@@ -1,0 +1,51 @@
+{
+  "review_id": "story-12-3-definition-review-37",
+  "mode": "definition",
+  "verdict": "REVISE",
+  "implementation_authorized": false,
+  "t166_may_begin": false,
+  "reviewed_hashes": {
+    "source_base": "29459174348511bb813c4aa9672ccffee61d82a6",
+    "spec.md": "782CCE177A53E61C320C59E30B6855E67DB57440D75E2AC8C3F82ED486BC3C7E",
+    "plan.md": "8274B510D3952AD7EFB3BAD58BAC04FDB1DCC43BA9B4C626E8D150C739E42BDC",
+    "research.md": "F455D81739100304A18DB937EF011C4E76D8BBC8644F4A9207CE80BC433BDC59",
+    "data-model.md": "77D6BE28524113B371B0CF9A0A12ABCED4F014A3B4BEB73599600F6AC1A01708",
+    "quickstart.md": "7CB6D879FDE708187A5BB3FEC5A412E5EEB5238C9ED04C63FBCE367D868DDE9A",
+    "contracts/deepseek-strict-result-submission.md": "E6960E717C24849F37C3B55ED9A4F7AAFFE7416588E22AC475E2A0CF77075A2B",
+    "contracts/pass1-runtime-contracts.md": "CF3359D18761C2021C9C47AD44A7903B63A06633ED501D04013BD88E05FCAF13",
+    "contracts/navigate-code-contract.md": "0FEBFA3F664FACC749A95299EEF643497AED2202A4E29DBAE166316D222C449F",
+    "evidence/research/deepseek-v4-current-best-practices-audit.md": "6FDAE98004134FDCE40700F8B45CDBB5F608FBD3774C7DB1D5CFB4AC797077B0",
+    "evidence/tdd/failure-40.json": "EFB9757EF8A05026D6ED735E02FB3C88A456B49B9E0F76ED05724D8FDE6B247B",
+    "evidence/tdd/analysis-22.json": "16EFAC53A8F19ADADE520333C54C1D3186807D2979D4D2D3EBE4FE0BB5713433",
+    "reviews/plan-review/plan-review-27.json": "7D3A168248A5A6641AB9DE33C94724569914DB7C66A9320790F75C8807848A79",
+    "reviews/plan-review/plan-review-28.json": "6F9AB271926620C88776C530FE4911B4339815ACA44C794452A6D43A11EFDD25",
+    "tasks.md": "09E6BB185E3E15760C5DDBB5BD71EEA82DC6C91EFA6C53476CCD949D19AA4D0D"
+  },
+  "task_metrics": {
+    "task_count": 170,
+    "unique_task_ids": 170,
+    "duplicate_task_ids": 0
+  },
+  "findings": [
+    {
+      "id": "AD30-DR-001",
+      "severity": "HIGH",
+      "earliest_owner": "tasks",
+      "locations": [
+        "tasks.md:365-366",
+        "tasks.md:378-379"
+      ],
+      "evidence": "Historical AD-27/AD-26 summaries retained current-authority wording for T163/T164, T135, and an active AD-27 chain.",
+      "consequence": "Older completed tasks could be interpreted as current qualification or ownership authority despite the AD-30 header and tail.",
+      "required_correction": "Change only those historical-summary sentences to checkpoint-relative past tense and state the current T169 to T170 to T085 to T086 qualification route."
+    }
+  ],
+  "closed_checks": [
+    "T164 is recorded as an executed failed gate, not T084 success.",
+    "T165 binds accepted AD-30 authority; T166 is tests-only RED; T167 is the sole GREEN owner; T168-T170 contain no hidden implementation.",
+    "Turns one through eight navigation, forced turn nine, correction-only turn ten, early correction, SDK iteration eight/nine, local-two/provider-visible-two-or-one, eight attempts, two submissions, ten turns, 64/65, and no request eleven are explicit.",
+    "T168 covers nonlive/PostgreSQL/privacy/zero-delta barriers, T169 is source-free before T170, and T170 requires a new disposable 3/3 before T085.",
+    "No provider-field, sampling, retry, timeout, token, SDK, schema, persistence, source-scope, host, network, or system expansion is assigned."
+  ],
+  "summary": "The T165-T170 task bodies are complete and correctly ordered; acceptance is blocked only by stale current-authority wording in historical summaries."
+}

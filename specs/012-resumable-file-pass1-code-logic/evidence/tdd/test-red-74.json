@@ -1,0 +1,38 @@
+{
+  "evidence_id": "12-3/implement/151",
+  "kind": "test-red",
+  "status": "expected-red",
+  "stage": "implement",
+  "task": "T177",
+  "source_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --no-restore --filter <six AD-32 receipt-provenance fake-stream tests> --logger console;verbosity=minimal",
+  "result": {
+    "exit_code": 1,
+    "total": 6,
+    "passed": 2,
+    "failed": 4,
+    "skipped": 0,
+    "duration_milliseconds": 379,
+    "compilation_errors": 0
+  },
+  "expected_failures": [
+    "invented receipt with zero navigation callbacks",
+    "mixed observed and unobserved receipt IDs",
+    "receipt assigned only to an excess no-effect sibling",
+    "cross-execution receipt ID"
+  ],
+  "passing_controls": [
+    "one exact observed receipt",
+    "multiple observed receipts cited in reverse order with duplicate citation"
+  ],
+  "observed_behavior": "Unchanged production captures the otherwise valid receipt-bearing candidate, so the result contains knownReferences/deferredObservations instead of rejecting locally as InvalidEvidence and accepting only the corrected receipt-free candidate.",
+  "test_file_sha256": "8C2773C1D92143C340C5941BC7574BC6284F54D323B8BF786BF11E94CC99F825",
+  "unchanged_production_hashes": {
+    "PreparedNavigateCodeFunction.cs": "2083F6A20715D96AE5913A97C834C1CBF0ACE616A1305769B0B5A3BA35912FD3",
+    "PreparedSubmitCodeLogicFunction.cs": "838E03DE173EC3AF4A1AA227A215519A9508ABC8FABB6130C60C468C193CABFE",
+    "PreparedPass1JobExecutor.cs": "74BCE967D4AA40434F7082DA5688CADDE688BE90F8E0B81FB491CFFD869BA9AB"
+  },
+  "privacy": "Fake streamed responses used synthetic packet/tool data only. Assertions and evidence retain closed categories, test names, counts, and hashes; no candidate/source/provider payload, credential, database, host, or system data is retained.",
+  "recorded_at": "2026-08-25T21:15:00+08:00",
+  "next_step": "T178 may implement only the accepted execution-local receipt-provenance GREEN in the three owned Agent files."
+}

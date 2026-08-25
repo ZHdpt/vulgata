@@ -1,0 +1,57 @@
+{
+  "evidence_id": "12-3/implement/143",
+  "kind": "analysis",
+  "status": "current",
+  "stage": "implement",
+  "task": "T085",
+  "source_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "scope": "Content-dark diagnosis of a locally accepted DeepSeek result rejected by the atomic PostgreSQL committer",
+  "diagnostic_database": "vulgata_test_t085diag_b8fd6ce89e9d45a7aa1fd49cad6ea69f",
+  "runs": [
+    {
+      "result": "passed 20 consecutive real provider/source/commit jobs",
+      "elapsed_seconds": 402
+    },
+    {
+      "result": "reproduced commit Rejected after 57 total completed jobs",
+      "elapsed_seconds": 549,
+      "provider_stream_completed": true,
+      "local_parser_completed": true,
+      "document_written_for_failed_job": false
+    },
+    {
+      "result": "reset and replay of only the still-uncommitted deterministic job passed",
+      "elapsed_seconds": 35
+    }
+  ],
+  "code_evidence": [
+    "Pass1CodeLogicDocumentCommitter.DurableBindingsMatchAsync derives its classification query IDs only from candidate communicationEvidence.",
+    "The same method then compares every classification supplied in the prepared packet against that cited-only query result.",
+    "A valid candidate subset therefore fails whenever an unrelated supplied classification is omitted from communicationEvidence.",
+    "The local code-logic/file-v2 parser already validates every candidate-cited classification against the supplied packet."
+  ],
+  "root_cause": "The atomic committer reverses the intended set relation: it queries the candidate-cited subset and then requires the complete packet-supplied set to exist inside that subset. The correct relation revalidates the complete supplied set against durable Story 12.2 rows and separately proves that the candidate-cited set is a subset of it.",
+  "best_practice_disposition": {
+    "force_every_classification_into_candidate": "rejected because it would fabricate or overstate communication evidence",
+    "skip_unused_durable_revalidation": "rejected because FR-033 and FR-036 require every supplied classification to remain current and exact",
+    "provider_retry": "rejected because correctness would remain output-dependent after a locally deterministic commit rejection",
+    "model_endpoint_timeout_or_network_change": "rejected because complete sub-minute streamed responses and successful replays exclude those causes",
+    "minimal_fix": "query all distinct supplied classification IDs, revalidate them against the current Pre-Scan Result and packet projections, then require each cited ID to belong to the supplied set"
+  },
+  "diagnostic_changes": {
+    "temporary_first_chance_capture": true,
+    "retained_values": [
+      "closed local stage/subtype scalars",
+      "job counts and elapsed durations"
+    ],
+    "excluded_values": [
+      "candidate or validator detail",
+      "source, packet, prompt, reasoning, content, call arguments or results",
+      "request or response bytes",
+      "credential or host path"
+    ]
+  },
+  "privacy": "Diagnostics used only the two approved repositories and disposable PostgreSQL clones. No system, host, network, firewall, service, permission, installed-tool, global configuration, credential, ordinary vulgata database, or source-scope change occurred.",
+  "recorded_at": "2026-08-25T18:11:09.0917929+08:00",
+  "summary": "DeepSeek variability exposed a deterministic local classification-subset commit bug; the provider and environment are not the blocker."
+}

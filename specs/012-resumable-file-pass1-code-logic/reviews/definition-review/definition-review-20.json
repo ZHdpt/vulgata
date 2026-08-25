@@ -1,0 +1,57 @@
+{
+  "schema_version": "1.0",
+  "gate": "definition-review",
+  "verdict": "ACCEPT",
+  "reviewed_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "reviewed_boundary": {
+    "base_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+    "candidate_commit": null,
+    "diff_sha256": "fd63dce191a8f7cf1eaa2cbec1c5c8d82f7c1058f52d6caa3941ed10b898d159",
+    "artifact_hashes": {
+      "specs/012-resumable-file-pass1-code-logic/spec.md": "b03687c3a77f52766280669da6cf9e2f9925a44bec1ae9304991f387477a9493",
+      "specs/012-resumable-file-pass1-code-logic/plan.md": "80a696fb658cfd06004a10a7bd13bbbf0211156bb846de09cf902fc113fc923e",
+      "specs/012-resumable-file-pass1-code-logic/research.md": "cf749f3d6ef9d46e603166e805986084eb53975ee3bfa12b0b9cba6906155987",
+      "specs/012-resumable-file-pass1-code-logic/data-model.md": "3d19b5eb7bb3e46ed4aa7dac2d2358678bfcb9e03147d38a883bd30819c5addf",
+      "specs/012-resumable-file-pass1-code-logic/quickstart.md": "fe1e8e8fa3449318e7b5d33478bdfa9707fc72cc647f2813551ce7dda6b71c66",
+      "specs/012-resumable-file-pass1-code-logic/contracts/deepseek-strict-result-submission.md": "056a37031cbbb00587d011b1d74dc60cc21f11bf0b20858eb3df3e785c9d6643",
+      "specs/012-resumable-file-pass1-code-logic/tasks.md": "a894899f15acda90b516b48b05d3177f715ec266d2a391fdc47a20b298492a33"
+    },
+    "owned_paths": [
+      "specs/012-resumable-file-pass1-code-logic/spec.md",
+      "specs/012-resumable-file-pass1-code-logic/plan.md",
+      "specs/012-resumable-file-pass1-code-logic/research.md",
+      "specs/012-resumable-file-pass1-code-logic/data-model.md",
+      "specs/012-resumable-file-pass1-code-logic/quickstart.md",
+      "specs/012-resumable-file-pass1-code-logic/contracts/deepseek-strict-result-submission.md",
+      "specs/012-resumable-file-pass1-code-logic/tasks.md"
+    ]
+  },
+  "reviewed_artifacts": [
+    "AGENTS.md",
+    ".specify/memory/constitution.md",
+    ".specify/extensions.yml",
+    "docs/UBIQUITOUS_LANGUAGE.md",
+    "docs/bmad/epics.md",
+    "docs/bmad/implementation-artifacts/12-3-resumable-file-pass-1-and-code-logic-documents.md",
+    "docs/requirement-draft.md",
+    "docs/bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md",
+    "docs/bmad/planning-artifacts/architecture/august-30-bounded-scanning-design.md",
+    "docs/bmad/planning-artifacts/sprint-change-proposal-2026-08-24-deepseek-strict-result-submission.md",
+    "specs/012-resumable-file-pass1-code-logic/spec.md",
+    "specs/012-resumable-file-pass1-code-logic/plan.md",
+    "specs/012-resumable-file-pass1-code-logic/research.md",
+    "specs/012-resumable-file-pass1-code-logic/data-model.md",
+    "specs/012-resumable-file-pass1-code-logic/quickstart.md",
+    "specs/012-resumable-file-pass1-code-logic/contracts/deepseek-strict-result-submission.md",
+    "specs/012-resumable-file-pass1-code-logic/tasks.md",
+    "specs/012-resumable-file-pass1-code-logic/evidence/tdd/failure-25.json",
+    "specs/012-resumable-file-pass1-code-logic/reviews/plan-review/plan-review-12.json",
+    "src/dotnet/Vulgata.Agents/WorkerExecution/DeepSeekStrictToolDeclarations.cs",
+    "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedPass1JobExecutor.cs",
+    "tests/Vulgata.Tests/PreparedPass1/DeepSeekSourceFreeHandshakeHarness.cs",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekContractQualificationTests.cs",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekStreamingQualificationTests.cs"
+  ],
+  "findings": [],
+  "summary": "ACCEPT. Fresh independent combined definition review attempt 20 verified the exact pinned seven-artifact boundary and reran the required read-only SpecKit prerequisite and cross-artifact consistency checks; .specify/extensions.yml contains no before_analyze or after_analyze hook, and no CONTEXT-MAP.md, CONTEXT.md, or ADR artifact exists in this checkout. Failure-25 and current source establish feasibility without relying on prior reviewer conclusions: the raw public declarations fail DeepSeek strict validation, the same source-free route/model/key/thinking/streaming path succeeds without tools, and changing only the two ledgered object-null encodings plus the sixteen ledgered homogeneous string-enum discriminators succeeds. AD-20/R-20 consistently retain both actual AIFunction.AsOpenAIChatTool() declarations as immutable hash-bound inputs and define one deterministic, ledgered, fail-closed projected wire shared byte-for-byte by production and T083. The plan preserves the four supported primitive-null arrays and every other accepted name, description, strict flag, property/required/enum order and value; rejects duplicate, missing, additional, reordered, malformed, unsupported, referenced, cyclic, open, drifted, or oversized shapes before substitution or transport; and does not pin the diagnostic output hash. The complete local code-logic/file-v2 validator remains the sole acceptance and commit authority. All 64 Functional Requirements, 15 buildable Success Criteria, five user stories, and the raw BMad Story 12.3 boundary retain task coverage. The 98 unique task IDs have no duplicate, unresolved placeholder, invalid correction path, or active production-owner overlap. The remaining dependency chain is explicitly test-first and source-safe: T097 tests-only honest RED, T098 declaration-helper-only minimal GREEN with an executor edit permitted only if the RED proves the existing consumption seam insufficient, T096 deterministic/fake-wire/live source-free qualification, fresh T084 isolated 3/3 source-bearing qualification, T085 full T062, then T086 final barrier. T093-T095 remain historical evidence only for the preserved AD-19 field, content, reasoning, bounds, privacy, and isolation behavior. The definition preserves complete thinking-mode reasoning/content/tool-call/result continuity, five-minute inactivity and nonresetting 25-minute absolute limits, ten turns, two submissions, zero SDK retries, bounded request and declaration sizes, content-dark diagnostics, current-job-only provider context, and the source-free-before-source stop rule. It adds no database entity, migration, API, UI, prompt, scheduling, concurrency, provider circuit, host/system/environment/network configuration, sibling Chat/Worker flow, Story 12.4, or Story 12.5 behavior. Constitution layering, immutable Document, externalized prompt, bounded external-provider source, validation, testing, and security requirements remain satisfied. No blocking or major unresolved definition defect, authority conflict, ambiguity, duplication, coverage gap, failure-behavior gap, privacy weakness, or untestable acceptance criterion remains. ACCEPT advances this gate without duplicate user approval under the standing authorization, but performs no implementation, qualification traffic, database/lifecycle/state mutation, staging, commit, or Git-history change."
+}

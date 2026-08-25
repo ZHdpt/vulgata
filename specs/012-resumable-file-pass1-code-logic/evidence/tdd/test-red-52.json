@@ -1,0 +1,47 @@
+{
+  "evidence_id": "12-3/implement/105",
+  "kind": "test-red",
+  "status": "current",
+  "stage": "implement",
+  "task": "T132",
+  "source_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "commands": [
+    "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore -p:WarningLevel=0 --filter \"FullyQualifiedName~Pass1DeepSeekStreamingQualificationTests.ExecuteAsync_LatestLegalSecondSubmissionUsesTurnTenAndNoRequestElevenAsync|FullyQualifiedName~Pass1DeepSeekStreamingQualificationTests.NormalizeAndValidateDeepSeekRequestBody_UsesClosedOrdinaryAndTerminalChoiceMatrix|FullyQualifiedName~PreparedPass1JobExecutorStreamingTests.ExecuteAsync_ProviderIgnoresNamedTerminalChoice_NavigationRemainsPayloadFreeAsync|FullyQualifiedName~Pass1DeepSeekContractQualificationTests.SourceFreeHandshake_RequiresTwoSanitizedShapesWithDistinctRequestEvidenceAsync\" --logger \"console;verbosity=minimal\"",
+    "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --no-restore -p:WarningLevel=0 --filter \"FullyQualifiedName~Pass1DeepSeekContractQualificationTests\" --logger \"console;verbosity=minimal\""
+  ],
+  "results": [
+    {
+      "scope": "focused request-ten, turn-aware normalizer, ignored-choice, and two-shape source-free RED",
+      "total": 16,
+      "passed": 0,
+      "failed": 16,
+      "skipped": 0,
+      "duration_seconds": 0.493,
+      "build_errors": 0
+    },
+    {
+      "scope": "complete DeepSeek contract class with successful paths corrected to the two-request contract",
+      "total": 58,
+      "passed": 50,
+      "failed": 6,
+      "skipped": 2,
+      "duration_seconds": 0.282,
+      "build_errors": 0
+    }
+  ],
+  "observed_red": [
+    "two public fake-HTTP ten-turn paths preserve ten requests and no request eleven but request ten still carries string tool_choice required rather than the exact named submit_code_logic object",
+    "all thirteen closed ordinary/terminal source-shape cases fail behaviorally because the current normalizer has no provider-turn-aware overload",
+    "all six successful source-free contract paths now require the ordinary and terminal request pair and fail only because the current harness emits one request; fifty adjacent contract cases pass and two live opt-ins skip",
+    "first-request HTTP, network, missing-call, and missing-DONE failures intentionally retain their existing one-request closed behavior"
+  ],
+  "files": {
+    "tests/Vulgata.Tests/PreparedPass1/PreparedPass1JobExecutorStreamingTests.cs": "EF4AE6242D13CC606FC6D2148505E10E5A52D5B80DAC17F4350ECA802C569DDC",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekStreamingQualificationTests.cs": "BE7C93C3675CDD27622393270FB28FEB96640755187BC58D98F39D8C0C2A3530",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekContractQualificationTests.cs": "739229CC7F96CE24AED8F0E1CE6930909DAFCE099F089CFFEE51EB38253401A3",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekIsolatedSourceQualificationTests.cs": "FBC6F5FF87EB554631AA6BCF74747309B5804B86B32C2187B833DCACA2683510"
+  },
+  "privacy": "No provider, source, database, network, host, system, function arguments/results, response content, reasoning, credential, or source data was accessed or retained.",
+  "observed_at": "2026-08-25T02:00:19.6093323Z",
+  "summary": "T132 is a complete compile-clean behavioral RED. Both executor and qualification test boundaries now describe the accepted ordinary-versus-terminal wire and two-request source-free contract without leaving stale successful one-request expectations."
+}

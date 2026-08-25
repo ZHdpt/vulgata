@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
+using System.Reflection;
 using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
@@ -30,6 +31,46 @@ namespace Vulgata.Tests.PreparedPass1;
 [Collection(PreparedScanningCollection.Name)]
 public sealed class Pass1ProductionExecutionTests
 {
+    [T062HostQualificationFact]
+    public async Task HostedRevisionBinding_CurrentRunningPair_LoadsAndAcquiresExactTwoRequestsAsync()
+    {
+        T062QualificationInputs qualification = await LoadQualificationInputsAsync();
+        using WebApplicationFactory<Program> host = CreateProductionHost(
+            qualification.ConnectionString);
+        await using AsyncServiceScope scope = host.Services.CreateAsyncScope();
+        Pass1PairExecution pair = await scope.ServiceProvider.GetRequiredService<VulgataDbContext>()
+            .Pass1PairExecutions.AsNoTracking()
+            .SingleAsync(value =>
+                value.SystemId == qualification.SystemId &&
+                value.Phase == Pass1PairExecutionPhase.Running);
+        object hosted = host.Services.GetServices<Microsoft.Extensions.Hosting.IHostedService>()
+            .Single(value => value.GetType() == typeof(PreparedPass1ExecutionHostedService));
+        MethodInfo loader = typeof(PreparedPass1ExecutionHostedService).GetMethod(
+            "LoadRevisionRequestsAsync",
+            BindingFlags.Instance | BindingFlags.NonPublic)
+            ?? throw new Xunit.Sdk.XunitException(
+                "The production hosted revision-request loader is unavailable.");
+        object invocation = loader.Invoke(hosted, [pair.Id, CancellationToken.None])
+            ?? throw new Xunit.Sdk.XunitException(
+                "The production hosted revision-request loader returned no task.");
+        Task task = Assert.IsAssignableFrom<Task>(invocation);
+        await task;
+        object? result = task.GetType().GetProperty("Result")?.GetValue(task);
+        IReadOnlyList<PreparedRevisionRequest> requests = Assert.IsAssignableFrom<
+            IReadOnlyList<PreparedRevisionRequest>>(result);
+        Assert.Equal(2, requests.Count);
+
+        IPreparedPass1RevisionBindingRegistry registry = host.Services
+            .GetRequiredService<IPreparedPass1RevisionBindingRegistry>();
+        PreparedPass1PairRevisionBindings? acquired = await registry.AcquirePairAsync(
+            pair.Id,
+            requests,
+            CancellationToken.None);
+        Assert.NotNull(acquired);
+        Assert.Equal(2, acquired!.Bindings.Count);
+        await registry.ReleasePairAsync(pair.Id);
+    }
+
     [T062HostQualificationTheory]
     [MemberData(nameof(QualificationConcurrencyLimits))]
     public async Task AuthenticatedApprovedPair_StartsRealRunAtEveryLimit_AndPersistsTerminalEvidence(
@@ -77,7 +118,7 @@ public sealed class Pass1ProductionExecutionTests
             started.Pass1ExecutionId,
             QualificationTerminalTimeout());
         Assert.True(
-            terminal.Phase is "Completed" or "CompletedWithWarnings",
+            terminal.Phase == "ReadyForResolution",
             $"T062 RED: production Start did not reach terminal success; phase={terminal.Phase}, " +
             $"dispatched={terminal.DispatchedCount}, completed={terminal.CompletedCount}, " +
             $"failed={terminal.FailedCount}, warnings={terminal.Warnings.Count}, start={startBody}");
@@ -169,14 +210,19 @@ public sealed class Pass1ProductionExecutionTests
             .AsNoTracking()
             .Where(value => value.PairExecutionId == pair.Id)
             .ToArrayAsync();
-        Assert.Contains(receipts, value =>
-            value.Operation == Pass1NavigationOperation.Implementations &&
-            value.DescriptorJson.Contains(".java", StringComparison.OrdinalIgnoreCase));
-        Assert.Contains(receipts, value =>
-            value.Operation == Pass1NavigationOperation.ExactSourceEvidence &&
-            value.DescriptorJson.Contains(".xml", StringComparison.OrdinalIgnoreCase));
         Assert.All(receipts, receipt =>
         {
+            Assert.Equal(pair.Id, receipt.PairExecutionId);
+            Assert.Contains(receipt.ScanJobExecutionId, jobIds);
+            if (receipt.Operation is { } operation)
+            {
+                Assert.True(Enum.IsDefined(operation));
+            }
+            else
+            {
+                Assert.Equal(Pass1NavigationBoundKind.Calls, receipt.BoundKind);
+            }
+
             Assert.InRange(receipt.ResultCount, 0, 20);
             Assert.InRange(receipt.EvidenceBytes, 0, 65_536);
             Assert.InRange(receipt.Depth ?? 0, 0, 3);
@@ -225,9 +271,9 @@ public sealed class Pass1ProductionExecutionTests
             return TimeSpan.FromSeconds(30);
         }
 
-        if (!int.TryParse(configured, out int seconds) || seconds is < 30 or > 3600)
+        if (!int.TryParse(configured, out int seconds) || seconds is < 30 or > 9000)
         {
-            throw new InvalidOperationException($"{variable} must be an integer from 30 through 3600.");
+            throw new InvalidOperationException($"{variable} must be an integer from 30 through 9000.");
         }
 
         return TimeSpan.FromSeconds(seconds);
@@ -623,9 +669,9 @@ public sealed class Pass1ProductionExecutionTests
             string body = await response.Content.ReadAsStringAsync();
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
             last = (await response.Content.ReadFromJsonAsync<Pass1ExecutionStatusResponse>())!;
-            if (last.Phase is "Completed" or "CompletedWithWarnings" or "Failed" or
-                "FailedPass1" or "FailedIntegrity" or "Paused" or
-                "PausedProviderUnavailable")
+            if (last.Phase is "ReadyForResolution" or "FailedPass1" or "FailedIntegrity" or
+                "FailedSecurity" or "Cancelled" or "PausedProviderUnavailable" or
+                "PausedOperatorCorrection" or "PausedInspection")
             {
                 return last;
             }

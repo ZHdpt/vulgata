@@ -3,6 +3,21 @@ using Vulgata.Core.DomainServices;
 
 namespace Vulgata.Agents.WorkerExecution;
 
+public enum PreparedPass1ValidationFailureKind
+{
+    Shape,
+    Binding,
+    Evidence,
+    Semantics,
+}
+
+public sealed record PreparedPass1ValidationResult(
+    ReadOnlyMemory<byte>? CanonicalJson,
+    PreparedPass1ValidationFailureKind? FailureKind)
+{
+    public bool IsValid => CanonicalJson is not null && FailureKind is null;
+}
+
 /// <summary>
 /// Performs the T014 schema/identity preflight. T025 adds the complete v2
 /// semantic materialization contract; this parser already rejects a wrong
@@ -122,6 +137,8 @@ public sealed class PreparedPass1ResultParser
             }
         }
 
+        ValidateSourceAnchors(packet, root.GetProperty("sourceAnchors"));
+
         if (root.GetProperty("filePurpose").ValueKind != JsonValueKind.Object)
         {
             throw new InvalidDataException("Prepared Pass 1 filePurpose must be an object.");
@@ -130,6 +147,110 @@ public sealed class PreparedPass1ResultParser
         return new PreparedPass1ParsedWorkerResult(
             "code-logic/file-v2",
             canonicalJson);
+    }
+
+    public static PreparedPass1ValidationResult Validate(
+        PreparedPass1WorkerPacket packet,
+        ReadOnlyMemory<byte> utf8Json)
+    {
+        try
+        {
+            PreparedPass1ParsedWorkerResult parsed = Parse(packet, utf8Json);
+            return new(parsed.CanonicalCandidateJson, null);
+        }
+        catch (Exception exception) when (
+            exception is InvalidDataException or ArgumentException or JsonException or
+                OverflowException)
+        {
+            return new(null, ClassifyFailure(packet, utf8Json));
+        }
+    }
+
+    private static PreparedPass1ValidationFailureKind ClassifyFailure(
+        PreparedPass1WorkerPacket packet,
+        ReadOnlyMemory<byte> utf8Json)
+    {
+        try
+        {
+            using JsonDocument document = JsonDocument.Parse(
+                utf8Json,
+                new JsonDocumentOptions
+                {
+                    AllowTrailingCommas = false,
+                    CommentHandling = JsonCommentHandling.Disallow,
+                    MaxDepth = CodeLogicFileV2Contract.MaximumJsonDepth,
+                });
+            JsonElement root = document.RootElement;
+            if (root.ValueKind != JsonValueKind.Object)
+            {
+                return PreparedPass1ValidationFailureKind.Shape;
+            }
+
+            HashSet<string> names = new(StringComparer.Ordinal);
+            foreach (JsonProperty property in root.EnumerateObject())
+            {
+                if (!names.Add(property.Name) ||
+                    !_rootProperties.Contains(property.Name, StringComparer.Ordinal))
+                {
+                    return PreparedPass1ValidationFailureKind.Shape;
+                }
+            }
+
+            if (names.Count != _rootProperties.Length ||
+                _rootProperties.Any(name => !names.Contains(name)) ||
+                !root.TryGetProperty("binding", out JsonElement binding) ||
+                binding.ValueKind != JsonValueKind.Object)
+            {
+                return PreparedPass1ValidationFailureKind.Shape;
+            }
+
+            try
+            {
+                RequireExactObjectShape(binding, _bindingProperties, "binding");
+                RequireString(binding, "jobId", packet.JobId.ToString("D"));
+                RequireString(binding, "scanExecutionId", packet.ScanExecutionId.ToString("D"));
+                RequireString(binding, "systemId", packet.SystemId.ToString("D"));
+                RequireString(binding, "repositoryId", packet.RepositoryId.ToString("D"));
+                RequireString(binding, "scanRunId", packet.ScanRunId.ToString("D"));
+                RequireString(binding, "profiledRevision", packet.ProfiledRevision);
+                RequireString(binding, "fileCodeUnitId", packet.FileCodeUnitId.ToString("D"));
+                RequireString(binding, "fileCodeUnitIdentityFingerprint", packet.FileCodeUnitIdentityFingerprint);
+                RequireString(binding, "preparedScanManifestId", packet.PreparedScanManifestId.ToString("D"));
+                RequireString(binding, "preparedScanManifestFingerprint", packet.PreparedScanManifestFingerprint);
+                RequireString(binding, "pairPackageFingerprint", packet.PairPackageFingerprint);
+                RequireString(binding, "repositoryRelativePath", packet.RepositoryRelativePath);
+                RequireInteger(binding, "byteStart", packet.ByteStart);
+                RequireInteger(binding, "byteEnd", packet.ByteEnd);
+                RequireInteger(binding, "lineStart", packet.LineStart);
+                RequireInteger(binding, "lineEnd", packet.LineEnd);
+                RequireInteger(binding, "segmentOrdinal", packet.SegmentOrdinal);
+                RequireInteger(binding, "segmentCount", packet.SegmentCount);
+                RequireString(binding, "fileHash", packet.FileHash);
+                RequireString(binding, "sourceHash", packet.SourceHash);
+                RequireString(binding, "promptIdentity", packet.PromptIdentity);
+                RequireString(binding, "documentSchemaIdentity", packet.DocumentSchemaIdentity);
+                RequireString(binding, "analysisRuntimeIdentityHash", packet.AnalysisRuntimeIdentityHash);
+            }
+            catch (InvalidDataException)
+            {
+                return PreparedPass1ValidationFailureKind.Binding;
+            }
+
+            try
+            {
+                ValidateSourceAnchors(packet, root.GetProperty("sourceAnchors"));
+            }
+            catch (InvalidDataException)
+            {
+                return PreparedPass1ValidationFailureKind.Evidence;
+            }
+
+            return PreparedPass1ValidationFailureKind.Semantics;
+        }
+        catch (JsonException)
+        {
+            return PreparedPass1ValidationFailureKind.Shape;
+        }
     }
 
     public static PreparedPass1RawWorkerResult CreateDeferredCallsFallback(
@@ -276,6 +397,53 @@ public sealed class PreparedPass1ResultParser
             !string.Equals(value.GetString(), expected, StringComparison.Ordinal))
         {
             throw new InvalidDataException($"Prepared Pass 1 result binding mismatch: {name}.");
+        }
+    }
+
+    private static void ValidateSourceAnchors(
+        PreparedPass1WorkerPacket packet,
+        JsonElement anchors)
+    {
+        if (anchors.ValueKind != JsonValueKind.Array)
+        {
+            throw new InvalidDataException("Prepared Pass 1 sourceAnchors must be an array.");
+        }
+
+        foreach (JsonElement anchor in anchors.EnumerateArray())
+        {
+            if (anchor.ValueKind != JsonValueKind.Object ||
+                !anchor.TryGetProperty("repositoryRelativePath", out JsonElement pathValue) ||
+                pathValue.ValueKind != JsonValueKind.String ||
+                !anchor.TryGetProperty("sourceHash", out JsonElement sourceHashValue) ||
+                sourceHashValue.ValueKind != JsonValueKind.String ||
+                !anchor.TryGetProperty("byteStart", out JsonElement byteStartValue) ||
+                !byteStartValue.TryGetInt64(out long byteStart) ||
+                !anchor.TryGetProperty("byteEnd", out JsonElement byteEndValue) ||
+                !byteEndValue.TryGetInt64(out long byteEnd) ||
+                !anchor.TryGetProperty("lineStart", out JsonElement lineStartValue) ||
+                !lineStartValue.TryGetInt64(out long lineStart) ||
+                !anchor.TryGetProperty("lineEnd", out JsonElement lineEndValue) ||
+                !lineEndValue.TryGetInt64(out long lineEnd) ||
+                !anchor.TryGetProperty("evidenceLocator", out JsonElement locatorValue) ||
+                locatorValue.ValueKind != JsonValueKind.String)
+            {
+                throw new InvalidDataException("Prepared Pass 1 source anchor has an invalid evidence shape.");
+            }
+
+            string? path = pathValue.GetString();
+            string expectedLocator = $"{path}#L{lineStart}-L{lineEnd}";
+            if (!string.Equals(path, packet.RepositoryRelativePath, StringComparison.Ordinal) ||
+                !string.Equals(sourceHashValue.GetString(), packet.SourceHash, StringComparison.Ordinal) ||
+                byteStart < packet.ByteStart ||
+                byteEnd > packet.ByteEnd ||
+                byteStart >= byteEnd ||
+                lineStart < packet.LineStart ||
+                lineEnd > packet.LineEnd ||
+                lineStart > lineEnd ||
+                !string.Equals(locatorValue.GetString(), expectedLocator, StringComparison.Ordinal))
+            {
+                throw new InvalidDataException("Prepared Pass 1 source anchor is outside authorized evidence.");
+            }
         }
     }
 

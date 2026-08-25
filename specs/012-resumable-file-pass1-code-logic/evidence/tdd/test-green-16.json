@@ -1,0 +1,34 @@
+{
+  "evidence_id": "12-3/implement/43",
+  "kind": "test-green",
+  "stage": "implement",
+  "source_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "artifact_paths": [
+    "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedSubmitCodeLogicFunction.cs",
+    "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedPass1JobExecutor.cs",
+    "tests/Vulgata.Tests/PreparedPass1/PreparedPass1JobExecutorStreamingTests.cs",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekIsolatedSourceQualificationTests.cs"
+  ],
+  "artifact_sha256": {
+    "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedSubmitCodeLogicFunction.cs": "F15F29E93E38AE62AD6D4702853243E26D89D2DEC4A0C3ED9850D255FEE24DE0",
+    "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedPass1JobExecutor.cs": "6E623B864F72F95F556BC382C5916B8CCA885A02DCA672FF1CA39928621B1C37",
+    "tests/Vulgata.Tests/PreparedPass1/PreparedPass1JobExecutorStreamingTests.cs": "7CF0751CF98F52154DB396A8B2783CE0BE27A8ECE497E11A269BACFE89036CA2",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekIsolatedSourceQualificationTests.cs": "A95C70A85A337709798FFCE9BD741FD22CA6697965673D489F319FFD26BF9FB1"
+  },
+  "commands": [
+    "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --nologo --filter FullyQualifiedName~PreparedPass1JobExecutorStreamingTests.SubmitSession_InvalidCandidate_ReportsExactlyOneSanitizedCategoryAsync|FullyQualifiedName~PreparedPass1JobExecutorStreamingTests.ExecuteAsync_InvalidSubmission_ReportsCategoryAndRetainsClosedReasonAsync --logger console;verbosity=minimal -p:GenerateMvcTestManifest=false -clp:ErrorsOnly",
+    "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --nologo --filter FullyQualifiedName~PreparedPass1JobExecutorStreamingTests|FullyQualifiedName~Pass1DeepSeekIsolatedSourceQualificationTests --logger console;verbosity=minimal -p:GenerateMvcTestManifest=false -clp:ErrorsOnly"
+  ],
+  "result": {
+    "focused": "2 passed, 0 failed",
+    "surrounding": "50 passed, 0 failed, 1 opt-in T084 test skipped",
+    "agents_build": "0 errors, 114 existing warnings",
+    "external_reason": "worker-result-rejected unchanged",
+    "observer_payload": "one allowlisted enum value only",
+    "production_registration": "none; observer and function override are scoped to the T084 test host",
+    "provider_calls": 0,
+    "source_bearing_calls": 0
+  },
+  "observed_at": "2026-08-24T12:21:53.5895832Z",
+  "summary": "The minimal GREEN adds an execution-local, enum-only submission rejection observer for T084 qualification, preserves all Core/dispatcher/durable/API failure contracts, and passes the complete fake-transport executor suite."
+}

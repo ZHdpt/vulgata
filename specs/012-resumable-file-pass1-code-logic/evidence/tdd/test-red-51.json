@@ -1,0 +1,31 @@
+{
+  "evidence_id": "12-3/implement/104",
+  "kind": "test-red",
+  "status": "superseded",
+  "stage": "implement",
+  "task": "T132",
+  "source_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore -p:WarningLevel=0 --filter \"FullyQualifiedName~Pass1DeepSeekStreamingQualificationTests.ExecuteAsync_LatestLegalSecondSubmissionUsesTurnTenAndNoRequestElevenAsync|FullyQualifiedName~Pass1DeepSeekStreamingQualificationTests.NormalizeAndValidateDeepSeekRequestBody_UsesClosedOrdinaryAndTerminalChoiceMatrix|FullyQualifiedName~PreparedPass1JobExecutorStreamingTests.ExecuteAsync_ProviderIgnoresNamedTerminalChoice_NavigationRemainsPayloadFreeAsync|FullyQualifiedName~Pass1DeepSeekContractQualificationTests.SourceFreeHandshake_RequiresTwoSanitizedShapesWithDistinctRequestEvidenceAsync\" --logger \"console;verbosity=minimal\"",
+  "result": {
+    "total": 16,
+    "passed": 0,
+    "failed": 16,
+    "skipped": 0,
+    "duration_seconds": 0.374,
+    "build_errors": 0
+  },
+  "observed_red": [
+    "two public fake-HTTP ten-turn paths preserve ten requests, existing callback/reservation/capture defenses, and no request eleven, but request ten still carries string tool_choice required instead of the exact named submit_code_logic object",
+    "all thirteen closed ordinary/terminal source-shape cases execute and fail because the current normalizer has no provider-turn-aware overload; the failure is behavioral reflection evidence rather than compilation failure",
+    "the source-free harness completes only one exact-declaration request rather than the required ordinary and terminal pair, so distinct sanitized identities and terminal selected-name evidence are unavailable"
+  ],
+  "files": {
+    "tests/Vulgata.Tests/PreparedPass1/PreparedPass1JobExecutorStreamingTests.cs": "EF4AE6242D13CC606FC6D2148505E10E5A52D5B80DAC17F4350ECA802C569DDC",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekStreamingQualificationTests.cs": "BE7C93C3675CDD27622393270FB28FEB96640755187BC58D98F39D8C0C2A3530",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekContractQualificationTests.cs": "DEF6CAD0D8261813762D64BAAA07F708364C1CF492D80C7D419E62624CFD1E95",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekIsolatedSourceQualificationTests.cs": "FBC6F5FF87EB554631AA6BCF74747309B5804B86B32C2187B833DCACA2683510"
+  },
+  "privacy": "No provider, source, database, network, host, system, function arguments/results, response content, reasoning, credential, or source data was accessed or retained.",
+  "observed_at": "2026-08-25T01:54:56.0509892Z",
+  "summary": "Superseded as T132 completion evidence after root found successful legacy source-free tests that still asserted the pre-AD-24 one-request contract. The observed failures remain valid RED facts, but the test definition required a test-only consistency correction before GREEN."
+}

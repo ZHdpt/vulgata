@@ -1,0 +1,78 @@
+{
+  "evidence_id": "12-3/qualify/161",
+  "kind": "command",
+  "status": "passed",
+  "stage": "qualify",
+  "task": "T085",
+  "source_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "definition_review": {
+    "artifact": "specs/012-resumable-file-pass1-code-logic/reviews/definition-review/definition-review-48.json",
+    "verdict": "ACCEPT",
+    "sha256": "27D4657ABEC0DCC6710A903DB2F6272B427CEF8CAF482CD57237040D50EAE11E"
+  },
+  "test_only_correction": {
+    "path": "tests/Vulgata.Tests/PreparedPass1/Pass1ProductionExecutionTests.cs",
+    "pre_sha256": "8BE7B4D1DA2FD4CE60C1ED6E585CBAC3DA9CA95554B6C1DCE1AF9C7A452DA75D",
+    "post_sha256": "64903F6B641CB1F1CBD91398D742D8BB31F1BCB5E6919576DDD1ECA8A26D92B0",
+    "change": "Replaced only the two stochastic operation/path predicates with per-receipt pair/job binding, defined-operation-or-Calls-marker, and unchanged result/evidence/depth bounds.",
+    "build": { "exit_code": 0, "errors": 0, "warnings": 2728 }
+  },
+  "production_sha256": {
+    "PreparedNavigateCodeFunction.cs": "388A4C6D28960E487907A84B8448CBF32F0FEB75003EC34E7C6E172659C18044",
+    "PreparedSubmitCodeLogicFunction.cs": "564030AAB3187AA0C16F2813B54D863FEA82D2E7043755BD27BA592AD9264362",
+    "PreparedPass1JobExecutor.cs": "BC9E322876AA540E380A3B2CB46717B4FE8A31678D73465F0C02E5C19C6A9FEE"
+  },
+  "deterministic_composed_proof": [
+    { "filter": "NavigateCodeRealToolQualificationTests", "passed": 3, "failed": 0, "skipped": 0, "duration_seconds": 22 },
+    { "filter": "NavigateCodeLeaseSecurityCorrectionTests", "passed": 19, "failed": 0, "skipped": 0 },
+    { "filter": "Pass1ProductionBoundaryQualificationTests", "passed": 3, "failed": 0, "skipped": 0, "artifact_sha256": "95824DFBCD44F79B1BDADF3580CB31ECACB5828E994928798D02915879ABD694" },
+    { "filter": "Pass1HostRuntimeQualificationTests", "passed": 2, "failed": 0, "skipped": 2, "skip_reason": "The two authenticated live-only facts were intentionally disabled in the deterministic slice; the exact host identity and PostgreSQL facts passed." }
+  ],
+  "live_command": "VULGATA_T062_CONCURRENCY_LIMIT=2; VULGATA_T062_TERMINAL_TIMEOUT_SECONDS=9000; VULGATA_T062_QUALIFICATION_CONNECTION=<fresh-pre-start-r10-disposable-clone>; <approved-source-provider-runtime-bindings>; dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --no-restore -p:WarningLevel=0 --filter FullyQualifiedName~Pass1ProductionExecutionTests.AuthenticatedApprovedPair_StartsRealRunAtEveryLimit_AndPersistsTerminalEvidence --logger console;verbosity=normal -clp:ErrorsOnly",
+  "live_result": {
+    "exit_code": 0,
+    "total": 1,
+    "passed": 1,
+    "failed": 0,
+    "skipped": 0,
+    "duration": "00:36:44",
+    "provider_endpoint": "https://api.deepseek.com",
+    "provider_model": "deepseek-v4-flash",
+    "streaming": true,
+    "concurrency_limit": 2,
+    "terminal_timeout_seconds": 9000,
+    "pair_phase": "ReadyForResolution",
+    "pair_circuit": "Closed",
+    "coordination_phase": "Resolving",
+    "scan_execution_phases": { "Completed": 2 },
+    "jobs": { "total": 150, "completed": 150, "noncompleted": 0 },
+    "outcome": { "status": "Succeeded", "dispatched": 150, "completed": 150, "ordinary_failures": 0, "ordinary_failure_budget": 5 },
+    "documents": { "total": 150, "java": 127, "xml": 23 },
+    "source_anchors": { "java": 127, "xml": 23 },
+    "navigation_receipts": {
+      "total": 19,
+      "calls_markers": 8,
+      "exact_source_evidence": 9,
+      "symbol_search": 2,
+      "maximum_depth": 1,
+      "total_evidence_bytes": 49958
+    },
+    "failure_inventory_entries": 0,
+    "transient_retry_scheduled_observed": 1,
+    "transient_retry_recovered": true,
+    "immutable_replay_assertion": "passed"
+  },
+  "disposable_databases": {
+    "template_mutated": false,
+    "ordinary_vulgata_mutated": false,
+    "dropped": [
+      "vulgata_test_t085r8_20260825",
+      "vulgata_test_t085r9_20260825",
+      "vulgata_test_t085r10_20260825"
+    ],
+    "remaining_catalog_rows": 0
+  },
+  "privacy": "Only the user-approved bounded source/context from the two approved repositories was sent to DeepSeek. Evidence retains only states, counts, categories, hashes, model/endpoint identity, and timings; no source, prompt, reasoning, request/response, candidate, tool argument/result, credential, or host path is retained. No ordinary database, host/system/global configuration, firewall, service, permission, or Git operation occurred.",
+  "observed_at": "2026-08-25T15:41:56.6294078Z",
+  "summary": "Corrected T085 passed the composed deterministic typed-tool/lease/DI proof and the fresh authenticated 150-job DeepSeek production run, reaching the Story 12.3 ReadyForResolution handoff with immutable replay and no remaining disposable T085 database."
+}

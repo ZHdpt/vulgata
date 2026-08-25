@@ -1,0 +1,61 @@
+{
+  "evidence_id": "12-3/implement/100",
+  "kind": "failure",
+  "stage": "implement",
+  "task": "T084",
+  "attempt": "r20",
+  "source_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "database": "vulgata_story123_t084_20260825_r20",
+  "database_template": "vulgata_story121_feffce36e44c48238a6e55c6742c374c",
+  "command": "VULGATA_T084_ISOLATED_SOURCE_JOBS=1 VULGATA_T062_QUALIFICATION_CONNECTION=<fresh-r20-disposable-database> VULGATA_T062_WORKER_PROVIDER_API_KEY=<present-secret> <approved-source-and-runtime-bindings> dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --no-restore --nologo --filter FullyQualifiedName=Vulgata.Tests.PreparedPass1.Pass1DeepSeekIsolatedSourceQualificationTests.ThreeIsolatedSourceJobs_CompleteCommitAndReplayWithoutLeakingPayloadsAsync --logger console;verbosity=normal -p:GenerateMvcTestManifest=false -clp:ErrorsOnly",
+  "result": {
+    "passed": 0,
+    "failed": 1,
+    "skipped": 0,
+    "total": 1,
+    "duration_seconds": 44.0069,
+    "failed_at_job": 1,
+    "source_kind": "xml"
+  },
+  "sanitized_failure": {
+    "outcome": "Rejected",
+    "reason": "unclassified-systemic",
+    "executor_category": "UnclassifiedSystemic",
+    "execution_category": "IllegalFunctionCall",
+    "function_call_subtype": "TurnIneligible",
+    "submission_category": "none",
+    "wire_budget_category": "none",
+    "provider_http": "none",
+    "tool_choice": "required",
+    "response_format": "absent",
+    "parallel_tool_calls": "absent"
+  },
+  "job_scoped_postgresql": {
+    "job_id": "7bdfceac-a6ec-8470-9104-2a1ecd111866",
+    "pair_execution_id": "e8027a57-62dd-8564-9989-e3ad1e26627a",
+    "job_state": "Running",
+    "attempt_count": 1,
+    "job_state_version": 1,
+    "tool_attempt_count": 0,
+    "remaining_navigation_capacity": 8,
+    "accepted_call_count": 0,
+    "evidence_bytes": 0,
+    "maximum_depth_observed": 0,
+    "budget_state_version": 0,
+    "receipt_count": 0,
+    "document_count": 0,
+    "pass1_outcome_count": 0
+  },
+  "excluded_causes": [
+    "endpoint, model, authentication, network, and HTTP failure",
+    "strict declaration or final request rejection",
+    "stream inactivity, absolute timeout, or wire-budget failure",
+    "navigation reservation, callback, receipt, evidence, Document, or Pass 1 outcome mutation",
+    "PostgreSQL availability, host, or system configuration failure"
+  ],
+  "remaining_unknown": "TurnIneligible currently collapses terminal-turn non-submission, exhausted submission state, and post-turn-limit branches. The retained evidence cannot identify which branch occurred without a narrower closed payload-free subtype.",
+  "required_next_step": "Keep T084 and T085 blocked. Add test-first payload-free subtype separation for the three turn/state branches without retaining provider turn, call identity/name/count/arguments/results/content/source, then retry T084 only on a new disposable clone.",
+  "privacy": "No provider response body, function call identity/name/count/arguments/result, reasoning, assistant content, source bytes, prompt packet, credential, or request body was retained. Only the approved repositories were read; only bounded source/context for job 1 was sent; only r20 was mutated; no host or system setting changed.",
+  "observed_at": "2026-08-25T09:10:00+08:00",
+  "summary": "T084 r20 excludes environment and network causes but reveals that the existing TurnIneligible diagnostic is too coarse to select a safe correction. The failed job retained zero navigation or document effects."
+}

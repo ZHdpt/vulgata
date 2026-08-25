@@ -1,0 +1,122 @@
+{
+  "evidence_id": "12-3/verify/162",
+  "kind": "command",
+  "status": "passed",
+  "stage": "verify",
+  "task": "T086",
+  "source_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "story_boundary": {
+    "prepared_pass1_nonlive": {
+      "passed": 740,
+      "failed": 0,
+      "skipped": 4,
+      "skip_reason": "The four authenticated live-only facts were intentionally disabled; their real DeepSeek and production-host evidence is recorded by command-37.json and command-38.json."
+    },
+    "replay_and_production_boundary_refresh": {
+      "passed": 97,
+      "failed": 0,
+      "skipped": 0
+    },
+    "production_boundary_artifact": {
+      "path": "artifacts/qualification/story-12.3/production-boundary-inspection.json",
+      "sha256": "889BE910DF0EA0250C23854B0D77C037786B1641AC59D2ADD0586FB92531E38F",
+      "verdict": "pass",
+      "forbidden_matches": 0,
+      "composition_all": true,
+      "prompt_closed": true
+    },
+    "isolated_live_deepseek": {
+      "evidence": "specs/012-resumable-file-pass1-code-logic/evidence/tdd/command-37.json",
+      "sha256": "7E5527FD48B1A07781A51C8500948279F6BEFA08A474010AAD565C2E662FD733",
+      "qualification_artifact_sha256": "2CA2D51BE4D4852A7E073DCC43E17434CACF74AA857EE54C4F2707FFAB70E82F",
+      "passed_jobs": 3,
+      "failed_jobs": 0
+    },
+    "production_live_deepseek": {
+      "evidence": "specs/012-resumable-file-pass1-code-logic/evidence/tdd/command-38.json",
+      "sha256": "8F8EE063BDBEF2477B1AA529465C99E4F023436EB895540579EE032C3F37B017",
+      "passed": 1,
+      "failed": 0,
+      "jobs_completed": 150,
+      "documents_committed": 150,
+      "pair_phase": "ReadyForResolution",
+      "immutable_replay": "passed"
+    }
+  },
+  "adjacent_regressions": {
+    "initial_slice": {
+      "passed": 438,
+      "failed": 4,
+      "skipped": 1,
+      "classification": "The four failures required the deliberately unset VULGATA_TEST_POSTGRES disposable connection."
+    },
+    "postgresql_concurrency_rerun": {
+      "passed": 4,
+      "failed": 0,
+      "skipped": 0,
+      "database": "vulgata_test_knowledge_t086_20260825",
+      "active_sessions_before_drop": 0,
+      "dropped": true,
+      "catalog_row_after_drop": false
+    },
+    "combined": {
+      "passed": 442,
+      "failed": 0,
+      "skipped": 1,
+      "total": 443
+    }
+  },
+  "web_build": {
+    "exit_code": 0,
+    "errors": 0,
+    "warnings": 9,
+    "warning_classification": "Existing NuGet source-mapping and Entity Framework package-version conflict warnings; no build error."
+  },
+  "repository_full_suite": {
+    "command_scope": "All tests except KnowledgeStorePostgreSqlConcurrencyTests, which passed separately 4/4 against their required disposable database.",
+    "passed": 2404,
+    "failed": 5,
+    "skipped": 9,
+    "total": 2418,
+    "duration": "00:07:53",
+    "verdict": "repository-baseline-failures-outside-story-boundary",
+    "failures": [
+      {
+        "count": 2,
+        "suite": "CodeGraphQualification.QualificationPreflightTests",
+        "category": "stale fixture shape",
+        "detail": "Fixture input lacks the plan_revision property required by the current preflight script."
+      },
+      {
+        "count": 1,
+        "suite": "CodeGraphProviderContractTests",
+        "category": "missing external input",
+        "detail": "VULGATA_PROVIDER_CONTRACT_IMAGE is absent."
+      },
+      {
+        "count": 1,
+        "suite": "Story43EndToEndTests",
+        "category": "legacy fail-closed composition expectation",
+        "detail": "The test expected RepositoryProfilingCoordinator but the unavailable provider lane registered RuntimeUnavailableRepositoryProfilingCoordinator."
+      },
+      {
+        "count": 1,
+        "suite": "RepositoryManagementTests",
+        "category": "stale UI text assertion",
+        "detail": "The rendered page no longer contains the expected old label 最近扫描时间."
+      }
+    ],
+    "changed_file_intersection": false,
+    "story_regression_observed": false
+  },
+  "repository_checks": {
+    "migration_status_entries": 0,
+    "git_diff_check_exit_code": 0,
+    "command_37_json": "valid",
+    "command_38_json": "valid",
+    "qualification_artifacts_json": "valid"
+  },
+  "privacy": "Only the user-approved bounded source/context from the two approved repositories was sent to DeepSeek during T084/T085. T086 made no provider request. Evidence contains no credential, source, prompt, reasoning, request/response, candidate, tool argument/result, or host-path payload. No ordinary database, host/system/global configuration, firewall, service, permission, or Git operation occurred.",
+  "observed_at": "2026-08-25T16:04:23.4073124Z",
+  "summary": "T086 passed the complete Story 12.3 correction boundary, replay, privacy/exclusion, PostgreSQL concurrency, migration-delta, build, and diff checks. The unfiltered repository suite completed with five explicitly classified unrelated baseline failures and no Story 12.3 regression."
+}

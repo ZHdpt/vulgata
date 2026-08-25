@@ -1,0 +1,54 @@
+{
+  "review_id": "story-12-3-definition-review-40",
+  "mode": "definition",
+  "verdict": "REVISE",
+  "implementation_authorized": false,
+  "source_checkpoint": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "reviewed_hashes": {
+    "tasks.md": "99B0D4582199DAB638FC5488B69A158A361A09458C014AD59568B489CE0974C3",
+    "definition-review-39.json": "38C34243E986CBF27D8035C5B578D774467DCF34033B4BA9C60CEED6DA9B2624",
+    "plan-review-31.json": "F797814CFD15D361B30B1C55427C2940F7E3284971C5410B434B034C1036402D"
+  },
+  "task_metrics": {
+    "total_tasks": 175,
+    "unique_task_ids": 175,
+    "checked_tasks": 168,
+    "unchecked_task_ids": ["T085", "T086", "T171", "T172", "T173", "T174", "T175"]
+  },
+  "prior_finding_dispositions": [
+    { "id": "AD31-DR-001", "status": "PARTIALLY_CLOSED" },
+    { "id": "AD31-DR-002", "status": "PARTIALLY_CLOSED" }
+  ],
+  "findings": [
+    {
+      "id": "AD31-DR-001",
+      "category": "inconsistency",
+      "severity": "HIGH",
+      "earliest_owner": "tasks",
+      "title": "Global task-state wording still marks the pending reused T085/T086 gates as historical or checked",
+      "correction": "State that T001-T170 except deliberately reused pending T085/T086 are completed history. Keep T085/T086 unchecked and current only after T175 in the Phase 11 purpose and T070+ checklist."
+    },
+    {
+      "id": "AD31-DR-002",
+      "category": "coverage",
+      "severity": "HIGH",
+      "earliest_owner": "tasks",
+      "title": "T174 claims verification of upstream duplicate/canonicality regressions that do not exist",
+      "correction": "Remove the nonexistent duplicate/canonicality regression claim from T174 and coverage. State only that T173 does not edit dispatcher or claimed-packet source and therefore does not change upstream packet policy."
+    }
+  ],
+  "closed_checks": [
+    "The principal current chain and T172/T173 ownership are correct.",
+    "Classification failure precedence, zero mutation, replay, privacy, and zero-model-delta coverage remain explicit.",
+    "No duplicate IDs, placeholders, authority conflicts, or scope expansion exist."
+  ],
+  "residual_proof_obligations": [
+    "Correct task text and obtain a fresh definition ACCEPT before T171.",
+    "Then observe RED, implement bounded GREEN, and run T174, T175, T085, T086 in order."
+  ],
+  "residual_risks": [
+    "Reused T085/T086 IDs require exact pending wording.",
+    "Packet uniqueness is upstream policy and must not be overclaimed as tested."
+  ],
+  "summary": "REVISE. Correct pending T085/T086 wording and remove nonexistent upstream-regression claims."
+}

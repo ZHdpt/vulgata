@@ -1,0 +1,43 @@
+{
+  "evidence_id": "12-3/implement/102",
+  "kind": "test-green",
+  "stage": "implement",
+  "task": "T130",
+  "source_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "commands": [
+    "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore -p:WarningLevel=0 --filter \"FullyQualifiedName~PreparedPass1JobExecutorStreamingTests.ExecuteAsync_TurnTenIllegalShape_StopsWithoutAnAdditionalCallbackAsync|FullyQualifiedName~PreparedPass1JobExecutorStreamingTests.IllegalFunctionCallSubtype_SeparatesTurnDefenseBranchesByDistinctMembers\" --logger \"console;verbosity=minimal\"",
+    "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore -p:WarningLevel=0 --filter \"FullyQualifiedName~PreparedPass1JobExecutorStreamingTests\" --logger \"console;verbosity=minimal\""
+  ],
+  "results": [
+    {
+      "scope": "focused T129 diagnostics",
+      "total": 2,
+      "passed": 2,
+      "failed": 0,
+      "skipped": 0,
+      "duration_seconds": 0.374
+    },
+    {
+      "scope": "complete PreparedPass1JobExecutorStreamingTests class",
+      "total": 104,
+      "passed": 104,
+      "failed": 0,
+      "skipped": 0,
+      "duration_seconds": 2.0
+    }
+  ],
+  "behavior": [
+    "provider-turn-ten non-submission reports TerminalTurnRequiresSubmission",
+    "submission-state defense reports SubmissionUnavailable",
+    "mapped post-turn-ten defense reports PostTurnLimit",
+    "the diagnostic-only enum split preserves existing termination, callback, reservation, receipt, candidate, replay, request, and no-request-eleven behavior"
+  ],
+  "files": {
+    "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedPass1JobExecutor.cs": "1AA178F3829752C90EADD68AACD4483E55470532DCADE929F00DDC8E215F51CD",
+    "tests/Vulgata.Tests/PreparedPass1/PreparedPass1JobExecutorStreamingTests.cs": "80B0EEE96C7E718D19457BF6972BBE3BBA45A849F3BCA6296992EDC12417EADE",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekIsolatedSourceQualificationTests.cs": "FBC6F5FF87EB554631AA6BCF74747309B5804B86B32C2187B833DCACA2683510"
+  },
+  "privacy": "No provider, source, database, network, host, system, call identity/name/count/arguments/result, response content, reasoning, or source data was accessed or retained.",
+  "observed_at": "2026-08-25T09:18:11.4742331+08:00",
+  "summary": "T130 is GREEN: all three formerly collapsed TurnIneligible branches now have fixed payload-free enum-only diagnostics, with 2/2 focused and 104/104 full-class tests passing and no execution behavior change."
+}

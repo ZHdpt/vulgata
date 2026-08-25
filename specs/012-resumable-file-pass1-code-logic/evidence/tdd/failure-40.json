@@ -1,0 +1,48 @@
+{
+  "evidence_id": "12-3/implement/135",
+  "kind": "failure",
+  "status": "current",
+  "stage": "implement",
+  "task": "T164",
+  "attempt": "r34",
+  "source_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "database": "vulgata_test_t164_4d9f09956b7b4a038e174a7fe8d6eec6",
+  "database_template": "vulgata_story121_feffce36e44c48238a6e55c6742c374c",
+  "command": "VULGATA_T084_ISOLATED_SOURCE_JOBS=1 VULGATA_T062_QUALIFICATION_CONNECTION=<fresh-r34-disposable-database> VULGATA_T062_WORKER_PROVIDER_API_KEY=<present-secret> <approved-source-and-runtime-bindings> dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --no-restore -p:WarningLevel=0 --filter FullyQualifiedName=Vulgata.Tests.PreparedPass1.Pass1DeepSeekIsolatedSourceQualificationTests.ThreeIsolatedSourceJobs_CompleteCommitAndReplayWithoutLeakingPayloadsAsync --logger console;verbosity=normal -clp:ErrorsOnly",
+  "result": {
+    "total": 1,
+    "passed": 0,
+    "failed": 1,
+    "elapsed_seconds": 56,
+    "stopped_at_job": 2,
+    "source_kind": ".xml",
+    "outcome": "Rejected",
+    "reason": "worker-result-rejected",
+    "executor_category": "WorkerResultRejected",
+    "submission_category": "InvalidShape",
+    "execution_category": null,
+    "function_call_subtype": null,
+    "wire_budget_category": null,
+    "provider_http": "none"
+  },
+  "observed": {
+    "streaming_completed": true,
+    "final_request_response_format_absent": true,
+    "parallel_tool_calls_absent": true,
+    "final_request_submit_only_schema_bytes": 13973,
+    "final_request_submit_schema_sha256": "3CD6F35EB8E6B6E7BEFBF802B2D3187823A0805A00B2ADFEC8A85082835DB20F",
+    "later_gate_started": false
+  },
+  "diagnosis": "The provider, streaming transport, schema projection, PostgreSQL, approved source roots, and pinned analysis runtime were healthy. The local application exhausted both available result opportunities for job 2, but the first-category-only observer could not prove whether the correction callback ran. Bounded follow-up diagnosis in analysis-22 identifies the scheduling defect: a first invalid submission on provider turn ten is invoked and then unconditionally terminates, so the AD-29 repair projection has no legal turn in which to execute.",
+  "excluded_causes": [
+    "DeepSeek endpoint, model, authentication, HTTP, or network failure",
+    "streaming inactivity or absolute timeout",
+    "wire or strict-schema rejection",
+    "PostgreSQL availability or disposable-clone failure",
+    "CodeGraph, Java, JDT-LS, archive, host, or system failure"
+  ],
+  "privacy": "Only the approved bounded job source/context was sent. No provider response, function arguments/results, reasoning, assistant content, source bytes, packet, credential, request body, validator detail, or host path was retained. Ordinary vulgata and system configuration were untouched.",
+  "required_correction": "Reserve provider turn ten for the already-authorized second submission by making provider turn nine the unconditional finalization boundary. Preserve ten total turns, eight navigation attempts, two submissions, no request eleven, local validation, privacy, persistence, provider settings, and host/system boundaries; prove the correction RED/GREEN before another source-bearing qualification.",
+  "recorded_at": "2026-08-25T16:33:21.1432622+08:00",
+  "summary": "T164 r34 stopped correctly before T085 on an application-level late-first-submission scheduling defect; it was not an environment or DeepSeek availability failure."
+}

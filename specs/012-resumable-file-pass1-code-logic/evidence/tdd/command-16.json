@@ -1,0 +1,38 @@
+{
+  "evidence_id": "12-3/implement/33",
+  "kind": "command",
+  "stage": "implement",
+  "source_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "artifact_paths": [
+    "specs/012-resumable-file-pass1-code-logic/verification/deepseek-correction-focused.md",
+    "src/dotnet/Vulgata.Agents/WorkerExecution/DeepSeekStrictSchemaProjector.cs",
+    "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedPass1ResultParser.cs",
+    "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedPass1JobExecutor.cs",
+    "src/dotnet/Vulgata.Web/Program.cs",
+    "src/dotnet/Vulgata.Web/Logging/LocalFileLoggerProvider.cs",
+    "tests/Vulgata.Tests/LoggingConfigurationTests.cs",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekContractQualificationTests.cs",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekPromptCompositionTests.cs",
+    "tests/Vulgata.Tests/PreparedPass1/PreparedPass1JobExecutorStreamingTests.cs",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekStreamingQualificationTests.cs",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1MigrationTests.cs",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DocumentCommitTests.cs",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DocumentPostgreSqlAtomicTests.cs"
+  ],
+  "commands": [
+    "AnalysisRuntime__JdtLsDistributionArchivePath=<approved-jdt-ls-archive> dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --nologo --filter (FullyQualifiedName~LoggingConfigurationTests.ProductionHost_CriticalLog_WritesConfiguredLocalFileAsync)|(FullyQualifiedName~Pass1DeepSeekPromptCompositionTests.ProductionWebScope_ResolvesPreparedExecutorAndBothClosedFunctionFactoriesAsync) --logger console;verbosity=minimal -p:GenerateMvcTestManifest=false -clp:ErrorsOnly",
+    "AnalysisRuntime__JdtLsDistributionArchivePath=<approved-jdt-ls-archive> AnalysisRuntime__JdtLsInstallationRoot=<approved-jdt-ls-installation> VULGATA_TEST_POSTGRES_ADMIN=<approved-admin-connection> dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --nologo --filter (FullyQualifiedName~Pass1DeepSeekContractQualificationTests&FullyQualifiedName!~ApprovedFileCodeUnit_DeepSeekResponse)|(FullyQualifiedName~Pass1DeepSeekPromptCompositionTests)|(FullyQualifiedName~PreparedPass1JobExecutorStreamingTests)|(FullyQualifiedName~Pass1DeepSeekStreamingQualificationTests)|(FullyQualifiedName~Pass1MigrationTests)|(FullyQualifiedName~Pass1DocumentCommitTests)|(FullyQualifiedName~Pass1DocumentPostgreSqlAtomicTests) --logger console;verbosity=minimal -p:GenerateMvcTestManifest=false -clp:ErrorsOnly",
+    "dotnet build src/dotnet/Vulgata.Web/Vulgata.Web.csproj --no-restore --nologo -clp:ErrorsOnly"
+  ],
+  "result": {
+    "host_logging_and_composition": "2 passed, 0 failed, 0 skipped in 4 seconds",
+    "focused_correction_suite": "272 passed, 0 failed, 0 skipped in 1 minute 17 seconds",
+    "web_build": "succeeded with 0 errors and 9 existing warnings",
+    "event_log_disposition": "default Windows Event Log provider removed; Critical logging is verified through the configured local file without Event Log permission",
+    "jdt_ls_disposition": "explicit approved archive and installation bindings used; archive SHA-256 matched the pinned production identity; no copy required",
+    "provider_traffic": "no DeepSeek request and no source-derived payload",
+    "qualification_disposition": "T081 GREEN; T082 is the next ordered gate"
+  },
+  "observed_at": "2026-08-24T11:23:14.8430259Z",
+  "summary": "T081 passed the complete corrected source-free regression boundary, production composition, persistence/atomicity checks, and Web build after the authorized host logging and explicit JDT-LS bindings."
+}

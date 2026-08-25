@@ -1,0 +1,35 @@
+{
+  "evidence_id": "12-3/implement/70",
+  "kind": "test-green",
+  "stage": "implement",
+  "task": "T102",
+  "source_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "focused_command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --nologo -p:WarningLevel=0 -p:GenerateMvcTestManifest=false --filter \"FullyQualifiedName~PreparedDispatcher_Prompt_BindsSoleSubmissionAndPreflightedNavigationBatchRules|FullyQualifiedName~SourceFreeHandshake_UsesSupportedDefaultsWithoutSamplingOrControlFields\" --logger \"console;verbosity=minimal\"",
+  "focused_result": {
+    "passed": 2,
+    "failed": 0,
+    "skipped": 0
+  },
+  "broader_command": "$env:AnalysisRuntime__JdtLsDistributionArchivePath='C:\\Users\\13728\\Downloads\\jdt-language-server-1.61.0-202608141332.tar.gz'; $env:AnalysisRuntime__JdtLsInstallationRoot='C:\\Users\\13728\\.local\\jdt-language-server-1.61.0-202608141332'; dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --nologo -p:WarningLevel=0 -p:GenerateMvcTestManifest=false --filter \"FullyQualifiedName~Pass1DeepSeekPromptCompositionTests|FullyQualifiedName~Pass1DeepSeekContractQualificationTests\" --logger \"console;verbosity=minimal\"",
+  "broader_result": {
+    "passed": 55,
+    "failed": 0,
+    "skipped": 2,
+    "skip_reason": "The opt-in live T083 and T084 qualifications remain disabled."
+  },
+  "implementation": {
+    "production_change": "Externalized prompt only",
+    "sole_submission": "The final answer must be one sole submit_code_logic call.",
+    "navigation_batch": "Only a complete preflighted all-navigate_code batch within the durable remaining budget is permitted.",
+    "privacy": "The prompt states bounded provider disclosure and makes no unsupported zero-retention or no-training claim.",
+    "request_and_declarations_changed": false
+  },
+  "artifact_sha256": {
+    "src/dotnet/Vulgata.Agents/Prompts/pass1-code-logic-worker.v2.md": "D804C0A1AEC77A09747AE22587194FA5D01F723A9FB59A44B403AB85EB9A4581",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekPromptCompositionTests.cs": "EEB62F6193BC35F1CAD5C844E606BBFEB720B5F3DC872DC6A07340A34CC1E4C4",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekContractQualificationTests.cs": "62ABAB24140DFA366EAD2B50327D67D6E908A4C2A9660A8ABBBD4A3D079CF6B2"
+  },
+  "environment_note": "The broader rerun used only process-local approved JDT archive and installation bindings. No user, machine, service, permission, network, or other system setting changed.",
+  "warnings": "Existing NU1507 and EF assembly-version warnings remain; test execution succeeded.",
+  "observed_at": "2026-08-24T21:03:01.1002264Z"
+}

@@ -1,0 +1,31 @@
+{
+  "schema_version": "1.0",
+  "gate": "plan-review",
+  "verdict": "ACCEPT",
+  "reviewed_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "reviewed_boundary": {
+    "base_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+    "candidate_commit": null,
+    "artifact_hashes": {
+      "specs/012-resumable-file-pass1-code-logic/spec.md": "c363d4c28ec7544d6b2385d910107883dd01c9483313bcbe5564a301a557068a",
+      "specs/012-resumable-file-pass1-code-logic/plan.md": "5c9a8fc16437e689b432f106a73d60a24ae59bb29b6f302346e51a31ca2be06b",
+      "specs/012-resumable-file-pass1-code-logic/research.md": "90df8e8f0934dcb934a53fbbf667d6c4c6ff9ed37a81de1b90dc17e3c85f47a8",
+      "specs/012-resumable-file-pass1-code-logic/contracts/deepseek-strict-result-submission.md": "9f78041b23a9440210f3a2311f4481b05a2684d42ec3883cd5bc56ce33ec8ba7",
+      "specs/012-resumable-file-pass1-code-logic/evidence/research/deepseek-v4-current-best-practices-audit.md": "75f842472b4c64ee74e56c105370f341c8d6ea6e4f5c0e9b0d20332884ed5432",
+      "specs/012-resumable-file-pass1-code-logic/evidence/tdd/failure-35.json": "9abcbf550e8a62e653f3da56d707bce04480299f6ccc13aff128e62cbb69881a",
+      "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedPass1JobExecutor.cs": "db9c1278947dc3a4402f22ba0516bee2bfb76cbfc06d9ba81962efb47797410",
+      "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekIsolatedSourceQualificationTests.cs": "fbc6f5ff87eb554631aa6bcf74747309b5804b86b32c2187b833dcaca2683510"
+    }
+  },
+  "findings": [],
+  "closed_findings": [
+    "AD25-PR-001: TerminalMultipleSubmissions is defined only for provider turn ten, cardinality above one, and all exact submit_code_logic names after existing unique-ID and unknown-name precedence; every other non-sole terminal topology remains TerminalTurnRequiresSubmission",
+    "AD25-PR-002: both terminal categories retain zero callback, reservation, receipt, candidate, later request, payload retention, and execution-policy change while fresh disposable T084 alone identifies the actual topology"
+  ],
+  "residual_risks": [
+    "T084 r22 topology remains intentionally unknown; a fresh result other than TerminalMultipleSubmissions must stop and route to its existing subtype.",
+    "Even a TerminalMultipleSubmissions result authorizes only a separate current-provider compatibility plan, not immediate provider-field preservation or candidate arbitration.",
+    "Older summary and traceability rows ending at AD-24 are editorial history; AD-25 and the failure-35 correction row supersede only the current diagnostic detail."
+  ],
+  "summary": "ACCEPT. Independent review verified every pinned artifact hash and found AD-25/R-26 source-grounded, feasible, testable, privacy-preserving, and bounded for task generation. DeepSeek named choice forces the selected function name but does not promise singleton call cardinality; the pinned streaming adapter emits one logical FunctionCallContent per provider call index, so the proposed enum diagnoses logical topology rather than fragments. The correction changes no provider field, prompt, function surface, callback/admission/candidate policy, schema, dependency, persistence, source scope, endpoint/model/credential, host, network, or system state."
+}

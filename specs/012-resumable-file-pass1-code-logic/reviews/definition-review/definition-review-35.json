@@ -1,0 +1,50 @@
+{
+  "review_id": "story-12-3-definition-review-35",
+  "mode": "definition",
+  "verdict": "REJECT",
+  "reviewed_hashes": {
+    "source_base": "29459174348511bb813c4aa9672ccffee61d82a6",
+    "spec.md": "745400BDC572B047E858F33608528BE2276CD530D952376025E6845F9C0B1543",
+    "plan.md": "328B3132DFEEF0677B6E784FE28261040972514BCD00A9B69FF62205A4ECCABD",
+    "tasks.md": "04BF98045DCA1918EFD83E177A429D3059209D15F2B3C7E408662B9D201FFFDC"
+  },
+  "analysis_metrics": {
+    "task_count": 164,
+    "unique_task_ids": 164,
+    "duplicate_task_ids": 0,
+    "constitution_conflicts": 0,
+    "blocking_findings": 1
+  },
+  "findings": [
+    {
+      "id": "AD29-DR-001",
+      "severity": "HIGH",
+      "earliest_owner": "tasks",
+      "locations": [
+        "specs/012-resumable-file-pass1-code-logic/tasks.md:366",
+        "specs/012-resumable-file-pass1-code-logic/tasks.md:405-418"
+      ],
+      "evidence": "The header and AD-29 section correctly define T159 -> T160 -> T161 -> T162 -> T163 -> T164 -> T085 -> T086 as the sole current chain, but the global T070+ authority summary still calls T150/T151 the sole current RED/GREEN owners, T150-T154 the only current remaining work, and T153/T154 the current source-free/T084 gates. Line 366 also says the qualification gates are reached only through T149-T154. These are competing current ownership and dependency statements.",
+      "consequence": "An implementer can legitimately select the completed AD-28 tasks instead of T160-T164, making RED/GREEN ownership and qualification ordering nondeterministic.",
+      "required_correction": "Update the global T070+ dependency, ownership, coverage, and self-review text to name T160 as the current RED owner, T161 as the sole serialized GREEN owner, T162-T164 as no-code-edit verification/qualification owners, and the T163 -> T164 fresh-T084 -> T085 -> T086 gate order. Mark T149-T158 and their former qualification route unambiguously historical, including line 366. Do not change task bodies, spec, plan, or implementation."
+    }
+  ],
+  "closed_checks": [
+    "T160 is an honest compile-clean behavioral RED: current production lacks repairCode serialization and prompt definitions; its optional scaffold is explicitly defaulted and nonfunctional.",
+    "T161 is the sole serialized working owner across the terminal projector, executor mapping, parser/session privacy cleanup, embedded prompt, and source-free helper.",
+    "All five T160 test paths and all six T161 production/helper paths exist.",
+    "All four valid category/code pairs, mismatched and unknown no-send cases, canonical JSON order, three prompt definitions, second-valid, second-invalid, and no-request-eleven behavior are assigned.",
+    "Ordinary invalid-* results and the full local validator remain authoritative.",
+    "Diagnostic-message removal and privacy exclusions cover the current parser, submission observer/session, executor, isolated qualification output, and logs.",
+    "T162 includes hosted-loader, nonlive, PostgreSQL, and zero-model/migration-delta regression barriers.",
+    "T163 uses the production terminal projector for a correction-bearing source-free gate; T164 requires a fresh disposable T084 and stops before T085 on non-3/3.",
+    "No task authorizes automatic repair, additional source, retry/turn/timeout/token/provider change, persistence/migration, or host/system change.",
+    "Story 12.3 BMad acceptance criteria and Constitution principles I, IV, and V remain covered."
+  ],
+  "residual_proof_obligations": [
+    "After correcting AD29-DR-001, rerun definition review against the new tasks hash.",
+    "Implementation must capture behavioral RED before T161 and preserve the scaffold as nonfunctional until GREEN.",
+    "T162 must pass before any source-free traffic; T163 must pass before fresh disposable T084; non-3/3 T164 must stop before T085."
+  ],
+  "summary": "The executable T160-T164 task bodies are otherwise implementable, test-first, privacy-safe, and correctly bounded. Definition acceptance is blocked solely by stale global task-authority text that still identifies completed AD-28 tasks as current."
+}

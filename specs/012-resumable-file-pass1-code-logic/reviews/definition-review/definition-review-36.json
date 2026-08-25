@@ -1,0 +1,50 @@
+{
+  "review_id": "story-12-3-definition-review-36",
+  "mode": "definition",
+  "verdict": "ACCEPT",
+  "reviewed_hashes": {
+    "source_base": "29459174348511bb813c4aa9672ccffee61d82a6",
+    "spec.md": "745400BDC572B047E858F33608528BE2276CD530D952376025E6845F9C0B1543",
+    "plan.md": "328B3132DFEEF0677B6E784FE28261040972514BCD00A9B69FF62205A4ECCABD",
+    "tasks.md": "4CBD3F8D966AA64DE0E117ABB01388D260416B1808F712829439F3605743B6A4"
+  },
+  "task_metrics": {
+    "task_count": 164,
+    "unique_task_ids": 164,
+    "duplicate_task_ids": 0
+  },
+  "prior_finding_dispositions": [
+    {
+      "id": "AD29-DR-001",
+      "earliest_owner": "tasks",
+      "status": "CLOSED",
+      "evidence": [
+        "tasks.md:366 now routes current qualification through T163, T164 fresh T084, T085, and T086 while identifying T145-T158 as historical",
+        "tasks.md:407-411 now identifies T160/T161 as the sole current RED/GREEN owners and T162-T164 as the current verification/qualification chain",
+        "tasks.md:416-419 now binds the global self-review to AD-29/R-30 and removes the competing T150-T154 authority"
+      ]
+    }
+  ],
+  "findings": [],
+  "closed_checks": [
+    "Only T159 -> T160 -> T161 -> T162 -> T163 -> T164 fresh T084 -> T085 -> T086 is current; T001-T158 and prior qualification attempts are unambiguously historical.",
+    "T160 owns an honest compile-clean behavioral RED and only a defaulted nonfunctional repair-code scaffold when compilation requires it.",
+    "T161 is the sole serialized working owner for category mapping, projection, executor/session privacy cleanup, prompt definitions, and source-free helper behavior.",
+    "T162-T164 own no code or test edits; nonlive verification precedes source-free traffic, which precedes fresh source-bearing T084.",
+    "All four valid category/code pairs, mismatched and unknown no-send cases, canonical correction ordering, and all three prompt definitions are covered.",
+    "Second-valid capture, second-invalid termination, and zero request eleven are explicit.",
+    "The ordinary fixed invalid-* result and full local validator remain unchanged authorities.",
+    "Provisional diagnostic-message removal, privacy exclusions, hosted-loader regression, and zero EF model/migration delta are assigned.",
+    "T163 exercises a correction-bearing source-free request through the production projector; T164 requires a fresh disposable T084 and stops before T085 on non-3/3.",
+    "No hidden automatic repair, additional source, retry, turn, timeout, token, provider, persistence, migration, host, or system expansion is assigned.",
+    "No Constitution, BMad Story 12.3, PRD, architecture-boundary, or path-feasibility conflict remains."
+  ],
+  "residual_proof_obligations": [
+    "Record an actual behavioral RED from T160 before any T161 working edit.",
+    "T161 must remove diagnostic-message plumbing without changing the closed rejection category or ordinary tool-result contract.",
+    "T162 must pass the focused/full nonlive, hosted-loader, PostgreSQL, privacy, and zero-delta barriers before T163.",
+    "T163 must observe HTTP success, one submit_code_logic call, and DONE using the production projector before T164.",
+    "T164 must use a new disposable clone, require 3/3 locally valid results, and stop before T085 on any failure."
+  ],
+  "summary": "AD29-DR-001 is fully closed. The corrected definition has one unambiguous current chain, honest RED-before-GREEN ownership, complete AD-29 coverage, ordered source-free/source-bearing qualification, and no hidden implementation or scope expansion. Implementation approval may proceed to T160 under the existing workflow gates."
+}

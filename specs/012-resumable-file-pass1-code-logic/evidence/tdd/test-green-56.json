@@ -1,0 +1,30 @@
+{
+  "evidence_id": "12-3/implement/111",
+  "kind": "test-green",
+  "status": "current",
+  "stage": "implement",
+  "task": "T138",
+  "source_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "commands": [
+    "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore -p:WarningLevel=0 --filter \"FullyQualifiedName~PreparedPass1JobExecutorStreamingTests.ExecuteAsync_TurnTenTwoSubmissions_UsesDistinctTerminalTopologySubtypeAsync|FullyQualifiedName~PreparedPass1JobExecutorStreamingTests.ExecuteAsync_TurnTenIllegalShape_StopsWithoutAnAdditionalCallbackAsync|FullyQualifiedName~PreparedPass1JobExecutorStreamingTests.ExecuteAsync_ProviderIgnoresNamedTerminalChoice_NavigationRemainsPayloadFreeAsync|FullyQualifiedName~PreparedPass1JobExecutorStreamingTests.ExecuteAsync_IllegalWholeTurnShapesHaveNoApplicationEffectsAsync\" --logger \"console;verbosity=minimal\"",
+    "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --filter \"FullyQualifiedName~PreparedPass1JobExecutorStreamingTests\" --logger \"console;verbosity=minimal\""
+  ],
+  "results": [
+    { "scope": "T137 exact focused barrier", "total": 8, "passed": 8, "failed": 0, "skipped": 0, "build_errors": 0 },
+    { "scope": "complete executor streaming class", "total": 106, "passed": 106, "failed": 0, "skipped": 0 }
+  ],
+  "behavior": {
+    "new_subtype": "TerminalMultipleSubmissions",
+    "selection": "provider turn ten, cardinality above one, every call name exact submit_code_logic, after unique-ID and unknown-name precedence",
+    "unchanged": "acceptance, callbacks, reservations, receipts, candidates, transcript, wire, retry, timeout, persistence, privacy, and no request eleven"
+  },
+  "files": {
+    "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedPass1JobExecutor.cs": "014A1328ADA482CF80B9BFC9C2923F3E56A0DCB8FBCC91092119E0CF9C4CE043",
+    "tests/Vulgata.Tests/PreparedPass1/PreparedPass1JobExecutorStreamingTests.cs": "5DD4B96646F157A9BF9617A4A77B34762F978F8A3DD85116FD529D65F8019589",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekIsolatedSourceQualificationTests.cs": "E7B1488E4F090CF7CA9AE591D909F4CEE436E1BD93BE9999092947D8BCFFA27A"
+  },
+  "warnings": "The build remains at zero errors with the existing NU1507 package-source and MSB3277 Entity Framework assembly-version warnings; scoped diff check emitted only the existing LF-to-CRLF advisory.",
+  "privacy": "No provider, source, database, network, host, system, function arguments/results, response content, reasoning, credential, or source data was accessed or retained.",
+  "observed_at": "2026-08-25T11:20:45.0007513+08:00",
+  "summary": "T138 made the diagnostic-only terminal topology distinction GREEN without changing execution effects or provider policy."
+}

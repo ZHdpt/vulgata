@@ -25,6 +25,60 @@ namespace Vulgata.Tests.PreparedPass1;
 public sealed class Pass1ProductionCompositionTests
 {
     [Fact]
+    public void ProductionComposition_ResolvesReservationPortToTheSolePreparedStore()
+    {
+        Type reservationPort = typeof(IPass1NavigationAttemptReservationStore);
+        Assert.True(
+            reservationPort.IsAssignableFrom(typeof(PreparedPass1Store)),
+            "T109 RED: PreparedPass1Store must be the sole implementation of the durable navigation reservation port.");
+
+        string program = ReadRepositorySource("src/dotnet/Vulgata.Web/Program.cs");
+        Assert.Contains(
+            "IPass1NavigationAttemptReservationStore",
+            program,
+            StringComparison.Ordinal);
+        Assert.Contains(
+            "PreparedPass1Store",
+            program,
+            StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void HighWaterEight_RepairsCallsMarkerBeforeProviderOrTerminalVisibility()
+    {
+        string runner = ReadRepositorySource(
+            "src/dotnet/Vulgata.Web/Data/PreparedPass1JobRunner.cs");
+        int marker = runner.IndexOf(
+            "EnsureNavigationCallsMarkerAsync",
+            StringComparison.Ordinal);
+        int dispatch = runner.IndexOf(
+            "GetRequiredService<PreparedPass1DispatchWorker>()",
+            StringComparison.Ordinal);
+        Assert.True(
+            marker >= 0,
+            "T109 RED: durable claim execution must expose the marker-repair transition before provider execution.");
+        Assert.True(
+            dispatch < 0 || marker < dispatch,
+            "T109 RED: Calls marker repair must precede provider execution visibility.");
+    }
+
+    [Fact]
+    public void JobRunner_RequiresDurableCallsMarkerRepairStore()
+    {
+        string runner = ReadRepositorySource(
+            "src/dotnet/Vulgata.Web/Data/PreparedPass1JobRunner.cs");
+
+        Assert.Contains(
+            "GetRequiredService<IPass1NavigationCallsMarkerRepairStore>()",
+            runner,
+            StringComparison.Ordinal);
+        Assert.DoesNotContain(
+            "GetService<IPass1NavigationCallsMarkerRepairStore>()",
+            runner,
+            StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task ClaimedFileCodeUnit_ReachesRealDispatcherAndRecordingExecutorAsync()
     {
         PreparedPass1FileCodeUnitAssignment assignment = CreateAssignment();
@@ -75,6 +129,8 @@ public sealed class Pass1ProductionCompositionTests
         services.AddScoped<IPreparedPass1ClaimedPacketSource>(_ => new FixedPacketSource(packet));
         services.AddScoped<IPreparedPass1WorkerDispatcher>(_ => new RejectedDispatcher(packet));
         services.AddScoped<PreparedPass1DispatchWorker>();
+        services.AddScoped<IPass1NavigationCallsMarkerRepairStore>(
+            _ => new RecordingMarkerRepairStore());
         services.AddScoped<IPass1CodeLogicDocumentCommitter>(_ => committer);
         await using ServiceProvider provider = services.BuildServiceProvider();
         var runner = new PreparedPass1JobRunner(
@@ -145,6 +201,23 @@ public sealed class Pass1ProductionCompositionTests
     private static string Hash(string value) =>
         Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(value)));
 
+    private static string ReadRepositorySource(string relativePath)
+    {
+        DirectoryInfo? directory = new(AppContext.BaseDirectory);
+        while (directory is not null &&
+            !File.Exists(Path.Combine(directory.FullName, "Vulgata.slnx")))
+        {
+            directory = directory.Parent;
+        }
+
+        Assert.NotNull(directory);
+        string path = Path.Combine(
+            directory!.FullName,
+            relativePath.Replace('/', Path.DirectorySeparatorChar));
+        Assert.True(File.Exists(path), $"T109 source seam is missing: {relativePath}");
+        return File.ReadAllText(path);
+    }
+
     private sealed class RecordingExecutor : IPreparedPass1JobExecutor
     {
         public ConcurrentQueue<PreparedPass1WorkerPacket> Packets { get; } = new();
@@ -192,6 +265,14 @@ public sealed class Pass1ProductionCompositionTests
                 Pass1DocumentCommitStatus.Committed, Guid.NewGuid(), Guid.NewGuid(),
                 Hash("unexpected-commit"), null));
         }
+    }
+
+    private sealed class RecordingMarkerRepairStore : IPass1NavigationCallsMarkerRepairStore
+    {
+        public Task<bool> EnsureNavigationCallsMarkerAsync(
+            PreparedPass1NavigationCallsMarkerRepairRequest request,
+            CancellationToken cancellationToken) =>
+            Task.FromResult(true);
     }
 
     private sealed class RecordingStore : IPreparedPass1Store

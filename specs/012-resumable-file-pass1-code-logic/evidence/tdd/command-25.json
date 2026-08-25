@@ -1,0 +1,62 @@
+{
+  "evidence_id": "12-3/plan/123",
+  "kind": "command",
+  "status": "current",
+  "stage": "plan",
+  "task": "AD-28",
+  "source_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "commands": [
+    "<in-memory PowerShell HttpClient> POST https://api.deepseek.com/beta/chat/completions with fixed source-free fresh and nine-turn historical cases; stream response; retain only HTTP/DONE/function topology",
+    "<in-memory PowerShell HttpClient> POST https://api.deepseek.com/beta/chat/completions for three fixed source-free projected-terminal trials; stream response; retain only HTTP/DONE/function topology"
+  ],
+  "request_contract": {
+    "model": "deepseek-v4-flash",
+    "streaming": true,
+    "thinking": "disabled",
+    "current_declaration_count": 1,
+    "current_function": "submit_code_logic",
+    "tool_choice": "named submit_code_logic",
+    "strict": true,
+    "sdk_retry": 0
+  },
+  "results": [
+    {
+      "case": "fresh-terminal",
+      "trials": 1,
+      "http_200": 1,
+      "done": 1,
+      "sole_function": "submit_code_logic",
+      "elapsed_seconds": 0.775
+    },
+    {
+      "case": "historical-assistant-tool-protocol",
+      "trials": 1,
+      "http_200": 1,
+      "done": 1,
+      "sole_function": "navigate_code",
+      "elapsed_seconds": 1.113
+    },
+    {
+      "case": "server-owned-terminal-result-projection",
+      "trials": 3,
+      "http_200": 3,
+      "done": 3,
+      "sole_function": "submit_code_logic",
+      "elapsed_seconds": [0.816, 0.55, 0.579]
+    }
+  ],
+  "diagnosis": "Historical assistant function-call protocol is sufficient to make DeepSeek V4 Flash emit the historical navigate_code identity despite a current one-function submit-only tool surface and named submit choice. Removing that protocol while preserving fixed bounded prior-result data restores the requested submit function in three of three source-free trials.",
+  "privacy": {
+    "source_derived_payload_sent": false,
+    "repository_context_sent": false,
+    "repository_or_scan_identifiers_sent": false,
+    "request_content_persisted": false,
+    "response_content_persisted": false,
+    "reasoning_persisted": false,
+    "arguments_or_results_persisted": false,
+    "credential_persisted": false
+  },
+  "network": "The already-approved unrestricted outbound route was used only for five bounded source-free DeepSeek beta requests. No PostgreSQL database, Repository source, host setting, or system configuration was accessed or changed by these probes.",
+  "observed_at": "2026-08-25T12:27:08+08:00",
+  "summary": "Source-free differential evidence reproduces the r25 failure and validates Terminal Context Projection as the next bounded plan correction."
+}

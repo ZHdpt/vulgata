@@ -1,0 +1,37 @@
+{
+  "evidence_id": "12-3/implement/84",
+  "kind": "test-green",
+  "stage": "implement",
+  "task": "T115",
+  "source_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter \"FullyQualifiedName~Pass1DeepSeekContractQualificationTests|FullyQualifiedName~Pass1DeepSeekStreamingQualificationTests|FullyQualifiedName~Pass1ProductionBoundaryQualificationTests\" --no-restore --logger \"console;verbosity=normal\"",
+  "result": {
+    "build": "passed-with-existing-warnings",
+    "passed": 126,
+    "failed": 0,
+    "skipped": 2,
+    "exit_code": 0,
+    "duration_seconds": 2.6197
+  },
+  "verified": [
+    "immutable public declaration hashes and the reviewed projection ledger reject drift before send",
+    "production and source-free consumers use the exact shared projected declaration and final-wire composition",
+    "invalid schema projection, request normalization, final-wire validation, or complete-turn preflight produces no HTTP send and no tool side effect",
+    "the latest legal second submission occurs on turn ten and no request eleven is sent",
+    "raw response, assembled response, message, aggregate, and request-body bounds remain fail closed",
+    "status families, injected sampling rejection, sanitized diagnostics, and bounded-source privacy rules remain enforced",
+    "all fake provider, fake wire, and production-boundary tests pass without source-bearing traffic"
+  ],
+  "artifact_sha256": {
+    "src/dotnet/Vulgata.Agents/WorkerExecution/DeepSeekStrictToolDeclarations.cs": "43FB2EFE3BB22A64EA3DF749071CA712E1A7602B3911FEA180855117411A14EB",
+    "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedPass1JobExecutor.cs": "C5B4CD73FD8A85D34ED849477F730FD97D3F51E9580E6A53FEC4B9082B22F881",
+    "src/dotnet/Vulgata.Agents/Prompts/pass1-code-logic-worker.v2.md": "D804C0A1AEC77A09747AE22587194FA5D01F723A9FB59A44B403AB85EB9A4581",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekContractQualificationTests.cs": "ABBB55A4C0C8902EB5FD522820C85F1AD0B4058DC8178D72B9FDDF233DF0CAC1",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekStreamingQualificationTests.cs": "2B59B33A17AD902A25B431E8A5E130C9732172CF344122769E211C020AA51C4F",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1ProductionBoundaryQualificationTests.cs": "C0BB00B2B25585B8EC875D3D0EABB04A20045BDF6BF4ABC51D815D98D7E89E78",
+    "tests/Vulgata.Tests/PreparedPass1/DeepSeekSourceFreeHandshakeHarness.cs": "4DB67EF4B451C1EB4D19D7D9F9B5CC5DEDC78AB272E849FCADAB8566658BE288"
+  },
+  "network": "No live provider, source-bearing request, database, network, credential, host setting, or system configuration was accessed or changed.",
+  "warnings": "Existing NU1507 and EF assembly-version warnings remain; the two skipped tests are the deliberately opt-in live-provider qualifications.",
+  "observed_at": "2026-08-24T22:57:52.3372486Z"
+}

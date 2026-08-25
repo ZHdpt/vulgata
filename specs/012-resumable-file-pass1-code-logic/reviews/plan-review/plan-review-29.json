@@ -1,0 +1,54 @@
+{
+  "review_id": "story-12-3-plan-review-29",
+  "mode": "plan-only",
+  "verdict": "REVISE",
+  "task_generation_authorized": false,
+  "source_checkpoint": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "reviewed_hashes": {
+    "specs/012-resumable-file-pass1-code-logic/spec.md": "31411747F87B3890C83223B331B3E32FD5064CD0B47D18EB0D4B66FA2ABCF249",
+    "specs/012-resumable-file-pass1-code-logic/plan.md": "995CC37582735F03832FE9097C60325B732C23591EC56813AFBA2A36FDC48969",
+    "specs/012-resumable-file-pass1-code-logic/research.md": "D69776617E94DD08057E892EDF9BAC6F3830E9747668E9ED3DDAACBB661A2DDC",
+    "specs/012-resumable-file-pass1-code-logic/data-model.md": "35E2533B43ACE94C70DDDD17B94711CB65A346A3393EB50887B0A1A5D6480C72",
+    "specs/012-resumable-file-pass1-code-logic/evidence/tdd/failure-41.json": "7516B3D3A80E11BC83FD2624A32F0EAA898D69DC92FD1272680F668C5DA980DE",
+    "specs/012-resumable-file-pass1-code-logic/evidence/tdd/analysis-23.json": "B3924C6B912021B3E4104E8AB0E81E11D1802E056B608DBBE56C6170F347DF5E",
+    "src/dotnet/Vulgata.Infrastructure/Data/Pass1CodeLogicDocumentCommitter.cs": "F0F3C5A287E8111CD507B354A9D505C3F28D75F1DC21F6C939A0E39110F30975",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DocumentPostgreSqlAtomicTests.cs": "EA116DFE1DF4E2DFB041BC8E235B80211C3C6774CEC6C86327829296239EAFF0",
+    "AGENTS.md": "A62E1A9ED71CFF0DCE44F9D50A68EE61C370D13E27F6E1EBF569A22AB05ACF00",
+    "docs/UBIQUITOUS_LANGUAGE.md": "1F1075F98F8CD36C244E3B020BBA1BCA530BC90F4165469EDA0562D763B050E4",
+    ".specify/memory/constitution.md": "1C5E7319A6FA6EF6576E92A97F65DB74057BAA2226CA4BF28B45D884E7BD8971",
+    "docs/bmad/epics.md": "1F5E54A57A7768F123AE7495667973CB682D041F49AB6E73694B66B277FC1BE6"
+  },
+  "prior_finding_dispositions": [],
+  "findings": [
+    {
+      "id": "AD31-PR-001",
+      "severity": "HIGH",
+      "earliest_owner": "plan",
+      "title": "Current task-generation, traceability, governance, and self-review authority still describe AD-30 instead of AD-31",
+      "correction": "Synchronize the current task-generation section, requirement/authority traceability, planned-change governance, implementation-discovered correction table, risks, and inline self-review to AD-31/R-32. Mark AD-30 and T165-T170 as completed history; name the PostgreSQL behavioral RED and Pass1CodeLogicDocumentCommitter as the sole minimal GREEN production owner; retain the ordered local, nonlive, fresh-T084, T085, and T086 gates."
+    },
+    {
+      "id": "AD31-PR-002",
+      "severity": "HIGH",
+      "earliest_owner": "plan",
+      "title": "The planned PostgreSQL proof does not cover the full two-sided set contract",
+      "correction": "Require public-seam PostgreSQL vectors for one-of-two cited, none cited, each uncited supplied row missing/wrong-Pre-Scan-Result/field-mismatched rejection with zero mutation, cited-unsupplied rejection, all-cited behavior, and exact replay."
+    }
+  ],
+  "closed_checks": [
+    "The evidence-backed set-direction root cause matches the current committer.",
+    "FR-033, FR-036, and FR-059 preserve complete supplied-set validation, cited-subset authorization, local validation, and atomic rejection.",
+    "The correction is minimal at the existing Infrastructure commit seam and adds no schema, migration, provider, prompt, retry, source-scope, endpoint, credential, host, network, or system change."
+  ],
+  "residual_proof_obligations": [
+    "Observe the subset PostgreSQL test fail against unchanged production before the committer edit.",
+    "Run the complete supplied-row negative matrix and prove zero Document, associated-record, and Completed-job mutation.",
+    "Run focused GREEN, surrounding nonlive/PostgreSQL/privacy checks, and prove zero EF-model or migration delta.",
+    "Use a new disposable database for fresh T084 3/3 before restarting full T085; run T086 only after T085 succeeds."
+  ],
+  "residual_risks": [
+    "Provider variability can select whether the deterministic local defect is exercised, so provider success cannot replace the PostgreSQL proof.",
+    "Distinct-ID handling must not turn malformed or duplicate packet projections into a weaker authorization set; existing packet canonicality remains binding."
+  ],
+  "summary": "REVISE. The AD-31 relation and minimal committer seam are sound, but downstream plan authority and the complete two-sided PostgreSQL proof matrix must be synchronized before task generation."
+}

@@ -1,0 +1,57 @@
+{
+  "schema_version": "1.0",
+  "gate": "plan-review",
+  "verdict": "ACCEPT",
+  "reviewed_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "reviewed_boundary": {
+    "base_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+    "candidate_commit": null,
+    "diff_sha256": "c7bcbf9b253cc3ed5144221cfcbee25ea0537f6d23f6545202c31420cbe9518a",
+    "artifact_hashes": {
+      "specs/012-resumable-file-pass1-code-logic/spec.md": "b03687c3a77f52766280669da6cf9e2f9925a44bec1ae9304991f387477a9493",
+      "specs/012-resumable-file-pass1-code-logic/plan.md": "adc2414e283f39c789078f61bab8b343c85eeb78fe35bc43ac0264ec11cc2b1f",
+      "specs/012-resumable-file-pass1-code-logic/research.md": "0017c4577ebf75da67b08d7cd4f03b94fa555c34ec316c19eb280e23693ae414",
+      "specs/012-resumable-file-pass1-code-logic/data-model.md": "f0fe2d364673582b972dd33cfabf62848140ebc5a57a4c96321d899e0f04320f",
+      "specs/012-resumable-file-pass1-code-logic/quickstart.md": "c3f60ae16ee40ce3d25a4bd4942afebfd0bf4aa738e5c438bbb2bdb5dcbbed44",
+      "specs/012-resumable-file-pass1-code-logic/contracts/deepseek-strict-result-submission.md": "b1033ecefe310d618aa2023c3cef48e8414d875c9d2d1dee041b9a0d603fb160",
+      "specs/012-resumable-file-pass1-code-logic/contracts/navigate-code-contract.md": "5b738e432c510fe4acad9053af7e6abaddefe475d62dad75a733aaec54125731",
+      "specs/012-resumable-file-pass1-code-logic/contracts/pass1-runtime-contracts.md": "0929bb07d0ded6517d4112c6b82abc709a4d2baca2ae3ae1d4e8fa0f26f500ee",
+      "specs/012-resumable-file-pass1-code-logic/reviews/plan-review/plan-review-14.json": "8454b664fd99295985f46f9afaaf16eb1f2000684c83d7f2470d046e8befeec7",
+      "specs/012-resumable-file-pass1-code-logic/evidence/tdd/failure-29.json": "99063c3c25531c654e1fa1ba209d9561c385842824481625e877869a88f2a88d",
+      "specs/012-resumable-file-pass1-code-logic/evidence/research/deepseek-v4-current-best-practices-audit.md": "9c63a30905cf97d69b74bc9e3f3f2e8e67ed9b9ab8ccbb0332bbb45b5dca7f74"
+    },
+    "owned_paths": [
+      "specs/012-resumable-file-pass1-code-logic/plan.md",
+      "specs/012-resumable-file-pass1-code-logic/research.md",
+      "specs/012-resumable-file-pass1-code-logic/data-model.md",
+      "specs/012-resumable-file-pass1-code-logic/quickstart.md",
+      "specs/012-resumable-file-pass1-code-logic/contracts/deepseek-strict-result-submission.md",
+      "specs/012-resumable-file-pass1-code-logic/contracts/navigate-code-contract.md",
+      "specs/012-resumable-file-pass1-code-logic/contracts/pass1-runtime-contracts.md"
+    ]
+  },
+  "reviewed_artifacts": [
+    "AGENTS.md",
+    ".specify/memory/constitution.md",
+    ".agents/skills/run-bmad-sprint-loop/SKILL.md",
+    "docs/bmad/epics.md",
+    "docs/requirement-draft.md",
+    "docs/bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md",
+    "docs/bmad/planning-artifacts/architecture/august-30-bounded-scanning-design.md",
+    "docs/bmad/planning-artifacts/sprint-change-proposal-2026-08-24-deepseek-strict-result-submission.md",
+    "specs/012-resumable-file-pass1-code-logic/spec.md",
+    "specs/012-resumable-file-pass1-code-logic/plan.md",
+    "specs/012-resumable-file-pass1-code-logic/research.md",
+    "specs/012-resumable-file-pass1-code-logic/data-model.md",
+    "specs/012-resumable-file-pass1-code-logic/quickstart.md",
+    "specs/012-resumable-file-pass1-code-logic/contracts/deepseek-strict-result-submission.md",
+    "specs/012-resumable-file-pass1-code-logic/contracts/navigate-code-contract.md",
+    "specs/012-resumable-file-pass1-code-logic/contracts/pass1-runtime-contracts.md",
+    "specs/012-resumable-file-pass1-code-logic/reviews/plan-review/plan-review-14.json",
+    "specs/012-resumable-file-pass1-code-logic/evidence/tdd/failure-29.json",
+    "specs/012-resumable-file-pass1-code-logic/evidence/research/deepseek-v4-current-best-practices-audit.md",
+    "src/dotnet/Vulgata.Agents/obj/project.assets.json"
+  ],
+  "findings": [],
+  "summary": "ACCEPT. Fresh independent plan-only review attempt 15 found PR14-001 fully closed and no remaining material requirement, feasibility, failure-behavior, testability, privacy, migration, Constitution, PRD, ADR/context, or Story-boundary defect. Whole-response preflight remains a Story-12.3-only DelegatingChatClient immediately below the pinned Microsoft.Extensions.AI 10.6.0 FunctionInvokingChatClient: it assembles and validates the complete call set before FICC sees any call, leaves rejected unknown, mixed, submission-containing, post-submission, turn-ten, duplicate-ID, blank-ID, and over-budget batches with zero reservation, callback, receipt, candidate activity, tool-result message, or later provider request, and permits only bounded all-navigate_code batches or a legal sole submit_code_logic call. FICC remains nonconcurrent, so accepted navigation calls run serially in provider order and replay the complete assistant reasoning_content, string content, ordered call array, and one matching result per call ID. PR14-001 is closed through one existing-budget reservation transaction immediately before every serial callback: it locks and revalidates pair, job, authorization, lease, versions, expected high-water, and capacity; increments Pass1NavigationBudget.ToolAttemptCount once; returns the committed ordinal and state cursor; and prevents the callback until commit. ToolAttemptCount is now the job-wide contiguous reservation high-water across Guid.Empty, local rejection, exception, cancellation, lost response, lease expiry, crash, JobTransient retry, and restart. Ordinary receipt commit binds only to an already reserved ordinal, uses ReceiptOrdinal equal to ToolAttemptOrdinal, updates accepted/evidence/depth without incrementing attempts, returns the replacement store cursor, and tolerates missing receipt ordinals only as consumed no-evidence attempts. Each later sibling uses the latest store-returned cursor; reservation or binding failure stops before the affected and all later callbacks. Exact hydration loads ToolAttemptCount and RemainingNavigationBudget equal to 8 minus ToolAttemptCount, accepts zero as navigation-disabled, and never defaults a nonzero high-water back to eight. Marker ordinal nine is idempotently created after reserved ordinal eight closes and repaired during hydration, lease recovery, and terminal/reconciliation guards before new provider or terminal visibility. The dispatcher invokes the executor exactly once per durable claim and owns no conversation, retry, callback-slot, or budget dictionary. Named behavioral RED and disposable-PostgreSQL seams cover illegal-batch zero reservation, first/later reservation conflict, reserve-before-callback, Guid.Empty/exception/cancellation/crash consumption, receipt no-double-count, gaps/replay/conflict, marker final snapshot/repair, exact retry/restart hydration, combined callbacks across both durable attempts at most eight, and dispatcher once-per-claim behavior. The pinned public FICC/DelegatingChatClient/ToChatResponse/custom-invoker seams make this implementable without a manual provider loop or new dependency. The correction preserves successful raw nonzero reads, including comment-only SSE bytes, as the sole five-minute inactivity reset; the 25-minute absolute cap and 30-minute lease never reset. It rejects temperature, top_p, presence_penalty, and frequency_penalty before send; keeps tool_choice, parallel_tool_calls, and response_format absent; maps 401/402/403 to nonretryable configuration, 400/422 to nonretryable request/capability rejection, and 408/429/5xx to transient unavailability; preserves zero SDK retries; and makes no zero-retention, no-training, or local-only provider claim. The two actual public AIFunction.AsOpenAIChatTool declarations remain immutable hash-bound inputs to one deterministic fail-closed projected production/T083 wire, with full local code-logic/file-v2 validation still authoritative. PR14 changes only existing aggregate/store transitions, packet hydration, dispatcher ownership, and Agents composition; it adds no table, column, migration, row kind, schema authority, reservation receipt, endpoint/model field, other-client behavior, host/system change, source scope, Story 12.4, or Story 12.5 work. No repository ADR or context artifact exists for this seam. Tasks remain invalidated and must be regenerated and independently definition-reviewed before TDD; this ACCEPT advances the plan gate without authorizing implementation, provider qualification, database mutation, lifecycle mutation, staging, commit, or Git-history action. The reviewed seven-artifact design identity is SHA-256 c7bcbf9b253cc3ed5144221cfcbee25ea0537f6d23f6545202c31420cbe9518a over UTF-8 sorted repository-path, tab, lowercase artifact-SHA-256 rows joined by LF with no trailing newline."
+}

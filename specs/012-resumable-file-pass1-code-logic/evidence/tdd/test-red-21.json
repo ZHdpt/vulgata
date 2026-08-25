@@ -1,0 +1,61 @@
+{
+  "evidence_id": "12-3/implement/61",
+  "kind": "test-red",
+  "stage": "implement",
+  "task": "T097",
+  "source_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "accepted_scope_sha256": "1bbce628560b8620efb5d0e36d8975e2f66686b4891886d5ff0e0bfca158244f",
+  "artifact_paths": [
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekStreamingQualificationTests.cs",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekContractQualificationTests.cs",
+    "src/dotnet/Vulgata.Agents/WorkerExecution/DeepSeekStrictToolDeclarations.cs",
+    "tests/Vulgata.Tests/PreparedPass1/DeepSeekSourceFreeHandshakeHarness.cs"
+  ],
+  "artifact_sha256": {
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekStreamingQualificationTests.cs": "137E83098877B21BB4AC324C0CBB6B805ADB41A6522A2D07A111B585A150C8F1",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekContractQualificationTests.cs": "F420DC5C5AEBFD4A58F771B33C8A7631B8E7A4F0F61DC3033E1366915E2274A0",
+    "src/dotnet/Vulgata.Agents/WorkerExecution/DeepSeekStrictToolDeclarations.cs": "21A89A661FE8F17AF21A3122D6C74ECE8F24B6269AF3695BB4315AFBC4BA0DB7",
+    "tests/Vulgata.Tests/PreparedPass1/DeepSeekSourceFreeHandshakeHarness.cs": "B86EB3AF0DDEE3F89876F8097B0D8C1BA200E9A94A7881C1676C08F26BCE21C9"
+  },
+  "authority_sha256": {
+    "plan": "206A5DD8129197CD63A028101245D9D78D63B48AF862D85FA69A8E798EE4BF8F",
+    "tasks": "5272D562B0C5CF030D45E3B261C59020D6FB568863A3D1356A4D7B3F1AED8AFE",
+    "plan_review_13": "C3E00ECB5EF3A617DA5FE3462AD6CC351B34311EA9EF4E7FB41E2EBBFBB8B633",
+    "definition_review_21": "0A970B0DE5502A7A6540D1CAC8602725ABE35378C95F2ABB4B0FEA77BE4E4926",
+    "implementation_approval_10": "3535D64556B51CCDD376781E66E5E305119A38E0E701D87B1BAC07006B903AB1"
+  },
+  "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --nologo -p:WarningLevel=0 -p:GenerateMvcTestManifest=false --filter \"FullyQualifiedName~Pass1DeepSeekStreamingQualificationTests.DeclarationAuthority_ExposesRawAndProjectedHashesAndCompleteSortedLedger|FullyQualifiedName~Pass1DeepSeekStreamingQualificationTests.DeclarationAuthority_RejectsUnsupportedOrDriftedRawSchemaBeforeSend|FullyQualifiedName~Pass1DeepSeekContractQualificationTests.SourceFreeHandshakeEvidence_ExposesSanitizedRawAndProjectedDeclarationIdentities\" --logger \"console;verbosity=minimal\"",
+  "result": {
+    "exit_code": 1,
+    "total": 15,
+    "failed": 15,
+    "passed": 0,
+    "skipped": 0,
+    "duration_ms": 126,
+    "compilation_succeeded": true
+  },
+  "observed_red": [
+    "The declaration authority does not expose immutable raw and deterministic projected per-function identities or the complete transform ledger.",
+    "The shared raw-schema projection seam needed for the closed mutation matrix is absent.",
+    "The source-free evidence record does not expose all sanitized raw, algorithm/ledger, and projected declaration identities required by failure-26."
+  ],
+  "mutation_cases": [
+    "missing-ledger-node",
+    "additional-ledger-node",
+    "reordered-ledger-node",
+    "changed-ledger-node",
+    "changed-type-array",
+    "unsupported-keyword",
+    "open-object",
+    "incomplete-object",
+    "reference-cycle",
+    "empty-enum",
+    "heterogeneous-enum",
+    "raw-hash-drift",
+    "size-overflow"
+  ],
+  "privacy": "The RED used local deterministic functions, reflection, and fake/test seams only. It made no network, provider, source, database, credential, or system call and retained no request, response, source, reasoning, tool, or schema content.",
+  "warnings": "Build emitted existing NuGet source-mapping and Entity Framework version-conflict warnings; compilation succeeded and the failures were runtime behavioral assertions, not build or environment failures.",
+  "observed_at": "2026-08-24T19:00:20.2371315Z",
+  "summary": "T097 is an honest runtime RED: 15 focused cases expose the missing AD-20 projection/ledger authority and failure-26 sanitized handshake evidence plumbing."
+}

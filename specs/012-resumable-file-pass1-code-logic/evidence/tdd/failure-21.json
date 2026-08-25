@@ -1,0 +1,51 @@
+{
+  "evidence_id": "12-3/implement/48",
+  "kind": "failure",
+  "stage": "implement",
+  "source_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "artifact_paths": [
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekIsolatedSourceQualificationTests.cs",
+    "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedPass1JobExecutor.cs"
+  ],
+  "artifact_sha256": {
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekIsolatedSourceQualificationTests.cs": "BBE2FB2284BB652F4E9CDA084477630ABB32EC3C63660BE0D6E93691FC9C516C",
+    "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedPass1JobExecutor.cs": "24B9F1237CFE03C7AB3ADF744B65851AC056B64F05D415A0AC48871D943C3344"
+  },
+  "qualification": {
+    "task": "T084",
+    "database_alias": "vulgata_story123_t084_20260824_r8",
+    "provider_endpoint_authority": "https://api.deepseek.com",
+    "provider_model": "deepseek-v4-flash",
+    "streaming": true,
+    "attempted_source_jobs": 1,
+    "unattempted_source_jobs": 2,
+    "duration_seconds": 23,
+    "source_kind": ".xml",
+    "dispatch_outcome": "Rejected",
+    "dispatcher_reason": "unclassified-systemic",
+    "executor_category": "UnclassifiedSystemic",
+    "wire_budget_category": null,
+    "submission_category": null
+  },
+  "durable_postmortem": {
+    "pending_jobs": 149,
+    "running_jobs": 1,
+    "logical_documents": 0,
+    "document_versions": 0,
+    "navigation_receipts": 0
+  },
+  "result": {
+    "confirmed": "The corrected 16777216-byte raw SSE limit was not exceeded; no RawResponse, AssembledResponse, outgoing-request, or submission-rejection diagnostic fired.",
+    "exact_unknown": "The closed unclassified-systemic result currently conflates an unexpected provider/agent exception with an illegal or parallel function-call response, so the present observer cannot distinguish the two without a further sanitized in-memory diagnostic.",
+    "not_yet_classified_as_environment": "The provider was reached and returned within the timeout. There is no evidence in this attempt of DNS, TCP, TLS, authentication, endpoint availability, PostgreSQL, or timeout failure.",
+    "privacy": "No API key, source bytes, prompt, reasoning, tool arguments, raw stream, response body, identifiers, paths, or exception messages were logged or persisted.",
+    "atomicity": "No Document, Document Version, or navigation receipt was committed; later jobs were not claimed."
+  },
+  "commands": [
+    "VULGATA_T084_ISOLATED_SOURCE_JOBS=1 VULGATA_T062_QUALIFICATION_CONNECTION=<fresh-r8-disposable-database> VULGATA_T062_WORKER_PROVIDER_API_KEY=<present-secret> <approved-source-and-runtime-bindings> dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --nologo --filter FullyQualifiedName=Vulgata.Tests.PreparedPass1.Pass1DeepSeekIsolatedSourceQualificationTests.ThreeIsolatedSourceJobs_CompleteCommitAndReplayWithoutLeakingPayloadsAsync --logger console;verbosity=normal -p:GenerateMvcTestManifest=false -clp:ErrorsOnly",
+    "docker exec vulgata-postgres psql -U vulgata -d <fresh-r8-disposable-database> <aggregate-only-postmortem-query>"
+  ],
+  "next_step": "Keep T085 blocked. Add a closed, in-memory, payload-free executor diagnostic that distinguishes illegal/parallel tool-call termination from unexpected provider/agent exceptions, prove it source-free, and retry T084 only on another fresh disposable clone.",
+  "observed_at": "2026-08-24T14:25:42.2748615Z",
+  "summary": "The 16 MiB raw-response correction removed the prior RawResponse failure. The next T084 attempt reached a distinct unclassified-systemic result before any durable mutation; finer sanitized executor diagnostics are required before another provider retry."
+}

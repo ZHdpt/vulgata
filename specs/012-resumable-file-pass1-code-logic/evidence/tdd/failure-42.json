@@ -1,0 +1,32 @@
+{
+  "evidence_id": "12-3/qualify/148",
+  "kind": "failure",
+  "status": "resolved-for-retry",
+  "stage": "qualify",
+  "task": "T085",
+  "source_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "failed_command": "VULGATA_T062_CONCURRENCY_LIMIT=2; VULGATA_T062_TERMINAL_TIMEOUT_SECONDS=9000; VULGATA_T062_QUALIFICATION_CONNECTION=<fresh-r3-disposable-clone>; <approved-source-provider-runtime-bindings>; dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --no-restore -p:WarningLevel=0 --filter FullyQualifiedName~Pass1ProductionExecutionTests.AuthenticatedApprovedPair_StartsRealRunAtEveryLimit_AndPersistsTerminalEvidence --logger console;verbosity=normal -clp:ErrorsOnly",
+  "result": {
+    "exit_code": 1,
+    "total": 1,
+    "passed": 0,
+    "failed": 1,
+    "duration_seconds": 5,
+    "http_status": 200,
+    "is_replay": true,
+    "provider_requests": 0
+  },
+  "failure": "The fresh clone inherited one already-Running Pass 1 pair with 150 Pending jobs from the reusable T084 template. The authenticated Start endpoint therefore correctly returned an idempotent replay, while T085 requires a new 201/isReplay=false Start boundary.",
+  "diagnosis": "This is a disposable qualification-fixture preparation mismatch before provider dispatch, not a DeepSeek, network, timeout, source, runtime, or production behavior failure. The template is intentionally post-Start for isolated T084 job execution; T085 needs the same approved manifests and coordination reset to the pre-Start Preparing/Prepared boundary.",
+  "bounded_resolution": {
+    "failed_clone": "vulgata_test_t085r3_47eb8e8c519a4e60b83a0690648f0a4d",
+    "failed_clone_dropped": true,
+    "retry_clone": "vulgata_test_t085r4_f99e0ec6c6614db38824160c3fa91290",
+    "precondition": "Exactly one Running/Closed pair, two Running version-1 Scan Executions, 150 Pending jobs, 150 navigation budgets, and zero receipts/Documents/outcomes/concurrency changes.",
+    "reset": "Inside one transaction, removed only disposable Pass 1 pair/job/budget child state and reversed the two BeginRunning plus one BeginPass1 fixture transitions to Prepared/Preparing version zero with original timestamps.",
+    "postcondition": "Zero pair/job/budget rows, two Prepared version-0 Scan Executions, one Preparing version-0 coordination, and two unchanged approved manifests."
+  },
+  "privacy": "The failure occurred before any provider call or source transfer. No ordinary database, template, host, system, network, service, global configuration, source, test, production, workflow, or Git change occurred.",
+  "observed_at": "2026-08-25T19:14:05.9184841+08:00",
+  "next_step": "Retry the complete T085 test on the precondition-validated r4 disposable clone."
+}

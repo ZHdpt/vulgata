@@ -1,0 +1,40 @@
+{
+  "evidence_id": "12-3/implement/66",
+  "kind": "test-red",
+  "stage": "implement",
+  "task": "T099",
+  "source_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --nologo -p:WarningLevel=0 -p:GenerateMvcTestManifest=false --filter \"FullyQualifiedName~PreparedPass1JobExecutorStreamingTests.ExecuteAsync_IllegalFunctionCall_ReportsDeterministicClosedSubtypeAsync\" --logger \"console;verbosity=minimal\"",
+  "result": {
+    "build": "passed",
+    "passed": 0,
+    "failed": 3,
+    "skipped": 0,
+    "expected_failure": "T099 RED: the execution-local observer has no closed FunctionCallSubtype seam."
+  },
+  "broader_owned_file_result": {
+    "passed": 52,
+    "failed": 3,
+    "skipped": 1,
+    "skip_reason": "T084 remains opt-in and no source-bearing request was authorized for T099."
+  },
+  "cases": [
+    "sole unknown function requires UnknownFunction",
+    "multiple declared functions require MultipleFunctions",
+    "multiple functions including an unknown name require MultipleFunctions by count-first precedence"
+  ],
+  "preserved_behavior": {
+    "general_category": "IllegalFunctionCall",
+    "reason_code": "unclassified-systemic",
+    "result_bytes_empty": true,
+    "request_count": 1,
+    "payload_retained_or_exposed": false
+  },
+  "artifact_sha256": {
+    "tests/Vulgata.Tests/PreparedPass1/PreparedPass1JobExecutorStreamingTests.cs": "2CD3C0C5C0D00C0A60A78A530D70D32F1B54CB8950E37920091CB679EBEDEA27",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekIsolatedSourceQualificationTests.cs": "E6311CB0F85A75D37E66010BE98A4A588CCB3C675F9FD5A4E48B0BAA8075645E"
+  },
+  "diagnosis": "The fake streams prove the existing fail-closed behavior, but all three illegal-call shapes are observationally identical because the scoped observer has no subtype seam. The RED is behavioral and attributable only to that missing production seam.",
+  "privacy": "No live provider, source-bearing request, database, source repository, prompt, function argument/result, reasoning, content, response bytes, credential, or host state was accessed or persisted.",
+  "observed_at": "2026-08-24T19:40:04.8533288Z"
+}

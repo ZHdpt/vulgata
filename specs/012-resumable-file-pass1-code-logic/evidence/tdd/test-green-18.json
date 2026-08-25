@@ -1,0 +1,33 @@
+{
+  "evidence_id": "12-3/implement/50",
+  "kind": "test-green",
+  "stage": "implement",
+  "source_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "artifact_paths": [
+    "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedPass1JobExecutor.cs",
+    "tests/Vulgata.Tests/PreparedPass1/PreparedPass1JobExecutorStreamingTests.cs"
+  ],
+  "artifact_sha256": {
+    "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedPass1JobExecutor.cs": "F16AD68DBDB8BF7F926BC0F6C16FED3AC37A6A4EE6EF85B77D0D341C4B504789",
+    "tests/Vulgata.Tests/PreparedPass1/PreparedPass1JobExecutorStreamingTests.cs": "56E753441F09619D62CD7E9113ED471E4FDBF679EB0BD0E606B5FF766ADAB554"
+  },
+  "commands": [
+    "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --nologo --filter \"FullyQualifiedName~ExecuteAsync_ClientBadRequest_ReportsOnlyProviderClientRequestRejectedAsync|FullyQualifiedName~ExecuteAsync_UnknownOrParallelFunctionCall_ReportsOnlyIllegalFunctionCallAsync|FullyQualifiedName~ExecuteAsync_UnexpectedTransportException_ReportsOnlyUnexpectedExceptionAsync\" --logger \"console;verbosity=minimal\" -p:GenerateMvcTestManifest=false -clp:ErrorsOnly",
+    "$env:VULGATA_T084_ISOLATED_SOURCE_JOBS=$null; dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --no-restore --nologo --filter \"FullyQualifiedName~PreparedPass1JobExecutorStreamingTests|FullyQualifiedName~Pass1DeepSeekStreamingQualificationTests|FullyQualifiedName~Pass1DeepSeekIsolatedSourceQualificationTests\" --logger \"console;verbosity=minimal\" -p:GenerateMvcTestManifest=false -clp:ErrorsOnly"
+  ],
+  "result": {
+    "focused": "4 passed, 0 failed, 0 skipped",
+    "source_free": "67 passed, 0 failed, 1 opt-in T084 test skipped, 68 total",
+    "diagnostic_categories": [
+      "ProviderClientRequestRejected",
+      "IllegalFunctionCall",
+      "UnexpectedException"
+    ],
+    "external_failure_contract": "Rejected plus empty bytes plus unclassified-systemic remains unchanged",
+    "payload_retained": false,
+    "provider_calls": 0,
+    "source_bearing_calls": 0
+  },
+  "observed_at": "2026-08-24T14:32:12.1090936Z",
+  "summary": "The execution-local diagnostic now distinguishes the three previously conflated unclassified terminal causes using closed enum values only, without changing any public outcome or retaining provider or source content."
+}

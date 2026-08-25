@@ -1,0 +1,41 @@
+{
+  "evidence_id": "12-3/implement/71",
+  "kind": "test-red",
+  "stage": "implement",
+  "task": "T103",
+  "source_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --nologo -p:WarningLevel=0 -p:GenerateMvcTestManifest=false --filter \"FullyQualifiedName~ExecuteAsync_CompleteTurnWithLegalNavigationThenUnknownSibling_PreflightsBeforeAnyCallbackAsync|FullyQualifiedName~ExecuteAsync_MultipleCallTurnWithLegalThenUnknownSibling_HasNoPartialCallbackAsync|FullyQualifiedName~ExecuteAsync_IllegalWholeTurnShapesHaveNoApplicationEffectsAsync|FullyQualifiedName~ExecuteAsync_TurnTenIllegalShape_StopsWithoutRequestElevenOrNewCallbackAsync|FullyQualifiedName~ExecuteAsync_CompleteAllNavigationBatch_RemainsEligibleAndReleasesUpdatesSeriallyAsync\" --logger \"console;verbosity=minimal\"",
+  "result": {
+    "build": "passed-with-existing-warnings",
+    "passed": 7,
+    "failed": 2,
+    "skipped": 0,
+    "exit_code": 1
+  },
+  "expected_failures": [
+    {
+      "test": "PreparedPass1JobExecutorStreamingTests.ExecuteAsync_TurnTenIllegalShape_StopsWithoutRequestElevenOrNewCallbackAsync",
+      "location": "tests/Vulgata.Tests/PreparedPass1/PreparedPass1JobExecutorStreamingTests.cs:641",
+      "observed": "The execution released more navigation callbacks than the packet's eight-call remaining budget."
+    },
+    {
+      "test": "PreparedPass1JobExecutorStreamingTests.ExecuteAsync_CompleteAllNavigationBatch_RemainsEligibleAndReleasesUpdatesSeriallyAsync",
+      "location": "tests/Vulgata.Tests/PreparedPass1/PreparedPass1JobExecutorStreamingTests.cs:671",
+      "observed": "A legal two-call all-navigate_code batch was Rejected instead of completing through serial callbacks and final submission."
+    }
+  ],
+  "passing_zero_effect_shapes": [
+    "legal navigation plus unknown sibling",
+    "mixed navigate_code plus submit_code_logic",
+    "multiple submissions",
+    "over-remaining-budget navigation batch",
+    "duplicate call identifiers",
+    "blank call identifier"
+  ],
+  "artifact_sha256": {
+    "tests/Vulgata.Tests/PreparedPass1/PreparedPass1JobExecutorStreamingTests.cs": "D08EDFFE900F0B69FD2FCF9CEE64C8AACC44D3CCB57198CD0F6A0FCC6160111D"
+  },
+  "diagnosis": "The current executor rejects every multi-call provider turn, including a legal all-navigation batch, and its existing turn loop can release callbacks beyond the execution-local remaining budget. Illegal complete-turn shapes are already zero-effect; T104 must add the complete-turn eligibility seam that permits only legal serial navigation batches and enforces the current budget before callback release.",
+  "privacy": "No provider, source-bearing request, database, source repository, credential, raw external response, or system configuration was accessed or changed.",
+  "observed_at": "2026-08-24T21:10:49.3418518Z"
+}

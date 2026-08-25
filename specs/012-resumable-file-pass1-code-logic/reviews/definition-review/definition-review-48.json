@@ -1,0 +1,62 @@
+{
+  "review_id": "story-12-3-definition-review-48",
+  "mode": "definition-amendment",
+  "verdict": "ACCEPT",
+  "implementation_authorized": true,
+  "source_checkpoint": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "reviewed_hashes": {
+    "spec.md": "3412704EB3A6C71BF062C4FBAD2E8FA12B0DBDDDDAB80FDBBBC1F6FAAF8E81DA",
+    "plan.md": "22EEB64DCC151849E6FE18E12DDFC549E4C5854C8B97847EFFDAEA3B2FD5A9B6",
+    "research.md": "B914B25423AE7083615439E1421057EF96834E038938529EF10774CA3C98B42D",
+    "quickstart.md": "AAF16632ED5077D50EAB8CE265AA256E93E92BD11E010453F63D6648F3FCFDF9",
+    "tasks.md": "F2001ED0C32B760A6FFD0BBC0A828CB218BE57B34408EFAE6B60C0D12B7BCBA6",
+    "failure-46.json": "936D96FDB9F18C4DB1E6DD7E8F842D507C8F616159E67E75EF565468A8D2952C",
+    "analysis-27.json": "7FF07D31CD5F8EC025CA2DCDA189D37E53CBB77CE32F7CFDDF402F9F9CAD76EC",
+    "Pass1ProductionExecutionTests.cs": "8BE7B4D1DA2FD4CE60C1ED6E585CBAC3DA9CA95554B6C1DCE1AF9C7A452DA75D"
+  },
+  "task_metrics": {
+    "total": 180,
+    "unique_ids": 180,
+    "duplicate_ids": 0,
+    "pending_ids": ["T085", "T086"],
+    "ordered_chain": "T180 completed -> corrected T085 -> T086"
+  },
+  "finding_dispositions": [
+    {
+      "id": "T085-QC-001",
+      "status": "CLOSED",
+      "disposition": "Deterministic typed-host, lease-facade, and production-DI proof is separated from observational live-provider operation choice without weakening QR-005/T062."
+    }
+  ],
+  "findings": [],
+  "authorized_test_change": {
+    "owner": "tests/Vulgata.Tests/PreparedPass1/Pass1ProductionExecutionTests.cs",
+    "remove": [
+      "Assert.Contains requiring Implementations with a .java descriptor",
+      "Assert.Contains requiring ExactSourceEvidence with an .xml descriptor"
+    ],
+    "add_or_retain": [
+      "Every loaded receipt has the started PairExecutionId.",
+      "Every loaded receipt belongs to one jobId from the production run.",
+      "An ordinary receipt has a defined Pass1NavigationOperation; a null-operation receipt has the Calls marker shape.",
+      "ResultCount, EvidenceBytes, and effective Depth retain their existing bounds.",
+      "No nonempty or operation-specific receipt set is required.",
+      "Every assertion outside the two replaced predicates is retained, including Java/XML Document and Source Anchor coverage."
+    ]
+  },
+  "authorized_commands": [
+    "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter FullyQualifiedName~NavigateCodeRealToolQualificationTests",
+    "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter FullyQualifiedName~NavigateCodeLeaseSecurityCorrectionTests",
+    "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter FullyQualifiedName~Pass1ProductionBoundaryQualificationTests",
+    "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter FullyQualifiedName~Pass1HostRuntimeQualificationTests",
+    "fresh pre-Start single authenticated T085 production test with approved bindings"
+  ],
+  "preserved": [
+    "T180 remains valid because no production/provider behavior changes.",
+    "No planned-change or additional implementation approval is required.",
+    "T086 remains pending until corrected fresh T085 passes."
+  ],
+  "prohibited": "No production, prompt, provider, persistence, schema, migration, source-scope, database-template, ordinary database, host, system, or Git change is authorized.",
+  "reviewed_at": "2026-08-25T14:56:00Z",
+  "summary": "ACCEPT: the composed deterministic and live qualification preserves QR-005/T062 and authorizes one exact test-only correction."
+}

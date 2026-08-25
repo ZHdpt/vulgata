@@ -1,0 +1,80 @@
+{
+  "evidence_id": "12-3/implement/87",
+  "kind": "failure",
+  "stage": "implement",
+  "task": "T084",
+  "source_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "database": "vulgata_story123_t084_20260825_r17",
+  "provider_result": {
+    "outcome": "Rejected",
+    "reason_code": "worker-result-rejected",
+    "executor_category": "WorkerResultRejected",
+    "execution_category": null,
+    "function_call_subtype": null,
+    "submission_category": "MissingSubmission",
+    "wire_budget_category": null,
+    "provider_http": null,
+    "duration_seconds": 194,
+    "jobs_attempted": 1,
+    "jobs_completed": 0,
+    "later_jobs_sent": false,
+    "endpoint": "https://api.deepseek.com/beta",
+    "model": "deepseek-v4-flash"
+  },
+  "request_identity": {
+    "response_format": "absent",
+    "tool_choice": "absent",
+    "parallel_tool_calls": "absent",
+    "navigate_code_parameters_bytes": 1057,
+    "navigate_code_parameters_sha256": "779250FCFE72F07B59CBE280A0FF537FF7D622BFE847BCB616A39858705A1FDA",
+    "submit_code_logic_parameters_bytes": 13973,
+    "submit_code_logic_parameters_sha256": "3CD6F35EB8E6B6E7BEFBF802B2D3187823A0805A00B2ADFEC8A85082835DB20F"
+  },
+  "durable_no_effect": {
+    "job_state": "Running",
+    "attempt_count": 1,
+    "job_version": 1,
+    "tool_attempt_count": 0,
+    "accepted_navigation_count": 0,
+    "evidence_bytes": 0,
+    "maximum_depth": 0,
+    "budget_state_version": 0,
+    "receipt_count": 0,
+    "document_count": 0
+  },
+  "diagnosis": "DeepSeek completed a successful streamed response but selected the legal normal-message branch of omitted/default tool_choice auto. The complete response contained no function call, so the executor observed no submit_code_logic invocation and reported MissingSubmission. The accepted AD-21 preflight explicitly passed zero-call turns through; prompt wording therefore remained the only force toward the mandatory function protocol and was not a sufficient enforcement boundary.",
+  "source_free_compatibility_probes": [
+    {
+      "thinking": "enabled",
+      "tool_choice": "required",
+      "stream": true,
+      "http_status": 400,
+      "tool_call_seen": false,
+      "done_seen": false,
+      "sanitized_error_type": "invalid_request_error",
+      "sanitized_error_code": "invalid_request_error"
+    },
+    {
+      "thinking": "disabled",
+      "tool_choice": "required",
+      "stream": true,
+      "http_status": 200,
+      "tool_call_seen": true,
+      "done_seen": true
+    }
+  ],
+  "excluded_causes": [
+    "provider HTTP rejection",
+    "schema capability or declaration drift",
+    "network failure",
+    "streaming inactivity or absolute timeout",
+    "wire-budget overflow",
+    "submission validation",
+    "database failure",
+    "host or system configuration"
+  ],
+  "required_correction": "Supersede the auto-choice thinking Worker wire with the provider-supported streamed non-thinking required-tool wire, bind the source-free handshake to that exact production shape, correct the affected specification/plan/research/contract/quickstart/tasks through independent review and RED/GREEN implementation, then rerun the source-free live gate before a fresh disposable-database T084 attempt. Do not add a hidden/manual provider loop or change host configuration.",
+  "privacy": "The provider received only the approved job-1 bounded source/context. No credential, header, request/response body, source, prompt, free-form content, reasoning, function argument/result, or host path was logged or persisted. Jobs 2 and 3 were not sent. Both compatibility probes were source-free and retained only status and Boolean protocol observations.",
+  "observed_at": "2026-08-25T07:14:48.8611388+08:00",
+  "summary": "T084 r17 confirms a second auto-choice blocker: a normal assistant response with no function call. Required tool choice is rejected with thinking enabled but succeeds with thinking disabled on the same streamed endpoint/model, so this is a repository request-contract defect rather than an environment or network failure."
+}

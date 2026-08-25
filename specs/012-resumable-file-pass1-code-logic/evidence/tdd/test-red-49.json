@@ -1,0 +1,27 @@
+{
+  "evidence_id": "12-3/implement/101",
+  "kind": "test-red",
+  "stage": "implement",
+  "task": "T129",
+  "source_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore -p:WarningLevel=0 --filter \"FullyQualifiedName~PreparedPass1JobExecutorStreamingTests.ExecuteAsync_TurnTenIllegalShape_StopsWithoutAnAdditionalCallbackAsync|FullyQualifiedName~PreparedPass1JobExecutorStreamingTests.IllegalFunctionCallSubtype_SeparatesTurnDefenseBranchesByDistinctMembers\" --logger \"console;verbosity=minimal\"",
+  "result": {
+    "total": 2,
+    "passed": 0,
+    "failed": 2,
+    "skipped": 0,
+    "duration_seconds": 0.406,
+    "build_errors": 0
+  },
+  "observed_red": [
+    "the reachable provider-turn-ten illegal-shape scenario preserves ten requests, eight callbacks, eight reservations, no request eleven, and rejection, but reports catch-all TurnIneligible instead of TerminalTurnRequiresSubmission",
+    "the closed diagnostic enum lacks TerminalTurnRequiresSubmission, SubmissionUnavailable, and PostTurnLimit defense-branch members"
+  ],
+  "files": {
+    "tests/Vulgata.Tests/PreparedPass1/PreparedPass1JobExecutorStreamingTests.cs": "80B0EEE96C7E718D19457BF6972BBE3BBA45A849F3BCA6296992EDC12417EADE",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekIsolatedSourceQualificationTests.cs": "FBC6F5FF87EB554631AA6BCF74747309B5804B86B32C2187B833DCACA2683510"
+  },
+  "privacy": "No provider, source, database, network, host, system, call identity/name/count/arguments/result, response content, reasoning, or source data was accessed or retained.",
+  "observed_at": "2026-08-25T09:14:47.2073400+08:00",
+  "summary": "T129 is a compile-clean honest RED proving the r20 TurnIneligible catch-all cannot identify the terminal-turn, submission-state, or post-turn branch while all existing no-effect behavior remains intact."
+}

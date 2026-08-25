@@ -1,0 +1,30 @@
+{
+  "evidence_id": "12-3/implement/96",
+  "kind": "test-red",
+  "stage": "implement",
+  "task": "T125",
+  "source_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore -p:WarningLevel=0 --filter \"FullyQualifiedName~PreparedPass1JobExecutorStreamingTests.ExecuteAsync_AllNavigationSaturation_ReplaysCompleteTurnAndSubmitsAfterCapacityPrefixAsync|FullyQualifiedName~PreparedPass1JobExecutorStreamingTests.ExecuteAsync_InitialZero_DirectSubmissionUsesProviderInsteadOfDeferredFallbackAsync|FullyQualifiedName~PreparedPass1JobExecutorStreamingTests.ExecuteAsync_InitialZero_ClosedNavigationThenSubmissionHasNoApplicationEffectsAsync|FullyQualifiedName~PreparedPass1JobExecutorStreamingTests.ExecuteAsync_NineNavigationCallsRemainWholeResponseRejectedAtCapacityEightAsync|FullyQualifiedName~PreparedPass1JobExecutorStreamingTests.ExecuteAsync_ProviderTurnTen_MapsSdkIterationNineAndTerminatesWithoutRequestElevenAsync\" --logger \"console;verbosity=minimal\"",
+  "result": {
+    "total": 17,
+    "passed": 10,
+    "failed": 7,
+    "skipped": 0,
+    "duration_seconds": 0.439,
+    "build_errors": 0
+  },
+  "observed_red": [
+    "remaining capacity one with two or eight legal navigation calls is rejected rather than executing the provider-order prefix and replaying matching closed results",
+    "initial capacity zero returns the legacy navigation-calls-bound-exceeded fallback without making the direct-submission provider request",
+    "initial capacity zero returns the legacy fallback without replaying a closed navigation result followed by submission",
+    "provider-turn-ten first-valid, first-invalid, and second-valid cases are intercepted by legacy budget behavior instead of applying zero-based SDK iteration-nine terminal handling"
+  ],
+  "valid_fixture_controls": "Ten passing cases prove legal capacity-eight and capacity-one within-budget batches, exact reservation ordinals, above-eight whole-turn rejection, and shared fake-HTTP scaffolding remain operational.",
+  "files": {
+    "tests/Vulgata.Tests/PreparedPass1/PreparedPass1JobExecutorStreamingTests.cs": "E6F14BC352D9C666ABB50D14EF616E4FE08984D764FB68DA57DB20B1EF4CCDB1"
+  },
+  "warnings": "Existing NU1507 package-source and EF assembly-version warnings remain; zero build errors.",
+  "privacy": "No provider, source-bearing repository, database, host tool, credential, request body, response body, function argument/result, or system configuration was accessed or changed.",
+  "observed_at": "2026-08-25T08:51:19.2513305+08:00",
+  "summary": "Honest compile-clean RED proves the current strict executor cannot close excess legal navigation siblings, reach the provider at initial zero capacity, or implement the pinned zero-based turn-ten mapping required by AD-23."
+}

@@ -1,0 +1,71 @@
+{
+  "evidence_id": "12-3/implement/103",
+  "kind": "failure",
+  "stage": "implement",
+  "task": "T084",
+  "attempt": "r21",
+  "source_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "database": "vulgata_story123_t084_20260825_r21",
+  "database_template": "vulgata_story121_feffce36e44c48238a6e55c6742c374c",
+  "command": "VULGATA_T084_ISOLATED_SOURCE_JOBS=1 VULGATA_T062_QUALIFICATION_CONNECTION=<fresh-r21-disposable-database> VULGATA_T062_WORKER_PROVIDER_API_KEY=<present-secret> <approved-source-and-runtime-bindings> dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --no-restore --nologo --filter FullyQualifiedName=Vulgata.Tests.PreparedPass1.Pass1DeepSeekIsolatedSourceQualificationTests.ThreeIsolatedSourceJobs_CompleteCommitAndReplayWithoutLeakingPayloadsAsync --logger console;verbosity=normal -p:GenerateMvcTestManifest=false -clp:ErrorsOnly",
+  "result": {
+    "passed": 0,
+    "failed": 1,
+    "skipped": 0,
+    "total": 1,
+    "duration_seconds": 38.0586,
+    "failed_at_job": 1,
+    "source_kind": "xml"
+  },
+  "sanitized_failure": {
+    "outcome": "Rejected",
+    "reason": "unclassified-systemic",
+    "executor_category": "UnclassifiedSystemic",
+    "execution_category": "IllegalFunctionCall",
+    "function_call_subtype": "TerminalTurnRequiresSubmission",
+    "submission_category": "none",
+    "wire_budget_category": "none",
+    "provider_http": "none",
+    "tool_choice": "required",
+    "response_format": "absent",
+    "parallel_tool_calls": "absent"
+  },
+  "job_scoped_postgresql": {
+    "job_id": "7bdfceac-a6ec-8470-9104-2a1ecd111866",
+    "pair_execution_id": "e8027a57-62dd-8564-9989-e3ad1e26627a",
+    "job_state": "Running",
+    "attempt_count": 1,
+    "job_state_version": 1,
+    "tool_attempt_count": 8,
+    "remaining_navigation_capacity": 0,
+    "accepted_call_count": 0,
+    "evidence_bytes": 0,
+    "maximum_depth_observed": 0,
+    "budget_state_version": 8,
+    "receipt_count": 0,
+    "document_count": 0,
+    "pass1_outcome_count": 0
+  },
+  "source_free_named_choice_probe": {
+    "endpoint": "https://api.deepseek.com/beta",
+    "model": "deepseek-v4-flash",
+    "http_status": 200,
+    "thinking_disabled": true,
+    "named_submit_choice": true,
+    "submit_call_observed": true,
+    "done_observed": true,
+    "source_free": true,
+    "response_retained": false
+  },
+  "excluded_causes": [
+    "endpoint, model, authentication, network, provider availability, and HTTP failure",
+    "strict declarations, disabled-thinking/required-choice request composition, streaming, timeout, or wire-budget failure",
+    "PostgreSQL availability, host, or system configuration failure",
+    "diagnostic ambiguity between terminal, submission-state, and post-turn branches"
+  ],
+  "root_cause": "The application knew provider turn ten was terminal but still serialized generic tool_choice required with both functions selectable. DeepSeek legally selected navigate_code again after all eight durable navigation reservations were consumed, so complete-turn preflight correctly rejected before submission. Prompt-only finalization guidance did not make the terminal request deterministic.",
+  "required_next_step": "Keep T084/T085 blocked. Plan and prove a terminal-turn-only named submit_code_logic selection while retaining both exact strict declarations, disabled thinking, streaming, complete preflight, local validation, ten turns, no request eleven, all limits/privacy, and generic required selection on turns one through nine. Qualify both exact required and exact named-submit request shapes source-free before a fresh source-bearing retry.",
+  "privacy": "No provider response body, function call identity/arguments/result, reasoning, assistant content, source bytes, prompt packet, credential, or request body was retained. Only fixed closed subtype/state counts and the source-free named-choice capability Booleans were recorded. Only the approved repositories were read; only bounded source/context for job 1 was sent; only r21 was mutated; no host or system setting changed.",
+  "observed_at": "2026-08-25T09:24:31.8148992+08:00",
+  "summary": "T084 r21 proves a repository protocol-control defect: a generic required choice on the known terminal turn lets DeepSeek select navigation and prevents finalization. A bounded source-free probe confirms the configured beta route/model accepts a named submit_code_logic choice with streaming and disabled thinking."
+}

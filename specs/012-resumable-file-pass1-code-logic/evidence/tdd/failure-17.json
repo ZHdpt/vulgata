@@ -1,0 +1,33 @@
+{
+  "evidence_id": "12-3/implement/35",
+  "kind": "failure",
+  "stage": "implement",
+  "source_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "artifact_paths": [
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekContractQualificationTests.cs",
+    "tests/Vulgata.Tests/PreparedPass1/DeepSeekSourceFreeHandshakeHarness.cs"
+  ],
+  "artifact_sha256": {
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekContractQualificationTests.cs": "A5D775868D4C044A78C7DAD6DC33B266E43F29C22D005CC1F312ED2609BC30CC",
+    "tests/Vulgata.Tests/PreparedPass1/DeepSeekSourceFreeHandshakeHarness.cs": "8F0D9E6A1F28A808FB163D53A1E51A6D58CB107D0300081D25BE33C25AF036F6"
+  },
+  "commands": [
+    "VULGATA_T083_SOURCE_FREE_HANDSHAKE=1 VULGATA_T062_WORKER_PROVIDER_API_KEY=<present-secret> dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --nologo --filter FullyQualifiedName~SourceFreeHandshake_LiveBetaCapability_WritesSanitizedEvidenceAsync --logger console;verbosity=minimal -p:GenerateMvcTestManifest=false"
+  ],
+  "result": {
+    "status": "stopped",
+    "failed_test": "Vulgata.Tests.PreparedPass1.Pass1DeepSeekContractQualificationTests.SourceFreeHandshake_LiveBetaCapability_WritesSanitizedEvidenceAsync",
+    "sanitized_outcome": "ProviderUnavailable",
+    "duration": "7 seconds",
+    "endpoint": "https://api.deepseek.com/beta",
+    "model": "deepseek-v4-flash",
+    "network_mode": "unrestricted outbound approved and requested",
+    "api_key_presence": "present; value not printed or persisted",
+    "success_artifact_written": false,
+    "source_derived_payload_sent": false,
+    "underlying_detail": "unknown because the approved closed harness maps non-configuration HTTP failures and HTTP/IO/cancellation transport failures to ProviderUnavailable without retaining status, headers, body, or exception detail",
+    "retry_disposition": "no retry, alternate route, host remediation, or source-bearing traffic attempted"
+  },
+  "observed_at": "2026-08-24T11:30:21.1025291Z",
+  "summary": "T083 stopped at the required provider/environment boundary after the single unrestricted source-free DeepSeek beta handshake returned the closed sanitized outcome ProviderUnavailable."
+}

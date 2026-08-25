@@ -1,0 +1,49 @@
+{
+  "evidence_id": "12-3/implement/132",
+  "kind": "test-green",
+  "status": "current",
+  "stage": "implement",
+  "task": "T161",
+  "source_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "red_evidence": "specs/012-resumable-file-pass1-code-logic/evidence/tdd/test-red-68.json",
+  "command": "AnalysisRuntime__JdtLsDistributionArchivePath=<approved-verified-archive>; <live-flags-cleared>; dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --no-restore -p:WarningLevel=0 --filter FullyQualifiedName~Pass1DeepSeekTerminalContextProjectionTests|FullyQualifiedName~PreparedPass1JobExecutorStreamingTests|FullyQualifiedName~Pass1DeepSeekPromptCompositionTests|FullyQualifiedName~Pass1DeepSeekContractQualificationTests|FullyQualifiedName~Pass1DeepSeekIsolatedSourceQualificationTests --logger console;verbosity=minimal -clp:ErrorsOnly; git diff --check",
+  "result": {
+    "total": 220,
+    "passed": 217,
+    "failed": 0,
+    "skipped": 3,
+    "duration_seconds": 4,
+    "exit_code": 0,
+    "diff_check": "passed_with_line_ending_warnings_only"
+  },
+  "expected_skips": [
+    "T163 source-free live DeepSeek qualification",
+    "T164 isolated source-bearing DeepSeek qualification",
+    "live approved-file dispatcher qualification"
+  ],
+  "implementation": [
+    "The executor derives one finite repair code solely from the first closed local rejection category.",
+    "The terminal projector validates the exact category/code pairing and serializes attempt, category, and repairCode in canonical order.",
+    "The terminal prompt defines all three repair codes using existing packet, smallest-valid-document, and authorized full-range-anchor instructions.",
+    "Diagnostic message, exception text, candidate detail, and qualification semanticDiagnostic seams were removed; only the closed category remains observable.",
+    "The source-free harness now exercises the production projector with synthetic InvalidSemantics/UseMinimalValidDocument correction metadata."
+  ],
+  "preserved": [
+    "ordinary fixed invalid-* tool results and the full local validator",
+    "two submissions, ten provider turns, termination after the second invalid submission, and no request eleven",
+    "strict submit-only terminal declarations, original packet/evidence continuity, streaming, deadlines, wire-byte bounds, and zero SDK retry",
+    "persistence, migration, provider endpoint/model/key, ordinary database, host, and system boundaries"
+  ],
+  "files": {
+    "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedPass1TerminalContextProjection.cs": "ED378D5898CF0966B0101777B644437EE49538B136CDB3CE830592173F89F796",
+    "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedPass1JobExecutor.cs": "3BC458B89CDDA990C34F94959CA84A59ECDEB2487F79EEC3C45590DEE4234E64",
+    "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedPass1ResultParser.cs": "2DB3A6E96888A2B93094116B8DC0E9070ACE74B599C3938D9FB359DB18EADF46",
+    "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedSubmitCodeLogicFunction.cs": "838E03DE173EC3AF4A1AA227A215519A9508ABC8FABB6130C60C468C193CABFE",
+    "src/dotnet/Vulgata.Agents/Prompts/pass1-code-logic-worker.v2.md": "8CED2F3A6160395436A53F2D99F68ED8FA7A6E10933360B10D4E5079B0435F10",
+    "tests/Vulgata.Tests/PreparedPass1/DeepSeekSourceFreeHandshakeHarness.cs": "28DE0FC163A7656201269A18B263152196E9A372F42BEB0B80A403F655F0ECCE",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekContractQualificationTests.cs": "311D8DDA7DB3C9FA98CE964CDB386A5BBB8D76F69387D883DB0A8DA01A770846"
+  },
+  "privacy": "The GREEN verification was deterministic and source-free. It invoked no provider, network, source repository, database, ordinary database, host, system, credential, or Git mutation.",
+  "observed_at": "2026-08-25T16:00:30.5146595+08:00",
+  "summary": "The bounded AD-29 repair-code projection and diagnostic-privacy correction are GREEN across the exact T160 boundary."
+}

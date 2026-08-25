@@ -1,0 +1,42 @@
+{
+  "evidence_id": "12-3/implement/85",
+  "kind": "test-green",
+  "stage": "implement",
+  "task": "T116",
+  "source_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "command": "$env:VULGATA_TEST_POSTGRES_ADMIN = '<approved localhost postgres admin connection>'; dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter \"FullyQualifiedName~Pass1MigrationTests|FullyQualifiedName~Pass1DocumentCommitTests|FullyQualifiedName~Pass1DocumentPostgreSqlAtomicTests|FullyQualifiedName~PreparedPass1WorkerDispatcherTests\" --no-restore --logger \"console;verbosity=normal\"",
+  "result": {
+    "build": "passed-with-existing-warnings",
+    "passed": 174,
+    "failed": 0,
+    "skipped": 0,
+    "exit_code": 0,
+    "duration_minutes": 1.2873
+  },
+  "verified": [
+    "the Story 12.3 correction introduces no EF schema or migration delta",
+    "atomic document graph commit and reconciliation roll back at every tested write boundary",
+    "reservation, receipt, cursor, marker repair, exact replay, changed replay, stale lease, cancellation, and restart invariants remain durable and fail closed",
+    "the dispatcher invokes the executor exactly once per durable claim and owns no retry, navigation scheduling, or conversation budget state",
+    "the existing durable no-tools provider probe implementation remains unchanged",
+    "no hidden production correction remains in the named T116 inventory"
+  ],
+  "database": {
+    "server": "localhost:5432",
+    "admin_database": "postgres",
+    "scope": "test-created disposable databases only",
+    "ordinary_vulgata_accessed": false
+  },
+  "artifact_sha256": {
+    "tests/Vulgata.Tests/PreparedPass1/Pass1MigrationTests.cs": "D6E5DA1882A88B9DCD9BA0136A5B0B235106551E3F4CA4C428E69C341866214B",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DocumentCommitTests.cs": "2689BC556BAC17864B9E5D362BDBAA02009F5BED50C2EBAE9644F746FFBCFA13",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DocumentPostgreSqlAtomicTests.cs": "9C3A46501B7E754B28BE0B2FC45B808A8D367F0E030F14061041809AB560A376",
+    "tests/Vulgata.Tests/PreparedPass1/PreparedPass1WorkerDispatcherTests.cs": "91F895D1A615DEC53738042D93FE9BBB26E1A803E1F2A1DAA0D6B95A0D8BB0BC",
+    "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedPass1ProviderHealthProbe.cs": "4CCC1948552C3ACB3F5DC9354AC4CE67E3BAC0E2A1D9239EEAE711665C71A746",
+    "src/dotnet/Vulgata.Web/Data/PreparedPass1ProbeDriver.cs": "7D17140C03BD6FB0C5CC23C9B7CDF176B9BE661550D2FBBE329AB7C8B578550C"
+  },
+  "diff": "No migration path appeared in git diff --name-only; git diff --check exited zero with only existing line-ending notices.",
+  "network": "Only the approved local PostgreSQL test instance was accessed. No provider, source-bearing request, external network, credential output, host setting, or system configuration was accessed or changed.",
+  "warnings": "Existing NU1507 and EF assembly-version warnings remain.",
+  "observed_at": "2026-08-24T23:00:13.7221308Z"
+}

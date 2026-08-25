@@ -13,6 +13,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <EmbeddedResource Include="..\..\..\specs\012-resumable-file-pass1-code-logic\contracts\code-logic-file-v2.schema.json"
+                      Link="Contracts\code-logic-file-v2.schema.json"
+                      LogicalName="Vulgata.Agents.Contracts.code-logic-file-v2.schema.json" />
     <EmbeddedResource Include="Prompts\pass1-code-logic-worker.v1.md"
                       LogicalName="Vulgata.Agents.Prompts.pass1-code-logic-worker.v1.md" />
     <EmbeddedResource Include="Prompts\pass1-code-logic-worker.v2.md"

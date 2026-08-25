@@ -1,0 +1,43 @@
+{
+  "evidence_id": "12-3/implement/76",
+  "kind": "test-green",
+  "stage": "implement",
+  "task": "T108",
+  "source_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "focused_command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --nologo -p:WarningLevel=0 -p:GenerateMvcTestManifest=false --filter \"FullyQualifiedName~ExecutorComposition_ExposesTheDurableReservationStore|FullyQualifiedName~AllNavigationCallbacks_ReserveBeforeSerialCallback|FullyQualifiedName~ReservationFailureStopsBeforeAffected\" --logger \"console;verbosity=minimal\"",
+  "focused_result": {
+    "passed": 4,
+    "failed": 0,
+    "skipped": 0,
+    "exit_code": 0
+  },
+  "broader_command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --nologo --filter \"FullyQualifiedName~PreparedPass1JobExecutorStreamingTests|FullyQualifiedName~NavigateCodeContractTests|FullyQualifiedName~NavigateCodeSecurityTests|FullyQualifiedName~NavigateCodeLeaseSecurityCorrectionTests|FullyQualifiedName~Pass1NavigationBudgetPersistenceTests\" --logger \"console;verbosity=minimal\"",
+  "broader_result": {
+    "passed": 107,
+    "failed": 0,
+    "skipped": 0,
+    "exit_code": 0
+  },
+  "implementation": {
+    "consumer": "Complete-turn preflight remains zero-effect. For an accepted all-navigation batch, the function invoker remains serial and each callback first obtains exactly one durable reservation using the latest store-returned cursor.",
+    "binding": "The exact returned ordinal is combined only with server-owned current job/pair versions and lease authorization; model arguments and tool-call IDs remain unchanged for callback invocation and provider replay.",
+    "failure": "A null, stale, or failed first/later reservation terminates before the affected and later callbacks and before another provider request.",
+    "receipt": "A closed server-only reserved-navigation port carries the ticket to the typed receipt sink; PreparedPass1Store returns the receipt ID and replacement cursor from CommitReservedNavigationReceiptAsync without incrementing ToolAttemptCount again.",
+    "cumulative_state": "Each later reservation sees the preceding committed response's accepted/evidence counters and only the latest returned ticket."
+  },
+  "boundary_extension": "Exact receipt-ticket propagation required minimal Core updates to the reservation ticket, navigation response/port, and closed prepared contracts plus an explicit PreparedPass1Store receipt-sink implementation. This avoids an Agents-to-Infrastructure dependency and the legacy double-increment path; no DI registration, schema, migration, provider, or source scope changed.",
+  "artifact_sha256": {
+    "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedPass1JobExecutor.cs": "BF677252403A96EE3A2D822504BA0B39E49D2C0CB9C07A89A0DDB155E8B3A1D2",
+    "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedNavigateCodeFunction.cs": "E4F97BBFB4300BE5E4A6C1BFA55A502676C29910810CF3F486F6BEC34DDD78A1",
+    "src/dotnet/Vulgata.Infrastructure/Analysis/PreparedNavigation/PreparedPass1NavigationService.cs": "D2ED821FA5F0C065E6138DFC167D7F1878B72F35BE82D2E42BD4D14FA668D86D",
+    "src/dotnet/Vulgata.Core/DomainServices/IPass1NavigationAttemptReservationStore.cs": "30CBB3A0EE12477A854BE34DFD28EC3FA55DA6533A22EDF3F47F17882E8A1020",
+    "src/dotnet/Vulgata.Core/DomainServices/IPass1NavigationService.cs": "830DCC9B7CC9601F928C3707C9E08AB6918FE634DA5D6A96183DBBB5BD1A273D",
+    "src/dotnet/Vulgata.Core/DomainServices/PreparedPass1Contracts.cs": "4E236FB9941A1E9D146EB61E5AEBF318E2E2E5375854A78ABE2CFFD77A7C9C75",
+    "src/dotnet/Vulgata.Infrastructure/Data/PreparedPass1Store.cs": "F53B6700BBF372FE94EE958491E93C9CFEC07F8B3298E44CFFD742ED88DF44E5",
+    "tests/Vulgata.Tests/PreparedPass1/NavigateCodeContractTests.cs": "662D7CDEAC1E44D628C3D9A4736D8F52E3DBB01C003326F1245BDDA0A6DB9595",
+    "tests/Vulgata.Tests/PreparedPass1/PreparedPass1JobExecutorStreamingTests.cs": "41CA7477CAE588F122D8F2E571F5A52E1E308482B4D8352D4850D496AF41F303"
+  },
+  "privacy": "The reservation and replacement tickets are server-only and absent from provider-visible arguments, request bodies, logs, and durable source evidence. No provider, database, network, credential, host setting, or system configuration was accessed or changed.",
+  "warnings": "Existing NU1507 and EF assembly-version warnings remain; focused and broader tests succeeded.",
+  "observed_at": "2026-08-24T22:07:01.6739787Z"
+}

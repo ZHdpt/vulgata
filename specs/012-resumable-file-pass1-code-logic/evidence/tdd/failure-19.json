@@ -1,0 +1,69 @@
+{
+  "evidence_id": "12-3/implement/41",
+  "kind": "failure",
+  "stage": "implement",
+  "source_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "artifact_paths": [
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekIsolatedSourceQualificationTests.cs",
+    "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedPass1JobExecutor.cs",
+    "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedSubmitCodeLogicFunction.cs"
+  ],
+  "artifact_sha256": {
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekIsolatedSourceQualificationTests.cs": "9B90D87E07D4E2ABB179554D39174D46F6196EE7BE64987550722C3A541A1D0E",
+    "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedPass1JobExecutor.cs": "1425D221B154895378FFC351E600C64CFC64C77D2191001D7F57222BF389C56A",
+    "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedSubmitCodeLogicFunction.cs": "9B8F57B4229A9ED65C3862B99F6C2F9D23C3B54878237F0354DAEC7D97A43F4E"
+  },
+  "qualification": {
+    "task": "T084",
+    "provider_endpoint_authority": "https://api.deepseek.com",
+    "provider_model": "deepseek-v4-flash",
+    "streaming": true,
+    "absolute_timeout_minutes": 25,
+    "sequence_limit": 3,
+    "attempted_source_jobs": 1,
+    "unattempted_source_jobs": 2,
+    "result": "stopped",
+    "reason": "worker-result-rejected"
+  },
+  "attempts": [
+    {
+      "database_alias": "first-disposable-clone",
+      "result": "qualification-harness-precondition-failed",
+      "detail": "Claim succeeded but hydration returned null because the harness had not acquired the production exact-revision leases.",
+      "source_sent": false,
+      "provider_called": false,
+      "remediation": "The harness was corrected to acquire and retain IPreparedPass1RevisionBindingRegistry bindings before claims; the interrupted clone was not reused."
+    },
+    {
+      "database_alias": "fresh-t084-clone-r1",
+      "result": "provider-output-rejected",
+      "duration_seconds": 38,
+      "source_kind": ".xml",
+      "dispatch_outcome": "Rejected",
+      "reason_code": "worker-result-rejected",
+      "source_sent": true,
+      "provider_called": true,
+      "retried": false
+    }
+  ],
+  "sanitized_diagnosis": {
+    "transport": "DeepSeek connectivity and streaming remained active and completed before the local rejection; no timeout, authentication, DNS, TLS, or HTTP availability error was observed.",
+    "exact_unknown": "The current production executor intentionally maps both no submit_code_logic call and all rejected submit_code_logic calls to worker-result-rejected. The rejected submission category is therefore not observable after this run.",
+    "possible_local_rejection_classes": [
+      "invalid-shape",
+      "invalid-binding",
+      "invalid-evidence",
+      "invalid-semantics",
+      "no-submission"
+    ],
+    "privacy": "No API key, source bytes, prompt, tool arguments, raw provider stream, or raw model response was logged or persisted. Detailed tool errors remained disabled.",
+    "atomicity": "The fresh disposable database contained zero Document Versions and zero navigation receipts after the stop. The first job retained only its temporary Running lease; jobs two and three were not claimed."
+  },
+  "commands": [
+    "VULGATA_T084_ISOLATED_SOURCE_JOBS=1 VULGATA_T062_QUALIFICATION_CONNECTION=<fresh-disposable-database> VULGATA_T062_WORKER_PROVIDER_API_KEY=<present-secret> <approved-source-and-runtime-bindings> dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --nologo --filter FullyQualifiedName~Pass1DeepSeekIsolatedSourceQualificationTests.ThreeIsolatedSourceJobs_CompleteCommitAndReplayWithoutLeakingPayloadsAsync --logger console;verbosity=minimal -p:GenerateMvcTestManifest=false -clp:ErrorsOnly",
+    "docker exec vulgata-postgres psql -U vulgata -d <fresh-disposable-database> <read-only-state-query>"
+  ],
+  "next_step": "Do not run T085. Decide whether to add bounded, sanitized qualification observability for submit_code_logic rejection kind without persisting provider content, then use another fresh disposable clone for any explicitly authorized T084 retry.",
+  "observed_at": "2026-08-24T12:05:58.3795922Z",
+  "summary": "T084 stopped after the first isolated source-bearing DeepSeek response was locally rejected as worker-result-rejected. The sequence did not retry or send jobs two and three; atomic persistence and privacy held, while the exact local rejection category remains unobservable by design."
+}

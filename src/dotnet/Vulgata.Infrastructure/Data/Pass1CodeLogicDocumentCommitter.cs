@@ -92,6 +92,11 @@ public sealed class Pass1CodeLogicDocumentCommitter(VulgataDbContext context)
             return Rejected("invalid-commit-authorization");
         }
 
+        request = request with
+        {
+            CommittedAt = NormalizePostgreSqlTimestamp(request.CommittedAt),
+        };
+
         byte[] canonical;
         CodeLogicFileV2Projection projection;
         try
@@ -673,14 +678,19 @@ public sealed class Pass1CodeLogicDocumentCommitter(VulgataDbContext context)
             .Select(value => value.GetProperty("classificationId").GetGuid())
             .Distinct()
             .ToArray();
+        Guid[] suppliedClassificationIds = packet.CommunicationClassifications
+            .Select(value => value.ClassificationId)
+            .Distinct()
+            .ToArray();
         CommunicationKindClassification[] classifications = await context.CommunicationKindClassifications
             .AsNoTracking()
-            .Where(value => classificationIds.Contains(value.Id))
+            .Where(value => suppliedClassificationIds.Contains(value.Id))
             .ToArrayAsync(cancellationToken);
-        if (classifications.Length != classificationIds.Length ||
+        if (classifications.Length != suppliedClassificationIds.Length ||
             classifications.Any(value => value.PreScanResultId != execution.PreScanResultId) ||
             packet.CommunicationClassifications.Any(supplied =>
-                !ClassificationMatches(supplied, classifications)))
+                !ClassificationMatches(supplied, classifications)) ||
+            classificationIds.Any(value => !suppliedClassificationIds.Contains(value)))
         {
             return false;
         }
@@ -729,11 +739,14 @@ public sealed class Pass1CodeLogicDocumentCommitter(VulgataDbContext context)
     }
 
     private static bool CanAcceptInFlightResult(Pass1PairExecution pair) =>
-        pair.Phase == Pass1PairExecutionPhase.Running &&
-        (pair.CircuitState == Pass1CircuitState.Closed ||
-         pair.CircuitState == Pass1CircuitState.Paused &&
-         pair.ReasonCategory == Pass1PairReasonCategory.Pass1Policy &&
-         string.Equals(pair.ReasonCode, "pass1-policy-failed", StringComparison.Ordinal));
+        (pair.Phase == Pass1PairExecutionPhase.ProbingProvider &&
+         pair.CircuitState == Pass1CircuitState.Probing &&
+         pair.ReasonCategory == Pass1PairReasonCategory.ProviderUnavailable) ||
+        (pair.Phase == Pass1PairExecutionPhase.Running &&
+         (pair.CircuitState == Pass1CircuitState.Closed ||
+          pair.CircuitState == Pass1CircuitState.Paused &&
+          pair.ReasonCategory == Pass1PairReasonCategory.Pass1Policy &&
+          string.Equals(pair.ReasonCode, "pass1-policy-failed", StringComparison.Ordinal)));
 
     private static bool JobMatchesPacket(ScanJobExecution job, PreparedPass1WorkerPacket packet) =>
         job.ScanExecutionId == packet.ScanExecutionId &&
@@ -745,6 +758,14 @@ public sealed class Pass1CodeLogicDocumentCommitter(VulgataDbContext context)
     private static bool PacketSourceMatches(PreparedPass1WorkerPacket packet) =>
         packet.SourceUtf8.Length == packet.ByteEnd - packet.ByteStart &&
         Convert.ToHexStringLower(SHA256.HashData(packet.SourceUtf8.Span)) == packet.SourceHash;
+
+    private static DateTimeOffset NormalizePostgreSqlTimestamp(DateTimeOffset value)
+    {
+        const long ticksPerMicrosecond = 10;
+        return new DateTimeOffset(
+            value.Ticks - (value.Ticks % ticksPerMicrosecond),
+            TimeSpan.Zero);
+    }
 
     private static bool ClassificationMatches(
         PreparedPass1CommunicationClassificationProjection supplied,

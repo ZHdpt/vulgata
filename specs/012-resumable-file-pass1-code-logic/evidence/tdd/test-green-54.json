@@ -1,0 +1,72 @@
+{
+  "evidence_id": "12-3/implement/107",
+  "kind": "test-green",
+  "status": "current",
+  "stage": "implement",
+  "task": "T134",
+  "source_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "commands": [
+    "$env:VULGATA_T083_SOURCE_FREE_HANDSHAKE=$null; $env:VULGATA_T084_ISOLATED_SOURCE_JOBS=$null; $env:VULGATA_T062_APPROVED_PAIR_REAL=$null; dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --no-restore -p:WarningLevel=0 --filter \"FullyQualifiedName~PreparedPass1JobExecutorStreamingTests|FullyQualifiedName~Pass1DeepSeekStreamingQualificationTests|FullyQualifiedName~Pass1DeepSeekContractQualificationTests|FullyQualifiedName~Pass1DeepSeekIsolatedSourceQualificationTests\" --logger \"console;verbosity=minimal\"",
+    "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --no-restore -p:WarningLevel=0 --filter \"FullyQualifiedName~Pass1DurableNavigationRecoveryTests|FullyQualifiedName~Pass1NavigationBudgetPersistenceTests|FullyQualifiedName~PreparedPass1WorkerDispatcherTests|FullyQualifiedName~Pass1ProductionBoundaryQualificationTests\" --logger \"console;verbosity=minimal\"",
+    "$env:VULGATA_TEST_POSTGRES_ADMIN='<approved localhost postgres admin connection>'; dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore -p:WarningLevel=0 --filter \"FullyQualifiedName~Pass1MigrationTests|FullyQualifiedName~Pass1DocumentCommitTests|FullyQualifiedName~Pass1DocumentPostgreSqlAtomicTests|FullyQualifiedName~PreparedPass1WorkerDispatcherTests\" --logger \"console;verbosity=minimal\"",
+    "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --no-restore -p:WarningLevel=0 --filter \"FullyQualifiedName~Pass1MigrationTests\" --logger \"console;verbosity=minimal\""
+  ],
+  "results": [
+    {
+      "scope": "non-live executor, wire, contract, and isolated-source classes",
+      "total": 259,
+      "passed": 256,
+      "failed": 0,
+      "skipped": 3,
+      "expected_skips": [
+        "two-shape source-free live capability",
+        "isolated source-bearing contract qualification",
+        "T084 three isolated source jobs"
+      ]
+    },
+    {
+      "scope": "durable navigation, budget persistence, dispatcher, and production boundary",
+      "total": 25,
+      "passed": 25,
+      "failed": 0,
+      "skipped": 0
+    },
+    {
+      "scope": "disposable PostgreSQL migration, reservation, restart, commit, atomicity, and dispatcher",
+      "total": 174,
+      "passed": 174,
+      "failed": 0,
+      "skipped": 0,
+      "duration_seconds": 81
+    },
+    {
+      "scope": "migration and EF model no-delta",
+      "total": 9,
+      "passed": 9,
+      "failed": 0,
+      "skipped": 0
+    }
+  ],
+  "verified": [
+    "exact string-required requests one through nine, exact named-submit request ten, both declaration identities, and no request eleven",
+    "provider-ignored named-choice defense, initial-zero reachability, capacities eight/one/zero, durable high-water eight, ordered matching results, and complete replay",
+    "source-free ordinary and terminal fake request shapes with sanitized dual identities and Boolean observations",
+    "privacy, raw/assembled/per-message/aggregate/outgoing byte limits, inactivity and absolute time limits, zero SDK retry, and sibling-client isolation",
+    "disposable PostgreSQL atomic commit, rollback, replay, restart, lease, and navigation reservation behavior",
+    "nine migration/model tests and zero AD-24 migration or EF-model ownership"
+  ],
+  "database": {
+    "server": "localhost:5432",
+    "admin_database": "postgres",
+    "scope": "test-created disposable databases only",
+    "ordinary_vulgata_accessed": false
+  },
+  "files": {
+    "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedPass1JobExecutor.cs": "DB9C1278947DC3A4402F22BA0516BEE2BFB76FCBFC06D9BA81962EFB47797410",
+    "tests/Vulgata.Tests/PreparedPass1/DeepSeekSourceFreeHandshakeHarness.cs": "520AFE78113F7CDBA8C525DD28234CACB103B8288B9933038367934FB940DA58"
+  },
+  "warnings": "The build remains at zero errors with the existing NU1507 package-source and MSB3277 EF assembly-version warnings; scoped diff check emitted only the existing LF-to-CRLF advisory.",
+  "privacy": "Only the approved localhost PostgreSQL instance and disposable test-created databases were accessed. No provider, source-bearing repository, external network, ordinary vulgata database, host setting, or system configuration was accessed or changed.",
+  "observed_at": "2026-08-25T02:11:52.4514053Z",
+  "summary": "T134 passed the complete deterministic, fake-wire, durability, dispatcher, production-boundary, disposable-PostgreSQL, atomicity, restart, privacy, and migration/model no-delta barrier without live provider or source traffic."
+}

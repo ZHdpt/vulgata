@@ -1,0 +1,51 @@
+{
+  "schema_version": "1.0",
+  "gate": "definition-review",
+  "verdict": "ACCEPT",
+  "reviewed_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "reviewed_boundary": {
+    "base_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+    "candidate_commit": null,
+    "diff_sha256": "3205e88631877b00c2c8ea9a6ad2d2c15fdcb64095c4f88b7a80c1339b23264e",
+    "artifact_hashes": {
+      "specs/012-resumable-file-pass1-code-logic/spec.md": "b03687c3a77f52766280669da6cf9e2f9925a44bec1ae9304991f387477a9493",
+      "specs/012-resumable-file-pass1-code-logic/plan.md": "206a5dd8129197cd63a028101245d9d78d63b48af862d85fa69a8e798ee4bf8f",
+      "specs/012-resumable-file-pass1-code-logic/research.md": "5186f39371e8bbc9fbb427d56ffee385e4d80b416daed3562a3ffa516526c79b",
+      "specs/012-resumable-file-pass1-code-logic/data-model.md": "1715bf59a8f3e0295aca888e32c23418f4545f37f15a24f0381426357ce23d3b",
+      "specs/012-resumable-file-pass1-code-logic/quickstart.md": "d074749a285f874bd8bdadd2ca8ac54be522316ee925140d26dbfba720f6693e",
+      "specs/012-resumable-file-pass1-code-logic/contracts/deepseek-strict-result-submission.md": "684d35c74ff07457dc27eae145db2c1538a5b7549f1e82fe38553adca3e2a58d",
+      "specs/012-resumable-file-pass1-code-logic/tasks.md": "613dee3891b639773ac8c9d9770458f88583a009aa3c6d157b43f0cffaa93930"
+    },
+    "owned_paths": [
+      "specs/012-resumable-file-pass1-code-logic/spec.md",
+      "specs/012-resumable-file-pass1-code-logic/plan.md",
+      "specs/012-resumable-file-pass1-code-logic/research.md",
+      "specs/012-resumable-file-pass1-code-logic/data-model.md",
+      "specs/012-resumable-file-pass1-code-logic/quickstart.md",
+      "specs/012-resumable-file-pass1-code-logic/contracts/deepseek-strict-result-submission.md",
+      "specs/012-resumable-file-pass1-code-logic/tasks.md"
+    ]
+  },
+  "reviewed_artifacts": [
+    "AGENTS.md",
+    ".specify/memory/constitution.md",
+    ".specify/extensions.yml",
+    "docs/agent-workflow/artifact-contracts.md",
+    "docs/agent-workflow/review-and-correction.md",
+    "specs/012-resumable-file-pass1-code-logic/spec.md",
+    "specs/012-resumable-file-pass1-code-logic/plan.md",
+    "specs/012-resumable-file-pass1-code-logic/research.md",
+    "specs/012-resumable-file-pass1-code-logic/data-model.md",
+    "specs/012-resumable-file-pass1-code-logic/quickstart.md",
+    "specs/012-resumable-file-pass1-code-logic/contracts/deepseek-strict-result-submission.md",
+    "specs/012-resumable-file-pass1-code-logic/tasks.md",
+    "specs/012-resumable-file-pass1-code-logic/evidence/tdd/failure-28.json",
+    "specs/012-resumable-file-pass1-code-logic/reviews/definition-review/definition-review-22.json",
+    "specs/012-resumable-file-pass1-code-logic/workflow-state.json",
+    "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedPass1JobExecutor.cs",
+    "tests/Vulgata.Tests/PreparedPass1/PreparedPass1JobExecutorStreamingTests.cs",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekIsolatedSourceQualificationTests.cs"
+  ],
+  "findings": [],
+  "summary": "ACCEPT. Independent definition-review attempt 23 verified the exact corrected task hash and re-reviewed T099/T100 against failure-28, the unchanged accepted specification and plan set, the strict-result contract, current executor and qualification test seams, definition-review 22, and workflow state. DR22-001 is closed completely. T099 now requires fake-stream RED coverage for a sole unknown call, multiple all-declared calls, and multiple calls containing an unknown name. Both T099 and T100 define one total deterministic precedence: FunctionCount not equal to one always yields MultipleFunctions without inspecting names for diagnostic selection; only an exactly single call whose name is outside navigate_code and submit_code_logic yields UnknownFunction. The overlap case therefore has exactly one result and cannot vary by implementation order. The pair remains coherent with failure-28 and the accepted fail-closed plan: IllegalFunctionCall remains the sole general category, the public result remains Rejected with unclassified-systemic and empty bytes, invocation is terminated without candidate validation or evidence access, and no request, prompt, tool, invocation serialization, result reason, timeout, retry, persistence, database, provider, logging, host, system, or sibling-client behavior changes. The subtype is execution-scoped, closed, and payload-free; no name, count, ID, argument, content, reasoning, response, source, credential, header, or host path may be retained or exposed, and T084 may print only the subtype. T099 owns only the two named test files and must record honest RED before T100 changes only PreparedPass1JobExecutor.cs, so test and production ownership do not overlap. The dependency chain remains T096 completed -> T099 RED -> T100 GREEN -> fresh-disposable T084 -> T085 -> T086. T084 and T085 remain blocked until the pair is GREEN, and neither T099 nor T100 authorizes provider or source-bearing traffic. The amended artifact contains 100 unique task IDs and no unresolved placeholder. No blocking or major unresolved definition defect, authority conflict, ambiguity, privacy regression, failure-behavior change, coverage gap, ordering defect, ownership overlap, or untestable acceptance criterion remains. ACCEPT advances without duplicate user approval under the standing authorization but performs no implementation, provider traffic, source transfer, database/lifecycle/state mutation, staging, commit, or Git-history change."
+}

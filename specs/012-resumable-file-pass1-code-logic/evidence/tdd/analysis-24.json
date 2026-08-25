@@ -1,0 +1,31 @@
+{
+  "evidence_id": "12-3/implement/150",
+  "kind": "analysis",
+  "status": "current",
+  "stage": "implement",
+  "task": "T085",
+  "source_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "scope": "Content-dark root-cause diagnosis and current-practice audit for a provider-authored receipt identity rejected by the atomic PostgreSQL committer",
+  "root_cause": "CodeLogicFileV2Contract validates receipt consistency only inside the candidate. PreparedSubmitCodeLogicSession therefore captures a candidate whose repeated receipt UUID was never produced by this Worker execution. Pass1CodeLogicDocumentCommitter catches the missing durable receipt later, after the existing bounded local correction opportunity has been lost.",
+  "best_practice_audit": {
+    "deepseek_tool_calls": "The application executes tools and supplies their results; strict mode constrains argument JSON shape but does not establish evidence truth or provenance.",
+    "deepseek_thinking": "The current Worker explicitly disables thinking and preserves the required non-thinking tool-call continuity, so no reasoning-content or wire change is required.",
+    "deepseek_streaming_and_limits": "SSE keep-alive is expected; concurrency two, raw-read inactivity reset, nonresetting absolute cap, and zero SDK retries remain appropriate.",
+    "deepseek_errors": "A successful streamed response with invalid application evidence is not a transport, rate, or provider-server retry case.",
+    "microsoft_extensions_ai": "Automatic function invocation supports one or more tool calls, so shared execution-local provenance state must be thread-safe and independent of completion order."
+  },
+  "minimal_fix": {
+    "owner": "PreparedPass1JobExecutor composition with PreparedNavigateCodeFunction and PreparedSubmitCodeLogicFunction",
+    "ledger": "One bounded, thread-safe, execution-local UUID-only allowlist records non-empty receipt IDs actually returned by admitted navigate_code calls.",
+    "validation": "After unchanged complete parsing and before candidate capture, every candidate-cited receipt ID must belong to the allowlist; an unknown ID returns existing InvalidEvidence and its existing repair code.",
+    "defense_in_depth": "The PostgreSQL committer retains its unchanged durable receipt ownership and bounds query."
+  },
+  "prohibited_changes": [
+    "provider prompt, wire protocol, strict declarations, model, endpoint, sampling, thinking, retry, timeout, or token ceilings",
+    "packet, database schema, migration, durable entity, dependency, API, UI, or scheduling",
+    "source scope, ordinary database, host, network, firewall, service, permission, installed tool, or system configuration"
+  ],
+  "temporary_diagnostics_removed": true,
+  "recorded_at": "2026-08-25T20:08:34.4382708+08:00",
+  "summary": "DeepSeek variability exposed a deterministic local receipt-provenance validation gap; environment and network are not blocking Story 12.3."
+}

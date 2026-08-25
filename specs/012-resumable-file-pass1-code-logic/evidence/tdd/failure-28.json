@@ -1,0 +1,37 @@
+{
+  "evidence_id": "12-3/implement/65",
+  "kind": "failure",
+  "stage": "implement",
+  "task": "T084",
+  "source_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "database": "vulgata_story123_t084_20260825_r15",
+  "provider_result": {
+    "outcome": "Rejected",
+    "reason_code": "unclassified-systemic",
+    "executor_category": "UnclassifiedSystemic",
+    "execution_category": "IllegalFunctionCall",
+    "submission_category": null,
+    "wire_budget_category": null,
+    "provider_http": null,
+    "duration_seconds": 171,
+    "jobs_attempted": 1,
+    "jobs_completed": 0,
+    "later_jobs_sent": false,
+    "endpoint": "https://api.deepseek.com/beta",
+    "model": "deepseek-v4-flash"
+  },
+  "request_identity": {
+    "response_format": "absent",
+    "tool_choice": "absent",
+    "parallel_tool_calls": "absent",
+    "navigate_code_parameters_bytes": 1057,
+    "navigate_code_parameters_sha256": "779250FCFE72F07B59CBE280A0FF537FF7D622BFE847BCB616A39858705A1FDA",
+    "submit_code_logic_parameters_bytes": 13973,
+    "submit_code_logic_parameters_sha256": "3CD6F35EB8E6B6E7BEFBF802B2D3187823A0805A00B2ADFEC8A85082835DB20F"
+  },
+  "diagnosis": "The first isolated source-bearing job reached the provider and returned a streamed function-call response that the executor classified as illegal. Exact projected schema identities match the successful T083 handshake; no provider HTTP rejection, timeout, wire-budget failure, submission validation, database failure, network failure, or host failure was observed. The existing closed observer conflates unknown-function and parallel/multiple-call shapes, so the exact provider response shape is not yet observable without retaining prohibited payload content.",
+  "required_correction": "Add a bounded execution-local diagnostic subtype that distinguishes unknown-name from multiple-call shape without retaining names, arguments, reasoning, content, source, or response bytes. Reproduce with fake streams first, then rerun T084 on a fresh disposable clone. If multiple calls are confirmed, align the prompt/request strategy with the current official DeepSeek default that tool_choice auto may produce one or more tools while preserving Story 12.3 serial invocation and fail-closed authority.",
+  "privacy": "The provider received only the approved job-1 bounded source/context. No key, header, request body, source, reasoning, content, function arguments/results, response bytes, or host path was logged or persisted. Jobs 2 and 3 were not sent.",
+  "observed_at": "2026-08-24T19:30:54.8905463Z",
+  "summary": "Fresh T084 r15 stopped safely on job 1 because the provider emitted an illegal function-call shape; current diagnostics are too coarse to distinguish unknown from multiple calls."
+}

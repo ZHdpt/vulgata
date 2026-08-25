@@ -1,0 +1,66 @@
+{
+  "schema_version": "1.0",
+  "gate": "plan-review",
+  "verdict": "REVISE",
+  "reviewed_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "reviewed_boundary": {
+    "base_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+    "candidate_commit": null,
+    "diff_sha256": "e66a023d10f95cbd73823aa85f69a24a4a531dbe3bc01a7cd8ea56138dfb360c",
+    "artifact_hashes": {
+      "specs/012-resumable-file-pass1-code-logic/spec.md": "b03687c3a77f52766280669da6cf9e2f9925a44bec1ae9304991f387477a9493",
+      "specs/012-resumable-file-pass1-code-logic/plan.md": "cd334e457c515ab89dbec14dc848183ebc0db0af964d31599771e5654c776ebc",
+      "specs/012-resumable-file-pass1-code-logic/research.md": "744875b2ec9525d3c85e8b15fb54061f4e6e6f0d03dd0c691c5982ea4a445543",
+      "specs/012-resumable-file-pass1-code-logic/data-model.md": "0cfa744e8143245e830b3ec9e211e959b831c181b552ab6d759e0888e211d00e",
+      "specs/012-resumable-file-pass1-code-logic/quickstart.md": "7c3ef0193c1ef19d659122a6759c10fb67c433c629fe17c8b6bdb86abdc2822a",
+      "specs/012-resumable-file-pass1-code-logic/contracts/deepseek-strict-result-submission.md": "6deec8d7fa56a8b9fb278072a750d554969f1272f55c8c01dd5869fac2afe162",
+      "specs/012-resumable-file-pass1-code-logic/contracts/navigate-code-contract.md": "e16998558e097ebaf344f36246925be2209c98e7ede8172692785304ce3664ee",
+      "specs/012-resumable-file-pass1-code-logic/contracts/pass1-runtime-contracts.md": "8fb7aac024f9e0b9ace4773a6c7c1f8b66ff8e90b5f4798acf1777383429579c",
+      "specs/012-resumable-file-pass1-code-logic/evidence/tdd/failure-29.json": "99063c3c25531c654e1fa1ba209d9561c385842824481625e877869a88f2a88d",
+      "specs/012-resumable-file-pass1-code-logic/evidence/research/deepseek-v4-current-best-practices-audit.md": "9c63a30905cf97d69b74bc9e3f3f2e8e67ed9b9ab8ccbb0332bbb45b5dca7f74"
+    },
+    "owned_paths": [
+      "specs/012-resumable-file-pass1-code-logic/plan.md",
+      "specs/012-resumable-file-pass1-code-logic/research.md",
+      "specs/012-resumable-file-pass1-code-logic/data-model.md",
+      "specs/012-resumable-file-pass1-code-logic/quickstart.md",
+      "specs/012-resumable-file-pass1-code-logic/contracts/deepseek-strict-result-submission.md",
+      "specs/012-resumable-file-pass1-code-logic/contracts/navigate-code-contract.md",
+      "specs/012-resumable-file-pass1-code-logic/contracts/pass1-runtime-contracts.md"
+    ]
+  },
+  "reviewed_artifacts": [
+    "AGENTS.md",
+    ".specify/memory/constitution.md",
+    "docs/bmad/epics.md",
+    "docs/requirement-draft.md",
+    "docs/bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md",
+    "docs/bmad/planning-artifacts/architecture/august-30-bounded-scanning-design.md",
+    "docs/bmad/planning-artifacts/sprint-change-proposal-2026-08-24-deepseek-strict-result-submission.md",
+    "specs/012-resumable-file-pass1-code-logic/spec.md",
+    "specs/012-resumable-file-pass1-code-logic/plan.md",
+    "specs/012-resumable-file-pass1-code-logic/research.md",
+    "specs/012-resumable-file-pass1-code-logic/data-model.md",
+    "specs/012-resumable-file-pass1-code-logic/quickstart.md",
+    "specs/012-resumable-file-pass1-code-logic/contracts/deepseek-strict-result-submission.md",
+    "specs/012-resumable-file-pass1-code-logic/contracts/navigate-code-contract.md",
+    "specs/012-resumable-file-pass1-code-logic/contracts/pass1-runtime-contracts.md",
+    "specs/012-resumable-file-pass1-code-logic/evidence/tdd/failure-29.json",
+    "specs/012-resumable-file-pass1-code-logic/evidence/research/deepseek-v4-current-best-practices-audit.md",
+    "src/dotnet/Vulgata.Agents/obj/project.assets.json"
+  ],
+  "findings": [
+    {
+      "id": "PR14-001",
+      "severity": "HIGH",
+      "category": "durable-budget-retry-consistency",
+      "artifact": "specs/012-resumable-file-pass1-code-logic/plan.md",
+      "location": "lines 25, 198, 290, 318, 351, 383, 457, and 531-533",
+      "affected_requirement": "FR-014 and FR-061 eight-call navigation ceiling; AD-5 durable eight-attempt budget across the one Worker retry; navigate-code contract lines 87-94; strict-result-submission contract lines 9 and 51; no budget bypass across retry or restart",
+      "evidence": "The plan says the durable navigation budget is shared across the one retry (plan.md:25,196-198), and the navigation contract requires at most eight invocation attempts across all retries with no ninth attempt (contracts/navigate-code-contract.md:87-94). AD-21 instead makes a Guid.Empty/no-receipt callback consume only an execution-local slot without advancing ToolAttemptCount or the durable ordinal, then reconstructs both counters on retry solely from the unchanged store-provided RemainingNavigationBudget (plan.md:290; contracts/deepseek-strict-result-submission.md:51; quickstart.md:92-96). Therefore k no-receipt callbacks in attempt one can disappear after a JobTransient failure or process restart, and attempt two can receive the same durable remaining slot count and execute k additional callbacks beyond the stated job-wide eight-attempt ceiling. The requested retry-reconstruction tests (plan.md:351,383,457,533) do not define or detect this cross-attempt bypass; as written they can enshrine it.",
+      "correction_outcome": "Define one exact fail-closed authority for no-receipt callback consumption across an eligible durable retry and restart while preserving the required rule that Guid.Empty does not advance the durable receipt ordinal. Without adding a migration or new durable ledger, specify whether such a callback makes later Worker retry ineligible, conservatively reduces retry callback capacity from an existing durable fact, or uses another existing persisted authority; reconcile plan, research, data model, quickstart, strict-submission, navigate, and runtime contracts. Add behavioral RED proving the total released navigate_code callbacks across attempt one, restart, and attempt two never exceed eight, including multiple no-receipt calls followed by receipt-bearing siblings and later failure/retry. Do not regenerate tasks until this hidden budget decision is closed.",
+      "earliest_owner": "plan"
+    }
+  ],
+  "summary": "REVISE. AD-21/R-22 otherwise provides a feasible pinned Microsoft.Extensions.AI 10.6.0 whole-turn preflight seam below FICC; atomically rejects unknown, mixed, multi-submit, post-submit, malformed-ID, and over-budget batches before callbacks; executes accepted all-navigation batches serially in provider order; preserves complete reasoning, content, calls, and matching results; measures inactivity from nonzero raw reads while keeping the 25-minute absolute cap and 30-minute lease fixed; rejects ignored thinking sampling fields before send; keeps tool_choice, parallel_tool_calls, and response_format absent; closes the 401/402/403, 400/422, and 408/429/5xx taxonomy; makes no zero-retention claim; and adds no migration, dependency, manual provider loop, sibling-client behavior, host/system change, or Story 12.4/12.5 scope. One material budget contradiction prevents acceptance: Guid.Empty callbacks consume only transient slots, but retry reconstructs those slots solely from unchanged durable remaining budget, allowing no-receipt callbacks from a prior attempt to be forgotten and the job-wide eight-attempt ceiling to be exceeded across retry/restart. This is an earliest-owner plan defect because the accepted specification and existing navigation contract retain the bounded navigation ceiling, while the corrected design has not selected a durable or fail-closed reconstruction rule. The reviewed design-boundary identity is SHA-256 e66a023d10f95cbd73823aa85f69a24a4a531dbe3bc01a7cd8ea56138dfb360c over sorted path-tab-lowercase-hash rows for the seven corrected design artifacts. Prior plan-review-13 and definition-review-23 remain invalid; no task regeneration, implementation, qualification, lifecycle mutation, staging, commit, or Git-history action is authorized."
+}

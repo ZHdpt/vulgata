@@ -1,0 +1,39 @@
+{
+  "evidence_id": "12-3/implement/97",
+  "kind": "test-green",
+  "stage": "implement",
+  "task": "T126",
+  "source_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "focused_command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore -p:WarningLevel=0 --filter \"FullyQualifiedName~PreparedPass1JobExecutorStreamingTests.ExecuteAsync_AllNavigationSaturation_ReplaysCompleteTurnAndSubmitsAfterCapacityPrefixAsync|FullyQualifiedName~PreparedPass1JobExecutorStreamingTests.ExecuteAsync_InitialZero_DirectSubmissionUsesProviderInsteadOfDeferredFallbackAsync|FullyQualifiedName~PreparedPass1JobExecutorStreamingTests.ExecuteAsync_InitialZero_ClosedNavigationThenSubmissionHasNoApplicationEffectsAsync|FullyQualifiedName~PreparedPass1JobExecutorStreamingTests.ExecuteAsync_NineNavigationCallsRemainWholeResponseRejectedAtCapacityEightAsync|FullyQualifiedName~PreparedPass1JobExecutorStreamingTests.ExecuteAsync_ProviderTurnTen_MapsSdkIterationNineAndTerminatesWithoutRequestElevenAsync\" --logger \"console;verbosity=minimal\"",
+  "focused_result": {
+    "total": 17,
+    "passed": 17,
+    "failed": 0,
+    "skipped": 0,
+    "duration_seconds": 0.563,
+    "build_errors": 0
+  },
+  "class_command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --filter \"FullyQualifiedName~PreparedPass1JobExecutorStreamingTests\" --logger \"console;verbosity=minimal\"",
+  "class_result": {
+    "total": 103,
+    "passed": 103,
+    "failed": 0,
+    "skipped": 0,
+    "duration_seconds": 2
+  },
+  "behavior": {
+    "initial_zero": "The strict provider conversation now remains reachable for direct submission or closed navigation results followed by submission.",
+    "saturation": "Legal one-through-eight all-navigation responses execute only the provider-order prefix fitting remaining capacity; every excess original call receives navigation-budget-exhausted without an application effect; above-eight remains a whole-turn rejection.",
+    "turn_mapping": "The serial invoker maps zero-based SDK iteration plus one, allows sole first-or-second submission on provider turn ten, terminates after that invocation, and creates no request eleven.",
+    "admission_privacy": "Preflight retains only provider turn, function count, and admitted prefix length; no call ID, name, arguments, results, source, or provider content is retained."
+  },
+  "bounded_test_correction": "After production made the initial-zero path reachable, one T125 assertion was corrected from ReadOnlyMemory backing-identity comparison to byte-sequence comparison; expected content and all behavioral assertions remained unchanged.",
+  "files": {
+    "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedPass1JobExecutor.cs": "D267431A554CFCA612C3F3B5744B6C92FBA4153654E829D09F2C6FF990B141F5",
+    "tests/Vulgata.Tests/PreparedPass1/PreparedPass1JobExecutorStreamingTests.cs": "A439981FAD1B7742AE84D11717E7AE2F4D1B39E0298098D9C95B690329063D8F"
+  },
+  "warnings": "Existing NU1507 package-source and MSB3277 EF assembly-version warnings remain; zero build or test errors.",
+  "privacy": "No provider, source-bearing repository, database, host tool, credential, request body, response body, function argument/result, or system configuration was accessed or changed.",
+  "observed_at": "2026-08-25T09:00:12.8683711+08:00",
+  "summary": "T126 minimally implements AD-23 in the strict executor and turns all 17 focused saturation/zero/turn cases plus the 103-test executor streaming class GREEN."
+}

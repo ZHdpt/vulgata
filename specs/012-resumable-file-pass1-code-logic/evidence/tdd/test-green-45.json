@@ -1,0 +1,35 @@
+{
+  "evidence_id": "12-3/implement/94",
+  "kind": "test-green",
+  "stage": "implement",
+  "task": "T123",
+  "source_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "focused_command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --nologo -p:WarningLevel=0 -p:GenerateMvcTestManifest=false --filter FullyQualifiedName~ExecuteAsync_IllegalWholeTurnShapesHaveNoApplicationEffectsAsync|FullyQualifiedName~ExecuteAsync_SubmitThenNavigate_RejectsWithoutNavigationAccessAsync --logger console;verbosity=minimal",
+  "focused_result": {
+    "total": 6,
+    "passed": 6,
+    "failed": 0,
+    "skipped": 0
+  },
+  "class_command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --filter FullyQualifiedName~PreparedPass1JobExecutorStreamingTests --logger console;verbosity=minimal",
+  "class_result": {
+    "total": 86,
+    "passed": 86,
+    "failed": 0,
+    "skipped": 0
+  },
+  "behavior": {
+    "priority": "invalid identity, unknown function, turn/state, mixed functions, multiple submissions, navigation unavailable, navigation budget exceeded",
+    "unchanged_execution": "Every newly distinguished illegal shape still stops before FICC receives an update and therefore before callback, reservation, receipt, candidate, or later provider request.",
+    "accepted_paths": "Sole legal submission, bounded all-navigation batches, UnknownFunction, MissingFunction, and external failure mappings remain unchanged."
+  },
+  "files": {
+    "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedPass1JobExecutor.cs": "3BD4EA47CF3B95A650D85F941A06DB56C8DB872D9AB1741B63FE6BCA9B189C90",
+    "tests/Vulgata.Tests/PreparedPass1/PreparedPass1JobExecutorStreamingTests.cs": "613899F1944EE3E9F4F5562BF20109A786FED8EEC9151D108D8B388B215E1EDF",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekIsolatedSourceQualificationTests.cs": "6B1C23EDE6B50AB38AFAD22A03D05D80A930AEDBC2BD82F637177B4287DF6C58"
+  },
+  "warnings": "Existing NU1507 package-source and EF assembly-version warnings remain; zero build or test errors.",
+  "privacy": "No provider, source-bearing repository, database, host tool, credential, request body, response body, function argument/result, or system configuration was accessed or changed.",
+  "observed_at": "2026-08-25T08:16:13.2195235+08:00",
+  "summary": "T123 turns the r18 catch-all into deterministic payload-free topology diagnostics without changing execution effects or accepted tool-loop behavior."
+}

@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0",
   "story": "12.3",
-  "required": true,
+  "required": false,
   "predicates": [
     {
       "predicate_id": "user-visible-workflow",
@@ -9,8 +9,8 @@
       "gate": "required",
       "triggered": false,
       "affected_paths": [],
-      "affected_behavior": "No UI journey is added.",
-      "evidence": ["quality-review-03"]
+      "affected_behavior": "The AD-32 correction adds no UI journey.",
+      "evidence": ["12-3/verify/162", "quality-review-06"]
     },
     {
       "predicate_id": "authentication-authorization",
@@ -19,10 +19,10 @@
       "triggered": true,
       "affected_paths": [
         "src/dotnet/Vulgata.Web/Api/Scans/Pass1ExecutionEndpoints.cs",
-        "tests/Vulgata.Tests/PreparedPass1/Pass1ExecutionApiTests.cs"
+        "tests/Vulgata.Tests/PreparedPass1/Pass1ProductionExecutionTests.cs"
       ],
-      "affected_behavior": "Authenticated Pass 1 start, status, resume, concurrency, and ownership-filtered APIs.",
-      "evidence": ["quality-review-03", "story-12-3/e2e/02-api-harness"]
+      "affected_behavior": "Authenticated System Owner Start and status execution for the approved manifest pair.",
+      "evidence": ["12-3/qualify/161", "12-3/verify/162"]
     },
     {
       "predicate_id": "api-persistence-multi-module",
@@ -37,8 +37,8 @@
         "src/dotnet/Vulgata.Web/Data",
         "tests/Vulgata.Tests/PreparedPass1"
       ],
-      "affected_behavior": "Cross-module Worker dispatch, durable claims, leases, Documents, reconciliation, and API lifecycle.",
-      "evidence": ["quality-review-03", "story-12-3/e2e/01-focused-integration"]
+      "affected_behavior": "Execution-local receipt provenance, streaming Worker/tool dispatch, durable claims, Documents, reconciliation, and API lifecycle.",
+      "evidence": ["12-3/implement/152", "12-3/qualify/156", "12-3/qualify/161", "12-3/verify/162"]
     },
     {
       "predicate_id": "ef-migration-data-lifecycle",
@@ -46,14 +46,13 @@
       "gate": "required",
       "triggered": true,
       "affected_paths": [
-        "src/dotnet/Vulgata.Infrastructure/Data/Migrations/20260821114734_AddResumablePass1CodeLogic.cs",
         "src/dotnet/Vulgata.Infrastructure/Data/PreparedPass1Store.cs",
-        "tests/Vulgata.Tests/PreparedPass1/Pass1MigrationTests.cs",
-        "tests/Vulgata.Tests/PreparedPass1/Pass1PairPostgreSqlAtomicTests.cs",
-        "tests/Vulgata.Tests/PreparedPass1/Pass1DocumentPostgreSqlAtomicTests.cs"
+        "src/dotnet/Vulgata.Infrastructure/Data/Pass1CodeLogicDocumentCommitter.cs",
+        "tests/Vulgata.Tests/PreparedPass1/Pass1DocumentPostgreSqlAtomicTests.cs",
+        "tests/Vulgata.Tests/PreparedPass1/Pass1MigrationTests.cs"
       ],
-      "affected_behavior": "Pass 1 schema, atomic lifecycle, replay, rollback, reconciliation, and terminal state.",
-      "evidence": ["quality-review-03", "story-12-3/e2e/01-focused-integration"]
+      "affected_behavior": "Atomic Code Logic Document commit/replay, receipt defense, reconciliation, and terminal handoff with zero migration delta in this correction.",
+      "evidence": ["12-3/qualify/156", "12-3/qualify/161", "12-3/verify/162"]
     },
     {
       "predicate_id": "existing-integration-coverage",
@@ -61,12 +60,8 @@
       "gate": "may-skip",
       "triggered": true,
       "affected_paths": ["tests/Vulgata.Tests/PreparedPass1"],
-      "affected_behavior": "Focused and authenticated API coverage pass; the corrected authorized approved-pair DeepSeek execution exercised the real Worker/tool path but produced no accepted Code Logic Document.",
-      "evidence": [
-        "story-12-3/e2e/01-focused-integration",
-        "story-12-3/e2e/02-api-harness-correction",
-        "story-12-3/e2e/03-host-prerequisites"
-      ]
+      "affected_behavior": "Current-boundary tests prove invented/mixed/excess/cross-execution receipt rejection, isolated source-bearing DeepSeek execution, authenticated production Start-to-ReadyForResolution, typed local tools, atomic persistence, reconciliation, and immutable replay.",
+      "evidence": ["12-3/implement/152", "12-3/qualify/156", "12-3/qualify/161", "12-3/verify/162"]
     },
     {
       "predicate_id": "documentation-or-refactor",
@@ -74,118 +69,144 @@
       "gate": "may-skip",
       "triggered": false,
       "affected_paths": [],
-      "affected_behavior": "Story 12.3 materially changes runtime behavior.",
-      "evidence": ["quality-review-03"]
+      "affected_behavior": "The correction materially changes pre-capture validation behavior.",
+      "evidence": ["quality-review-06"]
     }
   ],
-  "coverage_override": null,
-  "rationale": "Required E2E was rerun against the independently accepted correction with two approved Story 12.2 manifests, the pinned host runtime, and the user-authorized DeepSeek endpoint/model. The model initiated six bounded navigate_code calls, but no code-logic/file-v2 result passed acceptance. The sixth ordinary failure above the budget of five immediately stopped new claims; one already-leased job closed as the seventh failure, then 143 remaining jobs were atomically cancelled and exact FailedPass1 outcome/inventory were persisted with probe state cleared. The affected Pass 1 regression slice passed 149/149 and the Web build has 0 errors. No coverage override is valid because the real provider path has not produced an accepted Code Logic Document.",
+  "coverage_override": {
+    "test_ids": [
+      "Vulgata.Tests.PreparedPass1.PreparedPass1JobExecutorStreamingTests",
+      "Vulgata.Tests.PreparedPass1.Pass1DeepSeekIsolatedSourceQualificationTests.ThreeIsolatedSourceJobs_CompleteCommitAndReplayWithoutLeakingPayloadsAsync",
+      "Vulgata.Tests.PreparedPass1.Pass1ProductionExecutionTests.AuthenticatedApprovedPair_StartsRealRunAtEveryLimit_AndPersistsTerminalEvidence",
+      "Vulgata.Tests.PreparedPass1.NavigateCodeRealToolQualificationTests",
+      "Vulgata.Tests.PreparedPass1.NavigateCodeLeaseSecurityCorrectionTests",
+      "Vulgata.Tests.PreparedPass1.Pass1ProductionBoundaryQualificationTests",
+      "Vulgata.Tests.PreparedPass1.Pass1DocumentCommitTests"
+    ],
+    "covered_predicate_ids": [
+      "authentication-authorization",
+      "api-persistence-multi-module",
+      "ef-migration-data-lifecycle"
+    ],
+    "source_boundary": {
+      "base_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+      "candidate_commit": null,
+      "diff_sha256": "B2A30A617FDBB4E444071491979F9C80DCD39DE65FC1F727040F2FB00B25550C",
+      "artifact_hashes": {
+        "specs/012-resumable-file-pass1-code-logic/tasks.md": "E3A5F1BBED02AD10AF66520B0D142542D4C8FFB0F48C911024F6B1AB6182EE6B",
+        "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedNavigateCodeFunction.cs": "388A4C6D28960E487907A84B8448CBF32F0FEB75003EC34E7C6E172659C18044",
+        "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedSubmitCodeLogicFunction.cs": "564030AAB3187AA0C16F2813B54D863FEA82D2E7043755BD27BA592AD9264362",
+        "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedPass1JobExecutor.cs": "BC9E322876AA540E380A3B2CB46717B4FE8A31678D73465F0C02E5C19C6A9FEE",
+        "tests/Vulgata.Tests/PreparedPass1/PreparedPass1JobExecutorStreamingTests.cs": "8C2773C1D92143C340C5941BC7574BC6284F54D323B8BF786BF11E94CC99F825",
+        "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekIsolatedSourceQualificationTests.cs": "4B35189B870E7E24E1CFB4527DE4F1CE7B1BC32626A0528255623674B1F25B3D",
+        "tests/Vulgata.Tests/PreparedPass1/Pass1ProductionExecutionTests.cs": "64903F6B641CB1F1CBD91398D742D8BB31F1BCB5E6919576DDD1ECA8A26D92B0",
+        "specs/012-resumable-file-pass1-code-logic/evidence/tdd/command-37.json": "7E5527FD48B1A07781A51C8500948279F6BEFA08A474010AAD565C2E662FD733",
+        "specs/012-resumable-file-pass1-code-logic/evidence/tdd/command-38.json": "8F8EE063BDBEF2477B1AA529465C99E4F023436EB895540579EE032C3F37B017",
+        "specs/012-resumable-file-pass1-code-logic/evidence/tdd/command-39.json": "FB6949433B2BC80A0413153A6184E3B55E4C56DD1A02FF873A71A282E2AE609D",
+        "specs/012-resumable-file-pass1-code-logic/reviews/convergence/convergence-04.md": "16F10B170B548A6A9AF1AE3A4209CCBD2C03A68D4FEEDA136C11FEBB78405CCC",
+        "specs/012-resumable-file-pass1-code-logic/reviews/quality-review/quality-review-06.json": "E571CD11FFE00B54CAB3E7229EBD7D677E37FEF302A841158B17AE28C134EED5"
+      },
+      "owned_paths": [
+        "src/dotnet/Vulgata.Agents/WorkerExecution",
+        "src/dotnet/Vulgata.Core/DomainServices",
+        "src/dotnet/Vulgata.Infrastructure/Analysis/PreparedNavigation",
+        "src/dotnet/Vulgata.Infrastructure/Data",
+        "src/dotnet/Vulgata.Web/Api/Scans",
+        "src/dotnet/Vulgata.Web/Data/PreparedPass1ExecutionHostedService.cs",
+        "src/dotnet/Vulgata.Web/Data/PreparedPass1JobRunner.cs",
+        "tests/Vulgata.Tests/PreparedPass1",
+        "specs/012-resumable-file-pass1-code-logic",
+        "artifacts/qualification/story-12.3"
+      ]
+    },
+    "passing_evidence_ids": [
+      "12-3/implement/152",
+      "12-3/qualify/156",
+      "12-3/qualify/161",
+      "12-3/verify/162"
+    ],
+    "completeness_rationale": "The fake-stream suite exercises the exact AD-32 receipt-provenance change, including invented, mixed, excess-sibling, duplicate, reverse-order, and cross-execution cases. T084 exercises three isolated source-bearing streamed DeepSeek jobs and atomic replay. T085 exercises the authenticated production DI graph from API Start through 150/150 jobs, Java/XML Documents and Source Anchors, reconciliation, ReadyForResolution, and immutable replay. T086 refreshes the production-boundary/privacy artifact, full graph replay mutations, PostgreSQL concurrency, migration delta, build, and adjacent regressions on the unchanged candidate. Together they cover every triggered observable boundary."
+  },
+  "rationale": "The matrix initially requires E2E for authentication, multi-module persistence, and observable data lifecycle. A complete current-boundary coverage override is valid because the exact changed behavior and all triggered integration boundaries already passed in existing integration and live qualification tests; another 150-job provider run would duplicate current evidence without increasing boundary coverage.",
   "covering_tests": [
-    "Vulgata.Tests.PreparedPass1.Pass1ExecutionApiTests",
-    "Vulgata.Tests.PreparedPass1.Pass1ProductionExecutionCapacityTests",
-    "Vulgata.Tests.PreparedPass1.Pass1PairPostgreSqlAtomicTests",
-    "Vulgata.Tests.PreparedPass1.Pass1DocumentPostgreSqlAtomicTests",
-    "Vulgata.Tests.PreparedPass1.Pass1MigrationTests",
-    "Vulgata.Tests.PreparedPass1.Pass1ProductionProviderOutageTests",
-    "Vulgata.Tests.PreparedPass1.Pass1HostRuntimeQualificationTests"
+    "Vulgata.Tests.PreparedPass1.PreparedPass1JobExecutorStreamingTests",
+    "Vulgata.Tests.PreparedPass1.Pass1DeepSeekIsolatedSourceQualificationTests",
+    "Vulgata.Tests.PreparedPass1.Pass1ProductionExecutionTests",
+    "Vulgata.Tests.PreparedPass1.NavigateCodeRealToolQualificationTests",
+    "Vulgata.Tests.PreparedPass1.NavigateCodeLeaseSecurityCorrectionTests",
+    "Vulgata.Tests.PreparedPass1.Pass1ProductionBoundaryQualificationTests",
+    "Vulgata.Tests.PreparedPass1.Pass1DocumentCommitTests"
   ],
-  "owner": "e2e-runner",
+  "owner": "orchestrator",
   "source_boundary": {
-    "base_commit": "29e889badc00db671fcabf80f50918e15381052c",
-    "candidate_commit": "4b464e608486b01d8241264537f0b299eb80ca49",
-    "diff_sha256": "5d84e1fa3bd7317cf1eb6312aeb39d724b2bd5388b6acac26cd4dae5e39b346f",
+    "base_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+    "candidate_commit": null,
+    "diff_sha256": "B2A30A617FDBB4E444071491979F9C80DCD39DE65FC1F727040F2FB00B25550C",
     "artifact_hashes": {
-      "specs/012-resumable-file-pass1-code-logic/spec.md": "7dba4ddf1d808dd6327468920d8ae2e0bf8130881a95c10166858c407e2f98a1",
-      "specs/012-resumable-file-pass1-code-logic/plan.md": "9535a4b31c16cb927a11ef4e6c71d6b3398536e53dedda38c4dd70ece3b0226f",
-      "specs/012-resumable-file-pass1-code-logic/tasks.md": "fd46fa773182880f7cd6a0113793b45e83432f5efcb2ec867881ebcb9ca964f6",
-      "specs/012-resumable-file-pass1-code-logic/contracts/pass1-runtime-contracts.md": "9a1ea96d61e27c4e17203ff40b57fecba88e34e195e6e2287c17d3554412e065",
-      "specs/012-resumable-file-pass1-code-logic/reviews/convergence/convergence-03.md": "f4b98ff1fe1b5646194158ec2d6325e464c2d54cc26be29fa15b300eb818a878",
-      "specs/012-resumable-file-pass1-code-logic/verification/final-verification.md": "7385bf772d04f89e5fd90a5b44ceb8019e228d182917495eddf51eb725ed67ae",
-      "specs/012-resumable-file-pass1-code-logic/reviews/quality-review/quality-review-04.json": "0bc4ac8ac3634b1903dfe66597e902d5d32a5d0a6788b070ec7715738bcfed5a",
-      "specs/012-resumable-file-pass1-code-logic/evidence/e2e/test-harness-correction-01.json": "f2b5d4989365136da49f757575f885ca87bbdd01492dfd0bc5f4e4d84498751a",
-      "src/dotnet/Vulgata.Web/Data/PreparedPass1ExecutionHostedService.cs": "06ce25ef7dc41d604254cff213641ab51c6c82877e290bc1929991a739b441bf",
-      "src/dotnet/Vulgata.Web/Data/PreparedPass1JobRunner.cs": "04816ecc1de96b5bd04febee9f383a7b7775b7f487a701453726821a4fc52944",
-      "src/dotnet/Vulgata.Infrastructure/Data/PreparedPass1Store.cs": "907ef68c6470c8fda8585f95cd660f7e5726bb9e9e9b79c185c199ddcde5c2be"
+      "specs/012-resumable-file-pass1-code-logic/evidence/tdd/command-37.json": "7E5527FD48B1A07781A51C8500948279F6BEFA08A474010AAD565C2E662FD733",
+      "specs/012-resumable-file-pass1-code-logic/evidence/tdd/command-38.json": "8F8EE063BDBEF2477B1AA529465C99E4F023436EB895540579EE032C3F37B017",
+      "specs/012-resumable-file-pass1-code-logic/evidence/tdd/command-39.json": "FB6949433B2BC80A0413153A6184E3B55E4C56DD1A02FF873A71A282E2AE609D",
+      "specs/012-resumable-file-pass1-code-logic/reviews/convergence/convergence-04.md": "16F10B170B548A6A9AF1AE3A4209CCBD2C03A68D4FEEDA136C11FEBB78405CCC",
+      "specs/012-resumable-file-pass1-code-logic/reviews/quality-review/quality-review-06.json": "E571CD11FFE00B54CAB3E7229EBD7D677E37FEF302A841158B17AE28C134EED5"
     },
     "owned_paths": [
       "src/dotnet/Vulgata.Agents/WorkerExecution",
       "src/dotnet/Vulgata.Core/DomainServices",
-      "src/dotnet/Vulgata.Infrastructure/Analysis",
+      "src/dotnet/Vulgata.Infrastructure/Analysis/PreparedNavigation",
       "src/dotnet/Vulgata.Infrastructure/Data",
-      "src/dotnet/Vulgata.Infrastructure/Git",
       "src/dotnet/Vulgata.Web/Api/Scans",
-      "src/dotnet/Vulgata.Web/Data/PreparedPass1ExecutionHostedService.cs",
-      "src/dotnet/Vulgata.Web/Data/PreparedPass1JobRunner.cs",
+      "src/dotnet/Vulgata.Web/Data",
       "tests/Vulgata.Tests/PreparedPass1",
-      "tests/Vulgata.Tests/Migrations"
+      "specs/012-resumable-file-pass1-code-logic",
+      "artifacts/qualification/story-12.3"
     ]
   },
-  "result": "failed",
+  "result": "skipped-covered",
   "evidence_ids": [
-    "story-12-3/e2e/01-focused-integration",
-    "story-12-3/e2e/02-api-harness-correction",
-    "story-12-3/e2e/03-host-prerequisites",
-    "story-12-3/e2e/06-approved-pair-deepseek"
+    "12-3/implement/152",
+    "12-3/qualify/156",
+    "12-3/qualify/161",
+    "12-3/verify/162",
+    "quality-review-06"
   ],
-  "decided_at": "2026-08-23T09:37:58.6689000Z",
-  "completed_at": "2026-08-23T09:37:58.6689000Z",
+  "decided_at": "2026-08-25T16:14:00Z",
+  "completed_at": "2026-08-25T16:14:00Z",
   "blocker_prerequisites": [],
   "execution_evidence": [
     {
-      "evidence_id": "story-12-3/e2e/01-focused-integration",
-      "total": 95,
-      "passed": 95,
-      "failed": 0,
-      "skipped": 0,
-      "duration": "2m22s",
-      "result": "passed"
-    },
-    {
-      "evidence_id": "story-12-3/e2e/02-api-harness-correction",
-      "total": 11,
-      "passed": 11,
+      "evidence_id": "12-3/implement/152",
+      "total": 120,
+      "passed": 120,
       "failed": 0,
       "skipped": 0,
       "result": "passed"
     },
     {
-      "evidence_id": "story-12-3/e2e/03-approved-pair",
+      "evidence_id": "12-3/qualify/156",
+      "total": 3,
+      "passed": 3,
+      "failed": 0,
+      "skipped": 0,
+      "result": "passed"
+    },
+    {
+      "evidence_id": "12-3/qualify/161",
       "total": 1,
-      "passed": 0,
-      "failed": 0,
-      "skipped": 1,
-      "result": "blocked-skipped"
-    },
-    {
-      "evidence_id": "story-12-3/e2e/04-provider-outage",
-      "total": 10,
-      "passed": 9,
-      "failed": 0,
-      "skipped": 1,
-      "result": "passed-with-skip"
-    },
-    {
-      "evidence_id": "story-12-3/e2e/05-host-runtime",
-      "total": 4,
       "passed": 1,
-      "failed": 1,
-      "skipped": 2,
-      "result": "blocked",
-      "failure": "VULGATA_T046_CODEGRAPH_COMMAND and approved-pair host prerequisites absent"
+      "failed": 0,
+      "skipped": 0,
+      "result": "passed",
+      "jobs_completed": 150,
+      "documents_committed": 150,
+      "terminal_phase": "ReadyForResolution"
     },
     {
-      "evidence_id": "story-12-3/e2e/06-approved-pair-deepseek",
-      "total": 1,
-      "passed": 0,
-      "failed": 1,
-      "skipped": 0,
-      "result": "failed",
-      "llm_involved": true,
-      "navigation_receipts": 6,
-      "accepted_documents": 0,
-      "terminal_phase": "FailedPass1",
-      "failure": "Seven JobTransient failures were durably accounted: the sixth immediately entered policy drain above the budget of five, one already-leased job closed as the seventh, and no code-logic/file-v2 Document passed acceptance.",
-      "evidence_path": "specs/012-resumable-file-pass1-code-logic/evidence/e2e/approved-pair-deepseek-qualification-01.json"
+      "evidence_id": "12-3/verify/162",
+      "prepared_pass1_passed": 740,
+      "replay_boundary_passed": 97,
+      "adjacent_passed": 442,
+      "story_failures": 0,
+      "result": "passed"
     }
   ]
 }

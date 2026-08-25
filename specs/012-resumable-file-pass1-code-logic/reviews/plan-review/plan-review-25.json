@@ -1,0 +1,49 @@
+{
+  "review_id": "story-12-3-plan-review-25",
+  "mode": "plan-only",
+  "verdict": "REJECT",
+  "reviewed_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "reviewed_hashes": {
+    "spec.md": "745400BDC572B047E858F33608528BE2276CD530D952376025E6845F9C0B1543",
+    "plan.md": "EA892C8A5F81B89F481C81B19620D0341E4A9E3E2AEA147F881E4FD17511FB23",
+    "research.md": "7BCFC2E5944FAD9B9F55BA379BF8200A7C2EE54F65E19BBBCD37420DF11759C0",
+    "data-model.md": "DDDE7CBCD3822E3D9749C5108DBE81C199D76202D09B6A804ED3C5B312E17A54",
+    "quickstart.md": "2E7AC3E1B8E25D142C89CD9300F2460B880BD2906D2981B8AB22C52D697E5D8F",
+    "contracts/deepseek-strict-result-submission.md": "1D1C7236A07413BE94E3416AD4F1018C5646FC2AEDB0B318690992618B428AE6",
+    "evidence/research/deepseek-v4-current-best-practices-audit.md": "E1E7EFE3A96DBCF7DC1C5D184A0031F847B95FA4A51F5D9C837BC23082DDBA41"
+  },
+  "findings": [
+    {
+      "id": "AD29-PR-001",
+      "severity": "HIGH",
+      "earliest_owner": "plan",
+      "locations": [
+        "plan.md:380-392",
+        "plan.md:473",
+        "plan.md:501-502",
+        "plan.md:508-516",
+        "plan.md:553-555",
+        "plan.md:658-675"
+      ],
+      "evidence": "AD-29 is defined and the test inventory mentions category/repair-code pairs, but the normative Task-Generation Impact still permits only AD-28 work. The traceability, planned-change disclosure, and inline self-review also stop at AD-28/R-29 and declare that older boundary task-ready. These competing current clauses can regenerate an AD-28 tail while omitting the new AD-29 RED/GREEN and qualification work.",
+      "correction": "Synchronize the Task-Generation Impact, traceability/governance tables, and inline self-review to AD-29/R-30 and the r30-r33 evidence. Require a bounded AD-29 tail covering all four exact category/code pairs, every mismatch/unknown no-send case, prompt definitions, second-valid and second-invalid behavior, privacy exclusions, unchanged ordinary tool result/local validation/ceilings, regression and zero-model-delta barriers, a correction-bearing source-free request through the production projector, then fresh T084 -> T085 -> T086. Mark completed AD-28 work as preserved historical authority."
+    }
+  ],
+  "closed_checks": [
+    "The four-category mapping is total and deterministic.",
+    "Current parser classification makes InvalidEvidence specifically the Source Anchor validation branch; the selected full-range-anchor instruction is source-grounded.",
+    "InvalidShape and InvalidSemantics safely converge on the existing smallest truthful Document guidance; InvalidBinding uses the exact packet already present.",
+    "The ordinary FICC tool result remains unchanged; repairCode appears only in the next legal terminal projection.",
+    "The local code-logic/file-v2 validator remains the sole acceptance authority; no automatic candidate repair or provider-schema authority is introduced.",
+    "Candidate bytes, validator/exception details, paths, schema fragments, additional source, and provider-authored fields remain excluded.",
+    "Two submissions, ten turns, no request eleven, durable retry, streaming, deadlines, byte limits, model, endpoint, credential, persistence, and host/system boundaries remain unchanged.",
+    "The pinned current-practice audit correctly limits DeepSeek strict mode to transport shape and uses the documented multi-round caller-owned outcome-resend pattern."
+  ],
+  "residual_proof_obligations": [
+    "Behavioral RED/GREEN for every exact category/code pair and every mismatch/unknown rejection before send.",
+    "Prompt tests proving all three code definitions remain bounded and disclose no candidate or validator detail.",
+    "Second valid submission succeeds; second invalid submission terminates with no request eleven.",
+    "Source-free production projection, nonlive regressions, zero EF model delta, fresh T084, T085, and T086 remain ordered."
+  ],
+  "summary": "The AD-29 design itself is bounded, feasible, privacy-safe, and consistent with local semantic authority. The plan cannot yet advance because its normative task-generation, traceability, governance, and self-review sections still authorize only AD-28."
+}

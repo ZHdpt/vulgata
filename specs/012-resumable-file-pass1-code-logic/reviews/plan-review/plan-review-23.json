@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0",
+  "gate": "plan-review",
+  "verdict": "ACCEPT",
+  "reviewed_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "reviewed_boundary": {
+    "base_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+    "candidate_commit": null,
+    "artifact_hashes": {
+      "specs/012-resumable-file-pass1-code-logic/spec.md": "11cbfb17bfe5a8a37621fb432ec2d4d8af4d7ed4ee34f4f8ea5aad57d4bff946",
+      "specs/012-resumable-file-pass1-code-logic/plan.md": "5c441722437377615c84f99f44935023ae1051f19cf4699cce322cbed0209861",
+      "specs/012-resumable-file-pass1-code-logic/research.md": "9dfa9634610f86077cc153ec7bcee00978ebaa8b09eb4735909bdafc7522d5c1",
+      "specs/012-resumable-file-pass1-code-logic/contracts/deepseek-strict-result-submission.md": "4c611950d8579282e10577388724140e47b1f82292950d6aebad0103d4a71728",
+      "specs/012-resumable-file-pass1-code-logic/evidence/research/deepseek-v4-current-best-practices-audit.md": "b04c1e8c7507739ffc2c0f6e8af6ec659431fc49fc6bf1bb652a3cc6889b753b",
+      "specs/012-resumable-file-pass1-code-logic/evidence/tdd/failure-37.json": "5279690f95b01375deda1ba5d648b5d30c239696da935713b6fac969a1b6f250"
+    }
+  },
+  "findings": [],
+  "closed_findings": [
+    "AD27-PR-001: the specification separates the two local FICC functions from turn-appropriate provider-visible declaration arrays",
+    "AD27-PR-002: active plan and contract clauses consistently require ordinary two-tool and terminal submit-only one-tool arrays",
+    "Historical R-18/R-25/AD-24 request-ten two-tool language is explicitly superseded by R-28/AD-27"
+  ],
+  "residual_risks": [
+    "Provider acceptance of the exact terminal one-tool shape remains assigned to the refreshed source-free gate.",
+    "Impossible provider responses remain fail-closed through unchanged complete-turn preflight.",
+    "Fresh T084 must stop before T085 on any fixed failure subtype."
+  ],
+  "summary": "ACCEPT. AD-27 is internally consistent, source-grounded, testable, privacy-safe, minimally scoped, and task-generatable without provider, persistence, source, host, network, or system expansion."
+}

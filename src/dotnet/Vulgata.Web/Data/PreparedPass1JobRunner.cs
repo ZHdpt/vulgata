@@ -14,6 +14,26 @@ public sealed class PreparedPass1JobRunner(
 {
     private static readonly TimeSpan _leaseDuration = TimeSpan.FromMinutes(30);
 
+    private static async Task<bool> EnsureNavigationCallsMarkerAsync(
+        IServiceProvider services,
+        PreparedPass1Activation activation,
+        PreparedPass1ClaimResult claim,
+        CancellationToken cancellationToken)
+    {
+        IPass1NavigationCallsMarkerRepairStore markerStore =
+            services.GetRequiredService<IPass1NavigationCallsMarkerRepairStore>();
+        return await markerStore.EnsureNavigationCallsMarkerAsync(
+            new(
+                activation.PairExecutionId,
+                claim.JobId,
+                claim.JobStateVersion,
+                claim.PairStateVersion,
+                claim.LeaseToken,
+                claim.LeaseExpiresAt,
+                PreparedPass1AuthorizationBinding.Create(activation.AuthorizationScope)),
+            cancellationToken);
+    }
+
     internal async Task RunPairAsync(
         PreparedPass1ExecutionActivator.ActivationSlot slot,
         CancellationToken cancellationToken)
@@ -125,6 +145,15 @@ public sealed class PreparedPass1JobRunner(
     {
         await using AsyncServiceScope scope = scopeFactory.CreateAsyncScope();
         IServiceProvider services = scope.ServiceProvider;
+        if (!await EnsureNavigationCallsMarkerAsync(
+                services,
+                activation,
+                claim,
+                cancellationToken))
+        {
+            return;
+        }
+
         PreparedPass1WorkerPacket? hydratedPacket = await services
             .GetRequiredService<IPreparedPass1ClaimedPacketSource>()
             .HydrateAsync(
@@ -154,6 +183,15 @@ public sealed class PreparedPass1JobRunner(
                 PreparedPass1AuthorizationBinding.Create(activation.AuthorizationScope)),
         };
 
+        if (!await EnsureNavigationCallsMarkerAsync(
+                services,
+                activation,
+                claim,
+                cancellationToken))
+        {
+            return;
+        }
+
         PreparedPass1DispatchRequest request = CreateDispatchRequest(hydratedPacket);
 
         PreparedPass1DispatchResult dispatch;
@@ -164,16 +202,39 @@ public sealed class PreparedPass1JobRunner(
         }
         catch (Exception exception) when (exception is InvalidDataException or ArgumentException)
         {
-            await RecordFailureAsync(
-                services, activation.PairExecutionId, claim,
-                ScanJobFailureCategory.Integrity, cancellationToken);
+            if (await EnsureNavigationCallsMarkerAsync(
+                    services,
+                    activation,
+                    claim,
+                    cancellationToken))
+            {
+                await RecordFailureAsync(
+                    services, activation.PairExecutionId, claim,
+                    ScanJobFailureCategory.Integrity, cancellationToken);
+            }
             return;
         }
         catch (Exception exception) when (exception is not OperationCanceledException)
         {
-            await RecordFailureAsync(
-                services, activation.PairExecutionId, claim,
-                ScanJobFailureCategory.Unclassified, cancellationToken);
+            if (await EnsureNavigationCallsMarkerAsync(
+                    services,
+                    activation,
+                    claim,
+                    cancellationToken))
+            {
+                await RecordFailureAsync(
+                    services, activation.PairExecutionId, claim,
+                    ScanJobFailureCategory.Unclassified, cancellationToken);
+            }
+            return;
+        }
+
+        if (!await EnsureNavigationCallsMarkerAsync(
+                services,
+                activation,
+                claim,
+                cancellationToken))
+        {
             return;
         }
 
@@ -360,6 +421,7 @@ public sealed class PreparedPass1JobRunner(
             packet.SourceUtf8)
         {
             RemainingNavigationBudget = packet.RemainingNavigationBudget,
+            NavigationBudget = packet.NavigationBudget,
             ServerAuthorization = packet.ServerAuthorization,
         };
         return new(
@@ -368,6 +430,7 @@ public sealed class PreparedPass1JobRunner(
             packet.CommunicationClassifications,
             1);
     }
+
 
     private static ScanJobFailureCategory ClassifyRejectedResult(
         PreparedPass1JobDispatchResult result) => result.ReasonCode switch

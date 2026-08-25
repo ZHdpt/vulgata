@@ -1,0 +1,42 @@
+{
+  "evidence_id": "12-3/implement/82",
+  "kind": "test-red",
+  "stage": "implement",
+  "task": "T113",
+  "source_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter \"FullyQualifiedName~Pass1DeepSeekContractQualificationTests.SourceFreeHandshake_402And422RemainSourceFreeAndMapToConfigurationOutcomeAsync|FullyQualifiedName~PreparedPass1JobExecutorStreamingTests.ExecuteAsync_StatusFamiliesReturnClosedSanitizedOutcomesWithoutRawProviderEvidenceAsync|FullyQualifiedName~PreparedPass1JobExecutorStreamingTests.NormalizeAndValidateDeepSeekRequestBody_RejectsInjectedSamplingFieldBeforeTransport|FullyQualifiedName~Pass1DeepSeekContractQualificationTests.SourceFreeHandshake_UsesSupportedDefaultsWithoutSamplingOrControlFieldsAsync|FullyQualifiedName~Pass1DeepSeekContractQualificationTests.SourceFreeHandshake_RecordsOnlySanitizedHashesAndBytes_WithoutSourceBearingRequestFieldsAsync|FullyQualifiedName~Pass1ProductionBoundaryQualificationTests.ProductionBoundary_DoesNotClaimProviderRetentionOrPersistRawFailurePayloads\" --no-restore --logger \"console;verbosity=normal\"",
+  "result": {
+    "build": "passed-with-existing-warnings",
+    "passed": 12,
+    "failed": 7,
+    "skipped": 0,
+    "exit_code": 1
+  },
+  "expected_failures": [
+    "Worker HTTP 402 is currently a generic Rejected/unclassified-systemic response instead of the closed provider-configuration family",
+    "the source-free harness currently maps HTTP 402 and 422 to ProviderUnavailable instead of ProviderConfiguration",
+    "the final-wire normalizer currently preserves injected temperature, top_p, presence_penalty, and frequency_penalty instead of rejecting before transport"
+  ],
+  "passing_boundaries": [
+    "Worker 401/403 map to provider-configuration",
+    "Worker 400/422 map to sanitized ProviderClientRequestRejected and unclassified-systemic",
+    "Worker 408/429/500/502/503 map to provider-unavailable",
+    "supported-default requests omit sampling and control fields",
+    "source-free evidence and Worker results retain no source, reasoning, raw request, or raw response payload",
+    "production and source-free code make no unsupported zero-retention or training guarantee"
+  ],
+  "future_green_assertions": [
+    "the Worker treats 401/402/403 as provider-configuration without payload retention",
+    "the Worker retains distinct 400/422 client-rejection and 408/429/5xx unavailable families",
+    "the source-free harness maps 402/422 explicitly to ProviderConfiguration",
+    "all four incompatible sampling fields reject before transport and are not silently stripped or forwarded"
+  ],
+  "artifact_sha256": {
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekContractQualificationTests.cs": "ABBB55A4C0C8902EB5FD522820C85F1AD0B4058DC8178D72B9FDDF233DF0CAC1",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1ProductionBoundaryQualificationTests.cs": "C0BB00B2B25585B8EC875D3D0EABB04A20045BDF6BF4ABC51D815D98D7E89E78",
+    "tests/Vulgata.Tests/PreparedPass1/PreparedPass1JobExecutorStreamingTests.cs": "EC0063B1A4CE3C6E2EB8A07E5FC8A3113D3A7F76D59547345414A71DFA9D5E27"
+  },
+  "privacy": "No live provider, source-bearing request, database, network, credential, host setting, or system configuration was accessed or changed.",
+  "warnings": "Existing NU1507 and EF assembly-version warnings remain; seven focused behavioral failures are expected RED.",
+  "observed_at": "2026-08-24T22:53:09.3294623Z"
+}

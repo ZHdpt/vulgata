@@ -1,0 +1,35 @@
+{
+  "evidence_id": "12-3/implement/75",
+  "kind": "test-red",
+  "stage": "implement",
+  "task": "T107",
+  "source_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --nologo -p:WarningLevel=0 -p:GenerateMvcTestManifest=false --filter \"FullyQualifiedName~ExecutorComposition_ExposesTheDurableReservationStore|FullyQualifiedName~AllNavigationCallbacks_ReserveBeforeSerialCallback|FullyQualifiedName~ReservationFailureStopsBeforeAffected\" --logger \"console;verbosity=minimal\"",
+  "result": {
+    "build": "passed-with-existing-warnings",
+    "passed": 0,
+    "failed": 4,
+    "skipped": 0,
+    "exit_code": 1
+  },
+  "expected_failures": [
+    "PreparedPass1JobExecutor has no IPass1NavigationAttemptReservationStore constructor dependency",
+    "a legal two-navigation turn invokes callback then callback instead of reserve then callback for each sibling",
+    "first-reservation failure records zero reservation calls and therefore cannot stop the first callback through the missing consumer",
+    "second-reservation failure records zero reservation calls and therefore cannot stop the second and later siblings through the missing consumer"
+  ],
+  "future_green_assertions": [
+    "whole-turn eligibility remains zero-reservation and zero-effect for illegal batches",
+    "each eligible navigation callback is preceded by exactly one durable reservation and callbacks remain serial",
+    "call ID plus current lease and job/pair versions bind to the exact reserved ordinal",
+    "each sibling consumes only the latest store-returned cursor and cumulative accepted/refused evidence",
+    "a null, stale, or failed first/later reservation invokes no affected or later callback and sends no later provider request"
+  ],
+  "artifact_sha256": {
+    "tests/Vulgata.Tests/PreparedPass1/NavigateCodeContractTests.cs": "662D7CDEAC1E44D628C3D9A4736D8F52E3DBB01C003326F1245BDDA0A6DB9595",
+    "tests/Vulgata.Tests/PreparedPass1/PreparedPass1JobExecutorStreamingTests.cs": "41CA7477CAE588F122D8F2E571F5A52E1E308482B4D8352D4850D496AF41F303"
+  },
+  "privacy": "No provider, source-bearing request, database, network, credential, host setting, or system configuration was accessed or changed.",
+  "warnings": "Existing NU1507 and EF assembly-version warnings remain; the four focused behavioral failures are expected RED.",
+  "observed_at": "2026-08-24T21:57:26.7944452Z"
+}

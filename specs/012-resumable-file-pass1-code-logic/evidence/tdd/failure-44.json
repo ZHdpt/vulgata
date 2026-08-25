@@ -1,0 +1,42 @@
+{
+  "evidence_id": "12-3/implement/153",
+  "kind": "failure",
+  "status": "diagnosed",
+  "stage": "implement",
+  "task": "T179",
+  "source_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "failed_command": "<approved-postgres-admin>; <live-opt-ins-and-provider-key-cleared>; dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore -p:WarningLevel=0 --filter \"FullyQualifiedName~Vulgata.Tests.PreparedPass1&FullyQualifiedName!~Pass1HostRuntimeQualificationTests&FullyQualifiedName!~NavigateCodeRealToolQualificationTests&FullyQualifiedName!~Pass1ProductionExecutionTests&FullyQualifiedName!~Pass1ExecutionApiTests\" --logger \"console;verbosity=minimal\" -clp:ErrorsOnly",
+  "result": {
+    "exit_code": 1,
+    "total": 744,
+    "passed": 733,
+    "failed": 7,
+    "skipped": 4,
+    "duration_seconds": 195
+  },
+  "failure_groups": [
+    {
+      "count": 6,
+      "suite": "Pass1DeepSeekStreamingQualificationTests",
+      "classification": "stale deterministic fixture",
+      "detail": "Five tests construct their accepted document through CreateDeferredCallsFallback, which embeds one synthetic BoundExceeded navigation receipt. One theory has two cases. The fake executions either perform no navigate_code call or use NoOpNavigationService, whose response ReceiptId is Guid.Empty, so AD-32 correctly rejects the synthetic ID as unobserved."
+    },
+    {
+      "count": 1,
+      "suite": "Pass1DeepSeekPromptCompositionTests",
+      "classification": "child-process prerequisite omitted",
+      "detail": "The barrier command omitted the already-approved AnalysisRuntime__JdtLsDistributionArchivePath, so DI failed with jdt_distribution_archive_missing before the composition assertion. The verified archive exists and no installation or host/system change is required."
+    }
+  ],
+  "excluded_causes": [
+    "production receipt-ledger behavior",
+    "DeepSeek endpoint, model, authentication, availability, or response",
+    "outbound network, streaming transport, inactivity timeout, or absolute timeout",
+    "PostgreSQL availability or ordinary database mutation",
+    "host or system configuration change"
+  ],
+  "pre_failure_test_hash": "A10D7589CB715DF573B6401433667698816038D1DA0131351CE70AA9CCB5CAD2",
+  "privacy": "The failed barrier cleared provider credentials and live opt-ins and sent no provider or source-bearing request. PostgreSQL fixtures remained disposable. No ordinary database, host/system, workflow, or Git mutation occurred.",
+  "observed_at": "2026-08-25T21:00:49.4385991+08:00",
+  "next_step": "Replace only the five stale fallback-document constructions with a locally valid receipt-free document helper, retain all wire/timing assertions, and rerun with the approved archive path passed explicitly to the child process."
+}

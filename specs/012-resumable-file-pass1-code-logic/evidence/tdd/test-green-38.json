@@ -1,0 +1,37 @@
+{
+  "evidence_id": "12-3/implement/83",
+  "kind": "test-green",
+  "stage": "implement",
+  "task": "T114",
+  "source_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "focused_command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter \"FullyQualifiedName~Pass1DeepSeekContractQualificationTests.SourceFreeHandshake_402And422RemainSourceFreeAndMapToConfigurationOutcomeAsync|FullyQualifiedName~PreparedPass1JobExecutorStreamingTests.ExecuteAsync_StatusFamiliesReturnClosedSanitizedOutcomesWithoutRawProviderEvidenceAsync|FullyQualifiedName~PreparedPass1JobExecutorStreamingTests.NormalizeAndValidateDeepSeekRequestBody_RejectsInjectedSamplingFieldBeforeTransport|FullyQualifiedName~Pass1DeepSeekContractQualificationTests.SourceFreeHandshake_UsesSupportedDefaultsWithoutSamplingOrControlFieldsAsync|FullyQualifiedName~Pass1DeepSeekContractQualificationTests.SourceFreeHandshake_RecordsOnlySanitizedHashesAndBytes_WithoutSourceBearingRequestFieldsAsync|FullyQualifiedName~Pass1ProductionBoundaryQualificationTests.ProductionBoundary_DoesNotClaimProviderRetentionOrPersistRawFailurePayloads\" --no-restore --logger \"console;verbosity=normal\"",
+  "focused_result": {
+    "build": "passed-with-existing-warnings",
+    "passed": 19,
+    "failed": 0,
+    "skipped": 0,
+    "exit_code": 0
+  },
+  "barrier_command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter \"FullyQualifiedName~Pass1DeepSeekContractQualificationTests|FullyQualifiedName~PreparedPass1JobExecutorStreamingTests|FullyQualifiedName~Pass1ProductionBoundaryQualificationTests\" --no-restore --logger \"console;verbosity=minimal\"",
+  "barrier_result": {
+    "build": "passed-with-existing-warnings",
+    "passed": 139,
+    "failed": 0,
+    "skipped": 2,
+    "exit_code": 0
+  },
+  "implementation": {
+    "status_families": "Worker HTTP 401/402/403 map to provider-configuration, 400/422 retain the sanitized client-rejection family, and 408/429/5xx retain provider-unavailable.",
+    "source_free_mapping": "The source-free harness maps 400/401/402/403/422 to ProviderConfiguration while preserving source-free evidence.",
+    "sampling": "Injected temperature, top_p, presence_penalty, and frequency_penalty are rejected by final-wire validation before transport.",
+    "privacy": "Only bounded sanitized diagnostics are retained; no raw request, raw response, source, reasoning, or unsupported provider retention claim is added.",
+    "unchanged": "The provider health probe, probe driver, durable no-tools probe behavior, provider retry policy, schema, migration, source scope, and system configuration remain unchanged."
+  },
+  "artifact_sha256": {
+    "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedPass1JobExecutor.cs": "C5B4CD73FD8A85D34ED849477F730FD97D3F51E9580E6A53FEC4B9082B22F881",
+    "tests/Vulgata.Tests/PreparedPass1/DeepSeekSourceFreeHandshakeHarness.cs": "4DB67EF4B451C1EB4D19D7D9F9B5CC5DEDC78AB272E849FCADAB8566658BE288"
+  },
+  "network": "No live provider, source-bearing request, database, network, credential, host setting, or system configuration was accessed or changed.",
+  "warnings": "Existing NU1507 and EF assembly-version warnings remain; the only skipped tests are the two opt-in live-provider qualifications.",
+  "observed_at": "2026-08-24T22:56:34.4197099Z"
+}

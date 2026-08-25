@@ -1,0 +1,57 @@
+{
+  "review_id": "story-12-3-definition-review-47",
+  "task_id": "AD32-T085-DEFINITION-47",
+  "mode": "definition-amendment",
+  "verdict": "ACCEPT",
+  "implementation_authorized": true,
+  "source_checkpoint": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "reviewed_hashes": {
+    "spec.md": "3412704EB3A6C71BF062C4FBAD2E8FA12B0DBDDDDAB80FDBBBC1F6FAAF8E81DA",
+    "plan.md": "EF966A8045F10D1D85812B4E8789FA83DFBFB1A08D9A5670E5A83C00B58306FE",
+    "research.md": "DDB71AF7BE7D97D64839668434555A11829A86A279AAC62FAEFC7AAFF9FFC6A7",
+    "data-model.md": "25B5EA3C5A00A9774B6E3976BCE0D3DC03452942274C64AA033AE928D37A201F",
+    "contracts/pass1-runtime-contracts.md": "CF3359D18761C2021C9C47AD44A7903B63A06633ED501D04013BD88E05FCAF13",
+    "tasks.md": "60D1208C6369773B1815CE12F0341D02B869518052F8058206D77517F9C226CD",
+    "evidence/tdd/failure-45.json": "F56BAA3DD78835311AE328A5A58CE529EEFDCF42238AEEE58FFD0FFF9C5C1F43",
+    "evidence/tdd/analysis-26.json": "E34C8F6F2CDAD046AA2D7F50B930AAAE6002F29F3B69828EA16802A8BBEDE5C4",
+    "src/dotnet/Vulgata.Core/Entities/Pass1PairExecution.cs": "C0A2E43F3A3F041702BF06A074E26FDB4D55487E381E08A58137C96BAE80778F",
+    "src/dotnet/Vulgata.Web/Data/PreparedPass1Coordinator.cs": "C1FC1AC2D2C0ACA544C5D07B15FDD9F5CE3E8241AC039E44FDEB0DB39DA01239",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1ProductionExecutionCapacityTests.cs": "C586AF7E652248D7AEBEC95F15056BF4967FCA130E78A0AE9DEF4117CA492486",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1ProductionExecutionTests.cs": "7BDD419521903ED8CF2EEF895C15B486EDE8760816F2F6ADC950F3D895311CD5"
+  },
+  "task_metrics": {
+    "total": 180,
+    "unique_ids": 180,
+    "duplicate_ids": 0,
+    "pending_ids": ["T085", "T086"],
+    "ordered_chain": "T176 completed -> T177 completed -> T178 completed -> T179 completed -> T180 completed -> T085 -> T086"
+  },
+  "authorization_scope": {
+    "allowed_repository_edit": "tests/Vulgata.Tests/PreparedPass1/Pass1ProductionExecutionTests.cs only",
+    "allowed_change": "Replace the stale pair-success assertion with exact ReadyForResolution and replace WaitForTerminalAsync's mixed vocabulary with ReadyForResolution, FailedPass1, FailedIntegrity, FailedSecurity, Cancelled, PausedProviderUnavailable, PausedOperatorCorrection, and PausedInspection.",
+    "required_preservation": "All authenticated Start, concurrency, timeout, live Worker, PostgreSQL, source/runtime, receipt, Document, reconciliation, handoff, immutability, and replay assertions.",
+    "required_retry": "Rerun T085 on a new fresh pre-Start disposable clone; do not reuse r8.",
+    "production_or_api_change_authorized": false,
+    "provider_or_source_change_authorized": false,
+    "database_schema_or_migration_change_authorized": false,
+    "host_network_or_system_change_authorized": false,
+    "new_planned_change_approval_required": false
+  },
+  "findings": [],
+  "closed_checks": [
+    "Pass1PairExecutionPhase contains ReadyForResolution and no Completed or CompletedWithWarnings value; the coordinator exposes binding.Pair.Phase.ToString().",
+    "ReadyForResolution ends Story 12.3 and is already asserted through the public status seam by Pass1ProductionExecutionCapacityTests.",
+    "The current T062 success assertion and polling set use mixed Scan/coordination vocabulary and omit exact pair terminal values.",
+    "T085 owns only the single test file and a fresh retry; T086 remains ordered after it.",
+    "The test-only vocabulary correction triggers no planned-change approval."
+  ],
+  "residual_proof_obligations": [
+    "Keep the polling set exactly aligned to Pass1PairExecutionPhase stop outcomes.",
+    "Require ReadyForResolution as the sole successful Story 12.3 pair outcome.",
+    "Preserve every existing live qualification assertion outside the two stale phase predicates.",
+    "Run the amended test on a new fresh pre-Start disposable database and proceed to T086 only after it passes."
+  ],
+  "reviewer": "independent definition-reviewer",
+  "repository_actions_performed_by_reviewer": false,
+  "summary": "ACCEPT. The one-file qualification-harness correction aligns T062 with the public pair contract and creates no production or planned-change scope."
+}

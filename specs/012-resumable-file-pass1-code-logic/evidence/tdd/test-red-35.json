@@ -1,0 +1,42 @@
+{
+  "evidence_id": "12-3/implement/80",
+  "kind": "test-red",
+  "stage": "implement",
+  "task": "T111",
+  "source_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter \"FullyQualifiedName~ExecuteAsync_FakeWire_SuccessfulSseDataIsParsedAndRawBytesAreNotReturned|FullyQualifiedName~ExecuteAsync_RawSseDataAtEof_ClosesWithoutRetainingRawBytes|FullyQualifiedName~ExecuteAsync_CommentOnlyRawReadResetsInactivityBeforeParsedUpdate|FullyQualifiedName~ExecuteAsync_RawSseReadFailureReturnsSanitizedEmptyEvidence\" --no-restore --logger \"console;verbosity=normal\"",
+  "result": {
+    "build": "passed-with-existing-warnings",
+    "passed": 3,
+    "failed": 1,
+    "skipped": 0,
+    "exit_code": 1
+  },
+  "expected_failure": "ExecuteAsync_CommentOnlyRawReadResetsInactivityBeforeParsedUpdateAsync expected Completed but returned ProviderUnavailable because inactivity advances only on parsed SDK updates, not on a successful nonzero raw SSE comment read.",
+  "passing_boundaries": [
+    "successful SSE data bytes parse into the canonical result without returning raw framing",
+    "EOF closes the raw stream without retaining raw comments",
+    "raw-read failure returns sanitized empty evidence",
+    "the complete two-class inventory otherwise passes EOF, cancellation, exact raw and assembled bounds, parsed-update continuity, and sanitized failure behavior"
+  ],
+  "broader_result": {
+    "scope": "Pass1DeepSeekStreamingQualificationTests and PreparedPass1JobExecutorStreamingTests",
+    "passed": 140,
+    "failed": 1,
+    "skipped": 0,
+    "failure": "the same intentional comment-only raw-activity RED"
+  },
+  "future_green_assertions": [
+    "every successful nonzero raw response read pulses the inactivity clock before parsing",
+    "comment-only SSE bytes reset inactivity while producing no parsed update",
+    "zero-byte EOF and cancelled or failed reads do not create activity",
+    "raw chunks remain transient and exact raw/assembled bounds remain unchanged"
+  ],
+  "artifact_sha256": {
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekStreamingQualificationTests.cs": "2B59B33A17AD902A25B431E8A5E130C9732172CF344122769E211C020AA51C4F",
+    "tests/Vulgata.Tests/PreparedPass1/PreparedPass1JobExecutorStreamingTests.cs": "D1E582843D8C682F4265B74008E18D18FD1D8067E3FC55910B932BF0AE3594E8"
+  },
+  "privacy": "No provider, source-bearing request, database, network, credential, host setting, or system configuration was accessed or changed.",
+  "warnings": "Existing NU1507 and EF assembly-version warnings remain; the single focused behavioral failure is expected RED.",
+  "observed_at": "2026-08-24T22:35:59.1077014Z"
+}

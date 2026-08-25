@@ -13,7 +13,7 @@ public sealed class PreparedPass1NavigationService(
     IJavaAnalysisSessionFactory javaSessionFactory,
     ICodeGraphAnalysisPort codeGraph,
     IRevisionBoundSourceReader sourceReader,
-    TimeProvider? timeProvider = null) : IPass1NavigationService
+    TimeProvider? timeProvider = null) : IPass1NavigationService, IPass1ReservedNavigationService
 {
     private const int _maximumCalls = 8;
     private const int _maximumResults = 20;
@@ -35,6 +35,18 @@ public sealed class PreparedPass1NavigationService(
 
     public async Task<PreparedPass1NavigationResponse> NavigateAsync(
         PreparedPass1NavigationRequestInput request,
+        CancellationToken cancellationToken) =>
+        await NavigateCoreAsync(request, null, cancellationToken).ConfigureAwait(false);
+
+    public async Task<PreparedPass1NavigationResponse> NavigateReservedAsync(
+        PreparedPass1NavigationRequestInput request,
+        PreparedPass1NavigationReservationTicket reservation,
+        CancellationToken cancellationToken) =>
+        await NavigateCoreAsync(request, reservation, cancellationToken).ConfigureAwait(false);
+
+    private async Task<PreparedPass1NavigationResponse> NavigateCoreAsync(
+        PreparedPass1NavigationRequestInput request,
+        PreparedPass1NavigationReservationTicket? reservation,
         CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
@@ -52,7 +64,8 @@ public sealed class PreparedPass1NavigationService(
         byte[] targetIdentity = CreateTargetIdentity(request);
 
         if (request.ToolAttemptOrdinal is < 1 or > _maximumCalls ||
-            scope.ToolAttemptCount >= _maximumCalls ||
+            scope.ToolAttemptCount > _maximumCalls ||
+            reservation is null && scope.ToolAttemptCount >= _maximumCalls ||
             scope.AcceptedCallCount >= _maximumCalls)
         {
             return await CommitBoundAsync(
@@ -61,6 +74,7 @@ public sealed class PreparedPass1NavigationService(
                 requestDigest,
                 targetIdentity,
                 PreparedPass1NavigationBoundKind.Calls,
+                reservation,
                 cancellationToken).ConfigureAwait(false);
         }
 
@@ -78,6 +92,7 @@ public sealed class PreparedPass1NavigationService(
                 requestDigest,
                 targetIdentity,
                 PreparedPass1NavigationBoundKind.Depth,
+                reservation,
                 cancellationToken).ConfigureAwait(false);
         }
 
@@ -96,6 +111,7 @@ public sealed class PreparedPass1NavigationService(
                 null,
                 [],
                 0,
+                reservation,
                 cancellationToken).ConfigureAwait(false);
         }
 
@@ -110,6 +126,7 @@ public sealed class PreparedPass1NavigationService(
                 requestDigest,
                 targetIdentity,
                 PreparedPass1NavigationBoundKind.Results,
+                reservation,
                 cancellationToken).ConfigureAwait(false);
         }
 
@@ -177,6 +194,7 @@ public sealed class PreparedPass1NavigationService(
                 null,
                 [],
                 0,
+                reservation,
                 cancellationToken).ConfigureAwait(false);
         }
 
@@ -188,6 +206,7 @@ public sealed class PreparedPass1NavigationService(
                 requestDigest,
                 targetIdentity,
                 PreparedPass1NavigationBoundKind.EvidenceBytes,
+                reservation,
                 cancellationToken).ConfigureAwait(false);
         }
 
@@ -203,6 +222,7 @@ public sealed class PreparedPass1NavigationService(
             null,
             descriptors,
             evidenceBytes,
+            reservation,
             cancellationToken).ConfigureAwait(false);
     }
 
@@ -306,6 +326,7 @@ public sealed class PreparedPass1NavigationService(
         ReadOnlyMemory<byte> requestDigest,
         ReadOnlyMemory<byte> targetIdentity,
         PreparedPass1NavigationBoundKind boundKind,
+        PreparedPass1NavigationReservationTicket? reservation,
         CancellationToken cancellationToken) =>
         await CommitAsync(
             scope,
@@ -316,6 +337,7 @@ public sealed class PreparedPass1NavigationService(
             boundKind,
             [],
             0,
+            reservation,
             cancellationToken).ConfigureAwait(false);
 
     private async Task<PreparedPass1NavigationResponse> CommitAsync(
@@ -327,6 +349,7 @@ public sealed class PreparedPass1NavigationService(
         PreparedPass1NavigationBoundKind? boundKind,
         IReadOnlyList<PreparedPass1EvidenceDescriptor> results,
         int evidenceBytes,
+        PreparedPass1NavigationReservationTicket? reservation,
         CancellationToken cancellationToken)
     {
         var draft = new PreparedPass1NavigationReceiptDraft(
@@ -339,11 +362,25 @@ public sealed class PreparedPass1NavigationService(
             results.Count,
             evidenceBytes,
             targetIdentity);
-        Guid? receiptId = await _receiptSink.CommitAsync(
-            scope,
-            request,
-            draft,
-            cancellationToken).ConfigureAwait(false);
+        PreparedPass1NavigationReservationTicket? replacement =
+            reservation is not null
+                ? await _receiptSink.CommitReservedAsync(
+                    scope,
+                    request,
+                    reservation,
+                    draft,
+                    cancellationToken).ConfigureAwait(false)
+                : null;
+        Guid? receiptId = replacement?.ReceiptId;
+        if (reservation is null)
+        {
+            receiptId = await _receiptSink.CommitAsync(
+                scope,
+                request,
+                draft,
+                cancellationToken).ConfigureAwait(false);
+        }
+
         return receiptId is { } committed && committed != Guid.Empty
             ? new PreparedPass1NavigationResponse(
                 outcome,
@@ -353,7 +390,8 @@ public sealed class PreparedPass1NavigationService(
                 boundKind,
                 results.Count,
                 evidenceBytes,
-                [.. results.Select(ToResult)])
+                [.. results.Select(ToResult)],
+                replacement)
             : Empty(PreparedPass1NavigationOutcome.Unavailable, Guid.Empty, request, null);
     }
 

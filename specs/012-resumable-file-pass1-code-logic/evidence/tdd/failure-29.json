@@ -1,0 +1,49 @@
+{
+  "evidence_id": "12-3/implement/68",
+  "kind": "failure",
+  "stage": "implement",
+  "task": "T084",
+  "source_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "database": "vulgata_story123_t084_20260825_r16",
+  "provider_result": {
+    "outcome": "Rejected",
+    "reason_code": "unclassified-systemic",
+    "executor_category": "UnclassifiedSystemic",
+    "execution_category": "IllegalFunctionCall",
+    "function_call_subtype": "MultipleFunctions",
+    "submission_category": null,
+    "wire_budget_category": null,
+    "provider_http": null,
+    "duration_seconds": 58,
+    "jobs_attempted": 1,
+    "jobs_completed": 0,
+    "later_jobs_sent": false,
+    "endpoint": "https://api.deepseek.com/beta",
+    "model": "deepseek-v4-flash"
+  },
+  "request_identity": {
+    "response_format": "absent",
+    "tool_choice": "absent",
+    "parallel_tool_calls": "absent",
+    "navigate_code_parameters_bytes": 1057,
+    "navigate_code_parameters_sha256": "779250FCFE72F07B59CBE280A0FF537FF7D622BFE847BCB616A39858705A1FDA",
+    "submit_code_logic_parameters_bytes": 13973,
+    "submit_code_logic_parameters_sha256": "3CD6F35EB8E6B6E7BEFBF802B2D3187823A0805A00B2ADFEC8A85082835DB20F"
+  },
+  "diagnosis": "The bounded T099/T100 subtype proves DeepSeek emitted more than one function call in one assistant response. The accepted executor intentionally rejected the response before invoking any call. The current official Chat Completions reference states that the default tool_choice auto may call one or more tools, while the current pass1 prompt describes the two functions but does not explicitly instruct the model to emit exactly one function call per assistant response. No hidden name, count, ID, argument, reasoning, content, response bytes, or source was retained, so the call combination remains intentionally unknown.",
+  "excluded_causes": [
+    "unknown function name",
+    "provider HTTP rejection",
+    "schema capability or declaration drift",
+    "network failure",
+    "streaming inactivity or absolute timeout",
+    "wire-budget overflow",
+    "submission validation",
+    "database failure",
+    "host or system configuration"
+  ],
+  "required_correction": "Complete the approved whole-path DeepSeek best-practices audit, correct the accepted plan where current first-party guidance invalidates prior assumptions, independently review the corrected plan/definition, then use RED/GREEN implementation and a fresh disposable database before retrying T084. T085 remains blocked.",
+  "privacy": "The provider received only the approved job-1 bounded source/context. No credential, header, request/response body, source, prompt, function details, reasoning, content, tool argument/result, or host path was logged or persisted. Jobs 2 and 3 were not sent.",
+  "observed_at": "2026-08-24T19:47:32.6507511Z",
+  "summary": "T084 r16 confirms the DeepSeek blocker is a multiple-function-call response under the provider's auto tool selection, not an environment, network, schema, timeout, database, or system failure."
+}

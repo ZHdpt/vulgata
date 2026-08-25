@@ -1,0 +1,47 @@
+{
+  "evidence_id": "12-3/implement/128",
+  "kind": "failure",
+  "status": "resolved",
+  "stage": "implement",
+  "task": "T154",
+  "attempt": "r26",
+  "source_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "database": "vulgata_story123_t084_20260825_r26",
+  "database_template": "vulgata_story121_feffce36e44c48238a6e55c6742c374c",
+  "command": "VULGATA_T084_ISOLATED_SOURCE_JOBS=1 VULGATA_T062_QUALIFICATION_CONNECTION=<fresh-r26-disposable-database> VULGATA_T062_WORKER_PROVIDER_API_KEY=<present-secret> <approved-source-and-runtime-bindings> dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --no-restore -p:WarningLevel=0 --filter FullyQualifiedName=Vulgata.Tests.PreparedPass1.Pass1DeepSeekIsolatedSourceQualificationTests.ThreeIsolatedSourceJobs_CompleteCommitAndReplayWithoutLeakingPayloadsAsync --logger console;verbosity=normal -clp:ErrorsOnly",
+  "result": {
+    "total": 1,
+    "passed": 0,
+    "failed": 1,
+    "elapsed_seconds": 69,
+    "failure_line": "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekIsolatedSourceQualificationTests.cs:216",
+    "expected": "Replayed",
+    "actual": "Conflict"
+  },
+  "observed": {
+    "deepseek_result_outcome": "Completed",
+    "schema_identity": "code-logic/file-v2",
+    "first_atomic_commit": "Committed",
+    "immediate_exact_replay": "Conflict",
+    "completed_jobs": 1,
+    "pending_jobs": 149,
+    "document_versions": 1,
+    "logical_documents": 1,
+    "navigation_receipts": 1,
+    "pass1_outcomes": 0,
+    "pair_phase": "Running",
+    "pair_circuit": "Closed"
+  },
+  "diagnosis": "The qualification creates CommittedAt from live DateTimeOffset.UtcNow with 100-nanosecond ticks. PostgreSQL stores timestamptz at microsecond precision, but exact replay compared persisted graph CreatedAt values to the original unnormalized request timestamp. A deterministic one-tick PostgreSQL regression reproduced Committed followed by Conflict without any provider call.",
+  "excluded_causes": [
+    "DeepSeek availability or schema validity",
+    "streaming or inactivity/absolute timeout",
+    "network, endpoint, model, authentication, or provider HTTP failure",
+    "JDT-LS, CodeGraph, Java, archive, host, or system failure",
+    "database availability, migration, or atomic first-commit failure"
+  ],
+  "privacy": "Only approved bounded job-1 source/context was sent. No provider response, function arguments/results, reasoning, assistant content, source bytes, packet, credential, request body, or host path was retained. Only fixed outcome categories and disposable-database counts were recorded; ordinary vulgata and system configuration were untouched.",
+  "required_correction": "Normalize the execution-local UTC commit timestamp to PostgreSQL microsecond precision at the sole atomic commit boundary before any graph write or replay comparison; prove the exact sub-microsecond case RED/GREEN and rerun all atomic/nonlive gates before a fresh disposable T084.",
+  "observed_at": "2026-08-25T14:24:03+08:00",
+  "summary": "T084 r26 proves the DeepSeek terminal-history blocker is fixed for job 1 and exposes an independent PostgreSQL replay precision defect; T085 remains blocked."
+}

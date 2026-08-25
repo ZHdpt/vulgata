@@ -1,0 +1,43 @@
+{
+  "evidence_id": "12-3/plan/53",
+  "kind": "analysis",
+  "stage": "plan",
+  "source_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "artifact_paths": [
+    "specs/012-resumable-file-pass1-code-logic/evidence/research/deepseek-transcript-budget-best-practices.md",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekStreamingQualificationTests.cs",
+    "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedPass1JobExecutor.cs"
+  ],
+  "artifact_sha256": {
+    "specs/012-resumable-file-pass1-code-logic/evidence/research/deepseek-transcript-budget-best-practices.md": "AB4DC4B2B17269901BE4B90CBF22461BA2E28C1C51E6AF77F4EBD248B57697E1",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekStreamingQualificationTests.cs": "97FE42785A2F68A6D961A6D6FFE240B6C3A81B0DB82272F1DCABBC2F568BFDA9",
+    "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedPass1JobExecutor.cs": "F16AD68DBDB8BF7F926BC0F6C16FED3AC37A6A4EE6EF85B77D0D341C4B504789"
+  },
+  "official_source_findings": {
+    "provider_requirements": [
+      "stream responses as SSE and consume them with cancellation",
+      "use the beta route and strict true on every function for DeepSeek strict mode",
+      "replay complete reasoning_content with assistant tool calls on every later tool-bearing request",
+      "use the documented max_tokens field for Chat Completions"
+    ],
+    "vulgata_policy": [
+      "16777216-byte raw, assembled, per-assistant, and aggregate assistant bounds",
+      "17416192-byte complete outgoing body bound",
+      "32768 output-token setting, five-minute inactivity, 25-minute absolute cap, and zero SDK retries"
+    ],
+    "wire_gaps": [
+      "the pinned Microsoft/OpenAI adapter may serialize ChatOptions.MaxOutputTokens as max_completion_tokens rather than DeepSeek's documented max_tokens",
+      "production relies on DeepSeek's default thinking mode instead of explicitly binding thinking.type enabled"
+    ]
+  },
+  "correction": {
+    "preserve": "Complete reasoning replay, strict beta routing, local validation, privacy, zero retries, all numeric safety caps, atomic persistence, and Story 12.3 scope.",
+    "tests": "Use exact inclusive comparisons at the deterministic accounting seam, plus reachable public-executor SSE/wire tests for the original 131072-byte blocker, raw-before-assembled precedence, aggregate/body no-send, cancellation, privacy, and the actual serialized token/thinking fields.",
+    "production": "Raise the accepted constants, add checked aggregate assistant validation, and patch/assert the final SDK request so DeepSeek receives max_tokens 32768 and explicit thinking enabled without retaining or logging content."
+  },
+  "system_changes": false,
+  "provider_calls": 0,
+  "source_bearing_calls": 0,
+  "observed_at": "2026-08-24T16:24:57.8578245Z",
+  "summary": "Primary-source review preserves the safety design but invalidates unreachable public-boundary claims and adds two production wire-contract proofs before another T084 attempt."
+}

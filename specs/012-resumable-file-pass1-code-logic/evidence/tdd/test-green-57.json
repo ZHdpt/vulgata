@@ -1,0 +1,44 @@
+{
+  "evidence_id": "12-3/implement/112",
+  "kind": "test-green",
+  "status": "current",
+  "stage": "implement",
+  "task": "T139",
+  "source_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "commands": [
+    "$env:VULGATA_T083_SOURCE_FREE_HANDSHAKE=$null; $env:VULGATA_T084_ISOLATED_SOURCE_JOBS=$null; $env:VULGATA_T062_APPROVED_PAIR_REAL=$null; dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore -p:WarningLevel=0 --filter \"FullyQualifiedName~PreparedPass1JobExecutorStreamingTests.ExecuteAsync_TurnTenTwoSubmissions_UsesDistinctTerminalTopologySubtypeAsync|FullyQualifiedName~PreparedPass1JobExecutorStreamingTests.ExecuteAsync_TurnTenIllegalShape_StopsWithoutAnAdditionalCallbackAsync|FullyQualifiedName~PreparedPass1JobExecutorStreamingTests.ExecuteAsync_ProviderIgnoresNamedTerminalChoice_NavigationRemainsPayloadFreeAsync|FullyQualifiedName~PreparedPass1JobExecutorStreamingTests.ExecuteAsync_IllegalWholeTurnShapesHaveNoApplicationEffectsAsync\" --logger \"console;verbosity=minimal\"",
+    "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --no-restore -p:WarningLevel=0 --filter \"FullyQualifiedName~PreparedPass1JobExecutorStreamingTests\" --logger \"console;verbosity=minimal\"",
+    "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --no-restore -p:WarningLevel=0 --filter \"FullyQualifiedName~Pass1DeepSeekStreamingQualificationTests|FullyQualifiedName~Pass1DeepSeekContractQualificationTests|FullyQualifiedName~Pass1DeepSeekIsolatedSourceQualificationTests\" --logger \"console;verbosity=minimal\""
+  ],
+  "results": [
+    { "scope": "T137 exact focused barrier", "total": 8, "passed": 8, "failed": 0, "skipped": 0, "duration_seconds": 0.444 },
+    { "scope": "complete executor streaming class", "total": 106, "passed": 106, "failed": 0, "skipped": 0, "duration_seconds": 2 },
+    {
+      "scope": "nonlive DeepSeek streaming, contract, and isolated-source classes",
+      "total": 154,
+      "passed": 151,
+      "failed": 0,
+      "skipped": 3,
+      "duration_seconds": 1,
+      "expected_skips": [
+        "two-shape source-free live capability",
+        "approved File Code Unit live contract qualification",
+        "T084 three isolated source jobs"
+      ]
+    }
+  ],
+  "verified": [
+    "terminal subtype priority, zero effects, sole submission, nonterminal multiple submission, and no request eleven",
+    "ordinary and terminal wire identities, both strict declarations, ten-turn bound, initial-zero and saturation behavior",
+    "raw, assembled, per-message, aggregate, outgoing-body, inactivity, absolute-time, zero-retry, and privacy bounds"
+  ],
+  "files": {
+    "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedPass1JobExecutor.cs": "014A1328ADA482CF80B9BFC9C2923F3E56A0DCB8FBCC91092119E0CF9C4CE043",
+    "tests/Vulgata.Tests/PreparedPass1/PreparedPass1JobExecutorStreamingTests.cs": "5DD4B96646F157A9BF9617A4A77B34762F978F8A3DD85116FD529D65F8019589",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekIsolatedSourceQualificationTests.cs": "E7B1488E4F090CF7CA9AE591D909F4CEE436E1BD93BE9999092947D8BCFFA27A"
+  },
+  "warnings": "The build remains at zero errors with the existing NU1507 package-source and MSB3277 Entity Framework assembly-version warnings.",
+  "privacy": "Live opt-ins were removed for the commands. No provider, source, database, network, host, system, credential, or live response was accessed or changed.",
+  "observed_at": "2026-08-25T11:20:45.0007513+08:00",
+  "summary": "T139 passed the exact diagnostic, complete executor, and complete nonlive DeepSeek regression barrier; fresh T084 is now permitted."
+}

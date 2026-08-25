@@ -1,0 +1,31 @@
+{
+  "evidence_id": "12-3/implement/30",
+  "kind": "test-green",
+  "stage": "implement",
+  "source_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "artifact_paths": [
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekContractQualificationTests.cs",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1ProductionBoundaryQualificationTests.cs",
+    "tests/Vulgata.Tests/PreparedPass1/DeepSeekSourceFreeHandshakeHarness.cs"
+  ],
+  "artifact_sha256": {
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekContractQualificationTests.cs": "F75B39F5FFB7492EDD4715D59BFFB8B91FA7FEA11E886A191747E0D6E42FC62E",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1ProductionBoundaryQualificationTests.cs": "414752CF8E9FCBA8B0BDC3BFDD67024908B24B8A60F7D444B5714788879B1947",
+    "tests/Vulgata.Tests/PreparedPass1/DeepSeekSourceFreeHandshakeHarness.cs": "8F0D9E6A1F28A808FB163D53A1E51A6D58CB107D0300081D25BE33C25AF036F6"
+  },
+  "commands": [
+    "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --nologo --filter FullyQualifiedName~SourceFreeHandshake --logger console;verbosity=minimal -p:GenerateMvcTestManifest=false",
+    "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --no-build --nologo --filter FullyQualifiedName~SourceFreeHandshake|FullyQualifiedName~Pass1DeepSeekStreamingQualificationTests|FullyQualifiedName~PreparedPass1JobExecutorStreamingTests --logger console;verbosity=minimal -p:GenerateMvcTestManifest=false",
+    "git diff --check -- tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekContractQualificationTests.cs tests/Vulgata.Tests/PreparedPass1/Pass1ProductionBoundaryQualificationTests.cs tests/Vulgata.Tests/PreparedPass1/DeepSeekSourceFreeHandshakeHarness.cs"
+  ],
+  "result": {
+    "source_free_handshake": "10 passed, 0 failed, 0 skipped",
+    "combined_local_regression": "70 passed, 0 failed, 0 skipped",
+    "wire_identity": "both navigate_code and submit_code_logic use exact public AsOpenAIChatTool FunctionParameters bytes; canonical ProjectedSchema evidence remains pre-adapter while combined declaration/request hashes bind wire bytes",
+    "privacy_and_isolation": "no source-bearing values, tool invocations/results, prompt packet, non-transport secret, QR-002 provider-health probe, durable circuit, or store seam is present",
+    "live_artifact": "artifacts/qualification/story-12.3/deepseek-source-free-handshake.json remains absent because no live provider call occurred",
+    "diff_check": "passed with the existing LF-to-CRLF notice only"
+  },
+  "observed_at": "2026-08-24T09:17:21.2259600Z",
+  "summary": "T079 sends one bounded streaming source-free request with the configured beta route/model and both exact current public-adapter strict declarations, discards bounded response content, returns only sanitized evidence or a closed failure, and remains separate from durable provider health/probe state."
+}

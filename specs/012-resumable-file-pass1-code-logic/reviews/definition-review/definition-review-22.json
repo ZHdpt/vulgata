@@ -1,0 +1,63 @@
+{
+  "schema_version": "1.0",
+  "gate": "definition-review",
+  "verdict": "REVISE",
+  "reviewed_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "reviewed_boundary": {
+    "base_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+    "candidate_commit": null,
+    "diff_sha256": "88fffeae4b3447f7012ad752b93afaba2ff18c8bd1f60f5bf33ea00c67377b85",
+    "artifact_hashes": {
+      "specs/012-resumable-file-pass1-code-logic/spec.md": "b03687c3a77f52766280669da6cf9e2f9925a44bec1ae9304991f387477a9493",
+      "specs/012-resumable-file-pass1-code-logic/plan.md": "206a5dd8129197cd63a028101245d9d78d63b48af862d85fa69a8e798ee4bf8f",
+      "specs/012-resumable-file-pass1-code-logic/research.md": "5186f39371e8bbc9fbb427d56ffee385e4d80b416daed3562a3ffa516526c79b",
+      "specs/012-resumable-file-pass1-code-logic/data-model.md": "1715bf59a8f3e0295aca888e32c23418f4545f37f15a24f0381426357ce23d3b",
+      "specs/012-resumable-file-pass1-code-logic/quickstart.md": "d074749a285f874bd8bdadd2ca8ac54be522316ee925140d26dbfba720f6693e",
+      "specs/012-resumable-file-pass1-code-logic/contracts/deepseek-strict-result-submission.md": "684d35c74ff07457dc27eae145db2c1538a5b7549f1e82fe38553adca3e2a58d",
+      "specs/012-resumable-file-pass1-code-logic/tasks.md": "33a8e837e83d28b950f1a7ebb3a51e346b2336eb398f9a0e7fec0fde83217ef7"
+    },
+    "owned_paths": [
+      "specs/012-resumable-file-pass1-code-logic/spec.md",
+      "specs/012-resumable-file-pass1-code-logic/plan.md",
+      "specs/012-resumable-file-pass1-code-logic/research.md",
+      "specs/012-resumable-file-pass1-code-logic/data-model.md",
+      "specs/012-resumable-file-pass1-code-logic/quickstart.md",
+      "specs/012-resumable-file-pass1-code-logic/contracts/deepseek-strict-result-submission.md",
+      "specs/012-resumable-file-pass1-code-logic/tasks.md"
+    ]
+  },
+  "reviewed_artifacts": [
+    "AGENTS.md",
+    ".specify/memory/constitution.md",
+    ".specify/extensions.yml",
+    "docs/agent-workflow/artifact-contracts.md",
+    "docs/agent-workflow/review-and-correction.md",
+    "specs/012-resumable-file-pass1-code-logic/spec.md",
+    "specs/012-resumable-file-pass1-code-logic/plan.md",
+    "specs/012-resumable-file-pass1-code-logic/research.md",
+    "specs/012-resumable-file-pass1-code-logic/data-model.md",
+    "specs/012-resumable-file-pass1-code-logic/quickstart.md",
+    "specs/012-resumable-file-pass1-code-logic/contracts/deepseek-strict-result-submission.md",
+    "specs/012-resumable-file-pass1-code-logic/tasks.md",
+    "specs/012-resumable-file-pass1-code-logic/evidence/tdd/failure-28.json",
+    "specs/012-resumable-file-pass1-code-logic/reviews/definition-review/definition-review-21.json",
+    "specs/012-resumable-file-pass1-code-logic/workflow-state.json",
+    "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedPass1JobExecutor.cs",
+    "tests/Vulgata.Tests/PreparedPass1/PreparedPass1JobExecutorStreamingTests.cs",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekIsolatedSourceQualificationTests.cs"
+  ],
+  "findings": [
+    {
+      "id": "DR22-001",
+      "severity": "HIGH",
+      "category": "Inconsistency and testability",
+      "artifact": "specs/012-resumable-file-pass1-code-logic/tasks.md",
+      "location": "T099-T100 at lines 281-282",
+      "affected_requirement": "Failure-28 closed illegal-function-call diagnosis; FR-040, FR-062, and FR-063",
+      "evidence": "T099 requires exactly one payload-free subtype distinguishing UnknownFunction from MultipleFunctions. T100 says to report MultipleFunctions whenever one assistant response has more than one function call and also says to report UnknownFunction whenever any returned name is outside the two declarations. A response containing two calls where one name is unknown satisfies both rules, but neither task defines precedence and T099 does not explicitly require this overlapping fake-stream case. The accepted contract remains fail closed for unknown and parallel/multiple calls, so choosing either subtype does not change termination, but the new diagnostic evidence would be nondeterministic and two implementations could disagree while each follows one clause.",
+      "correction_outcome": "Amend T099 and T100 only. Define one deterministic precedence without retaining names or counts; the smallest fit to the existing execution seam is: if FunctionCount is not exactly one, report MultipleFunctions regardless of names; otherwise report UnknownFunction only when that sole name is outside navigate_code and submit_code_logic. Require RED coverage for a sole unknown call, multiple all-declared calls, and multiple calls containing an unknown name, all preserving IllegalFunctionCall, unclassified-systemic, empty bytes, zero payload retention, and stop-before-next-job. Keep every request, prompt, termination, privacy, ownership, and T084/T085 gate unchanged.",
+      "earliest_owner": "tasks"
+    }
+  ],
+  "summary": "REVISE. Definition-review attempt 22 verified the pinned specification, accepted plan set, failure-28 evidence, current source seam, workflow state, and amended 100-task artifact. T099/T100 are otherwise correctly bounded: they form an honest public-seam RED before a single-file executor GREEN; production and test ownership do not overlap; T096 and failure-28 are prerequisites; T084 remains blocked until the pair is GREEN and must retry only on a fresh disposable clone; T085 remains downstream of T084; no provider, source-bearing, database, lifecycle, prompt, request, tool, retry, timeout, persistence, logging, sibling-client, host, or system change is authorized; and the proposed subtype retains only one closed payload-free value under the existing IllegalFunctionCall and unclassified-systemic behavior. However, DR22-001 is a blocking task-owned ambiguity: a multiple-call response containing an unknown function simultaneously satisfies both subtype rules while T099 requires exactly one subtype. Without explicit precedence and an overlap regression, the diagnostic is not deterministic or fully testable. Correct only T099/T100 as stated, then rerun combined definition review. The accepted specification and plan do not require regeneration. This review performed no implementation, provider traffic, source transfer, database/lifecycle/state mutation, staging, commit, or Git-history change."
+}

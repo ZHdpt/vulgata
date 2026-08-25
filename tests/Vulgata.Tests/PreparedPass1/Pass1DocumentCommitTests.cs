@@ -196,6 +196,52 @@ public sealed class Pass1DocumentCommitTests
             method => method.Name is "CommitDocumentAsync" or "CommitProjectionAsync");
     }
 
+    [Fact]
+    public void CommitBoundary_DoesNotExposeExecutionLocalStrictResultState()
+    {
+        Type[] durableBoundaryTypes =
+        [
+            typeof(Pass1DocumentCommitRequest),
+            typeof(Pass1DocumentCommitResult),
+            typeof(PreparedPass1CommitInput),
+        ];
+        string[] forbiddenTokens =
+        [
+            "DeepSeek",
+            "StrictResult",
+            "SubmissionSession",
+            "ProviderTranscript",
+            "ReasoningContent",
+            "ToolCall",
+        ];
+
+        foreach (Type boundaryType in durableBoundaryTypes)
+        {
+            MemberInfo[] members = boundaryType
+                .GetMembers(BindingFlags.Public | BindingFlags.Instance)
+                .Where(member => member.MemberType is MemberTypes.Property or MemberTypes.Field)
+                .ToArray();
+            Assert.DoesNotContain(
+                members,
+                member => forbiddenTokens.Any(token =>
+                    member.Name.Contains(token, StringComparison.OrdinalIgnoreCase)));
+
+            Type[] memberTypes = members
+                .Select(member => member switch
+                {
+                    PropertyInfo property => property.PropertyType,
+                    FieldInfo field => field.FieldType,
+                    _ => typeof(object),
+                })
+                .ToArray();
+            Assert.DoesNotContain(
+                memberTypes,
+                memberType =>
+                    memberType.Namespace?.StartsWith("Vulgata.Agents", StringComparison.Ordinal) == true ||
+                    memberType.Namespace?.StartsWith("Microsoft.Extensions.AI", StringComparison.Ordinal) == true);
+        }
+    }
+
     [Theory]
     [MemberData(nameof(CanonicalGraphReplayCases))]
     public void CommitAsync_CanonicalGraphCorruptionCase_UsesThePublicAtomicReplayPort(

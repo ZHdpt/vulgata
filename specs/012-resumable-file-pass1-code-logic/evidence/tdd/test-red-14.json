@@ -1,0 +1,27 @@
+{
+  "evidence_id": "12-3/implement/29",
+  "kind": "test-red",
+  "stage": "implement",
+  "source_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "artifact_paths": [
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekContractQualificationTests.cs",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1ProductionBoundaryQualificationTests.cs",
+    "tests/Vulgata.Tests/PreparedPass1/DeepSeekSourceFreeHandshakeHarness.cs"
+  ],
+  "artifact_sha256": {
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekContractQualificationTests.cs": "F75B39F5FFB7492EDD4715D59BFFB8B91FA7FEA11E886A191747E0D6E42FC62E",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1ProductionBoundaryQualificationTests.cs": "414752CF8E9FCBA8B0BDC3BFDD67024908B24B8A60F7D444B5714788879B1947"
+  },
+  "commands": [
+    "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --nologo --filter FullyQualifiedName~SourceFreeHandshake --logger console;verbosity=minimal -p:GenerateMvcTestManifest=false"
+  ],
+  "result": {
+    "missing_helper_red": "six CS0246 references failed because DeepSeekSourceFreeHandshakeHarness did not exist",
+    "navigate_adapter_red": "helper navigate_code parameters were 1019 bytes/A7C461FF5E8763DFE3FAA034FB4B6848371A4F418643E72E29CCEE8742883F7A while public AsOpenAIChatTool production bytes were 2115/C8387178DA32FC682E7DE462AFA8B62AF388944CB0FC741B895375E585E87770; first difference offset 1",
+    "submit_adapter_red": "helper submit_code_logic parameters were 12549 bytes/C711E658CBE74955A1DAF8C45FE861E632EB18AFEED4A64EEF18B60EC9EF55B5 while public AsOpenAIChatTool production bytes were 27502/77A044526E5D61480B3E86FA3C3AA354FF78A9F04BCA3B279F210DFBFB421BC8; first difference offset 1",
+    "test_defect_corrections": "authorized expectedSourceHash declaration metadata was separated from source-bearing values, and canonical pre-adapter ProjectedSchema evidence was separated from adapter-expanded combined declaration/request evidence",
+    "classification": "expected-deepseek-source-free-handshake-red"
+  },
+  "observed_at": "2026-08-24T09:17:21.2259600Z",
+  "summary": "T078 first exposed the missing qualification helper, then independently proved that semantic-only schema equivalence was insufficient because exact navigate_code and submit_code_logic public-adapter bytes and hashes differed from the helper wire. No provider or network call occurred."
+}

@@ -1,0 +1,57 @@
+{
+  "schema_version": "1.0",
+  "gate": "plan-review",
+  "verdict": "REVISE",
+  "reviewed_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "reviewed_boundary": {
+    "base_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+    "candidate_commit": null,
+    "artifact_hashes": {
+      "specs/012-resumable-file-pass1-code-logic/spec.md": "7508aad4b3219c7c88295fdcd585ce107f9b4454e32c7b4e6417a61c87ef7cc0",
+      "specs/012-resumable-file-pass1-code-logic/plan.md": "9d957c8866145ad430b70169e00fb9d255868685e304c92ebae27e3a5b0e4655",
+      "specs/012-resumable-file-pass1-code-logic/research.md": "453ffe70ae0b4238954d7cf259de3fac026433c6feda9ccaa6b6ef76090f4bc9",
+      "specs/012-resumable-file-pass1-code-logic/data-model.md": "d298a89ad94be6b9e1bebb783529184e710abc7d67f7f6eee542de8e6f71b57a",
+      "specs/012-resumable-file-pass1-code-logic/quickstart.md": "3239baf9646839024cc297307914d4042ae080a1431d6b89d832c67f028bf77e",
+      "specs/012-resumable-file-pass1-code-logic/contracts/deepseek-strict-result-submission.md": "3dbff46c5bb7952e8c41000875e3b77a901864ffdf9121dd129e76b13f6e247e",
+      "specs/012-resumable-file-pass1-code-logic/evidence/research/deepseek-v4-current-best-practices-audit.md": "1dd1b93a63346d50f9a06b42ddeb8922858e2c0dafd63d13a168756deef0bd1b",
+      "specs/012-resumable-file-pass1-code-logic/evidence/tdd/failure-32.json": "98691d887608e28b4f8875cc2bf40379e77bf41a7de10ed0a1c5f3dbf8ded148"
+    }
+  },
+  "reviewed_artifacts": [
+    "AGENTS.md",
+    "specs/012-resumable-file-pass1-code-logic/spec.md",
+    "specs/012-resumable-file-pass1-code-logic/plan.md",
+    "specs/012-resumable-file-pass1-code-logic/research.md",
+    "specs/012-resumable-file-pass1-code-logic/data-model.md",
+    "specs/012-resumable-file-pass1-code-logic/quickstart.md",
+    "specs/012-resumable-file-pass1-code-logic/contracts/deepseek-strict-result-submission.md",
+    "specs/012-resumable-file-pass1-code-logic/evidence/research/deepseek-v4-current-best-practices-audit.md",
+    "specs/012-resumable-file-pass1-code-logic/evidence/tdd/failure-32.json",
+    "Microsoft.Extensions.AI 10.6.0 pinned FunctionInvokingChatClient source"
+  ],
+  "findings": [
+    {
+      "id": "AD23-PR-001",
+      "severity": "HIGH",
+      "earliest_owner": "plan",
+      "summary": "The plan treated FunctionInvocationContext.Iteration as one-based, but pinned Microsoft.Extensions.AI 10.6.0 passes its zero-based loop counter directly; provider turn ten is SDK iteration 9.",
+      "required_correction": "Define providerTurn = context.Iteration + 1 for admission/turn matching, trigger final-turn behavior at SDK iteration 9, clarify MaximumIterationsPerRequest=11 compatibility, and test first turn, mapped turn ten, unreachable post-ten invocation, and no request eleven."
+    },
+    {
+      "id": "AD23-PR-002",
+      "severity": "HIGH",
+      "earliest_owner": "plan",
+      "summary": "The executor's initial RemainingNavigationBudget <= 0 fallback bypasses FICC, matching closed navigation results, and the sole-submission path required by FR-062/AD-23.",
+      "required_correction": "Remove the initial-zero fallback from the strict Story 12.3 Worker path so hydrated zero enters the normal two-function conversation; test direct submission and at-most-eight all-navigation closed results followed by sole submission with no evidence effect or request eleven."
+    }
+  ],
+  "accepted_material": [
+    "one-through-eight all-navigation eligibility",
+    "provider-order admitted prefix min(count, remaining)",
+    "constant no-effect excess results without Terminate",
+    "serial durable reservation and complete call/result replay",
+    "above-eight whole-turn rejection and durable high-water eight",
+    "privacy, no manual provider loop, and no system change"
+  ],
+  "summary": "REVISE. AD-23 is otherwise bounded and coherent, but implementation would be unsafe or unreachable until the zero-based SDK iteration mapping and the initial-zero executor shortcut are explicitly corrected and test-owned."
+}

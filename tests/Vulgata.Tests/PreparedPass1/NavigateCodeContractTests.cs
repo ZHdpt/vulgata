@@ -1,4 +1,5 @@
 using System.Reflection;
+using Vulgata.Agents.WorkerExecution;
 using Vulgata.Core.DomainServices;
 using Vulgata.Core.Entities;
 
@@ -49,6 +50,18 @@ public sealed class NavigateCodeContractTests
             method.Name.Contains("Schedule", StringComparison.OrdinalIgnoreCase) ||
             method.Name.Contains("Claim", StringComparison.OrdinalIgnoreCase) ||
             method.Name.Contains("Await", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public void ExecutorComposition_ExposesTheDurableReservationStoreForNavigationCallbacks()
+    {
+        ConstructorInfo[] constructors = typeof(PreparedPass1JobExecutor)
+            .GetConstructors(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+
+        Assert.Contains(
+            constructors,
+            constructor => constructor.GetParameters().Any(parameter =>
+                parameter.ParameterType == typeof(IPass1NavigationAttemptReservationStore)));
     }
 
     [Fact]

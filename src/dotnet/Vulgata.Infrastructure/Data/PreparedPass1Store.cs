@@ -18,7 +18,9 @@ public sealed class PreparedPass1Store(
     IPreparedPass1ProviderTransitionStore,
     IPreparedPass1NavigationScopeSource,
     IPreparedPass1CurrentDocumentEvidenceSource,
-    IPreparedPass1NavigationReceiptSink
+    IPreparedPass1NavigationReceiptSink,
+    IPass1NavigationAttemptReservationStore,
+    IPass1NavigationCallsMarkerRepairStore
 {
     public PreparedPass1Store(VulgataDbContext context)
         : this(context, TimeProvider.System)
@@ -403,6 +405,460 @@ public sealed class PreparedPass1Store(
         await context.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
         return entity.Id;
+    }
+
+    public Task<PreparedPass1NavigationReservationTicket?> ReserveNextAsync(
+        PreparedPass1NavigationReservationRequest request,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        return ReserveNavigationAttemptAsync(
+            request.Scope,
+            request.Request,
+            request.Cursor,
+            cancellationToken);
+    }
+
+    public async Task<PreparedPass1NavigationReservationTicket?> ReserveNavigationAttemptAsync(
+        PreparedPass1NavigationScope scope,
+        PreparedPass1NavigationRequestInput request,
+        PreparedPass1NavigationReservationTicket? cursor = null,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(scope);
+        ArgumentNullException.ThrowIfNull(request);
+        await using var transaction = await context.Database.BeginTransactionAsync(
+            IsolationLevel.Serializable,
+            cancellationToken);
+        context.ChangeTracker.Clear();
+        try
+        {
+            (Pass1PairExecution? pair, ScanJobExecution? job, Pass1NavigationBudget? budget) =
+                await LockReservationOwnersAsync(request, cancellationToken);
+            DateTimeOffset now = _timeProvider.GetUtcNow();
+            int expectedAttemptCount = cursor?.ToolAttemptCount ?? scope.ToolAttemptCount;
+            long expectedBudgetVersion = cursor?.StateVersion ?? 0;
+            if (!await IsCurrentNavigationAuthorizationAsync(
+                    scope, request, pair, job, budget, now, cancellationToken) ||
+                budget!.ToolAttemptCount != expectedAttemptCount ||
+                budget.StateVersion != expectedBudgetVersion ||
+                cursor is not null && !TicketMatches(cursor, request, budget) ||
+                request.ToolAttemptOrdinal != checked((ulong)(expectedAttemptCount + 1)))
+            {
+                await transaction.RollbackAsync(CancellationToken.None);
+                context.ChangeTracker.Clear();
+                return null;
+            }
+
+            PreparedPass1NavigationBudgetCursor latest = budget.ReserveNextAttempt(
+                expectedBudgetVersion,
+                expectedAttemptCount,
+                now);
+            await context.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+            return CreateTicket(request, latest);
+        }
+        catch
+        {
+            await transaction.RollbackAsync(CancellationToken.None);
+            context.ChangeTracker.Clear();
+            throw;
+        }
+    }
+
+    public async Task<PreparedPass1NavigationReservationTicket?> CommitReservedNavigationReceiptAsync(
+        PreparedPass1NavigationScope scope,
+        PreparedPass1NavigationRequestInput request,
+        PreparedPass1NavigationReservationTicket cursor,
+        PreparedPass1NavigationReceiptDraft receipt,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(scope);
+        ArgumentNullException.ThrowIfNull(request);
+        ArgumentNullException.ThrowIfNull(cursor);
+        ArgumentNullException.ThrowIfNull(receipt);
+        await using var transaction = await context.Database.BeginTransactionAsync(
+            IsolationLevel.Serializable,
+            cancellationToken);
+        context.ChangeTracker.Clear();
+        try
+        {
+            (Pass1PairExecution? pair, ScanJobExecution? job, Pass1NavigationBudget? budget) =
+                await LockReservationOwnersAsync(request, cancellationToken);
+            DateTimeOffset now = _timeProvider.GetUtcNow();
+            int ordinal = checked((int)request.ToolAttemptOrdinal);
+            if (!await IsCurrentNavigationAuthorizationAsync(
+                    scope, request, pair, job, budget, now, cancellationToken) ||
+                !TicketMatches(cursor, request, budget!) ||
+                ordinal != cursor.ToolAttemptOrdinal ||
+                ordinal is < 1 or > 8 ||
+                ordinal > budget.ToolAttemptCount)
+            {
+                throw new InvalidOperationException("The reserved navigation receipt authorization is stale.");
+            }
+
+            Pass1NavigationReceipt? replay = await context.Pass1NavigationReceipts
+                .SingleOrDefaultAsync(value =>
+                    value.ScanJobExecutionId == request.JobId &&
+                    value.ToolAttemptOrdinal == ordinal,
+                    cancellationToken);
+            string requestFingerprint = Convert.ToHexStringLower(receipt.RequestDigest.Span);
+            if (replay is not null)
+            {
+                if (!string.Equals(replay.RequestFingerprint, requestFingerprint, StringComparison.Ordinal) ||
+                    replay.Operation != Enum.Parse<CoreEntities.Pass1NavigationOperation>(request.Operation.ToString()) ||
+                    replay.Depth != checked((int)request.RequestedDepth) ||
+                    replay.Outcome != Enum.Parse<CoreEntities.Pass1NavigationOutcomeKind>(receipt.Outcome.ToString()))
+                {
+                    throw new InvalidOperationException("The reserved ordinal already has a conflicting receipt.");
+                }
+
+                await transaction.RollbackAsync(CancellationToken.None);
+                context.ChangeTracker.Clear();
+                return CreateTicket(request, new(
+                    ordinal,
+                    budget.ToolAttemptCount,
+                    budget.StateVersion), replay.Id);
+            }
+
+            bool accepted = receipt.Outcome is PreparedPass1NavigationOutcome.DocumentEvidence or
+                PreparedPass1NavigationOutcome.SourceEvidence;
+            PreparedPass1NavigationReceiptInput canonicalInput = new(
+                receipt.RequestDigest,
+                request.JobId,
+                (ulong)ordinal,
+                request.ToolAttemptOrdinal,
+                request.Operation,
+                request.RequestedDepth,
+                receipt.Outcome,
+                receipt.BoundKind,
+                receipt.Results,
+                (ulong)receipt.ResultCount,
+                (ulong)receipt.EvidenceBytes,
+                (ulong)(budget.AcceptedCallCount + (accepted ? 1 : 0)),
+                (ulong)(budget.EvidenceBytes + (accepted ? receipt.EvidenceBytes : 0)));
+            PreparedPass1CanonicalArtifact artifact = PreparedPass1CanonicalCodec.CreateNavigationReceipt(canonicalInput);
+            string descriptorJson = JsonSerializer.Serialize(new
+            {
+                targetObservationIdentity = Convert.ToHexStringLower(receipt.TargetObservationIdentity.Span),
+                descriptors = receipt.Results,
+            });
+            var entity = CoreEntities.Pass1NavigationReceipt.Create(
+                artifact.Id!.Value,
+                request.JobId,
+                budget.PairExecutionId,
+                ordinal,
+                ordinal,
+                Enum.Parse<CoreEntities.Pass1NavigationOperation>(request.Operation.ToString()),
+                checked((int)request.RequestedDepth),
+                Enum.Parse<CoreEntities.Pass1NavigationOutcomeKind>(receipt.Outcome.ToString()),
+                receipt.BoundKind is null
+                    ? null
+                    : Enum.Parse<CoreEntities.Pass1NavigationBoundKind>(receipt.BoundKind.ToString()!),
+                requestFingerprint,
+                artifact.FingerprintHex,
+                receipt.ResultCount,
+                receipt.EvidenceBytes,
+                descriptorJson,
+                now);
+            PreparedPass1NavigationBudgetCursor latest = budget.ApplyReservedReceipt(
+                budget.StateVersion,
+                ordinal,
+                accepted,
+                receipt.EvidenceBytes,
+                checked((int)request.RequestedDepth),
+                now);
+            context.Pass1NavigationReceipts.Add(entity);
+            await context.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+            return CreateTicket(request, latest, entity.Id);
+        }
+        catch
+        {
+            await transaction.RollbackAsync(CancellationToken.None);
+            context.ChangeTracker.Clear();
+            throw;
+        }
+    }
+
+    public async Task<PreparedPass1NavigationReservationTicket?> EnsureNavigationCallsMarkerAsync(
+        PreparedPass1NavigationScope scope,
+        PreparedPass1NavigationRequestInput request,
+        PreparedPass1NavigationReservationTicket cursor,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(scope);
+        ArgumentNullException.ThrowIfNull(request);
+        ArgumentNullException.ThrowIfNull(cursor);
+        await using var transaction = await context.Database.BeginTransactionAsync(
+            IsolationLevel.Serializable,
+            cancellationToken);
+        context.ChangeTracker.Clear();
+        try
+        {
+            (Pass1PairExecution? pair, ScanJobExecution? job, Pass1NavigationBudget? budget) =
+                await LockReservationOwnersAsync(request, cancellationToken);
+            DateTimeOffset now = _timeProvider.GetUtcNow();
+            if (!await IsCurrentNavigationAuthorizationAsync(
+                    scope, request, pair, job, budget, now, cancellationToken) ||
+                !TicketMatches(cursor, request, budget!) ||
+                budget.ToolAttemptCount != 8)
+            {
+                throw new InvalidOperationException("The navigation call-cap marker authorization is stale.");
+            }
+
+            Pass1NavigationReceipt? existing = await context.Pass1NavigationReceipts
+                .SingleOrDefaultAsync(value =>
+                    value.ScanJobExecutionId == request.JobId &&
+                    value.BoundKind == CoreEntities.Pass1NavigationBoundKind.Calls,
+                    cancellationToken);
+            if (existing is null)
+            {
+                PreparedPass1NavigationReceiptInput canonicalInput = new(
+                    null,
+                    request.JobId,
+                    9,
+                    null,
+                    null,
+                    null,
+                    PreparedPass1NavigationOutcome.BoundExceeded,
+                    PreparedPass1NavigationBoundKind.Calls,
+                    [],
+                    0,
+                    0,
+                    (ulong)budget.AcceptedCallCount,
+                    (ulong)budget.EvidenceBytes);
+                PreparedPass1CanonicalArtifact artifact =
+                    PreparedPass1CanonicalCodec.CreateNavigationReceipt(canonicalInput);
+                context.Pass1NavigationReceipts.Add(CoreEntities.Pass1NavigationReceipt.Create(
+                    artifact.Id!.Value,
+                    request.JobId,
+                    budget.PairExecutionId,
+                    9,
+                    null,
+                    null,
+                    null,
+                    CoreEntities.Pass1NavigationOutcomeKind.BoundExceeded,
+                    CoreEntities.Pass1NavigationBoundKind.Calls,
+                    null,
+                    artifact.FingerprintHex,
+                    0,
+                    0,
+                    "{}",
+                    now));
+                await context.SaveChangesAsync(cancellationToken);
+                await transaction.CommitAsync(cancellationToken);
+            }
+            else
+            {
+                if (existing.ReceiptOrdinal != 9 || existing.ToolAttemptOrdinal is not null)
+                {
+                    throw new InvalidOperationException("The navigation call-cap marker conflicts with durable state.");
+                }
+
+                await transaction.RollbackAsync(CancellationToken.None);
+                context.ChangeTracker.Clear();
+            }
+
+            return CreateTicket(request, new(8, budget.ToolAttemptCount, budget.StateVersion));
+        }
+        catch
+        {
+            await transaction.RollbackAsync(CancellationToken.None);
+            context.ChangeTracker.Clear();
+            throw;
+        }
+    }
+
+    private async Task<(Pass1PairExecution? Pair, ScanJobExecution? Job, Pass1NavigationBudget? Budget)>
+        LockReservationOwnersAsync(
+            PreparedPass1NavigationRequestInput request,
+            CancellationToken cancellationToken)
+    {
+        Pass1PairExecution? pair = (await context.Pass1PairExecutions
+            .FromSqlInterpolated($"SELECT * FROM \"vulgata\".\"Pass1PairExecutions\" WHERE \"Id\" = {request.PairExecutionId} FOR UPDATE")
+            .ToArrayAsync(cancellationToken)).SingleOrDefault();
+        ScanJobExecution? job = (await context.ScanJobExecutions
+            .FromSqlInterpolated($"SELECT * FROM \"vulgata\".\"ScanJobExecutions\" WHERE \"Id\" = {request.JobId} FOR UPDATE")
+            .ToArrayAsync(cancellationToken)).SingleOrDefault();
+        Pass1NavigationBudget? budget = (await context.Pass1NavigationBudgets
+            .FromSqlInterpolated($"SELECT * FROM \"vulgata\".\"Pass1NavigationBudgets\" WHERE \"ScanJobExecutionId\" = {request.JobId} FOR UPDATE")
+            .ToArrayAsync(cancellationToken)).SingleOrDefault();
+        return (pair, job, budget);
+    }
+
+    private async Task<bool> IsCurrentNavigationAuthorizationAsync(
+        PreparedPass1NavigationScope scope,
+        PreparedPass1NavigationRequestInput request,
+        Pass1PairExecution? pair,
+        ScanJobExecution? job,
+        Pass1NavigationBudget? budget,
+        DateTimeOffset now,
+        CancellationToken cancellationToken) =>
+        pair is not null && job is not null && budget is not null &&
+        scope.JobId == request.JobId &&
+        scope.SourceFileCodeUnitId == request.SourceFileCodeUnitId &&
+        scope.PairExecutionId == request.PairExecutionId &&
+        scope.JobStateVersion == request.JobStateVersion &&
+        scope.PairStateVersion == request.PairStateVersion &&
+        scope.LeaseToken == request.LeaseToken &&
+        scope.LeaseExpiresAt == request.LeaseExpiresAt &&
+        !string.IsNullOrWhiteSpace(scope.AuthorizationBinding) &&
+        string.Equals(scope.AuthorizationBinding, request.AuthorizationBinding, StringComparison.Ordinal) &&
+        string.Equals(scope.PairState, nameof(Pass1PairExecutionPhase.Running), StringComparison.Ordinal) &&
+        string.Equals(request.PairState, nameof(Pass1PairExecutionPhase.Running), StringComparison.Ordinal) &&
+        scope.CircuitState == Pass1CircuitState.Closed &&
+        request.CircuitState == Pass1CircuitState.Closed &&
+        scope.JobState == ScanJobExecutionState.Running &&
+        request.JobState == ScanJobExecutionState.Running &&
+        pair.Id == request.PairExecutionId &&
+        pair.StateVersion == request.PairStateVersion &&
+        pair.Phase == Pass1PairExecutionPhase.Running &&
+        pair.CircuitState == Pass1CircuitState.Closed &&
+        job.Id == request.JobId &&
+        job.FileCodeUnitId == request.SourceFileCodeUnitId &&
+        job.StateVersion == request.JobStateVersion &&
+        job.State == ScanJobExecutionState.Running &&
+        job.LeaseToken == request.LeaseToken &&
+        job.LeaseExpiresAt == request.LeaseExpiresAt &&
+        job.LeaseExpiresAt > now &&
+        budget.PairExecutionId == request.PairExecutionId &&
+        await HasCurrentAuthorizationAsync(pair, request.AuthorizationBinding, cancellationToken);
+
+    private static bool TicketMatches(
+        PreparedPass1NavigationReservationTicket cursor,
+        PreparedPass1NavigationRequestInput request,
+        Pass1NavigationBudget budget) =>
+        cursor.JobId == request.JobId &&
+        cursor.PairExecutionId == request.PairExecutionId &&
+        cursor.LeaseToken == request.LeaseToken &&
+        cursor.ToolAttemptCount == budget.ToolAttemptCount &&
+        cursor.StateVersion == budget.StateVersion;
+
+    private static PreparedPass1NavigationReservationTicket CreateTicket(
+        PreparedPass1NavigationRequestInput request,
+        PreparedPass1NavigationBudgetCursor cursor,
+        Guid? receiptId = null) =>
+        new(
+            request.JobId,
+            request.PairExecutionId,
+            request.LeaseToken,
+            cursor.ToolAttemptOrdinal,
+            cursor.ToolAttemptCount,
+            cursor.StateVersion,
+            receiptId);
+
+    async Task<PreparedPass1NavigationReservationTicket?>
+        IPreparedPass1NavigationReceiptSink.CommitReservedAsync(
+            PreparedPass1NavigationScope scope,
+            PreparedPass1NavigationRequestInput request,
+            PreparedPass1NavigationReservationTicket reservation,
+            PreparedPass1NavigationReceiptDraft receipt,
+            CancellationToken cancellationToken) =>
+        await CommitReservedNavigationReceiptAsync(
+            scope,
+            request,
+            reservation,
+            receipt,
+            cancellationToken);
+
+    async Task<bool> IPass1NavigationCallsMarkerRepairStore.EnsureNavigationCallsMarkerAsync(
+        PreparedPass1NavigationCallsMarkerRepairRequest repair,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(repair);
+        if (repair.PairExecutionId == Guid.Empty || repair.JobId == Guid.Empty ||
+            repair.JobStateVersion <= 0 || repair.PairStateVersion < 0 ||
+            repair.LeaseToken == Guid.Empty || repair.LeaseExpiresAt.Offset != TimeSpan.Zero ||
+            string.IsNullOrWhiteSpace(repair.AuthorizationBinding))
+        {
+            return false;
+        }
+
+        context.ChangeTracker.Clear();
+        ScanJobExecution? job = await context.ScanJobExecutions.AsNoTracking()
+            .SingleOrDefaultAsync(value => value.Id == repair.JobId, cancellationToken);
+        ScanExecution? execution = job is null
+            ? null
+            : await context.ScanExecutions.AsNoTracking()
+                .SingleOrDefaultAsync(value => value.Id == job.ScanExecutionId, cancellationToken);
+        Pass1NavigationBudget? budget = await context.Pass1NavigationBudgets.AsNoTracking()
+            .SingleOrDefaultAsync(
+                value => value.ScanJobExecutionId == repair.JobId,
+                cancellationToken);
+        if (job is null || execution is null || budget is null ||
+            budget.PairExecutionId != repair.PairExecutionId)
+        {
+            return false;
+        }
+
+        if (budget.ToolAttemptCount < 8)
+        {
+            return true;
+        }
+
+        if (budget.ToolAttemptCount != 8)
+        {
+            return false;
+        }
+
+        var scope = new PreparedPass1NavigationScope(
+            job.Id,
+            job.RepositoryId,
+            job.ScanRunId,
+            execution.ProfiledRevision,
+            job.FileCodeUnitId,
+            new AnalysisScope(
+                job.RepositoryId,
+                job.ScanRunId,
+                execution.ProfiledRevision,
+                "calls-marker-repair",
+                execution.AnalysisRuntimeIdentityHash!,
+                new AnalysisDeadline(repair.LeaseExpiresAt.ToUnixTimeMilliseconds())),
+            [],
+            budget.ToolAttemptCount,
+            budget.AcceptedCallCount,
+            budget.EvidenceBytes,
+            [],
+            repair.PairExecutionId,
+            repair.JobStateVersion,
+            repair.PairStateVersion,
+            repair.LeaseToken,
+            repair.LeaseExpiresAt,
+            nameof(Pass1PairExecutionPhase.Running),
+            Pass1CircuitState.Closed,
+            ScanJobExecutionState.Running,
+            repair.AuthorizationBinding);
+        var request = new PreparedPass1NavigationRequestInput(
+            job.Id,
+            8,
+            PreparedPass1NavigationOperation.Definition,
+            job.FileCodeUnitId,
+            new(null, null, null, null, null),
+            1,
+            null,
+            repair.PairExecutionId,
+            repair.JobStateVersion,
+            repair.PairStateVersion,
+            repair.LeaseToken,
+            repair.LeaseExpiresAt,
+            nameof(Pass1PairExecutionPhase.Running),
+            Pass1CircuitState.Closed,
+            ScanJobExecutionState.Running,
+            repair.AuthorizationBinding);
+        PreparedPass1NavigationReservationTicket? cursor =
+            await EnsureNavigationCallsMarkerAsync(
+                scope,
+                request,
+                new(
+                    job.Id,
+                    repair.PairExecutionId,
+                    repair.LeaseToken,
+                    8,
+                    8,
+                    budget.StateVersion),
+                cancellationToken);
+        return cursor is not null;
     }
 
     public async Task<PreparedPass1ReconciliationResult> ReconcileAsync(

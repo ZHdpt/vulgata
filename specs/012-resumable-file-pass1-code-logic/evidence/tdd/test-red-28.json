@@ -1,0 +1,38 @@
+{
+  "evidence_id": "12-3/implement/73",
+  "kind": "test-red",
+  "stage": "implement",
+  "task": "T105",
+  "source_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --nologo -p:WarningLevel=0 -p:GenerateMvcTestManifest=false --filter \"FullyQualifiedName~Pass1NavigationBudgetPersistenceTests|FullyQualifiedName~PostgreSql17_Reservation\" --logger \"console;verbosity=minimal\"",
+  "result": {
+    "build": "passed-with-existing-warnings",
+    "passed": 2,
+    "failed": 8,
+    "skipped": 0,
+    "exit_code": 1
+  },
+  "expected_failures": [
+    "IPass1NavigationAttemptReservationStore and its ReserveNextAsync contract are absent",
+    "PreparedPass1NavigationReservationTicket is absent",
+    "Pass1NavigationBudget lacks ReserveNextAttempt and ApplyReservedReceipt",
+    "PreparedPass1Store lacks reservation, reserved-receipt, and marker-repair seams",
+    "PostgreSQL reservation persistence and marker qualification stops at the missing-port guard"
+  ],
+  "future_green_assertions": [
+    "reservation advances only ToolAttemptCount and StateVersion and returns the latest ordinal/high-water cursor",
+    "stale cursor and capacity overflow reject",
+    "reserved receipt updates accepted/evidence/depth without double-incrementing ToolAttemptCount",
+    "unreserved/conflicting receipt rejects",
+    "a no-receipt reservation survives context recreation as a consumed gap",
+    "serial reservations reach ordinal eight and marker ordinal nine is idempotently created/repaired",
+    "no reservation entity, DbSet, or migration is introduced"
+  ],
+  "artifact_sha256": {
+    "tests/Vulgata.Tests/PreparedPass1/Pass1NavigationBudgetPersistenceTests.cs": "8CE46B884662C7EDF91532314D2D3C5CD3A8DFFE57A84098A34B390663238C06",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DocumentPostgreSqlAtomicTests.cs": "4970C96CD2AEAC8F9A01DB1AC1B6CB822CE6B636A720E692FD4965551B6A2B35"
+  },
+  "database": "No database was read, created, mutated, or dropped. Both PostgreSQL cases fail at the missing-port assertion before reading administrator configuration.",
+  "privacy": "No provider, source-bearing request, credential, repository source, host setting, or system configuration was accessed or changed.",
+  "observed_at": "2026-08-24T21:34:01.4848449Z"
+}

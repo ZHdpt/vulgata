@@ -1,0 +1,30 @@
+{
+  "evidence_id": "12-3/implement/160",
+  "kind": "analysis",
+  "status": "current",
+  "stage": "implement",
+  "task": "T085",
+  "source_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "scope": "T062 typed-host and live-provider qualification composition after the successful r9 production execution",
+  "verdict": "REVISE qualification composition; production conforms",
+  "root_cause": "T062/T085 collapsed deterministic typed-host operation coverage and stochastic live-provider operation selection into two receipt predicates on one run. Story 12.3 requires bounded typed tool capability and a real production-composed Pass 1, but neither the Worker prompt nor provider contract mandates Implementations or XML ExactSourceEvidence for a particular full-pair sample.",
+  "minimal_correction": {
+    "artifact_scope": [
+      "specs/012-resumable-file-pass1-code-logic/plan.md",
+      "specs/012-resumable-file-pass1-code-logic/research.md",
+      "specs/012-resumable-file-pass1-code-logic/quickstart.md",
+      "specs/012-resumable-file-pass1-code-logic/tasks.md"
+    ],
+    "test_owner": "tests/Vulgata.Tests/PreparedPass1/Pass1ProductionExecutionTests.cs only",
+    "test_change": "Replace only the exact Implementations/.java and ExactSourceEvidence/.xml receipt predicates. Retain receipt binding and bounds checks, plus all authenticated Start, terminal, job, Document, Java/XML Source Anchor, reconciliation, replay, concurrency, privacy, and production-composition assertions.",
+    "composed_proof": "Run NavigateCodeRealToolQualificationTests, NavigateCodeLeaseSecurityCorrectionTests, and Pass1ProductionBoundaryQualificationTests as deterministic operation/DI evidence before a new fresh live T085 run."
+  },
+  "prohibited_changes": [
+    "production source, prompt, provider request, function declarations, retry, timeout, parser, ledger, committer, coordinator, scheduling, or lifecycle",
+    "database model, migration, template, ordinary database, source scope, endpoint/model/credential, network, host, system, or Git history",
+    "retrying DeepSeek until a desired optional operation topology appears"
+  ],
+  "production_result": "r9 reached ReadyForResolution/Closed with two Completed child Scan Executions, 150/150 completed jobs, 150 immutable Documents, Java/XML Source Anchors, one Pass1 Outcome, and bounded receipts; no environment or provider blocker remains.",
+  "independent_review": "definition reviewer verdict REVISE; classification test-fixture/qualification-composition defect; production_nonconformance=false; external_provider_blocker=false",
+  "recorded_at": "2026-08-25T14:49:40.3114777Z"
+}

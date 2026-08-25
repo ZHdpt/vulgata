@@ -1,0 +1,27 @@
+{
+  "evidence_id": "12-3/implement/34",
+  "kind": "command",
+  "stage": "implement",
+  "source_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "artifact_paths": [
+    "artifacts/qualification/story-12.3/deepseek-fake-wire.json",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekStreamingQualificationTests.cs",
+    "tests/Vulgata.Tests/PreparedPass1/PreparedPass1JobExecutorStreamingTests.cs"
+  ],
+  "commands": [
+    "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --nologo --filter FullyQualifiedName~Pass1DeepSeekStreamingQualificationTests --logger console;verbosity=minimal -p:GenerateMvcTestManifest=false -clp:ErrorsOnly",
+    "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --nologo --filter (FullyQualifiedName~Pass1DeepSeekStreamingQualificationTests)|(FullyQualifiedName~PreparedPass1JobExecutorStreamingTests.ExecuteAsync_SubmitCodeLogic_InvalidNestedCandidateThenValidCorrection_CapturesCanonicalResultOnceAsync)|(FullyQualifiedName~PreparedPass1JobExecutorStreamingTests.SubmitSession_OuterShapeDriftAndWrongValueKind_ReturnOnlyInvalidShapeAsync) --logger console;verbosity=minimal -p:GenerateMvcTestManifest=false"
+  ],
+  "result": {
+    "fake_wire_class": "12 passed, 0 failed, 0 skipped after adding the serialized model characterization assertion",
+    "complete_t082_gate": "14 passed, 0 failed, 0 skipped in 485 milliseconds",
+    "route_and_model": "https://deepseek.test/v1/chat/completions with serialized model deepseek-v4-flash",
+    "strict_functions": "exactly navigate_code and submit_code_logic; both strict and closed",
+    "wire_behavior": "streaming, unchanged reasoning replay, one-property nested candidate local validation, no SDK retry, ten-turn ceiling with no request eleven, cancellation and exact byte bounds passed",
+    "privacy": "bounded artifact contains no credential, source, prompt packet, provider response, or function payload",
+    "provider_traffic": "fake HttpMessageHandler only; no network or live provider contact",
+    "qualification_disposition": "T082 GREEN; T083 source-free live handshake is the next ordered gate"
+  },
+  "observed_at": "2026-08-24T11:25:59.1845180Z",
+  "summary": "T082 passed the local fake outgoing-wire gate and recorded bounded privacy-preserving proof before any live DeepSeek call."
+}

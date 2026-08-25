@@ -1,0 +1,80 @@
+{
+  "evidence_id": "12-3/implement/146",
+  "kind": "command",
+  "status": "passed",
+  "stage": "implement",
+  "task": "T174",
+  "source_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "commands": [
+    "VULGATA_TEST_ADMIN_CONNECTION=<approved-postgres-admin>; VULGATA_TEST_POSTGRES_ADMIN=<approved-postgres-admin>; AnalysisRuntime__JdtLsDistributionArchivePath=<approved-verified-archive>; <live-opt-ins-and-provider-key-cleared>; dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore -p:WarningLevel=0 --filter \"FullyQualifiedName~Vulgata.Tests.PreparedPass1&FullyQualifiedName!~Pass1HostRuntimeQualificationTests&FullyQualifiedName!~NavigateCodeRealToolQualificationTests&FullyQualifiedName!~Pass1ProductionExecutionTests\" --logger \"console;verbosity=minimal\" -clp:ErrorsOnly",
+    "VULGATA_TEST_ADMIN_CONNECTION=<approved-postgres-admin>; VULGATA_TEST_POSTGRES_ADMIN=<approved-postgres-admin>; AnalysisRuntime__JdtLsDistributionArchivePath=<approved-verified-archive>; <live-opt-ins-and-provider-key-cleared>; dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --no-restore -p:WarningLevel=0 --filter \"FullyQualifiedName~Vulgata.Tests.PreparedPass1&FullyQualifiedName!~Pass1HostRuntimeQualificationTests&FullyQualifiedName!~NavigateCodeRealToolQualificationTests&FullyQualifiedName!~Pass1ProductionExecutionTests&FullyQualifiedName!~Pass1ExecutionApiTests\" --logger \"console;verbosity=minimal\" -clp:ErrorsOnly",
+    "<approved-pair-environment-with-api-key-absent-and-fresh-t174-disposable-clone>; dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --no-restore -p:WarningLevel=0 --filter \"FullyQualifiedName=Vulgata.Tests.PreparedPass1.Pass1ProductionExecutionTests.HostedRevisionBinding_CurrentRunningPair_LoadsAndAcquiresExactTwoRequestsAsync\" --logger \"console;verbosity=minimal\" -clp:ErrorsOnly",
+    "git diff --check; git diff --name-only -- src/dotnet/Vulgata.Infrastructure/Data/Migrations"
+  ],
+  "results": [
+    {
+      "suite": "broad Prepared Pass 1 diagnostic sweep",
+      "exit_code": 1,
+      "total": 749,
+      "passed": 736,
+      "failed": 9,
+      "skipped": 4,
+      "duration_seconds": 212,
+      "classification": "All nine failures are the known Pass1ExecutionApiTests login-form extractor failure before product assertions; no correction-boundary failure occurred."
+    },
+    {
+      "suite": "complete T174 nonlive correction barrier excluding the separately classified stale login harness",
+      "exit_code": 0,
+      "total": 738,
+      "passed": 734,
+      "failed": 0,
+      "skipped": 4,
+      "duration_seconds": 191
+    },
+    {
+      "suite": "hosted approved-pair revision loader on fresh disposable clone",
+      "exit_code": 0,
+      "total": 1,
+      "passed": 1,
+      "failed": 0,
+      "skipped": 0,
+      "duration_seconds": 14
+    },
+    {
+      "suite": "diff and migration delta",
+      "exit_code": 0,
+      "migration_file_delta": 0,
+      "result": "passed_with_line_ending_advisories_only"
+    }
+  ],
+  "coverage": [
+    "The exact T172 none/one/all-cited matrix, all supplied-row drift controls, parser-owned cited-unsupplied rejection, zero mutation, and exact replay passed.",
+    "Focused committer, parser, code-logic/file-v2 schema/projection, streaming, prompt, contract, privacy, production-boundary, dispatcher, migration, PostgreSQL atomic, capacity, revision-binding, pair, recovery, and reconciliation suites passed.",
+    "The refreshed production-boundary inspection contains no forbidden match and reports all composition checks true.",
+    "The hosted production loader acquired exactly two current revision bindings from the approved Running pair without a provider key or provider request."
+  ],
+  "expected_skips": [
+    "source-free live DeepSeek qualification",
+    "isolated source-bearing DeepSeek qualification",
+    "live approved-file dispatcher qualification",
+    "authenticated real-pair provider-outage qualification"
+  ],
+  "unchanged_adjacent_policy": {
+    "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedPass1WorkerDispatcher.cs": "E6BF742DB5E829EF5F7800EF175FC6F94DAAA9E625466987028D392AF12D8524",
+    "src/dotnet/Vulgata.Infrastructure/Data/PreparedPass1ClaimedPacketSource.cs": "75F56EF097B15BF94DD2FE5BB3529B73390A460D5BAA03BC24E2FB87B117180F",
+    "basis": "The hashes match the accepted pre-T173 evidence; T173's dispatched and observed write set contained only the committer."
+  },
+  "artifacts": {
+    "artifacts/qualification/story-12.3/production-boundary-inspection.json": "0D26C31C1B4A70385940AAC06D2C5C52D9EDCAD6346105AD3E019D943E1422D4"
+  },
+  "disposable_database": {
+    "name": "vulgata_test_t174_20260825_1857",
+    "template": "vulgata_story121_feffce36e44c48238a6e55c6742c374c",
+    "dropped_after_verification": true,
+    "remaining_catalog_rows": 0,
+    "ordinary_vulgata_database_mutated": false
+  },
+  "privacy": "Every aggregate T174 test ran with live opt-ins and the provider key absent from the child process. The hosted loader read only the approved local revision-bound source prerequisites and sent no source or request to a provider. No ordinary database, host, system, network, service, global configuration, or Git mutation occurred.",
+  "observed_at": "2026-08-25T19:06:26.0514471+08:00",
+  "summary": "The AD-31 committer correction passes the complete nonlive, PostgreSQL, privacy, production-composition, model/migration, hosted-loader, and diff barriers; a fresh T175/T084 run is permitted."
+}

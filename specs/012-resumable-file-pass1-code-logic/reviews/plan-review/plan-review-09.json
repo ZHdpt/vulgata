@@ -1,0 +1,66 @@
+{
+  "schema_version": "1.0",
+  "gate": "plan-review",
+  "verdict": "REVISE",
+  "reviewed_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "reviewed_boundary": {
+    "base_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+    "candidate_commit": null,
+    "diff_sha256": "56b8ba7edfd54f9b10287da7b63754fc15f06ed6d00ccbe8aa50c301953ac5a3",
+    "artifact_hashes": {
+      "specs/012-resumable-file-pass1-code-logic/plan.md": "c6ba297a0c547a21795f1715fabb2755897461f918fca3e96ae0c9284bec785c",
+      "specs/012-resumable-file-pass1-code-logic/research.md": "cdbf940108f6398d677e8ce7b572c6a94cd61988a591ca3333c6c904d73c9eab",
+      "specs/012-resumable-file-pass1-code-logic/data-model.md": "afe74243ff08150403975ac99603f11cd1d95885edee718fdaddc34d29c55e23",
+      "specs/012-resumable-file-pass1-code-logic/quickstart.md": "6120198e927e038627e7f0dee19e512ec28ee475f38ac5a9730a1576cc865b53",
+      "specs/012-resumable-file-pass1-code-logic/contracts/deepseek-strict-result-submission.md": "567d2000da1bfb115dc987c6d3d65276db85e21f1c6d2714be4f41f5475ebba2"
+    },
+    "owned_paths": [
+      "specs/012-resumable-file-pass1-code-logic/plan.md",
+      "specs/012-resumable-file-pass1-code-logic/research.md",
+      "specs/012-resumable-file-pass1-code-logic/data-model.md",
+      "specs/012-resumable-file-pass1-code-logic/quickstart.md",
+      "specs/012-resumable-file-pass1-code-logic/contracts/deepseek-strict-result-submission.md"
+    ]
+  },
+  "reviewed_artifacts": [
+    "AGENTS.md",
+    ".specify/memory/constitution.md",
+    "docs/agent-workflow/state-machine.md",
+    "docs/agent-workflow/artifact-contracts.md",
+    "docs/agent-workflow/review-and-correction.md",
+    "docs/requirement-draft.md",
+    "docs/bmad/epics.md",
+    "docs/bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md",
+    "docs/bmad/planning-artifacts/architecture/august-30-bounded-scanning-design.md",
+    "docs/bmad/planning-artifacts/sprint-change-proposal-2026-08-24-deepseek-strict-result-submission.md",
+    "specs/012-resumable-file-pass1-code-logic/spec.md",
+    "specs/012-resumable-file-pass1-code-logic/plan.md",
+    "specs/012-resumable-file-pass1-code-logic/research.md",
+    "specs/012-resumable-file-pass1-code-logic/data-model.md",
+    "specs/012-resumable-file-pass1-code-logic/quickstart.md",
+    "specs/012-resumable-file-pass1-code-logic/contracts/deepseek-strict-result-submission.md",
+    "specs/012-resumable-file-pass1-code-logic/decisions/planned-change-authorization-04.md",
+    "specs/012-resumable-file-pass1-code-logic/decisions/deepseek-continuation-authorization-05.md",
+    "specs/012-resumable-file-pass1-code-logic/evidence/tdd/failure-22.json",
+    "specs/012-resumable-file-pass1-code-logic/evidence/tdd/failure-23.json",
+    "specs/012-resumable-file-pass1-code-logic/evidence/tdd/analysis-20.json",
+    "specs/012-resumable-file-pass1-code-logic/evidence/research/deepseek-transcript-budget-best-practices.md",
+    "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedPass1JobExecutor.cs",
+    "tests/Vulgata.Tests/PreparedPass1/PreparedPass1JobExecutorStreamingTests.cs",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekStreamingQualificationTests.cs"
+  ],
+  "findings": [
+    {
+      "id": "PR09-001",
+      "severity": "HIGH",
+      "category": "deepseek-thinking-wire-construction",
+      "artifact": "specs/012-resumable-file-pass1-code-logic/contracts/deepseek-strict-result-submission.md",
+      "location": "lines 91-95; plan.md AD-18 lines 249-253; research.md R-18 lines 312-325",
+      "affected_requirement": "FR-062, FR-064, and SC-015",
+      "evidence": "The boundary requires every final request to contain exactly thinking.type=enabled and explicitly rejects relying on DeepSeek's default, but it authorizes only one mutation of the SDK body: renaming max_completion_tokens to max_tokens, with no other repair or normalization. The pinned reachable executor constructs ChatOptions with response format, multiple-call, max-output-token, and tool values only; it supplies no explicit thinking option. The primary-source analysis establishes the token-field mapping but does not establish that this adapter serializes ChatOptions.AdditionalProperties or another configured option as DeepSeek's thinking object. Consequently the planned final-wire validator either rejects every current production request before transport or can pass only by relying on undocumented/default behavior that the plan itself forbids. Capturing and asserting a field is not a construction mechanism.",
+      "correction_outcome": "Choose and bind one executor-local, pinned mechanism that constructs explicit thinking.type=enabled before final validation: either a proven SDK/adapter option whose production-real wire is tested, or an explicitly authorized deterministic insertion into the captured DeepSeek JSON body. Reconcile plan.md, research.md, data-model.md, quickstart.md, and this contract so token renaming versus thinking construction have unambiguous order and at-most-once rules; bound any provisional body capture; perform contribution and complete-body measurement only after both operations; reject missing, duplicate, malformed, or conflicting input without send; and prove through the public executor/fake transport that the exact field is sent while other Chat, Worker, health, configuration, and host paths remain unchanged.",
+      "earliest_owner": "plan"
+    }
+  ],
+  "summary": "REVISE. The corrected transcript-budget architecture is otherwise coherent and bounded: all byte values are expressly Vulgata policy rather than provider guarantees; checked accounting honestly proves exact inclusive arithmetic while the public executor proves only reachable precedence, cancellation, and no-send behavior; equal raw/assembled limits correctly give ordinary SSE RawResponse precedence while preserving defensive AssembledResponse; individually legal multi-turn responses can exercise aggregate assistant overflow; final contribution/body measurement is ordered after normalization; local validation, privacy, atomic persistence, zero retries, qualification ordering, and Story 12.4/12.5 exclusions remain intact. PR09-001 is blocking because the plan requires explicit thinking on the final DeepSeek wire but defines no conforming way for the pinned executor to create that field while simultaneously forbidding every body mutation except token-field renaming. Correct that plan-owned construction seam and rerun fresh independent plan review. This verdict authorizes no task generation, implementation, source-bearing qualification, lifecycle update, staging, commit, or Git-history change. The nonrecursive diff identity is SHA-256 over UTF-8 sorted repository-path, tab, lowercase file-SHA-256 rows for the five owned paths, joined by LF with no trailing newline."
+}

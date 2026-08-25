@@ -1,0 +1,52 @@
+{
+  "evidence_id": "12-3/implement/118",
+  "kind": "test-red",
+  "status": "current",
+  "stage": "implement",
+  "task": "T145",
+  "source_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore -p:WarningLevel=0 --filter \"FullyQualifiedName~Pass1DeepSeekStreamingQualificationTests.DeclarationAuthority_ExposesRawAndProjectedHashesAndCompleteSortedLedger|FullyQualifiedName~Pass1DeepSeekStreamingQualificationTests.ExecuteAsync_LatestLegalSecondSubmissionUsesTurnTenAndNoRequestElevenAsync|FullyQualifiedName~PreparedPass1JobExecutorStreamingTests.ExecuteAsync_ProviderTurnTen_MapsSdkIterationNineAndTerminatesWithoutRequestElevenAsync|FullyQualifiedName~Pass1DeepSeekContractQualificationTests.SourceFreeHandshake_RequiresTwoSanitizedShapesWithDistinctRequestEvidenceAsync|FullyQualifiedName~Pass1DeepSeekContractQualificationTests.SourceFreeHandshake_UsesConfiguredBetaRouteAndFlashModel_WithExactlyTwoStrictDeclarationsAsync\" --logger \"console;verbosity=minimal\"",
+  "result": {
+    "total": 7,
+    "passed": 0,
+    "failed": 7,
+    "skipped": 0,
+    "duration_seconds": 0.463,
+    "exit_code": 1,
+    "build_errors": 0,
+    "warnings": "existing NU1507 package-source and MSB3277 Entity Framework assembly-version warnings only"
+  },
+  "observed_red": [
+    {
+      "test": "DeclarationAuthority_ExposesRawAndProjectedHashesAndCompleteSortedLedger",
+      "expected": "deterministic ProjectedSubmitOnlyUtf8 authority",
+      "actual": "member absent"
+    },
+    {
+      "test": "ExecuteAsync_LatestLegalSecondSubmissionUsesTurnTenAndNoRequestElevenAsync",
+      "expected": "one unchanged strict submit declaration on request ten",
+      "actual": "two declarations"
+    },
+    {
+      "test": "ExecuteAsync_ProviderTurnTen_MapsSdkIterationNineAndTerminatesWithoutRequestElevenAsync[first-valid,first-invalid,second-valid]",
+      "expected": "one unchanged strict submit declaration on request ten",
+      "actual": "two declarations in all three cases"
+    },
+    {
+      "test": "SourceFreeHandshake_UsesConfiguredBetaRouteAndFlashModel_WithExactlyTwoStrictDeclarationsAsync and SourceFreeHandshake_RequiresTwoSanitizedShapesWithDistinctRequestEvidenceAsync",
+      "expected": "ordinary two-function request and terminal submit-only request",
+      "actual": "terminal request still contains both declarations"
+    }
+  ],
+  "files": {
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekStreamingQualificationTests.cs": "DC65B324BA9CDCA96DBCA2B5CB8C0FBBC0EE8E65CD6F9C0342EE644499BE7C70",
+    "tests/Vulgata.Tests/PreparedPass1/PreparedPass1JobExecutorStreamingTests.cs": "CB10B94880F0D440B859CBB313704053DC41F752652C5FD23BFA7186E13F40F2",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekContractQualificationTests.cs": "220204F9E4FF0D9A43FEB3465060C7C5F9F812DFF946119EE621CFDDF55CD4D2",
+    "src/dotnet/Vulgata.Agents/WorkerExecution/DeepSeekStrictToolDeclarations.cs": "43FB2EFE3BB22A64EA3DF749071CA712E1A7602B3911FEA180855117411A14EB",
+    "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedPass1JobExecutor.cs": "9D02038CAB78ADF91B641554AE412E838A0A11B8AEC653AAF8F053C6054724C2",
+    "tests/Vulgata.Tests/PreparedPass1/DeepSeekSourceFreeHandshakeHarness.cs": "520AFE78113F7CDBA8C525DD28234CACB103B8288B9933038367934FB940DA58"
+  },
+  "privacy": "No provider, source, database, network, host, system, request/response payload, function argument/result, reasoning, or credential was accessed or retained. Production and the source-free harness remained byte-pinned.",
+  "observed_at": "2026-08-25T12:11:01.0677839+08:00",
+  "summary": "T145 is an honest compile-clean behavioral RED: the authority lacks the derived submit-only array and every request-ten/source-free terminal assertion observes the current two-declaration wire, while build and all environmental prerequisites remain healthy."
+}

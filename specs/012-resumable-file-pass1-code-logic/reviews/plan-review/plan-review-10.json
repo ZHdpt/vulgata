@@ -1,0 +1,54 @@
+{
+  "schema_version": "1.0",
+  "gate": "plan-review",
+  "verdict": "ACCEPT",
+  "reviewed_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "reviewed_boundary": {
+    "base_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+    "candidate_commit": null,
+    "diff_sha256": "434d31c7db2375ccf686dfc3e2103f049b442aadccc3f790490e083bc9908dce",
+    "artifact_hashes": {
+      "specs/012-resumable-file-pass1-code-logic/plan.md": "edd9c805173ded3b55abeecc6ba081f11cb9583818a13b94241a12acd527a399",
+      "specs/012-resumable-file-pass1-code-logic/research.md": "8c501b39a0a9ef97e00d37200ac47b27a98e3c49830c8cf9fb8d61aa25f1ef9b",
+      "specs/012-resumable-file-pass1-code-logic/data-model.md": "9cb15de6ac496ea044bb0b63db9e5682ca834d5d09e2f297e99a38e76c689735",
+      "specs/012-resumable-file-pass1-code-logic/quickstart.md": "31776392b9589ddfa6c42d2cf0a7abecd3f8675a5ef41c2469fcd5a82651fa33",
+      "specs/012-resumable-file-pass1-code-logic/contracts/deepseek-strict-result-submission.md": "c6647dec68b833b6ff4d9ae108176d451109a84e3609ae1d75ae75b0e5a2ed65"
+    },
+    "owned_paths": [
+      "specs/012-resumable-file-pass1-code-logic/plan.md",
+      "specs/012-resumable-file-pass1-code-logic/research.md",
+      "specs/012-resumable-file-pass1-code-logic/data-model.md",
+      "specs/012-resumable-file-pass1-code-logic/quickstart.md",
+      "specs/012-resumable-file-pass1-code-logic/contracts/deepseek-strict-result-submission.md"
+    ]
+  },
+  "reviewed_artifacts": [
+    "AGENTS.md",
+    ".specify/memory/constitution.md",
+    "docs/agent-workflow/state-machine.md",
+    "docs/agent-workflow/artifact-contracts.md",
+    "docs/agent-workflow/review-and-correction.md",
+    "docs/requirement-draft.md",
+    "docs/bmad/epics.md",
+    "docs/bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md",
+    "docs/bmad/planning-artifacts/architecture/august-30-bounded-scanning-design.md",
+    "docs/bmad/planning-artifacts/sprint-change-proposal-2026-08-24-deepseek-strict-result-submission.md",
+    "specs/012-resumable-file-pass1-code-logic/spec.md",
+    "specs/012-resumable-file-pass1-code-logic/plan.md",
+    "specs/012-resumable-file-pass1-code-logic/research.md",
+    "specs/012-resumable-file-pass1-code-logic/data-model.md",
+    "specs/012-resumable-file-pass1-code-logic/quickstart.md",
+    "specs/012-resumable-file-pass1-code-logic/contracts/deepseek-strict-result-submission.md",
+    "specs/012-resumable-file-pass1-code-logic/decisions/planned-change-authorization-04.md",
+    "specs/012-resumable-file-pass1-code-logic/decisions/deepseek-continuation-authorization-05.md",
+    "specs/012-resumable-file-pass1-code-logic/evidence/tdd/failure-22.json",
+    "specs/012-resumable-file-pass1-code-logic/evidence/tdd/failure-23.json",
+    "specs/012-resumable-file-pass1-code-logic/evidence/tdd/analysis-20.json",
+    "specs/012-resumable-file-pass1-code-logic/evidence/research/deepseek-transcript-budget-best-practices.md",
+    "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedPass1JobExecutor.cs",
+    "tests/Vulgata.Tests/PreparedPass1/PreparedPass1JobExecutorStreamingTests.cs",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekStreamingQualificationTests.cs"
+  ],
+  "findings": [],
+  "summary": "ACCEPT. Fresh independent plan-only review found no blocking finding, Critical/High issue, Constitution MUST violation, authority conflict, unresolved placeholder, or infeasible architecture/test seam in the pinned five-artifact boundary. PR09-001 is closed at the earliest plan owner: AD-18, R-18, the runtime projection, quickstart, and strict-submission contract now authorize a concrete executor-local construction path rather than validation alone. The production-real SDK body is provisionally capped at 17,416,192 bytes before parsing; duplicate-aware parsing validates the unmodified source shape; a valid max_completion_tokens integer 32,768 may be renamed exactly once or an already exact max_tokens retained; absent thinking may independently receive exactly one object containing only type enabled or an already exact object is retained. Missing, duplicate, simultaneous, wrong, noninteger, malformed, disabled, extra, or conflicting token/thinking shapes reject without transport. The mandatory sequence is bounded provisional capture, source-shape validation, optional 0/1 token rename, independent optional 0/1 thinking insertion, deterministic final serialization, all contribution and complete-body remeasurement, exact final wire and full assistant/tool-result continuity validation, then send. Post-operation byte 17,416,193 and every other final-wire violation are sanitized OutgoingRequest no-send outcomes. This is feasible at the pinned production seam: PreparedPass1JobExecutor already owns an execution-local HttpMessageHandler decorator immediately before HttpClientPipelineTransport and can transform and replace the body without changing the SDK loop, provider configuration, or sibling clients. The plan honestly separates deterministic checked UTF-8 accounting exact/+1 tests from constructible public IPreparedPass1JobExecutor.ExecuteAsync transport vectors. It preserves Vulgata-policy raw response, assembled response, per-assistant contribution, and aggregate assistant replay caps of 16,777,216 bytes; the independent nine-assistant count; and the complete-body cap of 17,416,192 bytes from 131,072 prepared initial + 81,920 declarations + 16,777,216 assistant aggregate + 393,216 tool results + 32,768 envelope. MaxOutputTokens and final max_tokens remain 32,768; ten turns, five-/25-minute deadlines, zero SDK retries, one durable retry, strict two-function shape, complete reasoning continuity, local code-logic/file-v2 validation, atomic immutable persistence/replay, and first reachable RawResponse/AssembledResponse/OutgoingRequest failure precedence remain unchanged. The documents distinguish DeepSeek protocol requirements from conservative Vulgata byte/time/resource policy and make no provider byte guarantee. Provisional/final body and transcript bytes are execution-local, content-dark, nonlogged, nontelemetric, and nonpersistent; source transfer still follows the approved source-free-before-source gate. Scope is confined to the Story 12.3 DeepSeek strict Worker: no database or migration delta, ordinary vulgata database mutation, host/system/network/environment/configuration change, endpoint/model rewrite, provider-health or other Chat/Worker change, local-validation/privacy/atomicity weakening, Story 12.4/12.5 work, or source-scope expansion is planned. Qualification ordering is deterministic: accounting/public/fake-wire RED-GREEN and sibling isolation, source-free exact-hash handshake, fresh T084 isolated 3/3, then T085/full T062, followed by remaining convergence/review/E2E/verification gates. The corrected plan remains aligned with the unchanged specification, PRD overlay, August bounded-scanning architecture, Constitution, AGENTS.md, evidence failure-22/failure-23/analysis-20, primary-source research AB4DC4, planned-change authorization 04, and continuation authorization 05. ACCEPT authorizes no task generation, implementation, lifecycle update, source/provider qualification, staging, commit, or Git-history change. The nonrecursive diff identity is SHA-256 over UTF-8 sorted repository-path, tab, lowercase file-SHA-256 rows for the five owned paths, joined by LF with no trailing newline."
+}

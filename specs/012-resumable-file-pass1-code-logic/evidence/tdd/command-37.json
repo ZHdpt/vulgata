@@ -1,0 +1,66 @@
+{
+  "evidence_id": "12-3/qualify/156",
+  "kind": "command",
+  "status": "passed",
+  "stage": "qualify",
+  "task": "T180",
+  "qualified_gate": "T084",
+  "source_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "command": "VULGATA_T084_ISOLATED_SOURCE_JOBS=1; VULGATA_T062_QUALIFICATION_CONNECTION=<fresh-t180-disposable-database>; VULGATA_T062_WORKER_PROVIDER_API_KEY=<approved-inherited-secret>; <approved-source-and-pinned-runtime-bindings>; dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --no-restore -p:WarningLevel=0 --filter FullyQualifiedName=Vulgata.Tests.PreparedPass1.Pass1DeepSeekIsolatedSourceQualificationTests.ThreeIsolatedSourceJobs_CompleteCommitAndReplayWithoutLeakingPayloadsAsync --logger console;verbosity=normal -clp:ErrorsOnly",
+  "execution": {
+    "network": "unrestricted outbound as explicitly approved",
+    "endpoint": "https://api.deepseek.com",
+    "model": "deepseek-v4-flash",
+    "streaming": true,
+    "thinking_disabled": true,
+    "source_scope": "only the two explicitly approved repositories and bound manifest entries",
+    "database_scope": "fresh disposable clone only"
+  },
+  "result": {
+    "test_total": 1,
+    "test_passed": 1,
+    "test_failed": 0,
+    "test_skipped": 0,
+    "isolated_jobs_required": 3,
+    "isolated_jobs_completed": 3,
+    "test_duration_seconds": 112,
+    "command_duration_seconds": 114,
+    "all_executor_categories": "Completed",
+    "execution_diagnostic_count": 0,
+    "submission_diagnostic_count": 1,
+    "submission_diagnostic_disposition": "One first candidate was InvalidShape and succeeded through the existing bounded correction turn; the final result was locally valid and committed.",
+    "wire_budget_diagnostic_count": 0,
+    "receipt_provenance_rejection_count": 0
+  },
+  "observed": [
+    "All three jobs completed through fresh dependency-injection scopes with streamed DeepSeek calls and locally validated code-logic/file-v2 results.",
+    "Every final result committed an immutable Document graph and replayed with the same commit fingerprint and no mutation.",
+    "Each job produced one Source Anchor, one Document Section, and one Index Entry; no executor, receipt-provenance, or wire-budget failure occurred.",
+    "The second job exercised the existing InvalidShape correction path; the correction remained bounded and the final candidate was accepted without request eleven.",
+    "The sanitized artifact contains only hashes, counts, categories, and commit fingerprints; it contains no source or provider payload."
+  ],
+  "artifact": {
+    "path": "artifacts/qualification/story-12.3/deepseek-isolated-source-jobs.json",
+    "sha256": "2CA2D51BE4D4852A7E073DCC43E17434CACF74AA857EE54C4F2707FFAB70E82F",
+    "status": "passed",
+    "jobs": 3
+  },
+  "production_hashes": {
+    "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedNavigateCodeFunction.cs": "388A4C6D28960E487907A84B8448CBF32F0FEB75003EC34E7C6E172659C18044",
+    "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedSubmitCodeLogicFunction.cs": "564030AAB3187AA0C16F2813B54D863FEA82D2E7043755BD27BA592AD9264362",
+    "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedPass1JobExecutor.cs": "BC9E322876AA540E380A3B2CB46717B4FE8A31678D73465F0C02E5C19C6A9FEE"
+  },
+  "model_and_migration_delta": 0,
+  "disposable_database": {
+    "name": "vulgata_test_t180_20260825_2118",
+    "template": "vulgata_story121_feffce36e44c48238a6e55c6742c374c",
+    "active_connections_before_drop": 0,
+    "dropped_after_verification": true,
+    "remaining_catalog_rows": 0,
+    "recoverable": false,
+    "ordinary_vulgata_database_mutated": false
+  },
+  "privacy": "Only the user-approved bounded source/context from the two approved repositories was sent to DeepSeek. No provider response, reasoning, candidate/validator detail, request body, credential, host path, or source payload was retained. No ordinary database, host, system, firewall, service, permission, global configuration, or Git change occurred.",
+  "observed_at": "2026-08-25T21:20:13.1440903+08:00",
+  "summary": "Fresh T180/T084 passed 3/3 with streaming, bounded correction, local receipt-provenance validation, atomic immutable commit, and exact replay, so fresh pre-Start T085 is permitted."
+}

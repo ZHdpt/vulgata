@@ -1,0 +1,51 @@
+{
+  "review_id": "story-12-3-definition-review-43",
+  "mode": "definition",
+  "verdict": "REVISE",
+  "implementation_authorized": false,
+  "source_checkpoint": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "reviewed_hashes": {
+    "spec.md": "3412704EB3A6C71BF062C4FBAD2E8FA12B0DBDDDDAB80FDBBBC1F6FAAF8E81DA",
+    "plan.md": "EF966A8045F10D1D85812B4E8789FA83DFBFB1A08D9A5670E5A83C00B58306FE",
+    "research.md": "DDB71AF7BE7D97D64839668434555A11829A86A279AAC62FAEFC7AAFF9FFC6A7",
+    "data-model.md": "25B5EA3C5A00A9774B6E3976BCE0D3DC03452942274C64AA033AE928D37A201F",
+    "tasks.md": "A887DDCA9CB6C50DD2722402C6F2C1E7F57892417F800C7D7FB397400383937E",
+    "reviews/definition-review/definition-review-42.json": "9D6620AF3025FC7B44F909399E956EE7E15846355A9C6DF78C5983382EC7FF98"
+  },
+  "task_metrics": {
+    "total": 180,
+    "unique_ids": 180,
+    "pending": 7,
+    "pending_ids": ["T085", "T086", "T176", "T177", "T178", "T179", "T180"]
+  },
+  "prior_finding_dispositions": [
+    {
+      "finding_id": "AD32-DR-001",
+      "status": "PARTIALLY_CLOSED",
+      "evidence": "Global summaries were corrected, but the AD-31 self-review still routed T175 directly into T085/T086."
+    }
+  ],
+  "findings": [
+    {
+      "finding_id": "AD32-DR-001",
+      "severity": "HIGH",
+      "earliest_owner": "tasks",
+      "summary": "The AD-31 self-review remained a competing executable dependency authority.",
+      "correction": "Label it completed history, describe T171-T175 in past tense, and route reused T085/T086 exclusively through AD-32 T180."
+    }
+  ],
+  "closed_checks": [
+    "AD-32 behavior, TDD seam, production ownership, privacy boundary, and qualification design are implementable.",
+    "All other global and historical task summaries correctly identify AD-32 as current."
+  ],
+  "residual_proof_obligations": [
+    "Correct the AD-31 self-review and rerun the definition gate.",
+    "After acceptance, complete T176 and observe T177 RED before T178."
+  ],
+  "residual_risks": [
+    "Receipt recording must remain post-return and execution-local.",
+    "Live provider variability remains bounded by qualification gates."
+  ],
+  "summary": "REVISE. One final tasks-only historical self-review correction is required.",
+  "repository_actions_performed": false
+}

@@ -1,0 +1,54 @@
+{
+  "review_id": "story-12-3-plan-review-30",
+  "mode": "plan-only",
+  "verdict": "REVISE",
+  "task_generation_authorized": false,
+  "source_checkpoint": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "reviewed_hashes": {
+    "specs/012-resumable-file-pass1-code-logic/spec.md": "31411747F87B3890C83223B331B3E32FD5064CD0B47D18EB0D4B66FA2ABCF249",
+    "specs/012-resumable-file-pass1-code-logic/plan.md": "374B22C216293BF38F96F2C9654E503B3B05355B9E618BC438F7F60B57084EBF",
+    "specs/012-resumable-file-pass1-code-logic/research.md": "3FF66725DF1D51F840D8A94F8B60CA34F4EEF65E5D5B1FCBCC27C85CE2F7B09D",
+    "specs/012-resumable-file-pass1-code-logic/data-model.md": "35E2533B43ACE94C70DDDD17B94711CB65A346A3393EB50887B0A1A5D6480C72",
+    "specs/012-resumable-file-pass1-code-logic/evidence/tdd/failure-41.json": "7516B3D3A80E11BC83FD2624A32F0EAA898D69DC92FD1272680F668C5DA980DE",
+    "specs/012-resumable-file-pass1-code-logic/evidence/tdd/analysis-23.json": "B3924C6B912021B3E4104E8AB0E81E11D1802E056B608DBBE56C6170F347DF5E",
+    "specs/012-resumable-file-pass1-code-logic/reviews/plan-review/plan-review-29.json": "AFEBB84FF4FB4DDB9E801EB3DD3AB0DE787F0B7AB3F7B7A02A95A32B5BA7F3C0",
+    "src/dotnet/Vulgata.Infrastructure/Data/Pass1CodeLogicDocumentCommitter.cs": "F0F3C5A287E8111CD507B354A9D505C3F28D75F1DC21F6C939A0E39110F30975",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DocumentPostgreSqlAtomicTests.cs": "EA116DFE1DF4E2DFB041BC8E235B80211C3C6774CEC6C86327829296239EAFF0"
+  },
+  "prior_finding_dispositions": [
+    {
+      "id": "AD31-PR-001",
+      "status": "CLOSED",
+      "evidence": "Current generation, traceability, governance, implementation-discovered correction, risks, and self-review now bind AD-31/R-32 and the existing committer owner."
+    },
+    {
+      "id": "AD31-PR-002",
+      "status": "CLOSED",
+      "evidence": "Plan and research now contain the complete two-sided public PostgreSQL matrix."
+    }
+  ],
+  "findings": [
+    {
+      "id": "AD31-PR-003",
+      "severity": "HIGH",
+      "earliest_owner": "plan",
+      "title": "Cited-unsupplied failure precedence conflicts with unchanged local-validator authority",
+      "correction": "Preserve cited-unsupplied as an existing invalid-authoritative-result parser characterization with zero mutation. Reserve durable-binding-mismatch for durable supplied-row absence, wrong current Pre-Scan Result, or projection mismatch; retain cited-subset membership only as defense in depth."
+    }
+  ],
+  "closed_checks": [
+    "The one-of-two PostgreSQL vector is an honest RED against unchanged production.",
+    "The sole production owner is the existing Infrastructure committer.",
+    "Qualification remains focused GREEN, complete barriers, fresh T084, restarted T085, then T086."
+  ],
+  "residual_proof_obligations": [
+    "Classify cited-unsupplied as an existing parser regression with its current reason and zero mutation.",
+    "Observe one-of-two RED before production change and prove none/all cited plus durable supplied-row drift cases.",
+    "Prove exact replay and complete ordered barriers."
+  ],
+  "residual_risks": [
+    "Distinct supplied-ID handling must preserve prepared-packet canonicality.",
+    "The defense-in-depth cited-membership branch is shadowed by the public parser and must not be misrepresented as separately reachable."
+  ],
+  "summary": "REVISE. Prior gaps are closed; correct cited-unsupplied precedence before task generation."
+}

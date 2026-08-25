@@ -1,0 +1,33 @@
+{
+  "evidence_id": "12-3/implement/26",
+  "kind": "test-green",
+  "stage": "implement",
+  "source_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "artifact_paths": [
+    "src/dotnet/Vulgata.Agents/Prompts/pass1-code-logic-worker.v2.md",
+    "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedPass1JobExecutor.cs",
+    "src/dotnet/Vulgata.Web/Program.cs",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekPromptCompositionTests.cs"
+  ],
+  "artifact_sha256": {
+    "src/dotnet/Vulgata.Agents/Prompts/pass1-code-logic-worker.v2.md": "21ef03abc7e1994af197060457faf2d9e039f13b19d66f7c0d377a0636ab9cbb",
+    "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedPass1JobExecutor.cs": "6763ecd01f785cf350471975bbaef444351ced67b94cbfc70e00dc3dae693682",
+    "src/dotnet/Vulgata.Web/Program.cs": "3414488d9af32e145c7b7b1d30682d74bbc32debd4342274ab8ca495ad04a297",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekPromptCompositionTests.cs": "76995ebc4baf4ca018c3cf4a55178ec8298084614c4d586749571e22de23b5e8"
+  },
+  "commands": [
+    "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter FullyQualifiedName~Pass1DeepSeekPromptCompositionTests --no-build --no-restore --nologo --logger console;verbosity=minimal -p:GenerateMvcTestManifest=false",
+    "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter FullyQualifiedName~PreparedPass1JobExecutorStreamingTests --no-build --no-restore --nologo --logger console;verbosity=minimal -p:GenerateMvcTestManifest=false",
+    "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter FullyQualifiedName~CodeLogicFileV2SchemaTests --no-build --no-restore --nologo --logger console;verbosity=minimal -p:GenerateMvcTestManifest=false",
+    "dotnet build src/dotnet/Vulgata.Web/Vulgata.Web.csproj --no-restore --nologo"
+  ],
+  "result": {
+    "prompt_and_di": "3 passed, 0 failed, 0 skipped; approved elevated host permission allowed the in-process Web scope to resolve PreparedPass1JobExecutor plus both closed function factories",
+    "streaming_regression": "48 passed, 0 failed, 0 skipped",
+    "schema_regression": "18 passed, 0 failed, 0 skipped",
+    "web_build": "0 errors, 9 existing NU1507 package-source and MSB3277 EF assembly-version warnings",
+    "diff_check": "passed with LF-to-CRLF notices only"
+  },
+  "observed_at": "2026-08-24T07:35:05.0595315Z",
+  "summary": "T075 keeps the full externalized v2 schema guidance, declares exactly navigate_code evidence plus submit_code_logic finalization, rejects free-form authority, preserves one correction, and resolves both functions through production DI without changing legacy v1 behavior."
+}

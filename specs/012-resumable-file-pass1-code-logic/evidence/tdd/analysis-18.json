@@ -1,0 +1,45 @@
+{
+  "evidence_id": "12-3/implement/36",
+  "kind": "analysis",
+  "stage": "implement",
+  "source_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "artifact_paths": [
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekContractQualificationTests.cs",
+    "tests/Vulgata.Tests/PreparedPass1/DeepSeekSourceFreeHandshakeHarness.cs",
+    "specs/012-resumable-file-pass1-code-logic/contracts/deepseek-strict-result-submission.md"
+  ],
+  "commands": [
+    "Get-Command tshark; tshark --version; tshark -D",
+    "VULGATA_T083_SOURCE_FREE_HANDSHAKE=1 VULGATA_T062_WORKER_PROVIDER_API_KEY=<present-secret> dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --nologo --filter FullyQualifiedName~SourceFreeHandshake_LiveBetaCapability_WritesSanitizedEvidenceAsync --logger console;verbosity=minimal -p:GenerateMvcTestManifest=false",
+    "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --nologo --filter FullyQualifiedName~SourceFreeHandshake&FullyQualifiedName!~LiveBetaCapability --logger console;verbosity=minimal -p:GenerateMvcTestManifest=false -clp:ErrorsOnly",
+    "rg -n DEBUG-t083|ObservedResponseBytes|ResponseFailureCategory|SourceFreeDiagnosticTransport tests/Vulgata.Tests/PreparedPass1/DeepSeekSourceFreeHandshakeHarness.cs tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekContractQualificationTests.cs"
+  ],
+  "result": {
+    "reproduction": "the exact unrestricted source-free T083 request failed repeatedly after approximately 7 seconds",
+    "http_boundary": "DeepSeek returned HTTP 200 OK",
+    "stream_boundary": "local bounded response consumption stopped with response-bound-exceeded",
+    "observed_bytes_at_stop": 262194,
+    "maximum_raw_response_bytes": 262144,
+    "request_composition": "the fixed request sets model, one source-free user message, two strict tools, tool_choice none, and stream true; it sets neither thinking nor max_tokens",
+    "provider_contract": "official DeepSeek V4 documentation states thinking defaults to enabled, deepseek-v4-flash supports strict tool mode, and output capacity greatly exceeds the local handshake response cap",
+    "root_cause": "the source-free handshake does not bound provider generation; DeepSeek accepts the request and streams beyond the local 262144-byte cap, after which the harness catches the local IOException and misreports the event as ProviderUnavailable",
+    "not_root_cause": [
+      "DNS/TCP/TLS connection establishment",
+      "endpoint reachability",
+      "immediate authentication rejection",
+      "HTTP route or model rejection",
+      "the 25-minute absolute deadline"
+    ],
+    "tshark": "not installed; packet capture was unnecessary after HTTP 200 and the local response-overflow boundary were observed",
+    "privacy": "no credential, header, request body, response body, reasoning, schema payload, or source content was logged or persisted",
+    "cleanup": "all DEBUG-t083 instrumentation was removed; the ten non-live source-free contract tests pass; no T083 success artifact exists",
+    "candidate_correction": "after authorization, explicitly disable thinking and set a small max_tokens value in the source-free capability request, preserve streaming and both exact strict declarations, then rerun fake/source-free gates with a new request hash"
+  },
+  "official_references": [
+    "https://api-docs.deepseek.com/api/create-chat-completion",
+    "https://api-docs.deepseek.com/guides/tool_calls",
+    "https://api-docs.deepseek.com/quick_start/pricing/"
+  ],
+  "observed_at": "2026-08-24T11:37:43.7133233Z",
+  "summary": "T083 is blocked by an unbounded source-free generation request overflowing the local raw-response cap, not by network or provider unavailability."
+}

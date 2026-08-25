@@ -1,0 +1,69 @@
+{
+  "evidence_id": "12-3/implement/113",
+  "kind": "failure",
+  "stage": "implement",
+  "task": "T084",
+  "attempt": "r23",
+  "source_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "database": "vulgata_story123_t084_20260825_r23",
+  "database_template": "vulgata_story121_feffce36e44c48238a6e55c6742c374c",
+  "command": "VULGATA_T084_ISOLATED_SOURCE_JOBS=1 VULGATA_T062_QUALIFICATION_CONNECTION=<fresh-r23-disposable-database> VULGATA_T062_WORKER_PROVIDER_API_KEY=<present-secret> <approved-source-and-runtime-bindings> dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --no-restore -p:WarningLevel=0 --filter FullyQualifiedName~Pass1DeepSeekIsolatedSourceQualificationTests.ThreeIsolatedSourceJobs_CompleteCommitAndReplayWithoutLeakingPayloadsAsync --logger console;verbosity=normal",
+  "result": {
+    "passed": 0,
+    "failed": 1,
+    "skipped": 0,
+    "total": 1,
+    "duration_seconds": 32.628,
+    "failed_at_job": 1,
+    "source_kind": "xml"
+  },
+  "sanitized_failure": {
+    "outcome": "Rejected",
+    "reason": "unclassified-systemic",
+    "executor_category": "UnclassifiedSystemic",
+    "execution_category": "IllegalFunctionCall",
+    "function_call_subtype": "TerminalTurnRequiresSubmission",
+    "submission_category": "none",
+    "wire_budget_category": "none",
+    "provider_http": "none",
+    "response_format": "absent",
+    "parallel_tool_calls": "absent",
+    "projected_declaration_identities_matched": true
+  },
+  "job_scoped_postgresql": {
+    "job_id": "7bdfceac-a6ec-8470-9104-2a1ecd111866",
+    "pair_execution_id": "e8027a57-62dd-8564-9989-e3ad1e26627a",
+    "pair_phase": "Running",
+    "pair_state_version": 0,
+    "job_state": "Running",
+    "attempt_count": 1,
+    "job_state_version": 1,
+    "tool_attempt_count": 0,
+    "remaining_navigation_capacity": 8,
+    "accepted_call_count": 0,
+    "evidence_bytes": 0,
+    "maximum_depth_observed": 0,
+    "budget_state_version": 0,
+    "receipt_count": 0,
+    "committed_document_present": false,
+    "later_jobs": "two Pending jobs with zero attempts, receipts, and committed Documents"
+  },
+  "qualified_preconditions": {
+    "t137_focused": "8/8 passed",
+    "executor_streaming": "106/106 passed",
+    "deepseek_nonlive": "151/151 passed with three expected live skips",
+    "source_free_artifact": "artifacts/qualification/story-12.3/deepseek-source-free-handshake.json",
+    "source_free_artifact_sha256": "5232822827D90F4D88C73D73E9416E378F2DC03946FB3D63F56CA4CF22E6C08E"
+  },
+  "excluded_causes": [
+    "endpoint, model, authentication, unrestricted outbound network, provider availability, and HTTP failure",
+    "strict declarations, disabled-thinking composition, streaming, inactivity/absolute timeout, and wire-budget failure",
+    "PostgreSQL availability, disposable clone freshness, host, and system configuration failure",
+    "terminal multiple-submit topology and request-eleven drift"
+  ],
+  "remaining_unknown": "After unique nonblank identities, declared-name validation, sole-submission handling, and the now-distinct all-submission batch rejection, TerminalTurnRequiresSubmission contains exactly three legal-name topologies: one navigate_code call, more than one all-navigate_code call, or a mixed navigate_code/submit_code_logic batch. No call name, count, identity, arguments, response, reasoning, content, or source was retained, so r23 cannot distinguish those three.",
+  "required_next_step": "Keep T084/T085 blocked. Add three fixed payload-free terminal navigation/mixed subtypes with deterministic precedence and behavioral RED/GREEN, then retry T084 only on a fresh disposable clone. Only the observed fixed topology may authorize a provider-wire correction; do not infer a parallel-call or candidate-selection policy from r23.",
+  "privacy": "No provider response body, function-call identity/arguments/result, reasoning, assistant content, source bytes, prompt packet, credential, request body, or host path was retained. Only fixed categories and approved disposable-database scalars were recorded. Only the two approved repositories were read; only the current bounded XML job source/context was sent; only r23 was mutated; ordinary vulgata and host/system settings were not accessed or changed.",
+  "recorded_at": "2026-08-25T11:24:30+08:00",
+  "summary": "T084 r23 again reached the terminal named-submit turn and failed closed, but ruled out multiple submissions. The remaining cause is one of three navigation-bearing terminal response topologies, so one final content-dark split is required before selecting the provider-wire fix."
+}

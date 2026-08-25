@@ -1,0 +1,29 @@
+{
+  "evidence_id": "12-3/implement/137",
+  "kind": "test-red",
+  "status": "resolved",
+  "stage": "implement",
+  "task": "T166",
+  "source_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "commands": [
+    "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore -p:WarningLevel=0 --filter FullyQualifiedName~Ad30TurnAllocation|FullyQualifiedName~Accumulator_SupportsOnlyBounded|FullyQualifiedName~Accumulator_RejectsSixtyFifth|FullyQualifiedName~ShouldProject_Aligns --logger console;verbosity=normal -clp:ErrorsOnly"
+  ],
+  "result": {
+    "build": { "exit_code": 1, "compilation_errors": 0 },
+    "focused_red": { "total": 10, "passed": 5, "failed": 5, "skipped": 0, "duration_seconds": 2.1328 }
+  },
+  "expected_failures": {
+    "turn_projection": "Provider turn nine returns ShouldProject=false instead of entering forced finalization.",
+    "accumulator": "The sixty-fifth structural result is accepted instead of rejected at the narrowed 64-entry boundary.",
+    "wire_valid_nine": "A valid first candidate on request nine observes ordinary string-required choice instead of the terminal named-submit object.",
+    "wire_invalid_nine_valid_ten": "The invalid-nine/valid-ten sequence cannot start its projected correction because request nine remains ordinary.",
+    "wire_invalid_nine_invalid_ten": "The invalid-nine/invalid-ten termination sequence cannot start its projected correction because request nine remains ordinary."
+  },
+  "files": {
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekTerminalContextProjectionTests.cs": "B77F3DB2CC05C2C7CC5253B66315F99F033F25C4F0583FFC698F20E459F91A61",
+    "tests/Vulgata.Tests/PreparedPass1/PreparedPass1JobExecutorStreamingTests.cs": "D58DA544851DEA68AAC9BD4236C150797405A17F4C5B1F494BCD857B8239E1D1"
+  },
+  "privacy": "The RED suite is deterministic and source-free. It performed no provider, source transfer, database, ordinary database, host, system, workflow, credential, or Git operation.",
+  "observed_at": "2026-08-25T17:00:52.4199920+08:00",
+  "summary": "AD-30 has a compile-clean behavioral RED at the terminal projection, structural result bound, and real fake-wire turn-allocation seams."
+}

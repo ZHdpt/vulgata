@@ -1,0 +1,44 @@
+{
+  "review_id": "story-12-3-definition-review-42",
+  "mode": "definition",
+  "verdict": "REVISE",
+  "implementation_authorized": false,
+  "source_checkpoint": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "reviewed_hashes": {
+    "spec.md": "3412704EB3A6C71BF062C4FBAD2E8FA12B0DBDDDDAB80FDBBBC1F6FAAF8E81DA",
+    "plan.md": "EF966A8045F10D1D85812B4E8789FA83DFBFB1A08D9A5670E5A83C00B58306FE",
+    "research.md": "DDB71AF7BE7D97D64839668434555A11829A86A279AAC62FAEFC7AAFF9FFC6A7",
+    "data-model.md": "25B5EA3C5A00A9774B6E3976BCE0D3DC03452942274C64AA033AE928D37A201F",
+    "tasks.md": "5A5193321094B61DBA57B8E26CE58315FE271102B54AC3301E0AA77A84B5679D"
+  },
+  "task_metrics": {
+    "total": 180,
+    "unique_ids": 180,
+    "pending": 7,
+    "pending_ids": ["T085", "T086", "T176", "T177", "T178", "T179", "T180"]
+  },
+  "findings": [
+    {
+      "finding_id": "AD32-DR-001",
+      "severity": "HIGH",
+      "earliest_owner": "tasks",
+      "summary": "Global T070+ summaries still named completed AD-31/T171-T175 as the current chain, conflicting with the AD-32 header and section.",
+      "correction": "Mark AD-31/T171-T175 completed history and state only T176 through T180 followed by reused T085/T086 as current."
+    }
+  ],
+  "closed_checks": [
+    "The AD-32 design, behavioral seam, production ownership, privacy boundary, and qualification sequence are implementable.",
+    "T177 is an honest compile-clean tests-only fake-stream RED and T178 is the sole three-file GREEN.",
+    "The ledger rules and unchanged parser/committer/provider/host boundaries are complete."
+  ],
+  "residual_proof_obligations": [
+    "Correct AD32-DR-001 in tasks.md and rerun independent definition review.",
+    "After acceptance, observe T177 RED before any T178 production edit."
+  ],
+  "residual_risks": [
+    "Receipt recording must remain post-return and execution-local.",
+    "Live provider variability cannot replace deterministic test evidence."
+  ],
+  "summary": "REVISE. A tasks-only historical-authority wording correction and fresh definition review are required.",
+  "repository_actions_performed": false
+}

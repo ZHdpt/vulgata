@@ -1,0 +1,47 @@
+{
+  "evidence_id": "12-3/implement/79",
+  "kind": "test-green",
+  "stage": "implement",
+  "task": "T110",
+  "source_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "focused_command": "$env:VULGATA_TEST_POSTGRES_ADMIN='<approved disposable admin connection>'; dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter \"FullyQualifiedName~Pass1ProductionCompositionTests|FullyQualifiedName~PreparedPass1WorkerDispatcherTests|FullyQualifiedName~Pass1ClaimedPacketExecutionTests|FullyQualifiedName~Pass1DurableNavigationRecoveryTests|FullyQualifiedName~Pass1ProductionBoundaryQualificationTests\" --no-restore --logger \"console;verbosity=normal\"",
+  "focused_result": {
+    "build": "passed-with-existing-warnings",
+    "passed": 36,
+    "failed": 0,
+    "skipped": 0,
+    "exit_code": 0
+  },
+  "implementation": {
+    "durable_hydration": "Claim hydration reloads the persisted navigation high-water, state version, accepted-call count, and evidence bytes; remaining capacity is exactly 8 - ToolAttemptCount.",
+    "dispatcher": "PreparedPass1WorkerDispatcher owns no conversation, retry, provider-turn, callback-slot, or budget state and invokes the executor exactly once per durable claim.",
+    "marker_repair": "PreparedPass1JobRunner requires the typed marker-repair port before hydration/provider and before retry or terminal visibility. PreparedPass1Store re-reads current durable state and idempotently creates Calls receipt ordinal nine only at high-water eight under current lease/version/authorization.",
+    "composition": "Production DI maps reservation and marker-repair ports to the same scoped PreparedPass1Store; missing marker composition now fails closed.",
+    "restart": "Retry, lease recovery, process restart, and sibling claims reconstruct capacity only from PostgreSQL and cannot reset or share the budget."
+  },
+  "review_corrections": [
+    "Three legacy dispatcher tests were updated from the removed outer retry loop to the accepted single-dispatch executor-owned conversation.",
+    "The production-boundary inspection now recognizes the reservation dependency and durable eight-attempt owner.",
+    "A follow-up RED proved optional marker-store resolution could bypass repair; production now uses GetRequiredService and the isolated fixture registers an explicit marker test double."
+  ],
+  "artifact_sha256": {
+    "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedPass1WorkerDispatcher.cs": "E6BF742DB5E829EF5F7800EF175FC6F94DAAA9E625466987028D392AF12D8524",
+    "src/dotnet/Vulgata.Infrastructure/Data/PreparedPass1ClaimedPacketSource.cs": "75F56EF097B15BF94DD2FE5BB3529B73390A460D5BAA03BC24E2FB87B117180F",
+    "src/dotnet/Vulgata.Web/Data/PreparedPass1JobRunner.cs": "D1315520072D8CB8C07CE54664D8757599E1E1D45F5ACBFA5641492439C7C13B",
+    "src/dotnet/Vulgata.Web/Program.cs": "5467BDCBDB463B1F3FED6E3DC888AFD4FD2A8BCFE0FE30AD4E7AFAC8D6BACFD1",
+    "src/dotnet/Vulgata.Core/DomainServices/IPreparedPass1WorkerDispatcher.cs": "EDE37D8EF6DD976F9D8190C39274A18CB74E422BD3B635781E5E1D3965F9FAFD",
+    "src/dotnet/Vulgata.Core/DomainServices/IPass1NavigationAttemptReservationStore.cs": "541379B876AA088F1AD4637D2D3023FDADF46F71F8EC75361D097789EE0A69D0",
+    "src/dotnet/Vulgata.Infrastructure/Data/PreparedPass1Store.cs": "CB060679C2B09465A7BF02828EBFA2F4EF2A68A41ABA22DA6854EB16D356DEA2",
+    "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedPass1JobExecutor.cs": "EEDDCD356179426FBB02DC398A0230CC3428347E75D2BDE42EF60A5ADF12FC99",
+    "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedNavigateCodeFunction.cs": "2083F6A20715D96AE5913A97C834C1CBF0ACE616A1305769B0B5A3BA35912FD3",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1ProductionCompositionTests.cs": "2275BA454F2ADA7E84764299B8231EC18AA2AA0B77172B18DF647942125F9A93",
+    "tests/Vulgata.Tests/PreparedPass1/PreparedPass1WorkerDispatcherTests.cs": "91F895D1A615DEC53738042D93FE9BBB26E1A803E1F2A1DAA0D6B95A0D8BB0BC",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1ProductionBoundaryQualificationTests.cs": "210D73124E75D00D21CD7580B87277293C9DED54013F9CFFAC61D7F8094954A2",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1ClaimedPacketExecutionTests.cs": "433B324FEA05EE9F0900AA27753943FE706DB01F6352FC3D32818BDBA68C0161",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DurableNavigationRecoveryTests.cs": "8526FD6373BEE20D93D65416E9C88A09F1668BBF540F00E8D966AEBC9713239E"
+  },
+  "database": "PostgreSQL coverage used fixture-managed disposable databases through the approved admin connection. The ordinary vulgata database was not targeted.",
+  "privacy": "No provider request, source-bearing traffic, credential output, host setting, system configuration, service, firewall, or global tool state was accessed or changed.",
+  "warnings": "Existing NU1507 and EF assembly-version warnings remain; the focused suite succeeded.",
+  "observed_at": "2026-08-24T22:27:57.7695893Z"
+}

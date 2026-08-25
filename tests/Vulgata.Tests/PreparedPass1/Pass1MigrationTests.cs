@@ -172,6 +172,90 @@ public sealed class Pass1MigrationTests
         Assert.Contains(ScanExecutionPhase.Pass1Planning, Enum.GetValues<ScanExecutionPhase>());
         Assert.Contains(TwoRepositoryScanCoordinationPhase.Pass1, Enum.GetValues<TwoRepositoryScanCoordinationPhase>());
         Assert.Contains(TwoRepositoryScanReasonCategory.Unclassified, Enum.GetValues<TwoRepositoryScanReasonCategory>());
+
+        ScanExecution v2 = CreateExecution(_secondExecutionId, _secondRepositoryId, _secondScanRunId);
+        Assert.Equal("code-logic/file-v2", v2.DocumentSchemaIdentity);
+        Assert.NotEqual(legacy.DocumentSchemaIdentity, v2.DocumentSchemaIdentity);
+    }
+
+    [Fact]
+    public void StrictResultCorrection_IsExecutionLocalAndLeavesTheEfModelUnchanged()
+    {
+        using VulgataDbContext db = CreateNpgsqlModelContext();
+
+        Assert.False(db.Database.HasPendingModelChanges());
+        Assert.DoesNotContain(
+            db.Model.GetEntityTypes(),
+            entity =>
+            {
+                string identity = entity.ClrType?.FullName ?? entity.Name;
+                return identity.Contains("DeepSeek", StringComparison.OrdinalIgnoreCase) ||
+                       identity.Contains("StrictResult", StringComparison.OrdinalIgnoreCase) ||
+                       identity.Contains("SubmissionSession", StringComparison.OrdinalIgnoreCase) ||
+                       identity.Contains("ProviderTranscript", StringComparison.OrdinalIgnoreCase);
+            });
+
+        IMigrationsAssembly migrationsAssembly = db.GetService<IMigrationsAssembly>();
+        Assert.DoesNotContain(
+            migrationsAssembly.Migrations.Keys,
+            name => name.Contains("DeepSeek", StringComparison.OrdinalIgnoreCase) ||
+                    name.Contains("StrictResult", StringComparison.OrdinalIgnoreCase) ||
+                    name.Contains("SubmissionSession", StringComparison.OrdinalIgnoreCase) ||
+                    name.Contains("ProviderTranscript", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public void ScanJobExecution_OneRetryLifecycle_PreservesOnlyDurableRetryState()
+    {
+        ScanJobExecution job = ScanJobExecution.Create(
+            _firstExecutionId,
+            _firstRepositoryId,
+            _firstScanRunId,
+            Guid.Parse("55000000-0000-4000-8000-000000000056"),
+            manifestOrdinal: 1,
+            _startedAt);
+        Guid firstLease = Guid.Parse("66000000-0000-4000-8000-000000000066");
+        DateTimeOffset retryAt = _startedAt.AddMinutes(2);
+
+        job.AcquireLease(firstLease, _startedAt.AddMinutes(5), _startedAt.AddMinutes(1));
+        job.ScheduleRetry(
+            job.StateVersion,
+            firstLease,
+            retryAt,
+            ScanJobFailureCategory.JobTransient,
+            "worker-transient",
+            _startedAt.AddMinutes(1).AddSeconds(1));
+
+        Assert.Equal(ScanJobExecutionState.RetryScheduled, job.State);
+        Assert.Equal(1, job.AttemptCount);
+        Assert.Equal(retryAt, job.NextAttemptAt);
+
+        job.RecoverDueRetry(job.StateVersion, retryAt);
+        job.AcquireLease(
+            Guid.Parse("66000000-0000-4000-8000-000000000067"),
+            retryAt.AddMinutes(5),
+            retryAt.AddSeconds(1));
+
+        Assert.Equal(ScanJobExecutionState.Running, job.State);
+        Assert.Equal(2, job.AttemptCount);
+        Assert.Null(job.NextAttemptAt);
+
+        // PreparedPass1Store owns the at-most-one retry policy. This entity and
+        // model assertion protects only the durable state used by that policy.
+        using VulgataDbContext db = CreateNpgsqlModelContext();
+        var jobEntity = Assert.IsAssignableFrom<Microsoft.EntityFrameworkCore.Metadata.IReadOnlyEntityType>(
+            db.Model.FindEntityType(typeof(ScanJobExecution)));
+        string[] durableProperties = jobEntity.GetProperties()
+            .Select(property => property.Name)
+            .ToArray();
+        Assert.Contains(nameof(ScanJobExecution.AttemptCount), durableProperties);
+        Assert.Contains(nameof(ScanJobExecution.State), durableProperties);
+        Assert.Contains(nameof(ScanJobExecution.NextAttemptAt), durableProperties);
+        Assert.DoesNotContain(
+            durableProperties,
+            name => name.Contains("StrictResult", StringComparison.OrdinalIgnoreCase) ||
+                    name.Contains("SubmissionSession", StringComparison.OrdinalIgnoreCase) ||
+                    name.Contains("ProviderTranscript", StringComparison.OrdinalIgnoreCase));
     }
 
     [Fact]
@@ -261,6 +345,14 @@ public sealed class Pass1MigrationTests
     {
         var options = new DbContextOptionsBuilder<VulgataDbContext>()
             .UseSqlite(new SqliteConnection("Data Source=:memory:"))
+            .Options;
+        return new(options);
+    }
+
+    private static VulgataDbContext CreateNpgsqlModelContext()
+    {
+        var options = new DbContextOptionsBuilder<VulgataDbContext>()
+            .UseNpgsql("Host=localhost;Port=5432;Database=vulgata")
             .Options;
         return new(options);
     }

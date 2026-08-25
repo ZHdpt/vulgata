@@ -1,0 +1,71 @@
+{
+  "evidence_id": "12-3/implement/120",
+  "kind": "test-green",
+  "status": "current",
+  "stage": "implement",
+  "task": "T147",
+  "source_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "commands": [
+    "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore -p:WarningLevel=0 --filter <exact-T145-five-name-filter> --logger console;verbosity=minimal",
+    "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --no-restore -p:WarningLevel=0 --filter FullyQualifiedName~PreparedPass1JobExecutorStreamingTests --logger console;verbosity=minimal",
+    "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --no-restore -p:WarningLevel=0 --filter FullyQualifiedName~Pass1DeepSeekStreamingQualificationTests|FullyQualifiedName~Pass1DeepSeekContractQualificationTests|FullyQualifiedName~Pass1DeepSeekIsolatedSourceQualificationTests --logger console;verbosity=minimal"
+  ],
+  "results": [
+    {
+      "scope": "exact T145 ordinary-two/terminal-one cases",
+      "total": 7,
+      "passed": 7,
+      "failed": 0,
+      "skipped": 0,
+      "duration_seconds": 0.473,
+      "exit_code": 0
+    },
+    {
+      "scope": "complete PreparedPass1JobExecutorStreamingTests",
+      "total": 107,
+      "passed": 107,
+      "failed": 0,
+      "skipped": 0,
+      "duration_seconds": 2,
+      "exit_code": 0
+    },
+    {
+      "scope": "nonlive DeepSeek streaming, contract, and isolated-source classes",
+      "total": 154,
+      "passed": 151,
+      "failed": 0,
+      "skipped": 3,
+      "duration_seconds": 1,
+      "exit_code": 0,
+      "expected_skips": [
+        "live source-free handshake",
+        "live approved File Code Unit dispatcher-seam response",
+        "live three isolated source jobs"
+      ]
+    }
+  ],
+  "checks": {
+    "build_errors": 0,
+    "warnings": "existing NU1507 package-source and MSB3277 Entity Framework assembly-version warnings only",
+    "migration_or_model_snapshot_delta": false,
+    "git_diff_check": "passed with line-ending advisories only",
+    "provider_or_source_or_database_operation": false
+  },
+  "files": {
+    "src/dotnet/Vulgata.Agents/WorkerExecution/DeepSeekStrictToolDeclarations.cs": "B53E8A840685B4501780EE9C210E5B41AB7E49FE4CF8E4392207CC651F18826F",
+    "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedPass1JobExecutor.cs": "7A6B4EFE976E545D9F9ABF358262EC9D06664889113C54834D949B1EDAD56A32",
+    "tests/Vulgata.Tests/PreparedPass1/DeepSeekSourceFreeHandshakeHarness.cs": "28E8B293DC728E523A5398FDA6A4F12D80AF65E93DC2166017C2A9D206F5A20B",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekStreamingQualificationTests.cs": "DC65B324BA9CDCA96DBCA2B5CB8C0FBBC0EE8E65CD6F9C0342EE644499BE7C70",
+    "tests/Vulgata.Tests/PreparedPass1/PreparedPass1JobExecutorStreamingTests.cs": "CB10B94880F0D440B859CBB313704053DC41F752652C5FD23BFA7186E13F40F2",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekContractQualificationTests.cs": "EC4E112B1447143547D3F618ABACF27BD3D96CDB30AB04D29AF77DA62D346E0D"
+  },
+  "evidence_plumbing_correction": {
+    "change": "The live source-free artifact now identifies task T148 and includes the helper-owned terminal declaration SHA-256 and byte count.",
+    "focused_rerun": "7/7 passed",
+    "nonlive_rerun": "151 passed, 0 failed, 3 expected live skips",
+    "observed_at": "2026-08-25T12:17:11.1067527+08:00"
+  },
+  "privacy": "No live provider, source, database, network, host, system, request/response payload, function argument/result, reasoning, or credential was accessed or retained.",
+  "observed_at": "2026-08-25T12:15:28.5544922+08:00",
+  "summary": "T147 passed and remained green after the T148 evidence-plumbing correction: focused ordinary-two/terminal-one behavior, all 107 executor tests, and all 151 nonlive DeepSeek tests are green; three live tests remain expected skips and no migration/model delta exists."
+}

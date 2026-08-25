@@ -33,10 +33,25 @@ using Vulgata.Web.Components;
 using Vulgata.Web.Components.Account;
 using Vulgata.Web.Components.Pages;
 using Vulgata.Web.Data;
+using Vulgata.Web.Logging;
 using Vulgata.Web.RequestPipeline;
 using Vulgata.Web.Validators;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Logging.ClearProviders();
+builder.Logging.AddConsole();
+builder.Logging.Services.AddSingleton<ILoggerProvider>(services =>
+{
+    IConfiguration configuration = services.GetRequiredService<IConfiguration>();
+    IHostEnvironment environment = services.GetRequiredService<IHostEnvironment>();
+    string localLogPath = configuration["Logging:LocalFile:Path"] ?? "logs/vulgata.log";
+    if (!Path.IsPathRooted(localLogPath))
+    {
+        localLogPath = Path.Combine(environment.ContentRootPath, localLogPath);
+    }
+
+    return new LocalFileLoggerProvider(localLogPath);
+});
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
@@ -360,6 +375,10 @@ public static class VulgataWebComposition
             services.GetRequiredService<PreparedPass1Store>());
         builder.Services.AddScoped<IPreparedPass1NavigationReceiptSink>(services =>
             services.GetRequiredService<PreparedPass1Store>());
+        builder.Services.AddScoped<IPass1NavigationAttemptReservationStore>(services =>
+            services.GetRequiredService<PreparedPass1Store>());
+        builder.Services.AddScoped<IPass1NavigationCallsMarkerRepairStore>(services =>
+            services.GetRequiredService<PreparedPass1Store>());
         builder.Services.AddScoped<IPreparedPass1ClaimedPacketSource,
             PreparedPass1ClaimedPacketSource>();
         builder.Services.AddScoped<IPreparedPass1JobExecutor, PreparedPass1JobExecutor>();
@@ -383,6 +402,7 @@ public static class VulgataWebComposition
         builder.Services.AddScoped<IPass1NavigationService>(services =>
             services.GetRequiredService<PreparedPass1NavigationService>());
         builder.Services.AddScoped<PreparedNavigateCodeFunction>();
+        builder.Services.AddScoped<PreparedSubmitCodeLogicFunction>();
         builder.Services.AddScoped<IJavaAnalysisSessionFactory>(services =>
         {
             const string release = "jdt-language-server-1.61.0-202608141332";

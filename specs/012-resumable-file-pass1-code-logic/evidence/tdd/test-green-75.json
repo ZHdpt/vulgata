@@ -1,0 +1,36 @@
+{
+  "evidence_id": "12-3/implement/152",
+  "kind": "test-green",
+  "status": "passed",
+  "stage": "implement",
+  "task": "T178",
+  "source_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "public_seam": "PreparedPass1JobExecutor.ExecuteAsync",
+  "production_owner": "execution-local PreparedPass1ReceiptProvenanceLedger shared by PreparedNavigateCodeFunction and PreparedSubmitCodeLogicFunction",
+  "commands": [
+    "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --no-restore --filter \"FullyQualifiedName~ExecuteAsync_InventedNavigationReceiptWithoutObservedCallback_UsesEvidenceCorrectionBeforeCaptureAsync|FullyQualifiedName~ExecuteAsync_ObservedNavigationReceipt_IsAcceptedWithoutReceiptOrderCouplingAsync|FullyQualifiedName~ExecuteAsync_MultipleObservedReceipts_AcceptsReverseOrderAndDuplicateCitationsAsync|FullyQualifiedName~ExecuteAsync_MixedObservedAndUnobservedReceipts_RejectsBeforeCaptureAndCorrectsAsync|FullyQualifiedName~ExecuteAsync_OneRemainingNavigationCapacity_DoesNotAuthorizeExcessReceiptAsync|FullyQualifiedName~ExecuteAsync_ConcurrentExecutions_IsolateCrossExecutionReceiptIdsAsync\" --logger \"console;verbosity=minimal\"",
+    "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --no-restore --filter \"FullyQualifiedName~PreparedPass1JobExecutorStreamingTests\" --logger \"console;verbosity=minimal\"",
+    "git diff --check -- src/dotnet/Vulgata.Agents/WorkerExecution/PreparedNavigateCodeFunction.cs src/dotnet/Vulgata.Agents/WorkerExecution/PreparedSubmitCodeLogicFunction.cs src/dotnet/Vulgata.Agents/WorkerExecution/PreparedPass1JobExecutor.cs tests/Vulgata.Tests/PreparedPass1/PreparedPass1JobExecutorStreamingTests.cs"
+  ],
+  "result": {
+    "build": { "compilation_errors": 0, "baseline_warnings_retained": true },
+    "focused_receipt_provenance": { "exit_code": 0, "total": 6, "passed": 6, "failed": 0, "skipped": 0, "test_duration_milliseconds": 412 },
+    "complete_executor_streaming": { "exit_code": 0, "total": 120, "passed": 120, "failed": 0, "skipped": 0, "test_duration_seconds": 2 },
+    "diff_check": { "exit_code": 0, "line_ending_advisory_only": true }
+  },
+  "behavior": {
+    "recording": "Only non-empty ReceiptId values returned by admitted navigation callbacks are recorded after callback completion; duplicates are idempotent and ordering is irrelevant.",
+    "validation": "After unchanged complete parser success and before canonical capture, every candidate receipt in communicationEvidence, knownReferences, and deferredObservations must occur in the same execution ledger; unknown IDs use the existing InvalidEvidence correction path.",
+    "bounds_and_isolation": "The locked UUID-only ledger is capped at eight entries, overflow terminates fail-closed, and one new ledger instance is discarded with each executor invocation.",
+    "preserved": "Provider wire, streaming, timeout, retry, prompt, schema, packet, parser, durable committer defense, persistence, and lifecycle ownership are unchanged."
+  },
+  "files": {
+    "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedNavigateCodeFunction.cs": "388A4C6D28960E487907A84B8448CBF32F0FEB75003EC34E7C6E172659C18044",
+    "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedSubmitCodeLogicFunction.cs": "564030AAB3187AA0C16F2813B54D863FEA82D2E7043755BD27BA592AD9264362",
+    "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedPass1JobExecutor.cs": "BC9E322876AA540E380A3B2CB46717B4FE8A31678D73465F0C02E5C19C6A9FEE",
+    "tests/Vulgata.Tests/PreparedPass1/PreparedPass1JobExecutorStreamingTests.cs": "8C2773C1D92143C340C5941BC7574BC6284F54D323B8BF786BF11E94CC99F825"
+  },
+  "privacy": "The ledger retains UUIDs only. No descriptor, source, target, arguments, tool result, provider response, candidate body, credential, or log content is retained. No provider, source-bearing traffic, database, host/system, workflow, or Git mutation occurred.",
+  "observed_at": "2026-08-25T20:56:17.8269090+08:00",
+  "summary": "The minimal three-file AD-32 production change turns all four honest receipt-provenance failures GREEN while preserving both observed-receipt controls and the complete 120-test executor streaming suite."
+}

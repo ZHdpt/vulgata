@@ -1,0 +1,31 @@
+{
+  "evidence_id": "12-3/implement/60",
+  "kind": "failure",
+  "stage": "implement",
+  "source_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "artifact_paths": [
+    "specs/012-resumable-file-pass1-code-logic/plan.md",
+    "specs/012-resumable-file-pass1-code-logic/data-model.md",
+    "specs/012-resumable-file-pass1-code-logic/contracts/deepseek-strict-result-submission.md",
+    "specs/012-resumable-file-pass1-code-logic/tasks.md",
+    "tests/Vulgata.Tests/PreparedPass1/DeepSeekSourceFreeHandshakeHarness.cs"
+  ],
+  "artifact_sha256": {
+    "specs/012-resumable-file-pass1-code-logic/plan.md": "80A696FB658CFD06004A10A7BD13BBBF0211156BB846DE09CF902FC113FC923E",
+    "specs/012-resumable-file-pass1-code-logic/data-model.md": "3D19B5EB7BB3E46ED4AA7DAC2D2358678BFCB9E03147D38A883BD30819C5ADDF",
+    "specs/012-resumable-file-pass1-code-logic/contracts/deepseek-strict-result-submission.md": "056A37031CBBB00587D011B1D74DC60CC21F11BF0B20858EB3DF3E785C9D6643",
+    "specs/012-resumable-file-pass1-code-logic/tasks.md": "A894899F15ACDA90B516B48B05D3177F715EC266D2A391FDC47A20B298492A33",
+    "tests/Vulgata.Tests/PreparedPass1/DeepSeekSourceFreeHandshakeHarness.cs": "B86EB3AF0DDEE3F89876F8097B0D8C1BA200E9A94A7881C1676C08F26BCE21C9"
+  },
+  "observed_gap": {
+    "required_observation": "The source-free capability observation records raw public per-function and combined hashes and bytes, projection algorithm and complete ledger identity, projected per-function and combined hashes and bytes, and final request identity.",
+    "current_harness_shape": "DeepSeekSourceFreeHandshakeEvidence records one navigate schema identity and one combined declaration identity, but has no raw submit identity, raw combined identity, transform-ledger identity, or explicit projected per-function identities.",
+    "current_task_boundary": "T098 permits only DeepSeekStrictToolDeclarations.cs and a strictly necessary executor seam. It does not permit the test-only handshake evidence record/harness to consume the helper's new sanitized identities.",
+    "consequence": "A helper-only T098 cannot make the complete T097 evidence-shape assertions GREEN or produce the data-model-required T083 artifact without overloading unrelated fields or violating task ownership."
+  },
+  "diagnosis": "The AD-20 projection algorithm remains valid. The defect is a narrow plan/task ownership omission discovered while reviewing the T097 RED: the existing test-only source-free harness must be allowed to plumb sanitized raw, ledger, and projected identities from the shared helper into T083 evidence.",
+  "required_correction": "Preserve T097 test ownership. Expand T098 only to include tests/Vulgata.Tests/PreparedPass1/DeepSeekSourceFreeHandshakeHarness.cs for sanitized evidence plumbing from DeepSeekStrictToolDeclarations, with no independent schema generation, provider call, source transfer, production behavior, or diagnostic output constant. Rerun independent plan and combined definition reviews before GREEN implementation.",
+  "privacy": "This diagnosis used repository code and metadata only. It made no provider, network, source, database, credential, or system call and retained no request or response content.",
+  "observed_at": "2026-08-24T18:46:48.8974435Z",
+  "summary": "T097 audit found an accepted-definition ownership gap: helper-only T098 cannot emit the complete sanitized raw/ledger/projected T083 evidence required by the AD-20 data model."
+}

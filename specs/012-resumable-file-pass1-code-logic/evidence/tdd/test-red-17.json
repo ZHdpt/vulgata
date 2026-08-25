@@ -1,0 +1,25 @@
+{
+  "evidence_id": "12-3/implement/46",
+  "kind": "test-red",
+  "stage": "implement",
+  "source_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "artifact_paths": [
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekStreamingQualificationTests.cs"
+  ],
+  "artifact_sha256": {
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekStreamingQualificationTests.cs": "B7D6EDF373ACCDEE8C907B86DB39E62608ED9DFEEB9245750B3CB062CB9F8C26"
+  },
+  "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --nologo --filter FullyQualifiedName~Pass1DeepSeekStreamingQualificationTests.ExecuteAsync_RawResponseExactBoundaryRemainsLegalAsync --logger console;verbosity=normal -p:GenerateMvcTestManifest=false -clp:ErrorsOnly",
+  "result": {
+    "outcome": "failed-as-expected",
+    "tests_total": 1,
+    "tests_failed": 1,
+    "tests_passed": 0,
+    "expected_reason": "worker-result-rejected",
+    "actual_reason": "provider-request-bound-exceeded",
+    "provider_calls": 0,
+    "source_bearing_calls": 0
+  },
+  "observed_at": "2026-08-24T14:15:06Z",
+  "summary": "At the public executor seam, an exact 16777216-byte raw SSE response remained incorrectly rejected by the old 262144-byte production ceiling, providing the honest T087 RED for the approved bounded correction."
+}

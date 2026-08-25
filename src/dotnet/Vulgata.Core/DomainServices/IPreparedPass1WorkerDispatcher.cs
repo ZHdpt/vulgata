@@ -83,8 +83,15 @@ public sealed record PreparedPass1FileCodeUnitAssignment(
     ReadOnlyMemory<byte> SourceUtf8)
 {
     public int RemainingNavigationBudget { get; init; } = 8;
+    public PreparedPass1NavigationBudgetProjection? NavigationBudget { get; init; }
     public PreparedPass1ServerAuthorization? ServerAuthorization { get; init; }
 }
+
+public sealed record PreparedPass1NavigationBudgetProjection(
+    int ToolAttemptCount,
+    long StateVersion,
+    int AcceptedCallCount,
+    int EvidenceBytes);
 
 public sealed record PreparedPass1ContextSnapshotProjection(
     Guid ContextSnapshotId,
@@ -150,6 +157,7 @@ public sealed record PreparedPass1WorkerPacket(
     IReadOnlyList<PreparedPass1CommunicationClassificationProjection> CommunicationClassifications)
 {
     public int RemainingNavigationBudget { get; init; } = 8;
+    public PreparedPass1NavigationBudgetProjection? NavigationBudget { get; init; }
     public PreparedPass1ServerAuthorization? ServerAuthorization { get; init; }
 }
 

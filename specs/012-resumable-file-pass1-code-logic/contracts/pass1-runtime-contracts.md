@@ -39,7 +39,7 @@ An `AtCapacity` or future-eligibility result uses runner completion/state-change
 
 The service does not discover dormant pairs at process startup. Process loss preserves durable progress and requires authenticated manual Resume to revalidate and signal remaining work. The fifth failed provider probe removes the activation and persists the paused/manual-action state; no timer, startup scan, or provider callback may reactivate it. An explicit `继续扫描` request is the only reactivation path after that pause.
 
-The production DI graph must resolve the execution activator/hosted service, claimed-packet source, `IPreparedPass1JobExecutor`, prepared dispatcher, lease-bound `navigate_code`, provider health request, probe driver, `IPass1CodeLogicDocumentCommitter`, and store/reconciler. A static registration without an authenticated Start-to-terminal call path is nonconforming.
+The production DI graph must resolve the execution activator/hosted service, budget-bound claimed-packet source, navigation-attempt reservation port, `IPreparedPass1JobExecutor`, result-only prepared dispatcher, explicit strict invoker, lease-bound `navigate_code`, submission/parser/schema/wire components, committer, and store/reconciler. The executor owns the complete provider conversation. The dispatcher calls it exactly once per durable claim; an outer loop, `ConversationState`, in-memory retry/budget decrement, or default Agent wrapper is nonconforming.
 
 ## Active concurrency update
 
@@ -51,7 +51,7 @@ Already-valid leases survive a decrease unchanged. Claims count them against the
 
 Claims are internal. A transaction locks the pair execution, rejects any non-`Running`/closed-circuit state, returns strictly expired leases to Pending, releases only due nonexhausted Story 12.3 retries, counts valid unexpired Running leases, and if capacity remains selects the smallest eligible Pair Selection Ordinal among Pending jobs. It applies `AcquireLease` using a server UUID and bounded lease expiration. The result carries the current job `StateVersion`, lease token/expiry, pair `StateVersion`, Pair Selection Ordinal, Manifest Ordinal, and nullable next durable eligibility as a server-only claim authorization.
 
-A specific Infrastructure packet source accepts only that claim authorization. It reconstructs the exact manifest entry, File Code Unit, Scan Context Snapshot, contained Communication Kind Classifications, prompt/schema/runtime bindings, and revision-bound source bytes. After source I/O it rechecks the current job version/unexpired lease and pair Running/closed state before returning one packet. A mismatch returns no packet and no source/provider disclosure. The returned model-visible packet contains no lease token/version/expiry. The dispatcher never accepts a caller-built multi-job batch on the production path.
+A specific Infrastructure packet source accepts only that claim authorization. It reconstructs exact binding and loads the budget; absence/invalid state fails. It repairs marker nine at high-water eight before provider disclosure, then reloads/revalidates after source I/O. Server-only packet fields include exact high-water/state and `RemainingNavigationBudget = 8 - ToolAttemptCount`. Zero remaining is valid: navigation is disabled but sole submission remains possible. No value becomes model-authored.
 
 The Worker packet includes only the assigned exact source range, untrusted bounded context, and same-manifest classifications whose canonical path and Evidence Locator are contained by the assigned File Code Unit. Each supplied classification binding carries its exact persisted ID, fingerprint, nullable closed kind, level, confidence, rule, provenance, Catalog Rule Identity, and Evidence Locator so a result can echo and be compared field-for-field. It excludes unrelated classifications and never converts a classification into endpoint/provider ownership. A null-kind Warning cannot support an authored `Rpc`/`Http` communication observation.
 
@@ -59,22 +59,28 @@ The Worker packet includes only the assigned exact source range, untrusted bound
 
 ## Worker attempt and result classification
 
-The prepared dispatcher has one normal attempt and no in-memory retry decorator. Durable `AttemptCount` decides whether the isolated `JobTransient` retry remains legal.
+The prepared dispatcher has one executor invocation per durable claim and no in-memory retry, provider-turn, or navigation-budget decorator. Durable job `AttemptCount` decides whether JobTransient retry remains legal; durable navigation `ToolAttemptCount` independently decides remaining callbacks.
+
+For each claim, the executor supplies exactly two strict functions and current-job-only context to one streaming conversation, including when exact hydrated remaining navigation capacity is zero. Whole-response preflight rejects illegal responses with zero reservation. For an eligible one-through-eight all-navigation response, each provider-order call within current remaining capacity is preceded by one reservation transaction over the current pair/job/budget/lease; every excess sibling receives constant `navigation-budget-exhausted` with no reservation/callback/receipt/evidence effect. The existing budget high-water advances before callback and survives every no-receipt/failure/crash path; receipt commit never advances it twice. Reservation and receipt operations return the committed high-water/state-version cursor, and each later admitted sibling uses only the latest returned cursor rather than predicting a version. `submit_code_logic` and parser authority remain unchanged.
+
+The execution-local session allows two submissions within ten provider service turns. First invalid returns only the closed category and disables navigation. Valid captures canonical bytes and terminates immediately; free-form text is ignored. Second invalid, third submission, later navigation, unknown/mixed/multiple-submission, above-eight response, or exhaustion rejects. SDK maximum eleven exists only to keep declarations on provider turn ten. The SDK callback iteration is zero-based and Vulgata derives `providerTurn = Iteration + 1`; SDK iteration 8/provider turn nine is forced finalization when no earlier submission ended the execution, and an invalid turn-nine first candidate alone authorizes SDK iteration 9/provider turn ten as the sole correction. Turn ten cannot become a first-submission fallback and always terminates after the one eligible correction invocation. Any mapped post-ten callback is fail-closed; fake transport proves no request eleven.
+
+All service calls stream with five minutes since the last accepted nonzero raw read—including SSE comments—and one nonresetting 25-minute attempt deadline below the 30-minute lease. Comments never enter assembled content. Every later function-carrying request replays complete reasoning/content/tool calls/results unchanged. Zero SDK retry preserves the one durable Worker retry. Exact bounds/privacy remain normative in the strict-submission contract.
 
 | Observation | Durable classification | Effect |
 | --- | --- | --- |
 | timeout/transport/408/429/5xx | ProviderTransient | open pair circuit; no new claims |
 | missing/invalid provider assignment, endpoint, model or credential; 401/403 | ProviderConfiguration | pause pair immediately for correction |
-| malformed/unknown/duplicate JSON, ordinary schema/semantic defect | JobTransient on first attempt | schedule the same job once |
+| no accepted capture; typed ordinary Shape/Binding/Evidence/Semantics rejection, submission/turn exhaustion, or bounded request/response overflow | JobTransient on first attempt | schedule the same job once |
 | second JobTransient or permanent file-specific refusal | JobPermanent/ordinary file failure | terminal failed job, counted once |
 | current manifest/revision/hash/job/receipt relational contradiction | Integrity | fail affected Scan and pair closed |
 | forbidden tool/scope/disclosure/secret/host path | Security | fail affected Scan and pair closed |
 | explicit operator cancellation | Cancellation | cancel remaining work; no auto-resume |
 | systemic condition with no safe class | Unclassified | pause for inspection |
 
-A bad Worker result never commits a Document. Integrity/security classification is reserved for a violated trusted boundary; ordinary provider-authored mistakes remain job-scoped so peripheral files can use the approved budget. A metadata-only navigation BoundExceeded receipt is neither provider failure nor accepted evidence: it truthfully supports only a deferred bound-exhaustion observation.
+A bad or uncaptured Worker result never commits a Document. Provider strict acceptance is not local acceptance. Integrity/security classification is reserved for a violated trusted boundary; ordinary provider-authored mistakes remain job-scoped so peripheral files can use the approved budget. A metadata-only navigation BoundExceeded receipt is neither provider failure nor accepted evidence: it truthfully supports only a deferred bound-exhaustion observation.
 
-The production job runner maps every dispatcher/commit outcome before continuing: valid canonical result -> atomic commit; ordinary malformed/rejected result -> `JobTransient` then `JobPermanent` according to the durable attempt policy; provider transient -> pair circuit/probe driver while retaining the same current claim when still valid; provider configuration -> operator-correction pause; binding/graph contradiction -> Integrity; forbidden disclosure/tool access -> Security; unknown systemic result -> inspection pause. No caught exception may be treated as successful completion or silently abandon a Running lease.
+The production job runner maps every dispatcher/commit outcome before continuing. Before scheduling retry, terminal failure, or reconciliation, it ensures marker nine whenever durable high-water is eight. A crash may defer this to expired-lease recovery/hydration, but no new provider execution or terminal outcome becomes visible first. Valid result, JobTransient/JobPermanent, provider circuit/configuration, Integrity/Security, and unknown-systemic mappings otherwise remain unchanged. No exception may restore a reservation or silently abandon a Running lease.
 
 ## Provider circuit
 
@@ -93,6 +99,8 @@ Probe state/version, ordinal, eligibility, bounded retry-after and sanitized rea
 
 The health request is a fixed source-free OpenAI-compatible Chat Completions request against the resolved Worker assignment: no tools, caller text, Repository/System/Scan identity, source, context, classification, Document content, or navigation. SDK retries/logging/message logging are disabled; timeout and request/response bytes are bounded; response content is discarded. The closed observation is only `Available`, `TransientUnavailable` with a bounded Retry-After, or `ProviderConfiguration`. Only availability/classification and a sanitized code cross into the durable store. Raw headers/body/credential/model response are never persisted or returned.
 
+The source-free strict-capability handshake is a separate T062 qualification pre-gate. It carries the exact two strict schema hashes to the configured beta endpoint but cannot read/mutate circuit state, consume a probe ordinal/window, signal production activation, or replace/change this health request. Its environment/configuration/network/authentication/schema/provider failure stops qualification before source and is reported without host remediation.
+
 ## Retry, restart, and manual resume
 
 An isolated JobTransient may use one `Running -> RetryScheduled -> Pending` cycle. The same deterministic job and remaining navigation budget are reused. AttemptCount can never exceed two for this policy.
@@ -103,7 +111,7 @@ The visible manual action text is exactly `继续扫描`. No response includes l
 
 ## Atomic Document commit
 
-The commit port accepts one validated canonical result plus the expected job StateVersion/lease token. It rechecks all trusted bindings and calls one transaction-aware knowledge-store primitive. Document graph insertion/supersession and `ScanJobExecution.Complete` are one transaction. Already-Completed replay is evaluated before the Running lease branch.
+The commit port accepts only the executor's execution-local captured, fully locally validated canonical result plus the expected job StateVersion/lease token. The dispatcher may defensively reparse those canonical bytes but cannot substitute final text or provider validation. The port rechecks all trusted bindings and calls one transaction-aware knowledge-store primitive. Document graph insertion/supersession and `ScanJobExecution.Complete` are one transaction. Already-Completed replay is evaluated before the Running lease branch.
 
 Replay independently reconstructs and compares the complete canonical commit graph from scalar rows: Document Version fields and canonical ContentJson/Markdown, every Source Anchor field/order/cardinality, every Document Section field/order/cardinality, exactly one Index Entry with all projected fields, and direct REFERENCES Edge identity/source/target/type/order/cardinality. Duplicate source/target relations with a different row identity reject. When a durable post-Pass1 outcome exists, the pure reconciliation projection must independently reconstruct the exact additional Edge set; those edges cannot mask a missing or mutated direct Edge. Only the exact graph returns the existing Document Version without mutation. Missing, extra, changed, reordered, renormalized, or duplicate graph state conflicts or fails integrity with zero writes.
 

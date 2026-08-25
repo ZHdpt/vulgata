@@ -1,0 +1,29 @@
+{
+  "evidence_id": "12-3/implement/28",
+  "kind": "test-green",
+  "stage": "implement",
+  "source_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "artifact_paths": [
+    "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedPass1JobExecutor.cs",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekStreamingQualificationTests.cs"
+  ],
+  "artifact_sha256": {
+    "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedPass1JobExecutor.cs": "1425D221B154895378FFC351E600C64CFC64C77D2191001D7F57222BF389C56A",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekStreamingQualificationTests.cs": "E8E7987778EC03E6978ADF44D42520677504176B693830049F5B4F55CFFC028B"
+  },
+  "commands": [
+    "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --no-build --nologo --filter FullyQualifiedName~Vulgata.Tests.PreparedPass1.Pass1DeepSeekStreamingQualificationTests --logger console;verbosity=minimal -p:GenerateMvcTestManifest=false",
+    "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --no-build --nologo --filter FullyQualifiedName~Vulgata.Tests.PreparedPass1.PreparedPass1JobExecutorStreamingTests --logger console;verbosity=minimal -p:GenerateMvcTestManifest=false",
+    "dotnet build src/dotnet/Vulgata.Agents/Vulgata.Agents.csproj --no-restore --nologo",
+    "git diff --check"
+  ],
+  "result": {
+    "streaming_wire": "12 passed, 0 failed, 0 skipped",
+    "executor_regression": "48 passed, 0 failed, 0 skipped",
+    "agents_build": "0 errors, 7 existing NU1507 package-source and MSB3277 EF assembly-version warnings",
+    "diff_check": "passed with LF-to-CRLF notices only",
+    "privacy": "PreparedPass1JobExecutor has no ILogger or logging calls and disables SDK logging, message logging, and message-content logging; this is static/configuration evidence because no runtime logger-injection seam exists"
+  },
+  "observed_at": "2026-08-24T08:43:19.1215972Z",
+  "summary": "T077 enforces the accepted post-serialization component and aggregate wire limits, streams with resettable inactivity and nonresetting absolute cancellation, preserves complete reasoning replay, sends no later request after overflow, and returns only the sanitized provider-request-bound-exceeded reason without an outer retry or durable transcript."
+}

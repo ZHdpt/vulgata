@@ -1,0 +1,39 @@
+{
+  "evidence_id": "12-3/implement/40",
+  "kind": "failure",
+  "stage": "implement",
+  "source_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "artifact_paths": [
+    "specs/012-resumable-file-pass1-code-logic/tasks.md",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1ProductionExecutionTests.cs",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekContractQualificationTests.cs"
+  ],
+  "commands": [
+    "Inspect presence only for the twelve T062/T084 host-binding environment variables; do not print values or send source-bearing provider traffic."
+  ],
+  "result": {
+    "gate": "T084",
+    "classification": "host-configuration-prerequisite-unavailable",
+    "present": [
+      "VULGATA_T062_WORKER_PROVIDER_API_KEY"
+    ],
+    "missing": [
+      "VULGATA_T062_APPROVED_PAIR_REAL",
+      "VULGATA_T062_QUALIFICATION_CONNECTION",
+      "VULGATA_T062_SYSTEM_ID",
+      "VULGATA_T062_MANIFEST_ONE_ID",
+      "VULGATA_T062_MANIFEST_TWO_ID",
+      "VULGATA_T062_REPOSITORY_ONE_ROOT",
+      "VULGATA_T062_REPOSITORY_TWO_ROOT",
+      "VULGATA_T062_WORKER_PROVIDER_ENDPOINT",
+      "VULGATA_T062_WORKER_PROVIDER_MODEL",
+      "VULGATA_T062_SOURCE_BINDING_READY",
+      "VULGATA_TEST_POSTGRES_ADMIN"
+    ],
+    "source_bearing_requests_sent": 0,
+    "provider_requests_sent": 0,
+    "host_remediation_attempted": false
+  },
+  "observed_at": "2026-08-24T11:46:20.8154311Z",
+  "summary": "T083 passed, but the ordered T084 source-bearing qualification stopped at the fail-closed host-binding preflight. Only the existing provider API key is visible in this process; the disposable qualification database, approved System/manifests, two approved Repository roots, endpoint/model acknowledgement, source-binding acknowledgement, and PostgreSQL admin binding are absent. No source-bearing request was attempted and no host configuration was changed."
+}

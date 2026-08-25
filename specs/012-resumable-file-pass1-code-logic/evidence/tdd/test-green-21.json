@@ -1,0 +1,37 @@
+{
+  "evidence_id": "12-3/implement/58",
+  "kind": "test-green",
+  "stage": "implement",
+  "source_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "artifact_paths": [
+    "tests/Vulgata.Tests/PreparedPass1/DeepSeekSourceFreeHandshakeHarness.cs",
+    "src/dotnet/Vulgata.Agents/WorkerExecution/DeepSeekStrictToolDeclarations.cs",
+    "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedPass1JobExecutor.cs",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekContractQualificationTests.cs",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekStreamingQualificationTests.cs"
+  ],
+  "artifact_sha256": {
+    "tests/Vulgata.Tests/PreparedPass1/DeepSeekSourceFreeHandshakeHarness.cs": "B86EB3AF0DDEE3F89876F8097B0D8C1BA200E9A94A7881C1676C08F26BCE21C9",
+    "src/dotnet/Vulgata.Agents/WorkerExecution/DeepSeekStrictToolDeclarations.cs": "21A89A661FE8F17AF21A3122D6C74ECE8F24B6269AF3695BB4315AFBC4BA0DB7",
+    "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedPass1JobExecutor.cs": "B17AACB077045DC6361C523714D6531DEDC157ED7B029A28345196C64CA04027",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekContractQualificationTests.cs": "EAEAE6C87CB6C7D2F879A5164EA7D132FBACA6B62C576015528765E5BCBBD7B8",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekStreamingQualificationTests.cs": "AE10F410B3DAF4E4552CF3E622862CC0A8F80C0F24B1C5FBA3912D30CEF4DBEA"
+  },
+  "commands": [
+    "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --no-restore -p:WarningLevel=0 --filter \"FullyQualifiedName~Pass1DeepSeekContractQualificationTests.SourceFreeHandshake_\" --logger \"console;verbosity=minimal\"",
+    "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --no-restore -p:WarningLevel=0 --filter \"FullyQualifiedName=Vulgata.Tests.PreparedPass1.Pass1DeepSeekStreamingQualificationTests.ExecuteAsync_FakeWire_UsesExactlyTwoStrictStreamingFunctionsWithoutRetryAsync|FullyQualifiedName=Vulgata.Tests.PreparedPass1.Pass1DeepSeekStreamingQualificationTests.ExecuteAsync_FakeWire_UsesPublicAdapterDeclarationBytesAsync|FullyQualifiedName=Vulgata.Tests.PreparedPass1.Pass1DeepSeekStreamingQualificationTests.ExecuteAsync_FakeWire_OmitsUnsupportedDeepSeekFieldsAsync\" --logger \"console;verbosity=minimal\""
+  ],
+  "result": {
+    "source_free_contract": "9 passed, 0 failed, 1 intentional opt-in live T083 skipped",
+    "production_identity": "3 passed, 0 failed, 0 skipped",
+    "request": "thinking enabled; max_tokens 16; stream true; exact shared declarations; no tool_choice, parallel_tool_calls, or response_format",
+    "response_handling": "Bounded response content is discarded; no returned function is invoked and no tool result or continuation is sent.",
+    "privacy": "Only sanitized request/declaration/schema hashes, byte counts, endpoint/model, streaming/strict flags, closed outcome, and observation time are retained.",
+    "provider_calls": 0,
+    "source_bearing_calls": 0,
+    "database_actions": 0,
+    "system_or_host_changes": 0
+  },
+  "observed_at": "2026-08-24T18:10:57.7055182Z",
+  "summary": "T095 makes the deterministic source-free qualification harness share production's exact accepted declaration authority and DeepSeek V4 request shape. Live provider qualification remains deferred to T096."
+}

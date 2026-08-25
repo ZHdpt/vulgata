@@ -1,0 +1,45 @@
+{
+  "evidence_id": "12-3/implement/64",
+  "kind": "command",
+  "stage": "implement",
+  "task": "T096",
+  "source_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "broader_gate": {
+    "command": "$env:AnalysisRuntime__JdtLsDistributionArchivePath='C:\\Users\\13728\\Downloads\\jdt-language-server-1.61.0-202608141332.tar.gz'; Remove-Item Env:VULGATA_T083_SOURCE_FREE_HANDSHAKE -ErrorAction SilentlyContinue; Remove-Item Env:VULGATA_T084_ISOLATED_SOURCE_JOBS -ErrorAction SilentlyContinue; dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --nologo -p:WarningLevel=0 -p:GenerateMvcTestManifest=false --filter \"FullyQualifiedName~Pass1DeepSeekStreamingQualificationTests|FullyQualifiedName~PreparedPass1JobExecutorStreamingTests|FullyQualifiedName~Pass1DeepSeekContractQualificationTests|FullyQualifiedName~Pass1DeepSeekPromptCompositionTests|FullyQualifiedName~Pass1DeepSeekIsolatedSourceQualificationTests\" --logger \"console;verbosity=minimal\"",
+    "result": "177 passed, 0 failed, 3 intentionally skipped",
+    "duration_seconds": 4
+  },
+  "live_source_free_gate": {
+    "command": "$env:VULGATA_T083_SOURCE_FREE_HANDSHAKE='1'; Remove-Item Env:VULGATA_T084_ISOLATED_SOURCE_JOBS -ErrorAction SilentlyContinue; dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --no-restore --nologo -p:WarningLevel=0 -p:GenerateMvcTestManifest=false --filter \"FullyQualifiedName=Vulgata.Tests.PreparedPass1.Pass1DeepSeekContractQualificationTests.SourceFreeHandshake_LiveBetaCapability_WritesSanitizedEvidenceAsync\" --logger \"console;verbosity=normal\"",
+    "result": "1 passed, 0 failed",
+    "duration_ms": 670,
+    "outcome": "Available",
+    "endpoint": "https://api.deepseek.com/beta",
+    "model": "deepseek-v4-flash",
+    "streaming": true,
+    "strict": true
+  },
+  "artifact_path": "artifacts/qualification/story-12.3/deepseek-source-free-handshake.json",
+  "artifact_sha256": "E4B4C3F1DDFEA30B7F26178C82763D05E8F0326C9B39F56F44CA95ADEE20DBC1",
+  "identity": {
+    "projection_algorithm": "deepseek-strict-schema-projection-v1",
+    "raw_navigate_sha256": "C8387178DA32FC682E7DE462AFA8B62AF388944CB0FC741B895375E585E87770",
+    "raw_submit_sha256": "77A044526E5D61480B3E86FA3C3AA354FF78A9F04BCA3B279F210DFBFB421BC8",
+    "raw_combined_sha256": "54321765E82EBE39092DF96A6F0E39F922E24459C34830525C22A38CDE533B61",
+    "ledger_identity_sha256": "1472E4F1240A7D4568F127FDA36E72BA8B074EDAA430B54289DC5E02C0E5D6FA",
+    "ledger_rows": 18,
+    "projected_navigate_sha256": "779250FCFE72F07B59CBE280A0FF537FF7D622BFE847BCB616A39858705A1FDA",
+    "projected_submit_sha256": "3CD6F35EB8E6B6E7BEFBF802B2D3187823A0805A00B2ADFEC8A85082835DB20F",
+    "projected_combined_sha256": "506603F604C080EA50CDC5E78A4EFD8BAE39AEAEC24B03C66A9F19FC50962D44",
+    "request_sha256": "CFA181975E2FBEF68B9FEA4ABBBB39F83A48F0E1D4444C415BD351CBECD1213D"
+  },
+  "failure_27_resolution": "The first successful provider call exposed an incomplete JSON artifact projection. Only the live test artifact initializer was corrected to serialize existing sanitized observation fields; 49 deterministic contract tests then passed and the same source-free live request passed again with complete evidence.",
+  "privacy": {
+    "source_derived_payload_sent": false,
+    "response_content_persisted": false,
+    "credential_persisted": false,
+    "request_content_persisted": false
+  },
+  "observed_at": "2026-08-24T19:21:52.3188386Z",
+  "summary": "T096 passes: all deterministic/fake gates and the corrected live source-free DeepSeek beta handshake succeeded with complete sanitized identity evidence."
+}

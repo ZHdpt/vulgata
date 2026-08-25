@@ -1,5 +1,66 @@
 # Story 12.3 final verification
 
+## AD-32/R-33 final correction verdict
+
+Observed at `2026-08-25T16:04:23.4073124Z` on branch
+`demo0831/story-12-3`, pinned to source checkpoint
+`29459174348511bb813c4aa9672ccffee61d82a6`.
+
+The DeepSeek blocker is fixed and the Story 12.3 correction boundary passes.
+The root cause was not network instability or streaming inactivity: DeepSeek
+could return a schema-valid candidate containing internally consistent receipt
+UUIDs that were never issued by that execution's admitted `navigate_code`
+callbacks. The parser accepted the shape and the durable committer rejected it
+later, which could consume the ordinary pair-wide failure budget. The Worker
+execution now keeps a bounded, thread-safe, execution-local UUID-only allowlist,
+records only receipts returned by admitted navigation callbacks, and rejects an
+unknown cited receipt through the existing `InvalidEvidence` correction path
+before candidate capture. No prompt, provider wire, schema, migration, retry
+policy, host, system, or global configuration changed.
+
+The live qualification uses streaming `deepseek-v4-flash`, concurrency two,
+and the approved two-Repository source boundary. Fresh T084 completed 3/3
+isolated source jobs with immutable commit/replay. Fresh T085 completed 150/150
+production jobs in 36m44s, persisted 150 Documents and Java/XML Source Anchors,
+reached `ReadyForResolution` with a closed circuit and zero failure inventory,
+recovered one durable transient retry, and passed immutable replay. All T084,
+T085, and T086 disposable databases were dropped after use; ordinary `vulgata`
+and the approved template were not mutated.
+
+### Final barrier evidence
+
+| Boundary | Result |
+|---|---|
+| AD-32 fake-stream RED/GREEN | honest RED, then 6/6 focused and 120/120 full executor-streaming GREEN |
+| complete non-live Story 12.3 barrier | 740 passed, 0 failed, 4 expected live-only skips |
+| fresh isolated DeepSeek T084 | 3/3 jobs completed and replayed |
+| deterministic typed-tool/lease/DI host proof | 27 passed, 0 failed, 2 expected live-only skips |
+| fresh production DeepSeek T085 | 1/1; 150/150 jobs and Documents; `ReadyForResolution` |
+| refreshed replay and production-boundary inspection | 97 passed, 0 failed; verdict `pass`; zero forbidden matches |
+| adjacent regression boundary | 442 passed, 0 failed, 1 intentional PostgreSQL-only skip |
+| Web build | succeeded, 0 errors, 9 existing package/assembly warnings |
+| EF migration delta | none |
+| `git diff --check` | exit 0 |
+
+The completed repository-wide run is not relabeled as fully green: excluding
+the four PostgreSQL concurrency facts that passed separately against their
+required disposable database, it completed with 2404 passed, 5 failed, and 9
+skipped (2418 total, 7m53s). The five failures are outside the Story 12.3
+changed-file and behavior boundary: two stale CodeGraph preflight fixtures lack
+`plan_revision`; one legacy provider-contract qualification lacks
+`VULGATA_PROVIDER_CONTRACT_IMAGE`; one Story 4.3 test expects a concrete
+coordinator while its provider is unavailable and the runtime fails closed;
+and one repository-management test expects the old `最近扫描时间` label. These
+are retained as repository-baseline failures, not counted as passes and not
+attributed to DeepSeek, streaming, PostgreSQL, or this correction.
+
+The authoritative sanitized evidence is
+`evidence/tdd/command-37.json`, `evidence/tdd/command-38.json`, and
+`evidence/tdd/command-39.json`. No credential, source, prompt, provider
+reasoning, request/response, candidate, tool arguments/results, or host-path
+payload is retained. Story 12.4 Cross-Repository Resolution and Story 12.5
+Business Logic/Chat work remain excluded.
+
 ## T062 authorized DeepSeek qualification and correction result
 
 Observed on `2026-08-23` on branch `demo0831/story-12-3`. The user authorized

@@ -1,0 +1,39 @@
+{
+  "schema_version": "1.0",
+  "gate": "definition-review",
+  "verdict": "ACCEPT",
+  "reviewed_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "reviewed_boundary": {
+    "base_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+    "candidate_commit": null,
+    "artifact_hashes": {
+      "specs/012-resumable-file-pass1-code-logic/spec.md": "11cbfb17bfe5a8a37621fb432ec2d4d8af4d7ed4ee34f4f8ea5aad57d4bff946",
+      "specs/012-resumable-file-pass1-code-logic/plan.md": "5c441722437377615c84f99f44935023ae1051f19cf4699cce322cbed0209861",
+      "specs/012-resumable-file-pass1-code-logic/research.md": "9dfa9634610f86077cc153ec7bcee00978ebaa8b09eb4735909bdafc7522d5c1",
+      "specs/012-resumable-file-pass1-code-logic/data-model.md": "5e8b7ff94653b26b7a544febb28dc17eff050033c7308f2e51ff941b1480a220",
+      "specs/012-resumable-file-pass1-code-logic/quickstart.md": "94b7873e35f5e321344f99034fc1d07642178c818615f29c0fa4a8a8cbb4f45d",
+      "specs/012-resumable-file-pass1-code-logic/contracts/deepseek-strict-result-submission.md": "4c611950d8579282e10577388724140e47b1f82292950d6aebad0103d4a71728",
+      "specs/012-resumable-file-pass1-code-logic/tasks.md": "af5e7d03ae74cda603995b8a8d4019e223227778cfb95bfc76285b55c1da4883",
+      "specs/012-resumable-file-pass1-code-logic/reviews/plan-review/plan-review-23.json": "b238e7db482dc698988d743a6fcb93354f171982e9cfc2b0e364f16250798c6a",
+      "specs/012-resumable-file-pass1-code-logic/decisions/planned-change-authorization-11.md": "af974cbf1c86afd8f74806bece2ca9e1f7268a361f4a1bc1c828296ef33b47df",
+      "specs/012-resumable-file-pass1-code-logic/evidence/tdd/failure-37.json": "5279690f95b01375deda1ba5d648b5d30c239696da935713b6fac969a1b6f250"
+    }
+  },
+  "task_metrics": {
+    "count": 148,
+    "unique_ids": 148,
+    "duplicate_ids": []
+  },
+  "findings": [],
+  "closed_findings": [
+    "DR33-001: the authority header and global summaries bind AD-27 and the T145-T148 current chain",
+    "DR33-002: T148 requires HTTP, call, DONE, terminal-name-match, sanitized evidence, and fail-closed behavior",
+    "T145 is an honest compile-clean RED and T146 is the sole minimal GREEN owner",
+    "Evidence names test-red-61, test-green-62, and test-green-63 are collision-free"
+  ],
+  "residual_risks": [
+    "Provider acceptance of the exact terminal submit-only surface remains assigned to T148.",
+    "Fresh disposable T084 must achieve 3/3 or stop before T085."
+  ],
+  "summary": "ACCEPT. The AD-27 definition is internally consistent, test-first, uniquely owned, privacy-safe, and correctly orders nonlive proof, source-free qualification, fresh source-bearing qualification, full T062, and final verification."
+}

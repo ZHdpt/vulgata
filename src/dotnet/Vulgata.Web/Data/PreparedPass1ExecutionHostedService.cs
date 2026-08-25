@@ -428,7 +428,6 @@ public sealed class PreparedPass1ExecutionHostedService(
             .Select(value => new ScanRunBinding(
                 value.Id,
                 value.RepositoryId,
-                value.Status,
                 value.ProfiledRevision))
             .ToArrayAsync(cancellationToken);
         PreScanResult[] preScans = await context.PreScanResults.AsNoTracking()
@@ -438,7 +437,6 @@ public sealed class PreparedPass1ExecutionHostedService(
                 !scanRuns.Any(scan =>
                     scan.Id == manifest.ScanRunId &&
                     scan.RepositoryId == manifest.RepositoryId &&
-                    scan.Status == ScanRunStatus.Completed &&
                     string.Equals(scan.ProfiledRevision, manifest.ProfiledRevision, StringComparison.Ordinal)) ||
                 !preScans.Any(preScan =>
                     preScan.ScanRunId == manifest.ScanRunId &&
@@ -475,7 +473,6 @@ public sealed class PreparedPass1ExecutionHostedService(
     private sealed record ScanRunBinding(
         Guid Id,
         Guid RepositoryId,
-        ScanRunStatus Status,
         string? ProfiledRevision);
 
     private sealed record ProviderProbeTicket(

@@ -1,0 +1,48 @@
+{
+  "review_id": "story-12-3-plan-review-27",
+  "mode": "plan-only",
+  "verdict": "REVISE",
+  "task_generation_authorized": false,
+  "reviewed_hashes": {
+    "source_base": "29459174348511bb813c4aa9672ccffee61d82a6",
+    "spec.md": "782CCE177A53E61C320C59E30B6855E67DB57440D75E2AC8C3F82ED486BC3C7E",
+    "plan.md": "C332A38CC19CFD24FC01E8734390ECAD890DA23EE762975A0A3026CCECB990F7",
+    "research.md": "F455D81739100304A18DB937EF011C4E76D8BBC8644F4A9207CE80BC433BDC59",
+    "data-model.md": "DDDE7CBCD3822E3D9749C5108DBE81C199D76202D09B6A804ED3C5B312E17A54",
+    "quickstart.md": "7CB6D879FDE708187A5BB3FEC5A412E5EEB5238C9ED04C63FBCE367D868DDE9A",
+    "contracts/deepseek-strict-result-submission.md": "E6960E717C24849F37C3B55ED9A4F7AAFFE7416588E22AC475E2A0CF77075A2B",
+    "contracts/pass1-runtime-contracts.md": "CF3359D18761C2021C9C47AD44A7903B63A06633ED501D04013BD88E05FCAF13",
+    "contracts/navigate-code-contract.md": "0FEBFA3F664FACC749A95299EEF643497AED2202A4E29DBAE166316D222C449F",
+    "evidence/research/deepseek-v4-current-best-practices-audit.md": "6FDAE98004134FDCE40700F8B45CDBB5F608FBD3774C7DB1D5CFB4AC797077B0",
+    "evidence/tdd/failure-40.json": "EFB9757EF8A05026D6ED735E02FB3C88A456B49B9E0F76ED05724D8FDE6B247B",
+    "evidence/tdd/analysis-22.json": "16EFAC53A8F19ADADE520333C54C1D3186807D2979D4D2D3EBE4FE0BB5713433"
+  },
+  "findings": [
+    {
+      "id": "AD30-PR-001",
+      "severity": "HIGH",
+      "earliest_owner": "plan",
+      "locations": [
+        "data-model.md:151",
+        "data-model.md:161"
+      ],
+      "evidence": "The normative runtime-only data model still made provider turns one through nine navigation-capable, permitted a terminal first or second submission on turn ten, and described exactly two provider-visible functions on every request.",
+      "consequence": "Task generation would have two incompatible current contracts for provider capability selection, terminal declaration cardinality, and turn-ten submission eligibility.",
+      "required_correction": "Synchronize only the transient runtime projections to turns one through eight navigation, forced first finalization on turn nine, correction-only turn ten, distinct local-versus-provider-visible function sets, and zero schema or migration delta."
+    }
+  ],
+  "closed_checks": [
+    "Failure-40 and analysis-22 establish an application turn-allocation defect after healthy provider transport and local validation.",
+    "Spec, plan, research, quickstart, strict/runtime/navigation contracts agree outside data-model.md on forced turn nine, correction-only turn ten, and no request eleven.",
+    "Earlier first rejection still corrects immediately; limits remain eight navigation attempts, two submissions, and ten provider turns.",
+    "The exact terminal-result structural boundary is zero through 64 accepted and 65 rejected.",
+    "No provider configuration, persistence, migration, source-scope, host, network, or system change is proposed.",
+    "Behavioral RED, sole GREEN, nonlive/PostgreSQL/privacy/zero-model-delta barriers, refreshed source-free projection, fresh T084, T085/T062, and T086 are ordered."
+  ],
+  "residual_risks": [
+    "The provider may still violate named submit selection; complete-turn preflight must remain zero-callback fail-closed.",
+    "The 64-entry structural bound includes closed no-effect results and does not enlarge the durable eight-attempt or byte authority.",
+    "Historical pre-AD-30 text remains readable only through explicit supersession clauses."
+  ],
+  "summary": "AD-30 is evidence-backed, minimal, privacy-safe, and otherwise task-generatable, but one HIGH runtime-data-model contradiction must be corrected and independently rereviewed before task generation."
+}

@@ -1,0 +1,30 @@
+{
+  "evidence_id": "12-3/implement/69",
+  "kind": "test-red",
+  "stage": "implement",
+  "task": "T101",
+  "source_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --nologo -p:WarningLevel=0 -p:GenerateMvcTestManifest=false --filter \"FullyQualifiedName~PreparedDispatcher_Prompt_BindsSoleSubmissionAndPreflightedNavigationBatchRules|FullyQualifiedName~SourceFreeHandshake_UsesSupportedDefaultsWithoutSamplingOrControlFields\" --logger \"console;verbosity=minimal\"",
+  "result": {
+    "build": "passed-with-existing-warnings",
+    "passed": 1,
+    "failed": 1,
+    "skipped": 0,
+    "exit_code": 1,
+    "expected_failure": "T101 RED: the embedded Worker prompt does not contain the required sole submit_code_logic and preflighted navigation-batch contract."
+  },
+  "failure": {
+    "test": "Pass1DeepSeekPromptCompositionTests.PreparedDispatcher_Prompt_BindsSoleSubmissionAndPreflightedNavigationBatchRulesAsync",
+    "location": "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekPromptCompositionTests.cs:97",
+    "assertion": "Assert.Contains",
+    "missing_marker": "sole `submit_code_logic`"
+  },
+  "passing_boundary": "The new source-free supported-default wire test already proves DeepSeek V4 Flash streaming/thinking and omission of tool_choice, parallel_tool_calls, response_format, temperature, top_p, presence_penalty, and frequency_penalty without live traffic.",
+  "artifact_sha256": {
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekPromptCompositionTests.cs": "EEB62F6193BC35F1CAD5C844E606BBFEB720B5F3DC872DC6A07340A34CC1E4C4",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekContractQualificationTests.cs": "62ABAB24140DFA366EAD2B50327D67D6E908A4C2A9660A8ABBBD4A3D079CF6B2"
+  },
+  "diagnosis": "The request defaults and immutable public declaration identities are already conforming. The honest behavioral gap is the externalized prompt contract for a sole final submission and bounded preflighted all-navigation batch.",
+  "privacy": "No live provider, source-bearing request, database, source repository, credential, raw response, reasoning, function argument/result, host state, or system configuration was accessed or changed.",
+  "observed_at": "2026-08-24T20:59:50.4452844Z"
+}

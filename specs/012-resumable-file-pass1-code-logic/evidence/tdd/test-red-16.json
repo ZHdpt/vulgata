@@ -1,0 +1,26 @@
+{
+  "evidence_id": "12-3/implement/42",
+  "kind": "test-red",
+  "stage": "implement",
+  "source_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "artifact_paths": [
+    "tests/Vulgata.Tests/PreparedPass1/PreparedPass1JobExecutorStreamingTests.cs",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekIsolatedSourceQualificationTests.cs"
+  ],
+  "artifact_sha256": {
+    "tests/Vulgata.Tests/PreparedPass1/PreparedPass1JobExecutorStreamingTests.cs": "7CF0751CF98F52154DB396A8B2783CE0BE27A8ECE497E11A269BACFE89036CA2",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekIsolatedSourceQualificationTests.cs": "A95C70A85A337709798FFCE9BD741FD22CA6697965673D489F319FFD26BF9FB1"
+  },
+  "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --nologo --filter FullyQualifiedName~PreparedPass1JobExecutorStreamingTests.SubmitSession_InvalidCandidate_ReportsExactlyOneSanitizedCategoryAsync|FullyQualifiedName~PreparedPass1JobExecutorStreamingTests.ExecuteAsync_InvalidSubmission_ReportsCategoryAndRetainsClosedReasonAsync --logger console;verbosity=minimal -p:GenerateMvcTestManifest=false -clp:ErrorsOnly",
+  "result": {
+    "outcome": "failed-as-expected",
+    "compiler_errors": [
+      "CS0246: IPreparedPass1SubmissionDiagnosticObserver could not be found",
+      "CS0246: PreparedPass1SubmissionRejectionKind could not be found"
+    ],
+    "provider_calls": 0,
+    "source_bearing_calls": 0
+  },
+  "observed_at": "2026-08-24T12:16:00Z",
+  "summary": "The T084 diagnostic RED required a fixed enum-only in-memory observer while preserving Rejected/worker-result-rejected and empty failed-result bytes; compilation failed solely because the production diagnostic seam was absent."
+}

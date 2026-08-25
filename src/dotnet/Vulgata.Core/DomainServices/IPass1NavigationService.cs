@@ -12,6 +12,18 @@ public interface IPass1NavigationService
         CancellationToken cancellationToken);
 }
 
+/// <summary>
+/// Server-only reserved invocation path. The model-visible navigation request
+/// remains closed while its durable ticket reaches the receipt owner.
+/// </summary>
+public interface IPass1ReservedNavigationService
+{
+    Task<PreparedPass1NavigationResponse> NavigateReservedAsync(
+        PreparedPass1NavigationRequestInput request,
+        PreparedPass1NavigationReservationTicket reservation,
+        CancellationToken cancellationToken);
+}
+
 public sealed record PreparedPass1NavigationResponse(
     PreparedPass1NavigationOutcome Outcome,
     Guid ReceiptId,
@@ -20,7 +32,8 @@ public sealed record PreparedPass1NavigationResponse(
     PreparedPass1NavigationBoundKind? BoundKind,
     int ResultCount,
     int EvidenceBytes,
-    IReadOnlyList<PreparedPass1NavigationResult> Results);
+    IReadOnlyList<PreparedPass1NavigationResult> Results,
+    PreparedPass1NavigationReservationTicket? ReservationTicket = null);
 
 public sealed record PreparedPass1NavigationResult(
     string CanonicalPath,
@@ -128,4 +141,12 @@ public interface IPreparedPass1NavigationReceiptSink
         PreparedPass1NavigationRequestInput request,
         PreparedPass1NavigationReceiptDraft receipt,
         CancellationToken cancellationToken);
+
+    Task<PreparedPass1NavigationReservationTicket?> CommitReservedAsync(
+        PreparedPass1NavigationScope scope,
+        PreparedPass1NavigationRequestInput request,
+        PreparedPass1NavigationReservationTicket reservation,
+        PreparedPass1NavigationReceiptDraft receipt,
+        CancellationToken cancellationToken) =>
+        Task.FromResult<PreparedPass1NavigationReservationTicket?>(null);
 }

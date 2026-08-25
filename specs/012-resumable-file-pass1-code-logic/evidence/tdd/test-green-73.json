@@ -1,0 +1,38 @@
+{
+  "evidence_id": "12-3/implement/145",
+  "kind": "test-green",
+  "status": "passed",
+  "stage": "implement",
+  "task": "T173",
+  "source_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "public_seam": "IPass1CodeLogicDocumentCommitter.CommitAsync",
+  "production_owner": "Pass1CodeLogicDocumentCommitter.DurableBindingsMatchAsync",
+  "commands": [
+    "$env:VULGATA_TEST_ADMIN_CONNECTION='<postgres-admin>'; dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter \"FullyQualifiedName~Pass1DocumentPostgreSqlAtomicTests.PostgreSql17_InvalidUncitedSuppliedClassificationBindingIsMutationFreeAsync|FullyQualifiedName~Pass1DocumentPostgreSqlAtomicTests.PostgreSql17_CitedUnsuppliedClassificationIsInvalidAuthoritativeResultAndMutationFreeAsync\" --logger \"console;verbosity=minimal\"",
+    "$env:VULGATA_TEST_ADMIN_CONNECTION='<postgres-admin>'; dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter \"DisplayName~citedClassificationCount: 2\" --logger \"console;verbosity=minimal\"",
+    "$env:VULGATA_TEST_ADMIN_CONNECTION='<postgres-admin>'; dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --filter \"DisplayName~citedClassificationCount: 1\" --logger \"console;verbosity=minimal\"",
+    "$env:VULGATA_TEST_ADMIN_CONNECTION='<postgres-admin>'; dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --filter \"FullyQualifiedName~Pass1DocumentPostgreSqlAtomicTests.PostgreSql17_ClassificationCitedSubsetUsesCompleteSuppliedAuthorizationSetAsync\" --logger \"console;verbosity=minimal\"",
+    "git diff --check -- src/dotnet/Vulgata.Infrastructure/Data/Pass1CodeLogicDocumentCommitter.cs"
+  ],
+  "result": {
+    "build": { "compilation_errors": 0, "baseline_warnings_retained": true },
+    "negative_controls": { "exit_code": 0, "total": 4, "passed": 4, "failed": 0, "test_duration_seconds": 7, "wall_seconds": 23.79 },
+    "all_cited_and_replay": { "exit_code": 0, "total": 1, "passed": 1, "failed": 0, "test_duration_seconds": 3, "wall_seconds": 7.87 },
+    "one_cited": { "exit_code": 0, "total": 1, "passed": 1, "failed": 0, "test_duration_seconds": 3, "wall_seconds": 6.06 },
+    "complete_citation_matrix": { "exit_code": 0, "total": 3, "passed": 3, "failed": 0, "test_duration_seconds": 5, "wall_seconds": 8.05 },
+    "diff_check": { "exit_code": 0, "line_ending_advisory_only": true }
+  },
+  "behavior": {
+    "durable_authorization_set": "All distinct packet-supplied classification IDs are queried and revalidated against the execution's current Pre-Scan Result and exact supplied projections.",
+    "candidate_subset": "Every distinct candidate-cited classification ID is independently required to belong to the packet-supplied set.",
+    "preserved": "Parser authority, rejection precedence, mutation-free rejection, immutable commit, exact replay, and upstream duplicate-packet policy are unchanged."
+  },
+  "files": {
+    "src/dotnet/Vulgata.Infrastructure/Data/Pass1CodeLogicDocumentCommitter.cs": "FB484CD8BA5E816A0FF8E20A20B3F4FA2283E5A5D8CBD35F6CDADA39BC261F34",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DocumentPostgreSqlAtomicTests.cs": "A2440E52680C49F8D03DB7F0201EEEAF5AC1D94753DB86F26C99F8C1E19D22C0"
+  },
+  "isolation": "Fixture-owned disposable PostgreSQL databases completed cleanup; ordinary vulgata was not used or mutated.",
+  "privacy": "The deterministic GREEN used no provider, source transfer, host/system, network, workflow, credential, or Git mutation. The administrator connection is sanitized.",
+  "observed_at": "2026-08-25T18:55:23.3998892+08:00",
+  "summary": "The minimal committer-only T173 change turns the cited-subset RED green while retaining all supplied-binding and parser rejection controls."
+}

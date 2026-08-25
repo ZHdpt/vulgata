@@ -1,0 +1,24 @@
+{
+  "evidence_id": "12-3/implement/158",
+  "kind": "analysis",
+  "status": "current",
+  "stage": "implement",
+  "task": "T085",
+  "source_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "scope": "T062 terminal polling after a fully successful production-composed 150-job live run",
+  "root_cause": "The test harness conflates child Scan terminal phases with the Pass1PairExecution status contract. Its success predicate and polling terminal set omit ReadyForResolution, even though production, the accepted Story 12.3 contract, and adjacent production tests all use that exact pair terminal.",
+  "minimal_correction": {
+    "owner": "tests/Vulgata.Tests/PreparedPass1/Pass1ProductionExecutionTests.cs only",
+    "success_assertion": "Require terminal.Phase == ReadyForResolution.",
+    "polling_set": "Recognize the exact terminal Pass1PairExecutionPhase values: ReadyForResolution, FailedPass1, FailedIntegrity, FailedSecurity, Cancelled, PausedProviderUnavailable, PausedOperatorCorrection, and PausedInspection.",
+    "preserved": "Authenticated 201/non-replay Start, concurrency two, 9000-second ceiling, all 150 live Worker jobs, provider/source/runtime bindings, PostgreSQL outcome/Document/Source Anchor/navigation receipt/immutability assertions, and production behavior remain unchanged."
+  },
+  "prohibited_changes": [
+    "production coordinator, API mapping, pair/scan entities, lifecycle, reconciliation, or handoff",
+    "provider, streaming, prompt, receipt ledger, parser, committer, retry, timeout, model, endpoint, schema, migration, or persistence",
+    "database template, ordinary database, source scope, host/network/system configuration, or Git history"
+  ],
+  "fresh_retry_required": true,
+  "recorded_at": "2026-08-25T22:03:58.4606185+08:00",
+  "summary": "The live implementation completed Story 12.3 successfully; only T062's stale terminal-phase vocabulary prevents the qualification test from returning."
+}

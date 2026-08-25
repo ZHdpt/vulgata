@@ -1,0 +1,43 @@
+{
+  "evidence_id": "12-3/implement/56",
+  "kind": "test-red",
+  "stage": "implement",
+  "source_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "artifact_paths": [
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekStreamingQualificationTests.cs",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekContractQualificationTests.cs"
+  ],
+  "artifact_sha256": {
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekStreamingQualificationTests.cs": "AE10F410B3DAF4E4552CF3E622862CC0A8F80C0F24B1C5FBA3912D30CEF4DBEA",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekContractQualificationTests.cs": "EAEAE6C87CB6C7D2F879A5164EA7D132FBACA6B62C576015528765E5BCBBD7B8"
+  },
+  "unchanged_green_owners_sha256": {
+    "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedPass1JobExecutor.cs": "D96DBB49C1776CF5BB9AF5B21C3321F7570EBA2F3EFE468386DE654275CB478F",
+    "tests/Vulgata.Tests/PreparedPass1/DeepSeekSourceFreeHandshakeHarness.cs": "4EB01BD982375AA59A23A156B33F34D9EC812154664533AA4977C424D0F0CE47"
+  },
+  "commands": [
+    "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter \"FullyQualifiedName~Pass1DeepSeekStreamingQualificationTests.ExecuteAsync_FakeWire_UsesPublicAdapterDeclarationBytesAsync|FullyQualifiedName~Pass1DeepSeekStreamingQualificationTests.ExecuteAsync_FakeWire_OmitsUnsupportedDeepSeekFieldsAsync|FullyQualifiedName~Pass1DeepSeekContractQualificationTests.SourceFreeHandshake_UsesConfiguredBetaRouteAndFlashModel_WithExactlyTwoStrictDeclarationsAsync\" --logger \"console;verbosity=minimal\"",
+    "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore -p:WarningLevel=0 --filter \"FullyQualifiedName~Pass1DeepSeekStreamingQualificationTests.NormalizeAndValidateDeepSeekRequestBody_RemovesOnlyExactCompatibilityFieldsOrRejectsThem|FullyQualifiedName~Pass1DeepSeekStreamingQualificationTests.ExecuteAsync_ReplayedAssistantToolCallContentIsAlwaysStringAsync\" --logger \"console;verbosity=minimal\""
+  ],
+  "result": {
+    "core_wire_filter": "3 failed, 0 passed, 0 skipped",
+    "compatibility_and_content_filter": "11 failed, 4 passed, 0 skipped",
+    "expected_failures": [
+      "Production tool parameter bytes differ from the two public AIFunction.AsOpenAIChatTool declarations.",
+      "Production emits at least one of tool_choice, parallel_tool_calls, or response_format.",
+      "The source-free handshake sends thinking disabled instead of enabled.",
+      "Exact compatibility fields are retained rather than removed.",
+      "Alternate compatibility field types or values are accepted rather than rejected.",
+      "Replayed tool-call assistant content is absent for both absent and explicit-null source cases instead of the required empty string."
+    ],
+    "existing_string_content_coverage": "ExecuteAsync_ReplaysReasoningContentToolCallAndResultUnchangedAsync preserves existing reasoning, string content, tool calls, and tool results.",
+    "provider_calls": 0,
+    "source_bearing_calls": 0,
+    "database_actions": 0,
+    "environment_failure": false,
+    "production_changed": false,
+    "handshake_harness_changed": false
+  },
+  "observed_at": "2026-08-24T17:56:16.3973317Z",
+  "summary": "T093 records an honest source-free behavioral RED for failure-24. The unchanged executor and handshake do not yet share the accepted declaration wire, omit the three DeepSeek V4 compatibility fields, reject alternate shapes, enable thinking in the handshake, or complete null tool-call assistant content."
+}

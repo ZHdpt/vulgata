@@ -71,6 +71,49 @@ public sealed class Pass1ProductionBoundaryQualificationTests
     ];
 
     [Fact]
+    public void SourceFreeHandshake_IsQualificationOnlyAndDoesNotReferenceQr002CircuitOrProbeState()
+    {
+        Type harness = typeof(DeepSeekSourceFreeHandshakeHarness);
+        string repositoryRoot = FindRepositoryRoot();
+        string helperSource = ReadSource(
+            repositoryRoot,
+            "tests/Vulgata.Tests/PreparedPass1/DeepSeekSourceFreeHandshakeHarness.cs");
+
+        Assert.DoesNotContain(
+            [
+                "IPreparedPass1ProviderHealthProbe",
+                "IPreparedPass1Store",
+                "PreparedPass1ProviderHealthProbe",
+                "ProbeProviderAsync",
+                "Pass1PairExecution",
+                "ProbeOrdinal",
+            ],
+            forbidden => helperSource.Contains(forbidden, StringComparison.Ordinal));
+        Assert.DoesNotContain(
+            harness.GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static),
+            method => method.GetParameters().Any(parameter =>
+                parameter.ParameterType.FullName?.Contains("PreparedPass1Store", StringComparison.Ordinal) == true ||
+                parameter.ParameterType.FullName?.Contains("ProviderHealthProbe", StringComparison.Ordinal) == true));
+    }
+
+    [Fact]
+    public void ProductionBoundary_DoesNotClaimProviderRetentionOrPersistRawFailurePayloads()
+    {
+        string repositoryRoot = FindRepositoryRoot();
+        string executorSource = ReadSource(
+            repositoryRoot,
+            "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedPass1JobExecutor.cs");
+        string harnessSource = ReadSource(
+            repositoryRoot,
+            "tests/Vulgata.Tests/PreparedPass1/DeepSeekSourceFreeHandshakeHarness.cs");
+
+        Assert.DoesNotContain("zero-retention", executorSource, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("training guarantee", executorSource, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("zero-retention", harnessSource, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("training guarantee", harnessSource, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
     public void ProductionBoundary_InspectsClosedCompositionAndForbiddenCapabilities()
     {
         string repositoryRoot = FindRepositoryRoot();
@@ -113,6 +156,8 @@ public sealed class Pass1ProductionBoundaryQualificationTests
             "src/dotnet/Vulgata.Web/Data/PreparedPass1JobRunner.cs");
         string committerSource = ReadSource(repositoryRoot,
             "src/dotnet/Vulgata.Infrastructure/Data/Pass1CodeLogicDocumentCommitter.cs");
+        string executorSource = ReadSource(repositoryRoot,
+            "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedPass1JobExecutor.cs");
         string navigateSource = ReadSource(repositoryRoot,
             "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedNavigateCodeFunction.cs");
         string endpointSource = ReadSource(repositoryRoot,
@@ -129,11 +174,22 @@ public sealed class Pass1ProductionBoundaryQualificationTests
         ConstructorBinding navigateBinding = ReadConstructorBinding(typeof(PreparedNavigateCodeFunction));
         ConstructorBinding dispatcherBinding = ReadConstructorBinding(typeof(PreparedPass1WorkerDispatcher));
         var checks = new CompositionChecks(
-            navigateBinding.ParameterType == typeof(IPass1NavigationService).FullName,
-            dispatcherBinding.ParameterType == typeof(IPreparedPass1JobExecutor).FullName,
+            navigateBinding.ParameterTypes.SequenceEqual(
+                [
+                    typeof(IPass1NavigationService).FullName!,
+                    typeof(IPass1NavigationAttemptReservationStore).FullName!,
+                ]),
+            dispatcherBinding.ParameterTypes.Contains(
+                typeof(IPreparedPass1JobExecutor).FullName!,
+                StringComparer.Ordinal),
             CountOrdinal(navigateSource, "Name = \"navigate_code\"") == 1,
             CountOrdinal(navigateSource, "AIFunctionFactory.Create") == 1,
-            CountOrdinal(dispatcherSource, "_maximumToolAttempts = 8") == 1,
+            executorSource.Contains(
+                "IPass1NavigationAttemptReservationStore? navigationReservationStore",
+                StringComparison.Ordinal) &&
+                CountOrdinal(navigateSource, "ReserveNextAsync") == 1 &&
+                !dispatcherSource.Contains("ConversationState", StringComparison.Ordinal) &&
+                !dispatcherSource.Contains("_conversationStates", StringComparison.Ordinal),
             CountOrdinal(dispatcherSource, "MaxDegreeOfParallelism = request.ConcurrencyLimit") == 1,
             CountOrdinal(endpointSource, "RequireAuthorization()") == 4,
             CountOrdinal(registrationSource, "MapPass1ExecutionApiEndpoints()") == 1,
@@ -197,11 +253,17 @@ public sealed class Pass1ProductionBoundaryQualificationTests
 
     private static ConstructorBinding ReadConstructorBinding(Type type)
     {
-        ConstructorInfo[] constructors = type.GetConstructors();
-        Assert.Single(constructors);
-        ParameterInfo[] parameters = constructors[0].GetParameters();
-        Assert.Single(parameters);
-        return new(type.FullName!, parameters[0].ParameterType.FullName!);
+        ConstructorInfo constructor = type.GetConstructors()
+            .OrderByDescending(value => value.GetParameters().Length)
+            .FirstOrDefault()
+            ?? throw new Xunit.Sdk.XunitException(
+                $"No public constructor found for {type.FullName}.");
+        string[] parameterTypes = constructor.GetParameters()
+            .Select(parameter => parameter.ParameterType.FullName
+                ?? throw new Xunit.Sdk.XunitException(
+                    $"Constructor parameter type is unnamed for {type.FullName}."))
+            .ToArray();
+        return new(type.FullName!, parameterTypes);
     }
 
     private static string ReadSource(string root, string relativePath) =>
@@ -305,7 +367,7 @@ public sealed class Pass1ProductionBoundaryQualificationTests
         throw new DirectoryNotFoundException("Could not locate the Vulgata repository root.");
     }
 
-    private sealed record ConstructorBinding(string Type, string ParameterType);
+    private sealed record ConstructorBinding(string Type, IReadOnlyList<string> ParameterTypes);
 
     private sealed record CompositionChecks(
         bool NavigateBinding,

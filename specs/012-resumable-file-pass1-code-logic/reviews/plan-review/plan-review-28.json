@@ -1,0 +1,58 @@
+{
+  "review_id": "story-12-3-plan-review-28",
+  "mode": "plan-only",
+  "verdict": "ACCEPT",
+  "task_generation_authorized": true,
+  "reviewed_hashes": {
+    "source_base": "29459174348511bb813c4aa9672ccffee61d82a6",
+    "spec.md": "782CCE177A53E61C320C59E30B6855E67DB57440D75E2AC8C3F82ED486BC3C7E",
+    "plan.md": "8274B510D3952AD7EFB3BAD58BAC04FDB1DCC43BA9B4C626E8D150C739E42BDC",
+    "research.md": "F455D81739100304A18DB937EF011C4E76D8BBC8644F4A9207CE80BC433BDC59",
+    "data-model.md": "77D6BE28524113B371B0CF9A0A12ABCED4F014A3B4BEB73599600F6AC1A01708",
+    "quickstart.md": "7CB6D879FDE708187A5BB3FEC5A412E5EEB5238C9ED04C63FBCE367D868DDE9A",
+    "contracts/deepseek-strict-result-submission.md": "E6960E717C24849F37C3B55ED9A4F7AAFFE7416588E22AC475E2A0CF77075A2B",
+    "contracts/pass1-runtime-contracts.md": "CF3359D18761C2021C9C47AD44A7903B63A06633ED501D04013BD88E05FCAF13",
+    "contracts/navigate-code-contract.md": "0FEBFA3F664FACC749A95299EEF643497AED2202A4E29DBAE166316D222C449F",
+    "evidence/research/deepseek-v4-current-best-practices-audit.md": "6FDAE98004134FDCE40700F8B45CDBB5F608FBD3774C7DB1D5CFB4AC797077B0",
+    "evidence/tdd/failure-40.json": "EFB9757EF8A05026D6ED735E02FB3C88A456B49B9E0F76ED05724D8FDE6B247B",
+    "evidence/tdd/analysis-22.json": "16EFAC53A8F19ADADE520333C54C1D3186807D2979D4D2D3EBE4FE0BB5713433",
+    "reviews/plan-review/plan-review-27.json": "7D3A168248A5A6641AB9DE33C94724569914DB7C66A9320790F75C8807848A79"
+  },
+  "prior_finding_dispositions": [
+    {
+      "id": "AD30-PR-001",
+      "earliest_owner": "plan",
+      "status": "CLOSED",
+      "evidence": [
+        "data-model.md:151 defines turns one through eight as navigation-capable, forced first submission on turn nine, and correction-only turn ten with no first-submission fallback",
+        "data-model.md:161 distinguishes two local FICC functions from provider-visible two-function navigation requests and one-function finalization requests",
+        "data-model.md:161 explicitly preserves zero persisted field, table, constraint, migration, and EF-model delta",
+        "plan.md:583 records the correction and binds its definition/TDD proof"
+      ]
+    }
+  ],
+  "findings": [],
+  "closed_checks": [
+    "The root cause is evidence-backed: late first submission on turn ten makes the authorized correction unreachable while provider and environment remain healthy.",
+    "All current authorities agree on turns one through eight navigation/two provider-visible declarations, forced sole first finalization on turn nine, and correction-only turn ten.",
+    "Turn ten cannot be a first-submission fallback, earlier correction remains immediate, and request eleven is impossible.",
+    "Limits remain eight durable navigation attempts, two submissions, ten provider turns, five-minute inactivity, 25-minute absolute duration, and zero SDK retries.",
+    "The terminal accumulator accepts zero through 64 ordered results and rejects 65 without enlarging durable or byte authority.",
+    "Exactly two functions remain local to FICC while provider-visible arrays are turn-specific subsets.",
+    "Spec, plan, research, data model, quickstart, strict/runtime/navigation contracts, and current-practice audit are consistent.",
+    "No provider-field, retry, timeout, model, endpoint, SDK, persistence, migration, source-scope, host, network, system, or provider-configuration change is authorized.",
+    "Behavioral RED, sole GREEN, nonlive/PostgreSQL/privacy/zero-delta barriers, refreshed source-free proof, fresh T084, T085/T062, and T086 are ordered."
+  ],
+  "residual_proof_obligations": [
+    "Tasks must bind the corrected data-model hash and preserve one honest compile-clean RED before the sole working GREEN.",
+    "Fake-wire tests must prove local-two versus provider-visible two/one cardinality and exact SDK iteration eight/nine mapping.",
+    "Tests must cover invalid-nine/valid-ten, valid-nine/no-ten, invalid-ten, early correction, illegal turn-ten zero callback, 64/65, and no request eleven.",
+    "The refreshed source-free forced-turn-nine/correction gate must pass before fresh source-bearing T084, which must pass 3/3 before T085/T062 and T086."
+  ],
+  "residual_risks": [
+    "DeepSeek may still violate named-submit selection; complete-turn preflight remains the zero-effect defense.",
+    "The 64-result limit includes closed no-effect results and does not authorize more than eight durable navigation attempts.",
+    "Provider-side retention remains governed by the approved bounded source-transfer authorization; no zero-retention claim is made."
+  ],
+  "summary": "AD30-PR-001 is closed. The corrected AD-30/R-31 plan is internally consistent, minimal, testable, privacy-safe, and authorized for task generation under definition-review and TDD gates."
+}

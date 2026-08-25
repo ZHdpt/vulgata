@@ -1,0 +1,50 @@
+{
+  "schema_version": "1.0",
+  "gate": "definition-review",
+  "verdict": "ACCEPT",
+  "reviewed_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "reviewed_boundary": {
+    "base_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+    "candidate_commit": null,
+    "diff_sha256": "a1f07935b0a3032e2814afb161078b2aafab690ad6b6da3c2c6e9c70ac10c600",
+    "artifact_hashes": {
+      "specs/012-resumable-file-pass1-code-logic/spec.md": "c363d4c28ec7544d6b2385d910107883dd01c9483313bcbe5564a301a557068a",
+      "specs/012-resumable-file-pass1-code-logic/plan.md": "5c9a8fc16437e689b432f106a73d60a24ae59bb29b6f302346e51a31ca2be06b",
+      "specs/012-resumable-file-pass1-code-logic/research.md": "90df8e8f0934dcb934a53fbbf667d6c4c6ff9ed37a81de1b90dc17e3c85f47a8",
+      "specs/012-resumable-file-pass1-code-logic/data-model.md": "5e8b7ff94653b26b7a544febb28dc17eff050033c7308f2e51ff941b1480a220",
+      "specs/012-resumable-file-pass1-code-logic/quickstart.md": "94b7873e35f5e321344f99034fc1d07642178c818615f29c0fa4a8a8cbb4f45d",
+      "specs/012-resumable-file-pass1-code-logic/contracts/deepseek-strict-result-submission.md": "9f78041b23a9440210f3a2311f4481b05a2684d42ec3883cd5bc56ce33ec8ba7",
+      "specs/012-resumable-file-pass1-code-logic/tasks.md": "d212e5b8a9af910d00b46502dcc68256072b609998ef9c637f810a8a135a1376",
+      "specs/012-resumable-file-pass1-code-logic/reviews/plan-review/plan-review-21.json": "d065c9993762cb290d67b89e8608fd282fc4d50a546dbd7de4554df31d41cdb4",
+      "specs/012-resumable-file-pass1-code-logic/decisions/planned-change-authorization-09.md": "1ea608882f03a0b46c320a2d0a826074440fa6413657110183d0dc08e59a0aee",
+      "specs/012-resumable-file-pass1-code-logic/evidence/tdd/failure-35.json": "9abcbf550e8a62e653f3da56d707bce04480299f6ccc13aff128e62cbb69881a"
+    }
+  },
+  "reviewed_artifacts": [
+    "AGENTS.md",
+    "specs/012-resumable-file-pass1-code-logic/spec.md",
+    "specs/012-resumable-file-pass1-code-logic/plan.md",
+    "specs/012-resumable-file-pass1-code-logic/research.md",
+    "specs/012-resumable-file-pass1-code-logic/data-model.md",
+    "specs/012-resumable-file-pass1-code-logic/quickstart.md",
+    "specs/012-resumable-file-pass1-code-logic/contracts/deepseek-strict-result-submission.md",
+    "specs/012-resumable-file-pass1-code-logic/tasks.md",
+    "specs/012-resumable-file-pass1-code-logic/reviews/plan-review/plan-review-21.json",
+    "specs/012-resumable-file-pass1-code-logic/decisions/planned-change-authorization-09.md",
+    "specs/012-resumable-file-pass1-code-logic/evidence/tdd/failure-35.json",
+    "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedPass1JobExecutor.cs",
+    "tests/Vulgata.Tests/PreparedPass1/PreparedPass1JobExecutorStreamingTests.cs",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekIsolatedSourceQualificationTests.cs"
+  ],
+  "findings": [],
+  "closed_findings": [
+    "AD25-DR-001: the authority header, AD-25 section, global T070+ summary, and self-review now agree that T001-T136 are history, T137-T139 are the current diagnostic chain, and fresh T084 then T085-T086 are the ordered qualification tail",
+    "AD25-DR-002: T137 is an honest public-seam compile-clean RED, T138 has sufficient sole executor-file ownership for the enum and branch, and T139 contains no hidden implementation or live operation"
+  ],
+  "residual_risks": [
+    "Fresh T084 may identify any fixed subtype; every non-3/3 result must stop before T085 and authorize only a separately reviewed correction.",
+    "T137 must retain exact identity and unknown-name precedence and prove no callback, reservation, receipt, candidate, or request eleven.",
+    "No AD-25 task may preserve parallel_tool_calls, accept or arbitrate multiple submissions, or send provider/source/database traffic before fresh T084."
+  ],
+  "summary": "ACCEPT. Independent definition review verified the corrected task authority, one unambiguous dependency chain, honest RED-to-GREEN causality, sufficient and nonoverlapping ownership, testable subtype precedence, privacy, and fail-closed qualification order. T131-T135 remain completed AD-24/R-25 history; T137-T139 implement diagnosis only. No execution recovery, provider field, prompt, function surface, candidate arbitration, persistence, source, endpoint/model/credential, host, network, or system change is authorized."
+}

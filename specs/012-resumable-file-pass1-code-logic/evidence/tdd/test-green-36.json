@@ -1,0 +1,35 @@
+{
+  "evidence_id": "12-3/implement/81",
+  "kind": "test-green",
+  "stage": "implement",
+  "task": "T112",
+  "source_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter \"FullyQualifiedName~Pass1DeepSeekStreamingQualificationTests|FullyQualifiedName~PreparedPass1JobExecutorStreamingTests\" --no-restore --logger \"console;verbosity=minimal\"",
+  "result": {
+    "build": "passed-with-existing-warnings",
+    "passed": 141,
+    "failed": 0,
+    "skipped": 0,
+    "exit_code": 0
+  },
+  "implementation": {
+    "activity": "The inactivity generation now advances only after each successful nonzero raw response read, before SDK parsing; SSE comment-only bytes therefore keep an active stream alive.",
+    "non_activity": "Zero-byte EOF and failed or cancelled reads do not pulse activity.",
+    "parsing": "Parsed update collection, complete-turn preflight, reasoning/content/tool-call replay, and clean EOF behavior remain unchanged.",
+    "bounds": "Raw bytes are checked before the activity pulse; exact raw and assembled caps, diagnostic precedence, cancellation, and the 25-minute absolute cap remain unchanged.",
+    "privacy": "Raw buffers remain transient and no raw chunk, reasoning, content, function argument, or source payload is added to results or diagnostics."
+  },
+  "test_fixture_review": [
+    "The new RawReadStream was confirmed to honor partial-read suffixes and per-chunk delays.",
+    "New fake SSE literals were corrected from backslash-n bytes to actual SSE line endings.",
+    "The clean-EOF assertion was corrected to preserve the existing accepted complete parsed tool-call behavior rather than introduce a new DONE-marker policy."
+  ],
+  "artifact_sha256": {
+    "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedPass1JobExecutor.cs": "B776F49B89AEAC16C995289BB13960D62B1ED022A4340B4D57EECA6095BD2307",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekStreamingQualificationTests.cs": "2B59B33A17AD902A25B431E8A5E130C9732172CF344122769E211C020AA51C4F",
+    "tests/Vulgata.Tests/PreparedPass1/PreparedPass1JobExecutorStreamingTests.cs": "19087D9774980960B61313A4A670DA1445727CE9CAEDD118543AAC2FF0B24CB0"
+  },
+  "network": "No provider request, database, network, source-bearing traffic, host setting, or system configuration was accessed or changed.",
+  "warnings": "Existing NU1507 and EF assembly-version warnings remain; both full streaming classes succeeded.",
+  "observed_at": "2026-08-24T22:47:00.8310982Z"
+}

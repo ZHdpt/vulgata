@@ -1,0 +1,40 @@
+{
+  "evidence_id": "12-3/implement/38",
+  "kind": "test-green",
+  "stage": "implement",
+  "source_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "artifact_paths": [
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekContractQualificationTests.cs",
+    "tests/Vulgata.Tests/PreparedPass1/DeepSeekSourceFreeHandshakeHarness.cs"
+  ],
+  "artifact_sha256": {
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekContractQualificationTests.cs": "34C1B8E6CADBBAF9469FECEB5A7A14D740E9A50857D3E9743DB7D2632AA77790",
+    "tests/Vulgata.Tests/PreparedPass1/DeepSeekSourceFreeHandshakeHarness.cs": "4EB01BD982375AA59A23A156B33F34D9EC812154664533AA4977C424D0F0CE47"
+  },
+  "commands": [
+    "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --nologo --filter FullyQualifiedName~SourceFreeHandshake_UsesConfiguredBetaRouteAndFlashModel_WithExactlyTwoStrictDeclarationsAsync --logger console;verbosity=minimal -p:GenerateMvcTestManifest=false -clp:ErrorsOnly",
+    "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --nologo --filter FullyQualifiedName~SourceFreeHandshake&FullyQualifiedName!~LiveBetaCapability --logger console;verbosity=minimal -p:GenerateMvcTestManifest=false -clp:ErrorsOnly"
+  ],
+  "result": {
+    "focused": {
+      "exit_code": 0,
+      "passed": 1,
+      "failed": 0,
+      "skipped": 0
+    },
+    "surrounding": {
+      "exit_code": 0,
+      "passed": 10,
+      "failed": 0,
+      "skipped": 0
+    },
+    "wire_contract": {
+      "thinking_type": "disabled",
+      "max_tokens": 16,
+      "stream": true,
+      "strict_function_declarations": 2
+    }
+  },
+  "observed_at": "2026-08-24T11:42:25.6004109Z",
+  "summary": "The source-free DeepSeek qualification request now explicitly disables thinking and caps output at 16 tokens while preserving streaming and exactly two strict function declarations; the focused and surrounding fake-wire boundaries are GREEN without a provider call."
+}

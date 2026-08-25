@@ -1,0 +1,24 @@
+{
+  "evidence_id": "12-3/implement/23",
+  "kind": "test-red",
+  "stage": "implement",
+  "source_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "artifact_paths": [
+    "tests/Vulgata.Tests/PreparedPass1/PreparedPass1JobExecutorStreamingTests.cs"
+  ],
+  "commands": [
+    "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --nologo --filter FullyQualifiedName~PreparedPass1JobExecutorStreamingTests.SubmitSession_InvalidCandidate_MapsOnlyItsClosedCategory --logger console;verbosity=minimal -p:GenerateMvcTestManifest=false",
+    "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --no-restore --nologo --filter FullyQualifiedName~PreparedPass1JobExecutorStreamingTests --logger console;verbosity=minimal -p:GenerateMvcTestManifest=false",
+    "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --nologo --filter FullyQualifiedName~PreparedPass1JobExecutorStreamingTests.SubmitSession_EveryServerOwnedBindingDriftMapsInvalidBindingAsync --logger console;verbosity=minimal -p:GenerateMvcTestManifest=false",
+    "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --nologo --filter FullyQualifiedName~PreparedPass1JobExecutorStreamingTests.SubmitSession_SourceAnchorEvidenceDriftMapsInvalidEvidenceAsync --logger console;verbosity=minimal -p:GenerateMvcTestManifest=false"
+  ],
+  "result": {
+    "initial_category_red": "3 passed, 1 failed: Source Anchor path drift expected invalid-evidence but returned invalid-semantics",
+    "executor_red": "17 passed, 3 failed after fixture correction: free-form JSON completed and unknown/parallel calls returned worker-result-rejected",
+    "binding_red": "8 passed, 15 failed: unchecked server-owned binding fields fell through to Semantics",
+    "evidence_red": "1 passed, 4 failed after correcting the contained-byte fixture: source hash and out-of-packet ranges mapped Semantics, and locator drift was accepted",
+    "classification": "expected-strict-submission-session-red"
+  },
+  "observed_at": "2026-08-24T07:08:24.4941185Z",
+  "summary": "T072 exposed the missing execution-local submit authority, closed illegal-call handling, exhaustive binding classification, and structured Source Anchor evidence classification while correcting only demonstrable fixture defects and never weakening the local validator."
+}

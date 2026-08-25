@@ -11,17 +11,20 @@ namespace Vulgata.Agents.WorkerExecution;
 /// units and applies one pair-wide capacity limit; it has no enumeration or
 /// navigation-scheduling surface.
 /// </summary>
-public sealed class PreparedPass1WorkerDispatcher(IPreparedPass1JobExecutor executor)
+public sealed class PreparedPass1WorkerDispatcher(
+    IPreparedPass1JobExecutor executor,
+    IPreparedPass1SubmissionDiagnosticObserver? diagnosticObserver = null)
     : IPreparedPass1WorkerDispatcher
 {
-    private const int _maximumProviderTurns = 10;
-    private const int _maximumToolAttempts = 8;
     private const string _promptResourceName =
         "Vulgata.Agents.Prompts.pass1-code-logic-worker.v2.md";
     private readonly IPreparedPass1JobExecutor _executor =
         executor ?? throw new ArgumentNullException(nameof(executor));
-    private readonly System.Collections.Concurrent.ConcurrentDictionary<Guid, ConversationState>
-        _conversationStates = new();
+
+    public PreparedPass1WorkerDispatcher(IPreparedPass1JobExecutor executor)
+        : this(executor, null)
+    {
+    }
 
     public async Task<PreparedPass1DispatchResult> DispatchAsync(
         PreparedPass1DispatchRequest request,
@@ -65,53 +68,8 @@ public sealed class PreparedPass1WorkerDispatcher(IPreparedPass1JobExecutor exec
         PreparedPass1JobDispatchResult[] results,
         CancellationToken cancellationToken)
     {
-        ConversationState state = _conversationStates.GetOrAdd(
-            packet.JobId,
-            _ => new ConversationState(packet.RemainingNavigationBudget));
-        PreparedPass1RawWorkerResult raw;
-        PreparedPass1WorkerPacket currentPacket = packet;
-        while (true)
-        {
-            int turn;
-            int remaining;
-            lock (state)
-            {
-                if (state.ProviderTurns >= _maximumProviderTurns)
-                {
-                    raw = PreparedPass1ResultParser.CreateDeferredCallsFallback(packet);
-                    break;
-                }
-
-                state.ProviderTurns++;
-                turn = state.ProviderTurns;
-                remaining = state.RemainingNavigationBudget;
-            }
-
-            currentPacket = packet with { RemainingNavigationBudget = remaining };
-            raw = await _executor.ExecuteAsync(currentPacket, prompt, cancellationToken);
-            if (raw.Outcome != PreparedPass1RawWorkerOutcome.Rejected ||
-                !string.Equals(
-                    raw.ReasonCode,
-                    "invalid-or-repeated-tool-call",
-                    StringComparison.Ordinal))
-            {
-                break;
-            }
-
-            lock (state)
-            {
-                if (state.RemainingNavigationBudget > 0)
-                {
-                    state.RemainingNavigationBudget--;
-                }
-            }
-
-            if (turn >= _maximumProviderTurns)
-            {
-                raw = PreparedPass1ResultParser.CreateDeferredCallsFallback(packet);
-                break;
-            }
-        }
+        PreparedPass1RawWorkerResult raw =
+            await _executor.ExecuteAsync(packet, prompt, cancellationToken);
         if (!Enum.IsDefined(raw.Outcome))
         {
             throw new InvalidDataException("Prepared Pass 1 provider returned an unknown outcome.");
@@ -128,6 +86,23 @@ public sealed class PreparedPass1WorkerDispatcher(IPreparedPass1JobExecutor exec
                 exception is InvalidDataException or ArgumentException or
                     System.Text.Json.JsonException or OverflowException)
             {
+                PreparedPass1ValidationResult validation =
+                    PreparedPass1ResultParser.Validate(packet, raw.Utf8Json);
+                PreparedPass1SubmissionRejectionKind rejectionKind =
+                    validation.FailureKind switch
+                    {
+                        PreparedPass1ValidationFailureKind.Shape =>
+                            PreparedPass1SubmissionRejectionKind.InvalidShape,
+                        PreparedPass1ValidationFailureKind.Binding =>
+                            PreparedPass1SubmissionRejectionKind.InvalidBinding,
+                        PreparedPass1ValidationFailureKind.Evidence =>
+                            PreparedPass1SubmissionRejectionKind.InvalidEvidence,
+                        PreparedPass1ValidationFailureKind.Semantics =>
+                            PreparedPass1SubmissionRejectionKind.InvalidSemantics,
+                        _ => throw new InvalidOperationException(
+                            "Prepared Pass 1 validation returned an unknown failure kind."),
+                    };
+                diagnosticObserver?.Observe(rejectionKind);
                 raw = new PreparedPass1RawWorkerResult(
                     PreparedPass1RawWorkerOutcome.Rejected,
                     ReadOnlyMemory<byte>.Empty,
@@ -296,6 +271,7 @@ public sealed class PreparedPass1WorkerDispatcher(IPreparedPass1JobExecutor exec
             Array.AsReadOnly(classifications))
         {
             RemainingNavigationBudget = assignment.RemainingNavigationBudget,
+            NavigationBudget = assignment.NavigationBudget,
             ServerAuthorization = assignment.ServerAuthorization,
         };
     }
@@ -386,19 +362,4 @@ public sealed class PreparedPass1WorkerDispatcher(IPreparedPass1JobExecutor exec
         !value.Contains('\\', StringComparison.Ordinal) &&
         value.Split('/').All(segment => segment is not ("" or "." or ".."));
 
-    private sealed class ConversationState
-    {
-        public ConversationState(int remainingNavigationBudget)
-        {
-            if (remainingNavigationBudget is < 0 or > _maximumToolAttempts)
-            {
-                throw new InvalidDataException("The remaining navigation budget is outside its closed bound.");
-            }
-
-            RemainingNavigationBudget = remainingNavigationBudget;
-        }
-
-        public int ProviderTurns { get; set; }
-        public int RemainingNavigationBudget { get; set; }
-    }
 }

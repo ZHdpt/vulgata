@@ -1,0 +1,57 @@
+{
+  "evidence_id": "12-3/implement/141",
+  "kind": "command",
+  "status": "current",
+  "stage": "implement",
+  "task": "T170",
+  "qualified_gate": "T084",
+  "source_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "command": "VULGATA_T084_ISOLATED_SOURCE_JOBS=1; VULGATA_T062_QUALIFICATION_CONNECTION=<fresh-t170-disposable-database>; VULGATA_T062_WORKER_PROVIDER_API_KEY=<approved-inherited-secret>; <approved-source-and-pinned-runtime-bindings>; dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --no-restore -p:WarningLevel=0 --filter FullyQualifiedName=Vulgata.Tests.PreparedPass1.Pass1DeepSeekIsolatedSourceQualificationTests.ThreeIsolatedSourceJobs_CompleteCommitAndReplayWithoutLeakingPayloadsAsync --logger console;verbosity=normal -clp:ErrorsOnly",
+  "execution": {
+    "network": "unrestricted outbound as explicitly approved",
+    "endpoint": "https://api.deepseek.com",
+    "model": "deepseek-v4-flash",
+    "streaming": true,
+    "thinking_disabled": true,
+    "source_scope": "only the two explicitly approved repositories and bound manifest entries",
+    "database_scope": "fresh disposable clone only"
+  },
+  "result": {
+    "test_total": 1,
+    "test_passed": 1,
+    "test_failed": 0,
+    "test_skipped": 0,
+    "isolated_jobs_required": 3,
+    "isolated_jobs_completed": 3,
+    "test_duration_seconds": 69,
+    "command_duration_seconds": 71.17,
+    "all_executor_categories": "Completed",
+    "execution_diagnostic_count": 0,
+    "submission_diagnostic_count": 0,
+    "wire_budget_diagnostic_count": 0
+  },
+  "observed": [
+    "All three jobs completed through fresh dependency-injection scopes with streamed DeepSeek calls and locally validated code-logic/file-v2 results.",
+    "Every result committed an immutable Document graph, then replayed with the same commit fingerprint and no mutation.",
+    "All three jobs produced source anchors, sections, and one index entry; no provider, execution, submission, or wire-budget failure category was observed.",
+    "The accepted AD-30 turn allocation made the historical late-first-submission scheduling failure unreachable while preserving no request eleven and the existing bounds.",
+    "The sanitized artifact contains hashes, byte/count metadata, categories, and commit fingerprints only; it contains no source or provider payload."
+  ],
+  "artifact": {
+    "path": "artifacts/qualification/story-12.3/deepseek-isolated-source-jobs.json",
+    "sha256": "22A52CB982563185DE4AFFB8365319508BC2C1445ACEAED35349062D04AF5ECD",
+    "status": "passed",
+    "jobs": 3
+  },
+  "disposable_database": {
+    "name": "vulgata_test_t170_8fbf126f319c492ba39024e4be76015a",
+    "template": "vulgata_story121_feffce36e44c48238a6e55c6742c374c",
+    "active_connections_before_drop": 0,
+    "dropped_after_verification": true,
+    "recoverable": false,
+    "ordinary_vulgata_database_mutated": false
+  },
+  "privacy": "Only the user-approved bounded source/context from the two approved repositories was sent to DeepSeek. No provider response, reasoning, candidate/validator detail, request body, credential, host path, or source payload was retained in the evidence. No ordinary database, host, system, network, firewall, service, permission, global configuration, or Git change occurred.",
+  "observed_at": "2026-08-25T17:23:57.3157777+08:00",
+  "summary": "Fresh T170/T084 passed 3/3 with atomic commit and exact replay, so the full authenticated T085/T062 production qualification is now permitted."
+}

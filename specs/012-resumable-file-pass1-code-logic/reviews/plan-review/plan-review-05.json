@@ -1,0 +1,63 @@
+{
+  "schema_version": "1.0",
+  "gate": "plan-review",
+  "verdict": "REVISE",
+  "reviewed_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "reviewed_boundary": {
+    "base_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+    "candidate_commit": null,
+    "diff_sha256": "10fd96a3576b7fd2a1966a1b0ee2fed97e0c7379c760d0340f1c050895364520",
+    "artifact_hashes": {
+      "docs/bmad/planning-artifacts/sprint-change-proposal-2026-08-24-deepseek-strict-result-submission.md": "04C38967B8AE56A32E95B823DE9738842D08F10C05246E23ABE9191145B1D905",
+      "specs/012-resumable-file-pass1-code-logic/spec.md": "B03687C3A77F52766280669DA6CF9E2F9925A44BEC1AE9304991F387477A9493",
+      "specs/012-resumable-file-pass1-code-logic/plan.md": "AACA4B6B0AA2A42213772826502B7D3CC2DA499611201F0D94D718E3BBCC26FC",
+      "specs/012-resumable-file-pass1-code-logic/research.md": "41BBD1A7397C7122835C757ABC1CA512CEAAD4DA4670E58AA7492BBACF2BB62B",
+      "specs/012-resumable-file-pass1-code-logic/data-model.md": "E7A746C9E7C83093626948DB5595DFC3DC3A07AFBF9FD2AFDBD27C350BE511A2",
+      "specs/012-resumable-file-pass1-code-logic/quickstart.md": "A62A3B8326C6880D53440EA2791C0F07F4B8895BF4F01A44D06DB7A3E7B5EC71",
+      "specs/012-resumable-file-pass1-code-logic/contracts/code-logic-file-v2.schema.json": "87C8FC21F261779A0D130F09ECCF574363B56E6D7138EA9D8933172E6CDAAC9A",
+      "specs/012-resumable-file-pass1-code-logic/contracts/pass1-runtime-contracts.md": "8FB7AAC024F9E0B9ACE4773A6C7C1F8B66FF8E90B5F4798ACF1777383429579C",
+      "specs/012-resumable-file-pass1-code-logic/contracts/navigate-code-contract.md": "E16998558E097EBAF344F36246925BE2209C98E7EDE8172692785304CE3664EE",
+      "specs/012-resumable-file-pass1-code-logic/contracts/deepseek-strict-result-submission.md": "576C617B6B3888F6F53001CB4E5BF33CF2F89C07723A22D4F962E6CAC9DB2C74"
+    },
+    "owned_paths": [
+      "docs/bmad/planning-artifacts/sprint-change-proposal-2026-08-24-deepseek-strict-result-submission.md",
+      "specs/012-resumable-file-pass1-code-logic/contracts/code-logic-file-v2.schema.json",
+      "specs/012-resumable-file-pass1-code-logic/contracts/deepseek-strict-result-submission.md",
+      "specs/012-resumable-file-pass1-code-logic/contracts/navigate-code-contract.md",
+      "specs/012-resumable-file-pass1-code-logic/contracts/pass1-runtime-contracts.md",
+      "specs/012-resumable-file-pass1-code-logic/data-model.md",
+      "specs/012-resumable-file-pass1-code-logic/plan.md",
+      "specs/012-resumable-file-pass1-code-logic/quickstart.md",
+      "specs/012-resumable-file-pass1-code-logic/research.md",
+      "specs/012-resumable-file-pass1-code-logic/spec.md"
+    ]
+  },
+  "reviewed_artifacts": [
+    "docs/bmad/planning-artifacts/sprint-change-proposal-2026-08-24-deepseek-strict-result-submission.md",
+    "specs/012-resumable-file-pass1-code-logic/spec.md",
+    "specs/012-resumable-file-pass1-code-logic/plan.md",
+    "specs/012-resumable-file-pass1-code-logic/research.md",
+    "specs/012-resumable-file-pass1-code-logic/data-model.md",
+    "specs/012-resumable-file-pass1-code-logic/quickstart.md",
+    "specs/012-resumable-file-pass1-code-logic/contracts/code-logic-file-v2.schema.json",
+    "specs/012-resumable-file-pass1-code-logic/contracts/pass1-runtime-contracts.md",
+    "specs/012-resumable-file-pass1-code-logic/contracts/navigate-code-contract.md",
+    "specs/012-resumable-file-pass1-code-logic/contracts/deepseek-strict-result-submission.md",
+    "specs/012-resumable-file-pass1-code-logic/decisions/streaming-provider-correction-01.md",
+    "specs/012-resumable-file-pass1-code-logic/evidence/e2e/streaming-provider-correction-01.json"
+  ],
+  "findings": [
+    {
+      "id": "PR05-001",
+      "severity": "HIGH",
+      "category": "provider-schema-projection",
+      "artifact": "specs/012-resumable-file-pass1-code-logic/contracts/deepseek-strict-result-submission.md",
+      "location": "lines 53-61, especially projection steps 4 and 6 and the drift contract; authoritative schema lines 330-332 and 440-443",
+      "affected_requirement": "FR-058 and FR-059",
+      "evidence": "The authoritative schema contains two object-level anyOf constraints expressed as partial properties subschemas. The communication-evidence branches depend only on minItems:1, which projection step 4 removes, making those branches vacuous. Projection step 6 simultaneously requires every object to list all properties in required and set additionalProperties:false; applying that recursively to either partial branch rejects the enclosing object's other properties. The deferred-observation anyOf uses the same partial-object form. The omission ledger does not classify either semantic anyOf as local-only, while the drift contract permits only the named omissions and transforms. Therefore the implementation has no single conforming provider-schema transformation.",
+      "correction_outcome": "Define one deterministic treatment for both authoritative anyOf constraints and reconcile plan.md, research.md, deepseek-strict-result-submission.md, and the projection/drift test seam. Either classify these exact conditional-anyOf JSON pointers as local-only semantic constraints, omit them through the closed ledger, and prove the unchanged full local validator rejects both-empty communication evidence and both-null deferred targets, or specify and prove a provider-compatible equivalent transformation. Mutation tests must reject every new or changed conditional constraint not explicitly classified.",
+      "earliest_owner": "plan"
+    }
+  ],
+  "summary": "REVISE. The corrected definition closes the transport, authority, retry, privacy, turn-limit, and qualification boundaries, but PR05-001 leaves the provider-schema projector internally inconsistent for the authoritative partial-object anyOf constraints. Correct that plan-owned transformation and rerun fresh independent plan review. This verdict authorizes no planned-change approval, task generation, implementation, source-bearing qualification, lifecycle update, or Git mutation."
+}

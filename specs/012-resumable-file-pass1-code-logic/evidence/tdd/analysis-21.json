@@ -1,0 +1,35 @@
+{
+  "evidence_id": "12-3/implement/56",
+  "kind": "analysis",
+  "stage": "implement",
+  "source_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "artifact_paths": [
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekPromptCompositionTests.cs",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1ProductionBoundaryQualificationTests.cs",
+    "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedPass1WorkerDispatcher.cs"
+  ],
+  "command": "Remove-Item Env:VULGATA_T084_ISOLATED_SOURCE_JOBS -ErrorAction SilentlyContinue; dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter \"FullyQualifiedName~Pass1DeepSeekPromptCompositionTests|FullyQualifiedName~Pass1ProductionBoundaryQualificationTests\" --no-restore --nologo --logger \"console;verbosity=minimal\" -p:GenerateMvcTestManifest=false -clp:ErrorsOnly",
+  "result": {
+    "outcome": "two-adjacent-pre-existing-failures-classified",
+    "prompt_composition": {
+      "failure": "jdt_distribution_archive_missing",
+      "cause": "The sandbox .NET process resolves SpecialFolder.UserProfile to C:\\Users\\CodexSandboxOffline, while the already-approved archive is at C:\\Users\\13728\\Downloads.",
+      "archive_exists": true,
+      "archive_sha256": "BBB2297D69A69A8216E17B799744B9EC5454974BBB5E498D45AD3505D8B4FA0F",
+      "process_local_rerun": "4 passed, 0 failed after setting only AnalysisRuntime__JdtLsDistributionArchivePath for the child test process",
+      "system_or_host_change": false,
+      "blocking": false
+    },
+    "production_boundary": {
+      "failure": "ReadConstructorBinding expected one PreparedPass1WorkerDispatcher constructor but observed the existing two-parameter primary constructor plus one-parameter convenience constructor.",
+      "t092_paths_involved": false,
+      "introduced_by_t092": false,
+      "blocking": "Must be dispositioned before final Story 12.3 verification; does not invalidate the focused DeepSeek executor GREEN or require a host change."
+    },
+    "provider_calls": 0,
+    "source_bearing_calls": 0,
+    "database_actions": 0
+  },
+  "observed_at": "2026-08-24T17:16:15.7663071Z",
+  "summary": "The broader adjacent run exposed no T092 regression. One failure was a sandbox process-path mismatch solved with the user's already-approved verified archive path and no persistent change. The other is a stale pre-existing constructor-count assertion outside T092 ownership and remains explicit work for convergence/final verification."
+}

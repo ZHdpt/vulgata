@@ -1,0 +1,37 @@
+{
+  "evidence_id": "12-3/implement/131",
+  "kind": "test-red",
+  "status": "resolved",
+  "stage": "implement",
+  "task": "T160",
+  "source_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "commands": [
+    "dotnet build tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --verbosity quiet",
+    "AnalysisRuntime__JdtLsDistributionArchivePath=<approved-verified-archive>; <live-flags-cleared>; dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --no-restore -p:WarningLevel=0 --filter FullyQualifiedName~Pass1DeepSeekTerminalContextProjectionTests|FullyQualifiedName~PreparedPass1JobExecutorStreamingTests|FullyQualifiedName~Pass1DeepSeekPromptCompositionTests|FullyQualifiedName~Pass1DeepSeekContractQualificationTests|FullyQualifiedName~Pass1DeepSeekIsolatedSourceQualificationTests --logger console;verbosity=minimal -clp:ErrorsOnly",
+    "git diff --check"
+  ],
+  "result": {
+    "build": { "exit_code": 0, "errors": 0, "warnings": 2729 },
+    "focused_red": { "total": 220, "passed": 198, "failed": 19, "skipped": 3, "duration_seconds": 4 },
+    "diff_check": "passed"
+  },
+  "expected_failures": {
+    "projection": "Four valid category/code pairs omit repairCode; four mismatches and one unknown code are not rejected before projection.",
+    "executor": "The correction projection omits repairCode for both second-valid capture and second-invalid termination paths.",
+    "prompt": "The terminal prompt does not define InvalidShape, InvalidSemantics, InvalidBinding, or InvalidEvidence with the three closed repair codes.",
+    "privacy": "Semantic validator details remain observable at the submission and isolated-qualification seams.",
+    "source_free": "The source-free production projection still emits firstSubmissionCorrection:null rather than the synthetic InvalidSemantics/UseMinimalValidDocument correction."
+  },
+  "environment_disposition": "The first root replay also observed the known sandbox-profile JDT archive lookup mismatch. A child-process-only binding to the user's approved verified archive removed that unrelated failure; the recorded final rerun contains only the nineteen intended behavioral RED failures and three expected live skips. No host or system state changed.",
+  "files": {
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekTerminalContextProjectionTests.cs": "67B5D65034B751C56DE0E5ACCF781E84C07A4DEC57E5F0CFAC0FE11BCE57B2D4",
+    "tests/Vulgata.Tests/PreparedPass1/PreparedPass1JobExecutorStreamingTests.cs": "1EAE0910A2229D41F0355C8C36EEC46DA7244AFBB6EE22A2A874B5B611DF80E7",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekPromptCompositionTests.cs": "57F2604884F00FEF9C70E4C56D0580E147270114A0B00B14D4416E6002CC1A48",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekContractQualificationTests.cs": "F8EEB23D4A2B9963245DB7C0EF2B312058BD196DB29865D1D96AAE01DA2D2699",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekIsolatedSourceQualificationTests.cs": "A139BAAC30E7B53864C7A24013467AC508A882894767CD626A6752BF1D5F301E",
+    "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedPass1TerminalContextProjection.cs": "2680140048DFC88B480EFBBC9BC877ED054183BE42F5EF677116D2AA1D430329"
+  },
+  "privacy": "All RED verification was deterministic and source-free. It invoked no provider, network, database, ordinary database, host, system, credential, or Git mutation.",
+  "observed_at": "2026-08-25T15:48:02.2042398+08:00",
+  "summary": "AD-29 has a compile-clean behavioral RED across mapping, projection, termination, prompt, qualification, and diagnostic-privacy seams."
+}

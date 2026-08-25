@@ -34,9 +34,9 @@ public sealed class Pass1HostRuntimeQualificationTests
     {
         T062QualificationInputs qualification =
             await Pass1ProductionExecutionTests.LoadQualificationInputsAsync();
-        using var host = Pass1ProductionExecutionTests.CreateProductionHost(
+        await using var host = Pass1ProductionExecutionTests.CreateProductionHost(
             qualification.ConnectionString);
-        using IServiceScope scope = host.Services.CreateScope();
+        await using AsyncServiceScope scope = host.Services.CreateAsyncScope();
         IRevisionBoundSourceReader sourceReader =
             scope.ServiceProvider.GetRequiredService<IRevisionBoundSourceReader>();
 

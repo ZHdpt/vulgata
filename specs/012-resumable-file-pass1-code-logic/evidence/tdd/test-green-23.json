@@ -1,0 +1,37 @@
+{
+  "evidence_id": "12-3/implement/67",
+  "kind": "test-green",
+  "stage": "implement",
+  "task": "T100",
+  "source_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "focused_command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --nologo -p:WarningLevel=0 -p:GenerateMvcTestManifest=false --filter \"FullyQualifiedName~PreparedPass1JobExecutorStreamingTests.ExecuteAsync_IllegalFunctionCall_ReportsDeterministicClosedSubtypeAsync\" --logger \"console;verbosity=minimal\"",
+  "focused_result": {
+    "passed": 3,
+    "failed": 0,
+    "skipped": 0
+  },
+  "broader_command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --nologo -p:WarningLevel=0 -p:GenerateMvcTestManifest=false --filter \"FullyQualifiedName~PreparedPass1JobExecutorStreamingTests|FullyQualifiedName~Pass1DeepSeekIsolatedSourceQualificationTests\" --logger \"console;verbosity=minimal\"",
+  "broader_result": {
+    "passed": 55,
+    "failed": 0,
+    "skipped": 1,
+    "skip_reason": "The opt-in live T084 qualification remained disabled."
+  },
+  "implementation": {
+    "subtypes": [
+      "UnknownFunction",
+      "MultipleFunctions"
+    ],
+    "precedence": "A response message with a function-call count other than one is MultipleFunctions before any name inspection; only a sole undeclared call is UnknownFunction.",
+    "general_category": "IllegalFunctionCall",
+    "reason_code": "unclassified-systemic",
+    "payload_retained_or_exposed": false
+  },
+  "artifact_sha256": {
+    "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedPass1JobExecutor.cs": "A82B36688D7A655B38944EF8A5185F795BDF4B22EF3ADADC4E60B14B13021438",
+    "tests/Vulgata.Tests/PreparedPass1/PreparedPass1JobExecutorStreamingTests.cs": "2CD3C0C5C0D00C0A60A78A530D70D32F1B54CB8950E37920091CB679EBEDEA27",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekIsolatedSourceQualificationTests.cs": "E6311CB0F85A75D37E66010BE98A4A588CCB3C675F9FD5A4E48B0BAA8075645E"
+  },
+  "privacy": "No provider, source-bearing request, database, artifact rewrite, prompt, request/response payload, function details, credential, or host state was accessed or changed.",
+  "observed_at": "2026-08-24T19:44:34.4842430Z"
+}

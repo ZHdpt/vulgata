@@ -1,0 +1,60 @@
+{
+  "evidence_id": "12-3/implement/74",
+  "kind": "test-green",
+  "stage": "implement",
+  "task": "T106",
+  "source_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "focused_command": "$env:VULGATA_TEST_ADMIN_CONNECTION='<approved-local-postgres-admin>'; dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --nologo -p:WarningLevel=0 -p:GenerateMvcTestManifest=false --filter \"FullyQualifiedName~Pass1NavigationBudgetPersistenceTests|FullyQualifiedName~PostgreSqlReservationQualification_RequiresTheDurableReservationPort|FullyQualifiedName~PostgreSql17_Reservation\" --logger \"console;verbosity=normal\"",
+  "focused_result": {
+    "passed": 11,
+    "failed": 0,
+    "skipped": 0,
+    "exit_code": 0
+  },
+  "broader_results": [
+    {
+      "scope": "NavigateCodeSecurityTests and NavigateCodeLeaseSecurityCorrectionTests",
+      "passed": 24,
+      "failed": 0,
+      "skipped": 0
+    },
+    {
+      "scope": "Pass1DocumentPostgreSqlAtomicTests",
+      "passed": 61,
+      "failed": 0,
+      "skipped": 0
+    },
+    {
+      "scope": "Pass1MigrationTests",
+      "passed": 9,
+      "failed": 0,
+      "skipped": 0
+    }
+  ],
+  "implementation": {
+    "reservation": "The store revalidates and locks the current pair, job, lease, authorization, and budget in a serializable transaction, advances only ToolAttemptCount and StateVersion, commits, then returns the reserved ordinal and latest cursor.",
+    "receipt": "A receipt requires the exact reserved ordinal and current ticket, preserves consumed gaps, updates accepted/evidence/depth state without a second ToolAttemptCount increment, and rejects stale or conflicting replay.",
+    "marker": "At durable high-water eight the existing schema records exactly one idempotent ordinal-nine Calls marker; no new entity, column, DbSet, or migration was introduced.",
+    "runtime_boundary": "PreparedPass1NavigationService remains unchanged because the serial callback consumer and runtime reservation wiring belong to T107/T108."
+  },
+  "fixture_correction": "Receiving-review verification confirmed that the shared commit fixture pre-seeded a same-job receipt, evaluated a fixed lease with the system clock, and retained the pre-commit cursor. The test author isolated the seeded receipt only for the reservation cases, injected the fixed test clock, and advanced to the returned cursor. The corrected PostgreSQL RED boundary then passed without weakening production validation.",
+  "database": {
+    "authority": "Only the approved localhost PostgreSQL admin connection was supplied process-locally; the password is omitted from evidence.",
+    "root_rerun_disposable_databases": [
+      "vulgata_story121_89f3f55b4b2147e089a73ff9fffa1a0b",
+      "vulgata_story121_d6beb7bff2dc4da7a4da3da8e3497bd5"
+    ],
+    "cleanup": "Both databases were created by DisposablePostgreSqlDatabase and disposed by await using. Ordinary database vulgata was not targeted."
+  },
+  "schema": "Migration and VulgataDbContext diff inventory is empty; all nine migration tests pass.",
+  "artifact_sha256": {
+    "src/dotnet/Vulgata.Core/DomainServices/IPass1NavigationAttemptReservationStore.cs": "D81C5FEA35D9FEA9E8360FF208D7B41081F91DD5D1613982A5A2E70F36CB27C4",
+    "src/dotnet/Vulgata.Core/Entities/Pass1NavigationBudget.cs": "B06270EAB6EF250095F0795EEA206DA272CC5D37DBFC16A2A4721A0BEA93DE44",
+    "src/dotnet/Vulgata.Infrastructure/Data/PreparedPass1Store.cs": "8BF3AB0F870DC71E2311F3754FE0B9337C1A50C604E3420DE9920A54935B9340",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1NavigationBudgetPersistenceTests.cs": "8CE46B884662C7EDF91532314D2D3C5CD3A8DFFE57A84098A34B390663238C06",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DocumentPostgreSqlAtomicTests.cs": "9C3A46501B7E754B28BE0B2FC45B808A8D367F0E030F14061041809AB560A376"
+  },
+  "privacy": "No provider request, source-bearing traffic, repository source disclosure, credential retention, host setting, or system configuration change occurred.",
+  "warnings": "Existing NU1507 and EF assembly-version warnings remain; all recorded tests succeeded.",
+  "observed_at": "2026-08-24T21:51:37.0020534Z"
+}

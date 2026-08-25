@@ -1,0 +1,54 @@
+{
+  "evidence_id": "12-3/implement/90",
+  "kind": "test-green",
+  "stage": "implement",
+  "task": "T120",
+  "source_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "fake_barrier_command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter \"FullyQualifiedName~Pass1DeepSeekContractQualificationTests|FullyQualifiedName~Pass1DeepSeekStreamingQualificationTests|FullyQualifiedName~PreparedPass1JobExecutorStreamingTests|FullyQualifiedName~Pass1DeepSeekIsolatedSourceQualificationTests|FullyQualifiedName~Pass1ProductionBoundaryQualificationTests\" --logger \"console;verbosity=minimal\"",
+  "fake_barrier_result": {
+    "build": "passed-with-existing-warnings",
+    "passed": 225,
+    "failed": 0,
+    "skipped": 3,
+    "total": 228,
+    "exit_code": 0
+  },
+  "postgres_barrier_command": "$env:VULGATA_TEST_POSTGRES_ADMIN = '<approved localhost postgres admin connection>'; dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter \"FullyQualifiedName~Pass1MigrationTests|FullyQualifiedName~Pass1DocumentCommitTests|FullyQualifiedName~Pass1DocumentPostgreSqlAtomicTests|FullyQualifiedName~PreparedPass1WorkerDispatcherTests\" --no-restore --logger \"console;verbosity=minimal\"",
+  "postgres_barrier_result": {
+    "build": "passed-with-existing-warnings",
+    "passed": 174,
+    "failed": 0,
+    "skipped": 0,
+    "total": 174,
+    "exit_code": 0,
+    "duration_seconds": 75
+  },
+  "verified": [
+    "exact disabled-thinking/required-tool normalization and final-wire shape",
+    "bounded source-free call and DONE observation with missing-call and incomplete-stream fail-closed behavior",
+    "pre-FICC zero-call and illegal-batch no-effect behavior with closed diagnostic subtypes",
+    "batch, turn, reservation, content, call, and result continuity",
+    "raw, assembled, replay, message, aggregate, request-body, timeout, HTTP-family, and privacy bounds",
+    "sibling-client isolation, zero SDK retry, no request eleven, and no source-bearing traffic",
+    "migration, atomic commit/rollback, replay, restart, lease, cursor, marker, and dispatcher durability against disposable PostgreSQL",
+    "no EF migration or model-snapshot path was added or changed by AD-22"
+  ],
+  "database": {
+    "server": "localhost:5432",
+    "admin_database": "postgres",
+    "scope": "test-created disposable databases only",
+    "ordinary_vulgata_accessed": false
+  },
+  "artifact_sha256": {
+    "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedPass1JobExecutor.cs": "4688A7A830C09561BBD58AD4526BC7ABF6D87B0248CA9740B56C976D97935CF2",
+    "tests/Vulgata.Tests/PreparedPass1/DeepSeekSourceFreeHandshakeHarness.cs": "2E7F44783533A3934D9DB2AC070A140D8405302E2291DF68E18C7DD1BB6F5914",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekContractQualificationTests.cs": "D653774FEAA9C55D05D8E9A97223B7F7FC6F9BD8F547C1606155D4AFAE53A01B",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekStreamingQualificationTests.cs": "AC24DEDD028C59CF8CED35BF846A436869464C909DBA8E292798919FE4202F6A",
+    "tests/Vulgata.Tests/PreparedPass1/PreparedPass1JobExecutorStreamingTests.cs": "994213F10FF54F209CF73E30F6B13BE0D4F54017A09AF157F281D09CD8E86716",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekIsolatedSourceQualificationTests.cs": "C41446A8A73FC9C8C42615D3DED4CA26A574EA99273716512B9DFBC825991D06",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1ProductionBoundaryQualificationTests.cs": "C0BB00B2B25585B8EC875D3D0EABB04A20045BDF6BF4ABC51D815D98D7E89E78"
+  },
+  "network": "Only the approved local PostgreSQL test instance was accessed. No live provider, external network, source-bearing request, credential output, host setting, or system configuration was accessed or changed.",
+  "warnings": "The three skips are the expected opt-in live/source qualifications. Existing NU1507 and EF assembly-version warnings remain.",
+  "observed_at": "2026-08-24T23:54:10.9354333Z"
+}

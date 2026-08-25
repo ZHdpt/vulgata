@@ -10,6 +10,7 @@ using Vulgata.Core.DomainServices;
 using Vulgata.Core.Entities;
 using Vulgata.Infrastructure.Data;
 using Vulgata.Tests.PreparedScanning;
+using Vulgata.Tests.PreparedScanning.TestDoubles;
 using Xunit.Sdk;
 
 namespace Vulgata.Tests.PreparedPass1;
@@ -23,6 +24,333 @@ namespace Vulgata.Tests.PreparedPass1;
 [Collection(PreparedScanningCollection.Name)]
 public sealed class Pass1DocumentPostgreSqlAtomicTests
 {
+    [Fact]
+    public void PostgreSqlReservationQualification_RequiresTheDurableReservationPort()
+    {
+        Type? reservationStore = typeof(Pass1NavigationBudget).Assembly.GetType(
+            "Vulgata.Core.DomainServices.IPass1NavigationAttemptReservationStore");
+        Assert.NotNull(reservationStore);
+
+        Assert.Contains(
+            reservationStore!.GetMethods(),
+            method => method.Name == "ReserveNextAsync");
+    }
+
+    [Fact]
+    public async Task PostgreSql17_ReservationFoundationPersistsAcrossContextRecreationWithoutSchemaDeltaAsync()
+    {
+        Type? reservationStore = typeof(Pass1NavigationBudget).Assembly.GetType(
+            "Vulgata.Core.DomainServices.IPass1NavigationAttemptReservationStore");
+        Assert.NotNull(reservationStore);
+        Assert.Contains(reservationStore!.GetMethods(), method => method.Name == "ReserveNextAsync");
+
+        string administrator = GetAdministratorConnectionStringOrSkip();
+        await using CommitFixture fixture = await CommitFixture.CreateAsync(administrator);
+        Console.WriteLine($"T105 disposable database: {fixture.Prepared.DatabaseName}");
+        await ResetReservationQualificationFixtureAsync(fixture);
+        Guid jobId = fixture.Request.Packet.JobId;
+        Pass1NavigationBudget before = await fixture.Prepared.Context.Pass1NavigationBudgets
+            .AsNoTracking()
+            .SingleAsync(value => value.ScanJobExecutionId == jobId);
+        Assert.Equal(0, before.ToolAttemptCount);
+        Assert.Equal(0, before.StateVersion);
+        Assert.DoesNotContain(
+            fixture.Prepared.Context.Model.GetEntityTypes(),
+            entity => entity.ClrType.Name.Contains("NavigationAttempt", StringComparison.Ordinal) ||
+                entity.ClrType.Name.Contains("Reservation", StringComparison.Ordinal));
+
+        await using VulgataDbContext recreated =
+            PreparedScanPostgreSqlFixture.CreateContext(fixture.ConnectionString);
+        Pass1NavigationBudget after = await recreated.Pass1NavigationBudgets
+            .AsNoTracking()
+            .SingleAsync(value => value.ScanJobExecutionId == jobId);
+        Assert.Equal(before.ToolAttemptCount, after.ToolAttemptCount);
+        Assert.Equal(before.StateVersion, after.StateVersion);
+        Assert.Empty(await recreated.Pass1NavigationReceipts
+            .AsNoTracking()
+            .Where(value => value.ScanJobExecutionId == jobId)
+            .ToArrayAsync());
+    }
+
+    [Fact]
+    public async Task PostgreSql17_ReservationReceiptAndMarkerRepairAreDurableAndIdempotentAsync()
+    {
+        Type? reservationPort = typeof(Pass1NavigationBudget).Assembly.GetType(
+            "Vulgata.Core.DomainServices.IPass1NavigationAttemptReservationStore");
+        Assert.NotNull(reservationPort);
+        Assert.Contains(reservationPort!.GetMethods(), method => method.Name == "ReserveNextAsync");
+
+        string administrator = GetAdministratorConnectionStringOrSkip();
+        await using CommitFixture fixture = await CommitFixture.CreateAsync(administrator);
+        Console.WriteLine($"T105 disposable database: {fixture.Prepared.DatabaseName}");
+        await ResetReservationQualificationFixtureAsync(fixture);
+        (PreparedPass1NavigationScope scope, PreparedPass1NavigationRequestInput request) =
+            await CreateNavigationBindingAsync(fixture);
+        PreparedPass1Store store = CreateReservationStore(fixture);
+        MethodInfo reserve = Assert.Single(
+            typeof(PreparedPass1Store).GetMethods(BindingFlags.Public | BindingFlags.Instance)
+                .Where(method => method.Name == "ReserveNavigationAttemptAsync"));
+
+        object latest = await InvokeStoreAsync(store, reserve, scope, request, cursor: null, draft: null);
+        Assert.Equal(1, ReadInt(latest, "ToolAttemptOrdinal", "ReservedOrdinal", "Ordinal"));
+        Assert.Equal(1, ReadInt(latest, "ToolAttemptCount", "AttemptHighWater", "HighWater"));
+        Assert.Equal(1L, ReadLong(latest, "StateVersion", "BudgetStateVersion", "CursorStateVersion"));
+
+        await using VulgataDbContext afterReservation =
+            PreparedScanPostgreSqlFixture.CreateContext(fixture.ConnectionString);
+        Pass1NavigationBudget reservedBudget = await afterReservation.Pass1NavigationBudgets
+            .AsNoTracking()
+            .SingleAsync(value => value.ScanJobExecutionId == request.JobId);
+        Assert.Equal(1, reservedBudget.ToolAttemptCount);
+        Assert.Equal(1, reservedBudget.StateVersion);
+        Assert.Empty(await afterReservation.Pass1NavigationReceipts
+            .AsNoTracking()
+            .Where(value => value.ScanJobExecutionId == request.JobId)
+            .ToArrayAsync());
+
+        PreparedPass1NavigationReceiptDraft draft = new(
+            SHA256.HashData(Encoding.UTF8.GetBytes("t105-ordinary-receipt")),
+            PreparedPass1NavigationOperation.Definition,
+            1,
+            PreparedPass1NavigationOutcome.Unavailable,
+            null,
+            [],
+            0,
+            0,
+            ReadOnlyMemory<byte>.Empty);
+        MethodInfo commit = Assert.Single(
+            typeof(PreparedPass1Store).GetMethods(BindingFlags.Public | BindingFlags.Instance)
+                .Where(method => method.Name == "CommitReservedNavigationReceiptAsync"));
+        object replacement = await InvokeStoreAsync(store, commit, scope, request, latest, draft);
+        Assert.Equal(1, ReadInt(replacement, "ToolAttemptCount", "AttemptHighWater", "HighWater"));
+        Assert.Equal(2L, ReadLong(replacement, "StateVersion", "BudgetStateVersion", "CursorStateVersion"));
+        latest = replacement;
+
+        request = request with { ToolAttemptOrdinal = 2 };
+        for (int ordinal = 2; ordinal <= 8; ordinal++)
+        {
+            PreparedPass1NavigationScope currentScope = scope with
+            {
+                ToolAttemptCount = ordinal - 1,
+                AcceptedCallCount = 0,
+                EvidenceBytes = 0,
+            };
+            request = request with { ToolAttemptOrdinal = (ulong)ordinal };
+            latest = await InvokeStoreAsync(store, reserve, currentScope, request, latest, draft: null);
+            Assert.Equal(ordinal, ReadInt(latest, "ToolAttemptOrdinal", "ReservedOrdinal", "Ordinal"));
+            Assert.Equal(ordinal, ReadInt(latest, "ToolAttemptCount", "AttemptHighWater", "HighWater"));
+        }
+
+        MethodInfo marker = Assert.Single(
+            typeof(PreparedPass1Store).GetMethods(BindingFlags.Public | BindingFlags.Instance)
+                .Where(method => method.Name == "EnsureNavigationCallsMarkerAsync"));
+        object markerCursor = await InvokeStoreAsync(store, marker, scope, request, latest, draft: null);
+        Assert.Equal(8, ReadInt(markerCursor, "ToolAttemptCount", "AttemptHighWater", "HighWater"));
+        await InvokeStoreAsync(store, marker, scope, request, markerCursor, draft: null);
+
+        await using VulgataDbContext afterMarker =
+            PreparedScanPostgreSqlFixture.CreateContext(fixture.ConnectionString);
+        Pass1NavigationBudget finalBudget = await afterMarker.Pass1NavigationBudgets
+            .AsNoTracking()
+            .SingleAsync(value => value.ScanJobExecutionId == request.JobId);
+        Assert.Equal(8, finalBudget.ToolAttemptCount);
+        Assert.Equal(1, await afterMarker.Pass1NavigationReceipts.CountAsync(value =>
+            value.ScanJobExecutionId == request.JobId && value.ReceiptOrdinal == 9 &&
+            value.ToolAttemptOrdinal == null && value.BoundKind == Pass1NavigationBoundKind.Calls));
+
+        int receiptsBeforeConflict = await afterMarker.Pass1NavigationReceipts.CountAsync(
+            value => value.ScanJobExecutionId == request.JobId);
+        await Assert.ThrowsAnyAsync<Exception>(async () =>
+            await InvokeStoreAsync(store, commit, scope, request with { ToolAttemptOrdinal = 9 }, latest, draft));
+        await using VulgataDbContext afterConflict =
+            PreparedScanPostgreSqlFixture.CreateContext(fixture.ConnectionString);
+        Assert.Equal(receiptsBeforeConflict, await afterConflict.Pass1NavigationReceipts.CountAsync(
+            value => value.ScanJobExecutionId == request.JobId));
+    }
+
+    private static async Task<(PreparedPass1NavigationScope Scope, PreparedPass1NavigationRequestInput Request)>
+        CreateNavigationBindingAsync(CommitFixture fixture)
+    {
+        ScanJobExecution job = await fixture.Prepared.Context.ScanJobExecutions
+            .AsNoTracking()
+            .SingleAsync(value => value.Id == fixture.Request.Packet.JobId);
+        Pass1PairExecution pair = await fixture.Prepared.Context.Pass1PairExecutions
+            .AsNoTracking()
+            .SingleAsync(value => value.Id == fixture.Request.Packet.PairExecutionId);
+        PreparedPass1NavigationRequestInput request = new(
+            job.Id,
+            1,
+            PreparedPass1NavigationOperation.Definition,
+            job.FileCodeUnitId,
+            new(null, null, null, null, null),
+            1,
+            null,
+            pair.Id,
+            job.StateVersion,
+            pair.StateVersion,
+            job.LeaseToken!.Value,
+            job.LeaseExpiresAt!.Value,
+            pair.Phase.ToString(),
+            pair.CircuitState,
+            job.State,
+            PreparedPass1AuthorizationBinding.Create(fixture.Prepared.Authorization));
+        PreparedPass1NavigationScope? scope = await CreateReservationStore(fixture)
+            .GetAsync(request, CancellationToken.None);
+        Assert.NotNull(scope);
+        return (scope!, request);
+    }
+
+    private static async Task<object> InvokeStoreAsync(
+        object target,
+        MethodInfo method,
+        PreparedPass1NavigationScope scope,
+        PreparedPass1NavigationRequestInput request,
+        object? cursor,
+        PreparedPass1NavigationReceiptDraft? draft)
+    {
+        ParameterInfo[] parameters = method.GetParameters();
+        object?[] arguments = new object?[parameters.Length];
+        foreach (ParameterInfo parameter in parameters)
+        {
+            Type rawType = parameter.ParameterType;
+            Type type = Nullable.GetUnderlyingType(rawType) ?? rawType;
+            string name = parameter.Name ?? string.Empty;
+            arguments[parameter.Position] =
+                rawType == typeof(PreparedPass1NavigationScope) ? scope :
+                rawType == typeof(PreparedPass1NavigationRequestInput) ? request :
+                rawType == typeof(PreparedPass1NavigationReservationRequest)
+                    ? new PreparedPass1NavigationReservationRequest(
+                        scope,
+                        request,
+                        cursor as PreparedPass1NavigationReservationTicket) :
+                rawType == typeof(PreparedPass1NavigationReceiptDraft) ? draft :
+                cursor is not null && rawType.IsInstanceOfType(cursor) ? cursor :
+                rawType == typeof(CancellationToken) ? CancellationToken.None :
+                type == typeof(Guid) ? GuidArgument(name, request) :
+                type == typeof(long) ? LongArgument(name, request, cursor) :
+                type == typeof(int) ? IntArgument(name, request, cursor) :
+                type == typeof(ulong) ? ULongArgument(name, request, cursor) :
+                type == typeof(DateTimeOffset) ? DateTimeOffset.UtcNow :
+                type == typeof(string) ? StringArgument(name, request) :
+                type == typeof(PreparedPass1ServerAuthorization) ? new PreparedPass1ServerAuthorization(
+                    request.PairExecutionId,
+                    request.JobStateVersion,
+                    request.PairStateVersion,
+                    request.LeaseToken,
+                    request.LeaseExpiresAt,
+                    request.PairState,
+                    request.CircuitState,
+                    request.JobState,
+                    request.AuthorizationBinding) :
+                type == typeof(ReadOnlyMemory<byte>) ? ReadOnlyMemory<byte>.Empty :
+                type == typeof(IReadOnlyList<PreparedPass1EvidenceDescriptor>)
+                    ? Array.Empty<PreparedPass1EvidenceDescriptor>() :
+                type.IsEnum ? EnumArgument(type, name, request) :
+                parameter.HasDefaultValue ? parameter.DefaultValue :
+                throw new XunitException(
+                    $"No T105 fixture binding for {method.Name} parameter {parameter.ParameterType} {parameter.Name}.");
+        }
+
+        object? invocation;
+        try
+        {
+            invocation = method.Invoke(target, arguments);
+        }
+        catch (TargetInvocationException exception) when (exception.InnerException is not null)
+        {
+            throw exception.InnerException;
+        }
+
+        if (invocation is Task task)
+        {
+            await task.ConfigureAwait(false);
+            PropertyInfo? result = task.GetType().GetProperty("Result");
+            return result?.GetValue(task) ?? new object();
+        }
+
+        return invocation ?? throw new XunitException($"{method.Name} returned null.");
+    }
+
+    private static PreparedPass1Store CreateReservationStore(CommitFixture fixture) =>
+        new(
+            fixture.Prepared.Context,
+            new FixedTimeProvider(PreparedScanTestHost.FixedUtcNow.AddMinutes(1)));
+
+    private static async Task ResetReservationQualificationFixtureAsync(CommitFixture fixture)
+    {
+        await fixture.Prepared.Context.Database.ExecuteSqlInterpolatedAsync($"""
+            DELETE FROM "vulgata"."Pass1NavigationReceipts"
+            WHERE "ScanJobExecutionId" = {fixture.Request.Packet.JobId};
+            """);
+        fixture.Prepared.Context.ChangeTracker.Clear();
+        Assert.Equal(0, await fixture.Prepared.Context.Pass1NavigationReceipts
+            .AsNoTracking()
+            .CountAsync(value => value.ScanJobExecutionId == fixture.Request.Packet.JobId));
+    }
+
+    private static Guid GuidArgument(string name, PreparedPass1NavigationRequestInput request) =>
+        name.Contains("pair", StringComparison.OrdinalIgnoreCase) ? request.PairExecutionId :
+        name.Contains("lease", StringComparison.OrdinalIgnoreCase) ? request.LeaseToken :
+        request.JobId;
+
+    private static long LongArgument(string name, PreparedPass1NavigationRequestInput request, object? cursor) =>
+        name.Contains("attempt", StringComparison.OrdinalIgnoreCase) ||
+        name.Contains("high", StringComparison.OrdinalIgnoreCase)
+            ? cursor is null ? 0 : ReadLong(cursor, "ToolAttemptCount", "AttemptHighWater", "HighWater")
+            : request.JobStateVersion;
+
+    private static int IntArgument(string name, PreparedPass1NavigationRequestInput request, object? cursor) =>
+        name.Contains("ordinal", StringComparison.OrdinalIgnoreCase)
+            ? checked((int)request.ToolAttemptOrdinal)
+            : checked((int)LongArgument(name, request, cursor));
+
+    private static ulong ULongArgument(string name, PreparedPass1NavigationRequestInput request, object? cursor) =>
+        name.Contains("ordinal", StringComparison.OrdinalIgnoreCase)
+            ? request.ToolAttemptOrdinal
+            : checked((ulong)LongArgument(name, request, cursor));
+
+    private static string StringArgument(string name, PreparedPass1NavigationRequestInput request) =>
+        name.Contains("binding", StringComparison.OrdinalIgnoreCase) ? request.AuthorizationBinding :
+        name.Contains("pair", StringComparison.OrdinalIgnoreCase) ? request.PairState :
+        string.Empty;
+
+    private static object EnumArgument(
+        Type type,
+        string name,
+        PreparedPass1NavigationRequestInput request) =>
+        name.Contains("circuit", StringComparison.OrdinalIgnoreCase) && type == typeof(Pass1CircuitState)
+            ? request.CircuitState
+            : name.Contains("job", StringComparison.OrdinalIgnoreCase) && type == typeof(ScanJobExecutionState)
+                ? request.JobState
+                : Enum.GetValues(type).GetValue(0)!;
+
+    private static int ReadInt(object value, params string[] names) =>
+        Convert.ToInt32(ReadMember(value, names));
+
+    private static long ReadLong(object value, params string[] names) =>
+        Convert.ToInt64(ReadMember(value, names));
+
+    private static object ReadMember(object value, string[] names)
+    {
+        foreach (string name in names)
+        {
+            PropertyInfo? property = value.GetType().GetProperty(name, BindingFlags.Public | BindingFlags.Instance);
+            if (property is not null)
+            {
+                return property.GetValue(value) ?? throw new XunitException($"{name} was null.");
+            }
+        }
+
+        PropertyInfo? cursor = value.GetType().GetProperty("Cursor", BindingFlags.Public | BindingFlags.Instance);
+        if (cursor?.GetValue(value) is { } nested)
+        {
+            return ReadMember(nested, names);
+        }
+
+        throw new XunitException(
+            $"{value.GetType().FullName} did not expose any of: {string.Join(", ", names)}.");
+    }
+
     private static readonly Guid TargetDocumentVersionId =
         Guid.Parse("aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee");
     private static readonly Guid TargetLogicalDocumentId =
@@ -232,8 +560,38 @@ public sealed class Pass1DocumentPostgreSqlAtomicTests
 
         Assert.Equal(Pass1DocumentCommitStatus.Rejected, rejected.Status);
         Assert.Equal("durable-binding-mismatch", rejected.ReasonCode);
+        Assert.Null(rejected.LogicalDocumentId);
+        Assert.Null(rejected.DocumentVersionId);
+        Assert.Null(rejected.CommitFingerprint);
         Assert.Equal(before, await GraphCounts.ReadAsync(terminal.ConnectionString));
         Assert.Equal(ScanJobExecutionState.Running, await terminal.ReadJobStateAsync());
+    }
+
+    [Fact]
+    public async Task PostgreSql17_ProviderProbeDrain_AcceptsAlreadyLeasedSuccessBeforeTerminalRejection()
+    {
+        string administrator = GetAdministratorConnectionStringOrSkip();
+        await using CommitFixture fixture = await CommitFixture.CreateAsync(administrator);
+        await SetPairPhaseAsync(
+            fixture,
+            Pass1PairExecutionPhase.ProbingProvider,
+            Pass1CircuitState.Probing,
+            Pass1PairReasonCategory.ProviderUnavailable,
+            "provider-unavailable",
+            terminalAt: null);
+        GraphCounts before = await GraphCounts.ReadAsync(fixture.ConnectionString);
+
+        Pass1DocumentCommitResult accepted = await fixture.Committer.CommitAsync(
+            fixture.Request,
+            CancellationToken.None);
+
+        Assert.True(
+            accepted.Status == Pass1DocumentCommitStatus.Committed,
+            $"Expected Committed, actual {accepted.Status}/{accepted.ReasonCode}.");
+        Assert.Equal(2, await CountAsync(fixture.ConnectionString, "\"DocumentVersions\""));
+        Assert.Equal(2, await CountAsync(fixture.ConnectionString, "\"LogicalDocuments\""));
+        Assert.NotEqual(before, await GraphCounts.ReadAsync(fixture.ConnectionString));
+        Assert.Equal(ScanJobExecutionState.Completed, await fixture.ReadJobStateAsync());
     }
 
     [Fact]
@@ -279,6 +637,119 @@ public sealed class Pass1DocumentPostgreSqlAtomicTests
     }
 
     [Fact]
+    public async Task PostgreSql17_LocalAuthoritativeRejection_LeavesGraphAndJobUnchanged()
+    {
+        string administrator = GetAdministratorConnectionStringOrSkip();
+        await using CommitFixture fixture = await CommitFixture.CreateAsync(administrator);
+        GraphSnapshot graphBefore = await fixture.ReadGraphSnapshotAsync();
+        GraphCounts countsBefore = await GraphCounts.ReadAsync(fixture.ConnectionString);
+
+        Pass1DocumentCommitResult rejected = await fixture.Committer.CommitAsync(
+            fixture.Request with
+            {
+                CanonicalCodeLogicJson = Encoding.UTF8.GetBytes("{}"),
+            },
+            CancellationToken.None);
+
+        Assert.Equal(Pass1DocumentCommitStatus.Rejected, rejected.Status);
+        Assert.Equal("invalid-authoritative-result", rejected.ReasonCode);
+        Assert.Null(rejected.LogicalDocumentId);
+        Assert.Null(rejected.DocumentVersionId);
+        Assert.Null(rejected.CommitFingerprint);
+        Assert.Equal(graphBefore, await fixture.ReadGraphSnapshotAsync());
+        Assert.Equal(countsBefore, await GraphCounts.ReadAsync(fixture.ConnectionString));
+        Assert.Equal(ScanJobExecutionState.Running, await fixture.ReadJobStateAsync());
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(1)]
+    [InlineData(2)]
+    public async Task PostgreSql17_ClassificationCitedSubsetUsesCompleteSuppliedAuthorizationSetAsync(
+        int citedClassificationCount)
+    {
+        string administrator = GetAdministratorConnectionStringOrSkip();
+        await using CommitFixture fixture = await CommitFixture.CreateAsync(administrator);
+        (Pass1DocumentCommitRequest request, IReadOnlyList<CommunicationKindClassification> classifications) =
+            await fixture.CreateClassificationRequestAsync(citedClassificationCount);
+
+        Pass1DocumentCommitResult result = await fixture.Committer.CommitAsync(
+            request,
+            CancellationToken.None);
+
+        Assert.True(
+            result.Status == Pass1DocumentCommitStatus.Committed,
+            $"supplied=2 cited={citedClassificationCount} returned {result.Status}: {result.ReasonCode}");
+
+        if (citedClassificationCount == 2)
+        {
+            Pass1DocumentCommitResult replay = await fixture.Committer.CommitAsync(
+                request,
+                CancellationToken.None);
+            Assert.Equal(Pass1DocumentCommitStatus.Replayed, replay.Status);
+            Assert.Equal(result.DocumentVersionId, replay.DocumentVersionId);
+            Assert.Equal(result.CommitFingerprint, replay.CommitFingerprint);
+        }
+
+        Assert.Equal(2, classifications.Count);
+    }
+
+    [Theory]
+    [InlineData("missing-current-pre-scan-result")]
+    [InlineData("wrong-current-pre-scan-result")]
+    [InlineData("field-mismatched-uncited-supplied")]
+    public async Task PostgreSql17_InvalidUncitedSuppliedClassificationBindingIsMutationFreeAsync(
+        string mutation)
+    {
+        string administrator = GetAdministratorConnectionStringOrSkip();
+        await using CommitFixture fixture = await CommitFixture.CreateAsync(administrator);
+        (Pass1DocumentCommitRequest request, IReadOnlyList<CommunicationKindClassification> classifications) =
+            await fixture.CreateClassificationRequestAsync(0);
+        await fixture.MutateClassificationBindingAsync(mutation, classifications[0].Id);
+        GraphSnapshot graphBefore = await fixture.ReadGraphSnapshotAsync();
+        GraphCounts countsBefore = await GraphCounts.ReadAsync(fixture.ConnectionString);
+
+        Pass1DocumentCommitResult result = await fixture.Committer.CommitAsync(
+            request,
+            CancellationToken.None);
+
+        Assert.Equal(Pass1DocumentCommitStatus.Rejected, result.Status);
+        Assert.Equal("durable-binding-mismatch", result.ReasonCode);
+        Assert.Equal(graphBefore, await fixture.ReadGraphSnapshotAsync());
+        Assert.Equal(countsBefore, await GraphCounts.ReadAsync(fixture.ConnectionString));
+        Assert.Equal(ScanJobExecutionState.Running, await fixture.ReadJobStateAsync());
+    }
+
+    [Fact]
+    public async Task PostgreSql17_CitedUnsuppliedClassificationIsInvalidAuthoritativeResultAndMutationFreeAsync()
+    {
+        string administrator = GetAdministratorConnectionStringOrSkip();
+        await using CommitFixture fixture = await CommitFixture.CreateAsync(administrator);
+        (Pass1DocumentCommitRequest request, _) = await fixture.CreateClassificationRequestAsync(1);
+        JsonObject root = JsonNode.Parse(
+            Encoding.UTF8.GetString(request.CanonicalCodeLogicJson.ToArray()))!.AsObject();
+        root["communicationEvidence"]![0]!["classificationEvidence"]![0]!["classificationId"] =
+            Guid.NewGuid().ToString("D");
+        Pass1DocumentCommitRequest invalid = request with
+        {
+            CanonicalCodeLogicJson = Encoding.UTF8.GetBytes(
+                root.ToJsonString(new JsonSerializerOptions { WriteIndented = false })),
+        };
+        GraphSnapshot graphBefore = await fixture.ReadGraphSnapshotAsync();
+        GraphCounts countsBefore = await GraphCounts.ReadAsync(fixture.ConnectionString);
+
+        Pass1DocumentCommitResult result = await fixture.Committer.CommitAsync(
+            invalid,
+            CancellationToken.None);
+
+        Assert.Equal(Pass1DocumentCommitStatus.Rejected, result.Status);
+        Assert.Equal("invalid-authoritative-result", result.ReasonCode);
+        Assert.Equal(graphBefore, await fixture.ReadGraphSnapshotAsync());
+        Assert.Equal(countsBefore, await GraphCounts.ReadAsync(fixture.ConnectionString));
+        Assert.Equal(ScanJobExecutionState.Running, await fixture.ReadJobStateAsync());
+    }
+
+    [Fact]
     public async Task PostgreSql17_ExactReplay_IsMutationFreeAndReconstructsScalarsWithoutArrayDependence()
     {
         string administrator = GetAdministratorConnectionStringOrSkip();
@@ -299,6 +770,29 @@ public sealed class Pass1DocumentPostgreSqlAtomicTests
         // One seeded target version plus exactly one committed source version.
         Assert.Equal(2, await CountAsync(fixture.ConnectionString, "\"DocumentVersions\""));
         Assert.Equal(1, await CountAsync(fixture.ConnectionString, "\"ScanJobExecutions\"", "\"State\" = 'Completed'"));
+    }
+
+    [Fact]
+    public async Task PostgreSql17_ExactReplay_WithSubMicrosecondCommittedAt_IsReplayed()
+    {
+        string administrator = GetAdministratorConnectionStringOrSkip();
+        await using CommitFixture fixture = await CommitFixture.CreateAsync(administrator);
+        Pass1DocumentCommitRequest request = fixture.Request with
+        {
+            CommittedAt = fixture.Request.CommittedAt.AddTicks(1),
+        };
+
+        Pass1DocumentCommitResult first = await fixture.Committer.CommitAsync(
+            request,
+            CancellationToken.None);
+        Pass1DocumentCommitResult replay = await fixture.Committer.CommitAsync(
+            request,
+            CancellationToken.None);
+
+        Assert.Equal(Pass1DocumentCommitStatus.Committed, first.Status);
+        Assert.Equal(Pass1DocumentCommitStatus.Replayed, replay.Status);
+        Assert.Equal(first.DocumentVersionId, replay.DocumentVersionId);
+        Assert.Equal(first.CommitFingerprint, replay.CommitFingerprint);
     }
 
     [Fact]
@@ -556,6 +1050,166 @@ public sealed class Pass1DocumentPostgreSqlAtomicTests
         internal Pass1DocumentCommitRequest Request { get; }
         internal byte[] ChangedCanonicalJson { get; }
         internal Guid PairExecutionId => Request.Packet.PairExecutionId;
+
+        internal async Task<
+            (Pass1DocumentCommitRequest Request, IReadOnlyList<CommunicationKindClassification> Classifications)>
+            CreateClassificationRequestAsync(int citedClassificationCount)
+        {
+            if (citedClassificationCount is < 0 or > 2)
+            {
+                throw new ArgumentOutOfRangeException(nameof(citedClassificationCount));
+            }
+
+            PreparedPass1WorkerPacket basePacket = Request.Packet;
+            ScanExecution execution = await Prepared.Context.ScanExecutions.AsNoTracking()
+                .SingleAsync(value => value.Id == basePacket.ScanExecutionId);
+            Guid currentPreScanResultId = await Prepared.Context.PreScanResults.AsNoTracking()
+                .Where(value => value.RepositoryId == basePacket.RepositoryId)
+                .Select(value => value.Id)
+                .SingleAsync();
+            await Prepared.Context.ScanExecutions
+                .Where(value => value.Id == execution.Id)
+                .ExecuteUpdateAsync(setters => setters.SetProperty(
+                    value => value.PreScanResultId,
+                    currentPreScanResultId));
+            CommunicationKindClassification first = CreateTestClassification(
+                currentPreScanResultId,
+                basePacket,
+                new string('a', 64),
+                $"{basePacket.RepositoryRelativePath}#L{basePacket.LineStart}",
+                "t172-first");
+            CommunicationKindClassification second = CreateTestClassification(
+                currentPreScanResultId,
+                basePacket,
+                new string('b', 64),
+                $"{basePacket.RepositoryRelativePath}#L{basePacket.LineStart + 1}",
+                "t172-second");
+            Prepared.Context.CommunicationKindClassifications.AddRange(first, second);
+            await Prepared.Context.SaveChangesAsync();
+            Prepared.Context.ChangeTracker.Clear();
+            ScanExecution persistedExecution = await Prepared.Context.ScanExecutions.AsNoTracking()
+                .SingleAsync(value => value.Id == basePacket.ScanExecutionId);
+            CommunicationKindClassification[] persistedClassifications =
+                await Prepared.Context.CommunicationKindClassifications.AsNoTracking()
+                    .Where(value => value.Id == first.Id || value.Id == second.Id)
+                    .ToArrayAsync();
+            Assert.Equal(currentPreScanResultId, persistedExecution.PreScanResultId);
+            Assert.Equal(2, persistedClassifications.Length);
+            Assert.All(persistedClassifications, value => Assert.Equal(currentPreScanResultId, value.PreScanResultId));
+
+            PreparedPass1CommunicationClassificationProjection[] supplied =
+            [
+                ToProjection(first, basePacket),
+                ToProjection(second, basePacket),
+            ];
+            Assert.All(supplied, projection =>
+            {
+                CommunicationKindClassification durable = persistedClassifications.Single(
+                    value => value.Id == projection.ClassificationId);
+                Assert.Equal(durable.Fingerprint, projection.ClassificationFingerprint);
+                Assert.Equal(durable.Kind, projection.Kind);
+                Assert.Equal(durable.Level, projection.Level);
+                Assert.Equal(durable.Confidence, projection.Confidence);
+                Assert.Equal(durable.Rule, projection.Rule);
+                Assert.Equal(durable.Provenance, projection.Provenance);
+                Assert.Equal(durable.CatalogRuleIdentity, projection.CatalogRuleIdentity);
+                Assert.Equal(durable.RelativePath, projection.RepositoryRelativePath);
+                Assert.Equal(durable.Locator, projection.EvidenceLocator);
+            });
+            PreparedPass1WorkerPacket packet = basePacket with
+            {
+                CommunicationClassifications = supplied,
+            };
+            JsonObject root = JsonNode.Parse(
+                Encoding.UTF8.GetString(Request.CanonicalCodeLogicJson.ToArray()))!.AsObject();
+            JsonArray communicationEvidence = [];
+            if (citedClassificationCount > 0)
+            {
+                JsonArray classificationEvidence = [];
+                for (int index = 0; index < citedClassificationCount; index++)
+                {
+                    PreparedPass1CommunicationClassificationProjection classification = supplied[index];
+                    classificationEvidence.Add(new JsonObject
+                    {
+                        ["classificationId"] = classification.ClassificationId.ToString("D"),
+                        ["classificationFingerprint"] = classification.ClassificationFingerprint,
+                        ["communicationKind"] = classification.Kind!.Value.ToString(),
+                        ["level"] = classification.Level.ToString(),
+                        ["confidence"] = classification.Confidence.ToString(),
+                        ["evidenceRule"] = classification.Rule.ToString(),
+                        ["provenance"] = classification.Provenance.ToString(),
+                        ["catalogRuleIdentity"] = classification.CatalogRuleIdentity,
+                        ["evidenceLocator"] = classification.EvidenceLocator,
+                    });
+                }
+
+                communicationEvidence.Add(new JsonObject
+                {
+                    ["order"] = 1,
+                    ["communicationKind"] = "Http",
+                    ["observation"] = "The supplied classification is cited.",
+                    ["classificationEvidence"] = classificationEvidence,
+                    ["navigationReceiptIds"] = new JsonArray(),
+                    ["sourceAnchorRefs"] = new JsonArray("a001"),
+                });
+            }
+
+            root["communicationEvidence"] = communicationEvidence;
+            byte[] candidate = Encoding.UTF8.GetBytes(
+                root.ToJsonString(new JsonSerializerOptions { WriteIndented = false }));
+            PreparedPass1ParsedWorkerResult parsed = PreparedPass1ResultParser.Parse(packet, candidate);
+            using (JsonDocument parsedDocument = JsonDocument.Parse(parsed.CanonicalCandidateJson.ToArray()))
+            {
+                Guid[] parsedIds = parsedDocument.RootElement.GetProperty("communicationEvidence")
+                    .EnumerateArray()
+                    .SelectMany(value => value.GetProperty("classificationEvidence").EnumerateArray())
+                    .Select(value => value.GetProperty("classificationId").GetGuid())
+                    .ToArray();
+                Assert.Equal(citedClassificationCount, parsedIds.Length);
+                Assert.All(parsedIds, id => Assert.Contains(supplied, value => value.ClassificationId == id));
+            }
+            return (Request with
+            {
+                Packet = packet,
+                CanonicalCodeLogicJson = parsed.CanonicalCandidateJson,
+            }, [first, second]);
+        }
+
+        internal async Task MutateClassificationBindingAsync(string mutation, Guid classificationId)
+        {
+            switch (mutation)
+            {
+                case "missing-current-pre-scan-result":
+                    await Prepared.Context.ScanExecutions
+                        .Where(value => value.Id == Request.Packet.ScanExecutionId)
+                        .ExecuteUpdateAsync(setters => setters.SetProperty(
+                            value => value.PreScanResultId,
+                            Guid.Empty));
+                    break;
+                case "wrong-current-pre-scan-result":
+                    Guid wrongPreScanResultId = await Prepared.Context.PreScanResults.AsNoTracking()
+                        .Where(value => value.RepositoryId != Request.Packet.RepositoryId)
+                        .Select(value => value.Id)
+                        .SingleAsync();
+                    await Prepared.Context.CommunicationKindClassifications
+                        .Where(value => value.Id == classificationId)
+                        .ExecuteUpdateAsync(setters => setters.SetProperty(
+                            value => value.PreScanResultId,
+                            wrongPreScanResultId));
+                    break;
+                case "field-mismatched-uncited-supplied":
+                    await Prepared.Context.Database.ExecuteSqlInterpolatedAsync($"""
+                        UPDATE "vulgata"."CommunicationKindClassifications"
+                        SET "Fingerprint" = {new string('c', 64)}
+                        WHERE "Id" = {classificationId};
+                        """);
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(mutation), mutation, null);
+            }
+
+            Prepared.Context.ChangeTracker.Clear();
+        }
 
         internal async Task PrepareForReconciliationAsync()
         {
@@ -1150,6 +1804,45 @@ public sealed class Pass1DocumentPostgreSqlAtomicTests
         string Pair,
         string Coordination);
 
+    private static CommunicationKindClassification CreateTestClassification(
+        Guid preScanResultId,
+        PreparedPass1WorkerPacket packet,
+        string fingerprint,
+        string locator,
+        string catalogRuleIdentity) =>
+        CommunicationKindClassification.CreatePrepared(
+            preScanResultId,
+            CommunicationKind.Http,
+            ClassificationLevel.Confirmed,
+            ConfidenceBand.High,
+            EvidenceRule.HttpClientAnnotation,
+            EvidenceProvenance.StructuralAnnotation,
+            packet.RepositoryRelativePath,
+            locator,
+            1,
+            fingerprint,
+            catalogRuleIdentity);
+
+    private static PreparedPass1CommunicationClassificationProjection ToProjection(
+        CommunicationKindClassification classification,
+        PreparedPass1WorkerPacket packet) =>
+        new(
+            packet.FileCodeUnitId,
+            classification.Id,
+            packet.PreparedScanManifestId,
+            packet.RepositoryId,
+            packet.ScanRunId,
+            packet.ProfiledRevision,
+            classification.Fingerprint,
+            classification.Kind,
+            classification.Level,
+            classification.Confidence,
+            classification.Rule,
+            classification.Provenance,
+            classification.CatalogRuleIdentity!,
+            classification.RelativePath,
+            classification.Locator);
+
     private static byte[] CreateCanonicalJson(
         PreparedPass1WorkerPacket packet,
         string targetPath,
@@ -1170,7 +1863,9 @@ public sealed class Pass1DocumentPostgreSqlAtomicTests
         binding["preparedScanManifestFingerprint"] = packet.PreparedScanManifestFingerprint;
         binding["pairPackageFingerprint"] = packet.PairPackageFingerprint;
         binding["repositoryRelativePath"] = packet.RepositoryRelativePath;
+        binding["byteStart"] = packet.ByteStart;
         binding["byteEnd"] = packet.ByteEnd;
+        binding["lineStart"] = packet.LineStart;
         binding["lineEnd"] = packet.LineEnd;
         binding["fileHash"] = packet.FileHash;
         binding["sourceHash"] = packet.SourceHash;
@@ -1178,19 +1873,30 @@ public sealed class Pass1DocumentPostgreSqlAtomicTests
         binding["analysisRuntimeIdentityHash"] = packet.AnalysisRuntimeIdentityHash;
         JsonObject anchor = root["sourceAnchors"]![0]!.AsObject();
         anchor["repositoryRelativePath"] = packet.RepositoryRelativePath;
+        anchor["byteStart"] = packet.ByteStart;
         anchor["byteEnd"] = packet.ByteEnd;
+        anchor["lineStart"] = packet.LineStart;
         anchor["lineEnd"] = packet.LineEnd;
         anchor["sourceHash"] = packet.SourceHash;
+        anchor["evidenceLocator"] =
+            $"{packet.RepositoryRelativePath}#L{packet.LineStart}-L{packet.LineEnd}";
         root["communicationEvidence"] = new JsonArray();
+        int sourceClaimLine = packet.LineStart < packet.LineEnd
+            ? packet.LineStart + 1
+            : packet.LineStart;
         JsonObject reference = root["knownReferences"]![0]!.AsObject();
         reference["targetDocumentVersionId"] = TargetDocumentVersionId.ToString("D");
         reference["targetRepositoryRelativePath"] = targetPath;
         reference["targetSourceHash"] = targetSourceHash;
         reference["navigationReceiptId"] = NavigationReceiptId.ToString("D");
+        reference["sourceClaimLocator"] =
+            $"{packet.RepositoryRelativePath}#L{sourceClaimLine}";
         JsonObject deferred = root["deferredObservations"]![0]!.AsObject();
         deferred["targetRepositoryRelativePath"] = targetPath;
         deferred["targetSourceHash"] = targetSourceHash;
         deferred["navigationReceiptIds"] = new JsonArray(NavigationReceiptId.ToString("D"));
+        deferred["sourceClaimLocator"] =
+            $"{packet.RepositoryRelativePath}#L{sourceClaimLine}";
         return Encoding.UTF8.GetBytes(root.ToJsonString(new JsonSerializerOptions { WriteIndented = false }));
     }
 

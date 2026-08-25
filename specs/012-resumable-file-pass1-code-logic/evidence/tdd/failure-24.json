@@ -1,0 +1,64 @@
+{
+  "evidence_id": "12-3/implement/53",
+  "kind": "failure",
+  "stage": "implement",
+  "source_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "artifact_paths": [
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekIsolatedSourceQualificationTests.cs",
+    "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedPass1JobExecutor.cs",
+    "tests/Vulgata.Tests/PreparedPass1/DeepSeekSourceFreeHandshakeHarness.cs"
+  ],
+  "artifact_sha256": {
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekIsolatedSourceQualificationTests.cs": "4C6D6CF511613A6DD2C96B271E34D3F7053710ACC112411BA6FA317DDFED79B6",
+    "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedPass1JobExecutor.cs": "D96DBB49C1776CF5BB9AF5B21C3321F7570EBA2F3EFE468386DE654275CB478F"
+  },
+  "qualification": {
+    "task": "T084",
+    "database_alias": "vulgata_story123_t084_20260825_r14",
+    "provider_endpoint_authority": "https://api.deepseek.com",
+    "provider_model": "deepseek-v4-flash",
+    "streaming": true,
+    "attempted_source_jobs": 1,
+    "unattempted_source_jobs": 2,
+    "source_kind": ".xml",
+    "dispatch_outcome": "Rejected",
+    "executor_category": "UnclassifiedSystemic",
+    "execution_category": "ProviderClientRequestRejected",
+    "wire_budget_category": null,
+    "submission_category": null,
+    "provider_http_status": 400,
+    "provider_error_type": "invalid_request_error",
+    "provider_error_code": "invalid_request_error",
+    "provider_error_field_class": "schema"
+  },
+  "sanitized_request_shape": {
+    "response_format": "json_object",
+    "tool_choice": "auto",
+    "parallel_tool_calls": false,
+    "navigate_code_parameters_bytes": 1019,
+    "navigate_code_parameters_sha256": "6C90B0895DBC922CD997B671034D379CBF1C1CA2275011B17397D67B9D741192",
+    "submit_code_logic_parameters_bytes": 13717,
+    "submit_code_logic_parameters_sha256": "06FFE9BFFAFCD812188D08C9D95222876C6C2938151C2A2CA34A2976D0A8FA9A"
+  },
+  "comparison": {
+    "source_free_gate": "T083 passed immediately before T084 on the same endpoint/model/key without source.",
+    "declaration_mismatch": "The production Worker parameter-schema bytes differ from the exact public AsOpenAIChatTool declarations sent and accepted by the source-free handshake.",
+    "official_v4_compatibility": "DeepSeek V4 thinking-tool guidance requires reasoning_content and non-null assistant content replay, rejects tool_choice, and documents neither parallel_tool_calls nor a need for JSON Output when strict tool finalization is authoritative."
+  },
+  "durable_postmortem": {
+    "pending_jobs": 149,
+    "running_jobs": 1,
+    "logical_documents": 0,
+    "document_versions": 0,
+    "navigation_receipts": 0
+  },
+  "privacy": "Only closed categories, HTTP status/error identifiers, standard request option names, function names, parameter-schema byte counts/hashes, and aggregate durable counts were retained. No API key, source, prompt, reasoning, tool arguments/results, provider message/body, headers, identifiers, or host paths were persisted.",
+  "not_environment_or_network": "The immediately preceding source-free live handshake succeeded, PostgreSQL preflight passed, the provider returned a structured HTTP 400, and no timeout or transport failure occurred.",
+  "commands": [
+    "VULGATA_T084_ISOLATED_SOURCE_JOBS=1 VULGATA_T062_QUALIFICATION_CONNECTION=<fresh-r14-disposable-database> VULGATA_T062_WORKER_PROVIDER_API_KEY=<present-secret> <approved-source-and-runtime-bindings> dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter FullyQualifiedName=Vulgata.Tests.PreparedPass1.Pass1DeepSeekIsolatedSourceQualificationTests.ThreeIsolatedSourceJobs_CompleteCommitAndReplayWithoutLeakingPayloadsAsync --no-build --no-restore --nologo --logger console;verbosity=normal -p:GenerateMvcTestManifest=false -clp:ErrorsOnly",
+    "docker exec vulgata-postgres psql -U vulgata -d <fresh-r14-disposable-database> <aggregate-only-postmortem-query>"
+  ],
+  "next_step": "Keep T085 blocked. Correct the reviewed DeepSeek V4 wire contract test-first so the source-free handshake and production Worker share exact declarations, omit incompatible or undocumented SDK fields, and preserve required tool-call replay; rerun T083 and T084 on fresh disposable databases.",
+  "observed_at": "2026-08-25T01:38:28.2188256+08:00",
+  "summary": "Fresh T084 reached DeepSeek but the first production Worker request was rejected with HTTP 400 schema validation because the live declaration/request shape was not the shape qualified by T083."
+}

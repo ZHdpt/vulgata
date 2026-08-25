@@ -1,0 +1,20 @@
+{
+  "evidence_id": "12-3/implement/21",
+  "kind": "test-red",
+  "stage": "implement",
+  "source_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "artifact_paths": [
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekContractQualificationTests.cs"
+  ],
+  "commands": [
+    "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter FullyQualifiedName~Pass1DeepSeekContractQualificationTests --no-restore --nologo --logger console;verbosity=minimal -p:GenerateMvcTestManifest=false",
+    "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter FullyQualifiedName~Pass1DeepSeekContractQualificationTests --no-restore --nologo --logger console -p:GenerateMvcTestManifest=false"
+  ],
+  "result": {
+    "initial": "3 failed, 8 passed, 1 intentional live-host skip: missing authoritative embedded schema and missing DeepSeekStrictSchemaProjector public Build/Project seam",
+    "extended": "1 failed, 38 passed, 1 intentional live-host skip: missing public Project schema-bytes mutation seam",
+    "classification": "expected-deepseek-strict-schema-projection-red"
+  },
+  "observed_at": "2026-08-24T06:21:40.7890852Z",
+  "summary": "T070 independently exposed the missing one-resource strict projector and then the missing schema-bytes qualification seam; test-code overload/traversal defects were corrected without weakening the resource, wrapper, ledger, mutation, local-validator, or size assertions."
+}

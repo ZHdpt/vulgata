@@ -143,6 +143,7 @@ public sealed class PreparedPass1ClaimedPacketSource(
                 return null;
             }
 
+            PreparedPass1NavigationBudgetProjection budget = binding.NavigationBudget;
             return new PreparedPass1WorkerPacket(
                 pairExecutionId,
                 binding.JobId,
@@ -172,7 +173,11 @@ public sealed class PreparedPass1ClaimedPacketSource(
                 binding.PairSelectionOrdinal,
                 sourceUtf8,
                 binding.ContextSnapshot,
-                binding.CommunicationClassifications);
+                binding.CommunicationClassifications)
+            {
+                NavigationBudget = budget,
+                RemainingNavigationBudget = 8 - budget.ToolAttemptCount,
+            };
         }
         catch (OperationCanceledException)
         {
@@ -211,6 +216,21 @@ public sealed class PreparedPass1ClaimedPacketSource(
         ScanJobExecution? job = await context.ScanJobExecutions.AsNoTracking()
             .SingleOrDefaultAsync(value => value.Id == claim.JobId, cancellationToken);
         if (!IsCurrentJob(job, claim, observedAt) || job is null)
+        {
+            return null;
+        }
+
+        Pass1NavigationBudget? budget = await context.Pass1NavigationBudgets.AsNoTracking()
+            .SingleOrDefaultAsync(
+                value => value.ScanJobExecutionId == claim.JobId,
+                cancellationToken);
+        if (budget is null ||
+            budget.PairExecutionId != pairExecutionId ||
+            budget.ToolAttemptCount is < 0 or > 8 ||
+            budget.AcceptedCallCount is < 0 or > 8 ||
+            budget.AcceptedCallCount > budget.ToolAttemptCount ||
+            budget.EvidenceBytes is < 0 or > 65_536 ||
+            budget.StateVersion < budget.ToolAttemptCount)
         {
             return null;
         }
@@ -371,7 +391,12 @@ public sealed class PreparedPass1ClaimedPacketSource(
             job.ManifestOrdinal,
             claim.PairSelectionOrdinal,
             snapshotProjection,
-            Array.AsReadOnly(classificationProjections));
+            Array.AsReadOnly(classificationProjections),
+            new PreparedPass1NavigationBudgetProjection(
+                budget.ToolAttemptCount,
+                budget.StateVersion,
+                budget.AcceptedCallCount,
+                budget.EvidenceBytes));
     }
 
     private static bool IsCurrentJob(
@@ -437,5 +462,6 @@ public sealed class PreparedPass1ClaimedPacketSource(
         int ManifestOrdinal,
         int PairSelectionOrdinal,
         PreparedPass1ContextSnapshotProjection ContextSnapshot,
-        IReadOnlyList<PreparedPass1CommunicationClassificationProjection> CommunicationClassifications);
+        IReadOnlyList<PreparedPass1CommunicationClassificationProjection> CommunicationClassifications,
+        PreparedPass1NavigationBudgetProjection NavigationBudget);
 }

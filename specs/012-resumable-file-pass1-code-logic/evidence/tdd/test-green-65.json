@@ -1,0 +1,65 @@
+{
+  "evidence_id": "12-3/implement/125",
+  "kind": "test-green",
+  "status": "current",
+  "stage": "implement",
+  "task": "T151",
+  "source_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "red_evidence": "specs/012-resumable-file-pass1-code-logic/evidence/tdd/test-red-64.json",
+  "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter \"FullyQualifiedName~Pass1DeepSeekTerminalContextProjectionTests|FullyQualifiedName~PreparedPass1JobExecutorStreamingTests.ExecuteAsync_TurnTenFinalization|FullyQualifiedName~PreparedPass1JobExecutorStreamingTests.ExecuteAsync_FirstRejectedSubmission|FullyQualifiedName~Pass1DeepSeekPromptCompositionTests.PreparedDispatcher_PromptContainsOneAuthoritativeTerminalMarkerSet\" --logger \"console;verbosity=minimal\" -clp:ErrorsOnly",
+  "result": {
+    "total": 32,
+    "passed": 32,
+    "failed": 0,
+    "skipped": 0,
+    "duration_seconds": 0.299,
+    "wall_seconds": 4.176,
+    "exit_code": 0,
+    "build_errors": 0
+  },
+  "supplemental_nonlive": [
+    {
+      "suite": "PreparedPass1JobExecutorStreamingTests",
+      "total": 109,
+      "passed": 109,
+      "failed": 0
+    },
+    {
+      "suite": "Pass1DeepSeekTerminalContextProjectionTests",
+      "total": 29,
+      "passed": 29,
+      "failed": 0
+    },
+    {
+      "suite": "Pass1DeepSeekContractQualificationTests nonlive",
+      "total": 59,
+      "passed": 57,
+      "failed": 0,
+      "skipped": 2
+    }
+  ],
+  "observed_green": [
+    "Turn-ten and early-correction finalization use exact three-message history-free projection with aligned named submit and submit-only declarations.",
+    "The same embedded prompt resource is the ordinary instruction and marker-derived terminal authority under one Prompt Identity.",
+    "Typed navigation results are captured once as cloned JsonElement values with the invoked function serializer; later mutable-source changes cannot alter context.",
+    "Canonical context enforces 0/1/72/73 result, correction allowlist, LF-only markers, 393216-byte component bound, internal-only API, reference release, and feasible mutable-buffer clearing.",
+    "Prompt drift maps ProviderConfiguration, state/canonicalization drift maps integrity-failure, and context overflow maps ProviderRequestBoundExceeded with OutgoingRequest observation.",
+    "Ordinary history replay, impossible-return topology defense, deadlines, zero retries, local validation, and no request eleven remain green."
+    ,"The source-free terminal gate now starts from fixed synthetic historical navigation state, uses the same production projector, emits exact system/user/user messages, and retains only sanitized counts, booleans, hashes, and byte lengths."
+  ],
+  "files": {
+    "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedPass1TerminalContextProjection.cs": "B7CD5B23C2A7A2112D4767D07F83A669B79305631762D309978FFD8CF27F5D3B",
+    "src/dotnet/Vulgata.Agents/Prompts/pass1-code-logic-worker.v2.md": "F35A90BD03EFB57F7EF2920DD95461E6BB5C52954E6DCFADE295773EBAB77C0C",
+    "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedPass1JobExecutor.cs": "0B8068BF224BB1B81F4DB871802F9D8E99C5F2C9F96A1BEC7FA7E61656A41F69",
+    "src/dotnet/Vulgata.Agents/WorkerExecution/DeepSeekStrictToolDeclarations.cs": "B53E8A840685B4501780EE9C210E5B41AB7E49FE4CF8E4392207CC651F18826F",
+    "tests/Vulgata.Tests/PreparedPass1/DeepSeekSourceFreeHandshakeHarness.cs": "870617E7486CC2D38E1095BB271F335A9C4B3D237F6E8F52CD2E3692338004FD",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekTerminalContextProjectionTests.cs": "476CE83C4094BB621F526F7F316CB753847735B250121DF7D192C3A119E0C302",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekPromptCompositionTests.cs": "88EBC50A534D27F7240A33078B083ABCC00140F1FF623E3ADB5DAA46995CDB12",
+    "tests/Vulgata.Tests/PreparedPass1/PreparedPass1JobExecutorStreamingTests.cs": "0D8FAF2169F771EEAB9DB54591EEFCE102340461F9BAB11B496A18FBF4D8DAFE",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekContractQualificationTests.cs": "B663FFF83352837EE8848F7FA15C4764512A7DC826DF425FF8969E9EB08B43A1"
+  },
+  "environment_note": "The unconfigured full PromptComposition host case independently reported jdt_distribution_archive_missing; no host or system change was attempted. T152 will provide the user-approved archive path as a process-local test variable only.",
+  "privacy": "No provider, source repository, PostgreSQL, network, host, system, credential, or external state was accessed by T151. All wire behavior used in-memory fake transport.",
+  "observed_at": "2026-08-25T13:56:14.7335221+08:00",
+  "summary": "T151 turns the observed T150 terminal-history RED into GREEN at the existing FICC seam without adding a second Agent, prompt identity, function, retry, request eleven, persistence, dependency, source scope, or system change."
+}

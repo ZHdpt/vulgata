@@ -1,0 +1,83 @@
+{
+  "evidence_id": "12-3/implement/59",
+  "kind": "failure",
+  "stage": "implement",
+  "source_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "artifact_paths": [
+    "src/dotnet/Vulgata.Agents/WorkerExecution/DeepSeekStrictToolDeclarations.cs",
+    "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedPass1JobExecutor.cs",
+    "tests/Vulgata.Tests/PreparedPass1/DeepSeekSourceFreeHandshakeHarness.cs",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekContractQualificationTests.cs",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekStreamingQualificationTests.cs"
+  ],
+  "artifact_sha256": {
+    "src/dotnet/Vulgata.Agents/WorkerExecution/DeepSeekStrictToolDeclarations.cs": "21A89A661FE8F17AF21A3122D6C74ECE8F24B6269AF3695BB4315AFBC4BA0DB7",
+    "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedPass1JobExecutor.cs": "B17AACB077045DC6361C523714D6531DEDC157ED7B029A28345196C64CA04027",
+    "tests/Vulgata.Tests/PreparedPass1/DeepSeekSourceFreeHandshakeHarness.cs": "B86EB3AF0DDEE3F89876F8097B0D8C1BA200E9A94A7881C1676C08F26BCE21C9",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekContractQualificationTests.cs": "EAEAE6C87CB6C7D2F879A5164EA7D132FBACA6B62C576015528765E5BCBBD7B8",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekStreamingQualificationTests.cs": "AE10F410B3DAF4E4552CF3E622862CC0A8F80C0F24B1C5FBA3912D30CEF4DBEA"
+  },
+  "qualification": {
+    "task": "T096/T083",
+    "provider_endpoint_authority": "https://api.deepseek.com",
+    "provider_model": "deepseek-v4-flash",
+    "streaming": true,
+    "thinking": "enabled",
+    "source_free_regression": "162 passed, 0 failed, 3 intentional live/source skips",
+    "live_outcome": "ProviderConfiguration",
+    "live_http_status": 400,
+    "provider_error_type": "invalid_request_error",
+    "provider_error_code": "invalid_request_error",
+    "provider_error_param": null,
+    "provider_error": "Invalid tool parameters schema: object is not accepted inside the public adapter's nullable type-array encoding."
+  },
+  "control": {
+    "source_free_no_tools_http_status": 200,
+    "streamed_reasoning_observed": true,
+    "final_content_observed": true,
+    "conclusion": "Network, credential, endpoint, model, thinking mode, and streaming are healthy."
+  },
+  "raw_declaration_shape": {
+    "declarations_bytes": 29964,
+    "declarations_sha256": "54321765E82EBE39092DF96A6F0E39F922E24459C34830525C22A38CDE533B61",
+    "navigate_code_parameters_bytes": 2115,
+    "navigate_code_parameters_sha256": "C8387178DA32FC682E7DE462AFA8B62AF388944CB0FC741B895375E585E87770",
+    "submit_code_logic_parameters_bytes": 27502,
+    "submit_code_logic_parameters_sha256": "77A044526E5D61480B3E86FA3C3AA354FF78A9F04BCA3B279F210DFBFB421BC8",
+    "request_fields": [
+      "model",
+      "thinking",
+      "max_tokens",
+      "messages",
+      "tools",
+      "stream"
+    ],
+    "forbidden_compatibility_fields_present": false
+  },
+  "schema_audit": {
+    "nullable_nested_object_type_arrays": [
+      "navigate_code/properties/target/properties/position",
+      "navigate_code/properties/target/properties/exactLineRange"
+    ],
+    "primitive_nullable_type_arrays": 4,
+    "string_enum_nodes_without_explicit_type": 16,
+    "all_object_properties_required_and_closed": true,
+    "official_rule": "DeepSeek strict mode supports object and anyOf; every object is closed with all properties required, and the live validator requires each schema node to carry type, anyOf, or $ref."
+  },
+  "source_free_projection_proof": {
+    "operations": [
+      "Rewrite only the two object|null type arrays as anyOf(object,null), moving object-only properties, required, and additionalProperties into the object branch.",
+      "Add type:string to each enum-only node only when every enum value is a string.",
+      "Leave the four primitive|null type arrays and every other schema value unchanged."
+    ],
+    "diagnostic_declarations_bytes": 15222,
+    "diagnostic_declarations_sha256": "03B4953CBDB1B957E74B71F86EB64D41D2533A977665C5A40886808204BAA3FF",
+    "http_status": 200,
+    "bounded_response_bytes": 5762
+  },
+  "privacy": "All eight diagnostic calls were source-free. Only HTTP status/error identifiers, fixed field names, schema pointers/counts, request field names, byte counts/hashes, and aggregate response bytes were retained. No API key, repository source, prompt packet, response text/reasoning, tool arguments/results, durable identity, header, or host path was persisted.",
+  "not_environment_or_network": "The no-tools command-line control returned HTTP 200 with streaming reasoning, the raw strict-tools request returned a structured HTTP 400 schema error, and the minimally projected strict-tools request returned HTTP 200 on the same endpoint/model/key/network.",
+  "next_step": "Keep T084/T085 blocked. Correct AD-19 so the public adapter schemas are immutable inputs to one deterministic DeepSeek strict projection rather than the accepted wire itself; add test-first drift and fail-closed coverage, then rerun T096/T083.",
+  "observed_at": "2026-08-24T18:17:10.5714542Z",
+  "summary": "T096 exposed a second request-contract defect: byte-identical raw public adapter declarations are not DeepSeek-strict compatible. A bounded two-rule deterministic schema projection makes the same source-free V4 request succeed."
+}

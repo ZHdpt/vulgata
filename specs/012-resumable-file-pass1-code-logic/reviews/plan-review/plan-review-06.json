@@ -1,0 +1,59 @@
+{
+  "schema_version": "1.0",
+  "gate": "plan-review",
+  "verdict": "ACCEPT",
+  "reviewed_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "reviewed_boundary": {
+    "base_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+    "candidate_commit": null,
+    "diff_sha256": "4e70096357d48944cdea3935502f93ccbd52d34680eeaf5205cae564cd0dcc08",
+    "artifact_hashes": {
+      "docs/bmad/planning-artifacts/sprint-change-proposal-2026-08-24-deepseek-strict-result-submission.md": "04c38967b8ae56a32e95b823de9738842d08f10c05246e23abe9191145b1d905",
+      "specs/012-resumable-file-pass1-code-logic/spec.md": "b03687c3a77f52766280669da6cf9e2f9925a44bec1ae9304991f387477a9493",
+      "specs/012-resumable-file-pass1-code-logic/plan.md": "457c461cbbcb3761bb27e43074e5e663e1d0ad854de658a4e7d8cd6b82960d0c",
+      "specs/012-resumable-file-pass1-code-logic/research.md": "19805377a30391018643ff4c2ec8589f7205af93224b3df6bc0511045dbd2760",
+      "specs/012-resumable-file-pass1-code-logic/data-model.md": "e7a746c9e7c83093626948db5595dfc3dc3a07afbf9fd2afdbd27c350be511a2",
+      "specs/012-resumable-file-pass1-code-logic/quickstart.md": "c74b657f9ab47ebf44235f6ba9a88f7b1a8150a411579a182b87396082ae8214",
+      "specs/012-resumable-file-pass1-code-logic/contracts/code-logic-file-v2.schema.json": "87c8fc21f261779a0d130f09eccf574363b56e6d7138ea9d8933172e6cdaac9a",
+      "specs/012-resumable-file-pass1-code-logic/contracts/pass1-runtime-contracts.md": "8fb7aac024f9e0b9ace4773a6c7c1f8b66ff8e90b5f4798acf1777383429579c",
+      "specs/012-resumable-file-pass1-code-logic/contracts/navigate-code-contract.md": "e16998558e097ebaf344f36246925be2209c98e7ede8172692785304ce3664ee",
+      "specs/012-resumable-file-pass1-code-logic/contracts/deepseek-strict-result-submission.md": "ddbcc57bf36705d0fb1f352192c83ce6d972eb8fdf4be735cfa5759ab28221fc"
+    },
+    "owned_paths": [
+      "specs/012-resumable-file-pass1-code-logic/plan.md",
+      "specs/012-resumable-file-pass1-code-logic/research.md",
+      "specs/012-resumable-file-pass1-code-logic/data-model.md",
+      "specs/012-resumable-file-pass1-code-logic/quickstart.md",
+      "specs/012-resumable-file-pass1-code-logic/contracts/code-logic-file-v2.schema.json",
+      "specs/012-resumable-file-pass1-code-logic/contracts/pass1-runtime-contracts.md",
+      "specs/012-resumable-file-pass1-code-logic/contracts/navigate-code-contract.md",
+      "specs/012-resumable-file-pass1-code-logic/contracts/deepseek-strict-result-submission.md"
+    ]
+  },
+  "reviewed_artifacts": [
+    "AGENTS.md",
+    ".specify/memory/constitution.md",
+    "docs/UBIQUITOUS_LANGUAGE.md",
+    "docs/agent-workflow/artifact-contracts.md",
+    "docs/bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md",
+    "docs/bmad/epics.md",
+    "docs/bmad/planning-artifacts/architecture.md",
+    "docs/bmad/planning-artifacts/architecture/august-30-bounded-scanning-design.md",
+    "docs/bmad/planning-artifacts/sprint-change-proposal-2026-08-24-deepseek-strict-result-submission.md",
+    "specs/012-resumable-file-pass1-code-logic/spec.md",
+    "specs/012-resumable-file-pass1-code-logic/plan.md",
+    "specs/012-resumable-file-pass1-code-logic/research.md",
+    "specs/012-resumable-file-pass1-code-logic/data-model.md",
+    "specs/012-resumable-file-pass1-code-logic/quickstart.md",
+    "specs/012-resumable-file-pass1-code-logic/contracts/code-logic-file-v2.schema.json",
+    "specs/012-resumable-file-pass1-code-logic/contracts/pass1-runtime-contracts.md",
+    "specs/012-resumable-file-pass1-code-logic/contracts/navigate-code-contract.md",
+    "specs/012-resumable-file-pass1-code-logic/contracts/deepseek-strict-result-submission.md",
+    "specs/012-resumable-file-pass1-code-logic/reviews/plan-review/plan-review-05.json",
+    "specs/012-resumable-file-pass1-code-logic/decisions/streaming-provider-correction-01.md",
+    "specs/012-resumable-file-pass1-code-logic/evidence/e2e/streaming-provider-correction-01.json",
+    "specs/012-resumable-file-pass1-code-logic/workflow-state.json"
+  ],
+  "findings": [],
+  "summary": "ACCEPT. PR05-001 is CLOSED without weakening the complete local code-logic/file-v2 acceptance authority. The corrected projection ledger identifies exactly /$defs/communicationEvidence/anyOf and /$defs/deferredObservation/anyOf by authoritative pointer, anyOf node kind, two ordered branches, semantic identity, and stable minified-subtree SHA-256; it omits each complete conditional node rather than emitting a vacuous or partial-object approximation, retains the underlying properties and representable types, and requires the unchanged full local validator plus both-empty, both-null, one-sided-control, move, reorder, mutation, and new-unclassified-conditional tests. No BLOCKER or HIGH finding remains. The definition also preserves exactly two closed strict functions, nested JsonElement.GetRawText candidate preservation, the SDK-eleven/Vulgata-ten no-request-eleven boundary, complete reasoning round-trip, one same-execution correction distinct from one durable retry, the exact 1,818,624-byte outgoing bound, privacy, zero strict-correction persistence delta, and Story 12.4/12.5 exclusions. Actual provider compatibility remains intentionally deferred to the source-free exact-hash fail-closed handshake; failure cannot weaken the schema or authorize source transmission. The nonrecursive diff identity 4e70096357d48944cdea3935502f93ccbd52d34680eeaf5205cae564cd0dcc08 is SHA-256 over UTF-8 sorted repository-path, tab, lowercase file-SHA-256 lines for the eight owned paths with LF separators and no trailing newline. This ACCEPT advances only plan review. Explicit hash-bound planned-change authorization is still required before task generation, and later definition review, production-write approval, TDD, convergence, quality review, E2E, security, migration, host qualification, final verification, lifecycle, staging, and commit gates remain mandatory."
+}

@@ -1,0 +1,52 @@
+{
+  "evidence_id": "12-3/implement/86",
+  "kind": "command",
+  "stage": "implement",
+  "task": "T117",
+  "source_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "prerequisite_evidence": [
+    "specs/012-resumable-file-pass1-code-logic/evidence/tdd/test-green-39.json",
+    "specs/012-resumable-file-pass1-code-logic/evidence/tdd/test-green-40.json"
+  ],
+  "command": "$env:VULGATA_T083_SOURCE_FREE_HANDSHAKE = '1'; dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter \"FullyQualifiedName=Vulgata.Tests.PreparedPass1.Pass1DeepSeekContractQualificationTests.SourceFreeHandshake_LiveBetaCapability_WritesSanitizedEvidenceAsync\" --no-restore --logger \"console;verbosity=normal\"",
+  "result": {
+    "build": "passed-with-existing-warnings",
+    "passed": 1,
+    "failed": 0,
+    "skipped": 0,
+    "exit_code": 0,
+    "duration_seconds": 3.9604
+  },
+  "provider": {
+    "outcome": "Available",
+    "endpoint": "https://api.deepseek.com/beta",
+    "model": "deepseek-v4-flash",
+    "streaming": true,
+    "strict": true,
+    "unrestricted_outbound": true
+  },
+  "identity": {
+    "projection_algorithm": "deepseek-strict-schema-projection-v1",
+    "raw_navigate_sha256": "C8387178DA32FC682E7DE462AFA8B62AF388944CB0FC741B895375E585E87770",
+    "raw_submit_sha256": "77A044526E5D61480B3E86FA3C3AA354FF78A9F04BCA3B279F210DFBFB421BC8",
+    "raw_combined_sha256": "54321765E82EBE39092DF96A6F0E39F922E24459C34830525C22A38CDE533B61",
+    "ledger_identity_sha256": "1472E4F1240A7D4568F127FDA36E72BA8B074EDAA430B54289DC5E02C0E5D6FA",
+    "ledger_rows": 18,
+    "projected_navigate_sha256": "779250FCFE72F07B59CBE280A0FF537FF7D622BFE847BCB616A39858705A1FDA",
+    "projected_submit_sha256": "3CD6F35EB8E6B6E7BEFBF802B2D3187823A0805A00B2ADFEC8A85082835DB20F",
+    "projected_combined_sha256": "506603F604C080EA50CDC5E78A4EFD8BAE39AEAEC24B03C66A9F19FC50962D44",
+    "request_sha256": "CFA181975E2FBEF68B9FEA4ABBBB39F83A48F0E1D4444C415BD351CBECD1213D"
+  },
+  "artifact_path": "artifacts/qualification/story-12.3/deepseek-source-free-handshake.json",
+  "artifact_sha256": "7F21FD47B6CFA4649EB569C44A652836EE9822E812B0A295A1ACE732E908156B",
+  "privacy": {
+    "source_derived_payload_sent": false,
+    "response_content_persisted": false,
+    "credential_persisted": false,
+    "request_content_persisted": false
+  },
+  "classification": "Endpoint, model, authentication, unrestricted outbound network, streaming transport, strict projected declarations, request bounds, and source-free composition are currently available; T084 source-bearing qualification is unblocked.",
+  "system_changes": false,
+  "warnings": "Existing NU1507 and EF assembly-version warnings remain.",
+  "observed_at": "2026-08-24T23:01:29.6455444Z"
+}

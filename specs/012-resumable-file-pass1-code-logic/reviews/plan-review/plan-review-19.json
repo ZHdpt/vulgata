@@ -1,0 +1,37 @@
+{
+  "schema_version": "1.0",
+  "gate": "plan-review",
+  "verdict": "ACCEPT",
+  "reviewed_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "reviewed_boundary": {
+    "base_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+    "candidate_commit": null,
+    "artifact_hashes": {
+      "specs/012-resumable-file-pass1-code-logic/spec.md": "c2fb00c34246ff0eb82428575778a3abd4d8098c124edf36d48666a41ccc8aea",
+      "specs/012-resumable-file-pass1-code-logic/plan.md": "27c356f7e798fec727d412635da07781e13998ec268a749b15fa13aac7ec6e1a",
+      "specs/012-resumable-file-pass1-code-logic/research.md": "ddc7ca1bb6db579b42555cabd2e15b46deeba91bd7701b0fc0557ce15dcd320a",
+      "specs/012-resumable-file-pass1-code-logic/data-model.md": "4153241bd1de2cc96f22fa98539ee7d171e85225701ae203f19d6938832eb54c",
+      "specs/012-resumable-file-pass1-code-logic/quickstart.md": "4d7a79458e2922f030ec2cba2dab50858d032e8132ce240b9f7023666a17a8da",
+      "specs/012-resumable-file-pass1-code-logic/contracts/deepseek-strict-result-submission.md": "09e6ef897a4ae132b008b6e97175eee842a5ba42367bfe86fded6254cf8c7360",
+      "specs/012-resumable-file-pass1-code-logic/contracts/pass1-runtime-contracts.md": "f3883b4d51c0cbaea52054f1ae90c654e116237c64304eda2465408478463ce4",
+      "specs/012-resumable-file-pass1-code-logic/contracts/navigate-code-contract.md": "ba5ba06edcf32a6a7ec82139795f060e1cd4dd0ae2eac7e3fb01fafc0c629d1c",
+      "specs/012-resumable-file-pass1-code-logic/evidence/research/deepseek-v4-current-best-practices-audit.md": "39870acedcccb40e9fbde5df6bf15b4ad67a7acff8b74cb606598ff1b00bfd65",
+      "specs/012-resumable-file-pass1-code-logic/evidence/tdd/failure-32.json": "98691d887608e28b4f8875cc2bf40379e77bf41a7de10ed0a1c5f3dbf8ded148",
+      "specs/012-resumable-file-pass1-code-logic/reviews/plan-review/plan-review-17.json": "df762d76de374be126a55b181a427464e55feb33a28157a27841dfe52a3ccfd4",
+      "specs/012-resumable-file-pass1-code-logic/reviews/plan-review/plan-review-18.json": "080bdbf383242f8f3a67e5d66af0e5a9b00e7ef756716694f55b412b497586f5"
+    }
+  },
+  "findings": [],
+  "closed_findings": [
+    "AD23-PR-001: every linked artifact maps providerTurn = Iteration + 1, provider turns 1-9 to SDK iterations 0-8, and provider turn ten to SDK iteration 9 with sole first-or-second terminal submission and post-ten fail-closed behavior",
+    "AD23-PR-002: exact initial zero enters the normal strict two-function conversation and supports direct submission or all-closed navigation followed by submission"
+  ],
+  "residual_risks": [
+    "Fake tests must prove SDK iterations 0 and 9, all final-turn submission states, post-ten no invocation, declarations retained, and no request eleven.",
+    "Capacity 8/1/0 and nine-call tests must prove ordered admitted-prefix execution, matching excess results, and zero excess durable or evidence effect.",
+    "Initial-zero direct submission and all-closed-then-submit continuity require public execution proof.",
+    "Retry/restart and PostgreSQL gates must preserve durable high-water eight with zero migration/model delta.",
+    "Deterministic/fake-wire, source-free, fresh T084, and T085/T062 qualification remain ordered."
+  ],
+  "summary": "ACCEPT. Independent plan review found AD-23 source-grounded, feasible, internally consistent, and bounded after two correction rounds. The accepted design keeps exact streamed disabled-thinking/required-tool wire and complete-turn preflight; admits only a legal sole submission or one-through-eight all-navigation response; executes the provider-order prefix fitting durable capacity; returns one constant no-effect result for each excess original call ID without Terminate; rejects above-eight and all other illegal shapes before callbacks; and preserves one result per call, complete replay, durable high-water eight, two submissions, ten provider turns, no request eleven, local validation, privacy, and atomic persistence. The pinned zero-based SDK iteration mapping and initial-zero conversation path are explicit across every linked contract. No manual provider loop, retry, dependency, schema/migration, source expansion, host/system change, or Story 12.4/12.5 behavior is introduced. Tasks may be regenerated and independently definition-reviewed without another user approval pause under the standing authorization."
+}

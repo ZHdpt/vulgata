@@ -1,0 +1,59 @@
+{
+  "review_id": "story-12-3-plan-review-31",
+  "mode": "plan-only",
+  "verdict": "ACCEPT",
+  "task_generation_authorized": true,
+  "source_checkpoint": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "reviewed_hashes": {
+    "specs/012-resumable-file-pass1-code-logic/spec.md": "31411747F87B3890C83223B331B3E32FD5064CD0B47D18EB0D4B66FA2ABCF249",
+    "specs/012-resumable-file-pass1-code-logic/plan.md": "39F3850DB4F0E761C7D6E08696E6066F7B120C42F26F3D211B5B0B5C16347C59",
+    "specs/012-resumable-file-pass1-code-logic/research.md": "8660446313001E0707E071A5E5B29E215407077A5FDE2FCDB798D94BFADB7D8D",
+    "specs/012-resumable-file-pass1-code-logic/data-model.md": "25B5EA3C5A00A9774B6E3976BCE0D3DC03452942274C64AA033AE928D37A201F",
+    "specs/012-resumable-file-pass1-code-logic/evidence/tdd/failure-41.json": "7516B3D3A80E11BC83FD2624A32F0EAA898D69DC92FD1272680F668C5DA980DE",
+    "specs/012-resumable-file-pass1-code-logic/evidence/tdd/analysis-23.json": "B3924C6B912021B3E4104E8AB0E81E11D1802E056B608DBBE56C6170F347DF5E",
+    "specs/012-resumable-file-pass1-code-logic/reviews/plan-review/plan-review-29.json": "AFEBB84FF4FB4DDB9E801EB3DD3AB0DE787F0B7AB3F7B7A02A95A32B5BA7F3C0",
+    "specs/012-resumable-file-pass1-code-logic/reviews/plan-review/plan-review-30.json": "0D9494CEFEA8B63400A0EC1F4E811FFCCB32094CCFAF6CF6DC7F5C8D29CAC1DE",
+    "src/dotnet/Vulgata.Infrastructure/Data/Pass1CodeLogicDocumentCommitter.cs": "F0F3C5A287E8111CD507B354A9D505C3F28D75F1DC21F6C939A0E39110F30975",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DocumentPostgreSqlAtomicTests.cs": "EA116DFE1DF4E2DFB041BC8E235B80211C3C6774CEC6C86327829296239EAFF0",
+    "tests/Vulgata.Tests/PreparedPass1/CodeLogicFileV2SchemaTests.cs": "463B7906292747BAA882DA3E5C4AAE8A0D6207678D3507DF31961C169785532C"
+  },
+  "prior_finding_dispositions": [
+    {
+      "id": "AD31-PR-001",
+      "source_review": "plan-review-29",
+      "status": "CLOSED"
+    },
+    {
+      "id": "AD31-PR-002",
+      "source_review": "plan-review-29",
+      "status": "CLOSED"
+    },
+    {
+      "id": "AD31-PR-003",
+      "source_review": "plan-review-30",
+      "status": "CLOSED"
+    }
+  ],
+  "findings": [],
+  "closed_checks": [
+    "The root cause is provider-independent and matches the current cited-only committer query.",
+    "FR-033, FR-036, and FR-059 preserve complete supplied-set revalidation, cited-subset authorization, unchanged local validation, and atomic rejection.",
+    "Only two-supplied/one-cited is the honest RED; cited-unsupplied remains an existing invalid-authoritative-result characterization.",
+    "The sole production owner is Pass1CodeLogicDocumentCommitter.DurableBindingsMatchAsync.",
+    "One/none/all cited, supplied-row drift, zero mutation, and exact replay have explicit PostgreSQL proof.",
+    "No parser, prompt, provider, schema, migration, API, retry, source-scope, host, network, or system change is authorized.",
+    "Qualification order remains focused RED/GREEN, complete barriers, fresh T084, restarted T085, then T086."
+  ],
+  "residual_proof_obligations": [
+    "Observe the two-supplied/one-cited RED before production edit.",
+    "Implement the minimal committer query/membership GREEN.",
+    "Prove the full matrix, zero mutation, exact replay, surrounding barriers, and zero model/migration delta.",
+    "Use a fresh disposable database for T084 before restarted T085 and T086."
+  ],
+  "residual_risks": [
+    "The defense-in-depth cited-membership branch is shadowed by authoritative parser validation.",
+    "Distinct supplied-ID handling must preserve prepared-packet canonicality.",
+    "Provider variability cannot replace the deterministic PostgreSQL proof."
+  ],
+  "summary": "ACCEPT. AD-31/R-32 is consistent, minimal, test-first, fail-closed, privacy-safe, and task-generatable without another user approval pause."
+}

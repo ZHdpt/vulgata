@@ -1,0 +1,32 @@
+{
+  "evidence_id": "12-3/implement/93",
+  "kind": "test-red",
+  "stage": "implement",
+  "task": "T122",
+  "source_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --nologo -p:WarningLevel=0 -p:GenerateMvcTestManifest=false --filter FullyQualifiedName~ExecuteAsync_IllegalWholeTurnShapesHaveNoApplicationEffectsAsync|FullyQualifiedName~ExecuteAsync_SubmitThenNavigate_RejectsWithoutNavigationAccessAsync --logger console;verbosity=minimal",
+  "result": {
+    "total": 6,
+    "passed": 0,
+    "failed": 6,
+    "skipped": 0,
+    "duration_seconds": 0.331,
+    "build_errors": 0
+  },
+  "observed_red": [
+    "mixed navigate/submit expected MixedFunctions but received catch-all MultipleFunctions",
+    "multiple submissions expected MultipleSubmissions but received catch-all MultipleFunctions",
+    "over-budget all-navigation expected NavigationBudgetExceeded but received catch-all MultipleFunctions",
+    "blank and duplicate call IDs expected InvalidCallIdentity but received catch-all MultipleFunctions",
+    "navigation after an invalid submission expected NavigationUnavailable but emitted no illegal-call category",
+    "compatibility classification kept UnknownFunction for a sole unknown call but returned catch-all MultipleFunctions for mixed declared calls and a declared-plus-unknown batch"
+  ],
+  "unchanged_behavior": "Every exercised shape still stopped without a navigation callback, reservation, receipt, candidate, or later request beyond the existing submit-correction fixture; this RED changes diagnostic granularity only.",
+  "files": {
+    "tests/Vulgata.Tests/PreparedPass1/PreparedPass1JobExecutorStreamingTests.cs": "613899F1944EE3E9F4F5562BF20109A786FED8EEC9151D108D8B388B215E1EDF",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekIsolatedSourceQualificationTests.cs": "6B1C23EDE6B50AB38AFAD22A03D05D80A930AEDBC2BD82F637177B4287DF6C58"
+  },
+  "privacy": "No provider, source-bearing repository, database, host tool, credential, request body, response body, function argument/result, or system configuration was accessed or changed.",
+  "observed_at": "2026-08-25T08:13:20.1273168+08:00",
+  "summary": "Honest compile-clean RED proves the existing payload-free MultipleFunctions subtype is too coarse to diagnose the r18 provider-valid multi-call topology."
+}

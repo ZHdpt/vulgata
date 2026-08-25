@@ -1,0 +1,49 @@
+{
+  "evidence_id": "12-3/implement/88",
+  "kind": "test-red",
+  "stage": "implement",
+  "task": "T118",
+  "source_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "build_command": "dotnet build tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore -v:q",
+  "build_result": {
+    "status": "passed-with-existing-warnings",
+    "errors": 0,
+    "exit_code": 0
+  },
+  "focused_command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --filter \"FullyQualifiedName~Pass1DeepSeekStreamingQualificationTests.ExecuteAsync_FakeWire_UsesExactlyTwoStrictStreamingFunctionsWithoutRetryAsync|FullyQualifiedName~Pass1DeepSeekStreamingQualificationTests.ExecuteAsync_FakeWire_OmitsUnsupportedDeepSeekFieldsAsync|FullyQualifiedName~Pass1DeepSeekStreamingQualificationTests.NormalizeAndValidateDeepSeekRequestBody_UsesIndependentTokenThinkingAndChoiceOperations|FullyQualifiedName~Pass1DeepSeekStreamingQualificationTests.NormalizeAndValidateDeepSeekRequestBody_ConstructsExactRequiredChoiceOrRejectsIt|FullyQualifiedName~PreparedPass1JobExecutorStreamingTests.ExecuteAsync_CompletedZeroCallTurnFailsBeforeFiccWithPayloadFreeMissingFunctionAsync|FullyQualifiedName~Pass1DeepSeekContractQualificationTests.SourceFreeHandshake_RecordsDisabledRequiredCallAndDoneEvidenceAsync|FullyQualifiedName~Pass1DeepSeekContractQualificationTests.SourceFreeHandshake_MissingCallOrDoneStopsWithConfigurationBeforeSourceBearingTrafficAsync|FullyQualifiedName~Pass1DeepSeekContractQualificationTests.SourceFreeHandshake_UsesConfiguredBetaRouteAndFlashModel_WithExactlyTwoStrictDeclarationsAsync|FullyQualifiedName~Pass1DeepSeekContractQualificationTests.SourceFreeHandshake_UsesSupportedDefaultsWithoutSamplingOrControlFieldsAsync|FullyQualifiedName~Pass1DeepSeekContractQualificationTests.SourceFreeHandshake_RecordsOnlySanitizedHashesAndBytes_WithoutSourceBearingRequestFieldsAsync\" --logger \"console;verbosity=minimal\"",
+  "focused_result": {
+    "passed": 36,
+    "failed": 20,
+    "skipped": 0,
+    "total": 56,
+    "exit_code": 1
+  },
+  "expected_failures": [
+    "the production final wire still emits thinking.type enabled and omits tool_choice required",
+    "the normalizer rejects supported disabled-thinking/required-choice shapes, accepts enabled thinking, and does not construct the required choice",
+    "a completed zero-call turn is not consumed before FICC and does not report the payload-free MissingFunction subtype",
+    "the source-free harness still treats a missing streamed call or missing DONE terminator as available",
+    "the source-free harness does not yet expose the four sanitized disabled/required/call/DONE evidence flags"
+  ],
+  "passing_boundaries": [
+    "the new RED tests compile cleanly against the pre-correction implementation",
+    "external zero-call behavior already remains worker-result-rejected with MissingSubmission and no navigation or reservation effect",
+    "the retained strict-declaration, source-free privacy, request-count, and unsupported-field assertions remain executable",
+    "the live isolated-source qualification remains opt-in and was not executed"
+  ],
+  "future_green_assertions": [
+    "every final Story 12.3 Worker request uses exact streamed disabled thinking and required tool choice",
+    "the closed normalizer rejects enabled, malformed, duplicate, extra, named-object, none, wrong-type, reasoning-effort, and sampling shapes before transport",
+    "zero-call completion is consumed before FICC with only the MissingFunction diagnostic subtype and no later request or effect",
+    "the source-free handshake requires a streamed tool call and DONE while retaining only four Boolean observations"
+  ],
+  "artifact_sha256": {
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekStreamingQualificationTests.cs": "AC24DEDD028C59CF8CED35BF846A436869464C909DBA8E292798919FE4202F6A",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekContractQualificationTests.cs": "43A62F5EFB1D54B9ABE3B07E33443D69591DA62413830112ABF912E21A99F87C",
+    "tests/Vulgata.Tests/PreparedPass1/PreparedPass1JobExecutorStreamingTests.cs": "994213F10FF54F209CF73E30F6B13BE0D4F54017A09AF157F281D09CD8E86716",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekIsolatedSourceQualificationTests.cs": "C41446A8A73FC9C8C42615D3DED4CA26A574EA99273716512B9DFBC825991D06"
+  },
+  "privacy": "No live provider, source-bearing request, database, network, credential, host setting, or system configuration was accessed or changed.",
+  "warnings": "Existing NU1507 and EF assembly-version warnings remain; twenty focused behavioral failures are the expected RED.",
+  "observed_at": "2026-08-24T23:43:00.6023525Z"
+}

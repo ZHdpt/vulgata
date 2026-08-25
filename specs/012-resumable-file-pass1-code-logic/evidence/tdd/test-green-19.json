@@ -1,0 +1,31 @@
+{
+  "evidence_id": "12-3/implement/55",
+  "kind": "test-green",
+  "stage": "implement",
+  "source_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "artifact_paths": [
+    "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedPass1JobExecutor.cs",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekStreamingQualificationTests.cs"
+  ],
+  "artifact_sha256": {
+    "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedPass1JobExecutor.cs": "D96DBB49C1776CF5BB9AF5B21C3321F7570EBA2F3EFE468386DE654275CB478F",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekStreamingQualificationTests.cs": "84BDDBB68B9F877C23EB3868260D997C81CBC49CCC38F6B5D50B48C9DA0A0496"
+  },
+  "commands": [
+    "Remove-Item Env:VULGATA_T084_ISOLATED_SOURCE_JOBS -ErrorAction SilentlyContinue; dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter \"FullyQualifiedName~Pass1DeepSeekStreamingQualificationTests\" --no-restore --nologo --logger \"console;verbosity=minimal\" -p:GenerateMvcTestManifest=false -clp:ErrorsOnly",
+    "$env:AnalysisRuntime__JdtLsDistributionArchivePath='C:\\Users\\13728\\Downloads\\jdt-language-server-1.61.0-202608141332.tar.gz'; Remove-Item Env:VULGATA_T084_ISOLATED_SOURCE_JOBS -ErrorAction SilentlyContinue; dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter \"FullyQualifiedName~Pass1DeepSeekStreamingQualificationTests|FullyQualifiedName~PreparedPass1JobExecutorStreamingTests|FullyQualifiedName~Pass1DeepSeekContractQualificationTests|FullyQualifiedName~Pass1DeepSeekPromptCompositionTests|FullyQualifiedName~Pass1DeepSeekIsolatedSourceQualificationTests\" --no-restore --nologo --logger \"console;verbosity=minimal\" -p:GenerateMvcTestManifest=false -clp:ErrorsOnly"
+  ],
+  "result": {
+    "focused": "39 passed, 0 failed, 0 skipped",
+    "source_free_deepseek_and_executor": "145 passed, 0 failed, 3 intentional opt-in live tests skipped",
+    "final_wire": "max_tokens 32768; no max_completion_tokens; thinking enabled; stream true; exactly two strict functions",
+    "budgets": "raw, assembled, per-assistant, and assistant aggregate 16777216; final outgoing body 17416192",
+    "invalid_shapes": "closed null/no-send normalization for malformed, duplicate, missing, wrong-type, disabled, extra, and conflicting token/thinking/stream shapes",
+    "provider_calls": 0,
+    "source_bearing_calls": 0,
+    "database_actions": 0,
+    "system_or_host_changes": 0
+  },
+  "observed_at": "2026-08-24T17:16:15.7663071Z",
+  "summary": "T092 makes the pinned T091 suite and the bounded source-free DeepSeek/executor regression set GREEN. The executor now performs bounded provisional capture, duplicate-aware normalization, deterministic final serialization, complete contribution/body remeasurement, exact DeepSeek wire validation, and only then transport send, while retaining timeout, zero-retry, cancellation, privacy, and sibling isolation."
+}

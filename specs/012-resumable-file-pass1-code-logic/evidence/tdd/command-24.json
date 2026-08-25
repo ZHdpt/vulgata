@@ -1,0 +1,55 @@
+{
+  "evidence_id": "12-3/implement/121",
+  "kind": "command",
+  "status": "current",
+  "stage": "implement",
+  "task": "T148",
+  "source_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "command": "$env:VULGATA_T083_SOURCE_FREE_HANDSHAKE='1'; dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --no-restore -p:WarningLevel=0 --filter \"FullyQualifiedName=Vulgata.Tests.PreparedPass1.Pass1DeepSeekContractQualificationTests.SourceFreeHandshake_LiveBetaCapability_WritesSanitizedEvidenceAsync\" --logger \"console;verbosity=normal\"",
+  "result": {
+    "total": 1,
+    "passed": 1,
+    "failed": 0,
+    "skipped": 0,
+    "duration_seconds": 2.9213,
+    "exit_code": 0
+  },
+  "capability": {
+    "outcome": "Available",
+    "endpoint": "https://api.deepseek.com/beta",
+    "model": "deepseek-v4-flash",
+    "streaming": true,
+    "thinking_disabled": true,
+    "ordinary_declaration_count": 2,
+    "ordinary_declarations_sha256": "506603F604C080EA50CDC5E78A4EFD8BAE39AEAEC24B03C66A9F19FC50962D44",
+    "ordinary_tool_choice_required": true,
+    "ordinary_tool_call_observed": true,
+    "ordinary_done_observed": true,
+    "terminal_declaration_count": 1,
+    "terminal_declarations_sha256": "606D8CCCDFDB3F0EC0482C0A2E9901755A2069B949EDBD980B607F318C7D648B",
+    "terminal_tool_choice_named_submit": true,
+    "terminal_tool_call_observed": true,
+    "terminal_done_observed": true,
+    "terminal_selected_function_name_matched": true,
+    "function_invoked": false,
+    "tool_result_sent": false
+  },
+  "artifact": {
+    "path": "artifacts/qualification/story-12.3/deepseek-source-free-handshake.json",
+    "task": "T148",
+    "sha256": "3B7B20FF12D74506D29C035DC7D9AE0B43B7F6277A39A04023C48FAD5F9B3C61",
+    "ordinary_request_sha256": "EA8CCA5DA027B3A575F4DC69884D46ECA54B2E0A406DB134CAFEFBB6B8D95824",
+    "terminal_request_sha256": "B1FA33A86B5C2062377E56D0250E0A28A2B684409DC92A446969ACB618EC2554",
+    "ordinary_declarations_bytes": 15377,
+    "terminal_declarations_bytes": 14146
+  },
+  "privacy": {
+    "source_derived_payload_sent": false,
+    "response_content_persisted": false,
+    "credential_persisted": false,
+    "request_content_persisted": false
+  },
+  "network": "The approved unrestricted outbound route was used only for two bounded source-free DeepSeek beta capability requests. No repository source, tool result, PostgreSQL database, host setting, or system configuration was accessed or changed.",
+  "observed_at": "2026-08-25T04:17:42.3797747+00:00",
+  "summary": "T148 passed both exact source-free request shapes: ordinary two-function and terminal submit-only, with call plus DONE for each, terminal submit_code_logic name match, and zero invocation, result, source, response retention, or durable effect."
+}

@@ -1,0 +1,40 @@
+{
+  "evidence_id": "12-3/implement/77",
+  "kind": "test-red",
+  "stage": "implement",
+  "task": "T109",
+  "source_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --nologo -p:WarningLevel=0 -p:GenerateMvcTestManifest=false --filter \"FullyQualifiedName~Pass1ProductionCompositionTests.ProductionComposition_ResolvesReservationPortToTheSolePreparedStore|FullyQualifiedName~Pass1ProductionCompositionTests.HighWaterEight_RepairsCallsMarkerBeforeProviderOrTerminalVisibility|FullyQualifiedName~Pass1ClaimedPacketExecutionTests.WorkerPacket_ExposesDurableBudgetHighWaterCursorAndEvidenceCounters|FullyQualifiedName~PreparedPass1WorkerDispatcherTests.DispatchAsync_InvokesExecutorExactlyOncePerDurableClaim|FullyQualifiedName~PreparedPass1WorkerDispatcherTests.PreparedDispatcher_DoesNotOwnConversationRetryOrBudgetState|FullyQualifiedName~Pass1DurableNavigationRecoveryTests\" --logger \"console;verbosity=minimal\"",
+  "result": {
+    "build": "passed-with-existing-warnings",
+    "passed": 0,
+    "failed": 9,
+    "skipped": 0,
+    "exit_code": 1
+  },
+  "expected_failures": [
+    "PreparedPass1WorkerDispatcher invokes one rejected durable claim ten times instead of exactly once",
+    "the dispatcher still owns _conversationStates, ConversationState, outer retry, and local navigation-budget decrement",
+    "production DI has no IPass1NavigationAttemptReservationStore mapping to PreparedPass1Store",
+    "PreparedPass1WorkerPacket exposes no cohesive durable high-water/state-version/accepted/evidence projection",
+    "PreparedPass1ClaimedPacketSource does not load Pass1NavigationBudgets or derive RemainingNavigationBudget as 8 - ToolAttemptCount",
+    "the job runner does not repair the ordinal-nine Calls marker before provider, retry, or terminal visibility"
+  ],
+  "review_correction": "Receiving-review verification removed an out-of-scope assertion that the job runner itself call RecoverAsync. The corrected test observes the existing coordinator-owned durable recovery, the runner-owned claimed-packet hydration, and the remaining dispatcher-local state violation.",
+  "future_green_assertions": [
+    "production DI resolves the reservation port to the sole scoped PreparedPass1Store",
+    "each claim hydrates exact durable budget cursor/counters and RemainingNavigationBudget = 8 - ToolAttemptCount",
+    "high-water eight repairs marker nine before provider retry, terminal failure, or reconciliation visibility",
+    "dispatcher invokes the executor once per durable claim and owns no conversation, retry, provider-turn, or budget state",
+    "retry, lease recovery, restart, and sibling claims reconstruct only durable state and cannot reset or share capacity"
+  ],
+  "artifact_sha256": {
+    "tests/Vulgata.Tests/PreparedPass1/Pass1ProductionCompositionTests.cs": "B96587E14B2559ABD83520B6CE80E9C57039D4DF58432A09FFBF6E5E87CD1711",
+    "tests/Vulgata.Tests/PreparedPass1/PreparedPass1WorkerDispatcherTests.cs": "FE4DFFAA37BAACA65BE7D108BCBC1BC5D4F46774679104CCE29315D64237CBC7",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1ClaimedPacketExecutionTests.cs": "433B324FEA05EE9F0900AA27753943FE706DB01F6352FC3D32818BDBA68C0161",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DurableNavigationRecoveryTests.cs": "8526FD6373BEE20D93D65416E9C88A09F1668BBF540F00E8D966AEBC9713239E"
+  },
+  "privacy": "No provider, source-bearing request, database, network, credential, host setting, or system configuration was accessed or changed.",
+  "warnings": "Existing NU1507 and EF assembly-version warnings remain; the nine focused behavioral failures are expected RED.",
+  "observed_at": "2026-08-24T22:14:18.1320502Z"
+}

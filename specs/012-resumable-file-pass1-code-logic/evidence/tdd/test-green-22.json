@@ -1,0 +1,63 @@
+{
+  "evidence_id": "12-3/implement/62",
+  "kind": "test-green",
+  "stage": "implement",
+  "task": "T098",
+  "source_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "accepted_scope_sha256": "1bbce628560b8620efb5d0e36d8975e2f66686b4891886d5ff0e0bfca158244f",
+  "artifact_paths": [
+    "src/dotnet/Vulgata.Agents/WorkerExecution/DeepSeekStrictToolDeclarations.cs",
+    "tests/Vulgata.Tests/PreparedPass1/DeepSeekSourceFreeHandshakeHarness.cs",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekStreamingQualificationTests.cs",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekContractQualificationTests.cs"
+  ],
+  "artifact_sha256": {
+    "src/dotnet/Vulgata.Agents/WorkerExecution/DeepSeekStrictToolDeclarations.cs": "43FB2EFE3BB22A64EA3DF749071CA712E1A7602B3911FEA180855117411A14EB",
+    "tests/Vulgata.Tests/PreparedPass1/DeepSeekSourceFreeHandshakeHarness.cs": "2F6C1E724B63447028D73C3A632C6C318DB2A31268574AF35CA8B5181E6B65E7",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekStreamingQualificationTests.cs": "2AAB7C59DF7A837BA5EDF27486A07540C75339B7DA6DC1C45E5DB9B0C5D19B5B",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekContractQualificationTests.cs": "F420DC5C5AEBFD4A58F771B33C8A7631B8E7A4F0F61DC3033E1366915E2274A0"
+  },
+  "focused_result": {
+    "total": 15,
+    "passed": 15,
+    "failed": 0,
+    "skipped": 0
+  },
+  "surrounding_command": "Remove-Item Env:VULGATA_T083_SOURCE_FREE_HANDSHAKE -ErrorAction SilentlyContinue; Remove-Item Env:VULGATA_T084_ISOLATED_SOURCE_JOBS -ErrorAction SilentlyContinue; dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --nologo -p:WarningLevel=0 -p:GenerateMvcTestManifest=false --filter \"FullyQualifiedName~Pass1DeepSeekStreamingQualificationTests|FullyQualifiedName~Pass1DeepSeekContractQualificationTests\" --logger \"console;verbosity=minimal\"",
+  "surrounding_result": {
+    "exit_code": 0,
+    "total": 121,
+    "passed": 119,
+    "failed": 0,
+    "skipped": 2,
+    "duration_seconds": 1,
+    "skips": [
+      "T083 live source-free capability handshake",
+      "source-bearing approved File Code Unit qualification"
+    ]
+  },
+  "declaration_identity": {
+    "algorithm": "deepseek-strict-schema-projection-v1",
+    "raw_navigate_bytes": 2115,
+    "raw_navigate_sha256": "C8387178DA32FC682E7DE462AFA8B62AF388944CB0FC741B895375E585E87770",
+    "raw_submit_bytes": 27502,
+    "raw_submit_sha256": "77A044526E5D61480B3E86FA3C3AA354FF78A9F04BCA3B279F210DFBFB421BC8",
+    "raw_combined_bytes": 29964,
+    "raw_combined_sha256": "54321765E82EBE39092DF96A6F0E39F922E24459C34830525C22A38CDE533B61",
+    "projected_navigate_bytes": 1057,
+    "projected_submit_bytes": 13973,
+    "projected_combined_bytes": 15377,
+    "ledger_rows": 18,
+    "ledger_identity_sha256": "1472E4F1240A7D4568F127FDA36E72BA8B074EDAA430B54289DC5E02C0E5D6FA"
+  },
+  "behavior": [
+    "The helper is the sole immutable raw, projection, ledger, and projected-declaration authority.",
+    "Exactly two nullable-object and sixteen homogeneous string-enum transforms are ledgered; four primitive-null arrays remain unchanged.",
+    "All mutation, drift, unsupported-shape, reference/cycle, closure, enum, and size cases fail closed.",
+    "The source-free harness copies sanitized helper scalars and computes only final request identity; live traffic remained disabled."
+  ],
+  "privacy": "All GREEN validation was deterministic or fake-transport only. No provider, network, source, database, credential, or system call occurred; no schema, request, response, source, reasoning, or tool content was persisted.",
+  "warnings": "Build emitted existing NuGet source-mapping and Entity Framework version-conflict warnings; no compilation or test failure remained.",
+  "observed_at": "2026-08-24T19:17:51.0783966Z",
+  "summary": "T098 is GREEN: 15 focused and 119 surrounding deterministic/fake tests passed, with only two intentionally disabled live qualifications skipped."
+}

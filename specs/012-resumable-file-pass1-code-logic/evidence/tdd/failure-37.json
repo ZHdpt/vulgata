@@ -1,0 +1,69 @@
+{
+  "evidence_id": "12-3/implement/117",
+  "kind": "failure",
+  "stage": "implement",
+  "task": "T084",
+  "attempt": "r24",
+  "source_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "database": "vulgata_story123_t084_20260825_r24",
+  "database_template": "vulgata_story121_feffce36e44c48238a6e55c6742c374c",
+  "command": "VULGATA_T084_ISOLATED_SOURCE_JOBS=1 VULGATA_T062_QUALIFICATION_CONNECTION=<fresh-r24-disposable-database> VULGATA_T062_WORKER_PROVIDER_API_KEY=<present-secret> <approved-source-and-runtime-bindings> dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --no-restore -p:WarningLevel=0 --filter FullyQualifiedName~Pass1DeepSeekIsolatedSourceQualificationTests.ThreeIsolatedSourceJobs_CompleteCommitAndReplayWithoutLeakingPayloadsAsync --logger console;verbosity=normal",
+  "result": {
+    "passed": 0,
+    "failed": 1,
+    "skipped": 0,
+    "total": 1,
+    "duration_seconds": 33.414,
+    "failed_at_job": 1,
+    "source_kind": "xml"
+  },
+  "sanitized_failure": {
+    "outcome": "Rejected",
+    "reason": "unclassified-systemic",
+    "executor_category": "UnclassifiedSystemic",
+    "execution_category": "IllegalFunctionCall",
+    "function_call_subtype": "TerminalNavigation",
+    "submission_category": "none",
+    "wire_budget_category": "none",
+    "provider_http": "none",
+    "response_format": "absent",
+    "parallel_tool_calls": "absent",
+    "projected_declaration_identities_matched": true
+  },
+  "job_scoped_postgresql": {
+    "job_id": "7bdfceac-a6ec-8470-9104-2a1ecd111866",
+    "pair_execution_id": "e8027a57-62dd-8564-9989-e3ad1e26627a",
+    "pair_phase": "Running",
+    "pair_state_version": 0,
+    "job_state": "Running",
+    "attempt_count": 1,
+    "job_state_version": 1,
+    "tool_attempt_count": 8,
+    "remaining_navigation_capacity": 0,
+    "accepted_call_count": 1,
+    "evidence_bytes": 10181,
+    "maximum_depth_observed": 1,
+    "budget_state_version": 9,
+    "receipt_count": 1,
+    "committed_document_present": false,
+    "later_jobs": "two Pending jobs with zero attempts, receipts, and committed Documents"
+  },
+  "qualified_preconditions": {
+    "t141_focused": "8/8 passed",
+    "executor_streaming": "107/107 passed",
+    "deepseek_nonlive": "151/151 passed with three expected live skips",
+    "source_free_artifact": "artifacts/qualification/story-12.3/deepseek-source-free-handshake.json",
+    "source_free_artifact_sha256": "5232822827D90F4D88C73D73E9416E378F2DC03946FB3D63F56CA4CF22E6C08E"
+  },
+  "excluded_causes": [
+    "timeout or slow thinking; disabled-thinking streaming completed in about 33 seconds",
+    "endpoint, model, authentication, unrestricted outbound network, provider availability, and HTTP failure",
+    "strict schema projection, request-ten named-submit choice serialization, wire budget, PostgreSQL, host, and system failure",
+    "multiple submissions, multiple navigations, mixed calls, invalid identity, unknown name, and request-eleven drift"
+  ],
+  "proven_cause": "On provider turn ten, DeepSeek returned exactly one declared navigate_code call even though Vulgata sent the accepted named submit_code_logic choice while still exposing both function declarations. Complete-turn preflight rejected before the terminal callback. The provider selected an application-illegal function from the still-advertised terminal tool surface.",
+  "required_next_step": "Keep T084/T085 blocked. Change the terminal request surface, test-first, so request ten retains exact named submit_code_logic choice but advertises only the projected strict submit_code_logic declaration; keep both declarations on requests one through nine and retain preflight as defense. Update and rerun the source-free terminal capability gate on that exact one-tool shape before a fresh disposable T084. Do not add parallel_tool_calls, retry, request eleven, prompt injection, or candidate arbitration.",
+  "privacy": "No provider response body, function-call identity/arguments/result, reasoning, assistant content, source bytes, prompt packet, credential, request body, or host path was retained. Only fixed categories and approved disposable-database scalars were recorded. Only the two approved repositories were read; only the current bounded XML job source/context was sent; only r24 was mutated; ordinary vulgata and host/system settings were not accessed or changed.",
+  "recorded_at": "2026-08-25T11:47:00+08:00",
+  "summary": "T084 r24 proves the blocker is a sole terminal navigation returned despite named-submit selection. The exact bounded repository fix is to make the terminal advertised tool surface match the sole legal action, then requalify source-free and source-bearing."
+}

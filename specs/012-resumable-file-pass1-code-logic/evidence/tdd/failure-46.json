@@ -1,0 +1,58 @@
+{
+  "evidence_id": "12-3/qualify/159",
+  "kind": "failure",
+  "status": "diagnosed",
+  "stage": "qualify",
+  "task": "T085",
+  "source_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "command": "VULGATA_T062_CONCURRENCY_LIMIT=2; VULGATA_T062_TERMINAL_TIMEOUT_SECONDS=9000; VULGATA_T062_QUALIFICATION_CONNECTION=<fresh-pre-start-r9-disposable-clone>; <approved-source-provider-runtime-bindings>; dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --no-restore -p:WarningLevel=0 --filter FullyQualifiedName~Pass1ProductionExecutionTests.AuthenticatedApprovedPair_StartsRealRunAtEveryLimit_AndPersistsTerminalEvidence --logger console;verbosity=normal -clp:ErrorsOnly",
+  "result": {
+    "exit_code": 1,
+    "duration": "00:34:34",
+    "failed_assertion": "Pass1ProductionExecutionTests.cs:213 required an Implementations receipt whose descriptor contained .java",
+    "pair_phase": "ReadyForResolution",
+    "pair_circuit": "Closed",
+    "coordination_phase": "Resolving",
+    "scan_execution_phases": { "Completed": 2 },
+    "jobs": { "total": 150, "completed": 150, "noncompleted": 0 },
+    "documents": { "total": 150, "java": 127, "xml": 23 },
+    "source_anchors": { "java": 127, "xml": 23 },
+    "navigation_receipts": {
+      "total": 8,
+      "operations": {
+        "ExactSourceEvidence": 3,
+        "SymbolSearch": 3,
+        "CallsMarker": 2
+      },
+      "implementation_java": 0,
+      "exact_source_xml": 0
+    },
+    "pass1_outcomes": 1
+  },
+  "root_cause": "The live qualification test treats two optional model-selected navigation operations as deterministic acceptance predicates. The Worker prompt permits navigation only when needed, so a conforming DeepSeek run can complete every job and Document without choosing Implementations or XML ExactSourceEvidence. The prior r8 full run independently produced the same absence, proving that repeated provider sampling is not a deterministic qualification strategy.",
+  "classification": "test-fixture/qualification-composition defect",
+  "excluded_causes": [
+    "DeepSeek endpoint, model, authentication, availability, streaming, inactivity, or absolute timeout",
+    "same-execution receipt provenance, correction, or durable receipt binding",
+    "PostgreSQL availability, atomic commit, reconciliation, or Story 12.3 handoff",
+    "source repository, CodeGraph, Java, JDT-LS, network, host, or system configuration",
+    "production Worker, prompt, provider wire, persistence, or schema behavior"
+  ],
+  "deterministic_authorities": [
+    "NavigateCodeRealToolQualificationTests directly invokes pinned JDT-LS Implementations and exact revision-bound XML source access.",
+    "NavigateCodeLeaseSecurityCorrectionTests proves lease-bound Implementations dispatch reaches GetImplementationsAsync.",
+    "Pass1ProductionBoundaryQualificationTests proves the accepted typed adapters are in the production boundary.",
+    "The live approved-pair test proves authenticated Start, real DeepSeek Worker execution, PostgreSQL commit/reconciliation, Java/XML Documents and Source Anchors, and validates all receipts actually produced."
+  ],
+  "pre_correction_test_hash": "8BE7B4D1DA2FD4CE60C1ED6E585CBAC3DA9CA95554B6C1DCE1AF9C7A452DA75D",
+  "disposable_database": {
+    "name": "vulgata_test_t085r9_20260825",
+    "template": "vulgata_story121_feffce36e44c48238a6e55c6742c374c",
+    "pre_start_reset_validated": true,
+    "retained_for_bounded_evidence_until_corrected_retry": true,
+    "ordinary_vulgata_database_mutated": false
+  },
+  "privacy": "Only bounded approved source/context was sent to DeepSeek. Evidence retains only states, counts, categories, and hashes; no source, prompt, reasoning, request/response, candidate, tool argument/result, credential, or host path is retained. No host/system/global configuration or Git operation occurred.",
+  "observed_at": "2026-08-25T14:49:40.3114777Z",
+  "next_step": "Correct the qualification composition and only the two stochastic receipt predicates, rerun deterministic typed-host/lease/production-boundary proof, then rerun T085 from a new fresh pre-Start clone."
+}

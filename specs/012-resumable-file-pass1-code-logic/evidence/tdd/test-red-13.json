@@ -1,0 +1,24 @@
+{
+  "evidence_id": "12-3/implement/27",
+  "kind": "test-red",
+  "stage": "implement",
+  "source_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "artifact_paths": [
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekStreamingQualificationTests.cs"
+  ],
+  "artifact_sha256": {
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekStreamingQualificationTests.cs": "E8E7987778EC03E6978ADF44D42520677504176B693830049F5B4F55CFFC028B"
+  },
+  "commands": [
+    "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --nologo --filter FullyQualifiedName~Pass1DeepSeekStreamingQualificationTests --logger console;verbosity=minimal -p:GenerateMvcTestManifest=false",
+    "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --nologo --filter FullyQualifiedName~ExecuteAsync_AssembledResponseBoundaryPlusOneCancelsWithoutLaterSendAsync|FullyQualifiedName~ExecuteAsync_RawResponseBoundaryPlusOneCancelsWithoutLaterSendAsync|FullyQualifiedName~ExecuteAsync_PreparedInitialMessageBoundaryPlusOneSendsNoRequestAsync --logger console;verbosity=minimal -p:GenerateMvcTestManifest=false"
+  ],
+  "result": {
+    "runtime_projection_red": "the accepted exact-limit test did not compile because PreparedPass1WireBudget was absent (CS0103)",
+    "executor_overflow_red": "prepared-initial, raw-response, and assembled-response plus-one behaviors returned worker-result-rejected instead of provider-request-bound-exceeded",
+    "absolute_cap_harness_correction": "the initial 25 ms test used a real timer through an incomplete TimeProvider and was nondeterministic; the corrected ManualTimeProvider test deterministically proved the existing nonresetting absolute-cap behavior before production changed",
+    "classification": "expected-deepseek-streaming-wire-red"
+  },
+  "observed_at": "2026-08-24T08:43:19.1215972Z",
+  "summary": "T076 exposed the missing accepted wire-budget projection and missing prepared-initial, raw-response, and assembled-response overflow enforcement. The user's manual failure was classified as a test-clock defect and is not claimed as product RED evidence."
+}

@@ -2,59 +2,59 @@
   "SchemaVersion": "story-12.3-production-boundary-inspection/1.0",
   "Task": "T047",
   "ExpectedSourceCommit": "cb3fb0f17b2eaf92d93afe71c710cd7b92c1e3bd",
-  "ObservedSourceCommit": "99a2bc4e3072688783df40f12cbc30132279ed85",
-  "ObservedAtUtc": "2026-08-22T20:30:10.275029+00:00",
+  "ObservedSourceCommit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "ObservedAtUtc": "2026-08-25T16:04:13.2748291+00:00",
   "QualificationCommand": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter FullyQualifiedName~Pass1ProductionBoundaryQualificationTests",
   "InspectedPaths": [
     {
       "Path": "src/dotnet/Vulgata.Agents/Prompts/pass1-code-logic-worker.v2.md",
-      "Bytes": 2814,
-      "Sha256": "6fa86f7a06d714dcfc2111ab3b959f8a52cef7b7db8cb0c7adf41dba7e9cc12d"
+      "Bytes": 10579,
+      "Sha256": "5b1e48e50b83c5d12b7916d72d1973f4984db8bf60d1fa62df5cb9f4bcd27e7b"
     },
     {
       "Path": "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedNavigateCodeFunction.cs",
-      "Bytes": 5446,
-      "Sha256": "a23eb15bdf7ece83947dfd4a76b18d9e3d47a2bcf98b5c8af07c8cc94da2b7ab"
+      "Bytes": 10868,
+      "Sha256": "388a4c6d28960e487907a84b8448cbf32f0feb75003ec34e7c6e172659c18044"
     },
     {
       "Path": "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedPass1JobExecutor.cs",
-      "Bytes": 9188,
-      "Sha256": "1de7796359d13956b976094c14aa64a8028c205c99c6662ad8da8efb23d33933"
+      "Bytes": 83200,
+      "Sha256": "bc9e322876aa540e380a3b2cb46717b4fe8a31678d73465f0c02e5c19c6a9fee"
     },
     {
       "Path": "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedPass1ResultParser.cs",
-      "Bytes": 14456,
-      "Sha256": "9677e096dfa762be5f645a9db1b82655c1d99426580961df4c3df843f7b087ca"
+      "Bytes": 22160,
+      "Sha256": "2db3a6e96888a2b93094116b8dc0e9070ace74b599c3938d9fb359db18eadf46"
     },
     {
       "Path": "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedPass1WorkerDispatcher.cs",
-      "Bytes": 18724,
-      "Sha256": "1514e0f826a29f15ec1012ec0709311a7370cdf3f1d8c34cc1a171497b9cb47e"
+      "Bytes": 17846,
+      "Sha256": "e6bf742db5e829ef5f7800ef175fc6f94daaa9e625466987028d392af12d8524"
     },
     {
       "Path": "src/dotnet/Vulgata.Core/DomainServices/IPass1NavigationService.cs",
-      "Bytes": 4395,
-      "Sha256": "66c7d1c083f3437a2927c4f05b307543b5b4bba26a0206e17b52e39ba5814409"
+      "Bytes": 5334,
+      "Sha256": "830dcc9b7cc9601f928c3707c9e08ab6918fe634da5d6a96183dbbb5bd1a273d"
     },
     {
       "Path": "src/dotnet/Vulgata.Core/DomainServices/IPreparedPass1WorkerDispatcher.cs",
-      "Bytes": 5723,
-      "Sha256": "0ffa9b63aea67cdd9d89cdf6a2232829bcff608df87ca302a29f1949d178e806"
+      "Bytes": 6054,
+      "Sha256": "ede37d8ef6dd976f9d8190c39274a18cb74e422bd3b635781e5e1d3965f9fafd"
     },
     {
       "Path": "src/dotnet/Vulgata.Infrastructure/Analysis/PreparedNavigation/PreparedPass1NavigationService.cs",
-      "Bytes": 28238,
-      "Sha256": "7cb48776ce3abebd613878ca2e857e79824c777b9ecf181bc3f815bf042560b4"
+      "Bytes": 29871,
+      "Sha256": "d2ed821fa5f0c065e6138dfc167d7f1878b72f35be82d2e42bd4d14fa668d86d"
     },
     {
       "Path": "src/dotnet/Vulgata.Infrastructure/Data/Pass1CodeLogicDocumentCommitter.cs",
-      "Bytes": 40575,
-      "Sha256": "a8608430c9f84ec34b00daaff67959f00c6337a5e1dd6d19060e0c2287f76a5c"
+      "Bytes": 41935,
+      "Sha256": "fb484cd8ba5e816a0ff8e20a20b3f4fa2283e5a5d8cbd35f6cdada39bc261f34"
     },
     {
       "Path": "src/dotnet/Vulgata.Infrastructure/Data/PreparedPass1Store.cs",
-      "Bytes": 168795,
-      "Sha256": "907ef68c6470c8fda8585f95cd660f7e5726bb9e9e9b79c185c199ddcde5c2be"
+      "Bytes": 195872,
+      "Sha256": "cb060679c2b09465a7bf02828ebfa2f4ef2a68a41aba22da6854eb16d356dea2"
     },
     {
       "Path": "src/dotnet/Vulgata.Shared/Scans/Pass1ExecutionContracts.cs",
@@ -78,8 +78,8 @@
     },
     {
       "Path": "src/dotnet/Vulgata.Web/Data/PreparedPass1Coordinator.cs",
-      "Bytes": 13407,
-      "Sha256": "f9aa699743e6ada8f7a6d238ae448eb408b3ff20509287f2a41a68cf099317a6"
+      "Bytes": 13937,
+      "Sha256": "c1fc1ac2d2c0aca544c5d07b15fdd9f5ce3e8241ac039e44fdeb0db39da01239"
     },
     {
       "Path": "src/dotnet/Vulgata.Web/Data/PreparedPass1DispatchWorker.cs",
@@ -88,8 +88,8 @@
     },
     {
       "Path": "src/dotnet/Vulgata.Web/Program.cs",
-      "Bytes": 56909,
-      "Sha256": "3e24c49e2a3510b0a45598d29311104d0c7daf31560c1006d055fd7657446957"
+      "Bytes": 57884,
+      "Sha256": "5467bdcbdb463b1f3fed6e3dc888afd4fd2a8bcfe0fe30ad4e7afac8d6bacfd1"
     }
   ],
   "ForbiddenLiterals": [

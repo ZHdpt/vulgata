@@ -1,0 +1,50 @@
+{
+  "schema_version": "1.0",
+  "gate": "plan-review",
+  "verdict": "ACCEPT",
+  "reviewed_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "reviewed_boundary": {
+    "base_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+    "candidate_commit": null,
+    "diff_sha256": "375975e05038d5d7b21c057a231b539347d4ef92384b7e10d1fadc551983f852",
+    "artifact_hashes": {
+      "specs/012-resumable-file-pass1-code-logic/plan.md": "dbc4faa6e6b4de96639b1b85bb564c5d4c5c281c222db031143323ce13fe2fc0",
+      "specs/012-resumable-file-pass1-code-logic/research.md": "514008f5de775d13f49282f228bac2e6396b36064e2dd18e56c1cdbe92ef238e",
+      "specs/012-resumable-file-pass1-code-logic/data-model.md": "9847560911dee2e36e294ac005f75ee78aede324f504c2f6adcf7fae0267ef03",
+      "specs/012-resumable-file-pass1-code-logic/quickstart.md": "9eeb0bd3db4a19c0fa0e50f50ec0612157342bde6808f2a8bfba1c9fe3a23324",
+      "specs/012-resumable-file-pass1-code-logic/contracts/deepseek-strict-result-submission.md": "323ad171d50f7aeab6708d2cc28772632f9a465aab1a47140f7c6a6dbaaff373"
+    },
+    "owned_paths": [
+      "specs/012-resumable-file-pass1-code-logic/plan.md",
+      "specs/012-resumable-file-pass1-code-logic/research.md",
+      "specs/012-resumable-file-pass1-code-logic/data-model.md",
+      "specs/012-resumable-file-pass1-code-logic/quickstart.md",
+      "specs/012-resumable-file-pass1-code-logic/contracts/deepseek-strict-result-submission.md"
+    ]
+  },
+  "reviewed_artifacts": [
+    "AGENTS.md",
+    ".specify/memory/constitution.md",
+    "docs/agent-workflow/state-machine.md",
+    "docs/agent-workflow/artifact-contracts.md",
+    "docs/agent-workflow/review-and-correction.md",
+    "docs/requirement-draft.md",
+    "docs/bmad/epics.md",
+    "docs/bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md",
+    "docs/bmad/planning-artifacts/architecture/august-30-bounded-scanning-design.md",
+    "docs/bmad/planning-artifacts/sprint-change-proposal-2026-08-24-deepseek-strict-result-submission.md",
+    "specs/012-resumable-file-pass1-code-logic/spec.md",
+    "specs/012-resumable-file-pass1-code-logic/plan.md",
+    "specs/012-resumable-file-pass1-code-logic/research.md",
+    "specs/012-resumable-file-pass1-code-logic/data-model.md",
+    "specs/012-resumable-file-pass1-code-logic/quickstart.md",
+    "specs/012-resumable-file-pass1-code-logic/contracts/deepseek-strict-result-submission.md",
+    "specs/012-resumable-file-pass1-code-logic/decisions/planned-change-authorization-04.md",
+    "specs/012-resumable-file-pass1-code-logic/evidence/tdd/failure-22.json",
+    "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedPass1JobExecutor.cs",
+    "tests/Vulgata.Tests/PreparedPass1/PreparedPass1JobExecutorStreamingTests.cs",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekStreamingQualificationTests.cs"
+  ],
+  "findings": [],
+  "summary": "ACCEPT. Independent plan-only review found no blocking finding, Critical/High issue, Constitution MUST violation, unresolved authority conflict, or infeasible seam in the exact transcript-budget correction. The reviewed five-artifact boundary binds the accepted scope hash 99f542e15eaddf6c50c5381225c0c719ebe1f82c6c4f8774f5d565c6c835e63a exactly: raw streamed SSE remains 16,777,216 bytes; assembled response, each finally serialized assistant contribution, and the aggregate of all prior assistant contributions are each 16,777,216 bytes; and the complete outgoing request is 17,416,192 bytes. The additive formula is exact: 131,072 prepared initial + 81,920 declarations + 16,777,216 assistant aggregate + 393,216 tool results + 32,768 envelope. The aggregate replaces, rather than supplements, nine-times per-message authority, so assistant bytes are not multiplied or double counted; the existing maximum of nine prior assistant messages remains an independent count bound. Measuring assembled and replay contributions after final UTF-8 serialization makes the equal assembled/per-message limits coherent with complete unchanged DeepSeek reasoning/content/tool-call replay, while measuring the full body again immediately before transport closes serialization and envelope drift. Exact-bound acceptance and byte-plus-one cancellation/no-send behavior are testable through the public PreparedPass1JobExecutor.ExecuteAsync seam and its existing raw stream, assembled accumulator, outgoing contribution parser, final body limiter, sanitized observer, and cancellation path. The correction has an explicit bounded transient-memory consequence: one Worker may retain a near-16 MiB assistant turn and materialize a near-17 MiB body, and the unchanged pair concurrency range one through four may multiply those independent allocations; no unbounded per-turn multiplication, cumulative raw buffer, durable transcript, shared Worker state, or new scheduling authority is introduced. failure-22 directly supports the correction: the r9 streamed response cleared the raw limit, failed only at AssembledResponse, committed no Document/Version/receipt, and did not implicate provider, network, database, timeout, function, validation, or retry behavior. Privacy remains fail-closed because only sanitized categories and aggregate counts may be observed; source, prompt, reasoning, raw chunks, arguments, bodies, credentials, paths, and validator detail remain nonlogged and nonpersistent. The plan preserves the 65,536-byte candidate/evidence/schema limits, 81,920-byte declaration limit, 131,072-byte prepared-initial limit, 393,216-byte tool-result limit, 32,768-token setting, ten turns, eight navigation calls, two submissions, five-/25-minute deadlines, zero SDK retries, one durable retry, atomic immutable commit/replay, local code-logic/file-v2 authority, source-free-before-source qualification, Story 12.4/12.5 exclusions, and CodeGraphContext exclusion. It therefore aligns with Story 12.3, the current PRD overlay, the architecture, Constitution, and AGENTS.md; no ADR or context artifact exists to conflict. Planned-change authorization 04 is valid and exact, so ACCEPT advances without duplicate user approval. Task regeneration and every later definition, implementation-approval, TDD, qualification, convergence, quality, E2E, verification, lifecycle, staging, and commit gate remain unwaived. The nonrecursive diff identity is SHA-256 over UTF-8 sorted repository-path, tab, lowercase file-SHA-256 rows for the five owned paths, joined by LF with no trailing newline."
+}

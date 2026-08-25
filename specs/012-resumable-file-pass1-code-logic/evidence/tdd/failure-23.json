@@ -1,0 +1,31 @@
+{
+  "evidence_id": "12-3/implement/52",
+  "kind": "failure",
+  "stage": "implement",
+  "source_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "artifact_paths": [
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekStreamingQualificationTests.cs",
+    "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedPass1JobExecutor.cs"
+  ],
+  "artifact_sha256": {
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekStreamingQualificationTests.cs": "97FE42785A2F68A6D961A6D6FFE240B6C3A81B0DB82272F1DCABBC2F568BFDA9",
+    "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedPass1JobExecutor.cs": "F16AD68DBDB8BF7F926BC0F6C16FED3AC37A6A4EE6EF85B77D0D341C4B504789"
+  },
+  "task": "T091",
+  "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter FullyQualifiedName~AssembledResponse --no-restore --nologo --logger \"console;verbosity=minimal\" -p:GenerateMvcTestManifest=false -clp:ErrorsOnly",
+  "result": {
+    "outcome": "definition-invalidated",
+    "exit_code": 1,
+    "tests": "3 failed, 0 passed",
+    "expected_category": "AssembledResponse",
+    "actual_category": "RawResponse",
+    "reproduced_runs": 2,
+    "provider_calls": 0,
+    "source_bearing_calls": 0
+  },
+  "root_cause": "With equal 16777216-byte raw and assembled caps, ordinary valid SSE framing makes the raw wire representation larger than the parsed assembled assistant contribution. The accepted exact assembled-bound public fixture therefore reaches RawResponse before AssembledResponse; an assembled target of 16777217 bytes produced 16777360 raw bytes, 144 bytes beyond the raw cap.",
+  "privacy": "The deterministic source-free fixture and closed enum categories disclosed no prompt, reasoning, source, credentials, function arguments/results, provider body, host path, or validator details.",
+  "next_step": "Return to plan correction. Keep the safety caps, but split exact inclusive accounting proofs from reachable public-transport precedence/no-send proofs before regenerating T091/T092.",
+  "observed_at": "2026-08-24T16:24:57.8578245Z",
+  "summary": "T091 exposed an infeasible test claim in the accepted plan rather than a production or environment failure; no valid RED evidence is claimed for T092."
+}

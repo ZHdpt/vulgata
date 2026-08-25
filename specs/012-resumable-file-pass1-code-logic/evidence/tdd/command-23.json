@@ -1,0 +1,55 @@
+{
+  "evidence_id": "12-3/implement/108",
+  "kind": "command",
+  "status": "current",
+  "stage": "implement",
+  "task": "T135",
+  "source_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "command": "$env:VULGATA_T083_SOURCE_FREE_HANDSHAKE='1'; dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore -p:WarningLevel=0 --filter \"FullyQualifiedName=Vulgata.Tests.PreparedPass1.Pass1DeepSeekContractQualificationTests.SourceFreeHandshake_LiveBetaCapability_WritesSanitizedEvidenceAsync\" --logger \"console;verbosity=normal\"",
+  "result": {
+    "total": 1,
+    "passed": 1,
+    "failed": 0,
+    "skipped": 0,
+    "duration_seconds": 3,
+    "exit_code": 0
+  },
+  "capability": {
+    "outcome": "Available",
+    "endpoint": "https://api.deepseek.com/beta",
+    "model": "deepseek-v4-flash",
+    "streaming": true,
+    "thinking_disabled": true,
+    "ordinary_tool_choice_required": true,
+    "ordinary_tool_call_observed": true,
+    "ordinary_done_observed": true,
+    "terminal_tool_choice_named_submit": true,
+    "terminal_tool_call_observed": true,
+    "terminal_done_observed": true,
+    "terminal_selected_function_name_matched": true,
+    "function_invoked": false,
+    "tool_result_sent": false
+  },
+  "artifact": {
+    "path": "artifacts/qualification/story-12.3/deepseek-source-free-handshake.json",
+    "task": "T135",
+    "sha256": "5232822827D90F4D88C73D73E9416E378F2DC03946FB3D63F56CA4CF22E6C08E",
+    "ordinary_request_sha256": "EA8CCA5DA027B3A575F4DC69884D46ECA54B2E0A406DB134CAFEFBB6B8D95824",
+    "terminal_request_sha256": "7899C75F8FEDA01A26FBA2DDCAC86220BA292422B642F90AF7FA8599C714B2D8",
+    "declarations_sha256": "506603F604C080EA50CDC5E78A4EFD8BAE39AEAEC24B03C66A9F19FC50962D44"
+  },
+  "evidence_correction": {
+    "observed": "The first successful AD-24 run revealed that the sanitized artifact writer still labeled the gate as historical T121.",
+    "fix": "Changed only the qualification artifact task label to T135 and reran the same two source-free requests successfully.",
+    "test_file_sha256": "D9F571EA62F763C437BDA198D63C946C8F809716C0B8CE61F9D41B2860482566"
+  },
+  "privacy": {
+    "source_derived_payload_sent": false,
+    "response_content_persisted": false,
+    "credential_persisted": false,
+    "request_content_persisted": false
+  },
+  "network": "The approved unrestricted outbound route was used only for two bounded source-free DeepSeek beta capability requests per run. No repository source, tool result, PostgreSQL database, host setting, or system configuration was accessed or changed.",
+  "observed_at": "2026-08-25T02:22:22.4473371Z",
+  "summary": "T135 passed both exact source-free request shapes with distinct sanitized identities, call plus DONE for each, terminal submit_code_logic name match, and zero invocation, result, source, response retention, or durable effect."
+}

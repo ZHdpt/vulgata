@@ -1,0 +1,23 @@
+{
+  "evidence_id": "12-3/implement/129",
+  "kind": "test-red",
+  "status": "resolved",
+  "stage": "implement",
+  "task": "T155",
+  "source_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "failure_evidence": "specs/012-resumable-file-pass1-code-logic/evidence/tdd/failure-39.json",
+  "command": "VULGATA_TEST_ADMIN_CONNECTION=<approved-postgres-admin> dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter FullyQualifiedName=Vulgata.Tests.PreparedPass1.Pass1DocumentPostgreSqlAtomicTests.PostgreSql17_ExactReplay_WithSubMicrosecondCommittedAt_IsReplayed --logger console;verbosity=minimal -clp:ErrorsOnly",
+  "result": {
+    "total": 1,
+    "passed": 0,
+    "failed": 1,
+    "skipped": 0,
+    "duration_seconds": 3,
+    "expected": "Replayed",
+    "actual": "Conflict"
+  },
+  "red_boundary": "The first commit succeeds, then the byte-identical request whose UTC CommittedAt differs from a microsecond boundary by exactly one 100-nanosecond tick must replay mutation-free.",
+  "privacy": "The regression used only a fixture-owned disposable PostgreSQL database and synthetic canonical data; it made no provider, network, repository-source, ordinary-database, host, system, or Git change.",
+  "observed_at": "2026-08-25T14:26:20+08:00",
+  "summary": "The deterministic PostgreSQL RED reproduces r26 independently of DeepSeek and isolates timestamp precision as the replay conflict cause."
+}

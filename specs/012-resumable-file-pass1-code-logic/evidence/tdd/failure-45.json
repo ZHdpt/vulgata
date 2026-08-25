@@ -1,0 +1,54 @@
+{
+  "evidence_id": "12-3/qualify/157",
+  "kind": "failure",
+  "status": "diagnosed",
+  "stage": "qualify",
+  "task": "T085",
+  "source_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "command": "VULGATA_T062_CONCURRENCY_LIMIT=2; VULGATA_T062_TERMINAL_TIMEOUT_SECONDS=9000; VULGATA_T062_QUALIFICATION_CONNECTION=<fresh-pre-start-r8-disposable-clone>; <approved-source-provider-runtime-bindings>; dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --no-restore -p:WarningLevel=0 --filter FullyQualifiedName~Pass1ProductionExecutionTests.AuthenticatedApprovedPair_StartsRealRunAtEveryLimit_AndPersistsTerminalEvidence --logger console;verbosity=normal -clp:ErrorsOnly",
+  "execution_result_before_manual_cancel": {
+    "provider_and_worker_result": "succeeded",
+    "pair_phase": "ReadyForResolution",
+    "pair_circuit": "Closed",
+    "coordination_phase": "Resolving",
+    "scan_execution_phases": { "Completed": 2 },
+    "jobs": { "total": 150, "completed": 150, "noncompleted": 0 },
+    "documents": 150,
+    "navigation_receipts": 4,
+    "pass1_outcomes": 1,
+    "transient_retry_scheduled_observed": 1,
+    "transient_retry_recovered": true,
+    "prior_failure_point_crossed": true
+  },
+  "manual_cancel": {
+    "performed": true,
+    "reason": "The test polling loop cannot recognize the accepted ReadyForResolution pair terminal and would wait until the configured 9000-second limit despite complete durable success.",
+    "test_process_exit_code": 1,
+    "durable_state_preserved": true
+  },
+  "root_cause": "Pass1ProductionExecutionTests.WaitForTerminalAsync recognizes Completed and CompletedWithWarnings, which are Scan Execution/coordination concepts and are not values of Pass1PairExecutionPhase. The production API correctly returns the pair's accepted Story 12.3 terminal ReadyForResolution, so the T062 harness continues polling indefinitely and its subsequent success assertion is unreachable.",
+  "authoritative_evidence": [
+    "Pass1PairExecutionPhase defines ReadyForResolution and has no Completed or CompletedWithWarnings value.",
+    "pass1-runtime-contracts.md says ReadyForResolution ends Story 12.3 activation and does not execute Story 12.4.",
+    "data-model.md marks ReadyForResolution terminal/immutable for Story 12.3.",
+    "Pass1ProductionExecutionCapacityTests already asserts the public status phase ReadyForResolution."
+  ],
+  "excluded_causes": [
+    "DeepSeek endpoint, model, authentication, availability, streaming, or timeout",
+    "same-execution receipt provenance or durable receipt binding",
+    "source repository, CodeGraph, Java, JDT-LS, or production composition",
+    "PostgreSQL availability, reconciliation, atomic commit, or handoff",
+    "host, network, or system configuration"
+  ],
+  "pre_correction_test_hash": "7BDD419521903ED8CF2EEF895C15B486EDE8760816F2F6ADC950F3D895311CD5",
+  "disposable_database": {
+    "name": "vulgata_test_t085r8_20260825",
+    "template": "vulgata_story121_feffce36e44c48238a6e55c6742c374c",
+    "pre_start_reset_validated": true,
+    "retained_for_bounded_evidence_until_fresh_retry": true,
+    "ordinary_vulgata_database_mutated": false
+  },
+  "privacy": "Only bounded approved source/context was sent to DeepSeek. Evidence retains only states, counts, categories, and hashes; no source, prompt, reasoning, request/response, candidate, tool argument/result, credential, or host path is retained. No host/system/global configuration or Git operation occurred.",
+  "observed_at": "2026-08-25T22:03:58.4606185+08:00",
+  "next_step": "Correct only the T062 test harness to recognize the exact Pass1PairExecutionPhase terminal set and assert ReadyForResolution success, then rerun T085 from a new fresh pre-Start clone."
+}

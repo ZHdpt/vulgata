@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0",
+  "gate": "plan-review",
+  "verdict": "ACCEPT",
+  "reviewed_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "reviewed_boundary": {
+    "base_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+    "candidate_commit": null,
+    "artifact_hashes": {
+      "specs/012-resumable-file-pass1-code-logic/spec.md": "f5e4dc894dd102246ad56defdf216a54eaca97f083cf32e79d9c88ad23800c49",
+      "specs/012-resumable-file-pass1-code-logic/plan.md": "8b500d7b3ae58cf4605d9834d451f3c1887bb860e8c93a2d9362351a7f6d99f2",
+      "specs/012-resumable-file-pass1-code-logic/research.md": "0393ec5f5631eb15afb8b00e0f266a728ada3a30862874099f7ab0922b12a5dd",
+      "specs/012-resumable-file-pass1-code-logic/contracts/deepseek-strict-result-submission.md": "e59c2e01c24e226997d206aa9eb0e208766b95fd8e9c425cbff89cd9486e3178",
+      "specs/012-resumable-file-pass1-code-logic/evidence/research/deepseek-v4-current-best-practices-audit.md": "63d6d5406fe968986e6656841dd34fdb9e0a60985e22d3e498c19ef024b3a67c",
+      "specs/012-resumable-file-pass1-code-logic/evidence/tdd/failure-36.json": "05cb8adc4d8e937bb6c5a7f045d54f53e5bb9bb96b74ecff855d9270a11c7e0d"
+    }
+  },
+  "findings": [],
+  "closed_findings": [
+    "AD26-PR-001: after identity, declared-name, sole-submission, and all-submission handling, the remaining legal-name terminal set is exhaustively sole navigation, multiple all-navigation, or mixed navigation/submission",
+    "AD26-PR-002: the three enum-only subtypes have deterministic precedence and retain zero callback, reservation, receipt, candidate, later request, and payload retention",
+    "AD26-PR-003: no provider field, declaration, execution policy, persistence, source, endpoint/model/credential, network, host, or system change is authorized before a fresh fixed T084 result"
+  ],
+  "residual_risks": [
+    "The exact r23 terminal topology remains intentionally unknown until a fresh retry reports one of the fixed subtypes.",
+    "Any fresh result authorizes only a separately reviewed provider-wire plan; it does not authorize preserving parallel_tool_calls, changing declarations, or accepting/truncating candidates.",
+    "The current DeepSeek Chat Completions contract exposes tool calls as an array and does not document parallel_tool_calls, so the next provider-policy decision must remain evidence-driven."
+  ],
+  "summary": "ACCEPT. Independent review verified every pinned artifact hash and found AD-26/R-27 evidence-grounded, exhaustive, testable, content-dark, zero-effect, and bounded for task generation. No PRD, Story 12.3, privacy, persistence, source-scope, host, network, or system conflict remains."
+}

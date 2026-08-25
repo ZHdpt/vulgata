@@ -1,0 +1,46 @@
+{
+  "schema_version": "1.0",
+  "gate": "plan-review",
+  "verdict": "ACCEPT",
+  "reviewed_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "reviewed_boundary": {
+    "base_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+    "candidate_commit": null,
+    "diff_sha256": "6ef7811cc53d6cf0f80b7c3cfb1f84826f0eec6f43efe5f7c90c43d5df2bc26c",
+    "artifact_hashes": {
+      "specs/012-resumable-file-pass1-code-logic/plan.md": "80a696fb658cfd06004a10a7bd13bbbf0211156bb846de09cf902fc113fc923e",
+      "specs/012-resumable-file-pass1-code-logic/research.md": "cf749f3d6ef9d46e603166e805986084eb53975ee3bfa12b0b9cba6906155987",
+      "specs/012-resumable-file-pass1-code-logic/data-model.md": "3d19b5eb7bb3e46ed4aa7dac2d2358678bfcb9e03147d38a883bd30819c5addf",
+      "specs/012-resumable-file-pass1-code-logic/quickstart.md": "fe1e8e8fa3449318e7b5d33478bdfa9707fc72cc647f2813551ce7dda6b71c66",
+      "specs/012-resumable-file-pass1-code-logic/contracts/deepseek-strict-result-submission.md": "056a37031cbbb00587d011b1d74dc60cc21f11bf0b20858eb3df3e785c9d6643"
+    },
+    "owned_paths": [
+      "specs/012-resumable-file-pass1-code-logic/plan.md",
+      "specs/012-resumable-file-pass1-code-logic/research.md",
+      "specs/012-resumable-file-pass1-code-logic/data-model.md",
+      "specs/012-resumable-file-pass1-code-logic/quickstart.md",
+      "specs/012-resumable-file-pass1-code-logic/contracts/deepseek-strict-result-submission.md"
+    ]
+  },
+  "reviewed_artifacts": [
+    "AGENTS.md",
+    ".specify/memory/constitution.md",
+    "docs/bmad/epics.md",
+    "docs/requirement-draft.md",
+    "docs/bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md",
+    "docs/bmad/planning-artifacts/architecture/august-30-bounded-scanning-design.md",
+    "docs/bmad/planning-artifacts/sprint-change-proposal-2026-08-24-deepseek-strict-result-submission.md",
+    "specs/012-resumable-file-pass1-code-logic/spec.md",
+    "specs/012-resumable-file-pass1-code-logic/plan.md",
+    "specs/012-resumable-file-pass1-code-logic/research.md",
+    "specs/012-resumable-file-pass1-code-logic/data-model.md",
+    "specs/012-resumable-file-pass1-code-logic/quickstart.md",
+    "specs/012-resumable-file-pass1-code-logic/contracts/deepseek-strict-result-submission.md",
+    "specs/012-resumable-file-pass1-code-logic/evidence/tdd/failure-25.json",
+    "src/dotnet/Vulgata.Agents/WorkerExecution/DeepSeekStrictToolDeclarations.cs",
+    "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedPass1JobExecutor.cs",
+    "tests/Vulgata.Tests/PreparedPass1/DeepSeekSourceFreeHandshakeHarness.cs"
+  ],
+  "findings": [],
+  "summary": "ACCEPT. Independent plan-only review of the pinned AD-20/R-20 correction found no blocking or major unresolved plan defect, Constitution MUST violation, authority conflict, scope leak, or infeasible test seam. Failure-25 isolates a provider-wire schema defect rather than an endpoint, credential, network, thinking, streaming, timeout, database, or host failure: the exact raw public declarations failed with a structured schema 400, while the same source-free route/model/key/network accepted the bounded two-rule projection. The corrected plan keeps both actual AIFunction.AsOpenAIChatTool() declarations immutable and hash-bound, projects them only inside the existing DeepSeekStrictToolDeclarations helper, and requires production plus the source-free handshake to consume one byte/hash-identical projected declaration blob. The projection is deterministic and closed: it converts only the two ledgered object-null type arrays to closed object-first anyOf branches, adds a primitive discriminator only to ledgered nonempty homogeneous primitive enum-only nodes, preserves the four supported primitive-null arrays and every other accepted value/order, and rejects duplicate, missing, additional, reordered, malformed, unsupported, referenced, cyclic, open, drifted, or oversized shapes before substitution or transport. Raw-input hashes and a complete pointer/subtree-hash transform ledger prevent the live diagnostic output from becoming a second schema authority; the unchanged complete local code-logic/file-v2 validator remains the sole acceptance and commit authority. The existing executor seam makes helper-only GREEN feasible while preserving AD-19 token/thinking construction, exact compatibility-field removal, assistant string-content completion, complete reasoning/tool-call/result continuity, final remeasurement, all numeric bounds and deadlines, ten turns, zero SDK retries, sibling-client isolation, and sanitized no-send failure behavior. Runtime projection state and source-free qualification evidence remain bounded and content-dark; no source, request body, reasoning, tool argument/result, credential, host path, or schema bytes are logged or persisted. The correction adds no database, EF migration, API, UI, prompt, dispatch, scheduling, provider-circuit, host/system/environment/network configuration, Story 12.4, or Story 12.5 behavior. The planning-only dependency T097 RED -> T098 helper GREEN -> deterministic/fake-wire/live source-free T096 -> fresh T084 3/3 -> T085/full T062 is testable and correctly blocks all further source-bearing traffic until the exact projected declaration gate succeeds. Supporting authorities were read at spec SHA-256 b03687c3a77f52766280669da6cf9e2f9925a44bec1ae9304991f387477a9493 and failure-25 SHA-256 9e9f12cf66f535ea7b524d4540a3517824ec5ec339b520d8daea99f6dfb948da. No repository ADR or context artifact exists for this seam. ACCEPT advances the plan-only gate without duplicate user approval; it does not waive task regeneration, combined definition review, TDD, qualification, convergence, quality, E2E, verification, lifecycle, staging, commit, or Git-history controls. The nonrecursive diff identity is SHA-256 over UTF-8 sorted repository-path, tab, lowercase artifact-SHA-256 rows joined by LF with no trailing newline."
+}

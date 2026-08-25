@@ -1,0 +1,30 @@
+{
+  "evidence_id": "12-3/implement/47",
+  "kind": "test-green",
+  "stage": "implement",
+  "source_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "artifact_paths": [
+    "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedPass1JobExecutor.cs",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekStreamingQualificationTests.cs"
+  ],
+  "artifact_sha256": {
+    "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedPass1JobExecutor.cs": "24B9F1237CFE03C7AB3ADF744B65851AC056B64F05D415A0AC48871D943C3344",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekStreamingQualificationTests.cs": "E97AF7CFA2E34596B25625EC9E811C4037AE1F853CF39A68DC2A649D2F0744CE"
+  },
+  "commands": [
+    "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --nologo --filter \"FullyQualifiedName~Pass1DeepSeekStreamingQualificationTests.ExecuteAsync_RawResponseExactBoundaryRemainsLegalAsync|FullyQualifiedName~Pass1DeepSeekStreamingQualificationTests.ExecuteAsync_RawResponseBoundaryPlusOneCancelsWithoutLaterSendAsync|FullyQualifiedName~Pass1DeepSeekStreamingQualificationTests.ExecuteAsync_RawResponseBoundaryPlusOne_ReportsCategoryWhenTransportCancellationCallbackThrowsAsync\" --logger \"console;verbosity=minimal\" -p:GenerateMvcTestManifest=false -clp:ErrorsOnly",
+    "$env:VULGATA_T084_ISOLATED_SOURCE_JOBS=$null; set the approved JDT-LS and Java bindings; dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --nologo --filter \"FullyQualifiedName~PreparedPass1WorkerDispatcherTests|FullyQualifiedName~Pass1DeepSeekPromptCompositionTests|FullyQualifiedName~PreparedPass1JobExecutorStreamingTests|FullyQualifiedName~Pass1DeepSeekIsolatedSourceQualificationTests|FullyQualifiedName~Pass1DeepSeekStreamingQualificationTests.ExecuteAsync_RawResponseExactBoundaryRemainsLegalAsync\" --logger \"console;verbosity=minimal\" -p:GenerateMvcTestManifest=false -clp:ErrorsOnly"
+  ],
+  "result": {
+    "focused": "3 passed, 0 failed, 0 skipped",
+    "source_free": "63 passed, 0 failed, 1 opt-in T084 test skipped, 64 total",
+    "maximum_raw_response_bytes": 16777216,
+    "first_rejected_raw_response_bytes": 16777217,
+    "maximum_assembled_response_bytes": 131072,
+    "cancellation_callback_failure_classification": "RawResponse",
+    "provider_calls": 0,
+    "source_bearing_calls": 0
+  },
+  "observed_at": "2026-08-24T14:21:33.0988906Z",
+  "summary": "T088 changes only the execution-local streamed raw-response ceiling to exactly 16777216 bytes. The exact boundary, plus-one cancellation, cancellation-callback diagnostic, and 64-test source-free regression set are GREEN while the independent 131072-byte assembled limit and all other safeguards remain unchanged."
+}

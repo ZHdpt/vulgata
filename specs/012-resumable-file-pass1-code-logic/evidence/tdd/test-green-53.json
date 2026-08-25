@@ -1,0 +1,59 @@
+{
+  "evidence_id": "12-3/implement/106",
+  "kind": "test-green",
+  "status": "current",
+  "stage": "implement",
+  "task": "T133",
+  "source_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "commands": [
+    "dotnet build tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore -p:WarningLevel=0 --verbosity minimal",
+    "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --no-restore -p:WarningLevel=0 --filter \"FullyQualifiedName~Pass1DeepSeekStreamingQualificationTests.ExecuteAsync_LatestLegalSecondSubmissionUsesTurnTenAndNoRequestElevenAsync|FullyQualifiedName~Pass1DeepSeekStreamingQualificationTests.NormalizeAndValidateDeepSeekRequestBody_UsesClosedOrdinaryAndTerminalChoiceMatrix|FullyQualifiedName~PreparedPass1JobExecutorStreamingTests.ExecuteAsync_ProviderIgnoresNamedTerminalChoice_NavigationRemainsPayloadFreeAsync|FullyQualifiedName~Pass1DeepSeekContractQualificationTests.SourceFreeHandshake_RequiresTwoSanitizedShapesWithDistinctRequestEvidenceAsync\" --logger \"console;verbosity=minimal\"",
+    "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --no-restore -p:WarningLevel=0 --filter \"FullyQualifiedName~Pass1DeepSeekContractQualificationTests\" --logger \"console;verbosity=minimal\"",
+    "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --no-restore -p:WarningLevel=0 --filter \"FullyQualifiedName~PreparedPass1JobExecutorStreamingTests\" --logger \"console;verbosity=minimal\""
+  ],
+  "results": [
+    {
+      "scope": "test-project build",
+      "errors": 0,
+      "warnings": 10
+    },
+    {
+      "scope": "focused T132 matrix",
+      "total": 16,
+      "passed": 16,
+      "failed": 0,
+      "skipped": 0,
+      "duration_seconds": 0.476
+    },
+    {
+      "scope": "complete DeepSeek contract class",
+      "total": 58,
+      "passed": 56,
+      "failed": 0,
+      "skipped": 2,
+      "duration_seconds": 0.409
+    },
+    {
+      "scope": "complete executor streaming class",
+      "total": 105,
+      "passed": 105,
+      "failed": 0,
+      "skipped": 0,
+      "duration_seconds": 2.0
+    }
+  ],
+  "behavior": [
+    "provider requests one through nine retain exact string required selection while request ten alone clones options and requires named submit_code_logic",
+    "the execution-local transport rejects request eleven and enforces ordinary-versus-terminal normalization and final validation while retaining both strict declarations and all continuity and byte policies",
+    "complete-turn preflight still rejects navigation when a provider ignores the request-ten named choice, with no tenth callback/reservation/receipt/candidate and no request eleven",
+    "the source-free harness sends ordinary then terminal request shapes from the same immutable declarations, stops after first-request failure, requires call plus DONE for both, transiently matches submit_code_logic, and retains only sanitized hashes, byte counts, and Booleans",
+    "legacy source-free evidence members remain bound to the ordinary shape"
+  ],
+  "files": {
+    "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedPass1JobExecutor.cs": "DB9C1278947DC3A4402F22BA0516BEE2BFB76FCBFC06D9BA81962EFB47797410",
+    "tests/Vulgata.Tests/PreparedPass1/DeepSeekSourceFreeHandshakeHarness.cs": "520AFE78113F7CDBA8C525DD28234CACB103B8288B9933038367934FB940DA58"
+  },
+  "privacy": "No provider, source, database, network, host, system, response body, function arguments/results, reasoning, credential, or source data was accessed or retained.",
+  "observed_at": "2026-08-25T02:07:57.3905248Z",
+  "summary": "T133 is GREEN. The exact terminal named-submit request, closed turn-aware final wire, ignored-choice defense, and two-shape sanitized source-free harness pass all focused and full owning-class tests with zero build errors."
+}

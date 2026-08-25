@@ -1,0 +1,63 @@
+{
+  "review_id": "story-12-3-definition-review-38",
+  "mode": "definition",
+  "verdict": "ACCEPT",
+  "implementation_authorized": true,
+  "t166_may_begin": "after T165 is completed and recorded",
+  "reviewed_hashes": {
+    "source_base": "29459174348511bb813c4aa9672ccffee61d82a6",
+    "spec.md": "782CCE177A53E61C320C59E30B6855E67DB57440D75E2AC8C3F82ED486BC3C7E",
+    "plan.md": "8274B510D3952AD7EFB3BAD58BAC04FDB1DCC43BA9B4C626E8D150C739E42BDC",
+    "research.md": "F455D81739100304A18DB937EF011C4E76D8BBC8644F4A9207CE80BC433BDC59",
+    "data-model.md": "77D6BE28524113B371B0CF9A0A12ABCED4F014A3B4BEB73599600F6AC1A01708",
+    "quickstart.md": "7CB6D879FDE708187A5BB3FEC5A412E5EEB5238C9ED04C63FBCE367D868DDE9A",
+    "contracts/deepseek-strict-result-submission.md": "E6960E717C24849F37C3B55ED9A4F7AAFFE7416588E22AC475E2A0CF77075A2B",
+    "contracts/pass1-runtime-contracts.md": "CF3359D18761C2021C9C47AD44A7903B63A06633ED501D04013BD88E05FCAF13",
+    "contracts/navigate-code-contract.md": "0FEBFA3F664FACC749A95299EEF643497AED2202A4E29DBAE166316D222C449F",
+    "evidence/research/deepseek-v4-current-best-practices-audit.md": "6FDAE98004134FDCE40700F8B45CDBB5F608FBD3774C7DB1D5CFB4AC797077B0",
+    "evidence/tdd/failure-40.json": "EFB9757EF8A05026D6ED735E02FB3C88A456B49B9E0F76ED05724D8FDE6B247B",
+    "evidence/tdd/analysis-22.json": "16EFAC53A8F19ADADE520333C54C1D3186807D2979D4D2D3EBE4FE0BB5713433",
+    "reviews/plan-review/plan-review-27.json": "7D3A168248A5A6641AB9DE33C94724569914DB7C66A9320790F75C8807848A79",
+    "reviews/plan-review/plan-review-28.json": "6F9AB271926620C88776C530FE4911B4339815ACA44C794452A6D43A11EFDD25",
+    "reviews/definition-review/definition-review-37.json": "4D40FA1F47EA4899B83FC2EDF9F096A70A574285AA46DD6550B61BCED465600E",
+    "tasks.md": "4E29F90AF32255EE7A28E1C3466926ABE64F3D306E04389B0A521BEB0D69D25B"
+  },
+  "task_metrics": {
+    "task_count": 170,
+    "unique_task_ids": 170,
+    "duplicate_task_ids": 0
+  },
+  "prior_finding_dispositions": [
+    {
+      "id": "AD30-DR-001",
+      "earliest_owner": "tasks",
+      "status": "CLOSED",
+      "evidence": [
+        "tasks.md:365-366 makes AD-28 and AD-29 routes completed history and identifies only T169 to T170 to T085 to T086 as current qualification",
+        "tasks.md:376-379 describes AD-26 and AD-27 only as checkpoint-relative completed history",
+        "tasks.md:407-419 binds current ownership and coverage to T165-T170",
+        "tasks.md:484-506 records T164 as a stopped failed gate and only AD-30 as active"
+      ]
+    }
+  ],
+  "findings": [],
+  "closed_checks": [
+    "Only T165 through T170, then T085 and T086, is current.",
+    "T164 is an executed failed gate, not T084 success.",
+    "T165 is nonbehavioral binding, T166 is tests-only RED, T167 is the sole GREEN owner, and T168-T170 contain no hidden implementation.",
+    "Turn mapping, early correction, SDK mapping, local-versus-provider-visible functions, eight attempts, two submissions, ten turns, 64/65, turn-ten defense, and no request eleven are complete.",
+    "T168 precedes source-free T169, which precedes fresh-disposable 3/3 T170 and then T085/T086.",
+    "No privacy, provider, schema, persistence, source-scope, host, network, system, or Story boundary expansion remains."
+  ],
+  "residual_proof_obligations": [
+    "Complete and record T165 before T166.",
+    "Capture honest T166 RED before any T167 working edit.",
+    "Pass T168 before T169, T169 before T170, and T170 3/3 before T085/T086."
+  ],
+  "residual_risks": [
+    "DeepSeek may violate named-submit selection; complete-turn preflight remains the zero-effect defense.",
+    "The 64-result structural bound does not enlarge the durable eight-navigation-attempt budget.",
+    "No zero-retention claim is made for the approved bounded provider transfer."
+  ],
+  "summary": "AD30-DR-001 is closed. The AD-30 definition is complete, unambiguous, test-first, privacy-safe, and authorized to proceed through T165 then T166."
+}

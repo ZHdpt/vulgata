@@ -1,0 +1,33 @@
+{
+  "evidence_id": "12-3/implement/115",
+  "kind": "test-green",
+  "status": "current",
+  "stage": "implement",
+  "task": "T142",
+  "source_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "commands": [
+    "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore -p:WarningLevel=0 --filter \"FullyQualifiedName~PreparedPass1JobExecutorStreamingTests.ExecuteAsync_TurnTenNavigation_ReportsTerminalNavigationAsync|FullyQualifiedName~PreparedPass1JobExecutorStreamingTests.ExecuteAsync_TurnTenMixedFunctions_ReportsTerminalMixedFunctionsAsync|FullyQualifiedName~PreparedPass1JobExecutorStreamingTests.ExecuteAsync_TurnTenMultipleNavigations_ReportsTerminalMultipleNavigationsAsync|FullyQualifiedName~PreparedPass1JobExecutorStreamingTests.ExecuteAsync_TurnTenTwoSubmissions_UsesDistinctTerminalTopologySubtypeAsync|FullyQualifiedName~PreparedPass1JobExecutorStreamingTests.IllegalFunctionCallSubtype_SeparatesTurnDefenseBranchesByDistinctMembers|FullyQualifiedName~PreparedPass1JobExecutorStreamingTests.ExecuteAsync_ProviderTurnTen_MapsSdkIterationNineAndTerminatesWithoutRequestElevenAsync\" --logger \"console;verbosity=minimal\"",
+    "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --filter \"FullyQualifiedName~PreparedPass1JobExecutorStreamingTests\" --logger \"console;verbosity=minimal\""
+  ],
+  "results": [
+    { "scope": "T141 exact focused barrier", "total": 8, "passed": 8, "failed": 0, "skipped": 0, "duration_seconds": 0.543, "build_errors": 0 },
+    { "scope": "complete executor streaming class", "total": 107, "passed": 107, "failed": 0, "skipped": 0, "duration_seconds": 2 }
+  ],
+  "behavior": {
+    "terminal_navigation": "TerminalNavigation",
+    "terminal_multiple_navigations": "TerminalMultipleNavigations",
+    "terminal_mixed": "TerminalMixedFunctions",
+    "precedence": "identity, declared name, sole submission, all-submission, sole navigation, all-navigation, mixed",
+    "unchanged": "acceptance, callback, reservation, receipt, candidate, transcript, request, provider field, wire, retry, timeout, persistence, privacy, and no request eleven"
+  },
+  "fixture_correction": "After production first emitted the new fixed values, the T141 owner added exactly those three names to the executor-test closed subtype helper; no behavior assertion changed and the isolated-source allowlist was already complete.",
+  "files": {
+    "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedPass1JobExecutor.cs": "9D02038CAB78ADF91B641554AE412E838A0A11B8AEC653AAF8F053C6054724C2",
+    "tests/Vulgata.Tests/PreparedPass1/PreparedPass1JobExecutorStreamingTests.cs": "CF10A1E3B903A71B16CCDAB895AB195379E635D10D08D8EF615DCC13354845DA",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekIsolatedSourceQualificationTests.cs": "9D91ADA53EC73ED7A6AD13B677533E4A61DED5DCFB51075438C9FDD6A71958DD"
+  },
+  "warnings": "Zero build errors; existing NU1507 and MSB3277 warnings only. Scoped diff check passed with the existing LF-to-CRLF advisory.",
+  "privacy": "No provider, source, database, network, host, system, payload, response content, reasoning, function arguments/results, or credential was accessed or retained.",
+  "observed_at": "2026-08-25T11:42:48.9598957+08:00",
+  "summary": "T142 made all three exhaustive navigation-bearing terminal topology diagnostics GREEN with enum and selection changes only."
+}

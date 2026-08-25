@@ -1,0 +1,33 @@
+{
+  "schema_version": "1.0",
+  "gate": "plan-review",
+  "verdict": "ACCEPT",
+  "reviewed_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "reviewed_boundary": {
+    "base_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+    "candidate_commit": null,
+    "artifact_hashes": {
+      "specs/012-resumable-file-pass1-code-logic/spec.md": "54f5cbc22847c62c28ad516877733dd81875a9bf61e1987ff0e530651400c946",
+      "specs/012-resumable-file-pass1-code-logic/plan.md": "47db509eab17daf263c4b9b00441b2134b9364cc208cf1be44568fa32a3e491f",
+      "specs/012-resumable-file-pass1-code-logic/research.md": "f91c44b42e4a109913f1b2a2204f907d5ad5851ba13729eb09f93649f1ed791d",
+      "specs/012-resumable-file-pass1-code-logic/contracts/deepseek-strict-result-submission.md": "52419348f01ebba9f453cb3173318bfb30ee72675a257e272e99d7fff2efb142",
+      "specs/012-resumable-file-pass1-code-logic/quickstart.md": "f430e4760628539c3886065fa5058d49371324a129827c2f8709b69009493feb",
+      "specs/012-resumable-file-pass1-code-logic/evidence/tdd/failure-38.json": "9df370b4bb0985a3fe15ac32676a6b32241a0229dfc0d33f154d5cd0e481e9f1",
+      "specs/012-resumable-file-pass1-code-logic/evidence/research/deepseek-terminal-history-probe.md": "9b2139f9cb0b5ad91ccb38cfddfa3fec090984dc85fa86783085013ec9f495b0",
+      "specs/012-resumable-file-pass1-code-logic/evidence/tdd/command-25.json": "c026d3bfd8c0bb7a40e93b83e497ede3492a778180fed217205338d4595e9431",
+      "specs/012-resumable-file-pass1-code-logic/evidence/research/deepseek-v4-current-best-practices-audit.md": "1eaedad5b72aa523eb40a262e0f22e3eaeff20da67c85776793e1b8a1bc416af"
+    }
+  },
+  "findings": [],
+  "closed_findings": [
+    "AD28-PR-001: FR-058 now distinguishes every navigation-capable request from every finalization-only request, including early correction and turn ten",
+    "AD28-PR-002: the accumulator now has bounded execution-local cleanup without an infeasible managed-object zeroization or zero-retention promise"
+  ],
+  "residual_risks": [
+    "Marker/resource validation must fail before the first source-bearing send.",
+    "Zero, one, 72, and 73-result canonicalization and bounds remain behavioral proof obligations.",
+    "Early-correction and turn-ten triggers must align across message projection, options, declarations, named choice, preflight, and final wire.",
+    "History-bearing source-free qualification and fresh disposable T084 remain mandatory before T085."
+  ],
+  "summary": "ACCEPT. AD-28 is internally consistent, feasible at the existing FICC seam, privacy-bounded, and task-generatable without provider, persistence, source, host, network, or system expansion."
+}

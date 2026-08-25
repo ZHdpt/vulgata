@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using Vulgata.Agents.WorkerExecution;
 using Vulgata.Core.DomainServices;
 using Vulgata.Core.Entities;
 using Vulgata.Tests.PreparedPass1.Fixtures;
@@ -176,7 +177,7 @@ public sealed class PreparedPass1WorkerDispatcherTests
     }
 
     [Fact]
-    public async Task DispatchAsync_BoundedProviderLoop_UsesTenTurnsAndReturnsSchemaValidDeferredFallbackAsync()
+    public async Task DispatchAsync_InvokesEachExecutorConversationOnceAndReturnsItsFirstResultAsync()
     {
         ScriptedProviderExecutor executor = new(turnsBeforeFinalResult: 9);
         IPreparedPass1WorkerDispatcher dispatcher = CreateDispatcher(executor);
@@ -188,20 +189,16 @@ public sealed class PreparedPass1WorkerDispatcherTests
         Assert.Equal(2, result.Results.Count);
         Assert.All(result.Results, item =>
         {
-            Assert.Equal(PreparedPass1RawWorkerOutcome.Completed, item.Outcome);
-            Assert.NotNull(item.ParsedResult);
-            Assert.Equal("code-logic/file-v2", item.ParsedResult!.SchemaIdentity);
-            Assert.Contains(
-                "BoundExceeded",
-                Encoding.UTF8.GetString(item.ParsedResult.CanonicalCandidateJson.Span),
-                StringComparison.Ordinal);
+            Assert.Equal(PreparedPass1RawWorkerOutcome.Rejected, item.Outcome);
+            Assert.Equal("invalid-or-repeated-tool-call", item.ReasonCode);
+            Assert.Null(item.ParsedResult);
         });
-        Assert.Equal(10, executor.TurnCount(result.Results[0].JobId));
-        Assert.Equal(10, executor.TurnCount(result.Results[1].JobId));
+        Assert.All(executor.TotalTurns, turns => Assert.Equal(1, turns.Value));
+        Assert.All(executor.ToolAttemptCounts, attempts => Assert.Equal(1, attempts.Value));
     }
 
     [Fact]
-    public async Task DispatchAsync_RetryReusesJobAndRemainingNavigationBudgetAsync()
+    public async Task DispatchAsync_RepeatedDurableClaimsDoNotUseDispatcherLocalRetryOrBudgetAsync()
     {
         ScriptedProviderExecutor executor = new(turnsBeforeFinalResult: 8);
         IPreparedPass1WorkerDispatcher dispatcher = CreateDispatcher(executor);
@@ -217,12 +214,14 @@ public sealed class PreparedPass1WorkerDispatcherTests
         Assert.Equal(
             first.Results.Select(item => item.JobId),
             replay.Results.Select(item => item.JobId));
-        Assert.All(
-            executor.TotalTurns,
-            turns => Assert.InRange(turns.Value, 1, 10));
-        Assert.All(
-            replay.Results,
-            item => Assert.Equal("code-logic/file-v2", item.ParsedResult?.SchemaIdentity));
+        Assert.All(executor.TotalTurns, turns => Assert.Equal(2, turns.Value));
+        Assert.All(executor.ToolAttemptCounts, attempts => Assert.Equal(2, attempts.Value));
+        Assert.All(first.Results.Concat(replay.Results), item =>
+        {
+            Assert.Equal(PreparedPass1RawWorkerOutcome.Rejected, item.Outcome);
+            Assert.Equal("invalid-or-repeated-tool-call", item.ReasonCode);
+            Assert.Null(item.ParsedResult);
+        });
 
         Type packetType = resultPacketType();
         Assert.NotNull(
@@ -230,7 +229,70 @@ public sealed class PreparedPass1WorkerDispatcherTests
     }
 
     [Fact]
-    public async Task DispatchAsync_EightRefusedToolAttempts_CreateOneCallsMarkerAndNeverAttemptNinthToolCallAsync()
+    public async Task DispatchAsync_InvokesExecutorExactlyOncePerDurableClaimAsync()
+    {
+        OneShotRejectedExecutor executor = new();
+        IPreparedPass1WorkerDispatcher dispatcher = CreateDispatcher(executor);
+        PreparedPass1DispatchRequest request = CreateLoopRequest();
+        request = new(
+            [request.PreparedFileCodeUnits[0]],
+            [request.ContextSnapshots[0]],
+            [],
+            1);
+
+        PreparedPass1DispatchResult result = await dispatcher.DispatchAsync(
+            request,
+            CancellationToken.None);
+
+        Assert.Equal(1, executor.CallCount);
+        PreparedPass1JobDispatchResult item = Assert.Single(result.Results);
+        Assert.Equal(PreparedPass1RawWorkerOutcome.Rejected, item.Outcome);
+        Assert.Equal("invalid-or-repeated-tool-call", item.ReasonCode);
+    }
+
+    [Fact]
+    public void PreparedDispatcher_DoesNotOwnConversationRetryOrBudgetState()
+    {
+        FieldInfo[] fields = typeof(PreparedPass1WorkerDispatcher)
+            .GetFields(BindingFlags.Instance | BindingFlags.NonPublic);
+
+        Assert.DoesNotContain(
+            fields,
+            field => field.FieldType.Name.Contains("ConversationState", StringComparison.Ordinal) ||
+                field.Name.Contains("conversation", StringComparison.OrdinalIgnoreCase) ||
+                field.Name.Contains("budget", StringComparison.OrdinalIgnoreCase) ||
+                field.Name.Contains("retry", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public async Task DispatchAsync_InvalidCompletedPayload_ReportsOneSanitizedCategoryAndClosedFailureAsync()
+    {
+        RecordingSubmissionDiagnosticObserver observer = new();
+        InvalidCompletedResultExecutor executor = new();
+        IPreparedPass1WorkerDispatcher dispatcher =
+            new PreparedPass1WorkerDispatcher(executor, observer);
+        PreparedPass1DispatchRequest request = CreateLoopRequest();
+        request = new(
+            [request.PreparedFileCodeUnits[0]],
+            [request.ContextSnapshots[0]],
+            [],
+            1);
+
+        PreparedPass1DispatchResult result = await dispatcher.DispatchAsync(
+            request,
+            CancellationToken.None);
+        PreparedPass1JobDispatchResult item = Assert.Single(result.Results);
+
+        Assert.Equal(PreparedPass1RawWorkerOutcome.Rejected, item.Outcome);
+        Assert.Equal("worker-result-rejected", item.ReasonCode);
+        Assert.Null(item.ParsedResult);
+        Assert.Equal(
+            [PreparedPass1SubmissionRejectionKind.InvalidShape],
+            observer.Categories);
+    }
+
+    [Fact]
+    public async Task DispatchAsync_EightRefusedToolAttemptsRemainExecutorOwnedAndDoNotLoopAsync()
     {
         ScriptedProviderExecutor executor = new(turnsBeforeFinalResult: 8);
         IPreparedPass1WorkerDispatcher dispatcher = CreateDispatcher(executor);
@@ -241,19 +303,12 @@ public sealed class PreparedPass1WorkerDispatcherTests
 
         Assert.All(result.Results, item =>
         {
-            Assert.Equal(PreparedPass1RawWorkerOutcome.Completed, item.Outcome);
-            Assert.NotNull(item.ParsedResult);
-            Assert.Contains(
-                "Calls",
-                Encoding.UTF8.GetString(item.ParsedResult!.CanonicalCandidateJson.Span),
-                StringComparison.Ordinal);
+            Assert.Equal(PreparedPass1RawWorkerOutcome.Rejected, item.Outcome);
+            Assert.Equal("invalid-or-repeated-tool-call", item.ReasonCode);
+            Assert.Null(item.ParsedResult);
         });
-        Assert.All(
-            executor.TotalTurns,
-            turns => Assert.Equal(9, turns.Value));
-        Assert.All(
-            executor.ToolAttemptCounts,
-            attempts => Assert.Equal(8, attempts.Value));
+        Assert.All(executor.TotalTurns, turns => Assert.Equal(1, turns.Value));
+        Assert.All(executor.ToolAttemptCounts, attempts => Assert.Equal(1, attempts.Value));
     }
 
     private static Type RequireType(string fullName, Assembly assembly) =>
@@ -265,7 +320,7 @@ public sealed class PreparedPass1WorkerDispatcherTests
         Assembly.Load("Vulgata.Agents");
 
     private static IPreparedPass1WorkerDispatcher CreateDispatcher(
-        ScriptedProviderExecutor executor)
+        IPreparedPass1JobExecutor executor)
     {
         Type implementation = RequireType(
             DispatcherImplementationName,
@@ -448,5 +503,44 @@ public sealed class PreparedPass1WorkerDispatcherTests
                 knownReferences = Array.Empty<object>(),
                 deferredObservations = new[] { new { outcome = "BoundExceeded", boundKind = "Calls" } },
                 assumptions = Array.Empty<object>() });
+        }
+
+    private sealed class InvalidCompletedResultExecutor : IPreparedPass1JobExecutor
+    {
+        public Task<PreparedPass1RawWorkerResult> ExecuteAsync(
+            PreparedPass1WorkerPacket packet,
+            string systemPrompt,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult(new PreparedPass1RawWorkerResult(
+                PreparedPass1RawWorkerOutcome.Completed,
+                Encoding.UTF8.GetBytes(
+                    "{\"schemaIdentity\":\"code-logic/file-v2\",\"schemaIdentity\":\"code-logic/file-v2\"}"),
+                null));
+    }
+
+    private sealed class OneShotRejectedExecutor : IPreparedPass1JobExecutor
+    {
+        public int CallCount { get; private set; }
+
+        public Task<PreparedPass1RawWorkerResult> ExecuteAsync(
+            PreparedPass1WorkerPacket packet,
+            string systemPrompt,
+            CancellationToken cancellationToken = default)
+        {
+            CallCount++;
+            return Task.FromResult(new PreparedPass1RawWorkerResult(
+                PreparedPass1RawWorkerOutcome.Rejected,
+                ReadOnlyMemory<byte>.Empty,
+                "invalid-or-repeated-tool-call"));
+        }
+    }
+
+    private sealed class RecordingSubmissionDiagnosticObserver
+        : IPreparedPass1SubmissionDiagnosticObserver
+    {
+        public List<PreparedPass1SubmissionRejectionKind> Categories { get; } = [];
+
+        public void Observe(PreparedPass1SubmissionRejectionKind category) =>
+            Categories.Add(category);
     }
 }

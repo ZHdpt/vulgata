@@ -1,0 +1,53 @@
+{
+  "review_id": "story-12-3-plan-review-32",
+  "mode": "plan-only",
+  "verdict": "REVISE",
+  "task_generation_authorized": false,
+  "source_checkpoint": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "reviewed_hashes": {
+    "spec.md": "3412704EB3A6C71BF062C4FBAD2E8FA12B0DBDDDDAB80FDBBBC1F6FAAF8E81DA",
+    "plan.md": "C2775754CB0629B3A4265EE3CC2A570238DA568D753D76C048E1AAB2DFA12C8F",
+    "research.md": "D725D2B19A7001EAC6E431B2BA8D001BD2D74FA0014651F82B4C8B1B623817A9",
+    "data-model.md": "25B5EA3C5A00A9774B6E3976BCE0D3DC03452942274C64AA033AE928D37A201F",
+    "evidence/tdd/failure-43.json": "FB15EC7B3508E62ECECD091D6D964D3D30324F2093844FA3CCD61FE0D4D27BE1",
+    "evidence/tdd/analysis-24.json": "C829E2629068C8E72CB6A0573944BF1E26DDDD15B7C120DC1A9217BC625B0A22"
+  },
+  "findings": [
+    {
+      "id": "AD32-PR-001",
+      "severity": "HIGH",
+      "earliest_owner": "plan",
+      "category": "current-authority-conflict",
+      "summary": "The normative task-generation section still directed AD-31/R-32 work instead of the appended AD-32/R-33 correction.",
+      "correction": "Mark AD-31/T171-T175 completed history and generate only the receipt-provenance plan, RED, GREEN, verification, fresh T084, fresh pre-Start T085, and T086 tail."
+    },
+    {
+      "id": "AD32-PR-002",
+      "severity": "HIGH",
+      "earliest_owner": "plan",
+      "category": "traceability-and-governance",
+      "summary": "Global traceability, authorization, implementation evidence, risk, self-review, and research authority remained bound to AD-31 and 64 FRs.",
+      "correction": "Synchronize the companions to 65 FRs and current AD-32/R-33, FR-059/061/063/065, failure-43/analysis-24, exact three-file ownership, proof matrix, unchanged committer defense, and qualification order."
+    }
+  ],
+  "closed_checks": [
+    "The AD-32 mechanism is evidence-backed, minimal, feasible, privacy-safe, and locally testable.",
+    "Invented receipts can use existing InvalidEvidence and correction behavior before capture.",
+    "The ledger can be bounded, thread-safe, completion-order-independent, UUID-only, and execution-local.",
+    "The durable committer remains unchanged defense in depth.",
+    "No provider, transport, persistence, source-scope, host, network, or system change is required."
+  ],
+  "residual_proof_obligations": [
+    "Correct the plan-owned current-authority and traceability sections, then rerun independent plan review.",
+    "After ACCEPT, generate tasks and obtain full definition review before implementation.",
+    "Observe deterministic fake-stream RED before the three-file GREEN.",
+    "Run complete barriers, fresh T084, fresh pre-Start T085, and T086 in order."
+  ],
+  "residual_risks": [
+    "Only callbacks admitted by complete-turn preflight may record receipts.",
+    "Duplicate receipt insertion must be idempotent.",
+    "Thread safety must not create a second navigation-order or authorization authority."
+  ],
+  "summary": "REVISE. Synchronize global current authority and traceability to AD-32/R-33 before task generation.",
+  "repository_actions_performed": false
+}

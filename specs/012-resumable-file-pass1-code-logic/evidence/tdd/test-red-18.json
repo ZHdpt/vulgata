@@ -1,0 +1,21 @@
+{
+  "evidence_id": "12-3/implement/49",
+  "kind": "test-red",
+  "stage": "implement",
+  "source_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "artifact_paths": [
+    "tests/Vulgata.Tests/PreparedPass1/PreparedPass1JobExecutorStreamingTests.cs"
+  ],
+  "artifact_sha256": {
+    "tests/Vulgata.Tests/PreparedPass1/PreparedPass1JobExecutorStreamingTests.cs": "56E753441F09619D62CD7E9113ED471E4FDBF679EB0BD0E606B5FF766ADAB554"
+  },
+  "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --nologo --filter \"FullyQualifiedName~PreparedPass1JobExecutorStreamingTests.ExecuteAsync_ClientBadRequest_ReportsOnlyProviderClientRequestRejectedAsync|FullyQualifiedName~PreparedPass1JobExecutorStreamingTests.ExecuteAsync_UnknownOrParallelFunctionCall_ReportsOnlyIllegalFunctionCallAsync|FullyQualifiedName~PreparedPass1JobExecutorStreamingTests.ExecuteAsync_UnexpectedTransportException_ReportsOnlyUnexpectedExceptionAsync\" --logger \"console;verbosity=normal\" -p:GenerateMvcTestManifest=false -clp:ErrorsOnly",
+  "result": {
+    "outcome": "failed-as-expected",
+    "failure": "CS0246: IPreparedPass1ExecutionDiagnosticObserver does not exist",
+    "provider_calls": 0,
+    "source_bearing_calls": 0
+  },
+  "observed_at": "2026-08-24T14:28:58.0047733Z",
+  "summary": "The source-free regression tests require a closed enum-only executor diagnostic that distinguishes provider client rejection, illegal function calls, and unexpected exceptions while preserving the existing public result reasons; the production seam is absent, producing the honest RED."
+}

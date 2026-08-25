@@ -1,0 +1,50 @@
+{
+  "schema_version": "1.0",
+  "gate": "plan-review",
+  "verdict": "ACCEPT",
+  "reviewed_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "reviewed_boundary": {
+    "base_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+    "candidate_commit": null,
+    "diff_sha256": "065f92b727148e2486cb8bb9d9bd5ed5ad86257d7eccea5e38f5c00ee1408baa",
+    "artifact_hashes": {
+      "specs/012-resumable-file-pass1-code-logic/plan.md": "7d9490dc424ffbab384a794e62fba55d0bb4c89dec592a1f067852e61549eafa",
+      "specs/012-resumable-file-pass1-code-logic/research.md": "2ad1fada7480d72cdf17dda6db9d43e4173972212cdd6e027f24beae99d8e61b",
+      "specs/012-resumable-file-pass1-code-logic/data-model.md": "024b0785f0c65e214827b61d572dc31acd8dd84bff27e4d015db064a70c77df1",
+      "specs/012-resumable-file-pass1-code-logic/quickstart.md": "259e3f9296dcffa0906eb0b9e17fbe8d6a2efc00aff4fd0acec600a7259774a8",
+      "specs/012-resumable-file-pass1-code-logic/contracts/deepseek-strict-result-submission.md": "abedf16a62553e2b0c13f4675029f69fca56121327910ece12afc1756f725f9e"
+    },
+    "owned_paths": [
+      "specs/012-resumable-file-pass1-code-logic/plan.md",
+      "specs/012-resumable-file-pass1-code-logic/research.md",
+      "specs/012-resumable-file-pass1-code-logic/data-model.md",
+      "specs/012-resumable-file-pass1-code-logic/quickstart.md",
+      "specs/012-resumable-file-pass1-code-logic/contracts/deepseek-strict-result-submission.md"
+    ]
+  },
+  "reviewed_artifacts": [
+    "AGENTS.md",
+    ".specify/memory/constitution.md",
+    "docs/UBIQUITOUS_LANGUAGE.md",
+    "docs/agent-workflow/state-machine.md",
+    "docs/agent-workflow/review-and-correction.md",
+    "docs/bmad/epics.md",
+    "docs/bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md",
+    "docs/bmad/planning-artifacts/architecture/august-30-bounded-scanning-design.md",
+    "docs/bmad/planning-artifacts/sprint-change-proposal-2026-08-24-deepseek-strict-result-submission.md",
+    "specs/012-resumable-file-pass1-code-logic/spec.md",
+    "specs/012-resumable-file-pass1-code-logic/plan.md",
+    "specs/012-resumable-file-pass1-code-logic/research.md",
+    "specs/012-resumable-file-pass1-code-logic/data-model.md",
+    "specs/012-resumable-file-pass1-code-logic/quickstart.md",
+    "specs/012-resumable-file-pass1-code-logic/contracts/deepseek-strict-result-submission.md",
+    "specs/012-resumable-file-pass1-code-logic/decisions/streaming-provider-correction-01.md",
+    "specs/012-resumable-file-pass1-code-logic/evidence/tdd/analysis-18.json",
+    "specs/012-resumable-file-pass1-code-logic/reviews/plan-review/plan-review-06.json",
+    "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedPass1JobExecutor.cs",
+    "tests/Vulgata.Tests/PreparedPass1/PreparedPass1JobExecutorStreamingTests.cs",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekStreamingQualificationTests.cs"
+  ],
+  "findings": [],
+  "summary": "ACCEPT. Independent plan-only review found no blocking finding, Critical/High issue, Constitution MUST violation, or unresolved authority conflict in the exact raw-SSE correction. The 16,777,216-byte per-response allowance is a user-approved Vulgata transport safety budget, calculated as the configured 32,768 MaxOutputTokens multiplied by a deliberately conservative local allowance of 512 serialized SSE bytes per generated token; official DeepSeek material supports max_tokens as a generated-token ceiling, streamed data-only SSE, and a model output maximum above 32,768, but does not guarantee the 512-byte factor, and the plan states that distinction accurately. The allowance is feasible at the current incremental RawResponseBoundedStream seam and does not authorize whole-response or cumulative raw buffering. The unchanged 131,072-byte assembled-response authority remains independently enforced over reasoning, content, and tool-call material, so increased framing/metadata tolerance cannot enlarge replayable assistant content, the 65,536-byte candidate, navigation evidence, outgoing request, turn, timeout, retry, lease, persistence, validation, or privacy boundaries. Exact-bound/plus-one public-executor tests, cancellation/no-later-send behavior, cancellation-callback failure classification, no-complete-raw-buffer proof, unchanged assembled 131,072/131,073 cases, and live requalification provide precise fail-closed seams. The observed old-cap ProviderRequestBoundExceeded/RawResponse failure with zero Documents is therefore addressed without weakening atomic commit or creating partial durable output. This is an architecture correction requiring this plan-review gate, but it does not match any additional AGENTS.md planned-change category: it neither adds or materially changes a Worker Agent tool, changes Scan parsing/filtering/scheduling/grouping/retry/dispatch strategy, nor conflicts with the PRD. The dispatch already carries explicit user approval for exactly 16,777,216 raw SSE bytes with all other safeguards unchanged, so ACCEPT advances without duplicate planned-change approval; task regeneration, complete definition review, implementation approval, TDD, convergence, quality review, conditional E2E, security/provider qualification, final verification, lifecycle, staging, and commit authority remain separate and unwaived. The nonrecursive diff identity is SHA-256 over UTF-8 sorted repository-path, tab, lowercase file-SHA-256 rows for the five owned paths, joined by LF with no trailing newline."
+}

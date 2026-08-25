@@ -1,0 +1,50 @@
+{
+  "evidence_id": "12-3/implement/134",
+  "kind": "command",
+  "status": "current",
+  "stage": "implement",
+  "task": "T163",
+  "source_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "command": "VULGATA_T083_SOURCE_FREE_HANDSHAKE=1; VULGATA_T062_WORKER_PROVIDER_API_KEY=<approved-inherited-secret>; <T084-live-flag-absent>; dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --no-restore -p:WarningLevel=0 --filter FullyQualifiedName=Vulgata.Tests.PreparedPass1.Pass1DeepSeekContractQualificationTests.SourceFreeHandshake_LiveBetaCapability_WritesSanitizedEvidenceAsync --logger console;verbosity=normal -clp:ErrorsOnly",
+  "execution": {
+    "network": "unrestricted outbound as explicitly approved",
+    "endpoint": "https://api.deepseek.com/beta",
+    "model": "deepseek-v4-flash",
+    "streaming": true,
+    "thinking_disabled": true,
+    "source_bearing": false,
+    "database": false
+  },
+  "result": {
+    "total": 1,
+    "passed": 1,
+    "failed": 0,
+    "skipped": 0,
+    "test_duration_seconds": 1,
+    "command_duration_seconds": 4.36,
+    "http_outcome": "Available",
+    "ordinary_submit_code_logic_call_observed": true,
+    "ordinary_done_observed": true,
+    "terminal_submit_code_logic_call_observed": true,
+    "terminal_done_observed": true,
+    "terminal_selected_function_name_matched": true
+  },
+  "terminal_projection": {
+    "message_count": 3,
+    "result_present": true,
+    "historical_protocol_absent": true,
+    "first_submission_correction": "InvalidSemantics/UseMinimalValidDocument",
+    "correction_source": "production PreparedPass1TerminalContextProjection",
+    "context_sha256": "C4B97B9BDC1914AAB7A571CAE8BDF7C11E77653B5379C0D098B604A11A7893B8",
+    "context_bytes": 788
+  },
+  "artifact": {
+    "path": "artifacts/qualification/story-12.3/deepseek-source-free-handshake.json",
+    "sha256": "18AE47A656C7FC25DB6BC8A3C3B947E02AF80653DA6CDFC5CAE33B737EA8D97D",
+    "task": "T163",
+    "status": "pass"
+  },
+  "privacy": "The two requests contained only fixed synthetic source-free input, strict function declarations, synthetic typed navigation-result metadata, and the closed correction pair. No repository source, packet identity, System/Repository/Scan/job/Document identity, function result, response/candidate/validator content, credential, or request body was persisted.",
+  "observed_at": "2026-08-25T16:10:08.8358085+08:00",
+  "summary": "The correction-bearing production terminal projector is compatible with DeepSeek beta streaming and completes both source-free strict requests with one observed tool call and DONE each."
+}

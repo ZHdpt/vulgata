@@ -1,0 +1,55 @@
+{
+  "schema_version": "1.0",
+  "gate": "definition-review",
+  "verdict": "ACCEPT",
+  "reviewed_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "reviewed_boundary": {
+    "base_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+    "candidate_commit": null,
+    "diff_sha256": "cdef2aa8179b3f2d3da1c84d86cba3e2e10bbb8d1ba7dd19649c49dd364e5b35",
+    "artifact_hashes": {
+      "specs/012-resumable-file-pass1-code-logic/spec.md": "c2fb00c34246ff0eb82428575778a3abd4d8098c124edf36d48666a41ccc8aea",
+      "specs/012-resumable-file-pass1-code-logic/plan.md": "27c356f7e798fec727d412635da07781e13998ec268a749b15fa13aac7ec6e1a",
+      "specs/012-resumable-file-pass1-code-logic/research.md": "ddc7ca1bb6db579b42555cabd2e15b46deeba91bd7701b0fc0557ce15dcd320a",
+      "specs/012-resumable-file-pass1-code-logic/data-model.md": "4153241bd1de2cc96f22fa98539ee7d171e85225701ae203f19d6938832eb54c",
+      "specs/012-resumable-file-pass1-code-logic/quickstart.md": "4d7a79458e2922f030ec2cba2dab50858d032e8132ce240b9f7023666a17a8da",
+      "specs/012-resumable-file-pass1-code-logic/contracts/deepseek-strict-result-submission.md": "09e6ef897a4ae132b008b6e97175eee842a5ba42367bfe86fded6254cf8c7360",
+      "specs/012-resumable-file-pass1-code-logic/contracts/pass1-runtime-contracts.md": "f3883b4d51c0cbaea52054f1ae90c654e116237c64304eda2465408478463ce4",
+      "specs/012-resumable-file-pass1-code-logic/contracts/navigate-code-contract.md": "ba5ba06edcf32a6a7ec82139795f060e1cd4dd0ae2eac7e3fb01fafc0c629d1c",
+      "specs/012-resumable-file-pass1-code-logic/evidence/research/deepseek-v4-current-best-practices-audit.md": "39870acedcccb40e9fbde5df6bf15b4ad67a7acff8b74cb606598ff1b00bfd65",
+      "specs/012-resumable-file-pass1-code-logic/evidence/tdd/failure-32.json": "98691d887608e28b4f8875cc2bf40379e77bf41a7de10ed0a1c5f3dbf8ded148",
+      "specs/012-resumable-file-pass1-code-logic/tasks.md": "7763603404cb2431dfea882a9722d48b71baf065d5a7f9d1635ff25fe8f45dde",
+      "specs/012-resumable-file-pass1-code-logic/reviews/plan-review/plan-review-19.json": "d08fbc6f811fade6a0d29ca0115b36eb9f7a1dda95816ce58345dd7159953dca"
+    }
+  },
+  "reviewed_artifacts": [
+    "AGENTS.md",
+    ".agents/skills/run-bmad-sprint-loop/SKILL.md",
+    "docs/bmad/epics.md",
+    "specs/012-resumable-file-pass1-code-logic/spec.md",
+    "specs/012-resumable-file-pass1-code-logic/plan.md",
+    "specs/012-resumable-file-pass1-code-logic/research.md",
+    "specs/012-resumable-file-pass1-code-logic/data-model.md",
+    "specs/012-resumable-file-pass1-code-logic/quickstart.md",
+    "specs/012-resumable-file-pass1-code-logic/contracts/deepseek-strict-result-submission.md",
+    "specs/012-resumable-file-pass1-code-logic/contracts/pass1-runtime-contracts.md",
+    "specs/012-resumable-file-pass1-code-logic/contracts/navigate-code-contract.md",
+    "specs/012-resumable-file-pass1-code-logic/tasks.md",
+    "specs/012-resumable-file-pass1-code-logic/reviews/plan-review/plan-review-19.json",
+    "specs/012-resumable-file-pass1-code-logic/evidence/research/deepseek-v4-current-best-practices-audit.md",
+    "specs/012-resumable-file-pass1-code-logic/evidence/tdd/failure-32.json",
+    "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedPass1JobExecutor.cs",
+    "tests/Vulgata.Tests/PreparedPass1/PreparedPass1JobExecutorStreamingTests.cs"
+  ],
+  "findings": [],
+  "closed_findings": [
+    "AD23-DR-001: provider turns are consistently mapped from the pinned SDK's zero-based FunctionInvocationContext.Iteration by adding one; turn-ten and post-ten behavior is explicit.",
+    "AD23-DR-002: an initially exhausted navigation budget enters the normal two-function provider conversation and supports direct submission or closed navigation results followed by submission."
+  ],
+  "residual_risks": [
+    "T125 must produce compile-clean behavioral RED evidence for capacities eight, one, and zero; ordered admitted prefixes; matching excess results; above-eight rejection; and zero-based iteration mapping.",
+    "T126 must remain confined to PreparedPass1JobExecutor.cs and preserve serial SDK-managed replay, durable reservation, local validation, privacy, time, byte, and retry bounds.",
+    "T127-T128 and fresh disposable-database T084-T086 qualification remain mandatory and ordered."
+  ],
+  "summary": "ACCEPT. Independent definition review found no blocking consistency, coverage, Constitution, ownership, ordering, or scope gap. T125 is an honest behavioral RED against the current initial-zero fallback, remaining-capacity whole-batch rejection, and turn-ten submission rule. T126 is the sole sufficient minimal GREEN owner. The serialized chain T125 through T086 preserves exact streamed DeepSeek wire behavior, complete SDK-managed replay, durable high-water eight, ten provider turns, no request eleven, and all source, privacy, database, and system boundaries."
+}

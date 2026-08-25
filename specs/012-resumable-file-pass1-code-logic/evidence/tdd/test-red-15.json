@@ -1,0 +1,26 @@
+{
+  "evidence_id": "12-3/implement/37",
+  "kind": "test-red",
+  "stage": "implement",
+  "source_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "artifact_paths": [
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekContractQualificationTests.cs",
+    "tests/Vulgata.Tests/PreparedPass1/DeepSeekSourceFreeHandshakeHarness.cs"
+  ],
+  "artifact_sha256": {
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekContractQualificationTests.cs": "34C1B8E6CADBBAF9469FECEB5A7A14D740E9A50857D3E9743DB7D2632AA77790"
+  },
+  "commands": [
+    "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --nologo --filter FullyQualifiedName~SourceFreeHandshake_UsesConfiguredBetaRouteAndFlashModel_WithExactlyTwoStrictDeclarationsAsync --logger console;verbosity=minimal -p:GenerateMvcTestManifest=false -clp:ErrorsOnly"
+  ],
+  "result": {
+    "exit_code": 1,
+    "failed": 1,
+    "passed": 0,
+    "skipped": 0,
+    "failure": "JsonElement.GetProperty(\"thinking\") threw KeyNotFoundException at line 766 because the source-free DeepSeek request omitted the bounded thinking control.",
+    "classification": "expected-bounded-source-free-request-red"
+  },
+  "observed_at": "2026-08-24T11:41:46.3585667Z",
+  "summary": "The local fake-wire contract test independently reproduced the diagnosed omission before any provider or network call: the source-free request did not serialize thinking.type=disabled; the paired max_tokens=16 assertion remains on the same contract boundary."
+}

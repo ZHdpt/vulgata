@@ -1,0 +1,63 @@
+{
+  "evidence_id": "12-3/implement/92",
+  "kind": "failure",
+  "stage": "implement",
+  "task": "T084",
+  "source_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "database": "vulgata_story123_t084_20260825_r18",
+  "provider_result": {
+    "outcome": "Rejected",
+    "reason_code": "unclassified-systemic",
+    "executor_category": "UnclassifiedSystemic",
+    "execution_category": "IllegalFunctionCall",
+    "function_call_subtype": "MultipleFunctions",
+    "submission_category": null,
+    "wire_budget_category": null,
+    "provider_http": null,
+    "duration_seconds": 30,
+    "jobs_attempted": 1,
+    "jobs_completed": 0,
+    "later_jobs_sent": false,
+    "endpoint": "https://api.deepseek.com/beta",
+    "model": "deepseek-v4-flash"
+  },
+  "request_identity": {
+    "response_format": "absent",
+    "tool_choice": "required",
+    "parallel_tool_calls": "absent",
+    "thinking": "disabled",
+    "stream": true,
+    "navigate_code_parameters_bytes": 1057,
+    "navigate_code_parameters_sha256": "779250FCFE72F07B59CBE280A0FF537FF7D622BFE847BCB616A39858705A1FDA",
+    "submit_code_logic_parameters_bytes": 13973,
+    "submit_code_logic_parameters_sha256": "3CD6F35EB8E6B6E7BEFBF802B2D3187823A0805A00B2ADFEC8A85082835DB20F"
+  },
+  "durable_no_effect": {
+    "job_state": "Running",
+    "attempt_count": 1,
+    "job_version": 1,
+    "tool_attempt_count": 0,
+    "accepted_navigation_count": 0,
+    "evidence_bytes": 0,
+    "maximum_depth": 0,
+    "budget_state_version": 0,
+    "receipt_count": 0,
+    "document_count": 0
+  },
+  "diagnosis": "DeepSeek accepted the exact source-free-qualified streamed non-thinking required-tool request and returned more than one complete logical function call. Microsoft.Extensions.AI.OpenAI assembles fragmented streaming tool deltas by call index and emits each complete FunctionCallContent once after the provider stream, so this was not a stream-fragment double-count. The current whole-turn preflight accepted bounded all-navigation batches but rejected every other multi-call topology before FICC. The retained payload-free subtype does not distinguish mixed navigation/submission, multiple submissions, invalid or duplicate call identity, or navigation over-budget; that closed diagnostic gap must be corrected locally before another source-bearing retry.",
+  "excluded_causes": [
+    "provider HTTP rejection",
+    "schema capability or declaration drift",
+    "network failure",
+    "streaming inactivity or absolute timeout",
+    "stream-fragment double-count",
+    "wire-budget overflow",
+    "submission validation",
+    "database failure",
+    "host or system configuration"
+  ],
+  "required_correction": "Keep T085 blocked. Add bounded payload-free preflight topology categories and fake tests first, then revise the application policy for provider-valid one-or-more declared calls without weakening durable navigation, two-submission, local-validation, privacy, or ten-turn limits. Rerun the source-free gate and use a new disposable clone for any renewed T084; do not alter host or system configuration.",
+  "privacy": "The provider received only the approved job-1 bounded source/context. No credential, header, request/response body, source, prompt, function name, call ID, count, argument/result, reasoning, free-form content, validator detail, or host path was logged or persisted. Jobs 2 and 3 were not sent. The database inspection retained only durable counters and states.",
+  "observed_at": "2026-08-25T08:07:18.6944309+08:00",
+  "summary": "T084 r18 confirms a provider-successful, fully streamed multi-call response still falls outside the accepted Vulgata batch policy. It is a repository protocol-policy/diagnostic gap, not an environment or network failure, and the disposable database remains effect-free."
+}

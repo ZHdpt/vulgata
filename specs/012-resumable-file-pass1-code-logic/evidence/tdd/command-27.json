@@ -1,0 +1,58 @@
+{
+  "evidence_id": "12-3/implement/127",
+  "kind": "command",
+  "status": "current",
+  "stage": "implement",
+  "task": "T153",
+  "source_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "command": "require inherited VULGATA_T062_WORKER_PROVIDER_API_KEY without displaying it; set VULGATA_T083_SOURCE_FREE_HANDSHAKE=1; remove T084 opt-in; dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter \"FullyQualifiedName=Vulgata.Tests.PreparedPass1.Pass1DeepSeekContractQualificationTests.SourceFreeHandshake_LiveBetaCapability_WritesSanitizedEvidenceAsync\" --logger \"console;verbosity=minimal\" -clp:ErrorsOnly",
+  "result": {
+    "total": 1,
+    "passed": 1,
+    "failed": 0,
+    "skipped": 0,
+    "duration_seconds": 1,
+    "wall_seconds": 5.439,
+    "exit_code": 0
+  },
+  "request_contract": {
+    "endpoint": "https://api.deepseek.com/beta",
+    "model": "deepseek-v4-flash",
+    "streaming": true,
+    "thinking": "disabled",
+    "absolute_cap_minutes": 25,
+    "source_free": true
+  },
+  "observed": {
+    "outcome": "Available",
+    "ordinary_tool_call_observed": true,
+    "ordinary_done_observed": true,
+    "terminal_tool_call_observed": true,
+    "terminal_done_observed": true,
+    "terminal_selected_function_name_matched": true,
+    "terminal_message_count": 3,
+    "terminal_result_present": true,
+    "terminal_historical_protocol_absent": true,
+    "terminal_prompt_sha256": "6DAB71BD6825C31C0A6ECAFC889B56563BDF4C8B3BC6803BBEE9307B3FD13E64",
+    "terminal_prompt_bytes": 7543,
+    "terminal_context_sha256": "BC61FD23BD1A7A01EF5097124CC1DAF708D325E522367F776C9690A35261CEE3",
+    "terminal_context_bytes": 710
+  },
+  "artifact": {
+    "path": "artifacts/qualification/story-12.3/deepseek-source-free-handshake.json",
+    "sha256": "B8C8BACC91E1C4A4C8102E04570C14804DFF9D9BCB25CFB67704796285C7136C",
+    "task": "T153",
+    "status": "pass"
+  },
+  "privacy": {
+    "source_derived_payload_sent": false,
+    "repository_or_scan_identifiers_sent": false,
+    "postgresql_accessed": false,
+    "request_content_persisted": false,
+    "response_content_persisted": false,
+    "credential_persisted": false,
+    "system_change": false
+  },
+  "observed_at": "2026-08-25T14:17:48.9362636+08:00",
+  "summary": "T153 proves current DeepSeek V4 Flash streaming compatibility for both ordinary synthetic history and the production history-free terminal projection before any source-bearing qualification."
+}

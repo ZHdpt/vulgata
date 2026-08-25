@@ -1,0 +1,115 @@
+{
+  "schema_version": "story-12.3-streaming-provider-correction/1.0",
+  "evidence_id": "story-12-3/e2e/07-streaming-provider-correction",
+  "observed_at_utc": "2026-08-24T03:04:35.6403795Z",
+  "branch": "demo0831/story-12-3",
+  "source_head": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "authorization": {
+    "source_payload_transmission_authorized": true,
+    "endpoint": "https://api.deepseek.com",
+    "model": "deepseek-v4-flash",
+    "credential_persisted": false,
+    "stream_chunks_persisted": false,
+    "reasoning_persisted": false,
+    "tool_arguments_persisted": false,
+    "raw_provider_content_persisted": false
+  },
+  "correction": {
+    "streaming_enabled": true,
+    "inactivity_timeout_minutes": 5,
+    "absolute_timeout_minutes": 25,
+    "sdk_retries": 0,
+    "whole_response_http_timeout_disabled": true,
+    "provider_executor_sha256": "0CDC77D91FE45CB1DF111DD8C649F55D5FBBA484D3C3CB95D0DA10D07571B63B",
+    "streaming_tests_sha256": "E49C811EBECDBD23944F9C420B2ED86A2C2A215230AF5546F35AEBCDCBDC78A1",
+    "qualification_test_sha256": "88E55FFF47B017C63C65986BD48BC432FB32B61AA6C369F6BB0E59AFE781D195"
+  },
+  "local_verification": {
+    "focused_and_surrounding": {
+      "passed": 36,
+      "failed": 0,
+      "skipped": 1,
+      "skip_reason": "Live qualification environment variables were intentionally absent from the local regression process."
+    },
+    "closed_diagnostic_classifier": {
+      "passed": 8,
+      "failed": 0
+    },
+    "build_errors": 0,
+    "warnings": "Existing NU1507 package-source and Entity Framework assembly-version warnings remain.",
+    "git_diff_check": "passed"
+  },
+  "live_probes": {
+    "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter FullyQualifiedName=Vulgata.Tests.PreparedPass1.Pass1DeepSeekContractQualificationTests.ApprovedFileCodeUnit_DeepSeekResponse_IsSchemaValidAtDispatcherSeamAsync --no-restore --no-build --logger console;verbosity=normal",
+    "unrestricted_outbound": true,
+    "attempts": [
+      {
+        "ordinal": 1,
+        "duration": "00:04:41",
+        "transport_timeout": false,
+        "outcome": "Rejected",
+        "reason_code": "worker-result-rejected"
+      },
+      {
+        "ordinal": 2,
+        "duration": "00:03:41",
+        "transport_timeout": false,
+        "outcome": "Rejected",
+        "reason_code": "worker-result-rejected"
+      },
+      {
+        "ordinal": 3,
+        "duration": "00:03:30",
+        "transport_timeout": false,
+        "outcome": "Rejected",
+        "reason_code": "worker-result-rejected"
+      },
+      {
+        "ordinal": 4,
+        "duration": "00:04:44",
+        "transport_timeout": false,
+        "outcome": "Rejected",
+        "reason_code": "worker-result-rejected",
+        "diagnostic": "semantic-property-shape"
+      },
+      {
+        "ordinal": 5,
+        "duration": "00:05:24",
+        "transport_timeout": false,
+        "outcome": "Rejected",
+        "reason_code": "worker-result-rejected",
+        "diagnostic": "semantic-property-shape"
+      },
+      {
+        "ordinal": 6,
+        "duration": "00:04:19",
+        "transport_timeout": false,
+        "outcome": "Rejected",
+        "reason_code": "worker-result-rejected",
+        "diagnostic": "semantic-uuid"
+      }
+    ],
+    "summary": "All six requests completed beyond the old fixed timeout without an inactivity, absolute-cap, network, host, database, or provider-availability failure. The closed diagnostics varied between property-shape and UUID violations, proving nondeterministic strict-contract noncompliance rather than one stable malformed field. No final result passed the strict code-logic/file-v2 dispatcher seam.",
+    "non_probe_skip": "One attempted diagnostic invocation used stale aggregate environment-variable names and skipped before host setup or provider contact; it is not counted above."
+  },
+  "full_t062": {
+    "started": false,
+    "reason": "The required isolated probe gate was 0 of 3. Starting 150 jobs would consume the ordinary-failure budget without identifying the semantic rejection category."
+  },
+  "diagnostic": {
+    "prepared": true,
+    "live_request_sent": true,
+    "privacy_boundary": "A test-only decorator retains only the bounded final aggregated result in memory, classifies it into a closed diagnostic category, then zeroes the copy. It does not record stream chunks, reasoning, tool arguments, source, prompts, credentials, or raw transport bodies."
+  },
+  "provider_capability": {
+    "normal_endpoint": "https://api.deepseek.com",
+    "normal_endpoint_response_constraint": "response_format type json_object is already active in production and guarantees JSON output only, not code-logic/file-v2 semantic conformance.",
+    "strict_function_schema_endpoint": "https://api.deepseek.com/beta",
+    "strict_function_schema_status": "Provider configuration change and a new Worker final-submission tool would be required; neither was attempted.",
+    "official_sources": [
+      "https://api-docs.deepseek.com/guides/json_mode",
+      "https://api-docs.deepseek.com/guides/tool_calls"
+    ]
+  },
+  "result": "provider-configuration-decision-required"
+}

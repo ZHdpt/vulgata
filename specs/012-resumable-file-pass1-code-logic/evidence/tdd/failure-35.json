@@ -1,0 +1,69 @@
+{
+  "evidence_id": "12-3/implement/109",
+  "kind": "failure",
+  "stage": "implement",
+  "task": "T084",
+  "attempt": "r22",
+  "source_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "database": "vulgata_story123_t084_20260825_r22",
+  "database_template": "vulgata_story121_feffce36e44c48238a6e55c6742c374c",
+  "command": "VULGATA_T084_ISOLATED_SOURCE_JOBS=1 VULGATA_T062_QUALIFICATION_CONNECTION=<fresh-r22-disposable-database> VULGATA_T062_WORKER_PROVIDER_API_KEY=<present-secret> <approved-source-and-runtime-bindings> dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --no-restore --nologo --filter FullyQualifiedName=Vulgata.Tests.PreparedPass1.Pass1DeepSeekIsolatedSourceQualificationTests.ThreeIsolatedSourceJobs_CompleteCommitAndReplayWithoutLeakingPayloadsAsync --logger console;verbosity=normal -p:GenerateMvcTestManifest=false -clp:ErrorsOnly",
+  "result": {
+    "passed": 0,
+    "failed": 1,
+    "skipped": 0,
+    "total": 1,
+    "duration_seconds": 36,
+    "failed_at_job": 1,
+    "source_kind": "xml"
+  },
+  "sanitized_failure": {
+    "outcome": "Rejected",
+    "reason": "unclassified-systemic",
+    "executor_category": "UnclassifiedSystemic",
+    "execution_category": "IllegalFunctionCall",
+    "function_call_subtype": "TerminalTurnRequiresSubmission",
+    "submission_category": "none",
+    "wire_budget_category": "none",
+    "provider_http": "none",
+    "tool_choice": "named-submit",
+    "response_format": "absent",
+    "parallel_tool_calls": "absent"
+  },
+  "job_scoped_postgresql": {
+    "job_id": "7bdfceac-a6ec-8470-9104-2a1ecd111866",
+    "pair_execution_id": "e8027a57-62dd-8564-9989-e3ad1e26627a",
+    "job_state": "Running",
+    "attempt_count": 1,
+    "job_state_version": 1,
+    "tool_attempt_count": 8,
+    "remaining_navigation_capacity": 0,
+    "accepted_call_count": 0,
+    "evidence_bytes": 0,
+    "maximum_depth_observed": 0,
+    "budget_state_version": 8,
+    "receipt_count": 0,
+    "committed_document_present": false,
+    "pass1_outcome_count": 0
+  },
+  "qualified_source_free_gate": {
+    "artifact": "artifacts/qualification/story-12.3/deepseek-source-free-handshake.json",
+    "artifact_sha256": "5232822827D90F4D88C73D73E9416E378F2DC03946FB3D63F56CA4CF22E6C08E",
+    "ordinary_required_call_and_done": true,
+    "terminal_named_submit_call_and_done": true,
+    "terminal_selected_name_matched": true,
+    "source_free": true,
+    "response_retained": false
+  },
+  "excluded_causes": [
+    "endpoint, model, authentication, network, provider availability, and HTTP failure",
+    "strict declarations, disabled-thinking request composition, streaming, timeout, and wire-budget failure",
+    "PostgreSQL availability, host, and system configuration failure",
+    "request-ten named-submit serialization or request-eleven drift"
+  ],
+  "remaining_unknown": "The payload-free terminal subtype does not distinguish a response containing more than one submit_code_logic call from a response containing navigation, mixed, unknown, or otherwise non-submission calls. No response body, call name, call count, call identity, arguments, or content was retained, so the exact topology cannot be inferred from r22.",
+  "required_next_step": "Keep T084/T085 blocked. Add one fixed payload-free terminal-multiple-submissions subtype with deterministic precedence and behavioral RED/GREEN, then retry T084 only on a fresh disposable clone. If the subtype proves multiple named submissions, assess a provider-supported single-call control or a locally safe whole-response submission policy against current DeepSeek and pinned Microsoft.Extensions.AI contracts before changing execution behavior.",
+  "privacy": "No provider response body, function-call identity/arguments/result, reasoning, assistant content, source bytes, prompt packet, credential, request body, or host path was retained. Only fixed categories, database scalars, and prior source-free Boolean/hash evidence were recorded. Only the approved repositories were read; only bounded current-job source/context was sent; only r22 was mutated; no host or system setting changed.",
+  "recorded_at": "2026-08-25T11:01:07.0215895+08:00",
+  "summary": "T084 r22 reached request ten with exact named-submit selection after consuming all eight durable navigation reservations, then failed closed under an intentionally coarse terminal topology subtype. Environment, network, provider availability, request-shape, timeout, database, host, and system causes are excluded; a payload-free topology split is required before choosing a fix."
+}

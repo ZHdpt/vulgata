@@ -1,0 +1,51 @@
+{
+  "review_id": "story-12-3-definition-review-44",
+  "mode": "definition",
+  "verdict": "REVISE",
+  "implementation_authorized": false,
+  "source_checkpoint": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "reviewed_hashes": {
+    "spec.md": "3412704EB3A6C71BF062C4FBAD2E8FA12B0DBDDDDAB80FDBBBC1F6FAAF8E81DA",
+    "plan.md": "EF966A8045F10D1D85812B4E8789FA83DFBFB1A08D9A5670E5A83C00B58306FE",
+    "research.md": "DDB71AF7BE7D97D64839668434555A11829A86A279AAC62FAEFC7AAFF9FFC6A7",
+    "data-model.md": "25B5EA3C5A00A9774B6E3976BCE0D3DC03452942274C64AA033AE928D37A201F",
+    "tasks.md": "B3C10268FBD8B630765E8DEE73D0C69648D62586F64016AFCE7D47FE8FECAF80",
+    "reviews/definition-review/definition-review-43.json": "8D422BF4EE805C4C6DF3BAD10D051CEA10AE87112459950332AD570A2003FCCD"
+  },
+  "task_metrics": {
+    "total": 180,
+    "unique_ids": 180,
+    "pending": 7,
+    "pending_ids": ["T085", "T086", "T176", "T177", "T178", "T179", "T180"]
+  },
+  "prior_finding_dispositions": [
+    {
+      "finding_id": "AD32-DR-001",
+      "status": "CLOSED",
+      "evidence": "AD-31 self-review is completed history and routes reused T085/T086 only through AD-32 T180."
+    }
+  ],
+  "findings": [
+    {
+      "finding_id": "AD32-DR-002",
+      "severity": "HIGH",
+      "earliest_owner": "tasks",
+      "summary": "The AD-27 historical summary still declared the superseded AD-31 route current.",
+      "correction": "Make the AD-27 route wholly historical and point current authority only to the header and AD-32 section."
+    }
+  ],
+  "closed_checks": [
+    "All AD-32 behavior, TDD, ownership, privacy, and qualification checks remain sound.",
+    "AD32-DR-001 is fully closed."
+  ],
+  "residual_proof_obligations": [
+    "Correct AD32-DR-002 and rerun the definition gate.",
+    "After acceptance, complete T176 and observe T177 RED before T178."
+  ],
+  "residual_risks": [
+    "Receipt recording must remain post-return and execution-local.",
+    "Provider variability remains bounded by qualification."
+  ],
+  "summary": "REVISE. One stale AD-27 historical summary must stop declaring an obsolete current chain.",
+  "repository_actions_performed": false
+}

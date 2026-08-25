@@ -1,0 +1,34 @@
+{
+  "evidence_id": "12-3/implement/114",
+  "kind": "test-red",
+  "status": "current",
+  "stage": "implement",
+  "task": "T141",
+  "source_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore -p:WarningLevel=0 --filter \"FullyQualifiedName~PreparedPass1JobExecutorStreamingTests.ExecuteAsync_TurnTenNavigation_ReportsTerminalNavigationAsync|FullyQualifiedName~PreparedPass1JobExecutorStreamingTests.ExecuteAsync_TurnTenMixedFunctions_ReportsTerminalMixedFunctionsAsync|FullyQualifiedName~PreparedPass1JobExecutorStreamingTests.ExecuteAsync_TurnTenMultipleNavigations_ReportsTerminalMultipleNavigationsAsync|FullyQualifiedName~PreparedPass1JobExecutorStreamingTests.ExecuteAsync_TurnTenTwoSubmissions_UsesDistinctTerminalTopologySubtypeAsync|FullyQualifiedName~PreparedPass1JobExecutorStreamingTests.IllegalFunctionCallSubtype_SeparatesTurnDefenseBranchesByDistinctMembers|FullyQualifiedName~PreparedPass1JobExecutorStreamingTests.ExecuteAsync_ProviderTurnTen_MapsSdkIterationNineAndTerminatesWithoutRequestElevenAsync\" --logger \"console;verbosity=minimal\"",
+  "result": {
+    "total": 8,
+    "passed": 5,
+    "failed": 3,
+    "skipped": 0,
+    "duration_seconds": 0.537,
+    "exit_code": 1,
+    "build_errors": 0,
+    "warnings": "existing NU1507 package-source and MSB3277 Entity Framework assembly-version warnings only"
+  },
+  "observed_red": [
+    { "test": "ExecuteAsync_TurnTenNavigation_ReportsTerminalNavigationAsync", "expected": "TerminalNavigation", "actual": "TerminalTurnRequiresSubmission", "line": 858 },
+    { "test": "ExecuteAsync_TurnTenMultipleNavigations_ReportsTerminalMultipleNavigationsAsync", "expected": "TerminalMultipleNavigations", "actual": "TerminalTurnRequiresSubmission", "line": 900 },
+    { "test": "ExecuteAsync_TurnTenMixedFunctions_ReportsTerminalMixedFunctionsAsync", "expected": "TerminalMixedFunctions", "actual": "TerminalTurnRequiresSubmission", "line": 784 }
+  ],
+  "passed_controls": "defense-only enum member exists; terminal multiple submissions remain distinct; sole terminal submission, SDK iteration-nine mapping, and no request eleven remain unchanged",
+  "effects": "all three failing topologies produced zero navigation callback, reservation, receipt, candidate, submission invocation, and later request",
+  "files": {
+    "tests/Vulgata.Tests/PreparedPass1/PreparedPass1JobExecutorStreamingTests.cs": "1A60270C0EC721729A162B6CAE9336991926388F4A4B5F4A556B3111717662E1",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekIsolatedSourceQualificationTests.cs": "9D91ADA53EC73ED7A6AD13B677533E4A61DED5DCFB51075438C9FDD6A71958DD",
+    "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedPass1JobExecutor.cs": "014A1328ADA482CF80B9BFC9C2923F3E56A0DCB8FBCC91092119E0CF9C4CE043"
+  },
+  "privacy": "No provider, source, database, network, host, system, call payload, function argument/result, response content, reasoning, or credential was accessed or retained. Production remained byte-pinned.",
+  "observed_at": "2026-08-25T11:38:55.1762301+08:00",
+  "summary": "T141 is an honest compile-clean behavioral RED: exactly the three accepted terminal navigation-bearing topology expectations fail against the current catch-all, while five precedence and termination controls pass."
+}

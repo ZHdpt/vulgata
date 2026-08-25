@@ -1,0 +1,36 @@
+{
+  "evidence_id": "12-3/implement/39",
+  "kind": "command",
+  "stage": "implement",
+  "source_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "artifact_paths": [
+    "artifacts/qualification/story-12.3/deepseek-source-free-handshake.json",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekContractQualificationTests.cs",
+    "tests/Vulgata.Tests/PreparedPass1/DeepSeekSourceFreeHandshakeHarness.cs"
+  ],
+  "artifact_sha256": {
+    "artifacts/qualification/story-12.3/deepseek-source-free-handshake.json": "66C462AC365ADC283D45FC51766E63AEAD9F70D208A2E246E1EE03CDEAD42350",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekContractQualificationTests.cs": "34C1B8E6CADBBAF9469FECEB5A7A14D740E9A50857D3E9743DB7D2632AA77790",
+    "tests/Vulgata.Tests/PreparedPass1/DeepSeekSourceFreeHandshakeHarness.cs": "4EB01BD982375AA59A23A156B33F34D9EC812154664533AA4977C424D0F0CE47"
+  },
+  "commands": [
+    "$env:VULGATA_T083_SOURCE_FREE_HANDSHAKE='1'; dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --nologo --filter FullyQualifiedName~SourceFreeHandshake_LiveBetaCapability_WritesSanitizedEvidenceAsync --logger console;verbosity=minimal -p:GenerateMvcTestManifest=false"
+  ],
+  "result": {
+    "exit_code": 0,
+    "passed": 1,
+    "failed": 0,
+    "skipped": 0,
+    "duration_ms": 685,
+    "provider_outcome": "Available",
+    "endpoint": "https://api.deepseek.com/beta",
+    "model": "deepseek-v4-flash",
+    "request_sha256": "FA8255A9AF55771BF31D0AD28B18AA307A69A89CADCA65FF0687CFA1C48EC402",
+    "request_bytes": 30202,
+    "source_derived_payload_sent": false,
+    "response_content_persisted": false,
+    "qualification_disposition": "T083 GREEN; T084 isolated 3-of-3 source-bearing qualification is the next ordered gate"
+  },
+  "observed_at": "2026-08-24T11:42:54.9363251Z",
+  "summary": "One unrestricted outbound source-free DeepSeek beta handshake passed with the approved bounded request. The sanitized artifact proves the current endpoint, authentication, network, model, strict declarations, and streaming capability without persisting source, request/response content, or credentials."
+}

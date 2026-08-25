@@ -1,0 +1,59 @@
+{
+  "evidence_id": "12-3/implement/51",
+  "kind": "failure",
+  "stage": "implement",
+  "source_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "artifact_paths": [
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekIsolatedSourceQualificationTests.cs",
+    "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedPass1JobExecutor.cs"
+  ],
+  "artifact_sha256": {
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekIsolatedSourceQualificationTests.cs": "D29CE179C4402A922046D8D3EC43BAC0998A63B9BCB17FCA049B2E71D0E9DF58",
+    "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedPass1JobExecutor.cs": "F16AD68DBDB8BF7F926BC0F6C16FED3AC37A6A4EE6EF85B77D0D341C4B504789"
+  },
+  "qualification": {
+    "task": "T084",
+    "database_alias": "vulgata_story123_t084_20260824_r9",
+    "provider_endpoint_authority": "https://api.deepseek.com",
+    "provider_model": "deepseek-v4-flash",
+    "streaming": true,
+    "attempted_source_jobs": 1,
+    "unattempted_source_jobs": 2,
+    "duration_seconds": 52,
+    "source_kind": ".xml",
+    "dispatch_outcome": "Rejected",
+    "dispatcher_reason": "worker-result-rejected",
+    "executor_category": "ProviderRequestBoundExceeded",
+    "execution_category": null,
+    "wire_budget_category": "AssembledResponse",
+    "submission_category": null
+  },
+  "durable_postmortem": {
+    "pending_jobs": 149,
+    "running_jobs": 1,
+    "logical_documents": 0,
+    "document_versions": 0,
+    "navigation_receipts": 0
+  },
+  "result": {
+    "root_cause": "DeepSeek's successful streamed thinking response exceeded the unchanged 131072-byte assembled reasoning/content/tool-call ceiling before submit_code_logic finalization.",
+    "not_root_cause": [
+      "the corrected 16777216-byte raw SSE transport ceiling",
+      "provider HTTP/client rejection",
+      "illegal or parallel function calls",
+      "submission validation",
+      "DNS, TCP, TLS, authentication, endpoint availability, PostgreSQL, inactivity timeout, or the 25-minute absolute timeout"
+    ],
+    "authority_conflict": "The accepted correction explicitly authorized only the 16777216-byte raw SSE limit and required the 131072-byte assembled, per-assistant, and outgoing bounds to remain unchanged. A further transcript-budget change needs a new reviewed design and explicit approval.",
+    "provider_constraint": "DeepSeek's official thinking-mode contract requires complete reasoning_content replay after tool calls, so discarding or truncating reasoning is not a valid workaround.",
+    "privacy": "Only closed enum categories and aggregate counts were observed. No API key, source bytes, prompt, reasoning, tool arguments, raw stream, response body, identifiers, paths, exception messages, or provider payload was logged or persisted.",
+    "atomicity": "No Document, Document Version, or navigation receipt was committed; later jobs were not claimed."
+  },
+  "commands": [
+    "VULGATA_T084_ISOLATED_SOURCE_JOBS=1 VULGATA_T062_QUALIFICATION_CONNECTION=<fresh-r9-disposable-database> VULGATA_T062_WORKER_PROVIDER_API_KEY=<present-secret> <approved-source-and-runtime-bindings> dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --nologo --filter FullyQualifiedName=Vulgata.Tests.PreparedPass1.Pass1DeepSeekIsolatedSourceQualificationTests.ThreeIsolatedSourceJobs_CompleteCommitAndReplayWithoutLeakingPayloadsAsync --logger console;verbosity=normal -p:GenerateMvcTestManifest=false -clp:ErrorsOnly",
+    "docker exec vulgata-postgres psql -U vulgata -d <fresh-r9-disposable-database> <aggregate-only-postmortem-query>"
+  ],
+  "next_step": "Keep T085 blocked. Review and approve a bounded transcript-budget correction before changing the assembled, assistant-replay, or outgoing request limits; then use RED/GREEN and a new disposable clone.",
+  "observed_at": "2026-08-24T14:35:28.1032650Z",
+  "summary": "The raw transport correction works, and the sanitized diagnostic retry exposes the next independent blocker: the local 128 KiB assembled response cap is too small for DeepSeek thinking-mode tool use."
+}

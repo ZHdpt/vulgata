@@ -1,0 +1,29 @@
+{
+  "evidence_id": "12-3/implement/22",
+  "kind": "test-green",
+  "stage": "implement",
+  "source_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "artifact_paths": [
+    "src/dotnet/Vulgata.Agents/WorkerExecution/DeepSeekStrictSchemaProjector.cs",
+    "src/dotnet/Vulgata.Agents/Vulgata.Agents.csproj",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekContractQualificationTests.cs"
+  ],
+  "artifact_sha256": {
+    "src/dotnet/Vulgata.Agents/WorkerExecution/DeepSeekStrictSchemaProjector.cs": "c9933159eb2695f337728503aa07e483dd8b8748daa8666271df0999b09e26b1",
+    "src/dotnet/Vulgata.Agents/Vulgata.Agents.csproj": "fb964615fe5d777d09edc66e55a02e3eb201cf309c8d5aec0c22ce2d3f658970",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekContractQualificationTests.cs": "bc94de47ec3c7daf325ad5975d87deaa5f0cd9b188d154e7cbcfdd5d3e9f64c3"
+  },
+  "commands": [
+    "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter FullyQualifiedName~Pass1DeepSeekContractQualificationTests --no-restore --nologo --logger console;verbosity=minimal -p:GenerateMvcTestManifest=false",
+    "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter FullyQualifiedName~CodeLogicFileV2SchemaTests --no-restore --nologo --logger console;verbosity=minimal -p:GenerateMvcTestManifest=false",
+    "dotnet build src/dotnet/Vulgata.Agents/Vulgata.Agents.csproj --no-restore --nologo"
+  ],
+  "result": {
+    "focused": "39 passed, 0 failed, 1 intentional live-host skip; all 21 schema mutations discovered and fail closed",
+    "surrounding_schema_parser": "18 passed, 0 failed, 0 skipped",
+    "build": "0 errors, 7 existing package-source and EF assembly-version warnings",
+    "diff_check": "passed"
+  },
+  "observed_at": "2026-08-24T06:21:40.7890852Z",
+  "summary": "T071 derives one fully inlined strict document wrapper from the exact embedded authoritative schema, permits only the two hash-bound local conditional omissions, fails closed on drift, and keeps the complete local code-logic/file-v2 validator authoritative."
+}

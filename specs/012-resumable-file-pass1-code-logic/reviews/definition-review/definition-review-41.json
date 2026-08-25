@@ -1,0 +1,54 @@
+{
+  "review_id": "story-12-3-definition-review-41",
+  "mode": "definition",
+  "verdict": "ACCEPT",
+  "implementation_authorized": true,
+  "source_checkpoint": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "reviewed_hashes": {
+    "spec.md": "31411747F87B3890C83223B331B3E32FD5064CD0B47D18EB0D4B66FA2ABCF249",
+    "plan.md": "39F3850DB4F0E761C7D6E08696E6066F7B120C42F26F3D211B5B0B5C16347C59",
+    "research.md": "8660446313001E0707E071A5E5B29E215407077A5FDE2FCDB798D94BFADB7D8D",
+    "data-model.md": "25B5EA3C5A00A9774B6E3976BCE0D3DC03452942274C64AA033AE928D37A201F",
+    "tasks.md": "CF0450ED09FE52A98BFEFC4D4C055338F27C5CBE6BD50F200B1677483FBAEC9A",
+    "definition-review-39.json": "38C34243E986CBF27D8035C5B578D774467DCF34033B4BA9C60CEED6DA9B2624",
+    "definition-review-40.json": "77069F14CB915AEA5FD1F8AD9A6F41178EE0F786DA1BD53D1CA921A15F23DC31",
+    "plan-review-31.json": "F797814CFD15D361B30B1C55427C2940F7E3284971C5410B434B034C1036402D",
+    "failure-41.json": "7516B3D3A80E11BC83FD2624A32F0EAA898D69DC92FD1272680F668C5DA980DE",
+    "analysis-23.json": "B3924C6B912021B3E4104E8AB0E81E11D1802E056B608DBBE56C6170F347DF5E",
+    "Pass1CodeLogicDocumentCommitter.cs": "F0F3C5A287E8111CD507B354A9D505C3F28D75F1DC21F6C939A0E39110F30975",
+    "Pass1DocumentPostgreSqlAtomicTests.cs": "EA116DFE1DF4E2DFB041BC8E235B80211C3C6774CEC6C86327829296239EAFF0"
+  },
+  "task_metrics": {
+    "total_tasks": 175,
+    "unique_task_ids": 175,
+    "checked_tasks": 168,
+    "pending_task_ids": ["T085", "T086", "T171", "T172", "T173", "T174", "T175"],
+    "current_order": ["T171", "T172", "T173", "T174", "T175", "T085", "T086"],
+    "functional_requirements": 64,
+    "success_criteria": 15,
+    "placeholder_count": 0
+  },
+  "finding_dispositions": [
+    { "id": "AD31-DR-001", "status": "CLOSED" },
+    { "id": "AD31-DR-002", "status": "CLOSED" }
+  ],
+  "findings": [],
+  "closed_checks": [
+    "The sole current chain is unambiguous and contains exactly seven pending tasks.",
+    "T172 is an honest public PostgreSQL RED and T173 solely owns the minimal committer GREEN.",
+    "None/subset/all cited, supplied-row drift, cited-unsupplied precedence, zero mutation, and exact replay are covered.",
+    "T174 is verification-only and T175 precedes restarted T085 and T086.",
+    "No schema, migration, parser, prompt, provider, retry, source-scope, host, network, system, later-story, lifecycle, or Git expansion is authorized."
+  ],
+  "residual_proof_obligations": [
+    "Complete T171, then record T172 RED before any production edit.",
+    "Implement only T173's supplied-set query and cited-subset defense.",
+    "Complete T174, T175, T085, and T086 in order."
+  ],
+  "residual_risks": [
+    "The cited-membership defense remains shadowed by parser validation.",
+    "Packet uniqueness/canonicality remains upstream authority.",
+    "Provider variability cannot replace PostgreSQL proof."
+  ],
+  "summary": "ACCEPT. The corrected AD-31 definition is coherent, test-first, privately bounded, and implementation-ready; T171 may begin."
+}

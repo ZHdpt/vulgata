@@ -1,0 +1,64 @@
+{
+  "review_id": "story-12-3-definition-review-39",
+  "mode": "definition",
+  "verdict": "REVISE",
+  "implementation_authorized": false,
+  "source_checkpoint": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "reviewed_hashes": {
+    "spec.md": "31411747F87B3890C83223B331B3E32FD5064CD0B47D18EB0D4B66FA2ABCF249",
+    "plan.md": "39F3850DB4F0E761C7D6E08696E6066F7B120C42F26F3D211B5B0B5C16347C59",
+    "research.md": "8660446313001E0707E071A5E5B29E215407077A5FDE2FCDB798D94BFADB7D8D",
+    "data-model.md": "25B5EA3C5A00A9774B6E3976BCE0D3DC03452942274C64AA033AE928D37A201F",
+    "tasks.md": "33FF7389BCDA87C2E76B156D0345BD759FCCBACBC8AD5002B6D09385604D986E",
+    "reviews/plan-review/plan-review-31.json": "F797814CFD15D361B30B1C55427C2940F7E3284971C5410B434B034C1036402D"
+  },
+  "task_metrics": {
+    "total_tasks": 175,
+    "unique_task_ids": 175,
+    "checked_tasks": 168,
+    "unchecked_task_ids": ["T085", "T086", "T171", "T172", "T173", "T174", "T175"],
+    "expected_active_chain": ["T171", "T172", "T173", "T174", "T175", "T085", "T086"],
+    "functional_requirements": 64,
+    "success_criteria": 15,
+    "placeholder_count": 0
+  },
+  "prior_finding_dispositions": [
+    { "id": "AD31-PR-001", "status": "CLOSED" },
+    { "id": "AD31-PR-002", "status": "CLOSED" },
+    { "id": "AD31-PR-003", "status": "CLOSED" }
+  ],
+  "findings": [
+    {
+      "id": "AD31-DR-001",
+      "category": "inconsistency",
+      "severity": "HIGH",
+      "earliest_owner": "tasks",
+      "title": "A global current-authority block still declares the completed AD-30 chain as the only remaining work",
+      "correction": "Update the global T070+ current summary to the AD-31 chain and ownership: T172 tests only, T173 sole committer GREEN, T174 verification only, T175 fresh T084, then T085/T086. Rewrite the earlier current-qualification sentence as checkpoint-relative historical wording. Preserve T165-T170 as completed AD-30 history."
+    },
+    {
+      "id": "AD31-DR-002",
+      "category": "ambiguity",
+      "severity": "HIGH",
+      "earliest_owner": "tasks",
+      "title": "The duplicate/canonical supplied-ID test has no specified expected behavior or traceable owner",
+      "correction": "Remove duplicate/canonical supplied-ID behavior from T172 and its coverage claim. Add a verification-only T174 obligation to retain existing dispatcher/claimed-packet uniqueness and canonicality regressions, explicitly stating T173 changes no duplicate-packet policy."
+    }
+  ],
+  "closed_checks": [
+    "The AD-31 committer seam is feasible and the honest public RED precedes its sole GREEN.",
+    "Cited-unsupplied and supplied-row drift failure precedence is correct.",
+    "None/one/all-cited, zero mutation, exact replay, and ordered qualification are assigned.",
+    "No schema, migration, provider, retry, source-scope, host, system, ordinary-database, or later-story expansion exists."
+  ],
+  "residual_proof_obligations": [
+    "Correct tasks and obtain a fresh definition ACCEPT before T171.",
+    "Observe two-supplied/one-cited RED before production edit.",
+    "Run the complete matrix, exact replay, zero model delta, T174, T175, T085, and T086 in order."
+  ],
+  "residual_risks": [
+    "Packet canonicality is upstream authority; committer normalization would broaden AD-31.",
+    "Provider variability cannot replace PostgreSQL proof."
+  ],
+  "summary": "REVISE. Correct the stale competing AD-30 current summary and remove the unsupported duplicate-ID behavior from T172 before implementation authorization."
+}

@@ -1,0 +1,27 @@
+{
+  "evidence_id": "12-3/implement/78",
+  "kind": "test-red",
+  "stage": "implement",
+  "task": "T110-review-correction",
+  "source_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter \"FullyQualifiedName~Pass1ProductionCompositionTests.JobRunner_RequiresDurableCallsMarkerRepairStore\" --no-restore --logger \"console;verbosity=normal\"",
+  "result": {
+    "build": "passed-with-existing-warnings",
+    "passed": 0,
+    "failed": 1,
+    "skipped": 0,
+    "exit_code": 1
+  },
+  "expected_failure": "PreparedPass1JobRunner resolves IPass1NavigationCallsMarkerRepairStore optionally and silently bypasses durable Calls-marker repair when the production composition is incomplete.",
+  "future_green_assertions": [
+    "the job runner requires IPass1NavigationCallsMarkerRepairStore from its execution scope",
+    "a missing durable marker-repair composition fails closed instead of permitting provider or terminal visibility",
+    "the existing isolated composition fixture supplies an explicit test double rather than weakening production"
+  ],
+  "artifact_sha256": {
+    "tests/Vulgata.Tests/PreparedPass1/Pass1ProductionCompositionTests.cs": "663B0F359F4BF045EC7CCB1D2744832818DAF469CFD98F5340239D6634C367DD"
+  },
+  "privacy": "No provider, source-bearing request, database, network, credential, host setting, or system configuration was accessed or changed.",
+  "warnings": "Existing NU1507 and EF assembly-version warnings remain; the focused composition failure is expected RED.",
+  "observed_at": "2026-08-24T22:25:43.6963390Z"
+}

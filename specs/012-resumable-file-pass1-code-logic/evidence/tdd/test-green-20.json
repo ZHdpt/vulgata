@@ -1,0 +1,39 @@
+{
+  "evidence_id": "12-3/implement/57",
+  "kind": "test-green",
+  "stage": "implement",
+  "source_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "artifact_paths": [
+    "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedPass1JobExecutor.cs",
+    "src/dotnet/Vulgata.Agents/WorkerExecution/DeepSeekStrictToolDeclarations.cs",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekStreamingQualificationTests.cs",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekContractQualificationTests.cs"
+  ],
+  "artifact_sha256": {
+    "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedPass1JobExecutor.cs": "B17AACB077045DC6361C523714D6531DEDC157ED7B029A28345196C64CA04027",
+    "src/dotnet/Vulgata.Agents/WorkerExecution/DeepSeekStrictToolDeclarations.cs": "21A89A661FE8F17AF21A3122D6C74ECE8F24B6269AF3695BB4315AFBC4BA0DB7",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekStreamingQualificationTests.cs": "AE10F410B3DAF4E4552CF3E622862CC0A8F80C0F24B1C5FBA3912D30CEF4DBEA",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekContractQualificationTests.cs": "EAEAE6C87CB6C7D2F879A5164EA7D132FBACA6B62C576015528765E5BCBBD7B8"
+  },
+  "unchanged_t095_owner_sha256": {
+    "tests/Vulgata.Tests/PreparedPass1/DeepSeekSourceFreeHandshakeHarness.cs": "4EB01BD982375AA59A23A156B33F34D9EC812154664533AA4977C424D0F0CE47"
+  },
+  "commands": [
+    "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore -p:WarningLevel=0 --filter \"FullyQualifiedName~Pass1DeepSeekStreamingQualificationTests\" --logger \"console;verbosity=minimal\"",
+    "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --no-restore -p:WarningLevel=0 --filter \"FullyQualifiedName~Pass1DeepSeekStreamingQualificationTests\" --logger \"console;verbosity=minimal\""
+  ],
+  "result": {
+    "production_focused": "56 passed, 0 failed, 0 skipped",
+    "declarations": "One ordered deterministic blob from the execution-real navigate_code and submit_code_logic AIFunction.AsOpenAIChatTool declarations; exact accepted names, descriptions, strict metadata, closed schemas, bytes, and hashes are validated.",
+    "compatibility_fields": "Only exact tool_choice:auto, parallel_tool_calls:false, and response_format:{type:json_object} are removed; absence is accepted; duplicates and alternate shapes reject.",
+    "assistant_replay": "Complete reasoning, existing string content, tool calls, and matching tool results are preserved; absent/null tool-call assistant content becomes an empty string.",
+    "final_wire": "max_tokens 32768; thinking enabled; stream true; no three forbidden fields; exactly two accepted strict functions; remeasured within 17416192 bytes.",
+    "provider_calls": 0,
+    "source_bearing_calls": 0,
+    "database_actions": 0,
+    "system_or_host_changes": 0,
+    "t095_pending": "The unchanged source-free harness still sends thinking disabled and remains owned by T095."
+  },
+  "observed_at": "2026-08-24T18:07:30.5413083Z",
+  "summary": "T094 makes the production-targeted T093 wire contract GREEN without changing tests or the source-free harness. The correction stays inside the execution-local DeepSeek transport and preserves all accepted limits, retry, timeout, privacy, and sibling-client boundaries."
+}

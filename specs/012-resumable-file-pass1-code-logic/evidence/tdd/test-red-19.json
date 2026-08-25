@@ -1,0 +1,48 @@
+{
+  "evidence_id": "12-3/implement/54",
+  "kind": "test-red",
+  "stage": "implement",
+  "source_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "artifact_paths": [
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekStreamingQualificationTests.cs"
+  ],
+  "artifact_sha256": {
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekStreamingQualificationTests.cs": "84BDDBB68B9F877C23EB3868260D997C81CBC49CCC38F6B5D50B48C9DA0A0496"
+  },
+  "production_baseline_sha256": {
+    "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedPass1JobExecutor.cs": "F16AD68DBDB8BF7F926BC0F6C16FED3AC37A6A4EE6EF85B77D0D341C4B504789"
+  },
+  "command": "Remove-Item Env:VULGATA_T084_ISOLATED_SOURCE_JOBS -ErrorAction SilentlyContinue; dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter \"FullyQualifiedName~Pass1DeepSeekStreamingQualificationTests\" --no-restore --nologo --logger \"console;verbosity=minimal\" -p:GenerateMvcTestManifest=false -clp:ErrorsOnly",
+  "result": {
+    "outcome": "failed-as-expected",
+    "exit_code": 1,
+    "total": 39,
+    "passed": 11,
+    "failed": 28,
+    "expected_failures": [
+      "The deterministic DeepSeek request normalizer seam is absent for the valid and invalid token/thinking theory rows and sibling-isolation fact.",
+      "The fake final wire has no max_tokens field.",
+      "Two individually legal assistant messages cannot reach the expected second request under the old assembled cap.",
+      "An assembled response above 131072 bytes is still rejected as provider-request-bound-exceeded.",
+      "The assembled and per-assistant accounting constants remain 131072 instead of 16777216."
+    ],
+    "invalid_shape_coverage": [
+      "missing-token",
+      "wrong-token-type-or-value",
+      "duplicate-token",
+      "simultaneous-token-fields",
+      "malformed-json",
+      "wrong-thinking-type",
+      "disabled-thinking",
+      "extra-thinking-property",
+      "duplicate-thinking",
+      "wrong-stream-shape"
+    ],
+    "provider_calls": 0,
+    "source_bearing_calls": 0,
+    "environment_failure": false,
+    "production_changed": false
+  },
+  "observed_at": "2026-08-24T17:08:53.1138368Z",
+  "summary": "T091 replaces the three definition-invalidated assembled-boundary methods with reachable transport precedence and deterministic checked UTF-8 accounting. The source-free suite compiles and fails only because the unchanged executor still has the old transcript budgets and lacks the accepted bounded DeepSeek final-wire normalization/validation seam."
+}

@@ -1,0 +1,39 @@
+{
+  "evidence_id": "12-3/implement/144",
+  "kind": "test-red",
+  "status": "active",
+  "stage": "implement",
+  "task": "T172",
+  "source_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "public_seam": "IPass1CodeLogicDocumentCommitter.CommitAsync",
+  "commands": [
+    "$env:VULGATA_TEST_ADMIN_CONNECTION='<postgres-admin>'; dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter \"FullyQualifiedName~Pass1DocumentPostgreSqlAtomicTests.PostgreSql17_InvalidUncitedSuppliedClassificationBindingIsMutationFreeAsync|FullyQualifiedName~Pass1DocumentPostgreSqlAtomicTests.PostgreSql17_CitedUnsuppliedClassificationIsInvalidAuthoritativeResultAndMutationFreeAsync\" --logger \"console;verbosity=minimal\"",
+    "$env:VULGATA_TEST_ADMIN_CONNECTION='<postgres-admin>'; dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter \"DisplayName~citedClassificationCount: 2\" --logger \"console;verbosity=minimal\"",
+    "$env:VULGATA_TEST_ADMIN_CONNECTION='<postgres-admin>'; dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --filter \"DisplayName~citedClassificationCount: 1\" --logger \"console;verbosity=minimal\"",
+    "$env:VULGATA_TEST_ADMIN_CONNECTION='<postgres-admin>'; dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --filter \"FullyQualifiedName~Pass1DocumentPostgreSqlAtomicTests.PostgreSql17_ClassificationCitedSubsetUsesCompleteSuppliedAuthorizationSetAsync\" --logger \"console;verbosity=minimal\""
+  ],
+  "result": {
+    "build": { "compilation_errors": 0 },
+    "negative_controls": { "exit_code": 0, "total": 4, "passed": 4, "failed": 0, "skipped": 0 },
+    "all_cited_control": { "exit_code": 0, "total": 1, "passed": 1, "failed": 0, "skipped": 0 },
+    "one_cited_red": { "exit_code": 1, "total": 1, "passed": 0, "failed": 1, "skipped": 0 },
+    "complete_citation_matrix": { "exit_code": 1, "total": 3, "passed": 1, "failed": 2, "skipped": 0 }
+  },
+  "expected_failures": {
+    "two_supplied_one_cited": "Unchanged production returned Rejected/durable-binding-mismatch instead of committing the valid cited subset.",
+    "two_supplied_none_cited": "Unchanged production returned Rejected/durable-binding-mismatch instead of committing when the valid supplied authorization set was uncited."
+  },
+  "passing_controls": {
+    "two_supplied_all_cited": "Committed successfully and exact replay returned the same immutable document version and commit fingerprint.",
+    "supplied_binding_drift": "Missing current Pre-Scan Result, wrong current Pre-Scan Result, and an uncited supplied field mismatch were rejected as durable-binding-mismatch with zero graph/count mutation and a Running job.",
+    "cited_unsupplied": "The existing parser authority rejected an unsupplied cited ID as invalid-authoritative-result with zero mutation."
+  },
+  "files": {
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DocumentPostgreSqlAtomicTests.cs": "A2440E52680C49F8D03DB7F0201EEEAF5AC1D94753DB86F26C99F8C1E19D22C0",
+    "src/dotnet/Vulgata.Infrastructure/Data/Pass1CodeLogicDocumentCommitter.cs": "F0F3C5A287E8111CD507B354A9D505C3F28D75F1DC21F6C939A0E39110F30975"
+  },
+  "isolation": "Fixture-owned disposable PostgreSQL databases were cleaned after each case; ordinary vulgata was not used or mutated.",
+  "privacy": "The deterministic RED used no provider, source transfer, host/system, network, workflow, credential, or Git operation. The administrator connection is sanitized.",
+  "observed_at": "2026-08-25T18:51:48.1021140+08:00",
+  "summary": "T172 is compile-clean and behaviorally RED only for valid cited-subset and uncited supplied-set commits, isolating the cited-only durable-row query in the unchanged committer."
+}

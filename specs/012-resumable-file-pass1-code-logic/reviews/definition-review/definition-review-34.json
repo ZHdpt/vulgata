@@ -1,0 +1,40 @@
+{
+  "schema_version": "1.0",
+  "gate": "definition-review",
+  "verdict": "ACCEPT",
+  "reviewed_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "reviewed_boundary": {
+    "base_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+    "candidate_commit": null,
+    "artifact_hashes": {
+      "specs/012-resumable-file-pass1-code-logic/spec.md": "54f5cbc22847c62c28ad516877733dd81875a9bf61e1987ff0e530651400c946",
+      "specs/012-resumable-file-pass1-code-logic/plan.md": "47db509eab17daf263c4b9b00441b2134b9364cc208cf1be44568fa32a3e491f",
+      "specs/012-resumable-file-pass1-code-logic/research.md": "f91c44b42e4a109913f1b2a2204f907d5ad5851ba13729eb09f93649f1ed791d",
+      "specs/012-resumable-file-pass1-code-logic/data-model.md": "5e8b7ff94653b26b7a544febb28dc17eff050033c7308f2e51ff941b1480a220",
+      "specs/012-resumable-file-pass1-code-logic/quickstart.md": "f430e4760628539c3886065fa5058d49371324a129827c2f8709b69009493feb",
+      "specs/012-resumable-file-pass1-code-logic/contracts/deepseek-strict-result-submission.md": "52419348f01ebba9f453cb3173318bfb30ee72675a257e272e99d7fff2efb142",
+      "specs/012-resumable-file-pass1-code-logic/contracts/pass1-runtime-contracts.md": "f3883b4d51c0cbaea52054f1ae90c654e116237c64304eda2465408478463ce4",
+      "specs/012-resumable-file-pass1-code-logic/contracts/navigate-code-contract.md": "ba5ba06edcf32a6a7ec82139795f060e1cd4dd0ae2eac7e3fb01fafc0c629d1c",
+      "specs/012-resumable-file-pass1-code-logic/tasks.md": "e6193c009021ebcc2acccae684213dc451d8ffcc75aaa4701577c76a91ca9087",
+      "specs/012-resumable-file-pass1-code-logic/reviews/plan-review/plan-review-24.json": "478853887acb0351c11f9980000070d7807320708bf6c0a464236059453bcc08",
+      "specs/012-resumable-file-pass1-code-logic/decisions/planned-change-authorization-12.md": "c6ebdba406a4fe1fafddf04c0b6c573b7d09840747744720ee29cf490b73843a"
+    }
+  },
+  "task_metrics": {
+    "count": 154,
+    "unique_ids": 154,
+    "duplicate_ids": []
+  },
+  "findings": [],
+  "closed_findings": [
+    "AD28-DR-001: the authority header and global summaries now bind AD-28 and the sole T149-T154 current chain, with T144-T148 historical",
+    "AD28-DR-002: T150 owns a minimal nonfunctional internal scaffold plus honest deterministic RED tests, and T151 is its serialized sole implementation owner",
+    "Reachable projection, trigger, exclusion, no-effect, and no-request-eleven behavior remains on public executor/fake-wire seams",
+    "No reflection, GC-dependent assertion, public 73rd-result assumption, or managed-object zeroization promise remains"
+  ],
+  "residual_risks": [
+    "The T150 behavioral RED must be observed before any T151 implementation.",
+    "History-bearing source-free T153 and fresh disposable T154/T084 must pass before T085."
+  ],
+  "summary": "ACCEPT. The AD-28 definition is internally consistent, test-first, uniquely and serially owned, privacy-safe, and correctly orders nonlive proof, source-free qualification, fresh source-bearing qualification, full T062, and final verification."
+}

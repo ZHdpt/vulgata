@@ -1,7 +1,7 @@
 ---
 story_key: 12-3-resumable-file-pass-1-and-code-logic-documents
 title: "Story 12.3: Resumable File Pass 1 & Code Logic Documents"
-Status: in-progress
+Status: done
 Epic: 12
 Story: 3
 created: 2026-08-21
@@ -486,3 +486,27 @@ after convergence, quality review, and E2E. The final 49-task hash, size,
 numbering, dependencies, placeholders, and whitespace were independently
 re-observed. Fresh combined definition review attempt 5 is next; production
 implementation remains unauthorized.
+
+### Completion checkpoint: 2026-08-25
+
+The later correction and qualification record supersedes the intermediate
+blockers retained above for audit history. Story 12.3 completed its accepted
+definition, implementation, convergence, quality, E2E-decision, and final
+verification gates. The final correction rejects provider-cited navigation
+receipt UUIDs unless the same Worker execution actually issued them through an
+admitted `navigate_code` callback.
+
+Current-boundary verification passed 740 non-live Story tests (four expected
+live-only skips), 3/3 isolated streaming DeepSeek jobs, the authenticated
+150/150-job production qualification with 150 immutable Code Logic Documents,
+97 replay and production-boundary checks, and 442 adjacent regressions. The Web
+build completed with zero errors and nine existing warnings. Five explicitly
+documented repository-baseline failures remain outside the Story 12.3 changed
+behavior boundary. E2E is `skipped-covered` because the exact authentication,
+multi-module persistence, lifecycle, live-provider, and replay boundaries were
+already exercised by current integration and qualification evidence.
+
+Completion checkpoint `bmad-12-3-complete-20260825T235437Z-5e9cb0` owns the
+Story 12.3 implementation, tests, specification, review, qualification, and
+verification evidence. Story 12.4 Cross-Repository Resolution and Story 12.5
+Business Logic/Chat remain outside this completed boundary.

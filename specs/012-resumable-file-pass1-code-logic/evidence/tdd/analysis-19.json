@@ -1,0 +1,54 @@
+{
+  "evidence_id": "12-3/implement/45",
+  "kind": "analysis",
+  "stage": "implement",
+  "source_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "artifact_paths": [
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekIsolatedSourceQualificationTests.cs",
+    "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedPass1JobExecutor.cs"
+  ],
+  "artifact_sha256": {
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekIsolatedSourceQualificationTests.cs": "BBE2FB2284BB652F4E9CDA084477630ABB32EC3C63660BE0D6E93691FC9C516C",
+    "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedPass1JobExecutor.cs": "3A80450DFF3D2A8ADC1393E24AE9A89BFEC072FBBD5D1AA87320078BD5AA6074"
+  },
+  "qualification": {
+    "task": "T084",
+    "database_alias": "vulgata_story123_t084_20260824_r7",
+    "provider_endpoint_authority": "https://api.deepseek.com",
+    "provider_model": "deepseek-v4-flash",
+    "streaming": true,
+    "attempted_source_jobs": 1,
+    "unattempted_source_jobs": 2,
+    "duration_seconds": 21,
+    "source_kind": ".xml",
+    "dispatch_outcome": "Rejected",
+    "dispatcher_reason": "worker-result-rejected",
+    "executor_category": "ProviderRequestBoundExceeded",
+    "wire_budget_category": "RawResponse",
+    "submission_category": null
+  },
+  "durable_postmortem": {
+    "pending_jobs": 149,
+    "running_jobs": 1,
+    "logical_documents": 0,
+    "navigation_receipts": 0
+  },
+  "result": {
+    "root_cause": "The live DeepSeek HTTP/SSE stream exceeded Vulgata's 262144-byte per-response raw transport ceiling before submit_code_logic finalization.",
+    "not_root_cause": [
+      "DNS, TCP, TLS, or endpoint reachability",
+      "authentication or model configuration",
+      "stream inactivity or the 25-minute absolute deadline",
+      "submission shape, binding, evidence, or semantic validation",
+      "PostgreSQL migration or commit behavior"
+    ],
+    "privacy": "Only closed enum categories and aggregate durable counts were observed. No API key, source bytes, prompt, reasoning, tool arguments, raw stream, response body, identifiers, paths, or exception details were logged or persisted.",
+    "atomicity": "No Document or navigation receipt was committed; later jobs were not claimed."
+  },
+  "commands": [
+    "VULGATA_T084_ISOLATED_SOURCE_JOBS=1 VULGATA_T062_QUALIFICATION_CONNECTION=<fresh-r7-disposable-database> VULGATA_T062_WORKER_PROVIDER_API_KEY=<present-secret> <approved-source-and-runtime-bindings> dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --nologo --filter FullyQualifiedName=Vulgata.Tests.PreparedPass1.Pass1DeepSeekIsolatedSourceQualificationTests.ThreeIsolatedSourceJobs_CompleteCommitAndReplayWithoutLeakingPayloadsAsync --logger console;verbosity=normal -p:GenerateMvcTestManifest=false -clp:ErrorsOnly",
+    "docker exec vulgata-postgres psql -U vulgata -d <fresh-r7-disposable-database> <aggregate-read-only-postmortem-query>"
+  ],
+  "observed_at": "2026-08-24T14:15:06Z",
+  "summary": "T084's DeepSeek blocker is the local raw SSE transport ceiling. The provider reached HTTP streaming and the executor failed closed at RawResponse without producing durable output."
+}

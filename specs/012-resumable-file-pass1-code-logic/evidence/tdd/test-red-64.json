@@ -1,0 +1,50 @@
+{
+  "evidence_id": "12-3/implement/124",
+  "kind": "test-red",
+  "status": "current",
+  "stage": "implement",
+  "task": "T150",
+  "source_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter \"FullyQualifiedName~Pass1DeepSeekTerminalContextProjectionTests|FullyQualifiedName~PreparedPass1JobExecutorStreamingTests.ExecuteAsync_TurnTenFinalization|FullyQualifiedName~PreparedPass1JobExecutorStreamingTests.ExecuteAsync_FirstRejectedSubmission|FullyQualifiedName~Pass1DeepSeekPromptCompositionTests.PreparedDispatcher_PromptContainsOneAuthoritativeTerminalMarkerSet\" --logger \"console;verbosity=minimal\" -clp:ErrorsOnly",
+  "result": {
+    "total": 29,
+    "passed": 9,
+    "failed": 20,
+    "skipped": 0,
+    "duration_seconds": 0.315,
+    "wall_seconds": 4.181,
+    "exit_code": 1,
+    "build_errors": 0
+  },
+  "observed_red": [
+    {
+      "test": "ExecuteAsync_TurnTenFinalization_UsesHistoryFreeThreeMessageProjectionAsync",
+      "expected": "exactly three terminal messages with historical protocol absent",
+      "actual": "20 historical messages"
+    },
+    {
+      "test": "ExecuteAsync_FirstRejectedSubmission_UsesHistoryFreeCorrectionProjectionAsync",
+      "expected": "request four already uses named submit choice, submit-only declarations, and three projected messages",
+      "actual": "request four tool_choice remains the ordinary string shape"
+    },
+    {
+      "test": "PreparedDispatcher_PromptContainsOneAuthoritativeTerminalMarkerSetAsync",
+      "expected": "one each of the four authoritative full-line markers",
+      "actual": "all four markers absent"
+    },
+    {
+      "test": "Pass1DeepSeekTerminalContextProjectionTests",
+      "expected": "marker-derived exact projection, closed correction/result grammar, bounded accumulator, binding checks, and eager failures",
+      "actual": "the deliberately nonfunctional scaffold returns invalid/empty projection, false triggers, and lacks closed validation"
+    }
+  ],
+  "files": {
+    "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedPass1TerminalContextProjection.cs": "D2AD34398BA042E670E0490E8EA61862B4F198A99D3CA64EB9215580E3805C1F",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekTerminalContextProjectionTests.cs": "2EE48AB0183792325178E2C2C2AD576EDDE1C991005650D82F4E3B2FB7C782D7",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekPromptCompositionTests.cs": "88EBC50A534D27F7240A33078B083ABCC00140F1FF623E3ADB5DAA46995CDB12",
+    "tests/Vulgata.Tests/PreparedPass1/PreparedPass1JobExecutorStreamingTests.cs": "AC8180D7E3A3418EC6AE9101F3A9B231449709D480343A3CCBEE8A5A489F4EF8"
+  },
+  "privacy": "No provider, source repository, PostgreSQL, network, host, system, request/response payload, credential, or external state was accessed. Only source-free in-memory fake-wire data was used.",
+  "observed_at": "2026-08-25T13:13:36.1951992+08:00",
+  "summary": "T150 is an honest compile-clean behavioral RED: finalization-only requests still preserve historical provider protocol, early correction still uses the ordinary wire shape, prompt markers are absent, and the new internal scaffold is intentionally nonfunctional while defensive accumulator tests remain statically reachable."
+}

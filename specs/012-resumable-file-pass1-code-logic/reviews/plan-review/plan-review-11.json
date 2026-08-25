@@ -1,0 +1,55 @@
+{
+  "schema_version": "1.0",
+  "gate": "plan-review",
+  "verdict": "ACCEPT",
+  "reviewed_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "reviewed_boundary": {
+    "base_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+    "candidate_commit": null,
+    "diff_sha256": "b7c36eb4e4791207c1805a17da28922a3fa37ec0d1f1518ab7080847667bc5b3",
+    "artifact_hashes": {
+      "specs/012-resumable-file-pass1-code-logic/plan.md": "76c6078ffaaa9dc71125c62890cce145291fbafb5951c61f280fa01f89942d06",
+      "specs/012-resumable-file-pass1-code-logic/research.md": "2d8635aefc41405b5855828489fb407093129b30ba1c7e64e2c640824cead562",
+      "specs/012-resumable-file-pass1-code-logic/data-model.md": "25266c044a07a696e97b6952b29c2a0f3ba29ad1ee8fd813d0365b3cb92c0119",
+      "specs/012-resumable-file-pass1-code-logic/quickstart.md": "0d30c5c880a7127969970d5fb0c72d2f58e6f3796a455d660528af4527e57816",
+      "specs/012-resumable-file-pass1-code-logic/contracts/deepseek-strict-result-submission.md": "33ece2b2c8ea8fb904b510df3c0be258f7efd648d7f94d4fcf2002df29dc40c3"
+    },
+    "owned_paths": [
+      "specs/012-resumable-file-pass1-code-logic/plan.md",
+      "specs/012-resumable-file-pass1-code-logic/research.md",
+      "specs/012-resumable-file-pass1-code-logic/data-model.md",
+      "specs/012-resumable-file-pass1-code-logic/quickstart.md",
+      "specs/012-resumable-file-pass1-code-logic/contracts/deepseek-strict-result-submission.md"
+    ]
+  },
+  "supporting_hashes": {
+    "specs/012-resumable-file-pass1-code-logic/spec.md": "b03687c3a77f52766280669da6cf9e2f9925a44bec1ae9304991f387477a9493",
+    "specs/012-resumable-file-pass1-code-logic/evidence/tdd/failure-24.json": "cc4e7033582c8a306d758e223b4585d622edad4ed2dba69ae9244de26bbf12d4"
+  },
+  "reviewed_artifacts": [
+    "AGENTS.md",
+    ".specify/memory/constitution.md",
+    "docs/requirement-draft.md",
+    "docs/bmad/epics.md",
+    "docs/bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md",
+    "docs/bmad/planning-artifacts/architecture/august-30-bounded-scanning-design.md",
+    "docs/bmad/planning-artifacts/sprint-change-proposal-2026-08-24-deepseek-strict-result-submission.md",
+    "specs/012-resumable-file-pass1-code-logic/spec.md",
+    "specs/012-resumable-file-pass1-code-logic/plan.md",
+    "specs/012-resumable-file-pass1-code-logic/research.md",
+    "specs/012-resumable-file-pass1-code-logic/data-model.md",
+    "specs/012-resumable-file-pass1-code-logic/quickstart.md",
+    "specs/012-resumable-file-pass1-code-logic/contracts/deepseek-strict-result-submission.md",
+    "specs/012-resumable-file-pass1-code-logic/decisions/planned-change-authorization-04.md",
+    "specs/012-resumable-file-pass1-code-logic/decisions/deepseek-continuation-authorization-05.md",
+    "specs/012-resumable-file-pass1-code-logic/evidence/tdd/failure-24.json",
+    "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedPass1JobExecutor.cs",
+    "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedSubmitCodeLogicFunction.cs",
+    "src/dotnet/Vulgata.Agents/WorkerExecution/DeepSeekStrictSchemaProjector.cs",
+    "tests/Vulgata.Tests/PreparedPass1/DeepSeekSourceFreeHandshakeHarness.cs",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekContractQualificationTests.cs",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekStreamingQualificationTests.cs"
+  ],
+  "findings": [],
+  "summary": "ACCEPT. Fresh independent plan-only review found no blocking finding, Critical/High issue, Constitution MUST violation, authority conflict, unresolved placeholder, or infeasible architecture/test seam in the pinned corrected boundary. Failure-24 establishes an implementation/request-contract defect rather than an environment, network, authentication, database, timeout, or streaming-stall condition: the immediately preceding source-free T083 request succeeded, while the first production T084 request returned structured HTTP 400 invalid_request_error/schema and exposed different sanitized function-schema hashes plus response_format, tool_choice, and parallel_tool_calls. AD-19 and R-19 close that gap at the earliest plan owner without weakening code-logic/file-v2 or changing host configuration. One deterministic DeepSeekStrictToolDeclarations authority is built from the two actual AIFunction public OpenAI declarations, validates exact ordered names, descriptions, strict flags and closed schemas, and supplies byte/hash-identical complete declaration bytes to both the source-free handshake and every production Worker turn. The executor-local final-wire seam is feasible at the existing bounded HttpMessageHandler immediately before HttpClientPipelineTransport: after duplicate-aware provisional parsing and the separately authorized token/thinking construction, it may omit only one exact tool_choice:auto, parallel_tool_calls:false, and JSON response_format, substitute only the accepted declaration blob, and complete only absent/null assistant tool-call content to an empty string. Alternate, duplicate, malformed, or conflicting forms reject before transport; existing string content, complete reasoning_content, tool calls, matching tool results, endpoint/model selection, streaming, timeouts, zero SDK retries, and all accepted numeric budgets remain unchanged. The design is testable through an honest T093 RED followed by T094 production GREEN, T095 source-free harness GREEN, and T096 source-free qualification before any fresh T084 source-bearing run; fake-wire tests bind exact declaration bytes, forbidden-field absence, non-null content, reasoning/tool continuity, malformed/alternate no-send behavior, sibling-client isolation, final body measurement, and no request eleven. The source-free handshake remains bounded, uses fixed non-source content, enables thinking, never invokes a returned function or sends a tool result, and records only sanitized hashes, sizes, classifications, and timestamps. Provisional/final request bodies, source, prompts, reasoning, tool arguments/results, credentials, provider content, validator internals, and host paths remain execution-local and nonlogged/nonpersistent. The correction adds no database, EF migration, API, UI, durable state, provider circuit, scheduling, dispatch, local validation, persistence authority, system/host/environment/network/global configuration change, Story 12.4 Cross-Repository Resolution, or Story 12.5 behavior. The unchanged specification already requires actual strict-provider compatibility, complete reasoning/content/tool replay, privacy, source-free-before-source qualification, and fail-closed behavior, so no specification change is required. The updated Task-Generation Impact correctly orders T093 -> T094 -> T095 -> T096 -> T084 and does not authorize implementation. ACCEPT advances to fresh definition review under the user's standing continuation authorization without another duplicate approval pause; it does not waive task/definition analysis, TDD, qualification, convergence, quality, E2E, verification, lifecycle, staging, commit, or Git-history gates. The nonrecursive diff identity is SHA-256 over UTF-8 sorted repository-path, tab, lowercase file-SHA-256 rows for the five owned paths, joined by LF with no trailing newline."
+}

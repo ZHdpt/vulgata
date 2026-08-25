@@ -1,0 +1,43 @@
+{
+  "evidence_id": "12-3/implement/89",
+  "kind": "test-green",
+  "stage": "implement",
+  "task": "T119",
+  "source_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "build_command": "dotnet build tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --verbosity quiet",
+  "build_result": {
+    "errors": 0,
+    "warnings": 10,
+    "exit_code": 0
+  },
+  "focused_command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --filter \"FullyQualifiedName~Pass1DeepSeekStreamingQualificationTests.ExecuteAsync_FakeWire_UsesExactlyTwoStrictStreamingFunctionsWithoutRetryAsync|FullyQualifiedName~Pass1DeepSeekStreamingQualificationTests.ExecuteAsync_FakeWire_OmitsUnsupportedDeepSeekFieldsAsync|FullyQualifiedName~Pass1DeepSeekStreamingQualificationTests.NormalizeAndValidateDeepSeekRequestBody_UsesIndependentTokenThinkingAndChoiceOperations|FullyQualifiedName~Pass1DeepSeekStreamingQualificationTests.NormalizeAndValidateDeepSeekRequestBody_ConstructsExactRequiredChoiceOrRejectsIt|FullyQualifiedName~PreparedPass1JobExecutorStreamingTests.ExecuteAsync_CompletedZeroCallTurnFailsBeforeFiccWithPayloadFreeMissingFunctionAsync|FullyQualifiedName~Pass1DeepSeekContractQualificationTests.SourceFreeHandshake_RecordsDisabledRequiredCallAndDoneEvidenceAsync|FullyQualifiedName~Pass1DeepSeekContractQualificationTests.SourceFreeHandshake_MissingCallOrDoneStopsWithConfigurationBeforeSourceBearingTrafficAsync|FullyQualifiedName~Pass1DeepSeekContractQualificationTests.SourceFreeHandshake_UsesConfiguredBetaRouteAndFlashModel_WithExactlyTwoStrictDeclarationsAsync|FullyQualifiedName~Pass1DeepSeekContractQualificationTests.SourceFreeHandshake_UsesSupportedDefaultsWithoutSamplingOrControlFieldsAsync|FullyQualifiedName~Pass1DeepSeekContractQualificationTests.SourceFreeHandshake_RecordsOnlySanitizedHashesAndBytes_WithoutSourceBearingRequestFieldsAsync\" --logger \"console;verbosity=minimal\"",
+  "focused_result": {
+    "passed": 56,
+    "failed": 0,
+    "skipped": 0,
+    "exit_code": 0
+  },
+  "barrier_command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --filter \"FullyQualifiedName~Pass1DeepSeekContractQualificationTests|FullyQualifiedName~Pass1DeepSeekStreamingQualificationTests|FullyQualifiedName~PreparedPass1JobExecutorStreamingTests|FullyQualifiedName~Pass1DeepSeekIsolatedSourceQualificationTests\" --logger \"console;verbosity=minimal\"",
+  "barrier_result": {
+    "passed": 222,
+    "failed": 0,
+    "skipped": 3,
+    "total": 225,
+    "exit_code": 0
+  },
+  "implementation": {
+    "wire": "The Worker normalizer now emits exact thinking disabled, tool_choice required, stream true, max_tokens 32768, and the two accepted strict declarations while rejecting reasoning_effort and incompatible source shapes before transport.",
+    "preflight": "A completed zero-call provider turn is consumed before FICC, reports only the payload-free MissingFunction subtype, preserves worker-result-rejected plus MissingSubmission, and creates no navigation/reservation/later-request effect.",
+    "source_free": "The qualification harness sends the exact disabled/required streamed policy and requires at least one observed call plus DONE while retaining only four Boolean observations and existing sanitized scalar identities.",
+    "fixture": "The .NET 10 successful fake-response fixture now explicitly supplies its intended bounded call-plus-DONE SSE body; explicit missing-call and missing-DONE fixtures remain fail closed.",
+    "unchanged": "No provider loop, retry, function, declaration, prompt, dispatcher, persistence, migration, endpoint/model/credential, source scope, or system behavior changed."
+  },
+  "artifact_sha256": {
+    "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedPass1JobExecutor.cs": "4688A7A830C09561BBD58AD4526BC7ABF6D87B0248CA9740B56C976D97935CF2",
+    "tests/Vulgata.Tests/PreparedPass1/DeepSeekSourceFreeHandshakeHarness.cs": "2E7F44783533A3934D9DB2AC070A140D8405302E2291DF68E18C7DD1BB6F5914",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekContractQualificationTests.cs": "D653774FEAA9C55D05D8E9A97223B7F7FC6F9BD8F547C1606155D4AFAE53A01B"
+  },
+  "network": "No live provider, source-bearing request, database, network, credential, host setting, or system configuration was accessed or changed.",
+  "warnings": "The three skips are the expected opt-in live/source qualifications. Existing NU1507 and EF assembly-version warnings remain.",
+  "observed_at": "2026-08-24T23:51:47.2223210Z"
+}

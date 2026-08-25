@@ -1,0 +1,20 @@
+{
+  "evidence_id": "12-3/implement/25",
+  "kind": "test-red",
+  "stage": "implement",
+  "source_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "artifact_paths": [
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekPromptCompositionTests.cs"
+  ],
+  "commands": [
+    "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter FullyQualifiedName~Pass1DeepSeekPromptCompositionTests --no-restore --nologo --logger console;verbosity=minimal -p:GenerateMvcTestManifest=false"
+  ],
+  "result": {
+    "focused": "0 passed, 2 failed, 0 skipped after scoping the prepared-v2 resource assertion to preserve the accepted unchanged legacy-v1 path",
+    "prompt_red": "the real prepared dispatcher loaded the exact embedded v2 prompt, but it contained no submit_code_logic finalization authority",
+    "composition_red": "the sole public PreparedPass1JobExecutor constructor exposed PreparedNavigateCodeFunction but not PreparedSubmitCodeLogicFunction",
+    "classification": "expected-deepseek-prompt-composition-red"
+  },
+  "observed_at": "2026-08-24T07:35:05.0595315Z",
+  "summary": "T074 exposed the missing submit-only finalization guidance and missing production submit-function dependency while preserving the explicitly unchanged legacy WorkerAgentDispatcher v1 prompt path."
+}

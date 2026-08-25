@@ -143,6 +143,38 @@ public sealed class Pass1ClaimedPacketExecutionTests
             "StateVersion" or "JobStateVersion" or "PairStateVersion");
     }
 
+    [Fact]
+    public void WorkerPacket_ExposesDurableBudgetHighWaterCursorAndEvidenceCounters()
+    {
+        PropertyInfo[] packetProperties = typeof(PreparedPass1WorkerPacket)
+            .GetProperties(BindingFlags.Public | BindingFlags.Instance);
+
+        Assert.Contains(
+            packetProperties,
+            property => property.Name == "RemainingNavigationBudget");
+
+        // T109 requires the packet to carry a server-owned durable budget
+        // projection. Accept either direct fields or one cohesive projection;
+        // the current default-eight packet has neither and therefore REDs
+        // honestly without inventing a production DTO in this test.
+        Type? budgetProjection = packetProperties
+            .Select(property => property.PropertyType)
+            .FirstOrDefault(type =>
+                type.GetProperty("ToolAttemptCount") is not null &&
+                type.GetProperty("StateVersion") is not null &&
+                type.GetProperty("AcceptedCallCount") is not null &&
+                type.GetProperty("EvidenceBytes") is not null);
+        bool directProjection =
+            packetProperties.Any(property => property.Name is "ToolAttemptCount" or "NavigationToolAttemptCount") &&
+            packetProperties.Any(property => property.Name is "BudgetStateVersion" or "NavigationBudgetStateVersion") &&
+            packetProperties.Any(property => property.Name == "AcceptedCallCount") &&
+            packetProperties.Any(property => property.Name == "EvidenceBytes");
+
+        Assert.True(
+            directProjection || budgetProjection is not null,
+            "T109 RED: claimed packet hydration must carry durable ToolAttemptCount/state cursor and accepted/evidence counters.");
+    }
+
     private static async Task<object?> InvokeHydrateAsync(
         VulgataDbContext context,
         RecordingSourceReader reader,

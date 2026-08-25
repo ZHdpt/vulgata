@@ -1,0 +1,57 @@
+{
+  "review_id": "story-12-3-definition-review-46",
+  "task_id": "AD32-T179-DEFINITION-46",
+  "mode": "definition-amendment",
+  "verdict": "ACCEPT",
+  "next_authorized_task": "T179 fixture-only correction and full T179 rerun",
+  "authorization_scope": {
+    "allowed_repository_edit": "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekStreamingQualificationTests.cs only",
+    "allowed_change": "Add one local receipt-free valid-candidate helper and replace exactly five stale CreateDeferredCallsFallback success setups while preserving every behavioral assertion.",
+    "allowed_rerun_input": "Pass the already-approved AnalysisRuntime__JdtLsDistributionArchivePath transiently to the child test process.",
+    "production_change_authorized": false,
+    "provider_or_source_traffic_authorized": false,
+    "host_or_system_change_authorized": false,
+    "new_planned_change_approval_required": false
+  },
+  "source_checkpoint": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "reviewed_hashes": {
+    "spec.md": "3412704EB3A6C71BF062C4FBAD2E8FA12B0DBDDDDAB80FDBBBC1F6FAAF8E81DA",
+    "plan.md": "EF966A8045F10D1D85812B4E8789FA83DFBFB1A08D9A5670E5A83C00B58306FE",
+    "research.md": "DDB71AF7BE7D97D64839668434555A11829A86A279AAC62FAEFC7AAFF9FFC6A7",
+    "tasks.md": "491E8555DF137A897CD8F96D4A8D78B1DA41FE90EE6A74889D1DFCA5E2F15449",
+    "evidence/tdd/failure-44.json": "9122BFD8F5AABE691A6FF46992898A4B7E8282CDCDC6EC554349CD27955CAA4E",
+    "evidence/tdd/analysis-25.json": "05413065DE3C61BAC850569F5F0A2A96ACD150752B82D6C499E68F31ADD5DCA9",
+    "reviews/definition-review/definition-review-45.json": "326BAFBAB92C07BCC3824AB68638B083A7E783488D48F4F8F6724EC934F62055",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekStreamingQualificationTests.cs": "A10D7589CB715DF573B6401433667698816038D1DA0131351CE70AA9CCB5CAD2",
+    "tests/Vulgata.Tests/PreparedPass1/PreparedPass1JobExecutorStreamingTests.cs": "8C2773C1D92143C340C5941BC7574BC6284F54D323B8BF786BF11E94CC99F825",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekPromptCompositionTests.cs": "57F2604884F00FEF9C70E4C56D0580E147270114A0B00B14D4416E6002CC1A48",
+    "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedPass1ResultParser.cs": "2DB3A6E96888A2B93094116B8DC0E9070ACE74B599C3938D9FB359DB18EADF46",
+    "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedSubmitCodeLogicFunction.cs": "564030AAB3187AA0C16F2813B54D863FEA82D2E7043755BD27BA592AD9264362",
+    "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedNavigateCodeFunction.cs": "388A4C6D28960E487907A84B8448CBF32F0FEB75003EC34E7C6E172659C18044",
+    "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedPass1JobExecutor.cs": "BC9E322876AA540E380A3B2CB46717B4FE8A31678D73465F0C02E5C19C6A9FEE"
+  },
+  "task_metrics": {
+    "total": 180,
+    "unique_ids": 180,
+    "duplicate_ids": 0,
+    "pending_ids": ["T085", "T086", "T179", "T180"],
+    "ordered_chain": "T176 completed -> T177 completed -> T178 completed -> T179 -> T180 -> T085 -> T086"
+  },
+  "findings": [],
+  "closed_checks": [
+    "The five stale setup sites are exactly lines 92, 945, 1035, 1063, and 1134 of the reviewed test hash; the theory at the fourth site has two cases.",
+    "Each test asserts transport, replay, normalization, timing, request-count, or result behavior independent of synthetic receipt identity.",
+    "The amendment keeps same-execution provenance and cannot weaken InvalidEvidence rejection or the existing correction path.",
+    "The transient verified archive path is a rerun prerequisite, not installation or host/system mutation.",
+    "No task duplication, ownership overlap, hidden production work, planned-change trigger, provider traffic, source-bearing traffic, or scope expansion was found."
+  ],
+  "residual_proof_obligations": [
+    "Keep the helper local and receipt-free and use it only at the five named setup sites.",
+    "Preserve all assertions and test cardinality.",
+    "Rerun the complete T179 barrier with provider credentials/live opt-ins cleared and the approved archive path explicitly supplied.",
+    "Confirm production hashes remain unchanged before T180."
+  ],
+  "reviewer": "independent definition-reviewer",
+  "repository_actions_performed_by_reviewer": false,
+  "summary": "ACCEPT. The T179 amendment is complete, bounded, evidence-backed, assertion-preserving, and does not weaken AD-32 same-execution receipt provenance."
+}

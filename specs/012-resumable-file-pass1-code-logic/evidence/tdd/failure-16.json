@@ -1,0 +1,24 @@
+{
+  "evidence_id": "12-3/implement/32",
+  "kind": "failure",
+  "stage": "implement",
+  "source_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "artifact_paths": [
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekPromptCompositionTests.cs",
+    "src/dotnet/Vulgata.Web/Program.cs"
+  ],
+  "commands": [
+    "VULGATA_TEST_POSTGRES_ADMIN=<approved-admin-connection> dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --nologo --filter (FullyQualifiedName~Pass1DeepSeekContractQualificationTests&FullyQualifiedName!~ApprovedFileCodeUnit_DeepSeekResponse)|(FullyQualifiedName~Pass1DeepSeekPromptCompositionTests)|(FullyQualifiedName~PreparedPass1JobExecutorStreamingTests)|(FullyQualifiedName~Pass1DeepSeekStreamingQualificationTests)|(FullyQualifiedName~Pass1MigrationTests)|(FullyQualifiedName~Pass1DocumentCommitTests)|(FullyQualifiedName~Pass1DocumentPostgreSqlAtomicTests) --logger console;verbosity=minimal -p:GenerateMvcTestManifest=false"
+  ],
+  "result": {
+    "status": "stopped",
+    "failed_test": "Vulgata.Tests.PreparedPass1.Pass1DeepSeekPromptCompositionTests.ProductionWebScope_ResolvesPreparedExecutorAndBothClosedFunctionFactoriesAsync",
+    "error": "System.AggregateException: An error occurred while writing to logger(s). Cannot open log for source '.NET Runtime'. You may not have write access.",
+    "inner_error": "System.ComponentModel.Win32Exception: Access is denied.",
+    "failure_path": "Program.cs line 148 attempted startupLogger.LogCritical while reporting an earlier startup migration/seeding exception; Windows Event Log access masked that original exception",
+    "process_disposition": "the focused run was cancelled after the host-permission blocker was observed; T081 was not advanced",
+    "environment_classification": "Windows Event Log write permission for the test process is unavailable"
+  },
+  "observed_at": "2026-08-24T09:38:21.2515078Z",
+  "summary": "T081 focused verification stopped at the required environment fail/report boundary because the production web-scope test process cannot write the .NET Runtime Windows Event Log source; rerun from an Event-Log-authorized host context is required before the underlying startup exception and final suite result can be observed."
+}

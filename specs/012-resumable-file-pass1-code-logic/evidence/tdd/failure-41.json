@@ -1,0 +1,41 @@
+{
+  "evidence_id": "12-3/implement/142",
+  "kind": "failure",
+  "status": "current",
+  "stage": "implement",
+  "task": "T085",
+  "attempt": "full-pair-r35",
+  "source_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "database": "vulgata_test_t085r2_69c61a2e59f647389b1bd2bf9b128236",
+  "database_template": "vulgata_story121_feffce36e44c48238a6e55c6742c374c",
+  "result": {
+    "dispatched_jobs": 150,
+    "completed_before_stop": 14,
+    "failed_jobs": 1,
+    "stopped_at_job": 15,
+    "source_kind": ".xml",
+    "provider_stream_completed": true,
+    "local_parser_completed": true,
+    "commit_status": "Rejected",
+    "pair_status": "FailedIntegrity",
+    "later_gate_started": false
+  },
+  "observed": {
+    "same_source_hash_completed_on_other_deterministic_jobs": true,
+    "provider_round_trip_seconds": 35,
+    "navigation_attempts": 0,
+    "document_written_for_failed_job": false,
+    "outcome_written_for_failed_job": false
+  },
+  "excluded_causes": [
+    "DeepSeek endpoint, model, authentication, HTTP, or network failure",
+    "streaming inactivity or absolute timeout",
+    "wire or strict-schema rejection",
+    "PostgreSQL availability or disposable-clone failure",
+    "CodeGraph, Java, JDT-LS, archive, host, or system failure"
+  ],
+  "privacy": "Only the user-approved bounded source/context was sent. No provider response, function arguments/results, reasoning, assistant content, source bytes, packet, credential, request body, validator detail, or host path was retained. Ordinary vulgata and system configuration were untouched.",
+  "required_correction": "Separate durable revalidation of every packet-supplied Story 12.2 classification from the requirement that every candidate-cited classification belong to that supplied set; prove the behavior through the public PostgreSQL commit seam before restarting qualification.",
+  "recorded_at": "2026-08-25T18:11:09.0917929+08:00",
+  "summary": "T085 stopped correctly after healthy DeepSeek streaming and local parsing on a deterministic atomic-commit classification-set defect; it was not an environment or network failure."
+}

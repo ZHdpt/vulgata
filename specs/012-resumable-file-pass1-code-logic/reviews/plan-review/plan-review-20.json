@@ -1,0 +1,33 @@
+{
+  "schema_version": "1.0",
+  "gate": "plan-review",
+  "verdict": "ACCEPT",
+  "reviewed_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "reviewed_boundary": {
+    "base_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+    "candidate_commit": null,
+    "artifact_hashes": {
+      "specs/012-resumable-file-pass1-code-logic/spec.md": "48c6fe93539ac94fcd6597c0001486d6271ac9a19971f2cb06b90ea5e66edcda",
+      "specs/012-resumable-file-pass1-code-logic/plan.md": "dcd3e6d6d38a8f8754f66559a87038a35b54c6b033ef929f20e383f512fe4bae",
+      "specs/012-resumable-file-pass1-code-logic/research.md": "14d9d14a2422013549c7d1e8f4c64834ed18c16c652235979bfd19aa08fa42d2",
+      "specs/012-resumable-file-pass1-code-logic/data-model.md": "5e8b7ff94653b26b7a544febb28dc17eff050033c7308f2e51ff941b1480a220",
+      "specs/012-resumable-file-pass1-code-logic/quickstart.md": "94b7873e35f5e321344f99034fc1d07642178c818615f29c0fa4a8a8cbb4f45d",
+      "specs/012-resumable-file-pass1-code-logic/contracts/deepseek-strict-result-submission.md": "afd679f8562a2fb43b9436f371ebd5c53de242f69b0c7a31b0d5120239700c39",
+      "specs/012-resumable-file-pass1-code-logic/evidence/research/deepseek-v4-current-best-practices-audit.md": "d75d3b993e86a970c561cc00206f8326714f61e7d94ad4545c4ad5c3c47f077f",
+      "specs/012-resumable-file-pass1-code-logic/evidence/tdd/failure-34.json": "d32d326978c6fd48188ec35e7e206d5673e212afcecfd2863ec702f89689592b"
+    }
+  },
+  "findings": [],
+  "closed_findings": [
+    "AD24-PR-001: the active wire matrix consistently uses generic required selection on requests one through nine, exact named submit_code_logic selection only on request ten, both strict declarations on every request, and closed rejection of every duplicate, malformed, wrong-name, wrong-turn, none, or conflicting selection shape",
+    "AD24-PR-002: the source-free gate now covers both exact production shapes, retains two distinct sanitized request identities, requires a call and DONE for both plus a terminal fixed-name-match Boolean, and explicitly scopes the older AD-22 handshake as the ordinary half of the combined AD-24 gate"
+  ],
+  "residual_risks": [
+    "Fake-wire proof must show request ten alone receives RequireSpecific submit_code_logic while requests one through nine remain string-required and both declarations remain byte-identical.",
+    "The final-wire normalizer must preserve only the exact terminal named object and reject wrong-turn, wrong-name, duplicate, or malformed variants before send.",
+    "Complete-turn preflight must reject a provider response that ignores the named terminal choice with zero callback or application effect and no request eleven.",
+    "Both source-free shapes require distinct sanitized identities, a call and DONE, a terminal fixed-name match, and zero invocation, result, source, retention, or durable effect.",
+    "Initial-zero, saturation, durable high-water eight, replay, privacy, byte and time limits, zero retry, deterministic and PostgreSQL regressions, and fresh T084 through T086 remain ordered proof gates."
+  ],
+  "summary": "ACCEPT. Independent review found AD-24/R-25 internally consistent, feasible, source-grounded, and bounded after two correction rounds. Requests one through nine retain streamed disabled-thinking generic required selection; request ten alone uses exact named submit_code_logic selection while retaining both strict declarations. Existing complete-turn preflight and local validation remain the safety authority, including when a provider ignores the named choice. The source-free gate now proves both exact request shapes before fresh source-bearing qualification. No prompt injection, manual provider loop, SDK fork, dependency, schema or migration, endpoint, model, credential, source expansion, host or system change, or Story 12.4/12.5 behavior is introduced. Tasks may be generated and independently definition-reviewed under the user's standing continuation authority."
+}

@@ -1,0 +1,35 @@
+{
+  "schema_version": "1.0",
+  "gate": "plan-review",
+  "verdict": "REVISE",
+  "reviewed_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "reviewed_boundary": {
+    "base_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+    "candidate_commit": null,
+    "artifact_hashes": {
+      "specs/012-resumable-file-pass1-code-logic/spec.md": "c2fb00c34246ff0eb82428575778a3abd4d8098c124edf36d48666a41ccc8aea",
+      "specs/012-resumable-file-pass1-code-logic/plan.md": "d0d7ba363880d4b1b8284593d2ed3cb1fb4e986f844a3c4b07e0f854c09223bd",
+      "specs/012-resumable-file-pass1-code-logic/research.md": "7090a17e35defe6380a5883d0988c479fea6a51aea9524a9f71eb5d868bb17f0",
+      "specs/012-resumable-file-pass1-code-logic/data-model.md": "4153241bd1de2cc96f22fa98539ee7d171e85225701ae203f19d6938832eb54c",
+      "specs/012-resumable-file-pass1-code-logic/quickstart.md": "4d7a79458e2922f030ec2cba2dab50858d032e8132ce240b9f7023666a17a8da",
+      "specs/012-resumable-file-pass1-code-logic/contracts/deepseek-strict-result-submission.md": "80243a1a17f958acc8361f7a5b4cdc87b2cb5ab19cd7c8253bc63d7f6247dce8",
+      "specs/012-resumable-file-pass1-code-logic/evidence/research/deepseek-v4-current-best-practices-audit.md": "39870acedcccb40e9fbde5df6bf15b4ad67a7acff8b74cb606598ff1b00bfd65",
+      "specs/012-resumable-file-pass1-code-logic/evidence/tdd/failure-32.json": "98691d887608e28b4f8875cc2bf40379e77bf41a7de10ed0a1c5f3dbf8ded148",
+      "specs/012-resumable-file-pass1-code-logic/reviews/plan-review/plan-review-17.json": "df762d76de374be126a55b181a427464e55feb33a28157a27841dfe52a3ccfd4"
+    }
+  },
+  "findings": [
+    {
+      "id": "AD23-PR-001",
+      "severity": "HIGH",
+      "earliest_owner": "plan",
+      "summary": "The primary AD-23 correction is zero-based, but research R-5 and pass1-runtime-contracts still permit only a second submission on provider turn ten, and one strict-contract bullet ambiguously says iterations one through nine.",
+      "required_correction": "Update every linked companion to SDK iteration 9/provider turn ten sole first-or-second terminal submission and state earlier valid submission as provider turns 1-9/SDK iterations 0-8."
+    }
+  ],
+  "closed_findings": [
+    "AD23-PR-002: strict-path initial zero fallback removal and direct/all-closed-then-submit proof are explicit",
+    "AD23-PR-001 primary mapping: providerTurn = Iteration + 1 and SDK iteration 9 terminal behavior are explicit in the main artifacts"
+  ],
+  "summary": "REVISE. The plan-review-17 corrections are technically sound in the primary artifacts, but one high-severity cross-artifact turn-ten contradiction remains in linked research/runtime-contract material."
+}

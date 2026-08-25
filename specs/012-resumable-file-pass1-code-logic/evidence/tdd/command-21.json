@@ -1,0 +1,58 @@
+{
+  "evidence_id": "12-3/implement/91",
+  "kind": "command",
+  "stage": "implement",
+  "task": "T121",
+  "source_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "prerequisite_evidence": [
+    "specs/012-resumable-file-pass1-code-logic/evidence/tdd/test-green-43.json"
+  ],
+  "command": "$env:VULGATA_T083_SOURCE_FREE_HANDSHAKE = '1'; dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter \"FullyQualifiedName=Vulgata.Tests.PreparedPass1.Pass1DeepSeekContractQualificationTests.SourceFreeHandshake_LiveBetaCapability_WritesSanitizedEvidenceAsync\" --no-restore --logger \"console;verbosity=normal\"",
+  "result": {
+    "build": "passed-with-existing-warnings",
+    "passed": 1,
+    "failed": 0,
+    "skipped": 0,
+    "exit_code": 0,
+    "live_test_duration_seconds": 0.831,
+    "total_duration_seconds": 2.3164
+  },
+  "provider": {
+    "outcome": "Available",
+    "endpoint": "https://api.deepseek.com/beta",
+    "model": "deepseek-v4-flash",
+    "streaming": true,
+    "strict": true,
+    "thinking_disabled": true,
+    "tool_choice_required": true,
+    "tool_call_observed": true,
+    "done_observed": true,
+    "unrestricted_outbound": true
+  },
+  "identity": {
+    "projection_algorithm": "deepseek-strict-schema-projection-v1",
+    "raw_navigate_sha256": "C8387178DA32FC682E7DE462AFA8B62AF388944CB0FC741B895375E585E87770",
+    "raw_submit_sha256": "77A044526E5D61480B3E86FA3C3AA354FF78A9F04BCA3B279F210DFBFB421BC8",
+    "raw_combined_sha256": "54321765E82EBE39092DF96A6F0E39F922E24459C34830525C22A38CDE533B61",
+    "ledger_identity_sha256": "1472E4F1240A7D4568F127FDA36E72BA8B074EDAA430B54289DC5E02C0E5D6FA",
+    "ledger_rows": 18,
+    "projected_navigate_sha256": "779250FCFE72F07B59CBE280A0FF537FF7D622BFE847BCB616A39858705A1FDA",
+    "projected_submit_sha256": "3CD6F35EB8E6B6E7BEFBF802B2D3187823A0805A00B2ADFEC8A85082835DB20F",
+    "projected_combined_sha256": "506603F604C080EA50CDC5E78A4EFD8BAE39AEAEC24B03C66A9F19FC50962D44",
+    "request_sha256": "EA8CCA5DA027B3A575F4DC69884D46ECA54B2E0A406DB134CAFEFBB6B8D95824"
+  },
+  "artifact_path": "artifacts/qualification/story-12.3/deepseek-source-free-handshake.json",
+  "artifact_sha256": "C0D10D515954EC967C774BDEEC8C2165AA569A5A4E8F11AC92BD15D3CB11D58C",
+  "test_sha256": "81BB5A9A968456D7E536BC50C4C7558E47E782121B7F5AD25C2F382D0811D7E6",
+  "privacy": {
+    "source_derived_payload_sent": false,
+    "response_content_persisted": false,
+    "credential_persisted": false,
+    "request_content_persisted": false,
+    "function_invoked": false,
+    "tool_result_sent": false,
+    "database_effect": false
+  },
+  "system_changes": false,
+  "observed_at": "2026-08-24T23:58:07.7526896Z"
+}

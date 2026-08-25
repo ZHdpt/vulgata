@@ -1,0 +1,43 @@
+{
+  "evidence_id": "12-3/implement/99",
+  "kind": "command",
+  "stage": "implement",
+  "task": "T128",
+  "source_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "command": "$env:VULGATA_T083_SOURCE_FREE_HANDSHAKE='1'; dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --filter \"FullyQualifiedName~Pass1DeepSeekContractQualificationTests.SourceFreeHandshake_LiveBetaCapability_WritesSanitizedEvidenceAsync\" --logger \"console;verbosity=minimal\"",
+  "result": {
+    "passed": 1,
+    "failed": 0,
+    "skipped": 0,
+    "total": 1,
+    "duration_seconds": 1,
+    "exit_code": 0
+  },
+  "capability": {
+    "outcome": "Available",
+    "endpoint": "https://api.deepseek.com/beta",
+    "model": "deepseek-v4-flash",
+    "streaming": true,
+    "thinking_disabled": true,
+    "tool_choice_required": true,
+    "tool_call_observed": true,
+    "done_observed": true,
+    "function_invoked": false,
+    "tool_result_sent": false
+  },
+  "artifact": {
+    "path": "artifacts/qualification/story-12.3/deepseek-source-free-handshake.json",
+    "sha256": "58F3038C50A2ADEEAC0BBDE29E0F9EF71BA3D0E636C017340A3BF7DC10F4C9AE",
+    "request_sha256": "EA8CCA5DA027B3A575F4DC69884D46ECA54B2E0A406DB134CAFEFBB6B8D95824",
+    "declarations_sha256": "506603F604C080EA50CDC5E78A4EFD8BAE39AEAEC24B03C66A9F19FC50962D44"
+  },
+  "privacy": {
+    "source_derived_payload_sent": false,
+    "response_content_persisted": false,
+    "credential_persisted": false,
+    "request_content_persisted": false
+  },
+  "network": "The approved unrestricted outbound route was used only for the source-free DeepSeek beta capability request. No repository source, PostgreSQL database, host setting, or system configuration was accessed or changed.",
+  "observed_at": "2026-08-25T09:05:12.5348808+08:00",
+  "summary": "T128 refreshed the exact production declarations and disabled-thinking/required-tool streamed source-free capability gate successfully; source-bearing T084 may now proceed on a fresh disposable clone."
+}

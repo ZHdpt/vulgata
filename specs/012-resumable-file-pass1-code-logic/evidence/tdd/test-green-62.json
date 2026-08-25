@@ -1,0 +1,36 @@
+{
+  "evidence_id": "12-3/implement/119",
+  "kind": "test-green",
+  "status": "current",
+  "stage": "implement",
+  "task": "T146",
+  "source_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore -p:WarningLevel=0 --filter \"FullyQualifiedName~Pass1DeepSeekStreamingQualificationTests.DeclarationAuthority_ExposesRawAndProjectedHashesAndCompleteSortedLedger|FullyQualifiedName~Pass1DeepSeekStreamingQualificationTests.ExecuteAsync_LatestLegalSecondSubmissionUsesTurnTenAndNoRequestElevenAsync|FullyQualifiedName~PreparedPass1JobExecutorStreamingTests.ExecuteAsync_ProviderTurnTen_MapsSdkIterationNineAndTerminatesWithoutRequestElevenAsync|FullyQualifiedName~Pass1DeepSeekContractQualificationTests.SourceFreeHandshake_RequiresTwoSanitizedShapesWithDistinctRequestEvidenceAsync|FullyQualifiedName~Pass1DeepSeekContractQualificationTests.SourceFreeHandshake_UsesConfiguredBetaRouteAndFlashModel_WithExactlyTwoStrictDeclarationsAsync\" --logger \"console;verbosity=minimal\"",
+  "result": {
+    "total": 7,
+    "passed": 7,
+    "failed": 0,
+    "skipped": 0,
+    "duration_seconds": 0.473,
+    "exit_code": 0,
+    "build_errors": 0,
+    "warnings": "existing NU1507 package-source and MSB3277 Entity Framework assembly-version warnings only"
+  },
+  "proven_behavior": [
+    "The declaration authority derives a deterministic one-element submit-only array and identity from the unchanged projected submit object in the accepted combined array.",
+    "Provider requests one through nine retain the exact ordered two-function declarations; request ten carries the exact one-element unchanged strict submit declaration and named submit choice.",
+    "Local FICC ownership of both functions, complete replay/preflight, terminal validation, and zero request eleven remain unchanged.",
+    "The source-free harness uses the combined ordinary array and helper-owned submit-only terminal array and exposes only sanitized terminal declaration hash and byte count."
+  ],
+  "files": {
+    "src/dotnet/Vulgata.Agents/WorkerExecution/DeepSeekStrictToolDeclarations.cs": "B53E8A840685B4501780EE9C210E5B41AB7E49FE4CF8E4392207CC651F18826F",
+    "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedPass1JobExecutor.cs": "7A6B4EFE976E545D9F9ABF358262EC9D06664889113C54834D949B1EDAD56A32",
+    "tests/Vulgata.Tests/PreparedPass1/DeepSeekSourceFreeHandshakeHarness.cs": "28E8B293DC728E523A5398FDA6A4F12D80AF65E93DC2166017C2A9D206F5A20B",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekStreamingQualificationTests.cs": "DC65B324BA9CDCA96DBCA2B5CB8C0FBBC0EE8E65CD6F9C0342EE644499BE7C70",
+    "tests/Vulgata.Tests/PreparedPass1/PreparedPass1JobExecutorStreamingTests.cs": "CB10B94880F0D440B859CBB313704053DC41F752652C5FD23BFA7186E13F40F2",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekContractQualificationTests.cs": "220204F9E4FF0D9A43FEB3465060C7C5F9F812DFF946119EE621CFDDF55CD4D2"
+  },
+  "privacy": "No provider, source, database, network, host, system, request/response payload, function argument/result, reasoning, or credential was accessed or retained.",
+  "observed_at": "2026-08-25T12:14:39.9681849+08:00",
+  "summary": "T146 is GREEN: the exact seven T145 cases now prove ordinary-two and terminal submit-only provider declaration arrays from one authority, with unchanged local FICC and terminal safety behavior."
+}

@@ -1,0 +1,35 @@
+{
+  "evidence_id": "12-3/implement/130",
+  "kind": "test-green",
+  "status": "current",
+  "stage": "implement",
+  "task": "T156-T157",
+  "source_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "red_evidence": "specs/012-resumable-file-pass1-code-logic/evidence/tdd/test-red-66.json",
+  "commands": [
+    "VULGATA_TEST_ADMIN_CONNECTION=<approved-postgres-admin> dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter FullyQualifiedName=Vulgata.Tests.PreparedPass1.Pass1DocumentPostgreSqlAtomicTests.PostgreSql17_ExactReplay_WithSubMicrosecondCommittedAt_IsReplayed --logger console;verbosity=minimal -clp:ErrorsOnly",
+    "VULGATA_TEST_ADMIN_CONNECTION=<approved-postgres-admin> dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter FullyQualifiedName~Pass1DocumentPostgreSqlAtomicTests --logger console;verbosity=minimal -clp:ErrorsOnly",
+    "<approved-postgres-admin-and-process-local-jdt-archive> dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter <T152 exact nonlive barrier> --logger console;verbosity=minimal -clp:ErrorsOnly"
+  ],
+  "results": [
+    { "suite": "sub-microsecond exact replay", "total": 1, "passed": 1, "failed": 0, "duration_seconds": 3 },
+    { "suite": "Pass1DocumentPostgreSqlAtomicTests", "total": 62, "passed": 62, "failed": 0, "duration_seconds": 70 },
+    { "suite": "T152 nonlive barrier", "total": 388, "passed": 385, "failed": 0, "skipped": 3, "duration_seconds": 76 }
+  ],
+  "implementation": "Pass1CodeLogicDocumentCommitter validates UTC and then truncates only its execution-local CommittedAt copy to PostgreSQL microsecond precision before all graph creation, job completion, and exact replay reconstruction.",
+  "preserved": [
+    "canonical source/section/index/edge reconstruction and cardinality checks",
+    "immutable version and changed-replay Conflict behavior",
+    "lease/state/binding authorization",
+    "transaction rollback and reconciliation",
+    "zero schema or migration delta",
+    "DeepSeek terminal projection, streaming, privacy, and provider configuration"
+  ],
+  "files": {
+    "src/dotnet/Vulgata.Infrastructure/Data/Pass1CodeLogicDocumentCommitter.cs": "F0F3C5A287E8111CD507B354A9D505C3F28D75F1DC21F6C939A0E39110F30975",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DocumentPostgreSqlAtomicTests.cs": "EA116DFE1DF4E2DFB041BC8E235B80211C3C6774CEC6C86327829296239EAFF0"
+  },
+  "privacy": "All GREEN verification used synthetic or fixture-owned data and disposable PostgreSQL only. No provider/source call occurred and no ordinary database, host, system, credential, or Git configuration changed.",
+  "observed_at": "2026-08-25T14:29:21.0200072+08:00",
+  "summary": "The r26 replay precision defect is fixed test-first and the complete affected/nonlive regression boundary is GREEN."
+}

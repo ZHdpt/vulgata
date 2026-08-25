@@ -1,0 +1,24 @@
+{
+  "evidence_id": "12-3/implement/154",
+  "kind": "analysis",
+  "status": "current",
+  "stage": "implement",
+  "task": "T179",
+  "source_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "scope": "Deterministic T179 regression-barrier failures after the AD-32 production GREEN",
+  "root_cause": "The streaming tests reused a server-authored bound-exceeded fallback as a convenient valid provider submission. That fallback contains a canonical synthetic receipt by design, but the fake provider flow did not receive that receipt from navigate_code. Same-execution provenance therefore reveals that the fixture no longer represents the test's claimed successful provider behavior.",
+  "minimal_correction": {
+    "owner": "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekStreamingQualificationTests.cs only",
+    "change": "Create a receipt-free locally valid candidate from the existing canonical fallback shape and use it only in the five affected setup sites; do not weaken assertions or production validation.",
+    "preserved": "Raw SSE parsing, latest legal turn, replay continuity, assistant content normalization, inactivity reset, terminal correction, request-count, declaration, wire-bound, and no-request-eleven assertions remain unchanged.",
+    "rerun_prerequisite": "Pass the user's already verified JDT-LS archive path through AnalysisRuntime__JdtLsDistributionArchivePath for the DI composition test."
+  },
+  "prohibited_changes": [
+    "the AD-32 production ledger or receipt validation",
+    "parser fallback semantics, durable committer defense, prompt, provider wire, retry, timeout, model, endpoint, thinking, or schema",
+    "migration, persistence, packet, API, lifecycle, source scope, database contents, host/system configuration, or Git history"
+  ],
+  "provider_or_source_traffic_required": false,
+  "recorded_at": "2026-08-25T21:00:49.4385991+08:00",
+  "summary": "T179 found stale receipt-bearing success fixtures plus one omitted child-process path, not a production, provider, network, or host failure."
+}

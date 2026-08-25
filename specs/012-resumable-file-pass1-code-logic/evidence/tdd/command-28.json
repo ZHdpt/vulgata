@@ -1,0 +1,49 @@
+{
+  "evidence_id": "12-3/implement/131",
+  "kind": "command",
+  "status": "current",
+  "stage": "implement",
+  "task": "T158/T084",
+  "source_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "database": "vulgata_story123_t084_20260825_r27",
+  "database_template": "vulgata_story121_feffce36e44c48238a6e55c6742c374c",
+  "command": "VULGATA_T084_ISOLATED_SOURCE_JOBS=1 VULGATA_T062_QUALIFICATION_CONNECTION=<fresh-r27-disposable-database> VULGATA_T062_WORKER_PROVIDER_API_KEY=<present-secret> <approved-source-and-runtime-bindings> dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --no-restore -p:WarningLevel=0 --filter FullyQualifiedName=Vulgata.Tests.PreparedPass1.Pass1DeepSeekIsolatedSourceQualificationTests.ThreeIsolatedSourceJobs_CompleteCommitAndReplayWithoutLeakingPayloadsAsync --logger console;verbosity=normal -clp:ErrorsOnly",
+  "result": {
+    "total": 1,
+    "passed": 1,
+    "failed": 0,
+    "skipped": 0,
+    "test_duration_seconds": 125,
+    "wall_minutes": 2.1248,
+    "exit_code": 0
+  },
+  "qualification": {
+    "isolated_jobs": 3,
+    "completed": 3,
+    "valid_schema_identity": "code-logic/file-v2",
+    "atomic_first_commits": 3,
+    "exact_replays": 3,
+    "executor_categories": ["Completed", "Completed", "Completed"],
+    "execution_diagnostics": [null, null, null],
+    "submission_diagnostics": [null, null, null],
+    "wire_budget_diagnostics": [null, null, null],
+    "request_eleven_observed": false
+  },
+  "durable_aggregate": {
+    "completed_jobs": 3,
+    "pending_jobs": 147,
+    "document_versions": 3,
+    "logical_documents": 3,
+    "navigation_receipts": 1,
+    "pass1_outcomes": 0
+  },
+  "artifact": {
+    "path": "artifacts/qualification/story-12.3/deepseek-isolated-source-jobs.json",
+    "sha256": "8B1C0FF846C382E1DFC897467901960C9B46C0A9C8F176BDB0F394B45C7D518C",
+    "schema_version": "story-12.3-deepseek-isolated-source-jobs/1.0",
+    "status": "passed"
+  },
+  "privacy": "Only the three approved bounded current-job source/context packets were sent to the configured DeepSeek Worker. The artifact retains source/result/commit hashes, byte/count scalars, fixed outcome categories, and provider identity only; it retains no source/provider content, reasoning, function arguments/results, packet, credential, request/response body, or host path. Only disposable r27 was mutated; ordinary vulgata and system configuration were untouched.",
+  "observed_at": "2026-08-25T14:34:52+08:00",
+  "summary": "T158/T084 passed 3/3 on fresh r27 and proves the terminal-history projection plus PostgreSQL exact-replay correction under real bounded DeepSeek execution."
+}

@@ -1,0 +1,47 @@
+{
+  "schema_version": "1.0",
+  "gate": "plan-review",
+  "verdict": "ACCEPT",
+  "reviewed_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "reviewed_boundary": {
+    "base_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+    "candidate_commit": null,
+    "diff_sha256": "8c31a3ed55983c1fdf4447db8b3b2041bbaa8708b4a214af59c48cc3e82629e1",
+    "artifact_hashes": {
+      "specs/012-resumable-file-pass1-code-logic/spec.md": "bd6ddd9a92089a9fcdf110461547e69b52912a0e892bc08b9c017e5f834170e6",
+      "specs/012-resumable-file-pass1-code-logic/plan.md": "a2344e815cdb6440ebab8dc3345f4ed410634e0a862e19637fd8a090ea4eeb6b",
+      "specs/012-resumable-file-pass1-code-logic/research.md": "a0dc5e51827260cbe095faa5c6462bfb55d271592aaf201e70103ae86d735384",
+      "specs/012-resumable-file-pass1-code-logic/quickstart.md": "61691151becec554a419b37f8ada251b4bfd2ed52931411f9c6e2e45cb213cab",
+      "specs/012-resumable-file-pass1-code-logic/contracts/deepseek-strict-result-submission.md": "727a74a1c3f583941a0f07dcf5d9f9d89869c3ae10b46a09a8045c3684b90657",
+      "specs/012-resumable-file-pass1-code-logic/evidence/research/deepseek-v4-current-best-practices-audit.md": "d68134b21e8276b3c42d51bdf9b76d7d7381ca19c5e0a5523d1fc0a9bf9e0231",
+      "specs/012-resumable-file-pass1-code-logic/evidence/tdd/failure-30.json": "d8de3a651b27523067824e59705e058289f7e4634ba95e43b66440e943b1f9a1"
+    },
+    "owned_paths": [
+      "specs/012-resumable-file-pass1-code-logic/spec.md",
+      "specs/012-resumable-file-pass1-code-logic/plan.md",
+      "specs/012-resumable-file-pass1-code-logic/research.md",
+      "specs/012-resumable-file-pass1-code-logic/quickstart.md",
+      "specs/012-resumable-file-pass1-code-logic/contracts/deepseek-strict-result-submission.md"
+    ]
+  },
+  "reviewed_artifacts": [
+    "AGENTS.md",
+    ".agents/skills/run-bmad-sprint-loop/SKILL.md",
+    "specs/012-resumable-file-pass1-code-logic/spec.md",
+    "specs/012-resumable-file-pass1-code-logic/plan.md",
+    "specs/012-resumable-file-pass1-code-logic/research.md",
+    "specs/012-resumable-file-pass1-code-logic/quickstart.md",
+    "specs/012-resumable-file-pass1-code-logic/contracts/deepseek-strict-result-submission.md",
+    "specs/012-resumable-file-pass1-code-logic/evidence/research/deepseek-v4-current-best-practices-audit.md",
+    "specs/012-resumable-file-pass1-code-logic/evidence/tdd/failure-30.json"
+  ],
+  "findings": [],
+  "residual_risks": [
+    "Provider behavior drift is bounded by the exact live source-free call-and-DONE gate before any source-bearing retry.",
+    "Multiple or unsafe required calls remain bounded by complete-response preflight and serial durable reservation tests.",
+    "Adapter wire drift remains bounded by duplicate-aware source normalization and exact fake-wire assertions.",
+    "Malformed streams or continuity loss remain bounded by raw inactivity, absolute-cap, and fail-closed call/result continuity tests.",
+    "Result-quality impact from disabled thinking remains bounded by three isolated locally validated source-bearing jobs before full T062."
+  ],
+  "summary": "ACCEPT. Independent AD-22 plan review found the correction source-grounded, minimal, feasible, and internally consistent. T084 r17 proves omitted/default auto selection can legally complete with no function, while bounded source-free probes and current DeepSeek V4 guidance establish that required selection is rejected with thinking enabled and succeeds with thinking disabled on the same streamed endpoint/model. The corrected FR-062/SC-015, AD-22, R-23, quickstart, strict-result contract, and audit consistently scope exact thinking disabled plus tool_choice required to only the Story 12.3 strict Worker and its qualification-only source-free handshake. Closed normalization accepts only absent/exact-disabled thinking and absent/exact-auto/exact-required choice, then deterministically emits exact disabled/required fields and rejects every malformed, duplicate, enabled, named, none, or conflicting shape before send. Required selection grants no application authority: zero-call completion still rejects content-dark; complete-response preflight still admits only a legal sole submit_code_logic or bounded all-navigate_code batch; serial durable reservation, local candidate validation, all byte/time/turn limits, one durable retry, atomic persistence, privacy, and Story boundaries remain unchanged. The source-free handshake uses the exact production declaration and selection policy, must observe a call and DONE, invokes nothing, sends no result, and stops before source on incompatibility. The implementation can use the existing final-wire capture and preflight seams without a hidden/manual provider loop, dependency, schema/migration, endpoint rewrite, host/system change, or sibling-client behavior change. No actionable finding remains; tasks may be generated and independently definition-reviewed without another user approval pause under the standing authorization."
+}

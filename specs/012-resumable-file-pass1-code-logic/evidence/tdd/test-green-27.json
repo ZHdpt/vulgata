@@ -1,0 +1,34 @@
+{
+  "evidence_id": "12-3/implement/72",
+  "kind": "test-green",
+  "stage": "implement",
+  "task": "T104",
+  "source_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "focused_command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --nologo -p:WarningLevel=0 -p:GenerateMvcTestManifest=false --filter \"FullyQualifiedName~ExecuteAsync_CompleteTurnWithLegalNavigationThenUnknownSibling_PreflightsBeforeAnyCallbackAsync|FullyQualifiedName~ExecuteAsync_MultipleCallTurnWithLegalThenUnknownSibling_HasNoPartialCallbackAsync|FullyQualifiedName~ExecuteAsync_IllegalWholeTurnShapesHaveNoApplicationEffectsAsync|FullyQualifiedName~ExecuteAsync_BudgetExhaustionBeforeTurnTen_StopsAtEightCallbacksWithoutRequestTenOrElevenAsync|FullyQualifiedName~ExecuteAsync_CompleteAllNavigationBatch_RemainsEligibleAndReleasesUpdatesSeriallyAsync\" --logger \"console;verbosity=minimal\"",
+  "focused_result": {
+    "passed": 9,
+    "failed": 0,
+    "skipped": 0
+  },
+  "broader_command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --nologo -p:WarningLevel=0 -p:GenerateMvcTestManifest=false --filter \"FullyQualifiedName~PreparedPass1JobExecutorStreamingTests\" --logger \"console;verbosity=minimal\"",
+  "broader_result": {
+    "passed": 64,
+    "failed": 0,
+    "skipped": 0
+  },
+  "implementation": {
+    "placement": "FunctionInvokingChatClient -> CompleteProviderTurnPreflightChatClient -> ReasoningReplayChatClient",
+    "accepted_navigation": "A complete all-navigate_code batch with unique nonblank call IDs within the current execution-local remaining budget is released unchanged to serial FICC invocation.",
+    "rejected_turns": "Unknown, mixed, multiple-submission, duplicate/blank-ID, post-submission navigation, and over-budget turns release no callback or later request.",
+    "inactivity_compatibility": "A generation-stamped parsed-activity pulse resets the existing inactivity delay while the complete turn remains buffered; raw/comment activity remains reserved for T111/T112.",
+    "closed_reason_compatibility": "Known post-submission navigation is suppressed without an illegal-call subtype so the existing worker-result-rejected terminal reason is preserved."
+  },
+  "fixture_correction": "During GREEN verification, receiving-review checks confirmed one malformed fake SSE closing brace and one request-count assertion that conflicted with the no-later-request budget rule. The test author corrected only those fixtures; the original honest RED behaviors remained the legal batch rejection and callback budget overflow.",
+  "artifact_sha256": {
+    "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedPass1JobExecutor.cs": "8BEAB19D999C7F9522904AC6123E44FA6DF11CC8241A5A1278BBB04E855172AB",
+    "tests/Vulgata.Tests/PreparedPass1/PreparedPass1JobExecutorStreamingTests.cs": "8BFCE4A5BB31CD8AA4F987669C918EA1B9405F4CA2C348F1D4811C47F1622C32"
+  },
+  "privacy": "No provider, source-bearing request, database, credential, raw external payload, host setting, or system configuration was accessed or changed.",
+  "warnings": "Existing NU1507 and EF assembly-version warnings remain; focused and broader tests succeeded.",
+  "observed_at": "2026-08-24T21:22:17.5135871Z"
+}

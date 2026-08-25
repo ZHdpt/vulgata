@@ -1,0 +1,64 @@
+{
+  "evidence_id": "12-3/implement/98",
+  "kind": "test-green",
+  "stage": "implement",
+  "task": "T127",
+  "source_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "non_live_command": "$env:VULGATA_T083_SOURCE_FREE_HANDSHAKE=$null; $env:VULGATA_T084_ISOLATED_SOURCE_JOBS=$null; dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --filter \"FullyQualifiedName~PreparedPass1JobExecutorStreamingTests|FullyQualifiedName~Pass1DeepSeekStreamingQualificationTests|FullyQualifiedName~Pass1DeepSeekContractQualificationTests|FullyQualifiedName~Pass1DeepSeekIsolatedSourceQualificationTests\" --logger \"console;verbosity=minimal\"",
+  "non_live_result": {
+    "passed": 240,
+    "failed": 0,
+    "skipped": 3,
+    "total": 243,
+    "expected_skips": [
+      "source-free live capability handshake",
+      "isolated source-bearing DeepSeek contract qualification",
+      "T084 three isolated source jobs"
+    ]
+  },
+  "durability_command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --filter \"FullyQualifiedName~Pass1DurableNavigationRecoveryTests|FullyQualifiedName~Pass1NavigationBudgetPersistenceTests|FullyQualifiedName~PreparedPass1WorkerDispatcherTests|FullyQualifiedName~Pass1ProductionBoundaryQualificationTests\" --logger \"console;verbosity=minimal\"",
+  "durability_result": {
+    "passed": 25,
+    "failed": 0,
+    "skipped": 0,
+    "total": 25
+  },
+  "postgres_command": "$env:VULGATA_TEST_POSTGRES_ADMIN='<approved localhost postgres admin connection>'; dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter \"FullyQualifiedName~Pass1MigrationTests|FullyQualifiedName~Pass1DocumentCommitTests|FullyQualifiedName~Pass1DocumentPostgreSqlAtomicTests|FullyQualifiedName~PreparedPass1WorkerDispatcherTests\" --logger \"console;verbosity=minimal\"",
+  "postgres_result": {
+    "passed": 174,
+    "failed": 0,
+    "skipped": 0,
+    "total": 174,
+    "duration_seconds": 91
+  },
+  "migration_command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --filter \"FullyQualifiedName~Pass1MigrationTests\" --logger \"console;verbosity=minimal\"",
+  "migration_result": {
+    "passed": 9,
+    "failed": 0,
+    "skipped": 0,
+    "total": 9
+  },
+  "verified": [
+    "exact disabled-thinking, required-tool, streamed final wire and projected declaration identity",
+    "legal saturation closure, one result per call, complete replay, and no request eleven",
+    "reservation failure, retry, durable high-water eight, restart, receipt, cursor, marker, dispatcher, and production-boundary behavior",
+    "PostgreSQL atomic commit, rollback, replay, restart, lease, and reservation behavior on test-created disposable databases",
+    "nine migration/model tests and zero AD-23 schema or migration ownership",
+    "zero source-bearing or live-provider traffic during T127"
+  ],
+  "database": {
+    "server": "localhost:5432",
+    "admin_database": "postgres",
+    "scope": "test-created disposable databases only",
+    "ordinary_vulgata_accessed": false
+  },
+  "files": {
+    "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedPass1JobExecutor.cs": "D267431A554CFCA612C3F3B5744B6C92FBA4153654E829D09F2C6FF990B141F5",
+    "tests/Vulgata.Tests/PreparedPass1/PreparedPass1JobExecutorStreamingTests.cs": "A439981FAD1B7742AE84D11717E7AE2F4D1B39E0298098D9C95B690329063D8F"
+  },
+  "diff_check": "Scoped git diff --check exited zero; only the existing LF-to-CRLF advisory was emitted.",
+  "warnings": "Existing NU1507 package-source and MSB3277 EF assembly-version warnings remain; zero build or test errors.",
+  "privacy": "Only the approved localhost PostgreSQL instance and disposable databases were accessed. No provider, source-bearing repository, external network, credential output, host setting, or system configuration was accessed or changed.",
+  "observed_at": "2026-08-25T09:03:46.6420964+08:00",
+  "summary": "T127 passed the full deterministic, fake-wire, durability, disposable-PostgreSQL, atomicity, restart, production-boundary, and migration barrier without live provider traffic or system changes."
+}

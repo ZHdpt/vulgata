@@ -1,0 +1,59 @@
+{
+  "evidence_id": "12-3/implement/155",
+  "kind": "command",
+  "status": "passed",
+  "stage": "implement",
+  "task": "T179",
+  "source_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "definition_review": {
+    "artifact": "reviews/definition-review/definition-review-46.json",
+    "verdict": "ACCEPT",
+    "scope": "one local receipt-free helper and exactly five stale success setup replacements in Pass1DeepSeekStreamingQualificationTests.cs"
+  },
+  "commands": [
+    "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --no-restore --filter \"<six T177 same-execution receipt-provenance tests>\" --logger \"console;verbosity=minimal\"",
+    "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --no-restore --filter \"FullyQualifiedName~PreparedPass1JobExecutorStreamingTests\" --logger \"console;verbosity=minimal\"",
+    "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --no-restore --filter \"<six corrected Pass1DeepSeekStreamingQualification success cases>\" --logger \"console;verbosity=minimal\"",
+    "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --no-restore --filter \"FullyQualifiedName~Pass1DeepSeekStreamingQualificationTests\" --logger \"console;verbosity=minimal\"",
+    "<approved-postgres-admin>; AnalysisRuntime__JdtLsDistributionArchivePath=<approved-verified-archive>; <live-opt-ins-and-provider-key-cleared>; dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --no-restore -p:WarningLevel=0 --filter \"FullyQualifiedName~Vulgata.Tests.PreparedPass1&FullyQualifiedName!~Pass1HostRuntimeQualificationTests&FullyQualifiedName!~NavigateCodeRealToolQualificationTests&FullyQualifiedName!~Pass1ProductionExecutionTests&FullyQualifiedName!~Pass1ExecutionApiTests\" --logger \"console;verbosity=minimal\" -clp:ErrorsOnly",
+    "<approved-pair-environment-with-provider-key-absent-and-fresh-t179-disposable-clone>; dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --no-restore -p:WarningLevel=0 --filter \"FullyQualifiedName=Vulgata.Tests.PreparedPass1.Pass1ProductionExecutionTests.HostedRevisionBinding_CurrentRunningPair_LoadsAndAcquiresExactTwoRequestsAsync\" --logger \"console;verbosity=minimal\" -clp:ErrorsOnly",
+    "git diff --check; git status --short -- src/dotnet/Vulgata.Infrastructure/Data/Migrations"
+  ],
+  "results": [
+    { "suite": "exact T177 receipt provenance", "exit_code": 0, "total": 6, "passed": 6, "failed": 0, "skipped": 0, "duration_milliseconds": 412 },
+    { "suite": "complete executor streaming", "exit_code": 0, "total": 120, "passed": 120, "failed": 0, "skipped": 0, "duration_seconds": 2 },
+    { "suite": "corrected stale streaming fixtures", "exit_code": 0, "total": 6, "passed": 6, "failed": 0, "skipped": 0, "duration_milliseconds": 585 },
+    { "suite": "complete DeepSeek streaming qualification", "exit_code": 0, "total": 95, "passed": 95, "failed": 0, "skipped": 0, "duration_seconds": 1 },
+    { "suite": "complete nonlive Prepared Pass 1 and PostgreSQL barrier", "exit_code": 0, "total": 744, "passed": 740, "failed": 0, "skipped": 4, "duration_seconds": 236 },
+    { "suite": "provider-free hosted approved-pair revision loader", "exit_code": 0, "total": 1, "passed": 1, "failed": 0, "skipped": 0, "duration_seconds": 16 },
+    { "suite": "owned fixture build", "exit_code": 0, "compilation_errors": 0, "warnings": 10 },
+    { "suite": "diff and migration delta", "exit_code": 0, "migration_file_delta": 0, "result": "passed_with_line_ending_advisories_only" }
+  ],
+  "expected_skips": [
+    "authenticated real-pair provider-outage qualification",
+    "isolated source-bearing DeepSeek qualification",
+    "source-free live DeepSeek handshake",
+    "live approved-file dispatcher qualification"
+  ],
+  "fixture_correction": {
+    "pre_hash": "A10D7589CB715DF573B6401433667698816038D1DA0131351CE70AA9CCB5CAD2",
+    "post_hash": "6968954AAFEC5C97015B49430A733D2C267487965BE0BAB6DDEB857F148C2319",
+    "behavior": "The local helper preserves the canonical candidate shape while clearing knownReferences and deferredObservations, so no synthetic receipt is submitted without an observed callback. All original assertions and test cardinality remain."
+  },
+  "unchanged_production": {
+    "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedNavigateCodeFunction.cs": "388A4C6D28960E487907A84B8448CBF32F0FEB75003EC34E7C6E172659C18044",
+    "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedSubmitCodeLogicFunction.cs": "564030AAB3187AA0C16F2813B54D863FEA82D2E7043755BD27BA592AD9264362",
+    "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedPass1JobExecutor.cs": "BC9E322876AA540E380A3B2CB46717B4FE8A31678D73465F0C02E5C19C6A9FEE"
+  },
+  "disposable_database": {
+    "name": "vulgata_test_t179_20260825_2110",
+    "template": "vulgata_story121_feffce36e44c48238a6e55c6742c374c",
+    "active_connections_before_drop": 0,
+    "dropped_after_verification": true,
+    "remaining_catalog_rows": 0,
+    "ordinary_vulgata_database_mutated": false
+  },
+  "privacy": "Provider credentials and live opt-ins were cleared for every aggregate test. The hosted loader acquired only the approved local revision bindings and sent no provider request. The verified archive path was supplied transiently; no archive, host, system, service, permission, global configuration, ordinary database, or Git history was changed.",
+  "observed_at": "2026-08-25T21:16:35.1345395+08:00",
+  "summary": "T179 passes the complete deterministic, streaming, privacy, PostgreSQL, hosted-loader, migration-delta, and diff barriers after the independently accepted receipt-free fixture correction; fresh T180/T084 is permitted."
+}

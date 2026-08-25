@@ -1,0 +1,36 @@
+{
+  "evidence_id": "12-3/qualify/149",
+  "kind": "failure",
+  "status": "diagnosed",
+  "stage": "qualify",
+  "task": "T085",
+  "source_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "failed_command": "VULGATA_T062_CONCURRENCY_LIMIT=2; VULGATA_T062_TERMINAL_TIMEOUT_SECONDS=9000; VULGATA_T062_QUALIFICATION_CONNECTION=<fresh-r7-disposable-clone>; <approved-source-provider-runtime-bindings>; dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --no-restore -p:WarningLevel=0 --filter FullyQualifiedName~Pass1ProductionExecutionTests.AuthenticatedApprovedPair_StartsRealRunAtEveryLimit_AndPersistsTerminalEvidence --logger console;verbosity=normal -clp:ErrorsOnly",
+  "result": {
+    "exit_code": 1,
+    "total_jobs": 150,
+    "completed_jobs": 24,
+    "failed_jobs": 1,
+    "pair_phase": "FailedIntegrity",
+    "provider_stream_completed": true,
+    "local_parser_completed": true,
+    "commit_status": "Rejected",
+    "diagnostic_reason": "durable-binding-mismatch-receipt"
+  },
+  "failed_job_navigation_budget": {
+    "tool_attempts": 0,
+    "accepted_calls": 0,
+    "evidence_bytes": 0,
+    "durable_receipts": 0
+  },
+  "diagnosis": "The provider returned a schema-valid, locally parsed candidate containing internally consistent receipt UUIDs that were never returned by navigate_code in this execution. The local validator captured the candidate because it checks candidate-internal receipt consistency but not execution provenance. The atomic committer correctly found no durable receipt and rejected it, which the runner escalated to pair-wide Integrity.",
+  "excluded_causes": [
+    "DeepSeek endpoint, model, authentication, or availability",
+    "outbound network, streaming, inactivity timeout, or absolute timeout",
+    "source repository, CodeGraph, Java, JDT-LS, or worker runtime",
+    "PostgreSQL availability, host configuration, or system configuration"
+  ],
+  "privacy": "The diagnostic retained only closed status/subtype scalars, job counts, and navigation-budget counts. It retained no source, packet, prompt, reasoning, candidate, validator detail, tool arguments/results, request/response bytes, credential, or host path. Only approved repositories and disposable PostgreSQL databases were used; the ordinary vulgata database and all host/system settings were untouched.",
+  "observed_at": "2026-08-25T20:08:34.4382708+08:00",
+  "next_step": "Apply AD-32/R-33 test-first: reject candidate-cited receipt IDs not observed in the same execution through the existing InvalidEvidence correction path, while retaining the unchanged durable committer check."
+}

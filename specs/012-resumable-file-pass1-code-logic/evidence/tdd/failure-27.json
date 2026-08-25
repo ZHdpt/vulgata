@@ -1,0 +1,31 @@
+{
+  "evidence_id": "12-3/implement/63",
+  "kind": "failure",
+  "stage": "implement",
+  "task": "T096/T083",
+  "source_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "artifact_paths": [
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekContractQualificationTests.cs",
+    "tests/Vulgata.Tests/PreparedPass1/DeepSeekSourceFreeHandshakeHarness.cs",
+    "artifacts/qualification/story-12.3/deepseek-source-free-handshake.json"
+  ],
+  "artifact_sha256": {
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekContractQualificationTests.cs": "F420DC5C5AEBFD4A58F771B33C8A7631B8E7A4F0F61DC3033E1366915E2274A0",
+    "tests/Vulgata.Tests/PreparedPass1/DeepSeekSourceFreeHandshakeHarness.cs": "2F6C1E724B63447028D73C3A632C6C318DB2A31268574AF35CA8B5181E6B65E7",
+    "artifacts/qualification/story-12.3/deepseek-source-free-handshake.json": "90E417FCA336EEAB2C33C6565EB91F56D3B87FEF579FA6114BF67128AFA7B6C5"
+  },
+  "provider_result": {
+    "outcome": "Available",
+    "test_result": "1 passed, 0 failed",
+    "duration_ms": 955,
+    "endpoint": "https://api.deepseek.com/beta",
+    "model": "deepseek-v4-flash",
+    "source_derived_payload_sent": false
+  },
+  "observed_gap": "The corrected in-memory DeepSeekSourceFreeHandshakeEvidence contains raw navigate/submit/combined identities, algorithm and ledger identities, and projected navigate/submit/combined identities, but the live T083 artifact initializer still serialized only the older navigate/combined subset.",
+  "diagnosis": "This is a qualification-artifact projection omission in the existing T096 test writer, not a provider, network, schema, thinking, streaming, timeout, credential, database, or host failure. The current accepted plan and contract already require the omitted sanitized fields, so no plan or production correction is needed.",
+  "required_correction": "Update only the live test artifact initializer to serialize the existing sanitized evidence scalars, add deterministic assertions for their presence/provenance/privacy, then rerun the same single source-free handshake and inspect the regenerated artifact before accepting T096.",
+  "privacy": "The successful request was source-free. Inspection retained only sanitized hashes, byte counts, route/model, flags, and timestamps; no key, headers, schema/request content, response text/reasoning, source, tool arguments/results, or durable identity was persisted.",
+  "observed_at": "2026-08-24T19:19:38.2583306Z",
+  "summary": "T083 provider compatibility passed, but its JSON evidence writer omitted newly required sanitized raw/ledger/projected identity fields."
+}

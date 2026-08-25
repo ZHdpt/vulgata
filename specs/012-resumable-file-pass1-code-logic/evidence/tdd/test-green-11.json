@@ -1,0 +1,30 @@
+{
+  "evidence_id": "12-3/implement/24",
+  "kind": "test-green",
+  "stage": "implement",
+  "source_commit": "29459174348511bb813c4aa9672ccffee61d82a6",
+  "artifact_paths": [
+    "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedPass1JobExecutor.cs",
+    "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedPass1ResultParser.cs",
+    "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedSubmitCodeLogicFunction.cs",
+    "tests/Vulgata.Tests/PreparedPass1/PreparedPass1JobExecutorStreamingTests.cs"
+  ],
+  "artifact_sha256": {
+    "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedPass1JobExecutor.cs": "f8038edde33ab1452c8873668bab12c3cc0927a80d8c713240f35172ea15b430",
+    "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedPass1ResultParser.cs": "2db3a6e96888a2b93094116b8dc0e9070ace74b599c3938d9fb359db18eadf46",
+    "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedSubmitCodeLogicFunction.cs": "6ac78a3fb4ccc846c9a1ec8c267c148e9284ebd1939b3839bf67327e0cf30f2b",
+    "tests/Vulgata.Tests/PreparedPass1/PreparedPass1JobExecutorStreamingTests.cs": "5909d4983460d5746c9896abb3b0946d7e8c49f0b1c4b11a0d720493a7c84375"
+  },
+  "commands": [
+    "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --nologo --filter FullyQualifiedName~PreparedPass1JobExecutorStreamingTests --logger console;verbosity=minimal -p:GenerateMvcTestManifest=false",
+    "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --no-restore --nologo --filter FullyQualifiedName~CodeLogicFileV2SchemaTests --logger console;verbosity=minimal -p:GenerateMvcTestManifest=false"
+  ],
+  "result": {
+    "focused": "48 passed, 0 failed, 0 skipped; SubmitSession 36 passed including 23/23 binding rows, 5/5 evidence rows, and 4/4 closed categories",
+    "surrounding_schema_parser": "18 passed, 0 failed, 0 skipped",
+    "warnings": "existing NU1507 package-source, MSB3277 EF assembly-version, and analyzer warnings; no build or test errors",
+    "diff_check": "passed with LF-to-CRLF notices only"
+  },
+  "observed_at": "2026-08-24T07:08:24.4941185Z",
+  "summary": "T073 accepts authority only through one locally validated submit_code_logic candidate, preserves nested raw JSON bytes, maps exhaustive typed failures to closed categories, blocks later evidence and illegal calls, ignores free-form output, and keeps canonical capture execution-local."
+}
