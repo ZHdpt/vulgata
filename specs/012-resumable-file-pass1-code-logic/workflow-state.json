@@ -3,13 +3,13 @@
   "bmad_story_key": "12-3-resumable-file-pass-1-and-code-logic-documents",
   "bmad_epic_key": "12",
   "feature_directory": "specs/012-resumable-file-pass1-code-logic",
-  "stage": "verify",
+  "stage": "complete",
   "preflight": {
     "branch": "demo0831/story-12-3",
-    "head": "29459174348511bb813c4aa9672ccffee61d82a6",
+    "head": "88048291b148d59d5a88d605f7b27c26325c8d83",
     "git_identity_sha256": "056EE72BEB553F1C2AAA2D88B2730FC47D14ABC810286CC5F98D68B1F513B17B",
-    "status_sha256": "0A689CD0F6B6EF4B7E853BC63BB4CF8BE3A262408169EE66CEB30E9D2EEF5BCB",
-    "observed_at": "2026-08-25T16:16:52.0294483Z"
+    "status_sha256": "A9419E3BE3B788512FAE579FED9BE4B064040129148FA2B3E3E2A90AB2162952",
+    "observed_at": "2026-08-25T23:57:29.9568413Z"
   },
   "artifacts": {
     "spec": {
@@ -83,13 +83,9 @@
   "checkpoint": {
     "checkpoint_id": "bmad-12-3-complete-20260825T235437Z-5e9cb0",
     "stage": "complete",
-    "commit_sha": null,
-    "binding_status": "pending"
+    "commit_sha": "88048291b148d59d5a88d605f7b27c26325c8d83",
+    "binding_status": "bound"
   },
-  "resume": {
-    "stage": "verify",
-    "reason": "All correction gates pass; the explicit-path completion commit and checkpoint trailer binding are pending.",
-    "evidence_path": "specs/012-resumable-file-pass1-code-logic/evidence/tdd/command-39.json"
-  },
-  "updated_at": "2026-08-25T23:54:37.1604789Z"
+  "resume": null,
+  "updated_at": "2026-08-25T23:57:29.9568413Z"
 }
