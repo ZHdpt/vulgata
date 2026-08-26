@@ -366,7 +366,7 @@ public sealed class ExactCrossRepositoryIntegrationTests
     [InlineData("unmatched")]
     [InlineData("normalization_mismatch")]
     [InlineData("multiple_providers")]
-    public async Task ResolveAfterPass1Async_RealProviderNegativeMatrix_PersistsOneReplayStableOwnerAnchoredUncertaintyAsync(
+    public async Task ResolveAfterPass1Async_RealProviderMatrix_PersistsExpectedReplayStableOutcomeAsync(
         string reason)
     {
         await using ExactCrossRepositoryTestFixture fixture =
@@ -394,17 +394,33 @@ public sealed class ExactCrossRepositoryIntegrationTests
         ExactResolutionOutcome first = await coordinator.ResolveAfterPass1Async(
             Request(profile),
             fixture.Access.AuthorizedScope);
-        Uncertainty firstDiagnostic = await context.Uncertainties.AsNoTracking()
-            .SingleAsync(uncertainty => uncertainty.OccurrenceId == occurrence.OccurrenceId);
         ExactResolutionOutcome replay = await coordinator.ResolveAfterPass1Async(
             Request(profile),
             fixture.Access.AuthorizedScope);
 
         Assert.Equal(ExactResolutionOutcomeKind.Applied, first.Kind);
         Assert.Equal(ExactResolutionOutcomeKind.AlreadyApplied, replay.Kind);
+        Uncertainty[] uncertainties = await context.Uncertainties.AsNoTracking().ToArrayAsync();
+
+        if (reason == "multiple_providers")
+        {
+            // The mutated fixture has two evidence observations, but both are
+            // owned by the same current provider Document Version. Provider
+            // multiplicity is defined over distinct current Document Versions,
+            // so this is an exact result plus the unrelated unsupported row.
+            Assert.Single(await context.DocumentEdges.AsNoTracking().ToArrayAsync());
+            Assert.Single(await context.ExactCrossRepositoryEdgeEvidence.AsNoTracking().ToArrayAsync());
+            Uncertainty unsupportedDiagnostic = Assert.Single(uncertainties);
+            Assert.Equal("unsupported_kind", unsupportedDiagnostic.ReasonCode);
+            Assert.Equal("unresolved", unsupportedDiagnostic.Status);
+            Assert.Equal("unknown_target", unsupportedDiagnostic.SubStatus);
+            return;
+        }
+
         Assert.Empty(context.DocumentEdges);
         Assert.Empty(context.ExactCrossRepositoryEdgeEvidence);
-        Uncertainty[] uncertainties = await context.Uncertainties.AsNoTracking().ToArrayAsync();
+        Uncertainty firstDiagnostic = await context.Uncertainties.AsNoTracking()
+            .SingleAsync(uncertainty => uncertainty.OccurrenceId == occurrence.OccurrenceId);
         Uncertainty diagnostic = Assert.Single(
             uncertainties,
             uncertainty => uncertainty.OccurrenceId == occurrence.OccurrenceId);

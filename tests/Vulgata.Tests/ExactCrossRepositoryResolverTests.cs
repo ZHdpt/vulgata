@@ -196,16 +196,20 @@ public sealed class ExactCrossRepositoryResolverTests
             },
             "in/cust/updateSession");
 
-        ExactResolutionNonExactException exception =
-            await Assert.ThrowsAsync<ExactResolutionNonExactException>(() =>
-            new ExactCrossRepositoryResolver().ResolveAsync(
+        ExactResolutionDecisionBatch batch =
+            await new ExactCrossRepositoryResolver().ResolveAsync(
                 profile,
                 [consumer],
                 [provider, duplicate],
                 [UnsupportedDecision(
                     Assert.Single(profile.UnsupportedObservations).ObservationId,
-                    consumerOwner)]));
-        Assert.Equal("multiple_providers", exception.ReasonCode);
+                    consumerOwner)]);
+        ExactResolutionDecision decision = Assert.Single(
+            batch.Decisions,
+            value => value.Identity == occurrence.OccurrenceId);
+        Assert.Equal(ExactResolutionDecisionKind.Uncertainty, decision.Kind);
+        Assert.Equal("multiple_providers", decision.ReasonCode);
+        Assert.Null(decision.Target);
     }
 
     [Theory]

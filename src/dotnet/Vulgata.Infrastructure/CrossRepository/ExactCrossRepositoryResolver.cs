@@ -1,4 +1,3 @@
-using System.Text;
 using Vulgata.Core.DomainServices;
 
 namespace Vulgata.Infrastructure.CrossRepository;
@@ -42,38 +41,8 @@ public sealed class ExactCrossRepositoryResolver : IExactCrossRepositoryResolver
 
     internal static string NormalizeEndpointIdentifier(
         string rawIdentifier,
-        string requiredPrefix)
-    {
-        ArgumentNullException.ThrowIfNull(rawIdentifier);
-        ArgumentNullException.ThrowIfNull(requiredPrefix);
-        string normalized = rawIdentifier.Normalize(NormalizationForm.FormC)
-            .Trim(' ', '\t', '\r', '\n');
-        if (requiredPrefix.Length > 0)
-        {
-            if (!normalized.StartsWith(requiredPrefix, StringComparison.Ordinal))
-            {
-                throw new InvalidDataException(
-                    "The endpoint identifier does not satisfy the configured normalization rule.");
-            }
-
-            normalized = normalized[requiredPrefix.Length..];
-            if (normalized.StartsWith(requiredPrefix, StringComparison.Ordinal))
-            {
-                throw new InvalidDataException(
-                    "The endpoint identifier does not satisfy the configured normalization rule.");
-            }
-        }
-
-        if (normalized.Length == 0 ||
-            Encoding.UTF8.GetByteCount(normalized) > ExactResolutionLimits.MaxEndpointUtf8Bytes ||
-            normalized.Any(char.IsControl))
-        {
-            throw new InvalidDataException(
-                "The endpoint identifier does not satisfy the configured normalization rule.");
-        }
-
-        return normalized;
-    }
+        string requiredPrefix) =>
+        ExactEndpointNormalizer.Normalize(rawIdentifier, requiredPrefix);
 
     private static ExactResolutionDecision ResolveOccurrence(
         ExactResolutionProfile profile,
@@ -159,16 +128,35 @@ public sealed class ExactCrossRepositoryResolver : IExactCrossRepositoryResolver
                 "normalization_mismatch");
         }
 
-        if (eligibleProviders.Length != 1)
+        ProviderEndpointCandidate[][] providersByDocument =
+        [
+            .. eligibleProviders
+                .GroupBy(candidate => candidate.Owner.DocumentVersionId)
+                .OrderBy(group => group.Key)
+                .Select(group => group
+                    .OrderBy(candidate => candidate.DeclarationEvidenceLocator, StringComparer.Ordinal)
+                    .ThenBy(candidate => candidate.RawIdentifier, StringComparer.Ordinal)
+                    .ToArray()),
+        ];
+        if (providersByDocument.Length != 1)
         {
+            if (providersByDocument.Length > 1)
+            {
+                return new(
+                    occurrence.OccurrenceId,
+                    ExactResolutionDecisionKind.Uncertainty,
+                    consumer.Owner,
+                    null,
+                    "multiple_providers",
+                    consumer.InvocationEvidenceLocator);
+            }
+
             throw new ExactResolutionNonExactException(
                 occurrence.OccurrenceId,
-                eligibleProviders.Length > 1
-                    ? "multiple_providers"
-                    : "unmatched");
+                "unmatched");
         }
 
-        ProviderEndpointCandidate provider = eligibleProviders[0];
+        ProviderEndpointCandidate provider = providersByDocument[0][0];
         string normalizedProvider = NormalizeEndpointIdentifier(
             provider.RawIdentifier,
             occurrence.Normalization.ProviderRequiredPrefix);

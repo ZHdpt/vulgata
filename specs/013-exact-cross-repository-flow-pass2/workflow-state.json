@@ -6,10 +6,10 @@
   "stage": "implement",
   "preflight": {
     "branch": "demo0831/story-12-4",
-    "head": "4420f56f65bfe984d3771e410dea83ae9cd329f9",
+    "head": "91b9404d824d2d4bcad3882aa3c54395be131e04",
     "git_identity_sha256": "056EE72BEB553F1C2AAA2D88B2730FC47D14ABC810286CC5F98D68B1F513B17B",
-    "status_sha256": "4846329E928AF0251D5FB6F4E7728712A93B71E3367219BA1232131AEC79DBF6",
-    "observed_at": "2026-08-26T02:38:16.0304481Z"
+    "status_sha256": "C35A80CF1834B01D4937612F2A83CE37C10A3C7E9488FE340F02444EBF6D5332",
+    "observed_at": "2026-08-26T03:24:16.7316628Z"
   },
   "artifacts": {
     "spec": {
@@ -22,7 +22,7 @@
     },
     "tasks": {
       "path": "specs/013-exact-cross-repository-flow-pass2/tasks.md",
-      "sha256": "E515F902FC2D58C41F343FB98A19BC91F207BB7BB3DF7DC2B5FF224704C9F72B"
+      "sha256": "311FBC04F4CA2444C39EF4D82C4A74C082229AD7E09D329F7B2FDBB096A95D83"
     }
   },
   "gates": {
@@ -82,21 +82,21 @@
     "specs/013-exact-cross-repository-flow-pass2/contracts/pass2-runtime-and-commit.md",
     "specs/013-exact-cross-repository-flow-pass2/contracts/retrieve-code-logic.md",
     "specs/013-exact-cross-repository-flow-pass2/contracts/business-logic-flow-v1.schema.json",
-    "specs/013-exact-cross-repository-flow-pass2/evidence/implementation/t001-t004-red.json",
+    "specs/013-exact-cross-repository-flow-pass2/evidence/implementation/t010-t012-red.json",
     "specs/013-exact-cross-repository-flow-pass2/evidence/implementation/t007-migration-red.json",
     "specs/013-exact-cross-repository-flow-pass2/reviews/definition-review/definition-review-03.json",
     "specs/013-exact-cross-repository-flow-pass2/decisions/implementation-approval-01.md"
   ],
   "checkpoint": {
-    "checkpoint_id": "bmad-12-4-implement-20260826T023708Z-d69eca",
+    "checkpoint_id": "bmad-12-4-implement-20260826T032416Z-a184d2",
     "stage": "implement",
-    "commit_sha": "4420f56f65bfe984d3771e410dea83ae9cd329f9",
-    "binding_status": "bound"
+    "commit_sha": null,
+    "binding_status": "pending"
   },
   "resume": {
     "stage": "implement",
-    "reason": "T007-T009 are verified GREEN against disposable PostgreSQL with no pending model changes; begin T010-T017 exact Cross-Repository Resolution slice.",
+    "reason": "T010-T012 and T014-T016 are verified GREEN; continue T013 full AD-1 candidate reconstruction, then run the T017 US1 gate.",
     "evidence_path": "specs/013-exact-cross-repository-flow-pass2/tasks.md"
   },
-  "updated_at": "2026-08-26T02:38:16.0304481Z"
+  "updated_at": "2026-08-26T03:24:16.7316628Z"
 }

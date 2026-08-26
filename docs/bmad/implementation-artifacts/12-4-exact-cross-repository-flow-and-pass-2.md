@@ -274,3 +274,15 @@ migration, disposable PostgreSQL, and Chat compatibility tests. Fresh apply,
 rollback, reapply, nullable prepublication bindings, foreign keys, reusable
 Edge uniqueness, legacy schema retention, no pending model changes, and
 disposable database cleanup all passed; ordinary `vulgata` was not migrated.
+
+### T010-T012/T014-T016 partial US1 checkpoint
+
+Honest RED covered provider aggregation, safe HTTP rejection, deterministic
+uncertainty, v2 persistence, replay drift, and the candidate-source seam. The
+normalizer, resolver, decision/contribution store, and a persisted current-
+candidate source are GREEN; stale tests were aligned to distinct-current-
+Document provider cardinality. Root verification passed 64/64 tests with
+disposable PostgreSQL cleanup. T013 remains intentionally open for terminal
+Scan Execution/manifest/pair validation, deferred communication reconstruction,
+revision-bound source/hash reread, and full catalog reproduction; T017 is not
+claimed until those gaps close.

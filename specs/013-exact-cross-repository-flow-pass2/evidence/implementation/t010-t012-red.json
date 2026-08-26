@@ -1,0 +1,225 @@
+{
+  "story": "12.4",
+  "feature": "exact-cross-repository-flow-pass2",
+  "tasks": ["T010", "T011", "T012"],
+  "phase": "implement",
+  "sourceCommit": "91b9404d824d2d4bcad3882aa3c54395be131e04",
+  "acceptedScopeHash": "7D47E4DABBEC9A1C436FF3ABA003732A8E4D1A960EE0C539170D6ECE24BFEF7D",
+  "observedAt": "2026-08-26T02:46:38.7637436Z",
+  "pureRed": {
+    "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter 'FullyQualifiedName~PreparedPass2.ExactCrossRepositoryResolutionTests' --logger \"console;verbosity=minimal\" --verbosity quiet",
+    "exitCode": 1,
+    "result": {
+      "total": 4,
+      "passed": 0,
+      "failed": 4,
+      "skipped": 0,
+      "compilation": "successful"
+    },
+    "expectedDiagnostics": [
+      "Duplicate provider observations for one current provider Document Version are treated as multiple providers and throw ExactResolutionNonExactException instead of aggregating to one exact provider.",
+      "Ten randomized observation-order attempts cannot produce a canonical batch because the duplicate observations are rejected before a batch is emitted.",
+      "Multiple distinct current provider Document Versions throw ExactResolutionNonExactException instead of returning a closed multiple_providers Uncertainty decision.",
+      "The public resolver accepts a query/fragment-bearing HTTP identifier instead of returning the closed normalization_mismatch rejection."
+    ],
+    "classification": "Behavioral RED for missing T013-T015 semantics; no environment or network dependency."
+  },
+  "postgresqlRed": {
+    "command": "$env:VULGATA_TEST_POSTGRES_ADMIN = '<supplied localhost:5432/vulgata admin connection; password redacted>'; dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --filter 'FullyQualifiedName~PreparedPass2.ExactCrossRepositoryPostgreSqlTests' --logger \"console;verbosity=normal\"",
+    "exitCode": 1,
+    "result": {
+      "total": 2,
+      "passed": 0,
+      "failed": 2,
+      "skipped": 0,
+      "compilation": "verified by the preceding focused build/test run"
+    },
+    "expectedDiagnostics": [
+      "ApplyAsync returns through the existing legacy path, leaving CrossRepositoryResolutionDecisions empty; the v2 decision assertion fails with Sequence contains no elements.",
+      "Evidence drift correctly returns Conflict through the legacy path, but the v2 decision assertion fails because no v2 row exists."
+    ],
+    "databases": [
+      "vulgata_story121_38a2fcc7d2b045eaa76c623c547a6813",
+      "vulgata_story121_eb40e1ed26a74ea2963c6d40038e820f"
+    ],
+    "databaseLifecycle": "Both uniquely named databases were created against localhost PostgreSQL 17, used for migration and resolution persistence tests, disposed in finally paths, and passed the post-disposal database-dropped assertions. The ordinary vulgata database was not targeted.",
+    "classification": "Behavioral RED for missing T016 v2 decision/contribution persistence and replay graph; PostgreSQL connectivity, credentials, migration, and cleanup all succeeded."
+  },
+  "coverage": [
+    "T010: candidate/provider aggregation, deterministic randomized order, closed multiple-provider outcome, and safe HTTP rejection.",
+    "T011: ten randomized enumeration orders and distinct-provider cardinality are represented; graph/LLM suggestions are not accepted as resolver inputs and therefore cannot influence these public-seam tests.",
+    "T012: v2 decision/contribution/Edge persistence, exact replay drift conflict, and disposable PostgreSQL lifecycle."
+  ],
+  "scopeNotes": [
+    "Only ExactCrossRepositoryResolutionTests.cs, ExactCrossRepositoryPostgreSqlTests.cs, and this evidence file were changed.",
+    "No production source, migration, project file, task marker, workflow state, or Git history was changed."
+  ],
+  "testHarnessCorrection": {
+    "observedAt": "2026-08-26T02:50:48.8865822Z",
+    "sourceCommit": "91b9404d824d2d4bcad3882aa3c54395be131e04",
+    "correction": "Passed a safe provider evidence locator as the ProviderEndpointCandidate locator argument and the unsafe query/fragment HTTP value as rawIdentifier. The prior RED had reversed these arguments, so production correctly rejected the locator before reaching endpoint normalization.",
+    "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter 'FullyQualifiedName~PreparedPass2.ExactCrossRepositoryResolutionTests' --logger \"console;verbosity=minimal\" --verbosity quiet",
+    "exitCode": 0,
+    "result": {
+      "total": 4,
+      "passed": 4,
+      "failed": 0,
+      "skipped": 0,
+      "compilation": "successful"
+    },
+    "interpretation": "The corrected unsafe-HTTP test now reaches the production endpoint-normalization seam and passes. This is subsequent GREEN verification after the implementer's T013-T015 changes; the original behavioral RED and PostgreSQL RED remain preserved above."
+  },
+  "legacyCompatibilityCorrection": {
+    "observedAt": "2026-08-26T02:55:28.1023853Z",
+    "sourceCommit": "91b9404d824d2d4bcad3882aa3c54395be131e04",
+    "correction": "Changed the mixed exact-plus-unsupported batch assertion from an incorrect empty-Uncertainty expectation to the accepted single canonical legacy Uncertainty shape: unsupported_communication, unresolved, unsupported_kind, file_storage, owned by the consumer Document Version and Source Anchor, with no resolution fields.",
+    "command": "$env:VULGATA_TEST_POSTGRES_ADMIN = '<supplied localhost:5432/vulgata admin connection; password redacted>'; dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --filter 'FullyQualifiedName~PreparedPass2.ExactCrossRepositoryPostgreSqlTests' --logger \"console;verbosity=normal\"",
+    "exitCode": 0,
+    "result": {
+      "total": 2,
+      "passed": 2,
+      "failed": 0,
+      "skipped": 0,
+      "databaseDropAssertions": "Passed for both uniquely named disposable PostgreSQL databases created by the tests; no ordinary vulgata database was targeted."
+    },
+    "interpretation": "Both T012 PostgreSQL tests are subsequent GREEN verification. The original PostgreSQL RED remains preserved above, and the v2 decision/contribution/reusable-Edge assertions remain exact."
+  },
+  "legacyResolverExpectationCorrection": {
+    "observedAt": "2026-08-26T02:57:27.5803025Z",
+    "sourceCommit": "91b9404d824d2d4bcad3882aa3c54395be131e04",
+    "correction": "Updated ResolveAsync_TwoEligibleProviders_ProducesNoExactDecisionAsync to assert the accepted explicit Uncertainty decision with reason multiple_providers and no target, rather than expecting ExactResolutionNonExactException.",
+    "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter 'FullyQualifiedName~ExactCrossRepositoryResolverTests|FullyQualifiedName~PreparedPass2.ExactCrossRepositoryResolutionTests' --logger \"console;verbosity=minimal\" --verbosity quiet",
+    "exitCode": 0,
+    "result": {
+      "total": 23,
+      "passed": 23,
+      "failed": 0,
+      "skipped": 0,
+      "compilation": "successful"
+    },
+    "interpretation": "The stale legacy expectation now aligns with the Story 12.4 explicit-Uncertainty contract. The new US1 pure suite and the surrounding legacy resolver compatibility class are green."
+  },
+  "t013CandidateSourceRed": {
+    "observedAt": "2026-08-26T03:01:41.0460799Z",
+    "sourceCommit": "91b9404d824d2d4bcad3882aa3c54395be131e04",
+    "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter 'FullyQualifiedName~CurrentCommunicationCandidateSource' --logger \"console;verbosity=minimal\" --verbosity quiet",
+    "exitCode": 1,
+    "result": {
+      "total": 1,
+      "passed": 0,
+      "failed": 1,
+      "skipped": 0,
+      "compilation": "successful"
+    },
+    "diagnostic": "Assert.NotNull failure at ExactCrossRepositoryResolutionTests.cs:169: the Infrastructure assembly contains no Vulgata.Infrastructure.CrossRepository.CurrentCommunicationCandidateSource type. The accepted T013 public candidate-reconstruction seam is therefore absent and its behavior cannot yet be exercised.",
+    "expectedBehavior": "The missing public seam must accept only the server-resolved terminal Story 12.3 pair and RepositoryAccessScope, asynchronously reconstruct current authorized candidates from persisted evidence, revalidate currentness/authorization/catalog identity, and return a closed candidate set that rejects mismatch or stale evidence.",
+    "classification": "Honest T013 RED for an absent accepted public seam; no environment, PostgreSQL, network, or system dependency was involved.",
+    "surroundingPureVerification": {
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --filter 'FullyQualifiedName~PreparedPass2.ExactCrossRepositoryResolutionTests' --logger \"console;verbosity=minimal\" --verbosity quiet",
+      "exitCode": 1,
+      "result": {
+        "total": 5,
+        "passed": 4,
+        "failed": 1,
+        "skipped": 0
+      },
+      "interpretation": "The four existing T010-T012 pure behavioral tests remain green; only the new T013 seam-presence test fails."
+    }
+  },
+  "t013BehavioralRed": {
+    "observedAt": "2026-08-26T03:09:00.2813156Z",
+    "sourceCommit": "91b9404d824d2d4bcad3882aa3c54395be131e04",
+    "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter 'FullyQualifiedName~CurrentCommunicationCandidateSource' --logger \"console;verbosity=minimal\" --verbosity quiet",
+    "exitCode": 1,
+    "result": {
+      "total": 1,
+      "passed": 0,
+      "failed": 1,
+      "skipped": 0,
+      "compilation": "successful"
+    },
+    "fixtureSetup": "The test created and disposed the existing managed two-Repository fixture, persisted its current Pass 1 Scan Runs, current Code Logic Logical Documents and Document Versions, and Source Anchors in the fixture SQLite database, then invoked the server-owned seam with the exact profile/runtime pair and authorized RepositoryAccessScope.",
+    "diagnostic": "The public ReconstructAsync method exists and accepts ExactResolutionRuntimeRequest, RepositoryAccessScope, and CancellationToken, but returns non-generic Task. The test fails at ExactCrossRepositoryResolutionTests.cs:195 because no typed result can expose reconstructed Consumer and Provider candidates; therefore the current stub does not return or reconstruct the accepted candidate set.",
+    "requiredBehavior": "Return a typed, canonically ordered candidate set containing the current authorized Consumer and aggregated Provider candidates reconstructed from the terminal pair's persisted communication evidence, Source Anchors, classifications, deferred observations, catalog evidence, and same-Repository REFERENCES Edges; reject authorization/currentness/catalog or evidence drift with a typed integrity refusal.",
+    "classification": "Honest behavioral RED for missing T013 candidate output/reconstruction. The test setup and failure are local and deterministic; no PostgreSQL, network, or system dependency was involved.",
+    "surroundingPureVerification": {
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --filter 'FullyQualifiedName~PreparedPass2.ExactCrossRepositoryResolutionTests' --logger \"console;verbosity=minimal\" --verbosity quiet",
+      "exitCode": 1,
+      "result": {
+        "total": 5,
+        "passed": 4,
+        "failed": 1,
+        "skipped": 0
+      },
+      "interpretation": "The four prior T010-T012 pure behavioral tests remain green; only the behavioral T013 candidate-source test fails."
+    }
+  },
+  "t013InjectableHarnessRed": {
+    "observedAt": "2026-08-26T03:14:25.0243821Z",
+    "sourceCommit": "91b9404d824d2d4bcad3882aa3c54395be131e04",
+    "correction": "Removed parameterless Activator construction and kept the fixture VulgataDbContext alive through invocation. The test now persists the managed pair's current Scan Runs, current Code Logic Logical Documents/Document Versions/Source Anchors, and one Confirmed classification per Repository while loading the embedded closed communication catalog. It requires an injectable source constructor with database access before invoking ReconstructAsync.",
+    "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter 'FullyQualifiedName~CurrentCommunicationCandidateSource' --logger \"console;verbosity=minimal\" --verbosity quiet",
+    "exitCode": 1,
+    "result": {
+      "total": 1,
+      "passed": 0,
+      "failed": 1,
+      "skipped": 0,
+      "compilation": "successful"
+    },
+    "diagnostic": "Assert.NotNull failure at ExactCrossRepositoryResolutionTests.cs:185: CurrentCommunicationCandidateSource has no public constructor accepting VulgataDbContext. The source therefore cannot access the persisted fixture or authoritative pair/source services; the test cannot reach candidate result assertions until T013 supplies an injectable reconstruction implementation.",
+    "requiredBehaviorAfterInjection": "Invoke the public ReconstructAsync runtime-pair seam against the persisted current pair, return a typed result with canonically ordered Consumer and aggregated Provider candidates, and reject authorization/currentness/catalog or evidence drift with a typed integrity refusal.",
+    "classification": "Causally valid T013 RED for missing injectable persisted-evidence reconstruction. The fixture setup succeeded and was disposed; failure is local production shape/behavior, not environment, PostgreSQL, network, or system state.",
+    "surroundingPureVerification": {
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --filter 'FullyQualifiedName~PreparedPass2.ExactCrossRepositoryResolutionTests' --logger \"console;verbosity=minimal\" --verbosity quiet",
+      "exitCode": 1,
+      "result": {
+        "total": 5,
+        "passed": 4,
+        "failed": 1,
+        "skipped": 0
+      }
+    }
+  },
+  "providerAggregationCompatibilityCorrection": {
+    "observedAt": "2026-08-26T03:21:16.8242090Z",
+    "sourceCommit": "91b9404d824d2d4bcad3882aa3c54395be131e04",
+    "correction": "Updated the pre-Story-12.4 real-provider matrix so the multiple_providers fixture, which contains two observations owned by one current provider Document Version, asserts one exact REFERENCES Edge plus the unrelated unsupported Uncertainty. True negative cases remain malformed_provider, unmatched, and normalization_mismatch. The test name now describes expected matrix outcomes.",
+    "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter 'FullyQualifiedName~ExactCrossRepositoryIntegrationTests' --logger \"console;verbosity=minimal\" --verbosity quiet",
+    "exitCode": 0,
+    "result": {
+      "total": 19,
+      "passed": 19,
+      "failed": 0,
+      "skipped": 0,
+      "compilation": "successful"
+    },
+    "aggregationAssertion": "The multiple_providers case now passes with one current provider Document Version aggregated from duplicate observations, one exact DocumentEdge/legacy evidence row, and one unrelated unsupported-kind Uncertainty.",
+    "pureUs1Verification": {
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --filter 'FullyQualifiedName~ExactCrossRepositoryResolverTests|FullyQualifiedName~PreparedPass2.ExactCrossRepositoryResolutionTests' --logger \"console;verbosity=minimal\" --verbosity quiet",
+      "exitCode": 0,
+      "result": {
+        "total": 24,
+        "passed": 24,
+        "failed": 0,
+        "skipped": 0
+      },
+      "interpretation": "Legacy resolver compatibility, new T010-T012 pure tests, and the strengthened T013 candidate-source test are green."
+    },
+    "scopeNote": "This correction does not close T013; manifest/terminal/deferred-observation/source-reread coverage gaps remain separately tracked."
+  }
+,
+  "rootVerification": {
+    "observedAt": "2026-08-26T03:07:25Z",
+    "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter <new-and-surrounding-exact-resolution-filter> --logger console;verbosity=minimal",
+    "exitCode": 0,
+    "result": { "total": 64, "passed": 64, "failed": 0, "skipped": 0 },
+    "databaseBoundary": "Disposable PostgreSQL only; cleanup assertions passed.",
+    "openT013Gaps": [
+      "terminal Scan Execution and Prepared Scan Manifest/pair-package validation",
+      "deferredObservation and communicationEvidence reconstruction",
+      "revision-bound source reread and Source Anchor hash verification",
+      "full embedded Communication Pattern Catalog reproduction"
+    ]
+  }
+}
