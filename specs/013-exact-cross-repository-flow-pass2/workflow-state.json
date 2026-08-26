@@ -90,8 +90,8 @@
   "checkpoint": {
     "checkpoint_id": "bmad-12-4-implement-20260826T061215Z-ae1791",
     "stage": "implement",
-    "commit_sha": null,
-    "binding_status": "pending"
+    "commit_sha": "687d157774476036864c0375ec1015c3b6e2d43a",
+    "binding_status": "bound"
   },
   "resume": {
     "stage": "implement",
