@@ -45,7 +45,8 @@ internal sealed record Pass2RetrievalReservation(
 
 internal sealed record Pass2ExplicitRetrievalResolution(
     Pass2RetrievalReservation? Reservation,
-    Pass2CodeLogicRetrievalResult? CompletedResult);
+    Pass2CodeLogicRetrievalResult? CompletedResult,
+    Pass2RetrievalReceipt? CompletedReceipt = null);
 
 public sealed class PreparedPass2Store(VulgataDbContext dbContext)
 {
@@ -179,15 +180,10 @@ public sealed class PreparedPass2Store(VulgataDbContext dbContext)
                 return new(null, Pass2CodeLogicRetrievalResult.Refused());
             }
 
-            Pass2RetrievalResult[] persistedResults = await _dbContext.Pass2RetrievalResults
-                .AsNoTracking()
-                .Where(value => value.ReceiptId == receipt.Id)
-                .OrderBy(value => value.ResultOrdinal)
-                .ToArrayAsync(cancellationToken).ConfigureAwait(false);
-            Pass2CodeLogicRetrievalResult replay = Rehydrate(receipt, persistedResults, budget);
+            Pass2CodeLogicRetrievalResult replay = Rehydrate(receipt, budget);
             await transaction.RollbackAsync(CancellationToken.None).ConfigureAwait(false);
             _dbContext.ChangeTracker.Clear();
-            return new(null, replay);
+            return new(null, replay, receipt);
         }
 
         if (identity.CallOrdinal <= budget.CallsReserved ||
@@ -409,11 +405,29 @@ public sealed class PreparedPass2Store(VulgataDbContext dbContext)
                 Pass2CodeLogicRetrievalItem item = candidate.Items[index];
                 DocumentVersion document = documents[item.DocumentVersionId];
                 int resultOrdinal = index + 1;
+                Guid resultId = Guid.ParseExact(item.OpaqueHandle, "D");
+                Pass2RetrievalResult? existingResult = admittedResults.SingleOrDefault(
+                    value => value.Id == resultId);
+                if (existingResult is not null)
+                {
+                    if (!PersistedResultMatches(
+                            existingResult,
+                            item,
+                            document,
+                            pass2JobExecutionId,
+                            reservation.AttemptOrdinal))
+                    {
+                        await transaction.RollbackAsync(CancellationToken.None)
+                            .ConfigureAwait(false);
+                        _dbContext.ChangeTracker.Clear();
+                        return Pass2CodeLogicRetrievalResult.Refused();
+                    }
+
+                    continue;
+                }
+
                 _dbContext.Pass2RetrievalResults.Add(Pass2RetrievalResult.CreateAdmitted(
-                    DeriveId(
-                        "pass2-retrieval-result/1.0",
-                        receiptId,
-                        GuidFromOrdinal(resultOrdinal)),
+                    resultId,
                     receiptId,
                     pass2JobExecutionId,
                     reservation.AttemptOrdinal,
@@ -427,7 +441,7 @@ public sealed class PreparedPass2Store(VulgataDbContext dbContext)
                     item.EdgeId,
                     item.ByteStart,
                     item.ByteEnd,
-                    item.OpaqueHandle,
+                    FingerprintDescriptor(item),
                     FingerprintResult(item),
                     item.ReturnedUtf8Bytes,
                     createdAt));
@@ -736,6 +750,18 @@ public sealed class PreparedPass2Store(VulgataDbContext dbContext)
             item.ByteEnd?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? string.Empty,
             item.ReturnedUtf8Bytes.ToString(System.Globalization.CultureInfo.InvariantCulture)));
 
+    private static string FingerprintDescriptor(Pass2CodeLogicRetrievalItem item) =>
+        LowerSha256(string.Join(
+            '\n',
+            "pass2-retrieval-descriptor/1.0",
+            item.Kind.ToString(),
+            item.DocumentVersionId.ToString("D"),
+            item.SectionId?.ToString("D") ?? string.Empty,
+            item.SourceAnchorId?.ToString("D") ?? string.Empty,
+            item.EdgeId?.ToString("D") ?? string.Empty,
+            item.ByteStart?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? string.Empty,
+            item.ByteEnd?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? string.Empty));
+
     private static string ResultSetFingerprint(
         IReadOnlyCollection<Pass2CodeLogicRetrievalItem> items) =>
         LowerSha256(string.Join(
@@ -743,9 +769,45 @@ public sealed class PreparedPass2Store(VulgataDbContext dbContext)
             new[] { "pass2-retrieval-result-set/1.0" }
                 .Concat(items.Select(FingerprintResult))));
 
+    internal static bool MatchesCompletedReplay(
+        Pass2RetrievalReceipt receipt,
+        Pass2CodeLogicRetrievalResult candidate) =>
+        receipt.State == Pass2RetrievalReceiptState.Accepted &&
+        candidate.Outcome == Pass2CodeLogicRetrievalOutcome.Accepted &&
+        candidate.Items.Count == receipt.ResultCount &&
+        candidate.Items.Sum(value => value.ReturnedUtf8Bytes) == receipt.ReturnedUtf8Bytes &&
+        StringComparer.Ordinal.Equals(
+            ResultSetFingerprint(candidate.Items),
+            receipt.ResultSetFingerprint);
+
+    private static bool PersistedResultMatches(
+        Pass2RetrievalResult persisted,
+        Pass2CodeLogicRetrievalItem item,
+        DocumentVersion document,
+        Guid pass2JobExecutionId,
+        int attemptOrdinal) =>
+        persisted.Pass2JobExecutionId == pass2JobExecutionId &&
+        persisted.AttemptOrdinal == attemptOrdinal &&
+        persisted.State == Pass2RetrievalResultState.Admitted &&
+        persisted.Kind == item.Kind &&
+        persisted.DocumentVersionId == item.DocumentVersionId &&
+        persisted.RepositoryId == document.RepositoryId &&
+        persisted.ScanRunId == document.ScanRunId &&
+        persisted.ReadSectionId() == item.SectionId &&
+        persisted.ReadSourceAnchorId() == item.SourceAnchorId &&
+        persisted.EdgeId == item.EdgeId &&
+        persisted.ByteStart == item.ByteStart &&
+        persisted.ByteEnd == item.ByteEnd &&
+        StringComparer.Ordinal.Equals(
+            persisted.DescriptorFingerprint,
+            FingerprintDescriptor(item)) &&
+        StringComparer.Ordinal.Equals(
+            persisted.EvidenceFingerprint,
+            FingerprintResult(item)) &&
+        persisted.ReturnedUtf8Bytes == item.ReturnedUtf8Bytes;
+
     private static Pass2CodeLogicRetrievalResult Rehydrate(
         Pass2RetrievalReceipt receipt,
-        IReadOnlyCollection<Pass2RetrievalResult> persistedResults,
         Pass2RetrievalBudget budget)
     {
         Pass2CodeLogicRetrievalRemainingBudget remaining = RemainingBudget(budget);
@@ -769,29 +831,9 @@ public sealed class PreparedPass2Store(VulgataDbContext dbContext)
             return Pass2CodeLogicRetrievalResult.Unavailable().WithRemainingBudget(remaining);
         }
 
-        Pass2CodeLogicRetrievalItem[] items = persistedResults
-            .OrderBy(value => value.ResultOrdinal)
-            .Select(value => new Pass2CodeLogicRetrievalItem(
-                value.DescriptorFingerprint,
-                value.Kind,
-                value.DocumentVersionId,
-                value.ReturnedUtf8Bytes,
-                value.ReadSectionId(),
-                value.ReadSourceAnchorId(),
-                value.EdgeId,
-                value.ByteStart,
-                value.ByteEnd))
-            .ToArray();
-        if (items.Length != receipt.ResultCount ||
-            items.Sum(value => value.ReturnedUtf8Bytes) != receipt.ReturnedUtf8Bytes ||
-            !StringComparer.Ordinal.Equals(
-                ResultSetFingerprint(items),
-                receipt.ResultSetFingerprint))
-        {
-            return Pass2CodeLogicRetrievalResult.Refused();
-        }
-
-        return Pass2CodeLogicRetrievalResult.Accepted(items, remaining);
+        return Pass2CodeLogicRetrievalResult.Accepted(
+            Array.Empty<Pass2CodeLogicRetrievalItem>(),
+            remaining);
     }
 
     private static string LowerSha256(string value) =>

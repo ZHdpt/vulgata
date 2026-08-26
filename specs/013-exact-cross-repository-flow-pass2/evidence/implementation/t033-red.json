@@ -1,0 +1,173 @@
+{
+  "schema_version": "story-12.4-implementation-evidence/1.0",
+  "task_ids": ["T033"],
+  "stage": "implement",
+  "status": "GREEN_AFTER_T037",
+  "observed_at_utc": "2026-08-26T10:14:44.3753162Z",
+  "source_commit": "bc9d4b5c0f3fa51960ce1cb5019f62b093dc5132",
+  "changed_paths": [
+    "tests/Vulgata.Tests/PreparedPass2/Pass2DocumentCommitTests.cs",
+    "specs/013-exact-cross-repository-flow-pass2/evidence/implementation/t033-red.json"
+  ],
+  "commands": [
+    {
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore -p:WarningLevel=0 --filter FullyQualifiedName~Pass2DocumentCommitTests --logger \"console;verbosity=minimal\"",
+      "exit_code": 0,
+      "result": {
+        "tests_executed": true,
+        "total": 6,
+        "passed": 6,
+        "failed": 0,
+        "skipped": 0,
+        "duration": "15 s"
+      },
+      "diagnostics": [
+        "Build succeeded with existing non-fatal package/analyzer warnings.",
+        "The fresh authoritative request committed an immutable Business Logic Document Version, returned its id, derived exactly the two cited initial/retrieved GENERATED_FROM targets, published the Flow Group, and completed the Pass 2 Job.",
+        "Five T036 invalid-evidence/provider-binding vectors remained GREEN with Rejected results and unchanged graph counts.",
+        "No fixture, database, network, provider, or environment failure occurred."
+      ],
+      "build_observation": "The direct typed T033 fixture compiled and executed. T036 rejection validation and T037 publication/materialization are GREEN."
+    },
+    {
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore -p:WarningLevel=0 --filter FullyQualifiedName~Pass2DocumentCommitTests --logger \"console;verbosity=minimal\"",
+      "exit_code": 1,
+      "result": {
+        "tests_executed": true,
+        "total": 7,
+        "passed": 6,
+        "failed": 1,
+        "skipped": 0,
+        "duration": "13 s"
+      },
+      "diagnostics": [
+        "Build succeeded with existing non-fatal package/analyzer warnings.",
+        "Six T036 typed validation vectors passed: all-and-only-used evidence derivation, initial currentness rejection, retrieved currentness rejection, unauthorized evidence rejection, profiled-revision mismatch rejection, and changed-provider rejection; each rejection asserted no graph-count writes.",
+        "One causal T037 RED remains: CommitAsync_ValidCandidate_DoesNotYetMaterializeImmutableVersion_REDAsync expected Committed with a non-null immutable DocumentVersionId but observed Validated with a null id.",
+        "No fixture, database, network, provider, or environment failure occurred."
+      ],
+      "build_observation": "The direct typed T033 fixture compiled and executed. T036 validation is GREEN; the remaining failure is the absent T037 publication/materialization behavior."
+    },
+    {
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore -p:WarningLevel=0 --filter FullyQualifiedName~Pass2DocumentCommitTests --logger \"console;verbosity=minimal\"",
+      "exit_code": 1,
+      "result": {
+        "tests_executed": false,
+        "total": 0,
+        "passed": 0,
+        "failed": 0,
+        "skipped": 0
+      },
+      "diagnostics": [
+        "The shared test project did not compile, so Pass2DocumentCommitTests did not execute.",
+        "Unowned file tests/Vulgata.Tests/PreparedPass2/PreparedPass2JobExecutorStreamingTests.cs(353,65) has CS8419: async-iterator method ThrowsAsync has no yield statement.",
+        "This is an unrelated test-source compile blocker; no T033 behavior result is claimed."
+      ]
+    },
+    {
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter FullyQualifiedName~Pass2DocumentCommitTests --logger \"console;verbosity=minimal\"",
+      "exit_code": 1,
+      "result": {
+        "tests_executed": true,
+        "total": 18,
+        "passed": 0,
+        "failed": 18,
+        "skipped": 0,
+        "duration": "28 ms"
+      },
+      "diagnostics": [
+        "Build completed successfully with existing non-fatal package/analyzer warnings.",
+        "All 18 failures are causal and have the same exact failure: T033 RED: IPass2BusinessLogicDocumentCommitter is not implemented yet.",
+        "No fixture, database, network, provider, or environment failure occurred."
+      ],
+      "build_observation": "The focused source compiled and executed. The expected RED is the missing approved production Core committer seam; no behavior was claimed GREEN."
+    },
+    {
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --no-restore --filter FullyQualifiedName~Pass2DocumentCommitTests --logger \"console;verbosity=minimal\"",
+      "exit_code": 0,
+      "result": {
+      "tests_executed": false,
+        "total": 0,
+        "passed": 0,
+        "failed": 0,
+        "skipped": 0
+      },
+      "diagnostics": [
+        "The existing test assembly predates Pass2DocumentCommitTests; no test matched the filter. This is not GREEN evidence."
+      ]
+    },
+    {
+      "command": "git diff --check -- tests/Vulgata.Tests/PreparedPass2/Pass2DocumentCommitTests.cs",
+      "exit_code": 0,
+      "result": {
+        "status": "clean"
+      }
+    }
+  ],
+  "t033": {
+    "status": "GREEN_AFTER_T037",
+    "intended_test_count": 6,
+    "approved_public_seam": "Vulgata.Core.DomainServices.IPass2BusinessLogicDocumentCommitter",
+    "expected_method": "one public CommitAsync operation returning Task<T>",
+    "red_mapping": {
+      "all_and_only_used_generated_from": "The commit boundary must derive one GENERATED_FROM Edge per distinct cited initial or retrieved opaque evidence handle and no Edge for eligible, grouped, or returned-but-uncited Documents.",
+      "initial_evidence_revalidation": "A mutation of a cited initial Document Version, Source Anchor, Profiled Revision, or authorization must be rejected before materialization.",
+      "retrieved_evidence_revalidation": "A mutation of a cited additional retrieved Document Version, Source Anchor, Profiled Revision, or authorization must be rejected before materialization.",
+      "immutable_materialization": "A successful commit must expose one immutable Business Logic Document Version and the closed replay disposition required for later exact replay/conflict handling.",
+      "changed_provider_rejection": "A candidate that changes the deterministic provider or relationship binding must be rejected with no publication mutation.",
+      "no_write_rejection": "Every stale, unauthorized, mismatched, or changed-provider rejection must leave Document, Version Chain, GENERATED_FROM, Flow Group, job, and current-pointer state unchanged."
+    },
+    "covered_vectors": [
+      "initial-stale",
+      "initial-unauthorized",
+      "initial-profiled-revision",
+      "retrieved-stale",
+      "changed-provider",
+      "fresh-valid-publication"
+    ],
+    "deferred_vectors": [
+      "initial-source-anchor-hash",
+      "initial-source-anchor-range",
+      "retrieved-unauthorized",
+      "retrieved-profiled-revision",
+      "retrieved-source-anchor-hash",
+      "retrieved-source-anchor-range"
+    ],
+    "validation_status": "GREEN_T036_5_REJECTION_VECTORS",
+    "publication_status": "GREEN_T037_1_OF_1",
+    "fixture_status": "DIRECT_TYPED_PERSISTED_FIXTURE_EXECUTED",
+    "scope_note": "The direct typed tests target the final CommitAsync semantics and accepted persisted fixture. Five invalid T036 vectors reject without writes, and the fresh valid vector publishes the immutable Business Logic Document Version with exact GENERATED_FROM targets. No production, workflow, task, Git history, database, network, or system changes were made."
+  },
+  "environment": {
+    "database": "not used",
+    "network": "not used",
+    "provider": "not used",
+    "classification": "test-only direct typed slice: T036 validation and T037 publication/materialization GREEN"
+  },
+  "latest_verification": {
+    "observed_at_utc": "2026-08-26T11:37:00Z",
+    "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore -p:WarningLevel=0 -p:GenerateMvcTestManifest=false --output .tmp-t033-run2 --filter FullyQualifiedName~Pass2DocumentCommitTests --logger \"console;verbosity=minimal\" --nologo",
+    "build": "successful; 0 errors; 10 warnings",
+    "tests_executed": 6,
+    "passed": 6,
+    "failed": 0,
+    "skipped": 0,
+    "fixture_alignment": "Initial SourceAnchor and relationship handles are derived with Pass2InitialEvidenceHandle from the leased job attempt; the admitted retrieval result uses canonical descriptor and evidence fingerprints.",
+    "database": "not used; direct SQLite fixture",
+    "network": "not used",
+    "provider": "not used"
+  },
+  "final_verification": {
+    "observed_at_utc": "2026-08-26T12:05:00Z",
+    "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore -p:WarningLevel=0 -p:GenerateMvcTestManifest=false --output .tmp-t033-final --filter FullyQualifiedName~Pass2DocumentCommitTests --logger \"console;verbosity=minimal\" --nologo",
+    "build": "successful; 0 errors; 10 warnings",
+    "tests_executed": 6,
+    "passed": 6,
+    "failed": 0,
+    "skipped": 0,
+    "status": "GREEN",
+    "database": "not used; direct SQLite fixture",
+    "network": "not used",
+    "provider": "not used"
+  }
+}

@@ -1,0 +1,95 @@
+{
+  "story": "12.4",
+  "feature": "exact-cross-repository-flow-pass2",
+  "tasks": ["T030"],
+  "phase": "implement",
+  "status": "GREEN_AFTER_T035",
+  "observedAt": "2026-08-26T20:18:17.9105702+08:00",
+  "sourceCommit": "bc9d4b5c0f3fa51960ce1cb5019f62b093dc5132",
+  "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore -p:WarningLevel=0 -p:GenerateMvcTestManifest=false -clp:ErrorsOnly --output G:\\source\\repos\\vulgata\\.tmp\\t030-custom-output --filter \"FullyQualifiedName~Pass2StrictSubmissionTests|FullyQualifiedName~Pass2SchemaResourceTests\" --logger \"console;verbosity=minimal\"",
+  "exitCode": 0,
+  "result": {
+    "total": 9,
+    "passed": 9,
+    "failed": 0,
+    "skipped": 0,
+    "compilation": "successful; build-enabled combined focused run and testhost execution completed",
+    "warnings": "WarningLevel=0 was used to keep the focused evidence output bounded; no errors occurred",
+    "harnessCorrection": "Pass2SchemaResourceTests now searches upward from AppContext.BaseDirectory for the repository specs contract, so custom output layouts do not resolve G:\\specs."
+  },
+  "redBaseline": {
+    "total": 3,
+    "passed": 0,
+    "failed": 3,
+    "skipped": 0,
+    "failures": [
+      "PreparedPass2DispatchRequest lacked server-claimed job/lease/attempt and persisted v2 authority; dispatcher lacked the committer seam",
+      "submission schema projection dropped minLength/maxLength/minItems/maxItems/uniqueItems constraints",
+      "provider request lacked tool-call IDs, bounded sanitized results, and rejection repair context"
+    ],
+    "correctedBy": "T035"
+  },
+  "tests": [
+    {
+      "name": "Pass2StrictDeclarations_ExposeExactlyRetrieveAndSubmitFunctions",
+      "status": "GREEN",
+      "coverage": "Exactly two strict functions, in order retrieve_code_logic then submit_business_logic, plus submit-only terminal projection"
+    },
+    {
+      "name": "RetrieveCodeLogic_UsesBoundedSelectorsAndServerOwnedCallbackAsync",
+      "status": "GREEN",
+      "coverage": "Closed six-selector schema with five typed operations, bounded handles/ranges, forbidden authority exclusion, and server-owned JobId callback"
+    },
+    {
+      "name": "SubmitBusinessLogic_UsesOneClosedDocumentArgumentWithoutEvidenceAuthority",
+      "status": "GREEN",
+      "coverage": "One closed document argument, fixed business-logic/flow-v1 identity, no root evidence-authority fields, and exactly one canonical embedded schema resource"
+    },
+    {
+      "name": "SubmitBusinessLogic_LocalValidationParityTracksEmbeddedSchemaBoundsAndEnums",
+      "status": "GREEN",
+      "coverage": "Embedded resource required fields, collection bounds, enums, uniqueness, and bounded text constraints remain authoritative"
+    },
+    {
+      "name": "PreparedPass2Dispatch_RequiresServerClaimedJobAndAuthorityBinding",
+      "status": "GREEN",
+      "coverage": "Dispatch request exposes claimed execution/lease/attempt plus Flow Group, exact decision, logical key, plan, membership, prompt, schema, tool identity; dispatcher accepts the committer seam"
+    },
+    {
+      "name": "SubmitBusinessLogic_PreservesAllAcceptedResourceConstraints",
+      "status": "GREEN",
+      "coverage": "Provider-facing projection preserves required fields, min/max length/items, uniqueness, and enums"
+    },
+    {
+      "name": "PreparedPass2ProviderRequest_CarriesBoundedTranscriptAndRepairContext",
+      "status": "GREEN",
+      "coverage": "Provider request carries TranscriptUtf8, ToolCallIds, SanitizedToolResultsUtf8, and RepairContextUtf8"
+    },
+    {
+      "name": "PreparedPass2WorkerDispatcher_PropagatesClaimedAuthorityToRetrievalAndCommitterAsync",
+      "status": "GREEN",
+      "coverage": "Deterministic retrieve-then-submit flow reaches retrieval and committer with exact claimed Pass2JobExecutionId, lease, attempt, initial evidence, and authority ledger; JobId is not derived from FlowId"
+    },
+    {
+      "name": "Pass2SchemaResourceTests.BusinessLogicFlowSchema_IsOneEmbeddedResource_AndMatchesAcceptedContract",
+      "status": "GREEN",
+      "coverage": "Core-owned Pass2BusinessLogicSchemaContract.ResourceName resolves exactly one embedded resource whose SHA-256 matches the accepted contract"
+    }
+  ],
+  "approvedSeams": {
+    "dispatch": "PreparedPass2DispatchRequest -> PreparedPass2WorkerDispatcher.DispatchAsync",
+    "retrieval": "PreparedRetrieveCodeLogicFunction server-bound callback",
+    "submission": "PreparedSubmitBusinessLogicFunction local validation callback",
+    "commit": "IPass2BusinessLogicDocumentCommitter",
+    "transport": "IPreparedPass2StreamingTransport with bounded transcript fields"
+  },
+  "scope": {
+    "changedFiles": [
+      "tests/Vulgata.Tests/PreparedPass2/Pass2StrictSubmissionTests.cs",
+      "tests/Vulgata.Tests/PreparedPass2/Pass2SchemaResourceTests.cs",
+      "specs/013-exact-cross-repository-flow-pass2/evidence/implementation/t030-red.json"
+    ],
+    "excluded": "No production, workflow, task, Git, PostgreSQL, network, or system changes were made.",
+    "environment": "Build, testhost, and deterministic fake transport all succeeded; no environment, provider, database, or network dependency was involved."
+  }
+}

@@ -249,6 +249,18 @@ public sealed class FlowGroup
     public DocumentVersion? BusinessLogicDocumentVersion { get; private set; }
     public ICollection<FlowTrace> Traces { get; } = [];
 
+    public void Publish(Guid businessLogicDocumentVersionId)
+    {
+        if (businessLogicDocumentVersionId == Guid.Empty ||
+            State != "Complete" || BusinessLogicDocumentVersionId is not null)
+        {
+            throw new InvalidOperationException("Only a complete unpublished Flow Group can publish.");
+        }
+
+        BusinessLogicDocumentVersionId = businessLogicDocumentVersionId;
+        State = "Published";
+    }
+
     private static string RequireText(string value)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(value);

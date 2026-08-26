@@ -6,4 +6,10 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <EmbeddedResource Include="..\..\..\specs\013-exact-cross-repository-flow-pass2\contracts\business-logic-flow-v1.schema.json"
+                      Link="Contracts\business-logic-flow-v1.schema.json"
+                      LogicalName="Vulgata.Core.Contracts.business-logic-flow-v1.schema.json" />
+  </ItemGroup>
+
 </Project>

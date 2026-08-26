@@ -427,7 +427,8 @@ public sealed class ExactCrossRepositoryResolutionStore(VulgataDbContext context
                     : ExactResolutionOutcomeKind.Conflict;
         }
 
-        Guid decisionId = DeterministicGuid(write.Evidence.EvidenceFingerprint);
+        Guid decisionId = ExactResolutionCanonicalAuthority.DecisionId(
+            write.Evidence.EvidenceFingerprint);
         if (await _context.CrossRepositoryResolutionDecisions.AsNoTracking()
             .AnyAsync(decision => decision.Id == decisionId, cancellationToken))
         {
@@ -492,16 +493,15 @@ public sealed class ExactCrossRepositoryResolutionStore(VulgataDbContext context
         MaterializedExactWrite write,
         Guid decisionId)
     {
-        string fingerprint = HashIdentity(
-            "provider-contribution",
+        string fingerprint = ExactResolutionCanonicalAuthority.ProviderContributionFingerprint(
             write.Evidence.EvidenceFingerprint,
-            source.Target!.DocumentVersionId.ToString("D"),
-            source.Target.SourceAnchorId.ToString("D"));
+            source.Target!.DocumentVersionId,
+            source.Target.SourceAnchorId);
         var contribution = (ExactResolutionProviderEvidenceContribution)Activator.CreateInstance(
             typeof(ExactResolutionProviderEvidenceContribution),
             nonPublic: true)!;
         _context.Entry(contribution).Property(value => value.Id).CurrentValue =
-            DeterministicGuid(fingerprint);
+            ExactResolutionCanonicalAuthority.ProviderContributionId(fingerprint);
         _context.Entry(contribution).Property(value => value.ResolutionDecisionId).CurrentValue =
             decisionId;
         _context.Entry(contribution).Property(value => value.ProviderDocumentVersionId).CurrentValue =
@@ -539,7 +539,8 @@ public sealed class ExactCrossRepositoryResolutionStore(VulgataDbContext context
     {
         ExactResolutionOwner target = decision.Target!;
         ExactResolutionDecisionEvidence exact = decision.ExactEvidence!;
-        string evidenceFingerprint = Fingerprint(batch, decision, exact);
+        string evidenceFingerprint = ExactResolutionCanonicalAuthority.EvidenceFingerprint(
+            batch, decision, exact);
         Guid edgeId = DeterministicGuid(evidenceFingerprint);
         var edge = new DocumentEdge(
             edgeId,
@@ -611,36 +612,6 @@ public sealed class ExactCrossRepositoryResolutionStore(VulgataDbContext context
             decision.EvidenceLocator,
             fingerprint,
             createdAt);
-    }
-
-    private static string Fingerprint(
-        ExactResolutionDecisionBatch batch,
-        ExactResolutionDecision decision,
-        ExactResolutionDecisionEvidence evidence)
-    {
-        using var stream = new MemoryStream();
-        using (var writer = new BinaryWriter(stream, new UTF8Encoding(false), leaveOpen: true))
-        {
-            writer.Write("vulgata.exact-cross-repository-edge-evidence/1");
-            writer.Write(_profileSchemaVersion);
-            writer.Write(batch.ProfileId);
-            writer.Write(batch.ProfileVersion);
-            writer.Write(batch.ProfileFingerprint);
-            writer.Write(decision.Identity);
-            WriteOwner(writer, decision.Owner);
-            WriteOwner(writer, decision.Target!);
-            writer.Write(evidence.ConsumerRawIdentifier);
-            writer.Write(evidence.ProviderRawIdentifier);
-            writer.Write(evidence.NormalizedIdentifier);
-            writer.Write(evidence.Protocol.ToString());
-            writer.Write(_resolutionKind);
-            writer.Write(evidence.Confidence);
-            writer.Write(evidence.ConsumerEvidenceLocator);
-            writer.Write(evidence.ProviderEvidenceLocator);
-        }
-
-        return Convert.ToHexString(SHA256.HashData(stream.ToArray()))
-            .ToLowerInvariant();
     }
 
     private static string UncertaintyFingerprint(
@@ -763,11 +734,10 @@ public sealed class ExactCrossRepositoryResolutionStore(VulgataDbContext context
         ExactResolutionDecision source,
         MaterializedExactWrite write)
     {
-        string fingerprint = HashIdentity(
-            "provider-contribution",
+        string fingerprint = ExactResolutionCanonicalAuthority.ProviderContributionFingerprint(
             write.Evidence.EvidenceFingerprint,
-            source.Target!.DocumentVersionId.ToString("D"),
-            source.Target.SourceAnchorId.ToString("D"));
+            source.Target!.DocumentVersionId,
+            source.Target.SourceAnchorId);
         return actual.ResolutionDecisionId == decisionId &&
             actual.ProviderDocumentVersionId == source.Target.DocumentVersionId &&
             actual.SourceAnchorId == source.Target.SourceAnchorId &&

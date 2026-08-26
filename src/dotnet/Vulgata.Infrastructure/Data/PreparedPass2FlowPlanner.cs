@@ -98,29 +98,19 @@ public sealed class PreparedPass2FlowPlanner(VulgataDbContext dbContext)
             bool boundExcluded = value.IncompleteReason is null &&
                 (documentCount > Pass2ExecutionContracts.MaxDocumentVersions ||
                     evidenceStepCount > Pass2ExecutionContracts.MaxEvidenceSteps);
-            object?[] membershipValues =
-            [
-                "flow-membership/1.0",
+            string membershipFingerprint = ComputeMembershipFingerprint(
                 value.Consumer.Id,
                 value.CrossEdge.Id,
                 value.ProviderXml.Id,
                 value.ImplementationEdge?.Id,
                 value.ProviderImplementation?.Id,
-                .. value.OptionalMembers.SelectMany(item =>
-                    new object?[] { item.Edge.Id, item.Document.Id }),
-            ];
-            string membershipFingerprint = Hash(membershipValues);
-            string planFingerprint = Hash(
-                "endpoint-flow-plan/1.0",
+                value.OptionalMembers.Select(item => (item.Edge.Id, item.Document.Id)));
+            string planFingerprint = ComputePlanFingerprint(
                 value.Decision.Id,
                 value.Decision.EvidenceFingerprint,
                 boundExcluded ? "flow-group-bound" : value.IncompleteReason ?? "Complete",
                 membershipFingerprint,
-                string.Join('\n', value.Contributions
-                    .OrderBy(item => item.ProviderOrdinal)
-                    .ThenBy(item => item.EvidenceOrdinal)
-                    .ThenBy(item => GuidKey(item.Id), StringComparer.Ordinal)
-                    .Select(item => item.EvidenceFingerprint)));
+                value.Contributions);
             Guid groupId = Uuid8(HashBytes(
                 _flowSchema,
                 pair.Id,
@@ -552,6 +542,46 @@ public sealed class PreparedPass2FlowPlanner(VulgataDbContext dbContext)
 
     private static string GuidKey(Guid value) =>
         Convert.ToHexString(value.ToByteArray(bigEndian: true));
+
+    internal static string ComputeMembershipFingerprint(
+        Guid consumerDocumentVersionId,
+        Guid crossRepositoryEdgeId,
+        Guid providerXmlDocumentVersionId,
+        Guid? implementationEdgeId,
+        Guid? providerImplementationDocumentVersionId,
+        IEnumerable<(Guid EdgeId, Guid DocumentVersionId)> optionalMembers)
+    {
+        object?[] values =
+        [
+            "flow-membership/1.0",
+            consumerDocumentVersionId,
+            crossRepositoryEdgeId,
+            providerXmlDocumentVersionId,
+            implementationEdgeId,
+            providerImplementationDocumentVersionId,
+            .. optionalMembers.SelectMany(item =>
+                new object?[] { item.EdgeId, item.DocumentVersionId }),
+        ];
+        return Hash(values);
+    }
+
+    internal static string ComputePlanFingerprint(
+        Guid decisionId,
+        string decisionEvidenceFingerprint,
+        string reasonCode,
+        string membershipFingerprint,
+        IEnumerable<ExactResolutionProviderEvidenceContribution> contributions) =>
+        Hash(
+            "endpoint-flow-plan/1.0",
+            decisionId,
+            decisionEvidenceFingerprint,
+            reasonCode,
+            membershipFingerprint,
+            string.Join('\n', contributions
+                .OrderBy(item => item.ProviderOrdinal)
+                .ThenBy(item => item.EvidenceOrdinal)
+                .ThenBy(item => GuidKey(item.Id), StringComparer.Ordinal)
+                .Select(item => item.EvidenceFingerprint)));
 
     private static string Hash(params object?[] values) =>
         Convert.ToHexStringLower(HashBytes(values));

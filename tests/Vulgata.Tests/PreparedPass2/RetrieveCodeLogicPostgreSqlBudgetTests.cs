@@ -1207,7 +1207,7 @@ public sealed class RetrieveCodeLogicPostgreSqlBudgetTests(ITestOutputHelper out
         int excerptPayloadBytes) =>
         Encoding.UTF8.GetByteCount(JsonSerializer.Serialize(new
         {
-            opaqueHandle = new string('0', 64),
+            opaqueHandle = Guid.Empty.ToString("D"),
             kind = Pass2CodeLogicRetrievalItemKind.SourceExcerpt.ToString(),
             documentVersionId,
             sectionId = (Guid?)null,

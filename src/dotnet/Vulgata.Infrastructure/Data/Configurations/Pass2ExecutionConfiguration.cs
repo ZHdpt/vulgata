@@ -13,7 +13,12 @@ internal sealed class Pass2ExecutionConfiguration : IEntityTypeConfiguration<Pas
         builder.HasKey(execution => execution.Id);
         builder.Property(execution => execution.Id).ValueGeneratedNever();
         builder.Property(execution => execution.State).HasConversion<string>().HasMaxLength(64);
+        builder.Property(execution => execution.PublishedCount);
+        builder.Property(execution => execution.FailedCount);
         builder.Property(execution => execution.StateVersion).IsConcurrencyToken();
+        builder.ToTable(table => table.HasCheckConstraint(
+            "CK_Pass2Executions_Accounting",
+            "\"PublishedCount\" >= 0 AND \"FailedCount\" >= 0"));
         builder.HasIndex(execution => execution.Pass1PairExecutionId).IsUnique();
         builder.HasOne<Pass1PairExecution>()
             .WithOne()

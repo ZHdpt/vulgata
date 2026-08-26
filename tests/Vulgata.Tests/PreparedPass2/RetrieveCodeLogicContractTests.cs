@@ -780,6 +780,40 @@ public sealed class RetrieveCodeLogicContractTests
     }
 
     [Fact]
+    public async Task RetrieveCodeLogic_AcceptedHandlesAreCanonicalResultIdsAndDescriptorFingerprintsRemainSha256Async()
+    {
+        await using RetrievalHarness harness = await RetrievalHarness.CreateAsync();
+        Pass2CodeLogicRetrievalResult result = await harness.Service.RetrieveAsync(
+            harness.JobId,
+            new Pass2CodeLogicRetrievalRequest(
+                Pass2CodeLogicRetrievalOperation.Search,
+                queryText: "consumer"));
+
+        Assert.Equal(Pass2CodeLogicRetrievalOutcome.Accepted, result.Outcome);
+        Assert.NotEmpty(result.Items);
+        Pass2RetrievalResult[] persisted = await harness.Context.Pass2RetrievalResults
+            .AsNoTracking()
+            .Where(value => value.Pass2JobExecutionId == harness.JobId)
+            .OrderBy(value => value.ResultOrdinal)
+            .ToArrayAsync();
+        Assert.Equal(result.Items.Count, persisted.Length);
+
+        const string canonicalUuidPattern =
+            "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$";
+        foreach ((Pass2CodeLogicRetrievalItem item, Pass2RetrievalResult stored) in
+            result.Items.Zip(persisted))
+        {
+            Assert.Matches(canonicalUuidPattern, item.OpaqueHandle);
+            Assert.True(Guid.TryParseExact(item.OpaqueHandle, "D", out Guid handleId));
+            Assert.Equal(handleId.ToString("D"), item.OpaqueHandle);
+            Assert.Equal(stored.Id.ToString("D"), item.OpaqueHandle);
+
+            Assert.Matches("^[0-9a-f]{64}$", stored.DescriptorFingerprint);
+            Assert.NotEqual(stored.DescriptorFingerprint, item.OpaqueHandle);
+        }
+    }
+
+    [Fact]
     public async Task RetrieveCodeLogic_ServerOwnedCallIdentity_IsAcceptedWithoutModelVisibleIdentityAsync()
     {
         await using RetrievalHarness harness = await RetrievalHarness.CreateAsync();

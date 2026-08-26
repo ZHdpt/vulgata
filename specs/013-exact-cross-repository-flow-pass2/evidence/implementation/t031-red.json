@@ -1,0 +1,142 @@
+{
+  "schema_version": "1.0",
+  "task": "T031",
+  "status": "GREEN_AFTER_QR_US4_003A_CORRECTION",
+  "scope": "direct PreparedPass2JobExecutor deterministic fake-wire tests",
+  "test_file": "tests/Vulgata.Tests/PreparedPass2/PreparedPass2JobExecutorStreamingTests.cs",
+  "commands": {
+    "build": "dotnet build tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore -p:WarningLevel=0 -p:GenerateMvcTestManifest=false -clp:ErrorsOnly",
+    "focused_test": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --no-restore --filter FullyQualifiedName~PreparedPass2JobExecutorStreamingTests --logger \"console;verbosity=minimal\""
+  },
+  "covered_vectors": [
+    "inactivity cap",
+    "non-resetting absolute cap",
+    "raw provider response byte bound",
+    "request byte bound",
+    "assembled response byte bound",
+    "zero SDK retry",
+    "all-retrieve batch whole-batch preflight",
+    "serial accepted callbacks",
+    "forced request-nine submission",
+    "sole request-ten correction",
+    "no request eleven",
+    "retrieval budget survival across retry/restart",
+    "canonical transcript and admitted retrieval projection",
+    "missing tool-call ID preflight",
+    "duplicate tool-call ID preflight",
+    "closed request-ten correction context",
+    "transcript and retrieval-result request byte accounting",
+    "early rejected submission skips request nine and uses request ten correction"
+  ],
+  "test_design": {
+    "transport": "ScriptedStreamingTransport implements IPreparedPass2StreamingTransport in-process and records request metadata only.",
+    "clock": "DeterministicTimeProvider supplies a fixed UTC origin; timeout timers remain provider-controlled and no wall-clock provider is contacted.",
+    "packet": "Each direct test constructs a canonical two-Repository PreparedPass2WorkerPacket with a server-shaped flow/runtime binding and bounded provider packet bytes.",
+    "callbacks": "RecordingRetrievalService provides deterministic accepted/bound-exceeded outcomes, an optional admitted provider projection, and tracks callback order/concurrency. Submission validation is a deterministic local callback."
+  },
+  "current_result": {
+    "total": 18,
+    "passed": 18,
+    "failed": 0,
+    "skipped": 0,
+    "build": "SUCCEEDED with 0 errors using the build-enabled focused test command with WarningLevel=0.",
+    "focused_test": "18 total, 18 passed, 0 failed, 0 skipped. The QR-US4-003A early rejected submission correction now advances directly to request ten; the prior 17 T031 vectors remain GREEN.",
+    "verification_note": "Fresh build-enabled focused run after the QR-US4-003A production correction; no environment, provider, network, database, or stale-binary qualification was used."
+  },
+  "red_baseline": {
+    "total": 12,
+    "passed": 9,
+    "failed": 3,
+    "skipped": 0,
+    "failures": [
+      "inactivity timeout returned provider-unavailable instead of provider-timeout",
+      "absolute timeout returned provider-unavailable instead of provider-timeout",
+      "restarted executor accepted after retrieval-bound-exceeded"
+    ]
+  },
+  "corrective_red_baseline": {
+    "total": 17,
+    "passed": 12,
+    "failed": 5,
+    "skipped": 0,
+    "failures": [
+      "request two omitted tool-call ID and admitted retrieval projection from the canonical transcript",
+      "missing tool-call ID invoked retrieval callbacks instead of failing whole-batch preflight",
+      "duplicate tool-call ID invoked retrieval callbacks instead of failing whole-batch preflight",
+      "request ten omitted closed correction category, repair code, and server context",
+      "transcript and admitted retrieval-result bytes were excluded from request-cap accounting"
+    ]
+  },
+  "latest_corrective_red": {
+    "vector": "early rejected submission skips request nine and uses request ten correction",
+    "test": "ExecuteAsync_EarlyRejectedSubmission_SkipsRequestNineAndUsesSoleCorrectionOnRequestTen",
+    "expected": "A first locally rejected submission on request one is followed by exactly one correction submission on request ten; there is no request-nine submission and no third provider callback/request.",
+    "observed": "The pre-correction executor issued the second submission on request nine, so the test failed with expected request number 10 but actual request number 9. The provider submit callback count remained two and no third request was made.",
+    "correction_result": "After correction, the test passes with exactly two requests numbered 1 and 10, exactly two validation callbacks, no request-nine submission, and no request eleven."
+  },
+  "green_observations": [
+    "raw response bound returns closed provider-unavailable after one request",
+    "request bound returns request-bound before transport",
+    "assembled response bound returns closed provider-unavailable after one request",
+    "provider failure results in exactly one transport request",
+    "valid all-retrieve batch invokes both callbacks serially",
+    "mixed batch invokes zero callbacks",
+    "eight retrieval turns force request nine submission-only declarations",
+    "first rejected submission uses request ten and accepts correction",
+    "rejected correction terminates at request ten without request eleven",
+    "request two carries bounded canonical transcript with tool-call IDs and admitted retrieval projection",
+    "missing tool-call ID is rejected before any callback",
+    "duplicate tool-call IDs are rejected before any callback",
+    "request ten carries only closed correction category/repair code plus original packet and server-owned retrieval context",
+    "transcript and admitted retrieval-result bytes are included in request-cap accounting",
+    "early rejected submission advances directly to request ten correction with no request-nine submission"
+  ],
+  "required_corrections": [
+    {
+      "vector": "inactivity and absolute timeout mapping",
+      "observed": "ReadBoundedAsync timeout cancellation is caught as provider-unavailable because the linked timeout token is not distinguished from provider failure.",
+      "expected": "Both inactivity and absolute deadline expiry return the closed provider-timeout outcome while preserving zero retry and no raw provider payload."
+    },
+    {
+      "vector": "budget survival across retry/restart",
+      "observed": "A shared retrieval callback returns retrieval-bound-exceeded on the restarted run, but the executor ignores the function result and proceeds to accepted submission.",
+      "expected": "A bound refusal from retrieve_code_logic prevents final acceptance; durable retrieval accounting must remain authoritative across a new executor instance."
+    },
+    {
+      "vector": "canonical transcript and admitted retrieval projection",
+      "observed": "Request two contains only the original prompt, packet, and declarations; tool-call ID, retrieval handle, and admitted projection are absent, so retrieval output is discarded before the next provider turn.",
+      "expected": "Every request after tool work carries a bounded canonical transcript with stable tool-call IDs and the actual server-admitted retrieval projection, while preserving the original server context."
+    },
+    {
+      "vector": "missing tool-call ID preflight",
+      "observed": "A retrieve call with no ID is accepted and the retrieval callback runs eight times as the one scripted response is replayed; the executor returns submission-missing rather than invalid-tool-call before callbacks.",
+      "expected": "A missing tool-call ID returns invalid-tool-call immediately and invokes zero local callbacks."
+    },
+    {
+      "vector": "duplicate tool-call ID preflight",
+      "observed": "Two retrieve calls with the same ID are accepted and callbacks run eight times as the one scripted response is replayed; duplicate IDs are not rejected during whole-batch preflight.",
+      "expected": "Duplicate IDs return invalid-tool-call before the first callback and make no retrieval or submission mutation."
+    },
+    {
+      "vector": "closed request-ten correction context",
+      "observed": "Request ten is submission-only but repeats the original prompt, packet, and declarations without firstSubmissionCorrection, closed rejection category, deterministic repair code, or server context projection.",
+      "expected": "Request ten contains only the closed rejection category and repair code plus exact original packet and server-owned retrieval context; raw exceptions, provider content, tool arguments, and reasoning are excluded."
+    },
+    {
+      "vector": "transcript and retrieval-result request byte accounting",
+      "observed": "A 100,000-byte provider packet plus a 40,000-character admitted retrieval projection still reaches and accepts request two; the projection and transcript are not measured against the 131,072-byte request cap.",
+      "expected": "The initial request remains under the cap, but the next request is rejected as request-bound before transport when canonical transcript and admitted result bytes would exceed the cap."
+    },
+    {
+      "vector": "early rejected submission skips request nine and uses request ten correction",
+      "observed": "When the provider submits a candidate on request one and local validation rejects it, the executor sets its loop counter so the next provider submission is request nine. This violates the correction contract by using request nine instead of request ten, even though only two submit callbacks occur.",
+      "expected": "An early rejected submission must advance directly to the sole request-ten correction, with exactly two provider submit invocations and no request-nine submission or third callback/request."
+    }
+  ],
+  "environment": {
+    "provider": "not used",
+    "network": "not used",
+    "database": "not used",
+    "classification": "code behavior GREEN after QR-US4-003A correction; no environment or network failure"
+  }
+}

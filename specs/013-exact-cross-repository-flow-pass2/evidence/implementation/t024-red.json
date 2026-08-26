@@ -2,8 +2,8 @@
   "schema_version": "story-12.4-implementation-evidence/1.0",
   "task_ids": ["T024"],
   "stage": "implement",
-  "status": "GREEN_AFTER_PROVIDER_CODEC",
-  "observed_at_utc": "2026-08-26T09:28:26.8155440Z",
+  "status": "RED_EXPECTED_CANONICAL_HANDLE",
+  "observed_at_utc": "2026-08-26T09:48:55.8269897Z",
   "source_commit": "79134023c855ab551f6d56e7f8fab9531af36dd7",
   "changed_paths": [
     "tests/Vulgata.Tests/PreparedPass2/RetrieveCodeLogicContractTests.cs",
@@ -367,6 +367,46 @@
         "failures": 0
       }
     },
+    "scope_note": "Only the assigned T024 test and evidence files were changed; no production, workflow, Git, PostgreSQL, network, or system changes were made."
+  },
+  "handleIdentityCorrectiveRed": {
+    "status": "RED_EXPECTED_CANONICAL_HANDLE",
+    "observed_at_utc": "2026-08-26T09:48:55.8269897Z",
+    "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter FullyQualifiedName~RetrieveCodeLogicContractTests --logger \"console;verbosity=minimal\"",
+    "exit_code": 1,
+    "result": {
+      "total": 29,
+      "passed": 28,
+      "failed": 1,
+      "skipped": 0,
+      "tests_executed": true,
+      "compilation": "successful; focused build-enabled test run executed; non-fatal analyzer/package warnings did not affect the result"
+    },
+    "causal_red": {
+      "test": "RetrieveCodeLogic_AcceptedHandlesAreCanonicalResultIdsAndDescriptorFingerprintsRemainSha256Async",
+      "failure": "Assert.Matches at RetrieveCodeLogicContractTests.cs:806: accepted OpaqueHandle was a 64-character hexadecimal DescriptorFingerprint rather than a canonical lowercase UUID.",
+      "proof": "The accepted result was persisted and the test reached handle validation; no fixture, database, network, or environment setup error occurred."
+    },
+    "required_production_behavior": {
+      "accepted_handle": "Every accepted item OpaqueHandle must match lowercase UUID format ^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$.",
+      "persisted_identity": "For every admitted Pass2RetrievalResult, OpaqueHandle must equal Pass2RetrievalResult.Id.ToString(\"D\") exactly.",
+      "descriptor_separation": "DescriptorFingerprint must remain an independent lowercase 64-hex SHA-256 value and must not be reused as OpaqueHandle."
+    },
+    "green_baseline": {
+      "previous_provider_codec_suite": "28/28 GREEN after provider codec correction.",
+      "current_split": "28 passed, 1 causal RED for canonical handle identity."
+    },
+    "root_verification": {
+      "t024_t025": "60/60 passed before this corrective RED",
+      "t024_t025_t026_constraints": "82/82 passed before this corrective RED",
+      "migration": "4/4 passed",
+      "ef_pending_model_changes": false,
+      "default_no_admin_postgresql_filter": {
+        "visible_skips": 22,
+        "failures": 0
+      }
+    },
+    "no_environment_failure": "Build and focused testhost initialization succeeded; the sole failure is the intended semantic handle identity mismatch. No system, network, or PostgreSQL change was involved.",
     "scope_note": "Only the assigned T024 test and evidence files were changed; no production, workflow, Git, PostgreSQL, network, or system changes were made."
   },
   "notes": [

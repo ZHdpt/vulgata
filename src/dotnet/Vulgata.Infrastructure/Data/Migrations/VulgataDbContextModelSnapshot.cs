@@ -1649,8 +1649,14 @@ namespace Vulgata.Infrastructure.Data.Migrations
                     b.Property<Guid>("CoordinationId")
                         .HasColumnType("uuid");
 
+                    b.Property<int>("FailedCount")
+                        .HasColumnType("integer");
+
                     b.Property<Guid>("Pass1PairExecutionId")
                         .HasColumnType("uuid");
+
+                    b.Property<int>("PublishedCount")
+                        .HasColumnType("integer");
 
                     b.Property<DateTimeOffset>("StartedAt")
                         .HasColumnType("timestamp with time zone");
@@ -1680,7 +1686,10 @@ namespace Vulgata.Infrastructure.Data.Migrations
 
                     b.HasIndex("SystemId");
 
-                    b.ToTable("Pass2Executions", "vulgata");
+                    b.ToTable("Pass2Executions", "vulgata", t =>
+                        {
+                            t.HasCheckConstraint("CK_Pass2Executions_Accounting", "\"PublishedCount\" >= 0 AND \"FailedCount\" >= 0");
+                        });
                 });
 
             modelBuilder.Entity("Vulgata.Core.Entities.Pass2JobExecution", b =>

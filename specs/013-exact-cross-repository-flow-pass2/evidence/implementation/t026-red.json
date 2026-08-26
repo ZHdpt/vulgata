@@ -436,8 +436,9 @@
         "disposableDatabaseCleanup": "Each disposable database was dropped and absence was verified by its fixture."
       },
       "canonicalByteBoundaryCorrection": {
-        "method": "The test independently serializes the complete provider-visible SourceExcerpt JSON shape with a fixed 64-character placeholder handle, then iteratively solves payload length against the remaining budget; it does not call the production byte helper.",
-        "result": "GREEN; exact payload fills the remaining 65,536-byte cumulative budget and payload plus one is BoundExceeded."
+        "method": "The test independently serializes the complete provider-visible SourceExcerpt JSON shape with a fixed 36-character lowercase UUID placeholder handle, matching the opaque-handle contract, then iteratively solves payload length against the remaining budget; it does not call the production byte helper.",
+        "result": "GREEN; exact payload fills the remaining 65,536-byte cumulative budget and payload plus one is BoundExceeded.",
+        "correction": "Replaced the stale 64-character placeholder with Guid.Empty.ToString(\"D\"), a 36-character lowercase UUID-shaped placeholder whose serialized length matches accepted opaque handles."
       },
       "note": "The supplied localhost vulgata connection was accepted as the disposable-database administrator for this qualification. No ordinary vulgata database was migrated."
     },

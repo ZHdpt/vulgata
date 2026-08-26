@@ -48,6 +48,8 @@ internal sealed class Pass2RetrievalCallIdentity
 public sealed class Pass2CodeLogicRetrievalService : IPass2CodeLogicRetrievalService
 {
     private const int _maximumQueryUtf8Bytes = 512;
+    private const string _opaqueHandlePlaceholder =
+        "00000000-0000-0000-0000-000000000000";
     private readonly VulgataDbContext _context;
     private readonly RepositoryAccessScope _accessScope;
     private readonly IRevisionBoundSourceReader _sourceReader;
@@ -166,7 +168,10 @@ public sealed class Pass2CodeLogicRetrievalService : IPass2CodeLogicRetrievalSer
                     .ConfigureAwait(false)
                     ? await ExecuteAsync(authority, request, cancellationToken).ConfigureAwait(false)
                     : Pass2CodeLogicRetrievalResult.Refused();
-            return ReplayMatches(resolution.CompletedResult, replayCandidate)
+            return resolution.CompletedReceipt is not null &&
+                PreparedPass2Store.MatchesCompletedReplay(
+                    resolution.CompletedReceipt,
+                    replayCandidate)
                 ? replayCandidate.WithRemainingBudget(resolution.CompletedResult.RemainingBudget)
                 : Pass2CodeLogicRetrievalResult.Refused();
         }
@@ -192,22 +197,6 @@ public sealed class Pass2CodeLogicRetrievalService : IPass2CodeLogicRetrievalSer
             authority.InitialDocumentVersionIds,
             cancellationToken).ConfigureAwait(false);
     }
-
-    private static bool ReplayMatches(
-        Pass2CodeLogicRetrievalResult persisted,
-        Pass2CodeLogicRetrievalResult candidate) =>
-        candidate.Outcome == Pass2CodeLogicRetrievalOutcome.Accepted &&
-        persisted.Items.Count == candidate.Items.Count &&
-        persisted.Items.Zip(candidate.Items).All(pair =>
-            pair.First.OpaqueHandle == pair.Second.OpaqueHandle &&
-            pair.First.Kind == pair.Second.Kind &&
-            pair.First.DocumentVersionId == pair.Second.DocumentVersionId &&
-            pair.First.ReturnedUtf8Bytes == pair.Second.ReturnedUtf8Bytes &&
-            pair.First.SectionId == pair.Second.SectionId &&
-            pair.First.SourceAnchorId == pair.Second.SourceAnchorId &&
-            pair.First.EdgeId == pair.Second.EdgeId &&
-            pair.First.ByteStart == pair.Second.ByteStart &&
-            pair.First.ByteEnd == pair.Second.ByteEnd);
 
     private async Task<Pass2CodeLogicRetrievalResult> ExecuteAsync(
         RetrievalAuthority authority,
@@ -1080,7 +1069,7 @@ public sealed class Pass2CodeLogicRetrievalService : IPass2CodeLogicRetrievalSer
         }
 
         int returnedUtf8Bytes = CanonicalProviderVisibleUtf8Bytes(
-            new string('0', 64),
+            _opaqueHandlePlaceholder,
             Pass2CodeLogicRetrievalItemKind.SourceExcerpt,
             anchor.DocumentVersionId,
             sourceAnchorId: anchor.Id,
@@ -1306,7 +1295,10 @@ public sealed class Pass2CodeLogicRetrievalService : IPass2CodeLogicRetrievalSer
             byteEnd?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? string.Empty,
             evidenceFingerprint,
             returnedUtf8Bytes.ToString(System.Globalization.CultureInfo.InvariantCulture)));
-        return Convert.ToHexStringLower(SHA256.HashData(value));
+        byte[] handleBytes = SHA256.HashData(value)[..16];
+        handleBytes[6] = (byte)((handleBytes[6] & 0x0f) | 0x80);
+        handleBytes[8] = (byte)((handleBytes[8] & 0x3f) | 0x80);
+        return new Guid(handleBytes, bigEndian: true).ToString("D");
     }
 
     private static string CreateDocumentHandle(
@@ -1318,7 +1310,7 @@ public sealed class Pass2CodeLogicRetrievalService : IPass2CodeLogicRetrievalSer
         string evidence = LowerSha256(string.Join(
             '\n', "document/1.0", binding.ContentFingerprint));
         int bytes = CanonicalProviderVisibleUtf8Bytes(
-            new string('0', 64),
+            _opaqueHandlePlaceholder,
             Pass2CodeLogicRetrievalItemKind.Document,
             documentVersionId);
         return CreateOpaqueHandle(
@@ -1344,7 +1336,7 @@ public sealed class Pass2CodeLogicRetrievalService : IPass2CodeLogicRetrievalSer
             section.ContentMarkdown,
             section.SourceAnchorIdsJson));
         int bytes = CanonicalProviderVisibleUtf8Bytes(
-            new string('0', 64),
+            _opaqueHandlePlaceholder,
             Pass2CodeLogicRetrievalItemKind.Section,
             section.DocumentVersionId,
             sectionId: section.Id,
@@ -1362,7 +1354,7 @@ public sealed class Pass2CodeLogicRetrievalService : IPass2CodeLogicRetrievalSer
     {
         string evidence = AnchorEvidenceFingerprint(anchor);
         int bytes = CanonicalProviderVisibleUtf8Bytes(
-            new string('0', 64),
+            _opaqueHandlePlaceholder,
             Pass2CodeLogicRetrievalItemKind.SourceAnchor,
             anchor.DocumentVersionId,
             sourceAnchorId: anchor.Id);
@@ -1441,7 +1433,7 @@ public sealed class Pass2CodeLogicRetrievalService : IPass2CodeLogicRetrievalSer
         SourceExcerptResult source)
     {
         int returnedUtf8Bytes = CanonicalProviderVisibleUtf8Bytes(
-            new string('0', 64),
+            _opaqueHandlePlaceholder,
             Pass2CodeLogicRetrievalItemKind.SourceExcerpt,
             anchor.DocumentVersionId,
             sourceAnchorId: anchor.Id,
@@ -1475,7 +1467,7 @@ public sealed class Pass2CodeLogicRetrievalService : IPass2CodeLogicRetrievalSer
         Guid relatedDocumentVersionId)
     {
         int bytes = CanonicalProviderVisibleUtf8Bytes(
-            new string('0', 64),
+            _opaqueHandlePlaceholder,
             Pass2CodeLogicRetrievalItemKind.Relationship,
             relatedDocumentVersionId,
             edgeId: edge.Id);

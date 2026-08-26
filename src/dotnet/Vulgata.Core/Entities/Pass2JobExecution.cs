@@ -139,6 +139,32 @@ public sealed class Pass2JobExecution
         StateChangedAt = now;
     }
 
+    public void Complete(
+        long expectedStateVersion,
+        Guid expectedLeaseToken,
+        Guid committedDocumentVersionId,
+        string completionFingerprint,
+        DateTimeOffset completedAt)
+    {
+        RequireCurrentLease(expectedStateVersion, expectedLeaseToken);
+        ValidateTransitionTime(completedAt);
+        if (committedDocumentVersionId == Guid.Empty || !IsLowerSha256(completionFingerprint))
+        {
+            throw new ArgumentException("Complete Pass 2 publication identity is required.");
+        }
+
+        State = Pass2JobExecutionState.Completed;
+        StateVersion++;
+        LeaseToken = null;
+        LeaseExpiresAt = null;
+        NextAttemptAt = null;
+        FailureCategory = null;
+        FailureCode = null;
+        CommittedDocumentVersionId = committedDocumentVersionId;
+        CompletionFingerprint = completionFingerprint;
+        StateChangedAt = completedAt;
+    }
+
     private void RequireCurrentLease(long expectedStateVersion, Guid expectedLeaseToken)
     {
         if (State != Pass2JobExecutionState.Running || StateVersion != expectedStateVersion ||
@@ -164,4 +190,8 @@ public sealed class Pass2JobExecution
             throw new ArgumentException("Pass 2 Job timestamps must be UTC.", parameterName);
         }
     }
+
+    private static bool IsLowerSha256(string value) =>
+        value is { Length: 64 } && value.All(character =>
+            char.IsAsciiHexDigit(character) && !char.IsAsciiLetterUpper(character));
 }

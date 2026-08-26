@@ -1,0 +1,254 @@
+{
+  "task": "T034",
+  "story": "12.4",
+  "slice": "US4 publication and replay",
+  "status": "GREEN_AFTER_QR_US4_005A_CHAIN_REVALIDATION",
+  "behavioral_coverage_status": "PRIOR_POSTGRESQL_PUBLICATION_ROLLBACK_BINDING_VERSION_CHAIN_FLOW_TRACE_REUSE_AND_REPLAY_AUTHORITY_SUPERSEDED_BY_CORRECTIVE_REDS",
+  "owned_paths": [
+    "tests/Vulgata.Tests/PreparedPass2/Pass2DocumentPostgreSqlAtomicTests.cs",
+    "specs/013-exact-cross-repository-flow-pass2/evidence/implementation/t034-red.json"
+  ],
+  "public_seam": {
+    "required_type": "Vulgata.Core.DomainServices.IPass2BusinessLogicDocumentCommitter",
+    "required_operation": "CommitAsync",
+    "required_result": "closed enum disposition containing Conflict and Replayed",
+    "reason": "The accepted atomic publication contract requires one public commit seam; no test-local committer, transaction, or reflection invocation of private production methods is introduced."
+  },
+  "corrective_red_slice": {
+    "requirements": [
+      "A later pair with the same Logical Document stable key appends a successor, terminalizes both jobs, and leaves the earlier superseded version replayable.",
+      "Exact replay of that superseded earlier pair returns Replayed with zero publication mutation.",
+      "Pass2Execution durably exposes PublishedCount, FailedCount, and StateVersion; one publication advances only its own execution accounting atomically.",
+      "Injected publication failure rolls back execution accounting together with the document publication graph.",
+      "Concurrent same-job publication/replay has one Committed owner, one Replayed loser, and advances PublishedCount/StateVersion exactly once."
+    ],
+    "tests_added": [
+      "Pass2Execution_ExposesDurablePublicationAccountingFields",
+      "PostgreSql17_ReplayOfSupersededEarlierPairReturnsReplayedWithoutMutationAsync",
+      "PostgreSql17_PublicationAdvancesExecutionPublishedCountAndStateVersionAtomicallyAsync",
+      "PostgreSql17_PublicationFailureRollsBackExecutionAccountingAsync",
+      "PostgreSql17_ConcurrentPublicationAndReplayAdvanceExecutionAccountingOnceAsync"
+    ],
+    "red_observation": {
+      "command": "cmd /d /c \"set VULGATA_TEST_POSTGRES_ADMIN=Host=localhost;Port=5432;Database=postgres;Username=vulgata;Password=vulgata_dev&& dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore -p:WarningLevel=0 -p:GenerateMvcTestManifest=false --output .tmp-t034-accounting-red5 --filter FullyQualifiedName~PostgreSql17_ReplayOfSupersededEarlierPairReturnsReplayedWithoutMutationAsync --logger console --nologo\"",
+      "build": "successful; 0 errors",
+      "tests_executed": 1,
+      "passed": 0,
+      "failed": 1,
+      "skipped": 0,
+      "failure": "PostgreSql17_ReplayOfSupersededEarlierPairReturnsReplayedWithoutMutationAsync expected Replayed after pair B superseded pair A; actual Conflict. The test reached the PostgreSQL fixture and concrete public committer, so this is a causal replay-disposition RED.",
+      "database": "One uniquely named disposable PostgreSQL database was created and teardown verified its absence; ordinary vulgata was not contacted."
+    },
+    "latest_build_enabled_run": {
+      "observed_at_utc": "2026-08-26T12:03:43Z",
+      "command": "cmd /d /c \"set VULGATA_TEST_POSTGRES_ADMIN=Host=localhost;Port=5432;Database=postgres;Username=vulgata;Password=vulgata_dev&& dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore -p:WarningLevel=0 -p:GenerateMvcTestManifest=false --output .tmp-t034-final-corrective --filter FullyQualifiedName~Pass2DocumentPostgreSqlAtomicTests --logger console --nologo\"",
+      "build": "successful; 0 errors",
+      "tests_executed": 32,
+      "passed": 27,
+      "failed": 5,
+      "skipped": 0,
+      "causal_reds": [
+        "Pass2Execution_ExposesDurablePublicationAccountingFields: PublishedCount and FailedCount are absent from the public entity.",
+        "PostgreSql17_ReplayOfSupersededEarlierPairReturnsReplayedWithoutMutationAsync: expected Replayed after pair B superseded pair A; actual Conflict.",
+        "PostgreSql17_PublicationAdvancesExecutionPublishedCountAndStateVersionAtomicallyAsync: migrated Pass2Executions exposes only State and StateVersion; PublishedCount/FailedCount are absent.",
+        "PostgreSql17_PublicationFailureRollsBackExecutionAccountingAsync: migrated Pass2Executions exposes only State and StateVersion; PublishedCount/FailedCount are absent.",
+        "PostgreSql17_ConcurrentPublicationAndReplayAdvanceExecutionAccountingOnceAsync: migrated Pass2Executions exposes only State and StateVersion; PublishedCount/FailedCount are absent."
+      ],
+      "database": "PostgreSQL 17 localhost was reached; each qualification fixture used a uniquely named disposable database and verified its absence during teardown. Ordinary vulgata was not contacted.",
+      "network": "localhost PostgreSQL only; no provider/network dependency"
+    }
+  },
+  "historical_red_observation": {
+    "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter FullyQualifiedName~Pass2DocumentPostgreSqlAtomicTests --logger \"console;verbosity=minimal\"",
+    "compile": "successful",
+    "total": 2,
+    "passed": 1,
+    "failed": 1,
+    "skipped": 0,
+    "failure": "Historical T034 RED baseline: PostgreSql17_ValidCandidatePublishesOneImmutableVersionAsync expected Committed but observed Validated. T036 validation completed through the concrete public committer, while T037 publication was not implemented at that baseline.",
+    "database_contacted": true,
+    "classification": "CAUSAL_PUBLICATION_RED",
+    "seam_contract_test": "Pass2Publication_ExposesOnePublicAtomicReplayPort passed"
+  },
+  "current_verification": {
+    "build_command": "dotnet build tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore",
+    "build": "successful; 0 errors",
+    "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --no-restore --filter FullyQualifiedName~Pass2DocumentPostgreSqlAtomicTests --logger \"console;verbosity=minimal\"",
+    "total": 27,
+    "passed": 24,
+    "failed": 3,
+    "skipped": 0,
+    "causal_red": "Three replay cases still return Conflict instead of the required Replayed: exact replay after a fresh DbContext restart, lost-ack retry in the same process, and the concurrent same-job loser. The prior nine authority-drift cases are now GREEN and return Conflict without publication mutation.",
+    "qualified_vectors": [
+      "valid candidate publishes one immutable Business Logic Document Version",
+      "exact replay after a fresh DbContext restart returns the same version and leaves counts unchanged",
+      "lost-ack retry in the same process returns Replayed and leaves counts unchanged",
+      "changed replay returns Conflict with no new version or used-document IDs",
+      "concurrent same-job admission has exactly one Committed owner and one Replayed loser",
+      "a second decision may share the REFERENCES Edge, but substituting its decision evidence into the original job binding is Rejected without mutation",
+      "published Flow Group points to exactly one persisted FlowTrace with contiguous ordered steps and expected document/edge evidence bindings (pre-existing planning trace)",
+      "two independently leased jobs with the same stable key append exactly one successor and supersede the old version",
+      "two independently leased jobs with a changed endpoint create two Logical Document chains",
+      "concurrent independently leased same-key jobs serialize the current pointer and preserve the predecessor version",
+      "persisted LogicalDocumentStableKey drift rejects the stale second submission and preserves the prior current version",
+      "injected failure at LogicalDocuments INSERT rolls back all publication state",
+      "injected failure at DocumentVersions INSERT rolls back all publication state",
+      "injected failure at DocumentSections INSERT rolls back all publication state",
+      "injected failure at IndexEntries INSERT rolls back all publication state",
+      "injected failure at DocumentEdges INSERT rolls back all publication state",
+      "injected failure at FlowGroups UPDATE rolls back all publication state",
+      "injected failure at Pass2JobExecutions UPDATE rolls back all publication state"
+    ],
+    "classification": "QUALIFIED_WITH_REPLAY_DISPOSITION_RED"
+  },
+  "latest_fixture_correction": {
+    "observed_at_utc": "2026-08-26T11:37:00Z",
+    "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore -p:WarningLevel=0 -p:GenerateMvcTestManifest=false --output .tmp-t034-run3 --filter FullyQualifiedName~Pass2DocumentPostgreSqlAtomicTests --logger \"console;verbosity=minimal\" --nologo",
+    "build": "successful; 0 errors; 10 warnings",
+    "tests_executed": 27,
+    "passed": 24,
+    "failed": 3,
+    "skipped": 0,
+    "fixture_correction": "Independent later-job fixtures now clone the authoritative FlowTrace and FlowTraceStep graph, remapping the relationship decision while preserving the shared REFERENCES edge. Changed-endpoint fixtures use the canonical business-flow logical stable-key formula.",
+    "remaining_failures": [
+      "PostgreSql17_ExactReplayAfterRestartReturnsSameVersionWithoutMutationAsync: expected Replayed, actual Conflict",
+      "PostgreSql17_LostAcknowledgementRetryReturnsSameVersionWithoutMutationAsync: expected Replayed, actual Conflict",
+      "PostgreSql17_ConcurrentSameJobAdmissionHasOneOwnerAndOneReplayAsync: expected one Replayed result, actual one Conflict and one Committed"
+    ],
+    "database": "PostgreSQL 17 disposable databases only; each qualification fixture completed disposal and absence verification",
+    "network": "localhost PostgreSQL only",
+    "provider": "not used"
+  },
+  "final_verification": {
+    "observed_at_utc": "2026-08-26T12:58:30.4230201Z",
+    "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore -p:WarningLevel=0 -p:GenerateMvcTestManifest=false --output .tmp-t034-chain-full-final --filter FullyQualifiedName~Pass2DocumentPostgreSqlAtomicTests --logger console --nologo",
+    "build": "successful; 0 errors; 10 warnings",
+    "tests_executed": 36,
+    "passed": 36,
+    "failed": 0,
+    "skipped": 0,
+    "status": "GREEN",
+    "covered_replay_corrections": [
+      "fresh DbContext replay returns Replayed",
+      "lost acknowledgement retry returns Replayed",
+      "concurrent same-job loser returns Replayed",
+      "all nine post-publication authority drift vectors return Conflict without publication mutation",
+      "superseded-pair current-pointer drift returns Conflict without publication mutation",
+      "immediate successor backlink drift returns Conflict without publication mutation",
+      "second-hop SupersededById drift returns Conflict without publication mutation",
+      "successor version-number gap returns Conflict without publication mutation"
+    ],
+    "disposable_database_cleanup": "34 uniquely named PostgreSQL qualification databases were created, disposed, and asserted absent during teardown; no ordinary vulgata database was contacted.",
+    "network": "localhost PostgreSQL only",
+    "provider": "not used"
+  },
+  "replay_authority_drift_red": {
+    "expected": "Conflict with null DocumentVersionId, empty UsedDocumentVersionIds, and unchanged publication snapshot",
+    "observed": "Replayed for all nine independent persisted authority mutations; publication counts stayed unchanged",
+    "vectors": [
+      "decision contribution fingerprint",
+      "REFERENCES Edge target tuple",
+      "SourceAnchor hash and byte range",
+      "published DocumentSections content",
+      "published IndexEntry summary",
+      "preplanned FlowTraceStep description",
+      "LogicalDocument current pointer",
+      "GENERATED_FROM provenance timestamp",
+      "Pass2Execution state in the job execution graph"
+    ],
+    "classification": "CAUSAL_REPLAY_AUTHORITY_REVALIDATION_RED"
+  },
+  "discovery_verification": {
+    "admin_environment": "unset",
+    "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --no-restore --filter FullyQualifiedName~Pass2DocumentPostgreSqlAtomicTests --logger \"console;verbosity=minimal\"",
+    "total": 13,
+    "passed": 1,
+    "failed": 0,
+    "skipped": 12,
+    "note": "The seam contract Fact passes; twelve PostgreSQL-qualified cases are visible skips without admin credentials (ten facts plus one discovery-suppressed placeholder for each parameterized theory), and no database is contacted. With the admin environment, the two theories expand to their full 16 rows."
+  },
+  "chain_integrity_red": {
+    "requirements": [
+      "After pair A is superseded by pair B, replay of A must revalidate the authoritative LogicalDocument current pointer.",
+      "After pair A is superseded by pair B and successor C is appended, replay of A must validate the complete SupersededById chain, not only A's immediate successor.",
+      "Chain corruption must return Conflict with null DocumentVersionId, empty UsedDocumentVersionIds, and no publication mutation."
+    ],
+    "current_pointer_red": {
+      "test": "PostgreSql17_ReplayOfSupersededPairWithCurrentPointerDriftReturnsConflictWithoutMutationAsync",
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore -p:WarningLevel=0 -p:GenerateMvcTestManifest=false --output .tmp-t034-current-pointer-red --filter FullyQualifiedName~PostgreSql17_ReplayOfSupersededPairWithCurrentPointerDriftReturnsConflictWithoutMutationAsync --logger console --nologo",
+      "build": "successful; 0 errors",
+      "tests_executed": 1,
+      "passed": 0,
+      "failed": 1,
+      "skipped": 0,
+      "failure": "After valid pair A publication and same-key successor B publication, the test moved LogicalDocument.CurrentVersionId back to A; replay of A returned Replayed instead of Conflict.",
+      "mutation_proof": "The test captured the complete LogicalDocument and DocumentVersion chain snapshot after the authority tamper and requires the snapshot to remain unchanged after replay.",
+      "database": "One uniquely named disposable PostgreSQL database was created and teardown verified its absence; ordinary vulgata was not contacted."
+    },
+    "immediate_successor_link": {
+      "test": "PostgreSql17_ReplayOfSupersededPairWithImmediateSuccessorBacklinkReturnsConflictWithoutMutationAsync",
+      "result": "GREEN_NO_RED_EXPECTED",
+      "observation": "After pair A->B, changing B.SupersededById to A was rejected as Conflict without publication mutation; the existing predecessor-chain invariant already covers this immediate-link corruption.",
+      "database": "One uniquely named disposable PostgreSQL database was created and teardown verified its absence; ordinary vulgata was not contacted."
+    },
+    "second_hop_red": {
+      "test": "PostgreSql17_ReplayOfFirstPairWithSecondHopSupersededByDriftReturnsConflictWithoutMutationAsync",
+      "fixture": "Creates authoritative A->B->C same-key chain, adds a detached same-logical version as a valid alternate target, changes C.SupersededById to that target, and replays A.",
+      "expected": "Conflict with null DocumentVersionId, empty UsedDocumentVersionIds, unchanged full chain snapshot",
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore -p:WarningLevel=0 -p:GenerateMvcTestManifest=false --output .tmp-t034-second-hop-red5 --filter FullyQualifiedName~PostgreSql17_ReplayOfFirstPairWithSecondHopSupersededByDriftReturnsConflictWithoutMutationAsync --logger console --nologo",
+      "build": "successful; 0 errors",
+      "tests_executed": 1,
+      "passed": 0,
+      "failed": 1,
+      "skipped": 0,
+      "failure": "After valid A->B->C publication, C.SupersededById was redirected to a detached same-logical version; replay of A returned Replayed instead of Conflict.",
+      "mutation_proof": "The test captured the complete LogicalDocument and DocumentVersion chain snapshot after the second-hop tamper and requires the snapshot to remain unchanged after replay.",
+      "database": "One uniquely named disposable PostgreSQL database was created and teardown verified its absence; ordinary vulgata was not contacted."
+    },
+    "current_baseline": {
+      "prior_suite_total": 32,
+      "new_chain_tests_added": 4,
+      "target_total_after_compile_restoration": 36,
+      "scope": "The pre-existing 32-test T034 suite remains unchanged in intent; four chain-integrity vectors are additive (current pointer RED, second hop RED, immediate link GREEN, version gap GREEN)."
+    },
+    "post_implementation_status": {
+      "current_pointer": "GREEN_AFTER_QR_US4_005A",
+      "second_hop": "GREEN_AFTER_QR_US4_005A",
+      "immediate_successor_link": "GREEN",
+      "successor_version_gap": "GREEN",
+      "fixture_correction": "CloneIndependentLaterGraphAsync now recomputes cloned MembershipFingerprint and PlanFingerprint via PreparedPass2FlowPlanner using the cloned decision identity and canonical trace membership."
+    }
+  },
+  "latest_full_verification": {
+    "observed_at_utc": "2026-08-26T12:58:30.4230201Z",
+    "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore -p:WarningLevel=0 -p:GenerateMvcTestManifest=false --output .tmp-t034-chain-full-final --filter FullyQualifiedName~Pass2DocumentPostgreSqlAtomicTests --logger console --nologo",
+    "build": "successful; 0 errors; 10 warnings",
+    "tests_executed": 36,
+    "passed": 36,
+    "failed": 0,
+    "skipped": 0,
+    "status": "GREEN",
+    "coverage": "Original 32-test T034 suite plus four additive chain-integrity vectors: current-pointer drift, immediate successor backlink, second-hop SupersededById drift, and successor version gap.",
+    "disposable_database_cleanup": "34 uniquely named disposable PostgreSQL databases were created by PostgreSQL-qualified cases; each fixture asserted pg_database absence during teardown. Ordinary vulgata was not contacted.",
+    "network": "localhost PostgreSQL only",
+    "provider": "not used"
+  },
+  "deferred_vectors": [
+    {
+      "vector": "SourceAnchor failure injection",
+      "status": "NOT_APPLICABLE_TO_COMMITTER_WRITE_SET",
+      "reason": "SourceAnchor rows are pre-existing Pass 1 evidence used by publication; this committer does not create or mutate them, so no SourceAnchor publication boundary exists in the approved seam."
+    }
+  ],
+  "fixture_or_environment": {
+    "postgresql": "PostgreSQL 17 on localhost was migrated and exercised through 34 uniquely named disposable databases",
+    "disposable_database_policy": "VULGATA_TEST_POSTGRES_ADMIN was used only to create/drop uniquely named disposable databases; ordinary vulgata was never contacted",
+    "databases_created": 34,
+    "databases_dropped": 34,
+    "database_absence_verified": true,
+    "ordinary_vulgata_database": "not contacted",
+    "production_changes": false,
+    "workflow_changes": false,
+    "git_operations": false
+  }
+}

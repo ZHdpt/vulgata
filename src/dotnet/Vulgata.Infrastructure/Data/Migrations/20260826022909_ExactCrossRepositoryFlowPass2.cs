@@ -249,6 +249,8 @@ namespace Vulgata.Infrastructure.Data.Migrations
                     CoordinationId = table.Column<Guid>(type: "uuid", nullable: false),
                     SystemId = table.Column<Guid>(type: "uuid", nullable: false),
                     State = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
+                    PublishedCount = table.Column<int>(type: "integer", nullable: false),
+                    FailedCount = table.Column<int>(type: "integer", nullable: false),
                     StateVersion = table.Column<long>(type: "bigint", nullable: false),
                     StartedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
                     UpdatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
@@ -256,6 +258,9 @@ namespace Vulgata.Infrastructure.Data.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Pass2Executions", x => x.Id);
+                    table.CheckConstraint(
+                        name: "CK_Pass2Executions_Accounting",
+                        sql: "\"PublishedCount\" >= 0 AND \"FailedCount\" >= 0");
                     table.ForeignKey(
                         name: "FK_Pass2Executions_Pass1PairExecutions_Pass1PairExecutionId",
                         column: x => x.Pass1PairExecutionId,

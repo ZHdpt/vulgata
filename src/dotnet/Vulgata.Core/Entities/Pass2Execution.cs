@@ -60,12 +60,42 @@ public sealed class Pass2Execution
         UpdatedAt = changedAt;
     }
 
+    public void RecordPublished(long expectedStateVersion, DateTimeOffset changedAt)
+    {
+        RequireRunningAccountingTransition(expectedStateVersion, changedAt);
+        PublishedCount++;
+        StateVersion++;
+        UpdatedAt = changedAt;
+    }
+
+    public void RecordFailed(long expectedStateVersion, DateTimeOffset changedAt)
+    {
+        RequireRunningAccountingTransition(expectedStateVersion, changedAt);
+        FailedCount++;
+        StateVersion++;
+        UpdatedAt = changedAt;
+    }
+
     public Guid Id { get; private set; }
     public Guid Pass1PairExecutionId { get; private set; }
     public Guid CoordinationId { get; private set; }
     public Guid SystemId { get; private set; }
     public Pass2ExecutionState State { get; private set; }
+    public int PublishedCount { get; private set; }
+    public int FailedCount { get; private set; }
     public long StateVersion { get; private set; }
     public DateTimeOffset StartedAt { get; private set; }
     public DateTimeOffset UpdatedAt { get; private set; }
+
+    private void RequireRunningAccountingTransition(
+        long expectedStateVersion,
+        DateTimeOffset changedAt)
+    {
+        if (State != Pass2ExecutionState.Running || StateVersion != expectedStateVersion ||
+            changedAt.Offset != TimeSpan.Zero || changedAt < UpdatedAt)
+        {
+            throw new InvalidOperationException(
+                "Only the current running Pass 2 execution can advance terminal accounting.");
+        }
+    }
 }

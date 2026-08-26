@@ -1,0 +1,192 @@
+{
+  "story": "12.4",
+  "feature": "exact-cross-repository-flow-pass2",
+  "task": "T032",
+  "phase": "implement",
+  "status": "GREEN_AFTER_T036_QR_US4_008_CANONICAL_FIXTURE",
+  "observedAt": "2026-08-26T21:31:00+08:00",
+  "sourceCommit": "bc9d4b5c0f3fa51960ce1cb5019f62b093dc5132",
+  "commands": [
+    {
+      "command": "dotnet build tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --nologo -p:BaseOutputPath=G:\\source\\repos\\vulgata\\.tmp-t032-canonical-fixture2\\ -p:WarningLevel=0 -p:GenerateMvcTestManifest=false -clp:ErrorsOnly",
+      "exitCode": 0,
+      "result": {
+        "compilation": "successful",
+        "errors": 0,
+        "warnings": "suppressed for isolated corrective build; package-source/reference warnings remain known",
+        "note": "Isolated output was required because another test host held the normal test output assemblies open."
+      }
+    },
+    {
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --no-restore --nologo -p:BaseOutputPath=G:\\source\\repos\\vulgata\\.tmp-t032-canonical-fixture2\\ -p:WarningLevel=0 -v:q --filter FullyQualifiedName~Pass2BusinessLogicValidationTests --logger \"console;verbosity=minimal\"",
+      "exitCode": 0,
+      "result": {
+        "total": 32,
+        "passed": 32,
+        "failed": 0,
+        "skipped": 0,
+        "fixture": "persisted exact cross-repository Pass 1 handoff plus Running Pass 2 job/lease in disposable SQLite",
+        "writes": "rejection assertions require zero writes; all invalid vectors rejected",
+        "redExpected": 0,
+        "causalRedVectors": [],
+        "redBaseline": {
+          "total": 31,
+          "passed": 25,
+          "failed": 6,
+          "vectors": [
+            "source-anchor-hash",
+            "source-excerpt-hash",
+            "strict-source-excerpt-subrange",
+            "plan-fingerprint-drift",
+            "membership-fingerprint-drift",
+            "decision-evidence-fingerprint-drift"
+          ],
+          "status": "RED_CORRECTIVE_QR_US4_002A_008"
+        },
+        "authorityDrift": {
+          "total": 5,
+          "passed": 5,
+          "failed": 0,
+          "vectors": [
+            "source-anchor-hash",
+            "source-anchor-profiled-revision",
+            "source-excerpt-hash",
+            "source-excerpt-range",
+            "source-excerpt-current-pointer"
+          ],
+          "result": "Rejected",
+          "writes": 0,
+          "redExpected": 0,
+          "note": "The candidate cites only the admitted retrieved SourceAnchor or SourceExcerpt; the initial consumer SourceAnchor is omitted from both candidate and request. Independent Profiled Revision, SourceHash, exact-range, and current-pointer mutations all reject before publication. Each mutation occurs after the admitted ledger row is persisted."
+        },
+        "strictSubrange": {
+          "total": 1,
+          "passed": 1,
+          "failed": 0,
+          "result": "Committed",
+          "writes": "durable DocumentVersion, Published FlowGroup, Completed Pass2JobExecution, and GENERATED_FROM edges confirmed",
+          "redExpected": 0,
+          "note": "The persisted retrieved SourceExcerpt covers byte range 1..3 inside its authoritative SourceAnchor range 0..4; the valid strict-subrange candidate omits the initial consumer SourceAnchor and commits with durable publication."
+        },
+        "authorityFingerprintDrift": {
+          "total": 3,
+          "passed": 3,
+          "failed": 0,
+          "result": "Rejected",
+          "writes": 0,
+          "redExpected": 0,
+          "vectors": [
+            "plan-fingerprint-drift",
+            "membership-fingerprint-drift",
+            "decision-evidence-fingerprint-drift"
+          ],
+          "note": "Each persisted authority fingerprint is independently changed to a canonical-width corruption, then the candidate echoes the corrupted stored value. The committer rejects before publication, proving immutable preimage/authority validation."
+        },
+        "coordinatedAuthorityFingerprintCorruption": {
+          "total": 1,
+          "passed": 1,
+          "failed": 0,
+          "result": "Rejected",
+          "writes": 0,
+          "redExpected": 0,
+          "redBaseline": {
+            "total": 1,
+            "passed": 0,
+            "failed": 1,
+            "result": "Committed instead of Rejected",
+            "status": "RED_CORRECTIVE_QR_US4_008_COORDINATED_CANONICAL"
+          },
+          "vectors": [
+            "decision-evidence-fingerprint",
+            "provider-contribution-evidence-fingerprints",
+            "plan-fingerprint"
+          ],
+          "note": "Decision EvidenceFingerprint, every provider contribution EvidenceFingerprint, and FlowGroup PlanFingerprint are independently replaced with coordinated canonical-width corruption while IDs and canonical preimages remain unchanged. The candidate echoes all resulting persisted values and is rejected without publication. No RED is expected because the authority-preimage check is already correct."
+        },
+        "schemaBoundary": {
+          "total": 1,
+          "passed": 1,
+          "failed": 0,
+          "result": "Rejected",
+          "writes": 0,
+          "redExpected": 0,
+          "authority": "The title maxLength is read from the single embedded business-logic-flow-v1 schema resource and the candidate is submitted through the public committer seam."
+        }
+      }
+    }
+  ],
+  "directBehavior": {
+    "validBaseline": {
+      "total": 1,
+      "passed": 1,
+      "result": "Committed",
+      "usedDocumentDerivation": "exactly the consumer and provider XML documents cited by job/attempt-bound canonical handles; provider implementation evidence was supplied but excluded because it was uncited",
+      "documentVersionId": "non-null deterministic Business Logic DocumentVersion",
+      "writes": "durable materialization confirmed by DocumentVersion, Published FlowGroup, Completed job, and GENERATED_FROM edge snapshots"
+    },
+    "rejectionVectors": {
+      "total": 19,
+      "passed": 19,
+      "failed": 0,
+      "result": "Rejected",
+      "writes": 0,
+      "vectors": [
+        "unknown-handle",
+        "prior-attempt",
+        "claim-support",
+        "contiguous-ordinals",
+        "group-fingerprint",
+        "provider-fingerprint",
+        "edge-fingerprint",
+        "logical-key-fingerprint",
+        "unsupported-relationship",
+        "incomplete-provenance",
+        "bounded-utf8",
+        "fabricated-canonical-handle",
+        "document-only-relationship",
+        "missing-source-anchor",
+        "wrong-source-anchor",
+        "source-range-drift",
+        "relationship-without-references-edge",
+        "retrieved-fingerprint-drift",
+        "prior-job"
+      ]
+    },
+    "returnedButUncited": {
+      "total": 1,
+      "passed": 1,
+      "result": "Committed",
+      "assertion": "returned provider implementation evidence is excluded from UsedDocumentVersionIds when not cited",
+      "writes": "durable materialization confirmed by before/after snapshots",
+      "redExpected": 0
+    }
+  },
+  "approvedSeam": {
+    "submission": "Pass2BusinessLogicCommitRequest",
+    "operation": "Pass2BusinessLogicDocumentCommitter.CommitAsync",
+    "result": "Pass2BusinessLogicCommitResult",
+    "rejection": "Pass2BusinessLogicCommitStatus.Rejected with pass2-candidate-rejected and empty used-document IDs",
+    "publication": "Atomic Business Logic Document materialization; successful commits persist the version, Published FlowGroup, Completed job, and cited-only GENERATED_FROM edges"
+  },
+  "fixtureBoundary": {
+    "database": "SQLite disposable database",
+    "authority": "persisted FlowGroup, Pass2Execution, Running Pass2JobExecution lease, exact decision, REFERENCES Edge, provider evidence contributions, and current Document Versions",
+      "handleLedger": "initial document and source-anchor handles are reconstructed from persisted FlowGroup/FlowTrace/DocumentVersion/SourceAnchor authority with Pass2InitialEvidenceHandle; provider document/relationship and consumer SourceAnchor/SourceExcerpt handles are reconstructed only from admitted current-attempt Pass2RetrievalReceipt/Pass2RetrievalResult rows",
+    "normalization": "The shared planning fixture's ConsumerEntryStableKey was normalized to the current 64-character schema-bound representation before planning; exact edge evidence, decision, and provider contribution fingerprints/IDs are canonicalized through ExactResolutionCanonicalAuthority for this fixture; no production row or migration was changed."
+  },
+  "deferred": [
+    "Commit receipt/idempotent replay qualification remains in the owning T037/T033 slices.",
+    "Server-issued initial handles are now job/attempt-bound canonical UUIDs reconstructed from persisted authority; caller-supplied InitialEvidence is not trusted for publication authority.",
+    "Relationship claims require an admitted Relationship result bound to the authoritative REFERENCES Edge; missing SourceAnchor, wrong anchor identity, range drift, and non-REFERENCES edge mutations all reject before writes.",
+    "Persisted retrieval results use canonical pass2-retrieval-descriptor/1.0 and pass2-retrieval-result/1.0 fingerprints; evidence-fingerprint drift rejects before publication.",
+    "The focused T032 validation suite is GREEN after canonical fixture alignment and T036: all 32 tests pass, including the coordinated QR-US4-008 corruption vector. The earlier six-vector RED baseline and the pre-alignment canonical coordinated RED remain recorded above.",
+    "No provider, network, PostgreSQL, environment, or system change was required."
+  ],
+  "scope": {
+    "changedFiles": [
+      "tests/Vulgata.Tests/PreparedPass2/Pass2BusinessLogicValidationTests.cs",
+      "specs/013-exact-cross-repository-flow-pass2/evidence/implementation/t032-red.json"
+    ],
+    "excluded": "No production, task, workflow, Git, PostgreSQL, network, or system changes were made."
+  }
+}
