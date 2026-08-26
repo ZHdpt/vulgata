@@ -2,70 +2,447 @@
   "task": "T026",
   "story": "12.4",
   "slice": "US3 retrieve_code_logic durable budget/replay",
-  "status": "RED_EXPECTED",
+  "status": "GREEN",
+  "qualification": "T026/T029 PostgreSQL qualification GREEN after transient replay rehydration and canonical provider-visible byte-boundary corrections",
   "testPath": "tests/Vulgata.Tests/PreparedPass2/RetrieveCodeLogicPostgreSqlBudgetTests.cs",
   "approvedSeam": "Vulgata.Core.DomainServices.IPass2CodeLogicRetrievalService.RetrieveAsync(Guid, Pass2CodeLogicRetrievalRequest, CancellationToken)",
   "compileAndSetup": {
-    "command": "$env:VULGATA_TEST_POSTGRES_ADMIN='Host=localhost;Port=5432;Database=vulgata;Username=vulgata;Password=vulgata_dev'; dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter FullyQualifiedName~RetrieveCodeLogicPostgreSqlBudgetTests --logger \"console;verbosity=minimal\"",
+    "command": "$env:VULGATA_TEST_POSTGRES_ADMIN='<approved localhost admin connection supplied out-of-band>'; dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter FullyQualifiedName~RetrieveCodeLogicPostgreSqlBudgetTests --logger \"console;verbosity=minimal\" --nologo -- xUnit.MaxParallelThreads=1",
     "compile": "successful",
     "postgres": "successful; PostgreSQL 17 accepted and migrations applied only to disposable databases",
-    "disposableDatabases": [
-      "vulgata_story121_52fac110e2a64380b98314ef811b817f",
-      "vulgata_story121_b08adbae1bff43c2b570f30dbc800fcf",
-      "vulgata_story121_f6a41ea5aefa46869831138270461e7a"
+    "fixture": "T020 authoritative terminal pair, 8 flow Documents, 4 current sections per Document, issued Search/SourceAnchor handles, and a successful test-local revision-bound reader",
+    "causalIsolation": [
+      "Call-cap and restart tests use guaranteed no-match queries, so their calls do not consume the ten-result bound.",
+      "Section and repeated-request tests query one persisted IndexEntry title containing its unique Document Version ID; discovery returns exactly one Document.",
+      "The byte test computes the exact SourceExcerpt length after valid discovery and SourceAnchor descriptors so cumulative ReturnedUtf8Bytes reaches exactly 65,536.",
+      "Repeated sections intentionally charge 1 + 4 + 4 = 9 result descriptors while distinct-document accounting remains canonical."
     ],
-    "cleanup": "each database was dropped by DisposablePostgreSqlDatabase.DisposeAsync and absence was verified by SELECT EXISTS against pg_database",
+    "disposableDatabases": [
+      "vulgata_story121_ed83502926d9402f97e8f41daede0098",
+      "vulgata_story121_a4a41bd7aeb448099a0d40bfd2465df7",
+      "vulgata_story121_228dfbbe147c49b2af5190f867d58918",
+      "vulgata_story121_1286426d08bf4a13a9c16386becc87b8",
+      "vulgata_story121_2c766b6e373246eba95d260084c6de20",
+      "vulgata_story121_4cc7b2bdfc8e4200a779670eb9d80e9a"
+    ],
+    "cleanup": "each database was dropped by DisposablePostgreSqlDatabase.DisposeAsync and absence was verified with SELECT EXISTS against pg_database",
     "ordinaryDatabaseMigrated": false
   },
   "behavioralRed": {
     "commandExitCode": 1,
-    "total": 3,
+    "total": 6,
     "passed": 0,
-    "failed": 3,
+    "failed": 6,
+    "cause": "The public service reaches valid current Documents, issued handles, and the successful source-reader test double, but has no T028 reservation/admission transaction. It returns usable retrieval outputs while Pass2RetrievalBudget remains at zero and no receipts/results are persisted. This is a production behavior RED, not a PostgreSQL, network, or fixture failure.",
     "vectors": [
       {
         "test": "RetrieveAsync_EightCallsAreInclusiveAndNinthIsPersistedBoundRefusalAsync",
-        "expected": "calls 1-8 complete with receipt CallOrdinal values 1-8; call 9 returns content-dark BoundExceeded without increasing CallsReserved, creating a receipt with ordinal 9, or adding results",
-        "observed": "RED at call 1: result outcome was Unavailable; no reservation or receipt was observed"
+        "expected": "calls 1-8 reserve and persist CallOrdinal 1-8; call 9 returns content-dark BoundExceeded without incrementing CallsReserved, creating ordinal 9, or adding results",
+        "observed": "Search calls returned usable outcomes, then persisted CallsReserved was 0 instead of 8"
+      },
+      {
+        "test": "RetrieveAsync_TenReturnedResultsAreInclusiveAndEleventhIsPersistedBoundRefusalAsync",
+        "expected": "exactly 10 issued result descriptors are admitted; a second projection exceeding 10 returns BoundExceeded with a zero-result receipt",
+        "observed": "service produced exactly 10 distinct descriptors, then budget ResultsReturned was 0 instead of 10"
+      },
+      {
+        "test": "RetrieveAsync_FourSectionsPerDocumentAreInclusiveAsync",
+        "expected": "one uniquely selected Document is discovered, then exactly 4 current sections are admitted; cumulative ResultsReturned is 5",
+        "observed": "service returned one Document and 4 sections, then budget ResultsReturned was 0 instead of 5"
+      },
+      {
+        "test": "RetrieveAsync_ExactReturnedUtf8ByteBudgetIsInclusiveAndPlusOneIsBoundedAsync",
+        "expected": "a SourceExcerpt fills the remaining cumulative byte budget exactly to 65,536; a later 1-byte projection returns BoundExceeded",
+        "observed": "valid issued SourceAnchor and successful exact-cumulative-byte reader output were produced, then budget ReturnedUtf8Bytes was 0 instead of 65,536"
       },
       {
         "test": "RetrieveAsync_RepeatedRequestChargesCallsButKeepsDocumentAccountingCanonicalAsync",
-        "expected": "two identical requests consume two calls, while already-counted Documents are not double-counted",
-        "observed": "RED at first outcome: service returned Unavailable before durable accounting"
+        "expected": "one uniquely selected Document plus two identical section requests charge three calls and 1 + 4 + 4 = 9 result descriptors without double-counting the Document",
+        "observed": "identical section handles were returned, then budget CallsReserved was 0 instead of 3"
       },
       {
         "test": "RetrieveAsync_NewServiceInstanceDoesNotResetPersistedBudgetAsync",
-        "expected": "two service instances share the durable budget and receipts",
-        "observed": "RED at first outcome: service returned Unavailable before durable accounting"
+        "expected": "a new service instance observes and continues the durable budget/receipt state",
+        "observed": "retrieval output was usable, then budget CallsReserved was 0 instead of 2"
       }
-    ],
-    "cause": "The context/scope/source-reader composition seam is now present, so the fixture reaches the public RetrieveAsync call. The current implementation still returns Pass2CodeLogicRetrievalResult.Unavailable() without reservation, retrieval, or durable receipt/result writes; all three tests RED at the first expected usable outcome. This is a production-behavior RED, not a PostgreSQL or network failure."
+    ]
   },
   "latestRerun": {
-    "command": "$env:VULGATA_TEST_POSTGRES_ADMIN='Host=localhost;Port=5432;Database=vulgata;Username=vulgata;Password=vulgata_dev'; dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --no-build --filter FullyQualifiedName~RetrieveCodeLogicPostgreSqlBudgetTests --logger \"console;verbosity=minimal\" --nologo -- xUnit.MaxParallelThreads=1",
-    "compile": "not performed by this retry; source compiled successfully in the preceding build-enabled run",
-    "exitCode": 1,
-    "total": 3,
-    "passed": 0,
-    "failed": 3,
-    "classification": "ENVIRONMENT_BLOCKED",
-    "diagnostic": "All three tests failed while creating their disposable database: NpgsqlException Failed to connect to 127.0.0.1:5432, inner SocketException target machine actively refused it. No fixture, migration, retrieval call, or database cleanup ran in this retry. The preceding causal run had PostgreSQL setup and cleanup success; this later run indicates PostgreSQL is currently unavailable and must be restored externally before requalification.",
-    "noHostOrSystemChanges": true
+    "command": "$env:VULGATA_TEST_POSTGRES_ADMIN='<approved localhost admin connection supplied out-of-band>'; dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter FullyQualifiedName~RetrieveCodeLogicPostgreSqlBudgetTests --logger \"console;verbosity=minimal\" --nologo -- xUnit.MaxParallelThreads=1",
+    "compile": "successful",
+    "postgres": "successful; all six PostgreSQL fixtures migrated only their uniquely named disposable databases",
+    "total": 7,
+    "passed": 6,
+    "failed": 1,
+    "skipped": 0,
+    "classification": "SERVER_OWNED_CALL_IDENTITY_SEAM_RED_EXPECTED",
+    "passedBehavioralTests": [
+      "RetrieveAsync_EightCallsAreInclusiveAndNinthIsPersistedBoundRefusalAsync",
+      "RetrieveAsync_TenReturnedResultsAreInclusiveAndEleventhIsPersistedBoundRefusalAsync",
+      "RetrieveAsync_ExactReturnedUtf8ByteBudgetIsInclusiveAndPlusOneIsBoundedAsync",
+      "RetrieveAsync_FourSectionsPerDocumentAreInclusiveAsync",
+      "RetrieveAsync_RepeatedRequestChargesCallsButKeepsDocumentAccountingCanonicalAsync",
+      "RetrieveAsync_NewServiceInstanceDoesNotResetPersistedBudgetAsync"
+    ],
+    "redTest": {
+      "test": "RetrieveAsync_ServerOwnedCallIdentityOverloadIsAvailable",
+      "observed": "Vulgata.Infrastructure.Data.Pass2RetrievalCallIdentity was absent from the Infrastructure assembly; the required internal four-parameter RetrieveAsync overload could not be inspected.",
+      "requiredShape": "internal Pass2RetrievalCallIdentity with int AttemptOrdinal, int CallOrdinal, string ToolCallIdFingerprint, plus internal Pass2CodeLogicRetrievalService.RetrieveAsync(Guid, Pass2RetrievalCallIdentity, Pass2CodeLogicRetrievalRequest, CancellationToken) returning Task<Pass2CodeLogicRetrievalResult>",
+      "productionOrFixtureFailure": false
+    },
+    "disposableDatabaseCleanup": {
+      "created": 6,
+      "dropped": 6,
+      "absenceVerified": 6,
+      "ordinaryDatabaseMigrated": false,
+      "note": "Passing PostgreSQL tests do not emit ITestOutputHelper database names under the selected xUnit logger; each per-test AssertDatabaseDroppedAsync verification passed."
+    },
+    "exitCode": 1
   },
-  "deferredVectors": [
-    {
-      "vector": "10 result descriptors, 4 additional Documents, 4 sections per Document, 65,536 UTF-8 bytes and each plus-one refusal",
-      "minimalGap": "Implement the T028 durable reservation/admission path behind the existing context-backed service so seeded jobs load and typed results are admitted before these persisted bound vectors can be causal."
+  "replayRerun": {
+    "command": "$env:VULGATA_TEST_POSTGRES_ADMIN='<approved localhost admin connection supplied out-of-band>'; dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter FullyQualifiedName~RetrieveCodeLogicPostgreSqlBudgetTests --logger \"console;verbosity=minimal\" --nologo -- xUnit.MaxParallelThreads=1",
+    "compile": "successful",
+    "postgres": "successful; all nine PostgreSQL fixtures migrated only their uniquely named disposable databases",
+    "total": 10,
+    "passed": 7,
+    "failed": 3,
+    "skipped": 0,
+    "classification": "REPLAY_CONFLICT_LOST_RESERVATION_RED_EXPECTED",
+    "greenBaseline": [
+      "RetrieveAsync_ServerOwnedCallIdentityOverloadIsAvailable",
+      "RetrieveAsync_EightCallsAreInclusiveAndNinthIsPersistedBoundRefusalAsync",
+      "RetrieveAsync_TenReturnedResultsAreInclusiveAndEleventhIsPersistedBoundRefusalAsync",
+      "RetrieveAsync_ExactReturnedUtf8ByteBudgetIsInclusiveAndPlusOneIsBoundedAsync",
+      "RetrieveAsync_FourSectionsPerDocumentAreInclusiveAsync",
+      "RetrieveAsync_RepeatedRequestChargesCallsButKeepsDocumentAccountingCanonicalAsync",
+      "RetrieveAsync_NewServiceInstanceDoesNotResetPersistedBudgetAsync"
+    ],
+    "vectors": [
+      {
+        "test": "RetrieveAsync_ExactOrdinalReplayReturnsSameDescriptorsWithoutMutationAsync",
+        "expected": "same job/attempt/call/tool identity and request rehydrates identical descriptors without another call, receipt, result, byte, or document charge",
+        "observed": "first call was Accepted and replay descriptors matched, but CallsReserved became 2 instead of remaining 1; the internal overload currently forwards to the public auto-ordinal path"
+      },
+      {
+        "test": "RetrieveAsync_ChangedRequestForExistingOrdinalIsRefusedWithoutMutationAsync",
+        "expected": "same ordinal with a changed request returns Refused with zero items and no durable or source-reader effect",
+        "observed": "changed request returned NoResults instead of Refused; the forwarding path reserves the next ordinal before producing the no-results response, so the no-mutation postcondition is not met"
+      },
+      {
+        "test": "RetrieveAsync_LostReservationRemainsConsumedAndCannotBeRetriedAsync",
+        "expected": "a source failure after committed reservation leaves call 3 consumed without a receipt; retrying call 3 returns Refused without reader I/O, while call 4 remains usable",
+        "observed": "reservation and throwing reader were reached, but retrying call 3 returned Accepted instead of Refused; the current forwarding path treats the retry as a new call rather than a consumed lost ordinal"
+      }
+    ],
+    "disposableDatabaseCleanup": {
+      "created": 9,
+      "dropped": 9,
+      "absenceVerified": 9,
+      "ordinaryDatabaseMigrated": false,
+      "visibleFailedTestDatabases": [
+        "vulgata_story121_23d122eb3c454320b0c820ff19875942",
+        "vulgata_story121_a34e49c9c0cd4687b7837d350edede74",
+        "vulgata_story121_69f9772b801f4b6790977823fded56c1"
+      ],
+      "note": "The six passing database tests do not emit ITestOutputHelper names under the selected xUnit logger; their cleanup assertions passed. The three failing fixtures emitted the names listed above."
     },
-    {
-      "vector": "lost receipt, exact same-ordinal replay, changed-request conflict",
-      "minimalGap": "The public request does not supply an ordinal, receipt token, or fault-injection boundary. The durable implementation must derive ordinals and expose a testable provider/transaction failure path; tests must not fabricate private receipt rows."
+    "exitCode": 1
+  },
+  "additionalBoundsRerun": {
+    "command": "$env:VULGATA_TEST_POSTGRES_ADMIN='<approved localhost admin connection supplied out-of-band>'; dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter FullyQualifiedName~RetrieveCodeLogicPostgreSqlBudgetTests --logger \"console;verbosity=minimal\" --nologo -- xUnit.MaxParallelThreads=1",
+    "compile": "successful",
+    "postgres": "successful; all twelve PostgreSQL fixtures migrated only their uniquely named disposable databases",
+    "total": 13,
+    "passed": 10,
+    "failed": 3,
+    "skipped": 0,
+    "classification": "ADDITIONAL_DOCUMENT_SECTION_DUPLICATE_RED_EXPECTED",
+    "greenBaseline": "The prior seven replay/budget tests remain GREEN; the three new tests isolate additional-document authority, per-document section admission, and duplicate projection canonicalization.",
+    "vectors": [
+      {
+        "test": "RetrieveAsync_FourAdditionalDocumentsAreInclusiveAndFifthIsBoundedAsync",
+        "expected": "five current authorized Code Logic Documents outside the initial FlowTrace are retrievable independently; documents 1-4 charge four additional Documents and document 5 returns BoundExceeded with zero deltas",
+        "observed": "the first external current document returned NoResults instead of Accepted; the service authority currently contains only initial FlowTrace Document Versions, so the fifth-document bound was not reached"
+      },
+      {
+        "test": "RetrieveAsync_FifthSectionForDocumentIsRefusedWithoutMutationAsync",
+        "expected": "after one Document and four sections are admitted, a uniquely searchable fifth current section returns BoundExceeded without result/byte/document/section deltas",
+        "observed": "the fifth section returned Accepted instead of BoundExceeded; the service/store admits the projection because per-Document section admission is not enforced"
+      },
+      {
+        "test": "RetrieveAsync_DuplicateHandleProjectionProducesOneCanonicalResultAndChargesOnceAsync",
+        "expected": "a Sections request repeating the same current Document handle produces one canonical set of four section descriptors and charges those descriptors once",
+        "observed": "production threw InvalidOperationException 'Sequence contains more than one element' in SectionsAsync grouping duplicate selected section rows before durable admission; no fixture constraint was violated"
+      }
+    ],
+    "disposableDatabaseCleanup": {
+      "created": 12,
+      "dropped": 12,
+      "absenceVerified": 12,
+      "ordinaryDatabaseMigrated": false,
+      "visibleFailedTestDatabases": [
+        "vulgata_story121_d0557095d0474089a8f5eddc3c5cb72b",
+        "vulgata_story121_77f923c700754814be0a2465005085d8",
+        "vulgata_story121_45437a7cf4ec4fe397f6b16d2bf96496"
+      ],
+      "note": "The ten passing PostgreSQL tests do not emit ITestOutputHelper names under the selected xUnit logger; their cleanup assertions passed. The three failing fixtures emitted the names listed above."
     },
-    {
-      "vector": "atomic rollback of reservation/results on provider failure",
-      "minimalGap": "No public provider/source failure seam is currently available to induce the failure after reservation."
+    "exitCode": 1
+  },
+  "currentVerification": {
+    "source": "Build-enabled serial rerun after the fixture acquired a UTC Running Pass 2 lease and used an always-allow live authorization verifier.",
+    "command": "With VULGATA_TEST_POSTGRES_ADMIN set to the approved localhost admin connection out-of-band: dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter FullyQualifiedName~RetrieveCodeLogicPostgreSqlBudgetTests --logger \"console;verbosity=minimal\" --nologo -- xUnit.MaxParallelThreads=1",
+    "compile": "successful",
+    "postgres": "successful; only uniquely named disposable databases were migrated",
+    "fixtureCorrections": [
+      "Each seeded Pass2JobExecution acquires a valid UTC Running lease through AcquireLease before retrieval.",
+      "Each retrieval service receives a RepositoryAccessScope with an always-allow live authorization verifier.",
+      "The concurrency case shares one leased job and allocates the next two server-owned call ordinals."
+    ],
+    "total": 14,
+    "passed": 14,
+    "failed": 0,
+    "skipped": 0,
+    "classification": "GREEN",
+    "databaseCleanup": {
+      "created": 13,
+      "dropped": 13,
+      "absenceVerified": 13,
+      "remainingCount": 0,
+      "ordinaryDatabaseMigrated": false,
+      "query": "SELECT EXISTS (SELECT 1 FROM pg_database WHERE datname = @name);",
+      "result": "false for every disposable database"
+    },
+    "vectorMap": [
+      {
+        "vector": "eight calls inclusive and ninth-call refusal",
+        "test": "RetrieveAsync_EightCallsAreInclusiveAndNinthIsPersistedBoundRefusalAsync",
+        "result": "GREEN; call ordinals 1-8 are admitted, and the ninth outcome is content-dark BoundExceeded with no ordinal 9 or result delta"
+      },
+      {
+        "vector": "ten results inclusive and eleventh-result refusal",
+        "test": "RetrieveAsync_TenReturnedResultsAreInclusiveAndEleventhIsPersistedBoundRefusalAsync",
+        "result": "GREEN; exactly 10 descriptors are admitted and the over-bound outcome has zero results and zero deltas"
+      },
+      {
+        "vector": "four additional Documents inclusive and fifth refusal",
+        "test": "RetrieveAsync_FourAdditionalDocumentsAreInclusiveAndFifthIsBoundedAsync",
+        "result": "GREEN; four additional current authorized Documents are admitted and the fifth is content-dark BoundExceeded with zero deltas"
+      },
+      {
+        "vector": "four sections per Document inclusive",
+        "test": "RetrieveAsync_FourSectionsPerDocumentAreInclusiveAsync",
+        "result": "GREEN; four current sections are admitted for one Document"
+      },
+      {
+        "vector": "fifth section refusal",
+        "test": "RetrieveAsync_FifthSectionForDocumentIsRefusedWithoutMutationAsync",
+        "result": "GREEN; the fifth section is BoundExceeded atomically with no result, byte, Document, or section delta"
+      },
+      {
+        "vector": "65,536 UTF-8 bytes inclusive and plus-one refusal",
+        "test": "RetrieveAsync_ExactReturnedUtf8ByteBudgetIsInclusiveAndPlusOneIsBoundedAsync",
+        "result": "GREEN; cumulative ReturnedUtf8Bytes reaches exactly 65,536 and the next byte is refused content-dark"
+      },
+      {
+        "vector": "duplicate result canonicalization",
+        "test": "RetrieveAsync_DuplicateHandleProjectionProducesOneCanonicalResultAndChargesOnceAsync",
+        "result": "GREEN; repeated opaque handle projection yields one canonical descriptor set and one charge"
+      },
+      {
+        "vector": "exact same-ordinal replay",
+        "test": "RetrieveAsync_ExactOrdinalReplayReturnsSameDescriptorsWithoutMutationAsync",
+        "result": "GREEN; same job/attempt/call/tool identity and request rehydrate identical descriptors without another call, receipt, result, byte, or Document charge"
+      },
+      {
+        "vector": "same-ordinal changed-request conflict",
+        "test": "RetrieveAsync_ChangedRequestForExistingOrdinalIsRefusedWithoutMutationAsync",
+        "result": "GREEN; changed request returns closed Refused with zero items, no mutation, and no source-reader effect"
+      },
+      {
+        "vector": "lost receipt consumes reservation",
+        "test": "RetrieveAsync_LostReservationRemainsConsumedAndCannotBeRetriedAsync",
+        "result": "GREEN; source failure after reservation consumes the ordinal without a receipt; retry is closed without reader I/O and the next ordinal remains usable"
+      },
+      {
+        "vector": "later duplicate request",
+        "test": "RetrieveAsync_RepeatedRequestChargesCallsButKeepsDocumentAccountingCanonicalAsync",
+        "result": "GREEN; repeated requests charge calls and 1 + 4 + 4 = 9 result descriptors while distinct-Document accounting remains canonical"
+      },
+      {
+        "vector": "retry/restart persistence",
+        "test": "RetrieveAsync_NewServiceInstanceDoesNotResetPersistedBudgetAsync",
+        "result": "GREEN; durable counters and receipts survive a new service instance"
+      },
+      {
+        "vector": "content-dark atomic bound rows",
+        "test": "bound refusal assertions in call, result, additional-Document, section, and byte tests",
+        "result": "GREEN; each refusal is closed, exposes no excluded evidence, and persists zero result/content/delta rows"
+      },
+      {
+        "vector": "concurrent reservation ordinals and counters",
+        "test": "RetrieveAsync_ConcurrentReservationsKeepOrdinalsAndCountersConsistentAsync",
+        "result": "GREEN; concurrent calls persist unique ordinals 1 and 2 with two NoResults receipts and invariant zero result deltas"
+      }
+    ]
+  },
+  "correctiveQualityRun": {
+    "scope": "QR-US3-008/009/010/011 corrective PostgreSQL checks; the existing 13 behavioral T026 tests remain unchanged",
+    "behavioralT026": {
+      "command": "With VULGATA_TEST_POSTGRES_ADMIN set to the approved localhost admin connection out-of-band: dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter FullyQualifiedName~RetrieveCodeLogicPostgreSqlBudgetTests --logger \"console;verbosity=minimal\" --nologo -- xUnit.MaxParallelThreads=1",
+      "compile": "successful",
+      "total": 14,
+      "passed": 13,
+      "failed": 1,
+      "skipped": 0,
+      "greenBehavioralBaseline": 13,
+      "supersededByLeaseCorrection": true,
+      "redVector": {
+        "test": "RetrieveAsync_ConcurrentReservationsKeepOrdinalsAndCountersConsistentAsync",
+        "expected": "two concurrent calls serialize to unique call ordinals and receipts while budget counters remain invariant",
+        "observed": "one racing reservation surfaced InvalidOperationException wrapping PostgreSQL 40001 could not serialize access due to concurrent update; the store has no retry/reconciliation path",
+        "classification": "INVALIDATED_FIXTURE_MISSING_RUNNING_LEASE",
+        "fixtureOrEnvironmentFailure": true,
+        "note": "This pre-correction run did not acquire the now-required Running lease or live authorization verifier; do not treat its serialization error as a current production RED."
+      },
+      "databaseCleanup": {
+        "created": 13,
+        "dropped": 13,
+        "absenceVerified": 13,
+        "remainingCount": 0,
+        "ordinaryDatabaseMigrated": false,
+        "note": "The helper now verifies database absence in its finally block, including when the concurrency assertion fails."
+      }
+    },
+    "schemaConstraints": {
+      "command": "With VULGATA_TEST_POSTGRES_ADMIN set to the approved localhost admin connection out-of-band: dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter FullyQualifiedName~Pass2PostgreSqlConstraintTests --logger \"console;verbosity=minimal\" --nologo -- xUnit.MaxParallelThreads=1",
+      "compile": "successful",
+      "total": 4,
+      "passed": 4,
+      "failed": 0,
+      "skipped": 0,
+      "currentResult": "GREEN; migrated budget primary key/UpdatedAt and retrieval relational CHECK constraints now satisfy the corrective assertions",
+      "greenExistingTests": [
+        "Story124PostgreSql17_FreshApplyRollbackReapply_PreservesLegacySchema",
+        "Story124PostgreSql17_ConstraintsEnforceNullablePrepublicationAndReusableEdge"
+      ],
+      "historicalRedVectorsBeforeProductionSchemaCorrection": [
+        {
+          "test": "Story124PostgreSql17_RetrievalBudgetUsesJobPrimaryKeyAndUtcUpdatedAt",
+          "expected": "Pass2JobExecutionId is the budget primary key/FK and UpdatedAt is a UTC timestamp",
+          "observed": "migration primary key is Id and Pass2RetrievalBudgets has no UpdatedAt column",
+          "classification": "CAUSAL_SCHEMA_FIDELITY_RED"
+        },
+        {
+          "test": "Story124PostgreSql17_RetrievalTablesEnforceContractChecksRelationally",
+          "expected": "budget maxima/nonnegative/version, ordinal, lowercase SHA-256, closed state/operation/kind, non-Accepted zero-delta, and descriptor-coordinate checks exist relationally",
+          "observed": "required relational CHECK definitions are absent from the migrated retrieval tables",
+          "classification": "CAUSAL_SCHEMA_CONSTRAINT_RED"
+        }
+      ],
+      "databaseCleanup": {
+        "created": 4,
+        "dropped": 4,
+        "absenceVerified": 4,
+        "remainingCount": 0,
+        "ordinaryDatabaseMigrated": false
+      }
+    },
+    "missingAdminRun": {
+      "command": "Remove-Item Env:VULGATA_TEST_POSTGRES_ADMIN -ErrorAction SilentlyContinue; dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter FullyQualifiedName~Pass2PostgreSqlConstraintTests --logger \"console;verbosity=minimal\" --nologo -- xUnit.MaxParallelThreads=1",
+      "compile": "successful",
+      "total": 4,
+      "passed": 0,
+      "failed": 4,
+      "skipped": 0,
+      "classification": "VISIBLE_MISSING_CONFIGURATION_NOT_SILENT",
+      "observed": "SkipException.ForSkip emits the explicit \u0024XunitDynamicSkip\u0024 reason as a visible test failure under xUnit 2.9.3 plus the v3 Visual Studio adapter; no database was contacted. The prior silent pass is eliminated.",
+      "environmentOrFixtureFailure": false
     }
-  ],
+  },
+  "surroundingEvidence": {
+    "T024": "28/28 supplied by root/implementer; typed operation/results, opaque handles, and content-dark refusal contract",
+    "T025": "28/28 supplied by root/implementer; stale/currentness, authorization, cross-System, revision/hash/range, second-hop, hidden-content, and provider/group invariants",
+    "T029": "The 14-test T026 PostgreSQL suite and 4-test constraint suite are GREEN after lease/live-authorization and schema corrections, with unchanged T024/T025 28/28 surrounding runs",
+    "rerunPolicy": "Build-enabled serial reruns were performed after the production corrections; no ordinary database was migrated"
+  },
+  "remainingNonUs3Deferrals": [],
+  "credentialHandling": "The approved PostgreSQL admin connection is supplied out-of-band through VULGATA_TEST_POSTGRES_ADMIN; no password is persisted in this evidence.",
+  "acknowledgementLossReplay": {
+    "tests": [
+      "RetrieveAsync_AcknowledgementLossReplaySectionsRehydratesContentWithoutMutationAsync",
+      "RetrieveAsync_AcknowledgementLossReplaySourceExcerptRehydratesExcerptWithoutMutationAsync",
+      "RetrieveAsync_AcknowledgementLossReplayAfterCurrentnessChangesIsRefusedWithoutMutationAsync"
+    ],
+    "requiredBehavior": "A server-owned durable call identity replay on a fresh service instance returns identical handles/descriptors and rehydrates transient Section ContentMarkdown or SourceExcerpt text without another charge or durable content; a currentness change closes the replay with Refused and no mutation.",
+    "defaultRun": {
+      "command": "Remove-Item Env:VULGATA_TEST_POSTGRES_ADMIN -ErrorAction SilentlyContinue; dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --no-restore --filter \"FullyQualifiedName~RetrieveCodeLogicPostgreSqlBudgetTests|FullyQualifiedName~Pass2PostgreSqlConstraintTests\" --logger \"console;verbosity=minimal\" --nologo -- xUnit.MaxParallelThreads=1",
+      "compile": "successful",
+      "total": 22,
+      "passed": 0,
+      "failed": 0,
+      "skipped": 22,
+      "classification": "OPTIONAL_POSTGRES_QUALIFICATION_NOT_RUN",
+      "observed": "The runner-supported PostgreSqlQualificationFactAttribute reports each PostgreSQL test as skipped when VULGATA_TEST_POSTGRES_ADMIN is unset; no database was contacted. Setting the approved administrator switch runs the same tests."
+    },
+    "administratorQualification": {
+      "status": "RUN_COMPLETE_HISTORICAL_RED_AND_CURRENT_GREEN",
+      "requiredCommand": "$env:VULGATA_TEST_POSTGRES_ADMIN='<approved disposable-DB administrator connection>'; dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter \"FullyQualifiedName~RetrieveCodeLogicPostgreSqlBudgetTests|FullyQualifiedName~Pass2PostgreSqlConstraintTests\" --logger \"console;verbosity=minimal\" --nologo -- xUnit.MaxParallelThreads=1",
+      "replayRedCommand": "$env:VULGATA_TEST_POSTGRES_ADMIN='<approved disposable-DB administrator connection>'; dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --no-restore --filter \"FullyQualifiedName~AcknowledgementLossReplay\" --logger \"console;verbosity=minimal\" --nologo -- xUnit.MaxParallelThreads=1",
+      "replayRedResult": {
+        "compile": "successful",
+        "total": 3,
+        "passed": 1,
+        "failed": 2,
+        "skipped": 0,
+        "failedTests": [
+          "RetrieveAsync_AcknowledgementLossReplaySectionsRehydratesContentWithoutMutationAsync",
+          "RetrieveAsync_AcknowledgementLossReplaySourceExcerptRehydratesExcerptWithoutMutationAsync"
+        ],
+        "greenTest": "RetrieveAsync_AcknowledgementLossReplayAfterCurrentnessChangesIsRefusedWithoutMutationAsync",
+        "observed": "Fresh-service replay returned identical persisted descriptors but omitted Section ContentMarkdown and SourceExcerpt; the currentness mutation was correctly refused with no durable accounting mutation. This is a causal production RED for transient-content rehydration, not a fixture or network failure.",
+        "disposableDatabaseCleanup": "Each of the three disposable databases was dropped by the fixture finally path and verified absent with SELECT EXISTS against pg_database."
+      },
+      "fingerprintConstraintResult": {
+        "command": "$env:VULGATA_TEST_POSTGRES_ADMIN='<approved disposable-DB administrator connection>'; dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --no-restore --filter FullyQualifiedName~Pass2PostgreSqlConstraintTests --logger \"console;verbosity=minimal\" --nologo -- xUnit.MaxParallelThreads=1",
+        "compile": "successful",
+        "total": 5,
+        "passed": 5,
+        "failed": 0,
+        "skipped": 0,
+        "observed": "Direct PostgreSQL inserts with 64 lowercase non-hex characters were rejected by CK_Pass2RetrievalReceipts_Fingerprints for ToolCallIdFingerprint, RequestFingerprint, and ResultSetFingerprint, and by CK_Pass2RetrievalResults_Fingerprints for DescriptorFingerprint and EvidenceFingerprint.",
+        "disposableDatabaseCleanup": "All five disposable databases were dropped and each absence was verified by the test fixture."
+      },
+      "fullBoundedRun": {
+        "command": "$env:VULGATA_TEST_POSTGRES_ADMIN='<approved disposable-DB administrator connection>'; dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --no-restore --filter \"FullyQualifiedName~RetrieveCodeLogicPostgreSqlBudgetTests|FullyQualifiedName~Pass2PostgreSqlConstraintTests\" --logger \"console;verbosity=minimal\" --nologo -- xUnit.MaxParallelThreads=1",
+        "compile": "successful",
+        "total": 22,
+        "passed": 22,
+        "failed": 0,
+        "skipped": 0,
+        "classification": "GREEN",
+        "greenScope": "All 17 PostgreSQL budget/lease/bound/concurrency/replay tests, including the three acknowledgement-loss replay tests and canonical byte-boundary test, and all 5 schema/constraint tests passed.",
+        "disposableDatabaseCleanup": "Every disposable fixture verified its own database was absent after teardown; no ordinary vulgata database was migrated."
+      },
+      "latestReplayGreenRerun": {
+        "command": "$env:VULGATA_TEST_POSTGRES_ADMIN='<approved disposable-DB administrator connection>'; dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --no-restore --filter \"FullyQualifiedName~RetrieveCodeLogicPostgreSqlBudgetTests\" --logger \"console;verbosity=minimal\" --nologo -- xUnit.MaxParallelThreads=1",
+        "compile": "successful",
+        "total": 17,
+        "passed": 17,
+        "failed": 0,
+        "skipped": 0,
+        "classification": "GREEN",
+        "scope": "Includes the exact acknowledgement-loss Section and SourceExcerpt replays, changed-currentness refusal, and canonical provider-visible byte boundary.",
+        "disposableDatabaseCleanup": "Each disposable database was dropped and absence was verified by its fixture."
+      },
+      "canonicalByteBoundaryCorrection": {
+        "method": "The test independently serializes the complete provider-visible SourceExcerpt JSON shape with a fixed 64-character placeholder handle, then iteratively solves payload length against the remaining budget; it does not call the production byte helper.",
+        "result": "GREEN; exact payload fills the remaining 65,536-byte cumulative budget and payload plus one is BoundExceeded."
+      },
+      "note": "The supplied localhost vulgata connection was accepted as the disposable-database administrator for this qualification. No ordinary vulgata database was migrated."
+    },
+    "productionOrFixtureFailure": false
+  },
   "productionChanges": false,
   "migrationChanges": false,
   "workflowChanges": false,

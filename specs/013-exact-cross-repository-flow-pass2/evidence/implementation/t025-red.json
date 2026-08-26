@@ -1,12 +1,12 @@
 {
   "schema_version": "1.0",
   "task": "T025",
-  "status": "GREEN_AFTER_T027",
+  "status": "GREEN_AFTER_QR_US3_004_AND_QR_US3_006_CORRECTION",
   "scope": "direct persisted-fixture security, currentness, privacy, and traversal tests",
   "test_file": "tests/Vulgata.Tests/PreparedPass2/RetrieveCodeLogicSecurityTests.cs",
   "commands": {
     "build": "dotnet build tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore",
-    "focused_test": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --no-restore --filter FullyQualifiedName~RetrieveCodeLogicSecurityTests --logger console;verbosity=minimal"
+    "focused_test": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --no-restore --filter FullyQualifiedName~RetrieveCodeLogicSecurityTests --logger \"console;verbosity=minimal\""
   },
   "red_baseline": {
     "total": 5,
@@ -14,37 +14,208 @@
     "failed": 5,
     "expected": "The five original persisted currentness/security calls reached the placeholder and failed Expected Refused versus Actual Unavailable."
   },
-  "current_result": {
+  "pre_corrective_result": {
     "total": 11,
     "passed": 11,
     "failed": 0,
     "skipped": 0,
-    "observed": "All focused T025 tests are GREEN after T027 retrieval behavior was supplied."
+    "observed": "All 11 pre-correction T025 tests were GREEN after T027 retrieval behavior was supplied."
+  },
+  "corrective_result": {
+    "total": 18,
+    "passed": 12,
+    "failed": 6,
+    "skipped": 0,
+    "build": "Build succeeded with no compile errors; unrelated T026 SkipException compile break was resolved by its owner before this run.",
+    "focused_test": "Six failures are expected corrective REDs: four non-running job states, one prior-attempt handle, and one missing lease/attempt admission seam. The source-read/admission race is GREEN."
+  },
+  "admission_boundary_result": {
+    "total": 19,
+    "passed": 12,
+    "failed": 7,
+    "skipped": 0,
+    "build": "The focused test was compiled in the preceding successful build; a subsequent build was blocked by a concurrent test host holding Vulgata.Tests.dll, with no source compile error.",
+    "focused_test": "The added direct PreparedPass2Store admission test is the seventh causal RED; the prior 12G/6R corrective split remains unchanged."
+  },
+  "scope_validation_result": {
+    "total": 20,
+    "passed": 12,
+    "failed": 8,
+    "skipped": 0,
+    "focused_test": "The added unverified-scope test is the eighth causal RED; the prior 12G/7R split remains unchanged."
+  },
+  "current_run": {
+    "total": 32,
+    "passed": 32,
+    "failed": 0,
+    "skipped": 0,
+    "build": "The build-enabled focused command compiled successfully with warnings and no errors; the focused test run used an isolated output directory because a stale testhost held the default build artifacts.",
+    "focused_test": "The focused T025 run reached all 32 tests: 32 passed, 0 failed, and 0 skipped. The two candidate-specific post-projection SourceAnchor mutation vectors now refuse content-dark after the already-consumed reservation, with exactly one zero-delta Refused receipt and no result rows, Documents, or returned bytes. All prior admission-drift, currentness, authorization, handle, lease, and traversal vectors remain GREEN.",
+    "environment": "SQLite migration/setup completed successfully; no environment or network failure was observed."
+  },
+  "admission_drift_matrix": {
+    "status": "GREEN_AFTER_QR_US3_012_CORRECTION",
+    "test": "RetrieveAsync_AuthorityChangesBetweenSourceReadAndAdmission_IsRefusedWithoutAcceptedMutationAsync",
+    "vectors": [
+      "live authorization revocation",
+      "Pass1 pair state",
+      "System identity",
+      "Flow Group provider Repository identity",
+      "Flow Group consumer Scan Run identity",
+      "Profiled Revision",
+      "Document ContentFingerprint",
+      "Source Anchor hash",
+      "Source Anchor byte range"
+    ],
+    "mapping": {
+      "live-authorization": "AllowAccessVerifier changes from allow to deny in the source-reader callback.",
+      "pair": "Pass1PairExecution.Phase changes to FailedSecurity.",
+      "system": "Pass2Execution.SystemId changes to a newly persisted foreign System.",
+      "repository": "FlowGroup.ProviderRepositoryId changes to a newly persisted same-System Repository.",
+      "scan-run": "FlowGroup.RepositoryId/ScanRunId and ConsumerDocumentVersionId move to the provider Scan Run, preserving relational validity while invalidating the exact decision binding.",
+      "profiled-revision": "The coordination ProfiledRevisionOne changes to a different valid revision fingerprint.",
+      "document-fingerprint": "The selected DocumentVersion.ContentFingerprint changes to a different valid SHA-256.",
+      "source-anchor-hash": "The selected SourceAnchor.SourceHash changes after the source read.",
+      "source-anchor-range": "The selected SourceAnchor byte range changes after the source read."
+    },
+    "expected": "Each mutation occurs from the source-reader callback after the operation projection and before transactional admission. The call must consume exactly one reservation, persist one zero-delta Refused receipt, persist no result rows, and return no content.",
+    "verification": {
+      "total": 9,
+      "passed": 9,
+      "failed": 0,
+      "green_vectors": [
+        "live-authorization",
+        "pair",
+        "system",
+        "repository",
+        "scan-run",
+        "profiled-revision",
+        "document-fingerprint",
+        "source-anchor-hash",
+        "source-anchor-range"
+      ],
+      "red_vectors": [],
+      "focused_command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --no-restore -p:OutDir=G:\\source\\repos\\vulgata\\.tmp-test-bin2\\ --filter FullyQualifiedName~RetrieveCodeLogicSecurityTests --logger \"console;verbosity=minimal\""
+    }
+  },
+  "candidate_evidence_admission_result": {
+    "status": "GREEN_AFTER_QR_US3_006_CORRECTION",
+    "tests": [
+      "RetrieveAsync_CandidateEvidenceChangesAfterProjectionBeforeAdmission_IsRefusedWithoutAcceptedMutationAsync(source-anchor-hash)",
+      "RetrieveAsync_CandidateEvidenceChangesAfterProjectionBeforeAdmission_IsRefusedWithoutAcceptedMutationAsync(source-anchor-range)"
+    ],
+    "expected": "After an accepted SourceExcerpt candidate is projected, mutate the persisted SourceAnchor hash or byte range from the real admission authorization callback. The callback must revalidate the candidate-specific SourceAnchor descriptor inside the admission transaction, return content-dark Refused, consume exactly the reserved call, persist one zero-delta Refused receipt, and persist no result rows, Documents, or returned bytes.",
+    "timing_proof": "The fixture arms the server-owned IRepositoryAuthorizationVerifier after handle issuance and skips the initial authority and operation-level revalidation checks; the mutation fires only on the third authorization check, which is the PreparedPass2Store admission callback after ExecuteAsync has returned the candidate. The test asserts the mutation hook ran and the source reader was called once.",
+    "causal_red": "The pre-correction production admission callback revalidated only pair/job/Flow Group/document authority and live repository access. It did not inspect each candidate item’s current SourceAnchor hash or byte range, so the mutated accepted candidate was admitted instead of Refused.",
+    "focused_command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter FullyQualifiedName~RetrieveCodeLogicSecurityTests --logger \"console;verbosity=minimal\"",
+    "latest_run": {
+      "build": "SUCCEEDED_WITH_WARNINGS",
+      "focused_test": "32 total, 32 passed, 0 failed, 0 skipped. Both post-projection SourceAnchor hash/range mutations now return content-dark Refused from the real admission path. Each consumes the reserved call, persists exactly one zero-delta Refused receipt, and persists no admitted result rows, returned bytes, or additional Documents; the authority snapshot remains unchanged.",
+      "environment": "No environment or network failure; SQLite setup completed and the build/test executed normally."
+    },
+    "root_verification": {
+      "contract_and_security": "T024 + T025: 60/60 passed, 0 failed, 0 skipped.",
+      "combined_surrounding_filter": "T024 + T025 + T026 + PostgreSQL constraints: 82/82 passed, 0 failed, 0 skipped.",
+      "migration": "4/4 passed.",
+      "ef_model": "No pending model changes.",
+      "default_no_admin_postgresql_filter": "22 visible skips, 0 failures; no unauthorized database contact."
+    }
+  },
+  "unknown_selector_result": {
+    "status": "GREEN_AFTER_QR_US3_012_CORRECTION",
+    "tests": [
+      "RetrieveAsync_UnknownOpaqueSelector_ConsumesCallAndPersistsContentDarkRefusalAsync",
+      "RetrieveAsync_UnknownUnauthorizedAndStaleRequestsHaveEquivalentContentDarkRefusalAsync"
+    ],
+    "observed": "Valid Running/authorized unknown-selector, cross-job, stale, prior-attempt, hash-mismatch, and range-mismatch paths return content-dark Refused after exactly one durable reservation and persist exactly one zero-delta Refused receipt, with no source I/O, result rows, Documents, or bytes. Invalid job state and authorization remain pre-reservation refusals with unchanged accounting.",
+    "required_correction": "Satisfied: reserve the call before resolving opaque selectors, then persist exactly one zero-delta Refused receipt with no result rows, Documents, or bytes. Malformed request shape may still fail before reservation."
+  },
+  "corrective_vectors": [
+    {
+      "scenario": "Pending job admission",
+      "test": "RetrieveAsync_NonRunningJobState_IsContentDarkRefusalAsync(state: Pending)",
+      "mutation": "Persist the authoritative job state as Pending.",
+       "expected_and_observed": "GREEN: Refused before retrieval with unchanged durable accounting and content-dark zero remaining budget because admission does not occur."
+    },
+    {
+      "scenario": "RetryScheduled job admission",
+      "test": "RetrieveAsync_NonRunningJobState_IsContentDarkRefusalAsync(state: RetryScheduled)",
+      "mutation": "Persist the authoritative job state as RetryScheduled.",
+       "expected_and_observed": "GREEN: Refused before retrieval with unchanged durable accounting and content-dark zero remaining budget because admission does not occur."
+    },
+    {
+      "scenario": "Completed job admission",
+      "test": "RetrieveAsync_NonRunningJobState_IsContentDarkRefusalAsync(state: Completed)",
+      "mutation": "Persist the authoritative job state as Completed.",
+       "expected_and_observed": "GREEN: Refused before retrieval with unchanged durable accounting and content-dark zero remaining budget because admission does not occur."
+    },
+    {
+      "scenario": "Failed job admission",
+      "test": "RetrieveAsync_NonRunningJobState_IsContentDarkRefusalAsync(state: Failed)",
+      "mutation": "Persist the authoritative job state as Failed.",
+       "expected_and_observed": "GREEN: Refused before retrieval with unchanged durable accounting and content-dark zero remaining budget because admission does not occur."
+    },
+    {
+      "scenario": "prior-attempt handle",
+      "test": "RetrieveAsync_HandleIssuedBeforeAttemptAdvance_IsContentDarkRefusalAsync",
+      "mutation": "Issue a valid section handle, then persist AttemptCount=2 while retaining the same coordinates.",
+       "expected_and_observed": "GREEN: the attempt-1 handle is refused content-dark after exactly one consumed reservation and one zero-delta Refused receipt, with no source I/O or result mutation."
+    },
+    {
+      "scenario": "mutation between operation read and admission",
+       "test": "RetrieveAsync_CurrentnessChangesBetweenSourceReadAndAdmission_IsRefusedWithConsumedReservationAsync",
+      "mutation": "The recording source reader clears LogicalDocument.CurrentVersionId before returning the source result.",
+      "expected_and_observed": "GREEN: refused after one source-reader call with one consumed reservation and one Refused receipt; result rows, bytes, and additional Documents remained unchanged, and the response reported current remaining budgets."
+    },
+    {
+      "scenario": "mutation after operation projection before transactional admission",
+      "test": "PreparedPass2Store_AdmissionCurrentnessChangesAfterProjection_IsRefusedWithoutAdmissionMutationAsync",
+      "mutation": "Reserve a valid call and project an accepted Search candidate, then clear the persisted LogicalDocument.CurrentVersionId before direct AdmitRetrievalAsync.",
+      "expected": "Refused with no admission receipt/results or result-budget deltas beyond the consumed reservation.",
+      "accounting_snapshots": {
+        "after_reservation": "1:0:0:0:1:0:0",
+        "expected_after_admission": "1:0:0:0:1:0:0",
+        "actual_after_admission": "1:0:0:0:1:0:0"
+      },
+       "actual": "GREEN: after the explicit reservation, AdmitRetrievalAsync refused the stale projection and made no further accounting/receipt/result mutation."
+    }
+  ],
+  "lease_seam_red": {
+    "test": "Pass2JobExecution_ExposesLeaseAndAttemptAdmissionIdentity",
+    "expected": "Pass2JobExecution exposes LeaseToken, LeaseExpiresAt, NextAttemptAt, FailureCategory, FailureCode, and StateChangedAt in addition to AttemptCount and StateVersion.",
+    "actual": "GREEN: all required lease/attempt admission properties are present and the persisted fixture establishes a valid Running lease through AcquireLease before retrieval.",
+    "required_before_green": "No further correction is required for the lease/attempt admission seam."
+  },
+  "scope_validation_vector": {
+    "scenario": "caller-constructed scope without live authorization verifier",
+    "test": "RetrieveAsync_UnverifiedServerScope_ReturnsClosedRefusalWithoutAuthorityMutationAsync",
+    "mutation": "Construct a new otherwise-valid RepositoryAccessScope containing both persisted repositories with no IRepositoryAuthorizationVerifier, then invoke Search against the valid persisted job.",
+    "expected_and_observed": "GREEN: a caller-constructed scope without a live verifier is refused content-dark with zero source-reader calls and unchanged authority/accounting snapshots."
   },
   "covered_behavior": [
     {
       "scenario": "stale current pointer",
       "test": "RetrieveAsync_PersistedSecurityMutation_ReturnsClosedRefusalWithoutAuthorityMutationAsync(mutation: stale)",
       "mutation": "Clear persisted LogicalDocument.CurrentVersionId for a traced document.",
-      "expected_and_observed": "Refused, zero items, content-dark code, zero source-reader calls, and unchanged Flow Group/exact-resolution authority snapshot."
+      "expected_and_observed": "Refused before reservation, with zero items/source-reader calls/accounting deltas and unchanged Flow Group/exact-resolution authority snapshot; the closed response is content-dark."
     },
     {
       "scenario": "superseded document version",
       "test": "RetrieveAsync_PersistedSecurityMutation_ReturnsClosedRefusalWithoutAuthorityMutationAsync(mutation: superseded)",
       "mutation": "Persist a valid same-logical-document successor and set the traced DocumentVersion.SupersededById.",
-      "expected_and_observed": "Refused, zero items, content-dark code, zero source-reader calls, and unchanged authority snapshot."
+      "expected_and_observed": "Refused before reservation, with zero items/source-reader calls/accounting deltas and unchanged authority snapshot; the closed response is content-dark."
     },
     {
       "scenario": "cross-System mismatch",
       "test": "RetrieveAsync_PersistedSecurityMutation_ReturnsClosedRefusalWithoutAuthorityMutationAsync(mutation: cross-system)",
       "mutation": "Persist an existing foreign System and change Pass2Execution.SystemId to it.",
-      "expected_and_observed": "Refused, zero items, content-dark code, zero source-reader calls, and unchanged authority snapshot."
+      "expected_and_observed": "Refused before reservation because the persisted Pass2 execution/System binding is invalid; zero items/source-reader calls/accounting deltas and unchanged authority snapshot."
     },
     {
       "scenario": "mismatched Profiled Revision",
       "test": "RetrieveAsync_PersistedSecurityMutation_ReturnsClosedRefusalWithoutAuthorityMutationAsync(mutation: profiled-revision)",
       "mutation": "Change the traced DocumentVersion.ProfiledRevision to a different persisted revision.",
-      "expected_and_observed": "Refused, zero items, content-dark code, zero source-reader calls, and unchanged authority snapshot."
+      "expected_and_observed": "Refused before reservation because the persisted Profiled Revision no longer matches; zero items/source-reader calls/accounting deltas and unchanged authority snapshot."
     },
     {
       "scenario": "revoked server-owned scope",
@@ -56,19 +227,19 @@
       "scenario": "cross-job handle",
       "test": "RetrieveAsync_HandleIssuedForDifferentJob_IsContentDarkRefusalAsync",
       "mutation": "Issue the section handle in independent fixture A; submit it to fixture B's different valid persisted job. Fixture B has two valid groups/jobs and respects one-job-per-FlowGroup uniqueness.",
-      "expected_and_observed": "Refused, zero items, handle absent from refusal code, and zero source-reader calls."
+      "expected_and_observed": "Refused after exactly one consumed reservation and one zero-delta Refused receipt, with zero items/source-reader calls/result rows/bytes and the submitted cross-job handle absent from the content-dark refusal code."
     },
     {
       "scenario": "Source Anchor hash mismatch",
       "test": "RetrieveAsync_IssuedAnchorWithPersistedHashMismatch_IsContentDarkRefusalAsync",
       "mutation": "Issue a valid Search-to-SourceAnchor handle, change the persisted SourceAnchor.SourceHash, and make the reader return the pre-mutation hash.",
-      "expected_and_observed": "Refused, zero items, one source-reader call, no source content in the result, and unchanged authority snapshot."
+      "expected_and_observed": "Refused after exactly one consumed reservation and one zero-delta Refused receipt, with zero source-reader calls/result rows/bytes and unchanged authority snapshot; no raw source content is returned."
     },
     {
       "scenario": "Source Anchor contained-range mismatch",
       "test": "RetrieveAsync_IssuedAnchorWithPersistedRangeMismatch_IsContentDarkRefusalAsync",
       "mutation": "Issue a valid anchor handle, persist ByteStart=10 and ByteEnd=16, then request contained bytes 0..6.",
-      "expected_and_observed": "Refused, zero items, zero source-reader calls, and unchanged authority snapshot."
+      "expected_and_observed": "Refused after exactly one consumed reservation and one zero-delta Refused receipt, with zero source-reader calls/result rows/bytes and unchanged authority snapshot; the contained-range mismatch remains content-dark."
     },
     {
       "scenario": "one-hop RelatedDocuments and non-REFERENCES exclusion",
@@ -80,7 +251,7 @@
       "scenario": "unknown, unauthorized, and stale privacy equivalence",
       "test": "RetrieveAsync_UnknownUnauthorizedAndStaleRequestsHaveEquivalentContentDarkRefusalAsync",
       "mutation": "Compare an unknown handle, a valid handle issued for another job, and a request against a persisted stale job.",
-      "expected_and_observed": "All refusal outcomes, codes, remaining budgets, and empty item sets are equivalent and content-dark."
+      "expected_and_observed": "Unknown, unauthorized, and stale requests were compared only on the contract-required content-dark outcome/code/empty-items fields because their durable histories differ; the valid Running/authorized unknown selector consumed one reservation and persisted one zero-delta Refused receipt, while the stale job's invalid currentness refused before reservation with unchanged accounting."
     },
     {
       "scenario": "caller cannot mutate authority selection",
@@ -91,6 +262,7 @@
   "fixture_setup": {
     "status": "VALID_AUTHORITATIVE_PERSISTED_FIXTURE",
     "source": "Pass2FlowPlanningPostgreSqlTests.SeedPass2Async invoked only as the accepted T020 fixture helper, followed by PreparedPass2Store.StartAsync.",
+    "positive_execution_setup": "After StartAsync, every persisted Pass2JobExecution is transitioned through its public AcquireLease API to Running with AttemptCount=1, a non-expired UTC lease, and a live always-allow IRepositoryAuthorizationVerifier before the retrieval service is constructed. The unverified-scope case explicitly replaces this with a null verifier; the revoked-scope case retains its rejecting verifier.",
     "proof_assertions": [
       "Pass2Execution, Pass2JobExecution, and Pass2RetrievalBudget persisted",
       "FlowGroups, FlowTraces, and FlowTraceSteps persisted",
@@ -112,6 +284,10 @@
     {
       "scenario": "Flow Group membership-changing retrieval request",
       "reason": "The request has no group-membership field or operation. The DTO contract test proves this is server-derived; no group mutation can be issued through the public seam."
+    },
+    {
+      "scenario": "expired lease and wrong lease owner",
+      "reason": "Pass2JobExecution currently has no LeaseToken, LeaseExpiresAt, lease owner/current-attempt binding, or public claim/recovery transition. The compile-ready lease seam RED records this exact gap; no fabricated lease rows are used."
     }
   ],
   "retraction": "The earlier 11 arbitrary-handle probes were withdrawn as non-causal. Current evidence contains only issued-handle or persisted-fact mutations; deferred vectors are explicitly not claimed as behavioral coverage.",
@@ -119,6 +295,6 @@
     "database": "temporary SQLite fixtures only; PostgreSQL is unavailable and was not contacted",
     "network": "not used",
     "provider": "not used",
-    "classification": "code/test behavior verified; no environment or network failure"
+    "classification": "code/test behavior RED/GREEN split; no environment or network failure"
   }
 }

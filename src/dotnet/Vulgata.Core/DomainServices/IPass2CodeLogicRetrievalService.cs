@@ -1,3 +1,6 @@
+using System.Text.Json;
+using System.Text.Json.Serialization;
+
 namespace Vulgata.Core.DomainServices;
 
 public interface IPass2CodeLogicRetrievalService
@@ -78,7 +81,9 @@ public sealed class Pass2CodeLogicRetrievalItem
         Guid? sourceAnchorId = null,
         Guid? edgeId = null,
         long? byteStart = null,
-        long? byteEnd = null)
+        long? byteEnd = null,
+        string? contentMarkdown = null,
+        string? excerpt = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(opaqueHandle);
         if (!Enum.IsDefined(kind))
@@ -127,17 +132,70 @@ public sealed class Pass2CodeLogicRetrievalItem
         EdgeId = edgeId;
         ByteStart = byteStart;
         ByteEnd = byteEnd;
+        ContentMarkdown = contentMarkdown;
+        Excerpt = excerpt;
     }
 
     public string OpaqueHandle { get; }
     public Pass2CodeLogicRetrievalItemKind Kind { get; }
     public Guid DocumentVersionId { get; }
+    [JsonIgnore]
     public int ReturnedUtf8Bytes { get; }
     public Guid? SectionId { get; }
     public Guid? SourceAnchorId { get; }
     public Guid? EdgeId { get; }
     public long? ByteStart { get; }
     public long? ByteEnd { get; }
+    public string? ContentMarkdown { get; }
+    public string? Excerpt { get; }
+}
+
+public sealed record Pass2CodeLogicRetrievalProviderProjection(
+    string OpaqueHandle,
+    Pass2CodeLogicRetrievalItemKind Kind,
+    Guid DocumentVersionId,
+    Guid? SectionId,
+    Guid? SourceAnchorId,
+    Guid? EdgeId,
+    long? ByteStart,
+    long? ByteEnd,
+    string? ContentMarkdown,
+    string? Excerpt);
+
+public static class Pass2CodeLogicRetrievalProviderCodec
+{
+    private static readonly JsonSerializerOptions _serializerOptions =
+        CreateSerializerOptions();
+
+    private static JsonSerializerOptions CreateSerializerOptions()
+    {
+        var options = new JsonSerializerOptions(JsonSerializerDefaults.Web);
+        options.Converters.Add(new JsonStringEnumConverter());
+        return options;
+    }
+
+    public static Pass2CodeLogicRetrievalProviderProjection Project(
+        Pass2CodeLogicRetrievalItem item)
+    {
+        ArgumentNullException.ThrowIfNull(item);
+        return new(
+            item.OpaqueHandle,
+            item.Kind,
+            item.DocumentVersionId,
+            item.SectionId,
+            item.SourceAnchorId,
+            item.EdgeId,
+            item.ByteStart,
+            item.ByteEnd,
+            item.ContentMarkdown,
+            item.Excerpt);
+    }
+
+    public static byte[] Serialize(Pass2CodeLogicRetrievalProviderProjection projection)
+    {
+        ArgumentNullException.ThrowIfNull(projection);
+        return JsonSerializer.SerializeToUtf8Bytes(projection, _serializerOptions);
+    }
 }
 
 public sealed record Pass2CodeLogicRetrievalRemainingBudget(
@@ -181,20 +239,40 @@ public sealed class Pass2CodeLogicRetrievalResult
             Array.Empty<Pass2CodeLogicRetrievalItem>());
 
     public static Pass2CodeLogicRetrievalResult Accepted(
-        IReadOnlyList<Pass2CodeLogicRetrievalItem> items)
+        IReadOnlyList<Pass2CodeLogicRetrievalItem> items,
+        Pass2CodeLogicRetrievalRemainingBudget? remainingBudget = null)
     {
         ArgumentNullException.ThrowIfNull(items);
         return new(
             Pass2CodeLogicRetrievalOutcome.Accepted,
             "retrieval-accepted",
-            new(0, 0, 0, 0, 0),
+            remainingBudget ?? new(0, 0, 0, 0, 0),
             Array.AsReadOnly(items.ToArray()));
     }
 
-    public static Pass2CodeLogicRetrievalResult NoResults() =>
+    public static Pass2CodeLogicRetrievalResult NoResults(
+        Pass2CodeLogicRetrievalRemainingBudget? remainingBudget = null) =>
         new(
             Pass2CodeLogicRetrievalOutcome.NoResults,
             "retrieval-no-results",
-            new(0, 0, 0, 0, 0),
+            remainingBudget ?? new(0, 0, 0, 0, 0),
             Array.Empty<Pass2CodeLogicRetrievalItem>());
+
+    public static Pass2CodeLogicRetrievalResult BoundExceeded(
+        Pass2CodeLogicRetrievalRemainingBudget remainingBudget)
+    {
+        ArgumentNullException.ThrowIfNull(remainingBudget);
+        return new(
+            Pass2CodeLogicRetrievalOutcome.BoundExceeded,
+            "retrieval-bound-exceeded",
+            remainingBudget,
+            Array.Empty<Pass2CodeLogicRetrievalItem>());
+    }
+
+    public Pass2CodeLogicRetrievalResult WithRemainingBudget(
+        Pass2CodeLogicRetrievalRemainingBudget remainingBudget)
+    {
+        ArgumentNullException.ThrowIfNull(remainingBudget);
+        return new(Outcome, Code, remainingBudget, Items);
+    }
 }

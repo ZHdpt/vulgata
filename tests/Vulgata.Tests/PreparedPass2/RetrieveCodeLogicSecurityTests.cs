@@ -12,8 +12,7 @@ namespace Vulgata.Tests.PreparedPass2;
 /// <summary>
 /// T025 security/currentness REDs use the accepted T026 authoritative pair
 /// fixture and mutate one persisted fact per case. Handle-dependent vectors
-/// remain deferred because the current DTO has no way to issue a valid opaque
-/// current-attempt handle.
+/// use handles issued by the valid persisted fixture before each mutation.
 /// </summary>
 public sealed class RetrieveCodeLogicSecurityTests
 {
@@ -35,7 +34,6 @@ public sealed class RetrieveCodeLogicSecurityTests
         Assert.NotEqual(persistedBefore, persistedAfter);
         string mutatedFixture = await fixture.AuthoritySnapshotAsync();
         Assert.Equal(authorityBefore, mutatedFixture);
-
         Pass2CodeLogicRetrievalResult result = await fixture.Service.RetrieveAsync(
             fixture.JobExecutionId,
             new(
@@ -48,6 +46,7 @@ public sealed class RetrieveCodeLogicSecurityTests
         Assert.Empty(result.Items);
         Assert.DoesNotContain(mutation, result.Code, StringComparison.Ordinal);
         Assert.Equal(0, fixture.SourceReader.Calls);
+        Assert.Equal("0:0:0:0:0:0:0", await fixture.RetrievalAccountingSnapshotAsync());
     }
 
     [Fact]
@@ -71,6 +70,34 @@ public sealed class RetrieveCodeLogicSecurityTests
     }
 
     [Fact]
+    public async Task RetrieveAsync_UnverifiedServerScope_ReturnsClosedRefusalWithoutAuthorityMutationAsync()
+    {
+        await using PersistedRetrievalFixture fixture =
+            await PersistedRetrievalFixture.CreateAsync("none");
+        RepositoryAccessScope unverifiedScope =
+            new(fixture.Scope.AuthorizedRepositoryIds);
+        var service = new Pass2CodeLogicRetrievalService(
+            fixture.Context,
+            unverifiedScope,
+            fixture.SourceReader);
+        string authorityBefore = await fixture.AuthoritySnapshotAsync();
+        string accountingBefore = await fixture.RetrievalAccountingSnapshotAsync();
+
+        Pass2CodeLogicRetrievalResult result = await service.RetrieveAsync(
+            fixture.JobExecutionId,
+            new(
+                Pass2CodeLogicRetrievalOperation.Search,
+                queryText: "ledger"));
+
+        Assert.Equal(Pass2CodeLogicRetrievalOutcome.Refused, result.Outcome);
+        Assert.Empty(result.Items);
+        Assert.DoesNotContain("ledger", result.Code, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal(0, fixture.SourceReader.Calls);
+        Assert.Equal(authorityBefore, await fixture.AuthoritySnapshotAsync());
+        Assert.Equal(accountingBefore, await fixture.RetrievalAccountingSnapshotAsync());
+    }
+
+    [Fact]
     public async Task RetrieveAsync_HandleIssuedForDifferentJob_IsContentDarkRefusalAsync()
     {
         await using PersistedRetrievalFixture owner =
@@ -83,6 +110,11 @@ public sealed class RetrieveCodeLogicSecurityTests
             .Where(value => value.Id != otherJob.JobExecutionId)
             .Select(value => value.Id)
             .SingleAsync();
+        Pass2CodeLogicRetrievalResult targetProbe = await otherJob.Service.RetrieveAsync(
+            otherJobId,
+            new(Pass2CodeLogicRetrievalOperation.Search, queryText: "ledger"));
+        Assert.Equal(Pass2CodeLogicRetrievalOutcome.Accepted, targetProbe.Outcome);
+        string accountingBefore = await otherJob.RetrievalAccountingSnapshotAsync(otherJobId);
         Pass2CodeLogicRetrievalResult result = await otherJob.Service.RetrieveAsync(
             otherJobId,
             new(
@@ -93,6 +125,12 @@ public sealed class RetrieveCodeLogicSecurityTests
         Assert.Empty(result.Items);
         Assert.DoesNotContain(section.OpaqueHandle, result.Code, StringComparison.Ordinal);
         Assert.Equal(0, otherJob.SourceReader.Calls);
+        string accountingAfter = await otherJob.RetrievalAccountingSnapshotAsync(otherJobId);
+        AssertReservedRefusalAccounting(accountingBefore, accountingAfter);
+        Assert.Equal(
+            Pass2RetrievalReceiptState.Refused,
+            await otherJob.LatestReceiptStateAsync(otherJobId));
+        AssertCurrentRemainingBudget(result, accountingAfter);
     }
 
     [Fact]
@@ -106,15 +144,16 @@ public sealed class RetrieveCodeLogicSecurityTests
             .Select(value => value.SourceHash)
             .SingleAsync();
         fixture.SourceReader.FixedSourceHash = originalHash;
-        string before = await fixture.AnchorSnapshotAsync(anchor.SourceAnchorId!.Value);
+        string anchorBefore = await fixture.AnchorSnapshotAsync(anchor.SourceAnchorId!.Value);
 
         await fixture.Context.Database.ExecuteSqlInterpolatedAsync(
             $"UPDATE \"SourceAnchors\" SET \"SourceHash\" = {new string('c', 64)} WHERE \"Id\" = {anchor.SourceAnchorId}");
         fixture.Context.ChangeTracker.Clear();
 
-        string after = await fixture.AnchorSnapshotAsync(anchor.SourceAnchorId.Value);
-        Assert.NotEqual(before, after);
+        string anchorAfter = await fixture.AnchorSnapshotAsync(anchor.SourceAnchorId.Value);
+        Assert.NotEqual(anchorBefore, anchorAfter);
         string authorityBefore = await fixture.AuthoritySnapshotAsync();
+        string accountingBefore = await fixture.RetrievalAccountingSnapshotAsync();
         Pass2CodeLogicRetrievalResult result = await fixture.Service.RetrieveAsync(
             fixture.JobExecutionId,
             new(
@@ -125,9 +164,11 @@ public sealed class RetrieveCodeLogicSecurityTests
 
         Assert.Equal(Pass2CodeLogicRetrievalOutcome.Refused, result.Outcome);
         Assert.Empty(result.Items);
-        Assert.Equal(1, fixture.SourceReader.Calls);
+        Assert.Equal(0, fixture.SourceReader.Calls);
         Assert.DoesNotContain("ledger", result.Code, StringComparison.OrdinalIgnoreCase);
         Assert.Equal(authorityBefore, await fixture.AuthoritySnapshotAsync());
+        string accountingAfter = await fixture.RetrievalAccountingSnapshotAsync();
+        await AssertReservedRefusalAsync(fixture, accountingBefore, accountingAfter, result);
     }
 
     [Fact]
@@ -136,15 +177,16 @@ public sealed class RetrieveCodeLogicSecurityTests
         await using PersistedRetrievalFixture fixture =
             await PersistedRetrievalFixture.CreateAsync("none");
         Pass2CodeLogicRetrievalItem anchor = await fixture.IssueAnchorHandleAsync();
-        string before = await fixture.AnchorSnapshotAsync(anchor.SourceAnchorId!.Value);
+        string anchorBefore = await fixture.AnchorSnapshotAsync(anchor.SourceAnchorId!.Value);
 
         await fixture.Context.Database.ExecuteSqlInterpolatedAsync(
             $"UPDATE \"SourceAnchors\" SET \"ByteStart\" = 10, \"ByteEnd\" = 16 WHERE \"Id\" = {anchor.SourceAnchorId}");
         fixture.Context.ChangeTracker.Clear();
 
-        string after = await fixture.AnchorSnapshotAsync(anchor.SourceAnchorId.Value);
-        Assert.NotEqual(before, after);
+        string anchorAfter = await fixture.AnchorSnapshotAsync(anchor.SourceAnchorId.Value);
+        Assert.NotEqual(anchorBefore, anchorAfter);
         string authorityBefore = await fixture.AuthoritySnapshotAsync();
+        string accountingBefore = await fixture.RetrievalAccountingSnapshotAsync();
         Pass2CodeLogicRetrievalResult result = await fixture.Service.RetrieveAsync(
             fixture.JobExecutionId,
             new(
@@ -157,6 +199,8 @@ public sealed class RetrieveCodeLogicSecurityTests
         Assert.Empty(result.Items);
         Assert.Equal(0, fixture.SourceReader.Calls);
         Assert.Equal(authorityBefore, await fixture.AuthoritySnapshotAsync());
+        string accountingAfter = await fixture.RetrievalAccountingSnapshotAsync();
+        await AssertReservedRefusalAsync(fixture, accountingBefore, accountingAfter, result);
     }
 
     [Fact]
@@ -212,6 +256,8 @@ public sealed class RetrieveCodeLogicSecurityTests
             await PersistedRetrievalFixture.CreateAsync("stale");
         Pass2CodeLogicRetrievalItem issued = await owner.IssueSectionHandleAsync();
         await stale.ApplyMutationAsync();
+        string ownerAccountingBefore = await owner.RetrievalAccountingSnapshotAsync();
+        string staleAccountingBefore = await stale.RetrievalAccountingSnapshotAsync();
 
         Pass2CodeLogicRetrievalResult unknown = await owner.Service.RetrieveAsync(
             owner.JobExecutionId,
@@ -227,11 +273,291 @@ public sealed class RetrieveCodeLogicSecurityTests
         Assert.Equal(Pass2CodeLogicRetrievalOutcome.Refused, unknown.Outcome);
         Assert.Equal(unknown.Outcome, unauthorized.Outcome);
         Assert.Equal(unknown.Code, unauthorized.Code);
-        Assert.Equal(unknown.RemainingBudget, unauthorized.RemainingBudget);
         Assert.Empty(unknown.Items);
         Assert.Empty(unauthorized.Items);
         Assert.DoesNotContain("opaque-handle-never-issued", unknown.Code, StringComparison.Ordinal);
         Assert.DoesNotContain(issued.OpaqueHandle, unauthorized.Code, StringComparison.Ordinal);
+        string ownerAccountingAfter = await owner.RetrievalAccountingSnapshotAsync();
+        AssertReservedRefusalAccounting(ownerAccountingBefore, ownerAccountingAfter);
+        Assert.Equal(Pass2RetrievalReceiptState.Refused, await owner.LatestReceiptStateAsync());
+        Assert.Equal(staleAccountingBefore, await stale.RetrievalAccountingSnapshotAsync());
+    }
+
+    [Fact]
+    public async Task RetrieveAsync_UnknownOpaqueSelector_ConsumesCallAndPersistsContentDarkRefusalAsync()
+    {
+        await using PersistedRetrievalFixture fixture =
+            await PersistedRetrievalFixture.CreateAsync("none");
+        string before = await fixture.RetrievalAccountingSnapshotAsync();
+
+        Pass2CodeLogicRetrievalResult result = await fixture.Service.RetrieveAsync(
+            fixture.JobExecutionId,
+            new(
+                Pass2CodeLogicRetrievalOperation.Sections,
+                opaqueHandles: ["opaque-handle-never-issued"]));
+
+        Assert.Equal(Pass2CodeLogicRetrievalOutcome.Refused, result.Outcome);
+        Assert.Empty(result.Items);
+        Assert.DoesNotContain("opaque-handle-never-issued", result.Code, StringComparison.Ordinal);
+        Assert.Equal(0, fixture.SourceReader.Calls);
+
+        string after = await fixture.RetrievalAccountingSnapshotAsync();
+        AssertReservedRefusalAccounting(before, after);
+        Assert.Equal(Pass2RetrievalReceiptState.Refused, await fixture.LatestReceiptStateAsync());
+        AssertCurrentRemainingBudget(result, after);
+    }
+
+    [Theory]
+    [InlineData("Pending")]
+    [InlineData("RetryScheduled")]
+    [InlineData("Completed")]
+    [InlineData("Failed")]
+    public async Task RetrieveAsync_NonRunningJobState_IsContentDarkRefusalAsync(string state)
+    {
+        await using PersistedRetrievalFixture fixture =
+            await PersistedRetrievalFixture.CreateAsync("none");
+
+        await fixture.SetJobStateAsync(state);
+        fixture.Context.ChangeTracker.Clear();
+        Assert.Equal(
+            Enum.Parse<Pass2JobExecutionState>(state),
+            await fixture.Context.Pass2JobExecutions
+                .Where(value => value.Id == fixture.JobExecutionId)
+                .Select(value => value.State)
+                .SingleAsync());
+        string accountingBefore = await fixture.RetrievalAccountingSnapshotAsync();
+
+        Pass2CodeLogicRetrievalResult result = await fixture.Service.RetrieveAsync(
+            fixture.JobExecutionId,
+            new(Pass2CodeLogicRetrievalOperation.Search, queryText: "ledger"));
+
+        Assert.Equal(Pass2CodeLogicRetrievalOutcome.Refused, result.Outcome);
+        Assert.Empty(result.Items);
+        Assert.DoesNotContain("ledger", result.Code, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal(0, fixture.SourceReader.Calls);
+        string accountingAfter = await fixture.RetrievalAccountingSnapshotAsync();
+        Assert.Equal(accountingBefore, accountingAfter);
+    }
+
+    [Fact]
+    public async Task RetrieveAsync_HandleIssuedBeforeAttemptAdvance_IsContentDarkRefusalAsync()
+    {
+        await using PersistedRetrievalFixture fixture =
+            await PersistedRetrievalFixture.CreateAsync("none");
+        Pass2CodeLogicRetrievalItem section = await fixture.IssueSectionHandleAsync();
+
+        await fixture.Context.Database.ExecuteSqlInterpolatedAsync(
+            $"UPDATE \"Pass2JobExecutions\" SET \"AttemptCount\" = 2 WHERE \"Id\" = {fixture.JobExecutionId}");
+        fixture.Context.ChangeTracker.Clear();
+        Assert.Equal(
+            2,
+            await fixture.Context.Pass2JobExecutions
+                .Where(value => value.Id == fixture.JobExecutionId)
+                .Select(value => value.AttemptCount)
+                .SingleAsync());
+        string accountingBefore = await fixture.RetrievalAccountingSnapshotAsync();
+
+        Pass2CodeLogicRetrievalResult result = await fixture.Service.RetrieveAsync(
+            fixture.JobExecutionId,
+            new(
+                Pass2CodeLogicRetrievalOperation.Sections,
+                opaqueHandles: [section.OpaqueHandle]));
+
+        Assert.Equal(Pass2CodeLogicRetrievalOutcome.Refused, result.Outcome);
+        Assert.Empty(result.Items);
+        Assert.DoesNotContain(section.OpaqueHandle, result.Code, StringComparison.Ordinal);
+        Assert.Equal(0, fixture.SourceReader.Calls);
+        string accountingAfter = await fixture.RetrievalAccountingSnapshotAsync();
+        await AssertReservedRefusalAsync(fixture, accountingBefore, accountingAfter, result);
+    }
+
+    [Fact]
+    public void Pass2JobExecution_ExposesLeaseAndAttemptAdmissionIdentity()
+    {
+        Type jobType = typeof(Pass2JobExecution);
+        Assert.NotNull(jobType.GetProperty(nameof(Pass2JobExecution.AttemptCount)));
+        Assert.NotNull(jobType.GetProperty(nameof(Pass2JobExecution.StateVersion)));
+        foreach (string propertyName in new[]
+                 {
+                     "LeaseToken",
+                     "LeaseExpiresAt",
+                     "NextAttemptAt",
+                     "FailureCategory",
+                     "FailureCode",
+                     "StateChangedAt",
+                 })
+        {
+            Assert.True(
+                jobType.GetProperty(propertyName) is not null,
+                $"Pass2JobExecution must expose {propertyName} for retrieval admission.");
+        }
+    }
+
+    [Fact]
+    public async Task RetrieveAsync_CurrentnessChangesBetweenSourceReadAndAdmission_IsRefusedWithConsumedReservationAsync()
+    {
+        await using PersistedRetrievalFixture fixture =
+            await PersistedRetrievalFixture.CreateAsync("none");
+        Pass2CodeLogicRetrievalItem anchor = await fixture.IssueAnchorHandleAsync();
+        Guid logicalDocumentId = await fixture.Context.DocumentVersions
+            .Where(value => value.Id == anchor.DocumentVersionId)
+            .Select(value => value.LogicalDocumentId)
+            .SingleAsync();
+        fixture.SourceReader.BeforeReadAsync = async () =>
+        {
+            await fixture.Context.Database.ExecuteSqlInterpolatedAsync(
+                $"UPDATE \"LogicalDocuments\" SET \"CurrentVersionId\" = NULL WHERE \"Id\" = {logicalDocumentId}");
+            fixture.Context.ChangeTracker.Clear();
+        };
+        string before = await fixture.RetrievalAccountingSnapshotAsync();
+
+        Pass2CodeLogicRetrievalResult result = await fixture.Service.RetrieveAsync(
+            fixture.JobExecutionId,
+            new(
+                Pass2CodeLogicRetrievalOperation.SourceExcerpt,
+                opaqueHandles: [anchor.OpaqueHandle],
+                containedByteOffset: 0,
+                containedByteLength: 6));
+
+        Assert.Equal(Pass2CodeLogicRetrievalOutcome.Refused, result.Outcome);
+        Assert.Empty(result.Items);
+        Assert.Equal(1, fixture.SourceReader.Calls);
+        string after = await fixture.RetrievalAccountingSnapshotAsync();
+        await AssertReservedRefusalAsync(fixture, before, after, result);
+    }
+
+    [Fact]
+    public async Task PreparedPass2Store_AdmissionCurrentnessChangesAfterProjection_IsRefusedWithoutAdmissionMutationAsync()
+    {
+        await using PersistedRetrievalFixture fixture =
+            await PersistedRetrievalFixture.CreateAsync("none");
+        Pass2CodeLogicRetrievalRequest request = new(
+            Pass2CodeLogicRetrievalOperation.Search,
+            queryText: "ledger");
+        Pass2CodeLogicRetrievalResult candidate = await fixture.Service.RetrieveAsync(
+            fixture.JobExecutionId,
+            request);
+        Assert.Equal(Pass2CodeLogicRetrievalOutcome.Accepted, candidate.Outcome);
+        Assert.NotEmpty(candidate.Items);
+
+        Pass2RetrievalReservation reservation = await new PreparedPass2Store(fixture.Context)
+            .ReserveRetrievalAsync(fixture.JobExecutionId, request, CancellationToken.None);
+        Assert.True(reservation.IsReserved);
+        string reservedAccounting = await fixture.RetrievalAccountingSnapshotAsync();
+        Pass2CodeLogicRetrievalItem projected = candidate.Items[0];
+        Guid logicalDocumentId = await fixture.Context.DocumentVersions
+            .Where(value => value.Id == projected.DocumentVersionId)
+            .Select(value => value.LogicalDocumentId)
+            .SingleAsync();
+        Guid? currentBefore = await fixture.Context.LogicalDocuments
+            .Where(value => value.Id == logicalDocumentId)
+            .Select(value => value.CurrentVersionId)
+            .SingleAsync();
+        Assert.NotNull(currentBefore);
+
+        await fixture.Context.Database.ExecuteSqlInterpolatedAsync(
+            $"UPDATE \"LogicalDocuments\" SET \"CurrentVersionId\" = NULL WHERE \"Id\" = {logicalDocumentId}");
+        fixture.Context.ChangeTracker.Clear();
+        Assert.Null(await fixture.Context.LogicalDocuments
+            .Where(value => value.Id == logicalDocumentId)
+            .Select(value => value.CurrentVersionId)
+            .SingleAsync());
+
+        Guid[] initialDocumentVersionIds = await fixture.InitialDocumentVersionIdsAsync();
+        Pass2CodeLogicRetrievalResult result = await new PreparedPass2Store(fixture.Context)
+            .AdmitRetrievalAsync(
+                fixture.JobExecutionId,
+                reservation,
+                request,
+                candidate,
+                initialDocumentVersionIds,
+                CancellationToken.None);
+
+        string admittedAccounting = await fixture.RetrievalAccountingSnapshotAsync();
+        Assert.Equal(reservedAccounting, admittedAccounting);
+        Assert.Equal(Pass2CodeLogicRetrievalOutcome.Refused, result.Outcome);
+        Assert.Empty(result.Items);
+    }
+
+    [Theory]
+    [InlineData("source-anchor-hash")]
+    [InlineData("source-anchor-range")]
+    public async Task RetrieveAsync_CandidateEvidenceChangesAfterProjectionBeforeAdmission_IsRefusedWithoutAcceptedMutationAsync(
+        string mutation)
+    {
+        await using PersistedRetrievalFixture fixture =
+            await PersistedRetrievalFixture.CreateAsync("none");
+        Pass2CodeLogicRetrievalItem anchor = await fixture.IssueAnchorHandleAsync();
+        string anchorBefore = await fixture.AnchorSnapshotAsync(anchor.SourceAnchorId!.Value);
+        string authorityBefore = await fixture.AuthoritySnapshotAsync();
+        string accountingBefore = await fixture.RetrievalAccountingSnapshotAsync();
+        fixture.SourceReader.Reset();
+        fixture.AccessVerifier.ArmAdmissionMutation(
+            () => fixture.ApplyAdmissionMutationAsync(
+                mutation,
+                anchor.SourceAnchorId.Value,
+                anchor.DocumentVersionId),
+            expectedAuthorizationChecks: 3);
+
+        Pass2CodeLogicRetrievalResult result = await fixture.Service.RetrieveAsync(
+            fixture.JobExecutionId,
+            new(
+                Pass2CodeLogicRetrievalOperation.SourceExcerpt,
+                opaqueHandles: [anchor.OpaqueHandle],
+                containedByteOffset: 0,
+                containedByteLength: 6));
+
+        Assert.True(fixture.AccessVerifier.AdmissionMutationInvoked);
+        Assert.NotEqual(anchorBefore, await fixture.AnchorSnapshotAsync(anchor.SourceAnchorId.Value));
+        Assert.Equal(Pass2CodeLogicRetrievalOutcome.Refused, result.Outcome);
+        Assert.Empty(result.Items);
+        Assert.Equal(1, fixture.SourceReader.Calls);
+        Assert.Equal(authorityBefore, await fixture.AuthoritySnapshotAsync());
+        await AssertReservedRefusalAsync(
+            fixture,
+            accountingBefore,
+            await fixture.RetrievalAccountingSnapshotAsync(),
+            result);
+    }
+
+    [Theory]
+    [InlineData("live-authorization")]
+    [InlineData("pair")]
+    [InlineData("system")]
+    [InlineData("repository")]
+    [InlineData("scan-run")]
+    [InlineData("profiled-revision")]
+    [InlineData("document-fingerprint")]
+    [InlineData("source-anchor-hash")]
+    [InlineData("source-anchor-range")]
+    public async Task RetrieveAsync_AuthorityChangesBetweenSourceReadAndAdmission_IsRefusedWithoutAcceptedMutationAsync(
+        string mutation)
+    {
+        await using PersistedRetrievalFixture fixture =
+            await PersistedRetrievalFixture.CreateAsync("none");
+        Pass2CodeLogicRetrievalItem anchor = await fixture.IssueAnchorHandleAsync();
+        string before = await fixture.RetrievalAccountingSnapshotAsync();
+        fixture.SourceReader.BeforeReadAsync = () => fixture.ApplyAdmissionMutationAsync(
+            mutation,
+            anchor.SourceAnchorId!.Value,
+            anchor.DocumentVersionId);
+
+        Pass2CodeLogicRetrievalResult result = await fixture.Service.RetrieveAsync(
+            fixture.JobExecutionId,
+            new(
+                Pass2CodeLogicRetrievalOperation.SourceExcerpt,
+                opaqueHandles: [anchor.OpaqueHandle],
+                containedByteOffset: 0,
+                containedByteLength: 6));
+
+        Assert.Equal(Pass2CodeLogicRetrievalOutcome.Refused, result.Outcome);
+        Assert.Empty(result.Items);
+        Assert.DoesNotContain("ledger", result.Code, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal(1, fixture.SourceReader.Calls);
+        string after = await fixture.RetrievalAccountingSnapshotAsync();
+        AssertReservedRefusalAccounting(before, after);
+        Assert.Equal(Pass2RetrievalReceiptState.Refused, await fixture.LatestReceiptStateAsync());
+        AssertCurrentRemainingBudget(result, after);
     }
 
     [Fact]
@@ -254,6 +580,7 @@ public sealed class RetrieveCodeLogicSecurityTests
             Guid jobExecutionId,
             Guid executionId,
             RepositoryAccessScope scope,
+            AllowAccessVerifier accessVerifier,
             string mutation)
         {
             Fixture = fixture;
@@ -261,6 +588,7 @@ public sealed class RetrieveCodeLogicSecurityTests
             JobExecutionId = jobExecutionId;
             ExecutionId = executionId;
             Scope = scope;
+            AccessVerifier = accessVerifier;
             _mutation = mutation;
             SourceReader = new RecordingSourceReader();
             Service = new Pass2CodeLogicRetrievalService(Context, Scope, SourceReader);
@@ -275,6 +603,7 @@ public sealed class RetrieveCodeLogicSecurityTests
         internal Guid JobExecutionId { get; }
         internal Guid ExecutionId { get; }
         internal RepositoryAccessScope Scope { get; }
+        internal AllowAccessVerifier AccessVerifier { get; }
         internal RecordingSourceReader SourceReader { get; }
         internal IPass2CodeLogicRetrievalService Service { get; }
         internal IPass2CodeLogicRetrievalService ServiceWithRevokedScope { get; }
@@ -301,6 +630,10 @@ public sealed class RetrieveCodeLogicSecurityTests
                     ?? throw new InvalidOperationException("The authoritative T026 seed result is unavailable.");
                 Pass1PairExecution pair = (Pass1PairExecution)GetRequiredProperty(seed, "Pair");
                 RepositoryAccessScope scope = (RepositoryAccessScope)GetRequiredProperty(seed, "Scope");
+                AllowAccessVerifier accessVerifier = new();
+                RepositoryAccessScope liveScope = new(
+                    scope.AuthorizedRepositoryIds,
+                    accessVerifier);
                 await AddSearchableSectionsAsync(context, seed);
                 if (mutation == "cross-job")
                 {
@@ -308,11 +641,31 @@ public sealed class RetrieveCodeLogicSecurityTests
                 }
 
                 PreparedPass2StartResult start = await new PreparedPass2Store(context)
-                    .StartAsync(pair.Id, scope);
+                    .StartAsync(pair.Id, liveScope);
                 Assert.Equal(PreparedPass2StartOutcome.Created, start.Outcome);
-                Pass2JobExecution job = await context.Pass2JobExecutions
+                Pass2JobExecution[] jobs = await context.Pass2JobExecutions
                     .OrderBy(value => value.GroupOrder)
-                    .FirstAsync();
+                    .ToArrayAsync();
+                Assert.NotEmpty(jobs);
+                for (int index = 0; index < jobs.Length; index++)
+                {
+                    DateTimeOffset stateChangedAt = jobs[index].StateChangedAt.AddSeconds(1);
+                    jobs[index].AcquireLease(
+                        ExactCrossRepositoryTestValues.Id(50_001 + index),
+                        stateChangedAt.AddMinutes(5),
+                        stateChangedAt);
+                }
+                await context.SaveChangesAsync();
+                Pass2JobExecution job = jobs[0];
+                Assert.All(
+                    await context.Pass2JobExecutions.AsNoTracking().ToArrayAsync(),
+                    value =>
+                    {
+                        Assert.Equal(Pass2JobExecutionState.Running, value.State);
+                        Assert.Equal(1, value.AttemptCount);
+                        Assert.NotNull(value.LeaseToken);
+                        Assert.True(value.LeaseExpiresAt > value.StateChangedAt);
+                    });
                 Guid executionId = job.Pass2ExecutionId;
                 Assert.Equal(1, await context.Pass2Executions.CountAsync());
                 Assert.Equal(start.JobCount, await context.Pass2JobExecutions.CountAsync());
@@ -325,7 +678,7 @@ public sealed class RetrieveCodeLogicSecurityTests
                 Assert.NotEmpty(await context.SourceAnchors.ToArrayAsync());
                 Assert.NotEmpty(await context.DocumentEdges.ToArrayAsync());
                 context.ChangeTracker.Clear();
-                return new(fixture, context, job.Id, executionId, scope, mutation);
+                return new(fixture, context, job.Id, executionId, liveScope, accessVerifier, mutation);
             }
             catch
             {
@@ -457,6 +810,135 @@ public sealed class RetrieveCodeLogicSecurityTests
             };
         }
 
+        internal async Task SetJobStateAsync(string state)
+        {
+            DateTimeOffset stateChangedAt = DateTimeOffset.UtcNow;
+            string retryFailureCode = "t025-test-retry";
+            string failedFailureCode = "t025-test-failed";
+            switch (state)
+            {
+                case "Pending":
+                    await Context.Database.ExecuteSqlInterpolatedAsync(
+                        $"UPDATE \"Pass2JobExecutions\" SET \"State\" = {state}, \"LeaseToken\" = NULL, \"LeaseExpiresAt\" = NULL, \"NextAttemptAt\" = NULL, \"FailureCategory\" = NULL, \"FailureCode\" = NULL, \"CommittedDocumentVersionId\" = NULL, \"CompletionFingerprint\" = NULL, \"StateChangedAt\" = {stateChangedAt} WHERE \"Id\" = {JobExecutionId}");
+                    break;
+                case "RetryScheduled":
+                    await Context.Database.ExecuteSqlInterpolatedAsync(
+                        $"UPDATE \"Pass2JobExecutions\" SET \"State\" = {state}, \"LeaseToken\" = NULL, \"LeaseExpiresAt\" = NULL, \"NextAttemptAt\" = {stateChangedAt.AddMinutes(5)}, \"FailureCategory\" = {nameof(ScanJobFailureCategory.ProviderTransient)}, \"FailureCode\" = {retryFailureCode}, \"CommittedDocumentVersionId\" = NULL, \"CompletionFingerprint\" = NULL, \"StateChangedAt\" = {stateChangedAt} WHERE \"Id\" = {JobExecutionId}");
+                    break;
+                case "Completed":
+                {
+                    Guid committedDocumentVersionId = await Context.FlowTraceSteps
+                        .Where(step => step.DocumentVersionId != Guid.Empty)
+                        .Select(step => step.DocumentVersionId)
+                        .FirstAsync();
+                    await Context.Database.ExecuteSqlInterpolatedAsync(
+                        $"UPDATE \"Pass2JobExecutions\" SET \"State\" = {state}, \"LeaseToken\" = NULL, \"LeaseExpiresAt\" = NULL, \"NextAttemptAt\" = NULL, \"FailureCategory\" = NULL, \"FailureCode\" = NULL, \"CommittedDocumentVersionId\" = {committedDocumentVersionId}, \"CompletionFingerprint\" = {new string('d', 64)}, \"StateChangedAt\" = {stateChangedAt} WHERE \"Id\" = {JobExecutionId}");
+                    break;
+                }
+                case "Failed":
+                    await Context.Database.ExecuteSqlInterpolatedAsync(
+                        $"UPDATE \"Pass2JobExecutions\" SET \"State\" = {state}, \"LeaseToken\" = NULL, \"LeaseExpiresAt\" = NULL, \"NextAttemptAt\" = NULL, \"FailureCategory\" = {nameof(ScanJobFailureCategory.Security)}, \"FailureCode\" = {failedFailureCode}, \"CommittedDocumentVersionId\" = NULL, \"CompletionFingerprint\" = NULL, \"StateChangedAt\" = {stateChangedAt} WHERE \"Id\" = {JobExecutionId}");
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(state));
+            }
+        }
+
+        internal async Task ApplyAdmissionMutationAsync(
+            string mutation,
+            Guid sourceAnchorId,
+            Guid documentVersionId)
+        {
+            switch (mutation)
+            {
+                case "live-authorization":
+                    AccessVerifier.IsAllowed = false;
+                    return;
+                case "pair":
+                    const string failedPairPhase = nameof(Pass1PairExecutionPhase.FailedSecurity);
+                    await Context.Database.ExecuteSqlInterpolatedAsync(
+                        $"UPDATE \"Pass1PairExecutions\" SET \"Phase\" = {failedPairPhase} WHERE \"Id\" = (SELECT \"Pass1PairExecutionId\" FROM \"Pass2Executions\" WHERE \"Id\" = (SELECT \"Pass2ExecutionId\" FROM \"Pass2JobExecutions\" WHERE \"Id\" = {JobExecutionId}))");
+                    break;
+                case "system":
+                {
+                    Guid foreignSystemId = Guid.Parse("f0000000-0000-4000-8000-000000000010");
+                    SystemEntity foreignSystem = new(
+                        "T025 admission drift system",
+                        null,
+                        null,
+                        DateTimeOffset.UtcNow);
+                    ExactCrossRepositoryReflection.SetId(foreignSystem, foreignSystemId);
+                    Context.Systems.Add(foreignSystem);
+                    await Context.SaveChangesAsync();
+                    await Context.Database.ExecuteSqlInterpolatedAsync(
+                        $"UPDATE \"Pass2Executions\" SET \"SystemId\" = {foreignSystemId} WHERE \"Id\" = (SELECT \"Pass2ExecutionId\" FROM \"Pass2JobExecutions\" WHERE \"Id\" = {JobExecutionId})");
+                    break;
+                }
+                case "repository":
+                {
+                    Guid systemId = await Context.Pass2Executions
+                        .Where(value => value.Id == ExecutionId)
+                        .Select(value => value.SystemId)
+                        .SingleAsync();
+                    Guid foreignRepositoryId = Guid.Parse("a0000000-0000-4000-8000-000000000010");
+                    Repository foreignRepository = Repository.Create(
+                        systemId,
+                        "T025 admission drift repository",
+                        "https://example.test/t025-admission-drift-repository",
+                        null,
+                        null,
+                        DateTimeOffset.UtcNow);
+                    ExactCrossRepositoryReflection.SetId(foreignRepository, foreignRepositoryId);
+                    Context.Repositories.Add(foreignRepository);
+                    await Context.SaveChangesAsync();
+                    await Context.Database.ExecuteSqlInterpolatedAsync(
+                        $"UPDATE \"FlowGroups\" SET \"ProviderRepositoryId\" = {foreignRepositoryId} WHERE \"Id\" = (SELECT \"FlowGroupId\" FROM \"Pass2JobExecutions\" WHERE \"Id\" = {JobExecutionId})");
+                    break;
+                }
+                case "scan-run":
+                {
+                    Guid systemId = await Context.Pass2Executions
+                        .Where(value => value.Id == ExecutionId)
+                        .Select(value => value.SystemId)
+                        .SingleAsync();
+                    Guid foreignRepositoryId = Guid.Parse("a0000000-0000-4000-8000-000000000011");
+                    Repository foreignRepository = Repository.Create(
+                        systemId,
+                        "T025 admission scan-run drift repository",
+                        "https://example.test/t025-admission-scan-run-drift-repository",
+                        null,
+                        null,
+                        DateTimeOffset.UtcNow);
+                    ExactCrossRepositoryReflection.SetId(foreignRepository, foreignRepositoryId);
+                    Context.Repositories.Add(foreignRepository);
+                    await Context.SaveChangesAsync();
+                    await Context.Database.ExecuteSqlInterpolatedAsync(
+                        $"UPDATE \"FlowGroups\" SET \"RepositoryId\" = (SELECT \"RepositoryTwoId\" FROM \"TwoRepositoryScanCoordinations\" WHERE \"Id\" = (SELECT \"CoordinationId\" FROM \"Pass2Executions\" WHERE \"Id\" = (SELECT \"Pass2ExecutionId\" FROM \"Pass2JobExecutions\" WHERE \"Id\" = {JobExecutionId}))), \"ScanRunId\" = (SELECT \"ScanRunTwoId\" FROM \"TwoRepositoryScanCoordinations\" WHERE \"Id\" = (SELECT \"CoordinationId\" FROM \"Pass2Executions\" WHERE \"Id\" = (SELECT \"Pass2ExecutionId\" FROM \"Pass2JobExecutions\" WHERE \"Id\" = {JobExecutionId}))), \"ConsumerDocumentVersionId\" = \"ProviderXmlDocumentVersionId\", \"ProviderRepositoryId\" = {foreignRepositoryId} WHERE \"Id\" = (SELECT \"FlowGroupId\" FROM \"Pass2JobExecutions\" WHERE \"Id\" = {JobExecutionId})");
+                    break;
+                }
+                case "profiled-revision":
+                    await Context.Database.ExecuteSqlInterpolatedAsync(
+                        $"UPDATE \"TwoRepositoryScanCoordinations\" SET \"ProfiledRevisionOne\" = {new string('f', 40)} WHERE \"Id\" = (SELECT \"CoordinationId\" FROM \"Pass2Executions\" WHERE \"Id\" = (SELECT \"Pass2ExecutionId\" FROM \"Pass2JobExecutions\" WHERE \"Id\" = {JobExecutionId}))");
+                    break;
+                case "document-fingerprint":
+                    await Context.Database.ExecuteSqlInterpolatedAsync(
+                        $"UPDATE \"DocumentVersions\" SET \"ContentFingerprint\" = {new string('c', 64)} WHERE \"Id\" = {documentVersionId}");
+                    break;
+                case "source-anchor-hash":
+                    await Context.Database.ExecuteSqlInterpolatedAsync(
+                        $"UPDATE \"SourceAnchors\" SET \"SourceHash\" = {new string('c', 64)} WHERE \"Id\" = {sourceAnchorId}");
+                    break;
+                case "source-anchor-range":
+                    await Context.Database.ExecuteSqlInterpolatedAsync(
+                        $"UPDATE \"SourceAnchors\" SET \"ByteStart\" = 10, \"ByteEnd\" = 16 WHERE \"Id\" = {sourceAnchorId}");
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(mutation));
+            }
+
+            Context.ChangeTracker.Clear();
+        }
+
         internal async Task<Pass2CodeLogicRetrievalItem> IssueSectionHandleAsync()
         {
             Pass2CodeLogicRetrievalResult search = await Service.RetrieveAsync(
@@ -500,6 +982,59 @@ public sealed class RetrieveCodeLogicSecurityTests
                 .Where(value => value.Id == anchorId)
                 .Select(value => value.SourceHash + ":" + value.ByteStart + ":" + value.ByteEnd)
                 .SingleAsync();
+        }
+
+        internal async Task<string> RetrievalAccountingSnapshotAsync(Guid? jobExecutionId = null)
+        {
+            Guid selectedJobExecutionId = jobExecutionId ?? JobExecutionId;
+            Pass2RetrievalBudget budget = await Context.Pass2RetrievalBudgets
+                .SingleAsync(value => value.Pass2JobExecutionId == selectedJobExecutionId);
+            int receipts = await Context.Pass2RetrievalReceipts
+                .CountAsync(value => value.Pass2JobExecutionId == selectedJobExecutionId);
+            Guid[] receiptIds = await Context.Pass2RetrievalReceipts
+                .Where(value => value.Pass2JobExecutionId == selectedJobExecutionId)
+                .Select(value => value.Id)
+                .ToArrayAsync();
+            int results = await Context.Pass2RetrievalResults
+                .CountAsync(value => receiptIds.Contains(value.ReceiptId));
+            return string.Join(
+                ":",
+                budget.CallsReserved,
+                budget.ResultsReturned,
+                budget.AdditionalDocumentCount,
+                budget.ReturnedUtf8Bytes,
+                budget.StateVersion,
+                receipts,
+                results);
+        }
+
+        internal async Task<Pass2RetrievalReceiptState> LatestReceiptStateAsync(
+            Guid? jobExecutionId = null)
+        {
+            Guid selectedJobExecutionId = jobExecutionId ?? JobExecutionId;
+            return await Context.Pass2RetrievalReceipts
+                .Where(value => value.Pass2JobExecutionId == selectedJobExecutionId)
+                .OrderByDescending(value => value.CallOrdinal)
+                .Select(value => value.State)
+                .FirstAsync();
+        }
+
+        internal async Task<Guid[]> InitialDocumentVersionIdsAsync()
+        {
+            Guid flowGroupId = await Context.Pass2JobExecutions
+                .Where(value => value.Id == JobExecutionId)
+                .Select(value => value.FlowGroupId)
+                .SingleAsync();
+            Guid[] traceIds = await Context.FlowTraces
+                .Where(value => value.FlowGroupId == flowGroupId)
+                .Select(value => value.Id)
+                .ToArrayAsync();
+            return await Context.FlowTraceSteps
+                .Where(value => traceIds.Contains(value.FlowTraceId) &&
+                    value.DocumentVersionId != Guid.Empty)
+                .Select(value => value.DocumentVersionId)
+                .Distinct()
+                .ToArrayAsync();
         }
 
         internal async Task<string> AuthoritySnapshotAsync()
@@ -632,6 +1167,67 @@ public sealed class RetrieveCodeLogicSecurityTests
         }
     }
 
+    private static void AssertReservedRefusalAccounting(string beforeSnapshot, string afterSnapshot)
+    {
+        (int beforeCalls, int beforeResults, int beforeDocuments, int beforeBytes,
+            long beforeStateVersion, int beforeReceipts, int beforeResultRows) =
+            ParseAccountingSnapshot(beforeSnapshot);
+        (int afterCalls, int afterResults, int afterDocuments, int afterBytes,
+            long afterStateVersion, int afterReceipts, int afterResultRows) =
+            ParseAccountingSnapshot(afterSnapshot);
+
+        Assert.Equal(beforeCalls + 1, afterCalls);
+        Assert.Equal(beforeResults, afterResults);
+        Assert.Equal(beforeDocuments, afterDocuments);
+        Assert.Equal(beforeBytes, afterBytes);
+        Assert.Equal(beforeStateVersion + 1, afterStateVersion);
+        Assert.Equal(beforeReceipts + 1, afterReceipts);
+        Assert.Equal(beforeResultRows, afterResultRows);
+    }
+
+    private static async Task AssertReservedRefusalAsync(
+        PersistedRetrievalFixture fixture,
+        string beforeSnapshot,
+        string afterSnapshot,
+        Pass2CodeLogicRetrievalResult result)
+    {
+        AssertReservedRefusalAccounting(beforeSnapshot, afterSnapshot);
+        AssertCurrentRemainingBudget(result, afterSnapshot);
+        Assert.Equal(Pass2RetrievalReceiptState.Refused, await fixture.LatestReceiptStateAsync());
+    }
+
+    private static void AssertCurrentRemainingBudget(
+        Pass2CodeLogicRetrievalResult result,
+        string accountingSnapshot)
+    {
+        (int calls, int results, int documents, int bytes, _, _, _) =
+            ParseAccountingSnapshot(accountingSnapshot);
+        Assert.Equal(Math.Max(0, Pass2RetrievalContracts.MaxCalls - calls), result.RemainingBudget.Calls);
+        Assert.Equal(Math.Max(0, Pass2RetrievalContracts.MaxResults - results), result.RemainingBudget.Results);
+        Assert.Equal(
+            Math.Max(0, Pass2RetrievalContracts.MaxAdditionalDocuments - documents),
+            result.RemainingBudget.AdditionalDocuments);
+        Assert.Equal(Pass2RetrievalContracts.MaxSectionsPerDocument, result.RemainingBudget.SectionsPerDocument);
+        Assert.Equal(
+            Math.Max(0, Pass2RetrievalContracts.MaxReturnedUtf8Bytes - bytes),
+            result.RemainingBudget.ReturnedUtf8Bytes);
+    }
+
+    private static (int Calls, int Results, int Documents, int Bytes, long StateVersion, int Receipts, int ResultRows)
+        ParseAccountingSnapshot(string snapshot)
+    {
+        string[] values = snapshot.Split(':');
+        Assert.Equal(7, values.Length);
+        return (
+            int.Parse(values[0]),
+            int.Parse(values[1]),
+            int.Parse(values[2]),
+            int.Parse(values[3]),
+            long.Parse(values[4]),
+            int.Parse(values[5]),
+            int.Parse(values[6]));
+    }
+
     private sealed class DeniedAccessVerifier : IRepositoryAuthorizationVerifier
     {
         public ValueTask<bool> HasCurrentAccessAsync(
@@ -640,10 +1236,52 @@ public sealed class RetrieveCodeLogicSecurityTests
             ValueTask.FromResult(false);
     }
 
+    private sealed class AllowAccessVerifier : IRepositoryAuthorizationVerifier
+    {
+        private Func<Task>? _admissionMutation;
+        private int _checksBeforeMutation;
+
+        internal bool IsAllowed { get; set; } = true;
+
+        internal bool AdmissionMutationInvoked { get; private set; }
+
+        internal void ArmAdmissionMutation(
+            Func<Task> mutation,
+            int expectedAuthorizationChecks)
+        {
+            ArgumentNullException.ThrowIfNull(mutation);
+            ArgumentOutOfRangeException.ThrowIfLessThan(expectedAuthorizationChecks, 1);
+            _admissionMutation = mutation;
+            _checksBeforeMutation = expectedAuthorizationChecks;
+            AdmissionMutationInvoked = false;
+        }
+
+        public async ValueTask<bool> HasCurrentAccessAsync(
+            IReadOnlyCollection<Guid> requiredRepositoryIds,
+            CancellationToken cancellationToken = default)
+        {
+            if (_admissionMutation is not null &&
+                Interlocked.Decrement(ref _checksBeforeMutation) == 0)
+            {
+                Func<Task>? mutation = Interlocked.Exchange(ref _admissionMutation, null);
+                if (mutation is not null)
+                {
+                    AdmissionMutationInvoked = true;
+                    await mutation();
+                }
+            }
+
+            return IsAllowed;
+        }
+    }
+
     private sealed class RecordingSourceReader : IRevisionBoundSourceReader
     {
         public int Calls { get; private set; }
         public string? FixedSourceHash { get; set; }
+        public Func<Task>? BeforeReadAsync { get; set; }
+
+        public void Reset() => Calls = 0;
 
         public Task<SourceExcerptResult> ReadAsync(
             AnalysisScope scope,
@@ -652,7 +1290,24 @@ public sealed class RetrieveCodeLogicSecurityTests
         {
             Calls++;
             cancellationToken.ThrowIfCancellationRequested();
-            return Task.FromResult(new SourceExcerptResult(
+            return ReadAsyncCore(
+                scope,
+                request,
+                cancellationToken);
+        }
+
+        private async Task<SourceExcerptResult> ReadAsyncCore(
+            AnalysisScope scope,
+            RevisionBoundSourceRequest request,
+            CancellationToken cancellationToken)
+        {
+            if (BeforeReadAsync is not null)
+            {
+                await BeforeReadAsync();
+            }
+
+            cancellationToken.ThrowIfCancellationRequested();
+            return new SourceExcerptResult(
                 AnalysisOperationStatus.Succeeded,
                 scope.RepositoryId,
                 scope.ProfiledRevision,
@@ -661,7 +1316,7 @@ public sealed class RetrieveCodeLogicSecurityTests
                 FixedSourceHash ?? request.ExpectedSourceSha256,
                 "ledger",
                 6,
-                null));
+                null);
         }
     }
 }

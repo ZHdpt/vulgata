@@ -1,4 +1,6 @@
 using System.Reflection;
+using System.Text;
+using System.Text.Json;
 
 using Microsoft.EntityFrameworkCore;
 using Vulgata.Core.DomainServices;
@@ -180,6 +182,21 @@ public sealed class RetrieveCodeLogicContractTests
     }
 
     [Fact]
+    public void RetrieveCodeLogic_Item_ExposesTypedTransientContentProjections()
+    {
+        Type itemType = typeof(Pass2CodeLogicRetrievalItem);
+        foreach (string propertyName in new[] { "ContentMarkdown", "Excerpt" })
+        {
+            PropertyInfo? property = itemType.GetProperty(propertyName);
+            Assert.NotNull(property);
+            if (property is not null)
+            {
+                Assert.Equal(typeof(string), property.PropertyType);
+            }
+        }
+    }
+
+    [Fact]
     public void RetrieveCodeLogic_Bounds_AreInclusiveAndExact()
     {
         Assert.Equal(8, Pass2RetrievalContracts.MaxCalls);
@@ -241,7 +258,7 @@ public sealed class RetrieveCodeLogicContractTests
         await using RetrievalHarness harness = await RetrievalHarness.CreateAsync();
         Pass2CodeLogicRetrievalRequest request = new(
             Pass2CodeLogicRetrievalOperation.Search,
-            queryText: "ledger");
+            queryText: "consumer");
 
         Pass2CodeLogicRetrievalResult first = await harness.Service.RetrieveAsync(
             harness.JobId,
@@ -390,6 +407,544 @@ public sealed class RetrieveCodeLogicContractTests
     }
 
     [Fact]
+    public async Task RetrieveCodeLogic_Sections_ReturnsExactTransientContentMarkdownAsync()
+    {
+        await using RetrievalHarness harness = await RetrievalHarness.CreateAsync();
+        Pass2CodeLogicRetrievalResult search = await harness.Service.RetrieveAsync(
+            harness.JobId,
+            new Pass2CodeLogicRetrievalRequest(
+                Pass2CodeLogicRetrievalOperation.Search,
+                queryText: "ledger"));
+        Pass2CodeLogicRetrievalItem handle = search.Items.First(
+            item => item.Kind == Pass2CodeLogicRetrievalItemKind.Section);
+        DocumentSection expected = await harness.Context.DocumentSections
+            .AsNoTracking()
+            .SingleAsync(section => section.Id == handle.SectionId);
+
+        Pass2CodeLogicRetrievalResult result = await harness.Service.RetrieveAsync(
+            harness.JobId,
+            new Pass2CodeLogicRetrievalRequest(
+                Pass2CodeLogicRetrievalOperation.Sections,
+                opaqueHandles: [handle.OpaqueHandle]));
+
+        Assert.Equal(Pass2CodeLogicRetrievalOutcome.Accepted, result.Outcome);
+        Pass2CodeLogicRetrievalItem returned = Assert.Single(result.Items);
+        PropertyInfo? contentProperty = typeof(Pass2CodeLogicRetrievalItem)
+            .GetProperty("ContentMarkdown");
+        Assert.NotNull(contentProperty);
+        if (contentProperty is null)
+        {
+            return;
+        }
+
+        Assert.Equal(expected.ContentMarkdown, contentProperty.GetValue(returned));
+    }
+
+    [Fact]
+    public async Task RetrieveCodeLogic_SourceExcerpt_ReturnsExactTransientReaderExcerptAsync()
+    {
+        await using RetrievalHarness harness = await RetrievalHarness.CreateAsync();
+        Pass2CodeLogicRetrievalResult search = await harness.Service.RetrieveAsync(
+            harness.JobId,
+            new Pass2CodeLogicRetrievalRequest(
+                Pass2CodeLogicRetrievalOperation.Search,
+                queryText: "ledger"));
+        Pass2CodeLogicRetrievalItem section = search.Items.First(
+            item => item.Kind == Pass2CodeLogicRetrievalItemKind.Section);
+        Pass2CodeLogicRetrievalResult anchors = await harness.Service.RetrieveAsync(
+            harness.JobId,
+            new Pass2CodeLogicRetrievalRequest(
+                Pass2CodeLogicRetrievalOperation.SourceAnchors,
+                opaqueHandles: [section.OpaqueHandle]));
+        Pass2CodeLogicRetrievalItem anchor = anchors.Items.First(
+            item => item.Kind == Pass2CodeLogicRetrievalItemKind.SourceAnchor);
+
+        Pass2CodeLogicRetrievalResult result = await harness.Service.RetrieveAsync(
+            harness.JobId,
+            new Pass2CodeLogicRetrievalRequest(
+                Pass2CodeLogicRetrievalOperation.SourceExcerpt,
+                opaqueHandles: [anchor.OpaqueHandle],
+                containedByteOffset: 0,
+                containedByteLength: 6));
+
+        Assert.Equal(Pass2CodeLogicRetrievalOutcome.Accepted, result.Outcome);
+        Pass2CodeLogicRetrievalItem returned = Assert.Single(result.Items);
+        PropertyInfo? excerptProperty = typeof(Pass2CodeLogicRetrievalItem)
+            .GetProperty("Excerpt");
+        Assert.NotNull(excerptProperty);
+        if (excerptProperty is null)
+        {
+            return;
+        }
+
+        Assert.Equal("ledger", excerptProperty.GetValue(returned));
+    }
+
+    [Fact]
+    public async Task RetrieveCodeLogic_Sections_UsesCanonicalProviderSerializationByteCountAsync()
+    {
+        await using RetrievalHarness harness = await RetrievalHarness.CreateAsync();
+        Pass2CodeLogicRetrievalResult search = await harness.Service.RetrieveAsync(
+            harness.JobId,
+            new Pass2CodeLogicRetrievalRequest(
+                Pass2CodeLogicRetrievalOperation.Search,
+                queryText: "ledger"));
+        Pass2CodeLogicRetrievalItem handle = search.Items.First(
+            item => item.Kind == Pass2CodeLogicRetrievalItemKind.Section);
+
+        Pass2CodeLogicRetrievalResult result = await harness.Service.RetrieveAsync(
+            harness.JobId,
+            new Pass2CodeLogicRetrievalRequest(
+                Pass2CodeLogicRetrievalOperation.Sections,
+                opaqueHandles: [handle.OpaqueHandle]));
+
+        Assert.Equal(Pass2CodeLogicRetrievalOutcome.Accepted, result.Outcome);
+        Pass2CodeLogicRetrievalItem returned = Assert.Single(result.Items);
+        int independentlyComputedBytes = CanonicalProviderVisibleUtf8Bytes(returned);
+        Assert.Equal(independentlyComputedBytes, returned.ReturnedUtf8Bytes);
+    }
+
+    [Fact]
+    public async Task RetrieveCodeLogic_AllItemKinds_UseCompleteIndependentProviderVisibleUtf8ByteAccountingAsync()
+    {
+        await using RetrievalHarness harness = await RetrievalHarness.CreateAsync();
+
+        Pass2CodeLogicRetrievalResult documentSearch = await harness.Service.RetrieveAsync(
+            harness.JobId,
+            new Pass2CodeLogicRetrievalRequest(
+                Pass2CodeLogicRetrievalOperation.Search,
+                queryText: "consumer"));
+        Pass2CodeLogicRetrievalItem document = Assert.Single(
+            documentSearch.Items,
+            item => item.Kind == Pass2CodeLogicRetrievalItemKind.Document);
+
+        Pass2CodeLogicRetrievalResult sectionSearch = await harness.Service.RetrieveAsync(
+            harness.JobId,
+            new Pass2CodeLogicRetrievalRequest(
+                Pass2CodeLogicRetrievalOperation.Search,
+                queryText: "ledger"));
+        Pass2CodeLogicRetrievalItem sectionHandle = sectionSearch.Items
+            .Where(item => item.Kind == Pass2CodeLogicRetrievalItemKind.Section)
+            .OrderBy(item => item.DocumentVersionId)
+            .ThenBy(item => item.SectionId)
+            .First();
+
+        Pass2CodeLogicRetrievalResult sections = await harness.Service.RetrieveAsync(
+            harness.JobId,
+            new Pass2CodeLogicRetrievalRequest(
+                Pass2CodeLogicRetrievalOperation.Sections,
+                opaqueHandles: [sectionHandle.OpaqueHandle]));
+        Pass2CodeLogicRetrievalItem section = Assert.Single(
+            sections.Items,
+            item => item.Kind == Pass2CodeLogicRetrievalItemKind.Section);
+
+        Pass2CodeLogicRetrievalResult anchors = await harness.Service.RetrieveAsync(
+            harness.JobId,
+            new Pass2CodeLogicRetrievalRequest(
+                Pass2CodeLogicRetrievalOperation.SourceAnchors,
+                opaqueHandles: [sectionHandle.OpaqueHandle]));
+        Pass2CodeLogicRetrievalItem anchor = Assert.Single(
+            anchors.Items,
+            item => item.Kind == Pass2CodeLogicRetrievalItemKind.SourceAnchor);
+
+        Pass2CodeLogicRetrievalResult excerpts = await harness.Service.RetrieveAsync(
+            harness.JobId,
+            new Pass2CodeLogicRetrievalRequest(
+                Pass2CodeLogicRetrievalOperation.SourceExcerpt,
+                opaqueHandles: [anchor.OpaqueHandle],
+                containedByteOffset: 0,
+                containedByteLength: 6));
+        Pass2CodeLogicRetrievalItem excerpt = Assert.Single(
+            excerpts.Items,
+            item => item.Kind == Pass2CodeLogicRetrievalItemKind.SourceExcerpt);
+
+        await using RetrievalHarness relationshipHarness = await RetrievalHarness.CreateAsync();
+        Pass2CodeLogicRetrievalResult relationshipSearch =
+            await relationshipHarness.Service.RetrieveAsync(
+                relationshipHarness.JobId,
+                new Pass2CodeLogicRetrievalRequest(
+                    Pass2CodeLogicRetrievalOperation.Search,
+                    queryText: "consumer"));
+        Pass2CodeLogicRetrievalItem relationshipDocument = Assert.Single(
+            relationshipSearch.Items,
+            item => item.Kind == Pass2CodeLogicRetrievalItemKind.Document);
+        Pass2CodeLogicRetrievalResult relationships =
+            await relationshipHarness.Service.RetrieveAsync(
+            relationshipHarness.JobId,
+            new Pass2CodeLogicRetrievalRequest(
+                Pass2CodeLogicRetrievalOperation.RelatedDocuments,
+                opaqueHandles: [relationshipDocument.OpaqueHandle],
+                direction: Pass2RelatedDocumentDirection.Outgoing));
+        Pass2CodeLogicRetrievalItem relationship = Assert.Single(
+            relationships.Items,
+            item => item.Kind == Pass2CodeLogicRetrievalItemKind.Relationship);
+
+        Assert.Null(document.ContentMarkdown);
+        Assert.Null(document.Excerpt);
+        Assert.NotNull(section.ContentMarkdown);
+        Assert.Null(section.Excerpt);
+        Assert.Null(anchor.ContentMarkdown);
+        Assert.Null(anchor.Excerpt);
+        Assert.Null(excerpt.ContentMarkdown);
+        Assert.Equal("ledger", excerpt.Excerpt);
+        Assert.Null(relationship.ContentMarkdown);
+        Assert.Null(relationship.Excerpt);
+
+        Assert.Equal(
+            CanonicalProviderVisibleUtf8Bytes(document),
+            document.ReturnedUtf8Bytes);
+        Assert.Equal(
+            CanonicalProviderVisibleUtf8Bytes(section),
+            section.ReturnedUtf8Bytes);
+        Assert.Equal(
+            CanonicalProviderVisibleUtf8Bytes(anchor),
+            anchor.ReturnedUtf8Bytes);
+        Assert.Equal(
+            CanonicalProviderVisibleUtf8Bytes(excerpt),
+            excerpt.ReturnedUtf8Bytes);
+        Assert.Equal(
+            CanonicalProviderVisibleUtf8Bytes(relationship),
+            relationship.ReturnedUtf8Bytes);
+    }
+
+    [Fact]
+    public async Task RetrieveCodeLogic_ProviderCodec_ClosesWireFieldsAndMatchesEveryStoredCountAsync()
+    {
+        Type? codecType = typeof(Pass2RetrievalContracts).Assembly.GetType(
+            "Vulgata.Core.DomainServices.Pass2CodeLogicRetrievalProviderCodec",
+            throwOnError: false);
+        Assert.NotNull(codecType);
+        if (codecType is null)
+        {
+            return;
+        }
+
+        Assert.True(
+            codecType.IsPublic,
+            "The provider-visible retrieval codec must be a public Core boundary.");
+        MethodInfo project = Assert.Single(
+            codecType.GetMethods(BindingFlags.Public | BindingFlags.Static),
+            method => method.Name == "Project" &&
+                method.GetParameters() is [{ ParameterType: var parameterType }] &&
+                parameterType == typeof(Pass2CodeLogicRetrievalItem));
+        Type projectionType = project.ReturnType;
+        Assert.True(
+            projectionType.IsPublic,
+            "The provider-visible projection must be public so the wire boundary is typed.");
+
+        string[] expectedProjectionFields =
+        [
+            "OpaqueHandle",
+            "Kind",
+            "DocumentVersionId",
+            "SectionId",
+            "SourceAnchorId",
+            "EdgeId",
+            "ByteStart",
+            "ByteEnd",
+            "ContentMarkdown",
+            "Excerpt",
+        ];
+        string[] actualProjectionFields = projectionType
+            .GetProperties(BindingFlags.Public | BindingFlags.Instance)
+            .Select(property => property.Name)
+            .Order(StringComparer.Ordinal)
+            .ToArray();
+        Assert.Equal(expectedProjectionFields.Order(StringComparer.Ordinal), actualProjectionFields);
+        Assert.DoesNotContain(
+            actualProjectionFields,
+            field => field == "ReturnedUtf8Bytes");
+
+        PropertyInfo[] itemFields = typeof(Pass2CodeLogicRetrievalItem)
+            .GetProperties(BindingFlags.Public | BindingFlags.Instance);
+        foreach (string field in expectedProjectionFields)
+        {
+            PropertyInfo projectionField = Assert.Single(
+                projectionType.GetProperties(BindingFlags.Public | BindingFlags.Instance),
+                property => property.Name == field);
+            PropertyInfo itemField = Assert.Single(itemFields, property => property.Name == field);
+            Assert.Equal(itemField.PropertyType, projectionField.PropertyType);
+        }
+
+        MethodInfo serialize = Assert.Single(
+            codecType.GetMethods(BindingFlags.Public | BindingFlags.Static),
+            method => method.Name == "Serialize" &&
+                method.ReturnType == typeof(byte[]) &&
+                method.GetParameters() is [{ ParameterType: var parameterType }] &&
+                parameterType == projectionType);
+
+        List<Pass2CodeLogicRetrievalItem> items = [];
+        await using (RetrievalHarness harness = await RetrievalHarness.CreateAsync())
+        {
+            Pass2CodeLogicRetrievalResult documentSearch = await harness.Service.RetrieveAsync(
+                harness.JobId,
+                new Pass2CodeLogicRetrievalRequest(
+                    Pass2CodeLogicRetrievalOperation.Search,
+                    queryText: "consumer"));
+            items.Add(Assert.Single(
+                documentSearch.Items,
+                item => item.Kind == Pass2CodeLogicRetrievalItemKind.Document));
+
+            Pass2CodeLogicRetrievalResult sectionSearch = await harness.Service.RetrieveAsync(
+                harness.JobId,
+                new Pass2CodeLogicRetrievalRequest(
+                    Pass2CodeLogicRetrievalOperation.Search,
+                    queryText: "ledger"));
+            Pass2CodeLogicRetrievalItem sectionHandle = sectionSearch.Items
+                .Where(item => item.Kind == Pass2CodeLogicRetrievalItemKind.Section)
+                .OrderBy(item => item.DocumentVersionId)
+                .ThenBy(item => item.SectionId)
+                .First();
+            Pass2CodeLogicRetrievalResult sections = await harness.Service.RetrieveAsync(
+                harness.JobId,
+                new Pass2CodeLogicRetrievalRequest(
+                    Pass2CodeLogicRetrievalOperation.Sections,
+                    opaqueHandles: [sectionHandle.OpaqueHandle]));
+            items.Add(Assert.Single(
+                sections.Items,
+                item => item.Kind == Pass2CodeLogicRetrievalItemKind.Section));
+
+            Pass2CodeLogicRetrievalResult anchors = await harness.Service.RetrieveAsync(
+                harness.JobId,
+                new Pass2CodeLogicRetrievalRequest(
+                    Pass2CodeLogicRetrievalOperation.SourceAnchors,
+                    opaqueHandles: [sectionHandle.OpaqueHandle]));
+            Pass2CodeLogicRetrievalItem anchor = Assert.Single(
+                anchors.Items,
+                item => item.Kind == Pass2CodeLogicRetrievalItemKind.SourceAnchor);
+            items.Add(anchor);
+
+            Pass2CodeLogicRetrievalResult excerpts = await harness.Service.RetrieveAsync(
+                harness.JobId,
+                new Pass2CodeLogicRetrievalRequest(
+                    Pass2CodeLogicRetrievalOperation.SourceExcerpt,
+                    opaqueHandles: [anchor.OpaqueHandle],
+                    containedByteOffset: 0,
+                    containedByteLength: 6));
+            items.Add(Assert.Single(
+                excerpts.Items,
+                item => item.Kind == Pass2CodeLogicRetrievalItemKind.SourceExcerpt));
+        }
+
+        await using (RetrievalHarness relationshipHarness = await RetrievalHarness.CreateAsync())
+        {
+            Pass2CodeLogicRetrievalResult search = await relationshipHarness.Service.RetrieveAsync(
+                relationshipHarness.JobId,
+                new Pass2CodeLogicRetrievalRequest(
+                    Pass2CodeLogicRetrievalOperation.Search,
+                    queryText: "consumer"));
+            Pass2CodeLogicRetrievalItem document = Assert.Single(
+                search.Items,
+                item => item.Kind == Pass2CodeLogicRetrievalItemKind.Document);
+            Pass2CodeLogicRetrievalResult related = await relationshipHarness.Service.RetrieveAsync(
+                relationshipHarness.JobId,
+                new Pass2CodeLogicRetrievalRequest(
+                    Pass2CodeLogicRetrievalOperation.RelatedDocuments,
+                    opaqueHandles: [document.OpaqueHandle],
+                    direction: Pass2RelatedDocumentDirection.Outgoing));
+            items.Add(Assert.Single(
+                related.Items,
+                item => item.Kind == Pass2CodeLogicRetrievalItemKind.Relationship));
+        }
+
+        string[] expectedWireFields =
+        [
+            "opaqueHandle",
+            "kind",
+            "documentVersionId",
+            "sectionId",
+            "sourceAnchorId",
+            "edgeId",
+            "byteStart",
+            "byteEnd",
+            "contentMarkdown",
+            "excerpt",
+        ];
+        foreach (Pass2CodeLogicRetrievalItem item in items)
+        {
+            object projection = project.Invoke(null, [item])
+                ?? throw new InvalidOperationException("Provider codec returned a null projection.");
+            byte[] wire = Assert.IsType<byte[]>(serialize.Invoke(null, [projection]));
+            using JsonDocument json = JsonDocument.Parse(wire);
+            string[] actualWireFields = json.RootElement
+                .EnumerateObject()
+                .Select(property => property.Name)
+                .Order(StringComparer.Ordinal)
+                .ToArray();
+            Assert.Equal(expectedWireFields.Order(StringComparer.Ordinal), actualWireFields);
+            Assert.DoesNotContain(
+                actualWireFields,
+                field => field == "returnedUtf8Bytes");
+            Assert.Equal(wire.Length, item.ReturnedUtf8Bytes);
+        }
+    }
+
+    [Fact]
+    public async Task RetrieveCodeLogic_ServerOwnedCallIdentity_IsAcceptedWithoutModelVisibleIdentityAsync()
+    {
+        await using RetrievalHarness harness = await RetrievalHarness.CreateAsync();
+        Pass2CodeLogicRetrievalService service = Assert.IsType<Pass2CodeLogicRetrievalService>(
+            harness.Service);
+        Pass2CodeLogicRetrievalRequest request = new(
+            Pass2CodeLogicRetrievalOperation.Search,
+            queryText: "consumer");
+
+        Pass2CodeLogicRetrievalResult result = await service.RetrieveAsync(
+            harness.JobId,
+            new Pass2RetrievalCallIdentity(1, 1, new string('a', 64)),
+            request,
+            CancellationToken.None);
+
+        Assert.Equal(Pass2CodeLogicRetrievalOutcome.Accepted, result.Outcome);
+        Assert.NotEmpty(result.Items);
+        Assert.DoesNotContain(
+            request.GetType().GetProperties(BindingFlags.Instance | BindingFlags.Public),
+            property => property.Name is "AttemptOrdinal" or "CallOrdinal" or
+                "ToolCallIdFingerprint");
+    }
+
+    [Fact]
+    public async Task RetrieveCodeLogic_Search_ExposesRemainingBudgetAfterAcceptedCallAsync()
+    {
+        await using RetrievalHarness harness = await RetrievalHarness.CreateAsync();
+
+        Pass2CodeLogicRetrievalResult result = await harness.Service.RetrieveAsync(
+            harness.JobId,
+            new Pass2CodeLogicRetrievalRequest(
+                Pass2CodeLogicRetrievalOperation.Search,
+                queryText: "ledger"));
+
+        Assert.Equal(Pass2CodeLogicRetrievalOutcome.Accepted, result.Outcome);
+        Assert.Equal(Pass2RetrievalContracts.MaxCalls - 1, result.RemainingBudget.Calls);
+        Assert.Equal(
+            Pass2RetrievalContracts.MaxResults - result.Items.Count,
+            result.RemainingBudget.Results);
+        Assert.Equal(
+            Pass2RetrievalContracts.MaxAdditionalDocuments,
+            result.RemainingBudget.AdditionalDocuments);
+        Assert.Equal(
+            Pass2RetrievalContracts.MaxSectionsPerDocument,
+            result.RemainingBudget.SectionsPerDocument);
+        Assert.InRange(
+            result.RemainingBudget.ReturnedUtf8Bytes,
+            1,
+            Pass2RetrievalContracts.MaxReturnedUtf8Bytes - 1);
+    }
+
+    [Fact]
+    public async Task RetrieveCodeLogic_SearchHandleChangesAcrossProviderAttemptsAsync()
+    {
+        await using RetrievalHarness harness = await RetrievalHarness.CreateAsync();
+        Pass2CodeLogicRetrievalService service = Assert.IsType<Pass2CodeLogicRetrievalService>(
+            harness.Service);
+        Pass2CodeLogicRetrievalRequest request = new(
+            Pass2CodeLogicRetrievalOperation.Search,
+            queryText: "consumer");
+
+        Pass2CodeLogicRetrievalResult first = await service.RetrieveAsync(
+            harness.JobId,
+            new Pass2RetrievalCallIdentity(1, 1, new string('a', 64)),
+            request,
+            CancellationToken.None);
+        await harness.AdvanceToSecondAttemptAsync();
+
+        Pass2CodeLogicRetrievalResult retry = await service.RetrieveAsync(
+            harness.JobId,
+            new Pass2RetrievalCallIdentity(2, 2, new string('b', 64)),
+            request,
+            CancellationToken.None);
+
+        Assert.Equal(Pass2CodeLogicRetrievalOutcome.Accepted, first.Outcome);
+        Assert.Equal(Pass2CodeLogicRetrievalOutcome.Accepted, retry.Outcome);
+        string[] firstHandles = first.Items.Select(item => item.OpaqueHandle).ToArray();
+        string[] retryHandles = retry.Items.Select(item => item.OpaqueHandle).ToArray();
+        Assert.False(firstHandles.SequenceEqual(retryHandles));
+    }
+
+    [Fact]
+    public async Task RetrieveCodeLogic_StaleAnchorHandleAfterEvidenceChange_IsRefusedAsync()
+    {
+        await using RetrievalHarness harness = await RetrievalHarness.CreateAsync();
+        Pass2CodeLogicRetrievalResult search = await harness.Service.RetrieveAsync(
+            harness.JobId,
+            new Pass2CodeLogicRetrievalRequest(
+                Pass2CodeLogicRetrievalOperation.Search,
+                queryText: "ledger"));
+        Pass2CodeLogicRetrievalItem section = search.Items.First(
+            item => item.Kind == Pass2CodeLogicRetrievalItemKind.Section);
+        Pass2CodeLogicRetrievalResult anchors = await harness.Service.RetrieveAsync(
+            harness.JobId,
+            new Pass2CodeLogicRetrievalRequest(
+                Pass2CodeLogicRetrievalOperation.SourceAnchors,
+                opaqueHandles: [section.OpaqueHandle]));
+        Pass2CodeLogicRetrievalItem anchor = anchors.Items.First(
+            item => item.Kind == Pass2CodeLogicRetrievalItemKind.SourceAnchor);
+        SourceAnchor persisted = await harness.Context.SourceAnchors
+            .AsNoTracking()
+            .SingleAsync(value => value.Id == anchor.SourceAnchorId);
+        string changedPath = persisted.RepositoryRelativePath + "/changed";
+        await harness.Context.Database.ExecuteSqlInterpolatedAsync(
+            $"UPDATE \"SourceAnchors\" SET \"RepositoryRelativePath\" = {changedPath} WHERE \"Id\" = {persisted.Id}");
+        harness.Context.ChangeTracker.Clear();
+
+        Pass2CodeLogicRetrievalResult result = await harness.Service.RetrieveAsync(
+            harness.JobId,
+            new Pass2CodeLogicRetrievalRequest(
+                Pass2CodeLogicRetrievalOperation.SourceExcerpt,
+                opaqueHandles: [anchor.OpaqueHandle],
+                containedByteOffset: 0,
+                containedByteLength: 6));
+
+        Assert.Equal(Pass2CodeLogicRetrievalOutcome.Refused, result.Outcome);
+        Assert.Empty(result.Items);
+        Assert.Equal(0, harness.SourceReader.ReadCalls);
+    }
+
+    [Fact]
+    public async Task RetrieveCodeLogic_AnchorHandleChangesButVisibleByteCountRemainsExactWhenEvidenceChangesAsync()
+    {
+        await using RetrievalHarness harness = await RetrievalHarness.CreateAsync();
+        Pass2CodeLogicRetrievalResult search = await harness.Service.RetrieveAsync(
+            harness.JobId,
+            new Pass2CodeLogicRetrievalRequest(
+                Pass2CodeLogicRetrievalOperation.Search,
+                queryText: "ledger"));
+        Pass2CodeLogicRetrievalItem section = search.Items.First(
+            item => item.Kind == Pass2CodeLogicRetrievalItemKind.Section);
+        Pass2CodeLogicRetrievalResult before = await harness.Service.RetrieveAsync(
+            harness.JobId,
+            new Pass2CodeLogicRetrievalRequest(
+                Pass2CodeLogicRetrievalOperation.SourceAnchors,
+                opaqueHandles: [section.OpaqueHandle]));
+        Pass2CodeLogicRetrievalItem oldAnchor = before.Items.First(
+            item => item.Kind == Pass2CodeLogicRetrievalItemKind.SourceAnchor);
+        SourceAnchor persisted = await harness.Context.SourceAnchors
+            .AsNoTracking()
+            .SingleAsync(value => value.Id == oldAnchor.SourceAnchorId);
+        string changedPath = persisted.RepositoryRelativePath + "/changed";
+        await harness.Context.Database.ExecuteSqlInterpolatedAsync(
+            $"UPDATE \"SourceAnchors\" SET \"RepositoryRelativePath\" = {changedPath} WHERE \"Id\" = {persisted.Id}");
+        harness.Context.ChangeTracker.Clear();
+
+        Pass2CodeLogicRetrievalResult after = await harness.Service.RetrieveAsync(
+            harness.JobId,
+            new Pass2CodeLogicRetrievalRequest(
+                Pass2CodeLogicRetrievalOperation.SourceAnchors,
+                opaqueHandles: [section.OpaqueHandle]));
+        Pass2CodeLogicRetrievalItem newAnchor = after.Items.First(
+            item => item.Kind == Pass2CodeLogicRetrievalItemKind.SourceAnchor);
+
+        Assert.NotEqual(oldAnchor.OpaqueHandle, newAnchor.OpaqueHandle);
+        Assert.Equal(
+            CanonicalProviderVisibleUtf8Bytes(oldAnchor),
+            oldAnchor.ReturnedUtf8Bytes);
+        Assert.Equal(
+            CanonicalProviderVisibleUtf8Bytes(newAnchor),
+            newAnchor.ReturnedUtf8Bytes);
+        Assert.Equal(oldAnchor.ReturnedUtf8Bytes, newAnchor.ReturnedUtf8Bytes);
+    }
+
+    [Fact]
     public async Task RetrieveCodeLogic_Sections_UnknownOpaqueHandleIsClosedRefusalAsync()
     {
         await using RetrievalHarness harness = await RetrievalHarness.CreateAsync();
@@ -480,6 +1035,31 @@ public sealed class RetrieveCodeLogicContractTests
 
         internal IPass2CodeLogicRetrievalService Service { get; }
 
+        internal async Task AdvanceToSecondAttemptAsync()
+        {
+            Pass2JobExecution job = await Context.Pass2JobExecutions
+                .SingleAsync(value => value.Id == JobId);
+            Guid leaseToken = job.LeaseToken ?? throw new InvalidOperationException(
+                "The retrieval fixture must have a Running lease before attempt transition.");
+            DateTimeOffset scheduledAt = DateTimeOffset.UtcNow;
+            DateTimeOffset nextAttemptAt = scheduledAt.AddMinutes(1);
+            job.ScheduleRetry(
+                job.StateVersion,
+                leaseToken,
+                nextAttemptAt,
+                ScanJobFailureCategory.ProviderTransient,
+                "t024-test-retry",
+                scheduledAt);
+            await Context.SaveChangesAsync();
+
+            job.RecoverDueRetry(job.StateVersion, nextAttemptAt);
+            job.AcquireLease(
+                Guid.NewGuid(),
+                nextAttemptAt.AddMinutes(10),
+                nextAttemptAt);
+            await Context.SaveChangesAsync();
+        }
+
         internal static async Task<RetrievalHarness> CreateAsync()
         {
             ExactCrossRepositoryTestFixture fixture =
@@ -489,13 +1069,24 @@ public sealed class RetrieveCodeLogicContractTests
             {
                 object seed = await InvokeAuthoritativeSeedAsync(context, fixture);
                 Pass1PairExecution pair = GetProperty<Pass1PairExecution>(seed, "Pair");
-                RepositoryAccessScope scope = GetProperty<RepositoryAccessScope>(seed, "Scope");
+                RepositoryAccessScope seededScope = GetProperty<RepositoryAccessScope>(seed, "Scope");
+                RepositoryAccessScope scope = new(
+                    seededScope.AuthorizedRepositoryIds,
+                    new AllowAllAuthorizationVerifier());
                 await AddSearchableSectionsAsync(context, seed);
 
                 PreparedPass2StartResult start = await new PreparedPass2Store(context)
                     .StartAsync(pair.Id, scope);
                 Assert.Equal(PreparedPass2StartOutcome.Created, start.Outcome);
                 Pass2JobExecution job = await context.Pass2JobExecutions.SingleAsync();
+                DateTimeOffset leaseStartedAt = DateTimeOffset.UtcNow;
+                job.AcquireLease(
+                    Guid.NewGuid(),
+                    leaseStartedAt.AddMinutes(10),
+                    leaseStartedAt);
+                await context.SaveChangesAsync();
+                Assert.Equal(Pass2JobExecutionState.Running, job.State);
+                Assert.NotNull(job.LeaseToken);
                 Assert.Equal(1, await context.Pass2RetrievalBudgets.CountAsync());
                 Assert.Equal(3, await context.DocumentSections.CountAsync());
 
@@ -616,6 +1207,33 @@ public sealed class RetrieveCodeLogicContractTests
         }
     }
 
+    private sealed class AllowAllAuthorizationVerifier : IRepositoryAuthorizationVerifier
+    {
+        public ValueTask<bool> HasCurrentAccessAsync(
+            IReadOnlyCollection<Guid> requiredRepositoryIds,
+            CancellationToken cancellationToken = default) =>
+            ValueTask.FromResult(true);
+    }
+
     private static Type? FindService() =>
         typeof(Pass2RetrievalContracts).Assembly.GetType(ServiceTypeName, throwOnError: false);
+
+    private static int CanonicalProviderVisibleUtf8Bytes(
+        Pass2CodeLogicRetrievalItem item)
+    {
+        string json = JsonSerializer.Serialize(new
+        {
+            opaqueHandle = item.OpaqueHandle,
+            kind = item.Kind.ToString(),
+            documentVersionId = item.DocumentVersionId,
+            sectionId = item.SectionId,
+            sourceAnchorId = item.SourceAnchorId,
+            edgeId = item.EdgeId,
+            byteStart = item.ByteStart,
+            byteEnd = item.ByteEnd,
+            contentMarkdown = item.ContentMarkdown,
+            excerpt = item.Excerpt,
+        });
+        return Encoding.UTF8.GetByteCount(json);
+    }
 }

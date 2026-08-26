@@ -15,6 +15,17 @@ namespace Vulgata.Infrastructure.Data.Migrations
     [Migration("20260826022909_ExactCrossRepositoryFlowPass2")]
     partial class ExactCrossRepositoryFlowPass2
     {
+        private static string LowerHexCheck(string column)
+        {
+            string stripped = string.Concat(Enumerable.Repeat("replace(", 16)) + column;
+            foreach (char character in "0123456789abcdef")
+            {
+                stripped += $", '{character}', '')";
+            }
+
+            return $"length({column}) = 64 AND lower({column}) = {column} AND length({stripped}) = 0";
+        }
+
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -1691,11 +1702,28 @@ namespace Vulgata.Infrastructure.Data.Migrations
                         .HasColumnType("character(64)")
                         .IsFixedLength();
 
+                    b.Property<string>("FailureCategory")
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<string>("FailureCode")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
                     b.Property<Guid>("FlowGroupId")
                         .HasColumnType("uuid");
 
                     b.Property<int>("GroupOrder")
                         .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset?>("LeaseExpiresAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("LeaseToken")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("NextAttemptAt")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<Guid>("Pass2ExecutionId")
                         .HasColumnType("uuid");
@@ -1704,6 +1732,9 @@ namespace Vulgata.Infrastructure.Data.Migrations
                         .IsRequired()
                         .HasMaxLength(32)
                         .HasColumnType("character varying(32)");
+
+                    b.Property<DateTimeOffset>("StateChangedAt")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<long>("StateVersion")
                         .IsConcurrencyToken()
@@ -1719,7 +1750,14 @@ namespace Vulgata.Infrastructure.Data.Migrations
                     b.HasIndex("Pass2ExecutionId", "GroupOrder")
                         .IsUnique();
 
-                    b.ToTable("Pass2JobExecutions", "vulgata");
+                    b.ToTable("Pass2JobExecutions", "vulgata", t =>
+                        {
+                            t.HasCheckConstraint("CK_Pass2JobExecutions_Bounds", "\"GroupOrder\" BETWEEN 1 AND 10 AND \"AttemptCount\" BETWEEN 0 AND 2 AND \"StateVersion\" >= 0");
+
+                            t.HasCheckConstraint("CK_Pass2JobExecutions_FailureShape", "(\"FailureCategory\" IS NULL) = (\"FailureCode\" IS NULL)");
+
+                            t.HasCheckConstraint("CK_Pass2JobExecutions_StateShape", $"(\"State\" = 'Running' AND \"LeaseToken\" IS NOT NULL AND \"LeaseExpiresAt\" IS NOT NULL AND \"NextAttemptAt\" IS NULL) OR (\"State\" = 'RetryScheduled' AND \"LeaseToken\" IS NULL AND \"LeaseExpiresAt\" IS NULL AND \"NextAttemptAt\" IS NOT NULL) OR (\"State\" IN ('Pending','Failed','Cancelled') AND \"LeaseToken\" IS NULL AND \"LeaseExpiresAt\" IS NULL AND \"NextAttemptAt\" IS NULL) OR (\"State\" = 'Completed' AND \"LeaseToken\" IS NULL AND \"LeaseExpiresAt\" IS NULL AND \"NextAttemptAt\" IS NULL AND \"CommittedDocumentVersionId\" IS NOT NULL AND {LowerHexCheck("\"CompletionFingerprint\"")})");
+                        });
                 });
 
             modelBuilder.Entity("Vulgata.Core.Entities.Pass2Omission", b =>
@@ -1758,7 +1796,7 @@ namespace Vulgata.Infrastructure.Data.Migrations
 
             modelBuilder.Entity("Vulgata.Core.Entities.Pass2RetrievalBudget", b =>
                 {
-                    b.Property<Guid>("Id")
+                    b.Property<Guid>("Pass2JobExecutionId")
                         .HasColumnType("uuid");
 
                     b.Property<int>("AdditionalDocumentCount")
@@ -1766,9 +1804,6 @@ namespace Vulgata.Infrastructure.Data.Migrations
 
                     b.Property<int>("CallsReserved")
                         .HasColumnType("integer");
-
-                    b.Property<Guid>("Pass2JobExecutionId")
-                        .HasColumnType("uuid");
 
                     b.Property<int>("ResultsReturned")
                         .HasColumnType("integer");
@@ -1785,12 +1820,17 @@ namespace Vulgata.Infrastructure.Data.Migrations
                         .IsConcurrencyToken()
                         .HasColumnType("bigint");
 
-                    b.HasKey("Id");
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
 
-                    b.HasIndex("Pass2JobExecutionId")
-                        .IsUnique();
+                    b.HasKey("Pass2JobExecutionId");
 
-                    b.ToTable("Pass2RetrievalBudgets", "vulgata");
+                    b.ToTable("Pass2RetrievalBudgets", "vulgata", t =>
+                        {
+                            t.HasCheckConstraint("CK_Pass2RetrievalBudgets_Bounds", "\"CallsReserved\" BETWEEN 0 AND 8 AND \"ResultsReturned\" BETWEEN 0 AND 10 AND \"AdditionalDocumentCount\" BETWEEN 0 AND 4 AND \"ReturnedUtf8Bytes\" BETWEEN 0 AND 65536 AND \"StateVersion\" >= 0");
+
+                            t.HasCheckConstraint("CK_Pass2RetrievalBudgets_State", "\"State\" IN ('Available','Exhausted') AND ((\"CallsReserved\" = 8 AND \"State\" = 'Exhausted') OR (\"CallsReserved\" < 8 AND \"State\" = 'Available'))");
+                        });
                 });
 
             modelBuilder.Entity("Vulgata.Core.Entities.Pass2RetrievalReceipt", b =>
@@ -1807,6 +1847,14 @@ namespace Vulgata.Infrastructure.Data.Migrations
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<int>("NewAdditionalDocumentCount")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Operation")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
                     b.Property<Guid>("Pass2JobExecutionId")
                         .HasColumnType("uuid");
 
@@ -1816,17 +1864,44 @@ namespace Vulgata.Infrastructure.Data.Migrations
                         .HasColumnType("character(64)")
                         .IsFixedLength();
 
+                    b.Property<int>("ResultCount")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("ResultSetFingerprint")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character(64)")
+                        .IsFixedLength();
+
+                    b.Property<int>("ReturnedUtf8Bytes")
+                        .HasColumnType("integer");
+
                     b.Property<string>("State")
                         .IsRequired()
                         .HasMaxLength(32)
                         .HasColumnType("character varying(32)");
+
+                    b.Property<string>("ToolCallIdFingerprint")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character(64)")
+                        .IsFixedLength();
 
                     b.HasKey("Id");
 
                     b.HasIndex("Pass2JobExecutionId", "CallOrdinal")
                         .IsUnique();
 
-                    b.ToTable("Pass2RetrievalReceipts", "vulgata");
+                    b.ToTable("Pass2RetrievalReceipts", "vulgata", t =>
+                        {
+                            t.HasCheckConstraint("CK_Pass2RetrievalReceipts_Bounds", "\"AttemptOrdinal\" BETWEEN 1 AND 2 AND \"CallOrdinal\" BETWEEN 1 AND 8 AND \"ResultCount\" BETWEEN 0 AND 10 AND \"ReturnedUtf8Bytes\" BETWEEN 0 AND 65536 AND \"NewAdditionalDocumentCount\" BETWEEN 0 AND 4");
+
+                            t.HasCheckConstraint("CK_Pass2RetrievalReceipts_ClosedValues", "\"State\" IN ('Accepted','NoResults','BoundExceeded','Refused','Unavailable') AND \"Operation\" IN ('Search','Sections','SourceAnchors','SourceExcerpt','RelatedDocuments')");
+
+                            t.HasCheckConstraint("CK_Pass2RetrievalReceipts_Fingerprints", $"{LowerHexCheck("\"ToolCallIdFingerprint\"")} AND {LowerHexCheck("\"RequestFingerprint\"")} AND {LowerHexCheck("\"ResultSetFingerprint\"")}");
+
+                            t.HasCheckConstraint("CK_Pass2RetrievalReceipts_OutcomeDeltas", "\"State\" = 'Accepted' OR (\"ResultCount\" = 0 AND \"ReturnedUtf8Bytes\" = 0 AND \"NewAdditionalDocumentCount\" = 0)");
+                        });
                 });
 
             modelBuilder.Entity("Vulgata.Core.Entities.Pass2RetrievalResult", b =>
@@ -1837,7 +1912,25 @@ namespace Vulgata.Infrastructure.Data.Migrations
                     b.Property<int>("AttemptOrdinal")
                         .HasColumnType("integer");
 
+                    b.Property<long?>("ByteEnd")
+                        .HasColumnType("bigint");
+
+                    b.Property<long?>("ByteStart")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DescriptorFingerprint")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character(64)")
+                        .IsFixedLength();
+
                     b.Property<Guid>("DocumentVersionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("EdgeId")
                         .HasColumnType("uuid");
 
                     b.Property<string>("EvidenceFingerprint")
@@ -1846,14 +1939,34 @@ namespace Vulgata.Infrastructure.Data.Migrations
                         .HasColumnType("character(64)")
                         .IsFixedLength();
 
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
                     b.Property<Guid>("Pass2JobExecutionId")
                         .HasColumnType("uuid");
 
                     b.Property<Guid>("ReceiptId")
                         .HasColumnType("uuid");
 
+                    b.Property<Guid>("RepositoryId")
+                        .HasColumnType("uuid");
+
                     b.Property<int>("ResultOrdinal")
                         .HasColumnType("integer");
+
+                    b.Property<int>("ReturnedUtf8Bytes")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("ScanRunId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("SectionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("SourceAnchorId")
+                        .HasColumnType("uuid");
 
                     b.Property<string>("State")
                         .IsRequired()
@@ -1869,7 +1982,16 @@ namespace Vulgata.Infrastructure.Data.Migrations
                     b.HasIndex("ReceiptId", "ResultOrdinal")
                         .IsUnique();
 
-                    b.ToTable("Pass2RetrievalResults", "vulgata");
+                    b.ToTable("Pass2RetrievalResults", "vulgata", t =>
+                        {
+                            t.HasCheckConstraint("CK_Pass2RetrievalResults_Bounds", "\"AttemptOrdinal\" BETWEEN 1 AND 2 AND \"ResultOrdinal\" BETWEEN 1 AND 10 AND \"ReturnedUtf8Bytes\" BETWEEN 0 AND 65536");
+
+                            t.HasCheckConstraint("CK_Pass2RetrievalResults_ClosedValues", "\"State\" = 'Admitted' AND \"Kind\" IN ('Document','Section','SourceAnchor','SourceExcerpt','Relationship')");
+
+                            t.HasCheckConstraint("CK_Pass2RetrievalResults_Coordinates", "(\"Kind\" = 'Document' AND \"SectionId\" IS NULL AND \"SourceAnchorId\" IS NULL AND \"EdgeId\" IS NULL AND \"ByteStart\" IS NULL AND \"ByteEnd\" IS NULL) OR (\"Kind\" = 'Section' AND \"SectionId\" IS NOT NULL AND \"SourceAnchorId\" IS NULL AND \"EdgeId\" IS NULL AND \"ByteStart\" IS NULL AND \"ByteEnd\" IS NULL) OR (\"Kind\" = 'SourceAnchor' AND \"SectionId\" IS NULL AND \"SourceAnchorId\" IS NOT NULL AND \"EdgeId\" IS NULL AND \"ByteStart\" IS NULL AND \"ByteEnd\" IS NULL) OR (\"Kind\" = 'SourceExcerpt' AND \"SectionId\" IS NULL AND \"SourceAnchorId\" IS NOT NULL AND \"EdgeId\" IS NULL AND \"ByteStart\" >= 0 AND \"ByteEnd\" > \"ByteStart\") OR (\"Kind\" = 'Relationship' AND \"SectionId\" IS NULL AND \"SourceAnchorId\" IS NULL AND \"EdgeId\" IS NOT NULL AND \"ByteStart\" IS NULL AND \"ByteEnd\" IS NULL)");
+
+                            t.HasCheckConstraint("CK_Pass2RetrievalResults_Fingerprints", $"{LowerHexCheck("\"DescriptorFingerprint\"")} AND {LowerHexCheck("\"EvidenceFingerprint\"")}");
+                        });
                 });
 
             modelBuilder.Entity("Vulgata.Core.Entities.PendingContextChange", b =>

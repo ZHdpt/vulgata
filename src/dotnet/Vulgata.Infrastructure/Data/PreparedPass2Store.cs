@@ -3,6 +3,7 @@ using System.Security.Cryptography;
 using System.Text;
 
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
 using Vulgata.Core.DomainServices;
 using Vulgata.Core.Entities;
 
@@ -28,11 +29,419 @@ public sealed record PreparedPass2StartResult(
     int RetrievalBudgetCount,
     bool IsReplay);
 
+internal sealed record Pass2RetrievalReservation(
+    bool IsReserved,
+    int AttemptOrdinal,
+    int CallOrdinal,
+    string ToolCallIdFingerprint,
+    string RequestFingerprint,
+    long JobStateVersion,
+    Guid LeaseToken,
+    DateTimeOffset LeaseExpiresAt,
+    Pass2CodeLogicRetrievalRemainingBudget RemainingBudget)
+{
+    internal Func<CancellationToken, Task<bool>>? AdmissionAuthorityCheck { get; init; }
+}
+
+internal sealed record Pass2ExplicitRetrievalResolution(
+    Pass2RetrievalReservation? Reservation,
+    Pass2CodeLogicRetrievalResult? CompletedResult);
+
 public sealed class PreparedPass2Store(VulgataDbContext dbContext)
 {
     private const int _maxFlowGroups = 10;
     private readonly VulgataDbContext _dbContext = dbContext ??
         throw new ArgumentNullException(nameof(dbContext));
+
+    internal async Task<Pass2RetrievalReservation> ReserveRetrievalAsync(
+        Guid pass2JobExecutionId,
+        Pass2CodeLogicRetrievalRequest request,
+        CancellationToken cancellationToken)
+    {
+        for (int attempt = 1; ; attempt++)
+        {
+            try
+            {
+                return await ReserveRetrievalOnceAsync(
+                    pass2JobExecutionId,
+                    request,
+                    cancellationToken).ConfigureAwait(false);
+            }
+            catch (Exception exception) when (attempt < 3 && IsSerializationFailure(exception))
+            {
+                _dbContext.ChangeTracker.Clear();
+            }
+        }
+    }
+
+    private async Task<Pass2RetrievalReservation> ReserveRetrievalOnceAsync(
+        Guid pass2JobExecutionId,
+        Pass2CodeLogicRetrievalRequest request,
+        CancellationToken cancellationToken)
+    {
+        ArgumentOutOfRangeException.ThrowIfEqual(pass2JobExecutionId, Guid.Empty);
+        _dbContext.ChangeTracker.Clear();
+        await using var transaction = await _dbContext.Database.BeginTransactionAsync(
+            IsolationLevel.Serializable,
+            cancellationToken).ConfigureAwait(false);
+        Pass2RetrievalBudget? budget = await LockedBudgetQuery(pass2JobExecutionId)
+            .SingleOrDefaultAsync(cancellationToken).ConfigureAwait(false);
+        Pass2JobExecution? job = await _dbContext.Pass2JobExecutions.AsNoTracking()
+            .SingleOrDefaultAsync(value => value.Id == pass2JobExecutionId, cancellationToken)
+            .ConfigureAwait(false);
+        DateTimeOffset now = DateTimeOffset.UtcNow;
+        if (budget is null || job is null || job.State != Pass2JobExecutionState.Running ||
+            job.AttemptCount is < 1 or > 2 || job.LeaseToken is null ||
+            job.LeaseExpiresAt is null || job.LeaseExpiresAt <= now)
+        {
+            await transaction.RollbackAsync(CancellationToken.None).ConfigureAwait(false);
+            return new(false, 0, 0, string.Empty, string.Empty, 0, Guid.Empty,
+                DateTimeOffset.MinValue, EmptyRemainingBudget());
+        }
+
+        int attemptOrdinal = Math.Max(1, job.AttemptCount);
+        if (budget.CallsReserved >= Pass2RetrievalContracts.MaxCalls)
+        {
+            Pass2CodeLogicRetrievalRemainingBudget remaining = RemainingBudget(budget);
+            await transaction.RollbackAsync(CancellationToken.None).ConfigureAwait(false);
+            _dbContext.ChangeTracker.Clear();
+            return new(false, attemptOrdinal, 0, string.Empty, string.Empty,
+                job.StateVersion, job.LeaseToken.Value, job.LeaseExpiresAt.Value, remaining);
+        }
+
+        int callOrdinal = budget.ReserveCall(DateTimeOffset.UtcNow);
+        string requestFingerprint = FingerprintRequest(request);
+        string toolCallIdFingerprint = LowerSha256(string.Join(
+            '\n',
+            "pass2-automatic-tool-call/1.0",
+            pass2JobExecutionId.ToString("D"),
+            attemptOrdinal.ToString(System.Globalization.CultureInfo.InvariantCulture),
+            callOrdinal.ToString(System.Globalization.CultureInfo.InvariantCulture)));
+        await _dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        Pass2CodeLogicRetrievalRemainingBudget reservedRemaining = RemainingBudget(budget);
+        await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+        _dbContext.ChangeTracker.Clear();
+        return new(
+            true,
+            attemptOrdinal,
+            callOrdinal,
+            toolCallIdFingerprint,
+            requestFingerprint,
+            job.StateVersion,
+            job.LeaseToken.Value,
+            job.LeaseExpiresAt.Value,
+            reservedRemaining);
+    }
+
+    internal async Task<Pass2ExplicitRetrievalResolution> ResolveExplicitRetrievalAsync(
+        Guid pass2JobExecutionId,
+        Pass2RetrievalCallIdentity identity,
+        Pass2CodeLogicRetrievalRequest request,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(identity);
+        ArgumentNullException.ThrowIfNull(request);
+        _dbContext.ChangeTracker.Clear();
+        await using var transaction = await _dbContext.Database.BeginTransactionAsync(
+            IsolationLevel.Serializable,
+            cancellationToken).ConfigureAwait(false);
+        Pass2RetrievalBudget? budget = await LockedBudgetQuery(pass2JobExecutionId)
+            .SingleOrDefaultAsync(cancellationToken).ConfigureAwait(false);
+        Pass2JobExecution? job = await _dbContext.Pass2JobExecutions.AsNoTracking()
+            .SingleOrDefaultAsync(value => value.Id == pass2JobExecutionId, cancellationToken)
+            .ConfigureAwait(false);
+        DateTimeOffset now = DateTimeOffset.UtcNow;
+        if (budget is null || job is null || job.State != Pass2JobExecutionState.Running ||
+            job.LeaseToken is null || job.LeaseExpiresAt is null || job.LeaseExpiresAt <= now ||
+            identity.AttemptOrdinal != job.AttemptCount)
+        {
+            await transaction.RollbackAsync(CancellationToken.None).ConfigureAwait(false);
+            _dbContext.ChangeTracker.Clear();
+            return new(null, Pass2CodeLogicRetrievalResult.Refused());
+        }
+
+        string requestFingerprint = FingerprintRequest(request);
+        Pass2RetrievalReceipt? receipt = await _dbContext.Pass2RetrievalReceipts.AsNoTracking()
+            .SingleOrDefaultAsync(
+                value => value.Pass2JobExecutionId == pass2JobExecutionId &&
+                    value.CallOrdinal == identity.CallOrdinal,
+                cancellationToken).ConfigureAwait(false);
+        if (receipt is not null)
+        {
+            if (receipt.AttemptOrdinal != identity.AttemptOrdinal ||
+                !StringComparer.Ordinal.Equals(
+                    receipt.ToolCallIdFingerprint,
+                    identity.ToolCallIdFingerprint) ||
+                !StringComparer.Ordinal.Equals(receipt.RequestFingerprint, requestFingerprint))
+            {
+                await transaction.RollbackAsync(CancellationToken.None).ConfigureAwait(false);
+                _dbContext.ChangeTracker.Clear();
+                return new(null, Pass2CodeLogicRetrievalResult.Refused());
+            }
+
+            Pass2RetrievalResult[] persistedResults = await _dbContext.Pass2RetrievalResults
+                .AsNoTracking()
+                .Where(value => value.ReceiptId == receipt.Id)
+                .OrderBy(value => value.ResultOrdinal)
+                .ToArrayAsync(cancellationToken).ConfigureAwait(false);
+            Pass2CodeLogicRetrievalResult replay = Rehydrate(receipt, persistedResults, budget);
+            await transaction.RollbackAsync(CancellationToken.None).ConfigureAwait(false);
+            _dbContext.ChangeTracker.Clear();
+            return new(null, replay);
+        }
+
+        if (identity.CallOrdinal <= budget.CallsReserved ||
+            identity.CallOrdinal != budget.CallsReserved + 1 ||
+            budget.CallsReserved >= Pass2RetrievalContracts.MaxCalls)
+        {
+            await transaction.RollbackAsync(CancellationToken.None).ConfigureAwait(false);
+            _dbContext.ChangeTracker.Clear();
+            return new(null, Pass2CodeLogicRetrievalResult.Refused());
+        }
+
+        int callOrdinal = budget.ReserveCall(DateTimeOffset.UtcNow);
+        await _dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        Pass2RetrievalReservation reservation = new(
+            true,
+            identity.AttemptOrdinal,
+            callOrdinal,
+            identity.ToolCallIdFingerprint,
+            requestFingerprint,
+            job.StateVersion,
+            job.LeaseToken.Value,
+            job.LeaseExpiresAt.Value,
+            RemainingBudget(budget));
+        await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+        _dbContext.ChangeTracker.Clear();
+        return new(reservation, null);
+    }
+
+    internal async Task<Pass2CodeLogicRetrievalResult> AdmitRetrievalAsync(
+        Guid pass2JobExecutionId,
+        Pass2RetrievalReservation reservation,
+        Pass2CodeLogicRetrievalRequest request,
+        Pass2CodeLogicRetrievalResult candidate,
+        IReadOnlyCollection<Guid> initialDocumentVersionIds,
+        CancellationToken cancellationToken)
+    {
+        for (int attempt = 1; ; attempt++)
+        {
+            try
+            {
+                return await AdmitRetrievalOnceAsync(
+                    pass2JobExecutionId,
+                    reservation,
+                    request,
+                    candidate,
+                    initialDocumentVersionIds,
+                    cancellationToken).ConfigureAwait(false);
+            }
+            catch (Exception exception) when (attempt < 3 && IsSerializationFailure(exception))
+            {
+                _dbContext.ChangeTracker.Clear();
+            }
+        }
+    }
+
+    private async Task<Pass2CodeLogicRetrievalResult> AdmitRetrievalOnceAsync(
+        Guid pass2JobExecutionId,
+        Pass2RetrievalReservation reservation,
+        Pass2CodeLogicRetrievalRequest request,
+        Pass2CodeLogicRetrievalResult candidate,
+        IReadOnlyCollection<Guid> initialDocumentVersionIds,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(reservation);
+        ArgumentNullException.ThrowIfNull(request);
+        ArgumentNullException.ThrowIfNull(candidate);
+        ArgumentNullException.ThrowIfNull(initialDocumentVersionIds);
+        if (!reservation.IsReserved || reservation.AttemptOrdinal < 1 || reservation.CallOrdinal < 1)
+        {
+            throw new ArgumentException("A durable retrieval reservation is required.", nameof(reservation));
+        }
+
+        _dbContext.ChangeTracker.Clear();
+        await using var transaction = await _dbContext.Database.BeginTransactionAsync(
+            IsolationLevel.Serializable,
+            cancellationToken).ConfigureAwait(false);
+        Pass2RetrievalBudget budget = await LockedBudgetQuery(pass2JobExecutionId)
+            .SingleAsync(cancellationToken).ConfigureAwait(false);
+        Pass2JobExecution? currentJob = await _dbContext.Pass2JobExecutions.AsNoTracking()
+            .SingleOrDefaultAsync(value => value.Id == pass2JobExecutionId, cancellationToken)
+            .ConfigureAwait(false);
+        if (currentJob is null || currentJob.State != Pass2JobExecutionState.Running ||
+            currentJob.AttemptCount != reservation.AttemptOrdinal ||
+            currentJob.StateVersion != reservation.JobStateVersion ||
+            currentJob.LeaseToken != reservation.LeaseToken ||
+            currentJob.LeaseExpiresAt != reservation.LeaseExpiresAt ||
+            currentJob.LeaseExpiresAt <= DateTimeOffset.UtcNow ||
+            reservation.CallOrdinal > budget.CallsReserved ||
+            await _dbContext.Pass2RetrievalReceipts.AsNoTracking().AnyAsync(
+                value => value.Pass2JobExecutionId == pass2JobExecutionId &&
+                    value.CallOrdinal == reservation.CallOrdinal,
+                cancellationToken).ConfigureAwait(false))
+        {
+            await transaction.RollbackAsync(CancellationToken.None).ConfigureAwait(false);
+            _dbContext.ChangeTracker.Clear();
+            return Pass2CodeLogicRetrievalResult.Refused();
+        }
+
+        if (reservation.AdmissionAuthorityCheck is not null &&
+            !await reservation.AdmissionAuthorityCheck(cancellationToken).ConfigureAwait(false))
+        {
+            candidate = Pass2CodeLogicRetrievalResult.Refused();
+        }
+
+        Guid[] candidateDocumentIds = candidate.Items
+            .Select(value => value.DocumentVersionId)
+            .Distinct()
+            .ToArray();
+        int currentCandidateCount = await _dbContext.DocumentVersions.AsNoTracking()
+            .Where(value => candidateDocumentIds.Contains(value.Id) &&
+                value.SupersededById == null &&
+                _dbContext.LogicalDocuments.Any(logical =>
+                    logical.Id == value.LogicalDocumentId &&
+                    logical.CurrentVersionId == value.Id &&
+                    logical.RepositoryId == value.RepositoryId &&
+                    logical.DocumentType == DocumentType.CodeLogic))
+            .CountAsync(cancellationToken).ConfigureAwait(false);
+        if (currentCandidateCount != candidateDocumentIds.Length)
+        {
+            await transaction.RollbackAsync(CancellationToken.None).ConfigureAwait(false);
+            _dbContext.ChangeTracker.Clear();
+            return Pass2CodeLogicRetrievalResult.Refused();
+        }
+
+        Pass2CodeLogicRetrievalItem[] canonicalItems = candidate.Outcome ==
+                Pass2CodeLogicRetrievalOutcome.Accepted
+            ? candidate.Items
+                .GroupBy(value => value.OpaqueHandle, StringComparer.Ordinal)
+                .Select(grouping => grouping.First())
+                .ToArray()
+            : Array.Empty<Pass2CodeLogicRetrievalItem>();
+        if (canonicalItems.Length != candidate.Items.Count)
+        {
+            candidate = Pass2CodeLogicRetrievalResult.Accepted(canonicalItems);
+        }
+
+        int resultCount = candidate.Outcome == Pass2CodeLogicRetrievalOutcome.Accepted
+            ? canonicalItems.Length
+            : 0;
+        int returnedUtf8Bytes = candidate.Outcome == Pass2CodeLogicRetrievalOutcome.Accepted
+            ? checked(canonicalItems.Sum(value => value.ReturnedUtf8Bytes))
+            : 0;
+        Pass2RetrievalResult[] admittedResults = await _dbContext.Pass2RetrievalResults
+            .AsNoTracking()
+            .Where(value => value.Pass2JobExecutionId == pass2JobExecutionId)
+            .ToArrayAsync(cancellationToken).ConfigureAwait(false);
+        HashSet<Guid> admittedAdditionalDocuments = admittedResults
+            .Select(value => value.DocumentVersionId)
+            .Where(value => !initialDocumentVersionIds.Contains(value))
+            .ToHashSet();
+        int additionalDocuments = candidate.Outcome == Pass2CodeLogicRetrievalOutcome.Accepted
+            ? canonicalItems.Select(value => value.DocumentVersionId)
+                .Where(value => !initialDocumentVersionIds.Contains(value) &&
+                    !admittedAdditionalDocuments.Contains(value))
+                .Distinct()
+                .Count()
+            : 0;
+        bool exceedsSectionBound = canonicalItems
+            .Where(value => value.Kind == Pass2CodeLogicRetrievalItemKind.Section &&
+                value.SectionId.HasValue)
+            .GroupBy(value => value.DocumentVersionId)
+            .Any(grouping => admittedResults
+                .Where(value =>
+                    value.Kind == Pass2CodeLogicRetrievalItemKind.Section &&
+                    value.DocumentVersionId == grouping.Key)
+                .Select(value => value.ReadSectionId())
+                .Where(value => value.HasValue)
+                .Select(value => value!.Value)
+                .Concat(grouping.Select(value => value.SectionId!.Value))
+                .Distinct()
+                .Count() > Pass2RetrievalContracts.MaxSectionsPerDocument);
+        bool exceedsBound = budget.ResultsReturned + resultCount > Pass2RetrievalContracts.MaxResults ||
+            budget.ReturnedUtf8Bytes + returnedUtf8Bytes > Pass2RetrievalContracts.MaxReturnedUtf8Bytes ||
+            budget.AdditionalDocumentCount + additionalDocuments >
+                Pass2RetrievalContracts.MaxAdditionalDocuments ||
+            exceedsSectionBound;
+        Pass2RetrievalReceiptState receiptState = exceedsBound
+            ? Pass2RetrievalReceiptState.BoundExceeded
+            : ReceiptState(candidate.Outcome);
+        Guid receiptId = DeriveId(
+            "pass2-retrieval-receipt/1.0",
+            pass2JobExecutionId,
+            GuidFromOrdinal(reservation.AttemptOrdinal),
+            GuidFromOrdinal(reservation.CallOrdinal));
+        Pass2RetrievalReceipt receipt = Pass2RetrievalReceipt.Create(
+            receiptId,
+            pass2JobExecutionId,
+            reservation.AttemptOrdinal,
+            reservation.CallOrdinal,
+            reservation.ToolCallIdFingerprint,
+            receiptState,
+            request.Operation,
+            reservation.RequestFingerprint,
+            exceedsBound ? 0 : resultCount,
+            exceedsBound ? 0 : returnedUtf8Bytes,
+            exceedsBound ? 0 : additionalDocuments,
+            ResultSetFingerprint(exceedsBound ? Array.Empty<Pass2CodeLogicRetrievalItem>() : candidate.Items),
+            DateTimeOffset.UtcNow);
+        _dbContext.Pass2RetrievalReceipts.Add(receipt);
+
+        if (!exceedsBound && candidate.Outcome == Pass2CodeLogicRetrievalOutcome.Accepted)
+        {
+            budget.Admit(
+                resultCount,
+                additionalDocuments,
+                returnedUtf8Bytes,
+                DateTimeOffset.UtcNow);
+            Guid[] documentVersionIds = candidate.Items
+                .Select(value => value.DocumentVersionId)
+                .Distinct()
+                .ToArray();
+            Dictionary<Guid, DocumentVersion> documents = await _dbContext.DocumentVersions
+                .AsNoTracking()
+                .Where(value => documentVersionIds.Contains(value.Id))
+                .ToDictionaryAsync(value => value.Id, cancellationToken).ConfigureAwait(false);
+            DateTimeOffset createdAt = receipt.CreatedAt;
+            for (int index = 0; index < candidate.Items.Count; index++)
+            {
+                Pass2CodeLogicRetrievalItem item = candidate.Items[index];
+                DocumentVersion document = documents[item.DocumentVersionId];
+                int resultOrdinal = index + 1;
+                _dbContext.Pass2RetrievalResults.Add(Pass2RetrievalResult.CreateAdmitted(
+                    DeriveId(
+                        "pass2-retrieval-result/1.0",
+                        receiptId,
+                        GuidFromOrdinal(resultOrdinal)),
+                    receiptId,
+                    pass2JobExecutionId,
+                    reservation.AttemptOrdinal,
+                    resultOrdinal,
+                    item.Kind,
+                    item.DocumentVersionId,
+                    document.RepositoryId,
+                    document.ScanRunId,
+                    item.SectionId,
+                    item.SourceAnchorId,
+                    item.EdgeId,
+                    item.ByteStart,
+                    item.ByteEnd,
+                    item.OpaqueHandle,
+                    FingerprintResult(item),
+                    item.ReturnedUtf8Bytes,
+                    createdAt));
+            }
+        }
+
+        await _dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        Pass2CodeLogicRetrievalRemainingBudget remaining = RemainingBudget(budget);
+        await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+        _dbContext.ChangeTracker.Clear();
+        return exceedsBound
+            ? Pass2CodeLogicRetrievalResult.BoundExceeded(remaining)
+            : candidate.WithRemainingBudget(remaining);
+    }
 
     public async Task<PreparedPass2StartResult> StartAsync(
         Guid pass1PairExecutionId,
@@ -126,9 +535,7 @@ public sealed class PreparedPass2Store(VulgataDbContext dbContext)
                     group.Id,
                     group.GroupOrder);
                 jobs.Add(job);
-                budgets.Add(Pass2RetrievalBudget.Create(
-                    DeriveId("pass2-retrieval-budget/1.0", job.Id),
-                    job.Id));
+                budgets.Add(Pass2RetrievalBudget.Create(job.Id, startedAt));
             }
 
             _dbContext.Pass2JobExecutions.AddRange(jobs);
@@ -262,6 +669,142 @@ public sealed class PreparedPass2Store(VulgataDbContext dbContext)
         byte[] bytes = SHA256.HashData(Encoding.UTF8.GetBytes(canonical))[..16];
         bytes[6] = (byte)((bytes[6] & 0x0f) | 0x80);
         bytes[8] = (byte)((bytes[8] & 0x3f) | 0x80);
+        return new Guid(bytes, bigEndian: true);
+    }
+
+    private IQueryable<Pass2RetrievalBudget> LockedBudgetQuery(Guid pass2JobExecutionId)
+    {
+        if (_dbContext.Database.ProviderName?.Contains("Npgsql", StringComparison.Ordinal) == true)
+        {
+            return _dbContext.Pass2RetrievalBudgets.FromSqlInterpolated(
+                $"SELECT * FROM vulgata.\"Pass2RetrievalBudgets\" WHERE \"Pass2JobExecutionId\" = {pass2JobExecutionId} FOR UPDATE");
+        }
+
+        return _dbContext.Pass2RetrievalBudgets
+            .Where(value => value.Pass2JobExecutionId == pass2JobExecutionId);
+    }
+
+    private static Pass2RetrievalReceiptState ReceiptState(
+        Pass2CodeLogicRetrievalOutcome outcome) => outcome switch
+        {
+            Pass2CodeLogicRetrievalOutcome.Accepted => Pass2RetrievalReceiptState.Accepted,
+            Pass2CodeLogicRetrievalOutcome.NoResults => Pass2RetrievalReceiptState.NoResults,
+            Pass2CodeLogicRetrievalOutcome.BoundExceeded => Pass2RetrievalReceiptState.BoundExceeded,
+            Pass2CodeLogicRetrievalOutcome.Refused => Pass2RetrievalReceiptState.Refused,
+            _ => Pass2RetrievalReceiptState.Unavailable,
+        };
+
+    private static Pass2CodeLogicRetrievalRemainingBudget RemainingBudget(
+        Pass2RetrievalBudget budget) => new(
+            Math.Max(0, Pass2RetrievalContracts.MaxCalls - budget.CallsReserved),
+            Math.Max(0, Pass2RetrievalContracts.MaxResults - budget.ResultsReturned),
+            Math.Max(
+                0,
+                Pass2RetrievalContracts.MaxAdditionalDocuments - budget.AdditionalDocumentCount),
+            Pass2RetrievalContracts.MaxSectionsPerDocument,
+            Math.Max(
+                0,
+                Pass2RetrievalContracts.MaxReturnedUtf8Bytes - budget.ReturnedUtf8Bytes));
+
+    private static Pass2CodeLogicRetrievalRemainingBudget EmptyRemainingBudget() =>
+        new(0, 0, 0, 0, 0);
+
+    private static string FingerprintRequest(Pass2CodeLogicRetrievalRequest request) =>
+        LowerSha256(string.Join(
+            '\n',
+            "pass2-retrieval-request/1.0",
+            request.Operation.ToString(),
+            request.QueryText ?? string.Empty,
+            string.Join('\n', request.OpaqueHandles),
+            request.Direction?.ToString() ?? string.Empty,
+            request.ContainedByteOffset?.ToString(
+                System.Globalization.CultureInfo.InvariantCulture) ?? string.Empty,
+            request.ContainedByteLength?.ToString(
+                System.Globalization.CultureInfo.InvariantCulture) ?? string.Empty));
+
+    private static string FingerprintResult(Pass2CodeLogicRetrievalItem item) =>
+        LowerSha256(string.Join(
+            '\n',
+            "pass2-retrieval-result/1.0",
+            item.OpaqueHandle,
+            item.Kind.ToString(),
+            item.DocumentVersionId.ToString("D"),
+            item.SectionId?.ToString("D") ?? string.Empty,
+            item.SourceAnchorId?.ToString("D") ?? string.Empty,
+            item.EdgeId?.ToString("D") ?? string.Empty,
+            item.ByteStart?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? string.Empty,
+            item.ByteEnd?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? string.Empty,
+            item.ReturnedUtf8Bytes.ToString(System.Globalization.CultureInfo.InvariantCulture)));
+
+    private static string ResultSetFingerprint(
+        IReadOnlyCollection<Pass2CodeLogicRetrievalItem> items) =>
+        LowerSha256(string.Join(
+            '\n',
+            new[] { "pass2-retrieval-result-set/1.0" }
+                .Concat(items.Select(FingerprintResult))));
+
+    private static Pass2CodeLogicRetrievalResult Rehydrate(
+        Pass2RetrievalReceipt receipt,
+        IReadOnlyCollection<Pass2RetrievalResult> persistedResults,
+        Pass2RetrievalBudget budget)
+    {
+        Pass2CodeLogicRetrievalRemainingBudget remaining = RemainingBudget(budget);
+        if (receipt.State == Pass2RetrievalReceiptState.NoResults)
+        {
+            return Pass2CodeLogicRetrievalResult.NoResults(remaining);
+        }
+
+        if (receipt.State == Pass2RetrievalReceiptState.BoundExceeded)
+        {
+            return Pass2CodeLogicRetrievalResult.BoundExceeded(remaining);
+        }
+
+        if (receipt.State == Pass2RetrievalReceiptState.Refused)
+        {
+            return Pass2CodeLogicRetrievalResult.Refused().WithRemainingBudget(remaining);
+        }
+
+        if (receipt.State == Pass2RetrievalReceiptState.Unavailable)
+        {
+            return Pass2CodeLogicRetrievalResult.Unavailable().WithRemainingBudget(remaining);
+        }
+
+        Pass2CodeLogicRetrievalItem[] items = persistedResults
+            .OrderBy(value => value.ResultOrdinal)
+            .Select(value => new Pass2CodeLogicRetrievalItem(
+                value.DescriptorFingerprint,
+                value.Kind,
+                value.DocumentVersionId,
+                value.ReturnedUtf8Bytes,
+                value.ReadSectionId(),
+                value.ReadSourceAnchorId(),
+                value.EdgeId,
+                value.ByteStart,
+                value.ByteEnd))
+            .ToArray();
+        if (items.Length != receipt.ResultCount ||
+            items.Sum(value => value.ReturnedUtf8Bytes) != receipt.ReturnedUtf8Bytes ||
+            !StringComparer.Ordinal.Equals(
+                ResultSetFingerprint(items),
+                receipt.ResultSetFingerprint))
+        {
+            return Pass2CodeLogicRetrievalResult.Refused();
+        }
+
+        return Pass2CodeLogicRetrievalResult.Accepted(items, remaining);
+    }
+
+    private static string LowerSha256(string value) =>
+        Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(value)));
+
+    private static bool IsSerializationFailure(Exception exception) =>
+        exception is PostgresException { SqlState: PostgresErrorCodes.SerializationFailure } ||
+        exception.InnerException is not null && IsSerializationFailure(exception.InnerException);
+
+    private static Guid GuidFromOrdinal(int ordinal)
+    {
+        Span<byte> bytes = stackalloc byte[16];
+        System.Buffers.Binary.BinaryPrimitives.WriteInt32BigEndian(bytes[12..], ordinal);
         return new Guid(bytes, bigEndian: true);
     }
 

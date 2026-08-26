@@ -11,6 +11,27 @@ namespace Vulgata.Infrastructure.Data.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            static string PortableLowerHex(string column)
+            {
+                string stripped = string.Concat(Enumerable.Repeat("replace(", 16)) + column;
+                foreach (char character in "0123456789abcdef")
+                {
+                    stripped += $", '{character}', '')";
+                }
+
+                return $"length({column}) = 64 AND lower({column}) = {column} AND length({stripped}) = 0";
+            }
+
+            bool isPostgreSql = ActiveProvider.Contains("Npgsql", StringComparison.Ordinal);
+            string completionFingerprintCheck = isPostgreSql
+                ? "\"CompletionFingerprint\" ~ '^[0-9a-f]{64}$'"
+                : PortableLowerHex("\"CompletionFingerprint\"");
+            string receiptFingerprintCheck = isPostgreSql
+                ? "\"ToolCallIdFingerprint\" ~ '^[0-9a-f]{64}$' AND \"RequestFingerprint\" ~ '^[0-9a-f]{64}$' AND \"ResultSetFingerprint\" ~ '^[0-9a-f]{64}$'"
+                : $"{PortableLowerHex("\"ToolCallIdFingerprint\"")} AND {PortableLowerHex("\"RequestFingerprint\"")} AND {PortableLowerHex("\"ResultSetFingerprint\"")}";
+            string resultFingerprintCheck = isPostgreSql
+                ? "\"DescriptorFingerprint\" ~ '^[0-9a-f]{64}$' AND \"EvidenceFingerprint\" ~ '^[0-9a-f]{64}$'"
+                : $"{PortableLowerHex("\"DescriptorFingerprint\"")} AND {PortableLowerHex("\"EvidenceFingerprint\"")}";
             migrationBuilder.AddColumn<Guid>(
                 name: "ExactResolutionDecisionId",
                 schema: "vulgata",
@@ -303,12 +324,21 @@ namespace Vulgata.Infrastructure.Data.Migrations
                     State = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: false),
                     AttemptCount = table.Column<int>(type: "integer", nullable: false),
                     StateVersion = table.Column<long>(type: "bigint", nullable: false),
+                    LeaseToken = table.Column<Guid>(type: "uuid", nullable: true),
+                    LeaseExpiresAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    NextAttemptAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    FailureCategory = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: true),
+                    FailureCode = table.Column<string>(type: "character varying(128)", maxLength: 128, nullable: true),
                     CommittedDocumentVersionId = table.Column<Guid>(type: "uuid", nullable: true),
-                    CompletionFingerprint = table.Column<string>(type: "character(64)", fixedLength: true, maxLength: 64, nullable: true)
+                    CompletionFingerprint = table.Column<string>(type: "character(64)", fixedLength: true, maxLength: 64, nullable: true),
+                    StateChangedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Pass2JobExecutions", x => x.Id);
+                    table.CheckConstraint("CK_Pass2JobExecutions_Bounds", "\"GroupOrder\" BETWEEN 1 AND 10 AND \"AttemptCount\" BETWEEN 0 AND 2 AND \"StateVersion\" >= 0");
+                    table.CheckConstraint("CK_Pass2JobExecutions_FailureShape", "(\"FailureCategory\" IS NULL) = (\"FailureCode\" IS NULL)");
+                    table.CheckConstraint("CK_Pass2JobExecutions_StateShape", "(\"State\" = 'Running' AND \"LeaseToken\" IS NOT NULL AND \"LeaseExpiresAt\" IS NOT NULL AND \"NextAttemptAt\" IS NULL) OR (\"State\" = 'RetryScheduled' AND \"LeaseToken\" IS NULL AND \"LeaseExpiresAt\" IS NULL AND \"NextAttemptAt\" IS NOT NULL) OR (\"State\" IN ('Pending','Failed','Cancelled') AND \"LeaseToken\" IS NULL AND \"LeaseExpiresAt\" IS NULL AND \"NextAttemptAt\" IS NULL) OR (\"State\" = 'Completed' AND \"LeaseToken\" IS NULL AND \"LeaseExpiresAt\" IS NULL AND \"NextAttemptAt\" IS NULL AND \"CommittedDocumentVersionId\" IS NOT NULL AND " + completionFingerprintCheck + ")");
                     table.ForeignKey(
                         name: "FK_Pass2JobExecutions_DocumentVersions_CommittedDocumentVersio~",
                         column: x => x.CommittedDocumentVersionId,
@@ -368,18 +398,20 @@ namespace Vulgata.Infrastructure.Data.Migrations
                 schema: "vulgata",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
                     Pass2JobExecutionId = table.Column<Guid>(type: "uuid", nullable: false),
                     State = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: false),
                     CallsReserved = table.Column<int>(type: "integer", nullable: false),
                     ResultsReturned = table.Column<int>(type: "integer", nullable: false),
                     AdditionalDocumentCount = table.Column<int>(type: "integer", nullable: false),
                     ReturnedUtf8Bytes = table.Column<int>(type: "integer", nullable: false),
-                    StateVersion = table.Column<long>(type: "bigint", nullable: false)
+                    StateVersion = table.Column<long>(type: "bigint", nullable: false),
+                    UpdatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Pass2RetrievalBudgets", x => x.Id);
+                    table.PrimaryKey("PK_Pass2RetrievalBudgets", x => x.Pass2JobExecutionId);
+                    table.CheckConstraint("CK_Pass2RetrievalBudgets_Bounds", "\"CallsReserved\" BETWEEN 0 AND 8 AND \"ResultsReturned\" BETWEEN 0 AND 10 AND \"AdditionalDocumentCount\" BETWEEN 0 AND 4 AND \"ReturnedUtf8Bytes\" BETWEEN 0 AND 65536 AND \"StateVersion\" >= 0");
+                    table.CheckConstraint("CK_Pass2RetrievalBudgets_State", "\"State\" IN ('Available','Exhausted') AND ((\"CallsReserved\" = 8 AND \"State\" = 'Exhausted') OR (\"CallsReserved\" < 8 AND \"State\" = 'Available'))");
                     table.ForeignKey(
                         name: "FK_Pass2RetrievalBudgets_Pass2JobExecutions_Pass2JobExecutionId",
                         column: x => x.Pass2JobExecutionId,
@@ -398,13 +430,23 @@ namespace Vulgata.Infrastructure.Data.Migrations
                     Pass2JobExecutionId = table.Column<Guid>(type: "uuid", nullable: false),
                     AttemptOrdinal = table.Column<int>(type: "integer", nullable: false),
                     CallOrdinal = table.Column<int>(type: "integer", nullable: false),
+                    ToolCallIdFingerprint = table.Column<string>(type: "character(64)", fixedLength: true, maxLength: 64, nullable: false),
                     State = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: false),
+                    Operation = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: false),
                     RequestFingerprint = table.Column<string>(type: "character(64)", fixedLength: true, maxLength: 64, nullable: false),
+                    ResultCount = table.Column<int>(type: "integer", nullable: false),
+                    ReturnedUtf8Bytes = table.Column<int>(type: "integer", nullable: false),
+                    NewAdditionalDocumentCount = table.Column<int>(type: "integer", nullable: false),
+                    ResultSetFingerprint = table.Column<string>(type: "character(64)", fixedLength: true, maxLength: 64, nullable: false),
                     CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Pass2RetrievalReceipts", x => x.Id);
+                    table.CheckConstraint("CK_Pass2RetrievalReceipts_Bounds", "\"AttemptOrdinal\" BETWEEN 1 AND 2 AND \"CallOrdinal\" BETWEEN 1 AND 8 AND \"ResultCount\" BETWEEN 0 AND 10 AND \"ReturnedUtf8Bytes\" BETWEEN 0 AND 65536 AND \"NewAdditionalDocumentCount\" BETWEEN 0 AND 4");
+                    table.CheckConstraint("CK_Pass2RetrievalReceipts_ClosedValues", "\"State\" IN ('Accepted','NoResults','BoundExceeded','Refused','Unavailable') AND \"Operation\" IN ('Search','Sections','SourceAnchors','SourceExcerpt','RelatedDocuments')");
+                    table.CheckConstraint("CK_Pass2RetrievalReceipts_Fingerprints", receiptFingerprintCheck);
+                    table.CheckConstraint("CK_Pass2RetrievalReceipts_OutcomeDeltas", "\"State\" = 'Accepted' OR (\"ResultCount\" = 0 AND \"ReturnedUtf8Bytes\" = 0 AND \"NewAdditionalDocumentCount\" = 0)");
                     table.ForeignKey(
                         name: "FK_Pass2RetrievalReceipts_Pass2JobExecutions_Pass2JobExecution~",
                         column: x => x.Pass2JobExecutionId,
@@ -425,12 +467,27 @@ namespace Vulgata.Infrastructure.Data.Migrations
                     AttemptOrdinal = table.Column<int>(type: "integer", nullable: false),
                     ResultOrdinal = table.Column<int>(type: "integer", nullable: false),
                     State = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: false),
+                    Kind = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: false),
                     DocumentVersionId = table.Column<Guid>(type: "uuid", nullable: false),
-                    EvidenceFingerprint = table.Column<string>(type: "character(64)", fixedLength: true, maxLength: 64, nullable: false)
+                    RepositoryId = table.Column<Guid>(type: "uuid", nullable: false),
+                    ScanRunId = table.Column<Guid>(type: "uuid", nullable: false),
+                    SectionId = table.Column<Guid>(type: "uuid", nullable: true),
+                    SourceAnchorId = table.Column<Guid>(type: "uuid", nullable: true),
+                    EdgeId = table.Column<Guid>(type: "uuid", nullable: true),
+                    ByteStart = table.Column<long>(type: "bigint", nullable: true),
+                    ByteEnd = table.Column<long>(type: "bigint", nullable: true),
+                    DescriptorFingerprint = table.Column<string>(type: "character(64)", fixedLength: true, maxLength: 64, nullable: false),
+                    EvidenceFingerprint = table.Column<string>(type: "character(64)", fixedLength: true, maxLength: 64, nullable: false),
+                    ReturnedUtf8Bytes = table.Column<int>(type: "integer", nullable: false),
+                    CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Pass2RetrievalResults", x => x.Id);
+                    table.CheckConstraint("CK_Pass2RetrievalResults_Bounds", "\"AttemptOrdinal\" BETWEEN 1 AND 2 AND \"ResultOrdinal\" BETWEEN 1 AND 10 AND \"ReturnedUtf8Bytes\" BETWEEN 0 AND 65536");
+                    table.CheckConstraint("CK_Pass2RetrievalResults_ClosedValues", "\"State\" = 'Admitted' AND \"Kind\" IN ('Document','Section','SourceAnchor','SourceExcerpt','Relationship')");
+                    table.CheckConstraint("CK_Pass2RetrievalResults_Coordinates", "(\"Kind\" = 'Document' AND \"SectionId\" IS NULL AND \"SourceAnchorId\" IS NULL AND \"EdgeId\" IS NULL AND \"ByteStart\" IS NULL AND \"ByteEnd\" IS NULL) OR (\"Kind\" = 'Section' AND \"SectionId\" IS NOT NULL AND \"SourceAnchorId\" IS NULL AND \"EdgeId\" IS NULL AND \"ByteStart\" IS NULL AND \"ByteEnd\" IS NULL) OR (\"Kind\" = 'SourceAnchor' AND \"SectionId\" IS NULL AND \"SourceAnchorId\" IS NOT NULL AND \"EdgeId\" IS NULL AND \"ByteStart\" IS NULL AND \"ByteEnd\" IS NULL) OR (\"Kind\" = 'SourceExcerpt' AND \"SectionId\" IS NULL AND \"SourceAnchorId\" IS NOT NULL AND \"EdgeId\" IS NULL AND \"ByteStart\" >= 0 AND \"ByteEnd\" > \"ByteStart\") OR (\"Kind\" = 'Relationship' AND \"SectionId\" IS NULL AND \"SourceAnchorId\" IS NULL AND \"EdgeId\" IS NOT NULL AND \"ByteStart\" IS NULL AND \"ByteEnd\" IS NULL)");
+                    table.CheckConstraint("CK_Pass2RetrievalResults_Fingerprints", resultFingerprintCheck);
                     table.ForeignKey(
                         name: "FK_Pass2RetrievalResults_DocumentVersions_DocumentVersionId",
                         column: x => x.DocumentVersionId,
@@ -650,13 +707,6 @@ namespace Vulgata.Infrastructure.Data.Migrations
                 schema: "vulgata",
                 table: "Pass2Omissions",
                 columns: new[] { "Pass2ExecutionId", "ExactResolutionDecisionId" },
-                unique: true);
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Pass2RetrievalBudgets_Pass2JobExecutionId",
-                schema: "vulgata",
-                table: "Pass2RetrievalBudgets",
-                column: "Pass2JobExecutionId",
                 unique: true);
 
             migrationBuilder.CreateIndex(

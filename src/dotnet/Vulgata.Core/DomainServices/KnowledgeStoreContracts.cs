@@ -34,6 +34,8 @@ public sealed record RepositoryAccessScope
 
     public IReadOnlyCollection<Guid> AuthorizedRepositoryIds { get; }
 
+    public bool HasLiveAuthorizationVerifier => _authorizationVerifier is not null;
+
     public bool Contains(Guid repositoryId) => AuthorizedRepositoryIds.Contains(repositoryId);
 
     public async ValueTask<bool> HasCurrentAccessAsync(
