@@ -1,0 +1,40 @@
+{
+  "schema_version": "3.0",
+  "bmad_story_key": "12-4-exact-cross-repository-flow-and-pass-2",
+  "bmad_epic_key": "12",
+  "story_path": "docs/bmad/implementation-artifacts/12-4-exact-cross-repository-flow-and-pass-2.md",
+  "proposed_feature_short_name": "exact-cross-repository-flow-pass2",
+  "stage": "specify",
+  "source_commit": "6aed7057e9e371d35c4123c0a204dd4849803eea",
+  "preflight": {
+    "branch": "demo0831/story-12-4",
+    "head": "6aed7057e9e371d35c4123c0a204dd4849803eea",
+    "repository_root": "G:/source/repos/vulgata",
+    "git_common_directory": "G:/source/repos/vulgata/.git",
+    "worktree_path": "G:/source/repos/vulgata",
+    "git_identity_sha256": "056EE72BEB553F1C2AAA2D88B2730FC47D14ABC810286CC5F98D68B1F513B17B",
+    "status_sha256": "A9419E3BE3B788512FAE579FED9BE4B064040129148FA2B3E3E2A90AB2162952",
+    "observed_at": "2026-08-25T23:59:43.5417726Z"
+  },
+  "owned_paths": [
+    "docs/bmad/implementation-artifacts/12-4-exact-cross-repository-flow-and-pass-2.md",
+    "docs/bmad/implementation-artifacts/sprint-status.yaml",
+    "docs/bmad/implementation-artifacts/workflow-activations/12-4-exact-cross-repository-flow-and-pass-2.json"
+  ],
+  "unrelated_paths": [
+    "artifacts/qualification/story-12.2/production-literal-inspection.json"
+  ],
+  "checkpoint": {
+    "checkpoint_id": "bmad-12-4-context-20260825T235943Z-753c83",
+    "stage": "context",
+    "commit_sha": null,
+    "binding_status": "pending"
+  },
+  "feature_directory": null,
+  "superseded_by_state": null,
+  "resume": {
+    "stage": "specify",
+    "reason": "Context synthesis is complete; allocate one SpecKit feature and author the bounded specification."
+  },
+  "updated_at": "2026-08-25T23:59:43.5417726Z"
+}
