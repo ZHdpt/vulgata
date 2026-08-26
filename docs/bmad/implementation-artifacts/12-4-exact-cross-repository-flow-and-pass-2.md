@@ -117,3 +117,69 @@ bounds, closed `retrieve_code_logic`, complete `GENERATED_FROM` provenance,
 immutable Documents, and Story 12.5 exclusion. No placeholder, unresolved
 clarification, or authority conflict remains. The next owner is the
 architecture-sensitive planning stage.
+
+## Plan-review preparation
+
+The architecture-sensitive SpecKit plan and its research, data model,
+quickstart, strict Business Logic result schema, exact-resolution/Flow Group,
+runtime/commit, and `retrieve_code_logic` contracts passed author self-review.
+The design deepens the accepted Story 12.1–12.3 stores and Worker execution
+seams, uses one cohesive compatibility migration, preserves deterministic and
+immutable replay behavior, and defines pure, PostgreSQL, authenticated-host,
+and approved two-Repository qualification layers.
+
+Independent plan review is mandatory because the plan materially changes Scan
+strategy through Cross-Repository Resolution, endpoint-centered grouping,
+scheduling, omission accounting, and Pass 2 transitions; adds the Worker Agent
+tools `retrieve_code_logic` and `submit_business_logic`; and retains the dated
+exact RPC/safe HTTP narrowing of PRD FR-4.5, FR-6.1, and FR-6.2. Task generation
+cannot begin until that review accepts and the user explicitly authorizes the
+accepted plan scope.
+
+### Plan review attempt 1: REVISE
+
+Independent review found two HIGH plan-owned defects. The corrected plan must
+separate pair-specific Flow Group execution identity from the cross-scan stable
+Logical Document key so later scan pairs append immutable Version Chains. It
+must also aggregate duplicate evidence for the same provider and decide
+uniqueness over distinct eligible current provider Document Versions, rather
+than treating evidence multiplicity as provider ambiguity. Both corrections
+remain inside the accepted Story 12.4 specification; all downstream definition
+and implementation stages remain unstarted.
+
+The correction now defines distinct pair-specific `FlowGroup.Id` and
+cross-scan `business-flow-logical-key/1.0` identities, including current-pointer
+locking, successor publication, endpoint evolution, replay, and concurrency.
+It also aggregates provider evidence by distinct current provider XML Document
+Version before uniqueness cardinality while retaining every contributing
+observation as normalized decision evidence. The corrected companion set passed
+the full plan self-review and is ready for plan-review attempt 2.
+
+### Plan review attempt 2: REVISE
+
+Attempt 2 confirmed the prior identity and provider-cardinality findings are
+closed. It found one new HIGH plan-owned defect: exact endpoint/consumer-entry
+decisions were still one-to-one with the existing document-level `REFERENCES`
+Edge, whose source/target/type uniqueness cannot retain multiple endpoint
+decisions between the same Documents. The plan must give exact-match decisions
+their own durable identity, allow many decisions to reuse one Document Edge,
+and seed distinct Flow Groups from those decisions with compatible replay,
+migration, and concurrency behavior.
+
+The corrected plan now models one immutable
+`CrossRepositoryResolutionDecision` per exact consumer candidate/outcome and
+one reusable graph-level `DocumentEdge` per source/target/type tuple. Multiple
+endpoint or consumer-entry decisions may share that Edge while retaining their
+own evidence contributions, fingerprints, replay identities, Flow Groups,
+omission accounting, and Worker bindings. Unresolved decisions own an
+Uncertainty and no Edge binding. The compatibility migration does not infer an
+unsafe v2 backfill from legacy one-to-one evidence. Full self-review passed;
+plan-review attempt 3 is next.
+
+### Plan review attempt 3: ACCEPT
+
+Attempt 3 accepted the complete corrected plan with no findings. All pinned
+hashes remained unchanged, the three earlier plan findings are closed, and no
+authority conflict, Constitution violation, placeholder, or unresolved design
+gap remains. The accepted scope now pauses at planned-change authorization
+`story-12-4-planned-change-authorization-01`; task generation has not begun.

@@ -3,27 +3,30 @@
   "bmad_story_key": "12-4-exact-cross-repository-flow-and-pass-2",
   "bmad_epic_key": "12",
   "feature_directory": "specs/013-exact-cross-repository-flow-pass2",
-  "stage": "plan",
+  "stage": "plan-review",
   "preflight": {
     "branch": "demo0831/story-12-4",
     "head": "e5911f208f86570b143bbfe5d482e4512240f3b9",
     "git_identity_sha256": "056EE72BEB553F1C2AAA2D88B2730FC47D14ABC810286CC5F98D68B1F513B17B",
-    "status_sha256": "A9419E3BE3B788512FAE579FED9BE4B064040129148FA2B3E3E2A90AB2162952",
-    "observed_at": "2026-08-26T00:07:29.7997364Z"
+    "status_sha256": "17EB0D7461C129FF59F49E362330F456E5A3993F15A89327B06CAB8F385E7DB2",
+    "observed_at": "2026-08-26T00:50:20.2876613Z"
   },
   "artifacts": {
     "spec": {
       "path": "specs/013-exact-cross-repository-flow-pass2/spec.md",
       "sha256": "50327089B48F6ACCFBA1267E762CD2AF29E9F33A53E249B7FB8590C06D671517"
     },
-    "plan": null,
+    "plan": {
+      "path": "specs/013-exact-cross-repository-flow-pass2/plan.md",
+      "sha256": "77CBCE41E3C4CAB9B6ECE0220A2EE29A64BECD9D0E6872499EA1877C78840F94"
+    },
     "tasks": null
   },
   "gates": {
     "plan-review": {
-      "status": "pending",
-      "attempt": 0,
-      "verdict_path": null
+      "status": "accepted",
+      "attempt": 3,
+      "verdict_path": "specs/013-exact-cross-repository-flow-pass2/reviews/plan-review/plan-review-03.json"
     },
     "definition-review": {
       "status": "pending",
@@ -41,7 +44,15 @@
     "converge": 0,
     "quality-review": 0
   },
-  "approvals": [],
+  "approvals": [
+    {
+      "decision_id": "story-12-4-planned-change-authorization-01",
+      "status": "pending",
+      "scope_sha256": "683F10B848D93A843EF61F0CAC11518F9048E4FC7F5E23ACDAE116C3C8CF92E0",
+      "evidence_path": "specs/013-exact-cross-repository-flow-pass2/decisions/planned-change-authorization-01.md",
+      "decided_at": null
+    }
+  ],
   "convergence": {
     "status": "pending",
     "attempt": 0,
@@ -54,18 +65,28 @@
   },
   "current_evidence_paths": [
     "specs/013-exact-cross-repository-flow-pass2/spec.md",
-    "specs/013-exact-cross-repository-flow-pass2/checklists/requirements.md"
+    "specs/013-exact-cross-repository-flow-pass2/checklists/requirements.md",
+    "specs/013-exact-cross-repository-flow-pass2/plan.md",
+    "specs/013-exact-cross-repository-flow-pass2/research.md",
+    "specs/013-exact-cross-repository-flow-pass2/data-model.md",
+    "specs/013-exact-cross-repository-flow-pass2/quickstart.md",
+    "specs/013-exact-cross-repository-flow-pass2/contracts/exact-resolution-and-flow-planning.md",
+    "specs/013-exact-cross-repository-flow-pass2/contracts/pass2-runtime-and-commit.md",
+    "specs/013-exact-cross-repository-flow-pass2/contracts/retrieve-code-logic.md",
+    "specs/013-exact-cross-repository-flow-pass2/contracts/business-logic-flow-v1.schema.json",
+    "specs/013-exact-cross-repository-flow-pass2/reviews/plan-review/plan-review-03.json",
+    "specs/013-exact-cross-repository-flow-pass2/decisions/planned-change-authorization-01.md"
   ],
   "checkpoint": {
-    "checkpoint_id": "bmad-12-4-specify-20260826T000637Z-53650c",
-    "stage": "specify",
-    "commit_sha": "e5911f208f86570b143bbfe5d482e4512240f3b9",
-    "binding_status": "bound"
+    "checkpoint_id": "bmad-12-4-plan-review-20260826T005306Z-c84e75",
+    "stage": "plan-review",
+    "commit_sha": null,
+    "binding_status": "pending"
   },
   "resume": {
-    "stage": "plan",
-    "reason": "Specification self-review passed; produce the architecture-sensitive implementation plan and self-review it.",
-    "evidence_path": "specs/013-exact-cross-repository-flow-pass2/checklists/requirements.md"
+    "stage": "plan-review",
+    "reason": "Plan-review attempt 3 accepted with no findings; explicit planned-change authorization is required before tasks.",
+    "evidence_path": "specs/013-exact-cross-repository-flow-pass2/decisions/planned-change-authorization-01.md"
   },
-  "updated_at": "2026-08-26T00:07:29.7997364Z"
+  "updated_at": "2026-08-26T00:53:06.9527915Z"
 }
