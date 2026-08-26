@@ -22,7 +22,7 @@
     },
     "tasks": {
       "path": "specs/013-exact-cross-repository-flow-pass2/tasks.md",
-      "sha256": "1775F1E959F25FFA7CBC787E93FC07483BF44FC53A25840B3D23BCA068ECA857"
+      "sha256": "0D73F8D143F9D93DD7EC0878B93FECE68687B4A65DB72B956AAB49336CA5E6E4"
     }
   },
   "gates": {
@@ -78,25 +78,25 @@
     "specs/013-exact-cross-repository-flow-pass2/plan.md",
     "specs/013-exact-cross-repository-flow-pass2/tasks.md",
     "specs/013-exact-cross-repository-flow-pass2/data-model.md",
-    "specs/013-exact-cross-repository-flow-pass2/contracts/exact-resolution-and-flow-planning.md",
     "specs/013-exact-cross-repository-flow-pass2/contracts/pass2-runtime-and-commit.md",
-    "specs/013-exact-cross-repository-flow-pass2/contracts/retrieve-code-logic.md",
     "specs/013-exact-cross-repository-flow-pass2/contracts/business-logic-flow-v1.schema.json",
     "specs/013-exact-cross-repository-flow-pass2/evidence/implementation/t024-red.json",
-    "specs/013-exact-cross-repository-flow-pass2/evidence/implementation/t025-red.json",
     "specs/013-exact-cross-repository-flow-pass2/evidence/implementation/t026-red.json",
-    "specs/013-exact-cross-repository-flow-pass2/decisions/implementation-approval-01.md"
+    "specs/013-exact-cross-repository-flow-pass2/evidence/implementation/t030-red.json",
+    "specs/013-exact-cross-repository-flow-pass2/evidence/implementation/t031-red.json",
+    "specs/013-exact-cross-repository-flow-pass2/evidence/implementation/t032-red.json",
+    "specs/013-exact-cross-repository-flow-pass2/evidence/implementation/t034-red.json"
   ],
   "checkpoint": {
-    "checkpoint_id": "bmad-12-4-implement-20260826T093144Z-515d6b",
+    "checkpoint_id": "bmad-12-4-implement-20260826T135953Z-becfa8",
     "stage": "implement",
-    "commit_sha": "515d6b7ad1f59a257f0b4781bf561df76b0f236e",
+    "commit_sha": "becfa825ee190404f644987406aafcd07efd1a60",
     "binding_status": "bound"
   },
   "resume": {
     "stage": "implement",
-    "reason": "US3 T024-T029 closed retrieval, transactional security, durable budgets, replay, and PostgreSQL qualification are accepted; resume US4 at T030, then follow the dependency order through T038.",
+    "reason": "US4 T030-T038 strict Worker execution, semantic validation, atomic publication, canonical evidence authority, and complete replay qualification are independently accepted; resume US5 at T039, then follow the dependency order through T045.",
     "evidence_path": "specs/013-exact-cross-repository-flow-pass2/tasks.md"
   },
-  "updated_at": "2026-08-26T09:31:44.1171264Z"
+  "updated_at": "2026-08-26T13:59:53.1958982Z"
 }
