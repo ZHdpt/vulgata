@@ -3,13 +3,13 @@
   "bmad_story_key": "12-4-exact-cross-repository-flow-and-pass-2",
   "bmad_epic_key": "12",
   "feature_directory": "specs/013-exact-cross-repository-flow-pass2",
-  "stage": "plan-review",
+  "stage": "implementation-approval",
   "preflight": {
     "branch": "demo0831/story-12-4",
-    "head": "65f80713d3d6e1df3a4b0e8d5112272c54d592ec",
+    "head": "02f46cafb79391b4dd310bda9e8d387d8f332ec8",
     "git_identity_sha256": "056EE72BEB553F1C2AAA2D88B2730FC47D14ABC810286CC5F98D68B1F513B17B",
-    "status_sha256": "A9419E3BE3B788512FAE579FED9BE4B064040129148FA2B3E3E2A90AB2162952",
-    "observed_at": "2026-08-26T00:54:44.8397396Z"
+    "status_sha256": "019D21416819710A82B4CD93BDA1C3AFE799C8A687A8617DE780C872B6A426D7",
+    "observed_at": "2026-08-26T01:54:31.5168535Z"
   },
   "artifacts": {
     "spec": {
@@ -18,9 +18,12 @@
     },
     "plan": {
       "path": "specs/013-exact-cross-repository-flow-pass2/plan.md",
-      "sha256": "77CBCE41E3C4CAB9B6ECE0220A2EE29A64BECD9D0E6872499EA1877C78840F94"
+      "sha256": "8DE291B2AFF5B793DD6413532DEC1A3D8EDD191150B24B497B6D9B8894A10B92"
     },
-    "tasks": null
+    "tasks": {
+      "path": "specs/013-exact-cross-repository-flow-pass2/tasks.md",
+      "sha256": "32BDF28A535B67C01ECE45508EE6F3FDB849D16090F2EC27888DEEA1DBD40198"
+    }
   },
   "gates": {
     "plan-review": {
@@ -29,9 +32,9 @@
       "verdict_path": "specs/013-exact-cross-repository-flow-pass2/reviews/plan-review/plan-review-03.json"
     },
     "definition-review": {
-      "status": "pending",
-      "attempt": 0,
-      "verdict_path": null
+      "status": "accepted",
+      "attempt": 3,
+      "verdict_path": "specs/013-exact-cross-repository-flow-pass2/reviews/definition-review/definition-review-03.json"
     },
     "quality-review": {
       "status": "pending",
@@ -47,9 +50,16 @@
   "approvals": [
     {
       "decision_id": "story-12-4-planned-change-authorization-01",
-      "status": "pending",
+      "status": "accepted",
       "scope_sha256": "683F10B848D93A843EF61F0CAC11518F9048E4FC7F5E23ACDAE116C3C8CF92E0",
       "evidence_path": "specs/013-exact-cross-repository-flow-pass2/decisions/planned-change-authorization-01.md",
+      "decided_at": "2026-08-26T01:29:14.8911566Z"
+    },
+    {
+      "decision_id": "story-12-4-implementation-approval-01",
+      "status": "pending",
+      "scope_sha256": "7D47E4DABBEC9A1C436FF3ABA003732A8E4D1A960EE0C539170D6ECE24BFEF7D",
+      "evidence_path": "specs/013-exact-cross-repository-flow-pass2/decisions/implementation-approval-01.md",
       "decided_at": null
     }
   ],
@@ -65,28 +75,28 @@
   },
   "current_evidence_paths": [
     "specs/013-exact-cross-repository-flow-pass2/spec.md",
-    "specs/013-exact-cross-repository-flow-pass2/checklists/requirements.md",
     "specs/013-exact-cross-repository-flow-pass2/plan.md",
-    "specs/013-exact-cross-repository-flow-pass2/research.md",
+    "specs/013-exact-cross-repository-flow-pass2/tasks.md",
     "specs/013-exact-cross-repository-flow-pass2/data-model.md",
-    "specs/013-exact-cross-repository-flow-pass2/quickstart.md",
     "specs/013-exact-cross-repository-flow-pass2/contracts/exact-resolution-and-flow-planning.md",
     "specs/013-exact-cross-repository-flow-pass2/contracts/pass2-runtime-and-commit.md",
     "specs/013-exact-cross-repository-flow-pass2/contracts/retrieve-code-logic.md",
     "specs/013-exact-cross-repository-flow-pass2/contracts/business-logic-flow-v1.schema.json",
     "specs/013-exact-cross-repository-flow-pass2/reviews/plan-review/plan-review-03.json",
-    "specs/013-exact-cross-repository-flow-pass2/decisions/planned-change-authorization-01.md"
+    "specs/013-exact-cross-repository-flow-pass2/decisions/planned-change-authorization-01.md",
+    "specs/013-exact-cross-repository-flow-pass2/reviews/definition-review/definition-review-03.json",
+    "specs/013-exact-cross-repository-flow-pass2/decisions/implementation-approval-01.md"
   ],
   "checkpoint": {
-    "checkpoint_id": "bmad-12-4-plan-review-20260826T005306Z-c84e75",
-    "stage": "plan-review",
-    "commit_sha": "65f80713d3d6e1df3a4b0e8d5112272c54d592ec",
-    "binding_status": "bound"
+    "checkpoint_id": "bmad-12-4-definition-review-20260826T015912Z-2511f4",
+    "stage": "definition-review",
+    "commit_sha": null,
+    "binding_status": "pending"
   },
   "resume": {
-    "stage": "plan-review",
-    "reason": "Plan-review attempt 3 accepted with no findings; explicit planned-change authorization is required before tasks.",
-    "evidence_path": "specs/013-exact-cross-repository-flow-pass2/decisions/planned-change-authorization-01.md"
+    "stage": "implementation-approval",
+    "reason": "Definition-review attempt 3 accepted the complete 49-task definition with no findings; await explicit production implementation approval.",
+    "evidence_path": "specs/013-exact-cross-repository-flow-pass2/decisions/implementation-approval-01.md"
   },
-  "updated_at": "2026-08-26T00:54:44.8397396Z"
+  "updated_at": "2026-08-26T01:59:12.3396279Z"
 }

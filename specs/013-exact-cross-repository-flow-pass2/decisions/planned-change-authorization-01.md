@@ -1,7 +1,8 @@
 # Story 12.4 planned-change authorization 01
 
 - Decision ID: `story-12-4-planned-change-authorization-01`
-- Status: pending
+- Status: accepted
+- Decided at: `2026-08-26T01:29:14.8911566Z`
 - Scope SHA-256: `683F10B848D93A843EF61F0CAC11518F9048E4FC7F5E23ACDAE116C3C8CF92E0`
 - Accepted plan review: `reviews/plan-review/plan-review-03.json`
 - Accepted plan SHA-256: `77CBCE41E3C4CAB9B6ECE0220A2EE29A64BECD9D0E6872499EA1877C78840F94`
@@ -34,6 +35,13 @@ the later independent definition review, explicit implementation approval,
 TDD, convergence, quality review, conditional E2E, final verification, or
 completion checkpoint gates. Declining keeps Story 12.4 at plan review so the
 scope can be revised or deferred.
+
+## Decision
+
+The user explicitly approved this exact scope on 2026-08-26. Task generation
+may proceed. Production implementation remains unauthorized until the complete
+definition passes independent review and the separate implementation-approval
+gate is accepted.
 
 ## Authorities
 

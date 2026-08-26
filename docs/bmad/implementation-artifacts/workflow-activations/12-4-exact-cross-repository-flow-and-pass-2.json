@@ -4,7 +4,7 @@
   "bmad_epic_key": "12",
   "story_path": "docs/bmad/implementation-artifacts/12-4-exact-cross-repository-flow-and-pass-2.md",
   "proposed_feature_short_name": "exact-cross-repository-flow-pass2",
-  "stage": "plan-review",
+  "stage": "implementation-approval",
   "source_commit": "6aed7057e9e371d35c4123c0a204dd4849803eea",
   "preflight": {
     "branch": "demo0831/story-12-4",
@@ -33,8 +33,8 @@
   "feature_directory": "specs/013-exact-cross-repository-flow-pass2",
   "superseded_by_state": "specs/013-exact-cross-repository-flow-pass2/workflow-state.json",
   "resume": {
-    "stage": "plan-review",
-    "reason": "Plan-review attempt 3 accepted; explicit planned-change authorization is required before task generation."
+    "stage": "implementation-approval",
+    "reason": "Definition-review attempt 3 accepted with zero findings; await explicit implementation approval for the bound definition hashes."
   },
-  "updated_at": "2026-08-26T00:53:06.9527915Z"
+  "updated_at": "2026-08-26T01:59:12.3396279Z"
 }

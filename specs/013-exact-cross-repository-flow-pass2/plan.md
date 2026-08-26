@@ -42,7 +42,7 @@ No clarification remains. Research decisions are closed in [research.md](researc
 | --- | --- | --- |
 | I. Layered Project Boundaries | Core owns closed entities/contracts; Infrastructure owns EF, catalog/source reads and transactions; Agents owns the strict provider loop/functions; Shared owns validated API DTOs; Web owns authorization, endpoints, activation and hosted execution. | PASS |
 | II. Domain Purity & Ubiquitous Language | Uses Cross-Repository Resolution, REFERENCES Edge, Uncertainty, Flow Group, Document Version, GENERATED_FROM Edge, Source Anchor and Profiled Revision verbatim. No generic repository, `IQueryable`, `DbSet`, data annotation, or new Edge type is introduced. | PASS |
-| III. Validation & API Contract Discipline | New `/api/pass2-executions` endpoints use FluentValidation, ProblemDetails, Chinese safe messages, authorization-filtered 404, and correct 401/403 behavior. | PASS |
+| III. Validation & API Contract Discipline | New `/api/pass2-executions` endpoints use FluentValidation, ProblemDetails, Chinese safe messages, ownership-filtered 404, and correct 401/403 behavior. The plural Pass 2 endpoint group is registered through the existing `MapVulgataApiEndpoints()` composition seam. | PASS |
 | IV. Test-First Integration Harness | Every behavior has a public/pure seam and a named PostgreSQL boundary; migration lifecycle and real provider/source qualification are explicit. | PASS |
 | V. Security & Data Stewardship | Server-owned scope/currentness, closed retrieval, opaque handles, configured provider boundary, content-dark receipts/logging, no raw graph/shell/network/database tool, and no unauthorized-content distinction. | PASS |
 
@@ -129,7 +129,9 @@ src/dotnet/
 │   ├── Pass2ExecutionContracts.cs
 │   └── Pass2ExecutionValidators.cs
 └── Vulgata.Web/
-    ├── Api/Scans/Pass2ExecutionEndpoints.cs
+    ├── Api/
+    │   ├── ApiEndpointRegistrationExtensions.cs # central MapVulgataApiEndpoints composition
+    │   └── Scans/Pass2ExecutionEndpoints.cs
     ├── Data/PreparedPass2Coordinator.cs
     ├── Data/PreparedPass2ExecutionActivator.cs
     ├── Data/PreparedPass2ExecutionHostedService.cs
@@ -285,7 +287,7 @@ Alternative: roll back the whole pair or synthesize a reduced group after failur
 
 ### AD-13: Authenticated API activation, no Story 12.5 UI
 
-Add plural authenticated endpoints to create/replay, inspect, and manually resume a Pass 2 execution. The server resolves ownership from the current user and pair; caller input cannot provide Repository/System/revision/provider/source identities. Missing and unauthorized execution are indistinguishable 404; management-policy failure is 403; conflicts use ProblemDetails. `PreparedPass2ExecutionHostedService` is a wake-up mechanism only; PostgreSQL remains authority and process restart requires authenticated resume.
+Add one plural authenticated Pass 2 endpoint group for create/replay, inspect, and manual resume, and register that group through the existing `ApiEndpointRegistrationExtensions.MapVulgataApiEndpoints()` composition seam already invoked once by `Program.cs`. Story 12.4 does not map Pass 2 routes directly from `Program.cs` or create a second API-registration path. The server resolves ownership from the current user and pair; caller input cannot provide Repository/System/revision/provider/source identities. Unauthenticated requests remain 401, management-policy failures remain 403, and missing or outside-ownership executions are indistinguishable 404. Validation, state, replay, and concurrency conflicts use ProblemDetails with Chinese safe messages. `PreparedPass2ExecutionHostedService` is a wake-up mechanism only; PostgreSQL remains authority and process restart requires authenticated resume.
 
 No Chat route, production progress UI, citation UI, or final release-evidence surface is added.
 
@@ -329,7 +331,7 @@ No data rewrite or destructive migration is planned. Current Story 12.4 rows use
 4. **Retrieval**: every operation and inclusive/+1 bound; durable call reservation; repeated request/replay; duplicate descriptors; four additional Documents/four sections; cumulative UTF-8 bytes; unknown/stale/cross-System/mismatched revision; no excluded-content disclosure; retrieval cannot alter provider/group.
 5. **Worker protocol**: exact strict schemas, two-function declaration set, all-retrieve batch preflight, forced submission/correction, no request eleven, streaming inactivity/absolute cap, raw/request/response byte bounds, content-dark diagnostics, fake OpenAI-compatible wire.
 6. **Commit and replay**: handle-derived used set, all-and-only GENERATED_FROM, unused-return exclusion, stale/unauthorized/mismatched used Document, unsupported relationship/provider change, atomic rollback injection, concurrent completion, acknowledgement loss, same semantic flow in a later pair appending/superseding under one Logical Document, changed endpoint creating a separate untouched chain, stable-key creation race/current-pointer reload, exact replay, immutable Version Chain, and full graph reconstruction.
-7. **Execution/API**: authorization-filtered 404/403, create/status/resume replay, serial canonical claims, one retry, provider pause, restart lease recovery, mixed published/failed/incomplete/omitted terminal accounting, zero-success warning completion.
+7. **Execution/API**: a public authenticated `WebApplicationFactory<Program>` RED proves the plural Pass 2 routes are initially absent; GREEN owns both the endpoint group and its explicit registration through `MapVulgataApiEndpoints()`. Composition coverage proves create/status/resume are reachable through that single central seam and preserve 401 for unauthenticated requests, 403 for policy failures, ownership-filtered 404, ProblemDetails for validation/state conflicts, replay, serial canonical claims, one retry, provider pause, restart lease recovery, mixed published/failed/incomplete/omitted terminal accounting, and zero-success warning completion.
 8. **Migration**: clean/legacy apply, rollback/reapply, constraints/indexes/FKs, old exact/Uncertainty/attached Flow Group rows, no pending model changes.
 9. **Production qualification**: disposable PostgreSQL and approved two Repository roots at exact revisions; Story 12.3 handoff -> exact RPC decision/shared-or-new Edge -> complete Flow Group -> configured live Worker -> one Business Logic Document -> every claim traceable through its decision, GENERATED_FROM and Source Anchors. Direct Pass 2 JDT-LS/CodeGraph remains disabled and results must be identical without it.
 
@@ -359,7 +361,7 @@ Authorization permits only progression from an accepted plan to task generation.
 
 | Lens | Evidence reviewed | Result |
 | --- | --- | --- |
-| Feasibility | Existing exact resolver/store, catalog evaluator, revision reader, Flow Group/trace, knowledge projections, Pass 2 packet/result/committer, and Story 12.3 strict transport all provide concrete seams; each required delta has one owner. | PASS |
+| Feasibility | Existing exact resolver/store, catalog evaluator, revision reader, Flow Group/trace, knowledge projections, Pass 2 packet/result/committer, Story 12.3 strict transport, and `ApiEndpointRegistrationExtensions` all provide concrete seams; each required delta has one owner. | PASS |
 | Repository fit | No new graph type or generic repository; legacy profile/demo path is characterized; current composition deepens rather than replaces the accepted source. | PASS |
 | Invariants | Exact protocol+endpoint key, provider count over distinct current provider Document Versions after complete evidence aggregation, many endpoint/entry decisions to one source/target/type Edge, pair-specific Flow Group versus cross-scan Logical Document identity, currentness/authorization/revision/hash, closed group membership, hard release bounds, immutable Documents, and derived provenance are explicit at projector and transaction boundaries. | PASS |
 | Resolution/graph cardinality | Every consumer candidate owns one durable v2 decision; exact decisions may share a tuple-unique REFERENCES Edge but retain independent evidence/contributions and Flow Groups; unresolved decisions own Uncertainties; legacy one-to-one evidence remains isolated. | PASS |
@@ -370,7 +372,7 @@ Authorization permits only progression from an accepted plan to task generation.
 | Test seams | Pure resolver/normalizer/planner/schema projector plus stores, retrieval service, strict executor, committer, API/host and PostgreSQL qualification are independently observable. | PASS |
 | Security/data stewardship | Scope is server-owned; provider receives bounded authorized context; no secrets/source/provider payload persist in receipts/logs; cross-System and stale content are never disclosed; no open tools. | PASS |
 | Migration/compatibility | One versioned migration adds v2 decision/contribution and Flow Group decision/stable-key fields while retaining DocumentEdge uniqueness, legacy one-to-one exact evidence, and Logical Document uniqueness/current-pointer concurrency without unsafe backfill; clean/legacy lifecycle evidence is explicit. | PASS |
-| Constitution/ADR | All five principles pass; no ADR/context exists; the dated PRD narrowing is disclosed rather than silently overriding long-term intent. | PASS |
+| Constitution/ADR | All five principles pass, including Constitution III registration of the plural Pass 2 group through `MapVulgataApiEndpoints()` with the established ProblemDetails and 401/403/ownership-filtered-404 behavior; no ADR/context exists; the dated PRD narrowing is disclosed rather than silently overriding long-term intent. | PASS |
 | Story boundary | No Chat, vector retrieval, UI, final release evidence, general graph clustering, mandatory direct analysis, unsupported protocols, or provider/failover configuration change. | PASS |
 | Planned-change governance | Scan strategy, two Worker tools, and dated PRD/architecture decisions are named with exact consequences and later authorization scope. | PASS |
 

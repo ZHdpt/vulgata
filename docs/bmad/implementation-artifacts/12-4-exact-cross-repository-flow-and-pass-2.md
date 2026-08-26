@@ -136,6 +136,27 @@ exact RPC/safe HTTP narrowing of PRD FR-4.5, FR-6.1, and FR-6.2. Task generation
 cannot begin until that review accepts and the user explicitly authorizes the
 accepted plan scope.
 
+### Planned-change authorization 01: ACCEPTED
+
+The user explicitly approved scope
+`683F10B848D93A843EF61F0CAC11518F9048E4FC7F5E23ACDAE116C3C8CF92E0`
+on 2026-08-26. This authorizes dependency-ordered task generation from the
+accepted plan. It does not authorize production implementation or waive the
+combined definition review, implementation approval, TDD, convergence,
+quality, E2E, verification, or completion gates.
+
+## Task-generation result
+
+The task author produced and self-reviewed 49 sequential tasks (`T001`–`T049`):
+nine setup/foundation tasks, thirty-six tasks across five independently
+testable user-story slices, and four production-qualification/final-barrier
+tasks. The task set names separate test and production ownership, places
+behavioral RED before GREEN implementation, covers FR-001–FR-043 and
+SC-001–SC-012, includes the compatibility migration and disposable PostgreSQL
+qualification, and excludes Story 12.5. The current on-disk task SHA-256 is
+`5FA8B1074763B4D62BD9511BF1995018DB415587BDA99EB4F7ECBBF5462574DD`.
+The next gate is one fresh combined definition/analyze review.
+
 ### Plan review attempt 1: REVISE
 
 Independent review found two HIGH plan-owned defects. The corrected plan must
@@ -183,3 +204,45 @@ hashes remained unchanged, the three earlier plan findings are closed, and no
 authority conflict, Constitution violation, placeholder, or unresolved design
 gap remains. The accepted scope now pauses at planned-change authorization
 `story-12-4-planned-change-authorization-01`; task generation has not begun.
+
+### Definition review attempt 1: REVISE
+
+The combined definition review found one CRITICAL plan-owned gap and three
+downstream task defects. The plan omitted the Constitution-mandated central
+`MapVulgataApiEndpoints()` registration seam for the new Pass 2 API group. The
+task set also allowed same-file parallel writes and ambiguous RED/GREEN order,
+did not assign exact runtime embedding/loading of the accepted
+`business-logic/flow-v1` schema, and attributed live qualification criterion
+SC-012 to local test work instead of the approved two-Repository qualification.
+The specification remains accepted. Correct the plan, regenerate tasks, and
+run a fresh combined definition review before implementation approval.
+
+The corrected plan now owns central registration through
+`ApiEndpointRegistrationExtensions.MapVulgataApiEndpoints()`. The regenerated
+49-task worklist serializes every same-file test owner and makes foundation RED
+evidence precede GREEN work, uniquely embeds and verifies the accepted
+`business-logic/flow-v1` schema for production loading, and assigns SC-012 only
+to the durable sanitized live two-Repository qualification. Full task
+self-review passed; definition-review attempt 2 is next.
+
+### Definition review attempt 2: REVISE
+
+Attempt 2 confirmed all four attempt-1 findings are closed without regression.
+It found one HIGH tasks-only ownership gap: the planned Core
+`IPreparedPass2WorkerDispatcher` abstraction and its RED contract test were not
+assigned. Correct only `tasks.md` so foundation RED/GREEN work owns that Core
+contract and the Agents/Web consumers depend on it, then run definition-review
+attempt 3.
+
+The task correction now assigns the dispatcher contract RED to T004, the Core
+interface to T006, the concrete Agents implementation to T035, and the Web
+consumer to T042 with explicit dependencies. All prior corrections remain
+intact; definition-review attempt 3 is ready.
+
+### Definition review attempt 3: ACCEPT
+
+Attempt 3 accepted the complete corrected specification, plan set, and 49-task
+worklist with zero findings. Every prior finding is explicitly closed without
+regression, the accepted hashes match, and the delivery definition is ready
+for the mandatory implementation-approval pause. No production write is
+authorized by the review itself.
