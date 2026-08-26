@@ -12,6 +12,21 @@ public sealed class Pass2RetrievalBudget
     {
     }
 
+    public static Pass2RetrievalBudget Create(Guid id, Guid pass2JobExecutionId)
+    {
+        if (id == Guid.Empty || pass2JobExecutionId == Guid.Empty)
+        {
+            throw new ArgumentException("Complete Pass 2 retrieval budget identities are required.");
+        }
+
+        return new Pass2RetrievalBudget
+        {
+            Id = id,
+            Pass2JobExecutionId = pass2JobExecutionId,
+            State = Pass2RetrievalBudgetState.Available,
+        };
+    }
+
     public Guid Id { get; private set; }
     public Guid Pass2JobExecutionId { get; private set; }
     public Pass2RetrievalBudgetState State { get; private set; }

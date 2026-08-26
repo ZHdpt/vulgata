@@ -11,6 +11,13 @@ namespace Vulgata.Infrastructure.Data.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.AddColumn<Guid>(
+                name: "ExactResolutionDecisionId",
+                schema: "vulgata",
+                table: "FlowTraceSteps",
+                type: "uuid",
+                nullable: true);
+
             migrationBuilder.AlterColumn<Guid>(
                 name: "BusinessLogicDocumentVersionId",
                 schema: "vulgata",
@@ -20,6 +27,44 @@ namespace Vulgata.Infrastructure.Data.Migrations
                 oldClrType: typeof(Guid),
                 oldType: "uuid");
 
+            migrationBuilder.AddColumn<Guid>(
+                name: "ConsumerDocumentVersionId",
+                schema: "vulgata",
+                table: "FlowGroups",
+                type: "uuid",
+                nullable: true);
+
+            migrationBuilder.AddColumn<string>(
+                name: "ConsumerEntryIdentity",
+                schema: "vulgata",
+                table: "FlowGroups",
+                type: "character varying(512)",
+                maxLength: 512,
+                nullable: true);
+
+            migrationBuilder.AddColumn<string>(
+                name: "ConsumerEntryStableKey",
+                schema: "vulgata",
+                table: "FlowGroups",
+                type: "character(64)",
+                fixedLength: true,
+                maxLength: 64,
+                nullable: true);
+
+            migrationBuilder.AddColumn<Guid>(
+                name: "ExactResolutionDecisionId",
+                schema: "vulgata",
+                table: "FlowGroups",
+                type: "uuid",
+                nullable: true);
+
+            migrationBuilder.AddColumn<Guid>(
+                name: "ExactResolutionEdgeId",
+                schema: "vulgata",
+                table: "FlowGroups",
+                type: "uuid",
+                nullable: true);
+
             migrationBuilder.AddColumn<string>(
                 name: "LogicalDocumentStableKey",
                 schema: "vulgata",
@@ -28,6 +73,38 @@ namespace Vulgata.Infrastructure.Data.Migrations
                 maxLength: 512,
                 nullable: false,
                 defaultValue: "");
+
+            migrationBuilder.AddColumn<string>(
+                name: "LogicalKeySchemaIdentity",
+                schema: "vulgata",
+                table: "FlowGroups",
+                type: "character varying(128)",
+                maxLength: 128,
+                nullable: true);
+
+            migrationBuilder.AddColumn<string>(
+                name: "MembershipFingerprint",
+                schema: "vulgata",
+                table: "FlowGroups",
+                type: "character(64)",
+                fixedLength: true,
+                maxLength: 64,
+                nullable: true);
+
+            migrationBuilder.AddColumn<string>(
+                name: "NormalizedEndpointIdentifier",
+                schema: "vulgata",
+                table: "FlowGroups",
+                type: "character varying(512)",
+                maxLength: 512,
+                nullable: true);
+
+            migrationBuilder.AddColumn<Guid>(
+                name: "Pass2ExecutionId",
+                schema: "vulgata",
+                table: "FlowGroups",
+                type: "uuid",
+                nullable: true);
 
             migrationBuilder.AddColumn<string>(
                 name: "PlanFingerprint",
@@ -40,6 +117,51 @@ namespace Vulgata.Infrastructure.Data.Migrations
                 defaultValue: "");
 
             migrationBuilder.AddColumn<string>(
+                name: "Protocol",
+                schema: "vulgata",
+                table: "FlowGroups",
+                type: "character varying(32)",
+                maxLength: 32,
+                nullable: true);
+
+            migrationBuilder.AddColumn<Guid>(
+                name: "ProviderImplementationDocumentVersionId",
+                schema: "vulgata",
+                table: "FlowGroups",
+                type: "uuid",
+                nullable: true);
+
+            migrationBuilder.AddColumn<Guid>(
+                name: "ProviderRepositoryId",
+                schema: "vulgata",
+                table: "FlowGroups",
+                type: "uuid",
+                nullable: true);
+
+            migrationBuilder.AddColumn<Guid>(
+                name: "ProviderXmlDocumentVersionId",
+                schema: "vulgata",
+                table: "FlowGroups",
+                type: "uuid",
+                nullable: true);
+
+            migrationBuilder.AddColumn<string>(
+                name: "ReasonCode",
+                schema: "vulgata",
+                table: "FlowGroups",
+                type: "character varying(64)",
+                maxLength: 64,
+                nullable: true);
+
+            migrationBuilder.AddColumn<string>(
+                name: "SchemaIdentity",
+                schema: "vulgata",
+                table: "FlowGroups",
+                type: "character varying(128)",
+                maxLength: 128,
+                nullable: true);
+
+            migrationBuilder.AddColumn<string>(
                 name: "State",
                 schema: "vulgata",
                 table: "FlowGroups",
@@ -47,6 +169,13 @@ namespace Vulgata.Infrastructure.Data.Migrations
                 maxLength: 32,
                 nullable: false,
                 defaultValue: "");
+
+            migrationBuilder.AddColumn<Guid>(
+                name: "SystemId",
+                schema: "vulgata",
+                table: "FlowGroups",
+                type: "uuid",
+                nullable: true);
 
             migrationBuilder.CreateTable(
                 name: "CrossRepositoryResolutionDecisions",
@@ -326,6 +455,111 @@ namespace Vulgata.Infrastructure.Data.Migrations
                 });
 
             migrationBuilder.CreateIndex(
+                name: "IX_FlowTraceSteps_ExactResolutionDecisionId",
+                schema: "vulgata",
+                table: "FlowTraceSteps",
+                column: "ExactResolutionDecisionId");
+
+            migrationBuilder.AddCheckConstraint(
+                name: "CK_FlowTraceSteps_ExactDecision_RelationshipOnly",
+                schema: "vulgata",
+                table: "FlowTraceSteps",
+                sql: "\"ExactResolutionDecisionId\" IS NULL OR \"StepKind\" = 'Relationship'");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_FlowGroups_ConsumerDocumentVersionId_RepositoryId_ScanRunId",
+                schema: "vulgata",
+                table: "FlowGroups",
+                columns: new[] { "ConsumerDocumentVersionId", "RepositoryId", "ScanRunId" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_FlowGroups_ExactResolutionDecisionId",
+                schema: "vulgata",
+                table: "FlowGroups",
+                column: "ExactResolutionDecisionId",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_FlowGroups_ExactResolutionEdgeId",
+                schema: "vulgata",
+                table: "FlowGroups",
+                column: "ExactResolutionEdgeId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_FlowGroups_Pass2ExecutionId_GroupOrder",
+                schema: "vulgata",
+                table: "FlowGroups",
+                columns: new[] { "Pass2ExecutionId", "GroupOrder" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_FlowGroups_Pass2ExecutionId_PlanFingerprint",
+                schema: "vulgata",
+                table: "FlowGroups",
+                columns: new[] { "Pass2ExecutionId", "PlanFingerprint" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_FlowGroups_ProviderImplementationDocumentVersionId",
+                schema: "vulgata",
+                table: "FlowGroups",
+                column: "ProviderImplementationDocumentVersionId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_FlowGroups_ProviderRepositoryId",
+                schema: "vulgata",
+                table: "FlowGroups",
+                column: "ProviderRepositoryId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_FlowGroups_ProviderXmlDocumentVersionId",
+                schema: "vulgata",
+                table: "FlowGroups",
+                column: "ProviderXmlDocumentVersionId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_FlowGroups_SystemId",
+                schema: "vulgata",
+                table: "FlowGroups",
+                column: "SystemId");
+
+            migrationBuilder.AddCheckConstraint(
+                name: "CK_FlowGroups_Fingerprint_Lengths",
+                schema: "vulgata",
+                table: "FlowGroups",
+                sql: "(\"PlanFingerprint\" = '' OR length(\"PlanFingerprint\") = 64) AND (\"MembershipFingerprint\" IS NULL OR length(\"MembershipFingerprint\") = 64) AND (\"ConsumerEntryStableKey\" IS NULL OR length(\"ConsumerEntryStableKey\") = 64)");
+
+            migrationBuilder.AddCheckConstraint(
+                name: "CK_FlowGroups_LogicalKeySchemaIdentity_Closed",
+                schema: "vulgata",
+                table: "FlowGroups",
+                sql: "\"LogicalKeySchemaIdentity\" IS NULL OR \"LogicalKeySchemaIdentity\" = 'business-flow-logical-key/1.0'");
+
+            migrationBuilder.AddCheckConstraint(
+                name: "CK_FlowGroups_Protocol_Closed",
+                schema: "vulgata",
+                table: "FlowGroups",
+                sql: "\"Protocol\" IS NULL OR \"Protocol\" IN ('CustomRpc', 'Http')");
+
+            migrationBuilder.AddCheckConstraint(
+                name: "CK_FlowGroups_ProviderRepository_CrossRepository",
+                schema: "vulgata",
+                table: "FlowGroups",
+                sql: "\"ProviderRepositoryId\" IS NULL OR \"ProviderRepositoryId\" <> \"RepositoryId\"");
+
+            migrationBuilder.AddCheckConstraint(
+                name: "CK_FlowGroups_SchemaIdentity_Closed",
+                schema: "vulgata",
+                table: "FlowGroups",
+                sql: "\"SchemaIdentity\" IS NULL OR \"SchemaIdentity\" = 'endpoint-flow-group/1.0'");
+
+            migrationBuilder.AddCheckConstraint(
+                name: "CK_FlowGroups_State_Closed",
+                schema: "vulgata",
+                table: "FlowGroups",
+                sql: "\"SchemaIdentity\" IS NULL OR \"State\" IN ('Complete', 'Incomplete', 'BoundExcluded', 'Running', 'Published', 'Failed')");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_CrossRepositoryResolutionDecisions_DocumentEdgeId",
                 schema: "vulgata",
                 table: "CrossRepositoryResolutionDecisions",
@@ -450,11 +684,146 @@ namespace Vulgata.Infrastructure.Data.Migrations
                 table: "Pass2RetrievalResults",
                 columns: new[] { "ReceiptId", "ResultOrdinal" },
                 unique: true);
+
+            migrationBuilder.AddForeignKey(
+                name: "FK_FlowGroups_CrossRepositoryResolutionDecisions_ExactResoluti~",
+                schema: "vulgata",
+                table: "FlowGroups",
+                column: "ExactResolutionDecisionId",
+                principalSchema: "vulgata",
+                principalTable: "CrossRepositoryResolutionDecisions",
+                principalColumn: "Id",
+                onDelete: ReferentialAction.Restrict);
+
+            migrationBuilder.AddForeignKey(
+                name: "FK_FlowGroups_DocumentEdges_ExactResolutionEdgeId",
+                schema: "vulgata",
+                table: "FlowGroups",
+                column: "ExactResolutionEdgeId",
+                principalSchema: "vulgata",
+                principalTable: "DocumentEdges",
+                principalColumn: "Id",
+                onDelete: ReferentialAction.Restrict);
+
+            migrationBuilder.AddForeignKey(
+                name: "FK_FlowGroups_DocumentVersions_ConsumerDocumentVersionId_Repos~",
+                schema: "vulgata",
+                table: "FlowGroups",
+                columns: new[] { "ConsumerDocumentVersionId", "RepositoryId", "ScanRunId" },
+                principalSchema: "vulgata",
+                principalTable: "DocumentVersions",
+                principalColumns: new[] { "Id", "RepositoryId", "ScanRunId" },
+                onDelete: ReferentialAction.Restrict);
+
+            migrationBuilder.AddForeignKey(
+                name: "FK_FlowGroups_DocumentVersions_ProviderImplementationDocumentV~",
+                schema: "vulgata",
+                table: "FlowGroups",
+                column: "ProviderImplementationDocumentVersionId",
+                principalSchema: "vulgata",
+                principalTable: "DocumentVersions",
+                principalColumn: "Id",
+                onDelete: ReferentialAction.Restrict);
+
+            migrationBuilder.AddForeignKey(
+                name: "FK_FlowGroups_DocumentVersions_ProviderXmlDocumentVersionId",
+                schema: "vulgata",
+                table: "FlowGroups",
+                column: "ProviderXmlDocumentVersionId",
+                principalSchema: "vulgata",
+                principalTable: "DocumentVersions",
+                principalColumn: "Id",
+                onDelete: ReferentialAction.Restrict);
+
+            migrationBuilder.AddForeignKey(
+                name: "FK_FlowGroups_Pass2Executions_Pass2ExecutionId",
+                schema: "vulgata",
+                table: "FlowGroups",
+                column: "Pass2ExecutionId",
+                principalSchema: "vulgata",
+                principalTable: "Pass2Executions",
+                principalColumn: "Id",
+                onDelete: ReferentialAction.Restrict);
+
+            migrationBuilder.AddForeignKey(
+                name: "FK_FlowGroups_Repositories_ProviderRepositoryId",
+                schema: "vulgata",
+                table: "FlowGroups",
+                column: "ProviderRepositoryId",
+                principalSchema: "vulgata",
+                principalTable: "Repositories",
+                principalColumn: "Id",
+                onDelete: ReferentialAction.Restrict);
+
+            migrationBuilder.AddForeignKey(
+                name: "FK_FlowGroups_Systems_SystemId",
+                schema: "vulgata",
+                table: "FlowGroups",
+                column: "SystemId",
+                principalSchema: "vulgata",
+                principalTable: "Systems",
+                principalColumn: "Id",
+                onDelete: ReferentialAction.Restrict);
+
+            migrationBuilder.AddForeignKey(
+                name: "FK_FlowTraceSteps_CrossRepositoryResolutionDecisions_ExactReso~",
+                schema: "vulgata",
+                table: "FlowTraceSteps",
+                column: "ExactResolutionDecisionId",
+                principalSchema: "vulgata",
+                principalTable: "CrossRepositoryResolutionDecisions",
+                principalColumn: "Id",
+                onDelete: ReferentialAction.Restrict);
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.DropForeignKey(
+                name: "FK_FlowGroups_CrossRepositoryResolutionDecisions_ExactResoluti~",
+                schema: "vulgata",
+                table: "FlowGroups");
+
+            migrationBuilder.DropForeignKey(
+                name: "FK_FlowGroups_DocumentEdges_ExactResolutionEdgeId",
+                schema: "vulgata",
+                table: "FlowGroups");
+
+            migrationBuilder.DropForeignKey(
+                name: "FK_FlowGroups_DocumentVersions_ConsumerDocumentVersionId_Repos~",
+                schema: "vulgata",
+                table: "FlowGroups");
+
+            migrationBuilder.DropForeignKey(
+                name: "FK_FlowGroups_DocumentVersions_ProviderImplementationDocumentV~",
+                schema: "vulgata",
+                table: "FlowGroups");
+
+            migrationBuilder.DropForeignKey(
+                name: "FK_FlowGroups_DocumentVersions_ProviderXmlDocumentVersionId",
+                schema: "vulgata",
+                table: "FlowGroups");
+
+            migrationBuilder.DropForeignKey(
+                name: "FK_FlowGroups_Pass2Executions_Pass2ExecutionId",
+                schema: "vulgata",
+                table: "FlowGroups");
+
+            migrationBuilder.DropForeignKey(
+                name: "FK_FlowGroups_Repositories_ProviderRepositoryId",
+                schema: "vulgata",
+                table: "FlowGroups");
+
+            migrationBuilder.DropForeignKey(
+                name: "FK_FlowGroups_Systems_SystemId",
+                schema: "vulgata",
+                table: "FlowGroups");
+
+            migrationBuilder.DropForeignKey(
+                name: "FK_FlowTraceSteps_CrossRepositoryResolutionDecisions_ExactReso~",
+                schema: "vulgata",
+                table: "FlowTraceSteps");
+
             migrationBuilder.DropTable(
                 name: "ExactResolutionProviderEvidenceContributions",
                 schema: "vulgata");
@@ -487,8 +856,143 @@ namespace Vulgata.Infrastructure.Data.Migrations
                 name: "Pass2Executions",
                 schema: "vulgata");
 
+            migrationBuilder.DropIndex(
+                name: "IX_FlowTraceSteps_ExactResolutionDecisionId",
+                schema: "vulgata",
+                table: "FlowTraceSteps");
+
+            migrationBuilder.DropCheckConstraint(
+                name: "CK_FlowTraceSteps_ExactDecision_RelationshipOnly",
+                schema: "vulgata",
+                table: "FlowTraceSteps");
+
+            migrationBuilder.DropIndex(
+                name: "IX_FlowGroups_ConsumerDocumentVersionId_RepositoryId_ScanRunId",
+                schema: "vulgata",
+                table: "FlowGroups");
+
+            migrationBuilder.DropIndex(
+                name: "IX_FlowGroups_ExactResolutionDecisionId",
+                schema: "vulgata",
+                table: "FlowGroups");
+
+            migrationBuilder.DropIndex(
+                name: "IX_FlowGroups_ExactResolutionEdgeId",
+                schema: "vulgata",
+                table: "FlowGroups");
+
+            migrationBuilder.DropIndex(
+                name: "IX_FlowGroups_Pass2ExecutionId_GroupOrder",
+                schema: "vulgata",
+                table: "FlowGroups");
+
+            migrationBuilder.DropIndex(
+                name: "IX_FlowGroups_Pass2ExecutionId_PlanFingerprint",
+                schema: "vulgata",
+                table: "FlowGroups");
+
+            migrationBuilder.DropIndex(
+                name: "IX_FlowGroups_ProviderImplementationDocumentVersionId",
+                schema: "vulgata",
+                table: "FlowGroups");
+
+            migrationBuilder.DropIndex(
+                name: "IX_FlowGroups_ProviderRepositoryId",
+                schema: "vulgata",
+                table: "FlowGroups");
+
+            migrationBuilder.DropIndex(
+                name: "IX_FlowGroups_ProviderXmlDocumentVersionId",
+                schema: "vulgata",
+                table: "FlowGroups");
+
+            migrationBuilder.DropIndex(
+                name: "IX_FlowGroups_SystemId",
+                schema: "vulgata",
+                table: "FlowGroups");
+
+            migrationBuilder.DropCheckConstraint(
+                name: "CK_FlowGroups_Fingerprint_Lengths",
+                schema: "vulgata",
+                table: "FlowGroups");
+
+            migrationBuilder.DropCheckConstraint(
+                name: "CK_FlowGroups_LogicalKeySchemaIdentity_Closed",
+                schema: "vulgata",
+                table: "FlowGroups");
+
+            migrationBuilder.DropCheckConstraint(
+                name: "CK_FlowGroups_Protocol_Closed",
+                schema: "vulgata",
+                table: "FlowGroups");
+
+            migrationBuilder.DropCheckConstraint(
+                name: "CK_FlowGroups_ProviderRepository_CrossRepository",
+                schema: "vulgata",
+                table: "FlowGroups");
+
+            migrationBuilder.DropCheckConstraint(
+                name: "CK_FlowGroups_SchemaIdentity_Closed",
+                schema: "vulgata",
+                table: "FlowGroups");
+
+            migrationBuilder.DropCheckConstraint(
+                name: "CK_FlowGroups_State_Closed",
+                schema: "vulgata",
+                table: "FlowGroups");
+
+            migrationBuilder.DropColumn(
+                name: "ExactResolutionDecisionId",
+                schema: "vulgata",
+                table: "FlowTraceSteps");
+
+            migrationBuilder.DropColumn(
+                name: "ConsumerDocumentVersionId",
+                schema: "vulgata",
+                table: "FlowGroups");
+
+            migrationBuilder.DropColumn(
+                name: "ConsumerEntryIdentity",
+                schema: "vulgata",
+                table: "FlowGroups");
+
+            migrationBuilder.DropColumn(
+                name: "ConsumerEntryStableKey",
+                schema: "vulgata",
+                table: "FlowGroups");
+
+            migrationBuilder.DropColumn(
+                name: "ExactResolutionDecisionId",
+                schema: "vulgata",
+                table: "FlowGroups");
+
+            migrationBuilder.DropColumn(
+                name: "ExactResolutionEdgeId",
+                schema: "vulgata",
+                table: "FlowGroups");
+
             migrationBuilder.DropColumn(
                 name: "LogicalDocumentStableKey",
+                schema: "vulgata",
+                table: "FlowGroups");
+
+            migrationBuilder.DropColumn(
+                name: "LogicalKeySchemaIdentity",
+                schema: "vulgata",
+                table: "FlowGroups");
+
+            migrationBuilder.DropColumn(
+                name: "MembershipFingerprint",
+                schema: "vulgata",
+                table: "FlowGroups");
+
+            migrationBuilder.DropColumn(
+                name: "NormalizedEndpointIdentifier",
+                schema: "vulgata",
+                table: "FlowGroups");
+
+            migrationBuilder.DropColumn(
+                name: "Pass2ExecutionId",
                 schema: "vulgata",
                 table: "FlowGroups");
 
@@ -498,7 +1002,42 @@ namespace Vulgata.Infrastructure.Data.Migrations
                 table: "FlowGroups");
 
             migrationBuilder.DropColumn(
+                name: "Protocol",
+                schema: "vulgata",
+                table: "FlowGroups");
+
+            migrationBuilder.DropColumn(
+                name: "ProviderImplementationDocumentVersionId",
+                schema: "vulgata",
+                table: "FlowGroups");
+
+            migrationBuilder.DropColumn(
+                name: "ProviderRepositoryId",
+                schema: "vulgata",
+                table: "FlowGroups");
+
+            migrationBuilder.DropColumn(
+                name: "ProviderXmlDocumentVersionId",
+                schema: "vulgata",
+                table: "FlowGroups");
+
+            migrationBuilder.DropColumn(
+                name: "ReasonCode",
+                schema: "vulgata",
+                table: "FlowGroups");
+
+            migrationBuilder.DropColumn(
+                name: "SchemaIdentity",
+                schema: "vulgata",
+                table: "FlowGroups");
+
+            migrationBuilder.DropColumn(
                 name: "State",
+                schema: "vulgata",
+                table: "FlowGroups");
+
+            migrationBuilder.DropColumn(
+                name: "SystemId",
                 schema: "vulgata",
                 table: "FlowGroups");
 

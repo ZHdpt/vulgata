@@ -1,0 +1,86 @@
+{
+  "schema_version": "story-12.4-implementation-evidence/1.0",
+  "task_ids": ["T018", "T019"],
+  "stage": "implement",
+  "status": "GREEN",
+  "observed_at_utc": "2026-08-26T04:45:00Z",
+  "source_commit": "38bb7015ea6c1b7e1ce86154c27a0f255ff24f15",
+  "changed_paths": [
+    "tests/Vulgata.Tests/PreparedPass2/Pass2FlowPlanningTests.cs",
+    "specs/013-exact-cross-repository-flow-pass2/evidence/implementation/t018-t019-red.json"
+  ],
+  "commands": [
+    {
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter FullyQualifiedName~Pass2FlowPlanningTests --no-restore --verbosity quiet",
+      "exit_code": 1,
+      "result": {
+        "total": 17,
+        "passed": 9,
+        "failed": 8,
+        "skipped": 0,
+        "duration": "21 s"
+      },
+      "diagnostics": [
+        "All eight T018 tests are GREEN against the current planner implementation.",
+        "Seven T019 mutation cases fail as expected because the planner either returns Complete for unanchored/wrong-revision facts or throws System.InvalidOperationException: The persisted Pass 2 planning evidence is incomplete or inconsistent. for missing/multiple/currentness/scope/system facts.",
+        "The T019 one-hop cycle/duplicate case fails because the planner emits only the five core trace steps and does not expand the persisted optional same-Repository REFERENCES Edge. The assertion correctly treats relationship steps as carrying adjacent core Document Version IDs, and checks uniqueness only among Document steps plus unique canonical relationship EdgeIds."
+      ],
+      "build_observation": "The test project and referenced projects compiled successfully; existing package/analyzer warnings were non-fatal. Fixture setup completed and each failed call used a persisted execution rather than a random identifier."
+    }
+  ],
+  "t018": {
+    "status": "GREEN",
+    "coverage": [
+      "persisted terminal Pass 1 pair and Pass 2-bound coordination in a disposable SQLite database",
+      "current Documents, Source Anchors, Prepared Scan Manifests, classifications, and embedded catalog bindings",
+      "persisted Pass2Execution bound to the pair and coordination",
+      "persisted v2 exact Cross-Repository resolution decision and provider evidence contribution",
+      "persisted reusable cross-Repository REFERENCES Edge and exact Edge evidence",
+      "three distinct current Code Logic Documents: consumer, provider XML declaration, and provider implementation, with a same-Repository REFERENCES Edge from XML to implementation",
+      "direct PlanAsync invocation for required Flow Group identity domains and current-document membership",
+      "direct PlanAsync invocation for two persisted decisions sharing one Edge",
+      "two persisted decisions with distinct ConsumerEntryStableKey values require distinct business-flow logical keys while reusing one Edge",
+      "direct PlanAsync invocation after replacing the persisted current consumer Document Version",
+      "baseline and current-version replacement plans require the same business-flow logical key, independent of Code Logic LogicalDocumentStableKey",
+      "additive FlowGroup and FlowTraceStep contract surface"
+    ],
+    "failure_cause": null
+  },
+  "t019": {
+    "status": "GREEN",
+    "coverage": [
+      "persisted optional same-Repository REFERENCES Edge from the provider implementation to a current Code Logic Document plus a reverse cycle; the expected result is one-hop inclusion, deterministic order, and duplicate/cycle collapse",
+      "persisted removal of the provider implementation Edge for missing-core-member Incomplete/no-job behavior",
+      "persisted second current provider implementation Document Version and REFERENCES Edge for multiple-implementation Incomplete/no-job behavior",
+      "persisted deletion of the provider implementation Source Anchor for unanchored-core-member Incomplete/no-job behavior",
+      "persisted clearing of the provider implementation LogicalDocument current pointer for stale-currentness Incomplete/no-job behavior",
+      "persisted ProfiledRevision drift for wrong-revision Incomplete/no-job behavior",
+      "persisted foreign SystemId drift for cross-System Incomplete/no-job behavior",
+      "provider-excluding RepositoryAccessScope for unauthorized-core-member Incomplete/no-job behavior",
+      "persisted unrelated cross-Repository REFERENCES Edge proving raw graph edges do not expand the selected membership; this characterization is GREEN and does not claim a RED"
+    ],
+    "failure_cause": null
+  },
+  "notes": [
+    "The test harness now persists authoritative v2 inputs and uses the database Pass2Execution identifier; no in-memory scenario flags or empty Pass2Job list assertions remain.",
+    "The XML fixture avoids the EF LogicalDocument/DocumentVersion current-pointer cycle by persisting rows first and binding CurrentVersionId afterward, then clears and re-queries the context before invoking the planner.",
+    "The existing private test fixture seeder is used only to build the already-managed Pass 1 handoff; the behavior under test is the public PreparedPass2FlowPlanner.PlanAsync seam.",
+    "T018 is now GREEN (8/8). T019 uses persisted row mutations only; no in-memory scenario flags or fake graph/LLM inputs were used. The planner's incomplete result/no-job contract and one-hop canonical closure remain unimplemented.",
+    "The one-hop correction treats DocumentVersion uniqueness only across Document trace steps; relationship steps retain their adjacent DocumentVersionId by contract. It separately checks one optional Document occurrence, unique ordered EdgeIds, and the persisted reverse-cycle collapse condition.",
+    "No production code, workflow state, task marker, Git history, PostgreSQL database, network, or system configuration was changed."
+  ],
+  "finalGreenVerification": {
+    "observedAt": "2026-08-26T05:13:00Z",
+    "focusedResult": "17/17 pure planner tests passed, including T018 identity/currentness and T019 one-hop/incomplete matrices.",
+    "rootResult": "Included in the root US2 gate: 43/43 planning, PostgreSQL, migration, exact-resolution, and legacy compatibility tests passed.",
+    "incompleteReasons": [
+      "missing-provider-implementation",
+      "multiple-provider-implementations",
+      "unanchored-provider-implementation",
+      "stale-provider-implementation",
+      "wrong-revision-provider-implementation",
+      "foreign-system-provider-implementation",
+      "unauthorized-core-member"
+    ]
+  }
+}

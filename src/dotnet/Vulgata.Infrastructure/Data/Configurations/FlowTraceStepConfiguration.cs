@@ -14,6 +14,9 @@ internal sealed class FlowTraceStepConfiguration : IEntityTypeConfiguration<Flow
             table.HasCheckConstraint(
                 "CK_FlowTraceSteps_StepKind_Closed",
                 "\"StepKind\" IN ('Document', 'Relationship', 'Termination')");
+            table.HasCheckConstraint(
+                "CK_FlowTraceSteps_ExactDecision_RelationshipOnly",
+                "\"ExactResolutionDecisionId\" IS NULL OR \"StepKind\" = 'Relationship'");
         });
         builder.HasKey(step => step.Id);
         builder.Property(step => step.Id).ValueGeneratedNever();
@@ -21,6 +24,7 @@ internal sealed class FlowTraceStepConfiguration : IEntityTypeConfiguration<Flow
         builder.Property(step => step.Description).HasMaxLength(4_096);
         builder.HasIndex(step => new { step.FlowTraceId, step.StepOrder }).IsUnique();
         builder.HasIndex(step => new { step.DocumentRepositoryId, step.DocumentVersionId });
+        builder.HasIndex(step => step.ExactResolutionDecisionId);
         builder.HasOne(step => step.FlowTrace)
             .WithMany(trace => trace.Steps)
             .HasForeignKey(step => step.FlowTraceId)
@@ -43,6 +47,10 @@ internal sealed class FlowTraceStepConfiguration : IEntityTypeConfiguration<Flow
         builder.HasOne(step => step.Edge)
             .WithMany()
             .HasForeignKey(step => step.EdgeId)
+            .OnDelete(DeleteBehavior.Restrict);
+        builder.HasOne<CrossRepositoryResolutionDecision>()
+            .WithMany()
+            .HasForeignKey(step => step.ExactResolutionDecisionId)
             .OnDelete(DeleteBehavior.Restrict);
     }
 }

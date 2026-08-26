@@ -809,8 +809,26 @@ namespace Vulgata.Infrastructure.Data.Migrations
                     b.Property<Guid?>("BusinessLogicDocumentVersionId")
                         .HasColumnType("uuid");
 
+                    b.Property<Guid?>("ConsumerDocumentVersionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ConsumerEntryIdentity")
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)");
+
+                    b.Property<string>("ConsumerEntryStableKey")
+                        .HasMaxLength(64)
+                        .HasColumnType("character(64)")
+                        .IsFixedLength();
+
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ExactResolutionDecisionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("ExactResolutionEdgeId")
+                        .HasColumnType("uuid");
 
                     b.Property<int>("GroupOrder")
                         .HasColumnType("integer");
@@ -820,11 +838,44 @@ namespace Vulgata.Infrastructure.Data.Migrations
                         .HasMaxLength(512)
                         .HasColumnType("character varying(512)");
 
+                    b.Property<string>("LogicalKeySchemaIdentity")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<string>("MembershipFingerprint")
+                        .HasMaxLength(64)
+                        .HasColumnType("character(64)")
+                        .IsFixedLength();
+
+                    b.Property<string>("NormalizedEndpointIdentifier")
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)");
+
+                    b.Property<Guid?>("Pass2ExecutionId")
+                        .HasColumnType("uuid");
+
                     b.Property<string>("PlanFingerprint")
                         .IsRequired()
                         .HasMaxLength(64)
                         .HasColumnType("character(64)")
                         .IsFixedLength();
+
+                    b.Property<string>("Protocol")
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<Guid?>("ProviderImplementationDocumentVersionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("ProviderRepositoryId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("ProviderXmlDocumentVersionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ReasonCode")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
 
                     b.Property<Guid>("RepositoryId")
                         .HasColumnType("uuid");
@@ -832,10 +883,17 @@ namespace Vulgata.Infrastructure.Data.Migrations
                     b.Property<Guid>("ScanRunId")
                         .HasColumnType("uuid");
 
+                    b.Property<string>("SchemaIdentity")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
                     b.Property<string>("State")
                         .IsRequired()
                         .HasMaxLength(32)
                         .HasColumnType("character varying(32)");
+
+                    b.Property<Guid?>("SystemId")
+                        .HasColumnType("uuid");
 
                     b.Property<string>("Title")
                         .IsRequired()
@@ -844,16 +902,49 @@ namespace Vulgata.Infrastructure.Data.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("ExactResolutionDecisionId")
+                        .IsUnique();
+
+                    b.HasIndex("ExactResolutionEdgeId");
+
+                    b.HasIndex("ProviderImplementationDocumentVersionId");
+
+                    b.HasIndex("ProviderRepositoryId");
+
+                    b.HasIndex("ProviderXmlDocumentVersionId");
+
+                    b.HasIndex("SystemId");
+
                     b.HasIndex("BusinessLogicDocumentVersionId", "GroupOrder")
+                        .IsUnique();
+
+                    b.HasIndex("Pass2ExecutionId", "GroupOrder")
+                        .IsUnique();
+
+                    b.HasIndex("Pass2ExecutionId", "PlanFingerprint")
                         .IsUnique();
 
                     b.HasIndex("RepositoryId", "BusinessLogicDocumentVersionId");
 
                     b.HasIndex("BusinessLogicDocumentVersionId", "RepositoryId", "ScanRunId");
 
+                    b.HasIndex("ConsumerDocumentVersionId", "RepositoryId", "ScanRunId");
+
                     b.ToTable("FlowGroups", "vulgata", t =>
                         {
+                            t.HasCheckConstraint("CK_FlowGroups_Fingerprint_Lengths", "(\"PlanFingerprint\" = '' OR length(\"PlanFingerprint\") = 64) AND (\"MembershipFingerprint\" IS NULL OR length(\"MembershipFingerprint\") = 64) AND (\"ConsumerEntryStableKey\" IS NULL OR length(\"ConsumerEntryStableKey\") = 64)");
+
                             t.HasCheckConstraint("CK_FlowGroups_GroupOrder_Positive", "\"GroupOrder\" > 0");
+
+                            t.HasCheckConstraint("CK_FlowGroups_LogicalKeySchemaIdentity_Closed", "\"LogicalKeySchemaIdentity\" IS NULL OR \"LogicalKeySchemaIdentity\" = 'business-flow-logical-key/1.0'");
+
+                            t.HasCheckConstraint("CK_FlowGroups_Protocol_Closed", "\"Protocol\" IS NULL OR \"Protocol\" IN ('CustomRpc', 'Http')");
+
+                            t.HasCheckConstraint("CK_FlowGroups_ProviderRepository_CrossRepository", "\"ProviderRepositoryId\" IS NULL OR \"ProviderRepositoryId\" <> \"RepositoryId\"");
+
+                            t.HasCheckConstraint("CK_FlowGroups_SchemaIdentity_Closed", "\"SchemaIdentity\" IS NULL OR \"SchemaIdentity\" = 'endpoint-flow-group/1.0'");
+
+                            t.HasCheckConstraint("CK_FlowGroups_State_Closed", "\"SchemaIdentity\" IS NULL OR \"State\" IN ('Complete', 'Incomplete', 'BoundExcluded', 'Running', 'Published', 'Failed')");
                         });
                 });
 
@@ -907,6 +998,9 @@ namespace Vulgata.Infrastructure.Data.Migrations
                     b.Property<Guid?>("EdgeId")
                         .HasColumnType("uuid");
 
+                    b.Property<Guid?>("ExactResolutionDecisionId")
+                        .HasColumnType("uuid");
+
                     b.Property<Guid>("FlowTraceId")
                         .HasColumnType("uuid");
 
@@ -922,6 +1016,8 @@ namespace Vulgata.Infrastructure.Data.Migrations
 
                     b.HasIndex("EdgeId");
 
+                    b.HasIndex("ExactResolutionDecisionId");
+
                     b.HasIndex("DocumentRepositoryId", "DocumentVersionId");
 
                     b.HasIndex("FlowTraceId", "StepOrder")
@@ -931,6 +1027,8 @@ namespace Vulgata.Infrastructure.Data.Migrations
 
                     b.ToTable("FlowTraceSteps", "vulgata", t =>
                         {
+                            t.HasCheckConstraint("CK_FlowTraceSteps_ExactDecision_RelationshipOnly", "\"ExactResolutionDecisionId\" IS NULL OR \"StepKind\" = 'Relationship'");
+
                             t.HasCheckConstraint("CK_FlowTraceSteps_StepKind_Closed", "\"StepKind\" IN ('Document', 'Relationship', 'Termination')");
 
                             t.HasCheckConstraint("CK_FlowTraceSteps_StepOrder_Positive", "\"StepOrder\" > 0");
@@ -3543,9 +3641,50 @@ namespace Vulgata.Infrastructure.Data.Migrations
 
             modelBuilder.Entity("Vulgata.Core.Entities.FlowGroup", b =>
                 {
+                    b.HasOne("Vulgata.Core.Entities.CrossRepositoryResolutionDecision", null)
+                        .WithOne()
+                        .HasForeignKey("Vulgata.Core.Entities.FlowGroup", "ExactResolutionDecisionId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Vulgata.Core.Entities.DocumentEdge", null)
+                        .WithMany()
+                        .HasForeignKey("ExactResolutionEdgeId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Vulgata.Core.Entities.Pass2Execution", null)
+                        .WithMany()
+                        .HasForeignKey("Pass2ExecutionId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Vulgata.Core.Entities.DocumentVersion", null)
+                        .WithMany()
+                        .HasForeignKey("ProviderImplementationDocumentVersionId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Vulgata.Core.Entities.Repository", null)
+                        .WithMany()
+                        .HasForeignKey("ProviderRepositoryId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Vulgata.Core.Entities.DocumentVersion", null)
+                        .WithMany()
+                        .HasForeignKey("ProviderXmlDocumentVersionId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Vulgata.Core.Entities.System", null)
+                        .WithMany()
+                        .HasForeignKey("SystemId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("Vulgata.Core.Entities.DocumentVersion", "BusinessLogicDocumentVersion")
                         .WithMany("FlowGroups")
                         .HasForeignKey("BusinessLogicDocumentVersionId", "RepositoryId", "ScanRunId")
+                        .HasPrincipalKey("Id", "RepositoryId", "ScanRunId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Vulgata.Core.Entities.DocumentVersion", null)
+                        .WithMany()
+                        .HasForeignKey("ConsumerDocumentVersionId", "RepositoryId", "ScanRunId")
                         .HasPrincipalKey("Id", "RepositoryId", "ScanRunId")
                         .OnDelete(DeleteBehavior.Restrict);
 
@@ -3568,6 +3707,11 @@ namespace Vulgata.Infrastructure.Data.Migrations
                     b.HasOne("Vulgata.Core.Entities.DocumentEdge", "Edge")
                         .WithMany()
                         .HasForeignKey("EdgeId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Vulgata.Core.Entities.CrossRepositoryResolutionDecision", null)
+                        .WithMany()
+                        .HasForeignKey("ExactResolutionDecisionId")
                         .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("Vulgata.Core.Entities.FlowTrace", "FlowTrace")

@@ -297,3 +297,15 @@ proof bindings. Root verification passed 96/96 pure, disposable-PostgreSQL, and
 legacy compatibility tests. Same-Repository provider-implementation Edge
 traversal is retained for T019/T020 Flow Group completeness under AD-3; it is
 not provider-selection evidence and no candidate-result seam was invented.
+
+### T018-T023 US2 completion
+
+Endpoint-centered planning now separates pair-specific Flow Group identities
+from cross-scan `business-flow/v1` keys, preserves distinct decisions that share
+one REFERENCES Edge, resolves the unique provider implementation through exact
+same-Repository evidence, and performs canonical one-hop expansion. Invalid
+core membership produces closed Incomplete reasons. Exact eight-Document,
+sixteen-step, and ten-group bounds remain inclusive; plus-one cases are never
+truncated, and the eleventh candidate becomes a content-dark omission. Atomic
+PostgreSQL start, rollback, and replay create one job/budget only per Complete
+group. Root verification passed 43/43 and EF reports no pending model changes.

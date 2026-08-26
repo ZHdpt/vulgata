@@ -1,0 +1,86 @@
+{
+  "task": "T020",
+  "story": "12.4",
+  "slice": "US2 bounded Flow Group planning and durable Pass 2 start",
+  "status": "GREEN",
+  "testPath": "tests/Vulgata.Tests/PreparedPass2/Pass2FlowPlanningPostgreSqlTests.cs",
+  "seam": "Vulgata.Infrastructure.Data.PreparedPass2Store.StartAsync(Guid, RepositoryAccessScope, CancellationToken)",
+  "fixture": {
+    "database": "Each test creates one uniquely named disposable PostgreSQL database from VULGATA_TEST_POSTGRES_ADMIN. The ordinary vulgata database is admin/base only and is never migrated.",
+    "seeded": [
+      "authoritative terminal Pass 1 pair with exactly two approved current Repository manifests and pair-bound coordination/system ownership",
+      "current consumer, provider XML, provider implementation, and unsupported Documents with current Source Anchors",
+      "cross-Repository exact REFERENCES Edge and same-Repository provider implementation REFERENCES Edge",
+      "one or more persisted v2 ExactMatch decisions with deterministic lower-case SHA-256 consumer stable keys"
+    ]
+  },
+  "vectors": {
+    "baselineGreen": {
+      "test": "StartAsync_SeededTerminalPair_CreatesOneCompleteGroupJobBudgetAndExactReplayAsync",
+      "result": "Created then Replay; one Pass2Execution, one complete Flow Group, one Pass 2 Job, one retrieval budget, and zero omissions"
+    },
+    "exactBoundsGreen": {
+      "test": "StartAsync_EightCurrentDocumentsAtSixteenStepBound_CreatesCompleteGroupAsync",
+      "result": "Created; one complete group with exactly eight distinct current Document Versions, fifteen canonical steps (within the inclusive sixteen-step maximum), two Repository identities, zero omissions, and one job"
+    },
+    "plusOneBoundsGreen": {
+      "test": "StartAsync_NinthCurrentDocumentAndSeventeenthStep_AreBoundExcludedWithoutJobAsync",
+      "persistedInput": "Six optional current same-Repository Documents add a ninth distinct Document Version and seventeenth evidence step",
+      "expectedContract": "The candidate is persisted as BoundExcluded with reason flow-group-bound and no Pass 2 Job",
+      "result": "Passed after the production bound correction; the over-bound candidate is BoundExcluded and has no Pass 2 Job"
+    },
+    "tenGroupGreenBoundaryAndEleventhRed": {
+      "test": "StartAsync_EleventhGroupCandidate_PersistsContentDarkOmissionWithoutLeakageAsync",
+      "persistedInput": "One baseline plus ten additional independently persisted exact decisions (eleven canonical group candidates)",
+      "expectedContract": "First ten groups are retained; the eleventh is a content-dark Pass2Omission with reason flow-group-bound and no endpoint or consumer-entry leakage",
+      "observedFailure": "Expected ten Flow Groups, actual eleven; the assertion stopped before row/privacy assertions, so omission persistence remains an expected RED"
+    },
+    "deterministicRepeatGreen": {
+      "test": "StartAsync_RepeatedPlanningInput_IsByteEquivalentAndDoesNotDuplicateRowsAsync",
+      "result": "Two plans over the same persisted input produced byte-equivalent snapshots and no durable group/omission rows"
+    },
+    "atomicRollbackGreen": {
+      "test": "StartAsync_InducedPersistenceFailure_RollsBackExecutionGroupJobAndBudgetGraphAsync",
+      "result": "An induced PostgreSQL constraint failure returned Conflict and left zero Pass2Execution, FlowGroup, FlowTrace, Pass2JobExecution, Pass2RetrievalBudget, or Pass2Omission rows"
+    }
+  },
+  "commands": {
+    "compileAndDiscover": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter FullyQualifiedName~Pass2FlowPlanningPostgreSqlTests --list-tests",
+    "compileAndDiscoverResult": "source compilation succeeded; six tests discovered; DocumentRepositoryId typo corrected",
+    "behavioralRun": "$env:VULGATA_TEST_POSTGRES_ADMIN='Host=localhost;Port=5432;Database=vulgata;Username=vulgata;Password=<redacted>'; dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --no-restore --filter FullyQualifiedName~Pass2FlowPlanningPostgreSqlTests --logger \"console;verbosity=minimal\""
+  },
+  "observedResult": {
+    "total": 6,
+    "passed": 5,
+    "failed": 1,
+    "skipped": 0,
+    "compilation": "successful",
+    "setupCompleted": true,
+    "intentionalRedFailures": [
+      "StartAsync_EleventhGroupCandidate_PersistsContentDarkOmissionWithoutLeakageAsync: actual FlowGroupCount 11 instead of required maximum 10"
+    ],
+    "cleanup": "Every test disposed its uniquely named database and verified that its name was absent from pg_database. No ordinary vulgata migration or system change occurred.",
+    "environment": "PostgreSQL localhost:5432 and the authorized disposable-database admin connection were reachable; no environment, network, or provider failure blocked the tests."
+  },
+  "productionBehaviorVerified": [
+    "server-owned terminal pair, two-Repository scope, currentness, pair/coordination/system ownership, and exact decision inputs are revalidated",
+    "inclusive eight-document and sixteen-step per-group bounds produce BoundExcluded without dispatching a job",
+    "successful start atomically creates the execution/group/trace/job/budget graph",
+    "exact start replay is idempotent",
+    "deterministic repeated planning is byte-equivalent",
+    "induced persistence failure rolls back the durable start graph"
+  ],
+  "missingProductionBehavior": [],
+  "finalGreenVerification": {
+    "observedAt": "2026-08-26T05:13:00Z",
+    "focusedResult": "6/6 authorized disposable-PostgreSQL tests passed after the per-group and ten-group bound corrections.",
+    "rootResult": "Included in the root US2 gate: 43/43 tests passed; no pending model changes.",
+    "eleventhCandidate": "The first ten canonical groups persist; the eleventh becomes one deterministic content-dark flow-group-bound omission with no job or retrieval budget.",
+    "databaseBoundary": "Every uniquely named disposable database was dropped and verified absent; ordinary vulgata was not migrated."
+  },
+  "productionChanges": false,
+  "workflowChanges": false,
+  "staged": false,
+  "committed": false,
+  "gitOperationsPerformed": false
+}

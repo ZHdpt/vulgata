@@ -16,7 +16,8 @@ public sealed class FlowTraceStep
         Guid? edgeId,
         FlowTraceStepKind stepKind,
         string description,
-        DateTimeOffset createdAt)
+        DateTimeOffset createdAt,
+        Guid? exactResolutionDecisionId = null)
     {
         Id = id;
         FlowTraceId = flowTraceId;
@@ -25,6 +26,7 @@ public sealed class FlowTraceStep
         DocumentRepositoryId = documentRepositoryId;
         DocumentScanRunId = documentScanRunId;
         EdgeId = edgeId;
+        ExactResolutionDecisionId = exactResolutionDecisionId;
         StepKind = stepKind;
         Description = description;
         CreatedAt = createdAt;
@@ -37,6 +39,7 @@ public sealed class FlowTraceStep
     public Guid DocumentRepositoryId { get; private set; }
     public Guid DocumentScanRunId { get; private set; }
     public Guid? EdgeId { get; private set; }
+    public Guid? ExactResolutionDecisionId { get; private set; }
     public FlowTraceStepKind StepKind { get; private set; }
     public string Description { get; private set; } = string.Empty;
     public DateTimeOffset CreatedAt { get; private set; }

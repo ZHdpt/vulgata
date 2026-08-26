@@ -21,6 +21,45 @@ public sealed class Pass2Execution
     {
     }
 
+    public static Pass2Execution CreatePlanning(
+        Guid id,
+        Guid pass1PairExecutionId,
+        Guid coordinationId,
+        Guid systemId,
+        DateTimeOffset startedAt)
+    {
+        if (id == Guid.Empty || pass1PairExecutionId == Guid.Empty ||
+            coordinationId == Guid.Empty || systemId == Guid.Empty ||
+            startedAt.Offset != TimeSpan.Zero)
+        {
+            throw new ArgumentException("A complete UTC-bound Pass 2 execution identity is required.");
+        }
+
+        return new Pass2Execution
+        {
+            Id = id,
+            Pass1PairExecutionId = pass1PairExecutionId,
+            CoordinationId = coordinationId,
+            SystemId = systemId,
+            State = Pass2ExecutionState.Planning,
+            StartedAt = startedAt,
+            UpdatedAt = startedAt,
+        };
+    }
+
+    public void MarkRunning(DateTimeOffset changedAt)
+    {
+        if (State != Pass2ExecutionState.Planning ||
+            changedAt.Offset != TimeSpan.Zero || changedAt < UpdatedAt)
+        {
+            throw new InvalidOperationException("Only a complete planned execution can start running.");
+        }
+
+        State = Pass2ExecutionState.Running;
+        StateVersion++;
+        UpdatedAt = changedAt;
+    }
+
     public Guid Id { get; private set; }
     public Guid Pass1PairExecutionId { get; private set; }
     public Guid CoordinationId { get; private set; }

@@ -16,6 +16,28 @@ public sealed class Pass2JobExecution
     {
     }
 
+    public static Pass2JobExecution CreatePending(
+        Guid id,
+        Guid pass2ExecutionId,
+        Guid flowGroupId,
+        int groupOrder)
+    {
+        if (id == Guid.Empty || pass2ExecutionId == Guid.Empty || flowGroupId == Guid.Empty)
+        {
+            throw new ArgumentException("Complete Pass 2 Job identities are required.");
+        }
+
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(groupOrder);
+        return new Pass2JobExecution
+        {
+            Id = id,
+            Pass2ExecutionId = pass2ExecutionId,
+            FlowGroupId = flowGroupId,
+            GroupOrder = groupOrder,
+            State = Pass2JobExecutionState.Pending,
+        };
+    }
+
     public Guid Id { get; private set; }
     public Guid Pass2ExecutionId { get; private set; }
     public Guid FlowGroupId { get; private set; }
