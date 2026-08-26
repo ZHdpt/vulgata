@@ -6,10 +6,10 @@
   "stage": "plan-review",
   "preflight": {
     "branch": "demo0831/story-12-4",
-    "head": "e5911f208f86570b143bbfe5d482e4512240f3b9",
+    "head": "65f80713d3d6e1df3a4b0e8d5112272c54d592ec",
     "git_identity_sha256": "056EE72BEB553F1C2AAA2D88B2730FC47D14ABC810286CC5F98D68B1F513B17B",
-    "status_sha256": "17EB0D7461C129FF59F49E362330F456E5A3993F15A89327B06CAB8F385E7DB2",
-    "observed_at": "2026-08-26T00:50:20.2876613Z"
+    "status_sha256": "A9419E3BE3B788512FAE579FED9BE4B064040129148FA2B3E3E2A90AB2162952",
+    "observed_at": "2026-08-26T00:54:44.8397396Z"
   },
   "artifacts": {
     "spec": {
@@ -80,13 +80,13 @@
   "checkpoint": {
     "checkpoint_id": "bmad-12-4-plan-review-20260826T005306Z-c84e75",
     "stage": "plan-review",
-    "commit_sha": null,
-    "binding_status": "pending"
+    "commit_sha": "65f80713d3d6e1df3a4b0e8d5112272c54d592ec",
+    "binding_status": "bound"
   },
   "resume": {
     "stage": "plan-review",
     "reason": "Plan-review attempt 3 accepted with no findings; explicit planned-change authorization is required before tasks.",
     "evidence_path": "specs/013-exact-cross-repository-flow-pass2/decisions/planned-change-authorization-01.md"
   },
-  "updated_at": "2026-08-26T00:53:06.9527915Z"
+  "updated_at": "2026-08-26T00:54:44.8397396Z"
 }
