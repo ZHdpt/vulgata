@@ -6,10 +6,10 @@
   "stage": "implement",
   "preflight": {
     "branch": "demo0831/story-12-4",
-    "head": "91b9404d824d2d4bcad3882aa3c54395be131e04",
+    "head": "279d9681dc1a97ee8258be65f01b2c3c5691b136",
     "git_identity_sha256": "056EE72BEB553F1C2AAA2D88B2730FC47D14ABC810286CC5F98D68B1F513B17B",
-    "status_sha256": "C35A80CF1834B01D4937612F2A83CE37C10A3C7E9488FE340F02444EBF6D5332",
-    "observed_at": "2026-08-26T03:24:16.7316628Z"
+    "status_sha256": "7886C290977B80B3175FC8808E7C95FF1C8127891885BD8EB36D49ADE4A250D8",
+    "observed_at": "2026-08-26T03:25:23.5136963Z"
   },
   "artifacts": {
     "spec": {
@@ -90,13 +90,13 @@
   "checkpoint": {
     "checkpoint_id": "bmad-12-4-implement-20260826T032416Z-a184d2",
     "stage": "implement",
-    "commit_sha": null,
-    "binding_status": "pending"
+    "commit_sha": "279d9681dc1a97ee8258be65f01b2c3c5691b136",
+    "binding_status": "bound"
   },
   "resume": {
     "stage": "implement",
     "reason": "T010-T012 and T014-T016 are verified GREEN; continue T013 full AD-1 candidate reconstruction, then run the T017 US1 gate.",
     "evidence_path": "specs/013-exact-cross-repository-flow-pass2/tasks.md"
   },
-  "updated_at": "2026-08-26T03:24:16.7316628Z"
+  "updated_at": "2026-08-26T03:25:23.5136963Z"
 }
