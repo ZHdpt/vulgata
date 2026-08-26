@@ -6,10 +6,10 @@
   "stage": "implement",
   "preflight": {
     "branch": "demo0831/story-12-4",
-    "head": "a8d00d26ed9a5424c366563df8c9fed184704689",
+    "head": "a39b3ef692e008d1202241c5cdc077ee36f11db5",
     "git_identity_sha256": "056EE72BEB553F1C2AAA2D88B2730FC47D14ABC810286CC5F98D68B1F513B17B",
-    "status_sha256": "A50E09884A5CB94757FB439AF382BF7BA12BBDC730C33835D634F40E3E1B6026",
-    "observed_at": "2026-08-26T02:18:26.2217202Z"
+    "status_sha256": "4846329E928AF0251D5FB6F4E7728712A93B71E3367219BA1232131AEC79DBF6",
+    "observed_at": "2026-08-26T02:19:32.8754346Z"
   },
   "artifacts": {
     "spec": {
@@ -90,13 +90,13 @@
   "checkpoint": {
     "checkpoint_id": "bmad-12-4-implement-20260826T021724Z-f60081",
     "stage": "implement",
-    "commit_sha": null,
-    "binding_status": "pending"
+    "commit_sha": "a39b3ef692e008d1202241c5cdc077ee36f11db5",
+    "binding_status": "bound"
   },
   "resume": {
     "stage": "implement",
     "reason": "T001-T006 are verified GREEN with preserved RED evidence; execute T007-T009 migration and relational constraints test-first.",
     "evidence_path": "specs/013-exact-cross-repository-flow-pass2/tasks.md"
   },
-  "updated_at": "2026-08-26T02:18:26.2217202Z"
+  "updated_at": "2026-08-26T02:19:32.8754346Z"
 }
