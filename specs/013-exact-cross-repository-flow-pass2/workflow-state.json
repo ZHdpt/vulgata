@@ -6,10 +6,10 @@
   "stage": "implementation-approval",
   "preflight": {
     "branch": "demo0831/story-12-4",
-    "head": "02f46cafb79391b4dd310bda9e8d387d8f332ec8",
+    "head": "1913a65a886d9fb33031bc3bfe956cd1115a23a4",
     "git_identity_sha256": "056EE72BEB553F1C2AAA2D88B2730FC47D14ABC810286CC5F98D68B1F513B17B",
-    "status_sha256": "019D21416819710A82B4CD93BDA1C3AFE799C8A687A8617DE780C872B6A426D7",
-    "observed_at": "2026-08-26T01:54:31.5168535Z"
+    "status_sha256": "92A8C5B6DCBCB729EA6B607D098FC598AC7E7772F02373531D013F055331A2A0",
+    "observed_at": "2026-08-26T02:00:43.8075505Z"
   },
   "artifacts": {
     "spec": {
@@ -90,13 +90,13 @@
   "checkpoint": {
     "checkpoint_id": "bmad-12-4-definition-review-20260826T015912Z-2511f4",
     "stage": "definition-review",
-    "commit_sha": null,
-    "binding_status": "pending"
+    "commit_sha": "1913a65a886d9fb33031bc3bfe956cd1115a23a4",
+    "binding_status": "bound"
   },
   "resume": {
     "stage": "implementation-approval",
     "reason": "Definition-review attempt 3 accepted the complete 49-task definition with no findings; await explicit production implementation approval.",
     "evidence_path": "specs/013-exact-cross-repository-flow-pass2/decisions/implementation-approval-01.md"
   },
-  "updated_at": "2026-08-26T01:59:12.3396279Z"
+  "updated_at": "2026-08-26T02:00:43.8075505Z"
 }
