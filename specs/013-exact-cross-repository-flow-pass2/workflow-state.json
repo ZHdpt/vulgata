@@ -6,10 +6,10 @@
   "stage": "plan",
   "preflight": {
     "branch": "demo0831/story-12-4",
-    "head": "40db07b0286a09cf909cd7b4e59d56078c55f28b",
+    "head": "e5911f208f86570b143bbfe5d482e4512240f3b9",
     "git_identity_sha256": "056EE72BEB553F1C2AAA2D88B2730FC47D14ABC810286CC5F98D68B1F513B17B",
-    "status_sha256": "6A6993FB47217C72EFFD23C0C39ACD9F703A926CAA3E05277F7516191D1C9B3C",
-    "observed_at": "2026-08-26T00:05:53.3190612Z"
+    "status_sha256": "A9419E3BE3B788512FAE579FED9BE4B064040129148FA2B3E3E2A90AB2162952",
+    "observed_at": "2026-08-26T00:07:29.7997364Z"
   },
   "artifacts": {
     "spec": {
@@ -59,13 +59,13 @@
   "checkpoint": {
     "checkpoint_id": "bmad-12-4-specify-20260826T000637Z-53650c",
     "stage": "specify",
-    "commit_sha": null,
-    "binding_status": "pending"
+    "commit_sha": "e5911f208f86570b143bbfe5d482e4512240f3b9",
+    "binding_status": "bound"
   },
   "resume": {
     "stage": "plan",
     "reason": "Specification self-review passed; produce the architecture-sensitive implementation plan and self-review it.",
     "evidence_path": "specs/013-exact-cross-repository-flow-pass2/checklists/requirements.md"
   },
-  "updated_at": "2026-08-26T00:06:37.7114413Z"
+  "updated_at": "2026-08-26T00:07:29.7997364Z"
 }
