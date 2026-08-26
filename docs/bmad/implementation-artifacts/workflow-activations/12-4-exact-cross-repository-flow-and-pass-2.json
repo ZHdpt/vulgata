@@ -4,7 +4,7 @@
   "bmad_epic_key": "12",
   "story_path": "docs/bmad/implementation-artifacts/12-4-exact-cross-repository-flow-and-pass-2.md",
   "proposed_feature_short_name": "exact-cross-repository-flow-pass2",
-  "stage": "specify",
+  "stage": "plan",
   "source_commit": "6aed7057e9e371d35c4123c0a204dd4849803eea",
   "preflight": {
     "branch": "demo0831/story-12-4",
@@ -30,11 +30,11 @@
     "commit_sha": "ccd8cdbcc88999083b89b6e7a0b8ac622c1420ed",
     "binding_status": "bound"
   },
-  "feature_directory": null,
-  "superseded_by_state": null,
+  "feature_directory": "specs/013-exact-cross-repository-flow-pass2",
+  "superseded_by_state": "specs/013-exact-cross-repository-flow-pass2/workflow-state.json",
   "resume": {
-    "stage": "specify",
-    "reason": "Context synthesis is complete; allocate one SpecKit feature and author the bounded specification."
+    "stage": "plan",
+    "reason": "Specification self-review passed; produce the architecture-sensitive implementation plan."
   },
-  "updated_at": "2026-08-26T00:01:04.7742927Z"
+  "updated_at": "2026-08-26T00:05:53.3190612Z"
 }

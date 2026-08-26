@@ -1,0 +1,71 @@
+{
+  "schema_version": "3.0",
+  "bmad_story_key": "12-4-exact-cross-repository-flow-and-pass-2",
+  "bmad_epic_key": "12",
+  "feature_directory": "specs/013-exact-cross-repository-flow-pass2",
+  "stage": "plan",
+  "preflight": {
+    "branch": "demo0831/story-12-4",
+    "head": "40db07b0286a09cf909cd7b4e59d56078c55f28b",
+    "git_identity_sha256": "056EE72BEB553F1C2AAA2D88B2730FC47D14ABC810286CC5F98D68B1F513B17B",
+    "status_sha256": "6A6993FB47217C72EFFD23C0C39ACD9F703A926CAA3E05277F7516191D1C9B3C",
+    "observed_at": "2026-08-26T00:05:53.3190612Z"
+  },
+  "artifacts": {
+    "spec": {
+      "path": "specs/013-exact-cross-repository-flow-pass2/spec.md",
+      "sha256": "50327089B48F6ACCFBA1267E762CD2AF29E9F33A53E249B7FB8590C06D671517"
+    },
+    "plan": null,
+    "tasks": null
+  },
+  "gates": {
+    "plan-review": {
+      "status": "pending",
+      "attempt": 0,
+      "verdict_path": null
+    },
+    "definition-review": {
+      "status": "pending",
+      "attempt": 0,
+      "verdict_path": null
+    },
+    "quality-review": {
+      "status": "pending",
+      "attempt": 0,
+      "verdict_path": null
+    }
+  },
+  "attempts": {
+    "definition-review": 0,
+    "converge": 0,
+    "quality-review": 0
+  },
+  "approvals": [],
+  "convergence": {
+    "status": "pending",
+    "attempt": 0,
+    "outcome": "pending",
+    "report_path": null
+  },
+  "e2e": {
+    "result": "pending",
+    "decision_path": null
+  },
+  "current_evidence_paths": [
+    "specs/013-exact-cross-repository-flow-pass2/spec.md",
+    "specs/013-exact-cross-repository-flow-pass2/checklists/requirements.md"
+  ],
+  "checkpoint": {
+    "checkpoint_id": "bmad-12-4-specify-20260826T000637Z-53650c",
+    "stage": "specify",
+    "commit_sha": null,
+    "binding_status": "pending"
+  },
+  "resume": {
+    "stage": "plan",
+    "reason": "Specification self-review passed; produce the architecture-sensitive implementation plan and self-review it.",
+    "evidence_path": "specs/013-exact-cross-repository-flow-pass2/checklists/requirements.md"
+  },
+  "updated_at": "2026-08-26T00:06:37.7114413Z"
+}

@@ -105,3 +105,15 @@ unrelated user work and is excluded from Story 12.4 ownership.
 The next stage is bounded specification authoring. Planning must surface the
 repository planned-change triggers for Cross-Repository Resolution strategy,
 Pass 2 grouping/dispatch, and `retrieve_code_logic` before task generation.
+
+## Specification checkpoint preparation
+
+The bounded specification at `specs/013-exact-cross-repository-flow-pass2`
+passed its author self-review in one iteration with five user scenarios,
+twenty-four acceptance scenarios, forty-three functional requirements, and
+twelve measurable success criteria. It retains the exact provider key,
+unique-current-provider rule, honest Uncertainty outcomes, endpoint-centered
+bounds, closed `retrieve_code_logic`, complete `GENERATED_FROM` provenance,
+immutable Documents, and Story 12.5 exclusion. No placeholder, unresolved
+clarification, or authority conflict remains. The next owner is the
+architecture-sensitive planning stage.
