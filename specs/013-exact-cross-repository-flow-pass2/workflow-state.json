@@ -6,10 +6,10 @@
   "stage": "implement",
   "preflight": {
     "branch": "demo0831/story-12-4",
-    "head": "38bb7015ea6c1b7e1ce86154c27a0f255ff24f15",
+    "head": "7513710a7e31ab38f45fd61f15881676ae6df917",
     "git_identity_sha256": "056EE72BEB553F1C2AAA2D88B2730FC47D14ABC810286CC5F98D68B1F513B17B",
-    "status_sha256": "4A20ED87EFC455E7477CB415315BF8A574E1B93F694152B03FDE50861DA944DF",
-    "observed_at": "2026-08-26T05:09:19.0288792Z"
+    "status_sha256": "7886C290977B80B3175FC8808E7C95FF1C8127891885BD8EB36D49ADE4A250D8",
+    "observed_at": "2026-08-26T05:10:11.5503036Z"
   },
   "artifacts": {
     "spec": {
@@ -90,13 +90,13 @@
   "checkpoint": {
     "checkpoint_id": "bmad-12-4-implement-20260826T050919Z-7dce31",
     "stage": "implement",
-    "commit_sha": null,
-    "binding_status": "pending"
+    "commit_sha": "7513710a7e31ab38f45fd61f15881676ae6df917",
+    "binding_status": "bound"
   },
   "resume": {
     "stage": "implement",
     "reason": "T018-T023 US2 Flow Group planning and atomic start are verified GREEN; execute T024-T029 closed supporting-knowledge retrieval test-first.",
     "evidence_path": "specs/013-exact-cross-repository-flow-pass2/tasks.md"
   },
-  "updated_at": "2026-08-26T05:09:19.0288792Z"
+  "updated_at": "2026-08-26T05:10:11.5503036Z"
 }
