@@ -22,7 +22,7 @@
     },
     "tasks": {
       "path": "specs/013-exact-cross-repository-flow-pass2/tasks.md",
-      "sha256": "88F61A4F314496817D2411CF223BC708272B9C684E10FB2F4D9F3854C25A97FA"
+      "sha256": "1775F1E959F25FFA7CBC787E93FC07483BF44FC53A25840B3D23BCA068ECA857"
     }
   },
   "gates": {
@@ -88,15 +88,15 @@
     "specs/013-exact-cross-repository-flow-pass2/decisions/implementation-approval-01.md"
   ],
   "checkpoint": {
-    "checkpoint_id": "bmad-12-4-implement-20260826T061215Z-ae1791",
+    "checkpoint_id": "bmad-12-4-implement-20260826T093144Z-515d6b",
     "stage": "implement",
-    "commit_sha": "687d157774476036864c0375ec1015c3b6e2d43a",
+    "commit_sha": "515d6b7ad1f59a257f0b4781bf561df76b0f236e",
     "binding_status": "bound"
   },
   "resume": {
     "stage": "implement",
-    "reason": "T024, T025, and T027 closed retrieval operations/security are verified GREEN; PostgreSQL localhost:5432 is unavailable, so resume T026/T028 durable accounting after the listener is restored, then execute T029.",
+    "reason": "US3 T024-T029 closed retrieval, transactional security, durable budgets, replay, and PostgreSQL qualification are accepted; resume US4 at T030, then follow the dependency order through T038.",
     "evidence_path": "specs/013-exact-cross-repository-flow-pass2/tasks.md"
   },
-  "updated_at": "2026-08-26T06:12:15.2091099Z"
+  "updated_at": "2026-08-26T09:31:44.1171264Z"
 }
