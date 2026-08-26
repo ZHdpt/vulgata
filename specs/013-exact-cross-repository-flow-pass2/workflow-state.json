@@ -6,10 +6,10 @@
   "stage": "implement",
   "preflight": {
     "branch": "demo0831/story-12-4",
-    "head": "5396de24dbccacd4f4b637ebbe5c2529232b3669",
+    "head": "11a6b7a37ef8e7d2fc30c077357616514767eb3a",
     "git_identity_sha256": "056EE72BEB553F1C2AAA2D88B2730FC47D14ABC810286CC5F98D68B1F513B17B",
-    "status_sha256": "1F4F4698EAD4A9365D6802807F3866D2E403C2A9AF465C20EF97E7B7AE4E8347",
-    "observed_at": "2026-08-26T03:55:41.9565863Z"
+    "status_sha256": "7886C290977B80B3175FC8808E7C95FF1C8127891885BD8EB36D49ADE4A250D8",
+    "observed_at": "2026-08-26T03:56:33.5124494Z"
   },
   "artifacts": {
     "spec": {
@@ -90,13 +90,13 @@
   "checkpoint": {
     "checkpoint_id": "bmad-12-4-implement-20260826T035541Z-c72b0e",
     "stage": "implement",
-    "commit_sha": null,
-    "binding_status": "pending"
+    "commit_sha": "11a6b7a37ef8e7d2fc30c077357616514767eb3a",
+    "binding_status": "bound"
   },
   "resume": {
     "stage": "implement",
     "reason": "T010-T017 US1 exact Cross-Repository Resolution is verified GREEN; execute T018-T023 endpoint-centered Flow Group planning test-first.",
     "evidence_path": "specs/013-exact-cross-repository-flow-pass2/tasks.md"
   },
-  "updated_at": "2026-08-26T03:55:41.9565863Z"
+  "updated_at": "2026-08-26T03:56:33.5124494Z"
 }
