@@ -896,7 +896,7 @@ public sealed class RetrieveCodeLogicPostgreSqlBudgetTests(ITestOutputHelper out
 
             (Pass1PairExecution pair, RepositoryAccessScope scope) =
                 await SeedUsingT020Async(context, fixture);
-            PreparedPass2StartResult start = await new PreparedPass2Store(context)
+            PreparedPass2StartResult start = await Pass2FlowPlanningPostgreSqlTests.CreateStore(context)
                 .StartAsync(pair.Id, scope);
             Assert.Equal(PreparedPass2StartOutcome.Created, start.Outcome);
             await AddRetrievalArtifactsAsync(context);

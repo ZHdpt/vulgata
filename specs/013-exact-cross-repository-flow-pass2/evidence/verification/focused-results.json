@@ -1,0 +1,40 @@
+{
+  "schema_version": "story-12.4-focused-verification/1.0",
+  "observed_at": "2026-08-27T05:44:14.9453589+08:00",
+  "status": "GREEN_T046_T047",
+  "results": [
+    {
+      "boundary": "pure_and_hosted_focused",
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --no-restore --filter \"FullyQualifiedName~ExactResolutionContractTests|FullyQualifiedName~ExactCrossRepositoryResolutionTests|FullyQualifiedName~Pass2FlowPlanningTests|FullyQualifiedName~RetrieveCodeLogicContractTests|FullyQualifiedName~RetrieveCodeLogicSecurityTests|FullyQualifiedName~Pass2StrictSubmissionTests|FullyQualifiedName~PreparedPass2JobExecutorStreamingTests|FullyQualifiedName~Pass2BusinessLogicValidationTests|FullyQualifiedName~Pass2DocumentCommitTests|FullyQualifiedName~Pass2ExecutionRecoveryTests|FullyQualifiedName~Pass2ExecutionApiTests|FullyQualifiedName~Pass2PartialCompletionTests|FullyQualifiedName~Pass2MigrationTests|FullyQualifiedName~Pass2ProductionCompositionTests|FullyQualifiedName~Pass2Us5QualityCorrectionTests\" --logger \"console;verbosity=minimal\"",
+      "total": 286,
+      "passed": 286,
+      "failed": 0,
+      "skipped": 0
+    },
+    {
+      "boundary": "disposable_postgresql_17",
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --no-restore --filter \"FullyQualifiedName~ExactCrossRepositoryPostgreSqlTests|FullyQualifiedName~Pass2FlowPlanningPostgreSqlTests|FullyQualifiedName~RetrieveCodeLogicPostgreSqlBudgetTests|FullyQualifiedName~Pass2DocumentPostgreSqlAtomicTests|FullyQualifiedName~Pass2ExecutionRecoveryTests|FullyQualifiedName~Pass2PostgreSqlConstraintTests\" --logger \"console;verbosity=minimal\"",
+      "database": "localhost:5432 unique disposable databases; ordinary vulgata database untouched",
+      "total": 87,
+      "passed": 87,
+      "failed": 0,
+      "skipped": 0
+    },
+    {
+      "boundary": "authenticated_composition_and_api_security",
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter \"FullyQualifiedName~Pass2ProductionCompositionTests|FullyQualifiedName~Pass2ExecutionApiTests\" --logger \"console;verbosity=minimal\"",
+      "total": 64,
+      "passed": 64,
+      "failed": 0,
+      "skipped": 0
+    }
+  ],
+  "corrections": {
+    "scope": "test fixtures only",
+    "summary": "Updated PostgreSQL fixtures to provide the accepted Worker contract authority and live authorization verifier, bind Source Anchor and contract fingerprints, and clone current resolution decision/contribution authority without legacy ExactCrossRepositoryEdgeEvidence fallback assumptions.",
+    "environment_blocker": false,
+    "network_used": false,
+    "ordinary_database_mutated": false
+  },
+  "nonblocking_baseline_failures": []
+}

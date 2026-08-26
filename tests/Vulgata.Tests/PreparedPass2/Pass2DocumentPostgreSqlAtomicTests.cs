@@ -115,7 +115,7 @@ public sealed class Pass2DocumentPostgreSqlAtomicTests
 
         await using VulgataDbContext restarted = CreateContext(fixture.DatabaseConnectionString);
         Pass2BusinessLogicCommitResult replay = await new Pass2BusinessLogicDocumentCommitter(
-            restarted, fixture.Scope).CommitAsync(request);
+            restarted, fixture.Scope, fixture.WorkerContractAuthority).CommitAsync(request);
 
         Assert.Equal(Pass2BusinessLogicCommitStatus.Replayed, replay.Status);
         Assert.Equal(first.DocumentVersionId, replay.DocumentVersionId);
@@ -141,10 +141,16 @@ public sealed class Pass2DocumentPostgreSqlAtomicTests
             request.AttemptOrdinal,
             JsonSerializer.SerializeToElement(changed),
             request.InitialEvidence,
-            request.PromptIdentity);
+            request.PromptIdentity)
+        {
+            PromptFingerprint = request.PromptFingerprint,
+            SubmissionSchemaIdentity = request.SubmissionSchemaIdentity,
+            SubmissionSchemaFingerprint = request.SubmissionSchemaFingerprint,
+            ToolDeclarationFingerprint = request.ToolDeclarationFingerprint,
+        };
         await using VulgataDbContext restarted = CreateContext(fixture.DatabaseConnectionString);
         Pass2BusinessLogicCommitResult conflict = await new Pass2BusinessLogicDocumentCommitter(
-            restarted, fixture.Scope).CommitAsync(changedRequest);
+            restarted, fixture.Scope, fixture.WorkerContractAuthority).CommitAsync(changedRequest);
 
         Assert.Equal(Pass2BusinessLogicCommitStatus.Conflict, conflict.Status);
         Assert.Null(conflict.DocumentVersionId);
@@ -185,10 +191,12 @@ public sealed class Pass2DocumentPostgreSqlAtomicTests
 
         Task<Pass2BusinessLogicCommitResult> left = new Pass2BusinessLogicDocumentCommitter(
             leftContext,
-            fixture.Scope).CommitAsync(request);
+            fixture.Scope,
+            fixture.WorkerContractAuthority).CommitAsync(request);
         Task<Pass2BusinessLogicCommitResult> right = new Pass2BusinessLogicDocumentCommitter(
             rightContext,
-            fixture.Scope).CommitAsync(request);
+            fixture.Scope,
+            fixture.WorkerContractAuthority).CommitAsync(request);
         Pass2BusinessLogicCommitResult[] results = await Task.WhenAll(left, right);
 
         Assert.Single(results, value => value.Status == Pass2BusinessLogicCommitStatus.Committed);
@@ -419,7 +427,8 @@ public sealed class Pass2DocumentPostgreSqlAtomicTests
             await fixture.PrepareThirdRequestWithStableKeyAsync();
         Pass2BusinessLogicCommitResult third = await new Pass2BusinessLogicDocumentCommitter(
             fixture.Context,
-            fixture.Scope).CommitAsync(thirdRequest);
+            fixture.Scope,
+            fixture.WorkerContractAuthority).CommitAsync(thirdRequest);
         Assert.Equal(Pass2BusinessLogicCommitStatus.Committed, third.Status);
         Assert.NotEqual(second.DocumentVersionId, third.DocumentVersionId);
 
@@ -514,10 +523,12 @@ public sealed class Pass2DocumentPostgreSqlAtomicTests
 
         Task<Pass2BusinessLogicCommitResult> left = new Pass2BusinessLogicDocumentCommitter(
             leftContext,
-            fixture.Scope).CommitAsync(request);
+            fixture.Scope,
+            fixture.WorkerContractAuthority).CommitAsync(request);
         Task<Pass2BusinessLogicCommitResult> right = new Pass2BusinessLogicDocumentCommitter(
             rightContext,
-            fixture.Scope).CommitAsync(request);
+            fixture.Scope,
+            fixture.WorkerContractAuthority).CommitAsync(request);
         Pass2BusinessLogicCommitResult[] results = await Task.WhenAll(left, right);
 
         Assert.Single(results, value => value.Status == Pass2BusinessLogicCommitStatus.Committed);
@@ -617,7 +628,8 @@ public sealed class Pass2DocumentPostgreSqlAtomicTests
         Task<Pass2BusinessLogicCommitResult> firstCommit = fixture.Committer.CommitAsync(firstRequest);
         Task<Pass2BusinessLogicCommitResult> successor = new Pass2BusinessLogicDocumentCommitter(
             concurrentContext,
-            fixture.Scope).CommitAsync(secondRequest);
+            fixture.Scope,
+            fixture.WorkerContractAuthority).CommitAsync(secondRequest);
         Pass2BusinessLogicCommitResult first = await firstCommit;
         Pass2BusinessLogicCommitResult second = await successor;
 
@@ -688,99 +700,6 @@ public sealed class Pass2DocumentPostgreSqlAtomicTests
     private static string Hash(string value) =>
         Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(value)));
 
-    private static async Task CanonicalizeExactAuthorityAsync(VulgataDbContext context)
-    {
-        CrossRepositoryResolutionDecision seededDecision =
-            await context.CrossRepositoryResolutionDecisions.SingleAsync();
-        ExactCrossRepositoryEdgeEvidence edgeEvidence =
-            await context.ExactCrossRepositoryEdgeEvidence.AsNoTracking().SingleAsync();
-        DocumentVersion consumer = await context.DocumentVersions.AsNoTracking()
-            .SingleAsync(value => value.Id == edgeEvidence.ConsumerDocumentVersionId);
-        DocumentVersion provider = await context.DocumentVersions.AsNoTracking()
-            .SingleAsync(value => value.Id == edgeEvidence.ProviderDocumentVersionId);
-        string canonicalEvidenceFingerprint = ExactResolutionCanonicalAuthority.EvidenceFingerprint(
-            edgeEvidence, consumer.ProfiledRevision, provider.ProfiledRevision);
-        ExactResolutionProviderEvidenceContribution[] seededContributions = await context
-            .ExactResolutionProviderEvidenceContributions.AsNoTracking()
-            .Where(value => value.ResolutionDecisionId == seededDecision.Id)
-            .OrderBy(value => value.ProviderOrdinal).ThenBy(value => value.EvidenceOrdinal)
-            .ToArrayAsync();
-
-        context.RemoveRange(await context.ExactResolutionProviderEvidenceContributions
-            .Where(value => value.ResolutionDecisionId == seededDecision.Id).ToArrayAsync());
-        context.Remove(seededDecision);
-        await context.SaveChangesAsync();
-
-        ExactCrossRepositoryEdgeEvidence trackedEvidence =
-            await context.ExactCrossRepositoryEdgeEvidence
-                .SingleAsync(value => value.EdgeId == edgeEvidence.EdgeId);
-        SetProperty(trackedEvidence, nameof(ExactCrossRepositoryEdgeEvidence.EvidenceFingerprint),
-            canonicalEvidenceFingerprint);
-        CrossRepositoryResolutionDecision canonicalDecision =
-            NewEntity<CrossRepositoryResolutionDecision>();
-        SetProperty(canonicalDecision, nameof(CrossRepositoryResolutionDecision.Id),
-            ExactResolutionCanonicalAuthority.DecisionId(canonicalEvidenceFingerprint));
-        SetProperty(canonicalDecision, nameof(CrossRepositoryResolutionDecision.Pass1PairExecutionId),
-            seededDecision.Pass1PairExecutionId);
-        SetProperty(canonicalDecision, nameof(CrossRepositoryResolutionDecision.CoordinationId),
-            seededDecision.CoordinationId);
-        SetProperty(canonicalDecision, nameof(CrossRepositoryResolutionDecision.SystemId),
-            seededDecision.SystemId);
-        SetProperty(canonicalDecision, nameof(CrossRepositoryResolutionDecision.ConsumerCandidateId),
-            seededDecision.ConsumerCandidateId);
-        SetProperty(canonicalDecision, nameof(CrossRepositoryResolutionDecision.ConsumerEntryIdentity),
-            edgeEvidence.OccurrenceId);
-        SetProperty(canonicalDecision, nameof(CrossRepositoryResolutionDecision.ConsumerEntryStableKey),
-            seededDecision.ConsumerEntryStableKey);
-        SetProperty(canonicalDecision, nameof(CrossRepositoryResolutionDecision.ConsumerDocumentVersionId),
-            seededDecision.ConsumerDocumentVersionId);
-        SetProperty(canonicalDecision, nameof(CrossRepositoryResolutionDecision.Protocol), seededDecision.Protocol);
-        SetProperty(canonicalDecision, nameof(CrossRepositoryResolutionDecision.NormalizedEndpointIdentifier),
-            seededDecision.NormalizedEndpointIdentifier);
-        SetProperty(canonicalDecision, nameof(CrossRepositoryResolutionDecision.Outcome), seededDecision.Outcome);
-        SetProperty(canonicalDecision, nameof(CrossRepositoryResolutionDecision.ProviderDocumentVersionId),
-            seededDecision.ProviderDocumentVersionId);
-        SetProperty(canonicalDecision, nameof(CrossRepositoryResolutionDecision.DocumentEdgeId),
-            seededDecision.DocumentEdgeId);
-        SetProperty(canonicalDecision, nameof(CrossRepositoryResolutionDecision.UncertaintyId),
-            seededDecision.UncertaintyId);
-        SetProperty(canonicalDecision, nameof(CrossRepositoryResolutionDecision.EvidenceFingerprint),
-            canonicalEvidenceFingerprint);
-        SetProperty(canonicalDecision, nameof(CrossRepositoryResolutionDecision.CreatedAt), seededDecision.CreatedAt);
-        context.CrossRepositoryResolutionDecisions.Add(canonicalDecision);
-
-        foreach (ExactResolutionProviderEvidenceContribution seededContribution in seededContributions)
-        {
-            string fingerprint = ExactResolutionCanonicalAuthority.ProviderContributionFingerprint(
-                canonicalEvidenceFingerprint,
-                seededContribution.ProviderDocumentVersionId,
-                seededContribution.SourceAnchorId);
-            ExactResolutionProviderEvidenceContribution canonicalContribution =
-                NewEntity<ExactResolutionProviderEvidenceContribution>();
-            SetProperty(canonicalContribution, nameof(ExactResolutionProviderEvidenceContribution.Id),
-                ExactResolutionCanonicalAuthority.ProviderContributionId(fingerprint));
-            SetProperty(canonicalContribution,
-                nameof(ExactResolutionProviderEvidenceContribution.ResolutionDecisionId), canonicalDecision.Id);
-            SetProperty(canonicalContribution,
-                nameof(ExactResolutionProviderEvidenceContribution.ProviderDocumentVersionId),
-                seededContribution.ProviderDocumentVersionId);
-            SetProperty(canonicalContribution, nameof(ExactResolutionProviderEvidenceContribution.SourceAnchorId),
-                seededContribution.SourceAnchorId);
-            SetProperty(canonicalContribution,
-                nameof(ExactResolutionProviderEvidenceContribution.EvidenceFingerprint), fingerprint);
-            SetProperty(canonicalContribution, nameof(ExactResolutionProviderEvidenceContribution.ProviderOrdinal),
-                seededContribution.ProviderOrdinal);
-            SetProperty(canonicalContribution, nameof(ExactResolutionProviderEvidenceContribution.EvidenceOrdinal),
-                seededContribution.EvidenceOrdinal);
-            SetProperty(canonicalContribution, nameof(ExactResolutionProviderEvidenceContribution.CreatedAt),
-                seededContribution.CreatedAt);
-            context.ExactResolutionProviderEvidenceContributions.Add(canonicalContribution);
-        }
-
-        await context.SaveChangesAsync();
-        context.ChangeTracker.Clear();
-    }
-
     private static T NewEntity<T>() => (T)Activator.CreateInstance(
         typeof(T), BindingFlags.Instance | BindingFlags.NonPublic, null, null, null)!;
 
@@ -809,11 +728,13 @@ public sealed class Pass2DocumentPostgreSqlAtomicTests
             CrossRepositoryResolutionDecision? secondDecision,
             DocumentEdge? secondEdge,
             ExactResolutionProviderEvidenceContribution[] secondContributions,
+            Guid consumerSourceAnchorId,
             string consumerAnchorHandle,
             string relationshipHandle,
             string? secondConsumerAnchorHandle,
             string? secondRelationshipHandle,
-            string administrator)
+            string administrator,
+            IPreparedPass2WorkerContractAuthority workerContractAuthority)
         {
             Database = database;
             SourceFixture = sourceFixture;
@@ -836,11 +757,13 @@ public sealed class Pass2DocumentPostgreSqlAtomicTests
             SecondDecision = secondDecision;
             SecondEdge = secondEdge;
             SecondContributions = secondContributions;
+            ConsumerSourceAnchorId = consumerSourceAnchorId;
             ConsumerAnchorHandle = consumerAnchorHandle;
             RelationshipHandle = relationshipHandle;
             SecondConsumerAnchorHandle = secondConsumerAnchorHandle;
             SecondRelationshipHandle = secondRelationshipHandle;
             Administrator = administrator;
+            WorkerContractAuthority = workerContractAuthority;
             CommitterForSecond = secondJob is null ? null : committer;
         }
 
@@ -864,11 +787,13 @@ public sealed class Pass2DocumentPostgreSqlAtomicTests
         private CrossRepositoryResolutionDecision? SecondDecision { get; set; }
         private DocumentEdge? SecondEdge { get; }
         private ExactResolutionProviderEvidenceContribution[] SecondContributions { get; set; }
+        private Guid ConsumerSourceAnchorId { get; }
         private string ConsumerAnchorHandle { get; }
         private string RelationshipHandle { get; }
         private string? SecondConsumerAnchorHandle { get; }
         private string? SecondRelationshipHandle { get; }
         private string Administrator { get; }
+        internal IPreparedPass2WorkerContractAuthority WorkerContractAuthority { get; }
         internal Pass2BusinessLogicDocumentCommitter? CommitterForSecond { get; }
         internal Guid ConsumerRepositoryId => Consumer.DocumentVersion.RepositoryId;
         internal Guid ConsumerDocumentVersionId => Consumer.DocumentVersion.Id;
@@ -899,7 +824,6 @@ public sealed class Pass2DocumentPostgreSqlAtomicTests
                     ?? throw new InvalidOperationException("The accepted T020 seed returned null.");
                 await Assert.IsAssignableFrom<Task>(invocation);
                 await (Task)invocation;
-                await CanonicalizeExactAuthorityAsync(context);
                 object seed = (invocation.GetType().GetProperty("Result")?.GetValue(invocation))
                     ?? throw new InvalidOperationException("The accepted T020 seed result is unavailable.");
 
@@ -909,7 +833,11 @@ public sealed class Pass2DocumentPostgreSqlAtomicTests
                     [consumer.DocumentVersion.RepositoryId, Get<ExactPass1DocumentFixture>(seed, "ProviderXml")
                         .DocumentVersion.RepositoryId],
                     new AlwaysAllowAuthorizationVerifier());
-                PreparedPass2StartResult start = await new PreparedPass2Store(context)
+                IPreparedPass2WorkerContractAuthority workerContractAuthority =
+                    Pass2FlowPlanningPostgreSqlTests.CreateWorkerContractAuthority();
+                PreparedPass2StartResult start = await new PreparedPass2Store(
+                        context,
+                        workerContractAuthority)
                     .StartAsync(pair.Id, scope);
                 Assert.Equal(PreparedPass2StartOutcome.Created, start.Outcome);
                 Pass2JobExecution[] jobs = await context.Pass2JobExecutions
@@ -975,6 +903,11 @@ public sealed class Pass2DocumentPostgreSqlAtomicTests
                     secondDecision = await context.CrossRepositoryResolutionDecisions
                         .SingleAsync(value => value.Id == secondGroup.ExactResolutionDecisionId);
                     secondEdge = await context.DocumentEdges.SingleAsync(value => value.Id == secondGroup.ExactResolutionEdgeId);
+                    FlowTraceStep secondRelationshipStep = await context.FlowTraceSteps.SingleAsync(
+                        value => value.EdgeId == secondEdge.Id && context.FlowTraces.Any(trace =>
+                            trace.Id == value.FlowTraceId && trace.FlowGroupId == secondGroup.Id));
+                    DocumentVersion secondRelationshipDocument = await context.DocumentVersions.SingleAsync(
+                        value => value.Id == secondRelationshipStep.DocumentVersionId);
                     secondContributions = await context.ExactResolutionProviderEvidenceContributions
                         .Where(value => value.ResolutionDecisionId == secondDecision.Id)
                         .OrderBy(value => value.ProviderOrdinal).ThenBy(value => value.EvidenceOrdinal)
@@ -995,17 +928,20 @@ public sealed class Pass2DocumentPostgreSqlAtomicTests
                         secondJob.Id,
                         secondJob.AttemptCount,
                         Pass2CodeLogicRetrievalItemKind.Relationship,
-                        relationshipDocument.Id,
-                        relationshipDocument.RepositoryId,
-                        relationshipDocument.ScanRunId,
-                        relationshipDocument.ProfiledRevision,
+                        secondRelationshipDocument.Id,
+                        secondRelationshipDocument.RepositoryId,
+                        secondRelationshipDocument.ScanRunId,
+                        secondRelationshipDocument.ProfiledRevision,
                         edgeId: secondEdge.Id);
                 }
                 return new(
                     database,
                     sourceFixture,
                     context,
-                    new Pass2BusinessLogicDocumentCommitter(context, scope),
+                    new Pass2BusinessLogicDocumentCommitter(
+                        context,
+                        scope,
+                        workerContractAuthority),
                     scope,
                     job,
                     group,
@@ -1020,6 +956,7 @@ public sealed class Pass2DocumentPostgreSqlAtomicTests
                     secondDecision,
                     secondEdge,
                     secondContributions,
+                    consumerAnchor.Id,
                     Pass2InitialEvidenceHandle.Create(
                         job.Id,
                         job.AttemptCount,
@@ -1043,7 +980,8 @@ public sealed class Pass2DocumentPostgreSqlAtomicTests
                         edgeId: edge.Id),
                     secondConsumerAnchorHandle,
                     secondRelationshipHandle,
-                    administrator);
+                    administrator,
+                    workerContractAuthority);
             }
             catch
             {
@@ -1125,8 +1063,14 @@ public sealed class Pass2DocumentPostgreSqlAtomicTests
                     Consumer.DocumentVersion.RepositoryId,
                     Consumer.DocumentVersion.ScanRunId,
                     Consumer.DocumentVersion.ProfiledRevision,
-                    SourceAnchorId: null)],
-                "pass2-business-logic-worker.v1");
+                    SourceAnchorId: ConsumerSourceAnchorId)],
+                "pass2-business-logic-worker.v1")
+            {
+                PromptFingerprint = Execution.WorkerPromptFingerprint,
+                SubmissionSchemaIdentity = Execution.SubmissionSchemaIdentity,
+                SubmissionSchemaFingerprint = Execution.SubmissionSchemaFingerprint,
+                ToolDeclarationFingerprint = Execution.ToolDeclarationFingerprint,
+            };
         }
 
         internal async Task<Pass2BusinessLogicCommitRequest> PrepareSecondRequestAsync()
@@ -1176,8 +1120,15 @@ public sealed class Pass2DocumentPostgreSqlAtomicTests
                     Consumer.DocumentVersion.Id,
                     Consumer.DocumentVersion.RepositoryId,
                     Consumer.DocumentVersion.ScanRunId,
-                    Consumer.DocumentVersion.ProfiledRevision)],
-                "pass2-business-logic-worker.v1");
+                    Consumer.DocumentVersion.ProfiledRevision,
+                    SourceAnchorId: ConsumerSourceAnchorId)],
+                "pass2-business-logic-worker.v1")
+            {
+                PromptFingerprint = SecondExecution.WorkerPromptFingerprint,
+                SubmissionSchemaIdentity = SecondExecution.SubmissionSchemaIdentity,
+                SubmissionSchemaFingerprint = SecondExecution.SubmissionSchemaFingerprint,
+                ToolDeclarationFingerprint = SecondExecution.ToolDeclarationFingerprint,
+            };
         }
 
         internal async Task<Pass2BusinessLogicCommitRequest> PrepareSecondRequestWithStableKeyAsync(
@@ -1219,6 +1170,8 @@ public sealed class Pass2DocumentPostgreSqlAtomicTests
             Guid changedDecisionId = ExactResolutionCanonicalAuthority.DecisionId(changedEvidenceFingerprint);
             CrossRepositoryResolutionDecision changedDecision = NewEntity<CrossRepositoryResolutionDecision>();
             SetProperty(changedDecision, nameof(CrossRepositoryResolutionDecision.Id), changedDecisionId);
+            SetProperty(changedDecision, nameof(CrossRepositoryResolutionDecision.ResolutionSchemaIdentity),
+                SecondDecision.ResolutionSchemaIdentity);
             SetProperty(changedDecision, nameof(CrossRepositoryResolutionDecision.Pass1PairExecutionId),
                 SecondExecution!.Pass1PairExecutionId);
             SetProperty(changedDecision, nameof(CrossRepositoryResolutionDecision.CoordinationId),
@@ -1227,19 +1180,43 @@ public sealed class Pass2DocumentPostgreSqlAtomicTests
             SetProperty(changedDecision, nameof(CrossRepositoryResolutionDecision.ConsumerCandidateId),
                 SecondDecision.ConsumerCandidateId);
             SetProperty(changedDecision, nameof(CrossRepositoryResolutionDecision.ConsumerEntryIdentity),
-                exactEvidence.OccurrenceId);
+                SecondDecision.ConsumerEntryIdentity);
             SetProperty(changedDecision, nameof(CrossRepositoryResolutionDecision.ConsumerEntryStableKey),
                 SecondDecision.ConsumerEntryStableKey);
             SetProperty(changedDecision, nameof(CrossRepositoryResolutionDecision.ConsumerDocumentVersionId),
                 SecondDecision.ConsumerDocumentVersionId);
+            SetProperty(changedDecision, nameof(CrossRepositoryResolutionDecision.ConsumerRepositoryId),
+                SecondDecision.ConsumerRepositoryId);
+            SetProperty(changedDecision, nameof(CrossRepositoryResolutionDecision.ConsumerScanRunId),
+                SecondDecision.ConsumerScanRunId);
+            SetProperty(changedDecision, nameof(CrossRepositoryResolutionDecision.ConsumerProfiledRevision),
+                SecondDecision.ConsumerProfiledRevision);
             SetProperty(changedDecision, nameof(CrossRepositoryResolutionDecision.Protocol), SecondDecision.Protocol);
             SetProperty(changedDecision, nameof(CrossRepositoryResolutionDecision.NormalizedEndpointIdentifier),
                 changedEndpoint);
             SetProperty(changedDecision, nameof(CrossRepositoryResolutionDecision.Outcome), SecondDecision.Outcome);
+            SetProperty(changedDecision, nameof(CrossRepositoryResolutionDecision.OutcomeKind), SecondDecision.OutcomeKind);
+            SetProperty(changedDecision, nameof(CrossRepositoryResolutionDecision.ReasonCode), SecondDecision.ReasonCode);
+            SetProperty(changedDecision, nameof(CrossRepositoryResolutionDecision.NormalizationRuleIdentity),
+                SecondDecision.NormalizationRuleIdentity);
+            SetProperty(changedDecision, nameof(CrossRepositoryResolutionDecision.ProviderIdentity),
+                SecondDecision.ProviderIdentity);
             SetProperty(changedDecision, nameof(CrossRepositoryResolutionDecision.ProviderDocumentVersionId),
                 SecondDecision.ProviderDocumentVersionId);
+            SetProperty(changedDecision, nameof(CrossRepositoryResolutionDecision.ProviderRepositoryId),
+                SecondDecision.ProviderRepositoryId);
+            SetProperty(changedDecision, nameof(CrossRepositoryResolutionDecision.ProviderScanRunId),
+                SecondDecision.ProviderScanRunId);
+            SetProperty(changedDecision, nameof(CrossRepositoryResolutionDecision.ProviderProfiledRevision),
+                SecondDecision.ProviderProfiledRevision);
             SetProperty(changedDecision, nameof(CrossRepositoryResolutionDecision.DocumentEdgeId), SecondDecision.DocumentEdgeId);
             SetProperty(changedDecision, nameof(CrossRepositoryResolutionDecision.UncertaintyId), SecondDecision.UncertaintyId);
+            SetProperty(changedDecision, nameof(CrossRepositoryResolutionDecision.ResolvedUncertaintyId),
+                SecondDecision.ResolvedUncertaintyId);
+            SetProperty(changedDecision, nameof(CrossRepositoryResolutionDecision.ConsumerEvidenceFingerprint),
+                SecondDecision.ConsumerEvidenceFingerprint);
+            SetProperty(changedDecision, nameof(CrossRepositoryResolutionDecision.DecisionFingerprint),
+                changedEvidenceFingerprint);
             SetProperty(changedDecision, nameof(CrossRepositoryResolutionDecision.EvidenceFingerprint),
                 changedEvidenceFingerprint);
             SetProperty(changedDecision, nameof(CrossRepositoryResolutionDecision.CreatedAt), SecondDecision.CreatedAt);
@@ -1247,18 +1224,37 @@ public sealed class Pass2DocumentPostgreSqlAtomicTests
             List<ExactResolutionProviderEvidenceContribution> changedContributions = [];
             foreach (ExactResolutionProviderEvidenceContribution contribution in SecondContributions)
             {
-                string fingerprint = ExactResolutionCanonicalAuthority.ProviderContributionFingerprint(
-                    changedEvidenceFingerprint, contribution.ProviderDocumentVersionId, contribution.SourceAnchorId);
                 ExactResolutionProviderEvidenceContribution changedContribution =
                     NewEntity<ExactResolutionProviderEvidenceContribution>();
-                SetProperty(changedContribution, nameof(ExactResolutionProviderEvidenceContribution.Id),
-                    ExactResolutionCanonicalAuthority.ProviderContributionId(fingerprint));
                 SetProperty(changedContribution, nameof(ExactResolutionProviderEvidenceContribution.ResolutionDecisionId),
                     changedDecisionId);
+                SetProperty(changedContribution, nameof(ExactResolutionProviderEvidenceContribution.ProviderIdentity),
+                    contribution.ProviderIdentity);
                 SetProperty(changedContribution, nameof(ExactResolutionProviderEvidenceContribution.ProviderDocumentVersionId),
                     contribution.ProviderDocumentVersionId);
+                SetProperty(changedContribution, nameof(ExactResolutionProviderEvidenceContribution.RepositoryId), contribution.RepositoryId);
+                SetProperty(changedContribution, nameof(ExactResolutionProviderEvidenceContribution.ScanRunId), contribution.ScanRunId);
+                SetProperty(changedContribution, nameof(ExactResolutionProviderEvidenceContribution.ProfiledRevision), contribution.ProfiledRevision);
+                SetProperty(changedContribution, nameof(ExactResolutionProviderEvidenceContribution.CommunicationClassificationId),
+                    contribution.CommunicationClassificationId);
                 SetProperty(changedContribution, nameof(ExactResolutionProviderEvidenceContribution.SourceAnchorId),
                     contribution.SourceAnchorId);
+                SetProperty(changedContribution, nameof(ExactResolutionProviderEvidenceContribution.ProviderRawIdentifier),
+                    contribution.ProviderRawIdentifier);
+                SetProperty(changedContribution, nameof(ExactResolutionProviderEvidenceContribution.NormalizedEndpointIdentifier),
+                    changedEndpoint);
+                SetProperty(changedContribution, nameof(ExactResolutionProviderEvidenceContribution.EvidenceLocator), contribution.EvidenceLocator);
+                SetProperty(changedContribution, nameof(ExactResolutionProviderEvidenceContribution.ClassificationFingerprint),
+                    contribution.ClassificationFingerprint);
+                SetProperty(changedContribution, nameof(ExactResolutionProviderEvidenceContribution.CatalogRuleIdentity),
+                    contribution.CatalogRuleIdentity);
+                SetProperty(changedContribution, nameof(ExactResolutionProviderEvidenceContribution.NormalizationRuleIdentity),
+                    contribution.NormalizationRuleIdentity);
+                string fingerprint = ExactResolutionCanonicalAuthority.PersistedProviderContributionFingerprint(
+                    changedEvidenceFingerprint,
+                    changedContribution);
+                SetProperty(changedContribution, nameof(ExactResolutionProviderEvidenceContribution.Id),
+                    ExactResolutionCanonicalAuthority.ProviderContributionId(fingerprint));
                 SetProperty(changedContribution, nameof(ExactResolutionProviderEvidenceContribution.EvidenceFingerprint), fingerprint);
                 SetProperty(changedContribution, nameof(ExactResolutionProviderEvidenceContribution.ProviderOrdinal), contribution.ProviderOrdinal);
                 SetProperty(changedContribution, nameof(ExactResolutionProviderEvidenceContribution.EvidenceOrdinal), contribution.EvidenceOrdinal);
@@ -1266,6 +1262,14 @@ public sealed class Pass2DocumentPostgreSqlAtomicTests
                 Context.ExactResolutionProviderEvidenceContributions.Add(changedContribution);
                 changedContributions.Add(changedContribution);
             }
+            SetProperty(
+                changedDecision,
+                nameof(CrossRepositoryResolutionDecision.ProviderEvidenceSetFingerprint),
+                ExactResolutionCanonicalAuthority.ProviderEvidenceSetFingerprint(
+                    changedContributions
+                        .OrderBy(value => value.ProviderOrdinal)
+                        .ThenBy(value => value.EvidenceOrdinal)
+                        .Select(value => value.EvidenceFingerprint)));
             await Context.SaveChangesAsync();
             string changedStableKey = "business-flow/v1/" + Hash(string.Join(
                 '\n',
@@ -1404,8 +1408,15 @@ public sealed class Pass2DocumentPostgreSqlAtomicTests
                     Consumer.DocumentVersion.Id,
                     Consumer.DocumentVersion.RepositoryId,
                     Consumer.DocumentVersion.ScanRunId,
-                    Consumer.DocumentVersion.ProfiledRevision)],
-                "pass2-business-logic-worker.v1"), thirdJob);
+                    Consumer.DocumentVersion.ProfiledRevision,
+                    SourceAnchorId: consumerAnchor.Id)],
+                "pass2-business-logic-worker.v1")
+            {
+                PromptFingerprint = thirdExecution.WorkerPromptFingerprint,
+                SubmissionSchemaIdentity = thirdExecution.SubmissionSchemaIdentity,
+                SubmissionSchemaFingerprint = thirdExecution.SubmissionSchemaFingerprint,
+                ToolDeclarationFingerprint = thirdExecution.ToolDeclarationFingerprint,
+            }, thirdJob);
         }
 
         internal async Task MutateSecondStableKeyAsync(string stableKey)
@@ -1731,18 +1742,14 @@ public sealed class Pass2DocumentPostgreSqlAtomicTests
             string fingerprint = Hash($"shared-decision/{duplicateId:D}");
             await Context.Database.ExecuteSqlInterpolatedAsync($"""
                 INSERT INTO "vulgata"."CrossRepositoryResolutionDecisions"
-                    ("Id", "Pass1PairExecutionId", "CoordinationId", "SystemId",
-                     "ConsumerCandidateId", "ConsumerEntryIdentity", "ConsumerEntryStableKey",
-                     "ConsumerDocumentVersionId", "Protocol", "NormalizedEndpointIdentifier",
-                     "Outcome", "ProviderDocumentVersionId", "DocumentEdgeId", "UncertaintyId",
-                     "EvidenceFingerprint", "CreatedAt")
-                SELECT {duplicateId}, "Pass1PairExecutionId", "CoordinationId", "SystemId",
-                       "ConsumerCandidateId", "ConsumerEntryIdentity", "ConsumerEntryStableKey",
-                       "ConsumerDocumentVersionId", "Protocol", "NormalizedEndpointIdentifier",
-                       "Outcome", "ProviderDocumentVersionId", "DocumentEdgeId", "UncertaintyId",
-                       {fingerprint}, "CreatedAt"
-                FROM "vulgata"."CrossRepositoryResolutionDecisions"
-                WHERE "Id" = {Decision.Id};
+                SELECT (jsonb_populate_record(NULL::"vulgata"."CrossRepositoryResolutionDecisions",
+                    to_jsonb(source) || jsonb_build_object(
+                        'Id', {duplicateId},
+                        'ConsumerCandidateId', {duplicateId},
+                        'DecisionFingerprint', {fingerprint},
+                        'EvidenceFingerprint', {fingerprint}))).*
+                FROM "vulgata"."CrossRepositoryResolutionDecisions" source
+                WHERE source."Id" = {Decision.Id};
                 """);
             return (duplicateId, fingerprint);
         }
@@ -1767,15 +1774,18 @@ public sealed class Pass2DocumentPostgreSqlAtomicTests
             string pairPackageFingerprint = Hash($"later-pair-package/{pairId:D}");
             string pairSelectionFingerprint = Hash($"later-pair-selection/{pairId:D}");
             string pairFingerprint = Hash($"later-pair/{pairId:D}");
-            ExactCrossRepositoryEdgeEvidence sourceEvidence = await context
-                .ExactCrossRepositoryEdgeEvidence.AsNoTracking()
-                .SingleAsync(value => value.EdgeId == group.ExactResolutionEdgeId);
             DocumentVersion sourceConsumer = await context.DocumentVersions.AsNoTracking()
-                .SingleAsync(value => value.Id == sourceEvidence.ConsumerDocumentVersionId);
+                .SingleAsync(value => value.Id == decision.ConsumerDocumentVersionId);
+            ExactResolutionProviderEvidenceContribution sourceContribution = contributions
+                .OrderBy(value => value.ProviderOrdinal)
+                .ThenBy(value => value.EvidenceOrdinal)
+                .First();
+            SourceAnchor sourceConsumerAnchor = await context.SourceAnchors.AsNoTracking()
+                .SingleAsync(value => value.DocumentVersionId == decision.ConsumerDocumentVersionId);
             DocumentVersion sourceProvider = await context.DocumentVersions.AsNoTracking()
-                .SingleAsync(value => value.Id == sourceEvidence.ProviderDocumentVersionId);
+                .SingleAsync(value => value.Id == sourceContribution.ProviderDocumentVersionId);
             SourceAnchor sourceProviderAnchor = await context.SourceAnchors.AsNoTracking()
-                .SingleAsync(value => value.Id == sourceEvidence.ProviderSourceAnchorId);
+                .SingleAsync(value => value.Id == sourceContribution.SourceAnchorId);
             LogicalDocument sourceProviderLogical = await context.LogicalDocuments.AsNoTracking()
                 .SingleAsync(value => value.Id == sourceProvider.LogicalDocumentId);
             Guid laterProviderLogicalDocumentId = Guid.NewGuid();
@@ -1812,29 +1822,29 @@ public sealed class Pass2DocumentPostgreSqlAtomicTests
                 """);
             ExactCrossRepositoryEdgeEvidence laterEvidence = new(
                 edgeId,
-                sourceEvidence.ConsumerSourceAnchorId,
-                sourceEvidence.ConsumerDocumentVersionId,
-                sourceEvidence.ConsumerRepositoryId,
-                sourceEvidence.ConsumerScanRunId,
+                sourceConsumerAnchor.Id,
+                decision.ConsumerDocumentVersionId,
+                decision.ConsumerRepositoryId,
+                decision.ConsumerScanRunId,
                 laterProviderAnchorId,
                 laterProviderDocumentId,
-                sourceEvidence.ProviderRepositoryId,
-                sourceEvidence.ProviderScanRunId,
-                sourceEvidence.ConsumerRawIdentifier,
-                sourceEvidence.ProviderRawIdentifier,
-                sourceEvidence.NormalizedEndpointIdentifier,
-                sourceEvidence.Protocol,
-                sourceEvidence.ResolutionKind,
-                sourceEvidence.Confidence,
-                sourceEvidence.ProfileSchemaVersion,
-                sourceEvidence.ProfileId,
-                sourceEvidence.ProfileVersion,
-                sourceEvidence.ProfileFingerprint,
-                $"{sourceEvidence.OccurrenceId}/later/{pairId:D}",
-                sourceEvidence.ConsumerEvidenceLocator,
-                sourceEvidence.ProviderEvidenceLocator,
+                sourceContribution.RepositoryId,
+                sourceContribution.ScanRunId,
+                decision.ConsumerEntryIdentity,
+                sourceContribution.ProviderRawIdentifier,
+                decision.NormalizedEndpointIdentifier,
+                decision.Protocol,
+                "ExactConfigured",
+                1m,
+                "1.0",
+                "pass2-pg",
+                "1.0",
+                sourceContribution.ClassificationFingerprint,
+                $"{decision.ConsumerEntryIdentity}/later/{pairId:D}",
+                $"source-anchor:{sourceConsumerAnchor.Id:D}",
+                sourceContribution.EvidenceLocator,
                 string.Empty,
-                sourceEvidence.CreatedAt);
+                decision.CreatedAt);
             string decisionFingerprint = ExactResolutionCanonicalAuthority.EvidenceFingerprint(
                 laterEvidence,
                 sourceConsumer.ProfiledRevision,
@@ -1914,14 +1924,14 @@ public sealed class Pass2DocumentPostgreSqlAtomicTests
 
             context.DocumentEdges.Add(new DocumentEdge(
                 edgeId,
-                sourceEvidence.ConsumerDocumentVersionId,
-                sourceEvidence.ConsumerRepositoryId,
-                sourceEvidence.ConsumerScanRunId,
+                decision.ConsumerDocumentVersionId,
+                decision.ConsumerRepositoryId,
+                decision.ConsumerScanRunId,
                 laterProviderDocumentId,
-                sourceEvidence.ProviderRepositoryId,
-                sourceEvidence.ProviderScanRunId,
+                sourceContribution.RepositoryId,
+                sourceContribution.ScanRunId,
                 DocumentEdgeType.References,
-                sourceEvidence.CreatedAt));
+                decision.CreatedAt));
             context.DocumentEdges.Add(new DocumentEdge(
                 laterImplementationEdgeId,
                 laterProviderDocumentId,
@@ -1935,34 +1945,66 @@ public sealed class Pass2DocumentPostgreSqlAtomicTests
             context.ExactCrossRepositoryEdgeEvidence.Add(laterEvidence);
             CrossRepositoryResolutionDecision laterDecision = NewEntity<CrossRepositoryResolutionDecision>();
             SetProperty(laterDecision, nameof(CrossRepositoryResolutionDecision.Id), decisionId);
+            SetProperty(laterDecision, nameof(CrossRepositoryResolutionDecision.ResolutionSchemaIdentity), decision.ResolutionSchemaIdentity);
             SetProperty(laterDecision, nameof(CrossRepositoryResolutionDecision.Pass1PairExecutionId), pairId);
             SetProperty(laterDecision, nameof(CrossRepositoryResolutionDecision.CoordinationId), coordinationId);
             SetProperty(laterDecision, nameof(CrossRepositoryResolutionDecision.SystemId), decision.SystemId);
             SetProperty(laterDecision, nameof(CrossRepositoryResolutionDecision.ConsumerCandidateId), decision.ConsumerCandidateId);
-            SetProperty(laterDecision, nameof(CrossRepositoryResolutionDecision.ConsumerEntryIdentity), laterEvidence.OccurrenceId);
+            SetProperty(laterDecision, nameof(CrossRepositoryResolutionDecision.ConsumerEntryIdentity), decision.ConsumerEntryIdentity);
             SetProperty(laterDecision, nameof(CrossRepositoryResolutionDecision.ConsumerEntryStableKey), decision.ConsumerEntryStableKey);
             SetProperty(laterDecision, nameof(CrossRepositoryResolutionDecision.ConsumerDocumentVersionId), decision.ConsumerDocumentVersionId);
+            SetProperty(laterDecision, nameof(CrossRepositoryResolutionDecision.ConsumerRepositoryId), decision.ConsumerRepositoryId);
+            SetProperty(laterDecision, nameof(CrossRepositoryResolutionDecision.ConsumerScanRunId), decision.ConsumerScanRunId);
+            SetProperty(laterDecision, nameof(CrossRepositoryResolutionDecision.ConsumerProfiledRevision), decision.ConsumerProfiledRevision);
             SetProperty(laterDecision, nameof(CrossRepositoryResolutionDecision.Protocol), decision.Protocol);
             SetProperty(laterDecision, nameof(CrossRepositoryResolutionDecision.NormalizedEndpointIdentifier), decision.NormalizedEndpointIdentifier);
+            SetProperty(laterDecision, nameof(CrossRepositoryResolutionDecision.NormalizationRuleIdentity), decision.NormalizationRuleIdentity);
             SetProperty(laterDecision, nameof(CrossRepositoryResolutionDecision.Outcome), decision.Outcome);
+            SetProperty(laterDecision, nameof(CrossRepositoryResolutionDecision.OutcomeKind), decision.OutcomeKind);
+            SetProperty(laterDecision, nameof(CrossRepositoryResolutionDecision.ReasonCode), decision.ReasonCode);
+            Guid laterProviderIdentity = ExactResolutionCanonicalAuthority.ProviderIdentity(
+                decision.SystemId,
+                sourceContribution.RepositoryId,
+                sourceContribution.ScanRunId,
+                sourceContribution.ProfiledRevision,
+                laterProviderDocumentId);
+            SetProperty(laterDecision, nameof(CrossRepositoryResolutionDecision.ProviderIdentity), laterProviderIdentity);
             SetProperty(laterDecision, nameof(CrossRepositoryResolutionDecision.ProviderDocumentVersionId), laterProviderDocumentId);
+            SetProperty(laterDecision, nameof(CrossRepositoryResolutionDecision.ProviderRepositoryId), sourceContribution.RepositoryId);
+            SetProperty(laterDecision, nameof(CrossRepositoryResolutionDecision.ProviderScanRunId), sourceContribution.ScanRunId);
+            SetProperty(laterDecision, nameof(CrossRepositoryResolutionDecision.ProviderProfiledRevision), sourceContribution.ProfiledRevision);
             SetProperty(laterDecision, nameof(CrossRepositoryResolutionDecision.DocumentEdgeId), edgeId);
             SetProperty(laterDecision, nameof(CrossRepositoryResolutionDecision.UncertaintyId), decision.UncertaintyId);
+            SetProperty(laterDecision, nameof(CrossRepositoryResolutionDecision.ResolvedUncertaintyId), decision.ResolvedUncertaintyId);
+            SetProperty(laterDecision, nameof(CrossRepositoryResolutionDecision.ConsumerEvidenceFingerprint), decision.ConsumerEvidenceFingerprint);
+            SetProperty(laterDecision, nameof(CrossRepositoryResolutionDecision.DecisionFingerprint), decisionFingerprint);
             SetProperty(laterDecision, nameof(CrossRepositoryResolutionDecision.EvidenceFingerprint), decisionFingerprint);
             SetProperty(laterDecision, nameof(CrossRepositoryResolutionDecision.CreatedAt), decision.CreatedAt);
             context.CrossRepositoryResolutionDecisions.Add(laterDecision);
             List<ExactResolutionProviderEvidenceContribution> laterContributions = [];
             foreach (ExactResolutionProviderEvidenceContribution contribution in contributions)
             {
-                string fingerprint = ExactResolutionCanonicalAuthority.ProviderContributionFingerprint(
-                    decisionFingerprint, laterProviderDocumentId, laterProviderAnchorId);
                 ExactResolutionProviderEvidenceContribution laterContribution =
                     NewEntity<ExactResolutionProviderEvidenceContribution>();
+                SetProperty(laterContribution, nameof(ExactResolutionProviderEvidenceContribution.ResolutionDecisionId), decisionId);
+                SetProperty(laterContribution, nameof(ExactResolutionProviderEvidenceContribution.ProviderIdentity), laterProviderIdentity);
+                SetProperty(laterContribution, nameof(ExactResolutionProviderEvidenceContribution.ProviderDocumentVersionId), laterProviderDocumentId);
+                SetProperty(laterContribution, nameof(ExactResolutionProviderEvidenceContribution.RepositoryId), contribution.RepositoryId);
+                SetProperty(laterContribution, nameof(ExactResolutionProviderEvidenceContribution.ScanRunId), contribution.ScanRunId);
+                SetProperty(laterContribution, nameof(ExactResolutionProviderEvidenceContribution.ProfiledRevision), contribution.ProfiledRevision);
+                SetProperty(laterContribution, nameof(ExactResolutionProviderEvidenceContribution.CommunicationClassificationId), contribution.CommunicationClassificationId);
+                SetProperty(laterContribution, nameof(ExactResolutionProviderEvidenceContribution.SourceAnchorId), laterProviderAnchorId);
+                SetProperty(laterContribution, nameof(ExactResolutionProviderEvidenceContribution.ProviderRawIdentifier), contribution.ProviderRawIdentifier);
+                SetProperty(laterContribution, nameof(ExactResolutionProviderEvidenceContribution.NormalizedEndpointIdentifier), contribution.NormalizedEndpointIdentifier);
+                SetProperty(laterContribution, nameof(ExactResolutionProviderEvidenceContribution.EvidenceLocator), contribution.EvidenceLocator);
+                SetProperty(laterContribution, nameof(ExactResolutionProviderEvidenceContribution.ClassificationFingerprint), contribution.ClassificationFingerprint);
+                SetProperty(laterContribution, nameof(ExactResolutionProviderEvidenceContribution.CatalogRuleIdentity), contribution.CatalogRuleIdentity);
+                SetProperty(laterContribution, nameof(ExactResolutionProviderEvidenceContribution.NormalizationRuleIdentity), contribution.NormalizationRuleIdentity);
+                string fingerprint = ExactResolutionCanonicalAuthority.PersistedProviderContributionFingerprint(
+                    decisionFingerprint,
+                    laterContribution);
                 SetProperty(laterContribution, nameof(ExactResolutionProviderEvidenceContribution.Id),
                     ExactResolutionCanonicalAuthority.ProviderContributionId(fingerprint));
-                SetProperty(laterContribution, nameof(ExactResolutionProviderEvidenceContribution.ResolutionDecisionId), decisionId);
-                SetProperty(laterContribution, nameof(ExactResolutionProviderEvidenceContribution.ProviderDocumentVersionId), laterProviderDocumentId);
-                SetProperty(laterContribution, nameof(ExactResolutionProviderEvidenceContribution.SourceAnchorId), laterProviderAnchorId);
                 SetProperty(laterContribution, nameof(ExactResolutionProviderEvidenceContribution.EvidenceFingerprint), fingerprint);
                 SetProperty(laterContribution, nameof(ExactResolutionProviderEvidenceContribution.ProviderOrdinal), contribution.ProviderOrdinal);
                 SetProperty(laterContribution, nameof(ExactResolutionProviderEvidenceContribution.EvidenceOrdinal), contribution.EvidenceOrdinal);
@@ -1970,7 +2012,19 @@ public sealed class Pass2DocumentPostgreSqlAtomicTests
                 context.ExactResolutionProviderEvidenceContributions.Add(laterContribution);
                 laterContributions.Add(laterContribution);
             }
+            SetProperty(
+                laterDecision,
+                nameof(CrossRepositoryResolutionDecision.ProviderEvidenceSetFingerprint),
+                ExactResolutionCanonicalAuthority.ProviderEvidenceSetFingerprint(
+                    laterContributions
+                        .OrderBy(value => value.ProviderOrdinal)
+                        .ThenBy(value => value.EvidenceOrdinal)
+                        .Select(value => value.EvidenceFingerprint)));
             await context.SaveChangesAsync();
+            Assert.True(ExactResolutionCanonicalAuthority.MatchesPersistedExactAuthority(
+                laterDecision,
+                context.DocumentEdges.Local.Single(value => value.Id == edgeId),
+                laterContributions));
 
             string planFingerprint = PreparedPass2FlowPlanner.ComputePlanFingerprint(
                 decisionId,

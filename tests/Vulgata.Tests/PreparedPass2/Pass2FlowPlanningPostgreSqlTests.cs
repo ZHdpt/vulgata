@@ -3,6 +3,7 @@ using System.Text;
 using System.Reflection;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
+using Vulgata.Agents.WorkerExecution;
 using Vulgata.Core.DomainServices;
 using Vulgata.Core.Entities;
 using Vulgata.Infrastructure.Data;
@@ -66,8 +67,9 @@ public sealed class Pass2FlowPlanningPostgreSqlTests(ITestOutputHelper output)
             ExactResolutionBatchOutcome resolution = await new ExactCrossRepositoryResolutionStore(
                 context).ApplyAsync(
                 BuildResolutionBatch(profile, occurrence, consumer, providerXml, unsupported),
-                new RepositoryAccessScope(
-                    [consumer.DocumentVersion.RepositoryId, providerXml.DocumentVersion.RepositoryId]));
+                CreateLiveScope(
+                    consumer.DocumentVersion.RepositoryId,
+                    providerXml.DocumentVersion.RepositoryId));
             Assert.Equal(ExactResolutionOutcomeKind.Applied, resolution.Kind);
             CrossRepositoryResolutionDecision decision = await context
                 .CrossRepositoryResolutionDecisions
@@ -97,9 +99,10 @@ public sealed class Pass2FlowPlanningPostgreSqlTests(ITestOutputHelper output)
             Assert.Equal(pair.SystemId, decision.SystemId);
             Assert.Equal(consumerEntryStableKey, decision.ConsumerEntryStableKey);
 
-            RepositoryAccessScope scope = new(
-                [consumer.DocumentVersion.RepositoryId, providerXml.DocumentVersion.RepositoryId]);
-            var store = new PreparedPass2Store(context);
+            RepositoryAccessScope scope = CreateLiveScope(
+                consumer.DocumentVersion.RepositoryId,
+                providerXml.DocumentVersion.RepositoryId);
+            PreparedPass2Store store = CreateStore(context);
             PreparedPass2StartResult result = await store.StartAsync(
                 decision.Pass1PairExecutionId,
                 scope);
@@ -138,7 +141,7 @@ public sealed class Pass2FlowPlanningPostgreSqlTests(ITestOutputHelper output)
         {
             await AddOptionalDocumentsAsync(context, seed, 5);
 
-            PreparedPass2StartResult result = await new PreparedPass2Store(context).StartAsync(
+            PreparedPass2StartResult result = await CreateStore(context).StartAsync(
                 seed.Pair.Id,
                 seed.Scope);
 
@@ -164,7 +167,7 @@ public sealed class Pass2FlowPlanningPostgreSqlTests(ITestOutputHelper output)
         {
             await AddOptionalDocumentsAsync(context, seed, 6);
 
-            PreparedPass2StartResult result = await new PreparedPass2Store(context).StartAsync(
+            PreparedPass2StartResult result = await CreateStore(context).StartAsync(
                 seed.Pair.Id,
                 seed.Scope);
 
@@ -185,7 +188,7 @@ public sealed class Pass2FlowPlanningPostgreSqlTests(ITestOutputHelper output)
         {
             await AddExactDecisionsAsync(context, seed, 10);
 
-            PreparedPass2StartResult result = await new PreparedPass2Store(context).StartAsync(
+            PreparedPass2StartResult result = await CreateStore(context).StartAsync(
                 seed.Pair.Id,
                 seed.Scope);
 
@@ -234,7 +237,7 @@ public sealed class Pass2FlowPlanningPostgreSqlTests(ITestOutputHelper output)
             await context.SaveChangesAsync();
             context.ChangeTracker.Clear();
 
-            PreparedPass2StartResult result = await new PreparedPass2Store(context).StartAsync(
+            PreparedPass2StartResult result = await CreateStore(context).StartAsync(
                 seed.Pair.Id,
                 seed.Scope);
 
@@ -297,7 +300,9 @@ public sealed class Pass2FlowPlanningPostgreSqlTests(ITestOutputHelper output)
         ResolutionOccurrence occurrence = Assert.Single(profile.Occurrences);
         ExactResolutionBatchOutcome resolution = await new ExactCrossRepositoryResolutionStore(context).ApplyAsync(
             BuildResolutionBatch(profile, occurrence, consumer, providerXml, unsupported),
-            new RepositoryAccessScope([consumer.DocumentVersion.RepositoryId, providerXml.DocumentVersion.RepositoryId]));
+            CreateLiveScope(
+                consumer.DocumentVersion.RepositoryId,
+                providerXml.DocumentVersion.RepositoryId));
         Assert.Equal(ExactResolutionOutcomeKind.Applied, resolution.Kind);
         CrossRepositoryResolutionDecision decision = await context
             .CrossRepositoryResolutionDecisions
@@ -322,7 +327,40 @@ public sealed class Pass2FlowPlanningPostgreSqlTests(ITestOutputHelper output)
             unsupported,
             pair,
             decision,
-            new RepositoryAccessScope([consumer.DocumentVersion.RepositoryId, providerXml.DocumentVersion.RepositoryId]));
+            CreateLiveScope(
+                consumer.DocumentVersion.RepositoryId,
+                providerXml.DocumentVersion.RepositoryId));
+    }
+
+    private static RepositoryAccessScope CreateLiveScope(params Guid[] repositoryIds) =>
+        new(repositoryIds, new AlwaysAllowAuthorizationVerifier());
+
+    internal static PreparedPass2Store CreateStore(VulgataDbContext context) =>
+        new(context, CreateWorkerContractAuthority());
+
+    internal static IPreparedPass2WorkerContractAuthority CreateWorkerContractAuthority() =>
+        new PreparedPass2WorkerContractAuthoritySource(
+            new PreparedRetrieveCodeLogicFunction(new EmptyRetrievalService()),
+            new PreparedSubmitBusinessLogicFunction());
+
+    private sealed class AlwaysAllowAuthorizationVerifier : IRepositoryAuthorizationVerifier
+    {
+        public ValueTask<bool> HasCurrentAccessAsync(
+            IReadOnlyCollection<Guid> requiredRepositoryIds,
+            CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            return ValueTask.FromResult(true);
+        }
+    }
+
+    private sealed class EmptyRetrievalService : IPass2CodeLogicRetrievalService
+    {
+        public Task<Pass2CodeLogicRetrievalResult> RetrieveAsync(
+            Guid pass2JobExecutionId,
+            Pass2CodeLogicRetrievalRequest request,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult(Pass2CodeLogicRetrievalResult.NoResults());
     }
 
     private static async Task AddOptionalDocumentsAsync(
