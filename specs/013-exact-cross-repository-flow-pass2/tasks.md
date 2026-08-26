@@ -57,11 +57,11 @@ randomized order, replay, concurrent Edge reuse, and no CodeGraph/LLM effect.
 
 ### Implementation
 
-- [ ] T013 [US1] Implement server-owned current candidate reconstruction and revalidation from the terminal Story 12.3 pair, manifests, current Code Logic Documents, Source Anchors, classifications, deferred observations, catalog evidence, and exact same-Repository REFERENCES Edges in `src/dotnet/Vulgata.Infrastructure/CrossRepository/CurrentCommunicationCandidateSource.cs`.
+- [x] T013 [US1] Implement server-owned current candidate reconstruction and revalidation from the terminal Story 12.3 pair, manifests, current Code Logic Documents, Source Anchors, classifications, deferred observations, catalog evidence, and exact same-Repository REFERENCES Edges in `src/dotnet/Vulgata.Infrastructure/CrossRepository/CurrentCommunicationCandidateSource.cs`.
 - [x] T014 [US1] Implement the single closed protocol-aware endpoint normalizer with exact catalog-driven Custom RPC and safe queryless HTTP rules in `src/dotnet/Vulgata.Infrastructure/CrossRepository/ExactEndpointNormalizer.cs`.
 - [x] T015 [US1] Implement deterministic provider aggregation by distinct current provider XML Document Version and canonical evidence fingerprints in `src/dotnet/Vulgata.Infrastructure/CrossRepository/ExactCrossRepositoryResolver.cs` and `src/dotnet/Vulgata.Core/DomainServices/ExactResolutionContracts.cs`.
 - [x] T016 [US1] Implement v2 decision-owned exact/unresolved outcomes, reusable tuple-unique Document Edge binding, Uncertainty ownership, and additive idempotent persistence in `src/dotnet/Vulgata.Infrastructure/Data/ExactCrossRepositoryResolutionStore.cs` and `src/dotnet/Vulgata.Infrastructure/Data/Configurations/DocumentEdgeConfiguration.cs`.
-- [ ] T017 [US1] Verify pure and PostgreSQL US1 suites, including randomized determinism, exact replay, concurrent Edge reuse, and legacy compatibility; record SC-001, SC-002, FR-001–FR-010 evidence in `tests/Vulgata.Tests/PreparedPass2/ExactCrossRepositoryResolutionTests.cs` and `tests/Vulgata.Tests/PreparedPass2/ExactCrossRepositoryPostgreSqlTests.cs`.
+- [x] T017 [US1] Verify pure and PostgreSQL US1 suites, including randomized determinism, exact replay, concurrent Edge reuse, and legacy compatibility; record SC-001, SC-002, FR-001–FR-010 evidence in `tests/Vulgata.Tests/PreparedPass2/ExactCrossRepositoryResolutionTests.cs` and `tests/Vulgata.Tests/PreparedPass2/ExactCrossRepositoryPostgreSqlTests.cs`.
 
 ## Phase 4: User Story 2 - Plan Bounded Endpoint-Centered Flow Groups (Priority: P1)
 

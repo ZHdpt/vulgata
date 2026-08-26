@@ -6,10 +6,10 @@
   "stage": "implement",
   "preflight": {
     "branch": "demo0831/story-12-4",
-    "head": "279d9681dc1a97ee8258be65f01b2c3c5691b136",
+    "head": "5396de24dbccacd4f4b637ebbe5c2529232b3669",
     "git_identity_sha256": "056EE72BEB553F1C2AAA2D88B2730FC47D14ABC810286CC5F98D68B1F513B17B",
-    "status_sha256": "7886C290977B80B3175FC8808E7C95FF1C8127891885BD8EB36D49ADE4A250D8",
-    "observed_at": "2026-08-26T03:25:23.5136963Z"
+    "status_sha256": "1F4F4698EAD4A9365D6802807F3866D2E403C2A9AF465C20EF97E7B7AE4E8347",
+    "observed_at": "2026-08-26T03:55:41.9565863Z"
   },
   "artifacts": {
     "spec": {
@@ -22,7 +22,7 @@
     },
     "tasks": {
       "path": "specs/013-exact-cross-repository-flow-pass2/tasks.md",
-      "sha256": "311FBC04F4CA2444C39EF4D82C4A74C082229AD7E09D329F7B2FDBB096A95D83"
+      "sha256": "D1635EE420C4F54D1B94E321BEA2CEBF488CA950DC345ACE835B6C67AC1D3A8B"
     }
   },
   "gates": {
@@ -83,20 +83,20 @@
     "specs/013-exact-cross-repository-flow-pass2/contracts/retrieve-code-logic.md",
     "specs/013-exact-cross-repository-flow-pass2/contracts/business-logic-flow-v1.schema.json",
     "specs/013-exact-cross-repository-flow-pass2/evidence/implementation/t010-t012-red.json",
-    "specs/013-exact-cross-repository-flow-pass2/evidence/implementation/t007-migration-red.json",
+    "specs/013-exact-cross-repository-flow-pass2/evidence/implementation/t013-ad1-red.json",
     "specs/013-exact-cross-repository-flow-pass2/reviews/definition-review/definition-review-03.json",
     "specs/013-exact-cross-repository-flow-pass2/decisions/implementation-approval-01.md"
   ],
   "checkpoint": {
-    "checkpoint_id": "bmad-12-4-implement-20260826T032416Z-a184d2",
+    "checkpoint_id": "bmad-12-4-implement-20260826T035541Z-c72b0e",
     "stage": "implement",
-    "commit_sha": "279d9681dc1a97ee8258be65f01b2c3c5691b136",
-    "binding_status": "bound"
+    "commit_sha": null,
+    "binding_status": "pending"
   },
   "resume": {
     "stage": "implement",
-    "reason": "T010-T012 and T014-T016 are verified GREEN; continue T013 full AD-1 candidate reconstruction, then run the T017 US1 gate.",
+    "reason": "T010-T017 US1 exact Cross-Repository Resolution is verified GREEN; execute T018-T023 endpoint-centered Flow Group planning test-first.",
     "evidence_path": "specs/013-exact-cross-repository-flow-pass2/tasks.md"
   },
-  "updated_at": "2026-08-26T03:25:23.5136963Z"
+  "updated_at": "2026-08-26T03:55:41.9565863Z"
 }

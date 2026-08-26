@@ -1,0 +1,117 @@
+{
+  "story": "12.4",
+  "feature": "exact-cross-repository-flow-pass2",
+  "task": "T013",
+  "phase": "implement",
+  "sourceCommit": "5396de24dbccacd4f4b637ebbe5c2529232b3669",
+  "observedAt": "2026-08-26T03:40:55.9772840Z",
+  "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter 'FullyQualifiedName~CurrentCommunicationCandidateSource' --logger \"console;verbosity=minimal\" --verbosity quiet",
+  "exitCode": 1,
+  "result": {
+    "total": 5,
+    "passed": 1,
+    "failed": 4,
+    "skipped": 0,
+    "compilation": "successful"
+  },
+  "fixture": "Each test created and disposed the existing managed two-Repository fixture and persisted a terminal ReadyForResolution Pass1 pair: both Scan Executions, TwoRepositoryScanCoordination, prepared Scan Context Snapshots, two approved Prepared Scan Manifests with the same pair-package binding, current Code Logic Logical Documents/Document Versions, actual revision-bound Source Anchor and Code Unit SHA-256 values, one Confirmed classification per Repository, embedded catalog identity, and Code Logic JSON containing matching communicationEvidence plus CrossRepository deferredObservations. The baseline uses the complete fixture; each RED changes one fact. The source-hash RED uses an injected deterministic reader expectation and does not mutate the working tree. All tests use disposable SQLite/Git fixtures only; no PostgreSQL, network, or system state was used.",
+  "redCases": [
+    {
+      "gap": "terminal Scan Execution plus Prepared Scan Manifest/pair-package validation",
+      "test": "CurrentCommunicationCandidateSource_RequiresTerminalExecutionAndPreparedPairAsync",
+      "diagnostic": "Assert.Throws failure at ExactCrossRepositoryResolutionTests.cs:272: no InvalidDataException was thrown after the runtime request used a non-existent ScanExecution identity. The source does not validate terminal execution or the paired Prepared Scan Manifest/package before producing candidates."
+    },
+    {
+      "gap": "communicationEvidence plus CrossRepository deferredObservation reconstruction",
+      "test": "CurrentCommunicationCandidateSource_RequiresCommunicationEvidenceAndCrossRepositoryObservationAsync",
+      "diagnostic": "Assert.Throws failure at ExactCrossRepositoryResolutionTests.cs:296: no InvalidDataException was thrown after exactly the persisted communicationEvidence and CrossRepository deferredObservations were removed from one current Code Logic Document while all pair, manifest, anchor, and classification facts remained valid. The source derives candidates without the required persisted evidence pair."
+    },
+    {
+      "gap": "revision-bound source reread plus Source Anchor hash verification",
+      "test": "CurrentCommunicationCandidateSource_RereadsRevisionBoundSourceAndChecksAnchorHashAsync",
+      "diagnostic": "The test reaches the public-construction seam and fails at ExactCrossRepositoryResolutionTests.cs:326 because CurrentCommunicationCandidateSource exposes no approved IRevisionBoundSourceReader dependency. The previous working-tree mutation was removed; the test now requires an injectable deterministic revision-bound reader and would supply a mismatching hash once that seam exists."
+    },
+    {
+      "gap": "full embedded Communication Pattern Catalog identity/rule reproduction",
+      "test": "CurrentCommunicationCandidateSource_ReevaluatesEmbeddedCatalogIdentityAndRuleAsync",
+      "diagnostic": "Assert.Throws failure at ExactCrossRepositoryResolutionTests.cs:340: no InvalidDataException was thrown after exactly one persisted Confirmed classification was changed to the non-embedded rule identity not-an-embedded-rule. The source checks only that the catalog identity is non-empty and does not reproduce the embedded catalog rule."
+    }
+  ],
+  "greenCase": {
+    "test": "CurrentCommunicationCandidateSource_ReconstructsCurrentPersistedCandidatesAsync",
+    "result": "passed",
+    "interpretation": "The complete terminal-pair/manifest/evidence/hash/catalog fixture reconstructs the current Consumer and Provider candidates successfully. The four AD-1 integrity gaps are independently red: three are behavioral no-op failures and the source-reread case is a missing approved injectable seam."
+  },
+  "surroundingVerification": {
+    "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --filter 'FullyQualifiedName~PreparedPass2.ExactCrossRepositoryResolutionTests' --logger \"console;verbosity=minimal\" --verbosity quiet",
+    "exitCode": 1,
+    "result": {
+      "total": 9,
+      "passed": 5,
+      "failed": 4,
+      "skipped": 0
+    },
+    "interpretation": "The four existing T010-T012 pure tests and the complete-fixture baseline current-candidate test pass; only the four new T013 AD-1 gap tests fail."
+  },
+  "followUpVerification": {
+    "observedAt": "2026-08-26T03:49:04.7830205Z",
+    "sourceCommit": "5396de24dbccacd4f4b637ebbe5c2529232b3669",
+    "focusedCommand": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --filter 'FullyQualifiedName~CurrentCommunicationCandidateSource' --logger \"console;verbosity=minimal\" --verbosity quiet",
+    "focusedExitCode": 1,
+    "focusedResult": {
+      "total": 8,
+      "passed": 5,
+      "failed": 3,
+      "skipped": 0,
+      "compilation": "previously successful"
+    },
+    "newRedCases": [
+      {
+        "gap": "consumer endpoint identity must come from the persisted Cross-Repository deferred observation",
+        "test": "CurrentCommunicationCandidateSource_UsesChangedDeferredTargetForConsumerIdentityAsync",
+        "diagnostic": "Assert.Equal at ExactCrossRepositoryResolutionTests.cs:406 expected cust/newSession but actual cust/updateSession. The grammar-valid persisted targetSymbol was changed while all other facts remained valid; production still falls back to reviewed profile metadata."
+      },
+      {
+        "gap": "provider raw/normalized identity must come from reproduced revision-bound source/catalog evidence",
+        "test": "CurrentCommunicationCandidateSource_UsesReproducedProviderSourceIdentityAsync",
+        "diagnostic": "Assert.Equal at ExactCrossRepositoryResolutionTests.cs:452 expected in/cust/newSession but actual in/cust/updateSession. A consistent changed provider XML source/hash was supplied through the injected revision-bound reader; production still derives the provider identifier from profile metadata."
+      },
+      {
+        "gap": "materially invalid manifest proof binding must be rejected",
+        "test": "CurrentCommunicationCandidateSource_RejectsInvalidManifestProofBindingAsync",
+        "diagnostic": "Assert.Throws at ExactCrossRepositoryResolutionTests.cs:479: no InvalidDataException was thrown after CodeGraphRuntimeBindingMatched was changed to false on one persisted Prepared Scan Manifest. Production revalidates only a subset of manifest proof fields."
+      }
+    ],
+    "surroundingCommand": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --filter 'FullyQualifiedName~PreparedPass2.ExactCrossRepositoryResolutionTests' --logger \"console;verbosity=minimal\" --verbosity quiet",
+    "surroundingExitCode": 1,
+    "surroundingResult": {
+      "total": 12,
+      "passed": 9,
+      "failed": 3,
+      "skipped": 0
+    },
+    "priorAd1Status": "The baseline and the four original AD-1 tests are now green against the complete fixture; only these three newly added production gaps remain red."
+  },
+  "sameRepositoryEdgeDisposition": "No test was added at this candidate-source seam. AD-3 makes the provider implementation Document reachable through a same-Repository REFERENCES Edge a Flow Group completeness requirement, and CurrentCommunicationCandidateSet exposes no Edge or membership result. Testing Edge traversal here would invent an output property; it belongs to the later T019/T020 Flow Group planning slice. A provider implementation Edge is explicitly not provider-selection evidence.",
+  "classification": "Honest behavioral RED for missing T013 AD-1 persisted-pair/evidence/source/catalog revalidation. The complete baseline is green; the failures are production behavior/seam gaps, not fixture, environment, network, or system failures.",
+  "requiredProductionSeam": "Expose CurrentCommunicationCandidateSource construction with VulgataDbContext plus the approved IRevisionBoundSourceReader (or an explicitly accepted equivalent) so the source can reread revision-bound bytes and compare each current Source Anchor hash. The reader must be injectable and bound to the requested Repository, Scan Run, Profiled Revision, and authorization scope.",
+  "scopeNotes": [
+    "Only ExactCrossRepositoryResolutionTests.cs and this evidence file were changed in this correction.",
+    "T013 remains open; no production, task, workflow, lifecycle, state, or Git files were changed."
+  ],
+  "finalGreenVerification": {
+    "observedAt": "2026-08-26T04:01:30Z",
+    "focusedResult": "8/8 CurrentCommunicationCandidateSource tests passed after terminal pair, persisted evidence, revision-bound hash, catalog, endpoint-authority, and manifest-proof corrections.",
+    "rootCommand": "$env:VULGATA_TEST_POSTGRES_ADMIN='<redacted localhost disposable-database admin connection>'; dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter <US1 plus exact-resolution compatibility filter> --logger console;verbosity=minimal --verbosity quiet",
+    "rootResult": {
+      "exitCode": 0,
+      "total": 96,
+      "passed": 96,
+      "failed": 0,
+      "skipped": 0
+    },
+    "databaseBoundary": "Only uniquely named disposable PostgreSQL databases created by the test harness were migrated and used; cleanup assertions passed and the ordinary vulgata database was not migrated.",
+    "sameRepositoryEdgeDisposition": "Provider implementation REFERENCES Edge traversal is not provider-selection evidence under AD-3 and remains explicitly verified by T019/T020 Flow Group completeness; T013 reconstructs the exact consumer/provider candidates without inventing Edge membership output.",
+    "taskStatus": "T013 and the T017 US1 gate are GREEN."
+  }
+}

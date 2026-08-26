@@ -286,3 +286,14 @@ disposable PostgreSQL cleanup. T013 remains intentionally open for terminal
 Scan Execution/manifest/pair validation, deferred communication reconstruction,
 revision-bound source/hash reread, and full catalog reproduction; T017 is not
 claimed until those gaps close.
+
+### T013/T017 US1 completion
+
+Seven isolated behavioral REDs closed the remaining candidate-authority gaps:
+terminal pair/manifests, persisted communication plus Cross-Repository deferred
+evidence, revision-bound Source Anchor hashes, embedded catalog identities,
+consumer endpoint derivation, provider XML endpoint reproduction, and manifest
+proof bindings. Root verification passed 96/96 pure, disposable-PostgreSQL, and
+legacy compatibility tests. Same-Repository provider-implementation Edge
+traversal is retained for T019/T020 Flow Group completeness under AD-3; it is
+not provider-selection evidence and no candidate-result seam was invented.
