@@ -27,8 +27,8 @@
   "checkpoint": {
     "checkpoint_id": "bmad-12-4-context-20260825T235943Z-753c83",
     "stage": "context",
-    "commit_sha": null,
-    "binding_status": "pending"
+    "commit_sha": "ccd8cdbcc88999083b89b6e7a0b8ac622c1420ed",
+    "binding_status": "bound"
   },
   "feature_directory": null,
   "superseded_by_state": null,
@@ -36,5 +36,5 @@
     "stage": "specify",
     "reason": "Context synthesis is complete; allocate one SpecKit feature and author the bounded specification."
   },
-  "updated_at": "2026-08-25T23:59:43.5417726Z"
+  "updated_at": "2026-08-26T00:01:04.7742927Z"
 }
