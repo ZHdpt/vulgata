@@ -139,6 +139,75 @@ public sealed class Pass2JobExecution
         StateChangedAt = now;
     }
 
+    public void RecoverExpiredLease(long expectedStateVersion, DateTimeOffset now)
+    {
+        ThrowIfNotUtc(now, nameof(now));
+        if (State != Pass2JobExecutionState.Running ||
+            StateVersion != expectedStateVersion || LeaseExpiresAt is null ||
+            now < LeaseExpiresAt)
+        {
+            throw new InvalidOperationException("Recovery requires the current expired Pass 2 lease.");
+        }
+
+        StateVersion++;
+        LeaseToken = null;
+        LeaseExpiresAt = null;
+        NextAttemptAt = null;
+        StateChangedAt = now;
+        if (AttemptCount < 2)
+        {
+            State = Pass2JobExecutionState.Pending;
+            FailureCategory = null;
+            FailureCode = null;
+            return;
+        }
+
+        State = Pass2JobExecutionState.Failed;
+        FailureCategory = ScanJobFailureCategory.Unclassified;
+        FailureCode = "lease-expired";
+    }
+
+    public void ReleaseForProviderPause(
+        long expectedStateVersion,
+        Guid expectedLeaseToken,
+        DateTimeOffset stateChangedAt)
+    {
+        RequireCurrentLease(expectedStateVersion, expectedLeaseToken);
+        ValidateTransitionTime(stateChangedAt);
+        State = Pass2JobExecutionState.Pending;
+        AttemptCount--;
+        StateVersion++;
+        LeaseToken = null;
+        LeaseExpiresAt = null;
+        FailureCategory = null;
+        FailureCode = null;
+        StateChangedAt = stateChangedAt;
+    }
+
+    public void Fail(
+        long expectedStateVersion,
+        Guid expectedLeaseToken,
+        ScanJobFailureCategory failureCategory,
+        string failureCode,
+        DateTimeOffset stateChangedAt)
+    {
+        RequireCurrentLease(expectedStateVersion, expectedLeaseToken);
+        ValidateTransitionTime(stateChangedAt);
+        if (!Enum.IsDefined(failureCategory) || string.IsNullOrWhiteSpace(failureCode))
+        {
+            throw new ArgumentException("Complete Pass 2 failure details are required.");
+        }
+
+        State = Pass2JobExecutionState.Failed;
+        StateVersion++;
+        LeaseToken = null;
+        LeaseExpiresAt = null;
+        NextAttemptAt = null;
+        FailureCategory = failureCategory;
+        FailureCode = failureCode.Trim();
+        StateChangedAt = stateChangedAt;
+    }
+
     public void Complete(
         long expectedStateVersion,
         Guid expectedLeaseToken,

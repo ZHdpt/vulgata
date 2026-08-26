@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.FluentUI.AspNetCore.Components;
 using Vulgata.Agents.ChatExecution;
 using Vulgata.Agents.WorkerExecution;
+using Vulgata.Agents;
 using Vulgata.Core.DomainServices;
 using Vulgata.Core.DomainServices.BackupB;
 using Vulgata.Core.Entities;
@@ -23,6 +24,7 @@ using Vulgata.Infrastructure.Data;
 using Vulgata.Infrastructure.FrameworkDetection;
 using Vulgata.Infrastructure.Git;
 using Vulgata.Infrastructure.Git.BackupB;
+using Vulgata.Infrastructure;
 using Vulgata.Shared;
 using Vulgata.Shared.Repositories;
 using Vulgata.Shared.Scans;
@@ -403,6 +405,14 @@ public static class VulgataWebComposition
             services.GetRequiredService<PreparedPass1NavigationService>());
         builder.Services.AddScoped<PreparedNavigateCodeFunction>();
         builder.Services.AddScoped<PreparedSubmitCodeLogicFunction>();
+        builder.Services.AddPreparedPass2Infrastructure();
+        builder.Services.AddPreparedPass2Agents();
+        builder.Services.AddScoped<IPass2ExecutionAuthorizationVerifier,
+            PreparedPass2ExecutionAuthorizationVerifier>();
+        builder.Services.AddSingleton<PreparedPass2ExecutionActivator>();
+        builder.Services.AddHostedService<PreparedPass2ExecutionHostedService>();
+        builder.Services.AddScoped<PreparedPass2JobRunner>();
+        builder.Services.AddScoped<PreparedPass2Coordinator>();
         builder.Services.AddScoped<IJavaAnalysisSessionFactory>(services =>
         {
             const string release = "jdt-language-server-1.61.0-202608141332";
@@ -481,6 +491,8 @@ public static class VulgataWebComposition
             StartPass1ExecutionRequestValidator>();
         builder.Services.AddScoped<IValidator<UpdatePass1ConcurrencyRequest>,
             UpdatePass1ConcurrencyRequestValidator>();
+        builder.Services.AddScoped<IValidator<StartPass2ExecutionRequest>,
+            StartPass2ExecutionRequestValidator>();
         builder.Services.AddScoped<IPasswordHasher<ApplicationUser>, BcryptPasswordHasher<ApplicationUser>>();
         builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
         return frameworkCatalog;

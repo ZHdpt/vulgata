@@ -80,6 +80,10 @@ public sealed class Pass2MigrationTests
     {
         using VulgataDbContext context = CreateSqliteContext();
         IMigrationsAssembly assembly = context.GetService<IMigrationsAssembly>();
+        string[] storyMigrations = assembly.Migrations.Keys
+            .Where(value => StringComparer.Ordinal.Compare(value, BaselineMigration) > 0)
+            .ToArray();
+        Assert.Single(storyMigrations);
         KeyValuePair<string, TypeInfo> entry = Assert.Single(
             assembly.Migrations,
             migration => migration.Key.EndsWith(MigrationSuffix, StringComparison.Ordinal));
@@ -93,6 +97,15 @@ public sealed class Pass2MigrationTests
             tableName => Assert.Contains(
                 migration.UpOperations.OfType<CreateTableOperation>(),
                 operation => operation.Name == tableName));
+        CreateTableOperation contributions = Assert.Single(
+            migration.UpOperations.OfType<CreateTableOperation>(),
+            operation => operation.Name == "ExactResolutionProviderEvidenceContributions");
+        Assert.Contains(contributions.Columns, column =>
+            column.Name == nameof(ExactResolutionProviderEvidenceContribution.ProviderRawIdentifier) &&
+            column.MaxLength == 512 && !column.IsNullable);
+        Assert.Contains(contributions.Columns, column =>
+            column.Name == nameof(ExactResolutionProviderEvidenceContribution.NormalizedEndpointIdentifier) &&
+            column.MaxLength == 512 && !column.IsNullable);
         Assert.Contains(
             migration.DownOperations.OfType<DropTableOperation>(),
             operation => V2TableNames.Contains(operation.Name, StringComparer.Ordinal));

@@ -1,0 +1,77 @@
+{
+  "task": "T039",
+  "story": "12.4",
+  "slice": "US5 execution and recovery",
+  "status": "GREEN_AFTER_T042_QR_US5_002_004_005",
+  "behavioral_coverage_status": "DIRECT_TYPED_CORE_STORE_COORDINATOR_AND_POSTGRESQL_GREEN",
+  "observed_at_utc": "2026-08-26T15:11:31Z",
+  "owned_paths": [
+    "tests/Vulgata.Tests/PreparedPass2/Pass2ExecutionRecoveryTests.cs",
+    "specs/013-exact-cross-repository-flow-pass2/evidence/implementation/t039-red.json"
+  ],
+  "public_seams": [
+    "Vulgata.Core.Entities.Pass2JobExecution",
+    "Vulgata.Core.Entities.Pass2Execution",
+    "Vulgata.Core.Entities.Pass2RetrievalBudget",
+    "Vulgata.Infrastructure.Data.PreparedPass2Store",
+    "Vulgata.Web.Data.PreparedPass2Coordinator",
+    "Vulgata.Web.Data.PreparedPass2ExecutionActivator"
+  ],
+  "historical_red": {
+    "status": "SUPERSEDED",
+    "tests": 9,
+    "passed": 5,
+    "failed": 4,
+    "observation": "The initial four reflection-only discovery probes failed because the approved T042 Store/coordinator/activator seams were absent. They were replaced by direct typed tests after those seams landed."
+  },
+  "corrective_red_baseline": {
+    "status": "RESOLVED_BY_T042",
+    "tests": 19,
+    "passed": 17,
+    "failed": 2,
+    "failed_vectors": [
+      "RecordDispatchFailureAsync_IntegrityOrSecurityTerminalizesExecutionAndCoordinationAtomicallyAsync(Integrity)",
+      "RecordDispatchFailureAsync_IntegrityOrSecurityTerminalizesExecutionAndCoordinationAtomicallyAsync(Security)"
+    ],
+    "observed": "Both first-attempt Integrity/Security failures returned RetryScheduled and left execution and coordination Running before the T042 correction."
+  },
+  "current_verification": {
+    "command": "$env:VULGATA_TEST_POSTGRES_ADMIN='Host=localhost;Port=5432;Database=postgres;Username=vulgata;Password=vulgata_dev'; dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore -p:WarningLevel=0 -p:GenerateMvcTestManifest=false -clp:ErrorsOnly --output .tmp-t039-final-evidence2 --filter FullyQualifiedName~Pass2ExecutionRecoveryTests --logger \"console;verbosity=minimal\" --nologo",
+    "build": "successful; exit code 0; zero compile errors",
+    "tests_executed": 19,
+    "passed": 19,
+    "failed": 0,
+    "skipped": 0,
+    "database": "Two uniquely named disposable PostgreSQL 17 databases were created by the approved harness. Each test explicitly disposed its database and then queried pg_database through the administrator connection to assert absence.",
+    "network": "none",
+    "provider": "none"
+  },
+  "covered_vectors": {
+    "serial_canonical_claims": "ClaimNextAsync claims the lowest GroupOrder first and a concurrent PostgreSQL claimant cannot create a second active lease.",
+    "one_active_job": "A second claim observes the existing active lease while the next group remains Pending.",
+    "lease_expiry_and_restart": "An expired first-attempt lease is reclaimed with the same execution, job, Flow Group, and retrieval-budget identity as attempt two.",
+    "one_durable_job_local_retry": "A due retry is reclaimed once, a third attempt is prohibited, and durable retrieval counters are preserved.",
+    "provider_pause_and_manual_resume": "Provider pause releases the lease without charging an attempt; execution identity and durable state survive resume.",
+    "authenticated_activation": "Coordinator Start/Resume use IUserContext and never accept caller-supplied Repository/System/revision/provider authority.",
+    "integrity_security_terminalization": "Integrity and Security failures atomically release the lease, fail the job, transition Pass2Execution and coordination to matching terminal states, preserve prior Documents, and prohibit later claims.",
+    "postgresql_serialization": "Fresh PostgreSQL qualification proves one active claim under concurrency plus expired-lease/due-retry recovery with stable job and budget identity."
+  },
+  "postgresql_qualification": {
+    "status": "GREEN",
+    "admin_variable": "VULGATA_TEST_POSTGRES_ADMIN",
+    "database_created_count": 2,
+    "database_dropped_count": 2,
+    "absence_verified_count": 2,
+    "ordinary_database_contacted": false,
+    "note": "The test-owned harness validates each unique database name before create/drop and explicitly asserts post-drop absence."
+  },
+  "deferred_or_composition_owned": [
+    "Configured provider probing and full hosted execution composition are owned by T044/T045; T039 uses no provider or outbound network.",
+    "HTTP status and response-shape semantics remain owned by T041/T043."
+  ],
+  "database_contacted": true,
+  "network_contacted": false,
+  "production_changes": false,
+  "workflow_changes": false,
+  "git_operations": false
+}

@@ -18,5 +18,6 @@ internal static class ApiEndpointRegistrationExtensions
         app.MapManualResumeApiEndpoints();
         app.MapPreparedScanApiEndpoints();
         app.MapPass1ExecutionApiEndpoints();
+        app.MapPass2ExecutionApiEndpoints();
     }
 }

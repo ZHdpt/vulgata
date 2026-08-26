@@ -1,0 +1,104 @@
+{
+  "story": "12.4",
+  "feature": "exact-cross-repository-flow-pass2",
+  "tasks": ["T041"],
+  "phase": "implement",
+  "status": "GREEN_AFTER_T043_T044_AND_QR_US5_CORRECTIONS",
+  "observedAt": "2026-08-26T23:13:27+08:00",
+  "sourceCommit": "adfdd2718354f57e61b8ad5ddde6159a8c7ea826",
+  "buildCommand": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore -p:BaseOutputPath=G:\\source\\repos\\vulgata\\.tmp-t041-contract-green-bin2\\ -p:WarningLevel=0 -p:GenerateMvcTestManifest=false --filter FullyQualifiedName~Pass2ExecutionApiTests --logger \"console;verbosity=minimal\" --nologo",
+  "buildExitCode": 0,
+  "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore -p:BaseOutputPath=G:\\source\\repos\\vulgata\\.tmp-t041-contract-green-bin2\\ -p:WarningLevel=0 -p:GenerateMvcTestManifest=false --filter FullyQualifiedName~Pass2ExecutionApiTests --logger \"console;verbosity=minimal\" --nologo",
+  "exitCode": 0,
+  "result": {
+    "total": 10,
+    "passed": 10,
+    "failed": 0,
+    "skipped": 0,
+    "compilation": "successful; independent isolated build completed with 0 errors and 10 warnings",
+    "green": [
+      "Pass2Endpoints_ArePluralAndReachableThroughTheSingleCentralMapper",
+      "PublicPass2Endpoints_Unauthenticated_Return401WithoutRedirectAsync",
+      "AuthenticatedNonManagementUser_Create_Returns403WithoutScopeDisclosureAsync",
+      "AuthenticatedUnknownExecution_StatusAndResume_ReturnOwnershipFiltered404ProblemDetailsAsync",
+      "Create_MissingPairAndMalformedInput_ReturnValidationProblemDetailsAsync",
+      "Create_RejectsCallerSuppliedAuthorityScope_AsSanitizedProblemDetailsAsync",
+      "ExecutionStateConflict_ReturnsProblemDetailsWithClosedChineseMessageAsync",
+      "StatusResponse_ExposesOnlySanitizedCountsAndWarningsAsync",
+      "Pass2Api_DoesNotAddStory125ChatOrProductionProgressSurface",
+      "CreateReplay_IsExactAfterProgressAndTerminalStatus_CandidateCountUsesPlannedDenominatorAsync"
+    ],
+    "red": [],
+    "testExecution": "fresh build-enabled focused run; no stale --no-build result was used; all authenticated cases and the full pending/progressed/terminal replay slice completed with the test-local Data Protection override"
+  },
+  "redBaseline": {
+    "total": 9,
+    "passed": 1,
+    "failed": 8,
+    "skipped": 0,
+    "causalFailures": "The route group was absent: route discovery returned an empty set, unauthenticated and non-management requests fell through to 405, and authenticated status/validation responses were not ProblemDetails.",
+    "correctedBy": "T043/T044"
+  },
+  "postImplementation": {
+    "status": "GREEN",
+    "verifiedBy": "T044 composition plus this independent T041 rerun",
+    "observations": "All ten API contract tests are green. Web-default typed deserialization honors the camelCase API contract. Original create returns IsReplay false; pending, progressed, and terminal replays preserve Pass2ExecutionId and immutable FlowGroup/Omission/Job counts while returning IsReplay true. CandidateCount remains the planned denominator 2 across all states, and the persisted progression/no-mutation assertions complete."
+  },
+  "tests": [
+    {
+      "name": "Pass2Endpoints_ArePluralAndReachableThroughTheSingleCentralMapper",
+      "coverage": "Exactly POST create, GET status, and POST resume plural routes are registered through the one central mapper."
+    },
+    {
+      "name": "PublicPass2Endpoints_Unauthenticated_Return401WithoutRedirectAsync",
+      "coverage": "Create/status/resume reject unauthenticated callers with 401 and no login redirect."
+    },
+    {
+      "name": "AuthenticatedNonManagementUser_Create_Returns403WithoutScopeDisclosureAsync",
+      "coverage": "An authenticated user without management policy access receives 403 without repository/system scope leakage."
+    },
+    {
+      "name": "AuthenticatedUnknownExecution_StatusAndResume_ReturnOwnershipFiltered404ProblemDetailsAsync",
+      "coverage": "A management-authorized caller cannot distinguish missing or outside-ownership executions and receives sanitized ProblemDetails 404."
+    },
+    {
+      "name": "Create_MissingPairAndMalformedInput_ReturnValidationProblemDetailsAsync",
+      "coverage": "Create validates the sole Story 12.3 pair identifier and returns ProblemDetails for malformed input."
+    },
+    {
+      "name": "Create_RejectsCallerSuppliedAuthorityScope_AsSanitizedProblemDetailsAsync",
+      "coverage": "Caller-supplied System, Repository, revision, provider, source, and credential fields are rejected and never echoed."
+    },
+    {
+      "name": "ExecutionStateConflict_ReturnsProblemDetailsWithClosedChineseMessageAsync",
+      "coverage": "Resume state/concurrency conflict uses ProblemDetails, closed safe messaging, and no raw exception or stack details."
+    },
+    {
+      "name": "StatusResponse_ExposesOnlySanitizedCountsAndWarningsAsync",
+      "coverage": "Status/error responses expose only safe accounting channels and never lease, source, provider, prompt, path, or credential atoms."
+    },
+    {
+      "name": "Pass2Api_DoesNotAddStory125ChatOrProductionProgressSurface",
+      "coverage": "Pass 2 API registration does not introduce Chat or production progress routes; Story 12.5 UI remains excluded."
+    },
+    {
+      "name": "CreateReplay_IsExactAfterProgressAndTerminalStatus_CandidateCountUsesPlannedDenominatorAsync",
+      "coverage": "One disposable test-local pair creates two planned jobs, asserts byte-identical create replay while pending, after one published job, and after terminal mixed publication/failure; status reads assert CandidateCount remains the planned denominator across pending, running, published-plus-pending, retry-scheduled, and failed terminal states.",
+      "status": "GREEN; all pending, running, published-plus-pending, retry-scheduled, failed-terminal, typed replay identity/count, replay signal, and no-mutation assertions completed"
+    }
+  ],
+  "approvedSeams": {
+    "http": "WebApplicationFactory<Program> through the public /api/pass2-executions routes",
+    "registration": "ApiEndpointRegistrationExtensions.MapVulgataApiEndpoints",
+    "authentication": "ASP.NET Core Identity cookie authentication and ManagementAccess policy",
+    "response": "HTTP status plus RFC 9457-compatible application/problem+json ProblemDetails"
+  },
+  "scope": {
+    "changedFiles": [
+      "tests/Vulgata.Tests/PreparedPass2/Pass2ExecutionApiTests.cs",
+      "specs/013-exact-cross-repository-flow-pass2/evidence/implementation/t041-red.json"
+    ],
+    "excluded": "No production, workflow, task, Git, PostgreSQL, network, or system changes were made.",
+    "environment": "The test-local unique Data Protection key-ring override removed the host-specific AppData permission blocker. Independent build and testhost completed; no environment or network blocker remains for T041."
+  }
+}

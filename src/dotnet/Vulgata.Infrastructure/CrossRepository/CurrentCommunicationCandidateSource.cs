@@ -183,6 +183,20 @@ public sealed class CurrentCommunicationCandidateSource(
             string normalizedProvider = ExactEndpointNormalizer.Normalize(
                 providerRawIdentifier,
                 occurrence.Normalization.ProviderRequiredPrefix);
+            CodeUnit consumerCodeUnit = await RequireConsumerCodeUnitAsync(
+                consumerDocument.Document,
+                consumerAnchor,
+                cancellationToken);
+            string consumerEntryStableKey = ConsumerEntryStableKey(
+                consumerDocument.Document.RepositoryId,
+                consumerDocument.Document.RepositoryRelativePath,
+                consumerCodeUnit.SymbolName,
+                occurrence.Protocol,
+                occurrence.Consumer.Invocation.OccurrenceOrdinalOnLine);
+            CommunicationKindClassification providerClassification =
+                providerDocument.Classifications.Single(value =>
+                    StringComparer.Ordinal.Equals(
+                        value.Locator, providerAnchor.EvidenceLocator));
             consumers.Add(new(
                 occurrence.OccurrenceId,
                 Owner(consumerDocument.Document, consumerAnchor),
@@ -194,13 +208,18 @@ public sealed class CurrentCommunicationCandidateSource(
                 occurrence.Consumer.Invocation.OccurrenceOrdinalOnLine,
                 consumerRawIdentifier,
                 normalizedConsumer,
-                consumerAnchor.EvidenceLocator));
+                consumerAnchor.EvidenceLocator,
+                consumerEntryStableKey));
             providers.Add(new(
                 occurrence.OccurrenceId,
                 Owner(providerDocument.Document, providerAnchor),
                 providerRawIdentifier,
                 normalizedProvider,
-                providerAnchor.EvidenceLocator));
+                providerAnchor.EvidenceLocator,
+                providerClassification.Id,
+                providerClassification.Fingerprint,
+                providerClassification.CatalogRuleIdentity,
+                occurrence.Normalization.Id));
         }
 
         if (!await scope.HasCurrentAccessAsync(repositoryIds, cancellationToken))
@@ -209,6 +228,48 @@ public sealed class CurrentCommunicationCandidateSource(
         }
 
         return new(consumers, providers);
+    }
+
+    private async Task<CodeUnit> RequireConsumerCodeUnitAsync(
+        DocumentVersion document,
+        SourceAnchor anchor,
+        CancellationToken cancellationToken)
+    {
+        CodeUnit[] codeUnits = await _context.CodeUnits.AsNoTracking()
+            .Where(value =>
+                value.Id == anchor.CodeUnitId &&
+                value.RepositoryId == document.RepositoryId &&
+                value.ScanRunId == document.ScanRunId &&
+                value.FilePath == document.RepositoryRelativePath &&
+                value.LineStart <= anchor.LineStart &&
+                value.LineEnd >= anchor.LineEnd)
+            .Take(2)
+            .ToArrayAsync(cancellationToken);
+        return codeUnits.Length == 1 && !string.IsNullOrWhiteSpace(codeUnits[0].SymbolName)
+            ? codeUnits[0]
+            : throw new InvalidDataException(
+                "The consumer Source Anchor has no unique containing semantic owner.");
+    }
+
+    private static string ConsumerEntryStableKey(
+        Guid repositoryId,
+        string repositoryRelativePath,
+        string containingSemanticOwner,
+        ExactResolutionProtocol siteKind,
+        int structuralOrdinal)
+    {
+        string normalizedPath = repositoryRelativePath.Replace('\\', '/').TrimStart('/')
+            .Normalize(NormalizationForm.FormC);
+        string normalizedOwner = containingSemanticOwner.Trim().Normalize(NormalizationForm.FormC);
+        string preimage = string.Join(
+            '\n',
+            "consumer-entry/v1",
+            repositoryId,
+            normalizedPath,
+            normalizedOwner,
+            siteKind,
+            structuralOrdinal);
+        return Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(preimage)));
     }
 
     private async Task<PairAuthority> LoadPairAuthorityAsync(

@@ -111,15 +111,13 @@ public sealed class ExactCrossRepositoryResolver : IExactCrossRepositoryResolver
         ProviderEndpointCandidate[] eligibleProviders;
         try
         {
-            eligibleProviders =
-            [
-                .. directionQualifiedProviders.Where(candidate =>
+            eligibleProviders = ExactResolutionProviderObservationCanonicalizer.Canonicalize(
+                directionQualifiedProviders.Where(candidate =>
                     StringComparer.Ordinal.Equals(
                         NormalizeEndpointIdentifier(
                             candidate.RawIdentifier,
                             occurrence.Normalization.ProviderRequiredPrefix),
-                        normalizedConsumer)),
-            ];
+                        normalizedConsumer)));
         }
         catch (InvalidDataException)
         {
@@ -131,12 +129,14 @@ public sealed class ExactCrossRepositoryResolver : IExactCrossRepositoryResolver
         ProviderEndpointCandidate[][] providersByDocument =
         [
             .. eligibleProviders
-                .GroupBy(candidate => candidate.Owner.DocumentVersionId)
-                .OrderBy(group => group.Key)
-                .Select(group => group
-                    .OrderBy(candidate => candidate.DeclarationEvidenceLocator, StringComparer.Ordinal)
-                    .ThenBy(candidate => candidate.RawIdentifier, StringComparer.Ordinal)
-                    .ToArray()),
+                .GroupBy(candidate => new
+                {
+                    candidate.Owner.RepositoryId,
+                    candidate.Owner.ScanRunId,
+                    candidate.Owner.ProfiledRevision,
+                    candidate.Owner.DocumentVersionId,
+                })
+                .Select(group => group.ToArray()),
         ];
         if (providersByDocument.Length != 1)
         {
@@ -148,7 +148,9 @@ public sealed class ExactCrossRepositoryResolver : IExactCrossRepositoryResolver
                     consumer.Owner,
                     null,
                     "multiple_providers",
-                    consumer.InvocationEvidenceLocator);
+                    consumer.InvocationEvidenceLocator,
+                    ConsumerEntryStableKey: consumer.ConsumerEntryStableKey,
+                    ProviderObservations: providersByDocument.SelectMany(value => value).ToArray());
             }
 
             throw new ExactResolutionNonExactException(
@@ -184,7 +186,9 @@ public sealed class ExactCrossRepositoryResolver : IExactCrossRepositoryResolver
             "exact_configured",
             consumer.InvocationEvidenceLocator,
             provider.DeclarationEvidenceLocator,
-            evidence);
+            evidence,
+            consumer.ConsumerEntryStableKey,
+            providersByDocument[0]);
     }
 
     private static ProfileRepository FindRepository(

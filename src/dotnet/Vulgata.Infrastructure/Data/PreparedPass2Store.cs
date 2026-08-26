@@ -29,6 +29,58 @@ public sealed record PreparedPass2StartResult(
     int RetrievalBudgetCount,
     bool IsReplay);
 
+public enum PreparedPass2ClaimOutcome
+{
+    Claimed,
+    Active,
+    Exhausted,
+    Ineligible,
+    Conflict,
+    Cancelled,
+}
+
+public sealed record PreparedPass2ClaimResult(
+    PreparedPass2ClaimOutcome Outcome,
+    Guid ExecutionId,
+    Guid? JobId,
+    Guid? FlowGroupId,
+    int GroupOrder,
+    int AttemptOrdinal,
+    long JobStateVersion,
+    Guid? LeaseToken,
+    DateTimeOffset? LeaseExpiresAt,
+    DateTimeOffset? NextEligibleAt);
+
+public enum PreparedPass2RecoveryOutcome
+{
+    Continued,
+    PausedProviderUnavailable,
+    Completed,
+    NoOpReplay,
+    NotFound,
+    Rejected,
+    Conflict,
+    Cancelled,
+}
+
+public sealed record PreparedPass2RecoveryResult(
+    PreparedPass2RecoveryOutcome Outcome,
+    Guid? ExecutionId,
+    Pass2ExecutionState? State,
+    long? StateVersion,
+    int RecoveredJobCount,
+    int FailedJobCount,
+    bool IsReplay);
+
+public enum PreparedPass2DispatchFailureOutcome
+{
+    RetryScheduled,
+    PausedProviderUnavailable,
+    Failed,
+    Conflict,
+    Cancelled,
+}
+
 internal sealed record Pass2RetrievalReservation(
     bool IsReserved,
     int AttemptOrdinal,
@@ -48,11 +100,35 @@ internal sealed record Pass2ExplicitRetrievalResolution(
     Pass2CodeLogicRetrievalResult? CompletedResult,
     Pass2RetrievalReceipt? CompletedReceipt = null);
 
-public sealed class PreparedPass2Store(VulgataDbContext dbContext)
+public sealed class PreparedPass2Store
 {
     private const int _maxFlowGroups = 10;
-    private readonly VulgataDbContext _dbContext = dbContext ??
-        throw new ArgumentNullException(nameof(dbContext));
+    private readonly VulgataDbContext _dbContext;
+    private readonly IPreparedPass2WorkerContractAuthority? _workerContractAuthority;
+
+    public PreparedPass2Store(VulgataDbContext dbContext)
+        : this(dbContext, null, true)
+    {
+    }
+
+    public PreparedPass2Store(
+        VulgataDbContext dbContext,
+        IPreparedPass2WorkerContractAuthority workerContractAuthority)
+    {
+        _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
+        _workerContractAuthority = workerContractAuthority ??
+            throw new ArgumentNullException(nameof(workerContractAuthority));
+    }
+
+    private PreparedPass2Store(
+        VulgataDbContext dbContext,
+        IPreparedPass2WorkerContractAuthority? workerContractAuthority,
+        bool compatibilityAdapter = true)
+    {
+        _ = compatibilityAdapter;
+        _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
+        _workerContractAuthority = workerContractAuthority;
+    }
 
     internal async Task<Pass2RetrievalReservation> ReserveRetrievalAsync(
         Guid pass2JobExecutionId,
@@ -72,6 +148,413 @@ public sealed class PreparedPass2Store(VulgataDbContext dbContext)
             {
                 _dbContext.ChangeTracker.Clear();
             }
+        }
+    }
+
+    public async Task<PreparedPass2ClaimResult> ClaimNextAsync(
+        Guid pass2ExecutionId,
+        DateTimeOffset now,
+        TimeSpan leaseDuration,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentOutOfRangeException.ThrowIfEqual(pass2ExecutionId, Guid.Empty);
+        RequireUtc(now, nameof(now));
+        if (leaseDuration <= TimeSpan.Zero || leaseDuration > TimeSpan.FromMinutes(30))
+        {
+            throw new ArgumentOutOfRangeException(nameof(leaseDuration));
+        }
+        if (cancellationToken.IsCancellationRequested)
+        {
+            return Claim(PreparedPass2ClaimOutcome.Cancelled, pass2ExecutionId);
+        }
+
+        try
+        {
+            _dbContext.ChangeTracker.Clear();
+            await using var transaction = await _dbContext.Database.BeginTransactionAsync(
+                IsolationLevel.Serializable, cancellationToken).ConfigureAwait(false);
+            Pass2Execution? execution = await LockExecutionAsync(
+                pass2ExecutionId, cancellationToken).ConfigureAwait(false);
+            if (execution is null || execution.State != Pass2ExecutionState.Running)
+            {
+                await transaction.RollbackAsync(CancellationToken.None).ConfigureAwait(false);
+                return Claim(PreparedPass2ClaimOutcome.Ineligible, pass2ExecutionId);
+            }
+
+            Pass2JobExecution[] jobs = await LockJobsAsync(
+                pass2ExecutionId, cancellationToken).ConfigureAwait(false);
+            _ = await RecoverJobsAsync(jobs, execution, now, cancellationToken)
+                .ConfigureAwait(false);
+            Pass2JobExecution? active = jobs.SingleOrDefault(value =>
+                value.State == Pass2JobExecutionState.Running);
+            if (active is not null)
+            {
+                await _dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+                await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+                return new(
+                    PreparedPass2ClaimOutcome.Active,
+                    pass2ExecutionId,
+                    active.Id,
+                    active.FlowGroupId,
+                    active.GroupOrder,
+                    active.AttemptCount,
+                    active.StateVersion,
+                    active.LeaseToken,
+                    active.LeaseExpiresAt,
+                    active.LeaseExpiresAt);
+            }
+
+            Pass2JobExecution? next = jobs
+                .Where(value => value.State == Pass2JobExecutionState.Pending)
+                .OrderBy(value => value.GroupOrder)
+                .ThenBy(value => value.Id)
+                .FirstOrDefault();
+            if (next is not null)
+            {
+                Guid leaseToken = Guid.NewGuid();
+                next.AcquireLease(leaseToken, now.Add(leaseDuration), now);
+                await _dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+                await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+                return new(
+                    PreparedPass2ClaimOutcome.Claimed,
+                    pass2ExecutionId,
+                    next.Id,
+                    next.FlowGroupId,
+                    next.GroupOrder,
+                    next.AttemptCount,
+                    next.StateVersion,
+                    leaseToken,
+                    next.LeaseExpiresAt,
+                    null);
+            }
+
+            DateTimeOffset? nextEligibleAt = jobs
+                .Where(value => value.State == Pass2JobExecutionState.RetryScheduled)
+                .Select(value => value.NextAttemptAt)
+                .Where(value => value.HasValue)
+                .Min();
+            if (nextEligibleAt is null)
+            {
+                _ = await CompleteIfTerminalAsync(
+                    execution, now, cancellationToken).ConfigureAwait(false);
+            }
+
+            await _dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+            await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+            return new(
+                nextEligibleAt is null
+                    ? PreparedPass2ClaimOutcome.Exhausted
+                    : PreparedPass2ClaimOutcome.Ineligible,
+                pass2ExecutionId,
+                null,
+                null,
+                0,
+                0,
+                0,
+                null,
+                null,
+                nextEligibleAt);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            _dbContext.ChangeTracker.Clear();
+            return Claim(PreparedPass2ClaimOutcome.Cancelled, pass2ExecutionId);
+        }
+        catch (Exception exception) when (
+            exception is DbUpdateException or InvalidOperationException)
+        {
+            _dbContext.ChangeTracker.Clear();
+            return Claim(PreparedPass2ClaimOutcome.Conflict, pass2ExecutionId);
+        }
+    }
+
+    public async Task<PreparedPass2RecoveryResult> RecoverAsync(
+        Guid pass2ExecutionId,
+        RepositoryAccessScope scope,
+        bool providerAvailable,
+        DateTimeOffset now,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentOutOfRangeException.ThrowIfEqual(pass2ExecutionId, Guid.Empty);
+        ArgumentNullException.ThrowIfNull(scope);
+        RequireUtc(now, nameof(now));
+        if (cancellationToken.IsCancellationRequested)
+        {
+            return Recovery(PreparedPass2RecoveryOutcome.Cancelled, pass2ExecutionId);
+        }
+
+        try
+        {
+            _dbContext.ChangeTracker.Clear();
+            await using var transaction = await _dbContext.Database.BeginTransactionAsync(
+                IsolationLevel.Serializable, cancellationToken).ConfigureAwait(false);
+            Pass2Execution? execution = await LockExecutionAsync(
+                pass2ExecutionId, cancellationToken).ConfigureAwait(false);
+            if (execution is null)
+            {
+                await transaction.RollbackAsync(CancellationToken.None).ConfigureAwait(false);
+                return Recovery(PreparedPass2RecoveryOutcome.NotFound, pass2ExecutionId);
+            }
+            Guid[] repositoryIds = await ExecutionRepositoryIdsAsync(
+                execution, cancellationToken).ConfigureAwait(false);
+            if (repositoryIds.Length != 2 || !scope.HasLiveAuthorizationVerifier ||
+                !await scope.HasCurrentAccessAsync(repositoryIds, cancellationToken)
+                    .ConfigureAwait(false))
+            {
+                await transaction.RollbackAsync(CancellationToken.None).ConfigureAwait(false);
+                return Recovery(PreparedPass2RecoveryOutcome.Rejected, pass2ExecutionId);
+            }
+            if (execution.State is Pass2ExecutionState.Completed or
+                Pass2ExecutionState.CompletedWithWarnings)
+            {
+                int terminalCount = checked(
+                    execution.PublishedCount + execution.FailedCount +
+                    execution.TerminalIncompleteCount + execution.TerminalBoundExcludedCount +
+                    execution.TerminalOmissionCount);
+                if (!execution.PlanRecorded || terminalCount != execution.PlannedCount ||
+                    execution.TerminalWarningInventory is null)
+                {
+                    execution.RejectCorruptTerminal(execution.StateVersion, now);
+                    await _dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+                    await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+                    return Recovery(PreparedPass2RecoveryOutcome.Rejected, pass2ExecutionId);
+                }
+                await transaction.RollbackAsync(CancellationToken.None).ConfigureAwait(false);
+                return new(
+                    PreparedPass2RecoveryOutcome.Completed,
+                    execution.Id,
+                    execution.State,
+                    execution.StateVersion,
+                    0,
+                    0,
+                    true);
+            }
+
+            TwoRepositoryScanCoordination coordination = await LockCoordinationAsync(
+                execution.CoordinationId, cancellationToken).ConfigureAwait(false) ??
+                throw new InvalidOperationException("The Pass 2 coordination is unavailable.");
+            Pass2JobExecution[] jobs = await LockJobsAsync(
+                execution.Id, cancellationToken).ConfigureAwait(false);
+            int recovered = 0;
+            int failed = 0;
+            if (execution.State == Pass2ExecutionState.PausedProviderUnavailable)
+            {
+                if (!providerAvailable)
+                {
+                    await transaction.RollbackAsync(CancellationToken.None).ConfigureAwait(false);
+                    return new(
+                        PreparedPass2RecoveryOutcome.PausedProviderUnavailable,
+                        execution.Id,
+                        execution.State,
+                        execution.StateVersion,
+                        0,
+                        0,
+                        true);
+                }
+
+                execution.ResumeProvider(execution.StateVersion, now);
+                coordination.ResumePass2(coordination.StateVersion, now);
+            }
+            else if (execution.State != Pass2ExecutionState.Running)
+            {
+                await transaction.RollbackAsync(CancellationToken.None).ConfigureAwait(false);
+                return Recovery(PreparedPass2RecoveryOutcome.Conflict, pass2ExecutionId);
+            }
+
+            foreach (Pass2JobExecution job in jobs.OrderBy(value => value.GroupOrder))
+            {
+                Pass2JobExecutionState before = job.State;
+                if (job.State == Pass2JobExecutionState.Running &&
+                    job.LeaseExpiresAt is { } leaseExpiresAt && leaseExpiresAt <= now)
+                {
+                    job.RecoverExpiredLease(job.StateVersion, now);
+                    recovered++;
+                    if (job.State == Pass2JobExecutionState.Failed)
+                    {
+                        await MarkFailedAsync(job, execution, cancellationToken).ConfigureAwait(false);
+                        failed++;
+                    }
+                }
+                else if (job.State == Pass2JobExecutionState.RetryScheduled &&
+                    job.NextAttemptAt is { } nextAttemptAt && nextAttemptAt <= now)
+                {
+                    job.RecoverDueRetry(job.StateVersion, now);
+                    recovered++;
+                }
+                _ = before;
+            }
+
+            if (!providerAvailable)
+            {
+                Pass2JobExecution? running = jobs.SingleOrDefault(value =>
+                    value.State == Pass2JobExecutionState.Running);
+                if (running is not null && running.LeaseToken is { } leaseToken)
+                {
+                    running.ReleaseForProviderPause(running.StateVersion, leaseToken, now);
+                }
+                execution.PauseProviderUnavailable(execution.StateVersion, now);
+                coordination.Pause(
+                    coordination.StateVersion,
+                    TwoRepositoryScanReasonCategory.ProviderUnavailable,
+                    "provider-unavailable",
+                    now);
+                await _dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+                await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+                return new(
+                    PreparedPass2RecoveryOutcome.PausedProviderUnavailable,
+                    execution.Id,
+                    execution.State,
+                    execution.StateVersion,
+                    recovered,
+                    failed,
+                    false);
+            }
+
+            bool completed = await CompleteIfTerminalAsync(
+                execution, now, cancellationToken).ConfigureAwait(false);
+            await _dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+            await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+            return new(
+                completed ? PreparedPass2RecoveryOutcome.Completed :
+                    PreparedPass2RecoveryOutcome.Continued,
+                execution.Id,
+                execution.State,
+                execution.StateVersion,
+                recovered,
+                failed,
+                false);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            _dbContext.ChangeTracker.Clear();
+            return Recovery(PreparedPass2RecoveryOutcome.Cancelled, pass2ExecutionId);
+        }
+        catch (Exception exception) when (
+            exception is DbUpdateException or InvalidOperationException)
+        {
+            _dbContext.ChangeTracker.Clear();
+            return Recovery(PreparedPass2RecoveryOutcome.Conflict, pass2ExecutionId);
+        }
+    }
+
+    public async Task<PreparedPass2DispatchFailureOutcome> RecordDispatchFailureAsync(
+        Guid pass2ExecutionId,
+        Guid jobId,
+        long expectedJobStateVersion,
+        Guid leaseToken,
+        ScanJobFailureCategory failureCategory,
+        string failureCode,
+        DateTimeOffset now,
+        CancellationToken cancellationToken = default)
+    {
+        RequireUtc(now, nameof(now));
+        try
+        {
+            _dbContext.ChangeTracker.Clear();
+            await using var transaction = await _dbContext.Database.BeginTransactionAsync(
+                IsolationLevel.Serializable, cancellationToken).ConfigureAwait(false);
+            Pass2Execution execution = await LockExecutionAsync(
+                pass2ExecutionId, cancellationToken).ConfigureAwait(false) ??
+                throw new InvalidOperationException("The Pass 2 execution is unavailable.");
+            Pass2JobExecution job = (await LockJobsAsync(
+                pass2ExecutionId, cancellationToken).ConfigureAwait(false))
+                .Single(value => value.Id == jobId);
+            if (job.StateVersion != expectedJobStateVersion || job.LeaseToken != leaseToken)
+            {
+                await transaction.RollbackAsync(CancellationToken.None).ConfigureAwait(false);
+                return PreparedPass2DispatchFailureOutcome.Conflict;
+            }
+
+            if (failureCategory == ScanJobFailureCategory.ProviderTransient)
+            {
+                TwoRepositoryScanCoordination coordination = await LockCoordinationAsync(
+                    execution.CoordinationId, cancellationToken).ConfigureAwait(false) ??
+                    throw new InvalidOperationException("The Pass 2 coordination is unavailable.");
+                job.ReleaseForProviderPause(job.StateVersion, leaseToken, now);
+                execution.PauseProviderUnavailable(execution.StateVersion, now);
+                coordination.Pause(
+                    coordination.StateVersion,
+                    TwoRepositoryScanReasonCategory.ProviderUnavailable,
+                    "provider-unavailable",
+                    now);
+                await _dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+                await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+                return PreparedPass2DispatchFailureOutcome.PausedProviderUnavailable;
+            }
+
+            if (failureCategory is ScanJobFailureCategory.Integrity or
+                ScanJobFailureCategory.Security)
+            {
+                TwoRepositoryScanCoordination coordination = await LockCoordinationAsync(
+                    execution.CoordinationId, cancellationToken).ConfigureAwait(false) ??
+                    throw new InvalidOperationException("The Pass 2 coordination is unavailable.");
+                string terminalCode = NormalizeFailureCode(failureCode);
+                job.Fail(
+                    job.StateVersion,
+                    leaseToken,
+                    failureCategory,
+                    terminalCode,
+                    now);
+                FlowGroup group = await _dbContext.FlowGroups.SingleAsync(
+                    value => value.Id == job.FlowGroupId,
+                    cancellationToken).ConfigureAwait(false);
+                if (group.State == "Complete")
+                {
+                    group.Fail(terminalCode);
+                }
+
+                if (failureCategory == ScanJobFailureCategory.Integrity)
+                {
+                    execution.FailIntegrity(execution.StateVersion, now);
+                    coordination.FailIntegrity(coordination.StateVersion, terminalCode, now);
+                }
+                else
+                {
+                    execution.FailSecurity(execution.StateVersion, now);
+                    coordination.FailSecurity(coordination.StateVersion, terminalCode, now);
+                }
+
+                await _dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+                await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+                return PreparedPass2DispatchFailureOutcome.Failed;
+            }
+
+            if (job.AttemptCount < 2)
+            {
+                job.ScheduleRetry(
+                    job.StateVersion,
+                    leaseToken,
+                    now.AddSeconds(1),
+                    failureCategory,
+                    NormalizeFailureCode(failureCode),
+                    now);
+                await _dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+                await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+                return PreparedPass2DispatchFailureOutcome.RetryScheduled;
+            }
+
+            job.Fail(
+                job.StateVersion,
+                leaseToken,
+                failureCategory,
+                NormalizeFailureCode(failureCode),
+                now);
+            await MarkFailedAsync(job, execution, cancellationToken).ConfigureAwait(false);
+            await _dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+            _ = await CompleteIfTerminalAsync(execution, now, cancellationToken).ConfigureAwait(false);
+            await _dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+            await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+            return PreparedPass2DispatchFailureOutcome.Failed;
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            return PreparedPass2DispatchFailureOutcome.Cancelled;
+        }
+        catch (Exception exception) when (
+            exception is DbUpdateException or InvalidOperationException)
+        {
+            _dbContext.ChangeTracker.Clear();
+            return PreparedPass2DispatchFailureOutcome.Conflict;
         }
     }
 
@@ -460,13 +943,46 @@ public sealed class PreparedPass2Store(VulgataDbContext dbContext)
     public async Task<PreparedPass2StartResult> StartAsync(
         Guid pass1PairExecutionId,
         RepositoryAccessScope scope,
+        CancellationToken cancellationToken = default) =>
+        await StartAsync(
+            pass1PairExecutionId,
+            "server-authorized",
+            scope,
+            cancellationToken).ConfigureAwait(false);
+
+    public async Task<PreparedPass2StartResult> StartAsync(
+        Guid pass1PairExecutionId,
+        string authorizationSubject,
+        RepositoryAccessScope scope,
         CancellationToken cancellationToken = default)
     {
         ArgumentOutOfRangeException.ThrowIfEqual(pass1PairExecutionId, Guid.Empty);
+        ArgumentException.ThrowIfNullOrWhiteSpace(authorizationSubject);
+        string normalizedAuthorizationSubject = authorizationSubject.Trim();
+        if (normalizedAuthorizationSubject.Length > 450)
+        {
+            return Result(PreparedPass2StartOutcome.Rejected);
+        }
         ArgumentNullException.ThrowIfNull(scope);
         if (cancellationToken.IsCancellationRequested)
         {
             return Result(PreparedPass2StartOutcome.Cancelled);
+        }
+
+        if (_workerContractAuthority is null)
+        {
+            return Result(PreparedPass2StartOutcome.Rejected);
+        }
+
+        PreparedPass2WorkerContractAuthority workerContract;
+        try
+        {
+            workerContract = _workerContractAuthority.GetCurrent();
+        }
+        catch (Exception exception) when (
+            exception is InvalidOperationException or ArgumentException)
+        {
+            return Result(PreparedPass2StartOutcome.Rejected);
         }
 
         try
@@ -504,6 +1020,8 @@ public sealed class PreparedPass2Store(VulgataDbContext dbContext)
                 PreparedPass2StartResult replay = await ReplayAsync(
                     existing,
                     pair,
+                    normalizedAuthorizationSubject,
+                    workerContract,
                     cancellationToken).ConfigureAwait(false);
                 await transaction.RollbackAsync(CancellationToken.None).ConfigureAwait(false);
                 return replay;
@@ -516,7 +1034,13 @@ public sealed class PreparedPass2Store(VulgataDbContext dbContext)
                 pair.Id,
                 pair.CoordinationId,
                 pair.SystemId,
-                startedAt);
+                startedAt,
+                normalizedAuthorizationSubject,
+                workerContract.PromptIdentity,
+                workerContract.SubmissionSchemaIdentity,
+                workerContract.ToolDeclarationFingerprint,
+                workerContract.PromptFingerprint,
+                workerContract.SubmissionSchemaFingerprint);
             _dbContext.Pass2Executions.Add(execution);
             await _dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
@@ -535,6 +1059,21 @@ public sealed class PreparedPass2Store(VulgataDbContext dbContext)
                     startedAt))
                 .ToArray();
             Pass2Omission[] omissions = plan.Omissions.Concat(boundOmissions).ToArray();
+            execution.RecordPlan(checked(groups.Length + omissions.Length));
+            CrossRepositoryResolutionDecision[] authorityDecisions = await _dbContext
+                .CrossRepositoryResolutionDecisions.AsNoTracking()
+                .Where(value =>
+                    value.Pass1PairExecutionId == pair.Id &&
+                    value.CoordinationId == pair.CoordinationId &&
+                    value.SystemId == pair.SystemId)
+                .ToArrayAsync(cancellationToken).ConfigureAwait(false);
+            Pass2AuthoritySnapshot authoritySnapshot = CreateAuthoritySnapshot(
+                authorityDecisions, groups, omissions, execution);
+            execution.RecordAuthority(
+                authoritySnapshot.CandidateCount,
+                authoritySnapshot.ResolutionFingerprint,
+                authoritySnapshot.PlanningFingerprint,
+                authoritySnapshot.ExecutionFingerprint);
             _dbContext.FlowGroups.AddRange(groups);
             _dbContext.Pass2Omissions.AddRange(omissions);
 
@@ -554,6 +1093,21 @@ public sealed class PreparedPass2Store(VulgataDbContext dbContext)
 
             _dbContext.Pass2JobExecutions.AddRange(jobs);
             _dbContext.Pass2RetrievalBudgets.AddRange(budgets);
+            TwoRepositoryScanCoordination coordination = await LockCoordinationAsync(
+                pair.CoordinationId, cancellationToken).ConfigureAwait(false) ??
+                throw new InvalidOperationException("The Pass 2 coordination is unavailable.");
+            if (coordination.Phase == TwoRepositoryScanCoordinationPhase.Resolving)
+            {
+                DateTimeOffset transitionAt = startedAt < coordination.UpdatedAt
+                    ? coordination.UpdatedAt
+                    : startedAt;
+                coordination.BeginPass2(coordination.StateVersion, transitionAt);
+            }
+            else if (coordination.Phase != TwoRepositoryScanCoordinationPhase.Pass2)
+            {
+                throw new InvalidOperationException("The coordination is not eligible for Pass 2.");
+            }
+
             execution.MarkRunning(startedAt);
             await _dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
             await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
@@ -603,12 +1157,31 @@ public sealed class PreparedPass2Store(VulgataDbContext dbContext)
     private async Task<PreparedPass2StartResult> ReplayAsync(
         Pass2Execution execution,
         Pass1PairExecution pair,
+        string authorizationSubject,
+        PreparedPass2WorkerContractAuthority workerContract,
         CancellationToken cancellationToken)
     {
         if (execution.Id != DeriveId("pass2-execution/1.0", pair.Id) ||
             execution.CoordinationId != pair.CoordinationId ||
             execution.SystemId != pair.SystemId ||
-            execution.State != Pass2ExecutionState.Running)
+            !StringComparer.Ordinal.Equals(
+                execution.AuthorizationSubject,
+                authorizationSubject) ||
+            !StringComparer.Ordinal.Equals(
+                execution.WorkerPromptIdentity,
+                workerContract.PromptIdentity) ||
+            !StringComparer.Ordinal.Equals(
+                execution.WorkerPromptFingerprint,
+                workerContract.PromptFingerprint) ||
+            !StringComparer.Ordinal.Equals(
+                execution.SubmissionSchemaIdentity,
+                workerContract.SubmissionSchemaIdentity) ||
+            !StringComparer.Ordinal.Equals(
+                execution.SubmissionSchemaFingerprint,
+                workerContract.SubmissionSchemaFingerprint) ||
+            !StringComparer.Ordinal.Equals(
+                execution.ToolDeclarationFingerprint,
+                workerContract.ToolDeclarationFingerprint))
         {
             return Result(PreparedPass2StartOutcome.Conflict, execution.Id);
         }
@@ -650,8 +1223,29 @@ public sealed class PreparedPass2Store(VulgataDbContext dbContext)
             .OrderBy(value => Array.IndexOf(expectedOmissionDecisionIds, value.ExactResolutionDecisionId))
             .Select(value => value.ExactResolutionDecisionId)
             .ToArray();
-        int completeGroups = groups.Count(value => value.State == "Complete");
+        FlowGroup[] dispatchableGroups = groups.Where(value =>
+            value.State is "Complete" or "Running" or "Published" or "Failed").ToArray();
+        Guid[] budgetJobIds = await _dbContext.Pass2RetrievalBudgets.AsNoTracking()
+            .Where(value => jobIds.Contains(value.Pass2JobExecutionId))
+            .Select(value => value.Pass2JobExecutionId)
+            .ToArrayAsync(cancellationToken).ConfigureAwait(false);
+        CrossRepositoryResolutionDecision[] allDecisions = await _dbContext
+            .CrossRepositoryResolutionDecisions.AsNoTracking()
+            .Where(value =>
+                value.Pass1PairExecutionId == pair.Id &&
+                value.CoordinationId == pair.CoordinationId &&
+                value.SystemId == pair.SystemId)
+            .ToArrayAsync(cancellationToken).ConfigureAwait(false);
+        Pass2AuthoritySnapshot authoritySnapshot = CreateAuthoritySnapshot(
+            allDecisions, groups, omissions, execution);
         if (groups.Length == 0 ||
+            execution.CandidateCount != authoritySnapshot.CandidateCount ||
+            !StringComparer.Ordinal.Equals(
+                execution.ResolutionFingerprint, authoritySnapshot.ResolutionFingerprint) ||
+            !StringComparer.Ordinal.Equals(
+                execution.PlanningFingerprint, authoritySnapshot.PlanningFingerprint) ||
+            !StringComparer.Ordinal.Equals(
+                execution.ExecutionFingerprint, authoritySnapshot.ExecutionFingerprint) ||
             !actualGroupDecisionIds.SequenceEqual(expectedGroupDecisionIds) ||
             !actualOmissionDecisionIds.SequenceEqual(expectedOmissionDecisionIds) ||
             omissions.Any(value =>
@@ -661,8 +1255,14 @@ public sealed class PreparedPass2Store(VulgataDbContext dbContext)
                     "pass2-omission/1.0",
                     execution.Id,
                     value.ExactResolutionDecisionId)) ||
-            jobs.Length != completeGroups || budgets != jobs.Length ||
-            jobs.Any(job => groups.All(group => group.Id != job.FlowGroupId)))
+            jobs.Length != dispatchableGroups.Length || budgets != jobs.Length ||
+            budgetJobIds.Distinct().Count() != jobs.Length ||
+            jobs.Any(job =>
+                job.Id != DeriveId("pass2-job/1.0", execution.Id, job.FlowGroupId) ||
+                job.Pass2ExecutionId != execution.Id ||
+                dispatchableGroups.All(group =>
+                    group.Id != job.FlowGroupId || group.GroupOrder != job.GroupOrder)) ||
+            dispatchableGroups.Any(group => jobs.Count(job => job.FlowGroupId == group.Id) != 1))
         {
             return Result(PreparedPass2StartOutcome.Conflict, execution.Id);
         }
@@ -676,6 +1276,283 @@ public sealed class PreparedPass2Store(VulgataDbContext dbContext)
             budgets,
             true);
     }
+
+    private static Pass2AuthoritySnapshot CreateAuthoritySnapshot(
+        IEnumerable<CrossRepositoryResolutionDecision> decisions,
+        IEnumerable<FlowGroup> groups,
+        IEnumerable<Pass2Omission> omissions,
+        Pass2Execution execution)
+    {
+        string[] decisionFingerprints = decisions
+            .OrderBy(value => value.Protocol)
+            .ThenBy(value => value.NormalizedEndpointIdentifier, StringComparer.Ordinal)
+            .ThenBy(value => value.ConsumerEntryStableKey, StringComparer.Ordinal)
+            .ThenBy(value => value.Id.ToString("N"), StringComparer.Ordinal)
+            .Select(value => value.DecisionFingerprint.Length == 64
+                ? value.DecisionFingerprint
+                : value.EvidenceFingerprint)
+            .ToArray();
+        string resolutionFingerprint = HashAuthority(
+            "pass2-resolution-authority/1.0", decisionFingerprints);
+        string[] planningParts = groups
+            .OrderBy(value => value.GroupOrder)
+            .Select(value => $"group:{value.Id:D}:{value.PlanFingerprint}:{value.MembershipFingerprint}")
+            .Concat(omissions
+                .OrderBy(value => value.ExactResolutionDecisionId)
+                .Select(value => $"omission:{value.ExactResolutionDecisionId:D}:{value.ReasonCode}"))
+            .ToArray();
+        string planningFingerprint = HashAuthority(
+            "pass2-planning-authority/1.0", planningParts);
+        string executionFingerprint = HashAuthority(
+            "pass2-execution-authority/1.0",
+            [
+                resolutionFingerprint,
+                planningFingerprint,
+                execution.WorkerPromptIdentity,
+                execution.WorkerPromptFingerprint,
+                execution.SubmissionSchemaIdentity,
+                execution.SubmissionSchemaFingerprint,
+                execution.ToolDeclarationFingerprint,
+            ]);
+        return new(
+            decisionFingerprints.Length,
+            resolutionFingerprint,
+            planningFingerprint,
+            executionFingerprint);
+    }
+
+    private static string HashAuthority(string identity, IEnumerable<string> values)
+    {
+        string preimage = string.Join('\n', values.Prepend(identity));
+        return Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(preimage)));
+    }
+
+    private sealed record Pass2AuthoritySnapshot(
+        int CandidateCount,
+        string ResolutionFingerprint,
+        string PlanningFingerprint,
+        string ExecutionFingerprint);
+
+    private async Task<int> RecoverJobsAsync(
+        IReadOnlyList<Pass2JobExecution> jobs,
+        Pass2Execution execution,
+        DateTimeOffset now,
+        CancellationToken cancellationToken)
+    {
+        int failed = 0;
+        foreach (Pass2JobExecution job in jobs.OrderBy(value => value.GroupOrder))
+        {
+            if (job.State == Pass2JobExecutionState.Running &&
+                job.LeaseExpiresAt is { } leaseExpiresAt && leaseExpiresAt <= now)
+            {
+                job.RecoverExpiredLease(job.StateVersion, now);
+                if (job.State == Pass2JobExecutionState.Failed)
+                {
+                    await MarkFailedAsync(job, execution, cancellationToken).ConfigureAwait(false);
+                    failed++;
+                }
+            }
+            else if (job.State == Pass2JobExecutionState.RetryScheduled &&
+                job.NextAttemptAt is { } nextAttemptAt && nextAttemptAt <= now)
+            {
+                job.RecoverDueRetry(job.StateVersion, now);
+            }
+        }
+
+        return failed;
+    }
+
+    private async Task MarkFailedAsync(
+        Pass2JobExecution job,
+        Pass2Execution execution,
+        CancellationToken cancellationToken)
+    {
+        FlowGroup group = await _dbContext.FlowGroups.SingleAsync(
+            value => value.Id == job.FlowGroupId,
+            cancellationToken).ConfigureAwait(false);
+        if (group.State == "Complete")
+        {
+            group.Fail(job.FailureCode ?? "worker-failed");
+            execution.RecordFailed(execution.StateVersion, job.StateChangedAt);
+        }
+    }
+
+    internal async Task<bool> CompleteIfTerminalAsync(
+        Pass2Execution execution,
+        DateTimeOffset now,
+        CancellationToken cancellationToken)
+    {
+        if (execution.State is Pass2ExecutionState.Completed or
+            Pass2ExecutionState.CompletedWithWarnings)
+        {
+            return true;
+        }
+        if (execution.State != Pass2ExecutionState.Running)
+        {
+            return false;
+        }
+
+        Pass2JobExecutionState[] jobStates = await _dbContext.Pass2JobExecutions
+            .Where(value => value.Pass2ExecutionId == execution.Id)
+            .Select(value => value.State)
+            .ToArrayAsync(cancellationToken).ConfigureAwait(false);
+        if (jobStates.Any(value => value is Pass2JobExecutionState.Pending or
+            Pass2JobExecutionState.Running or Pass2JobExecutionState.RetryScheduled))
+        {
+            return false;
+        }
+
+        var groupRows = await _dbContext.FlowGroups
+            .Where(value => value.Pass2ExecutionId == execution.Id)
+            .Select(value => new
+            {
+                value.Id,
+                value.State,
+                value.PlanFingerprint,
+                value.ReasonCode,
+            })
+            .ToArrayAsync(cancellationToken).ConfigureAwait(false);
+        if (groupRows.Any(value => value.State == "Complete" || value.State == "Running"))
+        {
+            return false;
+        }
+
+        var omissionRows = await _dbContext.Pass2Omissions
+            .Where(value => value.Pass2ExecutionId == execution.Id)
+            .Join(
+                _dbContext.CrossRepositoryResolutionDecisions,
+                omission => omission.ExactResolutionDecisionId,
+                decision => decision.Id,
+                (omission, decision) => new
+                {
+                    omission.ExactResolutionDecisionId,
+                    decision.EvidenceFingerprint,
+                    omission.ReasonCode,
+                })
+            .ToArrayAsync(cancellationToken).ConfigureAwait(false);
+        int incompleteCount = groupRows.Count(value => value.State == "Incomplete");
+        int boundExcludedCount = groupRows.Count(value => value.State == "BoundExcluded");
+        int omissionCount = omissionRows.Length;
+        bool withWarnings = execution.PublishedCount == 0 || execution.FailedCount > 0 ||
+            omissionCount > 0 || incompleteCount > 0 || boundExcludedCount > 0;
+        string terminalWarningInventory = string.Join('\n', groupRows
+            .Where(value => value.State is "Incomplete" or "BoundExcluded" or "Failed")
+            .Select(value => $"{value.Id:D}|{value.PlanFingerprint}|{value.ReasonCode ?? "worker-failed"}")
+            .Concat(omissionRows.Select(value =>
+                $"{value.ExactResolutionDecisionId:D}|{value.EvidenceFingerprint}|{value.ReasonCode}"))
+            .OrderBy(value => value, StringComparer.Ordinal));
+        TwoRepositoryScanCoordination coordination = await LockCoordinationAsync(
+            execution.CoordinationId, cancellationToken).ConfigureAwait(false) ??
+            throw new InvalidOperationException("The Pass 2 coordination is unavailable.");
+        execution.Complete(
+            execution.StateVersion,
+            withWarnings,
+            incompleteCount,
+            boundExcludedCount,
+            omissionCount,
+            terminalWarningInventory,
+            now);
+        TwoRepositoryScanCoordinationPhase expectedCoordinationPhase = withWarnings
+            ? TwoRepositoryScanCoordinationPhase.CompletedWithWarnings
+            : TwoRepositoryScanCoordinationPhase.Completed;
+        if (coordination.Phase == TwoRepositoryScanCoordinationPhase.Pass2)
+        {
+            coordination.CompletePass2(coordination.StateVersion, withWarnings, now);
+        }
+        else if (coordination.Phase != expectedCoordinationPhase)
+        {
+            throw new InvalidOperationException(
+                "The Pass 2 coordination terminal outcome does not match execution accounting.");
+        }
+        return true;
+    }
+
+    private async Task<Pass2Execution?> LockExecutionAsync(
+        Guid executionId,
+        CancellationToken cancellationToken)
+    {
+        if (_dbContext.Database.ProviderName?.Contains("Npgsql", StringComparison.Ordinal) == true)
+        {
+            return await _dbContext.Pass2Executions.FromSqlInterpolated(
+                    $"SELECT * FROM vulgata.\"Pass2Executions\" WHERE \"Id\" = {executionId} FOR UPDATE")
+                .SingleOrDefaultAsync(cancellationToken).ConfigureAwait(false);
+        }
+
+        return await _dbContext.Pass2Executions.SingleOrDefaultAsync(
+            value => value.Id == executionId,
+            cancellationToken).ConfigureAwait(false);
+    }
+
+    private async Task<Pass2JobExecution[]> LockJobsAsync(
+        Guid executionId,
+        CancellationToken cancellationToken)
+    {
+        if (_dbContext.Database.ProviderName?.Contains("Npgsql", StringComparison.Ordinal) == true)
+        {
+            return await _dbContext.Pass2JobExecutions.FromSqlInterpolated(
+                    $"SELECT * FROM vulgata.\"Pass2JobExecutions\" WHERE \"Pass2ExecutionId\" = {executionId} ORDER BY \"GroupOrder\" FOR UPDATE")
+                .ToArrayAsync(cancellationToken).ConfigureAwait(false);
+        }
+
+        return await _dbContext.Pass2JobExecutions
+            .Where(value => value.Pass2ExecutionId == executionId)
+            .OrderBy(value => value.GroupOrder)
+            .ToArrayAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    private async Task<TwoRepositoryScanCoordination?> LockCoordinationAsync(
+        Guid coordinationId,
+        CancellationToken cancellationToken)
+    {
+        if (_dbContext.Database.ProviderName?.Contains("Npgsql", StringComparison.Ordinal) == true)
+        {
+            return await _dbContext.TwoRepositoryScanCoordinations.FromSqlInterpolated(
+                    $"SELECT * FROM vulgata.\"TwoRepositoryScanCoordinations\" WHERE \"Id\" = {coordinationId} FOR UPDATE")
+                .SingleOrDefaultAsync(cancellationToken).ConfigureAwait(false);
+        }
+
+        return await _dbContext.TwoRepositoryScanCoordinations.SingleOrDefaultAsync(
+            value => value.Id == coordinationId,
+            cancellationToken).ConfigureAwait(false);
+    }
+
+    private async Task<Guid[]> ExecutionRepositoryIdsAsync(
+        Pass2Execution execution,
+        CancellationToken cancellationToken)
+    {
+        TwoRepositoryScanCoordination? coordination = await _dbContext
+            .TwoRepositoryScanCoordinations.AsNoTracking()
+            .SingleOrDefaultAsync(value => value.Id == execution.CoordinationId, cancellationToken)
+            .ConfigureAwait(false);
+        return coordination is null
+            ? []
+            : [coordination.RepositoryOneId, coordination.RepositoryTwoId];
+    }
+
+    private static string NormalizeFailureCode(string value)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(value);
+        string normalized = value.Trim().ToLowerInvariant();
+        return normalized.Length <= 128 ? normalized : normalized[..128];
+    }
+
+    private static void RequireUtc(DateTimeOffset value, string parameterName)
+    {
+        if (value.Offset != TimeSpan.Zero)
+        {
+            throw new ArgumentException("Timestamp must use the UTC offset.", parameterName);
+        }
+    }
+
+    private static PreparedPass2ClaimResult Claim(
+        PreparedPass2ClaimOutcome outcome,
+        Guid executionId) =>
+        new(outcome, executionId, null, null, 0, 0, 0, null, null, null);
+
+    private static PreparedPass2RecoveryResult Recovery(
+        PreparedPass2RecoveryOutcome outcome,
+        Guid executionId) =>
+        new(outcome, executionId == Guid.Empty ? null : executionId, null, null, 0, 0, false);
 
     private static Guid DeriveId(string schema, params Guid[] identities)
     {

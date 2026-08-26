@@ -1,0 +1,72 @@
+{
+  "story": "12.4",
+  "feature": "exact-cross-repository-flow-pass2",
+  "tasks": ["T031", "T039", "T040", "T045"],
+  "phase": "quality-revise",
+  "status": "GREEN_AFTER_QR_US5_008_017",
+  "observedAt": "2026-08-27T00:53:31+08:00",
+  "sourceCommit": "adfdd2718354f57e61b8ad5ddde6159a8c7ea826",
+  "ownedPaths": [
+    "tests/Vulgata.Tests/PreparedPass2/PreparedPass2JobExecutorStreamingTests.cs",
+    "tests/Vulgata.Tests/PreparedPass2/Pass2PartialCompletionTests.cs",
+    "tests/Vulgata.Tests/PreparedPass2/Pass2ProductionCompositionTests.cs",
+    "tests/Vulgata.Tests/PreparedPass2/Pass2FlowPlanningPostgreSqlTests.cs",
+    "tests/Vulgata.Tests/PreparedPass2/Pass2DocumentCommitTests.cs",
+    "specs/013-exact-cross-repository-flow-pass2/evidence/implementation/t045-qr-us5-revise-red.json",
+    "specs/013-exact-cross-repository-flow-pass2/evidence/implementation/t045-verification.json"
+  ],
+  "build": {
+    "status": "succeeded",
+    "errors": 0,
+    "warnings": "known NU1507 and EF assembly-version warnings only"
+  },
+  "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter \"FullyQualifiedName~PreTransportAuthorityMutation_ClosesIntegrityWithoutDispatchAsync|FullyQualifiedName~RuntimeMembers_BindExactOrdinaryPass1AndCompletedScanJobIdentitiesAsync|FullyQualifiedName~V2Authority_|FullyQualifiedName~ResolutionStore_V2Authority_|FullyQualifiedName~V2Decisions_SharedReferencesEdge_|FullyQualifiedName~CommitAsync_V2Authority_|FullyQualifiedName~Pass2Execution_ExposesPersistedAcceptedWorkerContractIdentities|FullyQualifiedName~Pass2Execution_ZeroPlannedDenominator_|FullyQualifiedName~RecoverAsync_TerminalDenominatorDrift_|FullyQualifiedName~LegacyExactCrossRepositoryEdgeEvidence_RemainsReadableAndUnchanged\" --logger \"console;verbosity=minimal\" -p:WarningLevel=0",
+  "result": {
+    "total": 30,
+    "passed": 30,
+    "failed": 0,
+    "skipped": 0,
+    "duration": "58 seconds",
+    "freshBuildEnabled": true
+  },
+  "fullT040Regression": {
+    "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter FullyQualifiedName~Pass2PartialCompletionTests --logger \"console;verbosity=minimal\" -p:WarningLevel=0",
+    "total": 17,
+    "passed": 17,
+    "failed": 0,
+    "skipped": 0,
+    "duration": "16 seconds",
+    "freshBuildEnabled": true
+  },
+  "qrUs5008And5017Authority": {
+    "classification": "GREEN",
+    "proof": "Eighteen pre-transport mutations cover current pointer, supersession, ProfiledRevision, exact REFERENCES Edge, v2 contribution, anchor range/hash, trace, plan/membership fingerprints, Flow Group schema identities, canonical logical-document stable key, consumer entry identity, consumer ScanRun binding, and the persisted accepted Worker prompt/schema/tool identities. Every mutation terminalizes as FailedIntegrity with zero dispatcher/provider transport."
+  },
+  "qrUs5014V2Authority": {
+    "classification": "GREEN",
+    "proof": "The canonical pair-bound v2 ApplyAsync writes one CrossRepositoryResolutionDecision and its contributions without any ExactCrossRepositoryEdgeEvidence row. Hydration and CommitAsync accept native v2-only authority. An absent legacy row and an unrelated valid-but-mutated legacy row are irrelevant. Two canonical decisions may share one REFERENCES Edge while retaining distinct Decision identity and contribution authority; tampered v2 contribution fingerprints reject. Existing legacy evidence remains readable through the dedicated compatibility test."
+  },
+  "qrUs5015AcceptedWorkerContract": {
+    "classification": "GREEN",
+    "proof": "Pass2Execution persists WorkerPromptIdentity, SubmissionSchemaIdentity, and a lower-hex ToolDeclarationFingerprint. Hydration binds the persisted prompt/schema and approved tool declaration identity; independent mutations of all three persisted accepted-contract authorities refuse before transport."
+  },
+  "qrUs5016Denominator": {
+    "classification": "GREEN",
+    "proof": "A recorded zero planned denominator remains authoritative and cannot be derived from terminal graph counts. Recovery of a terminal graph whose persisted denominator drifted to zero rejects and records FailedIntegrity rather than deriving or falling back."
+  },
+  "fixtureCorrections": [
+    "Pair-bound v2 batches now carry the canonical AD-1 lower-hex 64-character ConsumerEntryStableKey and bind the unsupported observation to the terminal pair consumer scan.",
+    "Tests no longer rewrite persisted pair, coordination, System, stable-key, Decision, contribution, or legacy evidence authority after ApplyAsync.",
+    "The Commit fixture consumes the native canonical v2 Decision/contributions/REFERENCES Edge and asserts that no legacy row exists."
+  ],
+  "scope": {
+    "reviewedBoundaryProductionChanges": true,
+    "testEvidenceAuthorProductionChanges": false,
+    "migrationChangesByAuthor": false,
+    "workflowChanges": false,
+    "gitHistoryChanges": false,
+    "networkUsed": false,
+    "ordinaryDatabaseUsed": false,
+    "database": "fixture-owned temporary SQLite only"
+  }
+}

@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using Vulgata.Core.DomainServices;
 using Vulgata.Core.Entities;
+using Vulgata.Infrastructure.CrossRepository;
 
 namespace Vulgata.Infrastructure.Data;
 
@@ -39,6 +40,14 @@ public sealed class ExactCrossRepositoryResolutionStore(VulgataDbContext context
             return Refused();
         }
 
+        V2AuthorityResolution authorityResolution = await ResolveV2AuthorityAsync(
+            materializedDecisions, cancellationToken).ConfigureAwait(false);
+        if (authorityResolution.IsConflict)
+        {
+            return new(ExactResolutionOutcomeKind.Conflict, [], "conflict");
+        }
+        V2PairAuthority? v2Authority = authorityResolution.Authority;
+
         IExecutionStrategy strategy = _context.Database.CreateExecutionStrategy();
         try
         {
@@ -71,10 +80,27 @@ public sealed class ExactCrossRepositoryResolutionStore(VulgataDbContext context
                         return ClearAndConflict();
                     }
 
+                    ExactResolutionDecision[] authoritativeDecisions = materializedDecisions;
+                    if (v2Authority is not null)
+                    {
+                        ExactResolutionDecision[]? resolved =
+                            await ResolveProviderAuthorityAsync(
+                                decisions,
+                                materializedDecisions,
+                                cancellationToken).ConfigureAwait(false);
+                        if (resolved is null)
+                        {
+                            await transaction.RollbackAsync(cancellationToken);
+                            return ClearAndConflict();
+                        }
+
+                        authoritativeDecisions = resolved;
+                    }
+
                     DateTimeOffset createdAt = DateTimeOffset.UtcNow;
                     var items = new List<ExactResolutionBatchItemOutcome>(
-                        materializedDecisions.Length);
-                    foreach (ExactResolutionDecision decision in materializedDecisions)
+                        authoritativeDecisions.Length);
+                    foreach (ExactResolutionDecision decision in authoritativeDecisions)
                     {
                         ExactResolutionOutcomeKind itemKind;
                         if (decision.Kind == ExactResolutionDecisionKind.ExactMatch)
@@ -82,24 +108,24 @@ public sealed class ExactCrossRepositoryResolutionStore(VulgataDbContext context
                             MaterializedExactWrite write = MaterializeExact(
                                 decisions,
                                 decision,
-                                createdAt);
-                            itemKind = await PrepareExactWriteAsync(write, cancellationToken);
-                            if (itemKind != ExactResolutionOutcomeKind.Conflict)
+                                createdAt,
+                                v2Authority is not null);
+                            if (v2Authority is null)
                             {
-                                ExactResolutionOutcomeKind v2Kind =
-                                    await PrepareV2ExactWriteAsync(
+                                itemKind = await PrepareExactWriteAsync(write, cancellationToken);
+                            }
+                            else
+                            {
+                                MaterializedExactWrite? preparedWrite = await PrepareV2EdgeAsync(
+                                    write, cancellationToken).ConfigureAwait(false);
+                                itemKind = preparedWrite is null
+                                    ? ExactResolutionOutcomeKind.Conflict
+                                    : await PrepareV2ExactWriteAsync(
                                         decisions,
                                         decision,
-                                        write,
-                                        cancellationToken);
-                                if (v2Kind == ExactResolutionOutcomeKind.Conflict)
-                                {
-                                    itemKind = v2Kind;
-                                }
-                                else if (v2Kind == ExactResolutionOutcomeKind.Applied)
-                                {
-                                    itemKind = v2Kind;
-                                }
+                                        preparedWrite,
+                                        v2Authority,
+                                        cancellationToken).ConfigureAwait(false);
                             }
                         }
                         else
@@ -108,9 +134,11 @@ public sealed class ExactCrossRepositoryResolutionStore(VulgataDbContext context
                                 decisions,
                                 decision,
                                 createdAt);
-                            itemKind = await PrepareUncertaintyWriteAsync(
-                                uncertainty,
-                                cancellationToken);
+                            itemKind = v2Authority is null
+                                ? await PrepareUncertaintyWriteAsync(
+                                    uncertainty, cancellationToken)
+                                : await PrepareV2UncertaintyWriteAsync(
+                                    decision, uncertainty, v2Authority, cancellationToken);
                         }
 
                         if (itemKind == ExactResolutionOutcomeKind.Conflict)
@@ -332,6 +360,90 @@ public sealed class ExactCrossRepositoryResolutionStore(VulgataDbContext context
         }
     }
 
+    private async Task<V2AuthorityResolution> ResolveV2AuthorityAsync(
+        IReadOnlyCollection<ExactResolutionDecision> decisions,
+        CancellationToken cancellationToken)
+    {
+        ExactResolutionOwner[] owners = decisions.SelectMany(Owners).Distinct().ToArray();
+        Guid[] repositoryIds = owners.Select(value => value.RepositoryId).Distinct().ToArray();
+        Guid[] scanRunIds = owners.Select(value => value.ScanRunId).Distinct().ToArray();
+        PreparedScanManifest[] candidates = await _context.PreparedScanManifests.AsNoTracking()
+            .Where(value => repositoryIds.Contains(value.RepositoryId) ||
+                scanRunIds.Contains(value.ScanRunId))
+            .ToArrayAsync(cancellationToken).ConfigureAwait(false);
+        if (candidates.Length == 0)
+        {
+            return new(false, null);
+        }
+
+        Guid[] manifestIds = candidates.Select(value => value.Id).ToArray();
+        Pass1PairExecution[] pairs = await _context.Pass1PairExecutions.AsNoTracking()
+            .Where(value => manifestIds.Contains(value.ManifestOneId) ||
+                manifestIds.Contains(value.ManifestTwoId))
+            .ToArrayAsync(cancellationToken).ConfigureAwait(false);
+        var exact = new List<V2PairAuthority>();
+        foreach (Pass1PairExecution pair in pairs)
+        {
+            PreparedScanManifest? one = candidates.SingleOrDefault(value =>
+                value.Id == pair.ManifestOneId);
+            PreparedScanManifest? two = candidates.SingleOrDefault(value =>
+                value.Id == pair.ManifestTwoId);
+            TwoRepositoryScanCoordination? coordination = await _context
+                .TwoRepositoryScanCoordinations.AsNoTracking()
+                .SingleOrDefaultAsync(value => value.Id == pair.CoordinationId, cancellationToken)
+                .ConfigureAwait(false);
+            if (one is null || two is null || coordination is null ||
+                pair.Phase != Pass1PairExecutionPhase.ReadyForResolution ||
+                pair.TerminalAt is null || pair.SystemId != coordination.SystemId ||
+                one.CoordinationId != pair.CoordinationId || two.CoordinationId != pair.CoordinationId ||
+                !owners.All(owner => OwnerMatches(owner, one) || OwnerMatches(owner, two)))
+            {
+                continue;
+            }
+
+            exact.Add(new(pair, coordination, one, two));
+        }
+
+        return exact.Count == 1
+            ? new(false, exact[0])
+            : new(true, null);
+    }
+
+    private static bool OwnerMatches(ExactResolutionOwner owner, PreparedScanManifest manifest) =>
+        owner.RepositoryId == manifest.RepositoryId &&
+        owner.ScanRunId == manifest.ScanRunId &&
+        StringComparer.Ordinal.Equals(owner.ProfiledRevision, manifest.ProfiledRevision);
+
+    private async Task<MaterializedExactWrite?> PrepareV2EdgeAsync(
+        MaterializedExactWrite write,
+        CancellationToken cancellationToken)
+    {
+        DocumentEdge? existing = await _context.DocumentEdges.AsNoTracking()
+            .SingleOrDefaultAsync(edge =>
+                edge.SourceDocumentVersionId == write.Edge.SourceDocumentVersionId &&
+                edge.TargetDocumentVersionId == write.Edge.TargetDocumentVersionId &&
+                edge.EdgeType == DocumentEdgeType.References,
+                cancellationToken).ConfigureAwait(false);
+        if (existing is not null)
+        {
+            return EdgeMatchesIgnoringIdentity(existing, write.Edge)
+                ? new(existing, write.Evidence)
+                : null;
+        }
+
+        _context.DocumentEdges.Add(write.Edge);
+        return write;
+    }
+
+    private static bool EdgeMatchesIgnoringIdentity(DocumentEdge actual, DocumentEdge expected) =>
+        actual.SourceDocumentVersionId == expected.SourceDocumentVersionId &&
+        actual.SourceRepositoryId == expected.SourceRepositoryId &&
+        actual.SourceScanRunId == expected.SourceScanRunId &&
+        actual.TargetDocumentVersionId == expected.TargetDocumentVersionId &&
+        actual.TargetRepositoryId == expected.TargetRepositoryId &&
+        actual.TargetScanRunId == expected.TargetScanRunId &&
+        actual.EdgeType == DocumentEdgeType.References;
+
     private async Task<ExactResolutionOutcomeKind> PrepareExactWriteAsync(
         MaterializedExactWrite write,
         CancellationToken cancellationToken)
@@ -406,8 +518,14 @@ public sealed class ExactCrossRepositoryResolutionStore(VulgataDbContext context
         ExactResolutionDecisionBatch batch,
         ExactResolutionDecision source,
         MaterializedExactWrite write,
+        V2PairAuthority authority,
         CancellationToken cancellationToken)
     {
+        if (!IsLowerSha256(source.ConsumerEntryStableKey))
+        {
+            return ExactResolutionOutcomeKind.Conflict;
+        }
+
         CrossRepositoryResolutionDecision? existing =
             await _context.CrossRepositoryResolutionDecisions.AsNoTracking()
                 .SingleOrDefaultAsync(
@@ -416,13 +534,27 @@ public sealed class ExactCrossRepositoryResolutionStore(VulgataDbContext context
                     cancellationToken);
         if (existing is not null)
         {
-            ExactResolutionProviderEvidenceContribution[] contributions =
+            ProviderObservationOrdinal[] observations = ProviderObservationOrdinals(
+                source,
+                existing.SystemId);
+            ExactResolutionProviderEvidenceContribution[] existingContributions =
             await _context.ExactResolutionProviderEvidenceContributions.AsNoTracking()
                 .Where(contribution => contribution.ResolutionDecisionId == existing.Id)
                 .ToArrayAsync(cancellationToken);
             return V2DecisionMatches(existing, source, write) &&
-                contributions.Length == 1 &&
-                V2ContributionMatches(contributions[0], existing.Id, source, write)
+                existingContributions.Length == observations.Length &&
+                existingContributions.OrderBy(value => value.ProviderOrdinal)
+                    .ThenBy(value => value.EvidenceOrdinal)
+                    .Select((actual, index) => V2ContributionMatches(
+                        actual,
+                        existing.Id,
+                        observations[index].Observation,
+                        write.Evidence.EvidenceFingerprint,
+                        existing.SystemId,
+                        write.Edge.CreatedAt,
+                        observations[index].ProviderOrdinal,
+                        observations[index].EvidenceOrdinal))
+                    .All(value => value)
                     ? ExactResolutionOutcomeKind.AlreadyApplied
                     : ExactResolutionOutcomeKind.Conflict;
         }
@@ -439,48 +571,235 @@ public sealed class ExactCrossRepositoryResolutionStore(VulgataDbContext context
             batch,
             source,
             write,
-            decisionId);
-        ExactResolutionProviderEvidenceContribution contribution =
-            CreateV2Contribution(source, write, decisionId);
+            decisionId,
+            authority);
+        ExactResolutionProviderEvidenceContribution[] contributions =
+            ProviderObservationOrdinals(source, authority.Pair.SystemId)
+                .Select(observation => CreateV2Contribution(
+                    observation.Observation,
+                    write,
+                    decisionId,
+                    authority,
+                    observation.ProviderOrdinal,
+                    observation.EvidenceOrdinal))
+                .ToArray();
         _context.CrossRepositoryResolutionDecisions.Add(decision);
-        _context.ExactResolutionProviderEvidenceContributions.Add(contribution);
+        _context.ExactResolutionProviderEvidenceContributions.AddRange(contributions);
         return ExactResolutionOutcomeKind.Applied;
     }
 
-    private CrossRepositoryResolutionDecision CreateV2Decision(
-        ExactResolutionDecisionBatch batch,
+    private async Task<ExactResolutionOutcomeKind> PrepareV2UncertaintyWriteAsync(
         ExactResolutionDecision source,
-        MaterializedExactWrite write,
-        Guid decisionId)
+        Uncertainty uncertainty,
+        V2PairAuthority authority,
+        CancellationToken cancellationToken)
     {
+        if (!IsLowerSha256(source.ConsumerEntryStableKey))
+        {
+            return ExactResolutionOutcomeKind.Conflict;
+        }
+
+        CrossRepositoryResolutionDecision? existing = await _context
+            .CrossRepositoryResolutionDecisions.AsNoTracking()
+            .SingleOrDefaultAsync(value =>
+                value.DecisionFingerprint == uncertainty.EvidenceFingerprint,
+                cancellationToken);
+        if (existing is not null)
+        {
+            ProviderEndpointCandidate[] replayObservations = ProviderObservations(source);
+            ExactResolutionProviderEvidenceContribution[] contributions = await _context
+                .ExactResolutionProviderEvidenceContributions.AsNoTracking()
+                .Where(value => value.ResolutionDecisionId == existing.Id)
+                .OrderBy(value => value.ProviderOrdinal)
+                .ThenBy(value => value.EvidenceOrdinal)
+                .ToArrayAsync(cancellationToken).ConfigureAwait(false);
+            Uncertainty? persistedUncertainty = await _context.Uncertainties.AsNoTracking()
+                .SingleOrDefaultAsync(value => value.Id == uncertainty.Id, cancellationToken)
+                .ConfigureAwait(false);
+            return persistedUncertainty is not null &&
+                NonExactDecisionMatches(
+                    existing,
+                    source,
+                    uncertainty,
+                    persistedUncertainty.CreatedAt,
+                    authority,
+                    replayObservations,
+                    contributions) &&
+                UncertaintyMatches(persistedUncertainty, uncertainty)
+                    ? ExactResolutionOutcomeKind.AlreadyRecorded
+                    : ExactResolutionOutcomeKind.Conflict;
+        }
+
+        ExactResolutionOutcomeKind uncertaintyOutcome =
+            await PrepareUncertaintyWriteAsync(uncertainty, cancellationToken);
+        if (uncertaintyOutcome == ExactResolutionOutcomeKind.Conflict)
+        {
+            return uncertaintyOutcome;
+        }
+
+        Guid decisionId = ExactResolutionCanonicalAuthority.DecisionId(
+            uncertainty.EvidenceFingerprint);
+        if (await _context.CrossRepositoryResolutionDecisions.AsNoTracking()
+            .AnyAsync(value => value.Id == decisionId, cancellationToken))
+        {
+            return ExactResolutionOutcomeKind.Conflict;
+        }
+
+        ProviderEndpointCandidate[] observations = ProviderObservations(source);
+        string[] contributionFingerprints = observations.Select(value =>
+            ExactResolutionCanonicalAuthority.ProviderObservationFingerprint(
+                uncertainty.EvidenceFingerprint, value)).ToArray();
+        string providerSetFingerprint = contributionFingerprints.Length == 0
+            ? HashIdentity("provider-evidence-set", "none")
+            : ExactResolutionCanonicalAuthority.ProviderEvidenceSetFingerprint(
+                contributionFingerprints);
         var decision = (CrossRepositoryResolutionDecision)Activator.CreateInstance(
-            typeof(CrossRepositoryResolutionDecision),
-            nonPublic: true)!;
+            typeof(CrossRepositoryResolutionDecision), nonPublic: true)!;
         _context.Entry(decision).Property(value => value.Id).CurrentValue = decisionId;
+        _context.Entry(decision).Property(value => value.ResolutionSchemaIdentity).CurrentValue =
+            "exact-cross-repository-resolution/2.0";
         _context.Entry(decision).Property(value => value.Pass1PairExecutionId).CurrentValue =
-            DeterministicGuid(HashIdentity("pair", batch.ProfileFingerprint, source.Identity));
+            authority.Pair.Id;
         _context.Entry(decision).Property(value => value.CoordinationId).CurrentValue =
-            DeterministicGuid(HashIdentity("coordination", batch.ProfileFingerprint));
+            authority.Pair.CoordinationId;
         _context.Entry(decision).Property(value => value.SystemId).CurrentValue =
-            DeterministicGuid(HashIdentity("system", source.Owner.RepositoryId.ToString("D")));
+            authority.Pair.SystemId;
         _context.Entry(decision).Property(value => value.ConsumerCandidateId).CurrentValue =
             DeterministicGuid(HashIdentity("candidate", source.Identity,
                 source.Owner.SourceAnchorId.ToString("D")));
         _context.Entry(decision).Property(value => value.ConsumerEntryIdentity).CurrentValue =
             source.Identity;
         _context.Entry(decision).Property(value => value.ConsumerEntryStableKey).CurrentValue =
-            source.Identity;
+            source.ConsumerEntryStableKey!;
         _context.Entry(decision).Property(value => value.ConsumerDocumentVersionId).CurrentValue =
             source.Owner.DocumentVersionId;
+        _context.Entry(decision).Property(value => value.ConsumerRepositoryId).CurrentValue =
+            source.Owner.RepositoryId;
+        _context.Entry(decision).Property(value => value.ConsumerScanRunId).CurrentValue =
+            source.Owner.ScanRunId;
+        _context.Entry(decision).Property(value => value.ConsumerProfiledRevision).CurrentValue =
+            source.Owner.ProfiledRevision;
+        _context.Entry(decision).Property(value => value.Protocol).CurrentValue =
+            ExactResolutionProtocol.CustomRpc;
+        _context.Entry(decision).Property(value => value.NormalizedEndpointIdentifier).CurrentValue =
+            observations.FirstOrDefault()?.NormalizedIdentifier ?? source.Identity;
+        _context.Entry(decision).Property(value => value.NormalizationRuleIdentity).CurrentValue =
+            observations.FirstOrDefault()?.NormalizationRuleIdentity ?? source.Identity;
+        _context.Entry(decision).Property(value => value.Outcome).CurrentValue = "Uncertainty";
+        _context.Entry(decision).Property(value => value.OutcomeKind).CurrentValue =
+            source.Kind.ToString();
+        _context.Entry(decision).Property(value => value.ReasonCode).CurrentValue = source.ReasonCode;
+        _context.Entry(decision).Property(value => value.UncertaintyId).CurrentValue = uncertainty.Id;
+        _context.Entry(decision).Property(value => value.ConsumerEvidenceFingerprint).CurrentValue =
+            HashIdentity("consumer-evidence", source.Owner.RepositoryId.ToString("D"),
+                source.Owner.ScanRunId.ToString("D"), source.Owner.DocumentVersionId.ToString("D"),
+                source.Owner.SourceAnchorId.ToString("D"), source.Owner.ProfiledRevision,
+                source.EvidenceLocator);
+        _context.Entry(decision).Property(value => value.ProviderEvidenceSetFingerprint).CurrentValue =
+            providerSetFingerprint;
+        _context.Entry(decision).Property(value => value.DecisionFingerprint).CurrentValue =
+            uncertainty.EvidenceFingerprint;
+        _context.Entry(decision).Property(value => value.EvidenceFingerprint).CurrentValue =
+            uncertainty.EvidenceFingerprint;
+        _context.Entry(decision).Property(value => value.CreatedAt).CurrentValue =
+            uncertainty.CreatedAt;
+        _context.CrossRepositoryResolutionDecisions.Add(decision);
+        foreach (ProviderObservationOrdinal observation in
+            ProviderObservationOrdinals(source, authority.Pair.SystemId))
+        {
+            _context.ExactResolutionProviderEvidenceContributions.Add(
+                CreateV2Contribution(
+                    observation.Observation,
+                    uncertainty.EvidenceFingerprint,
+                    uncertainty.CreatedAt,
+                    decisionId,
+                    authority,
+                    observation.ProviderOrdinal,
+                    observation.EvidenceOrdinal));
+        }
+        return uncertaintyOutcome == ExactResolutionOutcomeKind.AlreadyRecorded
+            ? ExactResolutionOutcomeKind.Applied
+            : ExactResolutionOutcomeKind.UncertaintyRecorded;
+    }
+
+    private CrossRepositoryResolutionDecision CreateV2Decision(
+        ExactResolutionDecisionBatch batch,
+        ExactResolutionDecision source,
+        MaterializedExactWrite write,
+        Guid decisionId,
+        V2PairAuthority authority)
+    {
+        var decision = (CrossRepositoryResolutionDecision)Activator.CreateInstance(
+            typeof(CrossRepositoryResolutionDecision),
+            nonPublic: true)!;
+        _context.Entry(decision).Property(value => value.Id).CurrentValue = decisionId;
+        _context.Entry(decision).Property(value => value.ResolutionSchemaIdentity).CurrentValue =
+            "exact-cross-repository-resolution/2.0";
+        _context.Entry(decision).Property(value => value.Pass1PairExecutionId).CurrentValue =
+            authority.Pair.Id;
+        _context.Entry(decision).Property(value => value.CoordinationId).CurrentValue =
+            authority.Pair.CoordinationId;
+        _context.Entry(decision).Property(value => value.SystemId).CurrentValue =
+            authority.Pair.SystemId;
+        _context.Entry(decision).Property(value => value.ConsumerCandidateId).CurrentValue =
+            DeterministicGuid(HashIdentity("candidate", source.Identity,
+                source.Owner.SourceAnchorId.ToString("D")));
+        _context.Entry(decision).Property(value => value.ConsumerEntryIdentity).CurrentValue =
+            source.Identity;
+        _context.Entry(decision).Property(value => value.ConsumerEntryStableKey).CurrentValue =
+            source.ConsumerEntryStableKey!;
+        _context.Entry(decision).Property(value => value.ConsumerDocumentVersionId).CurrentValue =
+            source.Owner.DocumentVersionId;
+        _context.Entry(decision).Property(value => value.ConsumerRepositoryId).CurrentValue =
+            source.Owner.RepositoryId;
+        _context.Entry(decision).Property(value => value.ConsumerScanRunId).CurrentValue =
+            source.Owner.ScanRunId;
+        _context.Entry(decision).Property(value => value.ConsumerProfiledRevision).CurrentValue =
+            source.Owner.ProfiledRevision;
         _context.Entry(decision).Property(value => value.Protocol).CurrentValue =
             source.ExactEvidence!.Protocol;
         _context.Entry(decision).Property(value => value.NormalizedEndpointIdentifier).CurrentValue =
             source.ExactEvidence.NormalizedIdentifier;
+        _context.Entry(decision).Property(value => value.NormalizationRuleIdentity).CurrentValue =
+            ProviderObservations(source)[0].NormalizationRuleIdentity!;
         _context.Entry(decision).Property(value => value.Outcome).CurrentValue = "ExactMatch";
+        _context.Entry(decision).Property(value => value.OutcomeKind).CurrentValue = "ExactMatch";
+        _context.Entry(decision).Property(value => value.ReasonCode).CurrentValue = "unique_provider";
+        _context.Entry(decision).Property(value => value.ProviderIdentity).CurrentValue =
+            ProviderIdentity(authority.Pair.SystemId, source.Target!);
         _context.Entry(decision).Property(value => value.ProviderDocumentVersionId).CurrentValue =
             source.Target!.DocumentVersionId;
+        _context.Entry(decision).Property(value => value.ProviderRepositoryId).CurrentValue =
+            source.Target.RepositoryId;
+        _context.Entry(decision).Property(value => value.ProviderScanRunId).CurrentValue =
+            source.Target.ScanRunId;
+        _context.Entry(decision).Property(value => value.ProviderProfiledRevision).CurrentValue =
+            source.Target.ProfiledRevision;
         _context.Entry(decision).Property(value => value.DocumentEdgeId).CurrentValue = write.Edge.Id;
         _context.Entry(decision).Property(value => value.UncertaintyId).CurrentValue = null;
+        _context.Entry(decision).Property(value => value.ResolvedUncertaintyId).CurrentValue = null;
+        string consumerEvidenceFingerprint = HashIdentity(
+            "consumer-evidence",
+            source.Owner.RepositoryId.ToString("D"),
+            source.Owner.ScanRunId.ToString("D"),
+            source.Owner.DocumentVersionId.ToString("D"),
+            source.Owner.SourceAnchorId.ToString("D"),
+            source.Owner.ProfiledRevision,
+            source.EvidenceLocator);
+        string[] contributionFingerprints = ProviderObservations(source)
+            .Select(observation => ExactResolutionCanonicalAuthority
+                .ProviderObservationFingerprint(
+                    write.Evidence.EvidenceFingerprint, observation))
+            .ToArray();
+        string providerEvidenceSetFingerprint =
+            ExactResolutionCanonicalAuthority.ProviderEvidenceSetFingerprint(
+                contributionFingerprints);
+        _context.Entry(decision).Property(value => value.ConsumerEvidenceFingerprint).CurrentValue =
+            consumerEvidenceFingerprint;
+        _context.Entry(decision).Property(value => value.ProviderEvidenceSetFingerprint).CurrentValue =
+            providerEvidenceSetFingerprint;
+        _context.Entry(decision).Property(value => value.DecisionFingerprint).CurrentValue =
+            write.Evidence.EvidenceFingerprint;
         _context.Entry(decision).Property(value => value.EvidenceFingerprint).CurrentValue =
             write.Evidence.EvidenceFingerprint;
         _context.Entry(decision).Property(value => value.CreatedAt).CurrentValue =
@@ -489,14 +808,32 @@ public sealed class ExactCrossRepositoryResolutionStore(VulgataDbContext context
     }
 
     private ExactResolutionProviderEvidenceContribution CreateV2Contribution(
-        ExactResolutionDecision source,
+        ProviderEndpointCandidate observation,
         MaterializedExactWrite write,
-        Guid decisionId)
-    {
-        string fingerprint = ExactResolutionCanonicalAuthority.ProviderContributionFingerprint(
+        Guid decisionId,
+        V2PairAuthority authority,
+        int providerOrdinal,
+        int evidenceOrdinal) =>
+        CreateV2Contribution(
+            observation,
             write.Evidence.EvidenceFingerprint,
-            source.Target!.DocumentVersionId,
-            source.Target.SourceAnchorId);
+            write.Edge.CreatedAt,
+            decisionId,
+            authority,
+            providerOrdinal,
+            evidenceOrdinal);
+
+    private ExactResolutionProviderEvidenceContribution CreateV2Contribution(
+        ProviderEndpointCandidate observation,
+        string decisionFingerprint,
+        DateTimeOffset createdAt,
+        Guid decisionId,
+        V2PairAuthority authority,
+        int providerOrdinal,
+        int evidenceOrdinal)
+    {
+        string fingerprint = ExactResolutionCanonicalAuthority.ProviderObservationFingerprint(
+            decisionFingerprint, observation);
         var contribution = (ExactResolutionProviderEvidenceContribution)Activator.CreateInstance(
             typeof(ExactResolutionProviderEvidenceContribution),
             nonPublic: true)!;
@@ -504,16 +841,40 @@ public sealed class ExactCrossRepositoryResolutionStore(VulgataDbContext context
             ExactResolutionCanonicalAuthority.ProviderContributionId(fingerprint);
         _context.Entry(contribution).Property(value => value.ResolutionDecisionId).CurrentValue =
             decisionId;
+        _context.Entry(contribution).Property(value => value.ProviderIdentity).CurrentValue =
+            ProviderIdentity(authority.Pair.SystemId, observation.Owner);
         _context.Entry(contribution).Property(value => value.ProviderDocumentVersionId).CurrentValue =
-            source.Target.DocumentVersionId;
+            observation.Owner.DocumentVersionId;
+        _context.Entry(contribution).Property(value => value.RepositoryId).CurrentValue =
+            observation.Owner.RepositoryId;
+        _context.Entry(contribution).Property(value => value.ScanRunId).CurrentValue =
+            observation.Owner.ScanRunId;
+        _context.Entry(contribution).Property(value => value.ProfiledRevision).CurrentValue =
+            observation.Owner.ProfiledRevision;
+        _context.Entry(contribution).Property(value => value.CommunicationClassificationId).CurrentValue =
+            observation.CommunicationClassificationId;
         _context.Entry(contribution).Property(value => value.SourceAnchorId).CurrentValue =
-            source.Target.SourceAnchorId;
+            observation.Owner.SourceAnchorId;
+        _context.Entry(contribution).Property(value => value.ProviderRawIdentifier).CurrentValue =
+            observation.RawIdentifier;
+        _context.Entry(contribution).Property(value => value.NormalizedEndpointIdentifier).CurrentValue =
+            observation.NormalizedIdentifier;
+        _context.Entry(contribution).Property(value => value.EvidenceLocator).CurrentValue =
+            observation.DeclarationEvidenceLocator;
+        _context.Entry(contribution).Property(value => value.ClassificationFingerprint).CurrentValue =
+            observation.ClassificationFingerprint!;
+        _context.Entry(contribution).Property(value => value.CatalogRuleIdentity).CurrentValue =
+            observation.CatalogRuleIdentity!;
+        _context.Entry(contribution).Property(value => value.NormalizationRuleIdentity).CurrentValue =
+            observation.NormalizationRuleIdentity!;
         _context.Entry(contribution).Property(value => value.EvidenceFingerprint).CurrentValue =
             fingerprint;
-        _context.Entry(contribution).Property(value => value.ProviderOrdinal).CurrentValue = 1;
-        _context.Entry(contribution).Property(value => value.EvidenceOrdinal).CurrentValue = 1;
+        _context.Entry(contribution).Property(value => value.ProviderOrdinal).CurrentValue =
+            providerOrdinal;
+        _context.Entry(contribution).Property(value => value.EvidenceOrdinal).CurrentValue =
+            evidenceOrdinal;
         _context.Entry(contribution).Property(value => value.CreatedAt).CurrentValue =
-            write.Edge.CreatedAt;
+            createdAt;
         return contribution;
     }
 
@@ -532,16 +893,28 @@ public sealed class ExactCrossRepositoryResolutionStore(VulgataDbContext context
         return Convert.ToHexString(SHA256.HashData(stream.ToArray())).ToLowerInvariant();
     }
 
+    private static bool IsLowerSha256(string? value) =>
+        value is { Length: 64 } &&
+        value.All(character =>
+            character is (>= '0' and <= '9') or (>= 'a' and <= 'f'));
+
     private static MaterializedExactWrite MaterializeExact(
         ExactResolutionDecisionBatch batch,
         ExactResolutionDecision decision,
-        DateTimeOffset createdAt)
+        DateTimeOffset createdAt,
+        bool v2)
     {
         ExactResolutionOwner target = decision.Target!;
         ExactResolutionDecisionEvidence exact = decision.ExactEvidence!;
         string evidenceFingerprint = ExactResolutionCanonicalAuthority.EvidenceFingerprint(
             batch, decision, exact);
-        Guid edgeId = DeterministicGuid(evidenceFingerprint);
+        Guid edgeId = v2
+            ? DeterministicGuid(HashIdentity(
+                "references-edge",
+                decision.Owner.DocumentVersionId.ToString("D"),
+                target.DocumentVersionId.ToString("D"),
+                nameof(DocumentEdgeType.References)))
+            : DeterministicGuid(evidenceFingerprint);
         var edge = new DocumentEdge(
             edgeId,
             decision.Owner.DocumentVersionId,
@@ -709,41 +1082,338 @@ public sealed class ExactCrossRepositoryResolutionStore(VulgataDbContext context
             expected.ProviderEvidenceLocator) &&
         StringComparer.Ordinal.Equals(actual.EvidenceFingerprint, expected.EvidenceFingerprint);
 
+    private static ProviderEndpointCandidate[] ProviderObservations(
+        ExactResolutionDecision source) =>
+        source.ProviderObservations is { Count: > 0 }
+            ? ExactResolutionProviderObservationCanonicalizer.Canonicalize(
+                source.ProviderObservations)
+            : [];
+
+    private static ProviderObservationOrdinal[] ProviderObservationOrdinals(
+        ExactResolutionDecision source,
+        Guid systemId)
+    {
+        var providerOrdinals = new Dictionary<Guid, int>();
+        var evidenceCounts = new Dictionary<Guid, int>();
+        var result = new List<ProviderObservationOrdinal>();
+        foreach (ProviderEndpointCandidate observation in ProviderObservations(source))
+        {
+            Guid providerIdentity = ProviderIdentity(systemId, observation.Owner);
+            if (!providerOrdinals.TryGetValue(providerIdentity, out int providerOrdinal))
+            {
+                providerOrdinal = providerOrdinals.Count + 1;
+                providerOrdinals.Add(providerIdentity, providerOrdinal);
+            }
+
+            int evidenceOrdinal = evidenceCounts.GetValueOrDefault(providerIdentity) + 1;
+            evidenceCounts[providerIdentity] = evidenceOrdinal;
+            result.Add(new(
+                observation,
+                providerOrdinal,
+                evidenceOrdinal));
+        }
+
+        return result.ToArray();
+    }
+
+    private static Guid ProviderIdentity(Guid systemId, ExactResolutionOwner owner) =>
+        DeterministicGuid(HashIdentity(
+            "provider-identity",
+            systemId.ToString("D"),
+            owner.RepositoryId.ToString("D"),
+            owner.ScanRunId.ToString("D"),
+            owner.ProfiledRevision,
+            owner.DocumentVersionId.ToString("D")));
+
+    private readonly record struct ProviderObservationOrdinal(
+        ProviderEndpointCandidate Observation,
+        int ProviderOrdinal,
+        int EvidenceOrdinal);
+
+    private async Task<ExactResolutionDecision[]?> ResolveProviderAuthorityAsync(
+        ExactResolutionDecisionBatch batch,
+        IReadOnlyList<ExactResolutionDecision> decisions,
+        CancellationToken cancellationToken)
+    {
+        ExactResolutionProfile profile =
+            new Vulgata.Infrastructure.CrossRepository.ExactResolutionProfileCatalog().Load();
+        if (!StringComparer.Ordinal.Equals(profile.ProfileId, batch.ProfileId) ||
+            !StringComparer.Ordinal.Equals(profile.ProfileVersion, batch.ProfileVersion) ||
+            !StringComparer.Ordinal.Equals(profile.ProfileFingerprint, batch.ProfileFingerprint))
+        {
+            return null;
+        }
+
+        var result = new List<ExactResolutionDecision>(decisions.Count);
+        foreach (ExactResolutionDecision decision in decisions)
+        {
+            ProviderEndpointCandidate[] observations = ProviderObservations(decision);
+            ResolutionOccurrence? occurrence = profile.Occurrences.SingleOrDefault(value =>
+                StringComparer.Ordinal.Equals(value.OccurrenceId, decision.Identity));
+            if (observations.Length == 0)
+            {
+                if (decision.Kind == ExactResolutionDecisionKind.ExactMatch)
+                {
+                    return null;
+                }
+
+                result.Add(decision);
+                continue;
+            }
+            if (occurrence is null)
+            {
+                return null;
+            }
+
+            var resolved = new List<ProviderEndpointCandidate>(observations.Length);
+            foreach (ProviderEndpointCandidate observation in observations)
+            {
+                SourceAnchor? anchor = await _context.SourceAnchors.AsNoTracking()
+                    .SingleOrDefaultAsync(value =>
+                        value.Id == observation.Owner.SourceAnchorId &&
+                        value.DocumentVersionId == observation.Owner.DocumentVersionId &&
+                        value.RepositoryId == observation.Owner.RepositoryId &&
+                        value.ScanRunId == observation.Owner.ScanRunId &&
+                        value.ProfiledRevision == observation.Owner.ProfiledRevision,
+                        cancellationToken).ConfigureAwait(false);
+                if (anchor is null)
+                {
+                    return null;
+                }
+
+                CommunicationKindClassification[] classifications = await _context
+                    .CommunicationKindClassifications.AsNoTracking()
+                    .Where(value =>
+                        value.PreScanResultId == observation.Owner.ScanRunId &&
+                        value.Level == ClassificationLevel.Confirmed &&
+                        value.Kind == CommunicationKind.Rpc)
+                    .ToArrayAsync(cancellationToken).ConfigureAwait(false);
+                CommunicationKindClassification[] matching = classifications.Where(value =>
+                    observation.CommunicationClassificationId == Guid.Empty ||
+                        value.Id == observation.CommunicationClassificationId)
+                    .ToArray();
+                if (matching.Length != 1 ||
+                    matching[0].CatalogRuleIdentity is not { Length: > 0 } catalogRuleIdentity ||
+                    !IsLowerSha256(matching[0].Fingerprint) ||
+                    observation.ClassificationFingerprint is not null &&
+                        !StringComparer.Ordinal.Equals(
+                            observation.ClassificationFingerprint, matching[0].Fingerprint) ||
+                    observation.CatalogRuleIdentity is not null &&
+                        !StringComparer.Ordinal.Equals(
+                            observation.CatalogRuleIdentity, catalogRuleIdentity) ||
+                    observation.NormalizationRuleIdentity is not null &&
+                        !StringComparer.Ordinal.Equals(
+                            observation.NormalizationRuleIdentity, occurrence.Normalization.Id))
+                {
+                    return null;
+                }
+
+                resolved.Add(new ProviderEndpointCandidate(
+                    observation.OccurrenceId,
+                    observation.Owner,
+                    observation.RawIdentifier,
+                    observation.NormalizedIdentifier,
+                    observation.DeclarationEvidenceLocator,
+                    matching[0].Id,
+                    matching[0].Fingerprint,
+                    catalogRuleIdentity,
+                    occurrence.Normalization.Id));
+            }
+
+            result.Add(decision with { ProviderObservations = resolved });
+        }
+
+        return [.. result];
+    }
+
     private static bool V2DecisionMatches(
         CrossRepositoryResolutionDecision actual,
         ExactResolutionDecision source,
-        MaterializedExactWrite write) =>
+        MaterializedExactWrite write)
+    {
+        ProviderEndpointCandidate[] observations = ProviderObservations(source);
+        string[] fingerprints = observations.Select(value =>
+            ExactResolutionCanonicalAuthority.ProviderObservationFingerprint(
+                write.Evidence.EvidenceFingerprint, value)).ToArray();
+        string providerSet = ExactResolutionCanonicalAuthority.ProviderEvidenceSetFingerprint(
+            fingerprints);
+        ProviderEndpointCandidate provider = observations[0];
+        string consumerFingerprint = HashIdentity(
+            "consumer-evidence",
+            source.Owner.RepositoryId.ToString("D"),
+            source.Owner.ScanRunId.ToString("D"),
+            source.Owner.DocumentVersionId.ToString("D"),
+            source.Owner.SourceAnchorId.ToString("D"),
+            source.Owner.ProfiledRevision,
+            source.EvidenceLocator);
+        return actual.ResolutionSchemaIdentity == "exact-cross-repository-resolution/2.0" &&
+        actual.ConsumerCandidateId == DeterministicGuid(HashIdentity(
+            "candidate", source.Identity, source.Owner.SourceAnchorId.ToString("D"))) &&
         actual.ConsumerDocumentVersionId == source.Owner.DocumentVersionId &&
+        actual.ConsumerRepositoryId == source.Owner.RepositoryId &&
+        actual.ConsumerScanRunId == source.Owner.ScanRunId &&
+        StringComparer.Ordinal.Equals(
+            actual.ConsumerProfiledRevision, source.Owner.ProfiledRevision) &&
         actual.Protocol == source.ExactEvidence!.Protocol &&
         StringComparer.Ordinal.Equals(actual.ConsumerEntryIdentity, source.Identity) &&
-        StringComparer.Ordinal.Equals(actual.ConsumerEntryStableKey, source.Identity) &&
+        StringComparer.Ordinal.Equals(
+            actual.ConsumerEntryStableKey,
+            source.ConsumerEntryStableKey) &&
         StringComparer.Ordinal.Equals(
             actual.NormalizedEndpointIdentifier,
             source.ExactEvidence.NormalizedIdentifier) &&
+        StringComparer.Ordinal.Equals(
+            actual.NormalizationRuleIdentity, provider.NormalizationRuleIdentity) &&
         StringComparer.Ordinal.Equals(actual.Outcome, "ExactMatch") &&
-        actual.ProviderDocumentVersionId == source.Target!.DocumentVersionId &&
+        StringComparer.Ordinal.Equals(actual.OutcomeKind, "ExactMatch") &&
+        StringComparer.Ordinal.Equals(actual.ReasonCode, "unique_provider") &&
+        actual.ProviderIdentity == DeterministicGuid(HashIdentity(
+            "provider-identity",
+            actual.SystemId.ToString("D"),
+            source.Target!.RepositoryId.ToString("D"),
+            source.Target.ScanRunId.ToString("D"),
+            source.Target.ProfiledRevision,
+            source.Target.DocumentVersionId.ToString("D"))) &&
+        actual.ProviderDocumentVersionId == source.Target.DocumentVersionId &&
+        actual.ProviderRepositoryId == source.Target.RepositoryId &&
+        actual.ProviderScanRunId == source.Target.ScanRunId &&
+        StringComparer.Ordinal.Equals(
+            actual.ProviderProfiledRevision, source.Target.ProfiledRevision) &&
         actual.DocumentEdgeId == write.Edge.Id &&
         actual.UncertaintyId is null &&
+        actual.ResolvedUncertaintyId is null &&
+        StringComparer.Ordinal.Equals(
+            actual.ConsumerEvidenceFingerprint, consumerFingerprint) &&
+        StringComparer.Ordinal.Equals(actual.ProviderEvidenceSetFingerprint, providerSet) &&
+        StringComparer.Ordinal.Equals(
+            actual.DecisionFingerprint, write.Evidence.EvidenceFingerprint) &&
         StringComparer.Ordinal.Equals(
             actual.EvidenceFingerprint,
-            write.Evidence.EvidenceFingerprint);
+            write.Evidence.EvidenceFingerprint) &&
+        actual.CreatedAt == write.Edge.CreatedAt;
+    }
 
     private static bool V2ContributionMatches(
         ExactResolutionProviderEvidenceContribution actual,
         Guid decisionId,
-        ExactResolutionDecision source,
-        MaterializedExactWrite write)
+        ProviderEndpointCandidate observation,
+        string decisionFingerprint,
+        Guid systemId,
+        DateTimeOffset createdAt,
+        int providerOrdinal,
+        int evidenceOrdinal)
     {
-        string fingerprint = ExactResolutionCanonicalAuthority.ProviderContributionFingerprint(
-            write.Evidence.EvidenceFingerprint,
-            source.Target!.DocumentVersionId,
-            source.Target.SourceAnchorId);
+        string fingerprint = ExactResolutionCanonicalAuthority.ProviderObservationFingerprint(
+            decisionFingerprint, observation);
         return actual.ResolutionDecisionId == decisionId &&
-            actual.ProviderDocumentVersionId == source.Target.DocumentVersionId &&
-            actual.SourceAnchorId == source.Target.SourceAnchorId &&
+            actual.Id == ExactResolutionCanonicalAuthority.ProviderContributionId(fingerprint) &&
+            actual.ProviderIdentity == ProviderIdentity(systemId, observation.Owner) &&
+            actual.ProviderDocumentVersionId == observation.Owner.DocumentVersionId &&
+            actual.SourceAnchorId == observation.Owner.SourceAnchorId &&
+            StringComparer.Ordinal.Equals(
+                actual.ProviderRawIdentifier, observation.RawIdentifier) &&
+            StringComparer.Ordinal.Equals(
+                actual.NormalizedEndpointIdentifier, observation.NormalizedIdentifier) &&
+            actual.RepositoryId == observation.Owner.RepositoryId &&
+            actual.ScanRunId == observation.Owner.ScanRunId &&
+            StringComparer.Ordinal.Equals(
+                actual.ProfiledRevision, observation.Owner.ProfiledRevision) &&
+            actual.CommunicationClassificationId == observation.CommunicationClassificationId &&
+            StringComparer.Ordinal.Equals(
+                actual.EvidenceLocator, observation.DeclarationEvidenceLocator) &&
+            StringComparer.Ordinal.Equals(
+                actual.ClassificationFingerprint, observation.ClassificationFingerprint) &&
+            StringComparer.Ordinal.Equals(
+                actual.CatalogRuleIdentity, observation.CatalogRuleIdentity) &&
+            StringComparer.Ordinal.Equals(
+                actual.NormalizationRuleIdentity, observation.NormalizationRuleIdentity) &&
             StringComparer.Ordinal.Equals(actual.EvidenceFingerprint, fingerprint) &&
-            actual.ProviderOrdinal == 1 &&
-            actual.EvidenceOrdinal == 1;
+            actual.ProviderOrdinal == providerOrdinal &&
+            actual.EvidenceOrdinal == evidenceOrdinal &&
+            actual.CreatedAt == createdAt;
+    }
+
+    private static bool NonExactDecisionMatches(
+        CrossRepositoryResolutionDecision actual,
+        ExactResolutionDecision source,
+        Uncertainty uncertainty,
+        DateTimeOffset persistedCreatedAt,
+        V2PairAuthority authority,
+        IReadOnlyList<ProviderEndpointCandidate> observations,
+        IReadOnlyList<ExactResolutionProviderEvidenceContribution> contributions)
+    {
+        string[] fingerprints = observations.Select(value =>
+            ExactResolutionCanonicalAuthority.ProviderObservationFingerprint(
+                uncertainty.EvidenceFingerprint, value)).ToArray();
+        string providerSetFingerprint = fingerprints.Length == 0
+            ? HashIdentity("provider-evidence-set", "none")
+            : ExactResolutionCanonicalAuthority.ProviderEvidenceSetFingerprint(fingerprints);
+        string consumerFingerprint = HashIdentity(
+            "consumer-evidence",
+            source.Owner.RepositoryId.ToString("D"),
+            source.Owner.ScanRunId.ToString("D"),
+            source.Owner.DocumentVersionId.ToString("D"),
+            source.Owner.SourceAnchorId.ToString("D"),
+            source.Owner.ProfiledRevision,
+            source.EvidenceLocator);
+        string normalizedEndpoint = observations.FirstOrDefault()?.NormalizedIdentifier ??
+            source.Identity;
+        string normalizationRule = observations.FirstOrDefault()?.NormalizationRuleIdentity ??
+            source.Identity;
+        ProviderObservationOrdinal[] observationOrdinals =
+            ProviderObservationOrdinals(source, authority.Pair.SystemId);
+        bool contributionsMatch = contributions.Count == observationOrdinals.Length &&
+            contributions.Select((actualContribution, index) => V2ContributionMatches(
+                actualContribution,
+                actual.Id,
+                observationOrdinals[index].Observation,
+                uncertainty.EvidenceFingerprint,
+                authority.Pair.SystemId,
+                persistedCreatedAt,
+                observationOrdinals[index].ProviderOrdinal,
+                observationOrdinals[index].EvidenceOrdinal)).All(value => value);
+
+        return actual.Id == ExactResolutionCanonicalAuthority.DecisionId(
+                uncertainty.EvidenceFingerprint) &&
+            actual.ResolutionSchemaIdentity == "exact-cross-repository-resolution/2.0" &&
+            actual.Pass1PairExecutionId == authority.Pair.Id &&
+            actual.CoordinationId == authority.Pair.CoordinationId &&
+            actual.SystemId == authority.Pair.SystemId &&
+            actual.ConsumerCandidateId == DeterministicGuid(HashIdentity(
+                "candidate", source.Identity, source.Owner.SourceAnchorId.ToString("D"))) &&
+            StringComparer.Ordinal.Equals(actual.ConsumerEntryIdentity, source.Identity) &&
+            StringComparer.Ordinal.Equals(
+                actual.ConsumerEntryStableKey, source.ConsumerEntryStableKey) &&
+            actual.ConsumerDocumentVersionId == source.Owner.DocumentVersionId &&
+            actual.ConsumerRepositoryId == source.Owner.RepositoryId &&
+            actual.ConsumerScanRunId == source.Owner.ScanRunId &&
+            StringComparer.Ordinal.Equals(
+                actual.ConsumerProfiledRevision, source.Owner.ProfiledRevision) &&
+            actual.Protocol == ExactResolutionProtocol.CustomRpc &&
+            StringComparer.Ordinal.Equals(
+                actual.NormalizedEndpointIdentifier, normalizedEndpoint) &&
+            StringComparer.Ordinal.Equals(actual.NormalizationRuleIdentity, normalizationRule) &&
+            StringComparer.Ordinal.Equals(actual.Outcome, "Uncertainty") &&
+            StringComparer.Ordinal.Equals(actual.OutcomeKind, source.Kind.ToString()) &&
+            StringComparer.Ordinal.Equals(actual.ReasonCode, source.ReasonCode) &&
+            actual.ProviderIdentity is null &&
+            actual.ProviderDocumentVersionId is null &&
+            actual.ProviderRepositoryId is null &&
+            actual.ProviderScanRunId is null &&
+            actual.ProviderProfiledRevision is null &&
+            actual.DocumentEdgeId is null &&
+            actual.UncertaintyId == uncertainty.Id &&
+            actual.ResolvedUncertaintyId is null &&
+            StringComparer.Ordinal.Equals(
+                actual.ConsumerEvidenceFingerprint, consumerFingerprint) &&
+            StringComparer.Ordinal.Equals(
+                actual.ProviderEvidenceSetFingerprint, providerSetFingerprint) &&
+            StringComparer.Ordinal.Equals(
+                actual.DecisionFingerprint, uncertainty.EvidenceFingerprint) &&
+            StringComparer.Ordinal.Equals(
+                actual.EvidenceFingerprint, uncertainty.EvidenceFingerprint) &&
+            actual.CreatedAt == persistedCreatedAt &&
+            contributionsMatch;
     }
 
     private static bool UncertaintyMatches(Uncertainty actual, Uncertainty expected) =>
@@ -860,4 +1530,12 @@ public sealed class ExactCrossRepositoryResolutionStore(VulgataDbContext context
     private sealed record MaterializedExactWrite(
         DocumentEdge Edge,
         ExactCrossRepositoryEdgeEvidence Evidence);
+
+    private sealed record V2PairAuthority(
+        Pass1PairExecution Pair,
+        TwoRepositoryScanCoordination Coordination,
+        PreparedScanManifest ManifestOne,
+        PreparedScanManifest ManifestTwo);
+
+    private sealed record V2AuthorityResolution(bool IsConflict, V2PairAuthority? Authority);
 }

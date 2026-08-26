@@ -1,0 +1,311 @@
+{
+  "story": "12.4",
+  "feature": "exact-cross-repository-flow-pass2",
+  "tasks": ["T045", "QR-US5-024", "QR-US5-025", "QR-US5-026", "QR-US5-027", "QR-US5-028", "QR-US5-029", "QR-US5-030", "QR-US5-031", "QR-US5-032", "QR-US5-033", "QR-US5-034"],
+  "phase": "quality-revise",
+  "status": "GREEN_QR_US5_024_034",
+  "observedAt": "2026-08-27",
+  "sourceCommit": "adfdd2718354f57e61b8ad5ddde6159a8c7ea826",
+  "ownedPaths": [
+    "tests/Vulgata.Tests/PreparedPass2/Pass2ProductionCompositionTests.cs",
+    "tests/Vulgata.Tests/PreparedPass2/Pass2PartialCompletionTests.cs",
+    "tests/Vulgata.Tests/PreparedPass2/Pass2FlowPlanningPostgreSqlTests.cs",
+    "tests/Vulgata.Tests/PreparedPass2/Pass2DocumentCommitTests.cs",
+    "tests/Vulgata.Tests/PreparedPass2/Pass2Us5QualityCorrectionTests.cs",
+    "tests/Vulgata.Tests/PreparedPass2/ExactCrossRepositoryPostgreSqlTests.cs",
+    "specs/013-exact-cross-repository-flow-pass2/evidence/implementation/t045-verification.json",
+    "specs/013-exact-cross-repository-flow-pass2/evidence/implementation/t045-qr-us5-revise-red.json"
+  ],
+  "build": {
+    "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter FullyQualifiedName~Pass2ProductionCompositionTests --logger \"console;verbosity=minimal\" -p:WarningLevel=0 -p:BaseOutputPath=G:\\source\\repos\\vulgata\\.tmp-t044-qr14g-bin\\",
+    "exitCode": 0,
+    "errors": 0,
+    "warnings": 9,
+    "notes": "The build-enabled focused run completed successfully. A separate Web build also succeeded with 0 errors and 9 existing dependency/package-source or assembly-version warnings."
+  },
+  "historicalBaselines": {
+    "focusedCompositionBeforeQr018Through023": {
+      "total": 33,
+      "passed": 33,
+      "failed": 0,
+      "skipped": 0,
+      "status": "SUPERSEDED_BY_CURRENT_54_TEST_BUILD_ENABLED_RUN"
+    },
+    "causalRed": {
+      "total": 5,
+      "passed": 3,
+      "failed": 2,
+      "failedVectors": [
+        "authenticated hosted transport call was absent after start/status",
+        "capture logger retained exception atoms instead of only closed failure category/code"
+      ],
+      "status": "RESOLVED_BY_QR_US5_008_017"
+    },
+    "staleNoBuild": {
+      "status": "RETRACTED",
+      "reason": "The earlier no-build count is not used for the current gate; all current totals below are build-enabled observations."
+    }
+  },
+  "focusedTest": {
+    "total": 54,
+    "passed": 54,
+    "failed": 0,
+    "skipped": 0,
+    "freshBuildEnabled": true,
+    "noStaleNoBuildResultUsed": true
+  },
+  "previousGreenVerification": {
+    "status": "GREEN",
+    "fullComposition": {
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter FullyQualifiedName~Pass2ProductionCompositionTests --logger \"console;verbosity=minimal\" -p:WarningLevel=0 -p:BaseOutputPath=G:\\source\\repos\\vulgata\\.tmp-t044-qr14g-bin\\",
+      "total": 54,
+      "passed": 54,
+      "failed": 0,
+      "skipped": 0,
+      "buildEnabled": true
+    },
+    "api": {
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore -p:BaseOutputPath=G:\\source\\repos\\vulgata\\.tmp-t041-contract-green-bin2\\ -p:WarningLevel=0 -p:GenerateMvcTestManifest=false --filter FullyQualifiedName~Pass2ExecutionApiTests --logger \"console;verbosity=minimal\" --nologo",
+      "total": 10,
+      "passed": 10,
+      "failed": 0,
+      "skipped": 0
+    },
+    "streamingAndPartialCompletion": {
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore -p:WarningLevel=0 -p:GenerateMvcTestManifest=false --filter \"FullyQualifiedName~PreparedPass2JobExecutorStreamingTests|FullyQualifiedName~Pass2PartialCompletionTests\" --logger \"console;verbosity=minimal\"",
+      "total": 36,
+      "passed": 36,
+      "failed": 0,
+      "skipped": 0,
+      "buildEnabled": true
+    },
+    "partialCompletion": {
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore -p:BaseOutputPath=G:\\source\\repos\\vulgata\\.tmp-t040-qr019-final2\\ -p:WarningLevel=0 -p:GenerateMvcTestManifest=false --filter FullyQualifiedName~Pass2PartialCompletionTests --logger \"console;verbosity=quiet\"",
+      "total": 17,
+      "passed": 17,
+      "failed": 0,
+      "skipped": 0,
+      "buildEnabled": true
+    },
+    "qr020Commit": {
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --no-restore -p:BaseOutputPath=G:\\source\\repos\\vulgata\\.tmp-qr020-commit-red2\\ --filter FullyQualifiedName~CommitAsync_EdgeAuthorityMutation_RejectsWithoutWritesAsync --logger \"console;verbosity=minimal\"",
+      "total": 12,
+      "passed": 12,
+      "failed": 0,
+      "skipped": 0
+    },
+    "postgresql": {
+      "command": "$env:VULGATA_TEST_POSTGRES_ADMIN='Host=localhost;Port=5432;Database=postgres;Username=vulgata;Password=vulgata_dev'; dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore -p:WarningLevel=0 -p:GenerateMvcTestManifest=false -clp:ErrorsOnly --output .tmp-t039-final-evidence2 --filter FullyQualifiedName~Pass2ExecutionRecoveryTests --logger \"console;verbosity=minimal\" --nologo",
+      "total": 19,
+      "passed": 19,
+      "failed": 0,
+      "skipped": 0,
+      "databaseCreated": 2,
+      "databaseDropped": 2,
+      "databaseAbsenceVerified": 2,
+      "ordinaryDatabaseContacted": false
+    },
+    "migration": {
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter 'FullyQualifiedName~Pass2MigrationTests' --logger \"console;verbosity=minimal\"",
+      "total": 4,
+      "passed": 4,
+      "failed": 0,
+      "skipped": 0,
+      "pendingModelChanges": false
+    },
+    "postgresqlConstraints": {
+      "command": "$env:VULGATA_TEST_POSTGRES_ADMIN='<approved localhost administrator connection>'; dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter FullyQualifiedName~Pass2PostgreSqlConstraintTests --logger \"console;verbosity=minimal\" --nologo -- xUnit.MaxParallelThreads=1",
+      "total": 5,
+      "passed": 5,
+      "failed": 0,
+      "skipped": 0,
+      "ordinaryDatabaseContacted": false
+    },
+    "webBuild": {
+      "command": "dotnet build src/dotnet/Vulgata.Web/Vulgata.Web.csproj --no-restore",
+      "errors": 0,
+      "warnings": 9
+    },
+    "modelChanges": {
+      "pending": false,
+      "observation": "No pending model changes remain in the current qualification."
+    }
+  },
+  "qr024_028Verification": {
+    "status": "GREEN_QR_US5_024_028",
+    "sourceContractTests": {
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore -p:BaseOutputPath=G:\\source\\repos\\vulgata\\.tmp-qr024-contract-red3\\ -p:WarningLevel=0 -p:GenerateMvcTestManifest=false --filter FullyQualifiedName~Pass2Us5QualityCorrectionTests --logger \"console;verbosity=minimal\" --nologo",
+      "total": 5,
+      "passed": 3,
+      "failed": 2,
+      "skipped": 0,
+      "buildEnabled": true,
+      "classification": "HISTORICAL_CAUSAL_RED_SUPERSEDED",
+      "historical": true,
+      "supersededBy": "QR024-028 current green verification below",
+      "failedTests": [
+        "ProviderContributionPersistence_DoesNotUseConstantProviderOrdinal",
+        "ProviderContributionPersistence_DoesNotUseLegacyAuthorityDefaults"
+      ],
+      "historicalFailure": "The historical pre-correction run observed constant ProviderOrdinal and legacy authority fallback; QR024/025 current verification below supersedes this result.",
+      "failure": "The resolution store uses a constant ProviderOrdinal = 1 and legacy fallback literals for catalog and endpoint-normalization authority."
+    },
+    "postgresqlReplayAndOrdinalTests": {
+      "command": "$env:VULGATA_TEST_POSTGRES_ADMIN='Host=localhost;Port=5432;Database=postgres;Username=vulgata;Password=vulgata_dev'; dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore -p:BaseOutputPath=G:\\source\\repos\\vulgata\\.tmp-qr024-pg-v5\\ -p:WarningLevel=0 -p:GenerateMvcTestManifest=false --filter FullyQualifiedName~ExactCrossRepositoryPostgreSqlTests --logger \"console;verbosity=minimal\" --nologo -- xUnit.MaxParallelThreads=1",
+      "total": 4,
+      "passed": 4,
+      "failed": 0,
+      "skipped": 0,
+      "buildEnabled": true,
+      "classification": "GREEN_AFTER_QR024_025_FIXTURE_REPAIR",
+      "failure": null,
+      "observation": "The disposable-PostgreSQL v2 replay, complete observation authority, non-exact replay, and ambiguous-provider ordinal tests pass after the accepted fixture and full-authority repairs.",
+      "supersededObservation": {
+        "total": 5,
+        "passed": 0,
+        "failed": 5,
+        "buildEnabled": false,
+        "classification": "HISTORICAL_SETUP_BLOCKED_NOT_CAUSAL",
+        "reason": "Superseded: the earlier fixture omitted the accepted v2 pair and queried rows after a legacy-path apply."
+      }
+    },
+    "supportingReferences": {
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore -p:BaseOutputPath=G:\\source\\repos\\vulgata\\.tmp-qr026-edge-build3\\ -p:WarningLevel=0 -p:GenerateMvcTestManifest=false --filter \"FullyQualifiedName~CommitAsync_EdgeAuthorityMutation_RejectsWithoutWritesAsync\" --logger \"console;verbosity=minimal\" --nologo -- xUnit.MaxParallelThreads=1",
+      "total": 14,
+      "passed": 14,
+      "failed": 0,
+      "skipped": 0,
+      "buildEnabled": true,
+      "classification": "GREEN_NO_RED_EXPECTED",
+      "observation": "Supporting REFERENCES locality vectors already enforce zero-write refusal."
+    },
+    "surroundingValidation": {
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore -p:BaseOutputPath=G:\\source\\repos\\vulgata\\.tmp-qr027-valid-build3\\ -p:WarningLevel=0 -p:GenerateMvcTestManifest=false --filter FullyQualifiedName~Pass2BusinessLogicValidationTests --logger \"console;verbosity=minimal\" --nologo -- xUnit.MaxParallelThreads=1",
+      "total": 49,
+      "passed": 49,
+      "failed": 0,
+      "skipped": 0,
+      "buildEnabled": true,
+      "classification": "GREEN_AFTER_QR027_033_CORRECTION",
+      "failure": null,
+      "observation": "The earlier 46-test setup regression is superseded; current build-enabled validation is 49/49 after the worker-contract identity/fingerprint fixture repair, commit-time provider-set fingerprint revalidation, and correlated provider-owner authority revalidation.",
+      "supersededObservation": {
+        "total": 46,
+        "passed": 43,
+        "failed": 3,
+        "classification": "HISTORICAL_SETUP_BLOCKED_NOT_CAUSAL",
+        "failedTests": [
+          "CommitAsync_RetrievedSourceExcerptStrictSubrange_CommitsWithoutInitialAnchorAsync",
+          "CommitAsync_ValidCandidate_CommitsWithExactUsedDocumentsAsync",
+          "CommitAsync_ReturnedButUncitedEvidenceIsExcludedFromUsedDocumentsAsync"
+        ]
+      }
+    },
+    "requestedRef": {
+      "test": "RuntimeBinding_PropagatesPersistedManifestRequestedRefAsync",
+      "total": 1,
+      "passed": 1,
+      "failed": 0,
+      "skipped": 0,
+      "classification": "HISTORICAL_GREEN_AFTER_T044"
+    },
+    "transactionTimeMutation": {
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore -p:BaseOutputPath=G:\\source\\repos\\vulgata\\.tmp-qr026-toctou-build4\\ -p:WarningLevel=0 -p:GenerateMvcTestManifest=false --filter FullyQualifiedName~CommitAsync_SupportingEdgeMutatedAfterCandidateValidation_RejectsWithoutWritesAsync --logger \"console;verbosity=minimal\" --nologo -- xUnit.MaxParallelThreads=1",
+      "total": 1,
+      "passed": 1,
+      "failed": 0,
+      "skipped": 0,
+      "buildEnabled": true,
+      "classification": "GREEN_NO_RED_EXPECTED",
+      "observation": "The test-only EF command interceptor mutates a supporting REFERENCES edge after candidate validation and before relationship loading; the committer returns content-dark Rejected with zero durable writes."
+    }
+  },
+  "coverage": [
+    {
+      "test": "ProductionContainer_ResolvesPass2RuntimeGraphWithoutEagerProviderActivityAsync",
+      "result": "GREEN",
+      "proof": "The WebApplicationFactory service provider resolves the coordinator, process-local activator, hosted service, job runner, store, dispatch request source, real dispatcher, executor, streaming transport, retrieval service, document committer, and request validator. The injected transport recorded zero calls."
+    },
+    {
+      "test": "Pass2RuntimeEntryPoints_DeriveAuthorityAndDoNotInjectAnalysisProviders",
+      "result": "GREEN",
+      "proof": "The Pass 2 runtime entry-point constructors accept no caller-supplied RepositoryAccessScope and no direct Java/JDT-LS or CodeGraph analysis port. Authority is resolved by the coordinator/request-source boundary."
+    },
+    {
+      "test": "InvalidIdentityApiBoundary_Returns401WithoutProviderOrNetworkActivityAsync",
+      "result": "GREEN",
+      "proof": "Create, status, and resume requests with no authenticated identity return 401 without redirect and the injected provider/network handler records zero calls."
+    },
+    {
+      "test": "AuthenticatedStartStatusResume_HostedPathUsesPersistedAuthorityAndRevocationFailsClosedAsync",
+      "result": "GREEN",
+      "proof": "The authenticated start persists the initiating authorization subject, and canonical Ordinary Pass 1 member authority reaches the bounded fake transport. Removing the SystemOwnerAssignment makes status and resume return ownership-filtered 404. The separate post-claim revocation test observes zero transport calls and FailedSecurity."
+    },
+    {
+      "test": "AdministratorStart_HostedPathUsesCurrentRoleAndRoleRemovalFailsClosedAsync",
+      "result": "GREEN",
+      "proof": "An authenticated Administrator with no SystemOwnerAssignment starts the accepted pair and canonical Ordinary Pass 1 member authority reaches the production-composed hosted transport. The exact current two-Repository System binding is enforced. The separate post-claim role-removal test observes zero transport calls and FailedSecurity."
+    },
+    {
+      "test": "HostedFailureLog_UsesClosedCategoryAndCodeWithoutExceptionAtomsAsync",
+      "result": "GREEN",
+      "proof": "The hosted-service pump records only execution identity plus the closed Unclassified/worker-failed category and code. The captured record excludes the exception type, message, absolute source path, provider endpoint, source payload marker, and stack trace."
+    },
+    {
+      "test": "QR-US5-008 through QR-US5-012 corrective vectors",
+      "result": "GREEN",
+      "proof": "Ten pre-transport authority mutations refuse with zero dispatch; runtime members bind exact canonical Ordinary Pass 1 and Completed Scan Job identities; terminal summary replay is immutable; post-claim owner/Admin revocation is FailedSecurity with zero transport; and an oversized unterminated SSE line is rejected within the 16 MiB raw cap. Detailed RED/GREEN evidence is in t045-qr-us5-revise-red.json."
+    },
+    {
+      "test": "QR-US5-014 through QR-US5-017 corrective vectors",
+      "result": "GREEN",
+      "proof": "Canonical pair-bound ApplyAsync persists v2 Decision/contribution authority without a legacy evidence row; native v2 hydration and commit ignore absent or unrelated legacy evidence; two Decisions share one REFERENCES Edge while retaining independent contributions; persisted accepted Worker identities bind fail-closed; zero planned denominator and terminal denominator drift never derive or fall back; eighteen total pre-transport authority mutations record FailedIntegrity with zero transport."
+    }
+  ],
+  "surroundingEvidence": {
+    "T039": "Pass2ExecutionRecoveryTests 19/19 GREEN, including approved disposable PostgreSQL recovery coverage; durable claim, lease, retry, pause, coordinator identity, and activator coverage.",
+    "T040": "Pass2PartialCompletionTests 17/17 GREEN on fixture-owned SQLite; completed, failed, incomplete, bound-excluded, omission, immutable warning inventory, mixed-outcome, v2-only persistence/commit, shared Edge contributions, and denominator-integrity coverage.",
+    "T041": "Pass2ExecutionApiTests 10/10 GREEN; plural routes, authentication/ManagementAccess, ownership-filtered 404, validation/conflict ProblemDetails, scope rejection, sanitized responses, and Story 12.5 route exclusion.",
+    "T031": "PreparedPass2JobExecutorStreamingTests 19/19 GREEN; streaming transcript, call identity, retrieval projection, correction context, valid JSON composition, request byte-bound coverage, and bounded incremental SSE parsing.",
+    "T045_RED": "Historical baseline only: the accepted pre-correction run was 3/5 with two causal REDs; those failures were resolved by QR-US5-008..017 and are not current observations.",
+    "T045_GREEN": "The QR-US5-014..017 build-enabled focused matrix is 30/30. Canonical v2-only authority reaches hydration and commit without legacy evidence, shared REFERENCES Edge ownership stays decision-scoped, persisted accepted Worker identities bind fail-closed, denominator drift refuses, and all tested authority drift stops before transport.",
+    "QR-US5-024..034_GREEN": "Current build-enabled verification is green: full production composition 54/54, T040 partial completion 17/17, QR020 commit edge matrix 12/12, QR024/025/030 PostgreSQL replay and canonical provider/evidence ordinal matrix 4/4, QR026 supporting-edge matrix 14/14, pure canonical observation permutation/deduplication 14/14, QR027/029/032 validation 49/49, migration/model verification 4/4 with one cohesive Story 12.4 migration, and QR034 legacy-fixture apply/rollback/reapply preservation 1/1 on disposable PostgreSQL."
+  },
+  "privacyAndScope": {
+    "contentDarkStatusAndWarnings": "HTTP/API privacy and sanitized status/error response coverage is independently exercised by T041; T040 covers bounded reason-coded warning inventory and documentless partial outcomes.",
+    "secretsOrSourceDiagnostics": "T041 asserts no lease token, source root/content, provider API key, connection string, prompt, payload, path, raw exception, or stack trace appears in public responses.",
+    "story125Ui": "T041 confirms no chat or production progress route was introduced; no UI file or Story 12.5 surface is part of this slice."
+  },
+  "deferrals": [
+    "This composition gate does not call a real provider, JDT-LS process, CodeGraph process, or external network; those qualification paths remain bounded by their own stories and runtime readiness gates.",
+    "A successful end-to-end execution against a real external provider remains separately qualified; this gate uses a bounded injected transport and does not fabricate provider success or document publication.",
+    "WebApplicationFactory composition used fixture-owned temporary SQLite; approved unique disposable PostgreSQL databases were used for recovery, replay, migration, and constraint verification; the ordinary vulgata database was not contacted.",
+    "The bounded fake transport returns an empty tool-call envelope and proves only that authenticated durable hydration reaches the dispatch boundary; it does not claim successful publication."
+  ],
+  "environment": {
+    "database": "fixture-owned temporary SQLite and approved unique disposable PostgreSQL databases; ordinary vulgata was not contacted",
+    "provider": "not called",
+    "network": "not called",
+    "environmentOrNetworkBlocker": false,
+    "productionChanges": true,
+    "testEvidenceAuthorProductionChanges": false,
+    "workflowChanges": false,
+    "gitHistoryChanges": false
+  },
+  "validation": [
+    "Web project build succeeded with 0 errors and 9 warnings.",
+    "QR-US5-014..017 build-enabled focused regression passed 30/30 with 0 failed or skipped in 58 seconds.",
+    "Full T045 Pass2ProductionCompositionTests regression passed 54/54 with 0 failed or skipped in the current build-enabled run.",
+    "Full T040 Pass2PartialCompletionTests build-enabled regression passed 17/17 with 0 failed or skipped in 25 seconds.",
+    "T039 build-enabled recovery regression passed 19/19 against approved disposable PostgreSQL.",
+    "Combined T031 executor streaming and T040 partial-completion regression passed 36/36 with 0 failed or skipped in the current build-enabled run.",
+    "Pass2MigrationTests passed 4/4 with no pending model changes.",
+    "Pass2PostgreSqlConstraintTests passed 5/5 against disposable PostgreSQL, including protected legacy Document/FlowGroup/exact-evidence/Uncertainty preservation across apply, rollback, and reapply; ordinary vulgata was not contacted.",
+    "QR-US5-020 commit-side edge authority matrix passed 12/12 with zero durable writes.",
+    "Pass2StrictSubmissionTests passed 8/8 on a fresh build after binding the fixture to the production embedded worker-contract authority and its separate artifact fingerprints.",
+    "The broad non-qualification PreparedPass2 boundary passed with 394 total: 352 passed, 42 expected disposable-PostgreSQL skips, and 0 failed after the QR029-033 corrections.",
+    "Combined Pass2MigrationTests and Pass2ProductionCompositionTests passed 58/58; the model has no pending changes and composition remains 54/54.",
+    "JSON parsed successfully with PowerShell ConvertFrom-Json.",
+    "git diff --check passed for the production and evidence paths."
+  ]
+}

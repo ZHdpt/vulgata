@@ -64,6 +64,20 @@ public sealed class KnowledgeStoreMigrationTests
         {
             ["CK_DocumentVersions_SchemaIdentity_Closed"] =
                 "\"SchemaIdentity\" IN ('vulgata.knowledge-document/1.0', 'code-logic/file-v2')",
+            ["CK_FlowGroups_Fingerprint_Lengths"] =
+                "(\"PlanFingerprint\" = '' OR length(\"PlanFingerprint\") = 64) AND (\"MembershipFingerprint\" IS NULL OR length(\"MembershipFingerprint\") = 64) AND (\"ConsumerEntryStableKey\" IS NULL OR length(\"ConsumerEntryStableKey\") = 64)",
+            ["CK_FlowGroups_LogicalKeySchemaIdentity_Closed"] =
+                "\"LogicalKeySchemaIdentity\" IS NULL OR \"LogicalKeySchemaIdentity\" = 'business-flow-logical-key/1.0'",
+            ["CK_FlowGroups_Protocol_Closed"] =
+                "\"Protocol\" IS NULL OR \"Protocol\" IN ('CustomRpc', 'Http')",
+            ["CK_FlowGroups_ProviderRepository_CrossRepository"] =
+                "\"ProviderRepositoryId\" IS NULL OR \"ProviderRepositoryId\" <> \"RepositoryId\"",
+            ["CK_FlowGroups_SchemaIdentity_Closed"] =
+                "\"SchemaIdentity\" IS NULL OR \"SchemaIdentity\" = 'endpoint-flow-group/1.0'",
+            ["CK_FlowGroups_State_Closed"] =
+                "\"SchemaIdentity\" IS NULL OR \"State\" IN ('Complete', 'Incomplete', 'BoundExcluded', 'Running', 'Published', 'Failed')",
+            ["CK_FlowTraceSteps_ExactDecision_RelationshipOnly"] =
+                "\"ExactResolutionDecisionId\" IS NULL OR \"StepKind\" = 'Relationship'",
             ["CK_SourceAnchors_ByteRange_Shape"] =
                 "(\"ByteStart\" IS NULL AND \"ByteEnd\" IS NULL) OR " +
                 "(\"ByteStart\" IS NOT NULL AND \"ByteEnd\" IS NOT NULL AND \"ByteStart\" >= 0 AND \"ByteEnd\" > \"ByteStart\")",

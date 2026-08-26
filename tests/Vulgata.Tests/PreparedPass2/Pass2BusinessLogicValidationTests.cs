@@ -1,10 +1,13 @@
 using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
+using System.Data.Common;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
+using Vulgata.Agents.WorkerExecution;
 using Vulgata.Core.DomainServices;
 using Vulgata.Core.Entities;
 using Vulgata.Infrastructure.Data;
@@ -33,11 +36,64 @@ public sealed class Pass2BusinessLogicValidationTests
         Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(string.Join(
             '\n', new[] { "provider-evidence-set/1.0" }.Concat(evidenceFingerprints)))));
 
+    public static TheoryData<string> EdgeAuthorityVectors => new()
+    {
+        "provider-implementation-edge-type",
+        "provider-implementation-edge-source",
+        "provider-implementation-edge-target",
+        "provider-implementation-edge-repository",
+        "provider-implementation-edge-scan-run",
+        "provider-implementation-edge-provider-repository-locality",
+        "provider-implementation-edge-provider-scan-locality",
+        "provider-implementation-edge-direction",
+        "optional-edge-type",
+        "optional-edge-source",
+        "optional-edge-target",
+        "optional-edge-repository",
+        "optional-edge-scan-run",
+        "optional-edge-direction",
+    };
+
+    [Theory]
+    [MemberData(nameof(EdgeAuthorityVectors))]
+    public async Task CommitAsync_EdgeAuthorityMutation_RejectsWithoutWritesAsync(string mutation)
+    {
+        await using CommitFixture fixture = await CommitFixture.CreateAsync();
+        if (mutation.StartsWith("optional-edge-", StringComparison.Ordinal))
+        {
+            await fixture.AddCanonicalOptionalSupportingEdgeAsync();
+        }
+        JsonObject candidate = fixture.CreateCandidate();
+
+        await fixture.MutateEdgeAuthorityAsync(mutation);
+        string before = await fixture.DurableMutationSnapshotAsync();
+        fixture.Access.ResetDataAccessCounters();
+
+        Pass2BusinessLogicCommitResult result = await fixture.CommitAsync(
+            candidate, fixture.ConsumerHandle);
+
+        Assert.Equal(Pass2BusinessLogicCommitStatus.Rejected, result.Status);
+        Assert.Null(result.DocumentVersionId);
+        Assert.Empty(result.UsedDocumentVersionIds);
+        Assert.Equal("pass2-candidate-rejected", result.Code);
+        Assert.Equal(0, fixture.Access.WriteCallCount);
+        Assert.Equal(before, await fixture.DurableMutationSnapshotAsync());
+    }
+
     [Fact]
     public async Task CommitAsync_ValidCandidate_CommitsWithExactUsedDocumentsAsync()
     {
         await using CommitFixture fixture = await CommitFixture.CreateAsync();
         JsonObject candidate = fixture.CreateCandidate();
+
+        Assert.Equal(
+            ExactResolutionCanonicalAuthority.ProviderIdentity(
+                fixture.Decision.SystemId,
+                fixture.Decision.ProviderRepositoryId!.Value,
+                fixture.Decision.ProviderScanRunId!.Value,
+                fixture.Decision.ProviderProfiledRevision!,
+                fixture.Decision.ProviderDocumentVersionId!.Value),
+            fixture.Decision.ProviderIdentity);
 
         fixture.Access.ResetDataAccessCounters();
         Pass2BusinessLogicCommitResult result = await fixture.CommitAsync(
@@ -68,6 +124,29 @@ public sealed class Pass2BusinessLogicValidationTests
             .OrderBy(value => value.TargetDocumentVersionId)
             .Select(value => value.TargetDocumentVersionId).ToArrayAsync();
         Assert.Equal(result.UsedDocumentVersionIds, generatedTargets);
+    }
+
+    [Fact]
+    public async Task CommitAsync_SupportingEdgeMutatedAfterCandidateValidation_RejectsWithoutWritesAsync()
+    {
+        var interceptor = new PublicationRelationshipMutationInterceptor();
+        await using CommitFixture fixture = await CommitFixture.CreateAsync(interceptor);
+        await fixture.AddCanonicalOptionalSupportingEdgeAsync();
+        JsonObject candidate = fixture.CreateCandidate();
+        string before = await fixture.DurableMutationSnapshotAsync();
+        fixture.Access.ResetDataAccessCounters();
+        interceptor.Arm(Assert.IsType<Guid>(fixture.OptionalSupportingEdgeId));
+
+        Pass2BusinessLogicCommitResult result = await fixture.CommitAsync(
+            candidate, fixture.ConsumerHandle);
+
+        Assert.True(interceptor.MutationApplied);
+        Assert.Equal(Pass2BusinessLogicCommitStatus.Rejected, result.Status);
+        Assert.Null(result.DocumentVersionId);
+        Assert.Empty(result.UsedDocumentVersionIds);
+        Assert.Equal("pass2-candidate-rejected", result.Code);
+        Assert.Equal(0, fixture.Access.WriteCallCount);
+        Assert.Equal(before, await fixture.DurableMutationSnapshotAsync());
     }
 
     [Theory]
@@ -295,6 +374,106 @@ public sealed class Pass2BusinessLogicValidationTests
     }
 
     [Fact]
+    public async Task CommitAsync_ProviderEvidenceSetFingerprintDriftAfterDispatch_RejectsWithoutPublicationAsync()
+    {
+        await using CommitFixture fixture = await CommitFixture.CreateAsync();
+        JsonObject candidate = fixture.CreateCandidate();
+        int beforeDocumentVersionCount = await fixture.Context.DocumentVersions.CountAsync();
+        string beforeGroupState = await fixture.Context.FlowGroups.AsNoTracking()
+            .Where(value => value.Id == fixture.Group.Id)
+            .Select(value => value.State).SingleAsync();
+        await fixture.Context.CrossRepositoryResolutionDecisions
+            .Where(value => value.Id == fixture.Decision.Id)
+            .ExecuteUpdateAsync(setters => setters.SetProperty(
+                value => value.ProviderEvidenceSetFingerprint,
+                new string('d', 64)));
+        fixture.Context.ChangeTracker.Clear();
+        fixture.Access.ResetDataAccessCounters();
+
+        Pass2BusinessLogicCommitResult result = await fixture.CommitAsync(
+            candidate, fixture.ConsumerHandle);
+
+        Assert.Equal(Pass2BusinessLogicCommitStatus.Rejected, result.Status);
+        Assert.Null(result.DocumentVersionId);
+        Assert.Empty(result.UsedDocumentVersionIds);
+        Assert.Equal("pass2-candidate-rejected", result.Code);
+        Assert.Equal(0, fixture.Access.WriteCallCount);
+        Assert.Equal(beforeDocumentVersionCount, await fixture.Context.DocumentVersions.CountAsync());
+        Assert.Equal(beforeGroupState, await fixture.Context.FlowGroups.AsNoTracking()
+            .Where(value => value.Id == fixture.Group.Id)
+            .Select(value => value.State).SingleAsync());
+    }
+
+    [Fact]
+    public async Task CommitAsync_CorrelatedProviderOwnerAndFingerprintDrift_RejectsWithoutPublicationAsync()
+    {
+        await using CommitFixture fixture = await CommitFixture.CreateAsync();
+        ExactResolutionProviderEvidenceContribution contribution = await fixture.Context
+            .ExactResolutionProviderEvidenceContributions.AsNoTracking()
+            .SingleAsync(value => value.ResolutionDecisionId == fixture.Decision.Id);
+        Guid driftedRepositoryId = fixture.Group.RepositoryId;
+        Guid driftedScanRunId = fixture.Group.ScanRunId;
+        string driftedRevision = fixture.ConsumerProfiledRevision;
+        Guid driftedProviderIdentity = ExactResolutionCanonicalAuthority.ProviderIdentity(
+            fixture.Decision.SystemId,
+            driftedRepositoryId,
+            driftedScanRunId,
+            driftedRevision,
+            contribution.ProviderDocumentVersionId);
+        SetPrivate(contribution, nameof(contribution.RepositoryId), driftedRepositoryId);
+        SetPrivate(contribution, nameof(contribution.ScanRunId), driftedScanRunId);
+        SetPrivate(contribution, nameof(contribution.ProfiledRevision), driftedRevision);
+        SetPrivate(contribution, nameof(contribution.ProviderIdentity), driftedProviderIdentity);
+        string driftedContributionFingerprint =
+            ExactResolutionCanonicalAuthority.PersistedProviderContributionFingerprint(
+                fixture.Decision.EvidenceFingerprint,
+                contribution);
+        Guid driftedContributionId =
+            ExactResolutionCanonicalAuthority.ProviderContributionId(
+                driftedContributionFingerprint);
+        string driftedSetFingerprint =
+            ExactResolutionCanonicalAuthority.ProviderEvidenceSetFingerprint(
+                [driftedContributionFingerprint]);
+        await fixture.Context.ExactResolutionProviderEvidenceContributions
+            .Where(value => value.Id == contribution.Id)
+            .ExecuteUpdateAsync(setters => setters
+                .SetProperty(value => value.Id, driftedContributionId)
+                .SetProperty(value => value.RepositoryId, driftedRepositoryId)
+                .SetProperty(value => value.ScanRunId, driftedScanRunId)
+                .SetProperty(value => value.ProfiledRevision, driftedRevision)
+                .SetProperty(value => value.ProviderIdentity, driftedProviderIdentity)
+                .SetProperty(value => value.EvidenceFingerprint, driftedContributionFingerprint));
+        await fixture.Context.CrossRepositoryResolutionDecisions
+            .Where(value => value.Id == fixture.Decision.Id)
+            .ExecuteUpdateAsync(setters => setters
+                .SetProperty(value => value.ProviderIdentity, driftedProviderIdentity)
+                .SetProperty(value => value.ProviderEvidenceSetFingerprint, driftedSetFingerprint));
+        fixture.Context.ChangeTracker.Clear();
+        JsonObject candidate = fixture.CreateCandidate();
+        candidate["binding"]!["providerEvidenceFingerprint"] =
+            ProviderEvidenceFingerprint([driftedContributionFingerprint]);
+        int beforeDocumentVersionCount = await fixture.Context.DocumentVersions.CountAsync();
+        fixture.Access.ResetDataAccessCounters();
+
+        Pass2BusinessLogicCommitResult result = await fixture.CommitAsync(
+            candidate,
+            fixture.ConsumerHandle);
+
+        Assert.Equal(Pass2BusinessLogicCommitStatus.Rejected, result.Status);
+        Assert.Null(result.DocumentVersionId);
+        Assert.Empty(result.UsedDocumentVersionIds);
+        Assert.Equal("pass2-candidate-rejected", result.Code);
+        Assert.Equal(0, fixture.Access.WriteCallCount);
+        Assert.Equal(beforeDocumentVersionCount, await fixture.Context.DocumentVersions.CountAsync());
+    }
+
+    private static void SetPrivate<T>(object target, string propertyName, T value) =>
+        target.GetType().GetProperty(
+            propertyName,
+            BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)!
+            .SetValue(target, value);
+
+    [Fact]
     public async Task CommitAsync_TitleBoundaryUsesEmbeddedBusinessLogicSchemaAuthorityAsync()
     {
         Assembly core = typeof(Pass2BusinessLogicSchemaContract).Assembly;
@@ -446,8 +625,9 @@ public sealed class Pass2BusinessLogicValidationTests
 
     private sealed class CommitFixture : IAsyncDisposable
     {
-        private const string PromptIdentity = "pass2-business-logic-worker.v1";
-        private const string SubmissionSchemaIdentity = "business-logic/flow-v1";
+        private const string SchemaIdentity = "business-logic/flow-v1";
+        private static readonly PreparedPass2WorkerContractAuthority WorkerContract =
+            CreateWorkerContractAuthority();
 
         private CommitFixture(ExactCrossRepositoryTestFixture fixture, VulgataDbContext context,
             ExactCrossRepositoryAccessProbe access, RepositoryAccessScope scope,
@@ -479,6 +659,8 @@ public sealed class Pass2BusinessLogicValidationTests
             ConsumerStrictSourceExcerptHandle = "10000000-0000-4000-8000-000000000007";
             ConsumerSourceAnchorId = consumerSourceAnchorId;
             ProviderSourceAnchorId = providerSourceAnchorId;
+            PromptIdentity = WorkerContract.PromptIdentity;
+            SubmissionSchemaIdentity = WorkerContract.SubmissionSchemaIdentity;
             CanonicalPlanFingerprint = group.PlanFingerprint!;
             CanonicalMembershipFingerprint = group.MembershipFingerprint!;
             CanonicalDecisionEvidenceFingerprint = decision.EvidenceFingerprint;
@@ -518,6 +700,7 @@ public sealed class Pass2BusinessLogicValidationTests
         public Pass2Execution Execution { get; }
         public CrossRepositoryResolutionDecision Decision { get; }
         public DocumentEdge Edge { get; }
+        public Guid? OptionalSupportingEdgeId { get; private set; }
         public IReadOnlyList<ExactResolutionProviderEvidenceContribution> Contributions { get; }
         public Guid ConsumerDocumentVersionId { get; }
         public Guid ProviderXmlDocumentVersionId { get; }
@@ -530,6 +713,8 @@ public sealed class Pass2BusinessLogicValidationTests
         public string ConsumerRetrievedSourceAnchorHandle { get; }
         public string ConsumerRetrievedSourceExcerptHandle { get; }
         public string ConsumerStrictSourceExcerptHandle { get; }
+        public string PromptIdentity { get; }
+        public string SubmissionSchemaIdentity { get; }
         public Guid ConsumerSourceAnchorId { get; }
         public Guid ProviderSourceAnchorId { get; }
         public string CanonicalPlanFingerprint { get; }
@@ -537,7 +722,8 @@ public sealed class Pass2BusinessLogicValidationTests
         public string CanonicalDecisionEvidenceFingerprint { get; }
         public string ConsumerProfiledRevision { get; set; }
 
-        public static async Task<CommitFixture> CreateAsync()
+        public static async Task<CommitFixture> CreateAsync(
+            IInterceptor? interceptor = null)
         {
             object? planningHarness = null;
             try
@@ -558,132 +744,17 @@ public sealed class Pass2BusinessLogicValidationTests
                     [ExactCrossRepositoryTestValues.ConsumerRepositoryId,
                      ExactCrossRepositoryTestValues.ProviderRepositoryId],
                     new AllowAccessVerifier());
-                CrossRepositoryResolutionDecision? seededDecision = null;
-                // The persisted schema constrains the stable key to its
-                // canonical fingerprint-width representation. The shared
-                // planning fixture predates that constraint, so normalize the
-                // fixture fact before asking the planner to materialize it.
-                seededDecision =
-                    await planningContext.CrossRepositoryResolutionDecisions.SingleAsync();
-                ExactCrossRepositoryEdgeEvidence seededEdgeEvidence = await planningContext
-                    .ExactCrossRepositoryEdgeEvidence.AsNoTracking().SingleAsync();
-                DocumentVersion seededConsumerDocument = await planningContext.DocumentVersions
-                    .AsNoTracking().SingleAsync(value => value.Id ==
-                        seededEdgeEvidence.ConsumerDocumentVersionId);
-                DocumentVersion seededProviderDocument = await planningContext.DocumentVersions
-                    .AsNoTracking().SingleAsync(value => value.Id ==
-                        seededEdgeEvidence.ProviderDocumentVersionId);
-                string canonicalEdgeEvidenceFingerprint =
-                    ExactResolutionCanonicalAuthority.EvidenceFingerprint(
-                        seededEdgeEvidence,
-                        seededConsumerDocument.ProfiledRevision,
-                        seededProviderDocument.ProfiledRevision);
-                ExactResolutionProviderEvidenceContribution[] seededContributions =
-                    await planningContext.ExactResolutionProviderEvidenceContributions
-                        .AsNoTracking().Where(value => value.ResolutionDecisionId == seededDecision.Id)
-                        .OrderBy(value => value.ProviderOrdinal)
-                        .ThenBy(value => value.EvidenceOrdinal).ToArrayAsync();
-                planningContext.RemoveRange(await planningContext
-                    .ExactResolutionProviderEvidenceContributions
-                    .Where(value => value.ResolutionDecisionId == seededDecision.Id).ToArrayAsync());
-                planningContext.Remove(seededDecision);
-                await planningContext.SaveChangesAsync();
-                ExactCrossRepositoryEdgeEvidence trackedEdgeEvidence =
-                    await planningContext.ExactCrossRepositoryEdgeEvidence
-                        .SingleAsync(value => value.EdgeId == seededEdgeEvidence.EdgeId);
-                SetProperty(trackedEdgeEvidence,
-                    nameof(ExactCrossRepositoryEdgeEvidence.EvidenceFingerprint),
-                    canonicalEdgeEvidenceFingerprint);
-                CrossRepositoryResolutionDecision canonicalDecision = NewEntity<
-                    CrossRepositoryResolutionDecision>();
-                SetProperty(canonicalDecision, nameof(CrossRepositoryResolutionDecision.Id),
+                CrossRepositoryResolutionDecision canonicalDecision = await planningContext
+                    .CrossRepositoryResolutionDecisions.AsNoTracking().SingleAsync();
+                Assert.Equal(
                     ExactResolutionCanonicalAuthority.DecisionId(
-                        canonicalEdgeEvidenceFingerprint));
-                SetProperty(canonicalDecision,
-                    nameof(CrossRepositoryResolutionDecision.Pass1PairExecutionId),
-                    seededDecision.Pass1PairExecutionId);
-                SetProperty(canonicalDecision,
-                    nameof(CrossRepositoryResolutionDecision.CoordinationId),
-                    seededDecision.CoordinationId);
-                SetProperty(canonicalDecision, nameof(CrossRepositoryResolutionDecision.SystemId),
-                    seededDecision.SystemId);
-                SetProperty(canonicalDecision,
-                    nameof(CrossRepositoryResolutionDecision.ConsumerCandidateId),
-                    seededDecision.ConsumerCandidateId);
-                SetProperty(canonicalDecision,
-                    nameof(CrossRepositoryResolutionDecision.ConsumerEntryIdentity),
-                    seededEdgeEvidence.OccurrenceId);
-                SetProperty(canonicalDecision,
-                    nameof(CrossRepositoryResolutionDecision.ConsumerEntryStableKey),
-                    seededDecision.ConsumerEntryStableKey);
-                SetProperty(canonicalDecision,
-                    nameof(CrossRepositoryResolutionDecision.ConsumerDocumentVersionId),
-                    seededDecision.ConsumerDocumentVersionId);
-                SetProperty(canonicalDecision, nameof(CrossRepositoryResolutionDecision.Protocol),
-                    seededDecision.Protocol);
-                SetProperty(canonicalDecision,
-                    nameof(CrossRepositoryResolutionDecision.NormalizedEndpointIdentifier),
-                    seededDecision.NormalizedEndpointIdentifier);
-                SetProperty(canonicalDecision, nameof(CrossRepositoryResolutionDecision.Outcome),
-                    seededDecision.Outcome);
-                SetProperty(canonicalDecision,
-                    nameof(CrossRepositoryResolutionDecision.ProviderDocumentVersionId),
-                    seededDecision.ProviderDocumentVersionId);
-                SetProperty(canonicalDecision,
-                    nameof(CrossRepositoryResolutionDecision.DocumentEdgeId),
-                    seededDecision.DocumentEdgeId);
-                SetProperty(canonicalDecision,
-                    nameof(CrossRepositoryResolutionDecision.UncertaintyId),
-                    seededDecision.UncertaintyId);
-                SetProperty(canonicalDecision,
-                    nameof(CrossRepositoryResolutionDecision.EvidenceFingerprint),
-                    canonicalEdgeEvidenceFingerprint);
-                SetProperty(canonicalDecision,
-                    nameof(CrossRepositoryResolutionDecision.CreatedAt),
-                    seededDecision.CreatedAt);
-                planningContext.CrossRepositoryResolutionDecisions.Add(canonicalDecision);
-                foreach (ExactResolutionProviderEvidenceContribution seededContribution in
-                    seededContributions)
-                {
-                    string canonicalContributionFingerprint =
-                        ExactResolutionCanonicalAuthority.ProviderContributionFingerprint(
-                            canonicalEdgeEvidenceFingerprint,
-                            seededContribution.ProviderDocumentVersionId,
-                            seededContribution.SourceAnchorId);
-                    ExactResolutionProviderEvidenceContribution canonicalContribution = NewEntity<
-                        ExactResolutionProviderEvidenceContribution>();
-                    SetProperty(canonicalContribution,
-                        nameof(ExactResolutionProviderEvidenceContribution.Id),
-                        ExactResolutionCanonicalAuthority.ProviderContributionId(
-                            canonicalContributionFingerprint));
-                    SetProperty(canonicalContribution,
-                        nameof(ExactResolutionProviderEvidenceContribution.ResolutionDecisionId),
-                        canonicalDecision.Id);
-                    SetProperty(canonicalContribution,
-                        nameof(ExactResolutionProviderEvidenceContribution.ProviderDocumentVersionId),
-                        seededContribution.ProviderDocumentVersionId);
-                    SetProperty(canonicalContribution,
-                        nameof(ExactResolutionProviderEvidenceContribution.SourceAnchorId),
-                        seededContribution.SourceAnchorId);
-                    SetProperty(canonicalContribution,
-                        nameof(ExactResolutionProviderEvidenceContribution.EvidenceFingerprint),
-                        canonicalContributionFingerprint);
-                    SetProperty(canonicalContribution,
-                        nameof(ExactResolutionProviderEvidenceContribution.ProviderOrdinal),
-                        seededContribution.ProviderOrdinal);
-                    SetProperty(canonicalContribution,
-                        nameof(ExactResolutionProviderEvidenceContribution.EvidenceOrdinal),
-                        seededContribution.EvidenceOrdinal);
-                    SetProperty(canonicalContribution,
-                        nameof(ExactResolutionProviderEvidenceContribution.CreatedAt),
-                        seededContribution.CreatedAt);
-                    planningContext.ExactResolutionProviderEvidenceContributions.Add(
-                        canonicalContribution);
-                }
-                typeof(CrossRepositoryResolutionDecision).GetProperty(
-                    nameof(CrossRepositoryResolutionDecision.ConsumerEntryStableKey))!
-                    .SetValue(canonicalDecision, new string('c', 64));
-                await planningContext.SaveChangesAsync();
+                        canonicalDecision.EvidenceFingerprint),
+                    canonicalDecision.Id);
+                Assert.Matches("^[0-9a-f]{64}$", canonicalDecision.ConsumerEntryStableKey);
+                Assert.Empty(await planningContext.ExactCrossRepositoryEdgeEvidence
+                    .Where(value => value.EdgeId == canonicalDecision.DocumentEdgeId)
+                    .Where(value => value.EvidenceFingerprint == canonicalDecision.EvidenceFingerprint)
+                    .ToArrayAsync());
                 planningContext.ChangeTracker.Clear();
                 PreparedPass2FlowPlanningResult plan = await new PreparedPass2FlowPlanner(planningContext)
                     .PlanAsync(executionId, scope);
@@ -696,13 +767,31 @@ public sealed class Pass2BusinessLogicValidationTests
                 planningContext.FlowGroups.Add(group);
                 planningContext.Pass2JobExecutions.Add(job);
                 planningContext.Pass2RetrievalBudgets.Add(Pass2RetrievalBudget.Create(job.Id, createdAt));
+                execution.RecordPlan(1);
                 execution.MarkRunning(createdAt);
+                planningContext.Entry(execution).Property(
+                    nameof(Pass2Execution.WorkerPromptIdentity)).CurrentValue =
+                    WorkerContract.PromptIdentity;
+                planningContext.Entry(execution).Property(
+                    nameof(Pass2Execution.WorkerPromptFingerprint)).CurrentValue =
+                    WorkerContract.PromptFingerprint;
+                planningContext.Entry(execution).Property(
+                    nameof(Pass2Execution.SubmissionSchemaIdentity)).CurrentValue =
+                    WorkerContract.SubmissionSchemaIdentity;
+                planningContext.Entry(execution).Property(
+                    nameof(Pass2Execution.SubmissionSchemaFingerprint)).CurrentValue =
+                    WorkerContract.SubmissionSchemaFingerprint;
+                planningContext.Entry(execution).Property(
+                    nameof(Pass2Execution.ToolDeclarationFingerprint)).CurrentValue =
+                    WorkerContract.ToolDeclarationFingerprint;
                 await planningContext.SaveChangesAsync();
                 DateTimeOffset now = DateTimeOffset.UtcNow;
                 job.AcquireLease(Guid.NewGuid(), now.AddMinutes(10), now);
                 await planningContext.SaveChangesAsync();
                 planningContext.ChangeTracker.Clear();
-                VulgataDbContext context = fixture.Database.CreateContext(fixture.Access);
+                VulgataDbContext context = interceptor is null
+                    ? fixture.Database.CreateContext(fixture.Access)
+                    : fixture.Database.CreateContext(fixture.Access, interceptor);
                 CrossRepositoryResolutionDecision decision = await context
                     .CrossRepositoryResolutionDecisions.AsNoTracking()
                     .SingleAsync(value => value.Id == group.ExactResolutionDecisionId);
@@ -846,7 +935,7 @@ public sealed class Pass2BusinessLogicValidationTests
                     .ThenBy(value => value.EvidenceOrdinal));
             var candidate = new
             {
-                schemaIdentity = SubmissionSchemaIdentity,
+                schemaIdentity = SchemaIdentity,
                 binding = new
                 {
                     jobId = Job.Id.ToString("D"), pass2ExecutionId = Execution.Id.ToString("D"),
@@ -905,8 +994,62 @@ public sealed class Pass2BusinessLogicValidationTests
             Pass2BusinessLogicCommitRequest request = new(jobIdOverride ?? Job.Id, Job.LeaseToken!.Value,
                 attemptOrdinal ?? Job.AttemptCount,
                 JsonDocument.Parse(candidate.ToJsonString()).RootElement.Clone(),
-                [initialEvidence]);
-            return await new Pass2BusinessLogicDocumentCommitter(Context, Scope).CommitAsync(request);
+                [initialEvidence], PromptIdentity)
+            {
+                PromptFingerprint = WorkerContract.PromptFingerprint,
+                SubmissionSchemaIdentity = WorkerContract.SubmissionSchemaIdentity,
+                SubmissionSchemaFingerprint = WorkerContract.SubmissionSchemaFingerprint,
+                ToolDeclarationFingerprint = WorkerContract.ToolDeclarationFingerprint,
+            };
+            return await new Pass2BusinessLogicDocumentCommitter(
+                Context, Scope, new TestWorkerContractAuthority(WorkerContract)).CommitAsync(request);
+        }
+
+        private static PreparedPass2WorkerContractAuthority CreateWorkerContractAuthority()
+        {
+            Assembly assembly = typeof(PreparedPass2WorkerContractAuthoritySource).Assembly;
+            static byte[] ReadResource(Assembly assembly, string suffix)
+            {
+                string name = assembly.GetManifestResourceNames().Single(value =>
+                    value.EndsWith(suffix, StringComparison.Ordinal));
+                using Stream source = assembly.GetManifestResourceStream(name) ??
+                    throw new InvalidOperationException($"Missing accepted Pass 2 resource {suffix}.");
+                using var buffer = new MemoryStream();
+                source.CopyTo(buffer);
+                return buffer.ToArray();
+            }
+
+            byte[] prompt = ReadResource(assembly, "pass2-business-logic-worker.v1.md");
+            byte[] schema = ReadResource(assembly, "business-logic-flow-v1.schema.json");
+            Pass2StrictDeclarationSet declarations = Pass2StrictToolDeclarations.Create(
+                new PreparedRetrieveCodeLogicFunction(new EmptyRetrievalService()).Create(
+                    Guid.Parse("00000000-0000-4000-8000-000000000001")),
+                new PreparedSubmitBusinessLogicFunction().Create(static (_, _) =>
+                    Task.FromResult(PreparedPass2CandidateDecision.Reject(
+                        PreparedPass2SubmissionDisposition.InvalidSemantics))));
+            return new(
+                "pass2-business-logic-worker.v1",
+                Convert.ToHexStringLower(SHA256.HashData(prompt)),
+                "business-logic/flow-v1",
+                Convert.ToHexStringLower(SHA256.HashData(schema)),
+                Pass2StrictToolDeclarations.Identity,
+                Convert.ToHexStringLower(SHA256.HashData(declarations.ProjectedUtf8)));
+        }
+
+        private sealed class TestWorkerContractAuthority(
+            PreparedPass2WorkerContractAuthority contract) :
+            IPreparedPass2WorkerContractAuthority
+        {
+            public PreparedPass2WorkerContractAuthority GetCurrent() => contract;
+        }
+
+        private sealed class EmptyRetrievalService : IPass2CodeLogicRetrievalService
+        {
+            public Task<Pass2CodeLogicRetrievalResult> RetrieveAsync(
+                Guid pass2JobExecutionId,
+                Pass2CodeLogicRetrievalRequest request,
+                CancellationToken cancellationToken = default) =>
+                Task.FromResult(Pass2CodeLogicRetrievalResult.NoResults());
         }
 
         public async Task AddStrictRetrievedSourceExcerptAsync()
@@ -1135,6 +1278,287 @@ public sealed class Pass2BusinessLogicValidationTests
             Context.ChangeTracker.Clear();
         }
 
+        public async Task AddCanonicalOptionalSupportingEdgeAsync()
+        {
+            FlowTrace trace = await Context.FlowTraces
+                .SingleAsync(value => value.FlowGroupId == Group.Id);
+            FlowTraceStep[] existingSteps = await Context.FlowTraceSteps
+                .Where(value => value.FlowTraceId == trace.Id)
+                .OrderBy(value => value.StepOrder)
+                .ToArrayAsync();
+            Assert.Equal(5, existingSteps.Length);
+            Guid implementationEdgeId = Assert.IsType<Guid>(existingSteps[3].EdgeId);
+            DocumentVersion providerXml = await Context.DocumentVersions
+                .SingleAsync(value => value.Id == ProviderXmlDocumentVersionId);
+            DocumentVersion providerImplementation = await Context.DocumentVersions
+                .SingleAsync(value => value.Id == ProviderImplementationDocumentVersionId);
+            Guid optionalEdgeId = Guid.NewGuid();
+            OptionalSupportingEdgeId = optionalEdgeId;
+            DateTimeOffset createdAt = providerImplementation.CreatedAt.AddTicks(1);
+            Context.DocumentEdges.Add(new DocumentEdge(
+                optionalEdgeId,
+                providerImplementation.Id,
+                providerImplementation.RepositoryId,
+                providerImplementation.ScanRunId,
+                providerXml.Id,
+                providerXml.RepositoryId,
+                providerXml.ScanRunId,
+                DocumentEdgeType.References,
+                createdAt));
+            Context.FlowTraceSteps.Add(new FlowTraceStep(
+                Guid.NewGuid(), trace.Id, 6,
+                providerImplementation.Id, providerImplementation.RepositoryId,
+                providerImplementation.ScanRunId, optionalEdgeId,
+                FlowTraceStepKind.Relationship,
+                "Same-Repository supporting relationship", createdAt));
+            Context.FlowTraceSteps.Add(new FlowTraceStep(
+                Guid.NewGuid(), trace.Id, 7,
+                providerXml.Id, providerXml.RepositoryId, providerXml.ScanRunId,
+                null, FlowTraceStepKind.Document, "Supporting Document", createdAt));
+            string membershipFingerprint = PreparedPass2FlowPlanner.ComputeMembershipFingerprint(
+                Group.ConsumerDocumentVersionId!.Value,
+                Group.ExactResolutionEdgeId!.Value,
+                ProviderXmlDocumentVersionId,
+                implementationEdgeId,
+                ProviderImplementationDocumentVersionId,
+                [(optionalEdgeId, providerXml.Id)]);
+            string planFingerprint = PreparedPass2FlowPlanner.ComputePlanFingerprint(
+                Decision.Id, Decision.EvidenceFingerprint, "Complete", membershipFingerprint,
+                Contributions);
+            FlowGroup persistedGroup = await Context.FlowGroups
+                .SingleAsync(value => value.Id == Group.Id);
+            SetProperty(persistedGroup, nameof(FlowGroup.MembershipFingerprint), membershipFingerprint);
+            SetProperty(persistedGroup, nameof(FlowGroup.PlanFingerprint), planFingerprint);
+            SetProperty(Group, nameof(FlowGroup.MembershipFingerprint), membershipFingerprint);
+            SetProperty(Group, nameof(FlowGroup.PlanFingerprint), planFingerprint);
+            await Context.SaveChangesAsync();
+            Context.ChangeTracker.Clear();
+        }
+
+        public async Task MutateEdgeAuthorityAsync(string mutation)
+        {
+            FlowTrace trace = await Context.FlowTraces
+                .SingleAsync(value => value.FlowGroupId == Group.Id);
+            FlowTraceStep implementationStep = await Context.FlowTraceSteps
+                .SingleAsync(value => value.FlowTraceId == trace.Id && value.StepOrder == 4);
+            DocumentEdge edge = await Context.DocumentEdges
+                .SingleAsync(value => value.Id == implementationStep.EdgeId);
+            if (mutation.StartsWith("optional-edge-", StringComparison.Ordinal))
+            {
+                FlowTraceStep optionalStep = await Context.FlowTraceSteps
+                    .SingleAsync(value => value.FlowTraceId == trace.Id && value.StepOrder == 6);
+                edge = await Context.DocumentEdges.SingleAsync(value => value.Id == optionalStep.EdgeId);
+            }
+
+            DocumentVersion source = await Context.DocumentVersions
+                .SingleAsync(value => value.Id == edge.SourceDocumentVersionId);
+            DocumentVersion target = await Context.DocumentVersions
+                .SingleAsync(value => value.Id == edge.TargetDocumentVersionId);
+            bool foreignKeyBypass = false;
+            string? bypassProperty = null;
+            bool assertRepositoryLocalityMutation = false;
+            bool assertScanLocalityMutation = false;
+            switch (mutation)
+            {
+                case "provider-implementation-edge-type":
+                case "optional-edge-type":
+                    SetProperty(edge, nameof(DocumentEdge.EdgeType), DocumentEdgeType.GeneratedFrom);
+                    break;
+                case "provider-implementation-edge-source":
+                    SetProperty(edge, nameof(DocumentEdge.SourceDocumentVersionId), target.Id);
+                    SetProperty(edge, nameof(DocumentEdge.SourceRepositoryId), target.RepositoryId);
+                    SetProperty(edge, nameof(DocumentEdge.SourceScanRunId), target.ScanRunId);
+                    break;
+                case "optional-edge-source":
+                    SetProperty(edge, nameof(DocumentEdge.SourceDocumentVersionId), target.Id);
+                    SetProperty(edge, nameof(DocumentEdge.SourceRepositoryId), target.RepositoryId);
+                    SetProperty(edge, nameof(DocumentEdge.SourceScanRunId), target.ScanRunId);
+                    break;
+                case "provider-implementation-edge-target":
+                    SetProperty(edge, nameof(DocumentEdge.TargetDocumentVersionId), ConsumerDocumentVersionId);
+                    SetProperty(edge, nameof(DocumentEdge.TargetRepositoryId), Group.RepositoryId);
+                    SetProperty(edge, nameof(DocumentEdge.TargetScanRunId), Group.ScanRunId);
+                    break;
+                case "optional-edge-target":
+                    SetProperty(edge, nameof(DocumentEdge.TargetDocumentVersionId), ConsumerDocumentVersionId);
+                    SetProperty(edge, nameof(DocumentEdge.TargetRepositoryId), Group.RepositoryId);
+                    SetProperty(edge, nameof(DocumentEdge.TargetScanRunId), Group.ScanRunId);
+                    break;
+                case "provider-implementation-edge-repository":
+                case "optional-edge-repository":
+                    SetProperty(edge, nameof(DocumentEdge.SourceRepositoryId), Group.RepositoryId);
+                    foreignKeyBypass = true;
+                    bypassProperty = nameof(DocumentEdge.SourceRepositoryId);
+                    break;
+                case "provider-implementation-edge-scan-run":
+                case "optional-edge-scan-run":
+                    SetProperty(edge, nameof(DocumentEdge.SourceScanRunId), Group.ScanRunId);
+                    foreignKeyBypass = true;
+                    bypassProperty = nameof(DocumentEdge.SourceScanRunId);
+                    break;
+                case "provider-implementation-edge-provider-repository-locality":
+                    Assert.NotEqual(source.RepositoryId, Group.RepositoryId);
+                    SetProperty(edge, nameof(DocumentEdge.TargetRepositoryId), Group.RepositoryId);
+                    foreignKeyBypass = true;
+                    bypassProperty = nameof(DocumentEdge.TargetRepositoryId);
+                    assertRepositoryLocalityMutation = true;
+                    break;
+                case "provider-implementation-edge-provider-scan-locality":
+                    Assert.NotEqual(source.ScanRunId, Group.ScanRunId);
+                    SetProperty(edge, nameof(DocumentEdge.TargetScanRunId), Group.ScanRunId);
+                    foreignKeyBypass = true;
+                    bypassProperty = nameof(DocumentEdge.TargetScanRunId);
+                    assertScanLocalityMutation = true;
+                    break;
+                case "provider-implementation-edge-direction":
+                    SwapEdgeEndpoints(edge, source, target);
+                    break;
+                case "optional-edge-direction":
+                    SetProperty(edge, nameof(DocumentEdge.SourceDocumentVersionId), target.Id);
+                    SetProperty(edge, nameof(DocumentEdge.TargetDocumentVersionId), ConsumerDocumentVersionId);
+                    SetProperty(edge, nameof(DocumentEdge.SourceRepositoryId), target.RepositoryId);
+                    SetProperty(edge, nameof(DocumentEdge.TargetRepositoryId), Group.RepositoryId);
+                    SetProperty(edge, nameof(DocumentEdge.SourceScanRunId), target.ScanRunId);
+                    SetProperty(edge, nameof(DocumentEdge.TargetScanRunId), Group.ScanRunId);
+                    break;
+                default:
+                    throw new Xunit.Sdk.XunitException($"Unknown edge mutation '{mutation}'.");
+            }
+
+            if (!foreignKeyBypass)
+            {
+                await Context.SaveChangesAsync();
+                if (assertRepositoryLocalityMutation)
+                {
+                    Assert.Equal(Group.RepositoryId, await Context.DocumentEdges.AsNoTracking()
+                        .Where(value => value.Id == edge.Id)
+                        .Select(value => value.TargetRepositoryId).SingleAsync());
+                }
+
+                if (assertScanLocalityMutation)
+                {
+                    Assert.Equal(Group.ScanRunId, await Context.DocumentEdges.AsNoTracking()
+                        .Where(value => value.Id == edge.Id)
+                        .Select(value => value.TargetScanRunId).SingleAsync());
+                }
+
+                Context.ChangeTracker.Clear();
+                return;
+            }
+
+            await Context.Database.OpenConnectionAsync();
+            try
+            {
+                await using (System.Data.Common.DbCommand pragma =
+                    Context.Database.GetDbConnection().CreateCommand())
+                {
+                    pragma.CommandText = "PRAGMA foreign_keys = OFF";
+                    await pragma.ExecuteNonQueryAsync();
+                }
+                switch (bypassProperty)
+                {
+                    case nameof(DocumentEdge.SourceRepositoryId):
+                        await Context.Database.ExecuteSqlInterpolatedAsync(
+                            $"UPDATE \"DocumentEdges\" SET \"SourceRepositoryId\" = {Group.RepositoryId} WHERE \"Id\" = {edge.Id}");
+                        break;
+                    case nameof(DocumentEdge.SourceScanRunId):
+                        await Context.Database.ExecuteSqlInterpolatedAsync(
+                            $"UPDATE \"DocumentEdges\" SET \"SourceScanRunId\" = {Group.ScanRunId} WHERE \"Id\" = {edge.Id}");
+                        break;
+                    case nameof(DocumentEdge.TargetRepositoryId):
+                        await Context.Database.ExecuteSqlInterpolatedAsync(
+                            $"UPDATE \"DocumentEdges\" SET \"TargetRepositoryId\" = {Group.RepositoryId} WHERE \"Id\" = {edge.Id}");
+                        break;
+                    case nameof(DocumentEdge.TargetScanRunId):
+                        await Context.Database.ExecuteSqlInterpolatedAsync(
+                            $"UPDATE \"DocumentEdges\" SET \"TargetScanRunId\" = {Group.ScanRunId} WHERE \"Id\" = {edge.Id}");
+                        break;
+                    default:
+                        throw new Xunit.Sdk.XunitException("Unknown edge bypass mutation.");
+                }
+                await using (System.Data.Common.DbCommand pragma =
+                    Context.Database.GetDbConnection().CreateCommand())
+                {
+                    pragma.CommandText = "PRAGMA foreign_keys = ON";
+                    await pragma.ExecuteNonQueryAsync();
+                }
+                if (assertRepositoryLocalityMutation)
+                {
+                    Assert.Equal(Group.RepositoryId, await Context.DocumentEdges.AsNoTracking()
+                        .Where(value => value.Id == edge.Id)
+                        .Select(value => value.TargetRepositoryId).SingleAsync());
+                }
+
+                if (assertScanLocalityMutation)
+                {
+                    Assert.Equal(Group.ScanRunId, await Context.DocumentEdges.AsNoTracking()
+                        .Where(value => value.Id == edge.Id)
+                        .Select(value => value.TargetScanRunId).SingleAsync());
+                }
+            }
+            finally
+            {
+                await Context.Database.CloseConnectionAsync();
+            }
+            Context.ChangeTracker.Clear();
+        }
+
+        public async Task<string> DurableMutationSnapshotAsync()
+        {
+            var documents = await Context.DocumentVersions.AsNoTracking()
+                .OrderBy(value => value.Id).Select(value => new
+                {
+                    value.Id, value.SupersededById, value.ContentFingerprint,
+                }).ToArrayAsync();
+            var edges = await Context.DocumentEdges.AsNoTracking()
+                .OrderBy(value => value.Id).Select(value => new
+                {
+                    value.Id, value.SourceDocumentVersionId, value.SourceRepositoryId,
+                    value.SourceScanRunId, value.TargetDocumentVersionId,
+                    value.TargetRepositoryId, value.TargetScanRunId, value.EdgeType,
+                }).ToArrayAsync();
+            FlowGroup group = await Context.FlowGroups.AsNoTracking()
+                .SingleAsync(value => value.Id == Group.Id);
+            Pass2JobExecution job = await Context.Pass2JobExecutions.AsNoTracking()
+                .SingleAsync(value => value.Id == Job.Id);
+            Pass2Execution execution = await Context.Pass2Executions.AsNoTracking()
+                .SingleAsync(value => value.Id == Execution.Id);
+            var traces = await Context.FlowTraceSteps.AsNoTracking()
+                .Where(value => value.FlowTraceId == traceIdForSnapshot)
+                .OrderBy(value => value.StepOrder).Select(value => new
+                {
+                    value.Id, value.StepOrder, value.DocumentVersionId, value.EdgeId,
+                    value.Description,
+                }).ToArrayAsync();
+            return JsonSerializer.Serialize(new
+            {
+                documents, edges, traces,
+                GroupState = group.State, group.BusinessLogicDocumentVersionId,
+                group.PlanFingerprint, group.MembershipFingerprint,
+                JobState = job.State, job.AttemptCount, job.CommittedDocumentVersionId,
+                ExecutionState = execution.State, execution.PublishedCount, execution.FailedCount,
+                execution.TerminalIncompleteCount, execution.TerminalBoundExcludedCount,
+                execution.TerminalOmissionCount, execution.StateVersion,
+            });
+        }
+
+        private Guid traceIdForSnapshot => Context.FlowTraces
+            .Where(value => value.FlowGroupId == Group.Id)
+            .Select(value => value.Id).Single();
+
+        private static void SwapEdgeEndpoints(
+            DocumentEdge edge,
+            DocumentVersion source,
+            DocumentVersion target)
+        {
+            SetProperty(edge, nameof(DocumentEdge.SourceDocumentVersionId), target.Id);
+            SetProperty(edge, nameof(DocumentEdge.TargetDocumentVersionId), source.Id);
+            SetProperty(edge, nameof(DocumentEdge.SourceRepositoryId), target.RepositoryId);
+            SetProperty(edge, nameof(DocumentEdge.TargetRepositoryId), source.RepositoryId);
+            SetProperty(edge, nameof(DocumentEdge.SourceScanRunId), target.ScanRunId);
+            SetProperty(edge, nameof(DocumentEdge.TargetScanRunId), source.ScanRunId);
+        }
+
         public async ValueTask DisposeAsync()
         {
             await Context.DisposeAsync();
@@ -1190,6 +1614,48 @@ public sealed class Pass2BusinessLogicValidationTests
                 byteStart?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? string.Empty,
                 byteEnd?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? string.Empty,
                 returnedUtf8Bytes.ToString(System.Globalization.CultureInfo.InvariantCulture)));
+    }
+
+    private sealed class PublicationRelationshipMutationInterceptor : DbCommandInterceptor
+    {
+        private Guid _edgeId;
+        private int _armed;
+        private int _mutationStarted;
+
+        public bool MutationApplied { get; private set; }
+
+        public void Arm(Guid edgeId)
+        {
+            Assert.NotEqual(Guid.Empty, edgeId);
+            _edgeId = edgeId;
+            Volatile.Write(ref _armed, 1);
+        }
+
+        public override async ValueTask<InterceptionResult<DbDataReader>> ReaderExecutingAsync(
+            DbCommand command,
+            CommandEventData eventData,
+            InterceptionResult<DbDataReader> result,
+            CancellationToken cancellationToken = default)
+        {
+            if (Volatile.Read(ref _armed) != 0 &&
+                Volatile.Read(ref _mutationStarted) == 0 &&
+                command.CommandText.Contains("FROM \"FlowTraces\"", StringComparison.Ordinal) &&
+                Interlocked.CompareExchange(ref _mutationStarted, 1, 0) == 0)
+            {
+                await using DbCommand mutation = command.Connection!.CreateCommand();
+                mutation.Transaction = command.Transaction;
+                mutation.CommandText = "UPDATE \"DocumentEdges\" SET \"EdgeType\" = 'GeneratedFrom' WHERE \"Id\" = $edgeId";
+                DbParameter parameter = mutation.CreateParameter();
+                parameter.ParameterName = "$edgeId";
+                parameter.Value = _edgeId;
+                mutation.Parameters.Add(parameter);
+                int affected = await mutation.ExecuteNonQueryAsync(cancellationToken);
+                Assert.Equal(1, affected);
+                MutationApplied = true;
+            }
+
+            return await base.ReaderExecutingAsync(command, eventData, result, cancellationToken);
+        }
     }
 
     private sealed class AllowAccessVerifier : IRepositoryAuthorizationVerifier

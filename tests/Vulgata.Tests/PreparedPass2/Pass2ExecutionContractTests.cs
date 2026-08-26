@@ -5,16 +5,18 @@ namespace Vulgata.Tests.PreparedPass2;
 public sealed class Pass2ExecutionContractTests
 {
     [Theory]
-    [InlineData("Pass2Execution")]
-    [InlineData("Pass2Omission")]
-    [InlineData("Pass2JobExecution")]
-    [InlineData("Pass2RetrievalBudget")]
-    [InlineData("Pass2RetrievalReceipt")]
-    [InlineData("Pass2RetrievalResult")]
-    public void FoundationEntity_IsPresentWithDurableStateSurface(string entityName)
+    [InlineData("Pass2Execution", "Id")]
+    [InlineData("Pass2Omission", "Id")]
+    [InlineData("Pass2JobExecution", "Id")]
+    [InlineData("Pass2RetrievalBudget", "Pass2JobExecutionId")]
+    [InlineData("Pass2RetrievalReceipt", "Id")]
+    [InlineData("Pass2RetrievalResult", "Id")]
+    public void FoundationEntity_IsPresentWithDurableStateSurface(
+        string entityName,
+        string identityProperty)
     {
         Type type = FindCoreType(entityName);
-        Assert.NotNull(type.GetProperty("Id"));
+        Assert.NotNull(type.GetProperty(identityProperty));
         Assert.NotNull(type.GetProperty("State"));
     }
 

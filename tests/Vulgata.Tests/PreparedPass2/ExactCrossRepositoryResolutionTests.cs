@@ -15,6 +15,83 @@ namespace Vulgata.Tests.PreparedPass2;
 public sealed class ExactCrossRepositoryResolutionTests
 {
     [Fact]
+    public async Task ResolveAsync_ExactDuplicateProviderObservation_IsDeduplicatedAsync()
+    {
+        ExactResolutionProfile profile = new ExactResolutionProfileCatalog().Load();
+        ResolutionOccurrence occurrence = Assert.Single(profile.Occurrences);
+        ExactResolutionOwner consumer = Owner(
+            ExactCrossRepositoryTestValues.ConsumerRepositoryId,
+            ExactCrossRepositoryTestValues.ConsumerScanRunId,
+            ExactCrossRepositoryTestValues.ConsumerDocumentVersionId,
+            ExactCrossRepositoryTestValues.ConsumerSourceAnchorId,
+            Commit(profile, occurrence.ConsumerAlias));
+        ExactResolutionOwner provider = Owner(
+            ExactCrossRepositoryTestValues.ProviderRepositoryId,
+            ExactCrossRepositoryTestValues.ProviderScanRunId,
+            ExactCrossRepositoryTestValues.ProviderDocumentVersionId,
+            ExactCrossRepositoryTestValues.ProviderSourceAnchorId,
+            Commit(profile, occurrence.ProviderAlias));
+        ProviderEndpointCandidate observation = Provider(
+            occurrence,
+            provider,
+            "provider.xml#line=2;ordinal=0");
+
+        ExactResolutionDecisionBatch batch = await new ExactCrossRepositoryResolver().ResolveAsync(
+            profile,
+            [Consumer(occurrence, consumer)],
+            [observation, observation],
+            [Unsupported(Assert.Single(profile.UnsupportedObservations).ObservationId, consumer)]);
+
+        ExactResolutionDecision decision = Assert.Single(
+            batch.Decisions,
+            value => value.Identity == occurrence.OccurrenceId);
+        Assert.Equal(ExactResolutionDecisionKind.ExactMatch, decision.Kind);
+        Assert.Single(Assert.IsAssignableFrom<IReadOnlyList<ProviderEndpointCandidate>>(
+            decision.ProviderObservations));
+    }
+
+    [Fact]
+    public async Task ResolveAsync_SameLocatorDifferentClassification_IsRetainedInCanonicalOrderAsync()
+    {
+        ExactResolutionProfile profile = new ExactResolutionProfileCatalog().Load();
+        ResolutionOccurrence occurrence = Assert.Single(profile.Occurrences);
+        ExactResolutionOwner consumer = Owner(
+            ExactCrossRepositoryTestValues.ConsumerRepositoryId,
+            ExactCrossRepositoryTestValues.ConsumerScanRunId,
+            ExactCrossRepositoryTestValues.ConsumerDocumentVersionId,
+            ExactCrossRepositoryTestValues.ConsumerSourceAnchorId,
+            Commit(profile, occurrence.ConsumerAlias));
+        ExactResolutionOwner provider = Owner(
+            ExactCrossRepositoryTestValues.ProviderRepositoryId,
+            ExactCrossRepositoryTestValues.ProviderScanRunId,
+            ExactCrossRepositoryTestValues.ProviderDocumentVersionId,
+            ExactCrossRepositoryTestValues.ProviderSourceAnchorId,
+            Commit(profile, occurrence.ProviderAlias));
+        Guid firstId = ExactCrossRepositoryTestValues.Id(20_001);
+        Guid secondId = ExactCrossRepositoryTestValues.Id(20_002);
+        ProviderEndpointCandidate first = new(
+            occurrence.OccurrenceId, provider, "in/cust/updateSession", "cust/updateSession",
+            "provider.xml#line=2;ordinal=0", firstId, new string('a', 64),
+            "catalog-a", "normalizer-a");
+        ProviderEndpointCandidate second = new(
+            occurrence.OccurrenceId, provider, "in/cust/updateSession", "cust/updateSession",
+            "provider.xml#line=2;ordinal=0", secondId, new string('b', 64),
+            "catalog-b", "normalizer-b");
+
+        ExactResolutionDecisionBatch batch = await new ExactCrossRepositoryResolver().ResolveAsync(
+            profile,
+            [Consumer(occurrence, consumer)],
+            [second, first],
+            [Unsupported(Assert.Single(profile.UnsupportedObservations).ObservationId, consumer)]);
+
+        ExactResolutionDecision decision = Assert.Single(
+            batch.Decisions,
+            value => value.Identity == occurrence.OccurrenceId);
+        Assert.Equal([firstId, secondId], decision.ProviderObservations!
+            .Select(value => value.CommunicationClassificationId));
+    }
+
+    [Fact]
     public async Task ResolveAsync_DuplicateProviderObservationsForOneCurrentDocument_AggregateToOneExactProviderAsync()
     {
         ExactResolutionProfile profile = new ExactResolutionProfileCatalog().Load();
@@ -504,6 +581,13 @@ public sealed class ExactCrossRepositoryResolutionTests
 
     private static string ProfileCommit(ExactResolutionProfile profile, string alias) =>
         Assert.Single(profile.Repositories, repository => repository.Alias == alias).ExpectedCommit;
+
+    internal static Task SeedAcceptedV2PairAsync(
+        VulgataDbContext context,
+        ExactCrossRepositoryTestFixture fixture,
+        ExactPass1DocumentFixture consumer,
+        ExactPass1DocumentFixture provider) =>
+        SeedCurrentPairAsync(context, fixture, consumer, provider);
 
     private static async Task SeedCurrentPairAsync(
         VulgataDbContext context,

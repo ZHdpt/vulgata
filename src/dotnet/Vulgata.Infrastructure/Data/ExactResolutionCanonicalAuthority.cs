@@ -80,8 +80,177 @@ internal static class ExactResolutionCanonicalAuthority
             providerDocumentVersionId.ToString("D"),
             sourceAnchorId.ToString("D"));
 
+    internal static string ProviderObservationFingerprint(
+        string decisionEvidenceFingerprint,
+        ProviderEndpointCandidate observation)
+    {
+        if (observation.CommunicationClassificationId == Guid.Empty ||
+            string.IsNullOrWhiteSpace(observation.ClassificationFingerprint) ||
+            string.IsNullOrWhiteSpace(observation.CatalogRuleIdentity) ||
+            string.IsNullOrWhiteSpace(observation.NormalizationRuleIdentity))
+        {
+            throw new ArgumentException(
+                "A provider observation requires complete current classification authority.",
+                nameof(observation));
+        }
+
+        return HashIdentity(
+            "provider-contribution",
+            decisionEvidenceFingerprint,
+            observation.Owner.RepositoryId.ToString("D"),
+            observation.Owner.ScanRunId.ToString("D"),
+            observation.Owner.ProfiledRevision,
+            observation.Owner.DocumentVersionId.ToString("D"),
+            observation.Owner.SourceAnchorId.ToString("D"),
+            observation.CommunicationClassificationId.ToString("D"),
+            observation.DeclarationEvidenceLocator,
+            observation.ClassificationFingerprint,
+            observation.CatalogRuleIdentity,
+            observation.NormalizationRuleIdentity,
+            observation.RawIdentifier,
+            observation.NormalizedIdentifier);
+    }
+
+    internal static string PersistedProviderContributionFingerprint(
+        string decisionEvidenceFingerprint,
+        ExactResolutionProviderEvidenceContribution contribution) =>
+        HashIdentity(
+            "provider-contribution",
+            decisionEvidenceFingerprint,
+            contribution.RepositoryId.ToString("D"),
+            contribution.ScanRunId.ToString("D"),
+            contribution.ProfiledRevision,
+            contribution.ProviderDocumentVersionId.ToString("D"),
+            contribution.SourceAnchorId.ToString("D"),
+            contribution.CommunicationClassificationId.ToString("D"),
+            contribution.EvidenceLocator,
+            contribution.ClassificationFingerprint,
+            contribution.CatalogRuleIdentity,
+            contribution.NormalizationRuleIdentity,
+            contribution.ProviderRawIdentifier,
+            contribution.NormalizedEndpointIdentifier);
+
     internal static Guid ProviderContributionId(string contributionFingerprint) =>
         DeterministicGuid(contributionFingerprint);
+
+    internal static string ProviderEvidenceSetFingerprint(
+        IEnumerable<string> contributionFingerprints)
+    {
+        ArgumentNullException.ThrowIfNull(contributionFingerprints);
+        string[] ordered = [.. contributionFingerprints];
+        if (ordered.Length == 0 || ordered.Any(value =>
+                value.Length != 64 || value.Any(character =>
+                    character is not (>= '0' and <= '9') and
+                        not (>= 'a' and <= 'f'))))
+        {
+            throw new ArgumentException(
+                "A provider evidence set requires canonical contribution fingerprints.",
+                nameof(contributionFingerprints));
+        }
+
+        return Convert.ToHexStringLower(SHA256.HashData(
+            Encoding.UTF8.GetBytes(string.Join('\n', ordered))));
+    }
+
+    internal static bool MatchesPersistedExactAuthority(
+        CrossRepositoryResolutionDecision decision,
+        DocumentEdge edge,
+        IReadOnlyCollection<ExactResolutionProviderEvidenceContribution> contributions)
+    {
+        if (!IsCanonicalFingerprint(decision.EvidenceFingerprint) ||
+            !IsCanonicalFingerprint(decision.ConsumerEvidenceFingerprint) ||
+            !IsCanonicalFingerprint(decision.ProviderEvidenceSetFingerprint) ||
+            !StringComparer.Ordinal.Equals(
+                decision.ResolutionSchemaIdentity,
+                "exact-cross-repository-resolution/2.0") ||
+            string.IsNullOrWhiteSpace(decision.NormalizationRuleIdentity) ||
+            !StringComparer.Ordinal.Equals(decision.OutcomeKind, "ExactMatch") ||
+            !StringComparer.Ordinal.Equals(decision.ReasonCode, "unique_provider") ||
+            !decision.ProviderIdentity.HasValue ||
+            decision.ProviderIdentity.Value == Guid.Empty ||
+            !decision.ProviderDocumentVersionId.HasValue ||
+            !decision.ProviderRepositoryId.HasValue ||
+            !decision.ProviderScanRunId.HasValue ||
+            string.IsNullOrWhiteSpace(decision.ProviderProfiledRevision) ||
+            decision.UncertaintyId is not null || decision.ResolvedUncertaintyId is not null ||
+            !StringComparer.Ordinal.Equals(
+                decision.DecisionFingerprint, decision.EvidenceFingerprint) ||
+            decision.Id != DecisionId(decision.EvidenceFingerprint) ||
+            decision.ConsumerDocumentVersionId != edge.SourceDocumentVersionId ||
+            decision.ConsumerRepositoryId != edge.SourceRepositoryId ||
+            decision.ConsumerScanRunId != edge.SourceScanRunId ||
+            decision.ProviderDocumentVersionId != edge.TargetDocumentVersionId ||
+            decision.ProviderRepositoryId != edge.TargetRepositoryId ||
+            decision.ProviderScanRunId != edge.TargetScanRunId ||
+            decision.DocumentEdgeId != edge.Id ||
+            contributions.Count == 0)
+        {
+            return false;
+        }
+
+        Guid expectedProviderIdentity = ProviderIdentity(
+            decision.SystemId,
+            decision.ProviderRepositoryId.Value,
+            decision.ProviderScanRunId.Value,
+            decision.ProviderProfiledRevision,
+            decision.ProviderDocumentVersionId.Value);
+        if (decision.ProviderIdentity.Value != expectedProviderIdentity)
+        {
+            return false;
+        }
+
+        var contributionFingerprints = new List<string>(contributions.Count);
+        foreach (ExactResolutionProviderEvidenceContribution contribution in contributions
+            .OrderBy(value => value.ProviderOrdinal)
+            .ThenBy(value => value.EvidenceOrdinal))
+        {
+            string fingerprint = PersistedProviderContributionFingerprint(
+                decision.EvidenceFingerprint, contribution);
+            if (contribution.ResolutionDecisionId != decision.Id ||
+                contribution.ProviderIdentity != decision.ProviderIdentity ||
+                contribution.ProviderDocumentVersionId != decision.ProviderDocumentVersionId ||
+                contribution.RepositoryId != decision.ProviderRepositoryId ||
+                contribution.ScanRunId != decision.ProviderScanRunId ||
+                !StringComparer.Ordinal.Equals(
+                    contribution.ProfiledRevision,
+                    decision.ProviderProfiledRevision) ||
+                contribution.CommunicationClassificationId == Guid.Empty ||
+                !IsCanonicalFingerprint(contribution.ClassificationFingerprint) ||
+                string.IsNullOrWhiteSpace(contribution.CatalogRuleIdentity) ||
+                !StringComparer.Ordinal.Equals(
+                    contribution.NormalizationRuleIdentity,
+                    decision.NormalizationRuleIdentity) ||
+                !StringComparer.Ordinal.Equals(contribution.EvidenceFingerprint, fingerprint) ||
+                contribution.Id != ProviderContributionId(fingerprint))
+            {
+                return false;
+            }
+
+            contributionFingerprints.Add(fingerprint);
+        }
+
+        return StringComparer.Ordinal.Equals(
+            decision.ProviderEvidenceSetFingerprint,
+            ProviderEvidenceSetFingerprint(contributionFingerprints));
+    }
+
+    private static bool IsCanonicalFingerprint(string value) =>
+        value.Length == 64 && value.All(character =>
+            character is >= '0' and <= '9' or >= 'a' and <= 'f');
+
+    internal static Guid ProviderIdentity(
+        Guid systemId,
+        Guid repositoryId,
+        Guid scanRunId,
+        string profiledRevision,
+        Guid documentVersionId) =>
+        DeterministicGuid(HashIdentity(
+            "provider-identity",
+            systemId.ToString("D"),
+            repositoryId.ToString("D"),
+            scanRunId.ToString("D"),
+            profiledRevision,
+            documentVersionId.ToString("D")));
 
     private static string EvidenceFingerprint(
         string profileId,

@@ -18,13 +18,37 @@ public sealed class Pass2BusinessLogicDocumentCommitter : IPass2BusinessLogicDoc
     private const int _maximumCandidateUtf8Bytes = 65_536;
     private readonly VulgataDbContext _context;
     private readonly RepositoryAccessScope _accessScope;
+    private readonly PreparedPass2WorkerContractAuthority? _workerContract;
+
+    private PreparedPass2WorkerContractAuthority WorkerContract =>
+        _workerContract ?? throw new InvalidOperationException(
+            "The accepted Pass 2 worker contract authority is unavailable.");
 
     public Pass2BusinessLogicDocumentCommitter(
         VulgataDbContext context,
         RepositoryAccessScope accessScope)
+        : this(context, accessScope, null, true)
     {
+    }
+
+    public Pass2BusinessLogicDocumentCommitter(
+        VulgataDbContext context,
+        RepositoryAccessScope accessScope,
+        IPreparedPass2WorkerContractAuthority workerContractAuthority)
+        : this(context, accessScope, workerContractAuthority, false)
+    {
+    }
+
+    private Pass2BusinessLogicDocumentCommitter(
+        VulgataDbContext context,
+        RepositoryAccessScope accessScope,
+        IPreparedPass2WorkerContractAuthority? workerContractAuthority,
+        bool compatibilityAdapter)
+    {
+        _ = compatibilityAdapter;
         _context = context ?? throw new ArgumentNullException(nameof(context));
         _accessScope = accessScope ?? throw new ArgumentNullException(nameof(accessScope));
+        _workerContract = workerContractAuthority?.GetCurrent();
     }
 
     public async Task<Pass2BusinessLogicCommitResult> CommitAsync(
@@ -33,7 +57,9 @@ public sealed class Pass2BusinessLogicDocumentCommitter : IPass2BusinessLogicDoc
     {
         ArgumentNullException.ThrowIfNull(request);
         cancellationToken.ThrowIfCancellationRequested();
-        if (request.Pass2JobExecutionId == Guid.Empty || request.LeaseToken == Guid.Empty ||
+        if (_workerContract is null || !RequestContractMatches(request) ||
+            request.Pass2JobExecutionId == Guid.Empty ||
+            request.LeaseToken == Guid.Empty ||
             request.AttemptOrdinal is < 1 or > 2 || !_accessScope.HasLiveAuthorizationVerifier ||
             request.Candidate.ValueKind != JsonValueKind.Object ||
             JsonSerializer.SerializeToUtf8Bytes(request.Candidate).Length > _maximumCandidateUtf8Bytes)
@@ -74,6 +100,8 @@ public sealed class Pass2BusinessLogicDocumentCommitter : IPass2BusinessLogicDoc
                 cancellationToken).ConfigureAwait(false);
             if (authority is null || authority.Job.LeaseToken != request.LeaseToken ||
                 authority.Job.AttemptCount != request.AttemptOrdinal ||
+                !StringComparer.Ordinal.Equals(
+                    request.PromptIdentity, authority.Execution.WorkerPromptIdentity) ||
                 !await _accessScope.HasCurrentAccessAsync(
                     authority.RepositoryIds,
                     cancellationToken).ConfigureAwait(false) ||
@@ -159,6 +187,8 @@ public sealed class Pass2BusinessLogicDocumentCommitter : IPass2BusinessLogicDoc
             allowCompleted: true,
             cancellationToken).ConfigureAwait(false);
         if (authority is null || request.AttemptOrdinal != job.AttemptCount ||
+            !StringComparer.Ordinal.Equals(
+                request.PromptIdentity, authority.Execution.WorkerPromptIdentity) ||
             !await _accessScope.HasCurrentAccessAsync(authority.RepositoryIds, cancellationToken)
                 .ConfigureAwait(false) ||
             !TryValidateCandidate(request.Candidate, authority, request.PromptIdentity, out Guid[] handles))
@@ -345,6 +375,11 @@ public sealed class Pass2BusinessLogicDocumentCommitter : IPass2BusinessLogicDoc
             committedAt);
         trackedExecution.RecordPublished(trackedExecution.StateVersion, committedAt);
         await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        _ = await new PreparedPass2Store(_context).CompleteIfTerminalAsync(
+            trackedExecution,
+            committedAt,
+            cancellationToken).ConfigureAwait(false);
+        await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return new(
             Pass2BusinessLogicCommitStatus.Committed,
             versionId,
@@ -406,29 +441,32 @@ public sealed class Pass2BusinessLogicDocumentCommitter : IPass2BusinessLogicDoc
             .Where(value => value.ResolutionDecisionId == group.ExactResolutionDecisionId)
             .OrderBy(value => value.ProviderOrdinal).ThenBy(value => value.EvidenceOrdinal)
             .ToArrayAsync(cancellationToken).ConfigureAwait(false);
-        ExactCrossRepositoryEdgeEvidence? exactEvidence = edge is null
-            ? null
-            : await _context.ExactCrossRepositoryEdgeEvidence.AsNoTracking()
-                .SingleOrDefaultAsync(value => value.EdgeId == edge.Id, cancellationToken)
-                .ConfigureAwait(false);
-        SourceAnchor[] exactAnchors = exactEvidence is null
-            ? []
-            : await _context.SourceAnchors.AsNoTracking()
-                .Where(value => value.Id == exactEvidence.ConsumerSourceAnchorId ||
-                    value.Id == exactEvidence.ProviderSourceAnchorId)
-                .ToArrayAsync(cancellationToken).ConfigureAwait(false);
         bool validExecutionState = execution is not null && (allowCompleted
             ? execution.State is Pass2ExecutionState.Running or
                 Pass2ExecutionState.Completing or Pass2ExecutionState.Completed or
                 Pass2ExecutionState.CompletedWithWarnings
             : execution.State == Pass2ExecutionState.Running);
         if (!validExecutionState ||
+            !StringComparer.Ordinal.Equals(
+                execution.WorkerPromptIdentity, WorkerContract.PromptIdentity) ||
+            !StringComparer.Ordinal.Equals(
+                execution.WorkerPromptFingerprint, WorkerContract.PromptFingerprint) ||
+            !StringComparer.Ordinal.Equals(
+                execution.SubmissionSchemaIdentity, WorkerContract.SubmissionSchemaIdentity) ||
+            !StringComparer.Ordinal.Equals(
+                execution.SubmissionSchemaFingerprint,
+                WorkerContract.SubmissionSchemaFingerprint) ||
+            !StringComparer.Ordinal.Equals(
+                execution.ToolDeclarationFingerprint, WorkerContract.ToolDeclarationFingerprint) ||
             execution.SystemId != group.SystemId || decision is null || edge is null ||
-            exactEvidence is null || exactAnchors.Length != 2 ||
             decision.Outcome != "ExactMatch" ||
+            decision.Pass1PairExecutionId != execution.Pass1PairExecutionId ||
+            decision.CoordinationId != execution.CoordinationId ||
             decision.SystemId != group.SystemId || decision.DocumentEdgeId != edge.Id ||
+            decision.ConsumerDocumentVersionId != group.ConsumerDocumentVersionId ||
             decision.ProviderDocumentVersionId != group.ProviderXmlDocumentVersionId ||
             !StringComparer.Ordinal.Equals(decision.ConsumerEntryStableKey, group.ConsumerEntryStableKey) ||
+            !StringComparer.Ordinal.Equals(decision.ConsumerEntryIdentity, group.ConsumerEntryIdentity) ||
             decision.Protocol != group.Protocol ||
             !StringComparer.Ordinal.Equals(
                 decision.NormalizedEndpointIdentifier,
@@ -437,9 +475,10 @@ public sealed class Pass2BusinessLogicDocumentCommitter : IPass2BusinessLogicDoc
             edge.TargetDocumentVersionId != group.ProviderXmlDocumentVersionId ||
             edge.SourceRepositoryId != group.RepositoryId ||
             edge.TargetRepositoryId != group.ProviderRepositoryId ||
+            edge.SourceScanRunId != group.ScanRunId ||
             edge.EdgeType != DocumentEdgeType.References || contributions.Length == 0 ||
-            !ValidateCanonicalExactResolutionAuthority(
-                decision, edge, exactEvidence, exactAnchors, contributions) ||
+            !ExactResolutionCanonicalAuthority.MatchesPersistedExactAuthority(
+                decision, edge, contributions) ||
             contributions.Select(value => value.ProviderOrdinal).Distinct().Count() != 1 ||
             contributions.Select(value => value.EvidenceOrdinal)
                 .SequenceEqual(Enumerable.Range(1, contributions.Length)) is false)
@@ -455,7 +494,8 @@ public sealed class Pass2BusinessLogicDocumentCommitter : IPass2BusinessLogicDoc
             group.ProviderImplementationDocumentVersionId.Value,
         ];
         string canonicalStableKey = CanonicalLogicalStableKey(execution, group, decision);
-        if (!StringComparer.Ordinal.Equals(group.LogicalKeySchemaIdentity, "business-flow-logical-key/1.0") ||
+        if (!StringComparer.Ordinal.Equals(group.SchemaIdentity, "endpoint-flow-group/1.0") ||
+            !StringComparer.Ordinal.Equals(group.LogicalKeySchemaIdentity, "business-flow-logical-key/1.0") ||
             !StringComparer.Ordinal.Equals(group.LogicalDocumentStableKey, canonicalStableKey))
         {
             return null;
@@ -469,6 +509,15 @@ public sealed class Pass2BusinessLogicDocumentCommitter : IPass2BusinessLogicDoc
             .Where(value => authorityTraceIds.Contains(value.FlowTraceId))
             .OrderBy(value => value.FlowTraceId).ThenBy(value => value.StepOrder)
             .ToArrayAsync(cancellationToken).ConfigureAwait(false);
+        Guid[] supportingEdgeIds = authoritySteps
+            .Where(value => value.StepKind == FlowTraceStepKind.Relationship &&
+                value.EdgeId.HasValue && value.EdgeId != edge.Id)
+            .Select(value => value.EdgeId!.Value)
+            .Distinct()
+            .ToArray();
+        DocumentEdge[] supportingEdges = await _context.DocumentEdges.AsNoTracking()
+            .Where(value => supportingEdgeIds.Contains(value.Id))
+            .ToArrayAsync(cancellationToken).ConfigureAwait(false);
         bool canonicalPlanning = TryComputeCanonicalPlanningFingerprints(
             group,
             decision,
@@ -479,6 +528,9 @@ public sealed class Pass2BusinessLogicDocumentCommitter : IPass2BusinessLogicDoc
         if (authorityTraces.Length != 1 || authoritySteps.Length < 5 ||
             authoritySteps.Select(value => value.StepOrder)
                 .SequenceEqual(Enumerable.Range(1, authoritySteps.Length)) is false ||
+            supportingEdges.Length != supportingEdgeIds.Length ||
+            !Pass2RelationshipAuthority.ValidateSupportingEdges(
+                group, group.ProviderRepositoryId.Value, authoritySteps, supportingEdges) ||
             contributions.Any(value => value.ProviderDocumentVersionId != edge.TargetDocumentVersionId) ||
             !canonicalPlanning ||
             !StringComparer.Ordinal.Equals(group.MembershipFingerprint, canonicalMembershipFingerprint) ||
@@ -534,75 +586,6 @@ public sealed class Pass2BusinessLogicDocumentCommitter : IPass2BusinessLogicDoc
 
         return new(job, group, execution, decision, edge, contributions, repositoryIds,
             initialDocumentIds, authorityFingerprint);
-    }
-
-    private static bool ValidateCanonicalExactResolutionAuthority(
-        CrossRepositoryResolutionDecision decision,
-        DocumentEdge edge,
-        ExactCrossRepositoryEdgeEvidence evidence,
-        IReadOnlyCollection<SourceAnchor> anchors,
-        IReadOnlyCollection<ExactResolutionProviderEvidenceContribution> contributions)
-    {
-        SourceAnchor? consumerAnchor = anchors.SingleOrDefault(
-            value => value.Id == evidence.ConsumerSourceAnchorId);
-        SourceAnchor? providerAnchor = anchors.SingleOrDefault(
-            value => value.Id == evidence.ProviderSourceAnchorId);
-        if (consumerAnchor is null || providerAnchor is null ||
-            evidence.EdgeId != edge.Id ||
-            evidence.ConsumerDocumentVersionId != edge.SourceDocumentVersionId ||
-            evidence.ConsumerRepositoryId != edge.SourceRepositoryId ||
-            evidence.ConsumerScanRunId != edge.SourceScanRunId ||
-            evidence.ProviderDocumentVersionId != edge.TargetDocumentVersionId ||
-            evidence.ProviderRepositoryId != edge.TargetRepositoryId ||
-            evidence.ProviderScanRunId != edge.TargetScanRunId ||
-            consumerAnchor.DocumentVersionId != evidence.ConsumerDocumentVersionId ||
-            consumerAnchor.RepositoryId != evidence.ConsumerRepositoryId ||
-            consumerAnchor.ScanRunId != evidence.ConsumerScanRunId ||
-            providerAnchor.DocumentVersionId != evidence.ProviderDocumentVersionId ||
-            providerAnchor.RepositoryId != evidence.ProviderRepositoryId ||
-            providerAnchor.ScanRunId != evidence.ProviderScanRunId ||
-            decision.ConsumerDocumentVersionId != evidence.ConsumerDocumentVersionId ||
-            decision.ProviderDocumentVersionId != evidence.ProviderDocumentVersionId ||
-            decision.DocumentEdgeId != evidence.EdgeId ||
-            decision.Protocol != evidence.Protocol ||
-            !StringComparer.Ordinal.Equals(
-                decision.NormalizedEndpointIdentifier,
-                evidence.NormalizedEndpointIdentifier) ||
-            !StringComparer.Ordinal.Equals(decision.ConsumerEntryIdentity, evidence.OccurrenceId))
-        {
-            return false;
-        }
-
-        string canonicalEvidenceFingerprint =
-            ExactResolutionCanonicalAuthority.EvidenceFingerprint(
-                evidence,
-                consumerAnchor.ProfiledRevision,
-                providerAnchor.ProfiledRevision);
-        if (!StringComparer.Ordinal.Equals(evidence.EvidenceFingerprint, canonicalEvidenceFingerprint) ||
-            !StringComparer.Ordinal.Equals(decision.EvidenceFingerprint, canonicalEvidenceFingerprint) ||
-            decision.Id != ExactResolutionCanonicalAuthority.DecisionId(canonicalEvidenceFingerprint))
-        {
-            return false;
-        }
-
-        foreach (ExactResolutionProviderEvidenceContribution contribution in contributions)
-        {
-            string fingerprint =
-                ExactResolutionCanonicalAuthority.ProviderContributionFingerprint(
-                    canonicalEvidenceFingerprint,
-                    contribution.ProviderDocumentVersionId,
-                    contribution.SourceAnchorId);
-            if (contribution.ResolutionDecisionId != decision.Id ||
-                contribution.ProviderDocumentVersionId != evidence.ProviderDocumentVersionId ||
-                contribution.SourceAnchorId != evidence.ProviderSourceAnchorId ||
-                !StringComparer.Ordinal.Equals(contribution.EvidenceFingerprint, fingerprint) ||
-                contribution.Id != ExactResolutionCanonicalAuthority.ProviderContributionId(fingerprint))
-            {
-                return false;
-            }
-        }
-
-        return true;
     }
 
     private static bool TryComputeCanonicalPlanningFingerprints(
@@ -676,6 +659,17 @@ public sealed class Pass2BusinessLogicDocumentCommitter : IPass2BusinessLogicDoc
             decision.Protocol.ToString(),
             decision.NormalizedEndpointIdentifier,
             decision.ConsumerEntryStableKey));
+
+    private static bool AnchorMatchesCodeUnit(SourceAnchor anchor, CodeUnit codeUnit) =>
+        anchor.CodeUnitId == codeUnit.Id &&
+        anchor.RepositoryId == codeUnit.RepositoryId &&
+        anchor.ScanRunId == codeUnit.ScanRunId &&
+        anchor.LineStart == codeUnit.LineStart &&
+        anchor.LineEnd == codeUnit.LineEnd &&
+        StringComparer.Ordinal.Equals(anchor.RepositoryRelativePath, codeUnit.FilePath) &&
+        StringComparer.Ordinal.Equals(anchor.SourceHash, codeUnit.SourceHash) &&
+        (codeUnit.ByteStart is null ||
+            anchor.ByteStart == codeUnit.ByteStart && anchor.ByteEnd == codeUnit.ByteEndExclusive);
 
     private static void AddInitialDescriptor(
         IDictionary<Guid, EvidenceDescriptor> result,
@@ -773,12 +767,62 @@ public sealed class Pass2BusinessLogicDocumentCommitter : IPass2BusinessLogicDoc
         SourceAnchor[] anchors = await _context.SourceAnchors.AsNoTracking()
             .Where(value => authority.InitialDocumentVersionIds.Contains(value.DocumentVersionId))
             .OrderBy(value => value.Id).ToArrayAsync(cancellationToken).ConfigureAwait(false);
+        Guid[] codeUnitIds = anchors.Select(value => value.CodeUnitId).Distinct().ToArray();
+        CodeUnit[] codeUnits = await _context.CodeUnits.AsNoTracking()
+            .Where(value => codeUnitIds.Contains(value.Id))
+            .ToArrayAsync(cancellationToken).ConfigureAwait(false);
+        Guid[] logicalDocumentIds = initialDocuments
+            .Select(value => value.LogicalDocumentId)
+            .Distinct()
+            .ToArray();
+        LogicalDocument[] logicalDocuments = await _context.LogicalDocuments.AsNoTracking()
+            .Where(value => logicalDocumentIds.Contains(value.Id))
+            .ToArrayAsync(cancellationToken).ConfigureAwait(false);
         if (initialDocuments.Length != authority.InitialDocumentVersionIds.Count ||
+            logicalDocuments.Length != logicalDocumentIds.Length ||
+            codeUnits.Length != codeUnitIds.Length ||
+            !initialDocuments.Any(document =>
+                document.Id == authority.Decision.ConsumerDocumentVersionId &&
+                document.RepositoryId == authority.Decision.ConsumerRepositoryId &&
+                document.ScanRunId == authority.Decision.ConsumerScanRunId &&
+                StringComparer.Ordinal.Equals(
+                    document.ProfiledRevision,
+                    authority.Decision.ConsumerProfiledRevision)) ||
+            !initialDocuments.Any(document =>
+                document.Id == authority.Decision.ProviderDocumentVersionId &&
+                document.RepositoryId == authority.Decision.ProviderRepositoryId &&
+                document.ScanRunId == authority.Decision.ProviderScanRunId &&
+                StringComparer.Ordinal.Equals(
+                    document.ProfiledRevision,
+                    authority.Decision.ProviderProfiledRevision)) ||
             initialDocuments.Any(document => !steps.Any(step =>
                 step.DocumentVersionId == document.Id && step.DocumentRepositoryId == document.RepositoryId &&
                 step.DocumentScanRunId == document.ScanRunId)) ||
+            initialDocuments.Any(document =>
+                document.SystemId != authority.Execution.SystemId ||
+                !authority.RepositoryIds.Contains(document.RepositoryId) ||
+                document.SupersededById is not null ||
+                !logicalDocuments.Any(logical =>
+                    logical.Id == document.LogicalDocumentId &&
+                    logical.RepositoryId == document.RepositoryId &&
+                    logical.DocumentType == DocumentType.CodeLogic &&
+                    logical.CurrentVersionId == document.Id)) ||
             initialDocuments.Any(document => !anchors.Any(anchor =>
-                anchor.DocumentVersionId == document.Id)))
+                anchor.DocumentVersionId == document.Id)) ||
+            anchors.Any(anchor =>
+                !initialDocuments.Any(document =>
+                    document.Id == anchor.DocumentVersionId &&
+                    document.RepositoryId == anchor.RepositoryId &&
+                    document.ScanRunId == anchor.ScanRunId &&
+                    StringComparer.Ordinal.Equals(
+                        document.ProfiledRevision, anchor.ProfiledRevision)) ||
+                !AnchorMatchesCodeUnit(
+                    anchor,
+                    codeUnits.Single(value => value.Id == anchor.CodeUnitId))) ||
+            authority.Contributions.Any(contribution => !anchors.Any(anchor =>
+                anchor.Id == contribution.SourceAnchorId &&
+                anchor.DocumentVersionId == contribution.ProviderDocumentVersionId &&
+                anchor.DocumentVersionId == authority.Decision.ProviderDocumentVersionId)))
         {
             return null;
         }
@@ -1049,7 +1093,10 @@ public sealed class Pass2BusinessLogicDocumentCommitter : IPass2BusinessLogicDoc
             HasString(binding, "planFingerprint", group.PlanFingerprint) &&
             HasString(binding, "membershipFingerprint", group.MembershipFingerprint!) &&
             HasString(binding, "promptIdentity", expectedPromptIdentity) &&
-            HasString(binding, "submissionSchemaIdentity", "business-logic/flow-v1");
+            HasString(
+                binding,
+                "submissionSchemaIdentity",
+                authority.Execution.SubmissionSchemaIdentity);
     }
 
     private static bool ValidateClaim(JsonElement value, HashSet<Guid> cited) =>
@@ -1424,6 +1471,10 @@ public sealed class Pass2BusinessLogicDocumentCommitter : IPass2BusinessLogicDoc
             request.Pass2JobExecutionId.ToString("D"),
             request.AttemptOrdinal.ToString(System.Globalization.CultureInfo.InvariantCulture),
             request.PromptIdentity,
+            request.PromptFingerprint,
+            request.SubmissionSchemaIdentity,
+            request.SubmissionSchemaFingerprint,
+            request.ToolDeclarationFingerprint,
             JsonSerializer.Serialize(request.Candidate),
             authority.AuthorityFingerprint,
             string.Join('\n', evidence.OrderBy(value => value.Key).Select(value => string.Join('|',
@@ -1442,6 +1493,19 @@ public sealed class Pass2BusinessLogicDocumentCommitter : IPass2BusinessLogicDoc
                 value.Value.EvidenceFingerprint,
                 value.Value.ReturnedUtf8Bytes.ToString(System.Globalization.CultureInfo.InvariantCulture),
                 value.Value.SourceHash ?? string.Empty)))));
+
+    private bool RequestContractMatches(Pass2BusinessLogicCommitRequest request) =>
+        StringComparer.Ordinal.Equals(request.PromptIdentity, WorkerContract.PromptIdentity) &&
+        StringComparer.Ordinal.Equals(request.PromptFingerprint, WorkerContract.PromptFingerprint) &&
+        StringComparer.Ordinal.Equals(
+            request.SubmissionSchemaIdentity,
+            WorkerContract.SubmissionSchemaIdentity) &&
+        StringComparer.Ordinal.Equals(
+            request.SubmissionSchemaFingerprint,
+            WorkerContract.SubmissionSchemaFingerprint) &&
+        StringComparer.Ordinal.Equals(
+            request.ToolDeclarationFingerprint,
+            WorkerContract.ToolDeclarationFingerprint);
 
     private static Guid DeriveId(string schema, params string[] identities)
     {

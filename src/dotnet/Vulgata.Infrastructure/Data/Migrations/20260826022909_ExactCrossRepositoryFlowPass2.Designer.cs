@@ -331,11 +331,35 @@ namespace Vulgata.Infrastructure.Data.Migrations
                         .HasMaxLength(512)
                         .HasColumnType("character varying(512)");
 
+                    b.Property<string>("ConsumerEvidenceFingerprint")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character(64)")
+                        .IsFixedLength();
+
+                    b.Property<string>("ConsumerProfiledRevision")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character(40)")
+                        .IsFixedLength();
+
+                    b.Property<Guid>("ConsumerRepositoryId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ConsumerScanRunId")
+                        .HasColumnType("uuid");
+
                     b.Property<Guid>("CoordinationId")
                         .HasColumnType("uuid");
 
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DecisionFingerprint")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character(64)")
+                        .IsFixedLength();
 
                     b.Property<Guid?>("DocumentEdgeId")
                         .HasColumnType("uuid");
@@ -346,6 +370,16 @@ namespace Vulgata.Infrastructure.Data.Migrations
                         .HasColumnType("character(64)")
                         .IsFixedLength();
 
+                    b.Property<string>("NormalizationRuleIdentity")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<string>("NormalizedEndpointIdentifier")
+                        .IsRequired()
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)");
+
                     b.Property<string>("NormalizedEndpointIdentifier")
                         .IsRequired()
                         .HasMaxLength(512)
@@ -355,6 +389,11 @@ namespace Vulgata.Infrastructure.Data.Migrations
                         .IsRequired()
                         .HasMaxLength(64)
                         .HasColumnType("character varying(64)");
+
+                    b.Property<string>("OutcomeKind")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
 
                     b.Property<Guid>("Pass1PairExecutionId")
                         .HasColumnType("uuid");
@@ -367,6 +406,39 @@ namespace Vulgata.Infrastructure.Data.Migrations
                     b.Property<Guid?>("ProviderDocumentVersionId")
                         .HasColumnType("uuid");
 
+                    b.Property<string>("ProviderEvidenceSetFingerprint")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character(64)")
+                        .IsFixedLength();
+
+                    b.Property<Guid?>("ProviderIdentity")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ProviderProfiledRevision")
+                        .HasMaxLength(40)
+                        .HasColumnType("character(40)")
+                        .IsFixedLength();
+
+                    b.Property<Guid?>("ProviderRepositoryId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("ProviderScanRunId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ReasonCode")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<string>("ResolutionSchemaIdentity")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<Guid?>("ResolvedUncertaintyId")
+                        .HasColumnType("uuid");
+
                     b.Property<Guid>("SystemId")
                         .HasColumnType("uuid");
 
@@ -375,12 +447,18 @@ namespace Vulgata.Infrastructure.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("DocumentEdgeId");
-
-                    b.HasIndex("EvidenceFingerprint")
+                    b.HasIndex("DecisionFingerprint")
                         .IsUnique();
 
+                    b.HasIndex("DocumentEdgeId");
+
                     b.HasIndex("UncertaintyId")
+                        .IsUnique();
+
+                    b.HasIndex("ResolvedUncertaintyId")
+                        .IsUnique();
+
+                    b.HasIndex("Pass1PairExecutionId", "ConsumerCandidateId", "Protocol", "NormalizedEndpointIdentifier")
                         .IsUnique();
 
                     b.ToTable("CrossRepositoryResolutionDecisions", "vulgata");
@@ -774,6 +852,20 @@ namespace Vulgata.Infrastructure.Data.Migrations
 
             modelBuilder.Entity("Vulgata.Core.Entities.ExactResolutionProviderEvidenceContribution", b =>
                 {
+                    b.Property<string>("CatalogRuleIdentity")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<string>("ClassificationFingerprint")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character(64)")
+                        .IsFixedLength();
+
+                    b.Property<Guid>("CommunicationClassificationId")
+                        .HasColumnType("uuid");
+
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid");
 
@@ -789,11 +881,41 @@ namespace Vulgata.Infrastructure.Data.Migrations
                     b.Property<int>("EvidenceOrdinal")
                         .HasColumnType("integer");
 
+                    b.Property<string>("EvidenceLocator")
+                        .IsRequired()
+                        .HasMaxLength(2048)
+                        .HasColumnType("character varying(2048)");
+
                     b.Property<Guid>("ProviderDocumentVersionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ProviderIdentity")
                         .HasColumnType("uuid");
 
                     b.Property<int>("ProviderOrdinal")
                         .HasColumnType("integer");
+
+                    b.Property<string>("ProviderRawIdentifier")
+                        .IsRequired()
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)");
+
+                    b.Property<string>("NormalizationRuleIdentity")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<string>("ProfiledRevision")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character(40)")
+                        .IsFixedLength();
+
+                    b.Property<Guid>("RepositoryId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ScanRunId")
+                        .HasColumnType("uuid");
 
                     b.Property<Guid>("ResolutionDecisionId")
                         .HasColumnType("uuid");
@@ -802,6 +924,8 @@ namespace Vulgata.Infrastructure.Data.Migrations
                         .HasColumnType("uuid");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("CommunicationClassificationId");
 
                     b.HasIndex("SourceAnchorId");
 
@@ -1611,6 +1735,11 @@ namespace Vulgata.Infrastructure.Data.Migrations
                         .IsConcurrencyToken()
                         .HasColumnType("bigint");
 
+                    b.Property<string>("SubmissionSchemaIdentity")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
                     b.Property<Guid>("SystemId")
                         .HasColumnType("uuid");
 
@@ -1649,17 +1778,49 @@ namespace Vulgata.Infrastructure.Data.Migrations
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid");
 
+                    b.Property<string>("AuthorizationSubject")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("character varying(450)");
+
+                    b.Property<int>("CandidateCount")
+                        .HasColumnType("integer");
+
                     b.Property<Guid>("CoordinationId")
                         .HasColumnType("uuid");
 
                     b.Property<int>("FailedCount")
                         .HasColumnType("integer");
 
+                    b.Property<string>("ExecutionFingerprint")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character(64)")
+                        .IsFixedLength();
+
                     b.Property<Guid>("Pass1PairExecutionId")
                         .HasColumnType("uuid");
 
+                    b.Property<int>("PlannedCount")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("PlanningFingerprint")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character(64)")
+                        .IsFixedLength();
+
+                    b.Property<bool>("PlanRecorded")
+                        .HasColumnType("boolean");
+
                     b.Property<int>("PublishedCount")
                         .HasColumnType("integer");
+
+                    b.Property<string>("ResolutionFingerprint")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character(64)")
+                        .IsFixedLength();
 
                     b.Property<DateTimeOffset>("StartedAt")
                         .HasColumnType("timestamp with time zone");
@@ -1673,11 +1834,52 @@ namespace Vulgata.Infrastructure.Data.Migrations
                         .IsConcurrencyToken()
                         .HasColumnType("bigint");
 
+                    b.Property<string>("SubmissionSchemaIdentity")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<string>("SubmissionSchemaFingerprint")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character(64)")
+                        .IsFixedLength();
+
                     b.Property<Guid>("SystemId")
                         .HasColumnType("uuid");
 
+                    b.Property<int>("TerminalBoundExcludedCount")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("TerminalIncompleteCount")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("TerminalOmissionCount")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("ToolDeclarationFingerprint")
+                        .IsRequired()
+                        .IsFixedLength()
+                        .HasMaxLength(64)
+                        .HasColumnType("character(64)");
+
+                    b.Property<string>("TerminalWarningInventory")
+                        .HasMaxLength(65536)
+                        .HasColumnType("character varying(65536)");
+
                     b.Property<DateTimeOffset>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("WorkerPromptIdentity")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<string>("WorkerPromptFingerprint")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character(64)")
+                        .IsFixedLength();
 
                     b.HasKey("Id");
 
@@ -1691,7 +1893,11 @@ namespace Vulgata.Infrastructure.Data.Migrations
 
                     b.ToTable("Pass2Executions", "vulgata", t =>
                         {
-                            t.HasCheckConstraint("CK_Pass2Executions_Accounting", "\"PublishedCount\" >= 0 AND \"FailedCount\" >= 0");
+                            t.HasCheckConstraint("CK_Pass2Executions_Accounting", "\"CandidateCount\" BETWEEN 0 AND 256 AND length(\"ResolutionFingerprint\") = 64 AND length(\"PlanningFingerprint\") = 64 AND length(\"ExecutionFingerprint\") = 64 AND \"PublishedCount\" >= 0 AND \"FailedCount\" >= 0 AND \"PlannedCount\" BETWEEN 0 AND 256 AND \"TerminalIncompleteCount\" >= 0 AND \"TerminalBoundExcludedCount\" >= 0 AND \"TerminalOmissionCount\" >= 0");
+
+                            t.HasCheckConstraint("CK_Pass2Executions_AcceptedWorkerContract", "length(\"WorkerPromptIdentity\") BETWEEN 1 AND 128 AND length(\"WorkerPromptFingerprint\") = 64 AND length(\"SubmissionSchemaIdentity\") BETWEEN 1 AND 128 AND length(\"SubmissionSchemaFingerprint\") = 64 AND length(\"ToolDeclarationFingerprint\") = 64");
+
+                            t.HasCheckConstraint("CK_Pass2Executions_TerminalSummary", "(\"State\" IN ('Completed', 'CompletedWithWarnings') AND \"TerminalWarningInventory\" IS NOT NULL) OR (\"State\" IN ('FailedIntegrity', 'FailedSecurity')) OR (\"State\" NOT IN ('Completed', 'CompletedWithWarnings', 'FailedIntegrity', 'FailedSecurity') AND \"TerminalWarningInventory\" IS NULL AND \"TerminalIncompleteCount\" = 0 AND \"TerminalBoundExcludedCount\" = 0 AND \"TerminalOmissionCount\" = 0)");
                         });
                 });
 
@@ -3760,6 +3966,12 @@ namespace Vulgata.Infrastructure.Data.Migrations
 
             modelBuilder.Entity("Vulgata.Core.Entities.ExactResolutionProviderEvidenceContribution", b =>
                 {
+                    b.HasOne("Vulgata.Core.Entities.CommunicationKindClassification", null)
+                        .WithMany()
+                        .HasForeignKey("CommunicationClassificationId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.HasOne("Vulgata.Core.Entities.CrossRepositoryResolutionDecision", null)
                         .WithMany()
                         .HasForeignKey("ResolutionDecisionId")

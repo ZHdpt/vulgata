@@ -1,3 +1,4 @@
+using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using Microsoft.Extensions.AI;
@@ -29,8 +30,11 @@ public sealed record PreparedPass2WorkerPacket(
     public string PlanFingerprint { get; init; } = string.Empty;
     public string MembershipFingerprint { get; init; } = string.Empty;
     public string PromptIdentity { get; init; } = string.Empty;
+    public string PromptFingerprint { get; init; } = string.Empty;
     public string SubmissionSchemaIdentity { get; init; } = string.Empty;
+    public string SubmissionSchemaFingerprint { get; init; } = string.Empty;
     public string ToolDeclarationIdentity { get; init; } = string.Empty;
+    public string ToolDeclarationFingerprint { get; init; } = string.Empty;
 }
 
 public sealed record PreparedPass2ProviderRequest(
@@ -130,6 +134,21 @@ public sealed class PreparedPass2JobExecutor
         Pass2StrictDeclarationSet declarations = Pass2StrictToolDeclarations.Create(
             retrieve.Function,
             submit.Function);
+        if (packet.ToolDeclarationFingerprint.Length != 0 &&
+            !StringComparer.Ordinal.Equals(
+                packet.ToolDeclarationFingerprint,
+                Convert.ToHexStringLower(SHA256.HashData(declarations.ProjectedUtf8))))
+        {
+            return new(false, ReadOnlyMemory<byte>.Empty, "invalid-binding");
+        }
+
+        if (packet.PromptFingerprint.Length != 0 &&
+            !StringComparer.Ordinal.Equals(
+                packet.PromptFingerprint,
+                Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(prompt)))))
+        {
+            return new(false, ReadOnlyMemory<byte>.Empty, "invalid-binding");
+        }
 
         using var absoluteCancellation = new CancellationTokenSource(
             _absoluteTimeout,
@@ -455,6 +474,73 @@ public sealed class PreparedPass2JobExecutor
         ReadOnlySpan<byte> sanitizedResults,
         ReadOnlySpan<byte> repairContext)
     {
+        JsonDocument packetDocument;
+        try
+        {
+            packetDocument = JsonDocument.Parse(packet.ProviderUtf8);
+        }
+        catch (JsonException)
+        {
+            return ComposeOpaqueProviderContext(
+                packet, transcript, sanitizedResults, repairContext);
+        }
+
+        using (packetDocument)
+        {
+            using JsonDocument transcriptDocument = JsonDocument.Parse(transcript.ToArray());
+            using JsonDocument resultsDocument = JsonDocument.Parse(sanitizedResults.ToArray());
+            using var destination = new MemoryStream();
+            using (var writer = new Utf8JsonWriter(destination))
+            {
+                writer.WriteStartObject();
+                foreach (JsonProperty property in packetDocument.RootElement.EnumerateObject())
+                {
+                    property.WriteTo(writer);
+                }
+
+                writer.WritePropertyName("serverAuthority");
+                JsonSerializer.Serialize(writer, new
+                {
+                    pass2JobExecutionId = packet.JobId,
+                    flowId = packet.Flow.FlowId,
+                    packet.Pass2ExecutionId,
+                    packet.FlowGroupId,
+                    packet.ExactResolutionDecisionId,
+                    packet.AttemptOrdinal,
+                    packet.LogicalDocumentStableKey,
+                    packet.PlanFingerprint,
+                    packet.MembershipFingerprint,
+                    packet.PromptIdentity,
+                    packet.PromptFingerprint,
+                    packet.SubmissionSchemaIdentity,
+                    packet.SubmissionSchemaFingerprint,
+                    packet.ToolDeclarationIdentity,
+                    packet.ToolDeclarationFingerprint,
+                });
+                writer.WritePropertyName("boundedConversationTranscript");
+                transcriptDocument.RootElement.WriteTo(writer);
+                writer.WritePropertyName("admittedRetrievalResults");
+                resultsDocument.RootElement.WriteTo(writer);
+                if (!repairContext.IsEmpty)
+                {
+                    using JsonDocument repairDocument = JsonDocument.Parse(repairContext.ToArray());
+                    writer.WritePropertyName("firstSubmissionCorrection");
+                    repairDocument.RootElement.WriteTo(writer);
+                }
+
+                writer.WriteEndObject();
+            }
+
+            return destination.ToArray();
+        }
+    }
+
+    private static byte[] ComposeOpaqueProviderContext(
+        PreparedPass2WorkerPacket packet,
+        ReadOnlySpan<byte> transcript,
+        ReadOnlySpan<byte> sanitizedResults,
+        ReadOnlySpan<byte> repairContext)
+    {
         using var destination = new MemoryStream();
         destination.Write(packet.ProviderUtf8.Span);
         WriteSection(
@@ -472,8 +558,11 @@ public sealed class PreparedPass2JobExecutor
                 packet.PlanFingerprint,
                 packet.MembershipFingerprint,
                 packet.PromptIdentity,
+                packet.PromptFingerprint,
                 packet.SubmissionSchemaIdentity,
+                packet.SubmissionSchemaFingerprint,
                 packet.ToolDeclarationIdentity,
+                packet.ToolDeclarationFingerprint,
             }));
         WriteSection(destination, "boundedConversationTranscript", transcript);
         WriteSection(destination, "admittedRetrievalResults", sanitizedResults);

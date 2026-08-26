@@ -89,6 +89,7 @@ One normalized durable row preserves each distinct provider observation in the a
 | `ProviderDocumentVersionId`, `RepositoryId`, `ScanRunId`, `ProfiledRevision` | exact current provider binding |
 | `ProviderOrdinal`, `EvidenceOrdinal` | contiguous canonical ordinals |
 | `CommunicationClassificationId`, `SourceAnchorId` | exact contributing evidence FKs |
+| `ProviderRawIdentifier`, `NormalizedEndpointIdentifier` | reproduced bounded provider observation identity used by canonical sorting, hashing and replay |
 | `CatalogRuleIdentity`, `EvidenceLocator`, `NormalizationRuleIdentity` | bounded reproduced safe-catalog evidence |
 | `EvidenceFingerprint` | lower SHA-256 over the complete observation |
 

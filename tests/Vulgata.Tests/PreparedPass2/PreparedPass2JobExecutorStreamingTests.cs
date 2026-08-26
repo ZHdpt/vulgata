@@ -1,8 +1,11 @@
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
+using Vulgata.Agents;
 using Vulgata.Agents.WorkerExecution;
 using Vulgata.Core.DomainServices;
+using Vulgata.Core.Entities;
+using Vulgata.Shared;
 
 namespace Vulgata.Tests.PreparedPass2;
 
@@ -57,6 +60,46 @@ public sealed class PreparedPass2JobExecutorStreamingTests
         Assert.False(result.Accepted);
         Assert.Equal("provider-unavailable", result.ReasonCode);
         Assert.Single(transport.Requests);
+    }
+
+    [Fact]
+    public async Task StreamingTransport_OversizedUnterminatedSseLine_RejectsBeforeRawCapReadAsync()
+    {
+        Guid systemId = Guid.NewGuid();
+        LlmProvider provider = new(
+            "pass2-test-provider",
+            "https://provider.test/v1",
+            "ciphertext",
+            ApiType.ChatCompletions,
+            AgentType.Worker,
+            DateTimeOffset.UtcNow);
+        var stream = new OversizedUnterminatedSseStream(
+            PreparedPass2WireBudget.MaximumRawResponseUtf8Bytes + 1);
+        var transport = new OpenAiCompatiblePass2StreamingTransport(
+            new WorkerAgentProviderResolver(
+                new EmptyProviderOverrideRepository(),
+                new SingleProviderRepository(provider)),
+            new PlaintextEncryptionService(),
+            new SseStreamHandler(stream));
+        var request = new PreparedPass2ProviderRequest(
+            1,
+            "bounded prompt",
+            JsonSerializer.SerializeToUtf8Bytes(new
+            {
+                flow = new { systemId },
+            }),
+            "[]"u8.ToArray(),
+            SubmissionOnly: false);
+
+        await Assert.ThrowsAsync<InvalidDataException>(async () =>
+        {
+            await foreach (ReadOnlyMemory<byte> _ in transport.StreamAsync(request))
+            {
+            }
+        });
+        Assert.True(
+            stream.BytesRead <= PreparedPass2WireBudget.MaximumRawResponseUtf8Bytes,
+            $"The unterminated SSE line consumed {stream.BytesRead} bytes before rejection.");
     }
 
     [Fact]
@@ -569,6 +612,130 @@ public sealed class PreparedPass2JobExecutorStreamingTests
             int index = Interlocked.Increment(ref _nextScript) - 1;
             return scripts[Math.Min(index, scripts.Count - 1)];
         }
+    }
+
+    private sealed class OversizedUnterminatedSseStream(long length) : Stream
+    {
+        private static readonly byte[] _prefix = "data: "u8.ToArray();
+        private long _position;
+        internal long BytesRead { get; private set; }
+        public override bool CanRead => true;
+        public override bool CanSeek => false;
+        public override bool CanWrite => false;
+        public override long Length => length;
+        public override long Position { get => _position; set => throw new NotSupportedException(); }
+
+        public override int Read(byte[] buffer, int offset, int count) =>
+            Read(buffer.AsSpan(offset, count));
+
+        public override int Read(Span<byte> buffer)
+        {
+            int count = (int)Math.Min(buffer.Length, length - _position);
+            if (count <= 0)
+            {
+                return 0;
+            }
+
+            for (int index = 0; index < count; index++)
+            {
+                long absolute = _position + index;
+                buffer[index] = absolute < _prefix.Length
+                    ? _prefix[(int)absolute]
+                    : (byte)'a';
+            }
+
+            _position += count;
+            BytesRead += count;
+            return count;
+        }
+
+        public override ValueTask<int> ReadAsync(
+            Memory<byte> buffer,
+            CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            return ValueTask.FromResult(Read(buffer.Span));
+        }
+
+        public override void Flush() => throw new NotSupportedException();
+        public override long Seek(long offset, SeekOrigin origin) => throw new NotSupportedException();
+        public override void SetLength(long value) => throw new NotSupportedException();
+        public override void Write(byte[] buffer, int offset, int count) =>
+            throw new NotSupportedException();
+    }
+
+    private sealed class SseStreamHandler(Stream stream) : HttpMessageHandler
+    {
+        protected override Task<HttpResponseMessage> SendAsync(
+            HttpRequestMessage request,
+            CancellationToken cancellationToken) => Task.FromResult(new HttpResponseMessage
+            {
+                StatusCode = System.Net.HttpStatusCode.OK,
+                Content = new StreamContent(stream),
+            });
+    }
+
+    private sealed class PlaintextEncryptionService : ISecretEncryptionService
+    {
+        public Task<string> EncryptAsync(
+            string purpose,
+            string plain,
+            CancellationToken cancellationToken = default) => throw new NotSupportedException();
+
+        public Task<string> DecryptAsync(
+            string purpose,
+            string cipher,
+            CancellationToken cancellationToken = default) => Task.FromResult("test-key");
+    }
+
+    private sealed class EmptyProviderOverrideRepository : ISystemLlmProviderOverrideRepository
+    {
+        public Task<IReadOnlyList<SystemLlmProviderOverride>> ListBySystemAsync(
+            Guid systemId,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult<IReadOnlyList<SystemLlmProviderOverride>>([]);
+
+        public Task<SystemLlmProviderOverride?> GetBySystemAndIdAsync(
+            Guid systemId,
+            Guid overrideId,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult<SystemLlmProviderOverride?>(null);
+        public Task<SystemLlmProviderOverride?> GetBySystemAndAgentTypeAsync(
+            Guid systemId,
+            AgentType agentType,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult<SystemLlmProviderOverride?>(null);
+
+        public Task<SystemLlmProviderOverride> AddAsync(
+            SystemLlmProviderOverride overrideEntry,
+            CancellationToken cancellationToken = default) => throw new NotSupportedException();
+        public Task<bool> RemoveAsync(
+            Guid systemId,
+            Guid overrideId,
+            CancellationToken cancellationToken = default) => throw new NotSupportedException();
+        public Task SaveChangesAsync(CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
+    }
+
+    private sealed class SingleProviderRepository(LlmProvider provider) : ILlmProviderRepository
+    {
+        public Task<IReadOnlyList<LlmProvider>> ListAllAsync(
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult<IReadOnlyList<LlmProvider>>([provider]);
+        public Task<LlmProvider?> GetByIdAsync(
+            Guid id,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult<LlmProvider?>(id == provider.Id ? provider : null);
+        public Task<bool> NameExistsAsync(
+            string name,
+            Guid? excludeProviderId = null,
+            CancellationToken cancellationToken = default) => throw new NotSupportedException();
+        public Task<LlmProvider> AddAsync(
+            LlmProvider value,
+            CancellationToken cancellationToken = default) => throw new NotSupportedException();
+        public void Remove(LlmProvider value) => throw new NotSupportedException();
+        public Task SaveChangesAsync(CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
     }
 
     private sealed class RecordingRetrievalService(

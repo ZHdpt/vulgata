@@ -440,7 +440,8 @@ public sealed class RetrieveCodeLogicSecurityTests
         Assert.Equal(Pass2CodeLogicRetrievalOutcome.Accepted, candidate.Outcome);
         Assert.NotEmpty(candidate.Items);
 
-        Pass2RetrievalReservation reservation = await new PreparedPass2Store(fixture.Context)
+        Pass2RetrievalReservation reservation = await Pass2PartialCompletionTests
+            .CreateAuthorizedStore(fixture.Context)
             .ReserveRetrievalAsync(fixture.JobExecutionId, request, CancellationToken.None);
         Assert.True(reservation.IsReserved);
         string reservedAccounting = await fixture.RetrievalAccountingSnapshotAsync();
@@ -464,7 +465,8 @@ public sealed class RetrieveCodeLogicSecurityTests
             .SingleAsync());
 
         Guid[] initialDocumentVersionIds = await fixture.InitialDocumentVersionIdsAsync();
-        Pass2CodeLogicRetrievalResult result = await new PreparedPass2Store(fixture.Context)
+        Pass2CodeLogicRetrievalResult result = await Pass2PartialCompletionTests
+            .CreateAuthorizedStore(fixture.Context)
             .AdmitRetrievalAsync(
                 fixture.JobExecutionId,
                 reservation,
@@ -640,7 +642,8 @@ public sealed class RetrieveCodeLogicSecurityTests
                     await AddAdditionalDecisionAsync(context, seed);
                 }
 
-                PreparedPass2StartResult start = await new PreparedPass2Store(context)
+                PreparedPass2StartResult start = await Pass2PartialCompletionTests
+                    .CreateAuthorizedStore(context)
                     .StartAsync(pair.Id, liveScope);
                 Assert.Equal(PreparedPass2StartOutcome.Created, start.Outcome);
                 Pass2JobExecution[] jobs = await context.Pass2JobExecutions

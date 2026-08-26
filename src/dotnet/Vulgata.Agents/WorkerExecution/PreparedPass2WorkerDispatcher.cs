@@ -16,13 +16,33 @@ public sealed class PreparedPass2WorkerDispatcher : IPreparedPass2WorkerDispatch
     private static readonly UTF8Encoding _strictUtf8 = new(false, true);
     private readonly PreparedPass2JobExecutor _executor;
     private readonly IPass2BusinessLogicDocumentCommitter _committer;
+    private readonly PreparedPass2WorkerContractAuthority? _workerContract;
 
     public PreparedPass2WorkerDispatcher(
         PreparedPass2JobExecutor executor,
         IPass2BusinessLogicDocumentCommitter committer)
+        : this(executor, committer, null, true)
     {
+    }
+
+    public PreparedPass2WorkerDispatcher(
+        PreparedPass2JobExecutor executor,
+        IPass2BusinessLogicDocumentCommitter committer,
+        IPreparedPass2WorkerContractAuthority workerContractAuthority)
+        : this(executor, committer, workerContractAuthority, false)
+    {
+    }
+
+    private PreparedPass2WorkerDispatcher(
+        PreparedPass2JobExecutor executor,
+        IPass2BusinessLogicDocumentCommitter committer,
+        IPreparedPass2WorkerContractAuthority? workerContractAuthority,
+        bool compatibilityAdapter)
+    {
+        _ = compatibilityAdapter;
         _executor = executor ?? throw new ArgumentNullException(nameof(executor));
         _committer = committer ?? throw new ArgumentNullException(nameof(committer));
+        _workerContract = workerContractAuthority?.GetCurrent();
     }
 
     public async Task<PreparedPass2DispatchResult> DispatchAsync(
@@ -31,7 +51,7 @@ public sealed class PreparedPass2WorkerDispatcher : IPreparedPass2WorkerDispatch
     {
         ArgumentNullException.ThrowIfNull(request);
         cancellationToken.ThrowIfCancellationRequested();
-        if (!IsAuthoritative(request) ||
+        if (_workerContract is null || !IsAuthoritative(request) ||
             request.Flow is null || request.RuntimeBinding is null ||
             !request.RuntimeBinding.IsCanonical() ||
             !request.Flow.IsExactMatch(request.RuntimeBinding.Flow))
@@ -80,7 +100,13 @@ public sealed class PreparedPass2WorkerDispatcher : IPreparedPass2WorkerDispatch
                     dispatch.AttemptOrdinal,
                     candidate.RootElement,
                     dispatch.InitialEvidence,
-                    dispatch.PromptIdentity),
+                    dispatch.PromptIdentity)
+                {
+                    PromptFingerprint = dispatch.PromptFingerprint,
+                    SubmissionSchemaIdentity = dispatch.SubmissionSchemaIdentity,
+                    SubmissionSchemaFingerprint = dispatch.SubmissionSchemaFingerprint,
+                    ToolDeclarationFingerprint = dispatch.ToolDeclarationFingerprint,
+                },
                 cancellationToken);
             return result.Status is Pass2BusinessLogicCommitStatus.Committed or
                 Pass2BusinessLogicCommitStatus.Replayed
@@ -158,8 +184,11 @@ public sealed class PreparedPass2WorkerDispatcher : IPreparedPass2WorkerDispatch
             planFingerprint = request.PlanFingerprint,
             membershipFingerprint = request.MembershipFingerprint,
             promptIdentity = request.PromptIdentity,
+            promptFingerprint = request.PromptFingerprint,
             submissionSchemaIdentity = request.SubmissionSchemaIdentity,
+            submissionSchemaFingerprint = request.SubmissionSchemaFingerprint,
             toolDeclarationIdentity = request.ToolDeclarationIdentity,
+            toolDeclarationFingerprint = request.ToolDeclarationFingerprint,
             flow = new
             {
                 flow.SchemaIdentity,
@@ -213,12 +242,15 @@ public sealed class PreparedPass2WorkerDispatcher : IPreparedPass2WorkerDispatch
             PlanFingerprint = request.PlanFingerprint,
             MembershipFingerprint = request.MembershipFingerprint,
             PromptIdentity = request.PromptIdentity,
+            PromptFingerprint = request.PromptFingerprint,
             SubmissionSchemaIdentity = request.SubmissionSchemaIdentity,
+            SubmissionSchemaFingerprint = request.SubmissionSchemaFingerprint,
             ToolDeclarationIdentity = request.ToolDeclarationIdentity,
+            ToolDeclarationFingerprint = request.ToolDeclarationFingerprint,
         };
     }
 
-    private static bool IsAuthoritative(PreparedPass2DispatchRequest request) =>
+    private bool IsAuthoritative(PreparedPass2DispatchRequest request) =>
         request.Pass2JobExecutionId != Guid.Empty &&
         request.LeaseToken != Guid.Empty &&
         request.LeaseExpiresAt > DateTimeOffset.UtcNow &&
@@ -238,18 +270,20 @@ public sealed class PreparedPass2WorkerDispatcher : IPreparedPass2WorkerDispatch
         IsLowerFingerprint(request.LogicalDocumentStableKey["business-flow/v1/".Length..]) &&
         IsLowerFingerprint(request.PlanFingerprint) &&
         IsLowerFingerprint(request.MembershipFingerprint) &&
-        string.Equals(
-            request.PromptIdentity,
-            "pass2-business-logic-worker.v1",
-            StringComparison.Ordinal) &&
-        string.Equals(
-            request.SubmissionSchemaIdentity,
-            "business-logic/flow-v1",
-            StringComparison.Ordinal) &&
+        StringComparer.Ordinal.Equals(
+            request.PromptIdentity, _workerContract!.PromptIdentity) &&
+        StringComparer.Ordinal.Equals(
+            request.PromptFingerprint, _workerContract.PromptFingerprint) &&
+        StringComparer.Ordinal.Equals(
+            request.SubmissionSchemaIdentity, _workerContract.SubmissionSchemaIdentity) &&
+        StringComparer.Ordinal.Equals(
+            request.SubmissionSchemaFingerprint, _workerContract.SubmissionSchemaFingerprint) &&
         string.Equals(
             request.ToolDeclarationIdentity,
             Pass2StrictToolDeclarations.Identity,
             StringComparison.Ordinal) &&
+        StringComparer.Ordinal.Equals(
+            request.ToolDeclarationFingerprint, _workerContract.ToolDeclarationFingerprint) &&
         request.InitialEvidence is { Count: > 0 } &&
         request.InitialEvidence.All(IsValidEvidenceBinding);
 

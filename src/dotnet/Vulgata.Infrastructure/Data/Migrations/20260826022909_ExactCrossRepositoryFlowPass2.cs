@@ -204,6 +204,7 @@ namespace Vulgata.Infrastructure.Data.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    ResolutionSchemaIdentity = table.Column<string>(type: "character varying(128)", maxLength: 128, nullable: false),
                     Pass1PairExecutionId = table.Column<Guid>(type: "uuid", nullable: false),
                     CoordinationId = table.Column<Guid>(type: "uuid", nullable: false),
                     SystemId = table.Column<Guid>(type: "uuid", nullable: false),
@@ -211,12 +212,26 @@ namespace Vulgata.Infrastructure.Data.Migrations
                     ConsumerEntryIdentity = table.Column<string>(type: "character varying(512)", maxLength: 512, nullable: false),
                     ConsumerEntryStableKey = table.Column<string>(type: "character varying(512)", maxLength: 512, nullable: false),
                     ConsumerDocumentVersionId = table.Column<Guid>(type: "uuid", nullable: false),
+                    ConsumerRepositoryId = table.Column<Guid>(type: "uuid", nullable: false),
+                    ConsumerScanRunId = table.Column<Guid>(type: "uuid", nullable: false),
+                    ConsumerProfiledRevision = table.Column<string>(type: "character(40)", fixedLength: true, maxLength: 40, nullable: false),
                     Protocol = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: false),
                     NormalizedEndpointIdentifier = table.Column<string>(type: "character varying(512)", maxLength: 512, nullable: false),
+                    NormalizationRuleIdentity = table.Column<string>(type: "character varying(128)", maxLength: 128, nullable: false),
                     Outcome = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
+                    OutcomeKind = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: false),
+                    ReasonCode = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
+                    ProviderIdentity = table.Column<Guid>(type: "uuid", nullable: true),
                     ProviderDocumentVersionId = table.Column<Guid>(type: "uuid", nullable: true),
+                    ProviderRepositoryId = table.Column<Guid>(type: "uuid", nullable: true),
+                    ProviderScanRunId = table.Column<Guid>(type: "uuid", nullable: true),
+                    ProviderProfiledRevision = table.Column<string>(type: "character(40)", fixedLength: true, maxLength: 40, nullable: true),
                     DocumentEdgeId = table.Column<Guid>(type: "uuid", nullable: true),
                     UncertaintyId = table.Column<Guid>(type: "uuid", nullable: true),
+                    ResolvedUncertaintyId = table.Column<Guid>(type: "uuid", nullable: true),
+                    ConsumerEvidenceFingerprint = table.Column<string>(type: "character(64)", fixedLength: true, maxLength: 64, nullable: false),
+                    ProviderEvidenceSetFingerprint = table.Column<string>(type: "character(64)", fixedLength: true, maxLength: 64, nullable: false),
+                    DecisionFingerprint = table.Column<string>(type: "character(64)", fixedLength: true, maxLength: 64, nullable: false),
                     EvidenceFingerprint = table.Column<string>(type: "character(64)", fixedLength: true, maxLength: 64, nullable: false),
                     CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
                 },
@@ -248,9 +263,25 @@ namespace Vulgata.Infrastructure.Data.Migrations
                     Pass1PairExecutionId = table.Column<Guid>(type: "uuid", nullable: false),
                     CoordinationId = table.Column<Guid>(type: "uuid", nullable: false),
                     SystemId = table.Column<Guid>(type: "uuid", nullable: false),
+                    AuthorizationSubject = table.Column<string>(type: "character varying(450)", maxLength: 450, nullable: false),
+                    WorkerPromptIdentity = table.Column<string>(type: "character varying(128)", maxLength: 128, nullable: false),
+                    WorkerPromptFingerprint = table.Column<string>(type: "character(64)", fixedLength: true, maxLength: 64, nullable: false),
+                    SubmissionSchemaIdentity = table.Column<string>(type: "character varying(128)", maxLength: 128, nullable: false),
+                    SubmissionSchemaFingerprint = table.Column<string>(type: "character(64)", fixedLength: true, maxLength: 64, nullable: false),
+                    ToolDeclarationFingerprint = table.Column<string>(type: "character(64)", fixedLength: true, maxLength: 64, nullable: false),
+                    CandidateCount = table.Column<int>(type: "integer", nullable: false),
+                    ResolutionFingerprint = table.Column<string>(type: "character(64)", fixedLength: true, maxLength: 64, nullable: false),
+                    PlanningFingerprint = table.Column<string>(type: "character(64)", fixedLength: true, maxLength: 64, nullable: false),
+                    ExecutionFingerprint = table.Column<string>(type: "character(64)", fixedLength: true, maxLength: 64, nullable: false),
                     State = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
                     PublishedCount = table.Column<int>(type: "integer", nullable: false),
                     FailedCount = table.Column<int>(type: "integer", nullable: false),
+                    PlannedCount = table.Column<int>(type: "integer", nullable: false),
+                    PlanRecorded = table.Column<bool>(type: "boolean", nullable: false),
+                    TerminalIncompleteCount = table.Column<int>(type: "integer", nullable: false),
+                    TerminalBoundExcludedCount = table.Column<int>(type: "integer", nullable: false),
+                    TerminalOmissionCount = table.Column<int>(type: "integer", nullable: false),
+                    TerminalWarningInventory = table.Column<string>(type: "character varying(65536)", maxLength: 65536, nullable: true),
                     StateVersion = table.Column<long>(type: "bigint", nullable: false),
                     StartedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
                     UpdatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
@@ -260,7 +291,13 @@ namespace Vulgata.Infrastructure.Data.Migrations
                     table.PrimaryKey("PK_Pass2Executions", x => x.Id);
                     table.CheckConstraint(
                         name: "CK_Pass2Executions_Accounting",
-                        sql: "\"PublishedCount\" >= 0 AND \"FailedCount\" >= 0");
+                        sql: "\"CandidateCount\" BETWEEN 0 AND 256 AND length(\"ResolutionFingerprint\") = 64 AND length(\"PlanningFingerprint\") = 64 AND length(\"ExecutionFingerprint\") = 64 AND \"PublishedCount\" >= 0 AND \"FailedCount\" >= 0 AND \"PlannedCount\" BETWEEN 0 AND 256 AND \"TerminalIncompleteCount\" >= 0 AND \"TerminalBoundExcludedCount\" >= 0 AND \"TerminalOmissionCount\" >= 0");
+                    table.CheckConstraint(
+                        name: "CK_Pass2Executions_AcceptedWorkerContract",
+                        sql: "length(\"WorkerPromptIdentity\") BETWEEN 1 AND 128 AND length(\"WorkerPromptFingerprint\") = 64 AND length(\"SubmissionSchemaIdentity\") BETWEEN 1 AND 128 AND length(\"SubmissionSchemaFingerprint\") = 64 AND length(\"ToolDeclarationFingerprint\") = 64");
+                    table.CheckConstraint(
+                        name: "CK_Pass2Executions_TerminalSummary",
+                        sql: "(\"State\" IN ('Completed', 'CompletedWithWarnings') AND \"TerminalWarningInventory\" IS NOT NULL) OR (\"State\" IN ('FailedIntegrity', 'FailedSecurity')) OR (\"State\" NOT IN ('Completed', 'CompletedWithWarnings', 'FailedIntegrity', 'FailedSecurity') AND \"TerminalWarningInventory\" IS NULL AND \"TerminalIncompleteCount\" = 0 AND \"TerminalBoundExcludedCount\" = 0 AND \"TerminalOmissionCount\" = 0)");
                     table.ForeignKey(
                         name: "FK_Pass2Executions_Pass1PairExecutions_Pass1PairExecutionId",
                         column: x => x.Pass1PairExecutionId,
@@ -291,8 +328,19 @@ namespace Vulgata.Infrastructure.Data.Migrations
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     ResolutionDecisionId = table.Column<Guid>(type: "uuid", nullable: false),
+                    ProviderIdentity = table.Column<Guid>(type: "uuid", nullable: false),
                     ProviderDocumentVersionId = table.Column<Guid>(type: "uuid", nullable: false),
+                    RepositoryId = table.Column<Guid>(type: "uuid", nullable: false),
+                    ScanRunId = table.Column<Guid>(type: "uuid", nullable: false),
+                    ProfiledRevision = table.Column<string>(type: "character(40)", fixedLength: true, maxLength: 40, nullable: false),
+                    CommunicationClassificationId = table.Column<Guid>(type: "uuid", nullable: false),
                     SourceAnchorId = table.Column<Guid>(type: "uuid", nullable: false),
+                    EvidenceLocator = table.Column<string>(type: "character varying(2048)", maxLength: 2048, nullable: false),
+                    ClassificationFingerprint = table.Column<string>(type: "character(64)", fixedLength: true, maxLength: 64, nullable: false),
+                    CatalogRuleIdentity = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: false),
+                    NormalizationRuleIdentity = table.Column<string>(type: "character varying(128)", maxLength: 128, nullable: false),
+                    ProviderRawIdentifier = table.Column<string>(type: "character varying(512)", maxLength: 512, nullable: false),
+                    NormalizedEndpointIdentifier = table.Column<string>(type: "character varying(512)", maxLength: 512, nullable: false),
                     EvidenceFingerprint = table.Column<string>(type: "character(64)", fixedLength: true, maxLength: 64, nullable: false),
                     ProviderOrdinal = table.Column<int>(type: "integer", nullable: false),
                     EvidenceOrdinal = table.Column<int>(type: "integer", nullable: false),
@@ -306,6 +354,13 @@ namespace Vulgata.Infrastructure.Data.Migrations
                         column: x => x.ResolutionDecisionId,
                         principalSchema: "vulgata",
                         principalTable: "CrossRepositoryResolutionDecisions",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_ExactResolutionProviderEvidenceContributions_CommunicationK~",
+                        column: x => x.CommunicationClassificationId,
+                        principalSchema: "vulgata",
+                        principalTable: "CommunicationKindClassifications",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
@@ -628,10 +683,24 @@ namespace Vulgata.Infrastructure.Data.Migrations
                 column: "DocumentEdgeId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_CrossRepositoryResolutionDecisions_EvidenceFingerprint",
+                name: "IX_CrossRepositoryResolutionDecisions_DecisionFingerprint",
                 schema: "vulgata",
                 table: "CrossRepositoryResolutionDecisions",
-                column: "EvidenceFingerprint",
+                column: "DecisionFingerprint",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_CrossRepositoryResolutionDecisions_Pass1PairExecutionId_ConsumerC~",
+                schema: "vulgata",
+                table: "CrossRepositoryResolutionDecisions",
+                columns: new[] { "Pass1PairExecutionId", "ConsumerCandidateId", "Protocol", "NormalizedEndpointIdentifier" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_CrossRepositoryResolutionDecisions_ResolvedUncertaintyId",
+                schema: "vulgata",
+                table: "CrossRepositoryResolutionDecisions",
+                column: "ResolvedUncertaintyId",
                 unique: true);
 
             migrationBuilder.CreateIndex(
@@ -640,6 +709,12 @@ namespace Vulgata.Infrastructure.Data.Migrations
                 table: "CrossRepositoryResolutionDecisions",
                 column: "UncertaintyId",
                 unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ExactResolutionProviderEvidenceContributions_CommunicationCl~",
+                schema: "vulgata",
+                table: "ExactResolutionProviderEvidenceContributions",
+                column: "CommunicationClassificationId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_ExactResolutionProviderEvidenceContributions_ResolutionDec~1",

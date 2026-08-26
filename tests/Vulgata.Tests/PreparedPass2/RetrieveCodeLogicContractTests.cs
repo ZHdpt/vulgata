@@ -1109,7 +1109,8 @@ public sealed class RetrieveCodeLogicContractTests
                     new AllowAllAuthorizationVerifier());
                 await AddSearchableSectionsAsync(context, seed);
 
-                PreparedPass2StartResult start = await new PreparedPass2Store(context)
+                PreparedPass2StartResult start = await Pass2PartialCompletionTests
+                    .CreateAuthorizedStore(context)
                     .StartAsync(pair.Id, scope);
                 Assert.Equal(PreparedPass2StartOutcome.Created, start.Outcome);
                 Pass2JobExecution job = await context.Pass2JobExecutions.SingleAsync();

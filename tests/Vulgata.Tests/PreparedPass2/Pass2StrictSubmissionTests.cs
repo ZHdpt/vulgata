@@ -303,7 +303,12 @@ public sealed class Pass2StrictSubmissionTests
             transport,
             new PreparedRetrieveCodeLogicFunction(retrieval),
             new PreparedSubmitBusinessLogicFunction());
-        var dispatcher = new PreparedPass2WorkerDispatcher(executor, committer);
+        PreparedPass2WorkerContractAuthority workerContract =
+            Pass2PartialCompletionTests.CreateWorkerContractAuthority();
+        var dispatcher = new PreparedPass2WorkerDispatcher(
+            executor,
+            committer,
+            new TestWorkerContractAuthority(workerContract));
 
         PreparedPass2DispatchResult result = await dispatcher.DispatchAsync(request);
 
@@ -435,6 +440,8 @@ public sealed class Pass2StrictSubmissionTests
             consumerDocumentVersionId, consumerRepositoryId, consumer.ScanRunId, revision,
             EdgeId: relationshipId));
 
+        PreparedPass2WorkerContractAuthority workerContract =
+            Pass2PartialCompletionTests.CreateWorkerContractAuthority();
         return new(
             claimedJobId,
             Guid.Parse("85000000-0000-4000-8000-000000000008"),
@@ -446,8 +453,20 @@ public sealed class Pass2StrictSubmissionTests
             Guid.Parse("88000000-0000-4000-8000-000000000008"),
             new('d', 64), new('e', 64), "Http", new('f', 64), new('1', 64),
             "business-flow/v1/" + new string('2', 64), new('3', 64), new('4', 64),
-            "pass2-business-logic-worker.v1", "business-logic/flow-v1",
-            Pass2StrictToolDeclarations.Identity, evidence, binding.Flow, binding);
+            workerContract.PromptIdentity, workerContract.SubmissionSchemaIdentity,
+            workerContract.ToolDeclarationIdentity, evidence, binding.Flow, binding)
+        {
+            PromptFingerprint = workerContract.PromptFingerprint,
+            SubmissionSchemaFingerprint = workerContract.SubmissionSchemaFingerprint,
+            ToolDeclarationFingerprint = workerContract.ToolDeclarationFingerprint,
+        };
+    }
+
+    private sealed class TestWorkerContractAuthority(
+        PreparedPass2WorkerContractAuthority contract) :
+        IPreparedPass2WorkerContractAuthority
+    {
+        public PreparedPass2WorkerContractAuthority GetCurrent() => contract;
     }
 
     private sealed class DispatchRetrievalService : IPass2CodeLogicRetrievalService

@@ -195,6 +195,40 @@ public sealed class TwoRepositoryScanCoordination
         Advance(updatedAt);
     }
 
+    public void ResumePass2(long expectedStateVersion, DateTimeOffset updatedAt)
+    {
+        if (Phase != TwoRepositoryScanCoordinationPhase.Paused)
+        {
+            throw new InvalidOperationException("Only a paused coordination can resume Pass 2.");
+        }
+
+        EnsureVersionAndTime(expectedStateVersion, updatedAt);
+        Phase = TwoRepositoryScanCoordinationPhase.Pass2;
+        ReasonCategory = null;
+        ReasonCode = null;
+        Advance(updatedAt);
+    }
+
+    public void CompletePass2(
+        long expectedStateVersion,
+        bool withWarnings,
+        DateTimeOffset updatedAt)
+    {
+        if (Phase != TwoRepositoryScanCoordinationPhase.Pass2)
+        {
+            throw new InvalidOperationException("Pass 2 completion requires the Pass2 phase.");
+        }
+
+        EnsureVersionAndTime(expectedStateVersion, updatedAt);
+        Phase = withWarnings
+            ? TwoRepositoryScanCoordinationPhase.CompletedWithWarnings
+            : TwoRepositoryScanCoordinationPhase.Completed;
+        ReasonCategory = null;
+        ReasonCode = null;
+        TerminalAt = updatedAt;
+        Advance(updatedAt);
+    }
+
     public void FailIntegrity(
         long expectedStateVersion,
         string reasonCode,

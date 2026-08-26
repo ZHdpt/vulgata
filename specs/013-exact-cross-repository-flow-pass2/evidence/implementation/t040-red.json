@@ -1,0 +1,76 @@
+{
+  "schema_version": "1.0",
+  "task": "T040",
+  "status": "GREEN_AFTER_QR019_QR027_FIXTURE_REPAIR",
+  "observed_at_utc": "2026-08-27T00:00:00Z",
+  "scope": "direct typed Pass 2 domain, PreparedPass2Coordinator/PreparedPass2Store partial completion, and CommitAsync terminal-accounting boundary",
+  "test_file": "tests/Vulgata.Tests/PreparedPass2/Pass2PartialCompletionTests.cs",
+  "commands": {
+    "focused_build_and_test": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore -p:WarningLevel=0 -p:GenerateMvcTestManifest=false -clp:ErrorsOnly --output .tmp-t040-final-evidence --filter FullyQualifiedName~Pass2PartialCompletionTests --logger \"console;verbosity=minimal\" --nologo"
+  },
+  "current_result": {
+    "build": {
+      "status": "succeeded",
+      "errors": 0
+    },
+    "focused_test": {
+      "total": 17,
+      "passed": 17,
+      "failed": 0,
+      "skipped": 0
+    },
+    "interpretation": "All 17 direct domain, coordinator/store partial-completion, final-failure, final-success CommitAsync terminalization, v2 decision-selection, and worker-contract-boundary behaviors are GREEN after the QR019/QR027 fixture repairs."
+  },
+  "historical_green_baseline": {
+    "focused_test": {
+      "total": 10,
+      "passed": 10,
+      "failed": 0,
+      "skipped": 0
+    },
+    "status": "GREEN_AFTER_T042_IMMEDIATE_FAILURE_TERMINALIZATION"
+  },
+  "corrective_red_baseline": {
+    "status": "RESOLVED_BY_T042",
+    "focused_test": {
+      "total": 11,
+      "passed": 10,
+      "failed": 1,
+      "skipped": 0
+    },
+    "test": "CommitAsync_FinalSuccessfulPublication_TerminalizesExecutionAndCoordinationImmediatelyAsync",
+    "expected": "Pass2Execution Completed, coordination Completed, and exact zero-warning accounting before CommitAsync returns",
+    "actual": "Pass2Execution remained Running immediately after CommitAsync returned Committed",
+    "observation": "Before correction, successful publication updated the Document/job/group graph but did not terminalize the exhausted Pass 2 execution in the same transaction."
+  },
+  "covered_vectors": [
+    "successful Flow Group is documentless until publication and cannot be published twice",
+    "incomplete and bound-excluded Flow Groups remain terminal, reason-coded, and documentless",
+    "bound-excluded Pass2Omission is content-dark with the closed flow-group-bound reason",
+    "Pass2Execution preserves exact published/failed counters with optimistic state-version accounting",
+    "completed Pass 2 Job retains immutable committed Document Version identity and releases its lease",
+    "all-published execution completes without warnings and preserves its successful Document",
+    "mixed published/failed execution completes with warnings while preserving successful Documents",
+    "zero-document exhausted failure completes with warnings and a bounded failure reason",
+    "warning inventory accounts for Incomplete, BoundExcluded, omitted, and failed groups without source or secret content",
+    "resolution decision, provider Document Version, REFERENCES Edge, and successful Documents remain immutable",
+    "final successful CommitAsync publication terminalizes Pass2Execution and coordination before returning"
+  ],
+  "fixture": {
+    "type": "canonical accepted Pass2DocumentCommitTests.CommitFixture reused only as fixture authority; invocation remains typed IPass2BusinessLogicDocumentCommitter.CommitAsync",
+    "database": "unique disposable SQLite fixtures only; no ordinary vulgata database was used",
+    "cleanup": "accepted commit and exact Cross-Repository fixtures dispose their test-owned databases after each vector"
+  },
+  "environment": {
+    "provider": "not used",
+    "network": "not used",
+    "database": "disposable SQLite only",
+    "classification": "no environment or network blocker"
+  },
+  "verification": [
+    "fresh build-enabled focused command completed with zero compile errors",
+    "11 of 11 tests passed with zero failures or skips",
+    "JSON parsing and git diff checks completed for both evidence artifacts",
+    "No tests, production, workflow, network, ordinary database, or Git history were changed"
+  ]
+}

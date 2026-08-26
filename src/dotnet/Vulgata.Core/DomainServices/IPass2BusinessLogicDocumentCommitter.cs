@@ -44,6 +44,10 @@ public sealed class Pass2BusinessLogicCommitRequest
     public JsonElement Candidate { get; }
     public IReadOnlyList<Pass2BusinessLogicEvidenceBinding> InitialEvidence { get; }
     public string PromptIdentity { get; }
+    public string PromptFingerprint { get; init; } = string.Empty;
+    public string SubmissionSchemaIdentity { get; init; } = string.Empty;
+    public string SubmissionSchemaFingerprint { get; init; } = string.Empty;
+    public string ToolDeclarationFingerprint { get; init; } = string.Empty;
 }
 
 public sealed record Pass2BusinessLogicEvidenceBinding(

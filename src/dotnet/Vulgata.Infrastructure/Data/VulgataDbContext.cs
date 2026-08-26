@@ -2,11 +2,30 @@ using Microsoft.EntityFrameworkCore;
 using SystemEntity = Vulgata.Core.Entities.System;
 using RepositoryEntity = Vulgata.Core.Entities.Repository;
 using Vulgata.Core.Entities;
+using Vulgata.Core.DomainServices;
 
 namespace Vulgata.Infrastructure.Data;
 
-public class VulgataDbContext(DbContextOptions<VulgataDbContext> options) : DbContext(options)
+public class VulgataDbContext(DbContextOptions<VulgataDbContext> options) :
+    DbContext(options), IPreparedPass2ExecutionQueryService
 {
+    public Task<Pass1PairExecution?> FindPairAsync(
+        Guid id, CancellationToken cancellationToken = default) =>
+        new PreparedPass2ExecutionQueryService(this).FindPairAsync(id, cancellationToken);
+
+    public Task<TwoRepositoryScanCoordination?> FindCoordinationAsync(
+        Guid id, CancellationToken cancellationToken = default) =>
+        new PreparedPass2ExecutionQueryService(this).FindCoordinationAsync(id, cancellationToken);
+
+    public Task<Pass2Execution?> FindExecutionAsync(
+        Guid id, CancellationToken cancellationToken = default) =>
+        new PreparedPass2ExecutionQueryService(this).FindExecutionAsync(id, cancellationToken);
+
+    public Task<PreparedPass2StatusAuthority> ReadStatusAsync(
+        Guid executionId, CancellationToken cancellationToken = default) =>
+        new PreparedPass2ExecutionQueryService(this).ReadStatusAsync(
+            executionId, cancellationToken);
+
     public DbSet<SystemEntity> Systems => Set<SystemEntity>();
     public DbSet<RepositoryEntity> Repositories => Set<RepositoryEntity>();
     public DbSet<DatabaseConnection> DatabaseConnections => Set<DatabaseConnection>();

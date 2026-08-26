@@ -148,7 +148,8 @@ public sealed class Pass2FlowPlanningTests
         Assert.Matches("^business-flow/v1/[0-9a-f]{64}$", baselineGroup.LogicalDocumentStableKey);
         Assert.NotEqual(baseline.ConsumerLogicalDocumentStableKey, baselineGroup.LogicalDocumentStableKey);
         Assert.Equal(baselineGroup.LogicalDocumentStableKey, group.LogicalDocumentStableKey);
-        Assert.Equal("consumer-stable-01", group.ConsumerEntryStableKey);
+        Assert.Matches("^[0-9a-f]{64}$", group.ConsumerEntryStableKey);
+        Assert.Equal(baselineGroup.ConsumerEntryStableKey, group.ConsumerEntryStableKey);
         Assert.NotEqual(harness.ConsumerLogicalDocumentStableKey, group.LogicalDocumentStableKey);
         Assert.Equal(harness.ConsumerDocumentVersionId, group.ConsumerDocumentVersionId);
         Assert.NotEqual(baseline.ConsumerDocumentVersionId, group.ConsumerDocumentVersionId);
@@ -615,15 +616,12 @@ public sealed class Pass2FlowPlanningTests
 
                 Pass1PairExecution pair = await context.Pass1PairExecutions.SingleAsync();
                 Guid pass2ExecutionId = Guid.Parse("00000000-0000-0000-0000-000000012002");
-                Pass2Execution pass2 = New<Pass2Execution>();
-                Set(pass2, nameof(Pass2Execution.Id), pass2ExecutionId);
-                Set(pass2, nameof(Pass2Execution.Pass1PairExecutionId), pair.Id);
-                Set(pass2, nameof(Pass2Execution.CoordinationId), coordination.Id);
-                Set(pass2, nameof(Pass2Execution.SystemId), ExactCrossRepositoryTestValues.SystemId);
-                Set(pass2, nameof(Pass2Execution.State), Pass2ExecutionState.Planning);
-                Set(pass2, nameof(Pass2Execution.StateVersion), 0L);
-                Set(pass2, nameof(Pass2Execution.StartedAt), ExactCrossRepositoryTestValues.Pass1CompletedAt.AddSeconds(4));
-                Set(pass2, nameof(Pass2Execution.UpdatedAt), ExactCrossRepositoryTestValues.Pass1CompletedAt.AddSeconds(4));
+                Pass2Execution pass2 = Pass2Execution.CreatePlanning(
+                    pass2ExecutionId,
+                    pair.Id,
+                    coordination.Id,
+                    ExactCrossRepositoryTestValues.SystemId,
+                    ExactCrossRepositoryTestValues.Pass1CompletedAt.AddSeconds(4));
                 context.Pass2Executions.Add(pass2);
 
                 Guid edgeId = consumerEdgeIdForPlanning;
@@ -676,36 +674,93 @@ public sealed class Pass2FlowPlanningTests
                     DocumentEdgeType.References,
                     ExactCrossRepositoryTestValues.Pass1CompletedAt.AddSeconds(5)));
 
+                CommunicationKindClassification providerClassification =
+                    await context.CommunicationKindClassifications.SingleAsync(value =>
+                        value.PreScanResultId == provider.ScanRun.Id);
+                Guid providerIdentity = ExactResolutionCanonicalAuthority.ProviderIdentity(
+                    ExactCrossRepositoryTestValues.SystemId,
+                    provider.DocumentVersion.RepositoryId,
+                    provider.ScanRun.Id,
+                    provider.DocumentVersion.ProfiledRevision,
+                    xmlDocumentVersionId);
+
                 for (int ordinal = 1; ordinal <= decisionCount; ordinal++)
                 {
-                    Guid decisionId = Guid.Parse($"00000000-0000-0000-0000-0000000122{ordinal:00}");
+                    string decisionFingerprint = Convert.ToHexStringLower(
+                        SHA256.HashData([1, (byte)ordinal]));
+                    Guid decisionId = ExactResolutionCanonicalAuthority.DecisionId(
+                        decisionFingerprint);
                     CrossRepositoryResolutionDecision decision = New<CrossRepositoryResolutionDecision>();
                     Set(decision, nameof(CrossRepositoryResolutionDecision.Id), decisionId);
+                    Set(decision, nameof(CrossRepositoryResolutionDecision.ResolutionSchemaIdentity), "exact-cross-repository-resolution/2.0");
                     Set(decision, nameof(CrossRepositoryResolutionDecision.Pass1PairExecutionId), pair.Id);
                     Set(decision, nameof(CrossRepositoryResolutionDecision.CoordinationId), coordination.Id);
                     Set(decision, nameof(CrossRepositoryResolutionDecision.SystemId), ExactCrossRepositoryTestValues.SystemId);
                     Set(decision, nameof(CrossRepositoryResolutionDecision.ConsumerCandidateId), Guid.Parse($"00000000-0000-0000-0000-0000000123{ordinal:00}"));
                     Set(decision, nameof(CrossRepositoryResolutionDecision.ConsumerEntryIdentity), $"consumer-entry-{ordinal:00}");
-                    Set(decision, nameof(CrossRepositoryResolutionDecision.ConsumerEntryStableKey), $"consumer-stable-{ordinal:00}");
+                    Set(decision, nameof(CrossRepositoryResolutionDecision.ConsumerEntryStableKey),
+                        Convert.ToHexStringLower(SHA256.HashData([4, (byte)ordinal])));
                     Set(decision, nameof(CrossRepositoryResolutionDecision.ConsumerDocumentVersionId), consumerDocumentVersionIdForPlanning);
+                    Set(decision, nameof(CrossRepositoryResolutionDecision.ConsumerRepositoryId), consumer.DocumentVersion.RepositoryId);
+                    Set(decision, nameof(CrossRepositoryResolutionDecision.ConsumerScanRunId), consumer.ScanRun.Id);
+                    Set(decision, nameof(CrossRepositoryResolutionDecision.ConsumerProfiledRevision), consumer.DocumentVersion.ProfiledRevision);
                     Set(decision, nameof(CrossRepositoryResolutionDecision.Protocol), ExactResolutionProtocol.CustomRpc);
                     Set(decision, nameof(CrossRepositoryResolutionDecision.NormalizedEndpointIdentifier), "cust/updateSession");
+                    Set(decision, nameof(CrossRepositoryResolutionDecision.NormalizationRuleIdentity), "exact-endpoint-normalization/2.0");
                     Set(decision, nameof(CrossRepositoryResolutionDecision.Outcome), "ExactMatch");
+                    Set(decision, nameof(CrossRepositoryResolutionDecision.OutcomeKind), "ExactMatch");
+                    Set(decision, nameof(CrossRepositoryResolutionDecision.ReasonCode), "unique_provider");
+                    Set(decision, nameof(CrossRepositoryResolutionDecision.ProviderIdentity), providerIdentity);
                     Set(decision, nameof(CrossRepositoryResolutionDecision.ProviderDocumentVersionId), xmlDocumentVersionId);
+                    Set(decision, nameof(CrossRepositoryResolutionDecision.ProviderRepositoryId), provider.DocumentVersion.RepositoryId);
+                    Set(decision, nameof(CrossRepositoryResolutionDecision.ProviderScanRunId), provider.ScanRun.Id);
+                    Set(decision, nameof(CrossRepositoryResolutionDecision.ProviderProfiledRevision), provider.DocumentVersion.ProfiledRevision);
                     Set(decision, nameof(CrossRepositoryResolutionDecision.DocumentEdgeId), edgeId);
-                    Set(decision, nameof(CrossRepositoryResolutionDecision.EvidenceFingerprint), new string((char)('a' + ordinal), 64));
+                    Set(decision, nameof(CrossRepositoryResolutionDecision.ConsumerEvidenceFingerprint),
+                        Convert.ToHexStringLower(SHA256.HashData([2, (byte)ordinal])));
+                    Set(decision, nameof(CrossRepositoryResolutionDecision.DecisionFingerprint), decisionFingerprint);
+                    Set(decision, nameof(CrossRepositoryResolutionDecision.EvidenceFingerprint), decisionFingerprint);
                     Set(decision, nameof(CrossRepositoryResolutionDecision.CreatedAt), ExactCrossRepositoryTestValues.Pass1CompletedAt.AddSeconds(6 + ordinal));
                     context.CrossRepositoryResolutionDecisions.Add(decision);
 
+                    string contributionFingerprint;
                     ExactResolutionProviderEvidenceContribution contribution = New<ExactResolutionProviderEvidenceContribution>();
-                    Set(contribution, nameof(ExactResolutionProviderEvidenceContribution.Id), Guid.Parse($"00000000-0000-0000-0000-0000000124{ordinal:00}"));
                     Set(contribution, nameof(ExactResolutionProviderEvidenceContribution.ResolutionDecisionId), decisionId);
                     Set(contribution, nameof(ExactResolutionProviderEvidenceContribution.ProviderDocumentVersionId), xmlDocumentVersionId);
+                    Set(contribution, nameof(ExactResolutionProviderEvidenceContribution.ProviderIdentity),
+                        providerIdentity);
+                    Set(contribution, nameof(ExactResolutionProviderEvidenceContribution.RepositoryId),
+                        provider.DocumentVersion.RepositoryId);
+                    Set(contribution, nameof(ExactResolutionProviderEvidenceContribution.ScanRunId),
+                        provider.ScanRun.Id);
+                    Set(contribution, nameof(ExactResolutionProviderEvidenceContribution.ProfiledRevision),
+                        provider.DocumentVersion.ProfiledRevision);
                     Set(contribution, nameof(ExactResolutionProviderEvidenceContribution.SourceAnchorId), xmlAnchor.Id);
-                    Set(contribution, nameof(ExactResolutionProviderEvidenceContribution.EvidenceFingerprint), new string((char)('b' + ordinal), 64));
+                    Set(contribution, nameof(ExactResolutionProviderEvidenceContribution.CommunicationClassificationId),
+                        providerClassification.Id);
+                    Set(contribution, nameof(ExactResolutionProviderEvidenceContribution.ProviderRawIdentifier),
+                        "in/cust/updateSession");
+                    Set(contribution, nameof(ExactResolutionProviderEvidenceContribution.NormalizedEndpointIdentifier),
+                        "cust/updateSession");
+                    Set(contribution, nameof(ExactResolutionProviderEvidenceContribution.EvidenceLocator),
+                        xmlAnchor.EvidenceLocator);
+                    Set(contribution, nameof(ExactResolutionProviderEvidenceContribution.ClassificationFingerprint),
+                        providerClassification.Fingerprint);
+                    Set(contribution, nameof(ExactResolutionProviderEvidenceContribution.CatalogRuleIdentity),
+                        providerClassification.CatalogRuleIdentity!);
+                    Set(contribution, nameof(ExactResolutionProviderEvidenceContribution.NormalizationRuleIdentity),
+                        "exact-endpoint-normalization/2.0");
                     Set(contribution, nameof(ExactResolutionProviderEvidenceContribution.ProviderOrdinal), 1);
                     Set(contribution, nameof(ExactResolutionProviderEvidenceContribution.EvidenceOrdinal), 1);
                     Set(contribution, nameof(ExactResolutionProviderEvidenceContribution.CreatedAt), ExactCrossRepositoryTestValues.Pass1CompletedAt.AddSeconds(6 + ordinal));
+                    contributionFingerprint = ExactResolutionCanonicalAuthority
+                        .PersistedProviderContributionFingerprint(decisionFingerprint, contribution);
+                    Set(contribution, nameof(ExactResolutionProviderEvidenceContribution.Id),
+                        ExactResolutionCanonicalAuthority.ProviderContributionId(contributionFingerprint));
+                    Set(contribution, nameof(ExactResolutionProviderEvidenceContribution.EvidenceFingerprint),
+                        contributionFingerprint);
+                    Set(decision, nameof(CrossRepositoryResolutionDecision.ProviderEvidenceSetFingerprint),
+                        ExactResolutionCanonicalAuthority.ProviderEvidenceSetFingerprint([contributionFingerprint]));
                     context.ExactResolutionProviderEvidenceContributions.Add(contribution);
                 }
 

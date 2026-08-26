@@ -509,7 +509,11 @@ public sealed record ProviderEndpointCandidate
         ExactResolutionOwner owner,
         string rawIdentifier,
         string normalizedIdentifier,
-        string declarationEvidenceLocator)
+        string declarationEvidenceLocator,
+        Guid communicationClassificationId = default,
+        string? classificationFingerprint = null,
+        string? catalogRuleIdentity = null,
+        string? normalizationRuleIdentity = null)
     {
         OccurrenceId = ExactResolutionGuard.Identifier(occurrenceId, nameof(occurrenceId), 128);
         Owner = owner ?? throw new ArgumentNullException(nameof(owner));
@@ -521,6 +525,10 @@ public sealed record ProviderEndpointCandidate
         DeclarationEvidenceLocator = ExactResolutionGuard.EvidenceLocator(
             declarationEvidenceLocator,
             nameof(declarationEvidenceLocator));
+        CommunicationClassificationId = communicationClassificationId;
+        ClassificationFingerprint = classificationFingerprint;
+        CatalogRuleIdentity = catalogRuleIdentity;
+        NormalizationRuleIdentity = normalizationRuleIdentity;
     }
 
     public string OccurrenceId { get; }
@@ -528,6 +536,10 @@ public sealed record ProviderEndpointCandidate
     public string RawIdentifier { get; }
     public string NormalizedIdentifier { get; }
     public string DeclarationEvidenceLocator { get; }
+    public Guid CommunicationClassificationId { get; }
+    public string? ClassificationFingerprint { get; }
+    public string? CatalogRuleIdentity { get; }
+    public string? NormalizationRuleIdentity { get; }
 }
 
 public sealed record ConsumerDispatchCandidate
@@ -543,7 +555,8 @@ public sealed record ConsumerDispatchCandidate
         int ordinal,
         string rawIdentifier,
         string normalizedIdentifier,
-        string invocationEvidenceLocator)
+        string invocationEvidenceLocator,
+        string? consumerEntryStableKey = null)
     {
         _ = new ExactConsumerInvocationSelector(
             callForm,
@@ -568,6 +581,11 @@ public sealed record ConsumerDispatchCandidate
         InvocationEvidenceLocator = ExactResolutionGuard.EvidenceLocator(
             invocationEvidenceLocator,
             nameof(invocationEvidenceLocator));
+        ConsumerEntryStableKey = consumerEntryStableKey is null
+            ? null
+            : ExactResolutionGuard.LowerSha256(
+                consumerEntryStableKey,
+                nameof(consumerEntryStableKey));
     }
 
     public string OccurrenceId { get; }
@@ -581,6 +599,7 @@ public sealed record ConsumerDispatchCandidate
     public string RawIdentifier { get; }
     public string NormalizedIdentifier { get; }
     public string InvocationEvidenceLocator { get; }
+    public string? ConsumerEntryStableKey { get; }
 }
 
 public enum ExactResolutionDecisionKind
@@ -642,7 +661,9 @@ public sealed record ExactResolutionDecision(
     string ReasonCode,
     string EvidenceLocator,
     string? TargetEvidenceLocator = null,
-    ExactResolutionDecisionEvidence? ExactEvidence = null);
+    ExactResolutionDecisionEvidence? ExactEvidence = null,
+    string? ConsumerEntryStableKey = null,
+    IReadOnlyList<ProviderEndpointCandidate>? ProviderObservations = null);
 
 public sealed class ExactResolutionDecisionBatch
 {
@@ -882,6 +903,20 @@ internal static class ExactResolutionGuard
                     not (>= 'a' and <= 'f')))
         {
             throw new ArgumentException("One full lowercase Git commit is required.", parameterName);
+        }
+
+        return value;
+    }
+
+    internal static string LowerSha256(string value, string parameterName)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(value, parameterName);
+        if (value.Length != 64 ||
+            value.Any(character =>
+                character is not (>= '0' and <= '9') and
+                    not (>= 'a' and <= 'f')))
+        {
+            throw new ArgumentException("One lowercase SHA-256 fingerprint is required.", parameterName);
         }
 
         return value;

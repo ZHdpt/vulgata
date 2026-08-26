@@ -69,8 +69,9 @@ public sealed class Pass2FlowPlanningPostgreSqlTests(ITestOutputHelper output)
                 new RepositoryAccessScope(
                     [consumer.DocumentVersion.RepositoryId, providerXml.DocumentVersion.RepositoryId]));
             Assert.Equal(ExactResolutionOutcomeKind.Applied, resolution.Kind);
-            CrossRepositoryResolutionDecision decision =
-                await context.CrossRepositoryResolutionDecisions.SingleAsync();
+            CrossRepositoryResolutionDecision decision = await context
+                .CrossRepositoryResolutionDecisions
+                .SingleAsync(value => value.Outcome == "ExactMatch");
             Assert.Equal("ExactMatch", decision.Outcome);
             Assert.NotNull(decision.DocumentEdgeId);
             Assert.Equal(2, await context.DocumentEdges.CountAsync());
@@ -82,18 +83,6 @@ public sealed class Pass2FlowPlanningPostgreSqlTests(ITestOutputHelper output)
             Assert.Equal(4, await context.DocumentVersions.CountAsync());
             Assert.Equal(4, await context.SourceAnchors.CountAsync());
 
-            // The v2 resolver owns identity derivation for its adapter write.
-            // Bind all three ownership fields to this fixture's already
-            // terminal server-owned pair before exercising Pass 2. The store
-            // must not accept a decision whose pair, coordination, or system
-            // ownership is inconsistent.
-            context.Entry(decision).Property(value => value.Pass1PairExecutionId).CurrentValue = pair.Id;
-            context.Entry(decision).Property(value => value.CoordinationId).CurrentValue = pair.CoordinationId;
-            context.Entry(decision).Property(value => value.SystemId).CurrentValue = pair.SystemId;
-            // The legacy resolver adapter uses its short occurrence identity
-            // for this field. The v2 PostgreSQL model requires the accepted
-            // lower-case SHA-256 stable-key shape, so the fixture supplies a
-            // deterministic semantic-key stand-in before planning.
             string consumerEntryStableKey = Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(
                 string.Join(
                     '\n',
@@ -103,11 +92,6 @@ public sealed class Pass2FlowPlanningPostgreSqlTests(ITestOutputHelper output)
                     consumer.CodeUnit.SymbolName,
                     ExactResolutionProtocol.CustomRpc,
                     0))));
-            context.Entry(decision).Property(value => value.ConsumerEntryStableKey).CurrentValue =
-                consumerEntryStableKey;
-            await context.SaveChangesAsync();
-            context.ChangeTracker.Clear();
-            decision = await context.CrossRepositoryResolutionDecisions.SingleAsync();
             Assert.Equal(pair.Id, decision.Pass1PairExecutionId);
             Assert.Equal(pair.CoordinationId, decision.CoordinationId);
             Assert.Equal(pair.SystemId, decision.SystemId);
@@ -315,7 +299,9 @@ public sealed class Pass2FlowPlanningPostgreSqlTests(ITestOutputHelper output)
             BuildResolutionBatch(profile, occurrence, consumer, providerXml, unsupported),
             new RepositoryAccessScope([consumer.DocumentVersion.RepositoryId, providerXml.DocumentVersion.RepositoryId]));
         Assert.Equal(ExactResolutionOutcomeKind.Applied, resolution.Kind);
-        CrossRepositoryResolutionDecision decision = await context.CrossRepositoryResolutionDecisions.SingleAsync();
+        CrossRepositoryResolutionDecision decision = await context
+            .CrossRepositoryResolutionDecisions
+            .SingleAsync(value => value.Outcome == "ExactMatch");
         Pass1PairExecution pair = await context.Pass1PairExecutions.SingleAsync();
         string stableKey = Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(string.Join(
             '\n',
@@ -325,13 +311,6 @@ public sealed class Pass2FlowPlanningPostgreSqlTests(ITestOutputHelper output)
             consumer.CodeUnit.SymbolName,
             ExactResolutionProtocol.CustomRpc,
             0))));
-        context.Entry(decision).Property(value => value.Pass1PairExecutionId).CurrentValue = pair.Id;
-        context.Entry(decision).Property(value => value.CoordinationId).CurrentValue = pair.CoordinationId;
-        context.Entry(decision).Property(value => value.SystemId).CurrentValue = pair.SystemId;
-        context.Entry(decision).Property(value => value.ConsumerEntryStableKey).CurrentValue = stableKey;
-        await context.SaveChangesAsync();
-        context.ChangeTracker.Clear();
-        decision = await context.CrossRepositoryResolutionDecisions.SingleAsync();
         Assert.Equal(pair.Id, decision.Pass1PairExecutionId);
         Assert.Equal(pair.CoordinationId, decision.CoordinationId);
         Assert.Equal(pair.SystemId, decision.SystemId);
@@ -420,57 +399,11 @@ public sealed class Pass2FlowPlanningPostgreSqlTests(ITestOutputHelper output)
         SeededPass2Fixture seed,
         int additionalCount)
     {
-        for (int ordinal = 2; ordinal <= additionalCount + 1; ordinal++)
+        _ = seed;
+        for (int ordinal = 0; ordinal < additionalCount; ordinal++)
         {
-            Guid decisionId = ExactCrossRepositoryTestValues.Id(19_000 + ordinal);
-            CrossRepositoryResolutionDecision decision = New<CrossRepositoryResolutionDecision>();
-            Set(decision, nameof(CrossRepositoryResolutionDecision.Id), decisionId);
-            Set(decision, nameof(CrossRepositoryResolutionDecision.Pass1PairExecutionId), seed.Pair.Id);
-            Set(decision, nameof(CrossRepositoryResolutionDecision.CoordinationId), seed.Pair.CoordinationId);
-            Set(decision, nameof(CrossRepositoryResolutionDecision.SystemId), seed.Pair.SystemId);
-            Set(decision, nameof(CrossRepositoryResolutionDecision.ConsumerCandidateId),
-                ExactCrossRepositoryTestValues.Id(20_000 + ordinal));
-            Set(decision, nameof(CrossRepositoryResolutionDecision.ConsumerEntryIdentity),
-                $"consumer-entry-{ordinal:00}");
-            Set(decision, nameof(CrossRepositoryResolutionDecision.ConsumerEntryStableKey),
-                Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(
-                    $"consumer-entry/v1/{ordinal:00}"))));
-            Set(decision, nameof(CrossRepositoryResolutionDecision.ConsumerDocumentVersionId),
-                seed.Consumer.DocumentVersion.Id);
-            Set(decision, nameof(CrossRepositoryResolutionDecision.Protocol), ExactResolutionProtocol.CustomRpc);
-            Set(decision, nameof(CrossRepositoryResolutionDecision.NormalizedEndpointIdentifier),
-                "cust/updateSession");
-            Set(decision, nameof(CrossRepositoryResolutionDecision.Outcome), "ExactMatch");
-            Set(decision, nameof(CrossRepositoryResolutionDecision.ProviderDocumentVersionId),
-                seed.ProviderXml.DocumentVersion.Id);
-            Set(decision, nameof(CrossRepositoryResolutionDecision.DocumentEdgeId), seed.Decision.DocumentEdgeId);
-            Set(decision, nameof(CrossRepositoryResolutionDecision.EvidenceFingerprint),
-                Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(
-                    $"decision-evidence/{ordinal:00}"))));
-            Set(decision, nameof(CrossRepositoryResolutionDecision.CreatedAt),
-                ExactCrossRepositoryTestValues.Pass1CompletedAt.AddSeconds(20 + ordinal));
-            context.CrossRepositoryResolutionDecisions.Add(decision);
-
-            ExactResolutionProviderEvidenceContribution contribution = New<ExactResolutionProviderEvidenceContribution>();
-            Set(contribution, nameof(ExactResolutionProviderEvidenceContribution.Id),
-                ExactCrossRepositoryTestValues.Id(21_000 + ordinal));
-            Set(contribution, nameof(ExactResolutionProviderEvidenceContribution.ResolutionDecisionId), decisionId);
-            Set(contribution, nameof(ExactResolutionProviderEvidenceContribution.ProviderDocumentVersionId),
-                seed.ProviderXml.DocumentVersion.Id);
-            Set(contribution, nameof(ExactResolutionProviderEvidenceContribution.SourceAnchorId),
-                seed.ProviderXml.SourceAnchor.Id);
-            Set(contribution, nameof(ExactResolutionProviderEvidenceContribution.EvidenceFingerprint),
-                Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(
-                    $"contribution-evidence/{ordinal:00}"))));
-            Set(contribution, nameof(ExactResolutionProviderEvidenceContribution.ProviderOrdinal), ordinal);
-            Set(contribution, nameof(ExactResolutionProviderEvidenceContribution.EvidenceOrdinal), 1);
-            Set(contribution, nameof(ExactResolutionProviderEvidenceContribution.CreatedAt),
-                ExactCrossRepositoryTestValues.Pass1CompletedAt.AddSeconds(20 + ordinal));
-            context.ExactResolutionProviderEvidenceContributions.Add(contribution);
+            await Pass2ProductionCompositionTests.AddSharedV2DecisionAsync(context);
         }
-
-        await context.SaveChangesAsync();
-        context.ChangeTracker.Clear();
     }
 
     private static string PlanningSnapshot(PreparedPass2FlowPlanningResult result) =>
@@ -644,6 +577,15 @@ public sealed class Pass2FlowPlanningPostgreSqlTests(ITestOutputHelper output)
     {
         ExactResolutionOwner consumerOwner = Owner(consumer);
         ExactResolutionOwner providerOwner = Owner(provider);
+        string consumerEntryStableKey = Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(
+            string.Join(
+                '\n',
+                "consumer-entry/v1",
+                consumer.DocumentVersion.RepositoryId,
+                consumer.DocumentVersion.RepositoryRelativePath,
+                consumer.CodeUnit.SymbolName,
+                ExactResolutionProtocol.CustomRpc,
+                0))));
         var exact = new ExactResolutionDecision(
             occurrence.OccurrenceId,
             ExactResolutionDecisionKind.ExactMatch,
@@ -659,14 +601,22 @@ public sealed class Pass2FlowPlanningPostgreSqlTests(ITestOutputHelper output)
                 ExactResolutionProtocol.CustomRpc,
                 1.0000m,
                 "consumer.java#line=45;rule=exact-java-direct-literal-v1",
-                "provider.xml#line=2;rule=exact-xml-root-attribute-v1"));
+                "provider.xml#line=2;rule=exact-xml-root-attribute-v1"),
+            consumerEntryStableKey,
+            [new ProviderEndpointCandidate(
+                occurrence.OccurrenceId,
+                providerOwner,
+                "in/cust/updateSession",
+                "cust/updateSession",
+                "provider.xml#line=2;rule=exact-xml-root-attribute-v1")]);
         var unsupportedDecision = new ExactResolutionDecision(
             Assert.Single(profile.UnsupportedObservations).ObservationId,
             ExactResolutionDecisionKind.UnsupportedObservation,
-            Owner(unsupported),
+            consumerOwner,
             null,
             "unsupported_kind",
-            "unsupported.java#line=66;rule=unsupported-member-invocation-v1");
+            "unsupported.java#line=66;rule=unsupported-member-invocation-v1",
+            ConsumerEntryStableKey: consumerEntryStableKey);
         return ExactResolutionDecisionBatch.Create(
             profile,
             new[] { exact, unsupportedDecision }

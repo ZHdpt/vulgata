@@ -261,6 +261,17 @@ public sealed class FlowGroup
         State = "Published";
     }
 
+    public void Fail(string reasonCode)
+    {
+        if (State != "Complete" || BusinessLogicDocumentVersionId is not null)
+        {
+            throw new InvalidOperationException("Only an unpublished complete Flow Group can fail.");
+        }
+
+        State = "Failed";
+        ReasonCode = RequireText(reasonCode);
+    }
+
     private static string RequireText(string value)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(value);

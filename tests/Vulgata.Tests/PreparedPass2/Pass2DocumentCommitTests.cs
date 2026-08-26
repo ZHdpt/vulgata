@@ -257,14 +257,15 @@ public sealed class Pass2DocumentCommitTests
                 RepositoryAccessScope scope = new(
                     [consumer.DocumentVersion.RepositoryId, providerXml.DocumentVersion.RepositoryId],
                     authorization);
-                PreparedPass2StartResult start = await new PreparedPass2Store(context)
+                PreparedPass2StartResult start = await Pass2PartialCompletionTests.CreateAuthorizedStore(context)
                     .StartAsync(pair.Id, scope);
                 Assert.Equal(PreparedPass2StartOutcome.Created, start.Outcome);
                 Pass2JobExecution job = await context.Pass2JobExecutions.SingleAsync();
+                DateTimeOffset leaseAcquiredAt = DateTimeOffset.UtcNow;
                 job.AcquireLease(
                     ExactCrossRepositoryTestValues.Id(90_010),
-                    job.StateChangedAt.AddMinutes(5),
-                    job.StateChangedAt.AddSeconds(1));
+                    leaseAcquiredAt.AddMinutes(5),
+                    leaseAcquiredAt);
                 await context.SaveChangesAsync();
 
                 Pass2RetrievalReceipt receipt = Pass2RetrievalReceipt.Create(
@@ -348,7 +349,11 @@ public sealed class Pass2DocumentCommitTests
                 return new(
                     fixture,
                     context,
-                    new Pass2BusinessLogicDocumentCommitter(context, scope),
+                    new Pass2BusinessLogicDocumentCommitter(
+                        context,
+                        scope,
+                        new TestWorkerContractAuthority(
+                            Pass2PartialCompletionTests.CreateWorkerContractAuthority())),
                     authorization,
                     job,
                     group,
@@ -391,8 +396,11 @@ public sealed class Pass2DocumentCommitTests
         }
 
         internal Pass2BusinessLogicCommitRequest CreateRequest(
-            IReadOnlyCollection<string> handles) =>
-            new(
+            IReadOnlyCollection<string> handles)
+        {
+            PreparedPass2WorkerContractAuthority workerContract =
+                Pass2PartialCompletionTests.CreateWorkerContractAuthority();
+            return new(
                 Job.Id,
                 Job.LeaseToken!.Value,
                 Job.AttemptCount,
@@ -406,7 +414,14 @@ public sealed class Pass2DocumentCommitTests
                         Consumer.DocumentVersion.ProfiledRevision,
                         SourceAnchorId: null),
                 ],
-                PromptIdentity);
+                PromptIdentity)
+            {
+                PromptFingerprint = workerContract.PromptFingerprint,
+                SubmissionSchemaIdentity = workerContract.SubmissionSchemaIdentity,
+                SubmissionSchemaFingerprint = workerContract.SubmissionSchemaFingerprint,
+                ToolDeclarationFingerprint = workerContract.ToolDeclarationFingerprint,
+            };
+        }
 
         internal async Task<string> GraphSnapshotAsync()
         {
@@ -488,77 +503,35 @@ public sealed class Pass2DocumentCommitTests
         private static async Task CanonicalizeExactAuthorityAsync(VulgataDbContext context)
         {
             CrossRepositoryResolutionDecision seededDecision =
-                await context.CrossRepositoryResolutionDecisions.SingleAsync();
-            ExactCrossRepositoryEdgeEvidence edgeEvidence =
-                await context.ExactCrossRepositoryEdgeEvidence.AsNoTracking().SingleAsync();
-            DocumentVersion consumer = await context.DocumentVersions.AsNoTracking()
-                .SingleAsync(value => value.Id == edgeEvidence.ConsumerDocumentVersionId);
-            DocumentVersion provider = await context.DocumentVersions.AsNoTracking()
-                .SingleAsync(value => value.Id == edgeEvidence.ProviderDocumentVersionId);
-            string canonicalEvidenceFingerprint = ExactResolutionCanonicalAuthority.EvidenceFingerprint(
-                edgeEvidence, consumer.ProfiledRevision, provider.ProfiledRevision);
+                await context.CrossRepositoryResolutionDecisions
+                    .SingleAsync(value => value.Outcome == "ExactMatch");
             ExactResolutionProviderEvidenceContribution[] seededContributions =
                 await context.ExactResolutionProviderEvidenceContributions.AsNoTracking()
                     .Where(value => value.ResolutionDecisionId == seededDecision.Id)
                     .OrderBy(value => value.ProviderOrdinal).ThenBy(value => value.EvidenceOrdinal)
                     .ToArrayAsync();
-
-            context.RemoveRange(await context.ExactResolutionProviderEvidenceContributions
-                .Where(value => value.ResolutionDecisionId == seededDecision.Id).ToArrayAsync());
-            context.Remove(seededDecision);
-            await context.SaveChangesAsync();
-
-            ExactCrossRepositoryEdgeEvidence trackedEvidence =
-                await context.ExactCrossRepositoryEdgeEvidence.SingleAsync(value => value.EdgeId == edgeEvidence.EdgeId);
-            SetProperty(trackedEvidence, nameof(ExactCrossRepositoryEdgeEvidence.EvidenceFingerprint),
-                canonicalEvidenceFingerprint);
-            CrossRepositoryResolutionDecision canonicalDecision = NewEntity<CrossRepositoryResolutionDecision>();
-            SetProperty(canonicalDecision, nameof(CrossRepositoryResolutionDecision.Id),
-                ExactResolutionCanonicalAuthority.DecisionId(canonicalEvidenceFingerprint));
-            SetProperty(canonicalDecision, nameof(CrossRepositoryResolutionDecision.Pass1PairExecutionId), seededDecision.Pass1PairExecutionId);
-            SetProperty(canonicalDecision, nameof(CrossRepositoryResolutionDecision.CoordinationId), seededDecision.CoordinationId);
-            SetProperty(canonicalDecision, nameof(CrossRepositoryResolutionDecision.SystemId), seededDecision.SystemId);
-            SetProperty(canonicalDecision, nameof(CrossRepositoryResolutionDecision.ConsumerCandidateId), seededDecision.ConsumerCandidateId);
-            SetProperty(canonicalDecision, nameof(CrossRepositoryResolutionDecision.ConsumerEntryIdentity), edgeEvidence.OccurrenceId);
-            SetProperty(canonicalDecision, nameof(CrossRepositoryResolutionDecision.ConsumerEntryStableKey), seededDecision.ConsumerEntryStableKey);
-            SetProperty(canonicalDecision, nameof(CrossRepositoryResolutionDecision.ConsumerDocumentVersionId), seededDecision.ConsumerDocumentVersionId);
-            SetProperty(canonicalDecision, nameof(CrossRepositoryResolutionDecision.Protocol), seededDecision.Protocol);
-            SetProperty(canonicalDecision, nameof(CrossRepositoryResolutionDecision.NormalizedEndpointIdentifier), seededDecision.NormalizedEndpointIdentifier);
-            SetProperty(canonicalDecision, nameof(CrossRepositoryResolutionDecision.Outcome), seededDecision.Outcome);
-            SetProperty(canonicalDecision, nameof(CrossRepositoryResolutionDecision.ProviderDocumentVersionId), seededDecision.ProviderDocumentVersionId);
-            SetProperty(canonicalDecision, nameof(CrossRepositoryResolutionDecision.DocumentEdgeId), seededDecision.DocumentEdgeId);
-            SetProperty(canonicalDecision, nameof(CrossRepositoryResolutionDecision.UncertaintyId), seededDecision.UncertaintyId);
-            SetProperty(canonicalDecision, nameof(CrossRepositoryResolutionDecision.EvidenceFingerprint), canonicalEvidenceFingerprint);
-            SetProperty(canonicalDecision, nameof(CrossRepositoryResolutionDecision.CreatedAt), seededDecision.CreatedAt);
-            context.CrossRepositoryResolutionDecisions.Add(canonicalDecision);
+            Assert.Equal("exact-cross-repository-resolution/2.0", seededDecision.ResolutionSchemaIdentity);
+            Assert.Equal(
+                ExactResolutionCanonicalAuthority.DecisionId(seededDecision.EvidenceFingerprint),
+                seededDecision.Id);
+            Assert.Matches("^[0-9a-f]{64}$", seededDecision.ConsumerEntryStableKey);
+            Assert.NotEmpty(seededContributions);
+            Assert.Empty(await context.ExactCrossRepositoryEdgeEvidence.AsNoTracking().ToArrayAsync());
+            Assert.True(await context.DocumentEdges.AsNoTracking().AnyAsync(value =>
+                value.Id == seededDecision.DocumentEdgeId &&
+                value.EdgeType == DocumentEdgeType.References));
             foreach (ExactResolutionProviderEvidenceContribution seededContribution in seededContributions)
             {
-                string fingerprint = ExactResolutionCanonicalAuthority.ProviderContributionFingerprint(
-                    canonicalEvidenceFingerprint,
-                    seededContribution.ProviderDocumentVersionId,
-                    seededContribution.SourceAnchorId);
-                ExactResolutionProviderEvidenceContribution canonicalContribution = NewEntity<ExactResolutionProviderEvidenceContribution>();
-                SetProperty(canonicalContribution, nameof(ExactResolutionProviderEvidenceContribution.Id),
-                    ExactResolutionCanonicalAuthority.ProviderContributionId(fingerprint));
-                SetProperty(canonicalContribution, nameof(ExactResolutionProviderEvidenceContribution.ResolutionDecisionId), canonicalDecision.Id);
-                SetProperty(canonicalContribution, nameof(ExactResolutionProviderEvidenceContribution.ProviderDocumentVersionId), seededContribution.ProviderDocumentVersionId);
-                SetProperty(canonicalContribution, nameof(ExactResolutionProviderEvidenceContribution.SourceAnchorId), seededContribution.SourceAnchorId);
-                SetProperty(canonicalContribution, nameof(ExactResolutionProviderEvidenceContribution.EvidenceFingerprint), fingerprint);
-                SetProperty(canonicalContribution, nameof(ExactResolutionProviderEvidenceContribution.ProviderOrdinal), seededContribution.ProviderOrdinal);
-                SetProperty(canonicalContribution, nameof(ExactResolutionProviderEvidenceContribution.EvidenceOrdinal), seededContribution.EvidenceOrdinal);
-                SetProperty(canonicalContribution, nameof(ExactResolutionProviderEvidenceContribution.CreatedAt), seededContribution.CreatedAt);
-                context.ExactResolutionProviderEvidenceContributions.Add(canonicalContribution);
+                string fingerprint = ExactResolutionCanonicalAuthority.PersistedProviderContributionFingerprint(
+                    seededDecision.EvidenceFingerprint,
+                    seededContribution);
+                Assert.Equal(fingerprint, seededContribution.EvidenceFingerprint);
+                Assert.Equal(
+                    ExactResolutionCanonicalAuthority.ProviderContributionId(fingerprint),
+                    seededContribution.Id);
             }
-            await context.SaveChangesAsync();
             context.ChangeTracker.Clear();
         }
-
-        private static T NewEntity<T>() => (T)Activator.CreateInstance(
-            typeof(T), BindingFlags.Instance | BindingFlags.NonPublic, null, null, null)!;
-
-        private static void SetProperty<T>(object target, string propertyName, T value) =>
-            target.GetType().GetProperty(propertyName,
-                BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)!.SetValue(target, value);
     }
 
     private sealed class ToggleAuthorizationVerifier : IRepositoryAuthorizationVerifier
@@ -569,5 +542,12 @@ public sealed class Pass2DocumentCommitTests
             IReadOnlyCollection<Guid> requiredRepositoryIds,
             CancellationToken cancellationToken = default) =>
             ValueTask.FromResult(IsAllowed);
+    }
+
+    private sealed class TestWorkerContractAuthority(
+        PreparedPass2WorkerContractAuthority contract) :
+        IPreparedPass2WorkerContractAuthority
+    {
+        public PreparedPass2WorkerContractAuthority GetCurrent() => contract;
     }
 }

@@ -475,10 +475,12 @@ public sealed class Pass2DocumentPostgreSqlAtomicTests
             await fixture.ExecutionAccountingAsync(fixture.SecondExecutionId);
         Assert.Equal(beforeFirst.PublishedCount + 1, afterFirst.PublishedCount);
         Assert.Equal(beforeFirst.FailedCount, afterFirst.FailedCount);
-        Assert.Equal(beforeFirst.StateVersion + 1, afterFirst.StateVersion);
+        Assert.Equal(beforeFirst.StateVersion + 2, afterFirst.StateVersion);
+        Assert.Equal(nameof(Pass2ExecutionState.Completed), afterFirst.State);
         Assert.Equal(beforeSecond.PublishedCount + 1, afterSecond.PublishedCount);
         Assert.Equal(beforeSecond.FailedCount, afterSecond.FailedCount);
-        Assert.Equal(beforeSecond.StateVersion + 1, afterSecond.StateVersion);
+        Assert.Equal(beforeSecond.StateVersion + 2, afterSecond.StateVersion);
+        Assert.Equal(nameof(Pass2ExecutionState.Completed), afterSecond.State);
     }
 
     [PostgreSqlQualificationFact]
@@ -524,7 +526,8 @@ public sealed class Pass2DocumentPostgreSqlAtomicTests
             await fixture.ExecutionAccountingAsync(fixture.PrimaryExecutionId);
         Assert.Equal(before.PublishedCount + 1, after.PublishedCount);
         Assert.Equal(before.FailedCount, after.FailedCount);
-        Assert.Equal(before.StateVersion + 1, after.StateVersion);
+        Assert.Equal(before.StateVersion + 2, after.StateVersion);
+        Assert.Equal(nameof(Pass2ExecutionState.Completed), after.State);
     }
 
     [PostgreSqlQualificationFact]
@@ -1687,7 +1690,11 @@ public sealed class Pass2DocumentPostgreSqlAtomicTests
                 case "job-execution-graph":
                     await Context.Database.ExecuteSqlInterpolatedAsync($"""
                         UPDATE "vulgata"."Pass2Executions"
-                        SET "State" = 'Planning'
+                        SET "State" = 'Planning',
+                            "TerminalIncompleteCount" = 0,
+                            "TerminalBoundExcludedCount" = 0,
+                            "TerminalOmissionCount" = 0,
+                            "TerminalWarningInventory" = NULL
                         WHERE "Id" = {Execution.Id};
                         """);
                     break;
@@ -1893,7 +1900,13 @@ public sealed class Pass2DocumentPostgreSqlAtomicTests
                 SELECT (jsonb_populate_record(NULL::"vulgata"."Pass2Executions",
                     to_jsonb(source) || jsonb_build_object(
                         'Id', {executionId}, 'Pass1PairExecutionId', {pairId},
-                        'CoordinationId', {coordinationId}, 'State', 'Running'))).*
+                        'CoordinationId', {coordinationId}, 'State', 'Running',
+                        'PublishedCount', 0, 'FailedCount', 0, 'PlannedCount', 1,
+                        'TerminalIncompleteCount', 0,
+                        'TerminalBoundExcludedCount', 0,
+                        'TerminalOmissionCount', 0,
+                        'TerminalWarningInventory', NULL,
+                        'StateVersion', 1))).*
                 FROM "vulgata"."Pass2Executions" source
                 WHERE source."Id" = {execution.Id};
 
