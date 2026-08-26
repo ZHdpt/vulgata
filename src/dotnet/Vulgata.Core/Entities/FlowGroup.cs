@@ -25,7 +25,7 @@ public sealed class FlowGroup
     }
 
     public Guid Id { get; private set; }
-    public Guid BusinessLogicDocumentVersionId { get; private set; }
+    public Guid? BusinessLogicDocumentVersionId { get; private set; }
     public string LogicalDocumentStableKey { get; private set; } = string.Empty;
     public string State { get; private set; } = string.Empty;
     public string PlanFingerprint { get; private set; } = string.Empty;

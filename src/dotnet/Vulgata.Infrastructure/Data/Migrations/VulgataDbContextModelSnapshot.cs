@@ -296,6 +296,82 @@ namespace Vulgata.Infrastructure.Data.Migrations
                         });
                 });
 
+            modelBuilder.Entity("Vulgata.Core.Entities.CrossRepositoryResolutionDecision", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ConsumerCandidateId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ConsumerDocumentVersionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ConsumerEntryIdentity")
+                        .IsRequired()
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)");
+
+                    b.Property<string>("ConsumerEntryStableKey")
+                        .IsRequired()
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)");
+
+                    b.Property<Guid>("CoordinationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("DocumentEdgeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("EvidenceFingerprint")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character(64)")
+                        .IsFixedLength();
+
+                    b.Property<string>("NormalizedEndpointIdentifier")
+                        .IsRequired()
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)");
+
+                    b.Property<string>("Outcome")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<Guid>("Pass1PairExecutionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Protocol")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<Guid?>("ProviderDocumentVersionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("SystemId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("UncertaintyId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DocumentEdgeId");
+
+                    b.HasIndex("EvidenceFingerprint")
+                        .IsUnique();
+
+                    b.HasIndex("UncertaintyId")
+                        .IsUnique();
+
+                    b.ToTable("CrossRepositoryResolutionDecisions", "vulgata");
+                });
+
             modelBuilder.Entity("Vulgata.Core.Entities.DatabaseConnection", b =>
                 {
                     b.Property<Guid>("Id")
@@ -682,12 +758,55 @@ namespace Vulgata.Infrastructure.Data.Migrations
                         });
                 });
 
+            modelBuilder.Entity("Vulgata.Core.Entities.ExactResolutionProviderEvidenceContribution", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("EvidenceFingerprint")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character(64)")
+                        .IsFixedLength();
+
+                    b.Property<int>("EvidenceOrdinal")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("ProviderDocumentVersionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("ProviderOrdinal")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("ResolutionDecisionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("SourceAnchorId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SourceAnchorId");
+
+                    b.HasIndex("ResolutionDecisionId", "EvidenceFingerprint")
+                        .IsUnique();
+
+                    b.HasIndex("ResolutionDecisionId", "ProviderOrdinal", "EvidenceOrdinal")
+                        .IsUnique()
+                        .HasDatabaseName("IX_ExactResolutionProviderEvidenceContributions_ResolutionDec~1");
+
+                    b.ToTable("ExactResolutionProviderEvidenceContributions", "vulgata");
+                });
+
             modelBuilder.Entity("Vulgata.Core.Entities.FlowGroup", b =>
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid");
 
-                    b.Property<Guid>("BusinessLogicDocumentVersionId")
+                    b.Property<Guid?>("BusinessLogicDocumentVersionId")
                         .HasColumnType("uuid");
 
                     b.Property<DateTimeOffset>("CreatedAt")
@@ -696,11 +815,27 @@ namespace Vulgata.Infrastructure.Data.Migrations
                     b.Property<int>("GroupOrder")
                         .HasColumnType("integer");
 
+                    b.Property<string>("LogicalDocumentStableKey")
+                        .IsRequired()
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)");
+
+                    b.Property<string>("PlanFingerprint")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character(64)")
+                        .IsFixedLength();
+
                     b.Property<Guid>("RepositoryId")
                         .HasColumnType("uuid");
 
                     b.Property<Guid>("ScanRunId")
                         .HasColumnType("uuid");
+
+                    b.Property<string>("State")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
 
                     b.Property<string>("Title")
                         .IsRequired()
@@ -1395,6 +1530,245 @@ namespace Vulgata.Infrastructure.Data.Migrations
 
                             t.HasCheckConstraint("CK_Pass1PairExecutions_Versions", "\"StateVersion\" >= 0 AND \"ConcurrencyRevision\" >= 0");
                         });
+                });
+
+            modelBuilder.Entity("Vulgata.Core.Entities.Pass2Execution", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CoordinationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("Pass1PairExecutionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("StartedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("State")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<long>("StateVersion")
+                        .IsConcurrencyToken()
+                        .HasColumnType("bigint");
+
+                    b.Property<Guid>("SystemId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CoordinationId")
+                        .IsUnique();
+
+                    b.HasIndex("Pass1PairExecutionId")
+                        .IsUnique();
+
+                    b.HasIndex("SystemId");
+
+                    b.ToTable("Pass2Executions", "vulgata");
+                });
+
+            modelBuilder.Entity("Vulgata.Core.Entities.Pass2JobExecution", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("AttemptCount")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid?>("CommittedDocumentVersionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("CompletionFingerprint")
+                        .HasMaxLength(64)
+                        .HasColumnType("character(64)")
+                        .IsFixedLength();
+
+                    b.Property<Guid>("FlowGroupId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("GroupOrder")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("Pass2ExecutionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("State")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<long>("StateVersion")
+                        .IsConcurrencyToken()
+                        .HasColumnType("bigint");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CommittedDocumentVersionId");
+
+                    b.HasIndex("FlowGroupId")
+                        .IsUnique();
+
+                    b.HasIndex("Pass2ExecutionId", "GroupOrder")
+                        .IsUnique();
+
+                    b.ToTable("Pass2JobExecutions", "vulgata");
+                });
+
+            modelBuilder.Entity("Vulgata.Core.Entities.Pass2Omission", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("ExactResolutionDecisionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("Pass2ExecutionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ReasonCode")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<string>("State")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ExactResolutionDecisionId");
+
+                    b.HasIndex("Pass2ExecutionId", "ExactResolutionDecisionId")
+                        .IsUnique();
+
+                    b.ToTable("Pass2Omissions", "vulgata");
+                });
+
+            modelBuilder.Entity("Vulgata.Core.Entities.Pass2RetrievalBudget", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("AdditionalDocumentCount")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("CallsReserved")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("Pass2JobExecutionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("ResultsReturned")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("ReturnedUtf8Bytes")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("State")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<long>("StateVersion")
+                        .IsConcurrencyToken()
+                        .HasColumnType("bigint");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Pass2JobExecutionId")
+                        .IsUnique();
+
+                    b.ToTable("Pass2RetrievalBudgets", "vulgata");
+                });
+
+            modelBuilder.Entity("Vulgata.Core.Entities.Pass2RetrievalReceipt", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("AttemptOrdinal")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("CallOrdinal")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("Pass2JobExecutionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("RequestFingerprint")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character(64)")
+                        .IsFixedLength();
+
+                    b.Property<string>("State")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Pass2JobExecutionId", "CallOrdinal")
+                        .IsUnique();
+
+                    b.ToTable("Pass2RetrievalReceipts", "vulgata");
+                });
+
+            modelBuilder.Entity("Vulgata.Core.Entities.Pass2RetrievalResult", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("AttemptOrdinal")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("DocumentVersionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("EvidenceFingerprint")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character(64)")
+                        .IsFixedLength();
+
+                    b.Property<Guid>("Pass2JobExecutionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ReceiptId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("ResultOrdinal")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("State")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DocumentVersionId");
+
+                    b.HasIndex("Pass2JobExecutionId");
+
+                    b.HasIndex("ReceiptId", "ResultOrdinal")
+                        .IsUnique();
+
+                    b.ToTable("Pass2RetrievalResults", "vulgata");
                 });
 
             modelBuilder.Entity("Vulgata.Core.Entities.PendingContextChange", b =>
@@ -3037,6 +3411,19 @@ namespace Vulgata.Infrastructure.Data.Migrations
                     b.Navigation("PreScanResult");
                 });
 
+            modelBuilder.Entity("Vulgata.Core.Entities.CrossRepositoryResolutionDecision", b =>
+                {
+                    b.HasOne("Vulgata.Core.Entities.DocumentEdge", null)
+                        .WithMany()
+                        .HasForeignKey("DocumentEdgeId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Vulgata.Core.Entities.Uncertainty", null)
+                        .WithOne()
+                        .HasForeignKey("Vulgata.Core.Entities.CrossRepositoryResolutionDecision", "UncertaintyId")
+                        .OnDelete(DeleteBehavior.Restrict);
+                });
+
             modelBuilder.Entity("Vulgata.Core.Entities.DatabaseConnection", b =>
                 {
                     b.HasOne("Vulgata.Core.Entities.Repository", "Repository")
@@ -3139,14 +3526,28 @@ namespace Vulgata.Infrastructure.Data.Migrations
                     b.Navigation("ProviderSourceAnchor");
                 });
 
+            modelBuilder.Entity("Vulgata.Core.Entities.ExactResolutionProviderEvidenceContribution", b =>
+                {
+                    b.HasOne("Vulgata.Core.Entities.CrossRepositoryResolutionDecision", null)
+                        .WithMany()
+                        .HasForeignKey("ResolutionDecisionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Vulgata.Core.Entities.SourceAnchor", null)
+                        .WithMany()
+                        .HasForeignKey("SourceAnchorId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Vulgata.Core.Entities.FlowGroup", b =>
                 {
                     b.HasOne("Vulgata.Core.Entities.DocumentVersion", "BusinessLogicDocumentVersion")
                         .WithMany("FlowGroups")
                         .HasForeignKey("BusinessLogicDocumentVersionId", "RepositoryId", "ScanRunId")
                         .HasPrincipalKey("Id", "RepositoryId", "ScanRunId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("BusinessLogicDocumentVersion");
                 });
@@ -3306,6 +3707,101 @@ namespace Vulgata.Infrastructure.Data.Migrations
                     b.HasOne("Vulgata.Core.Entities.PreparedScanManifest", null)
                         .WithMany()
                         .HasForeignKey("ManifestTwoId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Vulgata.Core.Entities.Pass2Execution", b =>
+                {
+                    b.HasOne("Vulgata.Core.Entities.TwoRepositoryScanCoordination", null)
+                        .WithOne()
+                        .HasForeignKey("Vulgata.Core.Entities.Pass2Execution", "CoordinationId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Vulgata.Core.Entities.Pass1PairExecution", null)
+                        .WithOne()
+                        .HasForeignKey("Vulgata.Core.Entities.Pass2Execution", "Pass1PairExecutionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Vulgata.Core.Entities.System", null)
+                        .WithMany()
+                        .HasForeignKey("SystemId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Vulgata.Core.Entities.Pass2JobExecution", b =>
+                {
+                    b.HasOne("Vulgata.Core.Entities.DocumentVersion", null)
+                        .WithMany()
+                        .HasForeignKey("CommittedDocumentVersionId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Vulgata.Core.Entities.FlowGroup", null)
+                        .WithOne()
+                        .HasForeignKey("Vulgata.Core.Entities.Pass2JobExecution", "FlowGroupId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Vulgata.Core.Entities.Pass2Execution", null)
+                        .WithMany()
+                        .HasForeignKey("Pass2ExecutionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Vulgata.Core.Entities.Pass2Omission", b =>
+                {
+                    b.HasOne("Vulgata.Core.Entities.CrossRepositoryResolutionDecision", null)
+                        .WithMany()
+                        .HasForeignKey("ExactResolutionDecisionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Vulgata.Core.Entities.Pass2Execution", null)
+                        .WithMany()
+                        .HasForeignKey("Pass2ExecutionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Vulgata.Core.Entities.Pass2RetrievalBudget", b =>
+                {
+                    b.HasOne("Vulgata.Core.Entities.Pass2JobExecution", null)
+                        .WithOne()
+                        .HasForeignKey("Vulgata.Core.Entities.Pass2RetrievalBudget", "Pass2JobExecutionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Vulgata.Core.Entities.Pass2RetrievalReceipt", b =>
+                {
+                    b.HasOne("Vulgata.Core.Entities.Pass2JobExecution", null)
+                        .WithMany()
+                        .HasForeignKey("Pass2JobExecutionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Vulgata.Core.Entities.Pass2RetrievalResult", b =>
+                {
+                    b.HasOne("Vulgata.Core.Entities.DocumentVersion", null)
+                        .WithMany()
+                        .HasForeignKey("DocumentVersionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Vulgata.Core.Entities.Pass2JobExecution", null)
+                        .WithMany()
+                        .HasForeignKey("Pass2JobExecutionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Vulgata.Core.Entities.Pass2RetrievalReceipt", null)
+                        .WithMany()
+                        .HasForeignKey("ReceiptId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });

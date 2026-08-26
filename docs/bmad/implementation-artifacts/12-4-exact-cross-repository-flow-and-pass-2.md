@@ -263,3 +263,14 @@ passed. The minimal GREEN added the accepted external resources and Core v2
 entities/contracts. After correcting one test-only repository-root traversal,
 the focused suite passed 21/21 and the root's focused-plus-surrounding suite
 passed 46/46 with zero errors. T007-T009 migration/relational work remains next.
+
+### T007-T009 migration checkpoint
+
+The migration owner observed four model/migration RED failures and two real
+PostgreSQL RED failures before scaffolding additive migration
+`20260826022909_ExactCrossRepositoryFlowPass2`. Two test-only provider defects
+were corrected without weakening assertions. The root then verified 18/18
+migration, disposable PostgreSQL, and Chat compatibility tests. Fresh apply,
+rollback, reapply, nullable prepublication bindings, foreign keys, reusable
+Edge uniqueness, legacy schema retention, no pending model changes, and
+disposable database cleanup all passed; ordinary `vulgata` was not migrated.

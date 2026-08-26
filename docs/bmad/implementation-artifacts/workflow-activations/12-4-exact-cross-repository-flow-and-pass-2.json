@@ -34,7 +34,7 @@
   "superseded_by_state": "specs/013-exact-cross-repository-flow-pass2/workflow-state.json",
   "resume": {
     "stage": "implement",
-    "reason": "T001-T006 are verified GREEN; continue with T007-T009 migration and relational constraints RED/GREEN."
+    "reason": "T007-T009 are verified GREEN; begin T010-T017 exact Cross-Repository Resolution RED/GREEN."
   },
-  "updated_at": "2026-08-26T02:18:26.2217202Z"
+  "updated_at": "2026-08-26T02:37:08.9359829Z"
 }

@@ -13,6 +13,9 @@ internal sealed class FlowGroupConfiguration : IEntityTypeConfiguration<FlowGrou
         builder.HasKey(group => group.Id);
         builder.Property(group => group.Id).ValueGeneratedNever();
         builder.Property(group => group.Title).HasMaxLength(4_096);
+        builder.Property(group => group.LogicalDocumentStableKey).HasMaxLength(512);
+        builder.Property(group => group.State).HasMaxLength(32);
+        builder.Property(group => group.PlanFingerprint).HasMaxLength(64).IsFixedLength();
         builder.HasIndex(group => new
         {
             group.BusinessLogicDocumentVersionId,

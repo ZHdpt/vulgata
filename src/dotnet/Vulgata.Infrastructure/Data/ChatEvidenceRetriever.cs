@@ -405,7 +405,8 @@ public sealed class ChatEvidenceRetriever(
                 on flowGroup.Id equals trace.FlowGroupId
             join step in _context.FlowTraceSteps.AsNoTracking()
                 on trace.Id equals step.FlowTraceId
-            where documentVersionIds.Contains(flowGroup.BusinessLogicDocumentVersionId) &&
+            where flowGroup.BusinessLogicDocumentVersionId.HasValue &&
+                documentVersionIds.Contains(flowGroup.BusinessLogicDocumentVersionId.Value) &&
                 documentVersionIds.Contains(step.DocumentVersionId)
             orderby flowGroup.GroupOrder, trace.TraceOrder, step.StepOrder, step.Id
             select new FlowRow(

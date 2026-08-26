@@ -36,8 +36,18 @@ public class VulgataDbContext(DbContextOptions<VulgataDbContext> options) : DbCo
     public DbSet<DocumentEdge> DocumentEdges => Set<DocumentEdge>();
     public DbSet<ExactCrossRepositoryEdgeEvidence> ExactCrossRepositoryEdgeEvidence =>
         Set<ExactCrossRepositoryEdgeEvidence>();
+    public DbSet<CrossRepositoryResolutionDecision> CrossRepositoryResolutionDecisions =>
+        Set<CrossRepositoryResolutionDecision>();
+    public DbSet<ExactResolutionProviderEvidenceContribution> ExactResolutionProviderEvidenceContributions =>
+        Set<ExactResolutionProviderEvidenceContribution>();
     public DbSet<Uncertainty> Uncertainties => Set<Uncertainty>();
     public DbSet<FlowGroup> FlowGroups => Set<FlowGroup>();
+    public DbSet<Pass2Execution> Pass2Executions => Set<Pass2Execution>();
+    public DbSet<Pass2Omission> Pass2Omissions => Set<Pass2Omission>();
+    public DbSet<Pass2JobExecution> Pass2JobExecutions => Set<Pass2JobExecution>();
+    public DbSet<Pass2RetrievalBudget> Pass2RetrievalBudgets => Set<Pass2RetrievalBudget>();
+    public DbSet<Pass2RetrievalReceipt> Pass2RetrievalReceipts => Set<Pass2RetrievalReceipt>();
+    public DbSet<Pass2RetrievalResult> Pass2RetrievalResults => Set<Pass2RetrievalResult>();
     public DbSet<FlowTrace> FlowTraces => Set<FlowTrace>();
     public DbSet<FlowTraceStep> FlowTraceSteps => Set<FlowTraceStep>();
     public DbSet<IndexEntry> IndexEntries => Set<IndexEntry>();

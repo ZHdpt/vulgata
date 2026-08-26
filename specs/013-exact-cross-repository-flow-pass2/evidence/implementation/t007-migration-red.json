@@ -1,0 +1,77 @@
+{
+  "story": "12.4",
+  "feature": "exact-cross-repository-flow-pass2",
+  "tasks": ["T007"],
+  "phase": "implement",
+  "sourceCommit": "a3d0667508497853083897f6e2a503fc5b7774bf",
+  "foundationCheckpoint": "a39b3ef692e008d1202241c5cdc077ee36f11db5",
+  "observedAt": "2026-08-26T02:24:58.7952721Z",
+  "commands": [
+    {
+      "purpose": "focused compile/model RED",
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --filter 'FullyQualifiedName~Pass2MigrationTests' --logger \"console;verbosity=minimal\"",
+      "exitCode": 1,
+      "result": "4 tests failed as expected: missing v2 model registrations, missing cohesive migration, pending model changes, and missing Story 12.4 migration in the migration assembly."
+    },
+    {
+      "purpose": "focused PostgreSQL relational RED",
+      "command": "$env:VULGATA_TEST_POSTGRES_ADMIN = '<supplied localhost:5432/vulgata admin connection; password redacted>'; dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --filter 'FullyQualifiedName~Pass2PostgreSqlConstraintTests' --logger \"console;verbosity=normal\"",
+      "exitCode": 1,
+      "result": "2 tests failed as expected at MigrateAsync because EF raised PendingModelChangesWarning before the absent Story 12.4 migration could apply."
+    },
+    {
+      "purpose": "compile verification after test-author using fix",
+      "command": "dotnet build tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore -v:q 2>&1 | Select-String -Pattern 'error |Build succeeded|Build FAILED'",
+      "exitCode": 0,
+      "result": "Build succeeded."
+    }
+  ],
+  "result": {
+    "status": "red",
+    "reason": "Both model and PostgreSQL suites compile and fail specifically at the missing T008 EF registrations/migration boundary."
+  },
+  "database": {
+    "administrator": "redacted supplied Host=localhost;Port=5432;Database=vulgata connection",
+    "target": [
+      "vulgata_story121_4b96ae51d2f64f35b7ef2eb3b7a2fd91",
+      "vulgata_story121_85618d7c5b514c00884c7f5638aa63f1"
+    ],
+    "ordinaryVulgataTargeted": false,
+    "creation": "Both generated names were created successfully by DisposablePostgreSqlDatabase against the supplied base connection.",
+    "cleanup": "Both generated databases were disposed by the test finally/await-using path after the expected PendingModelChangesWarning failures; no cleanup exception was reported."
+  },
+  "scopeNotes": [
+    "Only Pass2MigrationTests.cs, Pass2PostgreSqlConstraintTests.cs, and this evidence file were changed.",
+    "No production source, migrations, project files, workflow state, or Git history was changed."
+  ],
+  "subsequentVerification": {
+    "observedAt": "2026-08-26T02:34:26.3758533Z",
+    "sourceCommit": "a3d0667508497853083897f6e2a503fc5b7774bf",
+    "harnessCorrection": "Configured the SQLite migration-double options to ignore RelationalEventId.PendingModelChangesWarning, matching the established migration-test precedent; Npgsql options and assertions remain unchanged.",
+    "postgresqlQueryCorrection": "Cast pg_attribute.attname to text before array_agg so the ordered name array compares with the text[] parameter without changing exact ordered-column equality.",
+    "commands": [
+      {
+        "purpose": "focused Pass2 migration verification",
+        "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter 'FullyQualifiedName~Pass2MigrationTests' --logger \"console;verbosity=minimal\"",
+        "exitCode": 0,
+        "result": "4 tests passed; 0 failed; 0 skipped. Build completed with existing warnings only."
+      },
+      {
+        "purpose": "focused disposable PostgreSQL constraint verification",
+        "command": "$env:VULGATA_TEST_POSTGRES_ADMIN = '<supplied localhost:5432/vulgata admin connection; password redacted>'; dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --filter 'FullyQualifiedName~Pass2PostgreSqlConstraintTests' --logger \"console;verbosity=normal\"",
+        "exitCode": 0,
+        "result": "2 tests passed; 0 failed; 0 skipped. Each test created a uniquely named disposable database, exercised migration/constraints, disposed it, and passed the post-disposal database-dropped assertion."
+      }
+    ],
+    "result": "Subsequent focused verification is green. The original T007 RED commands and diagnostics above are preserved; the earlier failure was the missing production T008 model/migration boundary, not an environment or network failure."
+  }
+,
+  "rootVerification": {
+    "observedAt": "2026-08-26T02:34:41Z",
+    "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter <Pass2Migration|Pass2PostgreSqlConstraint|ChatEvidence filter> --logger console;verbosity=minimal",
+    "exitCode": 0,
+    "result": { "total": 18, "passed": 18, "failed": 0, "skipped": 0 },
+    "databaseBoundary": "Uniquely named disposable PostgreSQL databases only; ordinary vulgata was administrative base only; cleanup assertions passed.",
+    "warnings": "Existing NU1507 and Entity Framework assembly-version warnings; zero errors."
+  }
+}
