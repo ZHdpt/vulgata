@@ -1,0 +1,75 @@
+{
+  "task": "T026",
+  "story": "12.4",
+  "slice": "US3 retrieve_code_logic durable budget/replay",
+  "status": "RED_EXPECTED",
+  "testPath": "tests/Vulgata.Tests/PreparedPass2/RetrieveCodeLogicPostgreSqlBudgetTests.cs",
+  "approvedSeam": "Vulgata.Core.DomainServices.IPass2CodeLogicRetrievalService.RetrieveAsync(Guid, Pass2CodeLogicRetrievalRequest, CancellationToken)",
+  "compileAndSetup": {
+    "command": "$env:VULGATA_TEST_POSTGRES_ADMIN='Host=localhost;Port=5432;Database=vulgata;Username=vulgata;Password=vulgata_dev'; dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter FullyQualifiedName~RetrieveCodeLogicPostgreSqlBudgetTests --logger \"console;verbosity=minimal\"",
+    "compile": "successful",
+    "postgres": "successful; PostgreSQL 17 accepted and migrations applied only to disposable databases",
+    "disposableDatabases": [
+      "vulgata_story121_52fac110e2a64380b98314ef811b817f",
+      "vulgata_story121_b08adbae1bff43c2b570f30dbc800fcf",
+      "vulgata_story121_f6a41ea5aefa46869831138270461e7a"
+    ],
+    "cleanup": "each database was dropped by DisposablePostgreSqlDatabase.DisposeAsync and absence was verified by SELECT EXISTS against pg_database",
+    "ordinaryDatabaseMigrated": false
+  },
+  "behavioralRed": {
+    "commandExitCode": 1,
+    "total": 3,
+    "passed": 0,
+    "failed": 3,
+    "vectors": [
+      {
+        "test": "RetrieveAsync_EightCallsAreInclusiveAndNinthIsPersistedBoundRefusalAsync",
+        "expected": "calls 1-8 complete with receipt CallOrdinal values 1-8; call 9 returns content-dark BoundExceeded without increasing CallsReserved, creating a receipt with ordinal 9, or adding results",
+        "observed": "RED at call 1: result outcome was Unavailable; no reservation or receipt was observed"
+      },
+      {
+        "test": "RetrieveAsync_RepeatedRequestChargesCallsButKeepsDocumentAccountingCanonicalAsync",
+        "expected": "two identical requests consume two calls, while already-counted Documents are not double-counted",
+        "observed": "RED at first outcome: service returned Unavailable before durable accounting"
+      },
+      {
+        "test": "RetrieveAsync_NewServiceInstanceDoesNotResetPersistedBudgetAsync",
+        "expected": "two service instances share the durable budget and receipts",
+        "observed": "RED at first outcome: service returned Unavailable before durable accounting"
+      }
+    ],
+    "cause": "The context/scope/source-reader composition seam is now present, so the fixture reaches the public RetrieveAsync call. The current implementation still returns Pass2CodeLogicRetrievalResult.Unavailable() without reservation, retrieval, or durable receipt/result writes; all three tests RED at the first expected usable outcome. This is a production-behavior RED, not a PostgreSQL or network failure."
+  },
+  "latestRerun": {
+    "command": "$env:VULGATA_TEST_POSTGRES_ADMIN='Host=localhost;Port=5432;Database=vulgata;Username=vulgata;Password=vulgata_dev'; dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --no-build --filter FullyQualifiedName~RetrieveCodeLogicPostgreSqlBudgetTests --logger \"console;verbosity=minimal\" --nologo -- xUnit.MaxParallelThreads=1",
+    "compile": "not performed by this retry; source compiled successfully in the preceding build-enabled run",
+    "exitCode": 1,
+    "total": 3,
+    "passed": 0,
+    "failed": 3,
+    "classification": "ENVIRONMENT_BLOCKED",
+    "diagnostic": "All three tests failed while creating their disposable database: NpgsqlException Failed to connect to 127.0.0.1:5432, inner SocketException target machine actively refused it. No fixture, migration, retrieval call, or database cleanup ran in this retry. The preceding causal run had PostgreSQL setup and cleanup success; this later run indicates PostgreSQL is currently unavailable and must be restored externally before requalification.",
+    "noHostOrSystemChanges": true
+  },
+  "deferredVectors": [
+    {
+      "vector": "10 result descriptors, 4 additional Documents, 4 sections per Document, 65,536 UTF-8 bytes and each plus-one refusal",
+      "minimalGap": "Implement the T028 durable reservation/admission path behind the existing context-backed service so seeded jobs load and typed results are admitted before these persisted bound vectors can be causal."
+    },
+    {
+      "vector": "lost receipt, exact same-ordinal replay, changed-request conflict",
+      "minimalGap": "The public request does not supply an ordinal, receipt token, or fault-injection boundary. The durable implementation must derive ordinals and expose a testable provider/transaction failure path; tests must not fabricate private receipt rows."
+    },
+    {
+      "vector": "atomic rollback of reservation/results on provider failure",
+      "minimalGap": "No public provider/source failure seam is currently available to induce the failure after reservation."
+    }
+  ],
+  "productionChanges": false,
+  "migrationChanges": false,
+  "workflowChanges": false,
+  "staged": false,
+  "committed": false,
+  "gitOperationsPerformed": false
+}

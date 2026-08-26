@@ -1,0 +1,124 @@
+{
+  "schema_version": "1.0",
+  "task": "T025",
+  "status": "GREEN_AFTER_T027",
+  "scope": "direct persisted-fixture security, currentness, privacy, and traversal tests",
+  "test_file": "tests/Vulgata.Tests/PreparedPass2/RetrieveCodeLogicSecurityTests.cs",
+  "commands": {
+    "build": "dotnet build tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore",
+    "focused_test": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --no-restore --filter FullyQualifiedName~RetrieveCodeLogicSecurityTests --logger console;verbosity=minimal"
+  },
+  "red_baseline": {
+    "total": 5,
+    "passed": 0,
+    "failed": 5,
+    "expected": "The five original persisted currentness/security calls reached the placeholder and failed Expected Refused versus Actual Unavailable."
+  },
+  "current_result": {
+    "total": 11,
+    "passed": 11,
+    "failed": 0,
+    "skipped": 0,
+    "observed": "All focused T025 tests are GREEN after T027 retrieval behavior was supplied."
+  },
+  "covered_behavior": [
+    {
+      "scenario": "stale current pointer",
+      "test": "RetrieveAsync_PersistedSecurityMutation_ReturnsClosedRefusalWithoutAuthorityMutationAsync(mutation: stale)",
+      "mutation": "Clear persisted LogicalDocument.CurrentVersionId for a traced document.",
+      "expected_and_observed": "Refused, zero items, content-dark code, zero source-reader calls, and unchanged Flow Group/exact-resolution authority snapshot."
+    },
+    {
+      "scenario": "superseded document version",
+      "test": "RetrieveAsync_PersistedSecurityMutation_ReturnsClosedRefusalWithoutAuthorityMutationAsync(mutation: superseded)",
+      "mutation": "Persist a valid same-logical-document successor and set the traced DocumentVersion.SupersededById.",
+      "expected_and_observed": "Refused, zero items, content-dark code, zero source-reader calls, and unchanged authority snapshot."
+    },
+    {
+      "scenario": "cross-System mismatch",
+      "test": "RetrieveAsync_PersistedSecurityMutation_ReturnsClosedRefusalWithoutAuthorityMutationAsync(mutation: cross-system)",
+      "mutation": "Persist an existing foreign System and change Pass2Execution.SystemId to it.",
+      "expected_and_observed": "Refused, zero items, content-dark code, zero source-reader calls, and unchanged authority snapshot."
+    },
+    {
+      "scenario": "mismatched Profiled Revision",
+      "test": "RetrieveAsync_PersistedSecurityMutation_ReturnsClosedRefusalWithoutAuthorityMutationAsync(mutation: profiled-revision)",
+      "mutation": "Change the traced DocumentVersion.ProfiledRevision to a different persisted revision.",
+      "expected_and_observed": "Refused, zero items, content-dark code, zero source-reader calls, and unchanged authority snapshot."
+    },
+    {
+      "scenario": "revoked server-owned scope",
+      "test": "RetrieveAsync_RevokedServerScope_ReturnsClosedRefusalWithoutAuthorityMutationAsync",
+      "mutation": "Use a server-owned RepositoryAccessScope whose verifier returns false; RetrieveAsync accepts no scope from the caller.",
+      "expected_and_observed": "Refused, zero items, content-dark result, zero source-reader calls, and unchanged authority snapshot."
+    },
+    {
+      "scenario": "cross-job handle",
+      "test": "RetrieveAsync_HandleIssuedForDifferentJob_IsContentDarkRefusalAsync",
+      "mutation": "Issue the section handle in independent fixture A; submit it to fixture B's different valid persisted job. Fixture B has two valid groups/jobs and respects one-job-per-FlowGroup uniqueness.",
+      "expected_and_observed": "Refused, zero items, handle absent from refusal code, and zero source-reader calls."
+    },
+    {
+      "scenario": "Source Anchor hash mismatch",
+      "test": "RetrieveAsync_IssuedAnchorWithPersistedHashMismatch_IsContentDarkRefusalAsync",
+      "mutation": "Issue a valid Search-to-SourceAnchor handle, change the persisted SourceAnchor.SourceHash, and make the reader return the pre-mutation hash.",
+      "expected_and_observed": "Refused, zero items, one source-reader call, no source content in the result, and unchanged authority snapshot."
+    },
+    {
+      "scenario": "Source Anchor contained-range mismatch",
+      "test": "RetrieveAsync_IssuedAnchorWithPersistedRangeMismatch_IsContentDarkRefusalAsync",
+      "mutation": "Issue a valid anchor handle, persist ByteStart=10 and ByteEnd=16, then request contained bytes 0..6.",
+      "expected_and_observed": "Refused, zero items, zero source-reader calls, and unchanged authority snapshot."
+    },
+    {
+      "scenario": "one-hop RelatedDocuments and non-REFERENCES exclusion",
+      "test": "RetrieveAsync_RelatedDocuments_StopsAtOneReferencesHopAndExcludesNonReferencesAsync",
+      "mutation": "Persist a consumer-to-implementation GeneratedFrom edge while the authoritative consumer-to-provider References edge and provider-to-implementation second-hop References edge remain present.",
+      "expected_and_observed": "Accepted relationship results contain only the one outgoing References hop, exclude the second-hop implementation, and preserve authority snapshot."
+    },
+    {
+      "scenario": "unknown, unauthorized, and stale privacy equivalence",
+      "test": "RetrieveAsync_UnknownUnauthorizedAndStaleRequestsHaveEquivalentContentDarkRefusalAsync",
+      "mutation": "Compare an unknown handle, a valid handle issued for another job, and a request against a persisted stale job.",
+      "expected_and_observed": "All refusal outcomes, codes, remaining budgets, and empty item sets are equivalent and content-dark."
+    },
+    {
+      "scenario": "caller cannot mutate authority selection",
+      "test": "RetrieveCodeLogic_RequestCannotSupplyAuthorityMutationFields",
+      "expected_and_observed": "The typed request exposes no Provider, Group, System, Repository, or Revision mutation fields; authority remains server-derived."
+    }
+  ],
+  "fixture_setup": {
+    "status": "VALID_AUTHORITATIVE_PERSISTED_FIXTURE",
+    "source": "Pass2FlowPlanningPostgreSqlTests.SeedPass2Async invoked only as the accepted T020 fixture helper, followed by PreparedPass2Store.StartAsync.",
+    "proof_assertions": [
+      "Pass2Execution, Pass2JobExecution, and Pass2RetrievalBudget persisted",
+      "FlowGroups, FlowTraces, and FlowTraceSteps persisted",
+      "DocumentVersions, DocumentSections, SourceAnchors, and DocumentEdges persisted",
+      "PreparedPass2StartOutcome.Created",
+      "all mutations compare a persisted target snapshot before and after mutation"
+    ],
+    "authority_snapshot": "Covered retrieval tests compare Flow Group identity/state/plan fingerprint/membership fingerprint plus exact-resolution provider/edge/evidence fields before and after retrieval; retrieval does not mutate them."
+  },
+  "deferred_vectors": [
+    {
+      "scenario": "hidden excluded-resource equivalence",
+      "reason": "No persisted hidden/excluded-resource flag or public issuance path exists in the approved seam; an arbitrary handle would not be causal."
+    },
+    {
+      "scenario": "provider-changing retrieval request",
+      "reason": "The request has no provider-selection field or operation. The DTO contract test proves this is server-derived; no provider mutation can be issued through the public seam."
+    },
+    {
+      "scenario": "Flow Group membership-changing retrieval request",
+      "reason": "The request has no group-membership field or operation. The DTO contract test proves this is server-derived; no group mutation can be issued through the public seam."
+    }
+  ],
+  "retraction": "The earlier 11 arbitrary-handle probes were withdrawn as non-causal. Current evidence contains only issued-handle or persisted-fact mutations; deferred vectors are explicitly not claimed as behavioral coverage.",
+  "environment": {
+    "database": "temporary SQLite fixtures only; PostgreSQL is unavailable and was not contacted",
+    "network": "not used",
+    "provider": "not used",
+    "classification": "code/test behavior verified; no environment or network failure"
+  }
+}

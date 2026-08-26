@@ -1,0 +1,195 @@
+{
+  "schema_version": "story-12.4-implementation-evidence/1.0",
+  "task_ids": ["T024"],
+  "stage": "implement",
+  "status": "GREEN_AFTER_T027",
+  "observed_at_utc": "2026-08-26T06:11:02.5826442Z",
+  "source_commit": "79134023c855ab551f6d56e7f8fab9531af36dd7",
+  "changed_paths": [
+    "tests/Vulgata.Tests/PreparedPass2/RetrieveCodeLogicContractTests.cs",
+    "specs/013-exact-cross-repository-flow-pass2/evidence/implementation/t024-red.json"
+  ],
+  "commands": [
+    {
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter FullyQualifiedName~RetrieveCodeLogicContractTests --no-restore --verbosity minimal",
+      "exit_code": 1,
+      "result": {
+        "total": 5,
+        "passed": 2,
+        "failed": 3,
+        "skipped": 0,
+        "duration": "31 ms"
+      },
+      "diagnostics": [
+        "Build completed successfully; existing package and analyzer warnings were non-fatal.",
+        "RetrieveCodeLogic_PublicService_DeclaresTypedServerOwnedAsyncSeam failed at Assert.NotNull: Vulgata.Core.DomainServices.IPass2CodeLogicRetrievalService is absent.",
+        "RetrieveCodeLogic_Request_ClosesTheFiveTypedOperations failed at the same absent public service seam; no operation behavior was inferred.",
+        "RetrieveCodeLogic_Result_IsTypedAndNotAnUnboundedRawPayload failed at the same absent public service seam; no result behavior was inferred.",
+        "NoResults, BoundExceeded, Refused, and Unavailable receipt states, exact inclusive budget constants, and content-dark durable rows passed characterization assertions."
+      ],
+      "build_observation": "The focused test source compiled and executed. The RED is caused by the missing production Core interface, not fixture, environment, network, PostgreSQL, or system failure."
+    }
+  ],
+  "t024": {
+    "status": "RED",
+    "expected_missing_seam": {
+      "interface": "Vulgata.Core.DomainServices.IPass2CodeLogicRetrievalService",
+      "method": "Task<TypedRetrievalResult> RetrieveAsync([optional Guid pass2JobExecutionId], TypedRetrievalRequest request, CancellationToken cancellationToken)",
+      "request_requirements": [
+        "typed closed Operation enum containing exactly Search, Sections, SourceAnchors, SourceExcerpt, RelatedDocuments",
+        "operation-specific typed selectors",
+        "no caller-supplied RepositoryAccessScope, System, Repository, Scan Run, Profiled Revision, provider, endpoint, path, SQL, graph, shell, or network target"
+      ],
+      "result_requirements": [
+        "typed bounded descriptors rather than object/string/raw payload",
+        "opaque evidence handles",
+        "closed NoResults, BoundExceeded, Refused, and Unavailable outcomes"
+      ]
+    },
+    "red_mapping": {
+      "typed_public_seam": "missing interface and RetrieveAsync declaration",
+      "closed_operations": "cannot be exercised until the typed request seam exists",
+      "typed_result_and_refusal": "cannot be exercised until the typed result seam exists",
+      "bounds": "GREEN characterization; exact inclusive limits are already present",
+      "content_dark_persistence": "GREEN characterization; durable receipt/result properties expose no raw query, section, source, path, endpoint, provider, content, prompt, response, secret, reasoning, or raw payload"
+    }
+  },
+  "behavioralContinuation": {
+    "status": "RED",
+    "observed_at_utc": "2026-08-26T05:27:46.9304724Z",
+    "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter FullyQualifiedName~RetrieveCodeLogicContractTests --no-restore --verbosity minimal",
+    "exit_code": 1,
+    "result": {
+      "total": 10,
+      "passed": 5,
+      "failed": 5,
+      "skipped": 0
+    },
+    "fixture": "Each test creates a unique ExactCrossRepositoryTestFixture with temporary consumer/provider Git repositories and SQLite storage, invokes the accepted T020 SeedPass2Async helper, persists three current Code Logic Document Sections containing the searchable ledger term, starts PreparedPass2Store for the terminal pair, and proves one Pass2JobExecution plus one retrieval budget exist before calling the concrete service. The service is constructed with VulgataDbContext, authorized RepositoryAccessScope, and a recording IRevisionBoundSourceReader.",
+    "operation_mapping": {
+      "Search": "T024 direct persisted current-section search expected Accepted with opaque result handles; actual Unavailable",
+      "Sections": "T024 direct unknown opaque-handle refusal expected Refused with zero items; actual Unavailable",
+      "SourceAnchors": "T024 direct unknown opaque-handle refusal expected Refused with zero items; actual Unavailable",
+      "SourceExcerpt": "T024 direct unknown source-anchor handle refusal expected Refused before source read; actual Unavailable",
+      "RelatedDocuments": "T024 direct unknown document handle refusal expected Refused with zero items; actual Unavailable"
+    },
+    "per_test_diagnostics": [
+      "RetrieveCodeLogic_Search_UsesCurrentPersistedSectionsAndOpaqueResultsAsync: Expected Accepted, actual Unavailable.",
+      "RetrieveCodeLogic_Sections_UnknownOpaqueHandleIsClosedRefusalAsync: Expected Refused, actual Unavailable.",
+      "RetrieveCodeLogic_SourceAnchors_UnknownOpaqueHandleIsClosedRefusalAsync: Expected Refused, actual Unavailable.",
+      "RetrieveCodeLogic_SourceExcerpt_UnknownOpaqueHandleIsRefusedBeforeSourceReadAsync: Expected Refused, actual Unavailable; recording source reader remained at zero calls.",
+      "RetrieveCodeLogic_RelatedDocuments_UnknownOpaqueHandleIsClosedRefusalAsync: Expected Refused, actual Unavailable."
+    ],
+    "required_production_behavior": "Replace the constant Unavailable implementation with job-bound operation dispatch, current authorized projection, opaque handle validation, and closed refusal results; T024 does not claim accepted SourceExcerpt content until T027/T028 expose result descriptors/handles sufficient for a valid handle round trip."
+  },
+  "latestAttempt": {
+    "observed_at_utc": "2026-08-26T05:31:00Z",
+    "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter FullyQualifiedName~RetrieveCodeLogicContractTests --no-restore --verbosity minimal",
+    "exit_code": 1,
+    "result": "Build did not reach test execution because unrelated concurrent edits in RetrieveCodeLogicSecurityTests.cs failed compilation.",
+    "diagnostics": [
+      "CS0246: Pass1PairExecution and Pass2JobExecution types are unresolved at RetrieveCodeLogicSecurityTests.cs lines 118 and 124.",
+      "CS1061: CrossRepositoryResolutionDecision has no Pass2FlowGroupId at line 221.",
+      "CS8640 and CS9226: ReadOnlySpan/expanded params expression-tree assertions are invalid at line 209.",
+      "No compiler errors were reported for RetrieveCodeLogicContractTests.cs before the unrelated errors stopped the build."
+    ],
+    "scope_note": "The failing file is outside T024 ownership and was not modified. The previous 10-test direct-fixture run remains the authoritative T024 RED result until this concurrent build blocker is corrected."
+  },
+  "descriptorContinuation": {
+    "status": "RED",
+    "observed_at_utc": "2026-08-26T05:41:37.3285763Z",
+    "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter FullyQualifiedName~RetrieveCodeLogicContractTests --no-restore --verbosity minimal",
+    "exit_code": 1,
+    "result": {
+      "total": 12,
+      "passed": 11,
+      "failed": 1,
+      "skipped": 0,
+      "duration": "10 s"
+    },
+    "diagnostic": "RetrieveCodeLogic_Item_ExposesClosedKindAndTypedBoundedDescriptor failed at Assert.NotNull because Pass2CodeLogicRetrievalItem has no Kind property. All prior contract, persisted-fixture, and direct operation tests passed or retained their expected RED assertions.",
+    "required_shape": {
+      "Kind": "closed enum exactly Document, Section, SourceAnchor, SourceExcerpt, Relationship",
+      "DocumentVersionId": "Guid identifying the current authorized Code Logic Document Version",
+      "ReturnedUtf8Bytes": "bounded Int32 provider-visible byte accounting",
+      "content_policy": "typed descriptor only; no object/JsonDocument/JsonElement, absolute path, or caller scope"
+    },
+    "deferred": "Sections, SourceAnchors, SourceExcerpt, and RelatedDocuments successful chaining remains deferred until T027/T028 provide valid typed descriptor handles and operation implementations."
+  },
+  "chainedContinuation": {
+    "status": "RED",
+    "observed_at_utc": "2026-08-26T05:52:47.7109384Z",
+    "source_commit": "79134023c855ab551f6d56e7f8fab9531af36dd7",
+    "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter FullyQualifiedName~RetrieveCodeLogicContractTests --no-restore -p:WarningLevel=0 --verbosity quiet",
+    "exit_code": 1,
+    "result": {
+      "total": 17,
+      "passed": 12,
+      "failed": 5,
+      "skipped": 0,
+      "duration": "20 s"
+    },
+    "fixture": {
+      "storage": "unique SQLite ExactCrossRepositoryTestFixture; no PostgreSQL or ordinary vulgata database",
+      "authority": "authoritative T020 SeedPass2Async, terminal ReadyForResolution pair, approved manifests, current Code Logic Document Versions, Source Anchors, exact Flow Group, shared REFERENCES Edge, running Pass2 job and retrieval budget",
+      "search_inputs": "three current Document Sections containing ledger plus current Index Entries; consumer Index Entry is intended to issue a Document handle",
+      "source_reader": "recording IRevisionBoundSourceReader; source calls remain zero when SourceAnchors does not issue a valid handle"
+    },
+    "operation_mapping": {
+      "Sections": "Search-issued Section handle reaches Sections; expected Accepted current bounded Section, actual Refused",
+      "SourceAnchors": "Search-issued Section handle reaches SourceAnchors; expected Accepted safe current Source Anchor descriptor, actual Refused",
+      "SourceExcerpt": "Search -> SourceAnchors -> SourceExcerpt chain uses no fabricated handle; current SourceAnchors result is empty, so the chain stops before SourceExcerpt and records the causal prerequisite RED",
+      "RelatedDocuments": "Search query consumer is backed by a current Index Entry; expected a Search-issued Document handle then one-hop REFERENCES Relationship, actual Search result has no Document item and the valid chain cannot begin"
+    },
+    "direct_assertions": [
+      "Sections checks Accepted outcome, Section kind, current Document Version identity, and nonzero bounded bytes.",
+      "SourceAnchors checks Accepted outcome, SourceAnchor kind, current Document Version identity, and nonzero bounded bytes; no absolute path is accepted by the test.",
+      "SourceExcerpt, once SourceAnchors is implemented, will check Accepted SourceExcerpt, exactly one recording source read, exact persisted relative path/Profiled Revision/hash, the requested contained byte range, and SourceExcerpt kind.",
+      "RelatedDocuments, once Search issues the valid Document handle, will check Accepted one-hop Relationship to the REFERENCES target and a distinct target Document Version."
+    ],
+    "diagnostics": [
+      "RetrieveCodeLogic_SearchIssuedSectionHandle_SectionsReturnsCurrentBoundedSectionAsync: Expected Accepted, actual Refused.",
+      "RetrieveCodeLogic_SearchIssuedSectionHandle_SourceAnchorsReturnsSafeCurrentDescriptorAsync: Expected Accepted, actual Refused.",
+      "RetrieveCodeLogic_SearchIssuedAnchorHandle_SourceExcerptReadsExactRevisionBoundSourceAsync: SourceAnchors returned no item, so no fabricated Source Anchor handle was used; downstream SourceExcerpt behavior remains causally blocked by the SourceAnchors RED.",
+      "RetrieveCodeLogic_SearchIssuedDocumentHandle_RelatedDocumentsFollowsOneReferencesHopAsync: Search returned no Document item for the current consumer Index Entry; no fabricated Document handle was used, so RelatedDocuments remains causally blocked by Search document projection.",
+      "RetrieveCodeLogic_Item_ExposesTypedTransientDescriptorCoordinates: missing typed nullable SectionId, SourceAnchorId, EdgeId, ByteStart, and ByteEnd properties on Pass2CodeLogicRetrievalItem."
+    ],
+    "required_production_behavior": "Implement Sections and SourceAnchors over current job-bound handles, issue typed transient descriptor coordinates, extend Search to issue a current Document handle for Index Entry matches, then implement SourceExcerpt through the exact revision-bound source reader and one-hop current REFERENCES traversal for RelatedDocuments."
+  },
+  "greenAfterT027": {
+    "status": "GREEN_AFTER_T027",
+    "observed_at_utc": "2026-08-26T06:11:02.5826442Z",
+    "source_commit": "79134023c855ab551f6d56e7f8fab9531af36dd7",
+    "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter FullyQualifiedName~RetrieveCodeLogicContractTests --no-build --no-restore --logger \"console;verbosity=minimal\"",
+    "exit_code": 0,
+    "result": {
+      "total": 17,
+      "passed": 17,
+      "failed": 0,
+      "skipped": 0,
+      "compilation": "successful; Core and Infrastructure reported zero errors"
+    },
+    "covered_operations": {
+      "Search": "Current persisted section/index matching returns deterministic opaque typed results and repeated requests preserve canonical order/deduplication.",
+      "Sections": "A Search-issued current Section handle returns the bounded current Section descriptor; unknown handles remain closed Refused.",
+      "SourceAnchors": "A Search-issued Section handle returns current Source Anchor descriptors with typed identity/bounds and no absolute path; unknown handles remain closed Refused.",
+      "SourceExcerpt": "A Search-issued Source Anchor handle drives exactly one revision-bound source read with the current relative path, Profiled Revision, anchor hash, and contained byte range; unknown handles are refused before source I/O.",
+      "RelatedDocuments": "A Search-issued current Document handle follows only the one-hop REFERENCES Edge in the requested direction and returns a typed Relationship descriptor; unknown handles remain closed Refused."
+    },
+    "security_and_contract": [
+      "Typed item Kind is closed to Document, Section, SourceAnchor, SourceExcerpt, and Relationship; descriptor identities and bounded byte accounting are typed and content-dark durable rows remain free of raw evidence.",
+      "Pass 2 job scope remains server-owned; handle validity is bound to the current job/attempt and current authorized evidence, with source currentness/hash/range revalidation covered by the surrounding T025 suite.",
+      "The focused T024 fixture is local SQLite with authoritative persisted Pass 2 state; no PostgreSQL, ordinary vulgata database, network, or system change was used."
+    ],
+    "deferred_to_T028": [
+      "Durable reservation-before-I/O, cumulative call/result/additional-Document/section/UTF-8 budgets, exact ordinal replay, lost-receipt charging, and content-dark receipt/result persistence remain T028/T026 scope.",
+      "This record does not claim T029 full retrieval verification or PostgreSQL budget/replay completion."
+    ],
+    "history_note": "The earlier behavioralContinuation, descriptorContinuation, and chainedContinuation RED records are retained unchanged as causal pre-T027 history; this section records only the subsequent 17/17 GREEN verification supplied for T024 after T027."
+  },
+  "notes": [
+    "T024 intentionally records public-seam RED only. Operation execution, opaque-handle binding, inclusive reservation, refusal privacy, currentness/security, and content-dark service behavior are not claimed until T027/T028 provide an invokable service.",
+    "The accepted retrieve-code-logic contract makes Pass 2 job scope server-owned; RepositoryAccessScope is therefore not part of this proposed caller seam. Existing T026 budget-test expectations should be reconciled with that contract by its owner.",
+    "No production code, workflow state, task marker, Git history, database, network, or system configuration was changed."
+  ]
+}
