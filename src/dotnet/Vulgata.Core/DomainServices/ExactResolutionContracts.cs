@@ -4,6 +4,18 @@ using Vulgata.Core.Entities;
 
 namespace Vulgata.Core.DomainServices;
 
+public sealed record ExactResolutionDecisionContract(
+    ExactResolutionProtocol Protocol,
+    string NormalizedEndpointIdentifier,
+    string ConsumerEntryStableKey,
+    ExactResolutionOutcomeKind Outcome,
+    string EvidenceFingerprint);
+
+public sealed record ExactResolutionProviderEvidenceContract(
+    Guid ProviderDocumentVersionId,
+    Guid SourceAnchorId,
+    string EvidenceFingerprint);
+
 public static class ExactResolutionLimits
 {
     public const int MaxProfileBytes = 256 * 1024;

@@ -4,7 +4,7 @@
   "bmad_epic_key": "12",
   "story_path": "docs/bmad/implementation-artifacts/12-4-exact-cross-repository-flow-and-pass-2.md",
   "proposed_feature_short_name": "exact-cross-repository-flow-pass2",
-  "stage": "implementation-approval",
+  "stage": "implement",
   "source_commit": "6aed7057e9e371d35c4123c0a204dd4849803eea",
   "preflight": {
     "branch": "demo0831/story-12-4",
@@ -33,8 +33,8 @@
   "feature_directory": "specs/013-exact-cross-repository-flow-pass2",
   "superseded_by_state": "specs/013-exact-cross-repository-flow-pass2/workflow-state.json",
   "resume": {
-    "stage": "implementation-approval",
-    "reason": "Definition-review attempt 3 accepted with zero findings; await explicit implementation approval for the bound definition hashes."
+    "stage": "implement",
+    "reason": "T001-T006 are verified GREEN; continue with T007-T009 migration and relational constraints RED/GREEN."
   },
-  "updated_at": "2026-08-26T01:59:12.3396279Z"
+  "updated_at": "2026-08-26T02:18:26.2217202Z"
 }

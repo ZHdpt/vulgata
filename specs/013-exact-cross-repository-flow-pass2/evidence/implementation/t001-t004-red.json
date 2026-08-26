@@ -1,0 +1,82 @@
+{
+  "story": "12.4",
+  "feature": "exact-cross-repository-flow-pass2",
+  "tasks": ["T001", "T002", "T003", "T004"],
+  "phase": "implement",
+  "observedAt": "2026-08-26T10:08:38.1630482+08:00",
+  "sourceCommit": "a8d00d26ed9a5424c366563df8c9fed184704689",
+  "acceptedScopeHash": "7D47E4DABBEC9A1C436FF3ABA003732A8E4D1A960EE0C539170D6ECE24BFEF7D",
+  "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --filter 'FullyQualifiedName~Pass2PromptCompositionTests|FullyQualifiedName~Pass2SchemaResourceTests|FullyQualifiedName~ExactResolutionContractTests|FullyQualifiedName~Pass2ExecutionContractTests|FullyQualifiedName~Pass2WorkerDispatcherContractTests|FullyQualifiedName~Pass2LegacyCompatibilityTests|FullyQualifiedName~Pass2ProductionQualificationTests' --logger \"console;verbosity=minimal\"",
+  "exitCode": 1,
+  "result": {
+    "total": 21,
+    "passed": 6,
+    "failed": 15,
+    "skipped": 0,
+    "build": "completed with existing repository warnings; no test compilation errors"
+  },
+  "characterization": [
+    "LegacyExactCrossRepositoryEdgeEvidence_RemainsReadableAndUnchanged passed.",
+    "DocumentEdge_RemainsReusableByDocumentVersionTuple passed.",
+    "Qualification_IsExplicitlyOptIn_AndDoesNotChangeDefaultProviderBehavior passed.",
+    "Existing FlowGroup/LogicalDocument compatibility assertions passed where their legacy surface remains present."
+  ],
+  "red": {
+    "honest": true,
+    "reason": "The production v2 Core entities/contracts and the one-time business-logic-flow schema plus pass2-business-logic-worker prompt are not present at the pinned source commit. Tests observe missing public seams through reflection/resource enumeration; no production type, prompt, schema, migration, or workflow state was fabricated.",
+    "diagnostics": [
+      "Assert.Single failure: Vulgata.Agents.Prompts.pass2-business-logic-worker.v1.md resource collection was empty.",
+      "Assert.Single failure: Vulgata.Agents.Contracts.business-logic-flow-v1.schema.json resource collection was empty.",
+      "Expected Story 12.4 public Core seam absent: CrossRepositoryResolutionDecision.",
+      "Expected Story 12.4 public Core seam absent: ExactResolutionProviderEvidenceContribution.",
+      "Expected Story 12.4 public Core seams absent: Pass2Execution, Pass2Omission, Pass2JobExecution, Pass2RetrievalBudget, Pass2RetrievalReceipt, Pass2RetrievalResult.",
+      "Expected Story 12.4 IPass2 contract seam absent: IPreparedPass2WorkerDispatcher and Pass2ExecutionContracts/Pass2RetrievalContracts."
+    ],
+    "unrelatedFailures": false,
+    "environmentOrNetworkBlocker": false
+  },
+  "changedFiles": [
+    "tests/Vulgata.Tests/PreparedPass2/Pass2TestFixtures.cs",
+    "tests/Vulgata.Tests/PreparedPass2/Pass2CanonicalAssertions.cs",
+    "tests/Vulgata.Tests/PreparedPass2/Pass2PrivacyAssertions.cs",
+    "tests/Vulgata.Tests/PreparedPass2/Pass2PromptCompositionTests.cs",
+    "tests/Vulgata.Tests/PreparedPass2/Pass2SchemaResourceTests.cs",
+    "tests/Vulgata.Tests/PreparedPass2/ExactResolutionContractTests.cs",
+    "tests/Vulgata.Tests/PreparedPass2/Pass2ExecutionContractTests.cs",
+    "tests/Vulgata.Tests/PreparedPass2/Pass2WorkerDispatcherContractTests.cs",
+    "tests/Vulgata.Tests/PreparedPass2/Pass2LegacyCompatibilityTests.cs",
+    "tests/Vulgata.Tests/PreparedPass2/Pass2ProductionQualificationTests.cs",
+    "tests/Vulgata.Tests/Vulgata.Tests.csproj"
+  ],
+  "scopeNotes": [
+    "Only the assigned test/evidence boundary was changed.",
+    "No production source, prompt, schema, migration, lifecycle state, task marker, decision, review, or Git history was changed.",
+    "The unrelated artifacts/qualification/story-12.2/production-literal-inspection.json change remains untouched and unstaged."
+  ],
+  "followUpVerification": {
+    "observedAt": "2026-08-26T10:15:23.2061421+08:00",
+    "fix": "Corrected the test-only accepted-contract path from six parent traversals to five. The previous path resolved G:\\source\\repos\\specs; the corrected path resolves G:\\source\\repos\\vulgata\\specs.",
+    "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter 'FullyQualifiedName~Pass2PromptCompositionTests|FullyQualifiedName~Pass2SchemaResourceTests|FullyQualifiedName~ExactResolutionContractTests|FullyQualifiedName~Pass2ExecutionContractTests|FullyQualifiedName~Pass2WorkerDispatcherContractTests|FullyQualifiedName~Pass2LegacyCompatibilityTests|FullyQualifiedName~Pass2ProductionQualificationTests' --logger \"console;verbosity=minimal\"",
+    "exitCode": 0,
+    "result": {
+      "total": 21,
+      "passed": 21,
+      "failed": 0,
+      "skipped": 0,
+      "build": "completed with existing repository warnings; no test compilation errors"
+    },
+    "scope": "This is subsequent verification after production implementation and the test-harness-only path correction; the original 15-test RED remains preserved above."
+  },
+  "rootVerification": {
+    "observedAt": "2026-08-26T02:17:24.1575747Z",
+    "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter <foundation-and-surrounding-filter> --logger console;verbosity=minimal",
+    "exitCode": 0,
+    "result": {
+      "total": 46,
+      "passed": 46,
+      "failed": 0,
+      "skipped": 0
+    },
+    "warnings": "Existing NU1507 and Microsoft.EntityFrameworkCore assembly-version warnings; zero build or test errors."
+  }
+}

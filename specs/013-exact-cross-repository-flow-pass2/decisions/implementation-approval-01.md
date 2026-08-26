@@ -1,9 +1,9 @@
 # Story 12.4 implementation approval 01
 
 - Decision ID: `story-12-4-implementation-approval-01`
-- Status: pending
+- Status: accepted
 - Requested at: `2026-08-26T01:59:12.3396279Z`
-- Decided at: pending
+- Decided at: `2026-08-26T02:02:53.3951345Z`
 - Scope SHA-256: `7D47E4DABBEC9A1C436FF3ABA003732A8E4D1A960EE0C539170D6ECE24BFEF7D`
 - Specification SHA-256: `50327089B48F6ACCFBA1267E762CD2AF29E9F33A53E249B7FB8590C06D671517`
 - Plan SHA-256: `8DE291B2AFF5B793DD6413532DEC1A3D8EDD191150B24B497B6D9B8894A10B92`
@@ -45,5 +45,5 @@ trailing newline.
 
 ## Decision
 
-Pending explicit user approval. No production source, test, migration, prompt,
-or host-composition write is authorized until this decision is accepted.
+The user explicitly approved production implementation of this exact scope on
+2026-08-26. No excluded scope or downstream gate was waived.

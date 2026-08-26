@@ -246,3 +246,20 @@ worklist with zero findings. Every prior finding is explicitly closed without
 regression, the accepted hashes match, and the delivery definition is ready
 for the mandatory implementation-approval pause. No production write is
 authorized by the review itself.
+
+### Implementation approval: ACCEPTED
+
+The user explicitly approved scope
+`7D47E4DABBEC9A1C436FF3ABA003732A8E4D1A960EE0C539170D6ECE24BFEF7D`
+on 2026-08-26. TDD implementation may begin at T001 while every downstream
+convergence, quality, E2E, qualification, verification, and completion gate
+remains mandatory.
+
+### T001-T006 foundation checkpoint
+
+The test owner observed 15 honest RED failures for the absent Pass 2 embedded
+schema/prompt and Core public seams while six compatibility/opt-in assertions
+passed. The minimal GREEN added the accepted external resources and Core v2
+entities/contracts. After correcting one test-only repository-root traversal,
+the focused suite passed 21/21 and the root's focused-plus-surrounding suite
+passed 46/46 with zero errors. T007-T009 migration/relational work remains next.

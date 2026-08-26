@@ -25,6 +25,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\src\dotnet\Vulgata.Core\Vulgata.Core.csproj" />
+    <ProjectReference Include="..\..\src\dotnet\Vulgata.Infrastructure\Vulgata.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\dotnet\Vulgata.Agents\Vulgata.Agents.csproj" />
     <ProjectReference Include="..\..\src\dotnet\Vulgata.Web\Vulgata.Web.csproj" />
     <ProjectReference Include="..\..\src\dotnet\Vulgata.Shared\Vulgata.Shared.csproj" />
   </ItemGroup>

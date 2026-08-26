@@ -3,13 +3,13 @@
   "bmad_story_key": "12-4-exact-cross-repository-flow-and-pass-2",
   "bmad_epic_key": "12",
   "feature_directory": "specs/013-exact-cross-repository-flow-pass2",
-  "stage": "implementation-approval",
+  "stage": "implement",
   "preflight": {
     "branch": "demo0831/story-12-4",
-    "head": "1913a65a886d9fb33031bc3bfe956cd1115a23a4",
+    "head": "a8d00d26ed9a5424c366563df8c9fed184704689",
     "git_identity_sha256": "056EE72BEB553F1C2AAA2D88B2730FC47D14ABC810286CC5F98D68B1F513B17B",
-    "status_sha256": "92A8C5B6DCBCB729EA6B607D098FC598AC7E7772F02373531D013F055331A2A0",
-    "observed_at": "2026-08-26T02:00:43.8075505Z"
+    "status_sha256": "A50E09884A5CB94757FB439AF382BF7BA12BBDC730C33835D634F40E3E1B6026",
+    "observed_at": "2026-08-26T02:18:26.2217202Z"
   },
   "artifacts": {
     "spec": {
@@ -22,7 +22,7 @@
     },
     "tasks": {
       "path": "specs/013-exact-cross-repository-flow-pass2/tasks.md",
-      "sha256": "32BDF28A535B67C01ECE45508EE6F3FDB849D16090F2EC27888DEEA1DBD40198"
+      "sha256": "6D41DD424B651B7ECDAF9AAC327B344EAA12AFB5ED74414892A6D66AEC95FCB1"
     }
   },
   "gates": {
@@ -57,10 +57,10 @@
     },
     {
       "decision_id": "story-12-4-implementation-approval-01",
-      "status": "pending",
+      "status": "accepted",
       "scope_sha256": "7D47E4DABBEC9A1C436FF3ABA003732A8E4D1A960EE0C539170D6ECE24BFEF7D",
       "evidence_path": "specs/013-exact-cross-repository-flow-pass2/decisions/implementation-approval-01.md",
-      "decided_at": null
+      "decided_at": "2026-08-26T02:02:53.3951345Z"
     }
   ],
   "convergence": {
@@ -83,20 +83,20 @@
     "specs/013-exact-cross-repository-flow-pass2/contracts/retrieve-code-logic.md",
     "specs/013-exact-cross-repository-flow-pass2/contracts/business-logic-flow-v1.schema.json",
     "specs/013-exact-cross-repository-flow-pass2/reviews/plan-review/plan-review-03.json",
-    "specs/013-exact-cross-repository-flow-pass2/decisions/planned-change-authorization-01.md",
+    "specs/013-exact-cross-repository-flow-pass2/evidence/implementation/t001-t004-red.json",
     "specs/013-exact-cross-repository-flow-pass2/reviews/definition-review/definition-review-03.json",
     "specs/013-exact-cross-repository-flow-pass2/decisions/implementation-approval-01.md"
   ],
   "checkpoint": {
-    "checkpoint_id": "bmad-12-4-definition-review-20260826T015912Z-2511f4",
-    "stage": "definition-review",
-    "commit_sha": "1913a65a886d9fb33031bc3bfe956cd1115a23a4",
-    "binding_status": "bound"
+    "checkpoint_id": "bmad-12-4-implement-20260826T021724Z-f60081",
+    "stage": "implement",
+    "commit_sha": null,
+    "binding_status": "pending"
   },
   "resume": {
-    "stage": "implementation-approval",
-    "reason": "Definition-review attempt 3 accepted the complete 49-task definition with no findings; await explicit production implementation approval.",
-    "evidence_path": "specs/013-exact-cross-repository-flow-pass2/decisions/implementation-approval-01.md"
+    "stage": "implement",
+    "reason": "T001-T006 are verified GREEN with preserved RED evidence; execute T007-T009 migration and relational constraints test-first.",
+    "evidence_path": "specs/013-exact-cross-repository-flow-pass2/tasks.md"
   },
-  "updated_at": "2026-08-26T02:00:43.8075505Z"
+  "updated_at": "2026-08-26T02:18:26.2217202Z"
 }
