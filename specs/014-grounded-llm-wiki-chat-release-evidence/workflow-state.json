@@ -3,13 +3,13 @@
   "bmad_story_key": "12-5-grounded-llm-wiki-chat-and-august-30-release-evidence",
   "bmad_epic_key": "12",
   "feature_directory": "specs/014-grounded-llm-wiki-chat-release-evidence",
-  "stage": "implementation-approval",
+  "stage": "implement",
   "preflight": {
     "branch": "demo0831/story-12-5",
-    "head": "923082a80270bb4e136982656ac1b3068edd82f5",
+    "head": "651ce053056e564614ef7fd8f0d466bd812c20a9",
     "git_identity_sha256": "cccc8dfb2a97e1a746fe7d93a08dee626836475c39662d1f73fe2d1cc6bbc583",
     "status_sha256": "421b9ce2638f27c9160070f16f7430a163a862475a67e4a516ead614e537b3ac",
-    "observed_at": "2026-08-27T09:41:17.0404010Z"
+    "observed_at": "2026-08-27T10:08:46.1375862Z"
   },
   "artifacts": {
     "spec": {
@@ -22,7 +22,7 @@
     },
     "tasks": {
       "path": "specs/014-grounded-llm-wiki-chat-release-evidence/tasks.md",
-      "sha256": "5d85429f048e1ebdeba091bea4b932cf51c23d8cac9ac557256127080ef2bc58"
+      "sha256": "b2e29bff017c4c47d4ca4e06340d7f028db9793a6438299ac7a5beacb3ea663c"
     }
   },
   "gates": {
@@ -61,6 +61,13 @@
       "scope_sha256": "787352f9562b45f62e0474806bd33bd6e7bf11d56f807a99fdd54c16335dda4d",
       "evidence_path": null,
       "decided_at": null
+    },
+    {
+      "decision_id": "story-12-5-implementation-approval-track-a-01",
+      "status": "accepted",
+      "scope_sha256": "81ea1431d710e6ab9d0647bebcc49525dd924f1265862b1666917ff2a08c5309",
+      "evidence_path": "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/implementation-approval-track-a-01.md",
+      "decided_at": "2026-08-27T10:08:46.1375862Z"
     }
   ],
   "convergence": {
@@ -88,15 +95,15 @@
     "specs/014-grounded-llm-wiki-chat-release-evidence/contracts/story125-release-evidence.schema.json"
   ],
   "checkpoint": {
-    "checkpoint_id": "bmad-12-5-definition-20260827T094000Z-787352",
-    "stage": "definition-review",
-    "commit_sha": "923082a80270bb4e136982656ac1b3068edd82f5",
-    "binding_status": "bound"
+    "checkpoint_id": "bmad-12-5-implement-20260827T103349Z-58753d",
+    "stage": "implement",
+    "commit_sha": null,
+    "binding_status": "pending"
   },
   "resume": {
-    "stage": "implementation-approval",
-    "reason": "Definition review attempt 4 accepted the complete 60-FR/17-SC/50-task boundary; pause for mandatory implementation approval before the first production or test write.",
-    "evidence_path": "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/definition-review/definition-review-04.json"
+    "stage": "implement",
+    "reason": "Track A foundation T001-T009 is verified; resume at T010 persisted Scan status RED while Tracks B and C remain gated.",
+    "evidence_path": "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/tdd/track-a-foundation.md"
   },
-  "updated_at": "2026-08-27T09:41:17.0404010Z"
+  "updated_at": "2026-08-27T10:33:49.1982311Z"
 }

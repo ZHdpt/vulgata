@@ -443,3 +443,15 @@ Accepted definition checkpoint
 `bmad-12-5-definition-20260827T094000Z-787352` is bound to commit
 `923082a80270bb4e136982656ac1b3068edd82f5`. The implementation-approval scope
 remains unchanged and pending.
+
+### Track A implementation approval
+
+The user explicitly approved starting Track A with `Approve track A`, confirmed
+again as `Approve starting Track A`. Decision
+`story-12-5-implementation-approval-track-a-01` binds accepted Track A tasks
+T001-T019 to scope
+`81ea1431d710e6ab9d0647bebcc49525dd924f1265862b1666917ff2a08c5309`.
+The workflow advances to TDD implementation for Track A only. The full-story
+implementation approval remains pending; Track B and C retain their accepted
+dependency gates. No EF, Story 12.4, fake Backup B release-evidence, or
+unaccepted architecture scope is authorized.

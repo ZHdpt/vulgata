@@ -10,6 +10,15 @@
     "repository/build/generated/Generated.java",
     "repository/vendor/neutral/vendor.xml"
   ],
+  "story125Reuse": {
+    "purpose": "source-traceable evaluation preparation",
+    "sourceManifest": "story-12.2-neutral-fixtures/1.0",
+    "reusedWithoutCopy": [
+      "repository/src/main/java/neutral/app/OrderGateway.java",
+      "repository/src/main/resources/neutral/communication.xml",
+      "repository/vendor/neutral/vendor.xml"
+    ]
+  },
   "syntheticUnsafeEntries": [
     { "path": "../escape.java", "kind": "traversal" },
     { "path": "repository/src/main/java/neutral/link.java", "kind": "symbolic-link" },

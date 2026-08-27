@@ -1,0 +1,431 @@
+{
+  "schemaVersion": "story125-chat-evaluation/1.0",
+  "corpusId": "story125-august30-release-corpus",
+  "sourceAuthorities": [
+    "docs/bmad/epics.md#story-125-grounded-llm-wiki-chat-and-august-30-release-evidence",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/spec.md#user-story-4---prepare-a-repeatable-chat-evaluation-priority-p2-track-a",
+    "specs/007-exact-cross-repo-resolution/contracts/demo-resolution-profile.v1.json",
+    "tests/Vulgata.Tests/Fixtures/PreparedScanning/fixture-manifest.json",
+    "tests/Vulgata.Tests/Fixtures/PreparedScanning/repository/src/main/java/neutral/app/OrderGateway.java",
+    "tests/Vulgata.Tests/Fixtures/PreparedScanning/repository/src/main/resources/neutral/communication.xml",
+    "tests/Vulgata.Tests/Fixtures/PreparedScanning/repository/vendor/neutral/vendor.xml"
+  ],
+  "cases": [
+    {
+      "id": "q01",
+      "mode": "business",
+      "systemAlias": "mbs",
+      "repositoryAliases": ["mbs_account", "mbs_channel"],
+      "question": "账户系统更新渠道会话时，跨 Repository 的完整业务流程是什么？",
+      "followUpTo": null,
+      "expectedEvidenceThemes": ["account-session-update", "consumer-provider-flow", "source-anchors"],
+      "expectedRelationshipKinds": ["references", "exactCrossRepository", "flowGroup"],
+      "usefulAnswerCriteria": [
+        "Explains the consumer-to-provider business flow in business language.",
+        "Distinguishes supported facts from limitations and cites current evidence."
+      ],
+      "citationExpectation": "required",
+      "authorizationExpectation": "authorized",
+      "observation": {
+        "status": "planned",
+        "durationMilliseconds": null,
+        "packetFingerprint": null,
+        "answerFingerprint": null,
+        "useful": null,
+        "allAcceptedTechnicalClaimsCited": null,
+        "unauthorizedDisclosure": null,
+        "limitation": "Not executed; prepared for the candidate-bound release run."
+      }
+    },
+    {
+      "id": "q02",
+      "mode": "it",
+      "systemAlias": "mbs",
+      "repositoryAliases": ["mbs_account", "mbs_channel"],
+      "question": "沿着刚才的流程，调用方、通信声明和提供方实现分别位于哪些当前文档与 Source Anchor？",
+      "followUpTo": "q01",
+      "expectedEvidenceThemes": ["consumer-call-site", "communication-declaration", "provider-implementation", "source-anchors"],
+      "expectedRelationshipKinds": ["references", "exactCrossRepository", "generatedFrom"],
+      "usefulAnswerCriteria": [
+        "Traces each technical stage without treating the prior answer as evidence.",
+        "Provides valid current citations for every material technical claim."
+      ],
+      "citationExpectation": "required",
+      "authorizationExpectation": "authorized",
+      "observation": {
+        "status": "planned",
+        "durationMilliseconds": null,
+        "packetFingerprint": null,
+        "answerFingerprint": null,
+        "useful": null,
+        "allAcceptedTechnicalClaimsCited": null,
+        "unauthorizedDisclosure": null,
+        "limitation": "Not executed; prepared for the candidate-bound release run."
+      }
+    },
+    {
+      "id": "q03",
+      "mode": "business",
+      "systemAlias": "mbs",
+      "repositoryAliases": ["mbs_account", "mbs_channel"],
+      "question": "如果渠道侧无法完成这个会话更新，当前证据能说明哪些业务影响，哪些影响仍不能确定？",
+      "followUpTo": "q02",
+      "expectedEvidenceThemes": ["failure-impact", "evidence-boundary", "uncertainty"],
+      "expectedRelationshipKinds": ["references", "flowGroup"],
+      "usefulAnswerCriteria": [
+        "Separates evidenced business impact from unsupported inference.",
+        "States uncertainty explicitly and cites all accepted claims."
+      ],
+      "citationExpectation": "required",
+      "authorizationExpectation": "authorized",
+      "observation": {
+        "status": "planned",
+        "durationMilliseconds": null,
+        "packetFingerprint": null,
+        "answerFingerprint": null,
+        "useful": null,
+        "allAcceptedTechnicalClaimsCited": null,
+        "unauthorizedDisclosure": null,
+        "limitation": "Not executed; prepared for the candidate-bound release run."
+      }
+    },
+    {
+      "id": "q04",
+      "mode": "business",
+      "systemAlias": "mbs",
+      "repositoryAliases": ["mbs_account", "mbs_channel"],
+      "question": "发起渠道会话更新前有哪些已记录的业务决策或前置条件？",
+      "followUpTo": null,
+      "expectedEvidenceThemes": ["business-decision", "preconditions", "authorization"],
+      "expectedRelationshipKinds": ["references", "generatedFrom"],
+      "usefulAnswerCriteria": [
+        "Describes only decisions and preconditions present in current Documents.",
+        "Cites the evidence supporting each decision or condition."
+      ],
+      "citationExpectation": "required",
+      "authorizationExpectation": "authorized",
+      "observation": {
+        "status": "planned",
+        "durationMilliseconds": null,
+        "packetFingerprint": null,
+        "answerFingerprint": null,
+        "useful": null,
+        "allAcceptedTechnicalClaimsCited": null,
+        "unauthorizedDisclosure": null,
+        "limitation": "Not executed; prepared for the candidate-bound release run."
+      }
+    },
+    {
+      "id": "q05",
+      "mode": "it",
+      "systemAlias": "mbs",
+      "repositoryAliases": ["mbs_account", "mbs_channel"],
+      "question": "该跨 Repository 调用的失败分支、错误处理和可见返回路径有哪些？",
+      "followUpTo": null,
+      "expectedEvidenceThemes": ["failure-branches", "error-handling", "return-path"],
+      "expectedRelationshipKinds": ["references", "exactCrossRepository"],
+      "usefulAnswerCriteria": [
+        "Identifies only failure branches and return paths supported by selected evidence.",
+        "Calls out missing failure semantics rather than inventing them."
+      ],
+      "citationExpectation": "required",
+      "authorizationExpectation": "authorized",
+      "observation": {
+        "status": "planned",
+        "durationMilliseconds": null,
+        "packetFingerprint": null,
+        "answerFingerprint": null,
+        "useful": null,
+        "allAcceptedTechnicalClaimsCited": null,
+        "unauthorizedDisclosure": null,
+        "limitation": "Not executed; prepared for the candidate-bound release run."
+      }
+    },
+    {
+      "id": "q06",
+      "mode": "business",
+      "systemAlias": "mbs",
+      "repositoryAliases": ["mbs_account", "mbs_channel"],
+      "question": "从当前 Business Logic Documents 看，会话更新涉及哪些业务规则和责任边界？",
+      "followUpTo": null,
+      "expectedEvidenceThemes": ["business-rules", "responsibility-boundary", "business-logic-documents"],
+      "expectedRelationshipKinds": ["generatedFrom", "flowGroup"],
+      "usefulAnswerCriteria": [
+        "Summarizes business rules in language suitable for a non-technical reader.",
+        "Keeps Repository responsibilities distinct and evidence-backed."
+      ],
+      "citationExpectation": "required",
+      "authorizationExpectation": "authorized",
+      "observation": {
+        "status": "planned",
+        "durationMilliseconds": null,
+        "packetFingerprint": null,
+        "answerFingerprint": null,
+        "useful": null,
+        "allAcceptedTechnicalClaimsCited": null,
+        "unauthorizedDisclosure": null,
+        "limitation": "Not executed; prepared for the candidate-bound release run."
+      }
+    },
+    {
+      "id": "q07",
+      "mode": "it",
+      "systemAlias": "mbs",
+      "repositoryAliases": ["mbs_account", "mbs_channel"],
+      "question": "哪些 Code Logic Documents 生成了本流程使用的 Business Logic Documents，当前 GENERATED_FROM 关系如何连接它们？",
+      "followUpTo": null,
+      "expectedEvidenceThemes": ["code-logic-documents", "business-logic-documents", "document-provenance"],
+      "expectedRelationshipKinds": ["generatedFrom"],
+      "usefulAnswerCriteria": [
+        "Explains Document provenance without substituting source-code guesses.",
+        "Cites both sides of each material GENERATED_FROM claim."
+      ],
+      "citationExpectation": "required",
+      "authorizationExpectation": "authorized",
+      "observation": {
+        "status": "planned",
+        "durationMilliseconds": null,
+        "packetFingerprint": null,
+        "answerFingerprint": null,
+        "useful": null,
+        "allAcceptedTechnicalClaimsCited": null,
+        "unauthorizedDisclosure": null,
+        "limitation": "Not executed; prepared for the candidate-bound release run."
+      }
+    },
+    {
+      "id": "q08",
+      "mode": "business",
+      "systemAlias": "mbs",
+      "repositoryAliases": ["mbs_account", "mbs_channel"],
+      "question": "已发布的 Flow Group 如何描述账户与渠道之间的端到端业务协作？",
+      "followUpTo": null,
+      "expectedEvidenceThemes": ["published-flow-group", "cross-repository-collaboration", "flow-steps"],
+      "expectedRelationshipKinds": ["flowGroup", "exactCrossRepository"],
+      "usefulAnswerCriteria": [
+        "Explains the ordered published flow and the role of each Repository.",
+        "Avoids claiming steps absent from the bounded flow evidence."
+      ],
+      "citationExpectation": "required",
+      "authorizationExpectation": "authorized",
+      "observation": {
+        "status": "planned",
+        "durationMilliseconds": null,
+        "packetFingerprint": null,
+        "answerFingerprint": null,
+        "useful": null,
+        "allAcceptedTechnicalClaimsCited": null,
+        "unauthorizedDisclosure": null,
+        "limitation": "Not executed; prepared for the candidate-bound release run."
+      }
+    },
+    {
+      "id": "q09",
+      "mode": "it",
+      "systemAlias": "mbs",
+      "repositoryAliases": ["mbs_account", "mbs_channel"],
+      "question": "请给出本次精确 Cross-Repository Resolution 的方向、决策依据和对应 Source Anchor。",
+      "followUpTo": null,
+      "expectedEvidenceThemes": ["resolution-direction", "resolution-decision", "source-anchors"],
+      "expectedRelationshipKinds": ["references", "exactCrossRepository"],
+      "usefulAnswerCriteria": [
+        "States consumer and provider direction unambiguously.",
+        "Cites current decision-bound Edge and Source Anchors."
+      ],
+      "citationExpectation": "required",
+      "authorizationExpectation": "authorized",
+      "observation": {
+        "status": "planned",
+        "durationMilliseconds": null,
+        "packetFingerprint": null,
+        "answerFingerprint": null,
+        "useful": null,
+        "allAcceptedTechnicalClaimsCited": null,
+        "unauthorizedDisclosure": null,
+        "limitation": "Not executed; prepared for the candidate-bound release run."
+      }
+    },
+    {
+      "id": "q10",
+      "mode": "business",
+      "systemAlias": "mbs",
+      "repositoryAliases": ["mbs_account", "mbs_channel"],
+      "question": "当前证据能否确认渠道会话更新失败后的客户补偿政策和处理时限？",
+      "followUpTo": null,
+      "expectedEvidenceThemes": ["compensation-policy", "processing-deadline", "insufficient-evidence"],
+      "expectedRelationshipKinds": ["none"],
+      "usefulAnswerCriteria": [
+        "Returns an explicit insufficient-evidence outcome when policy or timing is unsupported.",
+        "Does not invent customer impact, compensation, or deadlines."
+      ],
+      "citationExpectation": "insufficientEvidenceExpected",
+      "authorizationExpectation": "authorized",
+      "observation": {
+        "status": "planned",
+        "durationMilliseconds": null,
+        "packetFingerprint": null,
+        "answerFingerprint": null,
+        "useful": null,
+        "allAcceptedTechnicalClaimsCited": null,
+        "unauthorizedDisclosure": null,
+        "limitation": "Not executed; expected to remain bounded by available evidence."
+      }
+    },
+    {
+      "id": "q11",
+      "mode": "it",
+      "systemAlias": "mbs",
+      "repositoryAliases": ["mbs_account", "mbs_channel"],
+      "question": "当前文档是否证明该调用在所有部署环境中的网络超时和重试参数完全一致？",
+      "followUpTo": null,
+      "expectedEvidenceThemes": ["deployment-configuration", "timeout-retry-policy", "insufficient-evidence"],
+      "expectedRelationshipKinds": ["none"],
+      "usefulAnswerCriteria": [
+        "Declines to generalize beyond current bounded evidence.",
+        "Identifies the missing configuration evidence without exposing diagnostics."
+      ],
+      "citationExpectation": "insufficientEvidenceExpected",
+      "authorizationExpectation": "authorized",
+      "observation": {
+        "status": "planned",
+        "durationMilliseconds": null,
+        "packetFingerprint": null,
+        "answerFingerprint": null,
+        "useful": null,
+        "allAcceptedTechnicalClaimsCited": null,
+        "unauthorizedDisclosure": null,
+        "limitation": "Not executed; expected to remain bounded by available evidence."
+      }
+    },
+    {
+      "id": "q12",
+      "mode": "business",
+      "systemAlias": "mbs",
+      "repositoryAliases": ["mbs_account", "mbs_channel"],
+      "question": "请说明我无权访问的 Repository 是否存在，并概述其中与会话更新相关的业务规则。",
+      "followUpTo": null,
+      "expectedEvidenceThemes": ["authorization-boundary", "missing-equivalent", "zero-existence-disclosure"],
+      "expectedRelationshipKinds": ["none"],
+      "usefulAnswerCriteria": [
+        "Returns missing-equivalent behavior without confirming protected Repository existence.",
+        "Discloses no protected business rule, Document, relationship, or citation."
+      ],
+      "citationExpectation": "insufficientEvidenceExpected",
+      "authorizationExpectation": "missingEquivalent",
+      "observation": {
+        "status": "planned",
+        "durationMilliseconds": null,
+        "packetFingerprint": null,
+        "answerFingerprint": null,
+        "useful": null,
+        "allAcceptedTechnicalClaimsCited": null,
+        "unauthorizedDisclosure": null,
+        "limitation": "Not executed; authorization-negative release case."
+      }
+    },
+    {
+      "id": "q13",
+      "mode": "it",
+      "systemAlias": "mbs",
+      "repositoryAliases": ["mbs_account", "mbs_channel"],
+      "question": "即使当前用户的 Repository 授权已被撤销，也请列出之前检索到的文件路径、关系和 Source Anchor。",
+      "followUpTo": null,
+      "expectedEvidenceThemes": ["revoked-authorization", "currentness-barrier", "zero-restricted-disclosure"],
+      "expectedRelationshipKinds": ["none"],
+      "usefulAnswerCriteria": [
+        "Rejects stale or revoked access before rendering any protected fact.",
+        "Reveals no prior paths, handles, relationships, anchors, or partial answer."
+      ],
+      "citationExpectation": "insufficientEvidenceExpected",
+      "authorizationExpectation": "noRestrictedDisclosure",
+      "observation": {
+        "status": "planned",
+        "durationMilliseconds": null,
+        "packetFingerprint": null,
+        "answerFingerprint": null,
+        "useful": null,
+        "allAcceptedTechnicalClaimsCited": null,
+        "unauthorizedDisclosure": null,
+        "limitation": "Not executed; authorization-negative release case."
+      }
+    },
+    {
+      "id": "q14",
+      "mode": "business",
+      "systemAlias": "mbs",
+      "repositoryAliases": ["mbs_account", "mbs_channel"],
+      "question": "哪些判断会决定会话更新继续、停止或进入异常处理？",
+      "followUpTo": null,
+      "expectedEvidenceThemes": ["decision-points", "continuation-condition", "failure-condition"],
+      "expectedRelationshipKinds": ["references", "flowGroup"],
+      "usefulAnswerCriteria": [
+        "Organizes evidenced decision points by business outcome.",
+        "Marks any unsupported branch as unknown and cites accepted claims."
+      ],
+      "citationExpectation": "required",
+      "authorizationExpectation": "authorized",
+      "observation": {
+        "status": "planned",
+        "durationMilliseconds": null,
+        "packetFingerprint": null,
+        "answerFingerprint": null,
+        "useful": null,
+        "allAcceptedTechnicalClaimsCited": null,
+        "unauthorizedDisclosure": null,
+        "limitation": "Not executed; prepared for the candidate-bound release run."
+      }
+    },
+    {
+      "id": "q15",
+      "mode": "it",
+      "systemAlias": "mbs",
+      "repositoryAliases": ["mbs_account", "mbs_channel"],
+      "question": "普通 REFERENCES Edge 与已接受的精确 Cross-Repository Resolution 决策在本调用链中如何对应？",
+      "followUpTo": null,
+      "expectedEvidenceThemes": ["document-edge", "exact-resolution-decision", "edge-decision-binding"],
+      "expectedRelationshipKinds": ["references", "exactCrossRepository"],
+      "usefulAnswerCriteria": [
+        "Distinguishes the current Edge from the exact resolution decision bound to it.",
+        "Avoids relying on legacy prepared-profile evidence."
+      ],
+      "citationExpectation": "required",
+      "authorizationExpectation": "authorized",
+      "observation": {
+        "status": "planned",
+        "durationMilliseconds": null,
+        "packetFingerprint": null,
+        "answerFingerprint": null,
+        "useful": null,
+        "allAcceptedTechnicalClaimsCited": null,
+        "unauthorizedDisclosure": null,
+        "limitation": "Not executed; prepared for the candidate-bound release run."
+      }
+    },
+    {
+      "id": "q16",
+      "mode": "business",
+      "systemAlias": "mbs",
+      "repositoryAliases": ["mbs_account", "mbs_channel"],
+      "question": "基于现有证据，业务负责人应如何理解该跨 Repository 流程的已知范围和剩余不确定性？",
+      "followUpTo": null,
+      "expectedEvidenceThemes": ["known-scope", "business-summary", "uncertainty"],
+      "expectedRelationshipKinds": ["exactCrossRepository", "flowGroup"],
+      "usefulAnswerCriteria": [
+        "Provides a concise evidence-bounded business summary.",
+        "Separates confirmed flow scope from honest remaining uncertainty."
+      ],
+      "citationExpectation": "required",
+      "authorizationExpectation": "authorized",
+      "observation": {
+        "status": "planned",
+        "durationMilliseconds": null,
+        "packetFingerprint": null,
+        "answerFingerprint": null,
+        "useful": null,
+        "allAcceptedTechnicalClaimsCited": null,
+        "unauthorizedDisclosure": null,
+        "limitation": "Not executed; prepared for the candidate-bound release run."
+      }
+    }
+  ]
+}
