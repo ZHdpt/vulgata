@@ -23,7 +23,7 @@
   ],
   "unrelated_paths": [],
   "checkpoint": {
-    "checkpoint_id": "bmad-12-5-context-20260827T043017Z-7c1e5a",
+    "checkpoint_id": "bmad-12-5-context-20260827T043300Z-9a24bf",
     "stage": "context",
     "commit_sha": null,
     "binding_status": "pending"
@@ -34,5 +34,5 @@
     "stage": "specify",
     "reason": "Fresh Story 12.5 activation; author a bounded delta specification while Story 12.4 final-checkpoint-sensitive work remains gated."
   },
-  "updated_at": "2026-08-27T04:30:17.0479058Z"
+  "updated_at": "2026-08-27T04:33:00Z"
 }

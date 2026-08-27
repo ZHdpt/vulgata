@@ -123,3 +123,10 @@ it is neither planned-change authorization nor implementation approval.
 - Workflow schema/execution: `3.0` / unified.
 - Authority source commit:
   `0d835c5f65f70a3c6a9561c6ff600069bb93e832`.
+
+### Activation checkpoint correction
+
+The initial context checkpoint ID appeared in two adjacent local commits after
+a formatting-only correction, so it was not uniquely resolvable. History was
+preserved. The activation record supersedes that invalid pending binding with
+the unique checkpoint `bmad-12-5-context-20260827T043300Z-9a24bf`.
