@@ -6,10 +6,10 @@
   "stage": "implement",
   "preflight": {
     "branch": "demo0831/story-12-5",
-    "head": "f1711aacd4b0d6454d603b9b5a26fbc94e85dc21",
+    "head": "064c4ddcb305c75d25c91fd5545968d5f2a04c81",
     "git_identity_sha256": "8d4215c8f432617a51f487f46db541b6a2a1476dc422716ea7d2bda35321f5f1",
-    "status_sha256": "1fa40873e530e4e044179b00e7d76d7dade7ad4a0ff1c261e605f7109d6fba66",
-    "observed_at": "2026-08-27T11:35:43.5967392Z"
+    "status_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "observed_at": "2026-08-27T11:37:11.7075732Z"
   },
   "artifacts": {
     "spec": {
@@ -97,13 +97,13 @@
   "checkpoint": {
     "checkpoint_id": "bmad-12-5-implement-20260827T113543Z-dbf263",
     "stage": "implement",
-    "commit_sha": null,
-    "binding_status": "pending"
+    "commit_sha": "064c4ddcb305c75d25c91fd5545968d5f2a04c81",
+    "binding_status": "bound"
   },
   "resume": {
     "stage": "implement",
     "reason": "Track A T001-T019 is verified and complete; resume with a Track A-only convergence audit while Tracks B and C remain gated on Story 12.4's accepted integrated checkpoint.",
     "evidence_path": "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/tdd/track-a-integration.md"
   },
-  "updated_at": "2026-08-27T11:35:43.5967392Z"
+  "updated_at": "2026-08-27T11:37:11.7075732Z"
 }
