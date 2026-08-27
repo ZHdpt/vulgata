@@ -1,10 +1,96 @@
 @page "/management/scan-history"
 @layout ManagementLayout
 @attribute [Authorize(Policy = AuthorizationPolicyNames.ManagementAccess)]
+@using Vulgata.Core.DomainServices
+@using Vulgata.Web.Data
+@inject IProductionScanStatusReader StatusReader
+@inject IServiceProvider ServiceProvider
 
 <PageTitle>扫描历史</PageTitle>
 
 <header class="management-page-header">
     <h1>扫描历史</h1>
-    <p>扫描记录页占位，后续故事将添加实时状态与明细。</p>
+    <p>查看生产扫描的持久化状态与恢复进度。</p>
 </header>
+
+@if (_statuses.Count == 0)
+{
+    <p>暂无可查看的扫描记录。</p>
+}
+else
+{
+    <div class="scan-history-list">
+        @foreach (ProductionScanStatusView status in _statuses)
+        {
+            <section class="scan-history-item">
+                <h2>@DisplayLabel(status.DisplayState)</h2>
+                <p>已完成 @status.CompletedJobCount / @status.TotalJobCount</p>
+                @if (status.NextRetryAt is { } nextRetryAt)
+                {
+                    <p>下次重试：@nextRetryAt.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss")</p>
+                }
+                @if (!string.IsNullOrWhiteSpace(status.ReasonTextZh))
+                {
+                    <p>@status.ReasonTextZh</p>
+                }
+                @if (status.FailedFileCount > 0)
+                {
+                    <p>失败文件：@status.FailedFileCount</p>
+                    <ul>
+                        @foreach (string path in status.FailedFiles)
+                        {
+                            <li>@path</li>
+                        }
+                    </ul>
+                }
+                <a href="@($"/management/scan-history/{status.ScanExecutionId}")">查看详情</a>
+                @if (status.CanResume)
+                {
+                    <button type="button" @onclick="() => ResumeAsync(status.ScanExecutionId)">继续扫描</button>
+                }
+            </section>
+        }
+    </div>
+}
+
+@code {
+    private IReadOnlyList<ProductionScanStatusView> _statuses = [];
+
+    protected override async Task OnInitializedAsync() => await ReloadAsync();
+
+    private async Task ReloadAsync()
+    {
+        ProductionScanStatusCoordinator? coordinator =
+            ServiceProvider.GetService<ProductionScanStatusCoordinator>();
+        _statuses = coordinator is null
+            ? await StatusReader.ListVisibleAsync(new DurableScanAuthorizationScope(string.Empty, []))
+            : await coordinator.ListAsync();
+    }
+
+    private async Task ResumeAsync(Guid scanExecutionId)
+    {
+        ProductionScanStatusCoordinator? coordinator =
+            ServiceProvider.GetService<ProductionScanStatusCoordinator>();
+        if (coordinator is not null)
+        {
+            await coordinator.ResumeAsync(scanExecutionId);
+        }
+
+        await ReloadAsync();
+    }
+
+    private static string DisplayLabel(ProductionScanDisplayState state) => state switch
+    {
+        ProductionScanDisplayState.Preparing => "准备中",
+        ProductionScanDisplayState.Running => "扫描中",
+        ProductionScanDisplayState.Retrying => "正在重试",
+        ProductionScanDisplayState.Paused => "已暂停",
+        ProductionScanDisplayState.Resumed => "已恢复，等待继续",
+        ProductionScanDisplayState.Completed => "已完成",
+        ProductionScanDisplayState.CompletedWithWarnings => "已完成，但有警告",
+        ProductionScanDisplayState.FailedIntegrity => "完整性校验失败",
+        ProductionScanDisplayState.FailedSecurity => "安全校验失败",
+        ProductionScanDisplayState.Cancelled => "已取消",
+        _ => "扫描失败",
+    };
+}

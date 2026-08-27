@@ -6,10 +6,10 @@
   "stage": "implement",
   "preflight": {
     "branch": "demo0831/story-12-5",
-    "head": "5cac85b097379356c41e4fa6461c720fe60526aa",
-    "git_identity_sha256": "cccc8dfb2a97e1a746fe7d93a08dee626836475c39662d1f73fe2d1cc6bbc583",
-    "status_sha256": "421b9ce2638f27c9160070f16f7430a163a862475a67e4a516ead614e537b3ac",
-    "observed_at": "2026-08-27T10:36:29.0465680Z"
+    "head": "9c7d8c6d21856237957f5e7048f206dea7819c7e",
+    "git_identity_sha256": "8d4215c8f432617a51f487f46db541b6a2a1476dc422716ea7d2bda35321f5f1",
+    "status_sha256": "fa7305ed78cacd547392b82247da41fdcc9e3063c258e3ef2bba55af9f3bedd6",
+    "observed_at": "2026-08-27T11:24:22.4028986Z"
   },
   "artifacts": {
     "spec": {
@@ -22,7 +22,7 @@
     },
     "tasks": {
       "path": "specs/014-grounded-llm-wiki-chat-release-evidence/tasks.md",
-      "sha256": "b2e29bff017c4c47d4ca4e06340d7f028db9793a6438299ac7a5beacb3ea663c"
+      "sha256": "110ac61f1a510e51f5de403a5d0475db1c6ff9b0f4468689dc3237bde896c2fb"
     }
   },
   "gates": {
@@ -95,15 +95,15 @@
     "specs/014-grounded-llm-wiki-chat-release-evidence/contracts/story125-release-evidence.schema.json"
   ],
   "checkpoint": {
-    "checkpoint_id": "bmad-12-5-implement-20260827T103349Z-58753d",
+    "checkpoint_id": "bmad-12-5-implement-20260827T112422Z-fc63b2",
     "stage": "implement",
-    "commit_sha": "5cac85b097379356c41e4fa6461c720fe60526aa",
-    "binding_status": "bound"
+    "commit_sha": null,
+    "binding_status": "pending"
   },
   "resume": {
     "stage": "implement",
-    "reason": "Track A foundation T001-T009 is verified; resume at T010 persisted Scan status RED while Tracks B and C remain gated.",
-    "evidence_path": "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/tdd/track-a-foundation.md"
+    "reason": "Track A core T010-T018 is verified; resume at T019 shared registration and preflight integration while Tracks B and C remain gated.",
+    "evidence_path": "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/tdd/track-a-core.md"
   },
-  "updated_at": "2026-08-27T10:36:29.0465680Z"
+  "updated_at": "2026-08-27T11:24:22.4028986Z"
 }

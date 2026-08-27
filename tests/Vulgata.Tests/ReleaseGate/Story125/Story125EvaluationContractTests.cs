@@ -1,6 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
+using System.Reflection;
 
 namespace Vulgata.Tests.ReleaseGate;
 
@@ -144,6 +145,214 @@ public sealed class Story125EvaluationContractTests
             Assert.DoesNotContain("providerAnswer", item.EnumerateObject().Select(property => property.Name));
             Assert.DoesNotContain("expectedResponse", item.EnumerateObject().Select(property => property.Name));
         }
+    }
+
+    [Fact]
+    public void Story125CrossArtifactConsistency_UsesOneClosedStreamingVocabularyAndByteDomain()
+    {
+        string root = FindRepositoryRoot();
+        string plan = File.ReadAllText(Path.Combine(
+            root, "specs", "014-grounded-llm-wiki-chat-release-evidence", "plan.md"));
+        string model = File.ReadAllText(Path.Combine(
+            root, "specs", "014-grounded-llm-wiki-chat-release-evidence", "data-model.md"));
+        string streaming = File.ReadAllText(Path.Combine(
+            root, "specs", "014-grounded-llm-wiki-chat-release-evidence", "contracts", "chat-provider-streaming-v1.md"));
+        string release = File.ReadAllText(Path.Combine(
+            root, "specs", "014-grounded-llm-wiki-chat-release-evidence", "contracts", "release-evidence-contract.md"));
+        string schema = File.ReadAllText(Path.Combine(
+            root, "specs", "014-grounded-llm-wiki-chat-release-evidence", "contracts", "story125-release-evidence.schema.json"));
+
+        foreach (string term in new[] { "16,384", "65,536", "1,048,576", "131,072" })
+        {
+            Assert.Contains(term, plan, StringComparison.Ordinal);
+            Assert.Contains(term, model, StringComparison.Ordinal);
+            Assert.Contains(term, streaming, StringComparison.Ordinal);
+        }
+
+        Assert.Contains("streaming", release, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("screenshot", release, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("receipt", release, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("transportOutcome", model, StringComparison.Ordinal);
+        Assert.Contains("rejectionCategory", model, StringComparison.Ordinal);
+        Assert.Contains("validationOutcome", model, StringComparison.Ordinal);
+
+        using JsonDocument schemaDocument = JsonDocument.Parse(schema);
+        JsonElement streamAttempt = schemaDocument.RootElement
+            .GetProperty("$defs")
+            .GetProperty("streamAttemptReceipt");
+        JsonElement transportOutcome = streamAttempt.GetProperty("properties")
+            .GetProperty("transportOutcome").GetProperty("enum");
+        JsonElement rejectionCategory = streamAttempt.GetProperty("properties")
+            .GetProperty("rejectionCategory").GetProperty("oneOf")[0].GetProperty("enum");
+        JsonElement validationOutcome = streamAttempt.GetProperty("properties")
+            .GetProperty("validationOutcome").GetProperty("enum");
+        Assert.Contains("completed", transportOutcome.EnumerateArray().Select(value => value.GetString()));
+        Assert.Contains("invalid-wire-utf8", rejectionCategory.EnumerateArray().Select(value => value.GetString()));
+        Assert.Contains("rejected-semantic", validationOutcome.EnumerateArray().Select(value => value.GetString()));
+
+        MethodInfo? validator = typeof(Story125ReleaseHarness).GetMethod(
+            "ValidateCrossArtifactConsistency",
+            BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic,
+            binder: null,
+            types: [typeof(string)],
+            modifiers: null);
+        Assert.NotNull(
+            validator);
+
+        object? rawResult = validator!.Invoke(null, [root]);
+        IReadOnlyList<string> errors = rawResult switch
+        {
+            IReadOnlyList<string> diagnostics => diagnostics,
+            IEnumerable<string> diagnostics => diagnostics.ToArray(),
+            bool valid => valid ? [] : ["cross-artifact consistency rejected"],
+            _ => throw new InvalidOperationException(
+                "ValidateCrossArtifactConsistency must return errors or a validity boolean."),
+        };
+
+        Assert.Empty(errors);
+    }
+
+    [Fact]
+    public void Story125EvaluationScoring_RejectsAcceptedTechnicalClaimCitationCoverageBelowOneHundredPercent()
+    {
+        JsonObject envelope = CreatePassedScoringEnvelope();
+        ((JsonObject)envelope["releaseReceipt"]!["chat"]!)!["acceptedTechnicalClaimCitationPercent"] = 99;
+
+        IReadOnlyList<string> errors = Story125SemanticHarnessProbe.Validate(envelope);
+
+        Assert.Contains(
+            errors,
+            error => error.Contains("citation", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public void Story125EvaluationScoring_RejectsAnyUnauthorizedDisclosureAutomatically()
+    {
+        JsonObject envelope = CreatePassedScoringEnvelope();
+        ((JsonObject)envelope["releaseReceipt"]!["chat"]!)!["unauthorizedDisclosureCount"] = 1;
+
+        IReadOnlyList<string> errors = Story125SemanticHarnessProbe.Validate(envelope);
+
+        Assert.Contains(
+            errors,
+            error => error.Contains("unauthorized", StringComparison.OrdinalIgnoreCase) ||
+                error.Contains("disclosure", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public void Story125EvaluationScoring_UsesExactNonnegativeHalfUpUsefulPercentage()
+    {
+        JsonObject envelope = CreatePassedScoringEnvelope(usefulCount: 10, usefulPercent: 83.33);
+
+        IReadOnlyList<string> errors = Story125SemanticHarnessProbe.Validate(envelope);
+
+        Assert.DoesNotContain(
+            errors,
+            error => error.Contains("useful percentage", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public void Story125EvaluationScoring_RejectsAcceptedAnswerAtOrAboveThirtySeconds()
+    {
+        JsonObject envelope = CreatePassedScoringEnvelope();
+        ((JsonObject)envelope["releaseReceipt"]!["chat"]!)!["overThirtySecondAcceptedAnswerCount"] = 1;
+        ((JsonArray)((JsonObject)envelope["releaseReceipt"]!["chat"]!)!["caseReceipts"]!)[0]!["totalAcceptedAnswerDurationMilliseconds"] = 30000;
+
+        IReadOnlyList<string> errors = Story125SemanticHarnessProbe.Validate(envelope);
+
+        Assert.Contains(
+            errors,
+            error => error.Contains("30", StringComparison.OrdinalIgnoreCase) ||
+                error.Contains("duration", StringComparison.OrdinalIgnoreCase) ||
+                error.Contains("timing", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public void Story125EvaluationScoring_RejectsProviderDispositionOutsideClosedVocabulary()
+    {
+        JsonObject envelope = CreatePassedScoringEnvelope();
+        ((JsonArray)((JsonObject)envelope["releaseReceipt"]!["chat"]!)!["caseReceipts"]!)[0]!["providerDisposition"] = "provider-called";
+
+        IReadOnlyList<string> errors = Story125SemanticHarnessProbe.Validate(envelope);
+
+        Assert.Contains(
+            errors,
+            error => error.Contains("providerDisposition", StringComparison.OrdinalIgnoreCase) ||
+                error.Contains("provider disposition", StringComparison.OrdinalIgnoreCase));
+    }
+
+    private static JsonObject CreatePassedScoringEnvelope(int usefulCount = 10, double usefulPercent = 83.33)
+    {
+        string[] mandatoryChecks =
+        [
+            "tier1-contract-ranking-relationship",
+            "tier1-conversation-synthesis-security",
+            "tier1-production-ui-corpus-evidence",
+            "tier1-build-full-tests",
+            "tier2-postgresql-restart-resume",
+            "tier3-candidate-tool-database-preflight",
+            "tier3-real-scan",
+            "tier3-grounded-chat-corpus",
+            "tier3-restart-continuity",
+            "tier3-screenshot-release-integrity",
+        ];
+        var checks = new JsonArray();
+        foreach (string id in mandatoryChecks)
+        {
+            int tier = id.StartsWith("tier1-", StringComparison.Ordinal)
+                ? 1
+                : id.StartsWith("tier2-", StringComparison.Ordinal) ? 2 : 3;
+            checks.Add(new JsonObject
+            {
+                ["id"] = id,
+                ["tier"] = tier,
+                ["status"] = "passed",
+            });
+        }
+
+        return new JsonObject
+        {
+            ["schemaVersion"] = "story125-release-evidence/2.1",
+            ["runId"] = "story125-20260827t120000z-abcdef12",
+            ["supersedesRunId"] = null,
+            ["status"] = "passed",
+            ["candidate"] = null,
+            ["environment"] = null,
+            ["commands"] = new JsonArray(),
+            ["checks"] = checks,
+            ["attemptedObservations"] = new JsonArray(),
+            ["result"] = new JsonObject { ["kind"] = "passed" },
+            ["releaseReceipt"] = new JsonObject
+            {
+                ["screenshots"] = new JsonArray
+                {
+                    new JsonObject { ["viewKind"] = "scan-state" },
+                    new JsonObject { ["viewKind"] = "business-answer" },
+                    new JsonObject { ["viewKind"] = "it-answer" },
+                    new JsonObject { ["viewKind"] = "restart" },
+                    new JsonObject { ["viewKind"] = "release-summary" },
+                },
+                ["chat"] = new JsonObject
+                {
+                    ["caseCount"] = 12,
+                    ["corpusResultCount"] = 12,
+                    ["usefulCount"] = usefulCount,
+                    ["usefulPercent"] = usefulPercent,
+                    ["acceptedTechnicalClaimCitationPercent"] = 100,
+                    ["unauthorizedDisclosureCount"] = 0,
+                    ["overThirtySecondAcceptedAnswerCount"] = 0,
+                    ["caseReceipts"] = new JsonArray
+                    {
+                        new JsonObject
+                        {
+                            ["caseId"] = "q01",
+                            ["providerDisposition"] = "invoked",
+                            ["totalAcceptedAnswerDurationMilliseconds"] = 1000,
+                        },
+                    },
+                },
+            },
+        };
     }
 
     private static JsonObject CreateValidChatPacket()

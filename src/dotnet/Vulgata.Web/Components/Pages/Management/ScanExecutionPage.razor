@@ -1,0 +1,120 @@
+@page "/management/scan-history/{ScanExecutionId:guid}"
+@layout ManagementLayout
+@attribute [Authorize(Policy = AuthorizationPolicyNames.ManagementAccess)]
+@using Vulgata.Core.DomainServices
+@using Vulgata.Web.Data
+@inject IProductionScanStatusReader StatusReader
+@inject IServiceProvider ServiceProvider
+
+<PageTitle>扫描详情</PageTitle>
+
+<header class="management-page-header">
+    <h1>扫描详情</h1>
+    <a href="/management/scan-history">返回扫描历史</a>
+</header>
+
+@if (_status is null)
+{
+    <p>扫描执行不存在或当前用户无权访问。</p>
+}
+else
+{
+    <section class="scan-execution-card">
+        <h2>@DisplayLabel(_status.DisplayState)</h2>
+        <dl>
+            <dt>已完成</dt><dd>@_status.CompletedJobCount / @_status.TotalJobCount</dd>
+            <dt>等待中</dt><dd>@_status.PendingJobCount</dd>
+            <dt>执行中</dt><dd>@_status.RunningJobCount</dd>
+            <dt>等待重试</dt><dd>@_status.RetryScheduledJobCount</dd>
+            <dt>失败</dt><dd>@_status.FailedJobCount</dd>
+        </dl>
+        @if (_status.NextRetryAt is { } nextRetryAt)
+        {
+            <p>下次重试：@nextRetryAt.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss")</p>
+        }
+        @if (!string.IsNullOrWhiteSpace(_status.ReasonTextZh))
+        {
+            <p class="scan-reason">@_status.ReasonTextZh</p>
+        }
+        @if (_status.FailedFileCount > 0)
+        {
+            <h3>失败文件（共 @_status.FailedFileCount 个）</h3>
+            <ul>
+                @foreach (string path in _status.FailedFiles)
+                {
+                    <li>@path</li>
+                }
+            </ul>
+        }
+        @if (_status.CanResume)
+        {
+            <button type="button" disabled="@_isResuming" @onclick="ResumeAsync">继续扫描</button>
+        }
+        @if (_resumeMessage is not null)
+        {
+            <p role="status">@_resumeMessage</p>
+        }
+    </section>
+}
+
+@code {
+    [Parameter]
+    public Guid ScanExecutionId { get; set; }
+
+    private ProductionScanStatusView? _status;
+    private bool _isResuming;
+    private string? _resumeMessage;
+
+    protected override async Task OnParametersSetAsync() => await ReloadAsync();
+
+    private async Task ReloadAsync()
+    {
+        ProductionScanStatusCoordinator? coordinator =
+            ServiceProvider.GetService<ProductionScanStatusCoordinator>();
+        ProductionScanStatusResult result = coordinator is null
+            ? await StatusReader.GetVisibleAsync(
+                new DurableScanAuthorizationScope(string.Empty, []),
+                ScanExecutionId)
+            : await coordinator.GetAsync(ScanExecutionId);
+        _status = result.Outcome == ProductionScanStatusOutcome.Found ? result.View : null;
+    }
+
+    private async Task ResumeAsync()
+    {
+        ProductionScanStatusCoordinator? coordinator =
+            ServiceProvider.GetService<ProductionScanStatusCoordinator>();
+        if (coordinator is null)
+        {
+            return;
+        }
+
+        _isResuming = true;
+        ProductionScanResumeResult result = await coordinator.ResumeAsync(ScanExecutionId);
+        _resumeMessage = result.Outcome switch
+        {
+            ProductionScanResumeOutcome.Applied => "扫描已恢复。",
+            ProductionScanResumeOutcome.Conflict => "扫描状态已变化，请刷新后重试。",
+            ProductionScanResumeOutcome.Missing => "扫描执行不存在或当前用户无权访问。",
+            _ => "暂时无法继续扫描，请稍后重试。",
+        };
+        _status = result.Status.Outcome == ProductionScanStatusOutcome.Found
+            ? result.Status.View
+            : null;
+        _isResuming = false;
+    }
+
+    private static string DisplayLabel(ProductionScanDisplayState state) => state switch
+    {
+        ProductionScanDisplayState.Preparing => "准备中",
+        ProductionScanDisplayState.Running => "扫描中",
+        ProductionScanDisplayState.Retrying => "正在重试",
+        ProductionScanDisplayState.Paused => "已暂停",
+        ProductionScanDisplayState.Resumed => "已恢复，等待继续",
+        ProductionScanDisplayState.Completed => "已完成",
+        ProductionScanDisplayState.CompletedWithWarnings => "已完成，但有警告",
+        ProductionScanDisplayState.FailedIntegrity => "完整性校验失败",
+        ProductionScanDisplayState.FailedSecurity => "安全校验失败",
+        ProductionScanDisplayState.Cancelled => "已取消",
+        _ => "扫描失败",
+    };
+}

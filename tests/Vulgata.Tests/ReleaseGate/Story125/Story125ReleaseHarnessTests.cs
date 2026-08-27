@@ -1,4 +1,6 @@
 using System.Diagnostics;
+using System.Reflection;
+using System.Text.Json.Nodes;
 
 namespace Vulgata.Tests.ReleaseGate;
 
@@ -75,6 +77,332 @@ public sealed class Story125ReleaseHarnessTests
                     path.EndsWith(".csproj", StringComparison.Ordinal)));
     }
 
+    public static IEnumerable<object[]> SemanticEnvelopeRejectionVectors()
+    {
+        yield return ["planned-result-claims-passed", MutatePlanned(envelope =>
+        {
+            envelope["result"] = new JsonObject { ["kind"] = "passed" };
+        })];
+        yield return ["planned-has-release-receipt", MutatePlanned(envelope =>
+        {
+            envelope["releaseReceipt"] = new JsonObject();
+        })];
+        yield return ["self-supersession", MutatePlanned(envelope =>
+        {
+            envelope["supersedesRunId"] = envelope["runId"]!.GetValue<string>();
+        })];
+        yield return ["missing-supersession-target", MutatePlanned(envelope =>
+        {
+            envelope["supersedesRunId"] = "story125-20260827t120001z-12345678";
+        })];
+        yield return ["later-supersession-target", MutatePlanned(envelope =>
+        {
+            envelope["supersedesRunId"] = "story125-20260827t120001z-abcdef12";
+        })];
+        yield return ["non-passed-success-claim", MutatePlanned(envelope =>
+        {
+            envelope["status"] = "failed";
+            envelope["result"] = new JsonObject { ["kind"] = "passed" };
+        })];
+        yield return ["passed-without-receipt", MutatePlanned(envelope =>
+        {
+            envelope["status"] = "passed";
+            envelope["result"] = new JsonObject { ["kind"] = "passed" };
+        })];
+        yield return ["duplicate-mandatory-check", MutatePlanned(envelope =>
+        {
+            envelope["status"] = "passed";
+            envelope["checks"] = new JsonArray(
+                new JsonObject
+                {
+                    ["id"] = "tier1-contract-ranking-relationship",
+                    ["tier"] = 1,
+                    ["status"] = "passed",
+                    ["commandIds"] = new JsonArray(),
+                    ["artifacts"] = new JsonArray(),
+                    ["attemptedObservationIds"] = new JsonArray(),
+                    ["reason"] = null,
+                },
+                new JsonObject
+                {
+                    ["id"] = "tier1-contract-ranking-relationship",
+                    ["tier"] = 1,
+                    ["status"] = "passed",
+                    ["commandIds"] = new JsonArray(),
+                    ["artifacts"] = new JsonArray(),
+                    ["attemptedObservationIds"] = new JsonArray(),
+                    ["reason"] = null,
+                });
+        })];
+        yield return ["omitted-mandatory-check", MutatePlanned(envelope =>
+        {
+            envelope["status"] = "passed";
+            envelope["checks"] = new JsonArray();
+        })];
+        yield return ["mis-tiered-mandatory-check", MutatePlanned(envelope =>
+        {
+            envelope["status"] = "passed";
+            ((JsonObject)envelope["checks"]![0]!)!["tier"] = 3;
+        })];
+        yield return ["reordered-mandatory-checks", MutatePlanned(envelope =>
+        {
+            envelope["status"] = "passed";
+            envelope["checks"] = new JsonArray
+            {
+                new JsonObject
+                {
+                    ["id"] = "tier3-screenshot-release-integrity",
+                    ["tier"] = 3,
+                    ["status"] = "passed",
+                    ["commandIds"] = new JsonArray(),
+                    ["artifacts"] = new JsonArray(),
+                    ["attemptedObservationIds"] = new JsonArray(),
+                    ["reason"] = null,
+                },
+                new JsonObject
+                {
+                    ["id"] = "tier1-contract-ranking-relationship",
+                    ["tier"] = 1,
+                    ["status"] = "passed",
+                    ["commandIds"] = new JsonArray(),
+                    ["artifacts"] = new JsonArray(),
+                    ["attemptedObservationIds"] = new JsonArray(),
+                    ["reason"] = null,
+                },
+            };
+        })];
+        yield return ["incomplete-screenshot-categories", MutatePlanned(envelope =>
+        {
+            envelope["status"] = "passed";
+            envelope["releaseReceipt"] = new JsonObject
+            {
+                ["screenshots"] = new JsonArray
+                {
+                    new JsonObject { ["viewKind"] = "business-answer" },
+                },
+            };
+        })];
+        yield return ["half-up-score-drift", MutatePlanned(envelope =>
+        {
+            envelope["status"] = "passed";
+            envelope["releaseReceipt"] = new JsonObject
+            {
+                ["chat"] = new JsonObject
+                {
+                    ["caseCount"] = 12,
+                    ["usefulCount"] = 10,
+                    ["usefulPercent"] = 83.34,
+                },
+            };
+        })];
+        yield return ["content-bearing-stream-observation", MutatePlanned(envelope =>
+        {
+            envelope["attemptedObservations"] = new JsonArray
+            {
+                new JsonObject
+                {
+                    ["observationId"] = "obs-stream-01",
+                    ["content"] = "provider answer must not be exported",
+                },
+            };
+        })];
+        yield return ["altered-candidate-stream-provenance", MutatePlanned(envelope =>
+        {
+            envelope["attemptedObservations"] = new JsonArray
+            {
+                new JsonObject
+                {
+                    ["observationId"] = "obs-stream-01",
+                    ["candidateCommit"] = new string('f', 40),
+                    ["signature"] = new string('s', 96),
+                },
+            };
+        })];
+        yield return ["foreign-process-stream-provenance", MutatePlanned(envelope =>
+        {
+            envelope["attemptedObservations"] = new JsonArray
+            {
+                new JsonObject
+                {
+                    ["observationId"] = "obs-stream-01",
+                    ["processObservationId"] = "process-foreign-01",
+                },
+            };
+        })];
+        yield return ["unsigned-stream-provenance", MutatePlanned(envelope =>
+        {
+            envelope["attemptedObservations"] = new JsonArray
+            {
+                new JsonObject
+                {
+                    ["observationId"] = "obs-stream-01",
+                    ["observationSignature"] = null,
+                },
+            };
+        })];
+        yield return ["aggregate-fake-chunk-provenance", MutatePlanned(envelope =>
+        {
+            envelope["attemptedObservations"] = new JsonArray
+            {
+                new JsonObject
+                {
+                    ["observationId"] = "obs-stream-01",
+                    ["source"] = "sdk-aggregate-fake-chunk",
+                    ["streamingTransport"] = true,
+                    ["answerDeltaCount"] = 1,
+                },
+            };
+        })];
+        yield return ["omitted-stream-attempt", MutatePlanned(envelope =>
+        {
+            envelope["attemptedObservations"] = new JsonArray
+            {
+                new JsonObject
+                {
+                    ["caseId"] = "q01",
+                    ["providerDisposition"] = "invoked",
+                    ["streamAttempts"] = new JsonArray(),
+                },
+            };
+        })];
+        yield return ["duplicate-stream-attempt", MutatePlanned(envelope =>
+        {
+            envelope["attemptedObservations"] = new JsonArray
+            {
+                new JsonObject
+                {
+                    ["caseId"] = "q01",
+                    ["providerDisposition"] = "invoked",
+                    ["streamAttempts"] = new JsonArray
+                    {
+                        new JsonObject { ["attemptKind"] = "primary" },
+                        new JsonObject { ["attemptKind"] = "primary" },
+                    },
+                },
+            };
+        })];
+        yield return ["reordered-repair-attempt", MutatePlanned(envelope =>
+        {
+            envelope["attemptedObservations"] = new JsonArray
+            {
+                new JsonObject
+                {
+                    ["caseId"] = "q01",
+                    ["providerDisposition"] = "invoked",
+                    ["streamAttempts"] = new JsonArray
+                    {
+                        new JsonObject { ["attemptKind"] = "syntax-repair" },
+                        new JsonObject { ["attemptKind"] = "primary" },
+                    },
+                },
+            };
+        })];
+        yield return ["terminal-outcome-mismatch", MutatePlanned(envelope =>
+        {
+            envelope["attemptedObservations"] = new JsonArray
+            {
+                new JsonObject
+                {
+                    ["transportOutcome"] = "completed",
+                    ["terminalEventCount"] = 0,
+                    ["rejectionCategory"] = "missing-terminal",
+                },
+            };
+        })];
+        yield return ["repair-outcome-mismatch", MutatePlanned(envelope =>
+        {
+            envelope["attemptedObservations"] = new JsonArray
+            {
+                new JsonObject
+                {
+                    ["attemptKind"] = "syntax-repair",
+                    ["validationOutcome"] = "accepted",
+                    ["transportOutcome"] = "rejected-syntax",
+                },
+            };
+        })];
+        yield return ["deadline-mismatch", MutatePlanned(envelope =>
+        {
+            envelope["attemptedObservations"] = new JsonArray
+            {
+                new JsonObject
+                {
+                    ["overallDeadlineMilliseconds"] = 30000,
+                    ["inactivityLimitMilliseconds"] = 10000,
+                },
+            };
+        })];
+        yield return ["transport-vocabulary-mismatch", MutatePlanned(envelope =>
+        {
+            envelope["attemptedObservations"] = new JsonArray
+            {
+                new JsonObject
+                {
+                    ["transportOutcome"] = "utf8-error",
+                    ["rejectionCategory"] = "utf8-error",
+                    ["validationOutcome"] = "accepted",
+                },
+            };
+        })];
+        yield return ["unauthorized-content-leakage", MutatePlanned(envelope =>
+        {
+            envelope["attemptedObservations"] = new JsonArray
+            {
+                new JsonObject
+                {
+                    ["unauthorizedDisclosure"] = true,
+                    ["content"] = "secret connection string",
+                },
+            };
+        })];
+    }
+
+    [Theory]
+    [MemberData(nameof(SemanticEnvelopeRejectionVectors))]
+    public void Story125SemanticValidation_RedVector_IsRejectedBeforeT016(
+        string vector,
+        JsonObject envelope)
+    {
+        IReadOnlyList<string> errors = Story125SemanticHarnessProbe.Validate(envelope);
+
+        Assert.NotEmpty(errors);
+        Assert.True(
+            errors.Any(error => error.Length > 0),
+            $"T015 RED vector {vector} must have a diagnostic.");
+    }
+
+    private static JsonObject MutatePlanned(Action<JsonObject> mutation)
+    {
+        JsonObject envelope = new()
+        {
+            ["schemaVersion"] = "story125-release-evidence/2.1",
+            ["runId"] = "story125-20260827t120000z-abcdef12",
+            ["supersedesRunId"] = null,
+            ["status"] = "planned",
+            ["candidate"] = null,
+            ["environment"] = null,
+            ["commands"] = new JsonArray(),
+            ["checks"] = new JsonArray
+            {
+                new JsonObject
+                {
+                    ["id"] = "tier1-contract-ranking-relationship",
+                    ["tier"] = 1,
+                    ["status"] = "planned",
+                    ["commandIds"] = new JsonArray(),
+                    ["artifacts"] = new JsonArray(),
+                    ["attemptedObservationIds"] = new JsonArray(),
+                    ["reason"] = null,
+                },
+            },
+            ["attemptedObservations"] = new JsonArray(),
+            ["result"] = new JsonObject { ["kind"] = "planned" },
+            ["releaseReceipt"] = null,
+        };
+        mutation(envelope);
+        return envelope;
+    }
+
     private static string FindRepositoryRoot()
     {
         DirectoryInfo? directory = new(AppContext.BaseDirectory);
@@ -136,5 +464,36 @@ public sealed class Story125ReleaseHarnessTests
             process.ExitCode == 0,
             $"git {string.Join(' ', arguments)} failed: {error}");
         return output;
+    }
+}
+
+/// <summary>
+/// Test-only probe for the T016 public harness seam.  Reflection keeps this
+/// slice compiling while the seam is intentionally absent in the T015 RED.
+/// T016 must expose the internal static ValidateSemanticEnvelope(string)
+/// operation on Story125ReleaseHarness.
+/// </summary>
+internal static class Story125SemanticHarnessProbe
+{
+    internal static IReadOnlyList<string> Validate(JsonObject envelope)
+    {
+        MethodInfo? validator = typeof(Story125ReleaseHarness).GetMethod(
+            "ValidateSemanticEnvelope",
+            BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic,
+            binder: null,
+            types: [typeof(string)],
+            modifiers: null);
+        Assert.NotNull(
+            validator);
+
+        object? rawResult = validator!.Invoke(null, [envelope.ToJsonString()]);
+        return rawResult switch
+        {
+            IReadOnlyList<string> errors => errors,
+            IEnumerable<string> errors => errors.ToArray(),
+            bool valid => valid ? [] : ["semantic validation rejected the envelope"],
+            _ => throw new InvalidOperationException(
+                "ValidateSemanticEnvelope must return errors or a validity boolean."),
+        };
     }
 }
