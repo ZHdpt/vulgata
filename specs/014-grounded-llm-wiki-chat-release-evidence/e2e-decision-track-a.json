@@ -1,0 +1,156 @@
+{
+  "schema_version": "1.0",
+  "story": "12.5-track-a",
+  "required": false,
+  "predicates": [
+    {
+      "predicate_id": "user-visible-workflow",
+      "change_type": "User-visible workflow",
+      "gate": "required",
+      "triggered": true,
+      "affected_paths": [
+        "src/dotnet/Vulgata.Web/Components/Pages/Management/ScanHistoryPage.razor",
+        "src/dotnet/Vulgata.Web/Components/Pages/Management/ScanExecutionPage.razor"
+      ],
+      "affected_behavior": "Persisted production Scan history/detail, bounded Chinese status and resume presentation.",
+      "evidence": ["story-12-5-track-a-ui-7"]
+    },
+    {
+      "predicate_id": "authentication-authorization",
+      "change_type": "Authentication/authorization",
+      "gate": "required",
+      "triggered": true,
+      "affected_paths": [
+        "src/dotnet/Vulgata.Web/Components/Pages/Management/ScanHistoryPage.razor",
+        "src/dotnet/Vulgata.Web/Components/Pages/Management/ScanExecutionPage.razor",
+        "src/dotnet/Vulgata.Web/Data/ProductionScanStatusCoordinator.cs"
+      ],
+      "affected_behavior": "ManagementAccess, server-owned Repository scope, hidden/missing equivalence, and authorized resume.",
+      "evidence": ["story-12-5-track-a-manual-resume-13", "story-12-5-track-a-reader-22"]
+    },
+    {
+      "predicate_id": "api-persistence-multi-module",
+      "change_type": "API/SignalR/persistence/multi-module integration",
+      "gate": "required",
+      "triggered": true,
+      "affected_paths": [
+        "src/dotnet/Vulgata.Core/DomainServices/ProductionScanStatusContracts.cs",
+        "src/dotnet/Vulgata.Infrastructure/Data/ProductionScanStatusReader.cs",
+        "src/dotnet/Vulgata.Web/Data/ProductionScanStatusCoordinator.cs",
+        "src/dotnet/Vulgata.Web/Program.cs"
+      ],
+      "affected_behavior": "Persisted status projection, scoped composition, manual resume outcomes, and post-resume re-read.",
+      "evidence": ["story-12-5-track-a-reader-22", "story-12-5-track-a-manual-resume-13"]
+    },
+    {
+      "predicate_id": "ef-migration-data-lifecycle",
+      "change_type": "EF migration or observable data lifecycle",
+      "gate": "required",
+      "triggered": true,
+      "affected_paths": [
+        "src/dotnet/Vulgata.Infrastructure/Data/ProductionScanStatusReader.cs",
+        "tests/Vulgata.Tests/ProductionScanStatusReaderTests.cs"
+      ],
+      "affected_behavior": "Read-only persisted Scan lifecycle projection and persisted re-read with zero migration/DbContext delta.",
+      "evidence": ["story-12-5-track-a-reader-22", "story-12-5-track-a-release-gate-75"]
+    },
+    {
+      "predicate_id": "existing-integration-coverage",
+      "change_type": "Existing integration test proves full changed behavior",
+      "gate": "may-skip",
+      "triggered": true,
+      "affected_paths": [
+        "tests/Vulgata.Tests/ProductionScanStatusReaderTests.cs",
+        "tests/Vulgata.Tests/ProductionScanPageTests.cs",
+        "tests/Vulgata.Tests/DurableScanning/ManualResumeApiTests.cs",
+        "tests/Vulgata.Tests/ReleaseGate/Story125"
+      ],
+      "affected_behavior": "Complete Track A observable boundary including fake-state exclusion and release-preparation contracts.",
+      "evidence": ["story-12-5-track-a-quality-04"]
+    }
+  ],
+  "coverage_override": {
+    "test_ids": [
+      "Vulgata.Tests.ProductionScanPageTests",
+      "Vulgata.Tests.ProductionScanStatusReaderTests",
+      "Vulgata.Tests.DurableScanning.ManualResumeApiTests",
+      "Vulgata.Tests.ReleaseGate.Story125"
+    ],
+    "covered_predicate_ids": [
+      "user-visible-workflow",
+      "authentication-authorization",
+      "api-persistence-multi-module",
+      "ef-migration-data-lifecycle"
+    ],
+    "source_boundary": {
+      "base_commit": "0d835c5f65f70a3c6a9561c6ff600069bb93e832",
+      "candidate_commit": "1eba1f85f32177b3e288fc20a9f5feb6e60170af",
+      "diff_sha256": "00d8742612c57ed519b6c0f6589b6b9379f4bafab1e4d862e35a069aef978806",
+      "artifact_hashes": {
+        "specs/014-grounded-llm-wiki-chat-release-evidence/tasks.md": "679a9613c86dcfb2e7cccdf138f5d710969c478040b4f2539d6f1349e62ffddd",
+        "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/quality-review/track-a-quality-review-04.json": "51d069ebb97d545b72b6bcac01adb5e267bd89a48348321b43321f134537af8d"
+      },
+      "owned_paths": [
+        "src/dotnet/Vulgata.Core/DomainServices/ProductionScanStatusContracts.cs",
+        "src/dotnet/Vulgata.Infrastructure/Data/ProductionScanStatusReader.cs",
+        "src/dotnet/Vulgata.Web/Components/Pages/Management",
+        "src/dotnet/Vulgata.Web/Data/ProductionScanStatusCoordinator.cs",
+        "src/dotnet/Vulgata.Web/Program.cs",
+        "tests/Vulgata.Tests/ProductionScanPageTests.cs",
+        "tests/Vulgata.Tests/ProductionScanStatusReaderTests.cs",
+        "tests/Vulgata.Tests/ReleaseGate/Story125"
+      ]
+    },
+    "passing_evidence_ids": [
+      "story-12-5-track-a-ui-7",
+      "story-12-5-track-a-reader-22",
+      "story-12-5-track-a-manual-resume-13",
+      "story-12-5-track-a-release-gate-75",
+      "story-12-5-track-a-quality-04"
+    ],
+    "completeness_rationale": "Current-boundary component, WebApplicationFactory, SQLite persistence, manual-resume, composition, and release-gate tests exercise every Track A user-visible, authorization, persistence, and observable lifecycle boundary. Track B streaming/retrieval and Track C real restart/screenshot/release execution are excluded by accepted dependency gates."
+  },
+  "rationale": "The matrix predicates are triggered, but a complete current-boundary coverage override is valid. A preliminary parallel test attempt produced only shared build-output lock failures; sequential reruns passed without tracked changes.",
+  "covering_tests": [
+    "Vulgata.Tests.ProductionScanPageTests",
+    "Vulgata.Tests.ProductionScanStatusReaderTests",
+    "Vulgata.Tests.DurableScanning.ManualResumeApiTests",
+    "Vulgata.Tests.ReleaseGate.Story125"
+  ],
+  "owner": "orchestrator",
+  "source_boundary": {
+    "base_commit": "0d835c5f65f70a3c6a9561c6ff600069bb93e832",
+    "candidate_commit": "1eba1f85f32177b3e288fc20a9f5feb6e60170af",
+    "diff_sha256": "00d8742612c57ed519b6c0f6589b6b9379f4bafab1e4d862e35a069aef978806",
+    "artifact_hashes": {
+      "specs/014-grounded-llm-wiki-chat-release-evidence/tasks.md": "679a9613c86dcfb2e7cccdf138f5d710969c478040b4f2539d6f1349e62ffddd"
+    },
+    "owned_paths": [
+      "src/dotnet/Vulgata.Core/DomainServices/ProductionScanStatusContracts.cs",
+      "src/dotnet/Vulgata.Infrastructure/Data/ProductionScanStatusReader.cs",
+      "src/dotnet/Vulgata.Web/Components/Pages/Management",
+      "src/dotnet/Vulgata.Web/Data/ProductionScanStatusCoordinator.cs",
+      "src/dotnet/Vulgata.Web/Program.cs",
+      "tests/Vulgata.Tests/ProductionScanPageTests.cs",
+      "tests/Vulgata.Tests/ProductionScanStatusReaderTests.cs",
+      "tests/Vulgata.Tests/ReleaseGate/Story125"
+    ]
+  },
+  "result": "skipped-covered",
+  "evidence_ids": [
+    "story-12-5-track-a-ui-7",
+    "story-12-5-track-a-reader-22",
+    "story-12-5-track-a-manual-resume-13",
+    "story-12-5-track-a-release-gate-75",
+    "story-12-5-track-a-quality-04"
+  ],
+  "decided_at": "2026-08-27T13:10:00Z",
+  "completed_at": "2026-08-27T13:10:00Z",
+  "blocker_prerequisites": [],
+  "execution_evidence": [
+    { "evidence_id": "story-12-5-track-a-ui-7", "total": 7, "passed": 7, "failed": 0, "skipped": 0, "result": "passed" },
+    { "evidence_id": "story-12-5-track-a-reader-22", "total": 22, "passed": 22, "failed": 0, "skipped": 0, "result": "passed" },
+    { "evidence_id": "story-12-5-track-a-manual-resume-13", "total": 13, "passed": 13, "failed": 0, "skipped": 0, "result": "passed" },
+    { "evidence_id": "story-12-5-track-a-release-gate-75", "total": 75, "passed": 75, "failed": 0, "skipped": 0, "result": "passed" }
+  ]
+}
