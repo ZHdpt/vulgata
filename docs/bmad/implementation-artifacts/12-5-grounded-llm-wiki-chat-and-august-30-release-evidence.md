@@ -123,4 +123,3 @@ it is neither planned-change authorization nor implementation approval.
 - Workflow schema/execution: `3.0` / unified.
 - Authority source commit:
   `0d835c5f65f70a3c6a9561c6ff600069bb93e832`.
-
