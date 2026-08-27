@@ -524,4 +524,27 @@ internal static class Story125SemanticHarnessProbe
                 "ValidateSemanticEnvelope must return errors or a validity boolean."),
         };
     }
+
+    internal static IReadOnlyList<string> Validate(
+        JsonObject envelope,
+        IReadOnlyDictionary<string, byte[]> artifactContents)
+    {
+        MethodInfo? validator = typeof(Story125ReleaseHarness).GetMethod(
+            "ValidateSemanticEnvelope",
+            BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic,
+            binder: null,
+            types: [typeof(string), typeof(IReadOnlyDictionary<string, byte[]>)],
+            modifiers: null);
+        Assert.NotNull(validator);
+
+        object? rawResult = validator!.Invoke(null, [envelope.ToJsonString(), artifactContents]);
+        return rawResult switch
+        {
+            IReadOnlyList<string> errors => errors,
+            IEnumerable<string> errors => errors.ToArray(),
+            bool valid => valid ? [] : ["semantic validation rejected the envelope"],
+            _ => throw new InvalidOperationException(
+                "ValidateSemanticEnvelope must return errors or a validity boolean."),
+        };
+    }
 }

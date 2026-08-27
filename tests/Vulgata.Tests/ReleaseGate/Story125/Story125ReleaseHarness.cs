@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Security.Cryptography;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
@@ -105,6 +106,115 @@ internal static partial class Story125ReleaseHarness
         }
 
         return errors;
+    }
+
+    internal static IReadOnlyList<string> ValidateSemanticEnvelope(
+        string json,
+        IReadOnlyDictionary<string, byte[]> artifactContents)
+    {
+        var errors = new List<string>(ValidateSemanticEnvelope(json));
+        JsonObject? envelope;
+        try
+        {
+            envelope = JsonNode.Parse(json) as JsonObject;
+        }
+        catch (JsonException)
+        {
+            return errors;
+        }
+
+        if (envelope?["releaseReceipt"]?["chat"] is not JsonObject chat)
+        {
+            errors.Add("Hash-verified validation requires a passed Chat receipt.");
+            return errors;
+        }
+
+        JsonObject? results = LoadVerifiedArtifact(chat["resultsArtifact"] as JsonObject, artifactContents, "results", errors);
+        JsonObject? packets = LoadVerifiedArtifact(chat["packetResultArtifact"] as JsonObject, artifactContents, "packet results", errors);
+        JsonObject? streaming = LoadVerifiedArtifact(chat["streamingObservationsArtifact"] as JsonObject, artifactContents, "streaming observations", errors);
+        if (results is null || packets is null || streaming is null)
+        {
+            return errors;
+        }
+
+        string[] corpusCaseIds = RequiredUniqueStrings(results, "corpusCaseIds", "fixed corpus", errors);
+        string[] resultCaseIds = RequiredUniqueStrings(results, "resultCaseIds", "results", errors);
+        string[] packetCaseIds = RequiredUniqueStrings(packets, "caseIds", "packet results", errors);
+        string[] streamingCaseIds = RequiredUniqueStrings(streaming, "caseIds", "streaming observations", errors);
+        string[] packetFingerprints = RequiredUniqueStrings(packets, "packetFingerprints", "packet results", errors);
+        string[] receiptCaseIds = (chat["caseReceipts"] as JsonArray)?
+            .OfType<JsonObject>()
+            .Select(receipt => StringValue(receipt, "caseId"))
+            .Where(caseId => caseId is not null)
+            .Select(caseId => caseId!)
+            .ToArray() ?? [];
+
+        if (!corpusCaseIds.SequenceEqual(resultCaseIds, StringComparer.Ordinal) ||
+            !corpusCaseIds.SequenceEqual(packetCaseIds, StringComparer.Ordinal) ||
+            !corpusCaseIds.SequenceEqual(streamingCaseIds, StringComparer.Ordinal) ||
+            !corpusCaseIds.ToHashSet(StringComparer.Ordinal).SetEquals(receiptCaseIds))
+        {
+            errors.Add("Hash-verified fixed-corpus, result, packet, streaming, and Case Receipt ID sets must agree exactly.");
+        }
+
+        string[] recordedFingerprints = StringArray(chat, "packetFingerprints", errors);
+        if (!packetFingerprints.SequenceEqual(recordedFingerprints, StringComparer.Ordinal))
+        {
+            errors.Add("Hash-verified packet-result fingerprints must equal the recorded ordered packet fingerprints.");
+        }
+
+        return errors;
+    }
+
+    private static JsonObject? LoadVerifiedArtifact(
+        JsonObject? descriptor,
+        IReadOnlyDictionary<string, byte[]> artifactContents,
+        string name,
+        List<string> errors)
+    {
+        string? path = StringValue(descriptor, "path");
+        string? expectedHash = StringValue(descriptor, "sha256");
+        if (path is null || expectedHash is null || !artifactContents.TryGetValue(path, out byte[]? content))
+        {
+            errors.Add($"Hash-verified {name} artifact content is missing.");
+            return null;
+        }
+
+        string actualHash = Convert.ToHexString(SHA256.HashData(content)).ToLowerInvariant();
+        if (!string.Equals(expectedHash, actualHash, StringComparison.Ordinal))
+        {
+            errors.Add($"Hash-verified {name} artifact content does not match its descriptor SHA-256.");
+            return null;
+        }
+
+        try
+        {
+            JsonObject? parsed = JsonNode.Parse(content) as JsonObject;
+            if (parsed is null)
+            {
+                errors.Add($"Hash-verified {name} artifact must contain a JSON object.");
+            }
+            return parsed;
+        }
+        catch (JsonException)
+        {
+            errors.Add($"Hash-verified {name} artifact contains malformed JSON.");
+            return null;
+        }
+    }
+
+    private static string[] RequiredUniqueStrings(
+        JsonObject artifact,
+        string propertyName,
+        string name,
+        List<string> errors)
+    {
+        string[] values = StringArray(artifact, propertyName, errors);
+        if (values.Length == 0 || values.Distinct(StringComparer.Ordinal).Count() != values.Length)
+        {
+            errors.Add($"Hash-verified {name} {propertyName} must be nonempty and unique.");
+        }
+        return values;
     }
 
     private static void ValidateEvidenceBindings(JsonObject envelope, List<string> errors)

@@ -2,6 +2,8 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
 using System.Reflection;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace Vulgata.Tests.ReleaseGate;
 
@@ -487,6 +489,53 @@ public sealed class Story125EvaluationContractTests
         Assert.NotEmpty(schemaErrors.Concat(semanticErrors));
     }
 
+    [Fact]
+    public void Story125PassedEnvelope_HashVerifiedCorpusAndResultGraph_RemainsGreen()
+    {
+        Dictionary<string, byte[]> artifactContents = CreateFixedCorpusResultArtifactContents();
+        JsonObject envelope = CreateSchemaValidPassedEnvelope(artifactContents);
+        using JsonDocument schema = LoadSchema("story125-release-evidence.schema.json");
+        using JsonDocument document = JsonDocument.Parse(envelope.ToJsonString());
+
+        Assert.Empty(SchemaValidator.Validate(document.RootElement, schema.RootElement));
+        Assert.Empty(Story125SemanticHarnessProbe.Validate(envelope, artifactContents));
+    }
+
+    [Theory]
+    [InlineData("coordinated-foreign-case-identity")]
+    [InlineData("altered-result-artifact-content")]
+    [InlineData("missing-result-artifact-content")]
+    public void Story125PassedEnvelope_HashVerifiedCorpusAndResultMutation_IsRejected(string mutation)
+    {
+        Dictionary<string, byte[]> artifactContents = CreateFixedCorpusResultArtifactContents();
+        JsonObject envelope = CreateSchemaValidPassedEnvelope(artifactContents);
+        using JsonDocument schema = LoadSchema("story125-release-evidence.schema.json");
+        using JsonDocument baselineDocument = JsonDocument.Parse(envelope.ToJsonString());
+        Assert.Empty(SchemaValidator.Validate(baselineDocument.RootElement, schema.RootElement));
+        Assert.Empty(Story125SemanticHarnessProbe.Validate(envelope, artifactContents));
+
+        JsonArray caseReceipts = (JsonArray)envelope["releaseReceipt"]!["chat"]!["caseReceipts"]!;
+        switch (mutation)
+        {
+            case "coordinated-foreign-case-identity":
+                JsonObject foreignReceipt = (JsonObject)caseReceipts[0]!;
+                foreignReceipt["caseId"] = "q99";
+                ((JsonObject)foreignReceipt["streamAttempts"]![0]!)!["caseId"] = "q99";
+                break;
+            case "altered-result-artifact-content":
+                artifactContents["evidence/chat-results.json"] = Encoding.UTF8.GetBytes(
+                    "{\"corpusCaseIds\":[\"q01\"],\"resultCaseIds\":[\"q01\"]}");
+                break;
+            case "missing-result-artifact-content":
+                artifactContents.Remove("evidence/chat-results.json");
+                break;
+        }
+
+        IReadOnlyList<string> errors = Story125SemanticHarnessProbe.Validate(envelope, artifactContents);
+
+        Assert.NotEmpty(errors);
+    }
+
     private static void MutateArtifact(JsonObject chat, string propertyName, string mutation)
     {
         if (mutation.StartsWith("missing-", StringComparison.Ordinal))
@@ -503,7 +552,8 @@ public sealed class Story125EvaluationContractTests
         }
     }
 
-    private static JsonObject CreateSchemaValidPassedEnvelope()
+    private static JsonObject CreateSchemaValidPassedEnvelope(
+        IReadOnlyDictionary<string, byte[]>? artifactContents = null)
     {
         const string story125Commit = "cccccccccccccccccccccccccccccccccccccccc";
         const string story124Commit = "dddddddddddddddddddddddddddddddddddddddd";
@@ -585,7 +635,7 @@ public sealed class Story125EvaluationContractTests
         JsonObject aggregatePacketsArtifact = CreateArtifact("evidence/packets.json", 'b');
         JsonObject aggregateStreamingArtifact = CreateArtifact("evidence/streaming.json", 'c');
 
-        return new JsonObject
+        JsonObject envelope = new JsonObject
         {
             ["schemaVersion"] = "story125-release-evidence/2.1",
             ["runId"] = "story125-20260827t120000z-abcdef12",
@@ -727,7 +777,68 @@ public sealed class Story125EvaluationContractTests
                 ["limitations"] = new JsonArray(),
             },
         };
+
+        if (artifactContents is not null)
+        {
+            ApplyArtifactContentHashes(envelope, artifactContents);
+        }
+
+        return envelope;
     }
+
+    private static Dictionary<string, byte[]> CreateFixedCorpusResultArtifactContents()
+    {
+        string[] caseIds = Enumerable.Range(1, 12).Select(index => $"q{index:00}").ToArray();
+        string caseIdJson = string.Join("\",\"", caseIds);
+        string fingerprintsJson = string.Join("\",\"", Enumerable.Range(1, 12).Select(CaseFingerprint));
+
+        return new Dictionary<string, byte[]>(StringComparer.Ordinal)
+        {
+            ["evidence/chat-results.json"] = Encoding.UTF8.GetBytes(
+                $"{{\"corpusCaseIds\":[\"{caseIdJson}\"],\"resultCaseIds\":[\"{caseIdJson}\"]}}"),
+            ["evidence/packets.json"] = Encoding.UTF8.GetBytes(
+                $"{{\"caseIds\":[\"{caseIdJson}\"],\"packetFingerprints\":[\"{fingerprintsJson}\"]}}"),
+            ["evidence/streaming.json"] = Encoding.UTF8.GetBytes(
+                $"{{\"caseIds\":[\"{caseIdJson}\"]}}"),
+        };
+    }
+
+    private static void ApplyArtifactContentHashes(
+        JsonNode node,
+        IReadOnlyDictionary<string, byte[]> artifactContents)
+    {
+        if (node is JsonObject obj)
+        {
+            if (obj["path"] is JsonValue pathValue &&
+                pathValue.TryGetValue(out string? path) &&
+                path is not null &&
+                artifactContents.TryGetValue(path, out byte[]? content))
+            {
+                obj["sha256"] = ComputeSha256(content);
+            }
+
+            foreach (JsonNode? child in obj.Select(property => property.Value).ToArray())
+            {
+                if (child is not null)
+                {
+                    ApplyArtifactContentHashes(child, artifactContents);
+                }
+            }
+        }
+        else if (node is JsonArray array)
+        {
+            foreach (JsonNode? child in array)
+            {
+                if (child is not null)
+                {
+                    ApplyArtifactContentHashes(child, artifactContents);
+                }
+            }
+        }
+    }
+
+    private static string ComputeSha256(byte[] content) =>
+        Convert.ToHexString(SHA256.HashData(content)).ToLowerInvariant();
 
     private static JsonObject CreateCommand(string id, string stdoutPath, char stdoutHash)
     {

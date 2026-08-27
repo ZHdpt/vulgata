@@ -6,10 +6,10 @@
   "stage": "implement",
   "preflight": {
     "branch": "demo0831/story-12-5",
-    "head": "d36785e838e118d08f98c4e40c7526cee1c73861",
+    "head": "1b922be95e66a5bde9293c5441024707c1fb66cc",
     "git_identity_sha256": "8d4215c8f432617a51f487f46db541b6a2a1476dc422716ea7d2bda35321f5f1",
-    "status_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-    "observed_at": "2026-08-27T12:37:01.0984730Z"
+    "status_sha256": "ddecad4d3d8a8446254194900d87d114d42324cc4bb472d7cd533ab4d04ea022",
+    "observed_at": "2026-08-27T12:55:20.3963222Z"
   },
   "artifacts": {
     "spec": {
@@ -38,14 +38,14 @@
     },
     "quality-review": {
       "status": "revised",
-      "attempt": 2,
-      "verdict_path": "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/quality-review/track-a-quality-review-02.json"
+      "attempt": 3,
+      "verdict_path": "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/quality-review/track-a-quality-review-03.json"
     }
   },
   "attempts": {
     "definition-review": 4,
     "converge": 0,
-    "quality-review": 2
+    "quality-review": 3
   },
   "approvals": [
     {
@@ -88,22 +88,22 @@
     "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/definition-review/definition-review-04.json",
     "specs/014-grounded-llm-wiki-chat-release-evidence/contracts/chat-provider-streaming-v1.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/contracts/chat-evidence-packet-v2.schema.json",
-    "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/quality-review/track-a-quality-review-02.json",
-    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/tdd/track-a-quality-correction-02.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/quality-review/track-a-quality-review-03.json",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/tdd/track-a-quality-correction-03.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/contracts/release-evidence-contract.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/contracts/story125-evaluation-case.schema.json",
     "specs/014-grounded-llm-wiki-chat-release-evidence/contracts/story125-release-evidence.schema.json"
   ],
   "checkpoint": {
-    "checkpoint_id": "bmad-12-5-implement-20260827T123533Z-3aa9ae",
+    "checkpoint_id": "bmad-12-5-implement-20260827T125520Z-57470e",
     "stage": "implement",
-    "commit_sha": "d36785e838e118d08f98c4e40c7526cee1c73861",
-    "binding_status": "bound"
+    "commit_sha": null,
+    "binding_status": "pending"
   },
   "resume": {
     "stage": "implement",
-    "reason": "QR-TA-001 pass 2 is corrected at the real passed receipt seam and green; rerun Track A convergence and fresh quality review while Tracks B and C remain gated.",
-    "evidence_path": "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/tdd/track-a-quality-correction-02.md"
+    "reason": "QR-TA-001 pass 3 is corrected with hash-verified fixed corpus/result artifact content and green; rerun Track A convergence and fresh quality review while Tracks B and C remain gated.",
+    "evidence_path": "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/tdd/track-a-quality-correction-03.md"
   },
-  "updated_at": "2026-08-27T12:37:01.0984730Z"
+  "updated_at": "2026-08-27T12:55:20.3963222Z"
 }
