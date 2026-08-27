@@ -78,6 +78,7 @@ internal static partial class Story125ReleaseHarness
 
         ValidateSupersession(envelope, errors);
         ValidateChecks(envelope["checks"] as JsonArray, passed, errors);
+        ValidateEvidenceBindings(envelope, errors);
 
         JsonArray? observations = envelope["attemptedObservations"] as JsonArray;
         if (status is "planned" or "not-run" && observations is { Count: > 0 })
@@ -104,6 +105,217 @@ internal static partial class Story125ReleaseHarness
         }
 
         return errors;
+    }
+
+    private static void ValidateEvidenceBindings(JsonObject envelope, List<string> errors)
+    {
+        Dictionary<string, JsonObject> commands = IndexById(
+            envelope["commands"] as JsonArray,
+            "command",
+            errors);
+        Dictionary<string, JsonObject> observations = IndexById(
+            envelope["attemptedObservations"] as JsonArray,
+            "observation",
+            errors);
+
+        var commandArtifacts = new Dictionary<string, HashSet<string>>(StringComparer.Ordinal);
+        foreach ((string commandId, JsonObject command) in commands)
+        {
+            var artifacts = new HashSet<string>(StringComparer.Ordinal);
+            AddArtifact(command["stdoutArtifact"] as JsonObject, artifacts, errors);
+            AddArtifact(command["stderrArtifact"] as JsonObject, artifacts, errors);
+            commandArtifacts[commandId] = artifacts;
+        }
+
+        var observationArtifacts = new Dictionary<string, HashSet<string>>(StringComparer.Ordinal);
+        foreach ((string observationId, JsonObject observation) in observations)
+        {
+            string[] referencedCommandIds = StringArray(observation, "commandIds", errors);
+            HashSet<string> permittedArtifacts = ResolveCommandArtifacts(
+                referencedCommandIds,
+                commands,
+                commandArtifacts,
+                errors);
+            HashSet<string> artifacts = ArtifactSet(observation["artifacts"] as JsonArray, errors);
+            if (artifacts.Count == 0)
+            {
+                errors.Add($"Observation {observationId} must carry at least one evidence artifact.");
+            }
+            else if (!artifacts.IsSubsetOf(permittedArtifacts))
+            {
+                errors.Add($"Observation {observationId} contains an artifact not reproduced by its same-envelope commands.");
+            }
+
+            observationArtifacts[observationId] = artifacts;
+            ValidateRecordedCaseBindings(observation, errors);
+        }
+
+        if (envelope["checks"] is not JsonArray checks)
+        {
+            return;
+        }
+
+        foreach (JsonObject check in checks.OfType<JsonObject>())
+        {
+            string[] referencedCommandIds = StringArray(check, "commandIds", errors);
+            HashSet<string> permittedArtifacts = ResolveCommandArtifacts(
+                referencedCommandIds,
+                commands,
+                commandArtifacts,
+                errors);
+
+            foreach (string observationId in StringArray(check, "attemptedObservationIds", errors))
+            {
+                if (!observations.TryGetValue(observationId, out _))
+                {
+                    errors.Add($"Check references unresolved observation {observationId}.");
+                    continue;
+                }
+
+                permittedArtifacts.UnionWith(observationArtifacts[observationId]);
+            }
+
+            HashSet<string> artifacts = ArtifactSet(check["artifacts"] as JsonArray, errors);
+            if (!artifacts.IsSubsetOf(permittedArtifacts))
+            {
+                errors.Add("Check contains an artifact not reproduced by its referenced same-envelope command or observation.");
+            }
+        }
+    }
+
+    private static Dictionary<string, JsonObject> IndexById(
+        JsonArray? items,
+        string kind,
+        List<string> errors)
+    {
+        var indexed = new Dictionary<string, JsonObject>(StringComparer.Ordinal);
+        if (items is null)
+        {
+            return indexed;
+        }
+
+        foreach (JsonObject item in items.OfType<JsonObject>())
+        {
+            string? id = StringValue(item, "id");
+            if (id is null)
+            {
+                errors.Add($"Every {kind} must have an ID.");
+            }
+            else if (!indexed.TryAdd(id, item))
+            {
+                errors.Add($"Duplicate {kind} ID {id}.");
+            }
+        }
+
+        return indexed;
+    }
+
+    private static HashSet<string> ResolveCommandArtifacts(
+        IEnumerable<string> commandIds,
+        IReadOnlyDictionary<string, JsonObject> commands,
+        IReadOnlyDictionary<string, HashSet<string>> commandArtifacts,
+        List<string> errors)
+    {
+        var artifacts = new HashSet<string>(StringComparer.Ordinal);
+        foreach (string commandId in commandIds)
+        {
+            if (!commands.TryGetValue(commandId, out JsonObject? command))
+            {
+                errors.Add($"Evidence references unresolved command {commandId}.");
+                continue;
+            }
+
+            if (IntValue(command, "exitCode") != 0)
+            {
+                errors.Add($"Referenced command {commandId} must exit with code zero.");
+            }
+
+            artifacts.UnionWith(commandArtifacts[commandId]);
+        }
+
+        return artifacts;
+    }
+
+    private static HashSet<string> ArtifactSet(JsonArray? artifacts, List<string> errors)
+    {
+        var result = new HashSet<string>(StringComparer.Ordinal);
+        if (artifacts is null)
+        {
+            return result;
+        }
+
+        foreach (JsonObject artifact in artifacts.OfType<JsonObject>())
+        {
+            AddArtifact(artifact, result, errors);
+        }
+
+        return result;
+    }
+
+    private static void AddArtifact(JsonObject? artifact, HashSet<string> artifacts, List<string> errors)
+    {
+        if (artifact is null)
+        {
+            return;
+        }
+
+        string? path = StringValue(artifact, "path");
+        string? sha256 = StringValue(artifact, "sha256");
+        string? mediaType = StringValue(artifact, "mediaType");
+        if (path is null || sha256 is null || mediaType is null)
+        {
+            errors.Add("Artifact binding requires path, SHA-256, and media type.");
+            return;
+        }
+
+        artifacts.Add(string.Concat(path, "\n", sha256, "\n", mediaType));
+    }
+
+    private static string[] StringArray(JsonObject value, string propertyName, List<string> errors)
+    {
+        if (value[propertyName] is not JsonArray values)
+        {
+            return [];
+        }
+
+        var result = new List<string>(values.Count);
+        foreach (JsonNode? node in values)
+        {
+            if (node is JsonValue item && item.TryGetValue(out string? text) && text is not null)
+            {
+                result.Add(text);
+            }
+            else
+            {
+                errors.Add($"{propertyName} must contain only string IDs.");
+            }
+        }
+
+        return [.. result];
+    }
+
+    private static void ValidateRecordedCaseBindings(JsonObject observation, List<string> errors)
+    {
+        string[] names = ["corpusCaseIds", "resultCaseIds", "receiptCaseIds"];
+        if (!names.Any(observation.ContainsKey))
+        {
+            return;
+        }
+
+        HashSet<string>[] sets = names
+            .Select(name => StringArray(observation, name, errors).ToHashSet(StringComparer.Ordinal))
+            .ToArray();
+        if (sets.Any(set => set.Count == 0) || !sets[0].SetEquals(sets[1]) || !sets[0].SetEquals(sets[2]))
+        {
+            errors.Add("Corpus, result, and receipt case ID sets must agree exactly.");
+        }
+
+        string[] packetFingerprints = StringArray(observation, "packetFingerprints", errors);
+        if (packetFingerprints.Length > sets[0].Count ||
+            packetFingerprints.Distinct(StringComparer.Ordinal).Count() != packetFingerprints.Length)
+        {
+            errors.Add("Packet fingerprints must be a unique bounded invoked-case binding.");
+        }
     }
 
     internal static IReadOnlyList<string> ValidateCrossArtifactConsistency(string repositoryRoot)

@@ -281,6 +281,124 @@ public sealed class Story125EvaluationContractTests
                 error.Contains("provider disposition", StringComparison.OrdinalIgnoreCase));
     }
 
+    [Fact]
+    public void Story125SemanticValidation_KnownGoodPlannedEnvelope_RemainsGreen()
+    {
+        IReadOnlyList<string> errors = Story125SemanticHarnessProbe.Validate(CreateValidReleaseEnvelope());
+
+        Assert.Empty(errors);
+    }
+
+    [Theory]
+    [InlineData("dangling-command-reference")]
+    [InlineData("unresolved-observation-reference")]
+    [InlineData("foreign-artifact")]
+    [InlineData("missing-artifact")]
+    [InlineData("nonzero-command-exit")]
+    [InlineData("altered-artifact-hash")]
+    [InlineData("mismatched-corpus-result-receipt-packet-sets")]
+    public void Story125SemanticValidation_EvidenceBindingMutation_IsRejected(string mutation)
+    {
+        JsonObject envelope = CreateValidReleaseEnvelope();
+        envelope["status"] = "attempted";
+        envelope["result"] = new JsonObject { ["kind"] = "attempted" };
+        envelope["commands"] = new JsonArray
+        {
+            new JsonObject
+            {
+                ["id"] = "cmd-valid",
+                ["redactedExactCommand"] = "dotnet test --filter Story125",
+                ["commandSha256"] = new string('c', 64),
+                ["exitCode"] = 0,
+                ["startedAtUtc"] = "2026-08-27T12:00:00Z",
+                ["endedAtUtc"] = "2026-08-27T12:00:01Z",
+                ["durationMilliseconds"] = 1000,
+                ["stdoutArtifact"] = new JsonObject
+                {
+                    ["path"] = "evidence/observation.txt",
+                    ["sha256"] = new string('a', 64),
+                    ["mediaType"] = "text/plain",
+                },
+                ["stderrArtifact"] = null,
+            },
+        };
+        envelope["attemptedObservations"] = new JsonArray
+        {
+            new JsonObject
+            {
+                ["id"] = "obs-valid",
+                ["stage"] = "release-test",
+                ["observedAtUtc"] = "2026-08-27T12:00:01Z",
+                ["summary"] = "Release test completed.",
+                ["commandIds"] = new JsonArray("cmd-valid"),
+                ["artifacts"] = new JsonArray
+                {
+                    new JsonObject
+                    {
+                        ["path"] = "evidence/observation.txt",
+                        ["sha256"] = new string('a', 64),
+                        ["mediaType"] = "text/plain",
+                    },
+                },
+            },
+        };
+        ((JsonObject)envelope["checks"]![0]!)!["status"] = "attempted";
+        ((JsonObject)envelope["checks"]![0]!)!["commandIds"] = new JsonArray("cmd-valid");
+        ((JsonObject)envelope["checks"]![0]!)!["artifacts"] = new JsonArray
+        {
+            new JsonObject
+            {
+                ["path"] = "evidence/observation.txt",
+                ["sha256"] = new string('a', 64),
+                ["mediaType"] = "text/plain",
+            },
+        };
+        ((JsonObject)envelope["checks"]![0]!)!["attemptedObservationIds"] = new JsonArray("obs-valid");
+
+        IReadOnlyList<string> baselineErrors = Story125SemanticHarnessProbe.Validate(envelope);
+        Assert.Empty(baselineErrors);
+
+        switch (mutation)
+        {
+            case "dangling-command-reference":
+                ((JsonObject)envelope["attemptedObservations"]![0]!)!["commandIds"] =
+                    new JsonArray("cmd-missing");
+                break;
+            case "unresolved-observation-reference":
+                ((JsonObject)envelope["checks"]![0]!)!["attemptedObservationIds"] =
+                    new JsonArray("obs-missing");
+                break;
+            case "foreign-artifact":
+                ((JsonObject)((JsonObject)envelope["attemptedObservations"]![0]!)!["artifacts"]![0]!)!["path"] =
+                    "foreign/evidence.txt";
+                break;
+            case "missing-artifact":
+                ((JsonObject)envelope["attemptedObservations"]![0]!)!["artifacts"] = new JsonArray();
+                break;
+            case "nonzero-command-exit":
+                ((JsonObject)envelope["commands"]![0]!)!["exitCode"] = 7;
+                break;
+            case "altered-artifact-hash":
+                ((JsonObject)((JsonObject)envelope["attemptedObservations"]![0]!)!["artifacts"]![0]!)!["sha256"] =
+                    new string('b', 64);
+                break;
+            case "mismatched-corpus-result-receipt-packet-sets":
+                ((JsonObject)envelope["attemptedObservations"]![0]!)!["corpusCaseIds"] =
+                    new JsonArray("q01", "q02");
+                ((JsonObject)envelope["attemptedObservations"]![0]!)!["resultCaseIds"] =
+                    new JsonArray("q01");
+                ((JsonObject)envelope["attemptedObservations"]![0]!)!["receiptCaseIds"] =
+                    new JsonArray("q02");
+                ((JsonObject)envelope["attemptedObservations"]![0]!)!["packetFingerprints"] =
+                    new JsonArray(new string('c', 64));
+                break;
+        }
+
+        IReadOnlyList<string> errors = Story125SemanticHarnessProbe.Validate(envelope);
+
+        Assert.NotEmpty(errors);
+    }
+
     private static JsonObject CreatePassedScoringEnvelope(int usefulCount = 10, double usefulPercent = 83.33)
     {
         string[] mandatoryChecks =

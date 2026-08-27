@@ -6,10 +6,10 @@
   "stage": "implement",
   "preflight": {
     "branch": "demo0831/story-12-5",
-    "head": "064c4ddcb305c75d25c91fd5545968d5f2a04c81",
+    "head": "216f2392f1d00e7df94e27449970487978760f7c",
     "git_identity_sha256": "8d4215c8f432617a51f487f46db541b6a2a1476dc422716ea7d2bda35321f5f1",
-    "status_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-    "observed_at": "2026-08-27T11:37:11.7075732Z"
+    "status_sha256": "33f60719c73dd722b6c7eb103dc94e088ca5c89669b1bd1616c614bc3d777738",
+    "observed_at": "2026-08-27T12:01:38.9449460Z"
   },
   "artifacts": {
     "spec": {
@@ -37,15 +37,15 @@
       "verdict_path": "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/definition-review/definition-review-04.json"
     },
     "quality-review": {
-      "status": "pending",
-      "attempt": 0,
-      "verdict_path": null
+      "status": "revised",
+      "attempt": 1,
+      "verdict_path": "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/quality-review/track-a-quality-review-01.json"
     }
   },
   "attempts": {
     "definition-review": 4,
     "converge": 0,
-    "quality-review": 0
+    "quality-review": 1
   },
   "approvals": [
     {
@@ -88,22 +88,22 @@
     "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/definition-review/definition-review-04.json",
     "specs/014-grounded-llm-wiki-chat-release-evidence/contracts/chat-provider-streaming-v1.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/contracts/chat-evidence-packet-v2.schema.json",
-    "specs/014-grounded-llm-wiki-chat-release-evidence/contracts/grounded-chat-v2.md",
-    "specs/014-grounded-llm-wiki-chat-release-evidence/contracts/production-scan-ui.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/quality-review/track-a-quality-review-01.json",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/tdd/track-a-quality-correction-01.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/contracts/release-evidence-contract.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/contracts/story125-evaluation-case.schema.json",
     "specs/014-grounded-llm-wiki-chat-release-evidence/contracts/story125-release-evidence.schema.json"
   ],
   "checkpoint": {
-    "checkpoint_id": "bmad-12-5-implement-20260827T113543Z-dbf263",
+    "checkpoint_id": "bmad-12-5-implement-20260827T120138Z-ed168c",
     "stage": "implement",
-    "commit_sha": "064c4ddcb305c75d25c91fd5545968d5f2a04c81",
-    "binding_status": "bound"
+    "commit_sha": null,
+    "binding_status": "pending"
   },
   "resume": {
     "stage": "implement",
-    "reason": "Track A T001-T019 is verified and complete; resume with a Track A-only convergence audit while Tracks B and C remain gated on Story 12.4's accepted integrated checkpoint.",
-    "evidence_path": "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/tdd/track-a-integration.md"
+    "reason": "QR-TA-001 is corrected and green; rerun the invalidated Track A convergence audit and independent quality review while Tracks B and C remain gated.",
+    "evidence_path": "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/tdd/track-a-quality-correction-01.md"
   },
-  "updated_at": "2026-08-27T11:37:11.7075732Z"
+  "updated_at": "2026-08-27T12:01:38.9449460Z"
 }
