@@ -399,6 +399,446 @@ public sealed class Story125EvaluationContractTests
         Assert.NotEmpty(errors);
     }
 
+    [Fact]
+    public void Story125PassedEnvelope_EvidenceBindingGraph_IsSchemaValidAndSemanticallyGreen()
+    {
+        JsonObject envelope = CreateSchemaValidPassedEnvelope();
+        using JsonDocument schema = LoadSchema("story125-release-evidence.schema.json");
+        using JsonDocument document = JsonDocument.Parse(envelope.ToJsonString());
+
+        IReadOnlyList<string> schemaErrors = SchemaValidator.Validate(document.RootElement, schema.RootElement);
+        IReadOnlyList<string> semanticErrors = Story125SemanticHarnessProbe.Validate(envelope);
+
+        Assert.Empty(schemaErrors);
+        Assert.Empty(semanticErrors);
+    }
+
+    [Theory]
+    [InlineData("dangling-chat-command-reference")]
+    [InlineData("foreign-results-artifact")]
+    [InlineData("altered-results-artifact-hash")]
+    [InlineData("missing-results-artifact")]
+    [InlineData("foreign-packet-result-artifact")]
+    [InlineData("missing-packet-result-artifact")]
+    [InlineData("foreign-streaming-observations-artifact")]
+    [InlineData("missing-streaming-observations-artifact")]
+    [InlineData("duplicate-case-receipt-id")]
+    [InlineData("missing-case-receipt-id")]
+    [InlineData("foreign-case-receipt-id")]
+    [InlineData("mismatched-corpus-result-ids")]
+    [InlineData("reordered-packet-fingerprints")]
+    [InlineData("foreign-packet-fingerprint")]
+    public void Story125PassedEnvelope_EvidenceBindingMutation_IsRejected(string mutation)
+    {
+        JsonObject envelope = CreateSchemaValidPassedEnvelope();
+        using JsonDocument schema = LoadSchema("story125-release-evidence.schema.json");
+        using JsonDocument baselineDocument = JsonDocument.Parse(envelope.ToJsonString());
+        Assert.Empty(SchemaValidator.Validate(baselineDocument.RootElement, schema.RootElement));
+        Assert.Empty(Story125SemanticHarnessProbe.Validate(envelope));
+
+        JsonObject chat = (JsonObject)envelope["releaseReceipt"]!["chat"]!;
+        JsonArray caseReceipts = (JsonArray)chat["caseReceipts"]!;
+        JsonArray packetFingerprints = (JsonArray)chat["packetFingerprints"]!;
+
+        switch (mutation)
+        {
+            case "dangling-chat-command-reference":
+                chat["commandIds"] = new JsonArray("cmd-missing");
+                break;
+            case "foreign-results-artifact":
+            case "altered-results-artifact-hash":
+            case "missing-results-artifact":
+                MutateArtifact((JsonObject)chat, "resultsArtifact", mutation);
+                break;
+            case "foreign-packet-result-artifact":
+            case "missing-packet-result-artifact":
+                MutateArtifact((JsonObject)chat, "packetResultArtifact", mutation);
+                break;
+            case "foreign-streaming-observations-artifact":
+            case "missing-streaming-observations-artifact":
+                MutateArtifact((JsonObject)chat, "streamingObservationsArtifact", mutation);
+                break;
+            case "duplicate-case-receipt-id":
+                ((JsonObject)caseReceipts[1]!)!["caseId"] = "q01";
+                break;
+            case "missing-case-receipt-id":
+                ((JsonObject)caseReceipts[0]!)!["caseId"] = "q00";
+                break;
+            case "foreign-case-receipt-id":
+                ((JsonObject)caseReceipts[0]!)!["caseId"] = "q99";
+                break;
+            case "mismatched-corpus-result-ids":
+                ((JsonObject)caseReceipts[0]!)!["caseId"] = "q00";
+                break;
+            case "reordered-packet-fingerprints":
+                JsonNode? first = packetFingerprints[0];
+                packetFingerprints[0] = packetFingerprints[1]!.DeepClone();
+                packetFingerprints[1] = first!.DeepClone();
+                break;
+            case "foreign-packet-fingerprint":
+                packetFingerprints[0] = new string('f', 64);
+                break;
+        }
+
+        using JsonDocument mutatedDocument = JsonDocument.Parse(envelope.ToJsonString());
+        IReadOnlyList<string> schemaErrors = SchemaValidator.Validate(mutatedDocument.RootElement, schema.RootElement);
+        IReadOnlyList<string> semanticErrors = Story125SemanticHarnessProbe.Validate(envelope);
+
+        Assert.NotEmpty(schemaErrors.Concat(semanticErrors));
+    }
+
+    private static void MutateArtifact(JsonObject chat, string propertyName, string mutation)
+    {
+        if (mutation.StartsWith("missing-", StringComparison.Ordinal))
+        {
+            chat[propertyName] = CreateArtifact("evidence/unbound.json", 'd');
+        }
+        else if (mutation.StartsWith("foreign-", StringComparison.Ordinal))
+        {
+            chat[propertyName] = CreateArtifact("foreign/evidence.json", 'a');
+        }
+        else
+        {
+            chat[propertyName] = CreateArtifact("evidence/results.json", 'b');
+        }
+    }
+
+    private static JsonObject CreateSchemaValidPassedEnvelope()
+    {
+        const string story125Commit = "cccccccccccccccccccccccccccccccccccccccc";
+        const string story124Commit = "dddddddddddddddddddddddddddddddddddddddd";
+        const string processObservationId = "process-release01";
+        const string commandId = "cmd-chat";
+        const string packetCommandId = "cmd-packets";
+        const string streamingCommandId = "cmd-stream";
+        const string restartCommandId = "cmd-restart";
+        const string observationId = "obs-release";
+        const string observedAtUtc = "2026-08-27T12:00:01Z";
+
+        string[] mandatoryChecks =
+        [
+            "tier1-contract-ranking-relationship",
+            "tier1-conversation-synthesis-security",
+            "tier1-production-ui-corpus-evidence",
+            "tier1-build-full-tests",
+            "tier2-postgresql-restart-resume",
+            "tier3-candidate-tool-database-preflight",
+            "tier3-real-scan",
+            "tier3-grounded-chat-corpus",
+            "tier3-restart-continuity",
+            "tier3-screenshot-release-integrity",
+        ];
+
+        var checks = new JsonArray();
+        foreach (string id in mandatoryChecks)
+        {
+            int tier = id.StartsWith("tier1-", StringComparison.Ordinal)
+                ? 1
+                : id.StartsWith("tier2-", StringComparison.Ordinal) ? 2 : 3;
+            checks.Add(new JsonObject
+            {
+                ["id"] = id,
+                ["tier"] = tier,
+                ["status"] = "passed",
+                ["commandIds"] = new JsonArray(commandId, packetCommandId, streamingCommandId, restartCommandId),
+                ["artifacts"] = new JsonArray
+                {
+                    CreateArtifact("evidence/chat-results.json", 'a'),
+                    CreateArtifact("evidence/packets.json", 'b'),
+                    CreateArtifact("evidence/streaming.json", 'c'),
+                },
+                ["attemptedObservationIds"] = new JsonArray(observationId),
+                ["reason"] = null,
+            });
+        }
+
+        var packetFingerprints = new JsonArray();
+        var caseReceipts = new JsonArray();
+        for (int index = 1; index <= 12; index++)
+        {
+            packetFingerprints.Add(CaseFingerprint(index));
+            caseReceipts.Add(CreateCaseReceipt(index, story125Commit));
+        }
+
+        var screenshots = new JsonArray();
+        foreach ((string viewKind, string fileName) in new[]
+        {
+            ("scan-state", "scan-state.png"),
+            ("business-answer", "business-answer.png"),
+            ("it-answer", "it-answer.png"),
+            ("restart", "restart.png"),
+            ("release-summary", "release-summary.png"),
+        })
+        {
+            screenshots.Add(new JsonObject
+            {
+                ["path"] = $"evidence/screenshots/{fileName}",
+                ["sha256"] = new string('e', 64),
+                ["viewKind"] = viewKind,
+                ["candidateBound"] = true,
+                ["productionPersistedState"] = true,
+                ["redactionPassed"] = true,
+            });
+        }
+
+        JsonObject aggregateResultsArtifact = CreateArtifact("evidence/chat-results.json", 'a');
+        JsonObject aggregatePacketsArtifact = CreateArtifact("evidence/packets.json", 'b');
+        JsonObject aggregateStreamingArtifact = CreateArtifact("evidence/streaming.json", 'c');
+
+        return new JsonObject
+        {
+            ["schemaVersion"] = "story125-release-evidence/2.1",
+            ["runId"] = "story125-20260827t120000z-abcdef12",
+            ["supersedesRunId"] = null,
+            ["status"] = "passed",
+            ["candidate"] = new JsonObject
+            {
+                ["story125Commit"] = story125Commit,
+                ["story124IntegratedCommit"] = story124Commit,
+                ["cleanWorktree"] = true,
+            },
+            ["environment"] = new JsonObject
+            {
+                ["databaseName"] = "vulgata_story125_abcdef12",
+                ["postgresqlMajor"] = 17,
+                ["topology"] = "windows-host-app-tools-postgresql-only-docker",
+                ["repositoryRevisions"] = new JsonArray
+                {
+                    new JsonObject { ["repositoryAlias"] = "mbs-account", ["profiledRevision"] = story125Commit },
+                    new JsonObject { ["repositoryAlias"] = "mbs-channel", ["profiledRevision"] = story124Commit },
+                },
+                ["promptVersions"] = new JsonArray("story125-chat-v1"),
+                ["schemaVersions"] = new JsonArray("story125-release-evidence/2.1"),
+                ["toolVersions"] = new JsonArray
+                {
+                    new JsonObject { ["name"] = "dotnet", ["version"] = "10.0", ["checksum"] = new string('1', 64) },
+                    new JsonObject { ["name"] = "postgres", ["version"] = "17", ["checksum"] = new string('2', 64) },
+                    new JsonObject { ["name"] = "playwright", ["version"] = "1", ["checksum"] = new string('3', 64) },
+                },
+                ["provider"] = new JsonObject
+                {
+                    ["providerAlias"] = "release-provider",
+                    ["apiType"] = "openai-compatible",
+                    ["model"] = "release-model",
+                    ["nonSecretConfigurationIdentity"] = "release-provider-config",
+                    ["configurationFingerprint"] = new string('4', 64),
+                },
+                ["streamObservationAuthority"] = new JsonObject
+                {
+                    ["processObservationId"] = processObservationId,
+                    ["processPublicKeyFingerprint"] = new string('5', 64),
+                    ["candidateCommit"] = story125Commit,
+                    ["adapterImplementation"] = "Vulgata.Agents.ChatExecution.OpenAiCompatibleChatProviderStreamingTransport",
+                    ["adapterVersion"] = "1",
+                    ["adapterAssemblySha256"] = new string('6', 64),
+                    ["preflightArtifact"] = CreateArtifact("evidence/stream-preflight.json", '7'),
+                },
+            },
+            ["commands"] = new JsonArray
+            {
+                CreateCommand(commandId, "evidence/chat-results.json", 'a'),
+                CreateCommand(packetCommandId, "evidence/packets.json", 'b'),
+                CreateCommand(streamingCommandId, "evidence/streaming.json", 'c'),
+                CreateCommand(restartCommandId, "evidence/restart.json", '8'),
+            },
+            ["checks"] = checks,
+            ["attemptedObservations"] = new JsonArray
+            {
+                new JsonObject
+                {
+                    ["id"] = observationId,
+                    ["stage"] = "release-evidence",
+                    ["observedAtUtc"] = observedAtUtc,
+                    ["summary"] = "Release evidence graph observed.",
+                    ["commandIds"] = new JsonArray(commandId, packetCommandId, streamingCommandId),
+                    ["artifacts"] = new JsonArray
+                    {
+                        aggregateResultsArtifact.DeepClone(),
+                        aggregatePacketsArtifact.DeepClone(),
+                        aggregateStreamingArtifact.DeepClone(),
+                    },
+                },
+            },
+            ["result"] = new JsonObject
+            {
+                ["kind"] = "passed",
+                ["completedAtUtc"] = "2026-08-27T12:00:02Z",
+            },
+            ["releaseReceipt"] = new JsonObject
+            {
+                ["scan"] = new JsonObject
+                {
+                    ["fileCodeUnitCount"] = 50,
+                    ["highValueSeedCount"] = 1,
+                    ["failedHighValueSeedCount"] = 0,
+                    ["ordinaryFailureCount"] = 0,
+                    ["ordinaryFailureBudget"] = 1,
+                    ["exactCrossRepositoryReferencesEdgeCount"] = 1,
+                    ["honestUncertaintyCount"] = 1,
+                    ["businessLogicDocumentCount"] = 3,
+                    ["crossRepositoryBusinessFlowCount"] = 1,
+                    ["countsReceipt"] = CreateClaimReceipt("evidence/scan-counts.json", '9', commandId),
+                    ["exactEdgeReceipt"] = CreateClaimReceipt("evidence/scan-edges.json", 'a', commandId),
+                    ["uncertaintyReceipt"] = CreateClaimReceipt("evidence/scan-uncertainty.json", 'b', commandId),
+                    ["businessLogicDocumentsReceipt"] = CreateClaimReceipt("evidence/scan-documents.json", 'c', commandId),
+                    ["crossRepositoryFlowReceipt"] = CreateClaimReceipt("evidence/scan-flows.json", 'd', commandId),
+                },
+                ["chat"] = new JsonObject
+                {
+                    ["corpusId"] = "story125-release-corpus",
+                    ["caseCount"] = 12,
+                    ["corpusResultCount"] = 12,
+                    ["usefulCount"] = 10,
+                    ["usefulPercent"] = 83.33,
+                    ["acceptedTechnicalClaimCitationPercent"] = 100,
+                    ["unauthorizedDisclosureCount"] = 0,
+                    ["overThirtySecondAcceptedAnswerCount"] = 0,
+                    ["streamedProviderResponseCount"] = 12,
+                    ["nonStreamingAcceptedAnswerCount"] = 0,
+                    ["caseReceipts"] = caseReceipts,
+                    ["packetFingerprints"] = packetFingerprints,
+                    ["resultsArtifact"] = aggregateResultsArtifact,
+                    ["packetResultArtifact"] = aggregatePacketsArtifact,
+                    ["streamingObservationsArtifact"] = aggregateStreamingArtifact,
+                    ["commandIds"] = new JsonArray(commandId, packetCommandId, streamingCommandId),
+                },
+                ["restart"] = new JsonObject
+                {
+                    ["sameDatabase"] = true,
+                    ["authenticatedWikiAccessible"] = true,
+                    ["authenticatedChatAccessible"] = true,
+                    ["duplicatePublishedDocumentCount"] = 0,
+                    ["dataLossDetected"] = false,
+                    ["beforeArtifact"] = CreateArtifact("evidence/restart-before.json", 'e'),
+                    ["afterArtifact"] = CreateArtifact("evidence/restart-after.json", 'f'),
+                    ["duplicateQueryReceipt"] = CreateClaimReceipt("evidence/restart-query.json", '1', commandId),
+                    ["commandIds"] = new JsonArray(commandId, restartCommandId),
+                },
+                ["databaseOwnership"] = new JsonObject
+                {
+                    ["databaseName"] = "vulgata_story125_abcdef12",
+                    ["forbiddenDatabaseAccessCount"] = 0,
+                    ["preflightArtifact"] = CreateArtifact("evidence/db-preflight.json", '2'),
+                    ["ownershipArtifact"] = CreateArtifact("evidence/db-ownership.json", '3'),
+                    ["cleanupArtifact"] = CreateArtifact("evidence/db-cleanup.json", '4'),
+                    ["commandIds"] = new JsonArray(commandId, restartCommandId),
+                },
+                ["screenshots"] = screenshots,
+                ["limitations"] = new JsonArray(),
+            },
+        };
+    }
+
+    private static JsonObject CreateCommand(string id, string stdoutPath, char stdoutHash)
+    {
+        return new JsonObject
+        {
+            ["id"] = id,
+            ["redactedExactCommand"] = "dotnet test --filter Story125",
+            ["commandSha256"] = new string('8', 64),
+            ["exitCode"] = 0,
+            ["startedAtUtc"] = "2026-08-27T12:00:00Z",
+            ["endedAtUtc"] = "2026-08-27T12:00:01Z",
+            ["durationMilliseconds"] = 1000,
+            ["stdoutArtifact"] = CreateArtifact(stdoutPath, stdoutHash),
+            ["stderrArtifact"] = null,
+        };
+    }
+
+    private static JsonObject CreateCaseReceipt(int index, string candidateCommit)
+    {
+        string caseId = $"q{index:00}";
+        string fingerprint = CaseFingerprint(index);
+        return new JsonObject
+        {
+            ["caseId"] = caseId,
+            ["providerDisposition"] = "invoked",
+            ["packetFingerprint"] = fingerprint,
+            ["packetArtifact"] = CreateArtifact($"evidence/packets/{caseId}.json", fingerprint),
+            ["resultArtifact"] = CreateArtifact($"evidence/results/{caseId}.json", 'e'),
+            ["streamAttempts"] = new JsonArray { CreateStreamAttempt(caseId, candidateCommit, fingerprint) },
+            ["syntaxRepairUsed"] = false,
+            ["validationOutcome"] = "accepted",
+            ["totalAcceptedAnswerDurationMilliseconds"] = 1000,
+        };
+    }
+
+    private static JsonObject CreateStreamAttempt(string caseId, string candidateCommit, string fingerprint)
+    {
+        const string timestamp = "2026-08-27T12:00:01Z";
+        return new JsonObject
+        {
+            ["attemptKind"] = "primary",
+            ["candidateCommit"] = candidateCommit,
+            ["caseId"] = caseId,
+            ["requestId"] = $"stream-{caseId}-00000001",
+            ["observationAuthority"] = "production-raw-response-header-adapter",
+            ["processObservationId"] = "process-release01",
+            ["processPublicKeyFingerprint"] = new string('5', 64),
+            ["observationSequence"] = 1,
+            ["adapterImplementation"] = "Vulgata.Agents.ChatExecution.OpenAiCompatibleChatProviderStreamingTransport",
+            ["adapterVersion"] = "1",
+            ["adapterAssemblySha256"] = new string('6', 64),
+            ["providerApi"] = "openai-compatible",
+            ["providerConfigurationFingerprint"] = new string('4', 64),
+            ["canonicalStreamingRequestFingerprint"] = fingerprint,
+            ["requestStreamMode"] = true,
+            ["responseHeaderDisposition"] = "received",
+            ["responseStatusCode"] = 200,
+            ["responseMediaType"] = "text/event-stream",
+            ["negotiatedProtocol"] = "HTTP/1.1",
+            ["responseHeadersAtUtc"] = timestamp,
+            ["firstPhysicalReadDisposition"] = "observed",
+            ["firstPhysicalReadAtUtc"] = timestamp,
+            ["physicalEofAtUtc"] = timestamp,
+            ["physicalEofDisposition"] = "observed-after-terminal",
+            ["streamingTransport"] = true,
+            ["streamStartedAtUtc"] = timestamp,
+            ["firstDataAtUtc"] = timestamp,
+            ["terminalAtUtc"] = timestamp,
+            ["timeToFirstDataMilliseconds"] = 10,
+            ["rawReadCount"] = 1,
+            ["maximumRawReadByteCount"] = 10,
+            ["rawBodyByteCount"] = 100,
+            ["maximumSseLineByteCount"] = 10,
+            ["maximumSseEventByteCount"] = 10,
+            ["answerDeltaCount"] = 1,
+            ["maximumAnswerDeltaByteCount"] = 10,
+            ["assembledAnswerByteCount"] = 10,
+            ["terminalEventCount"] = 1,
+            ["inactivityLimitMilliseconds"] = 10000,
+            ["overallDeadlineAtUtc"] = "2026-08-27T12:00:29Z",
+            ["transportOutcome"] = "completed",
+            ["rejectionCategory"] = null,
+            ["validationOutcome"] = "accepted",
+            ["authenticatedObservationArtifact"] = CreateArtifact($"evidence/stream-{caseId}.json", fingerprint),
+            ["observationSignature"] = new string('A', 80),
+        };
+    }
+
+    private static JsonObject CreateClaimReceipt(string path, char hash, string commandId)
+    {
+        return new JsonObject
+        {
+            ["observedAtUtc"] = "2026-08-27T12:00:01Z",
+            ["queryFingerprint"] = new string('9', 64),
+            ["commandIds"] = new JsonArray(commandId),
+            ["artifacts"] = new JsonArray { CreateArtifact(path, hash) },
+        };
+    }
+
+    private static JsonObject CreateArtifact(string path, char hash) =>
+        CreateArtifact(path, new string(hash, 64));
+
+    private static JsonObject CreateArtifact(string path, string sha256) => new()
+    {
+        ["path"] = path,
+        ["sha256"] = sha256,
+        ["mediaType"] = "application/json",
+    };
+
+    private static string CaseFingerprint(int index) => index.ToString("x64");
+
     private static JsonObject CreatePassedScoringEnvelope(int usefulCount = 10, double usefulPercent = 83.33)
     {
         string[] mandatoryChecks =

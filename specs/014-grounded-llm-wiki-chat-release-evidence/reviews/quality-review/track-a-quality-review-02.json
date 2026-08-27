@@ -1,0 +1,50 @@
+{
+  "schema_version": "1.0",
+  "gate": "quality-review",
+  "verdict": "REVISE",
+  "reviewed_commit": "2655a8da3fb4bbfb166f5ff2057c8020554fd98d",
+  "reviewed_boundary": {
+    "base_commit": "0d835c5f65f70a3c6a9561c6ff600069bb93e832",
+    "candidate_commit": "2655a8da3fb4bbfb166f5ff2057c8020554fd98d",
+    "diff_sha256": "4b389381d52d8ca5d724d4249e4e2141c607548f9ca2e403e61d5e67b7e4ab47",
+    "artifact_hashes": {
+      "specs/014-grounded-llm-wiki-chat-release-evidence/spec.md": "a7367b1f64fcfc2cf099d7fd204575f314e35994204ccb0cd7b7f2dacf6f7dd4",
+      "specs/014-grounded-llm-wiki-chat-release-evidence/plan.md": "8dd2ba8d4f41a1c0436cc070d6b8639e6a962e6770d626b221ac3d314e998628",
+      "specs/014-grounded-llm-wiki-chat-release-evidence/tasks.md": "679a9613c86dcfb2e7cccdf138f5d710969c478040b4f2539d6f1349e62ffddd"
+    },
+    "owned_paths": [
+      "specs/014-grounded-llm-wiki-chat-release-evidence",
+      "src/dotnet/Vulgata.Core/DomainServices/ProductionScanStatusContracts.cs",
+      "src/dotnet/Vulgata.Infrastructure/Data/ProductionScanStatusReader.cs",
+      "src/dotnet/Vulgata.Web/Components/Pages/Management/ScanExecutionPage.razor",
+      "src/dotnet/Vulgata.Web/Components/Pages/Management/ScanHistoryPage.razor",
+      "src/dotnet/Vulgata.Web/Data/ProductionScanStatusCoordinator.cs",
+      "src/dotnet/Vulgata.Web/Program.cs",
+      "tests/Vulgata.Tests/ProductionScanPageTests.cs",
+      "tests/Vulgata.Tests/ProductionScanStatusReaderTests.cs",
+      "tests/Vulgata.Tests/ReleaseGate/Story125"
+    ]
+  },
+  "reviewed_artifacts": [
+    "specs/014-grounded-llm-wiki-chat-release-evidence/contracts/release-evidence-contract.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/contracts/story125-release-evidence.schema.json",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/tdd/track-a-quality-correction-01.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/convergence/track-a-02.md",
+    "tests/Vulgata.Tests/ReleaseGate/Story125/Story125ReleaseHarness.cs",
+    "tests/Vulgata.Tests/ReleaseGate/Story125/Story125EvaluationContractTests.cs"
+  ],
+  "findings": [
+    {
+      "id": "QR-TA-001",
+      "severity": "HIGH",
+      "category": "passed release-receipt binding integrity",
+      "artifact": "tests/Vulgata.Tests/ReleaseGate/Story125/Story125ReleaseHarness.cs",
+      "location": "ValidateEvidenceBindings, ValidateRecordedCaseBindings, and ValidatePassedReceipt",
+      "affected_requirement": "FR-039, T015/T016, plan.md release binding rules, and release-evidence-contract.md aggregate/binding rules",
+      "evidence": "The correction validates attempted-observation extension fields rather than the accepted passed releaseReceipt.chat graph. ValidatePassedReceipt does not resolve chat.commandIds, bind its aggregate artifacts to same-envelope evidence, require unique and exact caseReceipt IDs, compare them with fixed-corpus/result IDs, or bind ordered packetFingerprints to invoked caseReceipt fingerprints. A schema-valid passed envelope may retain dangling receipt commands/artifacts or mismatched/duplicate case coverage.",
+      "correction_outcome": "Add schema-valid passed-envelope adversarial vectors mutating releaseReceipt.chat.commandIds, aggregate artifacts, caseReceipt IDs, and ordered packetFingerprints; minimally validate those real receipt fields against same-envelope commands, observations, and fixed corpus/result artifacts without implementing Track B/C or T043/T046.",
+      "earliest_owner": "implement"
+    }
+  ],
+  "summary": "REVISE. Track A Scan UI, authorization, persisted-state, resume, DI, database isolation, and no-migration work pass, but QR-TA-001 remains open at the real schema-valid passed release-receipt seam. The focused corrected-boundary matrix passed 98/98 but does not cover this receipt graph."
+}

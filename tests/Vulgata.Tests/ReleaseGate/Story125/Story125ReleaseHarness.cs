@@ -101,7 +101,7 @@ internal static partial class Story125ReleaseHarness
 
         if (envelope["releaseReceipt"] is JsonObject receipt)
         {
-            ValidatePassedReceipt(receipt, errors);
+            ValidatePassedReceipt(receipt, envelope, errors);
         }
 
         return errors;
@@ -454,7 +454,7 @@ internal static partial class Story125ReleaseHarness
         }
     }
 
-    private static void ValidatePassedReceipt(JsonObject receipt, List<string> errors)
+    private static void ValidatePassedReceipt(JsonObject receipt, JsonObject envelope, List<string> errors)
     {
         if (receipt["screenshots"] is JsonArray screenshots)
         {
@@ -481,6 +481,8 @@ internal static partial class Story125ReleaseHarness
         {
             return;
         }
+
+        ValidatePassedChatBindings(chat, envelope, errors);
 
         if (IntValue(chat, "caseCount") is int caseCount && caseCount > 0 &&
             IntValue(chat, "usefulCount") is int usefulCount &&
@@ -523,6 +525,93 @@ internal static partial class Story125ReleaseHarness
                     errors.Add("Accepted answer duration must be under 30 seconds.");
                 }
             }
+        }
+    }
+
+    private static void ValidatePassedChatBindings(JsonObject chat, JsonObject envelope, List<string> errors)
+    {
+        Dictionary<string, JsonObject> commands = IndexById(envelope["commands"] as JsonArray, "command", errors);
+        var commandArtifacts = new Dictionary<string, HashSet<string>>(StringComparer.Ordinal);
+        foreach ((string commandId, JsonObject command) in commands)
+        {
+            var artifacts = new HashSet<string>(StringComparer.Ordinal);
+            AddArtifact(command["stdoutArtifact"] as JsonObject, artifacts, errors);
+            AddArtifact(command["stderrArtifact"] as JsonObject, artifacts, errors);
+            commandArtifacts[commandId] = artifacts;
+        }
+
+        string[] commandIds = StringArray(chat, "commandIds", errors);
+        HashSet<string> permittedArtifacts = ResolveCommandArtifacts(commandIds, commands, commandArtifacts, errors);
+        if (envelope["attemptedObservations"] is JsonArray observations)
+        {
+            foreach (JsonObject observation in observations.OfType<JsonObject>())
+            {
+                if (StringArray(observation, "commandIds", errors).Intersect(commandIds, StringComparer.Ordinal).Any())
+                {
+                    permittedArtifacts.UnionWith(ArtifactSet(observation["artifacts"] as JsonArray, errors));
+                }
+            }
+        }
+
+        foreach (string artifactName in new[] { "resultsArtifact", "packetResultArtifact", "streamingObservationsArtifact" })
+        {
+            var actual = new HashSet<string>(StringComparer.Ordinal);
+            AddArtifact(chat[artifactName] as JsonObject, actual, errors);
+            if (actual.Count != 1 || !actual.IsSubsetOf(permittedArtifacts))
+            {
+                errors.Add($"Chat {artifactName} must match a referenced same-envelope command or observation artifact exactly.");
+            }
+        }
+
+        if (chat["caseReceipts"] is not JsonArray caseReceipts)
+        {
+            return;
+        }
+
+        var caseIds = new List<string>(caseReceipts.Count);
+        var invokedFingerprints = new List<string>();
+        foreach (JsonObject caseReceipt in caseReceipts.OfType<JsonObject>())
+        {
+            string? caseId = StringValue(caseReceipt, "caseId");
+            if (caseId is null)
+            {
+                errors.Add("Every Chat case receipt must have a case ID.");
+                continue;
+            }
+
+            caseIds.Add(caseId);
+            if (string.Equals(StringValue(caseReceipt, "providerDisposition"), "invoked", StringComparison.Ordinal))
+            {
+                string? fingerprint = StringValue(caseReceipt, "packetFingerprint");
+                if (fingerprint is null)
+                {
+                    errors.Add($"Invoked case {caseId} must have a packet fingerprint.");
+                }
+                else
+                {
+                    invokedFingerprints.Add(fingerprint);
+                }
+
+                if (caseReceipt["streamAttempts"] is not JsonArray attempts ||
+                    attempts.OfType<JsonObject>().Any(attempt => !string.Equals(StringValue(attempt, "caseId"), caseId, StringComparison.Ordinal)))
+                {
+                    errors.Add($"Case receipt {caseId} must agree with its invoked stream-attempt case IDs.");
+                }
+            }
+        }
+
+        if (caseIds.Distinct(StringComparer.Ordinal).Count() != caseIds.Count ||
+            IntValue(chat, "caseCount") != caseIds.Count ||
+            IntValue(chat, "corpusResultCount") != caseIds.Count)
+        {
+            errors.Add("Fixed-corpus, result, and case-receipt IDs must be unique and agree exactly.");
+        }
+
+        string[] recordedFingerprints = StringArray(chat, "packetFingerprints", errors);
+        if (!recordedFingerprints.SequenceEqual(invokedFingerprints, StringComparer.Ordinal) ||
+            recordedFingerprints.Distinct(StringComparer.Ordinal).Count() != recordedFingerprints.Length)
+        {
+            errors.Add("Ordered packet fingerprints must equal the invoked case-receipt fingerprints exactly.");
         }
     }
 
