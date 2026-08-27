@@ -6,10 +6,10 @@
   "stage": "implement",
   "preflight": {
     "branch": "demo0831/story-12-5",
-    "head": "1b922be95e66a5bde9293c5441024707c1fb66cc",
+    "head": "3a9696d6f0a9e546b1265d7da4c337774439746d",
     "git_identity_sha256": "8d4215c8f432617a51f487f46db541b6a2a1476dc422716ea7d2bda35321f5f1",
-    "status_sha256": "ddecad4d3d8a8446254194900d87d114d42324cc4bb472d7cd533ab4d04ea022",
-    "observed_at": "2026-08-27T12:55:20.3963222Z"
+    "status_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "observed_at": "2026-08-27T12:56:26.5004199Z"
   },
   "artifacts": {
     "spec": {
@@ -97,13 +97,13 @@
   "checkpoint": {
     "checkpoint_id": "bmad-12-5-implement-20260827T125520Z-57470e",
     "stage": "implement",
-    "commit_sha": null,
-    "binding_status": "pending"
+    "commit_sha": "3a9696d6f0a9e546b1265d7da4c337774439746d",
+    "binding_status": "bound"
   },
   "resume": {
     "stage": "implement",
     "reason": "QR-TA-001 pass 3 is corrected with hash-verified fixed corpus/result artifact content and green; rerun Track A convergence and fresh quality review while Tracks B and C remain gated.",
     "evidence_path": "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/tdd/track-a-quality-correction-03.md"
   },
-  "updated_at": "2026-08-27T12:55:20.3963222Z"
+  "updated_at": "2026-08-27T12:56:26.5004199Z"
 }
