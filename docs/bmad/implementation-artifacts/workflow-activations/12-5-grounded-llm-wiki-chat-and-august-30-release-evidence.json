@@ -26,8 +26,8 @@
   "checkpoint": {
     "checkpoint_id": "bmad-12-5-definition-20260827T094000Z-787352",
     "stage": "definition-review",
-    "commit_sha": null,
-    "binding_status": "pending"
+    "commit_sha": "923082a80270bb4e136982656ac1b3068edd82f5",
+    "binding_status": "bound"
   },
   "feature_directory": "specs/014-grounded-llm-wiki-chat-release-evidence",
   "superseded_by_state": "specs/014-grounded-llm-wiki-chat-release-evidence/workflow-state.json",
@@ -35,5 +35,5 @@
     "stage": "implementation-approval",
     "reason": "Definition review attempt 4 accepted the complete boundary; pause for mandatory implementation approval before the first production or test write."
   },
-  "updated_at": "2026-08-27T09:33:01.5823034Z"
+  "updated_at": "2026-08-27T09:41:17.0404010Z"
 }

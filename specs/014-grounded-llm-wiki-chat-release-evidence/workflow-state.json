@@ -6,10 +6,10 @@
   "stage": "implementation-approval",
   "preflight": {
     "branch": "demo0831/story-12-5",
-    "head": "ec3c68613ea6d9afdbebfb72bb3ef57395fd751e",
-    "git_identity_sha256": "60995baec54e3096d14a5fdf8dc1cb4bc8f0a3c9a953e17a5c162977d1e416ba",
-    "status_sha256": "3bda05a73e56433c0c374fa4e6ccb7ec32bfe076bd00fa68fdcc5d1157ded021",
-    "observed_at": "2026-08-27T09:33:01.5823034Z"
+    "head": "923082a80270bb4e136982656ac1b3068edd82f5",
+    "git_identity_sha256": "cccc8dfb2a97e1a746fe7d93a08dee626836475c39662d1f73fe2d1cc6bbc583",
+    "status_sha256": "421b9ce2638f27c9160070f16f7430a163a862475a67e4a516ead614e537b3ac",
+    "observed_at": "2026-08-27T09:41:17.0404010Z"
   },
   "artifacts": {
     "spec": {
@@ -90,13 +90,13 @@
   "checkpoint": {
     "checkpoint_id": "bmad-12-5-definition-20260827T094000Z-787352",
     "stage": "definition-review",
-    "commit_sha": null,
-    "binding_status": "pending"
+    "commit_sha": "923082a80270bb4e136982656ac1b3068edd82f5",
+    "binding_status": "bound"
   },
   "resume": {
     "stage": "implementation-approval",
     "reason": "Definition review attempt 4 accepted the complete 60-FR/17-SC/50-task boundary; pause for mandatory implementation approval before the first production or test write.",
     "evidence_path": "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/definition-review/definition-review-04.json"
   },
-  "updated_at": "2026-08-27T09:33:01.5823034Z"
+  "updated_at": "2026-08-27T09:41:17.0404010Z"
 }

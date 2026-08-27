@@ -438,3 +438,8 @@ The workflow is now paused for mandatory implementation approval of scope
 `787352f9562b45f62e0474806bd33bd6e7bf11d56f807a99fdd54c16335dda4d`.
 No production or test write is authorized before that decision. The accepted
 definition checkpoint is pending Git binding.
+
+Accepted definition checkpoint
+`bmad-12-5-definition-20260827T094000Z-787352` is bound to commit
+`923082a80270bb4e136982656ac1b3068edd82f5`. The implementation-approval scope
+remains unchanged and pending.
