@@ -281,6 +281,8 @@ public static class VulgataWebComposition
                 services.GetRequiredService<IDurableScanStore>(),
                 services.GetRequiredService<IScanRecoveryRevalidator>(),
                 services.GetRequiredService<TimeProvider>()));
+        builder.Services.AddScoped<IProductionScanStatusReader, ProductionScanStatusReader>();
+        builder.Services.AddScoped<ProductionScanStatusCoordinator>();
         builder.Services.AddScoped<IScanRunRepository, ScanRunRepository>();
         builder.Services.AddScoped<IApprovedPreScanHandoffSource, ApprovedPreScanHandoffSource>();
         builder.Services.AddScoped<IPreparedScanStore, PreparedScanStore>();

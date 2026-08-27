@@ -2,6 +2,7 @@ using System.Collections;
 using System.Reflection;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Vulgata.Core.DomainServices;
 using Vulgata.Core.Entities;
 using Vulgata.Infrastructure.Data;
@@ -56,6 +57,25 @@ public sealed class ProductionScanStatusReaderTests
             typeof(IReadOnlyList<>).MakeGenericType(viewContract),
             list.ReturnType.GetGenericArguments()[0]);
         Assert.Equal(resultContract, get.ReturnType.GetGenericArguments()[0]);
+    }
+
+    [Fact]
+    public void ProductionComposition_ResolvesStatusReaderAndCoordinatorAsScopedServices()
+    {
+        using var factory = new LoginLogoutTests.CustomWebApplicationFactory();
+        using IServiceScope firstScope = factory.Services.CreateScope();
+        using IServiceScope secondScope = factory.Services.CreateScope();
+
+        IProductionScanStatusReader firstReader =
+            firstScope.ServiceProvider.GetRequiredService<IProductionScanStatusReader>();
+        ProductionScanStatusCoordinator firstCoordinator =
+            firstScope.ServiceProvider.GetRequiredService<ProductionScanStatusCoordinator>();
+
+        Assert.IsType<ProductionScanStatusReader>(firstReader);
+        Assert.Same(firstReader, firstScope.ServiceProvider.GetRequiredService<IProductionScanStatusReader>());
+        Assert.Same(firstCoordinator, firstScope.ServiceProvider.GetRequiredService<ProductionScanStatusCoordinator>());
+        Assert.NotSame(firstReader, secondScope.ServiceProvider.GetRequiredService<IProductionScanStatusReader>());
+        Assert.NotSame(firstCoordinator, secondScope.ServiceProvider.GetRequiredService<ProductionScanStatusCoordinator>());
     }
 
     [Fact]

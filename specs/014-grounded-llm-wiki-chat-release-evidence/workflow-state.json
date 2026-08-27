@@ -6,10 +6,10 @@
   "stage": "implement",
   "preflight": {
     "branch": "demo0831/story-12-5",
-    "head": "4229e0a4676ca1a35b6a9e34ad61f3be79fee2f0",
+    "head": "f1711aacd4b0d6454d603b9b5a26fbc94e85dc21",
     "git_identity_sha256": "8d4215c8f432617a51f487f46db541b6a2a1476dc422716ea7d2bda35321f5f1",
-    "status_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-    "observed_at": "2026-08-27T11:26:05.5197015Z"
+    "status_sha256": "1fa40873e530e4e044179b00e7d76d7dade7ad4a0ff1c261e605f7109d6fba66",
+    "observed_at": "2026-08-27T11:35:43.5967392Z"
   },
   "artifacts": {
     "spec": {
@@ -22,7 +22,7 @@
     },
     "tasks": {
       "path": "specs/014-grounded-llm-wiki-chat-release-evidence/tasks.md",
-      "sha256": "110ac61f1a510e51f5de403a5d0475db1c6ff9b0f4468689dc3237bde896c2fb"
+      "sha256": "679a9613c86dcfb2e7cccdf138f5d710969c478040b4f2539d6f1349e62ffddd"
     }
   },
   "gates": {
@@ -95,15 +95,15 @@
     "specs/014-grounded-llm-wiki-chat-release-evidence/contracts/story125-release-evidence.schema.json"
   ],
   "checkpoint": {
-    "checkpoint_id": "bmad-12-5-implement-20260827T112422Z-fc63b2",
+    "checkpoint_id": "bmad-12-5-implement-20260827T113543Z-dbf263",
     "stage": "implement",
-    "commit_sha": "4229e0a4676ca1a35b6a9e34ad61f3be79fee2f0",
-    "binding_status": "bound"
+    "commit_sha": null,
+    "binding_status": "pending"
   },
   "resume": {
     "stage": "implement",
-    "reason": "Track A core T010-T018 is verified; resume at T019 shared registration and preflight integration while Tracks B and C remain gated.",
-    "evidence_path": "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/tdd/track-a-core.md"
+    "reason": "Track A T001-T019 is verified and complete; resume with a Track A-only convergence audit while Tracks B and C remain gated on Story 12.4's accepted integrated checkpoint.",
+    "evidence_path": "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/tdd/track-a-integration.md"
   },
-  "updated_at": "2026-08-27T11:26:05.5197015Z"
+  "updated_at": "2026-08-27T11:35:43.5967392Z"
 }

@@ -7,7 +7,9 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.FluentUI.AspNetCore.Components;
 using Vulgata.Shared;
 using Vulgata.Core.DomainServices;
+using Vulgata.Infrastructure.Data;
 using Vulgata.Web.Components.Pages.Management;
+using Vulgata.Web.Data;
 
 namespace Vulgata.Tests;
 
@@ -25,6 +27,18 @@ public sealed class ProductionScanPageTests : BunitContext
     public ProductionScanPageTests()
     {
         Services.AddFluentUIComponents();
+    }
+
+    [Fact]
+    public void ProductionComposition_ResolvesStatusReaderAndCoordinatorForManagementPages()
+    {
+        using var factory = new LoginLogoutTests.CustomWebApplicationFactory();
+        using IServiceScope scope = factory.Services.CreateScope();
+
+        Assert.IsType<ProductionScanStatusReader>(
+            scope.ServiceProvider.GetRequiredService<IProductionScanStatusReader>());
+        Assert.IsType<ProductionScanStatusCoordinator>(
+            scope.ServiceProvider.GetRequiredService<ProductionScanStatusCoordinator>());
     }
 
     [Fact]

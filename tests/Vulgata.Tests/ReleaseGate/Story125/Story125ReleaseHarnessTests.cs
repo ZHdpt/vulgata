@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Reflection;
+using System.Text.Json;
 using System.Text.Json.Nodes;
 
 namespace Vulgata.Tests.ReleaseGate;
@@ -75,6 +76,33 @@ public sealed class Story125ReleaseHarnessTests
             path => path is not null &&
                 (uncoordinatedSharedIntegrationPaths.Contains(path, StringComparer.Ordinal) ||
                     path.EndsWith(".csproj", StringComparison.Ordinal)));
+    }
+
+    [Fact]
+    public void Story125DatabaseAndScreenshotPreflight_RejectsProtectedOrFakeBackupBState()
+    {
+        Assert.True(Story125ReleaseHarness.IsOwnedDatabaseName(
+            "vulgata_story125_0123456789abcdef0123456789abcdef"));
+        Assert.False(Story125ReleaseHarness.IsOwnedDatabaseName("vulgata"));
+        Assert.False(Story125ReleaseHarness.IsOwnedDatabaseName(
+            "vulgata_story124_0123456789abcdef0123456789abcdef"));
+        Assert.False(Story125ReleaseHarness.IsOwnedDatabaseName("vulgata_demo_backup_b"));
+
+        string schemaPath = Path.Combine(
+            FindRepositoryRoot(),
+            "specs",
+            "014-grounded-llm-wiki-chat-release-evidence",
+            "contracts",
+            "story125-release-evidence.schema.json");
+        using JsonDocument schema = JsonDocument.Parse(File.ReadAllText(schemaPath));
+        JsonElement screenshot = schema.RootElement
+            .GetProperty("$defs")
+            .GetProperty("screenshot");
+        Assert.True(
+            screenshot.GetProperty("properties")
+                .GetProperty("productionPersistedState")
+                .GetProperty("const")
+                .GetBoolean());
     }
 
     public static IEnumerable<object[]> SemanticEnvelopeRejectionVectors()
