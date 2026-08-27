@@ -6,10 +6,10 @@
   "stage": "implement",
   "preflight": {
     "branch": "demo0831/story-12-5",
-    "head": "8679af60d1c44c4a01c6006c017d30672655a064",
+    "head": "8b35d28ff6eead162cfbea08c55168aa225826b9",
     "git_identity_sha256": "8d4215c8f432617a51f487f46db541b6a2a1476dc422716ea7d2bda35321f5f1",
-    "status_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-    "observed_at": "2026-08-27T13:22:32.4058919Z"
+    "status_sha256": "c65b382af873c703b322968dd100bc753b15f605b3e255ae380331086be19c1a",
+    "observed_at": "2026-08-27T15:14:39.2789856Z"
   },
   "artifacts": {
     "spec": {
@@ -88,22 +88,22 @@
     "specs/014-grounded-llm-wiki-chat-release-evidence/contracts/chat-provider-streaming-v1.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/contracts/chat-evidence-packet-v2.schema.json",
     "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/quality-review/track-a-quality-review-04.json",
-    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/convergence/track-a-04.md",
-    "specs/014-grounded-llm-wiki-chat-release-evidence/e2e-decision-track-a.json",
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/verification/track-a-01.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/contracts/release-evidence-contract.md",
-    "specs/014-grounded-llm-wiki-chat-release-evidence/contracts/story125-release-evidence.schema.json"
+    "specs/014-grounded-llm-wiki-chat-release-evidence/contracts/story125-release-evidence.schema.json",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/integration/story-12.4-dependency-integration-01.md",
+    "specs/013-exact-cross-repository-flow-pass2/workflow-state.json"
   ],
   "checkpoint": {
-    "checkpoint_id": "bmad-12-5-implement-20260827T132029Z-tracka",
+    "checkpoint_id": "bmad-12-5-implement-20260827T150156Z-63b5a8",
     "stage": "implement",
-    "commit_sha": "8679af60d1c44c4a01c6006c017d30672655a064",
+    "commit_sha": "8b35d28ff6eead162cfbea08c55168aa225826b9",
     "binding_status": "bound"
   },
   "resume": {
     "stage": "implement",
-    "reason": "Track A T001-T019 is verified and accepted. Wait for Story 12.4's accepted final checkpoint and integrate its final commit before Track B; streaming LLM chat remains mandatory. Track C stays gated.",
-    "evidence_path": "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/verification/track-a-01.md"
+    "reason": "Dependency 4798b97 is integrated, but its committed Business Logic schema hash contradicts its accepted identity. Track B approval is not recorded; obtain a corrected accepted Story 12.4 commit.",
+    "evidence_path": "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/integration/story-12.4-dependency-integration-01.md"
   },
-  "updated_at": "2026-08-27T13:22:32.4058919Z"
+  "updated_at": "2026-08-27T15:14:39.2789856Z"
 }

@@ -9,6 +9,8 @@ public sealed class Story125ReleaseHarnessTests
 {
     private const string ProvisionalBaseCommit =
         "0d835c5f65f70a3c6a9561c6ff600069bb93e832";
+    private const string AcceptedStory124CompletionCommit =
+        "4798b97d9f23aef587829175df7ab7ebc3daf995";
 
     [Fact]
     public void Story125Boundary_NoMigrationDbContextStory124OrUncoordinatedSharedDelta_RemainsIntact()
@@ -30,11 +32,40 @@ public sealed class Story125ReleaseHarnessTests
             path => path.StartsWith(
                 "src/dotnet/Vulgata.Infrastructure/Data/Migrations/",
                 StringComparison.Ordinal));
-        Assert.DoesNotContain(
-            changedPaths,
-            path => path.StartsWith(
-                "specs/013-exact-cross-repository-flow-pass2/",
-                StringComparison.Ordinal));
+
+        HashSet<string> acceptedCompletionPaths = GetCommittedChangedPaths(
+                repositoryRoot,
+                ProvisionalBaseCommit,
+                AcceptedStory124CompletionCommit)
+            .ToHashSet(StringComparer.Ordinal);
+
+        string mergeBase = RunGit(
+            repositoryRoot,
+            "merge-base",
+            AcceptedStory124CompletionCommit,
+            "HEAD").Trim();
+        Assert.Equal(
+            AcceptedStory124CompletionCommit,
+            mergeBase);
+
+        HashSet<string> acceptedStory124Paths = acceptedCompletionPaths
+            .Where(IsStory124Path)
+            .ToHashSet(StringComparer.Ordinal);
+        HashSet<string> candidateStory124Paths = changedPaths
+            .Where(IsStory124Path)
+            .ToHashSet(StringComparer.Ordinal);
+        HashSet<string> story124PathDifferences = acceptedStory124Paths.ToHashSet(
+            StringComparer.Ordinal);
+        story124PathDifferences.SymmetricExceptWith(candidateStory124Paths);
+        Assert.True(
+            acceptedStory124Paths.SetEquals(candidateStory124Paths),
+            $"Story 12.4 paths must be exactly those in accepted commit {AcceptedStory124CompletionCommit}. " +
+            $"Unexpected or missing paths: {string.Join(", ", story124PathDifferences)}");
+
+        IReadOnlyList<string> postIntegrationChanges = GetChangedPathsSinceCommit(
+            repositoryRoot,
+            AcceptedStory124CompletionCommit);
+        Assert.DoesNotContain(postIntegrationChanges, IsStory124Path);
 
         string ownershipManifest = File.ReadAllText(Path.Combine(
             repositoryRoot,
@@ -74,8 +105,16 @@ public sealed class Story125ReleaseHarnessTests
         Assert.DoesNotContain(
             changedPaths,
             path => path is not null &&
-                (uncoordinatedSharedIntegrationPaths.Contains(path, StringComparer.Ordinal) ||
-                    path.EndsWith(".csproj", StringComparison.Ordinal)));
+                IsUncoordinatedSharedIntegrationPath(
+                    path,
+                    uncoordinatedSharedIntegrationPaths) &&
+                !acceptedCompletionPaths.Contains(path));
+        Assert.DoesNotContain(
+            postIntegrationChanges,
+            path => path is not null &&
+                IsUncoordinatedSharedIntegrationPath(
+                    path,
+                    uncoordinatedSharedIntegrationPaths));
     }
 
     [Fact]
@@ -447,12 +486,19 @@ public sealed class Story125ReleaseHarnessTests
 
     private static IReadOnlyList<string> GetChangedPaths(string repositoryRoot)
     {
+        return GetChangedPathsSinceCommit(repositoryRoot, ProvisionalBaseCommit);
+    }
+
+    private static IReadOnlyList<string> GetChangedPathsSinceCommit(
+        string repositoryRoot,
+        string commit)
+    {
         string committedAndWorkingTree = RunGit(
             repositoryRoot,
             "diff",
             "--name-only",
             "--no-renames",
-            ProvisionalBaseCommit,
+            commit,
             "--");
         string untracked = RunGit(
             repositoryRoot,
@@ -467,6 +513,35 @@ public sealed class Story125ReleaseHarnessTests
             .Distinct(StringComparer.Ordinal)
             .ToArray();
     }
+
+    private static IReadOnlyList<string> GetCommittedChangedPaths(
+        string repositoryRoot,
+        string fromCommit,
+        string toCommit)
+    {
+        return RunGit(
+                repositoryRoot,
+                "diff",
+                "--name-only",
+                "--no-renames",
+                $"{fromCommit}..{toCommit}",
+                "--")
+            .Split(["\r\n", "\n"], StringSplitOptions.RemoveEmptyEntries)
+            .Select(path => path.Replace('\\', '/'))
+            .Distinct(StringComparer.Ordinal)
+            .ToArray();
+    }
+
+    private static bool IsStory124Path(string path) =>
+        path.StartsWith(
+            "specs/013-exact-cross-repository-flow-pass2/",
+            StringComparison.Ordinal);
+
+    private static bool IsUncoordinatedSharedIntegrationPath(
+        string path,
+        IReadOnlyCollection<string> exactPaths) =>
+        exactPaths.Contains(path, StringComparer.Ordinal) ||
+        path.EndsWith(".csproj", StringComparison.Ordinal);
 
     private static string RunGit(string repositoryRoot, params string[] arguments)
     {
