@@ -1026,8 +1026,7 @@ public sealed class Pass2DocumentPostgreSqlAtomicTests
                     exactResolutionEdgeId = Edge.Id,
                     providerEvidenceFingerprint = Hash(string.Join(
                         "\n",
-                        new[] { "provider-evidence-set/1.0" }.Concat(
-                            Contributions.Select(value => value.EvidenceFingerprint)))),
+                        Contributions.Select(value => value.EvidenceFingerprint))),
                     planFingerprint = Group.PlanFingerprint,
                     membershipFingerprint = Group.MembershipFingerprint!,
                     promptIdentity = "pass2-business-logic-worker.v1",
@@ -1106,8 +1105,7 @@ public sealed class Pass2DocumentPostgreSqlAtomicTests
             binding["exactResolutionEdgeId"] = SecondEdge.Id;
             binding["providerEvidenceFingerprint"] = Hash(string.Join(
                 "\n",
-                new[] { "provider-evidence-set/1.0" }.Concat(
-                    SecondContributions.Select(value => value.EvidenceFingerprint))));
+                SecondContributions.Select(value => value.EvidenceFingerprint)));
             binding["planFingerprint"] = SecondGroup.PlanFingerprint;
             binding["membershipFingerprint"] = SecondGroup.MembershipFingerprint!;
             return new(
@@ -1394,8 +1392,7 @@ public sealed class Pass2DocumentPostgreSqlAtomicTests
             binding["exactResolutionEdgeId"] = thirdEdge.Id;
             binding["providerEvidenceFingerprint"] = Hash(string.Join(
                 "\n",
-                new[] { "provider-evidence-set/1.0" }.Concat(
-                    thirdContributions.Select(value => value.EvidenceFingerprint))));
+                thirdContributions.Select(value => value.EvidenceFingerprint)));
             binding["planFingerprint"] = thirdGroup.PlanFingerprint;
             binding["membershipFingerprint"] = thirdGroup.MembershipFingerprint!;
             return (new(

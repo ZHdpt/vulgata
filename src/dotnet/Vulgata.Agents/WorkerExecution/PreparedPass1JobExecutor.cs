@@ -86,6 +86,25 @@ public enum PreparedPass1WireBudgetDiagnosticKind
 }
 
 /// <summary>
+/// Payload-free reason a prepared outgoing provider request was rejected locally.
+/// </summary>
+public enum PreparedPass1OutgoingRequestRejectionKind
+{
+    TurnLimit,
+    BodySize,
+    Normalization,
+    NormalizationJson,
+    NormalizationParameters,
+    NormalizationMessages,
+    NormalizationMessageEnvelope,
+    NormalizationAssistantToolContentArray,
+    NormalizationAssistantToolContentOther,
+    NormalizationSize,
+    StrictShape,
+    ContributionBudget,
+}
+
+/// <summary>
 /// Observes only the closed wire-bound category for the current execution.
 /// Implementations must remain in memory and must not retain wire content.
 /// </summary>
@@ -93,7 +112,12 @@ public interface IPreparedPass1WireBudgetDiagnosticObserver
 {
     IReadOnlyList<PreparedPass1WireBudgetDiagnosticKind> Categories => [];
 
+    PreparedPass1OutgoingRequestRejectionKind? OutgoingRequestRejectionKind => null;
+
     void Observe(PreparedPass1WireBudgetDiagnosticKind category);
+
+    void ObserveOutgoingRequestRejection(PreparedPass1OutgoingRequestRejectionKind kind) =>
+        Observe(PreparedPass1WireBudgetDiagnosticKind.OutgoingRequest);
 }
 
 /// <summary>
@@ -104,6 +128,7 @@ public sealed class PreparedPass1WireBudgetDiagnosticObserver
 {
     private readonly object _sync = new();
     private readonly List<PreparedPass1WireBudgetDiagnosticKind> _categories = [];
+    private PreparedPass1OutgoingRequestRejectionKind? _outgoingRequestRejectionKind;
 
     public IReadOnlyList<PreparedPass1WireBudgetDiagnosticKind> Categories
     {
@@ -116,11 +141,31 @@ public sealed class PreparedPass1WireBudgetDiagnosticObserver
         }
     }
 
+    public PreparedPass1OutgoingRequestRejectionKind? OutgoingRequestRejectionKind
+    {
+        get
+        {
+            lock (_sync)
+            {
+                return _outgoingRequestRejectionKind;
+            }
+        }
+    }
+
     public void Observe(PreparedPass1WireBudgetDiagnosticKind category)
     {
         lock (_sync)
         {
             _categories.Add(category);
+        }
+    }
+
+    public void ObserveOutgoingRequestRejection(PreparedPass1OutgoingRequestRejectionKind kind)
+    {
+        lock (_sync)
+        {
+            _categories.Add(PreparedPass1WireBudgetDiagnosticKind.OutgoingRequest);
+            _outgoingRequestRejectionKind = kind;
         }
     }
 }
@@ -925,6 +970,22 @@ public sealed class PreparedPass1JobExecutor(
             executionCancellation.Cancel();
         }
 
+        internal void ExceedOutgoingRequest(PreparedPass1OutgoingRequestRejectionKind kind)
+        {
+            bool firstExceeded = Interlocked.Exchange(ref _exceeded, 1) == 0;
+            if (firstExceeded)
+            {
+                diagnosticObserver?.ObserveOutgoingRequestRejection(kind);
+            }
+
+            lock (_sync)
+            {
+                _transportCancellation?.Cancel();
+            }
+
+            executionCancellation.Cancel();
+        }
+
         public void Dispose()
         {
             lock (_sync)
@@ -957,7 +1018,7 @@ public sealed class PreparedPass1JobExecutor(
             int requestOrdinal = Interlocked.Increment(ref _requestOrdinal);
             if (requestOrdinal > 10)
             {
-                throw RejectOutgoingRequest();
+                throw RejectOutgoingRequest(PreparedPass1OutgoingRequestRejectionKind.TurnLimit);
             }
 
             byte[] outgoingBody = await ReadBoundedRequestBodyAsync(
@@ -970,7 +1031,7 @@ public sealed class PreparedPass1JobExecutor(
                     outgoingBody,
                     acceptedDeclarations,
                     toolChoiceShape) ??
-                throw RejectOutgoingRequest();
+                throw RejectOutgoingRequest(ClassifyNormalizationFailure(outgoingBody));
             ValidateOutgoingContributions(
                 outgoingBody,
                 toolChoiceShape);
@@ -999,9 +1060,10 @@ public sealed class PreparedPass1JobExecutor(
             return response;
         }
 
-        private InvalidDataException RejectOutgoingRequest()
+        private InvalidDataException RejectOutgoingRequest(
+            PreparedPass1OutgoingRequestRejectionKind kind)
         {
-            wireBudget.Exceed(PreparedPass1WireBudgetDiagnosticKind.OutgoingRequest);
+            wireBudget.ExceedOutgoingRequest(kind);
             return new InvalidDataException("Provider request bound exceeded.");
         }
 
@@ -1017,7 +1079,8 @@ public sealed class PreparedPass1JobExecutor(
             if (content.Headers.ContentLength >
                 PreparedPass1WireBudget.MaximumOutgoingBodyBytes)
             {
-                wireBudget.Exceed(PreparedPass1WireBudgetDiagnosticKind.OutgoingRequest);
+                wireBudget.ExceedOutgoingRequest(
+                    PreparedPass1OutgoingRequestRejectionKind.BodySize);
                 throw new InvalidDataException("Provider request bound exceeded.");
             }
 
@@ -1035,7 +1098,8 @@ public sealed class PreparedPass1JobExecutor(
                 if (destination.Length + read >
                     PreparedPass1WireBudget.MaximumOutgoingBodyBytes)
                 {
-                    wireBudget.Exceed(PreparedPass1WireBudgetDiagnosticKind.OutgoingRequest);
+                    wireBudget.ExceedOutgoingRequest(
+                        PreparedPass1OutgoingRequestRejectionKind.BodySize);
                     throw new InvalidDataException("Provider request bound exceeded.");
                 }
 
@@ -1054,7 +1118,8 @@ public sealed class PreparedPass1JobExecutor(
                 acceptedDeclarations,
                 toolChoiceShape))
             {
-                throw RejectOutgoingRequest();
+                throw RejectOutgoingRequest(
+                    PreparedPass1OutgoingRequestRejectionKind.StrictShape);
             }
 
             int declarationsBytes = root.TryGetProperty("tools", out JsonElement tools)
@@ -1093,8 +1158,85 @@ public sealed class PreparedPass1JobExecutor(
                 toolResultBytes,
                 body.Length))
             {
-                throw RejectOutgoingRequest();
+                throw RejectOutgoingRequest(
+                    PreparedPass1OutgoingRequestRejectionKind.ContributionBudget);
             }
+        }
+
+        private static PreparedPass1OutgoingRequestRejectionKind ClassifyNormalizationFailure(
+            byte[] sourceBody)
+        {
+            if (sourceBody.Length > PreparedPass1WireBudget.MaximumOutgoingBodyBytes)
+            {
+                return PreparedPass1OutgoingRequestRejectionKind.NormalizationSize;
+            }
+
+            try
+            {
+                using JsonDocument document = JsonDocument.Parse(sourceBody, new JsonDocumentOptions
+                {
+                    AllowTrailingCommas = false,
+                    CommentHandling = JsonCommentHandling.Disallow,
+                    MaxDepth = 64,
+                });
+                JsonElement root = document.RootElement;
+                if (root.ValueKind != JsonValueKind.Object || !HasUniquePropertyNames(root))
+                {
+                    return PreparedPass1OutgoingRequestRejectionKind.NormalizationJson;
+                }
+
+                if (root.TryGetProperty("messages", out JsonElement messages))
+                {
+                    using var sink = new MemoryStream();
+                    using var writer = new Utf8JsonWriter(sink);
+                    if (!WriteMessagesWithCompleteAssistantContent(writer, messages))
+                    {
+                        return ClassifyMessageNormalizationFailure(messages);
+                    }
+                }
+
+                return PreparedPass1OutgoingRequestRejectionKind.NormalizationParameters;
+            }
+            catch (Exception exception) when (
+                exception is JsonException or InvalidOperationException or OverflowException)
+            {
+                return PreparedPass1OutgoingRequestRejectionKind.NormalizationJson;
+            }
+        }
+
+        private static PreparedPass1OutgoingRequestRejectionKind
+            ClassifyMessageNormalizationFailure(JsonElement messages)
+        {
+            if (messages.ValueKind != JsonValueKind.Array)
+            {
+                return PreparedPass1OutgoingRequestRejectionKind.NormalizationMessageEnvelope;
+            }
+
+            foreach (JsonElement message in messages.EnumerateArray())
+            {
+                if (message.ValueKind != JsonValueKind.Object ||
+                    !message.TryGetProperty("role", out JsonElement role) ||
+                    role.ValueKind != JsonValueKind.String)
+                {
+                    return PreparedPass1OutgoingRequestRejectionKind.NormalizationMessageEnvelope;
+                }
+
+                bool isAssistantToolCall =
+                    string.Equals(role.GetString(), "assistant", StringComparison.Ordinal) &&
+                    message.TryGetProperty("tool_calls", out _);
+                if (isAssistantToolCall &&
+                    message.TryGetProperty("content", out JsonElement content) &&
+                    content.ValueKind is not (JsonValueKind.String or JsonValueKind.Null))
+                {
+                    return content.ValueKind == JsonValueKind.Array
+                        ? PreparedPass1OutgoingRequestRejectionKind
+                            .NormalizationAssistantToolContentArray
+                        : PreparedPass1OutgoingRequestRejectionKind
+                            .NormalizationAssistantToolContentOther;
+                }
+            }
+
+            return PreparedPass1OutgoingRequestRejectionKind.NormalizationMessages;
         }
 
         private static bool HasExactFinalDeepSeekShape(
@@ -1942,20 +2084,20 @@ public sealed class PreparedPass1JobExecutor(
                 continue;
             }
 
-            bool appendEmptyContent = !message.TryGetProperty(
-                "content",
-                out JsonElement content);
-            if (!appendEmptyContent &&
-                content.ValueKind is not (JsonValueKind.String or JsonValueKind.Null))
+            bool hasContent = message.TryGetProperty("content", out JsonElement content);
+            if (!TryNormalizeAssistantToolContent(
+                hasContent ? content : default,
+                hasContent,
+                out string? normalizedContent,
+                out bool rewriteContent))
             {
                 return false;
             }
 
-            appendEmptyContent |= content.ValueKind == JsonValueKind.Null;
             writer.WriteStartObject();
             foreach (JsonProperty property in message.EnumerateObject())
             {
-                if (appendEmptyContent &&
+                if (rewriteContent &&
                     string.Equals(property.Name, "content", StringComparison.Ordinal))
                 {
                     continue;
@@ -1964,15 +2106,62 @@ public sealed class PreparedPass1JobExecutor(
                 property.WriteTo(writer);
             }
 
-            if (appendEmptyContent)
+            if (rewriteContent)
             {
-                writer.WriteString("content", string.Empty);
+                writer.WriteString("content", normalizedContent);
             }
 
             writer.WriteEndObject();
         }
 
         writer.WriteEndArray();
+        return true;
+    }
+
+    private static bool TryNormalizeAssistantToolContent(
+        JsonElement content,
+        bool hasContent,
+        out string normalizedContent,
+        out bool rewriteContent)
+    {
+        normalizedContent = string.Empty;
+        rewriteContent = !hasContent;
+        if (!hasContent || content.ValueKind == JsonValueKind.Null)
+        {
+            rewriteContent = true;
+            return true;
+        }
+
+        if (content.ValueKind == JsonValueKind.String)
+        {
+            normalizedContent = content.GetString() ?? string.Empty;
+            return true;
+        }
+
+        if (content.ValueKind != JsonValueKind.Array)
+        {
+            return false;
+        }
+
+        var text = new StringBuilder();
+        foreach (JsonElement part in content.EnumerateArray())
+        {
+            if (part.ValueKind != JsonValueKind.Object ||
+                part.EnumerateObject().Count() != 2 ||
+                !part.TryGetProperty("type", out JsonElement type) ||
+                type.ValueKind != JsonValueKind.String ||
+                !string.Equals(type.GetString(), "text", StringComparison.Ordinal) ||
+                !part.TryGetProperty("text", out JsonElement value) ||
+                value.ValueKind != JsonValueKind.String)
+            {
+                return false;
+            }
+
+            text.Append(value.GetString());
+        }
+
+        normalizedContent = text.ToString();
+        rewriteContent = true;
         return true;
     }
 

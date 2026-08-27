@@ -167,8 +167,17 @@ internal sealed class OpenAiCompatiblePass2StreamingTransport(
         int end = providerContext.IndexOf(delimiter);
         ReadOnlySpan<byte> packet = end < 0 ? providerContext : providerContext[..end];
         using JsonDocument document = JsonDocument.Parse(packet.ToArray());
-        string? value = document.RootElement.GetProperty("flow")
-            .GetProperty("systemId").GetString();
+        if (!document.RootElement.TryGetProperty("flow", out JsonElement flow) ||
+            flow.ValueKind != JsonValueKind.Object ||
+            (!flow.TryGetProperty("systemId", out JsonElement systemIdElement) &&
+             !flow.TryGetProperty("SystemId", out systemIdElement)))
+        {
+            throw new InvalidDataException("The Pass 2 System binding is unavailable.");
+        }
+
+        string? value = systemIdElement.ValueKind == JsonValueKind.String
+            ? systemIdElement.GetString()
+            : null;
         return Guid.TryParse(value, out Guid systemId) && systemId != Guid.Empty
             ? systemId
             : throw new InvalidDataException("The Pass 2 System binding is unavailable.");
@@ -191,6 +200,7 @@ internal sealed class OpenAiCompatiblePass2StreamingTransport(
             writer.WriteStartArray("messages");
             WriteMessage(writer, "system", request.Prompt);
             WriteMessage(writer, "user", _strictUtf8.GetString(request.PacketUtf8.Span));
+            WriteToolHistory(writer, request);
             writer.WriteEndArray();
             writer.WritePropertyName("tools");
             writer.WriteRawValue(request.FunctionDeclarationsUtf8.Span, skipInputValidation: false);
@@ -222,6 +232,76 @@ internal sealed class OpenAiCompatiblePass2StreamingTransport(
         writer.WriteString("role", role);
         writer.WriteString("content", content);
         writer.WriteEndObject();
+    }
+
+    private static void WriteToolHistory(
+        Utf8JsonWriter writer,
+        PreparedPass2ProviderRequest request)
+    {
+        if (request.TranscriptUtf8.IsEmpty && request.SanitizedToolResultsUtf8.IsEmpty)
+        {
+            return;
+        }
+        if (request.TranscriptUtf8.IsEmpty || request.SanitizedToolResultsUtf8.IsEmpty)
+        {
+            throw new InvalidDataException("The Pass 2 tool history is incomplete.");
+        }
+
+        using JsonDocument transcript = JsonDocument.Parse(request.TranscriptUtf8);
+        using JsonDocument results = JsonDocument.Parse(request.SanitizedToolResultsUtf8);
+        if (transcript.RootElement.ValueKind != JsonValueKind.Array ||
+            results.RootElement.ValueKind != JsonValueKind.Array ||
+            transcript.RootElement.GetArrayLength() != results.RootElement.GetArrayLength())
+        {
+            throw new InvalidDataException("The Pass 2 tool history is invalid.");
+        }
+
+        for (int index = 0; index < transcript.RootElement.GetArrayLength(); index++)
+        {
+            JsonElement entry = transcript.RootElement[index];
+            JsonElement result = results.RootElement[index];
+            string? id = entry.TryGetProperty("id", out JsonElement idValue) &&
+                idValue.ValueKind == JsonValueKind.String
+                    ? idValue.GetString()
+                    : null;
+            string? name = entry.TryGetProperty("name", out JsonElement nameValue) &&
+                nameValue.ValueKind == JsonValueKind.String
+                    ? nameValue.GetString()
+                    : null;
+            string? resultId = result.TryGetProperty("id", out JsonElement resultIdValue) &&
+                resultIdValue.ValueKind == JsonValueKind.String
+                    ? resultIdValue.GetString()
+                    : null;
+            bool hasArguments = entry.TryGetProperty(
+                "arguments", out JsonElement arguments) &&
+                arguments.ValueKind == JsonValueKind.Object;
+            if (string.IsNullOrWhiteSpace(id) || string.IsNullOrWhiteSpace(name) ||
+                !string.Equals(id, resultId, StringComparison.Ordinal) || !hasArguments)
+            {
+                throw new InvalidDataException("The Pass 2 tool history identity is invalid.");
+            }
+
+            writer.WriteStartObject();
+            writer.WriteString("role", "assistant");
+            writer.WriteNull("content");
+            writer.WriteStartArray("tool_calls");
+            writer.WriteStartObject();
+            writer.WriteString("id", id);
+            writer.WriteString("type", "function");
+            writer.WriteStartObject("function");
+            writer.WriteString("name", name);
+            writer.WriteString("arguments", arguments.GetRawText());
+            writer.WriteEndObject();
+            writer.WriteEndObject();
+            writer.WriteEndArray();
+            writer.WriteEndObject();
+
+            writer.WriteStartObject();
+            writer.WriteString("role", "tool");
+            writer.WriteString("tool_call_id", id);
+            writer.WriteString("content", result.GetRawText());
+            writer.WriteEndObject();
+        }
     }
 
     private static Uri ResolveChatCompletionsEndpoint(Uri configured)

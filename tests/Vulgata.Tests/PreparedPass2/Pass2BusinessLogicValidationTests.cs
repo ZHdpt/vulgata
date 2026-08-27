@@ -34,7 +34,7 @@ public sealed class Pass2BusinessLogicValidationTests
 
     private static string ProviderEvidenceFingerprint(IEnumerable<string> evidenceFingerprints) =>
         Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(string.Join(
-            '\n', new[] { "provider-evidence-set/1.0" }.Concat(evidenceFingerprints)))));
+            '\n', evidenceFingerprints))));
 
     public static TheoryData<string> EdgeAuthorityVectors => new()
     {
@@ -124,6 +124,21 @@ public sealed class Pass2BusinessLogicValidationTests
             .OrderBy(value => value.TargetDocumentVersionId)
             .Select(value => value.TargetDocumentVersionId).ToArrayAsync();
         Assert.Equal(result.UsedDocumentVersionIds, generatedTargets);
+    }
+
+    [Fact]
+    public async Task CommitAsync_PersistedCanonicalProviderEvidenceSetFingerprint_CommitsAsync()
+    {
+        await using CommitFixture fixture = await CommitFixture.CreateAsync();
+        JsonObject candidate = fixture.CreateCandidate();
+        candidate["binding"]!["providerEvidenceFingerprint"] =
+            fixture.Decision.ProviderEvidenceSetFingerprint;
+
+        Pass2BusinessLogicCommitResult result = await fixture.CommitAsync(
+            candidate, fixture.ConsumerHandle);
+
+        Assert.Equal(Pass2BusinessLogicCommitStatus.Committed, result.Status);
+        Assert.NotNull(result.DocumentVersionId);
     }
 
     [Fact]
@@ -255,6 +270,28 @@ public sealed class Pass2BusinessLogicValidationTests
             .OrderBy(value => value.TargetDocumentVersionId)
             .Select(value => value.TargetDocumentVersionId).ToArrayAsync();
         Assert.Equal(result.UsedDocumentVersionIds, generatedTargets);
+    }
+
+    [Fact]
+    public async Task CommitAsync_AdmittedSourceExcerptFromLineRangedAnchor_CommitsAsync()
+    {
+        await using CommitFixture fixture = await CommitFixture.CreateAsync();
+        await fixture.Context.SourceAnchors
+            .Where(value => value.Id == fixture.ConsumerSourceAnchorId)
+            .ExecuteUpdateAsync(setters => setters
+                .SetProperty(value => value.ByteStart, (long?)null)
+                .SetProperty(value => value.ByteEnd, (long?)null));
+        fixture.Context.ChangeTracker.Clear();
+        JsonObject candidate = fixture.CreateCandidate(
+            additionalEvidenceHandles: [fixture.ConsumerRetrievedSourceExcerptHandle],
+            includeConsumerSourceAnchor: false);
+
+        Pass2BusinessLogicCommitResult result = await fixture.CommitAsync(
+            candidate, fixture.ConsumerHandle, includeConsumerSourceAnchor: false);
+
+        Assert.Equal(Pass2BusinessLogicCommitStatus.Committed, result.Status);
+        Assert.NotNull(result.DocumentVersionId);
+        Assert.Contains(fixture.ConsumerDocumentVersionId, result.UsedDocumentVersionIds);
     }
 
     [Theory]
@@ -1573,7 +1610,7 @@ public sealed class Pass2BusinessLogicValidationTests
         ProviderEvidenceFingerprint(contributions.Select(value => value.EvidenceFingerprint));
 
     private static string ProviderEvidenceFingerprint(IEnumerable<string> evidenceFingerprints) =>
-        Hash(string.Join('\n', new[] { "provider-evidence-set/1.0" }.Concat(evidenceFingerprints)));
+        Hash(string.Join('\n', evidenceFingerprints));
 
         private static string RetrievalDescriptorFingerprint(
             Pass2CodeLogicRetrievalItemKind kind,

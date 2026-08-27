@@ -588,7 +588,7 @@ public sealed class CurrentCommunicationCandidateSource(
             .SelectMany(occurrence => occurrence.Consumer.Files)
             .Concat(profile.Occurrences
                 .Where(occurrence => StringComparer.Ordinal.Equals(occurrence.ProviderAlias, alias))
-                .Select(occurrence => occurrence.Provider.ImplementationDocument.RepositoryRelativePath))
+                .SelectMany(occurrence => occurrence.Provider.Files))
             .ToHashSet(StringComparer.Ordinal);
         CurrentDocumentEvidence[] matches =
         [
@@ -706,8 +706,8 @@ public sealed class CurrentCommunicationCandidateSource(
         var sourceRequest = new RevisionBoundSourceRequest(
             file,
             new AnalysisLineRange(
-                occurrence.Provider.Declaration.Line,
-                occurrence.Provider.Declaration.Line),
+                providerAnchor.LineStart,
+                providerAnchor.LineEnd),
             providerAnchor.SourceHash,
             1_048_576);
         SourceExcerptResult source = await _sourceReader.ReadAsync(

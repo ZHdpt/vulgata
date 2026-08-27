@@ -47,6 +47,22 @@ public sealed class PreparedPass1JobExecutorStreamingTests
         Guid.Parse("dddddddd-eeee-4fff-8aaa-bbbbbbbbbbbb");
 
     [Fact]
+    public void WireBudgetDiagnosticObserver_RecordsPayloadFreeOutgoingRejectionSubtype()
+    {
+        PreparedPass1WireBudgetDiagnosticObserver observer = new();
+
+        observer.ObserveOutgoingRequestRejection(
+            PreparedPass1OutgoingRequestRejectionKind.StrictShape);
+
+        Assert.Equal(
+            PreparedPass1OutgoingRequestRejectionKind.StrictShape,
+            observer.OutgoingRequestRejectionKind);
+        Assert.Equal(
+            [PreparedPass1WireBudgetDiagnosticKind.OutgoingRequest],
+            observer.Categories);
+    }
+
+    [Fact]
     public async Task ExecuteAsync_StreamResponseWithReasoning_ProducesFinalCodeLogicResultAsync()
     {
         PreparedPass1WorkerPacket packet = CreatePacket();
@@ -311,6 +327,34 @@ public sealed class PreparedPass1JobExecutorStreamingTests
         Assert.Null(call.Target.Position);
         Assert.Null(call.Target.ExactLineRange);
         Assert.Equal(new string('f', 64), Convert.ToHexStringLower(call.Target.ExpectedSourceHash!.Value.Span));
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_ReasoningNavigateCodeLoop_ReplaysCompleteToolTurnAsync()
+    {
+        PreparedPass1WorkerPacket packet = CreatePacket();
+        string submittedDocument = CreateValidDocumentJson(packet);
+        ReasoningToolLoopHandler transport = new(submittedDocument);
+        PreparedPass1JobExecutor executor = CreateExecutor(
+            transport,
+            new TestTimeProvider(),
+            _testInactivityTimeout,
+            _testAbsoluteTimeout,
+            new RecordingNavigationService());
+
+        PreparedPass1RawWorkerResult result = await executor.ExecuteAsync(
+            packet,
+            "Use bounded reasoning, navigate once, then submit the document.");
+
+        Assert.Equal(PreparedPass1RawWorkerOutcome.Completed, result.Outcome);
+        Assert.Equal(2, transport.RequestBodies.Count);
+        using JsonDocument replay = JsonDocument.Parse(transport.RequestBodies[1]);
+        JsonElement assistant = replay.RootElement.GetProperty("messages")
+            .EnumerateArray()
+            .Single(message => message.GetProperty("role").GetString() == "assistant");
+        Assert.Equal("bounded reasoning", assistant.GetProperty("reasoning_content").GetString());
+        Assert.Equal(JsonValueKind.String, assistant.GetProperty("content").ValueKind);
+        Assert.Single(assistant.GetProperty("tool_calls").EnumerateArray());
     }
 
     [Fact]
@@ -1864,6 +1908,42 @@ public sealed class PreparedPass1JobExecutorStreamingTests
         Assert.Null(normalized);
     }
 
+    [Fact]
+    public void NormalizeAndValidateDeepSeekRequestBody_AssistantToolTextParts_CollapsesContentToString()
+    {
+        const string body =
+            "{\"max_tokens\":32768,\"stream\":true,\"messages\":[" +
+            "{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"Inspecting the bounded definition.\"}]," +
+            "\"reasoning_content\":\"bounded reasoning\",\"tool_calls\":[{\"id\":\"call-1\",\"type\":\"function\"," +
+            "\"function\":{\"name\":\"navigate_code\",\"arguments\":\"{}\"}}]}," +
+            "{\"role\":\"tool\",\"tool_call_id\":\"call-1\",\"content\":\"{}\"}]}";
+
+        byte[]? normalized = InvokeDeepSeekRequestNormalizer(body);
+
+        Assert.NotNull(normalized);
+        using JsonDocument request = JsonDocument.Parse(normalized);
+        JsonElement assistant = request.RootElement.GetProperty("messages")[0];
+        Assert.Equal(
+            "Inspecting the bounded definition.",
+            assistant.GetProperty("content").GetString());
+        Assert.Equal("bounded reasoning", assistant.GetProperty("reasoning_content").GetString());
+        Assert.Single(assistant.GetProperty("tool_calls").EnumerateArray());
+    }
+
+    [Fact]
+    public void NormalizeAndValidateDeepSeekRequestBody_AssistantToolNonTextPart_RejectsClosed()
+    {
+        const string body =
+            "{\"max_tokens\":32768,\"stream\":true,\"messages\":[" +
+            "{\"role\":\"assistant\",\"content\":[{\"type\":\"image_url\",\"image_url\":{\"url\":\"data:image/png;base64,AA==\"}}]," +
+            "\"tool_calls\":[{\"id\":\"call-1\",\"type\":\"function\",\"function\":{\"name\":\"navigate_code\",\"arguments\":\"{}\"}}]}," +
+            "{\"role\":\"tool\",\"tool_call_id\":\"call-1\",\"content\":\"{}\"}]}";
+
+        byte[]? normalized = InvokeDeepSeekRequestNormalizer(body);
+
+        Assert.Null(normalized);
+    }
+
     [Theory]
     [InlineData("unknown", "UnknownFunction")]
     [InlineData("parallel", "MixedFunctions")]
@@ -3070,6 +3150,49 @@ public sealed class PreparedPass1JobExecutorStreamingTests
             IncrementalSseStream stream = new(
                 events,
                 [TimeSpan.Zero, TimeSpan.Zero],
+                TimeSpan.Zero,
+                holdOpen: false);
+            StreamContent content = new(stream);
+            content.Headers.ContentType = new MediaTypeHeaderValue("text/event-stream");
+            return new HttpResponseMessage(HttpStatusCode.OK) { Content = content };
+        }
+    }
+
+    private sealed class ReasoningToolLoopHandler(string finalDocument) : HttpMessageHandler
+    {
+        public List<string> RequestBodies { get; } = [];
+
+        protected override async Task<HttpResponseMessage> SendAsync(
+            HttpRequestMessage request,
+            CancellationToken cancellationToken)
+        {
+            string body = await request.Content!.ReadAsStringAsync(cancellationToken);
+            RequestBodies.Add(body);
+            string[] events;
+            if (RequestBodies.Count == 1)
+            {
+                events =
+                [
+                    "data: {\"id\":\"tool-stream-1\",\"object\":\"chat.completion.chunk\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"reasoning_content\":\"bounded reasoning\"},\"finish_reason\":null}]}\n\n",
+                    "data: {\"id\":\"tool-stream-1\",\"object\":\"chat.completion.chunk\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"Inspecting the bounded definition.\"},\"finish_reason\":null}]}\n\n",
+                    "data: {\"id\":\"tool-stream-1\",\"object\":\"chat.completion.chunk\",\"choices\":[{\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"id\":\"call-navigate-1\",\"type\":\"function\",\"function\":{\"name\":\"navigate_code\",\"arguments\":\"{\\\"operation\\\":\\\"Definition\\\",\\\"target\\\":{\\\"repositoryRelativePath\\\":\\\"src/Target.java\\\",\\\"symbol\\\":\\\"Target\\\",\\\"position\\\":null,\\\"exactLineRange\\\":null,\\\"expectedSourceHash\\\":\\\"ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff\\\"},\\\"depth\\\":1,\\\"parentObservationIdentity\\\":null}\"}}]},\"finish_reason\":\"tool_calls\"}]}\n\n",
+                    "data: [DONE]\n\n",
+                ];
+            }
+            else
+            {
+                string argumentJson = $"{{\"document\":{finalDocument}}}";
+                string serializedArguments = JsonSerializer.Serialize(argumentJson);
+                events =
+                [
+                    $"data: {{\"id\":\"submit-stream-1\",\"object\":\"chat.completion.chunk\",\"choices\":[{{\"index\":0,\"delta\":{{\"role\":\"assistant\",\"tool_calls\":[{{\"index\":0,\"id\":\"call-submit-1\",\"type\":\"function\",\"function\":{{\"name\":\"submit_code_logic\",\"arguments\":{serializedArguments}}}}}]}},\"finish_reason\":\"tool_calls\"}}]}}\n\n",
+                    "data: [DONE]\n\n",
+                ];
+            }
+
+            IncrementalSseStream stream = new(
+                events,
+                Enumerable.Repeat(TimeSpan.Zero, events.Length).ToArray(),
                 TimeSpan.Zero,
                 holdOpen: false);
             StreamContent content = new(stream);

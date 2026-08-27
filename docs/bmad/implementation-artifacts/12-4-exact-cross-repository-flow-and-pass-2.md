@@ -1,7 +1,7 @@
 ---
 story_key: 12-4-exact-cross-repository-flow-and-pass-2
 title: "Story 12.4: Exact Cross-Repository Flow & Pass 2"
-Status: in-progress
+Status: done
 Epic: 12
 Story: 4
 created: 2026-08-26
@@ -309,3 +309,26 @@ sixteen-step, and ten-group bounds remain inclusive; plus-one cases are never
 truncated, and the eleventh candidate becomes a content-dark omission. Atomic
 PostgreSQL start, rollback, and replay create one job/budget only per Complete
 group. Root verification passed 43/43 and EF reports no pending model changes.
+
+### Completion checkpoint: 2026-08-27
+
+Story 12.4 completed all forty-nine accepted tasks and every governed delivery
+gate. Convergence attempt 1 found zero missing, partial, contradictory, or
+unrequested obligations. Independent quality review attempt 1 returned ACCEPT
+with zero findings. Required E2E predicates passed through the retained live
+two-Repository qualification and current authenticated API, PostgreSQL, and
+multi-module integration evidence.
+
+Final verification passed 439 exact Cross-Repository/Pass 2 regressions with
+42 explicit PostgreSQL opt-in skips and zero failures, 87/87 disposable
+PostgreSQL checks, 64/64 authenticated composition/API checks, and 442 adjacent
+regressions with one explicit prerequisite skip. The Web build completed with
+zero errors. The approved live OpenCode Zen qualification completed one
+Published Flow Group, one Pass 2 Job, one immutable Business Logic Document,
+three `GENERATED_FROM` Edges, and three Source Anchors; its successful disposable
+database and raw diagnostic outputs remain preserved as requested.
+
+Completion checkpoint `bmad-12-4-complete-20260827T132524Z-d8e2d1` owns the
+current Story 12.4 production, tests, specification, convergence, quality, E2E,
+qualification, and verification boundary. Story 12.5 Chat and August release
+evidence remain outside this completed boundary.

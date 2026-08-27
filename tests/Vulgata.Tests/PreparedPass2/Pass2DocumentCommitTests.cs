@@ -457,10 +457,9 @@ public sealed class Pass2DocumentCommitTests
                     exactResolutionDecisionFingerprint = Decision.EvidenceFingerprint,
                     exactResolutionEdgeId = Edge.Id,
                     providerEvidenceFingerprint = Hash(
-                        string.Join("\n", new[] { "provider-evidence-set/1.0" }
-                            .Concat(Contributions.OrderBy(value => value.ProviderOrdinal)
-                                .ThenBy(value => value.EvidenceOrdinal)
-                                .Select(value => value.EvidenceFingerprint)))),
+                        string.Join("\n", Contributions.OrderBy(value => value.ProviderOrdinal)
+                            .ThenBy(value => value.EvidenceOrdinal)
+                            .Select(value => value.EvidenceFingerprint))),
                     planFingerprint = Group.PlanFingerprint,
                     membershipFingerprint = Group.MembershipFingerprint!,
                     promptIdentity = PromptIdentity,

@@ -161,6 +161,43 @@ public sealed class Pass1PairPostgreSqlAtomicTests
     }
 
     [Fact]
+    public async Task PostgreSql17_RecoveryWithAllJobsCompleted_DoesNotRequireProviderAvailabilityAsync()
+    {
+        await using PreparedScanPostgreSqlFixture fixture = await CreateFixtureAsync();
+        await CommitPreparedPairAsync(fixture);
+        await PromoteFixtureScanExecutionsAsync(fixture);
+        IPreparedPass1Store store = CreatePass1Store(fixture.Context);
+        PreparedPass1StartResult started = await store.StartAsync(
+            fixture.Authorization,
+            CreateHandoff(fixture.Package),
+            2,
+            CancellationToken.None);
+        Assert.Equal(PreparedPass1StartOutcome.Created, started.Outcome);
+        Guid pairId = Assert.IsType<Guid>(started.PairExecutionId);
+        await MaterializeCompletedDocumentsAsync(fixture, pairId);
+
+        PreparedPass1RecoveryResult recovered = await store.RecoverAsync(
+            pairId,
+            fixture.Authorization,
+            providerAvailable: false,
+            PreparedScanTestHost.FixedUtcNow.AddMinutes(2),
+            CancellationToken.None);
+
+        Assert.Equal(PreparedPass1RecoveryOutcome.NoOpReplay, recovered.Outcome);
+        Assert.Equal(DurableScanReason.None, recovered.Reason);
+        Assert.Equal(fixture.Package.SelectedCount, recovered.SkippedCompletedJobCount);
+        Assert.Equal(0, recovered.PendingJobCount);
+        Assert.True(recovered.IsReplay);
+        fixture.Context.ChangeTracker.Clear();
+        Pass1PairExecution pair = await fixture.Context.Pass1PairExecutions.AsNoTracking()
+            .SingleAsync(value => value.Id == pairId);
+        Assert.Equal(Pass1PairExecutionPhase.Running, pair.Phase);
+        Assert.Equal(Pass1CircuitState.Closed, pair.CircuitState);
+        Assert.Null(pair.ReasonCategory);
+        Assert.Null(pair.ReasonCode);
+    }
+
+    [Fact]
     public async Task PostgreSql17_PolicyDrain_RestartBeforeAndAfterLeaseExpiry_ClosesAndAccountsTerminalStateAsync()
     {
         await using PreparedScanPostgreSqlFixture fixture = await CreateFixtureAsync();

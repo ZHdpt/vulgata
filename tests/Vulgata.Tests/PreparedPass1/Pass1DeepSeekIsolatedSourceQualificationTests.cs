@@ -149,6 +149,8 @@ public sealed class Pass1DeepSeekIsolatedSourceQualificationTests
             string? wireBudgetCategory = wireBudgetCategories.Count == 0
                 ? null
                 : Assert.Single(wireBudgetCategories).ToString();
+            string? outgoingRequestRejectionKind =
+                wireBudgetDiagnostics.OutgoingRequestRejectionKind?.ToString();
             IReadOnlyList<PreparedPass1ExecutionDiagnosticKind> executionCategories =
                 executionDiagnostics.Categories;
             Assert.All(
@@ -198,6 +200,7 @@ public sealed class Pass1DeepSeekIsolatedSourceQualificationTests
                 $"functionCallSubtype={functionCallSubtype ?? "none"}; " +
                 $"submissionCategory={diagnosticCategory ?? "none"}; " +
                 $"wireBudgetCategory={wireBudgetCategory ?? "none"}; " +
+                $"outgoingRequestRejectionKind={outgoingRequestRejectionKind ?? "none"}; " +
                 $"providerHttp={providerRejection.Summary}; " +
                 $"extension={Path.GetExtension(packet.RepositoryRelativePath)}.");
             Assert.NotNull(result.ParsedResult);

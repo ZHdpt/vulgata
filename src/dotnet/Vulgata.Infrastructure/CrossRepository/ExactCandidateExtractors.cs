@@ -107,9 +107,9 @@ public sealed class ExactCandidateExtractors(VulgataDbContext context)
         {
             ExactResolutionOwner? owner = await MapCurrentOwnerAsync(
                 snapshot,
-                occurrence.Provider.ImplementationDocument.RepositoryRelativePath,
-                line: null,
-                occurrence.Provider.ImplementationDocument.Symbol,
+                repositoryRelativePath,
+                occurrence.Provider.Declaration.Line,
+                symbol: null,
                 cancellationToken);
             if (!IsBeneathRoot(repositoryRelativePath, occurrence.Provider.Root))
             {

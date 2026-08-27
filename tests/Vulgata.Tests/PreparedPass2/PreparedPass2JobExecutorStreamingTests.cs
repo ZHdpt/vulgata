@@ -103,6 +103,111 @@ public sealed class PreparedPass2JobExecutorStreamingTests
     }
 
     [Fact]
+    public async Task StreamingTransport_CanonicalProjectedPacket_ResolvesSystemBindingAsync()
+    {
+        Guid systemId = Guid.NewGuid();
+        LlmProvider provider = new(
+            "pass2-test-provider",
+            "https://provider.test/v1",
+            "ciphertext",
+            ApiType.ChatCompletions,
+            AgentType.Worker,
+            DateTimeOffset.UtcNow);
+        byte[] sse = Encoding.UTF8.GetBytes(
+            "data: {\"choices\":[{\"delta\":{\"tool_calls\":[{\"index\":0,\"id\":\"call-1\",\"function\":{\"name\":\"ok\",\"arguments\":\"{}\"}}]}}]}\n\n" +
+            "data: [DONE]\n\n");
+        var transport = new OpenAiCompatiblePass2StreamingTransport(
+            new WorkerAgentProviderResolver(
+                new EmptyProviderOverrideRepository(),
+                new SingleProviderRepository(provider)),
+            new PlaintextEncryptionService(),
+            new SseStreamHandler(new MemoryStream(sse)));
+        var request = new PreparedPass2ProviderRequest(
+            1,
+            "bounded prompt",
+            JsonSerializer.SerializeToUtf8Bytes(new
+            {
+                flow = new { SystemId = systemId },
+            }),
+            "[]"u8.ToArray(),
+            SubmissionOnly: false);
+
+        var chunks = new List<ReadOnlyMemory<byte>>();
+        await foreach (ReadOnlyMemory<byte> chunk in transport.StreamAsync(request))
+        {
+            chunks.Add(chunk);
+        }
+
+        Assert.Contains("\"name\":\"ok\"", Encoding.UTF8.GetString(chunks[^1].Span));
+    }
+
+    [Fact]
+    public async Task StreamingTransport_SubsequentRequest_UsesCanonicalToolRoleHistoryAsync()
+    {
+        Guid systemId = Guid.NewGuid();
+        LlmProvider provider = new(
+            "pass2-test-provider",
+            "https://provider.test/v1",
+            "ciphertext",
+            ApiType.ChatCompletions,
+            AgentType.Worker,
+            DateTimeOffset.UtcNow);
+        byte[] sse = Encoding.UTF8.GetBytes("data: [DONE]\n\n");
+        var handler = new RecordingSseHandler(sse);
+        var transport = new OpenAiCompatiblePass2StreamingTransport(
+            new WorkerAgentProviderResolver(
+                new EmptyProviderOverrideRepository(),
+                new SingleProviderRepository(provider)),
+            new PlaintextEncryptionService(),
+            handler);
+        byte[] history = JsonSerializer.SerializeToUtf8Bytes(new[]
+        {
+            new
+            {
+                id = "call-1",
+                name = "retrieve_code_logic",
+                arguments = new
+                {
+                    operation = "SourceExcerpt",
+                    opaqueHandles = new[] { "anchor-marker" },
+                },
+                outcome = "Accepted",
+                code = "ok",
+                items = Array.Empty<object>(),
+            },
+        });
+        var request = new PreparedPass2ProviderRequest(
+            2,
+            "bounded prompt",
+            JsonSerializer.SerializeToUtf8Bytes(new { flow = new { SystemId = systemId } }),
+            "[]"u8.ToArray(),
+            SubmissionOnly: false,
+            TranscriptUtf8: history,
+            ToolCallIds: ["call-1"],
+            SanitizedToolResultsUtf8: history);
+
+        await foreach (ReadOnlyMemory<byte> _ in transport.StreamAsync(request))
+        {
+        }
+
+        using JsonDocument body = JsonDocument.Parse(handler.RequestBody);
+        string[] roles = body.RootElement.GetProperty("messages").EnumerateArray()
+            .Select(value => value.GetProperty("role").GetString()!)
+            .ToArray();
+        Assert.Equal(["system", "user", "assistant", "tool"], roles);
+        JsonElement assistant = body.RootElement.GetProperty("messages")[2];
+        Assert.Equal("call-1", assistant.GetProperty("tool_calls")[0].GetProperty("id").GetString());
+        string arguments = assistant.GetProperty("tool_calls")[0]
+            .GetProperty("function").GetProperty("arguments").GetString()!;
+        using JsonDocument argumentDocument = JsonDocument.Parse(arguments);
+        Assert.Equal(
+            "anchor-marker",
+            argumentDocument.RootElement.GetProperty("opaqueHandles")[0].GetString());
+        JsonElement tool = body.RootElement.GetProperty("messages")[3];
+        Assert.Equal("call-1", tool.GetProperty("tool_call_id").GetString());
+    }
+
+    [Fact]
     public async Task ExecuteAsync_RequestAtBound_IsRejectedBeforeTransport()
     {
         ScriptedStreamingTransport transport = new([NeverAsync()]);
@@ -157,6 +262,60 @@ public sealed class PreparedPass2JobExecutorStreamingTests
         Assert.Equal(2, retrieval.Calls);
         Assert.Equal(1, retrieval.MaximumConcurrency);
         Assert.Equal(["Search", "Search"], retrieval.Operations);
+    }
+
+    [Theory]
+    [InlineData("Outgoing")]
+    [InlineData("outgoing")]
+    public async Task ExecuteAsync_RelatedDocumentsStringDirection_InvokesTypedCallbackAsync(
+        string direction)
+    {
+        RecordingRetrievalService retrieval = new(TimeSpan.Zero);
+        ScriptedStreamingTransport transport = new(
+            [CallsAsync(RetrieveCall("RelatedDocuments", direction: direction)), CallsAsync(SubmitCall())]);
+
+        PreparedPass2RawExecutionResult result = await CreateExecutor(
+                transport,
+                retrievalService: retrieval)
+            .ExecuteAsync(CreatePacket(), "bounded worker prompt", AcceptCandidateAsync);
+
+        Assert.True(result.Accepted);
+        Assert.Equal(1, retrieval.Calls);
+        Assert.Equal(["RelatedDocuments"], retrieval.Operations);
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_StringNullForNullableRetrievalField_CoercesToNullAsync()
+    {
+        RecordingRetrievalService retrieval = new(TimeSpan.Zero);
+        ScriptedStreamingTransport transport = new(
+            [CallsAsync(RetrieveCall("SourceAnchors", direction: "null")), CallsAsync(SubmitCall())]);
+
+        PreparedPass2RawExecutionResult result = await CreateExecutor(
+                transport,
+                retrievalService: retrieval)
+            .ExecuteAsync(CreatePacket(), "bounded worker prompt", AcceptCandidateAsync);
+
+        Assert.True(result.Accepted);
+        Assert.Equal(1, retrieval.Calls);
+        Assert.Equal(["SourceAnchors"], retrieval.Operations);
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_InvalidNullableEnum_ReturnsClosedInvalidToolCallAsync()
+    {
+        RecordingRetrievalService retrieval = new(TimeSpan.Zero);
+        ScriptedStreamingTransport transport = new(
+            [CallsAsync(RetrieveCall("RelatedDocuments", direction: "sideways"))]);
+
+        PreparedPass2RawExecutionResult result = await CreateExecutor(
+                transport,
+                retrievalService: retrieval)
+            .ExecuteAsync(CreatePacket(), "bounded worker prompt", AcceptCandidateAsync);
+
+        Assert.False(result.Accepted);
+        Assert.Equal("invalid-tool-call", result.ReasonCode);
+        Assert.Equal(0, retrieval.Calls);
     }
 
     [Fact]
@@ -503,7 +662,10 @@ public sealed class PreparedPass2JobExecutorStreamingTests
             PreparedPass2SubmissionDisposition.Accepted,
             Encoding.UTF8.GetBytes("{\"accepted\":true}")));
 
-    private static byte[] RetrieveCall(string operation, string? id = "call-1") =>
+    private static byte[] RetrieveCall(
+        string operation,
+        string? id = "call-1",
+        string? direction = null) =>
         JsonSerializer.SerializeToUtf8Bytes(new
         {
             toolCalls = new[]
@@ -517,7 +679,7 @@ public sealed class PreparedPass2JobExecutorStreamingTests
                         operation,
                         queryText = (string?)null,
                         opaqueHandles = Array.Empty<string>(),
-                        direction = (string?)null,
+                        direction,
                         containedByteOffset = (int?)null,
                         containedByteLength = (int?)null,
                     },
@@ -673,6 +835,23 @@ public sealed class PreparedPass2JobExecutorStreamingTests
                 StatusCode = System.Net.HttpStatusCode.OK,
                 Content = new StreamContent(stream),
             });
+    }
+
+    private sealed class RecordingSseHandler(byte[] response) : HttpMessageHandler
+    {
+        internal byte[] RequestBody { get; private set; } = [];
+
+        protected override async Task<HttpResponseMessage> SendAsync(
+            HttpRequestMessage request,
+            CancellationToken cancellationToken)
+        {
+            RequestBody = await request.Content!.ReadAsByteArrayAsync(cancellationToken);
+            return new HttpResponseMessage
+            {
+                StatusCode = System.Net.HttpStatusCode.OK,
+                Content = new ByteArrayContent(response),
+            };
+        }
     }
 
     private sealed class PlaintextEncryptionService : ISecretEncryptionService

@@ -481,6 +481,74 @@ public sealed class RetrieveCodeLogicContractTests
     }
 
     [Fact]
+    public async Task RetrieveCodeLogic_SourceExcerptWithoutContainedRange_ReturnsWholeSourceAnchorAsync()
+    {
+        await using RetrievalHarness harness = await RetrievalHarness.CreateAsync();
+        Pass2CodeLogicRetrievalResult search = await harness.Service.RetrieveAsync(
+            harness.JobId,
+            new Pass2CodeLogicRetrievalRequest(
+                Pass2CodeLogicRetrievalOperation.Search,
+                queryText: "ledger"));
+        Pass2CodeLogicRetrievalItem section = search.Items.First(
+            item => item.Kind == Pass2CodeLogicRetrievalItemKind.Section);
+        Pass2CodeLogicRetrievalResult anchors = await harness.Service.RetrieveAsync(
+            harness.JobId,
+            new Pass2CodeLogicRetrievalRequest(
+                Pass2CodeLogicRetrievalOperation.SourceAnchors,
+                opaqueHandles: [section.OpaqueHandle]));
+        Pass2CodeLogicRetrievalItem anchor = anchors.Items.First(
+            item => item.Kind == Pass2CodeLogicRetrievalItemKind.SourceAnchor);
+
+        Pass2CodeLogicRetrievalResult result = await harness.Service.RetrieveAsync(
+            harness.JobId,
+            new Pass2CodeLogicRetrievalRequest(
+                Pass2CodeLogicRetrievalOperation.SourceExcerpt,
+                opaqueHandles: [anchor.OpaqueHandle]));
+
+        Assert.Equal(Pass2CodeLogicRetrievalOutcome.Accepted, result.Outcome);
+        Pass2CodeLogicRetrievalItem returned = Assert.Single(result.Items);
+        Assert.Equal(Pass2CodeLogicRetrievalItemKind.SourceExcerpt, returned.Kind);
+        Assert.Equal(anchor.SourceAnchorId, returned.SourceAnchorId);
+        Assert.Equal("ledger", returned.Excerpt);
+        Assert.Equal(0, returned.ByteStart);
+        Assert.Equal(6, returned.ByteEnd);
+        Assert.Null(harness.SourceReader.LastRequest?.ByteStart);
+        Assert.Null(harness.SourceReader.LastRequest?.ByteEndExclusive);
+    }
+
+    [Fact]
+    public async Task RetrieveCodeLogic_InitialPacketSourceAnchorHandle_ReturnsWholeSourceAnchorAsync()
+    {
+        await using RetrievalHarness harness = await RetrievalHarness.CreateAsync();
+        SourceAnchor anchor = await harness.Context.SourceAnchors.AsNoTracking()
+            .OrderBy(value => value.Id)
+            .FirstAsync();
+        string initialHandle = Pass2InitialEvidenceHandle.Create(
+            harness.JobId,
+            1,
+            Pass2CodeLogicRetrievalItemKind.SourceAnchor,
+            anchor.DocumentVersionId,
+            anchor.RepositoryId,
+            anchor.ScanRunId,
+            anchor.ProfiledRevision,
+            sourceAnchorId: anchor.Id,
+            byteStart: anchor.ByteStart,
+            byteEnd: anchor.ByteEnd,
+            sourceHash: anchor.SourceHash);
+
+        Pass2CodeLogicRetrievalResult result = await harness.Service.RetrieveAsync(
+            harness.JobId,
+            new Pass2CodeLogicRetrievalRequest(
+                Pass2CodeLogicRetrievalOperation.SourceExcerpt,
+                opaqueHandles: [initialHandle]));
+
+        Assert.Equal(Pass2CodeLogicRetrievalOutcome.Accepted, result.Outcome);
+        Pass2CodeLogicRetrievalItem returned = Assert.Single(result.Items);
+        Assert.Equal(anchor.Id, returned.SourceAnchorId);
+        Assert.Equal("ledger", returned.Excerpt);
+    }
+
+    [Fact]
     public async Task RetrieveCodeLogic_Sections_UsesCanonicalProviderSerializationByteCountAsync()
     {
         await using RetrievalHarness harness = await RetrievalHarness.CreateAsync();

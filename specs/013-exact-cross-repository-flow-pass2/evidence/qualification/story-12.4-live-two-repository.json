@@ -1,0 +1,32 @@
+{
+  "schema_version": "story-12.4-live-two-repository/1.0",
+  "qualification_id": "f6498b50458fff0eece491900623ca3005b578d78a3dc55127664ce6c8723096",
+  "observed_at": "2026-08-27T12:31:01.8633037\u002B00:00",
+  "status": "Completed",
+  "system_identity_hash": "c696cae8ae607df6fb69411e550fbc8aff0d0f5744ac0451e28662eaef9e69ca",
+  "repository_identity_hashes": [
+    "eab34535aed64f0b7180c15d74659cc866e101451e7f0ac188a2cd9e21044379",
+    "215699b4a4e68a243cff9e87bd7f52ab1bc835f34960648165e5fd906f1cfb8e"
+  ],
+  "revision_hashes": [
+    "50d9d4447cd61fec0ed0c9b2e65d5179a93fcde6982dfa800b44a1ce86cb8140",
+    "57e533e4cd50f0291f0a49d91bdf151b357313bcc576dae4c17e6666c7af0c48"
+  ],
+  "provider_endpoint": "https://opencode.ai",
+  "provider_model": "deepseek-v4-flash",
+  "database_target": "localhost:5432/vulgata_story124_b21df3f92e714fd98cb3b564d8314c70",
+  "flow_group_count": 1,
+  "job_count": 1,
+  "document_count": 1,
+  "omission_count": 0,
+  "generated_from_count": 3,
+  "source_anchor_count": 3,
+  "document_content_hashes": [
+    "acd3bfbb20e65a49b72d84542a9adb0fc704fea608132dc3978adfcfb3def94d"
+  ],
+  "document_utf8_bytes": [
+    4995
+  ],
+  "content_dark_diagnostics": true,
+  "failure_category": "none"
+}

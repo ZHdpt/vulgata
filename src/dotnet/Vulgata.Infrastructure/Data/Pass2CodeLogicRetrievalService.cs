@@ -423,39 +423,60 @@ public sealed class Pass2CodeLogicRetrievalService : IPass2CodeLogicRetrievalSer
         CancellationToken cancellationToken)
     {
         if (request.OpaqueHandles.Count != 1 || request.QueryText is not null ||
-            request.Direction is not null || request.ContainedByteOffset is null ||
-            request.ContainedByteLength is null || request.ContainedByteOffset < 0 ||
-            request.ContainedByteLength <= 0 ||
-            request.ContainedByteLength > Pass2RetrievalContracts.MaxReturnedUtf8Bytes)
+            request.Direction is not null || !HasValidContainedRange(request))
         {
             return Pass2CodeLogicRetrievalResult.Refused();
         }
 
         SourceAnchor[] anchors = await LoadAnchorsAsync(authority, cancellationToken)
             .ConfigureAwait(false);
-        SourceAnchor? anchor = anchors.SingleOrDefault(value => StringComparer.Ordinal.Equals(
-            CreateAnchorHandle(authority, value),
+        SourceAnchor? anchor = anchors.SingleOrDefault(value => MatchesAnchorHandle(
+            authority,
+            value,
             request.OpaqueHandles[0]));
         if (anchor is null)
         {
             return Pass2CodeLogicRetrievalResult.Refused();
         }
 
-        long byteStart = request.ContainedByteOffset.Value;
-        long byteEnd;
-        try
+        bool hasContainedRange = request.ContainedByteOffset is not null;
+        long? requestedByteStart = request.ContainedByteOffset;
+        long? requestedByteEnd = null;
+        int byteLimit = Pass2RetrievalContracts.MaxReturnedUtf8Bytes;
+        if (hasContainedRange)
         {
-            byteEnd = checked(byteStart + request.ContainedByteLength.Value);
+            try
+            {
+                requestedByteEnd = checked(
+                    request.ContainedByteOffset!.Value + request.ContainedByteLength!.Value);
+            }
+            catch (OverflowException)
+            {
+                return Pass2CodeLogicRetrievalResult.Refused();
+            }
+
+            byteLimit = request.ContainedByteLength!.Value;
         }
-        catch (OverflowException)
+
+        if (hasContainedRange &&
+            (anchor.ByteStart is not null && requestedByteStart < anchor.ByteStart ||
+             anchor.ByteEnd is not null && requestedByteEnd > anchor.ByteEnd) ||
+            !hasContainedRange && (anchor.ByteStart is null) != (anchor.ByteEnd is null))
         {
             return Pass2CodeLogicRetrievalResult.Refused();
         }
 
-        if (anchor.ByteStart is not null && byteStart < anchor.ByteStart ||
-            anchor.ByteEnd is not null && byteEnd > anchor.ByteEnd)
+        if (!hasContainedRange && anchor.ByteStart is not null)
         {
-            return Pass2CodeLogicRetrievalResult.Refused();
+            long anchorLength = anchor.ByteEnd!.Value - anchor.ByteStart.Value;
+            if (anchorLength <= 0 || anchorLength > Pass2RetrievalContracts.MaxReturnedUtf8Bytes)
+            {
+                return Pass2CodeLogicRetrievalResult.Refused();
+            }
+
+            requestedByteStart = anchor.ByteStart;
+            requestedByteEnd = anchor.ByteEnd;
+            byteLimit = checked((int)anchorLength);
         }
 
         PreparedScanManifest? manifest = await _context.PreparedScanManifests.AsNoTracking()
@@ -477,13 +498,19 @@ public sealed class Pass2CodeLogicRetrievalService : IPass2CodeLogicRetrievalSer
             "pass2-retrieval",
             manifest.RuntimeIdentityHash,
             new AnalysisDeadline(DateTimeOffset.UtcNow.AddMinutes(1).ToUnixTimeMilliseconds()));
-        var sourceRequest = new RevisionBoundSourceRequest(
-            anchor.RepositoryRelativePath,
-            new AnalysisLineRange(anchor.LineStart, anchor.LineEnd),
-            anchor.SourceHash,
-            request.ContainedByteLength.Value,
-            byteStart,
-            byteEnd);
+        var sourceRequest = requestedByteStart is not null
+            ? new RevisionBoundSourceRequest(
+                anchor.RepositoryRelativePath,
+                new AnalysisLineRange(anchor.LineStart, anchor.LineEnd),
+                anchor.SourceHash,
+                byteLimit,
+                requestedByteStart.Value,
+                requestedByteEnd!.Value)
+            : new RevisionBoundSourceRequest(
+                anchor.RepositoryRelativePath,
+                new AnalysisLineRange(anchor.LineStart, anchor.LineEnd),
+                anchor.SourceHash,
+                byteLimit);
         SourceExcerptResult source = await _sourceReader.ReadAsync(
             scope,
             sourceRequest,
@@ -500,14 +527,22 @@ public sealed class Pass2CodeLogicRetrievalService : IPass2CodeLogicRetrievalSer
             !StringComparer.Ordinal.Equals(source.SourceSha256, anchor.SourceHash) ||
             source.Range.StartLine != anchor.LineStart || source.Range.EndLine != anchor.LineEnd ||
             source.ByteCount != Encoding.UTF8.GetByteCount(source.Excerpt) ||
-            source.ByteCount > request.ContainedByteLength.Value)
+            source.ByteCount <= 0 || source.ByteCount > byteLimit)
         {
             return Pass2CodeLogicRetrievalResult.Refused();
         }
 
+        long descriptorByteStart = requestedByteStart ?? 0;
+        long descriptorByteEnd = requestedByteEnd ?? source.ByteCount;
+
         return Pass2CodeLogicRetrievalResult.Accepted(
         [
-            CreateExcerptItem(authority, anchor, byteStart, byteEnd, source),
+            CreateExcerptItem(
+                authority,
+                anchor,
+                descriptorByteStart,
+                descriptorByteEnd,
+                source),
         ]);
     }
 
@@ -1151,8 +1186,7 @@ public sealed class Pass2CodeLogicRetrievalService : IPass2CodeLogicRetrievalSer
                 request.OpaqueHandles.Count == 1 &&
                 !string.IsNullOrWhiteSpace(request.OpaqueHandles[0]) &&
                 request.QueryText is null && request.Direction is null &&
-                request.ContainedByteOffset >= 0 && request.ContainedByteLength > 0 &&
-                request.ContainedByteLength <= Pass2RetrievalContracts.MaxReturnedUtf8Bytes,
+                HasValidContainedRange(request),
             Pass2CodeLogicRetrievalOperation.RelatedDocuments =>
                 request.OpaqueHandles.Count == 1 &&
                 !string.IsNullOrWhiteSpace(request.OpaqueHandles[0]) &&
@@ -1160,6 +1194,16 @@ public sealed class Pass2CodeLogicRetrievalService : IPass2CodeLogicRetrievalSer
                 request.ContainedByteOffset is null && request.ContainedByteLength is null,
             _ => false,
         };
+
+    private static bool HasValidContainedRange(Pass2CodeLogicRetrievalRequest request)
+    {
+        bool hasOffset = request.ContainedByteOffset is not null;
+        bool hasLength = request.ContainedByteLength is not null;
+        return hasOffset == hasLength &&
+            (!hasOffset || request.ContainedByteOffset >= 0 &&
+                request.ContainedByteLength > 0 &&
+                request.ContainedByteLength <= Pass2RetrievalContracts.MaxReturnedUtf8Bytes);
+    }
 
     private async Task<bool> HasValidSelectorsAsync(
         RetrievalAuthority authority,
@@ -1193,8 +1237,7 @@ public sealed class Pass2CodeLogicRetrievalService : IPass2CodeLogicRetrievalSer
                         CreateSectionHandle(authority, section, searchDescriptor: false), handle))),
             Pass2CodeLogicRetrievalOperation.SourceExcerpt =>
                 request.OpaqueHandles.Count == 1 && anchors.Any(anchor =>
-                    StringComparer.Ordinal.Equals(CreateAnchorHandle(authority, anchor),
-                        request.OpaqueHandles[0])),
+                    MatchesAnchorHandle(authority, anchor, request.OpaqueHandles[0])),
             Pass2CodeLogicRetrievalOperation.RelatedDocuments =>
                 request.OpaqueHandles.Count == 1 &&
                 ResolveDocumentHandle(authority, request.OpaqueHandles[0]).HasValue,
@@ -1366,6 +1409,26 @@ public sealed class Pass2CodeLogicRetrievalService : IPass2CodeLogicRetrievalSer
             bytes,
             anchor.Id);
     }
+
+    private static bool MatchesAnchorHandle(
+        RetrievalAuthority authority,
+        SourceAnchor anchor,
+        string handle) =>
+        StringComparer.Ordinal.Equals(CreateAnchorHandle(authority, anchor), handle) ||
+        StringComparer.Ordinal.Equals(
+            Pass2InitialEvidenceHandle.Create(
+                authority.JobId,
+                authority.AttemptOrdinal,
+                Pass2CodeLogicRetrievalItemKind.SourceAnchor,
+                anchor.DocumentVersionId,
+                anchor.RepositoryId,
+                anchor.ScanRunId,
+                anchor.ProfiledRevision,
+                sourceAnchorId: anchor.Id,
+                byteStart: anchor.ByteStart,
+                byteEnd: anchor.ByteEnd,
+                sourceHash: anchor.SourceHash),
+            handle);
 
     private static Pass2CodeLogicRetrievalItem CreateDocumentItem(
         RetrievalAuthority authority,
