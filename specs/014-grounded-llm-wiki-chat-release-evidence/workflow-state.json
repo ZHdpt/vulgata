@@ -6,10 +6,10 @@
   "stage": "implement",
   "preflight": {
     "branch": "demo0831/story-12-5",
-    "head": "2655a8da3fb4bbfb166f5ff2057c8020554fd98d",
+    "head": "d36785e838e118d08f98c4e40c7526cee1c73861",
     "git_identity_sha256": "8d4215c8f432617a51f487f46db541b6a2a1476dc422716ea7d2bda35321f5f1",
-    "status_sha256": "45bef72ceb136550f2fa314b92dcf3792140d5f164b37ea5ba16ce086f6208b4",
-    "observed_at": "2026-08-27T12:35:33.5952027Z"
+    "status_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "observed_at": "2026-08-27T12:37:01.0984730Z"
   },
   "artifacts": {
     "spec": {
@@ -97,13 +97,13 @@
   "checkpoint": {
     "checkpoint_id": "bmad-12-5-implement-20260827T123533Z-3aa9ae",
     "stage": "implement",
-    "commit_sha": null,
-    "binding_status": "pending"
+    "commit_sha": "d36785e838e118d08f98c4e40c7526cee1c73861",
+    "binding_status": "bound"
   },
   "resume": {
     "stage": "implement",
     "reason": "QR-TA-001 pass 2 is corrected at the real passed receipt seam and green; rerun Track A convergence and fresh quality review while Tracks B and C remain gated.",
     "evidence_path": "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/tdd/track-a-quality-correction-02.md"
   },
-  "updated_at": "2026-08-27T12:35:33.5952027Z"
+  "updated_at": "2026-08-27T12:37:01.0984730Z"
 }
