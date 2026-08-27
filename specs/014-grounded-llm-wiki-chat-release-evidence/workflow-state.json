@@ -6,10 +6,10 @@
   "stage": "implement",
   "preflight": {
     "branch": "demo0831/story-12-5",
-    "head": "651ce053056e564614ef7fd8f0d466bd812c20a9",
+    "head": "5cac85b097379356c41e4fa6461c720fe60526aa",
     "git_identity_sha256": "cccc8dfb2a97e1a746fe7d93a08dee626836475c39662d1f73fe2d1cc6bbc583",
     "status_sha256": "421b9ce2638f27c9160070f16f7430a163a862475a67e4a516ead614e537b3ac",
-    "observed_at": "2026-08-27T10:08:46.1375862Z"
+    "observed_at": "2026-08-27T10:36:29.0465680Z"
   },
   "artifacts": {
     "spec": {
@@ -97,13 +97,13 @@
   "checkpoint": {
     "checkpoint_id": "bmad-12-5-implement-20260827T103349Z-58753d",
     "stage": "implement",
-    "commit_sha": null,
-    "binding_status": "pending"
+    "commit_sha": "5cac85b097379356c41e4fa6461c720fe60526aa",
+    "binding_status": "bound"
   },
   "resume": {
     "stage": "implement",
     "reason": "Track A foundation T001-T009 is verified; resume at T010 persisted Scan status RED while Tracks B and C remain gated.",
     "evidence_path": "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/tdd/track-a-foundation.md"
   },
-  "updated_at": "2026-08-27T10:33:49.1982311Z"
+  "updated_at": "2026-08-27T10:36:29.0465680Z"
 }
