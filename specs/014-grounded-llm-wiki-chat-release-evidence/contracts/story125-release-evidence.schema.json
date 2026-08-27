@@ -1,0 +1,514 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vulgata.local/contracts/story125-release-evidence.schema.json",
+  "title": "Story 12.5 Release Evidence Run Envelope",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion", "runId", "supersedesRunId", "status", "candidate",
+    "environment", "commands", "checks", "attemptedObservations", "result",
+    "releaseReceipt"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "story125-release-evidence/2.1" },
+    "runId": { "$ref": "#/$defs/runId" },
+    "supersedesRunId": { "oneOf": [{ "$ref": "#/$defs/runId" }, { "type": "null" }] },
+    "status": { "enum": ["planned", "attempted", "passed", "failed", "blocked", "not-run"] },
+    "candidate": { "oneOf": [{ "$ref": "#/$defs/candidate" }, { "type": "null" }] },
+    "environment": { "oneOf": [{ "$ref": "#/$defs/environment" }, { "type": "null" }] },
+    "commands": { "type": "array", "maxItems": 128, "items": { "$ref": "#/$defs/command" } },
+    "checks": { "type": "array", "minItems": 1, "maxItems": 128, "items": { "$ref": "#/$defs/check" } },
+    "attemptedObservations": { "type": "array", "maxItems": 256, "items": { "$ref": "#/$defs/observation" } },
+    "result": { "$ref": "#/$defs/runResult" },
+    "releaseReceipt": { "oneOf": [{ "$ref": "#/$defs/passedReleaseReceipt" }, { "type": "null" }] }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "status": { "const": "planned" } }, "required": ["status"] },
+      "then": {
+        "properties": {
+          "result": { "$ref": "#/$defs/plannedResult" },
+          "releaseReceipt": { "type": "null" },
+          "commands": { "maxItems": 0 },
+          "attemptedObservations": { "maxItems": 0 }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "status": { "const": "attempted" } }, "required": ["status"] },
+      "then": {
+        "properties": {
+          "candidate": { "$ref": "#/$defs/candidate" },
+          "environment": { "$ref": "#/$defs/environment" },
+          "commands": { "minItems": 1 },
+          "attemptedObservations": { "minItems": 1 },
+          "result": { "$ref": "#/$defs/attemptedResult" },
+          "releaseReceipt": { "type": "null" }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "status": { "const": "failed" } }, "required": ["status"] },
+      "then": {
+        "properties": {
+          "candidate": { "$ref": "#/$defs/candidate" },
+          "environment": { "$ref": "#/$defs/environment" },
+          "commands": { "minItems": 1 },
+          "attemptedObservations": { "minItems": 1 },
+          "result": { "$ref": "#/$defs/failedResult" },
+          "releaseReceipt": { "type": "null" }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "status": { "const": "blocked" } }, "required": ["status"] },
+      "then": {
+        "properties": {
+          "attemptedObservations": { "minItems": 1 },
+          "result": { "$ref": "#/$defs/blockedResult" },
+          "releaseReceipt": { "type": "null" }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "status": { "const": "not-run" } }, "required": ["status"] },
+      "then": {
+        "properties": {
+          "commands": { "maxItems": 0 },
+          "attemptedObservations": { "maxItems": 0 },
+          "result": { "$ref": "#/$defs/notRunResult" },
+          "releaseReceipt": { "type": "null" }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "status": { "const": "passed" } }, "required": ["status"] },
+      "then": {
+        "properties": {
+          "candidate": { "$ref": "#/$defs/candidate" },
+          "environment": { "$ref": "#/$defs/environment" },
+          "commands": {
+            "minItems": 1,
+            "items": {
+              "allOf": [
+                { "$ref": "#/$defs/command" },
+                { "properties": { "exitCode": { "const": 0 } } }
+              ]
+            }
+          },
+          "attemptedObservations": { "minItems": 1 },
+          "checks": {
+            "minItems": 10,
+            "maxItems": 10,
+            "items": { "$ref": "#/$defs/mandatoryPassedCheck" },
+            "allOf": [
+              { "contains": { "properties": { "id": { "const": "tier1-contract-ranking-relationship" } }, "required": ["id"] }, "minContains": 1, "maxContains": 1 },
+              { "contains": { "properties": { "id": { "const": "tier1-conversation-synthesis-security" } }, "required": ["id"] }, "minContains": 1, "maxContains": 1 },
+              { "contains": { "properties": { "id": { "const": "tier1-production-ui-corpus-evidence" } }, "required": ["id"] }, "minContains": 1, "maxContains": 1 },
+              { "contains": { "properties": { "id": { "const": "tier1-build-full-tests" } }, "required": ["id"] }, "minContains": 1, "maxContains": 1 },
+              { "contains": { "properties": { "id": { "const": "tier2-postgresql-restart-resume" } }, "required": ["id"] }, "minContains": 1, "maxContains": 1 },
+              { "contains": { "properties": { "id": { "const": "tier3-candidate-tool-database-preflight" } }, "required": ["id"] }, "minContains": 1, "maxContains": 1 },
+              { "contains": { "properties": { "id": { "const": "tier3-real-scan" } }, "required": ["id"] }, "minContains": 1, "maxContains": 1 },
+              { "contains": { "properties": { "id": { "const": "tier3-grounded-chat-corpus" } }, "required": ["id"] }, "minContains": 1, "maxContains": 1 },
+              { "contains": { "properties": { "id": { "const": "tier3-restart-continuity" } }, "required": ["id"] }, "minContains": 1, "maxContains": 1 },
+              { "contains": { "properties": { "id": { "const": "tier3-screenshot-release-integrity" } }, "required": ["id"] }, "minContains": 1, "maxContains": 1 }
+            ]
+          },
+          "result": { "$ref": "#/$defs/passedResult" },
+          "releaseReceipt": { "$ref": "#/$defs/passedReleaseReceipt" }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "runId": { "type": "string", "pattern": "^story125-[0-9]{8}t[0-9]{6}z-[0-9a-f]{8}$" },
+    "git": { "type": "string", "pattern": "^[0-9a-f]{40}$" },
+    "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "timestamp": { "type": "string", "format": "date-time" },
+    "safeReason": { "type": "string", "minLength": 1, "maxLength": 512 },
+    "artifact": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "sha256", "mediaType"],
+      "properties": {
+        "path": { "type": "string", "pattern": "^(?!/)(?![A-Za-z]:)(?!.*(?:^|/)\\.\\.(?:/|$)).+$" },
+        "sha256": { "$ref": "#/$defs/sha256" },
+        "mediaType": { "type": "string", "minLength": 1, "maxLength": 128 }
+      }
+    },
+    "candidate": {
+      "type": "object", "additionalProperties": false,
+      "required": ["story125Commit", "story124IntegratedCommit", "cleanWorktree"],
+      "properties": {
+        "story125Commit": { "$ref": "#/$defs/git" },
+        "story124IntegratedCommit": { "$ref": "#/$defs/git" },
+        "cleanWorktree": { "const": true }
+      }
+    },
+    "revision": {
+      "type": "object", "additionalProperties": false,
+      "required": ["repositoryAlias", "profiledRevision"],
+      "properties": {
+        "repositoryAlias": { "type": "string", "minLength": 1, "maxLength": 64 },
+        "profiledRevision": { "$ref": "#/$defs/git" }
+      }
+    },
+    "tool": {
+      "type": "object", "additionalProperties": false,
+      "required": ["name", "version", "checksum"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1, "maxLength": 64 },
+        "version": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "checksum": { "oneOf": [{ "$ref": "#/$defs/sha256" }, { "type": "null" }] }
+      }
+    },
+    "providerIdentity": {
+      "type": "object", "additionalProperties": false,
+      "required": ["providerAlias", "apiType", "model", "nonSecretConfigurationIdentity", "configurationFingerprint"],
+      "properties": {
+        "providerAlias": { "type": "string", "minLength": 1, "maxLength": 64 },
+        "apiType": { "type": "string", "minLength": 1, "maxLength": 64 },
+        "model": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "nonSecretConfigurationIdentity": { "type": "string", "minLength": 1, "maxLength": 512 },
+        "configurationFingerprint": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "streamObservationAuthority": {
+      "type": "object", "additionalProperties": false,
+      "required": ["processObservationId", "processPublicKeyFingerprint", "candidateCommit", "adapterImplementation", "adapterVersion", "adapterAssemblySha256", "preflightArtifact"],
+      "properties": {
+        "processObservationId": { "type": "string", "pattern": "^process-[a-z0-9][a-z0-9._-]{7,62}$" },
+        "processPublicKeyFingerprint": { "$ref": "#/$defs/sha256" },
+        "candidateCommit": { "$ref": "#/$defs/git" },
+        "adapterImplementation": { "const": "Vulgata.Agents.ChatExecution.OpenAiCompatibleChatProviderStreamingTransport" },
+        "adapterVersion": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "adapterAssemblySha256": { "$ref": "#/$defs/sha256" },
+        "preflightArtifact": { "$ref": "#/$defs/artifact" }
+      }
+    },
+    "environment": {
+      "type": "object", "additionalProperties": false,
+      "required": ["databaseName", "postgresqlMajor", "topology", "repositoryRevisions", "promptVersions", "schemaVersions", "toolVersions", "provider", "streamObservationAuthority"],
+      "properties": {
+        "databaseName": { "type": "string", "pattern": "^vulgata_story125_[a-z0-9_]{8,48}$" },
+        "postgresqlMajor": { "const": 17 },
+        "topology": { "const": "windows-host-app-tools-postgresql-only-docker" },
+        "repositoryRevisions": { "type": "array", "minItems": 2, "maxItems": 2, "items": { "$ref": "#/$defs/revision" } },
+        "promptVersions": { "type": "array", "minItems": 1, "maxItems": 16, "uniqueItems": true, "items": { "type": "string", "minLength": 1, "maxLength": 128 } },
+        "schemaVersions": { "type": "array", "minItems": 1, "maxItems": 16, "uniqueItems": true, "items": { "type": "string", "minLength": 1, "maxLength": 128 } },
+        "toolVersions": { "type": "array", "minItems": 3, "maxItems": 16, "items": { "$ref": "#/$defs/tool" } },
+        "provider": { "$ref": "#/$defs/providerIdentity" },
+        "streamObservationAuthority": { "$ref": "#/$defs/streamObservationAuthority" }
+      }
+    },
+    "command": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "redactedExactCommand", "commandSha256", "exitCode", "startedAtUtc", "endedAtUtc", "durationMilliseconds", "stdoutArtifact", "stderrArtifact"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^cmd-[a-z0-9][a-z0-9._-]{1,62}$" },
+        "redactedExactCommand": { "type": "string", "minLength": 1, "maxLength": 4096 },
+        "commandSha256": { "$ref": "#/$defs/sha256" },
+        "exitCode": { "type": "integer", "minimum": -2147483648, "maximum": 2147483647 },
+        "startedAtUtc": { "$ref": "#/$defs/timestamp" },
+        "endedAtUtc": { "$ref": "#/$defs/timestamp" },
+        "durationMilliseconds": { "type": "integer", "minimum": 0, "maximum": 86400000 },
+        "stdoutArtifact": { "oneOf": [{ "$ref": "#/$defs/artifact" }, { "type": "null" }] },
+        "stderrArtifact": { "oneOf": [{ "$ref": "#/$defs/artifact" }, { "type": "null" }] }
+      }
+    },
+    "observation": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "stage", "observedAtUtc", "summary", "commandIds", "artifacts"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^obs-[a-z0-9][a-z0-9._-]{1,62}$" },
+        "stage": { "type": "string", "minLength": 1, "maxLength": 64 },
+        "observedAtUtc": { "$ref": "#/$defs/timestamp" },
+        "summary": { "$ref": "#/$defs/safeReason" },
+        "commandIds": { "type": "array", "maxItems": 32, "uniqueItems": true, "items": { "type": "string", "pattern": "^cmd-[a-z0-9][a-z0-9._-]{1,62}$" } },
+        "artifacts": { "type": "array", "minItems": 1, "maxItems": 32, "items": { "$ref": "#/$defs/artifact" } }
+      }
+    },
+    "check": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "tier", "status", "commandIds", "artifacts", "attemptedObservationIds", "reason"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{2,63}$" },
+        "tier": { "enum": [1, 2, 3] },
+        "status": { "enum": ["planned", "attempted", "passed", "failed", "blocked", "not-run"] },
+        "commandIds": { "type": "array", "maxItems": 32, "uniqueItems": true, "items": { "type": "string", "pattern": "^cmd-[a-z0-9][a-z0-9._-]{1,62}$" } },
+        "artifacts": { "type": "array", "maxItems": 32, "items": { "$ref": "#/$defs/artifact" } },
+        "attemptedObservationIds": { "type": "array", "maxItems": 32, "uniqueItems": true, "items": { "type": "string", "pattern": "^obs-[a-z0-9][a-z0-9._-]{1,62}$" } },
+        "reason": { "oneOf": [{ "$ref": "#/$defs/safeReason" }, { "type": "null" }] }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "status": { "const": "planned" } }, "required": ["status"] },
+          "then": { "properties": { "commandIds": { "maxItems": 0 }, "artifacts": { "maxItems": 0 }, "attemptedObservationIds": { "maxItems": 0 }, "reason": { "type": "null" } } }
+        },
+        {
+          "if": { "properties": { "status": { "enum": ["attempted", "passed"] } }, "required": ["status"] },
+          "then": { "properties": { "commandIds": { "minItems": 1 }, "artifacts": { "minItems": 1 }, "attemptedObservationIds": { "minItems": 1 }, "reason": { "type": "null" } } }
+        },
+        {
+          "if": { "properties": { "status": { "enum": ["failed", "blocked"] } }, "required": ["status"] },
+          "then": { "properties": { "artifacts": { "minItems": 1 }, "attemptedObservationIds": { "minItems": 1 }, "reason": { "$ref": "#/$defs/safeReason" } } }
+        },
+        {
+          "if": { "properties": { "status": { "const": "not-run" } }, "required": ["status"] },
+          "then": { "properties": { "commandIds": { "maxItems": 0 }, "reason": { "$ref": "#/$defs/safeReason" } } }
+        }
+      ]
+    },
+    "mandatoryPassedCheck": {
+      "oneOf": [
+        { "allOf": [{ "$ref": "#/$defs/check" }, { "properties": { "id": { "const": "tier1-contract-ranking-relationship" }, "tier": { "const": 1 }, "status": { "const": "passed" } } }] },
+        { "allOf": [{ "$ref": "#/$defs/check" }, { "properties": { "id": { "const": "tier1-conversation-synthesis-security" }, "tier": { "const": 1 }, "status": { "const": "passed" } } }] },
+        { "allOf": [{ "$ref": "#/$defs/check" }, { "properties": { "id": { "const": "tier1-production-ui-corpus-evidence" }, "tier": { "const": 1 }, "status": { "const": "passed" } } }] },
+        { "allOf": [{ "$ref": "#/$defs/check" }, { "properties": { "id": { "const": "tier1-build-full-tests" }, "tier": { "const": 1 }, "status": { "const": "passed" } } }] },
+        { "allOf": [{ "$ref": "#/$defs/check" }, { "properties": { "id": { "const": "tier2-postgresql-restart-resume" }, "tier": { "const": 2 }, "status": { "const": "passed" } } }] },
+        { "allOf": [{ "$ref": "#/$defs/check" }, { "properties": { "id": { "const": "tier3-candidate-tool-database-preflight" }, "tier": { "const": 3 }, "status": { "const": "passed" } } }] },
+        { "allOf": [{ "$ref": "#/$defs/check" }, { "properties": { "id": { "const": "tier3-real-scan" }, "tier": { "const": 3 }, "status": { "const": "passed" } } }] },
+        { "allOf": [{ "$ref": "#/$defs/check" }, { "properties": { "id": { "const": "tier3-grounded-chat-corpus" }, "tier": { "const": 3 }, "status": { "const": "passed" } } }] },
+        { "allOf": [{ "$ref": "#/$defs/check" }, { "properties": { "id": { "const": "tier3-restart-continuity" }, "tier": { "const": 3 }, "status": { "const": "passed" } } }] },
+        { "allOf": [{ "$ref": "#/$defs/check" }, { "properties": { "id": { "const": "tier3-screenshot-release-integrity" }, "tier": { "const": 3 }, "status": { "const": "passed" } } }] }
+      ]
+    },
+    "plannedResult": { "type": "object", "additionalProperties": false, "required": ["kind"], "properties": { "kind": { "const": "planned" } } },
+    "attemptedResult": { "type": "object", "additionalProperties": false, "required": ["kind", "currentStage"], "properties": { "kind": { "const": "attempted" }, "currentStage": { "type": "string", "minLength": 1, "maxLength": 64 } } },
+    "passedResult": { "type": "object", "additionalProperties": false, "required": ["kind", "completedAtUtc"], "properties": { "kind": { "const": "passed" }, "completedAtUtc": { "$ref": "#/$defs/timestamp" } } },
+    "failedResult": {
+      "type": "object", "additionalProperties": false,
+      "required": ["kind", "stage", "reason", "evidenceArtifacts"],
+      "properties": { "kind": { "const": "failed" }, "stage": { "type": "string", "minLength": 1, "maxLength": 64 }, "reason": { "$ref": "#/$defs/safeReason" }, "evidenceArtifacts": { "type": "array", "minItems": 1, "maxItems": 32, "items": { "$ref": "#/$defs/artifact" } } }
+    },
+    "blockedResult": {
+      "type": "object", "additionalProperties": false,
+      "required": ["kind", "stage", "reason", "evidenceArtifacts"],
+      "properties": { "kind": { "const": "blocked" }, "stage": { "type": "string", "minLength": 1, "maxLength": 64 }, "reason": { "$ref": "#/$defs/safeReason" }, "evidenceArtifacts": { "type": "array", "minItems": 1, "maxItems": 32, "items": { "$ref": "#/$defs/artifact" } } }
+    },
+    "notRunResult": { "type": "object", "additionalProperties": false, "required": ["kind", "reason"], "properties": { "kind": { "const": "not-run" }, "reason": { "$ref": "#/$defs/safeReason" } } },
+    "runResult": { "oneOf": [{ "$ref": "#/$defs/plannedResult" }, { "$ref": "#/$defs/attemptedResult" }, { "$ref": "#/$defs/passedResult" }, { "$ref": "#/$defs/failedResult" }, { "$ref": "#/$defs/blockedResult" }, { "$ref": "#/$defs/notRunResult" }] },
+    "claimReceipt": {
+      "type": "object", "additionalProperties": false,
+      "required": ["observedAtUtc", "queryFingerprint", "commandIds", "artifacts"],
+      "properties": {
+        "observedAtUtc": { "$ref": "#/$defs/timestamp" },
+        "queryFingerprint": { "$ref": "#/$defs/sha256" },
+        "commandIds": { "type": "array", "minItems": 1, "maxItems": 16, "uniqueItems": true, "items": { "type": "string", "pattern": "^cmd-[a-z0-9][a-z0-9._-]{1,62}$" } },
+        "artifacts": { "type": "array", "minItems": 1, "maxItems": 16, "items": { "$ref": "#/$defs/artifact" } }
+      }
+    },
+    "scanReceipt": {
+      "type": "object", "additionalProperties": false,
+      "required": ["fileCodeUnitCount", "highValueSeedCount", "failedHighValueSeedCount", "ordinaryFailureCount", "ordinaryFailureBudget", "exactCrossRepositoryReferencesEdgeCount", "honestUncertaintyCount", "businessLogicDocumentCount", "crossRepositoryBusinessFlowCount", "countsReceipt", "exactEdgeReceipt", "uncertaintyReceipt", "businessLogicDocumentsReceipt", "crossRepositoryFlowReceipt"],
+      "properties": {
+        "fileCodeUnitCount": { "type": "integer", "minimum": 50, "maximum": 150 },
+        "highValueSeedCount": { "type": "integer", "minimum": 1 },
+        "failedHighValueSeedCount": { "const": 0 },
+        "ordinaryFailureCount": { "type": "integer", "minimum": 0 },
+        "ordinaryFailureBudget": { "type": "integer", "minimum": 0 },
+        "exactCrossRepositoryReferencesEdgeCount": { "type": "integer", "minimum": 1 },
+        "honestUncertaintyCount": { "type": "integer", "minimum": 1 },
+        "businessLogicDocumentCount": { "type": "integer", "minimum": 3 },
+        "crossRepositoryBusinessFlowCount": { "type": "integer", "minimum": 1 },
+        "countsReceipt": { "$ref": "#/$defs/claimReceipt" },
+        "exactEdgeReceipt": { "$ref": "#/$defs/claimReceipt" },
+        "uncertaintyReceipt": { "$ref": "#/$defs/claimReceipt" },
+        "businessLogicDocumentsReceipt": { "$ref": "#/$defs/claimReceipt" },
+        "crossRepositoryFlowReceipt": { "$ref": "#/$defs/claimReceipt" }
+      }
+    },
+    "streamAttemptReceipt": {
+      "type": "object", "additionalProperties": false,
+      "required": ["attemptKind", "candidateCommit", "caseId", "requestId", "observationAuthority", "processObservationId", "processPublicKeyFingerprint", "observationSequence", "adapterImplementation", "adapterVersion", "adapterAssemblySha256", "providerApi", "providerConfigurationFingerprint", "canonicalStreamingRequestFingerprint", "requestStreamMode", "responseHeaderDisposition", "responseStatusCode", "responseMediaType", "negotiatedProtocol", "responseHeadersAtUtc", "firstPhysicalReadDisposition", "firstPhysicalReadAtUtc", "physicalEofAtUtc", "physicalEofDisposition", "streamingTransport", "streamStartedAtUtc", "firstDataAtUtc", "terminalAtUtc", "timeToFirstDataMilliseconds", "rawReadCount", "maximumRawReadByteCount", "rawBodyByteCount", "maximumSseLineByteCount", "maximumSseEventByteCount", "answerDeltaCount", "maximumAnswerDeltaByteCount", "assembledAnswerByteCount", "terminalEventCount", "inactivityLimitMilliseconds", "overallDeadlineAtUtc", "transportOutcome", "rejectionCategory", "validationOutcome", "authenticatedObservationArtifact", "observationSignature"],
+      "properties": {
+        "attemptKind": { "enum": ["primary", "syntax-repair"] },
+        "candidateCommit": { "$ref": "#/$defs/git" },
+        "caseId": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{2,63}$" },
+        "requestId": { "type": "string", "pattern": "^stream-[a-z0-9][a-z0-9._-]{7,62}$" },
+        "observationAuthority": { "const": "production-raw-response-header-adapter" },
+        "processObservationId": { "type": "string", "pattern": "^process-[a-z0-9][a-z0-9._-]{7,62}$" },
+        "processPublicKeyFingerprint": { "$ref": "#/$defs/sha256" },
+        "observationSequence": { "type": "integer", "minimum": 1, "maximum": 2147483647 },
+        "adapterImplementation": { "const": "Vulgata.Agents.ChatExecution.OpenAiCompatibleChatProviderStreamingTransport" },
+        "adapterVersion": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "adapterAssemblySha256": { "$ref": "#/$defs/sha256" },
+        "providerApi": { "type": "string", "minLength": 1, "maxLength": 64 },
+        "providerConfigurationFingerprint": { "$ref": "#/$defs/sha256" },
+        "canonicalStreamingRequestFingerprint": { "$ref": "#/$defs/sha256" },
+        "requestStreamMode": { "const": true },
+        "responseHeaderDisposition": { "enum": ["received", "not-received"] },
+        "responseStatusCode": { "oneOf": [{ "type": "integer", "minimum": 100, "maximum": 599 }, { "type": "null" }] },
+        "responseMediaType": { "oneOf": [{ "type": "string", "pattern": "^text/event-stream(?:\\s*;.*)?$", "maxLength": 256 }, { "type": "null" }] },
+        "negotiatedProtocol": { "oneOf": [{ "enum": ["HTTP/1.1", "HTTP/2", "HTTP/3"] }, { "type": "null" }] },
+        "responseHeadersAtUtc": { "oneOf": [{ "$ref": "#/$defs/timestamp" }, { "type": "null" }] },
+        "firstPhysicalReadDisposition": { "enum": ["observed", "not-observed"] },
+        "firstPhysicalReadAtUtc": { "oneOf": [{ "$ref": "#/$defs/timestamp" }, { "type": "null" }] },
+        "physicalEofAtUtc": { "oneOf": [{ "$ref": "#/$defs/timestamp" }, { "type": "null" }] },
+        "physicalEofDisposition": { "enum": ["observed-after-terminal", "observed-before-terminal", "disconnect", "cancelled", "inactivity", "overall-deadline", "not-observed"] },
+        "streamingTransport": { "const": true },
+        "streamStartedAtUtc": { "$ref": "#/$defs/timestamp" },
+        "firstDataAtUtc": { "oneOf": [{ "$ref": "#/$defs/timestamp" }, { "type": "null" }] },
+        "terminalAtUtc": { "oneOf": [{ "$ref": "#/$defs/timestamp" }, { "type": "null" }] },
+        "timeToFirstDataMilliseconds": { "oneOf": [{ "type": "integer", "minimum": 0, "maximum": 29999 }, { "type": "null" }] },
+        "rawReadCount": { "type": "integer", "minimum": 0, "maximum": 65536 },
+        "maximumRawReadByteCount": { "type": "integer", "minimum": 0, "maximum": 16384 },
+        "rawBodyByteCount": { "type": "integer", "minimum": 0, "maximum": 1048577 },
+        "maximumSseLineByteCount": { "type": "integer", "minimum": 0, "maximum": 131073 },
+        "maximumSseEventByteCount": { "type": "integer", "minimum": 0, "maximum": 131073 },
+        "answerDeltaCount": { "type": "integer", "minimum": 0, "maximum": 4096 },
+        "maximumAnswerDeltaByteCount": { "type": "integer", "minimum": 0, "maximum": 16385 },
+        "assembledAnswerByteCount": { "type": "integer", "minimum": 0, "maximum": 65537 },
+        "terminalEventCount": { "type": "integer", "minimum": 0, "maximum": 8 },
+        "inactivityLimitMilliseconds": { "const": 10000 },
+        "overallDeadlineAtUtc": { "$ref": "#/$defs/timestamp" },
+        "transportOutcome": { "enum": ["completed", "cancelled", "disconnect", "inactivity", "overall-deadline", "raw-body-overflow", "sse-line-overflow", "sse-event-overflow", "chunk-overflow", "total-overflow", "invalid-wire-utf8", "invalid-sse", "invalid-json-event", "invalid-json-escape", "invalid-answer-utf8", "missing-terminal", "duplicate-terminal", "contradictory-terminal", "post-terminal-data", "provider-failure"] },
+        "rejectionCategory": { "oneOf": [{ "enum": ["cancelled", "disconnect", "inactivity", "overall-deadline", "raw-body-overflow", "sse-line-overflow", "sse-event-overflow", "chunk-overflow", "total-overflow", "invalid-wire-utf8", "invalid-sse", "invalid-json-event", "invalid-json-escape", "invalid-answer-utf8", "missing-terminal", "duplicate-terminal", "contradictory-terminal", "post-terminal-data", "provider-failure"] }, { "type": "null" }] },
+        "validationOutcome": { "enum": ["syntax-repair-required", "accepted", "rejected-before-parse", "rejected-syntax", "rejected-semantic", "cancelled"] },
+        "authenticatedObservationArtifact": { "$ref": "#/$defs/artifact" },
+        "observationSignature": { "type": "string", "pattern": "^[A-Za-z0-9_-]{80,200}$" }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "transportOutcome": { "const": "completed" } }, "required": ["transportOutcome"] },
+          "then": { "properties": { "responseHeaderDisposition": { "const": "received" }, "responseStatusCode": { "const": 200 }, "responseMediaType": { "type": "string", "pattern": "^text/event-stream(?:\\s*;.*)?$" }, "negotiatedProtocol": { "enum": ["HTTP/1.1", "HTTP/2", "HTTP/3"] }, "responseHeadersAtUtc": { "$ref": "#/$defs/timestamp" }, "firstPhysicalReadDisposition": { "const": "observed" }, "firstPhysicalReadAtUtc": { "$ref": "#/$defs/timestamp" }, "physicalEofDisposition": { "const": "observed-after-terminal" }, "physicalEofAtUtc": { "$ref": "#/$defs/timestamp" }, "rawBodyByteCount": { "maximum": 1048576 }, "maximumSseLineByteCount": { "maximum": 131072 }, "maximumSseEventByteCount": { "maximum": 131072 }, "maximumAnswerDeltaByteCount": { "maximum": 16384 }, "assembledAnswerByteCount": { "maximum": 65536 }, "terminalEventCount": { "const": 1 }, "terminalAtUtc": { "$ref": "#/$defs/timestamp" }, "rejectionCategory": { "type": "null" } } },
+          "else": { "properties": { "rejectionCategory": { "not": { "type": "null" } } } }
+        },
+        {
+          "if": { "properties": { "firstDataAtUtc": { "type": "null" } }, "required": ["firstDataAtUtc"] },
+          "then": { "properties": { "timeToFirstDataMilliseconds": { "type": "null" }, "answerDeltaCount": { "const": 0 }, "maximumAnswerDeltaByteCount": { "const": 0 }, "assembledAnswerByteCount": { "const": 0 } } },
+          "else": { "properties": { "timeToFirstDataMilliseconds": { "type": "integer", "minimum": 0, "maximum": 29999 }, "answerDeltaCount": { "type": "integer", "minimum": 1 }, "maximumAnswerDeltaByteCount": { "type": "integer", "minimum": 1 }, "assembledAnswerByteCount": { "type": "integer", "minimum": 1 } } }
+        },
+        {
+          "if": { "properties": { "responseHeaderDisposition": { "const": "received" } }, "required": ["responseHeaderDisposition"] },
+          "then": { "properties": { "responseStatusCode": { "type": "integer", "minimum": 100, "maximum": 599 }, "responseMediaType": { "type": "string" }, "negotiatedProtocol": { "enum": ["HTTP/1.1", "HTTP/2", "HTTP/3"] }, "responseHeadersAtUtc": { "$ref": "#/$defs/timestamp" } } },
+          "else": { "properties": { "responseStatusCode": { "type": "null" }, "responseMediaType": { "type": "null" }, "negotiatedProtocol": { "type": "null" }, "responseHeadersAtUtc": { "type": "null" } } }
+        },
+        {
+          "if": { "properties": { "firstPhysicalReadDisposition": { "const": "observed" } }, "required": ["firstPhysicalReadDisposition"] },
+          "then": { "properties": { "firstPhysicalReadAtUtc": { "$ref": "#/$defs/timestamp" }, "rawReadCount": { "type": "integer", "minimum": 1 }, "maximumRawReadByteCount": { "type": "integer", "minimum": 1 }, "rawBodyByteCount": { "type": "integer", "minimum": 1 } } },
+          "else": { "properties": { "firstPhysicalReadAtUtc": { "type": "null" }, "rawReadCount": { "const": 0 }, "maximumRawReadByteCount": { "const": 0 }, "rawBodyByteCount": { "const": 0 } } }
+        },
+        {
+          "if": { "properties": { "physicalEofDisposition": { "enum": ["observed-after-terminal", "observed-before-terminal"] } }, "required": ["physicalEofDisposition"] },
+          "then": { "properties": { "physicalEofAtUtc": { "$ref": "#/$defs/timestamp" } } },
+          "else": { "properties": { "physicalEofAtUtc": { "type": "null" } } }
+        }
+      ]
+    },
+    "caseReceipt": {
+      "type": "object", "additionalProperties": false,
+      "required": ["caseId", "providerDisposition", "packetFingerprint", "packetArtifact", "resultArtifact", "streamAttempts", "syntaxRepairUsed", "validationOutcome", "totalAcceptedAnswerDurationMilliseconds"],
+      "properties": {
+        "caseId": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{2,63}$" },
+        "providerDisposition": { "enum": ["invoked", "not-invoked-insufficient-evidence", "not-invoked-authorization-boundary"] },
+        "packetFingerprint": { "oneOf": [{ "$ref": "#/$defs/sha256" }, { "type": "null" }] },
+        "packetArtifact": { "oneOf": [{ "$ref": "#/$defs/artifact" }, { "type": "null" }] },
+        "resultArtifact": { "$ref": "#/$defs/artifact" },
+        "streamAttempts": { "type": "array", "maxItems": 2, "items": { "$ref": "#/$defs/streamAttemptReceipt" } },
+        "syntaxRepairUsed": { "type": "boolean" },
+        "validationOutcome": { "enum": ["accepted", "bounded-outcome", "failed"] },
+        "totalAcceptedAnswerDurationMilliseconds": { "oneOf": [{ "type": "integer", "minimum": 0, "maximum": 29999 }, { "type": "null" }] }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "providerDisposition": { "const": "invoked" } }, "required": ["providerDisposition"] },
+          "then": { "properties": { "packetFingerprint": { "$ref": "#/$defs/sha256" }, "packetArtifact": { "$ref": "#/$defs/artifact" }, "streamAttempts": { "minItems": 1 } } },
+          "else": { "properties": { "packetFingerprint": { "type": "null" }, "packetArtifact": { "type": "null" }, "streamAttempts": { "maxItems": 0 }, "syntaxRepairUsed": { "const": false }, "validationOutcome": { "not": { "const": "accepted" } }, "totalAcceptedAnswerDurationMilliseconds": { "type": "null" } } }
+        },
+        {
+          "if": { "properties": { "syntaxRepairUsed": { "const": true } }, "required": ["syntaxRepairUsed"] },
+          "then": { "properties": { "providerDisposition": { "const": "invoked" }, "streamAttempts": { "minItems": 2, "maxItems": 2, "prefixItems": [{ "properties": { "attemptKind": { "const": "primary" } } }, { "properties": { "attemptKind": { "const": "syntax-repair" } } }] } } },
+          "else": { "properties": { "streamAttempts": { "maxItems": 1, "items": { "properties": { "attemptKind": { "const": "primary" } } } } } }
+        },
+        {
+          "if": { "properties": { "validationOutcome": { "const": "accepted" } }, "required": ["validationOutcome"] },
+          "then": { "properties": { "providerDisposition": { "const": "invoked" }, "totalAcceptedAnswerDurationMilliseconds": { "type": "integer", "minimum": 0, "maximum": 29999 } } },
+          "else": { "properties": { "totalAcceptedAnswerDurationMilliseconds": { "type": "null" } } }
+        }
+      ]
+    },
+    "chatReceipt": {
+      "type": "object", "additionalProperties": false,
+      "required": ["corpusId", "caseCount", "corpusResultCount", "usefulCount", "usefulPercent", "acceptedTechnicalClaimCitationPercent", "unauthorizedDisclosureCount", "overThirtySecondAcceptedAnswerCount", "streamedProviderResponseCount", "nonStreamingAcceptedAnswerCount", "caseReceipts", "packetFingerprints", "resultsArtifact", "packetResultArtifact", "streamingObservationsArtifact", "commandIds"],
+      "properties": {
+        "corpusId": { "type": "string", "minLength": 3, "maxLength": 64 },
+        "caseCount": { "type": "integer", "minimum": 12, "maximum": 20 },
+        "corpusResultCount": { "type": "integer", "minimum": 12, "maximum": 20 },
+        "usefulCount": { "type": "integer", "minimum": 0, "maximum": 20 },
+        "usefulPercent": { "type": "number", "minimum": 80, "maximum": 100, "multipleOf": 0.01 },
+        "acceptedTechnicalClaimCitationPercent": { "const": 100 },
+        "unauthorizedDisclosureCount": { "const": 0 },
+        "overThirtySecondAcceptedAnswerCount": { "const": 0 },
+        "streamedProviderResponseCount": { "type": "integer", "minimum": 1, "maximum": 40 },
+        "nonStreamingAcceptedAnswerCount": { "const": 0 },
+        "caseReceipts": { "type": "array", "minItems": 12, "maxItems": 20, "items": { "$ref": "#/$defs/caseReceipt" } },
+        "packetFingerprints": { "type": "array", "minItems": 1, "maxItems": 20, "items": { "$ref": "#/$defs/sha256" } },
+        "resultsArtifact": { "$ref": "#/$defs/artifact" },
+        "packetResultArtifact": { "$ref": "#/$defs/artifact" },
+        "streamingObservationsArtifact": { "$ref": "#/$defs/artifact" },
+        "commandIds": { "type": "array", "minItems": 1, "maxItems": 16, "uniqueItems": true, "items": { "type": "string", "pattern": "^cmd-[a-z0-9][a-z0-9._-]{1,62}$" } }
+      }
+    },
+    "restartReceipt": {
+      "type": "object", "additionalProperties": false,
+      "required": ["sameDatabase", "authenticatedWikiAccessible", "authenticatedChatAccessible", "duplicatePublishedDocumentCount", "dataLossDetected", "beforeArtifact", "afterArtifact", "duplicateQueryReceipt", "commandIds"],
+      "properties": {
+        "sameDatabase": { "const": true },
+        "authenticatedWikiAccessible": { "const": true },
+        "authenticatedChatAccessible": { "const": true },
+        "duplicatePublishedDocumentCount": { "const": 0 },
+        "dataLossDetected": { "const": false },
+        "beforeArtifact": { "$ref": "#/$defs/artifact" },
+        "afterArtifact": { "$ref": "#/$defs/artifact" },
+        "duplicateQueryReceipt": { "$ref": "#/$defs/claimReceipt" },
+        "commandIds": { "type": "array", "minItems": 2, "maxItems": 16, "uniqueItems": true, "items": { "type": "string", "pattern": "^cmd-[a-z0-9][a-z0-9._-]{1,62}$" } }
+      }
+    },
+    "databaseOwnershipReceipt": {
+      "type": "object", "additionalProperties": false,
+      "required": ["databaseName", "forbiddenDatabaseAccessCount", "preflightArtifact", "ownershipArtifact", "cleanupArtifact", "commandIds"],
+      "properties": {
+        "databaseName": { "type": "string", "pattern": "^vulgata_story125_[a-z0-9_]{8,48}$" },
+        "forbiddenDatabaseAccessCount": { "const": 0 },
+        "preflightArtifact": { "$ref": "#/$defs/artifact" },
+        "ownershipArtifact": { "$ref": "#/$defs/artifact" },
+        "cleanupArtifact": { "$ref": "#/$defs/artifact" },
+        "commandIds": { "type": "array", "minItems": 2, "maxItems": 16, "uniqueItems": true, "items": { "type": "string", "pattern": "^cmd-[a-z0-9][a-z0-9._-]{1,62}$" } }
+      }
+    },
+    "screenshot": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "sha256", "viewKind", "candidateBound", "productionPersistedState", "redactionPassed"],
+      "properties": {
+        "path": { "type": "string", "pattern": "^(?!/)(?![A-Za-z]:)(?!.*(?:^|/)\\.\\.(?:/|$)).+\\.(png|jpg|jpeg)$" },
+        "sha256": { "$ref": "#/$defs/sha256" },
+        "viewKind": { "enum": ["scan-state", "business-answer", "it-answer", "restart", "release-summary"] },
+        "candidateBound": { "const": true },
+        "productionPersistedState": { "const": true },
+        "redactionPassed": { "const": true }
+      }
+    },
+    "passedReleaseReceipt": {
+      "type": "object", "additionalProperties": false,
+      "required": ["scan", "chat", "restart", "databaseOwnership", "screenshots", "limitations"],
+      "properties": {
+        "scan": { "$ref": "#/$defs/scanReceipt" },
+        "chat": { "$ref": "#/$defs/chatReceipt" },
+        "restart": { "$ref": "#/$defs/restartReceipt" },
+        "databaseOwnership": { "$ref": "#/$defs/databaseOwnershipReceipt" },
+        "screenshots": {
+          "type": "array", "minItems": 5, "maxItems": 64,
+          "items": { "$ref": "#/$defs/screenshot" },
+          "allOf": [
+            { "contains": { "properties": { "viewKind": { "const": "scan-state" } }, "required": ["viewKind"] }, "minContains": 1 },
+            { "contains": { "properties": { "viewKind": { "const": "business-answer" } }, "required": ["viewKind"] }, "minContains": 1 },
+            { "contains": { "properties": { "viewKind": { "const": "it-answer" } }, "required": ["viewKind"] }, "minContains": 1 },
+            { "contains": { "properties": { "viewKind": { "const": "restart" } }, "required": ["viewKind"] }, "minContains": 1 },
+            { "contains": { "properties": { "viewKind": { "const": "release-summary" } }, "required": ["viewKind"] }, "minContains": 1 }
+          ]
+        },
+        "limitations": { "type": "array", "maxItems": 32, "items": { "type": "string", "minLength": 1, "maxLength": 512 } }
+      }
+    }
+  }
+}

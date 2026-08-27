@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0",
+  "gate": "plan-review",
+  "verdict": "ACCEPT",
+  "reviewed_commit": "ec3c68613ea6d9afdbebfb72bb3ef57395fd751e",
+  "reviewed_boundary": {
+    "base_commit": "ec3c68613ea6d9afdbebfb72bb3ef57395fd751e",
+    "candidate_commit": null,
+    "diff_sha256": "e6da14e234c5f1c1b28df2252e44887b6763a1ca797d208918ca55b44639271d",
+    "artifact_hashes": {
+      "specs/014-grounded-llm-wiki-chat-release-evidence/spec.md": "a7367b1f64fcfc2cf099d7fd204575f314e35994204ccb0cd7b7f2dacf6f7dd4",
+      "specs/014-grounded-llm-wiki-chat-release-evidence/plan.md": "8dd2ba8d4f41a1c0436cc070d6b8639e6a962e6770d626b221ac3d314e998628",
+      "specs/014-grounded-llm-wiki-chat-release-evidence/data-model.md": "6a5950def4b16d398785b195fc5f6018f5fe3412d306f1b5a6e6f706dd2fe553",
+      "specs/014-grounded-llm-wiki-chat-release-evidence/contracts/chat-provider-streaming-v1.md": "3f442f751cdc4f82206fabc584431aa5ca6cf4a66d8c4aa68f37a09bf9b95254",
+      "specs/014-grounded-llm-wiki-chat-release-evidence/contracts/story125-release-evidence.schema.json": "c50d110bb588451c93e68ec02a907eb9e26ab0b385066b0c27172faa0dfd6fb3"
+    }
+  },
+  "finding_closure": {
+    "S125-PR4-001": "CLOSED: distinct raw, wire, SSE, JSON, decoded Provider Chunk, and final-answer domains have exact owners, limits, failure behavior, and adversarial vectors.",
+    "S125-PR4-002": "CLOSED: Tier 3 observations require signed same-process provenance from the resolved production response-header raw adapter and reject aggregate fake chunks.",
+    "S125-PR5-001": "CLOSED: the failure table, data model, contracts, and schema 2.1 use identical decoded-byte domains and stage-owned outcome vocabulary."
+  },
+  "findings": [],
+  "trigger_classification": {
+    "agent_tool_or_dispatch": "YES: AD-2 through AD-6 materially change IChatEvidenceRetriever and AD-7 replaces aggregate dispatch with mandatory bounded primary and repair streaming.",
+    "scan_strategy": "NO: AD-8 is a read-only projection of existing Scan and recovery state.",
+    "prd_conflict_or_weakening": "NO: bounded non-vector cited Chat and the under-30-second target are strengthened."
+  },
+  "summary": "ACCEPT attempt 6 with zero findings. All 60 FR and 17 SC remain mapped; prior evidence, dependency, no-migration, security, relationship, database, and release-integrity boundaries remain intact. Task generation must pause for new explicit planned-change authorization covering the retrieval-tool delta and mandatory primary/repair provider-streaming dispatch."
+}

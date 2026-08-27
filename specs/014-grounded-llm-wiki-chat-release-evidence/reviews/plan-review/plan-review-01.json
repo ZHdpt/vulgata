@@ -1,0 +1,98 @@
+{
+  "schema_version": "1.0",
+  "gate": "plan-review",
+  "verdict": "REVISE",
+  "reviewed_commit": "ec3c68613ea6d9afdbebfb72bb3ef57395fd751e",
+  "reviewed_boundary": {
+    "base_commit": "ec3c68613ea6d9afdbebfb72bb3ef57395fd751e",
+    "candidate_commit": null,
+    "diff_sha256": "8dcaed704ec7991237555cd1341be46c2732ac584a75046f90e0b8c8c2587fcc",
+    "artifact_hashes": {
+      "docs/bmad/implementation-artifacts/12-5-grounded-llm-wiki-chat-and-august-30-release-evidence.md": "f0cbc7087c34f0faca5d30e6241d1df08d0f34c3d7fce4db1ede0f4cd9fb6e14",
+      "docs/bmad/implementation-artifacts/workflow-activations/12-5-grounded-llm-wiki-chat-and-august-30-release-evidence.json": "a4009bd48a92c95e93c2958b33fd283400092fad15e848d6bb4224e7337fd6ab",
+      "specs/014-grounded-llm-wiki-chat-release-evidence/checklists/requirements.md": "1eedc4c0355c7998b75602d56a6f872b28aa7ed134ca01aa6106fe5397e4c3a3",
+      "specs/014-grounded-llm-wiki-chat-release-evidence/contracts/chat-evidence-packet-v2.schema.json": "f51ff0e136544a82158c124d7f86ad7bc361cc791e500b404de10c404d11ff92",
+      "specs/014-grounded-llm-wiki-chat-release-evidence/contracts/grounded-chat-v2.md": "a122f49dfa6a8cce72b20580bfd16470b10732c24eeba12418670bf78d47984d",
+      "specs/014-grounded-llm-wiki-chat-release-evidence/contracts/production-scan-ui.md": "b1a24c42aeaa47c9ba6ce87e96aa576cdd603032c4e24dc37b4e941234ff6933",
+      "specs/014-grounded-llm-wiki-chat-release-evidence/contracts/release-evidence-contract.md": "158601a292ab0f959301b0667b66ee8529f4e48348deeb2b15744e3f36f7a13a",
+      "specs/014-grounded-llm-wiki-chat-release-evidence/contracts/story125-evaluation-case.schema.json": "13a48618556e81a6656103146d2e3319e3fa389e027d38d31a1f385ff0d4a2bf",
+      "specs/014-grounded-llm-wiki-chat-release-evidence/contracts/story125-release-evidence.schema.json": "9d58cb731d585e1415f6e396b3d9ae3739d07e48dd71ad3e8cfdb87d5af415ef",
+      "specs/014-grounded-llm-wiki-chat-release-evidence/data-model.md": "0b45020bf84889fda28c8c896c6b46facd74cb190cff606140235a40ccbcdd91",
+      "specs/014-grounded-llm-wiki-chat-release-evidence/plan.md": "a2fc7f311a88b8dae74fb2d565301da04b7b2f065c50466481bf73323f815bf6",
+      "specs/014-grounded-llm-wiki-chat-release-evidence/quickstart.md": "880f68517ff4ec7fd28beb909bbdff29a1d493e61d6369f7a64dc570a97118f4",
+      "specs/014-grounded-llm-wiki-chat-release-evidence/research.md": "6fd02fffdb7f2e4d02463650c44f74082b3727b9c1697f0b499c5f84e94e7cf5",
+      "specs/014-grounded-llm-wiki-chat-release-evidence/spec.md": "3e7200118a2183d051d53e51f8be3d2b0226ff31f4bf09822531b1b09730cce9",
+      "specs/014-grounded-llm-wiki-chat-release-evidence/workflow-state.json": "2807228dedb995372f3561d1f7e883d76661d34cb0453973034999bdb4c53385"
+    },
+    "owned_paths": [
+      "docs/bmad/implementation-artifacts/12-5-grounded-llm-wiki-chat-and-august-30-release-evidence.md",
+      "docs/bmad/implementation-artifacts/workflow-activations/12-5-grounded-llm-wiki-chat-and-august-30-release-evidence.json",
+      "specs/014-grounded-llm-wiki-chat-release-evidence/checklists/requirements.md",
+      "specs/014-grounded-llm-wiki-chat-release-evidence/contracts/chat-evidence-packet-v2.schema.json",
+      "specs/014-grounded-llm-wiki-chat-release-evidence/contracts/grounded-chat-v2.md",
+      "specs/014-grounded-llm-wiki-chat-release-evidence/contracts/production-scan-ui.md",
+      "specs/014-grounded-llm-wiki-chat-release-evidence/contracts/release-evidence-contract.md",
+      "specs/014-grounded-llm-wiki-chat-release-evidence/contracts/story125-evaluation-case.schema.json",
+      "specs/014-grounded-llm-wiki-chat-release-evidence/contracts/story125-release-evidence.schema.json",
+      "specs/014-grounded-llm-wiki-chat-release-evidence/data-model.md",
+      "specs/014-grounded-llm-wiki-chat-release-evidence/plan.md",
+      "specs/014-grounded-llm-wiki-chat-release-evidence/quickstart.md",
+      "specs/014-grounded-llm-wiki-chat-release-evidence/research.md",
+      "specs/014-grounded-llm-wiki-chat-release-evidence/spec.md",
+      "specs/014-grounded-llm-wiki-chat-release-evidence/workflow-state.json"
+    ]
+  },
+  "reviewed_artifacts": [
+    "docs/bmad/implementation-artifacts/12-5-grounded-llm-wiki-chat-and-august-30-release-evidence.md",
+    "docs/bmad/implementation-artifacts/workflow-activations/12-5-grounded-llm-wiki-chat-and-august-30-release-evidence.json",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/checklists/requirements.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/contracts/chat-evidence-packet-v2.schema.json",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/contracts/grounded-chat-v2.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/contracts/production-scan-ui.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/contracts/release-evidence-contract.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/contracts/story125-evaluation-case.schema.json",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/contracts/story125-release-evidence.schema.json",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/data-model.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/plan.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/quickstart.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/research.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/spec.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/workflow-state.json"
+  ],
+  "findings": [
+    {
+      "id": "S125-PR-001",
+      "severity": "HIGH",
+      "category": "failure-evidence-contract",
+      "artifact": "specs/014-grounded-llm-wiki-chat-release-evidence/contracts/story125-release-evidence.schema.json",
+      "location": "top-level required fields and scan/chat/restart/screenshots constraints, lines 7-80",
+      "affected_requirement": "FR-039 and the release-evidence contract check-state and append-only failure requirements",
+      "evidence": "The plan and release contract require schema-valid planned, attempted, failed, blocked, and not-run records, including preservation of failed evidence. The schema always requires a fully successful Tier 3 shape: two Repository revisions, 50-150 File Code Units, zero failed high-value seeds, at least one exact Cross-Repository REFERENCES Edge and Uncertainty, at least three Business Logic Documents, usefulPercent of at least 80, citation percent 100, zero disclosure, successful restart booleans, and at least four screenshots. A failed, blocked, pre-gate, or not-run attempt cannot honestly satisfy those fields, so the claimed failure-state contract is not representable and AD-10 failure behavior is not implementable as specified.",
+      "correction_outcome": "Revise the release evidence design and schema so every lifecycle state has a schema-valid honest representation. Use status-conditioned result sections or separate run-envelope and accepted-release-receipt schemas; require success metrics only for passed final checks, require evidence/reason fields for failed or blocked checks, preserve attempted observations, and keep correction runs append-only under new run identities.",
+      "earliest_owner": "plan"
+    },
+    {
+      "id": "S125-PR-002",
+      "severity": "HIGH",
+      "category": "release-traceability",
+      "artifact": "specs/014-grounded-llm-wiki-chat-release-evidence/contracts/story125-release-evidence.schema.json",
+      "location": "environment, check, scan, chat, and restart definitions, lines 21-79 and 88-127",
+      "affected_requirement": "FR-039, FR-043 through FR-046, SC-010 through SC-013, and AD-10",
+      "evidence": "AD-10 and the release contract require exact commands, exit codes, provider model/config identity, packet fingerprints, artifact provenance, and proof behind Scan/restart counts. The schema records only a nullable command fingerprint, has no command or exit-code field, has no provider model/config identity, and gives the Scan aggregate no required supporting artifact or query receipt. Generic optional check artifacts do not bind those observations to the asserted counts. Consequently a schema-valid manifest can assert release metrics without the source-traceable evidence required by the specification.",
+      "correction_outcome": "Extend the plan's closed manifest contract with redacted exact-command records and exit codes, provider model and non-secret configuration identity, required packet-fingerprint/result artifacts, and explicit evidence bindings for Scan counts, exact Edge, Uncertainty, Business Logic Document, Cross-Repository flow, restart, and database-ownership observations. Add conditional schema rules tying passed checks and aggregate release claims to those artifacts.",
+      "earliest_owner": "plan"
+    },
+    {
+      "id": "S125-PR-003",
+      "severity": "MEDIUM",
+      "category": "screenshot-coverage",
+      "artifact": "specs/014-grounded-llm-wiki-chat-release-evidence/contracts/story125-release-evidence.schema.json",
+      "location": "screenshots property and screenshot viewKind definition, lines 80 and 128-139",
+      "affected_requirement": "FR-046 and release-evidence-contract.md screenshot requirements",
+      "evidence": "The contract requires reviewable real Scan-state, grounded Business-answer, grounded IT-answer, restart, and release-summary views. The schema requires only four screenshots and does not require any specific viewKind, so four duplicate scan-state screenshots satisfy it while all four other required evidence categories are absent.",
+      "correction_outcome": "Require at least one schema-valid screenshot for every mandatory view category, either with five named required properties or draft-2020-12 contains/minContains constraints for each viewKind, while retaining candidate binding, production-state attestation, hashing, and redaction requirements.",
+      "earliest_owner": "plan"
+    }
+  ],
+  "summary": "REVISE. The bounded Prepared Chat delta, no-migration decision, shared-file ownership, and hard Track B/C gate are feasible and do not require changing an unaccepted Story 12.4 contract. Planned-change triggers are classified correctly: Agent tool YES because AD-2 through AD-6 materially change the governed IChatEvidenceRetriever contract, as established by specs/008-demo-chat-release-gate/plan.md lines 626-637 and contracts/chat-agent-contract.md lines 255-260; Scan strategy NO because AD-8 only reads persisted state and invokes existing recovery policy; PRD conflict or weakening NO because the dated overlay at docs/bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md lines 24-50, 276-287, and 380 authorizes bounded non-vector retrieval, one-hop expansion, citations, and the under-30-second target. Task generation must not proceed on this REVISE verdict. After the plan-owned release-evidence defects are corrected and an independent plan-review returns ACCEPT, task generation must pause for explicit planned-change authorization of the retrieval-tool delta; the user's parallel split is neither that authorization nor implementation approval."
+}

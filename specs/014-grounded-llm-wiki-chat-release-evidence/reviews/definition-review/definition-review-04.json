@@ -1,0 +1,41 @@
+{
+  "schema_version": "1.0",
+  "gate": "definition-review",
+  "verdict": "ACCEPT",
+  "reviewed_commit": "ec3c68613ea6d9afdbebfb72bb3ef57395fd751e",
+  "reviewed_boundary": {
+    "spec_sha256": "a7367b1f64fcfc2cf099d7fd204575f314e35994204ccb0cd7b7f2dacf6f7dd4",
+    "plan_sha256": "8dd2ba8d4f41a1c0436cc070d6b8639e6a962e6770d626b221ac3d314e998628",
+    "tasks_sha256": "5d85429f048e1ebdeba091bea4b932cf51c23d8cac9ac557256127080ef2bc58",
+    "boundary_sha256": "275c1340bdb40de513ef2f88e13cce379d970b5bb17d5810464d92106c17d6ee"
+  },
+  "finding_closure": {
+    "S125-DR1-001": "CLOSED",
+    "S125-DR1-002": "CLOSED",
+    "S125-DR1-003": "CLOSED",
+    "S125-DR1-004": "CLOSED",
+    "S125-DR2-001": "CLOSED",
+    "S125-DR2-002": "CLOSED",
+    "S125-DR2-003": "CLOSED",
+    "S125-DR2-004": "CLOSED",
+    "S125-DR3-001": "CLOSED",
+    "S125-DR3-002": "CLOSED"
+  },
+  "requirements_task_coverage": {
+    "functional_requirements": { "total": 60, "mapped": 60 },
+    "success_criteria": { "total": 17, "mapped": 17 },
+    "tasks": { "total": 50, "unique_ids": 50 },
+    "unresolved_placeholders": 0,
+    "path_or_owner_ambiguities": 0
+  },
+  "findings": [],
+  "governance": {
+    "planned_change_authorization": "valid",
+    "implementation_approval": "mandatory next gate and not yet granted",
+    "migration": "not planned or authorized",
+    "track_a": "requires implementation approval",
+    "track_b": "requires implementation approval plus Story 12.4 final acceptance and integration",
+    "track_c": "requires accepted Track B"
+  },
+  "summary": "ACCEPT attempt 4 with zero findings. The complete definition advances only to mandatory implementation approval."
+}

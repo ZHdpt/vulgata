@@ -1,0 +1,90 @@
+{
+  "schema_version": "1.0",
+  "gate": "plan-review",
+  "verdict": "REVISE",
+  "reviewed_commit": "ec3c68613ea6d9afdbebfb72bb3ef57395fd751e",
+  "reviewed_boundary": {
+    "base_commit": "ec3c68613ea6d9afdbebfb72bb3ef57395fd751e",
+    "candidate_commit": null,
+    "diff_sha256": "822f7511031a419492c027e8b78c65e0979f8913a4a28f9293fab29eb5d895d2",
+    "artifact_hashes": {
+      "docs/bmad/implementation-artifacts/12-5-grounded-llm-wiki-chat-and-august-30-release-evidence.md": "b25a3885ea767b94f6eb66cb6dd1f74c881ef82a9b1846706a725b5ca851c082",
+      "docs/bmad/implementation-artifacts/workflow-activations/12-5-grounded-llm-wiki-chat-and-august-30-release-evidence.json": "e238ebc6f7de11a94902f70c39beba42d97fffd7e7a1f09f04cbe87e4825bf95",
+      "specs/014-grounded-llm-wiki-chat-release-evidence/checklists/requirements.md": "1eedc4c0355c7998b75602d56a6f872b28aa7ed134ca01aa6106fe5397e4c3a3",
+      "specs/014-grounded-llm-wiki-chat-release-evidence/contracts/chat-evidence-packet-v2.schema.json": "f51ff0e136544a82158c124d7f86ad7bc361cc791e500b404de10c404d11ff92",
+      "specs/014-grounded-llm-wiki-chat-release-evidence/contracts/grounded-chat-v2.md": "a122f49dfa6a8cce72b20580bfd16470b10732c24eeba12418670bf78d47984d",
+      "specs/014-grounded-llm-wiki-chat-release-evidence/contracts/production-scan-ui.md": "b1a24c42aeaa47c9ba6ce87e96aa576cdd603032c4e24dc37b4e941234ff6933",
+      "specs/014-grounded-llm-wiki-chat-release-evidence/contracts/release-evidence-contract.md": "0a78505534cc09761bb43c22945dfefaca328467e2ed5486a8b032e4a568908b",
+      "specs/014-grounded-llm-wiki-chat-release-evidence/contracts/story125-evaluation-case.schema.json": "13a48618556e81a6656103146d2e3319e3fa389e027d38d31a1f385ff0d4a2bf",
+      "specs/014-grounded-llm-wiki-chat-release-evidence/contracts/story125-release-evidence.schema.json": "10e2ff7b993c43cdd4c91cb9e18abc17555445ec847c0f47cd0da6c49d9257b5",
+      "specs/014-grounded-llm-wiki-chat-release-evidence/data-model.md": "0ad35fc1a573a44c32c4c676c65c2bc2f5b3668f9e08b8fb5516a7ef56a3f77e",
+      "specs/014-grounded-llm-wiki-chat-release-evidence/plan.md": "08d0a1b24816206c48e8d7f08cd43de9fd9066144563479899a3e3873ea45ee1",
+      "specs/014-grounded-llm-wiki-chat-release-evidence/quickstart.md": "63c28bbcf0d2caf25afc7eecc733190f0f16ea56d98d50269da9c544aac2d434",
+      "specs/014-grounded-llm-wiki-chat-release-evidence/research.md": "bdc4bda0d242bd063195128a010256f42c30bb4c80e6e9f346c9241df1fe3b8d",
+      "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/plan-review/plan-review-01.json": "e12bae6174517e1b252b935cdff8c152136a73159a34bbc0537cd603b6250d61",
+      "specs/014-grounded-llm-wiki-chat-release-evidence/spec.md": "3e7200118a2183d051d53e51f8be3d2b0226ff31f4bf09822531b1b09730cce9",
+      "specs/014-grounded-llm-wiki-chat-release-evidence/workflow-state.json": "8acc0d61a255413281279d84e7bab7906a0ffb8297521818eae58abc1467a58a"
+    },
+    "owned_paths": [
+      "docs/bmad/implementation-artifacts/12-5-grounded-llm-wiki-chat-and-august-30-release-evidence.md",
+      "docs/bmad/implementation-artifacts/workflow-activations/12-5-grounded-llm-wiki-chat-and-august-30-release-evidence.json",
+      "specs/014-grounded-llm-wiki-chat-release-evidence/checklists/requirements.md",
+      "specs/014-grounded-llm-wiki-chat-release-evidence/contracts/chat-evidence-packet-v2.schema.json",
+      "specs/014-grounded-llm-wiki-chat-release-evidence/contracts/grounded-chat-v2.md",
+      "specs/014-grounded-llm-wiki-chat-release-evidence/contracts/production-scan-ui.md",
+      "specs/014-grounded-llm-wiki-chat-release-evidence/contracts/release-evidence-contract.md",
+      "specs/014-grounded-llm-wiki-chat-release-evidence/contracts/story125-evaluation-case.schema.json",
+      "specs/014-grounded-llm-wiki-chat-release-evidence/contracts/story125-release-evidence.schema.json",
+      "specs/014-grounded-llm-wiki-chat-release-evidence/data-model.md",
+      "specs/014-grounded-llm-wiki-chat-release-evidence/plan.md",
+      "specs/014-grounded-llm-wiki-chat-release-evidence/quickstart.md",
+      "specs/014-grounded-llm-wiki-chat-release-evidence/research.md",
+      "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/plan-review/plan-review-01.json",
+      "specs/014-grounded-llm-wiki-chat-release-evidence/spec.md",
+      "specs/014-grounded-llm-wiki-chat-release-evidence/workflow-state.json"
+    ]
+  },
+  "reviewed_artifacts": [
+    "docs/bmad/implementation-artifacts/12-5-grounded-llm-wiki-chat-and-august-30-release-evidence.md",
+    "docs/bmad/implementation-artifacts/workflow-activations/12-5-grounded-llm-wiki-chat-and-august-30-release-evidence.json",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/checklists/requirements.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/contracts/chat-evidence-packet-v2.schema.json",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/contracts/grounded-chat-v2.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/contracts/production-scan-ui.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/contracts/release-evidence-contract.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/contracts/story125-evaluation-case.schema.json",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/contracts/story125-release-evidence.schema.json",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/data-model.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/plan.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/quickstart.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/research.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/plan-review/plan-review-01.json",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/spec.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/workflow-state.json"
+  ],
+  "findings": [
+    {
+      "id": "S125-PR2-001",
+      "severity": "HIGH",
+      "category": "passed-receipt-semantic-integrity",
+      "artifact": "specs/014-grounded-llm-wiki-chat-release-evidence/plan.md",
+      "location": "AD-10 and Tier 1 evidence strategy, lines 279-285 and 343-345",
+      "affected_requirement": "FR-043, FR-044, SC-009, SC-010, and the passed-release acceptance boundary",
+      "evidence": "The corrected schema requires receipts but still permits internally contradictory passed metrics: ordinaryFailureCount may exceed ordinaryFailureBudget, and usefulCount may be zero while usefulPercent is 80 or greater. The specified semantic validator in plan.md line 283 and data-model.md line 206 only resolves command, observation, artifact, and supersession references; it does not recompute aggregate values from the bound artifacts or enforce ordinaryFailureCount less than or equal to ordinaryFailureBudget and usefulPercent equal to the corpus-derived usefulCount divided by caseCount. A schema-valid, reference-complete passed receipt can therefore violate mandatory release thresholds.",
+      "correction_outcome": "Make passed-receipt semantic validation explicitly recompute every derived aggregate from the bound same-candidate artifacts and reject mismatches. At minimum enforce ordinaryFailureCount <= ordinaryFailureBudget; usefulCount <= caseCount; usefulPercent equals the defined rounding of 100 * usefulCount / caseCount and is >=80; corpus result count equals caseCount; packet/result coverage matches executed cases; and every recorded aggregate equals its named receipt artifact. Add positive and adversarial semantic-validator vectors.",
+      "earliest_owner": "plan"
+    },
+    {
+      "id": "S125-PR2-002",
+      "severity": "HIGH",
+      "category": "tier-gate-coverage",
+      "artifact": "specs/014-grounded-llm-wiki-chat-release-evidence/contracts/story125-release-evidence.schema.json",
+      "location": "passed status checks constraint, lines 88-110, and check definition, lines 207-238",
+      "affected_requirement": "FR-040 through FR-046 and the mandatory Tier 1, Tier 2, and Tier 3 release sequence",
+      "evidence": "A passed envelope requires all present checks to be passed but requires only one check and does not require any check from each tier or a closed mandatory check ID set. One Tier 1 check plus a populated releaseReceipt satisfies the schema; the plan's semantic-validator responsibilities do not require Tier 1, Tier 2, and Tier 3 coverage. This allows a formally passed release envelope that omitted the controlled PostgreSQL restart tier, the real-LLM tier, or required Tier 1 gates.",
+      "correction_outcome": "Define the closed mandatory release-check inventory and require a passed envelope to contain every required check exactly once, including at least all mandated Tier 1, Tier 2, and Tier 3 gates. Enforce this through schema contains/minContains or the named semantic validator, validate tier/ID consistency and same-envelope command/artifact bindings, and add negative vectors for each omitted, duplicated, mis-tiered, or non-passed required check.",
+      "earliest_owner": "plan"
+    }
+  ],
+  "summary": "REVISE attempt 2. Prior findings S125-PR-001, S125-PR-002, and S125-PR-003 are closed: schema 1.1 uses status-conditioned run results and a passed-only releaseReceipt; commands now carry redacted exact text, hashes, exit codes, timing, and output artifacts; environment records provider model and non-secret configuration identity; Scan, Chat, restart, and database claims have explicit receipts; immutable supersession is specified; and passed receipts require all five screenshot categories independently. The full Prepared Chat delta, no-migration decision, A/B/C dependency gates, shared-file ownership, failure/security behavior, and prohibition on changing unaccepted Story 12.4 contracts remain feasible and authority-aligned. Two new passed-receipt integrity gaps still allow mandatory release thresholds or tiers to be omitted while producing a formally passed envelope. Planned-change classification remains Agent tool YES for AD-2 through AD-6, Scan strategy NO for the read-only production status projection and existing resume command, and PRD conflict or weakening NO under the dated August 30 overlay. Task generation must not proceed on this REVISE verdict. After correction and independent ACCEPT, the root must pause before tasks for explicit planned-change authorization of the IChatEvidenceRetriever delta; mandatory implementation approval and the Story 12.4 Track B/C gate remain unchanged."
+}

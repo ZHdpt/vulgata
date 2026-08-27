@@ -1,0 +1,60 @@
+{
+  "schema_version": "1.0",
+  "gate": "definition-review",
+  "verdict": "REVISE",
+  "reviewed_commit": "ec3c68613ea6d9afdbebfb72bb3ef57395fd751e",
+  "reviewed_boundary": {
+    "spec_sha256": "a7367b1f64fcfc2cf099d7fd204575f314e35994204ccb0cd7b7f2dacf6f7dd4",
+    "plan_sha256": "8dd2ba8d4f41a1c0436cc070d6b8639e6a962e6770d626b221ac3d314e998628",
+    "tasks_sha256": "1cd00b22a54b6f9cde62ca7940a96b45714efa8b464464e7300fd0bcfbae17ec",
+    "boundary_sha256": "1bb4548e840996a39592cc6ef8745576977aa38787db05b2cf22832f6ea5cf0d"
+  },
+  "requirements_task_coverage": {
+    "functional_requirements": 60,
+    "success_criteria": 17,
+    "tasks": 50,
+    "nominal_coverage": "100%",
+    "qualification": "Non-executable as written because path, routing, reveal-test, and TDD-order defects remain."
+  },
+  "findings": [
+    {
+      "id": "S125-DR1-001",
+      "severity": "HIGH",
+      "category": "feature-routing",
+      "earliest_owner": "tasks",
+      "raw_evidence": ".specify/feature.json pins feature 013 and the prerequisite resolver selects Story 12.4, while T001 does not pin/assert feature 014 before later SpecKit commands.",
+      "correction_outcome": "Make the first read-only task pin the supported per-worktree feature context to feature 014 and assert check-prerequisites resolves feature 014 before implementation commands; Story 12.4 remains read-only."
+    },
+    {
+      "id": "S125-DR1-002",
+      "severity": "HIGH",
+      "category": "architecture-path-ownership",
+      "earliest_owner": "tasks",
+      "raw_evidence": "Tasks use nonexistent Web/Chat and Agents/Chat paths, contradict Infrastructure/Core ownership for relationship/packet seams, invent Scan paths contrary to the plan, use the wrong corpus path, and leave DI/shared integration ownership unnamed.",
+      "correction_outcome": "Regenerate exact paths from the accepted plan and live source, preserve layer ownership, use the canonical corpus path, and name one owner for each required shared integration file."
+    },
+    {
+      "id": "S125-DR1-003",
+      "severity": "HIGH",
+      "category": "testability-and-existing-behavior",
+      "earliest_owner": "tasks",
+      "raw_evidence": "Unicode-safe reveal, reduced motion, and render-timed scrolling already exist but T036 calls them RED; the genuinely new insufficient-remaining-deadline immediate-render behavior is omitted.",
+      "correction_outcome": "Use characterization for existing reveal/scroll behavior; add meaningful RED for zero pre-acceptance publication and insufficient-deadline immediate rendering, with only minimal deadline propagation as GREEN."
+    },
+    {
+      "id": "S125-DR1-004",
+      "severity": "MEDIUM",
+      "category": "tdd-ordering",
+      "earliest_owner": "tasks",
+      "raw_evidence": "T006 creates the corpus before T007 tests it, and T046 adds principal adversarial vectors after T016/T043 implement the validator/runner.",
+      "correction_outcome": "Put corpus contract tests before corpus creation and move/split adversarial validator vectors before their explicit GREEN owners."
+    }
+  ],
+  "governance": {
+    "planned_change_authorization": "still valid for unchanged accepted spec and plan",
+    "implementation_approval": "not granted",
+    "migration": "not required or authorized",
+    "story_12_4": "Track B remains gated; no definition blocker"
+  },
+  "summary": "REVISE attempt 1 with four tasks-owned findings. Correct tasks.md only, then rerun independent definition review."
+}

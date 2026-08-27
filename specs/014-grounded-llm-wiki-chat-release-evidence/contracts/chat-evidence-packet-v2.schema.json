@@ -1,0 +1,158 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vulgata.local/contracts/grounded-chat-evidence-2.0.schema.json",
+  "title": "Grounded Chat Evidence Packet 2.0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "requestId",
+    "mode",
+    "systemId",
+    "repositoryIds",
+    "documents",
+    "sections",
+    "sourceAnchors",
+    "relationships",
+    "flowSteps",
+    "advisoryContext",
+    "conversation",
+    "fingerprint"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "grounded-chat-evidence/2.0" },
+    "requestId": { "$ref": "#/$defs/handle" },
+    "mode": { "enum": ["business", "it"] },
+    "systemId": { "$ref": "#/$defs/uuid" },
+    "repositoryIds": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/uuid" }
+    },
+    "documents": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 5,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["handle", "logicalDocumentId", "documentVersionId", "repositoryId", "documentType", "profiledRevision", "title"],
+        "properties": {
+          "handle": { "$ref": "#/$defs/handle" },
+          "logicalDocumentId": { "$ref": "#/$defs/uuid" },
+          "documentVersionId": { "$ref": "#/$defs/uuid" },
+          "repositoryId": { "$ref": "#/$defs/uuid" },
+          "documentType": { "enum": ["codeLogic", "businessLogic"] },
+          "profiledRevision": { "type": "string", "pattern": "^[0-9a-f]{7,64}$" },
+          "title": { "type": "string", "minLength": 1, "maxLength": 512 }
+        }
+      }
+    },
+    "sections": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 20,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["handle", "documentHandle", "stableSectionId", "order", "kind", "heading", "contentMarkdown", "anchorHandles", "supportingDocumentHandles"],
+        "properties": {
+          "handle": { "$ref": "#/$defs/handle" },
+          "documentHandle": { "$ref": "#/$defs/handle" },
+          "stableSectionId": { "$ref": "#/$defs/uuid" },
+          "order": { "type": "integer", "minimum": 1 },
+          "kind": { "type": "string", "minLength": 1, "maxLength": 64 },
+          "heading": { "type": "string", "minLength": 1, "maxLength": 512 },
+          "contentMarkdown": { "type": "string", "minLength": 1 },
+          "anchorHandles": { "type": "array", "minItems": 1, "maxItems": 32, "uniqueItems": true, "items": { "$ref": "#/$defs/handle" } },
+          "supportingDocumentHandles": { "type": "array", "maxItems": 5, "uniqueItems": true, "items": { "$ref": "#/$defs/handle" } }
+        }
+      }
+    },
+    "sourceAnchors": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 32,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["handle", "anchorId", "documentHandle", "repositoryId", "repositoryRelativePath", "lineStart", "lineEnd", "sourceHash"],
+        "properties": {
+          "handle": { "$ref": "#/$defs/handle" },
+          "anchorId": { "$ref": "#/$defs/uuid" },
+          "documentHandle": { "$ref": "#/$defs/handle" },
+          "repositoryId": { "$ref": "#/$defs/uuid" },
+          "repositoryRelativePath": { "type": "string", "minLength": 1, "maxLength": 1024, "pattern": "^(?!/)(?![A-Za-z]:)(?!.*(?:^|/)\\.\\.(?:/|$)).+$" },
+          "lineStart": { "type": "integer", "minimum": 1 },
+          "lineEnd": { "type": "integer", "minimum": 1 },
+          "sourceHash": { "$ref": "#/$defs/sha256" }
+        }
+      }
+    },
+    "relationships": {
+      "type": "array",
+      "maxItems": 32,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["handle", "edgeId", "type", "sourceDocumentHandle", "targetDocumentHandle", "depth", "exactDecisionId", "flowGroupId"],
+        "properties": {
+          "handle": { "$ref": "#/$defs/handle" },
+          "edgeId": { "$ref": "#/$defs/uuid" },
+          "type": { "enum": ["references", "generatedFrom"] },
+          "sourceDocumentHandle": { "$ref": "#/$defs/handle" },
+          "targetDocumentHandle": { "$ref": "#/$defs/handle" },
+          "depth": { "type": "integer", "minimum": 0, "maximum": 1 },
+          "exactDecisionId": { "oneOf": [{ "$ref": "#/$defs/uuid" }, { "type": "null" }] },
+          "flowGroupId": { "oneOf": [{ "$ref": "#/$defs/uuid" }, { "type": "null" }] }
+        }
+      }
+    },
+    "flowSteps": {
+      "type": "array",
+      "maxItems": 12,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["order", "documentHandle", "relationshipHandle", "description"],
+        "properties": {
+          "order": { "type": "integer", "minimum": 1, "maximum": 12 },
+          "documentHandle": { "$ref": "#/$defs/handle" },
+          "relationshipHandle": { "oneOf": [{ "$ref": "#/$defs/handle" }, { "type": "null" }] },
+          "description": { "type": "string", "minLength": 1, "maxLength": 1024 }
+        }
+      }
+    },
+    "advisoryContext": { "type": "string", "maxLength": 8192 },
+    "conversation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["turns"],
+      "properties": {
+        "turns": {
+          "type": "array",
+          "maxItems": 2,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["question", "validatedAnswer", "packetFingerprint", "priorCitationHandles"],
+            "properties": {
+              "question": { "type": "string", "minLength": 1, "maxLength": 2000 },
+              "validatedAnswer": { "type": "string", "minLength": 1, "maxLength": 4096 },
+              "packetFingerprint": { "$ref": "#/$defs/sha256" },
+              "priorCitationHandles": { "type": "array", "maxItems": 32, "uniqueItems": true, "items": { "$ref": "#/$defs/handle" } }
+            }
+          }
+        }
+      }
+    },
+    "fingerprint": { "$ref": "#/$defs/sha256" }
+  },
+  "$defs": {
+    "uuid": { "type": "string", "format": "uuid" },
+    "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "handle": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$" }
+  }
+}

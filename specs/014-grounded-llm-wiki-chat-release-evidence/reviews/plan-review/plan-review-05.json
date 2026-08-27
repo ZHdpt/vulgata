@@ -1,0 +1,40 @@
+{
+  "schema_version": "1.0",
+  "gate": "plan-review",
+  "verdict": "REVISE",
+  "reviewed_commit": "ec3c68613ea6d9afdbebfb72bb3ef57395fd751e",
+  "reviewed_boundary": {
+    "base_commit": "ec3c68613ea6d9afdbebfb72bb3ef57395fd751e",
+    "candidate_commit": null,
+    "diff_sha256": "5146ac5acdc3a8e75db79b3268c155a790ed42d245bfbd1917252a00721153c4",
+    "artifact_hashes": {
+      "specs/014-grounded-llm-wiki-chat-release-evidence/spec.md": "a7367b1f64fcfc2cf099d7fd204575f314e35994204ccb0cd7b7f2dacf6f7dd4",
+      "specs/014-grounded-llm-wiki-chat-release-evidence/plan.md": "897f2050e4c92604d946418cf6d1f7af50d9ef65975deb1da802395ba6635ea7",
+      "specs/014-grounded-llm-wiki-chat-release-evidence/data-model.md": "fa72272ab91e0df32633ae36ce1c1d7ec8fd30b60885a8f3143ac3a9b26800ff",
+      "specs/014-grounded-llm-wiki-chat-release-evidence/contracts/story125-release-evidence.schema.json": "c50d110bb588451c93e68ec02a907eb9e26ab0b385066b0c27172faa0dfd6fb3"
+    }
+  },
+  "finding_closure": {
+    "S125-PR4-001": "NOT_CLOSED: plan failure table and data-model rejection taxonomy retain obsolete byte-domain and failure-category instructions.",
+    "S125-PR4-002": "CLOSED: signed same-process production raw-adapter provenance and aggregate-forgery rejection are complete."
+  },
+  "findings": [
+    {
+      "id": "S125-PR5-001",
+      "severity": "HIGH",
+      "category": "streaming-contract-consistency",
+      "artifact": "specs/014-grounded-llm-wiki-chat-release-evidence/plan.md",
+      "location": "failure table line 357 and data-model.md lines 162-175",
+      "affected_requirement": "FR-054 through FR-057 and SC-015 through SC-017",
+      "evidence": "The failure table still says to count chunk and total limits before decoding, contradicting the post-JSON-unescape Provider Chunk domain. The data model retains obsolete invalid-utf8 categories and omits the schema 2.1 staged failures.",
+      "correction_outcome": "Align the failure table with decoded Provider Chunk and concatenated decoded-byte limits; align the data-model rejection vocabulary exactly with schema 2.1 and add a cross-artifact consistency vector.",
+      "earliest_owner": "plan"
+    }
+  ],
+  "trigger_classification": {
+    "agent_tool_or_dispatch": "YES",
+    "scan_strategy": "NO",
+    "prd_conflict_or_weakening": "NO"
+  },
+  "summary": "REVISE attempt 5. One plan-owned terminology inconsistency remains. All other streaming, evidence, dependency, no-migration, security, and prior review boundaries remain intact."
+}

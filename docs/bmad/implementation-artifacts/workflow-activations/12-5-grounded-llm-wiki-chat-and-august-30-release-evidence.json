@@ -4,7 +4,7 @@
   "bmad_epic_key": "12",
   "story_path": "docs/bmad/implementation-artifacts/12-5-grounded-llm-wiki-chat-and-august-30-release-evidence.md",
   "proposed_feature_short_name": "grounded-llm-wiki-chat-release-evidence",
-  "stage": "context",
+  "stage": "implementation-approval",
   "source_commit": "0d835c5f65f70a3c6a9561c6ff600069bb93e832",
   "preflight": {
     "branch": "demo0831/story-12-5",
@@ -16,23 +16,24 @@
     "status_sha256": "18f392c3b2e74c741e85a8065b43e335012f3224c20b00bacaad80789344f217",
     "observed_at": "2026-08-27T04:30:17.0479058Z"
   },
-  "owned_paths": [
+    "owned_paths": [
+    ".specify/feature.json",
     "docs/bmad/implementation-artifacts/12-5-grounded-llm-wiki-chat-and-august-30-release-evidence.md",
     "docs/bmad/implementation-artifacts/sprint-status.yaml",
     "docs/bmad/implementation-artifacts/workflow-activations/12-5-grounded-llm-wiki-chat-and-august-30-release-evidence.json"
   ],
   "unrelated_paths": [],
   "checkpoint": {
-    "checkpoint_id": "bmad-12-5-context-20260827T043300Z-9a24bf",
-    "stage": "context",
+    "checkpoint_id": "bmad-12-5-definition-20260827T094000Z-787352",
+    "stage": "definition-review",
     "commit_sha": null,
     "binding_status": "pending"
   },
-  "feature_directory": null,
-  "superseded_by_state": null,
+  "feature_directory": "specs/014-grounded-llm-wiki-chat-release-evidence",
+  "superseded_by_state": "specs/014-grounded-llm-wiki-chat-release-evidence/workflow-state.json",
   "resume": {
-    "stage": "specify",
-    "reason": "Fresh Story 12.5 activation; author a bounded delta specification while Story 12.4 final-checkpoint-sensitive work remains gated."
+    "stage": "implementation-approval",
+    "reason": "Definition review attempt 4 accepted the complete boundary; pause for mandatory implementation approval before the first production or test write."
   },
-  "updated_at": "2026-08-27T04:33:00Z"
+  "updated_at": "2026-08-27T09:33:01.5823034Z"
 }

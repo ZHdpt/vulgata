@@ -1,0 +1,31 @@
+{
+  "schema_version": "1.0",
+  "gate": "definition-review",
+  "verdict": "REVISE",
+  "reviewed_commit": "ec3c68613ea6d9afdbebfb72bb3ef57395fd751e",
+  "reviewed_boundary": {
+    "spec_sha256": "a7367b1f64fcfc2cf099d7fd204575f314e35994204ccb0cd7b7f2dacf6f7dd4",
+    "plan_sha256": "8dd2ba8d4f41a1c0436cc070d6b8639e6a962e6770d626b221ac3d314e998628",
+    "tasks_sha256": "82bb253a6c9dd2c1f1f2a8f973c1becb90ebcabf706ac2b926300aece9f71d62",
+    "boundary_sha256": "5b4cb646485366e936772edb417fe06f67d54f1841d91ee7d2f009e76d3d2808"
+  },
+  "findings": [
+    {
+      "id": "S125-DR3-001",
+      "severity": "HIGH",
+      "category": "missing-green-and-exact-path-ownership",
+      "earliest_owner": "tasks",
+      "raw_evidence": "Accepted IChatEvidenceCurrentnessValidator, ChatAgentResultValidator, ChatCandidateExtractor, ChatPromptCatalog, chat-business.v1.md and chat-it.v1.md paths lack explicit characterization/GREEN owners; T009 names only a fixture directory despite existing reusable fixtures and manifest.",
+      "correction_outcome": "Name honest tests and GREEN owners for every accepted Chat path, distinguishing characterization from packet-v2/provider-contract changes; make T009 name exact reused fixtures and exact provenance artifact without ambiguous duplication."
+    },
+    {
+      "id": "S125-DR3-002",
+      "severity": "MEDIUM",
+      "category": "verification-order",
+      "earliest_owner": "tasks",
+      "raw_evidence": "T047 remains P although its focused matrices must include tests added by T046.",
+      "correction_outcome": "Remove P from T047 and require completion of T046 before recorded focused matrices."
+    }
+  ],
+  "summary": "REVISE attempt 3 with two tasks-owned findings. Correct tasks only; implementation approval remains unavailable."
+}

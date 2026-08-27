@@ -1,0 +1,102 @@
+{
+  "schema_version": "3.0",
+  "bmad_story_key": "12-5-grounded-llm-wiki-chat-and-august-30-release-evidence",
+  "bmad_epic_key": "12",
+  "feature_directory": "specs/014-grounded-llm-wiki-chat-release-evidence",
+  "stage": "implementation-approval",
+  "preflight": {
+    "branch": "demo0831/story-12-5",
+    "head": "ec3c68613ea6d9afdbebfb72bb3ef57395fd751e",
+    "git_identity_sha256": "60995baec54e3096d14a5fdf8dc1cb4bc8f0a3c9a953e17a5c162977d1e416ba",
+    "status_sha256": "3bda05a73e56433c0c374fa4e6ccb7ec32bfe076bd00fa68fdcc5d1157ded021",
+    "observed_at": "2026-08-27T09:33:01.5823034Z"
+  },
+  "artifacts": {
+    "spec": {
+      "path": "specs/014-grounded-llm-wiki-chat-release-evidence/spec.md",
+      "sha256": "a7367b1f64fcfc2cf099d7fd204575f314e35994204ccb0cd7b7f2dacf6f7dd4"
+    },
+    "plan": {
+      "path": "specs/014-grounded-llm-wiki-chat-release-evidence/plan.md",
+      "sha256": "8dd2ba8d4f41a1c0436cc070d6b8639e6a962e6770d626b221ac3d314e998628"
+    },
+    "tasks": {
+      "path": "specs/014-grounded-llm-wiki-chat-release-evidence/tasks.md",
+      "sha256": "5d85429f048e1ebdeba091bea4b932cf51c23d8cac9ac557256127080ef2bc58"
+    }
+  },
+  "gates": {
+    "plan-review": {
+      "status": "accepted",
+      "attempt": 6,
+      "verdict_path": "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/plan-review/plan-review-06.json"
+    },
+    "definition-review": {
+      "status": "accepted",
+      "attempt": 4,
+      "verdict_path": "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/definition-review/definition-review-04.json"
+    },
+    "quality-review": {
+      "status": "pending",
+      "attempt": 0,
+      "verdict_path": null
+    }
+  },
+  "attempts": {
+    "definition-review": 4,
+    "converge": 0,
+    "quality-review": 0
+  },
+  "approvals": [
+    {
+      "decision_id": "story-12-5-planned-change-authorization-02",
+      "status": "accepted",
+      "scope_sha256": "7581b411951e52fa08dd979bcc3b6a286645c1373ff60657044d851448fda05c",
+      "evidence_path": "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/planned-change-authorization-02.md",
+      "decided_at": "2026-08-27T08:21:21.6651087Z"
+    },
+    {
+      "decision_id": "story-12-5-implementation-approval-01",
+      "status": "pending",
+      "scope_sha256": "787352f9562b45f62e0474806bd33bd6e7bf11d56f807a99fdd54c16335dda4d",
+      "evidence_path": null,
+      "decided_at": null
+    }
+  ],
+  "convergence": {
+    "status": "pending",
+    "attempt": 0,
+    "outcome": "pending",
+    "report_path": null
+  },
+  "e2e": {
+    "result": "pending",
+    "decision_path": null
+  },
+  "current_evidence_paths": [
+    "specs/014-grounded-llm-wiki-chat-release-evidence/spec.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/plan.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/tasks.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/data-model.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/definition-review/definition-review-04.json",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/contracts/chat-provider-streaming-v1.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/contracts/chat-evidence-packet-v2.schema.json",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/contracts/grounded-chat-v2.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/contracts/production-scan-ui.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/contracts/release-evidence-contract.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/contracts/story125-evaluation-case.schema.json",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/contracts/story125-release-evidence.schema.json"
+  ],
+  "checkpoint": {
+    "checkpoint_id": "bmad-12-5-definition-20260827T094000Z-787352",
+    "stage": "definition-review",
+    "commit_sha": null,
+    "binding_status": "pending"
+  },
+  "resume": {
+    "stage": "implementation-approval",
+    "reason": "Definition review attempt 4 accepted the complete 60-FR/17-SC/50-task boundary; pause for mandatory implementation approval before the first production or test write.",
+    "evidence_path": "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/definition-review/definition-review-04.json"
+  },
+  "updated_at": "2026-08-27T09:33:01.5823034Z"
+}

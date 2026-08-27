@@ -1,0 +1,59 @@
+{
+  "schema_version": "1.0",
+  "gate": "plan-review",
+  "verdict": "REVISE",
+  "reviewed_commit": "ec3c68613ea6d9afdbebfb72bb3ef57395fd751e",
+  "reviewed_boundary": {
+    "base_commit": "ec3c68613ea6d9afdbebfb72bb3ef57395fd751e",
+    "candidate_commit": null,
+    "diff_sha256": "bb6bdd4db637db5016d60a0af2a53d96bebcc7394f340499623c4726075c4113",
+    "artifact_hashes": {
+      "specs/014-grounded-llm-wiki-chat-release-evidence/spec.md": "a7367b1f64fcfc2cf099d7fd204575f314e35994204ccb0cd7b7f2dacf6f7dd4",
+      "specs/014-grounded-llm-wiki-chat-release-evidence/plan.md": "e7259ae5d498894cea90bc8461f77ceca447cc66bec1e061ca5cc633db472ac9",
+      "specs/014-grounded-llm-wiki-chat-release-evidence/contracts/chat-provider-streaming-v1.md": "c31600386b839db0fdb18422969163843f286d6835f685cb9d6eb697b5fc953f",
+      "specs/014-grounded-llm-wiki-chat-release-evidence/contracts/release-evidence-contract.md": "2ea21cf8c0b7a58bee58393122044cf4b37632b37d1659b44655112668e489a3",
+      "specs/014-grounded-llm-wiki-chat-release-evidence/contracts/story125-release-evidence.schema.json": "166054cbfe23605b18f4de12ecd70b86bf108be7e30cedefa3e44fddfe402244"
+    }
+  },
+  "reviewed_artifacts": [
+    "specs/014-grounded-llm-wiki-chat-release-evidence/spec.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/plan.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/research.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/data-model.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/quickstart.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/contracts/chat-provider-streaming-v1.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/contracts/grounded-chat-v2.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/contracts/release-evidence-contract.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/contracts/story125-release-evidence.schema.json"
+  ],
+  "findings": [
+    {
+      "id": "S125-PR4-001",
+      "severity": "HIGH",
+      "category": "streaming-protocol-feasibility",
+      "artifact": "specs/014-grounded-llm-wiki-chat-release-evidence/contracts/chat-provider-streaming-v1.md",
+      "location": "lines 20 and 24-29, read with lines 40-58; plan.md lines 273-283; data-model.md lines 163-170",
+      "affected_requirement": "FR-053 through FR-057 and SC-015 through SC-017",
+      "evidence": "The contract conflates raw received SSE/JSON wire bytes with parsed events, JSON-decoded answer deltas, and final answer bytes. Those domains have different chunk boundaries and counts, so exact limits, strict UTF-8, terminal, inactivity, and post-terminal behavior do not target one implementable protocol contract.",
+      "correction_outcome": "Define separate wire, SSE event, JSON event, answer-delta, and final-answer stages; assign exact byte units, limits, UTF-8 ownership, inactivity reset, and terminal derivation; add adversarial splits and exact-plus-one vectors in every governed domain.",
+      "earliest_owner": "plan"
+    },
+    {
+      "id": "S125-PR4-002",
+      "severity": "HIGH",
+      "category": "release-evidence-integrity",
+      "artifact": "specs/014-grounded-llm-wiki-chat-release-evidence/contracts/story125-release-evidence.schema.json",
+      "location": "lines 306-370, read with release-evidence-contract.md lines 68-114, research.md lines 140-153, and plan.md lines 305-315 and 379-382",
+      "affected_requirement": "FR-039, FR-044, FR-053, FR-060, SC-010, and SC-015",
+      "evidence": "The receipt self-asserts streaming and repeats metrics without binding them to response-header streaming, the resolved raw adapter, request stream mode, protocol/media type, or physical raw-read provenance. A synthetic aggregate response can therefore produce internally consistent fake chunks.",
+      "correction_outcome": "Make the raw transport adapter the sole observation authority and bind each attempt to candidate, case, request, adapter implementation/version/hash, provider API/config fingerprint, canonical streaming request fingerprint, response-header disposition, protocol/media type, and physical EOF. Add an aggregate-handler forgery vector that must be rejected.",
+      "earliest_owner": "plan"
+    }
+  ],
+  "trigger_classification": {
+    "agent_tool_or_dispatch": "YES: AD-2 through AD-6 materially change IChatEvidenceRetriever and AD-7 replaces aggregate Chat provider dispatch with mandatory primary and repair streaming.",
+    "scan_strategy": "NO: AD-8 only projects persisted Scan and recovery state.",
+    "prd_conflict_or_weakening": "NO: bounded non-vector cited Chat and the under-30-second target are strengthened."
+  },
+  "summary": "REVISE attempt 4. All 60 FR and 17 SC remain mapped and prior release-evidence, dependency, no-migration, security, and ownership corrections remain closed. Correct the streaming byte-domain protocol and independently bind Tier 3 observations to the authorized raw streaming adapter, then rerun independent plan review."
+}
