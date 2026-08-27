@@ -1,0 +1,38 @@
+{
+  "schema_version": "3.0",
+  "bmad_story_key": "12-5-grounded-llm-wiki-chat-and-august-30-release-evidence",
+  "bmad_epic_key": "12",
+  "story_path": "docs/bmad/implementation-artifacts/12-5-grounded-llm-wiki-chat-and-august-30-release-evidence.md",
+  "proposed_feature_short_name": "grounded-llm-wiki-chat-release-evidence",
+  "stage": "context",
+  "source_commit": "0d835c5f65f70a3c6a9561c6ff600069bb93e832",
+  "preflight": {
+    "branch": "demo0831/story-12-5",
+    "head": "0d835c5f65f70a3c6a9561c6ff600069bb93e832",
+    "repository_root": "C:/Users/13728/.codex/worktrees/a991/vulgata",
+    "git_common_directory": "G:/source/repos/vulgata/.git",
+    "worktree_path": "C:/Users/13728/.codex/worktrees/a991/vulgata",
+    "git_identity_sha256": "d2c588471d5b9e02861ca4721a82bbf7ceca6efbd96e7b68de960dc1858532b4",
+    "status_sha256": "18f392c3b2e74c741e85a8065b43e335012f3224c20b00bacaad80789344f217",
+    "observed_at": "2026-08-27T04:30:17.0479058Z"
+  },
+  "owned_paths": [
+    "docs/bmad/implementation-artifacts/12-5-grounded-llm-wiki-chat-and-august-30-release-evidence.md",
+    "docs/bmad/implementation-artifacts/sprint-status.yaml",
+    "docs/bmad/implementation-artifacts/workflow-activations/12-5-grounded-llm-wiki-chat-and-august-30-release-evidence.json"
+  ],
+  "unrelated_paths": [],
+  "checkpoint": {
+    "checkpoint_id": "bmad-12-5-context-20260827T043017Z-7c1e5a",
+    "stage": "context",
+    "commit_sha": null,
+    "binding_status": "pending"
+  },
+  "feature_directory": null,
+  "superseded_by_state": null,
+  "resume": {
+    "stage": "specify",
+    "reason": "Fresh Story 12.5 activation; author a bounded delta specification while Story 12.4 final-checkpoint-sensitive work remains gated."
+  },
+  "updated_at": "2026-08-27T04:30:17.0479058Z"
+}
