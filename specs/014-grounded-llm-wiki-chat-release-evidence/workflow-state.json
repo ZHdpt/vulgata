@@ -6,10 +6,10 @@
   "stage": "implement",
   "preflight": {
     "branch": "demo0831/story-12-5",
-    "head": "0f2e69d5d39f632556d6a79c5c98e2c267ca7c08",
+    "head": "8679af60d1c44c4a01c6006c017d30672655a064",
     "git_identity_sha256": "8d4215c8f432617a51f487f46db541b6a2a1476dc422716ea7d2bda35321f5f1",
-    "status_sha256": "879c84cc2ac50d3e585a00216ef129add9d49df9bd3f3413c85445e5e79d5bd0",
-    "observed_at": "2026-08-27T13:20:29.0883333Z"
+    "status_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "observed_at": "2026-08-27T13:22:32.4058919Z"
   },
   "artifacts": {
     "spec": {
@@ -97,13 +97,13 @@
   "checkpoint": {
     "checkpoint_id": "bmad-12-5-implement-20260827T132029Z-tracka",
     "stage": "implement",
-    "commit_sha": null,
-    "binding_status": "pending"
+    "commit_sha": "8679af60d1c44c4a01c6006c017d30672655a064",
+    "binding_status": "bound"
   },
   "resume": {
     "stage": "implement",
     "reason": "Track A T001-T019 is verified and accepted. Wait for Story 12.4's accepted final checkpoint and integrate its final commit before Track B; streaming LLM chat remains mandatory. Track C stays gated.",
     "evidence_path": "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/verification/track-a-01.md"
   },
-  "updated_at": "2026-08-27T13:20:29.0883333Z"
+  "updated_at": "2026-08-27T13:22:32.4058919Z"
 }
