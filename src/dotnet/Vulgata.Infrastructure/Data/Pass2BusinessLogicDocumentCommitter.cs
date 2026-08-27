@@ -993,9 +993,11 @@ public sealed class Pass2BusinessLogicDocumentCommitter : IPass2BusinessLogicDoc
                         value.ProfiledRevision == descriptor.ProfiledRevision &&
                         value.SourceHash == descriptor.SourceHash &&
                         (descriptor.Kind == Pass2CodeLogicRetrievalItemKind.SourceExcerpt
-                            ? descriptor.ByteStart >= value.ByteStart &&
-                                descriptor.ByteEnd <= value.ByteEnd &&
-                                descriptor.ByteStart < descriptor.ByteEnd
+                            ? descriptor.ByteStart < descriptor.ByteEnd &&
+                                ((!value.ByteStart.HasValue && !value.ByteEnd.HasValue) ||
+                                 (value.ByteStart.HasValue && value.ByteEnd.HasValue &&
+                                  descriptor.ByteStart >= value.ByteStart &&
+                                  descriptor.ByteEnd <= value.ByteEnd))
                             : !descriptor.ByteStart.HasValue ||
                                 value.ByteStart == descriptor.ByteStart &&
                                 value.ByteEnd == descriptor.ByteEnd),
@@ -1518,9 +1520,9 @@ public sealed class Pass2BusinessLogicDocumentCommitter : IPass2BusinessLogicDoc
 
     private static string ProviderFingerprint(
         IReadOnlyCollection<ExactResolutionProviderEvidenceContribution> contributions) =>
-        Hash(string.Join('\n', new[] { "provider-evidence-set/1.0" }.Concat(
+        ExactResolutionCanonicalAuthority.ProviderEvidenceSetFingerprint(
             contributions.OrderBy(value => value.ProviderOrdinal).ThenBy(value => value.EvidenceOrdinal)
-                .Select(value => value.EvidenceFingerprint))));
+                .Select(value => value.EvidenceFingerprint));
 
     private static string Hash(string value) =>
         Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(value)));

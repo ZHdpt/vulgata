@@ -1,5 +1,7 @@
 using System.Reflection;
 using Vulgata.Core.DomainServices;
+using Vulgata.Core.Entities;
+using Vulgata.Infrastructure.Data;
 
 namespace Vulgata.Tests.PreparedPass1;
 
@@ -19,6 +21,55 @@ namespace Vulgata.Tests.PreparedPass1;
 /// </summary>
 public sealed class Pass1DocumentCommitTests
 {
+    [Fact]
+    public void ReadReferenceObservations_UnsupportedSymbolWithoutPathOrHash_ProducesClosedObservation()
+    {
+        const string content = """
+            {
+              "schemaIdentity": "code-logic/file-v2",
+              "knownReferences": [],
+              "deferredObservations": [
+                {
+                  "sourceClaimLocator": "claim@L1:C1",
+                  "targetSymbol": "sendEvent",
+                  "targetRepositoryRelativePath": null,
+                  "targetSourceHash": null,
+                  "outcome": "Unsupported"
+                }
+              ]
+            }
+            """;
+        DocumentVersion source = DocumentVersion.Create(
+            Guid.Parse("10000000-0000-4000-8000-000000000001"),
+            Guid.Parse("10000000-0000-4000-8000-000000000002"),
+            Guid.Parse("10000000-0000-4000-8000-000000000003"),
+            Guid.Parse("10000000-0000-4000-8000-000000000004"),
+            Guid.Parse("10000000-0000-4000-8000-000000000005"),
+            "0123456789abcdef0123456789abcdef01234567",
+            1,
+            "Source.java",
+            "src/Source.java",
+            "code-logic/file-v2",
+            content,
+            "# Source",
+            new string('1', 64),
+            new string('2', 64),
+            DateTimeOffset.Parse("2026-08-27T00:00:00Z"));
+
+        Pass1ReferenceObservation observation = Assert.Single(
+            Pass1CodeLogicDocumentCommitter.ReadReferenceObservations(
+                source,
+                Guid.Parse("10000000-0000-4000-8000-000000000006"),
+                1));
+
+        Assert.Equal("sendEvent", observation.NormalizedTargetSymbol);
+        Assert.Null(observation.TargetCanonicalPath);
+        Assert.Null(observation.TargetSourceHash);
+        Assert.False(observation.CanResolve);
+        Assert.Equal("unsupported-operation", observation.RejectionCode);
+        Assert.Equal(64, observation.ObservationFingerprint.Length);
+    }
+
     public static TheoryData<string> CanonicalGraphReplayCases => new()
     {
         "source-anchor-remove",

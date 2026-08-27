@@ -806,9 +806,11 @@ public sealed class Pass1CodeLogicDocumentCommitter(VulgataDbContext context)
         bool canResolve,
         string? rejectionCode)
     {
-        ReadOnlyMemory<byte>? hash = targetSourceHash is null
-            ? null
-            : Convert.FromHexString(targetSourceHash);
+        ReadOnlyMemory<byte>? hash = null;
+        if (targetSourceHash is not null)
+        {
+            hash = Convert.FromHexString(targetSourceHash);
+        }
         PreparedPass1CanonicalArtifact artifact = PreparedPass1CanonicalCodec.CreateReferenceObservation(new(
             source.Id,
             sourceFileCodeUnitId,

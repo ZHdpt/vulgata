@@ -507,9 +507,13 @@ public sealed class ExactCrossRepositoryResolutionTests
         SourceAnchor storedAnchor = await context.SourceAnchors.SingleAsync(
             value => value.DocumentVersionId == provider.DocumentVersion.Id);
         Set(storedAnchor, nameof(SourceAnchor.SourceHash), changedHash);
+        Set(storedAnchor, nameof(SourceAnchor.LineStart), 1);
+        Set(storedAnchor, nameof(SourceAnchor.LineEnd), 3);
         CodeUnit storedCodeUnit = await context.CodeUnits.SingleAsync(
             value => value.Id == provider.CodeUnit.Id);
         Set(storedCodeUnit, nameof(CodeUnit.SourceHash), changedHash);
+        Set(storedCodeUnit, nameof(CodeUnit.LineStart), 1);
+        Set(storedCodeUnit, nameof(CodeUnit.LineEnd), 3);
         DocumentVersion storedProvider = await context.DocumentVersions.SingleAsync(
             value => value.Id == provider.DocumentVersion.Id);
         JsonObject providerDocument = JsonNode.Parse(storedProvider.ContentJson)!.AsObject();
@@ -1034,7 +1038,10 @@ public sealed class ExactCrossRepositoryResolutionTests
                     relationshipKind = "References",
                     outcome = "CrossRepository",
                     sourceClaimLocator = anchor.EvidenceLocator,
-                    targetSymbol = target.DocumentVersion.Title,
+                    targetSymbol = document.DocumentVersion.RepositoryId ==
+                        ExactCrossRepositoryTestValues.ConsumerRepositoryId
+                        ? "cust/updateSession"
+                        : target.DocumentVersion.Title,
                     targetRepositoryRelativePath = target.DocumentVersion.RepositoryRelativePath,
                     targetSourceHash,
                     navigationOperation = "ExactSourceEvidence",
@@ -1080,13 +1087,30 @@ public sealed class ExactCrossRepositoryResolutionTests
                 : fixture.ProviderRepository.RootPath;
             string path = Path.Combine(root, request.RelativePath.Replace('/', Path.DirectorySeparatorChar));
             byte[] bytes = File.ReadAllBytes(path);
+            string sourceHash = Convert.ToHexStringLower(SHA256.HashData(bytes));
+            if (!StringComparer.Ordinal.Equals(request.ExpectedSourceSha256, sourceHash))
+            {
+                return Task.FromResult(new SourceExcerptResult(
+                    AnalysisOperationStatus.Failed,
+                    scope.RepositoryId,
+                    scope.ProfiledRevision,
+                    request.RelativePath,
+                    request.Range,
+                    sourceHash,
+                    string.Empty,
+                    0,
+                    new AnalysisPortFailure(
+                        AnalysisPortFailureReason.IntegrityMismatch,
+                        "source_hash_mismatch",
+                        "source hash mismatch")));
+            }
             return Task.FromResult(new SourceExcerptResult(
                 AnalysisOperationStatus.Succeeded,
                 scope.RepositoryId,
                 scope.ProfiledRevision,
                 request.RelativePath,
                 request.Range,
-                Convert.ToHexStringLower(SHA256.HashData(bytes)),
+                sourceHash,
                 Encoding.UTF8.GetString(bytes),
                 bytes.Length,
                 null));
@@ -1123,6 +1147,8 @@ public sealed class ExactCrossRepositoryResolutionTests
         {
             if (scope.RepositoryId == ExactCrossRepositoryTestValues.ProviderRepositoryId)
             {
+                Assert.Equal(1, request.Range.StartLine);
+                Assert.Equal(3, request.Range.EndLine);
                 return Task.FromResult(new SourceExcerptResult(
                     AnalysisOperationStatus.Succeeded,
                     scope.RepositoryId,

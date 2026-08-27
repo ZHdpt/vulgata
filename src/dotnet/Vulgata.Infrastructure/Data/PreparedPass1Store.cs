@@ -1778,6 +1778,7 @@ public sealed class PreparedPass1Store(
             int dueRetries = 0;
             bool changed = false;
             bool policyDrain = IsPass1PolicyDrain(pair);
+            int remaining = CountRemaining(jobs);
 
             if (policyDrain)
             {
@@ -1819,7 +1820,7 @@ public sealed class PreparedPass1Store(
                     pairBindingValid: true);
             }
 
-            if (!providerAvailable)
+            if (!providerAvailable && remaining > 0)
             {
                 if (pair.Phase == Pass1PairExecutionPhase.Running &&
                     pair.CircuitState == Pass1CircuitState.Closed)

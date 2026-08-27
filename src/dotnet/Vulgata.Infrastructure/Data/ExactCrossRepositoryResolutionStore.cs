@@ -40,14 +40,6 @@ public sealed class ExactCrossRepositoryResolutionStore(VulgataDbContext context
             return Refused();
         }
 
-        V2AuthorityResolution authorityResolution = await ResolveV2AuthorityAsync(
-            materializedDecisions, cancellationToken).ConfigureAwait(false);
-        if (authorityResolution.IsConflict)
-        {
-            return new(ExactResolutionOutcomeKind.Conflict, [], "conflict");
-        }
-        V2PairAuthority? v2Authority = authorityResolution.Authority;
-
         IExecutionStrategy strategy = _context.Database.CreateExecutionStrategy();
         try
         {
@@ -70,6 +62,17 @@ public sealed class ExactCrossRepositoryResolutionStore(VulgataDbContext context
                         return ClearAndRefused();
                     }
 
+                    V2AuthorityResolution authorityResolution =
+                        await ResolveV2AuthorityAsync(
+                            materializedDecisions,
+                            cancellationToken).ConfigureAwait(false);
+                    if (authorityResolution.IsConflict)
+                    {
+                        await transaction.RollbackAsync(cancellationToken);
+                        return ClearAndConflict();
+                    }
+
+                    V2PairAuthority? v2Authority = authorityResolution.Authority;
                     await AcquireOwnerLocksAsync(materializedDecisions, isSqlite, cancellationToken);
                     if (!await OwnersAreCurrentAsync(
                             materializedDecisions,

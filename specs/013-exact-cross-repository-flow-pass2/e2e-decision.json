@@ -1,0 +1,186 @@
+{
+  "schema_version": "1.0",
+  "story": "12.4",
+  "required": true,
+  "predicates": [
+    {
+      "predicate_id": "user-visible-workflow",
+      "change_type": "User-visible workflow",
+      "gate": "required",
+      "triggered": false,
+      "affected_paths": [],
+      "affected_behavior": "Story 12.4 adds no user-visible UI journey; the scope ends at the authenticated Pass 2 API and production qualification.",
+      "evidence": ["quality-review-01"]
+    },
+    {
+      "predicate_id": "authentication-authorization",
+      "change_type": "Authentication/authorization",
+      "gate": "required",
+      "triggered": true,
+      "affected_paths": [
+        "src/dotnet/Vulgata.Web/Api/Scans/Pass2ExecutionEndpoints.cs",
+        "tests/Vulgata.Tests/PreparedPass2/Pass2ExecutionApiTests.cs",
+        "tests/Vulgata.Tests/PreparedPass2/Pass2ProductionCompositionTests.cs"
+      ],
+      "affected_behavior": "The plural authenticated Pass 2 API and server-owned Repository authorization are part of the changed boundary.",
+      "evidence": ["focused-results", "final-verification", "quality-review-01"]
+    },
+    {
+      "predicate_id": "api-persistence-multi-module",
+      "change_type": "API/SignalR/persistence/multi-module integration",
+      "gate": "required",
+      "triggered": true,
+      "affected_paths": [
+        "src/dotnet/Vulgata.Core",
+        "src/dotnet/Vulgata.Infrastructure",
+        "src/dotnet/Vulgata.Agents/WorkerExecution",
+        "src/dotnet/Vulgata.Web/Api/Scans",
+        "src/dotnet/Vulgata.Web/Data",
+        "tests/Vulgata.Tests/PreparedPass2"
+      ],
+      "affected_behavior": "Exact Cross-Repository resolution, bounded planning and retrieval, strict Worker transport, atomic publication, terminal accounting, and the authenticated API cross Core, Infrastructure, Agents, Web, PostgreSQL, and the configured provider.",
+      "evidence": ["focused-results", "final-verification", "quality-review-01"]
+    },
+    {
+      "predicate_id": "ef-migration-data-lifecycle",
+      "change_type": "EF migration or observable data lifecycle",
+      "gate": "required",
+      "triggered": true,
+      "affected_paths": [
+        "src/dotnet/Vulgata.Infrastructure/Data/Migrations/20260826022909_ExactCrossRepositoryFlowPass2.cs",
+        "src/dotnet/Vulgata.Infrastructure/Data",
+        "tests/Vulgata.Tests/PreparedPass2"
+      ],
+      "affected_behavior": "The story adds durable decisions, contributions, Flow Group execution state, retrieval accounting, publication, replay, migration compatibility, and immutable Version Chain behavior.",
+      "evidence": ["focused-results", "final-verification", "quality-review-01"]
+    },
+    {
+      "predicate_id": "existing-integration-coverage",
+      "change_type": "Existing integration test proves full changed behavior",
+      "gate": "may-skip",
+      "triggered": true,
+      "affected_paths": [
+        "tests/Vulgata.Tests/PreparedPass2/ExactCrossRepositoryPostgreSqlTests.cs",
+        "tests/Vulgata.Tests/PreparedPass2/Pass2ProductionQualificationTests.cs",
+        "tests/Vulgata.Tests/PreparedPass2/Pass2ProductionCompositionTests.cs"
+      ],
+      "affected_behavior": "The current boundary already covers the exact/pass2 regression, disposable PostgreSQL, authenticated API/composition, and the approved real two-Repository provider qualification.",
+      "evidence": ["focused-results", "final-verification", "live-two-repository-qualification", "quality-review-01"]
+    },
+    {
+      "predicate_id": "documentation-or-refactor",
+      "change_type": "Documentation-only or behavior-preserving refactor",
+      "gate": "may-skip",
+      "triggered": false,
+      "affected_paths": [],
+      "affected_behavior": "Story 12.4 materially changes runtime behavior and persistence; it is not documentation-only or a behavior-preserving refactor.",
+      "evidence": ["quality-review-01"]
+    }
+  ],
+  "coverage_override": {
+    "test_ids": [
+      "Vulgata.Tests.PreparedPass2.Pass2ProductionQualificationTests.ApprovedTwoRepositoryPair_ProducesSanitizedSourceGroundedBusinessDocumentAsync",
+      "Vulgata.Tests.PreparedPass2.Pass2ProductionCompositionTests",
+      "Vulgata.Tests.PreparedPass2.Pass2ExecutionApiTests",
+      "Vulgata.Tests.PreparedPass2.ExactCrossRepositoryPostgreSqlTests",
+      "Vulgata.Tests.PreparedPass2.Pass2FlowPlanningPostgreSqlTests",
+      "Vulgata.Tests.PreparedPass2.RetrieveCodeLogicPostgreSqlBudgetTests",
+      "Vulgata.Tests.PreparedPass2.Pass2DocumentPostgreSqlAtomicTests",
+      "Vulgata.Tests.PreparedPass2.Pass2ExecutionRecoveryTests",
+      "Vulgata.Tests.PreparedPass2.Pass2PostgreSqlConstraintTests"
+    ],
+    "covered_predicate_ids": [
+      "authentication-authorization",
+      "api-persistence-multi-module",
+      "ef-migration-data-lifecycle",
+      "existing-integration-coverage"
+    ],
+    "source_boundary": {
+      "base_commit": "40db07b0286a09cf909cd7b4e59d56078c55f28b",
+      "candidate_commit": "0d835c5f65f70a3c6a9561c6ff600069bb93e832",
+      "diff_sha256": "90AE2475358EF08E754767A993D6C8C5997B61645E3C6EF997ED91F7EE275045",
+      "artifact_hashes": {
+        "specs/013-exact-cross-repository-flow-pass2/spec.md": "50327089B48F6ACCFBA1267E762CD2AF29E9F33A53E249B7FB8590C06D671517",
+        "specs/013-exact-cross-repository-flow-pass2/plan.md": "8DE291B2AFF5B793DD6413532DEC1A3D8EDD191150B24B497B6D9B8894A10B92",
+        "specs/013-exact-cross-repository-flow-pass2/tasks.md": "B89C97C2A19E808A89C309EC984C5479679CE813C6BCB17338A56E1F77C3EBAF",
+        "specs/013-exact-cross-repository-flow-pass2/reviews/quality-review/quality-review-01.json": "251E715E805C502E6D7BCCD895C2D923EB86FF2E36BBEF48FD67157C400ADC2C",
+        "specs/013-exact-cross-repository-flow-pass2/evidence/verification/focused-results.json": "77CCF93F5AAC843581904E07C39155A70C8B00078ED2D9B84644DDA2840B1954",
+        "specs/013-exact-cross-repository-flow-pass2/evidence/verification/final-verification.md": "6CA3A79CF61738BFD607C02B0E64ED655AFFAB11AD4434134C97BA5AB09D0B52",
+        "specs/013-exact-cross-repository-flow-pass2/evidence/qualification/story-12.4-live-two-repository.json": "7EC1336E451F42CF704762BBF2BF2A06D50906F133045214FDC1CE6E53FFF31A"
+      },
+      "owned_paths": [
+        "src/dotnet/Vulgata.Core",
+        "src/dotnet/Vulgata.Infrastructure",
+        "src/dotnet/Vulgata.Agents/WorkerExecution",
+        "src/dotnet/Vulgata.Web/Api/Scans",
+        "src/dotnet/Vulgata.Web/Data",
+        "tests/Vulgata.Tests/PreparedPass2",
+        "specs/013-exact-cross-repository-flow-pass2"
+      ]
+    },
+    "passing_evidence_ids": [
+      "focused-results",
+      "final-verification",
+      "live-two-repository-qualification",
+      "quality-review-01"
+    ],
+    "completeness_rationale": "No additional E2E/API/provider call is required. The retained approved live qualification already crosses the real two-Repository source boundary, configured OpenCode Zen provider, Worker execution, PostgreSQL persistence, publication, and Source Anchor traceability. The current local evidence independently covers authenticated API/composition and all disposable PostgreSQL lifecycle and concurrency boundaries. Repeating the provider call would duplicate coverage and needlessly transmit source-derived context."
+  },
+  "rationale": "The conditional E2E predicates are triggered, but the current boundary has already passed the required real integration boundaries. The retained live qualification is accepted as E2E-01; no new external call or source transmission was made.",
+  "covering_tests": [
+    "Vulgata.Tests.PreparedPass2.Pass2ProductionQualificationTests.ApprovedTwoRepositoryPair_ProducesSanitizedSourceGroundedBusinessDocumentAsync",
+    "Vulgata.Tests.PreparedPass2.Pass2ProductionCompositionTests",
+    "Vulgata.Tests.PreparedPass2.Pass2ExecutionApiTests",
+    "Vulgata.Tests.PreparedPass2.ExactCrossRepositoryPostgreSqlTests",
+    "Vulgata.Tests.PreparedPass2.Pass2DocumentPostgreSqlAtomicTests"
+  ],
+  "owner": "e2e-runner",
+  "result": "passed",
+  "evidence_ids": [
+    "focused-results",
+    "final-verification",
+    "live-two-repository-qualification",
+    "quality-review-01",
+    "e2e-01"
+  ],
+  "decided_at": "2026-08-27T21:30:00+08:00",
+  "completed_at": "2026-08-27T21:30:00+08:00",
+  "blocker_prerequisites": [],
+  "execution_evidence": [
+    {
+      "evidence_id": "live-two-repository-qualification",
+      "total": 1,
+      "passed": 1,
+      "failed": 0,
+      "skipped": 0,
+      "result": "passed",
+      "duration": "3m11s",
+      "flow_groups": 1,
+      "jobs_completed": 1,
+      "documents_committed": 1,
+      "generated_from_edges": 3,
+      "source_anchors": 3,
+      "omissions": 0,
+      "database_retained": true
+    },
+    {
+      "evidence_id": "focused-results",
+      "exact_pass2_total": 439,
+      "exact_pass2_passed": 439,
+      "exact_pass2_failed": 0,
+      "exact_pass2_skipped": 42,
+      "postgresql_total": 87,
+      "postgresql_passed": 87,
+      "postgresql_failed": 0,
+      "result": "passed"
+    },
+    {
+      "evidence_id": "final-verification",
+      "adjacent_passed": 442,
+      "adjacent_failed": 0,
+      "adjacent_skipped": 1,
+      "web_build_errors": 0,
+      "result": "passed"
+    }
+  ]
+}

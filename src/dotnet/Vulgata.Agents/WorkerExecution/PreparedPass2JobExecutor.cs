@@ -254,11 +254,18 @@ public sealed class PreparedPass2JobExecutor
                         StringComparison.Ordinal)
                         ? retrieve.Function
                         : submit.Function;
-                    AIFunctionArguments arguments = JsonSerializer.Deserialize<
-                        Dictionary<string, object?>>(call.Arguments.GetRawText()) is { } values
-                        ? new AIFunctionArguments(values)
-                        : new AIFunctionArguments();
-                    await function.InvokeAsync(arguments, cancellationToken);
+                    AIFunctionArguments arguments = CreateFunctionArguments(
+                        call.Arguments,
+                        isRetrieval);
+                    try
+                    {
+                        await function.InvokeAsync(arguments, cancellationToken);
+                    }
+                    catch (Exception exception) when (
+                        exception is JsonException or FormatException or OverflowException)
+                    {
+                        return new(false, ReadOnlyMemory<byte>.Empty, "invalid-tool-call");
+                    }
                     if (isRetrieval && retrieve.IsBoundExceeded)
                     {
                         retrievalBoundExceeded = true;
@@ -269,6 +276,7 @@ public sealed class PreparedPass2JobExecutor
                         transcript.Add(new(
                             call.Id,
                             call.Name,
+                            call.Arguments,
                             retrievalResponse,
                             null));
                     }
@@ -277,6 +285,7 @@ public sealed class PreparedPass2JobExecutor
                         transcript.Add(new(
                             call.Id,
                             call.Name,
+                            call.Arguments,
                             null,
                             submit.LastDisposition));
                     }
@@ -468,6 +477,27 @@ public sealed class PreparedPass2JobExecutor
         value.Length is >= 1 and <= 256 &&
         value.All(character => character is >= '!' and <= '~');
 
+    private static AIFunctionArguments CreateFunctionArguments(
+        JsonElement arguments,
+        bool normalizeRetrievalNulls)
+    {
+        var values = new Dictionary<string, object?>(StringComparer.Ordinal);
+        foreach (JsonProperty property in arguments.EnumerateObject())
+        {
+            values[property.Name] = normalizeRetrievalNulls &&
+                IsNullableRetrievalField(property.Name) &&
+                property.Value.ValueKind == JsonValueKind.String &&
+                string.Equals(property.Value.GetString(), "null", StringComparison.Ordinal)
+                    ? null
+                    : property.Value.Clone();
+        }
+        return new AIFunctionArguments(values);
+    }
+
+    private static bool IsNullableRetrievalField(string name) => name is
+        "queryText" or "opaqueHandles" or "direction" or
+        "containedByteOffset" or "containedByteLength";
+
     private static byte[] ComposeProviderContext(
         PreparedPass2WorkerPacket packet,
         ReadOnlySpan<byte> transcript,
@@ -604,6 +634,8 @@ public sealed class PreparedPass2JobExecutor
                 writer.WriteStartObject();
                 writer.WriteString("id", entry.Id);
                 writer.WriteString("name", entry.Name);
+                writer.WritePropertyName("arguments");
+                entry.Arguments.WriteTo(writer);
                 if (entry.Retrieval is { } retrieval)
                 {
                     writer.WriteString("outcome", retrieval.Outcome);
@@ -665,6 +697,7 @@ public sealed class PreparedPass2JobExecutor
     private sealed record PreparedPass2TranscriptEntry(
         string Id,
         string Name,
+        JsonElement Arguments,
         PreparedRetrieveCodeLogicResponse? Retrieval,
         PreparedPass2SubmissionDisposition? SubmissionDisposition);
 }
