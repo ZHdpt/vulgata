@@ -6,10 +6,10 @@
   "stage": "implement",
   "preflight": {
     "branch": "demo0831/story-12-5",
-    "head": "9c7d8c6d21856237957f5e7048f206dea7819c7e",
+    "head": "4229e0a4676ca1a35b6a9e34ad61f3be79fee2f0",
     "git_identity_sha256": "8d4215c8f432617a51f487f46db541b6a2a1476dc422716ea7d2bda35321f5f1",
-    "status_sha256": "fa7305ed78cacd547392b82247da41fdcc9e3063c258e3ef2bba55af9f3bedd6",
-    "observed_at": "2026-08-27T11:24:22.4028986Z"
+    "status_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "observed_at": "2026-08-27T11:26:05.5197015Z"
   },
   "artifacts": {
     "spec": {
@@ -97,13 +97,13 @@
   "checkpoint": {
     "checkpoint_id": "bmad-12-5-implement-20260827T112422Z-fc63b2",
     "stage": "implement",
-    "commit_sha": null,
-    "binding_status": "pending"
+    "commit_sha": "4229e0a4676ca1a35b6a9e34ad61f3be79fee2f0",
+    "binding_status": "bound"
   },
   "resume": {
     "stage": "implement",
     "reason": "Track A core T010-T018 is verified; resume at T019 shared registration and preflight integration while Tracks B and C remain gated.",
     "evidence_path": "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/tdd/track-a-core.md"
   },
-  "updated_at": "2026-08-27T11:24:22.4028986Z"
+  "updated_at": "2026-08-27T11:26:05.5197015Z"
 }
