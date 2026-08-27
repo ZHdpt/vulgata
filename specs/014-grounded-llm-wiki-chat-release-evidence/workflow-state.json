@@ -6,10 +6,10 @@
   "stage": "implement",
   "preflight": {
     "branch": "demo0831/story-12-5",
-    "head": "216f2392f1d00e7df94e27449970487978760f7c",
+    "head": "45eeb42b170df1acdfb38998aa83ac199d2d45cf",
     "git_identity_sha256": "8d4215c8f432617a51f487f46db541b6a2a1476dc422716ea7d2bda35321f5f1",
-    "status_sha256": "33f60719c73dd722b6c7eb103dc94e088ca5c89669b1bd1616c614bc3d777738",
-    "observed_at": "2026-08-27T12:01:38.9449460Z"
+    "status_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "observed_at": "2026-08-27T12:03:24.3833231Z"
   },
   "artifacts": {
     "spec": {
@@ -97,13 +97,13 @@
   "checkpoint": {
     "checkpoint_id": "bmad-12-5-implement-20260827T120138Z-ed168c",
     "stage": "implement",
-    "commit_sha": null,
-    "binding_status": "pending"
+    "commit_sha": "45eeb42b170df1acdfb38998aa83ac199d2d45cf",
+    "binding_status": "bound"
   },
   "resume": {
     "stage": "implement",
     "reason": "QR-TA-001 is corrected and green; rerun the invalidated Track A convergence audit and independent quality review while Tracks B and C remain gated.",
     "evidence_path": "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/tdd/track-a-quality-correction-01.md"
   },
-  "updated_at": "2026-08-27T12:01:38.9449460Z"
+  "updated_at": "2026-08-27T12:03:24.3833231Z"
 }
