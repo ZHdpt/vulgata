@@ -335,6 +335,13 @@ public sealed class PreparedChatCoordinator(
                 synthesis);
             if (!validation.IsValid)
             {
+                if (dispatcher is IChatStreamValidationDispositionRecorder recorder)
+                {
+                    _ = recorder.TryRecordFinalValidationDisposition(
+                        synthesisRequest.RequestId,
+                        ChatStreamValidationDisposition.RejectedSemantic);
+                }
+
                 logger?.LogWarning(
                     "Prepared Chat provider selection failed validation in {Mode} mode.",
                     request.Mode);

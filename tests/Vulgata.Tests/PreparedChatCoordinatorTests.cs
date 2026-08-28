@@ -1,6 +1,10 @@
+using System.Net;
 using System.Reflection;
 using System.Security.Claims;
+using System.Text;
 using System.Text.Json;
+using Microsoft.Extensions.DependencyInjection;
+using Vulgata.Agents;
 using Microsoft.AspNetCore.Components.Authorization;
 using Vulgata.Agents.ChatExecution;
 using Vulgata.Core.DomainServices;
@@ -479,6 +483,81 @@ public sealed class PreparedChatCoordinatorTests
         Assert.Equal(PreparedChatResultKind.EvidenceUnavailable, result.Kind);
         Assert.Equal(1, dispatcher.CallCount);
         Assert.Null(result.Answer);
+    }
+
+    [Fact]
+    public async Task AskAsync_SemanticallyRejectedStreamingAnswer_UpdatesSignedObservationWithoutContent()
+    {
+        var system = new SystemEntity("支付系统", null, null, DateTimeOffset.UtcNow);
+        Repository first = system.AddRepository(
+            "账户仓库", "https://example.test/account.git", null, null, DateTimeOffset.UtcNow);
+        Repository second = system.AddRepository(
+            "渠道仓库", "https://example.test/channel.git", null, null, DateTimeOffset.UtcNow);
+        var provider = new LlmProvider(
+            "chat-model",
+            "https://chat-provider.example.com/v1",
+            "encrypted-chat-key",
+            ApiType.ChatCompletions,
+            AgentType.Chat,
+            DateTimeOffset.UtcNow);
+        string semanticAnswer = JsonSerializer.Serialize(new
+        {
+            schemaVersion = ChatSynthesisResult.SupportedSchemaVersion,
+            requestId = "placeholder",
+            mode = "business",
+            evidenceFingerprint = new string('a', 64),
+            answerability = "supported",
+            selections = new[] { new { candidateHandle = "unknown", order = 1 } },
+        });
+        var handler = new SemanticRejectionResponseHandler(semanticAnswer);
+        var services = new ServiceCollection();
+        services.AddSingleton<ILlmProviderRepository>(new SingleProviderRepository(provider));
+        services.AddSingleton<ISecretEncryptionService>(new PlaintextSecretEncryptionService());
+        services.AddSingleton<HttpMessageHandler>(handler);
+        services.AddPreparedPass2Agents();
+        using ServiceProvider serviceProvider = services.BuildServiceProvider();
+        using IServiceScope scope = serviceProvider.CreateScope();
+        ChatStreamObservationAuthority authority =
+            scope.ServiceProvider.GetRequiredService<ChatStreamObservationAuthority>();
+        IChatProviderStreamingTransport transport =
+            scope.ServiceProvider.GetRequiredService<IChatProviderStreamingTransport>();
+        var dispatcher = new SemanticRejectingDispatcher(
+            transport,
+            provider,
+            semanticAnswer);
+        var candidateExtractor = new ChatCandidateExtractor();
+        var coordinator = new PreparedChatCoordinator(
+            new FixedAuthenticationStateProvider("owner-1"),
+            new StubSystemRepository([system]),
+            new StubRepositoryRepository([first, second]),
+            new StubAuthorizationVerifier(),
+            new StubEvidenceRetriever(),
+            candidateExtractor,
+            dispatcher,
+            new StubCurrentnessValidator(),
+            TimeProvider.System,
+            new ChatAgentResultValidator(candidateExtractor),
+            new StubPreparedChatScopeResolver(),
+            new PreparedChatQuestionRequestValidator());
+
+        PreparedChatResult result = await coordinator.AskAsync(
+            ChatMode.Business,
+            system.Id,
+            [first.Id, second.Id],
+            "客户如何付款？");
+
+        Assert.Equal(PreparedChatResultKind.EvidenceUnavailable, result.Kind);
+        Assert.Null(result.Answer);
+        Assert.NotNull(dispatcher.RequestId);
+        Assert.True(authority.TryGetVerifiedReceipt(
+            dispatcher.RequestId!,
+            "primary",
+            out string? serializedReceipt));
+        using JsonDocument document = JsonDocument.Parse(serializedReceipt!);
+        JsonElement receipt = document.RootElement.GetProperty("receipt");
+        Assert.Equal("rejected-semantic", receipt.GetProperty("validationOutcome").GetString());
+        Assert.DoesNotContain("unknown", serializedReceipt!, StringComparison.Ordinal);
+        Assert.DoesNotContain(semanticAnswer, serializedReceipt!, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -1105,6 +1184,118 @@ public sealed class PreparedChatCoordinatorTests
                 [new EvidenceFlowStep(1, "d1", null, "准备回答。")]);
             return Task.FromResult(ChatEvidenceResult.Found(packet));
         }
+    }
+
+    private sealed class SemanticRejectingDispatcher(
+        IChatProviderStreamingTransport transport,
+        LlmProvider provider,
+        string streamedAnswer) :
+        IChatAgentDispatcher,
+        IChatStreamValidationDispositionRecorder
+    {
+        public string? RequestId { get; private set; }
+
+        public async Task<ChatSynthesisOutcome> GenerateAsync(
+            ChatSynthesisRequest request,
+            CancellationToken cancellationToken = default)
+        {
+            RequestId = request.RequestId;
+            var streamRequest = new ChatProviderStreamRequest(
+                "0123456789abcdef0123456789abcdef01234567",
+                $"case-{request.RequestId}",
+                request.RequestId,
+                "primary",
+                provider.Id.ToString("D"),
+                "fedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210",
+                "question",
+                request.EvidenceFingerprint,
+                new string('b', 64),
+                request.AbsoluteDeadlineUnixTimeMilliseconds);
+            await foreach (ChatProviderStreamSignal _ in transport.StreamAsync(
+                streamRequest,
+                cancellationToken))
+            {
+            }
+
+            ChatSynthesisResult synthesis = ChatSynthesisResult.Create(
+                request.RequestId,
+                request.Mode,
+                request.EvidenceFingerprint,
+                ChatAnswerability.Supported,
+                [new ChatSynthesisSelection("unknown", 1)]);
+            return ChatSynthesisOutcome.Generated(synthesis, streamedAnswer);
+        }
+
+        public bool TryRecordFinalValidationDisposition(
+            string requestId,
+            ChatStreamValidationDisposition disposition) =>
+            transport is IChatStreamValidationDispositionRecorder recorder &&
+            recorder.TryRecordFinalValidationDisposition(requestId, disposition);
+    }
+
+    private sealed class SemanticRejectionResponseHandler(string answer) : HttpMessageHandler
+    {
+        private readonly string _body = CreateSseBody(answer);
+
+        protected override Task<HttpResponseMessage> SendAsync(
+            HttpRequestMessage request,
+            CancellationToken cancellationToken) =>
+            Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent(_body, Encoding.UTF8, "text/event-stream"),
+            });
+
+        private static string CreateSseBody(string answer)
+        {
+            string json = JsonSerializer.Serialize(new
+            {
+                id = "chatcmpl-story-125-semantic",
+                choices = new[]
+                {
+                    new
+                    {
+                        delta = new { content = answer },
+                        finish_reason = "stop",
+                    },
+                },
+            });
+            return $"data: {json}\n\ndata: [DONE]\n\n";
+        }
+    }
+
+    private sealed class SingleProviderRepository(LlmProvider provider) : ILlmProviderRepository
+    {
+        public Task<IReadOnlyList<LlmProvider>> ListAllAsync(CancellationToken cancellationToken = default) =>
+            Task.FromResult<IReadOnlyList<LlmProvider>>([provider]);
+
+        public Task<LlmProvider?> GetByIdAsync(Guid providerId, CancellationToken cancellationToken = default) =>
+            Task.FromResult<LlmProvider?>(providerId == provider.Id ? provider : null);
+
+        public Task<bool> NameExistsAsync(string name, Guid? excludeProviderId = null, CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
+
+        public Task<LlmProvider> AddAsync(LlmProvider value, CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
+
+        public void Remove(LlmProvider value) => throw new NotSupportedException();
+
+        public Task SaveChangesAsync(CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
+    }
+
+    private sealed class PlaintextSecretEncryptionService : ISecretEncryptionService
+    {
+        public Task<string> EncryptAsync(
+            string purpose,
+            string plain,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult(plain);
+
+        public Task<string> DecryptAsync(
+            string purpose,
+            string cipher,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult("plaintext-chat-key");
     }
 
     private sealed class StubDispatcher : IChatAgentDispatcher

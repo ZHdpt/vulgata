@@ -6,3 +6,19 @@ public interface IChatAgentDispatcher
         ChatSynthesisRequest request,
         CancellationToken cancellationToken = default);
 }
+
+public enum ChatStreamValidationDisposition
+{
+    SyntaxRepairRequired,
+    Accepted,
+    RejectedSyntax,
+    RejectedSemantic,
+    Cancelled,
+}
+
+public interface IChatStreamValidationDispositionRecorder
+{
+    bool TryRecordFinalValidationDisposition(
+        string requestId,
+        ChatStreamValidationDisposition disposition);
+}

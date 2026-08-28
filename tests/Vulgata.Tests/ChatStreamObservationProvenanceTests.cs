@@ -1,5 +1,6 @@
 using System.Reflection;
 using Vulgata.Agents.ChatExecution;
+using Vulgata.Core.DomainServices;
 
 namespace Vulgata.Tests;
 
@@ -11,6 +12,35 @@ namespace Vulgata.Tests;
 public sealed class ChatStreamObservationProvenanceTests
 {
     [Fact]
+    public void StreamRequest_BindsCandidateCaseAttemptAndProviderConfiguration()
+    {
+        Type requestType = typeof(ChatProviderStreamRequest).Assembly.GetType(
+            "Vulgata.Core.DomainServices.ChatProviderStreamRequest",
+            throwOnError: true,
+            ignoreCase: false)!;
+
+        string[] requiredFields =
+        [
+            "CandidateCommit",
+            "CaseId",
+            "RequestId",
+            "AttemptKind",
+            "ProviderIdentity",
+            "ProviderConfigurationFingerprint",
+            "Prompt",
+            "EvidencePacketFingerprint",
+            "StreamingRequestFingerprint",
+            "AbsoluteDeadlineUnixTimeMilliseconds",
+        ];
+
+        string[] missingFields = requiredFields
+            .Where(field => requestType.GetProperty(field) is null)
+            .ToArray();
+
+        Assert.Empty(missingFields);
+    }
+
+    [Fact]
     public void ObservationReceipt_BindsCandidateCaseProviderAndBoundedStreamLifecycle()
     {
         Type receiptType = typeof(IChatProviderStreamingTransport).Assembly.GetType(
@@ -20,30 +50,60 @@ public sealed class ChatStreamObservationProvenanceTests
 
         string[] requiredFields =
         [
+            "ObservationAuthority",
+            "ProcessObservationId",
+            "AdapterImplementation",
+            "AdapterVersion",
+            "AdapterAssemblySha256",
+            "ProcessPublicKeyFingerprint",
+            "ObservationSequence",
             "CandidateCommit",
             "CaseId",
+            "ProviderIdentity",
             "ProviderApi",
             "ProviderConfigurationFingerprint",
+            "RequestId",
+            "AttemptKind",
+            "CanonicalStreamingRequestFingerprint",
+            "RequestStreamMode",
+            "ResponseHeaderDisposition",
+            "ResponseStatusCode",
+            "ResponseMediaType",
+            "NegotiatedProtocol",
+            "ResponseHeadersAtUtc",
+            "FirstPhysicalReadDisposition",
+            "FirstPhysicalReadAtUtc",
+            "PhysicalEofAtUtc",
+            "PhysicalEofDisposition",
+            "StreamingTransport",
             "StreamStartedAtUtc",
             "FirstDataAtUtc",
             "TerminalAtUtc",
             "TimeToFirstDataMilliseconds",
+            "RawReadCount",
+            "MaximumRawReadByteCount",
+            "RawBodyByteCount",
+            "MaximumSseLineByteCount",
+            "MaximumSseEventByteCount",
             "AnswerDeltaCount",
-            "AnswerDeltaByteCount",
+            "MaximumAnswerDeltaByteCount",
             "AssembledAnswerByteCount",
             "TerminalEventCount",
             "InactivityLimitMilliseconds",
             "OverallDeadlineAtUtc",
             "TransportOutcome",
+            "RejectionCategory",
             "ValidationOutcome",
             "AcceptedAnswerDurationMilliseconds",
         ];
 
-        foreach (string field in requiredFields)
-        {
-            Assert.NotNull(
-                receiptType.GetProperty(field, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic));
-        }
+        string[] missingFields = requiredFields
+            .Where(field => receiptType.GetProperty(
+                field,
+                BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic) is null)
+            .ToArray();
+
+        Assert.Empty(missingFields);
     }
 
     [Fact]

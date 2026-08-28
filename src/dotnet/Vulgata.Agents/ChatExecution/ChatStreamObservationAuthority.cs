@@ -11,6 +11,8 @@ internal sealed record ChatStreamObservationReceipt(
     string AdapterImplementation,
     string AdapterVersion,
     string AdapterAssemblySha256,
+    string ProcessPublicKeyFingerprint,
+    int ObservationSequence,
     string CandidateCommit,
     string CaseId,
     string ProviderIdentity,
@@ -24,17 +26,23 @@ internal sealed record ChatStreamObservationReceipt(
     int? ResponseStatusCode,
     string? ResponseMediaType,
     string? NegotiatedProtocol,
+    DateTimeOffset? ResponseHeadersAtUtc,
     string FirstPhysicalReadDisposition,
+    DateTimeOffset? FirstPhysicalReadAtUtc,
+    DateTimeOffset? PhysicalEofAtUtc,
     string PhysicalEofDisposition,
+    bool StreamingTransport,
     int RawReadCount,
     int MaximumRawReadByteCount,
     int RawBodyByteCount,
+    int MaximumSseLineByteCount,
+    int MaximumSseEventByteCount,
     DateTimeOffset StreamStartedAtUtc,
     DateTimeOffset? FirstDataAtUtc,
     DateTimeOffset? TerminalAtUtc,
     long? TimeToFirstDataMilliseconds,
     int AnswerDeltaCount,
-    int AnswerDeltaByteCount,
+    int MaximumAnswerDeltaByteCount,
     int AssembledAnswerByteCount,
     int TerminalEventCount,
     int InactivityLimitMilliseconds,
@@ -53,6 +61,11 @@ internal sealed class ChatStreamObservationAuthority : IDisposable
     private const string _authority = "production-raw-response-header-adapter";
     private const string _adapterType =
         "Vulgata.Agents.ChatExecution.OpenAiCompatibleChatProviderStreamingTransport";
+    private static readonly JsonSerializerOptions _serializerOptions = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow,
+    };
     private readonly ECDsa _signer = ECDsa.Create(ECCurve.NamedCurves.nistP256);
     private readonly string _processObservationId = $"process-{Guid.NewGuid():N}";
     private readonly string _adapterVersion;
@@ -60,6 +73,7 @@ internal sealed class ChatStreamObservationAuthority : IDisposable
     private readonly string _publicKeyFingerprint;
     private readonly Dictionary<string, string> _receipts = new(StringComparer.Ordinal);
     private readonly object _gate = new();
+    private int _observationSequence;
 
     public ChatStreamObservationAuthority()
     {
@@ -81,6 +95,9 @@ internal sealed class ChatStreamObservationAuthority : IDisposable
 
     internal string AdapterAssemblySha256 => _adapterAssemblySha256;
 
+    internal int NextObservationSequence() =>
+        Interlocked.Increment(ref _observationSequence);
+
     internal string Record(ChatStreamObservationReceipt receipt)
     {
         ArgumentNullException.ThrowIfNull(receipt);
@@ -89,19 +106,12 @@ internal sealed class ChatStreamObservationAuthority : IDisposable
             throw new InvalidOperationException("The raw stream observation binding is invalid.");
         }
 
-        byte[] canonical = JsonSerializer.SerializeToUtf8Bytes(receipt);
-        byte[] signature = _signer.SignHash(SHA256.HashData(canonical));
-        string envelope = JsonSerializer.Serialize(new SignedReceipt(
-            receipt,
-            Base64UrlEncode(signature)));
         lock (_gate)
         {
+            string envelope = CreateSignedEnvelope(receipt);
             _receipts[receipt.RequestId + ":" + receipt.AttemptKind] = envelope;
+            return envelope;
         }
-
-        CryptographicOperations.ZeroMemory(canonical);
-        CryptographicOperations.ZeroMemory(signature);
-        return envelope;
     }
 
     internal bool TryGetVerifiedReceipt(
@@ -120,6 +130,38 @@ internal sealed class ChatStreamObservationAuthority : IDisposable
         return Verify(receipt);
     }
 
+    internal bool TryUpdateValidationOutcome(
+        string requestId,
+        string attemptKind,
+        string validationOutcome)
+    {
+        if (string.IsNullOrWhiteSpace(requestId) ||
+            attemptKind is not ("primary" or "syntax-repair") ||
+            validationOutcome is not (
+                "syntax-repair-required" or "accepted" or "rejected-before-parse" or
+                "rejected-syntax" or "rejected-semantic" or "cancelled"))
+        {
+            return false;
+        }
+
+        string key = requestId + ":" + attemptKind;
+        lock (_gate)
+        {
+            if (!_receipts.TryGetValue(key, out string? serializedReceipt) ||
+                !TryReadVerifiedReceipt(serializedReceipt, out ChatStreamObservationReceipt? receipt))
+            {
+                return false;
+            }
+
+            ChatStreamObservationReceipt updated = receipt with
+            {
+                ValidationOutcome = validationOutcome,
+            };
+            _receipts[key] = CreateSignedEnvelope(updated);
+            return true;
+        }
+    }
+
     internal bool Verify(string serializedReceipt)
     {
         if (string.IsNullOrWhiteSpace(serializedReceipt))
@@ -129,22 +171,10 @@ internal sealed class ChatStreamObservationAuthority : IDisposable
 
         try
         {
-            SignedReceipt? envelope = JsonSerializer.Deserialize<SignedReceipt>(
-                serializedReceipt,
-                new JsonSerializerOptions { UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow });
-            if (envelope?.Receipt is null ||
-                string.IsNullOrWhiteSpace(envelope.Signature) ||
-                !HasAuthorizedBinding(envelope.Receipt))
+            lock (_gate)
             {
-                return false;
+                return TryReadVerifiedReceipt(serializedReceipt, out _);
             }
-
-            byte[] canonical = JsonSerializer.SerializeToUtf8Bytes(envelope.Receipt);
-            byte[] signature = Base64UrlDecode(envelope.Signature);
-            bool verified = _signer.VerifyHash(SHA256.HashData(canonical), signature);
-            CryptographicOperations.ZeroMemory(canonical);
-            CryptographicOperations.ZeroMemory(signature);
-            return verified;
         }
         catch (Exception exception) when (
             exception is JsonException or FormatException or CryptographicException)
@@ -155,26 +185,75 @@ internal sealed class ChatStreamObservationAuthority : IDisposable
 
     public void Dispose() => _signer.Dispose();
 
+    private string CreateSignedEnvelope(ChatStreamObservationReceipt receipt)
+    {
+        byte[] canonical = JsonSerializer.SerializeToUtf8Bytes(receipt, _serializerOptions);
+        byte[] signature = _signer.SignHash(SHA256.HashData(canonical));
+        string envelope = JsonSerializer.Serialize(new SignedReceipt(
+            receipt,
+            Base64UrlEncode(signature)), _serializerOptions);
+        CryptographicOperations.ZeroMemory(canonical);
+        CryptographicOperations.ZeroMemory(signature);
+        return envelope;
+    }
+
+    private bool TryReadVerifiedReceipt(
+        string serializedReceipt,
+        out ChatStreamObservationReceipt? receipt)
+    {
+        receipt = null;
+        SignedReceipt? envelope = JsonSerializer.Deserialize<SignedReceipt>(
+            serializedReceipt,
+            _serializerOptions);
+        if (envelope?.Receipt is null ||
+            string.IsNullOrWhiteSpace(envelope.Signature) ||
+            !HasAuthorizedBinding(envelope.Receipt))
+        {
+            return false;
+        }
+
+        byte[] canonical = JsonSerializer.SerializeToUtf8Bytes(
+            envelope.Receipt,
+            _serializerOptions);
+        byte[] signature = Base64UrlDecode(envelope.Signature);
+        bool verified = _signer.VerifyHash(SHA256.HashData(canonical), signature);
+        CryptographicOperations.ZeroMemory(canonical);
+        CryptographicOperations.ZeroMemory(signature);
+        if (verified)
+        {
+            receipt = envelope.Receipt;
+        }
+
+        return verified;
+    }
+
     private bool HasAuthorizedBinding(ChatStreamObservationReceipt receipt) =>
         StringComparer.Ordinal.Equals(receipt.ObservationAuthority, _authority) &&
         StringComparer.Ordinal.Equals(receipt.ProcessObservationId, _processObservationId) &&
         StringComparer.Ordinal.Equals(receipt.AdapterImplementation, _adapterType) &&
         StringComparer.Ordinal.Equals(receipt.AdapterVersion, _adapterVersion) &&
         StringComparer.Ordinal.Equals(receipt.AdapterAssemblySha256, _adapterAssemblySha256) &&
+        StringComparer.Ordinal.Equals(
+            receipt.ProcessPublicKeyFingerprint,
+            _publicKeyFingerprint) &&
+        receipt.ObservationSequence > 0 &&
         receipt.RequestStreamMode &&
+        receipt.StreamingTransport &&
         !string.IsNullOrWhiteSpace(receipt.CandidateCommit) &&
         !string.IsNullOrWhiteSpace(receipt.CaseId) &&
         !string.IsNullOrWhiteSpace(receipt.ProviderIdentity) &&
         !string.IsNullOrWhiteSpace(receipt.ProviderApi) &&
         IsSha256(receipt.ProviderConfigurationFingerprint) &&
         !string.IsNullOrWhiteSpace(receipt.RequestId) &&
-        receipt.AttemptKind is "primary" or "repair" &&
+        receipt.AttemptKind is "primary" or "syntax-repair" &&
         IsSha256(receipt.CanonicalStreamingRequestFingerprint) &&
         receipt.RawReadCount >= 0 &&
         receipt.MaximumRawReadByteCount is >= 0 and <= 16_384 &&
         receipt.RawBodyByteCount is >= 0 and <= 1_048_576 &&
+        receipt.MaximumSseLineByteCount is >= 0 and <= 131_072 &&
+        receipt.MaximumSseEventByteCount is >= 0 and <= 131_072 &&
         receipt.AnswerDeltaCount is >= 0 and <= 4_096 &&
-        receipt.AnswerDeltaByteCount is >= 0 and <= 65_536 &&
+        receipt.MaximumAnswerDeltaByteCount is >= 0 and <= 16_384 &&
         receipt.AssembledAnswerByteCount is >= 0 and <= 65_536 &&
         receipt.TerminalEventCount is >= 0 and <= 8 &&
         receipt.InactivityLimitMilliseconds == 10_000 &&

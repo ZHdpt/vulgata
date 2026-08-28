@@ -8,9 +8,12 @@ public enum ChatProviderStreamSignalKind
 }
 
 public sealed record ChatProviderStreamRequest(
+    string CandidateCommit,
+    string CaseId,
     string RequestId,
     string AttemptKind,
     string ProviderIdentity,
+    string ProviderConfigurationFingerprint,
     string Prompt,
     string EvidencePacketFingerprint,
     string StreamingRequestFingerprint,

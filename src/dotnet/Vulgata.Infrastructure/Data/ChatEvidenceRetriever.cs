@@ -169,12 +169,14 @@ public sealed class ChatEvidenceRetriever(
             return ChatEvidenceResult.IncompleteOrStale();
         }
 
-        if (exactRelationships.Length != 1)
-        {
-            return ChatEvidenceResult.IncompleteOrStale();
-        }
-
-        ExactRelationshipRow exactRelationship = exactRelationships[0];
+        EvidencePacket projectionPacket = projectionResult.Packet!;
+        HashSet<Guid> projectionDocumentVersionIds = projectionPacket.Documents
+            .Select(document => document.DocumentVersionId)
+            .ToHashSet();
+        ExactRelationshipRow exactRelationship = exactRelationships.FirstOrDefault(relationship =>
+                projectionDocumentVersionIds.Contains(relationship.SourceDocumentVersionId) &&
+                projectionDocumentVersionIds.Contains(relationship.TargetDocumentVersionId)) ??
+            exactRelationships[0];
         bool sourceScanRunIsCurrent = await _context.ScanRuns.AsNoTracking().AnyAsync(
             scanRun =>
                 scanRun.Id == exactRelationship.SourceScanRunId &&
@@ -296,7 +298,6 @@ public sealed class ChatEvidenceRetriever(
             return ChatEvidenceResult.IncompleteOrStale();
         }
 
-        EvidencePacket projectionPacket = projectionResult.Packet!;
         Guid[] baseDocumentVersionIds = projectionPacket.Documents
             .Select(document => document.DocumentVersionId)
             .Distinct()

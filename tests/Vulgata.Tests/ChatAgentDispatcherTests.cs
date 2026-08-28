@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using System.Net;
 using System.Text;
 using System.Text.Json;
@@ -199,7 +200,15 @@ public sealed class ChatAgentDispatcherTests
         var capture = new OpenAiCaptureHandler(
             () => CreateSseResponse(rawSelectionJson),
             "text/event-stream");
+        var services = new ServiceCollection();
+        services.AddSingleton<ILlmProviderRepository>(new FakeProviderRepository([provider]));
+        services.AddSingleton<ISecretEncryptionService>(encryption);
+        services.AddSingleton<HttpMessageHandler>(capture);
+        services.AddPreparedPass2Agents();
+        using ServiceProvider serviceProvider = services.BuildServiceProvider();
+        using IServiceScope scope = serviceProvider.CreateScope();
         var dispatcher = new ChatAgentDispatcher(
+            scope.ServiceProvider,
             new ChatAgentProviderResolver(
                 new FakeOverrideRepository(null),
                 new FakeProviderRepository([provider])),
@@ -224,10 +233,16 @@ public sealed class ChatAgentDispatcherTests
 
         using JsonDocument providerDocument = JsonDocument.Parse(capture.Body);
         JsonElement messages = providerDocument.RootElement.GetProperty("messages");
-        string requestJson = messages.EnumerateArray()
+        string providerPrompt = messages.EnumerateArray()
             .Single(message => message.GetProperty("role").GetString() == "user")
             .GetProperty("content")
             .GetString()!;
+        const string requestJsonPrefix = "{\"schemaVersion\":";
+        int requestJsonStart = providerPrompt.IndexOf(
+            requestJsonPrefix,
+            StringComparison.Ordinal);
+        Assert.True(requestJsonStart >= 0);
+        string requestJson = providerPrompt[requestJsonStart..];
         using JsonDocument selectionDocument = JsonDocument.Parse(requestJson);
         JsonElement selectionRoot = selectionDocument.RootElement;
         Assert.Equal(
@@ -271,15 +286,25 @@ public sealed class ChatAgentDispatcherTests
             ApiType.ChatCompletions,
             AgentType.Chat,
             DateTimeOffset.UtcNow);
+        var encryption = new CapturingEncryptionService("plaintext-chat-key");
+        var capture = new OpenAiCaptureHandler(
+            () => CreateSseResponse(rawSelectionJson),
+            "text/event-stream");
+        var services = new ServiceCollection();
+        services.AddSingleton<ILlmProviderRepository>(new FakeProviderRepository([provider]));
+        services.AddSingleton<ISecretEncryptionService>(encryption);
+        services.AddSingleton<HttpMessageHandler>(capture);
+        services.AddPreparedPass2Agents();
+        using ServiceProvider serviceProvider = services.BuildServiceProvider();
+        using IServiceScope scope = serviceProvider.CreateScope();
         var dispatcher = new ChatAgentDispatcher(
+            scope.ServiceProvider,
             new ChatAgentProviderResolver(
                 new FakeOverrideRepository(null),
                 new FakeProviderRepository([provider])),
-            new CapturingEncryptionService("plaintext-chat-key"),
+            encryption,
             new ChatPromptCatalog(),
-            new OpenAiCaptureHandler(
-                () => CreateSseResponse(rawSelectionJson),
-                "text/event-stream"),
+            capture,
             TimeProvider.System);
 
         ChatSynthesisOutcome outcome = await dispatcher.GenerateAsync(request);
@@ -304,15 +329,25 @@ public sealed class ChatAgentDispatcherTests
             ApiType.ChatCompletions,
             AgentType.Chat,
             DateTimeOffset.UtcNow);
+        var encryption = new CapturingEncryptionService("plaintext-chat-key");
+        var capture = new OpenAiCaptureHandler(
+            () => CreateSseResponse($"```json\n{rawSelectionJson}\n```"),
+            "text/event-stream");
+        var services = new ServiceCollection();
+        services.AddSingleton<ILlmProviderRepository>(new FakeProviderRepository([provider]));
+        services.AddSingleton<ISecretEncryptionService>(encryption);
+        services.AddSingleton<HttpMessageHandler>(capture);
+        services.AddPreparedPass2Agents();
+        using ServiceProvider serviceProvider = services.BuildServiceProvider();
+        using IServiceScope scope = serviceProvider.CreateScope();
         var dispatcher = new ChatAgentDispatcher(
+            scope.ServiceProvider,
             new ChatAgentProviderResolver(
                 new FakeOverrideRepository(null),
                 new FakeProviderRepository([provider])),
-            new CapturingEncryptionService("plaintext-chat-key"),
+            encryption,
             new ChatPromptCatalog(),
-            new OpenAiCaptureHandler(
-                () => CreateSseResponse($"```json\n{rawSelectionJson}\n```"),
-                "text/event-stream"),
+            capture,
             TimeProvider.System);
 
         ChatSynthesisOutcome outcome = await dispatcher.GenerateAsync(request);
@@ -470,11 +505,20 @@ public sealed class ChatAgentDispatcherTests
             CreateSseResponse("{not-valid-json"),
             CreateSseResponse(validSelection),
         ]);
+        var encryption = new CapturingEncryptionService("plaintext-chat-key");
+        var services = new ServiceCollection();
+        services.AddSingleton<ILlmProviderRepository>(new FakeProviderRepository([provider]));
+        services.AddSingleton<ISecretEncryptionService>(encryption);
+        services.AddSingleton<HttpMessageHandler>(handler);
+        services.AddPreparedPass2Agents();
+        using ServiceProvider serviceProvider = services.BuildServiceProvider();
+        using IServiceScope scope = serviceProvider.CreateScope();
         var dispatcher = new ChatAgentDispatcher(
+            scope.ServiceProvider,
             new ChatAgentProviderResolver(
                 new FakeOverrideRepository(null),
                 new FakeProviderRepository([provider])),
-            new CapturingEncryptionService("plaintext-chat-key"),
+            encryption,
             new ChatPromptCatalog(),
             handler,
             TimeProvider.System);
@@ -524,6 +568,37 @@ public sealed class ChatAgentDispatcherTests
     }
 
     [Fact]
+    public async Task GenerateAsync_UnregisteredDirectSseTransport_CannotProduceAcceptedAttempt()
+    {
+        ChatSynthesisRequest request = CreateRequest(ChatMode.Business);
+        string validSelection = CreateRawSelectionJson(request);
+        var provider = new LlmProvider(
+            "chat-model",
+            "https://chat-provider.example.com/v1",
+            "encrypted-chat-key",
+            ApiType.ChatCompletions,
+            AgentType.Chat,
+            DateTimeOffset.UtcNow);
+        var handler = new OpenAiCaptureHandler(
+            () => CreateSseResponse(validSelection),
+            "text/event-stream");
+        var dispatcher = new ChatAgentDispatcher(
+            new ChatAgentProviderResolver(
+                new FakeOverrideRepository(null),
+                new FakeProviderRepository([provider])),
+            new CapturingEncryptionService("plaintext-chat-key"),
+            new ChatPromptCatalog(),
+            handler,
+            TimeProvider.System);
+
+        ChatSynthesisOutcome outcome = await dispatcher.GenerateAsync(request);
+
+        Assert.Equal(ChatContractFailureCode.ProviderFailure, outcome.FailureCode);
+        Assert.Null(outcome.Result);
+        Assert.Null(outcome.RawSelectionJson);
+    }
+
+    [Fact]
     public async Task GenerateAsync_DirectConstructionAggregateJsonDuringSyntaxRepair_IsRejectedWithoutAcceptedResult()
     {
         ChatSynthesisRequest request = CreateRequest(ChatMode.Business);
@@ -554,6 +629,50 @@ public sealed class ChatAgentDispatcherTests
         Assert.Null(outcome.Result);
         Assert.Null(outcome.RawSelectionJson);
         Assert.Equal(2, handler.CallCount);
+    }
+
+    [Fact]
+    public async Task GenerateAsync_SyntaxRepair_UsesCanonicalAttemptNameAndPreservesBinding()
+    {
+        ChatSynthesisRequest request = CreateRequest(ChatMode.Business);
+        var provider = new LlmProvider(
+            "chat-model",
+            "https://chat-provider.example.com/v1",
+            "encrypted-chat-key",
+            ApiType.ChatCompletions,
+            AgentType.Chat,
+            DateTimeOffset.UtcNow);
+        string validSelection = CreateRawSelectionJson(request);
+        var transport = new RecordingStreamTransport(["{not-valid-json", validSelection]);
+        var services = new ServiceCollection();
+        services.AddPreparedPass2Agents();
+        services.AddScoped<IChatProviderStreamingTransport>(_ => transport);
+        using ServiceProvider serviceProvider = services.BuildServiceProvider();
+        using IServiceScope scope = serviceProvider.CreateScope();
+        var dispatcher = new ChatAgentDispatcher(
+            scope.ServiceProvider,
+            new ChatAgentProviderResolver(
+                new FakeOverrideRepository(null),
+                new FakeProviderRepository([provider])),
+            new CapturingEncryptionService("plaintext-chat-key"),
+            new ChatPromptCatalog(),
+            new OpenAiCaptureHandler(() => string.Empty),
+            TimeProvider.System);
+
+        ChatSynthesisOutcome outcome = await dispatcher.GenerateAsync(request);
+
+        Assert.Null(outcome.FailureCode);
+        Assert.NotNull(outcome.Result);
+        Assert.Equal(2, transport.Requests.Count);
+        Assert.Equal("primary", transport.Requests[0].AttemptKind);
+        Assert.Equal("syntax-repair", transport.Requests[1].AttemptKind);
+        Assert.All(transport.Requests, dispatched =>
+        {
+            Assert.Equal(request.RequestId, dispatched.RequestId);
+            Assert.Equal(provider.Id.ToString("D"), dispatched.ProviderIdentity);
+            Assert.Equal(request.EvidenceFingerprint, dispatched.EvidencePacketFingerprint);
+            Assert.Equal(request.AbsoluteDeadlineUnixTimeMilliseconds, dispatched.AbsoluteDeadlineUnixTimeMilliseconds);
+        });
     }
 
     [Fact]
@@ -846,6 +965,27 @@ public sealed class ChatAgentDispatcherTests
             {
                 Content = new StringContent(body, Encoding.UTF8, mediaType),
             });
+        }
+    }
+
+    private sealed class RecordingStreamTransport(IReadOnlyList<string> answers)
+        : IChatProviderStreamingTransport
+    {
+        public List<ChatProviderStreamRequest> Requests { get; } = [];
+
+        public async IAsyncEnumerable<ChatProviderStreamSignal> StreamAsync(
+            ChatProviderStreamRequest request,
+            [EnumeratorCancellation] CancellationToken cancellationToken)
+        {
+            Requests.Add(request);
+            await Task.Yield();
+            string answer = answers[Requests.Count - 1];
+            yield return new ChatProviderStreamSignal(
+                ChatProviderStreamSignalKind.AnswerDelta,
+                Encoding.UTF8.GetBytes(answer));
+            yield return new ChatProviderStreamSignal(
+                ChatProviderStreamSignalKind.Terminal,
+                ReadOnlyMemory<byte>.Empty);
         }
     }
 

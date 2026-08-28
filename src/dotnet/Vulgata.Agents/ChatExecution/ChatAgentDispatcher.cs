@@ -9,7 +9,9 @@ using Vulgata.Shared;
 
 namespace Vulgata.Agents.ChatExecution;
 
-public sealed class ChatAgentDispatcher : IChatAgentDispatcher
+public sealed class ChatAgentDispatcher :
+    IChatAgentDispatcher,
+    IChatStreamValidationDispositionRecorder
 {
     internal static readonly TimeSpan ProviderTimeout = TimeSpan.FromSeconds(30);
     private static readonly TimeSpan _streamInactivityTimeout = TimeSpan.FromSeconds(10);
@@ -100,10 +102,7 @@ public sealed class ChatAgentDispatcher : IChatAgentDispatcher
                 return ChatSynthesisOutcome.Failed(ChatContractFailureCode.ProviderFailure);
             }
 
-            long coordinatorDeadline = request.AbsoluteDeadlineUnixTimeMilliseconds;
-            long localCap = _timeProvider.GetUtcNow().Add(ProviderTimeout)
-                .ToUnixTimeMilliseconds();
-            long absoluteDeadline = Math.Min(coordinatorDeadline, localCap);
+            long absoluteDeadline = request.AbsoluteDeadlineUnixTimeMilliseconds;
             IChatProviderStreamingTransport transport = _streamingTransport ??
                 new DirectConstructionStreamingTransport(
                     provider,
@@ -120,13 +119,12 @@ public sealed class ChatAgentDispatcher : IChatAgentDispatcher
                 "primary",
                 absoluteDeadline,
                 cancellationToken);
-            if (primary.FailureCode != ChatContractFailureCode.InvalidSelection ||
-                transport is DirectConstructionStreamingTransport
-                {
-                    LastResponseWasStreaming: false,
-                })
+            if (primary.FailureCode != ChatContractFailureCode.InvalidSelection)
             {
-                return primary;
+                return transport is DirectConstructionStreamingTransport &&
+                    primary.Result is not null
+                    ? ChatSynthesisOutcome.Failed(ChatContractFailureCode.ProviderFailure)
+                    : primary;
             }
 
             long remainingMilliseconds = absoluteDeadline -
@@ -140,14 +138,18 @@ public sealed class ChatAgentDispatcher : IChatAgentDispatcher
                 boundedPrompt,
                 "\n\nReturn only one syntactically valid JSON object matching the requested schema. " +
                 "Do not change the request, evidence fingerprint, candidates, or answer semantics.");
-            return await DispatchAttemptAsync(
+            ChatSynthesisOutcome repaired = await DispatchAttemptAsync(
                 transport,
                 request,
                 provider,
                 repairPrompt,
-                "repair",
+                "syntax-repair",
                 absoluteDeadline,
                 cancellationToken);
+            return transport is DirectConstructionStreamingTransport &&
+                repaired.Result is not null
+                ? ChatSynthesisOutcome.Failed(ChatContractFailureCode.ProviderFailure)
+                : repaired;
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
@@ -159,6 +161,12 @@ public sealed class ChatAgentDispatcher : IChatAgentDispatcher
             return ChatSynthesisOutcome.Failed(ChatContractFailureCode.ProviderFailure);
         }
     }
+
+    public bool TryRecordFinalValidationDisposition(
+        string requestId,
+        ChatStreamValidationDisposition disposition) =>
+        _streamingTransport is IChatStreamValidationDispositionRecorder recorder &&
+        recorder.TryRecordFinalValidationDisposition(requestId, disposition);
 
     private async Task<ChatSynthesisOutcome> DispatchAttemptAsync(
         IChatProviderStreamingTransport transport,
@@ -178,10 +186,23 @@ public sealed class ChatAgentDispatcher : IChatAgentDispatcher
                 synthesisRequest.EvidenceFingerprint,
                 "stream=true",
                 prompt))));
+        string candidateCommit = Environment.GetEnvironmentVariable(
+            "VULGATA_CANDIDATE_COMMIT") ?? string.Empty;
+        string caseId = Environment.GetEnvironmentVariable(
+            "VULGATA_RELEASE_CASE_ID") ?? string.Empty;
+        string providerConfigurationFingerprint = Convert.ToHexStringLower(
+            SHA256.HashData(Encoding.UTF8.GetBytes(string.Join(
+                '\u001f',
+                provider.ProviderId.ToString("D"),
+                provider.Endpoint.AbsoluteUri,
+                provider.Model))));
         var streamRequest = new ChatProviderStreamRequest(
+            candidateCommit,
+            caseId,
             synthesisRequest.RequestId,
             attemptKind,
             provider.ProviderId.ToString("D"),
+            providerConfigurationFingerprint,
             prompt,
             synthesisRequest.EvidenceFingerprint,
             requestFingerprint,
@@ -189,7 +210,10 @@ public sealed class ChatAgentDispatcher : IChatAgentDispatcher
         using var deadline = new CancellationTokenSource(
             TimeSpan.FromMilliseconds(Math.Max(
                 1,
-                absoluteDeadline - _timeProvider.GetUtcNow().ToUnixTimeMilliseconds())),
+                Math.Min(
+                    ProviderTimeout.TotalMilliseconds,
+                    absoluteDeadline -
+                        _timeProvider.GetUtcNow().ToUnixTimeMilliseconds()))),
             _timeProvider);
         using var linked = CancellationTokenSource.CreateLinkedTokenSource(
             cancellationToken,

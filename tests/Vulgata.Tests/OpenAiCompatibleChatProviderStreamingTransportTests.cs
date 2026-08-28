@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Headers;
 using System.Text;
+using System.Text.Json;
 using Vulgata.Core.DomainServices;
 using Vulgata.Core.Entities;
 using Microsoft.Extensions.DependencyInjection;
@@ -52,9 +53,12 @@ public sealed class OpenAiCompatibleChatProviderStreamingTransportTests
             handler,
             observationAuthority);
         var request = new ChatProviderStreamRequest(
-            "request-125-liveness",
+            "0123456789abcdef0123456789abcdef01234567",
+            "case-stream-liveness",
+            "stream-125-liveness",
             "primary",
             provider.Id.ToString("D"),
+            "fedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210",
             "question",
             new string('a', 64),
             new string('b', 64),
@@ -109,9 +113,12 @@ public sealed class OpenAiCompatibleChatProviderStreamingTransportTests
             handler,
             observationAuthority);
         var request = new ChatProviderStreamRequest(
-            "request-125-disconnect",
+            "0123456789abcdef0123456789abcdef01234567",
+            "case-stream-disconnect",
+            "stream-125-disconnect",
             "primary",
             provider.Id.ToString("D"),
+            "fedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210",
             "question",
             new string('a', 64),
             new string('b', 64),
@@ -141,6 +148,85 @@ public sealed class OpenAiCompatibleChatProviderStreamingTransportTests
                 request.AttemptKind,
                 out string? receipt));
         Assert.NotNull(receipt);
+    }
+
+    [Fact]
+    public async Task StreamAsync_SignedReceipt_UsesSchemaV3LifecycleVocabularyAndPerDomainCountersAsync()
+    {
+        var provider = new LlmProvider(
+            "streaming-chat",
+            "https://provider.example/v1",
+            "encrypted-key",
+            ApiType.ChatCompletions,
+            AgentType.Chat,
+            DateTimeOffset.UtcNow);
+        using var responseBody = new MemoryStream(
+            Encoding.UTF8.GetBytes(CreateSseEvent("answer", finishReason: "stop") +
+                "data: [DONE]\n\n"));
+        using var handler = new MemoryResponseHandler(responseBody);
+        using var observationAuthority = new ChatStreamObservationAuthority();
+        var transport = new OpenAiCompatibleChatProviderStreamingTransport(
+            new FakeProviderRepository(provider),
+            new FakeEncryptionService(),
+            handler,
+            observationAuthority);
+        var request = new ChatProviderStreamRequest(
+            "0123456789abcdef0123456789abcdef01234567",
+            "case-stream-receipt",
+            "stream-125-receipt",
+            "primary",
+            provider.Id.ToString("D"),
+            "fedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210",
+            "question",
+            new string('a', 64),
+            new string('b', 64),
+            DateTimeOffset.UtcNow.AddSeconds(30).ToUnixTimeMilliseconds());
+
+        await foreach (ChatProviderStreamSignal _ in transport.StreamAsync(
+            request,
+            CancellationToken.None))
+        {
+        }
+
+        Assert.True(observationAuthority.TryGetVerifiedReceipt(
+            request.RequestId,
+            request.AttemptKind,
+            out string? serializedReceipt));
+        using JsonDocument document = JsonDocument.Parse(serializedReceipt!);
+        JsonElement receipt = document.RootElement.GetProperty("receipt");
+
+        Assert.Equal("primary", receipt.GetProperty("attemptKind").GetString());
+        Assert.Equal(request.CandidateCommit, receipt.GetProperty("candidateCommit").GetString());
+        Assert.Equal(request.CaseId, receipt.GetProperty("caseId").GetString());
+        Assert.Equal(request.RequestId, receipt.GetProperty("requestId").GetString());
+        Assert.Equal(request.ProviderIdentity, receipt.GetProperty("providerIdentity").GetString());
+        Assert.Equal(
+            request.ProviderConfigurationFingerprint,
+            receipt.GetProperty("providerConfigurationFingerprint").GetString());
+        Assert.Equal("production-raw-response-header-adapter", receipt.GetProperty("observationAuthority").GetString());
+        Assert.True(receipt.GetProperty("requestStreamMode").GetBoolean());
+        Assert.Equal("received", receipt.GetProperty("responseHeaderDisposition").GetString());
+        Assert.Equal("HTTP/1.1", receipt.GetProperty("negotiatedProtocol").GetString());
+        Assert.Equal("observed", receipt.GetProperty("firstPhysicalReadDisposition").GetString());
+        Assert.Equal("observed-after-terminal", receipt.GetProperty("physicalEofDisposition").GetString());
+        Assert.Equal("completed", receipt.GetProperty("transportOutcome").GetString());
+        Assert.Null(receipt.GetProperty("rejectionCategory").ValueKind == JsonValueKind.Null
+            ? null
+            : receipt.GetProperty("rejectionCategory").GetString());
+        Assert.Equal("accepted", receipt.GetProperty("validationOutcome").GetString());
+        Assert.True(receipt.GetProperty("rawReadCount").GetInt32() >= 1);
+        Assert.True(receipt.GetProperty("maximumRawReadByteCount").GetInt32() >= 1);
+        Assert.True(receipt.GetProperty("rawBodyByteCount").GetInt32() >= 1);
+        Assert.True(receipt.GetProperty("maximumSseLineByteCount").GetInt32() >= 1);
+        Assert.True(receipt.GetProperty("maximumSseEventByteCount").GetInt32() >= 1);
+        Assert.Equal(1, receipt.GetProperty("answerDeltaCount").GetInt32());
+        Assert.Equal(
+            Encoding.UTF8.GetByteCount("answer"),
+            receipt.GetProperty("maximumAnswerDeltaByteCount").GetInt32());
+        Assert.Equal(
+            Encoding.UTF8.GetByteCount("answer"),
+            receipt.GetProperty("assembledAnswerByteCount").GetInt32());
+        Assert.Equal(1, receipt.GetProperty("terminalEventCount").GetInt32());
     }
 
     private static string CreateSseEvent(string content, string? finishReason = null)
@@ -213,6 +299,23 @@ public sealed class OpenAiCompatibleChatProviderStreamingTransportTests
                 Content = new StreamContent(body)
                 {
                     Headers = { ContentType = new MediaTypeHeaderValue("text/event-stream") },
+                },
+            });
+    }
+
+    private sealed class MemoryResponseHandler(Stream body) : HttpMessageHandler
+    {
+        protected override Task<HttpResponseMessage> SendAsync(
+            HttpRequestMessage request,
+            CancellationToken cancellationToken) =>
+            Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StreamContent(body)
+                {
+                    Headers =
+                    {
+                        ContentType = new MediaTypeHeaderValue("text/event-stream"),
+                    },
                 },
             });
     }

@@ -61,7 +61,8 @@ public sealed class ChatEvidenceCurrentnessValidator(VulgataDbContext context) :
                             version.ProfiledRevision,
                             version.Title,
                             scanRun.RepositoryId,
-                            scanRun.Status))
+                            scanRun.Status,
+                            scanRun.ProfiledRevision))
                     .Take(6)
                     .ToArrayAsync(cancellationToken);
                 bool documentsAreCurrent = documents.Length == request.Documents.Count &&
@@ -73,7 +74,11 @@ public sealed class ChatEvidenceCurrentnessValidator(VulgataDbContext context) :
                                                    expected.ExpectedTitle,
                                                    StringComparison.Ordinal) &&
                                                actual.ScanRunRepositoryId == actual.RepositoryId &&
-                                               actual.ScanRunStatus == ScanRunStatus.Completed));
+                                               actual.ScanRunStatus == ScanRunStatus.Completed &&
+                                               string.Equals(
+                                                   actual.ScanRunProfiledRevision,
+                                                   actual.ProfiledRevision,
+                                                   StringComparison.Ordinal)));
                 bool sectionsAreCurrent = documentsAreCurrent &&
                                           await ValidateSectionsAsync(request, cancellationToken);
                 bool anchorsAreCurrent = sectionsAreCurrent &&
@@ -538,7 +543,8 @@ public sealed class ChatEvidenceCurrentnessValidator(VulgataDbContext context) :
         string ProfiledRevision,
         string Title,
         Guid ScanRunRepositoryId,
-        ScanRunStatus ScanRunStatus);
+        ScanRunStatus ScanRunStatus,
+        string? ScanRunProfiledRevision);
 
     private sealed record CurrentSectionRow(
         Guid StableSectionId,

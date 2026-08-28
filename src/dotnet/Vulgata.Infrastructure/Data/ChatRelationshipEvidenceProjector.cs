@@ -40,7 +40,8 @@ internal sealed class ChatRelationshipEvidenceProjector(VulgataDbContext context
                     edge.EdgeType == DocumentEdgeType.GeneratedFrom) &&
                 repositories.Contains(edge.SourceRepositoryId) &&
                 repositories.Contains(edge.TargetRepositoryId))
-            .OrderBy(edge => edge.SourceDocumentVersionId)
+            .OrderBy(edge => edge.SourceRepositoryId == edge.TargetRepositoryId)
+            .ThenBy(edge => edge.SourceDocumentVersionId)
             .ThenBy(edge => edge.EdgeType)
             .ThenBy(edge => edge.TargetDocumentVersionId)
             .ThenBy(edge => edge.Id)
@@ -59,7 +60,7 @@ internal sealed class ChatRelationshipEvidenceProjector(VulgataDbContext context
         var relationships = new List<ProjectedChatRelationship>();
         var relatedSections = new List<DocumentSection>();
         var addedDocuments = new HashSet<Guid>();
-        var projectedTargets = new HashSet<Guid>();
+        var projectedTargets = new Dictionary<Guid, bool>();
         var projectedEdges = new HashSet<Guid>();
         var additionsBySeed = new Dictionary<Guid, int>();
 
@@ -131,11 +132,25 @@ internal sealed class ChatRelationshipEvidenceProjector(VulgataDbContext context
                 }
             }
 
-            if (!projectedEdges.Add(candidate.EdgeId) ||
-                !projectedTargets.Add(candidate.TargetDocumentVersionId))
+            bool hasExactAuthority = exactDecision is not null;
+            if (projectedTargets.TryGetValue(
+                    candidate.TargetDocumentVersionId,
+                    out bool existingHasExactAuthority))
+            {
+                if (existingHasExactAuthority && !hasExactAuthority)
+                {
+                    continue;
+                }
+
+                return ChatRelationshipProjection.Invalid;
+            }
+
+            if (!projectedEdges.Add(candidate.EdgeId))
             {
                 return ChatRelationshipProjection.Invalid;
             }
+
+            projectedTargets.Add(candidate.TargetDocumentVersionId, hasExactAuthority);
 
             relationships.Add(new ProjectedChatRelationship(
                 candidate.EdgeId,

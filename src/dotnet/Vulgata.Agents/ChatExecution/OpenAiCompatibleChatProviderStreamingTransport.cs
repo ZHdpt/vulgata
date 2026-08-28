@@ -12,7 +12,9 @@ internal sealed class OpenAiCompatibleChatProviderStreamingTransport(
     ILlmProviderRepository providerRepository,
     ISecretEncryptionService encryptionService,
     HttpMessageHandler httpMessageHandler,
-    ChatStreamObservationAuthority observationAuthority) : IChatProviderStreamingTransport
+    ChatStreamObservationAuthority observationAuthority) :
+    IChatProviderStreamingTransport,
+    IChatStreamValidationDispositionRecorder
 {
     private const int _maximumRawBodyBytes = 1_048_576;
     private const int _maximumReadBytes = 16_384;
@@ -28,7 +30,7 @@ internal sealed class OpenAiCompatibleChatProviderStreamingTransport(
         var observation = new ObservationState
         {
             StreamStartedAtUtc = DateTimeOffset.UtcNow,
-            OverallDeadlineAtUtc = DateTimeOffset.FromUnixTimeMilliseconds(
+            OverallDeadlineAtUtc = ResolveDeadline(
                 request.AbsoluteDeadlineUnixTimeMilliseconds),
         };
         ChatProviderStreamSignal? failureSignal = null;
@@ -48,6 +50,7 @@ internal sealed class OpenAiCompatibleChatProviderStreamingTransport(
             {
                 observation.Outcome = "cancelled";
                 observation.RejectionCategory = "cancelled";
+                observation.PhysicalEofDisposition = "cancelled";
                 RecordObservation(request, observation);
                 throw;
             }
@@ -56,8 +59,12 @@ internal sealed class OpenAiCompatibleChatProviderStreamingTransport(
                 JsonException or DecoderFallbackException or InvalidOperationException or
                 TimeoutException)
             {
-                observation.Outcome = "rejected";
                 observation.RejectionCategory = Classify(exception);
+                observation.Outcome = observation.RejectionCategory;
+                if (observation.Outcome == "disconnect")
+                {
+                    observation.PhysicalEofDisposition = "disconnect";
+                }
                 failureSignal = new ChatProviderStreamSignal(
                     ChatProviderStreamSignalKind.ProviderError,
                     ReadOnlyMemory<byte>.Empty,
@@ -79,6 +86,18 @@ internal sealed class OpenAiCompatibleChatProviderStreamingTransport(
             yield return failureSignal;
         }
     }
+
+    public bool TryRecordFinalValidationDisposition(
+        string requestId,
+        ChatStreamValidationDisposition disposition) =>
+        observationAuthority.TryUpdateValidationOutcome(
+            requestId,
+            "syntax-repair",
+            ToValidationOutcome(disposition)) ||
+        observationAuthority.TryUpdateValidationOutcome(
+            requestId,
+            "primary",
+            ToValidationOutcome(disposition));
 
     private async IAsyncEnumerable<ChatProviderStreamSignal> ExecuteAsync(
         ChatProviderStreamRequest request,
@@ -144,7 +163,14 @@ internal sealed class OpenAiCompatibleChatProviderStreamingTransport(
         observation.ResponseStatusCode = (int)response.StatusCode;
         observation.ResponseMediaType = response.Content.Headers.ContentType?.MediaType?
             .ToLowerInvariant();
-        observation.NegotiatedProtocol = response.Version.ToString();
+        observation.NegotiatedProtocol = response.Version.Major switch
+        {
+            1 => "HTTP/1.1",
+            2 => "HTTP/2",
+            3 => "HTTP/3",
+            _ => null,
+        };
+        observation.ResponseHeadersAtUtc = DateTimeOffset.UtcNow;
         if (!response.IsSuccessStatusCode)
         {
             throw new HttpRequestException(
@@ -188,18 +214,22 @@ internal sealed class OpenAiCompatibleChatProviderStreamingTransport(
             ChatProviderStreamSignal signal = assembled.Current;
             if (signal.Kind == ChatProviderStreamSignalKind.ProviderError)
             {
-                observation.Outcome = "rejected";
-                observation.RejectionCategory = signal.FailureCategory ??
-                    "invalid-provider-stream";
+                observation.RejectionCategory = NormalizeTransportCategory(
+                    signal.FailureCategory);
+                observation.Outcome = observation.RejectionCategory;
                 yield return signal;
                 yield break;
             }
 
             if (signal.Kind == ChatProviderStreamSignalKind.Terminal)
             {
-                observation.Outcome = "accepted";
+                observation.Outcome = "completed";
                 observation.TerminalAtUtc = DateTimeOffset.UtcNow;
                 observation.TerminalEventCount++;
+                if (observation.PhysicalEofAtUtc is not null)
+                {
+                    observation.PhysicalEofDisposition = "observed-after-terminal";
+                }
                 observation.AcceptedAnswerDurationMilliseconds = Math.Max(
                     0,
                     (long)(observation.TerminalAtUtc.Value -
@@ -210,7 +240,9 @@ internal sealed class OpenAiCompatibleChatProviderStreamingTransport(
                 DateTimeOffset observedAt = DateTimeOffset.UtcNow;
                 observation.FirstDataAtUtc ??= observedAt;
                 observation.AnswerDeltaCount++;
-                observation.AnswerDeltaByteCount += signal.AnswerDelta.Length;
+                observation.MaximumAnswerDeltaByteCount = Math.Max(
+                    observation.MaximumAnswerDeltaByteCount,
+                    signal.AnswerDelta.Length);
                 observation.AssembledAnswerByteCount += signal.AnswerDelta.Length;
             }
 
@@ -238,7 +270,8 @@ internal sealed class OpenAiCompatibleChatProviderStreamingTransport(
                     overflowRead);
                 if (overflowRead == 0)
                 {
-                    observation.PhysicalEofDisposition = "observed";
+                    observation.PhysicalEofAtUtc = DateTimeOffset.UtcNow;
+                    observation.PhysicalEofDisposition = "observed-before-terminal";
                     yield break;
                 }
 
@@ -255,20 +288,19 @@ internal sealed class OpenAiCompatibleChatProviderStreamingTransport(
                 read);
             if (read == 0)
             {
-                if (observation.FirstPhysicalReadDisposition == "not-observed")
-                {
-                    observation.FirstPhysicalReadDisposition = "eof";
-                }
-                observation.PhysicalEofDisposition = "observed";
+                observation.PhysicalEofAtUtc = DateTimeOffset.UtcNow;
+                observation.PhysicalEofDisposition = "observed-before-terminal";
                 yield break;
             }
 
             if (observation.FirstPhysicalReadDisposition == "not-observed")
             {
-                observation.FirstPhysicalReadDisposition = "data";
+                observation.FirstPhysicalReadDisposition = "observed";
+                observation.FirstPhysicalReadAtUtc = DateTimeOffset.UtcNow;
             }
 
             observation.RawBodyByteCount += read;
+            observation.ObserveSseBytes(buffer.AsSpan(0, read));
             yield return buffer.AsMemory(0, read).ToArray();
         }
     }
@@ -277,23 +309,26 @@ internal sealed class OpenAiCompatibleChatProviderStreamingTransport(
         ChatProviderStreamRequest request,
         ObservationState state)
     {
-        string candidateCommit = Environment.GetEnvironmentVariable(
-            "VULGATA_CANDIDATE_COMMIT") ?? observationAuthority.AdapterAssemblySha256[..40];
-        string caseId = request.RequestId;
-        string providerConfigurationFingerprint = Convert.ToHexStringLower(
-            System.Security.Cryptography.SHA256.HashData(Encoding.UTF8.GetBytes(
-                string.Join('\u001f', request.ProviderIdentity, "chat-completions"))));
+        if (string.IsNullOrWhiteSpace(request.CandidateCommit) ||
+            string.IsNullOrWhiteSpace(request.CaseId) ||
+            !IsSha256(request.ProviderConfigurationFingerprint))
+        {
+            return;
+        }
+
         _ = observationAuthority.Record(new ChatStreamObservationReceipt(
             "production-raw-response-header-adapter",
             observationAuthority.ProcessObservationId,
             typeof(OpenAiCompatibleChatProviderStreamingTransport).FullName!,
             observationAuthority.AdapterVersion,
             observationAuthority.AdapterAssemblySha256,
-            candidateCommit,
-            caseId,
+            observationAuthority.PublicKeyFingerprint,
+            observationAuthority.NextObservationSequence(),
+            request.CandidateCommit,
+            request.CaseId,
             request.ProviderIdentity,
             "chat-completions",
-            providerConfigurationFingerprint,
+            request.ProviderConfigurationFingerprint,
             request.RequestId,
             request.AttemptKind,
             request.StreamingRequestFingerprint,
@@ -302,11 +337,17 @@ internal sealed class OpenAiCompatibleChatProviderStreamingTransport(
             state.ResponseStatusCode,
             state.ResponseMediaType,
             state.NegotiatedProtocol,
+            state.ResponseHeadersAtUtc,
             state.FirstPhysicalReadDisposition,
+            state.FirstPhysicalReadAtUtc,
+            state.PhysicalEofAtUtc,
             state.PhysicalEofDisposition,
+            true,
             state.RawReadCount,
             state.MaximumRawReadByteCount,
             state.RawBodyByteCount,
+            state.MaximumSseLineByteCount,
+            state.MaximumSseEventByteCount,
             state.StreamStartedAtUtc,
             state.FirstDataAtUtc,
             state.TerminalAtUtc,
@@ -315,21 +356,21 @@ internal sealed class OpenAiCompatibleChatProviderStreamingTransport(
                 : Math.Max(0, (long)(state.FirstDataAtUtc.Value -
                     state.StreamStartedAtUtc).TotalMilliseconds),
             state.AnswerDeltaCount,
-            state.AnswerDeltaByteCount,
+            state.MaximumAnswerDeltaByteCount,
             state.AssembledAnswerByteCount,
             state.TerminalEventCount,
             10_000,
             state.OverallDeadlineAtUtc,
             state.Outcome,
             state.RejectionCategory,
-            state.Outcome == "accepted" ? "accepted" : "rejected-before-parse",
+            state.Outcome == "completed" ? "accepted" : "rejected-before-parse",
             state.AcceptedAnswerDurationMilliseconds));
     }
 
     private static void ValidateRequest(ChatProviderStreamRequest request)
     {
         if (string.IsNullOrWhiteSpace(request.RequestId) ||
-            request.AttemptKind is not ("primary" or "repair") ||
+            request.AttemptKind is not ("primary" or "syntax-repair") ||
             string.IsNullOrWhiteSpace(request.ProviderIdentity) ||
             string.IsNullOrWhiteSpace(request.Prompt) ||
             _strictUtf8.GetByteCount(request.Prompt) > 131_072 ||
@@ -346,8 +387,7 @@ internal sealed class OpenAiCompatibleChatProviderStreamingTransport(
 
     private static CancellationTokenSource CreateDeadline(long deadlineUnixMilliseconds)
     {
-        TimeSpan remaining = DateTimeOffset.FromUnixTimeMilliseconds(deadlineUnixMilliseconds) -
-            DateTimeOffset.UtcNow;
+        TimeSpan remaining = ResolveDeadline(deadlineUnixMilliseconds) - DateTimeOffset.UtcNow;
         if (remaining <= TimeSpan.Zero)
         {
             throw new TimeoutException("The Chat streaming deadline has expired.");
@@ -356,6 +396,18 @@ internal sealed class OpenAiCompatibleChatProviderStreamingTransport(
         var source = new CancellationTokenSource();
         source.CancelAfter(remaining);
         return source;
+    }
+
+    private static DateTimeOffset ResolveDeadline(long deadlineUnixMilliseconds)
+    {
+        DateTimeOffset now = DateTimeOffset.UtcNow;
+        DateTimeOffset maximum = now.Add(ChatAgentDispatcher.ProviderTimeout);
+        if (deadlineUnixMilliseconds >= maximum.ToUnixTimeMilliseconds())
+        {
+            return maximum;
+        }
+
+        return DateTimeOffset.FromUnixTimeMilliseconds(deadlineUnixMilliseconds);
     }
 
     private static Uri ResolveChatCompletionsEndpoint(Uri configured)
@@ -377,14 +429,35 @@ internal sealed class OpenAiCompatibleChatProviderStreamingTransport(
 
     private static string Classify(Exception exception) => exception switch
     {
-        HttpRequestException { StatusCode: not null } => "invalid-response-status",
-        HttpRequestException => "provider-transport-failure",
+        HttpRequestException => "provider-failure",
         IOException => "disconnect",
         DecoderFallbackException => "invalid-wire-utf8",
         JsonException => "invalid-json-event",
-        TimeoutException => "deadline-exceeded",
-        InvalidDataException => "invalid-provider-stream",
-        _ => "provider-configuration-failure",
+        TimeoutException => "overall-deadline",
+        InvalidDataException => "provider-failure",
+        _ => "provider-failure",
+    };
+
+    private static string NormalizeTransportCategory(string? category) => category switch
+    {
+        "cancelled" or "disconnect" or "inactivity" or "overall-deadline" or
+        "raw-body-overflow" or "sse-line-overflow" or "sse-event-overflow" or
+        "chunk-overflow" or "total-overflow" or "invalid-wire-utf8" or
+        "invalid-sse" or "invalid-json-event" or "invalid-json-escape" or
+        "invalid-answer-utf8" or "missing-terminal" or "duplicate-terminal" or
+        "contradictory-terminal" or "post-terminal-data" => category,
+        _ => "provider-failure",
+    };
+
+    private static string ToValidationOutcome(
+        ChatStreamValidationDisposition disposition) => disposition switch
+    {
+        ChatStreamValidationDisposition.SyntaxRepairRequired => "syntax-repair-required",
+        ChatStreamValidationDisposition.Accepted => "accepted",
+        ChatStreamValidationDisposition.RejectedSyntax => "rejected-syntax",
+        ChatStreamValidationDisposition.RejectedSemantic => "rejected-semantic",
+        ChatStreamValidationDisposition.Cancelled => "cancelled",
+        _ => throw new ArgumentOutOfRangeException(nameof(disposition)),
     };
 
     private sealed class ObservationState
@@ -393,21 +466,66 @@ internal sealed class OpenAiCompatibleChatProviderStreamingTransport(
         internal int? ResponseStatusCode { get; set; }
         internal string? ResponseMediaType { get; set; }
         internal string? NegotiatedProtocol { get; set; }
+        internal DateTimeOffset? ResponseHeadersAtUtc { get; set; }
         internal string FirstPhysicalReadDisposition { get; set; } = "not-observed";
+        internal DateTimeOffset? FirstPhysicalReadAtUtc { get; set; }
+        internal DateTimeOffset? PhysicalEofAtUtc { get; set; }
         internal string PhysicalEofDisposition { get; set; } = "not-observed";
         internal int RawReadCount { get; set; }
         internal int MaximumRawReadByteCount { get; set; }
         internal int RawBodyByteCount { get; set; }
+        internal int MaximumSseLineByteCount { get; set; }
+        internal int MaximumSseEventByteCount { get; set; }
         internal string Outcome { get; set; } = "rejected";
         internal string? RejectionCategory { get; set; }
         internal DateTimeOffset StreamStartedAtUtc { get; init; }
         internal DateTimeOffset? FirstDataAtUtc { get; set; }
         internal DateTimeOffset? TerminalAtUtc { get; set; }
         internal int AnswerDeltaCount { get; set; }
-        internal int AnswerDeltaByteCount { get; set; }
+        internal int MaximumAnswerDeltaByteCount { get; set; }
         internal int AssembledAnswerByteCount { get; set; }
         internal int TerminalEventCount { get; set; }
         internal DateTimeOffset OverallDeadlineAtUtc { get; init; }
         internal long? AcceptedAnswerDurationMilliseconds { get; set; }
+
+        private int _currentSseLineByteCount;
+        private int _currentSseEventByteCount;
+        private bool _previousWasCarriageReturn;
+
+        internal void ObserveSseBytes(ReadOnlySpan<byte> bytes)
+        {
+            foreach (byte value in bytes)
+            {
+                if (_previousWasCarriageReturn)
+                {
+                    _previousWasCarriageReturn = false;
+                    if (value == (byte)'\n')
+                    {
+                        continue;
+                    }
+                }
+
+                if (value is (byte)'\r' or (byte)'\n')
+                {
+                    MaximumSseLineByteCount = Math.Max(
+                        MaximumSseLineByteCount,
+                        _currentSseLineByteCount);
+                    _currentSseEventByteCount += _currentSseLineByteCount + 1;
+                    if (_currentSseLineByteCount == 0)
+                    {
+                        MaximumSseEventByteCount = Math.Max(
+                            MaximumSseEventByteCount,
+                            _currentSseEventByteCount);
+                        _currentSseEventByteCount = 0;
+                    }
+
+                    _currentSseLineByteCount = 0;
+                    _previousWasCarriageReturn = value == (byte)'\r';
+                    continue;
+                }
+
+                _currentSseLineByteCount++;
+            }
+        }
     }
 }

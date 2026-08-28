@@ -322,6 +322,26 @@ public sealed class ChatEvidenceCurrentnessTests
     }
 
     [Fact]
+    public async Task ValidateCurrentAsync_SelectedProviderScanRunProfiledRevisionDrift_ReturnsMissingOrStaleAsync()
+    {
+        await using CurrentnessFixture fixture = await CurrentnessFixture.CreateAsync();
+        EvidencePacket packet = await fixture.RetrieveAsync();
+
+        await fixture.CommitSelectedScanRunProfiledRevisionMutationAsync();
+
+        ChatCurrentnessValidationOutcome outcome =
+            await new ChatEvidenceCurrentnessValidator(fixture.Context)
+                .ValidateCurrentAsync(
+                    CurrentnessFixture.CreateValidationRequest(packet),
+                    new RepositoryAccessScope(
+                        fixture.RepositoryIds,
+                        new RecordingAuthorizationVerifier(true, true)));
+
+        Assert.Equal(ChatCurrentnessValidationOutcome.MissingOrStale, outcome);
+        Assert.Null(fixture.Context.Database.CurrentTransaction);
+    }
+
+    [Fact]
     public async Task ValidateCurrentAsync_CrossSystemExactDecisionRow_ReturnsMissingOrStaleAsync()
     {
         await using CurrentnessFixture fixture = await CurrentnessFixture.CreateAsync();
@@ -822,6 +842,9 @@ public sealed class ChatEvidenceCurrentnessTests
 
         internal Task CommitSelectedScanRunStatusMutationAsync() => CommitSqlAsync(
             $"UPDATE \"ScanRuns\" SET \"Status\" = 'Profiling' WHERE \"Id\" = {ExactCrossRepositoryTestValues.ConsumerScanRunId}");
+
+        internal Task CommitSelectedScanRunProfiledRevisionMutationAsync() => CommitSqlAsync(
+            $"UPDATE \"ScanRuns\" SET \"ProfiledRevision\" = {new string('0', 40)} WHERE \"Id\" = {ExactCrossRepositoryTestValues.ProviderScanRunId}");
 
         internal Task CommitSourceAnchorIdentityMutationAsync(string mutation) => mutation switch
         {
