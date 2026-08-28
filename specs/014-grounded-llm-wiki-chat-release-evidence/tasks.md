@@ -150,3 +150,9 @@ description: "Dependency-ordered Story 12.5 implementation tasks"
 - Every incomplete accepted behavior has a public-seam RED before GREEN; existing-correct Track A and characterization behavior is not fabricated as RED.
 - B1–B4 order, deletion inventory, many-decisions-per-Edge authority, decision-owned Published Flow Groups, advisory Context ownership, packet 2.2 binding, deterministic constants, received pre-JSON byte domains, neutral Track B telemetry, and Track C signed attestation are represented.
 - No placeholder task IDs, guessed paths, EF migration, Story 12.4 mutation, vector/autonomous retrieval, fake release evidence, or early Track C execution is authorized.
+
+## Phase 9: Convergence
+
+**Goal**: Close the remaining Track B deadline-propagation proof without changing the accepted streaming architecture or opening Track C.
+
+- [x] T063 [US2] Add fake-clock behavioral RED in `tests/Vulgata.Tests/ChatAgentDispatcherTests.cs` proving that exactly ten seconds without a non-empty decoded data chunk or valid terminal cancels the actual underlying provider stream and returns `TimedOut` with no accepted result, plus exact 2,999/3,000 ms remaining-budget vectors proving syntax repair is refused below and permitted at the accepted threshold; implement the minimal cancellation propagation correction in `src/dotnet/Vulgata.Agents/ChatExecution/ChatAgentDispatcher.cs`, then run focused dispatcher/coordinator/transport regression. Traces to FR-056, FR-057, plan AD-7, and T047 (`partial`). Track C remains closed until this task passes TDD, convergence reruns cleanly, and all remaining Track B gates bind a complete checkpoint.

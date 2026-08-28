@@ -568,6 +568,65 @@ public sealed class ChatAgentDispatcherTests
     }
 
     [Fact]
+    public async Task GenerateAsync_TenSecondsWithoutDecodedDataOrTerminal_CancelsUnderlyingProviderStreamAndTimesOut()
+    {
+        var clock = new ControllableTimeProvider(DateTimeOffset.UnixEpoch);
+        ChatSynthesisRequest request = CreateRequest(
+            ChatMode.Business,
+            DateTimeOffset.UnixEpoch.AddSeconds(29).ToUnixTimeMilliseconds());
+        var provider = new LlmProvider(
+            "chat-model",
+            "https://chat-provider.example.com/v1",
+            "encrypted-chat-key",
+            ApiType.ChatCompletions,
+            AgentType.Chat,
+            DateTimeOffset.UtcNow);
+        var transport = new CancellationTrackingBlockingStreamTransport();
+        var services = new ServiceCollection();
+        services.AddPreparedPass2Agents();
+        services.AddScoped<IChatProviderStreamingTransport>(_ => transport);
+        using ServiceProvider serviceProvider = services.BuildServiceProvider();
+        using IServiceScope scope = serviceProvider.CreateScope();
+        var dispatcher = new ChatAgentDispatcher(
+            scope.ServiceProvider,
+            new ChatAgentProviderResolver(
+                new FakeOverrideRepository(null),
+                new FakeProviderRepository([provider])),
+            new CapturingEncryptionService("plaintext-chat-key"),
+            new ChatPromptCatalog(),
+            new OpenAiCaptureHandler(() => string.Empty),
+            clock);
+        using var cleanup = new CancellationTokenSource();
+
+        Task<ChatSynthesisOutcome> pending = dispatcher.GenerateAsync(request, cleanup.Token);
+        try
+        {
+            await transport.Started.Task.WaitAsync(TimeSpan.FromSeconds(2));
+            clock.Fire(TimeSpan.FromSeconds(10));
+
+            ChatSynthesisOutcome outcome = await pending.WaitAsync(TimeSpan.FromSeconds(2));
+            await transport.CancellationObserved.Task.WaitAsync(TimeSpan.FromSeconds(2));
+
+            Assert.Equal(ChatContractFailureCode.TimedOut, outcome.FailureCode);
+            Assert.Null(outcome.Result);
+            Assert.Null(outcome.RawSelectionJson);
+            Assert.Single(transport.Requests);
+        }
+        finally
+        {
+            cleanup.Cancel();
+            try
+            {
+                _ = await pending.WaitAsync(TimeSpan.FromSeconds(2));
+            }
+            catch (Exception exception) when (
+                exception is OperationCanceledException or TimeoutException)
+            {
+            }
+        }
+    }
+
+    [Fact]
     public async Task GenerateAsync_UnregisteredDirectSseTransport_CannotProduceAcceptedAttempt()
     {
         ChatSynthesisRequest request = CreateRequest(ChatMode.Business);
@@ -676,6 +735,84 @@ public sealed class ChatAgentDispatcherTests
     }
 
     [Fact]
+    public async Task GenerateAsync_SyntaxRepairWith2999MillisecondsRemaining_RefusesSecondStreamedAttempt()
+    {
+        var clock = new ControllableTimeProvider(DateTimeOffset.UnixEpoch);
+        ChatSynthesisRequest request = CreateRequest(ChatMode.Business, 2_999);
+        var provider = new LlmProvider(
+            "chat-model",
+            "https://chat-provider.example.com/v1",
+            "encrypted-chat-key",
+            ApiType.ChatCompletions,
+            AgentType.Chat,
+            DateTimeOffset.UtcNow);
+        var transport = new RecordingStreamTransport(["{not-valid-json"]);
+        var services = new ServiceCollection();
+        services.AddPreparedPass2Agents();
+        services.AddScoped<IChatProviderStreamingTransport>(_ => transport);
+        using ServiceProvider serviceProvider = services.BuildServiceProvider();
+        using IServiceScope scope = serviceProvider.CreateScope();
+        var dispatcher = new ChatAgentDispatcher(
+            scope.ServiceProvider,
+            new ChatAgentProviderResolver(
+                new FakeOverrideRepository(null),
+                new FakeProviderRepository([provider])),
+            new CapturingEncryptionService("plaintext-chat-key"),
+            new ChatPromptCatalog(),
+            new OpenAiCaptureHandler(() => string.Empty),
+            clock);
+
+        ChatSynthesisOutcome outcome = await dispatcher.GenerateAsync(request);
+
+        Assert.Equal(ChatContractFailureCode.InvalidSelection, outcome.FailureCode);
+        Assert.Null(outcome.Result);
+        Assert.Null(outcome.RawSelectionJson);
+        Assert.Equal("primary", Assert.Single(transport.Requests).AttemptKind);
+        Assert.DoesNotContain(
+            transport.ValidationDispositions,
+            item => item.Disposition == ChatStreamValidationDisposition.SyntaxRepairRequired);
+    }
+
+    [Fact]
+    public async Task GenerateAsync_SyntaxRepairWith3000MillisecondsRemaining_PermitsExactlyOneStreamedRepair()
+    {
+        var clock = new ControllableTimeProvider(DateTimeOffset.UnixEpoch);
+        ChatSynthesisRequest request = CreateRequest(ChatMode.Business, 3_000);
+        string validSelection = CreateRawSelectionJson(request);
+        var provider = new LlmProvider(
+            "chat-model",
+            "https://chat-provider.example.com/v1",
+            "encrypted-chat-key",
+            ApiType.ChatCompletions,
+            AgentType.Chat,
+            DateTimeOffset.UtcNow);
+        var transport = new RecordingStreamTransport(["{not-valid-json", validSelection]);
+        var services = new ServiceCollection();
+        services.AddPreparedPass2Agents();
+        services.AddScoped<IChatProviderStreamingTransport>(_ => transport);
+        using ServiceProvider serviceProvider = services.BuildServiceProvider();
+        using IServiceScope scope = serviceProvider.CreateScope();
+        var dispatcher = new ChatAgentDispatcher(
+            scope.ServiceProvider,
+            new ChatAgentProviderResolver(
+                new FakeOverrideRepository(null),
+                new FakeProviderRepository([provider])),
+            new CapturingEncryptionService("plaintext-chat-key"),
+            new ChatPromptCatalog(),
+            new OpenAiCaptureHandler(() => string.Empty),
+            clock);
+
+        ChatSynthesisOutcome outcome = await dispatcher.GenerateAsync(request);
+
+        Assert.Null(outcome.FailureCode);
+        Assert.NotNull(outcome.Result);
+        Assert.Equal(["primary", "syntax-repair"], transport.Requests.Select(item => item.AttemptKind));
+        Assert.Equal(
+            (request.RequestId, ChatStreamValidationDisposition.SyntaxRepairRequired),
+            Assert.Single(transport.ValidationDispositions));
+    }
+
+    [Fact]
     public async Task GenerateAsync_PrimarySyntaxFailureThenRepairSyntaxFailure_RecordsAttemptLifecycleInOrder()
     {
         ChatSynthesisRequest request = CreateRequest(ChatMode.Business);
@@ -754,7 +891,9 @@ public sealed class ChatAgentDispatcherTests
         Assert.Equal(1, handler.CallCount);
     }
 
-    private static ChatSynthesisRequest CreateRequest(ChatMode mode)
+    private static ChatSynthesisRequest CreateRequest(
+        ChatMode mode,
+        long absoluteDeadlineUnixTimeMilliseconds = long.MaxValue)
     {
         string fingerprint = new('a', 64);
         CandidateClaim candidate = CandidateClaim.Create(
@@ -773,7 +912,8 @@ public sealed class ChatAgentDispatcherTests
             Guid.NewGuid(),
             "客户如何完成付款？",
             fingerprint,
-            [candidate]);
+            [candidate],
+            absoluteDeadlineUnixTimeMilliseconds);
     }
 
     private static string CreateRawSelectionJson(ChatSynthesisRequest request) => $$"""
@@ -1037,6 +1177,35 @@ public sealed class ChatAgentDispatcherTests
         }
     }
 
+    private sealed class CancellationTrackingBlockingStreamTransport :
+        IChatProviderStreamingTransport
+    {
+        public TaskCompletionSource Started { get; } = new(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+        public TaskCompletionSource CancellationObserved { get; } = new(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+        public List<ChatProviderStreamRequest> Requests { get; } = [];
+
+        public async IAsyncEnumerable<ChatProviderStreamSignal> StreamAsync(
+            ChatProviderStreamRequest request,
+            [EnumeratorCancellation] CancellationToken cancellationToken)
+        {
+            Requests.Add(request);
+            Started.TrySetResult();
+            try
+            {
+                await Task.Delay(Timeout.InfiniteTimeSpan, cancellationToken);
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                CancellationObserved.TrySetResult();
+                throw;
+            }
+
+            yield break;
+        }
+    }
+
     private static string CreateSseResponse(string answer)
     {
         string json = JsonSerializer.Serialize(new
@@ -1087,6 +1256,82 @@ public sealed class ChatAgentDispatcherTests
             }
 
             public ValueTask DisposeAsync() => ValueTask.CompletedTask;
+        }
+    }
+
+    private sealed class ControllableTimeProvider(DateTimeOffset utcNow) : TimeProvider
+    {
+        private readonly object _gate = new();
+        private readonly List<ControllableTimer> _timers = [];
+
+        public override DateTimeOffset GetUtcNow() => utcNow;
+
+        public override ITimer CreateTimer(
+            TimerCallback callback,
+            object? state,
+            TimeSpan dueTime,
+            TimeSpan period)
+        {
+            var timer = new ControllableTimer(callback, state, dueTime, period);
+            lock (_gate)
+            {
+                _timers.Add(timer);
+            }
+
+            return timer;
+        }
+
+        public void Fire(TimeSpan dueTime)
+        {
+            ControllableTimer timer;
+            lock (_gate)
+            {
+                timer = _timers.LastOrDefault(candidate =>
+                    !candidate.IsDisposed && candidate.DueTime == dueTime) ??
+                    throw new InvalidOperationException(
+                        $"No active timer exists for due time {dueTime}.");
+            }
+
+            timer.Fire();
+        }
+
+        private sealed class ControllableTimer(
+            TimerCallback callback,
+            object? state,
+            TimeSpan dueTime,
+            TimeSpan period) : ITimer
+        {
+            public TimeSpan DueTime { get; private set; } = dueTime;
+            public TimeSpan Period { get; private set; } = period;
+            public bool IsDisposed { get; private set; }
+
+            public bool Change(TimeSpan updatedDueTime, TimeSpan updatedPeriod)
+            {
+                if (IsDisposed)
+                {
+                    return false;
+                }
+
+                DueTime = updatedDueTime;
+                Period = updatedPeriod;
+                return true;
+            }
+
+            public void Fire()
+            {
+                if (!IsDisposed)
+                {
+                    callback(state);
+                }
+            }
+
+            public void Dispose() => IsDisposed = true;
+
+            public ValueTask DisposeAsync()
+            {
+                Dispose();
+                return ValueTask.CompletedTask;
+            }
         }
     }
 }

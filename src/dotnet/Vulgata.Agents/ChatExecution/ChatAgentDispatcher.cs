@@ -245,40 +245,25 @@ public sealed class ChatAgentDispatcher :
         using var linked = CancellationTokenSource.CreateLinkedTokenSource(
             cancellationToken,
             deadline.Token);
+        bool enforceInactivity = transport is not DirectConstructionStreamingTransport;
+        using var inactivity = enforceInactivity
+            ? new CancellationTokenSource(_streamInactivityTimeout, _timeProvider)
+            : null;
+        using var streamLifetime = inactivity is null
+            ? null
+            : CancellationTokenSource.CreateLinkedTokenSource(
+                linked.Token,
+                inactivity.Token);
+        CancellationToken streamToken = streamLifetime?.Token ?? linked.Token;
         var answer = new MemoryStream();
         try
         {
             await using IAsyncEnumerator<ChatProviderStreamSignal> signals = transport
-                .StreamAsync(streamRequest, linked.Token)
-                .GetAsyncEnumerator(linked.Token);
-            bool enforceInactivity = transport is not DirectConstructionStreamingTransport;
+                .StreamAsync(streamRequest, streamToken)
+                .GetAsyncEnumerator(streamToken);
             while (true)
             {
-                bool hasNext;
-                if (enforceInactivity)
-                {
-                    using var inactivity = new CancellationTokenSource(
-                        _streamInactivityTimeout,
-                        _timeProvider);
-                    using var moveNext = CancellationTokenSource.CreateLinkedTokenSource(
-                        linked.Token,
-                        inactivity.Token);
-                    try
-                    {
-                        hasNext = await signals.MoveNextAsync().AsTask()
-                            .WaitAsync(moveNext.Token);
-                    }
-                    catch (OperationCanceledException) when (
-                        inactivity.IsCancellationRequested && !linked.IsCancellationRequested)
-                    {
-                        return ChatSynthesisOutcome.Failed(ChatContractFailureCode.TimedOut);
-                    }
-                }
-                else
-                {
-                    hasNext = await signals.MoveNextAsync().AsTask()
-                        .WaitAsync(linked.Token);
-                }
+                bool hasNext = await signals.MoveNextAsync();
 
                 if (!hasNext)
                 {
@@ -303,7 +288,14 @@ public sealed class ChatAgentDispatcher :
                 }
 
                 await answer.WriteAsync(signal.AnswerDelta, linked.Token);
+                inactivity?.CancelAfter(_streamInactivityTimeout);
             }
+        }
+        catch (OperationCanceledException) when (
+            inactivity?.IsCancellationRequested == true &&
+            !linked.IsCancellationRequested)
+        {
+            return ChatSynthesisOutcome.Failed(ChatContractFailureCode.TimedOut);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
