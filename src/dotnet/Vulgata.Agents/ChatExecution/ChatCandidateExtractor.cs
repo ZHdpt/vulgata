@@ -116,7 +116,7 @@ public sealed class ChatCandidateExtractor
 
             EvidenceRelationship[] matchingRelationships = packet.Relationships
                 .Where(relationship =>
-                    IsSupportedRelationship(relationship) &&
+                    IsSupportedRelationship(relationship, documents) &&
                     relationship.SourceDocumentHandle == section.DocumentHandle &&
                     relationship.TargetDocumentHandle == supportingDocumentHandle)
                 .OrderBy(relationship => relationship.RelationshipHandle, StringComparer.Ordinal)
@@ -137,10 +137,23 @@ public sealed class ChatCandidateExtractor
         return true;
     }
 
-    private static bool IsSupportedRelationship(EvidenceRelationship relationship) =>
-        relationship.RelationshipType != ChatRelationshipType.References ||
-        (relationship.ProfileFingerprint is { Length: 64 } fingerprint &&
-            fingerprint.All(character => character is >= '0' and <= '9' or >= 'a' and <= 'f'));
+    private static bool IsSupportedRelationship(
+        EvidenceRelationship relationship,
+        IReadOnlyDictionary<string, EvidenceDocument> documents)
+    {
+        if (relationship.RelationshipType != ChatRelationshipType.References ||
+            !documents.TryGetValue(relationship.SourceDocumentHandle, out EvidenceDocument? source) ||
+            !documents.TryGetValue(relationship.TargetDocumentHandle, out EvidenceDocument? target) ||
+            source.RepositoryId == target.RepositoryId)
+        {
+            return true;
+        }
+
+        return relationship.ExactDecisionId is not null &&
+            relationship.ExactDecisionCount > 0 &&
+            relationship.ExactDecisionSetFingerprint is { Length: 64 } fingerprint &&
+            fingerprint.All(character => character is >= '0' and <= '9' or >= 'a' and <= 'f');
+    }
 
     private static IEnumerable<TextSpan> ExtractTextSpans(
         string markdown,

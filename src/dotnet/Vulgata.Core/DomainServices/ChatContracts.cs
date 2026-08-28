@@ -218,6 +218,37 @@ public sealed record EvidenceRelationship(
 {
     public string RelationshipIdentity { get; init; } = EdgeId.ToString("D", CultureInfo.InvariantCulture);
 
+    public int ExactDecisionCount { get; init; }
+
+    public string? ExactDecisionSetFingerprint { get; init; }
+
+    public EvidenceRelationship(
+        string relationshipHandle,
+        Guid edgeId,
+        ChatRelationshipType relationshipType,
+        string sourceDocumentHandle,
+        string targetDocumentHandle,
+        int depth,
+        Guid? exactDecisionId,
+        int exactDecisionCount,
+        string? exactDecisionSetFingerprint,
+        Guid? flowGroupId,
+        string? profileFingerprint)
+        : this(
+            relationshipHandle,
+            edgeId,
+            relationshipType,
+            sourceDocumentHandle,
+            targetDocumentHandle,
+            depth,
+            exactDecisionId,
+            flowGroupId,
+            profileFingerprint)
+    {
+        ExactDecisionCount = exactDecisionCount;
+        ExactDecisionSetFingerprint = exactDecisionSetFingerprint;
+    }
+
     public EvidenceRelationship(
         string relationshipHandle,
         string relationshipIdentity,
@@ -275,6 +306,205 @@ public sealed record EvidenceFlowGroupAuthority(
     Guid FlowTraceId,
     int FlowTraceOrder,
     IReadOnlyList<EvidenceFlowStepAuthority> Steps);
+
+public sealed record AuthorizedChatSnapshot
+{
+    private AuthorizedChatSnapshot(
+        AuthorizedChatScope scope,
+        ChatAdvisoryContextSnapshot advisoryContext,
+        IReadOnlyList<EvidenceDocument> documents,
+        IReadOnlyList<EvidenceSection> sections,
+        IReadOnlyList<EvidenceAnchor> sourceAnchors,
+        ChatConversationState conversation)
+    {
+        Scope = scope;
+        AdvisoryContext = advisoryContext;
+        Documents = documents;
+        Sections = sections;
+        SourceAnchors = sourceAnchors;
+        Conversation = conversation;
+    }
+
+    public AuthorizedChatScope Scope { get; }
+    public ChatAdvisoryContextSnapshot AdvisoryContext { get; }
+    public IReadOnlyList<EvidenceDocument> Documents { get; }
+    public IReadOnlyList<EvidenceSection> Sections { get; }
+    public IReadOnlyList<EvidenceAnchor> SourceAnchors { get; }
+    public ChatConversationState Conversation { get; }
+
+    public static AuthorizedChatSnapshot Create(
+        AuthorizedChatScope scope,
+        ChatAdvisoryContextSnapshot advisoryContext,
+        IReadOnlyCollection<EvidenceDocument> documents,
+        IReadOnlyCollection<EvidenceSection> sections,
+        IReadOnlyCollection<EvidenceAnchor> sourceAnchors,
+        ChatConversationState conversation)
+    {
+        ArgumentNullException.ThrowIfNull(scope);
+        ArgumentNullException.ThrowIfNull(advisoryContext);
+        ArgumentNullException.ThrowIfNull(documents);
+        ArgumentNullException.ThrowIfNull(sections);
+        ArgumentNullException.ThrowIfNull(sourceAnchors);
+        ArgumentNullException.ThrowIfNull(conversation);
+
+        Guid[] repositoryIds = scope.RepositoryIds.Order().ToArray();
+        if (scope.SystemId == Guid.Empty ||
+            repositoryIds.Length != 2 ||
+            repositoryIds.Any(id => id == Guid.Empty || !scope.AccessScope.Contains(id)) ||
+            repositoryIds[0] == repositoryIds[1] ||
+            !conversation.Scope.Equals(ChatConversationScope.Create(
+                conversation.Scope.Mode,
+                scope.SystemId,
+                repositoryIds)) ||
+            advisoryContext.EncodedUtf8Bytes is < 0 or > 8_192 ||
+            !ChatContractGuard.IsSha256(advisoryContext.AuthorityFingerprint))
+        {
+            throw new ChatContractException(ChatContractFailureCode.InvalidCurrentness);
+        }
+
+        return new AuthorizedChatSnapshot(
+            new AuthorizedChatScope(
+                scope.SystemId,
+                Array.AsReadOnly(repositoryIds),
+                scope.AccessScope),
+            advisoryContext,
+            Array.AsReadOnly(documents.ToArray()),
+            Array.AsReadOnly(sections.ToArray()),
+            Array.AsReadOnly(sourceAnchors.ToArray()),
+            conversation);
+    }
+}
+
+public sealed record ChatLexicalPrimaryProjection
+{
+    private ChatLexicalPrimaryProjection(
+        IReadOnlyList<EvidenceDocument> primaryDocuments,
+        IReadOnlyList<EvidenceSection> primarySections,
+        IReadOnlyList<EvidenceAnchor> primarySourceAnchors,
+        IReadOnlyList<Guid> expansionSeedDocumentVersionIds,
+        string primaryBindingFingerprint)
+    {
+        PrimaryDocuments = primaryDocuments;
+        PrimarySections = primarySections;
+        PrimarySourceAnchors = primarySourceAnchors;
+        ExpansionSeedDocumentVersionIds = expansionSeedDocumentVersionIds;
+        PrimaryBindingFingerprint = primaryBindingFingerprint;
+    }
+
+    public IReadOnlyList<EvidenceDocument> PrimaryDocuments { get; }
+    public IReadOnlyList<EvidenceSection> PrimarySections { get; }
+    public IReadOnlyList<EvidenceAnchor> PrimarySourceAnchors { get; }
+    public IReadOnlyList<Guid> ExpansionSeedDocumentVersionIds { get; }
+    public string PrimaryBindingFingerprint { get; }
+
+    public static ChatLexicalPrimaryProjection Create(
+        IReadOnlyCollection<EvidenceDocument> primaryDocuments,
+        IReadOnlyCollection<EvidenceSection> primarySections,
+        IReadOnlyCollection<EvidenceAnchor> primarySourceAnchors,
+        string primaryBindingFingerprint)
+    {
+        ArgumentNullException.ThrowIfNull(primaryDocuments);
+        ArgumentNullException.ThrowIfNull(primarySections);
+        ArgumentNullException.ThrowIfNull(primarySourceAnchors);
+
+        EvidenceDocument[] documents = primaryDocuments.ToArray();
+        EvidenceSection[] sections = primarySections.ToArray();
+        EvidenceAnchor[] anchors = primarySourceAnchors.ToArray();
+        HashSet<string> documentHandles = documents
+            .Select(document => document.DocumentHandle)
+            .ToHashSet(StringComparer.Ordinal);
+        if (documents.Length is < 1 or > 5 ||
+            sections.Length is < 1 or > 12 ||
+            sections.Any(section => !documentHandles.Contains(section.DocumentHandle)) ||
+            sections.GroupBy(section => section.DocumentHandle, StringComparer.Ordinal)
+                .Any(group => group.Count() > 4) ||
+            !ChatContractGuard.IsSha256(primaryBindingFingerprint))
+        {
+            throw new ChatContractException(ChatContractFailureCode.InvalidSelection);
+        }
+
+        Guid[] seeds = documents
+            .Take(Math.Min(3, documents.Length))
+            .Select(document => document.DocumentVersionId)
+            .ToArray();
+        return new ChatLexicalPrimaryProjection(
+            Array.AsReadOnly(documents),
+            Array.AsReadOnly(sections),
+            Array.AsReadOnly(anchors),
+            Array.AsReadOnly(seeds),
+            primaryBindingFingerprint);
+    }
+}
+
+public sealed record ChatRelationshipExpansionProjection
+{
+    private ChatRelationshipExpansionProjection(
+        string primaryBindingFingerprint,
+        IReadOnlyList<EvidenceDocument> addedDocuments,
+        IReadOnlyList<EvidenceSection> supportSections,
+        IReadOnlyList<EvidenceAnchor> supportSourceAnchors,
+        IReadOnlyList<EvidenceRelationship> relationships,
+        IReadOnlyList<EvidenceFlowStep> flowEvidence,
+        IReadOnlyList<EvidenceFlowGroupAuthority> flowGroups)
+    {
+        PrimaryBindingFingerprint = primaryBindingFingerprint;
+        AddedDocuments = addedDocuments;
+        SupportSections = supportSections;
+        SupportSourceAnchors = supportSourceAnchors;
+        Relationships = relationships;
+        FlowEvidence = flowEvidence;
+        FlowGroups = flowGroups;
+    }
+
+    public string PrimaryBindingFingerprint { get; }
+    public IReadOnlyList<EvidenceDocument> AddedDocuments { get; }
+    public IReadOnlyList<EvidenceSection> SupportSections { get; }
+    public IReadOnlyList<EvidenceAnchor> SupportSourceAnchors { get; }
+    public IReadOnlyList<EvidenceRelationship> Relationships { get; }
+    public IReadOnlyList<EvidenceFlowStep> FlowEvidence { get; }
+    public IReadOnlyList<EvidenceFlowGroupAuthority> FlowGroups { get; }
+
+    public static ChatRelationshipExpansionProjection Create(
+        ChatLexicalPrimaryProjection primary,
+        IReadOnlyCollection<EvidenceDocument> addedDocuments,
+        IReadOnlyCollection<EvidenceSection> supportSections,
+        IReadOnlyCollection<EvidenceAnchor> supportSourceAnchors,
+        IReadOnlyCollection<EvidenceRelationship> relationships,
+        IReadOnlyCollection<EvidenceFlowStep> flowEvidence,
+        IReadOnlyCollection<EvidenceFlowGroupAuthority> flowGroups)
+    {
+        ArgumentNullException.ThrowIfNull(primary);
+        ArgumentNullException.ThrowIfNull(addedDocuments);
+        ArgumentNullException.ThrowIfNull(supportSections);
+        ArgumentNullException.ThrowIfNull(supportSourceAnchors);
+        ArgumentNullException.ThrowIfNull(relationships);
+        ArgumentNullException.ThrowIfNull(flowEvidence);
+        ArgumentNullException.ThrowIfNull(flowGroups);
+
+        EvidenceDocument[] documents = addedDocuments.ToArray();
+        EvidenceRelationship[] relationshipSnapshot = relationships.ToArray();
+        EvidenceFlowStep[] flowSnapshot = flowEvidence.ToArray();
+        EvidenceFlowGroupAuthority[] groupSnapshot = flowGroups.ToArray();
+        if (primary.PrimaryDocuments.Count + documents.Length > 5 ||
+            relationshipSnapshot.Length > 32 ||
+            flowSnapshot.Length > 12 ||
+            groupSnapshot.Length > 10)
+        {
+            throw new ChatContractException(ChatContractFailureCode.InvalidSelection);
+        }
+
+        return new ChatRelationshipExpansionProjection(
+            primary.PrimaryBindingFingerprint,
+            Array.AsReadOnly(documents),
+            Array.AsReadOnly(supportSections.ToArray()),
+            Array.AsReadOnly(supportSourceAnchors.ToArray()),
+            Array.AsReadOnly(relationshipSnapshot),
+            Array.AsReadOnly(flowSnapshot),
+            Array.AsReadOnly(groupSnapshot));
+    }
+}
+
+public sealed record ChatEvidenceAssembly(ChatEvidencePacketBuildRequest BuildRequest);
 
 public sealed record ChatEvidencePacketBuildRequest
 {
@@ -546,6 +776,8 @@ public sealed record EvidencePacket
                 relationship.TargetDocumentHandle,
                 relationship.Depth,
                 relationship.ExactDecisionId,
+                relationship.ExactDecisionCount,
+                relationship.ExactDecisionSetFingerprint,
                 relationship.FlowGroupId,
             }),
             flowEvidence = canonicalFlow.Select(step => new
@@ -680,6 +912,9 @@ public sealed record EvidencePacket
                 relationship.SourceDocumentHandle == relationship.TargetDocumentHandle ||
                 relationship.Depth is < 0 or > 1 ||
                 relationship.ExactDecisionId == Guid.Empty ||
+                relationship.ExactDecisionCount < 0 ||
+                relationship.ExactDecisionSetFingerprint is not null &&
+                !ChatContractGuard.IsSha256(relationship.ExactDecisionSetFingerprint) ||
                 relationship.FlowGroupId == Guid.Empty ||
                 relationship.ProfileFingerprint is not null &&
                 !ChatContractGuard.IsSha256(relationship.ProfileFingerprint)) ||
@@ -760,6 +995,8 @@ public sealed class EvidencePacketJsonConverter : JsonConverter<EvidencePacket>
             targetDocumentHandle = relationship.TargetDocumentHandle,
             depth = relationship.Depth,
             exactDecisionId = relationship.ExactDecisionId,
+            exactDecisionCount = relationship.ExactDecisionCount,
+            exactDecisionSetFingerprint = relationship.ExactDecisionSetFingerprint,
             flowGroupId = relationship.FlowGroupId,
         }), options);
         WriteValue(writer, "flowSteps", value.FlowEvidence.Select(step => new
@@ -1321,7 +1558,41 @@ public sealed record ChatCurrentRelationship(
     int Depth,
     Guid? ExactDecisionId,
     Guid? FlowGroupId,
-    string? ProfileFingerprint);
+    string? ProfileFingerprint)
+{
+    public int ExactDecisionCount { get; init; }
+
+    public string? ExactDecisionSetFingerprint { get; init; }
+
+    public ChatCurrentRelationship(
+        Guid edgeId,
+        ChatRelationshipType relationshipType,
+        Guid sourceDocumentVersionId,
+        Guid targetDocumentVersionId,
+        Guid sourceRepositoryId,
+        Guid targetRepositoryId,
+        int depth,
+        Guid? exactDecisionId,
+        int exactDecisionCount,
+        string? exactDecisionSetFingerprint,
+        Guid? flowGroupId,
+        string? profileFingerprint)
+        : this(
+            edgeId,
+            relationshipType,
+            sourceDocumentVersionId,
+            targetDocumentVersionId,
+            sourceRepositoryId,
+            targetRepositoryId,
+            depth,
+            exactDecisionId,
+            flowGroupId,
+            profileFingerprint)
+    {
+        ExactDecisionCount = exactDecisionCount;
+        ExactDecisionSetFingerprint = exactDecisionSetFingerprint;
+    }
+}
 
 public sealed record ChatCurrentnessValidationRequest
 {
@@ -1453,9 +1724,20 @@ public sealed record ChatCurrentnessValidationRequest
                 relationship.Depth is < 0 or > 1 ||
                 relationship.RelationshipType == ChatRelationshipType.References &&
                     relationship.SourceRepositoryId != relationship.TargetRepositoryId &&
-                    relationship.ExactDecisionId is null ||
+                    (relationship.ExactDecisionId is null ||
+                     relationship.ExactDecisionCount < 0 ||
+                     relationship.ExactDecisionCount == 0 &&
+                         relationship.ExactDecisionSetFingerprint is not null ||
+                     relationship.ExactDecisionCount > 0 &&
+                         !ChatContractGuard.IsSha256(relationship.ExactDecisionSetFingerprint!)) ||
+                relationship.SourceRepositoryId == relationship.TargetRepositoryId &&
+                    (relationship.ExactDecisionId is not null ||
+                     relationship.ExactDecisionCount != 0 ||
+                     relationship.ExactDecisionSetFingerprint is not null) ||
                 relationship.RelationshipType == ChatRelationshipType.GeneratedFrom &&
-                    relationship.ExactDecisionId is not null ||
+                    (relationship.ExactDecisionId is not null ||
+                     relationship.ExactDecisionCount != 0 ||
+                     relationship.ExactDecisionSetFingerprint is not null) ||
                 relationship.FlowGroupId is Guid flowGroupId &&
                     !canonicalFlowGroups.Any(group =>
                         group.FlowGroupId == flowGroupId &&

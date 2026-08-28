@@ -147,6 +147,27 @@ public sealed class ChatCandidateRankerTests
         Assert.Empty(ranked);
     }
 
+    [Fact]
+    public void Rank_ProviderCandidateRanking_RemainsCountBoundedAndSeparateFromSectionRetrieval()
+    {
+        CandidateClaim[] candidates = Enumerable.Range(1, 13)
+            .Select(index => CandidateWithIdentity(
+                $"k{index:D2}",
+                index,
+                index,
+                "订单接口说明。",
+                true))
+            .ToArray();
+
+        IReadOnlyList<CandidateClaim> ranked = ChatCandidateRanker.Rank(
+            "订单接口说明",
+            ChatMode.It,
+            candidates);
+
+        Assert.Equal(12, ranked.Count);
+        Assert.DoesNotContain(ranked, candidate => candidate.CandidateHandle == "k13");
+    }
+
     [Theory]
     [InlineData("移动端消费方和渠道提供方在会话更新中各自负责什么？", "k1")]
     [InlineData("认证错误次数检查操作类负责什么？", "k2")]

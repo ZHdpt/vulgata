@@ -68,6 +68,7 @@ public sealed class PreparedChatCoordinatorTests
             new StubSystemRepository([system]),
             new StubRepositoryRepository([first, second]),
             new StubAuthorizationVerifier(),
+            new CanonicalEmptyAdvisoryContextReader(),
             new StubEvidenceRetriever(),
             candidateExtractor,
             new StubDispatcher(),
@@ -109,6 +110,7 @@ public sealed class PreparedChatCoordinatorTests
             new StubRepositoryRepository(
                 [preparedConsumer, preparedProvider, decoyConsumer, decoyProvider]),
             new StubAuthorizationVerifier(),
+            new CanonicalEmptyAdvisoryContextReader(),
             new StubEvidenceRetriever(),
             candidateExtractor,
             new StubDispatcher(),
@@ -143,6 +145,7 @@ public sealed class PreparedChatCoordinatorTests
             new StubSystemRepository([system]),
             new StubRepositoryRepository([first, second]),
             authorization,
+            new CanonicalEmptyAdvisoryContextReader(),
             retriever,
             candidateExtractor,
             dispatcher,
@@ -246,6 +249,7 @@ public sealed class PreparedChatCoordinatorTests
             new StubSystemRepository([system]),
             new StubRepositoryRepository([first, second]),
             new StubAuthorizationVerifier(),
+            new CanonicalEmptyAdvisoryContextReader(),
             retriever,
             candidateExtractor,
             dispatcher,
@@ -384,6 +388,7 @@ public sealed class PreparedChatCoordinatorTests
             new StubSystemRepository([system]),
             new StubRepositoryRepository([first, second]),
             authorization,
+            new CanonicalEmptyAdvisoryContextReader(),
             new StubEvidenceRetriever(),
             candidateExtractor,
             dispatcher,
@@ -424,6 +429,7 @@ public sealed class PreparedChatCoordinatorTests
             new StubSystemRepository([system]),
             new StubRepositoryRepository([first, second]),
             new StubAuthorizationVerifier(),
+            new CanonicalEmptyAdvisoryContextReader(),
             new StubEvidenceRetriever(),
             candidateExtractor,
             dispatcher,
@@ -465,6 +471,7 @@ public sealed class PreparedChatCoordinatorTests
             new StubSystemRepository([system]),
             new StubRepositoryRepository([first, second]),
             new StubAuthorizationVerifier(),
+            new CanonicalEmptyAdvisoryContextReader(),
             new StubEvidenceRetriever(),
             candidateExtractor,
             dispatcher,
@@ -531,6 +538,7 @@ public sealed class PreparedChatCoordinatorTests
             new StubSystemRepository([system]),
             new StubRepositoryRepository([first, second]),
             new StubAuthorizationVerifier(),
+            new CanonicalEmptyAdvisoryContextReader(),
             new StubEvidenceRetriever(),
             candidateExtractor,
             dispatcher,
@@ -629,6 +637,7 @@ public sealed class PreparedChatCoordinatorTests
             new StubSystemRepository([system]),
             new StubRepositoryRepository([first, second]),
             authorization,
+            new CanonicalEmptyAdvisoryContextReader(),
             new StubEvidenceRetriever(),
             candidateExtractor,
             dispatcher,
@@ -669,6 +678,7 @@ public sealed class PreparedChatCoordinatorTests
             new StubSystemRepository([system]),
             new StubRepositoryRepository([first, second]),
             authorization,
+            new CanonicalEmptyAdvisoryContextReader(),
             retriever,
             candidateExtractor,
             dispatcher,
@@ -700,6 +710,69 @@ public sealed class PreparedChatCoordinatorTests
         DocumentCitation citation = Assert.Single(answer.DocumentCitations);
         Assert.Equal([citation.CitationId], claim.CitationIds);
         Assert.Equal("src/PaymentFlow.cs", citation.RepositoryRelativePath);
+    }
+
+    [Fact]
+    public async Task AskAsync_AuthorizedScope_ReadsServerOwnedAdvisoryBeforeEvidenceRetrieval()
+    {
+        var trace = new List<string>();
+        var system = new SystemEntity("支付系统", null, null, DateTimeOffset.UtcNow);
+        Repository first = system.AddRepository("账户仓库", "https://example.test/account.git", null, null, DateTimeOffset.UtcNow);
+        Repository second = system.AddRepository("渠道仓库", "https://example.test/channel.git", null, null, DateTimeOffset.UtcNow);
+        var authorization = new StubAuthorizationVerifier { Trace = trace };
+        var retriever = new StubEvidenceRetriever { Trace = trace };
+        var advisoryReader = new CanonicalEmptyAdvisoryContextReader { Trace = trace };
+        var coordinator = CreateCoordinator(
+            system,
+            [first, second],
+            authorization,
+            retriever,
+            currentness: new StubCurrentnessValidator(),
+            advisoryReader: advisoryReader);
+
+        PreparedChatResult result = await coordinator.AskAsync(
+            ChatMode.Business,
+            system.Id,
+            [first.Id, second.Id],
+            "客户如何付款？");
+
+        Assert.Equal(PreparedChatResultKind.Succeeded, result.Kind);
+        Assert.Equal(1, advisoryReader.CallCount);
+        Assert.Equal(1, retriever.CallCount);
+        Assert.True(trace.IndexOf("pre-authorization") < trace.IndexOf("advisory"));
+        Assert.True(trace.IndexOf("advisory") < trace.IndexOf("retrieval"));
+    }
+
+    [Theory]
+    [InlineData(ChatAdvisoryContextReadResultKind.NotFoundOrUnauthorized, PreparedChatResultKind.MissingOrUnauthorized)]
+    [InlineData(ChatAdvisoryContextReadResultKind.InconsistentCurrentEvidence, PreparedChatResultKind.EvidenceUnavailable)]
+    public async Task AskAsync_AdvisoryFailure_StopsBeforeEvidenceRetrieval(
+        ChatAdvisoryContextReadResultKind advisoryResultKind,
+        PreparedChatResultKind expectedResultKind)
+    {
+        var system = new SystemEntity("支付系统", null, null, DateTimeOffset.UtcNow);
+        Repository first = system.AddRepository("账户仓库", "https://example.test/account.git", null, null, DateTimeOffset.UtcNow);
+        Repository second = system.AddRepository("渠道仓库", "https://example.test/channel.git", null, null, DateTimeOffset.UtcNow);
+        var retriever = new StubEvidenceRetriever();
+        var advisoryReader = new CanonicalEmptyAdvisoryContextReader
+        {
+            ResultKind = advisoryResultKind,
+        };
+        var coordinator = CreateCoordinator(
+            system,
+            [first, second],
+            retriever: retriever,
+            advisoryReader: advisoryReader);
+
+        PreparedChatResult result = await coordinator.AskAsync(
+            ChatMode.Business,
+            system.Id,
+            [first.Id, second.Id],
+            "客户如何付款？");
+
+        Assert.Equal(expectedResultKind, result.Kind);
+        Assert.Equal(1, advisoryReader.CallCount);
+        Assert.Equal(0, retriever.CallCount);
     }
 
     [Fact]
@@ -851,6 +924,7 @@ public sealed class PreparedChatCoordinatorTests
             new StubSystemRepository([system]),
             new StubRepositoryRepository([first, second]),
             authorization,
+            new CanonicalEmptyAdvisoryContextReader(),
             retriever,
             candidateExtractor,
             dispatcher,
@@ -894,6 +968,7 @@ public sealed class PreparedChatCoordinatorTests
             new StubSystemRepository([system]),
             new StubRepositoryRepository([first, second]),
             authorization,
+            new CanonicalEmptyAdvisoryContextReader(),
             retriever,
             candidateExtractor,
             dispatcher,
@@ -944,6 +1019,7 @@ public sealed class PreparedChatCoordinatorTests
             new StubSystemRepository([selectedSystem]),
             new StubRepositoryRepository([selectedRepository, otherRepository]),
             authorization,
+            new CanonicalEmptyAdvisoryContextReader(),
             retriever,
             candidateExtractor,
             dispatcher,
@@ -984,6 +1060,7 @@ public sealed class PreparedChatCoordinatorTests
             new StubSystemRepository([firstSystem, secondSystem]),
             new StubRepositoryRepository([firstA, firstB, secondA, secondB]),
             new StubAuthorizationVerifier(),
+            new CanonicalEmptyAdvisoryContextReader(),
             new StubEvidenceRetriever(),
             candidateExtractor,
             dispatcher,
@@ -1020,7 +1097,8 @@ public sealed class PreparedChatCoordinatorTests
         StubAuthorizationVerifier? authorization = null,
         StubEvidenceRetriever? retriever = null,
         IChatAgentDispatcher? dispatcher = null,
-        StubCurrentnessValidator? currentness = null)
+        StubCurrentnessValidator? currentness = null,
+        IChatAdvisoryContextReader? advisoryReader = null)
     {
         var candidateExtractor = new ChatCandidateExtractor();
         return new PreparedChatCoordinator(
@@ -1028,6 +1106,7 @@ public sealed class PreparedChatCoordinatorTests
             new StubSystemRepository([system]),
             new StubRepositoryRepository(repositories),
             authorization ?? new StubAuthorizationVerifier(),
+            advisoryReader ?? new CanonicalEmptyAdvisoryContextReader(),
             retriever ?? new StubEvidenceRetriever(),
             candidateExtractor,
             dispatcher ?? new StubDispatcher(),
@@ -1190,7 +1269,7 @@ public sealed class PreparedChatCoordinatorTests
                 DocumentType.CodeLogic,
                 "技术实现",
                 new string('b', 40));
-            EvidencePacket packet = EvidencePacket.Create(
+                EvidencePacket packet = EvidencePacket.Create(
                 request.RequestId,
                 request.Mode,
                 request.SystemId,
@@ -1231,11 +1310,13 @@ public sealed class PreparedChatCoordinatorTests
                             "d2",
                             1,
                             Id(411),
+                            1,
+                            new string('d', 64),
                             null,
-                            new string('d', 64))
+                            null)
                     ]
                     : [],
-                [new EvidenceFlowStep(1, "d1", null, "准备回答。")]);
+                    [new EvidenceFlowStep(1, "d1", null, "准备回答。")]);
             return Task.FromResult(ChatEvidenceResult.Found(packet));
         }
     }

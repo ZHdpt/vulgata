@@ -11,6 +11,331 @@ namespace Vulgata.Tests;
 public sealed class ChatEvidenceRetrievalTests
 {
     [Fact]
+    public void RetrieveAsync_UsesSingleTypedPath_ObsoleteClassifierAndLegacyRowsAreAbsent()
+    {
+        string source = File.ReadAllText(
+            Path.Combine(
+                FindRepositoryRoot(),
+                "src",
+                "dotnet",
+                "Vulgata.Infrastructure",
+                "Data",
+                "ChatEvidenceRetriever.cs"));
+        MethodInfo[] nonPublicMethods = typeof(ChatEvidenceRetriever)
+            .GetMethods(BindingFlags.Static | BindingFlags.Instance | BindingFlags.NonPublic);
+        Type[] nestedTypes = typeof(ChatEvidenceRetriever)
+            .GetNestedTypes(BindingFlags.NonPublic);
+
+        Assert.Equal(1, CountOccurrences(source, "new ChatEvidencePacketBuilder().Build("));
+        Assert.DoesNotContain("RetrieveProjectionOnlyAsync(", source, StringComparison.Ordinal);
+        Assert.DoesNotContain("ChatRelationshipEvidenceProjector", source, StringComparison.Ordinal);
+        Assert.DoesNotContain("EvidencePacket projectionPacket", source, StringComparison.Ordinal);
+        Assert.DoesNotContain("projectionPacket.", source, StringComparison.Ordinal);
+        Assert.DoesNotContain("CurrentExactDecisionCandidate", source, StringComparison.Ordinal);
+        Assert.DoesNotContain("RelationshipPacketRow", source, StringComparison.Ordinal);
+        Assert.DoesNotContain("ExactCrossRepositoryEdgeEvidence", source, StringComparison.Ordinal);
+        Assert.DoesNotContain("ExactResolutionProfileCatalog", source, StringComparison.Ordinal);
+        Assert.DoesNotContain(
+            nonPublicMethods,
+            method => method.Name == "RequiresCrossRepositoryEvidence");
+        Assert.DoesNotContain(
+            nestedTypes,
+            type => type.Name is "ExactRelationshipRow" or "ProvenanceRow");
+    }
+
+    private static int CountOccurrences(string source, string value)
+    {
+        int count = 0;
+        int offset = 0;
+        while ((offset = source.IndexOf(value, offset, StringComparison.Ordinal)) >= 0)
+        {
+            count++;
+            offset += value.Length;
+        }
+
+        return count;
+    }
+
+    private static string FindRepositoryRoot()
+    {
+        DirectoryInfo? directory = new(AppContext.BaseDirectory);
+        while (directory is not null &&
+            !File.Exists(Path.Combine(directory.FullName, "Vulgata.slnx")))
+        {
+            directory = directory.Parent;
+        }
+
+        return directory?.FullName ??
+            throw new InvalidOperationException("Vulgata repository root could not be located.");
+    }
+
+    [Fact]
+    public async Task RetrieveAsync_CrossRepositoryLiteralAndNeutralEquivalent_PreserveLexicalPrimaryIdentitiesAsync()
+    {
+        await using PreparedEvidenceFixture literalFixture = await PreparedEvidenceFixture.CreateAsync();
+        await using PreparedEvidenceFixture neutralFixture = await PreparedEvidenceFixture.CreateAsync();
+
+        ChatEvidenceResult literal = await new ChatEvidenceRetriever(literalFixture.Context)
+            .RetrieveAsync(
+                literalFixture.CreateRequest(
+                    "b1-literal",
+                    question: "客户会话如何跨仓库更新？"),
+                new RepositoryAccessScope(
+                    literalFixture.RepositoryIds,
+                    new RecordingAuthorizationVerifier(true, true)));
+        ChatEvidenceResult neutral = await new ChatEvidenceRetriever(neutralFixture.Context)
+            .RetrieveAsync(
+                neutralFixture.CreateRequest(
+                    "b1-neutral",
+                    question: "客户会话如何更新？"),
+                new RepositoryAccessScope(
+                    neutralFixture.RepositoryIds,
+                    new RecordingAuthorizationVerifier(true, true)));
+
+        EvidencePacket literalPacket = Assert.IsType<EvidencePacket>(literal.Packet);
+        EvidencePacket neutralPacket = Assert.IsType<EvidencePacket>(neutral.Packet);
+        Assert.Equal(ChatEvidenceResultKind.Found, literal.Kind);
+        Assert.Equal(ChatEvidenceResultKind.Found, neutral.Kind);
+        Assert.Equal(
+            neutralPacket.Sections.Select(section => section.StableSectionId),
+            literalPacket.Sections.Select(section => section.StableSectionId));
+        Assert.Equal(
+            neutralPacket.Documents.Select(document => document.DocumentVersionId),
+            literalPacket.Documents.Select(document => document.DocumentVersionId));
+    }
+
+    [Fact]
+    public async Task RetrieveAsync_RelationshipExpansionMutation_DoesNotReplaceExistingLexicalPrimarySectionsAsync()
+    {
+        await using PreparedEvidenceFixture baselineFixture = await PreparedEvidenceFixture.CreateAsync();
+        await using PreparedEvidenceFixture expandedFixture = await PreparedEvidenceFixture.CreateAsync();
+
+        EvidencePacket baselinePacket = Assert.IsType<EvidencePacket>(
+            (await new ChatEvidenceRetriever(baselineFixture.Context)
+                .RetrieveAsync(
+                    baselineFixture.CreateRequest("b1-baseline"),
+                    new RepositoryAccessScope(
+                        baselineFixture.RepositoryIds,
+                        new RecordingAuthorizationVerifier(true, true)))).Packet);
+
+        await expandedFixture.AddCurrentOneHopReferenceAsync();
+        EvidencePacket expandedPacket = Assert.IsType<EvidencePacket>(
+            (await new ChatEvidenceRetriever(expandedFixture.Context)
+                .RetrieveAsync(
+                    expandedFixture.CreateRequest("b1-expanded"),
+                    new RepositoryAccessScope(
+                        expandedFixture.RepositoryIds,
+                        new RecordingAuthorizationVerifier(true, true)))).Packet);
+
+        Assert.All(
+            baselinePacket.Sections,
+            section => Assert.Contains(
+                expandedPacket.Sections,
+                expanded => expanded.StableSectionId == section.StableSectionId));
+    }
+
+    [Fact]
+    public async Task RelationshipProjector_FirstThreeLexicalSeeds_AreOneHopBoundedAndCanonicalAsync()
+    {
+        await using PreparedEvidenceFixture fixture = await PreparedEvidenceFixture.CreateAsync();
+        await fixture.AddCurrentOneHopReferenceAsync();
+
+        Guid[] seeds =
+        [
+            fixture.OneHopDocumentVersionId,
+            ExactCrossRepositoryTestValues.ProviderDocumentVersionId,
+            ExactCrossRepositoryTestValues.ConsumerDocumentVersionId,
+            fixture.BusinessDocumentVersionId,
+        ];
+        ChatRelationshipProjection projection = await ChatRelationshipProjectorFactory
+            .Create(fixture.Context)
+            .ProjectAsync(
+                ExactCrossRepositoryTestValues.SystemId,
+                fixture.RepositoryIds,
+                seeds,
+                [
+                    fixture.BusinessDocumentVersionId,
+                    ExactCrossRepositoryTestValues.ConsumerDocumentVersionId,
+                    ExactCrossRepositoryTestValues.ProviderDocumentVersionId,
+                ],
+                [],
+                2,
+                32,
+                CancellationToken.None);
+
+        Assert.False(projection.IsInconsistent);
+        Assert.NotEmpty(projection.Relationships);
+        Guid[] expectedSeeds = seeds.Take(3).ToArray();
+        Assert.All(
+            projection.Relationships,
+            relationship => Assert.Contains(relationship.SourceDocumentVersionId, expectedSeeds));
+        Assert.DoesNotContain(
+            projection.Relationships,
+            relationship => relationship.SourceDocumentVersionId == fixture.SecondHopDocumentVersionId);
+        Assert.All(
+            projection.Relationships.GroupBy(relationship => relationship.SourceDocumentVersionId),
+            group => Assert.InRange(group.Count(), 1, 2));
+        Assert.InRange(projection.Relationships.Count, 1, 32);
+        Assert.InRange(projection.RelatedSections.Count, 1, 20);
+        Assert.InRange(projection.FlowGroups.Sum(group => group.Steps.Count), 0, 12);
+        Assert.Equal(
+            projection.Relationships.Select(relationship => relationship.EdgeId).Distinct(),
+            projection.Relationships.Select(relationship => relationship.EdgeId));
+        Assert.Equal(
+            projection.Relationships
+                .OrderBy(relationship => relationship.EdgeType == DocumentEdgeType.References ? 0 : 1)
+                .ThenBy(relationship => relationship.EdgeId)
+                .Select(relationship => relationship.EdgeId),
+            projection.Relationships.Select(relationship => relationship.EdgeId));
+        Assert.Contains(
+            projection.Relationships,
+            relationship =>
+                relationship.EdgeId == fixture.OneHopEdgeId &&
+                relationship.EdgeType == DocumentEdgeType.References);
+        Assert.Contains(
+            projection.Relationships,
+            relationship =>
+                relationship.EdgeId == fixture.SecondHopEdgeId &&
+                relationship.EdgeType == DocumentEdgeType.References);
+    }
+
+    [Fact]
+    public async Task RelationshipProjector_LowerRankedOptionalRelatedDocument_IsExcludedWithoutPoisoningAsync()
+    {
+        await using PreparedEvidenceFixture fixture = await PreparedEvidenceFixture.CreateAsync();
+        await fixture.AddCurrentOneHopReferenceAsync();
+        await fixture.AddOptionalProviderSecondHopReferenceAsync();
+
+        ChatRelationshipProjection projection = await ChatRelationshipProjectorFactory
+            .Create(fixture.Context)
+            .ProjectAsync(
+                ExactCrossRepositoryTestValues.SystemId,
+                fixture.RepositoryIds,
+                [ExactCrossRepositoryTestValues.ProviderDocumentVersionId],
+                [ExactCrossRepositoryTestValues.ProviderDocumentVersionId],
+                [],
+                1,
+                32,
+                CancellationToken.None);
+
+        Assert.False(projection.IsInconsistent);
+        ProjectedChatRelationship relationship = Assert.Single(projection.Relationships);
+        Assert.Equal(fixture.OneHopEdgeId, relationship.EdgeId);
+        Assert.Equal(fixture.OneHopDocumentVersionId, relationship.TargetDocumentVersionId);
+        Assert.DoesNotContain(
+            projection.Relationships,
+            item => item.TargetDocumentVersionId == fixture.SecondHopDocumentVersionId);
+    }
+
+    [Fact]
+    public async Task RetrieveAsync_Exactly256RankedCandidates_IsAcceptedAsync()
+    {
+        await using PreparedEvidenceFixture fixture = await PreparedEvidenceFixture.CreateAsync();
+        await fixture.RemoveV2AuthorityAsync();
+        await fixture.AddBusinessSectionsAsync(253);
+
+        ChatEvidenceResult result = await new ChatEvidenceRetriever(fixture.Context)
+            .RetrieveAsync(
+                fixture.CreateRequest("ranked-window-256"),
+                new RepositoryAccessScope(
+                    fixture.RepositoryIds,
+                    new RecordingAuthorizationVerifier(true, true)));
+
+        Assert.Equal(ChatEvidenceResultKind.Found, result.Kind);
+        EvidencePacket packet = Assert.IsType<EvidencePacket>(result.Packet);
+        Assert.InRange(packet.Sections.Count, 1, 12);
+    }
+
+    [Fact]
+    public async Task RetrieveAsync_257RankedCandidates_ReturnsIncompleteOrStaleAsync()
+    {
+        await using PreparedEvidenceFixture fixture = await PreparedEvidenceFixture.CreateAsync();
+        await fixture.RemoveV2AuthorityAsync();
+        await fixture.AddBusinessSectionsAsync(254);
+
+        ChatEvidenceResult result = await new ChatEvidenceRetriever(fixture.Context)
+            .RetrieveAsync(
+                fixture.CreateRequest("ranked-window-257"),
+                new RepositoryAccessScope(
+                    fixture.RepositoryIds,
+                    new RecordingAuthorizationVerifier(true, true)));
+
+        Assert.Equal(ChatEvidenceResultKind.IncompleteOrStale, result.Kind);
+        Assert.Null(result.Packet);
+    }
+
+    [Fact]
+    public async Task RetrieveAsync_SelectsTwelvePrimariesWithAtMostFourSectionsPerDocumentAsync()
+    {
+        await using PreparedEvidenceFixture fixture = await PreparedEvidenceFixture.CreateAsync();
+        await fixture.RemoveV2AuthorityAsync();
+        await fixture.AddFourScoredSectionsPerDocumentAsync();
+
+        ChatEvidenceResult result = await new ChatEvidenceRetriever(fixture.Context)
+            .RetrieveAsync(
+                fixture.CreateRequest("primary-sections-12"),
+                new RepositoryAccessScope(
+                    fixture.RepositoryIds,
+                    new RecordingAuthorizationVerifier(true, true)));
+
+        EvidencePacket packet = Assert.IsType<EvidencePacket>(result.Packet);
+        Assert.Equal(ChatEvidenceResultKind.Found, result.Kind);
+        Assert.Equal(12, packet.Sections.Count);
+        Assert.Equal(3, packet.Sections.GroupBy(section => section.DocumentHandle).Count());
+        Assert.All(
+            packet.Sections.GroupBy(section => section.DocumentHandle),
+            group => Assert.Equal(4, group.Count()));
+    }
+
+    [Fact]
+    public async Task RetrieveAsync_MoreThanTwentyEligibleSections_RemainsBoundedAndDeterministicAsync()
+    {
+        await using PreparedEvidenceFixture fixture = await PreparedEvidenceFixture.CreateAsync();
+        await fixture.RemoveV2AuthorityAsync();
+        await fixture.AddMoreThanTwentyEligibleSectionsAsync();
+
+        RepositoryAccessScope scope = new(
+            fixture.RepositoryIds,
+            new RecordingAuthorizationVerifier(true, true, true, true));
+        ChatRetrievalRequest request = fixture.CreateRequest("eligible-sections-over-20");
+        ChatEvidenceRetriever retriever = new(fixture.Context);
+
+        ChatEvidenceResult first = await retriever.RetrieveAsync(request, scope);
+        ChatEvidenceResult repeated = await retriever.RetrieveAsync(request, scope);
+        Assert.Equal(ChatEvidenceResultKind.Found, first.Kind);
+        Assert.Equal(ChatEvidenceResultKind.Found, repeated.Kind);
+        EvidencePacket firstPacket = Assert.IsType<EvidencePacket>(first.Packet);
+        EvidencePacket repeatedPacket = Assert.IsType<EvidencePacket>(repeated.Packet);
+
+        Assert.InRange(firstPacket.Sections.Count, 1, 12);
+        Assert.InRange(firstPacket.Sections.Count, 1, 20);
+        Assert.All(
+            firstPacket.Sections.GroupBy(section => section.DocumentHandle),
+            group => Assert.InRange(group.Count(), 1, 4));
+        Assert.Equal(
+            firstPacket.Sections.Select(section => section.StableSectionId),
+            repeatedPacket.Sections.Select(section => section.StableSectionId));
+    }
+
+    [Fact]
+    public async Task RetrieveAsync_SixthLowerRankedDocument_IsExcludedAndPacketRemainsBoundedAsync()
+    {
+        await using PreparedEvidenceFixture fixture = await PreparedEvidenceFixture.CreateAsync();
+        await fixture.ExceedDocumentMaximumAsync();
+
+        ChatEvidenceResult result = await new ChatEvidenceRetriever(fixture.Context)
+            .RetrieveAsync(
+                fixture.CreateRequest("document-bound-6"),
+                new RepositoryAccessScope(
+                    fixture.RepositoryIds,
+                    new RecordingAuthorizationVerifier(true, true)));
+
+        Assert.Equal(ChatEvidenceResultKind.Found, result.Kind);
+        EvidencePacket packet = Assert.IsType<EvidencePacket>(result.Packet);
+        Assert.InRange(packet.Documents.Count, 1, 5);
+    }
+
+    [Fact]
     public async Task RetrieveAsync_AcceptedV2DecisionAndCurrentEdgeWithoutLegacyEvidence_ReturnsCompletePacketAsync()
     {
         await using PreparedEvidenceFixture fixture = await PreparedEvidenceFixture.CreateAsync();
@@ -522,7 +847,7 @@ public sealed class ChatEvidenceRetrievalTests
     [InlineData("src/main/java/provider/SpecialSessionAnchor.java")]
     [InlineData("POST /special-session-anchor")]
     [InlineData("technical-session-term")]
-    public async Task RetrieveAsync_CurrentIndexEntryMetadataMatch_OutranksProseContentMatchAsync(
+    public async Task RetrieveAsync_CurrentIndexEntryMetadataMatch_RetainsPositiveProseContentMatchAsync(
         string question)
     {
         await using PreparedEvidenceFixture fixture = await PreparedEvidenceFixture.CreateAsync();
@@ -543,7 +868,7 @@ public sealed class ChatEvidenceRetrievalTests
         EvidencePacket packet = Assert.IsType<EvidencePacket>(result.Packet);
         Assert.Equal(ChatEvidenceResultKind.Found, result.Kind);
         Assert.Contains(packet.Sections, section => section.Heading == "特殊会话锚点说明");
-        Assert.DoesNotContain(packet.Sections, section => section.Heading == "普通说明");
+        Assert.Contains(packet.Sections, section => section.Heading == "普通说明");
     }
 
     [Fact]
@@ -560,14 +885,9 @@ public sealed class ChatEvidenceRetrievalTests
         await AssertClosedFailureAfterMutationAsync(
             fixture => fixture.StaleCurrentDocumentAsync());
         await AssertClosedFailureAfterMutationAsync(
-            fixture => fixture.ExceedSectionMaximumAsync());
-        await AssertClosedFailureAfterMutationAsync(
             fixture => fixture.ExceedAnchorMaximumAsync());
         await AssertClosedFailureAfterMutationAsync(
             fixture => fixture.ExceedFlowMaximumAsync());
-        await AssertClosedFailureAfterMutationAsync(
-            fixture => fixture.ExceedDocumentMaximumAsync());
-
         await using PreparedEvidenceFixture revokedFixture =
             await PreparedEvidenceFixture.CreateAsync();
         var revokedScope = new RepositoryAccessScope(
@@ -757,6 +1077,7 @@ public sealed class ChatEvidenceRetrievalTests
         private static readonly Guid _secondHopStableSectionId = Id(60_015);
         private static readonly Guid _secondHopEdgeId = Id(60_016);
         private static readonly Guid _duplicateOneHopEdgeId = Id(60_017);
+        private static readonly Guid _optionalSecondHopEdgeId = Id(60_018);
         private static readonly Guid _relatedFlowGroupId = Id(60_031);
         private static readonly Guid _relatedFlowTraceId = Id(60_032);
         private static readonly Guid _relatedFlowStepId = Id(60_033);
@@ -771,6 +1092,30 @@ public sealed class ChatEvidenceRetrievalTests
         internal Guid ReferencesEdgeId { get; } = referencesEdgeId;
 
         internal Guid OneHopEdgeId => _oneHopEdgeId;
+
+        internal Guid OneHopDocumentVersionId => _oneHopDocumentVersionId;
+
+        internal Guid SecondHopDocumentVersionId => _secondHopDocumentVersionId;
+
+        internal Guid BusinessDocumentVersionId => _businessDocumentVersionId;
+
+        internal Guid SecondHopEdgeId => _secondHopEdgeId;
+
+        internal async Task AddOptionalProviderSecondHopReferenceAsync()
+        {
+            Context.DocumentEdges.Add(new DocumentEdge(
+                _optionalSecondHopEdgeId,
+                ExactCrossRepositoryTestValues.ProviderDocumentVersionId,
+                ExactCrossRepositoryTestValues.ProviderRepositoryId,
+                ExactCrossRepositoryTestValues.ProviderScanRunId,
+                _secondHopDocumentVersionId,
+                ExactCrossRepositoryTestValues.ProviderRepositoryId,
+                ExactCrossRepositoryTestValues.ProviderScanRunId,
+                DocumentEdgeType.References,
+                ExactCrossRepositoryTestValues.Pass1CompletedAt));
+            await Context.SaveChangesAsync();
+            Context.ChangeTracker.Clear();
+        }
 
         internal Guid RelatedFlowGroupId => _relatedFlowGroupId;
 
@@ -996,6 +1341,66 @@ public sealed class ChatEvidenceRetrievalTests
                 DocumentSectionKind.Evidence,
                 "技术证据",
                 "TechnicalBoundaryToken 技术证据。");
+            Context.ChangeTracker.Clear();
+        }
+
+        internal async Task AddBusinessSectionsAsync(int additionalCount)
+        {
+            DocumentVersion version = await Context.DocumentVersions
+                .SingleAsync(value => value.Id == _businessDocumentVersionId);
+            for (int index = 0; index < additionalCount; index++)
+            {
+                Context.DocumentSections.Add(Section(
+                    Id(70_000 + index),
+                    _businessLogicalDocumentId,
+                    version,
+                    Id(71_000 + index),
+                    $"客户会话补充证据 {index + 1}",
+                    $"客户会话更新边界补充证据 {index + 1}。",
+                    _businessSourceAnchorId,
+                    [ExactCrossRepositoryTestValues.ConsumerDocumentVersionId],
+                    index + 2));
+            }
+
+            await Context.SaveChangesAsync();
+            Context.ChangeTracker.Clear();
+        }
+
+        internal async Task AddFourScoredSectionsPerDocumentAsync()
+        {
+            (Guid VersionId, Guid LogicalDocumentId, Guid AnchorId)[] documents =
+            [
+                (_businessDocumentVersionId, _businessLogicalDocumentId, _businessSourceAnchorId),
+                (ExactCrossRepositoryTestValues.ConsumerDocumentVersionId,
+                    ExactCrossRepositoryTestValues.ConsumerLogicalDocumentId,
+                    ExactCrossRepositoryTestValues.ConsumerSourceAnchorId),
+                (ExactCrossRepositoryTestValues.ProviderDocumentVersionId,
+                    ExactCrossRepositoryTestValues.ProviderLogicalDocumentId,
+                    ExactCrossRepositoryTestValues.ProviderSourceAnchorId),
+            ];
+
+            int sequence = 0;
+            foreach ((Guid versionId, Guid logicalDocumentId, Guid anchorId) in documents)
+            {
+                DocumentVersion version = await Context.DocumentVersions
+                    .SingleAsync(value => value.Id == versionId);
+                for (int sectionOrder = 2; sectionOrder <= 4; sectionOrder++)
+                {
+                    Context.DocumentSections.Add(Section(
+                        Id(74_000 + sequence),
+                        logicalDocumentId,
+                        version,
+                        Id(75_000 + sequence),
+                        $"客户会话更新补充段落 {sequence + 1}",
+                        $"客户会话更新的确定性检索证据 {sequence + 1}。",
+                        anchorId,
+                        [],
+                        sectionOrder));
+                    sequence++;
+                }
+            }
+
+            await Context.SaveChangesAsync();
             Context.ChangeTracker.Clear();
         }
 
@@ -1635,7 +2040,7 @@ public sealed class ChatEvidenceRetrievalTests
             Context.ChangeTracker.Clear();
         }
 
-        internal async Task ExceedSectionMaximumAsync()
+        internal async Task AddMoreThanTwentyEligibleSectionsAsync()
         {
             for (int index = 0; index < 18; index++)
             {

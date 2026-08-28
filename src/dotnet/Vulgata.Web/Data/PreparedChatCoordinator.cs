@@ -55,6 +55,7 @@ public sealed class PreparedChatCoordinator(
     ISystemRepository systemRepository,
     IRepositoryRepository repositoryRepository,
     IRepositoryAuthorizationVerifier authorizationVerifier,
+    IChatAdvisoryContextReader advisoryContextReader,
     IChatEvidenceRetriever evidenceRetriever,
     ChatCandidateExtractor candidateExtractor,
     IChatAgentDispatcher dispatcher,
@@ -245,10 +246,30 @@ public sealed class PreparedChatCoordinator(
                 return Missing();
             }
 
+            ChatAdvisoryContextReadResult advisoryResult =
+                await advisoryContextReader.ReadAsync(
+                    new AuthorizedChatScope(
+                        request.SystemId,
+                        request.RepositoryIds,
+                        accessScope),
+                    cancellationToken);
+            if (advisoryResult.Kind == ChatAdvisoryContextReadResultKind.NotFoundOrUnauthorized)
+            {
+                ClearConversation();
+                return Missing();
+            }
+
+            if (advisoryResult.Kind != ChatAdvisoryContextReadResultKind.Succeeded ||
+                advisoryResult.Snapshot is not ChatAdvisoryContextSnapshot advisoryContext)
+            {
+                return EvidenceUnavailable();
+            }
+
             ChatRetrievalRequest retrievalRequest = ChatRetrievalRequest.Create(
                 request,
                 _conversationState,
-                deadlineUtc);
+                deadlineUtc,
+                advisoryContext);
             ChatEvidenceResult evidence = await evidenceRetriever.RetrieveAsync(
                 retrievalRequest,
                 accessScope,
@@ -603,6 +624,8 @@ public sealed class PreparedChatCoordinator(
                         target.RepositoryId,
                         relationship.Depth,
                         relationship.ExactDecisionId,
+                        relationship.ExactDecisionCount,
+                        relationship.ExactDecisionSetFingerprint,
                         relationship.FlowGroupId,
                         relationship.ProfileFingerprint);
                 }),

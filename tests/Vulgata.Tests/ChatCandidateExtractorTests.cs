@@ -202,13 +202,89 @@ public sealed class ChatCandidateExtractorTests
                 Section("s4", "d1", 14, 4, DocumentSectionKind.TechnicalDetail, "受限或缺失的关系支持。", ["a1"], ["d3"]),
             ],
             [Anchor("a1", 21, "d1", 1), Anchor("a2", 22, "d2", 2, Repository2)],
-            [Relationship("r1", "d1", "d2", ChatRelationshipType.References)]);
+            [new EvidenceRelationship(
+                "r1",
+                Id(401),
+                ChatRelationshipType.References,
+                "d1",
+                "d2",
+                1,
+                Id(402),
+                1,
+                new string('d', 64),
+                null,
+                null)]);
 
         IReadOnlyList<CandidateClaim> candidates = _extractor.Extract(packet);
 
         Assert.Equal(["保留的本地支持。", "保留的固定关系支持。"], candidates.Select(candidate => candidate.Text));
         Assert.Empty(candidates[0].RelationshipHandles);
         Assert.Equal(["r1"], candidates[1].RelationshipHandles);
+    }
+
+    [Fact]
+    public void Extract_CrossRepositoryReferences_LegacyProfileFingerprintOnly_IsRejected()
+    {
+        EvidencePacket packet = CreatePacket(
+            ChatMode.It,
+            [
+                Document("d1", 1, DocumentType.CodeLogic),
+                Document("d2", 2, DocumentType.CodeLogic, Repository2),
+            ],
+            [Section(
+                "s1",
+                "d1",
+                11,
+                1,
+                DocumentSectionKind.Overview,
+                "跨仓库调用需要当前精确决策。",
+                ["a1"],
+                ["d2"])],
+            [Anchor("a1", 21, "d1", 1)],
+            [Relationship("r1", "d1", "d2", ChatRelationshipType.References)]);
+
+        Assert.Empty(_extractor.Extract(packet));
+    }
+
+    [Fact]
+    public void Extract_CrossRepositoryReferences_IncompleteV2Authority_IsRejected()
+    {
+        EvidenceRelationship incompleteAuthority = new(
+            "r1",
+            Id(401),
+            ChatRelationshipType.References,
+            "d1",
+            "d2",
+            1,
+            Id(402),
+            Id(403),
+            new string('c', 64));
+        EvidencePacket packet = CreatePacket(
+            ChatMode.It,
+            [
+                Document("d1", 1, DocumentType.CodeLogic),
+                Document("d2", 2, DocumentType.CodeLogic, Repository2),
+            ],
+            [Section(
+                "s1",
+                "d1",
+                11,
+                1,
+                DocumentSectionKind.Overview,
+                "跨仓库调用需要完整决策集合授权。",
+                ["a1"],
+                ["d2"])],
+            [Anchor("a1", 21, "d1", 1)],
+            [incompleteAuthority]);
+
+        Assert.Empty(_extractor.Extract(packet));
+    }
+
+    [Fact]
+    public void EvidenceRelationship_V2Authority_PublicSeam_ExposesDecisionCountAndSetFingerprint()
+    {
+        Assert.NotNull(typeof(EvidenceRelationship).GetProperty("ExactDecisionCount"));
+        Assert.NotNull(typeof(EvidenceRelationship).GetProperty("ExactDecisionSetFingerprint"));
     }
 
     [Theory]

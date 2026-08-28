@@ -1,3 +1,4 @@
+using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 
@@ -151,11 +152,13 @@ public sealed record ChatRetrievalRequest
     private ChatRetrievalRequest(
         ChatQuestionRequest questionRequest,
         ChatConversationState conversation,
-        DateTimeOffset deadlineUtc)
+        DateTimeOffset deadlineUtc,
+        ChatAdvisoryContextSnapshot advisoryContext)
     {
         QuestionRequest = questionRequest;
         Conversation = conversation;
         DeadlineUtc = deadlineUtc;
+        AdvisoryContext = advisoryContext;
     }
 
     internal ChatQuestionRequest QuestionRequest { get; }
@@ -174,25 +177,41 @@ public sealed record ChatRetrievalRequest
 
     public DateTimeOffset DeadlineUtc { get; }
 
+    public ChatAdvisoryContextSnapshot AdvisoryContext { get; }
+
     public static ChatRetrievalRequest Create(
         ChatQuestionRequest questionRequest,
         ChatConversationState conversation,
-        DateTimeOffset deadlineUtc)
+        DateTimeOffset deadlineUtc,
+        ChatAdvisoryContextSnapshot? advisoryContext = null)
     {
         ArgumentNullException.ThrowIfNull(questionRequest);
         ArgumentNullException.ThrowIfNull(conversation);
+        advisoryContext ??= new ChatAdvisoryContextSnapshot(
+            [],
+            string.Empty,
+            [],
+            0,
+            Convert.ToHexStringLower(SHA256.HashData([])));
         ChatConversationScope expectedScope = ChatConversationScope.Create(
             questionRequest.Mode,
             questionRequest.SystemId,
             questionRequest.RepositoryIds);
         if (!conversation.Scope.Equals(expectedScope) ||
             conversation.EncodedUtf8Bytes > 4_096 ||
+            advisoryContext.SourceUnits is null ||
+            advisoryContext.ComposedText is null ||
+            advisoryContext.Terms is null ||
+            advisoryContext.EncodedUtf8Bytes < 0 ||
+            advisoryContext.EncodedUtf8Bytes != Encoding.UTF8.GetByteCount(advisoryContext.ComposedText) ||
+            advisoryContext.EncodedUtf8Bytes > 8_192 ||
+            !ChatContractGuard.IsSha256(advisoryContext.AuthorityFingerprint) ||
             deadlineUtc == default)
         {
             throw new ChatContractException(ChatContractFailureCode.InvalidRequest);
         }
 
-        return new ChatRetrievalRequest(questionRequest, conversation, deadlineUtc);
+        return new ChatRetrievalRequest(questionRequest, conversation, deadlineUtc, advisoryContext);
     }
 }
 

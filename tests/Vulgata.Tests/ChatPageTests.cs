@@ -64,6 +64,7 @@ public sealed class ChatPageTests : BunitContext
             new StubSystemRepository([_system]),
             new StubRepositoryRepository([_firstRepository, _secondRepository]),
             _authorization,
+            new CanonicalEmptyAdvisoryContextReader(),
             _retriever,
             candidateExtractor,
             _dispatcher,
@@ -899,8 +900,10 @@ public sealed class ChatPageTests : BunitContext
                     "d2",
                     1,
                     Id(411),
+                    1,
+                    new string('d', 64),
                     null,
-                    new string('d', 64))],
+                    null)],
                 [new EvidenceFlowStep(1, "d1", null, "准备回答。")]);
             return Task.FromResult(ChatEvidenceResult.Found(packet));
         }

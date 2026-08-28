@@ -178,6 +178,128 @@ public sealed class ChatEvidencePacketBuilderTests
     }
 
     [Fact]
+    public void Build_V2Packet_CanonicalFingerprint_BindsDecisionCountAndSetFingerprint()
+    {
+        EvidenceRelationship baselineRelationship = CreateV2Relationship(
+            edgeId: Id(80),
+            depth: 1,
+            exactDecisionId: Id(81),
+            flowGroupId: Id(90),
+            exactDecisionCount: 2,
+            exactDecisionSetFingerprint: new string('d', 64));
+        EvidencePacket baseline = new ChatEvidencePacketBuilder().Build(CreateBuildRequest(
+            relationship: baselineRelationship,
+            flowGroups: [CreateFlowGroupAuthority(Id(90), Id(81), Id(80))]));
+
+        EvidencePacket countChanged = new ChatEvidencePacketBuilder().Build(CreateBuildRequest(
+            relationship: baselineRelationship with { ExactDecisionCount = 3 },
+            flowGroups: [CreateFlowGroupAuthority(Id(90), Id(81), Id(80))]));
+        EvidencePacket setChanged = new ChatEvidencePacketBuilder().Build(CreateBuildRequest(
+            relationship: baselineRelationship with { ExactDecisionSetFingerprint = new string('e', 64) },
+            flowGroups: [CreateFlowGroupAuthority(Id(90), Id(81), Id(80))]));
+
+        Assert.NotEqual(baseline.Fingerprint, countChanged.Fingerprint);
+        Assert.NotEqual(baseline.Fingerprint, setChanged.Fingerprint);
+    }
+
+    [Fact]
+    public void Build_V2Packet_SharedEdgeWithTwoDecisionOwnedFlowGroups_RemainsDistinctAndCanonical()
+    {
+        EvidenceRelationship relationship = CreateV2Relationship(
+            edgeId: Id(80),
+            depth: 1,
+            exactDecisionId: Id(81),
+            flowGroupId: Id(90),
+            exactDecisionCount: 2,
+            exactDecisionSetFingerprint: new string('d', 64));
+        EvidenceFlowGroupAuthority firstGroup = CreateFlowGroupAuthority(Id(90), Id(81), Id(80), Id(93), Id(94));
+        EvidenceFlowGroupAuthority secondGroup = CreateFlowGroupAuthority(Id(91), Id(84), Id(80), Id(96), Id(97));
+
+        EvidencePacket first = new ChatEvidencePacketBuilder().Build(CreateBuildRequest(
+            relationship: relationship,
+            flowGroups: [secondGroup, firstGroup]));
+        EvidencePacket second = new ChatEvidencePacketBuilder().Build(CreateBuildRequest(
+            relationship: relationship,
+            flowGroups: [firstGroup, secondGroup]));
+
+        Assert.Equal(first.Fingerprint, second.Fingerprint);
+        Assert.Equal([Id(90), Id(91)], first.FlowGroups.Select(group => group.FlowGroupId));
+        Assert.Equal([Id(81), Id(84)], first.FlowGroups.Select(group => group.ExactResolutionDecisionId));
+        Assert.Equal([Id(94), Id(97)], first.FlowGroups.SelectMany(group => group.Steps)
+            .Select(step => step.FlowTraceStepId));
+        Assert.Equal(2, first.FlowGroups.Count);
+    }
+
+    [Fact]
+    public void Build_V2Packet_CanonicalFingerprint_BindsEachDecisionOwnedFlowGroupAndStep()
+    {
+        EvidenceRelationship relationship = CreateV2Relationship(
+            edgeId: Id(80),
+            depth: 1,
+            exactDecisionId: Id(81),
+            flowGroupId: Id(90),
+            exactDecisionCount: 2,
+            exactDecisionSetFingerprint: new string('d', 64));
+        EvidenceFlowGroupAuthority baselineGroup = CreateFlowGroupAuthority(Id(90), Id(81), Id(80), Id(93), Id(94));
+        EvidencePacket baseline = new ChatEvidencePacketBuilder().Build(CreateBuildRequest(
+            relationship: relationship,
+            flowGroups: [baselineGroup]));
+
+        EvidencePacket decisionChanged = new ChatEvidencePacketBuilder().Build(CreateBuildRequest(
+            relationship: relationship,
+            flowGroups: [baselineGroup with { ExactResolutionDecisionId = Id(84) }]));
+        EvidencePacket edgeChanged = new ChatEvidencePacketBuilder().Build(CreateBuildRequest(
+            relationship: relationship,
+            flowGroups: [baselineGroup with { ExactResolutionEdgeId = Id(83) }]));
+        EvidencePacket traceChanged = new ChatEvidencePacketBuilder().Build(CreateBuildRequest(
+            relationship: relationship,
+            flowGroups: [baselineGroup with { FlowTraceId = Id(98) }]));
+        EvidenceFlowStepAuthority stepChanged = baselineGroup.Steps[0] with
+        {
+            Description = "改名后的完整流程步骤",
+        };
+        EvidencePacket stepDescriptionChanged = new ChatEvidencePacketBuilder().Build(CreateBuildRequest(
+            relationship: relationship,
+            flowGroups: [baselineGroup with { Steps = [stepChanged] }]));
+
+        Assert.NotEqual(baseline.Fingerprint, decisionChanged.Fingerprint);
+        Assert.NotEqual(baseline.Fingerprint, edgeChanged.Fingerprint);
+        Assert.NotEqual(baseline.Fingerprint, traceChanged.Fingerprint);
+        Assert.NotEqual(baseline.Fingerprint, stepDescriptionChanged.Fingerprint);
+    }
+
+    [Fact]
+    public void Build_V2Packet_OverBoundOptionalRelationshipUnit_DropsItsCompleteSupport()
+    {
+        EvidencePacket packet = new ChatEvidencePacketBuilder().Build(CreateBuildRequest(
+            includeOptionalRelationshipUnit: true,
+            optionalSectionHandles: ["s3"]));
+
+        Assert.DoesNotContain(packet.Sections, section => section.SectionHandle == "s3");
+        Assert.DoesNotContain(packet.Relationships, relationship => relationship.RelationshipHandle == "r3");
+        Assert.DoesNotContain(packet.FlowGroups, group => group.FlowGroupId == Id(96));
+        Assert.DoesNotContain(packet.FlowEvidence, step => step.DocumentHandle == "d3");
+        Assert.DoesNotContain(packet.SourceAnchors, anchor => anchor.AnchorHandle == "a3");
+        Assert.DoesNotContain(packet.Documents, document => document.DocumentHandle == "d3");
+    }
+
+    [Fact]
+    public void Build_V2Packet_SelectedRequiredFlowGroupWithoutSupport_Rejects()
+    {
+        ChatContractException exception = Assert.Throws<ChatContractException>(() =>
+            new ChatEvidencePacketBuilder().Build(CreateBuildRequest(
+                relationship: CreateV2Relationship(Id(80), 1, Id(81), Id(90)),
+                flowGroups: [CreateFlowGroupAuthority(
+                    flowGroupId: Id(90),
+                    decisionId: Id(81),
+                    edgeId: Id(80),
+                    businessLogicDocumentVersionId: Id(999),
+                    stepDocumentVersionId: Id(999))])));
+
+        Assert.Equal(ChatContractFailureCode.InvalidEvidence, exception.FailureCode);
+    }
+
+    [Fact]
     public void Build_V2Packet_SchemaSerialization_UsesExactConversationFieldNamesAndContents()
     {
         EvidencePacket packet = new ChatEvidencePacketBuilder().Build(CreateBuildRequest(
@@ -241,7 +363,9 @@ public sealed class ChatEvidencePacketBuilderTests
             [
                 "depth",
                 "edgeId",
+                "exactDecisionCount",
                 "exactDecisionId",
+                "exactDecisionSetFingerprint",
                 "flowGroupId",
                 "handle",
                 "sourceDocumentHandle",
@@ -251,7 +375,9 @@ public sealed class ChatEvidencePacketBuilderTests
             relationship.EnumerateObject().Select(property => property.Name).Order(StringComparer.Ordinal));
         Assert.Equal(Id(80), relationship.GetProperty("edgeId").GetGuid());
         Assert.Equal(1, relationship.GetProperty("depth").GetInt32());
+        Assert.Equal(1, relationship.GetProperty("exactDecisionCount").GetInt32());
         Assert.Equal(Id(81), relationship.GetProperty("exactDecisionId").GetGuid());
+        Assert.Equal(new string('d', 64), relationship.GetProperty("exactDecisionSetFingerprint").GetString());
         Assert.Equal(Id(82), relationship.GetProperty("flowGroupId").GetGuid());
     }
 
@@ -288,7 +414,8 @@ public sealed class ChatEvidencePacketBuilderTests
         bool includeOversizedOptionalSection = false,
         IReadOnlyCollection<string>? optionalSectionHandles = null,
         IReadOnlyCollection<EvidenceFlowGroupAuthority>? flowGroups = null,
-        EvidenceRelationship? relationship = null)
+        EvidenceRelationship? relationship = null,
+        bool includeOptionalRelationshipUnit = false)
     {
         Guid systemId = Id(1);
         Guid repository1 = Id(2);
@@ -308,6 +435,15 @@ public sealed class ChatEvidencePacketBuilderTests
         var anchor2 = new EvidenceAnchor(
             "a2", Id(31), "d2", Id(13), repository2, "src/OrderService.cs", 20, 22, new string('b', 64));
         var anchors = new List<EvidenceAnchor> { anchor1, anchor2 };
+        var relationshipSnapshot = new List<EvidenceRelationship>
+        {
+            relationship ?? new EvidenceRelationship(
+                "r1", "edge-1", ChatRelationshipType.References, "d1", "d2", new string('c', 64)),
+        };
+        var flowSnapshot = new List<EvidenceFlowStep>
+        {
+            new(1, "d1", "r1", "订单处理流程"),
+        };
         if (includeOversizedOptionalSection)
         {
             documents.Add(new EvidenceDocument(
@@ -317,6 +453,31 @@ public sealed class ChatEvidencePacketBuilderTests
             anchors.Add(new EvidenceAnchor(
                 "a3", Id(32), "d3", Id(15), repository1, "src/Optional.cs", 30, 32, new string('e', 64)));
         }
+        if (includeOptionalRelationshipUnit)
+        {
+            if (!includeOversizedOptionalSection)
+            {
+                documents.Add(new EvidenceDocument(
+                    "d3", Id(14), Id(15), repository1, DocumentType.CodeLogic, "可选支持", "abcdef3"));
+                sections.Add(new EvidenceSection(
+                    "s3", "d3", Id(22), 1, DocumentSectionKind.TechnicalDetail, "可选详情", new string('x', 70_000), ["a3"], []));
+                anchors.Add(new EvidenceAnchor(
+                    "a3", Id(32), "d3", Id(15), repository1, "src/Optional.cs", 30, 32, new string('e', 64)));
+            }
+
+            relationshipSnapshot.Add(CreateV2Relationship(Id(83), 1, Id(84), Id(96)) with
+            {
+                RelationshipHandle = "r3",
+                SourceDocumentHandle = "d1",
+                TargetDocumentHandle = "d3",
+            });
+            flowSnapshot.Add(new EvidenceFlowStep(2, "d3", "r3", "可选支持流程"));
+        }
+
+        IReadOnlyCollection<EvidenceFlowGroupAuthority> flowGroupSnapshot = flowGroups ??
+            (includeOptionalRelationshipUnit
+                ? [CreateFlowGroupAuthority(Id(96), Id(84), Id(83), Id(95), Id(99), Id(15))]
+                : []);
 
         return ChatEvidencePacketBuildRequest.Create(
             "request-1",
@@ -326,10 +487,9 @@ public sealed class ChatEvidencePacketBuilderTests
             documents,
             sections,
             anchors,
-            [relationship ?? new EvidenceRelationship(
-                "r1", "edge-1", ChatRelationshipType.References, "d1", "d2", new string('c', 64))],
-            [new EvidenceFlowStep(1, "d1", "r1", "订单处理流程")],
-            flowGroups ?? [],
+            relationshipSnapshot,
+            flowSnapshot,
+            flowGroupSnapshot,
             advisoryContext,
             conversation ?? ChatConversationState.Empty(ChatConversationScope.Create(
                 ChatMode.Business,
@@ -342,7 +502,9 @@ public sealed class ChatEvidencePacketBuilderTests
         Guid edgeId,
         int depth,
         Guid? exactDecisionId,
-        Guid? flowGroupId) =>
+        Guid? flowGroupId,
+        int exactDecisionCount = 1,
+        string? exactDecisionSetFingerprint = null) =>
         new(
             "r1",
             edgeId,
@@ -351,27 +513,36 @@ public sealed class ChatEvidencePacketBuilderTests
             "d2",
             depth,
             exactDecisionId,
+            exactDecisionCount,
+            exactDecisionSetFingerprint ?? new string('d', 64),
             flowGroupId,
             new string('c', 64));
 
-    private static EvidenceFlowGroupAuthority CreateFlowGroupAuthority() =>
+    private static EvidenceFlowGroupAuthority CreateFlowGroupAuthority(
+        Guid? flowGroupId = null,
+        Guid? decisionId = null,
+        Guid? edgeId = null,
+        Guid? flowTraceId = null,
+        Guid? stepId = null,
+        Guid? businessLogicDocumentVersionId = null,
+        Guid? stepDocumentVersionId = null) =>
         new(
-            Id(90),
+            flowGroupId ?? Id(90),
             "endpoint-flow-group/1.0",
             "Published",
-            Id(11),
-            Id(91),
-            Id(92),
+            businessLogicDocumentVersionId ?? Id(11),
+            decisionId ?? Id(91),
+            edgeId ?? Id(92),
             new string('d', 64),
             new string('e', 64),
-            Id(93),
+            flowTraceId ?? Id(93),
             1,
             [new EvidenceFlowStepAuthority(
-                Id(94),
+                stepId ?? Id(94),
                 1,
                 FlowTraceStepKind.Document,
                 "订单处理流程",
-                Id(11),
+                stepDocumentVersionId ?? businessLogicDocumentVersionId ?? Id(11),
                 Id(2),
                 Id(95),
                 null,

@@ -226,29 +226,48 @@ public sealed class ChatEvidenceCurrentnessValidator(VulgataDbContext context) :
             .ToArrayAsync(cancellationToken);
 
         Guid[] edgeIds = relationships.Select(relationship => relationship.Id).ToArray();
-        Guid[] exactDecisionIds = request.Relationships
-            .Where(relationship =>
-                relationship.RelationshipType == ChatRelationshipType.References &&
-                relationship.ExactDecisionId.HasValue)
-            .Select(relationship => relationship.ExactDecisionId!.Value)
-            .Distinct()
-            .ToArray();
         CrossRepositoryResolutionDecision[] exactDecisions = await _context
             .CrossRepositoryResolutionDecisions
             .AsNoTracking()
             .Where(decision =>
-                exactDecisionIds.Contains(decision.Id) &&
                 decision.DocumentEdgeId.HasValue &&
                 edgeIds.Contains(decision.DocumentEdgeId.Value))
-            .Take(33)
+            .Take(11)
             .ToArrayAsync(cancellationToken);
+        if (exactDecisions.Length > 10)
+        {
+            return false;
+        }
+
         Guid[] decisionIds = exactDecisions.Select(decision => decision.Id).ToArray();
         ExactResolutionProviderEvidenceContribution[] contributions = await _context
             .ExactResolutionProviderEvidenceContributions
             .AsNoTracking()
             .Where(contribution => decisionIds.Contains(contribution.ResolutionDecisionId))
-            .Take(257)
+            .Take(2_561)
             .ToArrayAsync(cancellationToken);
+        if (contributions.Length > 2_560 ||
+            exactDecisions.Any(decision =>
+            {
+                int count = contributions.Count(contribution =>
+                    contribution.ResolutionDecisionId == decision.Id);
+                return count is < 1 or > 256;
+            }))
+        {
+            return false;
+        }
+
+        FlowGroup[] exactFlowGroups = await _context.FlowGroups
+            .AsNoTracking()
+            .Where(group =>
+                group.ExactResolutionEdgeId.HasValue &&
+                edgeIds.Contains(group.ExactResolutionEdgeId.Value))
+            .Take(11)
+            .ToArrayAsync(cancellationToken);
+        if (exactFlowGroups.Length > 10)
+        {
+            return false;
+        }
 
         return request.Relationships.All(expected => expected.RelationshipType switch
         {
@@ -266,12 +285,14 @@ public sealed class ChatEvidenceCurrentnessValidator(VulgataDbContext context) :
                           documents,
                           scanRuns)
                     : HasAcceptedExactDecision(
+                        request,
                         request.SystemId,
                         expected,
                         edge,
                         documents,
                         exactDecisions,
-                        contributions))),
+                        contributions,
+                        exactFlowGroups))),
             ChatRelationshipType.GeneratedFrom => relationships.Any(edge =>
                 edge.Id == expected.EdgeId &&
                 edge.EdgeType == DocumentEdgeType.GeneratedFrom &&
@@ -433,39 +454,64 @@ public sealed class ChatEvidenceCurrentnessValidator(VulgataDbContext context) :
         actual.StepExactResolutionDecisionId == expected.ExactResolutionDecisionId;
 
     private static bool HasAcceptedExactDecision(
+        ChatCurrentnessValidationRequest request,
         Guid systemId,
         ChatCurrentRelationship expected,
         DocumentEdge edge,
         IReadOnlyCollection<CurrentDocumentRow> documents,
         IReadOnlyCollection<CrossRepositoryResolutionDecision> decisions,
-        IReadOnlyCollection<ExactResolutionProviderEvidenceContribution> contributions)
+        IReadOnlyCollection<ExactResolutionProviderEvidenceContribution> contributions,
+        IReadOnlyCollection<FlowGroup> flowGroups)
     {
-        CrossRepositoryResolutionDecision[] matchingDecisions = decisions
-            .Where(decision =>
-                decision.Id == expected.ExactDecisionId &&
-                decision.SystemId == systemId &&
-                decision.DocumentEdgeId == edge.Id &&
-                decision.ConsumerDocumentVersionId == expected.SourceDocumentVersionId &&
-                decision.ConsumerRepositoryId == expected.SourceRepositoryId &&
-                decision.ProviderDocumentVersionId == expected.TargetDocumentVersionId &&
-                decision.ProviderRepositoryId == expected.TargetRepositoryId &&
-                string.Equals(
-                    decision.ProviderEvidenceSetFingerprint,
-                    expected.ProfileFingerprint,
-                    StringComparison.Ordinal))
+        CrossRepositoryResolutionDecision[] edgeDecisions = decisions
+            .Where(decision => decision.DocumentEdgeId == edge.Id)
             .ToArray();
-        if (matchingDecisions.Length != 1)
+        ExactResolutionProviderEvidenceContribution[] edgeContributions = contributions
+            .Where(contribution => edgeDecisions.Any(decision =>
+                decision.Id == contribution.ResolutionDecisionId))
+            .ToArray();
+        if (!ChatExactDecisionSetAuthority.TryCreate(
+                edge,
+                edgeDecisions,
+                edgeContributions,
+                out ChatExactDecisionSet decisionSet) ||
+            decisionSet.SelectedDecision.Id != expected.ExactDecisionId ||
+            expected.ExactDecisionCount > 0 &&
+                (decisionSet.Count != expected.ExactDecisionCount ||
+                 !string.Equals(
+                     decisionSet.Fingerprint,
+                     expected.ExactDecisionSetFingerprint,
+                     StringComparison.Ordinal)) ||
+            decisionSet.Decisions.Any(decision =>
+                decision.SystemId != systemId ||
+                decision.ConsumerDocumentVersionId != expected.SourceDocumentVersionId ||
+                decision.ConsumerRepositoryId != expected.SourceRepositoryId ||
+                decision.ProviderDocumentVersionId != expected.TargetDocumentVersionId ||
+                decision.ProviderRepositoryId != expected.TargetRepositoryId))
         {
             return false;
         }
 
-        CrossRepositoryResolutionDecision decision = matchingDecisions[0];
+        CrossRepositoryResolutionDecision decision = decisionSet.SelectedDecision;
         CurrentDocumentRow? consumer = documents.SingleOrDefault(document =>
             document.DocumentVersionId == expected.SourceDocumentVersionId);
         CurrentDocumentRow? provider = documents.SingleOrDefault(document =>
             document.DocumentVersionId == expected.TargetDocumentVersionId);
-        ExactResolutionProviderEvidenceContribution[] decisionContributions = contributions
-            .Where(contribution => contribution.ResolutionDecisionId == decision.Id)
+        Guid[] setDecisionIds = decisionSet.Decisions
+            .Select(item => item.Id)
+            .ToArray();
+        FlowGroup[] decisionFlowGroups = flowGroups
+            .Where(group =>
+                group.ExactResolutionEdgeId == edge.Id &&
+                group.ExactResolutionDecisionId.HasValue &&
+                setDecisionIds.Contains(group.ExactResolutionDecisionId.Value))
+            .ToArray();
+        EvidenceFlowGroupAuthority[] requestedFlowGroups = request.FlowGroups
+            .Where(group =>
+                group.ExactResolutionEdgeId == expected.EdgeId &&
+                group.ExactResolutionDecisionId.HasValue &&
+                decisionSet.Decisions.Any(item =>
+                    item.Id == group.ExactResolutionDecisionId.Value))
             .ToArray();
 
         return consumer is not null &&
@@ -482,10 +528,24 @@ public sealed class ChatEvidenceCurrentnessValidator(VulgataDbContext context) :
                    provider.ProfiledRevision,
                    decision.ProviderProfiledRevision,
                    StringComparison.Ordinal) &&
-               ExactResolutionCanonicalAuthority.MatchesPersistedExactAuthority(
-                   decision,
-                   edge,
-                   decisionContributions);
+               (expected.ProfileFingerprint is null ||
+                string.Equals(
+                    decision.ProviderEvidenceSetFingerprint,
+                    expected.ProfileFingerprint,
+                    StringComparison.Ordinal)) &&
+               decisionFlowGroups.Length == decisionSet.Count &&
+               decisionFlowGroups.All(group =>
+                   string.Equals(group.State, "Published", StringComparison.Ordinal) &&
+                   group.BusinessLogicDocumentVersionId.HasValue &&
+                   group.SystemId == systemId) &&
+               decisionFlowGroups
+                   .Select(group => group.ExactResolutionDecisionId!.Value)
+                   .Order()
+                   .SequenceEqual(setDecisionIds.Order()) &&
+               (expected.FlowGroupId is null && requestedFlowGroups.Length == 0 ||
+                requestedFlowGroups.Length == decisionSet.Count &&
+                requestedFlowGroups.Select(group => group.FlowGroupId).Order()
+                    .SequenceEqual(decisionFlowGroups.Select(group => group.Id).Order()));
     }
 
     private static bool SpanMatches(

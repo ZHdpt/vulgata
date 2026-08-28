@@ -34,9 +34,9 @@ public sealed class ChatEvidencePacketBuilder
                     packed.Documents,
                     packed.Sections,
                     packed.SourceAnchors,
-                    request.Relationships,
-                    request.FlowEvidence,
-                    request.FlowGroups,
+                    packed.Relationships,
+                    packed.FlowEvidence,
+                    packed.FlowGroups,
                     request.AdvisoryContext,
                     request.Conversation);
             }
@@ -64,16 +64,27 @@ public sealed class ChatEvidencePacketBuilder
         HashSet<string> retainedDocumentHandles = retainedSections
             .Select(section => section.DocumentHandle)
             .Concat(retainedSections.SelectMany(section => section.SupportingDocumentHandles))
-            .Concat(request.Relationships.SelectMany(relationship => new[]
-            {
-                relationship.SourceDocumentHandle,
-                relationship.TargetDocumentHandle,
-            }))
-            .Concat(request.FlowEvidence.Select(step => step.DocumentHandle))
             .ToHashSet(StringComparer.Ordinal);
-        HashSet<Guid> authorityDocumentVersionIds = request.FlowGroups
+
+        EvidenceRelationship[] retainedRelationships = request.Relationships
+            .Where(relationship =>
+                retainedDocumentHandles.Contains(relationship.SourceDocumentHandle) &&
+                retainedDocumentHandles.Contains(relationship.TargetDocumentHandle))
+            .ToArray();
+        HashSet<string> retainedRelationshipHandles = retainedRelationships
+            .Select(relationship => relationship.RelationshipHandle)
+            .ToHashSet(StringComparer.Ordinal);
+        HashSet<Guid> droppedRelationshipEdgeIds = request.Relationships
+            .Where(relationship => !retainedRelationshipHandles.Contains(relationship.RelationshipHandle))
+            .Select(relationship => relationship.EdgeId)
+            .ToHashSet();
+        EvidenceFlowGroupAuthority[] retainedFlowGroups = request.FlowGroups
+            .Where(group => !droppedRelationshipEdgeIds.Contains(group.ExactResolutionEdgeId))
+            .ToArray();
+
+        HashSet<Guid> authorityDocumentVersionIds = retainedFlowGroups
             .Select(group => group.BusinessLogicDocumentVersionId)
-            .Concat(request.FlowGroups.SelectMany(group =>
+            .Concat(retainedFlowGroups.SelectMany(group =>
                 group.Steps.Select(step => step.DocumentVersionId)))
             .ToHashSet();
         EvidenceDocument[] retainedDocuments = request.Documents
@@ -81,15 +92,30 @@ public sealed class ChatEvidencePacketBuilder
                 retainedDocumentHandles.Contains(document.DocumentHandle) ||
                 authorityDocumentVersionIds.Contains(document.DocumentVersionId))
             .ToArray();
+        HashSet<string> packedDocumentHandles = retainedDocuments
+            .Select(document => document.DocumentHandle)
+            .ToHashSet(StringComparer.Ordinal);
+        EvidenceFlowStep[] retainedFlowEvidence = request.FlowEvidence
+            .Where(step =>
+                packedDocumentHandles.Contains(step.DocumentHandle) &&
+                (step.RelationshipHandle is null || retainedRelationshipHandles.Contains(step.RelationshipHandle)))
+            .Select((step, index) => step with { StepOrder = index + 1 })
+            .ToArray();
 
         return new PackedEvidence(
             retainedDocuments,
             retainedSections,
-            retainedAnchors);
+            retainedAnchors,
+            retainedRelationships,
+            retainedFlowEvidence,
+            retainedFlowGroups);
     }
 
     private sealed record PackedEvidence(
         IReadOnlyCollection<EvidenceDocument> Documents,
         IReadOnlyCollection<EvidenceSection> Sections,
-        IReadOnlyCollection<EvidenceAnchor> SourceAnchors);
+        IReadOnlyCollection<EvidenceAnchor> SourceAnchors,
+        IReadOnlyCollection<EvidenceRelationship> Relationships,
+        IReadOnlyCollection<EvidenceFlowStep> FlowEvidence,
+        IReadOnlyCollection<EvidenceFlowGroupAuthority> FlowGroups);
 }

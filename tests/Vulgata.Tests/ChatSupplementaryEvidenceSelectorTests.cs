@@ -159,6 +159,123 @@ public sealed class ChatSupplementaryEvidenceSelectorTests
         }
     }
 
+    [Fact]
+    public void Select_StructuredSymbolTokenEquality_DoesNotTreatSerializedJsonSubstringAsMatch()
+    {
+        SupplementaryChatSectionCandidate[] candidates =
+        [
+            CandidateWithMetadata(
+                1,
+                11,
+                "普通说明",
+                "概述",
+                "普通内容",
+                keySymbolsJson: "[\"SessionUpdateExtended\"]"),
+            CandidateWithMetadata(
+                2,
+                12,
+                "精确说明",
+                "概述",
+                "普通内容",
+                keySymbolsJson: "[\"SessionUpdate\"]"),
+        ];
+
+        SupplementaryChatSectionCandidate selected = Assert.Single(
+            ChatSupplementaryEvidenceSelector.Select("SessionUpdate", candidates, 1));
+
+        Assert.Equal(Id(12), selected.StableSectionId);
+    }
+
+    [Fact]
+    public void Select_BusinessMode_IgnoresTechnicalTermsForMetadataScoring()
+    {
+        SupplementaryChatSectionCandidate[] candidates =
+        [
+            CandidateWithMetadata(
+                1,
+                11,
+                "普通说明",
+                "概述",
+                "普通内容",
+                technicalTermsJson: "[\"TechnicalOnly\"]"),
+        ];
+
+        Assert.Empty(
+            ChatSupplementaryEvidenceSelector.Select(
+                "TechnicalOnly",
+                candidates,
+                1,
+                mode: Vulgata.Core.DomainServices.ChatMode.Business));
+    }
+
+    [Fact]
+    public void Select_MalformedStructuredMetadata_FailsClosed()
+    {
+        SupplementaryChatSectionCandidate[] candidates =
+        [
+            CandidateWithMetadata(
+                1,
+                11,
+                "普通说明",
+                "概述",
+                "普通内容",
+                keySymbolsJson: "[\"SessionUpdate\"")
+        ];
+
+        Assert.Empty(
+            ChatSupplementaryEvidenceSelector.Select("SessionUpdate", candidates, 1));
+    }
+
+    [Fact]
+    public void Select_WeakProseCandidate_CompetesWithMetadataCandidateBeforeRanking()
+    {
+        SupplementaryChatSectionCandidate[] candidates =
+        [
+            CandidateWithMetadata(
+                1,
+                11,
+                "元数据说明",
+                "概述",
+                "无关内容",
+                repositoryPath: "src/SessionUpdate.cs"),
+            CandidateWithMetadata(
+                2,
+                12,
+                "普通说明",
+                "概述",
+                "SessionUpdate 的业务规则。"),
+        ];
+
+        IReadOnlyList<SupplementaryChatSectionCandidate> selected =
+            ChatSupplementaryEvidenceSelector.Select("SessionUpdate", candidates, 2);
+
+        Assert.Equal([Id(11), Id(12)], selected.Select(item => item.StableSectionId));
+    }
+
+    [Fact]
+    public void Select_AllIntegerScoreComponents_AreAppliedOnceAndRemainInCanonicalOrder()
+    {
+        SupplementaryChatSectionCandidate[] candidates =
+        [
+            CandidateWithMetadata(1, 11, "普通标题", "普通标题", "无关内容", repositoryName: "alpha"),
+            CandidateWithMetadata(2, 12, "普通标题", "普通标题", "无关内容", keySymbolsJson: "[\"alpha\"]"),
+            CandidateWithMetadata(3, 13, "普通标题", "普通标题", "无关内容", repositoryPath: "src/alpha.cs"),
+            CandidateWithMetadata(4, 14, "普通标题", "普通标题", "无关内容", businessTermsJson: "[\"alpha\"]"),
+            CandidateWithMetadata(5, 15, "普通标题", "普通标题", "无关内容", searchText: "alpha"),
+            CandidateWithMetadata(6, 16, "普通标题", "alpha", "无关内容"),
+            CandidateWithMetadata(7, 17, "alpha", "普通标题", "无关内容"),
+            CandidateWithMetadata(8, 18, "普通标题", "普通标题", "alpha"),
+        ];
+
+        IReadOnlyList<SupplementaryChatSectionCandidate> selected =
+            ChatSupplementaryEvidenceSelector.Select("alpha", candidates, 8);
+
+        Assert.Equal(5, selected.Count);
+        Assert.Equal(
+            [Id(11), Id(12), Id(13), Id(14), Id(15)],
+            selected.Select(item => item.StableSectionId));
+    }
+
     private static IEnumerable<SupplementaryChatSectionCandidate[]> Permutations(
         SupplementaryChatSectionCandidate[] values)
     {
@@ -184,6 +301,34 @@ public sealed class ChatSupplementaryEvidenceSelectorTests
         string heading,
         string content) =>
         new(Id(document), Id(section), title, heading, content);
+
+    private static SupplementaryChatSectionCandidate CandidateWithMetadata(
+        int document,
+        int section,
+        string title,
+        string heading,
+        string content,
+        string repositoryPath = "",
+        string keySymbolsJson = "",
+        string businessTermsJson = "",
+        string technicalTermsJson = "",
+        string searchText = "",
+        string? repositoryName = null) =>
+        new(
+            Id(document),
+            Id(section),
+            title,
+            heading,
+            content,
+            LogicalDocumentId: Id(100 + document),
+            RepositoryRelativePath: repositoryPath,
+            KeySymbolsJson: keySymbolsJson,
+            BusinessTermsJson: businessTermsJson,
+            TechnicalTermsJson: technicalTermsJson,
+            SearchText: searchText,
+            RepositoryId: Id(200 + document),
+            SectionOrder: section,
+            RepositoryName: repositoryName ?? $"repo-{document}");
 
     private static Guid Id(int value) =>
         Guid.Parse($"00000000-0000-0000-0000-{value:D12}");

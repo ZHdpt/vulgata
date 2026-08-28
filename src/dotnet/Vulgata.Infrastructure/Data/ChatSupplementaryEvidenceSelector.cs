@@ -1,4 +1,5 @@
 using System.Text;
+using System.Text.Json;
 using Vulgata.Core.DomainServices;
 using Vulgata.Core.Entities;
 
@@ -26,6 +27,10 @@ internal static class ChatSupplementaryEvidenceSelector
 {
     private const int _maximumDocuments = 5;
 
+    private sealed record ScoredCandidate(
+        SupplementaryChatSectionCandidate Candidate,
+        int Score);
+
     private static readonly HashSet<string> _ignoredTerms = new(StringComparer.OrdinalIgnoreCase)
     {
         "如何", "哪些", "什么", "主要", "完整", "流程", "系统", "客户", "用户", "进行", "可以", "需要", "之后",
@@ -51,25 +56,15 @@ internal static class ChatSupplementaryEvidenceSelector
 
         HashSet<Guid> preferred = preferredLogicalDocumentIds?.ToHashSet() ?? [];
         var ranked = candidates
-            .Select(candidate => new
-            {
-                Candidate = candidate,
-                EligibilityScore = Score(candidate, terms),
-                MetadataScore = ScoreMetadata(candidate, terms),
-            })
-            .Where(item => item.EligibilityScore > 0 || item.MetadataScore > 0)
+            .Select(candidate => TryScore(candidate, terms, mode, out int score) && score > 0
+                ? new ScoredCandidate(
+                    candidate,
+                    score + (preferred.Contains(candidate.LogicalDocumentId) ? 1 : 0))
+                : null)
+            .Where(item => item is not null)
+            .Select(item => item!)
             .ToArray();
-        bool hasMetadataMatch = ranked.Any(item => item.MetadataScore > 0);
-        var scored = ranked
-            .Where(item => !hasMetadataMatch || item.MetadataScore > 0)
-            .Select(item => new
-            {
-                item.Candidate,
-                Score = item.MetadataScore + item.EligibilityScore +
-                    (preferred.Contains(item.Candidate.LogicalDocumentId) ? 1 : 0),
-            })
-            .ToArray();
-        var primary = scored
+        var primary = ranked
             .GroupBy(item => item.Candidate.DocumentVersionId)
             .Select(group => group
                 .OrderByDescending(item => item.Score)
@@ -93,7 +88,7 @@ internal static class ChatSupplementaryEvidenceSelector
         HashSet<Guid> primarySectionIds = primary
             .Select(item => item.Candidate.StableSectionId)
             .ToHashSet();
-        var extras = scored
+        var extras = ranked
             .Where(item =>
                 selectedDocumentIds.Contains(item.Candidate.DocumentVersionId) &&
                 !primarySectionIds.Contains(item.Candidate.StableSectionId))
@@ -127,22 +122,74 @@ internal static class ChatSupplementaryEvidenceSelector
             _ => 3,
         };
 
-    private static int Score(SupplementaryChatSectionCandidate candidate, string[] terms) =>
-        terms.Sum(term =>
-            (candidate.Title.Contains(term, StringComparison.OrdinalIgnoreCase) ? 3 : 0) +
-            (candidate.Heading.Contains(term, StringComparison.OrdinalIgnoreCase) ? 5 : 0) +
-            (candidate.ContentMarkdown.Contains(term, StringComparison.OrdinalIgnoreCase) ? 1 : 0));
-
-    private static int ScoreMetadata(
+    private static bool TryScore(
         SupplementaryChatSectionCandidate candidate,
-        string[] terms) =>
-        terms.Sum(term =>
-            (candidate.RepositoryName.Contains(term, StringComparison.OrdinalIgnoreCase) ? 50 : 0) +
-            (candidate.RepositoryRelativePath.Contains(term, StringComparison.OrdinalIgnoreCase) ? 30 : 0) +
-            (candidate.KeySymbolsJson.Contains(term, StringComparison.OrdinalIgnoreCase) ? 40 : 0) +
-            (candidate.BusinessTermsJson.Contains(term, StringComparison.OrdinalIgnoreCase) ? 25 : 0) +
-            (candidate.TechnicalTermsJson.Contains(term, StringComparison.OrdinalIgnoreCase) ? 25 : 0) +
-            (candidate.SearchText.Contains(term, StringComparison.OrdinalIgnoreCase) ? 20 : 0));
+        string[] terms,
+        ChatMode mode,
+        out int score)
+    {
+        score = 0;
+        if (!TryParseTokens(candidate.KeySymbolsJson, out HashSet<string> keySymbols) ||
+            !TryParseTokens(candidate.BusinessTermsJson, out HashSet<string> businessTerms) ||
+            !TryParseTokens(candidate.TechnicalTermsJson, out HashSet<string> technicalTerms))
+        {
+            return false;
+        }
+
+        HashSet<string> activeModeTerms = mode == ChatMode.Business
+            ? businessTerms
+            : technicalTerms;
+        score =
+            (ContainsAny(candidate.RepositoryName, terms) ? 50 : 0) +
+            (keySymbols.Overlaps(terms) ? 40 : 0) +
+            (ContainsAny(candidate.RepositoryRelativePath, terms) ? 30 : 0) +
+            (activeModeTerms.Overlaps(terms) ? 25 : 0) +
+            (ContainsAny(candidate.SearchText, terms) ? 20 : 0) +
+            (ContainsAny(candidate.Heading, terms) ? 5 : 0) +
+            (ContainsAny(candidate.Title, terms) ? 3 : 0) +
+            (ContainsAny(candidate.ContentMarkdown, terms) ? 1 : 0);
+        return true;
+    }
+
+    private static bool ContainsAny(string value, IReadOnlyCollection<string> terms)
+    {
+        string normalized = value.Normalize(NormalizationForm.FormC);
+        return terms.Any(term => normalized.Contains(term, StringComparison.OrdinalIgnoreCase));
+    }
+
+    private static bool TryParseTokens(string json, out HashSet<string> tokens)
+    {
+        tokens = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            return true;
+        }
+
+        try
+        {
+            using JsonDocument document = JsonDocument.Parse(json);
+            if (document.RootElement.ValueKind != JsonValueKind.Array)
+            {
+                return false;
+            }
+
+            foreach (JsonElement element in document.RootElement.EnumerateArray())
+            {
+                if (element.ValueKind != JsonValueKind.String || element.GetString() is not { } value)
+                {
+                    return false;
+                }
+
+                _ = tokens.Add(value.Normalize(NormalizationForm.FormC));
+            }
+
+            return true;
+        }
+        catch (JsonException)
+        {
+            return false;
+        }
+    }
 
     private static IEnumerable<string> ExtractTerms(string value)
     {
