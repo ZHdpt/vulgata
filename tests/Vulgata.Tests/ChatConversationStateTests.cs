@@ -85,6 +85,25 @@ public sealed class ChatConversationStateTests
     }
 
     [Fact]
+    public void AppendValidatedTurn_ExactFourKiBConversationState_IsAcceptedAndPlusOneIsRejected()
+    {
+        ChatConversationScope scope = CreateScope(ChatMode.Business);
+        ChatConversationState empty = ChatConversationState.Empty(scope);
+        int answerLength = FindAnswerLengthForEncodedState(empty, 4_096);
+
+        ChatConversationState exact = empty.AppendValidatedTurn(
+            Turn("问题", new('x', answerLength), "h1", "c1", FirstDocumentId));
+
+        Assert.Equal(4_096, exact.EncodedUtf8Bytes);
+        ChatContractException exception = Assert.Throws<ChatContractException>(() =>
+            empty.AppendValidatedTurn(
+                Turn("问题", new('x', answerLength + 1), "h1", "c1", FirstDocumentId)));
+
+        Assert.Equal(ChatContractFailureCode.InvalidEvidence, exception.FailureCode);
+        Assert.Empty(empty.Turns);
+    }
+
+    [Fact]
     public void PriorLogicalDocumentHints_ExposeOnlyBoundedCitationAndDocumentHints_NotPriorEvidenceBody()
     {
         ChatConversationState state = ChatConversationState.Empty(CreateScope(ChatMode.Business))
@@ -98,7 +117,7 @@ public sealed class ChatConversationStateTests
     }
 
     [Fact]
-    public void BuildRetrievalContext_ReFetchesHintsAndDropsUnauthorizedOrStaleDocuments()
+    public void BuildRetrievalContext_ReFetchedHintLoss_ClearsConversationAndFailsClosed()
     {
         ChatConversationState state = ChatConversationState.Empty(CreateScope(ChatMode.Business))
             .AppendValidatedTurn(Turn("问题", "答案", "h1", "c1", FirstDocumentId))
@@ -108,10 +127,10 @@ public sealed class ChatConversationStateTests
             currentAuthorizedDocumentIds: [FirstDocumentId],
             currentDocumentVersions: [FirstDocumentId]);
 
-        Assert.Equal([FirstDocumentId], context.CurrentDocumentHints);
-        Assert.DoesNotContain(SecondDocumentId, context.CurrentDocumentHints);
-        Assert.DoesNotContain("c2", context.CitationHandles);
-        Assert.DoesNotContain("h2", context.CitationHandles);
+        Assert.True(context.IsMissingEquivalent);
+        Assert.Empty(context.CurrentDocumentHints);
+        Assert.Empty(context.CitationHandles);
+        Assert.Empty(state.Turns);
     }
 
     [Fact]
@@ -128,6 +147,57 @@ public sealed class ChatConversationStateTests
         Assert.Empty(context.CitationHandles);
         Assert.True(context.IsMissingEquivalent);
         Assert.Empty(state.Turns);
+    }
+
+    [Fact]
+    public void BuildRetrievalContext_PartialAuthorizationRevocation_ClearsAllPriorHintsAndFailsClosed()
+    {
+        ChatConversationState state = ChatConversationState.Empty(CreateScope(ChatMode.Business))
+            .AppendValidatedTurn(Turn("问题", "答案", "h1", "c1", FirstDocumentId))
+            .AppendValidatedTurn(Turn("追问", "答案二", "h2", "c2", SecondDocumentId));
+
+        ChatConversationRetrievalContext context = state.BuildRetrievalContext(
+            currentAuthorizedDocumentIds: [FirstDocumentId],
+            currentDocumentVersions: [FirstDocumentId, SecondDocumentId]);
+
+        Assert.True(context.IsMissingEquivalent);
+        Assert.Empty(context.CurrentDocumentHints);
+        Assert.Empty(context.CitationHandles);
+        Assert.Empty(state.Turns);
+    }
+
+    [Fact]
+    public void BuildRetrievalContext_PartialCurrentnessMutation_ClearsAllPriorHintsAndFailsClosed()
+    {
+        ChatConversationState state = ChatConversationState.Empty(CreateScope(ChatMode.Business))
+            .AppendValidatedTurn(Turn("问题", "答案", "h1", "c1", FirstDocumentId))
+            .AppendValidatedTurn(Turn("追问", "答案二", "h2", "c2", SecondDocumentId));
+
+        ChatConversationRetrievalContext context = state.BuildRetrievalContext(
+            currentAuthorizedDocumentIds: [FirstDocumentId, SecondDocumentId],
+            currentDocumentVersions: [FirstDocumentId]);
+
+        Assert.True(context.IsMissingEquivalent);
+        Assert.Empty(context.CurrentDocumentHints);
+        Assert.Empty(context.CitationHandles);
+        Assert.Empty(state.Turns);
+    }
+
+    private static int FindAnswerLengthForEncodedState(
+        ChatConversationState empty,
+        int targetBytes)
+    {
+        for (int answerLength = 1; answerLength <= targetBytes; answerLength++)
+        {
+            ChatConversationState candidate = empty.AppendValidatedTurn(
+                Turn("问题", new('x', answerLength), "h1", "c1", FirstDocumentId));
+            if (candidate.EncodedUtf8Bytes == targetBytes)
+            {
+                return answerLength;
+            }
+        }
+
+        throw new Xunit.Sdk.XunitException($"No answer length produced {targetBytes} encoded bytes.");
     }
 
     private static ChatConversationScope CreateScope(

@@ -295,9 +295,9 @@ public sealed class ChatConversationState
         HashSet<Guid> authorized = currentAuthorizedDocumentIds.ToHashSet();
         HashSet<Guid> current = currentDocumentVersions.ToHashSet();
         Guid[] priorHints = PriorLogicalDocumentHints.ToArray();
-        bool authorizationLost = priorHints.Length > 0 &&
-            !priorHints.Any(authorized.Contains);
-        if (authorizationLost)
+        bool priorEvidenceLost = priorHints.Any(id =>
+            !authorized.Contains(id) || !current.Contains(id));
+        if (priorEvidenceLost)
         {
             Clear();
             return new ChatConversationRetrievalContext(

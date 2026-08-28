@@ -440,15 +440,19 @@ public sealed class ChatEvidenceRetriever : IChatEvidenceRetriever
             request.Conversation.BuildRetrievalContext(
                 currentLogicalDocumentIds,
                 currentLogicalDocumentIds);
-        string retrievalQuestion = conversationContext.IsMissingEquivalent
-            ? request.Question
-            : string.Join(
-                ' ',
-                request.Conversation.Turns
-                    .Where(turn => turn.LogicalDocumentIds.Any(
-                        conversationContext.CurrentDocumentHints.Contains))
-                    .Select(turn => turn.Question)
-                    .Append(request.Question));
+        if (conversationContext.IsMissingEquivalent)
+        {
+            return ChatRetrievalStageResult<ChatLexicalPrimaryProjection>
+                .NotFoundOrUnauthorized();
+        }
+
+        string retrievalQuestion = string.Join(
+            ' ',
+            request.Conversation.Turns
+                .Where(turn => turn.LogicalDocumentIds.Any(
+                    conversationContext.CurrentDocumentHints.Contains))
+                .Select(turn => turn.Question)
+                .Append(request.Question));
         SupplementaryChatSectionCandidate[] selectionCandidates = candidates
             .Select(candidate => new SupplementaryChatSectionCandidate(
                 candidate.DocumentVersionId,

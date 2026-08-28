@@ -111,9 +111,12 @@ public sealed class ChatAgentResultValidator(ChatCandidateExtractor candidateExt
             Dictionary<string, CandidateClaim> dispatchedCandidates = request.CandidateClaims.ToDictionary(
                 candidate => candidate.CandidateHandle,
                 StringComparer.Ordinal);
-            var unmatchedTypedHandles = outcome.Result.Selections
-                .Select(selection => selection.CandidateHandle)
-                .ToHashSet(StringComparer.Ordinal);
+            IReadOnlyList<ChatSynthesisSelection> typedSelections = outcome.Result.Selections;
+            if (selectionCount != typedSelections.Count)
+            {
+                return ChatAgentResultValidation.Invalid();
+            }
+
             var selected = new List<CandidateClaim>();
             var claims = new List<MaterialClaim>();
             JsonElement.ArrayEnumerator selections = root.GetProperty("selections").EnumerateArray();
@@ -136,7 +139,14 @@ public sealed class ChatAgentResultValidator(ChatCandidateExtractor candidateExt
                 }
 
                 string handle = selection.GetProperty("candidateHandle").GetString() ?? string.Empty;
-                if (!selectedHandles.Add(handle) ||
+                string? narrative = hasNarrative && narrativeElement.ValueKind == JsonValueKind.String
+                    ? narrativeElement.GetString()
+                    : null;
+                ChatSynthesisSelection typedSelection = typedSelections[expectedOrder - 1];
+                if (!string.Equals(handle, typedSelection.CandidateHandle, StringComparison.Ordinal) ||
+                    order != typedSelection.Order ||
+                    !string.Equals(narrative, typedSelection.NarrativeText, StringComparison.Ordinal) ||
+                    !selectedHandles.Add(handle) ||
                     !allowlist.TryGetValue(handle, out CandidateClaim? candidate) ||
                     !dispatchedCandidates.TryGetValue(handle, out CandidateClaim? dispatchedCandidate) ||
                     !HasExactRetainedState(candidate, dispatchedCandidate))
@@ -145,7 +155,6 @@ public sealed class ChatAgentResultValidator(ChatCandidateExtractor candidateExt
                 }
 
                 selected.Add(candidate);
-                unmatchedTypedHandles.Remove(handle);
                 string displayText = hasNarrative &&
                     candidate.AllowsBusinessNarrative &&
                     BusinessNarrativeSafety.IsSafeRewrite(
@@ -157,7 +166,7 @@ public sealed class ChatAgentResultValidator(ChatCandidateExtractor candidateExt
                 expectedOrder++;
             }
 
-            if (selected.Count == 0 || unmatchedTypedHandles.Count > 0)
+            if (selected.Count == 0)
             {
                 return ChatAgentResultValidation.Invalid();
             }

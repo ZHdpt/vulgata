@@ -82,11 +82,11 @@ description: "Dependency-ordered Story 12.5 implementation tasks"
 
 **Independent test**: Initial question plus two follow-ups preserve scope/mode, use previous citations only as hints, re-fetch current evidence, evict the fourth turn, and reject stale/unauthorized evidence or unsupported whole answers.
 
-- [ ] T040 [P] [US2] Add RED conversation vectors for initial plus two follow-ups, fourth-turn eviction, 4 KiB bound, scope/mode reset, prior-citation boost, re-fetch, authorization/currentness mutation, and restart non-persistence in `tests/Vulgata.Tests/ChatConversationStateTests.cs`.
-- [ ] T041 [US2] Implement transient `ChatConversationState` and validated-turn contracts in `src/dotnet/Vulgata.Core/DomainServices/ChatConversationContracts.cs`; retain only the last two questions/answers, cited handles, scope, and mode.
-- [ ] T042 [US2] Integrate re-fetch-only conversation hints, one shared deadline, currentness revalidation, bounded Chinese outcomes, and no stale-result reuse in `src/dotnet/Vulgata.Web/Data/PreparedChatCoordinator.cs`.
-- [ ] T043 [P] [US2] Add RED claim/citation/security vectors for handle/Source Anchor coverage, fingerprint binding, whole-answer semantic rejection, missing-equivalent failure, one syntax repair only, and no semantic repair in `tests/Vulgata.Tests/ChatAgentResultValidatorTests.cs` and `PreparedChatCoordinatorTests.cs`.
-- [ ] T044 [US2] Implement provider-independent complete-result validation in `src/dotnet/Vulgata.Agents/ChatExecution/ChatAgentResultValidator.cs` and coordinator integration in `src/dotnet/Vulgata.Web/Data/PreparedChatCoordinator.cs`; no partial claim, citation, handle, relationship, or Source Anchor may cross the client boundary.
+- [x] T040 [P] [US2] Add RED conversation vectors for initial plus two follow-ups, fourth-turn eviction, 4 KiB bound, scope/mode reset, prior-citation boost, re-fetch, authorization/currentness mutation, and restart non-persistence in `tests/Vulgata.Tests/ChatConversationStateTests.cs`.
+- [x] T041 [US2] Implement transient `ChatConversationState` and validated-turn contracts in `src/dotnet/Vulgata.Core/DomainServices/ChatConversationContracts.cs`; retain only the last two questions/answers, cited handles, scope, and mode.
+- [x] T042 [US2] Integrate re-fetch-only conversation hints, one shared deadline, currentness revalidation, bounded Chinese outcomes, and no stale-result reuse in `src/dotnet/Vulgata.Web/Data/PreparedChatCoordinator.cs`.
+- [x] T043 [P] [US2] Add RED claim/citation/security vectors for handle/Source Anchor coverage, fingerprint binding, whole-answer semantic rejection, missing-equivalent failure, one syntax repair only, and no semantic repair in `tests/Vulgata.Tests/ChatAgentResultValidatorTests.cs` and `PreparedChatCoordinatorTests.cs`.
+- [x] T044 [US2] Implement provider-independent complete-result validation in `src/dotnet/Vulgata.Agents/ChatExecution/ChatAgentResultValidator.cs` and coordinator integration in `src/dotnet/Vulgata.Web/Data/PreparedChatCoordinator.cs`; no partial claim, citation, handle, relationship, or Source Anchor may cross the client boundary.
 
 ## Phase 7: Track B4 — mandatory raw streaming, whole-answer barrier, and accepted-only reveal (Priority: P1)
 

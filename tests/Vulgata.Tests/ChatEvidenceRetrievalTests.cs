@@ -842,6 +842,52 @@ public sealed class ChatEvidenceRetrievalTests
             section => section.Heading == "特殊会话锚点说明");
     }
 
+    [Fact]
+    public async Task RetrieveAsync_FollowUpPriorEvidenceNoLongerCurrent_ReturnsMissingEquivalentAsync()
+    {
+        await using PreparedEvidenceFixture fixture = await PreparedEvidenceFixture.CreateAsync();
+        await fixture.AddStandaloneCurrentCodeLogicAsync();
+
+        ChatRetrievalRequest firstRequest = fixture.CreateRequest(
+            "conversation-currentness-seed",
+            question: "特殊会话锚点");
+        ChatEvidenceResult firstResult = await new ChatEvidenceRetriever(fixture.Context)
+            .RetrieveAsync(
+                firstRequest,
+                new RepositoryAccessScope(
+                    fixture.RepositoryIds,
+                    new RecordingAuthorizationVerifier(true, true)));
+        EvidencePacket firstPacket = Assert.IsType<EvidencePacket>(firstResult.Packet);
+        EvidenceSection citedSection = Assert.Single(
+            firstPacket.Sections,
+            section => section.Heading == "特殊会话锚点说明");
+        EvidenceDocument citedDocument = Assert.Single(
+            firstPacket.Documents,
+            document => document.DocumentHandle == citedSection.DocumentHandle);
+        ChatConversationState conversation = firstRequest.Conversation.AppendValidatedTurn(
+            ValidatedConversationTurn.Create(
+                firstRequest.Question,
+                "已验证的特殊会话锚点答案。",
+                firstPacket.Fingerprint,
+                [citedSection.SectionHandle],
+                [citedDocument.LogicalDocumentId]));
+        await fixture.RemoveStandaloneCurrentCodeLogicEvidenceAsync();
+
+        ChatEvidenceResult followUpResult = await new ChatEvidenceRetriever(fixture.Context)
+            .RetrieveAsync(
+                fixture.CreateRequest(
+                    "conversation-currentness-follow-up",
+                    conversation,
+                    "它如何工作？"),
+                new RepositoryAccessScope(
+                    fixture.RepositoryIds,
+                    new RecordingAuthorizationVerifier(true, true)));
+
+        Assert.Equal(ChatEvidenceResultKind.NotFoundOrUnauthorized, followUpResult.Kind);
+        Assert.Null(followUpResult.Packet);
+        Assert.Empty(conversation.Turns);
+    }
+
     [Theory]
     [InlineData("SpecialSessionAnchor")]
     [InlineData("src/main/java/provider/SpecialSessionAnchor.java")]
@@ -1613,6 +1659,15 @@ public sealed class ChatEvidenceRetrievalTests
             await Context.SaveChangesAsync();
             await SetCurrentVersionAsync(Context, logicalDocumentId, documentVersionId);
             await SetCurrentVersionAsync(Context, proseLogicalDocumentId, proseDocumentVersionId);
+            Context.ChangeTracker.Clear();
+        }
+
+        internal async Task RemoveStandaloneCurrentCodeLogicEvidenceAsync()
+        {
+            await Context.Database.ExecuteSqlInterpolatedAsync(
+                $"DELETE FROM \"IndexEntries\" WHERE \"DocumentVersionId\" = {Id(61_002)}");
+            await Context.Database.ExecuteSqlInterpolatedAsync(
+                $"DELETE FROM \"DocumentSections\" WHERE \"DocumentVersionId\" = {Id(61_002)}");
             Context.ChangeTracker.Clear();
         }
 

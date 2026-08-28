@@ -280,7 +280,10 @@ public sealed class ChatAgentResultValidatorTests
                 fixture.Request.RequestId,
                 fixture.Request.Mode,
                 fixture.Request.EvidenceFingerprint,
-                [new ChatSynthesisSelection("k1", 1)]),
+                [
+                    new ChatSynthesisSelection("k2", 1),
+                    new ChatSynthesisSelection("k1", 2),
+                ]),
             rawJson);
         var validator = new ChatAgentResultValidator(new ChatCandidateExtractor());
 
@@ -312,6 +315,28 @@ public sealed class ChatAgentResultValidatorTests
             fixture.Packet,
             fixture.Request,
             ChatSynthesisOutcome.Generated(typedResult, rawJson));
+
+        Assert.False(result.IsValid);
+        Assert.Empty(result.MaterialClaims);
+        Assert.Empty(result.SelectedCandidates);
+    }
+
+    [Fact]
+    public void Validate_RawSelectionMissingFromTypedResult_RejectsWholeAnswer()
+    {
+        ValidationFixture fixture = CreateFixture(ChatMode.It, "第一项。\n\n第二项。");
+        string rawJson = CreateRawJson(fixture.Request, [("k1", 1), ("k2", 2)]);
+        ChatSynthesisResult incompleteTypedResult = ChatSynthesisResult.Create(
+            fixture.Request.RequestId,
+            fixture.Request.Mode,
+            fixture.Request.EvidenceFingerprint,
+            [new ChatSynthesisSelection("k1", 1)]);
+        var validator = new ChatAgentResultValidator(new ChatCandidateExtractor());
+
+        ChatAgentResultValidation result = validator.Validate(
+            fixture.Packet,
+            fixture.Request,
+            ChatSynthesisOutcome.Generated(incompleteTypedResult, rawJson));
 
         Assert.False(result.IsValid);
         Assert.Empty(result.MaterialClaims);
