@@ -6,9 +6,9 @@
 - `docs/bmad/epics.md`, Story 12.5
 - `docs/bmad/implementation-artifacts/12-5-grounded-llm-wiki-chat-and-august-30-release-evidence.md`
 - August 30 sprint-change proposal, bounded-scanning architecture, and dated PRD overlay
-- `specs/013-exact-cross-repository-flow-pass2/{plan,research,data-model,contracts}` as unaccepted candidate dependency evidence
+- accepted Story 12.4 artifacts at immutable dependency commit `4798b97d9f23aef587829175df7ab7ebc3daf995`
 - `specs/008-demo-chat-release-gate` as stale lifecycle but reusable implementation history
-- revised spec SHA-256 `a7367b1f64fcfc2cf099d7fd204575f314e35994204ccb0cd7b7f2dacf6f7dd4`
+- accepted Story 12.5 spec and `decisions/design-correction-01.md` at clean source commit `73c317f10917236e7a4ac0ad55f4966abd18024e`
 - current Prepared Chat contracts, retriever, currentness validator, coordinator, non-streaming provider dispatch/result validation, Unicode-safe page reveal, tests, Pass 1/Pass 2 streaming implementations, durable Scan entities/recovery/manual-resume API, placeholder Scan-history page, fake demo state, and release harness
 
 No `CONTEXT-MAP.md`, `CONTEXT.md`, repository ADR directory, or context ADR exists at the inspected boundary.
@@ -50,11 +50,25 @@ No `CONTEXT-MAP.md`, `CONTEXT.md`, repository ADR directory, or context ADR exis
 - PostgreSQL full-text/trigram as sole ranking: rejected because mixed CJK/exact identifier precedence and cross-provider deterministic behavior need an explicit canonical scorer.
 - Embeddings/cross-encoder: explicitly deferred and adds operational/data-boundary risk.
 
-**Consequence**: rank a bounded current candidate window, canonicalize before every take, and verify randomized enumeration produces identical fingerprints.
+**Consequence**: stream current eligible sections in stable-ID order, deduplicate before a bounded top-K, and retain the highest-ranked 256 or exhaustion; a 257th or larger eligible set is ranked rather than refused. Parse structured term arrays and use token equality, apply each published integer component `50/40/30/25/20/5/3/1` at most once where 25 applies only to the active mode's term field, add one total prior-current-Document point, and let all positive-score candidates compete before selecting strongest-per-Document then extras to an exact target of twelve. Randomized enumeration, duplicate conflicts, 257+ sets, and weak-metadata/strong-prose cases must produce the specified identities/fingerprints.
+
+## R-3A: A single typed cutover is mandatory
+
+**Decision**: replace the current two-path retriever with one typed snapshot -> lexical primary projection -> current-v2 expansion -> packet-builder pipeline. Delete the literal Cross-Repository question classifier, exact-row rebuild branch, projection-only early final return, duplicate packet construction, direct legacy authority reads, and direct in-method projector construction.
+
+**Rationale**: pinned source shows `RetrieveInsideTransactionAsync` first creates a complete projection packet and then, only when `RequiresCrossRepositoryEvidence` recognizes `跨仓库` or `cross-repository`, executes a second `ExactRelationshipRow`/provenance path and creates another packet. T021/T055/T065/T070/T075/T080 repeatedly attempted to constrain branches without removing the second primary authority. Test growth could not establish the architectural postcondition because no seam represented immutable lexical primaries followed by optional expansion.
+
+**Alternatives considered**:
+
+- Add T080 to special-case the branch: rejected because it preserves the design defect and another question spelling can select another authority.
+- Feature-flag old and new retrieval: rejected because coexistence keeps two production authorities and makes release evidence configuration-dependent.
+- Let the projector return a complete packet: rejected because it can replace lexical identities and duplicates packing policy.
+
+**Consequence**: architectural interaction RED tests must fail against the old composition before replacement writes. Structural tests enforce one packet-builder call and absence of classifier/legacy queries; behavioral tests fix lexical identities while relationship fixtures vary.
 
 ## R-4: Relationship expansion is a closed projector
 
-**Decision**: use only current REFERENCES, GENERATED_FROM, accepted exact decision/Edge pairs, and complete `Published` Flow Groups; top 2-3 seeds, <=2 additions per seed, <=5 Documents, one hop, <=32 relationships, <=12 flow steps.
+**Decision**: use only current REFERENCES, GENERATED_FROM, accepted exact decision/Edge pairs, and complete `Published` Flow Groups; seeds are exactly the first `min(3, primaryDocumentCount)` lexical Documents, <=2 additions per seed, <=5 Documents, one hop, <=32 relationships, <=10 Flow Group authorities, <=12 flow steps.
 
 **Rationale**: these are publication facts. Current Flow Group code has explicit `Complete` → `Published` and candidate decision/Edge fields. Raw CodeGraph and incomplete groups are analysis/planning evidence, not published wiki truth.
 
@@ -63,7 +77,7 @@ No `CONTEXT-MAP.md`, `CONTEXT.md`, repository ADR directory, or context ADR exis
 - Recursive CTE: rejected because it makes depth and cycle effects harder to audit and exceeds one hop.
 - Treat all Flow Groups with a Business Logic ID as eligible: rejected because state, decision, trace, and current-version consistency must also hold.
 
-**Consequence**: one projector returns complete relationship support units or closed exclusion reasons; packet packing never repairs an invalid graph.
+**Consequence**: one projector returns complete relationship support units or closed exclusion reasons under the four-state table `absent` / `present-valid` / `present-inconsistent` / `selected-required`. Optional invalid facts cannot poison unrelated lexical evidence; after selection, any required-support defect refuses the assembly and cannot substitute a lower-ranked unit.
 
 ## R-5: Encoded packet size belongs to a dedicated builder
 
@@ -124,7 +138,7 @@ No `CONTEXT-MAP.md`, `CONTEXT.md`, repository ADR directory, or context ADR exis
 
 ## R-8: Production Scan UI reads durable state directly
 
-**Decision**: add a specific Core read interface, Infrastructure EF projector, Web current-user coordinator, and Chinese production pages. Reuse the existing recovery/manual-resume authority.
+**Decision**: preserve the accepted Track A specific Core read interface, Infrastructure EF projector, Web current-user coordinator, and Chinese production pages. Reuse the existing recovery/manual-resume authority; this plan correction makes no Track A production change.
 
 **Rationale**: `ScanExecution` and `ScanJobExecution` persist prepared/running/retry/pause/completed-with-warning/integrity/security state, next attempts, counts, and File Code Unit identities. `ManualResumeEndpoints` already proves authorization and recovery. `ScanHistoryPage` is a placeholder; `DemoScanPage` uses random circuit state and an iframe.
 
@@ -137,7 +151,7 @@ No `CONTEXT-MAP.md`, `CONTEXT.md`, repository ADR directory, or context ADR exis
 
 ## R-9: Evaluation and evidence are schema-validated data
 
-**Decision**: a fixed 12-20 case JSON corpus and closed Tier 1/2/3 envelope retain all prior status/check rules. Schema version 2.1 makes the production raw response-header adapter the sole content-dark attempt-observation authority and requires same-process authenticated provenance.
+**Decision**: a fixed 12-20 case JSON corpus and closed Tier 1/2/3 envelope retain all prior status/check rules. Track B emits a release-neutral content-dark runtime observation from the production raw response-header adapter. Release schema 2.2 makes a Track C-only sealed same-process attestation sink the exporter: it admits observations only directly from that adapter and signs candidate/run/case/process bindings without adding release concerns to the runtime transport contract.
 
 **Rationale**: Story 11.5 harness supplies useful ownership/cleanup/polling patterns, but its image/container topology, prepared profile, August 15 identity, and lifecycle are stale. Story 12.5 needs candidate/revision/tool/prompt/fingerprint/restart/screenshot traceability and automatic authorization-negative failure.
 
@@ -150,7 +164,7 @@ No `CONTEXT-MAP.md`, `CONTEXT.md`, repository ADR directory, or context ADR exis
 - Truncation, binary floating-point rounding, or banker's rounding for usefulness: rejected because implementations could disagree at a half-step; exact rational two-decimal round-half-up arithmetic is the single portable rule.
 - Provider-content logs or screenshots as streaming proof: rejected because they expose protected evidence and are unnecessary; timing/count/outcome metrics prove the transport without content.
 
-**Consequence**: process start creates an ephemeral ECDSA P-256 observation authority; preflight binds its public-key fingerprint/process identity to candidate and exact adapter type/version/assembly hash. Each adapter receipt signs candidate/case/request/attempt, provider config, canonical `stream=true` request fingerprint, response status/media/protocol, first physical read/EOF disposition, and domain counters. The semantic verifier validates signature and same-process/candidate bindings before aggregate recomputation. A perfectly consistent SDK aggregate fake-chunk receipt is rejected solely for missing authorized raw-adapter provenance. All earlier status conditioning, append-only correction, half-up scoring, ten checks, command/artifact bindings, and content redaction remain unchanged.
+**Consequence**: Track B runtime observations contain only opaque observation ID/sequence, request/attempt/provider/request fingerprints, response/read/EOF dispositions, timings, counters and outcome. During Track C, process start creates an ephemeral ECDSA P-256 attestation authority; preflight binds its public-key/process/candidate and exact adapter type/version/assembly hash. The sealed sink signs the immutable runtime observation plus run/case/candidate context. The semantic verifier validates signature, sealed admission, and same-process/candidate bindings before aggregate recomputation. A perfectly consistent SDK aggregate fake-chunk receipt is rejected solely for missing authorized adapter-to-sink provenance. All earlier status conditioning, append-only correction, half-up scoring, ten checks, command/artifact bindings, and content redaction remain unchanged.
 
 ## R-10: Tier 2/3 database safety is a preconnection invariant
 

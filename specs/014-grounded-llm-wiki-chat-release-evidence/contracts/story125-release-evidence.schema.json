@@ -10,7 +10,7 @@
     "releaseReceipt"
   ],
   "properties": {
-    "schemaVersion": { "const": "story125-release-evidence/2.1" },
+    "schemaVersion": { "const": "story125-release-evidence/2.2" },
     "runId": { "$ref": "#/$defs/runId" },
     "supersedesRunId": { "oneOf": [{ "$ref": "#/$defs/runId" }, { "type": "null" }] },
     "status": { "enum": ["planned", "attempted", "passed", "failed", "blocked", "not-run"] },
@@ -172,22 +172,26 @@
         "configurationFingerprint": { "$ref": "#/$defs/sha256" }
       }
     },
-    "streamObservationAuthority": {
+    "streamAttestationAuthority": {
       "type": "object", "additionalProperties": false,
-      "required": ["processObservationId", "processPublicKeyFingerprint", "candidateCommit", "adapterImplementation", "adapterVersion", "adapterAssemblySha256", "preflightArtifact"],
+      "required": ["authorityKind", "processObservationId", "processPublicKeyFingerprint", "candidateCommit", "adapterImplementation", "adapterVersion", "adapterAssemblySha256", "attestationSinkImplementation", "attestationSinkVersion", "attestationSinkAssemblySha256", "preflightArtifact"],
       "properties": {
+        "authorityKind": { "const": "story125-trackc-sealed-raw-stream-attestor/1.0" },
         "processObservationId": { "type": "string", "pattern": "^process-[a-z0-9][a-z0-9._-]{7,62}$" },
         "processPublicKeyFingerprint": { "$ref": "#/$defs/sha256" },
         "candidateCommit": { "$ref": "#/$defs/git" },
         "adapterImplementation": { "const": "Vulgata.Agents.ChatExecution.OpenAiCompatibleChatProviderStreamingTransport" },
         "adapterVersion": { "type": "string", "minLength": 1, "maxLength": 128 },
         "adapterAssemblySha256": { "$ref": "#/$defs/sha256" },
+        "attestationSinkImplementation": { "const": "Vulgata.Agents.ChatExecution.Story125StreamAttestationSink" },
+        "attestationSinkVersion": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "attestationSinkAssemblySha256": { "$ref": "#/$defs/sha256" },
         "preflightArtifact": { "$ref": "#/$defs/artifact" }
       }
     },
     "environment": {
       "type": "object", "additionalProperties": false,
-      "required": ["databaseName", "postgresqlMajor", "topology", "repositoryRevisions", "promptVersions", "schemaVersions", "toolVersions", "provider", "streamObservationAuthority"],
+      "required": ["databaseName", "postgresqlMajor", "topology", "repositoryRevisions", "promptVersions", "schemaVersions", "toolVersions", "provider", "streamAttestationAuthority"],
       "properties": {
         "databaseName": { "type": "string", "pattern": "^vulgata_story125_[a-z0-9_]{8,48}$" },
         "postgresqlMajor": { "const": 17 },
@@ -197,7 +201,7 @@
         "schemaVersions": { "type": "array", "minItems": 1, "maxItems": 16, "uniqueItems": true, "items": { "type": "string", "minLength": 1, "maxLength": 128 } },
         "toolVersions": { "type": "array", "minItems": 3, "maxItems": 16, "items": { "$ref": "#/$defs/tool" } },
         "provider": { "$ref": "#/$defs/providerIdentity" },
-        "streamObservationAuthority": { "$ref": "#/$defs/streamObservationAuthority" }
+        "streamAttestationAuthority": { "$ref": "#/$defs/streamAttestationAuthority" }
       }
     },
     "command": {
@@ -319,19 +323,24 @@
     },
     "streamAttemptReceipt": {
       "type": "object", "additionalProperties": false,
-      "required": ["attemptKind", "candidateCommit", "caseId", "requestId", "observationAuthority", "processObservationId", "processPublicKeyFingerprint", "observationSequence", "adapterImplementation", "adapterVersion", "adapterAssemblySha256", "providerApi", "providerConfigurationFingerprint", "canonicalStreamingRequestFingerprint", "requestStreamMode", "responseHeaderDisposition", "responseStatusCode", "responseMediaType", "negotiatedProtocol", "responseHeadersAtUtc", "firstPhysicalReadDisposition", "firstPhysicalReadAtUtc", "physicalEofAtUtc", "physicalEofDisposition", "streamingTransport", "streamStartedAtUtc", "firstDataAtUtc", "terminalAtUtc", "timeToFirstDataMilliseconds", "rawReadCount", "maximumRawReadByteCount", "rawBodyByteCount", "maximumSseLineByteCount", "maximumSseEventByteCount", "answerDeltaCount", "maximumAnswerDeltaByteCount", "assembledAnswerByteCount", "terminalEventCount", "inactivityLimitMilliseconds", "overallDeadlineAtUtc", "transportOutcome", "rejectionCategory", "validationOutcome", "authenticatedObservationArtifact", "observationSignature"],
+      "required": ["attemptKind", "candidateCommit", "runId", "caseId", "requestId", "attestationAuthority", "runtimeObservationId", "processObservationId", "processPublicKeyFingerprint", "observationSequence", "adapterImplementation", "adapterVersion", "adapterAssemblySha256", "attestationSinkImplementation", "attestationSinkVersion", "attestationSinkAssemblySha256", "providerApi", "providerConfigurationFingerprint", "canonicalStreamingRequestFingerprint", "requestStreamMode", "responseHeaderDisposition", "responseStatusCode", "responseMediaType", "negotiatedProtocol", "responseHeadersAtUtc", "firstPhysicalReadDisposition", "firstPhysicalReadAtUtc", "physicalEofAtUtc", "physicalEofDisposition", "streamingTransport", "streamStartedAtUtc", "firstDataAtUtc", "terminalAtUtc", "timeToFirstDataMilliseconds", "rawReadCount", "maximumRawReadByteCount", "rawBodyByteCount", "maximumSseLineByteCount", "maximumSseEventByteCount", "answerDeltaCount", "maximumAnswerDeltaByteCount", "assembledAnswerByteCount", "terminalEventCount", "inactivityLimitMilliseconds", "overallDeadlineAtUtc", "transportOutcome", "rejectionCategory", "validationOutcome", "runtimeObservationArtifact", "completionSummaryArtifact", "authenticatedAttestationArtifact", "attestationSignature"],
       "properties": {
         "attemptKind": { "enum": ["primary", "syntax-repair"] },
         "candidateCommit": { "$ref": "#/$defs/git" },
+        "runId": { "$ref": "#/$defs/runId" },
         "caseId": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{2,63}$" },
         "requestId": { "type": "string", "pattern": "^stream-[a-z0-9][a-z0-9._-]{7,62}$" },
-        "observationAuthority": { "const": "production-raw-response-header-adapter" },
+        "attestationAuthority": { "const": "story125-trackc-sealed-raw-stream-attestor/1.0" },
+        "runtimeObservationId": { "type": "string", "pattern": "^runtime-stream-[a-z0-9][a-z0-9._-]{7,62}$" },
         "processObservationId": { "type": "string", "pattern": "^process-[a-z0-9][a-z0-9._-]{7,62}$" },
         "processPublicKeyFingerprint": { "$ref": "#/$defs/sha256" },
         "observationSequence": { "type": "integer", "minimum": 1, "maximum": 2147483647 },
         "adapterImplementation": { "const": "Vulgata.Agents.ChatExecution.OpenAiCompatibleChatProviderStreamingTransport" },
         "adapterVersion": { "type": "string", "minLength": 1, "maxLength": 128 },
         "adapterAssemblySha256": { "$ref": "#/$defs/sha256" },
+        "attestationSinkImplementation": { "const": "Vulgata.Agents.ChatExecution.Story125StreamAttestationSink" },
+        "attestationSinkVersion": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "attestationSinkAssemblySha256": { "$ref": "#/$defs/sha256" },
         "providerApi": { "type": "string", "minLength": 1, "maxLength": 64 },
         "providerConfigurationFingerprint": { "$ref": "#/$defs/sha256" },
         "canonicalStreamingRequestFingerprint": { "$ref": "#/$defs/sha256" },
@@ -364,8 +373,10 @@
         "transportOutcome": { "enum": ["completed", "cancelled", "disconnect", "inactivity", "overall-deadline", "raw-body-overflow", "sse-line-overflow", "sse-event-overflow", "chunk-overflow", "total-overflow", "invalid-wire-utf8", "invalid-sse", "invalid-json-event", "invalid-json-escape", "invalid-answer-utf8", "missing-terminal", "duplicate-terminal", "contradictory-terminal", "post-terminal-data", "provider-failure"] },
         "rejectionCategory": { "oneOf": [{ "enum": ["cancelled", "disconnect", "inactivity", "overall-deadline", "raw-body-overflow", "sse-line-overflow", "sse-event-overflow", "chunk-overflow", "total-overflow", "invalid-wire-utf8", "invalid-sse", "invalid-json-event", "invalid-json-escape", "invalid-answer-utf8", "missing-terminal", "duplicate-terminal", "contradictory-terminal", "post-terminal-data", "provider-failure"] }, { "type": "null" }] },
         "validationOutcome": { "enum": ["syntax-repair-required", "accepted", "rejected-before-parse", "rejected-syntax", "rejected-semantic", "cancelled"] },
-        "authenticatedObservationArtifact": { "$ref": "#/$defs/artifact" },
-        "observationSignature": { "type": "string", "pattern": "^[A-Za-z0-9_-]{80,200}$" }
+        "runtimeObservationArtifact": { "$ref": "#/$defs/artifact" },
+        "completionSummaryArtifact": { "$ref": "#/$defs/artifact" },
+        "authenticatedAttestationArtifact": { "$ref": "#/$defs/artifact" },
+        "attestationSignature": { "type": "string", "pattern": "^[A-Za-z0-9_-]{80,200}$" }
       },
       "allOf": [
         {

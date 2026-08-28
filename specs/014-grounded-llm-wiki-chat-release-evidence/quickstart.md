@@ -1,6 +1,6 @@
 # Quickstart: Story 12.5 Validation and Release Evidence
 
-This is a validation/run guide, not planned-change authorization or implementation approval. After independent plan acceptance, the workflow must pause before task generation for explicit authorization of the material `IChatEvidenceRetriever` Agent-tool and Chat Agent provider-dispatch changes. Track A may run only after the later mandatory implementation approval. Track B and C remain blocked until Story 12.4 has an accepted final checkpoint and its final commit is integrated into `demo0831/story-12-5`.
+This is a validation/run guide, not planned-change authorization or implementation approval. Track A's accepted behavior/evidence is preserved and is not reimplemented or re-reviewed unless the corrected Track B work changes it. After fresh independent plan acceptance, the workflow must pause before regenerated tasks for fresh authorization of the material `IChatEvidenceRetriever` Agent-tool/runtime-contract changes; after task/definition acceptance it must obtain a new Track B implementation approval. Track C remains closed until corrected Track B is converged, quality-accepted, conditionally E2E-decided, verified and checkpoint-bound.
 
 ## 1. Re-observe the boundary
 
@@ -32,9 +32,9 @@ git diff --check -- specs/014-grounded-llm-wiki-chat-release-evidence
 
 Expected: no placeholder matches and no whitespace errors.
 
-## 3. Track A focused validation
+## 3. Preserved Track A regression validation
 
-After implementation approval, run production Scan-status, UI, corpus, and evidence-contract tests without relying on Story 12.4 final retrieval:
+Run production Scan-status, UI, corpus, and evidence-contract regressions to prove the plan correction did not alter accepted Track A behavior:
 
 ```pwsh
 dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter "FullyQualifiedName~ProductionScanStatusReaderTests|FullyQualifiedName~ProductionScanPageTests|FullyQualifiedName~Story125EvaluationContractTests|FullyQualifiedName~Story125ReleaseHarnessTests|FullyQualifiedName~ManualResumeApiTests"
@@ -57,7 +57,7 @@ Do not run Track B implementation/qualification until all are true:
 1. Story 12.4 final checkpoint is accepted.
 2. Its final commit is integrated into this branch.
 3. The integrated entities expose exact-match decision, exact current `DocumentEdge`, complete/published Flow Group, current Business Logic Document, and complete GENERATED_FROM authority without changing Story 12.4.
-4. Mandatory Story 12.5 implementation approval has been recorded.
+4. Fresh planned-change authorization, regenerated tasks/definition acceptance, and a new Track B implementation approval are bound to the revised artifact hashes.
 
 If accepted names or shapes differ from the candidate files, adapt Story 12.5 reads to the accepted contract. If the required invariant is absent, stop and return `BLOCKED_STORY_12_4_CONTRACT`; do not edit the dependency contract.
 
@@ -69,12 +69,17 @@ dotnet test tests/Vulgata.Tests/Vulgata.Tests.cs --filter "FullyQualifiedName~Ch
 
 Expected:
 
+- first observe the B1 architectural RED against the old literal-question/exact-row rebuild path; after cutover, structural inspection proves no classifier, legacy Chat authority query, alternate final-packet path, or duplicate packet-builder call remains;
+- `AuthorizedChatSnapshot -> ChatLexicalPrimaryProjection -> ChatRelationshipExpansionProjection -> ChatEvidenceAssembly` is the only retrieval composition;
+- Cross-Repository-literal and equivalent neutral wording preserve identical lexical primary Document/section identities, and adding/removing/staling relationship fixtures never changes those primary identities;
+- exact constants pass: highest-ranked 256 distinct candidates retained after scoring (257+ is ranked, not refused), structured token equality and duplicate-conflict vectors, integer score vector `50/40/30/25/20/5/3/1` with each component applied at most once and 25 bound only to the active mode's term field, five Documents, twelve primaries or exhaustion, four sections per Document, first `min(3,count)` seeds, two additions per seed, 20 total sections, 32 anchors/relationships, ten Flow Group authorities, 12 flow steps;
 - repeated identical inputs yield the same ordered evidence and packet fingerprint;
 - legacy-only exact evidence is rejected, accepted v2 decision + current directed Edge is accepted;
-- only current REFERENCES/GENERATED_FROM and published complete Flow Groups expand one hop;
+- every relationship and Flow Group `absent`/`present-valid`/`present-inconsistent`/`selected-required` state vector passes: optional invalid facts do not poison unrelated lexical evidence, selected-required mutation refuses the whole assembly with no substitution;
+- only current REFERENCES/GENERATED_FROM and Published complete Flow Groups expand one hop in exact canonical order;
 - exact and +1 Document/section/anchor/relationship/flow/UTF-8 bounds pass/fail correctly;
 - initial question plus two follow-ups re-fetch every row and use prior answers only as context;
-- primary and the single permitted syntax repair both use the dedicated provider stream; no non-streaming provider result is accepted;
+- primary and the single permitted syntax repair both use the dedicated provider stream; no non-streaming provider result is accepted; neutral Track B runtime telemetry contains no candidate/run/case/signature/export field;
 - decoded answer deltas of 16,384 bytes/final answers of 65,536 pass and +1 fails; separate raw-read/body and SSE line/event safety caps pass exact/+1 vectors;
 - arbitrary physical reads split wire UTF-8, CR/LF, SSE fields, JSON tokens/escapes, decoded deltas, terminal metadata, and post-terminal reads without conflating counters;
 - keepalives do not reset ten-second inactivity; cancellation, disconnect, terminal/framing failure, deadline, and overflow discard the buffer;
@@ -122,7 +127,7 @@ Accept only when the manifest proves:
 - every accepted provider answer used streaming, zero non-streaming provider answers were accepted, complete render finished in <30 seconds, and stream observations were content-dark;
 - process restart against the same database preserved authenticated wiki/Chat access with no duplicate publication or data loss.
 
-Before accepting those values, authenticate every raw-adapter receipt against the same-process preflight and exact candidate/case/request/adapter/provider/`stream=true` request/header/read/EOF binding, then recompute raw/SSE/delta/final counters and all existing aggregates. Reject a perfectly consistent SDK fake-chunk receipt solely when authorized raw-adapter provenance is absent. Continue requiring `ordinaryFailureCount <= ordinaryFailureBudget`, complete corpus coverage, exact half-up usefulness, and `nonStreamingAcceptedAnswerCount == 0`.
+Before accepting those values, authenticate every Track C attestation against its immutable sealed-admission runtime observation, same-process preflight and exact candidate/run/case/request/adapter/provider/`stream=true` request/header/read/EOF binding, then recompute raw/SSE/delta/final counters and all existing aggregates. Reject a perfectly consistent SDK fake-chunk receipt solely when authorized adapter-to-sink provenance is absent. Continue requiring `ordinaryFailureCount <= ordinaryFailureBudget`, complete corpus coverage, exact half-up usefulness, and `nonStreamingAcceptedAnswerCount == 0`.
 
 ## 9. Screenshot and manifest review
 
@@ -130,9 +135,9 @@ Capture only real candidate-bound views. At least one screenshot is mandatory in
 
 Reject any screenshot containing fake Backup B state, secrets, connection strings, credentials, absolute host paths, another candidate, or unredacted diagnostics. Validate every run envelope against `contracts/story125-release-evidence.schema.json`: non-passed runs must have an honest status-conditioned result and null release receipt; a passed run must contain every command/exit-code, claim receipt, packet/result artifact, database-ownership receipt, and all five screenshot categories.
 
-A passed schema `story125-release-evidence/2.1` envelope must also contain exactly these checks: Tier 1 `tier1-contract-ranking-relationship`, `tier1-conversation-synthesis-security`, `tier1-production-ui-corpus-evidence`, `tier1-build-full-tests`; Tier 2 `tier2-postgresql-restart-resume`; Tier 3 `tier3-candidate-tool-database-preflight`, `tier3-real-scan`, `tier3-grounded-chat-corpus`, `tier3-restart-continuity`, `tier3-screenshot-release-integrity`. Reject every omitted, duplicate, unknown, mis-tiered, or non-passed check. Resolve every check command ID to a zero-exit command in this envelope and every check artifact to identical path/hash/media type on a same-envelope command or attempted observation.
+A passed schema `story125-release-evidence/2.2` envelope must also contain exactly these checks: Tier 1 `tier1-contract-ranking-relationship`, `tier1-conversation-synthesis-security`, `tier1-production-ui-corpus-evidence`, `tier1-build-full-tests`; Tier 2 `tier2-postgresql-restart-resume`; Tier 3 `tier3-candidate-tool-database-preflight`, `tier3-real-scan`, `tier3-grounded-chat-corpus`, `tier3-restart-continuity`, `tier3-screenshot-release-integrity`. Reject every omitted, duplicate, unknown, mis-tiered, or non-passed check. Resolve every check command ID to a zero-exit command in this envelope and every check artifact to identical path/hash/media type on a same-envelope command or attempted observation.
 
-Run positive semantic vectors for signed raw-adapter provenance, exact/+1 per-domain limits, split wire/SSE/JSON/delta/terminal reads, one valid repair, one non-invoked case, exact aggregate agreement, and all ten checks. Run adversarial vectors for altered/foreign/unsigned provenance, the aggregate-consistent SDK fake-chunk forgery, omitted/duplicate/reordered attempts, domain/deadline/terminal/outcome/repair/validation mismatch, content-bearing artifacts, and all prior quality/coverage/check failures.
+Run positive semantic vectors for sealed raw-adapter admission plus signed Track C attestation, exact/+1 per-domain limits, split wire/SSE/JSON/delta/terminal reads, one valid repair, one non-invoked case, exact aggregate agreement, and all ten checks. Run adversarial vectors for direct caller submission, altered runtime/attestation equality, foreign/unsigned provenance, the aggregate-consistent SDK fake-chunk forgery, omitted/duplicate/reordered attempts, domain/deadline/terminal/outcome/repair/validation mismatch, content-bearing artifacts, and all prior quality/coverage/check failures.
 
 When a run fails or is blocked, preserve its commands, attempted observations, artifacts, and bounded reason. A correction creates a new run directory and `runId`, sets `supersedesRunId`, and never overwrites the earlier envelope.
 

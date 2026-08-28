@@ -48,7 +48,8 @@ Caller DTOs never supply `Conversation`, prior handles, deadline, Document IDs, 
 | `Question` | normalized original question |
 | `AnswerText` | complete validated rendered answer only; no partial/provider diagnostic |
 | `PacketFingerprint` | lower SHA-256 |
-| `Citations` | bounded prior opaque handles plus stable Logical Document IDs used only as current re-fetch hints |
+| `Citations` | bounded prior opaque handles; context only, never current claim authority |
+| `PriorLogicalDocumentIds` | 0-5 stable IDs used only as current re-fetch/ranking hints; serialized in the conversation packet and canonical fingerprint |
 
 State transitions:
 
@@ -67,7 +68,48 @@ Failed/unsupported/cancelled/timed-out attempts do not append a turn.
 
 Prior answer text and handles are context only. A stable ID may add a small ranking boost only after the current row is independently eligible.
 
-## 4. `RankedEvidenceSection`
+## 4. Typed retrieval pipeline
+
+```text
+AuthorizedChatSnapshot
+  -> ChatLexicalPrimaryProjection
+  -> ChatRelationshipExpansionProjection
+  -> ChatEvidenceAssembly
+  -> EvidencePacket v2
+```
+
+Every arrow accepts the immutable successful value from the prior stage. The closed result union is `Succeeded`, `InsufficientEvidence`, `NotFoundOrUnauthorized`, or `InconsistentCurrentEvidence`. No stage may return a final packet except `ChatEvidenceAssembly`; no relationship stage may alter `PrimaryDocumentIds`, `PrimarySectionIds`, their ranks, or their Source Anchors.
+
+### `AuthorizedChatSnapshot`
+
+| Field | Rule |
+| --- | --- |
+| current scope | one System, exactly two authorized Repositories |
+| candidate rows | stream all current eligible rows in stable-ID order; deduplicate/score before retaining the highest-ranked 256 or exhaustion |
+| duplicate stable ID | all ranking/currentness fields byte-equivalent or snapshot inconsistent |
+| source rows | current Logical Document/Document Version/Scan Run, Index Entry, Document Section, section Source Anchors only |
+
+### `ChatLexicalPrimaryProjection`
+
+| Field | Rule |
+| --- | --- |
+| `PrimaryDocuments` | 1-5 in lexical rank order |
+| `PrimarySections` | 1-12; strongest-per-Document first, then extras, <=4 per Document |
+| score vector | Repository 50, symbol/endpoint 40, path 30, active-mode term 25 (Business field only in Business; Technical field only in IT), search 20, heading 5, title 3, prose 1, one prior-current-Document boost 1 |
+| tie key | descending score, mode preference, Repository ID, Logical Document ID, section order, stable section ID |
+| `ExpansionSeeds` | first `min(3, PrimaryDocuments.Count)` primary Documents |
+
+### `ChatRelationshipExpansionProjection`
+
+| Field | Rule |
+| --- | --- |
+| `PrimaryBinding` | exact immutable identities/fingerprint from lexical projection |
+| `Units` | ordered complete optional relationship/Flow Group units |
+| additions | <=2 new Documents per seed; <=5 Documents overall; one hop |
+| bounds | <=32 relationships, <=12 flow steps |
+| invariant | cannot reorder, replace, or remove primary identities |
+
+## 5. `RankedEvidenceSection`
 
 Internal Infrastructure value returned by deterministic lexical scoring.
 
@@ -76,14 +118,15 @@ Internal Infrastructure value returned by deterministic lexical scoring.
 | current Document/section IDs | current selected scope only |
 | `DocumentType`, title, heading, content | safe current projection |
 | Source Anchor/support IDs | complete and parseable |
-| `MatchClass` | closed precedence: exact symbol, endpoint, path, title, heading, mode term, prose, fallback |
-| `Score` | deterministic integer components only |
-| `PriorCitationBoost` | fixed bounded value, applied only to current eligible Document |
-| canonical tie key | match class/score, mode preference, Repository ID, Logical Document ID, section order, stable section ID |
+| `MetadataScore` | sum of Repository/symbol/path/mode-term/search components, each applied at most once |
+| `ProseScore` | sum of heading/title/content components, each applied at most once |
+| `Score` | exact integer components from `ChatLexicalPrimaryProjection` |
+| `PriorCitationBoost` | exactly 0 or 1 total, applied only to a current eligible Logical Document |
+| canonical tie key | descending score, mode preference, Repository ID, Logical Document ID, section order, stable section ID |
 
-Selection takes the strongest section from each chosen Document before extras, <=4 sections per Document, approximately 12 primary and <=20 total.
+Structured symbol and mode-term arrays are parsed and matched by normalized token equality; malformed arrays make the row inconsistent. Every positive-score candidate competes in one bounded top-256 rank, so metadata presence does not pre-filter prose candidates. If no positive-score candidate exists, the same bounded ranker evaluates current Business Logic summaries plus advisory terms. Selection takes the strongest section from each chosen Document before extras, <=4 sections per Document, and stops at exactly 12 primary sections or exhaustion. Relationship packing may add support up to 20 total.
 
-## 5. `ProjectedChatRelationship`
+## 6. `ProjectedChatRelationship` and closed authority states
 
 Closed complete support unit; partial units are invalid.
 
@@ -109,9 +152,29 @@ AND all System/Repository/Profiled Revision/current-pointer bindings agree
 
 Legacy profile fingerprints are not a v2 binding.
 
-## 6. `EvidencePacket` v2
+### Relationship state table
 
-Schema identity: `grounded-chat-evidence/2.0`.
+| State | Exact meaning | Projection result | Packet/claim effect |
+| --- | --- | --- | --- |
+| `absent` | no allowlisted current Edge exists for this seed/candidate identity | no optional unit | none; lexical primaries remain valid; if an already selected unit requires it, assembly refuses |
+| `present-valid` | one current directed allowlisted Edge; current endpoints; for Cross-Repository REFERENCES exactly one accepted v2 decision and complete contribution authority | eligible and canonically ranked | may become a complete optional unit |
+| `present-inconsistent` | stale/wrong-scope/wrong-direction Edge, conflicting duplicate, zero/multiple exact decisions where required, decision/Edge/contribution/fingerprint mismatch, or exact decision attached where forbidden | closed exclusion with reason | cannot support expansion or claim; unrelated lexical evidence is not poisoned |
+| `selected-required` | a `present-valid` relationship unit remains after deterministic complete-unit packing and all optional drops | all Documents/sections/anchors/decision/Edge fields become required | any later missing/stale/inconsistent field refuses the whole assembly; no lower-ranked substitution |
+
+### Flow Group state table
+
+| State | Exact meaning | Projection result | Packet/claim effect |
+| --- | --- | --- | --- |
+| `absent` | no Flow Group is associated with a current included Business Logic Document/eligible exact relationship | no optional flow unit | none; a plain valid Edge remains usable without a flow claim |
+| `present-valid` | exactly one applicable `Published` group with current Business Logic Document, exact decision/Edge, fingerprints, Flow Trace and contiguous current steps within the selected scope/revisions | eligible and ranked by seed, group, trace, step identity | may become one complete flow unit |
+| `present-inconsistent` | `Incomplete`, `Complete`, `Failed`, `BoundExcluded`, unpublished, stale, conflicting duplicate, missing Business Logic Document, wrong decision/Edge, missing/duplicate/gapped trace step, wrong revision/scope/fingerprint | closed exclusion with reason | cannot support a flow claim; unrelated lexical evidence is not poisoned |
+| `selected-required` | a `present-valid` flow unit remains after deterministic complete-unit packing and all optional drops | group, Business Logic Document, exact relationship, trace, every step Document/Edge/description and required Source Anchor are required | any later defect refuses the whole assembly; no partial steps or substitute group |
+
+Selection states are transient values, not persistence states. Persisted Story 12.4 `Complete` means dispatchable but unpublished and is therefore `present-inconsistent` for Chat expansion; only persisted `Published` can become `present-valid`.
+
+## 7. `EvidencePacket` v2
+
+Schema identity: `grounded-chat-evidence/2.1`.
 
 | Collection/value | Bound |
 | --- | --- |
@@ -120,15 +183,17 @@ Schema identity: `grounded-chat-evidence/2.0`.
 | Source Anchors | 1-32 |
 | Relationships | 0-32 |
 | Flow steps | 0-12; canonical contiguous order |
-| relationship depth | 0 or 1 only |
+| relationship depth | exactly 1 |
+| selection policy | `lexical-current-v2/1.0`; binds primary Document/section and expansion-seed handles |
+| Flow Group authorities | 0-10; each binds Published group, Business Logic Document, decision, Edge, fingerprints and trace |
 | evidence body | <=65,536 UTF-8 bytes |
 | advisory context | <=8,192 UTF-8 bytes |
 | conversation | <=4,096 UTF-8 bytes |
 | fingerprint | lower SHA-256 over complete canonical packet |
 
-Each item has an opaque packet-local handle. Relationship handles bind the persisted Edge plus accepted v2 decision/Flow Group identities when applicable. Packing may remove only a whole optional low-ranked section and its now-unreferenced optional support. Required support, section text, Source Anchors, and relationships are never truncated.
+Each item has an opaque packet-local handle. Relationship handles bind the persisted Edge plus accepted v2 decision/Flow Group identities when applicable. Packing drops lowest-ranked optional relationship/Flow Group units first, then lowest-ranked non-strongest lexical extras; it removes newly unreachable support after each whole-unit drop. Strongest-per-Document units and selected-required support are never truncated or partially retained. Required-only overflow refuses assembly.
 
-## 7. `ChatSynthesisAttempt`
+## 8. `ChatSynthesisAttempt`
 
 | Field | Rule |
 | --- | --- |
@@ -153,7 +218,7 @@ SyntaxRejected without budget, second syntax rejection, or any semantic rejectio
 
 Semantic rejection is terminal and cannot transition to repair.
 
-## 8. Provider stream pipeline and observations
+## 9. Provider stream pipeline, runtime telemetry, and Track C attestation
 
 Agents-internal transport model; it never crosses the client boundary.
 
@@ -168,11 +233,13 @@ Agents-internal transport model; it never crosses the client boundary.
 | data inactivity | ten seconds since last Provider Chunk unless valid `[DONE]` arrives; raw reads/keepalive/metadata/finish do not reset |
 | terminal/EOF | one consistent `[DONE]`, then physical EOF with no later content/error; every other disposition rejects |
 
-`ChatProviderStreamObservation` is created only by the production raw response-header adapter. It binds candidate/case/request/attempt and process-observation identity; exact adapter type/version/assembly SHA-256; provider API/config fingerprint; canonical `stream=true` request fingerprint; response-header status/media/protocol; first physical read and physical EOF disposition; stage counters; terminal/rejection/validation/duration; provenance artifact; process public-key fingerprint; and ECDSA signature. It has no prompt, response, evidence, claim, citation, handle, relationship, Source Anchor, secret, connection, or path field.
+`ChatStreamRuntimeObservation` is created only by the production raw response-header adapter and is Track B's neutral telemetry. It binds an opaque runtime observation ID, monotonic sequence, request/attempt, provider/config and canonical `stream=true` request fingerprints, response status/media/protocol, first physical read/EOF disposition, UTC/monotonic transport timings, stage counters, terminal outcome and rejection category. It has no post-transport validation result, candidate, run, corpus case, public key, signature, artifact/export path, prompt, response, evidence, claim, citation, handle, relationship, Source Anchor, secret, connection, or host path.
 
-`ChatStreamObservationAuthority` owns an ephemeral process ECDSA P-256 key. Preflight records its public-key fingerprint with candidate/process/adapter identity; the private key is never persisted. A same-process semantic verifier authenticates every canonical raw-adapter receipt before export. Aggregate/SDK fake-chunk observations cannot construct accepted provenance.
+`ChatStreamCompletionSummary` is created by the coordinator after all attempted transport and validation work. It binds the ordered runtime observation IDs, whether syntax repair was used, the validation outcome for each attempt, the final validation outcome, and total accepted-answer duration. It is independently content-dark and release-neutral; it cannot alter transport counters or outcomes.
 
-Schema 2.1 uses one exact vocabulary. `transportOutcome` is `completed` or one of the rejection categories below; `rejectionCategory` is null only for `completed` and otherwise exactly matches the transport outcome:
+Track C optionally composes `Story125StreamAttestationSink`. Only the production raw adapter can invoke its sealed internal admission method. The sink binds a server-owned candidate/run/case/process context, exact adapter type/version/assembly SHA-256, and ephemeral ECDSA P-256 public-key fingerprint to the immutable runtime observation ID/sequence and fields. It emits one signed content-dark `Story125StreamAttemptAttestation`; the private key/admission capability never leaves process memory. Aggregate/SDK fake-chunk observations cannot construct accepted provenance even when their counters match.
+
+Release schema 2.2 uses one exact vocabulary. `transportOutcome` is `completed` or one of the rejection categories below; `rejectionCategory` is null only for `completed` and otherwise exactly matches the transport outcome:
 
 | Pipeline owner/domain | Exact rejection category |
 | --- | --- |
@@ -186,11 +253,11 @@ Schema 2.1 uses one exact vocabulary. `transportOutcome` is `completed` or one o
 | terminal and post-terminal assembly | `missing-terminal`, `duplicate-terminal`, `contradictory-terminal`, `post-terminal-data` |
 | provider error response | `provider-failure` |
 
-`validationOutcome` is a separate exact vocabulary: `syntax-repair-required`, `accepted`, `rejected-before-parse`, `rejected-syntax`, `rejected-semantic`, or `cancelled`. It never substitutes for a transport rejection. Every rejected transport or validation state discards all untrusted buffers and produces no partial answer.
+Coordinator-owned `validationOutcome` is a separate exact vocabulary: `syntax-repair-required`, `accepted`, `rejected-before-parse`, `rejected-syntax`, `rejected-semantic`, or `cancelled`. It never substitutes for a transport rejection. Every rejected transport or validation state discards all untrusted buffers and produces no partial answer.
 
-The cross-artifact consistency vector compares these literal terms and the post-JSON-unescape 16,384-byte Provider Chunk / concatenated decoded 65,536-byte response domains against `plan.md`, the streaming contract, release contract, and schema 2.1. Any generic UTF-8 rejection synonym, missing category, or before-decoding acceptance count fails the vector.
+The cross-artifact consistency vector compares these literal terms and the post-JSON-unescape 16,384-byte Provider Chunk / concatenated decoded 65,536-byte response domains against `plan.md`, the streaming contract, release contract, and release schema 2.2. Any generic UTF-8 rejection synonym, missing category, release-field leakage into runtime telemetry, or before-decoding acceptance count fails the vector.
 
-## 9. `ValidatedRevealState`
+## 10. `ValidatedRevealState`
 
 Transient Web presentation model distinct from provider streaming.
 
@@ -202,7 +269,7 @@ Transient Web presentation model distinct from provider streaming.
 | immediate condition | reduced-motion requested or remaining shared deadline cannot safely complete reveal |
 | terminal | complete answer, bounded Chinese outcome, cancelled, or failure; no partial-answer terminal |
 
-## 10. `ProductionScanStatusView`
+## 11. `ProductionScanStatusView`
 
 Server-owned Core read model.
 
@@ -220,7 +287,7 @@ Server-owned Core read model.
 
 Refresh is read-only. Resume re-reads authorization/current state, calls durable recovery, then re-reads the view. A stale or hidden execution never carries protected detail.
 
-## 11. `ChatEvaluationCase`
+## 12. `ChatEvaluationCase`
 
 Schema: [story125-evaluation-case.schema.json](contracts/story125-evaluation-case.schema.json).
 
@@ -234,7 +301,7 @@ Schema: [story125-evaluation-case.schema.json](contracts/story125-evaluation-cas
 
 The corpus has 12-20 entries. `expectedAnswer` is forbidden. Follow-up references must be acyclic and form chains no longer than three questions.
 
-## 12. `ReleaseEvidenceRunEnvelope`
+## 13. `ReleaseEvidenceRunEnvelope`
 
 Schema: [story125-release-evidence.schema.json](contracts/story125-release-evidence.schema.json).
 
@@ -249,7 +316,7 @@ Schema: [story125-release-evidence.schema.json](contracts/story125-release-evide
 | attemptedObservations | what was actually observed, UTC time, related command IDs and hashed artifacts; never inferred from absent files |
 | passed-only release receipt | Scan, Chat, restart, database-ownership and screenshot receipts plus bounded limitations; null for every non-passed status |
 | Scan receipts | File Code Unit/seed/failure counts and separate exact Edge, Uncertainty, Business Logic Document, and Cross-Repository-flow query receipts |
-| Chat receipt | corpus and quality aggregates plus one case receipt per case; invoked attempts include signed raw-adapter candidate/case/request/provider/request/header/read/EOF provenance, per-domain counters, result/packet/stream artifacts, and zero non-streaming accepted answers |
+| Chat receipt | corpus and quality aggregates plus one case receipt per case; invoked attempts include immutable runtime observation and coordinator completion-summary artifacts plus signed Track C candidate/run/case/request/process/adapter/provider/request/header/read/EOF/validation attestation, per-domain counters, result/packet/stream artifacts, and zero non-streaming accepted answers |
 | restart/database receipts | pre/post restart artifacts, duplicate-query receipt, database preflight/ownership/cleanup artifacts and zero forbidden-database access |
 | screenshots | at least one each for real Scan state, grounded Business answer, grounded IT answer, restart, and release summary; candidate-bound, production-state, hashed and redaction-passed |
 | limitations | explicit bounded list inside a passed receipt; never hidden by aggregate pass |
@@ -258,34 +325,39 @@ The passed check inventory is fixed: Tier 1 `tier1-contract-ranking-relationship
 
 Each case receipt declares `providerDisposition`. `invoked` requires a packet/fingerprint and exactly one primary stream plus, only when declared, one ordered syntax-repair stream. `not-invoked-insufficient-evidence` and `not-invoked-authorization-boundary` require null packet fields and zero stream attempts. An accepted case requires `invoked`, one completed final attempt, and total accepted-answer duration 0-29,999 ms. Operational deterministic rescue is a bounded outcome, not a streamed accepted provider answer.
 
-JSON Schema enforces the closed shape, status-conditioned required fields, raw-adapter provenance, stream-attempt cardinality/order/domain bounds, and exact mandatory-check inventory. The semantic validator authenticates the same-process signature and resolves candidate/case/request/adapter/provider/stream-request/header/read/EOF plus every command, observation, and artifact against the same envelope. It rejects a perfectly consistent SDK aggregate fake-chunk receipt solely when raw-adapter provenance is absent, then retains all prior Scan/Chat/restart/database recomputation, corpus coverage, zero non-streaming acceptance, exact two-decimal half-up usefulness, and immutable supersession rules.
+JSON Schema enforces the closed shape, status-conditioned required fields, Track C attestation provenance, stream-attempt cardinality/order/domain bounds, and exact mandatory-check inventory. The semantic validator authenticates the same-process signature and sealed adapter admission, then resolves runtime observation/candidate/run/case/request/adapter/provider/stream-request/header/read/EOF plus every command, observation, and artifact against the same envelope. It rejects a perfectly consistent SDK aggregate fake-chunk receipt solely when authorized adapter-to-sink provenance is absent, then retains all prior Scan/Chat/restart/database recomputation, corpus coverage, zero non-streaming acceptance, exact two-decimal half-up usefulness, and immutable supersession rules.
 
 Database names must begin `vulgata_story125_`, contain only lowercase ASCII/digits/underscore after the prefix, be unique for the run, and differ from configured development and Story 12.4 qualification database names. Validation occurs before a product connection.
 
-## 13. Relationship overview
+## 14. Relationship overview
 
 ```text
 ChatConversationState (transient)
   -> ChatRetrievalRequest
-  -> current IndexEntry/DocumentSection
-  -> RankedEvidenceSection
-  -> current DocumentEdge
+  -> AuthorizedChatSnapshot
+  -> ChatLexicalPrimaryProjection (sole primary authority)
+  -> ChatRelationshipExpansionProjection (optional complete units only)
+       -> current DocumentEdge
        -> CrossRepositoryResolutionDecision (required for cross-Repository REFERENCES)
        -> published FlowGroup -> FlowTrace -> FlowTraceStep
-  -> EvidencePacket v2
+  -> ChatEvidenceAssembly (sole packet builder)
+  -> EvidencePacket v2.1
   -> ChatSynthesisAttempt primary stream (optionally syntax-repair stream)
   -> strict ChatProviderStreamFrame assembly
-  -> validated GroundedAnswer -> ValidatedRevealState
+  -> ChatStreamRuntimeObservation (Track B neutral transport)
+  -> validated GroundedAnswer + ChatStreamCompletionSummary (Track B neutral coordinator result)
+  -> ValidatedRevealState
   -> append ValidatedConversationTurn
 
 ScanExecution -> ScanJobExecution -> FileCodeUnit
   -> ProductionScanStatusView -> production management UI
   -> existing durable manual resume -> refreshed ProductionScanStatusView
 
-ChatEvaluationCase[] -> Tier 3 attempted observations -> ReleaseEvidenceRunEnvelope
+ChatEvaluationCase[] -> Story125StreamAttestationSink (Track C sealed/signing)
+  -> Tier 3 attempted observations -> ReleaseEvidenceRunEnvelope 2.2
   -> passed-only ReleaseReceipt (only when every final check passes)
 ```
 
-## 14. Migration disposition
+## 15. Migration disposition
 
 No model above requires EF persistence. No migration, configuration, `VulgataDbContext`, or model snapshot change is planned. Discovery of an unavailable durable invariant blocks the affected track and requires revised authority/ownership; it does not authorize an opportunistic migration.

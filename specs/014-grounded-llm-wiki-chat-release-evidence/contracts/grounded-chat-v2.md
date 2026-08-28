@@ -32,6 +32,20 @@ public interface IChatEvidenceRetriever
 
 `ChatRetrievalRequest` includes normalized question/scope/mode, bounded transient conversation, and deadline. It does not contain caller-selected Document/Edge/Flow Group IDs.
 
+## Single typed retrieval pipeline
+
+```text
+AuthorizedChatSnapshot
+  -> ChatLexicalPrimaryProjection
+  -> ChatRelationshipExpansionProjection
+  -> ChatEvidenceAssembly
+  -> EvidencePacket v2
+```
+
+The result union at every stage is `Succeeded`, `InsufficientEvidence`, `NotFoundOrUnauthorized`, or `InconsistentCurrentEvidence`. The lexical projection is the sole primary Document/section authority. Relationship expansion receives immutable primary identities and can only append complete optional units. `ChatEvidenceAssembly` is the sole packet builder. There is no question-triggered branch, projection-only final return, exact-row packet rebuild, legacy-authority query, alternate builder, or feature-flagged coexistence path.
+
+The implementation cutover deletes `RequiresCrossRepositoryEvidence`, `ExactRelationshipRow`, `ProvenanceRow`, the retriever-owned v2 rebuild, duplicate builder calls, and every Story 12.5 use of `ExactCrossRepositoryEdgeEvidence`/prepared exact-profile truth. Legacy rows remain persistence history only.
+
 ## Deterministic primary selection
 
 Eligible rows are current authorized `IndexEntry` and `DocumentSection` projections inside the selected System/two Repositories. The ranker extracts:
@@ -43,12 +57,14 @@ Eligible rows are current authorized `IndexEntry` and `DocumentSection` projecti
 - Business or IT mode terms; and
 - bounded terms from prior validated conversation context.
 
-Precedence is exact symbol, endpoint, path, title, heading, mode-specific term, prose, bounded Business Logic/advisory fallback. Score components are integers. Canonical ties use mode Document-type preference, Repository ID, Logical Document ID, section order, and stable section ID.
+The candidate window is the highest-ranked 256 distinct stable section IDs or exhaustion. Current eligible rows stream in stable-ID order and are deduplicated/scored before the top-K cap; 257 or more eligible rows are not refused merely for size. Duplicate stable IDs must be byte-equivalent. After NFC normalization, parse structured symbol/business/technical term arrays and use normalized token equality; malformed arrays are inconsistent. These exact integer components apply at most once when any applicable term matches: Repository name 50, key symbol/endpoint 40, path 30, active-mode term 25 (`BusinessTerms` only in Business Mode, `TechnicalTerms` only in IT Mode), search text 20, heading 5, title 3, prose 1, plus exactly one point for a prior current eligible Logical Document. Other fields use normalized ordinal-ignore-case containment. Every positive-score candidate competes in the same rank; metadata presence never pre-filters prose candidates. If none scores positively, the same bounded ranker evaluates current Business Logic summaries and advisory terms.
+
+Canonical order is descending total score, then mode preference, Repository ID, Logical Document ID, section order, stable section ID. Business mode prefers Business Logic then Code Logic. IT mode prefers Code Logic TechnicalDetail/Evidence, other Code Logic, then Business Logic.
 
 Selection rules:
 
 - at most five Documents;
-- approximately twelve primary sections and never more than twenty total;
+- exactly twelve primary sections or exhaustion, and never more than twenty total after expansion;
 - at most four sections per Document;
 - take the strongest section from each selected Document before any extra section;
 - no useful result after fallback returns insufficient evidence without provider dispatch.
@@ -64,11 +80,15 @@ Only current persisted facts may add related evidence:
 
 Legacy `ExactCrossRepositoryEdgeEvidence` never authorizes v2 expansion or currentness.
 
-Expansion starts from only the top two or three primary Documents, follows exactly one hop, adds at most two related Documents per seed, and never exceeds five Documents, thirty-two relationships, or twelve steps. Canonical order is applied before bounds. Cycles, duplicates, unauthorized/stale endpoints, missing anchors, incomplete/unpublished groups, non-exact/non-unique decisions, and direction mismatch are excluded. Required support failure rejects the packet.
+Expansion seeds are exactly the first `min(3, primaryDocumentCount)` primary Documents. Traverse only stored direction: REFERENCES source -> target and GENERATED_FROM Business Logic source -> Code Logic target. Cross-Repository REFERENCES requires exactly one accepted v2 decision bound to that Edge; same-Repository REFERENCES and GENERATED_FROM must not carry an exact decision. A Flow Group is eligible only when its current Published Business Logic Document is included and its exact decision/Edge/trace/steps/fingerprints/current revisions are internally consistent.
+
+Candidate order is seed rank; mode relationship preference; same-Repository before Cross-Repository within that preference; target Repository ID; target Logical Document ID; target Document Version ID; Edge ID. Flow Groups then order by seed rank, GroupOrder, Flow Group ID, trace order, step order, step ID. Deduplicate exact identities before bounds; conflicting duplicates are inconsistent. Add at most two new related Documents per seed, follow exactly one hop, and never exceed five Documents, thirty-two relationships, ten Flow Group authorities, or twelve steps.
+
+Every applicable relationship and Flow Group has one closed state: `absent`, `present-valid`, `present-inconsistent`, or `selected-required`. Optional absent/inconsistent facts support no claim but do not poison unrelated lexical primaries. Ranking leaves a valid complete unit optional; retention after all complete-unit packing drops promotes it to selected-required. Any subsequent missing/stale/inconsistent required Document, section, Source Anchor, decision, Edge, Flow Group, trace, step, or fingerprint rejects the whole assembly with no lower-ranked substitution.
 
 ## Packet contract
 
-The JSON shape is defined by [chat-evidence-packet-v2.schema.json](chat-evidence-packet-v2.schema.json). Every handle is packet-local and opaque. The canonical fingerprint includes the schema, request/scope/mode, complete ordered evidence, accepted decision/Flow Group bindings, advisory context, and conversation state.
+The JSON shape is defined by [chat-evidence-packet-v2.schema.json](chat-evidence-packet-v2.schema.json). Every handle is packet-local and opaque. The canonical fingerprint includes schema and selection-policy versions, request/scope/mode, ordered primary Documents/sections, expansion seeds, complete ordered evidence units, accepted decision/Flow Group bindings, advisory context, and conversation state.
 
 Bounds:
 
@@ -82,11 +102,11 @@ Bounds:
 - conversation <=4,096 UTF-8 bytes;
 - advisory context <=8,192 UTF-8 bytes.
 
-The builder may drop an optional whole low-ranked section and its unused optional support. It never truncates section text or required evidence.
+Packing order is strongest-per-Document primary units, remaining lexical primary units, then ranked `present-valid` relationship/Flow Group units. On overflow, drop lowest-ranked optional relationship/Flow Group units first and then lowest-ranked non-strongest lexical extras, pruning newly unreachable support after each whole-unit drop. After all drops, retained relationship/Flow Group units become selected-required. Strongest-per-Document evidence and selected-required support are never dropped or partially retained. Required-only overflow refuses assembly; text is never truncated.
 
 ## Conversation contract
 
-At most two prior validated turns are retained. Each has question, complete validated answer, prior packet fingerprint, cited handles, and stable Logical Document hints. A prior hint receives only a small fixed boost after the Document independently passes current eligibility. All underlying rows are re-fetched. Prior prose and handles cannot support a current claim.
+At most two prior validated turns are retained. Each has question, complete validated answer, prior packet fingerprint, cited handles, and 0-5 stable Logical Document IDs serialized as retrieval hints. Those IDs and their order are fingerprint-bound. A prior hint receives only the exact one-point total boost after the Document independently passes current eligibility. All underlying rows are re-fetched. Prior prose and handles cannot support a current claim.
 
 New conversation, mode/scope change, access loss, or coordinator disposal clears state. Failed attempts do not append state. Conversation is never persisted or logged.
 
@@ -96,7 +116,9 @@ The provider receives only question, mode, packet fingerprint, opaque handles, b
 
 Both primary and repair use [chat-provider-streaming-v1.md](chat-provider-streaming-v1.md). One 29-second deadline covers retrieval through render. The ordered pipeline keeps raw body reads, strict wire UTF-8, SSE fields/events, JSON/escape decoding, decoded answer deltas, and final assembly distinct. One decoded delta after JSON unescape/re-encoding is the <=16,384-byte Provider Chunk; concatenated decoded deltas are the <=65,536-byte complete response. Separate raw/SSE implementation safety caps do not replace those acceptance caps. Only a non-empty decoded delta or valid `[DONE]` resets inactivity, and physical EOF is observed after terminal to reject missing/duplicate/contradictory/post-terminal behavior.
 
-Tier 3 accepts only content-dark observations signed by the same-process production raw response-header adapter and bound to candidate/case/request, exact adapter type/version/assembly hash, provider configuration, canonical `stream=true` request, response status/media/protocol, first physical read, and EOF disposition. Aggregate SDK fake chunks are release-ineligible regardless of metric consistency.
+Track B emits only neutral content-dark runtime observations: opaque observation ID/sequence, request/attempt/provider/request fingerprints, response/read/EOF dispositions, timings, counters and outcomes. It contains no candidate, run, corpus case, public key, signature or export path and is not release evidence.
+
+Track C composes a sealed same-process attestation sink admitted only by the production raw response-header adapter. It signs the immutable runtime observation plus candidate/run/case/process, exact adapter type/version/assembly hash, provider configuration, canonical `stream=true` request, response status/media/protocol, first physical read, and EOF disposition. Aggregate SDK fake chunks are release-ineligible regardless of metric consistency.
 
 Initial response syntax rejection may produce one repair request only when at least three seconds remain. Repair receives the same packet/fingerprint/deadline, the invalid bounded structured output, and one closed syntax category. It cannot add evidence or change scope. There is no third call and no non-streaming provider fallback may produce an accepted provider answer.
 

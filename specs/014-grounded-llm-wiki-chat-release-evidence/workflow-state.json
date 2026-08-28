@@ -3,13 +3,13 @@
   "bmad_story_key": "12-5-grounded-llm-wiki-chat-and-august-30-release-evidence",
   "bmad_epic_key": "12",
   "feature_directory": "specs/014-grounded-llm-wiki-chat-release-evidence",
-  "stage": "plan",
+  "stage": "plan-review",
   "preflight": {
     "branch": "demo0831/story-12-5",
-    "head": "29b18f07071c91379ba82c0f3f582abc14efab09",
-    "git_identity_sha256": "9757a003b5cc97cd77a9cf0ce0d345ad19c7845f3c206ad2949bc79476f93c4f",
-    "status_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-    "observed_at": "2026-08-28T09:02:33.7555814Z"
+    "head": "73c317f10917236e7a4ac0ad55f4966abd18024e",
+    "git_identity_sha256": "1bfce9288c893d22ef7108735ce07517d03c464db165f2031ed0129c9969f3d2",
+    "status_sha256": "09a708e803211571cdcea892e75b2c56a56ff1cb48e5d1a0f7949e4b8dbca040",
+    "observed_at": "2026-08-28T09:32:59.5664674Z"
   },
   "artifacts": {
     "spec": {
@@ -18,7 +18,7 @@
     },
     "plan": {
       "path": "specs/014-grounded-llm-wiki-chat-release-evidence/plan.md",
-      "sha256": "8dd2ba8d4f41a1c0436cc070d6b8639e6a962e6770d626b221ac3d314e998628"
+      "sha256": "a74b4cef7fd2d553a26b45692b25b9b81876ca1b2b88d6d80d453a43d5966aec"
     },
     "tasks": {
       "path": "specs/014-grounded-llm-wiki-chat-release-evidence/tasks.md",
@@ -27,7 +27,7 @@
   },
   "gates": {
     "plan-review": {
-      "status": "invalidated",
+      "status": "pending",
       "attempt": 0,
       "verdict_path": null
     },
@@ -76,22 +76,22 @@
   "current_evidence_paths": [
     "specs/014-grounded-llm-wiki-chat-release-evidence/spec.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/design-correction-01.md",
-    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/track-b-design-rollback-01.md",
-    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/track-b-convergence-pause-02.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/plan.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/track-b-plan-correction-01.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/implementation-approval-track-a-01.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/integration/story-12.4-dependency-integration-correction-01.md",
     "specs/013-exact-cross-repository-flow-pass2/workflow-state.json"
   ],
   "checkpoint": {
-    "checkpoint_id": "bmad-12-5-plan-20260828T090233Z-9a0996",
+    "checkpoint_id": "bmad-12-5-plan-20260828T093259Z-cd2355",
     "stage": "plan",
     "commit_sha": null,
     "binding_status": "pending"
   },
   "resume": {
-    "stage": "plan",
-    "reason": "User-directed design rollback invalidates the Track B definition and downstream gates. Revise the plan against the preserved spec and implementation evidence, then run fresh plan review and authorization.",
-    "evidence_path": "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/design-correction-01.md"
+    "stage": "plan-review",
+    "reason": "The corrected Track B architecture is self-reviewed and pinned for independent plan-only review. Fresh planned-change authorization remains mandatory before task regeneration.",
+    "evidence_path": "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/track-b-plan-correction-01.md"
   },
-  "updated_at": "2026-08-28T09:02:33.7555814Z"
+  "updated_at": "2026-08-28T09:32:59.5664674Z"
 }

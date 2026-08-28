@@ -2,7 +2,7 @@
 
 ## Scope and sole production authority
 
-This is the server-only transport boundary for every Story 12.5 primary synthesis request and the single permitted syntax-repair request. The production `IChatProviderStreamingTransport` registration MUST resolve directly to `Vulgata.Agents.ChatExecution.OpenAiCompatibleChatProviderStreamingTransport`. That response-header raw adapter, not an SDK aggregate response, SDK fake-chunk wrapper, dispatcher, test double, or release harness, is the sole authority allowed to originate a Tier 3 `StreamAttemptReceipt`.
+This is the server-only transport boundary for every Story 12.5 primary synthesis request and the single permitted syntax-repair request. The production `IChatProviderStreamingTransport` registration MUST resolve directly to `Vulgata.Agents.ChatExecution.OpenAiCompatibleChatProviderStreamingTransport`. That response-header raw adapter, not an SDK aggregate response, SDK fake-chunk wrapper, dispatcher, test double, or release harness, is the sole authority allowed to originate a Track B runtime stream observation. Track C release attestation is a separate export boundary below.
 
 ```csharp
 internal interface IChatProviderStreamingTransport
@@ -13,7 +13,7 @@ internal interface IChatProviderStreamingTransport
 }
 ```
 
-`ChatProviderStreamRequest` carries the selected provider identity, bounded prompt, candidate/case/request/attempt identities, packet fingerprint, canonical streaming-request fingerprint, and one absolute deadline. Signals are `AnswerDelta`, `Terminal`, or `ProviderError`; none is client-renderable.
+`ChatProviderStreamRequest` carries the selected provider identity, bounded prompt, runtime request/attempt identities, packet fingerprint, canonical streaming-request fingerprint, and one absolute deadline. It contains no candidate commit, release run, corpus case, signature, or export identity. Signals are `AnswerDelta`, `Terminal`, or `ProviderError`; none is client-renderable.
 
 ## Ordered byte-to-answer pipeline
 
@@ -47,23 +47,25 @@ The 131,072-byte line/event and 1,048,576-byte raw-body limits are explicit impl
 
 No raw octet, SSE field, JSON event, answer delta, partial answer, claim, citation, handle, relationship, or Source Anchor detail crosses the server-to-client boundary before complete acceptance. `ChatPage` exposes only generic pending/cancel state. After acceptance, existing Unicode text-element reveal may present the immutable answer; reduced motion or insufficient remaining deadline renders it immediately. Operational deterministic rescue is not a streamed provider answer and cannot satisfy Tier 3 streaming evidence.
 
-## Authenticated raw-adapter provenance
+## Track B neutral runtime telemetry
 
-At process start, `ChatStreamObservationAuthority` creates an ephemeral ECDSA P-256 key pair and an opaque process-observation ID. The release preflight binds its public-key fingerprint, process ID, candidate commit, resolved adapter fully qualified type, adapter assembly informational version, and adapter assembly SHA-256. The private key never leaves process memory.
+For each attempt the raw adapter emits one immutable content-dark `ChatStreamRuntimeObservation` containing:
 
-For each attempt, the raw adapter canonicalizes and signs a content-dark observation containing:
+- opaque runtime observation ID, process-local monotonic sequence, request ID and attempt kind;
+- provider API identity/non-secret configuration fingerprint and canonical request fingerprint containing `stream=true`;
+- response-header disposition/status/media/protocol/timestamp;
+- first physical-read and physical-EOF timestamps/dispositions;
+- all transport-stage counters, terminal/error outcome, and rejection category.
 
-- candidate commit, case ID, request ID, attempt kind, observation sequence, and process-observation ID;
-- exact adapter type, version, assembly SHA-256, and process public-key fingerprint;
-- provider API identity and non-secret configuration fingerprint;
-- canonical request fingerprint that includes `stream=true`, with `requestStreamMode: true` recorded separately;
-- response-header disposition; status code, normalized media type, negotiated HTTP protocol, and headers timestamp when received;
-- first physical-read timestamp/disposition and physical-EOF timestamp/disposition;
-- all stage counters, terminal/error outcome, rejection category, repair/validation disposition, and total duration.
+The runtime record has no post-transport validation result, candidate commit, release run ID, corpus case ID, process public-key fingerprint, signature, artifact/export path, prompt, response, evidence, claim, citation, handle, relationship, Source Anchor, secret, connection, or host path. The coordinator separately emits one content-dark `ChatStreamCompletionSummary` binding ordered observation IDs, syntax-repair use, per-attempt/final validation outcome, and total accepted-answer duration. Both support operations and Tier 1 verification only. Neither can be serialized directly as a Story 12.5 release receipt or claim release eligibility.
 
-`ChatStreamObservationAuthority` signs the SHA-256 of that canonical receipt. The same-process semantic verifier validates the signature before exporting the content-dark artifact. Tier 3 then binds the artifact/signature/public-key preflight to the same candidate, case, request, provider configuration, adapter assembly, and app process. Test adapters may emit test observations, but their type/provenance is release-ineligible.
+## Track C signed release attestation
 
-A fixed production-composition test and Tier 3 preflight must prove DI resolves the exact raw adapter and its assembly hash. The semantic verifier rejects a perfectly internally consistent aggregate or SDK fake-chunk receipt when it lacks the authorized adapter type/hash, streaming request fingerprint, response headers, physical-read/EOF provenance, process signature, or same-process binding.
+Track C optionally composes a release-only `Story125StreamAttestationSink`. Its admission method is internal and receives observations directly from the production raw adapter; dispatcher, SDK aggregates, test doubles, and release-harness callers cannot submit a runtime record. At release-process start the sink creates an ephemeral ECDSA P-256 key pair and opaque process-observation ID. Preflight binds its public-key fingerprint/process ID/candidate commit to the resolved adapter type, informational version and assembly SHA-256. The private key and admission capability never leave process memory.
+
+For each admitted runtime observation the sink combines server-owned release run/corpus case context and the matching coordinator-owned completion summary with the immutable observation ID/sequence/request/attempt/provider/request/header/read/EOF/counter/outcome fields and signs the canonical SHA-256. Completion binding may add validation/repair/duration facts but cannot alter transport facts. It exports one content-dark `Story125StreamAttemptAttestation`. A same-process semantic verifier authenticates the signature, exact runtime-to-attestation transport equality, and exact completion-summary validation equality before export. Test adapters may emit runtime telemetry, but only the production adapter can reach the release sink.
+
+A fixed production-composition test and Tier 3 preflight must prove DI resolves the exact raw adapter and Track C sink/assembly identity. The semantic verifier rejects a perfectly internally consistent aggregate or SDK fake-chunk receipt when it lacks sealed adapter admission, immutable runtime observation binding, exact adapter type/hash, streaming request fingerprint, response headers, physical-read/EOF provenance, process signature, or same-process candidate/run/case binding.
 
 ## Required vectors
 
@@ -74,6 +76,6 @@ A fixed production-composition test and Tier 3 preflight must prove DI resolves 
 5. Prove raw-body 1,048,576 and SSE line/event 131,072 implementation caps pass and each +1 fails without changing FR-054 acceptance counters.
 6. Empty/metadata/finish events do not reset inactivity; non-empty decoded deltas and valid `[DONE]` do. Exercise cancellation/disconnect races at every stage.
 7. Reject missing/duplicate/contradictory terminal, error plus success, non-empty data/error after terminal, truncated wire UTF-8 at EOF, and post-terminal reads; permit only inert comment/whitespace before physical EOF.
-8. Prove primary and one repair use the same deadline, packet, raw adapter, and authenticated process authority; semantic failure cannot repair.
+8. Prove primary and one repair use the same deadline, packet and raw adapter; semantic failure cannot repair. Prove Track B runtime records have no release fields.
 9. Prove no mocked client receives any pre-acceptance domain and only validated Unicode-safe reveal is available afterward.
-10. Accept a genuine signed raw-adapter receipt. Reject altered bindings/signature, foreign process/candidate/case/request/provider/assembly, missing headers/read/EOF disposition, and a perfectly consistent SDK aggregate fake-chunk receipt solely because authorized raw-adapter provenance is absent.
+10. Accept a genuine Track C attestation over an immutable admitted runtime observation. Reject altered observation fields/bindings/signature, foreign process/candidate/run/case/request/provider/assembly, missing headers/read/EOF disposition, direct caller submission, and a perfectly consistent SDK aggregate fake-chunk receipt solely because authorized adapter-to-sink provenance is absent.

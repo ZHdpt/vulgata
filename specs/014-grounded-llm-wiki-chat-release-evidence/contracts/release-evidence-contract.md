@@ -25,7 +25,7 @@ No state may be inferred from missing files. An attempted run requires commands 
 
 ## Candidate, command, and environment binding
 
-Attempted, failed, and passed execution evidence binds one Story 12.5 candidate commit and one integrated accepted Story 12.4 final commit. Dirty product state is invalid. Each Repository is bound to one Profiled Revision. Prompt, packet, provider-stream, document schema, CodeGraph, JDT LS, Java, PostgreSQL, and provider model/config identities are recorded without secrets. The environment also binds the process-observation public key and exact raw-adapter type/version/assembly hash. A blocked or planned envelope may omit candidate/environment only when the gate was not reached; the blocking observation proves why.
+Attempted, failed, and passed execution evidence binds one Story 12.5 candidate commit and one integrated accepted Story 12.4 final commit. Dirty product state is invalid. Each Repository is bound to one Profiled Revision. Prompt, packet, provider-stream, document schema, CodeGraph, JDT LS, Java, PostgreSQL, and provider model/config identities are recorded without secrets. The environment also binds the Track C attestation process/public key and exact raw-adapter plus attestation-sink type/version/assembly hashes. A blocked or planned envelope may omit candidate/environment only when the gate was not reached; the blocking observation proves why. Track B runtime telemetry has no candidate/run/case/signature/export fields and is never accepted directly as release evidence.
 
 Every executed command has a stable ID, redacted exact command, SHA-256 of that redacted command, exit code, UTC start/end, duration, and bounded stdout/stderr artifact references. Passed runs require exit code zero for every bound command. Provider evidence includes exact model, API type, provider alias, a bounded non-secret configuration identity, and its fingerprint; credentials, headers, endpoint secrets, and connection strings never enter evidence.
 
@@ -73,7 +73,7 @@ Every aggregate is backed by a named receipt rather than an unproved number:
 - Business Logic Document query receipt;
 - Cross-Repository-flow query receipt;
 - Chat corpus result and packet/result artifacts with invoked-case packet fingerprints;
-- same-process signed raw-adapter artifacts binding candidate/case/request, adapter/provider/streaming request, response headers, physical read/EOF, all byte-domain counters, terminal/deadline/rejection, repair/validation, and duration;
+- same-process signed Track C attestation artifacts binding the immutable sealed-admission runtime observation ID/sequence to candidate/run/case/request, adapter/provider/streaming request, response headers, physical read/EOF, all byte-domain counters and terminal/deadline/rejection facts, plus the matching coordinator completion summary's repair/validation/duration facts;
 - restart before/after artifacts plus duplicate query receipt; and
 - database preflight, ownership, and cleanup receipt.
 
@@ -107,11 +107,11 @@ The semantic validator verifies every referenced artifact hash before parsing it
 - fixed-corpus IDs, corpus result-row IDs, and per-case receipt IDs to be identical sets with exactly one row/receipt per case;
 - invoked cases to have one primary stream and at most one ordered syntax-repair stream; insufficient-evidence/authorization-boundary cases to have no packet or stream;
 - ordered `packetFingerprints` to equal invoked-case fingerprints in fixed corpus order;
-- raw/SSE/decoded-delta/final counts and bounds, terminal/EOF/outcome/repair/validation, and accepted durations to equal signed raw-adapter artifacts, with `nonStreamingAcceptedAnswerCount == 0`;
+- raw/SSE/decoded-delta/final counts and bounds plus terminal/EOF/outcome to equal the immutable runtime observation and signed Track C attestation; repair/validation/accepted duration to equal the coordinator completion summary and attestation, with `nonStreamingAcceptedAnswerCount == 0`;
 - `usefulPercent = floor((10000 * usefulCount / caseCount) + 0.5) / 100`, using exact nonnegative arithmetic, two-decimal round half up, and `usefulPercent >= 80.00`; and
 - citation, disclosure, over-30-second, restart, duplicate/data-loss, and database ownership/access values to equal their named artifacts.
 
-Positive vectors include exact 10/12 = 83.33 scoring, exact-limit streaming in every domain, one valid repair, one genuine signed raw-adapter observation, a non-invoked case, and all ten checks. Adversarial vectors split wire/SSE/JSON/delta/terminal boundaries; alter candidate/case/request/process/adapter/provider/request/header/read/EOF/signature binding; provide a perfectly consistent SDK fake-chunk receipt lacking authorized provenance; and retain all earlier aggregate, coverage, content, and mandatory-check negatives.
+Positive vectors include exact 10/12 = 83.33 scoring, exact-limit streaming in every domain, one valid repair, one genuine sealed runtime observation plus signed Track C attestation, a non-invoked case, and all ten checks. Adversarial vectors split wire/SSE/JSON/delta/terminal boundaries; directly submit an unattested observation; alter runtime equality or candidate/run/case/request/process/adapter/provider/request/header/read/EOF/signature binding; provide a perfectly consistent SDK fake-chunk receipt lacking authorized adapter-to-sink provenance; and retain all earlier aggregate, coverage, content, and mandatory-check negatives.
 
 ## Screenshots and redaction
 
@@ -121,4 +121,4 @@ Reject screenshots containing fake Backup B state, secrets, connection strings, 
 
 ## Evidence output
 
-The closed run envelope and passed-only receipt follow schema `story125-release-evidence/2.1` in [story125-release-evidence.schema.json](story125-release-evidence.schema.json). Corpus cases follow [story125-evaluation-case.schema.json](story125-evaluation-case.schema.json). Observed results are immutable within one run directory; correction creates a new run identity, links `supersedesRunId`, and never overwrites failed or blocked evidence.
+The closed run envelope and passed-only receipt follow schema `story125-release-evidence/2.2` in [story125-release-evidence.schema.json](story125-release-evidence.schema.json). Corpus cases follow [story125-evaluation-case.schema.json](story125-evaluation-case.schema.json). Observed results are immutable within one run directory; correction creates a new run identity, links `supersedesRunId`, and never overwrites failed or blocked evidence.
