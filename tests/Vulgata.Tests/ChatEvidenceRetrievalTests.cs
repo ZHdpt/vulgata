@@ -190,6 +190,46 @@ public sealed class ChatEvidenceRetrievalTests
     }
 
     [Fact]
+    public async Task RetrieveAsync_AcceptedV2Relationship_UsesProjectionFirstLexicalSelectionAsync()
+    {
+        await using PreparedEvidenceFixture fixture = await PreparedEvidenceFixture.CreateAsync();
+        await fixture.AddStandaloneCurrentCodeLogicAsync();
+
+        ChatEvidenceResult result = await new ChatEvidenceRetriever(fixture.Context)
+            .RetrieveAsync(
+                fixture.CreateRequest(
+                    "projection-first-with-v2",
+                    question: "SpecialSessionAnchor"),
+                new RepositoryAccessScope(
+                    fixture.RepositoryIds,
+                    new RecordingAuthorizationVerifier(true, true)));
+
+        EvidencePacket packet = Assert.IsType<EvidencePacket>(result.Packet);
+        Assert.Equal(ChatEvidenceResultKind.Found, result.Kind);
+        Assert.Contains(packet.Sections, section => section.Heading == "特殊会话锚点说明");
+        Assert.DoesNotContain(packet.Sections, section => section.Heading is "业务概览" or "消费端" or "提供端");
+    }
+
+    [Theory]
+    [InlineData("北京天气怎么样？")]
+    [InlineData("如何 主要 系统 客户 用户 进行 可以 需要 之后")]
+    public async Task RetrieveAsync_AcceptedV2Relationship_WithoutLexicalMatch_ReturnsInsufficientEvidenceAsync(
+        string question)
+    {
+        await using PreparedEvidenceFixture fixture = await PreparedEvidenceFixture.CreateAsync();
+
+        ChatEvidenceResult result = await new ChatEvidenceRetriever(fixture.Context)
+            .RetrieveAsync(
+                fixture.CreateRequest("projection-refusal", question: question),
+                new RepositoryAccessScope(
+                    fixture.RepositoryIds,
+                    new RecordingAuthorizationVerifier(true, true)));
+
+        Assert.Equal(ChatEvidenceResultKind.IncompleteOrStale, result.Kind);
+        Assert.Null(result.Packet);
+    }
+
+    [Fact]
     public async Task RetrieveAsync_FollowUpQuestion_UsesPriorValidatedQuestionForCurrentLexicalSelectionAsync()
     {
         await using PreparedEvidenceFixture fixture = await PreparedEvidenceFixture.CreateAsync();

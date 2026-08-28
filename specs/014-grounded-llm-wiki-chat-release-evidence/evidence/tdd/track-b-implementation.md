@@ -47,6 +47,8 @@ Independent convergence against checkpoint `4127658dcdff6942f031c3dbd3600dc76fd5
 
 The original test owners verified GREEN: T051/T052 focused suite 46 passed; T053 currentness suite 26 passed. The consolidated Track B filter after correction passed 218 tests with 0 failures and 0 skips. No EF, migration, model-snapshot, Story 12.4 contract, shared composition, or Track C path changed.
 
+A fresh convergence pass then identified T054: exact-v2 presence still selected the old prepared trunk. Three honest RED cases proved that accepted-v2 scope bypassed projection-first selection and returned `Found` for unrelated/all-stop-word input. Minimal GREEN moved the current authorized lexical eligibility gate ahead of exact-v2 lookup for every request; exact relationships remain available only for explicit Cross-Repository bounded expansion. The original test owner verified all three cases, all 22 retrieval tests, and both exact relationship/Flow Group expansion regressions GREEN. The consolidated Track B filter after T054 passed 221 tests with 0 failures and 0 skips.
+
 Additional checks:
 
 - `dotnet build src/dotnet/Vulgata.Web/Vulgata.Web.csproj --no-restore`: succeeded with 0 errors and existing package/analyzer warnings.

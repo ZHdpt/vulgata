@@ -113,6 +113,16 @@ public sealed class ChatEvidenceRetriever(
             return ChatEvidenceResult.NotFoundOrUnauthorized();
         }
 
+        ChatEvidenceResult projectionResult = await RetrieveProjectionOnlyAsync(
+            request,
+            repositoryIds,
+            cancellationToken);
+        if (projectionResult.Kind != ChatEvidenceResultKind.Found ||
+            !RequiresCrossRepositoryEvidence(request.Question))
+        {
+            return projectionResult;
+        }
+
         ExactRelationshipRow[] exactRelationships = await (
             from decision in _context.CrossRepositoryResolutionDecisions.AsNoTracking()
             join edge in _context.DocumentEdges.AsNoTracking()
@@ -158,15 +168,7 @@ public sealed class ChatEvidenceRetriever(
             .ToArrayAsync(cancellationToken);
         if (exactRelationships.Length == 0)
         {
-            if (RequiresCrossRepositoryEvidence(request.Question))
-            {
-                return ChatEvidenceResult.IncompleteOrStale();
-            }
-
-            return await RetrieveProjectionOnlyAsync(
-                request,
-                repositoryIds,
-                cancellationToken);
+            return ChatEvidenceResult.IncompleteOrStale();
         }
 
         if (exactRelationships.Length != 1)
