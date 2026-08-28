@@ -6,10 +6,10 @@
   "stage": "implement",
   "preflight": {
     "branch": "demo0831/story-12-5",
-    "head": "78f1160449ecb8023c44e77eec165b9bb1644284",
+    "head": "2e7fedc4cacd07d0a8c72b8a1aab40d265beedad",
     "git_identity_sha256": "07a20fe92c0f34dce99c42edc204a9db68ea55524b692aa9828e2edde364da34",
-    "status_sha256": "515f0a83b733ea552ff7b37891208f2582e4667fc67677121166f99b1a5db696",
-    "observed_at": "2026-08-28T15:03:18.3359444Z"
+    "status_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "observed_at": "2026-08-28T15:05:32.2943026Z"
   },
   "artifacts": {
     "spec": {
@@ -111,13 +111,13 @@
   "checkpoint": {
     "checkpoint_id": "bmad-12-5-implement-20260828T150318Z-4780c5",
     "stage": "implement",
-    "commit_sha": null,
-    "binding_status": "pending"
+    "commit_sha": "2e7fedc4cacd07d0a8c72b8a1aab40d265beedad",
+    "binding_status": "bound"
   },
   "resume": {
     "stage": "converge",
-    "reason": "Track B convergence task T063 is GREEN and pending its implementation checkpoint. After binding, rerun convergence against the pinned correction candidate; Track C remains closed.",
+    "reason": "Track B convergence task T063 is GREEN and bound at 2e7fedc4cacd07d0a8c72b8a1aab40d265beedad. Rerun convergence against this pinned correction candidate; Track C remains closed.",
     "evidence_path": "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/track-b-convergence-correction-08.md"
   },
-  "updated_at": "2026-08-28T15:03:18.3359444Z"
+  "updated_at": "2026-08-28T15:05:32.2943026Z"
 }
