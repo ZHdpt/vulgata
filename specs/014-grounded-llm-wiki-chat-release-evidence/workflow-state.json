@@ -6,10 +6,10 @@
   "stage": "implement",
   "preflight": {
     "branch": "demo0831/story-12-5",
-    "head": "8b35d28ff6eead162cfbea08c55168aa225826b9",
-    "git_identity_sha256": "8d4215c8f432617a51f487f46db541b6a2a1476dc422716ea7d2bda35321f5f1",
-    "status_sha256": "c65b382af873c703b322968dd100bc753b15f605b3e255ae380331086be19c1a",
-    "observed_at": "2026-08-27T15:14:39.2789856Z"
+    "head": "1ed2f213ae1e97e66234632fc96fd31a475bb829",
+    "git_identity_sha256": "7c75130a6ecb26fe286f57fcf786fb7699e8c429132821a01d5cdcb2bdcaec97",
+    "status_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "observed_at": "2026-08-28T00:09:25.4612638Z"
   },
   "artifacts": {
     "spec": {
@@ -68,6 +68,13 @@
       "scope_sha256": "81ea1431d710e6ab9d0647bebcc49525dd924f1265862b1666917ff2a08c5309",
       "evidence_path": "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/implementation-approval-track-a-01.md",
       "decided_at": "2026-08-27T10:08:46.1375862Z"
+    },
+    {
+      "decision_id": "implementation-approval-track-b-01",
+      "status": "accepted",
+      "scope_sha256": "bd65b1963898d727757ebc3fbf5ed90360802b74413256054ffb2da8f41547e3",
+      "evidence_path": "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/implementation-approval-track-b-01.md",
+      "decided_at": "2026-08-28T00:10:00.4646621Z"
     }
   ],
   "convergence": {
@@ -81,9 +88,6 @@
     "decision_path": "specs/014-grounded-llm-wiki-chat-release-evidence/e2e-decision-track-a.json"
   },
   "current_evidence_paths": [
-    "specs/014-grounded-llm-wiki-chat-release-evidence/spec.md",
-    "specs/014-grounded-llm-wiki-chat-release-evidence/plan.md",
-    "specs/014-grounded-llm-wiki-chat-release-evidence/tasks.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/definition-review/definition-review-04.json",
     "specs/014-grounded-llm-wiki-chat-release-evidence/contracts/chat-provider-streaming-v1.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/contracts/chat-evidence-packet-v2.schema.json",
@@ -92,18 +96,20 @@
     "specs/014-grounded-llm-wiki-chat-release-evidence/contracts/release-evidence-contract.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/contracts/story125-release-evidence.schema.json",
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/integration/story-12.4-dependency-integration-01.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/integration/story-12.4-dependency-integration-correction-01.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/implementation-approval-track-b-01.md",
     "specs/013-exact-cross-repository-flow-pass2/workflow-state.json"
   ],
   "checkpoint": {
-    "checkpoint_id": "bmad-12-5-implement-20260827T150156Z-63b5a8",
+    "checkpoint_id": "bmad-12-5-implement-20260828T000747Z-a12b5c",
     "stage": "implement",
-    "commit_sha": "8b35d28ff6eead162cfbea08c55168aa225826b9",
+    "commit_sha": "1ed2f213ae1e97e66234632fc96fd31a475bb829",
     "binding_status": "bound"
   },
   "resume": {
     "stage": "implement",
-    "reason": "Dependency 4798b97 is integrated, but its committed Business Logic schema hash contradicts its accepted identity. Track B approval is not recorded; obtain a corrected accepted Story 12.4 commit.",
-    "evidence_path": "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/integration/story-12.4-dependency-integration-01.md"
+    "reason": "The corrected Story 12.4 integration barrier and implementation-approval-track-b-01 authorize Track B T020-T037. Start at T020 behavioral RED; Track C remains closed.",
+    "evidence_path": "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/implementation-approval-track-b-01.md"
   },
-  "updated_at": "2026-08-27T15:14:39.2789856Z"
+  "updated_at": "2026-08-28T00:10:00.4646621Z"
 }
