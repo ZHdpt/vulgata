@@ -3,13 +3,13 @@
   "bmad_story_key": "12-5-grounded-llm-wiki-chat-and-august-30-release-evidence",
   "bmad_epic_key": "12",
   "feature_directory": "specs/014-grounded-llm-wiki-chat-release-evidence",
-  "stage": "tasks",
+  "stage": "implementation-approval",
   "preflight": {
     "branch": "demo0831/story-12-5",
-    "head": "8087bf97061a1935d251d577ea9395a2ca39b52f",
-    "git_identity_sha256": "6a79935ea101ac4dec63bd9d40aee7608378c1a72a0f861ed704afcb2ec451ce",
-    "status_sha256": "506e8c2ab9d8330a3d6780a2c5bf0c2ee1996eb87a0f975e810a6a6c60cab169",
-    "observed_at": "2026-08-28T12:05:42.7672339Z"
+    "head": "a3c85be777ac8af05bb83bc76fb6f1acd463723a",
+    "git_identity_sha256": "7d777b678bcb8b452d6645ce1d3fd6c3f7e32af14e0f7bda8855e582455f3bbf",
+    "status_sha256": "114ffcf2c2310efe2d492856a91e57f231fc3ef5953e7c89b121bf2d1f4b51f3",
+    "observed_at": "2026-08-28T12:16:34.9825775Z"
   },
   "artifacts": {
     "spec": {
@@ -22,7 +22,7 @@
     },
     "tasks": {
       "path": "specs/014-grounded-llm-wiki-chat-release-evidence/tasks.md",
-      "sha256": "b2be3c6a4b642f74c575f39258d723fe66839e017e0210b389be92d3bb4da348"
+      "sha256": "15756545cd4e4357e99a2dc5ee18d660ac8e4b6c782b5bdafcd191b821aa2f6f"
     }
   },
   "gates": {
@@ -32,9 +32,9 @@
       "verdict_path": "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/plan-review/plan-review-09.json"
     },
     "definition-review": {
-      "status": "revised",
-      "attempt": 5,
-      "verdict_path": "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/definition-review/definition-review-05.json"
+      "status": "accepted",
+      "attempt": 6,
+      "verdict_path": "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/definition-review/definition-review-06.json"
     },
     "quality-review": {
       "status": "invalidated",
@@ -43,7 +43,7 @@
     }
   },
   "attempts": {
-    "definition-review": 1,
+    "definition-review": 0,
     "converge": 0,
     "quality-review": 0
   },
@@ -68,6 +68,13 @@
       "scope_sha256": "f3057c1106d59d96a804b6a7c8902df653b6c23e4deb7402759c0ffd71a84f16",
       "evidence_path": "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/planned-change-authorization-03.md",
       "decided_at": "2026-08-28T11:50:51.6536446Z"
+    },
+    {
+      "decision_id": "story-12-5-implementation-approval-track-b-02",
+      "status": "pending",
+      "scope_sha256": "c6afc73bad816bad6a7a511fb2bf6557f30e81ae0c6576f3ee4783abfed75db8",
+      "evidence_path": "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/implementation-approval-track-b-02.md",
+      "decided_at": null
     }
   ],
   "convergence": {
@@ -84,25 +91,25 @@
     "specs/014-grounded-llm-wiki-chat-release-evidence/spec.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/design-correction-01.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/plan.md",
-    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/track-b-plan-correction-03.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/plan-review/plan-review-09.json",
-    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/track-b-plan-review-09.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/planned-change-authorization-03.md",
-    "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/definition-review/definition-review-05.json",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/definition-review/definition-review-06.json",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/track-b-definition-review-06.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/implementation-approval-track-b-02.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/implementation-approval-track-a-01.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/integration/story-12.4-dependency-integration-correction-01.md",
     "specs/013-exact-cross-repository-flow-pass2/workflow-state.json"
   ],
   "checkpoint": {
-    "checkpoint_id": "bmad-12-5-definition-review-20260828T120542Z-6b6afb",
+    "checkpoint_id": "bmad-12-5-definition-review-20260828T121634Z-2bf9ad",
     "stage": "definition-review",
     "commit_sha": null,
     "binding_status": "pending"
   },
   "resume": {
-    "stage": "tasks",
-    "reason": "Definition review 05 returned REVISE with four task-owned findings. Correct tasks only and rerun a fresh definition review; no implementation is authorized.",
-    "evidence_path": "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/definition-review/definition-review-05.json"
+    "stage": "implementation-approval",
+    "reason": "Definition review 06 accepted the corrected definition. Await Track B implementation approval 02 before the first production or behavioral-test write; Track C remains closed.",
+    "evidence_path": "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/implementation-approval-track-b-02.md"
   },
-  "updated_at": "2026-08-28T12:05:42.7672339Z"
+  "updated_at": "2026-08-28T12:16:34.9825775Z"
 }
