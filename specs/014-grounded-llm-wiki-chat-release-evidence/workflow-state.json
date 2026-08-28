@@ -3,13 +3,13 @@
   "bmad_story_key": "12-5-grounded-llm-wiki-chat-and-august-30-release-evidence",
   "bmad_epic_key": "12",
   "feature_directory": "specs/014-grounded-llm-wiki-chat-release-evidence",
-  "stage": "plan-review",
+  "stage": "plan",
   "preflight": {
     "branch": "demo0831/story-12-5",
-    "head": "bf48acba67bc6634bb3b929aad14eb16a5ed9341",
-    "git_identity_sha256": "4b28457017bad311578c8ad15545a2f9491e943c7f5490c6cd231b7aa30393b9",
-    "status_sha256": "09a708e803211571cdcea892e75b2c56a56ff1cb48e5d1a0f7949e4b8dbca040",
-    "observed_at": "2026-08-28T09:59:01.2358578Z"
+    "head": "6d51b6e8eadc2936c76cfa68b12d02552bf5a73b",
+    "git_identity_sha256": "65bc37422bd1140bddbbc5f1493e8ab30a5ce6161240d46320d18cf818d9a5b0",
+    "status_sha256": "535afc8ee7567c9a1076b44b59d699f3ad52c3201603eca399a30347ff767469",
+    "observed_at": "2026-08-28T10:05:04.2303107Z"
   },
   "artifacts": {
     "spec": {
@@ -27,9 +27,9 @@
   },
   "gates": {
     "plan-review": {
-      "status": "pending",
-      "attempt": 7,
-      "verdict_path": null
+      "status": "revised",
+      "attempt": 8,
+      "verdict_path": "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/plan-review/plan-review-08.json"
     },
     "definition-review": {
       "status": "invalidated",
@@ -77,21 +77,21 @@
     "specs/014-grounded-llm-wiki-chat-release-evidence/spec.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/design-correction-01.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/plan.md",
-    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/track-b-plan-correction-02.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/plan-review/plan-review-08.json",
     "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/implementation-approval-track-a-01.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/integration/story-12.4-dependency-integration-correction-01.md",
     "specs/013-exact-cross-repository-flow-pass2/workflow-state.json"
   ],
   "checkpoint": {
-    "checkpoint_id": "bmad-12-5-plan-20260828T095901Z-43a712",
-    "stage": "plan",
+    "checkpoint_id": "bmad-12-5-plan-review-20260828T100504Z-247353",
+    "stage": "plan-review",
     "commit_sha": null,
     "binding_status": "pending"
   },
   "resume": {
-    "stage": "plan-review",
-    "reason": "All plan-review 07 findings are corrected and self-reviewed. Dispatch a fresh plan-only review against this pinned plan set; planned-change authorization still precedes tasks.",
-    "evidence_path": "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/track-b-plan-correction-02.md"
+    "stage": "plan",
+    "reason": "Plan review 08 closed review-07 but found one FR-054 conflict: acceptance caps must measure received provider bytes before decoding, with decoded bounds remaining separate. Return to plan owner.",
+    "evidence_path": "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/plan-review/plan-review-08.json"
   },
-  "updated_at": "2026-08-28T09:59:01.2358578Z"
+  "updated_at": "2026-08-28T10:05:04.2303107Z"
 }
