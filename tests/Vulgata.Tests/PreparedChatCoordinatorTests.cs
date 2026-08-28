@@ -76,7 +76,8 @@ public sealed class PreparedChatCoordinatorTests
             TimeProvider.System,
             new ChatAgentResultValidator(candidateExtractor),
             new StubPreparedChatScopeResolver(),
-            new PreparedChatQuestionRequestValidator());
+            new PreparedChatQuestionRequestValidator(),
+            new RecordingCompletionSummaryRecorder());
 
         IReadOnlyList<PreparedChatScopeOption> scopes = await coordinator.ListScopesAsync();
 
@@ -118,7 +119,8 @@ public sealed class PreparedChatCoordinatorTests
             TimeProvider.System,
             new ChatAgentResultValidator(candidateExtractor),
             new StubPreparedChatScopeResolver(preparedSystem.Id),
-            new PreparedChatQuestionRequestValidator());
+            new PreparedChatQuestionRequestValidator(),
+            new RecordingCompletionSummaryRecorder());
 
         IReadOnlyList<PreparedChatScopeOption> scopes = await coordinator.ListScopesAsync();
 
@@ -153,7 +155,8 @@ public sealed class PreparedChatCoordinatorTests
             TimeProvider.System,
             new ChatAgentResultValidator(candidateExtractor),
             new StubPreparedChatScopeResolver(),
-            new PreparedChatQuestionRequestValidator());
+            new PreparedChatQuestionRequestValidator(),
+            new RecordingCompletionSummaryRecorder());
 
         PreparedChatResult result = await coordinator.AskAsync(
             ChatMode.Business,
@@ -257,7 +260,8 @@ public sealed class PreparedChatCoordinatorTests
             TimeProvider.System,
             new ChatAgentResultValidator(candidateExtractor),
             new StubPreparedChatScopeResolver(),
-            new PreparedChatQuestionRequestValidator());
+            new PreparedChatQuestionRequestValidator(),
+            new RecordingCompletionSummaryRecorder());
 
         PreparedChatResult result = await coordinator.AskAsync(
             ChatMode.Business,
@@ -396,7 +400,8 @@ public sealed class PreparedChatCoordinatorTests
             TimeProvider.System,
             new ChatAgentResultValidator(candidateExtractor),
             new StubPreparedChatScopeResolver(),
-            new PreparedChatQuestionRequestValidator());
+            new PreparedChatQuestionRequestValidator(),
+            new RecordingCompletionSummaryRecorder());
 
         PreparedChatResult result = await coordinator.AskAsync(
             ChatMode.Business,
@@ -437,7 +442,8 @@ public sealed class PreparedChatCoordinatorTests
             TimeProvider.System,
             new ChatAgentResultValidator(candidateExtractor),
             new StubPreparedChatScopeResolver(),
-            new PreparedChatQuestionRequestValidator());
+            new PreparedChatQuestionRequestValidator(),
+            new RecordingCompletionSummaryRecorder());
 
         _ = await coordinator.AskAsync(
             ChatMode.Business,
@@ -479,7 +485,8 @@ public sealed class PreparedChatCoordinatorTests
             TimeProvider.System,
             new ChatAgentResultValidator(candidateExtractor),
             new StubPreparedChatScopeResolver(),
-            new PreparedChatQuestionRequestValidator());
+            new PreparedChatQuestionRequestValidator(),
+            new RecordingCompletionSummaryRecorder());
 
         PreparedChatResult result = await coordinator.AskAsync(
             ChatMode.Business,
@@ -493,7 +500,7 @@ public sealed class PreparedChatCoordinatorTests
     }
 
     [Fact]
-    public async Task AskAsync_SemanticallyRejectedStreamingAnswer_UpdatesSignedObservationWithoutContent()
+    public async Task AskAsync_SemanticallyRejectedStreamingAnswer_RecordsContentDarkCompletionSummary()
     {
         var system = new SystemEntity("支付系统", null, null, DateTimeOffset.UtcNow);
         Repository first = system.AddRepository(
@@ -524,14 +531,15 @@ public sealed class PreparedChatCoordinatorTests
         services.AddPreparedPass2Agents();
         using ServiceProvider serviceProvider = services.BuildServiceProvider();
         using IServiceScope scope = serviceProvider.CreateScope();
-        ChatStreamObservationAuthority authority =
-            scope.ServiceProvider.GetRequiredService<ChatStreamObservationAuthority>();
+        ChatStreamRuntimeObservationRecorder runtimeRecorder =
+            scope.ServiceProvider.GetRequiredService<ChatStreamRuntimeObservationRecorder>();
         IChatProviderStreamingTransport transport =
             scope.ServiceProvider.GetRequiredService<IChatProviderStreamingTransport>();
         var dispatcher = new SemanticRejectingDispatcher(
             transport,
             provider,
             semanticAnswer);
+        var completionRecorder = new RecordingCompletionSummaryRecorder(runtimeRecorder);
         var candidateExtractor = new ChatCandidateExtractor();
         var coordinator = new PreparedChatCoordinator(
             new FixedAuthenticationStateProvider("owner-1"),
@@ -546,7 +554,8 @@ public sealed class PreparedChatCoordinatorTests
             TimeProvider.System,
             new ChatAgentResultValidator(candidateExtractor),
             new StubPreparedChatScopeResolver(),
-            new PreparedChatQuestionRequestValidator());
+            new PreparedChatQuestionRequestValidator(),
+            completionRecorder);
 
         PreparedChatResult result = await coordinator.AskAsync(
             ChatMode.Business,
@@ -557,19 +566,20 @@ public sealed class PreparedChatCoordinatorTests
         Assert.Equal(PreparedChatResultKind.EvidenceUnavailable, result.Kind);
         Assert.Null(result.Answer);
         Assert.NotNull(dispatcher.RequestId);
-        Assert.True(authority.TryGetVerifiedReceipt(
-            dispatcher.RequestId!,
-            "primary",
-            out string? serializedReceipt));
-        using JsonDocument document = JsonDocument.Parse(serializedReceipt!);
-        JsonElement receipt = document.RootElement.GetProperty("receipt");
-        Assert.Equal("rejected-semantic", receipt.GetProperty("validationOutcome").GetString());
-        Assert.DoesNotContain("unknown", serializedReceipt!, StringComparison.Ordinal);
-        Assert.DoesNotContain(semanticAnswer, serializedReceipt!, StringComparison.Ordinal);
+        ChatStreamCompletionSummary summary = Assert.Single(completionRecorder.Summaries);
+        Assert.Equal("rejected-semantic", summary.FinalValidationOutcome);
+        Assert.Equal(runtimeRecorder.GetRuntimeObservationIds(dispatcher.RequestId!), summary.RuntimeObservationIds);
+        string serializedObservation = JsonSerializer.Serialize(
+            runtimeRecorder.GetRuntimeObservations(dispatcher.RequestId!));
+        string serializedSummary = JsonSerializer.Serialize(summary);
+        Assert.DoesNotContain("unknown", serializedObservation, StringComparison.Ordinal);
+        Assert.DoesNotContain(semanticAnswer, serializedObservation, StringComparison.Ordinal);
+        Assert.DoesNotContain("unknown", serializedSummary, StringComparison.Ordinal);
+        Assert.DoesNotContain(semanticAnswer, serializedSummary, StringComparison.Ordinal);
     }
 
     [Fact]
-    public async Task AskAsync_UnsupportedStreamingAnswer_RecordsNonAcceptedDispositionOnPrimaryAttempt()
+    public async Task AskAsync_UnsupportedStreamingAnswer_RecordsNonAcceptedCompletionSummary()
     {
         var system = new SystemEntity("支付系统", null, null, DateTimeOffset.UtcNow);
         Repository first = system.AddRepository("账户仓库", "https://example.test/account.git", null, null, DateTimeOffset.UtcNow);
@@ -582,12 +592,12 @@ public sealed class PreparedChatCoordinatorTests
             AgentType.Chat,
             DateTimeOffset.UtcNow);
         using var responseHandler = new SemanticRejectionResponseHandler("{}");
-        using var observationAuthority = new ChatStreamObservationAuthority();
+        var runtimeRecorder = new ChatStreamRuntimeObservationRecorder();
         var transport = new OpenAiCompatibleChatProviderStreamingTransport(
             new SingleProviderRepository(provider),
             new PlaintextSecretEncryptionService(),
             responseHandler,
-            observationAuthority);
+            runtimeRecorder);
         var dispatcher = new SemanticRejectingDispatcher(
             transport,
             provider,
@@ -597,11 +607,13 @@ public sealed class PreparedChatCoordinatorTests
         {
             PrimaryContent = "客户付款记录。",
         };
+        var completionRecorder = new RecordingCompletionSummaryRecorder(runtimeRecorder);
         var coordinator = CreateCoordinator(
             system,
             [first, second],
             retriever: retriever,
-            dispatcher: dispatcher);
+            dispatcher: dispatcher,
+            completionRecorder: completionRecorder);
 
         PreparedChatResult result = await coordinator.AskAsync(
             ChatMode.Business,
@@ -612,14 +624,14 @@ public sealed class PreparedChatCoordinatorTests
         Assert.Equal(PreparedChatResultKind.Unsupported, result.Kind);
         Assert.Null(result.Answer);
         Assert.NotNull(dispatcher.RequestId);
-        Assert.True(observationAuthority.TryGetVerifiedReceipt(
-            dispatcher.RequestId!,
-            "primary",
-            out string? serializedReceipt));
-        using JsonDocument document = JsonDocument.Parse(serializedReceipt!);
-        JsonElement receipt = document.RootElement.GetProperty("receipt");
-        Assert.Equal("rejected-semantic", receipt.GetProperty("validationOutcome").GetString());
-        Assert.DoesNotContain("{}", serializedReceipt!, StringComparison.Ordinal);
+        ChatStreamCompletionSummary summary = Assert.Single(completionRecorder.Summaries);
+        Assert.Equal("rejected-semantic", summary.FinalValidationOutcome);
+        Assert.Equal(runtimeRecorder.GetRuntimeObservationIds(dispatcher.RequestId!), summary.RuntimeObservationIds);
+        string serializedObservation = JsonSerializer.Serialize(
+            runtimeRecorder.GetRuntimeObservations(dispatcher.RequestId!));
+        string serializedSummary = JsonSerializer.Serialize(summary);
+        Assert.DoesNotContain("{}", serializedObservation, StringComparison.Ordinal);
+        Assert.DoesNotContain("{}", serializedSummary, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -645,7 +657,8 @@ public sealed class PreparedChatCoordinatorTests
             TimeProvider.System,
             new ChatAgentResultValidator(candidateExtractor),
             new StubPreparedChatScopeResolver(),
-            new PreparedChatQuestionRequestValidator());
+            new PreparedChatQuestionRequestValidator(),
+            new RecordingCompletionSummaryRecorder());
 
         PreparedChatResult result = await coordinator.AskAsync(
             ChatMode.Business,
@@ -686,7 +699,8 @@ public sealed class PreparedChatCoordinatorTests
             new RecordingTimeProvider(trace),
             new ChatAgentResultValidator(candidateExtractor),
             new StubPreparedChatScopeResolver(),
-            new PreparedChatQuestionRequestValidator());
+            new PreparedChatQuestionRequestValidator(),
+            new RecordingCompletionSummaryRecorder());
 
         PreparedChatResult result = await coordinator.AskAsync(
             ChatMode.Business,
@@ -932,7 +946,8 @@ public sealed class PreparedChatCoordinatorTests
             TimeProvider.System,
             new ChatAgentResultValidator(candidateExtractor),
             new StubPreparedChatScopeResolver(),
-            new PreparedChatQuestionRequestValidator());
+            new PreparedChatQuestionRequestValidator(),
+            new RecordingCompletionSummaryRecorder());
         using var cancellation = new CancellationTokenSource();
         cancellation.Cancel();
 
@@ -976,7 +991,8 @@ public sealed class PreparedChatCoordinatorTests
             TimeProvider.System,
             new ChatAgentResultValidator(candidateExtractor),
             new StubPreparedChatScopeResolver(),
-            new PreparedChatQuestionRequestValidator());
+            new PreparedChatQuestionRequestValidator(),
+            new RecordingCompletionSummaryRecorder());
         (ChatMode Mode, Guid SystemId, IReadOnlyCollection<Guid> RepositoryIds, string Question)[] invalidRequests =
         [
             ((ChatMode)999, system.Id, [first.Id, second.Id], "客户如何付款？"),
@@ -1027,7 +1043,8 @@ public sealed class PreparedChatCoordinatorTests
             TimeProvider.System,
             new ChatAgentResultValidator(candidateExtractor),
             new StubPreparedChatScopeResolver(),
-            new PreparedChatQuestionRequestValidator());
+            new PreparedChatQuestionRequestValidator(),
+            new RecordingCompletionSummaryRecorder());
 
         PreparedChatResult result = await coordinator.AskAsync(
             ChatMode.Business,
@@ -1068,7 +1085,8 @@ public sealed class PreparedChatCoordinatorTests
             TimeProvider.System,
             new ChatAgentResultValidator(candidateExtractor),
             new StubPreparedChatScopeResolver(),
-            new PreparedChatQuestionRequestValidator());
+            new PreparedChatQuestionRequestValidator(),
+            new RecordingCompletionSummaryRecorder());
 
         PreparedChatResult prior = await coordinator.AskAsync(
             ChatMode.Business,
@@ -1098,7 +1116,8 @@ public sealed class PreparedChatCoordinatorTests
         StubEvidenceRetriever? retriever = null,
         IChatAgentDispatcher? dispatcher = null,
         StubCurrentnessValidator? currentness = null,
-        IChatAdvisoryContextReader? advisoryReader = null)
+        IChatAdvisoryContextReader? advisoryReader = null,
+        IChatStreamCompletionSummaryRecorder? completionRecorder = null)
     {
         var candidateExtractor = new ChatCandidateExtractor();
         return new PreparedChatCoordinator(
@@ -1114,7 +1133,21 @@ public sealed class PreparedChatCoordinatorTests
             TimeProvider.System,
             new ChatAgentResultValidator(candidateExtractor),
             new StubPreparedChatScopeResolver(),
-            new PreparedChatQuestionRequestValidator());
+            new PreparedChatQuestionRequestValidator(),
+            completionRecorder ?? new RecordingCompletionSummaryRecorder());
+    }
+
+    private sealed class RecordingCompletionSummaryRecorder(
+        IChatStreamCompletionSummaryRecorder? runtimeSource = null) :
+        IChatStreamCompletionSummaryRecorder
+    {
+        public List<ChatStreamCompletionSummary> Summaries { get; } = [];
+
+        public IReadOnlyList<string> GetRuntimeObservationIds(string requestId) =>
+            runtimeSource?.GetRuntimeObservationIds(requestId) ?? [];
+
+        public void RecordCompletion(ChatStreamCompletionSummary summary) =>
+            Summaries.Add(summary);
     }
 
     private sealed class RecordingTimeProvider(List<string> trace) : TimeProvider
@@ -1316,7 +1349,7 @@ public sealed class PreparedChatCoordinatorTests
                             null)
                     ]
                     : [],
-                    [new EvidenceFlowStep(1, "d1", null, "准备回答。")]);
+                    []);
             return Task.FromResult(ChatEvidenceResult.Found(packet));
         }
     }
@@ -1326,8 +1359,7 @@ public sealed class PreparedChatCoordinatorTests
         LlmProvider provider,
         string streamedAnswer,
         ChatAnswerability answerability = ChatAnswerability.Supported) :
-        IChatAgentDispatcher,
-        IChatStreamValidationDispositionRecorder
+        IChatAgentDispatcher
     {
         public string? RequestId { get; private set; }
 
@@ -1337,8 +1369,6 @@ public sealed class PreparedChatCoordinatorTests
         {
             RequestId = request.RequestId;
             var streamRequest = new ChatProviderStreamRequest(
-                "0123456789abcdef0123456789abcdef01234567",
-                $"case-{request.RequestId}",
                 request.RequestId,
                 "primary",
                 provider.Id.ToString("D"),
@@ -1375,12 +1405,6 @@ public sealed class PreparedChatCoordinatorTests
                 : streamedAnswer;
             return ChatSynthesisOutcome.Generated(synthesis, rawSelectionJson);
         }
-
-        public bool TryRecordFinalValidationDisposition(
-            string requestId,
-            ChatStreamValidationDisposition disposition) =>
-            transport is IChatStreamValidationDispositionRecorder recorder &&
-            recorder.TryRecordFinalValidationDisposition(requestId, disposition);
     }
 
     private sealed class SemanticRejectionResponseHandler(string answer) : HttpMessageHandler

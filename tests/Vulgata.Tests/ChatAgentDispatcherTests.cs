@@ -768,9 +768,6 @@ public sealed class ChatAgentDispatcherTests
         Assert.Null(outcome.Result);
         Assert.Null(outcome.RawSelectionJson);
         Assert.Equal("primary", Assert.Single(transport.Requests).AttemptKind);
-        Assert.DoesNotContain(
-            transport.ValidationDispositions,
-            item => item.Disposition == ChatStreamValidationDisposition.SyntaxRepairRequired);
     }
 
     [Fact]
@@ -807,9 +804,6 @@ public sealed class ChatAgentDispatcherTests
         Assert.Null(outcome.FailureCode);
         Assert.NotNull(outcome.Result);
         Assert.Equal(["primary", "syntax-repair"], transport.Requests.Select(item => item.AttemptKind));
-        Assert.Equal(
-            (request.RequestId, ChatStreamValidationDisposition.SyntaxRepairRequired),
-            Assert.Single(transport.ValidationDispositions));
     }
 
     [Fact]
@@ -843,11 +837,10 @@ public sealed class ChatAgentDispatcherTests
 
         Assert.Equal(ChatContractFailureCode.InvalidSelection, outcome.FailureCode);
         Assert.Equal(
-            [
-                (request.RequestId, ChatStreamValidationDisposition.SyntaxRepairRequired),
-                (request.RequestId, ChatStreamValidationDisposition.RejectedSyntax),
-            ],
-            transport.ValidationDispositions);
+            ["primary", "syntax-repair"],
+            transport.Requests.Select(item => item.AttemptKind));
+        Assert.Null(outcome.Result);
+        Assert.Null(outcome.RawSelectionJson);
     }
 
     [Fact]
@@ -1147,11 +1140,9 @@ public sealed class ChatAgentDispatcherTests
     }
 
     private sealed class RecordingStreamTransport(IReadOnlyList<string> answers) :
-        IChatProviderStreamingTransport,
-        IChatStreamValidationDispositionRecorder
+        IChatProviderStreamingTransport
     {
         public List<ChatProviderStreamRequest> Requests { get; } = [];
-        public List<(string RequestId, ChatStreamValidationDisposition Disposition)> ValidationDispositions { get; } = [];
 
         public async IAsyncEnumerable<ChatProviderStreamSignal> StreamAsync(
             ChatProviderStreamRequest request,
@@ -1168,13 +1159,6 @@ public sealed class ChatAgentDispatcherTests
                 ReadOnlyMemory<byte>.Empty);
         }
 
-        public bool TryRecordFinalValidationDisposition(
-            string requestId,
-            ChatStreamValidationDisposition disposition)
-        {
-            ValidationDispositions.Add((requestId, disposition));
-            return true;
-        }
     }
 
     private sealed class CancellationTrackingBlockingStreamTransport :

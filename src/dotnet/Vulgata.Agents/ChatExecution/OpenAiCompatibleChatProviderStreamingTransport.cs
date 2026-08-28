@@ -12,9 +12,8 @@ internal sealed class OpenAiCompatibleChatProviderStreamingTransport(
     ILlmProviderRepository providerRepository,
     ISecretEncryptionService encryptionService,
     HttpMessageHandler httpMessageHandler,
-    ChatStreamObservationAuthority observationAuthority) :
-    IChatProviderStreamingTransport,
-    IChatStreamValidationDispositionRecorder
+    ChatStreamRuntimeObservationRecorder observationRecorder) :
+    IChatProviderStreamingTransport
 {
     private const int _maximumRawBodyBytes = 1_048_576;
     private const int _maximumReadBytes = 16_384;
@@ -39,65 +38,58 @@ internal sealed class OpenAiCompatibleChatProviderStreamingTransport(
                 observation,
                 cancellationToken)
             .GetAsyncEnumerator(cancellationToken);
-        while (true)
+        try
         {
-            bool hasSignal;
-            try
+            while (true)
             {
-                hasSignal = await signals.MoveNextAsync().ConfigureAwait(false);
-            }
-            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
-            {
-                observation.Outcome = "cancelled";
-                observation.RejectionCategory = "cancelled";
-                observation.PhysicalEofDisposition = "cancelled";
-                RecordObservation(request, observation);
-                throw;
-            }
-            catch (Exception exception) when (
-                exception is HttpRequestException or IOException or InvalidDataException or
-                JsonException or DecoderFallbackException or InvalidOperationException or
-                TimeoutException)
-            {
-                observation.RejectionCategory = Classify(exception);
-                observation.Outcome = observation.RejectionCategory;
-                if (observation.Outcome == "disconnect")
+                bool hasSignal;
+                try
                 {
-                    observation.PhysicalEofDisposition = "disconnect";
+                    hasSignal = await signals.MoveNextAsync().ConfigureAwait(false);
                 }
-                failureSignal = new ChatProviderStreamSignal(
-                    ChatProviderStreamSignalKind.ProviderError,
-                    ReadOnlyMemory<byte>.Empty,
-                    observation.RejectionCategory);
-                break;
-            }
+                catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+                {
+                    observation.Outcome = "cancelled";
+                    observation.RejectionCategory = "cancelled";
+                    observation.PhysicalEofDisposition = "cancelled";
+                    throw;
+                }
+                catch (Exception exception) when (
+                    exception is HttpRequestException or IOException or InvalidDataException or
+                    JsonException or DecoderFallbackException or InvalidOperationException or
+                    TimeoutException)
+                {
+                    observation.RejectionCategory = Classify(exception);
+                    observation.Outcome = observation.RejectionCategory;
+                    if (observation.Outcome == "disconnect")
+                    {
+                        observation.PhysicalEofDisposition = "disconnect";
+                    }
+                    failureSignal = new ChatProviderStreamSignal(
+                        ChatProviderStreamSignalKind.ProviderError,
+                        ReadOnlyMemory<byte>.Empty,
+                        observation.RejectionCategory);
+                    break;
+                }
 
-            if (!hasSignal)
-            {
-                break;
-            }
+                if (!hasSignal)
+                {
+                    break;
+                }
 
-            yield return signals.Current;
+                yield return signals.Current;
+            }
+        }
+        finally
+        {
+            RecordObservation(request, observation);
         }
 
-        RecordObservation(request, observation);
         if (failureSignal is not null)
         {
             yield return failureSignal;
         }
     }
-
-    public bool TryRecordFinalValidationDisposition(
-        string requestId,
-        ChatStreamValidationDisposition disposition) =>
-        observationAuthority.TryUpdateValidationOutcome(
-            requestId,
-            "syntax-repair",
-            ToValidationOutcome(disposition)) ||
-        observationAuthority.TryUpdateValidationOutcome(
-            requestId,
-            "primary",
-            ToValidationOutcome(disposition));
 
     private async IAsyncEnumerable<ChatProviderStreamSignal> ExecuteAsync(
         ChatProviderStreamRequest request,
@@ -321,28 +313,20 @@ internal sealed class OpenAiCompatibleChatProviderStreamingTransport(
         ObservationState state)
     {
         state.FinalizeSseCounters();
-        if (string.IsNullOrWhiteSpace(request.CandidateCommit) ||
-            string.IsNullOrWhiteSpace(request.CaseId) ||
-            !IsSha256(request.ProviderConfigurationFingerprint))
+        if (!IsSha256(request.ProviderConfigurationFingerprint))
         {
             return;
         }
 
-        _ = observationAuthority.Record(new ChatStreamObservationReceipt(
-            "production-raw-response-header-adapter",
-            observationAuthority.ProcessObservationId,
-            typeof(OpenAiCompatibleChatProviderStreamingTransport).FullName!,
-            observationAuthority.AdapterVersion,
-            observationAuthority.AdapterAssemblySha256,
-            observationAuthority.PublicKeyFingerprint,
-            observationAuthority.NextObservationSequence(),
-            request.CandidateCommit,
-            request.CaseId,
+        _ = observationRecorder.Record((runtimeObservationId, observationSequence) =>
+            new ChatStreamRuntimeObservation(
+            runtimeObservationId,
+            observationSequence,
+            request.RequestId,
+            request.AttemptKind,
             request.ProviderIdentity,
             "chat-completions",
             request.ProviderConfigurationFingerprint,
-            request.RequestId,
-            request.AttemptKind,
             request.StreamingRequestFingerprint,
             true,
             state.ResponseHeaderDisposition,
@@ -355,14 +339,6 @@ internal sealed class OpenAiCompatibleChatProviderStreamingTransport(
             state.PhysicalEofAtUtc,
             state.PhysicalEofDisposition,
             true,
-            state.RawReadCount,
-            state.MaximumRawReadByteCount,
-            state.RawBodyByteCount,
-            state.ProviderChunkCount,
-            state.MaximumReceivedProviderChunkByteCount,
-            state.AssembledReceivedProviderResponseByteCount,
-            state.MaximumSseLineByteCount,
-            state.MaximumSseEventByteCount,
             state.StreamStartedAtUtc,
             state.FirstDataAtUtc,
             state.TerminalAtUtc,
@@ -370,6 +346,14 @@ internal sealed class OpenAiCompatibleChatProviderStreamingTransport(
                 ? null
                 : Math.Max(0, (long)(state.FirstDataAtUtc.Value -
                     state.StreamStartedAtUtc).TotalMilliseconds),
+            state.RawReadCount,
+            state.MaximumRawReadByteCount,
+            state.RawBodyByteCount,
+            state.MaximumSseLineByteCount,
+            state.MaximumSseEventByteCount,
+            state.ProviderChunkCount,
+            state.MaximumReceivedProviderChunkByteCount,
+            state.AssembledReceivedProviderResponseByteCount,
             state.AnswerDeltaCount,
             state.MaximumAnswerDeltaByteCount,
             state.AssembledAnswerByteCount,
@@ -377,9 +361,7 @@ internal sealed class OpenAiCompatibleChatProviderStreamingTransport(
             10_000,
             state.OverallDeadlineAtUtc,
             state.Outcome,
-            state.RejectionCategory,
-            state.Outcome == "completed" ? "accepted" : "rejected-before-parse",
-            state.AcceptedAnswerDurationMilliseconds));
+            state.RejectionCategory));
     }
 
     private static void ValidateRequest(ChatProviderStreamRequest request)
@@ -465,17 +447,6 @@ internal sealed class OpenAiCompatibleChatProviderStreamingTransport(
         "invalid-answer-utf8" or "missing-terminal" or "duplicate-terminal" or
         "contradictory-terminal" or "post-terminal-data" => category,
         _ => "provider-failure",
-    };
-
-    private static string ToValidationOutcome(
-        ChatStreamValidationDisposition disposition) => disposition switch
-    {
-        ChatStreamValidationDisposition.SyntaxRepairRequired => "syntax-repair-required",
-        ChatStreamValidationDisposition.Accepted => "accepted",
-        ChatStreamValidationDisposition.RejectedSyntax => "rejected-syntax",
-        ChatStreamValidationDisposition.RejectedSemantic => "rejected-semantic",
-        ChatStreamValidationDisposition.Cancelled => "cancelled",
-        _ => throw new ArgumentOutOfRangeException(nameof(disposition)),
     };
 
     private sealed class ObservationState

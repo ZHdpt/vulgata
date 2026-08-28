@@ -38,7 +38,15 @@ public sealed class ChatEvidencePacketBuilder
                     packed.FlowEvidence,
                     packed.FlowGroups,
                     request.AdvisoryContext,
-                    request.Conversation);
+                    request.Conversation,
+                    request.AdvisoryContextAuthorityFingerprint,
+                    request.PrimaryDocumentHandles,
+                    request.PrimarySectionHandles.Where(handle => retainedSections.Any(
+                        section => string.Equals(
+                            section.SectionHandle,
+                            handle,
+                            StringComparison.Ordinal))).ToArray(),
+                    request.ExpansionSeedDocumentHandles);
             }
             catch (ChatContractException exception) when (
                 exception.FailureCode == ChatContractFailureCode.InvalidEvidence)

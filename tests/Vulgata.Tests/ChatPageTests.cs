@@ -72,7 +72,8 @@ public sealed class ChatPageTests : BunitContext
             _timeProvider,
             new ChatAgentResultValidator(candidateExtractor),
             new StubPreparedChatScopeResolver(),
-            new PreparedChatQuestionRequestValidator()));
+            new PreparedChatQuestionRequestValidator(),
+            new CapturingCompletionSummaryRecorder()));
     }
 
     [Fact]
@@ -904,7 +905,7 @@ public sealed class ChatPageTests : BunitContext
                     new string('d', 64),
                     null,
                     null)],
-                [new EvidenceFlowStep(1, "d1", null, "准备回答。")]);
+                []);
             return Task.FromResult(ChatEvidenceResult.Found(packet));
         }
     }
@@ -1048,6 +1049,17 @@ public sealed class ChatPageTests : BunitContext
                     ? new PreparedChatScopeBinding(systemId, ids[0], ids[1])
                     : null);
         }
+    }
+
+    private sealed class CapturingCompletionSummaryRecorder :
+        IChatStreamCompletionSummaryRecorder
+    {
+        public List<ChatStreamCompletionSummary> Summaries { get; } = [];
+
+        public IReadOnlyList<string> GetRuntimeObservationIds(string requestId) => [];
+
+        public void RecordCompletion(ChatStreamCompletionSummary summary) =>
+            Summaries.Add(summary);
     }
 
     private static Guid Id(int value) =>

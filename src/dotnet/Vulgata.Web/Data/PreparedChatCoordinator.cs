@@ -64,6 +64,7 @@ public sealed class PreparedChatCoordinator(
     ChatAgentResultValidator resultValidator,
     IPreparedChatScopeResolver preparedScopeResolver,
     IValidator<PreparedChatQuestionRequest> requestValidator,
+    IChatStreamCompletionSummaryRecorder completionSummaryRecorder,
     ILogger<PreparedChatCoordinator>? logger = null) : IDisposable
 {
     private const string _invalidRequestMessage = "请选择业务模式、系统和两个不同的仓库，并输入 1 至 2000 个字符的问题。";
@@ -319,6 +320,11 @@ public sealed class PreparedChatCoordinator(
                 cancellationToken);
             if (synthesis.Result is null)
             {
+                RecordCompletionSummary(
+                    synthesisRequest.RequestId,
+                    synthesis.FailureCode?.ToString() ?? "provider-failure",
+                    accepted: false,
+                    deadlineUtc);
                 IReadOnlyList<CandidateClaim> fallbackCandidates =
                     synthesis.FailureCode is ChatContractFailureCode.ProviderFailure or
                         ChatContractFailureCode.TimedOut
@@ -356,12 +362,11 @@ public sealed class PreparedChatCoordinator(
                 synthesis);
             if (!validation.IsValid)
             {
-                if (dispatcher is IChatStreamValidationDispositionRecorder recorder)
-                {
-                    _ = recorder.TryRecordFinalValidationDisposition(
-                        synthesisRequest.RequestId,
-                        ChatStreamValidationDisposition.RejectedSemantic);
-                }
+                RecordCompletionSummary(
+                    synthesisRequest.RequestId,
+                    "rejected-semantic",
+                    accepted: false,
+                    deadlineUtc);
 
                 logger?.LogWarning(
                     "Prepared Chat provider selection failed validation in {Mode} mode.",
@@ -371,12 +376,11 @@ public sealed class PreparedChatCoordinator(
 
             if (!validation.IsAnswerable)
             {
-                if (dispatcher is IChatStreamValidationDispositionRecorder recorder)
-                {
-                    _ = recorder.TryRecordFinalValidationDisposition(
-                        synthesisRequest.RequestId,
-                        ChatStreamValidationDisposition.RejectedSemantic);
-                }
+                RecordCompletionSummary(
+                    synthesisRequest.RequestId,
+                    "rejected-semantic",
+                    accepted: false,
+                    deadlineUtc);
 
                 IReadOnlyList<CandidateClaim> fallbackCandidates =
                     ChatCandidateRanker.SelectStrongGroundedMatches(
@@ -408,7 +412,7 @@ public sealed class PreparedChatCoordinator(
                     : Missing();
             }
 
-            return await CompleteGroundedAnswerAsync(
+            PreparedChatResult completed = await CompleteGroundedAnswerAsync(
                 request,
                 packet,
                 validation.SelectedCandidates,
@@ -417,6 +421,14 @@ public sealed class PreparedChatCoordinator(
                 accessScope,
                 absoluteDeadlineUnixTimeMilliseconds,
                 cancellationToken);
+            RecordCompletionSummary(
+                synthesisRequest.RequestId,
+                completed.Kind == PreparedChatResultKind.Succeeded
+                    ? "accepted"
+                    : "rejected-semantic",
+                completed.Kind == PreparedChatResultKind.Succeeded,
+                deadlineUtc);
+            return completed;
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
@@ -525,6 +537,34 @@ public sealed class PreparedChatCoordinator(
             citationHandles,
             logicalDocumentIds);
         _conversationState = _conversationState.AppendValidatedTurn(turn);
+    }
+
+    private void RecordCompletionSummary(
+        string requestId,
+        string finalValidationOutcome,
+        bool accepted,
+        DateTimeOffset deadlineUtc)
+    {
+        IReadOnlyList<string> runtimeObservationIds =
+            completionSummaryRecorder.GetRuntimeObservationIds(requestId);
+        bool syntaxRepairUsed = runtimeObservationIds.Count > 1;
+        string[] attemptValidationOutcomes = syntaxRepairUsed
+            ? ["syntax-repair-required", finalValidationOutcome]
+            : [finalValidationOutcome];
+        long? acceptedDurationMilliseconds = accepted
+            ? Math.Max(
+                0,
+                (long)(timeProvider.GetUtcNow() - deadlineUtc.AddSeconds(-29))
+                    .TotalMilliseconds)
+            : null;
+        completionSummaryRecorder.RecordCompletion(new ChatStreamCompletionSummary(
+            $"completion-{Guid.NewGuid():N}",
+            requestId,
+            runtimeObservationIds.ToArray(),
+            syntaxRepairUsed,
+            attemptValidationOutcomes,
+            finalValidationOutcome,
+            acceptedDurationMilliseconds));
     }
 
     private void ClearConversation()

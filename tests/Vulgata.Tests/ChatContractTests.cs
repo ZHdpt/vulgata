@@ -102,14 +102,12 @@ public sealed class ChatContractTests
             "a1", Id(6), "d1", Id(2), repository1, "src/Orders.cs", 10, 12, new string('b', 64));
         var relationship = new EvidenceRelationship(
             "r1", "edge-1", ChatRelationshipType.References, "d1", "d2", new string('c', 64));
-        var flowStep = new EvidenceFlowStep(1, "d1", null, "接收订单请求。");
-
         EvidencePacket first = EvidencePacket.Create(
             "request-1", ChatMode.It, systemId, [repository2, repository1],
-            [document2, document1], [section], [anchor], [relationship], [flowStep]);
+            [document2, document1], [section], [anchor], [relationship], []);
         EvidencePacket second = EvidencePacket.Create(
             "request-1", ChatMode.It, systemId, [repository1, repository2],
-            [document1, document2], [section], [anchor], [relationship], [flowStep]);
+            [document1, document2], [section], [anchor], [relationship], []);
 
         Assert.Equal([repository1, repository2], first.RepositoryIds);
         Assert.Equal(["d1", "d2"], first.Documents.Select(document => document.DocumentHandle));

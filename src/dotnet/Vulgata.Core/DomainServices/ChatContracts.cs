@@ -307,6 +307,35 @@ public sealed record EvidenceFlowGroupAuthority(
     int FlowTraceOrder,
     IReadOnlyList<EvidenceFlowStepAuthority> Steps);
 
+public sealed record EvidencePacketSelection(
+    string Policy,
+    int CandidateWindow,
+    int PrimarySectionTarget,
+    IReadOnlyList<string> PrimaryDocumentHandles,
+    IReadOnlyList<string> PrimarySectionHandles,
+    IReadOnlyList<string> ExpansionSeedDocumentHandles);
+
+public sealed record EvidencePacketFlowGroup(
+    string Handle,
+    Guid FlowGroupId,
+    string State,
+    string BusinessLogicDocumentHandle,
+    string RelationshipHandle,
+    Guid ExactDecisionId,
+    Guid ExactEdgeId,
+    int DecisionRank,
+    string PlanFingerprint,
+    string MembershipFingerprint,
+    Guid FlowTraceId,
+    int FlowTraceOrder);
+
+public sealed record EvidencePacketFlowStep(
+    string FlowGroupHandle,
+    int Order,
+    string DocumentHandle,
+    string? RelationshipHandle,
+    string Description);
+
 public sealed record AuthorizedChatSnapshot
 {
     private AuthorizedChatSnapshot(
@@ -520,8 +549,12 @@ public sealed record ChatEvidencePacketBuildRequest
         IReadOnlyList<EvidenceFlowStep> flowEvidence,
         IReadOnlyList<EvidenceFlowGroupAuthority> flowGroups,
         string advisoryContext,
+        string advisoryContextAuthorityFingerprint,
         ChatConversationState conversation,
-        IReadOnlyList<string> optionalSectionHandles)
+        IReadOnlyList<string> optionalSectionHandles,
+        IReadOnlyList<string> primaryDocumentHandles,
+        IReadOnlyList<string> primarySectionHandles,
+        IReadOnlyList<string> expansionSeedDocumentHandles)
     {
         RequestId = requestId;
         Mode = mode;
@@ -534,8 +567,12 @@ public sealed record ChatEvidencePacketBuildRequest
         FlowEvidence = flowEvidence;
         FlowGroups = flowGroups;
         AdvisoryContext = advisoryContext;
+        AdvisoryContextAuthorityFingerprint = advisoryContextAuthorityFingerprint;
         Conversation = conversation;
         OptionalSectionHandles = optionalSectionHandles;
+        PrimaryDocumentHandles = primaryDocumentHandles;
+        PrimarySectionHandles = primarySectionHandles;
+        ExpansionSeedDocumentHandles = expansionSeedDocumentHandles;
     }
 
     public string RequestId { get; }
@@ -549,8 +586,12 @@ public sealed record ChatEvidencePacketBuildRequest
     public IReadOnlyList<EvidenceFlowStep> FlowEvidence { get; }
     public IReadOnlyList<EvidenceFlowGroupAuthority> FlowGroups { get; }
     public string AdvisoryContext { get; }
+    public string AdvisoryContextAuthorityFingerprint { get; }
     public ChatConversationState Conversation { get; }
     public IReadOnlyList<string> OptionalSectionHandles { get; }
+    public IReadOnlyList<string> PrimaryDocumentHandles { get; }
+    public IReadOnlyList<string> PrimarySectionHandles { get; }
+    public IReadOnlyList<string> ExpansionSeedDocumentHandles { get; }
 
     public static ChatEvidencePacketBuildRequest Create(
         string requestId,
@@ -565,7 +606,11 @@ public sealed record ChatEvidencePacketBuildRequest
         IReadOnlyCollection<EvidenceFlowGroupAuthority> flowGroups,
         string advisoryContext,
         ChatConversationState conversation,
-        IReadOnlyCollection<string> optionalSectionHandles)
+        IReadOnlyCollection<string> optionalSectionHandles,
+        string? advisoryContextAuthorityFingerprint = null,
+        IReadOnlyCollection<string>? primaryDocumentHandles = null,
+        IReadOnlyCollection<string>? primarySectionHandles = null,
+        IReadOnlyCollection<string>? expansionSeedDocumentHandles = null)
     {
         ArgumentNullException.ThrowIfNull(conversation);
         string normalizedAdvisory = advisoryContext?.Normalize(NormalizationForm.FormC) ?? string.Empty;
@@ -575,16 +620,52 @@ public sealed record ChatEvidencePacketBuildRequest
             systemId,
             canonicalRepositories);
         EvidenceSection[] sectionSnapshot = sections?.ToArray() ?? [];
+        EvidenceDocument[] documentSnapshot = documents?.ToArray() ?? [];
         string[] canonicalOptionalHandles = optionalSectionHandles?
             .Select(handle => handle?.Trim() ?? string.Empty)
             .Order(StringComparer.Ordinal)
             .ToArray() ?? [];
+        string[] canonicalPrimarySections = (primarySectionHandles ?? sectionSnapshot
+                .Take(12)
+                .Select(section => section.SectionHandle))
+            .Select(handle => handle?.Trim() ?? string.Empty)
+            .Distinct(StringComparer.Ordinal)
+            .ToArray();
+        HashSet<string> primarySectionSet = canonicalPrimarySections.ToHashSet(StringComparer.Ordinal);
+        string[] inferredPrimaryDocuments = sectionSnapshot
+            .Where(section => primarySectionSet.Contains(section.SectionHandle))
+            .Select(section => section.DocumentHandle)
+            .Distinct(StringComparer.Ordinal)
+            .Take(5)
+            .ToArray();
+        string[] canonicalPrimaryDocuments = (primaryDocumentHandles ?? inferredPrimaryDocuments)
+            .Select(handle => handle?.Trim() ?? string.Empty)
+            .Distinct(StringComparer.Ordinal)
+            .ToArray();
+        string[] canonicalSeeds = (expansionSeedDocumentHandles ?? canonicalPrimaryDocuments.Take(3))
+            .Select(handle => handle?.Trim() ?? string.Empty)
+            .Distinct(StringComparer.Ordinal)
+            .ToArray();
+        string authorityFingerprint = advisoryContextAuthorityFingerprint ?? new string('0', 64);
+        HashSet<string> documentHandleSet = documentSnapshot
+            .Select(document => document.DocumentHandle)
+            .ToHashSet(StringComparer.Ordinal);
+        HashSet<string> sectionHandleSet = sectionSnapshot
+            .Select(section => section.SectionHandle)
+            .ToHashSet(StringComparer.Ordinal);
         if (string.IsNullOrWhiteSpace(requestId) ||
             !Enum.IsDefined(mode) ||
             systemId == Guid.Empty ||
             Encoding.UTF8.GetByteCount(normalizedAdvisory) > 8_192 ||
             conversation.EncodedUtf8Bytes > 4_096 ||
             !conversation.Scope.Equals(expectedScope) ||
+            !ChatContractGuard.IsSha256(authorityFingerprint) ||
+            canonicalPrimaryDocuments.Length is < 1 or > 5 ||
+            canonicalPrimarySections.Length is < 1 or > 12 ||
+            canonicalSeeds.Length is < 1 or > 3 ||
+            canonicalPrimaryDocuments.Any(handle => !documentHandleSet.Contains(handle)) ||
+            canonicalPrimarySections.Any(handle => !sectionHandleSet.Contains(handle)) ||
+            canonicalSeeds.Any(handle => !canonicalPrimaryDocuments.Contains(handle, StringComparer.Ordinal)) ||
             canonicalOptionalHandles.Any(handle => !ChatContractGuard.IsHandle(handle)) ||
             canonicalOptionalHandles.Distinct(StringComparer.Ordinal).Count() != canonicalOptionalHandles.Length ||
             canonicalOptionalHandles.Any(handle =>
@@ -601,15 +682,19 @@ public sealed record ChatEvidencePacketBuildRequest
             mode,
             systemId,
             Array.AsReadOnly(canonicalRepositories),
-            Array.AsReadOnly(documents?.ToArray() ?? []),
+            Array.AsReadOnly(documentSnapshot),
             Array.AsReadOnly(sectionSnapshot),
             Array.AsReadOnly(sourceAnchors?.ToArray() ?? []),
             Array.AsReadOnly(relationships?.ToArray() ?? []),
             Array.AsReadOnly(flowEvidence?.ToArray() ?? []),
             Array.AsReadOnly(flowGroups?.ToArray() ?? []),
             normalizedAdvisory,
+            authorityFingerprint,
             conversation,
-            Array.AsReadOnly(canonicalOptionalHandles));
+            Array.AsReadOnly(canonicalOptionalHandles),
+            Array.AsReadOnly(canonicalPrimaryDocuments),
+            Array.AsReadOnly(canonicalPrimarySections),
+            Array.AsReadOnly(canonicalSeeds));
     }
 }
 
@@ -618,7 +703,7 @@ public sealed record EvidencePacket
 {
     private const int _maxEvidenceUtf8Bytes = 65_536;
 
-    public const string SupportedSchemaVersion = "grounded-chat-evidence/2.0";
+    public const string SupportedSchemaVersion = "grounded-chat-evidence/2.2";
 
     private EvidencePacket(
         string requestId,
@@ -632,7 +717,11 @@ public sealed record EvidencePacket
         IReadOnlyList<EvidenceFlowStep> flowEvidence,
         IReadOnlyList<EvidenceFlowGroupAuthority> flowGroups,
         string advisoryContext,
+        string advisoryContextAuthorityFingerprint,
         ChatConversationState conversation,
+        EvidencePacketSelection selection,
+        IReadOnlyList<EvidencePacketFlowGroup> packetFlowGroups,
+        IReadOnlyList<EvidencePacketFlowStep> packetFlowSteps,
         string fingerprint)
     {
         SchemaVersion = SupportedSchemaVersion;
@@ -647,7 +736,11 @@ public sealed record EvidencePacket
         FlowEvidence = flowEvidence;
         FlowGroups = flowGroups;
         AdvisoryContext = advisoryContext;
+        AdvisoryContextAuthorityFingerprint = advisoryContextAuthorityFingerprint;
         Conversation = conversation;
+        Selection = selection;
+        PacketFlowGroups = packetFlowGroups;
+        PacketFlowSteps = packetFlowSteps;
         Fingerprint = fingerprint;
     }
 
@@ -663,7 +756,11 @@ public sealed record EvidencePacket
     public IReadOnlyList<EvidenceFlowStep> FlowEvidence { get; }
     public IReadOnlyList<EvidenceFlowGroupAuthority> FlowGroups { get; }
     public string AdvisoryContext { get; }
+    public string AdvisoryContextAuthorityFingerprint { get; }
     public ChatConversationState Conversation { get; }
+    public EvidencePacketSelection Selection { get; }
+    public IReadOnlyList<EvidencePacketFlowGroup> PacketFlowGroups { get; }
+    public IReadOnlyList<EvidencePacketFlowStep> PacketFlowSteps { get; }
     public string Fingerprint { get; }
 
     public static EvidencePacket Create(
@@ -678,7 +775,11 @@ public sealed record EvidencePacket
         IReadOnlyCollection<EvidenceFlowStep> flowEvidence,
         IReadOnlyCollection<EvidenceFlowGroupAuthority>? flowGroups = null,
         string advisoryContext = "",
-        ChatConversationState? conversation = null)
+        ChatConversationState? conversation = null,
+        string? advisoryContextAuthorityFingerprint = null,
+        IReadOnlyCollection<string>? primaryDocumentHandles = null,
+        IReadOnlyCollection<string>? primarySectionHandles = null,
+        IReadOnlyCollection<string>? expansionSeedDocumentHandles = null)
     {
         Guid[] canonicalRepositories = ChatContractGuard.CanonicalRepositoryIds(repositoryIds);
         EvidenceDocument[] canonicalDocuments = documents?.OrderBy(
@@ -695,7 +796,10 @@ public sealed record EvidencePacket
             StringComparer.Ordinal).ToArray() ?? [];
         EvidenceFlowStep[] canonicalFlow = flowEvidence?.OrderBy(step => step.StepOrder).ToArray() ?? [];
         EvidenceFlowGroupAuthority[] canonicalFlowGroups = flowGroups?
-            .OrderBy(group => group.FlowGroupId)
+            .OrderBy(group => group.ExactResolutionEdgeId)
+            .ThenBy(group => group.ExactResolutionDecisionId)
+            .ThenBy(group => group.FlowTraceOrder)
+            .ThenBy(group => group.FlowGroupId)
             .Select(group => group with
             {
                 Steps = Array.AsReadOnly((group.Steps ?? [])
@@ -705,6 +809,7 @@ public sealed record EvidencePacket
             })
             .ToArray() ?? [];
         string normalizedAdvisory = advisoryContext?.Normalize(NormalizationForm.FormC) ?? string.Empty;
+        string authorityFingerprint = advisoryContextAuthorityFingerprint ?? new string('0', 64);
         ChatConversationState canonicalConversation = conversation ?? ChatConversationState.Empty(
             ChatConversationScope.Create(mode, systemId, canonicalRepositories));
         ChatConversationScope expectedConversationScope = ChatConversationScope.Create(
@@ -722,6 +827,7 @@ public sealed record EvidencePacket
             canonicalFlowGroups.Length > 10 ||
             Encoding.UTF8.GetByteCount(normalizedAdvisory) > 8_192 ||
             canonicalConversation.EncodedUtf8Bytes > 4_096 ||
+            !ChatContractGuard.IsSha256(authorityFingerprint) ||
             !canonicalConversation.Scope.Equals(expectedConversationScope))
         {
             throw new ChatContractException(ChatContractFailureCode.InvalidEvidence);
@@ -735,6 +841,23 @@ public sealed record EvidencePacket
             canonicalRelationships,
             canonicalFlow);
         ValidateFlowGroups(canonicalRepositories, canonicalDocuments, canonicalFlowGroups);
+        EvidencePacketSelection selection = CreateSelection(
+            canonicalDocuments,
+            canonicalSections,
+            primaryDocumentHandles,
+            primarySectionHandles,
+            expansionSeedDocumentHandles);
+        (EvidencePacketFlowGroup[] packetFlowGroups, EvidencePacketFlowStep[] packetFlowSteps) =
+            ProjectFlowBindings(
+                canonicalDocuments,
+                canonicalRelationships,
+                canonicalFlow,
+                canonicalFlowGroups);
+        Dictionary<Guid, string[]> flowGroupHandlesByEdge = packetFlowGroups
+            .GroupBy(group => group.ExactEdgeId)
+            .ToDictionary(
+                group => group.Key,
+                group => group.Select(item => item.Handle).ToArray());
         string canonicalJson = JsonSerializer.Serialize(new
         {
             schemaVersion = SupportedSchemaVersion,
@@ -742,6 +865,15 @@ public sealed record EvidencePacket
             mode = mode.ToString(),
             systemId,
             repositoryIds = canonicalRepositories,
+            selection = new
+            {
+                policy = selection.Policy,
+                candidateWindow = selection.CandidateWindow,
+                primarySectionTarget = selection.PrimarySectionTarget,
+                primaryDocumentHandles = selection.PrimaryDocumentHandles,
+                primarySectionHandles = selection.PrimarySectionHandles,
+                expansionSeedDocumentHandles = selection.ExpansionSeedDocumentHandles,
+            },
             documents = canonicalDocuments.Select(document => new
             {
                 document.DocumentHandle,
@@ -775,20 +907,22 @@ public sealed record EvidencePacket
                 relationship.SourceDocumentHandle,
                 relationship.TargetDocumentHandle,
                 relationship.Depth,
-                relationship.ExactDecisionId,
+                selectedExactDecisionId = relationship.ExactDecisionId,
                 relationship.ExactDecisionCount,
                 relationship.ExactDecisionSetFingerprint,
-                relationship.FlowGroupId,
+                flowGroupHandles = flowGroupHandlesByEdge.GetValueOrDefault(relationship.EdgeId, []),
             }),
-            flowEvidence = canonicalFlow.Select(step => new
+            flowGroups = packetFlowGroups,
+            flowSteps = packetFlowSteps.Select(step => new
             {
-                step.StepOrder,
+                step.FlowGroupHandle,
+                step.Order,
                 step.DocumentHandle,
                 step.RelationshipHandle,
                 step.Description,
             }),
-            flowGroups = canonicalFlowGroups,
             advisoryContext = normalizedAdvisory,
+            advisoryContextAuthorityFingerprint = authorityFingerprint,
             conversation = EvidencePacketJsonConverter.ProjectConversation(canonicalConversation),
         });
         if (Encoding.UTF8.GetByteCount(canonicalJson) > _maxEvidenceUtf8Bytes)
@@ -808,8 +942,131 @@ public sealed record EvidencePacket
             Array.AsReadOnly(canonicalFlow),
             Array.AsReadOnly(canonicalFlowGroups),
             normalizedAdvisory,
+            authorityFingerprint,
             canonicalConversation,
+            selection,
+            Array.AsReadOnly(packetFlowGroups),
+            Array.AsReadOnly(packetFlowSteps),
             ChatContractGuard.Sha256(canonicalJson));
+    }
+
+    private static EvidencePacketSelection CreateSelection(
+        IReadOnlyList<EvidenceDocument> documents,
+        IReadOnlyList<EvidenceSection> sections,
+        IReadOnlyCollection<string>? primaryDocumentHandles,
+        IReadOnlyCollection<string>? primarySectionHandles,
+        IReadOnlyCollection<string>? expansionSeedDocumentHandles)
+    {
+        string[] primarySections = (primarySectionHandles ?? sections.Take(12)
+                .Select(section => section.SectionHandle))
+            .Distinct(StringComparer.Ordinal)
+            .ToArray();
+        HashSet<string> primarySectionSet = primarySections.ToHashSet(StringComparer.Ordinal);
+        string[] inferredDocuments = sections
+            .Where(section => primarySectionSet.Contains(section.SectionHandle))
+            .Select(section => section.DocumentHandle)
+            .Distinct(StringComparer.Ordinal)
+            .Take(5)
+            .ToArray();
+        string[] primaryDocuments = (primaryDocumentHandles ?? inferredDocuments)
+            .Distinct(StringComparer.Ordinal)
+            .ToArray();
+        string[] seeds = (expansionSeedDocumentHandles ?? primaryDocuments.Take(3))
+            .Distinct(StringComparer.Ordinal)
+            .ToArray();
+        HashSet<string> documentHandles = documents.Select(item => item.DocumentHandle)
+            .ToHashSet(StringComparer.Ordinal);
+        HashSet<string> sectionHandles = sections.Select(item => item.SectionHandle)
+            .ToHashSet(StringComparer.Ordinal);
+        if (primaryDocuments.Length is < 1 or > 5 ||
+            primarySections.Length is < 1 or > 12 ||
+            seeds.Length is < 1 or > 3 ||
+            primaryDocuments.Any(handle => !documentHandles.Contains(handle)) ||
+            primarySections.Any(handle => !sectionHandles.Contains(handle)) ||
+            seeds.Any(handle => !primaryDocuments.Contains(handle, StringComparer.Ordinal)))
+        {
+            throw new ChatContractException(ChatContractFailureCode.InvalidEvidence);
+        }
+
+        return new EvidencePacketSelection(
+            "lexical-current-v2/1.0",
+            256,
+            12,
+            Array.AsReadOnly(primaryDocuments),
+            Array.AsReadOnly(primarySections),
+            Array.AsReadOnly(seeds));
+    }
+
+    private static (EvidencePacketFlowGroup[] Groups, EvidencePacketFlowStep[] Steps)
+        ProjectFlowBindings(
+            IReadOnlyList<EvidenceDocument> documents,
+            IReadOnlyList<EvidenceRelationship> relationships,
+            IReadOnlyList<EvidenceFlowStep> flowSteps,
+            IReadOnlyList<EvidenceFlowGroupAuthority> flowGroups)
+    {
+        Dictionary<Guid, string> documentHandles = documents.ToDictionary(
+            document => document.DocumentVersionId,
+            document => document.DocumentHandle);
+        Dictionary<Guid, EvidenceRelationship> relationshipsByEdge = relationships.ToDictionary(
+            relationship => relationship.EdgeId);
+        var decisionRanks = new Dictionary<(Guid EdgeId, Guid DecisionId), int>();
+        var nextRanks = new Dictionary<Guid, int>();
+        EvidencePacketFlowGroup[] groups = flowGroups.Select((group, index) =>
+        {
+            if (!relationshipsByEdge.TryGetValue(group.ExactResolutionEdgeId, out EvidenceRelationship? relationship) ||
+                group.ExactResolutionDecisionId is not Guid decisionId ||
+                !documentHandles.TryGetValue(group.BusinessLogicDocumentVersionId, out string? documentHandle))
+            {
+                throw new ChatContractException(ChatContractFailureCode.InvalidEvidence);
+            }
+
+            var key = (group.ExactResolutionEdgeId, decisionId);
+            if (!decisionRanks.TryGetValue(key, out int decisionRank))
+            {
+                decisionRank = nextRanks.GetValueOrDefault(group.ExactResolutionEdgeId) + 1;
+                nextRanks[group.ExactResolutionEdgeId] = decisionRank;
+                decisionRanks[key] = decisionRank;
+            }
+
+            return new EvidencePacketFlowGroup(
+                $"fg-{index + 1}",
+                group.FlowGroupId,
+                group.State,
+                documentHandle,
+                relationship.RelationshipHandle,
+                decisionId,
+                group.ExactResolutionEdgeId,
+                decisionRank,
+                group.PlanFingerprint,
+                group.MembershipFingerprint,
+                group.FlowTraceId,
+                group.FlowTraceOrder);
+        }).ToArray();
+
+        var unused = flowGroups.SelectMany((group, groupIndex) => group.Steps.Select(step =>
+            (GroupIndex: groupIndex, Step: step))).ToList();
+        EvidencePacketFlowStep[] steps = flowSteps.Select(step =>
+        {
+            int matchIndex = unused.FindIndex(item =>
+                documentHandles.GetValueOrDefault(item.Step.DocumentVersionId) == step.DocumentHandle &&
+                string.Equals(item.Step.Description, step.Description, StringComparison.Ordinal) &&
+                (step.RelationshipHandle is null ||
+                    groups[item.GroupIndex].RelationshipHandle == step.RelationshipHandle));
+            if (matchIndex < 0)
+            {
+                throw new ChatContractException(ChatContractFailureCode.InvalidEvidence);
+            }
+
+            int groupIndex = unused[matchIndex].GroupIndex;
+            unused.RemoveAt(matchIndex);
+            return new EvidencePacketFlowStep(
+                groups[groupIndex].Handle,
+                step.StepOrder,
+                step.DocumentHandle,
+                step.RelationshipHandle,
+                step.Description);
+        }).ToArray();
+        return (groups, steps);
     }
 
     private static void ValidateFlowGroups(
@@ -949,6 +1206,15 @@ public sealed class EvidencePacketJsonConverter : JsonConverter<EvidencePacket>
         writer.WriteString("mode", value.Mode == ChatMode.Business ? "business" : "it");
         writer.WriteString("systemId", value.SystemId);
         WriteValue(writer, "repositoryIds", value.RepositoryIds, options);
+        WriteValue(writer, "selection", new
+        {
+            policy = value.Selection.Policy,
+            candidateWindow = value.Selection.CandidateWindow,
+            primarySectionTarget = value.Selection.PrimarySectionTarget,
+            primaryDocumentHandles = value.Selection.PrimaryDocumentHandles,
+            primarySectionHandles = value.Selection.PrimarySectionHandles,
+            expansionSeedDocumentHandles = value.Selection.ExpansionSeedDocumentHandles,
+        }, options);
         WriteValue(writer, "documents", value.Documents.Select(document => new
         {
             handle = document.DocumentHandle,
@@ -984,6 +1250,11 @@ public sealed class EvidencePacketJsonConverter : JsonConverter<EvidencePacket>
             lineEnd = anchor.LineEnd,
             sourceHash = anchor.SourceHash,
         }), options);
+        Dictionary<Guid, string[]> flowGroupHandlesByEdge = value.PacketFlowGroups
+            .GroupBy(group => group.ExactEdgeId)
+            .ToDictionary(
+                group => group.Key,
+                group => group.Select(item => item.Handle).ToArray());
         WriteValue(writer, "relationships", value.Relationships.Select(relationship => new
         {
             handle = relationship.RelationshipHandle,
@@ -994,19 +1265,38 @@ public sealed class EvidencePacketJsonConverter : JsonConverter<EvidencePacket>
             sourceDocumentHandle = relationship.SourceDocumentHandle,
             targetDocumentHandle = relationship.TargetDocumentHandle,
             depth = relationship.Depth,
-            exactDecisionId = relationship.ExactDecisionId,
+            selectedExactDecisionId = relationship.ExactDecisionId,
             exactDecisionCount = relationship.ExactDecisionCount,
             exactDecisionSetFingerprint = relationship.ExactDecisionSetFingerprint,
-            flowGroupId = relationship.FlowGroupId,
+            flowGroupHandles = flowGroupHandlesByEdge.GetValueOrDefault(relationship.EdgeId, []),
         }), options);
-        WriteValue(writer, "flowSteps", value.FlowEvidence.Select(step => new
+        WriteValue(writer, "flowGroups", value.PacketFlowGroups.Select(group => new
         {
-            order = step.StepOrder,
+            handle = group.Handle,
+            flowGroupId = group.FlowGroupId,
+            state = group.State,
+            businessLogicDocumentHandle = group.BusinessLogicDocumentHandle,
+            relationshipHandle = group.RelationshipHandle,
+            exactDecisionId = group.ExactDecisionId,
+            exactEdgeId = group.ExactEdgeId,
+            decisionRank = group.DecisionRank,
+            planFingerprint = group.PlanFingerprint,
+            membershipFingerprint = group.MembershipFingerprint,
+            flowTraceId = group.FlowTraceId,
+            flowTraceOrder = group.FlowTraceOrder,
+        }), options);
+        WriteValue(writer, "flowSteps", value.PacketFlowSteps.Select(step => new
+        {
+            flowGroupHandle = step.FlowGroupHandle,
+            order = step.Order,
             documentHandle = step.DocumentHandle,
             relationshipHandle = step.RelationshipHandle,
             description = step.Description,
         }), options);
         writer.WriteString("advisoryContext", value.AdvisoryContext);
+        writer.WriteString(
+            "advisoryContextAuthorityFingerprint",
+            value.AdvisoryContextAuthorityFingerprint);
         WriteValue(writer, "conversation", ProjectConversation(value.Conversation), options);
         writer.WriteString("fingerprint", value.Fingerprint);
         writer.WriteEndObject();
@@ -1020,6 +1310,7 @@ public sealed class EvidencePacketJsonConverter : JsonConverter<EvidencePacket>
             validatedAnswer = turn.AnswerText,
             packetFingerprint = turn.PacketFingerprint,
             priorCitationHandles = turn.CitationHandles,
+            priorLogicalDocumentIds = turn.LogicalDocumentIds,
         }),
     };
 

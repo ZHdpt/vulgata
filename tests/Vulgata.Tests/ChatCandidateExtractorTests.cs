@@ -356,7 +356,7 @@ public sealed class ChatCandidateExtractorTests
             sections,
             anchors,
             relationships,
-            [new EvidenceFlowStep(1, documents.First().DocumentHandle, null, "准备回答。")]);
+            []);
 
     private static EvidenceDocument Document(
         string handle,

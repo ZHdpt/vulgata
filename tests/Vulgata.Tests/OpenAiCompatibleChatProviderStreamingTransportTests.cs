@@ -46,15 +46,13 @@ public sealed class OpenAiCompatibleChatProviderStreamingTransportTests
             CreateSseEvent("first"),
             CreateSseEvent("second", finishReason: "stop") + "data: [DONE]\n\n");
         using var handler = new GatedResponseHandler(responseBody);
-        using var observationAuthority = new ChatStreamObservationAuthority();
+        var observationAuthority = new ChatStreamRuntimeObservationRecorder();
         var transport = new OpenAiCompatibleChatProviderStreamingTransport(
             new FakeProviderRepository(provider),
             new FakeEncryptionService(),
             handler,
             observationAuthority);
         var request = new ChatProviderStreamRequest(
-            "0123456789abcdef0123456789abcdef01234567",
-            "case-stream-liveness",
             "stream-125-liveness",
             "primary",
             provider.Id.ToString("D"),
@@ -95,7 +93,7 @@ public sealed class OpenAiCompatibleChatProviderStreamingTransportTests
     }
 
     [Fact]
-    public async Task StreamAsync_PhysicalIOException_EmitsOneBoundedSignedDisconnectRejectionAsync()
+    public async Task StreamAsync_PhysicalIOException_EmitsOneBoundedNeutralDisconnectObservationAsync()
     {
         var provider = new LlmProvider(
             "streaming-chat",
@@ -106,15 +104,13 @@ public sealed class OpenAiCompatibleChatProviderStreamingTransportTests
             DateTimeOffset.UtcNow);
         using var responseBody = new DisconnectingSseStream(CreateSseEvent("partial"));
         using var handler = new DisconnectingResponseHandler(responseBody);
-        using var observationAuthority = new ChatStreamObservationAuthority();
+        var observationAuthority = new ChatStreamRuntimeObservationRecorder();
         var transport = new OpenAiCompatibleChatProviderStreamingTransport(
             new FakeProviderRepository(provider),
             new FakeEncryptionService(),
             handler,
             observationAuthority);
         var request = new ChatProviderStreamRequest(
-            "0123456789abcdef0123456789abcdef01234567",
-            "case-stream-disconnect",
             "stream-125-disconnect",
             "primary",
             provider.Id.ToString("D"),
@@ -142,16 +138,15 @@ public sealed class OpenAiCompatibleChatProviderStreamingTransportTests
             signals.Where(signal => signal.Kind == ChatProviderStreamSignalKind.ProviderError));
         Assert.Equal(ChatProviderStreamSignalKind.ProviderError, rejection.Kind);
         Assert.Equal("disconnect", rejection.FailureCategory);
-        Assert.True(
-            observationAuthority.TryGetVerifiedReceipt(
-                request.RequestId,
-                request.AttemptKind,
-                out string? receipt));
-        Assert.NotNull(receipt);
+        ChatStreamRuntimeObservation observation = ReadObservation(
+            observationAuthority,
+            request);
+        Assert.Equal("disconnect", observation.TransportOutcome);
+        Assert.Equal("disconnect", observation.RejectionCategory);
     }
 
     [Fact]
-    public async Task StreamAsync_SignedReceipt_UsesSchemaV3LifecycleVocabularyAndPerDomainCountersAsync()
+    public async Task StreamAsync_RuntimeObservation_UsesLifecycleVocabularyAndPerDomainCountersAsync()
     {
         var provider = new LlmProvider(
             "streaming-chat",
@@ -164,15 +159,13 @@ public sealed class OpenAiCompatibleChatProviderStreamingTransportTests
             Encoding.UTF8.GetBytes(CreateSseEvent("answer", finishReason: "stop") +
                 "data: [DONE]\n\n"));
         using var handler = new MemoryResponseHandler(responseBody);
-        using var observationAuthority = new ChatStreamObservationAuthority();
+        var observationAuthority = new ChatStreamRuntimeObservationRecorder();
         var transport = new OpenAiCompatibleChatProviderStreamingTransport(
             new FakeProviderRepository(provider),
             new FakeEncryptionService(),
             handler,
             observationAuthority);
         var request = new ChatProviderStreamRequest(
-            "0123456789abcdef0123456789abcdef01234567",
-            "case-stream-receipt",
             "stream-125-receipt",
             "primary",
             provider.Id.ToString("D"),
@@ -188,45 +181,38 @@ public sealed class OpenAiCompatibleChatProviderStreamingTransportTests
         {
         }
 
-        Assert.True(observationAuthority.TryGetVerifiedReceipt(
-            request.RequestId,
-            request.AttemptKind,
-            out string? serializedReceipt));
-        using JsonDocument document = JsonDocument.Parse(serializedReceipt!);
-        JsonElement receipt = document.RootElement.GetProperty("receipt");
+        ChatStreamRuntimeObservation observation = ReadObservation(
+            observationAuthority,
+            request);
 
-        Assert.Equal("primary", receipt.GetProperty("attemptKind").GetString());
-        Assert.Equal(request.CandidateCommit, receipt.GetProperty("candidateCommit").GetString());
-        Assert.Equal(request.CaseId, receipt.GetProperty("caseId").GetString());
-        Assert.Equal(request.RequestId, receipt.GetProperty("requestId").GetString());
-        Assert.Equal(request.ProviderIdentity, receipt.GetProperty("providerIdentity").GetString());
+        Assert.Equal("primary", observation.AttemptKind);
+        Assert.Equal(request.RequestId, observation.RequestId);
+        Assert.Equal(request.ProviderIdentity, observation.ProviderIdentity);
         Assert.Equal(
             request.ProviderConfigurationFingerprint,
-            receipt.GetProperty("providerConfigurationFingerprint").GetString());
-        Assert.Equal("production-raw-response-header-adapter", receipt.GetProperty("observationAuthority").GetString());
-        Assert.True(receipt.GetProperty("requestStreamMode").GetBoolean());
-        Assert.Equal("received", receipt.GetProperty("responseHeaderDisposition").GetString());
-        Assert.Equal("HTTP/1.1", receipt.GetProperty("negotiatedProtocol").GetString());
-        Assert.Equal("observed", receipt.GetProperty("firstPhysicalReadDisposition").GetString());
-        Assert.Equal("observed-after-terminal", receipt.GetProperty("physicalEofDisposition").GetString());
-        Assert.Equal("completed", receipt.GetProperty("transportOutcome").GetString());
-        Assert.Null(receipt.GetProperty("rejectionCategory").ValueKind == JsonValueKind.Null
-            ? null
-            : receipt.GetProperty("rejectionCategory").GetString());
-        Assert.Equal("accepted", receipt.GetProperty("validationOutcome").GetString());
-        Assert.True(receipt.GetProperty("rawReadCount").GetInt32() >= 1);
-        Assert.True(receipt.GetProperty("maximumRawReadByteCount").GetInt32() >= 1);
-        Assert.True(receipt.GetProperty("rawBodyByteCount").GetInt32() >= 1);
-        Assert.True(receipt.GetProperty("maximumSseLineByteCount").GetInt32() >= 1);
-        Assert.True(receipt.GetProperty("maximumSseEventByteCount").GetInt32() >= 1);
-        Assert.Equal(1, receipt.GetProperty("answerDeltaCount").GetInt32());
+            observation.ProviderConfigurationFingerprint);
+        Assert.StartsWith("runtime-", observation.RuntimeObservationId, StringComparison.Ordinal);
+        Assert.True(observation.ObservationSequence > 0);
+        Assert.True(observation.RequestStreamMode);
+        Assert.Equal("received", observation.ResponseHeaderDisposition);
+        Assert.Equal("HTTP/1.1", observation.NegotiatedProtocol);
+        Assert.Equal("observed", observation.FirstPhysicalReadDisposition);
+        Assert.Equal("observed-after-terminal", observation.PhysicalEofDisposition);
+        Assert.Equal("completed", observation.TransportOutcome);
+        Assert.Null(observation.RejectionCategory);
+        Assert.True(observation.RawReadCount >= 1);
+        Assert.True(observation.MaximumRawReadByteCount >= 1);
+        Assert.True(observation.RawBodyByteCount >= 1);
+        Assert.True(observation.MaximumSseLineByteCount >= 1);
+        Assert.True(observation.MaximumSseEventByteCount >= 1);
+        Assert.Equal(1, observation.AnswerDeltaCount);
         Assert.Equal(
             Encoding.UTF8.GetByteCount("answer"),
-            receipt.GetProperty("maximumAnswerDeltaByteCount").GetInt32());
+            observation.MaximumAnswerDeltaByteCount);
         Assert.Equal(
             Encoding.UTF8.GetByteCount("answer"),
-            receipt.GetProperty("assembledAnswerByteCount").GetInt32());
-        Assert.Equal(1, receipt.GetProperty("terminalEventCount").GetInt32());
+            observation.AssembledAnswerByteCount);
+        Assert.Equal(1, observation.TerminalEventCount);
     }
 
     [Theory]
@@ -249,15 +235,13 @@ public sealed class OpenAiCompatibleChatProviderStreamingTransportTests
         byte[] body = Encoding.UTF8.GetBytes("data: [DONE]" + lineEnding + lineEnding);
         using var responseBody = new ByteAtATimeSseStream(body);
         using var handler = new StreamBodyResponseHandler(responseBody);
-        using var observationAuthority = new ChatStreamObservationAuthority();
+        var observationAuthority = new ChatStreamRuntimeObservationRecorder();
         var transport = new OpenAiCompatibleChatProviderStreamingTransport(
             new FakeProviderRepository(provider),
             new FakeEncryptionService(),
             handler,
             observationAuthority);
         var request = new ChatProviderStreamRequest(
-            "0123456789abcdef0123456789abcdef01234567",
-            "case-stream-boundary",
             $"stream-125-boundary-{expectedRawBodyByteCount}",
             "primary",
             provider.Id.ToString("D"),
@@ -273,18 +257,15 @@ public sealed class OpenAiCompatibleChatProviderStreamingTransportTests
         {
         }
 
-        Assert.True(observationAuthority.TryGetVerifiedReceipt(
-            request.RequestId,
-            request.AttemptKind,
-            out string? serializedReceipt));
-        using JsonDocument document = JsonDocument.Parse(serializedReceipt!);
-        JsonElement receipt = document.RootElement.GetProperty("receipt");
-        Assert.Equal(expectedRawBodyByteCount, receipt.GetProperty("rawBodyByteCount").GetInt32());
-        Assert.Equal(expectedRawReadCount, receipt.GetProperty("rawReadCount").GetInt32());
-        Assert.Equal(1, receipt.GetProperty("maximumRawReadByteCount").GetInt32());
-        Assert.Equal(12, receipt.GetProperty("maximumSseLineByteCount").GetInt32());
-        Assert.Equal(expectedSseEventByteCount, receipt.GetProperty("maximumSseEventByteCount").GetInt32());
-        Assert.Equal("provider-failure", receipt.GetProperty("transportOutcome").GetString());
+        ChatStreamRuntimeObservation observation = ReadObservation(
+            observationAuthority,
+            request);
+        Assert.Equal(expectedRawBodyByteCount, observation.RawBodyByteCount);
+        Assert.Equal(expectedRawReadCount, observation.RawReadCount);
+        Assert.Equal(1, observation.MaximumRawReadByteCount);
+        Assert.Equal(12, observation.MaximumSseLineByteCount);
+        Assert.Equal(expectedSseEventByteCount, observation.MaximumSseEventByteCount);
+        Assert.Equal("provider-failure", observation.TransportOutcome);
     }
 
     [Fact]
@@ -300,15 +281,13 @@ public sealed class OpenAiCompatibleChatProviderStreamingTransportTests
         byte[] body = Encoding.UTF8.GetBytes("data: [DONE]");
         using var responseBody = new ByteAtATimeSseStream(body, oneChunk: true);
         using var handler = new StreamBodyResponseHandler(responseBody);
-        using var observationAuthority = new ChatStreamObservationAuthority();
+        var observationAuthority = new ChatStreamRuntimeObservationRecorder();
         var transport = new OpenAiCompatibleChatProviderStreamingTransport(
             new FakeProviderRepository(provider),
             new FakeEncryptionService(),
             handler,
             observationAuthority);
         var request = new ChatProviderStreamRequest(
-            "0123456789abcdef0123456789abcdef01234567",
-            "case-stream-unterminated",
             "stream-125-unterminated",
             "primary",
             provider.Id.ToString("D"),
@@ -327,19 +306,16 @@ public sealed class OpenAiCompatibleChatProviderStreamingTransportTests
         }
 
         Assert.Equal("missing-terminal", Assert.Single(signals).FailureCategory);
-        Assert.True(observationAuthority.TryGetVerifiedReceipt(
-            request.RequestId,
-            request.AttemptKind,
-            out string? serializedReceipt));
-        using JsonDocument document = JsonDocument.Parse(serializedReceipt!);
-        JsonElement receipt = document.RootElement.GetProperty("receipt");
-        Assert.Equal("missing-terminal", receipt.GetProperty("rejectionCategory").GetString());
-        Assert.Equal(12, receipt.GetProperty("rawBodyByteCount").GetInt32());
-        Assert.Equal(2, receipt.GetProperty("rawReadCount").GetInt32());
-        Assert.Equal(12, receipt.GetProperty("maximumRawReadByteCount").GetInt32());
-        Assert.Equal(12, receipt.GetProperty("maximumSseLineByteCount").GetInt32());
-        Assert.Equal(12, receipt.GetProperty("maximumSseEventByteCount").GetInt32());
-        Assert.Equal("observed-before-terminal", receipt.GetProperty("physicalEofDisposition").GetString());
+        ChatStreamRuntimeObservation observation = ReadObservation(
+            observationAuthority,
+            request);
+        Assert.Equal("missing-terminal", observation.RejectionCategory);
+        Assert.Equal(12, observation.RawBodyByteCount);
+        Assert.Equal(2, observation.RawReadCount);
+        Assert.Equal(12, observation.MaximumRawReadByteCount);
+        Assert.Equal(12, observation.MaximumSseLineByteCount);
+        Assert.Equal(12, observation.MaximumSseEventByteCount);
+        Assert.Equal("observed-before-terminal", observation.PhysicalEofDisposition);
     }
 
     [Fact]
@@ -355,13 +331,13 @@ public sealed class OpenAiCompatibleChatProviderStreamingTransportTests
             DateTimeOffset.UtcNow);
         using var responseBody = new ByteAtATimeSseStream(CreateCommentBody(expectedRawBodyByteCount), oneChunk: true);
         using var handler = new StreamBodyResponseHandler(responseBody);
-        using var observationAuthority = new ChatStreamObservationAuthority();
+        var observationAuthority = new ChatStreamRuntimeObservationRecorder();
         var transport = new OpenAiCompatibleChatProviderStreamingTransport(
             new FakeProviderRepository(provider),
             new FakeEncryptionService(),
             handler,
             observationAuthority);
-        ChatProviderStreamRequest request = CreateRequest(provider, "case-stream-raw-exact", "stream-125-raw-exact");
+        ChatProviderStreamRequest request = CreateRequest(provider, "stream-125-raw-exact");
 
         var signals = new List<ChatProviderStreamSignal>();
         await foreach (ChatProviderStreamSignal signal in transport.StreamAsync(
@@ -378,20 +354,17 @@ public sealed class OpenAiCompatibleChatProviderStreamingTransportTests
             signals,
             signal => signal.Kind == ChatProviderStreamSignalKind.Terminal);
 
-        Assert.True(observationAuthority.TryGetVerifiedReceipt(
-            request.RequestId,
-            request.AttemptKind,
-            out string? serializedReceipt));
-        using JsonDocument document = JsonDocument.Parse(serializedReceipt!);
-        JsonElement receipt = document.RootElement.GetProperty("receipt");
-        Assert.Equal("provider-failure", receipt.GetProperty("transportOutcome").GetString());
-        Assert.Equal(expectedRawBodyByteCount, receipt.GetProperty("rawBodyByteCount").GetInt32());
-        Assert.Equal(65, receipt.GetProperty("rawReadCount").GetInt32());
-        Assert.Equal(16_384, receipt.GetProperty("maximumRawReadByteCount").GetInt32());
+        ChatStreamRuntimeObservation observation = ReadObservation(
+            observationAuthority,
+            request);
+        Assert.Equal("provider-failure", observation.TransportOutcome);
+        Assert.Equal(expectedRawBodyByteCount, observation.RawBodyByteCount);
+        Assert.Equal(65, observation.RawReadCount);
+        Assert.Equal(16_384, observation.MaximumRawReadByteCount);
     }
 
     [Fact]
-    public async Task StreamAsync_RawBodyOneByteOverSafetyLimit_EmitsClosedRawOverflowReceiptAsync()
+    public async Task StreamAsync_RawBodyOneByteOverSafetyLimit_EmitsClosedRawOverflowObservationAsync()
     {
         const int expectedRawBodyByteCount = 1_048_576;
         var provider = new LlmProvider(
@@ -405,13 +378,13 @@ public sealed class OpenAiCompatibleChatProviderStreamingTransportTests
         byte[] overlongBody = exactBody.Concat([(byte)'x']).ToArray();
         using var responseBody = new ByteAtATimeSseStream(overlongBody, oneChunk: true);
         using var handler = new StreamBodyResponseHandler(responseBody);
-        using var observationAuthority = new ChatStreamObservationAuthority();
+        var observationAuthority = new ChatStreamRuntimeObservationRecorder();
         var transport = new OpenAiCompatibleChatProviderStreamingTransport(
             new FakeProviderRepository(provider),
             new FakeEncryptionService(),
             handler,
             observationAuthority);
-        ChatProviderStreamRequest request = CreateRequest(provider, "case-stream-raw-overflow", "stream-125-raw-overflow");
+        ChatProviderStreamRequest request = CreateRequest(provider, "stream-125-raw-overflow");
 
         var signals = new List<ChatProviderStreamSignal>();
         await foreach (ChatProviderStreamSignal signal in transport.StreamAsync(
@@ -425,16 +398,12 @@ public sealed class OpenAiCompatibleChatProviderStreamingTransportTests
             signals.Where(signal => signal.Kind == ChatProviderStreamSignalKind.ProviderError));
 
         Assert.Equal("raw-body-overflow", rejection.FailureCategory);
-        Assert.True(observationAuthority.TryGetVerifiedReceipt(
-            request.RequestId,
-            request.AttemptKind,
-            out string? serializedReceipt));
-        using JsonDocument document = JsonDocument.Parse(serializedReceipt!);
-        JsonElement receipt = document.RootElement.GetProperty("receipt");
-        Assert.Equal("raw-body-overflow", receipt.GetProperty("transportOutcome").GetString());
-        Assert.Equal("raw-body-overflow", receipt.GetProperty("rejectionCategory").GetString());
-        Assert.Equal("rejected-before-parse", receipt.GetProperty("validationOutcome").GetString());
-        Assert.Equal(expectedRawBodyByteCount, receipt.GetProperty("rawBodyByteCount").GetInt32());
+        ChatStreamRuntimeObservation observation = ReadObservation(
+            observationAuthority,
+            request);
+        Assert.Equal("raw-body-overflow", observation.TransportOutcome);
+        Assert.Equal("raw-body-overflow", observation.RejectionCategory);
+        Assert.Equal(expectedRawBodyByteCount, observation.RawBodyByteCount);
     }
 
     [Theory]
@@ -448,7 +417,7 @@ public sealed class OpenAiCompatibleChatProviderStreamingTransportTests
         using var responseBody = new MemoryStream(Encoding.UTF8.GetBytes(
             CreateSizedDataEvent(receivedPayloadBytes) + "data: [DONE]\n\n"));
         using var handler = new MemoryResponseHandler(responseBody);
-        using var observationAuthority = new ChatStreamObservationAuthority();
+        var observationAuthority = new ChatStreamRuntimeObservationRecorder();
         var transport = new OpenAiCompatibleChatProviderStreamingTransport(
             new FakeProviderRepository(provider),
             new FakeEncryptionService(),
@@ -456,7 +425,6 @@ public sealed class OpenAiCompatibleChatProviderStreamingTransportTests
             observationAuthority);
         ChatProviderStreamRequest request = CreateRequest(
             provider,
-            $"case-received-chunk-{receivedPayloadBytes}",
             $"stream-125-received-chunk-{receivedPayloadBytes}");
 
         var signals = await CollectSignalsAsync(transport, request);
@@ -475,12 +443,14 @@ public sealed class OpenAiCompatibleChatProviderStreamingTransportTests
                 signal => signal.Kind == ChatProviderStreamSignalKind.AnswerDelta);
         }
 
-        JsonElement receipt = ReadReceipt(observationAuthority, request);
-        Assert.Equal(expectedOutcome, receipt.GetProperty("transportOutcome").GetString());
-        Assert.Equal(receivedPayloadBytes, receipt.GetProperty("maximumReceivedProviderChunkByteCount").GetInt32());
+        ChatStreamRuntimeObservation observation = ReadObservation(
+            observationAuthority,
+            request);
+        Assert.Equal(expectedOutcome, observation.TransportOutcome);
+        Assert.Equal(receivedPayloadBytes, observation.MaximumReceivedProviderChunkByteCount);
         Assert.Equal(
             receivedPayloadBytes,
-            receipt.GetProperty("assembledReceivedProviderResponseByteCount").GetInt32());
+            observation.AssembledReceivedProviderResponseByteCount);
     }
 
     [Theory]
@@ -501,7 +471,7 @@ public sealed class OpenAiCompatibleChatProviderStreamingTransportTests
             "data: [DONE]\n\n";
         using var responseBody = new MemoryStream(Encoding.UTF8.GetBytes(body));
         using var handler = new MemoryResponseHandler(responseBody);
-        using var observationAuthority = new ChatStreamObservationAuthority();
+        var observationAuthority = new ChatStreamRuntimeObservationRecorder();
         var transport = new OpenAiCompatibleChatProviderStreamingTransport(
             new FakeProviderRepository(provider),
             new FakeEncryptionService(),
@@ -509,7 +479,6 @@ public sealed class OpenAiCompatibleChatProviderStreamingTransportTests
             observationAuthority);
         ChatProviderStreamRequest request = CreateRequest(
             provider,
-            $"case-received-response-{expectedReceivedBytes}",
             $"stream-125-received-response-{expectedReceivedBytes}");
 
         var signals = await CollectSignalsAsync(transport, request);
@@ -531,11 +500,13 @@ public sealed class OpenAiCompatibleChatProviderStreamingTransportTests
                 signal => signal.Kind == ChatProviderStreamSignalKind.Terminal);
         }
 
-        JsonElement receipt = ReadReceipt(observationAuthority, request);
-        Assert.Equal(expectedOutcome, receipt.GetProperty("transportOutcome").GetString());
+        ChatStreamRuntimeObservation observation = ReadObservation(
+            observationAuthority,
+            request);
+        Assert.Equal(expectedOutcome, observation.TransportOutcome);
         Assert.Equal(
             expectedReceivedBytes,
-            receipt.GetProperty("assembledReceivedProviderResponseByteCount").GetInt32());
+            observation.AssembledReceivedProviderResponseByteCount);
     }
 
     [Fact]
@@ -550,7 +521,7 @@ public sealed class OpenAiCompatibleChatProviderStreamingTransportTests
         using var responseBody = new MemoryStream(Encoding.UTF8.GetBytes(
             $"data: {json}\n\ndata: [DONE]\n\n"));
         using var handler = new MemoryResponseHandler(responseBody);
-        using var observationAuthority = new ChatStreamObservationAuthority();
+        var observationAuthority = new ChatStreamRuntimeObservationRecorder();
         var transport = new OpenAiCompatibleChatProviderStreamingTransport(
             new FakeProviderRepository(provider),
             new FakeEncryptionService(),
@@ -558,19 +529,20 @@ public sealed class OpenAiCompatibleChatProviderStreamingTransportTests
             observationAuthority);
         ChatProviderStreamRequest request = CreateRequest(
             provider,
-            "case-received-escape-metadata",
             "stream-125-received-escape-metadata");
 
         var signals = await CollectSignalsAsync(transport, request);
 
         Assert.Contains(signals, signal => signal.Kind == ChatProviderStreamSignalKind.Terminal);
-        JsonElement receipt = ReadReceipt(observationAuthority, request);
-        Assert.Equal(1, receipt.GetProperty("providerChunkCount").GetInt32());
-        Assert.Equal(receivedBytes, receipt.GetProperty("maximumReceivedProviderChunkByteCount").GetInt32());
-        Assert.Equal(receivedBytes, receipt.GetProperty("assembledReceivedProviderResponseByteCount").GetInt32());
-        Assert.Equal(1, receipt.GetProperty("answerDeltaCount").GetInt32());
-        Assert.Equal(7, receipt.GetProperty("maximumAnswerDeltaByteCount").GetInt32());
-        Assert.Equal(7, receipt.GetProperty("assembledAnswerByteCount").GetInt32());
+        ChatStreamRuntimeObservation observation = ReadObservation(
+            observationAuthority,
+            request);
+        Assert.Equal(1, observation.ProviderChunkCount);
+        Assert.Equal(receivedBytes, observation.MaximumReceivedProviderChunkByteCount);
+        Assert.Equal(receivedBytes, observation.AssembledReceivedProviderResponseByteCount);
+        Assert.Equal(1, observation.AnswerDeltaCount);
+        Assert.Equal(7, observation.MaximumAnswerDeltaByteCount);
+        Assert.Equal(7, observation.AssembledAnswerByteCount);
     }
 
     [Fact]
@@ -580,7 +552,7 @@ public sealed class OpenAiCompatibleChatProviderStreamingTransportTests
         using var responseBody = new MemoryStream(Encoding.UTF8.GetBytes(
             "data: {\"choices\":[]}\n\ndata: [DONE]\n\n"));
         using var handler = new MemoryResponseHandler(responseBody);
-        using var observationAuthority = new ChatStreamObservationAuthority();
+        var observationAuthority = new ChatStreamRuntimeObservationRecorder();
         var transport = new OpenAiCompatibleChatProviderStreamingTransport(
             new FakeProviderRepository(provider),
             new FakeEncryptionService(),
@@ -588,7 +560,6 @@ public sealed class OpenAiCompatibleChatProviderStreamingTransportTests
             observationAuthority);
         ChatProviderStreamRequest request = CreateRequest(
             provider,
-            "case-zero-output",
             "stream-125-zero-output");
 
         var signals = await CollectSignalsAsync(transport, request);
@@ -610,11 +581,8 @@ public sealed class OpenAiCompatibleChatProviderStreamingTransportTests
 
     private static ChatProviderStreamRequest CreateRequest(
         LlmProvider provider,
-        string caseId,
         string requestId) =>
         new(
-            "0123456789abcdef0123456789abcdef01234567",
-            caseId,
             requestId,
             "primary",
             provider.Id.ToString("D"),
@@ -661,16 +629,13 @@ public sealed class OpenAiCompatibleChatProviderStreamingTransportTests
         return signals;
     }
 
-    private static JsonElement ReadReceipt(
-        ChatStreamObservationAuthority observationAuthority,
+    private static ChatStreamRuntimeObservation ReadObservation(
+        ChatStreamRuntimeObservationRecorder observationRecorder,
         ChatProviderStreamRequest request)
     {
-        Assert.True(observationAuthority.TryGetVerifiedReceipt(
-            request.RequestId,
-            request.AttemptKind,
-            out string? serializedReceipt));
-        using JsonDocument document = JsonDocument.Parse(serializedReceipt!);
-        return document.RootElement.GetProperty("receipt").Clone();
+        return Assert.Single(
+            observationRecorder.GetRuntimeObservations(request.RequestId),
+            observation => observation.AttemptKind == request.AttemptKind);
     }
 
     private static byte[] CreateCommentBody(int totalBytes)

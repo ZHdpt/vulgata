@@ -12,7 +12,7 @@ public sealed class ChatEvidencePacketBuilderTests
     {
         EvidencePacket packet = CreatePacket();
 
-        Assert.Equal("grounded-chat-evidence/2.0", packet.SchemaVersion);
+        Assert.Equal("grounded-chat-evidence/2.2", packet.SchemaVersion);
         Assert.All(packet.Documents, document => Assert.Matches("^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$", document.DocumentHandle));
         Assert.All(packet.Sections, section =>
         {
@@ -68,10 +68,10 @@ public sealed class ChatEvidencePacketBuilderTests
     }
 
     [Fact]
-    public void Create_V2Packet_CanonicalFingerprint_BindsRelationshipIdentity()
+    public void Create_V2Packet_CanonicalFingerprint_BindsRelationshipEdgeIdentity()
     {
         EvidencePacket original = CreatePacket();
-        EvidencePacket changed = CreatePacket(relationshipIdentity: new string('d', 64));
+        EvidencePacket changed = CreatePacket(relationshipEdgeId: Id(93));
 
         Assert.NotEqual(original.Fingerprint, changed.Fingerprint);
     }
@@ -172,7 +172,7 @@ public sealed class ChatEvidencePacketBuilderTests
     {
         EvidencePacket baseline = new ChatEvidencePacketBuilder().Build(CreateBuildRequest());
         EvidencePacket changed = new ChatEvidencePacketBuilder().Build(CreateBuildRequest(
-            flowGroups: [CreateFlowGroupAuthority()]));
+            flowGroups: [CreateFlowGroupAuthority(flowTraceId: Id(98))]));
 
         Assert.NotEqual(baseline.Fingerprint, changed.Fingerprint);
     }
@@ -246,10 +246,10 @@ public sealed class ChatEvidencePacketBuilderTests
             flowGroups: [baselineGroup]));
 
         EvidencePacket decisionChanged = new ChatEvidencePacketBuilder().Build(CreateBuildRequest(
-            relationship: relationship,
+            relationship: relationship with { ExactDecisionId = Id(84) },
             flowGroups: [baselineGroup with { ExactResolutionDecisionId = Id(84) }]));
         EvidencePacket edgeChanged = new ChatEvidencePacketBuilder().Build(CreateBuildRequest(
-            relationship: relationship,
+            relationship: relationship with { EdgeId = Id(83) },
             flowGroups: [baselineGroup with { ExactResolutionEdgeId = Id(83) }]));
         EvidencePacket traceChanged = new ChatEvidencePacketBuilder().Build(CreateBuildRequest(
             relationship: relationship,
@@ -260,6 +260,7 @@ public sealed class ChatEvidencePacketBuilderTests
         };
         EvidencePacket stepDescriptionChanged = new ChatEvidencePacketBuilder().Build(CreateBuildRequest(
             relationship: relationship,
+            flowDescription: "改名后的完整流程步骤",
             flowGroups: [baselineGroup with { Steps = [stepChanged] }]));
 
         Assert.NotEqual(baseline.Fingerprint, decisionChanged.Fingerprint);
@@ -321,9 +322,11 @@ public sealed class ChatEvidencePacketBuilderTests
         Assert.Equal(
             [
                 "advisoryContext",
+                "advisoryContextAuthorityFingerprint",
                 "conversation",
                 "documents",
                 "fingerprint",
+                "flowGroups",
                 "flowSteps",
                 "mode",
                 "relationships",
@@ -331,6 +334,7 @@ public sealed class ChatEvidencePacketBuilderTests
                 "requestId",
                 "schemaVersion",
                 "sections",
+                "selection",
                 "sourceAnchors",
                 "systemId",
             ],
@@ -341,11 +345,13 @@ public sealed class ChatEvidencePacketBuilderTests
 
         JsonElement turn = Assert.Single(conversation.GetProperty("turns").EnumerateArray());
         Assert.Equal(
-            ["question", "validatedAnswer", "packetFingerprint", "priorCitationHandles"],
+            ["question", "validatedAnswer", "packetFingerprint", "priorCitationHandles", "priorLogicalDocumentIds"],
             turn.EnumerateObject().Select(property => property.Name));
         Assert.Equal("上一答", turn.GetProperty("validatedAnswer").GetString());
         Assert.Equal(["a1"], turn.GetProperty("priorCitationHandles").EnumerateArray()
             .Select(value => value.GetString()).ToArray());
+        Assert.Equal([Id(10)], turn.GetProperty("priorLogicalDocumentIds").EnumerateArray()
+            .Select(value => value.GetGuid()).ToArray());
     }
 
     [Fact]
@@ -364,10 +370,10 @@ public sealed class ChatEvidencePacketBuilderTests
                 "depth",
                 "edgeId",
                 "exactDecisionCount",
-                "exactDecisionId",
                 "exactDecisionSetFingerprint",
-                "flowGroupId",
+                "flowGroupHandles",
                 "handle",
+                "selectedExactDecisionId",
                 "sourceDocumentHandle",
                 "targetDocumentHandle",
                 "type",
@@ -376,9 +382,10 @@ public sealed class ChatEvidencePacketBuilderTests
         Assert.Equal(Id(80), relationship.GetProperty("edgeId").GetGuid());
         Assert.Equal(1, relationship.GetProperty("depth").GetInt32());
         Assert.Equal(1, relationship.GetProperty("exactDecisionCount").GetInt32());
-        Assert.Equal(Id(81), relationship.GetProperty("exactDecisionId").GetGuid());
+        Assert.Equal(Id(81), relationship.GetProperty("selectedExactDecisionId").GetGuid());
         Assert.Equal(new string('d', 64), relationship.GetProperty("exactDecisionSetFingerprint").GetString());
-        Assert.Equal(Id(82), relationship.GetProperty("flowGroupId").GetGuid());
+        Assert.Equal(["fg-1"], relationship.GetProperty("flowGroupHandles").EnumerateArray()
+            .Select(value => value.GetString()).ToArray());
     }
 
     [Fact]
@@ -409,6 +416,7 @@ public sealed class ChatEvidencePacketBuilderTests
 
     private static ChatEvidencePacketBuildRequest CreateBuildRequest(
         string sectionContent = "处理订单请求。",
+        string flowDescription = "订单处理流程",
         string advisoryContext = "",
         ChatConversationState? conversation = null,
         bool includeOversizedOptionalSection = false,
@@ -435,14 +443,15 @@ public sealed class ChatEvidencePacketBuilderTests
         var anchor2 = new EvidenceAnchor(
             "a2", Id(31), "d2", Id(13), repository2, "src/OrderService.cs", 20, 22, new string('b', 64));
         var anchors = new List<EvidenceAnchor> { anchor1, anchor2 };
-        var relationshipSnapshot = new List<EvidenceRelationship>
-        {
-            relationship ?? new EvidenceRelationship(
-                "r1", "edge-1", ChatRelationshipType.References, "d1", "d2", new string('c', 64)),
-        };
+        EvidenceRelationship primaryRelationship = relationship ?? CreateV2Relationship(
+            Id(92),
+            1,
+            Id(91),
+            Id(90));
+        var relationshipSnapshot = new List<EvidenceRelationship> { primaryRelationship };
         var flowSnapshot = new List<EvidenceFlowStep>
         {
-            new(1, "d1", "r1", "订单处理流程"),
+            new(1, "d1", "r1", flowDescription),
         };
         if (includeOversizedOptionalSection)
         {
@@ -475,9 +484,16 @@ public sealed class ChatEvidencePacketBuilderTests
         }
 
         IReadOnlyCollection<EvidenceFlowGroupAuthority> flowGroupSnapshot = flowGroups ??
-            (includeOptionalRelationshipUnit
-                ? [CreateFlowGroupAuthority(Id(96), Id(84), Id(83), Id(95), Id(99), Id(15))]
-                : []);
+            [CreateFlowGroupAuthority(
+                primaryRelationship.FlowGroupId ?? Id(90),
+                primaryRelationship.ExactDecisionId ?? Id(91),
+                primaryRelationship.EdgeId)];
+        if (includeOptionalRelationshipUnit)
+        {
+            flowGroupSnapshot = flowGroupSnapshot
+                .Append(CreateFlowGroupAuthority(Id(96), Id(84), Id(83), Id(95), Id(99), Id(15)))
+                .ToArray();
+        }
 
         return ChatEvidencePacketBuildRequest.Create(
             "request-1",
@@ -495,7 +511,11 @@ public sealed class ChatEvidencePacketBuilderTests
                 ChatMode.Business,
                 systemId,
                 [repository1, repository2])),
-            optionalSectionHandles ?? []);
+            optionalSectionHandles ?? [],
+            null,
+            ["d1", "d2"],
+            ["s1", "s2"],
+            ["d1", "d2"]);
     }
 
     private static EvidenceRelationship CreateV2Relationship(
@@ -525,7 +545,8 @@ public sealed class ChatEvidencePacketBuilderTests
         Guid? flowTraceId = null,
         Guid? stepId = null,
         Guid? businessLogicDocumentVersionId = null,
-        Guid? stepDocumentVersionId = null) =>
+        Guid? stepDocumentVersionId = null,
+        string stepDescription = "订单处理流程") =>
         new(
             flowGroupId ?? Id(90),
             "endpoint-flow-group/1.0",
@@ -541,7 +562,7 @@ public sealed class ChatEvidencePacketBuilderTests
                 stepId ?? Id(94),
                 1,
                 FlowTraceStepKind.Document,
-                "订单处理流程",
+                stepDescription,
                 stepDocumentVersionId ?? businessLogicDocumentVersionId ?? Id(11),
                 Id(2),
                 Id(95),
@@ -554,7 +575,7 @@ public sealed class ChatEvidencePacketBuilderTests
         string document1Title = "订单处理",
         string section1Heading = "业务规则",
         string flowDescription = "订单处理流程",
-        string relationshipIdentity = "edge-1")
+        Guid? relationshipEdgeId = null)
     {
         Guid systemId = Id(1);
         Guid repository1 = Id(2);
@@ -571,8 +592,8 @@ public sealed class ChatEvidencePacketBuilderTests
             "a1", Id(30), "d1", Id(11), repository1, "src/Orders.cs", 10, 12, new string('a', 64));
         var anchor2 = new EvidenceAnchor(
             "a2", Id(31), "d2", Id(13), repository2, "src/OrderService.cs", 20, 22, new string('b', 64));
-        var relationship = new EvidenceRelationship(
-            "r1", relationshipIdentity, ChatRelationshipType.References, "d1", "d2", new string('c', 64));
+        Guid edgeId = relationshipEdgeId ?? Id(92);
+        var relationship = CreateV2Relationship(edgeId, 1, Id(91), Id(90));
         var flowStep = new EvidenceFlowStep(1, "d1", "r1", flowDescription);
 
         return EvidencePacket.Create(
@@ -584,7 +605,8 @@ public sealed class ChatEvidencePacketBuilderTests
             reverseCollections ? [section2, section1] : [section1, section2],
             reverseCollections ? [anchor2, anchor1] : [anchor1, anchor2],
             [relationship],
-            [flowStep]);
+            [flowStep],
+            [CreateFlowGroupAuthority(Id(90), Id(91), edgeId, stepDescription: flowDescription)]);
     }
 
     private static Guid Id(int value) =>

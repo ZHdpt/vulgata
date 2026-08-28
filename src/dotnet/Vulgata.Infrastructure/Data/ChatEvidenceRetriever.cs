@@ -179,7 +179,13 @@ public sealed class ChatEvidenceRetriever : IChatEvidenceRetriever
                 expansion.FlowGroups,
                 request.AdvisoryContext.ComposedText,
                 request.Conversation,
-                expansion.SupportSections.Select(section => section.SectionHandle).ToArray()));
+                expansion.SupportSections.Select(section => section.SectionHandle).ToArray(),
+                request.AdvisoryContext.AuthorityFingerprint,
+                primary.PrimaryDocuments.Select(document => document.DocumentHandle).ToArray(),
+                primary.PrimarySections.Select(section => section.SectionHandle).ToArray(),
+                primary.ExpansionSeedDocumentVersionIds.Select(documentVersionId =>
+                    primary.PrimaryDocuments.Single(document =>
+                        document.DocumentVersionId == documentVersionId).DocumentHandle).ToArray()));
         return ChatEvidenceResult.Found(packet);
     }
 
@@ -424,9 +430,8 @@ public sealed class ChatEvidenceRetriever : IChatEvidenceRetriever
                 indexEntry == null ? string.Empty : indexEntry.TechnicalTermsJson,
                 indexEntry == null ? string.Empty : indexEntry.SearchText,
                 repository.Name))
-            .Take(257)
             .ToArrayAsync(cancellationToken);
-        if (candidates.Length is < 1 or > 256 ||
+        if (candidates.Length < 1 ||
             candidates.Select(candidate => candidate.RepositoryId).Distinct().Count() != 2)
         {
             return ChatRetrievalStageResult<ChatLexicalPrimaryProjection>.InconsistentCurrentEvidence();

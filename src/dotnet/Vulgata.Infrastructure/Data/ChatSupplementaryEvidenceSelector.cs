@@ -26,6 +26,7 @@ internal sealed record SupplementaryChatSectionCandidate(
 internal static class ChatSupplementaryEvidenceSelector
 {
     private const int _maximumDocuments = 5;
+    private const int _maximumRankedCandidates = 256;
 
     private sealed record ScoredCandidate(
         SupplementaryChatSectionCandidate Candidate,
@@ -55,7 +56,7 @@ internal static class ChatSupplementaryEvidenceSelector
         }
 
         HashSet<Guid> preferred = preferredLogicalDocumentIds?.ToHashSet() ?? [];
-        var ranked = candidates
+        ScoredCandidate[] ranked = candidates
             .Select(candidate => TryScore(candidate, terms, mode, out int score) && score > 0
                 ? new ScoredCandidate(
                     candidate,
@@ -63,6 +64,26 @@ internal static class ChatSupplementaryEvidenceSelector
                 : null)
             .Where(item => item is not null)
             .Select(item => item!)
+            .GroupBy(item => new
+            {
+                item.Candidate.DocumentVersionId,
+                item.Candidate.StableSectionId,
+            })
+            .Select(group => group
+                .OrderByDescending(item => item.Score)
+                .ThenBy(item => ModePreferenceRank(item.Candidate, mode))
+                .ThenBy(item => item.Candidate.RepositoryId)
+                .ThenBy(item => item.Candidate.LogicalDocumentId)
+                .ThenBy(item => item.Candidate.SectionOrder)
+                .ThenBy(item => item.Candidate.StableSectionId)
+                .First())
+            .OrderByDescending(item => item.Score)
+            .ThenBy(item => ModePreferenceRank(item.Candidate, mode))
+            .ThenBy(item => item.Candidate.RepositoryId)
+            .ThenBy(item => item.Candidate.LogicalDocumentId)
+            .ThenBy(item => item.Candidate.SectionOrder)
+            .ThenBy(item => item.Candidate.StableSectionId)
+            .Take(_maximumRankedCandidates)
             .ToArray();
         var primary = ranked
             .GroupBy(item => item.Candidate.DocumentVersionId)

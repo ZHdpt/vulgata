@@ -364,7 +364,7 @@ public sealed class ChatAgentResultValidatorTests
             [new EvidenceSection("s1", "d1", Id(11), 1, DocumentSectionKind.Overview, "章节", markdown, ["a1"], [])],
             [new EvidenceAnchor("a1", Id(21), "d1", DocumentVersionId(1), Repository1, "src/d1.cs", 10, 12, new string('b', 64))],
             [new EvidenceRelationship("r1", "edge-r1", ChatRelationshipType.References, "d1", "d2", new string('c', 64))],
-            [new EvidenceFlowStep(1, "d1", null, "准备回答。")]);
+            []);
         IReadOnlyList<CandidateClaim> candidates = new ChatCandidateExtractor().Extract(packet);
         ChatSynthesisRequest request = ChatSynthesisRequest.Create(
             packet.RequestId,
@@ -402,7 +402,7 @@ public sealed class ChatAgentResultValidatorTests
                 supportingDocumentHandle is null ? [] : [supportingDocumentHandle])],
             [new EvidenceAnchor("a1", Id(21), "d1", DocumentVersionId(1), Repository1, "src/d1.cs", 10, 12, new string('b', 64))],
             [new EvidenceRelationship("r1", "edge-r1", ChatRelationshipType.References, "d1", "d2", new string('c', 64))],
-            [new EvidenceFlowStep(1, "d1", null, "准备回答。")]);
+            []);
 
     private static string CreateRawJson(
         ChatSynthesisRequest request,

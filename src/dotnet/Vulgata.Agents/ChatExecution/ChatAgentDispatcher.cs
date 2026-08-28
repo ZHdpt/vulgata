@@ -9,9 +9,7 @@ using Vulgata.Shared;
 
 namespace Vulgata.Agents.ChatExecution;
 
-public sealed class ChatAgentDispatcher :
-    IChatAgentDispatcher,
-    IChatStreamValidationDispositionRecorder
+public sealed class ChatAgentDispatcher : IChatAgentDispatcher
 {
     internal static readonly TimeSpan ProviderTimeout = TimeSpan.FromSeconds(30);
     private static readonly TimeSpan _streamInactivityTimeout = TimeSpan.FromSeconds(10);
@@ -131,17 +129,9 @@ public sealed class ChatAgentDispatcher :
                 _timeProvider.GetUtcNow().ToUnixTimeMilliseconds();
             if (remainingMilliseconds < _minimumRepairWindow.TotalMilliseconds)
             {
-                RecordValidationDisposition(
-                    transport,
-                    request.RequestId,
-                    ChatStreamValidationDisposition.RejectedSyntax);
                 return primary;
             }
 
-            RecordValidationDisposition(
-                transport,
-                request.RequestId,
-                ChatStreamValidationDisposition.SyntaxRepairRequired);
             string repairPrompt = string.Concat(
                 boundedPrompt,
                 "\n\nReturn only one syntactically valid JSON object matching the requested schema. " +
@@ -154,14 +144,6 @@ public sealed class ChatAgentDispatcher :
                 "syntax-repair",
                 absoluteDeadline,
                 cancellationToken);
-            if (repaired.FailureCode == ChatContractFailureCode.InvalidSelection)
-            {
-                RecordValidationDisposition(
-                    transport,
-                    request.RequestId,
-                    ChatStreamValidationDisposition.RejectedSyntax);
-            }
-
             return transport is DirectConstructionStreamingTransport &&
                 repaired.Result is not null
                 ? ChatSynthesisOutcome.Failed(ChatContractFailureCode.ProviderFailure)
@@ -175,23 +157,6 @@ public sealed class ChatAgentDispatcher :
             exception is InvalidOperationException or ArgumentException or JsonException)
         {
             return ChatSynthesisOutcome.Failed(ChatContractFailureCode.ProviderFailure);
-        }
-    }
-
-    public bool TryRecordFinalValidationDisposition(
-        string requestId,
-        ChatStreamValidationDisposition disposition) =>
-        _streamingTransport is IChatStreamValidationDispositionRecorder recorder &&
-        recorder.TryRecordFinalValidationDisposition(requestId, disposition);
-
-    private static void RecordValidationDisposition(
-        IChatProviderStreamingTransport transport,
-        string requestId,
-        ChatStreamValidationDisposition disposition)
-    {
-        if (transport is IChatStreamValidationDispositionRecorder recorder)
-        {
-            _ = recorder.TryRecordFinalValidationDisposition(requestId, disposition);
         }
     }
 
@@ -213,10 +178,6 @@ public sealed class ChatAgentDispatcher :
                 synthesisRequest.EvidenceFingerprint,
                 "stream=true",
                 prompt))));
-        string candidateCommit = Environment.GetEnvironmentVariable(
-            "VULGATA_CANDIDATE_COMMIT") ?? string.Empty;
-        string caseId = Environment.GetEnvironmentVariable(
-            "VULGATA_RELEASE_CASE_ID") ?? string.Empty;
         string providerConfigurationFingerprint = Convert.ToHexStringLower(
             SHA256.HashData(Encoding.UTF8.GetBytes(string.Join(
                 '\u001f',
@@ -224,8 +185,6 @@ public sealed class ChatAgentDispatcher :
                 provider.Endpoint.AbsoluteUri,
                 provider.Model))));
         var streamRequest = new ChatProviderStreamRequest(
-            candidateCommit,
-            caseId,
             synthesisRequest.RequestId,
             attemptKind,
             provider.ProviderId.ToString("D"),

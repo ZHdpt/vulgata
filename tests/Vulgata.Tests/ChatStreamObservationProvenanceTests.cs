@@ -1,28 +1,25 @@
 using System.Reflection;
 using Vulgata.Agents.ChatExecution;
 using Vulgata.Core.DomainServices;
+using Vulgata.Web.Data;
 
 namespace Vulgata.Tests;
 
 /// <summary>
-/// T032 RED boundary for the production, content-dark observation authority.
-/// ReleaseGate is deliberately not involved: a test-only semantic harness
-/// cannot prove that production rejects an SDK aggregate as stream evidence.
+/// T066 public composition boundary for release-neutral Track B stream telemetry.
+/// Signed candidate attestation remains exclusively absent until Track C.
 /// </summary>
 public sealed class ChatStreamObservationProvenanceTests
 {
-    [Fact]
-    public void StreamRequest_BindsCandidateCaseAttemptAndProviderConfiguration()
-    {
-        Type requestType = typeof(ChatProviderStreamRequest).Assembly.GetType(
-            "Vulgata.Core.DomainServices.ChatProviderStreamRequest",
-            throwOnError: true,
-            ignoreCase: false)!;
+    private static readonly BindingFlags _instanceProperties =
+        BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
 
-        string[] requiredFields =
+    [Fact]
+    public void StreamRequest_TrackBMetadata_HasNoReleaseOrPostTransportValidationCoupling()
+    {
+        Type requestType = typeof(ChatProviderStreamRequest);
+        string[] requiredProperties =
         [
-            "CandidateCommit",
-            "CaseId",
             "RequestId",
             "AttemptKind",
             "ProviderIdentity",
@@ -32,38 +29,43 @@ public sealed class ChatStreamObservationProvenanceTests
             "StreamingRequestFingerprint",
             "AbsoluteDeadlineUnixTimeMilliseconds",
         ];
+        string[] prohibitedProperties =
+        [
+            "CandidateCommit",
+            "ReleaseRunId",
+            "RunId",
+            "CaseId",
+            "ProcessObservationId",
+            "ProcessPublicKeyFingerprint",
+            "Signature",
+            "AttestationSignature",
+            "ArtifactPath",
+            "ExportPath",
+            "ValidationOutcome",
+            "AcceptedAnswerDurationMilliseconds",
+            "ReleaseEligible",
+            "ReleaseStatus",
+        ];
 
-        string[] missingFields = requiredFields
-            .Where(field => requestType.GetProperty(field) is null)
-            .ToArray();
-
-        Assert.Empty(missingFields);
+        AssertPropertiesPresent(requestType, requiredProperties);
+        AssertPropertiesAbsent(requestType, prohibitedProperties);
     }
 
     [Fact]
-    public void ObservationReceipt_BindsCandidateCaseProviderAndBoundedStreamLifecycle()
+    public void RuntimeObservation_TrackBTransportFacts_AreImmutableContentDarkAndReleaseNeutral()
     {
-        Type receiptType = typeof(IChatProviderStreamingTransport).Assembly.GetType(
-            "Vulgata.Agents.ChatExecution.ChatStreamObservationReceipt",
-            throwOnError: true,
-            ignoreCase: false)!;
-
-        string[] requiredFields =
+        Type observationType = GetRequiredType(
+            typeof(IChatProviderStreamingTransport).Assembly,
+            "Vulgata.Agents.ChatExecution.ChatStreamRuntimeObservation");
+        string[] requiredProperties =
         [
-            "ObservationAuthority",
-            "ProcessObservationId",
-            "AdapterImplementation",
-            "AdapterVersion",
-            "AdapterAssemblySha256",
-            "ProcessPublicKeyFingerprint",
+            "RuntimeObservationId",
             "ObservationSequence",
-            "CandidateCommit",
-            "CaseId",
+            "RequestId",
+            "AttemptKind",
             "ProviderIdentity",
             "ProviderApi",
             "ProviderConfigurationFingerprint",
-            "RequestId",
-            "AttemptKind",
             "CanonicalStreamingRequestFingerprint",
             "RequestStreamMode",
             "ResponseHeaderDisposition",
@@ -85,6 +87,9 @@ public sealed class ChatStreamObservationProvenanceTests
             "RawBodyByteCount",
             "MaximumSseLineByteCount",
             "MaximumSseEventByteCount",
+            "ProviderChunkCount",
+            "MaximumReceivedProviderChunkByteCount",
+            "AssembledReceivedProviderResponseByteCount",
             "AnswerDeltaCount",
             "MaximumAnswerDeltaByteCount",
             "AssembledAnswerByteCount",
@@ -93,53 +98,189 @@ public sealed class ChatStreamObservationProvenanceTests
             "OverallDeadlineAtUtc",
             "TransportOutcome",
             "RejectionCategory",
+        ];
+        string[] prohibitedProperties =
+        [
+            "ObservationAuthority",
+            "ProcessObservationId",
+            "AdapterImplementation",
+            "AdapterVersion",
+            "AdapterAssemblySha256",
+            "ProcessPublicKeyFingerprint",
+            "CandidateCommit",
+            "ReleaseRunId",
+            "RunId",
+            "CaseId",
+            "Signature",
+            "AttestationSignature",
+            "ArtifactPath",
+            "ExportPath",
+            "Prompt",
+            "ResponseBody",
+            "Answer",
+            "PartialAnswer",
+            "RawSelectionJson",
+            "EvidencePacket",
+            "EvidencePacketFingerprint",
+            "Claim",
+            "Citation",
+            "Handle",
+            "Relationship",
+            "SourceAnchor",
+            "Secret",
+            "Connection",
+            "HostPath",
             "ValidationOutcome",
             "AcceptedAnswerDurationMilliseconds",
+            "ReleaseEligible",
+            "ReleaseStatus",
         ];
 
-        string[] missingFields = requiredFields
-            .Where(field => receiptType.GetProperty(
-                field,
-                BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic) is null)
-            .ToArray();
-
-        Assert.Empty(missingFields);
+        AssertPropertiesPresent(observationType, requiredProperties);
+        AssertPropertiesAbsent(observationType, prohibitedProperties);
+        Assert.All(
+            observationType.GetProperties(_instanceProperties),
+            property => Assert.True(
+                HasNoPublicMutationAfterConstruction(property),
+                $"{observationType.Name}.{property.Name} must be immutable after construction."));
     }
 
     [Fact]
-    public void AggregateConsistentSdkChunkReceipt_WithoutRawAdapterProvenance_IsRejectedByProductionAuthority()
+    public void CompletionSummary_CoordinatorResult_IsImmutableContentDarkAndSeparateFromTransportFacts()
+    {
+        Type summaryType = GetRequiredType(
+            typeof(ChatProviderStreamRequest).Assembly,
+            "Vulgata.Core.DomainServices.ChatStreamCompletionSummary");
+        string[] requiredProperties =
+        [
+            "CompletionSummaryId",
+            "RequestId",
+            "RuntimeObservationIds",
+            "SyntaxRepairUsed",
+            "AttemptValidationOutcomes",
+            "FinalValidationOutcome",
+            "TotalAcceptedAnswerDurationMilliseconds",
+        ];
+        string[] prohibitedProperties =
+        [
+            "CandidateCommit",
+            "ReleaseRunId",
+            "RunId",
+            "CaseId",
+            "ProcessObservationId",
+            "ProcessPublicKeyFingerprint",
+            "Signature",
+            "AttestationSignature",
+            "ArtifactPath",
+            "ExportPath",
+            "Prompt",
+            "ResponseBody",
+            "Answer",
+            "PartialAnswer",
+            "RawSelectionJson",
+            "EvidencePacket",
+            "EvidencePacketFingerprint",
+            "Claim",
+            "Citation",
+            "Handle",
+            "Relationship",
+            "SourceAnchor",
+            "ProviderIdentity",
+            "ProviderConfigurationFingerprint",
+            "RawReadCount",
+            "RawBodyByteCount",
+            "TransportOutcome",
+            "RejectionCategory",
+            "ReleaseEligible",
+            "ReleaseStatus",
+        ];
+
+        AssertPropertiesPresent(summaryType, requiredProperties);
+        AssertPropertiesAbsent(summaryType, prohibitedProperties);
+        Assert.All(
+            summaryType.GetProperties(_instanceProperties),
+            property => Assert.True(
+                HasNoPublicMutationAfterConstruction(property),
+                $"{summaryType.Name}.{property.Name} must be immutable after construction."));
+    }
+
+    [Fact]
+    public void PreparedChatCoordinator_ComposesRequiredCompletionSummaryRecorder()
+    {
+        Type summaryType = GetRequiredType(
+            typeof(ChatProviderStreamRequest).Assembly,
+            "Vulgata.Core.DomainServices.ChatStreamCompletionSummary");
+        ConstructorInfo constructor = Assert.Single(typeof(PreparedChatCoordinator).GetConstructors());
+        ParameterInfo recorderParameter = Assert.Single(
+            constructor.GetParameters(),
+            parameter => parameter.ParameterType.GetMethods(BindingFlags.Instance | BindingFlags.Public)
+                .Any(method => method.GetParameters() is [{ ParameterType: var parameterType }] &&
+                    parameterType == summaryType));
+
+        Assert.False(recorderParameter.HasDefaultValue);
+        MethodInfo recordMethod = Assert.Single(
+            recorderParameter.ParameterType.GetMethods(BindingFlags.Instance | BindingFlags.Public),
+            method => method.GetParameters() is [{ ParameterType: var parameterType }] &&
+                parameterType == summaryType);
+        Assert.Contains("Completion", recordMethod.Name, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void TrackBComposition_DoesNotContainTrackCCandidateAttestation()
     {
         Assembly agentsAssembly = typeof(IChatProviderStreamingTransport).Assembly;
-        Type? authorityType = agentsAssembly.GetType(
+
+        Assert.Null(agentsAssembly.GetType(
+            "Vulgata.Agents.ChatExecution.Story125StreamAttestationSink",
+            throwOnError: false,
+            ignoreCase: false));
+        Assert.Null(agentsAssembly.GetType(
+            "Vulgata.Agents.ChatExecution.Story125StreamAttemptAttestation",
+            throwOnError: false,
+            ignoreCase: false));
+        Assert.Null(agentsAssembly.GetType(
+            "Vulgata.Agents.ChatExecution.ChatStreamObservationReceipt",
+            throwOnError: false,
+            ignoreCase: false));
+        Assert.Null(agentsAssembly.GetType(
             "Vulgata.Agents.ChatExecution.ChatStreamObservationAuthority",
             throwOnError: false,
-            ignoreCase: false);
-        Assert.NotNull(authorityType);
+            ignoreCase: false));
+    }
 
-        ConstructorInfo constructor = Assert.Single(
-            authorityType!.GetConstructors(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic),
-            candidate => candidate.GetParameters().Length == 0);
-        object authority = constructor.Invoke(null);
+    private static Type GetRequiredType(Assembly assembly, string fullName)
+    {
+        Type? type = assembly.GetType(fullName, throwOnError: false, ignoreCase: false);
+        Assert.NotNull(type);
+        return type;
+    }
 
-        MethodInfo verifier = Assert.Single(
-            authorityType.GetMethods(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic),
-            candidate =>
-                (candidate.Name is "Verify" or "VerifyReceipt" or "Validate" or "ValidateReceipt") &&
-                candidate.GetParameters() is [{ ParameterType: var parameterType }] &&
-                parameterType == typeof(string));
+    private static void AssertPropertiesPresent(Type type, IReadOnlyCollection<string> names)
+    {
+        string[] missing = names
+            .Where(name => type.GetProperty(name, _instanceProperties) is null)
+            .ToArray();
+        Assert.True(
+            missing.Length == 0,
+            $"{type.FullName} is missing required properties: {string.Join(", ", missing)}");
+    }
 
-        object? result = verifier.Invoke(
-            authority,
-            ["{\"source\":\"sdk-aggregate\",\"chunks\":[\"answer\"]}"]);
+    private static void AssertPropertiesAbsent(Type type, IReadOnlyCollection<string> names)
+    {
+        string[] leaked = names
+            .Where(name => type.GetProperty(name, _instanceProperties) is not null)
+            .ToArray();
+        Assert.True(
+            leaked.Length == 0,
+            $"{type.FullName} leaks prohibited properties: {string.Join(", ", leaked)}");
+    }
 
-        Assert.False(
-            result switch
-            {
-                bool accepted => accepted,
-                IReadOnlyCollection<string> errors => errors.Count == 0,
-                IEnumerable<string> errors => !errors.Any(),
-                _ => throw new Xunit.Sdk.XunitException(
-                    $"{authorityType.FullName}.{verifier.Name} must return bool or validation errors."),
-            });
+    private static bool HasNoPublicMutationAfterConstruction(PropertyInfo property)
+    {
+        MethodInfo? setter = property.SetMethod;
+        return setter is null ||
+            !setter.IsPublic ||
+            setter.ReturnParameter.GetRequiredCustomModifiers().Any(
+                modifier => modifier.FullName == "System.Runtime.CompilerServices.IsExternalInit");
     }
 }

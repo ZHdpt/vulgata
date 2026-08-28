@@ -8,8 +8,6 @@ public enum ChatProviderStreamSignalKind
 }
 
 public sealed record ChatProviderStreamRequest(
-    string CandidateCommit,
-    string CaseId,
     string RequestId,
     string AttemptKind,
     string ProviderIdentity,
@@ -18,6 +16,22 @@ public sealed record ChatProviderStreamRequest(
     string EvidencePacketFingerprint,
     string StreamingRequestFingerprint,
     long AbsoluteDeadlineUnixTimeMilliseconds);
+
+public sealed record ChatStreamCompletionSummary(
+    string CompletionSummaryId,
+    string RequestId,
+    IReadOnlyList<string> RuntimeObservationIds,
+    bool SyntaxRepairUsed,
+    IReadOnlyList<string> AttemptValidationOutcomes,
+    string FinalValidationOutcome,
+    long? TotalAcceptedAnswerDurationMilliseconds);
+
+public interface IChatStreamCompletionSummaryRecorder
+{
+    void RecordCompletion(ChatStreamCompletionSummary summary);
+
+    IReadOnlyList<string> GetRuntimeObservationIds(string requestId);
+}
 
 public sealed record ChatProviderStreamSignal(
     ChatProviderStreamSignalKind Kind,
