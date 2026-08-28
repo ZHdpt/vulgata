@@ -3,13 +3,13 @@
   "bmad_story_key": "12-5-grounded-llm-wiki-chat-and-august-30-release-evidence",
   "bmad_epic_key": "12",
   "feature_directory": "specs/014-grounded-llm-wiki-chat-release-evidence",
-  "stage": "plan-review",
+  "stage": "tasks",
   "preflight": {
     "branch": "demo0831/story-12-5",
-    "head": "0baaec6a6003b8ff055410ec39c7217d51ab1deb",
-    "git_identity_sha256": "d6f14ac40088a1a50b68b77689e98fea933a6aaff475a4b98978663f382cceed",
-    "status_sha256": "5c5769e61ded062892d514d60f5a85e87b1c379dcc8bb9a9165da522bb93fa41",
-    "observed_at": "2026-08-28T11:18:15.6192481Z"
+    "head": "da09378c858dee57d0ac718ef2f014e46d02a91a",
+    "git_identity_sha256": "71fb5d9d3586c094fd5c463546af9eef370e312379c38e86f9a1846f8f4269d1",
+    "status_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "observed_at": "2026-08-28T11:50:51.6536446Z"
   },
   "artifacts": {
     "spec": {
@@ -64,10 +64,10 @@
     },
     {
       "decision_id": "story-12-5-planned-change-authorization-03",
-      "status": "pending",
+      "status": "accepted",
       "scope_sha256": "f3057c1106d59d96a804b6a7c8902df653b6c23e4deb7402759c0ffd71a84f16",
       "evidence_path": "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/planned-change-authorization-03.md",
-      "decided_at": null
+      "decided_at": "2026-08-28T11:50:51.6536446Z"
     }
   ],
   "convergence": {
@@ -93,15 +93,15 @@
     "specs/013-exact-cross-repository-flow-pass2/workflow-state.json"
   ],
   "checkpoint": {
-    "checkpoint_id": "bmad-12-5-plan-review-20260828T111815Z-fabe3f",
+    "checkpoint_id": "bmad-12-5-plan-review-20260828T115051Z-f3057c",
     "stage": "plan-review",
     "commit_sha": null,
     "binding_status": "pending"
   },
   "resume": {
-    "stage": "plan-review",
-    "reason": "Plan review 09 accepted the corrected architecture. Await planned-change authorization 03 before regenerating tasks; no implementation is authorized.",
+    "stage": "tasks",
+    "reason": "Planned-change authorization 03 is accepted for the corrected plan. Regenerate tasks, then run a fresh independent definition review; no implementation is authorized.",
     "evidence_path": "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/planned-change-authorization-03.md"
   },
-  "updated_at": "2026-08-28T11:18:15.6192481Z"
+  "updated_at": "2026-08-28T11:50:51.6536446Z"
 }

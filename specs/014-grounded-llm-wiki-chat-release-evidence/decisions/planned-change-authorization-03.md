@@ -1,15 +1,21 @@
 # Story 12.5 Planned-Change Authorization 03
 
-- **Decision**: Pending user authorization
+- **Decision**: Accepted
 - **Decision ID**: `story-12-5-planned-change-authorization-03`
 - **Scope SHA-256**: `f3057c1106d59d96a804b6a7c8902df653b6c23e4deb7402759c0ffd71a84f16`
 - **Requested at**: `2026-08-28T11:18:15.6192481Z`
+- **Decided at**: `2026-08-28T11:50:51.6536446Z`
+- **User decision**: `Approve planned-change authorization 03`
 - **Accepted plan review**: `reviews/plan-review/plan-review-09.json`
 
 ## Decision requested
 
 Authorize regeneration of Story 12.5 tasks from the independently accepted
 corrected plan. This request does not authorize implementation.
+
+The user accepted this exact decision and scope on 2026-08-28. Task generation
+may proceed while the fresh definition-review and implementation-approval gates
+remain mandatory.
 
 ## Planned-change trigger
 
