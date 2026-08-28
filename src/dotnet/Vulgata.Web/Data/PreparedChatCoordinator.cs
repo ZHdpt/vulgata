@@ -341,6 +341,7 @@ public sealed class PreparedChatCoordinator(
                     return await CompleteGroundedAnswerAsync(
                         request,
                         packet,
+                        advisoryContext,
                         fallbackCandidates,
                         CreateGroundedFallbackClaims(fallbackCandidates),
                         selectedRepositories,
@@ -394,6 +395,7 @@ public sealed class PreparedChatCoordinator(
                     return await CompleteGroundedAnswerAsync(
                         request,
                         packet,
+                        advisoryContext,
                         fallbackCandidates,
                         CreateGroundedFallbackClaims(fallbackCandidates),
                         selectedRepositories,
@@ -415,6 +417,7 @@ public sealed class PreparedChatCoordinator(
             PreparedChatResult completed = await CompleteGroundedAnswerAsync(
                 request,
                 packet,
+                advisoryContext,
                 validation.SelectedCandidates,
                 validation.MaterialClaims,
                 selectedRepositories,
@@ -458,6 +461,7 @@ public sealed class PreparedChatCoordinator(
     private async Task<PreparedChatResult> CompleteGroundedAnswerAsync(
         ChatQuestionRequest request,
         EvidencePacket packet,
+        ChatAdvisoryContextSnapshot initialAdvisoryContext,
         IReadOnlyList<CandidateClaim> selectedCandidates,
         IReadOnlyList<MaterialClaim> materialClaims,
         Dictionary<Guid, RepositoryEntity> selectedRepositories,
@@ -481,6 +485,26 @@ public sealed class PreparedChatCoordinator(
             return EvidenceUnavailable();
         }
 
+        ChatAdvisoryContextReadResult revealAdvisoryResult =
+            await advisoryContextReader.ReadAsync(
+                new AuthorizedChatScope(
+                    request.SystemId,
+                    request.RepositoryIds,
+                    accessScope),
+                cancellationToken);
+        if (revealAdvisoryResult.Kind == ChatAdvisoryContextReadResultKind.NotFoundOrUnauthorized)
+        {
+            ClearConversation();
+            return Missing();
+        }
+
+        if (revealAdvisoryResult.Kind != ChatAdvisoryContextReadResultKind.Succeeded ||
+            revealAdvisoryResult.Snapshot is not ChatAdvisoryContextSnapshot revealAdvisoryContext ||
+            !AdvisoryContextsMatch(initialAdvisoryContext, revealAdvisoryContext))
+        {
+            return EvidenceUnavailable();
+        }
+
         if (!await authorizationVerifier.HasCurrentAccessAsync(
                 request.RepositoryIds,
                 cancellationToken))
@@ -501,6 +525,18 @@ public sealed class PreparedChatCoordinator(
             timeProvider.GetUtcNow().ToUnixTimeMilliseconds();
         return PreparedChatResult.Succeeded(answer, remainingDeadlineMilliseconds);
     }
+
+    private static bool AdvisoryContextsMatch(
+        ChatAdvisoryContextSnapshot expected,
+        ChatAdvisoryContextSnapshot actual) =>
+        string.Equals(expected.ComposedText, actual.ComposedText, StringComparison.Ordinal) &&
+        expected.EncodedUtf8Bytes == actual.EncodedUtf8Bytes &&
+        string.Equals(
+            expected.AuthorityFingerprint,
+            actual.AuthorityFingerprint,
+            StringComparison.Ordinal) &&
+        expected.SourceUnits.SequenceEqual(actual.SourceUnits) &&
+        expected.Terms.SequenceEqual(actual.Terms, StringComparer.Ordinal);
 
     private void AppendValidatedConversationTurn(
         ChatQuestionRequest request,

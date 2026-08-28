@@ -155,6 +155,22 @@ public sealed class ChatEvidenceRetriever : IChatEvidenceRetriever
         }
 
         ChatRelationshipExpansionProjection expansion = expansionResult.Value!;
+        Dictionary<string, int> optionalRelationshipUnitRanks = expansion.Relationships
+            .Select((relationship, index) => (relationship.RelationshipHandle, Rank: index + 1))
+            .ToDictionary(item => item.RelationshipHandle, item => item.Rank, StringComparer.Ordinal);
+        var seenPrimaryDocumentHandles = new HashSet<string>(StringComparer.Ordinal);
+        Dictionary<string, int> lexicalExtraSectionRanks = primary.PrimarySections
+            .Select((section, index) => (Section: section, Rank: index + 1))
+            .Where(item => !seenPrimaryDocumentHandles.Add(item.Section.DocumentHandle))
+            .ToDictionary(
+                item => item.Section.SectionHandle,
+                item => item.Rank,
+                StringComparer.Ordinal);
+        string[] optionalSectionHandles = expansion.SupportSections
+            .Select(section => section.SectionHandle)
+            .Concat(lexicalExtraSectionRanks.Keys)
+            .Distinct(StringComparer.Ordinal)
+            .ToArray();
         EvidencePacket packet = _packetBuilder.Build(
             ChatEvidencePacketBuildRequest.Create(
                 request.RequestId,
@@ -169,13 +185,15 @@ public sealed class ChatEvidenceRetriever : IChatEvidenceRetriever
                 expansion.FlowGroups,
                 request.AdvisoryContext.ComposedText,
                 request.Conversation,
-                expansion.SupportSections.Select(section => section.SectionHandle).ToArray(),
+                optionalSectionHandles,
                 request.AdvisoryContext.AuthorityFingerprint,
                 primary.PrimaryDocuments.Select(document => document.DocumentHandle).ToArray(),
                 primary.PrimarySections.Select(section => section.SectionHandle).ToArray(),
                 primary.ExpansionSeedDocumentVersionIds.Select(documentVersionId =>
                     primary.PrimaryDocuments.Single(document =>
-                        document.DocumentVersionId == documentVersionId).DocumentHandle).ToArray()));
+                        document.DocumentVersionId == documentVersionId).DocumentHandle).ToArray(),
+                optionalRelationshipUnitRanks,
+                lexicalExtraSectionRanks));
         return ChatEvidenceResult.Found(packet);
     }
 

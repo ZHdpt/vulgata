@@ -6,10 +6,10 @@
   "stage": "implement",
   "preflight": {
     "branch": "demo0831/story-12-5",
-    "head": "ea8fadadbdca5f55133d1119ce2cd8ad1b0092e2",
+    "head": "12f721cdcb3971108b7c0c356f32d8c7292ff6c4",
     "git_identity_sha256": "07a20fe92c0f34dce99c42edc204a9db68ea55524b692aa9828e2edde364da34",
-    "status_sha256": "baf860aa2746db9bcce2a4246785c011364cc1f154d9abe82d3d42ffb11991ec",
-    "observed_at": "2026-08-28T23:25:55.1698231Z"
+    "status_sha256": "2fd4839ca55914ecedc7784b456de5031eeffa63b96e38d15a1a23d3e60620a3",
+    "observed_at": "2026-08-28T23:52:30.8276259Z"
   },
   "artifacts": {
     "spec": {
@@ -22,7 +22,7 @@
     },
     "tasks": {
       "path": "specs/014-grounded-llm-wiki-chat-release-evidence/tasks.md",
-      "sha256": "c514a0f7e3288b54ff3c1160ec08e6911ebcfdb947ac847ae2c8d8a7226a4525"
+      "sha256": "b8f041a331d5f7f9ff1020b43c5eba7aefef20e79f7a4b77cf3c18cd928cc4ce"
     }
   },
   "gates": {
@@ -113,18 +113,18 @@
     "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/implementation-approval-track-b-02.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/implementation-approval-track-c-01.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/integration/story-12.4-dependency-integration-correction-01.md",
-    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/track-b-convergence-correction-10.md"
+    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/track-b-convergence-correction-11.md"
   ],
   "checkpoint": {
-    "checkpoint_id": "bmad-12-5-implement-20260828T232555Z-388814",
+    "checkpoint_id": "bmad-12-5-implement-20260828T235230Z-t071t072",
     "stage": "implement",
     "commit_sha": null,
     "binding_status": "pending"
   },
   "resume": {
     "stage": "implement",
-    "reason": "T067-T070 are GREEN and pending their implementation checkpoint. Continue with T071-T072 after binding; Track C remains closed.",
-    "evidence_path": "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/track-b-convergence-correction-10.md"
+    "reason": "T071-T072 are GREEN and pending their implementation checkpoint. Run the one authorized fresh Track B convergence pass after binding; Track C remains closed.",
+    "evidence_path": "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/track-b-convergence-correction-11.md"
   },
-  "updated_at": "2026-08-28T23:26:37.8181703Z"
+  "updated_at": "2026-08-28T23:52:30.8276259Z"
 }

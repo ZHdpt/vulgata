@@ -554,7 +554,9 @@ public sealed record ChatEvidencePacketBuildRequest
         IReadOnlyList<string> optionalSectionHandles,
         IReadOnlyList<string> primaryDocumentHandles,
         IReadOnlyList<string> primarySectionHandles,
-        IReadOnlyList<string> expansionSeedDocumentHandles)
+        IReadOnlyList<string> expansionSeedDocumentHandles,
+        IReadOnlyDictionary<string, int> optionalRelationshipUnitRanks,
+        IReadOnlyDictionary<string, int> lexicalExtraSectionRanks)
     {
         RequestId = requestId;
         Mode = mode;
@@ -573,6 +575,8 @@ public sealed record ChatEvidencePacketBuildRequest
         PrimaryDocumentHandles = primaryDocumentHandles;
         PrimarySectionHandles = primarySectionHandles;
         ExpansionSeedDocumentHandles = expansionSeedDocumentHandles;
+        OptionalRelationshipUnitRanks = optionalRelationshipUnitRanks;
+        LexicalExtraSectionRanks = lexicalExtraSectionRanks;
     }
 
     public string RequestId { get; }
@@ -592,6 +596,8 @@ public sealed record ChatEvidencePacketBuildRequest
     public IReadOnlyList<string> PrimaryDocumentHandles { get; }
     public IReadOnlyList<string> PrimarySectionHandles { get; }
     public IReadOnlyList<string> ExpansionSeedDocumentHandles { get; }
+    public IReadOnlyDictionary<string, int> OptionalRelationshipUnitRanks { get; }
+    public IReadOnlyDictionary<string, int> LexicalExtraSectionRanks { get; }
 
     public static ChatEvidencePacketBuildRequest Create(
         string requestId,
@@ -610,7 +616,9 @@ public sealed record ChatEvidencePacketBuildRequest
         string? advisoryContextAuthorityFingerprint = null,
         IReadOnlyCollection<string>? primaryDocumentHandles = null,
         IReadOnlyCollection<string>? primarySectionHandles = null,
-        IReadOnlyCollection<string>? expansionSeedDocumentHandles = null)
+        IReadOnlyCollection<string>? expansionSeedDocumentHandles = null,
+        IReadOnlyDictionary<string, int>? optionalRelationshipUnitRanks = null,
+        IReadOnlyDictionary<string, int>? lexicalExtraSectionRanks = null)
     {
         ArgumentNullException.ThrowIfNull(conversation);
         string normalizedAdvisory = advisoryContext?.Normalize(NormalizationForm.FormC) ?? string.Empty;
@@ -632,6 +640,19 @@ public sealed record ChatEvidencePacketBuildRequest
             .Distinct(StringComparer.Ordinal)
             .ToArray();
         HashSet<string> primarySectionSet = canonicalPrimarySections.ToHashSet(StringComparer.Ordinal);
+        var strongestPrimarySectionHandles = new HashSet<string>(StringComparer.Ordinal);
+        var primaryDocumentSections = new HashSet<string>(StringComparer.Ordinal);
+        foreach (string handle in canonicalPrimarySections)
+        {
+            EvidenceSection? section = sectionSnapshot.FirstOrDefault(candidate => string.Equals(
+                candidate.SectionHandle,
+                handle,
+                StringComparison.Ordinal));
+            if (section is not null && primaryDocumentSections.Add(section.DocumentHandle))
+            {
+                strongestPrimarySectionHandles.Add(handle);
+            }
+        }
         string[] inferredPrimaryDocuments = sectionSnapshot
             .Where(section => primarySectionSet.Contains(section.SectionHandle))
             .Select(section => section.DocumentHandle)
@@ -653,6 +674,15 @@ public sealed record ChatEvidencePacketBuildRequest
         HashSet<string> sectionHandleSet = sectionSnapshot
             .Select(section => section.SectionHandle)
             .ToHashSet(StringComparer.Ordinal);
+        HashSet<string> relationshipHandleSet = relationships?
+            .Select(relationship => relationship.RelationshipHandle)
+            .ToHashSet(StringComparer.Ordinal) ?? [];
+        Dictionary<string, int> relationshipRankSnapshot = (optionalRelationshipUnitRanks ??
+                new Dictionary<string, int>(StringComparer.Ordinal))
+            .ToDictionary(item => item.Key, item => item.Value, StringComparer.Ordinal);
+        Dictionary<string, int> lexicalRankSnapshot = (lexicalExtraSectionRanks ??
+                new Dictionary<string, int>(StringComparer.Ordinal))
+            .ToDictionary(item => item.Key, item => item.Value, StringComparer.Ordinal);
         if (string.IsNullOrWhiteSpace(requestId) ||
             !Enum.IsDefined(mode) ||
             systemId == Guid.Empty ||
@@ -672,7 +702,17 @@ public sealed record ChatEvidencePacketBuildRequest
                 sectionSnapshot.All(section => !string.Equals(
                     section.SectionHandle,
                     handle,
-                    StringComparison.Ordinal))))
+                    StringComparison.Ordinal))) ||
+            relationshipRankSnapshot.Any(item =>
+                item.Value < 1 ||
+                !ChatContractGuard.IsHandle(item.Key) ||
+                !relationshipHandleSet.Contains(item.Key)) ||
+            lexicalRankSnapshot.Any(item =>
+                item.Value < 1 ||
+                !ChatContractGuard.IsHandle(item.Key) ||
+                !canonicalOptionalHandles.Contains(item.Key, StringComparer.Ordinal) ||
+                !primarySectionSet.Contains(item.Key) ||
+                strongestPrimarySectionHandles.Contains(item.Key)))
         {
             throw new ChatContractException(ChatContractFailureCode.InvalidEvidence);
         }
@@ -694,7 +734,9 @@ public sealed record ChatEvidencePacketBuildRequest
             Array.AsReadOnly(canonicalOptionalHandles),
             Array.AsReadOnly(canonicalPrimaryDocuments),
             Array.AsReadOnly(canonicalPrimarySections),
-            Array.AsReadOnly(canonicalSeeds));
+            Array.AsReadOnly(canonicalSeeds),
+            new System.Collections.ObjectModel.ReadOnlyDictionary<string, int>(relationshipRankSnapshot),
+            new System.Collections.ObjectModel.ReadOnlyDictionary<string, int>(lexicalRankSnapshot));
     }
 }
 

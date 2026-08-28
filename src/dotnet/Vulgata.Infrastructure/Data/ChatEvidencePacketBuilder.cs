@@ -9,21 +9,51 @@ public sealed class ChatEvidencePacketBuilder
         ArgumentNullException.ThrowIfNull(request);
 
         EvidenceSection[] retainedSections = request.Sections.ToArray();
+        var droppedRelationshipHandles = new HashSet<string>(StringComparer.Ordinal);
         ChatContractException? lastFailure = null;
-        foreach (string? optionalHandle in new string?[] { null }.Concat(
-                     request.OptionalSectionHandles.OrderDescending(StringComparer.Ordinal)))
+        DropOperation[] dropOperations = request.OptionalRelationshipUnitRanks
+            .OrderByDescending(item => item.Value)
+            .ThenByDescending(item => item.Key, StringComparer.Ordinal)
+            .Select(item => new DropOperation(item.Key, true))
+            .Concat(request.LexicalExtraSectionRanks
+                .OrderByDescending(item => item.Value)
+                .ThenByDescending(item => item.Key, StringComparer.Ordinal)
+                .Select(item => new DropOperation(item.Key, false)))
+            .ToArray();
+        foreach (DropOperation? operation in new DropOperation?[] { null }.Concat(dropOperations))
         {
-            if (optionalHandle is not null)
+            if (operation is { IsRelationship: true })
+            {
+                droppedRelationshipHandles.Add(operation.Handle);
+                HashSet<string> targetDocumentHandles = request.Relationships
+                    .Where(relationship => string.Equals(
+                        relationship.RelationshipHandle,
+                        operation.Handle,
+                        StringComparison.Ordinal))
+                    .Select(relationship => relationship.TargetDocumentHandle)
+                    .ToHashSet(StringComparer.Ordinal);
+                retainedSections = retainedSections
+                    .Where(section =>
+                        !targetDocumentHandles.Contains(section.DocumentHandle) ||
+                        !request.OptionalSectionHandles.Contains(
+                            section.SectionHandle,
+                            StringComparer.Ordinal))
+                    .ToArray();
+            }
+            else if (operation is not null)
             {
                 retainedSections = retainedSections
                     .Where(section => !string.Equals(
                         section.SectionHandle,
-                        optionalHandle,
+                        operation.Handle,
                         StringComparison.Ordinal))
                     .ToArray();
             }
 
-            PackedEvidence packed = PackCompleteUnits(request, retainedSections);
+            PackedEvidence packed = PackCompleteUnits(
+                request,
+                retainedSections,
+                droppedRelationshipHandles);
             try
             {
                 return EvidencePacket.Create(
@@ -60,7 +90,8 @@ public sealed class ChatEvidencePacketBuilder
 
     private static PackedEvidence PackCompleteUnits(
         ChatEvidencePacketBuildRequest request,
-        EvidenceSection[] retainedSections)
+        EvidenceSection[] retainedSections,
+        IReadOnlySet<string> droppedRelationshipHandles)
     {
         HashSet<string> retainedAnchorHandles = retainedSections
             .SelectMany(section => section.AnchorHandles)
@@ -76,6 +107,7 @@ public sealed class ChatEvidencePacketBuilder
 
         EvidenceRelationship[] retainedRelationships = request.Relationships
             .Where(relationship =>
+                !droppedRelationshipHandles.Contains(relationship.RelationshipHandle) &&
                 retainedDocumentHandles.Contains(relationship.SourceDocumentHandle) &&
                 retainedDocumentHandles.Contains(relationship.TargetDocumentHandle))
             .ToArray();
@@ -126,4 +158,6 @@ public sealed class ChatEvidencePacketBuilder
         IReadOnlyCollection<EvidenceRelationship> Relationships,
         IReadOnlyCollection<EvidenceFlowStep> FlowEvidence,
         IReadOnlyCollection<EvidenceFlowGroupAuthority> FlowGroups);
+
+    private sealed record DropOperation(string Handle, bool IsRelationship);
 }

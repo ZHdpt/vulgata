@@ -741,7 +741,7 @@ public sealed class PreparedChatCoordinatorTests
             [first, second],
             authorization,
             retriever,
-            currentness: new StubCurrentnessValidator(),
+            currentness: new StubCurrentnessValidator { Trace = trace },
             advisoryReader: advisoryReader);
 
         PreparedChatResult result = await coordinator.AskAsync(
@@ -751,10 +751,59 @@ public sealed class PreparedChatCoordinatorTests
             "客户如何付款？");
 
         Assert.Equal(PreparedChatResultKind.Succeeded, result.Kind);
-        Assert.Equal(1, advisoryReader.CallCount);
+        Assert.Equal(2, advisoryReader.CallCount);
         Assert.Equal(1, retriever.CallCount);
         Assert.True(trace.IndexOf("pre-authorization") < trace.IndexOf("advisory"));
         Assert.True(trace.IndexOf("advisory") < trace.IndexOf("retrieval"));
+        Assert.True(trace.IndexOf("currentness") < trace.LastIndexOf("advisory"));
+    }
+
+    [Theory]
+    [InlineData("value")]
+    [InlineData("updated-at")]
+    [InlineData("authority-fingerprint")]
+    [InlineData("repository-membership")]
+    [InlineData("repository-order")]
+    [InlineData("applied-pending-disposition")]
+    public async Task AskAsync_AppliedAdvisoryChangesBeforeReveal_ReReadsAndWithholdsAnswer(
+        string mutation)
+    {
+        var trace = new List<string>();
+        var system = new SystemEntity("支付系统", null, null, DateTimeOffset.UtcNow);
+        Repository first = system.AddRepository("账户仓库", "https://example.test/account.git", null, null, DateTimeOffset.UtcNow);
+        Repository second = system.AddRepository("渠道仓库", "https://example.test/channel.git", null, null, DateTimeOffset.UtcNow);
+        ChatAdvisoryContextSnapshot initial = CreateAdvisorySnapshot(system.Id, first.Id, second.Id);
+        ChatAdvisoryContextReadResult changed = CreateChangedAdvisoryResult(
+            mutation,
+            initial);
+        var advisoryReader = new SequencedAdvisoryContextReader(
+            [ChatAdvisoryContextReadResult.Succeeded(initial), changed],
+            trace);
+        var authorization = new StubAuthorizationVerifier { Trace = trace };
+        var retriever = new StubEvidenceRetriever { Trace = trace };
+        var dispatcher = new StubDispatcher { Trace = trace };
+        var currentness = new StubCurrentnessValidator { Trace = trace };
+        var coordinator = CreateCoordinator(
+            system,
+            [first, second],
+            authorization,
+            retriever,
+            dispatcher,
+            currentness,
+            advisoryReader);
+
+        PreparedChatResult result = await coordinator.AskAsync(
+            ChatMode.Business,
+            system.Id,
+            [second.Id, first.Id],
+            "客户如何付款？");
+
+        Assert.Equal(2, advisoryReader.CallCount);
+        Assert.Equal(PreparedChatResultKind.EvidenceUnavailable, result.Kind);
+        Assert.Null(result.Answer);
+        Assert.True(trace.IndexOf("advisory-initial") < trace.IndexOf("retrieval"));
+        Assert.True(trace.IndexOf("currentness") < trace.IndexOf("advisory-reveal"));
+        Assert.DoesNotContain("citation-materialization", trace);
     }
 
     [Theory]
@@ -1137,6 +1186,74 @@ public sealed class PreparedChatCoordinatorTests
             completionRecorder ?? new RecordingCompletionSummaryRecorder());
     }
 
+    private static ChatAdvisoryContextSnapshot CreateAdvisorySnapshot(
+        Guid systemId,
+        Guid firstRepositoryId,
+        Guid secondRepositoryId)
+    {
+        DateTimeOffset updatedAt = DateTimeOffset.Parse("2026-08-29T00:00:00Z");
+        ChatAdvisoryContextSourceUnit[] units =
+        [
+            new(ChatAdvisoryContextSourceKind.Global, Id(900), updatedAt, "全局规则"),
+            new(ChatAdvisoryContextSourceKind.System, systemId, updatedAt, "系统规则"),
+            new(ChatAdvisoryContextSourceKind.Repository, firstRepositoryId, updatedAt, "账户规则"),
+            new(ChatAdvisoryContextSourceKind.Repository, secondRepositoryId, updatedAt, "渠道规则"),
+        ];
+        const string composedText = "全局规则\n系统规则\n账户规则\n渠道规则";
+        return new ChatAdvisoryContextSnapshot(
+            units,
+            composedText,
+            ["全局", "系统", "账户", "渠道"],
+            Encoding.UTF8.GetByteCount(composedText),
+            new string('a', 64));
+    }
+
+    private static ChatAdvisoryContextReadResult CreateChangedAdvisoryResult(
+        string mutation,
+        ChatAdvisoryContextSnapshot initial)
+    {
+        if (mutation == "applied-pending-disposition")
+        {
+            return ChatAdvisoryContextReadResult.InconsistentCurrentEvidence();
+        }
+
+        ChatAdvisoryContextSourceUnit[] units = initial.SourceUnits.ToArray();
+        string composedText = initial.ComposedText;
+        string fingerprint = initial.AuthorityFingerprint;
+        switch (mutation)
+        {
+            case "value":
+                units[1] = units[1] with { Text = "已变更系统规则" };
+                composedText = "全局规则\n已变更系统规则\n账户规则\n渠道规则";
+                fingerprint = new string('b', 64);
+                break;
+            case "updated-at":
+                units[1] = units[1] with { UpdatedAt = units[1].UpdatedAt.AddTicks(1) };
+                fingerprint = new string('c', 64);
+                break;
+            case "authority-fingerprint":
+                fingerprint = new string('d', 64);
+                break;
+            case "repository-membership":
+                units[3] = units[3] with { SourceId = Id(999) };
+                fingerprint = new string('e', 64);
+                break;
+            case "repository-order":
+                (units[2], units[3]) = (units[3], units[2]);
+                fingerprint = new string('f', 64);
+                break;
+            default:
+                throw new ArgumentOutOfRangeException(nameof(mutation), mutation, null);
+        }
+
+        return ChatAdvisoryContextReadResult.Succeeded(new ChatAdvisoryContextSnapshot(
+            units,
+            composedText,
+            initial.Terms,
+            Encoding.UTF8.GetByteCount(composedText),
+            fingerprint));
+    }
+
     private sealed class RecordingCompletionSummaryRecorder(
         IChatStreamCompletionSummaryRecorder? runtimeSource = null) :
         IChatStreamCompletionSummaryRecorder
@@ -1148,6 +1265,25 @@ public sealed class PreparedChatCoordinatorTests
 
         public void RecordCompletion(ChatStreamCompletionSummary summary) =>
             Summaries.Add(summary);
+    }
+
+    private sealed class SequencedAdvisoryContextReader(
+        IReadOnlyCollection<ChatAdvisoryContextReadResult> results,
+        List<string> trace) : IChatAdvisoryContextReader
+    {
+        private readonly Queue<ChatAdvisoryContextReadResult> _results = new(results);
+
+        public int CallCount { get; private set; }
+
+        public Task<ChatAdvisoryContextReadResult> ReadAsync(
+            AuthorizedChatScope scope,
+            CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            CallCount++;
+            trace.Add(CallCount == 1 ? "advisory-initial" : "advisory-reveal");
+            return Task.FromResult(_results.Dequeue());
+        }
     }
 
     private sealed class RecordingTimeProvider(List<string> trace) : TimeProvider
@@ -1349,7 +1485,9 @@ public sealed class PreparedChatCoordinatorTests
                             null)
                     ]
                     : [],
-                    []);
+                    [],
+                    advisoryContext: request.AdvisoryContext.ComposedText,
+                    advisoryContextAuthorityFingerprint: request.AdvisoryContext.AuthorityFingerprint);
             return Task.FromResult(ChatEvidenceResult.Found(packet));
         }
     }

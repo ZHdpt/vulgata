@@ -148,7 +148,12 @@ public sealed class ChatEvidencePacketBuilderTests
     {
         EvidencePacket packet = new ChatEvidencePacketBuilder().Build(CreateBuildRequest(
             includeOversizedOptionalSection: true,
-            optionalSectionHandles: ["s3"]));
+            optionalSectionHandles: ["s3"],
+            primarySectionHandles: ["s1", "s2", "s3"],
+            lexicalExtraSectionRanks: new Dictionary<string, int>(StringComparer.Ordinal)
+            {
+                ["s3"] = 3,
+            }));
 
         Assert.DoesNotContain(packet.Sections, section => section.SectionHandle == "s3");
         Assert.DoesNotContain(packet.SourceAnchors, anchor => anchor.AnchorHandle == "a3");
@@ -274,7 +279,11 @@ public sealed class ChatEvidencePacketBuilderTests
     {
         EvidencePacket packet = new ChatEvidencePacketBuilder().Build(CreateBuildRequest(
             includeOptionalRelationshipUnit: true,
-            optionalSectionHandles: ["s3"]));
+            optionalSectionHandles: ["s3"],
+            optionalRelationshipUnitRanks: new Dictionary<string, int>(StringComparer.Ordinal)
+            {
+                ["r3"] = 1,
+            }));
 
         Assert.DoesNotContain(packet.Sections, section => section.SectionHandle == "s3");
         Assert.DoesNotContain(packet.Relationships, relationship => relationship.RelationshipHandle == "r3");
@@ -282,6 +291,57 @@ public sealed class ChatEvidencePacketBuilderTests
         Assert.DoesNotContain(packet.FlowEvidence, step => step.DocumentHandle == "d3");
         Assert.DoesNotContain(packet.SourceAnchors, anchor => anchor.AnchorHandle == "a3");
         Assert.DoesNotContain(packet.Documents, document => document.DocumentHandle == "d3");
+    }
+
+    [Fact]
+    public void Build_V2Packet_OverBoundOptionalRelationshipUnits_DropsLowestEvidenceRankBeforeHandleOrder()
+    {
+        EvidencePacket packet = new ChatEvidencePacketBuilder().Build(CreateBuildRequest(
+            includeRankedOptionalUnits: true,
+            optionalUnitsHaveRelationships: true,
+            optionalSectionHandles: ["s0", "sz"],
+            primarySectionHandles: ["s1", "s2", "s0", "sz"],
+            optionalRelationshipUnitRanks: new Dictionary<string, int>(StringComparer.Ordinal)
+            {
+                ["r0"] = 2,
+                ["rz"] = 1,
+            }));
+
+        Assert.DoesNotContain(packet.Relationships, relationship => relationship.RelationshipHandle == "r0");
+        Assert.DoesNotContain(packet.FlowGroups, group => group.FlowGroupId == Id(96));
+        Assert.DoesNotContain(packet.FlowEvidence, step => step.RelationshipHandle == "r0");
+        Assert.DoesNotContain(packet.Sections, section => section.SectionHandle == "s0");
+        Assert.DoesNotContain(packet.SourceAnchors, anchor => anchor.AnchorHandle == "a0");
+        Assert.DoesNotContain(packet.Documents, document => document.DocumentHandle == "d0");
+
+        Assert.Contains(packet.Relationships, relationship => relationship.RelationshipHandle == "rz");
+        Assert.Contains(packet.FlowGroups, group => group.FlowGroupId == Id(106));
+        Assert.Contains(packet.FlowEvidence, step => step.RelationshipHandle == "rz");
+        Assert.Contains(packet.Sections, section => section.SectionHandle == "sz");
+        Assert.Contains(packet.SourceAnchors, anchor => anchor.AnchorHandle == "az");
+        Assert.Contains(packet.Documents, document => document.DocumentHandle == "dz");
+    }
+
+    [Fact]
+    public void Build_V2Packet_OverBoundLexicalExtras_DropsLowestEvidenceRankBeforeHandleOrder()
+    {
+        EvidencePacket packet = new ChatEvidencePacketBuilder().Build(CreateBuildRequest(
+            includeRankedOptionalUnits: true,
+            optionalSectionHandles: ["s0", "sz"],
+            primarySectionHandles: ["s1", "s2", "s0", "sz"],
+            lexicalExtraSectionRanks: new Dictionary<string, int>(StringComparer.Ordinal)
+            {
+                ["s0"] = 3,
+                ["sz"] = 2,
+            }));
+
+        Assert.DoesNotContain(packet.Sections, section => section.SectionHandle == "s0");
+        Assert.DoesNotContain(packet.SourceAnchors, anchor => anchor.AnchorHandle == "a0");
+        Assert.DoesNotContain(packet.Documents, document => document.DocumentHandle == "d0");
+
+        Assert.Contains(packet.Sections, section => section.SectionHandle == "sz");
+        Assert.Contains(packet.SourceAnchors, anchor => anchor.AnchorHandle == "az");
+        Assert.Contains(packet.Documents, document => document.DocumentHandle == "dz");
     }
 
     [Fact]
@@ -423,7 +483,12 @@ public sealed class ChatEvidencePacketBuilderTests
         IReadOnlyCollection<string>? optionalSectionHandles = null,
         IReadOnlyCollection<EvidenceFlowGroupAuthority>? flowGroups = null,
         EvidenceRelationship? relationship = null,
-        bool includeOptionalRelationshipUnit = false)
+        bool includeOptionalRelationshipUnit = false,
+        bool includeRankedOptionalUnits = false,
+        bool optionalUnitsHaveRelationships = false,
+        IReadOnlyCollection<string>? primarySectionHandles = null,
+        IReadOnlyDictionary<string, int>? optionalRelationshipUnitRanks = null,
+        IReadOnlyDictionary<string, int>? lexicalExtraSectionRanks = null)
     {
         Guid systemId = Id(1);
         Guid repository1 = Id(2);
@@ -458,9 +523,9 @@ public sealed class ChatEvidencePacketBuilderTests
             documents.Add(new EvidenceDocument(
                 "d3", Id(14), Id(15), repository1, DocumentType.CodeLogic, "可选支持", "abcdef3"));
             sections.Add(new EvidenceSection(
-                "s3", "d3", Id(22), 1, DocumentSectionKind.TechnicalDetail, "可选详情", new string('x', 70_000), ["a3"], []));
+                "s3", "d1", Id(22), 2, DocumentSectionKind.TechnicalDetail, "可选详情", new string('x', 70_000), ["a3"], ["d3"]));
             anchors.Add(new EvidenceAnchor(
-                "a3", Id(32), "d3", Id(15), repository1, "src/Optional.cs", 30, 32, new string('e', 64)));
+                "a3", Id(32), "d1", Id(11), repository1, "src/Optional.cs", 30, 32, new string('e', 64)));
         }
         if (includeOptionalRelationshipUnit)
         {
@@ -482,6 +547,46 @@ public sealed class ChatEvidencePacketBuilderTests
             });
             flowSnapshot.Add(new EvidenceFlowStep(2, "d3", "r3", "可选支持流程"));
         }
+        if (includeRankedOptionalUnits)
+        {
+            documents.Add(new EvidenceDocument(
+                "d0", Id(14), Id(15), repository1, DocumentType.CodeLogic, "低排名支持", "abcdef3"));
+            documents.Add(new EvidenceDocument(
+                "dz", Id(16), Id(17), repository2, DocumentType.CodeLogic, "高排名支持", "abcdef4"));
+            sections.Add(new EvidenceSection(
+                "s0", optionalUnitsHaveRelationships ? "d0" : "d1", Id(22), 2,
+                DocumentSectionKind.TechnicalDetail, "低排名详情", new string('x', 35_000), ["a0"],
+                optionalUnitsHaveRelationships ? [] : ["d0"]));
+            sections.Add(new EvidenceSection(
+                "sz", optionalUnitsHaveRelationships ? "dz" : "d2", Id(23), 2,
+                DocumentSectionKind.TechnicalDetail, "高排名详情", new string('y', 35_000), ["az"],
+                optionalUnitsHaveRelationships ? [] : ["dz"]));
+            anchors.Add(new EvidenceAnchor(
+                "a0", Id(32), optionalUnitsHaveRelationships ? "d0" : "d1",
+                optionalUnitsHaveRelationships ? Id(15) : Id(11), repository1,
+                "src/LowRank.cs", 30, 32, new string('e', 64)));
+            anchors.Add(new EvidenceAnchor(
+                "az", Id(33), optionalUnitsHaveRelationships ? "dz" : "d2",
+                optionalUnitsHaveRelationships ? Id(17) : Id(13), repository2,
+                "src/HighRank.cs", 40, 42, new string('f', 64)));
+            if (optionalUnitsHaveRelationships)
+            {
+                relationshipSnapshot.Add(CreateV2Relationship(Id(83), 1, Id(84), Id(96)) with
+                {
+                    RelationshipHandle = "r0",
+                    SourceDocumentHandle = "d1",
+                    TargetDocumentHandle = "d0",
+                });
+                relationshipSnapshot.Add(CreateV2Relationship(Id(103), 1, Id(104), Id(106)) with
+                {
+                    RelationshipHandle = "rz",
+                    SourceDocumentHandle = "d1",
+                    TargetDocumentHandle = "dz",
+                });
+                flowSnapshot.Add(new EvidenceFlowStep(2, "d0", "r0", "低排名可选流程"));
+                flowSnapshot.Add(new EvidenceFlowStep(3, "dz", "rz", "高排名可选流程"));
+            }
+        }
 
         IReadOnlyCollection<EvidenceFlowGroupAuthority> flowGroupSnapshot = flowGroups ??
             [CreateFlowGroupAuthority(
@@ -492,6 +597,17 @@ public sealed class ChatEvidencePacketBuilderTests
         {
             flowGroupSnapshot = flowGroupSnapshot
                 .Append(CreateFlowGroupAuthority(Id(96), Id(84), Id(83), Id(95), Id(99), Id(15)))
+                .ToArray();
+        }
+        if (includeRankedOptionalUnits && optionalUnitsHaveRelationships)
+        {
+            flowGroupSnapshot = flowGroupSnapshot
+                .Append(CreateFlowGroupAuthority(
+                    Id(96), Id(84), Id(83), Id(95), Id(99), Id(15),
+                    stepDescription: "低排名可选流程"))
+                .Append(CreateFlowGroupAuthority(
+                    Id(106), Id(104), Id(103), Id(105), Id(109), Id(17),
+                    stepDescription: "高排名可选流程"))
                 .ToArray();
         }
 
@@ -514,8 +630,12 @@ public sealed class ChatEvidencePacketBuilderTests
             optionalSectionHandles ?? [],
             null,
             ["d1", "d2"],
-            ["s1", "s2"],
-            ["d1", "d2"]);
+            primarySectionHandles ?? ["s1", "s2"],
+            ["d1", "d2"],
+            optionalRelationshipUnitRanks: optionalRelationshipUnitRanks ??
+                new Dictionary<string, int>(StringComparer.Ordinal),
+            lexicalExtraSectionRanks: lexicalExtraSectionRanks ??
+                new Dictionary<string, int>(StringComparer.Ordinal));
     }
 
     private static EvidenceRelationship CreateV2Relationship(
