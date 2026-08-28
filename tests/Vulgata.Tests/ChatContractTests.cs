@@ -276,7 +276,7 @@ public sealed class ChatContractTests
             typeof(IChatEvidenceRetriever),
             "RetrieveAsync",
             typeof(Task<ChatEvidenceResult>),
-            typeof(ChatQuestionRequest),
+            typeof(ChatRetrievalRequest),
             typeof(RepositoryAccessScope),
             typeof(CancellationToken));
         AssertMethodSignature(

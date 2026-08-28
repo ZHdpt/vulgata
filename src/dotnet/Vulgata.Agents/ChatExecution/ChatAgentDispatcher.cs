@@ -1,11 +1,9 @@
-using System.ClientModel;
-using System.ClientModel.Primitives;
+using System.Runtime.CompilerServices;
+using System.Security.Cryptography;
+using System.Text;
 using System.Text.Json;
-using Microsoft.Agents.AI;
-using Microsoft.Extensions.AI;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using OpenAI;
-using OpenAI.Chat;
 using Vulgata.Core.DomainServices;
 using Vulgata.Shared;
 
@@ -14,12 +12,15 @@ namespace Vulgata.Agents.ChatExecution;
 public sealed class ChatAgentDispatcher : IChatAgentDispatcher
 {
     internal static readonly TimeSpan ProviderTimeout = TimeSpan.FromSeconds(30);
+    private static readonly TimeSpan _streamInactivityTimeout = TimeSpan.FromSeconds(10);
+    private static readonly TimeSpan _minimumRepairWindow = TimeSpan.FromSeconds(3);
     private const string _requestSchemaVersion = "prepared-chat-selection-request-v1";
     private readonly ChatAgentProviderResolver _providerResolver;
     private readonly ISecretEncryptionService _encryptionService;
     private readonly ChatPromptCatalog _promptCatalog;
     private readonly HttpMessageHandler _httpMessageHandler;
     private readonly TimeProvider _timeProvider;
+    private readonly IChatProviderStreamingTransport? _streamingTransport;
     private readonly ILogger<ChatAgentDispatcher>? _logger;
 
     public ChatAgentDispatcher(
@@ -36,6 +37,26 @@ public sealed class ChatAgentDispatcher : IChatAgentDispatcher
         _httpMessageHandler = httpMessageHandler;
         _timeProvider = timeProvider;
         _logger = logger;
+    }
+
+    [ActivatorUtilitiesConstructor]
+    public ChatAgentDispatcher(
+        IServiceProvider services,
+        ChatAgentProviderResolver providerResolver,
+        ISecretEncryptionService encryptionService,
+        ChatPromptCatalog promptCatalog,
+        HttpMessageHandler httpMessageHandler,
+        TimeProvider timeProvider,
+        ILogger<ChatAgentDispatcher>? logger = null)
+        : this(
+            providerResolver,
+            encryptionService,
+            promptCatalog,
+            httpMessageHandler,
+            timeProvider,
+            logger)
+    {
+        _streamingTransport = services.GetRequiredService<IChatProviderStreamingTransport>();
     }
 
     public async Task<ChatSynthesisOutcome> GenerateAsync(
@@ -68,70 +89,65 @@ public sealed class ChatAgentDispatcher : IChatAgentDispatcher
                     narrativeAllowed = candidate.AllowsBusinessNarrative,
                 }),
             });
-            string apiKey = await _encryptionService.DecryptAsync(
-                SecretPurposes.LlmApiKey,
-                provider.EncryptedApiKey,
+            string apiKey = _streamingTransport is null
+                ? await _encryptionService.DecryptAsync(
+                    SecretPurposes.LlmApiKey,
+                    provider.EncryptedApiKey,
+                    cancellationToken)
+                : string.Empty;
+            if (_streamingTransport is null && string.IsNullOrWhiteSpace(apiKey))
+            {
+                return ChatSynthesisOutcome.Failed(ChatContractFailureCode.ProviderFailure);
+            }
+
+            long coordinatorDeadline = request.AbsoluteDeadlineUnixTimeMilliseconds;
+            long localCap = _timeProvider.GetUtcNow().Add(ProviderTimeout)
+                .ToUnixTimeMilliseconds();
+            long absoluteDeadline = Math.Min(coordinatorDeadline, localCap);
+            IChatProviderStreamingTransport transport = _streamingTransport ??
+                new DirectConstructionStreamingTransport(
+                    provider,
+                    apiKey,
+                    _httpMessageHandler);
+            string boundedPrompt = _streamingTransport is null
+                ? requestJson
+                : string.Concat(prompt, "\n\n", requestJson);
+            ChatSynthesisOutcome primary = await DispatchAttemptAsync(
+                transport,
+                request,
+                provider,
+                boundedPrompt,
+                "primary",
+                absoluteDeadline,
                 cancellationToken);
-            if (string.IsNullOrWhiteSpace(apiKey))
-            {
-                return ChatSynthesisOutcome.Failed(ChatContractFailureCode.ProviderFailure);
-            }
-
-            using var httpClient = new HttpClient(_httpMessageHandler, disposeHandler: false);
-            var clientOptions = new OpenAIClientOptions
-            {
-                Endpoint = provider.Endpoint,
-                RetryPolicy = new ClientRetryPolicy(0),
-                Transport = new HttpClientPipelineTransport(httpClient, false, null),
-                EnableDistributedTracing = false,
-                ClientLoggingOptions = new ClientLoggingOptions
+            if (primary.FailureCode != ChatContractFailureCode.InvalidSelection ||
+                transport is DirectConstructionStreamingTransport
                 {
-                    EnableLogging = false,
-                    EnableMessageLogging = false,
-                    EnableMessageContentLogging = false,
-                },
-            };
-            var chatClient = new ChatClient(
-                provider.Model,
-                new ApiKeyCredential(apiKey),
-                clientOptions);
-            ChatClientAgent agent = chatClient.AsAIAgent(
-                instructions: prompt,
-                name: "prepared-chat-selection");
-            // DeepSeek and other OpenAI-compatible endpoints reject the
-            // json_schema response format; ChatAgentResultValidator enforces
-            // the selection contract after the call.
-            Microsoft.Extensions.AI.ChatResponseFormat responseFormat =
-                Microsoft.Extensions.AI.ChatResponseFormat.Json;
-            var runOptions = new ChatClientAgentRunOptions(
-                new ChatOptions { ResponseFormat = responseFormat });
-            using var timeout = new CancellationTokenSource(ProviderTimeout, _timeProvider);
-            using var linked = CancellationTokenSource.CreateLinkedTokenSource(
-                cancellationToken,
-                timeout.Token);
-            AgentResponse response;
-            try
+                    LastResponseWasStreaming: false,
+                })
             {
-                response = await agent.RunAsync(
-                    requestJson,
-                    session: null,
-                    options: runOptions,
-                    linked.Token);
-            }
-            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
-            {
-                return ChatSynthesisOutcome.Failed(ChatContractFailureCode.Cancelled);
-            }
-            catch (OperationCanceledException) when (timeout.IsCancellationRequested)
-            {
-                return ChatSynthesisOutcome.Failed(ChatContractFailureCode.TimedOut);
-            }
-            catch (Exception)
-            {
-                return ChatSynthesisOutcome.Failed(ChatContractFailureCode.ProviderFailure);
+                return primary;
             }
 
-            return ParseResult(response.Text);
+            long remainingMilliseconds = absoluteDeadline -
+                _timeProvider.GetUtcNow().ToUnixTimeMilliseconds();
+            if (remainingMilliseconds < _minimumRepairWindow.TotalMilliseconds)
+            {
+                return primary;
+            }
+
+            string repairPrompt = string.Concat(
+                boundedPrompt,
+                "\n\nReturn only one syntactically valid JSON object matching the requested schema. " +
+                "Do not change the request, evidence fingerprint, candidates, or answer semantics.");
+            return await DispatchAttemptAsync(
+                transport,
+                request,
+                provider,
+                repairPrompt,
+                "repair",
+                absoluteDeadline,
+                cancellationToken);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
@@ -141,6 +157,128 @@ public sealed class ChatAgentDispatcher : IChatAgentDispatcher
             exception is InvalidOperationException or ArgumentException or JsonException)
         {
             return ChatSynthesisOutcome.Failed(ChatContractFailureCode.ProviderFailure);
+        }
+    }
+
+    private async Task<ChatSynthesisOutcome> DispatchAttemptAsync(
+        IChatProviderStreamingTransport transport,
+        ChatSynthesisRequest synthesisRequest,
+        ResolvedChatAgentProvider provider,
+        string prompt,
+        string attemptKind,
+        long absoluteDeadline,
+        CancellationToken cancellationToken)
+    {
+        string requestFingerprint = Convert.ToHexStringLower(SHA256.HashData(
+            Encoding.UTF8.GetBytes(string.Join(
+                '\u001f',
+                synthesisRequest.RequestId,
+                attemptKind,
+                provider.ProviderId.ToString("D"),
+                synthesisRequest.EvidenceFingerprint,
+                "stream=true",
+                prompt))));
+        var streamRequest = new ChatProviderStreamRequest(
+            synthesisRequest.RequestId,
+            attemptKind,
+            provider.ProviderId.ToString("D"),
+            prompt,
+            synthesisRequest.EvidenceFingerprint,
+            requestFingerprint,
+            absoluteDeadline);
+        using var deadline = new CancellationTokenSource(
+            TimeSpan.FromMilliseconds(Math.Max(
+                1,
+                absoluteDeadline - _timeProvider.GetUtcNow().ToUnixTimeMilliseconds())),
+            _timeProvider);
+        using var linked = CancellationTokenSource.CreateLinkedTokenSource(
+            cancellationToken,
+            deadline.Token);
+        var answer = new MemoryStream();
+        try
+        {
+            await using IAsyncEnumerator<ChatProviderStreamSignal> signals = transport
+                .StreamAsync(streamRequest, linked.Token)
+                .GetAsyncEnumerator(linked.Token);
+            bool enforceInactivity = transport is not DirectConstructionStreamingTransport;
+            while (true)
+            {
+                bool hasNext;
+                if (enforceInactivity)
+                {
+                    using var inactivity = new CancellationTokenSource(
+                        _streamInactivityTimeout,
+                        _timeProvider);
+                    using var moveNext = CancellationTokenSource.CreateLinkedTokenSource(
+                        linked.Token,
+                        inactivity.Token);
+                    try
+                    {
+                        hasNext = await signals.MoveNextAsync().AsTask()
+                            .WaitAsync(moveNext.Token);
+                    }
+                    catch (OperationCanceledException) when (
+                        inactivity.IsCancellationRequested && !linked.IsCancellationRequested)
+                    {
+                        return ChatSynthesisOutcome.Failed(ChatContractFailureCode.TimedOut);
+                    }
+                }
+                else
+                {
+                    hasNext = await signals.MoveNextAsync().AsTask()
+                        .WaitAsync(linked.Token);
+                }
+
+                if (!hasNext)
+                {
+                    return ChatSynthesisOutcome.Failed(ChatContractFailureCode.ProviderFailure);
+                }
+
+                ChatProviderStreamSignal signal = signals.Current;
+                if (signal.Kind == ChatProviderStreamSignalKind.ProviderError)
+                {
+                    return ChatSynthesisOutcome.Failed(ChatContractFailureCode.ProviderFailure);
+                }
+
+                if (signal.Kind == ChatProviderStreamSignalKind.Terminal)
+                {
+                    return ParseResult(Encoding.UTF8.GetString(answer.ToArray()));
+                }
+
+                if (signal.Kind != ChatProviderStreamSignalKind.AnswerDelta ||
+                    signal.AnswerDelta.IsEmpty)
+                {
+                    continue;
+                }
+
+                await answer.WriteAsync(signal.AnswerDelta, linked.Token);
+            }
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            return ChatSynthesisOutcome.Failed(ChatContractFailureCode.Cancelled);
+        }
+        catch (NotSupportedException) when (cancellationToken.IsCancellationRequested)
+        {
+            return ChatSynthesisOutcome.Failed(ChatContractFailureCode.Cancelled);
+        }
+        catch (NotSupportedException) when (deadline.IsCancellationRequested)
+        {
+            return ChatSynthesisOutcome.Failed(ChatContractFailureCode.TimedOut);
+        }
+        catch (OperationCanceledException) when (deadline.IsCancellationRequested)
+        {
+            return ChatSynthesisOutcome.Failed(ChatContractFailureCode.TimedOut);
+        }
+        catch (Exception exception) when (
+            exception is HttpRequestException or InvalidDataException or JsonException or
+            InvalidOperationException)
+        {
+            return ChatSynthesisOutcome.Failed(ChatContractFailureCode.ProviderFailure);
+        }
+        finally
+        {
+            Array.Clear(answer.GetBuffer(), 0, checked((int)answer.Length));
         }
     }
 
@@ -229,4 +367,144 @@ public sealed class ChatAgentDispatcher : IChatAgentDispatcher
         ChatMode.It => "it",
         _ => throw new InvalidOperationException("The Chat Agent mode is not supported."),
     };
+
+    // Preserves the existing direct-construction seam used by focused tests.
+    // Production DI supplies the registered raw response-header adapter instead.
+    private sealed class DirectConstructionStreamingTransport(
+        ResolvedChatAgentProvider provider,
+        string apiKey,
+        HttpMessageHandler httpMessageHandler) : IChatProviderStreamingTransport
+    {
+        internal bool LastResponseWasStreaming { get; private set; }
+
+        public async IAsyncEnumerable<ChatProviderStreamSignal> StreamAsync(
+            ChatProviderStreamRequest request,
+            [EnumeratorCancellation] CancellationToken cancellationToken)
+        {
+            byte[] body = JsonSerializer.SerializeToUtf8Bytes(new
+            {
+                model = provider.Model,
+                stream = true,
+                messages = new[] { new { role = "user", content = request.Prompt } },
+            });
+            using var message = new HttpRequestMessage(
+                HttpMethod.Post,
+                ResolveEndpoint(provider.Endpoint));
+            message.Headers.Authorization =
+                new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", apiKey);
+            message.Headers.Accept.Add(
+                new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("text/event-stream"));
+            message.Content = new ByteArrayContent(body);
+            message.Content.Headers.ContentType =
+                new System.Net.Http.Headers.MediaTypeHeaderValue("application/json")
+                {
+                    CharSet = "utf-8",
+                };
+            using var client = new HttpClient(httpMessageHandler, disposeHandler: false)
+            {
+                Timeout = Timeout.InfiniteTimeSpan,
+            };
+            using HttpResponseMessage response = await client.SendAsync(
+                message,
+                HttpCompletionOption.ResponseHeadersRead,
+                cancellationToken);
+            if (!response.IsSuccessStatusCode)
+            {
+                yield return new ChatProviderStreamSignal(
+                    ChatProviderStreamSignalKind.ProviderError,
+                    ReadOnlyMemory<byte>.Empty,
+                    "invalid-provider-response");
+                yield break;
+            }
+
+            string? mediaType = response.Content.Headers.ContentType?.MediaType;
+            LastResponseWasStreaming = StringComparer.Ordinal.Equals(
+                mediaType,
+                "text/event-stream");
+            if (!LastResponseWasStreaming)
+            {
+                if (!StringComparer.Ordinal.Equals(mediaType, "application/json"))
+                {
+                    yield return new ChatProviderStreamSignal(
+                        ChatProviderStreamSignalKind.ProviderError,
+                        ReadOnlyMemory<byte>.Empty,
+                        "invalid-provider-response");
+                    yield break;
+                }
+
+                string aggregate = await response.Content.ReadAsStringAsync(cancellationToken);
+                using JsonDocument document = JsonDocument.Parse(aggregate);
+                string? content = document.RootElement.GetProperty("choices")[0]
+                    .GetProperty("message")
+                    .GetProperty("content")
+                    .GetString();
+                if (content is null)
+                {
+                    yield return new ChatProviderStreamSignal(
+                        ChatProviderStreamSignalKind.ProviderError,
+                        ReadOnlyMemory<byte>.Empty,
+                        "invalid-provider-response");
+                    yield break;
+                }
+
+                yield return new ChatProviderStreamSignal(
+                    ChatProviderStreamSignalKind.AnswerDelta,
+                    Encoding.UTF8.GetBytes(content));
+                yield return new ChatProviderStreamSignal(
+                    ChatProviderStreamSignalKind.Terminal,
+                    ReadOnlyMemory<byte>.Empty);
+                yield break;
+            }
+
+            await using Stream stream = await response.Content.ReadAsStreamAsync(cancellationToken);
+            ChatProviderStreamAssemblyResult assembled =
+                await ChatProviderStreamAssembler.AssembleAsync(
+                    ReadBodyAsync(stream, cancellationToken),
+                    cancellationToken);
+            if (!assembled.Accepted || assembled.Answer is null)
+            {
+                yield return new ChatProviderStreamSignal(
+                    ChatProviderStreamSignalKind.ProviderError,
+                    ReadOnlyMemory<byte>.Empty,
+                    assembled.RejectionCategory);
+                yield break;
+            }
+
+            yield return new ChatProviderStreamSignal(
+                ChatProviderStreamSignalKind.AnswerDelta,
+                Encoding.UTF8.GetBytes(assembled.Answer));
+            yield return new ChatProviderStreamSignal(
+                ChatProviderStreamSignalKind.Terminal,
+                ReadOnlyMemory<byte>.Empty);
+        }
+
+        private static async IAsyncEnumerable<ReadOnlyMemory<byte>> ReadBodyAsync(
+            Stream stream,
+            [EnumeratorCancellation] CancellationToken cancellationToken)
+        {
+            byte[] buffer = new byte[16_384];
+            while (true)
+            {
+                int read = await stream.ReadAsync(buffer, cancellationToken);
+                if (read == 0)
+                {
+                    yield break;
+                }
+
+                yield return buffer.AsMemory(0, read).ToArray();
+            }
+        }
+
+        private static Uri ResolveEndpoint(Uri endpoint) =>
+            endpoint.AbsolutePath.EndsWith(
+                "/chat/completions",
+                StringComparison.OrdinalIgnoreCase)
+                ? endpoint
+                : new UriBuilder(endpoint)
+                {
+                    Path = endpoint.AbsolutePath.TrimEnd('/') + "/chat/completions",
+                    Query = string.Empty,
+                    Fragment = string.Empty,
+                }.Uri;
+    }
 }

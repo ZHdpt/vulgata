@@ -32,13 +32,20 @@ public enum PreparedChatResultKind
 public sealed record PreparedChatResult(
     PreparedChatResultKind Kind,
     GroundedAnswer? Answer,
-    string? Message)
+    string? Message,
+    long RemainingDeadlineMilliseconds)
 {
-    public static PreparedChatResult Succeeded(GroundedAnswer answer) =>
-        new(PreparedChatResultKind.Succeeded, answer, null);
+    public static PreparedChatResult Succeeded(
+        GroundedAnswer answer,
+        long remainingDeadlineMilliseconds) =>
+        new(
+            PreparedChatResultKind.Succeeded,
+            answer,
+            null,
+            Math.Max(0, remainingDeadlineMilliseconds));
 
     public static PreparedChatResult Failed(PreparedChatResultKind kind, string message) =>
-        new(kind, null, message);
+        new(kind, null, message, 0);
 }
 
 public sealed class PreparedChatCoordinator(
@@ -54,7 +61,7 @@ public sealed class PreparedChatCoordinator(
     ChatAgentResultValidator resultValidator,
     IPreparedChatScopeResolver preparedScopeResolver,
     IValidator<PreparedChatQuestionRequest> requestValidator,
-    ILogger<PreparedChatCoordinator>? logger = null)
+    ILogger<PreparedChatCoordinator>? logger = null) : IDisposable
 {
     private const string _invalidRequestMessage = "请选择业务模式、系统和两个不同的仓库，并输入 1 至 2000 个字符的问题。";
     private const string _missingMessage = "未找到可用的知识范围，或您无权访问。";
@@ -63,6 +70,7 @@ public sealed class PreparedChatCoordinator(
     private const string _providerUnavailableMessage = "暂时无法生成回答，请稍后重试。";
     private const string _timedOutMessage = "回答超时，请重试。";
     private const string _cancelledMessage = "已取消本次提问。";
+    private ChatConversationState? _conversationState;
 
     public async Task<IReadOnlyList<PreparedChatScopeOption>> ListScopesAsync(
         CancellationToken cancellationToken = default)
@@ -181,6 +189,14 @@ public sealed class PreparedChatCoordinator(
                 boundaryRequest.SystemId,
                 boundaryRequest.RepositoryIds,
                 boundaryRequest.NormalizedQuestion);
+            ChatConversationScope conversationScope = ChatConversationScope.Create(
+                request.Mode,
+                request.SystemId,
+                request.RepositoryIds);
+            _conversationState = (_conversationState ?? ChatConversationState.Empty(conversationScope))
+                .ResetForScopeChange(conversationScope);
+            DateTimeOffset deadlineUtc = timeProvider.GetUtcNow().AddSeconds(29);
+            long absoluteDeadlineUnixTimeMilliseconds = deadlineUtc.ToUnixTimeMilliseconds();
             UserContext? userContext = await GetCurrentUserContextAsync();
             if (userContext is null ||
                 await systemRepository.GetVisibleByIdAsync(
@@ -188,6 +204,7 @@ public sealed class PreparedChatCoordinator(
                     userContext.ToSystemOwnerFilter(),
                     cancellationToken) is null)
             {
+                ClearConversation();
                 return Missing();
             }
 
@@ -200,6 +217,7 @@ public sealed class PreparedChatCoordinator(
                     cancellationToken);
                 if (repository is null)
                 {
+                    ClearConversation();
                     return Missing();
                 }
 
@@ -211,6 +229,7 @@ public sealed class PreparedChatCoordinator(
                 authorizationVerifier);
             if (!await accessScope.HasCurrentAccessAsync(request.RepositoryIds, cancellationToken))
             {
+                ClearConversation();
                 return Missing();
             }
 
@@ -220,15 +239,21 @@ public sealed class PreparedChatCoordinator(
                     accessScope,
                     cancellationToken) is null)
             {
+                ClearConversation();
                 return Missing();
             }
 
-            ChatEvidenceResult evidence = await evidenceRetriever.RetrieveAsync(
+            ChatRetrievalRequest retrievalRequest = ChatRetrievalRequest.Create(
                 request,
+                _conversationState,
+                deadlineUtc);
+            ChatEvidenceResult evidence = await evidenceRetriever.RetrieveAsync(
+                retrievalRequest,
                 accessScope,
                 cancellationToken);
             if (evidence.Kind == ChatEvidenceResultKind.NotFoundOrUnauthorized)
             {
+                ClearConversation();
                 return Missing();
             }
 
@@ -264,7 +289,8 @@ public sealed class PreparedChatCoordinator(
                 request.SystemId,
                 request.Question,
                 packet.Fingerprint,
-                candidates);
+                candidates,
+                absoluteDeadlineUnixTimeMilliseconds);
             ChatSynthesisOutcome synthesis = await dispatcher.GenerateAsync(
                 synthesisRequest,
                 cancellationToken);
@@ -290,6 +316,7 @@ public sealed class PreparedChatCoordinator(
                         CreateGroundedFallbackClaims(fallbackCandidates),
                         selectedRepositories,
                         accessScope,
+                        absoluteDeadlineUnixTimeMilliseconds,
                         cancellationToken);
                 }
 
@@ -330,6 +357,7 @@ public sealed class PreparedChatCoordinator(
                         CreateGroundedFallbackClaims(fallbackCandidates),
                         selectedRepositories,
                         accessScope,
+                        absoluteDeadlineUnixTimeMilliseconds,
                         cancellationToken);
                 }
 
@@ -350,6 +378,7 @@ public sealed class PreparedChatCoordinator(
                 validation.MaterialClaims,
                 selectedRepositories,
                 accessScope,
+                absoluteDeadlineUnixTimeMilliseconds,
                 cancellationToken);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
@@ -384,6 +413,7 @@ public sealed class PreparedChatCoordinator(
         IReadOnlyList<MaterialClaim> materialClaims,
         Dictionary<Guid, RepositoryEntity> selectedRepositories,
         RepositoryAccessScope accessScope,
+        long absoluteDeadlineUnixTimeMilliseconds,
         CancellationToken cancellationToken)
     {
         ChatCurrentnessValidationRequest currentnessRequest = BuildCurrentnessRequest(
@@ -407,6 +437,7 @@ public sealed class PreparedChatCoordinator(
                 request.RepositoryIds,
                 cancellationToken))
         {
+            ClearConversation();
             return Missing();
         }
 
@@ -417,7 +448,61 @@ public sealed class PreparedChatCoordinator(
             materialClaims,
             selectedRepositories,
             timeProvider.GetUtcNow());
-        return PreparedChatResult.Succeeded(answer);
+        AppendValidatedConversationTurn(request, packet, selectedCandidates, answer);
+        long remainingDeadlineMilliseconds = absoluteDeadlineUnixTimeMilliseconds -
+            timeProvider.GetUtcNow().ToUnixTimeMilliseconds();
+        return PreparedChatResult.Succeeded(answer, remainingDeadlineMilliseconds);
+    }
+
+    private void AppendValidatedConversationTurn(
+        ChatQuestionRequest request,
+        EvidencePacket packet,
+        IReadOnlyCollection<CandidateClaim> selectedCandidates,
+        GroundedAnswer answer)
+    {
+        if (_conversationState is null)
+        {
+            return;
+        }
+
+        HashSet<Guid> selectedDocumentVersionIds = selectedCandidates
+            .Select(candidate => candidate.DocumentVersionId)
+            .ToHashSet();
+        Guid[] logicalDocumentIds = packet.Documents
+            .Where(document => selectedDocumentVersionIds.Contains(document.DocumentVersionId))
+            .Select(document => document.LogicalDocumentId)
+            .Distinct()
+            .ToArray();
+        string[] citationHandles = selectedCandidates
+            .SelectMany(candidate => candidate.AnchorHandles)
+            .Distinct(StringComparer.Ordinal)
+            .ToArray();
+        string answerText = string.Join(
+            '\n',
+            answer.MaterialClaims
+                .OrderBy(claim => claim.Order)
+                .Select(claim => claim.Text));
+        ValidatedConversationTurn turn = ValidatedConversationTurn.Create(
+            request.Question,
+            answerText,
+            packet.Fingerprint,
+            citationHandles,
+            logicalDocumentIds);
+        _conversationState = _conversationState.AppendValidatedTurn(turn);
+    }
+
+    private void ClearConversation()
+    {
+        if (_conversationState is not null)
+        {
+            _conversationState = _conversationState.Reset();
+        }
+    }
+
+    public void Dispose()
+    {
+        ClearConversation();
+        GC.SuppressFinalize(this);
     }
 
     private static IReadOnlyList<MaterialClaim> CreateGroundedFallbackClaims(
@@ -542,7 +627,8 @@ public sealed class PreparedChatCoordinator(
             currentDocuments,
             currentSections,
             currentAnchors,
-            currentRelationships);
+            currentRelationships,
+            packet.FlowGroups);
     }
 
     private static GroundedAnswer BuildAnswer(

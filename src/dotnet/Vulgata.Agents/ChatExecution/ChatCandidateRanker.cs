@@ -46,15 +46,18 @@ public static class ChatCandidateRanker
             }
         }
 
-        var ranked = relevant.Any()
-            ? relevant
-                .OrderByDescending(item => item.Score)
-                .ThenBy(item => item.Candidate.AllowsBusinessNarrative)
-                .ThenBy(item => item.Candidate.CandidateHandle, StringComparer.Ordinal)
-                .Take(_maximumCandidates)
-                .Select(item => item.Candidate)
-                .ToArray()
-            : candidates.Take(_maximumCandidates).ToArray();
+        var ranked = relevant
+            .OrderByDescending(item => item.Score)
+            .ThenBy(item => mode == ChatMode.It
+                ? !item.Candidate.AllowsBusinessNarrative
+                : item.Candidate.AllowsBusinessNarrative)
+            .ThenBy(item => item.Candidate.DocumentVersionId)
+            .ThenBy(item => item.Candidate.StableSectionId)
+            .ThenBy(item => item.Candidate.SpanStart)
+            .ThenBy(item => item.Candidate.CandidateHandle, StringComparer.Ordinal)
+            .Take(_maximumCandidates)
+            .Select(item => item.Candidate)
+            .ToArray();
         return Array.AsReadOnly(ranked);
     }
 

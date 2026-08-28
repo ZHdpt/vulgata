@@ -11,6 +11,8 @@ internal sealed record SupplementaryChatSectionCandidate(
 
 internal static class ChatSupplementaryEvidenceSelector
 {
+    private const int _maximumDocuments = 5;
+
     private static readonly HashSet<string> _ignoredTerms = new(StringComparer.OrdinalIgnoreCase)
     {
         "如何", "哪些", "什么", "主要", "完整", "流程", "系统", "客户", "用户", "进行", "可以", "需要", "之后",
@@ -42,7 +44,7 @@ internal static class ChatSupplementaryEvidenceSelector
                 .First())
             .OrderByDescending(item => item.Score)
             .ThenBy(item => item.Candidate.DocumentVersionId)
-            .Take(maximumCount)
+            .Take(Math.Min(maximumCount, _maximumDocuments))
             .Select(item => item.Candidate)
             .ToArray();
         return Array.AsReadOnly(selected);
@@ -50,8 +52,8 @@ internal static class ChatSupplementaryEvidenceSelector
 
     private static int Score(SupplementaryChatSectionCandidate candidate, string[] terms) =>
         terms.Sum(term =>
-            (candidate.Title.Contains(term, StringComparison.OrdinalIgnoreCase) ? 5 : 0) +
-            (candidate.Heading.Contains(term, StringComparison.OrdinalIgnoreCase) ? 3 : 0) +
+            (candidate.Title.Contains(term, StringComparison.OrdinalIgnoreCase) ? 3 : 0) +
+            (candidate.Heading.Contains(term, StringComparison.OrdinalIgnoreCase) ? 5 : 0) +
             (candidate.ContentMarkdown.Contains(term, StringComparison.OrdinalIgnoreCase) ? 1 : 0));
 
     private static IEnumerable<string> ExtractTerms(string value)

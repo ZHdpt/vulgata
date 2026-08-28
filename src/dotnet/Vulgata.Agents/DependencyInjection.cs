@@ -3,6 +3,7 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
 using Microsoft.Extensions.DependencyInjection;
+using Vulgata.Agents.ChatExecution;
 using Vulgata.Agents.WorkerExecution;
 using Vulgata.Core.DomainServices;
 using Vulgata.Shared;
@@ -14,6 +15,9 @@ public static class DependencyInjection
     public static IServiceCollection AddPreparedPass2Agents(this IServiceCollection services)
     {
         ArgumentNullException.ThrowIfNull(services);
+        services.AddSingleton<ChatStreamObservationAuthority>();
+        services.AddScoped<IChatProviderStreamingTransport,
+            OpenAiCompatibleChatProviderStreamingTransport>();
         services.AddScoped<IPreparedPass2StreamingTransport,
             OpenAiCompatiblePass2StreamingTransport>();
         services.AddScoped<PreparedRetrieveCodeLogicFunction>();

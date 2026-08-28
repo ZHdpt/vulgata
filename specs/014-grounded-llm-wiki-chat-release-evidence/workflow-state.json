@@ -3,13 +3,13 @@
   "bmad_story_key": "12-5-grounded-llm-wiki-chat-and-august-30-release-evidence",
   "bmad_epic_key": "12",
   "feature_directory": "specs/014-grounded-llm-wiki-chat-release-evidence",
-  "stage": "implement",
+  "stage": "converge",
   "preflight": {
     "branch": "demo0831/story-12-5",
-    "head": "1ed2f213ae1e97e66234632fc96fd31a475bb829",
-    "git_identity_sha256": "7c75130a6ecb26fe286f57fcf786fb7699e8c429132821a01d5cdcb2bdcaec97",
-    "status_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-    "observed_at": "2026-08-28T00:09:25.4612638Z"
+    "head": "1b7526f9c57b7226b561a9708f4d94f09f1fd046",
+    "git_identity_sha256": "745e672f007878574989220b2248c167b8c2a2915bd2f2bc84ed38186117d004",
+    "status_sha256": "10cfbecf5a899c87cfc54feb959c997e71317ca7361d8ad86b5d195f30cff110",
+    "observed_at": "2026-08-28T02:28:09.1564291Z"
   },
   "artifacts": {
     "spec": {
@@ -22,7 +22,7 @@
     },
     "tasks": {
       "path": "specs/014-grounded-llm-wiki-chat-release-evidence/tasks.md",
-      "sha256": "679a9613c86dcfb2e7cccdf138f5d710969c478040b4f2539d6f1349e62ffddd"
+      "sha256": "b173f637cebc244d37303ea872d568ae10039741947724e7f5801796775e6943"
     }
   },
   "gates": {
@@ -37,9 +37,9 @@
       "verdict_path": "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/definition-review/definition-review-04.json"
     },
     "quality-review": {
-      "status": "accepted",
-      "attempt": 4,
-      "verdict_path": "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/quality-review/track-a-quality-review-04.json"
+      "status": "pending",
+      "attempt": 0,
+      "verdict_path": null
     }
   },
   "attempts": {
@@ -84,32 +84,33 @@
     "report_path": null
   },
   "e2e": {
-    "result": "skipped-covered",
-    "decision_path": "specs/014-grounded-llm-wiki-chat-release-evidence/e2e-decision-track-a.json"
+    "result": "pending",
+    "decision_path": null
   },
   "current_evidence_paths": [
     "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/definition-review/definition-review-04.json",
     "specs/014-grounded-llm-wiki-chat-release-evidence/contracts/chat-provider-streaming-v1.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/contracts/chat-evidence-packet-v2.schema.json",
-    "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/quality-review/track-a-quality-review-04.json",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/track-b-implementation-01.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/verification/track-a-01.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/contracts/release-evidence-contract.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/contracts/story125-release-evidence.schema.json",
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/integration/story-12.4-dependency-integration-01.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/integration/story-12.4-dependency-integration-correction-01.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/implementation-approval-track-b-01.md",
-    "specs/013-exact-cross-repository-flow-pass2/workflow-state.json"
+    "specs/013-exact-cross-repository-flow-pass2/workflow-state.json",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/tdd/track-b-implementation.md"
   ],
   "checkpoint": {
-    "checkpoint_id": "bmad-12-5-implement-20260828T000747Z-a12b5c",
+    "checkpoint_id": "bmad-12-5-implement-20260828T022809Z-894119",
     "stage": "implement",
-    "commit_sha": "1ed2f213ae1e97e66234632fc96fd31a475bb829",
-    "binding_status": "bound"
+    "commit_sha": null,
+    "binding_status": "pending"
   },
   "resume": {
-    "stage": "implement",
-    "reason": "The corrected Story 12.4 integration barrier and implementation-approval-track-b-01 authorize Track B T020-T037. Start at T020 behavioral RED; Track C remains closed.",
-    "evidence_path": "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/implementation-approval-track-b-01.md"
+    "stage": "converge",
+    "reason": "Track B T020-T037 are implemented and focused verification is green. Bind the implementation checkpoint, then run independent convergence; Track C remains closed.",
+    "evidence_path": "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/tdd/track-b-implementation.md"
   },
-  "updated_at": "2026-08-28T00:10:00.4646621Z"
+  "updated_at": "2026-08-28T02:30:37.2879114Z"
 }

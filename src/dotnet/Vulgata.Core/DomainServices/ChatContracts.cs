@@ -218,9 +218,142 @@ public sealed record EvidenceFlowStep(
     string? RelationshipHandle,
     string Description);
 
+public sealed record EvidenceFlowStepAuthority(
+    Guid FlowTraceStepId,
+    int StepOrder,
+    FlowTraceStepKind StepKind,
+    string Description,
+    Guid DocumentVersionId,
+    Guid DocumentRepositoryId,
+    Guid DocumentScanRunId,
+    Guid? EdgeId,
+    Guid? ExactResolutionDecisionId);
+
+public sealed record EvidenceFlowGroupAuthority(
+    Guid FlowGroupId,
+    string SchemaIdentity,
+    string State,
+    Guid BusinessLogicDocumentVersionId,
+    Guid ExactResolutionDecisionId,
+    Guid ExactResolutionEdgeId,
+    string PlanFingerprint,
+    string MembershipFingerprint,
+    Guid FlowTraceId,
+    int FlowTraceOrder,
+    IReadOnlyList<EvidenceFlowStepAuthority> Steps);
+
+public sealed record ChatEvidencePacketBuildRequest
+{
+    private ChatEvidencePacketBuildRequest(
+        string requestId,
+        ChatMode mode,
+        Guid systemId,
+        IReadOnlyList<Guid> repositoryIds,
+        IReadOnlyList<EvidenceDocument> documents,
+        IReadOnlyList<EvidenceSection> sections,
+        IReadOnlyList<EvidenceAnchor> sourceAnchors,
+        IReadOnlyList<EvidenceRelationship> relationships,
+        IReadOnlyList<EvidenceFlowStep> flowEvidence,
+        IReadOnlyList<EvidenceFlowGroupAuthority> flowGroups,
+        string advisoryContext,
+        ChatConversationState conversation,
+        IReadOnlyList<string> optionalSectionHandles)
+    {
+        RequestId = requestId;
+        Mode = mode;
+        SystemId = systemId;
+        RepositoryIds = repositoryIds;
+        Documents = documents;
+        Sections = sections;
+        SourceAnchors = sourceAnchors;
+        Relationships = relationships;
+        FlowEvidence = flowEvidence;
+        FlowGroups = flowGroups;
+        AdvisoryContext = advisoryContext;
+        Conversation = conversation;
+        OptionalSectionHandles = optionalSectionHandles;
+    }
+
+    public string RequestId { get; }
+    public ChatMode Mode { get; }
+    public Guid SystemId { get; }
+    public IReadOnlyList<Guid> RepositoryIds { get; }
+    public IReadOnlyList<EvidenceDocument> Documents { get; }
+    public IReadOnlyList<EvidenceSection> Sections { get; }
+    public IReadOnlyList<EvidenceAnchor> SourceAnchors { get; }
+    public IReadOnlyList<EvidenceRelationship> Relationships { get; }
+    public IReadOnlyList<EvidenceFlowStep> FlowEvidence { get; }
+    public IReadOnlyList<EvidenceFlowGroupAuthority> FlowGroups { get; }
+    public string AdvisoryContext { get; }
+    public ChatConversationState Conversation { get; }
+    public IReadOnlyList<string> OptionalSectionHandles { get; }
+
+    public static ChatEvidencePacketBuildRequest Create(
+        string requestId,
+        ChatMode mode,
+        Guid systemId,
+        IReadOnlyCollection<Guid> repositoryIds,
+        IReadOnlyCollection<EvidenceDocument> documents,
+        IReadOnlyCollection<EvidenceSection> sections,
+        IReadOnlyCollection<EvidenceAnchor> sourceAnchors,
+        IReadOnlyCollection<EvidenceRelationship> relationships,
+        IReadOnlyCollection<EvidenceFlowStep> flowEvidence,
+        IReadOnlyCollection<EvidenceFlowGroupAuthority> flowGroups,
+        string advisoryContext,
+        ChatConversationState conversation,
+        IReadOnlyCollection<string> optionalSectionHandles)
+    {
+        ArgumentNullException.ThrowIfNull(conversation);
+        string normalizedAdvisory = advisoryContext?.Normalize(NormalizationForm.FormC) ?? string.Empty;
+        Guid[] canonicalRepositories = ChatContractGuard.CanonicalRepositoryIds(repositoryIds);
+        ChatConversationScope expectedScope = ChatConversationScope.Create(
+            mode,
+            systemId,
+            canonicalRepositories);
+        EvidenceSection[] sectionSnapshot = sections?.ToArray() ?? [];
+        string[] canonicalOptionalHandles = optionalSectionHandles?
+            .Select(handle => handle?.Trim() ?? string.Empty)
+            .Order(StringComparer.Ordinal)
+            .ToArray() ?? [];
+        if (string.IsNullOrWhiteSpace(requestId) ||
+            !Enum.IsDefined(mode) ||
+            systemId == Guid.Empty ||
+            Encoding.UTF8.GetByteCount(normalizedAdvisory) > 8_192 ||
+            conversation.EncodedUtf8Bytes > 4_096 ||
+            !conversation.Scope.Equals(expectedScope) ||
+            canonicalOptionalHandles.Any(handle => !ChatContractGuard.IsHandle(handle)) ||
+            canonicalOptionalHandles.Distinct(StringComparer.Ordinal).Count() != canonicalOptionalHandles.Length ||
+            canonicalOptionalHandles.Any(handle =>
+                sectionSnapshot.All(section => !string.Equals(
+                    section.SectionHandle,
+                    handle,
+                    StringComparison.Ordinal))))
+        {
+            throw new ChatContractException(ChatContractFailureCode.InvalidEvidence);
+        }
+
+        return new ChatEvidencePacketBuildRequest(
+            requestId.Trim(),
+            mode,
+            systemId,
+            Array.AsReadOnly(canonicalRepositories),
+            Array.AsReadOnly(documents?.ToArray() ?? []),
+            Array.AsReadOnly(sectionSnapshot),
+            Array.AsReadOnly(sourceAnchors?.ToArray() ?? []),
+            Array.AsReadOnly(relationships?.ToArray() ?? []),
+            Array.AsReadOnly(flowEvidence?.ToArray() ?? []),
+            Array.AsReadOnly(flowGroups?.ToArray() ?? []),
+            normalizedAdvisory,
+            conversation,
+            Array.AsReadOnly(canonicalOptionalHandles));
+    }
+}
+
 public sealed record EvidencePacket
 {
-    public const string SupportedSchemaVersion = "prepared-chat-evidence-v1";
+    private const int _maxEvidenceUtf8Bytes = 65_536;
+
+    public const string SupportedSchemaVersion = "grounded-chat-evidence/2.0";
 
     private EvidencePacket(
         string requestId,
@@ -232,6 +365,9 @@ public sealed record EvidencePacket
         IReadOnlyList<EvidenceAnchor> sourceAnchors,
         IReadOnlyList<EvidenceRelationship> relationships,
         IReadOnlyList<EvidenceFlowStep> flowEvidence,
+        IReadOnlyList<EvidenceFlowGroupAuthority> flowGroups,
+        string advisoryContext,
+        ChatConversationState conversation,
         string fingerprint)
     {
         SchemaVersion = SupportedSchemaVersion;
@@ -244,6 +380,9 @@ public sealed record EvidencePacket
         SourceAnchors = sourceAnchors;
         Relationships = relationships;
         FlowEvidence = flowEvidence;
+        FlowGroups = flowGroups;
+        AdvisoryContext = advisoryContext;
+        Conversation = conversation;
         Fingerprint = fingerprint;
     }
 
@@ -257,6 +396,9 @@ public sealed record EvidencePacket
     public IReadOnlyList<EvidenceAnchor> SourceAnchors { get; }
     public IReadOnlyList<EvidenceRelationship> Relationships { get; }
     public IReadOnlyList<EvidenceFlowStep> FlowEvidence { get; }
+    public IReadOnlyList<EvidenceFlowGroupAuthority> FlowGroups { get; }
+    public string AdvisoryContext { get; }
+    public ChatConversationState Conversation { get; }
     public string Fingerprint { get; }
 
     public static EvidencePacket Create(
@@ -268,7 +410,10 @@ public sealed record EvidencePacket
         IReadOnlyCollection<EvidenceSection> sections,
         IReadOnlyCollection<EvidenceAnchor> sourceAnchors,
         IReadOnlyCollection<EvidenceRelationship> relationships,
-        IReadOnlyCollection<EvidenceFlowStep> flowEvidence)
+        IReadOnlyCollection<EvidenceFlowStep> flowEvidence,
+        IReadOnlyCollection<EvidenceFlowGroupAuthority>? flowGroups = null,
+        string advisoryContext = "",
+        ChatConversationState? conversation = null)
     {
         Guid[] canonicalRepositories = ChatContractGuard.CanonicalRepositoryIds(repositoryIds);
         EvidenceDocument[] canonicalDocuments = documents?.OrderBy(
@@ -284,6 +429,23 @@ public sealed record EvidencePacket
             relationship => relationship.RelationshipHandle,
             StringComparer.Ordinal).ToArray() ?? [];
         EvidenceFlowStep[] canonicalFlow = flowEvidence?.OrderBy(step => step.StepOrder).ToArray() ?? [];
+        EvidenceFlowGroupAuthority[] canonicalFlowGroups = flowGroups?
+            .OrderBy(group => group.FlowGroupId)
+            .Select(group => group with
+            {
+                Steps = Array.AsReadOnly((group.Steps ?? [])
+                    .OrderBy(step => step.StepOrder)
+                    .ThenBy(step => step.FlowTraceStepId)
+                    .ToArray()),
+            })
+            .ToArray() ?? [];
+        string normalizedAdvisory = advisoryContext?.Normalize(NormalizationForm.FormC) ?? string.Empty;
+        ChatConversationState canonicalConversation = conversation ?? ChatConversationState.Empty(
+            ChatConversationScope.Create(mode, systemId, canonicalRepositories));
+        ChatConversationScope expectedConversationScope = ChatConversationScope.Create(
+            mode,
+            systemId,
+            canonicalRepositories);
         if (string.IsNullOrWhiteSpace(requestId) ||
             !Enum.IsDefined(mode) ||
             systemId == Guid.Empty ||
@@ -291,7 +453,11 @@ public sealed record EvidencePacket
             canonicalSections.Length is < 1 or > 20 ||
             canonicalAnchors.Length is < 1 or > 32 ||
             canonicalRelationships.Length > 32 ||
-            canonicalFlow.Length is < 1 or > 12)
+            canonicalFlow.Length is < 1 or > 12 ||
+            canonicalFlowGroups.Length > 10 ||
+            Encoding.UTF8.GetByteCount(normalizedAdvisory) > 8_192 ||
+            canonicalConversation.EncodedUtf8Bytes > 4_096 ||
+            !canonicalConversation.Scope.Equals(expectedConversationScope))
         {
             throw new ChatContractException(ChatContractFailureCode.InvalidEvidence);
         }
@@ -303,6 +469,7 @@ public sealed record EvidencePacket
             canonicalAnchors,
             canonicalRelationships,
             canonicalFlow);
+        ValidateFlowGroups(canonicalRepositories, canonicalDocuments, canonicalFlowGroups);
         string canonicalJson = JsonSerializer.Serialize(new
         {
             schemaVersion = SupportedSchemaVersion,
@@ -317,6 +484,7 @@ public sealed record EvidencePacket
                 document.DocumentVersionId,
                 document.RepositoryId,
                 document.DocumentType,
+                document.Title,
                 document.ProfiledRevision,
             }),
             sections = canonicalSections.Select(section => new
@@ -326,6 +494,7 @@ public sealed record EvidencePacket
                 section.StableSectionId,
                 section.SectionOrder,
                 section.SectionKind,
+                section.Heading,
                 section.ContentMarkdown,
                 anchorHandles = section.AnchorHandles.Order(StringComparer.Ordinal),
                 supportingDocumentHandles = section.SupportingDocumentHandles.Order(StringComparer.Ordinal),
@@ -337,8 +506,30 @@ public sealed record EvidencePacket
                 step.StepOrder,
                 step.DocumentHandle,
                 step.RelationshipHandle,
+                step.Description,
             }),
+            flowGroups = canonicalFlowGroups,
+            advisoryContext = normalizedAdvisory,
+            conversation = new
+            {
+                mode = canonicalConversation.Scope.Mode.ToString(),
+                systemId = canonicalConversation.Scope.SystemId,
+                repositoryIds = canonicalConversation.Scope.RepositoryIds,
+                turns = canonicalConversation.Turns.Select(turn => new
+                {
+                    turn.Question,
+                    turn.AnswerText,
+                    turn.PacketFingerprint,
+                    citationHandles = turn.CitationHandles.Order(StringComparer.Ordinal),
+                    logicalDocumentIds = turn.LogicalDocumentIds.Order(),
+                }),
+            },
         });
+        if (Encoding.UTF8.GetByteCount(canonicalJson) > _maxEvidenceUtf8Bytes)
+        {
+            throw new ChatContractException(ChatContractFailureCode.InvalidEvidence);
+        }
+
         return new EvidencePacket(
             requestId.Trim(),
             mode,
@@ -349,7 +540,49 @@ public sealed record EvidencePacket
             Array.AsReadOnly(canonicalAnchors),
             Array.AsReadOnly(canonicalRelationships),
             Array.AsReadOnly(canonicalFlow),
+            Array.AsReadOnly(canonicalFlowGroups),
+            normalizedAdvisory,
+            canonicalConversation,
             ChatContractGuard.Sha256(canonicalJson));
+    }
+
+    private static void ValidateFlowGroups(
+        IReadOnlyCollection<Guid> repositoryIds,
+        IReadOnlyCollection<EvidenceDocument> documents,
+        IReadOnlyCollection<EvidenceFlowGroupAuthority> flowGroups)
+    {
+        HashSet<Guid> documentVersionIds = documents
+            .Select(document => document.DocumentVersionId)
+            .ToHashSet();
+        if (flowGroups.Select(group => group.FlowGroupId).Distinct().Count() != flowGroups.Count ||
+            flowGroups.Sum(group => group.Steps.Count) > 12 ||
+            flowGroups.Any(group =>
+                group.FlowGroupId == Guid.Empty ||
+                !string.Equals(group.SchemaIdentity, "endpoint-flow-group/1.0", StringComparison.Ordinal) ||
+                !string.Equals(group.State, "Published", StringComparison.Ordinal) ||
+                group.BusinessLogicDocumentVersionId == Guid.Empty ||
+                !documentVersionIds.Contains(group.BusinessLogicDocumentVersionId) ||
+                group.ExactResolutionDecisionId == Guid.Empty ||
+                group.ExactResolutionEdgeId == Guid.Empty ||
+                !ChatContractGuard.IsSha256(group.PlanFingerprint) ||
+                !ChatContractGuard.IsSha256(group.MembershipFingerprint) ||
+                group.FlowTraceId == Guid.Empty ||
+                group.FlowTraceOrder < 1 ||
+                group.Steps.Count < 1 ||
+                group.Steps.Select(step => step.FlowTraceStepId).Distinct().Count() != group.Steps.Count ||
+                !group.Steps.Select(step => step.StepOrder).SequenceEqual(
+                    Enumerable.Range(1, group.Steps.Count)) ||
+                group.Steps.Any(step =>
+                    step.FlowTraceStepId == Guid.Empty ||
+                    !Enum.IsDefined(step.StepKind) ||
+                    string.IsNullOrWhiteSpace(step.Description) ||
+                    step.DocumentVersionId == Guid.Empty ||
+                    !documentVersionIds.Contains(step.DocumentVersionId) ||
+                    !repositoryIds.Contains(step.DocumentRepositoryId) ||
+                    step.DocumentScanRunId == Guid.Empty)))
+        {
+            throw new ChatContractException(ChatContractFailureCode.InvalidEvidence);
+        }
     }
 
     private static void ValidatePacketItems(
@@ -548,7 +781,8 @@ public sealed record ChatSynthesisRequest
         Guid systemId,
         string question,
         string evidenceFingerprint,
-        IReadOnlyList<CandidateClaim> candidateClaims)
+        IReadOnlyList<CandidateClaim> candidateClaims,
+        long absoluteDeadlineUnixTimeMilliseconds)
     {
         RequestId = requestId;
         Mode = mode;
@@ -556,6 +790,7 @@ public sealed record ChatSynthesisRequest
         Question = question;
         EvidenceFingerprint = evidenceFingerprint;
         CandidateClaims = candidateClaims;
+        AbsoluteDeadlineUnixTimeMilliseconds = absoluteDeadlineUnixTimeMilliseconds;
     }
 
     public string RequestId { get; }
@@ -564,6 +799,7 @@ public sealed record ChatSynthesisRequest
     public string Question { get; }
     public string EvidenceFingerprint { get; }
     public IReadOnlyList<CandidateClaim> CandidateClaims { get; }
+    public long AbsoluteDeadlineUnixTimeMilliseconds { get; }
 
     public static ChatSynthesisRequest Create(
         string requestId,
@@ -571,7 +807,8 @@ public sealed record ChatSynthesisRequest
         Guid systemId,
         string question,
         string evidenceFingerprint,
-        IReadOnlyCollection<CandidateClaim> candidateClaims)
+        IReadOnlyCollection<CandidateClaim> candidateClaims,
+        long absoluteDeadlineUnixTimeMilliseconds = long.MaxValue)
     {
         string normalizedQuestion = question?.Normalize(NormalizationForm.FormC).Trim() ?? string.Empty;
         CandidateClaim[] canonicalClaims = candidateClaims?.OrderBy(
@@ -582,6 +819,7 @@ public sealed record ChatSynthesisRequest
             systemId == Guid.Empty ||
             normalizedQuestion.EnumerateRunes().Count() is < 1 or > 2_000 ||
             !ChatContractGuard.IsSha256(evidenceFingerprint) ||
+            absoluteDeadlineUnixTimeMilliseconds <= 0 ||
             canonicalClaims.Length < 1 ||
             canonicalClaims.Select(claim => claim.CandidateHandle).Distinct(StringComparer.Ordinal).Count() != canonicalClaims.Length ||
             canonicalClaims.Any(claim =>
@@ -597,7 +835,8 @@ public sealed record ChatSynthesisRequest
             systemId,
             normalizedQuestion,
             evidenceFingerprint,
-            Array.AsReadOnly(canonicalClaims));
+            Array.AsReadOnly(canonicalClaims),
+            absoluteDeadlineUnixTimeMilliseconds);
     }
 }
 
@@ -948,7 +1187,8 @@ public sealed record ChatCurrentnessValidationRequest
         IReadOnlyList<ChatCurrentDocument> documents,
         IReadOnlyList<ChatCurrentSection> sections,
         IReadOnlyList<ChatCurrentSourceAnchor> sourceAnchors,
-        IReadOnlyList<ChatCurrentRelationship> relationships)
+        IReadOnlyList<ChatCurrentRelationship> relationships,
+        IReadOnlyList<EvidenceFlowGroupAuthority> flowGroups)
     {
         RequestId = requestId;
         EvidenceFingerprint = evidenceFingerprint;
@@ -958,6 +1198,7 @@ public sealed record ChatCurrentnessValidationRequest
         Sections = sections;
         SourceAnchors = sourceAnchors;
         Relationships = relationships;
+        FlowGroups = flowGroups;
     }
 
     public string RequestId { get; }
@@ -968,6 +1209,7 @@ public sealed record ChatCurrentnessValidationRequest
     public IReadOnlyList<ChatCurrentSection> Sections { get; }
     public IReadOnlyList<ChatCurrentSourceAnchor> SourceAnchors { get; }
     public IReadOnlyList<ChatCurrentRelationship> Relationships { get; }
+    public IReadOnlyList<EvidenceFlowGroupAuthority> FlowGroups { get; }
 
     public static ChatCurrentnessValidationRequest Create(
         string requestId,
@@ -977,7 +1219,8 @@ public sealed record ChatCurrentnessValidationRequest
         IReadOnlyCollection<ChatCurrentDocument> documents,
         IReadOnlyCollection<ChatCurrentSection> sections,
         IReadOnlyCollection<ChatCurrentSourceAnchor> sourceAnchors,
-        IReadOnlyCollection<ChatCurrentRelationship> relationships)
+        IReadOnlyCollection<ChatCurrentRelationship> relationships,
+        IReadOnlyCollection<EvidenceFlowGroupAuthority>? flowGroups = null)
     {
         Guid[] canonicalRepositories;
         try
@@ -1001,6 +1244,16 @@ public sealed record ChatCurrentnessValidationRequest
         ChatCurrentRelationship[] canonicalRelationships = relationships?.OrderBy(
             relationship => relationship.RelationshipIdentity,
             StringComparer.Ordinal).ToArray() ?? [];
+        EvidenceFlowGroupAuthority[] canonicalFlowGroups = flowGroups?
+            .OrderBy(group => group.FlowGroupId)
+            .Select(group => group with
+            {
+                Steps = Array.AsReadOnly((group.Steps ?? [])
+                    .OrderBy(step => step.StepOrder)
+                    .ThenBy(step => step.FlowTraceStepId)
+                    .ToArray()),
+            })
+            .ToArray() ?? [];
 
         if (string.IsNullOrWhiteSpace(requestId) ||
             !ChatContractGuard.IsSha256(evidenceFingerprint) ||
@@ -1009,6 +1262,7 @@ public sealed record ChatCurrentnessValidationRequest
             canonicalSections.Length is < 1 or > 20 ||
             canonicalAnchors.Length is < 1 or > 32 ||
             canonicalRelationships.Length > 32 ||
+            canonicalFlowGroups.Length > 10 ||
             canonicalDocuments.Select(document => document.LogicalDocumentId).Distinct().Count() != canonicalDocuments.Length ||
             canonicalSections
                 .Select(section => (
@@ -1050,7 +1304,35 @@ public sealed record ChatCurrentnessValidationRequest
                 !canonicalRepositories.Contains(relationship.SourceRepositoryId) ||
                 !canonicalRepositories.Contains(relationship.TargetRepositoryId) ||
                 relationship.ProfileFingerprint is not null &&
-                !ChatContractGuard.IsSha256(relationship.ProfileFingerprint)))
+                !ChatContractGuard.IsSha256(relationship.ProfileFingerprint)) ||
+            canonicalFlowGroups.Select(group => group.FlowGroupId).Distinct().Count() != canonicalFlowGroups.Length ||
+            canonicalFlowGroups.Sum(group => group.Steps.Count) > 12 ||
+            canonicalFlowGroups.Any(group =>
+                group.FlowGroupId == Guid.Empty ||
+                !string.Equals(group.SchemaIdentity, "endpoint-flow-group/1.0", StringComparison.Ordinal) ||
+                !string.Equals(group.State, "Published", StringComparison.Ordinal) ||
+                group.BusinessLogicDocumentVersionId == Guid.Empty ||
+                !canonicalDocuments.Any(document =>
+                    document.ExpectedCurrentDocumentVersionId == group.BusinessLogicDocumentVersionId) ||
+                group.ExactResolutionDecisionId == Guid.Empty ||
+                group.ExactResolutionEdgeId == Guid.Empty ||
+                !ChatContractGuard.IsSha256(group.PlanFingerprint) ||
+                !ChatContractGuard.IsSha256(group.MembershipFingerprint) ||
+                group.FlowTraceId == Guid.Empty ||
+                group.FlowTraceOrder < 1 ||
+                group.Steps.Count < 1 ||
+                group.Steps.Select(step => step.FlowTraceStepId).Distinct().Count() != group.Steps.Count ||
+                !group.Steps.Select(step => step.StepOrder).SequenceEqual(
+                    Enumerable.Range(1, group.Steps.Count)) ||
+                group.Steps.Any(step =>
+                    step.FlowTraceStepId == Guid.Empty ||
+                    !Enum.IsDefined(step.StepKind) ||
+                    string.IsNullOrWhiteSpace(step.Description) ||
+                    step.DocumentVersionId == Guid.Empty ||
+                    !canonicalDocuments.Any(document =>
+                        document.ExpectedCurrentDocumentVersionId == step.DocumentVersionId) ||
+                    !canonicalRepositories.Contains(step.DocumentRepositoryId) ||
+                    step.DocumentScanRunId == Guid.Empty)))
         {
             throw new ChatContractException(ChatContractFailureCode.InvalidCurrentness);
         }
@@ -1063,7 +1345,8 @@ public sealed record ChatCurrentnessValidationRequest
             Array.AsReadOnly(canonicalDocuments),
             Array.AsReadOnly(canonicalSections),
             Array.AsReadOnly(canonicalAnchors),
-            Array.AsReadOnly(canonicalRelationships));
+            Array.AsReadOnly(canonicalRelationships),
+            Array.AsReadOnly(canonicalFlowGroups));
     }
 }
 

@@ -14,6 +14,42 @@ namespace Vulgata.Tests;
 public sealed class ChatEvidenceCurrentnessTests
 {
     [Fact]
+    public async Task ValidateCurrentAsync_LegacyExactEvidenceWithoutAcceptedV2Decision_ReturnsMissingOrStaleAsync()
+    {
+        await using CurrentnessFixture fixture = await CurrentnessFixture.CreateAsync(
+            includeAcceptedV2Authority: true);
+        EvidencePacket packet = await fixture.RetrieveAsync();
+        await fixture.RemoveV2AuthorityAsync();
+
+        ChatCurrentnessValidationOutcome outcome =
+            await new ChatEvidenceCurrentnessValidator(fixture.Context)
+                .ValidateCurrentAsync(
+                    CurrentnessFixture.CreateValidationRequest(packet),
+                    new RepositoryAccessScope(
+                        fixture.RepositoryIds,
+                        new RecordingAuthorizationVerifier(true, true)));
+
+        Assert.Equal(ChatCurrentnessValidationOutcome.MissingOrStale, outcome);
+    }
+
+    [Theory]
+    [InlineData("Incomplete")]
+    [InlineData("Complete")]
+    [InlineData("Failed")]
+    public async Task RetrieveAsync_NonPublishedFlowGroup_ReturnsIncompleteOrStaleAsync(
+        string state)
+    {
+        await using CurrentnessFixture fixture = await CurrentnessFixture.CreateAsync();
+        await fixture.SetFlowGroupStateAsync(state);
+
+        ChatEvidenceResult result = await fixture.RetrieveAsyncResult();
+
+        Assert.Equal(ChatEvidenceResultKind.IncompleteOrStale, result.Kind);
+        Assert.Null(result.Packet);
+        Assert.Null(fixture.Context.Database.CurrentTransaction);
+    }
+
+    [Fact]
     public async Task ValidateCurrentAsync_ExactCurrentAuthorizedSupport_ReturnsCurrentAsync()
     {
         await using CurrentnessFixture fixture = await CurrentnessFixture.CreateAsync();
@@ -76,9 +112,50 @@ public sealed class ChatEvidenceCurrentnessTests
         await AssertMissingAfterProviderWindowMutationAsync(fixture => fixture.CommitAnchorLossAsync());
         await AssertMissingAfterProviderWindowMutationAsync(fixture => fixture.CommitAnchorRangeChangeAsync());
         await AssertMissingAfterProviderWindowMutationAsync(fixture => fixture.CommitGeneratedFromLossAsync());
-        await AssertMissingAfterProviderWindowMutationAsync(fixture => fixture.CommitReferencesEvidenceLossAsync());
-        await AssertMissingAfterProviderWindowMutationAsync(fixture => fixture.CommitReferencesProfileChangeAsync());
-        await AssertMissingAfterProviderWindowMutationAsync(fixture => fixture.CommitReferencesDirectionChangeAsync());
+    }
+
+    [Theory]
+    [InlineData("flow-group-identity")]
+    [InlineData("flow-group-state")]
+    [InlineData("flow-group-document-binding")]
+    [InlineData("flow-group-decision-binding")]
+    [InlineData("flow-group-edge-binding")]
+    [InlineData("flow-trace-identity")]
+    [InlineData("flow-trace-order")]
+    [InlineData("flow-trace-step-identity")]
+    [InlineData("flow-trace-step-order")]
+    [InlineData("flow-trace-step-content")]
+    [InlineData("flow-trace-step-document-binding")]
+    [InlineData("flow-trace-step-edge-binding")]
+    [InlineData("flow-trace-step-decision-binding")]
+    // The public seam must receive the packet-selected Flow Group/trace/step snapshot.
+    public async Task ValidateCurrentAsync_PublishedFlowGroupMutationAfterRetrieval_ReturnsMissingOrStaleAsync(
+        string mutation)
+    {
+        await using CurrentnessFixture fixture = await CurrentnessFixture.CreateAsync();
+        EvidencePacket packet = await fixture.RetrieveAsync();
+        Assert.Equal([1, 2], packet.FlowEvidence.Select(step => step.StepOrder));
+
+        await fixture.CommitFlowMutationAsync(mutation);
+
+        ChatCurrentnessValidationOutcome outcome =
+            await new ChatEvidenceCurrentnessValidator(fixture.Context)
+                .ValidateCurrentAsync(
+                    CurrentnessFixture.CreateValidationRequest(packet),
+                    new RepositoryAccessScope(
+                        fixture.RepositoryIds,
+                        new RecordingAuthorizationVerifier(true, true)));
+
+        Assert.Equal(ChatCurrentnessValidationOutcome.MissingOrStale, outcome);
+        Assert.Null(fixture.Context.Database.CurrentTransaction);
+    }
+
+    [Fact]
+    public async Task ValidateCurrentAsync_LegacySupportMutationsAfterRetrieval_DoNotAffectAcceptedV2CurrentnessAsync()
+    {
+        await AssertCurrentAfterProviderWindowMutationAsync(fixture => fixture.CommitReferencesEvidenceLossAsync());
+        await AssertCurrentAfterProviderWindowMutationAsync(fixture => fixture.CommitReferencesProfileChangeAsync());
+        await AssertCurrentAfterProviderWindowMutationAsync(fixture => fixture.CommitReferencesDirectionChangeAsync());
     }
 
     [Fact]
@@ -130,6 +207,23 @@ public sealed class ChatEvidenceCurrentnessTests
     private static async Task AssertMissingAfterProviderWindowMutationAsync(
         Func<CurrentnessFixture, Task> commitMutationAsync)
     {
+        await AssertAfterProviderWindowMutationAsync(
+            commitMutationAsync,
+            ChatCurrentnessValidationOutcome.MissingOrStale);
+    }
+
+    private static async Task AssertCurrentAfterProviderWindowMutationAsync(
+        Func<CurrentnessFixture, Task> commitMutationAsync)
+    {
+        await AssertAfterProviderWindowMutationAsync(
+            commitMutationAsync,
+            ChatCurrentnessValidationOutcome.Current);
+    }
+
+    private static async Task AssertAfterProviderWindowMutationAsync(
+        Func<CurrentnessFixture, Task> commitMutationAsync,
+        ChatCurrentnessValidationOutcome expectedOutcome)
+    {
         await using CurrentnessFixture fixture = await CurrentnessFixture.CreateAsync();
         EvidencePacket packet = await fixture.RetrieveAsync();
         var barrier = new ProviderMutationBarrier();
@@ -151,7 +245,7 @@ public sealed class ChatEvidenceCurrentnessTests
                     scope);
 
         Assert.True(barrier.MutationCommittedBeforeProviderRelease);
-        Assert.Equal(ChatCurrentnessValidationOutcome.MissingOrStale, outcome);
+        Assert.Equal(expectedOutcome, outcome);
         Assert.Null(fixture.Context.Database.CurrentTransaction);
     }
 
@@ -215,18 +309,16 @@ public sealed class ChatEvidenceCurrentnessTests
 
     private sealed class CurrentnessFixture(
         ExactCrossRepositoryTestFixture exactFixture,
-        VulgataDbContext context) : IAsyncDisposable
+        VulgataDbContext context,
+        Guid referencesEdgeId) : IAsyncDisposable
     {
         internal static string ProfileFingerprint =>
             new ExactResolutionProfileCatalog().Load().ProfileFingerprint;
 
-        private const string _evidenceFingerprint =
-            "4123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
-
         private static readonly Guid _businessLogicalDocumentId = Id(10_001);
         private static readonly Guid _businessDocumentVersionId = Id(10_002);
         private static readonly Guid _businessSourceAnchorId = Id(10_003);
-        private static readonly Guid _referencesEdgeId = Id(10_004);
+        private Guid _referencesEdgeId = referencesEdgeId;
         private static readonly Guid _generatedFromEdgeId = Id(10_005);
 
         internal VulgataDbContext Context { get; } = context;
@@ -242,16 +334,115 @@ public sealed class ChatEvidenceCurrentnessTests
 
         internal async Task<EvidencePacket> RetrieveAsync()
         {
+            ChatEvidenceResult result = await RetrieveAsyncResult();
+            return Assert.IsType<EvidencePacket>(result.Packet);
+        }
+
+        internal async Task<ChatEvidenceResult> RetrieveAsyncResult()
+        {
             var scope = new RepositoryAccessScope(RepositoryIds);
-            ChatQuestionRequest request = ChatQuestionRequest.Create(
+            ChatQuestionRequest questionRequest = ChatQuestionRequest.Create(
                 "currentness-request",
                 ChatMode.Business,
                 ExactCrossRepositoryTestValues.SystemId,
                 RepositoryIds,
                 "客户会话如何跨仓库更新？");
-            ChatEvidenceResult result = await new ChatEvidenceRetriever(Context)
+            ChatConversationScope conversationScope = ChatConversationScope.Create(
+                questionRequest.Mode,
+                questionRequest.SystemId,
+                questionRequest.RepositoryIds);
+            ChatRetrievalRequest request = ChatRetrievalRequest.Create(
+                questionRequest,
+                ChatConversationState.Empty(conversationScope),
+                DateTimeOffset.UtcNow.AddMinutes(1));
+            return await new ChatEvidenceRetriever(Context)
                 .RetrieveAsync(request, scope);
-            return Assert.IsType<EvidencePacket>(result.Packet);
+        }
+
+        internal async Task SetFlowGroupStateAsync(string state)
+        {
+            int affectedRows = await Context.Database.ExecuteSqlInterpolatedAsync(
+                $"UPDATE \"FlowGroups\" SET \"State\" = {state} WHERE \"Id\" = {Id(10_301)}");
+            Assert.Equal(1, affectedRows);
+            Context.ChangeTracker.Clear();
+        }
+
+        internal Task CommitFlowGroupIdentityChangeAsync() => CommitSqlAsync(
+            $"UPDATE \"FlowGroups\" SET \"SchemaIdentity\" = NULL WHERE \"Id\" = {Id(10_301)}");
+
+        internal Task CommitFlowGroupStateChangeAsync() => CommitSqlAsync(
+            $"UPDATE \"FlowGroups\" SET \"State\" = 'Complete' WHERE \"Id\" = {Id(10_301)}");
+
+        internal Task CommitFlowGroupDocumentBindingLossAsync() => CommitSqlAsync(
+            $"UPDATE \"FlowGroups\" SET \"BusinessLogicDocumentVersionId\" = NULL WHERE \"Id\" = {Id(10_301)}");
+
+        internal Task CommitFlowGroupDecisionBindingLossAsync() => CommitSqlAsync(
+            $"UPDATE \"FlowGroups\" SET \"ExactResolutionDecisionId\" = NULL WHERE \"Id\" = {Id(10_301)}");
+
+        internal Task CommitFlowGroupEdgeBindingLossAsync() => CommitSqlAsync(
+            $"UPDATE \"FlowGroups\" SET \"ExactResolutionEdgeId\" = NULL WHERE \"Id\" = {Id(10_301)}");
+
+        internal async Task CommitFlowTraceLossAsync()
+        {
+            await CommitSqlAsync(
+                $"DELETE FROM \"FlowTraceSteps\" WHERE \"Id\" = {Id(10_303)}");
+            await CommitSqlAsync(
+                $"DELETE FROM \"FlowTraceSteps\" WHERE \"Id\" = {Id(10_304)}");
+            await CommitSqlAsync(
+                $"DELETE FROM \"FlowTraces\" WHERE \"Id\" = {Id(10_302)}");
+        }
+
+        internal Task CommitFlowTraceOrderChangeAsync() => CommitSqlAsync(
+            $"UPDATE \"FlowTraces\" SET \"TraceOrder\" = 2 WHERE \"Id\" = {Id(10_302)}");
+
+        internal Task CommitFlowTraceStepLossAsync() => CommitSqlAsync(
+            $"DELETE FROM \"FlowTraceSteps\" WHERE \"Id\" = {Id(10_304)}");
+
+        internal Task CommitFlowTraceStepOrderChangeAsync() => CommitSqlAsync(
+            $"UPDATE \"FlowTraceSteps\" SET \"StepOrder\" = 3 WHERE \"Id\" = {Id(10_304)}");
+
+        internal Task CommitFlowTraceStepContentChangeAsync() => CommitSqlAsync(
+            $"UPDATE \"FlowTraceSteps\" SET \"Description\" = '篡改后的流程步骤。' WHERE \"Id\" = {Id(10_304)}");
+
+        internal Task CommitFlowTraceStepDocumentBindingChangeAsync() => CommitSqlAsync(
+            $"UPDATE \"FlowTraceSteps\" SET \"DocumentVersionId\" = {ExactCrossRepositoryTestValues.ConsumerDocumentVersionId}, \"DocumentRepositoryId\" = {ExactCrossRepositoryTestValues.ConsumerRepositoryId}, \"DocumentScanRunId\" = {ExactCrossRepositoryTestValues.ConsumerScanRunId} WHERE \"Id\" = {Id(10_304)}");
+
+        internal Task CommitFlowTraceStepEdgeBindingLossAsync() => CommitSqlAsync(
+            $"UPDATE \"FlowTraceSteps\" SET \"EdgeId\" = NULL WHERE \"Id\" = {Id(10_304)}");
+
+        internal Task CommitFlowTraceStepDecisionBindingLossAsync() => CommitSqlAsync(
+            $"UPDATE \"FlowTraceSteps\" SET \"ExactResolutionDecisionId\" = NULL WHERE \"Id\" = {Id(10_304)}");
+
+        internal Task CommitFlowMutationAsync(string mutation) => mutation switch
+        {
+            "flow-group-identity" => CommitFlowGroupIdentityChangeAsync(),
+            "flow-group-state" => CommitFlowGroupStateChangeAsync(),
+            "flow-group-document-binding" => CommitFlowGroupDocumentBindingLossAsync(),
+            "flow-group-decision-binding" => CommitFlowGroupDecisionBindingLossAsync(),
+            "flow-group-edge-binding" => CommitFlowGroupEdgeBindingLossAsync(),
+            "flow-trace-identity" => CommitFlowTraceLossAsync(),
+            "flow-trace-order" => CommitFlowTraceOrderChangeAsync(),
+            "flow-trace-step-identity" => CommitFlowTraceStepLossAsync(),
+            "flow-trace-step-order" => CommitFlowTraceStepOrderChangeAsync(),
+            "flow-trace-step-content" => CommitFlowTraceStepContentChangeAsync(),
+            "flow-trace-step-document-binding" => CommitFlowTraceStepDocumentBindingChangeAsync(),
+            "flow-trace-step-edge-binding" => CommitFlowTraceStepEdgeBindingLossAsync(),
+            "flow-trace-step-decision-binding" => CommitFlowTraceStepDecisionBindingLossAsync(),
+            _ => throw new ArgumentOutOfRangeException(nameof(mutation), mutation, "Unknown Flow Group mutation."),
+        };
+
+        internal async Task RemoveV2AuthorityAsync()
+        {
+            await Context.Database.ExecuteSqlInterpolatedAsync(
+                $"UPDATE \"FlowGroups\" SET \"ExactResolutionDecisionId\" = NULL, \"ExactResolutionEdgeId\" = NULL WHERE \"ExactResolutionDecisionId\" IN (SELECT \"Id\" FROM \"CrossRepositoryResolutionDecisions\" WHERE \"DocumentEdgeId\" = {_referencesEdgeId})");
+            await Context.Database.ExecuteSqlInterpolatedAsync(
+                $"UPDATE \"FlowTraceSteps\" SET \"ExactResolutionDecisionId\" = NULL WHERE \"ExactResolutionDecisionId\" IN (SELECT \"Id\" FROM \"CrossRepositoryResolutionDecisions\" WHERE \"DocumentEdgeId\" = {_referencesEdgeId})");
+            // Detach the decision from the REFERENCES Edge. Retain its dependent
+            // contribution rows so SQLite's restrictive foreign keys stay valid;
+            // a decision without an edge is not accepted v2 authority.
+            await Context.Database.ExecuteSqlInterpolatedAsync(
+                $"UPDATE \"CrossRepositoryResolutionDecisions\" SET \"DocumentEdgeId\" = NULL WHERE \"DocumentEdgeId\" = {_referencesEdgeId}");
+            Context.ChangeTracker.Clear();
         }
 
         internal static ChatCurrentnessValidationRequest CreateValidationRequest(
@@ -297,29 +488,30 @@ public sealed class ChatEvidenceCurrentnessTests
                         source.RepositoryId,
                         target.RepositoryId,
                         relationship.ProfileFingerprint);
-                }).ToArray());
+                }).ToArray(),
+                packet.FlowGroups);
         }
 
         internal Task CommitSectionTextChangeAsync() => CommitSqlAsync(
-            $"UPDATE \"DocumentSections\" SET \"ContentMarkdown\" = '篡改后的持久化内容。' WHERE \"StableSectionId\" = '{Id(10_201)}'");
+            $"UPDATE \"DocumentSections\" SET \"ContentMarkdown\" = '篡改后的持久化内容。' WHERE \"StableSectionId\" = {Id(10_201)}");
 
         internal Task CommitAnchorLossAsync() => CommitSqlAsync(
-            $"DELETE FROM \"SourceAnchors\" WHERE \"Id\" = '{_businessSourceAnchorId}'");
+            $"DELETE FROM \"SourceAnchors\" WHERE \"Id\" = {_businessSourceAnchorId}");
 
         internal Task CommitAnchorRangeChangeAsync() => CommitSqlAsync(
-            $"UPDATE \"SourceAnchors\" SET \"LineStart\" = 13, \"LineEnd\" = 19 WHERE \"Id\" = '{_businessSourceAnchorId}'");
+            $"UPDATE \"SourceAnchors\" SET \"LineStart\" = 13, \"LineEnd\" = 19 WHERE \"Id\" = {_businessSourceAnchorId}");
 
         internal Task CommitGeneratedFromLossAsync() => CommitSqlAsync(
-            $"DELETE FROM \"DocumentEdges\" WHERE \"Id\" = '{_generatedFromEdgeId}'");
+            $"DELETE FROM \"DocumentEdges\" WHERE \"Id\" = {_generatedFromEdgeId}");
 
         internal Task CommitReferencesEvidenceLossAsync() => CommitSqlAsync(
-            $"DELETE FROM \"ExactCrossRepositoryEdgeEvidence\" WHERE \"EdgeId\" = '{_referencesEdgeId}'");
+            $"DELETE FROM \"ExactCrossRepositoryEdgeEvidence\" WHERE \"EdgeId\" = {_referencesEdgeId}");
 
         internal Task CommitReferencesProfileChangeAsync() => CommitSqlAsync(
-            $"UPDATE \"ExactCrossRepositoryEdgeEvidence\" SET \"ProfileFingerprint\" = '5123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef' WHERE \"EdgeId\" = '{_referencesEdgeId}'");
+            $"UPDATE \"ExactCrossRepositoryEdgeEvidence\" SET \"ProfileFingerprint\" = '5123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef' WHERE \"EdgeId\" = {_referencesEdgeId}");
 
         internal Task CommitReferencesDirectionChangeAsync() => CommitSqlAsync(
-            $"UPDATE \"ExactCrossRepositoryEdgeEvidence\" SET \"ConsumerSourceAnchorId\" = '{ExactCrossRepositoryTestValues.ProviderSourceAnchorId}', \"ConsumerDocumentVersionId\" = '{ExactCrossRepositoryTestValues.ProviderDocumentVersionId}', \"ConsumerRepositoryId\" = '{ExactCrossRepositoryTestValues.ProviderRepositoryId}', \"ConsumerScanRunId\" = '{ExactCrossRepositoryTestValues.ProviderScanRunId}', \"ProviderSourceAnchorId\" = '{ExactCrossRepositoryTestValues.ConsumerSourceAnchorId}', \"ProviderDocumentVersionId\" = '{ExactCrossRepositoryTestValues.ConsumerDocumentVersionId}', \"ProviderRepositoryId\" = '{ExactCrossRepositoryTestValues.ConsumerRepositoryId}', \"ProviderScanRunId\" = '{ExactCrossRepositoryTestValues.ConsumerScanRunId}' WHERE \"EdgeId\" = '{_referencesEdgeId}'");
+            $"UPDATE \"ExactCrossRepositoryEdgeEvidence\" SET \"ConsumerSourceAnchorId\" = {ExactCrossRepositoryTestValues.ProviderSourceAnchorId}, \"ConsumerDocumentVersionId\" = {ExactCrossRepositoryTestValues.ProviderDocumentVersionId}, \"ConsumerRepositoryId\" = {ExactCrossRepositoryTestValues.ProviderRepositoryId}, \"ConsumerScanRunId\" = {ExactCrossRepositoryTestValues.ProviderScanRunId}, \"ProviderSourceAnchorId\" = {ExactCrossRepositoryTestValues.ConsumerSourceAnchorId}, \"ProviderDocumentVersionId\" = {ExactCrossRepositoryTestValues.ConsumerDocumentVersionId}, \"ProviderRepositoryId\" = {ExactCrossRepositoryTestValues.ConsumerRepositoryId}, \"ProviderScanRunId\" = {ExactCrossRepositoryTestValues.ConsumerScanRunId} WHERE \"EdgeId\" = {_referencesEdgeId}");
 
         internal async Task CommitSuccessorAsync()
         {
@@ -342,26 +534,29 @@ public sealed class ChatEvidenceCurrentnessTests
                 ExactCrossRepositoryTestValues.CommitFingerprint,
                 ExactCrossRepositoryTestValues.Pass1CompletedAt.AddMinutes(1)));
             await mutationContext.SaveChangesAsync();
-            await mutationContext.Database.ExecuteSqlInterpolatedAsync(
+            int supersededRows = await mutationContext.Database.ExecuteSqlInterpolatedAsync(
                 $"UPDATE \"DocumentVersions\" SET \"SupersededById\" = {successorId} WHERE \"Id\" = {ExactCrossRepositoryTestValues.ProviderDocumentVersionId}");
-            await mutationContext.Database.ExecuteSqlInterpolatedAsync(
+            int currentVersionRows = await mutationContext.Database.ExecuteSqlInterpolatedAsync(
                 $"UPDATE \"LogicalDocuments\" SET \"CurrentVersionId\" = {successorId} WHERE \"Id\" = {ExactCrossRepositoryTestValues.ProviderLogicalDocumentId}");
+            Assert.Equal(1, supersededRows);
+            Assert.Equal(1, currentVersionRows);
         }
 
-        private async Task CommitSqlAsync(string sql)
+        private async Task CommitSqlAsync(FormattableString sql)
         {
             await using VulgataDbContext mutationContext = exactFixture.Database.CreateContext();
-            _ = await mutationContext.Database.ExecuteSqlRawAsync(sql);
+            int affectedRows = await mutationContext.Database.ExecuteSqlInterpolatedAsync(sql);
+            Assert.Equal(1, affectedRows);
         }
 
-        internal static async Task<CurrentnessFixture> CreateAsync()
+        internal static async Task<CurrentnessFixture> CreateAsync(
+            bool includeAcceptedV2Authority = true)
         {
             ExactCrossRepositoryTestFixture exactFixture =
                 await ExactCrossRepositoryTestFixture.CreateAsync();
             VulgataDbContext context = exactFixture.Database.CreateContext();
             try
             {
-                ExactCrossRepositoryManagedFixture managed = exactFixture.CreateManagedRepositories();
                 ExactResolutionProfile profile = new ExactResolutionProfileCatalog().Load();
                 ResolutionOccurrence occurrence = profile.Occurrences.Single();
                 ExactPass1DocumentFixture consumer = exactFixture.CreatePass1Document(
@@ -372,32 +567,19 @@ public sealed class ChatEvidenceCurrentnessTests
                     ExactPass1DocumentKind.Provider,
                     profile.Repositories.Single(repository =>
                         repository.Alias == occurrence.ProviderAlias).ExpectedCommit);
-                context.Systems.Add(managed.System);
-                context.ScanRuns.AddRange(consumer.ScanRun, provider.ScanRun);
-                await context.SaveChangesAsync();
+                await SeedAcceptedV2PairAsync(context, exactFixture, consumer, provider);
+                await ApplyAcceptedV2AuthorityAsync(context, profile, occurrence, consumer, provider);
+                context.ChangeTracker.Clear();
 
-                LogicalDocument consumerDocument = LogicalDocument.Create(
-                    consumer.LogicalDocument.Id,
-                    consumer.DocumentVersion.RepositoryId,
-                    DocumentType.CodeLogic,
-                    "prepared/consumer",
-                    ExactCrossRepositoryTestValues.CreatedAt);
-                LogicalDocument providerDocument = LogicalDocument.Create(
-                    provider.LogicalDocument.Id,
-                    provider.DocumentVersion.RepositoryId,
-                    DocumentType.CodeLogic,
-                    "prepared/provider",
-                    ExactCrossRepositoryTestValues.CreatedAt);
+                LogicalDocument consumerDocument = consumer.LogicalDocument;
+                LogicalDocument providerDocument = provider.LogicalDocument;
                 LogicalDocument businessDocument = LogicalDocument.Create(
                     _businessLogicalDocumentId,
                     consumer.DocumentVersion.RepositoryId,
                     DocumentType.BusinessLogic,
                     "prepared/business-flow",
                     ExactCrossRepositoryTestValues.CreatedAt);
-                context.LogicalDocuments.AddRange(
-                    consumerDocument,
-                    providerDocument,
-                    businessDocument);
+                context.LogicalDocuments.Add(businessDocument);
                 await context.SaveChangesAsync();
 
                 DocumentVersion businessVersion = DocumentVersion.Create(
@@ -430,10 +612,7 @@ public sealed class ChatEvidenceCurrentnessTests
                     ExactCrossRepositoryTestValues.SourceHash,
                     ExactCrossRepositoryTestValues.Pass1CompletedAt);
                 businessVersion.SourceAnchors.Add(businessAnchor);
-                context.DocumentVersions.AddRange(
-                    consumer.DocumentVersion,
-                    provider.DocumentVersion,
-                    businessVersion);
+                context.DocumentVersions.Add(businessVersion);
                 await context.SaveChangesAsync();
 
                 context.DocumentSections.AddRange(
@@ -462,16 +641,14 @@ public sealed class ChatEvidenceCurrentnessTests
                         provider.SourceAnchor.Id,
                         []));
 
-                var referencesEdge = new DocumentEdge(
-                    _referencesEdgeId,
-                    consumer.DocumentVersion.Id,
-                    consumer.DocumentVersion.RepositoryId,
-                    consumer.DocumentVersion.ScanRunId,
-                    provider.DocumentVersion.Id,
-                    provider.DocumentVersion.RepositoryId,
-                    provider.DocumentVersion.ScanRunId,
-                    DocumentEdgeType.References,
-                    ExactCrossRepositoryTestValues.Pass1CompletedAt);
+                DocumentEdge referencesEdge = await context.DocumentEdges.SingleAsync(edge =>
+                    edge.SourceDocumentVersionId == consumer.DocumentVersion.Id &&
+                    edge.TargetDocumentVersionId == provider.DocumentVersion.Id &&
+                    edge.EdgeType == DocumentEdgeType.References);
+                Guid referencesEdgeId = referencesEdge.Id;
+                CrossRepositoryResolutionDecision acceptedDecision = await context
+                    .CrossRepositoryResolutionDecisions
+                    .SingleAsync(decision => decision.DocumentEdgeId == referencesEdgeId);
                 var generatedFromEdge = new DocumentEdge(
                     _generatedFromEdgeId,
                     businessVersion.Id,
@@ -482,10 +659,10 @@ public sealed class ChatEvidenceCurrentnessTests
                     consumer.DocumentVersion.ScanRunId,
                     DocumentEdgeType.GeneratedFrom,
                     ExactCrossRepositoryTestValues.Pass1CompletedAt);
-                context.DocumentEdges.AddRange(referencesEdge, generatedFromEdge);
+                context.DocumentEdges.Add(generatedFromEdge);
                 context.ExactCrossRepositoryEdgeEvidence.Add(
                     new ExactCrossRepositoryEdgeEvidence(
-                        referencesEdge.Id,
+                        referencesEdgeId,
                         consumer.SourceAnchor.Id,
                         consumer.DocumentVersion.Id,
                         consumer.DocumentVersion.RepositoryId,
@@ -507,7 +684,7 @@ public sealed class ChatEvidenceCurrentnessTests
                         occurrence.OccurrenceId,
                         consumer.SourceAnchor.EvidenceLocator,
                         provider.SourceAnchor.EvidenceLocator,
-                        _evidenceFingerprint,
+                        acceptedDecision.EvidenceFingerprint,
                         ExactCrossRepositoryTestValues.Pass1CompletedAt));
 
                 var flowGroup = new FlowGroup(
@@ -518,6 +695,23 @@ public sealed class ChatEvidenceCurrentnessTests
                     1,
                     "客户会话更新",
                     ExactCrossRepositoryTestValues.Pass1CompletedAt);
+                // The retriever's production baseline is an accepted v2 Published
+                // Flow Group. The legacy constructor intentionally leaves these
+                // persisted authority fields empty, which would make every
+                // otherwise-current fixture row ineligible once publication
+                // currentness is enforced. Keep the fixture's existing document
+                // shape, but seed the accepted publication identity explicitly.
+                context.Entry(flowGroup).Property(nameof(FlowGroup.SchemaIdentity)).CurrentValue =
+                    "endpoint-flow-group/1.0";
+                context.Entry(flowGroup).Property(nameof(FlowGroup.State)).CurrentValue = "Published";
+                context.Entry(flowGroup).Property(nameof(FlowGroup.PlanFingerprint)).CurrentValue =
+                    new string('a', 64);
+                context.Entry(flowGroup).Property(nameof(FlowGroup.MembershipFingerprint)).CurrentValue =
+                    new string('b', 64);
+                context.Entry(flowGroup).Property(nameof(FlowGroup.ExactResolutionDecisionId)).CurrentValue =
+                    acceptedDecision.Id;
+                context.Entry(flowGroup).Property(nameof(FlowGroup.ExactResolutionEdgeId)).CurrentValue =
+                    referencesEdgeId;
                 var flowTrace = new FlowTrace(
                     Id(10_302),
                     flowGroup.Id,
@@ -545,15 +739,24 @@ public sealed class ChatEvidenceCurrentnessTests
                     referencesEdge.Id,
                     FlowTraceStepKind.Relationship,
                     "通过精确 REFERENCES Edge 调用提供端。",
-                    ExactCrossRepositoryTestValues.Pass1CompletedAt));
+                    ExactCrossRepositoryTestValues.Pass1CompletedAt,
+                    acceptedDecision.Id));
                 context.FlowGroups.Add(flowGroup);
                 await context.SaveChangesAsync();
+
+                if (!includeAcceptedV2Authority)
+                {
+                    await context.Database.ExecuteSqlInterpolatedAsync(
+                        $"DELETE FROM \"ExactResolutionProviderEvidenceContributions\" WHERE \"ResolutionDecisionId\" IN (SELECT \"Id\" FROM \"CrossRepositoryResolutionDecisions\" WHERE \"DocumentEdgeId\" = {referencesEdgeId})");
+                    await context.Database.ExecuteSqlInterpolatedAsync(
+                        $"DELETE FROM \"CrossRepositoryResolutionDecisions\" WHERE \"DocumentEdgeId\" = {referencesEdgeId}");
+                }
 
                 await SetCurrentVersionAsync(context, consumerDocument.Id, consumer.DocumentVersion.Id);
                 await SetCurrentVersionAsync(context, providerDocument.Id, provider.DocumentVersion.Id);
                 await SetCurrentVersionAsync(context, businessDocument.Id, businessVersion.Id);
                 context.ChangeTracker.Clear();
-                return new CurrentnessFixture(exactFixture, context);
+                return new CurrentnessFixture(exactFixture, context, referencesEdgeId);
             }
             catch
             {
@@ -598,6 +801,76 @@ public sealed class ChatEvidenceCurrentnessTests
             Guid documentVersionId) =>
             await context.Database.ExecuteSqlInterpolatedAsync(
                 $"UPDATE \"LogicalDocuments\" SET \"CurrentVersionId\" = {documentVersionId} WHERE \"Id\" = {logicalDocumentId}");
+
+        private static async Task SeedAcceptedV2PairAsync(
+            VulgataDbContext context,
+            ExactCrossRepositoryTestFixture fixture,
+            ExactPass1DocumentFixture consumer,
+            ExactPass1DocumentFixture provider)
+        {
+            await Vulgata.Tests.PreparedPass2.ExactCrossRepositoryResolutionTests
+                .SeedAcceptedV2PairAsync(context, fixture, consumer, provider);
+        }
+
+        private static async Task ApplyAcceptedV2AuthorityAsync(
+            VulgataDbContext context,
+            ExactResolutionProfile profile,
+            ResolutionOccurrence occurrence,
+            ExactPass1DocumentFixture consumer,
+            ExactPass1DocumentFixture provider)
+        {
+            ExactResolutionOwner consumerOwner = new(
+                consumer.DocumentVersion.RepositoryId,
+                consumer.DocumentVersion.ScanRunId,
+                consumer.DocumentVersion.Id,
+                consumer.SourceAnchor.Id,
+                consumer.DocumentVersion.ProfiledRevision);
+            ExactResolutionOwner providerOwner = new(
+                provider.DocumentVersion.RepositoryId,
+                provider.DocumentVersion.ScanRunId,
+                provider.DocumentVersion.Id,
+                provider.SourceAnchor.Id,
+                provider.DocumentVersion.ProfiledRevision);
+            var consumerCandidate = new ConsumerDispatchCandidate(
+                occurrence.OccurrenceId,
+                consumerOwner,
+                occurrence.Consumer.Invocation.Form,
+                occurrence.Consumer.Invocation.ReceiverSymbol,
+                occurrence.Consumer.Invocation.MemberName,
+                occurrence.Consumer.Invocation.EndpointArgumentIndex,
+                occurrence.Consumer.Invocation.Line,
+                occurrence.Consumer.Invocation.OccurrenceOrdinalOnLine,
+                "cust/updateSession",
+                "cust/updateSession",
+                "consumer.java#line=45;rule=exact-java-direct-literal-v1",
+                new string('e', 64));
+            var providerCandidate = new ProviderEndpointCandidate(
+                occurrence.OccurrenceId,
+                providerOwner,
+                "in/cust/updateSession",
+                "cust/updateSession",
+                "provider.xml#line=2;rule=exact-xml-root-attribute-v1");
+            var unsupported = new ExactResolutionDecision(
+                profile.UnsupportedObservations.Single().ObservationId,
+                ExactResolutionDecisionKind.UnsupportedObservation,
+                consumerOwner,
+                null,
+                "unsupported_kind",
+                "unsupported.java#line=66;rule=unsupported-member-invocation-v1",
+                ConsumerEntryStableKey: new string('f', 64));
+            ExactResolutionDecisionBatch batch = await new ExactCrossRepositoryResolver().ResolveAsync(
+                profile,
+                [consumerCandidate],
+                [providerCandidate],
+                [unsupported]);
+            ExactResolutionBatchOutcome outcome = await new ExactCrossRepositoryResolutionStore(context)
+                .ApplyAsync(
+                    batch,
+                    new RepositoryAccessScope([
+                        consumer.DocumentVersion.RepositoryId,
+                        provider.DocumentVersion.RepositoryId]));
+            Assert.Equal(ExactResolutionOutcomeKind.Applied, outcome.Kind);
+        }
 
         internal static string Hash(string value) => Sha256(value);
 

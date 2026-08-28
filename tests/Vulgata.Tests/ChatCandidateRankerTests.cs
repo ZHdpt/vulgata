@@ -91,6 +91,62 @@ public sealed class ChatCandidateRankerTests
         Assert.Equal("k2", ranked[0].CandidateHandle);
     }
 
+    [Fact]
+    public void Rank_ItQuestion_PrefersTechnicalCandidateOverBusinessCandidate()
+    {
+        CandidateClaim business = Candidate("a1", "接口业务说明。", false);
+        CandidateClaim technical = Candidate("z1", "接口技术说明。", true);
+
+        IReadOnlyList<CandidateClaim> ranked = ChatCandidateRanker.Rank(
+            "接口说明",
+            ChatMode.It,
+            [business, technical]);
+
+        Assert.Equal("z1", ranked[0].CandidateHandle);
+    }
+
+    [Fact]
+    public void Rank_EqualScores_UsesCanonicalDocumentOrderInsteadOfCandidateHandle()
+    {
+        CandidateClaim firstDocument = CandidateWithIdentity(
+            "z1",
+            1,
+            1,
+            "订单接口说明。",
+            true);
+        CandidateClaim secondDocument = CandidateWithIdentity(
+            "a1",
+            2,
+            2,
+            "订单接口说明。",
+            true);
+
+        IReadOnlyList<CandidateClaim> ranked = ChatCandidateRanker.Rank(
+            "订单接口说明",
+            ChatMode.It,
+            [secondDocument, firstDocument]);
+
+        Assert.Equal(["z1", "a1"], ranked.Select(candidate => candidate.CandidateHandle));
+    }
+
+    [Fact]
+    public void Rank_NoLexicalMatch_DoesNotReturnUnrelatedFallbackCandidates()
+    {
+        CandidateClaim unrelated = CandidateWithIdentity(
+            "k1",
+            1,
+            1,
+            "订单接口说明。",
+            true);
+
+        IReadOnlyList<CandidateClaim> ranked = ChatCandidateRanker.Rank(
+            "北京天气",
+            ChatMode.It,
+            [unrelated]);
+
+        Assert.Empty(ranked);
+    }
+
     [Theory]
     [InlineData("移动端消费方和渠道提供方在会话更新中各自负责什么？", "k1")]
     [InlineData("认证错误次数检查操作类负责什么？", "k2")]
@@ -124,6 +180,24 @@ public sealed class ChatCandidateRankerTests
             Guid.Parse("00000000-0000-0000-0000-000000000001"),
             Guid.Parse($"00000000-0000-0000-0000-00000000000{handle[1]}"),
             0,
+            text,
+            ["a1"],
+            [],
+            narrativeAllowed);
+
+    private static CandidateClaim CandidateWithIdentity(
+        string handle,
+        int document,
+        int section,
+        string text,
+        bool narrativeAllowed) =>
+        CandidateClaim.Create(
+            handle,
+            new string('a', 64),
+            ChatMode.Business,
+            Guid.Parse("00000000-0000-0000-0000-000000000001"),
+            Guid.Parse($"00000000-0000-0000-0000-{document:D12}"),
+            section,
             text,
             ["a1"],
             [],

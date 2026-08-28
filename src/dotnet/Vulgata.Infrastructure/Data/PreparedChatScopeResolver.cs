@@ -1,13 +1,10 @@
 using Microsoft.EntityFrameworkCore;
 using Vulgata.Core.DomainServices;
 using Vulgata.Core.Entities;
-using Vulgata.Infrastructure.CrossRepository;
 
 namespace Vulgata.Infrastructure.Data;
 
-public sealed class PreparedChatScopeResolver(
-    VulgataDbContext context,
-    ExactResolutionProfileCatalog profileCatalog) : IPreparedChatScopeResolver
+public sealed class PreparedChatScopeResolver(VulgataDbContext context) : IPreparedChatScopeResolver
 {
     public async Task<PreparedChatScopeBinding?> ResolveAsync(
         Guid systemId,
@@ -17,35 +14,50 @@ public sealed class PreparedChatScopeResolver(
     {
         ArgumentNullException.ThrowIfNull(repositoryIds);
         ArgumentNullException.ThrowIfNull(accessScope);
-        ExactResolutionProfile profile = profileCatalog.Load();
-        if (profile.Repositories.Count != 2 || profile.Occurrences.Count != 1)
+        Guid[] requestedIds = repositoryIds.Distinct().Order().ToArray();
+        if (requestedIds.Length is < 2 or > 256 ||
+            requestedIds.Any(repositoryId => !accessScope.Contains(repositoryId)))
         {
             return null;
         }
 
-        ResolutionOccurrence occurrence = profile.Occurrences[0];
-        ProfileRepository consumerProfile = profile.Repositories.Single(
-            repository => StringComparer.Ordinal.Equals(repository.Alias, occurrence.ConsumerAlias));
-        ProfileRepository providerProfile = profile.Repositories.Single(
-            repository => StringComparer.Ordinal.Equals(repository.Alias, occurrence.ProviderAlias));
-        PreparedEvidenceRow[] evidence = await context.ExactCrossRepositoryEdgeEvidence
-            .AsNoTracking()
-            .Where(value =>
-                value.ProfileSchemaVersion == profile.SchemaVersion &&
-                value.ProfileId == profile.ProfileId &&
-                value.ProfileVersion == profile.ProfileVersion &&
-                value.ProfileFingerprint == profile.ProfileFingerprint &&
-                value.OccurrenceId == occurrence.OccurrenceId)
-            .Select(value => new PreparedEvidenceRow(
-                value.EdgeId,
-                value.ConsumerRepositoryId,
-                value.ConsumerScanRunId,
-                value.ConsumerDocumentVersionId,
-                value.ConsumerSourceAnchorId,
-                value.ProviderRepositoryId,
-                value.ProviderScanRunId,
-                value.ProviderDocumentVersionId,
-                value.ProviderSourceAnchorId))
+        PreparedEvidenceRow[] evidence = await (
+            from decision in context.CrossRepositoryResolutionDecisions.AsNoTracking()
+            join edge in context.DocumentEdges.AsNoTracking()
+                on decision.DocumentEdgeId equals edge.Id
+            join consumer in context.LogicalDocuments.AsNoTracking()
+                on edge.SourceDocumentVersionId equals consumer.CurrentVersionId
+            join provider in context.LogicalDocuments.AsNoTracking()
+                on edge.TargetDocumentVersionId equals provider.CurrentVersionId
+            where decision.ResolutionSchemaIdentity == "exact-cross-repository-resolution/2.0" &&
+                decision.SystemId == systemId &&
+                decision.OutcomeKind == "ExactMatch" &&
+                decision.ReasonCode == "unique_provider" &&
+                decision.ProviderDocumentVersionId.HasValue &&
+                decision.ProviderRepositoryId.HasValue &&
+                decision.ProviderScanRunId.HasValue &&
+                edge.EdgeType == DocumentEdgeType.References &&
+                decision.ConsumerDocumentVersionId == edge.SourceDocumentVersionId &&
+                decision.ConsumerRepositoryId == edge.SourceRepositoryId &&
+                decision.ConsumerScanRunId == edge.SourceScanRunId &&
+                decision.ProviderDocumentVersionId.Value == edge.TargetDocumentVersionId &&
+                decision.ProviderRepositoryId.Value == edge.TargetRepositoryId &&
+                decision.ProviderScanRunId.Value == edge.TargetScanRunId &&
+                edge.SourceRepositoryId != edge.TargetRepositoryId &&
+                requestedIds.Contains(edge.SourceRepositoryId) &&
+                requestedIds.Contains(edge.TargetRepositoryId)
+            orderby decision.Id
+            select new PreparedEvidenceRow(
+                decision.Id,
+                edge.Id,
+                edge.SourceRepositoryId,
+                edge.SourceScanRunId,
+                edge.SourceDocumentVersionId,
+                decision.ConsumerProfiledRevision,
+                edge.TargetRepositoryId,
+                edge.TargetScanRunId,
+                edge.TargetDocumentVersionId,
+                decision.ProviderProfiledRevision!))
             .Take(2)
             .ToArrayAsync(cancellationToken);
         if (evidence.Length != 1)
@@ -54,12 +66,32 @@ public sealed class PreparedChatScopeResolver(
         }
 
         PreparedEvidenceRow exact = evidence[0];
-        Guid[] exactRepositoryIds =
-            [exact.ConsumerRepositoryId, exact.ProviderRepositoryId];
-        Guid[] requestedIds = repositoryIds.Distinct().Order().ToArray();
-        if (requestedIds.Length is < 2 or > 256 ||
-            exactRepositoryIds.Any(repositoryId => !requestedIds.Contains(repositoryId)) ||
-            requestedIds.Any(repositoryId => !accessScope.Contains(repositoryId)))
+        Guid[] exactRepositoryIds = [exact.ConsumerRepositoryId, exact.ProviderRepositoryId];
+        ExactResolutionProviderEvidenceContribution[] contributions = await context
+            .ExactResolutionProviderEvidenceContributions
+            .AsNoTracking()
+            .Where(contribution => contribution.ResolutionDecisionId == exact.DecisionId)
+            .Take(257)
+            .ToArrayAsync(cancellationToken);
+        CrossRepositoryResolutionDecision exactDecision = await context
+            .CrossRepositoryResolutionDecisions
+            .AsNoTracking()
+            .SingleAsync(decision => decision.Id == exact.DecisionId, cancellationToken);
+        DocumentEdge exactEdge = await context.DocumentEdges
+            .AsNoTracking()
+            .SingleAsync(edge => edge.Id == exact.EdgeId, cancellationToken);
+        if (contributions.Length is < 1 or > 256 ||
+            contributions.Any(contribution =>
+                contribution.ProviderDocumentVersionId != exact.ProviderDocumentVersionId ||
+                contribution.RepositoryId != exact.ProviderRepositoryId ||
+                contribution.ScanRunId != exact.ProviderScanRunId ||
+                !StringComparer.Ordinal.Equals(
+                    contribution.ProfiledRevision,
+                    exact.ProviderProfiledRevision)) ||
+            !ExactResolutionCanonicalAuthority.MatchesPersistedExactAuthority(
+                exactDecision,
+                exactEdge,
+                contributions))
         {
             return null;
         }
@@ -67,30 +99,21 @@ public sealed class PreparedChatScopeResolver(
         int repositoryCount = await context.Repositories.AsNoTracking().CountAsync(
             repository => exactRepositoryIds.Contains(repository.Id) && repository.SystemId == systemId,
             cancellationToken);
-        bool edgeIsCurrent = await context.DocumentEdges.AsNoTracking().AnyAsync(
-            edge =>
-                edge.Id == exact.EdgeId &&
-                edge.EdgeType == DocumentEdgeType.References &&
-                edge.SourceRepositoryId == exact.ConsumerRepositoryId &&
-                edge.SourceDocumentVersionId == exact.ConsumerDocumentVersionId &&
-                edge.TargetRepositoryId == exact.ProviderRepositoryId &&
-                edge.TargetDocumentVersionId == exact.ProviderDocumentVersionId,
-            cancellationToken);
         bool consumerIsCurrent = await CurrentEndpointAsync(
             exact.ConsumerRepositoryId,
             exact.ConsumerScanRunId,
             exact.ConsumerDocumentVersionId,
-            exact.ConsumerSourceAnchorId,
-            consumerProfile.ExpectedCommit,
+            exact.ConsumerProfiledRevision,
+            sourceAnchorIds: null,
             cancellationToken);
         bool providerIsCurrent = await CurrentEndpointAsync(
             exact.ProviderRepositoryId,
             exact.ProviderScanRunId,
             exact.ProviderDocumentVersionId,
-            exact.ProviderSourceAnchorId,
-            providerProfile.ExpectedCommit,
+            exact.ProviderProfiledRevision,
+            contributions.Select(contribution => contribution.SourceAnchorId).ToArray(),
             cancellationToken);
-        if (repositoryCount != 2 || !edgeIsCurrent || !consumerIsCurrent || !providerIsCurrent)
+        if (repositoryCount != 2 || !consumerIsCurrent || !providerIsCurrent)
         {
             return null;
         }
@@ -105,8 +128,8 @@ public sealed class PreparedChatScopeResolver(
         Guid repositoryId,
         Guid scanRunId,
         Guid documentVersionId,
-        Guid sourceAnchorId,
         string expectedCommit,
+        IReadOnlyCollection<Guid>? sourceAnchorIds,
         CancellationToken cancellationToken)
     {
         bool scanRunIsCurrent = await context.ScanRuns.AsNoTracking().AnyAsync(
@@ -128,25 +151,30 @@ public sealed class PreparedChatScopeResolver(
                 version.ProfiledRevision == expectedCommit
             select version.Id)
             .AnyAsync(cancellationToken);
-        bool anchorIsCurrent = await context.SourceAnchors.AsNoTracking().AnyAsync(
+        int? expectedAnchorCount = sourceAnchorIds?.Distinct().Count();
+        int currentAnchorCount = await context.SourceAnchors.AsNoTracking().CountAsync(
             anchor =>
-                anchor.Id == sourceAnchorId &&
+                (sourceAnchorIds == null || sourceAnchorIds.Contains(anchor.Id)) &&
                 anchor.DocumentVersionId == documentVersionId &&
                 anchor.RepositoryId == repositoryId &&
                 anchor.ScanRunId == scanRunId &&
                 anchor.ProfiledRevision == expectedCommit,
             cancellationToken);
-        return scanRunIsCurrent && documentIsCurrent && anchorIsCurrent;
+        bool anchorsAreCurrent = expectedAnchorCount.HasValue
+            ? currentAnchorCount == expectedAnchorCount.Value
+            : currentAnchorCount > 0;
+        return scanRunIsCurrent && documentIsCurrent && anchorsAreCurrent;
     }
 
     private sealed record PreparedEvidenceRow(
+        Guid DecisionId,
         Guid EdgeId,
         Guid ConsumerRepositoryId,
         Guid ConsumerScanRunId,
         Guid ConsumerDocumentVersionId,
-        Guid ConsumerSourceAnchorId,
+        string ConsumerProfiledRevision,
         Guid ProviderRepositoryId,
         Guid ProviderScanRunId,
         Guid ProviderDocumentVersionId,
-        Guid ProviderSourceAnchorId);
+        string ProviderProfiledRevision);
 }

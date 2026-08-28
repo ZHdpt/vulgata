@@ -52,6 +52,40 @@ public sealed class ChatSupplementaryEvidenceSelectorTests
         Assert.Equal(Id(12), selected.StableSectionId);
     }
 
+    [Fact]
+    public void Select_ExactEndpointHeading_PrecedesIncidentalTitleMatch()
+    {
+        SupplementaryChatSectionCandidate[] candidates =
+        [
+            Candidate(1, 11, "orders 相关业务说明", "概述", "说明订单提交后的业务处理。"),
+            Candidate(2, 12, "订单服务", "POST /orders", "接口接收订单提交请求。"),
+        ];
+
+        SupplementaryChatSectionCandidate selected = Assert.Single(
+            ChatSupplementaryEvidenceSelector.Select("orders 如何提交？", candidates, 1));
+
+        Assert.Equal(Id(12), selected.StableSectionId);
+    }
+
+    [Fact]
+    public void Select_HardDocumentBound_DropsTheExactPlusOneDocument()
+    {
+        SupplementaryChatSectionCandidate[] candidates = Enumerable.Range(1, 6)
+            .Select(index => Candidate(
+                index,
+                index + 10,
+                $"订单流程 {index}",
+                "订单处理",
+                "订单处理规则。"))
+            .ToArray();
+
+        IReadOnlyList<SupplementaryChatSectionCandidate> selected =
+            ChatSupplementaryEvidenceSelector.Select("订单处理规则", candidates, 6);
+
+        Assert.Equal(5, selected.Count);
+        Assert.Equal(5, selected.Select(item => item.DocumentVersionId).Distinct().Count());
+    }
+
     private static SupplementaryChatSectionCandidate Candidate(
         int document,
         int section,

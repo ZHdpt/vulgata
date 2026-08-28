@@ -32,6 +32,7 @@ public sealed class ChatPageTests : BunitContext
     private readonly StubDispatcher _dispatcher = new();
     private readonly StubCurrentnessValidator _currentness = new();
     private readonly ManualRevealDelay _revealDelay = new();
+    private readonly AdjustableTimeProvider _timeProvider = new(DateTimeOffset.UtcNow);
     private readonly BunitJSModuleInterop _chatModule;
 
     public ChatPageTests()
@@ -67,7 +68,7 @@ public sealed class ChatPageTests : BunitContext
             candidateExtractor,
             _dispatcher,
             _currentness,
-            TimeProvider.System,
+            _timeProvider,
             new ChatAgentResultValidator(candidateExtractor),
             new StubPreparedChatScopeResolver(),
             new PreparedChatQuestionRequestValidator()));
@@ -151,7 +152,7 @@ public sealed class ChatPageTests : BunitContext
         PrepareValidSelection(cut, ChatMode.Business);
         _dispatcher.BlockNextCall();
 
-        cut.Find("#chat-question").Input("这个问题仍在处理中");
+        cut.Find("#chat-question").Input("付款问题仍在处理中");
         Task sendTask = cut.Find("#chat-question").KeyDownAsync(new KeyboardEventArgs { Key = "Enter" });
         await _dispatcher.Entered.WaitAsync(TimeSpan.FromSeconds(5));
 
@@ -159,7 +160,7 @@ public sealed class ChatPageTests : BunitContext
         _dispatcher.ReleaseBlockedCall();
         await sendTask;
 
-        Assert.DoesNotContain("这个问题仍在处理中", cut.Markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("付款问题仍在处理中", cut.Markup, StringComparison.Ordinal);
         Assert.DoesNotContain("客户提交付款后，系统完成校验。", cut.Markup, StringComparison.Ordinal);
         Assert.DoesNotContain("已取消本次提问。", cut.Markup, StringComparison.Ordinal);
         Assert.Empty(cut.FindAll(".complete-answer"));
@@ -241,7 +242,7 @@ public sealed class ChatPageTests : BunitContext
 
         await SendQuestionAsync(cut, "付款仓库如何工作？");
 
-        ChatQuestionRequest firstRequest = Assert.Single(_retriever.Requests);
+        ChatRetrievalRequest firstRequest = Assert.Single(_retriever.Requests);
         Assert.Equal(_system.Id, firstRequest.SystemId);
         Assert.Equal(
             new[] { _firstRepository.Id, _secondRepository.Id }.Order(),
@@ -449,7 +450,7 @@ public sealed class ChatPageTests : BunitContext
         WaitForLoaded(cut);
         PrepareValidSelection(cut, ChatMode.Business);
         _retriever.ClaimText = "应保留的旧回答。";
-        await SendQuestionAsync(cut, "第一个问题");
+        await SendQuestionAsync(cut, "应保留的旧回答如何产生？");
         Assert.Contains("应保留的旧回答。", cut.Markup, StringComparison.Ordinal);
 
         FindButton(cut, "技术模式").Click();
@@ -459,7 +460,7 @@ public sealed class ChatPageTests : BunitContext
         Assert.Single(cut.FindAll(".document-citation"));
 
         _retriever.ClaimText = "技术模式回答。";
-        await SendQuestionAsync(cut, "第二个问题");
+        await SendQuestionAsync(cut, "技术模式回答如何产生？");
         Assert.Contains("技术模式回答。", cut.Markup, StringComparison.Ordinal);
 
         cut.Find(".repository-picker__trigger").Click();
@@ -472,9 +473,9 @@ public sealed class ChatPageTests : BunitContext
 
         PrepareValidSelection(cut, ChatMode.Business);
         _retriever.ClaimText = "失败前回答。";
-        await SendQuestionAsync(cut, "第三个问题");
+        await SendQuestionAsync(cut, "失败前回答如何产生？");
         _dispatcher.FailureCode = ChatContractFailureCode.ProviderFailure;
-        await SendQuestionAsync(cut, "会失败的问题");
+        await SendQuestionAsync(cut, "回答失败吗？");
 
         Assert.Equal("Error", cut.Find(".chat-page").GetAttribute("data-load-state"));
         Assert.Contains("暂时无法生成回答，请稍后重试。", cut.Markup, StringComparison.Ordinal);
@@ -490,13 +491,13 @@ public sealed class ChatPageTests : BunitContext
         WaitForLoaded(cut);
         PrepareValidSelection(cut, ChatMode.Business);
 
-        await SendQuestionAsync(cut, "第一问");
+        await SendQuestionAsync(cut, "付款第一问");
         Assert.Single(cut.FindAll(".complete-answer"));
         Assert.Single(cut.FindAll(".material-claim"));
         Assert.Single(cut.FindAll(".document-citation"));
 
         _currentness.Outcome = ChatCurrentnessValidationOutcome.MissingOrStale;
-        await SendQuestionAsync(cut, "证据是否仍然有效？");
+        await SendQuestionAsync(cut, "付款证据是否仍然有效？");
 
         IElement surface = cut.Find(".chat-surface");
         Assert.Contains("当前知识证据不可用或已更新，请稍后重试。", surface.TextContent, StringComparison.Ordinal);
@@ -507,10 +508,10 @@ public sealed class ChatPageTests : BunitContext
         Assert.Contains("src/PaymentFlow.cs", surface.TextContent, StringComparison.Ordinal);
 
         _currentness.Outcome = ChatCurrentnessValidationOutcome.Current;
-        await SendQuestionAsync(cut, "第二问");
+        await SendQuestionAsync(cut, "付款第二问");
         Assert.Equal(2, cut.FindAll(".document-citation").Count);
         _authorization.DenyOnCall = _authorization.CallCount + 2;
-        await SendQuestionAsync(cut, "权限是否仍然有效？");
+        await SendQuestionAsync(cut, "付款权限是否仍然有效？");
 
         Assert.Contains("未找到可用的知识范围，或您无权访问。", surface.TextContent, StringComparison.Ordinal);
         Assert.Equal(2, cut.FindAll(".complete-answer").Count);
@@ -572,6 +573,55 @@ public sealed class ChatPageTests : BunitContext
     }
 
     [Fact]
+    public async Task ChatPage_PendingProviderStream_ExposesNoUnvalidatedContentOrEvidenceToClientAsync()
+    {
+        IRenderedComponent<ChatPage> cut = Render<ChatPage>();
+        WaitForLoaded(cut);
+        PrepareValidSelection(cut, ChatMode.Business);
+        _dispatcher.BlockNextCall();
+
+        Task sendTask = BeginQuestionAsync(cut, "提交后应立即清空");
+        await _dispatcher.Entered.WaitAsync(TimeSpan.FromSeconds(5));
+
+        Assert.Single(cut.FindAll(".chat-thinking"));
+        Assert.Empty(cut.FindAll(".material-claim, .document-citation, .citation-locator, [data-source-anchor], [data-relationship], [data-provider-fragment]"));
+        Assert.DoesNotContain("provider-fragment", cut.Markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("不可信", cut.Markup, StringComparison.Ordinal);
+
+        _dispatcher.ReleaseBlockedCall();
+        await sendTask;
+    }
+
+    [Fact]
+    public async Task ChatPage_AcceptedAnswerWithInsufficientRemainingDeadline_RendersImmediatelyAsync()
+    {
+        _revealDelay.Pause();
+        _dispatcher.BeforeResult = () => _timeProvider.Advance(TimeSpan.FromSeconds(28.5));
+
+        IRenderedComponent<ChatPage> cut = Render<ChatPage>();
+        WaitForLoaded(cut);
+        PrepareValidSelection(cut, ChatMode.Business);
+        _retriever.ClaimText = "截止前必须立即显示。";
+
+        Task sendTask = BeginQuestionAsync(cut, "剩余时间不足时如何显示？");
+        cut.WaitForState(() => cut.FindAll("[data-answer-state='revealing'], [data-answer-state='complete']").Count == 1);
+
+        try
+        {
+            IElement answer = cut.Find(".complete-answer");
+            Assert.Equal("complete", answer.GetAttribute("data-answer-state"));
+            Assert.Equal("截止前必须立即显示。", cut.Find(".material-claim").TextContent);
+            Assert.Single(cut.FindAll(".document-citation"));
+            Assert.Equal(0, _revealDelay.CallCount);
+        }
+        finally
+        {
+            _revealDelay.ReleaseAll();
+            await sendTask;
+        }
+    }
+
+    [Fact]
     public async Task ChatPage_ValidPendingRequest_ClearsComposerImmediately()
     {
         IRenderedComponent<ChatPage> cut = Render<ChatPage>();
@@ -619,7 +669,7 @@ public sealed class ChatPageTests : BunitContext
         PrepareValidSelection(cut, ChatMode.Business);
         _retriever.ClaimText = "不会重新出现。";
 
-        Task sendTask = BeginQuestionAsync(cut, "开始显示");
+        Task sendTask = BeginQuestionAsync(cut, "不会重新出现的回答如何显示？");
         cut.WaitForState(() => cut.FindAll("[data-answer-state='revealing']").Count == 1);
         await FindButton(cut, "新对话").ClickAsync(new MouseEventArgs());
         _revealDelay.ReleaseAll();
@@ -639,7 +689,7 @@ public sealed class ChatPageTests : BunitContext
         PrepareValidSelection(cut, ChatMode.Business);
         _retriever.ClaimText = "e\u0301👨‍👩‍👧‍👦完成";
 
-        Task sendTask = BeginQuestionAsync(cut, "Unicode 测试");
+        Task sendTask = BeginQuestionAsync(cut, "Unicode 测试完成");
         cut.WaitForState(() => cut.FindAll("[data-answer-state='revealing']").Count == 1);
         Assert.Equal("e\u0301", cut.Find(".material-claim__revealed").TextContent);
         Assert.Equal(["e\u0301"], cut.FindAll(".material-claim__element").Select(element => element.TextContent));
@@ -666,7 +716,7 @@ public sealed class ChatPageTests : BunitContext
         PrepareValidSelection(cut, ChatMode.Business);
         _retriever.ClaimText = "立即完成。";
 
-        await SendQuestionAsync(cut, "减少动态效果");
+        await SendQuestionAsync(cut, "立即完成的回答");
 
         Assert.Equal("立即完成。", cut.Find(".material-claim").TextContent);
         Assert.Single(cut.FindAll(".document-citation"));
@@ -788,10 +838,10 @@ public sealed class ChatPageTests : BunitContext
     {
         public int CallCount { get; private set; }
         public string ClaimText { get; set; } = "客户提交付款后，系统完成校验。";
-        public List<ChatQuestionRequest> Requests { get; } = [];
+        public List<ChatRetrievalRequest> Requests { get; } = [];
 
         public Task<ChatEvidenceResult> RetrieveAsync(
-            ChatQuestionRequest request,
+            ChatRetrievalRequest request,
             RepositoryAccessScope accessScope,
             CancellationToken cancellationToken = default)
         {
@@ -888,6 +938,15 @@ public sealed class ChatPageTests : BunitContext
         }
     }
 
+    private sealed class AdjustableTimeProvider(DateTimeOffset initialUtcNow) : TimeProvider
+    {
+        private DateTimeOffset _utcNow = initialUtcNow;
+
+        public override DateTimeOffset GetUtcNow() => _utcNow;
+
+        public void Advance(TimeSpan duration) => _utcNow = _utcNow.Add(duration);
+    }
+
     private sealed class StubDispatcher : IChatAgentDispatcher
     {
         private TaskCompletionSource<bool>? _entered;
@@ -896,6 +955,7 @@ public sealed class ChatPageTests : BunitContext
         public int CallCount { get; private set; }
         public ChatContractFailureCode? FailureCode { get; set; }
         public ChatAnswerability Answerability { get; set; } = ChatAnswerability.Supported;
+        public Action? BeforeResult { get; set; }
         public Task Entered => _entered?.Task ?? Task.CompletedTask;
 
         public void BlockNextCall()
@@ -924,6 +984,8 @@ public sealed class ChatPageTests : BunitContext
             {
                 return ChatSynthesisOutcome.Failed(failureCode);
             }
+
+            BeforeResult?.Invoke();
 
             ChatSynthesisResult result = ChatSynthesisResult.Create(
                 request.RequestId,

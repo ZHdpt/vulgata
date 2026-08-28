@@ -14,6 +14,24 @@ namespace Vulgata.Tests;
 public sealed class PreparedChatCoordinatorTests
 {
     [Fact]
+    public void IChatEvidenceRetriever_RetrieveAsync_UsesServerOwnedConversationRequest()
+    {
+        MethodInfo retrieveMethod = Assert.Single(
+            typeof(IChatEvidenceRetriever)
+                .GetMethods(BindingFlags.Public | BindingFlags.Instance)
+                .Where(method => method.Name == nameof(IChatEvidenceRetriever.RetrieveAsync)));
+
+        ParameterInfo[] parameters = retrieveMethod.GetParameters();
+        Assert.Equal(typeof(Task<ChatEvidenceResult>), retrieveMethod.ReturnType);
+        Assert.Equal(typeof(ChatRetrievalRequest), parameters[0].ParameterType);
+        Assert.Equal(typeof(RepositoryAccessScope), parameters[1].ParameterType);
+        Assert.Equal(typeof(CancellationToken), parameters[2].ParameterType);
+
+        Assert.NotNull(typeof(ChatRetrievalRequest).GetProperty("Conversation"));
+        Assert.NotNull(typeof(ChatRetrievalRequest).GetProperty("DeadlineUtc"));
+    }
+
+    [Fact]
     public void Constructor_ChatAgentResultValidator_IsRequiredDependency()
     {
         ParameterInfo parameter = Assert.Single(
@@ -146,13 +164,61 @@ public sealed class PreparedChatCoordinatorTests
         Assert.Equal("src/PaymentFlow.cs", citation.RepositoryRelativePath);
         Assert.Equal(20, citation.LineStart);
         Assert.Equal(24, citation.LineEnd);
-        Assert.Equal("客户 完成付款？", retriever.LastRequest?.Question);
+        ChatRetrievalRequest retrievalRequest = Assert.IsType<ChatRetrievalRequest>(retriever.LastRequest);
+        Assert.Equal("客户 完成付款？", retrievalRequest.Question);
+        Assert.Equal(ChatMode.Business, retrievalRequest.Conversation.Scope.Mode);
+        Assert.Equal(system.Id, retrievalRequest.Conversation.Scope.SystemId);
+        Assert.Equal(
+            new[] { first.Id, second.Id }.Order(),
+            retrievalRequest.Conversation.Scope.RepositoryIds);
+        Assert.Empty(retrievalRequest.Conversation.Turns);
+        Assert.NotEqual(default, retrievalRequest.DeadlineUtc);
         Assert.Equal(2, authorization.CallCount);
         Assert.Equal(1, retriever.CallCount);
         Assert.Equal(1, dispatcher.CallCount);
         CandidateClaim dispatchedCandidate = Assert.Single(dispatcher.LastRequest?.CandidateClaims ?? []);
         Assert.Equal("客户提交付款后，系统完成校验。", dispatchedCandidate.Text);
         Assert.Equal(1, currentness.CallCount);
+    }
+
+    [Fact]
+    public async Task AskAsync_RepeatedFollowUps_ReFetchesEvidenceAndRevalidatesCurrentnessOnEveryTurn()
+    {
+        var system = new SystemEntity("支付系统", null, null, DateTimeOffset.UtcNow);
+        Repository first = system.AddRepository("账户仓库", "https://example.test/account.git", null, null, DateTimeOffset.UtcNow);
+        Repository second = system.AddRepository("渠道仓库", "https://example.test/channel.git", null, null, DateTimeOffset.UtcNow);
+        var retriever = new StubEvidenceRetriever();
+        var currentness = new StubCurrentnessValidator();
+        var dispatcher = new StubDispatcher();
+        var coordinator = CreateCoordinator(
+            system,
+            [first, second],
+            retriever: retriever,
+            dispatcher: dispatcher,
+            currentness: currentness);
+
+        PreparedChatResult initial = await coordinator.AskAsync(
+            ChatMode.Business,
+            system.Id,
+            [first.Id, second.Id],
+            "客户如何付款？");
+        PreparedChatResult firstFollowUp = await coordinator.AskAsync(
+            ChatMode.Business,
+            system.Id,
+            [first.Id, second.Id],
+            "客户如何付款？");
+        PreparedChatResult secondFollowUp = await coordinator.AskAsync(
+            ChatMode.Business,
+            system.Id,
+            [first.Id, second.Id],
+            "客户如何付款？");
+
+        Assert.All(
+            new[] { initial, firstFollowUp, secondFollowUp },
+            result => Assert.Equal(PreparedChatResultKind.Succeeded, result.Kind));
+        Assert.Equal(3, retriever.CallCount);
+        Assert.Equal(3, currentness.CallCount);
+        Assert.Equal(3, dispatcher.CallCount);
     }
 
     [Fact]
@@ -340,6 +406,82 @@ public sealed class PreparedChatCoordinatorTests
     }
 
     [Fact]
+    public async Task AskAsync_ProviderDispatchCarriesOneCoordinatorOwnedTwentyNineSecondDeadline()
+    {
+        var system = new SystemEntity("支付系统", null, null, DateTimeOffset.UtcNow);
+        Repository first = system.AddRepository(
+            "账户仓库", "https://example.test/account.git", null, null, DateTimeOffset.UtcNow);
+        Repository second = system.AddRepository(
+            "渠道仓库", "https://example.test/channel.git", null, null, DateTimeOffset.UtcNow);
+        var dispatcher = new StubDispatcher();
+        var candidateExtractor = new ChatCandidateExtractor();
+        var coordinator = new PreparedChatCoordinator(
+            new FixedAuthenticationStateProvider("owner-1"),
+            new StubSystemRepository([system]),
+            new StubRepositoryRepository([first, second]),
+            new StubAuthorizationVerifier(),
+            new StubEvidenceRetriever(),
+            candidateExtractor,
+            dispatcher,
+            new StubCurrentnessValidator(),
+            TimeProvider.System,
+            new ChatAgentResultValidator(candidateExtractor),
+            new StubPreparedChatScopeResolver(),
+            new PreparedChatQuestionRequestValidator());
+
+        _ = await coordinator.AskAsync(
+            ChatMode.Business,
+            system.Id,
+            [first.Id, second.Id],
+            "客户如何付款？");
+
+        PropertyInfo? deadlineProperty = typeof(ChatSynthesisRequest).GetProperty(
+            "AbsoluteDeadlineUnixTimeMilliseconds");
+        Assert.NotNull(deadlineProperty);
+        long deadline = Assert.IsType<long>(deadlineProperty.GetValue(dispatcher.LastRequest));
+        long now = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+        Assert.InRange(deadline - now, 1, 29_000);
+    }
+
+    [Fact]
+    public async Task AskAsync_SemanticValidationFailure_DoesNotInvokeARepairDispatch()
+    {
+        var system = new SystemEntity("支付系统", null, null, DateTimeOffset.UtcNow);
+        Repository first = system.AddRepository(
+            "账户仓库", "https://example.test/account.git", null, null, DateTimeOffset.UtcNow);
+        Repository second = system.AddRepository(
+            "渠道仓库", "https://example.test/channel.git", null, null, DateTimeOffset.UtcNow);
+        var dispatcher = new StubDispatcher
+        {
+            RawSelectionJsonOverride = "{\"schemaVersion\":\"prepared-chat-answer-v1\",\"requestId\":\"request-1\",\"mode\":\"business\",\"evidenceFingerprint\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"answerability\":\"supported\",\"selections\":[{\"candidateHandle\":\"unknown\",\"order\":1}]}",
+        };
+        var candidateExtractor = new ChatCandidateExtractor();
+        var coordinator = new PreparedChatCoordinator(
+            new FixedAuthenticationStateProvider("owner-1"),
+            new StubSystemRepository([system]),
+            new StubRepositoryRepository([first, second]),
+            new StubAuthorizationVerifier(),
+            new StubEvidenceRetriever(),
+            candidateExtractor,
+            dispatcher,
+            new StubCurrentnessValidator(),
+            TimeProvider.System,
+            new ChatAgentResultValidator(candidateExtractor),
+            new StubPreparedChatScopeResolver(),
+            new PreparedChatQuestionRequestValidator());
+
+        PreparedChatResult result = await coordinator.AskAsync(
+            ChatMode.Business,
+            system.Id,
+            [first.Id, second.Id],
+            "客户如何付款？");
+
+        Assert.Equal(PreparedChatResultKind.EvidenceUnavailable, result.Kind);
+        Assert.Equal(1, dispatcher.CallCount);
+        Assert.Null(result.Answer);
+    }
+
+    [Fact]
     public async Task AskAsync_UnrelatedQuestion_ReturnsChineseUnsupportedResponseWithoutCitations()
     {
         var system = new SystemEntity("支付系统", null, null, DateTimeOffset.UtcNow);
@@ -469,7 +611,7 @@ public sealed class PreparedChatCoordinatorTests
             ChatMode.It,
             system.Id,
             [first.Id, second.Id],
-            "接口如何实现？");
+            "付款接口如何实现？");
 
         Assert.Equal(PreparedChatResultKind.MissingOrUnauthorized, result.Kind);
         Assert.Equal("未找到可用的知识范围，或您无权访问。", result.Message);
@@ -729,7 +871,7 @@ public sealed class PreparedChatCoordinatorTests
             ChatMode.It,
             secondSystem.Id,
             [secondA.Id, secondB.Id],
-            "接口如何实现？");
+            "付款接口如何实现？");
 
         Assert.Equal(PreparedChatResultKind.Succeeded, prior.Kind);
         Assert.Equal(PreparedChatResultKind.ProviderUnavailable, failed.Kind);
@@ -765,9 +907,15 @@ public sealed class PreparedChatCoordinatorTests
 
     private sealed class RecordingTimeProvider(List<string> trace) : TimeProvider
     {
+        private int _callCount;
+
         public override DateTimeOffset GetUtcNow()
         {
-            trace.Add("citation-materialization");
+            if (++_callCount == 2)
+            {
+                trace.Add("citation-materialization");
+            }
+
             return DateTimeOffset.UnixEpoch;
         }
     }
@@ -867,14 +1015,14 @@ public sealed class PreparedChatCoordinatorTests
     private sealed class StubEvidenceRetriever : IChatEvidenceRetriever
     {
         public int CallCount { get; private set; }
-        public ChatQuestionRequest? LastRequest { get; private set; }
+        public ChatRetrievalRequest? LastRequest { get; private set; }
         public List<string>? Trace { get; set; }
         public ChatEvidenceResultKind? ForcedResultKind { get; set; }
         public DocumentType? PrimaryDocumentTypeOverride { get; set; }
         public string PrimaryContent { get; set; } = "客户提交付款后，系统完成校验。";
         public bool IncludeRelationshipSupport { get; set; } = true;
 
-        public Task<ChatEvidenceResult> RetrieveAsync(ChatQuestionRequest request, RepositoryAccessScope accessScope, CancellationToken cancellationToken = default)
+        public Task<ChatEvidenceResult> RetrieveAsync(ChatRetrievalRequest request, RepositoryAccessScope accessScope, CancellationToken cancellationToken = default)
         {
             CallCount++;
             Trace?.Add("retrieval");

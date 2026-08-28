@@ -443,6 +443,45 @@ public sealed class ChatAgentDispatcherTests
         Assert.DoesNotContain(malformedSelection, outcome.ToString(), StringComparison.Ordinal);
     }
 
+    [Fact]
+    public async Task GenerateAsync_SyntaxFailure_UsesOneStreamingRepairWithinTheSameBoundedRequest()
+    {
+        ChatSynthesisRequest request = CreateRequest(ChatMode.Business);
+        string validSelection = CreateRawSelectionJson(request);
+        var provider = new LlmProvider(
+            "chat-model",
+            "https://chat-provider.example.com/v1",
+            "encrypted-chat-key",
+            ApiType.ChatCompletions,
+            AgentType.Chat,
+            DateTimeOffset.UtcNow);
+        var handler = new StreamingSequenceHandler(
+        [
+            CreateSseResponse("{not-valid-json"),
+            CreateSseResponse(validSelection),
+        ]);
+        var dispatcher = new ChatAgentDispatcher(
+            new ChatAgentProviderResolver(
+                new FakeOverrideRepository(null),
+                new FakeProviderRepository([provider])),
+            new CapturingEncryptionService("plaintext-chat-key"),
+            new ChatPromptCatalog(),
+            handler,
+            TimeProvider.System);
+
+        ChatSynthesisOutcome outcome = await dispatcher.GenerateAsync(request);
+
+        Assert.Null(outcome.FailureCode);
+        Assert.NotNull(outcome.Result);
+        Assert.Equal(2, handler.CallCount);
+        Assert.All(
+            handler.RequestBodies,
+            body => Assert.Contains("\"stream\":true", body, StringComparison.Ordinal));
+        Assert.Equal(
+            handler.RequestBodies[0].Contains(request.EvidenceFingerprint, StringComparison.Ordinal),
+            handler.RequestBodies[1].Contains(request.EvidenceFingerprint, StringComparison.Ordinal));
+    }
+
     private static ChatSynthesisRequest CreateRequest(ChatMode mode)
     {
         string fingerprint = new('a', 64);
@@ -638,6 +677,53 @@ public sealed class ChatAgentDispatcherTests
                 Content = new StringContent(diagnostic, Encoding.UTF8, "text/plain"),
             });
         }
+    }
+
+    private sealed class StreamingSequenceHandler(IReadOnlyList<string> responses) : HttpMessageHandler
+    {
+        private int _responseIndex;
+
+        public int CallCount { get; private set; }
+        public List<string> RequestBodies { get; } = [];
+
+        protected override async Task<HttpResponseMessage> SendAsync(
+            HttpRequestMessage request,
+            CancellationToken cancellationToken)
+        {
+            CallCount++;
+            RequestBodies.Add(request.Content is null
+                ? string.Empty
+                : await request.Content.ReadAsStringAsync(cancellationToken));
+            if ((uint)_responseIndex >= (uint)responses.Count)
+            {
+                throw new InvalidOperationException("The dispatcher made more streaming attempts than allowed.");
+            }
+
+            string response = responses[_responseIndex++];
+            return new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent(response, Encoding.UTF8, "text/event-stream"),
+            };
+        }
+    }
+
+    private static string CreateSseResponse(string answer)
+    {
+        string json = JsonSerializer.Serialize(new
+        {
+            id = "chatcmpl-story-125",
+            @object = "chat.completion.chunk",
+            choices = new[]
+            {
+                new
+                {
+                    index = 0,
+                    delta = new { content = answer },
+                    finish_reason = "stop",
+                },
+            },
+        });
+        return $"data: {json}\n\ndata: [DONE]\n\n";
     }
 
     private sealed class ManualTimeoutTimeProvider : TimeProvider

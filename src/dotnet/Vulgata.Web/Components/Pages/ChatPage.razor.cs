@@ -12,6 +12,7 @@ namespace Vulgata.Web.Components.Pages;
 
 public partial class ChatPage : IAsyncDisposable
 {
+    private const long _minimumProgressiveRevealBudgetMilliseconds = 1_000;
     private const string _validationMessage = "请选择业务模式，并输入 1 至 2000 个字符的问题。";
     private const string _unexpectedFailureMessage = "暂时无法生成回答，请稍后重试。";
 
@@ -269,7 +270,12 @@ public partial class ChatPage : IAsyncDisposable
 
             if (result.Kind == PreparedChatResultKind.Succeeded && result.Answer is not null)
             {
-                await RevealAnswerAsync(turn, result.Answer, conversationVersion, cancellation.Token);
+                await RevealAnswerAsync(
+                    turn,
+                    result.Answer,
+                    result.RemainingDeadlineMilliseconds,
+                    conversationVersion,
+                    cancellation.Token);
                 _loadState = LoadState.Loaded;
             }
             else if (result.Kind == PreparedChatResultKind.Unsupported)
@@ -387,12 +393,14 @@ public partial class ChatPage : IAsyncDisposable
     private async Task RevealAnswerAsync(
         ChatTurn turn,
         GroundedAnswer answer,
+        long remainingDeadlineMilliseconds,
         int conversationVersion,
         CancellationToken requestCancellation)
     {
         turn.BeginReveal(answer);
         bool reducedMotion = await PrefersReducedMotionAsync(requestCancellation);
-        if (reducedMotion)
+        if (reducedMotion ||
+            remainingDeadlineMilliseconds < _minimumProgressiveRevealBudgetMilliseconds)
         {
             turn.CompleteReveal();
             await RenderConversationAtEndAsync();
