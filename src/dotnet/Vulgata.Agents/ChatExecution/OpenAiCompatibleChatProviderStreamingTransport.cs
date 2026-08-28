@@ -212,8 +212,19 @@ internal sealed class OpenAiCompatibleChatProviderStreamingTransport(
             }
 
             ChatProviderStreamSignal signal = assembled.Current;
+            observation.ProviderChunkCount = signal.ProviderChunkCount;
+            observation.MaximumReceivedProviderChunkByteCount =
+                signal.MaximumReceivedProviderChunkByteCount;
+            observation.AssembledReceivedProviderResponseByteCount =
+                signal.AssembledReceivedProviderResponseByteCount;
             if (signal.Kind == ChatProviderStreamSignalKind.ProviderError)
             {
+                cancellationToken.ThrowIfCancellationRequested();
+                if (deadline.IsCancellationRequested)
+                {
+                    throw new TimeoutException("The Chat streaming deadline expired.");
+                }
+
                 observation.RejectionCategory = NormalizeTransportCategory(
                     signal.FailureCategory);
                 observation.Outcome = observation.RejectionCategory;
@@ -347,6 +358,9 @@ internal sealed class OpenAiCompatibleChatProviderStreamingTransport(
             state.RawReadCount,
             state.MaximumRawReadByteCount,
             state.RawBodyByteCount,
+            state.ProviderChunkCount,
+            state.MaximumReceivedProviderChunkByteCount,
+            state.AssembledReceivedProviderResponseByteCount,
             state.MaximumSseLineByteCount,
             state.MaximumSseEventByteCount,
             state.StreamStartedAtUtc,
@@ -444,6 +458,8 @@ internal sealed class OpenAiCompatibleChatProviderStreamingTransport(
     {
         "cancelled" or "disconnect" or "inactivity" or "overall-deadline" or
         "raw-body-overflow" or "sse-line-overflow" or "sse-event-overflow" or
+        "received-provider-chunk-overflow" or
+        "received-provider-response-overflow" or
         "chunk-overflow" or "total-overflow" or "invalid-wire-utf8" or
         "invalid-sse" or "invalid-json-event" or "invalid-json-escape" or
         "invalid-answer-utf8" or "missing-terminal" or "duplicate-terminal" or
@@ -476,6 +492,9 @@ internal sealed class OpenAiCompatibleChatProviderStreamingTransport(
         internal int RawReadCount { get; set; }
         internal int MaximumRawReadByteCount { get; set; }
         internal int RawBodyByteCount { get; set; }
+        internal int ProviderChunkCount { get; set; }
+        internal int MaximumReceivedProviderChunkByteCount { get; set; }
+        internal int AssembledReceivedProviderResponseByteCount { get; set; }
         internal int MaximumSseLineByteCount { get; set; }
         internal int MaximumSseEventByteCount { get; set; }
         internal string Outcome { get; set; } = "rejected";

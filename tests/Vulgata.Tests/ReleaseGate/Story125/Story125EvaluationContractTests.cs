@@ -1,7 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
-using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -14,7 +13,7 @@ public sealed class Story125EvaluationContractTests
 
     public static IEnumerable<object[]> AcceptedSchemas()
     {
-        yield return ["chat-evidence-packet-v2.schema.json", "Grounded Chat Evidence Packet 2.0"];
+        yield return ["chat-evidence-packet-v2.schema.json", "Grounded Chat Evidence Packet 2.2"];
         yield return ["story125-evaluation-case.schema.json", "Story 12.5 Chat Evaluation Corpus"];
         yield return ["story125-release-evidence.schema.json", "Story 12.5 Release Evidence Run Envelope"];
     }
@@ -192,26 +191,22 @@ public sealed class Story125EvaluationContractTests
         Assert.Contains("invalid-wire-utf8", rejectionCategory.EnumerateArray().Select(value => value.GetString()));
         Assert.Contains("rejected-semantic", validationOutcome.EnumerateArray().Select(value => value.GetString()));
 
-        MethodInfo? validator = typeof(Story125ReleaseHarness).GetMethod(
-            "ValidateCrossArtifactConsistency",
-            BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic,
-            binder: null,
-            types: [typeof(string)],
-            modifiers: null);
-        Assert.NotNull(
-            validator);
-
-        object? rawResult = validator!.Invoke(null, [root]);
-        IReadOnlyList<string> errors = rawResult switch
-        {
-            IReadOnlyList<string> diagnostics => diagnostics,
-            IEnumerable<string> diagnostics => diagnostics.ToArray(),
-            bool valid => valid ? [] : ["cross-artifact consistency rejected"],
-            _ => throw new InvalidOperationException(
-                "ValidateCrossArtifactConsistency must return errors or a validity boolean."),
-        };
-
-        Assert.Empty(errors);
+        string[] acceptedTransportOutcomes =
+        [
+            "completed", "cancelled", "disconnect", "inactivity", "overall-deadline",
+            "raw-body-overflow", "sse-line-overflow", "sse-event-overflow",
+            "received-provider-chunk-overflow", "received-provider-response-overflow",
+            "decoded-delta-overflow", "final-answer-overflow", "invalid-wire-utf8",
+            "invalid-sse", "invalid-json-event", "invalid-json-escape", "invalid-answer-utf8",
+            "missing-terminal", "duplicate-terminal", "contradictory-terminal",
+            "post-terminal-data", "provider-failure",
+        ];
+        Assert.Equal(
+            acceptedTransportOutcomes.Order(StringComparer.Ordinal),
+            transportOutcome.EnumerateArray().Select(value => value.GetString()!).Order(StringComparer.Ordinal));
+        Assert.Equal(
+            acceptedTransportOutcomes.Where(value => value != "completed").Order(StringComparer.Ordinal),
+            rejectionCategory.EnumerateArray().Select(value => value.GetString()!).Order(StringComparer.Ordinal));
     }
 
     [Fact]
@@ -637,7 +632,7 @@ public sealed class Story125EvaluationContractTests
 
         JsonObject envelope = new JsonObject
         {
-            ["schemaVersion"] = "story125-release-evidence/2.1",
+            ["schemaVersion"] = "story125-release-evidence/2.2",
             ["runId"] = "story125-20260827t120000z-abcdef12",
             ["supersedesRunId"] = null,
             ["status"] = "passed",
@@ -658,7 +653,7 @@ public sealed class Story125EvaluationContractTests
                     new JsonObject { ["repositoryAlias"] = "mbs-channel", ["profiledRevision"] = story124Commit },
                 },
                 ["promptVersions"] = new JsonArray("story125-chat-v1"),
-                ["schemaVersions"] = new JsonArray("story125-release-evidence/2.1"),
+                ["schemaVersions"] = new JsonArray("story125-release-evidence/2.2"),
                 ["toolVersions"] = new JsonArray
                 {
                     new JsonObject { ["name"] = "dotnet", ["version"] = "10.0", ["checksum"] = new string('1', 64) },
@@ -673,14 +668,18 @@ public sealed class Story125EvaluationContractTests
                     ["nonSecretConfigurationIdentity"] = "release-provider-config",
                     ["configurationFingerprint"] = new string('4', 64),
                 },
-                ["streamObservationAuthority"] = new JsonObject
+                ["streamAttestationAuthority"] = new JsonObject
                 {
+                    ["authorityKind"] = "story125-trackc-sealed-raw-stream-attestor/1.0",
                     ["processObservationId"] = processObservationId,
                     ["processPublicKeyFingerprint"] = new string('5', 64),
                     ["candidateCommit"] = story125Commit,
                     ["adapterImplementation"] = "Vulgata.Agents.ChatExecution.OpenAiCompatibleChatProviderStreamingTransport",
                     ["adapterVersion"] = "1",
                     ["adapterAssemblySha256"] = new string('6', 64),
+                    ["attestationSinkImplementation"] = "Vulgata.Agents.ChatExecution.Story125StreamAttestationSink",
+                    ["attestationSinkVersion"] = "1",
+                    ["attestationSinkAssemblySha256"] = new string('7', 64),
                     ["preflightArtifact"] = CreateArtifact("evidence/stream-preflight.json", '7'),
                 },
             },
@@ -883,13 +882,19 @@ public sealed class Story125EvaluationContractTests
             ["candidateCommit"] = candidateCommit,
             ["caseId"] = caseId,
             ["requestId"] = $"stream-{caseId}-00000001",
-            ["observationAuthority"] = "production-raw-response-header-adapter",
+            ["runId"] = "story125-20260827t120000z-abcdef12",
+            ["attestationAuthority"] = "story125-trackc-sealed-raw-stream-attestor/1.0",
+            ["runtimeObservationId"] = $"runtime-stream-{caseId}-00000001",
+            ["completionSummaryId"] = $"completion-stream-{caseId}-00000001",
             ["processObservationId"] = "process-release01",
             ["processPublicKeyFingerprint"] = new string('5', 64),
             ["observationSequence"] = 1,
             ["adapterImplementation"] = "Vulgata.Agents.ChatExecution.OpenAiCompatibleChatProviderStreamingTransport",
             ["adapterVersion"] = "1",
             ["adapterAssemblySha256"] = new string('6', 64),
+            ["attestationSinkImplementation"] = "Vulgata.Agents.ChatExecution.Story125StreamAttestationSink",
+            ["attestationSinkVersion"] = "1",
+            ["attestationSinkAssemblySha256"] = new string('7', 64),
             ["providerApi"] = "openai-compatible",
             ["providerConfigurationFingerprint"] = new string('4', 64),
             ["canonicalStreamingRequestFingerprint"] = fingerprint,
@@ -913,6 +918,9 @@ public sealed class Story125EvaluationContractTests
             ["rawBodyByteCount"] = 100,
             ["maximumSseLineByteCount"] = 10,
             ["maximumSseEventByteCount"] = 10,
+            ["providerChunkCount"] = 1,
+            ["maximumReceivedProviderChunkByteCount"] = 10,
+            ["assembledReceivedProviderResponseByteCount"] = 10,
             ["answerDeltaCount"] = 1,
             ["maximumAnswerDeltaByteCount"] = 10,
             ["assembledAnswerByteCount"] = 10,
@@ -922,8 +930,10 @@ public sealed class Story125EvaluationContractTests
             ["transportOutcome"] = "completed",
             ["rejectionCategory"] = null,
             ["validationOutcome"] = "accepted",
-            ["authenticatedObservationArtifact"] = CreateArtifact($"evidence/stream-{caseId}.json", fingerprint),
-            ["observationSignature"] = new string('A', 80),
+            ["runtimeObservationArtifact"] = CreateArtifact($"evidence/runtime-stream-{caseId}.json", fingerprint),
+            ["completionSummaryArtifact"] = CreateArtifact($"evidence/completion-stream-{caseId}.json", fingerprint),
+            ["authenticatedAttestationArtifact"] = CreateArtifact($"evidence/attestation-stream-{caseId}.json", fingerprint),
+            ["attestationSignature"] = new string('A', 80),
         };
     }
 
@@ -981,7 +991,7 @@ public sealed class Story125EvaluationContractTests
 
         return new JsonObject
         {
-            ["schemaVersion"] = "story125-release-evidence/2.1",
+            ["schemaVersion"] = "story125-release-evidence/2.2",
             ["runId"] = "story125-20260827t120000z-abcdef12",
             ["supersedesRunId"] = null,
             ["status"] = "passed",
@@ -1036,11 +1046,20 @@ public sealed class Story125EvaluationContractTests
 
         return new JsonObject
         {
-            ["schemaVersion"] = "grounded-chat-evidence/2.0",
+            ["schemaVersion"] = "grounded-chat-evidence/2.2",
             ["requestId"] = "request-story125-01",
             ["mode"] = "business",
             ["systemId"] = systemId,
             ["repositoryIds"] = new JsonArray(repositoryA, repositoryB),
+            ["selection"] = new JsonObject
+            {
+                ["policy"] = "lexical-current-v2/1.0",
+                ["candidateWindow"] = 256,
+                ["primarySectionTarget"] = 12,
+                ["primaryDocumentHandles"] = new JsonArray("doc-account"),
+                ["primarySectionHandles"] = new JsonArray("section-account-summary"),
+                ["expansionSeedDocumentHandles"] = new JsonArray("doc-account"),
+            },
             ["documents"] = new JsonArray
             {
                 new JsonObject
@@ -1084,8 +1103,10 @@ public sealed class Story125EvaluationContractTests
                 }
             },
             ["relationships"] = new JsonArray(),
+            ["flowGroups"] = new JsonArray(),
             ["flowSteps"] = new JsonArray(),
             ["advisoryContext"] = "",
+            ["advisoryContextAuthorityFingerprint"] = new string('c', 64),
             ["conversation"] = new JsonObject { ["turns"] = new JsonArray() },
             ["fingerprint"] = new string('b', 64)
         };
@@ -1139,7 +1160,7 @@ public sealed class Story125EvaluationContractTests
     {
         return new JsonObject
         {
-            ["schemaVersion"] = "story125-release-evidence/2.1",
+            ["schemaVersion"] = "story125-release-evidence/2.2",
             ["runId"] = "story125-20260827t120000z-abcdef12",
             ["supersedesRunId"] = null,
             ["status"] = "planned",

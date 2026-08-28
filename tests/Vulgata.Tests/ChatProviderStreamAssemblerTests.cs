@@ -35,6 +35,25 @@ public sealed class ChatProviderStreamAssemblerTests
         Assert.Equal(1, result.TerminalCount);
     }
 
+    [Theory]
+    [InlineData("\r")]
+    [InlineData("\n")]
+    [InlineData("\r\n")]
+    public async Task AssembleAsync_ArbitraryReadSseLineEnding_ProducesOneTerminalAsync(
+        string lineEnding)
+    {
+        byte[] body = Wire(
+            "data: {\"choices\":[{\"delta\":{\"content\":\"答\"}}]}" +
+            lineEnding + lineEnding +
+            "data: [DONE]" + lineEnding + lineEnding);
+
+        var result = await AssembleAsync(SplitAtEveryByte(body));
+
+        Assert.True(result.Accepted, result.RejectionCategory);
+        Assert.Equal("答", result.Answer);
+        Assert.Equal(1, result.TerminalCount);
+    }
+
     [Fact]
     public async Task AssembleAsync_SplitJsonEscapesAndSurrogatePair_UsesDecodedDeltaBytesAsync()
     {
@@ -66,6 +85,31 @@ public sealed class ChatProviderStreamAssemblerTests
         Assert.Null(result.Answer);
         Assert.DoesNotContain('\uFFFD', result.PartialAnswer ?? string.Empty);
     }
+
+    [Theory]
+    [MemberData(nameof(InvalidWireUtf8))]
+    public async Task AssembleAsync_TruncatedOrOverlongWireUtf8_RejectsStrictlyAsync(
+        byte[] invalidBytes)
+    {
+        byte[] body = Wire("data: [DONE]\n\n")
+            .Take(6)
+            .Concat(invalidBytes)
+            .Concat(Wire("\n\n"))
+            .ToArray();
+
+        var result = await AssembleAsync(SplitAtEveryByte(body));
+
+        AssertRejected(result, "invalid-wire-utf8");
+        Assert.Null(result.Answer);
+        Assert.DoesNotContain('\uFFFD', result.PartialAnswer ?? string.Empty);
+    }
+
+    public static IEnumerable<object[]> InvalidWireUtf8() =>
+    [
+        [new byte[] { 0xE2, 0x82 }], // truncated three-byte scalar
+        [new byte[] { 0xC0, 0xAF }], // overlong U+002F
+        [new byte[] { 0xED, 0xA0, 0x80 }], // encoded UTF-16 surrogate
+    ];
 
     [Theory]
     [InlineData("data: {not-json}\n\n", "invalid-json-event")]
@@ -262,6 +306,55 @@ public sealed class ChatProviderStreamAssemblerTests
         AssertRejected(result, "post-terminal-data");
     }
 
+    [Fact]
+    public async Task StreamAsync_CancellationDuringArbitraryRead_ThrowsWithoutTerminalAcceptanceAsync()
+    {
+        using var cancellation = new CancellationTokenSource();
+        var reads = new List<ChatProviderStreamSignal>();
+
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(async () =>
+        {
+            await foreach (ChatProviderStreamSignal signal in ChatProviderStreamAssembler.StreamAsync(
+                CancelAfterFirstRead(cancellation),
+                cancellation.Token))
+            {
+                reads.Add(signal);
+            }
+        });
+
+        Assert.Contains(
+            reads,
+            signal => signal.Kind == ChatProviderStreamSignalKind.AnswerDelta);
+        Assert.DoesNotContain(
+            reads,
+            signal => signal.Kind == ChatProviderStreamSignalKind.Terminal);
+    }
+
+    [Fact]
+    public async Task StreamAsync_KeepAliveWithoutDecodedData_ExpiresInactivityWithoutPartialAnswerAsync()
+    {
+        using var cancellation = new CancellationTokenSource(TimeSpan.FromMilliseconds(25));
+        var signals = new List<ChatProviderStreamSignal>();
+        Exception? exception = await Record.ExceptionAsync(async () =>
+        {
+            await foreach (ChatProviderStreamSignal signal in ChatProviderStreamAssembler.StreamAsync(
+                SilentAfterKeepAlive(),
+                cancellation.Token))
+            {
+                signals.Add(signal);
+            }
+        });
+
+        Assert.Null(exception);
+        ChatProviderStreamSignal failure = Assert.Single(signals);
+        Assert.Equal(ChatProviderStreamSignalKind.ProviderError, failure.Kind);
+        Assert.Equal("inactivity", failure.FailureCategory);
+        Assert.DoesNotContain(
+            signals,
+            signal => signal.Kind is ChatProviderStreamSignalKind.Terminal or
+                ChatProviderStreamSignalKind.AnswerDelta);
+    }
+
     private static async Task<dynamic> AssembleAsync(
         IReadOnlyList<ReadOnlyMemory<byte>> chunks) =>
         await ChatProviderStreamAssembler.AssembleAsync(
@@ -278,6 +371,23 @@ public sealed class ChatProviderStreamAssemblerTests
             yield return chunk;
             await Task.Yield();
         }
+    }
+
+    private static async IAsyncEnumerable<ReadOnlyMemory<byte>> CancelAfterFirstRead(
+        CancellationTokenSource cancellation,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        yield return Wire("data: {\"choices\":[{\"delta\":{\"content\":\"partial\"}}]}\n\n");
+        cancellation.Cancel();
+        await Task.Yield();
+        cancellationToken.ThrowIfCancellationRequested();
+    }
+
+    private static async IAsyncEnumerable<ReadOnlyMemory<byte>> SilentAfterKeepAlive(
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        yield return Wire(": keepalive\n\n");
+        await Task.Delay(Timeout.InfiniteTimeSpan, cancellationToken);
     }
 
     private static IReadOnlyList<ReadOnlyMemory<byte>> SplitAtEveryByte(byte[] body) =>

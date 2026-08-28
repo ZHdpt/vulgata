@@ -22,7 +22,10 @@ public sealed record ChatProviderStreamRequest(
 public sealed record ChatProviderStreamSignal(
     ChatProviderStreamSignalKind Kind,
     ReadOnlyMemory<byte> AnswerDelta,
-    string? FailureCategory = null);
+    string? FailureCategory = null,
+    int ProviderChunkCount = 0,
+    int MaximumReceivedProviderChunkByteCount = 0,
+    int AssembledReceivedProviderResponseByteCount = 0);
 
 public sealed class ChatProviderStreamAssemblyResult
 {

@@ -13,6 +13,8 @@ internal static class ChatProviderStreamAssembler
     private const int _maximumSseEventBytes = 131_072;
     private const int _maximumAnswerDeltaBytes = 16_384;
     private const int _maximumAnswerBytes = 65_536;
+    private const int _maximumReceivedProviderChunkBytes = 16_384;
+    private const int _maximumReceivedProviderResponseBytes = 65_536;
     private const int _decoderInputSliceBytes = 16_384;
     private static readonly UTF8Encoding _strictUtf8 = new(false, true);
 
@@ -28,13 +30,37 @@ internal static class ChatProviderStreamAssembler
         char[] characters = ArrayPool<char>.Shared.Rent(
             _strictUtf8.GetMaxCharCount(_decoderInputSliceBytes));
         bool terminalObserved = false;
+        int providerChunkCount = 0;
+        int maximumReceivedProviderChunkByteCount = 0;
+        int assembledReceivedProviderResponseByteCount = 0;
+        int emittedAnswerDeltaCount = 0;
+        bool inactivityObserved = false;
 
         try
         {
-            await foreach (ReadOnlyMemory<byte> chunk in body
-                .WithCancellation(cancellationToken)
-                .ConfigureAwait(false))
+            await using IAsyncEnumerator<ReadOnlyMemory<byte>> chunks =
+                body.GetAsyncEnumerator(cancellationToken);
+            while (true)
             {
+                bool hasChunk;
+                try
+                {
+                    hasChunk = await chunks.MoveNextAsync().ConfigureAwait(false);
+                }
+                catch (OperationCanceledException) when (
+                    cancellationToken.IsCancellationRequested &&
+                    emittedAnswerDeltaCount == 0)
+                {
+                    inactivityObserved = true;
+                    break;
+                }
+
+                if (!hasChunk)
+                {
+                    break;
+                }
+
+                ReadOnlyMemory<byte> chunk = chunks.Current;
                 cancellationToken.ThrowIfCancellationRequested();
                 if (chunk.Length > _maximumRawBodyBytes - rawBody.Length)
                 {
@@ -60,6 +86,39 @@ internal static class ChatProviderStreamAssembler
 
                 while (TryTakeCompletedEvent(pendingText, out string? completedEvent))
                 {
+                    int receivedProviderChunkByteCount =
+                        GetReceivedProviderChunkByteCount(completedEvent);
+                    if (receivedProviderChunkByteCount > 0)
+                    {
+                        providerChunkCount++;
+                        maximumReceivedProviderChunkByteCount = Math.Max(
+                            maximumReceivedProviderChunkByteCount,
+                            receivedProviderChunkByteCount);
+                        assembledReceivedProviderResponseByteCount +=
+                            receivedProviderChunkByteCount;
+                        if (receivedProviderChunkByteCount >
+                            _maximumReceivedProviderChunkBytes)
+                        {
+                            yield return ProviderError(
+                                "received-provider-chunk-overflow",
+                                providerChunkCount,
+                                maximumReceivedProviderChunkByteCount,
+                                assembledReceivedProviderResponseByteCount);
+                            yield break;
+                        }
+
+                        if (assembledReceivedProviderResponseByteCount >
+                            _maximumReceivedProviderResponseBytes)
+                        {
+                            yield return ProviderError(
+                                "received-provider-response-overflow",
+                                providerChunkCount,
+                                maximumReceivedProviderChunkByteCount,
+                                assembledReceivedProviderResponseByteCount);
+                            yield break;
+                        }
+                    }
+
                     ChatProviderStreamAssemblyResult eventResult = await AssembleAsync(
                         SingleChunkAsync(_strictUtf8.GetBytes(
                             completedEvent + "data: [DONE]\n\n")),
@@ -82,7 +141,10 @@ internal static class ChatProviderStreamAssembler
                         }
 
                         yield return ProviderError(
-                            eventResult.RejectionCategory ?? "invalid-provider-stream");
+                            eventResult.RejectionCategory ?? "invalid-provider-stream",
+                            providerChunkCount,
+                            maximumReceivedProviderChunkByteCount,
+                            assembledReceivedProviderResponseByteCount);
                         yield break;
                     }
 
@@ -96,7 +158,13 @@ internal static class ChatProviderStreamAssembler
 
                         yield return new ChatProviderStreamSignal(
                             ChatProviderStreamSignalKind.AnswerDelta,
-                            _strictUtf8.GetBytes(eventResult.Answer));
+                            _strictUtf8.GetBytes(eventResult.Answer),
+                            ProviderChunkCount: providerChunkCount,
+                            MaximumReceivedProviderChunkByteCount:
+                                maximumReceivedProviderChunkByteCount,
+                            AssembledReceivedProviderResponseByteCount:
+                                assembledReceivedProviderResponseByteCount);
+                        emittedAnswerDeltaCount++;
                     }
                 }
             }
@@ -116,19 +184,47 @@ internal static class ChatProviderStreamAssembler
             ArrayPool<char>.Shared.Return(characters);
         }
 
+        if (inactivityObserved)
+        {
+            yield return ProviderError(
+                "inactivity",
+                providerChunkCount,
+                maximumReceivedProviderChunkByteCount,
+                assembledReceivedProviderResponseByteCount);
+            yield break;
+        }
+
         ChatProviderStreamAssemblyResult finalResult = await AssembleAsync(
             SingleChunkAsync(rawBody.ToArray()),
             cancellationToken).ConfigureAwait(false);
         if (!finalResult.Accepted)
         {
             yield return ProviderError(
-                finalResult.RejectionCategory ?? "invalid-provider-stream");
+                finalResult.RejectionCategory ?? "invalid-provider-stream",
+                providerChunkCount,
+                maximumReceivedProviderChunkByteCount,
+                assembledReceivedProviderResponseByteCount);
+            yield break;
+        }
+
+        if (emittedAnswerDeltaCount == 0)
+        {
+            yield return ProviderError(
+                "provider-failure",
+                providerChunkCount,
+                maximumReceivedProviderChunkByteCount,
+                assembledReceivedProviderResponseByteCount);
             yield break;
         }
 
         yield return new ChatProviderStreamSignal(
             ChatProviderStreamSignalKind.Terminal,
-            ReadOnlyMemory<byte>.Empty);
+            ReadOnlyMemory<byte>.Empty,
+            ProviderChunkCount: providerChunkCount,
+            MaximumReceivedProviderChunkByteCount:
+                maximumReceivedProviderChunkByteCount,
+            AssembledReceivedProviderResponseByteCount:
+                assembledReceivedProviderResponseByteCount);
     }
 
     public static async Task<ChatProviderStreamAssemblyResult> AssembleAsync(
@@ -651,6 +747,36 @@ internal static class ChatProviderStreamAssembler
         return false;
     }
 
+    private static int GetReceivedProviderChunkByteCount(string completedEvent)
+    {
+        var data = new List<string>();
+        foreach ((string line, _) in EnumerateLines(completedEvent))
+        {
+            if (!line.StartsWith("data:", StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            string value = line[5..];
+            if (value.StartsWith(' '))
+            {
+                value = value[1..];
+            }
+
+            data.Add(value);
+        }
+
+        if (data.Count == 0)
+        {
+            return 0;
+        }
+
+        string payload = string.Join('\n', data);
+        return StringComparer.Ordinal.Equals(payload, "[DONE]")
+            ? 0
+            : _strictUtf8.GetByteCount(payload);
+    }
+
     private static async IAsyncEnumerable<ReadOnlyMemory<byte>> SingleChunkAsync(
         byte[] content)
     {
@@ -658,11 +784,18 @@ internal static class ChatProviderStreamAssembler
         yield return content;
     }
 
-    private static ChatProviderStreamSignal ProviderError(string category) =>
+    private static ChatProviderStreamSignal ProviderError(
+        string category,
+        int providerChunkCount = 0,
+        int maximumReceivedProviderChunkByteCount = 0,
+        int assembledReceivedProviderResponseByteCount = 0) =>
         new(
             ChatProviderStreamSignalKind.ProviderError,
             ReadOnlyMemory<byte>.Empty,
-            category);
+            category,
+            providerChunkCount,
+            maximumReceivedProviderChunkByteCount,
+            assembledReceivedProviderResponseByteCount);
 
     private static ChatProviderStreamAssemblyResult Rejected(
         string category,

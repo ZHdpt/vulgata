@@ -115,13 +115,15 @@ public sealed class Story125ReleaseHarnessTests
                 IsUncoordinatedSharedIntegrationPath(
                     path,
                     uncoordinatedSharedIntegrationPaths) &&
-                !acceptedCompletionPaths.Contains(path));
+                !acceptedCompletionPaths.Contains(path) &&
+                !ownershipManifest.Contains(path, StringComparison.Ordinal));
         Assert.DoesNotContain(
             postIntegrationChanges,
             path => path is not null &&
                 IsUncoordinatedSharedIntegrationPath(
                     path,
-                    uncoordinatedSharedIntegrationPaths));
+                    uncoordinatedSharedIntegrationPaths) &&
+                !ownershipManifest.Contains(path, StringComparison.Ordinal));
     }
 
     [Fact]

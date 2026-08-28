@@ -35,6 +35,9 @@ internal sealed record ChatStreamObservationReceipt(
     int RawReadCount,
     int MaximumRawReadByteCount,
     int RawBodyByteCount,
+    int ProviderChunkCount,
+    int MaximumReceivedProviderChunkByteCount,
+    int AssembledReceivedProviderResponseByteCount,
     int MaximumSseLineByteCount,
     int MaximumSseEventByteCount,
     DateTimeOffset StreamStartedAtUtc,
@@ -250,6 +253,9 @@ internal sealed class ChatStreamObservationAuthority : IDisposable
         receipt.RawReadCount >= 0 &&
         receipt.MaximumRawReadByteCount is >= 0 and <= 16_384 &&
         receipt.RawBodyByteCount is >= 0 and <= 1_048_576 &&
+        receipt.ProviderChunkCount is >= 0 and <= 4_096 &&
+        receipt.MaximumReceivedProviderChunkByteCount is >= 0 and <= 16_385 &&
+        receipt.AssembledReceivedProviderResponseByteCount is >= 0 and <= 65_537 &&
         receipt.MaximumSseLineByteCount is >= 0 and <= 131_072 &&
         receipt.MaximumSseEventByteCount is >= 0 and <= 131_072 &&
         receipt.AnswerDeltaCount is >= 0 and <= 4_096 &&
