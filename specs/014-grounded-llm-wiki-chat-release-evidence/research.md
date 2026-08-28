@@ -8,7 +8,7 @@
 - August 30 sprint-change proposal, bounded-scanning architecture, and dated PRD overlay
 - accepted Story 12.4 artifacts at immutable dependency commit `4798b97d9f23aef587829175df7ab7ebc3daf995`
 - `specs/008-demo-chat-release-gate` as stale lifecycle but reusable implementation history
-- accepted Story 12.5 spec, `decisions/design-correction-01.md`, and immutable `plan-review-07` at clean source commit `bf48acba67bc6634bb3b929aad14eb16a5ed9341`
+- accepted Story 12.5 spec, `decisions/design-correction-01.md`, and immutable `plan-review-08` at clean source commit `7e390bf97e9564d542f6ef939349c2204a4043d5`
 - current Prepared Chat contracts, retriever, currentness validator, coordinator, non-streaming provider dispatch/result validation, Unicode-safe page reveal, tests, Pass 1/Pass 2 streaming implementations, durable Scan entities/recovery/manual-resume API, placeholder Scan-history page, fake demo state, and release harness
 
 No `CONTEXT-MAP.md`, `CONTEXT.md`, repository ADR directory, or context ADR exists at the inspected boundary.
@@ -124,19 +124,21 @@ Normalize NFC, CRLF/CR to LF and outer Unicode whitespace; reject disallowed con
 
 ## R-7: Mandatory provider streaming needs a dedicated Chat seam
 
-**Decision**: replace only `ChatAgentDispatcher`'s provider-call seam with an Agents-internal raw OpenAI-compatible adapter and ordered raw-body -> strict wire UTF-8 -> SSE -> JSON/escape -> decoded answer-delta bytes -> final answer assembly pipeline. Both primary and repair use it under one 29-second deadline.
+**Decision**: replace only `ChatAgentDispatcher`'s provider-call seam with an Agents-internal raw OpenAI-compatible adapter and ordered raw-body -> strict wire UTF-8 -> SSE -> received logical Provider Chunk gate -> assembled received-response gate -> JSON/escape -> decoded answer-delta bytes -> final decoded-answer assembly pipeline. Both primary and repair use it under one 29-second deadline.
 
-**Rationale**: current aggregate/Pass 1/Pass 2 paths cannot prove which bytes a bound governs. Physical reads split arbitrarily; SSE and JSON have independent grammar; JSON escapes change lexical versus answer byte counts. FR-054 is implementable when Provider Chunk means one decoded content delta re-encoded as strict UTF-8 (<=16,384) and complete response means concatenated decoded delta bytes (<=65,536). A 16,384-byte requested read buffer, 131,072-byte SSE line/event cap, and 1,048,576-byte raw-body cap separately bound implementation overhead without weakening acceptance.
+**Rationale**: current aggregate/Pass 1/Pass 2 paths cannot prove which bytes a bound governs. FR-054 explicitly says received bytes and the Provider Stream definition separates response chunks from terminal outcome. Therefore one complete nonterminal SSE `data` event is the logical Provider Chunk, and its exact received `data`-value payload octets—including JSON syntax, escapes and metadata, excluding only SSE framing and `[DONE]`—are counted before JSON decoding. Each is <=16,384 and their attempt-wide sum is <=65,536. A 16,384-byte requested read buffer, 131,072-byte SSE line/event cap, 1,048,576-byte raw-body cap, decoded-delta <=16,384 and final decoded-answer <=65,536 remain independent safety/defense bounds; none redefines the received domains.
 
 **Alternatives considered**:
 
 - Keep `RunAsync` or treat SDK aggregation as streaming: rejected because raw framing/byte/terminal observations would be unprovable.
 - Reuse Pass 1/Pass 2 transport directly: rejected because their liveness, terminal, aggregation, and bounds intentionally serve different workflows.
 - Generalize all Agent streaming now: rejected because it broadens ownership and regression scope; Story 12.5 needs one dedicated Chat seam.
+- Measure only decoded answer deltas: rejected because escape/metadata-heavy chunks could exceed FR-054 received-byte bounds while decoding small.
+- Count complete SSE framing as the Provider Chunk: rejected because physical line endings, field syntax, comments and parser-inserted multi-line separators are framing, not the logical provider payload; their overhead is already bounded separately.
 - Reset timeout for each call: rejected because repair could exceed PRD NFR-1.2.
 - Retry semantic/evidence failures: rejected because it can invent claims and disclose why protected evidence failed.
 
-**Consequence**: JSON escape bytes count in raw/SSE safety domains and after unescape in decoded-delta acceptance; `\u4e2d` is six raw bytes and three answer bytes. Only a valid non-empty decoded delta or `[DONE]` resets inactivity. The adapter reads through physical EOF; every stage owns its grammar/overflow/failure and discards the whole pipeline. Exact/+1 and arbitrary-split vectors cover wire scalars, CR/LF, SSE fields, JSON tokens/escapes, deltas, terminal metadata, and post-terminal reads. Pass 1/Pass 2 remain unchanged evidence, not authority.
+**Consequence**: received `\u4e2d` counts six Provider Chunk bytes before JSON and three decoded-delta bytes afterward; metadata grows received totals while leaving decoded counters unchanged. The offending 16,385th per-chunk or 65,537th assembled received byte rejects before JSON decoding. Pure post-JSON seams retain exact/+1 decoded bounds; full-pipeline collisions prove received ownership wins first. Only a valid non-empty decoded delta or `[DONE]` resets inactivity. Every stage discards the whole pipeline on failure, and Track C recomputes every independent content-dark counter. Pass 1/Pass 2 remain unchanged evidence, not authority.
 
 ## R-7B: Streaming transport is not progressive browser disclosure
 

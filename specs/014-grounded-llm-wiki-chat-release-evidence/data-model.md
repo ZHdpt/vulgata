@@ -254,10 +254,12 @@ Agents-internal transport model; it never crosses the client boundary.
 | raw read/body | arbitrary response-body octets; requested read <=16,384 and raw body <=1,048,576 implementation bytes |
 | wire decoder | strict incremental UTF-8 across physical reads; no replacement; owns malformed/truncated wire failure |
 | SSE line/event | parsed across CR/LF/read splits; each <=131,072 raw wire bytes as an implementation safety cap |
-| JSON event | complete SSE data event decoded into delta/finish/error/`[DONE]`; JSON escapes and surrogate pairs validated |
-| Provider Chunk | one non-empty decoded content delta re-encoded strict UTF-8, <=16,384 acceptance bytes after JSON unescape |
-| assembled response | concatenated Provider Chunk bytes, <=65,536 acceptance bytes; strict final decode after terminal/EOF |
-| data inactivity | ten seconds since last Provider Chunk unless valid `[DONE]` arrives; raw reads/keepalive/metadata/finish do not reset |
+| received logical Provider Chunk | one complete nonterminal SSE `data` event, including empty/metadata/finish/error/answer JSON; exact received `data`-value UTF-8 octets include JSON syntax/escapes/metadata and exclude SSE field syntax, terminators, inserted multi-line LF and `[DONE]`; count before JSON; <=16,384 normative bytes |
+| assembled received provider response | monotonic sum of every received logical Provider Chunk payload in stream order, before JSON; <=65,536 normative bytes |
+| JSON event | one already received-bounded Provider Chunk decoded into delta/finish/error; JSON escapes and surrogate pairs validated |
+| decoded answer delta | one non-empty decoded content delta re-encoded strict UTF-8, <=16,384 additional bytes after JSON unescape |
+| final decoded answer | concatenated decoded answer-delta bytes, <=65,536 additional bytes; strict final decode after terminal/EOF |
+| data inactivity | ten seconds since last non-empty decoded answer delta unless valid `[DONE]` arrives; raw reads/keepalive/empty/metadata/finish do not reset |
 | terminal/EOF | one consistent `[DONE]`, then physical EOF with no later content/error; every other disposition rejects |
 
 `ChatStreamRuntimeObservation` is created only by the production raw response-header adapter and is Track B's neutral telemetry. It binds an opaque runtime observation ID, monotonic sequence, request/attempt, provider/config and canonical `stream=true` request fingerprints, response status/media/protocol, first physical read/EOF disposition, UTC/monotonic transport timings, stage counters, terminal outcome and rejection category. It has no post-transport validation result, candidate, run, corpus case, public key, signature, artifact/export path, prompt, response, evidence, claim, citation, handle, relationship, Source Anchor, secret, connection, or host path.
@@ -276,13 +278,14 @@ Release schema 2.2 uses one exact vocabulary. `transportOutcome` is `completed` 
 | strict wire decoder | `invalid-wire-utf8` |
 | JSON event/escape decoder | `invalid-json-event`, `invalid-json-escape` |
 | decoded answer scalar encoding | `invalid-answer-utf8` |
-| post-unescape Provider Chunk / concatenated decoded bytes | `chunk-overflow`, `total-overflow` |
+| received logical Provider Chunk / assembled received response | `received-provider-chunk-overflow`, `received-provider-response-overflow` |
+| decoded answer delta / final decoded answer | `decoded-delta-overflow`, `final-answer-overflow` |
 | terminal and post-terminal assembly | `missing-terminal`, `duplicate-terminal`, `contradictory-terminal`, `post-terminal-data` |
 | provider error response | `provider-failure` |
 
 Coordinator-owned `validationOutcome` is a separate exact vocabulary: `syntax-repair-required`, `accepted`, `rejected-before-parse`, `rejected-syntax`, `rejected-semantic`, or `cancelled`. It never substitutes for a transport rejection. Every rejected transport or validation state discards all untrusted buffers and produces no partial answer.
 
-The cross-artifact consistency vector compares these literal terms and the post-JSON-unescape 16,384-byte Provider Chunk / concatenated decoded 65,536-byte response domains against `plan.md`, the streaming contract, release contract, and release schema 2.2. Any generic UTF-8 rejection synonym, missing category, release-field leakage into runtime telemetry, or before-decoding acceptance count fails the vector.
+The runtime model carries independent `providerChunkCount`, `maximumReceivedProviderChunkByteCount`, `assembledReceivedProviderResponseByteCount`, `answerDeltaCount`, `maximumAnswerDeltaByteCount`, and `assembledAnswerByteCount`. The cross-artifact consistency vector compares those literal fields/categories and the normative pre-JSON received 16,384/65,536 domains against `plan.md`, the streaming contract, release contract, and release schema 2.2. Any counter substitution, post-decode reinterpretation of FR-054, generic overflow synonym, missing category, or release-field leakage into runtime telemetry fails the vector.
 
 ## 10. `ValidatedRevealState`
 
