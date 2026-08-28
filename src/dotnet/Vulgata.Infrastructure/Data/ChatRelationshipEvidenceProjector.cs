@@ -14,6 +14,7 @@ public sealed class ChatRelationshipEvidenceProjector(VulgataDbContext context) 
 
     public async Task<ChatRelationshipProjection> ProjectAsync(
         Guid systemId,
+        ChatMode mode,
         IReadOnlyCollection<Guid> repositoryIds,
         IReadOnlyCollection<Guid> seedDocumentVersionIds,
         IReadOnlyCollection<Guid> includedDocumentVersionIds,
@@ -36,30 +37,48 @@ public sealed class ChatRelationshipEvidenceProjector(VulgataDbContext context) 
             return ChatRelationshipProjection.Empty;
         }
 
-        ProjectableEdgeRow[] candidates = await _context.DocumentEdges
-            .AsNoTracking()
-            .Where(edge => seeds.Contains(edge.SourceDocumentVersionId) &&
+        ProjectableEdgeRow[] eligibleCandidates = await (
+            from edge in _context.DocumentEdges.AsNoTracking()
+            join target in _context.DocumentVersions.AsNoTracking()
+                on edge.TargetDocumentVersionId equals target.Id
+            where seeds.Contains(edge.SourceDocumentVersionId) &&
                 !excludedEdges.Contains(edge.Id) &&
                 (edge.EdgeType == DocumentEdgeType.References ||
                     edge.EdgeType == DocumentEdgeType.GeneratedFrom) &&
                 repositories.Contains(edge.SourceRepositoryId) &&
-                repositories.Contains(edge.TargetRepositoryId))
-            .OrderBy(edge => edge.SourceRepositoryId == edge.TargetRepositoryId)
-            .ThenBy(edge => edge.SourceDocumentVersionId)
-            .ThenBy(edge => edge.EdgeType)
-            .ThenBy(edge => edge.TargetDocumentVersionId)
-            .ThenBy(edge => edge.Id)
-            .Select(edge => new ProjectableEdgeRow(
+                repositories.Contains(edge.TargetRepositoryId)
+            select new ProjectableEdgeRow(
                 edge.Id,
                 edge.SourceDocumentVersionId,
                 edge.SourceRepositoryId,
                 edge.SourceScanRunId,
                 edge.TargetDocumentVersionId,
                 edge.TargetRepositoryId,
+                target.LogicalDocumentId,
                 edge.TargetScanRunId,
                 edge.EdgeType))
-            .Take(97)
             .ToArrayAsync(cancellationToken);
+        IGrouping<Guid, ProjectableEdgeRow>[] candidateGroups = eligibleCandidates
+            .GroupBy(candidate => candidate.EdgeId)
+            .ToArray();
+        if (candidateGroups.Any(group => group.Distinct().Skip(1).Any()))
+        {
+            return ChatRelationshipProjection.Invalid;
+        }
+
+        Dictionary<Guid, int> seedRanks = seeds
+            .Select((seed, rank) => (seed, rank))
+            .ToDictionary(item => item.seed, item => item.rank);
+        ProjectableEdgeRow[] candidates = candidateGroups
+            .Select(group => group.First())
+            .OrderBy(candidate => seedRanks[candidate.SourceDocumentVersionId])
+            .ThenBy(candidate => RelationshipPreference(mode, candidate.EdgeType))
+            .ThenBy(candidate => candidate.SourceRepositoryId == candidate.TargetRepositoryId ? 0 : 1)
+            .ThenBy(candidate => candidate.TargetRepositoryId)
+            .ThenBy(candidate => candidate.TargetLogicalDocumentId)
+            .ThenBy(candidate => candidate.TargetDocumentVersionId)
+            .ThenBy(candidate => candidate.EdgeId)
+            .ToArray();
 
         var relationships = new List<ProjectedChatRelationship>();
         var relatedSections = new List<DocumentSection>();
@@ -224,6 +243,11 @@ public sealed class ChatRelationshipEvidenceProjector(VulgataDbContext context) 
         var seen = new HashSet<Guid>();
         return values.Where(seen.Add).Take(limit).ToArray();
     }
+
+    private static int RelationshipPreference(ChatMode mode, DocumentEdgeType edgeType) =>
+        mode == ChatMode.Business
+            ? edgeType == DocumentEdgeType.GeneratedFrom ? 0 : 1
+            : edgeType == DocumentEdgeType.References ? 0 : 1;
 
     private Task<bool> IsCurrentEndpointAsync(
         Guid documentVersionId,
@@ -461,6 +485,7 @@ public sealed class ChatRelationshipEvidenceProjector(VulgataDbContext context) 
         Guid SourceScanRunId,
         Guid TargetDocumentVersionId,
         Guid TargetRepositoryId,
+        Guid TargetLogicalDocumentId,
         Guid TargetScanRunId,
         DocumentEdgeType EdgeType);
 

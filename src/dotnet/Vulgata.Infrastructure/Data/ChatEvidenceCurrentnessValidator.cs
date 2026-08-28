@@ -232,9 +232,9 @@ public sealed class ChatEvidenceCurrentnessValidator(VulgataDbContext context) :
             .Where(decision =>
                 decision.DocumentEdgeId.HasValue &&
                 edgeIds.Contains(decision.DocumentEdgeId.Value))
-            .Take(11)
+            .Take(257)
             .ToArrayAsync(cancellationToken);
-        if (exactDecisions.Length > 10)
+        if (exactDecisions.Length > 256)
         {
             return false;
         }
@@ -244,9 +244,9 @@ public sealed class ChatEvidenceCurrentnessValidator(VulgataDbContext context) :
             .ExactResolutionProviderEvidenceContributions
             .AsNoTracking()
             .Where(contribution => decisionIds.Contains(contribution.ResolutionDecisionId))
-            .Take(2_561)
+            .Take(65_537)
             .ToArrayAsync(cancellationToken);
-        if (contributions.Length > 2_560 ||
+        if (contributions.Length > 65_536 ||
             exactDecisions.Any(decision =>
             {
                 int count = contributions.Count(contribution =>
@@ -533,19 +533,16 @@ public sealed class ChatEvidenceCurrentnessValidator(VulgataDbContext context) :
                     decision.ProviderEvidenceSetFingerprint,
                     expected.ProfileFingerprint,
                     StringComparison.Ordinal)) &&
-               decisionFlowGroups.Length == decisionSet.Count &&
-               decisionFlowGroups.All(group =>
-                   string.Equals(group.State, "Published", StringComparison.Ordinal) &&
-                   group.BusinessLogicDocumentVersionId.HasValue &&
-                   group.SystemId == systemId) &&
-               decisionFlowGroups
-                   .Select(group => group.ExactResolutionDecisionId!.Value)
-                   .Order()
-                   .SequenceEqual(setDecisionIds.Order()) &&
+               requestedFlowGroups.All(requested =>
+                   decisionFlowGroups.Any(group =>
+                       group.Id == requested.FlowGroupId &&
+                       group.ExactResolutionDecisionId == requested.ExactResolutionDecisionId &&
+                       string.Equals(group.State, "Published", StringComparison.Ordinal) &&
+                       group.BusinessLogicDocumentVersionId.HasValue &&
+                       group.SystemId == systemId)) &&
                (expected.FlowGroupId is null && requestedFlowGroups.Length == 0 ||
-                requestedFlowGroups.Length == decisionSet.Count &&
-                requestedFlowGroups.Select(group => group.FlowGroupId).Order()
-                    .SequenceEqual(decisionFlowGroups.Select(group => group.Id).Order()));
+                expected.FlowGroupId is Guid expectedFlowGroupId &&
+                requestedFlowGroups.Any(group => group.FlowGroupId == expectedFlowGroupId));
     }
 
     private static bool SpanMatches(

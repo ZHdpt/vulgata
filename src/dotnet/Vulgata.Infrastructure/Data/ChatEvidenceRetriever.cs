@@ -4,7 +4,6 @@ using System.Text;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Vulgata.Core.DomainServices;
 using Vulgata.Core.Entities;
@@ -16,30 +15,20 @@ public sealed class ChatEvidenceRetriever : IChatEvidenceRetriever
     private readonly VulgataDbContext _context;
     private readonly IPreparedChatScopeResolver _preparedScopeResolver;
     private readonly IChatRelationshipProjector _relationshipProjector;
+    private readonly ChatEvidencePacketBuilder _packetBuilder;
     private readonly ILogger<ChatEvidenceRetriever>? _logger;
 
     public ChatEvidenceRetriever(
         VulgataDbContext context,
-        IPreparedChatScopeResolver? preparedScopeResolver = null,
-        ILogger<ChatEvidenceRetriever>? logger = null)
-        : this(
-            context,
-            preparedScopeResolver,
-            ChatRelationshipProjectorFactory.Create(context),
-            logger)
-    {
-    }
-
-    [ActivatorUtilitiesConstructor]
-    public ChatEvidenceRetriever(
-        VulgataDbContext context,
         IPreparedChatScopeResolver? preparedScopeResolver,
         IChatRelationshipProjector relationshipProjector,
+        ChatEvidencePacketBuilder packetBuilder,
         ILogger<ChatEvidenceRetriever>? logger)
     {
         _context = context;
         _preparedScopeResolver = preparedScopeResolver ?? new PreparedChatScopeResolver(context);
         _relationshipProjector = relationshipProjector;
+        _packetBuilder = packetBuilder;
         _logger = logger;
     }
 
@@ -145,6 +134,7 @@ public sealed class ChatEvidenceRetriever : IChatEvidenceRetriever
         ChatLexicalPrimaryProjection primary = lexicalResult.Value!;
         ChatRelationshipProjection projected = await _relationshipProjector.ProjectAsync(
             request.SystemId,
+            request.Mode,
             repositoryIds,
             primary.ExpansionSeedDocumentVersionIds,
             primary.PrimaryDocuments.Select(document => document.DocumentVersionId).ToArray(),
@@ -165,7 +155,7 @@ public sealed class ChatEvidenceRetriever : IChatEvidenceRetriever
         }
 
         ChatRelationshipExpansionProjection expansion = expansionResult.Value!;
-        EvidencePacket packet = new ChatEvidencePacketBuilder().Build(
+        EvidencePacket packet = _packetBuilder.Build(
             ChatEvidencePacketBuildRequest.Create(
                 request.RequestId,
                 request.Mode,
@@ -484,7 +474,7 @@ public sealed class ChatEvidenceRetriever : IChatEvidenceRetriever
                 12,
                 conversationContext.CurrentDocumentHints,
                 request.Mode);
-        if (selected.Count == 0 && request.Mode == ChatMode.Business)
+        if (selected.Count == 0)
         {
             string fallbackQuestion = string.Join(
                 ' ',

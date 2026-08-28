@@ -14,6 +14,14 @@ namespace Vulgata.Tests;
 
 public sealed class ChatEvidenceCurrentnessTests
 {
+    private static ChatEvidenceRetriever CreateRetriever(VulgataDbContext context) =>
+        new(
+            context,
+            preparedScopeResolver: null,
+            new ChatRelationshipEvidenceProjector(context),
+            new ChatEvidencePacketBuilder(),
+            logger: null);
+
     [Fact]
     public async Task ValidateCurrentAsync_LegacyExactEvidenceWithoutAcceptedV2Decision_ReturnsMissingOrStaleAsync()
     {
@@ -226,6 +234,40 @@ public sealed class ChatEvidenceCurrentnessTests
                         new RecordingAuthorizationVerifier(true, true)));
 
         Assert.Equal(ChatCurrentnessValidationOutcome.MissingOrStale, outcome);
+    }
+
+    [Theory]
+    [InlineData(11)]
+    [InlineData(256)]
+    public async Task ValidateCurrentAsync_CompleteBoundedExactDecisionSet_PreservesAuthorityAndReturnsCurrentAsync(
+        int decisionCount)
+    {
+        await using CurrentnessFixture fixture = await CurrentnessFixture.CreateAsync();
+        ChatExactDecisionSet expectedDecisionSet =
+            await fixture.AddCurrentDecisionSetAsync(decisionCount);
+        EvidencePacket packet = await fixture.RetrieveAsync();
+
+        EvidenceRelationship relationship = Assert.Single(
+            packet.Relationships,
+            item => item.EdgeId == fixture.ReferencesEdgeId);
+        Assert.Equal(expectedDecisionSet.SelectedDecision.Id, relationship.ExactDecisionId);
+        Assert.Equal(decisionCount, relationship.ExactDecisionCount);
+        Assert.Equal(expectedDecisionSet.Fingerprint, relationship.ExactDecisionSetFingerprint);
+        EvidenceFlowGroupAuthority flowGroup = Assert.Single(packet.FlowGroups);
+        Assert.Contains(
+            expectedDecisionSet.Decisions,
+            decision => decision.Id == flowGroup.ExactResolutionDecisionId);
+        Assert.Equal(fixture.ReferencesEdgeId, flowGroup.ExactResolutionEdgeId);
+
+        ChatCurrentnessValidationOutcome outcome =
+            await new ChatEvidenceCurrentnessValidator(fixture.Context)
+                .ValidateCurrentAsync(
+                    CurrentnessFixture.CreateValidationRequest(packet),
+                    new RepositoryAccessScope(
+                        fixture.RepositoryIds,
+                        new RecordingAuthorizationVerifier(true, true)));
+
+        Assert.Equal(ChatCurrentnessValidationOutcome.Current, outcome);
     }
 
     [Theory]
@@ -740,7 +782,7 @@ public sealed class ChatEvidenceCurrentnessTests
                 questionRequest,
                 ChatConversationState.Empty(conversationScope),
                 DateTimeOffset.UtcNow.AddMinutes(1));
-            return await new ChatEvidenceRetriever(Context)
+            return await CreateRetriever(Context)
                 .RetrieveAsync(request, scope);
         }
 
@@ -896,6 +938,158 @@ public sealed class ChatEvidenceCurrentnessTests
             Context.FlowGroups.Add(flowGroup);
             await Context.SaveChangesAsync();
             Context.ChangeTracker.Clear();
+        }
+
+        internal async Task<ChatExactDecisionSet> AddCurrentDecisionSetAsync(int decisionCount)
+        {
+            Assert.InRange(decisionCount, 1, 256);
+            ExactCrossRepositoryEdgeEvidence evidence = await Context
+                .ExactCrossRepositoryEdgeEvidence
+                .AsNoTracking()
+                .SingleAsync(value => value.EdgeId == _referencesEdgeId);
+            CrossRepositoryResolutionDecision templateDecision = await Context
+                .CrossRepositoryResolutionDecisions
+                .AsNoTracking()
+                .SingleAsync(value => value.DocumentEdgeId == _referencesEdgeId);
+            ExactResolutionProviderEvidenceContribution templateContribution = await Context
+                .ExactResolutionProviderEvidenceContributions
+                .AsNoTracking()
+                .SingleAsync(value => value.ResolutionDecisionId == templateDecision.Id);
+            int stableKeyNonce = 0;
+
+            for (int index = 1; index < decisionCount; index++)
+            {
+                string endpoint = $"cust/updateSession-t069-{index:D3}";
+                string stableKey;
+                do
+                {
+                    stableKey = Hash($"t069-entry-{stableKeyNonce++:D6}");
+                }
+                while (StringComparer.Ordinal.Compare(
+                    stableKey,
+                    templateDecision.ConsumerEntryStableKey) <= 0);
+                var decisionEvidence = new ExactCrossRepositoryEdgeEvidence(
+                    evidence.EdgeId,
+                    evidence.ConsumerSourceAnchorId,
+                    evidence.ConsumerDocumentVersionId,
+                    evidence.ConsumerRepositoryId,
+                    evidence.ConsumerScanRunId,
+                    evidence.ProviderSourceAnchorId,
+                    evidence.ProviderDocumentVersionId,
+                    evidence.ProviderRepositoryId,
+                    evidence.ProviderScanRunId,
+                    evidence.ConsumerRawIdentifier,
+                    evidence.ProviderRawIdentifier,
+                    endpoint,
+                    evidence.Protocol,
+                    evidence.ResolutionKind,
+                    evidence.Confidence,
+                    evidence.ProfileSchemaVersion,
+                    evidence.ProfileId,
+                    evidence.ProfileVersion,
+                    evidence.ProfileFingerprint,
+                    $"t069-shared-edge-{index:D3}",
+                    evidence.ConsumerEvidenceLocator,
+                    evidence.ProviderEvidenceLocator,
+                    string.Empty,
+                    evidence.CreatedAt);
+                string decisionFingerprint = ExactResolutionCanonicalAuthority.EvidenceFingerprint(
+                    decisionEvidence,
+                    templateDecision.ConsumerProfiledRevision,
+                    templateDecision.ProviderProfiledRevision!);
+                Guid decisionId = ExactResolutionCanonicalAuthority.DecisionId(decisionFingerprint);
+
+                ExactResolutionProviderEvidenceContribution contribution =
+                    NewPrivate<ExactResolutionProviderEvidenceContribution>();
+                SetPrivate(contribution, nameof(ExactResolutionProviderEvidenceContribution.ResolutionDecisionId), decisionId);
+                SetPrivate(contribution, nameof(ExactResolutionProviderEvidenceContribution.ProviderIdentity), templateContribution.ProviderIdentity);
+                SetPrivate(contribution, nameof(ExactResolutionProviderEvidenceContribution.ProviderDocumentVersionId), templateContribution.ProviderDocumentVersionId);
+                SetPrivate(contribution, nameof(ExactResolutionProviderEvidenceContribution.RepositoryId), templateContribution.RepositoryId);
+                SetPrivate(contribution, nameof(ExactResolutionProviderEvidenceContribution.ScanRunId), templateContribution.ScanRunId);
+                SetPrivate(contribution, nameof(ExactResolutionProviderEvidenceContribution.ProfiledRevision), templateContribution.ProfiledRevision);
+                SetPrivate(contribution, nameof(ExactResolutionProviderEvidenceContribution.CommunicationClassificationId), templateContribution.CommunicationClassificationId);
+                SetPrivate(contribution, nameof(ExactResolutionProviderEvidenceContribution.SourceAnchorId), templateContribution.SourceAnchorId);
+                SetPrivate(contribution, nameof(ExactResolutionProviderEvidenceContribution.ProviderRawIdentifier), templateContribution.ProviderRawIdentifier);
+                SetPrivate(contribution, nameof(ExactResolutionProviderEvidenceContribution.NormalizedEndpointIdentifier), endpoint);
+                SetPrivate(contribution, nameof(ExactResolutionProviderEvidenceContribution.EvidenceLocator), templateContribution.EvidenceLocator);
+                SetPrivate(contribution, nameof(ExactResolutionProviderEvidenceContribution.ClassificationFingerprint), templateContribution.ClassificationFingerprint);
+                SetPrivate(contribution, nameof(ExactResolutionProviderEvidenceContribution.CatalogRuleIdentity), templateContribution.CatalogRuleIdentity);
+                SetPrivate(contribution, nameof(ExactResolutionProviderEvidenceContribution.NormalizationRuleIdentity), templateContribution.NormalizationRuleIdentity);
+                SetPrivate(contribution, nameof(ExactResolutionProviderEvidenceContribution.ProviderOrdinal), templateContribution.ProviderOrdinal);
+                SetPrivate(contribution, nameof(ExactResolutionProviderEvidenceContribution.EvidenceOrdinal), templateContribution.EvidenceOrdinal);
+                SetPrivate(contribution, nameof(ExactResolutionProviderEvidenceContribution.CreatedAt), templateContribution.CreatedAt);
+                string contributionFingerprint =
+                    ExactResolutionCanonicalAuthority.PersistedProviderContributionFingerprint(
+                        decisionFingerprint,
+                        contribution);
+                SetPrivate(contribution, nameof(ExactResolutionProviderEvidenceContribution.EvidenceFingerprint), contributionFingerprint);
+                SetPrivate(
+                    contribution,
+                    nameof(ExactResolutionProviderEvidenceContribution.Id),
+                    ExactResolutionCanonicalAuthority.ProviderContributionId(contributionFingerprint));
+
+                CrossRepositoryResolutionDecision decision =
+                    NewPrivate<CrossRepositoryResolutionDecision>();
+                SetPrivate(decision, nameof(CrossRepositoryResolutionDecision.Id), decisionId);
+                SetPrivate(decision, nameof(CrossRepositoryResolutionDecision.ResolutionSchemaIdentity), templateDecision.ResolutionSchemaIdentity);
+                SetPrivate(decision, nameof(CrossRepositoryResolutionDecision.Pass1PairExecutionId), templateDecision.Pass1PairExecutionId);
+                SetPrivate(decision, nameof(CrossRepositoryResolutionDecision.CoordinationId), templateDecision.CoordinationId);
+                SetPrivate(decision, nameof(CrossRepositoryResolutionDecision.SystemId), templateDecision.SystemId);
+                SetPrivate(decision, nameof(CrossRepositoryResolutionDecision.ConsumerCandidateId), Id(20_000 + index));
+                SetPrivate(decision, nameof(CrossRepositoryResolutionDecision.ConsumerEntryIdentity), $"t069-entry-{index:D3}");
+                SetPrivate(decision, nameof(CrossRepositoryResolutionDecision.ConsumerEntryStableKey), stableKey);
+                SetPrivate(decision, nameof(CrossRepositoryResolutionDecision.ConsumerDocumentVersionId), templateDecision.ConsumerDocumentVersionId);
+                SetPrivate(decision, nameof(CrossRepositoryResolutionDecision.ConsumerRepositoryId), templateDecision.ConsumerRepositoryId);
+                SetPrivate(decision, nameof(CrossRepositoryResolutionDecision.ConsumerScanRunId), templateDecision.ConsumerScanRunId);
+                SetPrivate(decision, nameof(CrossRepositoryResolutionDecision.ConsumerProfiledRevision), templateDecision.ConsumerProfiledRevision);
+                SetPrivate(decision, nameof(CrossRepositoryResolutionDecision.Protocol), templateDecision.Protocol);
+                SetPrivate(decision, nameof(CrossRepositoryResolutionDecision.NormalizedEndpointIdentifier), endpoint);
+                SetPrivate(decision, nameof(CrossRepositoryResolutionDecision.NormalizationRuleIdentity), templateDecision.NormalizationRuleIdentity);
+                SetPrivate(decision, nameof(CrossRepositoryResolutionDecision.Outcome), templateDecision.Outcome);
+                SetPrivate(decision, nameof(CrossRepositoryResolutionDecision.OutcomeKind), templateDecision.OutcomeKind);
+                SetPrivate(decision, nameof(CrossRepositoryResolutionDecision.ReasonCode), templateDecision.ReasonCode);
+                SetPrivate(decision, nameof(CrossRepositoryResolutionDecision.ProviderIdentity), templateDecision.ProviderIdentity);
+                SetPrivate(decision, nameof(CrossRepositoryResolutionDecision.ProviderDocumentVersionId), templateDecision.ProviderDocumentVersionId);
+                SetPrivate(decision, nameof(CrossRepositoryResolutionDecision.ProviderRepositoryId), templateDecision.ProviderRepositoryId);
+                SetPrivate(decision, nameof(CrossRepositoryResolutionDecision.ProviderScanRunId), templateDecision.ProviderScanRunId);
+                SetPrivate(decision, nameof(CrossRepositoryResolutionDecision.ProviderProfiledRevision), templateDecision.ProviderProfiledRevision);
+                SetPrivate(decision, nameof(CrossRepositoryResolutionDecision.DocumentEdgeId), _referencesEdgeId);
+                SetPrivate(decision, nameof(CrossRepositoryResolutionDecision.ConsumerEvidenceFingerprint), decisionFingerprint);
+                SetPrivate(
+                    decision,
+                    nameof(CrossRepositoryResolutionDecision.ProviderEvidenceSetFingerprint),
+                    ExactResolutionCanonicalAuthority.ProviderEvidenceSetFingerprint([contributionFingerprint]));
+                SetPrivate(decision, nameof(CrossRepositoryResolutionDecision.DecisionFingerprint), decisionFingerprint);
+                SetPrivate(decision, nameof(CrossRepositoryResolutionDecision.EvidenceFingerprint), decisionFingerprint);
+                SetPrivate(decision, nameof(CrossRepositoryResolutionDecision.CreatedAt), templateDecision.CreatedAt);
+
+                Context.CrossRepositoryResolutionDecisions.Add(decision);
+                Context.ExactResolutionProviderEvidenceContributions.Add(contribution);
+            }
+
+            await Context.SaveChangesAsync();
+            Context.ChangeTracker.Clear();
+            DocumentEdge edge = await Context.DocumentEdges
+                .AsNoTracking()
+                .SingleAsync(item => item.Id == _referencesEdgeId);
+            CrossRepositoryResolutionDecision[] decisions = await Context
+                .CrossRepositoryResolutionDecisions
+                .AsNoTracking()
+                .Where(item => item.DocumentEdgeId == _referencesEdgeId)
+                .ToArrayAsync();
+            Guid[] decisionIds = decisions.Select(item => item.Id).ToArray();
+            ExactResolutionProviderEvidenceContribution[] contributions = await Context
+                .ExactResolutionProviderEvidenceContributions
+                .AsNoTracking()
+                .Where(item => decisionIds.Contains(item.ResolutionDecisionId))
+                .ToArrayAsync();
+            Assert.True(ChatExactDecisionSetAuthority.TryCreate(
+                edge,
+                decisions,
+                contributions,
+                out ChatExactDecisionSet decisionSet));
+            Assert.Equal(decisionCount, decisionSet.Count);
+            return decisionSet;
         }
 
         private static T NewPrivate<T>() => (T)Activator.CreateInstance(

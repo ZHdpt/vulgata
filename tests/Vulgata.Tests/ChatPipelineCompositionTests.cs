@@ -11,6 +11,28 @@ namespace Vulgata.Tests;
 public sealed class ChatPipelineCompositionTests
 {
     [Fact]
+    public void ProductionComposition_Story125T067_UsesOneConstructorComposedTypedRetrievalPath()
+    {
+        using var factory = new LoginLogoutTests.CustomWebApplicationFactory();
+        using IServiceScope scope = factory.Services.CreateScope();
+
+        IChatEvidenceRetriever retriever =
+            scope.ServiceProvider.GetRequiredService<IChatEvidenceRetriever>();
+        ConstructorInfo constructor = Assert.Single(typeof(ChatEvidenceRetriever).GetConstructors());
+        Type[] dependencyTypes = constructor.GetParameters()
+            .Select(parameter => parameter.ParameterType)
+            .ToArray();
+
+        Assert.IsType<ChatEvidenceRetriever>(retriever);
+        Assert.Contains(typeof(IChatRelationshipProjector), dependencyTypes);
+        Assert.Contains(typeof(ChatEvidencePacketBuilder), dependencyTypes);
+        Assert.IsType<ChatRelationshipEvidenceProjector>(
+            scope.ServiceProvider.GetRequiredService<IChatRelationshipProjector>());
+        Assert.IsType<ChatEvidencePacketBuilder>(
+            scope.ServiceProvider.GetRequiredService<ChatEvidencePacketBuilder>());
+    }
+
+    [Fact]
     public void ProductionComposition_Story125B1_ResolvesAdvisoryReaderAndRelationshipProjectorAsScopedPorts()
     {
         using var factory = new LoginLogoutTests.CustomWebApplicationFactory();

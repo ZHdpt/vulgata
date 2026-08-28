@@ -28,7 +28,8 @@ public sealed class ChatEvidenceRetrievalTests
         Type[] nestedTypes = typeof(ChatEvidenceRetriever)
             .GetNestedTypes(BindingFlags.NonPublic);
 
-        Assert.Equal(1, CountOccurrences(source, "new ChatEvidencePacketBuilder().Build("));
+        Assert.Equal(1, CountOccurrences(source, "_packetBuilder.Build("));
+        Assert.DoesNotContain("new ChatEvidencePacketBuilder", source, StringComparison.Ordinal);
         Assert.DoesNotContain("RetrieveProjectionOnlyAsync(", source, StringComparison.Ordinal);
         Assert.DoesNotContain("ChatRelationshipEvidenceProjector", source, StringComparison.Ordinal);
         Assert.DoesNotContain("EvidencePacket projectionPacket", source, StringComparison.Ordinal);
@@ -77,7 +78,7 @@ public sealed class ChatEvidenceRetrievalTests
         await using PreparedEvidenceFixture literalFixture = await PreparedEvidenceFixture.CreateAsync();
         await using PreparedEvidenceFixture neutralFixture = await PreparedEvidenceFixture.CreateAsync();
 
-        ChatEvidenceResult literal = await new ChatEvidenceRetriever(literalFixture.Context)
+        ChatEvidenceResult literal = await CreateRetriever(literalFixture.Context)
             .RetrieveAsync(
                 literalFixture.CreateRequest(
                     "b1-literal",
@@ -85,7 +86,7 @@ public sealed class ChatEvidenceRetrievalTests
                 new RepositoryAccessScope(
                     literalFixture.RepositoryIds,
                     new RecordingAuthorizationVerifier(true, true)));
-        ChatEvidenceResult neutral = await new ChatEvidenceRetriever(neutralFixture.Context)
+        ChatEvidenceResult neutral = await CreateRetriever(neutralFixture.Context)
             .RetrieveAsync(
                 neutralFixture.CreateRequest(
                     "b1-neutral",
@@ -113,7 +114,7 @@ public sealed class ChatEvidenceRetrievalTests
         await using PreparedEvidenceFixture expandedFixture = await PreparedEvidenceFixture.CreateAsync();
 
         EvidencePacket baselinePacket = Assert.IsType<EvidencePacket>(
-            (await new ChatEvidenceRetriever(baselineFixture.Context)
+            (await CreateRetriever(baselineFixture.Context)
                 .RetrieveAsync(
                     baselineFixture.CreateRequest("b1-baseline"),
                     new RepositoryAccessScope(
@@ -122,7 +123,7 @@ public sealed class ChatEvidenceRetrievalTests
 
         await expandedFixture.AddCurrentOneHopReferenceAsync();
         EvidencePacket expandedPacket = Assert.IsType<EvidencePacket>(
-            (await new ChatEvidenceRetriever(expandedFixture.Context)
+            (await CreateRetriever(expandedFixture.Context)
                 .RetrieveAsync(
                     expandedFixture.CreateRequest("b1-expanded"),
                     new RepositoryAccessScope(
@@ -153,6 +154,7 @@ public sealed class ChatEvidenceRetrievalTests
             .Create(fixture.Context)
             .ProjectAsync(
                 ExactCrossRepositoryTestValues.SystemId,
+                ChatMode.Business,
                 fixture.RepositoryIds,
                 seeds,
                 [
@@ -212,6 +214,7 @@ public sealed class ChatEvidenceRetrievalTests
             .Create(fixture.Context)
             .ProjectAsync(
                 ExactCrossRepositoryTestValues.SystemId,
+                ChatMode.Business,
                 fixture.RepositoryIds,
                 [ExactCrossRepositoryTestValues.ProviderDocumentVersionId],
                 [ExactCrossRepositoryTestValues.ProviderDocumentVersionId],
@@ -230,13 +233,80 @@ public sealed class ChatEvidenceRetrievalTests
     }
 
     [Fact]
+    public async Task RelationshipProjector_CandidateBeyondLegacyQueryCap_HigherSeedRankWinsBeforeBoundsAsync()
+    {
+        await using PreparedEvidenceFixture fixture = await PreparedEvidenceFixture.CreateAsync();
+        Guid expectedEdgeId = await fixture.AddCandidatesBeyondLegacyQueryCapAsync();
+
+        ChatRelationshipProjection projection = await ChatRelationshipProjectorFactory
+            .Create(fixture.Context)
+            .ProjectAsync(
+                ExactCrossRepositoryTestValues.SystemId,
+                ChatMode.Business,
+                fixture.RepositoryIds,
+                [
+                    ExactCrossRepositoryTestValues.ProviderDocumentVersionId,
+                    ExactCrossRepositoryTestValues.ConsumerDocumentVersionId,
+                ],
+                [
+                    fixture.BusinessDocumentVersionId,
+                    ExactCrossRepositoryTestValues.ProviderDocumentVersionId,
+                    ExactCrossRepositoryTestValues.ConsumerDocumentVersionId,
+                ],
+                [],
+                1,
+                1,
+                CancellationToken.None);
+
+        Assert.False(projection.IsInconsistent);
+        ProjectedChatRelationship relationship = Assert.Single(projection.Relationships);
+        Assert.Equal(expectedEdgeId, relationship.EdgeId);
+        Assert.Equal(
+            ExactCrossRepositoryTestValues.ProviderDocumentVersionId,
+            relationship.SourceDocumentVersionId);
+    }
+
+    [Fact]
+    public async Task RelationshipProjector_BusinessAndItMode_PreferAcceptedRelationshipTypeBeforeBoundsAsync()
+    {
+        await using PreparedEvidenceFixture fixture = await PreparedEvidenceFixture.CreateAsync();
+        (_, Guid referencesEdgeId) =
+            await fixture.AddModePreferenceCandidatesAsync();
+        IChatRelationshipProjector projector = ChatRelationshipProjectorFactory.Create(fixture.Context);
+
+        ChatRelationshipProjection businessProjection = await projector.ProjectAsync(
+            ExactCrossRepositoryTestValues.SystemId,
+            ChatMode.Business,
+            fixture.RepositoryIds,
+            [fixture.BusinessDocumentVersionId],
+            [fixture.BusinessDocumentVersionId],
+            [],
+            1,
+            1,
+            CancellationToken.None);
+        ChatRelationshipProjection itProjection = await projector.ProjectAsync(
+            ExactCrossRepositoryTestValues.SystemId,
+            ChatMode.It,
+            fixture.RepositoryIds,
+            [fixture.BusinessDocumentVersionId],
+            [fixture.BusinessDocumentVersionId],
+            [],
+            1,
+            1,
+            CancellationToken.None);
+
+        Assert.Equal(fixture.GeneratedFromEdgeId, Assert.Single(businessProjection.Relationships).EdgeId);
+        Assert.Equal(referencesEdgeId, Assert.Single(itProjection.Relationships).EdgeId);
+    }
+
+    [Fact]
     public async Task RetrieveAsync_Exactly256RankedCandidates_IsAcceptedAsync()
     {
         await using PreparedEvidenceFixture fixture = await PreparedEvidenceFixture.CreateAsync();
         await fixture.RemoveV2AuthorityAsync();
         await fixture.AddBusinessSectionsAsync(253);
 
-        ChatEvidenceResult result = await new ChatEvidenceRetriever(fixture.Context)
+        ChatEvidenceResult result = await CreateRetriever(fixture.Context)
             .RetrieveAsync(
                 fixture.CreateRequest("ranked-window-256"),
                 new RepositoryAccessScope(
@@ -263,7 +333,7 @@ public sealed class ChatEvidenceRetrievalTests
         RepositoryAccessScope scope = new(
             fixture.RepositoryIds,
             new RecordingAuthorizationVerifier(true, true, true, true));
-        ChatEvidenceRetriever retriever = new(fixture.Context);
+        ChatEvidenceRetriever retriever = CreateRetriever(fixture.Context);
 
         ChatEvidenceResult first = await retriever.RetrieveAsync(request, scope);
         ChatEvidenceResult repeated = await retriever.RetrieveAsync(request, scope);
@@ -290,7 +360,7 @@ public sealed class ChatEvidenceRetrievalTests
         await fixture.RemoveV2AuthorityAsync();
         await fixture.AddFourScoredSectionsPerDocumentAsync();
 
-        ChatEvidenceResult result = await new ChatEvidenceRetriever(fixture.Context)
+        ChatEvidenceResult result = await CreateRetriever(fixture.Context)
             .RetrieveAsync(
                 fixture.CreateRequest("primary-sections-12"),
                 new RepositoryAccessScope(
@@ -317,7 +387,7 @@ public sealed class ChatEvidenceRetrievalTests
             fixture.RepositoryIds,
             new RecordingAuthorizationVerifier(true, true, true, true));
         ChatRetrievalRequest request = fixture.CreateRequest("eligible-sections-over-20");
-        ChatEvidenceRetriever retriever = new(fixture.Context);
+        ChatEvidenceRetriever retriever = CreateRetriever(fixture.Context);
 
         ChatEvidenceResult first = await retriever.RetrieveAsync(request, scope);
         ChatEvidenceResult repeated = await retriever.RetrieveAsync(request, scope);
@@ -342,7 +412,7 @@ public sealed class ChatEvidenceRetrievalTests
         await using PreparedEvidenceFixture fixture = await PreparedEvidenceFixture.CreateAsync();
         await fixture.ExceedDocumentMaximumAsync();
 
-        ChatEvidenceResult result = await new ChatEvidenceRetriever(fixture.Context)
+        ChatEvidenceResult result = await CreateRetriever(fixture.Context)
             .RetrieveAsync(
                 fixture.CreateRequest("document-bound-6"),
                 new RepositoryAccessScope(
@@ -360,7 +430,7 @@ public sealed class ChatEvidenceRetrievalTests
         await using PreparedEvidenceFixture fixture = await PreparedEvidenceFixture.CreateAsync();
         await fixture.RemoveLegacyEvidenceAsync();
 
-        ChatEvidenceResult result = await new ChatEvidenceRetriever(fixture.Context)
+        ChatEvidenceResult result = await CreateRetriever(fixture.Context)
             .RetrieveAsync(
                 fixture.CreateRequest("v2-authority"),
                 new RepositoryAccessScope(
@@ -377,7 +447,7 @@ public sealed class ChatEvidenceRetrievalTests
         await using PreparedEvidenceFixture fixture = await PreparedEvidenceFixture.CreateAsync();
         await fixture.RemoveV2AuthorityAsync();
 
-        ChatEvidenceResult result = await new ChatEvidenceRetriever(fixture.Context)
+        ChatEvidenceResult result = await CreateRetriever(fixture.Context)
             .RetrieveAsync(
                 fixture.CreateRequest(
                     "legacy-only",
@@ -397,7 +467,7 @@ public sealed class ChatEvidenceRetrievalTests
         var verifier = new RecordingAuthorizationVerifier(true, true, true, true);
         var scope = new RepositoryAccessScope(fixture.RepositoryIds, verifier);
         ChatRetrievalRequest request = fixture.CreateRequest("request-1");
-        var retriever = new ChatEvidenceRetriever(fixture.Context);
+        var retriever = CreateRetriever(fixture.Context);
 
         ChatEvidenceResult first = await retriever.RetrieveAsync(request, scope);
         ChatEvidenceResult second = await retriever.RetrieveAsync(request, scope);
@@ -444,7 +514,7 @@ public sealed class ChatEvidenceRetrievalTests
         await using PreparedEvidenceFixture fixture = await PreparedEvidenceFixture.CreateAsync();
         await fixture.AddCurrentOneHopReferenceAsync();
 
-        ChatEvidenceResult result = await new ChatEvidenceRetriever(fixture.Context)
+        ChatEvidenceResult result = await CreateRetriever(fixture.Context)
             .RetrieveAsync(
                 fixture.CreateRequest("one-hop-reference"),
                 new RepositoryAccessScope(
@@ -474,7 +544,7 @@ public sealed class ChatEvidenceRetrievalTests
         await fixture.AddCurrentOneHopReferenceAsync();
         await fixture.AddDuplicateOneHopTargetAsync();
 
-        ChatEvidenceResult result = await new ChatEvidenceRetriever(fixture.Context)
+        ChatEvidenceResult result = await CreateRetriever(fixture.Context)
             .RetrieveAsync(
                 fixture.CreateRequest("duplicate-related-target"),
                 new RepositoryAccessScope(
@@ -493,7 +563,7 @@ public sealed class ChatEvidenceRetrievalTests
         (Guid relatedEdgeId, Guid relatedDecisionId) = await fixture.AddSecondAcceptedV2ReferenceAsync();
         await fixture.AddPublishedOneHopFlowGroupAsync(relatedEdgeId, relatedDecisionId);
 
-        ChatEvidenceResult result = await new ChatEvidenceRetriever(fixture.Context)
+        ChatEvidenceResult result = await CreateRetriever(fixture.Context)
             .RetrieveAsync(
                 fixture.CreateRequest("related-flow-group"),
                 new RepositoryAccessScope(
@@ -519,7 +589,7 @@ public sealed class ChatEvidenceRetrievalTests
         await fixture.AddPublishedOneHopFlowGroupAsync(relatedEdgeId, relatedDecisionId);
         await fixture.AddSecondPublishedOneHopFlowGroupAsync(relatedEdgeId, secondRelatedDecisionId);
 
-        ChatEvidenceResult result = await new ChatEvidenceRetriever(fixture.Context)
+        ChatEvidenceResult result = await CreateRetriever(fixture.Context)
             .RetrieveAsync(
                 fixture.CreateRequest("multiple-related-flow-groups"),
                 new RepositoryAccessScope(
@@ -538,7 +608,7 @@ public sealed class ChatEvidenceRetrievalTests
     {
         await using PreparedEvidenceFixture fixture = await PreparedEvidenceFixture.CreateAsync();
         ChatRetrievalRequest emptyRequest = fixture.CreateRequest("conversation-empty");
-        ChatEvidenceResult emptyResult = await new ChatEvidenceRetriever(fixture.Context)
+        ChatEvidenceResult emptyResult = await CreateRetriever(fixture.Context)
             .RetrieveAsync(
                 emptyRequest,
                 new RepositoryAccessScope(
@@ -560,7 +630,7 @@ public sealed class ChatEvidenceRetrievalTests
             "conversation-context",
             conversation);
 
-        ChatEvidenceResult contextualResult = await new ChatEvidenceRetriever(fixture.Context)
+        ChatEvidenceResult contextualResult = await CreateRetriever(fixture.Context)
             .RetrieveAsync(
                 contextualRequest,
                 new RepositoryAccessScope(
@@ -585,7 +655,7 @@ public sealed class ChatEvidenceRetrievalTests
         await using PreparedEvidenceFixture fixture = await PreparedEvidenceFixture.CreateAsync();
         await fixture.RemoveV2AuthorityAsync();
 
-        ChatEvidenceResult result = await new ChatEvidenceRetriever(
+        ChatEvidenceResult result = await CreateRetriever(
                 fixture.Context,
                 new ProjectionOnlyScopeResolver())
             .RetrieveAsync(
@@ -608,7 +678,7 @@ public sealed class ChatEvidenceRetrievalTests
         await using PreparedEvidenceFixture fixture = await PreparedEvidenceFixture.CreateAsync();
         await fixture.RemoveV2AuthorityAsync();
 
-        ChatEvidenceResult result = await new ChatEvidenceRetriever(
+        ChatEvidenceResult result = await CreateRetriever(
                 fixture.Context,
                 new ProjectionOnlyScopeResolver())
             .RetrieveAsync(
@@ -630,7 +700,7 @@ public sealed class ChatEvidenceRetrievalTests
         await using PreparedEvidenceFixture fixture = await PreparedEvidenceFixture.CreateAsync();
         await fixture.RemoveV2AuthorityAsync();
 
-        ChatEvidenceResult result = await new ChatEvidenceRetriever(
+        ChatEvidenceResult result = await CreateRetriever(
                 fixture.Context,
                 new ProjectionOnlyScopeResolver())
             .RetrieveAsync(
@@ -665,7 +735,7 @@ public sealed class ChatEvidenceRetrievalTests
             await fixture.DriftConsumerProfiledRevisionAsync();
         }
 
-        ChatEvidenceResult result = await new ChatEvidenceRetriever(
+        ChatEvidenceResult result = await CreateRetriever(
                 fixture.Context,
                 new ProjectionOnlyScopeResolver())
             .RetrieveAsync(
@@ -684,7 +754,7 @@ public sealed class ChatEvidenceRetrievalTests
         await using PreparedEvidenceFixture fixture = await PreparedEvidenceFixture.CreateAsync();
         await fixture.AddStandaloneCurrentCodeLogicAsync();
 
-        ChatEvidenceResult result = await new ChatEvidenceRetriever(fixture.Context)
+        ChatEvidenceResult result = await CreateRetriever(fixture.Context)
             .RetrieveAsync(
                 fixture.CreateRequest(
                     "projection-first-with-v2",
@@ -706,7 +776,7 @@ public sealed class ChatEvidenceRetrievalTests
         await fixture.AddCurrentOneHopReferenceAsync();
         await fixture.AddSecondAcceptedV2ReferenceAsync();
 
-        ChatEvidenceResult result = await new ChatEvidenceRetriever(fixture.Context)
+        ChatEvidenceResult result = await CreateRetriever(fixture.Context)
             .RetrieveAsync(
                 fixture.CreateRequest("multiple-accepted-v2-edges"),
                 new RepositoryAccessScope(
@@ -723,7 +793,7 @@ public sealed class ChatEvidenceRetrievalTests
         await using PreparedEvidenceFixture fixture = await PreparedEvidenceFixture.CreateAsync();
         await fixture.RemoveOptionalCrossRepositorySupportAsync();
 
-        ChatEvidenceResult result = await new ChatEvidenceRetriever(fixture.Context)
+        ChatEvidenceResult result = await CreateRetriever(fixture.Context)
             .RetrieveAsync(
                 fixture.CreateRequest("cross-projection-without-optional-support"),
                 new RepositoryAccessScope(
@@ -743,7 +813,7 @@ public sealed class ChatEvidenceRetrievalTests
         await fixture.RemoveV2AuthorityAsync();
         await fixture.AddStaleUnrelatedCrossRepositoryEdgeAsync();
 
-        ChatEvidenceResult result = await new ChatEvidenceRetriever(
+        ChatEvidenceResult result = await CreateRetriever(
                 fixture.Context,
                 new ProjectionOnlyScopeResolver())
             .RetrieveAsync(
@@ -766,7 +836,7 @@ public sealed class ChatEvidenceRetrievalTests
         await fixture.AddPublishedOneHopFlowGroupAsync();
         await fixture.AddEmptyPublishedOneHopFlowGroupAsync();
 
-        ChatEvidenceResult result = await new ChatEvidenceRetriever(fixture.Context)
+        ChatEvidenceResult result = await CreateRetriever(fixture.Context)
             .RetrieveAsync(
                 fixture.CreateRequest("empty-additional-flow-group"),
                 new RepositoryAccessScope(
@@ -784,7 +854,7 @@ public sealed class ChatEvidenceRetrievalTests
         await fixture.AddTechnicalAndEvidenceSectionsAsync();
         await fixture.RemoveV2AuthorityAsync();
 
-        ChatEvidenceResult result = await new ChatEvidenceRetriever(
+        ChatEvidenceResult result = await CreateRetriever(
                 fixture.Context,
                 new ProjectionOnlyScopeResolver())
             .RetrieveAsync(
@@ -802,6 +872,45 @@ public sealed class ChatEvidenceRetrievalTests
         Assert.Contains(packet.Sections, section => section.Heading == "技术证据");
     }
 
+    [Fact]
+    public async Task RetrieveAsync_ItModeZeroPositivePrimary_UsesServerOwnedAdvisoryBusinessSummaryFallbackAsync()
+    {
+        await using PreparedEvidenceFixture fixture = await PreparedEvidenceFixture.CreateAsync();
+        const string composedAdvisoryText = "会话更新";
+        var advisoryContext = new ChatAdvisoryContextSnapshot(
+            [
+                new ChatAdvisoryContextSourceUnit(
+                    ChatAdvisoryContextSourceKind.System,
+                    ExactCrossRepositoryTestValues.SystemId,
+                    ExactCrossRepositoryTestValues.Pass1CompletedAt,
+                    composedAdvisoryText),
+            ],
+            composedAdvisoryText,
+            ["会话", "更新"],
+            Encoding.UTF8.GetByteCount(composedAdvisoryText),
+            Convert.ToHexStringLower(SHA256.HashData(
+                Encoding.UTF8.GetBytes("server-owned-t070"))));
+
+        ChatEvidenceResult result = await CreateRetriever(fixture.Context)
+            .RetrieveAsync(
+                fixture.CreateRequest(
+                    "it-advisory-fallback",
+                    question: "北京天气怎么样？",
+                    mode: ChatMode.It,
+                    advisoryContext: advisoryContext),
+                new RepositoryAccessScope(
+                    fixture.RepositoryIds,
+                    new RecordingAuthorizationVerifier(true, true)));
+
+        EvidencePacket packet = Assert.IsType<EvidencePacket>(result.Packet);
+        Assert.Equal(ChatEvidenceResultKind.Found, result.Kind);
+        Assert.Equal(composedAdvisoryText, packet.AdvisoryContext);
+        Assert.Contains(
+            packet.Sections.Where(section =>
+                packet.Selection.PrimarySectionHandles.Contains(section.SectionHandle)),
+            section => section.Heading == "业务概览");
+    }
+
     [Theory]
     [InlineData("北京天气怎么样？")]
     [InlineData("如何 主要 系统 客户 用户 进行 可以 需要 之后")]
@@ -810,7 +919,7 @@ public sealed class ChatEvidenceRetrievalTests
     {
         await using PreparedEvidenceFixture fixture = await PreparedEvidenceFixture.CreateAsync();
 
-        ChatEvidenceResult result = await new ChatEvidenceRetriever(fixture.Context)
+        ChatEvidenceResult result = await CreateRetriever(fixture.Context)
             .RetrieveAsync(
                 fixture.CreateRequest("projection-refusal", question: question),
                 new RepositoryAccessScope(
@@ -830,7 +939,7 @@ public sealed class ChatEvidenceRetrievalTests
         ChatRetrievalRequest firstRequest = fixture.CreateRequest(
             "conversation-seed",
             question: "特殊会话锚点");
-        ChatEvidenceResult firstResult = await new ChatEvidenceRetriever(fixture.Context)
+        ChatEvidenceResult firstResult = await CreateRetriever(fixture.Context)
             .RetrieveAsync(
                 firstRequest,
                 new RepositoryAccessScope(
@@ -851,7 +960,7 @@ public sealed class ChatEvidenceRetrievalTests
                 [citedSection.SectionHandle],
                 [citedDocument.LogicalDocumentId]));
 
-        ChatEvidenceResult followUpResult = await new ChatEvidenceRetriever(fixture.Context)
+        ChatEvidenceResult followUpResult = await CreateRetriever(fixture.Context)
             .RetrieveAsync(
                 fixture.CreateRequest(
                     "conversation-follow-up",
@@ -876,7 +985,7 @@ public sealed class ChatEvidenceRetrievalTests
         ChatRetrievalRequest firstRequest = fixture.CreateRequest(
             "conversation-currentness-seed",
             question: "特殊会话锚点");
-        ChatEvidenceResult firstResult = await new ChatEvidenceRetriever(fixture.Context)
+        ChatEvidenceResult firstResult = await CreateRetriever(fixture.Context)
             .RetrieveAsync(
                 firstRequest,
                 new RepositoryAccessScope(
@@ -898,7 +1007,7 @@ public sealed class ChatEvidenceRetrievalTests
                 [citedDocument.LogicalDocumentId]));
         await fixture.RemoveStandaloneCurrentCodeLogicEvidenceAsync();
 
-        ChatEvidenceResult followUpResult = await new ChatEvidenceRetriever(fixture.Context)
+        ChatEvidenceResult followUpResult = await CreateRetriever(fixture.Context)
             .RetrieveAsync(
                 fixture.CreateRequest(
                     "conversation-currentness-follow-up",
@@ -925,7 +1034,7 @@ public sealed class ChatEvidenceRetrievalTests
         await fixture.AddStandaloneCurrentCodeLogicAsync();
         await fixture.RemoveV2AuthorityAsync();
 
-        ChatEvidenceResult result = await new ChatEvidenceRetriever(
+        ChatEvidenceResult result = await CreateRetriever(
                 fixture.Context,
                 new ProjectionOnlyScopeResolver())
             .RetrieveAsync(
@@ -964,7 +1073,7 @@ public sealed class ChatEvidenceRetrievalTests
         var revokedScope = new RepositoryAccessScope(
             revokedFixture.RepositoryIds,
             new RecordingAuthorizationVerifier(true, false));
-        ChatEvidenceResult revoked = await new ChatEvidenceRetriever(revokedFixture.Context)
+        ChatEvidenceResult revoked = await CreateRetriever(revokedFixture.Context)
             .RetrieveAsync(revokedFixture.CreateRequest("revoked"), revokedScope);
 
         Assert.Equal(ChatEvidenceResultKind.NotFoundOrUnauthorized, revoked.Kind);
@@ -973,7 +1082,7 @@ public sealed class ChatEvidenceRetrievalTests
 
         var missingEndpointScope = new RepositoryAccessScope(
             [ExactCrossRepositoryTestValues.ConsumerRepositoryId]);
-        ChatEvidenceResult missingEndpoint = await new ChatEvidenceRetriever(revokedFixture.Context)
+        ChatEvidenceResult missingEndpoint = await CreateRetriever(revokedFixture.Context)
             .RetrieveAsync(revokedFixture.CreateRequest("missing-endpoint"), missingEndpointScope);
         Assert.Equal(ChatEvidenceResultKind.NotFoundOrUnauthorized, missingEndpoint.Kind);
         Assert.Null(missingEndpoint.Packet);
@@ -992,7 +1101,7 @@ public sealed class ChatEvidenceRetrievalTests
             fixture.RepositoryIds,
             new RecordingAuthorizationVerifier(true, true));
 
-        ChatEvidenceResult result = await new ChatEvidenceRetriever(fixture.Context)
+        ChatEvidenceResult result = await CreateRetriever(fixture.Context)
             .RetrieveAsync(fixture.CreateRequest($"wrong-{field}"), scope);
 
         Assert.Equal(ChatEvidenceResultKind.Found, result.Kind);
@@ -1005,7 +1114,7 @@ public sealed class ChatEvidenceRetrievalTests
         await using PreparedEvidenceFixture fixture = await PreparedEvidenceFixture.CreateAsync();
         await fixture.ReverseExactRelationshipEvidenceAsync();
 
-        ChatEvidenceResult result = await new ChatEvidenceRetriever(fixture.Context)
+        ChatEvidenceResult result = await CreateRetriever(fixture.Context)
             .RetrieveAsync(
                 fixture.CreateRequest("legacy-reversed-relationship"),
                 new RepositoryAccessScope(
@@ -1024,7 +1133,7 @@ public sealed class ChatEvidenceRetrievalTests
         var scope = new RepositoryAccessScope(
             fixture.RepositoryIds,
             new RecordingAuthorizationVerifier(true, true));
-        var retriever = new ChatEvidenceRetriever(fixture.Context);
+        var retriever = CreateRetriever(fixture.Context);
 
         ChatEvidenceResult withDecoy = await retriever.RetrieveAsync(
             fixture.CreateRequest("wrong-profile-decoy"),
@@ -1042,7 +1151,7 @@ public sealed class ChatEvidenceRetrievalTests
             fixture.RepositoryIds,
             new RecordingAuthorizationVerifier(true, true));
 
-        ChatEvidenceResult result = await new ChatEvidenceRetriever(fixture.Context).RetrieveAsync(
+        ChatEvidenceResult result = await CreateRetriever(fixture.Context).RetrieveAsync(
             fixture.CreateRequest("non-unique-accepted"),
             scope);
 
@@ -1059,7 +1168,7 @@ public sealed class ChatEvidenceRetrievalTests
             fixture.RepositoryIds,
             new RecordingAuthorizationVerifier(true, true));
 
-        ChatEvidenceResult result = await new ChatEvidenceRetriever(fixture.Context)
+        ChatEvidenceResult result = await CreateRetriever(fixture.Context)
             .RetrieveAsync(fixture.CreateRequest("stale-profiled-revision"), scope);
 
         Assert.Equal(ChatEvidenceResultKind.IncompleteOrStale, result.Kind);
@@ -1077,7 +1186,7 @@ public sealed class ChatEvidenceRetrievalTests
             fixture.RepositoryIds,
             new RecordingAuthorizationVerifier(true, true));
 
-        ChatEvidenceResult result = await new ChatEvidenceRetriever(fixture.Context)
+        ChatEvidenceResult result = await CreateRetriever(fixture.Context)
             .RetrieveAsync(fixture.CreateRequest(Guid.NewGuid().ToString("N")), scope);
 
         Assert.True(
@@ -1087,6 +1196,16 @@ public sealed class ChatEvidenceRetrievalTests
         Assert.Null(result.Packet);
         Assert.Null(fixture.Context.Database.CurrentTransaction);
     }
+
+    private static ChatEvidenceRetriever CreateRetriever(
+        VulgataDbContext context,
+        IPreparedChatScopeResolver? preparedScopeResolver = null) =>
+        new(
+            context,
+            preparedScopeResolver,
+            new ChatRelationshipEvidenceProjector(context),
+            new ChatEvidencePacketBuilder(),
+            logger: null);
 
     private sealed class RecordingAuthorizationVerifier(params bool[] decisions) :
         IRepositoryAuthorizationVerifier
@@ -1162,6 +1281,8 @@ public sealed class ChatEvidenceRetrievalTests
 
         internal Guid ReferencesEdgeId { get; } = referencesEdgeId;
 
+        internal Guid GeneratedFromEdgeId => _generatedFromEdgeId;
+
         internal Guid OneHopEdgeId => _oneHopEdgeId;
 
         internal Guid OneHopDocumentVersionId => _oneHopDocumentVersionId;
@@ -1207,7 +1328,8 @@ public sealed class ChatEvidenceRetrievalTests
             string requestId,
             ChatConversationState? conversation = null,
             string question = "客户会话如何跨仓库更新？",
-            ChatMode mode = ChatMode.Business)
+            ChatMode mode = ChatMode.Business,
+            ChatAdvisoryContextSnapshot? advisoryContext = null)
         {
             ChatQuestionRequest questionRequest = ChatQuestionRequest.Create(
                 requestId,
@@ -1222,7 +1344,8 @@ public sealed class ChatEvidenceRetrievalTests
             return ChatRetrievalRequest.Create(
                 questionRequest,
                 conversation ?? ChatConversationState.Empty(conversationScope),
-                DateTimeOffset.UtcNow.AddMinutes(1));
+                DateTimeOffset.UtcNow.AddMinutes(1),
+                advisoryContext);
         }
 
         internal async Task RemoveOptionalCrossRepositorySupportAsync()
@@ -1955,6 +2078,184 @@ public sealed class ChatEvidenceRetrievalTests
             await SetCurrentVersionAsync(Context, _oneHopLogicalDocumentId, _oneHopDocumentVersionId);
             await SetCurrentVersionAsync(Context, _secondHopLogicalDocumentId, _secondHopDocumentVersionId);
             Context.ChangeTracker.Clear();
+        }
+
+        internal async Task<Guid> AddCandidatesBeyondLegacyQueryCapAsync()
+        {
+            const int legacyQueryCap = 97;
+            DocumentVersion consumerSource = await Context.DocumentVersions
+                .AsNoTracking()
+                .SingleAsync(version =>
+                    version.Id == ExactCrossRepositoryTestValues.ConsumerDocumentVersionId);
+            DocumentVersion providerSource = await Context.DocumentVersions
+                .AsNoTracking()
+                .SingleAsync(version =>
+                    version.Id == ExactCrossRepositoryTestValues.ProviderDocumentVersionId);
+
+            for (int index = 0; index <= legacyQueryCap; index++)
+            {
+                bool isExpectedWinner = index == legacyQueryCap;
+                DocumentVersion source = isExpectedWinner ? providerSource : consumerSource;
+                Guid codeUnitId = isExpectedWinner
+                    ? ExactCrossRepositoryTestValues.ProviderCodeUnitId
+                    : ExactCrossRepositoryTestValues.ConsumerCodeUnitId;
+                int idBase = 80_000 + (index * 10);
+                Guid logicalDocumentId = Id(idBase);
+                Guid documentVersionId = Id(idBase + 1);
+                Guid sourceAnchorId = Id(idBase + 2);
+                Guid sectionId = Id(idBase + 3);
+                Guid stableSectionId = Id(idBase + 4);
+                Guid edgeId = Id(idBase + 5);
+                string name = isExpectedWinner ? "higher-seed-winner" : $"lower-seed-{index:D3}";
+
+                Context.LogicalDocuments.Add(LogicalDocument.Create(
+                    logicalDocumentId,
+                    source.RepositoryId,
+                    DocumentType.CodeLogic,
+                    $"prepared/t068-{name}",
+                    ExactCrossRepositoryTestValues.CreatedAt));
+                DocumentVersion target = DocumentVersion.Create(
+                    documentVersionId,
+                    logicalDocumentId,
+                    source.RepositoryId,
+                    ExactCrossRepositoryTestValues.SystemId,
+                    source.ScanRunId,
+                    source.ProfiledRevision,
+                    1,
+                    $"T068 {name}",
+                    $"src/t068/{name}.java",
+                    KnowledgeDocumentLimits.SchemaIdentity,
+                    "{}",
+                    $"T068 relationship candidate {name}.",
+                    ExactCrossRepositoryTestValues.ContentFingerprint,
+                    ExactCrossRepositoryTestValues.CommitFingerprint,
+                    ExactCrossRepositoryTestValues.Pass1CompletedAt);
+                target.SourceAnchors.Add(new SourceAnchor(
+                    sourceAnchorId,
+                    target.Id,
+                    target.RepositoryId,
+                    target.ScanRunId,
+                    codeUnitId,
+                    target.ProfiledRevision,
+                    $"src/t068/{name}.java",
+                    $"{name}.java#line=1;rule=t068",
+                    1,
+                    2,
+                    ExactCrossRepositoryTestValues.SourceHash,
+                    ExactCrossRepositoryTestValues.Pass1CompletedAt));
+                Context.DocumentVersions.Add(target);
+                Context.DocumentSections.Add(Section(
+                    sectionId,
+                    logicalDocumentId,
+                    target,
+                    stableSectionId,
+                    $"T068 {name}",
+                    $"T068 relationship candidate {name}.",
+                    sourceAnchorId,
+                    [source.Id]));
+                Context.DocumentEdges.Add(new DocumentEdge(
+                    edgeId,
+                    source.Id,
+                    source.RepositoryId,
+                    source.ScanRunId,
+                    target.Id,
+                    target.RepositoryId,
+                    target.ScanRunId,
+                    DocumentEdgeType.References,
+                    ExactCrossRepositoryTestValues.Pass1CompletedAt));
+            }
+
+            await Context.SaveChangesAsync();
+            for (int index = 0; index <= legacyQueryCap; index++)
+            {
+                int idBase = 80_000 + (index * 10);
+                await SetCurrentVersionAsync(Context, Id(idBase), Id(idBase + 1));
+            }
+
+            Context.ChangeTracker.Clear();
+            return Id(80_000 + (legacyQueryCap * 10) + 5);
+        }
+
+        internal async Task<(Guid GeneratedFromEdgeId, Guid ReferencesEdgeId)>
+            AddModePreferenceCandidatesAsync()
+        {
+            DocumentVersion businessSource = await Context.DocumentVersions
+                .AsNoTracking()
+                .SingleAsync(version => version.Id == _businessDocumentVersionId);
+            Guid generatedFromEdgeId = Id(90_005);
+            Guid referencesEdgeId = Id(90_015);
+
+            foreach ((int idBase, string name, DocumentEdgeType edgeType) in new[]
+            {
+                (90_000, "business-generated", DocumentEdgeType.GeneratedFrom),
+                (90_010, "it-reference", DocumentEdgeType.References),
+            })
+            {
+                Guid logicalDocumentId = Id(idBase);
+                Guid documentVersionId = Id(idBase + 1);
+                Guid sourceAnchorId = Id(idBase + 2);
+                Context.LogicalDocuments.Add(LogicalDocument.Create(
+                    logicalDocumentId,
+                    businessSource.RepositoryId,
+                    DocumentType.CodeLogic,
+                    $"prepared/t068-{name}",
+                    ExactCrossRepositoryTestValues.CreatedAt));
+                DocumentVersion target = DocumentVersion.Create(
+                    documentVersionId,
+                    logicalDocumentId,
+                    businessSource.RepositoryId,
+                    ExactCrossRepositoryTestValues.SystemId,
+                    businessSource.ScanRunId,
+                    businessSource.ProfiledRevision,
+                    1,
+                    $"T068 {name}",
+                    $"src/t068/{name}.java",
+                    KnowledgeDocumentLimits.SchemaIdentity,
+                    "{}",
+                    $"T068 mode preference candidate {name}.",
+                    ExactCrossRepositoryTestValues.ContentFingerprint,
+                    ExactCrossRepositoryTestValues.CommitFingerprint,
+                    ExactCrossRepositoryTestValues.Pass1CompletedAt);
+                target.SourceAnchors.Add(new SourceAnchor(
+                    sourceAnchorId,
+                    target.Id,
+                    target.RepositoryId,
+                    target.ScanRunId,
+                    ExactCrossRepositoryTestValues.ConsumerCodeUnitId,
+                    target.ProfiledRevision,
+                    $"src/t068/{name}.java",
+                    $"{name}.java#line=1;rule=t068-mode",
+                    1,
+                    2,
+                    ExactCrossRepositoryTestValues.SourceHash,
+                    ExactCrossRepositoryTestValues.Pass1CompletedAt));
+                Context.DocumentVersions.Add(target);
+                Context.DocumentSections.Add(Section(
+                    Id(idBase + 3),
+                    logicalDocumentId,
+                    target,
+                    Id(idBase + 4),
+                    $"T068 {name}",
+                    $"T068 mode preference candidate {name}.",
+                    sourceAnchorId,
+                    [businessSource.Id]));
+                Context.DocumentEdges.Add(new DocumentEdge(
+                    Id(idBase + 5),
+                    businessSource.Id,
+                    businessSource.RepositoryId,
+                    businessSource.ScanRunId,
+                    target.Id,
+                    target.RepositoryId,
+                    target.ScanRunId,
+                    edgeType,
+                    ExactCrossRepositoryTestValues.Pass1CompletedAt));
+            }
+
+            await Context.SaveChangesAsync();
+            await SetCurrentVersionAsync(Context, Id(90_000), Id(90_001));
+            await SetCurrentVersionAsync(Context, Id(90_010), Id(90_011));
+            Context.ChangeTracker.Clear();
+            return (generatedFromEdgeId, referencesEdgeId);
         }
 
         internal async Task<(Guid EdgeId, Guid DecisionId)> AddSecondAcceptedV2ReferenceAsync()

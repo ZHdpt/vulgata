@@ -48,6 +48,7 @@ public interface IChatRelationshipProjector
 {
     Task<ChatRelationshipProjection> ProjectAsync(
         Guid systemId,
+        ChatMode mode,
         IReadOnlyCollection<Guid> repositoryIds,
         IReadOnlyCollection<Guid> seedDocumentVersionIds,
         IReadOnlyCollection<Guid> includedDocumentVersionIds,
