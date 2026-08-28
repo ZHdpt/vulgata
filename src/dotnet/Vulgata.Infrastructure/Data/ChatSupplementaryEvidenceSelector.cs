@@ -1,4 +1,6 @@
 using System.Text;
+using Vulgata.Core.DomainServices;
+using Vulgata.Core.Entities;
 
 namespace Vulgata.Infrastructure.Data;
 
@@ -13,7 +15,11 @@ internal sealed record SupplementaryChatSectionCandidate(
     string KeySymbolsJson = "",
     string BusinessTermsJson = "",
     string TechnicalTermsJson = "",
-    string SearchText = "");
+    string SearchText = "",
+    DocumentType DocumentType = DocumentType.CodeLogic,
+    DocumentSectionKind SectionKind = DocumentSectionKind.Overview,
+    Guid RepositoryId = default,
+    int SectionOrder = 0);
 
 internal static class ChatSupplementaryEvidenceSelector
 {
@@ -28,7 +34,8 @@ internal static class ChatSupplementaryEvidenceSelector
         string question,
         IReadOnlyCollection<SupplementaryChatSectionCandidate> candidates,
         int maximumCount,
-        IReadOnlyCollection<Guid>? preferredLogicalDocumentIds = null)
+        IReadOnlyCollection<Guid>? preferredLogicalDocumentIds = null,
+        ChatMode mode = ChatMode.Business)
     {
         if (maximumCount <= 0 || candidates.Count == 0)
         {
@@ -63,15 +70,37 @@ internal static class ChatSupplementaryEvidenceSelector
             .GroupBy(item => item.Candidate.DocumentVersionId)
             .Select(group => group
                 .OrderByDescending(item => item.Score)
+                .ThenBy(item => ModePreferenceRank(item.Candidate, mode))
+                .ThenBy(item => item.Candidate.RepositoryId)
+                .ThenBy(item => item.Candidate.LogicalDocumentId)
+                .ThenBy(item => item.Candidate.SectionOrder)
                 .ThenBy(item => item.Candidate.StableSectionId)
                 .First())
             .OrderByDescending(item => item.Score)
-            .ThenBy(item => item.Candidate.DocumentVersionId)
+            .ThenBy(item => ModePreferenceRank(item.Candidate, mode))
+            .ThenBy(item => item.Candidate.RepositoryId)
+            .ThenBy(item => item.Candidate.LogicalDocumentId)
+            .ThenBy(item => item.Candidate.SectionOrder)
+            .ThenBy(item => item.Candidate.StableSectionId)
             .Take(Math.Min(maximumCount, _maximumDocuments))
             .Select(item => item.Candidate)
             .ToArray();
         return Array.AsReadOnly(selected);
     }
+
+    private static int ModePreferenceRank(
+        SupplementaryChatSectionCandidate candidate,
+        ChatMode mode) => mode switch
+        {
+            ChatMode.Business when candidate.DocumentType == DocumentType.BusinessLogic => 0,
+            ChatMode.Business => 1,
+            ChatMode.It when candidate.DocumentType == DocumentType.CodeLogic &&
+                candidate.SectionKind is DocumentSectionKind.TechnicalDetail or
+                    DocumentSectionKind.Evidence => 0,
+            ChatMode.It when candidate.DocumentType == DocumentType.CodeLogic => 1,
+            ChatMode.It => 2,
+            _ => 3,
+        };
 
     private static int Score(SupplementaryChatSectionCandidate candidate, string[] terms) =>
         terms.Sum(term =>

@@ -6,10 +6,10 @@
   "stage": "converge",
   "preflight": {
     "branch": "demo0831/story-12-5",
-    "head": "56e494393d1bc3b01f464ae332cab97e011ca9fd",
-    "git_identity_sha256": "f0a3a17fdbf354fc177f714a1011d1d6018c5a478d9069a05ae04a435878a89f",
-    "status_sha256": "37727d4ea1aa60a8c298ad26a48b95c4bca385c042d855f523f86de907628ca5",
-    "observed_at": "2026-08-28T03:37:57.4133066Z"
+    "head": "4b8366e16a7d50ae0c33f402de83101cbe1b5c42",
+    "git_identity_sha256": "3a6720ed3cda784c5ea4aff31e5c40d00cc4790310bde87b96cbd3f3ed507a9b",
+    "status_sha256": "fc0dc95e53fa8308b262d5ea810a4c69329f6df04aeefb425a774c2601f3c676",
+    "observed_at": "2026-08-28T04:33:41.2104804Z"
   },
   "artifacts": {
     "spec": {
@@ -22,7 +22,7 @@
     },
     "tasks": {
       "path": "specs/014-grounded-llm-wiki-chat-release-evidence/tasks.md",
-      "sha256": "b447ecd8242f915be322a8f6cd4c2965e059c25bbddaa3cbf68f0c6fdc10fd19"
+      "sha256": "a5730d460aef668ae988e4325743e34cc262f2a565c58318051f75bc7ee9b4e8"
     }
   },
   "gates": {
@@ -44,7 +44,7 @@
   },
   "attempts": {
     "definition-review": 4,
-    "converge": 2,
+    "converge": 3,
     "quality-review": 0
   },
   "approvals": [
@@ -79,9 +79,9 @@
   ],
   "convergence": {
     "status": "revised",
-    "attempt": 2,
+    "attempt": 3,
     "outcome": "tasks_appended",
-    "report_path": "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/track-b-convergence-correction-02.md"
+    "report_path": "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/track-b-convergence-correction-03.md"
   },
   "e2e": {
     "result": "pending",
@@ -98,19 +98,19 @@
     "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/implementation-approval-track-b-01.md",
     "specs/013-exact-cross-repository-flow-pass2/workflow-state.json",
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/tdd/track-b-implementation.md",
-    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/track-b-convergence-correction-01.md",
-    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/track-b-convergence-correction-02.md"
+    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/track-b-convergence-correction-02.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/track-b-convergence-correction-03.md"
   ],
   "checkpoint": {
-    "checkpoint_id": "bmad-12-5-implement-20260828T033757Z-convergence-02",
+    "checkpoint_id": "bmad-12-5-implement-20260828T043341Z-convergence-03",
     "stage": "implement",
     "commit_sha": null,
     "binding_status": "pending"
   },
   "resume": {
     "stage": "converge",
-    "reason": "Convergence task T054 is GREEN and consolidated Track B verification passed. Bind correction checkpoint 02, then rerun fresh convergence; Track C remains closed.",
+    "reason": "Convergence tasks T055-T059 are GREEN and consolidated Track B verification passed. Bind correction checkpoint 03, then rerun fresh convergence; Track C remains closed.",
     "evidence_path": "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/tdd/track-b-implementation.md"
   },
-  "updated_at": "2026-08-28T03:37:57.4133066Z"
+  "updated_at": "2026-08-28T04:33:41.2104804Z"
 }

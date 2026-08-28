@@ -1092,10 +1092,13 @@ public sealed class PreparedChatCoordinatorTests
                     [
                         new EvidenceRelationship(
                             "r1",
-                            "edge-r1",
+                            Id(410),
                             ChatRelationshipType.References,
                             "d1",
                             "d2",
+                            1,
+                            Id(411),
+                            null,
                             new string('d', 64))
                     ]
                     : [],

@@ -47,6 +47,8 @@ public sealed class ChatEvidenceCurrentnessValidator(VulgataDbContext context) :
                         from logical in _context.LogicalDocuments.AsNoTracking()
                         join version in _context.DocumentVersions.AsNoTracking()
                             on logical.CurrentVersionId equals version.Id
+                        join scanRun in _context.ScanRuns.AsNoTracking()
+                            on version.ScanRunId equals scanRun.Id
                         where logicalDocumentIds.Contains(logical.Id) &&
                               repositoryIds.Contains(logical.RepositoryId) &&
                               version.SystemId == request.SystemId &&
@@ -56,13 +58,22 @@ public sealed class ChatEvidenceCurrentnessValidator(VulgataDbContext context) :
                             version.Id,
                             version.RepositoryId,
                             version.ScanRunId,
-                            version.ProfiledRevision))
+                            version.ProfiledRevision,
+                            version.Title,
+                            scanRun.RepositoryId,
+                            scanRun.Status))
                     .Take(6)
                     .ToArrayAsync(cancellationToken);
                 bool documentsAreCurrent = documents.Length == request.Documents.Count &&
                                            request.Documents.All(expected => documents.Any(actual =>
                                                actual.LogicalDocumentId == expected.LogicalDocumentId &&
-                                               actual.DocumentVersionId == expected.ExpectedCurrentDocumentVersionId));
+                                               actual.DocumentVersionId == expected.ExpectedCurrentDocumentVersionId &&
+                                               string.Equals(
+                                                   actual.Title,
+                                                   expected.ExpectedTitle,
+                                                   StringComparison.Ordinal) &&
+                                               actual.ScanRunRepositoryId == actual.RepositoryId &&
+                                               actual.ScanRunStatus == ScanRunStatus.Completed));
                 bool sectionsAreCurrent = documentsAreCurrent &&
                                           await ValidateSectionsAsync(request, cancellationToken);
                 bool anchorsAreCurrent = sectionsAreCurrent &&
@@ -173,14 +184,12 @@ public sealed class ChatEvidenceCurrentnessValidator(VulgataDbContext context) :
         IReadOnlyCollection<CurrentDocumentRow> documents,
         CancellationToken cancellationToken)
     {
-        Guid[] documentVersionIds = request.Documents
-            .Select(document => document.ExpectedCurrentDocumentVersionId)
+        Guid[] expectedEdgeIds = request.Relationships
+            .Select(relationship => relationship.EdgeId)
             .ToArray();
         DocumentEdge[] relationships = await _context.DocumentEdges
             .AsNoTracking()
-            .Where(edge =>
-                documentVersionIds.Contains(edge.SourceDocumentVersionId) &&
-                documentVersionIds.Contains(edge.TargetDocumentVersionId))
+            .Where(edge => expectedEdgeIds.Contains(edge.Id))
             .Take(33)
             .ToArrayAsync(cancellationToken);
         Guid[] scanRunIds = documents
@@ -197,18 +206,18 @@ public sealed class ChatEvidenceCurrentnessValidator(VulgataDbContext context) :
             .ToArrayAsync(cancellationToken);
 
         Guid[] edgeIds = relationships.Select(relationship => relationship.Id).ToArray();
-        string[] exactRelationshipIdentities = request.Relationships
+        Guid[] exactDecisionIds = request.Relationships
             .Where(relationship => relationship.RelationshipType == ChatRelationshipType.References)
-            .Select(relationship => relationship.RelationshipIdentity)
-            .Distinct(StringComparer.Ordinal)
+            .Select(relationship => relationship.ExactDecisionId!.Value)
+            .Distinct()
             .ToArray();
         CrossRepositoryResolutionDecision[] exactDecisions = await _context
             .CrossRepositoryResolutionDecisions
             .AsNoTracking()
             .Where(decision =>
+                exactDecisionIds.Contains(decision.Id) &&
                 decision.DocumentEdgeId.HasValue &&
-                edgeIds.Contains(decision.DocumentEdgeId.Value) &&
-                exactRelationshipIdentities.Contains(decision.EvidenceFingerprint))
+                edgeIds.Contains(decision.DocumentEdgeId.Value))
             .Take(33)
             .ToArrayAsync(cancellationToken);
         Guid[] decisionIds = exactDecisions.Select(decision => decision.Id).ToArray();
@@ -222,8 +231,10 @@ public sealed class ChatEvidenceCurrentnessValidator(VulgataDbContext context) :
         return request.Relationships.All(expected => expected.RelationshipType switch
         {
             ChatRelationshipType.References => relationships.Any(edge =>
+                edge.Id == expected.EdgeId &&
                 edge.EdgeType == DocumentEdgeType.References &&
                 MatchesEndpoints(edge, expected, repositoryIds) &&
+                MatchesRelationshipFlowGroup(request, expected) &&
                 HasAcceptedExactDecision(
                     request.SystemId,
                     expected,
@@ -232,6 +243,7 @@ public sealed class ChatEvidenceCurrentnessValidator(VulgataDbContext context) :
                     exactDecisions,
                     contributions)),
             ChatRelationshipType.GeneratedFrom => relationships.Any(edge =>
+                edge.Id == expected.EdgeId &&
                 edge.EdgeType == DocumentEdgeType.GeneratedFrom &&
                 MatchesEndpoints(edge, expected, repositoryIds) &&
                 MatchesGeneratedFromEndpointAuthority(
@@ -239,13 +251,19 @@ public sealed class ChatEvidenceCurrentnessValidator(VulgataDbContext context) :
                     expected,
                     documents,
                     scanRuns) &&
-                string.Equals(
-                    StableIdentity(edge.Id),
-                    expected.RelationshipIdentity,
-                    StringComparison.Ordinal)),
+                MatchesRelationshipFlowGroup(request, expected)),
             _ => false,
         });
     }
+
+    private static bool MatchesRelationshipFlowGroup(
+        ChatCurrentnessValidationRequest request,
+        ChatCurrentRelationship expected) =>
+        expected.FlowGroupId is not Guid flowGroupId ||
+        request.FlowGroups.Any(group =>
+            group.FlowGroupId == flowGroupId &&
+            group.ExactResolutionEdgeId == expected.EdgeId &&
+            group.ExactResolutionDecisionId == expected.ExactDecisionId);
 
     private static bool MatchesGeneratedFromEndpointAuthority(
         DocumentEdge edge,
@@ -298,6 +316,9 @@ public sealed class ChatEvidenceCurrentnessValidator(VulgataDbContext context) :
                 flowGroup.Id,
                 flowGroup.SchemaIdentity!,
                 flowGroup.State,
+                flowGroup.SystemId,
+                flowGroup.RepositoryId,
+                flowGroup.ScanRunId,
                 flowGroup.BusinessLogicDocumentVersionId,
                 flowGroup.ExactResolutionDecisionId,
                 flowGroup.ExactResolutionEdgeId,
@@ -341,6 +362,7 @@ public sealed class ChatEvidenceCurrentnessValidator(VulgataDbContext context) :
                    actual.All(row =>
                        string.Equals(row.SchemaIdentity, expected.SchemaIdentity, StringComparison.Ordinal) &&
                        string.Equals(row.State, expected.State, StringComparison.Ordinal) &&
+                       row.SystemId == request.SystemId &&
                        row.BusinessLogicDocumentVersionId == expected.BusinessLogicDocumentVersionId &&
                        row.ExactResolutionDecisionId == expected.ExactResolutionDecisionId &&
                        row.ExactResolutionEdgeId == expected.ExactResolutionEdgeId &&
@@ -350,7 +372,9 @@ public sealed class ChatEvidenceCurrentnessValidator(VulgataDbContext context) :
                        row.FlowTraceOrder == expected.FlowTraceOrder) &&
                    expected.Steps.All(step => actual.Any(row => MatchesFlowStep(row, step))) &&
                    documents.Any(document =>
-                       document.DocumentVersionId == expected.BusinessLogicDocumentVersionId) &&
+                       document.DocumentVersionId == expected.BusinessLogicDocumentVersionId &&
+                       document.RepositoryId == actual[0].RepositoryId &&
+                       document.ScanRunId == actual[0].ScanRunId) &&
                    decisions.Any(decision =>
                        decision.Id == expected.ExactResolutionDecisionId &&
                        decision.DocumentEdgeId == expected.ExactResolutionEdgeId);
@@ -380,16 +404,13 @@ public sealed class ChatEvidenceCurrentnessValidator(VulgataDbContext context) :
     {
         CrossRepositoryResolutionDecision[] matchingDecisions = decisions
             .Where(decision =>
+                decision.Id == expected.ExactDecisionId &&
                 decision.SystemId == systemId &&
                 decision.DocumentEdgeId == edge.Id &&
                 decision.ConsumerDocumentVersionId == expected.SourceDocumentVersionId &&
                 decision.ConsumerRepositoryId == expected.SourceRepositoryId &&
                 decision.ProviderDocumentVersionId == expected.TargetDocumentVersionId &&
                 decision.ProviderRepositoryId == expected.TargetRepositoryId &&
-                string.Equals(
-                    decision.EvidenceFingerprint,
-                    expected.RelationshipIdentity,
-                    StringComparison.Ordinal) &&
                 string.Equals(
                     decision.ProviderEvidenceSetFingerprint,
                     expected.ProfileFingerprint,
@@ -452,9 +473,6 @@ public sealed class ChatEvidenceCurrentnessValidator(VulgataDbContext context) :
         repositoryIds.Contains(edge.SourceRepositoryId) &&
         repositoryIds.Contains(edge.TargetRepositoryId);
 
-    private static string StableIdentity(Guid edgeId) =>
-        Sha256(edgeId.ToString("D"));
-
     private static string Sha256(string value) =>
         Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(value)));
 
@@ -484,7 +502,10 @@ public sealed class ChatEvidenceCurrentnessValidator(VulgataDbContext context) :
         Guid DocumentVersionId,
         Guid RepositoryId,
         Guid ScanRunId,
-        string ProfiledRevision);
+        string ProfiledRevision,
+        string Title,
+        Guid ScanRunRepositoryId,
+        ScanRunStatus ScanRunStatus);
 
     private sealed record CurrentSectionRow(
         Guid StableSectionId,
@@ -508,6 +529,9 @@ public sealed class ChatEvidenceCurrentnessValidator(VulgataDbContext context) :
         Guid FlowGroupId,
         string SchemaIdentity,
         string State,
+        Guid? SystemId,
+        Guid RepositoryId,
+        Guid ScanRunId,
         Guid? BusinessLogicDocumentVersionId,
         Guid? ExactResolutionDecisionId,
         Guid? ExactResolutionEdgeId,

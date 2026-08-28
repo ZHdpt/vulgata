@@ -423,36 +423,10 @@ public sealed class ChatAgentDispatcher : IChatAgentDispatcher
                 "text/event-stream");
             if (!LastResponseWasStreaming)
             {
-                if (!StringComparer.Ordinal.Equals(mediaType, "application/json"))
-                {
-                    yield return new ChatProviderStreamSignal(
-                        ChatProviderStreamSignalKind.ProviderError,
-                        ReadOnlyMemory<byte>.Empty,
-                        "invalid-provider-response");
-                    yield break;
-                }
-
-                string aggregate = await response.Content.ReadAsStringAsync(cancellationToken);
-                using JsonDocument document = JsonDocument.Parse(aggregate);
-                string? content = document.RootElement.GetProperty("choices")[0]
-                    .GetProperty("message")
-                    .GetProperty("content")
-                    .GetString();
-                if (content is null)
-                {
-                    yield return new ChatProviderStreamSignal(
-                        ChatProviderStreamSignalKind.ProviderError,
-                        ReadOnlyMemory<byte>.Empty,
-                        "invalid-provider-response");
-                    yield break;
-                }
-
                 yield return new ChatProviderStreamSignal(
-                    ChatProviderStreamSignalKind.AnswerDelta,
-                    Encoding.UTF8.GetBytes(content));
-                yield return new ChatProviderStreamSignal(
-                    ChatProviderStreamSignalKind.Terminal,
-                    ReadOnlyMemory<byte>.Empty);
+                    ChatProviderStreamSignalKind.ProviderError,
+                    ReadOnlyMemory<byte>.Empty,
+                    "invalid-provider-response");
                 yield break;
             }
 

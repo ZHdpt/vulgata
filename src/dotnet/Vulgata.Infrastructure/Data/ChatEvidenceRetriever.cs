@@ -1,6 +1,4 @@
 using System.Data;
-using System.Security.Cryptography;
-using System.Text;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
@@ -256,12 +254,24 @@ public sealed class ChatEvidenceRetriever(
                 edge.TargetRepositoryId))
             .Take(32)
             .ToArrayAsync(cancellationToken);
-        if (provenance.Length is < 1 or > 31)
+        if (provenance.Length == 0)
+        {
+            bool hasFlowExpansion = await _context.FlowGroups.AsNoTracking().AnyAsync(
+                flowGroup =>
+                    flowGroup.ExactResolutionDecisionId == exactRelationship.DecisionId &&
+                    flowGroup.ExactResolutionEdgeId == exactRelationship.EdgeId,
+                cancellationToken);
+            return hasFlowExpansion
+                ? ChatEvidenceResult.IncompleteOrStale()
+                : projectionResult;
+        }
+
+        if (provenance.Length > 31)
         {
             return ChatEvidenceResult.IncompleteOrStale();
         }
 
-        Guid[] baseDocumentVersionIds = provenance
+        Guid[] expansionAuthorityDocumentVersionIds = provenance
             .SelectMany(relationship => new[]
             {
                 relationship.SourceDocumentVersionId,
@@ -271,118 +281,52 @@ public sealed class ChatEvidenceRetriever(
             .Append(exactRelationship.TargetDocumentVersionId)
             .Distinct()
             .ToArray();
+        if (expansionAuthorityDocumentVersionIds.Length > 5)
+        {
+            return ChatEvidenceResult.IncompleteOrStale();
+        }
+
+        int expansionAuthoritySectionCount = await _context.DocumentSections.AsNoTracking()
+            .Where(section =>
+                expansionAuthorityDocumentVersionIds.Contains(section.DocumentVersionId))
+            .Take(21)
+            .CountAsync(cancellationToken);
+        if (expansionAuthoritySectionCount > 20)
+        {
+            return ChatEvidenceResult.IncompleteOrStale();
+        }
+
+        EvidencePacket projectionPacket = projectionResult.Packet!;
+        Guid[] baseDocumentVersionIds = projectionPacket.Documents
+            .Select(document => document.DocumentVersionId)
+            .Distinct()
+            .ToArray();
         if (baseDocumentVersionIds.Length is < 1 or > 5)
         {
             return ChatEvidenceResult.IncompleteOrStale();
         }
 
+        Guid[] primarySectionIds = projectionPacket.Sections
+            .Select(section => section.StableSectionId)
+            .ToArray();
         DocumentSection[] baseSections = await _context.DocumentSections
             .AsNoTracking()
-            .Where(section => baseDocumentVersionIds.Contains(section.DocumentVersionId))
+            .Where(section => primarySectionIds.Contains(section.StableSectionId))
             .OrderBy(section => section.DocumentVersionId)
             .ThenBy(section => section.SectionOrder)
             .ThenBy(section => section.StableSectionId)
             .Take(21)
             .ToArrayAsync(cancellationToken);
-        if (baseSections.Length is < 1 or > 20 ||
-            baseDocumentVersionIds.Any(documentVersionId =>
-                baseSections.All(section => section.DocumentVersionId != documentVersionId)))
+        if (baseSections.Length != primarySectionIds.Length || baseSections.Length > 20)
         {
             return ChatEvidenceResult.IncompleteOrStale();
         }
 
-        int supplementaryLimit = Math.Min(
-            2,
-            Math.Min(5 - baseDocumentVersionIds.Length, 20 - baseSections.Length));
-        SupplementaryChatSectionCandidate[] supplementaryCandidates = supplementaryLimit == 0
-            ? []
-            : await (
-                from logical in _context.LogicalDocuments.AsNoTracking()
-                join version in _context.DocumentVersions.AsNoTracking()
-                    on logical.CurrentVersionId equals version.Id
-                join section in _context.DocumentSections.AsNoTracking()
-                    on version.Id equals section.DocumentVersionId
-                join indexEntry in _context.IndexEntries.AsNoTracking()
-                    on version.Id equals indexEntry.DocumentVersionId into indexEntries
-                from indexEntry in indexEntries.DefaultIfEmpty()
-                where logical.DocumentType == DocumentType.CodeLogic &&
-                    !baseDocumentVersionIds.Contains(version.Id) &&
-                    repositoryIds.Contains(version.RepositoryId) &&
-                    version.SystemId == request.SystemId &&
-                    version.SupersededById == null &&
-                    (section.SectionKind == DocumentSectionKind.Overview ||
-                        section.SectionKind == DocumentSectionKind.BusinessRule ||
-                        section.SectionKind == DocumentSectionKind.ProcessStep)
-                orderby version.Id, section.SectionOrder, section.StableSectionId
-                select new SupplementaryChatSectionCandidate(
-                    version.Id,
-                    section.StableSectionId,
-                    version.Title,
-                    section.Heading,
-                    section.ContentMarkdown,
-                    logical.Id,
-                    indexEntry == null ? string.Empty : indexEntry.RepositoryRelativePath,
-                    indexEntry == null ? string.Empty : indexEntry.KeySymbolsJson,
-                    indexEntry == null ? string.Empty : indexEntry.BusinessTermsJson,
-                    indexEntry == null ? string.Empty : indexEntry.TechnicalTermsJson,
-                    indexEntry == null ? string.Empty : indexEntry.SearchText))
-                .Take(256)
-                .ToArrayAsync(cancellationToken);
-        Guid[] currentLogicalDocumentIds = await (
-            from logical in _context.LogicalDocuments.AsNoTracking()
-            join version in _context.DocumentVersions.AsNoTracking()
-                on logical.CurrentVersionId equals version.Id
-            where repositoryIds.Contains(version.RepositoryId) &&
-                version.SystemId == request.SystemId &&
-                version.SupersededById == null
-            select logical.Id)
-            .Take(257)
-            .ToArrayAsync(cancellationToken);
-        if (currentLogicalDocumentIds.Length > 256)
-        {
-            return ChatEvidenceResult.IncompleteOrStale();
-        }
-
-        ChatConversationRetrievalContext conversationContext =
-            request.Conversation.BuildRetrievalContext(
-                currentLogicalDocumentIds,
-                currentLogicalDocumentIds);
-        string retrievalQuestion = conversationContext.IsMissingEquivalent
-            ? request.Question
-            : string.Join(
-                ' ',
-                request.Conversation.Turns
-                    .Where(turn => turn.LogicalDocumentIds.Any(
-                        conversationContext.CurrentDocumentHints.Contains))
-                    .Select(turn => turn.Question)
-                    .Append(request.Question));
-        IReadOnlyList<SupplementaryChatSectionCandidate> selectedSupplementary =
-            ChatSupplementaryEvidenceSelector.Select(
-                retrievalQuestion,
-                supplementaryCandidates,
-                supplementaryLimit,
-                conversationContext.CurrentDocumentHints);
-        Guid[] supplementarySectionIds = selectedSupplementary
-            .Select(item => item.StableSectionId)
-            .ToArray();
-        DocumentSection[] supplementarySections = supplementarySectionIds.Length == 0
-            ? []
-            : await _context.DocumentSections
-                .AsNoTracking()
-                .Where(section => supplementarySectionIds.Contains(section.StableSectionId))
-                .ToArrayAsync(cancellationToken);
-        if (supplementarySections.Length != supplementarySectionIds.Length)
-        {
-            return ChatEvidenceResult.IncompleteOrStale();
-        }
-
-        Guid[] selectedDocumentVersionIds = baseDocumentVersionIds
-            .Concat(selectedSupplementary.Select(item => item.DocumentVersionId))
-            .Distinct()
-            .ToArray();
+        Guid[] selectedDocumentVersionIds = baseDocumentVersionIds;
+        Guid[] supplementarySectionIds = [];
+        DocumentSection[] supplementarySections = [];
         Guid[] existingRelationshipEdgeIds = provenance
             .Select(item => item.EdgeId)
-            .Append(exactRelationship.EdgeId)
             .ToArray();
         int relatedDocumentLimit = Math.Min(
             5 - selectedDocumentVersionIds.Length,
@@ -398,13 +342,51 @@ public sealed class ChatEvidenceRetriever(
                 32 - existingRelationshipEdgeIds.Length,
                 cancellationToken);
 
-        DocumentSection[] sections =
-            [.. baseSections, .. supplementarySections, .. relationshipProjection.RelatedSections];
         Guid[] documentVersionIds = selectedDocumentVersionIds
             .Concat(relationshipProjection.Relationships.Select(
                 item => item.TargetDocumentVersionId))
             .Distinct()
             .ToArray();
+        HashSet<Guid> sectionDocumentIds = baseSections
+            .Concat(relationshipProjection.RelatedSections)
+            .Select(section => section.DocumentVersionId)
+            .ToHashSet();
+        Guid[] missingExactEndpointSectionDocumentIds = new[]
+            {
+                exactRelationship.SourceDocumentVersionId,
+                exactRelationship.TargetDocumentVersionId,
+            }
+            .Where(documentVersionId =>
+                documentVersionIds.Contains(documentVersionId) &&
+                !sectionDocumentIds.Contains(documentVersionId))
+            .ToArray();
+        DocumentSection[] exactEndpointSections = [];
+        foreach (Guid documentVersionId in missingExactEndpointSectionDocumentIds)
+        {
+            DocumentSection? section = await _context.DocumentSections.AsNoTracking()
+                .Where(item => item.DocumentVersionId == documentVersionId)
+                .OrderBy(item => item.SectionOrder)
+                .ThenBy(item => item.StableSectionId)
+                .FirstOrDefaultAsync(cancellationToken);
+            if (section is null)
+            {
+                return ChatEvidenceResult.IncompleteOrStale();
+            }
+
+            exactEndpointSections = [.. exactEndpointSections, section];
+        }
+
+        DocumentSection[] sections =
+            [
+                .. baseSections,
+                .. supplementarySections,
+                .. relationshipProjection.RelatedSections,
+                .. exactEndpointSections,
+            ];
+        if (sections.Length > 20)
+        {
+            return ChatEvidenceResult.IncompleteOrStale();
+        }
 
         CurrentDocumentRow[] documents = await (
             from logical in _context.LogicalDocuments.AsNoTracking()
@@ -500,40 +482,109 @@ public sealed class ChatEvidenceRetriever(
             .Select((anchor, index) => (anchor.Id, Handle: $"a{index + 1}"))
             .ToDictionary(item => item.Id, item => item.Handle);
 
-        List<(Guid EdgeId, EvidenceRelationship Relationship)> relationships =
-        [
-            (
+        var relationshipRows = new List<RelationshipPacketRow>();
+        if (documentHandles.ContainsKey(exactRelationship.SourceDocumentVersionId) &&
+            documentHandles.ContainsKey(exactRelationship.TargetDocumentVersionId))
+        {
+            relationshipRows.Add(new RelationshipPacketRow(
                 exactRelationship.EdgeId,
-                new EvidenceRelationship(
-                    "r1",
-                    exactRelationship.EvidenceFingerprint,
-                    ChatRelationshipType.References,
-                    documentHandles[exactRelationship.SourceDocumentVersionId],
-                    documentHandles[exactRelationship.TargetDocumentVersionId],
-                    exactRelationship.ProfileFingerprint)),
-        ];
-        relationships.AddRange(provenance.Select((relationship, index) =>
-            (
+                ChatRelationshipType.References,
+                exactRelationship.SourceDocumentVersionId,
+                exactRelationship.TargetDocumentVersionId,
+                exactRelationship.DecisionId,
+                exactRelationship.ProfileFingerprint));
+        }
+
+        relationshipRows.AddRange(provenance
+            .Where(relationship =>
+                documentHandles.ContainsKey(relationship.SourceDocumentVersionId) &&
+                documentHandles.ContainsKey(relationship.TargetDocumentVersionId))
+            .Select(relationship => new RelationshipPacketRow(
                 relationship.EdgeId,
-                new EvidenceRelationship(
-                    $"r{index + 2}",
-                    StableIdentity(relationship.EdgeId),
-                    ChatRelationshipType.GeneratedFrom,
-                    documentHandles[relationship.SourceDocumentVersionId],
-                    documentHandles[relationship.TargetDocumentVersionId],
-                    null))));
-        relationships.AddRange(relationshipProjection.Relationships.Select((relationship, index) =>
-            (
+                ChatRelationshipType.GeneratedFrom,
+                relationship.SourceDocumentVersionId,
+                relationship.TargetDocumentVersionId,
+                null,
+                null)));
+
+        Guid[] projectedExactEdgeIds = relationshipProjection.Relationships
+            .Where(relationship => relationship.ExactEvidenceFingerprint is not null)
+            .Select(relationship => relationship.EdgeId)
+            .Distinct()
+            .ToArray();
+        var projectedExactDecisionRows = projectedExactEdgeIds.Length == 0
+            ? []
+            : await _context.CrossRepositoryResolutionDecisions.AsNoTracking()
+                .Where(decision =>
+                    decision.DocumentEdgeId.HasValue &&
+                    projectedExactEdgeIds.Contains(decision.DocumentEdgeId.Value) &&
+                    decision.ResolutionSchemaIdentity == "exact-cross-repository-resolution/2.0" &&
+                    decision.OutcomeKind == "ExactMatch" &&
+                    decision.ReasonCode == "unique_provider")
+                .OrderBy(decision => decision.DocumentEdgeId)
+                .Select(decision => new ExactDecisionBindingRow(
+                    decision.DocumentEdgeId!.Value,
+                    decision.Id))
+                .Take(33)
+                .ToArrayAsync(cancellationToken);
+        Dictionary<Guid, Guid> projectedExactDecisionIds = projectedExactDecisionRows
+            .GroupBy(binding => binding.EdgeId)
+            .Where(group => group.Count() == 1)
+            .ToDictionary(group => group.Key, group => group.Single().DecisionId);
+        relationshipRows.AddRange(relationshipProjection.Relationships
+            .Where(relationship => relationshipRows.All(row => row.EdgeId != relationship.EdgeId))
+            .Select(relationship => new RelationshipPacketRow(
                 relationship.EdgeId,
-                new EvidenceRelationship(
-                    $"r{provenance.Length + index + 2}",
-                    relationship.ExactEvidenceFingerprint ?? StableIdentity(relationship.EdgeId),
-                    relationship.EdgeType == DocumentEdgeType.References
-                        ? ChatRelationshipType.References
-                        : ChatRelationshipType.GeneratedFrom,
-                    documentHandles[relationship.SourceDocumentVersionId],
-                    documentHandles[relationship.TargetDocumentVersionId],
-                    relationship.ExactProviderEvidenceSetFingerprint))));
+                relationship.EdgeType == DocumentEdgeType.References
+                    ? ChatRelationshipType.References
+                    : ChatRelationshipType.GeneratedFrom,
+                relationship.SourceDocumentVersionId,
+                relationship.TargetDocumentVersionId,
+                projectedExactDecisionIds.GetValueOrDefault(relationship.EdgeId) is Guid decisionId &&
+                    decisionId != Guid.Empty
+                    ? decisionId
+                    : null,
+                relationship.ExactProviderEvidenceSetFingerprint)));
+
+        Guid[] relationshipEdgeIds = relationshipRows.Select(row => row.EdgeId).ToArray();
+        var flowBindingRows = relationshipEdgeIds.Length == 0
+            ? []
+            : await _context.FlowGroups.AsNoTracking()
+                .Where(flowGroup =>
+                    flowGroup.State == "Published" &&
+                    flowGroup.SchemaIdentity == "endpoint-flow-group/1.0" &&
+                    flowGroup.ExactResolutionEdgeId.HasValue &&
+                    relationshipEdgeIds.Contains(flowGroup.ExactResolutionEdgeId.Value))
+                .OrderBy(flowGroup => flowGroup.GroupOrder)
+                .ThenBy(flowGroup => flowGroup.Id)
+                .Select(flowGroup => new FlowGroupBindingRow(
+                    flowGroup.ExactResolutionEdgeId!.Value,
+                    flowGroup.Id))
+                .Take(33)
+                .ToArrayAsync(cancellationToken);
+        Dictionary<Guid, Guid> flowGroupIds = flowBindingRows
+            .GroupBy(binding => binding.EdgeId)
+            .ToDictionary(group => group.Key, group => group.First().FlowGroupId);
+        List<(Guid EdgeId, EvidenceRelationship Relationship)> relationships = relationshipRows
+            .OrderBy(row => row.RelationshipType == ChatRelationshipType.References ? 0 : 1)
+            .ThenBy(row => row.EdgeId)
+            .Select((row, index) =>
+                (
+                    row.EdgeId,
+                    new EvidenceRelationship(
+                        $"r{index + 1}",
+                        row.EdgeId,
+                        row.RelationshipType,
+                        documentHandles[row.SourceDocumentVersionId],
+                        documentHandles[row.TargetDocumentVersionId],
+                        1,
+                        row.ExactDecisionId,
+                        flowGroupIds.GetValueOrDefault(row.EdgeId) is Guid flowGroupId &&
+                            flowGroupId != Guid.Empty
+                            ? flowGroupId
+                            : null,
+                        row.ProfileFingerprint)))
+            .ToList();
         Dictionary<Guid, string> relationshipHandles = relationships.ToDictionary(
             item => item.EdgeId,
             item => item.Relationship.RelationshipHandle);
@@ -574,6 +625,18 @@ public sealed class ChatEvidenceRetriever(
                 step.Description))
             .Take(13)
             .ToArrayAsync(cancellationToken);
+        if (flowRows.Length == 0)
+        {
+            bool hasFlowExpansion = await _context.FlowGroups.AsNoTracking().AnyAsync(
+                flowGroup =>
+                    flowGroup.ExactResolutionDecisionId == exactRelationship.DecisionId &&
+                    flowGroup.ExactResolutionEdgeId == exactRelationship.EdgeId,
+                cancellationToken);
+            return hasFlowExpansion
+                ? ChatEvidenceResult.IncompleteOrStale()
+                : projectionResult;
+        }
+
         EvidenceFlowGroupAuthority[] flowGroups = flowRows
             .GroupBy(row => new
             {
@@ -614,7 +677,7 @@ public sealed class ChatEvidenceRetriever(
                         row.StepExactResolutionDecisionId))
                     .ToArray()))
             .ToArray();
-        if (flowRows.Length is < 1 or > 12 ||
+        if (flowRows.Length > 12 ||
             flowGroups.Length is < 1 or > 10 ||
             flowRows.Any(row =>
                 !documentHandles.ContainsKey(row.DocumentVersionId) ||
@@ -740,7 +803,9 @@ public sealed class ChatEvidenceRetriever(
                 version.SupersededById == null &&
                 (section.SectionKind == DocumentSectionKind.Overview ||
                     section.SectionKind == DocumentSectionKind.BusinessRule ||
-                    section.SectionKind == DocumentSectionKind.ProcessStep)
+                    section.SectionKind == DocumentSectionKind.ProcessStep ||
+                    section.SectionKind == DocumentSectionKind.TechnicalDetail ||
+                    section.SectionKind == DocumentSectionKind.Evidence)
             orderby version.RepositoryId, logical.Id, section.SectionOrder, section.StableSectionId
             select new ProjectionSectionRow(
                 logical.Id,
@@ -794,9 +859,14 @@ public sealed class ChatEvidenceRetriever(
                     candidate.KeySymbolsJson,
                     candidate.BusinessTermsJson,
                     candidate.TechnicalTermsJson,
-                    candidate.SearchText)).ToArray(),
+                    candidate.SearchText,
+                    candidate.DocumentType,
+                    candidate.Section.SectionKind,
+                    candidate.RepositoryId,
+                    candidate.Section.SectionOrder)).ToArray(),
                 5,
-                conversationContext.CurrentDocumentHints);
+                conversationContext.CurrentDocumentHints,
+                request.Mode);
         if (selected.Count == 0)
         {
             return ChatEvidenceResult.IncompleteOrStale();
@@ -1001,10 +1071,6 @@ public sealed class ChatEvidenceRetriever(
             segments.All(segment => segment.Length > 0 && segment is not "." and not "..");
     }
 
-    private static string StableIdentity(Guid edgeId) =>
-        Convert.ToHexStringLower(
-            SHA256.HashData(Encoding.UTF8.GetBytes(edgeId.ToString("D"))));
-
     private sealed record ExactRelationshipRow(
         Guid DecisionId,
         Guid EdgeId,
@@ -1045,6 +1111,18 @@ public sealed class ChatEvidenceRetriever(
         Guid SourceRepositoryId,
         Guid TargetDocumentVersionId,
         Guid TargetRepositoryId);
+
+    private sealed record RelationshipPacketRow(
+        Guid EdgeId,
+        ChatRelationshipType RelationshipType,
+        Guid SourceDocumentVersionId,
+        Guid TargetDocumentVersionId,
+        Guid? ExactDecisionId,
+        string? ProfileFingerprint);
+
+    private sealed record ExactDecisionBindingRow(Guid EdgeId, Guid DecisionId);
+
+    private sealed record FlowGroupBindingRow(Guid EdgeId, Guid FlowGroupId);
 
     private sealed record CurrentDocumentRow(
         Guid LogicalDocumentId,

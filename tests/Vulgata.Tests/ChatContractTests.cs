@@ -239,13 +239,13 @@ public sealed class ChatContractTests
     {
         Guid repository1 = Id(20);
         Guid repository2 = Id(21);
-        var document = new ChatCurrentDocument(Id(1), Id(2));
+        var document = new ChatCurrentDocument(Id(1), Id(2), "文档标题");
         var section = new ChatCurrentSection(Id(3), Id(2), 0, 5, new string('b', 64));
         var anchor = new ChatCurrentSourceAnchor(
             Id(4), Id(2), repository1, "src/Orders.cs", 10, 12, new string('c', 64));
         var relationship = new ChatCurrentRelationship(
-            "edge-1", ChatRelationshipType.References, Id(2), Id(5),
-            repository1, repository2, new string('d', 64));
+            Id(6), ChatRelationshipType.References, Id(2), Id(5),
+            repository1, repository2, 1, Id(7), null, new string('d', 64));
 
         ChatCurrentnessValidationRequest request = ChatCurrentnessValidationRequest.Create(
             "request-1", new string('a', 64), Id(10), [repository2, repository1],

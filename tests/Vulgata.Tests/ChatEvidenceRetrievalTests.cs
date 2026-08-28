@@ -210,6 +210,49 @@ public sealed class ChatEvidenceRetrievalTests
         Assert.DoesNotContain(packet.Sections, section => section.Heading is "业务概览" or "消费端" or "提供端");
     }
 
+    [Fact]
+    public async Task RetrieveAsync_CrossRepositoryQuestionWithoutOptionalProvenanceOrFlowGroup_UsesProjectionPrimaryAsync()
+    {
+        await using PreparedEvidenceFixture fixture = await PreparedEvidenceFixture.CreateAsync();
+        await fixture.RemoveOptionalCrossRepositorySupportAsync();
+
+        ChatEvidenceResult result = await new ChatEvidenceRetriever(fixture.Context)
+            .RetrieveAsync(
+                fixture.CreateRequest("cross-projection-without-optional-support"),
+                new RepositoryAccessScope(
+                    fixture.RepositoryIds,
+                    new RecordingAuthorizationVerifier(true, true)));
+
+        EvidencePacket packet = Assert.IsType<EvidencePacket>(result.Packet);
+        Assert.Equal(ChatEvidenceResultKind.Found, result.Kind);
+        Assert.Contains(packet.Sections, section => section.Heading == "业务概览");
+    }
+
+    [Fact]
+    public async Task RetrieveAsync_ItQuestion_SelectsTechnicalDetailAndEvidenceProjectionSectionsAsync()
+    {
+        await using PreparedEvidenceFixture fixture = await PreparedEvidenceFixture.CreateAsync();
+        await fixture.AddTechnicalAndEvidenceSectionsAsync();
+        await fixture.RemoveV2AuthorityAsync();
+
+        ChatEvidenceResult result = await new ChatEvidenceRetriever(
+                fixture.Context,
+                new ProjectionOnlyScopeResolver())
+            .RetrieveAsync(
+                fixture.CreateRequest(
+                    "it-technical-evidence",
+                    question: "TechnicalBoundaryToken",
+                    mode: ChatMode.It),
+                new RepositoryAccessScope(
+                    fixture.RepositoryIds,
+                    new RecordingAuthorizationVerifier(true, true)));
+
+        EvidencePacket packet = Assert.IsType<EvidencePacket>(result.Packet);
+        Assert.Equal(ChatEvidenceResultKind.Found, result.Kind);
+        Assert.Contains(packet.Sections, section => section.Heading == "技术实现细节");
+        Assert.Contains(packet.Sections, section => section.Heading == "技术证据");
+    }
+
     [Theory]
     [InlineData("北京天气怎么样？")]
     [InlineData("如何 主要 系统 客户 用户 进行 可以 需要 之后")]
@@ -533,22 +576,149 @@ public sealed class ChatEvidenceRetrievalTests
         internal ChatRetrievalRequest CreateRequest(
             string requestId,
             ChatConversationState? conversation = null,
-            string question = "客户会话如何跨仓库更新？")
+            string question = "客户会话如何跨仓库更新？",
+            ChatMode mode = ChatMode.Business)
         {
             ChatQuestionRequest questionRequest = ChatQuestionRequest.Create(
                 requestId,
-                ChatMode.Business,
+                mode,
                 ExactCrossRepositoryTestValues.SystemId,
                 RepositoryIds,
                 question);
             ChatConversationScope conversationScope = ChatConversationScope.Create(
-                questionRequest.Mode,
+                mode,
                 questionRequest.SystemId,
                 questionRequest.RepositoryIds);
             return ChatRetrievalRequest.Create(
                 questionRequest,
                 conversation ?? ChatConversationState.Empty(conversationScope),
                 DateTimeOffset.UtcNow.AddMinutes(1));
+        }
+
+        internal async Task RemoveOptionalCrossRepositorySupportAsync()
+        {
+            await Context.Database.ExecuteSqlInterpolatedAsync(
+                $"DELETE FROM \"DocumentEdges\" WHERE \"Id\" = {_generatedFromEdgeId}");
+            await Context.Database.ExecuteSqlInterpolatedAsync(
+                $"DELETE FROM \"FlowTraceSteps\" WHERE \"FlowTraceId\" IN (SELECT \"Id\" FROM \"FlowTraces\" WHERE \"FlowGroupId\" = {Id(10_301)})");
+            await Context.Database.ExecuteSqlInterpolatedAsync(
+                $"DELETE FROM \"FlowTraces\" WHERE \"FlowGroupId\" = {Id(10_301)}");
+            await Context.Database.ExecuteSqlInterpolatedAsync(
+                $"DELETE FROM \"FlowGroups\" WHERE \"Id\" = {Id(10_301)}");
+            Context.ChangeTracker.Clear();
+        }
+
+        internal async Task AddTechnicalAndEvidenceSectionsAsync()
+        {
+            await AddModeSpecificDocumentAsync(
+                Id(62_001),
+                Id(62_002),
+                Id(62_003),
+                Id(62_004),
+                Id(62_005),
+                Id(62_006),
+                ExactCrossRepositoryTestValues.ProviderRepositoryId,
+                ExactCrossRepositoryTestValues.ProviderScanRunId,
+                ExactCrossRepositoryTestValues.ProviderCodeUnitId,
+                DocumentSectionKind.TechnicalDetail,
+                "技术实现细节",
+                "TechnicalBoundaryToken 技术实现细节。");
+            await AddModeSpecificDocumentAsync(
+                Id(62_011),
+                Id(62_012),
+                Id(62_013),
+                Id(62_014),
+                Id(62_015),
+                Id(62_016),
+                ExactCrossRepositoryTestValues.ConsumerRepositoryId,
+                ExactCrossRepositoryTestValues.ConsumerScanRunId,
+                ExactCrossRepositoryTestValues.ConsumerCodeUnitId,
+                DocumentSectionKind.Evidence,
+                "技术证据",
+                "TechnicalBoundaryToken 技术证据。");
+            Context.ChangeTracker.Clear();
+        }
+
+        private async Task AddModeSpecificDocumentAsync(
+            Guid logicalDocumentId,
+            Guid documentVersionId,
+            Guid sourceAnchorId,
+            Guid sectionId,
+            Guid stableSectionId,
+            Guid indexEntryId,
+            Guid repositoryId,
+            Guid scanRunId,
+            Guid codeUnitId,
+            DocumentSectionKind sectionKind,
+            string heading,
+            string content)
+        {
+            LogicalDocument logicalDocument = LogicalDocument.Create(
+                logicalDocumentId,
+                repositoryId,
+                DocumentType.CodeLogic,
+                $"prepared/{heading}",
+                ExactCrossRepositoryTestValues.CreatedAt);
+            Context.LogicalDocuments.Add(logicalDocument);
+            await Context.SaveChangesAsync();
+
+            DocumentVersion version = DocumentVersion.Create(
+                documentVersionId,
+                logicalDocumentId,
+                repositoryId,
+                ExactCrossRepositoryTestValues.SystemId,
+                scanRunId,
+                ExactCrossRepositoryTestValues.SourceHash[..40],
+                1,
+                heading,
+                $"src/{heading}.java",
+                KnowledgeDocumentLimits.SchemaIdentity,
+                "{}",
+                content,
+                ExactCrossRepositoryTestValues.ContentFingerprint,
+                ExactCrossRepositoryTestValues.CommitFingerprint,
+                ExactCrossRepositoryTestValues.Pass1CompletedAt);
+            version.SourceAnchors.Add(new SourceAnchor(
+                sourceAnchorId,
+                documentVersionId,
+                repositoryId,
+                scanRunId,
+                codeUnitId,
+                version.ProfiledRevision,
+                $"src/{heading}.java",
+                $"{heading}.java#line=1;rule=mode-specific",
+                1,
+                3,
+                ExactCrossRepositoryTestValues.SourceHash,
+                ExactCrossRepositoryTestValues.Pass1CompletedAt));
+            Context.DocumentVersions.Add(version);
+            Context.DocumentSections.Add(Section(
+                sectionId,
+                logicalDocumentId,
+                version,
+                stableSectionId,
+                heading,
+                content,
+                sourceAnchorId,
+                [],
+                sectionKind: sectionKind));
+            Context.IndexEntries.Add(IndexEntry.Create(
+                indexEntryId,
+                logicalDocumentId,
+                documentVersionId,
+                repositoryId,
+                ExactCrossRepositoryTestValues.SystemId,
+                DocumentType.CodeLogic,
+                heading,
+                content,
+                version.RepositoryRelativePath,
+                "[]",
+                "[]",
+                "[\"TechnicalBoundaryToken\"]",
+                "TechnicalBoundaryToken",
+                ExactCrossRepositoryTestValues.Pass1CompletedAt));
+            await Context.SaveChangesAsync();
+            await SetCurrentVersionAsync(Context, logicalDocumentId, documentVersionId);
         }
 
         internal async Task AddStandaloneCurrentCodeLogicAsync()
@@ -1278,7 +1448,8 @@ public sealed class ChatEvidenceRetrievalTests
             string contentMarkdown,
             Guid anchorId,
             IReadOnlyCollection<Guid> supportedDocumentVersionIds,
-            int sectionOrder = 1) =>
+            int sectionOrder = 1,
+            DocumentSectionKind sectionKind = DocumentSectionKind.Overview) =>
             DocumentSection.Create(
                 id,
                 logicalDocumentId,
@@ -1286,7 +1457,7 @@ public sealed class ChatEvidenceRetrievalTests
                 version.RepositoryId,
                 stableSectionId,
                 sectionOrder,
-                DocumentSectionKind.Overview,
+                sectionKind,
                 heading,
                 contentMarkdown,
                 contentMarkdown,

@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using Vulgata.Core.Entities;
 
 namespace Vulgata.Core.DomainServices;
@@ -206,11 +207,44 @@ public sealed record EvidenceAnchor(
 
 public sealed record EvidenceRelationship(
     string RelationshipHandle,
-    string RelationshipIdentity,
+    Guid EdgeId,
     ChatRelationshipType RelationshipType,
     string SourceDocumentHandle,
     string TargetDocumentHandle,
-    string? ProfileFingerprint);
+    int Depth,
+    Guid? ExactDecisionId,
+    Guid? FlowGroupId,
+    string? ProfileFingerprint)
+{
+    public string RelationshipIdentity { get; init; } = EdgeId.ToString("D", CultureInfo.InvariantCulture);
+
+    public EvidenceRelationship(
+        string relationshipHandle,
+        string relationshipIdentity,
+        ChatRelationshipType relationshipType,
+        string sourceDocumentHandle,
+        string targetDocumentHandle,
+        string? profileFingerprint)
+        : this(
+            relationshipHandle,
+            DeriveLegacyEdgeId(relationshipIdentity),
+            relationshipType,
+            sourceDocumentHandle,
+            targetDocumentHandle,
+            1,
+            null,
+            null,
+            profileFingerprint)
+    {
+        RelationshipIdentity = relationshipIdentity;
+    }
+
+    private static Guid DeriveLegacyEdgeId(string relationshipIdentity)
+    {
+        string fingerprint = ChatContractGuard.Sha256(relationshipIdentity ?? string.Empty);
+        return Guid.ParseExact(fingerprint[..32], "N");
+    }
+}
 
 public sealed record EvidenceFlowStep(
     int StepOrder,
@@ -349,6 +383,7 @@ public sealed record ChatEvidencePacketBuildRequest
     }
 }
 
+[JsonConverter(typeof(EvidencePacketJsonConverter))]
 public sealed record EvidencePacket
 {
     private const int _maxEvidenceUtf8Bytes = 65_536;
@@ -500,7 +535,19 @@ public sealed record EvidencePacket
                 supportingDocumentHandles = section.SupportingDocumentHandles.Order(StringComparer.Ordinal),
             }),
             sourceAnchors = canonicalAnchors,
-            relationships = canonicalRelationships,
+            relationships = canonicalRelationships.Select(relationship => new
+            {
+                handle = relationship.RelationshipHandle,
+                relationship.EdgeId,
+                type = relationship.RelationshipType == ChatRelationshipType.References
+                    ? "references"
+                    : "generatedFrom",
+                relationship.SourceDocumentHandle,
+                relationship.TargetDocumentHandle,
+                relationship.Depth,
+                relationship.ExactDecisionId,
+                relationship.FlowGroupId,
+            }),
             flowEvidence = canonicalFlow.Select(step => new
             {
                 step.StepOrder,
@@ -510,20 +557,7 @@ public sealed record EvidencePacket
             }),
             flowGroups = canonicalFlowGroups,
             advisoryContext = normalizedAdvisory,
-            conversation = new
-            {
-                mode = canonicalConversation.Scope.Mode.ToString(),
-                systemId = canonicalConversation.Scope.SystemId,
-                repositoryIds = canonicalConversation.Scope.RepositoryIds,
-                turns = canonicalConversation.Turns.Select(turn => new
-                {
-                    turn.Question,
-                    turn.AnswerText,
-                    turn.PacketFingerprint,
-                    citationHandles = turn.CitationHandles.Order(StringComparer.Ordinal),
-                    logicalDocumentIds = turn.LogicalDocumentIds.Order(),
-                }),
-            },
+            conversation = EvidencePacketJsonConverter.ProjectConversation(canonicalConversation),
         });
         if (Encoding.UTF8.GetByteCount(canonicalJson) > _maxEvidenceUtf8Bytes)
         {
@@ -636,11 +670,15 @@ public sealed record EvidencePacket
                 !ChatContractGuard.IsSha256(anchor.SourceHash)) ||
             relationships.Any(relationship =>
                 !ChatContractGuard.IsHandle(relationship.RelationshipHandle) ||
+                relationship.EdgeId == Guid.Empty ||
                 string.IsNullOrWhiteSpace(relationship.RelationshipIdentity) ||
                 !Enum.IsDefined(relationship.RelationshipType) ||
                 !documentMap.ContainsKey(relationship.SourceDocumentHandle) ||
                 !documentMap.ContainsKey(relationship.TargetDocumentHandle) ||
                 relationship.SourceDocumentHandle == relationship.TargetDocumentHandle ||
+                relationship.Depth is < 0 or > 1 ||
+                relationship.ExactDecisionId == Guid.Empty ||
+                relationship.FlowGroupId == Guid.Empty ||
                 relationship.ProfileFingerprint is not null &&
                 !ChatContractGuard.IsSha256(relationship.ProfileFingerprint)) ||
             flow.Select((step, index) => (step, index)).Any(item =>
@@ -652,6 +690,108 @@ public sealed record EvidencePacket
         {
             throw new ChatContractException(ChatContractFailureCode.InvalidEvidence);
         }
+    }
+}
+
+public sealed class EvidencePacketJsonConverter : JsonConverter<EvidencePacket>
+{
+    public override EvidencePacket? Read(
+        ref Utf8JsonReader reader,
+        Type typeToConvert,
+        JsonSerializerOptions options) =>
+        throw new NotSupportedException();
+
+    public override void Write(
+        Utf8JsonWriter writer,
+        EvidencePacket value,
+        JsonSerializerOptions options)
+    {
+        writer.WriteStartObject();
+        writer.WriteString("schemaVersion", value.SchemaVersion);
+        writer.WriteString("requestId", value.RequestId);
+        writer.WriteString("mode", value.Mode == ChatMode.Business ? "business" : "it");
+        writer.WriteString("systemId", value.SystemId);
+        WriteValue(writer, "repositoryIds", value.RepositoryIds, options);
+        WriteValue(writer, "documents", value.Documents.Select(document => new
+        {
+            handle = document.DocumentHandle,
+            logicalDocumentId = document.LogicalDocumentId,
+            documentVersionId = document.DocumentVersionId,
+            repositoryId = document.RepositoryId,
+            documentType = document.DocumentType == DocumentType.CodeLogic
+                ? "codeLogic"
+                : "businessLogic",
+            profiledRevision = document.ProfiledRevision,
+            title = document.Title,
+        }), options);
+        WriteValue(writer, "sections", value.Sections.Select(section => new
+        {
+            handle = section.SectionHandle,
+            documentHandle = section.DocumentHandle,
+            stableSectionId = section.StableSectionId,
+            order = section.SectionOrder,
+            kind = section.SectionKind.ToString(),
+            heading = section.Heading,
+            contentMarkdown = section.ContentMarkdown,
+            anchorHandles = section.AnchorHandles,
+            supportingDocumentHandles = section.SupportingDocumentHandles,
+        }), options);
+        WriteValue(writer, "sourceAnchors", value.SourceAnchors.Select(anchor => new
+        {
+            handle = anchor.AnchorHandle,
+            anchorId = anchor.AnchorId,
+            documentHandle = anchor.DocumentHandle,
+            repositoryId = anchor.RepositoryId,
+            repositoryRelativePath = anchor.RepositoryRelativePath,
+            lineStart = anchor.LineStart,
+            lineEnd = anchor.LineEnd,
+            sourceHash = anchor.SourceHash,
+        }), options);
+        WriteValue(writer, "relationships", value.Relationships.Select(relationship => new
+        {
+            handle = relationship.RelationshipHandle,
+            edgeId = relationship.EdgeId,
+            type = relationship.RelationshipType == ChatRelationshipType.References
+                ? "references"
+                : "generatedFrom",
+            sourceDocumentHandle = relationship.SourceDocumentHandle,
+            targetDocumentHandle = relationship.TargetDocumentHandle,
+            depth = relationship.Depth,
+            exactDecisionId = relationship.ExactDecisionId,
+            flowGroupId = relationship.FlowGroupId,
+        }), options);
+        WriteValue(writer, "flowSteps", value.FlowEvidence.Select(step => new
+        {
+            order = step.StepOrder,
+            documentHandle = step.DocumentHandle,
+            relationshipHandle = step.RelationshipHandle,
+            description = step.Description,
+        }), options);
+        writer.WriteString("advisoryContext", value.AdvisoryContext);
+        WriteValue(writer, "conversation", ProjectConversation(value.Conversation), options);
+        writer.WriteString("fingerprint", value.Fingerprint);
+        writer.WriteEndObject();
+    }
+
+    internal static object ProjectConversation(ChatConversationState conversation) => new
+    {
+        turns = conversation.Turns.Select(turn => new
+        {
+            question = turn.Question,
+            validatedAnswer = turn.AnswerText,
+            packetFingerprint = turn.PacketFingerprint,
+            priorCitationHandles = turn.CitationHandles,
+        }),
+    };
+
+    private static void WriteValue<T>(
+        Utf8JsonWriter writer,
+        string propertyName,
+        T value,
+        JsonSerializerOptions options)
+    {
+        writer.WritePropertyName(propertyName);
+        JsonSerializer.Serialize(writer, value, options);
     }
 }
 
@@ -1150,7 +1290,8 @@ public enum ChatCurrentnessValidationOutcome
 
 public sealed record ChatCurrentDocument(
     Guid LogicalDocumentId,
-    Guid ExpectedCurrentDocumentVersionId);
+    Guid ExpectedCurrentDocumentVersionId,
+    string ExpectedTitle);
 
 public sealed record ChatCurrentSection(
     Guid StableSectionId,
@@ -1169,12 +1310,15 @@ public sealed record ChatCurrentSourceAnchor(
     string SourceHash);
 
 public sealed record ChatCurrentRelationship(
-    string RelationshipIdentity,
+    Guid EdgeId,
     ChatRelationshipType RelationshipType,
     Guid SourceDocumentVersionId,
     Guid TargetDocumentVersionId,
     Guid SourceRepositoryId,
     Guid TargetRepositoryId,
+    int Depth,
+    Guid? ExactDecisionId,
+    Guid? FlowGroupId,
     string? ProfileFingerprint);
 
 public sealed record ChatCurrentnessValidationRequest
@@ -1241,9 +1385,9 @@ public sealed record ChatCurrentnessValidationRequest
             .ThenBy(section => section.TextSha256, StringComparer.Ordinal)
             .ToArray() ?? [];
         ChatCurrentSourceAnchor[] canonicalAnchors = sourceAnchors?.OrderBy(anchor => anchor.AnchorId).ToArray() ?? [];
-        ChatCurrentRelationship[] canonicalRelationships = relationships?.OrderBy(
-            relationship => relationship.RelationshipIdentity,
-            StringComparer.Ordinal).ToArray() ?? [];
+        ChatCurrentRelationship[] canonicalRelationships = relationships?
+            .OrderBy(relationship => relationship.EdgeId)
+            .ToArray() ?? [];
         EvidenceFlowGroupAuthority[] canonicalFlowGroups = flowGroups?
             .OrderBy(group => group.FlowGroupId)
             .Select(group => group with
@@ -1277,10 +1421,11 @@ public sealed record ChatCurrentnessValidationRequest
                 .GroupBy(section => section.StableSectionId)
                 .Any(group => group.Select(section => section.DocumentVersionId).Distinct().Count() != 1) ||
             canonicalAnchors.Select(anchor => anchor.AnchorId).Distinct().Count() != canonicalAnchors.Length ||
-            canonicalRelationships.Select(relationship => relationship.RelationshipIdentity).Distinct(StringComparer.Ordinal).Count() != canonicalRelationships.Length ||
+            canonicalRelationships.Select(relationship => relationship.EdgeId).Distinct().Count() != canonicalRelationships.Length ||
             canonicalDocuments.Any(document =>
                 document.LogicalDocumentId == Guid.Empty ||
-                document.ExpectedCurrentDocumentVersionId == Guid.Empty) ||
+                document.ExpectedCurrentDocumentVersionId == Guid.Empty ||
+                string.IsNullOrWhiteSpace(document.ExpectedTitle)) ||
             canonicalSections.Any(section =>
                 section.StableSectionId == Guid.Empty ||
                 section.DocumentVersionId == Guid.Empty ||
@@ -1296,13 +1441,23 @@ public sealed record ChatCurrentnessValidationRequest
                 anchor.LineEnd < anchor.LineStart ||
                 !ChatContractGuard.IsSha256(anchor.SourceHash)) ||
             canonicalRelationships.Any(relationship =>
-                string.IsNullOrWhiteSpace(relationship.RelationshipIdentity) ||
+                relationship.EdgeId == Guid.Empty ||
                 !Enum.IsDefined(relationship.RelationshipType) ||
                 relationship.SourceDocumentVersionId == Guid.Empty ||
                 relationship.TargetDocumentVersionId == Guid.Empty ||
                 relationship.SourceDocumentVersionId == relationship.TargetDocumentVersionId ||
                 !canonicalRepositories.Contains(relationship.SourceRepositoryId) ||
                 !canonicalRepositories.Contains(relationship.TargetRepositoryId) ||
+                relationship.Depth is < 0 or > 1 ||
+                relationship.RelationshipType == ChatRelationshipType.References &&
+                    relationship.ExactDecisionId is null ||
+                relationship.RelationshipType == ChatRelationshipType.GeneratedFrom &&
+                    relationship.ExactDecisionId is not null ||
+                relationship.FlowGroupId is Guid flowGroupId &&
+                    !canonicalFlowGroups.Any(group =>
+                        group.FlowGroupId == flowGroupId &&
+                        group.ExactResolutionEdgeId == relationship.EdgeId &&
+                        group.ExactResolutionDecisionId == relationship.ExactDecisionId) ||
                 relationship.ProfileFingerprint is not null &&
                 !ChatContractGuard.IsSha256(relationship.ProfileFingerprint)) ||
             canonicalFlowGroups.Select(group => group.FlowGroupId).Distinct().Count() != canonicalFlowGroups.Length ||

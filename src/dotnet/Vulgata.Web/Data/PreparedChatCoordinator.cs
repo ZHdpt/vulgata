@@ -1,3 +1,5 @@
+using System.Security.Cryptography;
+using System.Text;
 using FluentValidation;
 using FluentValidation.Results;
 using Microsoft.AspNetCore.Components.Authorization;
@@ -418,8 +420,7 @@ public sealed class PreparedChatCoordinator(
     {
         ChatCurrentnessValidationRequest currentnessRequest = BuildCurrentnessRequest(
             request,
-            packet,
-            selectedCandidates);
+            packet);
         ChatCurrentnessValidationOutcome currentness = await currentnessValidator.ValidateCurrentAsync(
             currentnessRequest,
             accessScope,
@@ -540,60 +541,31 @@ public sealed class PreparedChatCoordinator(
 
     private static ChatCurrentnessValidationRequest BuildCurrentnessRequest(
         ChatQuestionRequest request,
-        EvidencePacket packet,
-        IReadOnlyCollection<CandidateClaim> candidates)
+        EvidencePacket packet)
     {
         Dictionary<string, EvidenceDocument> documents = packet.Documents.ToDictionary(
             document => document.DocumentHandle,
             StringComparer.Ordinal);
-        Dictionary<Guid, EvidenceDocument> documentsByVersion = packet.Documents.ToDictionary(document => document.DocumentVersionId);
-        Dictionary<string, EvidenceAnchor> anchors = packet.SourceAnchors.ToDictionary(
-            anchor => anchor.AnchorHandle,
-            StringComparer.Ordinal);
-        Dictionary<string, EvidenceRelationship> relationships = packet.Relationships.ToDictionary(
-            relationship => relationship.RelationshipHandle,
-            StringComparer.Ordinal);
-        HashSet<Guid> documentVersionIds = candidates
-            .Select(candidate => candidate.DocumentVersionId)
-            .ToHashSet();
-        EvidenceRelationship[] selectedRelationships =
-        [
-            .. candidates
-                .SelectMany(candidate => candidate.RelationshipHandles)
-                .Distinct(StringComparer.Ordinal)
-                .Select(handle => relationships[handle]),
-        ];
-        foreach (EvidenceRelationship relationship in selectedRelationships)
-        {
-            _ = documentVersionIds.Add(documents[relationship.SourceDocumentHandle].DocumentVersionId);
-            _ = documentVersionIds.Add(documents[relationship.TargetDocumentHandle].DocumentVersionId);
-        }
 
         ChatCurrentDocument[] currentDocuments =
         [
-            .. documentVersionIds
-                .Select(versionId => documentsByVersion[versionId])
-                .Select(document => new ChatCurrentDocument(
+            .. packet.Documents.Select(document => new ChatCurrentDocument(
                     document.LogicalDocumentId,
-                    document.DocumentVersionId)),
+                    document.DocumentVersionId,
+                    document.Title)),
         ];
         ChatCurrentSection[] currentSections =
         [
-            .. candidates
-                .Select(candidate => new ChatCurrentSection(
-                    candidate.StableSectionId,
-                    candidate.DocumentVersionId,
-                    candidate.SpanStart,
-                    candidate.SpanLength,
-                    candidate.TextSha256)),
+            .. packet.Sections.Select(section => new ChatCurrentSection(
+                section.StableSectionId,
+                documents[section.DocumentHandle].DocumentVersionId,
+                0,
+                section.ContentMarkdown.Length,
+                Sha256(section.ContentMarkdown))),
         ];
         ChatCurrentSourceAnchor[] currentAnchors =
         [
-            .. candidates
-                .SelectMany(candidate => candidate.AnchorHandles)
-                .Distinct(StringComparer.Ordinal)
-                .Select(handle => anchors[handle])
-                .Select(anchor => new ChatCurrentSourceAnchor(
+            .. packet.SourceAnchors.Select(anchor => new ChatCurrentSourceAnchor(
                     anchor.AnchorId,
                     anchor.DocumentVersionId,
                     anchor.RepositoryId,
@@ -604,18 +576,20 @@ public sealed class PreparedChatCoordinator(
         ];
         ChatCurrentRelationship[] currentRelationships =
         [
-            .. selectedRelationships
-                .Select(relationship =>
+            .. packet.Relationships.Select(relationship =>
                 {
                     EvidenceDocument source = documents[relationship.SourceDocumentHandle];
                     EvidenceDocument target = documents[relationship.TargetDocumentHandle];
                     return new ChatCurrentRelationship(
-                        relationship.RelationshipIdentity,
+                        relationship.EdgeId,
                         relationship.RelationshipType,
                         source.DocumentVersionId,
                         target.DocumentVersionId,
                         source.RepositoryId,
                         target.RepositoryId,
+                        relationship.Depth,
+                        relationship.ExactDecisionId,
+                        relationship.FlowGroupId,
                         relationship.ProfileFingerprint);
                 }),
         ];
@@ -630,6 +604,9 @@ public sealed class PreparedChatCoordinator(
             currentRelationships,
             packet.FlowGroups);
     }
+
+    private static string Sha256(string value) =>
+        Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(value)));
 
     private static GroundedAnswer BuildAnswer(
         ChatMode mode,

@@ -893,10 +893,13 @@ public sealed class ChatPageTests : BunitContext
                     new string('c', 64))],
                 [new EvidenceRelationship(
                     "r1",
-                    "edge-r1",
+                    Id(410),
                     ChatRelationshipType.References,
                     "d1",
                     "d2",
+                    1,
+                    Id(411),
+                    null,
                     new string('d', 64))],
                 [new EvidenceFlowStep(1, "d1", null, "准备回答。")]);
             return Task.FromResult(ChatEvidenceResult.Found(packet));

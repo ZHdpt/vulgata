@@ -91,7 +91,8 @@ public sealed class ChatEvidenceCurrentnessTests
             original.Documents,
             [.. original.Sections, secondSpan],
             original.SourceAnchors,
-            original.Relationships);
+            original.Relationships,
+            original.FlowGroups);
 
         ChatCurrentnessValidationOutcome outcome =
             await new ChatEvidenceCurrentnessValidator(fixture.Context)
@@ -170,6 +171,110 @@ public sealed class ChatEvidenceCurrentnessTests
         Assert.Equal([1, 2], packet.FlowEvidence.Select(step => step.StepOrder));
 
         await fixture.CommitFlowMutationAsync(mutation);
+
+        ChatCurrentnessValidationOutcome outcome =
+            await new ChatEvidenceCurrentnessValidator(fixture.Context)
+                .ValidateCurrentAsync(
+                    CurrentnessFixture.CreateValidationRequest(packet),
+                    new RepositoryAccessScope(
+                        fixture.RepositoryIds,
+                        new RecordingAuthorizationVerifier(true, true)));
+
+        Assert.Equal(ChatCurrentnessValidationOutcome.MissingOrStale, outcome);
+        Assert.Null(fixture.Context.Database.CurrentTransaction);
+    }
+
+    [Fact]
+    public async Task ValidateCurrentAsync_PacketDocumentTitleMutation_ReturnsMissingOrStaleAsync()
+    {
+        await using CurrentnessFixture fixture = await CurrentnessFixture.CreateAsync();
+        EvidencePacket packet = await fixture.RetrieveAsync();
+
+        await fixture.CommitDocumentTitleMutationAsync();
+
+        ChatCurrentnessValidationOutcome outcome =
+            await new ChatEvidenceCurrentnessValidator(fixture.Context)
+                .ValidateCurrentAsync(
+                    CurrentnessFixture.CreateValidationRequest(packet),
+                    new RepositoryAccessScope(
+                        fixture.RepositoryIds,
+                        new RecordingAuthorizationVerifier(true, true)));
+
+        Assert.Equal(ChatCurrentnessValidationOutcome.MissingOrStale, outcome);
+        Assert.Null(fixture.Context.Database.CurrentTransaction);
+    }
+
+    [Theory]
+    [InlineData("flow-group-system")]
+    [InlineData("flow-group-repository")]
+    [InlineData("flow-group-scan-run")]
+    public async Task ValidateCurrentAsync_FlowGroupOwnerBindingMutation_ReturnsMissingOrStaleAsync(
+        string mutation)
+    {
+        await using CurrentnessFixture fixture = await CurrentnessFixture.CreateAsync();
+        EvidencePacket packet = await fixture.RetrieveAsync();
+
+        await fixture.CommitFlowGroupOwnerMutationAsync(mutation);
+
+        ChatCurrentnessValidationOutcome outcome =
+            await new ChatEvidenceCurrentnessValidator(fixture.Context)
+                .ValidateCurrentAsync(
+                    CurrentnessFixture.CreateValidationRequest(packet),
+                    new RepositoryAccessScope(
+                        fixture.RepositoryIds,
+                        new RecordingAuthorizationVerifier(true, true)));
+
+        Assert.Equal(ChatCurrentnessValidationOutcome.MissingOrStale, outcome);
+        Assert.Null(fixture.Context.Database.CurrentTransaction);
+    }
+
+    [Fact]
+    public async Task ValidateCurrentAsync_SelectedScanRunNotCompleted_ReturnsMissingOrStaleAsync()
+    {
+        await using CurrentnessFixture fixture = await CurrentnessFixture.CreateAsync();
+        EvidencePacket packet = await fixture.RetrieveAsync();
+
+        await fixture.CommitSelectedScanRunStatusMutationAsync();
+
+        ChatCurrentnessValidationOutcome outcome =
+            await new ChatEvidenceCurrentnessValidator(fixture.Context)
+                .ValidateCurrentAsync(
+                    CurrentnessFixture.CreateValidationRequest(packet),
+                    new RepositoryAccessScope(
+                        fixture.RepositoryIds,
+                        new RecordingAuthorizationVerifier(true, true)));
+
+        Assert.Equal(ChatCurrentnessValidationOutcome.MissingOrStale, outcome);
+        Assert.Null(fixture.Context.Database.CurrentTransaction);
+    }
+
+    [Fact]
+    public async Task ValidateCurrentAsync_CrossSystemExactDecisionRow_ReturnsMissingOrStaleAsync()
+    {
+        await using CurrentnessFixture fixture = await CurrentnessFixture.CreateAsync();
+        EvidencePacket packet = await fixture.RetrieveAsync();
+
+        await fixture.CommitCrossSystemDecisionMutationAsync();
+
+        ChatCurrentnessValidationOutcome outcome =
+            await new ChatEvidenceCurrentnessValidator(fixture.Context)
+                .ValidateCurrentAsync(
+                    CurrentnessFixture.CreateValidationRequest(packet),
+                    new RepositoryAccessScope(
+                        fixture.RepositoryIds,
+                        new RecordingAuthorizationVerifier(true, true)));
+
+        Assert.Equal(ChatCurrentnessValidationOutcome.MissingOrStale, outcome);
+        Assert.Null(fixture.Context.Database.CurrentTransaction);
+    }
+
+    [Fact]
+    public async Task ValidateCurrentAsync_ExactDecisionCanonicalFingerprintMutation_ReturnsMissingOrStaleAsync()
+    {
+        await using CurrentnessFixture fixture = await CurrentnessFixture.CreateAsync();
+        EvidencePacket packet = await fixture.RetrieveAsync();
+
+        await fixture.CommitExactDecisionCanonicalFingerprintMutationAsync();
 
         ChatCurrentnessValidationOutcome outcome =
             await new ChatEvidenceCurrentnessValidator(fixture.Context)
@@ -415,6 +520,17 @@ public sealed class ChatEvidenceCurrentnessTests
         internal Task CommitFlowGroupEdgeBindingLossAsync() => CommitSqlAsync(
             $"UPDATE \"FlowGroups\" SET \"ExactResolutionEdgeId\" = NULL WHERE \"Id\" = {Id(10_301)}");
 
+        internal Task CommitFlowGroupOwnerMutationAsync(string mutation) => mutation switch
+        {
+            "flow-group-system" => CommitSqlAsync(
+                $"UPDATE \"FlowGroups\" SET \"SystemId\" = NULL WHERE \"Id\" = {Id(10_301)}"),
+            "flow-group-repository" => CommitSqlWithForeignKeysDisabledAsync(
+                $"UPDATE \"FlowGroups\" SET \"RepositoryId\" = {Id(10_999)} WHERE \"Id\" = {Id(10_301)}"),
+            "flow-group-scan-run" => CommitSqlWithForeignKeysDisabledAsync(
+                $"UPDATE \"FlowGroups\" SET \"ScanRunId\" = {ExactCrossRepositoryTestValues.UnsupportedScanRunId} WHERE \"Id\" = {Id(10_301)}"),
+            _ => throw new ArgumentOutOfRangeException(nameof(mutation), mutation, "Unknown Flow Group owner mutation."),
+        };
+
         internal async Task CommitFlowTraceLossAsync()
         {
             await CommitSqlAsync(
@@ -495,7 +611,8 @@ public sealed class ChatEvidenceCurrentnessTests
                 packet.RepositoryIds,
                 packet.Documents.Select(document => new ChatCurrentDocument(
                     document.LogicalDocumentId,
-                    document.DocumentVersionId)).ToArray(),
+                    document.DocumentVersionId,
+                    document.Title)).ToArray(),
                 packet.Sections.Select(section => new ChatCurrentSection(
                     section.StableSectionId,
                     documents[section.DocumentHandle].DocumentVersionId,
@@ -519,12 +636,15 @@ public sealed class ChatEvidenceCurrentnessTests
                     EvidenceDocument source = documents[relationship.SourceDocumentHandle];
                     EvidenceDocument target = documents[relationship.TargetDocumentHandle];
                     return new ChatCurrentRelationship(
-                        relationship.RelationshipIdentity,
+                        relationship.EdgeId,
                         relationship.RelationshipType,
                         source.DocumentVersionId,
                         target.DocumentVersionId,
                         source.RepositoryId,
                         target.RepositoryId,
+                        relationship.Depth,
+                        relationship.ExactDecisionId,
+                        relationship.FlowGroupId,
                         relationship.ProfileFingerprint);
                 }).ToArray(),
                 packet.FlowGroups);
@@ -603,6 +723,18 @@ public sealed class ChatEvidenceCurrentnessTests
         internal Task CommitReferencesDirectionChangeAsync() => CommitSqlAsync(
             $"UPDATE \"ExactCrossRepositoryEdgeEvidence\" SET \"ConsumerSourceAnchorId\" = {ExactCrossRepositoryTestValues.ProviderSourceAnchorId}, \"ConsumerDocumentVersionId\" = {ExactCrossRepositoryTestValues.ProviderDocumentVersionId}, \"ConsumerRepositoryId\" = {ExactCrossRepositoryTestValues.ProviderRepositoryId}, \"ConsumerScanRunId\" = {ExactCrossRepositoryTestValues.ProviderScanRunId}, \"ProviderSourceAnchorId\" = {ExactCrossRepositoryTestValues.ConsumerSourceAnchorId}, \"ProviderDocumentVersionId\" = {ExactCrossRepositoryTestValues.ConsumerDocumentVersionId}, \"ProviderRepositoryId\" = {ExactCrossRepositoryTestValues.ConsumerRepositoryId}, \"ProviderScanRunId\" = {ExactCrossRepositoryTestValues.ConsumerScanRunId} WHERE \"EdgeId\" = {_referencesEdgeId}");
 
+        internal Task CommitDocumentTitleMutationAsync() => CommitSqlAsync(
+            $"UPDATE \"DocumentVersions\" SET \"Title\" = '篡改后的文档标题。' WHERE \"Id\" = {_businessDocumentVersionId}");
+
+        internal Task CommitSelectedScanRunStatusMutationAsync() => CommitSqlAsync(
+            $"UPDATE \"ScanRuns\" SET \"Status\" = 'Profiling' WHERE \"Id\" = {ExactCrossRepositoryTestValues.ConsumerScanRunId}");
+
+        internal Task CommitCrossSystemDecisionMutationAsync() => CommitSqlAsync(
+            $"UPDATE \"CrossRepositoryResolutionDecisions\" SET \"SystemId\" = {Id(10_998)} WHERE \"DocumentEdgeId\" = {_referencesEdgeId}");
+
+        internal Task CommitExactDecisionCanonicalFingerprintMutationAsync() => CommitSqlAsync(
+            $"UPDATE \"CrossRepositoryResolutionDecisions\" SET \"DecisionFingerprint\" = '5123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef' WHERE \"DocumentEdgeId\" = {_referencesEdgeId}");
+
         internal async Task CommitSuccessorAsync()
         {
             await using VulgataDbContext mutationContext = exactFixture.Database.CreateContext();
@@ -637,6 +769,33 @@ public sealed class ChatEvidenceCurrentnessTests
             await using VulgataDbContext mutationContext = exactFixture.Database.CreateContext();
             int affectedRows = await mutationContext.Database.ExecuteSqlInterpolatedAsync(sql);
             Assert.Equal(1, affectedRows);
+        }
+
+        private async Task CommitSqlWithForeignKeysDisabledAsync(FormattableString sql)
+        {
+            await using VulgataDbContext mutationContext = exactFixture.Database.CreateContext();
+            await mutationContext.Database.OpenConnectionAsync();
+            try
+            {
+                await using (DbCommand pragma = mutationContext.Database.GetDbConnection().CreateCommand())
+                {
+                    pragma.CommandText = "PRAGMA foreign_keys = OFF";
+                    await pragma.ExecuteNonQueryAsync();
+                }
+
+                int affectedRows = await mutationContext.Database.ExecuteSqlInterpolatedAsync(sql);
+                Assert.Equal(1, affectedRows);
+
+                await using (DbCommand pragma = mutationContext.Database.GetDbConnection().CreateCommand())
+                {
+                    pragma.CommandText = "PRAGMA foreign_keys = ON";
+                    await pragma.ExecuteNonQueryAsync();
+                }
+            }
+            finally
+            {
+                await mutationContext.Database.CloseConnectionAsync();
+            }
         }
 
         internal static async Task<CurrentnessFixture> CreateAsync(
@@ -794,6 +953,8 @@ public sealed class ChatEvidenceCurrentnessTests
                 context.Entry(flowGroup).Property(nameof(FlowGroup.SchemaIdentity)).CurrentValue =
                     "endpoint-flow-group/1.0";
                 context.Entry(flowGroup).Property(nameof(FlowGroup.State)).CurrentValue = "Published";
+                context.Entry(flowGroup).Property(nameof(FlowGroup.SystemId)).CurrentValue =
+                    ExactCrossRepositoryTestValues.SystemId;
                 context.Entry(flowGroup).Property(nameof(FlowGroup.PlanFingerprint)).CurrentValue =
                     new string('a', 64);
                 context.Entry(flowGroup).Property(nameof(FlowGroup.MembershipFingerprint)).CurrentValue =
