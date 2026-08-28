@@ -11,7 +11,11 @@ internal sealed record ChatStreamObservationReceipt(
     string AdapterImplementation,
     string AdapterVersion,
     string AdapterAssemblySha256,
+    string CandidateCommit,
+    string CaseId,
     string ProviderIdentity,
+    string ProviderApi,
+    string ProviderConfigurationFingerprint,
     string RequestId,
     string AttemptKind,
     string CanonicalStreamingRequestFingerprint,
@@ -25,8 +29,20 @@ internal sealed record ChatStreamObservationReceipt(
     int RawReadCount,
     int MaximumRawReadByteCount,
     int RawBodyByteCount,
-    string Outcome,
-    string? RejectionCategory);
+    DateTimeOffset StreamStartedAtUtc,
+    DateTimeOffset? FirstDataAtUtc,
+    DateTimeOffset? TerminalAtUtc,
+    long? TimeToFirstDataMilliseconds,
+    int AnswerDeltaCount,
+    int AnswerDeltaByteCount,
+    int AssembledAnswerByteCount,
+    int TerminalEventCount,
+    int InactivityLimitMilliseconds,
+    DateTimeOffset OverallDeadlineAtUtc,
+    string TransportOutcome,
+    string? RejectionCategory,
+    string ValidationOutcome,
+    long? AcceptedAnswerDurationMilliseconds);
 
 /// <summary>
 /// Same-process authority for content-dark raw Chat stream observations.
@@ -146,13 +162,27 @@ internal sealed class ChatStreamObservationAuthority : IDisposable
         StringComparer.Ordinal.Equals(receipt.AdapterVersion, _adapterVersion) &&
         StringComparer.Ordinal.Equals(receipt.AdapterAssemblySha256, _adapterAssemblySha256) &&
         receipt.RequestStreamMode &&
+        !string.IsNullOrWhiteSpace(receipt.CandidateCommit) &&
+        !string.IsNullOrWhiteSpace(receipt.CaseId) &&
         !string.IsNullOrWhiteSpace(receipt.ProviderIdentity) &&
+        !string.IsNullOrWhiteSpace(receipt.ProviderApi) &&
+        IsSha256(receipt.ProviderConfigurationFingerprint) &&
         !string.IsNullOrWhiteSpace(receipt.RequestId) &&
         receipt.AttemptKind is "primary" or "repair" &&
         IsSha256(receipt.CanonicalStreamingRequestFingerprint) &&
         receipt.RawReadCount >= 0 &&
         receipt.MaximumRawReadByteCount is >= 0 and <= 16_384 &&
         receipt.RawBodyByteCount is >= 0 and <= 1_048_576 &&
+        receipt.AnswerDeltaCount is >= 0 and <= 4_096 &&
+        receipt.AnswerDeltaByteCount is >= 0 and <= 65_536 &&
+        receipt.AssembledAnswerByteCount is >= 0 and <= 65_536 &&
+        receipt.TerminalEventCount is >= 0 and <= 8 &&
+        receipt.InactivityLimitMilliseconds == 10_000 &&
+        receipt.OverallDeadlineAtUtc >= receipt.StreamStartedAtUtc &&
+        receipt.FirstDataAtUtc is null == (receipt.TimeToFirstDataMilliseconds is null) &&
+        receipt.AcceptedAnswerDurationMilliseconds is null or >= 0 &&
+        !string.IsNullOrWhiteSpace(receipt.TransportOutcome) &&
+        !string.IsNullOrWhiteSpace(receipt.ValidationOutcome) &&
         !string.IsNullOrWhiteSpace(receipt.ResponseHeaderDisposition) &&
         !string.IsNullOrWhiteSpace(receipt.FirstPhysicalReadDisposition) &&
         !string.IsNullOrWhiteSpace(receipt.PhysicalEofDisposition);

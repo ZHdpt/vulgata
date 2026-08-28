@@ -25,7 +25,12 @@ internal sealed class OpenAiCompatibleChatProviderStreamingTransport(
         ArgumentNullException.ThrowIfNull(request);
         ValidateRequest(request);
 
-        var observation = new ObservationState();
+        var observation = new ObservationState
+        {
+            StreamStartedAtUtc = DateTimeOffset.UtcNow,
+            OverallDeadlineAtUtc = DateTimeOffset.FromUnixTimeMilliseconds(
+                request.AbsoluteDeadlineUnixTimeMilliseconds),
+        };
         ChatProviderStreamSignal? failureSignal = null;
         await using IAsyncEnumerator<ChatProviderStreamSignal> signals = ExecuteAsync(
                 request,
@@ -47,7 +52,7 @@ internal sealed class OpenAiCompatibleChatProviderStreamingTransport(
                 throw;
             }
             catch (Exception exception) when (
-                exception is HttpRequestException or InvalidDataException or
+                exception is HttpRequestException or IOException or InvalidDataException or
                 JsonException or DecoderFallbackException or InvalidOperationException or
                 TimeoutException)
             {
@@ -193,6 +198,20 @@ internal sealed class OpenAiCompatibleChatProviderStreamingTransport(
             if (signal.Kind == ChatProviderStreamSignalKind.Terminal)
             {
                 observation.Outcome = "accepted";
+                observation.TerminalAtUtc = DateTimeOffset.UtcNow;
+                observation.TerminalEventCount++;
+                observation.AcceptedAnswerDurationMilliseconds = Math.Max(
+                    0,
+                    (long)(observation.TerminalAtUtc.Value -
+                        observation.StreamStartedAtUtc).TotalMilliseconds);
+            }
+            else if (signal.Kind == ChatProviderStreamSignalKind.AnswerDelta)
+            {
+                DateTimeOffset observedAt = DateTimeOffset.UtcNow;
+                observation.FirstDataAtUtc ??= observedAt;
+                observation.AnswerDeltaCount++;
+                observation.AnswerDeltaByteCount += signal.AnswerDelta.Length;
+                observation.AssembledAnswerByteCount += signal.AnswerDelta.Length;
             }
 
             yield return signal;
@@ -258,13 +277,23 @@ internal sealed class OpenAiCompatibleChatProviderStreamingTransport(
         ChatProviderStreamRequest request,
         ObservationState state)
     {
+        string candidateCommit = Environment.GetEnvironmentVariable(
+            "VULGATA_CANDIDATE_COMMIT") ?? observationAuthority.AdapterAssemblySha256[..40];
+        string caseId = request.RequestId;
+        string providerConfigurationFingerprint = Convert.ToHexStringLower(
+            System.Security.Cryptography.SHA256.HashData(Encoding.UTF8.GetBytes(
+                string.Join('\u001f', request.ProviderIdentity, "chat-completions"))));
         _ = observationAuthority.Record(new ChatStreamObservationReceipt(
             "production-raw-response-header-adapter",
             observationAuthority.ProcessObservationId,
             typeof(OpenAiCompatibleChatProviderStreamingTransport).FullName!,
             observationAuthority.AdapterVersion,
             observationAuthority.AdapterAssemblySha256,
+            candidateCommit,
+            caseId,
             request.ProviderIdentity,
+            "chat-completions",
+            providerConfigurationFingerprint,
             request.RequestId,
             request.AttemptKind,
             request.StreamingRequestFingerprint,
@@ -278,8 +307,23 @@ internal sealed class OpenAiCompatibleChatProviderStreamingTransport(
             state.RawReadCount,
             state.MaximumRawReadByteCount,
             state.RawBodyByteCount,
+            state.StreamStartedAtUtc,
+            state.FirstDataAtUtc,
+            state.TerminalAtUtc,
+            state.FirstDataAtUtc is null
+                ? null
+                : Math.Max(0, (long)(state.FirstDataAtUtc.Value -
+                    state.StreamStartedAtUtc).TotalMilliseconds),
+            state.AnswerDeltaCount,
+            state.AnswerDeltaByteCount,
+            state.AssembledAnswerByteCount,
+            state.TerminalEventCount,
+            10_000,
+            state.OverallDeadlineAtUtc,
             state.Outcome,
-            state.RejectionCategory));
+            state.RejectionCategory,
+            state.Outcome == "accepted" ? "accepted" : "rejected-before-parse",
+            state.AcceptedAnswerDurationMilliseconds));
     }
 
     private static void ValidateRequest(ChatProviderStreamRequest request)
@@ -335,6 +379,7 @@ internal sealed class OpenAiCompatibleChatProviderStreamingTransport(
     {
         HttpRequestException { StatusCode: not null } => "invalid-response-status",
         HttpRequestException => "provider-transport-failure",
+        IOException => "disconnect",
         DecoderFallbackException => "invalid-wire-utf8",
         JsonException => "invalid-json-event",
         TimeoutException => "deadline-exceeded",
@@ -355,5 +400,14 @@ internal sealed class OpenAiCompatibleChatProviderStreamingTransport(
         internal int RawBodyByteCount { get; set; }
         internal string Outcome { get; set; } = "rejected";
         internal string? RejectionCategory { get; set; }
+        internal DateTimeOffset StreamStartedAtUtc { get; init; }
+        internal DateTimeOffset? FirstDataAtUtc { get; set; }
+        internal DateTimeOffset? TerminalAtUtc { get; set; }
+        internal int AnswerDeltaCount { get; set; }
+        internal int AnswerDeltaByteCount { get; set; }
+        internal int AssembledAnswerByteCount { get; set; }
+        internal int TerminalEventCount { get; set; }
+        internal DateTimeOffset OverallDeadlineAtUtc { get; init; }
+        internal long? AcceptedAnswerDurationMilliseconds { get; set; }
     }
 }

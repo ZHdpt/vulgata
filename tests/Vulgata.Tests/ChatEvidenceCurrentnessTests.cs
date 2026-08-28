@@ -148,6 +148,79 @@ public sealed class ChatEvidenceCurrentnessTests
         Assert.Null(fixture.Context.Database.CurrentTransaction);
     }
 
+    [Fact]
+    public async Task ValidateCurrentAsync_SameRepositoryReferencesWithoutExactAuthority_ReturnsCurrentAsync()
+    {
+        await using CurrentnessFixture fixture = await CurrentnessFixture.CreateAsync();
+        EvidencePacket packet = await fixture.RetrieveAsync();
+        await fixture.AddSameRepositoryReferenceAsync();
+
+        ChatCurrentnessValidationRequest original =
+            CurrentnessFixture.CreateValidationRequest(packet);
+        EvidenceDocument source = packet.Documents.Single(document =>
+            document.DocumentVersionId == fixture.BusinessDocumentVersionId);
+        EvidenceDocument target = packet.Documents.Single(document =>
+            document.DocumentVersionId == ExactCrossRepositoryTestValues.ConsumerDocumentVersionId);
+        ChatCurrentnessValidationRequest? request = null;
+        Exception? constructionFailure = Record.Exception(() => request =
+            ChatCurrentnessValidationRequest.Create(
+                original.RequestId,
+                original.EvidenceFingerprint,
+                original.SystemId,
+                original.RepositoryIds,
+                original.Documents,
+                original.Sections,
+                original.SourceAnchors,
+                [
+                    .. original.Relationships,
+                    new ChatCurrentRelationship(
+                        fixture.SameRepositoryReferenceEdgeId,
+                        ChatRelationshipType.References,
+                        source.DocumentVersionId,
+                        target.DocumentVersionId,
+                        source.RepositoryId,
+                        target.RepositoryId,
+                        1,
+                        null,
+                        null,
+                        null),
+                ],
+                original.FlowGroups));
+        Assert.Null(constructionFailure);
+        Assert.NotNull(request);
+
+        ChatCurrentnessValidationOutcome outcome =
+            await new ChatEvidenceCurrentnessValidator(fixture.Context)
+                .ValidateCurrentAsync(
+                    request!,
+                    new RepositoryAccessScope(
+                        fixture.RepositoryIds,
+                        new RecordingAuthorizationVerifier(true, true)));
+
+        Assert.Equal(ChatCurrentnessValidationOutcome.Current, outcome);
+    }
+
+    [Theory]
+    [InlineData("scan-run")]
+    [InlineData("profiled-revision")]
+    public async Task ValidateCurrentAsync_SourceAnchorIdentityMutation_ReturnsMissingOrStaleAsync(
+        string mutation)
+    {
+        await using CurrentnessFixture fixture = await CurrentnessFixture.CreateAsync();
+        EvidencePacket packet = await fixture.RetrieveAsync();
+        await fixture.CommitSourceAnchorIdentityMutationAsync(mutation);
+
+        ChatCurrentnessValidationOutcome outcome =
+            await new ChatEvidenceCurrentnessValidator(fixture.Context)
+                .ValidateCurrentAsync(
+                    CurrentnessFixture.CreateValidationRequest(packet),
+                    new RepositoryAccessScope(
+                        fixture.RepositoryIds,
+                        new RecordingAuthorizationVerifier(true, true)));
+
+        Assert.Equal(ChatCurrentnessValidationOutcome.MissingOrStale, outcome);
+    }
+
     [Theory]
     [InlineData("flow-group-identity")]
     [InlineData("flow-group-state")]
@@ -458,8 +531,13 @@ public sealed class ChatEvidenceCurrentnessTests
         private static readonly Guid _businessSourceAnchorId = Id(10_003);
         private Guid _referencesEdgeId = referencesEdgeId;
         private static readonly Guid _generatedFromEdgeId = Id(10_005);
+        private static readonly Guid _sameRepositoryReferenceEdgeId = Id(10_006);
 
         internal VulgataDbContext Context { get; } = context;
+
+        internal Guid BusinessDocumentVersionId => _businessDocumentVersionId;
+
+        internal Guid SameRepositoryReferenceEdgeId => _sameRepositoryReferenceEdgeId;
 
         internal VulgataDbContext CreateContext(params IInterceptor[] interceptors) =>
             exactFixture.Database.CreateContext(null, interceptors);
@@ -502,6 +580,22 @@ public sealed class ChatEvidenceCurrentnessTests
             int affectedRows = await Context.Database.ExecuteSqlInterpolatedAsync(
                 $"UPDATE \"FlowGroups\" SET \"State\" = {state} WHERE \"Id\" = {Id(10_301)}");
             Assert.Equal(1, affectedRows);
+            Context.ChangeTracker.Clear();
+        }
+
+        internal async Task AddSameRepositoryReferenceAsync()
+        {
+            Context.DocumentEdges.Add(new DocumentEdge(
+                _sameRepositoryReferenceEdgeId,
+                _businessDocumentVersionId,
+                ExactCrossRepositoryTestValues.ConsumerRepositoryId,
+                ExactCrossRepositoryTestValues.ConsumerScanRunId,
+                ExactCrossRepositoryTestValues.ConsumerDocumentVersionId,
+                ExactCrossRepositoryTestValues.ConsumerRepositoryId,
+                ExactCrossRepositoryTestValues.ConsumerScanRunId,
+                DocumentEdgeType.References,
+                ExactCrossRepositoryTestValues.Pass1CompletedAt));
+            await Context.SaveChangesAsync();
             Context.ChangeTracker.Clear();
         }
 
@@ -728,6 +822,15 @@ public sealed class ChatEvidenceCurrentnessTests
 
         internal Task CommitSelectedScanRunStatusMutationAsync() => CommitSqlAsync(
             $"UPDATE \"ScanRuns\" SET \"Status\" = 'Profiling' WHERE \"Id\" = {ExactCrossRepositoryTestValues.ConsumerScanRunId}");
+
+        internal Task CommitSourceAnchorIdentityMutationAsync(string mutation) => mutation switch
+        {
+            "scan-run" => CommitSqlWithForeignKeysDisabledAsync(
+                $"UPDATE \"SourceAnchors\" SET \"ScanRunId\" = {ExactCrossRepositoryTestValues.UnsupportedScanRunId} WHERE \"Id\" = {_businessSourceAnchorId}"),
+            "profiled-revision" => CommitSqlAsync(
+                $"UPDATE \"SourceAnchors\" SET \"ProfiledRevision\" = {new string('0', 40)} WHERE \"Id\" = {_businessSourceAnchorId}"),
+            _ => throw new ArgumentOutOfRangeException(nameof(mutation), mutation, "Unknown Source Anchor identity mutation."),
+        };
 
         internal Task CommitCrossSystemDecisionMutationAsync() => CommitSqlAsync(
             $"UPDATE \"CrossRepositoryResolutionDecisions\" SET \"SystemId\" = {Id(10_998)} WHERE \"DocumentEdgeId\" = {_referencesEdgeId}");

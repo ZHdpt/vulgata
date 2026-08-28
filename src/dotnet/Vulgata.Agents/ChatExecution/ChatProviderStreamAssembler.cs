@@ -228,6 +228,12 @@ internal static class ChatProviderStreamAssembler
                 continue;
             }
 
+            eventByteCount += lineByteCount + terminatorBytes;
+            if (eventByteCount > _maximumSseEventBytes)
+            {
+                return Rejected("sse-event-overflow");
+            }
+
             if (line[0] == ':')
             {
                 continue;
@@ -237,12 +243,6 @@ internal static class ChatProviderStreamAssembler
             if (separator <= 0)
             {
                 return Rejected("invalid-sse");
-            }
-
-            eventByteCount += lineByteCount + terminatorBytes;
-            if (eventByteCount > _maximumSseEventBytes)
-            {
-                return Rejected("sse-event-overflow");
             }
 
             string field = line[..separator];

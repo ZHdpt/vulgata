@@ -59,6 +59,8 @@ internal sealed class ChatRelationshipEvidenceProjector(VulgataDbContext context
         var relationships = new List<ProjectedChatRelationship>();
         var relatedSections = new List<DocumentSection>();
         var addedDocuments = new HashSet<Guid>();
+        var projectedTargets = new HashSet<Guid>();
+        var projectedEdges = new HashSet<Guid>();
         var additionsBySeed = new Dictionary<Guid, int>();
 
         foreach (ProjectableEdgeRow candidate in candidates)
@@ -75,18 +77,19 @@ internal sealed class ChatRelationshipEvidenceProjector(VulgataDbContext context
                 continue;
             }
 
-            if (!await IsCurrentEndpointAsync(
+            bool sourceCurrent = await IsCurrentEndpointAsync(
                     candidate.SourceDocumentVersionId,
                     candidate.SourceRepositoryId,
                     candidate.SourceScanRunId,
                     systemId,
-                    cancellationToken) ||
-                !await IsCurrentEndpointAsync(
+                    cancellationToken);
+            bool targetCurrent = await IsCurrentEndpointAsync(
                     candidate.TargetDocumentVersionId,
                     candidate.TargetRepositoryId,
                     candidate.TargetScanRunId,
                     systemId,
-                    cancellationToken))
+                    cancellationToken);
+            if (!sourceCurrent || !targetCurrent)
             {
                 continue;
             }
@@ -102,7 +105,10 @@ internal sealed class ChatRelationshipEvidenceProjector(VulgataDbContext context
             if (candidate.EdgeType == DocumentEdgeType.References &&
                 candidate.SourceRepositoryId != candidate.TargetRepositoryId)
             {
-                exactDecision = await FindAcceptedExactDecisionAsync(candidate, cancellationToken);
+                exactDecision = await FindAcceptedExactDecisionAsync(
+                    systemId,
+                    candidate,
+                    cancellationToken);
                 if (exactDecision is null)
                 {
                     continue;
@@ -123,6 +129,12 @@ internal sealed class ChatRelationshipEvidenceProjector(VulgataDbContext context
                 {
                     continue;
                 }
+            }
+
+            if (!projectedEdges.Add(candidate.EdgeId) ||
+                !projectedTargets.Add(candidate.TargetDocumentVersionId))
+            {
+                return ChatRelationshipProjection.Invalid;
             }
 
             relationships.Add(new ProjectedChatRelationship(
@@ -152,14 +164,20 @@ internal sealed class ChatRelationshipEvidenceProjector(VulgataDbContext context
         (from logical in _context.LogicalDocuments.AsNoTracking()
          join version in _context.DocumentVersions.AsNoTracking()
              on logical.CurrentVersionId equals version.Id
+         join scanRun in _context.ScanRuns.AsNoTracking()
+             on version.ScanRunId equals scanRun.Id
          where version.Id == documentVersionId &&
              version.RepositoryId == repositoryId &&
              version.ScanRunId == scanRunId &&
              version.SystemId == systemId &&
-             version.SupersededById == null
+             version.SupersededById == null &&
+             scanRun.RepositoryId == repositoryId &&
+             scanRun.Status == ScanRunStatus.Completed &&
+             scanRun.ProfiledRevision == version.ProfiledRevision
          select version.Id).AnyAsync(cancellationToken);
 
     private async Task<CrossRepositoryResolutionDecision?> FindAcceptedExactDecisionAsync(
+        Guid systemId,
         ProjectableEdgeRow candidate,
         CancellationToken cancellationToken)
     {
@@ -167,6 +185,7 @@ internal sealed class ChatRelationshipEvidenceProjector(VulgataDbContext context
             .CrossRepositoryResolutionDecisions
             .AsNoTracking()
             .Where(decision =>
+                decision.SystemId == systemId &&
                 decision.DocumentEdgeId == candidate.EdgeId &&
                 decision.ResolutionSchemaIdentity == "exact-cross-repository-resolution/2.0" &&
                 decision.OutcomeKind == "ExactMatch" &&
@@ -213,9 +232,11 @@ internal sealed class ChatRelationshipEvidenceProjector(VulgataDbContext context
 
 internal sealed record ChatRelationshipProjection(
     IReadOnlyList<ProjectedChatRelationship> Relationships,
-    IReadOnlyList<DocumentSection> RelatedSections)
+    IReadOnlyList<DocumentSection> RelatedSections,
+    bool IsInconsistent = false)
 {
     internal static ChatRelationshipProjection Empty { get; } = new([], []);
+    internal static ChatRelationshipProjection Invalid { get; } = new([], [], true);
 }
 
 internal sealed record ProjectedChatRelationship(

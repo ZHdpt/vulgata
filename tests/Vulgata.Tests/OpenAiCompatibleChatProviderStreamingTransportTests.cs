@@ -90,6 +90,59 @@ public sealed class OpenAiCompatibleChatProviderStreamingTransportTests
         }
     }
 
+    [Fact]
+    public async Task StreamAsync_PhysicalIOException_EmitsOneBoundedSignedDisconnectRejectionAsync()
+    {
+        var provider = new LlmProvider(
+            "streaming-chat",
+            "https://provider.example/v1",
+            "encrypted-key",
+            ApiType.ChatCompletions,
+            AgentType.Chat,
+            DateTimeOffset.UtcNow);
+        using var responseBody = new DisconnectingSseStream(CreateSseEvent("partial"));
+        using var handler = new DisconnectingResponseHandler(responseBody);
+        using var observationAuthority = new ChatStreamObservationAuthority();
+        var transport = new OpenAiCompatibleChatProviderStreamingTransport(
+            new FakeProviderRepository(provider),
+            new FakeEncryptionService(),
+            handler,
+            observationAuthority);
+        var request = new ChatProviderStreamRequest(
+            "request-125-disconnect",
+            "primary",
+            provider.Id.ToString("D"),
+            "question",
+            new string('a', 64),
+            new string('b', 64),
+            DateTimeOffset.UtcNow.AddSeconds(30).ToUnixTimeMilliseconds());
+
+        var signals = new List<ChatProviderStreamSignal>();
+        await foreach (ChatProviderStreamSignal signal in transport.StreamAsync(
+            request,
+            CancellationToken.None))
+        {
+            signals.Add(signal);
+        }
+
+        Assert.DoesNotContain(
+            signals,
+            signal => signal.Kind == ChatProviderStreamSignalKind.Terminal);
+        Assert.All(
+            signals.Where(signal => signal.Kind != ChatProviderStreamSignalKind.ProviderError),
+            signal => Assert.Equal(ChatProviderStreamSignalKind.AnswerDelta, signal.Kind));
+        ChatProviderStreamSignal rejection = Assert.Single(
+            signals.Where(signal => signal.Kind == ChatProviderStreamSignalKind.ProviderError));
+        Assert.Equal(ChatProviderStreamSignalKind.ProviderError, rejection.Kind);
+        Assert.Equal("disconnect", rejection.FailureCategory);
+        Assert.True(
+            observationAuthority.TryGetVerifiedReceipt(
+                request.RequestId,
+                request.AttemptKind,
+                out string? receipt));
+        Assert.NotNull(receipt);
+    }
+
     private static string CreateSseEvent(string content, string? finishReason = null)
     {
         string finishReasonJson = System.Text.Json.JsonSerializer.Serialize(finishReason);
@@ -150,6 +203,20 @@ public sealed class OpenAiCompatibleChatProviderStreamingTransportTests
             });
     }
 
+    private sealed class DisconnectingResponseHandler(DisconnectingSseStream body) : HttpMessageHandler
+    {
+        protected override Task<HttpResponseMessage> SendAsync(
+            HttpRequestMessage request,
+            CancellationToken cancellationToken) =>
+            Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StreamContent(body)
+                {
+                    Headers = { ContentType = new MediaTypeHeaderValue("text/event-stream") },
+                },
+            });
+    }
+
     private sealed class GatedSseStream(string first, string second) : Stream
     {
         private readonly byte[][] _chunks = [Encoding.UTF8.GetBytes(first), Encoding.UTF8.GetBytes(second)];
@@ -185,6 +252,38 @@ public sealed class OpenAiCompatibleChatProviderStreamingTransportTests
         {
             chunk.AsSpan().CopyTo(target.Span);
             return chunk.Length;
+        }
+
+        public override bool CanRead => true;
+        public override bool CanSeek => false;
+        public override bool CanWrite => false;
+        public override long Length => throw new NotSupportedException();
+        public override long Position { get => throw new NotSupportedException(); set => throw new NotSupportedException(); }
+        public override void Flush() => throw new NotSupportedException();
+        public override int Read(byte[] buffer, int offset, int count) => throw new NotSupportedException();
+        public override long Seek(long offset, SeekOrigin origin) => throw new NotSupportedException();
+        public override void SetLength(long value) => throw new NotSupportedException();
+        public override void Write(byte[] buffer, int offset, int count) => throw new NotSupportedException();
+    }
+
+    private sealed class DisconnectingSseStream(string first) : Stream
+    {
+        private readonly byte[] _first = Encoding.UTF8.GetBytes(first);
+        private bool _delivered;
+
+        public override ValueTask<int> ReadAsync(
+            Memory<byte> buffer,
+            CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            if (_delivered)
+            {
+                throw new IOException("simulated physical disconnect");
+            }
+
+            _delivered = true;
+            _first.AsSpan().CopyTo(buffer.Span);
+            return ValueTask.FromResult(_first.Length);
         }
 
         public override bool CanRead => true;

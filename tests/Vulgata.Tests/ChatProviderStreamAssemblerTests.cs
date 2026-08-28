@@ -192,15 +192,14 @@ public sealed class ChatProviderStreamAssemblerTests
     }
 
     [Fact]
-    public async Task AssembleAsync_ExactRawBodySafetyLimit_IsAcceptedWhenProtocolIsValidAsync()
+    public async Task AssembleAsync_CommentPaddingAtRawBodySafetyLimit_RejectsEventOverflowAsync()
     {
         byte[] valid = Wire("data: [DONE]\n\n");
         byte[] padding = CommentPadding(1_048_576 - valid.Length);
         var result = await AssembleAsync(
             SplitAtEveryByte(padding.Concat(valid).ToArray()));
 
-        Assert.True(result.Accepted, result.RejectionCategory);
-        Assert.Equal(1_048_576, result.RawBodyByteCount);
+        AssertRejected(result, "sse-event-overflow");
     }
 
     [Fact]
@@ -220,12 +219,47 @@ public sealed class ChatProviderStreamAssemblerTests
         string longComment = new('x', 131_070);
         var exact = await AssembleAsync(SplitAtEveryByte(Wire(
             $": {longComment}\n\ndata: [DONE]\n\n")));
-        Assert.True(exact.Accepted, exact.RejectionCategory);
+        AssertRejected(exact, "sse-event-overflow");
 
         string overlongComment = new('x', 131_071);
         var overflow = await AssembleAsync(SplitAtEveryByte(Wire(
             $": {overlongComment}\n\ndata: [DONE]\n\n")));
         AssertRejected(overflow, "sse-line-overflow");
+    }
+
+    [Fact]
+    public async Task AssembleAsync_CommentFields_CountTowardEventSafetyCapAsync()
+    {
+        string overhead = string.Concat(Enumerable.Repeat(": keepalive\n", 50_000));
+        var result = await AssembleAsync(SplitAtEveryByte(Wire(
+            overhead + "data: [DONE]\n\n")));
+
+        AssertRejected(result, "sse-event-overflow");
+    }
+
+    [Fact]
+    public async Task AssembleAsync_UnknownSseFields_CountTowardEventSafetyCapAsync()
+    {
+        string overhead = string.Concat(Enumerable.Repeat("retry: 1000\n", 50_000));
+        var result = await AssembleAsync(SplitAtEveryByte(Wire(
+            overhead + "data: [DONE]\n\n")));
+
+        // Characterization: ordinary SSE fields already participate in the
+        // event-byte counter; this should remain GREEN while comment handling
+        // is corrected.
+        AssertRejected(result, "sse-event-overflow");
+    }
+
+    [Fact]
+    public async Task AssembleAsync_ProviderErrorAfterTerminal_PreservesPostTerminalClassificationAsync()
+    {
+        var result = await AssembleAsync(SplitAtEveryByte(Wire(
+            "data: [DONE]\n\n" +
+            "data: {\"error\":{\"message\":\"provider stopped\"}}\n\n")));
+
+        // Characterization: this accepted boundary already distinguishes a
+        // provider error after [DONE] from a provider error before terminal.
+        AssertRejected(result, "post-terminal-data");
     }
 
     private static async Task<dynamic> AssembleAsync(

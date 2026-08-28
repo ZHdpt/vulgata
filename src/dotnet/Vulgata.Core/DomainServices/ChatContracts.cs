@@ -268,7 +268,7 @@ public sealed record EvidenceFlowGroupAuthority(
     string SchemaIdentity,
     string State,
     Guid BusinessLogicDocumentVersionId,
-    Guid ExactResolutionDecisionId,
+    Guid? ExactResolutionDecisionId,
     Guid ExactResolutionEdgeId,
     string PlanFingerprint,
     string MembershipFingerprint,
@@ -630,7 +630,9 @@ public sealed record EvidencePacket
         if (documents.Select(document => document.DocumentHandle).Distinct(StringComparer.Ordinal).Count() != documents.Count ||
             sections.Select(section => section.SectionHandle).Distinct(StringComparer.Ordinal).Count() != sections.Count ||
             anchors.Select(anchor => anchor.AnchorHandle).Distinct(StringComparer.Ordinal).Count() != anchors.Count ||
-            relationships.Select(relationship => relationship.RelationshipHandle).Distinct(StringComparer.Ordinal).Count() != relationships.Count)
+            relationships.Select(relationship => relationship.RelationshipHandle).Distinct(StringComparer.Ordinal).Count() != relationships.Count ||
+            relationships.Select(relationship => relationship.EdgeId).Distinct().Count() != relationships.Count ||
+            relationships.Select(relationship => relationship.TargetDocumentHandle).Distinct(StringComparer.Ordinal).Count() != relationships.Count)
         {
             throw new ChatContractException(ChatContractFailureCode.InvalidEvidence);
         }
@@ -1450,6 +1452,7 @@ public sealed record ChatCurrentnessValidationRequest
                 !canonicalRepositories.Contains(relationship.TargetRepositoryId) ||
                 relationship.Depth is < 0 or > 1 ||
                 relationship.RelationshipType == ChatRelationshipType.References &&
+                    relationship.SourceRepositoryId != relationship.TargetRepositoryId &&
                     relationship.ExactDecisionId is null ||
                 relationship.RelationshipType == ChatRelationshipType.GeneratedFrom &&
                     relationship.ExactDecisionId is not null ||
@@ -1503,6 +1506,7 @@ public sealed record ChatCurrentnessValidationRequest
             Array.AsReadOnly(canonicalRelationships),
             Array.AsReadOnly(canonicalFlowGroups));
     }
+
 }
 
 internal static class ChatContractGuard

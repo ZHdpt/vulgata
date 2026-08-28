@@ -341,6 +341,10 @@ public sealed class ChatEvidenceRetriever(
                 relatedDocumentLimit,
                 32 - existingRelationshipEdgeIds.Length,
                 cancellationToken);
+        if (relationshipProjection.IsInconsistent)
+        {
+            return ChatEvidenceResult.IncompleteOrStale();
+        }
 
         Guid[] documentVersionIds = selectedDocumentVersionIds
             .Concat(relationshipProjection.Relationships.Select(
@@ -392,10 +396,15 @@ public sealed class ChatEvidenceRetriever(
             from logical in _context.LogicalDocuments.AsNoTracking()
             join version in _context.DocumentVersions.AsNoTracking()
                 on logical.CurrentVersionId equals version.Id
+            join scanRun in _context.ScanRuns.AsNoTracking()
+                on version.ScanRunId equals scanRun.Id
             where documentVersionIds.Contains(version.Id) &&
                 repositoryIds.Contains(version.RepositoryId) &&
                 version.SystemId == request.SystemId &&
-                version.SupersededById == null
+                version.SupersededById == null &&
+                scanRun.RepositoryId == version.RepositoryId &&
+                scanRun.Status == ScanRunStatus.Completed &&
+                scanRun.ProfiledRevision == version.ProfiledRevision
             select new CurrentDocumentRow(
                 logical.Id,
                 version.Id,
@@ -447,6 +456,14 @@ public sealed class ChatEvidenceRetriever(
         bool hasInvalidAnchor = anchors.Any(anchor =>
                 !documentHandles.ContainsKey(anchor.DocumentVersionId) ||
                 !repositoryIds.Contains(anchor.RepositoryId) ||
+                canonicalDocuments.All(document =>
+                    document.DocumentVersionId != anchor.DocumentVersionId ||
+                    document.RepositoryId != anchor.RepositoryId ||
+                    document.ScanRunId != anchor.ScanRunId ||
+                    !string.Equals(
+                        document.ProfiledRevision,
+                        anchor.ProfiledRevision,
+                        StringComparison.Ordinal)) ||
                 !IsSafeRepositoryRelativePath(anchor.RepositoryRelativePath) ||
                 anchor.LineStart < 1 ||
                 anchor.LineEnd < anchor.LineStart ||
@@ -516,6 +533,7 @@ public sealed class ChatEvidenceRetriever(
             ? []
             : await _context.CrossRepositoryResolutionDecisions.AsNoTracking()
                 .Where(decision =>
+                    decision.SystemId == request.SystemId &&
                     decision.DocumentEdgeId.HasValue &&
                     projectedExactEdgeIds.Contains(decision.DocumentEdgeId.Value) &&
                     decision.ResolutionSchemaIdentity == "exact-cross-repository-resolution/2.0" &&
@@ -553,6 +571,7 @@ public sealed class ChatEvidenceRetriever(
                 .Where(flowGroup =>
                     flowGroup.State == "Published" &&
                     flowGroup.SchemaIdentity == "endpoint-flow-group/1.0" &&
+                    flowGroup.SystemId == request.SystemId &&
                     flowGroup.ExactResolutionEdgeId.HasValue &&
                     relationshipEdgeIds.Contains(flowGroup.ExactResolutionEdgeId.Value))
                 .OrderBy(flowGroup => flowGroup.GroupOrder)
@@ -588,6 +607,10 @@ public sealed class ChatEvidenceRetriever(
         Dictionary<Guid, string> relationshipHandles = relationships.ToDictionary(
             item => item.EdgeId,
             item => item.Relationship.RelationshipHandle);
+        Guid[] selectedFlowGroupIds = flowBindingRows
+            .Select(binding => binding.FlowGroupId)
+            .Distinct()
+            .ToArray();
 
         FlowRow[] flowRows = await (
             from flowGroup in _context.FlowGroups.AsNoTracking()
@@ -597,8 +620,9 @@ public sealed class ChatEvidenceRetriever(
                 on trace.Id equals step.FlowTraceId
             where flowGroup.State == "Published" &&
                 flowGroup.SchemaIdentity == "endpoint-flow-group/1.0" &&
-                flowGroup.ExactResolutionDecisionId == exactRelationship.DecisionId &&
-                flowGroup.ExactResolutionEdgeId == exactRelationship.EdgeId &&
+                flowGroup.SystemId == request.SystemId &&
+                selectedFlowGroupIds.Contains(flowGroup.Id) &&
+                flowGroup.ExactResolutionEdgeId.HasValue &&
                 flowGroup.BusinessLogicDocumentVersionId.HasValue &&
                 flowGroup.MembershipFingerprint != null &&
                 documentVersionIds.Contains(flowGroup.BusinessLogicDocumentVersionId.Value)
@@ -608,7 +632,7 @@ public sealed class ChatEvidenceRetriever(
                 flowGroup.SchemaIdentity!,
                 flowGroup.State,
                 flowGroup.BusinessLogicDocumentVersionId.Value,
-                flowGroup.ExactResolutionDecisionId.Value,
+                flowGroup.ExactResolutionDecisionId,
                 flowGroup.ExactResolutionEdgeId.Value,
                 flowGroup.PlanFingerprint,
                 flowGroup.MembershipFingerprint!,
@@ -629,8 +653,8 @@ public sealed class ChatEvidenceRetriever(
         {
             bool hasFlowExpansion = await _context.FlowGroups.AsNoTracking().AnyAsync(
                 flowGroup =>
-                    flowGroup.ExactResolutionDecisionId == exactRelationship.DecisionId &&
-                    flowGroup.ExactResolutionEdgeId == exactRelationship.EdgeId,
+                    flowGroup.ExactResolutionEdgeId.HasValue &&
+                    relationshipEdgeIds.Contains(flowGroup.ExactResolutionEdgeId.Value),
                 cancellationToken);
             return hasFlowExpansion
                 ? ChatEvidenceResult.IncompleteOrStale()
@@ -677,8 +701,33 @@ public sealed class ChatEvidenceRetriever(
                         row.StepExactResolutionDecisionId))
                     .ToArray()))
             .ToArray();
+        bool hasInvalidFlowGroupAuthority = flowGroups.Any(group =>
+        {
+            RelationshipPacketRow[] matchingRelationships = relationshipRows
+                .Where(relationship => relationship.EdgeId == group.ExactResolutionEdgeId)
+                .ToArray();
+            if (matchingRelationships.Length != 1 ||
+                matchingRelationships[0].ExactDecisionId != group.ExactResolutionDecisionId)
+            {
+                return true;
+            }
+
+            if (group.ExactResolutionDecisionId.HasValue)
+            {
+                return false;
+            }
+
+            RelationshipPacketRow relationship = matchingRelationships[0];
+            CurrentDocumentRow source = canonicalDocuments.Single(document =>
+                document.DocumentVersionId == relationship.SourceDocumentVersionId);
+            CurrentDocumentRow target = canonicalDocuments.Single(document =>
+                document.DocumentVersionId == relationship.TargetDocumentVersionId);
+            return relationship.RelationshipType != ChatRelationshipType.References ||
+                   source.RepositoryId != target.RepositoryId;
+        });
         if (flowRows.Length > 12 ||
             flowGroups.Length is < 1 or > 10 ||
+            hasInvalidFlowGroupAuthority ||
             flowRows.Any(row =>
                 !documentHandles.ContainsKey(row.DocumentVersionId) ||
                 canonicalDocuments.All(document =>
@@ -793,6 +842,10 @@ public sealed class ChatEvidenceRetriever(
             from logical in _context.LogicalDocuments.AsNoTracking()
             join version in _context.DocumentVersions.AsNoTracking()
                 on logical.CurrentVersionId equals version.Id
+            join repository in _context.Repositories.AsNoTracking()
+                on version.RepositoryId equals repository.Id
+            join scanRun in _context.ScanRuns.AsNoTracking()
+                on version.ScanRunId equals scanRun.Id
             join section in _context.DocumentSections.AsNoTracking()
                 on version.Id equals section.DocumentVersionId
             join indexEntry in _context.IndexEntries.AsNoTracking()
@@ -801,6 +854,10 @@ public sealed class ChatEvidenceRetriever(
             where repositoryIds.Contains(version.RepositoryId) &&
                 version.SystemId == request.SystemId &&
                 version.SupersededById == null &&
+                repository.SystemId == request.SystemId &&
+                scanRun.RepositoryId == version.RepositoryId &&
+                scanRun.Status == ScanRunStatus.Completed &&
+                scanRun.ProfiledRevision == version.ProfiledRevision &&
                 (section.SectionKind == DocumentSectionKind.Overview ||
                     section.SectionKind == DocumentSectionKind.BusinessRule ||
                     section.SectionKind == DocumentSectionKind.ProcessStep ||
@@ -820,7 +877,8 @@ public sealed class ChatEvidenceRetriever(
                 indexEntry == null ? string.Empty : indexEntry.KeySymbolsJson,
                 indexEntry == null ? string.Empty : indexEntry.BusinessTermsJson,
                 indexEntry == null ? string.Empty : indexEntry.TechnicalTermsJson,
-                indexEntry == null ? string.Empty : indexEntry.SearchText))
+                indexEntry == null ? string.Empty : indexEntry.SearchText,
+                repository.Name))
             .Take(257)
             .ToArrayAsync(cancellationToken);
         if (candidates.Length is < 1 or > 256)
@@ -863,8 +921,9 @@ public sealed class ChatEvidenceRetriever(
                     candidate.DocumentType,
                     candidate.Section.SectionKind,
                     candidate.RepositoryId,
-                    candidate.Section.SectionOrder)).ToArray(),
-                5,
+                    candidate.Section.SectionOrder,
+                    candidate.RepositoryName)).ToArray(),
+                12,
                 conversationContext.CurrentDocumentHints,
                 request.Mode);
         if (selected.Count == 0)
@@ -895,10 +954,15 @@ public sealed class ChatEvidenceRetriever(
             from logical in _context.LogicalDocuments.AsNoTracking()
             join version in _context.DocumentVersions.AsNoTracking()
                 on logical.CurrentVersionId equals version.Id
+            join scanRun in _context.ScanRuns.AsNoTracking()
+                on version.ScanRunId equals scanRun.Id
             where documentVersionIds.Contains(version.Id) &&
                 repositoryIds.Contains(version.RepositoryId) &&
                 version.SystemId == request.SystemId &&
-                version.SupersededById == null
+                version.SupersededById == null &&
+                scanRun.RepositoryId == version.RepositoryId &&
+                scanRun.Status == ScanRunStatus.Completed &&
+                scanRun.ProfiledRevision == version.ProfiledRevision
             select new CurrentDocumentRow(
                 logical.Id,
                 version.Id,
@@ -939,6 +1003,14 @@ public sealed class ChatEvidenceRetriever(
         if (anchors.Length != anchorIds.Length || anchors.Any(anchor =>
                 !documentHandles.ContainsKey(anchor.DocumentVersionId) ||
                 !repositoryIds.Contains(anchor.RepositoryId) ||
+                canonicalDocuments.All(document =>
+                    document.DocumentVersionId != anchor.DocumentVersionId ||
+                    document.RepositoryId != anchor.RepositoryId ||
+                    document.ScanRunId != anchor.ScanRunId ||
+                    !string.Equals(
+                        document.ProfiledRevision,
+                        anchor.ProfiledRevision,
+                        StringComparison.Ordinal)) ||
                 !IsSafeRepositoryRelativePath(anchor.RepositoryRelativePath) ||
                 anchor.LineStart < 1 ||
                 anchor.LineEnd < anchor.LineStart ||
@@ -1151,14 +1223,15 @@ public sealed class ChatEvidenceRetriever(
         string KeySymbolsJson,
         string BusinessTermsJson,
         string TechnicalTermsJson,
-        string SearchText);
+        string SearchText,
+        string RepositoryName);
 
     private sealed record FlowRow(
         Guid FlowGroupId,
         string SchemaIdentity,
         string State,
         Guid BusinessLogicDocumentVersionId,
-        Guid ExactResolutionDecisionId,
+        Guid? ExactResolutionDecisionId,
         Guid ExactResolutionEdgeId,
         string PlanFingerprint,
         string MembershipFingerprint,

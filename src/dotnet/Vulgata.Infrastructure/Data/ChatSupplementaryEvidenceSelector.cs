@@ -19,7 +19,8 @@ internal sealed record SupplementaryChatSectionCandidate(
     DocumentType DocumentType = DocumentType.CodeLogic,
     DocumentSectionKind SectionKind = DocumentSectionKind.Overview,
     Guid RepositoryId = default,
-    int SectionOrder = 0);
+    int SectionOrder = 0,
+    string RepositoryName = "");
 
 internal static class ChatSupplementaryEvidenceSelector
 {
@@ -59,7 +60,7 @@ internal static class ChatSupplementaryEvidenceSelector
             .Where(item => item.EligibilityScore > 0 || item.MetadataScore > 0)
             .ToArray();
         bool hasMetadataMatch = ranked.Any(item => item.MetadataScore > 0);
-        SupplementaryChatSectionCandidate[] selected = ranked
+        var scored = ranked
             .Where(item => !hasMetadataMatch || item.MetadataScore > 0)
             .Select(item => new
             {
@@ -67,6 +68,8 @@ internal static class ChatSupplementaryEvidenceSelector
                 Score = item.MetadataScore + item.EligibilityScore +
                     (preferred.Contains(item.Candidate.LogicalDocumentId) ? 1 : 0),
             })
+            .ToArray();
+        var primary = scored
             .GroupBy(item => item.Candidate.DocumentVersionId)
             .Select(group => group
                 .OrderByDescending(item => item.Score)
@@ -83,6 +86,28 @@ internal static class ChatSupplementaryEvidenceSelector
             .ThenBy(item => item.Candidate.SectionOrder)
             .ThenBy(item => item.Candidate.StableSectionId)
             .Take(Math.Min(maximumCount, _maximumDocuments))
+            .ToArray();
+        HashSet<Guid> selectedDocumentIds = primary
+            .Select(item => item.Candidate.DocumentVersionId)
+            .ToHashSet();
+        HashSet<Guid> primarySectionIds = primary
+            .Select(item => item.Candidate.StableSectionId)
+            .ToHashSet();
+        var extras = scored
+            .Where(item =>
+                selectedDocumentIds.Contains(item.Candidate.DocumentVersionId) &&
+                !primarySectionIds.Contains(item.Candidate.StableSectionId))
+            .OrderByDescending(item => item.Score)
+            .ThenBy(item => ModePreferenceRank(item.Candidate, mode))
+            .ThenBy(item => item.Candidate.RepositoryId)
+            .ThenBy(item => item.Candidate.LogicalDocumentId)
+            .ThenBy(item => item.Candidate.SectionOrder)
+            .ThenBy(item => item.Candidate.StableSectionId)
+            .GroupBy(item => item.Candidate.DocumentVersionId)
+            .SelectMany(group => group.Take(3))
+            .Take(Math.Max(0, maximumCount - primary.Length));
+        SupplementaryChatSectionCandidate[] selected = primary
+            .Concat(extras)
             .Select(item => item.Candidate)
             .ToArray();
         return Array.AsReadOnly(selected);
@@ -112,6 +137,7 @@ internal static class ChatSupplementaryEvidenceSelector
         SupplementaryChatSectionCandidate candidate,
         string[] terms) =>
         terms.Sum(term =>
+            (candidate.RepositoryName.Contains(term, StringComparison.OrdinalIgnoreCase) ? 50 : 0) +
             (candidate.RepositoryRelativePath.Contains(term, StringComparison.OrdinalIgnoreCase) ? 30 : 0) +
             (candidate.KeySymbolsJson.Contains(term, StringComparison.OrdinalIgnoreCase) ? 40 : 0) +
             (candidate.BusinessTermsJson.Contains(term, StringComparison.OrdinalIgnoreCase) ? 25 : 0) +

@@ -11,6 +11,42 @@ namespace Vulgata.Tests;
 public sealed class ChatStreamObservationProvenanceTests
 {
     [Fact]
+    public void ObservationReceipt_BindsCandidateCaseProviderAndBoundedStreamLifecycle()
+    {
+        Type receiptType = typeof(IChatProviderStreamingTransport).Assembly.GetType(
+            "Vulgata.Agents.ChatExecution.ChatStreamObservationReceipt",
+            throwOnError: true,
+            ignoreCase: false)!;
+
+        string[] requiredFields =
+        [
+            "CandidateCommit",
+            "CaseId",
+            "ProviderApi",
+            "ProviderConfigurationFingerprint",
+            "StreamStartedAtUtc",
+            "FirstDataAtUtc",
+            "TerminalAtUtc",
+            "TimeToFirstDataMilliseconds",
+            "AnswerDeltaCount",
+            "AnswerDeltaByteCount",
+            "AssembledAnswerByteCount",
+            "TerminalEventCount",
+            "InactivityLimitMilliseconds",
+            "OverallDeadlineAtUtc",
+            "TransportOutcome",
+            "ValidationOutcome",
+            "AcceptedAnswerDurationMilliseconds",
+        ];
+
+        foreach (string field in requiredFields)
+        {
+            Assert.NotNull(
+                receiptType.GetProperty(field, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic));
+        }
+    }
+
+    [Fact]
     public void AggregateConsistentSdkChunkReceipt_WithoutRawAdapterProvenance_IsRejectedByProductionAuthority()
     {
         Assembly agentsAssembly = typeof(IChatProviderStreamingTransport).Assembly;

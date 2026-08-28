@@ -86,6 +86,97 @@ public sealed class ChatSupplementaryEvidenceSelectorTests
         Assert.Equal(5, selected.Select(item => item.DocumentVersionId).Distinct().Count());
     }
 
+    [Fact]
+    public void Select_RepositoryNameTerm_SelectsAuthorizedRepositoryCandidate()
+    {
+        SupplementaryChatSectionCandidate[] candidates =
+        [
+            new(
+                Id(1),
+                Id(11),
+                "提供端业务流程",
+                "会话更新",
+                "提供端处理会话更新。",
+                LogicalDocumentId: Id(101),
+                RepositoryId: Id(201),
+                RepositoryName: "fixture-provider",
+                SearchText: "会话更新"),
+            new(
+                Id(2),
+                Id(12),
+                "消费端业务流程",
+                "会话更新",
+                "消费端发起会话更新。",
+                LogicalDocumentId: Id(102),
+                RepositoryId: Id(202),
+                RepositoryName: "fixture-consumer",
+                SearchText: "会话更新"),
+        ];
+
+        SupplementaryChatSectionCandidate selected = Assert.Single(
+            ChatSupplementaryEvidenceSelector.Select("fixture-provider", candidates, 1));
+
+        Assert.Equal(Id(1), selected.DocumentVersionId);
+    }
+
+    [Fact]
+    public void Select_StrongestSectionPerDocument_AddsAtMostFourExtraSectionsInScoreOrder()
+    {
+        SupplementaryChatSectionCandidate[] candidates = Enumerable.Range(1, 6)
+            .Select(index => Candidate(
+                1,
+                index,
+                "登录密码校验",
+                index == 1 ? "密码校验" : $"密码规则 {index}",
+                index == 1 ? "登录密码校验失败处理。" : "登录密码校验规则。"))
+            .ToArray();
+
+        IReadOnlyList<SupplementaryChatSectionCandidate> selected =
+            ChatSupplementaryEvidenceSelector.Select("登录密码校验", candidates, 12);
+
+        Assert.Equal(4, selected.Count);
+        Assert.Equal(Id(1), selected[0].StableSectionId);
+        Assert.Equal(4, selected.Select(item => item.StableSectionId).Distinct().Count());
+    }
+
+    [Fact]
+    public void Select_RandomizedCanonicalTieOrder_IsStable()
+    {
+        SupplementaryChatSectionCandidate[] candidates =
+        [
+            new(Id(1), Id(11), "相同标题", "相同标题", "相同内容", LogicalDocumentId: Id(101), RepositoryId: Id(202)),
+            new(Id(2), Id(12), "相同标题", "相同标题", "相同内容", LogicalDocumentId: Id(102), RepositoryId: Id(201)),
+            new(Id(3), Id(13), "相同标题", "相同标题", "相同内容", LogicalDocumentId: Id(103), RepositoryId: Id(203)),
+        ];
+
+        string[] expected = [Id(2).ToString(), Id(1).ToString(), Id(3).ToString()];
+        foreach (SupplementaryChatSectionCandidate[] permutation in Permutations(candidates))
+        {
+            IReadOnlyList<SupplementaryChatSectionCandidate> selected =
+                ChatSupplementaryEvidenceSelector.Select("相同标题", permutation, 3);
+
+            Assert.Equal(expected, selected.Select(item => item.DocumentVersionId.ToString()));
+        }
+    }
+
+    private static IEnumerable<SupplementaryChatSectionCandidate[]> Permutations(
+        SupplementaryChatSectionCandidate[] values)
+    {
+        for (int first = 0; first < values.Length; first++)
+        {
+            for (int second = 0; second < values.Length; second++)
+            {
+                if (second == first)
+                {
+                    continue;
+                }
+
+                int third = 3 - first - second;
+                yield return [values[first], values[second], values[third]];
+            }
+        }
+    }
+
     private static SupplementaryChatSectionCandidate Candidate(
         int document,
         int section,
