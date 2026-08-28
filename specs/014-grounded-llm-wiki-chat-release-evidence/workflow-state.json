@@ -3,13 +3,13 @@
   "bmad_story_key": "12-5-grounded-llm-wiki-chat-and-august-30-release-evidence",
   "bmad_epic_key": "12",
   "feature_directory": "specs/014-grounded-llm-wiki-chat-release-evidence",
-  "stage": "converge",
+  "stage": "implement",
   "preflight": {
     "branch": "demo0831/story-12-5",
-    "head": "d475b7d4f74ff37a79eeef8c516b702dab6e1e6f",
+    "head": "f8d304f545c51f38b9e84b2eda0597c83d304a19",
     "git_identity_sha256": "07a20fe92c0f34dce99c42edc204a9db68ea55524b692aa9828e2edde364da34",
-    "status_sha256": "0a4dee7179c7d4b9f24c61f767c6e2a75383f732077665d7a58aacf833152ce2",
-    "observed_at": "2026-08-28T16:20:58.0762215Z"
+    "status_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "observed_at": "2026-08-28T22:44:57.9426406Z"
   },
   "artifacts": {
     "spec": {
@@ -82,6 +82,13 @@
       "scope_sha256": "f1996ec2c369153464e52eff6da10718db61a0606ce1d7524cfd6c160c1fb009",
       "evidence_path": "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/implementation-approval-track-c-01.md",
       "decided_at": "2026-08-28T12:23:33.1309041Z"
+    },
+    {
+      "decision_id": "story-12-5-convergence-continuation-02",
+      "status": "accepted",
+      "scope_sha256": "30e9ab5f0954f0c61d568e5ef7de6580b2d2503e5ef7d806a214687e67f829e9",
+      "evidence_path": "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/convergence-continuation-02.md",
+      "decided_at": "2026-08-28T22:44:57.9426406Z"
     }
   ],
   "convergence": {
@@ -96,6 +103,7 @@
   },
   "current_evidence_paths": [
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/track-b-convergence-pause-03.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/convergence-continuation-02.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/design-correction-01.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/plan.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/plan-review/plan-review-09.json",
@@ -105,19 +113,18 @@
     "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/implementation-approval-track-b-02.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/implementation-approval-track-c-01.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/integration/story-12.4-dependency-integration-correction-01.md",
-    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/track-b-convergence-correction-08.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/track-b-convergence-correction-09.md"
   ],
   "checkpoint": {
-    "checkpoint_id": "bmad-12-5-converge-20260828T162058Z-30d1ef",
-    "stage": "converge",
+    "checkpoint_id": "bmad-12-5-implement-20260828T224457Z-0a6b7c",
+    "stage": "implement",
     "commit_sha": null,
     "binding_status": "pending"
   },
   "resume": {
-    "stage": "converge",
-    "reason": "The third post-redesign convergence pass appended T067-T072. Pause for renewed user approval before implementing them or running another convergence pass. Track C remains closed.",
-    "evidence_path": "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/track-b-convergence-pause-03.md"
+    "stage": "implement",
+    "reason": "User approved bounded test-first implementation of T067-T072 and one follow-up convergence pass. Track C remains closed.",
+    "evidence_path": "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/convergence-continuation-02.md"
   },
-  "updated_at": "2026-08-28T16:20:58.0762215Z"
+  "updated_at": "2026-08-28T22:44:57.9426406Z"
 }
