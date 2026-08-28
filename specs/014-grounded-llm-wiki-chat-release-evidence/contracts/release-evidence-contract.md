@@ -73,7 +73,7 @@ Every aggregate is backed by a named receipt rather than an unproved number:
 - Business Logic Document query receipt;
 - Cross-Repository-flow query receipt;
 - Chat corpus result and packet/result artifacts with invoked-case packet fingerprints;
-- same-process signed Track C attestation artifacts binding the immutable sealed-admission runtime observation ID/sequence to candidate/run/case/request, adapter/provider/streaming request, response headers, physical read/EOF, all byte-domain counters and terminal/deadline/rejection facts, plus the matching coordinator completion summary's repair/validation/duration facts;
+- same-process signed Track C attestation artifacts binding the immutable sealed-admission runtime observation ID/sequence to candidate/run/case/request, adapter/provider/streaming request, response headers, physical read/EOF, all byte-domain counters and terminal/deadline/rejection facts, plus the distinct matching coordinator completion summary ID and that summary's repair/validation/duration facts;
 - restart before/after artifacts plus duplicate query receipt; and
 - database preflight, ownership, and cleanup receipt.
 
@@ -107,7 +107,7 @@ The semantic validator verifies every referenced artifact hash before parsing it
 - fixed-corpus IDs, corpus result-row IDs, and per-case receipt IDs to be identical sets with exactly one row/receipt per case;
 - invoked cases to have one primary stream and at most one ordered syntax-repair stream; insufficient-evidence/authorization-boundary cases to have no packet or stream;
 - ordered `packetFingerprints` to equal invoked-case fingerprints in fixed corpus order;
-- raw/SSE/decoded-delta/final counts and bounds plus terminal/EOF/outcome to equal the immutable runtime observation and signed Track C attestation; repair/validation/accepted duration to equal the coordinator completion summary and attestation, with `nonStreamingAcceptedAnswerCount == 0`;
+- raw/SSE/decoded-delta/final counts and bounds plus terminal/EOF/outcome to equal the immutable runtime observation and signed Track C attestation; the receipt's distinct `completionSummaryId` and repair/validation/accepted duration to equal the coordinator completion summary and attestation, with `nonStreamingAcceptedAnswerCount == 0`;
 - `usefulPercent = floor((10000 * usefulCount / caseCount) + 0.5) / 100`, using exact nonnegative arithmetic, two-decimal round half up, and `usefulPercent >= 80.00`; and
 - citation, disclosure, over-30-second, restart, duplicate/data-loss, and database ownership/access values to equal their named artifacts.
 

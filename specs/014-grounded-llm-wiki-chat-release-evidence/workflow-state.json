@@ -3,13 +3,13 @@
   "bmad_story_key": "12-5-grounded-llm-wiki-chat-and-august-30-release-evidence",
   "bmad_epic_key": "12",
   "feature_directory": "specs/014-grounded-llm-wiki-chat-release-evidence",
-  "stage": "plan",
+  "stage": "plan-review",
   "preflight": {
     "branch": "demo0831/story-12-5",
-    "head": "080d04e04e1334ffc4176149110cadee9d0d2d79",
-    "git_identity_sha256": "a9f280c26308b137a4543e646f0385067bdb908519b204baae1a02faa1300444",
-    "status_sha256": "e32781f33ae571734adb5c5879aaf547a9fa9c7bd38c4566522e2678e4f6f395",
-    "observed_at": "2026-08-28T09:42:30.3468843Z"
+    "head": "bf48acba67bc6634bb3b929aad14eb16a5ed9341",
+    "git_identity_sha256": "4b28457017bad311578c8ad15545a2f9491e943c7f5490c6cd231b7aa30393b9",
+    "status_sha256": "09a708e803211571cdcea892e75b2c56a56ff1cb48e5d1a0f7949e4b8dbca040",
+    "observed_at": "2026-08-28T09:59:01.2358578Z"
   },
   "artifacts": {
     "spec": {
@@ -18,7 +18,7 @@
     },
     "plan": {
       "path": "specs/014-grounded-llm-wiki-chat-release-evidence/plan.md",
-      "sha256": "a74b4cef7fd2d553a26b45692b25b9b81876ca1b2b88d6d80d453a43d5966aec"
+      "sha256": "b98b5c127db31d445f707ee545febc534f4f6cf97440eb72c187ec65ee9be059"
     },
     "tasks": {
       "path": "specs/014-grounded-llm-wiki-chat-release-evidence/tasks.md",
@@ -27,9 +27,9 @@
   },
   "gates": {
     "plan-review": {
-      "status": "revised",
+      "status": "pending",
       "attempt": 7,
-      "verdict_path": "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/plan-review/plan-review-07.json"
+      "verdict_path": null
     },
     "definition-review": {
       "status": "invalidated",
@@ -77,21 +77,21 @@
     "specs/014-grounded-llm-wiki-chat-release-evidence/spec.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/design-correction-01.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/plan.md",
-    "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/plan-review/plan-review-07.json",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/track-b-plan-correction-02.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/implementation-approval-track-a-01.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/integration/story-12.4-dependency-integration-correction-01.md",
     "specs/013-exact-cross-repository-flow-pass2/workflow-state.json"
   ],
   "checkpoint": {
-    "checkpoint_id": "bmad-12-5-plan-review-20260828T094230Z-b22763",
-    "stage": "plan-review",
+    "checkpoint_id": "bmad-12-5-plan-20260828T095901Z-43a712",
+    "stage": "plan",
     "commit_sha": null,
     "binding_status": "pending"
   },
   "resume": {
-    "stage": "plan",
-    "reason": "Plan review 07 returned REVISE for Story 12.4 many-to-one decision authority, advisory-context ownership, and one telemetry-table contradiction. Return unchanged findings to the plan owner.",
-    "evidence_path": "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/plan-review/plan-review-07.json"
+    "stage": "plan-review",
+    "reason": "All plan-review 07 findings are corrected and self-reviewed. Dispatch a fresh plan-only review against this pinned plan set; planned-change authorization still precedes tasks.",
+    "evidence_path": "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/track-b-plan-correction-02.md"
   },
-  "updated_at": "2026-08-28T09:42:30.3468843Z"
+  "updated_at": "2026-08-28T09:59:01.2358578Z"
 }

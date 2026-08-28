@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://vulgata.local/contracts/grounded-chat-evidence-2.1.schema.json",
-  "title": "Grounded Chat Evidence Packet 2.1",
+  "$id": "https://vulgata.local/contracts/grounded-chat-evidence-2.2.schema.json",
+  "title": "Grounded Chat Evidence Packet 2.2",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -18,11 +18,12 @@
     "flowGroups",
     "flowSteps",
     "advisoryContext",
+    "advisoryContextAuthorityFingerprint",
     "conversation",
     "fingerprint"
   ],
   "properties": {
-    "schemaVersion": { "const": "grounded-chat-evidence/2.1" },
+    "schemaVersion": { "const": "grounded-chat-evidence/2.2" },
     "requestId": { "$ref": "#/$defs/handle" },
     "mode": { "enum": ["business", "it"] },
     "systemId": { "$ref": "#/$defs/uuid" },
@@ -112,7 +113,7 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["handle", "edgeId", "type", "sourceDocumentHandle", "targetDocumentHandle", "depth", "exactDecisionId", "flowGroupId"],
+        "required": ["handle", "edgeId", "type", "sourceDocumentHandle", "targetDocumentHandle", "depth", "selectedExactDecisionId", "exactDecisionCount", "exactDecisionSetFingerprint", "flowGroupHandles"],
         "properties": {
           "handle": { "$ref": "#/$defs/handle" },
           "edgeId": { "$ref": "#/$defs/uuid" },
@@ -120,8 +121,10 @@
           "sourceDocumentHandle": { "$ref": "#/$defs/handle" },
           "targetDocumentHandle": { "$ref": "#/$defs/handle" },
           "depth": { "const": 1 },
-          "exactDecisionId": { "oneOf": [{ "$ref": "#/$defs/uuid" }, { "type": "null" }] },
-          "flowGroupId": { "oneOf": [{ "$ref": "#/$defs/uuid" }, { "type": "null" }] }
+          "selectedExactDecisionId": { "oneOf": [{ "$ref": "#/$defs/uuid" }, { "type": "null" }] },
+          "exactDecisionCount": { "type": "integer", "minimum": 0, "maximum": 2147483647 },
+          "exactDecisionSetFingerprint": { "oneOf": [{ "$ref": "#/$defs/sha256" }, { "type": "null" }] },
+          "flowGroupHandles": { "type": "array", "maxItems": 10, "uniqueItems": true, "items": { "$ref": "#/$defs/handle" } }
         }
       }
     },
@@ -131,14 +134,16 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["handle", "flowGroupId", "state", "businessLogicDocumentHandle", "exactDecisionId", "exactEdgeId", "planFingerprint", "membershipFingerprint", "flowTraceId", "flowTraceOrder"],
+        "required": ["handle", "flowGroupId", "state", "businessLogicDocumentHandle", "relationshipHandle", "exactDecisionId", "exactEdgeId", "decisionRank", "planFingerprint", "membershipFingerprint", "flowTraceId", "flowTraceOrder"],
         "properties": {
           "handle": { "$ref": "#/$defs/handle" },
           "flowGroupId": { "$ref": "#/$defs/uuid" },
           "state": { "const": "Published" },
           "businessLogicDocumentHandle": { "$ref": "#/$defs/handle" },
+          "relationshipHandle": { "$ref": "#/$defs/handle" },
           "exactDecisionId": { "$ref": "#/$defs/uuid" },
           "exactEdgeId": { "$ref": "#/$defs/uuid" },
+          "decisionRank": { "type": "integer", "minimum": 1, "maximum": 2147483647 },
           "planFingerprint": { "$ref": "#/$defs/sha256" },
           "membershipFingerprint": { "$ref": "#/$defs/sha256" },
           "flowTraceId": { "$ref": "#/$defs/uuid" },
@@ -163,6 +168,7 @@
       }
     },
     "advisoryContext": { "type": "string", "maxLength": 8192 },
+    "advisoryContextAuthorityFingerprint": { "$ref": "#/$defs/sha256" },
     "conversation": {
       "type": "object",
       "additionalProperties": false,

@@ -30,7 +30,7 @@ public interface IChatEvidenceRetriever
 }
 ```
 
-`ChatRetrievalRequest` includes normalized question/scope/mode, bounded transient conversation, and deadline. It does not contain caller-selected Document/Edge/Flow Group IDs.
+`ChatRetrievalRequest` includes normalized question/scope/mode, bounded transient conversation, server-created `AuthorizedChatScope`, server-loaded `ChatAdvisoryContextSnapshot`, and deadline. It does not contain caller-selected advisory text or Context/Document/Edge/decision/Flow Group IDs.
 
 ## Single typed retrieval pipeline
 
@@ -57,7 +57,9 @@ Eligible rows are current authorized `IndexEntry` and `DocumentSection` projecti
 - Business or IT mode terms; and
 - bounded terms from prior validated conversation context.
 
-The candidate window is the highest-ranked 256 distinct stable section IDs or exhaustion. Current eligible rows stream in stable-ID order and are deduplicated/scored before the top-K cap; 257 or more eligible rows are not refused merely for size. Duplicate stable IDs must be byte-equivalent. After NFC normalization, parse structured symbol/business/technical term arrays and use normalized token equality; malformed arrays are inconsistent. These exact integer components apply at most once when any applicable term matches: Repository name 50, key symbol/endpoint 40, path 30, active-mode term 25 (`BusinessTerms` only in Business Mode, `TechnicalTerms` only in IT Mode), search text 20, heading 5, title 3, prose 1, plus exactly one point for a prior current eligible Logical Document. Other fields use normalized ordinal-ignore-case containment. Every positive-score candidate competes in the same rank; metadata presence never pre-filters prose candidates. If none scores positively, the same bounded ranker evaluates current Business Logic summaries and advisory terms.
+The candidate window is the highest-ranked 256 distinct stable section IDs or exhaustion. Current eligible rows stream in stable-ID order and are deduplicated/scored before the top-K cap; 257 or more eligible rows are not refused merely for size. Duplicate stable IDs must be byte-equivalent. After NFC normalization, parse structured symbol/business/technical term arrays and use normalized token equality; malformed arrays are inconsistent. These exact integer components apply at most once when any applicable term matches: Repository name 50, key symbol/endpoint 40, path 30, active-mode term 25 (`BusinessTerms` only in Business Mode, `TechnicalTerms` only in IT Mode), search text 20, heading 5, title 3, prose 1, plus exactly one point for a prior current eligible Logical Document. Other fields use normalized ordinal-ignore-case containment. Every positive-score candidate competes in the same rank; metadata presence never pre-filters prose candidates.
+
+Advisory context comes only from applied `GlobalContext`, selected `System.Context`, and both selected `Repository.Context` values loaded through `IChatAdvisoryContextReader` after authorization; pending changes and caller text are excluded. Normalize NFC, line endings and outer whitespace; compose Global -> System -> Repositories ordered by RFC 4122 ID; tokenize with the same ASCII/CJK rules. Empty applied values produce canonical empty context. Exactly 8,192 composed UTF-8 bytes succeeds; 8,193 refuses without truncation or provider dispatch. Advisory terms do not affect a positive direct pass. Only when direct question/conversation scoring yields zero candidates does fallback rank current Business Logic summary sections with question/conversation/advisory terms using search/summary 20, heading 5, title 3 and prose 1 at most once. No positive fallback returns insufficient evidence.
 
 Canonical order is descending total score, then mode preference, Repository ID, Logical Document ID, section order, stable section ID. Business mode prefers Business Logic then Code Logic. IT mode prefers Code Logic TechnicalDetail/Evidence, other Code Logic, then Business Logic.
 
@@ -80,15 +82,15 @@ Only current persisted facts may add related evidence:
 
 Legacy `ExactCrossRepositoryEdgeEvidence` never authorizes v2 expansion or currentness.
 
-Expansion seeds are exactly the first `min(3, primaryDocumentCount)` primary Documents. Traverse only stored direction: REFERENCES source -> target and GENERATED_FROM Business Logic source -> Code Logic target. Cross-Repository REFERENCES requires exactly one accepted v2 decision bound to that Edge; same-Repository REFERENCES and GENERATED_FROM must not carry an exact decision. A Flow Group is eligible only when its current Published Business Logic Document is included and its exact decision/Edge/trace/steps/fingerprints/current revisions are internally consistent.
+Expansion seeds are exactly the first `min(3, primaryDocumentCount)` primary Documents. Traverse only stored direction: REFERENCES source -> target and GENERATED_FROM Business Logic source -> Code Logic target. Cross-Repository REFERENCES requires at least one independently valid accepted v2 decision bound to that Edge; multiple distinct current decision slots are valid Story 12.4 authority. A slot is `(Pass1PairExecutionId, ConsumerCandidateId, ConsumerEntryStableKey, Protocol, NormalizedEndpointIdentifier)`. Order valid decisions by pair ID, protocol, consumer stable entry key, normalized endpoint, consumer candidate ID and decision ID under Story 12.4 byte ordering. The relationship binds the first as `selectedExactDecisionId` plus the complete valid `exactDecisionCount` and `exactDecisionSetFingerprint`; the set fingerprint uses the length-prefixed canonical decision authority and recomputed contribution fingerprints defined by AD-3. Same-Repository REFERENCES and GENERATED_FROM carry null/zero decision authority. A Flow Group is eligible only when its current Published Business Logic Document is included, its exact decision belongs to that Edge's valid decision set, and its Edge/trace/steps/fingerprints/current revisions are internally consistent.
 
-Candidate order is seed rank; mode relationship preference; same-Repository before Cross-Repository within that preference; target Repository ID; target Logical Document ID; target Document Version ID; Edge ID. Flow Groups then order by seed rank, GroupOrder, Flow Group ID, trace order, step order, step ID. Deduplicate exact identities before bounds; conflicting duplicates are inconsistent. Add at most two new related Documents per seed, follow exactly one hop, and never exceed five Documents, thirty-two relationships, ten Flow Group authorities, or twelve steps.
+Candidate order is seed rank; mode relationship preference; same-Repository before Cross-Repository within that preference; target Repository ID; target Logical Document ID; target Document Version ID; Edge ID. Flow Groups then order by owning Edge rank, decision rank inside the Edge set, GroupOrder, Flow Group ID, trace order, step order, step ID. Deduplicate exact identities and conflicting duplicate decision slots before bounds; distinct decisions/Flow Groups sharing one Edge remain independent. Add at most two new related Documents per seed, follow exactly one hop, and never exceed five Documents, thirty-two relationships, ten Flow Group authorities, or twelve steps.
 
 Every applicable relationship and Flow Group has one closed state: `absent`, `present-valid`, `present-inconsistent`, or `selected-required`. Optional absent/inconsistent facts support no claim but do not poison unrelated lexical primaries. Ranking leaves a valid complete unit optional; retention after all complete-unit packing drops promotes it to selected-required. Any subsequent missing/stale/inconsistent required Document, section, Source Anchor, decision, Edge, Flow Group, trace, step, or fingerprint rejects the whole assembly with no lower-ranked substitution.
 
 ## Packet contract
 
-The JSON shape is defined by [chat-evidence-packet-v2.schema.json](chat-evidence-packet-v2.schema.json). Every handle is packet-local and opaque. The canonical fingerprint includes schema and selection-policy versions, request/scope/mode, ordered primary Documents/sections, expansion seeds, complete ordered evidence units, accepted decision/Flow Group bindings, advisory context, and conversation state.
+The 2.2 JSON shape is defined by [chat-evidence-packet-v2.schema.json](chat-evidence-packet-v2.schema.json). It is the single accepted cutover shape; 2.1 cannot represent complete many-decision and advisory-source authority and is not accepted in parallel. Every handle is packet-local and opaque. The canonical fingerprint includes schema and selection-policy versions, request/scope/mode, ordered primary Documents/sections, expansion seeds, each Cross-Repository Edge's selected decision/count/full-set fingerprint, decision-owned Flow Group bindings, exact advisory text/authority fingerprint, and conversation state. Semantic validation requires Cross-Repository REFERENCES to carry non-null selected/set authority with count >=1 and requires same-Repository REFERENCES/GENERATED_FROM to carry null/zero authority.
 
 Bounds:
 
@@ -101,6 +103,8 @@ Bounds:
 - evidence <=65,536 UTF-8 bytes;
 - conversation <=4,096 UTF-8 bytes;
 - advisory context <=8,192 UTF-8 bytes.
+
+Each Cross-Repository relationship is emitted once even when multiple decisions share its Edge. Its `flowGroupHandles` may bind multiple independently selected Published Flow Groups, each carrying its own `exactDecisionId`, owning relationship handle and decision rank.
 
 Packing order is strongest-per-Document primary units, remaining lexical primary units, then ranked `present-valid` relationship/Flow Group units. On overflow, drop lowest-ranked optional relationship/Flow Group units first and then lowest-ranked non-strongest lexical extras, pruning newly unreachable support after each whole-unit drop. After all drops, retained relationship/Flow Group units become selected-required. Strongest-per-Document evidence and selected-required support are never dropped or partially retained. Required-only overflow refuses assembly; text is never truncated.
 
@@ -116,7 +120,7 @@ The provider receives only question, mode, packet fingerprint, opaque handles, b
 
 Both primary and repair use [chat-provider-streaming-v1.md](chat-provider-streaming-v1.md). One 29-second deadline covers retrieval through render. The ordered pipeline keeps raw body reads, strict wire UTF-8, SSE fields/events, JSON/escape decoding, decoded answer deltas, and final assembly distinct. One decoded delta after JSON unescape/re-encoding is the <=16,384-byte Provider Chunk; concatenated decoded deltas are the <=65,536-byte complete response. Separate raw/SSE implementation safety caps do not replace those acceptance caps. Only a non-empty decoded delta or valid `[DONE]` resets inactivity, and physical EOF is observed after terminal to reject missing/duplicate/contradictory/post-terminal behavior.
 
-Track B emits only neutral content-dark runtime observations: opaque observation ID/sequence, request/attempt/provider/request fingerprints, response/read/EOF dispositions, timings, counters and outcomes. It contains no candidate, run, corpus case, public key, signature or export path and is not release evidence.
+Track B emits only neutral content-dark runtime observations: opaque observation ID/sequence, request/attempt/provider/request fingerprints, response/read/EOF dispositions, timings, counters and transport outcomes. `ChatSynthesisAttempt.RuntimeObservationId` points only to this transport record. Validation/repair/duration belong to the separate coordinator `CompletionSummaryId`/`ValidationOutcome`. Neither contains candidate, run, corpus case, public key, signature or export path and neither is release evidence.
 
 Track C composes a sealed same-process attestation sink admitted only by the production raw response-header adapter. It signs the immutable runtime observation plus candidate/run/case/process, exact adapter type/version/assembly hash, provider configuration, canonical `stream=true` request, response status/media/protocol, first physical read, and EOF disposition. Aggregate SDK fake chunks are release-ineligible regardless of metric consistency.
 
@@ -133,8 +137,9 @@ Immediately before render, validate:
 - every selected Logical Document still points to the expected immutable current Document Version;
 - every selected section span/content and Source Anchor identity/path/line/hash;
 - every relationship's current directed Edge and both authorized endpoints;
-- every Cross-Repository REFERENCES relationship's accepted exact decision-to-Edge binding;
-- every selected Flow Group is still `Published`, bound to the same current Business Logic Document, decision, Edge, trace, and ordered steps; and
+- every Cross-Repository REFERENCES relationship's canonical selected decision, complete valid decision count/set fingerprint and contribution authority;
+- every selected Flow Group is still `Published`, bound to the same current Business Logic Document, decision, Edge, trace, and ordered steps;
+- the same authorized applied Global/System/two-Repository advisory Context values/order/`UpdatedAt`/authority fingerprint; and
 - current access to both selected Repositories.
 
 Any mismatch returns one non-identifying evidence-unavailable/missing-equivalent result with no citations.

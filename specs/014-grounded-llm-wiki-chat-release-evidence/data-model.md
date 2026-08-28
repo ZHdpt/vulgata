@@ -29,6 +29,8 @@ Server-owned Core contract extending the normalized question with transient cont
 | `RepositoryIds` | exactly two distinct canonical IDs in the System |
 | `Question` | NFC, controls rejected, 1-2,000 runes |
 | `Conversation` | valid `ChatConversationState`, <=4,096 UTF-8 bytes |
+| `AuthorizedScope` | server-created caller/System/exact-two-Repository binding; caller cannot construct it |
+| `AdvisoryContext` | server-loaded `ChatAdvisoryContextSnapshot`; caller DTO has no text/source field |
 | `DeadlineUtc` / monotonic remaining budget | one server-created absolute deadline, exactly the same binding across retrieval/primary/repair/validation/reveal; implementation maximum 29,000 ms after accepted submission |
 
 Caller DTOs never supply `Conversation`, prior handles, deadline, Document IDs, or relationship identities.
@@ -87,7 +89,22 @@ Every arrow accepts the immutable successful value from the prior stage. The clo
 | current scope | one System, exactly two authorized Repositories |
 | candidate rows | stream all current eligible rows in stable-ID order; deduplicate/score before retaining the highest-ranked 256 or exhaustion |
 | duplicate stable ID | all ranking/currentness fields byte-equivalent or snapshot inconsistent |
-| source rows | current Logical Document/Document Version/Scan Run, Index Entry, Document Section, section Source Anchors only |
+| source rows | current Logical Document/Document Version/Scan Run, Index Entry, Document Section, section Source Anchors, applied Global/System/two-Repository Context only |
+| pending Context | excluded until the existing lifecycle applies it |
+
+### `ChatAdvisoryContextSnapshot`
+
+| Field | Rule |
+| --- | --- |
+| `SourceUnits` | applied nonblank Global, selected System, and two selected Repository Context values; Repository units ordered by RFC 4122 ID bytes |
+| source currentness | server identity + `UpdatedAt` + normalized complete text; exact scope membership rechecked |
+| `ComposedText` | NFC; CRLF/CR -> LF; outer Unicode whitespace trimmed; canonical Global -> System -> Repository order |
+| `Terms` | distinct ordinal-sorted ASCII identifiers length >=2 plus CJK bigrams after the closed ignored-term set |
+| `EncodedUtf8Bytes` | 0-8,192 inclusive; 8,193+ is `InconsistentCurrentEvidence`, never truncated |
+| `AuthorityFingerprint` | lower SHA-256 over source kinds/identities/order/`UpdatedAt`/normalized complete text and empty/applied disposition |
+| empty disposition | missing/all-blank applied values produce canonical empty text/terms and a deterministic empty-authority fingerprint |
+
+`IChatAdvisoryContextReader` accepts only `AuthorizedChatScope`. Hidden/missing/mismatched scope is `NotFoundOrUnauthorized`. Advisory terms are used only after the direct question/conversation pass yields zero positive candidates; fallback is restricted to current Business Logic summary sections and applies search/summary 20, heading 5, title 3 and prose 1 at most once. Currentness reloads and recomputes the exact authority before reveal.
 
 ### `ChatLexicalPrimaryProjection`
 
@@ -135,19 +152,23 @@ Closed complete support unit; partial units are invalid.
 | `RelationshipKind` | References or GeneratedFrom |
 | `DocumentEdgeId` | current exact persisted Edge |
 | source/target current Document Version + Repository | both inside selected authorized scope, directed and distinct |
-| `ExactDecisionBinding` | required for Cross-Repository References; accepted exact-match decision bound to same Edge and direction |
+| `SelectedExactDecisionId` | Cross-Repository References only: first decision in canonical current valid set; relationship proof witness, not uniqueness claim |
+| `ExactDecisionCount` | Cross-Repository References only: count of all independently valid current decisions bound to the Edge, >=1 |
+| `ExactDecisionSetFingerprint` | SHA-256 over the complete canonical current valid decision/contribution authority set |
 | `FlowGroupBinding` | optional only for current published flow evidence; includes group/trace identities and fingerprints |
 | `Depth` | exactly 1 for expanded relation |
 
 Cross-Repository REFERENCES validation:
 
 ```text
-decision exact-match
-AND decision.DocumentEdgeId == edge.Id
+one or more decisions exact-match
+AND every included decision.DocumentEdgeId == edge.Id
 AND edge.EdgeType == References
-AND decision consumer == edge source
-AND decision provider == edge target
-AND all System/Repository/Profiled Revision/current-pointer bindings agree
+AND every decision consumer == edge source
+AND every decision provider == edge target
+AND all System/Repository/Profiled Revision/current-pointer/contribution bindings agree
+AND canonical selected decision == ordered valid set[0]
+AND count/fingerprint == recomputed complete valid set
 ```
 
 Legacy profile fingerprints are not a v2 binding.
@@ -157,24 +178,26 @@ Legacy profile fingerprints are not a v2 binding.
 | State | Exact meaning | Projection result | Packet/claim effect |
 | --- | --- | --- | --- |
 | `absent` | no allowlisted current Edge exists for this seed/candidate identity | no optional unit | none; lexical primaries remain valid; if an already selected unit requires it, assembly refuses |
-| `present-valid` | one current directed allowlisted Edge; current endpoints; for Cross-Repository REFERENCES exactly one accepted v2 decision and complete contribution authority | eligible and canonically ranked | may become a complete optional unit |
-| `present-inconsistent` | stale/wrong-scope/wrong-direction Edge, conflicting duplicate, zero/multiple exact decisions where required, decision/Edge/contribution/fingerprint mismatch, or exact decision attached where forbidden | closed exclusion with reason | cannot support expansion or claim; unrelated lexical evidence is not poisoned |
-| `selected-required` | a `present-valid` relationship unit remains after deterministic complete-unit packing and all optional drops | all Documents/sections/anchors/decision/Edge fields become required | any later missing/stale/inconsistent field refuses the whole assembly; no lower-ranked substitution |
+| `present-valid` | one current directed allowlisted Edge/current endpoints; Cross-Repository REFERENCES has >=1 independently valid current decision, canonical first decision, count and full-set fingerprint | eligible and canonically ranked; multiple distinct decision slots remain valid | may become a complete optional unit |
+| `present-inconsistent` | stale/wrong-scope/wrong-direction Edge, conflicting duplicate decision slot, zero valid decisions where required, decision/Edge/contribution/set-fingerprint mismatch, or decision authority attached where forbidden | closed exclusion with reason | cannot support expansion or claim; unrelated lexical evidence is not poisoned |
+| `selected-required` | a `present-valid` relationship unit remains after deterministic complete-unit packing and all optional drops | all Documents/sections/anchors/Edge plus selected-decision/count/full-set fingerprint become required | any later valid-set membership/order/fingerprint or other required-field change refuses the whole assembly; no lower-ranked substitution |
+
+For Cross-Repository REFERENCES, a decision slot is `(Pass1PairExecutionId, ConsumerCandidateId, ConsumerEntryStableKey, Protocol, NormalizedEndpointIdentifier)`. Valid decisions order by pair RFC 4122 bytes, protocol, canonical stable-key UTF-8 bytes, canonical endpoint UTF-8 bytes, candidate RFC 4122 bytes, then decision RFC 4122 bytes. The set fingerprint binds schema + Edge and the complete ordered persisted authority: decision/schema/pair/coordination/System; consumer candidate/entry/stable-key/Document/Repository/Scan/revision; protocol/endpoint/normalization; outcome/kind/reason; nullable provider identity/Document/Repository/Scan/revision and Edge/Uncertainty links; and all four decision/evidence fingerprints after complete contribution-set recomputation. Encodings use length prefixes, RFC 4122 GUID bytes, fixed big-endian enum values and explicit nullable markers. The first decision is only the canonical packet witness; it does not suppress later valid decisions or their Flow Groups.
 
 ### Flow Group state table
 
 | State | Exact meaning | Projection result | Packet/claim effect |
 | --- | --- | --- | --- |
 | `absent` | no Flow Group is associated with a current included Business Logic Document/eligible exact relationship | no optional flow unit | none; a plain valid Edge remains usable without a flow claim |
-| `present-valid` | exactly one applicable `Published` group with current Business Logic Document, exact decision/Edge, fingerprints, Flow Trace and contiguous current steps within the selected scope/revisions | eligible and ranked by seed, group, trace, step identity | may become one complete flow unit |
-| `present-inconsistent` | `Incomplete`, `Complete`, `Failed`, `BoundExcluded`, unpublished, stale, conflicting duplicate, missing Business Logic Document, wrong decision/Edge, missing/duplicate/gapped trace step, wrong revision/scope/fingerprint | closed exclusion with reason | cannot support a flow claim; unrelated lexical evidence is not poisoned |
+| `present-valid` | one applicable `Published` group with current Business Logic Document, its exact decision present in the owning Edge's valid set, exact Edge, fingerprints, Flow Trace and contiguous current steps within scope/revisions | eligible and ranked by Edge rank, decision rank, group, trace, step identity; distinct decision-owned groups may share one Edge | may become one complete flow unit |
+| `present-inconsistent` | `Incomplete`, `Complete`, `Failed`, `BoundExcluded`, unpublished, stale, conflicting duplicate for one decision, missing Business Logic Document, decision absent from owning Edge set, wrong Edge, missing/duplicate/gapped trace step, wrong revision/scope/fingerprint | closed exclusion with reason | cannot support a flow claim; unrelated lexical evidence is not poisoned |
 | `selected-required` | a `present-valid` flow unit remains after deterministic complete-unit packing and all optional drops | group, Business Logic Document, exact relationship, trace, every step Document/Edge/description and required Source Anchor are required | any later defect refuses the whole assembly; no partial steps or substitute group |
 
 Selection states are transient values, not persistence states. Persisted Story 12.4 `Complete` means dispatchable but unpublished and is therefore `present-inconsistent` for Chat expansion; only persisted `Published` can become `present-valid`.
 
 ## 7. `EvidencePacket` v2
 
-Schema identity: `grounded-chat-evidence/2.1`.
+Schema identity: `grounded-chat-evidence/2.2`. The incompatible addition of complete many-decision authority and applied advisory-context authority is an explicit schema cutover, not an in-place reinterpretation of 2.1.
 
 | Collection/value | Bound |
 | --- | --- |
@@ -182,16 +205,18 @@ Schema identity: `grounded-chat-evidence/2.1`.
 | Sections | 1-20; <=4 per Document |
 | Source Anchors | 1-32 |
 | Relationships | 0-32 |
+| Cross-Repository decision authority | each relationship binds one canonical selected decision plus complete current valid decision count/set fingerprint; multiplicity is not a relationship-count multiplier |
 | Flow steps | 0-12; canonical contiguous order |
 | relationship depth | exactly 1 |
 | selection policy | `lexical-current-v2/1.0`; binds primary Document/section and expansion-seed handles |
 | Flow Group authorities | 0-10; each binds Published group, Business Logic Document, decision, Edge, fingerprints and trace |
 | evidence body | <=65,536 UTF-8 bytes |
 | advisory context | <=8,192 UTF-8 bytes |
+| advisory authority | lower SHA-256 over the exact server-owned applied Context snapshot used |
 | conversation | <=4,096 UTF-8 bytes |
 | fingerprint | lower SHA-256 over complete canonical packet |
 
-Each item has an opaque packet-local handle. Relationship handles bind the persisted Edge plus accepted v2 decision/Flow Group identities when applicable. Packing drops lowest-ranked optional relationship/Flow Group units first, then lowest-ranked non-strongest lexical extras; it removes newly unreachable support after each whole-unit drop. Strongest-per-Document units and selected-required support are never truncated or partially retained. Required-only overflow refuses assembly.
+Each item has an opaque packet-local handle. A Cross-Repository relationship binds the persisted Edge, canonical selected exact decision, full current decision-set count/fingerprint, and any independently selected decision-owned Flow Groups. Packing drops lowest-ranked optional relationship/Flow Group units first, then lowest-ranked non-strongest lexical extras; it removes newly unreachable support after each whole-unit drop. Strongest-per-Document units and selected-required support are never truncated or partially retained. Required-only overflow refuses assembly. The packet fingerprint includes the exact advisory text and advisory authority fingerprint.
 
 ## 8. `ChatSynthesisAttempt`
 
@@ -201,7 +226,9 @@ Each item has an opaque packet-local handle. Relationship handles bind the persi
 | `AttemptKind` | Primary or SyntaxRepair |
 | request/packet fingerprint | exact same binding on both attempts |
 | absolute deadline | same coordinator-created 29-second maximum deadline on both attempts |
-| stream observation | content-dark request/start/first-data/terminal/count/bytes/outcome/validation fields only |
+| `RuntimeObservationId` | identifies only immutable raw-adapter transport telemetry: request/header/read/EOF/counters/transport outcome/rejection; no validation field |
+| `CompletionSummaryId` | identifies the immutable coordinator summary that orders runtime observations and owns repair/final validation/duration |
+| `ValidationOutcome` | coordinator-owned closed value copied from the completion summary; never stored in `ChatStreamRuntimeObservation` |
 | remaining deadline | positive and >=3,000 ms for ordinal 2 |
 | syntax category | closed parse category on ordinal 2; no database/currentness/authorization detail |
 
@@ -338,10 +365,10 @@ ChatConversationState (transient)
   -> ChatLexicalPrimaryProjection (sole primary authority)
   -> ChatRelationshipExpansionProjection (optional complete units only)
        -> current DocumentEdge
-       -> CrossRepositoryResolutionDecision (required for cross-Repository REFERENCES)
-       -> published FlowGroup -> FlowTrace -> FlowTraceStep
+       -> ordered CrossRepositoryResolutionDecision set (required for cross-Repository REFERENCES)
+       -> decision-owned published FlowGroup[] -> FlowTrace -> FlowTraceStep
   -> ChatEvidenceAssembly (sole packet builder)
-  -> EvidencePacket v2.1
+  -> EvidencePacket v2.2
   -> ChatSynthesisAttempt primary stream (optionally syntax-repair stream)
   -> strict ChatProviderStreamFrame assembly
   -> ChatStreamRuntimeObservation (Track B neutral transport)

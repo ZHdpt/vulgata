@@ -8,7 +8,7 @@
 - August 30 sprint-change proposal, bounded-scanning architecture, and dated PRD overlay
 - accepted Story 12.4 artifacts at immutable dependency commit `4798b97d9f23aef587829175df7ab7ebc3daf995`
 - `specs/008-demo-chat-release-gate` as stale lifecycle but reusable implementation history
-- accepted Story 12.5 spec and `decisions/design-correction-01.md` at clean source commit `73c317f10917236e7a4ac0ad55f4966abd18024e`
+- accepted Story 12.5 spec, `decisions/design-correction-01.md`, and immutable `plan-review-07` at clean source commit `bf48acba67bc6634bb3b929aad14eb16a5ed9341`
 - current Prepared Chat contracts, retriever, currentness validator, coordinator, non-streaming provider dispatch/result validation, Unicode-safe page reveal, tests, Pass 1/Pass 2 streaming implementations, durable Scan entities/recovery/manual-resume API, placeholder Scan-history page, fake demo state, and release harness
 
 No `CONTEXT-MAP.md`, `CONTEXT.md`, repository ADR directory, or context ADR exists at the inspected boundary.
@@ -28,7 +28,7 @@ No `CONTEXT-MAP.md`, `CONTEXT.md`, repository ADR directory, or context ADR exis
 
 ## R-2: Legacy exact evidence is not accepted v2 relationship truth
 
-**Decision**: a Cross-Repository expansion fact requires an accepted Story 12.4 exact-match `CrossRepositoryResolutionDecision` plus its exact current directed `DocumentEdge`. `ExactCrossRepositoryEdgeEvidence` is legacy-only.
+**Decision**: a Cross-Repository expansion fact requires one or more independently valid accepted Story 12.4 exact-match `CrossRepositoryResolutionDecision` rows plus their shared exact current directed `DocumentEdge`. `ExactCrossRepositoryEdgeEvidence` is legacy-only. For one Edge, select the first decision under the Story 12.4 slot ordering as the relationship witness and bind the complete valid set through count plus canonical fingerprint; distinct valid decisions are not inconsistent and may own distinct Published Flow Groups.
 
 **Rationale**: current `ChatEvidenceRetriever` joins one embedded profile occurrence to one legacy exact-evidence row. Current `ChatEvidenceCurrentnessValidator` repeats that assumption. Story 12.4 candidate source explicitly permits many endpoint/entry decisions to share one document-level Edge, retains independent evidence, and binds each complete/published Flow Group to its decision. Legacy one-to-one profile evidence cannot represent that cardinality.
 
@@ -37,7 +37,7 @@ No `CONTEXT-MAP.md`, `CONTEXT.md`, repository ADR directory, or context ADR exis
 - Accept either legacy or v2: rejected because a stale legacy row could authorize an answer after v2 found ambiguity or changed current evidence.
 - Backfill v2 decisions from legacy rows: rejected because endpoint/consumer-entry identity and full contribution evidence are not reconstructable.
 
-**Consequence**: Track B waits for the accepted final Story 12.4 commit and adapts to its accepted names without changing its contract.
+**Consequence**: Track B waits for the accepted final Story 12.4 commit and adapts without changing its contract. B2 must prove two endpoint/entry decisions -> one Edge -> two independently decision-owned Published Flow Groups remain stable/current under randomized enumeration, while conflicting duplicate slots or later set-fingerprint changes fail closed.
 
 ## R-3: Relational projection, not a new persistence/search system
 
@@ -66,6 +66,22 @@ No `CONTEXT-MAP.md`, `CONTEXT.md`, repository ADR directory, or context ADR exis
 
 **Consequence**: architectural interaction RED tests must fail against the old composition before replacement writes. Structural tests enforce one packet-builder call and absence of classifier/legacy queries; behavioral tests fix lexical identities while relationship fixtures vary.
 
+## R-3B: Applied Context is the only advisory source
+
+**Decision**: add provider-independent `IChatAdvisoryContextReader` over the existing applied `GlobalContext`, selected `System.Context`, and exact two selected `Repository.Context` fields. It accepts only server-created `AuthorizedChatScope`, reads inside the retrieval transaction, ignores `PendingContextChange`, and returns a typed currentness/fingerprint snapshot. Missing/all-blank applied values are a valid canonical empty context.
+
+**Rationale**: existing Context management already distinguishes applied values from pending changes and the existing composition service establishes Global -> System -> Repository semantics. Calling that per Repository would duplicate Global/System context and supplies neither caller authorization nor currentness identity. The Chat-specific reader composes the exact two-Repository scope once without persistence changes or caller-controlled text.
+
+Normalize NFC, CRLF/CR to LF and outer Unicode whitespace; reject disallowed controls. Order Repository units by RFC 4122 ID bytes. Extract the same distinct ordinal ASCII terms/CJK bigrams as lexical retrieval. The complete canonical text is 0-8,192 UTF-8 bytes: exact succeeds, +1 returns `InconsistentCurrentEvidence`, and no truncation/drop is permitted. Advisory terms run only in the zero-direct-match Business Logic summary fallback, with search/summary 20, heading 5, title 3 and prose 1 each at most once. Packet and authority fingerprints bind exactly the used text/source identity/order/`UpdatedAt`; render currentness recomputes it.
+
+**Alternatives considered**:
+
+- Caller-provided advisory text: rejected because it bypasses server ownership and authorization.
+- Call `IContextCompositionService` twice: rejected because Global/System are duplicated and no typed currentness binding is returned.
+- Silently truncate/drop Context units: rejected because the actual provider input would no longer equal the source authority and canonical fingerprint.
+
+**Consequence**: B1 public-seam vectors cover positive fallback, empty/nonmatching/pending/caller-negative cases, authorization/currentness mutation, stable two-Repository ordering, fingerprint change, and exact 8,192/+1 bytes before provider dispatch.
+
 ## R-4: Relationship expansion is a closed projector
 
 **Decision**: use only current REFERENCES, GENERATED_FROM, accepted exact decision/Edge pairs, and complete `Published` Flow Groups; seeds are exactly the first `min(3, primaryDocumentCount)` lexical Documents, <=2 additions per seed, <=5 Documents, one hop, <=32 relationships, <=10 Flow Group authorities, <=12 flow steps.
@@ -81,7 +97,7 @@ No `CONTEXT-MAP.md`, `CONTEXT.md`, repository ADR directory, or context ADR exis
 
 ## R-5: Encoded packet size belongs to a dedicated builder
 
-**Decision**: `ChatEvidencePacketBuilder` canonicalizes handles and enforces 64 KiB evidence, 4 KiB conversation, and 8 KiB advisory context using UTF-8 byte counts.
+**Decision**: `ChatEvidencePacketBuilder` canonicalizes handles and enforces 64 KiB evidence, 4 KiB conversation, and 8 KiB server-owned advisory context using UTF-8 byte counts; it binds the advisory authority fingerprint and the canonical selected-decision/count/full-set fingerprint for every Cross-Repository relationship.
 
 **Rationale**: current `EvidencePacket.Create` enforces cardinalities but no byte cap. Chinese text and JSON framing make character counts insufficient. A builder can drop optional whole low-ranked sections without letting retrieval or provider code partially truncate support.
 
@@ -164,7 +180,7 @@ No `CONTEXT-MAP.md`, `CONTEXT.md`, repository ADR directory, or context ADR exis
 - Truncation, binary floating-point rounding, or banker's rounding for usefulness: rejected because implementations could disagree at a half-step; exact rational two-decimal round-half-up arithmetic is the single portable rule.
 - Provider-content logs or screenshots as streaming proof: rejected because they expose protected evidence and are unnecessary; timing/count/outcome metrics prove the transport without content.
 
-**Consequence**: Track B runtime observations contain only opaque observation ID/sequence, request/attempt/provider/request fingerprints, response/read/EOF dispositions, timings, counters and outcome. During Track C, process start creates an ephemeral ECDSA P-256 attestation authority; preflight binds its public-key/process/candidate and exact adapter type/version/assembly hash. The sealed sink signs the immutable runtime observation plus run/case/candidate context. The semantic verifier validates signature, sealed admission, and same-process/candidate bindings before aggregate recomputation. A perfectly consistent SDK aggregate fake-chunk receipt is rejected solely for missing authorized adapter-to-sink provenance. All earlier status conditioning, append-only correction, half-up scoring, ten checks, command/artifact bindings, and content redaction remain unchanged.
+**Consequence**: Track B runtime observations contain only opaque observation ID/sequence, request/attempt/provider/request fingerprints, response/read/EOF dispositions, timings, counters and transport outcome. `ChatSynthesisAttempt.RuntimeObservationId` never carries validation. A separate coordinator `CompletionSummaryId` owns ordered attempt IDs, repair use, validation outcome and accepted duration. During Track C, process start creates an ephemeral ECDSA P-256 attestation authority; preflight binds its public-key/process/candidate and exact adapter type/version/assembly hash. The sealed sink signs a projection over both immutable sources plus run/case/candidate context. The semantic verifier validates signature, sealed admission, exact transport equality, exact completion-summary equality, and same-process/candidate bindings before aggregate recomputation. A perfectly consistent SDK aggregate fake-chunk receipt is rejected solely for missing authorized adapter-to-sink provenance. All earlier status conditioning, append-only correction, half-up scoring, ten checks, command/artifact bindings, and content redaction remain unchanged.
 
 ## R-10: Tier 2/3 database safety is a preconnection invariant
 
