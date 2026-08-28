@@ -35,6 +35,18 @@ dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter "Full
 
 Result: 208 passed, 0 failed, 0 skipped.
 
+## Convergence correction cycle
+
+Independent convergence against checkpoint `4127658dcdff6942f031c3dbd3600dc76fd507b4` identified three partial Track B boundaries and appended T051-T053. Test and production ownership remained separate.
+
+| Task | Honest RED | Corrected GREEN |
+| --- | --- | --- |
+| T051 | projection-only non-flow retrieval returned `IncompleteOrStale`; four current `IndexEntry` symbol/path/endpoint/mode metadata cases ranked a prose-only competitor | current authorized `IndexEntry` plus `DocumentSection` projection-first ranking, exact metadata precedence, deterministic strongest-per-Document/limits/fallback, and legacy non-authority passed |
+| T052 | a generic follow-up omitted current evidence selected by the bounded prior validated question | prior questions and current Logical Document hints participate only after re-fetch/authorization as terms and a small post-eligibility boost; no evidence is carried over |
+| T053 | four post-retrieval `GENERATED_FROM` mutations—source/target Edge Scan Run and source/target Profiled Revision—returned `Current` | render-time validation binds both persisted Edge endpoints to current Scan Runs and their distinct Profiled Revisions; all four mutation cases return missing/stale |
+
+The original test owners verified GREEN: T051/T052 focused suite 46 passed; T053 currentness suite 26 passed. The consolidated Track B filter after correction passed 218 tests with 0 failures and 0 skips. No EF, migration, model-snapshot, Story 12.4 contract, shared composition, or Track C path changed.
+
 Additional checks:
 
 - `dotnet build src/dotnet/Vulgata.Web/Vulgata.Web.csproj --no-restore`: succeeded with 0 errors and existing package/analyzer warnings.

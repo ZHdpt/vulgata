@@ -115,6 +115,39 @@ public sealed class ChatEvidenceCurrentnessTests
     }
 
     [Theory]
+    [InlineData("generated-from-source-scan-run")]
+    [InlineData("generated-from-target-scan-run")]
+    [InlineData("generated-from-source-profiled-revision")]
+    [InlineData("generated-from-target-profiled-revision")]
+    public async Task ValidateCurrentAsync_GeneratedFromEndpointIdentityMutation_ReturnsMissingOrStaleAsync(
+        string mutation)
+    {
+        await using CurrentnessFixture fixture = await CurrentnessFixture.CreateAsync();
+        EvidencePacket packet = await fixture.RetrieveAsync();
+        Assert.Contains(
+            packet.Relationships,
+            relationship => relationship.RelationshipType == ChatRelationshipType.GeneratedFrom);
+
+        await fixture.CommitGeneratedFromIdentityMutationAsync(mutation);
+
+        ChatCurrentnessValidationOutcome outcome =
+            await new ChatEvidenceCurrentnessValidator(fixture.Context)
+                .ValidateCurrentAsync(
+                    // Isolate the GENERATED_FROM render-time proof from the
+                    // unrelated exact REFERENCES proof. The endpoint profile
+                    // mutations below must be attributable to this edge.
+                    CurrentnessFixture.CreateValidationRequest(
+                        packet,
+                        generatedFromOnly: true),
+                    new RepositoryAccessScope(
+                        fixture.RepositoryIds,
+                        new RecordingAuthorizationVerifier(true, true)));
+
+        Assert.Equal(ChatCurrentnessValidationOutcome.MissingOrStale, outcome);
+        Assert.Null(fixture.Context.Database.CurrentTransaction);
+    }
+
+    [Theory]
     [InlineData("flow-group-identity")]
     [InlineData("flow-group-state")]
     [InlineData("flow-group-document-binding")]
@@ -446,7 +479,8 @@ public sealed class ChatEvidenceCurrentnessTests
         }
 
         internal static ChatCurrentnessValidationRequest CreateValidationRequest(
-            EvidencePacket packet)
+            EvidencePacket packet,
+            bool generatedFromOnly = false)
         {
             Dictionary<string, EvidenceDocument> documents = packet.Documents.ToDictionary(
                 document => document.DocumentHandle,
@@ -476,7 +510,11 @@ public sealed class ChatEvidenceCurrentnessTests
                     anchor.LineStart,
                     anchor.LineEnd,
                     anchor.SourceHash)).ToArray(),
-                packet.Relationships.Select(relationship =>
+                packet.Relationships
+                    .Where(relationship =>
+                        !generatedFromOnly ||
+                        relationship.RelationshipType == ChatRelationshipType.GeneratedFrom)
+                    .Select(relationship =>
                 {
                     EvidenceDocument source = documents[relationship.SourceDocumentHandle];
                     EvidenceDocument target = documents[relationship.TargetDocumentHandle];
@@ -503,6 +541,58 @@ public sealed class ChatEvidenceCurrentnessTests
 
         internal Task CommitGeneratedFromLossAsync() => CommitSqlAsync(
             $"DELETE FROM \"DocumentEdges\" WHERE \"Id\" = {_generatedFromEdgeId}");
+
+        internal Task CommitGeneratedFromIdentityMutationAsync(string mutation) => mutation switch
+        {
+            "generated-from-source-scan-run" => CommitGeneratedFromScanRunMutationAsync(
+                nameof(DocumentEdge.SourceScanRunId)),
+            "generated-from-target-scan-run" => CommitGeneratedFromScanRunMutationAsync(
+                nameof(DocumentEdge.TargetScanRunId)),
+            "generated-from-source-profiled-revision" => CommitSqlAsync(
+                $"UPDATE \"DocumentVersions\" SET \"ProfiledRevision\" = {new string('0', 40)} WHERE \"Id\" = {_businessDocumentVersionId}"),
+            "generated-from-target-profiled-revision" => CommitSqlAsync(
+                $"UPDATE \"DocumentVersions\" SET \"ProfiledRevision\" = {new string('0', 40)} WHERE \"Id\" = {ExactCrossRepositoryTestValues.ConsumerDocumentVersionId}"),
+            _ => throw new ArgumentOutOfRangeException(nameof(mutation), mutation, "Unknown GENERATED_FROM identity mutation."),
+        };
+
+        private async Task CommitGeneratedFromScanRunMutationAsync(string edgeScanRunProperty)
+        {
+            await Context.Database.OpenConnectionAsync();
+            try
+            {
+                await using (DbCommand pragma = Context.Database.GetDbConnection().CreateCommand())
+                {
+                    pragma.CommandText = "PRAGMA foreign_keys = OFF";
+                    await pragma.ExecuteNonQueryAsync();
+                }
+
+                switch (edgeScanRunProperty)
+                {
+                    case nameof(DocumentEdge.SourceScanRunId):
+                        await Context.Database.ExecuteSqlInterpolatedAsync(
+                            $"UPDATE \"DocumentEdges\" SET \"SourceScanRunId\" = {ExactCrossRepositoryTestValues.UnsupportedScanRunId} WHERE \"Id\" = {_generatedFromEdgeId}");
+                        break;
+                    case nameof(DocumentEdge.TargetScanRunId):
+                        await Context.Database.ExecuteSqlInterpolatedAsync(
+                            $"UPDATE \"DocumentEdges\" SET \"TargetScanRunId\" = {ExactCrossRepositoryTestValues.UnsupportedScanRunId} WHERE \"Id\" = {_generatedFromEdgeId}");
+                        break;
+                    default:
+                        throw new ArgumentOutOfRangeException(nameof(edgeScanRunProperty), edgeScanRunProperty, null);
+                }
+
+                await using (DbCommand pragma = Context.Database.GetDbConnection().CreateCommand())
+                {
+                    pragma.CommandText = "PRAGMA foreign_keys = ON";
+                    await pragma.ExecuteNonQueryAsync();
+                }
+            }
+            finally
+            {
+                await Context.Database.CloseConnectionAsync();
+            }
+
+            Context.ChangeTracker.Clear();
+        }
 
         internal Task CommitReferencesEvidenceLossAsync() => CommitSqlAsync(
             $"DELETE FROM \"ExactCrossRepositoryEdgeEvidence\" WHERE \"EdgeId\" = {_referencesEdgeId}");

@@ -167,6 +167,104 @@ public sealed class ChatEvidenceRetrievalTests
     }
 
     [Fact]
+    public async Task RetrieveAsync_CurrentNonFlowQuestion_DoesNotRequirePreparedExactRelationshipAsync()
+    {
+        await using PreparedEvidenceFixture fixture = await PreparedEvidenceFixture.CreateAsync();
+        await fixture.RemoveV2AuthorityAsync();
+
+        ChatEvidenceResult result = await new ChatEvidenceRetriever(
+                fixture.Context,
+                new ProjectionOnlyScopeResolver())
+            .RetrieveAsync(
+                fixture.CreateRequest(
+                    "projection-only",
+                    question: "客户会话更新业务流程"),
+                new RepositoryAccessScope(
+                    fixture.RepositoryIds,
+                    new RecordingAuthorizationVerifier(true, true)));
+
+        Assert.Equal(ChatEvidenceResultKind.Found, result.Kind);
+        Assert.Contains(
+            Assert.IsType<EvidencePacket>(result.Packet).Sections,
+            section => section.Heading == "业务概览");
+    }
+
+    [Fact]
+    public async Task RetrieveAsync_FollowUpQuestion_UsesPriorValidatedQuestionForCurrentLexicalSelectionAsync()
+    {
+        await using PreparedEvidenceFixture fixture = await PreparedEvidenceFixture.CreateAsync();
+        await fixture.AddStandaloneCurrentCodeLogicAsync();
+
+        ChatRetrievalRequest firstRequest = fixture.CreateRequest(
+            "conversation-seed",
+            question: "特殊会话锚点");
+        ChatEvidenceResult firstResult = await new ChatEvidenceRetriever(fixture.Context)
+            .RetrieveAsync(
+                firstRequest,
+                new RepositoryAccessScope(
+                    fixture.RepositoryIds,
+                    new RecordingAuthorizationVerifier(true, true)));
+        EvidencePacket firstPacket = Assert.IsType<EvidencePacket>(firstResult.Packet);
+        EvidenceSection citedSection = Assert.Single(
+            firstPacket.Sections,
+            section => section.Heading == "特殊会话锚点说明");
+        EvidenceDocument citedDocument = Assert.Single(
+            firstPacket.Documents,
+            document => document.DocumentHandle == citedSection.DocumentHandle);
+        ChatConversationState conversation = firstRequest.Conversation.AppendValidatedTurn(
+            ValidatedConversationTurn.Create(
+                firstRequest.Question,
+                "已验证的特殊会话锚点答案。",
+                firstPacket.Fingerprint,
+                [citedSection.SectionHandle],
+                [citedDocument.LogicalDocumentId]));
+
+        ChatEvidenceResult followUpResult = await new ChatEvidenceRetriever(fixture.Context)
+            .RetrieveAsync(
+                fixture.CreateRequest(
+                    "conversation-follow-up",
+                    conversation,
+                    "它如何工作？"),
+                new RepositoryAccessScope(
+                    fixture.RepositoryIds,
+                    new RecordingAuthorizationVerifier(true, true)));
+
+        Assert.Equal(ChatEvidenceResultKind.Found, followUpResult.Kind);
+        Assert.Contains(
+            Assert.IsType<EvidencePacket>(followUpResult.Packet).Sections,
+            section => section.Heading == "特殊会话锚点说明");
+    }
+
+    [Theory]
+    [InlineData("SpecialSessionAnchor")]
+    [InlineData("src/main/java/provider/SpecialSessionAnchor.java")]
+    [InlineData("POST /special-session-anchor")]
+    [InlineData("technical-session-term")]
+    public async Task RetrieveAsync_CurrentIndexEntryMetadataMatch_OutranksProseContentMatchAsync(
+        string question)
+    {
+        await using PreparedEvidenceFixture fixture = await PreparedEvidenceFixture.CreateAsync();
+        await fixture.AddStandaloneCurrentCodeLogicAsync();
+        await fixture.RemoveV2AuthorityAsync();
+
+        ChatEvidenceResult result = await new ChatEvidenceRetriever(
+                fixture.Context,
+                new ProjectionOnlyScopeResolver())
+            .RetrieveAsync(
+                fixture.CreateRequest(
+                    "index-symbol-precedence",
+                    question: question),
+                new RepositoryAccessScope(
+                    fixture.RepositoryIds,
+                    new RecordingAuthorizationVerifier(true, true)));
+
+        EvidencePacket packet = Assert.IsType<EvidencePacket>(result.Packet);
+        Assert.Equal(ChatEvidenceResultKind.Found, result.Kind);
+        Assert.Contains(packet.Sections, section => section.Heading == "特殊会话锚点说明");
+        Assert.DoesNotContain(packet.Sections, section => section.Heading == "普通说明");
+    }
+
+    [Fact]
     public async Task RetrieveAsync_InvalidOrRestrictedRelationalEvidence_ReturnsClosedWholePacketFailureAsync()
     {
         await AssertClosedFailureAfterMutationAsync(
@@ -336,6 +434,19 @@ public sealed class ChatEvidenceRetrievalTests
         }
     }
 
+    private sealed class ProjectionOnlyScopeResolver : IPreparedChatScopeResolver
+    {
+        public Task<PreparedChatScopeBinding?> ResolveAsync(
+            Guid systemId,
+            IReadOnlyCollection<Guid> repositoryIds,
+            RepositoryAccessScope accessScope,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult<PreparedChatScopeBinding?>(new PreparedChatScopeBinding(
+                systemId,
+                repositoryIds.Order().First(),
+                repositoryIds.Order().Skip(1).First()));
+    }
+
     private sealed class PreparedEvidenceFixture(
         ExactCrossRepositoryTestFixture exactFixture,
         VulgataDbContext context,
@@ -381,14 +492,15 @@ public sealed class ChatEvidenceRetrievalTests
 
         internal ChatRetrievalRequest CreateRequest(
             string requestId,
-            ChatConversationState? conversation = null)
+            ChatConversationState? conversation = null,
+            string question = "客户会话如何跨仓库更新？")
         {
             ChatQuestionRequest questionRequest = ChatQuestionRequest.Create(
                 requestId,
                 ChatMode.Business,
                 ExactCrossRepositoryTestValues.SystemId,
                 RepositoryIds,
-                "客户会话如何跨仓库更新？");
+                question);
             ChatConversationScope conversationScope = ChatConversationScope.Create(
                 questionRequest.Mode,
                 questionRequest.SystemId,
@@ -397,6 +509,131 @@ public sealed class ChatEvidenceRetrievalTests
                 questionRequest,
                 conversation ?? ChatConversationState.Empty(conversationScope),
                 DateTimeOffset.UtcNow.AddMinutes(1));
+        }
+
+        internal async Task AddStandaloneCurrentCodeLogicAsync()
+        {
+            Guid logicalDocumentId = Id(61_001);
+            Guid documentVersionId = Id(61_002);
+            Guid sourceAnchorId = Id(61_003);
+            LogicalDocument logicalDocument = LogicalDocument.Create(
+                logicalDocumentId,
+                ExactCrossRepositoryTestValues.ProviderRepositoryId,
+                DocumentType.CodeLogic,
+                "prepared/special-session-anchor",
+                ExactCrossRepositoryTestValues.CreatedAt);
+            Context.LogicalDocuments.Add(logicalDocument);
+            await Context.SaveChangesAsync();
+
+            DocumentVersion version = DocumentVersion.Create(
+                documentVersionId,
+                logicalDocumentId,
+                ExactCrossRepositoryTestValues.ProviderRepositoryId,
+                ExactCrossRepositoryTestValues.SystemId,
+                ExactCrossRepositoryTestValues.ProviderScanRunId,
+                ExactCrossRepositoryTestValues.SourceHash[..40],
+                1,
+                "特殊会话锚点",
+                "src/main/java/provider/SpecialSessionAnchor.java",
+                KnowledgeDocumentLimits.SchemaIdentity,
+                "{}",
+                "特殊会话锚点处理规则。",
+                ExactCrossRepositoryTestValues.ContentFingerprint,
+                ExactCrossRepositoryTestValues.CommitFingerprint,
+                ExactCrossRepositoryTestValues.Pass1CompletedAt);
+            version.SourceAnchors.Add(new SourceAnchor(
+                sourceAnchorId,
+                documentVersionId,
+                version.RepositoryId,
+                version.ScanRunId,
+                ExactCrossRepositoryTestValues.ProviderCodeUnitId,
+                version.ProfiledRevision,
+                "src/main/java/provider/SpecialSessionAnchor.java",
+                "SpecialSessionAnchor.java#line=1;rule=conversation",
+                1,
+                3,
+                ExactCrossRepositoryTestValues.SourceHash,
+                ExactCrossRepositoryTestValues.Pass1CompletedAt));
+            Context.DocumentVersions.Add(version);
+            Context.DocumentSections.Add(Section(
+                Id(61_004),
+                logicalDocumentId,
+                version,
+                Id(61_005),
+                "特殊会话锚点说明",
+                "特殊会话锚点处理规则。",
+                sourceAnchorId,
+                []));
+            Context.IndexEntries.Add(IndexEntry.Create(
+                Id(61_006),
+                logicalDocumentId,
+                documentVersionId,
+                version.RepositoryId,
+                ExactCrossRepositoryTestValues.SystemId,
+                DocumentType.CodeLogic,
+                version.Title,
+                "特殊会话锚点处理规则。",
+                version.RepositoryRelativePath,
+                "[\"SpecialSessionAnchor\"]",
+                "[]",
+                "[\"POST /special-session-anchor\",\"technical-session-term\"]",
+                "SpecialSessionAnchor POST /special-session-anchor technical-session-term",
+                ExactCrossRepositoryTestValues.Pass1CompletedAt));
+
+            Guid proseLogicalDocumentId = Id(61_011);
+            Guid proseDocumentVersionId = Id(61_012);
+            Guid proseSourceAnchorId = Id(61_013);
+            LogicalDocument proseLogicalDocument = LogicalDocument.Create(
+                proseLogicalDocumentId,
+                ExactCrossRepositoryTestValues.ConsumerRepositoryId,
+                DocumentType.CodeLogic,
+                "prepared/prose-special-session-anchor",
+                ExactCrossRepositoryTestValues.CreatedAt);
+            Context.LogicalDocuments.Add(proseLogicalDocument);
+            await Context.SaveChangesAsync();
+            DocumentVersion proseVersion = DocumentVersion.Create(
+                proseDocumentVersionId,
+                proseLogicalDocumentId,
+                ExactCrossRepositoryTestValues.ConsumerRepositoryId,
+                ExactCrossRepositoryTestValues.SystemId,
+                ExactCrossRepositoryTestValues.ConsumerScanRunId,
+                ExactCrossRepositoryTestValues.SourceHash[..40],
+                1,
+                "普通说明",
+                "src/main/java/customer/ProseSpecialSessionAnchor.java",
+                KnowledgeDocumentLimits.SchemaIdentity,
+                "{}",
+                "SpecialSessionAnchor 仅作为普通说明文本出现。",
+                ExactCrossRepositoryTestValues.ContentFingerprint,
+                ExactCrossRepositoryTestValues.CommitFingerprint,
+                ExactCrossRepositoryTestValues.Pass1CompletedAt);
+            proseVersion.SourceAnchors.Add(new SourceAnchor(
+                proseSourceAnchorId,
+                proseDocumentVersionId,
+                proseVersion.RepositoryId,
+                proseVersion.ScanRunId,
+                ExactCrossRepositoryTestValues.ConsumerCodeUnitId,
+                proseVersion.ProfiledRevision,
+                "src/main/java/customer/ProseSpecialSessionAnchor.java",
+                "ProseSpecialSessionAnchor.java#line=1;rule=prose",
+                1,
+                3,
+                ExactCrossRepositoryTestValues.SourceHash,
+                ExactCrossRepositoryTestValues.Pass1CompletedAt));
+            Context.DocumentVersions.Add(proseVersion);
+            Context.DocumentSections.Add(Section(
+                Id(61_014),
+                proseLogicalDocumentId,
+                proseVersion,
+                Id(61_015),
+                "普通说明",
+                "SpecialSessionAnchor 仅作为普通说明文本出现。",
+                proseSourceAnchorId,
+                []));
+            await Context.SaveChangesAsync();
+            await SetCurrentVersionAsync(Context, logicalDocumentId, documentVersionId);
+            await SetCurrentVersionAsync(Context, proseLogicalDocumentId, proseDocumentVersionId);
+            Context.ChangeTracker.Clear();
         }
 
         internal async Task DriftExactProfileAsync(string field)

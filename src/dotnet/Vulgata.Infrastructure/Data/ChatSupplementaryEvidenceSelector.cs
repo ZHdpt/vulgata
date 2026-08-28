@@ -7,7 +7,13 @@ internal sealed record SupplementaryChatSectionCandidate(
     Guid StableSectionId,
     string Title,
     string Heading,
-    string ContentMarkdown);
+    string ContentMarkdown,
+    Guid LogicalDocumentId = default,
+    string RepositoryRelativePath = "",
+    string KeySymbolsJson = "",
+    string BusinessTermsJson = "",
+    string TechnicalTermsJson = "",
+    string SearchText = "");
 
 internal static class ChatSupplementaryEvidenceSelector
 {
@@ -21,7 +27,8 @@ internal static class ChatSupplementaryEvidenceSelector
     public static IReadOnlyList<SupplementaryChatSectionCandidate> Select(
         string question,
         IReadOnlyCollection<SupplementaryChatSectionCandidate> candidates,
-        int maximumCount)
+        int maximumCount,
+        IReadOnlyCollection<Guid>? preferredLogicalDocumentIds = null)
     {
         if (maximumCount <= 0 || candidates.Count == 0)
         {
@@ -34,9 +41,25 @@ internal static class ChatSupplementaryEvidenceSelector
             return [];
         }
 
-        SupplementaryChatSectionCandidate[] selected = candidates
-            .Select(candidate => new { Candidate = candidate, Score = Score(candidate, terms) })
-            .Where(item => item.Score > 0)
+        HashSet<Guid> preferred = preferredLogicalDocumentIds?.ToHashSet() ?? [];
+        var ranked = candidates
+            .Select(candidate => new
+            {
+                Candidate = candidate,
+                EligibilityScore = Score(candidate, terms),
+                MetadataScore = ScoreMetadata(candidate, terms),
+            })
+            .Where(item => item.EligibilityScore > 0 || item.MetadataScore > 0)
+            .ToArray();
+        bool hasMetadataMatch = ranked.Any(item => item.MetadataScore > 0);
+        SupplementaryChatSectionCandidate[] selected = ranked
+            .Where(item => !hasMetadataMatch || item.MetadataScore > 0)
+            .Select(item => new
+            {
+                item.Candidate,
+                Score = item.MetadataScore + item.EligibilityScore +
+                    (preferred.Contains(item.Candidate.LogicalDocumentId) ? 1 : 0),
+            })
             .GroupBy(item => item.Candidate.DocumentVersionId)
             .Select(group => group
                 .OrderByDescending(item => item.Score)
@@ -55,6 +78,16 @@ internal static class ChatSupplementaryEvidenceSelector
             (candidate.Title.Contains(term, StringComparison.OrdinalIgnoreCase) ? 3 : 0) +
             (candidate.Heading.Contains(term, StringComparison.OrdinalIgnoreCase) ? 5 : 0) +
             (candidate.ContentMarkdown.Contains(term, StringComparison.OrdinalIgnoreCase) ? 1 : 0));
+
+    private static int ScoreMetadata(
+        SupplementaryChatSectionCandidate candidate,
+        string[] terms) =>
+        terms.Sum(term =>
+            (candidate.RepositoryRelativePath.Contains(term, StringComparison.OrdinalIgnoreCase) ? 30 : 0) +
+            (candidate.KeySymbolsJson.Contains(term, StringComparison.OrdinalIgnoreCase) ? 40 : 0) +
+            (candidate.BusinessTermsJson.Contains(term, StringComparison.OrdinalIgnoreCase) ? 25 : 0) +
+            (candidate.TechnicalTermsJson.Contains(term, StringComparison.OrdinalIgnoreCase) ? 25 : 0) +
+            (candidate.SearchText.Contains(term, StringComparison.OrdinalIgnoreCase) ? 20 : 0));
 
     private static IEnumerable<string> ExtractTerms(string value)
     {

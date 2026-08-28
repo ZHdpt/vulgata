@@ -183,6 +183,18 @@ public sealed class ChatEvidenceCurrentnessValidator(VulgataDbContext context) :
                 documentVersionIds.Contains(edge.TargetDocumentVersionId))
             .Take(33)
             .ToArrayAsync(cancellationToken);
+        Guid[] scanRunIds = documents
+            .Select(document => document.ScanRunId)
+            .Distinct()
+            .ToArray();
+        CurrentScanRunRow[] scanRuns = await _context.ScanRuns
+            .AsNoTracking()
+            .Where(scanRun => scanRunIds.Contains(scanRun.Id))
+            .Select(scanRun => new CurrentScanRunRow(
+                scanRun.Id,
+                scanRun.ProfiledRevision))
+            .Take(6)
+            .ToArrayAsync(cancellationToken);
 
         Guid[] edgeIds = relationships.Select(relationship => relationship.Id).ToArray();
         string[] exactRelationshipIdentities = request.Relationships
@@ -222,12 +234,45 @@ public sealed class ChatEvidenceCurrentnessValidator(VulgataDbContext context) :
             ChatRelationshipType.GeneratedFrom => relationships.Any(edge =>
                 edge.EdgeType == DocumentEdgeType.GeneratedFrom &&
                 MatchesEndpoints(edge, expected, repositoryIds) &&
+                MatchesGeneratedFromEndpointAuthority(
+                    edge,
+                    expected,
+                    documents,
+                    scanRuns) &&
                 string.Equals(
                     StableIdentity(edge.Id),
                     expected.RelationshipIdentity,
                     StringComparison.Ordinal)),
             _ => false,
         });
+    }
+
+    private static bool MatchesGeneratedFromEndpointAuthority(
+        DocumentEdge edge,
+        ChatCurrentRelationship expected,
+        IReadOnlyCollection<CurrentDocumentRow> documents,
+        IReadOnlyCollection<CurrentScanRunRow> scanRuns)
+    {
+        CurrentDocumentRow? source = documents.SingleOrDefault(document =>
+            document.DocumentVersionId == expected.SourceDocumentVersionId);
+        CurrentDocumentRow? target = documents.SingleOrDefault(document =>
+            document.DocumentVersionId == expected.TargetDocumentVersionId);
+        return source is not null &&
+               target is not null &&
+               edge.SourceScanRunId == source.ScanRunId &&
+               edge.TargetScanRunId == target.ScanRunId &&
+               scanRuns.Any(scanRun =>
+                   scanRun.ScanRunId == source.ScanRunId &&
+                   string.Equals(
+                       scanRun.ProfiledRevision,
+                       source.ProfiledRevision,
+                       StringComparison.Ordinal)) &&
+               scanRuns.Any(scanRun =>
+                   scanRun.ScanRunId == target.ScanRunId &&
+                   string.Equals(
+                       scanRun.ProfiledRevision,
+                       target.ProfiledRevision,
+                       StringComparison.Ordinal));
     }
 
     private async Task<bool> ValidateFlowGroupsAsync(
@@ -445,6 +490,10 @@ public sealed class ChatEvidenceCurrentnessValidator(VulgataDbContext context) :
         Guid StableSectionId,
         Guid DocumentVersionId,
         string ContentMarkdown);
+
+    private sealed record CurrentScanRunRow(
+        Guid ScanRunId,
+        string? ProfiledRevision);
 
     private sealed record CurrentAnchorRow(
         Guid AnchorId,

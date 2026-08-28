@@ -453,7 +453,7 @@ public sealed record EvidencePacket
             canonicalSections.Length is < 1 or > 20 ||
             canonicalAnchors.Length is < 1 or > 32 ||
             canonicalRelationships.Length > 32 ||
-            canonicalFlow.Length is < 1 or > 12 ||
+            canonicalFlow.Length > 12 ||
             canonicalFlowGroups.Length > 10 ||
             Encoding.UTF8.GetByteCount(normalizedAdvisory) > 8_192 ||
             canonicalConversation.EncodedUtf8Bytes > 4_096 ||
