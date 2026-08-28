@@ -6,10 +6,10 @@
   "stage": "implement",
   "preflight": {
     "branch": "demo0831/story-12-5",
-    "head": "c1c584172db32fb45a6712c02c8d275a4e3876b6",
+    "head": "4f20bdbad4e62c8b37b62b84f556d9d49f895ae7",
     "git_identity_sha256": "07a20fe92c0f34dce99c42edc204a9db68ea55524b692aa9828e2edde364da34",
-    "status_sha256": "f0307c5e2f714e704c07bead4eaa489bdb1763bd4e49f9857257387c09a531c4",
-    "observed_at": "2026-08-28T16:08:16.8326644Z"
+    "status_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "observed_at": "2026-08-28T16:11:57.2659662Z"
   },
   "artifacts": {
     "spec": {
@@ -111,13 +111,13 @@
   "checkpoint": {
     "checkpoint_id": "bmad-12-5-implement-20260828T160816Z-5e73a6",
     "stage": "implement",
-    "commit_sha": null,
-    "binding_status": "pending"
+    "commit_sha": "4f20bdbad4e62c8b37b62b84f556d9d49f895ae7",
+    "binding_status": "bound"
   },
   "resume": {
     "stage": "converge",
-    "reason": "Track B convergence tasks T064-T066 are GREEN and pending their implementation checkpoint. After binding, run the third post-redesign convergence pass; Track C remains closed.",
+    "reason": "Track B convergence tasks T064-T066 are GREEN and bound at 4f20bdbad4e62c8b37b62b84f556d9d49f895ae7. Run the third post-redesign convergence pass; Track C remains closed.",
     "evidence_path": "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/track-b-convergence-correction-09.md"
   },
-  "updated_at": "2026-08-28T16:08:16.8326644Z"
+  "updated_at": "2026-08-28T16:11:57.2659662Z"
 }
