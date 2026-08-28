@@ -993,6 +993,7 @@ public sealed class Pass2ProductionCompositionTests : IClassFixture<LoginLogoutT
         CrossRepositoryResolutionDecision[] existingDecisions = await context
             .CrossRepositoryResolutionDecisions.ToArrayAsync();
         CrossRepositoryResolutionDecision original = existingDecisions
+            .Where(value => value.Outcome == "ExactMatch")
             .OrderBy(value => value.CreatedAt)
             .First();
         ExactResolutionProviderEvidenceContribution originalContribution = await context

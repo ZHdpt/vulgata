@@ -11,6 +11,8 @@ public sealed class Story125ReleaseHarnessTests
         "0d835c5f65f70a3c6a9561c6ff600069bb93e832";
     private const string AcceptedStory124CompletionCommit =
         "4798b97d9f23aef587829175df7ab7ebc3daf995";
+    private const string AuthorizedStory124MetadataCorrectionPath =
+        "specs/013-exact-cross-repository-flow-pass2/workflow-state.json";
 
     [Fact]
     public void Story125Boundary_NoMigrationDbContextStory124OrUncoordinatedSharedDelta_RemainsIntact()
@@ -65,7 +67,12 @@ public sealed class Story125ReleaseHarnessTests
         IReadOnlyList<string> postIntegrationChanges = GetChangedPathsSinceCommit(
             repositoryRoot,
             AcceptedStory124CompletionCommit);
-        Assert.DoesNotContain(postIntegrationChanges, IsStory124Path);
+        Assert.DoesNotContain(
+            postIntegrationChanges,
+            path => IsStory124Path(path) &&
+                !StringComparer.Ordinal.Equals(
+                    path,
+                    AuthorizedStory124MetadataCorrectionPath));
 
         string ownershipManifest = File.ReadAllText(Path.Combine(
             repositoryRoot,

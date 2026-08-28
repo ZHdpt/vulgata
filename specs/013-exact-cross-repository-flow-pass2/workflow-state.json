@@ -6,10 +6,10 @@
   "stage": "complete",
   "preflight": {
     "branch": "demo0831/story-12-4",
-    "head": "0d835c5f65f70a3c6a9561c6ff600069bb93e832",
+    "head": "4798b97d9f23aef587829175df7ab7ebc3daf995",
     "git_identity_sha256": "056EE72BEB553F1C2AAA2D88B2730FC47D14ABC810286CC5F98D68B1F513B17B",
-    "status_sha256": "E52CE1747F37ADDBA0523AB36BF38CE0DFDE2EAAF42442A90EF0BD2F067126B0",
-    "observed_at": "2026-08-27T13:25:24.7971304Z"
+    "status_sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+    "observed_at": "2026-08-27T23:53:11.8111869Z"
   },
   "artifacts": {
     "spec": {
@@ -88,9 +88,9 @@
   "checkpoint": {
     "checkpoint_id": "bmad-12-4-complete-20260827T132524Z-d8e2d1",
     "stage": "complete",
-    "commit_sha": null,
-    "binding_status": "pending"
+    "commit_sha": "4798b97d9f23aef587829175df7ab7ebc3daf995",
+    "binding_status": "bound"
   },
   "resume": null,
-  "updated_at": "2026-08-27T13:25:24.7971304Z"
+  "updated_at": "2026-08-27T23:53:11.8111869Z"
 }
