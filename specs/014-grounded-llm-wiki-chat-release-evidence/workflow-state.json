@@ -6,10 +6,10 @@
   "stage": "implement",
   "preflight": {
     "branch": "demo0831/story-12-5",
-    "head": "b3ae9ac91709c1345598c625205b48a7ba2acaab",
+    "head": "ab7f1df63f40922c533fc2c3005a8e676a2bc068",
     "git_identity_sha256": "34fc6036d0a1be3ccf0e945a0e61830e954a7c687ba9850ccc68b215dbc981df",
     "status_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-    "observed_at": "2026-08-28T14:20:02.1901370Z"
+    "observed_at": "2026-08-28T14:21:17.4651454Z"
   },
   "artifacts": {
     "spec": {
@@ -111,13 +111,13 @@
   "checkpoint": {
     "checkpoint_id": "bmad-12-5-implement-20260828T141929Z-b3",
     "stage": "implement",
-    "commit_sha": null,
-    "binding_status": "pending"
+    "commit_sha": "ab7f1df63f40922c533fc2c3005a8e676a2bc068",
+    "binding_status": "bound"
   },
   "resume": {
     "stage": "implement",
-    "reason": "Track B B3 T040-T044 is complete and pending checkpoint binding. Continue with B4 T045-T053 after binding; Track C T054-T062 remains closed until the accepted full Track B checkpoint condition passes.",
+    "reason": "Track B B3 T040-T044 is complete and bound at ab7f1df63f40922c533fc2c3005a8e676a2bc068. Continue with B4 T045-T053; Track C T054-T062 remains closed until the accepted full Track B checkpoint condition passes.",
     "evidence_path": "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/track-b-b3-implementation-01.md"
   },
-  "updated_at": "2026-08-28T14:20:02.1901370Z"
+  "updated_at": "2026-08-28T14:21:17.4651454Z"
 }
