@@ -386,6 +386,48 @@ public sealed class ChatEvidenceRetrievalTests
     }
 
     [Fact]
+    public async Task RetrieveAsync_CrossRepositoryQuestion_IgnoresUnrelatedStaleCrossRepositoryEdgeAsync()
+    {
+        await using PreparedEvidenceFixture fixture = await PreparedEvidenceFixture.CreateAsync();
+        await fixture.AddCurrentOneHopReferenceAsync();
+        await fixture.RemoveV2AuthorityAsync();
+        await fixture.AddStaleUnrelatedCrossRepositoryEdgeAsync();
+
+        ChatEvidenceResult result = await new ChatEvidenceRetriever(
+                fixture.Context,
+                new ProjectionOnlyScopeResolver())
+            .RetrieveAsync(
+                fixture.CreateRequest(
+                    "stale-unrelated-cross-edge",
+                    question: "客户会话如何跨仓库更新？"),
+                new RepositoryAccessScope(
+                    fixture.RepositoryIds,
+                    new RecordingAuthorizationVerifier(true, true)));
+
+        Assert.Equal(ChatEvidenceResultKind.Found, result.Kind);
+        Assert.NotNull(result.Packet);
+    }
+
+    [Fact]
+    public async Task RetrieveAsync_EmptyAdditionalPublishedFlowGroup_RejectsWholePacketAsync()
+    {
+        await using PreparedEvidenceFixture fixture = await PreparedEvidenceFixture.CreateAsync();
+        await fixture.AddCurrentOneHopReferenceAsync();
+        await fixture.AddPublishedOneHopFlowGroupAsync();
+        await fixture.AddEmptyPublishedOneHopFlowGroupAsync();
+
+        ChatEvidenceResult result = await new ChatEvidenceRetriever(fixture.Context)
+            .RetrieveAsync(
+                fixture.CreateRequest("empty-additional-flow-group"),
+                new RepositoryAccessScope(
+                    fixture.RepositoryIds,
+                    new RecordingAuthorizationVerifier(true, true)));
+
+        Assert.Equal(ChatEvidenceResultKind.IncompleteOrStale, result.Kind);
+        Assert.Null(result.Packet);
+    }
+
+    [Fact]
     public async Task RetrieveAsync_ItQuestion_SelectsTechnicalDetailAndEvidenceProjectionSectionsAsync()
     {
         await using PreparedEvidenceFixture fixture = await PreparedEvidenceFixture.CreateAsync();
@@ -721,6 +763,8 @@ public sealed class ChatEvidenceRetrievalTests
         private static readonly Guid _secondRelatedFlowGroupId = Id(60_034);
         private static readonly Guid _secondRelatedFlowTraceId = Id(60_035);
         private static readonly Guid _secondRelatedFlowStepId = Id(60_036);
+        private static readonly Guid _staleUnrelatedEdgeId = Id(60_041);
+        private static readonly Guid _emptyFlowGroupId = Id(60_042);
 
         internal VulgataDbContext Context { get; } = context;
 
@@ -877,6 +921,50 @@ public sealed class ChatEvidenceRetrievalTests
             flowGroup.Traces.Add(trace);
             Context.FlowGroups.Add(flowGroup);
             await Context.SaveChangesAsync();
+            Context.ChangeTracker.Clear();
+        }
+
+        internal async Task AddEmptyPublishedOneHopFlowGroupAsync()
+        {
+            var flowGroup = new FlowGroup(
+                _emptyFlowGroupId,
+                _oneHopDocumentVersionId,
+                ExactCrossRepositoryTestValues.ProviderRepositoryId,
+                ExactCrossRepositoryTestValues.ProviderScanRunId,
+                4,
+                "会话调用扩展空流程",
+                ExactCrossRepositoryTestValues.Pass1CompletedAt);
+            Context.Entry(flowGroup).Property(nameof(FlowGroup.SchemaIdentity)).CurrentValue =
+                "endpoint-flow-group/1.0";
+            Context.Entry(flowGroup).Property(nameof(FlowGroup.State)).CurrentValue = "Published";
+            Context.Entry(flowGroup).Property(nameof(FlowGroup.SystemId)).CurrentValue =
+                ExactCrossRepositoryTestValues.SystemId;
+            Context.Entry(flowGroup).Property(nameof(FlowGroup.PlanFingerprint)).CurrentValue =
+                new string('1', 64);
+            Context.Entry(flowGroup).Property(nameof(FlowGroup.MembershipFingerprint)).CurrentValue =
+                new string('2', 64);
+            Context.Entry(flowGroup).Property(nameof(FlowGroup.ExactResolutionEdgeId)).CurrentValue =
+                _oneHopEdgeId;
+            Context.FlowGroups.Add(flowGroup);
+            await Context.SaveChangesAsync();
+            Context.ChangeTracker.Clear();
+        }
+
+        internal async Task AddStaleUnrelatedCrossRepositoryEdgeAsync()
+        {
+            Context.DocumentEdges.Add(new DocumentEdge(
+                _staleUnrelatedEdgeId,
+                ExactCrossRepositoryTestValues.ConsumerDocumentVersionId,
+                ExactCrossRepositoryTestValues.ConsumerRepositoryId,
+                ExactCrossRepositoryTestValues.ConsumerScanRunId,
+                _oneHopDocumentVersionId,
+                ExactCrossRepositoryTestValues.ProviderRepositoryId,
+                ExactCrossRepositoryTestValues.ProviderScanRunId,
+                DocumentEdgeType.References,
+                ExactCrossRepositoryTestValues.Pass1CompletedAt));
+            await Context.SaveChangesAsync();
+            await Context.Database.ExecuteSqlInterpolatedAsync(
+                $"UPDATE \"LogicalDocuments\" SET \"CurrentVersionId\" = NULL WHERE \"Id\" = {_oneHopLogicalDocumentId}");
             Context.ChangeTracker.Clear();
         }
 

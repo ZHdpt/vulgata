@@ -350,6 +350,13 @@ public sealed class PreparedChatCoordinator(
 
             if (!validation.IsAnswerable)
             {
+                if (dispatcher is IChatStreamValidationDispositionRecorder recorder)
+                {
+                    _ = recorder.TryRecordFinalValidationDisposition(
+                        synthesisRequest.RequestId,
+                        ChatStreamValidationDisposition.RejectedSemantic);
+                }
+
                 IReadOnlyList<CandidateClaim> fallbackCandidates =
                     ChatCandidateRanker.SelectStrongGroundedMatches(
                         request.Question,

@@ -166,7 +166,7 @@ public sealed class ChatEvidenceRetriever(
             .ToArrayAsync(cancellationToken);
         if (exactRelationships.Length == 0)
         {
-            return await HasInvalidCrossRepositoryEndpointAsync(
+            return await HasMissingCurrentRepositoryDocumentAsync(
                     request.SystemId,
                     repositoryIds,
                     cancellationToken)
@@ -655,6 +655,12 @@ public sealed class ChatEvidenceRetriever(
                 step.Description))
             .Take(13)
             .ToArrayAsync(cancellationToken);
+        if (selectedFlowGroupIds.Any(flowGroupId =>
+                flowRows.All(row => row.FlowGroupId != flowGroupId)))
+        {
+            return ChatEvidenceResult.IncompleteOrStale();
+        }
+
         if (flowRows.Length == 0)
         {
             bool hasFlowExpansion = await _context.FlowGroups.AsNoTracking().AnyAsync(
@@ -839,73 +845,28 @@ public sealed class ChatEvidenceRetriever(
         return ChatEvidenceResult.Found(packet);
     }
 
-    private async Task<bool> HasInvalidCrossRepositoryEndpointAsync(
+    private async Task<bool> HasMissingCurrentRepositoryDocumentAsync(
         Guid systemId,
         IReadOnlyCollection<Guid> repositoryIds,
         CancellationToken cancellationToken)
     {
-        DocumentEdge[] edges = await _context.DocumentEdges
-            .AsNoTracking()
-            .Where(edge =>
-                edge.EdgeType == DocumentEdgeType.References &&
-                repositoryIds.Contains(edge.SourceRepositoryId) &&
-                repositoryIds.Contains(edge.TargetRepositoryId) &&
-                edge.SourceRepositoryId != edge.TargetRepositoryId)
-            .OrderBy(edge => edge.Id)
-            .Take(33)
-            .ToArrayAsync(cancellationToken);
-        if (edges.Length > 32)
-        {
-            return true;
-        }
-
-        Guid[] endpointIds = edges
-            .SelectMany(edge => new[]
-            {
-                edge.SourceDocumentVersionId,
-                edge.TargetDocumentVersionId,
-            })
-            .Distinct()
-            .ToArray();
-        if (endpointIds.Length == 0)
-        {
-            return false;
-        }
-
-        CurrentDocumentRow[] currentEndpoints = await (
+        Guid[] currentRepositoryIds = await (
             from logical in _context.LogicalDocuments.AsNoTracking()
             join version in _context.DocumentVersions.AsNoTracking()
                 on logical.CurrentVersionId equals version.Id
             join scanRun in _context.ScanRuns.AsNoTracking()
                 on version.ScanRunId equals scanRun.Id
-            where endpointIds.Contains(version.Id) &&
-                version.SystemId == systemId &&
+            where version.SystemId == systemId &&
                 repositoryIds.Contains(version.RepositoryId) &&
                 version.SupersededById == null &&
                 scanRun.RepositoryId == version.RepositoryId &&
                 scanRun.Status == ScanRunStatus.Completed &&
                 scanRun.ProfiledRevision == version.ProfiledRevision
-            select new CurrentDocumentRow(
-                logical.Id,
-                version.Id,
-                version.RepositoryId,
-                version.ScanRunId,
-                logical.DocumentType,
-                version.Title,
-                version.ProfiledRevision))
-            .Take(65)
+            select version.RepositoryId)
+            .Distinct()
+            .Take(3)
             .ToArrayAsync(cancellationToken);
-
-        return currentEndpoints.Length != endpointIds.Length ||
-            edges.Any(edge =>
-                currentEndpoints.All(endpoint =>
-                    endpoint.DocumentVersionId != edge.SourceDocumentVersionId ||
-                    endpoint.RepositoryId != edge.SourceRepositoryId ||
-                    endpoint.ScanRunId != edge.SourceScanRunId) ||
-                currentEndpoints.All(endpoint =>
-                    endpoint.DocumentVersionId != edge.TargetDocumentVersionId ||
-                    endpoint.RepositoryId != edge.TargetRepositoryId ||
-                    endpoint.ScanRunId != edge.TargetScanRunId));
+        return currentRepositoryIds.Length != repositoryIds.Count;
     }
 
     private async Task<ChatEvidenceResult> RetrieveProjectionOnlyAsync(

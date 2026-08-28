@@ -275,7 +275,7 @@ internal sealed class OpenAiCompatibleChatProviderStreamingTransport(
                     yield break;
                 }
 
-                throw new InvalidDataException(
+                throw new RawBodyOverflowException(
                     "The Chat provider response exceeds its raw byte bound.");
             }
 
@@ -430,6 +430,7 @@ internal sealed class OpenAiCompatibleChatProviderStreamingTransport(
 
     private static string Classify(Exception exception) => exception switch
     {
+        RawBodyOverflowException => "raw-body-overflow",
         HttpRequestException => "provider-failure",
         IOException => "disconnect",
         DecoderFallbackException => "invalid-wire-utf8",
@@ -492,6 +493,8 @@ internal sealed class OpenAiCompatibleChatProviderStreamingTransport(
         private int _currentSseLineByteCount;
         private int _currentSseEventByteCount;
         private bool _previousWasCarriageReturn;
+        private bool _carriageReturnCompletedEvent;
+        private int _carriageReturnCompletedEventByteCount;
 
         internal void ObserveSseBytes(ReadOnlySpan<byte> bytes)
         {
@@ -502,8 +505,22 @@ internal sealed class OpenAiCompatibleChatProviderStreamingTransport(
                     _previousWasCarriageReturn = false;
                     if (value == (byte)'\n')
                     {
+                        if (_carriageReturnCompletedEvent)
+                        {
+                            MaximumSseEventByteCount = Math.Max(
+                                MaximumSseEventByteCount,
+                                _carriageReturnCompletedEventByteCount + 1);
+                        }
+                        else
+                        {
+                            _currentSseEventByteCount++;
+                        }
+
+                        _carriageReturnCompletedEvent = false;
                         continue;
                     }
+
+                    _carriageReturnCompletedEvent = false;
                 }
 
                 if (value is (byte)'\r' or (byte)'\n')
@@ -514,6 +531,9 @@ internal sealed class OpenAiCompatibleChatProviderStreamingTransport(
                     _currentSseEventByteCount += _currentSseLineByteCount + 1;
                     if (_currentSseLineByteCount == 0)
                     {
+                        _carriageReturnCompletedEvent = value == (byte)'\r';
+                        _carriageReturnCompletedEventByteCount =
+                            _currentSseEventByteCount;
                         MaximumSseEventByteCount = Math.Max(
                             MaximumSseEventByteCount,
                             _currentSseEventByteCount);
@@ -539,4 +559,7 @@ internal sealed class OpenAiCompatibleChatProviderStreamingTransport(
                 _currentSseEventByteCount + _currentSseLineByteCount);
         }
     }
+
+    private sealed class RawBodyOverflowException(string message) :
+        IOException(message);
 }

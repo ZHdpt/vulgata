@@ -561,6 +561,60 @@ public sealed class PreparedChatCoordinatorTests
     }
 
     [Fact]
+    public async Task AskAsync_UnsupportedStreamingAnswer_RecordsNonAcceptedDispositionOnPrimaryAttempt()
+    {
+        var system = new SystemEntity("支付系统", null, null, DateTimeOffset.UtcNow);
+        Repository first = system.AddRepository("账户仓库", "https://example.test/account.git", null, null, DateTimeOffset.UtcNow);
+        Repository second = system.AddRepository("渠道仓库", "https://example.test/channel.git", null, null, DateTimeOffset.UtcNow);
+        var provider = new LlmProvider(
+            "streaming-chat",
+            "https://provider.example/v1",
+            "encrypted-key",
+            ApiType.ChatCompletions,
+            AgentType.Chat,
+            DateTimeOffset.UtcNow);
+        using var responseHandler = new SemanticRejectionResponseHandler("{}");
+        using var observationAuthority = new ChatStreamObservationAuthority();
+        var transport = new OpenAiCompatibleChatProviderStreamingTransport(
+            new SingleProviderRepository(provider),
+            new PlaintextSecretEncryptionService(),
+            responseHandler,
+            observationAuthority);
+        var dispatcher = new SemanticRejectingDispatcher(
+            transport,
+            provider,
+            "{}",
+            ChatAnswerability.Unsupported);
+        var retriever = new StubEvidenceRetriever
+        {
+            PrimaryContent = "客户付款记录。",
+        };
+        var coordinator = CreateCoordinator(
+            system,
+            [first, second],
+            retriever: retriever,
+            dispatcher: dispatcher);
+
+        PreparedChatResult result = await coordinator.AskAsync(
+            ChatMode.Business,
+            system.Id,
+            [first.Id, second.Id],
+            "客户如何付款？");
+
+        Assert.Equal(PreparedChatResultKind.Unsupported, result.Kind);
+        Assert.Null(result.Answer);
+        Assert.NotNull(dispatcher.RequestId);
+        Assert.True(observationAuthority.TryGetVerifiedReceipt(
+            dispatcher.RequestId!,
+            "primary",
+            out string? serializedReceipt));
+        using JsonDocument document = JsonDocument.Parse(serializedReceipt!);
+        JsonElement receipt = document.RootElement.GetProperty("receipt");
+        Assert.Equal("rejected-semantic", receipt.GetProperty("validationOutcome").GetString());
+        Assert.DoesNotContain("{}", serializedReceipt!, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task AskAsync_UnrelatedQuestion_ReturnsChineseUnsupportedResponseWithoutCitations()
     {
         var system = new SystemEntity("支付系统", null, null, DateTimeOffset.UtcNow);
@@ -965,7 +1019,7 @@ public sealed class PreparedChatCoordinatorTests
         IReadOnlyList<Repository> repositories,
         StubAuthorizationVerifier? authorization = null,
         StubEvidenceRetriever? retriever = null,
-        StubDispatcher? dispatcher = null,
+        IChatAgentDispatcher? dispatcher = null,
         StubCurrentnessValidator? currentness = null)
     {
         var candidateExtractor = new ChatCandidateExtractor();
@@ -1189,7 +1243,8 @@ public sealed class PreparedChatCoordinatorTests
     private sealed class SemanticRejectingDispatcher(
         IChatProviderStreamingTransport transport,
         LlmProvider provider,
-        string streamedAnswer) :
+        string streamedAnswer,
+        ChatAnswerability answerability = ChatAnswerability.Supported) :
         IChatAgentDispatcher,
         IChatStreamValidationDispositionRecorder
     {
@@ -1221,9 +1276,23 @@ public sealed class PreparedChatCoordinatorTests
                 request.RequestId,
                 request.Mode,
                 request.EvidenceFingerprint,
-                ChatAnswerability.Supported,
-                [new ChatSynthesisSelection("unknown", 1)]);
-            return ChatSynthesisOutcome.Generated(synthesis, streamedAnswer);
+                answerability,
+                answerability == ChatAnswerability.Supported
+                    ? [new ChatSynthesisSelection("unknown", 1)]
+                    : []);
+            string rawSelectionJson = answerability == ChatAnswerability.Unsupported
+                ? $$"""
+                    {
+                      "schemaVersion": "{{ChatSynthesisResult.SupportedSchemaVersion}}",
+                      "requestId": "{{request.RequestId}}",
+                      "mode": "{{(request.Mode == ChatMode.Business ? "business" : "it")}}",
+                      "evidenceFingerprint": "{{request.EvidenceFingerprint}}",
+                      "answerability": "unsupported",
+                      "selections": []
+                    }
+                    """
+                : streamedAnswer;
+            return ChatSynthesisOutcome.Generated(synthesis, rawSelectionJson);
         }
 
         public bool TryRecordFinalValidationDisposition(

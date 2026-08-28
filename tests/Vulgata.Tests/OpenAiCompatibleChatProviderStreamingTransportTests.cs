@@ -232,7 +232,7 @@ public sealed class OpenAiCompatibleChatProviderStreamingTransportTests
     [Theory]
     [InlineData("\n", 14, 15, 14)]
     [InlineData("\r", 14, 15, 14)]
-    [InlineData("\r\n", 16, 17, 14)]
+    [InlineData("\r\n", 16, 17, 16)]
     public async Task StreamAsync_SplitLineEndingBoundaries_RecordExactWireCountersAsync(
         string lineEnding,
         int expectedRawBodyByteCount,
@@ -342,11 +342,133 @@ public sealed class OpenAiCompatibleChatProviderStreamingTransportTests
         Assert.Equal("observed-before-terminal", receipt.GetProperty("physicalEofDisposition").GetString());
     }
 
+    [Fact]
+    public async Task StreamAsync_RawBodyAtExactSafetyLimit_RecordsExactWireCountAndCompletesAsync()
+    {
+        const int expectedRawBodyByteCount = 1_048_576;
+        var provider = new LlmProvider(
+            "streaming-chat",
+            "https://provider.example/v1",
+            "encrypted-key",
+            ApiType.ChatCompletions,
+            AgentType.Chat,
+            DateTimeOffset.UtcNow);
+        using var responseBody = new ByteAtATimeSseStream(CreateCommentBody(expectedRawBodyByteCount), oneChunk: true);
+        using var handler = new StreamBodyResponseHandler(responseBody);
+        using var observationAuthority = new ChatStreamObservationAuthority();
+        var transport = new OpenAiCompatibleChatProviderStreamingTransport(
+            new FakeProviderRepository(provider),
+            new FakeEncryptionService(),
+            handler,
+            observationAuthority);
+        ChatProviderStreamRequest request = CreateRequest(provider, "case-stream-raw-exact", "stream-125-raw-exact");
+
+        await foreach (ChatProviderStreamSignal _ in transport.StreamAsync(
+            request,
+            CancellationToken.None))
+        {
+        }
+
+        Assert.True(observationAuthority.TryGetVerifiedReceipt(
+            request.RequestId,
+            request.AttemptKind,
+            out string? serializedReceipt));
+        using JsonDocument document = JsonDocument.Parse(serializedReceipt!);
+        JsonElement receipt = document.RootElement.GetProperty("receipt");
+        Assert.Equal("completed", receipt.GetProperty("transportOutcome").GetString());
+        Assert.Equal(expectedRawBodyByteCount, receipt.GetProperty("rawBodyByteCount").GetInt32());
+        Assert.Equal(65, receipt.GetProperty("rawReadCount").GetInt32());
+        Assert.Equal(16_384, receipt.GetProperty("maximumRawReadByteCount").GetInt32());
+    }
+
+    [Fact]
+    public async Task StreamAsync_RawBodyOneByteOverSafetyLimit_EmitsClosedRawOverflowReceiptAsync()
+    {
+        const int expectedRawBodyByteCount = 1_048_576;
+        var provider = new LlmProvider(
+            "streaming-chat",
+            "https://provider.example/v1",
+            "encrypted-key",
+            ApiType.ChatCompletions,
+            AgentType.Chat,
+            DateTimeOffset.UtcNow);
+        byte[] exactBody = CreateCommentBody(expectedRawBodyByteCount);
+        byte[] overlongBody = exactBody.Concat([(byte)'x']).ToArray();
+        using var responseBody = new ByteAtATimeSseStream(overlongBody, oneChunk: true);
+        using var handler = new StreamBodyResponseHandler(responseBody);
+        using var observationAuthority = new ChatStreamObservationAuthority();
+        var transport = new OpenAiCompatibleChatProviderStreamingTransport(
+            new FakeProviderRepository(provider),
+            new FakeEncryptionService(),
+            handler,
+            observationAuthority);
+        ChatProviderStreamRequest request = CreateRequest(provider, "case-stream-raw-overflow", "stream-125-raw-overflow");
+
+        var signals = new List<ChatProviderStreamSignal>();
+        await foreach (ChatProviderStreamSignal signal in transport.StreamAsync(
+            request,
+            CancellationToken.None))
+        {
+            signals.Add(signal);
+        }
+
+        ChatProviderStreamSignal rejection = Assert.Single(
+            signals.Where(signal => signal.Kind == ChatProviderStreamSignalKind.ProviderError));
+
+        Assert.Equal("raw-body-overflow", rejection.FailureCategory);
+        Assert.True(observationAuthority.TryGetVerifiedReceipt(
+            request.RequestId,
+            request.AttemptKind,
+            out string? serializedReceipt));
+        using JsonDocument document = JsonDocument.Parse(serializedReceipt!);
+        JsonElement receipt = document.RootElement.GetProperty("receipt");
+        Assert.Equal("raw-body-overflow", receipt.GetProperty("transportOutcome").GetString());
+        Assert.Equal("raw-body-overflow", receipt.GetProperty("rejectionCategory").GetString());
+        Assert.Equal("rejected-before-parse", receipt.GetProperty("validationOutcome").GetString());
+        Assert.Equal(expectedRawBodyByteCount, receipt.GetProperty("rawBodyByteCount").GetInt32());
+    }
+
     private static string CreateSseEvent(string content, string? finishReason = null)
     {
         string finishReasonJson = System.Text.Json.JsonSerializer.Serialize(finishReason);
         string json = $$"""{"id":"chatcmpl-125","choices":[{"delta":{"content":"{{content}}"},"finish_reason":{{finishReasonJson}}}]}""";
         return $"data: {json}\n\n";
+    }
+
+    private static ChatProviderStreamRequest CreateRequest(
+        LlmProvider provider,
+        string caseId,
+        string requestId) =>
+        new(
+            "0123456789abcdef0123456789abcdef01234567",
+            caseId,
+            requestId,
+            "primary",
+            provider.Id.ToString("D"),
+            "fedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210",
+            "question",
+            new string('a', 64),
+            new string('b', 64),
+            DateTimeOffset.UtcNow.AddSeconds(30).ToUnixTimeMilliseconds());
+
+    private static byte[] CreateCommentBody(int totalBytes)
+    {
+        const string terminal = "data: [DONE]\n\n";
+        int paddingBytes = totalBytes - Encoding.UTF8.GetByteCount(terminal);
+        int fullComments = paddingBytes / 4;
+        int remainder = paddingBytes % 4;
+        var body = new StringBuilder(totalBytes);
+        body.Append(string.Concat(Enumerable.Repeat(":x\n\n", fullComments)));
+        body.Append(remainder switch
+        {
+            0 => string.Empty,
+            1 => ":",
+            2 => ":\n",
+            3 => ":\n\n",
+            _ => throw new InvalidOperationException("Unexpected comment padding remainder."),
+        });
+        body.Append(terminal);
+        return Encoding.UTF8.GetBytes(body.ToString());
     }
 
     private sealed class FakeProviderRepository(LlmProvider provider) : ILlmProviderRepository
@@ -467,7 +589,7 @@ public sealed class OpenAiCompatibleChatProviderStreamingTransportTests
             }
 
             int count = _oneChunk
-                ? _body.Length - _offset
+                ? Math.Min(_body.Length - _offset, buffer.Length)
                 : 1;
             _body.AsSpan(_offset, count).CopyTo(buffer.Span);
             _offset += count;
