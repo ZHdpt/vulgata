@@ -166,7 +166,12 @@ public sealed class ChatEvidenceRetriever(
             .ToArrayAsync(cancellationToken);
         if (exactRelationships.Length == 0)
         {
-            return ChatEvidenceResult.IncompleteOrStale();
+            return await HasInvalidCrossRepositoryEndpointAsync(
+                    request.SystemId,
+                    repositoryIds,
+                    cancellationToken)
+                ? ChatEvidenceResult.IncompleteOrStale()
+                : projectionResult;
         }
 
         EvidencePacket projectionPacket = projectionResult.Packet!;
@@ -832,6 +837,75 @@ public sealed class ChatEvidenceRetriever(
                 request.Conversation,
                 optionalSectionHandles));
         return ChatEvidenceResult.Found(packet);
+    }
+
+    private async Task<bool> HasInvalidCrossRepositoryEndpointAsync(
+        Guid systemId,
+        IReadOnlyCollection<Guid> repositoryIds,
+        CancellationToken cancellationToken)
+    {
+        DocumentEdge[] edges = await _context.DocumentEdges
+            .AsNoTracking()
+            .Where(edge =>
+                edge.EdgeType == DocumentEdgeType.References &&
+                repositoryIds.Contains(edge.SourceRepositoryId) &&
+                repositoryIds.Contains(edge.TargetRepositoryId) &&
+                edge.SourceRepositoryId != edge.TargetRepositoryId)
+            .OrderBy(edge => edge.Id)
+            .Take(33)
+            .ToArrayAsync(cancellationToken);
+        if (edges.Length > 32)
+        {
+            return true;
+        }
+
+        Guid[] endpointIds = edges
+            .SelectMany(edge => new[]
+            {
+                edge.SourceDocumentVersionId,
+                edge.TargetDocumentVersionId,
+            })
+            .Distinct()
+            .ToArray();
+        if (endpointIds.Length == 0)
+        {
+            return false;
+        }
+
+        CurrentDocumentRow[] currentEndpoints = await (
+            from logical in _context.LogicalDocuments.AsNoTracking()
+            join version in _context.DocumentVersions.AsNoTracking()
+                on logical.CurrentVersionId equals version.Id
+            join scanRun in _context.ScanRuns.AsNoTracking()
+                on version.ScanRunId equals scanRun.Id
+            where endpointIds.Contains(version.Id) &&
+                version.SystemId == systemId &&
+                repositoryIds.Contains(version.RepositoryId) &&
+                version.SupersededById == null &&
+                scanRun.RepositoryId == version.RepositoryId &&
+                scanRun.Status == ScanRunStatus.Completed &&
+                scanRun.ProfiledRevision == version.ProfiledRevision
+            select new CurrentDocumentRow(
+                logical.Id,
+                version.Id,
+                version.RepositoryId,
+                version.ScanRunId,
+                logical.DocumentType,
+                version.Title,
+                version.ProfiledRevision))
+            .Take(65)
+            .ToArrayAsync(cancellationToken);
+
+        return currentEndpoints.Length != endpointIds.Length ||
+            edges.Any(edge =>
+                currentEndpoints.All(endpoint =>
+                    endpoint.DocumentVersionId != edge.SourceDocumentVersionId ||
+                    endpoint.RepositoryId != edge.SourceRepositoryId ||
+                    endpoint.ScanRunId != edge.SourceScanRunId) ||
+                currentEndpoints.All(endpoint =>
+                    endpoint.DocumentVersionId != edge.TargetDocumentVersionId ||
+                    endpoint.RepositoryId != edge.TargetRepositoryId ||
+                    endpoint.ScanRunId != edge.TargetScanRunId));
     }
 
     private async Task<ChatEvidenceResult> RetrieveProjectionOnlyAsync(

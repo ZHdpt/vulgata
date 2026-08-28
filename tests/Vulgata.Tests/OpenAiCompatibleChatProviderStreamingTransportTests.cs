@@ -229,6 +229,119 @@ public sealed class OpenAiCompatibleChatProviderStreamingTransportTests
         Assert.Equal(1, receipt.GetProperty("terminalEventCount").GetInt32());
     }
 
+    [Theory]
+    [InlineData("\n", 14, 15, 14)]
+    [InlineData("\r", 14, 15, 14)]
+    [InlineData("\r\n", 16, 17, 14)]
+    public async Task StreamAsync_SplitLineEndingBoundaries_RecordExactWireCountersAsync(
+        string lineEnding,
+        int expectedRawBodyByteCount,
+        int expectedRawReadCount,
+        int expectedSseEventByteCount)
+    {
+        var provider = new LlmProvider(
+            "streaming-chat",
+            "https://provider.example/v1",
+            "encrypted-key",
+            ApiType.ChatCompletions,
+            AgentType.Chat,
+            DateTimeOffset.UtcNow);
+        byte[] body = Encoding.UTF8.GetBytes("data: [DONE]" + lineEnding + lineEnding);
+        using var responseBody = new ByteAtATimeSseStream(body);
+        using var handler = new StreamBodyResponseHandler(responseBody);
+        using var observationAuthority = new ChatStreamObservationAuthority();
+        var transport = new OpenAiCompatibleChatProviderStreamingTransport(
+            new FakeProviderRepository(provider),
+            new FakeEncryptionService(),
+            handler,
+            observationAuthority);
+        var request = new ChatProviderStreamRequest(
+            "0123456789abcdef0123456789abcdef01234567",
+            "case-stream-boundary",
+            $"stream-125-boundary-{expectedRawBodyByteCount}",
+            "primary",
+            provider.Id.ToString("D"),
+            "fedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210",
+            "question",
+            new string('a', 64),
+            new string('b', 64),
+            DateTimeOffset.UtcNow.AddSeconds(30).ToUnixTimeMilliseconds());
+
+        await foreach (ChatProviderStreamSignal _ in transport.StreamAsync(
+            request,
+            CancellationToken.None))
+        {
+        }
+
+        Assert.True(observationAuthority.TryGetVerifiedReceipt(
+            request.RequestId,
+            request.AttemptKind,
+            out string? serializedReceipt));
+        using JsonDocument document = JsonDocument.Parse(serializedReceipt!);
+        JsonElement receipt = document.RootElement.GetProperty("receipt");
+        Assert.Equal(expectedRawBodyByteCount, receipt.GetProperty("rawBodyByteCount").GetInt32());
+        Assert.Equal(expectedRawReadCount, receipt.GetProperty("rawReadCount").GetInt32());
+        Assert.Equal(1, receipt.GetProperty("maximumRawReadByteCount").GetInt32());
+        Assert.Equal(12, receipt.GetProperty("maximumSseLineByteCount").GetInt32());
+        Assert.Equal(expectedSseEventByteCount, receipt.GetProperty("maximumSseEventByteCount").GetInt32());
+        Assert.Equal("completed", receipt.GetProperty("transportOutcome").GetString());
+    }
+
+    [Fact]
+    public async Task StreamAsync_UnterminatedSseEvent_FinalizesPhysicalReadCountersBeforeRejectionAsync()
+    {
+        var provider = new LlmProvider(
+            "streaming-chat",
+            "https://provider.example/v1",
+            "encrypted-key",
+            ApiType.ChatCompletions,
+            AgentType.Chat,
+            DateTimeOffset.UtcNow);
+        byte[] body = Encoding.UTF8.GetBytes("data: [DONE]");
+        using var responseBody = new ByteAtATimeSseStream(body, oneChunk: true);
+        using var handler = new StreamBodyResponseHandler(responseBody);
+        using var observationAuthority = new ChatStreamObservationAuthority();
+        var transport = new OpenAiCompatibleChatProviderStreamingTransport(
+            new FakeProviderRepository(provider),
+            new FakeEncryptionService(),
+            handler,
+            observationAuthority);
+        var request = new ChatProviderStreamRequest(
+            "0123456789abcdef0123456789abcdef01234567",
+            "case-stream-unterminated",
+            "stream-125-unterminated",
+            "primary",
+            provider.Id.ToString("D"),
+            "fedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210",
+            "question",
+            new string('a', 64),
+            new string('b', 64),
+            DateTimeOffset.UtcNow.AddSeconds(30).ToUnixTimeMilliseconds());
+
+        var signals = new List<ChatProviderStreamSignal>();
+        await foreach (ChatProviderStreamSignal signal in transport.StreamAsync(
+            request,
+            CancellationToken.None))
+        {
+            signals.Add(signal);
+        }
+
+        Assert.Equal("missing-terminal", Assert.Single(signals).FailureCategory);
+        Assert.True(observationAuthority.TryGetVerifiedReceipt(
+            request.RequestId,
+            request.AttemptKind,
+            out string? serializedReceipt));
+        using JsonDocument document = JsonDocument.Parse(serializedReceipt!);
+        JsonElement receipt = document.RootElement.GetProperty("receipt");
+        Assert.Equal("missing-terminal", receipt.GetProperty("rejectionCategory").GetString());
+        Assert.Equal(12, receipt.GetProperty("rawBodyByteCount").GetInt32());
+        Assert.Equal(2, receipt.GetProperty("rawReadCount").GetInt32());
+        Assert.Equal(12, receipt.GetProperty("maximumRawReadByteCount").GetInt32());
+        Assert.Equal(12, receipt.GetProperty("maximumSseLineByteCount").GetInt32());
+        Assert.Equal(12, receipt.GetProperty("maximumSseEventByteCount").GetInt32());
+        Assert.Equal("observed-before-terminal", receipt.GetProperty("physicalEofDisposition").GetString());
+    }
+
     private static string CreateSseEvent(string content, string? finishReason = null)
     {
         string finishReasonJson = System.Text.Json.JsonSerializer.Serialize(finishReason);
@@ -318,6 +431,59 @@ public sealed class OpenAiCompatibleChatProviderStreamingTransportTests
                     },
                 },
             });
+    }
+
+    private sealed class StreamBodyResponseHandler(Stream body) : HttpMessageHandler
+    {
+        protected override Task<HttpResponseMessage> SendAsync(
+            HttpRequestMessage request,
+            CancellationToken cancellationToken) =>
+            Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StreamContent(body)
+                {
+                    Headers =
+                    {
+                        ContentType = new MediaTypeHeaderValue("text/event-stream"),
+                    },
+                },
+            });
+    }
+
+    private sealed class ByteAtATimeSseStream(byte[] body, bool oneChunk = false) : Stream
+    {
+        private readonly byte[] _body = body;
+        private readonly bool _oneChunk = oneChunk;
+        private int _offset;
+
+        public override ValueTask<int> ReadAsync(
+            Memory<byte> buffer,
+            CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            if (_offset >= _body.Length)
+            {
+                return ValueTask.FromResult(0);
+            }
+
+            int count = _oneChunk
+                ? _body.Length - _offset
+                : 1;
+            _body.AsSpan(_offset, count).CopyTo(buffer.Span);
+            _offset += count;
+            return ValueTask.FromResult(count);
+        }
+
+        public override bool CanRead => true;
+        public override bool CanSeek => false;
+        public override bool CanWrite => false;
+        public override long Length => _body.Length;
+        public override long Position { get => _offset; set => throw new NotSupportedException(); }
+        public override void Flush() => throw new NotSupportedException();
+        public override int Read(byte[] buffer, int offset, int count) => throw new NotSupportedException();
+        public override long Seek(long offset, SeekOrigin origin) => throw new NotSupportedException();
+        public override void SetLength(long value) => throw new NotSupportedException();
+        public override void Write(byte[] buffer, int offset, int count) => throw new NotSupportedException();
     }
 
     private sealed class GatedSseStream(string first, string second) : Stream

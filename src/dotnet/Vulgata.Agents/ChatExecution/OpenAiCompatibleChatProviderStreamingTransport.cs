@@ -309,6 +309,7 @@ internal sealed class OpenAiCompatibleChatProviderStreamingTransport(
         ChatProviderStreamRequest request,
         ObservationState state)
     {
+        state.FinalizeSseCounters();
         if (string.IsNullOrWhiteSpace(request.CandidateCommit) ||
             string.IsNullOrWhiteSpace(request.CaseId) ||
             !IsSha256(request.ProviderConfigurationFingerprint))
@@ -526,6 +527,16 @@ internal sealed class OpenAiCompatibleChatProviderStreamingTransport(
 
                 _currentSseLineByteCount++;
             }
+        }
+
+        internal void FinalizeSseCounters()
+        {
+            MaximumSseLineByteCount = Math.Max(
+                MaximumSseLineByteCount,
+                _currentSseLineByteCount);
+            MaximumSseEventByteCount = Math.Max(
+                MaximumSseEventByteCount,
+                _currentSseEventByteCount + _currentSseLineByteCount);
         }
     }
 }

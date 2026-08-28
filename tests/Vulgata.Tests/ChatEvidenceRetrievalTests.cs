@@ -35,7 +35,9 @@ public sealed class ChatEvidenceRetrievalTests
 
         ChatEvidenceResult result = await new ChatEvidenceRetriever(fixture.Context)
             .RetrieveAsync(
-                fixture.CreateRequest("legacy-only"),
+                fixture.CreateRequest(
+                    "legacy-only",
+                    question: "完全无关的主题"),
                 new RepositoryAccessScope(
                     fixture.RepositoryIds,
                     new RecordingAuthorizationVerifier(true, true)));
@@ -248,6 +250,28 @@ public sealed class ChatEvidenceRetrievalTests
         Assert.Contains(
             Assert.IsType<EvidencePacket>(result.Packet).Sections,
             section => section.Heading == "业务概览");
+    }
+
+    [Fact]
+    public async Task RetrieveAsync_CrossRepositoryQuestionWithoutExactRelationship_UsesProjectionPrimaryAsync()
+    {
+        await using PreparedEvidenceFixture fixture = await PreparedEvidenceFixture.CreateAsync();
+        await fixture.RemoveV2AuthorityAsync();
+
+        ChatEvidenceResult result = await new ChatEvidenceRetriever(
+                fixture.Context,
+                new ProjectionOnlyScopeResolver())
+            .RetrieveAsync(
+                fixture.CreateRequest(
+                    "cross-repository-without-exact-relationship",
+                    question: "客户会话如何跨仓库更新？"),
+                new RepositoryAccessScope(
+                    fixture.RepositoryIds,
+                    new RecordingAuthorizationVerifier(true, true)));
+
+        Assert.Equal(ChatEvidenceResultKind.Found, result.Kind);
+        EvidencePacket packet = Assert.IsType<EvidencePacket>(result.Packet);
+        Assert.Contains(packet.Sections, section => section.Heading == "业务概览");
     }
 
     [Fact]

@@ -50,6 +50,42 @@ public sealed class ChatEvidenceCurrentnessTests
     }
 
     [Fact]
+    public async Task ValidateCurrentAsync_AdditionalFlowGroupMismatchedDecision_ReturnsMissingOrStaleAsync()
+    {
+        await using CurrentnessFixture fixture = await CurrentnessFixture.CreateAsync();
+        EvidencePacket packet = await fixture.RetrieveAsync();
+        EvidenceFlowGroupAuthority existingGroup = Assert.Single(packet.FlowGroups);
+        EvidenceFlowGroupAuthority additionalGroup = existingGroup with
+        {
+            FlowGroupId = Guid.Parse("11510000-0000-0000-0000-000000010311"),
+            ExactResolutionDecisionId = Guid.Parse("11510000-0000-0000-0000-000000010314"),
+        };
+        ChatCurrentnessValidationRequest original =
+            CurrentnessFixture.CreateValidationRequest(packet);
+        ChatCurrentnessValidationRequest request = ChatCurrentnessValidationRequest.Create(
+            original.RequestId,
+            original.EvidenceFingerprint,
+            original.SystemId,
+            original.RepositoryIds,
+            original.Documents,
+            original.Sections,
+            original.SourceAnchors,
+            original.Relationships,
+            [.. original.FlowGroups, additionalGroup]);
+
+        ChatCurrentnessValidationOutcome outcome =
+            await new ChatEvidenceCurrentnessValidator(fixture.Context)
+                .ValidateCurrentAsync(
+                    request,
+                    new RepositoryAccessScope(
+                        fixture.RepositoryIds,
+                        new RecordingAuthorizationVerifier(true, true)));
+
+        Assert.Equal(ChatCurrentnessValidationOutcome.MissingOrStale, outcome);
+        Assert.Null(fixture.Context.Database.CurrentTransaction);
+    }
+
+    [Fact]
     public async Task ValidateCurrentAsync_ExactCurrentAuthorizedSupport_ReturnsCurrentAsync()
     {
         await using CurrentnessFixture fixture = await CurrentnessFixture.CreateAsync();
@@ -328,6 +364,29 @@ public sealed class ChatEvidenceCurrentnessTests
         EvidencePacket packet = await fixture.RetrieveAsync();
 
         await fixture.CommitSelectedScanRunProfiledRevisionMutationAsync();
+
+        ChatCurrentnessValidationOutcome outcome =
+            await new ChatEvidenceCurrentnessValidator(fixture.Context)
+                .ValidateCurrentAsync(
+                    CurrentnessFixture.CreateValidationRequest(packet),
+                    new RepositoryAccessScope(
+                        fixture.RepositoryIds,
+                        new RecordingAuthorizationVerifier(true, true)));
+
+        Assert.Equal(ChatCurrentnessValidationOutcome.MissingOrStale, outcome);
+        Assert.Null(fixture.Context.Database.CurrentTransaction);
+    }
+
+    [Fact]
+    public async Task ValidateCurrentAsync_FlowStepDocumentProfiledRevisionDrift_ReturnsMissingOrStaleAsync()
+    {
+        await using CurrentnessFixture fixture = await CurrentnessFixture.CreateAsync();
+        EvidencePacket packet = await fixture.RetrieveAsync();
+        Assert.Contains(
+            packet.FlowGroups.SelectMany(group => group.Steps),
+            step => step.DocumentVersionId == ExactCrossRepositoryTestValues.ProviderDocumentVersionId);
+
+        await fixture.CommitFlowStepDocumentProfiledRevisionMutationAsync();
 
         ChatCurrentnessValidationOutcome outcome =
             await new ChatEvidenceCurrentnessValidator(fixture.Context)
@@ -845,6 +904,9 @@ public sealed class ChatEvidenceCurrentnessTests
 
         internal Task CommitSelectedScanRunProfiledRevisionMutationAsync() => CommitSqlAsync(
             $"UPDATE \"ScanRuns\" SET \"ProfiledRevision\" = {new string('0', 40)} WHERE \"Id\" = {ExactCrossRepositoryTestValues.ProviderScanRunId}");
+
+        internal Task CommitFlowStepDocumentProfiledRevisionMutationAsync() => CommitSqlAsync(
+            $"UPDATE \"DocumentVersions\" SET \"ProfiledRevision\" = {new string('0', 40)} WHERE \"Id\" = {ExactCrossRepositoryTestValues.ProviderDocumentVersionId}");
 
         internal Task CommitSourceAnchorIdentityMutationAsync(string mutation) => mutation switch
         {

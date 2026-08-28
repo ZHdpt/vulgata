@@ -131,9 +131,17 @@ public sealed class ChatAgentDispatcher :
                 _timeProvider.GetUtcNow().ToUnixTimeMilliseconds();
             if (remainingMilliseconds < _minimumRepairWindow.TotalMilliseconds)
             {
+                RecordValidationDisposition(
+                    transport,
+                    request.RequestId,
+                    ChatStreamValidationDisposition.RejectedSyntax);
                 return primary;
             }
 
+            RecordValidationDisposition(
+                transport,
+                request.RequestId,
+                ChatStreamValidationDisposition.SyntaxRepairRequired);
             string repairPrompt = string.Concat(
                 boundedPrompt,
                 "\n\nReturn only one syntactically valid JSON object matching the requested schema. " +
@@ -146,6 +154,14 @@ public sealed class ChatAgentDispatcher :
                 "syntax-repair",
                 absoluteDeadline,
                 cancellationToken);
+            if (repaired.FailureCode == ChatContractFailureCode.InvalidSelection)
+            {
+                RecordValidationDisposition(
+                    transport,
+                    request.RequestId,
+                    ChatStreamValidationDisposition.RejectedSyntax);
+            }
+
             return transport is DirectConstructionStreamingTransport &&
                 repaired.Result is not null
                 ? ChatSynthesisOutcome.Failed(ChatContractFailureCode.ProviderFailure)
@@ -167,6 +183,17 @@ public sealed class ChatAgentDispatcher :
         ChatStreamValidationDisposition disposition) =>
         _streamingTransport is IChatStreamValidationDispositionRecorder recorder &&
         recorder.TryRecordFinalValidationDisposition(requestId, disposition);
+
+    private static void RecordValidationDisposition(
+        IChatProviderStreamingTransport transport,
+        string requestId,
+        ChatStreamValidationDisposition disposition)
+    {
+        if (transport is IChatStreamValidationDispositionRecorder recorder)
+        {
+            _ = recorder.TryRecordFinalValidationDisposition(requestId, disposition);
+        }
+    }
 
     private async Task<ChatSynthesisOutcome> DispatchAttemptAsync(
         IChatProviderStreamingTransport transport,

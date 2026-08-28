@@ -676,6 +676,44 @@ public sealed class ChatAgentDispatcherTests
     }
 
     [Fact]
+    public async Task GenerateAsync_PrimarySyntaxFailureThenRepairSyntaxFailure_RecordsAttemptLifecycleInOrder()
+    {
+        ChatSynthesisRequest request = CreateRequest(ChatMode.Business);
+        var provider = new LlmProvider(
+            "chat-model",
+            "https://chat-provider.example.com/v1",
+            "encrypted-chat-key",
+            ApiType.ChatCompletions,
+            AgentType.Chat,
+            DateTimeOffset.UtcNow);
+        var transport = new RecordingStreamTransport(["{not-valid-json", "{still-not-valid-json"]);
+        var services = new ServiceCollection();
+        services.AddPreparedPass2Agents();
+        services.AddScoped<IChatProviderStreamingTransport>(_ => transport);
+        using ServiceProvider serviceProvider = services.BuildServiceProvider();
+        using IServiceScope scope = serviceProvider.CreateScope();
+        var dispatcher = new ChatAgentDispatcher(
+            scope.ServiceProvider,
+            new ChatAgentProviderResolver(
+                new FakeOverrideRepository(null),
+                new FakeProviderRepository([provider])),
+            new CapturingEncryptionService("plaintext-chat-key"),
+            new ChatPromptCatalog(),
+            new OpenAiCaptureHandler(() => string.Empty),
+            TimeProvider.System);
+
+        ChatSynthesisOutcome outcome = await dispatcher.GenerateAsync(request);
+
+        Assert.Equal(ChatContractFailureCode.InvalidSelection, outcome.FailureCode);
+        Assert.Equal(
+            [
+                (request.RequestId, ChatStreamValidationDisposition.SyntaxRepairRequired),
+                (request.RequestId, ChatStreamValidationDisposition.RejectedSyntax),
+            ],
+            transport.ValidationDispositions);
+    }
+
+    [Fact]
     // Characterization-only: the registered raw adapter already accepts a valid SSE response;
     // no RED is expected for this positive composition boundary.
     public async Task GenerateAsync_RegisteredRawSseTransport_AcceptsOnlyStreamedResponse()
@@ -968,10 +1006,12 @@ public sealed class ChatAgentDispatcherTests
         }
     }
 
-    private sealed class RecordingStreamTransport(IReadOnlyList<string> answers)
-        : IChatProviderStreamingTransport
+    private sealed class RecordingStreamTransport(IReadOnlyList<string> answers) :
+        IChatProviderStreamingTransport,
+        IChatStreamValidationDispositionRecorder
     {
         public List<ChatProviderStreamRequest> Requests { get; } = [];
+        public List<(string RequestId, ChatStreamValidationDisposition Disposition)> ValidationDispositions { get; } = [];
 
         public async IAsyncEnumerable<ChatProviderStreamSignal> StreamAsync(
             ChatProviderStreamRequest request,
@@ -986,6 +1026,14 @@ public sealed class ChatAgentDispatcherTests
             yield return new ChatProviderStreamSignal(
                 ChatProviderStreamSignalKind.Terminal,
                 ReadOnlyMemory<byte>.Empty);
+        }
+
+        public bool TryRecordFinalValidationDisposition(
+            string requestId,
+            ChatStreamValidationDisposition disposition)
+        {
+            ValidationDispositions.Add((requestId, disposition));
+            return true;
         }
     }
 
