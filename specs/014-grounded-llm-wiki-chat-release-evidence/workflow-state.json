@@ -3,13 +3,13 @@
   "bmad_story_key": "12-5-grounded-llm-wiki-chat-and-august-30-release-evidence",
   "bmad_epic_key": "12",
   "feature_directory": "specs/014-grounded-llm-wiki-chat-release-evidence",
-  "stage": "implementation-approval",
+  "stage": "implement",
   "preflight": {
     "branch": "demo0831/story-12-5",
-    "head": "a3c85be777ac8af05bb83bc76fb6f1acd463723a",
-    "git_identity_sha256": "7d777b678bcb8b452d6645ce1d3fd6c3f7e32af14e0f7bda8855e582455f3bbf",
-    "status_sha256": "114ffcf2c2310efe2d492856a91e57f231fc3ef5953e7c89b121bf2d1f4b51f3",
-    "observed_at": "2026-08-28T12:16:34.9825775Z"
+    "head": "9798a8e06988573898910cfb0598865edf1e4022",
+    "git_identity_sha256": "34fc6036d0a1be3ccf0e945a0e61830e954a7c687ba9850ccc68b215dbc981df",
+    "status_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "observed_at": "2026-08-28T12:23:33.1309041Z"
   },
   "artifacts": {
     "spec": {
@@ -71,10 +71,17 @@
     },
     {
       "decision_id": "story-12-5-implementation-approval-track-b-02",
-      "status": "pending",
+      "status": "accepted",
       "scope_sha256": "c6afc73bad816bad6a7a511fb2bf6557f30e81ae0c6576f3ee4783abfed75db8",
       "evidence_path": "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/implementation-approval-track-b-02.md",
-      "decided_at": null
+      "decided_at": "2026-08-28T12:23:33.1309041Z"
+    },
+    {
+      "decision_id": "story-12-5-implementation-approval-track-c-01",
+      "status": "accepted",
+      "scope_sha256": "f1996ec2c369153464e52eff6da10718db61a0606ce1d7524cfd6c160c1fb009",
+      "evidence_path": "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/implementation-approval-track-c-01.md",
+      "decided_at": "2026-08-28T12:23:33.1309041Z"
     }
   ],
   "convergence": {
@@ -96,20 +103,21 @@
     "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/definition-review/definition-review-06.json",
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/track-b-definition-review-06.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/implementation-approval-track-b-02.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/implementation-approval-track-c-01.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/implementation-approval-track-a-01.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/integration/story-12.4-dependency-integration-correction-01.md",
     "specs/013-exact-cross-repository-flow-pass2/workflow-state.json"
   ],
   "checkpoint": {
-    "checkpoint_id": "bmad-12-5-definition-review-20260828T121634Z-2bf9ad",
-    "stage": "definition-review",
+    "checkpoint_id": "bmad-12-5-implementation-approval-20260828T122333Z-c6afc7",
+    "stage": "implementation-approval",
     "commit_sha": null,
     "binding_status": "pending"
   },
   "resume": {
-    "stage": "implementation-approval",
-    "reason": "Definition review 06 accepted the corrected definition. Await Track B implementation approval 02 before the first production or behavioral-test write; Track C remains closed.",
+    "stage": "implement",
+    "reason": "Track B T020-T053 implementation approval 02 is accepted. Execute B1-B4 through TDD; Track C T054-T062 is conditionally authorized but remains closed until the accepted Track B checkpoint condition passes.",
     "evidence_path": "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/implementation-approval-track-b-02.md"
   },
-  "updated_at": "2026-08-28T12:16:34.9825775Z"
+  "updated_at": "2026-08-28T12:23:33.1309041Z"
 }
