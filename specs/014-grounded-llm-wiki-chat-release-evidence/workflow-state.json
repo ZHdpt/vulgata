@@ -6,10 +6,10 @@
   "stage": "implement",
   "preflight": {
     "branch": "demo0831/story-12-5",
-    "head": "ab7f1df63f40922c533fc2c3005a8e676a2bc068",
-    "git_identity_sha256": "34fc6036d0a1be3ccf0e945a0e61830e954a7c687ba9850ccc68b215dbc981df",
+    "head": "b021d3adcdce5549d12c7baf5c6a0db7b8a73d51",
+    "git_identity_sha256": "07a20fe92c0f34dce99c42edc204a9db68ea55524b692aa9828e2edde364da34",
     "status_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-    "observed_at": "2026-08-28T14:21:17.4651454Z"
+    "observed_at": "2026-08-28T14:50:45.1687365Z"
   },
   "artifacts": {
     "spec": {
@@ -22,7 +22,7 @@
     },
     "tasks": {
       "path": "specs/014-grounded-llm-wiki-chat-release-evidence/tasks.md",
-      "sha256": "237d3410668a8509007b8e5f81eff2f9c4f130239468bdf25e96d32cddf20b6a"
+      "sha256": "90a5d9623e33ace1a35c635b6a938f119c30d6543d586c0f5274a040549ec91d"
     }
   },
   "gates": {
@@ -106,18 +106,18 @@
     "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/implementation-approval-track-c-01.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/integration/story-12.4-dependency-integration-correction-01.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/tasks.md",
-    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/track-b-b3-implementation-01.md"
+    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/track-b-b4-implementation-01.md"
   ],
   "checkpoint": {
-    "checkpoint_id": "bmad-12-5-implement-20260828T141929Z-b3",
+    "checkpoint_id": "bmad-12-5-implement-20260828T144813Z-b4",
     "stage": "implement",
-    "commit_sha": "ab7f1df63f40922c533fc2c3005a8e676a2bc068",
+    "commit_sha": "b021d3adcdce5549d12c7baf5c6a0db7b8a73d51",
     "binding_status": "bound"
   },
   "resume": {
-    "stage": "implement",
-    "reason": "Track B B3 T040-T044 is complete and bound at ab7f1df63f40922c533fc2c3005a8e676a2bc068. Continue with B4 T045-T053; Track C T054-T062 remains closed until the accepted full Track B checkpoint condition passes.",
-    "evidence_path": "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/track-b-b3-implementation-01.md"
+    "stage": "converge",
+    "reason": "Track B T020-T053 is complete through B4 at b021d3adcdce5549d12c7baf5c6a0db7b8a73d51. Run convergence, quality review, E2E decision, pinned verification, and bind Track B before Track C activates.",
+    "evidence_path": "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/track-b-b4-implementation-01.md"
   },
-  "updated_at": "2026-08-28T14:21:17.4651454Z"
+  "updated_at": "2026-08-28T14:50:45.1687365Z"
 }
