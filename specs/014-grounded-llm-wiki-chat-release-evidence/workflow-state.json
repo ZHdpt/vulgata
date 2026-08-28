@@ -6,10 +6,10 @@
   "stage": "implement",
   "preflight": {
     "branch": "demo0831/story-12-5",
-    "head": "47a335fe08e7b8c82681a4a75622cf5b6b94f0de",
+    "head": "997239f78a83c88afe89ee9261483a41ac07570c",
     "git_identity_sha256": "34fc6036d0a1be3ccf0e945a0e61830e954a7c687ba9850ccc68b215dbc981df",
     "status_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-    "observed_at": "2026-08-28T14:04:20.8088486Z"
+    "observed_at": "2026-08-28T14:06:23.6507629Z"
   },
   "artifacts": {
     "spec": {
@@ -104,22 +104,20 @@
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/track-b-definition-review-06.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/implementation-approval-track-b-02.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/implementation-approval-track-c-01.md",
-    "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/implementation-approval-track-a-01.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/integration/story-12.4-dependency-integration-correction-01.md",
-    "specs/013-exact-cross-repository-flow-pass2/workflow-state.json",
     "specs/014-grounded-llm-wiki-chat-release-evidence/tasks.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/track-b-b1-b2-implementation-01.md"
   ],
   "checkpoint": {
     "checkpoint_id": "bmad-12-5-implement-20260828T140229Z-b1b2",
     "stage": "implement",
-    "commit_sha": null,
-    "binding_status": "pending"
+    "commit_sha": "997239f78a83c88afe89ee9261483a41ac07570c",
+    "binding_status": "bound"
   },
   "resume": {
     "stage": "implement",
-    "reason": "Track B B1+B2 T020-T039 are complete and pending checkpoint binding. Continue with B3 T040-T044 after binding; Track C T054-T062 remains closed until the accepted full Track B checkpoint condition passes.",
+    "reason": "Track B B1+B2 T020-T039 are complete and bound at 997239f78a83c88afe89ee9261483a41ac07570c. Continue with B3 T040-T044; Track C T054-T062 remains closed until the accepted full Track B checkpoint condition passes.",
     "evidence_path": "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/track-b-b1-b2-implementation-01.md"
   },
-  "updated_at": "2026-08-28T14:04:20.8088486Z"
+  "updated_at": "2026-08-28T14:06:23.6507629Z"
 }
