@@ -6,10 +6,10 @@
   "stage": "implement",
   "preflight": {
     "branch": "demo0831/story-12-5",
-    "head": "4efef0265b0e6bc33d7e6d20b987f56d4d844bed",
-    "git_identity_sha256": "073e895b4e42fad9dd364dc2a2e12446af594beca140a53664973488ada62355",
-    "status_sha256": "3b6d9b03e98c419e5ed19bb961681bc697a123e72e1f72d9bc310d8fbdafc68a",
-    "observed_at": "2026-08-29T11:40:50.7564333Z"
+    "head": "363c7179fcae7c9f767db9e757088fdb7e069384",
+    "git_identity_sha256": "14725eb432f3c8886579b46617496111683359e1f57b9e1b107fc463b97578a6",
+    "status_sha256": "5860c27493d691c3cda44eaf31e35596577174f22a7f65c8b53709736a228cde",
+    "observed_at": "2026-08-29T11:56:00.5983475Z"
   },
   "artifacts": {
     "spec": {
@@ -22,7 +22,7 @@
     },
     "tasks": {
       "path": "specs/014-grounded-llm-wiki-chat-release-evidence/tasks.md",
-      "sha256": "9cac0ce82ede8da736b817e839fcf9246ebfe058f1a2447aab950d1c3f30c512"
+      "sha256": "1c0fdf903c56b3686e6604086b71906f4c956ec0a384d06d75e174ee883294d1"
     }
   },
   "gates": {
@@ -44,7 +44,7 @@
   },
   "attempts": {
     "definition-review": 0,
-    "converge": 2,
+    "converge": 3,
     "quality-review": 1
   },
   "approvals": [
@@ -121,7 +121,7 @@
   ],
   "convergence": {
     "status": "pending",
-    "attempt": 2,
+    "attempt": 3,
     "outcome": "pending",
     "report_path": null
   },
@@ -136,23 +136,23 @@
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/integration/track-b-int-01.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/track-b-integration-01.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/convergence/track-b-corrected-01.md",
-    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/review/track-b-quality-input-01.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/quality-review/track-b-quality-review-03.json",
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/review/track-b-quality-correction-plan-01.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/integration/story-12.4-dependency-integration-correction-01.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/track-a-preservation-01.md",
-    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/track-b-quality-correction-03.md"
+    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/track-b-quality-correction-03.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/convergence/track-b-quality-correction-01.md"
   ],
   "checkpoint": {
-    "checkpoint_id": "bmad-12-5-implement-20260829T114050Z-qcor03",
+    "checkpoint_id": "bmad-12-5-implement-20260829T115600Z-cvg1f1",
     "stage": "implement",
     "commit_sha": null,
     "binding_status": "pending"
   },
   "resume": {
     "stage": "converge",
-    "reason": "T055-T063 are complete with 127/127 pinned affected-suite passes. Run mandatory independent T064 convergence before preparing a new quality-review input.",
-    "evidence_path": "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/track-b-quality-correction-03.md"
+    "reason": "Pass 1 appended T067 for one stale provenance assertion. T067 is green at 5/5 and the bounded matrix at 127/127. Run convergence pass 2; two more non-converged passes trigger user approval.",
+    "evidence_path": "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/convergence/track-b-quality-correction-01.md"
   },
-  "updated_at": "2026-08-29T11:40:50.7564333Z"
+  "updated_at": "2026-08-29T11:56:00.5983475Z"
 }

@@ -211,8 +211,23 @@ public sealed class ChatStreamObservationProvenanceTests
         ParameterInfo ownerParameter = Assert.Single(
             constructor.GetParameters(),
             parameter => parameter.ParameterType == typeof(IPreparedChatPublicationOwner));
+        ParameterInfo recorderParameter = Assert.Single(
+            constructor.GetParameters(),
+            parameter => parameter.ParameterType == typeof(IChatStreamCompletionSummaryRecorder));
 
-        Assert.True(ownerParameter.HasDefaultValue);
+        Assert.False(
+            ownerParameter.IsOptional || ownerParameter.HasDefaultValue,
+            "The publication owner must be one required typed dependency, not a default/fallback parameter.");
+        Assert.False(
+            recorderParameter.IsOptional || recorderParameter.HasDefaultValue,
+            "The completion recorder must be one required typed dependency, not a default/fallback parameter.");
+        Assert.Equal(
+            NullabilityState.NotNull,
+            new NullabilityInfoContext().Create(ownerParameter).ReadState);
+        Assert.Equal(
+            NullabilityState.NotNull,
+            new NullabilityInfoContext().Create(recorderParameter).ReadState);
+        Assert.DoesNotContain(constructor.GetParameters(), parameter => parameter.ParameterType == typeof(object));
         Assert.Equal(
             typeof(AcceptedPublicationCommit),
             typeof(PreparedChatResult).GetProperty(nameof(PreparedChatResult.PublicationCommit))!.PropertyType);
