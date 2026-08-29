@@ -624,6 +624,26 @@ public sealed class ChatPageTests : BunitContext
     }
 
     [Fact]
+    public async Task ChatPage_AcceptedLongUnicodeAnswerWithBudgetBelowRevealCost_RendersImmediatelyAsync()
+    {
+        _dispatcher.BeforeResult = () => _timeProvider.Advance(TimeSpan.FromSeconds(27.5));
+        _revealDelay.OnDelay = () => _timeProvider.Advance(TimeSpan.FromMilliseconds(25));
+
+        IRenderedComponent<ChatPage> cut = Render<ChatPage>();
+        WaitForLoaded(cut);
+        PrepareValidSelection(cut, ChatMode.Business);
+        _retriever.ClaimText = "付款" + new string('答', 78);
+
+        Task sendTask = BeginQuestionAsync(cut, "付款如何在截止时间内显示？");
+        await sendTask;
+
+        IElement answer = cut.Find(".complete-answer");
+        Assert.Equal("complete", answer.GetAttribute("data-answer-state"));
+        Assert.Equal(_retriever.ClaimText, cut.Find(".material-claim").TextContent);
+        Assert.Equal(0, _revealDelay.CallCount);
+    }
+
+    [Fact]
     public async Task ChatPage_ValidPendingRequest_ClearsComposerImmediately()
     {
         IRenderedComponent<ChatPage> cut = Render<ChatPage>();
@@ -916,10 +936,12 @@ public sealed class ChatPageTests : BunitContext
         private bool _releaseImmediately = true;
 
         public int CallCount { get; private set; }
+        public Action? OnDelay { get; set; }
 
         public Task DelayAsync(CancellationToken cancellationToken)
         {
             CallCount++;
+            OnDelay?.Invoke();
             if (_releaseImmediately)
             {
                 return Task.CompletedTask;

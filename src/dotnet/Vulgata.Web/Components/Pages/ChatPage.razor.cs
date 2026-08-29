@@ -399,8 +399,13 @@ public partial class ChatPage : IAsyncDisposable
     {
         turn.BeginReveal(answer);
         bool reducedMotion = await PrefersReducedMotionAsync(requestCancellation);
+        long requiredDelayCount = turn.Claims.Sum(
+            claim => Math.Max(0, claim.TextElementCount - 1));
+        double requiredRevealMilliseconds =
+            requiredDelayCount * RevealDelay.Interval.TotalMilliseconds;
         if (reducedMotion ||
-            remainingDeadlineMilliseconds < _minimumProgressiveRevealBudgetMilliseconds)
+            remainingDeadlineMilliseconds < _minimumProgressiveRevealBudgetMilliseconds ||
+            requiredRevealMilliseconds > remainingDeadlineMilliseconds)
         {
             turn.CompleteReveal();
             await RenderConversationAtEndAsync();

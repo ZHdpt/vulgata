@@ -557,9 +557,15 @@ public sealed class PreparedChatCoordinator(
             selectedRepositories,
             timeProvider.GetUtcNow());
         cancellationToken.ThrowIfCancellationRequested();
-        AppendValidatedConversationTurn(request, packet, selectedCandidates, answer);
         long remainingDeadlineMilliseconds = absoluteDeadlineUnixTimeMilliseconds -
             timeProvider.GetUtcNow().ToUnixTimeMilliseconds();
+        if (remainingDeadlineMilliseconds <= 0)
+        {
+            return TimedOut();
+        }
+
+        cancellationToken.ThrowIfCancellationRequested();
+        AppendValidatedConversationTurn(request, packet, selectedCandidates, answer);
         return PreparedChatResult.Succeeded(answer, remainingDeadlineMilliseconds);
     }
 

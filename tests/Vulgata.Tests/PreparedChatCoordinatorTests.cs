@@ -932,6 +932,44 @@ public sealed class PreparedChatCoordinatorTests
             turn => string.Equals(turn.Question, expiredQuestion, StringComparison.Ordinal));
     }
 
+    [Fact]
+    public async Task AskAsync_FinalPublicationBudgetExpiry_ReturnsTimedOutWithoutAppendingConversationTurn()
+    {
+        var system = new SystemEntity("支付系统", null, null, DateTimeOffset.UtcNow);
+        Repository first = system.AddRepository("账户仓库", "https://example.test/account.git", null, null, DateTimeOffset.UtcNow);
+        Repository second = system.AddRepository("渠道仓库", "https://example.test/channel.git", null, null, DateTimeOffset.UtcNow);
+        var clock = new AdjustableCoordinatorTimeProvider(DateTimeOffset.UnixEpoch);
+        var retriever = new StubEvidenceRetriever();
+        var dispatcher = new StubDispatcher();
+        var coordinator = CreateCoordinator(
+            system,
+            [first, second],
+            retriever: retriever,
+            dispatcher: dispatcher,
+            timeProvider: clock);
+
+        dispatcher.BeforeResult = () => clock.AdvanceOnReadAfter(1, TimeSpan.FromSeconds(29));
+
+        PreparedChatResult expired = await coordinator.AskAsync(
+            ChatMode.Business,
+            system.Id,
+            [first.Id, second.Id],
+            "客户付款需要哪些规则？");
+
+        dispatcher.BeforeResult = null;
+        _ = await coordinator.AskAsync(
+            ChatMode.Business,
+            system.Id,
+            [first.Id, second.Id],
+            "客户付款如何确认？");
+
+        Assert.Equal(PreparedChatResultKind.TimedOut, expired.Kind);
+        Assert.Equal("回答超时，请重试。", expired.Message);
+        Assert.Null(expired.Answer);
+        Assert.Equal(2, retriever.Requests.Count);
+        Assert.Empty(retriever.Requests[1].Conversation.Turns);
+    }
+
     [Theory]
     [InlineData(ChatAdvisoryContextReadResultKind.NotFoundOrUnauthorized, PreparedChatResultKind.MissingOrUnauthorized)]
     [InlineData(ChatAdvisoryContextReadResultKind.InconsistentCurrentEvidence, PreparedChatResultKind.EvidenceUnavailable)]
@@ -1448,9 +1486,33 @@ public sealed class PreparedChatCoordinatorTests
         private readonly object _gate = new();
         private readonly List<AdjustableTimer> _timers = [];
         private DateTimeOffset _current = current;
+        private int? _readsUntilAdvance;
+        private TimeSpan _advanceOnReadBy;
+
+        public void AdvanceOnReadAfter(int reads, TimeSpan duration)
+        {
+            ArgumentOutOfRangeException.ThrowIfNegative(reads);
+            _readsUntilAdvance = reads;
+            _advanceOnReadBy = duration;
+        }
 
         public override DateTimeOffset GetUtcNow()
         {
+            bool advance;
+            lock (_gate)
+            {
+                advance = _readsUntilAdvance == 0;
+                if (_readsUntilAdvance is int readsUntilAdvance)
+                {
+                    _readsUntilAdvance = readsUntilAdvance == 0 ? null : readsUntilAdvance - 1;
+                }
+            }
+
+            if (advance)
+            {
+                Advance(_advanceOnReadBy);
+            }
+
             lock (_gate)
             {
                 return _current;
@@ -1900,6 +1962,7 @@ public sealed class PreparedChatCoordinatorTests
         public string? RawSelectionJsonOverride { get; set; }
         public string? NarrativeText { get; set; }
         public List<string>? Trace { get; set; }
+        public Action? BeforeResult { get; set; }
 
         public Task<ChatSynthesisOutcome> GenerateAsync(ChatSynthesisRequest request, CancellationToken cancellationToken = default)
         {
@@ -1910,6 +1973,8 @@ public sealed class PreparedChatCoordinatorTests
             {
                 return Task.FromResult(ChatSynthesisOutcome.Failed(failureCode));
             }
+
+            BeforeResult?.Invoke();
 
             ChatSynthesisResult result = ChatSynthesisResult.Create(
                 request.RequestId,

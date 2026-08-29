@@ -113,6 +113,8 @@ internal sealed class ChatClaimReveal
 
     public bool IsComplete => _visibleCount == _textElements.Length;
 
+    public int TextElementCount => _textElements.Length;
+
     public bool RevealNext()
     {
         if (IsComplete)
