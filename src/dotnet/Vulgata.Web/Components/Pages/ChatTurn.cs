@@ -1,5 +1,6 @@
 using Vulgata.Core.DomainServices;
 using System.Globalization;
+using Vulgata.Web.Data;
 
 namespace Vulgata.Web.Components.Pages;
 
@@ -45,6 +46,22 @@ internal sealed class ChatTurn
     }
 
     public void BeginReveal(GroundedAnswer answer)
+    {
+        BeginRevealCore(answer);
+    }
+
+    public void BeginReveal(AcceptedPublicationCommit publicationCommit)
+    {
+        ArgumentNullException.ThrowIfNull(publicationCommit);
+        if (!publicationCommit.Published || publicationCommit.Answer is not GroundedAnswer answer)
+        {
+            throw new InvalidOperationException("Only an accepted publication commit can be revealed.");
+        }
+
+        BeginRevealCore(answer);
+    }
+
+    private void BeginRevealCore(GroundedAnswer answer)
     {
         Answer = answer ?? throw new ArgumentNullException(nameof(answer));
         Claims = answer.MaterialClaims.Select(claim => new ChatClaimReveal(claim)).ToArray();

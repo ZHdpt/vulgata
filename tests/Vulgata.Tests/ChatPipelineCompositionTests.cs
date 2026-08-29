@@ -163,6 +163,20 @@ public sealed class ChatPipelineCompositionTests
     }
 
     [Fact]
+    public void PublicationBoundary_Story125B4_DeclaresOneOwnerAndNoAlternateSuccessOwner()
+    {
+        Type? ownerType = Type.GetType(
+            "Vulgata.Web.Data.IPreparedChatPublicationOwner, Vulgata.Web");
+
+        Assert.NotNull(ownerType);
+        Assert.True(ownerType!.IsInterface);
+        Type[] implementations = ownerType.Assembly.GetTypes()
+            .Where(type => !type.IsInterface && ownerType.IsAssignableFrom(type))
+            .ToArray();
+        Assert.Single(implementations);
+    }
+
+    [Fact]
     public void PreparedChatQuestionRequest_Story125B1_HasNoCallerAdvisoryTextBoundary()
     {
         Assert.DoesNotContain(

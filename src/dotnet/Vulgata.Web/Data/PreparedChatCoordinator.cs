@@ -33,18 +33,20 @@ public enum PreparedChatResultKind
 
 public sealed record PreparedChatResult(
     PreparedChatResultKind Kind,
-    GroundedAnswer? Answer,
+    AcceptedPublicationCommit? PublicationCommit,
     string? Message,
     long RemainingDeadlineMilliseconds,
     long AbsoluteDeadlineUnixTimeMilliseconds)
 {
+    public GroundedAnswer? Answer => PublicationCommit?.Answer;
+
     public static PreparedChatResult Succeeded(
-        GroundedAnswer answer,
+        AcceptedPublicationCommit publicationCommit,
         long remainingDeadlineMilliseconds,
         long absoluteDeadlineUnixTimeMilliseconds) =>
         new(
             PreparedChatResultKind.Succeeded,
-            answer,
+            publicationCommit,
             null,
             Math.Max(0, remainingDeadlineMilliseconds),
             absoluteDeadlineUnixTimeMilliseconds);
@@ -67,7 +69,8 @@ public sealed class PreparedChatCoordinator(
     ChatAgentResultValidator resultValidator,
     IPreparedChatScopeResolver preparedScopeResolver,
     IValidator<PreparedChatQuestionRequest> requestValidator,
-    IChatStreamCompletionSummaryRecorder completionSummaryRecorder,
+    object? completionSummaryRecorder = null,
+    IPreparedChatPublicationOwner? publicationOwner = null,
     ILogger<PreparedChatCoordinator>? logger = null) : IDisposable
 {
     private const string _invalidRequestMessage = "请选择业务模式、系统和两个不同的仓库，并输入 1 至 2000 个字符的问题。";
@@ -77,7 +80,12 @@ public sealed class PreparedChatCoordinator(
     private const string _providerUnavailableMessage = "暂时无法生成回答，请稍后重试。";
     private const string _timedOutMessage = "回答超时，请重试。";
     private const string _cancelledMessage = "已取消本次提问。";
-    private ChatConversationState? _conversationState;
+    private readonly IChatStreamCompletionSummaryRecorder _completionSummaryRecorder =
+        completionSummaryRecorder as IChatStreamCompletionSummaryRecorder ??
+        NullChatStreamCompletionSummaryRecorder.Instance;
+    private readonly IPreparedChatPublicationOwner _publicationOwner =
+        publicationOwner ?? new PreparedChatPublicationOwner(timeProvider);
+    private AcceptedPublicationCommit? _acceptedPublicationCommit;
 
     public async Task<IReadOnlyList<PreparedChatScopeOption>> ListScopesAsync(
         CancellationToken cancellationToken = default)
@@ -178,6 +186,8 @@ public sealed class PreparedChatCoordinator(
             return Cancelled();
         }
 
+        long startTimestamp = timeProvider.GetTimestamp();
+        long deadlineTimestamp = checked(startTimestamp + (29 * timeProvider.TimestampFrequency));
         DateTimeOffset deadlineUtc = timeProvider.GetUtcNow().AddSeconds(29);
         using var operationCancellation = CancellationTokenSource.CreateLinkedTokenSource(
             cancellationToken);
@@ -210,7 +220,8 @@ public sealed class PreparedChatCoordinator(
                 request.Mode,
                 request.SystemId,
                 request.RepositoryIds);
-            _conversationState = (_conversationState ?? ChatConversationState.Empty(conversationScope))
+            ChatConversationState conversationState =
+                (_acceptedPublicationCommit?.Conversation ?? ChatConversationState.Empty(conversationScope))
                 .ResetForScopeChange(conversationScope);
             long absoluteDeadlineUnixTimeMilliseconds = deadlineUtc.ToUnixTimeMilliseconds();
             UserContext? userContext = await GetCurrentUserContextAsync();
@@ -296,7 +307,7 @@ public sealed class PreparedChatCoordinator(
 
             ChatRetrievalRequest retrievalRequest = ChatRetrievalRequest.Create(
                 request,
-                _conversationState,
+                conversationState,
                 deadlineUtc,
                 advisoryContext);
             ChatEvidenceResult evidence = await evidenceRetriever.RetrieveAsync(
@@ -378,8 +389,11 @@ public sealed class PreparedChatCoordinator(
                         selectedRepositories,
                         accessScope,
                         absoluteDeadlineUnixTimeMilliseconds,
+                        startTimestamp,
+                        deadlineTimestamp,
+                        conversationState,
                         operationToken,
-                        recordFinalCompletionSummary: false);
+                        cancellationToken);
                 }
 
                 logger?.LogWarning(
@@ -432,8 +446,11 @@ public sealed class PreparedChatCoordinator(
                         selectedRepositories,
                         accessScope,
                         absoluteDeadlineUnixTimeMilliseconds,
+                        startTimestamp,
+                        deadlineTimestamp,
+                        conversationState,
                         operationToken,
-                        recordFinalCompletionSummary: false);
+                        cancellationToken);
                 }
 
                 logger?.LogInformation(
@@ -456,7 +473,11 @@ public sealed class PreparedChatCoordinator(
                 selectedRepositories,
                 accessScope,
                 absoluteDeadlineUnixTimeMilliseconds,
-                operationToken);
+                startTimestamp,
+                deadlineTimestamp,
+                conversationState,
+                operationToken,
+                cancellationToken);
             if (completed.Kind is not (
                 PreparedChatResultKind.Succeeded or PreparedChatResultKind.TimedOut))
             {
@@ -506,8 +527,11 @@ public sealed class PreparedChatCoordinator(
         Dictionary<Guid, RepositoryEntity> selectedRepositories,
         RepositoryAccessScope accessScope,
         long absoluteDeadlineUnixTimeMilliseconds,
+        long startTimestamp,
+        long deadlineTimestamp,
+        ChatConversationState conversationState,
         CancellationToken cancellationToken,
-        bool recordFinalCompletionSummary = true)
+        CancellationToken publicationCancellationToken)
     {
         ChatCurrentnessValidationRequest currentnessRequest = BuildCurrentnessRequest(
             request,
@@ -566,60 +590,57 @@ public sealed class PreparedChatCoordinator(
             selectedRepositories,
             timeProvider.GetUtcNow());
         cancellationToken.ThrowIfCancellationRequested();
-        long remainingDeadlineMilliseconds = absoluteDeadlineUnixTimeMilliseconds -
-            timeProvider.GetUtcNow().ToUnixTimeMilliseconds();
-        if (remainingDeadlineMilliseconds <= 0)
-        {
-            return TimedOut();
-        }
-
-        ChatConversationState? proposedConversationState = BuildProposedConversationState(
+        ChatConversationState proposedConversationState = BuildProposedConversationState(
             request,
             packet,
             selectedCandidates,
-            answer);
-        CompletionSummaryPreparation? completionSummary = recordFinalCompletionSummary
-            ? PrepareCompletionSummary(request.RequestId)
-            : null;
+            answer,
+            conversationState);
+        CompletionSummaryPreparation completionSummary = PrepareCompletionSummary(request.RequestId);
+        string[] attemptValidationOutcomes = completionSummary.SyntaxRepairUsed
+            ? ["syntax-repair-required", "accepted"]
+            : ["accepted"];
+        var completionTemplate = new PreparedChatCompletionSummaryTemplate(
+            $"completion-{Guid.NewGuid():N}",
+            completionSummary.RequestId,
+            completionSummary.RuntimeObservationIds,
+            completionSummary.SyntaxRepairUsed,
+            Array.AsReadOnly(attemptValidationOutcomes),
+            "accepted");
+        var reveal = PreparedChatRevealDirective.ProgressiveAccepted(
+            absoluteDeadlineUnixTimeMilliseconds);
+        var candidate = new PreparedChatPublicationCandidate(
+            answer,
+            proposedConversationState,
+            completionTemplate,
+            reveal,
+            startTimestamp,
+            deadlineTimestamp,
+            cancellationToken,
+            packet.Fingerprint,
+            packet.AdvisoryContextAuthorityFingerprint);
 
-        remainingDeadlineMilliseconds = absoluteDeadlineUnixTimeMilliseconds -
-            timeProvider.GetUtcNow().ToUnixTimeMilliseconds();
-        if (remainingDeadlineMilliseconds <= 0)
+        AcceptedPublicationCommit publicationCommit = _publicationOwner.Commit(
+            candidate,
+            publicationCancellationToken);
+        if (publicationCommit.State == PreparedChatPublicationState.CancelledBeforePublication)
         {
-            if (recordFinalCompletionSummary)
-            {
-                RecordCompletionSummary(
-                    completionSummary!,
-                    "timed-out",
-                    accepted: false,
-                    deadlineUtc: DateTimeOffset.FromUnixTimeMilliseconds(
-                        absoluteDeadlineUnixTimeMilliseconds));
-            }
+            return Cancelled();
+        }
 
+        if (!publicationCommit.Published)
+        {
             return TimedOut();
         }
 
-        cancellationToken.ThrowIfCancellationRequested();
-        PreparedChatResult succeeded = PreparedChatResult.Succeeded(
-            answer,
+        _acceptedPublicationCommit = publicationCommit;
+        long acceptedDurationMilliseconds =
+            publicationCommit.CompletionSummary!.TotalAcceptedAnswerDurationMilliseconds!.Value;
+        long remainingDeadlineMilliseconds = Math.Max(0, 29_000 - acceptedDurationMilliseconds);
+        return PreparedChatResult.Succeeded(
+            publicationCommit,
             remainingDeadlineMilliseconds,
             absoluteDeadlineUnixTimeMilliseconds);
-        _conversationState = proposedConversationState;
-        if (recordFinalCompletionSummary)
-        {
-            long acceptedDurationMilliseconds = Math.Max(
-                0,
-                29_000 - remainingDeadlineMilliseconds);
-            RecordCompletionSummary(
-                completionSummary!,
-                "accepted",
-                accepted: true,
-                deadlineUtc: DateTimeOffset.FromUnixTimeMilliseconds(
-                    absoluteDeadlineUnixTimeMilliseconds),
-                acceptedDurationMilliseconds);
-        }
-
-        return succeeded;
     }
 
     private static bool PacketAdvisoryContextMatches(
@@ -631,17 +652,13 @@ public sealed class PreparedChatCoordinator(
             actual.AuthorityFingerprint,
             StringComparison.Ordinal);
 
-    private ChatConversationState? BuildProposedConversationState(
+    private static ChatConversationState BuildProposedConversationState(
         ChatQuestionRequest request,
         EvidencePacket packet,
         IReadOnlyCollection<CandidateClaim> selectedCandidates,
-        GroundedAnswer answer)
+        GroundedAnswer answer,
+        ChatConversationState conversationState)
     {
-        if (_conversationState is null)
-        {
-            return null;
-        }
-
         HashSet<Guid> selectedDocumentVersionIds = selectedCandidates
             .Select(candidate => candidate.DocumentVersionId)
             .ToHashSet();
@@ -665,7 +682,7 @@ public sealed class PreparedChatCoordinator(
             packet.Fingerprint,
             citationHandles,
             logicalDocumentIds);
-        return _conversationState.AppendValidatedTurn(turn);
+        return conversationState.AppendValidatedTurn(turn);
     }
 
     private void RecordCompletionSummary(
@@ -684,7 +701,7 @@ public sealed class PreparedChatCoordinator(
     private CompletionSummaryPreparation PrepareCompletionSummary(string requestId)
     {
         IReadOnlyList<string> runtimeObservationIds =
-            completionSummaryRecorder.GetRuntimeObservationIds(requestId);
+            _completionSummaryRecorder.GetRuntimeObservationIds(requestId);
         bool syntaxRepairUsed = runtimeObservationIds.Count > 1;
         return new CompletionSummaryPreparation(
             requestId,
@@ -708,7 +725,7 @@ public sealed class PreparedChatCoordinator(
                 (long)(timeProvider.GetUtcNow() - deadlineUtc.AddSeconds(-29))
                     .TotalMilliseconds)
             : null;
-        completionSummaryRecorder.RecordCompletion(new ChatStreamCompletionSummary(
+        _completionSummaryRecorder.RecordCompletion(new ChatStreamCompletionSummary(
             $"completion-{Guid.NewGuid():N}",
             preparation.RequestId,
             preparation.RuntimeObservationIds,
@@ -728,12 +745,21 @@ public sealed class PreparedChatCoordinator(
         IReadOnlyList<string> RuntimeObservationIds,
         bool SyntaxRepairUsed);
 
+    private sealed class NullChatStreamCompletionSummaryRecorder :
+        IChatStreamCompletionSummaryRecorder
+    {
+        internal static readonly NullChatStreamCompletionSummaryRecorder Instance = new();
+
+        public void RecordCompletion(ChatStreamCompletionSummary summary)
+        {
+        }
+
+        public IReadOnlyList<string> GetRuntimeObservationIds(string requestId) => [];
+    }
+
     private void ClearConversation()
     {
-        if (_conversationState is not null)
-        {
-            _conversationState = _conversationState.Reset();
-        }
+        _acceptedPublicationCommit = null;
     }
 
     public void Dispose()

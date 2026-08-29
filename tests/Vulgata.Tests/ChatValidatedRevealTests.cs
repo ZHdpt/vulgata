@@ -1,7 +1,9 @@
+using System.Reflection;
 using Vulgata.Agents.ChatExecution;
 using Vulgata.Core.DomainServices;
 using Vulgata.Core.Entities;
 using Vulgata.Web.Components.Pages;
+using Vulgata.Web.Data;
 
 namespace Vulgata.Tests;
 
@@ -12,6 +14,18 @@ namespace Vulgata.Tests;
 /// </summary>
 public sealed class ChatValidatedRevealTests
 {
+    [Fact]
+    public void ChatPage_RequiresAcceptedPublicationCommitBeforeClientReveal()
+    {
+        Type? commitType = Type.GetType(
+            "Vulgata.Web.Data.AcceptedPublicationCommit, Vulgata.Web");
+
+        Assert.NotNull(commitType);
+        Assert.Contains(
+            typeof(PreparedChatResult).GetProperties(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public),
+            property => property.PropertyType == commitType);
+    }
+
     [Fact]
     public void RejectedProviderAssembly_ExposesNoRenderablePartialAnswer()
     {

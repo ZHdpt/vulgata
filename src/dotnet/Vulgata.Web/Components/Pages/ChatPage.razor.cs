@@ -268,12 +268,12 @@ public partial class ChatPage : IAsyncDisposable
                 return;
             }
 
-            if (result.Kind == PreparedChatResultKind.Succeeded && result.Answer is not null)
+            if (result.Kind == PreparedChatResultKind.Succeeded &&
+                result.PublicationCommit is { Published: true } publicationCommit)
             {
                 await RevealAnswerAsync(
                     turn,
-                    result.Answer,
-                    result.AbsoluteDeadlineUnixTimeMilliseconds,
+                    publicationCommit,
                     conversationVersion,
                     cancellation.Token);
                 _loadState = LoadState.Loaded;
@@ -392,20 +392,23 @@ public partial class ChatPage : IAsyncDisposable
 
     private async Task RevealAnswerAsync(
         ChatTurn turn,
-        GroundedAnswer answer,
-        long absoluteDeadlineUnixTimeMilliseconds,
+        AcceptedPublicationCommit publicationCommit,
         int conversationVersion,
         CancellationToken requestCancellation)
     {
-        turn.BeginReveal(answer);
+        PreparedChatRevealDirective reveal = publicationCommit.Reveal ??
+            throw new InvalidOperationException("An accepted publication requires a reveal directive.");
+        turn.BeginReveal(publicationCommit);
         bool reducedMotion = await PrefersReducedMotionAsync(requestCancellation);
+        long absoluteDeadlineUnixTimeMilliseconds = reveal.AbsoluteDeadlineUnixTimeMilliseconds;
         long remainingDeadlineMilliseconds = ChatCoordinator.GetRemainingDeadlineMilliseconds(
             absoluteDeadlineUnixTimeMilliseconds);
         long requiredDelayCount = turn.Claims.Sum(
             claim => Math.Max(0, claim.TextElementCount - 1));
         double requiredRevealMilliseconds =
             requiredDelayCount * RevealDelay.Interval.TotalMilliseconds;
-        if (reducedMotion ||
+        if (reveal.Mode == PreparedChatRevealMode.ImmediateAccepted ||
+            reducedMotion ||
             remainingDeadlineMilliseconds < _minimumProgressiveRevealBudgetMilliseconds ||
             requiredRevealMilliseconds > remainingDeadlineMilliseconds)
         {

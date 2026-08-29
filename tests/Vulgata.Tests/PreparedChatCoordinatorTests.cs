@@ -18,6 +18,18 @@ namespace Vulgata.Tests;
 public sealed class PreparedChatCoordinatorTests
 {
     [Fact]
+    public void PreparedChatCoordinator_Story125B4_DeclaresPublicationOwnerAsSoleSuccessBoundary()
+    {
+        Type? ownerType = Type.GetType(
+            "Vulgata.Web.Data.IPreparedChatPublicationOwner, Vulgata.Web");
+
+        Assert.NotNull(ownerType);
+        ConstructorInfo constructor = Assert.Single(typeof(PreparedChatCoordinator).GetConstructors());
+        Assert.Contains(constructor.GetParameters(), parameter =>
+            parameter.ParameterType == ownerType);
+    }
+
+    [Fact]
     public void IChatEvidenceRetriever_RetrieveAsync_UsesServerOwnedConversationRequest()
     {
         MethodInfo retrieveMethod = Assert.Single(
@@ -948,7 +960,7 @@ public sealed class PreparedChatCoordinatorTests
             dispatcher: dispatcher,
             timeProvider: clock);
 
-        dispatcher.BeforeResult = () => clock.AdvanceOnReadAfter(1, TimeSpan.FromSeconds(29));
+        dispatcher.BeforeResult = () => clock.Advance(TimeSpan.FromSeconds(29));
 
         PreparedChatResult expired = await coordinator.AskAsync(
             ChatMode.Business,
@@ -1573,6 +1585,16 @@ public sealed class PreparedChatCoordinatorTests
             lock (_gate)
             {
                 return _current;
+            }
+        }
+
+        public override long TimestampFrequency => TimeSpan.TicksPerSecond;
+
+        public override long GetTimestamp()
+        {
+            lock (_gate)
+            {
+                return checked((_current - DateTimeOffset.UnixEpoch).Ticks);
             }
         }
 

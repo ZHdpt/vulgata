@@ -6,10 +6,10 @@
   "stage": "implement",
   "preflight": {
     "branch": "demo0831/story-12-5",
-    "head": "f4ff035c84e011354d295e48b4827d7328698bf2",
+    "head": "29cf72d4daa55e8c4d6eb19ba5054eea77bf91fe",
     "git_identity_sha256": "87214c8cffd1d0e862e9efb76792c3a73d21b6941517907f025f16ccc14f69ae",
     "status_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-    "observed_at": "2026-08-29T08:08:18.4139985Z"
+    "observed_at": "2026-08-29T08:44:44.9159817Z"
   },
   "artifacts": {
     "spec": {
@@ -22,7 +22,7 @@
     },
     "tasks": {
       "path": "specs/014-grounded-llm-wiki-chat-release-evidence/tasks.md",
-      "sha256": "ddd2dfd9522ec5e45c763b8503c02f7b16d8c708178564bc1d783b6e185a80bd"
+      "sha256": "90965b9d3ce6d61a563ff1fab41831506588054027176f210c5ac692bf99874b"
     }
   },
   "gates": {
@@ -139,20 +139,20 @@
     "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/definition-review/definition-review-08.json",
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/track-b-b2-reacceptance-01.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/track-b-b3-reacceptance-01.md",
-    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/verification/task-definition-01.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/track-b-b4-implementation-01.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/integration/story-12.4-dependency-integration-correction-01.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/track-a-preservation-01.md"
   ],
   "checkpoint": {
-    "checkpoint_id": "bmad-12-5-implement-20260829T080818Z-0f6a3d",
+    "checkpoint_id": "bmad-12-5-implement-20260829T084444Z-b4",
     "stage": "implement",
     "commit_sha": null,
     "binding_status": "pending"
   },
   "resume": {
     "stage": "implement",
-    "reason": "T019-T022 B3 reacceptance passed 286/286 aggregate with bounded transient Conversation State, per-turn revalidation and whole-answer semantic rejection. Begin B4 RED tasks T023-T026.",
-    "evidence_path": "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/track-b-b3-reacceptance-01.md"
+    "reason": "T023-T032 B4 passed honest RED-to-GREEN, 355/355 aggregate B1-B4, and a zero-error Web build. Begin sequential B-INT RED tasks T033 then T034; T035 remains the sole Integration Owner.",
+    "evidence_path": "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/track-b-b4-implementation-01.md"
   },
-  "updated_at": "2026-08-29T08:08:18.4139985Z"
+  "updated_at": "2026-08-29T08:44:44.9159817Z"
 }

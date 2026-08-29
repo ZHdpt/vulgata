@@ -205,24 +205,20 @@ public sealed class ChatStreamObservationProvenanceTests
     }
 
     [Fact]
-    public void PreparedChatCoordinator_ComposesRequiredCompletionSummaryRecorder()
+    public void PreparedChatCoordinator_ComposesPublicationOwnerForCompletionAuthority()
     {
-        Type summaryType = GetRequiredType(
-            typeof(ChatProviderStreamRequest).Assembly,
-            "Vulgata.Core.DomainServices.ChatStreamCompletionSummary");
         ConstructorInfo constructor = Assert.Single(typeof(PreparedChatCoordinator).GetConstructors());
-        ParameterInfo recorderParameter = Assert.Single(
+        ParameterInfo ownerParameter = Assert.Single(
             constructor.GetParameters(),
-            parameter => parameter.ParameterType.GetMethods(BindingFlags.Instance | BindingFlags.Public)
-                .Any(method => method.GetParameters() is [{ ParameterType: var parameterType }] &&
-                    parameterType == summaryType));
+            parameter => parameter.ParameterType == typeof(IPreparedChatPublicationOwner));
 
-        Assert.False(recorderParameter.HasDefaultValue);
-        MethodInfo recordMethod = Assert.Single(
-            recorderParameter.ParameterType.GetMethods(BindingFlags.Instance | BindingFlags.Public),
-            method => method.GetParameters() is [{ ParameterType: var parameterType }] &&
-                parameterType == summaryType);
-        Assert.Contains("Completion", recordMethod.Name, StringComparison.Ordinal);
+        Assert.True(ownerParameter.HasDefaultValue);
+        Assert.Equal(
+            typeof(AcceptedPublicationCommit),
+            typeof(PreparedChatResult).GetProperty(nameof(PreparedChatResult.PublicationCommit))!.PropertyType);
+        Assert.Contains(
+            typeof(AcceptedPublicationCommit).GetProperties(BindingFlags.Instance | BindingFlags.Public),
+            property => property.Name == nameof(AcceptedPublicationCommit.CompletionSummary));
     }
 
     [Fact]
