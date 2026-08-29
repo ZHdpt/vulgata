@@ -3,13 +3,13 @@
   "bmad_story_key": "12-5-grounded-llm-wiki-chat-and-august-30-release-evidence",
   "bmad_epic_key": "12",
   "feature_directory": "specs/014-grounded-llm-wiki-chat-release-evidence",
-  "stage": "quality-review",
+  "stage": "implement",
   "preflight": {
     "branch": "demo0831/story-12-5",
-    "head": "ce9777bff62c10edb678a2eeea2e99bcc129f392",
-    "git_identity_sha256": "e2468e31dbd4f8e7b7e8d0efb96dca578e307c09baee2bef490e8b58ffa328e1",
-    "status_sha256": "914ff89943a216e3a120abd817d84e52c91fac56ed42e4649e65c5f3d9e811d2",
-    "observed_at": "2026-08-29T12:08:22.6924679Z"
+    "head": "4e9f509adc598ad6664485b47bb5bbfd74e35329",
+    "git_identity_sha256": "5f07b33e27feb48432681d34a872c03409be1e02641394ae0a59b9d93c578849",
+    "status_sha256": "d3fd08f3fe86f6d97ffa1e895b7b1a98e8bb9e1a815dea8b48a38f8ab58256a9",
+    "observed_at": "2026-08-29T12:24:13.0583807Z"
   },
   "artifacts": {
     "spec": {
@@ -22,7 +22,7 @@
     },
     "tasks": {
       "path": "specs/014-grounded-llm-wiki-chat-release-evidence/tasks.md",
-      "sha256": "70a06ad831e461a6e8c6fef9624184e00bae3948dbb7d8c817a367f87d960c3f"
+      "sha256": "f477a7d31e63a76e54619405bb4a24c554692e3f1d875a38c28ecf042b3b0eb4"
     }
   },
   "gates": {
@@ -37,9 +37,9 @@
       "verdict_path": "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/definition-review/definition-review-08.json"
     },
     "quality-review": {
-      "status": "pending",
+      "status": "revised",
       "attempt": 4,
-      "verdict_path": null
+      "verdict_path": "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/quality-review/track-b-quality-review-04.json"
     }
   },
   "attempts": {
@@ -135,8 +135,8 @@
     "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/implementation-approval-03.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/integration/track-b-int-01.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/track-b-integration-01.md",
-    "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/quality-review/track-b-quality-review-03.json",
-    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/review/track-b-quality-correction-plan-01.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/quality-review/track-b-quality-review-04.json",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/review/track-b-quality-correction-plan-02.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/integration/story-12.4-dependency-integration-correction-01.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/track-b-quality-correction-03.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/convergence/track-b-quality-correction-01.md",
@@ -144,15 +144,15 @@
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/review/track-b-quality-input-02.md"
   ],
   "checkpoint": {
-    "checkpoint_id": "bmad-12-5-quality-20260829T120822Z-input04",
+    "checkpoint_id": "bmad-12-5-quality-20260829T122413Z-revise04",
     "stage": "quality-review",
     "commit_sha": null,
     "binding_status": "pending"
   },
   "resume": {
-    "stage": "quality-review",
-    "reason": "T065 prepared a verdict-neutral input bound to corrected candidate ce9777bf and accepted convergence pass 2. Dispatch T066 independent quality review 04; Track C remains closed.",
-    "evidence_path": "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/review/track-b-quality-input-02.md"
+    "stage": "implement",
+    "reason": "Quality review 04 closed QR-TB-005..008 and returned REVISE for QR-TB-009. Sol/high appended T068-T077 without authority change. Begin serialized public RED T068.",
+    "evidence_path": "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/review/track-b-quality-correction-plan-02.md"
   },
-  "updated_at": "2026-08-29T12:08:22.6924679Z"
+  "updated_at": "2026-08-29T12:24:13.0583807Z"
 }
