@@ -1,0 +1,53 @@
+{
+  "schema_version": "1.0",
+  "gate": "quality-review",
+  "verdict": "REVISE",
+  "reviewed_commit": "25268193b3766149b90b8e155d9fd270fa2fcd27",
+  "reviewed_boundary": {
+    "base_commit": "1b7526f9c57b7226b561a9708f4d94f09f1fd046",
+    "candidate_commit": "25268193b3766149b90b8e155d9fd270fa2fcd27",
+    "diff_sha256": "61ee20680a775ea81d8e0ccd39654dfc9569fb6f3ee2babb7c060788f6bf724b",
+    "spec_sha256": "a7367b1f64fcfc2cf099d7fd204575f314e35994204ccb0cd7b7f2dacf6f7dd4",
+    "plan_sha256": "9b84e94ea2bb564b8a08b521023ab449ae7c5731e52cce057d5e63bad2c02b6a",
+    "tasks_sha256": "88451be3ead7863b62040396949e724a41350ddcd168681e39a3ac168e9d01e4"
+  },
+  "findings": [
+    {
+      "id": "QR-TB-001",
+      "severity": "HIGH",
+      "category": "security-currentness",
+      "artifact": "src/dotnet/Vulgata.Web/Data/PreparedChatCoordinator.cs",
+      "location": "250-277,417-426,461-505,529-539",
+      "affected_requirement": "AD-2B; FR-019, FR-024, FR-027; SC-001, SC-005",
+      "evidence": "The reveal barrier compares its reread with the coordinator's earlier snapshot rather than the transaction-owned advisory authority bound into the retrieved packet, permitting an A-to-B-to-A race.",
+      "correction_outcome": "Carry transaction-owned advisory authority through the server-only retrieval result/currentness boundary and compare reveal state to that exact authority; prove A-to-B-to-A is withheld without answer or conversation append."
+    },
+    {
+      "id": "QR-TB-002",
+      "severity": "HIGH",
+      "category": "correctness-deadline",
+      "artifact": "src/dotnet/Vulgata.Web/Data/PreparedChatCoordinator.cs",
+      "location": "40-47,202-203,240-277,461-526",
+      "affected_requirement": "AD-7; FR-031, FR-032, FR-056; SC-017",
+      "evidence": "The 29-second timestamp is carried to dispatch but does not cancel or refuse retrieval, currentness, advisory reread, final authorization, conversation append, or publication after expiry.",
+      "correction_outcome": "Enforce one deadline-linked budget through all stages and refuse publication when expired; prove expiry during retrieval and reveal revalidation produces no answer or conversation append."
+    },
+    {
+      "id": "QR-TB-003",
+      "severity": "HIGH",
+      "category": "correctness-repair-boundary",
+      "artifact": "src/dotnet/Vulgata.Agents/ChatExecution/ChatAgentDispatcher.cs",
+      "location": "120-150,287-343",
+      "affected_requirement": "AD-7; chat-provider-streaming-v1; FR-027, FR-028",
+      "evidence": "Syntax, invalid operation, and contract-invalid selection failures collapse into InvalidSelection and all trigger repair; valid JSON with semantic or handle violations can receive a second stream.",
+      "correction_outcome": "Classify only bounded local syntax failures as repairable, carry the bounded invalid response and closed syntax category to repair, and refuse all semantic/handle/fingerprint/evidence/citation failures without repair."
+    }
+  ],
+  "verification": {
+    "focused_tests_passed": 272,
+    "web_build_errors": 0,
+    "existing_warnings": 19,
+    "diff_check": "passed"
+  },
+  "independence": "Independent read-only quality review; no implementation, test, lifecycle, staging, commit, or history mutation was performed."
+}
