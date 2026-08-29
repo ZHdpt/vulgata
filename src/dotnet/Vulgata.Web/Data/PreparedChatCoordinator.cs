@@ -85,7 +85,6 @@ public sealed class PreparedChatCoordinator(
         completionSummaryRecorder ?? throw new ArgumentNullException(nameof(completionSummaryRecorder));
     private readonly IPreparedChatPublicationOwner _publicationOwner =
         publicationOwner ?? throw new ArgumentNullException(nameof(publicationOwner));
-    private readonly PreparedChatPublicationAuthority _publicationAuthority = new();
 
     public async Task<IReadOnlyList<PreparedChatScopeOption>> ListScopesAsync(
         CancellationToken cancellationToken = default)
@@ -220,8 +219,16 @@ public sealed class PreparedChatCoordinator(
                 request.Mode,
                 request.SystemId,
                 request.RepositoryIds);
+            PreparedChatPublicationSnapshot publicationSnapshot = _publicationOwner.CaptureSnapshot();
+            if (publicationSnapshot.CurrentCommit?.Conversation is ChatConversationState currentConversation &&
+                !currentConversation.Scope.Equals(conversationScope))
+            {
+                _publicationOwner.Reset();
+                publicationSnapshot = _publicationOwner.CaptureSnapshot();
+            }
+
             ChatConversationState conversationState =
-                (_publicationAuthority.CurrentCommit?.Conversation ?? ChatConversationState.Empty(conversationScope))
+                (publicationSnapshot.CurrentCommit?.Conversation ?? ChatConversationState.Empty(conversationScope))
                 .ResetForScopeChange(conversationScope);
             long absoluteDeadlineUnixTimeMilliseconds = deadlineUtc.ToUnixTimeMilliseconds();
             UserContext? userContext = await GetCurrentUserContextAsync();
@@ -391,6 +398,7 @@ public sealed class PreparedChatCoordinator(
                         absoluteDeadlineUnixTimeMilliseconds,
                         startTimestamp,
                         deadlineTimestamp,
+                        publicationSnapshot,
                         conversationState,
                         operationToken,
                         cancellationToken);
@@ -448,6 +456,7 @@ public sealed class PreparedChatCoordinator(
                         absoluteDeadlineUnixTimeMilliseconds,
                         startTimestamp,
                         deadlineTimestamp,
+                        publicationSnapshot,
                         conversationState,
                         operationToken,
                         cancellationToken);
@@ -475,6 +484,7 @@ public sealed class PreparedChatCoordinator(
                 absoluteDeadlineUnixTimeMilliseconds,
                 startTimestamp,
                 deadlineTimestamp,
+                publicationSnapshot,
                 conversationState,
                 operationToken,
                 cancellationToken);
@@ -529,6 +539,7 @@ public sealed class PreparedChatCoordinator(
         long absoluteDeadlineUnixTimeMilliseconds,
         long startTimestamp,
         long deadlineTimestamp,
+        PreparedChatPublicationSnapshot publicationSnapshot,
         ChatConversationState conversationState,
         CancellationToken cancellationToken,
         CancellationToken publicationCancellationToken)
@@ -627,7 +638,7 @@ public sealed class PreparedChatCoordinator(
             cancellationToken,
             packet.Fingerprint,
             packet.AdvisoryContextAuthorityFingerprint,
-            _publicationAuthority);
+            publicationSnapshot);
 
         AcceptedPublicationCommit publicationCommit = _publicationOwner.Commit(
             candidate,
@@ -777,8 +788,10 @@ public sealed class PreparedChatCoordinator(
 
     private void ClearConversation()
     {
-        _publicationAuthority.Reset();
+        _publicationOwner.Reset();
     }
+
+    public void ResetConversation() => ClearConversation();
 
     public void Dispose()
     {

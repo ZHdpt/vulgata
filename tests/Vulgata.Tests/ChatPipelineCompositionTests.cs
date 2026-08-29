@@ -217,6 +217,42 @@ public sealed class ChatPipelineCompositionTests
     }
 
     [Fact]
+    public void ProductionComposition_Story125T071_UsesOneOwnerGenerationResetBoundary()
+    {
+        Type ownerType = typeof(IPreparedChatPublicationOwner);
+        MemberInfo snapshotMember = Assert.Single(
+            ownerType.GetMembers(BindingFlags.Public | BindingFlags.Instance)
+                .Where(member => member.Name.Contains("Snapshot", StringComparison.Ordinal)));
+        Type snapshotType = snapshotMember switch
+        {
+            MethodInfo method => method.ReturnType,
+            PropertyInfo property => property.PropertyType,
+            _ => throw new Xunit.Sdk.XunitException(
+                "The publication owner snapshot must be a public method or property."),
+        };
+
+        Assert.Contains(
+            snapshotType.GetProperties(BindingFlags.Public | BindingFlags.Instance),
+            property => property.Name.Contains("Generation", StringComparison.Ordinal));
+        Assert.Contains(
+            snapshotType.GetProperties(BindingFlags.Public | BindingFlags.Instance),
+            property => property.Name.Contains("Commit", StringComparison.Ordinal) ||
+                property.Name.Contains("Current", StringComparison.Ordinal));
+
+        MethodInfo reset = Assert.Single(
+            ownerType.GetMethods(BindingFlags.Public | BindingFlags.Instance)
+                .Where(method => method.Name.Contains("Reset", StringComparison.Ordinal)));
+        Assert.Empty(reset.GetParameters());
+        Assert.Equal(typeof(void), reset.ReturnType);
+
+        FieldInfo[] coordinatorShadowAuthorities = typeof(PreparedChatCoordinator)
+            .GetFields(BindingFlags.Instance | BindingFlags.NonPublic)
+            .Where(field => field.FieldType.Name == "PreparedChatPublicationAuthority")
+            .ToArray();
+        Assert.Empty(coordinatorShadowAuthorities);
+    }
+
+    [Fact]
     public void ProductionComposition_Story125BInt_DispatcherUsesTypedStreamingTransport()
     {
         using var factory = new LoginLogoutTests.CustomWebApplicationFactory();

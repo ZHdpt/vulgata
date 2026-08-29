@@ -162,6 +162,7 @@ public partial class ChatPage : IAsyncDisposable
 
     private async Task StartNewConversationAsync()
     {
+        ChatCoordinator.ResetConversation();
         _conversationVersion++;
         _requestCancellation?.Cancel();
         _revealCancellation?.Cancel();

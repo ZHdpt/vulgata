@@ -754,6 +754,10 @@ public sealed class PreparedChatIntegrationTests
 
         public int CommitCount { get; private set; }
 
+        public PreparedChatPublicationSnapshot CaptureSnapshot() => _inner.CaptureSnapshot();
+
+        public void Reset() => _inner.Reset();
+
         public AcceptedPublicationCommit Commit(
             PreparedChatPublicationCandidate candidate,
             CancellationToken cancellationToken)

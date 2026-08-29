@@ -76,6 +76,18 @@ public sealed class PreparedChatCoordinatorTests
     }
 
     [Fact]
+    public void PreparedChatCoordinator_UsesPublicationOwnerForConversationAuthorityWithoutLocalShadowState()
+    {
+        FieldInfo[] localPublicationAuthorities = typeof(PreparedChatCoordinator)
+            .GetFields(BindingFlags.Instance | BindingFlags.NonPublic)
+            .Where(field => field.FieldType.Name == "PreparedChatPublicationAuthority")
+            .ToArray();
+
+        Assert.Empty(
+            localPublicationAuthorities);
+    }
+
+    [Fact]
     public void IChatEvidenceRetriever_RetrieveAsync_UsesServerOwnedConversationRequest()
     {
         MethodInfo retrieveMethod = Assert.Single(

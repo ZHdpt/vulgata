@@ -153,23 +153,68 @@ public sealed class PreparedChatCommittedCompletionSummary
             durationMilliseconds);
 }
 
+public sealed class PreparedChatPublicationSnapshot
+{
+    internal PreparedChatPublicationSnapshot(
+        long generation,
+        AcceptedPublicationCommit? currentCommit,
+        PreparedChatPublicationAuthority authority)
+    {
+        Generation = generation;
+        CurrentCommit = currentCommit?.Published == true ? currentCommit : null;
+        Authority = authority;
+    }
+
+    public long Generation { get; }
+
+    public AcceptedPublicationCommit? CurrentCommit { get; }
+
+    internal PreparedChatPublicationAuthority Authority { get; }
+}
+
 internal sealed class PreparedChatPublicationAuthority
 {
+    private long _generation;
     private AcceptedPublicationCommit? _currentCommit;
+
+    internal object Gate { get; } = new();
 
     internal AcceptedPublicationCommit? CurrentCommit
     {
         get
         {
-            AcceptedPublicationCommit? current = Volatile.Read(ref _currentCommit);
-            return current?.Published == true ? current : null;
+            lock (Gate)
+            {
+                return _currentCommit?.Published == true ? _currentCommit : null;
+            }
         }
     }
 
-    internal void Prepare(AcceptedPublicationCommit commit) =>
-        Volatile.Write(ref _currentCommit, commit);
+    internal PreparedChatPublicationSnapshot Capture()
+    {
+        lock (Gate)
+        {
+            return new PreparedChatPublicationSnapshot(
+                _generation,
+                _currentCommit,
+                this);
+        }
+    }
 
-    internal void Reset() => Interlocked.Exchange(ref _currentCommit, null);
+    internal bool IsCurrentGenerationUnderLock(long generation) =>
+        _generation == generation;
+
+    internal void SetCurrentUnderLock(AcceptedPublicationCommit commit) =>
+        _currentCommit = commit;
+
+    internal void Reset()
+    {
+        lock (Gate)
+        {
+            _generation = unchecked(_generation + 1);
+            _currentCommit = null;
+        }
+    }
 }
 
 public sealed class PreparedChatPublicationCandidate
@@ -197,7 +242,7 @@ public sealed class PreparedChatPublicationCandidate
             deadlineCancellationToken,
             packetFingerprint,
             advisoryAuthorityFingerprint,
-            new PreparedChatPublicationAuthority())
+            new PreparedChatPublicationAuthority().Capture())
     {
     }
 
@@ -212,6 +257,32 @@ public sealed class PreparedChatPublicationCandidate
         string packetFingerprint,
         string advisoryAuthorityFingerprint,
         PreparedChatPublicationAuthority publicationAuthority)
+        : this(
+            acceptedAnswer,
+            proposedConversation,
+            completionSummary,
+            reveal,
+            startTimestamp,
+            deadlineTimestamp,
+            deadlineCancellationToken,
+            packetFingerprint,
+            advisoryAuthorityFingerprint,
+            publicationAuthority?.Capture() ??
+                throw new ArgumentNullException(nameof(publicationAuthority)))
+    {
+    }
+
+    internal PreparedChatPublicationCandidate(
+        GroundedAnswer acceptedAnswer,
+        ChatConversationState proposedConversation,
+        PreparedChatCompletionSummaryTemplate completionSummary,
+        PreparedChatRevealDirective reveal,
+        long startTimestamp,
+        long deadlineTimestamp,
+        CancellationToken deadlineCancellationToken,
+        string packetFingerprint,
+        string advisoryAuthorityFingerprint,
+        PreparedChatPublicationSnapshot publicationSnapshot)
     {
         AcceptedAnswer = acceptedAnswer ?? throw new ArgumentNullException(nameof(acceptedAnswer));
         ProposedConversation = proposedConversation ??
@@ -232,8 +303,8 @@ public sealed class PreparedChatPublicationCandidate
         PacketFingerprint = packetFingerprint ?? throw new ArgumentNullException(nameof(packetFingerprint));
         AdvisoryAuthorityFingerprint = advisoryAuthorityFingerprint ??
             throw new ArgumentNullException(nameof(advisoryAuthorityFingerprint));
-        PublicationAuthority = publicationAuthority ??
-            throw new ArgumentNullException(nameof(publicationAuthority));
+        PublicationSnapshot = publicationSnapshot ??
+            throw new ArgumentNullException(nameof(publicationSnapshot));
         CommittedCompletionSummary = new PreparedChatCommittedCompletionSummary(
             completionSummary);
         AcceptedCommit = new AcceptedPublicationCommit(this);
@@ -259,6 +330,8 @@ public sealed class PreparedChatPublicationCandidate
 
     public string AdvisoryAuthorityFingerprint { get; }
 
+    public long ConversationGeneration => PublicationSnapshot.Generation;
+
     public PreparedChatPublicationState State =>
         (PreparedChatPublicationState)Volatile.Read(ref _state);
 
@@ -270,7 +343,10 @@ public sealed class PreparedChatPublicationCandidate
 
     internal PreparedChatCommittedCompletionSummary CommittedCompletionSummary { get; }
 
-    internal PreparedChatPublicationAuthority PublicationAuthority { get; }
+    internal PreparedChatPublicationSnapshot PublicationSnapshot { get; }
+
+    internal PreparedChatPublicationAuthority PublicationAuthority =>
+        PublicationSnapshot.Authority;
 
     internal void SetAcceptedPrimitives(long sampledTimestamp, long acceptedDurationMilliseconds)
     {
@@ -322,6 +398,10 @@ public sealed class AcceptedPublicationCommit
 
 public interface IPreparedChatPublicationOwner
 {
+    PreparedChatPublicationSnapshot CaptureSnapshot();
+
+    void Reset();
+
     AcceptedPublicationCommit Commit(
         PreparedChatPublicationCandidate candidate,
         CancellationToken cancellationToken);
@@ -330,18 +410,29 @@ public interface IPreparedChatPublicationOwner
 public sealed class PreparedChatPublicationOwner(TimeProvider timeProvider) :
     IPreparedChatPublicationOwner
 {
-    private readonly object _gate = new();
+    private readonly PreparedChatPublicationAuthority _authority = new();
+
+    public PreparedChatPublicationSnapshot CaptureSnapshot() => _authority.Capture();
+
+    public void Reset() => _authority.Reset();
 
     public AcceptedPublicationCommit Commit(
         PreparedChatPublicationCandidate candidate,
         CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(candidate);
-        lock (_gate)
+        lock (_authority.Gate)
         {
             if (candidate.State != PreparedChatPublicationState.Pending)
             {
                 return candidate.TerminalCommit;
+            }
+
+            if (!ReferenceEquals(candidate.PublicationAuthority, _authority) ||
+                !_authority.IsCurrentGenerationUnderLock(candidate.ConversationGeneration))
+            {
+                candidate.TryTransition(PreparedChatPublicationState.CancelledBeforePublication);
+                return candidate.CancelledCommit;
             }
 
             if (cancellationToken.IsCancellationRequested)
@@ -376,8 +467,8 @@ public sealed class PreparedChatPublicationOwner(TimeProvider timeProvider) :
                 remainingBudgetMilliseconds,
                 candidate.Reveal.PreparedRemainingBudgetMilliseconds));
             candidate.SetAcceptedPrimitives(sampledTimestamp, acceptedDurationMilliseconds);
-            candidate.PublicationAuthority.Prepare(candidate.AcceptedCommit);
             candidate.TryTransition(PreparedChatPublicationState.AcceptedPublicationCommit);
+            _authority.SetCurrentUnderLock(candidate.AcceptedCommit);
             return candidate.AcceptedCommit;
         }
     }

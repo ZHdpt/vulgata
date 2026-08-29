@@ -52,16 +52,26 @@ public sealed class PreparedChatPublicationOwnerTests
     }
 
     [Fact]
-    public void CommitBoundary_UsesOneSynchronousNonThrowingOwnerOperation()
+    public void CommitBoundary_UsesThreeSynchronousNonThrowingOwnerOperations()
     {
         Type ownerType = RequireType(OwnerTypeName);
         MethodInfo[] methods = ownerType.GetMethods(BindingFlags.Public | BindingFlags.Instance);
 
-        Assert.Single(methods);
-        MethodInfo commit = methods[0];
-        Assert.DoesNotContain("Async", commit.Name, StringComparison.Ordinal);
-        Assert.NotEqual(typeof(Task), commit.ReturnType);
-        Assert.NotEqual(typeof(ValueTask), commit.ReturnType);
+        Assert.Equal(3, methods.Length);
+        Assert.Contains(methods, method =>
+            method.Name == "CaptureSnapshot" &&
+            method.GetParameters().Length == 0);
+        Assert.Contains(methods, method =>
+            method.Name == "Reset" &&
+            method.GetParameters().Length == 0);
+        MethodInfo commit = Assert.Single(methods.Where(method => method.GetParameters().Any(
+            parameter => parameter.ParameterType.Name.Contains("PublicationCandidate", StringComparison.Ordinal))));
+        Assert.All(methods, method =>
+        {
+            Assert.DoesNotContain("Async", method.Name, StringComparison.Ordinal);
+            Assert.NotEqual(typeof(Task), method.ReturnType);
+            Assert.NotEqual(typeof(ValueTask), method.ReturnType);
+        });
         Assert.Contains(
             commit.GetParameters(),
             parameter => parameter.ParameterType.Name.Contains("PublicationCandidate", StringComparison.Ordinal));
@@ -71,7 +81,10 @@ public sealed class PreparedChatPublicationOwnerTests
     public void PublicationOwner_ReceivesCancellationAndMonotonicClockAtTheCommitSeam()
     {
         Type ownerType = RequireType(OwnerTypeName);
-        MethodInfo commit = Assert.Single(ownerType.GetMethods(BindingFlags.Public | BindingFlags.Instance));
+        MethodInfo commit = Assert.Single(
+            ownerType.GetMethods(BindingFlags.Public | BindingFlags.Instance)
+                .Where(method => method.GetParameters().Any(parameter =>
+                    parameter.ParameterType.Name.Contains("PublicationCandidate", StringComparison.Ordinal))));
         Type implementationType = ownerType.Assembly.GetTypes()
             .Single(type => !type.IsInterface && ownerType.IsAssignableFrom(type));
 
@@ -98,6 +111,19 @@ public sealed class PreparedChatPublicationOwnerTests
         Assert.Contains(propertyNames, name => name.Contains("Completion", StringComparison.Ordinal));
         Assert.Contains(propertyNames, name => name.Contains("Reveal", StringComparison.Ordinal));
         Assert.Contains(propertyNames, name => name.Contains("Deadline", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void PublicationCandidate_BindsImmutableConversationGeneration()
+    {
+        PropertyInfo[] generationProperties = typeof(PreparedChatPublicationCandidate)
+            .GetProperties(BindingFlags.Public | BindingFlags.Instance)
+            .Where(property => property.Name.Contains("Generation", StringComparison.Ordinal))
+            .ToArray();
+
+        PropertyInfo generation = Assert.Single(generationProperties);
+        Assert.False(generation.CanWrite);
+        Assert.NotEqual(typeof(object), generation.PropertyType);
     }
 
     [Fact]
@@ -130,11 +156,12 @@ public sealed class PreparedChatPublicationOwnerTests
     public void Commit_CancellationBeforeSoleSample_ReturnsClosedCancelledWithoutPublication()
     {
         var clock = new PublicationClock(150);
-        var candidate = CreateCandidate(clock, startTimestamp: 100, deadlineTimestamp: 200);
+        var owner = new PreparedChatPublicationOwner(clock);
+        var candidate = CreateCandidate(owner, startTimestamp: 100, deadlineTimestamp: 200);
         using var cancellation = new CancellationTokenSource();
         cancellation.Cancel();
 
-        AcceptedPublicationCommit commit = new PreparedChatPublicationOwner(clock)
+        AcceptedPublicationCommit commit = owner
             .Commit(candidate, cancellation.Token);
 
         Assert.Equal(PreparedChatPublicationState.CancelledBeforePublication, commit.State);
@@ -145,6 +172,57 @@ public sealed class PreparedChatPublicationOwnerTests
         Assert.Equal(0, clock.SampleCount);
     }
 
+    [Fact]
+    public void Commit_CandidateCapturedBeforeReset_CannotPublishOrReactivate()
+    {
+        var clock = new PublicationClock(150);
+        var owner = new PreparedChatPublicationOwner(clock);
+        var candidate = CreateCandidate(
+            owner,
+            startTimestamp: 100,
+            deadlineTimestamp: 200);
+
+        owner.Reset();
+
+        AcceptedPublicationCommit firstCommit = owner.Commit(candidate, CancellationToken.None);
+        AcceptedPublicationCommit repeatedCommit = owner.Commit(candidate, CancellationToken.None);
+
+        Assert.False(firstCommit.Published);
+        Assert.Equal(PreparedChatPublicationState.CancelledBeforePublication, firstCommit.State);
+        Assert.Null(firstCommit.Answer);
+        Assert.Null(firstCommit.Conversation);
+        Assert.Null(firstCommit.CompletionSummary);
+        Assert.Same(firstCommit, repeatedCommit);
+        Assert.Equal(PreparedChatPublicationState.CancelledBeforePublication, candidate.State);
+    }
+
+    [Fact]
+    public async Task Commit_PreResetCandidate_FirstRepeatedAndConcurrentCallsRemainClosedAndNonCurrentAsync()
+    {
+        var clock = new PublicationClock(150);
+        var owner = new PreparedChatPublicationOwner(clock);
+        var candidate = CreateCandidate(
+            owner,
+            startTimestamp: 100,
+            deadlineTimestamp: 200);
+
+        owner.Reset();
+
+        AcceptedPublicationCommit[] commits = await Task.WhenAll(
+            Enumerable.Range(0, 16)
+                .Select(_ => Task.Run(() => owner.Commit(candidate, CancellationToken.None))));
+
+        AcceptedPublicationCommit first = commits[0];
+        Assert.False(first.Published);
+        Assert.Equal(PreparedChatPublicationState.CancelledBeforePublication, first.State);
+        Assert.All(commits, commit => Assert.Same(first, commit));
+        Assert.Null(first.Answer);
+        Assert.Null(first.Conversation);
+        Assert.Null(first.CompletionSummary);
+        Assert.Null(owner.CaptureSnapshot().CurrentCommit);
+        Assert.Equal(PreparedChatPublicationState.CancelledBeforePublication, candidate.State);
+    }
+
     [Theory]
     [InlineData(200)]
     [InlineData(201)]
@@ -152,9 +230,10 @@ public sealed class PreparedChatPublicationOwnerTests
         long sampledTimestamp)
     {
         var clock = new PublicationClock(sampledTimestamp);
-        var candidate = CreateCandidate(clock, startTimestamp: 100, deadlineTimestamp: 200);
+        var owner = new PreparedChatPublicationOwner(clock);
+        var candidate = CreateCandidate(owner, startTimestamp: 100, deadlineTimestamp: 200);
 
-        AcceptedPublicationCommit commit = new PreparedChatPublicationOwner(clock)
+        AcceptedPublicationCommit commit = owner
             .Commit(candidate, CancellationToken.None);
 
         Assert.Equal(PreparedChatPublicationState.TimedOutBeforePublication, commit.State);
@@ -169,8 +248,8 @@ public sealed class PreparedChatPublicationOwnerTests
     public void Commit_StrictlyBeforeDeadline_RemainsAcceptedAfterSchedulerAdvance()
     {
         var clock = new PublicationClock(150);
-        var candidate = CreateCandidate(clock, startTimestamp: 100, deadlineTimestamp: 200);
         var owner = new PreparedChatPublicationOwner(clock);
+        var candidate = CreateCandidate(owner, startTimestamp: 100, deadlineTimestamp: 200);
 
         AcceptedPublicationCommit commit = owner.Commit(candidate, CancellationToken.None);
         clock.Timestamp = 250;
@@ -186,11 +265,12 @@ public sealed class PreparedChatPublicationOwnerTests
     public void Commit_GetElapsedTimeFailure_DoesNotStrandCandidatePending()
     {
         var clock = new PublicationClock(150) { ThrowOnElapsedTime = true };
-        var candidate = CreateCandidate(clock, startTimestamp: 100, deadlineTimestamp: 200);
+        var owner = new PreparedChatPublicationOwner(clock);
+        var candidate = CreateCandidate(owner, startTimestamp: 100, deadlineTimestamp: 200);
 
         AcceptedPublicationCommit? commit = null;
         Exception? exception = Record.Exception(() =>
-            commit = new PreparedChatPublicationOwner(clock).Commit(candidate, CancellationToken.None));
+            commit = owner.Commit(candidate, CancellationToken.None));
 
         Assert.Null(exception);
         AcceptedPublicationCommit acceptedCommit = Assert.IsType<AcceptedPublicationCommit>(commit);
@@ -204,8 +284,8 @@ public sealed class PreparedChatPublicationOwnerTests
     public async Task Commit_ConcurrentRepeatedCalls_ReturnExactlyOneTerminalAcceptedCommitAsync()
     {
         var clock = new PublicationClock(150);
-        var candidate = CreateCandidate(clock, startTimestamp: 100, deadlineTimestamp: 200);
         var owner = new PreparedChatPublicationOwner(clock);
+        var candidate = CreateCandidate(owner, startTimestamp: 100, deadlineTimestamp: 200);
 
         AcceptedPublicationCommit[] commits = await Task.WhenAll(
             Enumerable.Range(0, 16)
@@ -223,9 +303,10 @@ public sealed class PreparedChatPublicationOwnerTests
     public void Commit_AcceptedComposite_ContainsAnswerConversationSummaryAndRevealAtomically()
     {
         var clock = new PublicationClock(150);
-        var candidate = CreateCandidate(clock, startTimestamp: 100, deadlineTimestamp: 200);
+        var owner = new PreparedChatPublicationOwner(clock);
+        var candidate = CreateCandidate(owner, startTimestamp: 100, deadlineTimestamp: 200);
 
-        AcceptedPublicationCommit commit = new PreparedChatPublicationOwner(clock)
+        AcceptedPublicationCommit commit = owner
             .Commit(candidate, CancellationToken.None);
 
         Assert.True(commit.Published);
@@ -247,24 +328,26 @@ public sealed class PreparedChatPublicationOwnerTests
             BindingFlags.Public | BindingFlags.Instance));
 
         var cancelledClock = new PublicationClock(150);
+        var cancelledOwner = new PreparedChatPublicationOwner(cancelledClock);
         var cancelledCandidate = CreateCandidate(
-            cancelledClock,
+            cancelledOwner,
             startTimestamp: 100,
             deadlineTimestamp: 200);
         using var cancellation = new CancellationTokenSource();
         cancellation.Cancel();
 
-        AcceptedPublicationCommit cancelled = new PreparedChatPublicationOwner(cancelledClock)
+        AcceptedPublicationCommit cancelled = cancelledOwner
             .Commit(cancelledCandidate, cancellation.Token);
         Assert.False(cancelled.Published);
         Assert.Null(cancelled.CompletionSummary);
 
         var acceptedClock = new PublicationClock(150);
+        var acceptedOwner = new PreparedChatPublicationOwner(acceptedClock);
         var acceptedCandidate = CreateCandidate(
-            acceptedClock,
+            acceptedOwner,
             startTimestamp: 100,
             deadlineTimestamp: 200);
-        AcceptedPublicationCommit accepted = new PreparedChatPublicationOwner(acceptedClock)
+        AcceptedPublicationCommit accepted = acceptedOwner
             .Commit(acceptedCandidate, CancellationToken.None);
 
         Assert.True(accepted.Published);
@@ -297,6 +380,7 @@ public sealed class PreparedChatPublicationOwnerTests
     public void Commit_AcceptedPublication_PreallocatesStableCompletionSummaryAuthority()
     {
         TimeProvider timeProvider = TimeProvider.System;
+        var owner = new PreparedChatPublicationOwner(timeProvider);
         long startTimestamp = timeProvider.GetTimestamp();
         var candidate = new PreparedChatPublicationCandidate(
             GroundedAnswer.Create(
@@ -329,9 +413,10 @@ public sealed class PreparedChatPublicationOwnerTests
             checked(startTimestamp + (29 * timeProvider.TimestampFrequency)),
             CancellationToken.None,
             new string('a', 64),
-            new string('b', 64));
+            new string('b', 64),
+            owner.CaptureSnapshot());
 
-        AcceptedPublicationCommit commit = new PreparedChatPublicationOwner(timeProvider)
+        AcceptedPublicationCommit commit = owner
             .Commit(candidate, CancellationToken.None);
 
         object? first = commit.CompletionSummary;
@@ -377,7 +462,7 @@ public sealed class PreparedChatPublicationOwnerTests
     }
 
     private static PreparedChatPublicationCandidate CreateCandidate(
-        TimeProvider timeProvider,
+        IPreparedChatPublicationOwner owner,
         long startTimestamp,
         long deadlineTimestamp,
         CancellationToken deadlineCancellationToken = default)
@@ -397,22 +482,24 @@ public sealed class PreparedChatPublicationOwnerTests
             DateTimeOffset.UnixEpoch);
         ChatConversationState conversation = ChatConversationState.Empty(
             ChatConversationScope.Create(ChatMode.Business, Guid.NewGuid(), [Guid.NewGuid(), Guid.NewGuid()]));
+        PreparedChatCompletionSummaryTemplate completionSummary = new(
+            "summary-1",
+            "request-1",
+            [],
+            false,
+            ["accepted"],
+            "accepted");
         return new PreparedChatPublicationCandidate(
             answer,
             conversation,
-            new PreparedChatCompletionSummaryTemplate(
-                "summary-1",
-                "request-1",
-                [],
-                false,
-                ["accepted"],
-                "accepted"),
+            completionSummary,
             PreparedChatRevealDirective.ProgressiveAccepted(29_000),
             startTimestamp,
             deadlineTimestamp,
             deadlineCancellationToken,
             new string('a', 64),
-            new string('b', 64));
+            new string('b', 64),
+            owner.CaptureSnapshot());
     }
 
     private sealed class PublicationClock(long timestamp) : TimeProvider

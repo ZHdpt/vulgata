@@ -150,6 +150,107 @@ public sealed class ChatPageTests : BunitContext
     }
 
     [Fact]
+    public async Task ChatPage_NewConversationAfterGroundedTurn_ResetsBackendConversationForIdenticalScopeAsync()
+    {
+        IRenderedComponent<ChatPage> cut = Render<ChatPage>();
+        WaitForLoaded(cut);
+        PrepareValidSelection(cut, ChatMode.Business);
+
+        await SendQuestionAsync(cut, "客户如何完成付款？");
+
+        AcceptedPublicationCommit firstCommit =
+            await _publicationOwner.CommitObserved.WaitAsync(TimeSpan.FromSeconds(5));
+        AssertCommittedAnswer(cut, firstCommit);
+        ChatRetrievalRequest firstRequest = Assert.Single(_retriever.Requests);
+        ChatConversationState firstConversation = Assert.IsType<ChatConversationState>(firstCommit.Conversation);
+        ValidatedConversationTurn firstTurn = Assert.Single(firstConversation.Turns);
+        ChatSynthesisRequest firstSynthesisRequest = Assert.Single(_dispatcher.Requests);
+
+        await FindButton(cut, "新对话").ClickAsync(new MouseEventArgs());
+
+        Assert.DoesNotContain("客户如何完成付款？", cut.Markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("客户提交付款后，系统完成校验。", cut.Markup, StringComparison.Ordinal);
+        Assert.Empty(cut.FindAll(".complete-answer"));
+        Assert.Empty(cut.FindAll(".document-citation"));
+        Assert.Equal(string.Empty, cut.Find("#chat-question").GetAttribute("value"));
+        Assert.Empty(cut.FindAll(".repository-chip"));
+        Assert.Equal("true", FindButton(cut, "业务模式").GetAttribute("aria-pressed"));
+        Assert.Contains("新对话已开始", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("你好，想了解什么业务流程？", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains(
+            JSInterop.Invocations,
+            invocation => invocation.Identifier.Contains("focus", StringComparison.OrdinalIgnoreCase));
+
+        await SendQuestionAsync(cut, "付款后如何查询？");
+
+        ChatRetrievalRequest secondRequest = Assert.Single(_retriever.Requests.Skip(1));
+        ChatConversationScope expectedScope = ChatConversationScope.Create(
+            firstRequest.Mode,
+            firstRequest.SystemId,
+            firstRequest.RepositoryIds);
+        Assert.Equal(firstRequest.Mode, secondRequest.Mode);
+        Assert.Equal(firstRequest.SystemId, secondRequest.SystemId);
+        Assert.Equal(firstRequest.RepositoryIds.Order(), secondRequest.RepositoryIds.Order());
+        Assert.Equal(expectedScope, secondRequest.Conversation.Scope);
+        Assert.Empty(secondRequest.Conversation.Turns);
+        Assert.Empty(secondRequest.Conversation.PriorCitationHandles);
+        Assert.Empty(secondRequest.Conversation.PriorLogicalDocumentHints);
+        Assert.DoesNotContain(firstTurn.Question, secondRequest.Conversation.RetrievalContext, StringComparison.Ordinal);
+        Assert.DoesNotContain(firstTurn.AnswerText, secondRequest.Conversation.RetrievalContext, StringComparison.Ordinal);
+        Assert.DoesNotContain(firstTurn.PacketFingerprint, secondRequest.Conversation.RetrievalContext, StringComparison.Ordinal);
+        Assert.DoesNotContain(firstSynthesisRequest.EvidenceFingerprint, secondRequest.Conversation.RetrievalContext, StringComparison.Ordinal);
+        Assert.DoesNotContain(
+            firstTurn.CitationHandles,
+            handle => secondRequest.Conversation.PriorCitationHandles.Contains(handle, StringComparer.Ordinal));
+        Assert.DoesNotContain(
+            firstTurn.LogicalDocumentIds,
+            documentId => secondRequest.Conversation.PriorLogicalDocumentHints.Contains(documentId));
+    }
+
+    [Fact]
+    public async Task ChatPage_NewConversationDuringInFlightCommit_RejectsStalePublicationAndNextRequestIsEmptyAsync()
+    {
+        IRenderedComponent<ChatPage> cut = Render<ChatPage>();
+        WaitForLoaded(cut);
+        PrepareValidSelection(cut, ChatMode.Business);
+
+        await SendQuestionAsync(cut, "客户如何完成付款？");
+        AcceptedPublicationCommit firstCommit =
+            await _publicationOwner.CommitObserved.WaitAsync(TimeSpan.FromSeconds(5));
+        AssertCommittedAnswer(cut, firstCommit);
+
+        _dispatcher.BlockNextCall();
+        Task staleSendTask = BeginQuestionAsync(cut, "付款问题正在处理中？");
+        await _dispatcher.Entered.WaitAsync(TimeSpan.FromSeconds(5));
+
+        await FindButton(cut, "新对话").ClickAsync(new MouseEventArgs());
+        Assert.DoesNotContain("客户如何完成付款？", cut.Markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("付款问题正在处理中？", cut.Markup, StringComparison.Ordinal);
+        Assert.Empty(cut.FindAll(".complete-answer"));
+        Assert.Empty(cut.FindAll(".document-citation"));
+        Assert.Contains("新对话已开始", cut.Markup, StringComparison.Ordinal);
+
+        _dispatcher.ReleaseBlockedCall();
+        await staleSendTask;
+
+        Assert.DoesNotContain("付款问题正在处理中？", cut.Markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("已取消本次提问。", cut.Markup, StringComparison.Ordinal);
+        Assert.Empty(cut.FindAll(".complete-answer"));
+
+        await SendQuestionAsync(cut, "付款后如何查询？");
+
+        ChatRetrievalRequest nextRequest = Assert.Single(_retriever.Requests.Skip(2));
+        Assert.Equal(ChatMode.Business, nextRequest.Mode);
+        Assert.Equal(_system.Id, nextRequest.SystemId);
+        Assert.Equal(
+            new[] { _firstRepository.Id, _secondRepository.Id }.Order(),
+            nextRequest.RepositoryIds.Order());
+        Assert.Empty(nextRequest.Conversation.Turns);
+        Assert.Empty(nextRequest.Conversation.PriorCitationHandles);
+        Assert.Empty(nextRequest.Conversation.PriorLogicalDocumentHints);
+    }
+
+    [Fact]
     public async Task ChatPage_NewConversationDuringRequest_PreventsLateAnswerFromReappearingAsync()
     {
         IRenderedComponent<ChatPage> cut = Render<ChatPage>();
@@ -786,6 +887,61 @@ public sealed class ChatPageTests : BunitContext
     }
 
     [Fact]
+    public async Task ChatPage_NewConversationDuringProgressiveReveal_DropsLateRevealAndCommittedConversationContextAsync()
+    {
+        _revealDelay.Pause();
+        _retriever.ClaimText = "付款后旧回答不应再次出现。";
+
+        IRenderedComponent<ChatPage> cut = Render<ChatPage>();
+        WaitForLoaded(cut);
+        PrepareValidSelection(cut, ChatMode.Business);
+
+        Task sendTask = BeginQuestionAsync(cut, "付款流程如何完成？");
+        AcceptedPublicationCommit committed =
+            await _publicationOwner.CommitObserved.WaitAsync(TimeSpan.FromSeconds(5));
+        Assert.True(committed.Published);
+        ChatConversationState committedConversation =
+            Assert.IsType<ChatConversationState>(committed.Conversation);
+        cut.WaitForState(() => cut.FindAll("[data-answer-state='revealing']").Count == 1);
+        cut.WaitForAssertion(() => Assert.True(_revealDelay.CallCount >= 1));
+
+        Assert.Equal("付", cut.Find(".material-claim__revealed").TextContent);
+        Assert.Empty(cut.FindAll(".document-citation, [data-provider-fragment]"));
+        Assert.DoesNotContain("provider-fragment", cut.Markup, StringComparison.Ordinal);
+
+        await FindButton(cut, "新对话").ClickAsync(new MouseEventArgs());
+        Assert.DoesNotContain("付款后旧回答不应再次出现。", cut.Markup, StringComparison.Ordinal);
+        Assert.Empty(cut.FindAll(".complete-answer, .material-claim, .document-citation"));
+        Assert.Contains("新对话已开始", cut.Markup, StringComparison.Ordinal);
+
+        _revealDelay.ReleaseAll();
+        await sendTask;
+
+        Assert.DoesNotContain("付款后旧回答不应再次出现。", cut.Markup, StringComparison.Ordinal);
+        Assert.Empty(cut.FindAll(".complete-answer, .material-claim, .document-citation, [data-provider-fragment]"));
+        Assert.DoesNotContain("provider-fragment", cut.Markup, StringComparison.Ordinal);
+
+        _retriever.ClaimText = "新对话的回答。";
+        await SendQuestionAsync(cut, "新对话如何查询付款状态？");
+
+        ChatRetrievalRequest nextRequest = Assert.Single(_retriever.Requests.Skip(1));
+        Assert.Equal(ChatMode.Business, nextRequest.Mode);
+        Assert.Equal(_system.Id, nextRequest.SystemId);
+        Assert.Equal(
+            new[] { _firstRepository.Id, _secondRepository.Id }.Order(),
+            nextRequest.RepositoryIds.Order());
+        Assert.Empty(nextRequest.Conversation.Turns);
+        Assert.Empty(nextRequest.Conversation.PriorCitationHandles);
+        Assert.Empty(nextRequest.Conversation.PriorLogicalDocumentHints);
+        Assert.DoesNotContain(
+            committedConversation.Turns,
+            turn => nextRequest.Conversation.Turns.Contains(turn));
+        Assert.DoesNotContain(committedConversation.Turns, turn =>
+            nextRequest.Conversation.RetrievalContext.Contains(turn.AnswerText, StringComparison.Ordinal));
+        Assert.DoesNotContain("provider-fragment", cut.Markup, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task ChatPage_ProgressiveReveal_DoesNotSplitCombiningMarkOrFamilyEmoji()
     {
         _revealDelay.Pause();
@@ -1249,6 +1405,10 @@ public sealed class ChatPageTests : BunitContext
 
         public Task<AcceptedPublicationCommit> CommitObserved => _commitObserved.Task;
 
+        public PreparedChatPublicationSnapshot CaptureSnapshot() => inner.CaptureSnapshot();
+
+        public void Reset() => inner.Reset();
+
         public AcceptedPublicationCommit Commit(
             PreparedChatPublicationCandidate candidate,
             CancellationToken cancellationToken)
@@ -1265,6 +1425,7 @@ public sealed class ChatPageTests : BunitContext
         private TaskCompletionSource<bool>? _release;
 
         public int CallCount { get; private set; }
+        public List<ChatSynthesisRequest> Requests { get; } = [];
         public ChatContractFailureCode? FailureCode { get; set; }
         public ChatAnswerability Answerability { get; set; } = ChatAnswerability.Supported;
         public Action? BeforeResult { get; set; }
@@ -1283,6 +1444,7 @@ public sealed class ChatPageTests : BunitContext
             CancellationToken cancellationToken = default)
         {
             CallCount++;
+            Requests.Add(request);
             if (_release is not null)
             {
                 _entered?.TrySetResult(true);

@@ -6,10 +6,10 @@
   "stage": "implement",
   "preflight": {
     "branch": "demo0831/story-12-5",
-    "head": "4e9f509adc598ad6664485b47bb5bbfd74e35329",
-    "git_identity_sha256": "5f07b33e27feb48432681d34a872c03409be1e02641394ae0a59b9d93c578849",
-    "status_sha256": "d3fd08f3fe86f6d97ffa1e895b7b1a98e8bb9e1a815dea8b48a38f8ab58256a9",
-    "observed_at": "2026-08-29T12:24:13.0583807Z"
+    "head": "1513747666ba8c5f8f05b1c99e340251f9ab2781",
+    "git_identity_sha256": "77b8dc44d528aaa1abdb67d9477def15dc3ba7254ca8b914eff3c7dfe4a0b636",
+    "status_sha256": "d65dae8f81cea96dbf9eb75f86e9644e4552dbcb8310bb5c30a209f7102c3243",
+    "observed_at": "2026-08-29T13:00:22.3662180Z"
   },
   "artifacts": {
     "spec": {
@@ -22,7 +22,7 @@
     },
     "tasks": {
       "path": "specs/014-grounded-llm-wiki-chat-release-evidence/tasks.md",
-      "sha256": "f477a7d31e63a76e54619405bb4a24c554692e3f1d875a38c28ecf042b3b0eb4"
+      "sha256": "cf0eaad100f7639dd9ef04ada049230cfcb1abb66a9f9fda4bbbc3ac3ff54cf2"
     }
   },
   "gates": {
@@ -120,10 +120,10 @@
     }
   ],
   "convergence": {
-    "status": "accepted",
+    "status": "pending",
     "attempt": 4,
-    "outcome": "converged",
-    "report_path": "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/convergence/track-b-quality-correction-02.md"
+    "outcome": "pending",
+    "report_path": null
   },
   "e2e": {
     "result": "pending",
@@ -138,21 +138,21 @@
     "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/quality-review/track-b-quality-review-04.json",
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/review/track-b-quality-correction-plan-02.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/integration/story-12.4-dependency-integration-correction-01.md",
-    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/track-b-quality-correction-03.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/track-b-quality-correction-04.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/convergence/track-b-quality-correction-01.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/convergence/track-b-quality-correction-02.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/review/track-b-quality-input-02.md"
   ],
   "checkpoint": {
-    "checkpoint_id": "bmad-12-5-quality-20260829T122413Z-revise04",
-    "stage": "quality-review",
+    "checkpoint_id": "bmad-12-5-implement-20260829T130022Z-qcor04",
+    "stage": "implement",
     "commit_sha": null,
     "binding_status": "pending"
   },
   "resume": {
-    "stage": "implement",
-    "reason": "Quality review 04 closed QR-TB-005..008 and returned REVISE for QR-TB-009. Sol/high appended T068-T077 without authority change. Begin serialized public RED T068.",
-    "evidence_path": "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/review/track-b-quality-correction-plan-02.md"
+    "stage": "converge",
+    "reason": "T068-T074 close QR-TB-009 with one owner generation/reset boundary. Focused reset tests pass 18/18 and bounded Track B/B-INT passes 436/436. Run T075 independent convergence.",
+    "evidence_path": "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/track-b-quality-correction-04.md"
   },
-  "updated_at": "2026-08-29T12:24:13.0583807Z"
+  "updated_at": "2026-08-29T13:00:22.3662180Z"
 }
