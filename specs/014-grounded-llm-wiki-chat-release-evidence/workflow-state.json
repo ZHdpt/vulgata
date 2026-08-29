@@ -3,13 +3,13 @@
   "bmad_story_key": "12-5-grounded-llm-wiki-chat-and-august-30-release-evidence",
   "bmad_epic_key": "12",
   "feature_directory": "specs/014-grounded-llm-wiki-chat-release-evidence",
-  "stage": "implement",
+  "stage": "converge",
   "preflight": {
     "branch": "demo0831/story-12-5",
-    "head": "363c7179fcae7c9f767db9e757088fdb7e069384",
-    "git_identity_sha256": "14725eb432f3c8886579b46617496111683359e1f57b9e1b107fc463b97578a6",
-    "status_sha256": "5860c27493d691c3cda44eaf31e35596577174f22a7f65c8b53709736a228cde",
-    "observed_at": "2026-08-29T11:56:00.5983475Z"
+    "head": "e505f267997938072f7d86f765093df2a60ea762",
+    "git_identity_sha256": "5ed48cb649d5f06726e5d139dffe3ce71892281ba2c88c16da73871f81d7bba2",
+    "status_sha256": "7527bc2567d6bbfa60f747762ce396ad169147d24eb6e52ec84453e6f5d698de",
+    "observed_at": "2026-08-29T12:05:45.1895086Z"
   },
   "artifacts": {
     "spec": {
@@ -44,7 +44,7 @@
   },
   "attempts": {
     "definition-review": 0,
-    "converge": 3,
+    "converge": 4,
     "quality-review": 1
   },
   "approvals": [
@@ -120,10 +120,10 @@
     }
   ],
   "convergence": {
-    "status": "pending",
-    "attempt": 3,
-    "outcome": "pending",
-    "report_path": null
+    "status": "accepted",
+    "attempt": 4,
+    "outcome": "converged",
+    "report_path": "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/convergence/track-b-quality-correction-02.md"
   },
   "e2e": {
     "result": "pending",
@@ -135,24 +135,24 @@
     "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/implementation-approval-03.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/integration/track-b-int-01.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/track-b-integration-01.md",
-    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/convergence/track-b-corrected-01.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/quality-review/track-b-quality-review-03.json",
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/review/track-b-quality-correction-plan-01.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/integration/story-12.4-dependency-integration-correction-01.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/track-a-preservation-01.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/track-b-quality-correction-03.md",
-    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/convergence/track-b-quality-correction-01.md"
+    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/convergence/track-b-quality-correction-01.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/convergence/track-b-quality-correction-02.md"
   ],
   "checkpoint": {
-    "checkpoint_id": "bmad-12-5-implement-20260829T115600Z-cvg1f1",
-    "stage": "implement",
+    "checkpoint_id": "bmad-12-5-converge-20260829T120545Z-04",
+    "stage": "converge",
     "commit_sha": null,
     "binding_status": "pending"
   },
   "resume": {
-    "stage": "converge",
-    "reason": "Pass 1 appended T067 for one stale provenance assertion. T067 is green at 5/5 and the bounded matrix at 127/127. Run convergence pass 2; two more non-converged passes trigger user approval.",
-    "evidence_path": "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/convergence/track-b-quality-correction-01.md"
+    "stage": "quality-review",
+    "reason": "Convergence pass 2 accepted the corrected Track B candidate with 428/428 bounded tests and no findings. Prepare T065 verdict-neutral quality input, then dispatch T066 independent review.",
+    "evidence_path": "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/convergence/track-b-quality-correction-02.md"
   },
-  "updated_at": "2026-08-29T11:56:00.5983475Z"
+  "updated_at": "2026-08-29T12:05:45.1895086Z"
 }
