@@ -3,13 +3,13 @@
   "bmad_story_key": "12-5-grounded-llm-wiki-chat-and-august-30-release-evidence",
   "bmad_epic_key": "12",
   "feature_directory": "specs/014-grounded-llm-wiki-chat-release-evidence",
-  "stage": "conditional-e2e",
+  "stage": "verify",
   "preflight": {
     "branch": "demo0831/story-12-5",
-    "head": "b48f13b21d899114bdb44c7d26a1f399df1fdf43",
-    "git_identity_sha256": "e892ff9d4f864470b5130a24a2080e469104b745ee88512bfde69a6ac6901ee0",
-    "status_sha256": "803cd9bfafed7008843df0ffaff175b2cb947626c9ce86c00de09435bb250cdd",
-    "observed_at": "2026-08-29T13:21:59.9546455Z"
+    "head": "43ddc8687153a72001a5a64bad921db94a8e9f24",
+    "git_identity_sha256": "589e8f0412dac0eac88a557a5e27b6af28f9d16c83ac19482a8ce7327f111df7",
+    "status_sha256": "406854a0c23b0a6455b1cd1de1bb2a4009344b52e0c5cb6cd343ca00ff86bfe3",
+    "observed_at": "2026-08-29T13:28:40.2136379Z"
   },
   "artifacts": {
     "spec": {
@@ -22,7 +22,7 @@
     },
     "tasks": {
       "path": "specs/014-grounded-llm-wiki-chat-release-evidence/tasks.md",
-      "sha256": "eb105506f72cf6bcd48a72df1c815c90246f581a0d04f976daa72ffcc084f67a"
+      "sha256": "eda0eef11650d3b9c7c093ca384e51243634b951dee2a9a4392860c90df6fec2"
     }
   },
   "gates": {
@@ -126,7 +126,7 @@
     "report_path": "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/convergence/track-b-quality-correction-03.md"
   },
   "e2e": {
-    "result": "pending",
+    "result": "passed",
     "decision_path": "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/e2e/track-b-decision-input-01.md"
   },
   "current_evidence_paths": [
@@ -137,22 +137,22 @@
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/track-b-integration-01.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/quality-review/track-b-quality-review-05.json",
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/e2e/track-b-decision-input-01.md",
-    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/integration/story-12.4-dependency-integration-correction-01.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/e2e/track-b-run-01.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/track-b-quality-correction-04.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/convergence/track-b-quality-correction-03.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/convergence/track-b-quality-correction-02.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/review/track-b-quality-input-03.md"
   ],
   "checkpoint": {
-    "checkpoint_id": "bmad-12-5-conditional-e2e-20260829T132159Z-fix01",
+    "checkpoint_id": "bmad-12-5-conditional-e2e-20260829T132840Z-pass01",
     "stage": "conditional-e2e",
     "commit_sha": null,
     "binding_status": "pending"
   },
   "resume": {
-    "stage": "conditional-e2e",
-    "reason": "The E2E matrix triggers user-visible, authorization, and multi-module predicates without a complete coverage override. Run the economical T040 E2E boundary before final Track B verification.",
-    "evidence_path": "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/e2e/track-b-decision-input-01.md"
+    "stage": "verify",
+    "reason": "T040 required E2E passed 405/405 with no tracked edits and no Track C substitution. Run T041 final pinned Track B verification and bind the accepted Track B checkpoint before opening Track C.",
+    "evidence_path": "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/e2e/track-b-run-01.md"
   },
-  "updated_at": "2026-08-29T13:21:59.9546455Z"
+  "updated_at": "2026-08-29T13:28:40.2136379Z"
 }

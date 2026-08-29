@@ -5,7 +5,7 @@
 - Quality verdict: `ACCEPT` (`track-b-quality-review-05.json`)
 - Decision owner: orchestrator
 - Execution owner: `e2e-runner`
-- Initial conclusion: `required: true`, `result: pending`
+- Conclusion: `required: true`, `result: passed`
 
 This decision applies only to Track B/B-INT. It must not substitute fake Backup B state, deterministic rescue output, or Track C real-provider/restart/screenshot/release evidence.
 
@@ -45,10 +45,12 @@ Use the smallest existing real rendered/integration path that proves every trigg
 
 The runner may use existing test infrastructure and add or correct E2E/API/integration tests only within its allowed boundary. Any tracked test edit changes the candidate identity and invalidates quality review before E2E may advance. Product failure returns raw evidence to TDD; test failure stays with the runner; ambiguous infrastructure or product attribution stops.
 
-## Pending result
+## Execution result
 
 - `required`: true
 - `coverage_override`: null
 - `owner`: `e2e-runner`
-- `result`: pending
-- `evidence_ids`: pending runner evidence
+- `result`: passed
+- `evidence_ids`: `story-12-5-track-b-e2e-chat-399`, `story-12-5-track-b-e2e-xrepo-auth-6`
+
+Execution at `43ddc8687153a72001a5a64bad921db94a8e9f24` passed 399 selected Track B/B-INT tests and 6 focused `ExactCrossRepositoryAuthorizationTests`: **405 passed, 0 failed, 0 skipped**. No tracked test or production edit occurred, so the accepted quality boundary remains valid. Exact commands, predicate mapping, warnings, and the clean post-run boundary are recorded in `track-b-run-01.md` (SHA-256 `f9093480f6c1b82395dfeb6fd8e98dd46c8499dc6c820fc627ee8eac0900e6ce`).
