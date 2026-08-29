@@ -6,10 +6,10 @@
   "stage": "implement",
   "preflight": {
     "branch": "demo0831/story-12-5",
-    "head": "e5d50047831043b47e4baffd7c8c5a6f3dacfe48",
-    "git_identity_sha256": "2d44b32f7318b215c3c4255492f2bf4f02f3d2ccff22fa1e622fe7c123f460e5",
+    "head": "f4ff035c84e011354d295e48b4827d7328698bf2",
+    "git_identity_sha256": "87214c8cffd1d0e862e9efb76792c3a73d21b6941517907f025f16ccc14f69ae",
     "status_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-    "observed_at": "2026-08-29T07:59:35.1370789Z"
+    "observed_at": "2026-08-29T08:08:18.4139985Z"
   },
   "artifacts": {
     "spec": {
@@ -22,7 +22,7 @@
     },
     "tasks": {
       "path": "specs/014-grounded-llm-wiki-chat-release-evidence/tasks.md",
-      "sha256": "f02b4144caa78e9165ad8f9642d97d4786927390db402c615b7b7599f1816a76"
+      "sha256": "ddd2dfd9522ec5e45c763b8503c02f7b16d8c708178564bc1d783b6e185a80bd"
     }
   },
   "gates": {
@@ -138,21 +138,21 @@
     "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/implementation-approval-03.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/definition-review/definition-review-08.json",
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/track-b-b2-reacceptance-01.md",
-    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/ownership/task-disposition-01.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/track-b-b3-reacceptance-01.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/verification/task-definition-01.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/integration/story-12.4-dependency-integration-correction-01.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/track-a-preservation-01.md"
   ],
   "checkpoint": {
-    "checkpoint_id": "bmad-12-5-implement-20260829T075935Z-4b8d20",
+    "checkpoint_id": "bmad-12-5-implement-20260829T080818Z-0f6a3d",
     "stage": "implement",
     "commit_sha": null,
     "binding_status": "pending"
   },
   "resume": {
     "stage": "implement",
-    "reason": "T014-T018 B2 reacceptance passed 265/265 aggregate and 124/124 focused with current-v2 many-decision/Flow Group authority and no Story 12.4 mutation. Continue B3 T019-T022.",
-    "evidence_path": "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/track-b-b2-reacceptance-01.md"
+    "reason": "T019-T022 B3 reacceptance passed 286/286 aggregate with bounded transient Conversation State, per-turn revalidation and whole-answer semantic rejection. Begin B4 RED tasks T023-T026.",
+    "evidence_path": "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/track-b-b3-reacceptance-01.md"
   },
-  "updated_at": "2026-08-29T07:59:35.1370789Z"
+  "updated_at": "2026-08-29T08:08:18.4139985Z"
 }
