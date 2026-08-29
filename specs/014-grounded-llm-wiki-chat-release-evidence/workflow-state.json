@@ -3,13 +3,13 @@
   "bmad_story_key": "12-5-grounded-llm-wiki-chat-and-august-30-release-evidence",
   "bmad_epic_key": "12",
   "feature_directory": "specs/014-grounded-llm-wiki-chat-release-evidence",
-  "stage": "tasks",
+  "stage": "definition-review",
   "preflight": {
     "branch": "demo0831/story-12-5",
-    "head": "4e51b08ea813423ce46fe346194a527bd13326be",
-    "git_identity_sha256": "c80b8d27dfa247039bf28cb40825bce5f1850055464ea8f48aef56c63ca4cbdc",
+    "head": "76de29c8fb060508c475731533232939e7fe8695",
+    "git_identity_sha256": "ed75b1d40160545ca87eedc24f93ae3b7f195c3a066ce0b3855cfca7afa0d552",
     "status_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-    "observed_at": "2026-08-29T07:12:50.0330166Z"
+    "observed_at": "2026-08-29T07:17:15.8694039Z"
   },
   "artifacts": {
     "spec": {
@@ -22,7 +22,7 @@
     },
     "tasks": {
       "path": "specs/014-grounded-llm-wiki-chat-release-evidence/tasks.md",
-      "sha256": "3b3614edd1ecbefc9df1ab7783cf16507148a11b4ab4bd21509407cfc60a6075"
+      "sha256": "e3daa433927ebdeb8d060be0794182c1f6d64fe57fbf165063df14ce98ad0374"
     }
   },
   "gates": {
@@ -32,9 +32,9 @@
       "verdict_path": "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/plan-review/plan-review-11.json"
     },
     "definition-review": {
-      "status": "revised",
-      "attempt": 7,
-      "verdict_path": "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/definition-review/definition-review-07.json"
+      "status": "pending",
+      "attempt": 8,
+      "verdict_path": null
     },
     "quality-review": {
       "status": "invalidated",
@@ -137,15 +137,15 @@
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/track-b-convergence-correction-14.md"
   ],
   "checkpoint": {
-    "checkpoint_id": "bmad-12-5-tasks-20260829T071250Z-2d4f86",
-    "stage": "tasks",
+    "checkpoint_id": "bmad-12-5-definition-review-20260829T071715Z-6c3d82",
+    "stage": "definition-review",
     "commit_sha": null,
     "binding_status": "pending"
   },
   "resume": {
-    "stage": "tasks",
-    "reason": "Plan review 11 accepted the scope-neutral data-model correction and confirmed authorization-04 remains reusable. Correct DR7 task ownership and live-state guard wording with Sol/high.",
-    "evidence_path": "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/plan-review/plan-review-11.json"
+    "stage": "definition-review",
+    "reason": "Sol/high corrected DR7 task ownership and live-versus-candidate Conversation State wording at hash e3daa433. Run fresh combined definition review 08.",
+    "evidence_path": "specs/014-grounded-llm-wiki-chat-release-evidence/tasks.md"
   },
-  "updated_at": "2026-08-29T07:12:50.0330166Z"
+  "updated_at": "2026-08-29T07:17:15.8694039Z"
 }
