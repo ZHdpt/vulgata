@@ -6,10 +6,10 @@
   "stage": "implement",
   "preflight": {
     "branch": "demo0831/story-12-5-trackC",
-    "head": "65b4204b94c16310b8ada631865e39543b4b6f6c",
-    "git_identity_sha256": "f2cbd9c44b4d3705baf064dbb3b74bd1f787f9f6eabd5c0e60ff3ea7e7307662",
+    "head": "c2a50c790c1bb9567611f9e507ed2c039c6022ef",
+    "git_identity_sha256": "d40d680f2544a957c67d46af943c44c749422c83f0ca8e4d8f3c935652e5e84a",
     "status_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-    "observed_at": "2026-08-29T17:15:07.4445558Z"
+    "observed_at": "2026-08-29T17:25:50.1263559Z"
   },
   "artifacts": {
     "spec": {"path":"specs/014-grounded-llm-wiki-chat-release-evidence/spec.md","sha256":"15bc1cc7afe3d7250d8d247546da4ab72086f030bcb81e7b33b875701ffba309"},
@@ -42,9 +42,10 @@
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/verification/track-c-mvp-support-01.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/verification/track-c-mvp-tier1-01.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/track-c-mvp/run-01/release-report.md",
-    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/track-c-mvp-blocked-01.md"
+    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/track-c-mvp-blocked-01.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/corrections/track-c-mvp-preflight-classification-01.md"
   ],
-  "checkpoint": {"checkpoint_id":"bmad-12-5-implement-20260829T171507Z-trackcmvpblocked01","stage":"implement","commit_sha":null,"binding_status":"pending"},
-  "resume": {"stage":"implement","reason":"T008 is blocked. Supply the approved database administrator, provider identity, pair/source opt-ins, System/manifests, and authorized-user readiness; then rerun T008 before T009 or product access.","evidence_path":"specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/track-c-mvp-blocked-01.md"},
-  "updated_at": "2026-08-29T17:15:07.4445558Z"
+  "checkpoint": {"checkpoint_id":"bmad-12-5-implement-20260829T172550Z-trackcmvppreflightcorrection01","stage":"implement","commit_sha":null,"binding_status":"pending"},
+  "resume": {"stage":"implement","reason":"T008 classification corrected. Only PostgreSQL admin authority and provider route readiness block. Rerun T008 with authorized process opt-ins before T009; bind System/manifests in T010.","evidence_path":"specs/014-grounded-llm-wiki-chat-release-evidence/evidence/corrections/track-c-mvp-preflight-classification-01.md"},
+  "updated_at": "2026-08-29T17:25:50.1263559Z"
 }
