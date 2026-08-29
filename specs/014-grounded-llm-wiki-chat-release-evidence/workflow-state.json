@@ -3,13 +3,13 @@
   "bmad_story_key": "12-5-grounded-llm-wiki-chat-and-august-30-release-evidence",
   "bmad_epic_key": "12",
   "feature_directory": "specs/014-grounded-llm-wiki-chat-release-evidence",
-  "stage": "definition-review",
+  "stage": "plan",
   "preflight": {
     "branch": "demo0831/story-12-5",
-    "head": "529de918855b30823dc5d339a7fb6d32a69ed1d4",
-    "git_identity_sha256": "a2036c68bcf83183f4aa2de52e7b8fcb4e3281eb3d1b64f7e53861147b00eda5",
+    "head": "438f9c7484959d6baefe45786ea3637ceb79e423",
+    "git_identity_sha256": "9256f964e9f1e173c6aa519c52d7fe2982af2728702a6023b0dbd88fd842cee1",
     "status_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-    "observed_at": "2026-08-29T06:54:31.8354423Z"
+    "observed_at": "2026-08-29T07:05:14.9710599Z"
   },
   "artifacts": {
     "spec": {
@@ -27,14 +27,14 @@
   },
   "gates": {
     "plan-review": {
-      "status": "accepted",
+      "status": "invalidated",
       "attempt": 10,
       "verdict_path": "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/plan-review/plan-review-10.json"
     },
     "definition-review": {
-      "status": "pending",
+      "status": "revised",
       "attempt": 7,
-      "verdict_path": null
+      "verdict_path": "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/definition-review/definition-review-07.json"
     },
     "quality-review": {
       "status": "invalidated",
@@ -43,7 +43,7 @@
     }
   },
   "attempts": {
-    "definition-review": 0,
+    "definition-review": 1,
     "converge": 0,
     "quality-review": 0
   },
@@ -129,7 +129,7 @@
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/track-b-convergence-pause-07.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/plan-review/plan-review-10.json",
     "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/planned-change-authorization-03.md",
-    "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/definition-review/definition-review-06.json",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/definition-review/definition-review-07.json",
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/track-b-definition-review-06.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/implementation-approval-track-b-02.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/implementation-approval-track-c-01.md",
@@ -137,15 +137,15 @@
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/track-b-convergence-correction-14.md"
   ],
   "checkpoint": {
-    "checkpoint_id": "bmad-12-5-definition-review-20260829T065431Z-3e7ac4",
-    "stage": "definition-review",
+    "checkpoint_id": "bmad-12-5-plan-20260829T070514Z-8fd1b0",
+    "stage": "plan",
     "commit_sha": null,
     "binding_status": "pending"
   },
   "resume": {
-    "stage": "definition-review",
-    "reason": "Sol/high tasks regenerated and self-reviewed at hash 3b3614ed. Run fresh independent definition review; conditional implementation authority remains inactive pending ACCEPT.",
-    "evidence_path": "specs/014-grounded-llm-wiki-chat-release-evidence/tasks.md"
+    "stage": "plan",
+    "reason": "Definition review 07 returned REVISE: correct the stale AD-7C data-model overview, then regenerate task ownership and Conversation State guard wording. Implementation remains locked.",
+    "evidence_path": "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/definition-review/definition-review-07.json"
   },
-  "updated_at": "2026-08-29T06:54:31.8354423Z"
+  "updated_at": "2026-08-29T07:05:14.9710599Z"
 }
