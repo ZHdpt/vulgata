@@ -3,13 +3,13 @@
   "bmad_story_key": "12-5-grounded-llm-wiki-chat-and-august-30-release-evidence",
   "bmad_epic_key": "12",
   "feature_directory": "specs/014-grounded-llm-wiki-chat-release-evidence",
-  "stage": "plan",
+  "stage": "plan-review",
   "preflight": {
     "branch": "demo0831/story-12-5",
-    "head": "cdec21ceeb81170ed24e709bf7be3634d34b15ea",
-    "git_identity_sha256": "d369ca46c9228397b00fd3afccde4e1de946623419549181980b5e48856010cf",
+    "head": "719c2a5afc9b2a0161fff4c9deb7b26531ebf66d",
+    "git_identity_sha256": "8677523393530e53ab5f8c57fda6f05cc5a331401b4d97eedbd373749c16d819",
     "status_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-    "observed_at": "2026-08-29T05:58:36.4577826Z"
+    "observed_at": "2026-08-29T06:18:43.3170048Z"
   },
   "artifacts": {
     "spec": {
@@ -18,7 +18,7 @@
     },
     "plan": {
       "path": "specs/014-grounded-llm-wiki-chat-release-evidence/plan.md",
-      "sha256": "9b84e94ea2bb564b8a08b521023ab449ae7c5731e52cce057d5e63bad2c02b6a"
+      "sha256": "fad42dcd3a3f393809e95500ea6d6c7607ce4a16787d8b16d054b415ce533318"
     },
     "tasks": {
       "path": "specs/014-grounded-llm-wiki-chat-release-evidence/tasks.md",
@@ -27,9 +27,9 @@
   },
   "gates": {
     "plan-review": {
-      "status": "invalidated",
-      "attempt": 9,
-      "verdict_path": "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/plan-review/plan-review-09.json"
+      "status": "pending",
+      "attempt": 10,
+      "verdict_path": null
     },
     "definition-review": {
       "status": "invalidated",
@@ -120,7 +120,7 @@
     "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/convergence-continuation-03.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/design-correction-01.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/track-b-convergence-pause-07.md",
-    "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/plan-review/plan-review-09.json",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/plan.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/planned-change-authorization-03.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/definition-review/definition-review-06.json",
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/track-b-definition-review-06.md",
@@ -130,15 +130,15 @@
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/track-b-convergence-correction-14.md"
   ],
   "checkpoint": {
-    "checkpoint_id": "bmad-12-5-plan-20260829T055836Z-6f31a2",
-    "stage": "plan",
+    "checkpoint_id": "bmad-12-5-plan-review-20260829T061843Z-a4d2c1",
+    "stage": "plan-review",
     "commit_sha": null,
     "binding_status": "pending"
   },
   "resume": {
-    "stage": "plan",
-    "reason": "The user rejected convergence continuation-04 and returned Story 12.5 to plan correction. Use gpt-5.6-sol high for plan authoring and, only after a fresh planned-change authorization, task authoring. No production work is authorized.",
-    "evidence_path": "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/design-correction-02.md"
+    "stage": "plan-review",
+    "reason": "Sol/high plan correction and self-review passed. Run architecture-triggered independent plan review; if accepted, pause for fresh planned-change authorization before Sol/high task authoring.",
+    "evidence_path": "specs/014-grounded-llm-wiki-chat-release-evidence/plan.md"
   },
-  "updated_at": "2026-08-29T05:58:36.4577826Z"
+  "updated_at": "2026-08-29T06:18:43.3170048Z"
 }

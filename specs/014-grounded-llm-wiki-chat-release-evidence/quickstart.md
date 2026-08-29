@@ -69,7 +69,7 @@ dotnet test tests/Vulgata.Tests/Vulgata.Tests.cs --filter "FullyQualifiedName~Ch
 
 Expected:
 
-- first observe the B1 architectural RED against the old literal-question/exact-row rebuild path; after cutover, structural inspection proves no classifier, legacy Chat authority query, alternate final-packet path, or duplicate packet-builder call remains;
+- against checkpoint `719c2a5a`, observe B1 mutation/structural REDs that would fail if a literal-question classifier, legacy Chat authority query, skipped relationship projector, alternate final-packet path, direct projector construction, or duplicate packet-builder call regains production control; preserve the current single-path implementation rather than rewriting it;
 - `AuthorizedChatSnapshot -> ChatLexicalPrimaryProjection -> ChatRelationshipExpansionProjection -> ChatEvidenceAssembly` is the only retrieval composition;
 - Cross-Repository-literal and equivalent neutral wording preserve identical lexical primary Document/section identities, and adding/removing/staling relationship fixtures never changes those primary identities;
 - exact constants pass: highest-ranked 256 distinct candidates retained after scoring (257+ is ranked, not refused), structured token equality and duplicate-conflict vectors, integer score vector `50/40/30/25/20/5/3/1` with each component applied at most once and 25 bound only to the active mode's term field, five Documents, twelve primaries or exhaustion, four sections per Document, first `min(3,count)` seeds, two additions per seed, 20 total sections, 32 anchors/relationships, ten Flow Group authorities, 12 flow steps;
@@ -89,7 +89,12 @@ Expected:
 - escape-heavy `\u4e2d` and metadata-heavy events prove received counters grow independently of decoded counters; every overflow discards the buffer and reveals zero partial answer;
 - keepalives do not reset ten-second inactivity; cancellation, disconnect, terminal/framing failure, deadline, and overflow discard the buffer;
 - semantic failure never repairs, no provider fragment reaches the client, and accepted Unicode reveal is immediate for reduced motion/low remaining budget;
-- all accepted answer flows share one 29-second maximum deadline.
+- all accepted answer flows share one 29-second maximum deadline through one `AcceptedPublicationCommit`;
+- fake-clock/cancellation/failure vectors at every publication state prove no prepared candidate mutates live answer, conversation, completion summary, or reveal state;
+- completion-summary template, proposed conversation, accepted answer and reveal directive are preallocated before the authoritative sample, and one atomic terminal-state exchange makes them authoritative together;
+- advancing time immediately after the authoritative sample does not create another acceptance check or post-commit success side effect; a sample at/after the deadline publishes nothing;
+- structural tests reject direct conversation append, accepted completion emission, success publication, or page content publication outside `IPreparedChatPublicationOwner`;
+- B1 lexical/packet, B2 relationship/currentness, B3 conversation and B4 streaming/publication/reveal each have a separate checkpoint; only the production-composition B-INT checkpoint may claim Track B complete.
 
 ## 6. Build and full Tier 1
 

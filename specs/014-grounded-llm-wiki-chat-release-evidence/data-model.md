@@ -31,7 +31,7 @@ Server-owned Core contract extending the normalized question with transient cont
 | `Conversation` | valid `ChatConversationState`, <=4,096 UTF-8 bytes |
 | `AuthorizedScope` | server-created caller/System/exact-two-Repository binding; caller cannot construct it |
 | `AdvisoryContext` | server-loaded `ChatAdvisoryContextSnapshot`; caller DTO has no text/source field |
-| `DeadlineUtc` / monotonic remaining budget | one server-created absolute deadline, exactly the same binding across retrieval/primary/repair/validation/reveal; implementation maximum 29,000 ms after accepted submission |
+| `DeadlineUtc` / monotonic start+deadline tokens | one server-created absolute deadline, exactly the same binding across retrieval/primary/repair/validation/publication linearization; implementation maximum 29,000 ms after accepted submission; Track C separately observes actual complete render before 30,000 ms |
 
 Caller DTOs never supply `Conversation`, prior handles, deadline, Document IDs, or relationship identities.
 
@@ -53,7 +53,7 @@ Caller DTOs never supply `Conversation`, prior handles, deadline, Document IDs, 
 | `Citations` | bounded prior opaque handles; context only, never current claim authority |
 | `PriorLogicalDocumentIds` | 0-5 stable IDs used only as current re-fetch/ranking hints; serialized in the conversation packet and canonical fingerprint |
 
-State transitions:
+Synthesis/validation transitions before publication:
 
 ```text
 Empty
@@ -236,14 +236,47 @@ State transitions:
 
 ```text
 Ready -> PrimaryStreaming -> PrimaryAssembled
-PrimaryAssembled -> Parsed -> EvidenceValidated -> CurrentnessValidated -> AcceptedForReveal -> Rendered
+PrimaryAssembled -> Parsed -> EvidenceValidated -> CurrentnessValidated -> PublicationCandidateReady
 PrimaryAssembled -> SyntaxRejected -> RepairStreaming (budget permits)
-RepairStreaming -> RepairAssembled -> Parsed -> EvidenceValidated -> CurrentnessValidated -> AcceptedForReveal -> Rendered
+RepairStreaming -> RepairAssembled -> Parsed -> EvidenceValidated -> CurrentnessValidated -> PublicationCandidateReady
 Any streaming/assembled/validation state -> Discarded | TimedOut | Cancelled | ProviderFailed
 SyntaxRejected without budget, second syntax rejection, or any semantic rejection -> Rejected
 ```
 
 Semantic rejection is terminal and cannot transition to repair.
+
+### 8A. `PreparedChatPublicationCandidate` and `AcceptedPublicationCommit`
+
+Web-scoped transient model; it is the only owner of accepted result publication.
+
+| Field/state | Rule |
+| --- | --- |
+| `PublicationOwner` | exactly one scoped `IPreparedChatPublicationOwner`; coordinator/page/recorder cannot publish success directly |
+| request/start/deadline tokens | immutable server-owned identities using the same monotonic time domain as the answer budget |
+| accepted answer | complete immutable `GroundedAnswer`; no provider buffer or partial claim |
+| proposed conversation | complete next `ChatConversationState`; live state is unchanged until commit |
+| completion template | ordered runtime-observation IDs, repair use and validation outcomes; accepted duration is derived from the commit timestamp |
+| authority fingerprints | final scope/currentness/advisory/packet identities already revalidated |
+| reveal directive | `ImmediateAccepted` or `ProgressiveAccepted(schedule, safetyMargin)` selected before commit |
+| mutable primitive fields | publication timestamp/duration and terminal state only; candidate and referenced values are preallocated |
+| terminal state | `Pending`, `AcceptedPublicationCommit`, `TimedOutBeforePublication`, or `CancelledBeforePublication`; exactly one transition |
+
+State transitions and owner order:
+
+```text
+Pending
+  -> TransportComplete
+  -> SyntaxAndEvidenceValidated
+  -> CurrentnessAndAuthorizationValidated
+  -> CompletionSummaryPrepared
+  -> ConversationAndRevealPrepared
+  -> PublicationCandidateReady
+  -> AcceptedPublicationCommit | TimedOutBeforePublication | CancelledBeforePublication
+AcceptedPublicationCommit is terminal; later consumers only read it
+Any earlier state -> ClosedFailure
+```
+
+All allocation, async work, authorization/currentness access, runtime-observation lookup, telemetry callbacks, serialization/logging and other fallible work ends before the publication critical section. Inside the single-writer section the owner samples cancellation, samples monotonic time once, rejects when cancelled or `sample >= deadline`, otherwise writes the primitive timestamp/duration and atomically exchanges the terminal state to `AcceptedPublicationCommit`. The exchange simultaneously owns answer availability, conversation append, accepted completion-summary authority and reveal directive. No later clock read, callback, mutation, async continuation or telemetry emission participates in success acceptance. Time advancing after the exchange does not retroactively invalidate it.
 
 ## 9. Provider stream pipeline, runtime telemetry, and Track C attestation
 
@@ -264,7 +297,7 @@ Agents-internal transport model; it never crosses the client boundary.
 
 `ChatStreamRuntimeObservation` is created only by the production raw response-header adapter and is Track B's neutral telemetry. It binds an opaque runtime observation ID, monotonic sequence, request/attempt, provider/config and canonical `stream=true` request fingerprints, response status/media/protocol, first physical read/EOF disposition, UTC/monotonic transport timings, stage counters, terminal outcome and rejection category. It has no post-transport validation result, candidate, run, corpus case, public key, signature, artifact/export path, prompt, response, evidence, claim, citation, handle, relationship, Source Anchor, secret, connection, or host path.
 
-`ChatStreamCompletionSummary` is created by the coordinator after all attempted transport and validation work. It binds the ordered runtime observation IDs, whether syntax repair was used, the validation outcome for each attempt, the final validation outcome, and total accepted-answer duration. It is independently content-dark and release-neutral; it cannot alter transport counters or outcomes.
+The coordinator prepares the `ChatStreamCompletionSummary` template after all attempted transport and validation work. It binds the ordered runtime observation IDs, whether syntax repair was used, the validation outcome for each attempt and the final validation outcome. For success, accepted duration is derived from the primitive timestamp written by `AcceptedPublicationCommit`, and the committed composite record is the only authoritative accepted summary. A timeout/cancellation candidate cannot leave an accepted summary behind. The summary is independently content-dark and release-neutral; it cannot alter transport counters or outcomes.
 
 Track C optionally composes `Story125StreamAttestationSink`. Only the production raw adapter can invoke its sealed internal admission method. The sink binds a server-owned candidate/run/case/process context, exact adapter type/version/assembly SHA-256, and ephemeral ECDSA P-256 public-key fingerprint to the immutable runtime observation ID/sequence and fields. It emits one signed content-dark `Story125StreamAttemptAttestation`; the private key/admission capability never leaves process memory. Aggregate/SDK fake-chunk observations cannot construct accepted provenance even when their counters match.
 
@@ -294,9 +327,10 @@ Transient Web presentation model distinct from provider streaming.
 | Field/state | Rule |
 | --- | --- |
 | `Pending` | generic activity/cancel state only; no provider fragment or evidence detail |
-| `AcceptedAnswer` | complete immutable answer after all syntax/evidence/citation/currentness/authorization validation |
-| `RevealMode` | Unicode text-element progressive reveal or immediate complete render |
-| immediate condition | reduced-motion requested or remaining shared deadline cannot safely complete reveal |
+| `AcceptedAnswer` | complete immutable answer read only from an `AcceptedPublicationCommit` record |
+| `RevealMode` | committed `ImmediateAccepted` full display or `ProgressiveAccepted` Unicode text-element presentation |
+| immediate condition | reduced-motion requested, insufficient precomputed reveal budget, or the live presentation supervisor detects schedule lag |
+| complete-render observation | Track C-only actual render timestamp; release fails at >=30,000 ms without changing Track B publication authority |
 | terminal | complete answer, bounded Chinese outcome, cancelled, or failure; no partial-answer terminal |
 
 ## 11. `ProductionScanStatusView`

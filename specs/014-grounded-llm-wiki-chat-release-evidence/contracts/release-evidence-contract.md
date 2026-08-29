@@ -73,6 +73,7 @@ Every aggregate is backed by a named receipt rather than an unproved number:
 - Business Logic Document query receipt;
 - Cross-Repository-flow query receipt;
 - Chat corpus result and packet/result artifacts with invoked-case packet fingerprints;
+- actual complete-render observation for every accepted answer, measured from accepted submission and recorded separately from the earlier Track B `AcceptedPublicationCommit` duration; `totalAcceptedAnswerDurationMilliseconds` is this Track C end-to-end render duration and must be 0-29,999;
 - same-process signed Track C attestation artifacts binding the immutable sealed-admission runtime observation ID/sequence to candidate/run/case/request, adapter/provider/streaming request, response headers, physical read/EOF, all byte-domain counters and terminal/deadline/rejection facts, plus the distinct matching coordinator completion summary ID and that summary's repair/validation/duration facts;
 - restart before/after artifacts plus duplicate query receipt; and
 - database preflight, ownership, and cleanup receipt.

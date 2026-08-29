@@ -8,8 +8,8 @@
 - August 30 sprint-change proposal, bounded-scanning architecture, and dated PRD overlay
 - accepted Story 12.4 artifacts at immutable dependency commit `4798b97d9f23aef587829175df7ab7ebc3daf995`
 - `specs/008-demo-chat-release-gate` as stale lifecycle but reusable implementation history
-- accepted Story 12.5 spec, `decisions/design-correction-01.md`, and immutable `plan-review-08` at clean source commit `7e390bf97e9564d542f6ef939349c2204a4043d5`
-- current Prepared Chat contracts, retriever, currentness validator, coordinator, non-streaming provider dispatch/result validation, Unicode-safe page reveal, tests, Pass 1/Pass 2 streaming implementations, durable Scan entities/recovery/manual-resume API, placeholder Scan-history page, fake demo state, and release harness
+- Story 12.5 specification content, `decisions/design-correction-02.md`, and exact clean source checkpoint `719c2a5afc9b2a0161fff4c9deb7b26531ebf66d`
+- current Prepared Chat contracts, single typed retriever, current-v2 relationship/currentness validators, scoped conversation, raw streaming provider dispatch/result validation, completion observation, Unicode-safe page reveal, tests, durable Scan entities/recovery/manual-resume API, accepted Track A UI/evidence preparation, and release harness
 
 No `CONTEXT-MAP.md`, `CONTEXT.md`, repository ADR directory, or context ADR exists at the inspected boundary.
 
@@ -30,7 +30,7 @@ No `CONTEXT-MAP.md`, `CONTEXT.md`, repository ADR directory, or context ADR exis
 
 **Decision**: a Cross-Repository expansion fact requires one or more independently valid accepted Story 12.4 exact-match `CrossRepositoryResolutionDecision` rows plus their shared exact current directed `DocumentEdge`. `ExactCrossRepositoryEdgeEvidence` is legacy-only. For one Edge, select the first decision under the Story 12.4 slot ordering as the relationship witness and bind the complete valid set through count plus canonical fingerprint; distinct valid decisions are not inconsistent and may own distinct Published Flow Groups.
 
-**Rationale**: current `ChatEvidenceRetriever` joins one embedded profile occurrence to one legacy exact-evidence row. Current `ChatEvidenceCurrentnessValidator` repeats that assumption. Story 12.4 candidate source explicitly permits many endpoint/entry decisions to share one document-level Edge, retains independent evidence, and binds each complete/published Flow Group to its decision. Legacy one-to-one profile evidence cannot represent that cardinality.
+**Rationale**: checkpoint `719c2a5a` already removed the legacy retriever/currentness authority and consumes the accepted v2 projector. Story 12.4 source explicitly permits many endpoint/entry decisions to share one document-level Edge, retains independent evidence, and binds each complete/published Flow Group to its decision. Legacy one-to-one profile evidence cannot represent that cardinality, so mutation/structural tests must prevent its return.
 
 **Alternatives considered**:
 
@@ -52,11 +52,11 @@ No `CONTEXT-MAP.md`, `CONTEXT.md`, repository ADR directory, or context ADR exis
 
 **Consequence**: stream current eligible sections in stable-ID order, deduplicate before a bounded top-K, and retain the highest-ranked 256 or exhaustion; a 257th or larger eligible set is ranked rather than refused. Parse structured term arrays and use token equality, apply each published integer component `50/40/30/25/20/5/3/1` at most once where 25 applies only to the active mode's term field, add one total prior-current-Document point, and let all positive-score candidates compete before selecting strongest-per-Document then extras to an exact target of twelve. Randomized enumeration, duplicate conflicts, 257+ sets, and weak-metadata/strong-prose cases must produce the specified identities/fingerprints.
 
-## R-3A: A single typed cutover is mandatory
+## R-3A: The single typed cutover is a preserved architecture invariant
 
-**Decision**: replace the current two-path retriever with one typed snapshot -> lexical primary projection -> current-v2 expansion -> packet-builder pipeline. Delete the literal Cross-Repository question classifier, exact-row rebuild branch, projection-only early final return, duplicate packet construction, direct legacy authority reads, and direct in-method projector construction.
+**Decision**: preserve exactly one typed snapshot -> lexical primary projection -> current-v2 expansion -> packet-builder pipeline. Keep the literal Cross-Repository question classifier, exact-row rebuild branch, projection-only early final return, duplicate packet construction, direct legacy authority reads, and direct in-method projector construction absent.
 
-**Rationale**: pinned source shows `RetrieveInsideTransactionAsync` first creates a complete projection packet and then, only when `RequiresCrossRepositoryEvidence` recognizes `跨仓库` or `cross-repository`, executes a second `ExactRelationshipRow`/provenance path and creates another packet. T021/T055/T065/T070/T075/T080 repeatedly attempted to constrain branches without removing the second primary authority. Test growth could not establish the architectural postcondition because no seam represented immutable lexical primaries followed by optional expansion.
+**Rationale**: the referenced audit observed those defects at an older checkpoint, but exact source checkpoint `719c2a5a` already constructor-composes lexical projection, relationship projection and one packet builder and contains none of the named legacy symbols. Replanning their deletion would discard valid implementation evidence. The current design problem is acceptance/mutation proof and B4 publication ownership, so the corrected plan makes the topology a regression invariant.
 
 **Alternatives considered**:
 
@@ -64,7 +64,7 @@ No `CONTEXT-MAP.md`, `CONTEXT.md`, repository ADR directory, or context ADR exis
 - Feature-flag old and new retrieval: rejected because coexistence keeps two production authorities and makes release evidence configuration-dependent.
 - Let the projector return a complete packet: rejected because it can replace lexical identities and duplicates packing policy.
 
-**Consequence**: architectural interaction RED tests must fail against the old composition before replacement writes. Structural tests enforce one packet-builder call and absence of classifier/legacy queries; behavioral tests fix lexical identities while relationship fixtures vary.
+**Consequence**: structural and mutation tests enforce one packet-builder call, mandatory relationship-projector interaction and absence of classifier/legacy queries. Behavioral tests freeze lexical identities while relationship fixtures vary. B1 can be reaccepted independently without rewriting the retriever.
 
 ## R-3B: Applied Context is the only advisory source
 
@@ -152,7 +152,23 @@ Normalize NFC, CRLF/CR to LF and outer Unicode whitespace; reject disallowed con
 - Forward complete individual claims early: rejected because the packet/currentness/authorization result is atomic.
 - Remove progressive reveal: unnecessary; its accepted-output-only implementation remains useful and supports reduced-motion behavior.
 
-**Consequence**: `ChatPage` shows only generic pending/cancellation state until acceptance. No fragment, claim, citation, handle, relationship, or Source Anchor detail crosses the client boundary early. The reveal consumes the same deadline and cannot push completion beyond it.
+**Consequence**: `ChatPage` shows only generic pending/cancellation state until acceptance. No fragment, claim, citation, handle, relationship, or Source Anchor detail crosses the client boundary early. A Web-scoped publication owner precomputes immediate/progressive presentation and commits only accepted immutable content.
+
+## R-7C: Deadline acceptance needs one named publication linearization point
+
+**Decision**: add one scoped `IPreparedChatPublicationOwner`. Before its critical section, the coordinator completes transport, validation, re-fetch/currentness/authorization, answer construction, proposed conversation construction, runtime-observation lookup, neutral completion-summary-template construction, reveal-plan selection and all allocation/fallible callbacks. The owner then samples cancellation and the monotonic deadline once and performs one non-throwing atomic terminal-state exchange on a preallocated composite candidate. This `AcceptedPublicationCommit` simultaneously makes the answer, next conversation, accepted completion summary and reveal directive authoritative.
+
+**Rationale**: checkpoint `719c2a5a` performs a live deadline check, constructs success, mutates conversation, records completion telemetry and returns across separate statements. Adding another check after each statement cannot close the race because time can always advance after the newest check. A linearizable state machine instead defines the authoritative observation: under 29 seconds means the monotonic sample immediately before the sole commit is strictly before the absolute deadline. Time after the commit does not retroactively invalidate accepted state, and no later time read or fallible success mutation is permitted.
+
+**Alternatives considered**:
+
+- Keep adding fake-clock checks around conversation, telemetry and result return: rejected because it has no final owner and generated T079-T081 convergence churn.
+- Record an accepted completion summary before publishing the answer: rejected because timeout/cancellation could leave false accepted telemetry.
+- Publish the answer first and append conversation/summary later: rejected because readers could observe a success that has no matching current conversation or completion authority.
+- Hold an EF transaction or database lock through provider streaming and browser rendering: rejected because publication/conversation are scoped transient state and a long transaction cannot make client scheduling atomic.
+- Define success by a clock check after UI rendering: rejected as the only Track B safety rule because the browser can be delayed indefinitely and already disclosed accepted content cannot be rolled back.
+
+**Consequence**: Track B has one logical acceptance point and zero post-commit success side effects. Immediate reveal stores the complete visible accepted answer in the composite record. Progressive reveal is allowed only when precomputed to fit the internal budget; a live page supervisor may switch the already accepted answer to complete display without changing acceptance. Track C separately records actual complete-render time and rejects release evidence at 30,000 ms or later. This adds one Web seam and no persistence, Story 12.4, provider transport or security-boundary change.
 
 ## R-8: Production Scan UI reads durable state directly
 
@@ -214,8 +230,8 @@ Normalize NFC, CRLF/CR to LF and outer Unicode whitespace; reject disallowed con
 
 **Decision**: architecture review is mandatory and accepted plan review must be followed by a planned-change authorization pause before task generation.
 
-**Rationale**: although the provider receives no callable retrieval tool, repository implementation history explicitly classifies `IChatEvidenceRetriever.RetrieveAsync` as a Chat Agent retrieval tool. Story 12.5 materially changes that tool from one prepared legacy exact-flow packet to current section-ranked, v2 decision/Edge/Flow Group-expanded, conversation-bound packet v2 evidence, and changes the Chat Agent provider dispatch from aggregate `RunAsync` to mandatory bounded primary/repair streaming. That satisfies the Agent-tool trigger. The real Scan UI is read/resume over existing policy and is not a Scan strategy change. The dated PRD overlay already authorizes bounded server retrieval, one-hop persisted expansion, citations, and under-30-second Chat; the streaming trust boundary strengthens those results and creates no PRD conflict/weakening.
+**Rationale**: although the provider receives no callable retrieval tool, repository implementation history explicitly classifies `IChatEvidenceRetriever.RetrieveAsync` as a Chat Agent retrieval tool. Checkpoint `719c2a5a` already embodies the material cutover from one prepared legacy exact-flow packet to current section-ranked, v2 decision/Edge/Flow Group-expanded, conversation-bound packet 2.2 evidence and from aggregate `RunAsync` to mandatory bounded primary/repair streaming; the corrected plan preserves and mutation-guards those changes. AD-7C additionally changes the server Chat completion/publication boundary to one deadline-linearized owner. Together they satisfy the Agent-tool trigger. The real Scan UI is read/resume over existing policy and is not a Scan strategy change. The dated PRD overlay already authorizes bounded server retrieval, one-hop persisted expansion, citations, and under-30-second Chat; the streaming/publication trust boundary strengthens those results and creates no PRD conflict/weakening.
 
 **Alternatives considered**: classify only provider-callable JSON functions as tools. Rejected because `specs/008-demo-chat-release-gate/plan.md` and its Chat contract already recorded the exact Core retrieval interface as the governed Chat Agent tool.
 
-**Consequence**: after independent plan acceptance, pause for explicit authorization of AD-2 through AD-7B before tasks, citing revised spec FR-053 through FR-060 and PRD lines 42-44, 285, and 380. Then run tasks/definition review and the separate mandatory implementation-approval gate. Track B/C dependency gates still apply.
+**Consequence**: after independent plan acceptance, pause for explicit authorization of AD-2 through AD-7C and AD-10 before tasks, citing specification FR-053 through FR-060, PRD lines 42-44, 285, and 380, and `design-correction-02.md`. Then run Sol/high task authoring, definition review, and the separate mandatory implementation-approval gate. Track B/C dependency gates still apply.
