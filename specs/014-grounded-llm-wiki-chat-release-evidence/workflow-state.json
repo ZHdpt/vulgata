@@ -3,7 +3,7 @@
   "bmad_story_key": "12-5-grounded-llm-wiki-chat-and-august-30-release-evidence",
   "bmad_epic_key": "12",
   "feature_directory": "specs/014-grounded-llm-wiki-chat-release-evidence",
-  "stage": "e2e",
+  "stage": "conditional-e2e",
   "preflight": {
     "branch": "demo0831/story-12-5",
     "head": "b48f13b21d899114bdb44c7d26a1f399df1fdf43",
@@ -144,13 +144,13 @@
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/review/track-b-quality-input-03.md"
   ],
   "checkpoint": {
-    "checkpoint_id": "bmad-12-5-e2e-20260829T132159Z-decision01",
-    "stage": "e2e",
+    "checkpoint_id": "bmad-12-5-conditional-e2e-20260829T132159Z-fix01",
+    "stage": "conditional-e2e",
     "commit_sha": null,
     "binding_status": "pending"
   },
   "resume": {
-    "stage": "e2e",
+    "stage": "conditional-e2e",
     "reason": "The E2E matrix triggers user-visible, authorization, and multi-module predicates without a complete coverage override. Run the economical T040 E2E boundary before final Track B verification.",
     "evidence_path": "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/e2e/track-b-decision-input-01.md"
   },
