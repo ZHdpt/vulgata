@@ -46,6 +46,16 @@ internal static partial class Story125ReleaseHarness
     internal static bool IsOwnedDatabaseName(string? databaseName) =>
         databaseName is not null && OwnedDatabaseNameRegex().IsMatch(databaseName);
 
+    internal static T CreateOwnedDatabaseConnection<T>(string? databaseName, Func<T> connectionFactory)
+    {
+        if (!IsOwnedDatabaseName(databaseName))
+        {
+            throw new InvalidOperationException("The database target is not owned by Story 12.5.");
+        }
+
+        return connectionFactory();
+    }
+
     internal static IReadOnlyList<string> ValidateSemanticEnvelope(string json)
     {
         var errors = new List<string>();

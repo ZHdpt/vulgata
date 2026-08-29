@@ -6,7 +6,7 @@
   "stage": "implement",
   "preflight": {
     "branch": "demo0831/story-12-5-trackC",
-    "head": "1517d8c85eed643a092fbb1c997f232c90e6b52c",
+    "head": "2b60081a514cc718895aed935cd5db4b494523b6",
     "git_identity_sha256": "550108c188b7baa3a78e820c7e9680bd51920b648a44edb277835750f001cdd1",
     "status_sha256": "a9ecb1b290979eaf1d6b3e55fcdcaaa08993b88aeefa2632e436f0b3d457f0d7",
     "observed_at": "2026-08-29T16:33:56.9454670Z"
@@ -26,7 +26,8 @@
     {"decision_id":"story-12-5-correct-course-track-c-mvp-01","status":"accepted","scope_sha256":"4c8ae61ce8136d058d51809a1b74593222c7b68d2845cd1ef2a7daf778a27db8","evidence_path":"specs/014-grounded-llm-wiki-chat-release-evidence/decisions/correct-course-track-c-mvp-01.md","decided_at":"2026-08-29T14:41:26.1917101Z"},
     {"decision_id":"story-12-5-planned-change-authorization-track-c-mvp-01","status":"accepted","scope_sha256":"2bec1009dbefde3cc8d9452b1579456cb57a9b61f78a063e8ca42d419708ae22","evidence_path":"specs/014-grounded-llm-wiki-chat-release-evidence/decisions/planned-change-authorization-track-c-mvp-01.md","decided_at":"2026-08-29T15:13:00.8104505Z"},
     {"decision_id":"story-12-5-planned-change-authorization-track-c-mvp-rebind-01","status":"accepted","scope_sha256":"6e88b42958a615399a9b4167a1c9fc27f7229ea7cedcc7f4febedafd8c775400","evidence_path":"specs/014-grounded-llm-wiki-chat-release-evidence/decisions/planned-change-authorization-track-c-mvp-rebind-01.md","decided_at":"2026-08-29T16:29:09.3191133Z"},
-    {"decision_id":"story-12-5-implementation-approval-track-c-mvp-01","status":"accepted","scope_sha256":"6e88b42958a615399a9b4167a1c9fc27f7229ea7cedcc7f4febedafd8c775400","evidence_path":"specs/014-grounded-llm-wiki-chat-release-evidence/decisions/implementation-approval-track-c-mvp-01.md","decided_at":"2026-08-29T16:33:56.9454670Z"}
+    {"decision_id":"story-12-5-implementation-approval-track-c-mvp-01","status":"accepted","scope_sha256":"6e88b42958a615399a9b4167a1c9fc27f7229ea7cedcc7f4febedafd8c775400","evidence_path":"specs/014-grounded-llm-wiki-chat-release-evidence/decisions/implementation-approval-track-c-mvp-01.md","decided_at":"2026-08-29T16:33:56.9454670Z"},
+    {"decision_id":"story-12-5-track-c-mvp-overnight-standing-authorization-02","status":"accepted","scope_sha256":"6e88b42958a615399a9b4167a1c9fc27f7229ea7cedcc7f4febedafd8c775400","evidence_path":"specs/014-grounded-llm-wiki-chat-release-evidence/decisions/standing-authorization-track-c-mvp-02.md","decided_at":"2026-08-29T17:08:44.9350501Z"}
   ],
   "convergence": {"status":"pending","attempt":0,"outcome":"pending","report_path":null},
   "e2e": {"result":"pending","decision_path":null},
@@ -36,9 +37,12 @@
     "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/implementation-approval-track-c-mvp-01.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/plan-review/plan-review-track-c-mvp-02.json",
     "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/definition-review/definition-review-track-c-mvp-02.json",
-    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/verification/track-b-final-01.md"
+    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/verification/track-b-final-01.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/preflight/track-c-mvp-entry-01.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/verification/track-c-mvp-support-01.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/verification/track-c-mvp-tier1-01.md"
   ],
-  "checkpoint": {"checkpoint_id":"bmad-12-5-definition-review-20260829T163356Z-c3a7e1","stage":"definition-review","commit_sha":null,"binding_status":"pending"},
-  "resume": {"stage":"implement","reason":"Corrected Track C-MVP definition accepted; standing implementation approval permits T001-T022 within the no-production boundary.","evidence_path":"specs/014-grounded-llm-wiki-chat-release-evidence/decisions/implementation-approval-track-c-mvp-01.md"},
-  "updated_at": "2026-08-29T16:33:56.9454670Z"
+  "checkpoint": {"checkpoint_id":"bmad-12-5-implement-20260829T170844Z-trackcmvpsupport01","stage":"implement","commit_sha":null,"binding_status":"pending"},
+  "resume": {"stage":"implement","reason":"T001-T007 support and Tier 1 passed; proceed to T008 external preflight and stop truthfully if a required prerequisite is unavailable.","evidence_path":"specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/track-c-mvp-support-01.md"},
+  "updated_at": "2026-08-29T17:08:44.9350501Z"
 }
