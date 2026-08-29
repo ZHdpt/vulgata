@@ -76,9 +76,10 @@ content, prompt corpus, Document, Source Anchor, relationship, or credential
 output.
 
 The restricted-sandbox request was unobserved as an environment failure. The one
-approved host retry reached the configured route but timed out after the bounded
-20-second deadline (`TaskCanceledException`). No response body was read or
-persisted, and the unchanged request was not repeated.
+approved host retry attempted the configured route outside the sandbox but timed
+out after the bounded 20-second deadline (`TaskCanceledException`); that result
+does not prove that the remote service accepted a connection. No response body
+was read or persisted, and the unchanged request was not repeated.
 
 ## Corrected blocker set
 
