@@ -202,3 +202,9 @@ description: "Dependency-ordered Story 12.5 implementation tasks"
 **Goal**: Close the final accepted Track B deadline-through-publication gap without changing accepted architecture, Story 12.4 authority, persistence, or Track C.
 
 - [x] T079 [US2] Add deterministic fake-clock REDs that expire at the coordinator's final remaining-budget/publication boundary and prove no successful result or conversation append, plus a Chat Page RED where the remaining budget is at least 1,000 ms but below the Unicode-safe progressive reveal cost and prove the complete accepted answer renders immediately within the absolute deadline; implement the minimal final deadline assertion and deadline-aware reveal decision while preserving caller-cancelled versus internal-timeout outcomes and accepted-only reveal. Traces to QR-TB-004, FR-031, FR-032, FR-056, SC-017, plan AD-7/AD-7B, and `contracts/chat-provider-streaming-v1.md`.
+
+## Phase 16: Convergence
+
+**Goal**: Close the remaining deadline-through-publication and accepted-UI-reveal race without changing accepted architecture, Story 12.4 authority, persistence, or the closed Track C boundary.
+
+- [ ] T080 [US2] Add deterministic fake-clock REDs that expire after the final deadline check but before conversation/result publication and prove no successful result, conversation append, or accepted-only publication; make conversation append and success publication deadline-atomic while preserving caller-cancelled versus internal-timeout outcomes, then bind the Chat Page reveal timer to the same absolute deadline and render a complete accepted answer immediately whenever progressive Unicode reveal cannot finish within the remaining budget. Traces to QR-TB-004, FR-031, FR-032, FR-056, FR-057, FR-059, SC-005, SC-016, SC-017, plan AD-7/AD-7B, and `contracts/chat-provider-streaming-v1.md` (`partial`).
