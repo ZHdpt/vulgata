@@ -1,0 +1,54 @@
+{
+  "schema_version": "1.0",
+  "gate": "plan-review",
+  "verdict": "ACCEPT",
+  "reviewed_commit": "915ace211b718a16036640e56afbed5ab6f18b46",
+  "reviewed_boundary": {
+    "base_commit": "719c2a5afc9b2a0161fff4c9deb7b26531ebf66d",
+    "candidate_commit": "915ace211b718a16036640e56afbed5ab6f18b46",
+    "diff_sha256": "c63a6d31efb89a940a3a93eeb6a53ed2e17a0e03b90d05b06123ac28b5af0466",
+    "artifact_hashes": {
+      "specs/014-grounded-llm-wiki-chat-release-evidence/spec.md": "a7367b1f64fcfc2cf099d7fd204575f314e35994204ccb0cd7b7f2dacf6f7dd4",
+      "specs/014-grounded-llm-wiki-chat-release-evidence/plan.md": "fad42dcd3a3f393809e95500ea6d6c7607ce4a16787d8b16d054b415ce533318",
+      "specs/014-grounded-llm-wiki-chat-release-evidence/research.md": "126d43a987823e5beb1f9dd7fa83da913a0b63ed5318b56b285ecdb5e491d4d0",
+      "specs/014-grounded-llm-wiki-chat-release-evidence/data-model.md": "238629dfa9363fd872be805d629e14a21b81a0057a93aa1a8a0b880077188716",
+      "specs/014-grounded-llm-wiki-chat-release-evidence/quickstart.md": "a63f5d50756d06f7c8ecbc8cebd7186cd24b2def3c86aa88f8a879017ca8bc33",
+      "specs/014-grounded-llm-wiki-chat-release-evidence/contracts/chat-provider-streaming-v1.md": "42b859792ac531b1ed9d650b7da444363ca4eae2bfc91ea6515851fade4d9143",
+      "specs/014-grounded-llm-wiki-chat-release-evidence/contracts/grounded-chat-v2.md": "23d4a7d3ac788092c28d4d49057e2a4160a8799b48e300d6706573679908b10e",
+      "specs/014-grounded-llm-wiki-chat-release-evidence/contracts/release-evidence-contract.md": "4b241d50f77046bda4abe5cffe4d11f9dd5cdd2e07a78c442ff8f9b98cd27f5b"
+    },
+    "owned_paths": [
+      "specs/014-grounded-llm-wiki-chat-release-evidence/plan.md",
+      "specs/014-grounded-llm-wiki-chat-release-evidence/research.md",
+      "specs/014-grounded-llm-wiki-chat-release-evidence/data-model.md",
+      "specs/014-grounded-llm-wiki-chat-release-evidence/quickstart.md",
+      "specs/014-grounded-llm-wiki-chat-release-evidence/contracts/chat-provider-streaming-v1.md",
+      "specs/014-grounded-llm-wiki-chat-release-evidence/contracts/grounded-chat-v2.md",
+      "specs/014-grounded-llm-wiki-chat-release-evidence/contracts/release-evidence-contract.md"
+    ]
+  },
+  "reviewed_artifacts": [
+    "AGENTS.md",
+    ".specify/memory/constitution.md",
+    "docs/UBIQUITOUS_LANGUAGE.md",
+    "docs/bmad/epics.md",
+    "docs/bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md",
+    "docs/bmad/planning-artifacts/architecture/august-30-bounded-scanning-design.md",
+    "specs/013-exact-cross-repository-flow-pass2/plan.md",
+    "specs/013-exact-cross-repository-flow-pass2/contracts/exact-resolution-and-flow-planning.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/spec.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/design-correction-02.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/plan.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/research.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/data-model.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/quickstart.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/contracts/chat-provider-streaming-v1.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/contracts/grounded-chat-v2.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/contracts/release-evidence-contract.md",
+    "src/dotnet/Vulgata.Infrastructure/Data/ChatEvidenceRetriever.cs",
+    "src/dotnet/Vulgata.Web/Data/PreparedChatCoordinator.cs",
+    "src/dotnet/Vulgata.Web/Components/Pages/ChatPage.razor.cs"
+  ],
+  "findings": [],
+  "summary": "ACCEPT. The corrected plan is a bounded delta over the current single typed retrieval pipeline, inventories all 60 FRs and 17 SCs, gives B1-B4 and B-INT independently testable exits, closes relationship and Flow Group support states, and defines a feasible single Web-owned AcceptedPublicationCommit. Track B telemetry remains release-neutral and Track C separately measures complete render. No EF migration, Story 12.4 contract mutation, PRD conflict, or specification correction is required. The material Agent-tool and Chat publication change requires fresh planned-change authorization before regenerated tasks; prior approvals are hash-invalidated."
+}

@@ -6,10 +6,10 @@
   "stage": "plan-review",
   "preflight": {
     "branch": "demo0831/story-12-5",
-    "head": "719c2a5afc9b2a0161fff4c9deb7b26531ebf66d",
-    "git_identity_sha256": "8677523393530e53ab5f8c57fda6f05cc5a331401b4d97eedbd373749c16d819",
+    "head": "915ace211b718a16036640e56afbed5ab6f18b46",
+    "git_identity_sha256": "721f6b287a0627ada9e4b7c3e34534cdbe793117e32b695a9e98bd8a5f06b44e",
     "status_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-    "observed_at": "2026-08-29T06:18:43.3170048Z"
+    "observed_at": "2026-08-29T06:26:39.5413951Z"
   },
   "artifacts": {
     "spec": {
@@ -27,9 +27,9 @@
   },
   "gates": {
     "plan-review": {
-      "status": "pending",
+      "status": "accepted",
       "attempt": 10,
-      "verdict_path": null
+      "verdict_path": "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/plan-review/plan-review-10.json"
     },
     "definition-review": {
       "status": "invalidated",
@@ -120,7 +120,7 @@
     "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/convergence-continuation-03.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/design-correction-01.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/track-b-convergence-pause-07.md",
-    "specs/014-grounded-llm-wiki-chat-release-evidence/plan.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/plan-review/plan-review-10.json",
     "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/planned-change-authorization-03.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/definition-review/definition-review-06.json",
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/track-b-definition-review-06.md",
@@ -130,15 +130,15 @@
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/track-b-convergence-correction-14.md"
   ],
   "checkpoint": {
-    "checkpoint_id": "bmad-12-5-plan-review-20260829T061843Z-a4d2c1",
+    "checkpoint_id": "bmad-12-5-plan-review-20260829T062639Z-7b2f41",
     "stage": "plan-review",
     "commit_sha": null,
     "binding_status": "pending"
   },
   "resume": {
     "stage": "plan-review",
-    "reason": "Sol/high plan correction and self-review passed. Run architecture-triggered independent plan review; if accepted, pause for fresh planned-change authorization before Sol/high task authoring.",
-    "evidence_path": "specs/014-grounded-llm-wiki-chat-release-evidence/plan.md"
+    "reason": "Independent plan review 10 accepted plan fad42dcd. Pause for fresh planned-change authorization before Sol/high task generation; no test or production write is authorized.",
+    "evidence_path": "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/plan-review/plan-review-10.json"
   },
-  "updated_at": "2026-08-29T06:18:43.3170048Z"
+  "updated_at": "2026-08-29T06:26:39.5413951Z"
 }
