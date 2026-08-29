@@ -1,0 +1,59 @@
+{
+  "gate": "definition-review",
+  "attempt": 2,
+  "verdict": "ACCEPT",
+  "source_identity": {
+    "branch": "demo0831/story-12-5-trackC",
+    "head": "1517d8c85eed643a092fbb1c997f232c90e6b52c",
+    "accepted_track_b_baseline": "f292caec427f9844be3c0f65b4cb00a9292080a5",
+    "story_12_4_dependency": "4798b97d9f23aef587829175df7ab7ebc3daf995",
+    "uncommitted_diff_sha256": "117a703f5f549c69e06ed6c0e58a095bd8f4a2f356b42c11738cae8e1e14c708",
+    "porcelain_v2_sha256": "39e91131be1c33c9099e5320fafa09e681987e163a20d1fd3159f1a364c10863",
+    "diff_check": "passed",
+    "production_or_test_source_delta": false
+  },
+  "artifact_sha256": {
+    "spec.md": "15bc1cc7afe3d7250d8d247546da4ab72086f030bcb81e7b33b875701ffba309",
+    "plan.md": "614bf140543847a396ca04eedb1f007a7e937e260619818838506f053c1cc0d7",
+    "tasks.md": "7bdcea011bbfb3b24b1c8a149ce2eb1e3558328e63149ac6b6708c70af6966d2",
+    "research.md": "5fe897e09100161b872df9e2dd7ec0699980b78a7ba197fd0911abf590c2e0f7",
+    "data-model.md": "466b971d1a93b5b691f5858cb4af4b4ce8e3500bd705f741b37d2f5919dc9b5e",
+    "quickstart.md": "e5628090da72b39c409a31af3edf656ba972a3946efda9696f0b070d37aa3624",
+    "contracts/release-evidence-contract.md": "f4c14ddcdcbf6cd0693f6b3f6582f8af83a9aa1bee8083fd8b7c76e9a15e984c"
+  },
+  "coverage": {
+    "functional_requirements_reviewed": 62,
+    "success_criteria_reviewed": 18,
+    "tasks_reviewed": 22,
+    "functional_requirements_with_owner": 62,
+    "success_criteria_with_owner": 18,
+    "unmapped_tasks": 0,
+    "unresolved_placeholders": 0,
+    "critical_findings": 0,
+    "high_findings": 0,
+    "medium_findings": 0,
+    "constitution_must_violations": 0
+  },
+  "prior_finding_disposition": [
+    {"id":"DR-TC-MVP-001","status":"RESOLVED","earliest_owner":"plan","evidence":"Fresh-state real rows; topical-only cross-mode lineage; q12 prompt-boundary-only; Track B owns actual multi-turn and authorization proof."},
+    {"id":"DR-TC-MVP-002","status":"RESOLVED","earliest_owner":"plan","evidence":"Production defects return to planning/review/rebinding before TDD; only evidence/operator/read-only-query correction is in scope."}
+  ],
+  "new_findings": [],
+  "analysis": {
+    "spec_plan_tasks_consistency": "PASS",
+    "requirement_coverage": "PASS",
+    "task_ordering_and_ownership": "PASS",
+    "tdd_honesty": "PASS",
+    "feasibility": "PASS",
+    "architecture_seams": "PASS",
+    "failure_behavior": "PASS",
+    "testability": "PASS",
+    "constitution_alignment": "PASS",
+    "security_and_authorization_preservation": "PASS",
+    "higher_authority_alignment": "PASS",
+    "retained_deferred_forbidden_boundary": "PASS",
+    "external_blocker_behavior": "PASS",
+    "no_production_write_boundary": "PASS"
+  },
+  "summary": "ACCEPT. The corrected definition is complete, feasible, testable, security-preserving, and fully mapped with no blocking finding."
+}

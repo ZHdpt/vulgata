@@ -1,6 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://vulgata.local/contracts/story125-release-evidence.schema.json",
+  "$comment": "DEFERRED POST-COMPETITION: historical release-envelope 2.2 compatibility artifact. Story 12.5 Track C-MVP uses release-evidence-contract.md and one human-readable Markdown report; this schema is not a current acceptance or execution contract.",
   "title": "Story 12.5 Release Evidence Run Envelope",
   "type": "object",
   "additionalProperties": false,

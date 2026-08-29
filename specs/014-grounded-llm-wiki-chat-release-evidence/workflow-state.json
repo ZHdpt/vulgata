@@ -3,156 +3,42 @@
   "bmad_story_key": "12-5-grounded-llm-wiki-chat-and-august-30-release-evidence",
   "bmad_epic_key": "12",
   "feature_directory": "specs/014-grounded-llm-wiki-chat-release-evidence",
-  "stage": "verify",
+  "stage": "implement",
   "preflight": {
-    "branch": "demo0831/story-12-5",
-    "head": "5b1f5a85223844ac46d9ecbeeca633d58b1e3874",
-    "git_identity_sha256": "cce0f1604380719aa6d296ac15ffd8fda8e5b2bce8c4b885629257b7424ba77c",
-    "status_sha256": "f431a29b72d0f1ff47fe99b9d1c9aa90ddcba6bb8beb7ea4eb3d06f703e9a012",
-    "observed_at": "2026-08-29T13:38:14.2858874Z"
+    "branch": "demo0831/story-12-5-trackC",
+    "head": "1517d8c85eed643a092fbb1c997f232c90e6b52c",
+    "git_identity_sha256": "550108c188b7baa3a78e820c7e9680bd51920b648a44edb277835750f001cdd1",
+    "status_sha256": "a9ecb1b290979eaf1d6b3e55fcdcaaa08993b88aeefa2632e436f0b3d457f0d7",
+    "observed_at": "2026-08-29T16:33:56.9454670Z"
   },
   "artifacts": {
-    "spec": {
-      "path": "specs/014-grounded-llm-wiki-chat-release-evidence/spec.md",
-      "sha256": "a7367b1f64fcfc2cf099d7fd204575f314e35994204ccb0cd7b7f2dacf6f7dd4"
-    },
-    "plan": {
-      "path": "specs/014-grounded-llm-wiki-chat-release-evidence/plan.md",
-      "sha256": "fad42dcd3a3f393809e95500ea6d6c7607ce4a16787d8b16d054b415ce533318"
-    },
-    "tasks": {
-      "path": "specs/014-grounded-llm-wiki-chat-release-evidence/tasks.md",
-      "sha256": "1196c86fa7f91b4724313d8bb0027650b8b77b0d4a785489eeac30a8de03c305"
-    }
+    "spec": {"path":"specs/014-grounded-llm-wiki-chat-release-evidence/spec.md","sha256":"15bc1cc7afe3d7250d8d247546da4ab72086f030bcb81e7b33b875701ffba309"},
+    "plan": {"path":"specs/014-grounded-llm-wiki-chat-release-evidence/plan.md","sha256":"614bf140543847a396ca04eedb1f007a7e937e260619818838506f053c1cc0d7"},
+    "tasks": {"path":"specs/014-grounded-llm-wiki-chat-release-evidence/tasks.md","sha256":"7bdcea011bbfb3b24b1c8a149ce2eb1e3558328e63149ac6b6708c70af6966d2"}
   },
   "gates": {
-    "plan-review": {
-      "status": "accepted",
-      "attempt": 11,
-      "verdict_path": "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/plan-review/plan-review-11.json"
-    },
-    "definition-review": {
-      "status": "accepted",
-      "attempt": 8,
-      "verdict_path": "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/definition-review/definition-review-08.json"
-    },
-    "quality-review": {
-      "status": "accepted",
-      "attempt": 5,
-      "verdict_path": "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/quality-review/track-b-quality-review-05.json"
-    }
+    "plan-review": {"status":"accepted","attempt":2,"verdict_path":"specs/014-grounded-llm-wiki-chat-release-evidence/reviews/plan-review/plan-review-track-c-mvp-02.json"},
+    "definition-review": {"status":"accepted","attempt":2,"verdict_path":"specs/014-grounded-llm-wiki-chat-release-evidence/reviews/definition-review/definition-review-track-c-mvp-02.json"},
+    "quality-review": {"status":"pending","attempt":0,"verdict_path":null}
   },
-  "attempts": {
-    "definition-review": 0,
-    "converge": 4,
-    "quality-review": 2
-  },
+  "attempts": {"definition-review":0,"converge":0,"quality-review":0},
   "approvals": [
-    {
-      "decision_id": "story-12-5-implementation-approval-track-a-01",
-      "status": "accepted",
-      "scope_sha256": "81ea1431d710e6ab9d0647bebcc49525dd924f1265862b1666917ff2a08c5309",
-      "evidence_path": "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/implementation-approval-track-a-01.md",
-      "decided_at": "2026-08-27T10:08:46.1375862Z"
-    },
-    {
-      "decision_id": "story-12-5-design-correction-01",
-      "status": "accepted",
-      "scope_sha256": "844cf7b2e9ae8e0b4b7e43f1567d47e349a45a8b7a55dac2ba572d7e4cf8df2c",
-      "evidence_path": "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/design-correction-01.md",
-      "decided_at": "2026-08-28T09:02:33.7555814Z"
-    },
-    {
-      "decision_id": "story-12-5-planned-change-authorization-03",
-      "status": "accepted",
-      "scope_sha256": "f3057c1106d59d96a804b6a7c8902df653b6c23e4deb7402759c0ffd71a84f16",
-      "evidence_path": "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/planned-change-authorization-03.md",
-      "decided_at": "2026-08-28T11:50:51.6536446Z"
-    },
-    {
-      "decision_id": "story-12-5-implementation-approval-track-b-02",
-      "status": "accepted",
-      "scope_sha256": "c6afc73bad816bad6a7a511fb2bf6557f30e81ae0c6576f3ee4783abfed75db8",
-      "evidence_path": "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/implementation-approval-track-b-02.md",
-      "decided_at": "2026-08-28T12:23:33.1309041Z"
-    },
-    {
-      "decision_id": "story-12-5-implementation-approval-track-c-01",
-      "status": "accepted",
-      "scope_sha256": "f1996ec2c369153464e52eff6da10718db61a0606ce1d7524cfd6c160c1fb009",
-      "evidence_path": "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/implementation-approval-track-c-01.md",
-      "decided_at": "2026-08-28T12:23:33.1309041Z"
-    },
-    {
-      "decision_id": "story-12-5-convergence-continuation-02",
-      "status": "accepted",
-      "scope_sha256": "30e9ab5f0954f0c61d568e5ef7de6580b2d2503e5ef7d806a214687e67f829e9",
-      "evidence_path": "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/convergence-continuation-02.md",
-      "decided_at": "2026-08-28T22:44:57.9426406Z"
-    },
-    {
-      "decision_id": "story-12-5-convergence-continuation-03",
-      "status": "accepted",
-      "scope_sha256": "7911ba276cd9e6d6d354c967fda43dd1ee2fa84b83184e4a2e0fa1a627652bbf",
-      "evidence_path": "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/convergence-continuation-03.md",
-      "decided_at": "2026-08-29T01:35:37.4466181Z"
-    },
-    {
-      "decision_id": "story-12-5-design-correction-02",
-      "status": "accepted",
-      "scope_sha256": "5b8ccc92ca93872606b02930265b11a26e09beb43b3ffdb04d0e37fbf8244a1f",
-      "evidence_path": "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/design-correction-02.md",
-      "decided_at": "2026-08-29T05:58:36.4577826Z"
-    },
-    {
-      "decision_id": "story-12-5-planned-change-authorization-04",
-      "status": "accepted",
-      "scope_sha256": "e28f64ef6dd4c217057e56e55b9ea22ca705a15ff61b4388cf2397da7aeaf976",
-      "evidence_path": "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/planned-change-authorization-04.md",
-      "decided_at": "2026-08-29T06:35:58.8077032Z"
-    },
-    {
-      "decision_id": "story-12-5-implementation-approval-03",
-      "status": "accepted",
-      "scope_sha256": "5a23d942a8c831243307fefe22a1de994b784c57e9ac5a11370ace3dfc9d4f06",
-      "evidence_path": "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/implementation-approval-03.md",
-      "decided_at": "2026-08-29T07:26:01.2483608Z"
-    }
+    {"decision_id":"story-12-5-correct-course-track-c-mvp-01","status":"accepted","scope_sha256":"4c8ae61ce8136d058d51809a1b74593222c7b68d2845cd1ef2a7daf778a27db8","evidence_path":"specs/014-grounded-llm-wiki-chat-release-evidence/decisions/correct-course-track-c-mvp-01.md","decided_at":"2026-08-29T14:41:26.1917101Z"},
+    {"decision_id":"story-12-5-planned-change-authorization-track-c-mvp-01","status":"accepted","scope_sha256":"2bec1009dbefde3cc8d9452b1579456cb57a9b61f78a063e8ca42d419708ae22","evidence_path":"specs/014-grounded-llm-wiki-chat-release-evidence/decisions/planned-change-authorization-track-c-mvp-01.md","decided_at":"2026-08-29T15:13:00.8104505Z"},
+    {"decision_id":"story-12-5-planned-change-authorization-track-c-mvp-rebind-01","status":"accepted","scope_sha256":"6e88b42958a615399a9b4167a1c9fc27f7229ea7cedcc7f4febedafd8c775400","evidence_path":"specs/014-grounded-llm-wiki-chat-release-evidence/decisions/planned-change-authorization-track-c-mvp-rebind-01.md","decided_at":"2026-08-29T16:29:09.3191133Z"},
+    {"decision_id":"story-12-5-implementation-approval-track-c-mvp-01","status":"accepted","scope_sha256":"6e88b42958a615399a9b4167a1c9fc27f7229ea7cedcc7f4febedafd8c775400","evidence_path":"specs/014-grounded-llm-wiki-chat-release-evidence/decisions/implementation-approval-track-c-mvp-01.md","decided_at":"2026-08-29T16:33:56.9454670Z"}
   ],
-  "convergence": {
-    "status": "accepted",
-    "attempt": 4,
-    "outcome": "converged",
-    "report_path": "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/convergence/track-b-quality-correction-03.md"
-  },
-  "e2e": {
-    "result": "passed",
-    "decision_path": "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/e2e/track-b-decision-input-01.md"
-  },
+  "convergence": {"status":"pending","attempt":0,"outcome":"pending","report_path":null},
+  "e2e": {"result":"pending","decision_path":null},
   "current_evidence_paths": [
-    "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/design-correction-02.md",
-    "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/planned-change-authorization-04.md",
-    "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/implementation-approval-03.md",
-    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/integration/track-b-int-01.md",
-    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/verification/track-b-final-01.md",
-    "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/quality-review/track-b-quality-review-05.json",
-    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/e2e/track-b-decision-input-01.md",
-    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/e2e/track-b-run-01.md",
-    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/track-b-quality-correction-04.md",
-    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/convergence/track-b-quality-correction-03.md",
-    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/convergence/track-b-quality-correction-02.md",
-    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/review/track-b-quality-input-03.md"
+    "docs/bmad/planning-artifacts/sprint-change-proposal-2026-08-29-story-12-5-track-c-mvp.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/planned-change-authorization-track-c-mvp-rebind-01.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/implementation-approval-track-c-mvp-01.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/plan-review/plan-review-track-c-mvp-02.json",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/definition-review/definition-review-track-c-mvp-02.json",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/verification/track-b-final-01.md"
   ],
-  "checkpoint": {
-    "checkpoint_id": "bmad-12-5-verify-20260829T133814Z-trackb01",
-    "stage": "verify",
-    "commit_sha": null,
-    "binding_status": "pending"
-  },
-  "resume": {
-    "stage": "implement",
-    "reason": "Track B is accepted through T041. Convergence, quality, required E2E, schema/build, and boundary guards pass. Full-suite baseline failures are documented separately. Begin authorized Track C at T042 preflight.",
-    "evidence_path": "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/verification/track-b-final-01.md"
-  },
-  "updated_at": "2026-08-29T13:38:14.2858874Z"
+  "checkpoint": {"checkpoint_id":"bmad-12-5-definition-review-20260829T163356Z-c3a7e1","stage":"definition-review","commit_sha":null,"binding_status":"pending"},
+  "resume": {"stage":"implement","reason":"Corrected Track C-MVP definition accepted; standing implementation approval permits T001-T022 within the no-production boundary.","evidence_path":"specs/014-grounded-llm-wiki-chat-release-evidence/decisions/implementation-approval-track-c-mvp-01.md"},
+  "updated_at": "2026-08-29T16:33:56.9454670Z"
 }

@@ -47,4 +47,4 @@ Hidden/missing remains missing-equivalent. Stale conflict asks for refresh. Inte
 
 ## Evidence eligibility
 
-Every view has an internal `ProductionPersisted` origin. Release screenshots must bind to the current candidate/evidence manifest and a real execution ID/state version. Screenshots from `/management/demo-scan`, the demo iframe, or any fake-state origin are rejected.
+Every view has an internal `ProductionPersisted` origin. Track C-MVP manually records the current candidate, real execution ID/state and screenshot path in the Markdown report, then performs the required redaction review. Screenshots from `/management/demo-scan`, the demo iframe, or any fake-state origin are rejected. Automated candidate binding and screenshot validation are post-competition backlog.

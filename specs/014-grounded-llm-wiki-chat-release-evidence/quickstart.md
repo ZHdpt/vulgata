@@ -1,162 +1,157 @@
-# Quickstart: Story 12.5 Validation and Release Evidence
+# Quickstart: Story 12.5 Track C-MVP
 
-This is a validation/run guide, not planned-change authorization or implementation approval. Track A's accepted behavior/evidence is preserved and is not reimplemented or re-reviewed unless the corrected Track B work changes it. After fresh independent plan acceptance, the workflow must pause before regenerated tasks for fresh authorization of the material `IChatEvidenceRetriever` Agent-tool/runtime-contract changes; after task/definition acceptance it must obtain a new Track B implementation approval. Track C remains closed until corrected Track B is converged, quality-accepted, conditionally E2E-decided, verified and checkpoint-bound.
+This guide validates the corrected definition and describes the single combined host integration/release run. It does not create approval, authorize production changes, or permit use of the main/Story 12.4 database.
 
-## 1. Re-observe the boundary
+## 1. Re-observe the pinned boundary
 
-From the Story 12.5 worktree:
+    git branch --show-current
+    git rev-parse HEAD
+    git rev-parse --git-common-dir
+    git status --porcelain=v2
+    git merge-base --is-ancestor 4798b97d9f23aef587829175df7ab7ebc3daf995 HEAD
+    Get-FileHash specs/014-grounded-llm-wiki-chat-release-evidence/spec.md -Algorithm SHA256
 
-```pwsh
-git branch --show-current
-git rev-parse HEAD
-git status --short
-git diff --name-only 0d835c5f65f70a3c6a9561c6ff600069bb93e832...HEAD
-```
+Expected before implementation: branch demo0831/story-12-5-trackC; Story 12.4 is ancestral; only explicitly owned corrected-definition files are dirty.
 
-Required observations:
+## 2. Validate corrected plan artifacts
 
-- branch is `demo0831/story-12-5`;
-- no Story 12.4 worktree path, temporary directory, qualification database, dirty file, index state, or unintegrated commit is used;
-- before Track B/C, the accepted Story 12.4 final commit is present and recorded;
-- `VulgataDbContext`, configurations, migrations, and model snapshot are absent from the Story 12.5 delta.
+    rg -n "attestation sink|ten-check|separate Tier 2|live outage|release-summary product" specs/014-grounded-llm-wiki-chat-release-evidence
+    git diff --check -- specs/014-grounded-llm-wiki-chat-release-evidence
 
-## 2. Validate plan artifacts
+Expected: no unresolved placeholder; removed mechanisms appear only as explicitly deferred/historical material; diff check passes.
 
-Parse the three JSON schemas with any draft-2020-12 validator and verify no unresolved marker exists:
+## 3. Tier 1 regression
 
-```pwsh
-$markers = @('NEEDS' + ' CLARIFICATION', '[FEA' + 'TURE]', '[DA' + 'TE]', '[###', 'ACTION' + ' REQUIRED', 'REMOVE' + ' IF UNUSED')
-$markers | ForEach-Object { rg -n --fixed-strings $_ specs/014-grounded-llm-wiki-chat-release-evidence/plan.md specs/014-grounded-llm-wiki-chat-release-evidence/research.md specs/014-grounded-llm-wiki-chat-release-evidence/data-model.md specs/014-grounded-llm-wiki-chat-release-evidence/quickstart.md specs/014-grounded-llm-wiki-chat-release-evidence/contracts }
-git diff --check -- specs/014-grounded-llm-wiki-chat-release-evidence
-```
+Run the current focused corpus, database guard, Prepared Chat, streaming, authorization/currentness, citation, publication/reset and production Scan UI suites selected by regenerated tasks. The baseline commands remain:
 
-Expected: no placeholder matches and no whitespace errors.
+    dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter "FullyQualifiedName~Story125EvaluationContractTests|FullyQualifiedName~Story125Tier2PostgreSqlTests|FullyQualifiedName~Story125ReleaseHarnessTests"
+    dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter "FullyQualifiedName~PreparedChatIntegrationTests|FullyQualifiedName~PreparedChatCoordinatorTests|FullyQualifiedName~ChatEvidenceRetrievalTests|FullyQualifiedName~ChatEvidencePacketBuilderTests|FullyQualifiedName~ChatProviderStreamAssemblerTests|FullyQualifiedName~OpenAiCompatibleChatProviderStreamingTransportTests|FullyQualifiedName~ChatPageTests|FullyQualifiedName~ProductionScanStatusReaderTests"
+    dotnet build src/dotnet/Vulgata.Web/Vulgata.Web.csproj --no-restore
 
-## 3. Preserved Track A regression validation
+Historical envelope tests remain unchanged and green as accepted Track A compatibility evidence, but Track C-MVP tasks and release acceptance must not implement or require their attestation, ten-check, counter-recomputation, supersession/closure, duplicate-orchestration, outage or screenshot-automation concepts. New current-boundary coverage targets the Markdown report and preconnection guard. Track A corpus and Track B product-security coverage remain unchanged.
 
-Run production Scan-status, UI, corpus, and evidence-contract regressions to prove the plan correction did not alter accepted Track A behavior:
+## 4. Preflight before any product database connection
 
-```pwsh
-dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter "FullyQualifiedName~ProductionScanStatusReaderTests|FullyQualifiedName~ProductionScanPageTests|FullyQualifiedName~Story125EvaluationContractTests|FullyQualifiedName~Story125ReleaseHarnessTests|FullyQualifiedName~ManualResumeApiTests"
-```
+1. Pin the candidate commit and exact two Repository Profiled Revisions.
+2. Generate one unique lowercase name matching vulgata_story125_[a-z0-9_]{8,48}.
+3. Run the database-name guard test and independently confirm the name is not vulgata, a PostgreSQL system database or any vulgata_story124_* name.
+4. Record PostgreSQL, CodeGraph, Java 21, JDT LS and non-secret provider identities.
+5. Check that the provider credential exists without printing it.
+6. Only after every guard passes, create the clean database and configure Vulgata to use it.
 
-Expected:
+Example non-secret identity probes:
 
-- every persisted Scan state maps to one bounded Chinese presentation;
-- retry count and earliest retry, pause/failure reason, completed/total counts, and bounded failed-file summary come from persisted rows;
-- only authorized recoverable paused state exposes `继续扫描`;
-- hidden/missing state is indistinguishable;
-- fake `DemoScanUiState` never reaches the production status reader or accepted evidence;
-- corpus has 12-20 complete cases and no desired answer;
-- invalid database names fail before a product connection.
+    git -C <repository-one-root> rev-parse HEAD
+    git -C <repository-two-root> rev-parse HEAD
+    codegraph --version
+    java -version
+    dotnet --info
+    docker version
 
-## 4. Track B entry check
+Record sanitized outputs in the report. Do not record provider keys, passwords, tokens, complete connection strings or secret-bearing host paths.
 
-Do not run Track B implementation/qualification until all are true:
+If Docker/PostgreSQL, a Repository revision, Java 21, CodeGraph/JDT LS, the provider credential/network route, authentication or browser capability is unavailable, record the exact sanitized blocked condition and stop dependent work. Do not substitute another database or fake provider.
 
-1. Story 12.4 final checkpoint is accepted.
-2. Its final commit is integrated into this branch.
-3. The integrated entities expose exact-match decision, exact current `DocumentEdge`, complete/published Flow Group, current Business Logic Document, and complete GENERATED_FROM authority without changing Story 12.4.
-4. Fresh planned-change authorization, regenerated tasks/definition acceptance, and a new Track B implementation approval are bound to the revised artifact hashes.
+## 5. Create the isolated database
 
-If accepted names or shapes differ from the candidate files, adapt Story 12.5 reads to the accepted contract. If the required invariant is absent, stop and return `BLOCKED_STORY_12_4_CONTRACT`; do not edit the dependency contract.
+Use the approved PostgreSQL administrator mechanism only after the guard passes. The resulting product connection must name exactly the generated owned database. Do not log its password or full connection string.
 
-## 5. Track B focused validation
+Immediately record database name and non-secret owner identity, PostgreSQL version, creation command purpose/exit result, and confirmation that no product process or query ran before ownership passed.
 
-```pwsh
-dotnet test tests/Vulgata.Tests/Vulgata.Tests.cs --filter "FullyQualifiedName~ChatContractTests|FullyQualifiedName~ChatEvidencePacketBuilderTests|FullyQualifiedName~ChatEvidenceRetrievalTests|FullyQualifiedName~ChatEvidenceCurrentnessTests|FullyQualifiedName~ChatConversationStateTests|FullyQualifiedName~ChatProviderStreamAssemblerTests|FullyQualifiedName~OpenAiCompatibleChatProviderStreamingTransportTests|FullyQualifiedName~ChatAgentDispatcherTests|FullyQualifiedName~ChatAgentResultValidatorTests|FullyQualifiedName~PreparedChatCoordinatorTests|FullyQualifiedName~ChatValidatedRevealTests|FullyQualifiedName~ChatPageTests"
-```
+Do not delete any database as part of this guide. Cleanup requires a separate explicit integrity check and command.
 
-Expected:
+## 6. Run the existing product path
 
-- against checkpoint `719c2a5a`, observe B1 mutation/structural REDs that would fail if a literal-question classifier, legacy Chat authority query, skipped relationship projector, alternate final-packet path, direct projector construction, or duplicate packet-builder call regains production control; preserve the current single-path implementation rather than rewriting it;
-- `AuthorizedChatSnapshot -> ChatLexicalPrimaryProjection -> ChatRelationshipExpansionProjection -> ChatEvidenceAssembly` is the only retrieval composition;
-- Cross-Repository-literal and equivalent neutral wording preserve identical lexical primary Document/section identities, and adding/removing/staling relationship fixtures never changes those primary identities;
-- exact constants pass: highest-ranked 256 distinct candidates retained after scoring (257+ is ranked, not refused), structured token equality and duplicate-conflict vectors, integer score vector `50/40/30/25/20/5/3/1` with each component applied at most once and 25 bound only to the active mode's term field, five Documents, twelve primaries or exhaustion, four sections per Document, first `min(3,count)` seeds, two additions per seed, 20 total sections, 32 anchors/relationships, ten Flow Group authorities, 12 flow steps;
-- repeated identical inputs yield the same ordered evidence and packet fingerprint;
-- legacy-only exact evidence is rejected; one or more distinct accepted v2 decisions sharing one current directed Edge are accepted without imposing uniqueness;
-- the shared-Edge B2 RED proves two valid decisions produce one relationship with canonical selected decision/count `2`/stable full-set fingerprint and two decision-owned Published Flow Groups in decision rank, while conflicting duplicate slots or post-selection set mutation fail closed without changing lexical primaries;
-- every relationship and Flow Group `absent`/`present-valid`/`present-inconsistent`/`selected-required` state vector passes: optional invalid facts do not poison unrelated lexical evidence, selected-required mutation refuses the whole assembly with no substitution;
-- only current REFERENCES/GENERATED_FROM and Published complete Flow Groups expand one hop in exact canonical order;
-- exact and +1 Document/section/anchor/relationship/flow/UTF-8 bounds pass/fail correctly;
-- server-owned advisory Context loads only applied Global/System/exact-two-Repository values after authorization, orders Repositories canonically, excludes caller/pending/hidden state, uses terms only for Business Logic summary fallback, and binds exact text plus authority fingerprint;
-- advisory positive, blank, nonmatching, unauthorized, pending-only, currentness-mutation and fingerprint-change public-seam vectors pass; exactly 8,192 composed UTF-8 bytes succeeds and 8,193 refuses before provider dispatch with no truncation;
-- initial question plus two follow-ups re-fetch every row and use prior answers only as context;
-- primary and the single permitted syntax repair both use the dedicated provider stream; no non-streaming provider result is accepted; `RuntimeObservationId` binds transport-only telemetry while coordinator `CompletionSummaryId`/`ValidationOutcome` bind validation/repair/duration, and neither Track B source contains candidate/run/case/signature/export fields;
-- received logical Provider Chunks of 16,384 bytes and assembled received responses of 65,536 pass, while 16,385/65,537 reject before decoding the offending chunk; JSON syntax, escapes and metadata count, SSE framing and `[DONE]` do not;
-- separate post-JSON seams cover decoded answer deltas of 16,384/16,385 and final decoded answers of 65,536/65,537; raw-read/body and SSE line/event safety caps retain their own exact/+1 vectors;
-- arbitrary physical reads split wire UTF-8, CR/LF, SSE fields, logical chunks, JSON tokens/escapes, decoded deltas, terminal metadata, and post-terminal reads without conflating raw, SSE, received-chunk, assembled-received, decoded-delta, or final-answer counters;
-- escape-heavy `\u4e2d` and metadata-heavy events prove received counters grow independently of decoded counters; every overflow discards the buffer and reveals zero partial answer;
-- keepalives do not reset ten-second inactivity; cancellation, disconnect, terminal/framing failure, deadline, and overflow discard the buffer;
-- semantic failure never repairs, no provider fragment reaches the client, and accepted Unicode reveal is immediate for reduced motion/low remaining budget;
-- all accepted answer flows share one 29-second maximum deadline through one `AcceptedPublicationCommit`;
-- fake-clock/cancellation/failure vectors at every publication state prove no prepared candidate mutates live answer, conversation, completion summary, or reveal state;
-- completion-summary template, proposed conversation, accepted answer and reveal directive are preallocated before the authoritative sample, and one atomic terminal-state exchange makes them authoritative together;
-- advancing time immediately after the authoritative sample does not create another acceptance check or post-commit success side effect; a sample at/after the deadline publishes nothing;
-- structural tests reject direct conversation append, accepted completion emission, success publication, or page content publication outside `IPreparedChatPublicationOwner`;
-- B1 lexical/packet, B2 relationship/currentness, B3 conversation and B4 streaming/publication/reveal each have a separate checkpoint; only the production-composition B-INT checkpoint may claim Track B complete.
+Start Vulgata on the Windows host with the owned database:
 
-## 6. Build and full Tier 1
+    dotnet run --project src/dotnet/Vulgata.Web/Vulgata.Web.csproj --no-build
 
-```pwsh
-dotnet build src/dotnet/Vulgata.Web/Vulgata.Web.csproj
-dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj
-git diff --check
-```
+Through the authenticated existing UI/API:
 
-Record build errors separately from warnings. Tier 1 is not accepted with a failing test or an unreviewed shared-file/migration delta.
+1. select one authorized System and exactly two real Java/XML Repositories;
+2. prepare both Repositories at the recorded Profiled Revisions;
+3. verify real CodeGraph index and JDT LS Java readiness plus safe XML catalog evidence;
+4. start the accepted Pass 1 path and allow it to reach terminal state;
+5. run exact Cross-Repository Resolution and the accepted Pass 2 path;
+6. use 继续扫描 only for an eligible durable paused state;
+7. observe terminal Scan state in the production Chinese management UI.
 
-## 7. Tier 2 disposable PostgreSQL run
+Do not invoke or copy a Story 12.4 qualification database/harness. Do not change selection, scheduling, retry, dispatch, XML or relationship behavior.
 
-Generate a unique lowercase database beginning `vulgata_story125_`. The harness must validate the exact name and reject both the main development database and Story 12.4 qualification database before opening a product connection.
+## 7. Run straightforward read-only queries
 
-Use PostgreSQL 17, neutral Java/XML fixtures, real Git/CodeGraph/JDT LS, and a controlled provider. Exercise:
+Use psql or an equivalent read-only client against only the owned database. Record sanitized SQL/description, exit result and bounded rows for:
 
-```text
-clean database -> current migrations -> real analysis -> controlled provider outage
--> persisted retry/pause -> stop Vulgata process -> restart same candidate/database
--> restore provider -> authorized manual resume -> completion -> duplicate queries
-```
+1. two approved PreparedScanManifests and total selected PreparedScanManifestEntries (50-150);
+2. exact Repository/Profiled Revision and real CodeGraph/JDT LS/catalog bindings;
+3. terminal Pass 1/Pass 2 executions/jobs, explicit high-value-seed selected/succeeded/failed counts, failed count zero, selected count equal to succeeded count, and ordinary failure budget;
+4. current Code Logic and Business Logic DocumentVersions with SourceAnchors;
+5. at least one accepted CrossRepositoryResolutionDecision joined to its current cross-Repository REFERENCES DocumentEdge;
+6. at least one honest Uncertainty;
+7. at least three current Business Logic Documents and one published Cross-Repository FlowGroup;
+8. pre-restart DocumentVersion, DocumentEdge and FlowGroup identities/counts.
 
-Expected evidence: redacted exact commands plus hashes and exit codes, provider model/non-secret configuration identity, versions, durations, persisted pre/post state, explicit Scan/relationship/restart query receipts, no duplicate Document/Edge/publication, and database ownership/cleanup receipts. A database-name preflight failure must precede every product read/write.
+Use the actual model columns from VulgataDbContext/configurations. A stale query is corrected to the model; a missing required row is reported as failure and is never inserted manually.
 
-## 8. Tier 3 real release run
+## 8. Execute twelve real Chat cases
 
-Pin one clean Story 12.5 candidate plus the integrated accepted Story 12.4 commit. Run Vulgata, CodeGraph, Java 21, and JDT LS on the host; PostgreSQL 17 is the only required Docker service. Use two real sample Repositories at exact Profiled Revisions and 50-150 automatically selected File Code Units.
+Before the first provider call, record case IDs `q01` through `q12` from tests/Vulgata.Tests/ReleaseGate/Story125/Fixtures/story125-question-corpus.json. Execute exactly those IDs; do not replace failed cases after observing provider output.
 
-Accept only when the manifest proves:
+Execute every row with fresh `ChatConversationState`. Treat `followUpTo` as topical lineage only. In particular, `q01` (Business), `q02` (IT) and `q03` (Business) are independent rows because each mode change invokes the accepted reset boundary; do not retain prior question, evidence or citation context.
 
-- every high-value seed succeeded;
-- ordinary failures stayed within the recorded budget;
-- >=1 exact Cross-Repository REFERENCES Edge;
-- >=1 honest Uncertainty;
-- >=3 Business Logic Documents including >=1 Cross-Repository flow;
-- all 12-20 fixed corpus cases ran through the declared provider disposition, >=80% were useful;
-- 100% of accepted material technical claims were cited;
-- zero unauthorized evidence/existence disclosures;
-- every accepted provider answer used streaming, zero non-streaming provider answers were accepted, complete render finished in <30 seconds, and stream observations were content-dark;
-- process restart against the same database preserved authenticated wiki/Chat access with no duplicate publication or data loss.
+For every row record case ID, Business/IT mode, question/topical-lineage relation, `freshConversationState`, disposition, usefulness, accepted/cited material claim counts, unauthorized disclosure, authorization oracle, streaming observation, complete rendered duration, packet fingerprint when exposed, Tier 1 evidence reference, and bounded notes.
 
-Before accepting those values, authenticate every Track C attestation against its immutable sealed-admission runtime observation, same-process preflight and exact candidate/run/case/request/adapter/provider/`stream=true` request/header/read/EOF binding, then recompute raw/SSE/received-chunk/assembled-received/decoded-delta/final-answer counters and all existing aggregates. Reject a perfectly consistent SDK fake-chunk receipt solely when authorized adapter-to-sink provenance is absent. Continue requiring `ordinaryFailureCount <= ordinaryFailureBudget`, complete corpus coverage, exact half-up usefulness, and `nonStreamingAcceptedAnswerCount == 0`.
+For `q12`, record authorization oracle `prompt-boundary-only`. Under the same authenticated principal and exactly-two-authorized-Repositories scope, it proves only that asking about an outside-scope Repository does not make the answer confirm its existence or disclose its Business Rules, Documents, relationships, citations or Source Anchors. Do not label it `denied-access-exercised` or claim proof of a denied principal, known protected Repository, revocation or true missing-equivalent behavior. Use accepted Tier 1 tests as the authority for same-mode multi-turn re-fetch/revalidation and actual authorization/currentness behavior; do not add a third Repository or denied principal to this run.
 
-## 9. Screenshot and manifest review
+Passing aggregates require at least 80% useful, 100% citation coverage for accepted material technical claims, zero unauthorized disclosure, zero accepted non-streaming provider answers and every accepted complete render below 30,000 ms.
 
-Capture only real candidate-bound views. At least one screenshot is mandatory in each category: persisted Scan state, grounded Business answer/citations, grounded IT answer/Source Anchors, restart result, and release summary. Store relative paths and SHA-256 hashes in the passed-only release receipt.
+Track C quotes existing Track B content-dark observations when available. It does not recompute raw-read, SSE, received Provider Chunk, decoded-delta or final-answer counters. Operational deterministic rescue is not a real streamed LLM answer.
 
-Reject any screenshot containing fake Backup B state, secrets, connection strings, credentials, absolute host paths, another candidate, or unredacted diagnostics. Validate every run envelope against `contracts/story125-release-evidence.schema.json`: non-passed runs must have an honest status-conditioned result and null release receipt; a passed run must contain every command/exit-code, claim receipt, packet/result artifact, database-ownership receipt, and all five screenshot categories.
+## 9. Restart the Vulgata process
 
-A passed schema `story125-release-evidence/2.2` envelope must also contain exactly these checks: Tier 1 `tier1-contract-ranking-relationship`, `tier1-conversation-synthesis-security`, `tier1-production-ui-corpus-evidence`, `tier1-build-full-tests`; Tier 2 `tier2-postgresql-restart-resume`; Tier 3 `tier3-candidate-tool-database-preflight`, `tier3-real-scan`, `tier3-grounded-chat-corpus`, `tier3-restart-continuity`, `tier3-screenshot-release-integrity`. Reject every omitted, duplicate, unknown, mis-tiered, or non-passed check. Resolve every check command ID to a zero-exit command in this envelope and every check artifact to identical path/hash/media type on a same-envelope command or attempted observation.
+1. Record the running process stop command/action and result.
+2. Stop only Vulgata. Keep PostgreSQL and the owned database unchanged.
+3. Start Vulgata again with the same configuration.
+4. Re-authenticate.
+5. Open persisted wiki content and submit one new grounded Chat request.
+6. Rerun the DocumentVersion, DocumentEdge and FlowGroup identity/count queries.
 
-Run positive semantic vectors for sealed raw-adapter admission plus signed Track C attestation, exact/+1 per-domain limits, escape/metadata-heavy received-versus-decoded accounting, split wire/SSE/logical-chunk/JSON/delta/terminal reads, one valid repair, one non-invoked case, exact aggregate agreement, and all ten checks. Run adversarial vectors for direct caller submission, altered received or decoded counter/attestation equality, foreign/unsigned provenance, the aggregate-consistent SDK fake-chunk forgery, omitted/duplicate/reordered attempts, domain/deadline/terminal/outcome/repair/validation mismatch, content-bearing artifacts, and all prior quality/coverage/check failures.
+Passing restart evidence requires persisted wiki/Chat access and zero restart-caused duplicate publication. Transient conversation history is not expected to survive.
 
-When a run fails or is blocked, preserve its commands, attempted observations, artifacts, and bounded reason. A correction creates a new run directory and `runId`, sets `supersedesRunId`, and never overwrites the earlier envelope.
+## 10. Capture and redact real screenshots
 
-## 10. Final artifact integrity
+Capture at least one real screenshot for each:
 
-```pwsh
-git status --short
-git diff --name-only
-Get-FileHash specs/014-grounded-llm-wiki-chat-release-evidence/plan.md,specs/014-grounded-llm-wiki-chat-release-evidence/research.md,specs/014-grounded-llm-wiki-chat-release-evidence/data-model.md,specs/014-grounded-llm-wiki-chat-release-evidence/quickstart.md -Algorithm SHA256
-```
+1. production Scan state;
+2. grounded Business Chat;
+3. grounded IT Chat with Source Anchors;
+4. exact Cross-Repository result;
+5. persisted wiki/Chat access after restart.
 
-Final review must confirm one candidate, one integrated accepted dependency commit, one disposable `vulgata_story125_*` database per run, real production UI state, and explicit failures/limitations. Tests or fake state alone cannot establish release completion.
+Store screenshots under the Track C evidence directory with relative report links. Manually reject/redact any secret, credential, connection string, absolute host path, fake Backup B state or unrelated candidate output. No automated screenshot validator or hash graph is required.
+
+## 11. Complete the Markdown report
+
+Follow contracts/release-evidence-contract.md. The report must contain:
+
+- passed, failed, blocked or not-run disposition;
+- candidate/Story 12.4 and exact two Profiled Revisions;
+- preflight and non-secret tool/provider/database identity;
+- command/exit table;
+- required query results;
+- twelve-row manual evaluation when provider available;
+- restart observation;
+- five screenshot categories;
+- failures and limitations.
+
+Never turn a blocked/not-run observation into a success value. A passed report requires every retained release value.
+
+Only an evidence-file, operator-command or read-only-query defect may be corrected inside this run, while preserving the original failure record. If any correction requires production source, stop: the no-production implementation approval is invalid, and work returns to plan, fresh downstream review and scope-hash rebinding before any TDD task may start.
+
+## 12. Final guards
+
+    git diff --name-only 4798b97d9f23aef587829175df7ab7ebc3daf995..HEAD -- src/dotnet/Vulgata.Infrastructure/Data/VulgataDbContext.cs src/dotnet/Vulgata.Infrastructure/Data/Migrations specs/013-exact-cross-repository-flow-pass2
+    git diff --check
+    dotnet build src/dotnet/Vulgata.Web/Vulgata.Web.csproj --no-restore
+
+The forbidden-path diff must show no Track C-MVP change. Then run the pinned sprint-loop verification and required E2E gate. Human preauthorization does not replace technical acceptance.

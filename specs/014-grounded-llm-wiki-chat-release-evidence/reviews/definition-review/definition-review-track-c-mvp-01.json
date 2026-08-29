@@ -1,0 +1,72 @@
+{
+  "gate": "definition-review",
+  "attempt": 1,
+  "verdict": "REVISE",
+  "source_identity": {
+    "branch": "demo0831/story-12-5-trackC",
+    "head": "1517d8c85eed643a092fbb1c997f232c90e6b52c",
+    "accepted_track_b_baseline": "f292caec427f9844be3c0f65b4cb00a9292080a5",
+    "story_12_4_dependency": "4798b97d9f23aef587829175df7ab7ebc3daf995",
+    "uncommitted_diff_sha256": "537919b82b6dd9f616b310b165be2029fe7fe04a18069233199b1d95a4d14164",
+    "porcelain_v2_sha256": "070713287ef837f367cc2f00206d122d87cc838110e726c09768ca05537f1483",
+    "diff_check": "passed",
+    "production_or_test_source_delta": false
+  },
+  "artifact_sha256": {
+    "spec.md": "15bc1cc7afe3d7250d8d247546da4ab72086f030bcb81e7b33b875701ffba309",
+    "plan.md": "a6a747db9e5989ef1ab78d915d45268ef67ac8eb72632425bfd2921e37bba9b8",
+    "tasks.md": "3dccac35a3c5dda500646496c6082bfbbe1b78c54e1c758a1bec9ea150036937"
+  },
+  "coverage": {
+    "functional_requirements_reviewed": 62,
+    "success_criteria_reviewed": 18,
+    "tasks_reviewed": 22,
+    "functional_requirements_with_owner": 62,
+    "success_criteria_with_owner": 18,
+    "unmapped_tasks": 0,
+    "unresolved_placeholders": 0,
+    "critical_findings": 0,
+    "high_findings": 1,
+    "medium_findings": 1,
+    "constitution_must_violations": 0
+  },
+  "findings": [
+    {
+      "id": "DR-TC-MVP-001",
+      "severity": "HIGH",
+      "earliest_owner": "plan",
+      "category": "testability/evidence-honesty",
+      "evidence": [
+        "T012 calls q01-q03 a follow-up chain across Business/IT mode switches, while grounded-chat-v2 and accepted tests reset Conversation State on mode change.",
+        "q12 uses the same authorized scope as positive cases and defines no denied principal or protected Repository, so it is not an executable unauthorized-evidence oracle."
+      ],
+      "correction": "Define an honest manual protocol separating corpus topical lineage from server Conversation State and state exactly what q12 proves. Prefer accepted Tier 1 for same-mode multi-turn and authorization/currentness behavior, treating real-run rows as independent prompts unless a concrete safe denied-access setup is planned. Regenerate T012/report wording."
+    },
+    {
+      "id": "DR-TC-MVP-002",
+      "severity": "MEDIUM",
+      "earliest_owner": "plan",
+      "category": "failure-routing/approval-boundary",
+      "evidence": [
+        "The plan both routes product defects through TDD and declares any production edit an architecture contradiction, while tasks make production read-only but mention a TDD escape hatch."
+      ],
+      "correction": "State deterministically that a real-run defect requiring production source invalidates the no-production approval and returns to plan for bounded correction/rebinding before RED/GREEN; only evidence/operator/query corrections remain in-scope."
+    }
+  ],
+  "prior_finding_disposition": [
+    {"id":"PR-TC-MVP-001","status":"RESOLVED","earliest_owner":"plan"},
+    {"id":"PR-TC-MVP-002","status":"RESOLVED","earliest_owner":"plan"}
+  ],
+  "constitution_security_authority_assessment": {
+    "constitution": "PASS",
+    "security": "Preserved",
+    "higher_authority": "Inside approved Track C-MVP boundary",
+    "blocker": false
+  },
+  "verification": {
+    "result": "75 passed, 0 failed, 0 skipped",
+    "git_diff_check": "passed",
+    "writes_performed": false
+  },
+  "summary": "REVISE to plan. Make the real evaluation protocol and production-defect routing unambiguous, regenerate tasks, and rerun independent definition review."
+}

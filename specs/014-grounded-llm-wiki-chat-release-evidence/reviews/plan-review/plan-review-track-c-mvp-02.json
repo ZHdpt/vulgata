@@ -1,0 +1,77 @@
+{
+  "gate": "plan-review",
+  "attempt": 2,
+  "verdict": "ACCEPT",
+  "source_identity": {
+    "branch": "demo0831/story-12-5-trackC",
+    "head": "1517d8c85eed643a092fbb1c997f232c90e6b52c",
+    "accepted_track_b_baseline": "f292caec427f9844be3c0f65b4cb00a9292080a5",
+    "baseline_is_ancestor": true,
+    "story_12_4_commit": "4798b97d9f23aef587829175df7ab7ebc3daf995",
+    "story_12_4_is_ancestor": true,
+    "uncommitted_diff_sha256": "615407bafd87f6b6538daf469078e60b1894dd73e8ea03cf5416bc5c020d0daa",
+    "porcelain_v2_sha256": "5221b2029502fc5eba2a2d01abcee8e5a0e24e1f2a910a1106031cd4b1bfbd2d",
+    "diff_check": "passed",
+    "production_or_test_delta": false
+  },
+  "artifact_sha256": {
+    "spec.md": "15bc1cc7afe3d7250d8d247546da4ab72086f030bcb81e7b33b875701ffba309",
+    "plan.md": "a6a747db9e5989ef1ab78d915d45268ef67ac8eb72632425bfd2921e37bba9b8",
+    "research.md": "a992271003f4bf652b88e223eac56808d3e1b9102e330bc49c5de99bcf5662ce",
+    "data-model.md": "16d207cc9c8e9cd0a38e27f968a2ae5c767952f8c548ac8fe066fc2419a154e2",
+    "quickstart.md": "56ce5648981ce3f20d21d373b3109c3dfc46a01a68a844e65f4a5490fab711f7",
+    "contracts/release-evidence-contract.md": "97a7c3d95dada31b6a43ace2cbdfc1aa92385196cac0954bd5bd3bd8533dc6e0",
+    "contracts/story125-release-evidence.schema.json": "f3401884c5fe1dce81fa43f1cd76d8c9c66179b370477bf69af41b2d3bcfd6ea",
+    "prior_raw_verdict": "d4862ad3646f6143b0a035bf830242705857319d47a43a79c96df137228efdad"
+  },
+  "prior_finding_disposition": [
+    {
+      "id": "PR-TC-MVP-001",
+      "status": "RESOLVED",
+      "earliest_owner": "plan",
+      "evidence": "Compatibility literals and observation vocabulary are preserved without Track C recomputation; independent focused regression passed 75/75."
+    },
+    {
+      "id": "PR-TC-MVP-002",
+      "status": "RESOLVED",
+      "earliest_owner": "plan",
+      "evidence": "The plan/report now require selected, succeeded and failed high-value-seed counts derived from existing Pass1Outcome authority."
+    }
+  ],
+  "new_findings": [],
+  "analysis": {
+    "blocking_issues": 0,
+    "critical_findings": 0,
+    "high_findings": 0,
+    "must_violations": 0,
+    "unresolved_placeholders": 0,
+    "constitution_alignment": "PASS",
+    "authority_alignment": "PASS",
+    "feasibility": "PASS",
+    "failure_behavior": "PASS",
+    "security_and_authorization_preservation": "PASS",
+    "testability": "PASS",
+    "retained_deferred_scope": "PASS",
+    "historical_schema_status": "PASS",
+    "no_production_write_claim": "PASS"
+  },
+  "planned_change_trigger_disposition": {
+    "triggered": true,
+    "reason": "Approved PRD August 30 release-proof scope reduction.",
+    "agent_tool_change": false,
+    "scan_strategy_change": false,
+    "security_weakening": false,
+    "next_gate": "planned-change-authorization",
+    "authorization_may_use_standing_instruction": true
+  },
+  "architecture_trigger_disposition": {
+    "triggered": true,
+    "reason": "AD-CMVP-1 through AD-CMVP-8 replace the former proof architecture with evidence execution over the existing product.",
+    "accepted_by_review": true
+  },
+  "verification": {
+    "result": "75 passed, 0 failed, 0 skipped",
+    "notes": "Existing NU1507 and MSB3277 warnings; no product/test source changed."
+  },
+  "summary": "ACCEPT. The corrected Track C-MVP plan is internally consistent, feasible, preserves accepted security/streaming behavior, and maps every retained release value to an observable seam."
+}
