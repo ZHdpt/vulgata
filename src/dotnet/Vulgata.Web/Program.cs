@@ -26,6 +26,7 @@ using Vulgata.Infrastructure.Git;
 using Vulgata.Infrastructure.Git.BackupB;
 using Vulgata.Infrastructure;
 using Vulgata.Shared;
+using Vulgata.Shared.Chat;
 using Vulgata.Shared.Repositories;
 using Vulgata.Shared.Scans;
 using Vulgata.Shared.Validators.Repositories;
@@ -304,7 +305,24 @@ public static class VulgataWebComposition
         builder.Services.AddScoped<ChatPromptCatalog>();
         builder.Services.AddScoped<IChatAgentDispatcher, ChatAgentDispatcher>();
         builder.Services.AddScoped<ChatAgentResultValidator>();
-        builder.Services.AddScoped<PreparedChatCoordinator>();
+        builder.Services.AddScoped<IPreparedChatPublicationOwner, PreparedChatPublicationOwner>();
+        builder.Services.AddScoped(services => new PreparedChatCoordinator(
+            services.GetRequiredService<AuthenticationStateProvider>(),
+            services.GetRequiredService<ISystemRepository>(),
+            services.GetRequiredService<IRepositoryRepository>(),
+            services.GetRequiredService<IRepositoryAuthorizationVerifier>(),
+            services.GetRequiredService<IChatAdvisoryContextReader>(),
+            services.GetRequiredService<IChatEvidenceRetriever>(),
+            services.GetRequiredService<ChatCandidateExtractor>(),
+            services.GetRequiredService<IChatAgentDispatcher>(),
+            services.GetRequiredService<IChatEvidenceCurrentnessValidator>(),
+            services.GetRequiredService<TimeProvider>(),
+            services.GetRequiredService<ChatAgentResultValidator>(),
+            services.GetRequiredService<IPreparedChatScopeResolver>(),
+            services.GetRequiredService<IValidator<PreparedChatQuestionRequest>>(),
+            services.GetRequiredService<IChatStreamCompletionSummaryRecorder>(),
+            services.GetRequiredService<IPreparedChatPublicationOwner>(),
+            services.GetRequiredService<ILogger<PreparedChatCoordinator>>()));
         builder.Services.AddScoped<IChatRevealDelay, ChatRevealDelay>();
         builder.Services.AddScoped<DemoScanUiState>();
         builder.Services.AddSingleton<ExactResolutionProfileCatalog>();

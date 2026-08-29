@@ -1,5 +1,6 @@
 using System.Reflection;
 using Microsoft.Extensions.DependencyInjection;
+using Vulgata.Agents.ChatExecution;
 using Vulgata.Core.DomainServices;
 using Vulgata.Infrastructure.Data;
 using Vulgata.Shared.Chat;
@@ -174,6 +175,78 @@ public sealed class ChatPipelineCompositionTests
             .Where(type => !type.IsInterface && ownerType.IsAssignableFrom(type))
             .ToArray();
         Assert.Single(implementations);
+    }
+
+    [Fact]
+    public void ProductionComposition_Story125BInt_ResolvesOneScopedPublicationOwnerForBusinessFlow()
+    {
+        using var factory = new LoginLogoutTests.CustomWebApplicationFactory();
+        using IServiceScope scope = factory.Services.CreateScope();
+
+        PreparedChatCoordinator coordinator = scope.ServiceProvider
+            .GetRequiredService<PreparedChatCoordinator>();
+        IPreparedChatPublicationOwner owner = scope.ServiceProvider
+            .GetRequiredService<IPreparedChatPublicationOwner>();
+        IChatStreamCompletionSummaryRecorder recorder = scope.ServiceProvider
+            .GetRequiredService<IChatStreamCompletionSummaryRecorder>();
+
+        Assert.IsType<PreparedChatPublicationOwner>(owner);
+        Assert.Same(
+            owner,
+            scope.ServiceProvider.GetRequiredService<IPreparedChatPublicationOwner>());
+
+        FieldInfo? publicationOwnerField = typeof(PreparedChatCoordinator).GetField(
+            "_publicationOwner",
+            BindingFlags.Instance | BindingFlags.NonPublic);
+        Assert.NotNull(publicationOwnerField);
+        Assert.Same(owner, publicationOwnerField!.GetValue(coordinator));
+
+        FieldInfo? completionSummaryRecorderField = typeof(PreparedChatCoordinator).GetField(
+            "_completionSummaryRecorder",
+            BindingFlags.Instance | BindingFlags.NonPublic);
+        Assert.NotNull(completionSummaryRecorderField);
+        Assert.Same(recorder, completionSummaryRecorderField!.GetValue(coordinator));
+    }
+
+    [Fact]
+    public void ProductionComposition_Story125BInt_DispatcherUsesTypedStreamingTransport()
+    {
+        using var factory = new LoginLogoutTests.CustomWebApplicationFactory();
+        using IServiceScope scope = factory.Services.CreateScope();
+
+        IChatAgentDispatcher dispatcher =
+            scope.ServiceProvider.GetRequiredService<IChatAgentDispatcher>();
+        IChatProviderStreamingTransport transport =
+            scope.ServiceProvider.GetRequiredService<IChatProviderStreamingTransport>();
+
+        Assert.IsType<ChatAgentDispatcher>(dispatcher);
+        Assert.IsType<OpenAiCompatibleChatProviderStreamingTransport>(transport);
+
+        FieldInfo? streamingTransportField = typeof(ChatAgentDispatcher).GetField(
+            "_streamingTransport",
+            BindingFlags.Instance | BindingFlags.NonPublic);
+        Assert.NotNull(streamingTransportField);
+        Assert.Same(transport, streamingTransportField!.GetValue(dispatcher));
+    }
+
+    [Fact]
+    public void ProductionComposition_Story125BInt_ItPathHasNoTrackCAttestationOrAlternateLiveStateOwner()
+    {
+        Type? attestationSink = typeof(ChatAgentDispatcher).Assembly.GetType(
+            "Vulgata.Agents.ChatExecution.Story125StreamAttestationSink");
+        Assert.Null(attestationSink);
+
+        FieldInfo[] liveStateFields = typeof(PreparedChatCoordinator)
+            .GetFields(BindingFlags.Instance | BindingFlags.NonPublic)
+            .Where(field => field.FieldType == typeof(ChatConversationState))
+            .ToArray();
+        Assert.Empty(liveStateFields);
+
+        MethodInfo[] nonStreamingEntryPoints = typeof(ChatAgentDispatcher)
+            .GetMethods(BindingFlags.Public | BindingFlags.Instance)
+            .Where(method => method.Name.Contains("NonStreaming", StringComparison.OrdinalIgnoreCase))
+            .ToArray();
+        Assert.Empty(nonStreamingEntryPoints);
     }
 
     [Fact]
