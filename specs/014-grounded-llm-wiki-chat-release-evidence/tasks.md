@@ -24,8 +24,8 @@ description: "Fresh dependency-ordered Story 12.5 tasks for the accepted design-
 
 **Purpose**: Re-observe the exact branch, hashes, dependency, and task disposition.
 
-- [ ] T001 Classification: GATE — Verify branch, clean worktree/index, source commit `76de29c8fb060508c475731533232939e7fe8695`, accepted spec/plan/data-model hashes, accepted plan-review-11, ancestral Story 12.4 commit `4798b97d9f23aef587829175df7ab7ebc3daf995`, and reusable authorization-04 before any test/production write; record the result in `specs/014-grounded-llm-wiki-chat-release-evidence/evidence/preflight/task-regeneration-01.md` (FR-048, FR-049, FR-052, SC-013).
-- [ ] T002 [P] Classification: EXISTING-EVIDENCE — Reclassify current production/tests as preserved Track A, reacceptance-only B1-B3, missing B4 publication owner, missing B-INT, and closed Track C; record exact source/test owners and the discarded prior 81-task history in `specs/014-grounded-llm-wiki-chat-release-evidence/evidence/ownership/task-disposition-01.md` (FR-001, FR-048, FR-051).
+- [x] T001 Classification: GATE — Verify branch, clean worktree/index, source commit `76de29c8fb060508c475731533232939e7fe8695`, accepted spec/plan/data-model hashes, accepted plan-review-11, ancestral Story 12.4 commit `4798b97d9f23aef587829175df7ab7ebc3daf995`, and reusable authorization-04 before any test/production write; record the result in `specs/014-grounded-llm-wiki-chat-release-evidence/evidence/preflight/task-regeneration-01.md` (FR-048, FR-049, FR-052, SC-013).
+- [x] T002 [P] Classification: EXISTING-EVIDENCE — Reclassify current production/tests as preserved Track A, reacceptance-only B1-B3, missing B4 publication owner, missing B-INT, and closed Track C; record exact source/test owners and the discarded prior 81-task history in `specs/014-grounded-llm-wiki-chat-release-evidence/evidence/ownership/task-disposition-01.md` (FR-001, FR-048, FR-051).
 
 **Checkpoint**: The accepted corrected definition and fresh task disposition are pinned.
 
@@ -35,8 +35,8 @@ description: "Fresh dependency-ordered Story 12.5 tasks for the accepted design-
 
 **Purpose**: Block every user-story phase on current ownership, schema, transport-vocabulary, and forbidden-write proof.
 
-- [ ] T003 [P] Classification: EXISTING-EVIDENCE — Reaccept the existing no-migration, no-model-snapshot, Story 12.4 read-only, forbidden-database, fake-state, and shared-file-owner guards in `tests/Vulgata.Tests/ReleaseGate/Story125/Story125ReleaseHarnessTests.cs` and `tests/Vulgata.Tests/ReleaseGate/Story125/Story125Tier2PostgreSqlTests.cs`; any failed boundary stops implementation instead of authorizing a migration or dependency edit (FR-036, FR-047, FR-049-FR-052, SC-014).
-- [ ] T004 Classification: VERIFY — Validate all Story 12.5 JSON schemas, exact cross-artifact transport vocabulary/caps, accepted hashes, and task checklist format; write command/result evidence to `specs/014-grounded-llm-wiki-chat-release-evidence/evidence/verification/task-definition-01.md` without changing contracts (FR-021-FR-024, FR-039, FR-054-FR-060, SC-003, SC-013, SC-015-SC-017).
+- [x] T003 [P] Classification: EXISTING-EVIDENCE — Reaccept the existing no-migration, no-model-snapshot, Story 12.4 read-only, forbidden-database, fake-state, and shared-file-owner guards in `tests/Vulgata.Tests/ReleaseGate/Story125/Story125ReleaseHarnessTests.cs` and `tests/Vulgata.Tests/ReleaseGate/Story125/Story125Tier2PostgreSqlTests.cs`; any failed boundary stops implementation instead of authorizing a migration or dependency edit (FR-036, FR-047, FR-049-FR-052, SC-014).
+- [x] T004 Classification: VERIFY — Validate all Story 12.5 JSON schemas, exact cross-artifact transport vocabulary/caps, accepted hashes, and task checklist format; write command/result evidence to `specs/014-grounded-llm-wiki-chat-release-evidence/evidence/verification/task-definition-01.md` without changing contracts (FR-021-FR-024, FR-039, FR-054-FR-060, SC-003, SC-013, SC-015-SC-017).
 
 **Checkpoint**: Authority, ownership, and forbidden-write guards are current. A mismatch returns to plan/definition review before implementation.
 
