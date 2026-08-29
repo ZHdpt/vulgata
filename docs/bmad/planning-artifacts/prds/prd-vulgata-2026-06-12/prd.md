@@ -20,6 +20,7 @@ is defined by:
 - [Sprint Change Proposal: August 30 Bounded Scanning Recovery](../../sprint-change-proposal-2026-08-17-august-30-bounded-scanning-recovery.md)
 - [Sprint Change Proposal: August Demo Host Runtime and JDT-LS Pin](../../sprint-change-proposal-2026-08-18-august-demo-host-runtime-and-jdtls-pin.md)
 - [August 30 Bounded Scanning and LLM-Wiki Design](../../architecture/august-30-bounded-scanning-design.md)
+- [Sprint Change Proposal: Story 12.5 Track C-MVP](../../sprint-change-proposal-2026-08-29-story-12-5-track-c-mvp.md)
 
 For the August 30 release boundary, those documents supersede conflicting V1
 details in FR-4.1 through FR-4.5, FR-4.9, FR-4.12, FR-5.8, FR-6.1/6.2,
@@ -43,6 +44,21 @@ The dated release shall prove:
   relationship expansion; and
 - Business/IT Chat synthesis in under 30 seconds with every accepted material
   technical claim cited to current authorized Documents and Source Anchors.
+
+For Story 12.5 Track C-MVP, one combined host integration and real release run
+may satisfy the final release-proof boundary. It uses one clean isolated
+`vulgata_story125_*` PostgreSQL database and records candidate commit, exact
+Repository Profiled Revisions, tool/provider versions, non-secret provider
+configuration identity, database ownership, commands and exit results. It then
+records straightforward database queries, one Vulgata process restart against
+the same database, a twelve-question manual evaluation table, and manually
+captured redacted screenshots. Cryptographic attestation, exhaustive transport
+counter recomputation, rigid release-envelope semantics, duplicate controlled-
+provider orchestration, live outage injection, automated screenshot binding,
+and a dedicated release-summary product feature are post-competition backlog.
+This correction does not weaken source revision binding, Source Anchors,
+authorization/currentness, citation validation, accepted Track B streaming
+bounds, or any existing security behavior.
 
 General 10,000-file validation, method-level scheduling, arbitrary protocols,
 general graph clustering, Worker cross-verification waves, dynamic PreScan HITL,

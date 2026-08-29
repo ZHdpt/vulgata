@@ -88,21 +88,22 @@ As a release evaluator, I have a fixed, source-traceable question corpus and sco
 
 ### User Story 5 - Prove the August 30 Release Candidate (Priority: P1, Track C)
 
-As a release owner, I can inspect one reproducible Tier 1/2/3 evidence set from the accepted candidate, so that release claims are backed by real tools, real source, durable restart behavior, and grounded Chat results.
+As a release owner, I can inspect one lightweight, human-auditable Track C-MVP evidence set from the accepted candidate, so that release claims are backed by real tools, real source, durable restart behavior, and grounded Chat results without building a second release-proof product.
 
 **Why this priority**: Story 12.5 is not complete until the integrated product is observed under the release boundary; test-only or fake-state claims are insufficient.
 
-**Independent Test**: After Story 12.4's accepted final commit is integrated, execute the three verification tiers against one pinned candidate, using a disposable database for integration and release runs, and verify all required artifacts and negative cases.
+**Independent Test**: After Story 12.4's accepted final commit is integrated and Track B is accepted, execute Tier 1 regression plus one combined host integration and real release run against one pinned candidate and one isolated disposable database; verify the retained outputs, restart, manual evaluation, screenshots, and security boundaries.
 
 **Acceptance Scenarios**:
 
 1. **Given** a Tier 1 checkpoint, **When** focused verification runs, **Then** retrieval, relationship expansion, streaming assembly and failure handling, post-validation reveal, packet validation, citations, conversation bounds, authorization, currentness, UI states, evaluation fixtures, and deterministic behavior are covered without a network LLM.
-2. **Given** a Tier 2 local integration run, **When** controlled failure and restart are exercised, **Then** the run uses a clean disposable PostgreSQL database, controlled provider behavior, real required analysis tools and neutral fixtures, persisted pause, application-process restart, manual resume, and duplicate-prevention proof.
-3. **Given** the Tier 3 release candidate, **When** final verification runs, **Then** host-run Vulgata uses PostgreSQL 17 as the only required Docker service, two real sample Repositories, real CodeGraph, JDT LS, and configured LLM, and 50–150 automatically selected File Code Units.
-4. **Given** the Tier 3 Scan completes, **When** release outcomes are inspected, **Then** every high-value seed succeeds, ordinary failures remain within the accepted budget, and at least one exact Cross-Repository REFERENCES Edge, one honest Uncertainty, and three Business Logic Documents including one Cross-Repository flow exist.
-5. **Given** the final 12–20 question corpus is executed, **When** results are scored, **Then** at least 80% are useful, 100% of accepted material technical claims are cited, zero unauthorized evidence is disclosed, every provider response is observed in streaming mode, and every accepted answer completes in under 30 seconds.
+2. **Given** Track C-MVP begins, **When** preflight completes, **Then** it records the candidate commit, exact Repository Profiled Revisions, tool and provider versions, non-secret provider configuration identity, unique lowercase `vulgata_story125_*` database ownership, and redacted commands with exit results before product data access.
+3. **Given** the combined host integration and real release run, **When** final verification runs, **Then** host-run Vulgata uses PostgreSQL 17 as the only required Docker service, two real sample Repositories, real CodeGraph, JDT LS, and configured LLM, and at least 50 automatically selected File Code Units.
+4. **Given** the real Scan completes, **When** straightforward database queries inspect release outcomes, **Then** at least one exact Cross-Repository REFERENCES Edge, one honest Uncertainty, and three Business Logic Documents including one Cross-Repository flow exist, with source-anchored Pass 1 and Pass 2 output bound to the exact Profiled Revisions.
+5. **Given** the twelve representative questions are executed while the provider is available, **When** results are manually scored, **Then** at least 80% are useful, 100% of accepted material technical claims are cited, zero unauthorized evidence is disclosed, mandatory streaming remains in use, and every accepted answer completes in under 30 seconds.
 6. **Given** the application process restarts against the same release database, **When** the authenticated wiki and Chat are reopened, **Then** persisted Documents and grounded Chat remain accessible without duplicate publication or data loss.
-7. **Given** final evidence is assembled, **When** release claims are reviewed, **Then** revisions, counts, durations, prompt/schema/tool versions, packet fingerprints, screenshots, restart proof, failures, and limitations are traceable to the same accepted candidate.
+7. **Given** final evidence is assembled, **When** release claims are reviewed, **Then** a human-readable Markdown report contains the preflight, commands and exits, query results, manual evaluation table, restart proof, redacted real Scan/Business Chat/IT Chat/Cross-Repository/persisted-result screenshots, failures, and limitations.
+8. **Given** Track C-MVP is implemented, **When** scope is reviewed, **Then** it adds no ECDSA attestation sink, private/public key lifecycle, sealed raw-adapter admission, Track C counter recomputation, rigid ten-check release envelope, schema-2.2 semantic machinery, immutable supersession/closure graph, duplicate Tier 2 orchestration, live outage injection, automated screenshot validator, or release-summary product feature.
 
 ### Edge Cases
 
@@ -121,7 +122,7 @@ As a release owner, I can inspect one reproducible Tier 1/2/3 evidence set from 
 - Cancellation races with a final chunk or terminal outcome; cancellation wins unless the complete answer already passed every acceptance check, and no partially accepted state survives.
 - The 30-second budget leaves no time for syntax repair; the original invalid answer is rejected immediately.
 - A SystemOwner loses access while a resume or status request is in flight; the result becomes missing-equivalent and discloses no protected state.
-- Tier 2 or Tier 3 points at a database whose name does not match `vulgata_story125_*`, Story 12.4's qualification database, or the main development database; verification fails before product data is read or written.
+- Track C-MVP points at a database whose name does not match `vulgata_story125_*`, Story 12.4's qualification database, or the main development database; verification fails before product data is read or written.
 - A screenshot contains fake Backup B state, secrets, absolute host paths, or a result from a different candidate; it is rejected from the release evidence set.
 
 ## Requirements *(mandatory)*
@@ -159,7 +160,7 @@ This classification describes the pinned authoring boundary at `ec3c68613ea6d9af
 | Missing | Single time-aware syntax repair and explicit no-semantic-repair behavior | Deliver in Track B. |
 | Missing | Real persisted production Scan progress, retry, pause/resume, warning, and failure UI | Deliver in Track A. |
 | Missing | A source-traceable 12–20 question corpus and usefulness/citation/authorization/timing rubric | Prepare in Track A and execute finally in Track C. |
-| Missing | Story 12.5 Tier 1/2/3 evidence manifest, screenshots, restart proof, and same-candidate traceability | Prepare structure in Track A; collect final evidence in Track C. |
+| Missing | Story 12.5 lightweight preflight, combined-run report, screenshots, restart proof, and candidate/revision traceability | Prepare structure in Track A; collect final evidence in Track C-MVP. |
 | Missing | Final real-LLM host run over two real sample Repositories and 50–150 automatically selected File Code Units | Deliver only in Track C. |
 | Missing | Observed 80% usefulness, 100% accepted technical-claim citation, zero authorization leakage, and under-30-second results | Establish only from Track C evidence. |
 
@@ -169,7 +170,7 @@ This classification describes the pinned authoring boundary at `ec3c68613ea6d9af
 
 - **Track A — dependency-independent**: definition, production Scan-state UI, evaluation fixtures, question corpus, evidence templates, screenshot plan, release-run preparation, and characterization of the existing Unicode-safe post-validation reveal may proceed after the normal implementation-approval gate. Track A does not expose or simulate provider chunks.
 - **Track B — dependency-sensitive**: provider streaming transport, bounded server-side assembly, retrieval authority replacement, current relationship expansion, Flow Group integration, and final relationship/currentness validation MUST NOT begin until Story 12.4 has an accepted final checkpoint and its final commit is integrated into this branch.
-- **Track C — final verification**: Tier 3 real-LLM streaming observability, restart, screenshot, question-corpus execution, and final release-evidence capture MUST NOT begin until the same Story 12.4 gate is satisfied and Track B is accepted on the integrated candidate.
+- **Track C-MVP — final verification**: one combined host integration and real-LLM release run, straightforward database queries, restart, screenshot capture, twelve-question execution, and Markdown release reporting MUST NOT begin until the Story 12.4 gate is satisfied and Track B is accepted on the integrated candidate. Track C-MVP reuses accepted Track B streaming evidence and does not add a second attestation/envelope product.
 - The presence of candidate v2 contracts at this pinned boundary is read-only dependency evidence, not acceptance of Story 12.4.
 - If integration requires changing an unaccepted Story 12.4 contract, work stops and the conflict returns to Story 12.4 authority rather than being redefined here.
 
@@ -230,15 +231,15 @@ This classification describes the pinned authoring boundary at `ec3c68613ea6d9af
 
 - **FR-037**: Track A MUST define a fixed 12–20 question corpus spanning Business/IT modes, cross-Repository flow, business rules, technical traces, failure conditions, follow-ups, insufficient evidence, and authorization-negative behavior.
 - **FR-038**: Each corpus entry MUST record scope, mode, question, expected evidence themes, useful-answer rubric, citation expectation, authorization expectation, timing, and observed result without prescribing provider prose.
-- **FR-039**: Release evidence MUST distinguish planned, attempted, passed, failed, blocked, and not-run checks and MUST preserve exact candidate revisions, commands, counts, durations, prompt/schema/tool versions, packet fingerprints, streaming observations, artifact provenance, and known limitations.
+- **FR-039**: Release evidence MUST honestly distinguish completed, failed, blocked, and not-run work and MUST preserve the candidate commit, exact Repository Profiled Revisions, tool/provider versions, non-secret provider configuration identity, database ownership, redacted commands and exit results, query results, durations, failures, and limitations in a human-readable Markdown report.
 - **FR-040**: Tier 1 MUST verify closed contracts, deterministic selection, streaming chunk assembly and failure handling, validated-answer reveal, relationship and packet bounds, authorization, currentness, citations, conversation behavior, UI state mapping, and evaluation fixtures without a network LLM.
-- **FR-041**: Tier 2 MUST use a clean disposable PostgreSQL database named `vulgata_story125_*`, controlled provider behavior, required real local analysis tools and neutral fixtures, persisted pause, application-process restart, provider restoration, manual resume, and duplicate-prevention proof.
-- **FR-042**: Tier 3 MUST use host-run Vulgata, PostgreSQL 17 as the only required Docker service, two real sample Repositories, real CodeGraph, JDT LS, configured LLM, and 50–150 automatically selected File Code Units.
-- **FR-043**: Tier 3 MUST prove every high-value seed successful, ordinary failures within budget, at least one exact Cross-Repository REFERENCES Edge, at least one honest Uncertainty, and at least three Business Logic Documents including one Cross-Repository flow.
-- **FR-044**: Tier 3 MUST execute the complete question corpus and record at least 80% useful answers, 100% citation coverage for accepted material technical claims, zero unauthorized evidence, streaming transport and bounded stream observations for every provider response, and every accepted answer under 30 seconds.
-- **FR-045**: Tier 3 MUST restart the Vulgata application process against the same disposable database and prove authenticated persisted wiki and Chat access without duplicate publication or data loss.
-- **FR-046**: Final evidence MUST include reviewable screenshots of real production Scan states, grounded Business/IT answers and citations, restart results, and release summaries, with secrets, absolute host paths, fake state, and unrelated candidate output excluded.
-- **FR-047**: Tier 2 and Tier 3 MUST never use Story 12.4's qualification database or the main development database; an invalid database target MUST fail verification before product data is read or written.
+- **FR-041**: Track C-MVP MUST use one clean disposable PostgreSQL database named `vulgata_story125_*` for the combined host integration and real release run.
+- **FR-042**: The combined run MUST use host-run Vulgata, PostgreSQL 17 as the only required Docker service, two real Java/XML sample Repositories, real CodeGraph, JDT LS Java PreScan/navigation, safe catalog-driven XML parsing, configured LLM, and at least 50 automatically selected File Code Units.
+- **FR-043**: Straightforward database queries MUST prove at least one exact Cross-Repository REFERENCES Edge, at least one honest Uncertainty, and at least three Business Logic Documents including one Cross-Repository flow, with real source-anchored Pass 1 and Pass 2 output.
+- **FR-044**: When the provider is available, Track C-MVP MUST execute twelve representative questions and manually record at least 80% useful answers, 100% citation coverage for accepted material technical claims, zero unauthorized evidence, mandatory streaming, and every accepted answer under 30 seconds.
+- **FR-045**: Track C-MVP MUST restart the Vulgata application process once against the same disposable database and prove authenticated persisted wiki and grounded Chat access without duplicate publication or data loss.
+- **FR-046**: Final evidence MUST include manually captured and redacted real screenshots of Scan, grounded Business Chat, grounded IT Chat with Source Anchors, a Cross-Repository result, and persisted access after restart; secrets, absolute host paths, fake state, and unrelated candidate output are forbidden.
+- **FR-047**: Track C-MVP MUST never use Story 12.4's qualification database or the main development database; an invalid database target MUST fail verification before product data is read or written.
 
 #### Dependency, Ownership, and Change Boundaries
 
@@ -269,7 +270,7 @@ This classification describes the pinned authoring boundary at `ec3c68613ea6d9af
 - **Document Citation**: A user-visible mapping from one or more accepted claims to a current Document and authorized Source Anchor detail.
 - **Conversation State**: The bounded transient context from at most two prior questions and validated answers, previously cited handles, selected scope, and mode; it is never source evidence.
 - **Chat Evaluation Case**: One fixed question, scope, mode, expected evidence themes, scoring expectations, timing, and observed result in the 12–20 question corpus.
-- **Release Evidence Set**: The same-candidate collection of Tier 1/2/3 results, revisions, counts, durations, versions, fingerprints, screenshots, restart proof, failures, and limitations.
+- **Release Evidence Set**: The candidate-bound Markdown report, lightweight preflight, command/exit log, database query results, manual evaluation table, redacted screenshots, restart proof, failures, and limitations from the combined Track C-MVP run.
 
 ## Success Criteria *(mandatory)*
 
@@ -283,12 +284,12 @@ This classification describes the pinned authoring boundary at `ec3c68613ea6d9af
 - **SC-006**: A user can ask an initial question and two follow-ups in one uninterrupted flow, while every follow-up re-fetches and revalidates its evidence and uses prior answers only as context.
 - **SC-007**: An authorized SystemOwner can identify every required real Scan state, inspect counts/retry/warning detail, and resume an eligible paused Scan from the Chinese UI; zero fake Backup B states appear in accepted release evidence.
 - **SC-008**: The release corpus contains 12–20 reviewable questions with complete scope, mode, evidence-theme, usefulness, citation, authorization, timing, and observed-result fields.
-- **SC-009**: Tier 3 yields at least 80% useful corpus answers, 100% citation coverage for accepted material technical claims, zero unauthorized evidence disclosures, and 100% of accepted answers in under 30 seconds.
+- **SC-009**: When the provider is available, the twelve-question Track C-MVP table yields at least 80% useful answers, 100% citation coverage for accepted material technical claims, zero unauthorized evidence disclosures, and 100% of accepted answers in under 30 seconds.
 - **SC-010**: The final Scan covers 50–150 automatically selected File Code Units across exactly two real sample Repositories, with every high-value seed successful and ordinary failures within the accepted budget.
 - **SC-011**: The final candidate contains at least one exact Cross-Repository REFERENCES Edge, one honest Uncertainty, and three Business Logic Documents including one Cross-Repository flow.
 - **SC-012**: One application-process restart against the same disposable release database preserves authenticated wiki and grounded Chat access with zero duplicate published Documents caused by restart.
-- **SC-013**: 100% of final release claims are traceable to the same candidate through recorded revisions, counts, durations, prompt/schema/tool versions, packet fingerprints, screenshots, and restart evidence.
-- **SC-014**: Zero Tier 2 or Tier 3 attempts read from or write to Story 12.4's qualification database or the main development database; every accepted attempt uses a uniquely named `vulgata_story125_*` database.
+- **SC-013**: Every final release claim is supported in one human-readable candidate-bound report by recorded Profiled Revisions, versions, commands/exits, query results, manual evaluation rows, screenshots, restart evidence, failures, or limitations.
+- **SC-014**: Zero Track C-MVP attempts read from or write to Story 12.4's qualification database or the main development database; every accepted attempt uses a uniquely named `vulgata_story125_*` database.
 - **SC-015**: In 100% of accepted Chat attempts, the primary provider response and any syntax-repair response use streaming transport, stay within the 16 KiB chunk and 64 KiB total bounds, and produce exactly one valid terminal outcome.
 - **SC-016**: Across streamed partial JSON, split UTF-8, disconnect, ten-second inactivity, cancellation, overflow, malformed UTF-8, missing terminal, duplicate or contradictory terminal, and post-terminal-data cases, zero provider fragments, claims, citations, handles, relationships, or source details render before complete validation.
 - **SC-017**: For 100% of accepted streamed answers, all retrieval, streaming, optional repair, validation, and accepted-result completion fit within one under-30-second budget, and any progressive UI reveal contains only Unicode-safe units from the already validated Grounded Answer.

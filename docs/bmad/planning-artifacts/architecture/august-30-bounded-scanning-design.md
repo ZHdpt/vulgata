@@ -477,14 +477,7 @@ projection validation, ordering, failure classification, pause/resume,
 authorization/currentness, retrieval, expansion, packet, and citation tests.
 No failing test may be committed.
 
-### Tier 2: local integration
-
-Clean disposable PostgreSQL; migration apply/rollback/reapply; real Git,
-CodeGraph, JDT LS, and neutral Java/XML fixtures; controlled provider double;
-provider outage, persisted pause, application restart, provider restoration,
-manual resume, and duplicate-prevention proof.
-
-### Tier 3: final real-LLM release evidence
+### Combined host integration and real-LLM release evidence
 
 - host-run Vulgata and analysis tools with a clean PostgreSQL database;
 - PostgreSQL 17 as the only required Docker service;
@@ -495,12 +488,26 @@ manual resume, and duplicate-prevention proof.
 - at least one exact Cross-Repository `REFERENCES` Edge;
 - at least one honest `Uncertainty`;
 - at least three Business Logic Documents, including one Cross-Repository flow;
-- 12-20 Chat questions, at least 80% useful, 100% accepted technical claims
+- twelve representative Chat questions, at least 80% useful, 100% accepted technical claims
   cited, zero unauthorized evidence, and each answer under 30 seconds;
 - Vulgata application-process restart and successful access to the persisted
   wiki and Chat through the same PostgreSQL database; and
-- recorded revisions, counts, timings, prompt/schema versions, and evidence
-  fingerprints.
+- a lightweight preflight recording the candidate commit, exact Repository
+  Profiled Revisions, tool/provider versions, non-secret provider configuration
+  identity, database ownership, commands, and exit results;
+- straightforward database queries proving the minimum outputs; and
+- a human-readable Markdown report, manual question-evaluation table, and
+  manually captured redacted real screenshots.
+
+This one run replaces a separate controlled-provider Tier 2 orchestration run
+for the August 30 boundary. Live outage injection is not required during the
+release run. Track C does not add an ECDSA attestation sink, recompute the
+accepted Track B raw/SSE/provider-chunk/decoded/final counters, require a fixed
+ten-check release envelope, construct immutable supersession/closure graphs,
+hash every evidence cross-link, automate screenshot candidate binding, or add
+a release-summary product feature. Those proof-automation capabilities are
+post-competition backlog. Existing Track B streaming and security tests remain
+mandatory Tier 1 evidence.
 
 Targets on the documented demonstration machine are CodeGraph under 30 seconds
 per Repository, JDT LS readiness under 60 seconds, PreScan under two minutes
@@ -521,7 +528,8 @@ Cut in this order if schedule pressure returns:
 Do not cut revision/hash binding, Source Anchors, citation validation, real
 CodeGraph/JDT-LS Java PreScan, real Pass1/Pass2 generation, deterministic
 Cross-Repository Resolution, authorization, durable job recovery,
-clean-database migration verification, or one real host-run two-Repository run.
+clean isolated database verification, mandatory provider streaming, or one real
+host-run two-Repository run.
 
 ## 16. Explicit Deferrals
 
@@ -539,6 +547,12 @@ clean-database migration verification, or one real host-run two-Repository run.
   Chat uploads;
 - general 10,000-file performance acceptance;
 - live graph/dashboard completeness and automatic background Scan recovery.
+- Track C cryptographic attestation and sealed raw-adapter admission;
+- exhaustive Track C transport-counter recomputation and fixed ten-check
+  release-envelope semantics;
+- immutable run supersession/closure graphs and exhaustive artifact cross-linking;
+- a duplicate controlled-provider release orchestration run and live outage injection;
+- automated candidate-bound screenshot validation and a release-summary product feature.
 
 ## 17. Planned-Change Authorization
 

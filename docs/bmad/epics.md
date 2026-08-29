@@ -1428,19 +1428,28 @@ bounded failure summary, and `继续扫描` action
 **And** isolated fake Backup B state shall not support release evidence
 
 **Given** the August 30 release candidate is verified
-**When** Tier 1, Tier 2, and Tier 3 gates run
-**Then** the final real-LLM host path shall use a clean PostgreSQL database, two
+**When** Tier 1 regression and one combined host integration and real release
+run execute
+**Then** the final real-LLM host path shall use one clean isolated
+`vulgata_story125_*` PostgreSQL database, two
 real sample Repositories, real CodeGraph/JDT LS/LLM, and 50–150 automatically
 selected File Code Units
 **And** every seed shall succeed, ordinary failures shall stay within budget,
 at least one exact Cross-Repository Edge, one honest Uncertainty, and three
 Business Logic Documents shall exist
-**And** 12–20 Chat questions shall achieve at least 80% useful answers, 100% of
+**And** twelve representative Chat questions shall achieve at least 80% useful answers, 100% of
 accepted material technical claims cited, zero unauthorized evidence, and
 answers under 30 seconds
 **And** Vulgata application-process restart against the same PostgreSQL database
 shall preserve wiki/Chat access and evidence shall record
-revisions, counts, durations, schema/prompt/tool versions, and fingerprints
+the candidate commit, exact Repository Profiled Revisions, counts, durations,
+tool/provider versions, non-secret provider identity, database ownership,
+commands and exit results, straightforward query results, a manual evaluation
+table, redacted real screenshots, failures, and limitations
+**And** Track C shall not add cryptographic attestation, recompute accepted
+Track B streaming counters, require a rigid release envelope, duplicate the
+real run with a separate automated orchestration harness, inject a live outage,
+or add a release-summary product feature for the August 30 boundary
 
 ---
 
