@@ -3,13 +3,13 @@
   "bmad_story_key": "12-5-grounded-llm-wiki-chat-and-august-30-release-evidence",
   "bmad_epic_key": "12",
   "feature_directory": "specs/014-grounded-llm-wiki-chat-release-evidence",
-  "stage": "definition-review",
+  "stage": "implement",
   "preflight": {
     "branch": "demo0831/story-12-5",
-    "head": "76de29c8fb060508c475731533232939e7fe8695",
-    "git_identity_sha256": "ed75b1d40160545ca87eedc24f93ae3b7f195c3a066ce0b3855cfca7afa0d552",
+    "head": "8deb9c8927dd0ae2dd5e4348a79c7cb711665a93",
+    "git_identity_sha256": "795f38fc08d0da13c84ff0940c2907106bffc4e8699d10cd74c6cdeae9b9cafc",
     "status_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-    "observed_at": "2026-08-29T07:17:15.8694039Z"
+    "observed_at": "2026-08-29T07:26:01.2483608Z"
   },
   "artifacts": {
     "spec": {
@@ -32,9 +32,9 @@
       "verdict_path": "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/plan-review/plan-review-11.json"
     },
     "definition-review": {
-      "status": "pending",
+      "status": "accepted",
       "attempt": 8,
-      "verdict_path": null
+      "verdict_path": "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/definition-review/definition-review-08.json"
     },
     "quality-review": {
       "status": "invalidated",
@@ -43,7 +43,7 @@
     }
   },
   "attempts": {
-    "definition-review": 1,
+    "definition-review": 0,
     "converge": 0,
     "quality-review": 0
   },
@@ -110,6 +110,13 @@
       "scope_sha256": "e28f64ef6dd4c217057e56e55b9ea22ca705a15ff61b4388cf2397da7aeaf976",
       "evidence_path": "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/planned-change-authorization-04.md",
       "decided_at": "2026-08-29T06:35:58.8077032Z"
+    },
+    {
+      "decision_id": "story-12-5-implementation-approval-03",
+      "status": "accepted",
+      "scope_sha256": "5a23d942a8c831243307fefe22a1de994b784c57e9ac5a11370ace3dfc9d4f06",
+      "evidence_path": "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/implementation-approval-03.md",
+      "decided_at": "2026-08-29T07:26:01.2483608Z"
     }
   ],
   "convergence": {
@@ -128,8 +135,8 @@
     "specs/014-grounded-llm-wiki-chat-release-evidence/tasks.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/data-model.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/plan-review/plan-review-11.json",
-    "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/planned-change-authorization-03.md",
-    "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/definition-review/definition-review-07.json",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/implementation-approval-03.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/definition-review/definition-review-08.json",
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/track-b-definition-review-06.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/implementation-approval-track-b-02.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/implementation-approval-track-c-01.md",
@@ -137,15 +144,15 @@
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/track-b-convergence-correction-14.md"
   ],
   "checkpoint": {
-    "checkpoint_id": "bmad-12-5-definition-review-20260829T071715Z-6c3d82",
-    "stage": "definition-review",
+    "checkpoint_id": "bmad-12-5-implement-20260829T072601Z-9f2a64",
+    "stage": "implement",
     "commit_sha": null,
     "binding_status": "pending"
   },
   "resume": {
-    "stage": "definition-review",
-    "reason": "Sol/high corrected DR7 task ownership and live-versus-candidate Conversation State wording at hash e3daa433. Run fresh combined definition review 08.",
-    "evidence_path": "specs/014-grounded-llm-wiki-chat-release-evidence/tasks.md"
+    "stage": "implement",
+    "reason": "Definition review 08 accepted the complete hashes and activated implementation-approval-03. Begin T001-T004 preflight/foundational guards, then dependency-ordered Track A/B1-B4/B-INT work.",
+    "evidence_path": "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/implementation-approval-03.md"
   },
-  "updated_at": "2026-08-29T07:17:15.8694039Z"
+  "updated_at": "2026-08-29T07:26:01.2483608Z"
 }
