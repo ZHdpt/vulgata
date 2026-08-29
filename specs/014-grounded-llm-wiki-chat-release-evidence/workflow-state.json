@@ -6,10 +6,10 @@
   "stage": "implement",
   "preflight": {
     "branch": "demo0831/story-12-5",
-    "head": "9db9b344d897368683236c0eaaabaff655ee0bb5",
+    "head": "4e6172887f61c77f2f0c79e1a29d51056546ba4d",
     "git_identity_sha256": "87214c8cffd1d0e862e9efb76792c3a73d21b6941517907f025f16ccc14f69ae",
     "status_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-    "observed_at": "2026-08-29T10:09:00.2215263Z"
+    "observed_at": "2026-08-29T10:18:49.9623977Z"
   },
   "artifacts": {
     "spec": {
@@ -22,7 +22,7 @@
     },
     "tasks": {
       "path": "specs/014-grounded-llm-wiki-chat-release-evidence/tasks.md",
-      "sha256": "c26caa1dc4dd78765c91778be7e845038ae66149500069ee29d7f84f68d3adc2"
+      "sha256": "f44af9292e219b744a0706b7c287990ea8bdcb245c2d48146fb0924d1e053e17"
     }
   },
   "gates": {
@@ -44,7 +44,7 @@
   },
   "attempts": {
     "definition-review": 0,
-    "converge": 1,
+    "converge": 2,
     "quality-review": 0
   },
   "approvals": [
@@ -120,9 +120,9 @@
     }
   ],
   "convergence": {
-    "status": "revised",
-    "attempt": 1,
-    "outcome": "tasks_appended",
+    "status": "accepted",
+    "attempt": 2,
+    "outcome": "converged",
     "report_path": "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/convergence/track-b-corrected-01.md"
   },
   "e2e": {
@@ -143,15 +143,15 @@
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/track-a-preservation-01.md"
   ],
   "checkpoint": {
-    "checkpoint_id": "bmad-12-5-implement-20260829T100900Z-f1",
+    "checkpoint_id": "bmad-12-5-converge-20260829T101849Z-02",
     "stage": "implement",
     "commit_sha": null,
     "binding_status": "pending"
   },
   "resume": {
     "stage": "implement",
-    "reason": "Convergence attempt 1 appended T054 for canonical exact-decision selection. T054 is GREEN with 132/132 retrieval/currentness/packet tests. Rerun T038 convergence before quality review.",
+    "reason": "Convergence attempt 2 accepted the corrected candidate with F1 closed, 410 effective B1-B4/B-INT passes, and no new tasks. Prepare T039 quality-review input next.",
     "evidence_path": "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/convergence/track-b-corrected-01.md"
   },
-  "updated_at": "2026-08-29T10:09:00.2215263Z"
+  "updated_at": "2026-08-29T10:18:49.9623977Z"
 }

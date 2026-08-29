@@ -51,3 +51,16 @@ T054 execution closes F1 locally but does not rewrite this independent attempt's
 - Existing B-INT evidence records 409/409 after excluding exactly the two host-path failures, 103/103 Track A status/UI/corpus/evidence tests, and 8/8 authenticated composition tests.
 - Existing static guards report one packet builder, one publication-owner implementation and scoped registration, no legacy exact Chat authority, no Track C sink/release fields, no migration/model-snapshot/Story 12.4 mutation, no live coordinator Conversation State field, one candidate-only `AppendValidatedTurn`, and one follow-up read from the committed composite.
 - `git diff --check` is clean for the current candidate.
+
+## Independent convergence attempt 2
+
+- Observed candidate: `4e6172887f61c77f2f0c79e1a29d51056546ba4d` on `demo0831/story-12-5`; the worktree was clean before this evidence-only update.
+- Definition identity remained unchanged from the accepted convergence input: the accepted Story 12.5 specification, plan, and tasks remain the same bounded current-v2/mandatory-streaming design, with T054 now present as the sole appended convergence task.
+- T054 retest: `RetrieveAsync_SharedReferencesEdgeWithCanonicalDecisionAndReversedFlowGroupIds_PreservesAuthorityAsync` passed **1/1**. The fixture has two independently valid accepted decisions on one Cross-Repository Edge, Flow Group IDs opposite the decision-set order, and the result binds `ChatExactDecisionSet.SelectedDecision` while retaining both decision-owned Published Flow Groups.
+- F1 is **closed**. `ChatRelationshipEvidenceProjector` now derives `selectedDecisionId` only from `exactDecisionSet.SelectedDecision.Id`; Flow Group ID ordering no longer selects the relationship witness. The public test also verifies the complete decision set, selected contribution fingerprint, both decision owners, edge binding, and Published state.
+- B1-B4/B-INT regression: the full bounded selection produced **410 passed, 2 failed, 0 skipped, 412 total**. The only failures were the known `PreparedChatIntegrationTests` default Data Protection characterizations attempting writes under `C:\Users\13728\AppData\Local\ASP.NET\DataProtection-Keys`, outside the writable workspace. Re-running the matrix without that integration class produced **403/403**; the seven remaining controlled-key-ring/authenticated integration vectors produced **7/7**. Thus the bounded matrix is **410/410** when the two host-path failures are excluded by their exact test names, with no Story 12.5 assertion failure.
+- Web build completed with **0 errors** and the existing NU1507/NU1900/MSB3277 warnings. `git diff --check` passed; no EF, model snapshot, Story 12.4, Track C, or workflow-state path was changed.
+
+### Attempt 2 outcome
+
+**CONVERGED** — T054 closes the sole actionable HIGH F1 gap from attempt 1. The accepted B1-B4/B-INT implementation invariants remain covered by the pinned evidence and the fresh regression above; the two default Data Protection failures are host-path/environment observations, not product defects. No new task is appended. Quality review and later E2E/verification gates remain separate workflow stages.
