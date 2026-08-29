@@ -22,7 +22,7 @@
     },
     "tasks": {
       "path": "specs/014-grounded-llm-wiki-chat-release-evidence/tasks.md",
-      "sha256": "a1ae9688fb6c8695e9c9c0da342683916d1fa8260cb74a788ec6c01085a7ad64"
+      "sha256": "a7bf724b9bb3724bf2adc8d7f4e762b263fe8dfc5a96e965fd0cb3be47b319f9"
     }
   },
   "gates": {
@@ -38,14 +38,14 @@
     },
     "quality-review": {
       "status": "revised",
-      "attempt": 1,
-      "verdict_path": "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/quality-review/track-b-quality-review-01.json"
+      "attempt": 2,
+      "verdict_path": "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/quality-review/track-b-quality-review-02.json"
     }
   },
   "attempts": {
     "definition-review": 0,
     "converge": 7,
-    "quality-review": 1
+    "quality-review": 2
   },
   "approvals": [
     {
@@ -99,17 +99,17 @@
     }
   ],
   "convergence": {
-    "status": "accepted",
+    "status": "invalidated",
     "attempt": 7,
-    "outcome": "converged",
-    "report_path": "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/track-b-convergence-accepted-07.md"
+    "outcome": "pending",
+    "report_path": "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/quality-review/track-b-quality-review-02.json"
   },
   "e2e": {
     "result": "pending",
     "decision_path": null
   },
   "current_evidence_paths": [
-    "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/quality-review/track-b-quality-review-01.json",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/quality-review/track-b-quality-review-02.json",
     "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/convergence-continuation-03.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/design-correction-01.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/track-b-convergence-accepted-07.md",
@@ -123,15 +123,15 @@
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/track-b-quality-correction-01.md"
   ],
   "checkpoint": {
-    "checkpoint_id": "bmad-12-5-implement-20260829T033626Z-converged-07",
+    "checkpoint_id": "bmad-12-5-implement-20260829T034617Z-quality-correction-02",
     "stage": "implement",
     "commit_sha": null,
     "binding_status": "pending"
   },
   "resume": {
     "stage": "implement",
-    "reason": "Post-correction Track B convergence is accepted. Proceed to independent quality review attempt 2; Track C remains closed pending review, E2E decision, verification, and complete checkpoint.",
-    "evidence_path": "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/track-b-convergence-accepted-07.md"
+    "reason": "Independent Track B quality review attempt 2 requires bounded T079 correction for the final deadline-through-publication boundary. Convergence must rerun after GREEN; Track C remains closed.",
+    "evidence_path": "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/quality-review/track-b-quality-review-02.json"
   },
-  "updated_at": "2026-08-29T03:36:26.9362217Z"
+  "updated_at": "2026-08-29T03:46:17.2611279Z"
 }
