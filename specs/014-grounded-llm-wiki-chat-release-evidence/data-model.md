@@ -409,9 +409,14 @@ ChatConversationState (transient)
   -> ChatSynthesisAttempt primary stream (optionally syntax-repair stream)
   -> strict ChatProviderStreamFrame assembly
   -> ChatStreamRuntimeObservation (Track B neutral transport)
-  -> validated GroundedAnswer + ChatStreamCompletionSummary (Track B neutral coordinator result)
-  -> ValidatedRevealState
-  -> append ValidatedConversationTurn
+  -> validated GroundedAnswer + proposed ChatConversationState
+     + ChatStreamCompletionSummary template + reveal directive
+  -> PreparedChatPublicationCandidate
+  -> IPreparedChatPublicationOwner
+  -> AcceptedPublicationCommit (single terminal atomic commit)
+       -> accepted GroundedAnswer -> ValidatedRevealState (read-only accepted-content projection)
+       -> committed ChatConversationState (read-only; contains proposed ValidatedConversationTurn)
+       -> ChatStreamCompletionSummary (read-only committed telemetry projection)
 
 ScanExecution -> ScanJobExecution -> FileCodeUnit
   -> ProductionScanStatusView -> production management UI
