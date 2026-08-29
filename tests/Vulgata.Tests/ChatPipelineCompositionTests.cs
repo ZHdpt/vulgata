@@ -33,6 +33,67 @@ public sealed class ChatPipelineCompositionTests
     }
 
     [Fact]
+    public void RetrievalArchitecture_Story125T073_LexicalStageConsumesAuthorizedSnapshot()
+    {
+        ConstructorInfo constructor = Assert.Single(typeof(ChatEvidenceRetriever).GetConstructors());
+        MethodInfo[] typedLexicalMethods = constructor.GetParameters()
+            .Select(parameter => parameter.ParameterType)
+            .SelectMany(type => type.GetMethods(BindingFlags.Public | BindingFlags.Instance))
+            .Where(method => method.GetParameters().Any(parameter =>
+                parameter.ParameterType == typeof(AuthorizedChatSnapshot)))
+            .Where(method => ReturnsClosedStageValue(method.ReturnType, typeof(ChatLexicalPrimaryProjection)))
+            .ToArray();
+
+        Assert.True(
+            typedLexicalMethods.Length == 1,
+            "The runtime retriever must constructor-compose one lexical stage that consumes AuthorizedChatSnapshot and returns ChatLexicalPrimaryProjection.");
+        MethodInfo lexicalMethod = typedLexicalMethods[0];
+        Assert.DoesNotContain(
+            lexicalMethod.GetParameters(),
+            parameter => parameter.ParameterType == typeof(ChatRetrievalRequest));
+        Assert.DoesNotContain(
+            lexicalMethod.GetParameters(),
+            parameter => IsGuidCollection(parameter.ParameterType));
+    }
+
+    [Fact]
+    public void RetrievalArchitecture_Story125T073_RelationshipStageConsumesLexicalProjection()
+    {
+        MethodInfo projectMethod = Assert.Single(
+            typeof(IChatRelationshipProjector).GetMethods(BindingFlags.Public | BindingFlags.Instance));
+        ParameterInfo[] parameters = projectMethod.GetParameters();
+
+        Assert.Contains(
+            parameters,
+            parameter => parameter.ParameterType == typeof(ChatLexicalPrimaryProjection));
+        Assert.DoesNotContain(
+            parameters,
+            parameter => parameter.ParameterType == typeof(ChatRetrievalRequest));
+        Assert.DoesNotContain(parameters, parameter => IsGuidCollection(parameter.ParameterType));
+        Assert.True(
+            ReturnsClosedStageValue(
+                projectMethod.ReturnType,
+                typeof(ChatRelationshipExpansionProjection)),
+            "The relationship stage must return the closed ChatRelationshipExpansionProjection stage result.");
+    }
+
+    [Fact]
+    public void RetrievalArchitecture_Story125T073_PacketBuilderConsumesOnlyTypedAssembly()
+    {
+        MethodInfo buildMethod = Assert.Single(
+            typeof(ChatEvidencePacketBuilder).GetMethods(BindingFlags.Public | BindingFlags.Instance)
+                .Where(method => method.Name == nameof(ChatEvidencePacketBuilder.Build)));
+        ParameterInfo parameter = Assert.Single(buildMethod.GetParameters());
+
+        Assert.Equal(typeof(ChatEvidenceAssembly), parameter.ParameterType);
+        Assert.Equal(typeof(EvidencePacket), buildMethod.ReturnType);
+        Assert.DoesNotContain(
+            typeof(ChatEvidencePacketBuilder).GetMethods(BindingFlags.Public | BindingFlags.Instance),
+            method => method.GetParameters().Any(candidate =>
+                candidate.ParameterType == typeof(ChatEvidencePacketBuildRequest)));
+    }
+
+    [Fact]
     public void ProductionComposition_Story125B1_ResolvesAdvisoryReaderAndRelationshipProjectorAsScopedPorts()
     {
         using var factory = new LoginLogoutTests.CustomWebApplicationFactory();
@@ -95,6 +156,25 @@ public sealed class ChatPipelineCompositionTests
             constructor => constructor.GetParameters().Any(parameter =>
                 parameter.Name?.Contains("advisory", StringComparison.OrdinalIgnoreCase) == true));
     }
+
+    private static bool ReturnsClosedStageValue(Type returnType, Type valueType)
+    {
+        Type candidate = returnType.IsGenericType &&
+            returnType.GetGenericTypeDefinition() == typeof(Task<>)
+                ? returnType.GetGenericArguments()[0]
+                : returnType;
+        return candidate.IsGenericType &&
+            candidate.GetGenericTypeDefinition() == typeof(ChatRetrievalStageResult<>) &&
+            candidate.GetGenericArguments()[0] == valueType;
+    }
+
+    private static bool IsGuidCollection(Type type) =>
+        type == typeof(Guid[]) ||
+        type.GetInterfaces()
+            .Concat([type])
+            .Any(candidate => candidate.IsGenericType &&
+                candidate.GetGenericTypeDefinition() == typeof(IReadOnlyCollection<>) &&
+                candidate.GetGenericArguments()[0] == typeof(Guid));
 }
 
 internal sealed class CanonicalEmptyAdvisoryContextReader : IChatAdvisoryContextReader

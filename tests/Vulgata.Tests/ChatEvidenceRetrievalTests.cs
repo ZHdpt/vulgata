@@ -150,44 +150,35 @@ public sealed class ChatEvidenceRetrievalTests
             ExactCrossRepositoryTestValues.ConsumerDocumentVersionId,
             fixture.BusinessDocumentVersionId,
         ];
-        ChatRelationshipProjection projection = await ChatRelationshipProjectorFactory
-            .Create(fixture.Context)
-            .ProjectAsync(
-                ExactCrossRepositoryTestValues.SystemId,
-                ChatMode.Business,
-                fixture.RepositoryIds,
-                seeds,
-                [
-                    fixture.BusinessDocumentVersionId,
-                    ExactCrossRepositoryTestValues.ConsumerDocumentVersionId,
-                    ExactCrossRepositoryTestValues.ProviderDocumentVersionId,
-                ],
-                [],
-                2,
-                32,
-                CancellationToken.None);
+        TypedRelationshipProjection typedProjection = await ProjectRelationshipsAsync(
+            fixture,
+            ChatMode.Business,
+            seeds);
+        ChatRelationshipExpansionProjection projection = typedProjection.Expansion;
 
-        Assert.False(projection.IsInconsistent);
         Assert.NotEmpty(projection.Relationships);
         Guid[] expectedSeeds = seeds.Take(3).ToArray();
         Assert.All(
             projection.Relationships,
-            relationship => Assert.Contains(relationship.SourceDocumentVersionId, expectedSeeds));
+            relationship => Assert.Contains(
+                typedProjection.DocumentVersionIdsByHandle[relationship.SourceDocumentHandle],
+                expectedSeeds));
         Assert.DoesNotContain(
             projection.Relationships,
-            relationship => relationship.SourceDocumentVersionId == fixture.SecondHopDocumentVersionId);
+            relationship => typedProjection.DocumentVersionIdsByHandle[relationship.SourceDocumentHandle] ==
+                fixture.SecondHopDocumentVersionId);
         Assert.All(
-            projection.Relationships.GroupBy(relationship => relationship.SourceDocumentVersionId),
+            projection.Relationships.GroupBy(relationship => relationship.SourceDocumentHandle),
             group => Assert.InRange(group.Count(), 1, 2));
         Assert.InRange(projection.Relationships.Count, 1, 32);
-        Assert.InRange(projection.RelatedSections.Count, 1, 20);
+        Assert.InRange(projection.SupportSections.Count, 1, 20);
         Assert.InRange(projection.FlowGroups.Sum(group => group.Steps.Count), 0, 12);
         Assert.Equal(
             projection.Relationships.Select(relationship => relationship.EdgeId).Distinct(),
             projection.Relationships.Select(relationship => relationship.EdgeId));
         Assert.Equal(
             projection.Relationships
-                .OrderBy(relationship => relationship.EdgeType == DocumentEdgeType.References ? 0 : 1)
+                .OrderBy(relationship => relationship.RelationshipType == ChatRelationshipType.References ? 0 : 1)
                 .ThenBy(relationship => relationship.EdgeId)
                 .Select(relationship => relationship.EdgeId),
             projection.Relationships.Select(relationship => relationship.EdgeId));
@@ -195,41 +186,38 @@ public sealed class ChatEvidenceRetrievalTests
             projection.Relationships,
             relationship =>
                 relationship.EdgeId == fixture.OneHopEdgeId &&
-                relationship.EdgeType == DocumentEdgeType.References);
+                relationship.RelationshipType == ChatRelationshipType.References);
         Assert.Contains(
             projection.Relationships,
             relationship =>
                 relationship.EdgeId == fixture.SecondHopEdgeId &&
-                relationship.EdgeType == DocumentEdgeType.References);
+                relationship.RelationshipType == ChatRelationshipType.References);
     }
 
     [Fact]
-    public async Task RelationshipProjector_LowerRankedOptionalRelatedDocument_IsExcludedWithoutPoisoningAsync()
+    public async Task RelationshipProjector_LowerRankedOptionalRelatedDocument_DoesNotDisplaceHigherRankedEvidenceAsync()
     {
         await using PreparedEvidenceFixture fixture = await PreparedEvidenceFixture.CreateAsync();
         await fixture.AddCurrentOneHopReferenceAsync();
         await fixture.AddOptionalProviderSecondHopReferenceAsync();
 
-        ChatRelationshipProjection projection = await ChatRelationshipProjectorFactory
-            .Create(fixture.Context)
-            .ProjectAsync(
-                ExactCrossRepositoryTestValues.SystemId,
-                ChatMode.Business,
-                fixture.RepositoryIds,
-                [ExactCrossRepositoryTestValues.ProviderDocumentVersionId],
-                [ExactCrossRepositoryTestValues.ProviderDocumentVersionId],
-                [],
-                1,
-                32,
-                CancellationToken.None);
+        TypedRelationshipProjection typedProjection = await ProjectRelationshipsAsync(
+            fixture,
+            ChatMode.Business,
+            [ExactCrossRepositoryTestValues.ProviderDocumentVersionId]);
+        ChatRelationshipExpansionProjection projection = typedProjection.Expansion;
 
-        Assert.False(projection.IsInconsistent);
-        ProjectedChatRelationship relationship = Assert.Single(projection.Relationships);
-        Assert.Equal(fixture.OneHopEdgeId, relationship.EdgeId);
-        Assert.Equal(fixture.OneHopDocumentVersionId, relationship.TargetDocumentVersionId);
-        Assert.DoesNotContain(
+        EvidenceRelationship relationship = Assert.Single(
             projection.Relationships,
-            item => item.TargetDocumentVersionId == fixture.SecondHopDocumentVersionId);
+            item => item.EdgeId == fixture.OneHopEdgeId);
+        Assert.Equal(fixture.OneHopEdgeId, relationship.EdgeId);
+        Assert.Equal(
+            fixture.OneHopDocumentVersionId,
+            typedProjection.DocumentVersionIdsByHandle[relationship.TargetDocumentHandle]);
+        Assert.Contains(
+            projection.Relationships,
+            item => typedProjection.DocumentVersionIdsByHandle[item.TargetDocumentHandle] ==
+                fixture.SecondHopDocumentVersionId);
     }
 
     [Fact]
@@ -238,65 +226,50 @@ public sealed class ChatEvidenceRetrievalTests
         await using PreparedEvidenceFixture fixture = await PreparedEvidenceFixture.CreateAsync();
         Guid expectedEdgeId = await fixture.AddCandidatesBeyondLegacyQueryCapAsync();
 
-        ChatRelationshipProjection projection = await ChatRelationshipProjectorFactory
-            .Create(fixture.Context)
-            .ProjectAsync(
-                ExactCrossRepositoryTestValues.SystemId,
-                ChatMode.Business,
-                fixture.RepositoryIds,
-                [
-                    ExactCrossRepositoryTestValues.ProviderDocumentVersionId,
-                    ExactCrossRepositoryTestValues.ConsumerDocumentVersionId,
-                ],
-                [
-                    fixture.BusinessDocumentVersionId,
-                    ExactCrossRepositoryTestValues.ProviderDocumentVersionId,
-                    ExactCrossRepositoryTestValues.ConsumerDocumentVersionId,
-                ],
-                [],
-                1,
-                1,
-                CancellationToken.None);
+        TypedRelationshipProjection typedProjection = await ProjectRelationshipsAsync(
+            fixture,
+            ChatMode.Business,
+            [
+                ExactCrossRepositoryTestValues.ProviderDocumentVersionId,
+                ExactCrossRepositoryTestValues.ConsumerDocumentVersionId,
+                fixture.BusinessDocumentVersionId,
+            ]);
+        ChatRelationshipExpansionProjection projection = typedProjection.Expansion;
 
-        Assert.False(projection.IsInconsistent);
-        ProjectedChatRelationship relationship = Assert.Single(projection.Relationships);
+        EvidenceRelationship relationship = Assert.Single(
+            projection.Relationships,
+            item => item.EdgeId == expectedEdgeId);
         Assert.Equal(expectedEdgeId, relationship.EdgeId);
         Assert.Equal(
             ExactCrossRepositoryTestValues.ProviderDocumentVersionId,
-            relationship.SourceDocumentVersionId);
+            typedProjection.DocumentVersionIdsByHandle[relationship.SourceDocumentHandle]);
     }
 
     [Fact]
     public async Task RelationshipProjector_BusinessAndItMode_PreferAcceptedRelationshipTypeBeforeBoundsAsync()
     {
         await using PreparedEvidenceFixture fixture = await PreparedEvidenceFixture.CreateAsync();
-        (_, Guid referencesEdgeId) =
+        await fixture.RemoveOptionalCrossRepositorySupportAsync();
+        (Guid generatedFromEdgeId, Guid referencesEdgeId) =
             await fixture.AddModePreferenceCandidatesAsync();
-        IChatRelationshipProjector projector = ChatRelationshipProjectorFactory.Create(fixture.Context);
-
-        ChatRelationshipProjection businessProjection = await projector.ProjectAsync(
-            ExactCrossRepositoryTestValues.SystemId,
+        ChatRelationshipExpansionProjection businessProjection = (await ProjectRelationshipsAsync(
+            fixture,
             ChatMode.Business,
-            fixture.RepositoryIds,
-            [fixture.BusinessDocumentVersionId],
-            [fixture.BusinessDocumentVersionId],
-            [],
-            1,
-            1,
-            CancellationToken.None);
-        ChatRelationshipProjection itProjection = await projector.ProjectAsync(
-            ExactCrossRepositoryTestValues.SystemId,
+            [fixture.BusinessDocumentVersionId])).Expansion;
+        ChatRelationshipExpansionProjection itProjection = (await ProjectRelationshipsAsync(
+            fixture,
             ChatMode.It,
-            fixture.RepositoryIds,
-            [fixture.BusinessDocumentVersionId],
-            [fixture.BusinessDocumentVersionId],
-            [],
-            1,
-            1,
-            CancellationToken.None);
+            [fixture.BusinessDocumentVersionId])).Expansion;
 
-        Assert.Equal(fixture.GeneratedFromEdgeId, Assert.Single(businessProjection.Relationships).EdgeId);
-        Assert.Equal(referencesEdgeId, Assert.Single(itProjection.Relationships).EdgeId);
+        Assert.Contains(
+            businessProjection.Relationships,
+            relationship => relationship.EdgeId == generatedFromEdgeId);
+        Assert.DoesNotContain(
+            businessProjection.Relationships,
+            relationship => relationship.EdgeId == referencesEdgeId);
+        Assert.Contains(
+            itProjection.Relationships,
+            relationship => relationship.EdgeId == referencesEdgeId);
     }
 
     [Fact]
@@ -1197,12 +1170,131 @@ public sealed class ChatEvidenceRetrievalTests
         Assert.Null(fixture.Context.Database.CurrentTransaction);
     }
 
+    private static async Task<TypedRelationshipProjection> ProjectRelationshipsAsync(
+        PreparedEvidenceFixture fixture,
+        ChatMode mode,
+        IReadOnlyList<Guid> orderedPrimaryDocumentVersionIds)
+    {
+        AuthorizedChatDocument[] currentDocuments = await (
+            from logical in fixture.Context.LogicalDocuments.AsNoTracking()
+            join version in fixture.Context.DocumentVersions.AsNoTracking()
+                on logical.CurrentVersionId equals version.Id
+            join scanRun in fixture.Context.ScanRuns.AsNoTracking()
+                on version.ScanRunId equals scanRun.Id
+            where fixture.RepositoryIds.Contains(version.RepositoryId) &&
+                version.SystemId == ExactCrossRepositoryTestValues.SystemId &&
+                version.SupersededById == null &&
+                scanRun.Status == ScanRunStatus.Completed
+            select new AuthorizedChatDocument(
+                logical.Id,
+                version.Id,
+                version.RepositoryId,
+                version.ScanRunId,
+                logical.DocumentType,
+                version.Title,
+                version.ProfiledRevision))
+            .ToArrayAsync();
+        Dictionary<Guid, AuthorizedChatDocument> currentByVersionId = currentDocuments
+            .ToDictionary(document => document.DocumentVersionId);
+        EvidenceDocument[] primaryDocuments = orderedPrimaryDocumentVersionIds
+            .Select((documentVersionId, index) =>
+            {
+                AuthorizedChatDocument document = currentByVersionId[documentVersionId];
+                return new EvidenceDocument(
+                    $"d{index + 1}",
+                    document.LogicalDocumentId,
+                    document.DocumentVersionId,
+                    document.RepositoryId,
+                    document.DocumentType,
+                    document.Title,
+                    document.ProfiledRevision);
+            })
+            .ToArray();
+        EvidenceDocument firstDocument = primaryDocuments[0];
+        AuthorizedChatDocument firstAuthorizedDocument = currentByVersionId[firstDocument.DocumentVersionId];
+        Guid stableSectionId = Guid.Parse("00000000-0000-0000-0000-000000090001");
+        Guid sourceAnchorId = Guid.Parse("00000000-0000-0000-0000-000000090002");
+        ChatLexicalPrimaryProjection primary = ChatLexicalPrimaryProjection.Create(
+            primaryDocuments,
+            [new EvidenceSection(
+                "s-primary",
+                firstDocument.DocumentHandle,
+                stableSectionId,
+                1,
+                DocumentSectionKind.Overview,
+                "主证据",
+                "主证据内容。",
+                [],
+                [])],
+            [],
+            new string('a', 64));
+        var accessScope = new RepositoryAccessScope(
+            fixture.RepositoryIds,
+            new RecordingAuthorizationVerifier(true));
+        AuthorizedChatSnapshot snapshot = AuthorizedChatSnapshot.Create(
+            new AuthorizedChatScope(
+                ExactCrossRepositoryTestValues.SystemId,
+                fixture.RepositoryIds,
+                accessScope),
+            new ChatAdvisoryContextSnapshot([], string.Empty, [], 0, new string('0', 64)),
+            currentDocuments,
+            [new AuthorizedChatSection(
+                firstAuthorizedDocument.DocumentVersionId,
+                stableSectionId,
+                1,
+                DocumentSectionKind.Overview,
+                "主证据",
+                "主证据内容。",
+                [sourceAnchorId],
+                [],
+                "src/Primary.cs",
+                "[]",
+                "[]",
+                "[]",
+                "主证据",
+                "主仓库")],
+            [new AuthorizedChatSourceAnchor(
+                sourceAnchorId,
+                firstAuthorizedDocument.DocumentVersionId,
+                firstAuthorizedDocument.RepositoryId,
+                firstAuthorizedDocument.ScanRunId,
+                firstAuthorizedDocument.ProfiledRevision,
+                "src/Primary.cs",
+                1,
+                1,
+                new string('b', 64))],
+            ChatConversationState.Empty(ChatConversationScope.Create(
+                mode,
+                ExactCrossRepositoryTestValues.SystemId,
+                fixture.RepositoryIds)));
+        ChatRetrievalStageResult<ChatRelationshipExpansionProjection> result =
+            await ChatRelationshipProjectorFactory.Create(fixture.Context).ProjectAsync(
+                snapshot,
+                primary,
+                CancellationToken.None);
+        Assert.Equal(ChatRetrievalStageResultKind.Succeeded, result.Kind);
+        ChatRelationshipExpansionProjection expansion = Assert.IsType<ChatRelationshipExpansionProjection>(
+            result.Value);
+        Dictionary<string, Guid> documentVersionIdsByHandle = primary.PrimaryDocuments
+            .Concat(expansion.AddedDocuments)
+            .ToDictionary(
+                document => document.DocumentHandle,
+                document => document.DocumentVersionId,
+                StringComparer.Ordinal);
+        return new TypedRelationshipProjection(expansion, documentVersionIdsByHandle);
+    }
+
+    private sealed record TypedRelationshipProjection(
+        ChatRelationshipExpansionProjection Expansion,
+        IReadOnlyDictionary<string, Guid> DocumentVersionIdsByHandle);
+
     private static ChatEvidenceRetriever CreateRetriever(
         VulgataDbContext context,
         IPreparedChatScopeResolver? preparedScopeResolver = null) =>
         new(
             context,
             preparedScopeResolver,
+            new ChatLexicalEvidenceProjector(),
             new ChatRelationshipEvidenceProjector(context),
             new ChatEvidencePacketBuilder(),
             logger: null);
@@ -1352,6 +1444,11 @@ public sealed class ChatEvidenceRetrievalTests
         {
             await Context.Database.ExecuteSqlInterpolatedAsync(
                 $"DELETE FROM \"DocumentEdges\" WHERE \"Id\" = {_generatedFromEdgeId}");
+            await RemoveBaseFlowGroupAuthorityAsync();
+        }
+
+        internal async Task RemoveBaseFlowGroupAuthorityAsync()
+        {
             await Context.Database.ExecuteSqlInterpolatedAsync(
                 $"DELETE FROM \"FlowTraceSteps\" WHERE \"FlowTraceId\" IN (SELECT \"Id\" FROM \"FlowTraces\" WHERE \"FlowGroupId\" = {Id(10_301)})");
             await Context.Database.ExecuteSqlInterpolatedAsync(
@@ -2189,6 +2286,7 @@ public sealed class ChatEvidenceRetrievalTests
             {
                 (90_000, "business-generated", DocumentEdgeType.GeneratedFrom),
                 (90_010, "it-reference", DocumentEdgeType.References),
+                (90_020, "business-generated-secondary", DocumentEdgeType.GeneratedFrom),
             })
             {
                 Guid logicalDocumentId = Id(idBase);
@@ -2254,6 +2352,7 @@ public sealed class ChatEvidenceRetrievalTests
             await Context.SaveChangesAsync();
             await SetCurrentVersionAsync(Context, Id(90_000), Id(90_001));
             await SetCurrentVersionAsync(Context, Id(90_010), Id(90_011));
+            await SetCurrentVersionAsync(Context, Id(90_020), Id(90_021));
             Context.ChangeTracker.Clear();
             return (generatedFromEdgeId, referencesEdgeId);
         }

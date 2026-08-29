@@ -14,6 +14,7 @@ public sealed class ChatEvidenceRetriever : IChatEvidenceRetriever
 {
     private readonly VulgataDbContext _context;
     private readonly IPreparedChatScopeResolver _preparedScopeResolver;
+    private readonly IChatLexicalEvidenceProjector _lexicalProjector;
     private readonly IChatRelationshipProjector _relationshipProjector;
     private readonly ChatEvidencePacketBuilder _packetBuilder;
     private readonly ILogger<ChatEvidenceRetriever>? _logger;
@@ -21,12 +22,14 @@ public sealed class ChatEvidenceRetriever : IChatEvidenceRetriever
     public ChatEvidenceRetriever(
         VulgataDbContext context,
         IPreparedChatScopeResolver? preparedScopeResolver,
+        IChatLexicalEvidenceProjector lexicalProjector,
         IChatRelationshipProjector relationshipProjector,
         ChatEvidencePacketBuilder packetBuilder,
         ILogger<ChatEvidenceRetriever>? logger)
     {
         _context = context;
         _preparedScopeResolver = preparedScopeResolver ?? new PreparedChatScopeResolver(context);
+        _lexicalProjector = lexicalProjector;
         _relationshipProjector = relationshipProjector;
         _packetBuilder = packetBuilder;
         _logger = logger;
@@ -73,6 +76,7 @@ public sealed class ChatEvidenceRetriever : IChatEvidenceRetriever
                 ChatEvidenceResult result = await RetrieveInsideTransactionAsync(
                     request,
                     repositoryIds,
+                    accessScope,
                     cancellationToken);
                 if (result.Kind != ChatEvidenceResultKind.Found)
                 {
@@ -111,6 +115,7 @@ public sealed class ChatEvidenceRetriever : IChatEvidenceRetriever
     private async Task<ChatEvidenceResult> RetrieveInsideTransactionAsync(
         ChatRetrievalRequest request,
         Guid[] repositoryIds,
+        RepositoryAccessScope accessScope,
         CancellationToken cancellationToken)
     {
         Repository[] repositories = await _context.Repositories.AsNoTracking()
@@ -122,8 +127,16 @@ public sealed class ChatEvidenceRetriever : IChatEvidenceRetriever
             return ChatEvidenceResult.NotFoundOrUnauthorized();
         }
 
+        AuthorizedChatSnapshot authorizedSnapshot = await LoadAuthorizedSnapshotAsync(
+            request,
+            repositoryIds,
+            accessScope,
+            cancellationToken);
         ChatRetrievalStageResult<ChatLexicalPrimaryProjection> lexicalResult =
-            await RetrieveLexicalPrimaryAsync(request, repositoryIds, cancellationToken);
+            await _lexicalProjector.ProjectAsync(
+                authorizedSnapshot,
+                request.Question,
+                cancellationToken);
         if (lexicalResult.Kind != ChatRetrievalStageResultKind.Succeeded)
         {
             return lexicalResult.Kind == ChatRetrievalStageResultKind.NotFoundOrUnauthorized
@@ -132,23 +145,11 @@ public sealed class ChatEvidenceRetriever : IChatEvidenceRetriever
         }
 
         ChatLexicalPrimaryProjection primary = lexicalResult.Value!;
-        ChatRelationshipProjection projected = await _relationshipProjector.ProjectAsync(
-            request.SystemId,
-            request.Mode,
-            repositoryIds,
-            primary.ExpansionSeedDocumentVersionIds,
-            primary.PrimaryDocuments.Select(document => document.DocumentVersionId).ToArray(),
-            [],
-            5 - primary.PrimaryDocuments.Count,
-            32,
-            cancellationToken);
-        if (projected.IsInconsistent)
-        {
-            return ChatEvidenceResult.IncompleteOrStale();
-        }
-
         ChatRetrievalStageResult<ChatRelationshipExpansionProjection> expansionResult =
-            await MaterializeExpansionAsync(request.SystemId, repositoryIds, primary, projected, cancellationToken);
+            await _relationshipProjector.ProjectAsync(
+                authorizedSnapshot,
+                primary,
+                cancellationToken);
         if (expansionResult.Kind != ChatRetrievalStageResultKind.Succeeded)
         {
             return ChatEvidenceResult.IncompleteOrStale();
@@ -171,7 +172,7 @@ public sealed class ChatEvidenceRetriever : IChatEvidenceRetriever
             .Concat(lexicalExtraSectionRanks.Keys)
             .Distinct(StringComparer.Ordinal)
             .ToArray();
-        EvidencePacket packet = _packetBuilder.Build(
+        EvidencePacket packet = _packetBuilder.Build(new ChatEvidenceAssembly(
             ChatEvidencePacketBuildRequest.Create(
                 request.RequestId,
                 request.Mode,
@@ -193,18 +194,157 @@ public sealed class ChatEvidenceRetriever : IChatEvidenceRetriever
                     primary.PrimaryDocuments.Single(document =>
                         document.DocumentVersionId == documentVersionId).DocumentHandle).ToArray(),
                 optionalRelationshipUnitRanks,
-                lexicalExtraSectionRanks));
+                lexicalExtraSectionRanks)));
         return ChatEvidenceResult.Found(packet);
     }
 
-    private async Task<ChatRetrievalStageResult<ChatRelationshipExpansionProjection>>
+    private async Task<AuthorizedChatSnapshot> LoadAuthorizedSnapshotAsync(
+        ChatRetrievalRequest request,
+        Guid[] repositoryIds,
+        RepositoryAccessScope accessScope,
+        CancellationToken cancellationToken)
+    {
+        ProjectionSectionRow[] candidates = await (
+            from logical in _context.LogicalDocuments.AsNoTracking()
+            join version in _context.DocumentVersions.AsNoTracking()
+                on logical.CurrentVersionId equals version.Id
+            join repository in _context.Repositories.AsNoTracking()
+                on version.RepositoryId equals repository.Id
+            join scanRun in _context.ScanRuns.AsNoTracking()
+                on version.ScanRunId equals scanRun.Id
+            join section in _context.DocumentSections.AsNoTracking()
+                on version.Id equals section.DocumentVersionId
+            join indexEntry in _context.IndexEntries.AsNoTracking()
+                on version.Id equals indexEntry.DocumentVersionId into indexEntries
+            from indexEntry in indexEntries.DefaultIfEmpty()
+            where repositoryIds.Contains(version.RepositoryId) &&
+                version.SystemId == request.SystemId &&
+                version.SupersededById == null &&
+                repository.SystemId == request.SystemId &&
+                scanRun.RepositoryId == version.RepositoryId &&
+                scanRun.Status == ScanRunStatus.Completed &&
+                scanRun.ProfiledRevision == version.ProfiledRevision &&
+                (section.SectionKind == DocumentSectionKind.Overview ||
+                    section.SectionKind == DocumentSectionKind.BusinessRule ||
+                    section.SectionKind == DocumentSectionKind.ProcessStep ||
+                    section.SectionKind == DocumentSectionKind.TechnicalDetail ||
+                    section.SectionKind == DocumentSectionKind.Evidence)
+            orderby version.RepositoryId, logical.Id, section.SectionOrder, section.StableSectionId
+            select new ProjectionSectionRow(
+                logical.Id,
+                version.Id,
+                version.RepositoryId,
+                version.ScanRunId,
+                logical.DocumentType,
+                version.Title,
+                version.ProfiledRevision,
+                section,
+                indexEntry == null ? string.Empty : indexEntry.RepositoryRelativePath,
+                indexEntry == null ? string.Empty : indexEntry.KeySymbolsJson,
+                indexEntry == null ? string.Empty : indexEntry.BusinessTermsJson,
+                indexEntry == null ? string.Empty : indexEntry.TechnicalTermsJson,
+                indexEntry == null ? string.Empty : indexEntry.SearchText,
+                repository.Name))
+            .ToArrayAsync(cancellationToken);
+        if (candidates.Length < 1 ||
+            candidates.Select(candidate => candidate.RepositoryId).Distinct().Count() != 2)
+        {
+            throw new ChatContractException(ChatContractFailureCode.InvalidCurrentness);
+        }
+
+        CurrentDocumentRow[] documents = await (
+            from logical in _context.LogicalDocuments.AsNoTracking()
+            join version in _context.DocumentVersions.AsNoTracking()
+                on logical.CurrentVersionId equals version.Id
+            join scanRun in _context.ScanRuns.AsNoTracking()
+                on version.ScanRunId equals scanRun.Id
+            where repositoryIds.Contains(version.RepositoryId) &&
+                version.SystemId == request.SystemId &&
+                version.SupersededById == null &&
+                scanRun.RepositoryId == version.RepositoryId &&
+                scanRun.Status == ScanRunStatus.Completed &&
+                scanRun.ProfiledRevision == version.ProfiledRevision
+            select new CurrentDocumentRow(
+                logical.Id,
+                version.Id,
+                version.RepositoryId,
+                version.ScanRunId,
+                logical.DocumentType,
+                version.Title,
+                version.ProfiledRevision))
+            .ToArrayAsync(cancellationToken);
+        ParsedSection[] parsedSections = candidates
+            .Select(candidate => new ParsedSection(
+                candidate.Section,
+                ParseGuidArrayForSnapshot(candidate.Section.SourceAnchorIdsJson),
+                ParseGuidArrayForSnapshot(candidate.Section.DocumentVersionIdsJson)))
+            .ToArray();
+        Guid[] anchorIds = parsedSections
+            .SelectMany(section => section.SourceAnchorIds)
+            .Distinct()
+            .ToArray();
+        SourceAnchor[] anchors = await _context.SourceAnchors.AsNoTracking()
+            .Where(anchor => anchorIds.Contains(anchor.Id))
+            .ToArrayAsync(cancellationToken);
+        AuthorizedChatDocument[] snapshotDocuments = documents
+            .Select(document => new AuthorizedChatDocument(
+                document.LogicalDocumentId,
+                document.DocumentVersionId,
+                document.RepositoryId,
+                document.ScanRunId,
+                document.DocumentType,
+                document.Title,
+                document.ProfiledRevision))
+            .ToArray();
+        AuthorizedChatSection[] snapshotSections = candidates
+            .Zip(parsedSections)
+            .Select(item => new AuthorizedChatSection(
+                item.First.DocumentVersionId,
+                item.First.Section.StableSectionId,
+                item.First.Section.SectionOrder,
+                item.First.Section.SectionKind,
+                item.First.Section.Heading,
+                item.First.Section.ContentMarkdown,
+                item.Second.SourceAnchorIds,
+                item.Second.SupportedDocumentVersionIds,
+                item.First.RepositoryRelativePath,
+                item.First.KeySymbolsJson,
+                item.First.BusinessTermsJson,
+                item.First.TechnicalTermsJson,
+                item.First.SearchText,
+                item.First.RepositoryName))
+            .ToArray();
+        AuthorizedChatSourceAnchor[] snapshotAnchors = anchors
+            .Select(anchor => new AuthorizedChatSourceAnchor(
+                anchor.Id,
+                anchor.DocumentVersionId,
+                anchor.RepositoryId,
+                anchor.ScanRunId,
+                anchor.ProfiledRevision,
+                anchor.RepositoryRelativePath,
+                anchor.LineStart,
+                anchor.LineEnd,
+                anchor.SourceHash))
+            .ToArray();
+        return AuthorizedChatSnapshot.Create(
+            new AuthorizedChatScope(request.SystemId, repositoryIds, accessScope),
+            request.AdvisoryContext,
+            snapshotDocuments,
+            snapshotSections,
+            snapshotAnchors,
+            request.Conversation);
+    }
+
+    internal static async Task<ChatRetrievalStageResult<ChatRelationshipExpansionProjection>>
         MaterializeExpansionAsync(
-            Guid systemId,
-            Guid[] repositoryIds,
+            VulgataDbContext context,
+            AuthorizedChatSnapshot snapshot,
             ChatLexicalPrimaryProjection primary,
             ChatRelationshipProjection projected,
             CancellationToken cancellationToken)
     {
+        Guid systemId = snapshot.Scope.SystemId;
+        Guid[] repositoryIds = snapshot.Scope.RepositoryIds.ToArray();
         HashSet<Guid> primaryDocumentIds = primary.PrimaryDocuments
             .Select(document => document.DocumentVersionId).ToHashSet();
         Guid[] addedDocumentIds = projected.Relationships
@@ -219,10 +359,10 @@ public sealed class ChatEvidenceRetriever : IChatEvidenceRetriever
         CurrentDocumentRow[] addedRows = addedDocumentIds.Length == 0
             ? []
             : await (
-                from logical in _context.LogicalDocuments.AsNoTracking()
-                join version in _context.DocumentVersions.AsNoTracking()
+                from logical in context.LogicalDocuments.AsNoTracking()
+                join version in context.DocumentVersions.AsNoTracking()
                     on logical.CurrentVersionId equals version.Id
-                join scanRun in _context.ScanRuns.AsNoTracking()
+                join scanRun in context.ScanRuns.AsNoTracking()
                     on version.ScanRunId equals scanRun.Id
                 where addedDocumentIds.Contains(version.Id) &&
                     repositoryIds.Contains(version.RepositoryId) &&
@@ -294,7 +434,7 @@ public sealed class ChatEvidenceRetriever : IChatEvidenceRetriever
 
         SourceAnchor[] supportAnchorRows = supportAnchorIds.Length == 0
             ? []
-            : await _context.SourceAnchors.AsNoTracking()
+            : await context.SourceAnchors.AsNoTracking()
                 .Where(anchor => supportAnchorIds.Contains(anchor.Id))
                 .ToArrayAsync(cancellationToken);
         if (supportAnchorRows.Length != supportAnchorIds.Length ||
@@ -391,66 +531,35 @@ public sealed class ChatEvidenceRetriever : IChatEvidenceRetriever
                 flowEvidence,
                 projected.FlowGroups));
     }
-    private async Task<ChatRetrievalStageResult<ChatLexicalPrimaryProjection>>
+    internal static ChatRetrievalStageResult<ChatLexicalPrimaryProjection>
         RetrieveLexicalPrimaryAsync(
-        ChatRetrievalRequest request,
-        Guid[] repositoryIds,
+        AuthorizedChatSnapshot snapshot,
+        string question,
         CancellationToken cancellationToken)
     {
-        ProjectionSectionRow[] candidates = await (
-            from logical in _context.LogicalDocuments.AsNoTracking()
-            join version in _context.DocumentVersions.AsNoTracking()
-                on logical.CurrentVersionId equals version.Id
-            join repository in _context.Repositories.AsNoTracking()
-                on version.RepositoryId equals repository.Id
-            join scanRun in _context.ScanRuns.AsNoTracking()
-                on version.ScanRunId equals scanRun.Id
-            join section in _context.DocumentSections.AsNoTracking()
-                on version.Id equals section.DocumentVersionId
-            join indexEntry in _context.IndexEntries.AsNoTracking()
-                on version.Id equals indexEntry.DocumentVersionId into indexEntries
-            from indexEntry in indexEntries.DefaultIfEmpty()
-            where repositoryIds.Contains(version.RepositoryId) &&
-                version.SystemId == request.SystemId &&
-                version.SupersededById == null &&
-                repository.SystemId == request.SystemId &&
-                scanRun.RepositoryId == version.RepositoryId &&
-                scanRun.Status == ScanRunStatus.Completed &&
-                scanRun.ProfiledRevision == version.ProfiledRevision &&
-                (section.SectionKind == DocumentSectionKind.Overview ||
-                    section.SectionKind == DocumentSectionKind.BusinessRule ||
-                    section.SectionKind == DocumentSectionKind.ProcessStep ||
-                    section.SectionKind == DocumentSectionKind.TechnicalDetail ||
-                    section.SectionKind == DocumentSectionKind.Evidence)
-            orderby version.RepositoryId, logical.Id, section.SectionOrder, section.StableSectionId
-            select new ProjectionSectionRow(
-                logical.Id,
-                version.Id,
-                version.RepositoryId,
-                version.ScanRunId,
-                logical.DocumentType,
-                version.Title,
-                version.ProfiledRevision,
-                section,
-                indexEntry == null ? string.Empty : indexEntry.RepositoryRelativePath,
-                indexEntry == null ? string.Empty : indexEntry.KeySymbolsJson,
-                indexEntry == null ? string.Empty : indexEntry.BusinessTermsJson,
-                indexEntry == null ? string.Empty : indexEntry.TechnicalTermsJson,
-                indexEntry == null ? string.Empty : indexEntry.SearchText,
-                repository.Name))
-            .ToArrayAsync(cancellationToken);
+        cancellationToken.ThrowIfCancellationRequested();
+        Guid[] repositoryIds = snapshot.Scope.RepositoryIds.ToArray();
+        ChatMode mode = snapshot.Conversation.Scope.Mode;
+        Dictionary<Guid, AuthorizedChatDocument> documentsById = snapshot.Documents
+            .ToDictionary(document => document.DocumentVersionId);
+        SnapshotSectionRow[] candidates = snapshot.Sections
+            .Select(section => new SnapshotSectionRow(
+                documentsById.GetValueOrDefault(section.DocumentVersionId),
+                section))
+            .ToArray();
         if (candidates.Length < 1 ||
-            candidates.Select(candidate => candidate.RepositoryId).Distinct().Count() != 2)
+            candidates.Any(candidate => candidate.Document is null) ||
+            candidates.Select(candidate => candidate.Document!.RepositoryId).Distinct().Count() != 2)
         {
             return ChatRetrievalStageResult<ChatLexicalPrimaryProjection>.InconsistentCurrentEvidence();
         }
 
         Guid[] currentLogicalDocumentIds = candidates
-            .Select(candidate => candidate.LogicalDocumentId)
+            .Select(candidate => candidate.Document!.LogicalDocumentId)
             .Distinct()
             .ToArray();
         ChatConversationRetrievalContext conversationContext =
-            request.Conversation.BuildRetrievalContext(
+            snapshot.Conversation.BuildRetrievalContext(
                 currentLogicalDocumentIds,
                 currentLogicalDocumentIds);
         if (conversationContext.IsMissingEquivalent)
@@ -461,29 +570,29 @@ public sealed class ChatEvidenceRetriever : IChatEvidenceRetriever
 
         string retrievalQuestion = string.Join(
             ' ',
-            request.Conversation.Turns
+            snapshot.Conversation.Turns
                 .Where(turn => turn.LogicalDocumentIds.Any(
                     conversationContext.CurrentDocumentHints.Contains))
                 .Select(turn => turn.Question)
-                .Append(request.Question));
+                .Append(question));
         SupplementaryChatSectionCandidate[] selectionCandidates = candidates
             .Select(candidate => new SupplementaryChatSectionCandidate(
-                candidate.DocumentVersionId,
+                candidate.Document!.DocumentVersionId,
                 candidate.Section.StableSectionId,
-                candidate.Title,
+                candidate.Document.Title,
                 candidate.Section.Heading,
                 candidate.Section.ContentMarkdown,
-                candidate.LogicalDocumentId,
-                candidate.RepositoryRelativePath,
-                candidate.KeySymbolsJson,
-                candidate.BusinessTermsJson,
-                candidate.TechnicalTermsJson,
-                candidate.SearchText,
-                candidate.DocumentType,
+                candidate.Document.LogicalDocumentId,
+                candidate.Section.RepositoryRelativePath,
+                candidate.Section.KeySymbolsJson,
+                candidate.Section.BusinessTermsJson,
+                candidate.Section.TechnicalTermsJson,
+                candidate.Section.SearchText,
+                candidate.Document.DocumentType,
                 candidate.Section.SectionKind,
-                candidate.RepositoryId,
+                candidate.Document.RepositoryId,
                 candidate.Section.SectionOrder,
-                candidate.RepositoryName))
+                candidate.Section.RepositoryName))
             .ToArray();
         IReadOnlyList<SupplementaryChatSectionCandidate> selected =
             ChatSupplementaryEvidenceSelector.Select(
@@ -491,12 +600,12 @@ public sealed class ChatEvidenceRetriever : IChatEvidenceRetriever
                 selectionCandidates,
                 12,
                 conversationContext.CurrentDocumentHints,
-                request.Mode);
+                mode);
         if (selected.Count == 0)
         {
             string fallbackQuestion = string.Join(
                 ' ',
-                request.AdvisoryContext.Terms.Prepend(retrievalQuestion));
+                snapshot.AdvisoryContext.Terms.Prepend(retrievalQuestion));
             SupplementaryChatSectionCandidate[] businessSummaries = selectionCandidates
                 .Where(candidate =>
                     candidate.DocumentType == DocumentType.BusinessLogic &&
@@ -515,7 +624,7 @@ public sealed class ChatEvidenceRetriever : IChatEvidenceRetriever
                 businessSummaries,
                 12,
                 conversationContext.CurrentDocumentHints,
-                request.Mode);
+                mode);
         }
 
         if (selected.Count == 0)
@@ -526,14 +635,28 @@ public sealed class ChatEvidenceRetriever : IChatEvidenceRetriever
         HashSet<Guid> selectedSectionIds = selected
             .Select(candidate => candidate.StableSectionId)
             .ToHashSet();
-        ProjectionSectionRow[] selectedRows = candidates
+        SnapshotSectionRow[] selectedRows = candidates
             .Where(candidate => selectedSectionIds.Contains(candidate.Section.StableSectionId))
             .ToArray();
-        ParsedSection[] parsedSections = selectedRows
-            .Select(candidate => ParseSection(candidate.Section))
+        SnapshotParsedSection[] parsedSections = selectedRows
+            .Select(candidate => new SnapshotParsedSection(
+                candidate.Section,
+                candidate.Section.SourceAnchorIds,
+                candidate.Section.SupportedDocumentVersionIds))
             .ToArray();
+        if (parsedSections.Any(section =>
+                section.SourceAnchorIds.Count < 1 ||
+                section.SourceAnchorIds.Any(id => id == Guid.Empty) ||
+                section.SourceAnchorIds.Distinct().Count() != section.SourceAnchorIds.Count ||
+                section.SupportedDocumentVersionIds.Any(id => id == Guid.Empty) ||
+                section.SupportedDocumentVersionIds.Distinct().Count() !=
+                    section.SupportedDocumentVersionIds.Count))
+        {
+            return ChatRetrievalStageResult<ChatLexicalPrimaryProjection>.InconsistentCurrentEvidence();
+        }
+
         Guid[] documentVersionIds = selectedRows
-            .Select(candidate => candidate.DocumentVersionId)
+            .Select(candidate => candidate.Document!.DocumentVersionId)
             .Concat(parsedSections.SelectMany(section => section.SupportedDocumentVersionIds))
             .Distinct()
             .ToArray();
@@ -542,35 +665,15 @@ public sealed class ChatEvidenceRetriever : IChatEvidenceRetriever
             return ChatRetrievalStageResult<ChatLexicalPrimaryProjection>.InconsistentCurrentEvidence();
         }
 
-        CurrentDocumentRow[] documents = await (
-            from logical in _context.LogicalDocuments.AsNoTracking()
-            join version in _context.DocumentVersions.AsNoTracking()
-                on logical.CurrentVersionId equals version.Id
-            join scanRun in _context.ScanRuns.AsNoTracking()
-                on version.ScanRunId equals scanRun.Id
-            where documentVersionIds.Contains(version.Id) &&
-                repositoryIds.Contains(version.RepositoryId) &&
-                version.SystemId == request.SystemId &&
-                version.SupersededById == null &&
-                scanRun.RepositoryId == version.RepositoryId &&
-                scanRun.Status == ScanRunStatus.Completed &&
-                scanRun.ProfiledRevision == version.ProfiledRevision
-            select new CurrentDocumentRow(
-                logical.Id,
-                version.Id,
-                version.RepositoryId,
-                version.ScanRunId,
-                logical.DocumentType,
-                version.Title,
-                version.ProfiledRevision))
-            .Take(6)
-            .ToArrayAsync(cancellationToken);
+        AuthorizedChatDocument[] documents = snapshot.Documents
+            .Where(document => documentVersionIds.Contains(document.DocumentVersionId))
+            .ToArray();
         if (documents.Length != documentVersionIds.Length)
         {
             return ChatRetrievalStageResult<ChatLexicalPrimaryProjection>.InconsistentCurrentEvidence();
         }
 
-        CurrentDocumentRow[] canonicalDocuments = documents
+        AuthorizedChatDocument[] canonicalDocuments = documents
             .OrderByDescending(document => document.DocumentType)
             .ThenBy(document => document.RepositoryId)
             .ThenBy(document => document.LogicalDocumentId)
@@ -587,11 +690,9 @@ public sealed class ChatEvidenceRetriever : IChatEvidenceRetriever
             return ChatRetrievalStageResult<ChatLexicalPrimaryProjection>.InconsistentCurrentEvidence();
         }
 
-        SourceAnchor[] anchors = await _context.SourceAnchors
-            .AsNoTracking()
-            .Where(anchor => anchorIds.Contains(anchor.Id))
-            .Take(33)
-            .ToArrayAsync(cancellationToken);
+        AuthorizedChatSourceAnchor[] anchors = snapshot.SourceAnchors
+            .Where(anchor => anchorIds.Contains(anchor.AnchorId))
+            .ToArray();
         if (anchors.Length != anchorIds.Length || anchors.Any(anchor =>
                 !documentHandles.ContainsKey(anchor.DocumentVersionId) ||
                 !repositoryIds.Contains(anchor.RepositoryId) ||
@@ -611,15 +712,15 @@ public sealed class ChatEvidenceRetriever : IChatEvidenceRetriever
             return ChatRetrievalStageResult<ChatLexicalPrimaryProjection>.InconsistentCurrentEvidence();
         }
 
-        SourceAnchor[] canonicalAnchors = anchors
+        AuthorizedChatSourceAnchor[] canonicalAnchors = anchors
             .OrderBy(anchor => documentHandles[anchor.DocumentVersionId], StringComparer.Ordinal)
             .ThenBy(anchor => anchor.RepositoryRelativePath, StringComparer.Ordinal)
             .ThenBy(anchor => anchor.LineStart)
-            .ThenBy(anchor => anchor.Id)
+            .ThenBy(anchor => anchor.AnchorId)
             .ToArray();
         Dictionary<Guid, string> anchorHandles = canonicalAnchors
-            .Select((anchor, index) => (anchor.Id, Handle: $"a{index + 1}"))
-            .ToDictionary(item => item.Id, item => item.Handle);
+            .Select((anchor, index) => (anchor.AnchorId, Handle: $"a{index + 1}"))
+            .ToDictionary(item => item.AnchorId, item => item.Handle);
         EvidenceDocument[] evidenceDocuments = canonicalDocuments
             .Select(document => new EvidenceDocument(
                 documentHandles[document.DocumentVersionId],
@@ -649,8 +750,8 @@ public sealed class ChatEvidenceRetriever : IChatEvidenceRetriever
             .ToArray();
         EvidenceAnchor[] evidenceAnchors = canonicalAnchors
             .Select(anchor => new EvidenceAnchor(
-                anchorHandles[anchor.Id],
-                anchor.Id,
+                anchorHandles[anchor.AnchorId],
+                anchor.AnchorId,
                 documentHandles[anchor.DocumentVersionId],
                 anchor.DocumentVersionId,
                 anchor.RepositoryId,
@@ -719,6 +820,21 @@ public sealed class ChatEvidenceRetriever : IChatEvidenceRetriever
         return values;
     }
 
+    private static Guid[] ParseGuidArrayForSnapshot(string json)
+    {
+        try
+        {
+            Guid[]? values = JsonSerializer.Deserialize<Guid[]>(json);
+            return values is null || values.Any(value => value == Guid.Empty)
+                ? [Guid.Empty]
+                : values;
+        }
+        catch (JsonException)
+        {
+            return [Guid.Empty];
+        }
+    }
+
     private static bool IsLowerHexSha256(string value) =>
         value is { Length: 64 } &&
         value.All(character => character is >= '0' and <= '9' or >= 'a' and <= 'f');
@@ -751,6 +867,15 @@ public sealed class ChatEvidenceRetriever : IChatEvidenceRetriever
         DocumentSection Section,
         IReadOnlyList<Guid> SourceAnchorIds,
         IReadOnlyList<Guid> SupportedDocumentVersionIds);
+
+    private sealed record SnapshotParsedSection(
+        AuthorizedChatSection Section,
+        IReadOnlyList<Guid> SourceAnchorIds,
+        IReadOnlyList<Guid> SupportedDocumentVersionIds);
+
+    private sealed record SnapshotSectionRow(
+        AuthorizedChatDocument? Document,
+        AuthorizedChatSection Section);
 
     private sealed record ProjectionSectionRow(
         Guid LogicalDocumentId,

@@ -12,7 +12,35 @@ public sealed class ChatRelationshipEvidenceProjector(VulgataDbContext context) 
     internal static ChatRelationshipEvidenceProjector Create(VulgataDbContext context) =>
         new(context);
 
-    public async Task<ChatRelationshipProjection> ProjectAsync(
+    public async Task<ChatRetrievalStageResult<ChatRelationshipExpansionProjection>> ProjectAsync(
+        AuthorizedChatSnapshot snapshot,
+        ChatLexicalPrimaryProjection primary,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(snapshot);
+        ArgumentNullException.ThrowIfNull(primary);
+        ChatRelationshipProjection projected = await ProjectRelationshipsAsync(
+            snapshot.Scope.SystemId,
+            snapshot.Conversation.Scope.Mode,
+            snapshot.Scope.RepositoryIds,
+            primary.ExpansionSeedDocumentVersionIds,
+            primary.PrimaryDocuments.Select(document => document.DocumentVersionId).ToArray(),
+            [],
+            5 - primary.PrimaryDocuments.Count,
+            32,
+            cancellationToken);
+        return projected.IsInconsistent
+            ? ChatRetrievalStageResult<ChatRelationshipExpansionProjection>
+                .InconsistentCurrentEvidence()
+            : await ChatEvidenceRetriever.MaterializeExpansionAsync(
+                _context,
+                snapshot,
+                primary,
+                projected,
+                cancellationToken);
+    }
+
+    private async Task<ChatRelationshipProjection> ProjectRelationshipsAsync(
         Guid systemId,
         ChatMode mode,
         IReadOnlyCollection<Guid> repositoryIds,

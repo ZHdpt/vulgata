@@ -293,6 +293,7 @@ public static class VulgataWebComposition
         builder.Services.AddScoped<IScanExecutionStore, ScanExecutionRepository>();
         builder.Services.AddScoped<IRepositoryAuthorizationVerifier, RepositoryAuthorizationVerifier>();
         builder.Services.AddScoped<IChatAdvisoryContextReader, ChatAdvisoryContextReader>();
+        builder.Services.AddScoped<IChatLexicalEvidenceProjector, ChatLexicalEvidenceProjector>();
         builder.Services.AddScoped<IChatRelationshipProjector, ChatRelationshipEvidenceProjector>();
         builder.Services.AddScoped<ChatEvidencePacketBuilder>();
         builder.Services.AddScoped<IChatEvidenceRetriever, ChatEvidenceRetriever>();

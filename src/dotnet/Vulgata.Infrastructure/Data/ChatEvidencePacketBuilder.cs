@@ -4,9 +4,10 @@ namespace Vulgata.Infrastructure.Data;
 
 public sealed class ChatEvidencePacketBuilder
 {
-    public EvidencePacket Build(ChatEvidencePacketBuildRequest request)
+    public EvidencePacket Build(ChatEvidenceAssembly assembly)
     {
-        ArgumentNullException.ThrowIfNull(request);
+        ArgumentNullException.ThrowIfNull(assembly);
+        ChatEvidencePacketBuildRequest request = assembly.BuildRequest;
 
         EvidenceSection[] retainedSections = request.Sections.ToArray();
         var droppedRelationshipHandles = new HashSet<string>(StringComparer.Ordinal);

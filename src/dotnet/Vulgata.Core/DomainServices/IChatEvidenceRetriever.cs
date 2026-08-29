@@ -44,17 +44,19 @@ public interface IChatEvidenceRetriever
         CancellationToken cancellationToken = default);
 }
 
+public interface IChatLexicalEvidenceProjector
+{
+    Task<ChatRetrievalStageResult<ChatLexicalPrimaryProjection>> ProjectAsync(
+        AuthorizedChatSnapshot snapshot,
+        string question,
+        CancellationToken cancellationToken);
+}
+
 public interface IChatRelationshipProjector
 {
-    Task<ChatRelationshipProjection> ProjectAsync(
-        Guid systemId,
-        ChatMode mode,
-        IReadOnlyCollection<Guid> repositoryIds,
-        IReadOnlyCollection<Guid> seedDocumentVersionIds,
-        IReadOnlyCollection<Guid> includedDocumentVersionIds,
-        IReadOnlyCollection<Guid> excludedEdgeIds,
-        int relatedDocumentLimit,
-        int relationshipLimit,
+    Task<ChatRetrievalStageResult<ChatRelationshipExpansionProjection>> ProjectAsync(
+        AuthorizedChatSnapshot snapshot,
+        ChatLexicalPrimaryProjection primary,
         CancellationToken cancellationToken);
 }
 

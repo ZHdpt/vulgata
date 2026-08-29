@@ -18,6 +18,7 @@ public sealed class ChatEvidenceCurrentnessTests
         new(
             context,
             preparedScopeResolver: null,
+            new ChatLexicalEvidenceProjector(),
             new ChatRelationshipEvidenceProjector(context),
             new ChatEvidencePacketBuilder(),
             logger: null);

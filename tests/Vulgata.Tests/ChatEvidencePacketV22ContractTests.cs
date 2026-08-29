@@ -163,7 +163,7 @@ public sealed class ChatEvidencePacketV22ContractTests
             "已应用的系统上下文",
             validConversation,
             []);
-        return new ChatEvidencePacketBuilder().Build(request);
+        return new ChatEvidencePacketBuilder().Build(new ChatEvidenceAssembly(request));
     }
 
     private static EvidenceFlowGroupAuthority CreateFlowGroup(

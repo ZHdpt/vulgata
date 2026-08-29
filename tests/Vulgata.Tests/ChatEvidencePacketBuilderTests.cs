@@ -99,7 +99,7 @@ public sealed class ChatEvidencePacketBuilderTests
     [Fact]
     public void Build_V2Packet_AdvisoryContext_ExactUtf8BoundSucceedsAndPlusOneFails()
     {
-        ChatEvidencePacketBuildRequest exactRequest = CreateBuildRequest(
+        ChatEvidenceAssembly exactRequest = CreateBuildRequest(
             advisoryContext: new string('a', 8_192));
 
         EvidencePacket exactPacket = new ChatEvidencePacketBuilder().Build(exactRequest);
@@ -474,7 +474,7 @@ public sealed class ChatEvidencePacketBuilderTests
         Assert.NotEqual(baseline.Fingerprint, flowGroupChanged.Fingerprint);
     }
 
-    private static ChatEvidencePacketBuildRequest CreateBuildRequest(
+    private static ChatEvidenceAssembly CreateBuildRequest(
         string sectionContent = "处理订单请求。",
         string flowDescription = "订单处理流程",
         string advisoryContext = "",
@@ -611,7 +611,7 @@ public sealed class ChatEvidencePacketBuilderTests
                 .ToArray();
         }
 
-        return ChatEvidencePacketBuildRequest.Create(
+        return new ChatEvidenceAssembly(ChatEvidencePacketBuildRequest.Create(
             "request-1",
             ChatMode.Business,
             systemId,
@@ -635,7 +635,7 @@ public sealed class ChatEvidencePacketBuilderTests
             optionalRelationshipUnitRanks: optionalRelationshipUnitRanks ??
                 new Dictionary<string, int>(StringComparer.Ordinal),
             lexicalExtraSectionRanks: lexicalExtraSectionRanks ??
-                new Dictionary<string, int>(StringComparer.Ordinal));
+                new Dictionary<string, int>(StringComparer.Ordinal)));
     }
 
     private static EvidenceRelationship CreateV2Relationship(

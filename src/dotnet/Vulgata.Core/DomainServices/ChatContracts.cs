@@ -336,14 +336,50 @@ public sealed record EvidencePacketFlowStep(
     string? RelationshipHandle,
     string Description);
 
+public sealed record AuthorizedChatDocument(
+    Guid LogicalDocumentId,
+    Guid DocumentVersionId,
+    Guid RepositoryId,
+    Guid ScanRunId,
+    DocumentType DocumentType,
+    string Title,
+    string ProfiledRevision);
+
+public sealed record AuthorizedChatSection(
+    Guid DocumentVersionId,
+    Guid StableSectionId,
+    int SectionOrder,
+    DocumentSectionKind SectionKind,
+    string Heading,
+    string ContentMarkdown,
+    IReadOnlyList<Guid> SourceAnchorIds,
+    IReadOnlyList<Guid> SupportedDocumentVersionIds,
+    string RepositoryRelativePath,
+    string KeySymbolsJson,
+    string BusinessTermsJson,
+    string TechnicalTermsJson,
+    string SearchText,
+    string RepositoryName);
+
+public sealed record AuthorizedChatSourceAnchor(
+    Guid AnchorId,
+    Guid DocumentVersionId,
+    Guid RepositoryId,
+    Guid ScanRunId,
+    string ProfiledRevision,
+    string RepositoryRelativePath,
+    int LineStart,
+    int LineEnd,
+    string SourceHash);
+
 public sealed record AuthorizedChatSnapshot
 {
     private AuthorizedChatSnapshot(
         AuthorizedChatScope scope,
         ChatAdvisoryContextSnapshot advisoryContext,
-        IReadOnlyList<EvidenceDocument> documents,
-        IReadOnlyList<EvidenceSection> sections,
-        IReadOnlyList<EvidenceAnchor> sourceAnchors,
+        IReadOnlyList<AuthorizedChatDocument> documents,
+        IReadOnlyList<AuthorizedChatSection> sections,
+        IReadOnlyList<AuthorizedChatSourceAnchor> sourceAnchors,
         ChatConversationState conversation)
     {
         Scope = scope;
@@ -356,17 +392,17 @@ public sealed record AuthorizedChatSnapshot
 
     public AuthorizedChatScope Scope { get; }
     public ChatAdvisoryContextSnapshot AdvisoryContext { get; }
-    public IReadOnlyList<EvidenceDocument> Documents { get; }
-    public IReadOnlyList<EvidenceSection> Sections { get; }
-    public IReadOnlyList<EvidenceAnchor> SourceAnchors { get; }
+    public IReadOnlyList<AuthorizedChatDocument> Documents { get; }
+    public IReadOnlyList<AuthorizedChatSection> Sections { get; }
+    public IReadOnlyList<AuthorizedChatSourceAnchor> SourceAnchors { get; }
     public ChatConversationState Conversation { get; }
 
     public static AuthorizedChatSnapshot Create(
         AuthorizedChatScope scope,
         ChatAdvisoryContextSnapshot advisoryContext,
-        IReadOnlyCollection<EvidenceDocument> documents,
-        IReadOnlyCollection<EvidenceSection> sections,
-        IReadOnlyCollection<EvidenceAnchor> sourceAnchors,
+        IReadOnlyCollection<AuthorizedChatDocument> documents,
+        IReadOnlyCollection<AuthorizedChatSection> sections,
+        IReadOnlyCollection<AuthorizedChatSourceAnchor> sourceAnchors,
         ChatConversationState conversation)
     {
         ArgumentNullException.ThrowIfNull(scope);
@@ -377,6 +413,18 @@ public sealed record AuthorizedChatSnapshot
         ArgumentNullException.ThrowIfNull(conversation);
 
         Guid[] repositoryIds = scope.RepositoryIds.Order().ToArray();
+        AuthorizedChatDocument[] documentSnapshot = documents.ToArray();
+        AuthorizedChatSection[] sectionSnapshot = sections.Select(section => section with
+        {
+            SourceAnchorIds = Array.AsReadOnly(section.SourceAnchorIds.ToArray()),
+            SupportedDocumentVersionIds =
+                Array.AsReadOnly(section.SupportedDocumentVersionIds.ToArray()),
+        }).ToArray();
+        AuthorizedChatSourceAnchor[] anchorSnapshot = sourceAnchors.ToArray();
+        Dictionary<Guid, AuthorizedChatDocument> documentsById = documentSnapshot
+            .GroupBy(document => document.DocumentVersionId)
+            .Where(group => group.Count() == 1)
+            .ToDictionary(group => group.Key, group => group.Single());
         if (scope.SystemId == Guid.Empty ||
             repositoryIds.Length != 2 ||
             repositoryIds.Any(id => id == Guid.Empty || !scope.AccessScope.Contains(id)) ||
@@ -386,7 +434,30 @@ public sealed record AuthorizedChatSnapshot
                 scope.SystemId,
                 repositoryIds)) ||
             advisoryContext.EncodedUtf8Bytes is < 0 or > 8_192 ||
-            !ChatContractGuard.IsSha256(advisoryContext.AuthorityFingerprint))
+            !ChatContractGuard.IsSha256(advisoryContext.AuthorityFingerprint) ||
+            documentSnapshot.Length < 1 ||
+            documentsById.Count != documentSnapshot.Length ||
+            documentSnapshot.Any(document =>
+                document.LogicalDocumentId == Guid.Empty ||
+                document.DocumentVersionId == Guid.Empty ||
+                !repositoryIds.Contains(document.RepositoryId)) ||
+            sectionSnapshot.Length < 1 ||
+            sectionSnapshot.Select(section => section.StableSectionId).Distinct().Count() !=
+                sectionSnapshot.Length ||
+            sectionSnapshot.Any(section =>
+                section.StableSectionId == Guid.Empty ||
+                !documentsById.ContainsKey(section.DocumentVersionId) ||
+                section.SectionOrder < 0 ||
+                section.SectionKind is not (DocumentSectionKind.Overview or
+                    DocumentSectionKind.BusinessRule or
+                    DocumentSectionKind.ProcessStep or
+                    DocumentSectionKind.TechnicalDetail or
+                    DocumentSectionKind.Evidence)) ||
+            anchorSnapshot.Select(anchor => anchor.AnchorId).Distinct().Count() !=
+                anchorSnapshot.Length ||
+            anchorSnapshot.Any(anchor =>
+                anchor.AnchorId == Guid.Empty ||
+                !documentsById.ContainsKey(anchor.DocumentVersionId)))
         {
             throw new ChatContractException(ChatContractFailureCode.InvalidCurrentness);
         }
@@ -397,9 +468,9 @@ public sealed record AuthorizedChatSnapshot
                 Array.AsReadOnly(repositoryIds),
                 scope.AccessScope),
             advisoryContext,
-            Array.AsReadOnly(documents.ToArray()),
-            Array.AsReadOnly(sections.ToArray()),
-            Array.AsReadOnly(sourceAnchors.ToArray()),
+            Array.AsReadOnly(documentSnapshot),
+            Array.AsReadOnly(sectionSnapshot),
+            Array.AsReadOnly(anchorSnapshot),
             conversation);
     }
 }

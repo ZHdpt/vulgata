@@ -6,10 +6,10 @@
   "stage": "implement",
   "preflight": {
     "branch": "demo0831/story-12-5",
-    "head": "12f721cdcb3971108b7c0c356f32d8c7292ff6c4",
+    "head": "ae8f97dbfe40e6d286c934b24b67f2bda74b46ec",
     "git_identity_sha256": "07a20fe92c0f34dce99c42edc204a9db68ea55524b692aa9828e2edde364da34",
-    "status_sha256": "0a4dee7179c7d4b9f24c61f767c6e2a75383f732077665d7a58aacf833152ce2",
-    "observed_at": "2026-08-29T01:35:37.4466181Z"
+    "status_sha256": "cff336a0cd216436f9e56f6073a40b3392aec094f75a479df99fb4ce3b097d8a",
+    "observed_at": "2026-08-29T02:15:58.2391709Z"
   },
   "artifacts": {
     "spec": {
@@ -22,7 +22,7 @@
     },
     "tasks": {
       "path": "specs/014-grounded-llm-wiki-chat-release-evidence/tasks.md",
-      "sha256": "7911ba276cd9e6d6d354c967fda43dd1ee2fa84b83184e4a2e0fa1a627652bbf"
+      "sha256": "eeec914b49fda3cf054d00f384e911828c8d63b54e25cb7be3e780bec37ea5b7"
     }
   },
   "gates": {
@@ -120,18 +120,18 @@
     "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/implementation-approval-track-b-02.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/implementation-approval-track-c-01.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/integration/story-12.4-dependency-integration-correction-01.md",
-    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/track-b-convergence-correction-11.md"
+    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/track-b-convergence-correction-12.md"
   ],
   "checkpoint": {
-    "checkpoint_id": "bmad-12-5-implement-20260829T013537Z-t073-approved",
+    "checkpoint_id": "bmad-12-5-implement-20260829T021558Z-t073",
     "stage": "implement",
     "commit_sha": null,
     "binding_status": "pending"
   },
   "resume": {
     "stage": "implement",
-    "reason": "User approved test-first T073 implementation and up to three additional non-converged passes before the next approval pause. Track C remains closed.",
-    "evidence_path": "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/convergence-continuation-03.md"
+    "reason": "T073 is GREEN and pending its implementation checkpoint. Run the next fresh convergence pass; the next user approval pause occurs only after three additional non-converged passes. Track C remains closed.",
+    "evidence_path": "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/track-b-convergence-correction-12.md"
   },
-  "updated_at": "2026-08-29T01:35:37.4466181Z"
+  "updated_at": "2026-08-29T02:15:58.2391709Z"
 }
