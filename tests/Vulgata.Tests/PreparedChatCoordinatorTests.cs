@@ -30,6 +30,52 @@ public sealed class PreparedChatCoordinatorTests
     }
 
     [Fact]
+    public void Constructor_RequiresExactlyOneTypedRecorderAndPublicationOwnerWithoutFallbacks()
+    {
+        ParameterInfo[] parameters = Assert.Single(
+            typeof(PreparedChatCoordinator).GetConstructors()).GetParameters();
+
+        Assert.Single(
+            parameters,
+            parameter => parameter.ParameterType == typeof(IChatStreamCompletionSummaryRecorder));
+        Assert.Single(
+            parameters,
+            parameter => parameter.ParameterType == typeof(IPreparedChatPublicationOwner));
+        Assert.DoesNotContain(parameters, parameter => parameter.ParameterType == typeof(object));
+        Assert.DoesNotContain(
+            parameters,
+            parameter => parameter.ParameterType == typeof(IChatStreamCompletionSummaryRecorder) &&
+                parameter.HasDefaultValue);
+        Assert.DoesNotContain(
+            parameters,
+            parameter => parameter.ParameterType == typeof(IPreparedChatPublicationOwner) &&
+                parameter.HasDefaultValue);
+    }
+
+    [Fact]
+    public void Constructor_RejectsNullRecorderAndOwnerInsteadOfActivatingFallbacks()
+    {
+        var candidateExtractor = new ChatCandidateExtractor();
+
+        Assert.Throws<ArgumentNullException>(() => new PreparedChatCoordinator(
+            new FixedAuthenticationStateProvider("owner-1"),
+            new StubSystemRepository([]),
+            new StubRepositoryRepository([]),
+            new StubAuthorizationVerifier(),
+            new CanonicalEmptyAdvisoryContextReader(),
+            new StubEvidenceRetriever(),
+            candidateExtractor,
+            new StubDispatcher(),
+            new StubCurrentnessValidator(),
+            TimeProvider.System,
+            new ChatAgentResultValidator(candidateExtractor),
+            new StubPreparedChatScopeResolver(),
+            new PreparedChatQuestionRequestValidator(),
+            null!,
+            null!));
+    }
+
+    [Fact]
     public void IChatEvidenceRetriever_RetrieveAsync_UsesServerOwnedConversationRequest()
     {
         MethodInfo retrieveMethod = Assert.Single(
@@ -89,7 +135,8 @@ public sealed class PreparedChatCoordinatorTests
             new ChatAgentResultValidator(candidateExtractor),
             new StubPreparedChatScopeResolver(),
             new PreparedChatQuestionRequestValidator(),
-            new RecordingCompletionSummaryRecorder());
+            new RecordingCompletionSummaryRecorder(),
+            new PreparedChatPublicationOwner(TimeProvider.System));
 
         IReadOnlyList<PreparedChatScopeOption> scopes = await coordinator.ListScopesAsync();
 
@@ -132,7 +179,8 @@ public sealed class PreparedChatCoordinatorTests
             new ChatAgentResultValidator(candidateExtractor),
             new StubPreparedChatScopeResolver(preparedSystem.Id),
             new PreparedChatQuestionRequestValidator(),
-            new RecordingCompletionSummaryRecorder());
+            new RecordingCompletionSummaryRecorder(),
+            new PreparedChatPublicationOwner(TimeProvider.System));
 
         IReadOnlyList<PreparedChatScopeOption> scopes = await coordinator.ListScopesAsync();
 
@@ -168,7 +216,8 @@ public sealed class PreparedChatCoordinatorTests
             new ChatAgentResultValidator(candidateExtractor),
             new StubPreparedChatScopeResolver(),
             new PreparedChatQuestionRequestValidator(),
-            new RecordingCompletionSummaryRecorder());
+            new RecordingCompletionSummaryRecorder(),
+            new PreparedChatPublicationOwner(TimeProvider.System));
 
         PreparedChatResult result = await coordinator.AskAsync(
             ChatMode.Business,
@@ -244,6 +293,50 @@ public sealed class PreparedChatCoordinatorTests
     }
 
     [Fact]
+    public async Task AskAsync_FailedAttempt_DoesNotActivateReplacementConversationAfterCommittedOwner()
+    {
+        var system = new SystemEntity("支付系统", null, null, DateTimeOffset.UtcNow);
+        Repository first = system.AddRepository("账户仓库", "https://example.test/account.git", null, null, DateTimeOffset.UtcNow);
+        Repository second = system.AddRepository("渠道仓库", "https://example.test/channel.git", null, null, DateTimeOffset.UtcNow);
+        var retriever = new StubEvidenceRetriever();
+        var dispatcher = new StubDispatcher();
+        var coordinator = CreateCoordinator(
+            system,
+            [first, second],
+            retriever: retriever,
+            dispatcher: dispatcher);
+
+        PreparedChatResult accepted = await coordinator.AskAsync(
+            ChatMode.Business,
+            system.Id,
+            [first.Id, second.Id],
+            "客户如何付款？");
+        dispatcher.FailureCode = ChatContractFailureCode.ProviderFailure;
+        PreparedChatResult failed = await coordinator.AskAsync(
+            ChatMode.Business,
+            system.Id,
+            [first.Id, second.Id],
+            "失败尝试不应成为会话状态？");
+        dispatcher.FailureCode = null;
+        PreparedChatResult recovered = await coordinator.AskAsync(
+            ChatMode.Business,
+            system.Id,
+            [first.Id, second.Id],
+            "客户如何确认付款？");
+
+        Assert.Equal(PreparedChatResultKind.Succeeded, accepted.Kind);
+        Assert.Equal(PreparedChatResultKind.EvidenceUnavailable, failed.Kind);
+        Assert.Equal(PreparedChatResultKind.Succeeded, recovered.Kind);
+        ChatConversationState committedConversation = Assert.IsType<ChatConversationState>(
+            accepted.PublicationCommit!.Conversation);
+        Assert.Same(committedConversation, retriever.Requests[1].Conversation);
+        Assert.Same(committedConversation, retriever.Requests[2].Conversation);
+        Assert.DoesNotContain(
+            retriever.Requests[2].Conversation.Turns,
+            turn => string.Equals(turn.Question, "失败尝试不应成为会话状态？", StringComparison.Ordinal));
+    }
+
+    [Fact]
     public async Task AskAsync_BusinessCodeLogicFallback_PublishesSafeNarrativeWithOriginalCitation()
     {
         var system = new SystemEntity("支付系统", null, null, DateTimeOffset.UtcNow);
@@ -273,7 +366,8 @@ public sealed class PreparedChatCoordinatorTests
             new ChatAgentResultValidator(candidateExtractor),
             new StubPreparedChatScopeResolver(),
             new PreparedChatQuestionRequestValidator(),
-            new RecordingCompletionSummaryRecorder());
+            new RecordingCompletionSummaryRecorder(),
+            new PreparedChatPublicationOwner(TimeProvider.System));
 
         PreparedChatResult result = await coordinator.AskAsync(
             ChatMode.Business,
@@ -413,7 +507,8 @@ public sealed class PreparedChatCoordinatorTests
             new ChatAgentResultValidator(candidateExtractor),
             new StubPreparedChatScopeResolver(),
             new PreparedChatQuestionRequestValidator(),
-            new RecordingCompletionSummaryRecorder());
+            new RecordingCompletionSummaryRecorder(),
+            new PreparedChatPublicationOwner(TimeProvider.System));
 
         PreparedChatResult result = await coordinator.AskAsync(
             ChatMode.Business,
@@ -455,7 +550,8 @@ public sealed class PreparedChatCoordinatorTests
             new ChatAgentResultValidator(candidateExtractor),
             new StubPreparedChatScopeResolver(),
             new PreparedChatQuestionRequestValidator(),
-            new RecordingCompletionSummaryRecorder());
+            new RecordingCompletionSummaryRecorder(),
+            new PreparedChatPublicationOwner(TimeProvider.System));
 
         _ = await coordinator.AskAsync(
             ChatMode.Business,
@@ -498,7 +594,8 @@ public sealed class PreparedChatCoordinatorTests
             new ChatAgentResultValidator(candidateExtractor),
             new StubPreparedChatScopeResolver(),
             new PreparedChatQuestionRequestValidator(),
-            new RecordingCompletionSummaryRecorder());
+            new RecordingCompletionSummaryRecorder(),
+            new PreparedChatPublicationOwner(TimeProvider.System));
 
         PreparedChatResult result = await coordinator.AskAsync(
             ChatMode.Business,
@@ -567,7 +664,8 @@ public sealed class PreparedChatCoordinatorTests
             new ChatAgentResultValidator(candidateExtractor),
             new StubPreparedChatScopeResolver(),
             new PreparedChatQuestionRequestValidator(),
-            completionRecorder);
+            completionRecorder,
+            new PreparedChatPublicationOwner(TimeProvider.System));
 
         PreparedChatResult result = await coordinator.AskAsync(
             ChatMode.Business,
@@ -670,7 +768,8 @@ public sealed class PreparedChatCoordinatorTests
             new ChatAgentResultValidator(candidateExtractor),
             new StubPreparedChatScopeResolver(),
             new PreparedChatQuestionRequestValidator(),
-            new RecordingCompletionSummaryRecorder());
+            new RecordingCompletionSummaryRecorder(),
+            new PreparedChatPublicationOwner(TimeProvider.System));
 
         PreparedChatResult result = await coordinator.AskAsync(
             ChatMode.Business,
@@ -698,6 +797,7 @@ public sealed class PreparedChatCoordinatorTests
         var dispatcher = new StubDispatcher { Trace = trace };
         var currentness = new StubCurrentnessValidator { Trace = trace };
         var candidateExtractor = new ChatCandidateExtractor();
+        var timeProvider = new RecordingTimeProvider(trace);
         var coordinator = new PreparedChatCoordinator(
             new FixedAuthenticationStateProvider("owner-1"),
             new StubSystemRepository([system]),
@@ -708,11 +808,12 @@ public sealed class PreparedChatCoordinatorTests
             candidateExtractor,
             dispatcher,
             currentness,
-            new RecordingTimeProvider(trace),
+            timeProvider,
             new ChatAgentResultValidator(candidateExtractor),
             new StubPreparedChatScopeResolver(),
             new PreparedChatQuestionRequestValidator(),
-            new RecordingCompletionSummaryRecorder());
+            new RecordingCompletionSummaryRecorder(),
+            new PreparedChatPublicationOwner(timeProvider));
 
         PreparedChatResult result = await coordinator.AskAsync(
             ChatMode.Business,
@@ -1208,7 +1309,8 @@ public sealed class PreparedChatCoordinatorTests
             new ChatAgentResultValidator(candidateExtractor),
             new StubPreparedChatScopeResolver(),
             new PreparedChatQuestionRequestValidator(),
-            new RecordingCompletionSummaryRecorder());
+            new RecordingCompletionSummaryRecorder(),
+            new PreparedChatPublicationOwner(TimeProvider.System));
         using var cancellation = new CancellationTokenSource();
         cancellation.Cancel();
 
@@ -1253,7 +1355,8 @@ public sealed class PreparedChatCoordinatorTests
             new ChatAgentResultValidator(candidateExtractor),
             new StubPreparedChatScopeResolver(),
             new PreparedChatQuestionRequestValidator(),
-            new RecordingCompletionSummaryRecorder());
+            new RecordingCompletionSummaryRecorder(),
+            new PreparedChatPublicationOwner(TimeProvider.System));
         (ChatMode Mode, Guid SystemId, IReadOnlyCollection<Guid> RepositoryIds, string Question)[] invalidRequests =
         [
             ((ChatMode)999, system.Id, [first.Id, second.Id], "客户如何付款？"),
@@ -1305,7 +1408,8 @@ public sealed class PreparedChatCoordinatorTests
             new ChatAgentResultValidator(candidateExtractor),
             new StubPreparedChatScopeResolver(),
             new PreparedChatQuestionRequestValidator(),
-            new RecordingCompletionSummaryRecorder());
+            new RecordingCompletionSummaryRecorder(),
+            new PreparedChatPublicationOwner(TimeProvider.System));
 
         PreparedChatResult result = await coordinator.AskAsync(
             ChatMode.Business,
@@ -1347,7 +1451,8 @@ public sealed class PreparedChatCoordinatorTests
             new ChatAgentResultValidator(candidateExtractor),
             new StubPreparedChatScopeResolver(),
             new PreparedChatQuestionRequestValidator(),
-            new RecordingCompletionSummaryRecorder());
+            new RecordingCompletionSummaryRecorder(),
+            new PreparedChatPublicationOwner(TimeProvider.System));
 
         PreparedChatResult prior = await coordinator.AskAsync(
             ChatMode.Business,
@@ -1382,6 +1487,7 @@ public sealed class PreparedChatCoordinatorTests
         TimeProvider? timeProvider = null)
     {
         var candidateExtractor = new ChatCandidateExtractor();
+        TimeProvider effectiveTimeProvider = timeProvider ?? TimeProvider.System;
         return new PreparedChatCoordinator(
             new FixedAuthenticationStateProvider("owner-1"),
             new StubSystemRepository([system]),
@@ -1392,11 +1498,12 @@ public sealed class PreparedChatCoordinatorTests
             candidateExtractor,
             dispatcher ?? new StubDispatcher(),
             currentness ?? new StubCurrentnessValidator(),
-            timeProvider ?? TimeProvider.System,
+            effectiveTimeProvider,
             new ChatAgentResultValidator(candidateExtractor),
             new StubPreparedChatScopeResolver(),
             new PreparedChatQuestionRequestValidator(),
-            completionRecorder ?? new RecordingCompletionSummaryRecorder());
+            completionRecorder ?? new RecordingCompletionSummaryRecorder(),
+            new PreparedChatPublicationOwner(effectiveTimeProvider));
     }
 
     private static ChatAdvisoryContextSnapshot CreateAdvisorySnapshot(

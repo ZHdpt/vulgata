@@ -189,8 +189,16 @@ public sealed class ChatPipelineCompositionTests
             .GetRequiredService<IPreparedChatPublicationOwner>();
         IChatStreamCompletionSummaryRecorder recorder = scope.ServiceProvider
             .GetRequiredService<IChatStreamCompletionSummaryRecorder>();
+        IPreparedChatPublicationOwner[] owners = scope.ServiceProvider
+            .GetServices<IPreparedChatPublicationOwner>()
+            .ToArray();
+        IChatStreamCompletionSummaryRecorder[] recorders = scope.ServiceProvider
+            .GetServices<IChatStreamCompletionSummaryRecorder>()
+            .ToArray();
 
         Assert.IsType<PreparedChatPublicationOwner>(owner);
+        Assert.Single(owners);
+        Assert.Single(recorders);
         Assert.Same(
             owner,
             scope.ServiceProvider.GetRequiredService<IPreparedChatPublicationOwner>());

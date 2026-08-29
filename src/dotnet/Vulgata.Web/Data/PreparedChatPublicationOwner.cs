@@ -17,15 +17,89 @@ public enum PreparedChatRevealMode
     ProgressiveAccepted,
 }
 
-public sealed record PreparedChatRevealDirective(
-    PreparedChatRevealMode Mode,
-    long AbsoluteDeadlineUnixTimeMilliseconds)
+public sealed class PreparedChatRevealDirective
 {
-    public static PreparedChatRevealDirective ImmediateAccepted(long absoluteDeadline) =>
-        new(PreparedChatRevealMode.ImmediateAccepted, absoluteDeadline);
+    public const long TextElementDelayMilliseconds = 25;
+    public const long FixedSafetyMarginMilliseconds = 1_000;
 
-    public static PreparedChatRevealDirective ProgressiveAccepted(long absoluteDeadline) =>
-        new(PreparedChatRevealMode.ProgressiveAccepted, absoluteDeadline);
+    private readonly bool _progressiveRequested;
+    private int _mode;
+
+    private PreparedChatRevealDirective(
+        PreparedChatRevealMode mode,
+        long absoluteDeadlineUnixTimeMilliseconds,
+        long scheduleCostMilliseconds,
+        long preparedRemainingBudgetMilliseconds)
+    {
+        if (scheduleCostMilliseconds < 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(scheduleCostMilliseconds));
+        }
+
+        if (preparedRemainingBudgetMilliseconds < 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(preparedRemainingBudgetMilliseconds));
+        }
+
+        _mode = (int)mode;
+        _progressiveRequested = mode == PreparedChatRevealMode.ProgressiveAccepted;
+        AbsoluteDeadlineUnixTimeMilliseconds = absoluteDeadlineUnixTimeMilliseconds;
+        ScheduleCostMilliseconds = scheduleCostMilliseconds;
+        PreparedRemainingBudgetMilliseconds = preparedRemainingBudgetMilliseconds;
+    }
+
+    public PreparedChatRevealMode Mode =>
+        (PreparedChatRevealMode)Volatile.Read(ref _mode);
+
+    public long AbsoluteDeadlineUnixTimeMilliseconds { get; }
+
+    public long ScheduleCostMilliseconds { get; }
+
+    public long SafetyMarginMilliseconds => FixedSafetyMarginMilliseconds;
+
+    internal long PreparedRemainingBudgetMilliseconds { get; }
+
+    public static PreparedChatRevealDirective ImmediateAccepted(
+        long absoluteDeadline,
+        long scheduleCostMilliseconds = 0) =>
+        new(
+            PreparedChatRevealMode.ImmediateAccepted,
+            absoluteDeadline,
+            scheduleCostMilliseconds,
+            long.MaxValue);
+
+    public static PreparedChatRevealDirective ProgressiveAccepted(
+        long absoluteDeadline,
+        long scheduleCostMilliseconds = 0) =>
+        new(
+            PreparedChatRevealMode.ProgressiveAccepted,
+            absoluteDeadline,
+            scheduleCostMilliseconds,
+            long.MaxValue);
+
+    internal static PreparedChatRevealDirective ProgressiveAccepted(
+        long absoluteDeadline,
+        long scheduleCostMilliseconds,
+        long preparedRemainingBudgetMilliseconds) =>
+        new(
+            PreparedChatRevealMode.ProgressiveAccepted,
+            absoluteDeadline,
+            scheduleCostMilliseconds,
+            preparedRemainingBudgetMilliseconds);
+
+    internal void SelectForRemainingBudget(long remainingBudgetMilliseconds)
+    {
+        bool scheduleStrictlyFits =
+            _progressiveRequested &&
+            ScheduleCostMilliseconds < remainingBudgetMilliseconds &&
+            SafetyMarginMilliseconds <
+                remainingBudgetMilliseconds - ScheduleCostMilliseconds;
+        Volatile.Write(
+            ref _mode,
+            (int)(scheduleStrictlyFits
+                ? PreparedChatRevealMode.ProgressiveAccepted
+                : PreparedChatRevealMode.ImmediateAccepted));
+    }
 }
 
 public sealed record PreparedChatCompletionSummaryTemplate(
@@ -79,6 +153,25 @@ public sealed class PreparedChatCommittedCompletionSummary
             durationMilliseconds);
 }
 
+internal sealed class PreparedChatPublicationAuthority
+{
+    private AcceptedPublicationCommit? _currentCommit;
+
+    internal AcceptedPublicationCommit? CurrentCommit
+    {
+        get
+        {
+            AcceptedPublicationCommit? current = Volatile.Read(ref _currentCommit);
+            return current?.Published == true ? current : null;
+        }
+    }
+
+    internal void Prepare(AcceptedPublicationCommit commit) =>
+        Volatile.Write(ref _currentCommit, commit);
+
+    internal void Reset() => Interlocked.Exchange(ref _currentCommit, null);
+}
+
 public sealed class PreparedChatPublicationCandidate
 {
     private int _state;
@@ -94,6 +187,31 @@ public sealed class PreparedChatPublicationCandidate
         CancellationToken deadlineCancellationToken,
         string packetFingerprint,
         string advisoryAuthorityFingerprint)
+        : this(
+            acceptedAnswer,
+            proposedConversation,
+            completionSummary,
+            reveal,
+            startTimestamp,
+            deadlineTimestamp,
+            deadlineCancellationToken,
+            packetFingerprint,
+            advisoryAuthorityFingerprint,
+            new PreparedChatPublicationAuthority())
+    {
+    }
+
+    internal PreparedChatPublicationCandidate(
+        GroundedAnswer acceptedAnswer,
+        ChatConversationState proposedConversation,
+        PreparedChatCompletionSummaryTemplate completionSummary,
+        PreparedChatRevealDirective reveal,
+        long startTimestamp,
+        long deadlineTimestamp,
+        CancellationToken deadlineCancellationToken,
+        string packetFingerprint,
+        string advisoryAuthorityFingerprint,
+        PreparedChatPublicationAuthority publicationAuthority)
     {
         AcceptedAnswer = acceptedAnswer ?? throw new ArgumentNullException(nameof(acceptedAnswer));
         ProposedConversation = proposedConversation ??
@@ -114,6 +232,8 @@ public sealed class PreparedChatPublicationCandidate
         PacketFingerprint = packetFingerprint ?? throw new ArgumentNullException(nameof(packetFingerprint));
         AdvisoryAuthorityFingerprint = advisoryAuthorityFingerprint ??
             throw new ArgumentNullException(nameof(advisoryAuthorityFingerprint));
+        PublicationAuthority = publicationAuthority ??
+            throw new ArgumentNullException(nameof(publicationAuthority));
         CommittedCompletionSummary = new PreparedChatCommittedCompletionSummary(
             completionSummary);
         AcceptedCommit = new AcceptedPublicationCommit(this);
@@ -149,6 +269,8 @@ public sealed class PreparedChatPublicationCandidate
     internal AcceptedPublicationCommit CancelledCommit { get; }
 
     internal PreparedChatCommittedCompletionSummary CommittedCompletionSummary { get; }
+
+    internal PreparedChatPublicationAuthority PublicationAuthority { get; }
 
     internal void SetAcceptedPrimitives(long sampledTimestamp, long acceptedDurationMilliseconds)
     {
@@ -225,29 +347,38 @@ public sealed class PreparedChatPublicationOwner(TimeProvider timeProvider) :
             if (cancellationToken.IsCancellationRequested)
             {
                 candidate.TryTransition(PreparedChatPublicationState.CancelledBeforePublication);
-                return candidate.TerminalCommit;
+                return candidate.CancelledCommit;
             }
 
             if (candidate.DeadlineCancellationToken.IsCancellationRequested)
             {
                 candidate.TryTransition(PreparedChatPublicationState.TimedOutBeforePublication);
-                return candidate.TerminalCommit;
+                return candidate.TimedOutCommit;
             }
 
             long sampledTimestamp = timeProvider.GetTimestamp();
             if (sampledTimestamp >= candidate.DeadlineTimestamp)
             {
                 candidate.TryTransition(PreparedChatPublicationState.TimedOutBeforePublication);
-                return candidate.TerminalCommit;
+                return candidate.TimedOutCommit;
             }
 
-            long acceptedDurationMilliseconds = Math.Max(
-                0,
-                (long)timeProvider.GetElapsedTime(candidate.StartTimestamp, sampledTimestamp)
-                    .TotalMilliseconds);
+            double elapsedTimestampUnits =
+                (double)sampledTimestamp - candidate.StartTimestamp;
+            double deadlineTimestampUnits =
+                (double)candidate.DeadlineTimestamp - candidate.StartTimestamp;
+            long acceptedDurationMilliseconds = (long)Math.Clamp(
+                (elapsedTimestampUnits / deadlineTimestampUnits) * 29_000d,
+                0d,
+                29_000d);
+            long remainingBudgetMilliseconds = 29_000 - acceptedDurationMilliseconds;
+            candidate.Reveal.SelectForRemainingBudget(Math.Min(
+                remainingBudgetMilliseconds,
+                candidate.Reveal.PreparedRemainingBudgetMilliseconds));
             candidate.SetAcceptedPrimitives(sampledTimestamp, acceptedDurationMilliseconds);
+            candidate.PublicationAuthority.Prepare(candidate.AcceptedCommit);
             candidate.TryTransition(PreparedChatPublicationState.AcceptedPublicationCommit);
-            return candidate.TerminalCommit;
+            return candidate.AcceptedCommit;
         }
     }
 }

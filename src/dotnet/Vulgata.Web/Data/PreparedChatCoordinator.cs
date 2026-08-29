@@ -1,5 +1,6 @@
 using System.Security.Cryptography;
 using System.Text;
+using System.Globalization;
 using FluentValidation;
 using FluentValidation.Results;
 using Microsoft.AspNetCore.Components.Authorization;
@@ -69,8 +70,8 @@ public sealed class PreparedChatCoordinator(
     ChatAgentResultValidator resultValidator,
     IPreparedChatScopeResolver preparedScopeResolver,
     IValidator<PreparedChatQuestionRequest> requestValidator,
-    object? completionSummaryRecorder = null,
-    IPreparedChatPublicationOwner? publicationOwner = null,
+    IChatStreamCompletionSummaryRecorder completionSummaryRecorder,
+    IPreparedChatPublicationOwner publicationOwner,
     ILogger<PreparedChatCoordinator>? logger = null) : IDisposable
 {
     private const string _invalidRequestMessage = "请选择业务模式、系统和两个不同的仓库，并输入 1 至 2000 个字符的问题。";
@@ -81,11 +82,10 @@ public sealed class PreparedChatCoordinator(
     private const string _timedOutMessage = "回答超时，请重试。";
     private const string _cancelledMessage = "已取消本次提问。";
     private readonly IChatStreamCompletionSummaryRecorder _completionSummaryRecorder =
-        completionSummaryRecorder as IChatStreamCompletionSummaryRecorder ??
-        NullChatStreamCompletionSummaryRecorder.Instance;
+        completionSummaryRecorder ?? throw new ArgumentNullException(nameof(completionSummaryRecorder));
     private readonly IPreparedChatPublicationOwner _publicationOwner =
-        publicationOwner ?? new PreparedChatPublicationOwner(timeProvider);
-    private AcceptedPublicationCommit? _acceptedPublicationCommit;
+        publicationOwner ?? throw new ArgumentNullException(nameof(publicationOwner));
+    private readonly PreparedChatPublicationAuthority _publicationAuthority = new();
 
     public async Task<IReadOnlyList<PreparedChatScopeOption>> ListScopesAsync(
         CancellationToken cancellationToken = default)
@@ -221,7 +221,7 @@ public sealed class PreparedChatCoordinator(
                 request.SystemId,
                 request.RepositoryIds);
             ChatConversationState conversationState =
-                (_acceptedPublicationCommit?.Conversation ?? ChatConversationState.Empty(conversationScope))
+                (_publicationAuthority.CurrentCommit?.Conversation ?? ChatConversationState.Empty(conversationScope))
                 .ResetForScopeChange(conversationScope);
             long absoluteDeadlineUnixTimeMilliseconds = deadlineUtc.ToUnixTimeMilliseconds();
             UserContext? userContext = await GetCurrentUserContextAsync();
@@ -607,8 +607,16 @@ public sealed class PreparedChatCoordinator(
             completionSummary.SyntaxRepairUsed,
             Array.AsReadOnly(attemptValidationOutcomes),
             "accepted");
+        long revealScheduleCostMilliseconds = CalculateRevealScheduleCostMilliseconds(answer);
+        long preparedRemainingRevealBudgetMilliseconds = Math.Clamp(
+            absoluteDeadlineUnixTimeMilliseconds -
+                timeProvider.GetUtcNow().ToUnixTimeMilliseconds(),
+            0,
+            29_000);
         var reveal = PreparedChatRevealDirective.ProgressiveAccepted(
-            absoluteDeadlineUnixTimeMilliseconds);
+            absoluteDeadlineUnixTimeMilliseconds,
+            revealScheduleCostMilliseconds,
+            preparedRemainingRevealBudgetMilliseconds);
         var candidate = new PreparedChatPublicationCandidate(
             answer,
             proposedConversationState,
@@ -618,7 +626,8 @@ public sealed class PreparedChatCoordinator(
             deadlineTimestamp,
             cancellationToken,
             packet.Fingerprint,
-            packet.AdvisoryContextAuthorityFingerprint);
+            packet.AdvisoryContextAuthorityFingerprint,
+            _publicationAuthority);
 
         AcceptedPublicationCommit publicationCommit = _publicationOwner.Commit(
             candidate,
@@ -633,7 +642,6 @@ public sealed class PreparedChatCoordinator(
             return TimedOut();
         }
 
-        _acceptedPublicationCommit = publicationCommit;
         long acceptedDurationMilliseconds =
             publicationCommit.CompletionSummary!.TotalAcceptedAnswerDurationMilliseconds!.Value;
         long remainingDeadlineMilliseconds = Math.Max(0, 29_000 - acceptedDurationMilliseconds);
@@ -683,6 +691,28 @@ public sealed class PreparedChatCoordinator(
             citationHandles,
             logicalDocumentIds);
         return conversationState.AppendValidatedTurn(turn);
+    }
+
+    private static long CalculateRevealScheduleCostMilliseconds(GroundedAnswer answer)
+    {
+        long delayedTextElementCount = 0;
+        foreach (MaterialClaim claim in answer.MaterialClaims)
+        {
+            int textElementCount = 0;
+            TextElementEnumerator enumerator =
+                StringInfo.GetTextElementEnumerator(claim.Text);
+            while (enumerator.MoveNext())
+            {
+                textElementCount++;
+            }
+
+            delayedTextElementCount = checked(
+                delayedTextElementCount + Math.Max(0, textElementCount - 1));
+        }
+
+        return checked(
+            delayedTextElementCount *
+            PreparedChatRevealDirective.TextElementDelayMilliseconds);
     }
 
     private void RecordCompletionSummary(
@@ -745,21 +775,9 @@ public sealed class PreparedChatCoordinator(
         IReadOnlyList<string> RuntimeObservationIds,
         bool SyntaxRepairUsed);
 
-    private sealed class NullChatStreamCompletionSummaryRecorder :
-        IChatStreamCompletionSummaryRecorder
-    {
-        internal static readonly NullChatStreamCompletionSummaryRecorder Instance = new();
-
-        public void RecordCompletion(ChatStreamCompletionSummary summary)
-        {
-        }
-
-        public IReadOnlyList<string> GetRuntimeObservationIds(string requestId) => [];
-    }
-
     private void ClearConversation()
     {
-        _acceptedPublicationCommit = null;
+        _publicationAuthority.Reset();
     }
 
     public void Dispose()

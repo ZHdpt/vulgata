@@ -72,6 +72,22 @@ public sealed class ChatValidatedRevealTests
         Assert.True(claim.IsComplete);
     }
 
+    [Fact]
+    public void ProgressiveRevealDirective_BindsUnicodeTextElementCostAndFixedSafetyMargin()
+    {
+        Type directiveType = typeof(PreparedChatRevealDirective);
+        PropertyInfo? scheduleCost = directiveType.GetProperty("ScheduleCostMilliseconds");
+        PropertyInfo? safetyMargin = directiveType.GetProperty("SafetyMarginMilliseconds");
+
+        Assert.NotNull(scheduleCost);
+        Assert.NotNull(safetyMargin);
+        PreparedChatRevealDirective directive = PreparedChatRevealDirective.ProgressiveAccepted(29_000);
+
+        Assert.False(scheduleCost!.CanWrite);
+        Assert.True(Convert.ToInt64(scheduleCost.GetValue(directive)) >= 0);
+        Assert.True(Convert.ToInt64(safetyMargin!.GetValue(directive)) > 0);
+    }
+
     private static GroundedAnswer CreateAnswer(string text)
     {
         const string citationId = "c1";

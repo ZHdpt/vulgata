@@ -50,6 +50,7 @@ public sealed class PreparedChatIntegrationTests
             new ChatAgentResultValidator(candidateExtractor),
             new InteractionScopeResolver(),
             new PreparedChatQuestionRequestValidator(),
+            completionSummaryRecorder: ports.CompletionRecorder,
             publicationOwner: ports.PublicationOwner);
 
         PreparedChatResult initial = await coordinator.AskAsync(
@@ -102,6 +103,7 @@ public sealed class PreparedChatIntegrationTests
             new ChatAgentResultValidator(candidateExtractor),
             new InteractionScopeResolver(),
             new PreparedChatQuestionRequestValidator(),
+            completionSummaryRecorder: ports.CompletionRecorder,
             publicationOwner: ports.PublicationOwner);
 
         PreparedChatResult initial = await coordinator.AskAsync(
@@ -154,6 +156,7 @@ public sealed class PreparedChatIntegrationTests
             new ChatAgentResultValidator(candidateExtractor),
             new InteractionScopeResolver(),
             new PreparedChatQuestionRequestValidator(),
+            completionSummaryRecorder: ports.CompletionRecorder,
             publicationOwner: ports.PublicationOwner);
 
         _ = await coordinator.AskAsync(
@@ -197,6 +200,7 @@ public sealed class PreparedChatIntegrationTests
             new ChatAgentResultValidator(candidateExtractor),
             new InteractionScopeResolver(),
             new PreparedChatQuestionRequestValidator(),
+            completionSummaryRecorder: ports.CompletionRecorder,
             publicationOwner: ports.PublicationOwner);
 
         PreparedChatResult result = await coordinator.AskAsync(
@@ -235,6 +239,7 @@ public sealed class PreparedChatIntegrationTests
             new ChatAgentResultValidator(candidateExtractor),
             new InteractionScopeResolver(),
             new PreparedChatQuestionRequestValidator(),
+            completionSummaryRecorder: ports.CompletionRecorder,
             publicationOwner: ports.PublicationOwner);
 
         PreparedChatResult result = await coordinator.AskAsync(
@@ -482,6 +487,7 @@ public sealed class PreparedChatIntegrationTests
         public InteractionRetriever Retriever { get; } = new();
         public InteractionDispatcher Dispatcher { get; } = new();
         public InteractionCurrentness Currentness { get; } = new();
+        public ChatStreamRuntimeObservationRecorder CompletionRecorder { get; } = new();
         public InteractionPublicationOwner PublicationOwner { get; } = new();
     }
 

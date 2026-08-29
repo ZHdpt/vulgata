@@ -33,6 +33,7 @@ public sealed class ChatPageTests : BunitContext
     private readonly StubCurrentnessValidator _currentness = new();
     private readonly ManualRevealDelay _revealDelay = new();
     private readonly AdjustableTimeProvider _timeProvider = new(DateTimeOffset.UtcNow);
+    private readonly PublicationOwnerProbe _publicationOwner;
     private readonly BunitJSModuleInterop _chatModule;
 
     public ChatPageTests()
@@ -58,6 +59,7 @@ public sealed class ChatPageTests : BunitContext
             null,
             null,
             DateTimeOffset.UtcNow);
+        _publicationOwner = new PublicationOwnerProbe(new PreparedChatPublicationOwner(_timeProvider));
         var candidateExtractor = new ChatCandidateExtractor();
         Services.AddSingleton(new PreparedChatCoordinator(
             new FixedAuthenticationStateProvider("owner-1"),
@@ -73,7 +75,8 @@ public sealed class ChatPageTests : BunitContext
             new ChatAgentResultValidator(candidateExtractor),
             new StubPreparedChatScopeResolver(),
             new PreparedChatQuestionRequestValidator(),
-            new CapturingCompletionSummaryRecorder()));
+            new CapturingCompletionSummaryRecorder(),
+            _publicationOwner));
     }
 
     [Fact]
@@ -643,6 +646,52 @@ public sealed class ChatPageTests : BunitContext
         Assert.Equal(0, _revealDelay.CallCount);
     }
 
+    [Theory]
+    [InlineData(27.4)]
+    [InlineData(27.399)]
+    public async Task ChatPage_RevealScheduleAtOrWithinSafetyMargin_RendersImmediatelyAsync(
+        double elapsedSeconds)
+    {
+        _dispatcher.BeforeResult = () => _timeProvider.Advance(
+            TimeSpan.FromMilliseconds(elapsedSeconds * 1_000));
+        _retriever.ClaimText = "付款" + new string('答', 63);
+
+        IRenderedComponent<ChatPage> cut = Render<ChatPage>();
+        WaitForLoaded(cut);
+        PrepareValidSelection(cut, ChatMode.Business);
+
+        await SendQuestionAsync(cut, "付款流程如何处理？");
+
+        IElement answer = cut.Find(".complete-answer");
+        Assert.Equal("complete", answer.GetAttribute("data-answer-state"));
+        Assert.Equal(_retriever.ClaimText, cut.Find(".material-claim").TextContent);
+        Assert.Equal(0, _revealDelay.CallCount);
+    }
+
+    [Fact]
+    public async Task ChatPage_StrictlyFittingProgressiveSchedule_RevealsAcceptedUnicodeContentAsync()
+    {
+        _revealDelay.Pause();
+        _dispatcher.BeforeResult = () => _timeProvider.Advance(TimeSpan.FromSeconds(26));
+        _retriever.ClaimText = "付款e\u0301👨‍👩‍👧‍👦完成";
+
+        IRenderedComponent<ChatPage> cut = Render<ChatPage>();
+        WaitForLoaded(cut);
+        PrepareValidSelection(cut, ChatMode.Business);
+
+        Task sendTask = BeginQuestionAsync(cut, "付款流程如何完成？");
+        cut.WaitForState(() => cut.FindAll("[data-answer-state='revealing']").Count == 1);
+        Assert.Equal("付", cut.Find(".material-claim__revealed").TextContent);
+        Assert.Empty(cut.FindAll(".document-citation"));
+
+        _revealDelay.ReleaseAll();
+        await sendTask;
+
+        Assert.Equal("complete", cut.Find(".complete-answer").GetAttribute("data-answer-state"));
+        Assert.Equal(_retriever.ClaimText, cut.Find(".material-claim").TextContent);
+        Assert.Single(cut.FindAll(".document-citation"));
+    }
+
     [Fact]
     public async Task ChatPage_AcceptedUnicodeReveal_UsesLiveAbsoluteDeadlineAfterRevealStartsAsync()
     {
@@ -654,7 +703,7 @@ public sealed class ChatPageTests : BunitContext
         WaitForLoaded(cut);
         PrepareValidSelection(cut, ChatMode.Business);
 
-        Task sendTask = BeginQuestionAsync(cut, "付款在截止时间内如何显示 Unicode 回答？");
+        Task sendTask = BeginQuestionAsync(cut, "客户提交付款后如何完成？");
         cut.WaitForState(() => cut.FindAll("[data-answer-state='revealing'], [data-answer-state='complete']").Count == 1);
         Assert.Equal("revealing", cut.Find(".complete-answer").GetAttribute("data-answer-state"));
         Assert.Equal("付", cut.Find(".material-claim__revealed").TextContent);
@@ -762,6 +811,68 @@ public sealed class ChatPageTests : BunitContext
     }
 
     [Fact]
+    public async Task ChatPage_CancelAfterAcceptedPublicationBeforeFirstProgressiveRevealDelay_PreservesCommittedAnswerCitationsAndConversationAsync()
+    {
+        _revealDelay.Pause();
+        _retriever.ClaimText = "客户提交付款后，系统完成校验。";
+
+        IRenderedComponent<ChatPage> cut = Render<ChatPage>();
+        WaitForLoaded(cut);
+        PrepareValidSelection(cut, ChatMode.Business);
+
+        Task sendTask = BeginQuestionAsync(cut, "客户如何完成付款？");
+        AcceptedPublicationCommit committed = await _publicationOwner.CommitObserved.WaitAsync(TimeSpan.FromSeconds(5));
+        Assert.True(committed.Published);
+
+        await cut.Find("#chat-question").KeyDownAsync(new KeyboardEventArgs { Key = "Escape" });
+        _revealDelay.ReleaseAll();
+        await sendTask;
+
+        AssertCommittedAnswer(cut, committed);
+        ChatConversationState committedConversation = Assert.IsType<ChatConversationState>(committed.Conversation);
+
+        _retriever.ClaimText = "后续回答。";
+        await SendQuestionAsync(cut, "付款后续如何处理？");
+
+        Assert.Equal(2, _retriever.Requests.Count);
+        Assert.Same(committedConversation, _retriever.Requests[1].Conversation);
+        Assert.Equal(committedConversation.Turns, _retriever.Requests[1].Conversation.Turns);
+    }
+
+    [Fact]
+    public async Task ChatPage_CancelAfterAcceptedPublicationDuringLaterProgressiveRevealDelay_PreservesCommittedAnswerCitationsAndConversationAsync()
+    {
+        _revealDelay.Pause();
+        _retriever.ClaimText = "客户提交付款后，系统完成校验。";
+
+        IRenderedComponent<ChatPage> cut = Render<ChatPage>();
+        WaitForLoaded(cut);
+        PrepareValidSelection(cut, ChatMode.Business);
+
+        Task sendTask = BeginQuestionAsync(cut, "付款流程如何实现？");
+        AcceptedPublicationCommit committed = await _publicationOwner.CommitObserved.WaitAsync(TimeSpan.FromSeconds(5));
+        Assert.True(committed.Published);
+        cut.WaitForState(() => cut.FindAll("[data-answer-state='revealing']").Count == 1);
+        cut.WaitForAssertion(() => Assert.True(_revealDelay.CallCount >= 1));
+
+        _revealDelay.ReleaseNext();
+        cut.WaitForAssertion(() => Assert.True(_revealDelay.CallCount >= 2));
+        await cut.Find("#chat-question").KeyDownAsync(new KeyboardEventArgs { Key = "Escape" });
+        _revealDelay.ReleaseAll();
+        await sendTask;
+
+        AssertCommittedAnswer(cut, committed);
+        ChatConversationState committedConversation = Assert.IsType<ChatConversationState>(committed.Conversation);
+
+        _retriever.ClaimText = "后续回答。";
+        await SendQuestionAsync(cut, "付款后续仍使用已提交上下文");
+
+        Assert.Equal(2, _retriever.Requests.Count);
+        Assert.Same(committedConversation, _retriever.Requests[1].Conversation);
+        Assert.Equal(committedConversation.Turns, _retriever.Requests[1].Conversation.Turns);
+    }
+
+    [Fact]
     public async Task ChatPage_ReducedMotion_PublishesCompleteAnswerWithoutDelay()
     {
         _chatModule.Setup<bool>("prefersReducedMotion").SetResult(true);
@@ -822,6 +933,24 @@ public sealed class ChatPageTests : BunitContext
 
     private int CountConversationScrolls() => JSInterop.Invocations.Count(
         invocation => StringComparer.Ordinal.Equals(invocation.Identifier, "scrollConversationToEnd"));
+
+    private static void AssertCommittedAnswer(
+        IRenderedComponent<ChatPage> cut,
+        AcceptedPublicationCommit committed)
+    {
+        Assert.True(committed.Published);
+        GroundedAnswer answer = Assert.IsType<GroundedAnswer>(committed.Answer);
+        Assert.Equal("complete", cut.Find(".complete-answer").GetAttribute("data-answer-state"));
+        Assert.DoesNotContain("已取消本次提问。", cut.Markup, StringComparison.Ordinal);
+        Assert.Equal(answer.MaterialClaims.Count, cut.FindAll(".material-claim").Count);
+        Assert.All(
+            answer.MaterialClaims,
+            claim => Assert.Contains(claim.Text, cut.Markup, StringComparison.Ordinal));
+        Assert.Equal(answer.DocumentCitations.Count, cut.FindAll(".document-citation").Count);
+        Assert.All(
+            answer.DocumentCitations,
+            citation => Assert.Contains(citation.DocumentTitle, cut.Markup, StringComparison.Ordinal));
+    }
 
     private static IElement FindButton(IRenderedComponent<ChatPage> cut, string text) =>
         cut.FindAll("button, fluent-button")
@@ -1110,6 +1239,23 @@ public sealed class ChatPageTests : BunitContext
                 Dispose();
                 return ValueTask.CompletedTask;
             }
+        }
+    }
+
+    private sealed class PublicationOwnerProbe(IPreparedChatPublicationOwner inner) : IPreparedChatPublicationOwner
+    {
+        private readonly TaskCompletionSource<AcceptedPublicationCommit> _commitObserved =
+            new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        public Task<AcceptedPublicationCommit> CommitObserved => _commitObserved.Task;
+
+        public AcceptedPublicationCommit Commit(
+            PreparedChatPublicationCandidate candidate,
+            CancellationToken cancellationToken)
+        {
+            AcceptedPublicationCommit commit = inner.Commit(candidate, cancellationToken);
+            _commitObserved.TrySetResult(commit);
+            return commit;
         }
     }
 

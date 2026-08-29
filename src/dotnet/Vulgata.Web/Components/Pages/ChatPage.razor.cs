@@ -12,7 +12,6 @@ namespace Vulgata.Web.Components.Pages;
 
 public partial class ChatPage : IAsyncDisposable
 {
-    private const long _minimumProgressiveRevealBudgetMilliseconds = 1_000;
     private const string _validationMessage = "请选择业务模式，并输入 1 至 2000 个字符的问题。";
     private const string _unexpectedFailureMessage = "暂时无法生成回答，请稍后重试。";
 
@@ -300,8 +299,17 @@ public partial class ChatPage : IAsyncDisposable
                 return;
             }
 
-            turn.Finish(ChatTurnState.Cancelled, "已取消本次提问。");
-            _loadState = ReadyState;
+            if (turn.State == ChatTurnState.Revealing)
+            {
+                turn.CompleteReveal();
+                await RenderConversationAtEndAsync();
+                _loadState = LoadState.Loaded;
+            }
+            else
+            {
+                turn.Finish(ChatTurnState.Cancelled, "已取消本次提问。");
+                _loadState = ReadyState;
+            }
         }
         catch (Exception)
         {
@@ -401,16 +409,8 @@ public partial class ChatPage : IAsyncDisposable
         turn.BeginReveal(publicationCommit);
         bool reducedMotion = await PrefersReducedMotionAsync(requestCancellation);
         long absoluteDeadlineUnixTimeMilliseconds = reveal.AbsoluteDeadlineUnixTimeMilliseconds;
-        long remainingDeadlineMilliseconds = ChatCoordinator.GetRemainingDeadlineMilliseconds(
-            absoluteDeadlineUnixTimeMilliseconds);
-        long requiredDelayCount = turn.Claims.Sum(
-            claim => Math.Max(0, claim.TextElementCount - 1));
-        double requiredRevealMilliseconds =
-            requiredDelayCount * RevealDelay.Interval.TotalMilliseconds;
         if (reveal.Mode == PreparedChatRevealMode.ImmediateAccepted ||
-            reducedMotion ||
-            remainingDeadlineMilliseconds < _minimumProgressiveRevealBudgetMilliseconds ||
-            requiredRevealMilliseconds > remainingDeadlineMilliseconds)
+            reducedMotion)
         {
             turn.CompleteReveal();
             await RenderConversationAtEndAsync();
