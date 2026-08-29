@@ -212,12 +212,48 @@ public sealed class ChatEvidenceCurrentnessTests
         Assert.Equal(2, relationship.ExactDecisionCount);
         Assert.NotNull(relationship.ExactDecisionSetFingerprint);
         Assert.Equal(2, packet.FlowGroups.Count);
+        CrossRepositoryResolutionDecision[] decisions = await fixture.Context
+            .CrossRepositoryResolutionDecisions
+            .AsNoTracking()
+            .Where(decision => decision.DocumentEdgeId == fixture.ReferencesEdgeId)
+            .ToArrayAsync();
+        Guid[] decisionIds = decisions.Select(decision => decision.Id).ToArray();
+        ExactResolutionProviderEvidenceContribution[] contributions = await fixture.Context
+            .ExactResolutionProviderEvidenceContributions
+            .AsNoTracking()
+            .Where(contribution => decisionIds.Contains(contribution.ResolutionDecisionId))
+            .ToArrayAsync();
+        DocumentEdge referencesEdge = await fixture.Context.DocumentEdges
+            .AsNoTracking()
+            .SingleAsync(edge => edge.Id == fixture.ReferencesEdgeId);
+        Assert.True(
+            ChatExactDecisionSetAuthority.TryCreate(
+                referencesEdge,
+                decisions,
+                contributions,
+                out ChatExactDecisionSet expectedDecisionSet));
         Assert.Equal(
-            relationship.ExactDecisionId,
-            packet.FlowGroups[0].ExactResolutionDecisionId);
-        Assert.NotEqual(
-            packet.FlowGroups[0].ExactResolutionDecisionId,
-            packet.FlowGroups[1].ExactResolutionDecisionId);
+            expectedDecisionSet.SelectedDecision.Id,
+            relationship.ExactDecisionId);
+        Assert.Equal(
+            expectedDecisionSet.Fingerprint,
+            relationship.ExactDecisionSetFingerprint);
+        Assert.Equal(
+            expectedDecisionSet.Decisions.Select(decision => decision.Id).ToHashSet(),
+            packet.FlowGroups
+                .Select(group => group.ExactResolutionDecisionId)
+                .OfType<Guid>()
+                .ToHashSet());
+        Assert.All(
+            packet.FlowGroups,
+            group =>
+            {
+                Assert.Equal("Published", group.State);
+                Assert.Equal(fixture.ReferencesEdgeId, group.ExactResolutionEdgeId);
+                Assert.Contains(
+                    expectedDecisionSet.Decisions,
+                    decision => decision.Id == group.ExactResolutionDecisionId);
+            });
     }
 
     [Fact]

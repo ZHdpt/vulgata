@@ -272,3 +272,7 @@ All FR-001-FR-060 and SC-001-SC-017 have at least one implementation/reacceptanc
 - T033 and T034 are sequential shared-file tasks owned by one named B-INT Interaction Test Owner; neither task is marked or described as parallel.
 - No EF, Story 12.4, vector/autonomous-tool, fake-evidence, unrestricted-provider-tool, or unvalidated-client-output task is present.
 - Track C is dependency-ordered behind accepted B1-B4, B-INT, convergence, review, conditional E2E decision, verification, and candidate pinning.
+
+## Phase 11: Convergence
+
+- [x] T054 [US1] Classification: RED-to-GREEN — Add a public-seam RED vector in `tests/Vulgata.Tests/ChatEvidenceRetrievalTests.cs` with two valid accepted decisions sharing one Cross-Repository Edge but Flow Group IDs ordered opposite to the decision-set order, then apply the minimal GREEN correction in `src/dotnet/Vulgata.Infrastructure/Data/ChatRelationshipEvidenceProjector.cs` so the relationship binds the canonical first decision while retaining every decision-owned Published Flow Group per AD-3 (partial; FR-014, FR-019, SC-001-SC-002).

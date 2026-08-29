@@ -579,6 +579,84 @@ public sealed class ChatEvidenceRetrievalTests
     }
 
     [Fact]
+    public async Task RetrieveAsync_SharedReferencesEdgeWithCanonicalDecisionAndReversedFlowGroupIds_PreservesAuthorityAsync()
+    {
+        await using PreparedEvidenceFixture fixture = await PreparedEvidenceFixture.CreateAsync();
+        CrossRepositoryResolutionDecision primaryDecision = await fixture.Context
+            .CrossRepositoryResolutionDecisions
+            .AsNoTracking()
+            .SingleAsync(decision => decision.DocumentEdgeId == fixture.ReferencesEdgeId);
+        Guid secondaryDecisionId = await fixture.AddAdditionalAcceptedV2DecisionAsync(
+            fixture.ReferencesEdgeId,
+            primaryDecision.Id);
+        await fixture.AddSecondPublishedOneHopFlowGroupAsync(
+            fixture.ReferencesEdgeId,
+            secondaryDecisionId,
+            ExactCrossRepositoryTestValues.ProviderDocumentVersionId);
+
+        CrossRepositoryResolutionDecision[] decisions = await fixture.Context
+            .CrossRepositoryResolutionDecisions
+            .AsNoTracking()
+            .Where(decision => decision.DocumentEdgeId == fixture.ReferencesEdgeId)
+            .ToArrayAsync();
+        ExactResolutionProviderEvidenceContribution[] contributions = await fixture.Context
+            .ExactResolutionProviderEvidenceContributions
+            .AsNoTracking()
+            .Where(contribution => decisions.Select(decision => decision.Id)
+                .Contains(contribution.ResolutionDecisionId))
+            .ToArrayAsync();
+        DocumentEdge referencesEdge = await fixture.Context.DocumentEdges
+            .AsNoTracking()
+            .SingleAsync(edge => edge.Id == fixture.ReferencesEdgeId);
+        Assert.True(
+            ChatExactDecisionSetAuthority.TryCreate(
+                referencesEdge,
+                decisions,
+                contributions,
+                out ChatExactDecisionSet expectedDecisionSet));
+        Assert.Equal(secondaryDecisionId, expectedDecisionSet.SelectedDecision.Id);
+        Assert.True(fixture.SecondRelatedFlowGroupId > fixture.BaseFlowGroupId);
+
+        ChatEvidenceResult result = await CreateRetriever(fixture.Context)
+            .RetrieveAsync(
+                fixture.CreateRequest("shared-edge-reversed-flow-group-order"),
+                new RepositoryAccessScope(
+                    fixture.RepositoryIds,
+                    new RecordingAuthorizationVerifier(true, true)));
+
+        EvidencePacket packet = Assert.IsType<EvidencePacket>(result.Packet);
+        Assert.Equal(ChatEvidenceResultKind.Found, result.Kind);
+        EvidenceRelationship relationship = Assert.Single(
+            packet.Relationships,
+            item => item.EdgeId == fixture.ReferencesEdgeId);
+        Assert.Equal(expectedDecisionSet.SelectedDecision.Id, relationship.ExactDecisionId);
+        Assert.Equal(expectedDecisionSet.Count, relationship.ExactDecisionCount);
+        Assert.Equal(expectedDecisionSet.Fingerprint, relationship.ExactDecisionSetFingerprint);
+        Assert.Equal(
+            expectedDecisionSet.SelectedDecision.ProviderEvidenceSetFingerprint,
+            relationship.ProfileFingerprint);
+        Assert.Equal(2, packet.FlowGroups.Count);
+        Assert.Equal(
+            expectedDecisionSet.Decisions.Select(decision => decision.Id).ToHashSet(),
+            packet.FlowGroups
+                .Select(group => group.ExactResolutionDecisionId)
+                .OfType<Guid>()
+                .ToHashSet());
+        Assert.All(
+            packet.FlowGroups,
+            group =>
+            {
+                Assert.Equal(fixture.ReferencesEdgeId, group.ExactResolutionEdgeId);
+                Assert.Contains(
+                    expectedDecisionSet.Decisions,
+                    decision => decision.Id == group.ExactResolutionDecisionId);
+                Assert.Equal("Published", group.State);
+                Assert.Matches("^[0-9a-f]{64}$", group.PlanFingerprint);
+                Assert.Matches("^[0-9a-f]{64}$", group.MembershipFingerprint);
+            });
+    }
+
+    [Fact]
     public async Task RetrieveAsync_BoundedValidatedConversation_IsBoundToReturnedPacketAsync()
     {
         await using PreparedEvidenceFixture fixture = await PreparedEvidenceFixture.CreateAsync();
@@ -1565,6 +1643,8 @@ public sealed class ChatEvidenceRetrievalTests
 
         internal Guid RelatedFlowGroupId => _relatedFlowGroupId;
 
+        internal Guid BaseFlowGroupId => Id(10_301);
+
         internal Guid SecondRelatedFlowGroupId => _secondRelatedFlowGroupId;
 
         internal string AcceptedEvidenceFingerprint { get; } = acceptedEvidenceFingerprint;
@@ -1688,7 +1768,8 @@ public sealed class ChatEvidenceRetrievalTests
 
         internal async Task AddSecondPublishedOneHopFlowGroupAsync(
             Guid? exactResolutionEdgeId = null,
-            Guid? exactResolutionDecisionId = null)
+            Guid? exactResolutionDecisionId = null,
+            Guid? flowStepDocumentVersionId = null)
         {
             var flowGroup = new FlowGroup(
                 _secondRelatedFlowGroupId,
@@ -1723,7 +1804,7 @@ public sealed class ChatEvidenceRetrievalTests
                 _secondRelatedFlowStepId,
                 _secondRelatedFlowTraceId,
                 1,
-                _oneHopDocumentVersionId,
+                flowStepDocumentVersionId ?? _oneHopDocumentVersionId,
                 ExactCrossRepositoryTestValues.ProviderRepositoryId,
                 ExactCrossRepositoryTestValues.ProviderScanRunId,
                 exactResolutionEdgeId ?? _oneHopEdgeId,

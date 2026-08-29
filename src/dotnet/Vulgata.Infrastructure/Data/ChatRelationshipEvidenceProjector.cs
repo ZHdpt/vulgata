@@ -220,11 +220,7 @@ public sealed class ChatRelationshipEvidenceProjector(VulgataDbContext context) 
                 }
             }
 
-            Guid? selectedDecisionId = projectedFlowGroups
-                .OrderBy(group => group.FlowGroupId)
-                .Select(group => group.ExactResolutionDecisionId)
-                .FirstOrDefault(decisionId => decisionId.HasValue) ??
-                exactDecisionSet?.SelectedDecision.Id;
+            Guid? selectedDecisionId = exactDecisionSet?.SelectedDecision.Id;
             CrossRepositoryResolutionDecision? selectedDecision = exactDecisionSet?.Decisions
                 .FirstOrDefault(decision => decision.Id == selectedDecisionId);
             relationships.Add(new ProjectedChatRelationship(

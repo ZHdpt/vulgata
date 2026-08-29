@@ -6,10 +6,10 @@
   "stage": "implement",
   "preflight": {
     "branch": "demo0831/story-12-5",
-    "head": "65ffe6986217849105b7a4493182ff835932f0a8",
+    "head": "9db9b344d897368683236c0eaaabaff655ee0bb5",
     "git_identity_sha256": "87214c8cffd1d0e862e9efb76792c3a73d21b6941517907f025f16ccc14f69ae",
     "status_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-    "observed_at": "2026-08-29T09:37:51.8816828Z"
+    "observed_at": "2026-08-29T10:09:00.2215263Z"
   },
   "artifacts": {
     "spec": {
@@ -22,7 +22,7 @@
     },
     "tasks": {
       "path": "specs/014-grounded-llm-wiki-chat-release-evidence/tasks.md",
-      "sha256": "bb1875108bcf8d522525ef15beb87f19d9b25ebf48f37a2a45876816400d52b8"
+      "sha256": "c26caa1dc4dd78765c91778be7e845038ae66149500069ee29d7f84f68d3adc2"
     }
   },
   "gates": {
@@ -44,7 +44,7 @@
   },
   "attempts": {
     "definition-review": 0,
-    "converge": 0,
+    "converge": 1,
     "quality-review": 0
   },
   "approvals": [
@@ -120,10 +120,10 @@
     }
   ],
   "convergence": {
-    "status": "invalidated",
-    "attempt": 9,
-    "outcome": "pending",
-    "report_path": "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/design-correction-02.md"
+    "status": "revised",
+    "attempt": 1,
+    "outcome": "tasks_appended",
+    "report_path": "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/convergence/track-b-corrected-01.md"
   },
   "e2e": {
     "result": "pending",
@@ -138,19 +138,20 @@
     "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/definition-review/definition-review-08.json",
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/integration/track-b-int-01.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/track-b-integration-01.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/convergence/track-b-corrected-01.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/integration/story-12.4-dependency-integration-correction-01.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/track-a-preservation-01.md"
   ],
   "checkpoint": {
-    "checkpoint_id": "bmad-12-5-implement-20260829T093751Z-bint",
+    "checkpoint_id": "bmad-12-5-implement-20260829T100900Z-f1",
     "stage": "implement",
     "commit_sha": null,
     "binding_status": "pending"
   },
   "resume": {
     "stage": "implement",
-    "reason": "T033-T037 B-INT passed 409/409 B1-B4 integration, 103/103 Story 12.5 UI/evidence, Web build, and ownership guards. Track B implementation is checkpoint-ready; run T038 convergence next.",
-    "evidence_path": "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/track-b-integration-01.md"
+    "reason": "Convergence attempt 1 appended T054 for canonical exact-decision selection. T054 is GREEN with 132/132 retrieval/currentness/packet tests. Rerun T038 convergence before quality review.",
+    "evidence_path": "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/convergence/track-b-corrected-01.md"
   },
-  "updated_at": "2026-08-29T09:37:51.8816828Z"
+  "updated_at": "2026-08-29T10:09:00.2215263Z"
 }
