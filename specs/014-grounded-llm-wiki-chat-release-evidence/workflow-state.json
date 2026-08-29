@@ -6,10 +6,10 @@
   "stage": "quality-review",
   "preflight": {
     "branch": "demo0831/story-12-5",
-    "head": "f8c89541cfbef3ba89fea79c852ae9fcfe7bc081",
-    "git_identity_sha256": "11c7fa21c29a3de77992eb9c8aeddce8b34c985c042ba9efb3528705afb66e98",
-    "status_sha256": "cbcce6006379e7ffce6f80b279bd0d4aca5fb419adb3e17604c248e6df6517fa",
-    "observed_at": "2026-08-29T13:11:09.5254384Z"
+    "head": "dd4cd82eb2c12cddf2bb4b06b6c8d0a79aa66685",
+    "git_identity_sha256": "87682b5cb699f7d5445b8b251348b4781d84486cbb426d457db2d760e04c2c5d",
+    "status_sha256": "7a506c0436085355d4427862ac7db35381dd728dcb92d073a639b52f5e735884",
+    "observed_at": "2026-08-29T13:20:26.8046836Z"
   },
   "artifacts": {
     "spec": {
@@ -22,7 +22,7 @@
     },
     "tasks": {
       "path": "specs/014-grounded-llm-wiki-chat-release-evidence/tasks.md",
-      "sha256": "61b1e70e7c3ac0178e079fd61868c265977cad3b49a0b6fcce14ae22b60bf96b"
+      "sha256": "eb105506f72cf6bcd48a72df1c815c90246f581a0d04f976daa72ffcc084f67a"
     }
   },
   "gates": {
@@ -37,9 +37,9 @@
       "verdict_path": "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/definition-review/definition-review-08.json"
     },
     "quality-review": {
-      "status": "revised",
-      "attempt": 4,
-      "verdict_path": "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/quality-review/track-b-quality-review-04.json"
+      "status": "accepted",
+      "attempt": 5,
+      "verdict_path": "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/quality-review/track-b-quality-review-05.json"
     }
   },
   "attempts": {
@@ -135,7 +135,7 @@
     "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/implementation-approval-03.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/integration/track-b-int-01.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/track-b-integration-01.md",
-    "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/quality-review/track-b-quality-review-04.json",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/quality-review/track-b-quality-review-05.json",
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/review/track-b-quality-correction-plan-02.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/integration/story-12.4-dependency-integration-correction-01.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/track-b-quality-correction-04.md",
@@ -144,15 +144,15 @@
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/review/track-b-quality-input-03.md"
   ],
   "checkpoint": {
-    "checkpoint_id": "bmad-12-5-quality-20260829T131109Z-input05",
+    "checkpoint_id": "bmad-12-5-quality-20260829T132026Z-accept05",
     "stage": "quality-review",
     "commit_sha": null,
     "binding_status": "pending"
   },
   "resume": {
     "stage": "quality-review",
-    "reason": "T076 binds the converged f8c89541 candidate to a verdict-neutral review input. Dispatch a fresh independent quality reviewer for T077 and do not predict its verdict.",
-    "evidence_path": "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/review/track-b-quality-input-03.md"
+    "reason": "T077 independently ACCEPTED the current Track B/B-INT boundary with QR-TB-009 closed and no findings. Apply the conditional E2E matrix for T040, then run final pinned Track B verification T041.",
+    "evidence_path": "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/quality-review/track-b-quality-review-05.json"
   },
-  "updated_at": "2026-08-29T13:11:09.5254384Z"
+  "updated_at": "2026-08-29T13:20:26.8046836Z"
 }
