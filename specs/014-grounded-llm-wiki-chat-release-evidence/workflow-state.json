@@ -6,10 +6,10 @@
   "stage": "implement",
   "preflight": {
     "branch": "demo0831/story-12-5",
-    "head": "5adc504a912528b8b7ef93a145517ed78eb99b58",
-    "git_identity_sha256": "d4b925aa4c3425454b6460b8a4bd4a6c0712c0fecaa241b760debf6a5210f169",
+    "head": "ba45c59065db8beebf2fe95f11fb518387bc18a4",
+    "git_identity_sha256": "eab8170b429539d6bd0909cbd355280f098e43e38cae4dc058b0e22fd2c66dbf",
     "status_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-    "observed_at": "2026-08-29T07:33:45.7691795Z"
+    "observed_at": "2026-08-29T07:44:02.9894096Z"
   },
   "artifacts": {
     "spec": {
@@ -22,7 +22,7 @@
     },
     "tasks": {
       "path": "specs/014-grounded-llm-wiki-chat-release-evidence/tasks.md",
-      "sha256": "5bd5fb3833f5cc33eee6318c5ef473ce872ddf971b91ef597bf767b3000c4cc0"
+      "sha256": "78184e26f097e0ec34f53bc3f7bf91f584aa7eb6165542d5d58acdb98e8ef621"
     }
   },
   "gates": {
@@ -141,18 +141,18 @@
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/ownership/task-disposition-01.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/verification/task-definition-01.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/integration/story-12.4-dependency-integration-correction-01.md",
-    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/track-b-convergence-correction-14.md"
+    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/track-a-preservation-01.md"
   ],
   "checkpoint": {
-    "checkpoint_id": "bmad-12-5-implement-20260829T073345Z-c18e70",
+    "checkpoint_id": "bmad-12-5-implement-20260829T074402Z-a7d1c9",
     "stage": "implement",
     "commit_sha": null,
     "binding_status": "pending"
   },
   "resume": {
     "stage": "implement",
-    "reason": "T001-T004 passed: clean authority preflight, disposition, 29 foundational guards, and 10 schema/transport checks. Continue with preserved Track A T005-T007, then B1 in order.",
-    "evidence_path": "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/verification/task-definition-01.md"
+    "reason": "T005-T007 Track A reacceptance passed 116/116 with fake Backup B excluded and no Track B/C claim. Continue B1 T008-T013 single-pipeline and packet-2.2 reacceptance.",
+    "evidence_path": "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/track-a-preservation-01.md"
   },
-  "updated_at": "2026-08-29T07:33:45.7691795Z"
+  "updated_at": "2026-08-29T07:44:02.9894096Z"
 }

@@ -50,14 +50,14 @@ description: "Fresh dependency-ordered Story 12.5 tasks for the accepted design-
 
 **Independent Test**: Persisted preparation/running/retry/paused/resumed/completed/warning/failure rows render bounded Chinese production state, and only an authorized recoverable pause exposes `继续扫描`; fake state is absent.
 
-- [ ] T005 [US3] Classification: EXISTING-EVIDENCE — Run and reaccept persisted state mapping, counts, earliest retry, bounded reason, twenty-file failure summary, missing-equivalent authorization, durable resume, and fake-state exclusion in `tests/Vulgata.Tests/ProductionScanStatusReaderTests.cs`, `tests/Vulgata.Tests/ProductionScanPageTests.cs`, and `tests/Vulgata.Tests/DurableScanning/ManualResumeApiTests.cs` (FR-033-FR-036, SC-007).
+- [x] T005 [US3] Classification: EXISTING-EVIDENCE — Run and reaccept persisted state mapping, counts, earliest retry, bounded reason, twenty-file failure summary, missing-equivalent authorization, durable resume, and fake-state exclusion in `tests/Vulgata.Tests/ProductionScanStatusReaderTests.cs`, `tests/Vulgata.Tests/ProductionScanPageTests.cs`, and `tests/Vulgata.Tests/DurableScanning/ManualResumeApiTests.cs` (FR-033-FR-036, SC-007).
 
 ### User Story 4 - Prepare a repeatable Chat evaluation (Priority: P2, Track A)
 
 **Independent Test**: The fixed 12-20-case corpus and closed run-envelope contracts validate without desired prose, fake state, forbidden database access, or fabricated passed evidence.
 
-- [ ] T006 [P] [US4] Classification: EXISTING-EVIDENCE — Run and reaccept corpus count/categories, acyclic at-most-three-question follow-ups, no `expectedAnswer`, authorization-negative automatic failure, exact half-up scoring, passed-only receipts, ten-check inventory, append-only supersession, and database guard coverage in `tests/Vulgata.Tests/ReleaseGate/Story125/Story125EvaluationContractTests.cs` and `tests/Vulgata.Tests/ReleaseGate/Story125/Story125ReleaseHarnessTests.cs` (FR-037-FR-040, FR-046-FR-047, SC-008, SC-014).
-- [ ] T007 [US4] Classification: VERIFY — Record the unchanged Track A focused command results and accepted-evidence classification in `specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/track-a-preservation-01.md`; a regression opens a separately reviewed Track A correction and does not broaden Track B ownership (FR-033-FR-040, SC-007-SC-008).
+- [x] T006 [P] [US4] Classification: EXISTING-EVIDENCE — Run and reaccept corpus count/categories, acyclic at-most-three-question follow-ups, no `expectedAnswer`, authorization-negative automatic failure, exact half-up scoring, passed-only receipts, ten-check inventory, append-only supersession, and database guard coverage in `tests/Vulgata.Tests/ReleaseGate/Story125/Story125EvaluationContractTests.cs` and `tests/Vulgata.Tests/ReleaseGate/Story125/Story125ReleaseHarnessTests.cs` (FR-037-FR-040, FR-046-FR-047, SC-008, SC-014).
+- [x] T007 [US4] Classification: VERIFY — Record the unchanged Track A focused command results and accepted-evidence classification in `specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/track-a-preservation-01.md`; a regression opens a separately reviewed Track A correction and does not broaden Track B ownership (FR-033-FR-040, SC-007-SC-008).
 
 **Checkpoint**: Track A remains preserved. Its evidence does not claim B1-B4, B-INT, or Track C completion.
 
