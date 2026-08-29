@@ -1,0 +1,42 @@
+{
+  "schema_version": "1.0",
+  "gate": "plan-review",
+  "verdict": "ACCEPT",
+  "reviewed_commit": "4e51b08ea813423ce46fe346194a527bd13326be",
+  "reviewed_boundary": {
+    "base_commit": "6605b309e481ddd76d0c8f750239e19f7a3adc8d",
+    "candidate_commit": "4e51b08ea813423ce46fe346194a527bd13326be",
+    "diff_sha256": "2027ebe66760a811ce16b4ee685834a96aed4c554a125171a3d15e5b9ac8ff25",
+    "artifact_hashes": {
+      "specs/014-grounded-llm-wiki-chat-release-evidence/spec.md": "a7367b1f64fcfc2cf099d7fd204575f314e35994204ccb0cd7b7f2dacf6f7dd4",
+      "specs/014-grounded-llm-wiki-chat-release-evidence/plan.md": "fad42dcd3a3f393809e95500ea6d6c7607ce4a16787d8b16d054b415ce533318",
+      "specs/014-grounded-llm-wiki-chat-release-evidence/data-model.md": "dc2017b93f1fd15235e351f7abe7e4cabc4344d66fe1af09f00ffbc14d8fa348",
+      "specs/014-grounded-llm-wiki-chat-release-evidence/contracts/chat-provider-streaming-v1.md": "42b859792ac531b1ed9d650b7da444363ca4eae2bfc91ea6515851fade4d9143",
+      "specs/014-grounded-llm-wiki-chat-release-evidence/contracts/grounded-chat-v2.md": "23d4a7d3ac788092c28d4d49057e2a4160a8799b48e300d6706573679908b10e",
+      "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/design-correction-02.md": "5b8ccc92ca93872606b02930265b11a26e09beb43b3ffdb04d0e37fbf8244a1f",
+      "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/planned-change-authorization-04.md": "e28f64ef6dd4c217057e56e55b9ea22ca705a15ff61b4388cf2397da7aeaf976",
+      "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/definition-review/definition-review-07.json": "85a376b9edc7a8aa6cee0f0d8f0b5fce0058555bc20e3a263595b06c8caf814f",
+      "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/plan-review/plan-review-10.json": "0e3ed925b1f7372135bf5c1e0b560577a388ba4165937a11e7c4a31915b62253"
+    },
+    "owned_paths": [
+      "specs/014-grounded-llm-wiki-chat-release-evidence/data-model.md"
+    ]
+  },
+  "reviewed_artifacts": [
+    "AGENTS.md",
+    ".specify/memory/constitution.md",
+    "docs/bmad/epics.md",
+    "docs/bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/spec.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/plan.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/data-model.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/contracts/chat-provider-streaming-v1.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/contracts/grounded-chat-v2.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/design-correction-02.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/planned-change-authorization-04.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/definition-review/definition-review-07.json",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/plan-review/plan-review-10.json"
+  ],
+  "findings": [],
+  "summary": "ACCEPT. S125-DR7-003 is fully corrected: the relationship overview now routes validated answer, proposed Conversation State, completion-summary template and reveal directive through PreparedChatPublicationCandidate to the sole Web-scoped IPreparedChatPublicationOwner and one terminal AcceptedPublicationCommit. Accepted answer/reveal, committed Conversation State and completion summary are read-only projections of that composite commit; no post-reveal append, second publication owner or sequential success mutation remains. The plan hash and architecture scope are unchanged, so planned-change-authorization-04 remains reusable."
+}

@@ -3,13 +3,13 @@
   "bmad_story_key": "12-5-grounded-llm-wiki-chat-and-august-30-release-evidence",
   "bmad_epic_key": "12",
   "feature_directory": "specs/014-grounded-llm-wiki-chat-release-evidence",
-  "stage": "plan-review",
+  "stage": "tasks",
   "preflight": {
     "branch": "demo0831/story-12-5",
-    "head": "6605b309e481ddd76d0c8f750239e19f7a3adc8d",
-    "git_identity_sha256": "0cb9c4407efb9c75da137a5eda60aaa073144c59b10ecfc546ececba98e18752",
+    "head": "4e51b08ea813423ce46fe346194a527bd13326be",
+    "git_identity_sha256": "c80b8d27dfa247039bf28cb40825bce5f1850055464ea8f48aef56c63ca4cbdc",
     "status_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-    "observed_at": "2026-08-29T07:07:42.8750963Z"
+    "observed_at": "2026-08-29T07:12:50.0330166Z"
   },
   "artifacts": {
     "spec": {
@@ -27,9 +27,9 @@
   },
   "gates": {
     "plan-review": {
-      "status": "pending",
+      "status": "accepted",
       "attempt": 11,
-      "verdict_path": null
+      "verdict_path": "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/plan-review/plan-review-11.json"
     },
     "definition-review": {
       "status": "revised",
@@ -127,7 +127,7 @@
     "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/planned-change-authorization-04.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/tasks.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/data-model.md",
-    "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/plan-review/plan-review-10.json",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/plan-review/plan-review-11.json",
     "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/planned-change-authorization-03.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/definition-review/definition-review-07.json",
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/track-b-definition-review-06.md",
@@ -137,15 +137,15 @@
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/track-b-convergence-correction-14.md"
   ],
   "checkpoint": {
-    "checkpoint_id": "bmad-12-5-plan-review-20260829T070742Z-5a9c31",
-    "stage": "plan-review",
+    "checkpoint_id": "bmad-12-5-tasks-20260829T071250Z-2d4f86",
+    "stage": "tasks",
     "commit_sha": null,
     "binding_status": "pending"
   },
   "resume": {
-    "stage": "plan-review",
-    "reason": "The plan owner corrected the stale AD-7C data-model diagram without changing plan or authorization scope. Run independent plan-only review 11 before task correction.",
-    "evidence_path": "specs/014-grounded-llm-wiki-chat-release-evidence/data-model.md"
+    "stage": "tasks",
+    "reason": "Plan review 11 accepted the scope-neutral data-model correction and confirmed authorization-04 remains reusable. Correct DR7 task ownership and live-state guard wording with Sol/high.",
+    "evidence_path": "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/plan-review/plan-review-11.json"
   },
-  "updated_at": "2026-08-29T07:07:42.8750963Z"
+  "updated_at": "2026-08-29T07:12:50.0330166Z"
 }
