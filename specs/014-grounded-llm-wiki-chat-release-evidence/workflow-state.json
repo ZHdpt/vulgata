@@ -6,10 +6,10 @@
   "stage": "verify",
   "preflight": {
     "branch": "demo0831/story-12-5",
-    "head": "43ddc8687153a72001a5a64bad921db94a8e9f24",
-    "git_identity_sha256": "589e8f0412dac0eac88a557a5e27b6af28f9d16c83ac19482a8ce7327f111df7",
-    "status_sha256": "406854a0c23b0a6455b1cd1de1bb2a4009344b52e0c5cb6cd343ca00ff86bfe3",
-    "observed_at": "2026-08-29T13:28:40.2136379Z"
+    "head": "5b1f5a85223844ac46d9ecbeeca633d58b1e3874",
+    "git_identity_sha256": "cce0f1604380719aa6d296ac15ffd8fda8e5b2bce8c4b885629257b7424ba77c",
+    "status_sha256": "f431a29b72d0f1ff47fe99b9d1c9aa90ddcba6bb8beb7ea4eb3d06f703e9a012",
+    "observed_at": "2026-08-29T13:38:14.2858874Z"
   },
   "artifacts": {
     "spec": {
@@ -22,7 +22,7 @@
     },
     "tasks": {
       "path": "specs/014-grounded-llm-wiki-chat-release-evidence/tasks.md",
-      "sha256": "eda0eef11650d3b9c7c093ca384e51243634b951dee2a9a4392860c90df6fec2"
+      "sha256": "1196c86fa7f91b4724313d8bb0027650b8b77b0d4a785489eeac30a8de03c305"
     }
   },
   "gates": {
@@ -134,7 +134,7 @@
     "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/planned-change-authorization-04.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/implementation-approval-03.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/integration/track-b-int-01.md",
-    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/track-b-integration-01.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/verification/track-b-final-01.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/quality-review/track-b-quality-review-05.json",
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/e2e/track-b-decision-input-01.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/e2e/track-b-run-01.md",
@@ -144,15 +144,15 @@
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/review/track-b-quality-input-03.md"
   ],
   "checkpoint": {
-    "checkpoint_id": "bmad-12-5-conditional-e2e-20260829T132840Z-pass01",
-    "stage": "conditional-e2e",
+    "checkpoint_id": "bmad-12-5-verify-20260829T133814Z-trackb01",
+    "stage": "verify",
     "commit_sha": null,
     "binding_status": "pending"
   },
   "resume": {
-    "stage": "verify",
-    "reason": "T040 required E2E passed 405/405 with no tracked edits and no Track C substitution. Run T041 final pinned Track B verification and bind the accepted Track B checkpoint before opening Track C.",
-    "evidence_path": "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/e2e/track-b-run-01.md"
+    "stage": "implement",
+    "reason": "Track B is accepted through T041. Convergence, quality, required E2E, schema/build, and boundary guards pass. Full-suite baseline failures are documented separately. Begin authorized Track C at T042 preflight.",
+    "evidence_path": "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/verification/track-b-final-01.md"
   },
-  "updated_at": "2026-08-29T13:28:40.2136379Z"
+  "updated_at": "2026-08-29T13:38:14.2858874Z"
 }
