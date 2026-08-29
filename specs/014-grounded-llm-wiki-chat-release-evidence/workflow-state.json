@@ -6,15 +6,15 @@
   "stage": "implement",
   "preflight": {
     "branch": "demo0831/story-12-5-trackC",
-    "head": "52174c0e47a4497c01ddf37fe99b50712bcf5547",
-    "git_identity_sha256": "a365242ce3591ff801022dfa59009246f2f96d360344266aa9a243595aac82f8",
+    "head": "d8f60354004cff7233f30570feb7d3cc4594441f",
+    "git_identity_sha256": "256a2c89b4543f2b557ad6bbbf1c4307097ff60a4be64b498bbb58e12cd8dcff",
     "status_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-    "observed_at": "2026-08-29T23:22:06.7117756Z"
+    "observed_at": "2026-08-29T23:29:44.3209131Z"
   },
   "artifacts": {
     "spec": {"path":"specs/014-grounded-llm-wiki-chat-release-evidence/spec.md","sha256":"15bc1cc7afe3d7250d8d247546da4ab72086f030bcb81e7b33b875701ffba309"},
     "plan": {"path":"specs/014-grounded-llm-wiki-chat-release-evidence/plan.md","sha256":"614bf140543847a396ca04eedb1f007a7e937e260619818838506f053c1cc0d7"},
-    "tasks": {"path":"specs/014-grounded-llm-wiki-chat-release-evidence/tasks.md","sha256":"7bdcea011bbfb3b24b1c8a149ce2eb1e3558328e63149ac6b6708c70af6966d2"}
+    "tasks": {"path":"specs/014-grounded-llm-wiki-chat-release-evidence/tasks.md","sha256":"1a388144bf59674aa74ab859f16a3d46ec3d60f344881fdff5d9ef069e8a165e"}
   },
   "gates": {
     "plan-review": {"status":"accepted","attempt":2,"verdict_path":"specs/014-grounded-llm-wiki-chat-release-evidence/reviews/plan-review/plan-review-track-c-mvp-02.json"},
@@ -28,13 +28,12 @@
     {"decision_id":"story-12-5-planned-change-authorization-track-c-mvp-rebind-01","status":"accepted","scope_sha256":"6e88b42958a615399a9b4167a1c9fc27f7229ea7cedcc7f4febedafd8c775400","evidence_path":"specs/014-grounded-llm-wiki-chat-release-evidence/decisions/planned-change-authorization-track-c-mvp-rebind-01.md","decided_at":"2026-08-29T16:29:09.3191133Z"},
     {"decision_id":"story-12-5-implementation-approval-track-c-mvp-01","status":"accepted","scope_sha256":"6e88b42958a615399a9b4167a1c9fc27f7229ea7cedcc7f4febedafd8c775400","evidence_path":"specs/014-grounded-llm-wiki-chat-release-evidence/decisions/implementation-approval-track-c-mvp-01.md","decided_at":"2026-08-29T16:33:56.9454670Z"},
     {"decision_id":"story-12-5-track-c-mvp-overnight-standing-authorization-02","status":"accepted","scope_sha256":"6e88b42958a615399a9b4167a1c9fc27f7229ea7cedcc7f4febedafd8c775400","evidence_path":"specs/014-grounded-llm-wiki-chat-release-evidence/decisions/standing-authorization-track-c-mvp-02.md","decided_at":"2026-08-29T17:08:44.9350501Z"},
-    {"decision_id":"story-12-5-track-c-mvp-postgresql-provider-authorization-01","status":"accepted","scope_sha256":"6e88b42958a615399a9b4167a1c9fc27f7229ea7cedcc7f4febedafd8c775400","evidence_path":"specs/014-grounded-llm-wiki-chat-release-evidence/decisions/postgresql-provider-preflight-authorization-01.md","decided_at":"2026-08-29T23:16:52.1463747Z"}
+    {"decision_id":"story-12-5-track-c-mvp-postgresql-provider-authorization-01","status":"accepted","scope_sha256":"6e88b42958a615399a9b4167a1c9fc27f7229ea7cedcc7f4febedafd8c775400","evidence_path":"specs/014-grounded-llm-wiki-chat-release-evidence/decisions/postgresql-provider-preflight-authorization-01.md","decided_at":"2026-08-29T23:16:52.1463747Z"},
+    {"decision_id":"story-12-5-track-c-mvp-host-startup-authorization-01","status":"accepted","scope_sha256":"6e88b42958a615399a9b4167a1c9fc27f7229ea7cedcc7f4febedafd8c775400","evidence_path":"specs/014-grounded-llm-wiki-chat-release-evidence/decisions/track-c-mvp-host-startup-authorization-01.md","decided_at":"2026-08-29T23:28:00Z"}
   ],
   "convergence": {"status":"pending","attempt":0,"outcome":"pending","report_path":null},
   "e2e": {"result":"pending","decision_path":null},
   "current_evidence_paths": [
-    "docs/bmad/planning-artifacts/sprint-change-proposal-2026-08-29-story-12-5-track-c-mvp.md",
-    "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/planned-change-authorization-track-c-mvp-rebind-01.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/implementation-approval-track-c-mvp-01.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/plan-review/plan-review-track-c-mvp-02.json",
     "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/definition-review/definition-review-track-c-mvp-02.json",
@@ -44,9 +43,11 @@
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/verification/track-c-mvp-tier1-01.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/corrections/track-c-mvp-preflight-classification-01.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/postgresql-provider-preflight-authorization-01.md",
-    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/track-c-mvp/run-02/release-report.md"
+    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/track-c-mvp/run-02/release-report.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/track-c-mvp-host-startup-authorization-01.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/track-c-mvp-blocked-02.md"
   ],
-  "checkpoint": {"checkpoint_id":"bmad-12-5-implement-20260829T232206Z-trackcmvpt009database01","stage":"implement","commit_sha":null,"binding_status":"pending"},
-  "resume": {"stage":"implement","reason":"T009 created and verified only the guarded run-02 PostgreSQL database. Proceed to T010 host bootstrap, authenticated System/exactly-two Repository preparation, and real Scan.","evidence_path":"specs/014-grounded-llm-wiki-chat-release-evidence/evidence/track-c-mvp/run-02/release-report.md"},
-  "updated_at": "2026-08-29T23:22:06.7117756Z"
+  "checkpoint": {"checkpoint_id":"bmad-12-5-implement-20260829T234116Z-trackcmvpt010blocked02","stage":"implement","commit_sha":null,"binding_status":"pending"},
+  "resume": {"stage":"implement","reason":"T010 blocked: production composition exposes only RuntimeUnavailableRepositoryProfilingCoordinator, so the clean database cannot create Scan prerequisites. Return to plan and Scan planned-change authority; never substitute Story 12.4 data.","evidence_path":"specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/track-c-mvp-blocked-02.md"},
+  "updated_at": "2026-08-29T23:41:16.7585449Z"
 }
