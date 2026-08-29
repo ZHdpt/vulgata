@@ -23,6 +23,7 @@ is `4798b97d9f23aef587829175df7ab7ebc3daf995`.
 | Repository `mbs_account` | exact clean Profiled Revision `19c60cd3f3976b7697c487c7bafd96142e3a7625` | ready |
 | Repository `mbs_channel` | exact clean Profiled Revision `47f6b627a7598f862873610413eec1e1e7bf46bf` | ready |
 | Docker/PostgreSQL | PostgreSQL `17.10`; verified role `vulgata` has database-creation authority | ready |
+| Owned database | `vulgata_story125_93fd44c9b3044fee84f2d032ac3af8a2`; owner `vulgata`; created from `template0` with UTF-8 after absence proof | ready |
 | CodeGraph | `@colbymchenry/codegraph@1.5.0`; approved hashes `03e4c791…de03`, `b3094d0b…aa3`, `80419260…877` matched | ready |
 | Java/JDT LS | Java `21.0.12`; `jdt-language-server-1.61.0-202608141332` archive SHA-256 `bbb2297d…a0f` matched | ready |
 | Provider | `https://opencode.ai/zen/go/v1/chat/completions`; `deepseek-v4-flash`; credential present via `VULGATA_TEST_KEY` | ready |
@@ -36,9 +37,11 @@ Owned database identity:
 
 The compiled Story 12.5 harness generated the name. Its preconnection factory
 guard rejected `postgres` with zero factory calls, then accepted this owned name
-with exactly one non-connecting marker call. The database has not yet been
-created or contacted as a product database. Intended owner/purpose: the Story
-12.5 Track C-MVP integration root, for this one combined release run.
+with exactly one non-connecting marker call. T009 then proved the name absent,
+created exactly this database through the approved PostgreSQL role, and read back
+its owner/version from the administrator catalog. Vulgata has not started and no
+migration or product query has run. Intended owner/purpose: the Story 12.5 Track
+C-MVP integration root, for this one combined release run.
 
 System, Repository, and Prepared Scan Manifest GUIDs are deliberately absent at
 T008. T010 must capture their actual values from the existing authenticated
@@ -54,14 +57,16 @@ UI/API after T009 creates the database; none may be inferred or fabricated.
 | 4 | 2026-08-29 23:14 | Read-only PostgreSQL administrator/version/capability query | exit 0; PostgreSQL 17.10; create authority true | completed |
 | 5 | 2026-08-29 23:15 | Invoke compiled Story 12.5 identity and preconnection factory guard | system target rejected with zero calls; owned target accepted with one marker call | completed |
 | 6 | 2026-08-29 23:16 | Revalidate exact Repository revisions, CodeGraph/Java/JDT hashes, provider/auth/browser bindings | exit 0; all ready | completed |
+| 7 | 2026-08-29 23:21 | Prove guarded database absent, create only that database, and read back owner/version | exit 0; absent before; created once; owner `vulgata`; PostgreSQL 17.10 | completed |
 
 No command emitted a credential, token, password, connection string, response
 body, source content, prompt corpus, absolute host path, or unrelated state.
 
 ## Combined host integration and real release run
 
-Pending T009 database creation and T010 execution. No Scan or generated-output
-claim exists yet.
+T009 database creation passed. T010 host/authentication/System/exactly-two
+Repository preparation and Scan execution are pending. No Scan or
+generated-output claim exists yet.
 
 ## Straightforward database query table
 
@@ -82,11 +87,11 @@ Pending. No historical or fake Backup B screenshot is substituted.
 ## Failures and limitations
 
 - Run 01 remains blocked historical evidence and is not edited.
-- Run 02 preflight is ready, but database creation and every dependent product
-  observation remain pending.
+- Run 02 preflight and owned database creation are ready; every dependent product
+  observation remains pending.
 - The source-free provider probe establishes route/credential/model readiness;
   it is not a grounded answer and counts toward no release metric.
 
 ## Passing checklist
 
-Not yet passed. T009-T022 and all retained technical gates remain incomplete.
+Not yet passed. T010-T022 and all retained technical gates remain incomplete.
