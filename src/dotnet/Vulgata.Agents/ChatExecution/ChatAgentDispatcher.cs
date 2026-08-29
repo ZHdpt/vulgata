@@ -15,6 +15,8 @@ public sealed class ChatAgentDispatcher : IChatAgentDispatcher
     private static readonly TimeSpan _streamInactivityTimeout = TimeSpan.FromSeconds(10);
     private static readonly TimeSpan _minimumRepairWindow = TimeSpan.FromSeconds(3);
     private const string _requestSchemaVersion = "prepared-chat-selection-request-v1";
+    private const string _invalidJsonSyntaxCategory = "invalid-json-syntax";
+    private const int _maximumRepairResponseLength = 2_048;
     private readonly ChatAgentProviderResolver _providerResolver;
     private readonly ISecretEncryptionService _encryptionService;
     private readonly ChatPromptCatalog _promptCatalog;
@@ -109,7 +111,7 @@ public sealed class ChatAgentDispatcher : IChatAgentDispatcher
             string boundedPrompt = _streamingTransport is null
                 ? requestJson
                 : string.Concat(prompt, "\n\n", requestJson);
-            ChatSynthesisOutcome primary = await DispatchAttemptAsync(
+            DispatchAttemptResult primaryAttempt = await DispatchAttemptAsync(
                 transport,
                 request,
                 provider,
@@ -117,13 +119,15 @@ public sealed class ChatAgentDispatcher : IChatAgentDispatcher
                 "primary",
                 absoluteDeadline,
                 cancellationToken);
-            if (primary.FailureCode != ChatContractFailureCode.InvalidSelection)
+            ChatSynthesisOutcome primary = primaryAttempt.Outcome;
+            if (primaryAttempt.SyntaxFailure is null)
             {
                 return transport is DirectConstructionStreamingTransport &&
                     primary.Result is not null
                     ? ChatSynthesisOutcome.Failed(ChatContractFailureCode.ProviderFailure)
                     : primary;
             }
+            SyntaxFailure syntaxFailure = primaryAttempt.SyntaxFailure;
 
             long remainingMilliseconds = absoluteDeadline -
                 _timeProvider.GetUtcNow().ToUnixTimeMilliseconds();
@@ -132,11 +136,18 @@ public sealed class ChatAgentDispatcher : IChatAgentDispatcher
                 return primary;
             }
 
+            string repairContext = JsonSerializer.Serialize(new
+            {
+                category = _invalidJsonSyntaxCategory,
+                invalidResponse = syntaxFailure.BoundedInvalidResponse,
+            });
             string repairPrompt = string.Concat(
                 boundedPrompt,
                 "\n\nReturn only one syntactically valid JSON object matching the requested schema. " +
-                "Do not change the request, evidence fingerprint, candidates, or answer semantics.");
-            ChatSynthesisOutcome repaired = await DispatchAttemptAsync(
+                "Do not change the request, evidence fingerprint, candidates, or answer semantics. " +
+                "Repair context: ",
+                repairContext);
+            DispatchAttemptResult repairedAttempt = await DispatchAttemptAsync(
                 transport,
                 request,
                 provider,
@@ -144,6 +155,7 @@ public sealed class ChatAgentDispatcher : IChatAgentDispatcher
                 "syntax-repair",
                 absoluteDeadline,
                 cancellationToken);
+            ChatSynthesisOutcome repaired = repairedAttempt.Outcome;
             return transport is DirectConstructionStreamingTransport &&
                 repaired.Result is not null
                 ? ChatSynthesisOutcome.Failed(ChatContractFailureCode.ProviderFailure)
@@ -160,7 +172,7 @@ public sealed class ChatAgentDispatcher : IChatAgentDispatcher
         }
     }
 
-    private async Task<ChatSynthesisOutcome> DispatchAttemptAsync(
+    private async Task<DispatchAttemptResult> DispatchAttemptAsync(
         IChatProviderStreamingTransport transport,
         ChatSynthesisRequest synthesisRequest,
         ResolvedChatAgentProvider provider,
@@ -226,18 +238,20 @@ public sealed class ChatAgentDispatcher : IChatAgentDispatcher
 
                 if (!hasNext)
                 {
-                    return ChatSynthesisOutcome.Failed(ChatContractFailureCode.ProviderFailure);
+                    return DispatchAttemptResult.Failed(ChatContractFailureCode.ProviderFailure);
                 }
 
                 ChatProviderStreamSignal signal = signals.Current;
                 if (signal.Kind == ChatProviderStreamSignalKind.ProviderError)
                 {
-                    return ChatSynthesisOutcome.Failed(ChatContractFailureCode.ProviderFailure);
+                    return DispatchAttemptResult.Failed(ChatContractFailureCode.ProviderFailure);
                 }
 
                 if (signal.Kind == ChatProviderStreamSignalKind.Terminal)
                 {
-                    return ParseResult(Encoding.UTF8.GetString(answer.ToArray()));
+                    return ParseResult(
+                        synthesisRequest,
+                        Encoding.UTF8.GetString(answer.ToArray()));
                 }
 
                 if (signal.Kind != ChatProviderStreamSignalKind.AnswerDelta ||
@@ -254,29 +268,29 @@ public sealed class ChatAgentDispatcher : IChatAgentDispatcher
             inactivity?.IsCancellationRequested == true &&
             !linked.IsCancellationRequested)
         {
-            return ChatSynthesisOutcome.Failed(ChatContractFailureCode.TimedOut);
+            return DispatchAttemptResult.Failed(ChatContractFailureCode.TimedOut);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
-            return ChatSynthesisOutcome.Failed(ChatContractFailureCode.Cancelled);
+            return DispatchAttemptResult.Failed(ChatContractFailureCode.Cancelled);
         }
         catch (NotSupportedException) when (cancellationToken.IsCancellationRequested)
         {
-            return ChatSynthesisOutcome.Failed(ChatContractFailureCode.Cancelled);
+            return DispatchAttemptResult.Failed(ChatContractFailureCode.Cancelled);
         }
         catch (NotSupportedException) when (deadline.IsCancellationRequested)
         {
-            return ChatSynthesisOutcome.Failed(ChatContractFailureCode.TimedOut);
+            return DispatchAttemptResult.Failed(ChatContractFailureCode.TimedOut);
         }
         catch (OperationCanceledException) when (deadline.IsCancellationRequested)
         {
-            return ChatSynthesisOutcome.Failed(ChatContractFailureCode.TimedOut);
+            return DispatchAttemptResult.Failed(ChatContractFailureCode.TimedOut);
         }
         catch (Exception exception) when (
             exception is HttpRequestException or InvalidDataException or JsonException or
             InvalidOperationException)
         {
-            return ChatSynthesisOutcome.Failed(ChatContractFailureCode.ProviderFailure);
+            return DispatchAttemptResult.Failed(ChatContractFailureCode.ProviderFailure);
         }
         finally
         {
@@ -284,64 +298,122 @@ public sealed class ChatAgentDispatcher : IChatAgentDispatcher
         }
     }
 
-    private ChatSynthesisOutcome ParseResult(string responseText)
+    private DispatchAttemptResult ParseResult(
+        ChatSynthesisRequest request,
+        string responseText)
     {
+        string responseJson = UnwrapJsonCodeFence(responseText);
+        JsonDocument document;
         try
         {
-            string responseJson = UnwrapJsonCodeFence(responseText);
-            using JsonDocument document = JsonDocument.Parse(responseJson);
-            JsonElement root = document.RootElement;
-            string requestId = root.GetProperty("requestId").GetString() ?? string.Empty;
-            ChatMode mode = root.GetProperty("mode").GetString() switch
-            {
-                "business" => ChatMode.Business,
-                "it" => ChatMode.It,
-                _ => throw new JsonException("Unsupported Chat mode."),
-            };
-            string fingerprint = root.GetProperty("evidenceFingerprint").GetString() ?? string.Empty;
-            ChatAnswerability answerability = root.GetProperty("answerability").GetString() switch
-            {
-                "supported" => ChatAnswerability.Supported,
-                "unsupported" => ChatAnswerability.Unsupported,
-                _ => throw new JsonException("Unsupported answerability value."),
-            };
-            string? schemaVersion = root.GetProperty("schemaVersion").GetString();
-            if (!StringComparer.Ordinal.Equals(
-                    schemaVersion,
-                    ChatSynthesisResult.SupportedSchemaVersion) &&
-                !StringComparer.Ordinal.Equals(
-                    schemaVersion,
-                    ChatSynthesisResult.CompatibleProviderEchoSchemaVersion))
-            {
-                throw new JsonException("Unsupported Chat result schema.");
-            }
-
-            ChatSynthesisSelection[] selections = root.GetProperty("selections")
-                .EnumerateArray()
-                .Select(selection => new ChatSynthesisSelection(
-                    selection.GetProperty("candidateHandle").GetString() ?? string.Empty,
-                    selection.GetProperty("order").GetInt32(),
-                    selection.TryGetProperty("narrativeText", out JsonElement narrative) &&
-                        narrative.ValueKind == JsonValueKind.String
-                            ? narrative.GetString()
-                            : null))
-                .ToArray();
-            return ChatSynthesisOutcome.Generated(ChatSynthesisResult.Create(
-                requestId,
-                mode,
-                fingerprint,
-                answerability,
-                selections), responseJson);
+            document = JsonDocument.Parse(responseJson);
         }
-        catch (Exception exception) when (
-            exception is JsonException or InvalidOperationException or ChatContractException)
+        catch (JsonException exception)
         {
             _logger?.LogWarning(
-                "Prepared Chat provider result parsing failed with {ErrorType}: {ErrorMessage}",
-                exception.GetType().Name,
-                exception.Message);
-            return ChatSynthesisOutcome.Failed(ChatContractFailureCode.InvalidSelection);
+                "Prepared Chat provider result had locally classified invalid JSON syntax: {ErrorType}",
+                exception.GetType().Name);
+            return DispatchAttemptResult.SyntaxFailed(BoundRepairResponse(responseJson));
         }
+
+        using (document)
+        {
+            try
+            {
+                JsonElement root = document.RootElement;
+                string requestId = root.GetProperty("requestId").GetString() ?? string.Empty;
+                ChatMode mode = root.GetProperty("mode").GetString() switch
+                {
+                    "business" => ChatMode.Business,
+                    "it" => ChatMode.It,
+                    _ => throw new JsonException("Unsupported Chat mode."),
+                };
+                string fingerprint = root.GetProperty("evidenceFingerprint").GetString() ??
+                    string.Empty;
+                ChatAnswerability answerability = root.GetProperty("answerability").GetString() switch
+                {
+                    "supported" => ChatAnswerability.Supported,
+                    "unsupported" => ChatAnswerability.Unsupported,
+                    _ => throw new JsonException("Unsupported answerability value."),
+                };
+                string? schemaVersion = root.GetProperty("schemaVersion").GetString();
+                if (!StringComparer.Ordinal.Equals(
+                        schemaVersion,
+                        ChatSynthesisResult.SupportedSchemaVersion) &&
+                    !StringComparer.Ordinal.Equals(
+                        schemaVersion,
+                        ChatSynthesisResult.CompatibleProviderEchoSchemaVersion))
+                {
+                    throw new JsonException("Unsupported Chat result schema.");
+                }
+
+                ChatSynthesisSelection[] selections = root.GetProperty("selections")
+                    .EnumerateArray()
+                    .Select(selection => new ChatSynthesisSelection(
+                        selection.GetProperty("candidateHandle").GetString() ?? string.Empty,
+                        selection.GetProperty("order").GetInt32(),
+                        selection.TryGetProperty("narrativeText", out JsonElement narrative) &&
+                            narrative.ValueKind == JsonValueKind.String
+                                ? narrative.GetString()
+                                : null))
+                    .ToArray();
+                ChatSynthesisResult result = ChatSynthesisResult.Create(
+                    requestId,
+                    mode,
+                    fingerprint,
+                    answerability,
+                    selections);
+                HashSet<string> candidateHandles = request.CandidateClaims
+                    .Select(candidate => candidate.CandidateHandle)
+                    .ToHashSet(StringComparer.Ordinal);
+                if (!StringComparer.Ordinal.Equals(result.RequestId, request.RequestId) ||
+                    result.Mode != request.Mode ||
+                    !StringComparer.Ordinal.Equals(
+                        result.EvidenceFingerprint,
+                        request.EvidenceFingerprint) ||
+                    result.Selections.Any(selection =>
+                        !candidateHandles.Contains(selection.CandidateHandle)))
+                {
+                    return DispatchAttemptResult.Failed(ChatContractFailureCode.InvalidSelection);
+                }
+
+                return DispatchAttemptResult.Generated(result, responseJson);
+            }
+            catch (Exception exception) when (
+                exception is JsonException or InvalidOperationException or ChatContractException)
+            {
+                _logger?.LogWarning(
+                    "Prepared Chat provider result contract validation failed with {ErrorType}: {ErrorMessage}",
+                    exception.GetType().Name,
+                    exception.Message);
+                return DispatchAttemptResult.Failed(ChatContractFailureCode.InvalidSelection);
+            }
+        }
+    }
+
+    private static string BoundRepairResponse(string responseJson) =>
+        responseJson.Length <= _maximumRepairResponseLength
+            ? responseJson
+            : responseJson[.._maximumRepairResponseLength];
+
+    private sealed record SyntaxFailure(string BoundedInvalidResponse);
+
+    private sealed record DispatchAttemptResult(
+        ChatSynthesisOutcome Outcome,
+        SyntaxFailure? SyntaxFailure)
+    {
+        public static DispatchAttemptResult Generated(
+            ChatSynthesisResult result,
+            string rawSelectionJson) =>
+            new(ChatSynthesisOutcome.Generated(result, rawSelectionJson), null);
+
+        public static DispatchAttemptResult Failed(ChatContractFailureCode failureCode) =>
+            new(ChatSynthesisOutcome.Failed(failureCode), null);
+
+        public static DispatchAttemptResult SyntaxFailed(string boundedInvalidResponse) =>
+            new(
+                ChatSynthesisOutcome.Failed(ChatContractFailureCode.InvalidSelection),
+                new SyntaxFailure(boundedInvalidResponse));
     }
 
     private static string UnwrapJsonCodeFence(string responseText)

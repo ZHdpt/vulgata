@@ -806,6 +806,132 @@ public sealed class PreparedChatCoordinatorTests
         Assert.DoesNotContain("citation-materialization", trace);
     }
 
+    [Fact]
+    public async Task AskAsync_RetrievalPacketAdvisoryDiffersFromInitialAndReveal_WithholdsWithoutConversationAppend()
+    {
+        var system = new SystemEntity("支付系统", null, null, DateTimeOffset.UtcNow);
+        Repository first = system.AddRepository("账户仓库", "https://example.test/account.git", null, null, DateTimeOffset.UtcNow);
+        Repository second = system.AddRepository("渠道仓库", "https://example.test/channel.git", null, null, DateTimeOffset.UtcNow);
+        ChatAdvisoryContextSnapshot initial = CreateAdvisorySnapshot(system.Id, first.Id, second.Id);
+        ChatAdvisoryContextSnapshot retrievalAuthority = initial with
+        {
+            ComposedText = "事务内检索规则",
+            EncodedUtf8Bytes = Encoding.UTF8.GetByteCount("事务内检索规则"),
+            AuthorityFingerprint = new string('b', 64),
+        };
+        var advisoryReader = new SequencedAdvisoryContextReader(
+            Enumerable.Repeat(
+                ChatAdvisoryContextReadResult.Succeeded(initial),
+                4).ToArray(),
+            []);
+        var retriever = new StubEvidenceRetriever
+        {
+            PacketAdvisoryContextOverride = retrievalAuthority,
+        };
+        var coordinator = CreateCoordinator(
+            system,
+            [first, second],
+            retriever: retriever,
+            advisoryReader: advisoryReader);
+
+        PreparedChatResult firstResult = await coordinator.AskAsync(
+            ChatMode.Business,
+            system.Id,
+            [first.Id, second.Id],
+            "客户如何付款？");
+        _ = await coordinator.AskAsync(
+            ChatMode.Business,
+            system.Id,
+            [first.Id, second.Id],
+            "客户付款还需要哪些规则？");
+
+        Assert.Equal(PreparedChatResultKind.EvidenceUnavailable, firstResult.Kind);
+        Assert.Null(firstResult.Answer);
+        Assert.Equal(2, retriever.Requests.Count);
+        Assert.Empty(retriever.Requests[1].Conversation.Turns);
+        Assert.Equal(initial.AuthorityFingerprint, retriever.Requests[0].AdvisoryContext.AuthorityFingerprint);
+        Assert.NotEqual(
+            retriever.Requests[0].AdvisoryContext.AuthorityFingerprint,
+            retriever.PacketAdvisoryContextOverride.AuthorityFingerprint);
+    }
+
+    [Theory]
+    [InlineData("retrieval")]
+    [InlineData("currentness")]
+    [InlineData("advisory-reveal")]
+    public async Task AskAsync_AbsoluteDeadlineExpiresDuringServerStage_TimesOutWithoutPublishingOrAppending(
+        string expiringStage)
+    {
+        var system = new SystemEntity("支付系统", null, null, DateTimeOffset.UtcNow);
+        Repository first = system.AddRepository("账户仓库", "https://example.test/account.git", null, null, DateTimeOffset.UtcNow);
+        Repository second = system.AddRepository("渠道仓库", "https://example.test/channel.git", null, null, DateTimeOffset.UtcNow);
+        var clock = new AdjustableCoordinatorTimeProvider(DateTimeOffset.UnixEpoch);
+        var retriever = new StubEvidenceRetriever();
+        var currentness = new StubCurrentnessValidator();
+        var advisoryReader = new DeadlineAwareAdvisoryContextReader();
+        var coordinator = CreateCoordinator(
+            system,
+            [first, second],
+            retriever: retriever,
+            currentness: currentness,
+            advisoryReader: advisoryReader,
+            timeProvider: clock);
+        PreparedChatResult prior = await coordinator.AskAsync(
+            ChatMode.Business,
+            system.Id,
+            [first.Id, second.Id],
+            "客户如何付款？");
+        Assert.Equal(PreparedChatResultKind.Succeeded, prior.Kind);
+
+        Action expire = () => clock.Advance(TimeSpan.FromSeconds(29));
+        switch (expiringStage)
+        {
+            case "retrieval":
+                retriever.BeforeResult = expire;
+                break;
+            case "currentness":
+                currentness.BeforeResult = expire;
+                break;
+            case "advisory-reveal":
+                advisoryReader.AdvanceOnCall = advisoryReader.CallCount + 2;
+                advisoryReader.BeforeResult = expire;
+                break;
+            default:
+                throw new ArgumentOutOfRangeException(nameof(expiringStage), expiringStage, null);
+        }
+
+        const string expiredQuestion = "客户付款需要哪些规则？";
+        PreparedChatResult expired = await coordinator.AskAsync(
+            ChatMode.Business,
+            system.Id,
+            [first.Id, second.Id],
+            expiredQuestion);
+        retriever.BeforeResult = null;
+        currentness.BeforeResult = null;
+        advisoryReader.BeforeResult = null;
+        advisoryReader.AdvanceOnCall = null;
+        _ = await coordinator.AskAsync(
+            ChatMode.Business,
+            system.Id,
+            [first.Id, second.Id],
+            "客户付款如何确认？");
+
+        Assert.Equal(PreparedChatResultKind.TimedOut, expired.Kind);
+        Assert.Equal("回答超时，请重试。", expired.Message);
+        Assert.Null(expired.Answer);
+        Assert.True(expiringStage switch
+        {
+            "retrieval" => retriever.CancellationObservedAfterBeforeResult,
+            "currentness" => currentness.CancellationObservedAfterBeforeResult,
+            "advisory-reveal" => advisoryReader.CancellationObservedAfterBeforeResult,
+            _ => false,
+        });
+        Assert.Equal(3, retriever.Requests.Count);
+        Assert.DoesNotContain(
+            retriever.Requests[2].Conversation.Turns,
+            turn => string.Equals(turn.Question, expiredQuestion, StringComparison.Ordinal));
+    }
+
     [Theory]
     [InlineData(ChatAdvisoryContextReadResultKind.NotFoundOrUnauthorized, PreparedChatResultKind.MissingOrUnauthorized)]
     [InlineData(ChatAdvisoryContextReadResultKind.InconsistentCurrentEvidence, PreparedChatResultKind.EvidenceUnavailable)]
@@ -1166,7 +1292,8 @@ public sealed class PreparedChatCoordinatorTests
         IChatAgentDispatcher? dispatcher = null,
         StubCurrentnessValidator? currentness = null,
         IChatAdvisoryContextReader? advisoryReader = null,
-        IChatStreamCompletionSummaryRecorder? completionRecorder = null)
+        IChatStreamCompletionSummaryRecorder? completionRecorder = null,
+        TimeProvider? timeProvider = null)
     {
         var candidateExtractor = new ChatCandidateExtractor();
         return new PreparedChatCoordinator(
@@ -1179,7 +1306,7 @@ public sealed class PreparedChatCoordinatorTests
             candidateExtractor,
             dispatcher ?? new StubDispatcher(),
             currentness ?? new StubCurrentnessValidator(),
-            TimeProvider.System,
+            timeProvider ?? TimeProvider.System,
             new ChatAgentResultValidator(candidateExtractor),
             new StubPreparedChatScopeResolver(),
             new PreparedChatQuestionRequestValidator(),
@@ -1283,6 +1410,148 @@ public sealed class PreparedChatCoordinatorTests
             CallCount++;
             trace.Add(CallCount == 1 ? "advisory-initial" : "advisory-reveal");
             return Task.FromResult(_results.Dequeue());
+        }
+    }
+
+    private sealed class DeadlineAwareAdvisoryContextReader : IChatAdvisoryContextReader
+    {
+        private static readonly ChatAdvisoryContextSnapshot _empty = new(
+            [],
+            string.Empty,
+            [],
+            0,
+            new string('0', 64));
+
+        public int CallCount { get; private set; }
+        public int? AdvanceOnCall { get; set; }
+        public Action? BeforeResult { get; set; }
+        public bool CancellationObservedAfterBeforeResult { get; private set; }
+
+        public Task<ChatAdvisoryContextReadResult> ReadAsync(
+            AuthorizedChatScope scope,
+            CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            CallCount++;
+            if (AdvanceOnCall == CallCount)
+            {
+                BeforeResult?.Invoke();
+                CancellationObservedAfterBeforeResult = cancellationToken.IsCancellationRequested;
+            }
+
+            return Task.FromResult(ChatAdvisoryContextReadResult.Succeeded(_empty));
+        }
+    }
+
+    private sealed class AdjustableCoordinatorTimeProvider(DateTimeOffset current) : TimeProvider
+    {
+        private readonly object _gate = new();
+        private readonly List<AdjustableTimer> _timers = [];
+        private DateTimeOffset _current = current;
+
+        public override DateTimeOffset GetUtcNow()
+        {
+            lock (_gate)
+            {
+                return _current;
+            }
+        }
+
+        public override ITimer CreateTimer(
+            TimerCallback callback,
+            object? state,
+            TimeSpan dueTime,
+            TimeSpan period)
+        {
+            var timer = new AdjustableTimer(this, callback, state, dueTime, period);
+            lock (_gate)
+            {
+                _timers.Add(timer);
+            }
+
+            return timer;
+        }
+
+        public void Advance(TimeSpan duration)
+        {
+            AdjustableTimer[] due;
+            lock (_gate)
+            {
+                _current = _current.Add(duration);
+                due = _timers.Where(timer => timer.IsDue(_current)).ToArray();
+            }
+
+            foreach (AdjustableTimer timer in due)
+            {
+                timer.Fire();
+            }
+        }
+
+        private sealed class AdjustableTimer(
+            AdjustableCoordinatorTimeProvider owner,
+            TimerCallback callback,
+            object? state,
+            TimeSpan dueTime,
+            TimeSpan period) : ITimer
+        {
+            private DateTimeOffset _dueAt = owner._current.Add(dueTime);
+            private TimeSpan _period = period;
+            private bool _disposed;
+
+            internal bool IsDue(DateTimeOffset now) => !_disposed && _dueAt <= now;
+
+            internal void Fire()
+            {
+                lock (owner._gate)
+                {
+                    if (_disposed)
+                    {
+                        return;
+                    }
+
+                    if (_period == Timeout.InfiniteTimeSpan)
+                    {
+                        _disposed = true;
+                        owner._timers.Remove(this);
+                    }
+                    else
+                    {
+                        _dueAt = owner._current.Add(_period);
+                    }
+                }
+
+                callback(state);
+            }
+
+            public bool Change(TimeSpan updatedDueTime, TimeSpan updatedPeriod)
+            {
+                lock (owner._gate)
+                {
+                    if (_disposed)
+                    {
+                        return false;
+                    }
+
+                    _dueAt = owner._current.Add(updatedDueTime);
+                    _period = updatedPeriod;
+                    return true;
+                }
+            }
+
+            public void Dispose()
+            {
+                lock (owner._gate)
+                {
+                    _disposed = true;
+                    owner._timers.Remove(this);
+                }
+            }
+
+            public ValueTask DisposeAsync()
+            {
+                Dispose();
+                return ValueTask.CompletedTask;
+            }
         }
     }
 
@@ -1402,12 +1671,17 @@ public sealed class PreparedChatCoordinatorTests
         public DocumentType? PrimaryDocumentTypeOverride { get; set; }
         public string PrimaryContent { get; set; } = "客户提交付款后，系统完成校验。";
         public bool IncludeRelationshipSupport { get; set; } = true;
+        public ChatAdvisoryContextSnapshot? PacketAdvisoryContextOverride { get; set; }
+        public Action? BeforeResult { get; set; }
+        public bool CancellationObservedAfterBeforeResult { get; private set; }
+        public List<ChatRetrievalRequest> Requests { get; } = [];
 
         public Task<ChatEvidenceResult> RetrieveAsync(ChatRetrievalRequest request, RepositoryAccessScope accessScope, CancellationToken cancellationToken = default)
         {
             CallCount++;
             Trace?.Add("retrieval");
             LastRequest = request;
+            Requests.Add(request);
             if (ForcedResultKind is ChatEvidenceResultKind forcedResultKind)
             {
                 return Task.FromResult(forcedResultKind switch
@@ -1438,7 +1712,9 @@ public sealed class PreparedChatCoordinatorTests
                 DocumentType.CodeLogic,
                 "技术实现",
                 new string('b', 40));
-                EvidencePacket packet = EvidencePacket.Create(
+            ChatAdvisoryContextSnapshot packetAdvisory =
+                PacketAdvisoryContextOverride ?? request.AdvisoryContext;
+            EvidencePacket packet = EvidencePacket.Create(
                 request.RequestId,
                 request.Mode,
                 request.SystemId,
@@ -1486,8 +1762,13 @@ public sealed class PreparedChatCoordinatorTests
                     ]
                     : [],
                     [],
-                    advisoryContext: request.AdvisoryContext.ComposedText,
-                    advisoryContextAuthorityFingerprint: request.AdvisoryContext.AuthorityFingerprint);
+                    advisoryContext: packetAdvisory.ComposedText,
+                    advisoryContextAuthorityFingerprint: packetAdvisory.AuthorityFingerprint);
+            if (BeforeResult is not null)
+            {
+                BeforeResult();
+                CancellationObservedAfterBeforeResult = cancellationToken.IsCancellationRequested;
+            }
             return Task.FromResult(ChatEvidenceResult.Found(packet));
         }
     }
@@ -1661,6 +1942,8 @@ public sealed class PreparedChatCoordinatorTests
         public ChatCurrentnessValidationOutcome Outcome { get; set; } = ChatCurrentnessValidationOutcome.Current;
         public ChatCurrentnessValidationRequest? LastRequest { get; private set; }
         public List<string>? Trace { get; set; }
+        public Action? BeforeResult { get; set; }
+        public bool CancellationObservedAfterBeforeResult { get; private set; }
 
         public Task<ChatCurrentnessValidationOutcome> ValidateCurrentAsync(ChatCurrentnessValidationRequest request, RepositoryAccessScope accessScope,
             CancellationToken cancellationToken = default)
@@ -1668,6 +1951,11 @@ public sealed class PreparedChatCoordinatorTests
             CallCount++;
             Trace?.Add("currentness");
             LastRequest = request;
+            if (BeforeResult is not null)
+            {
+                BeforeResult();
+                CancellationObservedAfterBeforeResult = cancellationToken.IsCancellationRequested;
+            }
             return Task.FromResult(Outcome);
         }
     }

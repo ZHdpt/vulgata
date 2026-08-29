@@ -536,6 +536,62 @@ public sealed class ChatAgentDispatcherTests
             handler.RequestBodies[1].Contains(request.EvidenceFingerprint, StringComparison.Ordinal));
     }
 
+    [Theory]
+    [InlineData("invalid-handle")]
+    [InlineData("unsupported-selection")]
+    [InlineData("mismatched-evidence-fingerprint")]
+    public async Task GenerateAsync_ValidJsonSemanticOrContractFailure_DoesNotUseSyntaxRepair(
+        string failureVector)
+    {
+        ChatSynthesisRequest request = CreateRequest(ChatMode.Business);
+        string validSelection = CreateRawSelectionJson(request);
+        string invalidSelection = failureVector switch
+        {
+            "invalid-handle" => validSelection.Replace(
+                "\"candidateHandle\": \"k1\"",
+                "\"candidateHandle\": \"not a candidate handle\"",
+                StringComparison.Ordinal),
+            "unsupported-selection" => validSelection.Replace(
+                "\"answerability\": \"supported\"",
+                "\"answerability\": \"unsupported\"",
+                StringComparison.Ordinal),
+            "mismatched-evidence-fingerprint" => validSelection.Replace(
+                request.EvidenceFingerprint,
+                new string('b', request.EvidenceFingerprint.Length),
+                StringComparison.Ordinal),
+            _ => throw new ArgumentOutOfRangeException(nameof(failureVector), failureVector, null),
+        };
+        var provider = new LlmProvider(
+            "chat-model",
+            "https://chat-provider.example.com/v1",
+            "encrypted-chat-key",
+            ApiType.ChatCompletions,
+            AgentType.Chat,
+            DateTimeOffset.UtcNow);
+        var transport = new RecordingStreamTransport([invalidSelection, validSelection]);
+        var services = new ServiceCollection();
+        services.AddPreparedPass2Agents();
+        services.AddScoped<IChatProviderStreamingTransport>(_ => transport);
+        using ServiceProvider serviceProvider = services.BuildServiceProvider();
+        using IServiceScope scope = serviceProvider.CreateScope();
+        var dispatcher = new ChatAgentDispatcher(
+            scope.ServiceProvider,
+            new ChatAgentProviderResolver(
+                new FakeOverrideRepository(null),
+                new FakeProviderRepository([provider])),
+            new CapturingEncryptionService("plaintext-chat-key"),
+            new ChatPromptCatalog(),
+            new OpenAiCaptureHandler(() => string.Empty),
+            TimeProvider.System);
+
+        ChatSynthesisOutcome outcome = await dispatcher.GenerateAsync(request);
+
+        Assert.Equal(ChatContractFailureCode.InvalidSelection, outcome.FailureCode);
+        Assert.Null(outcome.Result);
+        Assert.Null(outcome.RawSelectionJson);
+        Assert.Single(transport.Requests);
+    }
+
     [Fact]
     public async Task GenerateAsync_DirectConstructionAggregateJson_IsRejectedAsProviderFailure()
     {
@@ -732,6 +788,9 @@ public sealed class ChatAgentDispatcherTests
             Assert.Equal(request.EvidenceFingerprint, dispatched.EvidencePacketFingerprint);
             Assert.Equal(request.AbsoluteDeadlineUnixTimeMilliseconds, dispatched.AbsoluteDeadlineUnixTimeMilliseconds);
         });
+        Assert.Contains("{not-valid-json", transport.Requests[1].Prompt, StringComparison.Ordinal);
+        Assert.Contains("category", transport.Requests[1].Prompt, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("invalid", transport.Requests[1].Prompt, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]

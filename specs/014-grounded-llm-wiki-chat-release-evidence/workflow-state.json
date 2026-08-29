@@ -6,10 +6,10 @@
   "stage": "implement",
   "preflight": {
     "branch": "demo0831/story-12-5",
-    "head": "25268193b3766149b90b8e155d9fd270fa2fcd27",
+    "head": "5c9b8b9584a8689a81f1ffdadf85192bd299c600",
     "git_identity_sha256": "07a20fe92c0f34dce99c42edc204a9db68ea55524b692aa9828e2edde364da34",
-    "status_sha256": "359c878f27cf1b91fc59c36f4a6c173d223b80829963af99da0852a8f79be595",
-    "observed_at": "2026-08-29T03:08:27.6390566Z"
+    "status_sha256": "9825e069f80831799a496d6fd21a38238d41125a5fbfc391841e42c1cd86ce70",
+    "observed_at": "2026-08-29T03:24:56.5587567Z"
   },
   "artifacts": {
     "spec": {
@@ -22,7 +22,7 @@
     },
     "tasks": {
       "path": "specs/014-grounded-llm-wiki-chat-release-evidence/tasks.md",
-      "sha256": "8b957a03275794b3f758ffeffa68306aca90d668d5fdd5da8c7332a4fee4c7dc"
+      "sha256": "a1ae9688fb6c8695e9c9c0da342683916d1fa8260cb74a788ec6c01085a7ad64"
     }
   },
   "gates": {
@@ -120,18 +120,18 @@
     "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/implementation-approval-track-b-02.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/implementation-approval-track-c-01.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/integration/story-12.4-dependency-integration-correction-01.md",
-    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/track-b-convergence-correction-13.md"
+    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/track-b-quality-correction-01.md"
   ],
   "checkpoint": {
-    "checkpoint_id": "bmad-12-5-implement-20260829T030827Z-quality-revise-01",
+    "checkpoint_id": "bmad-12-5-implement-20260829T032456Z-quality-correction-01",
     "stage": "implement",
     "commit_sha": null,
     "binding_status": "pending"
   },
   "resume": {
     "stage": "implement",
-    "reason": "Independent quality review requested T076-T078 corrections. Return to test-first implementation, then rerun invalidated convergence and quality review. Track C remains closed.",
-    "evidence_path": "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/quality-review/track-b-quality-review-01.json"
+    "reason": "T076-T078 quality corrections are GREEN. Bind the checkpoint, then rerun invalidated convergence and independent quality review. Track C remains closed.",
+    "evidence_path": "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/track-b-quality-correction-01.md"
   },
-  "updated_at": "2026-08-29T03:08:27.6390566Z"
+  "updated_at": "2026-08-29T03:24:56.5587567Z"
 }

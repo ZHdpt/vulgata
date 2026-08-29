@@ -175,10 +175,20 @@ public sealed class PreparedChatCoordinator(
             return Cancelled();
         }
 
+        DateTimeOffset deadlineUtc = timeProvider.GetUtcNow().AddSeconds(29);
+        using var operationCancellation = CancellationTokenSource.CreateLinkedTokenSource(
+            cancellationToken);
+        using ITimer deadlineTimer = timeProvider.CreateTimer(
+            static state => ((CancellationTokenSource)state!).Cancel(),
+            operationCancellation,
+            TimeSpan.FromSeconds(29),
+            Timeout.InfiniteTimeSpan);
+        CancellationToken operationToken = operationCancellation.Token;
+
         try
         {
             ValidationResult validationResult =
-                await requestValidator.ValidateAsync(boundaryRequest, cancellationToken);
+                await requestValidator.ValidateAsync(boundaryRequest, operationToken);
             if (!validationResult.IsValid)
             {
                 return InvalidRequest();
@@ -199,14 +209,21 @@ public sealed class PreparedChatCoordinator(
                 request.RepositoryIds);
             _conversationState = (_conversationState ?? ChatConversationState.Empty(conversationScope))
                 .ResetForScopeChange(conversationScope);
-            DateTimeOffset deadlineUtc = timeProvider.GetUtcNow().AddSeconds(29);
             long absoluteDeadlineUnixTimeMilliseconds = deadlineUtc.ToUnixTimeMilliseconds();
             UserContext? userContext = await GetCurrentUserContextAsync();
-            if (userContext is null ||
-                await systemRepository.GetVisibleByIdAsync(
-                    request.SystemId,
-                    userContext.ToSystemOwnerFilter(),
-                    cancellationToken) is null)
+            operationToken.ThrowIfCancellationRequested();
+            if (userContext is null)
+            {
+                ClearConversation();
+                return Missing();
+            }
+
+            var visibleSystem = await systemRepository.GetVisibleByIdAsync(
+                request.SystemId,
+                userContext.ToSystemOwnerFilter(),
+                operationToken);
+            operationToken.ThrowIfCancellationRequested();
+            if (visibleSystem is null)
             {
                 ClearConversation();
                 return Missing();
@@ -218,7 +235,8 @@ public sealed class PreparedChatCoordinator(
                 RepositoryEntity? repository = await repositoryRepository.GetBySystemAndIdAsync(
                     request.SystemId,
                     repositoryId,
-                    cancellationToken);
+                    operationToken);
+                operationToken.ThrowIfCancellationRequested();
                 if (repository is null)
                 {
                     ClearConversation();
@@ -231,17 +249,23 @@ public sealed class PreparedChatCoordinator(
             var accessScope = new RepositoryAccessScope(
                 request.RepositoryIds,
                 authorizationVerifier);
-            if (!await accessScope.HasCurrentAccessAsync(request.RepositoryIds, cancellationToken))
+            bool hasInitialAccess = await accessScope.HasCurrentAccessAsync(
+                request.RepositoryIds,
+                operationToken);
+            operationToken.ThrowIfCancellationRequested();
+            if (!hasInitialAccess)
             {
                 ClearConversation();
                 return Missing();
             }
 
-            if (await preparedScopeResolver.ResolveAsync(
-                    request.SystemId,
-                    request.RepositoryIds,
-                    accessScope,
-                    cancellationToken) is null)
+            PreparedChatScopeBinding? preparedScope = await preparedScopeResolver.ResolveAsync(
+                request.SystemId,
+                request.RepositoryIds,
+                accessScope,
+                operationToken);
+            operationToken.ThrowIfCancellationRequested();
+            if (preparedScope is null)
             {
                 ClearConversation();
                 return Missing();
@@ -253,7 +277,8 @@ public sealed class PreparedChatCoordinator(
                         request.SystemId,
                         request.RepositoryIds,
                         accessScope),
-                    cancellationToken);
+                    operationToken);
+            operationToken.ThrowIfCancellationRequested();
             if (advisoryResult.Kind == ChatAdvisoryContextReadResultKind.NotFoundOrUnauthorized)
             {
                 ClearConversation();
@@ -274,7 +299,8 @@ public sealed class PreparedChatCoordinator(
             ChatEvidenceResult evidence = await evidenceRetriever.RetrieveAsync(
                 retrievalRequest,
                 accessScope,
-                cancellationToken);
+                operationToken);
+            operationToken.ThrowIfCancellationRequested();
             if (evidence.Kind == ChatEvidenceResultKind.NotFoundOrUnauthorized)
             {
                 ClearConversation();
@@ -300,9 +326,11 @@ public sealed class PreparedChatCoordinator(
                 extractedCandidates);
             if (ChatQuestionRelevanceGate.IsDefinitelyUnrelated(request.Question))
             {
-                return await authorizationVerifier.HasCurrentAccessAsync(
+                bool hasUnrelatedRevealAccess = await authorizationVerifier.HasCurrentAccessAsync(
                     request.RepositoryIds,
-                    cancellationToken)
+                    operationToken);
+                operationToken.ThrowIfCancellationRequested();
+                return hasUnrelatedRevealAccess
                     ? Unsupported()
                     : Missing();
             }
@@ -317,7 +345,8 @@ public sealed class PreparedChatCoordinator(
                 absoluteDeadlineUnixTimeMilliseconds);
             ChatSynthesisOutcome synthesis = await dispatcher.GenerateAsync(
                 synthesisRequest,
-                cancellationToken);
+                operationToken);
+            operationToken.ThrowIfCancellationRequested();
             if (synthesis.Result is null)
             {
                 RecordCompletionSummary(
@@ -341,13 +370,12 @@ public sealed class PreparedChatCoordinator(
                     return await CompleteGroundedAnswerAsync(
                         request,
                         packet,
-                        advisoryContext,
                         fallbackCandidates,
                         CreateGroundedFallbackClaims(fallbackCandidates),
                         selectedRepositories,
                         accessScope,
                         absoluteDeadlineUnixTimeMilliseconds,
-                        cancellationToken);
+                        operationToken);
                 }
 
                 logger?.LogWarning(
@@ -395,21 +423,22 @@ public sealed class PreparedChatCoordinator(
                     return await CompleteGroundedAnswerAsync(
                         request,
                         packet,
-                        advisoryContext,
                         fallbackCandidates,
                         CreateGroundedFallbackClaims(fallbackCandidates),
                         selectedRepositories,
                         accessScope,
                         absoluteDeadlineUnixTimeMilliseconds,
-                        cancellationToken);
+                        operationToken);
                 }
 
                 logger?.LogInformation(
                     "Prepared Chat provider returned unsupported with no strong grounded rescue in {Mode} mode.",
                     request.Mode);
-                return await authorizationVerifier.HasCurrentAccessAsync(
+                bool hasUnsupportedRevealAccess = await authorizationVerifier.HasCurrentAccessAsync(
                     request.RepositoryIds,
-                    cancellationToken)
+                    operationToken);
+                operationToken.ThrowIfCancellationRequested();
+                return hasUnsupportedRevealAccess
                     ? Unsupported()
                     : Missing();
             }
@@ -417,13 +446,12 @@ public sealed class PreparedChatCoordinator(
             PreparedChatResult completed = await CompleteGroundedAnswerAsync(
                 request,
                 packet,
-                advisoryContext,
                 validation.SelectedCandidates,
                 validation.MaterialClaims,
                 selectedRepositories,
                 accessScope,
                 absoluteDeadlineUnixTimeMilliseconds,
-                cancellationToken);
+                operationToken);
             RecordCompletionSummary(
                 synthesisRequest.RequestId,
                 completed.Kind == PreparedChatResultKind.Succeeded
@@ -436,6 +464,10 @@ public sealed class PreparedChatCoordinator(
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
             return Cancelled();
+        }
+        catch (OperationCanceledException) when (operationCancellation.IsCancellationRequested)
+        {
+            return TimedOut();
         }
         catch (ChatContractException exception) when (
             exception.FailureCode == ChatContractFailureCode.InvalidRequest)
@@ -461,7 +493,6 @@ public sealed class PreparedChatCoordinator(
     private async Task<PreparedChatResult> CompleteGroundedAnswerAsync(
         ChatQuestionRequest request,
         EvidencePacket packet,
-        ChatAdvisoryContextSnapshot initialAdvisoryContext,
         IReadOnlyList<CandidateClaim> selectedCandidates,
         IReadOnlyList<MaterialClaim> materialClaims,
         Dictionary<Guid, RepositoryEntity> selectedRepositories,
@@ -476,6 +507,7 @@ public sealed class PreparedChatCoordinator(
             currentnessRequest,
             accessScope,
             cancellationToken);
+        cancellationToken.ThrowIfCancellationRequested();
         if (currentness != ChatCurrentnessValidationOutcome.Current)
         {
             logger?.LogWarning(
@@ -492,6 +524,7 @@ public sealed class PreparedChatCoordinator(
                     request.RepositoryIds,
                     accessScope),
                 cancellationToken);
+        cancellationToken.ThrowIfCancellationRequested();
         if (revealAdvisoryResult.Kind == ChatAdvisoryContextReadResultKind.NotFoundOrUnauthorized)
         {
             ClearConversation();
@@ -500,19 +533,22 @@ public sealed class PreparedChatCoordinator(
 
         if (revealAdvisoryResult.Kind != ChatAdvisoryContextReadResultKind.Succeeded ||
             revealAdvisoryResult.Snapshot is not ChatAdvisoryContextSnapshot revealAdvisoryContext ||
-            !AdvisoryContextsMatch(initialAdvisoryContext, revealAdvisoryContext))
+            !PacketAdvisoryContextMatches(packet, revealAdvisoryContext))
         {
             return EvidenceUnavailable();
         }
 
-        if (!await authorizationVerifier.HasCurrentAccessAsync(
-                request.RepositoryIds,
-                cancellationToken))
+        bool hasFinalAccess = await authorizationVerifier.HasCurrentAccessAsync(
+            request.RepositoryIds,
+            cancellationToken);
+        cancellationToken.ThrowIfCancellationRequested();
+        if (!hasFinalAccess)
         {
             ClearConversation();
             return Missing();
         }
 
+        cancellationToken.ThrowIfCancellationRequested();
         GroundedAnswer answer = BuildAnswer(
             request.Mode,
             packet,
@@ -520,23 +556,21 @@ public sealed class PreparedChatCoordinator(
             materialClaims,
             selectedRepositories,
             timeProvider.GetUtcNow());
+        cancellationToken.ThrowIfCancellationRequested();
         AppendValidatedConversationTurn(request, packet, selectedCandidates, answer);
         long remainingDeadlineMilliseconds = absoluteDeadlineUnixTimeMilliseconds -
             timeProvider.GetUtcNow().ToUnixTimeMilliseconds();
         return PreparedChatResult.Succeeded(answer, remainingDeadlineMilliseconds);
     }
 
-    private static bool AdvisoryContextsMatch(
-        ChatAdvisoryContextSnapshot expected,
+    private static bool PacketAdvisoryContextMatches(
+        EvidencePacket packet,
         ChatAdvisoryContextSnapshot actual) =>
-        string.Equals(expected.ComposedText, actual.ComposedText, StringComparison.Ordinal) &&
-        expected.EncodedUtf8Bytes == actual.EncodedUtf8Bytes &&
+        string.Equals(packet.AdvisoryContext, actual.ComposedText, StringComparison.Ordinal) &&
         string.Equals(
-            expected.AuthorityFingerprint,
+            packet.AdvisoryContextAuthorityFingerprint,
             actual.AuthorityFingerprint,
-            StringComparison.Ordinal) &&
-        expected.SourceUnits.SequenceEqual(actual.SourceUnits) &&
-        expected.Terms.SequenceEqual(actual.Terms, StringComparer.Ordinal);
+            StringComparison.Ordinal);
 
     private void AppendValidatedConversationTurn(
         ChatQuestionRequest request,
