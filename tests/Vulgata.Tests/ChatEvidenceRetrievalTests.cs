@@ -1,8 +1,10 @@
+using System.Data;
 using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 using Vulgata.Core.DomainServices;
 using Vulgata.Core.Entities;
 using Vulgata.Infrastructure.CrossRepository;
@@ -864,13 +866,19 @@ public sealed class ChatEvidenceRetrievalTests
             Convert.ToHexStringLower(SHA256.HashData(
                 Encoding.UTF8.GetBytes("server-owned-t070"))));
 
-        ChatEvidenceResult result = await CreateRetriever(fixture.Context)
+        var advisoryReader = new TransactionObservingAdvisoryContextReader(
+            fixture.Context,
+            () => 1,
+            ChatAdvisoryContextReadResult.Succeeded(advisoryContext),
+            ChatAdvisoryContextReadResult.Succeeded(advisoryContext));
+        ChatEvidenceResult result = await CreateRetrieverWithAdvisoryReader(
+                fixture.Context,
+                advisoryReader)
             .RetrieveAsync(
                 fixture.CreateRequest(
                     "it-advisory-fallback",
                     question: "北京天气怎么样？",
-                    mode: ChatMode.It,
-                    advisoryContext: advisoryContext),
+                    mode: ChatMode.It),
                 new RepositoryAccessScope(
                     fixture.RepositoryIds,
                     new RecordingAuthorizationVerifier(true, true)));
@@ -882,6 +890,89 @@ public sealed class ChatEvidenceRetrievalTests
             packet.Sections.Where(section =>
                 packet.Selection.PrimarySectionHandles.Contains(section.SectionHandle)),
             section => section.Heading == "业务概览");
+    }
+
+    [Fact]
+    public async Task RetrieveAsync_TransactionAdvisorySnapshot_IgnoresCallerAndBindsSingleAuthorizedReadAsync()
+    {
+        await using PreparedEvidenceFixture fixture = await PreparedEvidenceFixture.CreateAsync();
+        ChatAdvisoryContextSnapshot callerSnapshot = CreateAdvisorySnapshot(
+            "caller-forged-context",
+            "caller-forged-authority");
+        ChatAdvisoryContextSnapshot transactionSnapshot = CreateAdvisorySnapshot(
+            "server-transaction-context",
+            "server-transaction-authority");
+        ChatAdvisoryContextSnapshot afterReadMutation = CreateAdvisorySnapshot(
+            "mutated-after-read-context",
+            "mutated-after-read-authority");
+        var verifier = new RecordingAuthorizationVerifier(true, true);
+        var reader = new TransactionObservingAdvisoryContextReader(
+            fixture.Context,
+            () => verifier.CallCount,
+            ChatAdvisoryContextReadResult.Succeeded(transactionSnapshot),
+            ChatAdvisoryContextReadResult.Succeeded(afterReadMutation));
+
+        ChatEvidenceResult result = await CreateRetrieverWithAdvisoryReader(
+                fixture.Context,
+                reader)
+            .RetrieveAsync(
+                fixture.CreateRequest(
+                    "transaction-advisory-authority",
+                    advisoryContext: callerSnapshot),
+                new RepositoryAccessScope(fixture.RepositoryIds, verifier));
+
+        EvidencePacket packet = Assert.IsType<EvidencePacket>(result.Packet);
+        Assert.Equal(ChatEvidenceResultKind.Found, result.Kind);
+        Assert.Equal(1, reader.CallCount);
+        Assert.Equal(1, reader.AuthorizationCallCountAtRead);
+        Assert.Equal(IsolationLevel.Serializable, reader.IsolationLevelAtRead);
+        Assert.Equal(transactionSnapshot.ComposedText, packet.AdvisoryContext);
+        Assert.Equal(
+            transactionSnapshot.AuthorityFingerprint,
+            packet.AdvisoryContextAuthorityFingerprint);
+        Assert.DoesNotContain(callerSnapshot.ComposedText, packet.AdvisoryContext, StringComparison.Ordinal);
+        Assert.DoesNotContain(afterReadMutation.ComposedText, packet.AdvisoryContext, StringComparison.Ordinal);
+    }
+
+    [Theory]
+    [InlineData(
+        ChatAdvisoryContextReadResultKind.NotFoundOrUnauthorized,
+        ChatEvidenceResultKind.NotFoundOrUnauthorized)]
+    [InlineData(
+        ChatAdvisoryContextReadResultKind.InconsistentCurrentEvidence,
+        ChatEvidenceResultKind.IncompleteOrStale)]
+    public async Task RetrieveAsync_ServerOwnedAdvisoryClosedResult_FailsClosedAsync(
+        ChatAdvisoryContextReadResultKind readerKind,
+        ChatEvidenceResultKind expectedKind)
+    {
+        await using PreparedEvidenceFixture fixture = await PreparedEvidenceFixture.CreateAsync();
+        ChatAdvisoryContextReadResult closedResult = readerKind switch
+        {
+            ChatAdvisoryContextReadResultKind.NotFoundOrUnauthorized =>
+                ChatAdvisoryContextReadResult.NotFoundOrUnauthorized(),
+            ChatAdvisoryContextReadResultKind.InconsistentCurrentEvidence =>
+                ChatAdvisoryContextReadResult.InconsistentCurrentEvidence(),
+            _ => throw new InvalidOperationException("The test requires a closed advisory result."),
+        };
+        var reader = new TransactionObservingAdvisoryContextReader(
+            fixture.Context,
+            () => 1,
+            closedResult,
+            closedResult);
+
+        ChatEvidenceResult result = await CreateRetrieverWithAdvisoryReader(
+                fixture.Context,
+                reader)
+            .RetrieveAsync(
+                fixture.CreateRequest("closed-advisory-authority"),
+                new RepositoryAccessScope(
+                    fixture.RepositoryIds,
+                    new RecordingAuthorizationVerifier(true)));
+
+        Assert.Equal(expectedKind, result.Kind);
+        Assert.Null(result.Packet);
+        Assert.Equal(1, reader.CallCount);
+        Assert.Equal(IsolationLevel.Serializable, reader.IsolationLevelAtRead);
     }
 
     [Theory]
@@ -1294,10 +1385,81 @@ public sealed class ChatEvidenceRetrievalTests
         new(
             context,
             preparedScopeResolver,
+            new CanonicalEmptyAdvisoryContextReader(),
             new ChatLexicalEvidenceProjector(),
             new ChatRelationshipEvidenceProjector(context),
             new ChatEvidencePacketBuilder(),
             logger: null);
+
+    private static ChatEvidenceRetriever CreateRetrieverWithAdvisoryReader(
+        VulgataDbContext context,
+        IChatAdvisoryContextReader advisoryContextReader)
+    {
+        ConstructorInfo constructor = Assert.Single(typeof(ChatEvidenceRetriever).GetConstructors());
+        Assert.Contains(
+            constructor.GetParameters(),
+            parameter => parameter.ParameterType == typeof(IChatAdvisoryContextReader));
+        object?[] arguments = constructor.GetParameters()
+            .Select(parameter => (object?)(parameter.ParameterType switch
+            {
+                Type type when type == typeof(VulgataDbContext) => context,
+                Type type when type == typeof(IPreparedChatScopeResolver) =>
+                    new ProjectionOnlyScopeResolver(),
+                Type type when type == typeof(IChatAdvisoryContextReader) => advisoryContextReader,
+                Type type when type == typeof(IChatLexicalEvidenceProjector) =>
+                    new ChatLexicalEvidenceProjector(),
+                Type type when type == typeof(IChatRelationshipProjector) =>
+                    new ChatRelationshipEvidenceProjector(context),
+                Type type when type == typeof(ChatEvidencePacketBuilder) =>
+                    new ChatEvidencePacketBuilder(),
+                _ when parameter.Name == "logger" => null,
+                _ => throw new InvalidOperationException(
+                    $"Unsupported ChatEvidenceRetriever dependency: {parameter.ParameterType}.")
+            }))
+            .ToArray();
+        return Assert.IsType<ChatEvidenceRetriever>(constructor.Invoke(arguments));
+    }
+
+    private static ChatAdvisoryContextSnapshot CreateAdvisorySnapshot(
+        string composedText,
+        string fingerprintSeed) =>
+        new(
+            [new ChatAdvisoryContextSourceUnit(
+                ChatAdvisoryContextSourceKind.System,
+                ExactCrossRepositoryTestValues.SystemId,
+                ExactCrossRepositoryTestValues.Pass1CompletedAt,
+                composedText)],
+            composedText,
+            [composedText],
+            Encoding.UTF8.GetByteCount(composedText),
+            Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(fingerprintSeed))));
+
+    private sealed class TransactionObservingAdvisoryContextReader(
+        VulgataDbContext context,
+        Func<int> authorizationCallCount,
+        ChatAdvisoryContextReadResult firstResult,
+        ChatAdvisoryContextReadResult afterReadMutation) : IChatAdvisoryContextReader
+    {
+        private ChatAdvisoryContextReadResult _nextResult = firstResult;
+
+        internal int CallCount { get; private set; }
+        internal int? AuthorizationCallCountAtRead { get; private set; }
+        internal IsolationLevel? IsolationLevelAtRead { get; private set; }
+
+        public Task<ChatAdvisoryContextReadResult> ReadAsync(
+            AuthorizedChatScope scope,
+            CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            CallCount++;
+            AuthorizationCallCountAtRead = authorizationCallCount();
+            IsolationLevelAtRead = context.Database.CurrentTransaction?
+                .GetDbTransaction().IsolationLevel;
+            ChatAdvisoryContextReadResult result = _nextResult;
+            _nextResult = afterReadMutation;
+            return Task.FromResult(result);
+        }
+    }
 
     private sealed class RecordingAuthorizationVerifier(params bool[] decisions) :
         IRepositoryAuthorizationVerifier

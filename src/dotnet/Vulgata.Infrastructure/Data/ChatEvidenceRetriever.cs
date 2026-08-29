@@ -14,6 +14,7 @@ public sealed class ChatEvidenceRetriever : IChatEvidenceRetriever
 {
     private readonly VulgataDbContext _context;
     private readonly IPreparedChatScopeResolver _preparedScopeResolver;
+    private readonly IChatAdvisoryContextReader _advisoryContextReader;
     private readonly IChatLexicalEvidenceProjector _lexicalProjector;
     private readonly IChatRelationshipProjector _relationshipProjector;
     private readonly ChatEvidencePacketBuilder _packetBuilder;
@@ -22,6 +23,7 @@ public sealed class ChatEvidenceRetriever : IChatEvidenceRetriever
     public ChatEvidenceRetriever(
         VulgataDbContext context,
         IPreparedChatScopeResolver? preparedScopeResolver,
+        IChatAdvisoryContextReader advisoryContextReader,
         IChatLexicalEvidenceProjector lexicalProjector,
         IChatRelationshipProjector relationshipProjector,
         ChatEvidencePacketBuilder packetBuilder,
@@ -29,6 +31,7 @@ public sealed class ChatEvidenceRetriever : IChatEvidenceRetriever
     {
         _context = context;
         _preparedScopeResolver = preparedScopeResolver ?? new PreparedChatScopeResolver(context);
+        _advisoryContextReader = advisoryContextReader;
         _lexicalProjector = lexicalProjector;
         _relationshipProjector = relationshipProjector;
         _packetBuilder = packetBuilder;
@@ -127,10 +130,28 @@ public sealed class ChatEvidenceRetriever : IChatEvidenceRetriever
             return ChatEvidenceResult.NotFoundOrUnauthorized();
         }
 
+        var authorizedScope = new AuthorizedChatScope(
+            request.SystemId,
+            repositoryIds,
+            accessScope);
+        ChatAdvisoryContextReadResult advisoryResult =
+            await _advisoryContextReader.ReadAsync(authorizedScope, cancellationToken);
+        if (advisoryResult.Kind == ChatAdvisoryContextReadResultKind.NotFoundOrUnauthorized)
+        {
+            return ChatEvidenceResult.NotFoundOrUnauthorized();
+        }
+
+        if (advisoryResult.Kind != ChatAdvisoryContextReadResultKind.Succeeded ||
+            advisoryResult.Snapshot is not ChatAdvisoryContextSnapshot advisoryContext)
+        {
+            return ChatEvidenceResult.IncompleteOrStale();
+        }
+
         AuthorizedChatSnapshot authorizedSnapshot = await LoadAuthorizedSnapshotAsync(
             request,
             repositoryIds,
-            accessScope,
+            authorizedScope,
+            advisoryContext,
             cancellationToken);
         ChatRetrievalStageResult<ChatLexicalPrimaryProjection> lexicalResult =
             await _lexicalProjector.ProjectAsync(
@@ -184,10 +205,10 @@ public sealed class ChatEvidenceRetriever : IChatEvidenceRetriever
                 expansion.Relationships,
                 expansion.FlowEvidence,
                 expansion.FlowGroups,
-                request.AdvisoryContext.ComposedText,
+                authorizedSnapshot.AdvisoryContext.ComposedText,
                 request.Conversation,
                 optionalSectionHandles,
-                request.AdvisoryContext.AuthorityFingerprint,
+                authorizedSnapshot.AdvisoryContext.AuthorityFingerprint,
                 primary.PrimaryDocuments.Select(document => document.DocumentHandle).ToArray(),
                 primary.PrimarySections.Select(section => section.SectionHandle).ToArray(),
                 primary.ExpansionSeedDocumentVersionIds.Select(documentVersionId =>
@@ -201,7 +222,8 @@ public sealed class ChatEvidenceRetriever : IChatEvidenceRetriever
     private async Task<AuthorizedChatSnapshot> LoadAuthorizedSnapshotAsync(
         ChatRetrievalRequest request,
         Guid[] repositoryIds,
-        RepositoryAccessScope accessScope,
+        AuthorizedChatScope authorizedScope,
+        ChatAdvisoryContextSnapshot advisoryContext,
         CancellationToken cancellationToken)
     {
         ProjectionSectionRow[] candidates = await (
@@ -327,8 +349,8 @@ public sealed class ChatEvidenceRetriever : IChatEvidenceRetriever
                 anchor.SourceHash))
             .ToArray();
         return AuthorizedChatSnapshot.Create(
-            new AuthorizedChatScope(request.SystemId, repositoryIds, accessScope),
-            request.AdvisoryContext,
+            authorizedScope,
+            advisoryContext,
             snapshotDocuments,
             snapshotSections,
             snapshotAnchors,

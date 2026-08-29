@@ -94,6 +94,23 @@ public sealed class ChatPipelineCompositionTests
     }
 
     [Fact]
+    public void RetrievalArchitecture_Story125T074_RetrieverConstructorComposesServerOwnedAdvisoryReader()
+    {
+        ConstructorInfo constructor = Assert.Single(typeof(ChatEvidenceRetriever).GetConstructors());
+        ParameterInfo[] parameters = constructor.GetParameters();
+
+        Assert.Single(
+            parameters,
+            parameter => parameter.ParameterType == typeof(IChatAdvisoryContextReader));
+        Assert.True(
+            Array.FindIndex(parameters, parameter =>
+                parameter.ParameterType == typeof(IChatAdvisoryContextReader)) <
+            Array.FindIndex(parameters, parameter =>
+                parameter.ParameterType == typeof(IChatLexicalEvidenceProjector)),
+            "The retriever must acquire server-owned advisory Context before the typed lexical stage.");
+    }
+
+    [Fact]
     public void ProductionComposition_Story125B1_ResolvesAdvisoryReaderAndRelationshipProjectorAsScopedPorts()
     {
         using var factory = new LoginLogoutTests.CustomWebApplicationFactory();

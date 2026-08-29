@@ -225,36 +225,45 @@ public sealed class ChatEvidenceCurrentnessValidator(VulgataDbContext context) :
             .Take(6)
             .ToArrayAsync(cancellationToken);
 
-        Guid[] edgeIds = relationships.Select(relationship => relationship.Id).ToArray();
-        CrossRepositoryResolutionDecision[] exactDecisions = await _context
-            .CrossRepositoryResolutionDecisions
-            .AsNoTracking()
-            .Where(decision =>
-                decision.DocumentEdgeId.HasValue &&
-                edgeIds.Contains(decision.DocumentEdgeId.Value))
-            .Take(257)
-            .ToArrayAsync(cancellationToken);
-        if (exactDecisions.Length > 256)
+        Guid[] edgeIds = relationships
+            .Select(relationship => relationship.Id)
+            .Distinct()
+            .ToArray();
+        List<CrossRepositoryResolutionDecision> exactDecisions = [];
+        List<ExactResolutionProviderEvidenceContribution> contributions = [];
+        foreach (Guid edgeId in edgeIds.Order())
         {
-            return false;
-        }
-
-        Guid[] decisionIds = exactDecisions.Select(decision => decision.Id).ToArray();
-        ExactResolutionProviderEvidenceContribution[] contributions = await _context
-            .ExactResolutionProviderEvidenceContributions
-            .AsNoTracking()
-            .Where(contribution => decisionIds.Contains(contribution.ResolutionDecisionId))
-            .Take(65_537)
-            .ToArrayAsync(cancellationToken);
-        if (contributions.Length > 65_536 ||
-            exactDecisions.Any(decision =>
+            CrossRepositoryResolutionDecision[] edgeDecisions = await _context
+                .CrossRepositoryResolutionDecisions
+                .AsNoTracking()
+                .Where(decision => decision.DocumentEdgeId == edgeId)
+                .Take(257)
+                .ToArrayAsync(cancellationToken);
+            if (edgeDecisions.Length > 256)
             {
-                int count = contributions.Count(contribution =>
-                    contribution.ResolutionDecisionId == decision.Id);
-                return count is < 1 or > 256;
-            }))
-        {
-            return false;
+                return false;
+            }
+
+            Guid[] edgeDecisionIds = edgeDecisions.Select(decision => decision.Id).ToArray();
+            ExactResolutionProviderEvidenceContribution[] edgeContributions = await _context
+                .ExactResolutionProviderEvidenceContributions
+                .AsNoTracking()
+                .Where(contribution => edgeDecisionIds.Contains(contribution.ResolutionDecisionId))
+                .Take(65_537)
+                .ToArrayAsync(cancellationToken);
+            if (edgeContributions.Length > 65_536 ||
+                edgeDecisions.Any(decision =>
+                {
+                    int count = edgeContributions.Count(contribution =>
+                        contribution.ResolutionDecisionId == decision.Id);
+                    return count is < 1 or > 256;
+                }))
+            {
+                return false;
+            }
+
+            exactDecisions.AddRange(edgeDecisions);
+            contributions.AddRange(edgeContributions);
         }
 
         FlowGroup[] exactFlowGroups = await _context.FlowGroups
