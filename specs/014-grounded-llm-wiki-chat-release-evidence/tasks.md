@@ -1,216 +1,268 @@
 ---
-description: "Dependency-ordered Story 12.5 implementation tasks"
+description: "Fresh dependency-ordered Story 12.5 tasks for the accepted design-correction-02 boundary"
 ---
 
 # Tasks: Grounded LLM-Wiki Chat & August 30 Release Evidence
 
-**Input**: `spec.md`, `plan.md`, `research.md`, `data-model.md`, `quickstart.md`, and the contracts under `specs/014-grounded-llm-wiki-chat-release-evidence/contracts/`.
+**Input**: `.specify/memory/constitution.md`, `docs/UBIQUITOUS_LANGUAGE.md`, Story 12.5 in `docs/bmad/epics.md`, `docs/bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md`, `spec.md`, accepted corrected `plan.md`, `research.md`, `data-model.md`, `quickstart.md`, every contract under `specs/014-grounded-llm-wiki-chat-release-evidence/contracts/`, `decisions/design-correction-02.md`, `decisions/planned-change-authorization-04.md`, and `reviews/plan-review/plan-review-10.json`.
 
-**Authority**: Generated from accepted plan SHA-256 `9b84e94ea2bb564b8a08b521023ab449ae7c5731e52cce057d5e63bad2c02b6a`, plan-review-09 SHA-256 `fabe3fe5baa1f29025479746862c3fda36df4b2e81d02f7f0baa29a519ae015c`, and planned-change authorization-03 scope SHA-256 `f3057c1106d59d96a804b6a7c8902df653b6c23e4deb7402759c0ffd71a84f16`. Track A is completed evidence. Track B requires the accepted Story 12.4 commit `4798b97d9f23aef587829175df7ab7ebc3daf995` and a new implementation approval. Track C is closed until Track B is accepted.
+**Pinned authority**: Source commit `529de918855b30823dc5d339a7fb6d32a69ed1d4`; specification SHA-256 `a7367b1f64fcfc2cf099d7fd204575f314e35994204ccb0cd7b7f2dacf6f7dd4`; plan SHA-256 `fad42dcd3a3f393809e95500ea6d6c7607ce4a16787d8b16d054b415ce533318`; immutable accepted Story 12.4 dependency commit `4798b97d9f23aef587829175df7ab7ebc3daf995`.
 
-**Boundaries**: This is a bounded delta over Prepared Chat. Do not add an EF migration, change `VulgataDbContext` or its snapshot, mutate Story 12.4 contracts, use embeddings/vector search/autonomous loops, or use fake Backup B for release evidence. `Program.cs`, DI registrations, project files, and central endpoint registration have one coordinated owner. Track B records neutral runtime observations; only Track C creates signed release attestation.
+**Fresh-generation disposition**: The prior 81-task list, including its final deadline-convergence continuation tail, is invalidated historical evidence. These T001-T053 tasks replace it completely; no old completion checkbox or prior Track B/Track C verdict transfers to this boundary.
 
-**TDD rule**: For each incomplete behavior, write and run the named public-seam RED before the smallest GREEN implementation. Existing-correct behavior is characterization-only and is not fabricated as RED. Every slice ends with focused and surrounding regression verification.
+**Classification rule**: `[EXISTING-EVIDENCE]` means characterize and reaccept behavior already present at the pinned source; do not manufacture a RED. `[RED]` means observe failure at the named public seam before production work. `[GREEN]` is the smallest production/harness change that turns that observed RED green. `[GATE]` and `[VERIFY]` never imply acceptance by themselves.
 
-## Phase 1: Setup and lifecycle-safe preflight
+**Ownership rule**: The root assigns one coordinated **Integration Owner** for `src/dotnet/Vulgata.Web/Program.cs`, `src/dotnet/Vulgata.Agents/DependencyInjection.cs`, `src/dotnet/Vulgata.Web/Api/ApiEndpointRegistrationExtensions.cs`, project files, and central package files. No other task edits those paths. Story 12.4 source/contracts, `VulgataDbContext`, configurations, migrations, and `VulgataDbContextModelSnapshot` are read-only.
 
-- [x] T001 Pin `specs/014-grounded-llm-wiki-chat-release-evidence/` with `check-prerequisites.ps1 -RequireTasks -IncludeTasks`, record branch `demo0831/story-12-5`, common base `0d835c5f65f70a3c6a9561c6ff600069bb93e832`, clean index, accepted Story 12.4 commit/checkpoint, and worktree ownership in `specs/014-grounded-llm-wiki-chat-release-evidence/evidence/preflight/README.md`.
-- [x] T002 Add the no-migration/no-`VulgataDbContext`/no-model-snapshot, Story 12.4 non-overlap, shared-file ownership, and database-isolation guard tests in `tests/Vulgata.Tests/ReleaseGate/Story125/Story125ReleaseHarnessTests.cs`.
-- [x] T003 [P] Add Track A, Track B, and Track C entry-gate assertions and approval/checkpoint templates in `specs/014-grounded-llm-wiki-chat-release-evidence/evidence/gates/README.md`.
-- [x] T004 Add disposable lowercase `vulgata_story125_*` database-name preflight and forbidden-target rejection coverage in `tests/Vulgata.Tests/ReleaseGate/Story125/Story125Tier2PostgreSqlTests.cs`.
+**Prohibited scope**: No EF migration; Story 12.4 contract mutation; vector/embedding/cross-encoder retrieval; raw CodeGraph proximity; autonomous multi-hop or unrestricted Agent tool loop; fake Backup B release evidence; non-streaming accepted provider answer; provider/unvalidated fragment at the client; Track C candidate/process/signature/export fields in Track B telemetry.
 
-## Phase 2: Foundational contracts, corpus, and ownership
+## Phase 1: Setup and authority preflight
 
-- [x] T005 Add positive/negative JSON contract tests for `contracts/chat-evidence-packet-v2.schema.json`, `story125-evaluation-case.schema.json`, and `story125-release-evidence.schema.json` in `tests/Vulgata.Tests/ReleaseGate/Story125/Story125EvaluationContractTests.cs`.
-- [x] T006 Add corpus schema, count, acyclic-follow-up, no-prescribed-answer, and source-reference RED coverage in `tests/Vulgata.Tests/ReleaseGate/Story125/Story125EvaluationContractTests.cs` before the fixture exists.
-- [x] T007 Create the source-traceable 12–20 question corpus covering Chinese Business/IT, Cross-Repository flow, business rules, technical traces, failures, follow-ups, insufficient evidence, and authorization-negative cases in `tests/Vulgata.Tests/ReleaseGate/Story125/Fixtures/story125-question-corpus.json`.
-- [x] T008 [P] Add the shared-file owner map and command/provider/artifact identity manifest template in `specs/014-grounded-llm-wiki-chat-release-evidence/evidence/ownership/README.md`.
-- [x] T009 [P] Characterize the existing neutral Java/XML fixture provenance in `tests/Vulgata.Tests/Fixtures/PreparedScanning/fixture-manifest.json` without duplicating or overwriting fixture files.
+**Purpose**: Re-observe the exact branch, hashes, dependency, and task disposition.
 
-## Phase 3: Track A — production Scan status and evidence preparation (completed)
+- [ ] T001 Classification: GATE — Verify branch, clean worktree/index, source commit `529de918855b30823dc5d339a7fb6d32a69ed1d4`, accepted spec/plan hashes, ancestral Story 12.4 commit `4798b97d9f23aef587829175df7ab7ebc3daf995`, and authorization-04 before any test/production write; record the result in `specs/014-grounded-llm-wiki-chat-release-evidence/evidence/preflight/task-regeneration-01.md` (FR-048, FR-049, FR-052, SC-013).
+- [ ] T002 [P] Classification: EXISTING-EVIDENCE — Reclassify current production/tests as preserved Track A, reacceptance-only B1-B3, missing B4 publication owner, missing B-INT, and closed Track C; record exact source/test owners and the discarded prior 81-task history in `specs/014-grounded-llm-wiki-chat-release-evidence/evidence/ownership/task-disposition-01.md` (FR-001, FR-048, FR-051).
 
-**Existing/accepted evidence**: Production Scan status projection/UI, Chinese state behavior, manual resume, fake Backup B exclusion, corpus/evidence schemas, scoring, and release-gate foundations are already implemented and checkpointed. These tasks remain as truthful completed evidence; do not rerun independent Track A review unless later changes alter Track A behavior.
+**Checkpoint**: The accepted corrected definition and fresh task disposition are pinned.
 
-- [x] T010 [P] [US3] Characterize persisted preparation/indexing/running/retry/paused/resumed/completed/warning/integrity-failure states, counts, retry, bounded reasons, failed-file summaries, authorization, and fake-state exclusion in `tests/Vulgata.Tests/ProductionScanStatusReaderTests.cs`.
-- [x] T011 [US3] Implement the bounded production status projection in `src/dotnet/Vulgata.Core/DomainServices/ProductionScanStatusContracts.cs` and `src/dotnet/Vulgata.Infrastructure/Data/ProductionScanStatusReader.cs` with `EvidenceEligibility=ProductionPersisted`.
-- [x] T012 [P] [US3] Characterize Chinese Scan UI labels, counts, warnings, authorization, and `继续扫描` in `tests/Vulgata.Tests/ProductionScanPageTests.cs`.
-- [x] T013 [US3] Implement real-state management UI in `src/dotnet/Vulgata.Web/Data/ProductionScanStatusCoordinator.cs`, `src/dotnet/Vulgata.Web/Components/Pages/Management/ScanHistoryPage.razor`, `ScanExecutionPage.razor`, and `ScanExecutionPage.razor.css`, using durable manual resume only.
-- [x] T014 [US3] Verify resume re-read, stale/hidden execution, and fake Backup B exclusion in `tests/Vulgata.Tests/DurableScanning/ManualResumeApiTests.cs` and `tests/Vulgata.Tests/ProductionScanStatusReaderTests.cs`.
-- [x] T015 [US4] Characterize semantic/adversarial status-conditioned release envelopes, passed-only receipts, fixed checks/screenshots, content-dark fields, provenance, leakage, and failure vectors in `tests/Vulgata.Tests/ReleaseGate/Story125/Story125ReleaseHarnessTests.cs` and `Story125EvaluationContractTests.cs`.
-- [x] T016 [US4] Implement the schema/semantic evidence validator and cross-artifact consistency checks in `tests/Vulgata.Tests/ReleaseGate/Story125/Story125ReleaseHarness.cs`.
-- [x] T017 [US4] Add citation coverage, authorization leakage, usefulness, timing, and `providerDisposition` scoring tests in `tests/Vulgata.Tests/ReleaseGate/Story125/Story125EvaluationContractTests.cs`.
-- [x] T018 [US4] Implement scoring and source-traceable corpus/evidence preparation in `tests/Vulgata.Tests/ReleaseGate/Story125/Story125ReleaseHarness.cs`, `Story125EvaluationContractTests.cs`, and `specs/014-grounded-llm-wiki-chat-release-evidence/evidence/evaluation/README.md`.
-- [x] T019 [US4] Verify Track A database preflight/fake-state rejection and coordinated registration of status reader/coordinator in `src/dotnet/Vulgata.Web/Program.cs` with focused tests before Track B.
+---
 
-## Phase 4: Track B1 — typed lexical projection and sole packet path (Priority: P1)
+## Phase 2: Foundational boundary guards and contract validation
 
-**Goal**: Establish one typed pipeline, with lexical projection as the sole primary authority and one packet builder. The old literal-question classifier, exact-row rebuild, projection-first early return, duplicate packet assembly, and direct projector construction are deletion targets.
+**Purpose**: Block every user-story phase on current ownership, schema, transport-vocabulary, and forbidden-write proof.
 
-**Independent test**: Equivalent wording and relationship fixture mutations produce identical lexical primary Document/section/Source Anchor identities; structural tests prove no alternate packet path remains.
+- [ ] T003 [P] Classification: EXISTING-EVIDENCE — Reaccept the existing no-migration, no-model-snapshot, Story 12.4 read-only, forbidden-database, fake-state, and shared-file-owner guards in `tests/Vulgata.Tests/ReleaseGate/Story125/Story125ReleaseHarnessTests.cs` and `tests/Vulgata.Tests/ReleaseGate/Story125/Story125Tier2PostgreSqlTests.cs`; any failed boundary stops implementation instead of authorizing a migration or dependency edit (FR-036, FR-047, FR-049-FR-052, SC-014).
+- [ ] T004 Classification: VERIFY — Validate all Story 12.5 JSON schemas, exact cross-artifact transport vocabulary/caps, accepted hashes, and task checklist format; write command/result evidence to `specs/014-grounded-llm-wiki-chat-release-evidence/evidence/verification/task-definition-01.md` without changing contracts (FR-021-FR-024, FR-039, FR-054-FR-060, SC-003, SC-013, SC-015-SC-017).
 
-- [x] T020 [US1] Add the architectural interaction RED in `tests/Vulgata.Tests/ChatEvidenceRetrievalTests.cs` and `ChatEvidenceCurrentnessTests.cs`: a Cross-Repository-literal question and neutral equivalent must share lexical primaries, and adding/removing/staling relationship facts must not replace those primaries.
-- [x] T021 [P] [US1] Add deterministic section-retrieval RED vectors in `tests/Vulgata.Tests/ChatEvidenceRetrievalTests.cs` and `tests/Vulgata.Tests/ChatSupplementaryEvidenceSelectorTests.cs` for normalized symbol/endpoint/path/title/heading tokens, Business/IT terms, prose fallback, stable ties, integer score components `50/40/30/25/20/5/3/1`, and malformed metadata fail-closed behavior; separately characterize the existing provider-candidate ranking contract in `tests/Vulgata.Tests/ChatCandidateRankerTests.cs` without conflating its count-based claim ranking with section retrieval.
-- [x] T022 [US1] Add exact bound RED vectors for the ranked candidate window of 256, five Documents, twelve primary sections or exhaustion, four sections per Document, strongest-per-Document ordering, 32 Source Anchors, and packet evidence limits in `tests/Vulgata.Tests/ChatEvidenceRetrievalTests.cs` and `ChatEvidencePacketBuilderTests.cs`.
-- [x] T023 [US1] Add a structural RED that fails while the obsolete classifier/legacy authority/early return/alternate builder path exists, naming the exact seams in `tests/Vulgata.Tests/ChatEvidenceRetrievalTests.cs`.
-- [x] T024 [US1] Add the four immutable typed handoffs `AuthorizedChatSnapshot`, `ChatLexicalPrimaryProjection`, `ChatRelationshipExpansionProjection`, and `ChatEvidenceAssembly`, plus the closed stage-result union `Succeeded|InsufficientEvidence|NotFoundOrUnauthorized|InconsistentCurrentEvidence`, in the exact Core contracts `src/dotnet/Vulgata.Core/DomainServices/IChatEvidenceRetriever.cs` and `src/dotnet/Vulgata.Core/DomainServices/ChatContracts.cs`; no intermediate stage may return a final packet.
-- [x] T025 [US1] Implement the deterministic lexical projection and exact ranking/candidate bounds in `src/dotnet/Vulgata.Infrastructure/Data/ChatSupplementaryEvidenceSelector.cs` and the typed integration seam in `src/dotnet/Vulgata.Infrastructure/Data/ChatEvidenceRetriever.cs`, preserving current authorization/currentness and existing-correct ranker behavior.
-- [x] T026 [US1] Delete the literal-question classifier, `ExactRelationshipRow` rebuild, projection-first early return, legacy `ExactCrossRepositoryEdgeEvidence` authority, duplicate packet construction, and direct projector construction from `src/dotnet/Vulgata.Infrastructure/Data/ChatEvidenceRetriever.cs`; make the structural RED pass without changing Story 12.4 contracts.
-- [x] T027 [US1] Add packet-v2 RED vectors for opaque handles, complete sections, Source Anchors, relationship/flow metadata, canonical fingerprint, exact/+1 UTF-8 evidence bounds, whole-unit packing, and no raw database/provider access in `tests/Vulgata.Tests/ChatEvidencePacketBuilderTests.cs`.
-- [x] T028 [US1] Implement `ChatEvidencePacketBuilder` and its Core request seam in `src/dotnet/Vulgata.Infrastructure/Data/ChatEvidencePacketBuilder.cs` and `src/dotnet/Vulgata.Core/DomainServices/ChatContracts.cs`; bind all ordered packet fields including titles/headings/descriptions, and drop optional complete units or refuse required units without truncation.
-- [x] T029 [US1] Add the packet-2.2 candidate-extractor RED/characterization vectors in `tests/Vulgata.Tests/ChatCandidateExtractorTests.cs`: Cross-Repository REFERENCES support must use selected decision, complete decision count, and decision-set fingerprint authority, while a legacy `ProfileFingerprint`-only relationship is rejected; preserve and regression-run the unchanged embedded Business/IT prompt catalog through `tests/Vulgata.Tests/ChatAgentDispatcherTests.cs`, `src/dotnet/Vulgata.Agents/ChatExecution/ChatPromptCatalog.cs`, `src/dotnet/Vulgata.Agents/Prompts/chat-business.v1.md`, and `src/dotnet/Vulgata.Agents/Prompts/chat-it.v1.md`.
-- [x] T030 [US1] Implement the minimal packet-2.2 candidate extraction GREEN in `src/dotnet/Vulgata.Agents/ChatExecution/ChatCandidateExtractor.cs`, consuming selected decision/count/set authority and never assuming legacy `ProfileFingerprint`; keep provider-candidate ranking separate from section retrieval and make T021 characterization plus T029 vectors pass.
-- [x] T031 [US1] Add the server-owned advisory Context RED vectors at the dedicated public seam `tests/Vulgata.Tests/ChatAdvisoryContextReaderTests.cs` for applied Global/System/exact-two Repository Context, authorization/currentness, pending/caller exclusion, canonical ordering, blank/nonmatching behavior, and exact 8,192/+1 UTF-8 bounds.
-- [x] T032 [US1] Add `IChatAdvisoryContextReader` at the exact Core path `src/dotnet/Vulgata.Core/DomainServices/IChatAdvisoryContextReader.cs` and implement it at the exact Infrastructure path `src/dotnet/Vulgata.Infrastructure/Data/ChatAdvisoryContextReader.cs`, binding applied-context authority and fingerprinting; use advisory terms only for the bounded Business Logic summary fallback.
-- [x] T033 [US1] Wire the four-stage B1 pipeline and dedicated advisory reader through `src/dotnet/Vulgata.Web/Data/PreparedChatCoordinator.cs` and the coordinated owners `src/dotnet/Vulgata.Agents/DependencyInjection.cs`/`src/dotnet/Vulgata.Web/Program.cs`; prove composition and focused B1 regression before B2.
+**Checkpoint**: Authority, ownership, and forbidden-write guards are current. A mismatch returns to plan/definition review before implementation.
 
-## Phase 5: Track B2 — current-v2 relationship expansion and currentness (Priority: P1)
+---
 
-**Goal**: Add one-hop current persisted REFERENCES/GENERATED_FROM and exact Cross-Repository evidence without changing lexical primaries. Preserve every valid decision for one Edge and each decision-owned Published complete Flow Group.
+## Phase 3: Preserved Track A reacceptance - User Stories 3 and 4
 
-**Independent test**: Shared-Edge fixtures with two independently valid decisions produce one relationship with selected decision, count `2`, stable full-set fingerprint, and two decision-ranked Flow Groups; invalid or mutated support fails closed according to the closed state table.
+**Purpose**: Preserve accepted production Scan UI and evaluation preparation; no Track A rewrite is planned.
 
-- [x] T034 [US1] Add the B2 architectural RED for two decisions/one current directed Edge/two decision-owned Published Flow Groups and for post-selection decision-set mutation in `tests/Vulgata.Tests/ChatEvidenceCurrentnessTests.cs`.
-- [x] T035 [US1] Add relationship/Flow Group state-table RED vectors for `absent`, `present-valid`, `present-inconsistent`, and `selected-required`, including cycles, duplicate slots, stale/mismatched endpoints/revisions, unpublished/incomplete groups, unavailable Source Anchors, and authorization loss in `tests/Vulgata.Tests/ChatEvidenceCurrentnessTests.cs`.
-- [x] T036 [US1] Add deterministic expansion RED vectors for first `min(3,count)` seeds, at most two related Documents per seed, one hop, 20 total sections, 32 relationships, 12 ordered flow steps, allowlisted REFERENCES/GENERATED_FROM direction, deduplication, and canonical ordering in `tests/Vulgata.Tests/ChatEvidenceRetrievalTests.cs`.
-- [x] T037 [US1] Implement current-v2 relationship authority in `src/dotnet/Vulgata.Infrastructure/Data/ChatRelationshipEvidenceProjector.cs` and `src/dotnet/Vulgata.Infrastructure/Data/ChatEvidenceCurrentnessValidator.cs`, accepting current `DocumentEdge`, exact accepted decisions, current `GENERATED_FROM`, and Published complete Flow Groups only; legacy evidence is never sufficient.
-- [x] T038 [US1] Implement the one-hop expansion handoff in `src/dotnet/Vulgata.Infrastructure/Data/ChatEvidenceRetriever.cs` and `src/dotnet/Vulgata.Core/DomainServices/IChatEvidenceCurrentnessValidator.cs`, preserving immutable B1 `PrimaryDocumentIds`, `PrimarySectionIds`, ranks, and Source Anchors.
-- [x] T039 [US1] Extend packet-v2 binding in `src/dotnet/Vulgata.Infrastructure/Data/ChatEvidencePacketBuilder.cs` to include selected decision, complete decision count/set fingerprint, exact Edge identity, decision-owned Flow Group authorities, relationship depth, and complete-unit packing; run B1+B2 focused and surrounding regression.
+### User Story 3 - Monitor and resume a real Scan (Priority: P1, Track A)
 
-## Phase 6: Track B3 — bounded transient conversation and validated synthesis (Priority: P1)
+**Independent Test**: Persisted preparation/running/retry/paused/resumed/completed/warning/failure rows render bounded Chinese production state, and only an authorized recoverable pause exposes `继续扫描`; fake state is absent.
 
-**Goal**: Support two follow-ups using transient, bounded context that is re-fetched and revalidated; validate complete answers before any reveal.
+- [ ] T005 [US3] Classification: EXISTING-EVIDENCE — Run and reaccept persisted state mapping, counts, earliest retry, bounded reason, twenty-file failure summary, missing-equivalent authorization, durable resume, and fake-state exclusion in `tests/Vulgata.Tests/ProductionScanStatusReaderTests.cs`, `tests/Vulgata.Tests/ProductionScanPageTests.cs`, and `tests/Vulgata.Tests/DurableScanning/ManualResumeApiTests.cs` (FR-033-FR-036, SC-007).
 
-**Independent test**: Initial question plus two follow-ups preserve scope/mode, use previous citations only as hints, re-fetch current evidence, evict the fourth turn, and reject stale/unauthorized evidence or unsupported whole answers.
+### User Story 4 - Prepare a repeatable Chat evaluation (Priority: P2, Track A)
 
-- [x] T040 [P] [US2] Add RED conversation vectors for initial plus two follow-ups, fourth-turn eviction, 4 KiB bound, scope/mode reset, prior-citation boost, re-fetch, authorization/currentness mutation, and restart non-persistence in `tests/Vulgata.Tests/ChatConversationStateTests.cs`.
-- [x] T041 [US2] Implement transient `ChatConversationState` and validated-turn contracts in `src/dotnet/Vulgata.Core/DomainServices/ChatConversationContracts.cs`; retain only the last two questions/answers, cited handles, scope, and mode.
-- [x] T042 [US2] Integrate re-fetch-only conversation hints, one shared deadline, currentness revalidation, bounded Chinese outcomes, and no stale-result reuse in `src/dotnet/Vulgata.Web/Data/PreparedChatCoordinator.cs`.
-- [x] T043 [P] [US2] Add RED claim/citation/security vectors for handle/Source Anchor coverage, fingerprint binding, whole-answer semantic rejection, missing-equivalent failure, one syntax repair only, and no semantic repair in `tests/Vulgata.Tests/ChatAgentResultValidatorTests.cs` and `PreparedChatCoordinatorTests.cs`.
-- [x] T044 [US2] Implement provider-independent complete-result validation in `src/dotnet/Vulgata.Agents/ChatExecution/ChatAgentResultValidator.cs` and coordinator integration in `src/dotnet/Vulgata.Web/Data/PreparedChatCoordinator.cs`; no partial claim, citation, handle, relationship, or Source Anchor may cross the client boundary.
+**Independent Test**: The fixed 12-20-case corpus and closed run-envelope contracts validate without desired prose, fake state, forbidden database access, or fabricated passed evidence.
 
-## Phase 7: Track B4 — mandatory raw streaming, whole-answer barrier, and accepted-only reveal (Priority: P1)
+- [ ] T006 [P] [US4] Classification: EXISTING-EVIDENCE — Run and reaccept corpus count/categories, acyclic at-most-three-question follow-ups, no `expectedAnswer`, authorization-negative automatic failure, exact half-up scoring, passed-only receipts, ten-check inventory, append-only supersession, and database guard coverage in `tests/Vulgata.Tests/ReleaseGate/Story125/Story125EvaluationContractTests.cs` and `tests/Vulgata.Tests/ReleaseGate/Story125/Story125ReleaseHarnessTests.cs` (FR-037-FR-040, FR-046-FR-047, SC-008, SC-014).
+- [ ] T007 [US4] Classification: VERIFY — Record the unchanged Track A focused command results and accepted-evidence classification in `specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/track-a-preservation-01.md`; a regression opens a separately reviewed Track A correction and does not broaden Track B ownership (FR-033-FR-040, SC-007-SC-008).
 
-**Goal**: Every primary and optional syntax-repair response uses strict raw provider streaming. Received wire domains are enforced before JSON decoding, while decoded safety limits remain separate; only the fully validated Grounded Answer is revealed.
+**Checkpoint**: Track A remains preserved. Its evidence does not claim B1-B4, B-INT, or Track C completion.
 
-**Independent test**: Arbitrary reads, split UTF-8, malformed framing, terminal errors, exact/+1 received caps, deadline/inactivity, cancellation, and validation failures yield zero partial client output; valid streams render Unicode-safe accepted text.
+---
 
-- [x] T045 [P] [US2] Add RED arbitrary-read vectors in `tests/Vulgata.Tests/ChatProviderStreamAssemblerTests.cs` for strict split UTF-8, CR/LF/CRLF SSE, JSON escapes/surrogates, one terminal plus physical EOF, post-terminal data, cancellation, inactivity, and malformed/truncated/overlong UTF-8.
-- [x] T046 [P] [US2] Add received-byte RED vectors in `tests/Vulgata.Tests/OpenAiCompatibleChatProviderStreamingTransportTests.cs` for one nonterminal SSE `data` event as one received Provider Chunk at 16,384/16,385 bytes, assembled received response at 65,536/65,537 bytes before JSON, escape-heavy/metadata-heavy payloads, zero-output failure, and separate raw-body/SSE/decoded-delta/final-answer caps.
-- [x] T047 [US2] Add RED composition/provenance vectors in `tests/Vulgata.Tests/ChatAgentDispatcherTests.cs` and `PreparedChatCoordinatorTests.cs` proving primary and one syntax repair use the dedicated stream, non-streaming cannot be accepted, one 29-second deadline covers all stages, inactivity is ten seconds, and repair is limited to three seconds.
-- [x] T048 [US2] Add RED client-barrier/reveal vectors in `tests/Vulgata.Tests/ChatValidatedRevealTests.cs` and `ChatPageTests.cs` proving no provider fragment or evidence detail renders before validation, accepted Unicode text-element reveal, reduced-motion immediate render, and existing render-timed scrolling.
-- [x] T049 [US2] Implement staged strict stream assembly and closed failure ownership in `src/dotnet/Vulgata.Agents/ChatExecution/ChatProviderStreamAssembler.cs`, `IChatProviderStreamingTransport.cs`, and `src/dotnet/Vulgata.Core/DomainServices/ChatStreamingContracts.cs`, with distinct raw-read/body, SSE, received-chunk, assembled-received, decoded-delta, final-answer, terminal, and deadline counters.
-- [x] T050 [US2] Implement the production raw streaming adapter and neutral content-dark `ChatStreamRuntimeObservation` in `src/dotnet/Vulgata.Agents/ChatExecution/OpenAiCompatibleChatProviderStreamingTransport.cs` and `ChatStreamObservationAuthority.cs`; bind transport-only `RuntimeObservationId` and exclude Track C candidate/signature/export fields.
-- [x] T051 [US2] Implement streaming primary/repair dispatch and shared budget propagation in `src/dotnet/Vulgata.Agents/ChatExecution/ChatAgentDispatcher.cs`, `src/dotnet/Vulgata.Core/DomainServices/IChatAgentDispatcher.cs`, and `src/dotnet/Vulgata.Web/Data/PreparedChatCoordinator.cs`, with coordinated registration in `src/dotnet/Vulgata.Agents/DependencyInjection.cs` and `src/dotnet/Vulgata.Web/Program.cs`.
-- [x] T052 [US2] Implement accepted-only Unicode-safe reveal and remaining-budget behavior in `src/dotnet/Vulgata.Web/Components/Pages/ChatPage.razor`, `ChatPage.razor.cs`, and `src/dotnet/Vulgata.Web/Components/Pages/ChatTurn.cs`; preserve Chinese Business/IT behavior and `OnAfterRenderAsync` scrolling.
-- [x] T053 [US2] Run the B4 focused stream/validator/UI suite, Web build, and full Tier 1 regression; record Track B neutral runtime observations separately from any future Track C attestation.
+## Phase 4: Track B1 - lexical primary projection and packet 2.2 reacceptance (User Story 1)
 
-## Phase 8: Track C — final release verification (closed until separate approval)
+**Goal**: Reaccept the existing single typed `AuthorizedChatSnapshot -> ChatLexicalPrimaryProjection -> ChatRelationshipExpansionProjection -> ChatEvidenceAssembly` topology with lexical projection as the sole primary authority.
 
-**Hard gate**: These tasks are not implementable or runnable until T020–T053 are accepted, Track B quality review/convergence/E2E decision/verification pass, the Track B checkpoint is bound, and a separate Track C approval is recorded. Track C must use real provider/host execution and a unique disposable `vulgata_story125_*` database; fake Backup B state and synthetic provider state cannot support release evidence.
+**Independent Test**: Equivalent literal/neutral wording and arbitrary relationship fixture mutations retain identical primary Document/section identities; only one constructor-composed relationship projector and one packet builder can participate.
 
-- [ ] T054 [US5] After the Track C gate, add RED Tier 2 PostgreSQL restart/resume/outage/duplicate-prevention and ownership-receipt tests in `tests/Vulgata.Tests/ReleaseGate/Story125/Story125Tier2PostgreSqlTests.cs`.
-- [ ] T055 [US5] After the Track C gate, implement Tier 2 real-tool orchestration and redacted command/artifact collection in `tests/Vulgata.Tests/ReleaseGate/Story125/Story125Tier2PostgreSqlTests.cs`.
-- [ ] T056 [US5] After the Track C gate, add RED provenance and production-composition tests in `tests/Vulgata.Tests/ChatStreamObservationProvenanceTests.cs` and `tests/Vulgata.Tests/ReleaseGate/Story125/Story125Tier3QualificationTests.cs` proving direct caller and aggregate-consistent SDK fake-chunk rejection, sealed raw-adapter admission, same-process identity, and no content-bearing observation.
-- [ ] T057 [US5] After the Track C gate, implement `Story125StreamAttestationSink` with sealed-admission signing, immutable provenance binding, and exact per-domain aggregate recomputation in `src/dotnet/Vulgata.Agents/ChatExecution/Story125StreamAttestationSink.cs`; coordinate registration only through `src/dotnet/Vulgata.Agents/DependencyInjection.cs` and `src/dotnet/Vulgata.Web/Program.cs`.
-- [ ] T058 [US5] After the Track C gate, add RED Tier 3 candidate/topology/tool/database preflight and forbidden-target tests in `tests/Vulgata.Tests/ReleaseGate/Story125/Story125Tier3QualificationTests.cs`; downstream GREEN/evidence owner is T059 in the same test file.
-- [ ] T059 [US5] After the Track C gate, implement candidate-bound preflight, fixed ten-check runner, same-candidate artifact/hash binding, status-conditioned receipts, and sealed observation projection in `tests/Vulgata.Tests/ReleaseGate/Story125/Story125Tier3QualificationTests.cs` and `tests/Vulgata.Tests/ReleaseGate/Story125/Story125ReleaseHarness.cs`.
-- [ ] T060 [US5] After the Track C gate, add RED real Scan/grounded Chat/restart/screenshot checks in `tests/Vulgata.Tests/ReleaseGate/Story125/Story125Tier3QualificationTests.cs` and evidence assertions in `tests/Vulgata.Tests/ReleaseGate/Story125/Story125ReleaseHarnessTests.cs` for two Repositories, 50–150 File Code Units, exact Cross-Repository REFERENCES, honest Uncertainty, three Business Logic Documents including a Cross-Repository flow, corpus usefulness/citation/leakage/timing, and zero non-streaming accepted answers; downstream GREEN/evidence owners are T061 and T062.
-- [ ] T061 [US5] After the Track C gate, execute the conditional E2E matrix and real host release run using Vulgata, CodeGraph, Java 21, JDT LS, PostgreSQL 17, and configured LLM; project T060 results into `tests/Vulgata.Tests/ReleaseGate/Story125/Story125ReleaseHarness.cs` and record honest failed/blocked/not-run outcomes without fake evidence.
-- [ ] T062 [US5] After the Track C gate, perform final schema/hash/diff/reproducibility and screenshot review against `contracts/story125-release-evidence.schema.json`, `quickstart.md`, and the candidate-bound `specs/014-grounded-llm-wiki-chat-release-evidence/evidence/release/` manifest; create the Track C release checkpoint only if every required check passes.
+- [ ] T008 [US1] Classification: EXISTING-EVIDENCE — Reaccept and mutation-guard the single typed topology, exactly-once lexical/relationship/builder interactions, and absence of `RequiresCrossRepositoryEvidence`, `ExactRelationshipRow`, `ProvenanceRow`, projection-only final return, direct projector construction, alternate packet return, duplicate build, and Story 12.5 legacy authority in `tests/Vulgata.Tests/ChatPipelineCompositionTests.cs` and `tests/Vulgata.Tests/ChatEvidenceRetrievalTests.cs` (FR-001, FR-007, FR-013-FR-014, FR-021, SC-002).
+- [ ] T009 [P] [US1] Classification: EXISTING-EVIDENCE — Reaccept NFC/token-array parsing, ASCII/CJK extraction, exact `50/40/30/25/20/5/3/1` scoring, active-mode-only term field, prior-current-Document +1, full-set ranking before top 256, strongest-per-Document, twelve-primary target, five-Document/four-section bounds, randomized ties, and insufficient fallback in `tests/Vulgata.Tests/ChatSupplementaryEvidenceSelectorTests.cs` and `tests/Vulgata.Tests/ChatEvidenceRetrievalTests.cs` (FR-005-FR-013, SC-002-SC-003).
+- [ ] T010 [P] [US1] Classification: EXISTING-EVIDENCE — Reaccept server-created authorization scope, applied Global/System/exact-two-Repository Context, canonical Repository order, caller/pending exclusion, fallback-only advisory terms, authority/currentness fingerprinting, and exact 8,192/8,193 UTF-8 behavior in `tests/Vulgata.Tests/ChatAdvisoryContextReaderTests.cs`, `tests/Vulgata.Tests/ChatPipelineCompositionTests.cs`, and `tests/Vulgata.Tests/PreparedChatCoordinatorTests.cs` (FR-002-FR-004, FR-012, FR-019, FR-023-FR-025, SC-001, SC-005).
+- [ ] T011 [P] [US1] Classification: EXISTING-EVIDENCE — Reaccept the sole packet-2.2 builder, independently constructed fingerprint vectors, opaque handles, primary/seed identities, complete sections/Source Anchors, whole-unit drop order, selected-required refusal, 1-5/1-20/1-32/32/10/12 bounds, and exact/+1 evidence/conversation/advisory UTF-8 limits in `tests/Vulgata.Tests/ChatEvidencePacketBuilderTests.cs` and `tests/Vulgata.Tests/ChatEvidencePacketV22ContractTests.cs` (FR-021-FR-025, SC-002-SC-003).
+- [ ] T012 [US1] Classification: EXISTING-EVIDENCE — Reaccept packet-2.2 candidate extraction and provider blindness in `tests/Vulgata.Tests/ChatCandidateExtractorTests.cs`, `tests/Vulgata.Tests/ChatAgentDispatcherTests.cs`, and `tests/Vulgata.Tests/ChatContractTests.cs`, proving only bounded question/mode/fingerprint/handles/packet/conversation enter synthesis and no database, source Repository, analysis tool, legacy profile, vector, or unrestricted tool is callable (FR-013, FR-025, SC-004-SC-005).
+- [ ] T013 [US1] Classification: VERIFY — Run the focused B1 suites plus relevant regressions and write exact commands, results, immutable primary identities/fingerprint vectors, and structural-guard evidence to `specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/track-b-b1-reacceptance-01.md`; accept B1 independently without claiming B2-B4 (FR-001-FR-013, FR-021-FR-025, SC-001-SC-005).
+
+**Checkpoint**: B1 is independently accepted only if all current behavior and topology guards pass unchanged.
+
+---
+
+## Phase 5: Track B2 - current-v2 relationship and currentness reacceptance (User Story 1)
+
+**Goal**: Hold B1 primaries fixed while reaccepting the sole optional relationship projector and its closed support states.
+
+**Independent Test**: Two valid decisions sharing one current directed Edge yield one relationship, selected canonical decision, count two, stable full-set fingerprint, and two decision-owned Published Flow Groups; selected-required mutation rejects the whole assembly without substitution.
+
+- [ ] T014 [US1] Classification: EXISTING-EVIDENCE — Reaccept one current Cross-Repository REFERENCES Edge with many independently valid Story 12.4 decision slots, canonical selected decision, complete contribution recomputation, decision count/set fingerprint, and distinct decision-owned Published Flow Groups under randomized enumeration in `tests/Vulgata.Tests/ChatEvidenceCurrentnessTests.cs` and `tests/Vulgata.Tests/ChatEvidenceRetrievalTests.cs` (FR-014-FR-015, FR-019-FR-021, SC-001-SC-002).
+- [ ] T015 [P] [US1] Classification: EXISTING-EVIDENCE — Reaccept every `absent`, `present-valid`, `present-inconsistent`, and `selected-required` relationship/Flow Group state, including legacy-only/non-exact/missing/reversed/stale/wrong-scope/wrong-revision/fingerprint/conflicting-slot/incomplete/unpublished cases, in `tests/Vulgata.Tests/ChatEvidenceCurrentnessTests.cs` (FR-014-FR-020, SC-001, SC-005).
+- [ ] T016 [P] [US1] Classification: EXISTING-EVIDENCE — Reaccept Business/IT relationship preference, first `min(3,count)` lexical seeds, two additions per seed, stored direction, one hop, cycle/duplicate handling, five Documents, 32 relationships, ten Flow Group authorities, twelve ordered steps, and complete eligible-set ranking before bounds in `tests/Vulgata.Tests/ChatEvidenceRetrievalTests.cs` (FR-015-FR-018, FR-021-FR-022, SC-002-SC-003).
+- [ ] T017 [US1] Classification: EXISTING-EVIDENCE — Reaccept post-selection currentness for every selected Document, section, Source Anchor, Edge, decision contribution set, Published Flow Group, trace, step, System, Repository, Scan Run, and Profiled Revision in `tests/Vulgata.Tests/ChatEvidenceCurrentnessTests.cs` and `tests/Vulgata.Tests/ChatEvidencePacketBuilderTests.cs`; optional invalid facts support nothing, while selected-required drift withholds the entire answer (FR-003-FR-004, FR-019-FR-024, SC-001, SC-004-SC-005).
+- [ ] T018 [US1] Classification: VERIFY — Run focused B1+B2 suites and write decision-set, Flow Group ordering, state-table, mutation, no-legacy-authority, and no-Story-12.4-mutation evidence to `specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/track-b-b2-reacceptance-01.md`; accept B2 independently without claiming B3/B4 (FR-014-FR-024, FR-049-FR-050, SC-001-SC-005).
+
+**Checkpoint**: B2 is independently accepted, with Story 12.4 remaining read-only.
+
+---
+
+## Phase 6: Track B3 - bounded transient conversation reacceptance (User Story 2)
+
+**Goal**: Reaccept two-turn transient Conversation State as context only, with full re-fetch and revalidation on every follow-up.
+
+**Independent Test**: Initial question and two follow-ups use prior eligible Logical Document identities only as +1 hints, evict older state, and fail closed on row/access mutation without carrying prose or handles as evidence.
+
+- [ ] T019 [P] [US2] Classification: EXISTING-EVIDENCE — Reaccept last-two validated turns, fourth-turn eviction, exact 4,096/4,097 UTF-8 behavior, prior packet/handle/Logical Document binding, reset on new conversation/mode/scope/access loss/disposal, and non-persistence in `tests/Vulgata.Tests/ChatConversationStateTests.cs` (FR-023, FR-029, SC-006).
+- [ ] T020 [US2] Classification: EXISTING-EVIDENCE — Reaccept initial plus two follow-ups, exactly-once evidence re-fetch/currentness/final authorization/advisory reread per turn, prior-current-Document +1 only after eligibility, missing-equivalent revocation, and zero append on failed attempts in `tests/Vulgata.Tests/PreparedChatCoordinatorTests.cs` and `tests/Vulgata.Tests/ChatEvidenceRetrievalTests.cs` (FR-003-FR-004, FR-008, FR-029-FR-031, SC-001, SC-005-SC-006).
+- [ ] T021 [P] [US2] Classification: EXISTING-EVIDENCE — Reaccept complete-result packet fingerprint, handle, claim, citation, Source Anchor, semantic, and no-repair-on-semantic-failure validation in `tests/Vulgata.Tests/ChatAgentResultValidatorTests.cs` and `tests/Vulgata.Tests/ChatContractTests.cs`; prior answer prose remains synthesis context and never validates a current claim (FR-024-FR-031, SC-004-SC-006).
+- [ ] T022 [US2] Classification: VERIFY — Run focused B1-B3 suites and record turn eviction, reset, re-fetch/mutation, bounded-context, claim/citation, and no-failed-append evidence in `specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/track-b-b3-reacceptance-01.md`; accept B3 independently without claiming provider publication (FR-023-FR-031, SC-001, SC-004-SC-006).
+
+**Checkpoint**: B3 is independently accepted; provider/publication acceptance remains B4 work.
+
+---
+
+## Phase 7: Track B4 - strict streaming, atomic accepted publication, and accepted-only reveal (User Story 2)
+
+**Goal**: Preserve the correct raw transport and add one Web-scoped publication owner with one `AcceptedPublicationCommit` linearization point.
+
+**Independent Test**: Cancellation/timeout/preparation failure at every pre-commit transition publishes nothing; a single preallocated candidate commits answer, Conversation State, completion summary, and reveal directive atomically when the sole monotonic sample is before deadline, and advancing time after that sample cannot create another success check.
+
+### Behavioral RED
+
+- [ ] T023 [US2] Classification: RED — Add public-seam state-machine tests proving a prepared candidate has zero live answer, Conversation State, accepted completion summary, or reveal effect through `PublicationCandidateReady`, and that every earlier failure closes without publication, in `tests/Vulgata.Tests/PreparedChatPublicationOwnerTests.cs` (FR-027, FR-031-FR-032, FR-056-FR-059, SC-004-SC-005, SC-016-SC-017).
+- [ ] T024 [US2] Classification: RED — Add fake monotonic clock/cancellation tests for the single-writer critical section: cancellation wins before the clock sample, `sample >= deadline` publishes nothing, `sample < deadline` performs exactly one atomic terminal exchange, and a scheduler advancing time immediately after the sample cannot trigger another acceptance check, in `tests/Vulgata.Tests/PreparedChatPublicationOwnerTests.cs` (FR-032, FR-056-FR-057, SC-005, SC-017; AD-7C).
+- [ ] T025 [US2] Classification: RED — Add throwing runtime-observation lookup, completion-template preparation, conversation preparation, reveal-plan allocation/callback, and structural mutation tests that forbid direct accepted-summary emission, direct conversation append, successful `PreparedChatResult` construction, or page publication outside `IPreparedChatPublicationOwner`, in `tests/Vulgata.Tests/PreparedChatPublicationOwnerTests.cs`, `tests/Vulgata.Tests/PreparedChatCoordinatorTests.cs`, and `tests/Vulgata.Tests/ChatPipelineCompositionTests.cs` (FR-027, FR-031-FR-032, FR-056-FR-060, SC-005, SC-016-SC-017).
+- [ ] T026 [P] [US2] Classification: RED — Add client-boundary tests proving `ChatPage` reads content only from an `AcceptedPublicationCommit`, provider/pending buffers remain invisible, committed `ImmediateAccepted` is complete, `ProgressiveAccepted` uses Unicode text elements, and schedule lag/reduced motion switches only already accepted content to full display in `tests/Vulgata.Tests/ChatValidatedRevealTests.cs` and `tests/Vulgata.Tests/ChatPageTests.cs` (FR-027, FR-032, FR-058-FR-059, SC-004-SC-005, SC-016-SC-017).
+
+### Minimal GREEN
+
+- [ ] T027 [US2] Classification: GREEN — Add the Web-scoped `IPreparedChatPublicationOwner`, closed publication states, immutable preallocated `PreparedChatPublicationCandidate`, committed composite record, reveal directive, and synchronous non-throwing atomic `AcceptedPublicationCommit` in `src/dotnet/Vulgata.Web/Data/PreparedChatPublicationOwner.cs`; no persistence, Agents, Infrastructure, or Story 12.4 type owns publication (FR-027, FR-031-FR-032, FR-056-FR-060, SC-004-SC-005, SC-016-SC-017).
+- [ ] T028 [US2] Classification: GREEN — Refactor only the accepted tail of `PreparedChatCoordinator.CompleteGroundedAnswerAsync` to prepare currentness/authorization/advisory results, immutable answer, proposed next Conversation State, runtime-observation IDs, neutral completion template, and reveal directive before delegating once to `IPreparedChatPublicationOwner`; remove direct conversation mutation and accepted completion recording from `src/dotnet/Vulgata.Web/Data/PreparedChatCoordinator.cs` (FR-003-FR-004, FR-027-FR-032, FR-056-FR-060, SC-001, SC-004-SC-006, SC-016-SC-017).
+- [ ] T029 [US2] Classification: GREEN — Make `src/dotnet/Vulgata.Web/Components/Pages/ChatPage.razor.cs`, `src/dotnet/Vulgata.Web/Components/Pages/ChatPage.razor`, and `src/dotnet/Vulgata.Web/Components/Pages/ChatTurn.cs` consume only the committed composite reveal directive, preserve generic pending/cancel state and render-time scrolling, and supervise progressive schedule lag without publishing new content (FR-005-FR-006, FR-027, FR-032, FR-058-FR-059, SC-004-SC-005, SC-016-SC-017).
+
+### Streaming reacceptance and B4 exit
+
+- [ ] T030 [US2] Classification: EXISTING-EVIDENCE — Reaccept mandatory raw primary/repair streaming, shared 29-second deadline and three-second repair threshold, strict split wire UTF-8/SSE/JSON, one `[DONE]` plus physical EOF, ten-second decoded-data inactivity, received 16,384/16,385 and 65,536/65,537 pre-JSON caps, separate raw-body/SSE/decoded-delta/final-answer domains, buffer discard, and closed failures in `tests/Vulgata.Tests/ChatProviderStreamAssemblerTests.cs`, `tests/Vulgata.Tests/OpenAiCompatibleChatProviderStreamingTransportTests.cs`, and `tests/Vulgata.Tests/ChatAgentDispatcherTests.cs` (FR-028, FR-031-FR-032, FR-053-FR-057, SC-005, SC-015-SC-017).
+- [ ] T031 [US2] Classification: VERIFY — Reaccept Track B runtime/completion separation and mutation-guard exact production raw-adapter composition, proving content-dark immutable counters/outcomes, coordinator-owned validation, no candidate/run/case/key/signature/export fields, no SDK aggregate acceptance, and no Track C sink in production B composition in `tests/Vulgata.Tests/ChatStreamObservationProvenanceTests.cs`, `tests/Vulgata.Tests/PreparedChatIntegrationTests.cs`, and `tests/Vulgata.Tests/ChatPipelineCompositionTests.cs` (FR-053-FR-060, SC-015-SC-017).
+- [ ] T032 [US2] Classification: VERIFY — Run the focused B4 RED-to-GREEN suite, B1-B3 regressions, and Web build; record RED commands, minimal GREEN diff, publication transition evidence, byte/deadline/cancellation results, zero-fragment client proof, and neutral telemetry proof in `specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/track-b-b4-implementation-01.md` (FR-025-FR-032, FR-053-FR-060, SC-004-SC-005, SC-015-SC-017).
+
+**Checkpoint**: B4 is independently accepted. Aggregate green tests do not yet claim Track B completion.
+
+---
+
+## Phase 8: Track B integration checkpoint B-INT (User Stories 1 and 2)
+
+**Goal**: Prove the production composition traverses the accepted B1-B4 ports exactly once and has no alternate authority or publication path.
+
+**Independent Test**: Authenticated Business and IT initial/follow-up requests execute lexical -> relationship -> packet/current conversation -> raw stream -> publication owner once; replacing or skipping any port fails the interaction test.
+
+- [ ] T033 [US1] Classification: RED — Add a production-boundary interaction test with counting/mutation ports for authenticated Business initial/follow-up flows, proving exactly one lexical projection, relationship projection, packet build, current conversation re-fetch, strict raw provider attempt, currentness/final authorization pass, and publication-owner commit in `tests/Vulgata.Tests/PreparedChatIntegrationTests.cs` and `tests/Vulgata.Tests/ChatPipelineCompositionTests.cs` (FR-001-FR-005, FR-007-FR-032, FR-053-FR-059, SC-001-SC-006, SC-015-SC-017).
+- [ ] T034 [P] [US2] Classification: RED — Add the equivalent IT initial/follow-up interaction and mutations that replace lexical primaries, skip relationships, bypass re-fetch, use non-streaming aggregation, directly append conversation, publish success twice, or compose Track C attestation; each mutation must fail in `tests/Vulgata.Tests/PreparedChatIntegrationTests.cs` and `tests/Vulgata.Tests/ChatPipelineCompositionTests.cs` (FR-001-FR-004, FR-006-FR-032, FR-053-FR-060, SC-001-SC-006, SC-015-SC-017).
+- [ ] T035 [US2] Classification: GREEN — As the sole Integration Owner, register the scoped `IPreparedChatPublicationOwner` and resolve the exact accepted B1-B4 ports once in `src/dotnet/Vulgata.Web/Program.cs` and, only if the observed interaction RED requires it, `src/dotnet/Vulgata.Agents/DependencyInjection.cs`; do not edit central endpoint/project/package files or compose `Story125StreamAttestationSink` in Track B (FR-048, FR-051, FR-053-FR-060).
+- [ ] T036 [US2] Classification: VERIFY — Run focused B1-B4, authenticated integration, Web build, full Tier 1 tests, `git diff --check`, and guards proving no `VulgataDbContext`/migration/snapshot, Story 12.4 contract, legacy Chat authority, second packet builder, direct conversation append, second publication owner, Track C sink, or release field is reachable; record results in `specs/014-grounded-llm-wiki-chat-release-evidence/evidence/integration/track-b-int-01.md` (FR-048-FR-060, SC-001-SC-008, SC-014-SC-017).
+- [ ] T037 [US2] Classification: VERIFY — Bind the independently accepted B1, B2, B3, B4, and B-INT evidence with exact candidate/diff/test hashes in `specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/track-b-integration-01.md`; this is the only task allowed to propose Track B implementation completion (FR-039-FR-040, FR-048-FR-052, SC-013).
+
+**Checkpoint**: Track B implementation is checkpoint-ready, not automatically converged, reviewed, E2E-accepted, or finally verified.
+
+---
+
+## Phase 9: Convergence, review, E2E-decision, and final Track B verification preparation
+
+**Purpose**: Prepare traceable inputs for independent workflow gates without treating task execution as gate acceptance.
+
+- [ ] T038 Classification: VERIFY — Run convergence against the accepted specification/plan/tasks and current implementation, rejecting green-count-only claims and checking every B1-B4/B-INT mutation invariant; write the traceable remaining-work report to `specs/014-grounded-llm-wiki-chat-release-evidence/evidence/convergence/track-b-corrected-01.md` and return any real gap to a new dependency-ordered RED/GREEN task before review (FR-001-FR-032, FR-048-FR-060, SC-001-SC-006, SC-015-SC-017).
+- [ ] T039 Classification: VERIFY — Prepare independent quality-review evidence covering correctness, authorization/currentness, strict transport, atomic publication, telemetry separation, regression risk, no migration, and Story 12.4 compatibility in `specs/014-grounded-llm-wiki-chat-release-evidence/evidence/review/track-b-quality-input-01.md`; only an external reviewer may issue the verdict (FR-003-FR-004, FR-019-FR-032, FR-049-FR-060, SC-001, SC-004-SC-005, SC-015-SC-017).
+- [ ] T040 Classification: VERIFY — Prepare the conditional economical E2E decision from accepted B-INT and quality evidence in `specs/014-grounded-llm-wiki-chat-release-evidence/evidence/e2e/track-b-decision-input-01.md`; if browser/API E2E is required, verify real authenticated Business/IT accepted-only render and cancellation with no fake state, and do not substitute Track C release evidence (FR-002-FR-006, FR-027, FR-031-FR-032, FR-058-FR-059, SC-004-SC-007, SC-016-SC-017).
+- [ ] T041 Classification: VERIFY — After convergence, quality review, and the conditional E2E decision are accepted, run focused/full tests, Web build, schema/semantic checks, `git diff --check`, no-migration/Story-12.4 boundary guard, and exact hash inventory; write final Track B verification to `specs/014-grounded-llm-wiki-chat-release-evidence/evidence/verification/track-b-final-01.md` and bind the accepted checkpoint before opening Track C (FR-039-FR-040, FR-048-FR-060, SC-001-SC-008, SC-013-SC-017).
+
+**Checkpoint**: Track C remains closed until T041 is accepted and one clean candidate is pinned.
+
+---
+
+## Phase 10: Track C - same-candidate Tier 2/Tier 3 release proof (User Story 5)
+
+**Hard dependency**: Start only after accepted Track A preservation, B1, B2, B3, B4, B-INT, convergence, quality review, conditional E2E decision, final Track B verification, and a clean pinned candidate. This ordering remains mandatory even when implementation approval is already hash-bound.
+
+**Goal**: Produce honest same-candidate Tier 2/Tier 3 evidence using real required tools, controlled/real providers as specified, and uniquely owned `vulgata_story125_*` PostgreSQL databases.
+
+**Independent Test**: A passed schema-2.2 envelope recomputes every Scan/Chat/stream/restart/database/screenshot claim from authenticated same-candidate artifacts and rejects direct/unsigned/foreign/SDK-fake or fake-Backup-B evidence.
+
+- [ ] T042 [US5] Classification: GATE — Verify the accepted Track B checkpoint, clean candidate, exact integrated Story 12.4 commit, production raw-adapter type/hash, tool/provider prerequisites, and a newly generated owned lowercase `vulgata_story125_*` database before any product connection; record the preflight in `specs/014-grounded-llm-wiki-chat-release-evidence/evidence/tier-2/preflight-01.md` (FR-041-FR-042, FR-047-FR-052, SC-010, SC-013-SC-015).
+- [ ] T043 [US5] Classification: RED — Add sealed-admission/same-process attestation REDs rejecting direct caller submission, unsigned/foreign candidate/run/case/request/process/provider/adapter bindings, altered counters, content-bearing fields, and aggregate-consistent SDK fake chunks in `tests/Vulgata.Tests/ChatStreamObservationProvenanceTests.cs` and `tests/Vulgata.Tests/ReleaseGate/Story125/Story125Tier3QualificationTests.cs` (FR-039-FR-040, FR-044, FR-060, SC-009, SC-013, SC-015-SC-017).
+- [ ] T044 [US5] Classification: GREEN — Implement the Track C-only ephemeral ECDSA P-256 `Story125StreamAttestationSink` with sealed raw-adapter admission, immutable runtime/completion binding, process public-key fingerprint, and signed content-dark export in `src/dotnet/Vulgata.Agents/ChatExecution/Story125StreamAttestationSink.cs`; the same Integration Owner adds its Track C-only registration in `src/dotnet/Vulgata.Agents/DependencyInjection.cs` and `src/dotnet/Vulgata.Web/Program.cs` without changing Track B contracts (FR-039-FR-040, FR-044, FR-051, FR-060, SC-009, SC-013, SC-015-SC-017).
+- [ ] T045 [US5] Classification: RED — Add schema/semantic RED vectors for exact ten-check inventory, status-conditioned receipts, immutable supersession, command/observation/artifact closure, sealed signature/admission, distinct received/decoded domains, per-case attempt order, complete corpus ID sets, exact half-up scoring, passed-only screenshots, and all +1/fake/foreign negatives in `tests/Vulgata.Tests/ReleaseGate/Story125/Story125ReleaseHarnessTests.cs` and `tests/Vulgata.Tests/ReleaseGate/Story125/Story125EvaluationContractTests.cs` (FR-037-FR-047, FR-060, SC-008-SC-017).
+- [ ] T046 [US5] Classification: GREEN — Implement the minimum schema-2.2 semantic validation and recomputation needed by T045 in `tests/Vulgata.Tests/ReleaseGate/Story125/Story125ReleaseHarness.cs`, preserving immutable run directories and never manufacturing missing observations or success values (FR-039-FR-047, FR-060, SC-009-SC-017).
+- [ ] T047 [US5] Classification: RED — Add Tier 2 public-harness REDs for unique database ownership before connection, current migrations, neutral Java/XML fixtures, real Git/CodeGraph/JDT LS, controlled provider outage, persisted retry/pause, Vulgata process restart, provider restoration, authorized manual resume, and duplicate Document/Edge/publication queries in `tests/Vulgata.Tests/ReleaseGate/Story125/Story125Tier2PostgreSqlTests.cs` (FR-041, FR-045, FR-047, SC-012, SC-014).
+- [ ] T048 [US5] Classification: GREEN — Implement the smallest Tier 2 orchestration, redacted command/hash/artifact capture, database ownership/cleanup receipts, and restart/resume duplicate proof in `tests/Vulgata.Tests/ReleaseGate/Story125/Story125Tier2PostgreSqlTests.cs` and `tests/Vulgata.Tests/ReleaseGate/Story125/Story125ReleaseHarness.cs`; do not add product design corrections inside the evidence run (FR-039, FR-041, FR-045, FR-047, SC-012-SC-014).
+- [ ] T049 [US5] Classification: VERIFY — Execute Tier 2 against one proven-owned `vulgata_story125_*` PostgreSQL database and record an honest passed/failed/blocked envelope plus preflight/ownership/cleanup, exact commands, exit codes, tool/provider identities, pause/restart/resume, and duplicate receipts under `specs/014-grounded-llm-wiki-chat-release-evidence/evidence/tier-2/run-01/` (FR-039, FR-041, FR-045, FR-047, SC-012-SC-014).
+- [ ] T050 [US5] Classification: RED — Add Tier 3 candidate/topology/real-tool/real-Scan/corpus/restart/screenshot REDs in `tests/Vulgata.Tests/ReleaseGate/Story125/Story125Tier3QualificationTests.cs` for exactly two real Repositories, 50-150 automatic File Code Units, all high-value seeds, bounded ordinary failures, exact Cross-Repository REFERENCES Edge, honest Uncertainty, three Business Logic Documents including a Cross-Repository flow, all corpus cases, streamed accepted answers, citations/leakage/timing, restart continuity, and five screenshot categories (FR-042-FR-046, FR-060, SC-009-SC-017).
+- [ ] T051 [US5] Classification: GREEN — Implement only the Tier 3 candidate-bound runner/projection and receipt wiring required by T050 in `tests/Vulgata.Tests/ReleaseGate/Story125/Story125Tier3QualificationTests.cs` and `tests/Vulgata.Tests/ReleaseGate/Story125/Story125ReleaseHarness.cs`; production failures pin a new candidate after normal TDD/review instead of patching product behavior inside the run (FR-039, FR-042-FR-046, FR-060, SC-009-SC-017).
+- [ ] T052 [US5] Classification: VERIFY — Execute the real host Tier 3 run with Vulgata, CodeGraph, Java 21, JDT LS, configured LLM, PostgreSQL 17 as the only required Docker service, the fixed corpus, same-database process restart, actual complete-render observations, and five candidate-bound redacted screenshots; preserve honest non-pass output under `specs/014-grounded-llm-wiki-chat-release-evidence/evidence/tier-3/run-01/` (FR-039, FR-042-FR-046, FR-060, SC-009-SC-017).
+- [ ] T053 [US5] Classification: VERIFY — Validate the final envelope against `specs/014-grounded-llm-wiki-chat-release-evidence/contracts/story125-release-evidence.schema.json`, recompute every aggregate/signature/reference/hash, verify exact ten checks, all corpus IDs, zero non-streaming accepted answers, 100% accepted technical-claim citations, zero leakage, exact half-up usefulness >=80%, complete render <30 seconds, restart/database ownership, screenshot categories/redaction, `git diff --check`, and candidate hashes; write the final release checkpoint to `specs/014-grounded-llm-wiki-chat-release-evidence/evidence/verification/track-c-final-01.md` only if all checks pass (FR-039-FR-047, FR-060, SC-009-SC-017).
+
+**Checkpoint**: Story 12.5 release completion requires accepted T053 evidence; tests, fake state, planned commands, or a partially successful run are insufficient.
+
+---
 
 ## Dependencies and execution order
 
-- Track A T001–T019 is completed evidence and remains preserved.
-- Track B requires the accepted Story 12.4 completion commit/checkpoint and a fresh Track B implementation approval. B1 T020–T033 precedes B2 T034–T039; B2 precedes B3 T040–T044; B3 precedes B4 T045–T053.
-- Architectural REDs T020/T023 and the shared-Edge RED T034 must be observed before their replacement production writes. No convergence task may substitute for these interaction tests.
-- Track C T054–T062 is closed until the Track B checkpoint and separate Track C approval. No task here authorizes Track C early execution.
-- Within each slice: RED tests → minimal GREEN → focused regression → surrounding regression → coherent checkpoint. Shared `Program.cs`, DI, project, and endpoint files require the named coordinated owner.
+### Boundary order
 
-## Parallel execution opportunities
+1. Phase 1 authority preflight precedes Phase 2 foundational guards.
+2. Phase 2 blocks every user-story write; preserved Track A reacceptance can then run independently but must be green before Track C.
+3. B1 T008-T013 precedes B2 T014-T018.
+4. B1+B2 precede B3 T019-T022.
+5. B1-B3 precede B4 T023-T032; T023-T026 must show honest public-seam RED before T027-T029 GREEN.
+6. B1-B4 precede B-INT T033-T037; T033-T034 RED precede Integration Owner GREEN T035.
+7. B-INT precedes convergence/review/E2E/final verification T038-T041.
+8. Track C T042-T053 remains closed until T041 is accepted and a clean candidate is pinned; each Track C RED precedes its paired GREEN.
 
-- T003, T008, and T009 are independent documentation/fixture-preparation work.
-- Within B1, T021, T022, T027, T029, and T031 can be authored in parallel after the architectural RED boundary is agreed; implementation remains ordered through T024–T033.
-- Within B2, T035 and T036 can be authored in parallel after T034; projector and retriever integration remains sequential.
-- Within B3, T040 and T043 are independent RED suites.
-- Within B4, T045–T048 are independent RED suites over separate seams; T049–T052 remain ordered by transport → dispatch → reveal.
-- Track C tasks are parallelizable only after its mandatory gate and only with explicit ownership of the release harness and evidence directory.
+### Shared-file ownership
 
-## Implementation strategy
+- T035 is the sole Track B Integration Owner task for `src/dotnet/Vulgata.Web/Program.cs` and any necessary `src/dotnet/Vulgata.Agents/DependencyInjection.cs` change.
+- T044 reuses that same coordinated Integration Owner only after Track B acceptance to add Track C composition.
+- No task currently authorizes changes to `src/dotnet/Vulgata.Web/Api/ApiEndpointRegistrationExtensions.cs`, any `.csproj`, `Directory.Packages.props`, `VulgataDbContext`, configurations, migrations, model snapshot, or Story 12.4 contracts. Discovery that one is necessary returns to plan.
 
-1. Preserve and regression-check completed Track A.
-2. Implement B1 as the smallest architectural cutover: typed lexical projection, one packet path, advisory Context, and deletion of the obsolete path.
-3. Add B2 current-v2 relationship expansion without changing lexical primary identities.
-4. Add B3 transient conversation and complete-answer validation.
-5. Add B4 mandatory raw streaming and accepted-only reveal; stop for convergence, quality review, E2E decision, verification, and Track B checkpoint.
-6. Start Track C only after a separate approval and run real Tier 2/Tier 3 evidence collection.
+### Parallel opportunities
+
+- T002 and T003 may run in parallel after T001.
+- T009-T011 are independent B1 characterization suites after T008 establishes the topology boundary.
+- T015 and T016 are independent B2 characterization suites after T014 fixes the shared-Edge authority.
+- T019 and T021 may run in parallel after B2 acceptance.
+- T026 may be authored in parallel with T023-T025; all four REDs block T027-T029.
+- T033 and T034 may be authored in parallel after B4 acceptance.
+- Track C test authoring may parallelize only where files do not overlap; `Story125ReleaseHarness.cs`, DI/Program, and each run directory have one owner.
+
+---
+
+## Requirement and success-criterion coverage
+
+| Boundary | Functional requirements | Success criteria |
+| --- | --- | --- |
+| Setup/ownership | FR-001, FR-036, FR-039-FR-040, FR-047-FR-052, FR-054-FR-060 | SC-003, SC-013-SC-017 |
+| Preserved Track A | FR-033-FR-040, FR-046-FR-047 | SC-007-SC-008, SC-014 |
+| B1 | FR-001-FR-013, FR-021-FR-025 | SC-001-SC-005 |
+| B2 | FR-003-FR-004, FR-014-FR-024 | SC-001-SC-005 |
+| B3 | FR-003-FR-004, FR-008, FR-023-FR-031 | SC-001, SC-004-SC-006 |
+| B4 | FR-025-FR-032, FR-053-FR-060 | SC-004-SC-005, SC-015-SC-017 |
+| B-INT/gates | FR-001-FR-032, FR-039-FR-040, FR-048-FR-060 | SC-001-SC-008, SC-013-SC-017 |
+| Track C | FR-037-FR-047, FR-060 | SC-008-SC-017 |
+
+All FR-001-FR-060 and SC-001-SC-017 have at least one implementation/reacceptance task and one verification or release-proof owner.
+
+### Architecture-decision coverage
+
+| Boundary | Accepted plan architecture |
+| --- | --- |
+| Setup/foundational | AD-1, AD-10, AD-11, AD-12 |
+| B1 | AD-1, AD-2, AD-2A, AD-2B, AD-5 |
+| B2 | AD-2, AD-3, AD-4, AD-5 |
+| B3 | AD-1, AD-2B, AD-5, AD-6 |
+| B4 | AD-1, AD-7, AD-7B, AD-7C |
+| Preserved Track A | AD-8, AD-9 |
+| B-INT/gates | AD-1, AD-2, AD-2A, AD-2B, AD-3, AD-4, AD-5, AD-6, AD-7, AD-7B, AD-7C, AD-10, AD-12 |
+| Track C | AD-9, AD-10, AD-11, AD-12 |
+
+---
+
+## Task count and implementation strategy
+
+- **53 total tasks**: Setup 2; Foundational 2; preserved Track A 3; B1 6; B2 5; B3 4; B4 10; B-INT 5; convergence/review/E2E/verification preparation 4; Track C 12.
+- **Classification**: 17 `[EXISTING-EVIDENCE]`; 10 `[RED]`; 8 `[GREEN]`; 18 `[GATE]`/`[VERIFY]` or checkpoint/evidence tasks.
+- **Suggested MVP boundary**: accepted B1+B2+B3+B4 plus B-INT. Track C is required for Story 12.5 release completion but cannot begin before the accepted Track B checkpoint.
+- **Test-first rule**: Existing-correct B1-B3/raw-streaming behavior is reaccepted without fabricated RED. Missing B4 publication ownership, B-INT interaction behavior, and Track C attestation/harness behavior use public-seam RED -> minimal GREEN -> focused regression -> checkpoint.
 
 ## Self-review
 
-- Source references reviewed against `spec.md`, accepted `plan.md`, `data-model.md`, `quickstart.md`, all contracts, Story 12.4 dependency contracts, and observed source/test topology.
-- Every incomplete accepted behavior has a public-seam RED before GREEN; existing-correct Track A and characterization behavior is not fabricated as RED.
-- B1–B4 order, deletion inventory, many-decisions-per-Edge authority, decision-owned Published Flow Groups, advisory Context ownership, packet 2.2 binding, deterministic constants, received pre-JSON byte domains, neutral Track B telemetry, and Track C signed attestation are represented.
-- No placeholder task IDs, guessed paths, EF migration, Story 12.4 mutation, vector/autonomous retrieval, fake release evidence, or early Track C execution is authorized.
-
-## Phase 9: Convergence
-
-**Goal**: Close the remaining Track B deadline-propagation proof without changing the accepted streaming architecture or opening Track C.
-
-- [x] T063 [US2] Add fake-clock behavioral RED in `tests/Vulgata.Tests/ChatAgentDispatcherTests.cs` proving that exactly ten seconds without a non-empty decoded data chunk or valid terminal cancels the actual underlying provider stream and returns `TimedOut` with no accepted result, plus exact 2,999/3,000 ms remaining-budget vectors proving syntax repair is refused below and permitted at the accepted threshold; implement the minimal cancellation propagation correction in `src/dotnet/Vulgata.Agents/ChatExecution/ChatAgentDispatcher.cs`, then run focused dispatcher/coordinator/transport regression. Traces to FR-056, FR-057, plan AD-7, and T047 (`partial`). Track C remains closed until this task passes TDD, convergence reruns cleanly, and all remaining Track B gates bind a complete checkpoint.
-
-## Phase 10: Convergence
-
-**Goal**: Close the remaining accepted Track B contract cutovers without opening Track C or changing Story 12.4/persistence authority.
-
-- [x] T064 [US1] Replace the 257-row refusal characterization with a public-seam RED proving any larger eligible current set is fully scored/deduplicated and only the highest-ranked 256 distinct sections are retained, then implement the bounded top-K lexical window without changing deterministic ranking or primary identities. Traces to FR-007, FR-009, plan AD-2, and T022/T025 (`contradicts`).
-- [x] T065 [US1] Add schema-conformance and fingerprint REDs for the single accepted `grounded-chat-evidence/2.2` packet shape, then cut `EvidencePacket`, `ChatEvidencePacketBuildRequest`, retrieval assembly, serialization, validation, and complete-unit packing over to the required selection policy/primary/seed identities, advisory-context authority fingerprint, relationship `selectedExactDecisionId` plus decision-set authority, multiple decision-owned `flowGroupHandles`, flow-group handles/relationship binding/decision rank, flow-step group binding, and conversation `priorLogicalDocumentIds`; remove the parallel 2.0 runtime shape and prove the complete canonical 2.2 packet against `contracts/chat-evidence-packet-v2.schema.json`. Traces to FR-021 through FR-025, plan AD-5, and T028/T039 (`contradicts`).
-- [x] T066 [US2] Add composition/leakage REDs for release-neutral Track B `ChatStreamRuntimeObservation` and separate coordinator-owned `ChatStreamCompletionSummary`, then remove candidate/run/case/public-key/signature/export and post-transport validation coupling from the Track B stream request/authority while retaining content-dark transport counters and immutable runtime/completion IDs; keep sealed admission and signed candidate attestation exclusively behind the still-closed Track C sink. Traces to FR-060, plan AD-7/AD-7B/AD-10, and T050/T051/T053 (`contradicts`).
-
-## Phase 11: Convergence
-
-**Goal**: Close remaining accepted Track B architecture and currentness gaps without opening Track C or changing Story 12.4/persistence authority.
-
-- [x] T067 [US1] Complete the exact `AuthorizedChatSnapshot` -> `ChatLexicalPrimaryProjection` -> `ChatRelationshipExpansionProjection` -> `ChatEvidenceAssembly` handoff in `ChatEvidenceRetriever`, make the relationship projector and packet builder constructor-composed dependencies, and remove the retriever's direct projector fallback/alternate untyped construction; add public composition coverage proving one typed lexical -> relationship -> packet path. Traces to FR-007, FR-014, FR-021, plan AD-2/AD-2A, and T024/T033 (`partial`).
-- [x] T068 [US1] Add public-seam REDs for relationship candidates beyond the current query cap and for Business/IT relationship preference, then rank and deduplicate the complete eligible edge set by seed rank, mode preference, repository/target identity, and edge identity before applying relationship and per-seed bounds. Traces to FR-015 through FR-018, plan AD-4, and T036/T038 (`partial`).
-- [x] T069 [US1] Add a currentness RED with 11 through 256 valid exact decisions sharing one current Cross-Repository Edge, then load and canonicalize the complete bounded decision set rather than rejecting more than ten rows, preserving count/set-fingerprint and decision-owned Flow Group validation. Traces to FR-014, FR-019, FR-020, plan AD-3, and T037/T039 (`partial`).
-- [x] T070 [US1] Add an IT-mode advisory-fallback RED and apply the same bounded current Business Logic summary plus server-owned advisory-term fallback when primary lexical matching is empty in either mode, without changing positive primary identities or allowing caller/pending Context. Traces to FR-012, FR-013, plan AD-2/AD-2B, and T025/T032 (`partial`).
-- [x] T071 [US2] Add multi-unit packet REDs proving over-bound packing drops the lowest-ranked optional relationship/Flow Group or lexical extra unit first, then preserve complete-unit reachability and required-unit refusal; carry explicit rank through the build request instead of sorting optional handles lexicographically. Traces to FR-022 through FR-024, plan AD-5, and T028/T039 (`partial`).
-- [x] T072 [US2] Add a render-barrier RED that mutates applied Global/System/selected-Repository advisory Context or its authority fingerprint after retrieval, then re-read and revalidate the same server-owned Context before reveal and withhold the answer on any value, membership, ordering, currentness, or applied/pending change. Traces to FR-019, FR-024, FR-027, plan AD-2B/AD-7B, and T032/T042/T044 (`partial`).
-
-## Phase 12: Convergence
-
-**Goal**: Enforce the accepted typed retrieval handoff at runtime without changing Story 12.4 authority, persistence, or the closed Track C boundary.
-
-- [x] T073 [US1] Complete the runtime `AuthorizedChatSnapshot` -> `ChatLexicalPrimaryProjection` -> `ChatRelationshipExpansionProjection` -> `ChatEvidenceAssembly` handoff: construct and pass the immutable authorized snapshot into lexical selection, preserve the lexical projection as the sole primary authority, wrap the final packet request in `ChatEvidenceAssembly`, and make the sole packet builder consume that typed assembly; add structural/public-seam tests proving retrieval cannot bypass the typed stages with direct request/repository arguments or a raw build request. Traces to FR-007, FR-014, FR-021, plan AD-2/AD-2A, and T067 (`partial`).
-
-## Phase 13: Convergence
-
-**Goal**: Close remaining substantive Track B authority and per-Edge currentness gaps without opening Track C or changing Story 12.4 contracts.
-
-- [x] T074 [US1] Move applied advisory-context acquisition into the server-owned `ChatEvidenceRetriever` serializable transaction: constructor-compose `IChatAdvisoryContextReader`, create the `AuthorizedChatScope` only after authorization, ignore caller-supplied advisory text, bind the reader result into `AuthorizedChatSnapshot`, and preserve closed missing/unauthorized/inconsistent outcomes; remove any duplicate pre-transaction advisory authority or add a race-focused seam proving the snapshot and packet use the same applied Context. Traces to FR-004, FR-007, FR-012, FR-019, plan AD-2/AD-2B, and T032/T073 (`partial`).
-- [x] T075 [US1] Rework `ChatEvidenceCurrentnessValidator` exact-decision and contribution loading to enforce the accepted 1-256 decision bound independently for each included Cross-Repository Edge, preserving complete per-Edge decision-set fingerprints and decision-owned Flow Group validation; add a multi-Edge public-seam RED proving that valid decision sets across separate Edges are not falsely rejected by one global `.Take(257)`/contribution cap. Traces to FR-014, FR-019, FR-020, plan AD-3, and T069 (`partial`).
-
-## Phase 14: Quality Review Corrections
-
-**Goal**: Resolve the independent Track B quality-review findings without changing accepted architecture, Story 12.4 authority, persistence, or Track C.
-
-- [x] T076 [US2] Carry the transaction-owned advisory Context authority used by retrieval/packet construction through the server-only result and reveal-currentness boundary, then compare the reveal reread against that exact authority; add an A-to-B-to-A race RED proving coordinator-pre-read A, transactional packet B, and reveal reread A is withheld before answer/citation/conversation publication. Traces to QR-TB-001, FR-019, FR-024, FR-027, SC-001, SC-005, and plan AD-2B.
-- [x] T077 [US2] Enforce the single 29-second absolute deadline across retrieval, streaming, validation, currentness, advisory reread, final authorization, conversation append, and publication; add fake-clock/cancellation REDs expiring during retrieval and reveal revalidation and prove the bounded timeout result contains no answer and appends no conversation turn. Traces to QR-TB-002, FR-031, FR-032, FR-056, SC-017, and plan AD-7.
-- [x] T078 [US2] Split provider-result parsing into a closed syntax-only repair classification carrying the bounded invalid response plus syntax category; permit the one repair stream only for those local syntax failures and reject valid-JSON semantic, handle, fingerprint, evidence, or citation violations without repair. Add negative non-repair vectors and repair-payload/category assertions. Traces to QR-TB-003, FR-027, FR-028, plan AD-7, and `contracts/chat-provider-streaming-v1.md`.
-
-## Phase 15: Quality Review Corrections
-
-**Goal**: Close the final accepted Track B deadline-through-publication gap without changing accepted architecture, Story 12.4 authority, persistence, or Track C.
-
-- [x] T079 [US2] Add deterministic fake-clock REDs that expire at the coordinator's final remaining-budget/publication boundary and prove no successful result or conversation append, plus a Chat Page RED where the remaining budget is at least 1,000 ms but below the Unicode-safe progressive reveal cost and prove the complete accepted answer renders immediately within the absolute deadline; implement the minimal final deadline assertion and deadline-aware reveal decision while preserving caller-cancelled versus internal-timeout outcomes and accepted-only reveal. Traces to QR-TB-004, FR-031, FR-032, FR-056, SC-017, plan AD-7/AD-7B, and `contracts/chat-provider-streaming-v1.md`.
-
-## Phase 16: Convergence
-
-**Goal**: Close the remaining deadline-through-publication and accepted-UI-reveal race without changing accepted architecture, Story 12.4 authority, persistence, or the closed Track C boundary.
-
-- [x] T080 [US2] Add deterministic fake-clock REDs that expire after the final deadline check but before conversation/result publication and prove no successful result, conversation append, or accepted-only publication; make conversation append and success publication deadline-atomic while preserving caller-cancelled versus internal-timeout outcomes, then bind the Chat Page reveal timer to the same absolute deadline and render a complete accepted answer immediately whenever progressive Unicode reveal cannot finish within the remaining budget. Traces to QR-TB-004, FR-031, FR-032, FR-056, FR-057, FR-059, SC-005, SC-016, SC-017, plan AD-7/AD-7B, and `contracts/chat-provider-streaming-v1.md` (`partial`).
-
-## Phase 17: Convergence
-
-**Goal**: Close the remaining post-check deadline publication race without changing accepted architecture, Story 12.4 authority, persistence, or the closed Track C boundary.
-
-- [ ] T081 [US2] Add a fake-clock/cancellation RED that expires during completion-summary recording or the final publication linearization after the live deadline check and proves no successful result, conversation-state append, or accepted-only publication; implement one deadline-atomic publication owner that observes completion telemetry before its final live check and distinguishes caller cancellation from internal timeout, then rerun the accepted Unicode reveal and fallback-summary regression without opening Track C. Traces to T080, QR-TB-004, FR-031, FR-032, FR-056, FR-057, FR-059, SC-005, SC-016, SC-017, plan AD-7/AD-7B, and `contracts/chat-provider-streaming-v1.md` (`partial`).
+- Every task uses the strict checklist form, a sequential ID, an exact file/directory path, and a story label only inside a user-story phase.
+- The task set replaces rather than appends to the invalidated prior 81-task history and contains no continuation-wave task logic.
+- B1, B2, B3, B4, and B-INT each have an independent goal, test, exit evidence, and dependency edge.
+- The typed single topology, immutable lexical primaries, closed relationship/Flow Group states, many decisions per Edge, packet 2.2, full re-fetch/currentness, strict byte/SSE/JSON/deadline behavior, one Web publication owner, atomic `AcceptedPublicationCommit`, accepted-only reveal, Track B/Track C telemetry separation, and same-candidate release proof are explicit.
+- No EF, Story 12.4, vector/autonomous-tool, fake-evidence, unrestricted-provider-tool, or unvalidated-client-output task is present.
+- Track C is dependency-ordered behind accepted B1-B4, B-INT, convergence, review, conditional E2E decision, verification, and candidate pinning.
