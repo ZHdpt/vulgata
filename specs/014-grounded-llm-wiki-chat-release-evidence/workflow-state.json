@@ -6,10 +6,10 @@
   "stage": "implement",
   "preflight": {
     "branch": "demo0831/story-12-5",
-    "head": "8c5ce6c6509723664754a10e41e1212c1712169c",
+    "head": "ca102fb21a7aeeb02dbd8bd931e71b8778c4797a",
     "git_identity_sha256": "07a20fe92c0f34dce99c42edc204a9db68ea55524b692aa9828e2edde364da34",
     "status_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-    "observed_at": "2026-08-29T04:13:51.8846176Z"
+    "observed_at": "2026-08-29T04:40:29.6378374Z"
   },
   "artifacts": {
     "spec": {
@@ -22,7 +22,7 @@
     },
     "tasks": {
       "path": "specs/014-grounded-llm-wiki-chat-release-evidence/tasks.md",
-      "sha256": "794d0d944af959d7a3ab3046b47746e82efc27c67f2c130e4cff13b316934cf8"
+      "sha256": "b35ccab915d05f7f24022888558fbad750ea66636c4d9b0bbcf3472e8fd7e322"
     }
   },
   "gates": {
@@ -120,18 +120,18 @@
     "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/implementation-approval-track-b-02.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/implementation-approval-track-c-01.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/integration/story-12.4-dependency-integration-correction-01.md",
-    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/track-b-quality-correction-02.md"
+    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/track-b-convergence-correction-14.md"
   ],
   "checkpoint": {
-    "checkpoint_id": "bmad-12-5-implement-20260829T042053Z-convergence-pause-06",
+    "checkpoint_id": "bmad-12-5-implement-20260829T044029Z-convergence-correction-14",
     "stage": "implement",
     "commit_sha": null,
     "binding_status": "pending"
   },
   "resume": {
     "stage": "implement",
-    "reason": "Convergence attempt 8 appended T080 for the remaining deadline-atomic publication and live absolute UI reveal boundary. This is non-converged pass 2 of 3 under continuation-03; Track C remains closed.",
-    "evidence_path": "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/track-b-convergence-pause-06.md"
+    "reason": "T080 is GREEN with deadline-linearized conversation/result publication and live absolute-deadline accepted reveal. Rerun convergence attempt 9; a non-converged result triggers the continuation-03 user gate. Track C remains closed.",
+    "evidence_path": "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/track-b-convergence-correction-14.md"
   },
-  "updated_at": "2026-08-29T04:20:53.3635864Z"
+  "updated_at": "2026-08-29T04:40:29.6378374Z"
 }

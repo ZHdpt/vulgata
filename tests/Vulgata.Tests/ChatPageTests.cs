@@ -644,6 +644,40 @@ public sealed class ChatPageTests : BunitContext
     }
 
     [Fact]
+    public async Task ChatPage_AcceptedUnicodeReveal_UsesLiveAbsoluteDeadlineAfterRevealStartsAsync()
+    {
+        _revealDelay.Pause();
+        _dispatcher.BeforeResult = () => _timeProvider.Advance(TimeSpan.FromSeconds(24));
+        _retriever.ClaimText = "付款e\u0301👨‍👩‍👧‍👦完成";
+
+        IRenderedComponent<ChatPage> cut = Render<ChatPage>();
+        WaitForLoaded(cut);
+        PrepareValidSelection(cut, ChatMode.Business);
+
+        Task sendTask = BeginQuestionAsync(cut, "付款在截止时间内如何显示 Unicode 回答？");
+        cut.WaitForState(() => cut.FindAll("[data-answer-state='revealing'], [data-answer-state='complete']").Count == 1);
+        Assert.Equal("revealing", cut.Find(".complete-answer").GetAttribute("data-answer-state"));
+        Assert.Equal("付", cut.Find(".material-claim__revealed").TextContent);
+
+        try
+        {
+            _timeProvider.Advance(TimeSpan.FromSeconds(6));
+
+            cut.WaitForAssertion(() =>
+            {
+                IElement answer = cut.Find(".complete-answer");
+                Assert.Equal("complete", answer.GetAttribute("data-answer-state"));
+                Assert.Equal(_retriever.ClaimText, cut.Find(".material-claim").TextContent);
+            });
+        }
+        finally
+        {
+            _revealDelay.ReleaseAll();
+            await sendTask;
+        }
+    }
+
+    [Fact]
     public async Task ChatPage_ValidPendingRequest_ClearsComposerImmediately()
     {
         IRenderedComponent<ChatPage> cut = Render<ChatPage>();
@@ -969,11 +1003,114 @@ public sealed class ChatPageTests : BunitContext
 
     private sealed class AdjustableTimeProvider(DateTimeOffset initialUtcNow) : TimeProvider
     {
+        private readonly object _gate = new();
+        private readonly List<AdjustableTimer> _timers = [];
         private DateTimeOffset _utcNow = initialUtcNow;
 
-        public override DateTimeOffset GetUtcNow() => _utcNow;
+        public override DateTimeOffset GetUtcNow()
+        {
+            lock (_gate)
+            {
+                return _utcNow;
+            }
+        }
 
-        public void Advance(TimeSpan duration) => _utcNow = _utcNow.Add(duration);
+        public override ITimer CreateTimer(
+            TimerCallback callback,
+            object? state,
+            TimeSpan dueTime,
+            TimeSpan period)
+        {
+            var timer = new AdjustableTimer(this, callback, state, dueTime, period);
+            lock (_gate)
+            {
+                _timers.Add(timer);
+            }
+
+            return timer;
+        }
+
+        public void Advance(TimeSpan duration)
+        {
+            AdjustableTimer[] due;
+            lock (_gate)
+            {
+                _utcNow = _utcNow.Add(duration);
+                due = _timers.Where(timer => timer.IsDue(_utcNow)).ToArray();
+            }
+
+            foreach (AdjustableTimer timer in due)
+            {
+                timer.Fire();
+            }
+        }
+
+        private sealed class AdjustableTimer(
+            AdjustableTimeProvider owner,
+            TimerCallback callback,
+            object? state,
+            TimeSpan dueTime,
+            TimeSpan period) : ITimer
+        {
+            private DateTimeOffset _dueAt = owner._utcNow.Add(dueTime);
+            private TimeSpan _period = period;
+            private bool _disposed;
+
+            internal bool IsDue(DateTimeOffset now) => !_disposed && _dueAt <= now;
+
+            internal void Fire()
+            {
+                lock (owner._gate)
+                {
+                    if (_disposed)
+                    {
+                        return;
+                    }
+
+                    if (_period == Timeout.InfiniteTimeSpan)
+                    {
+                        _disposed = true;
+                        owner._timers.Remove(this);
+                    }
+                    else
+                    {
+                        _dueAt = owner._utcNow.Add(_period);
+                    }
+                }
+
+                callback(state);
+            }
+
+            public bool Change(TimeSpan dueTime, TimeSpan period)
+            {
+                lock (owner._gate)
+                {
+                    if (_disposed)
+                    {
+                        return false;
+                    }
+
+                    _dueAt = owner._utcNow.Add(dueTime);
+                    _period = period;
+                    return true;
+                }
+            }
+
+            public void Dispose()
+            {
+                lock (owner._gate)
+                {
+                    _disposed = true;
+                    owner._timers.Remove(this);
+                }
+            }
+
+            public ValueTask DisposeAsync()
+            {
+                Dispose();
+                return ValueTask.CompletedTask;
+            }
+        }
     }
 
     private sealed class StubDispatcher : IChatAgentDispatcher

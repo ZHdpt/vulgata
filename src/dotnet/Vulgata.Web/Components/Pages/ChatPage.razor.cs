@@ -273,7 +273,7 @@ public partial class ChatPage : IAsyncDisposable
                 await RevealAnswerAsync(
                     turn,
                     result.Answer,
-                    result.RemainingDeadlineMilliseconds,
+                    result.AbsoluteDeadlineUnixTimeMilliseconds,
                     conversationVersion,
                     cancellation.Token);
                 _loadState = LoadState.Loaded;
@@ -393,12 +393,14 @@ public partial class ChatPage : IAsyncDisposable
     private async Task RevealAnswerAsync(
         ChatTurn turn,
         GroundedAnswer answer,
-        long remainingDeadlineMilliseconds,
+        long absoluteDeadlineUnixTimeMilliseconds,
         int conversationVersion,
         CancellationToken requestCancellation)
     {
         turn.BeginReveal(answer);
         bool reducedMotion = await PrefersReducedMotionAsync(requestCancellation);
+        long remainingDeadlineMilliseconds = ChatCoordinator.GetRemainingDeadlineMilliseconds(
+            absoluteDeadlineUnixTimeMilliseconds);
         long requiredDelayCount = turn.Claims.Sum(
             claim => Math.Max(0, claim.TextElementCount - 1));
         double requiredRevealMilliseconds =
@@ -412,7 +414,15 @@ public partial class ChatPage : IAsyncDisposable
             return;
         }
 
-        using var linked = CancellationTokenSource.CreateLinkedTokenSource(requestCancellation);
+        using var deadlineCancellation = new CancellationTokenSource();
+        using var monitorCancellation = new CancellationTokenSource();
+        Task deadlineMonitor = MonitorRevealDeadlineAsync(
+            absoluteDeadlineUnixTimeMilliseconds,
+            deadlineCancellation,
+            monitorCancellation.Token);
+        using var linked = CancellationTokenSource.CreateLinkedTokenSource(
+            requestCancellation,
+            deadlineCancellation.Token);
         _revealCancellation = linked;
         try
         {
@@ -440,12 +450,54 @@ public partial class ChatPage : IAsyncDisposable
             turn.CompleteReveal();
             await RenderConversationAtEndAsync();
         }
+        catch (OperationCanceledException) when (
+            deadlineCancellation.IsCancellationRequested &&
+            !requestCancellation.IsCancellationRequested)
+        {
+            if (conversationVersion == _conversationVersion &&
+                turn.State == ChatTurnState.Revealing)
+            {
+                turn.CompleteReveal();
+                await RenderConversationAtEndAsync();
+            }
+        }
         finally
         {
+            monitorCancellation.Cancel();
+            try
+            {
+                await deadlineMonitor;
+            }
+            catch (OperationCanceledException) when (monitorCancellation.IsCancellationRequested)
+            {
+            }
+
             if (ReferenceEquals(_revealCancellation, linked))
             {
                 _revealCancellation = null;
             }
+        }
+    }
+
+    private async Task MonitorRevealDeadlineAsync(
+        long absoluteDeadlineUnixTimeMilliseconds,
+        CancellationTokenSource deadlineCancellation,
+        CancellationToken cancellationToken)
+    {
+        while (true)
+        {
+            long remainingMilliseconds = ChatCoordinator.GetRemainingDeadlineMilliseconds(
+                absoluteDeadlineUnixTimeMilliseconds);
+            if (remainingMilliseconds <= 0)
+            {
+                deadlineCancellation.Cancel();
+                return;
+            }
+
+            await Task.Delay(
+                TimeSpan.FromMilliseconds(remainingMilliseconds),
+                ChatCoordinator.DeadlineTimeProvider,
+                cancellationToken);
         }
     }
 

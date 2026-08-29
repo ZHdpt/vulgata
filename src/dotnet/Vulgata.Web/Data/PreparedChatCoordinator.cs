@@ -35,19 +35,22 @@ public sealed record PreparedChatResult(
     PreparedChatResultKind Kind,
     GroundedAnswer? Answer,
     string? Message,
-    long RemainingDeadlineMilliseconds)
+    long RemainingDeadlineMilliseconds,
+    long AbsoluteDeadlineUnixTimeMilliseconds)
 {
     public static PreparedChatResult Succeeded(
         GroundedAnswer answer,
-        long remainingDeadlineMilliseconds) =>
+        long remainingDeadlineMilliseconds,
+        long absoluteDeadlineUnixTimeMilliseconds) =>
         new(
             PreparedChatResultKind.Succeeded,
             answer,
             null,
-            Math.Max(0, remainingDeadlineMilliseconds));
+            Math.Max(0, remainingDeadlineMilliseconds),
+            absoluteDeadlineUnixTimeMilliseconds);
 
     public static PreparedChatResult Failed(PreparedChatResultKind kind, string message) =>
-        new(kind, null, message, 0);
+        new(kind, null, message, 0, 0);
 }
 
 public sealed class PreparedChatCoordinator(
@@ -375,7 +378,8 @@ public sealed class PreparedChatCoordinator(
                         selectedRepositories,
                         accessScope,
                         absoluteDeadlineUnixTimeMilliseconds,
-                        operationToken);
+                        operationToken,
+                        recordFinalCompletionSummary: false);
                 }
 
                 logger?.LogWarning(
@@ -428,7 +432,8 @@ public sealed class PreparedChatCoordinator(
                         selectedRepositories,
                         accessScope,
                         absoluteDeadlineUnixTimeMilliseconds,
-                        operationToken);
+                        operationToken,
+                        recordFinalCompletionSummary: false);
                 }
 
                 logger?.LogInformation(
@@ -452,13 +457,16 @@ public sealed class PreparedChatCoordinator(
                 accessScope,
                 absoluteDeadlineUnixTimeMilliseconds,
                 operationToken);
-            RecordCompletionSummary(
-                synthesisRequest.RequestId,
-                completed.Kind == PreparedChatResultKind.Succeeded
-                    ? "accepted"
-                    : "rejected-semantic",
-                completed.Kind == PreparedChatResultKind.Succeeded,
-                deadlineUtc);
+            if (completed.Kind is not (
+                PreparedChatResultKind.Succeeded or PreparedChatResultKind.TimedOut))
+            {
+                RecordCompletionSummary(
+                    synthesisRequest.RequestId,
+                    "rejected-semantic",
+                    accepted: false,
+                    deadlineUtc);
+            }
+
             return completed;
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
@@ -498,7 +506,8 @@ public sealed class PreparedChatCoordinator(
         Dictionary<Guid, RepositoryEntity> selectedRepositories,
         RepositoryAccessScope accessScope,
         long absoluteDeadlineUnixTimeMilliseconds,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        bool recordFinalCompletionSummary = true)
     {
         ChatCurrentnessValidationRequest currentnessRequest = BuildCurrentnessRequest(
             request,
@@ -564,9 +573,53 @@ public sealed class PreparedChatCoordinator(
             return TimedOut();
         }
 
+        ChatConversationState? proposedConversationState = BuildProposedConversationState(
+            request,
+            packet,
+            selectedCandidates,
+            answer);
+        CompletionSummaryPreparation? completionSummary = recordFinalCompletionSummary
+            ? PrepareCompletionSummary(request.RequestId)
+            : null;
+
+        remainingDeadlineMilliseconds = absoluteDeadlineUnixTimeMilliseconds -
+            timeProvider.GetUtcNow().ToUnixTimeMilliseconds();
+        if (remainingDeadlineMilliseconds <= 0)
+        {
+            if (recordFinalCompletionSummary)
+            {
+                RecordCompletionSummary(
+                    completionSummary!,
+                    "timed-out",
+                    accepted: false,
+                    deadlineUtc: DateTimeOffset.FromUnixTimeMilliseconds(
+                        absoluteDeadlineUnixTimeMilliseconds));
+            }
+
+            return TimedOut();
+        }
+
         cancellationToken.ThrowIfCancellationRequested();
-        AppendValidatedConversationTurn(request, packet, selectedCandidates, answer);
-        return PreparedChatResult.Succeeded(answer, remainingDeadlineMilliseconds);
+        PreparedChatResult succeeded = PreparedChatResult.Succeeded(
+            answer,
+            remainingDeadlineMilliseconds,
+            absoluteDeadlineUnixTimeMilliseconds);
+        _conversationState = proposedConversationState;
+        if (recordFinalCompletionSummary)
+        {
+            long acceptedDurationMilliseconds = Math.Max(
+                0,
+                29_000 - remainingDeadlineMilliseconds);
+            RecordCompletionSummary(
+                completionSummary!,
+                "accepted",
+                accepted: true,
+                deadlineUtc: DateTimeOffset.FromUnixTimeMilliseconds(
+                    absoluteDeadlineUnixTimeMilliseconds),
+                acceptedDurationMilliseconds);
+        }
+
+        return succeeded;
     }
 
     private static bool PacketAdvisoryContextMatches(
@@ -578,7 +631,7 @@ public sealed class PreparedChatCoordinator(
             actual.AuthorityFingerprint,
             StringComparison.Ordinal);
 
-    private void AppendValidatedConversationTurn(
+    private ChatConversationState? BuildProposedConversationState(
         ChatQuestionRequest request,
         EvidencePacket packet,
         IReadOnlyCollection<CandidateClaim> selectedCandidates,
@@ -586,7 +639,7 @@ public sealed class PreparedChatCoordinator(
     {
         if (_conversationState is null)
         {
-            return;
+            return null;
         }
 
         HashSet<Guid> selectedDocumentVersionIds = selectedCandidates
@@ -612,7 +665,7 @@ public sealed class PreparedChatCoordinator(
             packet.Fingerprint,
             citationHandles,
             logicalDocumentIds);
-        _conversationState = _conversationState.AppendValidatedTurn(turn);
+        return _conversationState.AppendValidatedTurn(turn);
     }
 
     private void RecordCompletionSummary(
@@ -621,27 +674,59 @@ public sealed class PreparedChatCoordinator(
         bool accepted,
         DateTimeOffset deadlineUtc)
     {
+        RecordCompletionSummary(
+            PrepareCompletionSummary(requestId),
+            finalValidationOutcome,
+            accepted,
+            deadlineUtc);
+    }
+
+    private CompletionSummaryPreparation PrepareCompletionSummary(string requestId)
+    {
         IReadOnlyList<string> runtimeObservationIds =
             completionSummaryRecorder.GetRuntimeObservationIds(requestId);
         bool syntaxRepairUsed = runtimeObservationIds.Count > 1;
-        string[] attemptValidationOutcomes = syntaxRepairUsed
+        return new CompletionSummaryPreparation(
+            requestId,
+            runtimeObservationIds.ToArray(),
+            syntaxRepairUsed);
+    }
+
+    private void RecordCompletionSummary(
+        CompletionSummaryPreparation preparation,
+        string finalValidationOutcome,
+        bool accepted,
+        DateTimeOffset deadlineUtc,
+        long? acceptedDurationMilliseconds = null)
+    {
+        string[] attemptValidationOutcomes = preparation.SyntaxRepairUsed
             ? ["syntax-repair-required", finalValidationOutcome]
             : [finalValidationOutcome];
-        long? acceptedDurationMilliseconds = accepted
-            ? Math.Max(
+        long? totalAcceptedDurationMilliseconds = accepted
+            ? acceptedDurationMilliseconds ?? Math.Max(
                 0,
                 (long)(timeProvider.GetUtcNow() - deadlineUtc.AddSeconds(-29))
                     .TotalMilliseconds)
             : null;
         completionSummaryRecorder.RecordCompletion(new ChatStreamCompletionSummary(
             $"completion-{Guid.NewGuid():N}",
-            requestId,
-            runtimeObservationIds.ToArray(),
-            syntaxRepairUsed,
+            preparation.RequestId,
+            preparation.RuntimeObservationIds,
+            preparation.SyntaxRepairUsed,
             attemptValidationOutcomes,
             finalValidationOutcome,
-            acceptedDurationMilliseconds));
+            totalAcceptedDurationMilliseconds));
     }
+
+    internal long GetRemainingDeadlineMilliseconds(long absoluteDeadlineUnixTimeMilliseconds) =>
+        absoluteDeadlineUnixTimeMilliseconds - timeProvider.GetUtcNow().ToUnixTimeMilliseconds();
+
+    internal TimeProvider DeadlineTimeProvider => timeProvider;
+
+    private sealed record CompletionSummaryPreparation(
+        string RequestId,
+        IReadOnlyList<string> RuntimeObservationIds,
+        bool SyntaxRepairUsed);
 
     private void ClearConversation()
     {

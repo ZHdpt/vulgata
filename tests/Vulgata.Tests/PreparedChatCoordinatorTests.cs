@@ -970,6 +970,42 @@ public sealed class PreparedChatCoordinatorTests
         Assert.Empty(retriever.Requests[1].Conversation.Turns);
     }
 
+    [Fact]
+    public async Task AskAsync_DeadlineExpiresDuringSuccessPublication_ReturnsTimedOutWithoutAppendingConversationTurn()
+    {
+        var system = new SystemEntity("支付系统", null, null, DateTimeOffset.UtcNow);
+        Repository first = system.AddRepository("账户仓库", "https://example.test/account.git", null, null, DateTimeOffset.UtcNow);
+        Repository second = system.AddRepository("渠道仓库", "https://example.test/channel.git", null, null, DateTimeOffset.UtcNow);
+        var clock = new AdjustableCoordinatorTimeProvider(DateTimeOffset.UnixEpoch);
+        var retriever = new StubEvidenceRetriever();
+        var completionRecorder = new DeadlineAdvancingCompletionSummaryRecorder(clock);
+        var coordinator = CreateCoordinator(
+            system,
+            [first, second],
+            retriever: retriever,
+            completionRecorder: completionRecorder,
+            timeProvider: clock);
+
+        PreparedChatResult expired = await coordinator.AskAsync(
+            ChatMode.Business,
+            system.Id,
+            [first.Id, second.Id],
+            "客户付款需要哪些规则？");
+
+        PreparedChatResult followUp = await coordinator.AskAsync(
+            ChatMode.Business,
+            system.Id,
+            [first.Id, second.Id],
+            "客户付款如何确认？");
+
+        Assert.True(completionRecorder.AdvancedAfterAcceptedResult);
+        Assert.Equal(PreparedChatResultKind.TimedOut, expired.Kind);
+        Assert.Null(expired.Answer);
+        Assert.Equal(PreparedChatResultKind.Succeeded, followUp.Kind);
+        Assert.Equal(2, retriever.Requests.Count);
+        Assert.Empty(retriever.Requests[1].Conversation.Turns);
+    }
+
     [Theory]
     [InlineData(ChatAdvisoryContextReadResultKind.NotFoundOrUnauthorized, PreparedChatResultKind.MissingOrUnauthorized)]
     [InlineData(ChatAdvisoryContextReadResultKind.InconsistentCurrentEvidence, PreparedChatResultKind.EvidenceUnavailable)]
@@ -1430,6 +1466,27 @@ public sealed class PreparedChatCoordinatorTests
 
         public void RecordCompletion(ChatStreamCompletionSummary summary) =>
             Summaries.Add(summary);
+    }
+
+    private sealed class DeadlineAdvancingCompletionSummaryRecorder(
+        AdjustableCoordinatorTimeProvider clock) : IChatStreamCompletionSummaryRecorder
+    {
+        public bool AdvancedAfterAcceptedResult { get; private set; }
+
+        public IReadOnlyList<string> GetRuntimeObservationIds(string requestId)
+        {
+            if (!AdvancedAfterAcceptedResult)
+            {
+                AdvancedAfterAcceptedResult = true;
+                clock.Advance(TimeSpan.FromSeconds(29));
+            }
+
+            return [];
+        }
+
+        public void RecordCompletion(ChatStreamCompletionSummary summary)
+        {
+        }
     }
 
     private sealed class SequencedAdvisoryContextReader(
