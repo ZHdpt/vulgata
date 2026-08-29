@@ -3,13 +3,13 @@
   "bmad_story_key": "12-5-grounded-llm-wiki-chat-and-august-30-release-evidence",
   "bmad_epic_key": "12",
   "feature_directory": "specs/014-grounded-llm-wiki-chat-release-evidence",
-  "stage": "converge",
+  "stage": "quality-review",
   "preflight": {
     "branch": "demo0831/story-12-5",
-    "head": "9766f8aa740532d3d754c97d64ea65c474f0c836",
-    "git_identity_sha256": "b7747bfcdc6b5f24a875f1594fcf575698f7a127d4ae2bf1a3a6ae2248691ee7",
-    "status_sha256": "4d1103276dd64681f794ec0478b8010b120b120ea2dc1a66d0a568c1872bee3d",
-    "observed_at": "2026-08-29T13:08:55.6781852Z"
+    "head": "f8c89541cfbef3ba89fea79c852ae9fcfe7bc081",
+    "git_identity_sha256": "11c7fa21c29a3de77992eb9c8aeddce8b34c985c042ba9efb3528705afb66e98",
+    "status_sha256": "cbcce6006379e7ffce6f80b279bd0d4aca5fb419adb3e17604c248e6df6517fa",
+    "observed_at": "2026-08-29T13:11:09.5254384Z"
   },
   "artifacts": {
     "spec": {
@@ -22,7 +22,7 @@
     },
     "tasks": {
       "path": "specs/014-grounded-llm-wiki-chat-release-evidence/tasks.md",
-      "sha256": "1484c1d736e7b3f30fb0861cbdd15cfbc0ce4b2395759cf2fd4d3157dbe4d877"
+      "sha256": "61b1e70e7c3ac0178e079fd61868c265977cad3b49a0b6fcce14ae22b60bf96b"
     }
   },
   "gates": {
@@ -141,18 +141,18 @@
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/track-b-quality-correction-04.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/convergence/track-b-quality-correction-03.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/convergence/track-b-quality-correction-02.md",
-    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/review/track-b-quality-input-02.md"
+    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/review/track-b-quality-input-03.md"
   ],
   "checkpoint": {
-    "checkpoint_id": "bmad-12-5-converge-20260829T130855Z-05",
-    "stage": "converge",
+    "checkpoint_id": "bmad-12-5-quality-20260829T131109Z-input05",
+    "stage": "quality-review",
     "commit_sha": null,
     "binding_status": "pending"
   },
   "resume": {
     "stage": "quality-review",
-    "reason": "T075 independently converged at 9766f8aa with no appended tasks. Prepare the verdict-neutral T076 candidate input, then dispatch fresh quality review T077.",
-    "evidence_path": "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/convergence/track-b-quality-correction-03.md"
+    "reason": "T076 binds the converged f8c89541 candidate to a verdict-neutral review input. Dispatch a fresh independent quality reviewer for T077 and do not predict its verdict.",
+    "evidence_path": "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/review/track-b-quality-input-03.md"
   },
-  "updated_at": "2026-08-29T13:08:55.6781852Z"
+  "updated_at": "2026-08-29T13:11:09.5254384Z"
 }
