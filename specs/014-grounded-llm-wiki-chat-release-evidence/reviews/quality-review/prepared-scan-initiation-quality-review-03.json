@@ -1,0 +1,121 @@
+{
+  "schema_version": "1.0",
+  "gate": "quality-review",
+  "attempt": 3,
+  "verdict": "ACCEPT",
+  "reviewed_at": "2026-08-30T17:10:03.1311749+08:00",
+  "reviewed_commit": "9413558a42b39f8f2a9ce41a717a0b37c9f72a98",
+  "review_binding_head": "91202781df4926fbba500e93bd3dbf0072d18fb3",
+  "reviewed_boundary": {
+    "base_commit": "9d626259c0d64173fb5269be6690d6fbe455dd58",
+    "candidate_commit": "9413558a42b39f8f2a9ce41a717a0b37c9f72a98",
+    "accepted_scope_sha256": "f5690de4e4ca6b188fbeeab54745c12266585601583a05f9ffd81516c088ebd1",
+    "artifact_hashes": {
+      "AGENTS.md": "a62e1a9ed71cff0dce44f9d50a68ee61c370d13e27f6e1ebf569a22ab05acf00",
+      ".specify/memory/constitution.md": "1c5e7319a6fa6ef6576e92a97f65db74057baa2226ca4bf28b45d884e7bd8971",
+      "docs/UBIQUITOUS_LANGUAGE.md": "1f1075f98f8cd36c244e3b020bba1bca530bc90f4165469eda0562d763b050e4",
+      "docs/bmad/epics.md": "ea978e57f22a0bca9798ec65c1df9e3f248d220526546b6b86dd44ebeb955778",
+      "docs/bmad/planning-artifacts/sprint-change-proposal-2026-08-30-story-12-5-prepared-scan-initiation.md": "08ab64e68350911619f86983f0e3ca9a05c2ffb4a3f0693ab33c9a8e0c28f43f",
+      "specs/014-grounded-llm-wiki-chat-release-evidence/spec.md": "469f72c4e7fc62874e082a7f425351d9f46cf422ae8641d4bee7b64915dd67c0",
+      "specs/014-grounded-llm-wiki-chat-release-evidence/plan.md": "6ebb0a525721716bfcbb3dce0d330b4846a6f3cf50c604ceb2bf9b0ed41346a8",
+      "specs/014-grounded-llm-wiki-chat-release-evidence/tasks.md@review-binding": "cc73c8e7d43ecb03ec4a8c177c8aeabcacbb8142659029fda40b5a151bf75e22",
+      "specs/014-grounded-llm-wiki-chat-release-evidence/contracts/prepared-scan-initiation.md": "2234243212da60fddf94287f4b4946d57d2a600be3161c4d2673b4ae624b7c6d",
+      "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/convergence/prepared-scan-initiation-03.md": "2aba5273b1902c05a0076d22735f431152ce985bac6d4d43697c01fd5e0f91d3",
+      "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/tdd/prepared-pass1-identity-hostile-red-01.md": "a7def44e517db9bba80d303280bfea698ddf9a98007195249b31982648795a22",
+      "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/tdd/prepared-pass1-identity-activation-red-01.md": "1f1c9a6b5e8af8f64853a6e70f184515e1919a4927e953857789d913f4a6f6db"
+    }
+  },
+  "reviewed_paths": [
+    "AGENTS.md",
+    ".specify/memory/constitution.md",
+    "docs/UBIQUITOUS_LANGUAGE.md",
+    "docs/bmad/epics.md",
+    "docs/bmad/planning-artifacts/sprint-change-proposal-2026-08-30-story-12-5-prepared-scan-initiation.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/spec.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/plan.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/tasks.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/contracts/prepared-scan-initiation.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/convergence/prepared-scan-initiation-03.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/review/prepared-scan-initiation-quality-input-01.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/tdd/prepared-pass1-identity-hostile-red-01.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/tdd/prepared-pass1-identity-activation-red-01.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/quality-review/prepared-scan-initiation-quality-review-01.json",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/quality-review/prepared-scan-initiation-quality-review-02.json",
+    "src/dotnet/Vulgata.Core/DomainServices/PreparedPass1ContractIdentity.cs",
+    "src/dotnet/Vulgata.Core/DomainServices/IPreparedPass1ContractIdentitySource.cs",
+    "src/dotnet/Vulgata.Agents/WorkerExecution/EmbeddedPreparedPass1ContractIdentitySource.cs",
+    "src/dotnet/Vulgata.Infrastructure/Data/PreparedScanInitiationStore.cs",
+    "src/dotnet/Vulgata.Infrastructure/Data/PreparedScanStore.cs",
+    "src/dotnet/Vulgata.Infrastructure/Data/PreparedScanRepository.cs",
+    "src/dotnet/Vulgata.Web/Data/PreparedScanInitiationAuthorizationRechecker.cs",
+    "src/dotnet/Vulgata.Web/Data/PreparedScanInitiationCoordinator.cs",
+    "src/dotnet/Vulgata.Web/Api/Scans/PreparedScanEndpoints.cs",
+    "src/dotnet/Vulgata.Web/Program.cs",
+    "tests/Vulgata.Tests/PreparedScanning/PreparedPass1ContractIdentitySourceTests.cs",
+    "tests/Vulgata.Tests/PreparedScanning/PreparedScanInitiationCoordinatorTests.cs",
+    "tests/Vulgata.Tests/PreparedScanning/PreparedScanInitiationApiTests.cs"
+  ],
+  "independent_commands": [
+    {
+      "command": "git branch/status/HEAD plus git diff --stat/name-only/check 9d626259c0d64173fb5269be6690d6fbe455dd58..9413558a42b39f8f2a9ce41a717a0b37c9f72a98",
+      "result": "PASS: branch demo0831/story-12-5-trackC at binding HEAD 91202781; candidate boundary inspected; worktree and index were clean before this report; pinned diff check was clean."
+    },
+    {
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore -p:WarningLevel=0 --filter PreparedPass1ContractIdentitySourceTests|PreparedScanInitiationCoordinatorTests|PreparedScanInitiationApiTests with an isolated approved local PostgreSQL administrator connection",
+      "result": "PASS: 41 passed, 0 skipped, 0 failed. This independently executes the corrected source, coordinator, authenticated public endpoint, replay and PostgreSQL initiation boundary."
+    },
+    {
+      "command": "read-only source-to-contract trace of EmbeddedPreparedPass1ContractIdentitySource, PreparedScanInitiationCoordinator, PreparedScanEndpoints and Program composition",
+      "result": "PASS: constructor activation is inert; strict resource validation occurs in GetCurrent; the coordinator maps hostile authority failures before runtime, fresh authorization, initiation-store or preparation calls; the endpoint emits sanitized HTTP 503 application/problem+json with code prepared-scan-initiation-unavailable."
+    },
+    {
+      "command": "read-only transaction/replay trace of PreparedScanInitiationStore, PreparedScanStore and PreparedScanRepository",
+      "result": "PASS: EF execution strategies contain short database-only transactions; exact tuple visibility, advisory/serializable concurrency, replay, conflict, rollback and ambiguous commit acknowledgement resolve from durable state without enclosing external analysis."
+    }
+  ],
+  "prior_finding_disposition": [
+    {
+      "id": "QR-PSI-001",
+      "disposition": "CLOSED",
+      "evidence": "Executable source and coordinator vectors cover missing, duplicate, empty, invalid UTF-8, schema-inconsistent, null, v1, malformed-hash, wrong-schema and throwing authorities, plus exact decoded-text SHA-256 binding. Invalid authority cannot reach runtime, fresh authorization, store or preparation."
+    },
+    {
+      "id": "QR-PSI-002",
+      "disposition": "CLOSED",
+      "evidence": "The honest public RED observed HTTP 500 during eager hostile-source activation. The minimal correction removed constructor-time validation while preserving strict GetCurrent validation. The production-composed authenticated public seam now returns sanitized HTTP 503 and proves zero fresh-authorization, initiation-store, runtime/preparation and durable effects; the independently rerun combined matrix passed 41/41."
+    }
+  ],
+  "findings": [],
+  "boundary_assessment": {
+    "correctness": "ACCEPT. Exact request normalization, server-owned v2 prompt/schema identity, runtime identity verification, atomic tuple creation/replay, phase-aware recovery and prepared-v2 publication align with FR-063 through FR-078, SC-019 through SC-025 and AD-PSI-1 through AD-PSI-5.",
+    "security": "ACCEPT. Initial visibility, fresh isolated pre-store authorization and the established pre-publication authorization recheck remain distinct. Invalid identity, revoked scope and mismatched replay fail closed without disclosure or durable/external side effects. The public hostile response is sanitized and does not expose prompt identity or source content.",
+    "transactions_and_replay": "ACCEPT. Infrastructure owns transaction boundaries; initiation uses a canonical System advisory lock and atomic complete tuple, publication uses serializable isolation, and both execution-strategy/ambiguous-commit paths re-inspect durable state. Git, CodeGraph, JDT-LS, XML and later work execute outside initiation/publication transactions.",
+    "architecture": "ACCEPT. Core declares a dependency-free specific identity port, Agents solely owns and hashes the embedded v2 prompt, Web owns orchestration/Identity recheck, Infrastructure owns EF and PostgreSQL, and Program composes the single source with current CodeGraph 1.5/JDT-LS ports. The legacy v1 recovery source remains unchanged.",
+    "test_quality": "ACCEPT. The suite includes an authenticated zero-preseed production entrance, authorization and mismatch denial, replay/retry/concurrency/rollback, production DI and prohibited-path guards, executable hostile resource/value vectors, and an actual hostile source through the public endpoint. PostgreSQL—not SQLite—supplies concurrency and atomicity evidence.",
+    "regression_risk": "LOW within T025-T033. Independent 41/41 confirms the corrected seam; convergence records 116 passed plus one environment-dependent skip for the broader initiation boundary, 121/121 Track A, 455/455 Track B product boundary and a zero-error Web build. Existing package/version warnings are unchanged.",
+    "prohibited_scope": "PASS. The candidate adds no EF migration, VulgataDbContext/model-snapshot change, Story 12.4 mutation, WorkerAgentDispatchIdentitySource change, Agent tool, CGC or historical profiling registration, general/single/arbitrary-N Scan entrance, Track A/B product change, or T034-T045/run-03 work."
+  },
+  "environment_separated_observations": [
+    {
+      "id": "OBS-PSI-001",
+      "disposition": "PRE_EXISTING_TEST_DEFECT_OUTSIDE_REVIEWED_PRODUCT_BOUNDARY",
+      "detail": "The unchanged Story 12.2 literal-location assertion searches Program.cs for a CodeGraph package literal now owned by PreparedScanRuntimeIdentityResolver. It does not justify restoring the prohibited historical profiling coordinator and is not a candidate product defect."
+    },
+    {
+      "id": "OBS-PSI-002",
+      "disposition": "EXTERNAL_ASSET_RESERVED_FOR_CLOSED_RUN_03",
+      "detail": "The local JDT-LS distribution archive is absent. Real CodeGraph/JDT-LS/LLM release qualification remains in T034-T045/run-03 and is not required or claimed by this T025-T033 verdict."
+    },
+    {
+      "id": "OBS-PSI-003",
+      "disposition": "NON_BLOCKING_REVIEW_PACKET_CLERICAL_DRIFT",
+      "detail": "The quality-input packet still prints the pre-T031 tasks hash 6117b0b8..., while the seven-slot dispatch, current file and convergence attempt 03 consistently bind cc73c8e7.... The review used the latter accepted/current hash; no definition or candidate behavior differs."
+    }
+  ],
+  "residual_risks": [
+    "T034-T045/run-03 remains closed, so this verdict does not claim a real CodeGraph/JDT-LS/LLM release run, restart, screenshots, E2E acceptance or final Story 12.5 completion.",
+    "One environment-dependent PostgreSQL concurrency case was skipped in the broader recorded matrix; deterministic and public PostgreSQL atomic/replay coverage otherwise passed, and this does not replace the future real run.",
+    "Existing NU1507 and EF assembly-version warnings remain outside this bounded diff."
+  ],
+  "summary": "ACCEPT with zero findings. QR-PSI-001 and QR-PSI-002 are closed by executable hostile identity/resource tests and the corrected authenticated public composition. The bounded exactly-two-Repository Prepared Scan initiation is correct, fail-closed, transactionally coherent, idempotent, architecture-aligned and regression-tested within T025-T033. This acceptance advances only to T033 final implementation verification; T034-T045/run-03 and real release completion remain closed."
+}
