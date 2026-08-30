@@ -6,10 +6,10 @@
   "stage": "implement",
   "preflight": {
     "branch": "demo0831/story-12-5-trackC",
-    "head": "84d75d9749f49e82261f8d134f50788f17c08006",
+    "head": "4e9e2d7e03acd4cff3826a72ea41078a398b2189",
     "git_identity_sha256": "f8d5ef6181f2d5861e5a6a50c221bf14c2875c5d3dd48f7c79119b01f3d355ba",
     "status_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-    "observed_at": "2026-08-30T06:59:19.4028059Z"
+    "observed_at": "2026-08-30T07:00:02.4262431Z"
   },
   "artifacts": {
     "spec": {"path":"specs/014-grounded-llm-wiki-chat-release-evidence/spec.md","sha256":"469f72c4e7fc62874e082a7f425351d9f46cf422ae8641d4bee7b64915dd67c0"},
@@ -52,7 +52,7 @@
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/prepared-scan-initiation-identity-authority-blocked-01.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/planned-change-prepared-pass1-identity-authority-02.md"
   ],
-  "checkpoint": {"checkpoint_id":"bmad-12-5-implement-20260830T065926Z-338df8","stage":"implement","commit_sha":null,"binding_status":"pending"},
+  "checkpoint": {"checkpoint_id":"bmad-12-5-implement-20260830T065926Z-338df8","stage":"implement","commit_sha":"4e9e2d7e03acd4cff3826a72ea41078a398b2189","binding_status":"bound"},
   "resume": {"stage":"implement","reason":"Implementation approval 02 accepted for T025-T033 only. Begin T025 honest identity/layering RED; T034-T045 and run-03 remain closed.","evidence_path":"specs/014-grounded-llm-wiki-chat-release-evidence/decisions/implementation-approval-prepared-pass1-identity-authority-02.md"},
-  "updated_at": "2026-08-30T06:59:19.4028059Z"
+  "updated_at": "2026-08-30T07:00:02.4262431Z"
 }
