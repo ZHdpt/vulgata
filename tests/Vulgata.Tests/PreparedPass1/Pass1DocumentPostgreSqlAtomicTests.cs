@@ -168,6 +168,53 @@ public sealed class Pass1DocumentPostgreSqlAtomicTests
             value => value.ScanJobExecutionId == request.JobId));
     }
 
+    [Fact]
+    public async Task PostgreSql17_RetryingExecutionStrategy_ReservesAndCommitsNavigationReceiptWithoutTransactionRejectionAsync()
+    {
+        string administrator = GetAdministratorConnectionStringOrSkip();
+        await using CommitFixture fixture = await CommitFixture.CreateAsync(administrator);
+        await ResetReservationQualificationFixtureAsync(fixture);
+        (PreparedPass1NavigationScope scope, PreparedPass1NavigationRequestInput request) =
+            await CreateNavigationBindingAsync(fixture);
+        DbContextOptions<VulgataDbContext> options =
+            new DbContextOptionsBuilder<VulgataDbContext>()
+                .UseNpgsql(fixture.ConnectionString, npgsql => npgsql.EnableRetryOnFailure(3))
+                .Options;
+        await using VulgataDbContext retryingContext = new(options);
+        PreparedPass1Store store = new(
+            retryingContext,
+            new FixedTimeProvider(PreparedScanTestHost.FixedUtcNow.AddMinutes(1)));
+
+        PreparedPass1NavigationReservationTicket? reserved =
+            await store.ReserveNavigationAttemptAsync(
+                scope,
+                request,
+                cancellationToken: CancellationToken.None);
+        Assert.NotNull(reserved);
+
+        PreparedPass1NavigationReservationTicket? committed =
+            await store.CommitReservedNavigationReceiptAsync(
+                scope,
+                request,
+                reserved!,
+                new(
+                    SHA256.HashData(Encoding.UTF8.GetBytes("run-03-retry-strategy-receipt")),
+                    PreparedPass1NavigationOperation.Definition,
+                    1,
+                    PreparedPass1NavigationOutcome.Unavailable,
+                    null,
+                    [],
+                    0,
+                    0,
+                    ReadOnlyMemory<byte>.Empty),
+                CancellationToken.None);
+
+        Assert.NotNull(committed);
+        Assert.NotNull(committed!.ReceiptId);
+        Assert.Equal(1, await retryingContext.Pass1NavigationReceipts.CountAsync(value =>
+            value.ScanJobExecutionId == request.JobId));
+    }
+
     private static async Task<(PreparedPass1NavigationScope Scope, PreparedPass1NavigationRequestInput Request)>
         CreateNavigationBindingAsync(CommitFixture fixture)
     {
