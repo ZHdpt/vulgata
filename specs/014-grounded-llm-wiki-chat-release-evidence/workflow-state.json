@@ -3,13 +3,13 @@
   "bmad_story_key": "12-5-grounded-llm-wiki-chat-and-august-30-release-evidence",
   "bmad_epic_key": "12",
   "feature_directory": "specs/014-grounded-llm-wiki-chat-release-evidence",
-  "stage": "implementation-approval",
+  "stage": "implement",
   "preflight": {
     "branch": "demo0831/story-12-5-trackC",
-    "head": "c7b1ed424efc90b88b950d1b2ceaaa8af84d8624",
+    "head": "84d75d9749f49e82261f8d134f50788f17c08006",
     "git_identity_sha256": "f8d5ef6181f2d5861e5a6a50c221bf14c2875c5d3dd48f7c79119b01f3d355ba",
     "status_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-    "observed_at": "2026-08-30T06:56:48.8395061Z"
+    "observed_at": "2026-08-30T06:59:19.4028059Z"
   },
   "artifacts": {
     "spec": {"path":"specs/014-grounded-llm-wiki-chat-release-evidence/spec.md","sha256":"469f72c4e7fc62874e082a7f425351d9f46cf422ae8641d4bee7b64915dd67c0"},
@@ -33,7 +33,7 @@
     {"decision_id":"story-12-5-return-to-plan-scan-composition-01","status":"accepted","scope_sha256":"72ecb3bee01e498acb2dacd9c21719b48f307cbbb597bf6c09393bad13d5b1d3","evidence_path":"specs/014-grounded-llm-wiki-chat-release-evidence/decisions/return-to-plan-scan-composition-01.md","decided_at":"2026-08-30T00:10:24.4661357Z"},
     {"decision_id":"story-12-5-correct-course-prepared-scan-initiation-01","status":"accepted","scope_sha256":"97385cc24150140de882bb839dcdd6cbb7046701033ac76560409927b5a3bb56","evidence_path":"specs/014-grounded-llm-wiki-chat-release-evidence/decisions/correct-course-prepared-scan-initiation-01.md","decided_at":"2026-08-30T00:49:56.0824234Z"},
     {"decision_id":"story-12-5-planned-change-authorization-prepared-scan-initiation-01","status":"accepted","scope_sha256":"50958154329acbac8070ecec04f5b6c3527a6cc047129feac024c0e093eb1eab","evidence_path":"specs/014-grounded-llm-wiki-chat-release-evidence/decisions/planned-change-authorization-prepared-scan-initiation-01.md","decided_at":"2026-08-30T02:04:56.4056655Z"},
-    {"decision_id":"story-12-5-implementation-approval-prepared-pass1-identity-authority-02","status":"pending","scope_sha256":"f5690de4e4ca6b188fbeeab54745c12266585601583a05f9ffd81516c088ebd1","evidence_path":"specs/014-grounded-llm-wiki-chat-release-evidence/decisions/implementation-approval-prepared-pass1-identity-authority-02.md","decided_at":null},
+    {"decision_id":"story-12-5-implementation-approval-prepared-pass1-identity-authority-02","status":"accepted","scope_sha256":"f5690de4e4ca6b188fbeeab54745c12266585601583a05f9ffd81516c088ebd1","evidence_path":"specs/014-grounded-llm-wiki-chat-release-evidence/decisions/implementation-approval-prepared-pass1-identity-authority-02.md","decided_at":"2026-08-30T06:59:19.4028059Z"},
     {"decision_id":"story-12-5-planned-change-prepared-pass1-identity-authority-02","status":"accepted","scope_sha256":"7a9e3fc5fc4b9485cd7538e61f2b2153a81bcc8388a89935750d5a29dbf931b2","evidence_path":"specs/014-grounded-llm-wiki-chat-release-evidence/decisions/planned-change-prepared-pass1-identity-authority-02.md","decided_at":"2026-08-30T05:59:15.4510419Z"}
   ],
   "convergence": {"status":"pending","attempt":0,"outcome":"pending","report_path":null},
@@ -52,7 +52,7 @@
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/prepared-scan-initiation-identity-authority-blocked-01.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/planned-change-prepared-pass1-identity-authority-02.md"
   ],
-  "checkpoint": {"checkpoint_id":"bmad-12-5-implementation-approval-20260830T065447Z-aac00e","stage":"implementation-approval","commit_sha":"c7b1ed424efc90b88b950d1b2ceaaa8af84d8624","binding_status":"bound"},
-  "resume": {"stage":"implementation-approval","reason":"Corrected definition accepted at attempt 04. Await explicit implementation approval bound to scope f5690de4e4ca6b188fbeeab54745c12266585601583a05f9ffd81516c088ebd1 before T025.","evidence_path":"specs/014-grounded-llm-wiki-chat-release-evidence/decisions/implementation-approval-prepared-pass1-identity-authority-02.md"},
-  "updated_at": "2026-08-30T06:56:48.8395061Z"
+  "checkpoint": {"checkpoint_id":"bmad-12-5-implement-20260830T065926Z-338df8","stage":"implement","commit_sha":null,"binding_status":"pending"},
+  "resume": {"stage":"implement","reason":"Implementation approval 02 accepted for T025-T033 only. Begin T025 honest identity/layering RED; T034-T045 and run-03 remain closed.","evidence_path":"specs/014-grounded-llm-wiki-chat-release-evidence/decisions/implementation-approval-prepared-pass1-identity-authority-02.md"},
+  "updated_at": "2026-08-30T06:59:19.4028059Z"
 }

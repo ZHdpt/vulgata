@@ -11,7 +11,15 @@
 - Approved planned-change decision SHA-256: `7a9e3fc5fc4b9485cd7538e61f2b2153a81bcc8388a89935750d5a29dbf931b2`
 - Plan-review verdict SHA-256: `6138486b372f515d4488445ab436600cd13d496845b85b71e5ca05ac6ae4f680`
 - Definition-review verdict SHA-256: `88076e5f3a3b6f54e7ddd767ba292c196727d410288de6cb14133debe1e514e7`
-- Status: pending explicit user approval
+- Status: accepted
+- Decided at: `2026-08-30T06:59:19.4028059Z`
+
+## User authorization
+
+The user explicitly approved this decision for the exact accepted-definition
+scope and artifact hashes above. The authorization permits T025-T033 only and
+retains every exclusion below, including the prohibition on T034-T045 and
+run-03 external work.
 
 ## Scope-hash preimage
 
