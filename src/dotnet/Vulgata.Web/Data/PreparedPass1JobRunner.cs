@@ -343,7 +343,7 @@ public sealed class PreparedPass1JobRunner(
         IServiceProvider services = scope.ServiceProvider;
         IPreparedPass1Store store = services.GetRequiredService<IPreparedPass1Store>();
         PairSnapshot? snapshot = await LoadEligibleReconciliationAsync(
-            services.GetRequiredService<VulgataDbContext>(), activation, cancellationToken);
+            services, activation, cancellationToken);
         if (snapshot is null)
         {
             return false;
@@ -369,7 +369,7 @@ public sealed class PreparedPass1JobRunner(
         }
 
         PairSnapshot? reloaded = await LoadEligibleReconciliationAsync(
-            services.GetRequiredService<VulgataDbContext>(), activation, cancellationToken);
+            services, activation, cancellationToken);
         if (reloaded is null || reloaded != snapshot)
         {
             return true;
@@ -474,10 +474,11 @@ public sealed class PreparedPass1JobRunner(
     }
 
     private static async Task<PairSnapshot?> LoadEligibleReconciliationAsync(
-        VulgataDbContext context,
+        IServiceProvider services,
         PreparedPass1Activation activation,
         CancellationToken cancellationToken)
     {
+        VulgataDbContext context = services.GetRequiredService<VulgataDbContext>();
         Pass1PairExecution? pair = await context.Pass1PairExecutions.AsNoTracking()
             .SingleOrDefaultAsync(value => value.Id == activation.PairExecutionId, cancellationToken);
         bool policyDrain = pair is not null &&
@@ -493,15 +494,21 @@ public sealed class PreparedPass1JobRunner(
         }
 
         Guid[] authorizedRepositories = activation.AuthorizationScope.RepositoryIds.Distinct().ToArray();
+        PreparedScanInitiationAuthorizationResult freshAuthorization = await services
+            .GetRequiredService<IPreparedScanInitiationAuthorizationRechecker>()
+            .RecheckAsync(
+                activation.AuthorizationScope.UserId.ToString("D"),
+                pair.SystemId,
+                authorizedRepositories,
+                cancellationToken);
         PreparedScanManifest[] manifests = await context.PreparedScanManifests.AsNoTracking()
             .Where(value => value.Id == pair.ManifestOneId || value.Id == pair.ManifestTwoId)
             .OrderBy(value => value.RepositoryId)
             .ToArrayAsync(cancellationToken);
-        bool authorized = await context.SystemOwnerAssignments.AsNoTracking().AnyAsync(value =>
-            value.SystemId == pair.SystemId &&
-            value.UserId == activation.AuthorizationScope.UserId.ToString("D"),
-            cancellationToken);
-        if (!authorized || manifests.Length != 2 || authorizedRepositories.Length != 2 ||
+        if (!freshAuthorization.IsAuthorized ||
+            freshAuthorization.UserId != activation.AuthorizationScope.UserId ||
+            !freshAuthorization.RepositoryIds.Order().SequenceEqual(authorizedRepositories.Order()) ||
+            manifests.Length != 2 || authorizedRepositories.Length != 2 ||
             manifests.Any(value => !authorizedRepositories.Contains(value.RepositoryId)) ||
             manifests.Any(value => value.ApprovalState != PreparedScanManifestApprovalState.Approved ||
                 value.CoordinationId != pair.CoordinationId ||

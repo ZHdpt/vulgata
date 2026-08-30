@@ -11,7 +11,7 @@ E2E and final-verification threshold accepts the same candidate.
 
 Preflight began at `2026-08-30T14:04:55.3127121Z` on branch
 `demo0831/story-12-5-trackC`.  The active integration checkpoint is
-`1c1631c4` plus the pending eighth narrowly observed PostgreSQL retry-strategy correction;
+`a0e8fc7e` plus the pending ninth bounded run-03 correction;
 the final candidate remains pending until run-03 and its technical gates
 finish. The accepted Story 12.4 dependency is
 `4798b97d9f23aef587829175df7ab7ebc3daf995`.
@@ -63,6 +63,7 @@ Prepared Scan configuration.
 | 21 | 2026-08-30 17:49-17:58 | Recover four expired leases, observe the durable navigation-reservation transaction rejection, and checkpoint its public RED/GREEN correction | exact attempts re-leased without duplicates; pair fail-closed to `PausedInspection`; guarded host stopped for rebuild | completed |
 | 22 | 2026-08-30 18:10-18:17 | Resume real provider execution through the corrected navigation boundary, observe the Pass 1 document-publication transaction rejection, and checkpoint its public RED/GREEN correction | two tool attempts and one durable navigation receipt preceded the fail-closed pause; exact regression 1/1 and complete PostgreSQL atomicity class 71/71 passed; no partial Document graph | completed |
 | 23 | 2026-08-30 18:22-21:01 | Complete the retained Pass 1 jobs, diagnose the terminal phase stall, and correct the sole reconciliation transaction through public RED/GREEN evidence | 148 Documents and two bounded ordinary failures were durable; exact regression 1/1, PostgreSQL atomicity 72/72, and production capacity 19/19 passed; no direct database repair | completed |
+| 24 | 2026-08-30 21:03-21:17 | Replay the terminal activation, identify the Administrator-versus-System-Owner final-recheck mismatch, and align it with the existing durable Management Access authority | Administrator RED 1/1 observed then GREEN; complete production-capacity suite 20/20 passed; revocation remains fail-closed | completed |
 
 No command or evidence artifact records a credential, token, password,
 connection string, provider response body, source content, absolute host path,
@@ -94,10 +95,12 @@ no eligible units under the accepted catalog path.
 Real source-bearing Pass 1 has durably finished all 150 jobs: 148 current Code
 Logic Documents were published and two jobs ended in the honest bounded
 ordinary `JobTransient` category. The two failures remain within the five-job
-budget. The pair is still `Running` only because the first terminal
-reconciliation attempt reached the newly observed retry-strategy transaction
-composition defect; correction 08 is GREEN and awaits restart/replay against
-the same guarded database. Pass 2, Chat, restart and screenshots remain pending.
+budget. The pair is still `Running` because the first post-correction activation
+then exposed an assignment-only final recheck that rejected the valid
+Administrator operator. Correction 09 now reuses the existing current
+Administrator-or-System-Owner and exact two-Repository authority and awaits
+restart/replay against the same guarded database. Pass 2, Chat, restart and
+screenshots remain pending.
 
 ## Straightforward database query table
 
@@ -153,11 +156,16 @@ Pending. No historical, retained-run or fake Backup B screenshot is substituted.
   and terminal reconciliation.
   Each was corrected only after an observed public-seam RED, with focused and
   surrounding PostgreSQL GREEN evidence and no schema or Scan-strategy change.
+- The terminal runner's historical final authorization query recognized only a
+  System Owner assignment even though the public Management Access boundary
+  also accepts Administrators. It now reuses the existing current role,
+  System-visibility and exact Repository-pair rechecker; no role or ownership
+  policy was weakened.
 
 ## Passing checklist
 
 Not passed. T034-T035 and the real Prepared Scan/replay portion of T036 are
-complete. All real Pass 1 jobs are terminal and correction 08 is ready for an
+complete. All real Pass 1 jobs are terminal and correction 09 is ready for an
 authenticated reconciliation replay; Pass 2, generated Business Logic
 Documents, Chat, restart, screenshots, E2E and final verification remain
 pending.

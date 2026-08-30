@@ -271,6 +271,42 @@ public sealed class Pass1ProductionExecutionCapacityTests
     }
 
     [Fact]
+    public async Task FullyDrainedPair_AuthenticatedAdministratorWithoutOwnerAssignment_ReconcilesNormally()
+    {
+        await using PreparedScanPostgreSqlFixture fixture = await CreatePreparedPairAsync();
+        using WebApplicationFactory<Program> host = CreateConfiguredHost(fixture.ConnectionString, fixture.Package);
+        ControllableWorker worker = host.Services.GetRequiredService<ControllableWorker>();
+        worker.EnableAutoRelease();
+        using HttpClient client = await CreateAuthenticatedAdministratorClientAsync(host, fixture);
+        Guid[] manifests = await fixture.Context.PreparedScanManifests
+            .OrderBy(value => value.RepositoryId)
+            .Select(value => value.Id)
+            .ToArrayAsync();
+
+        using HttpResponseMessage start = await client.PostAsJsonAsync(
+            "/api/pass1-executions",
+            new { firstManifestId = manifests[0], secondManifestId = manifests[1], concurrencyLimit = 2 });
+        string startBody = await start.Content.ReadAsStringAsync();
+        Assert.True(start.StatusCode == HttpStatusCode.Created, $"Administrator start expected Created: {startBody}");
+        Pass1ExecutionStartResponse started =
+            (await start.Content.ReadFromJsonAsync<Pass1ExecutionStartResponse>())!;
+        Assert.True(
+            await worker.WaitForAtLeastAsync(fixture.Package.SelectedCount, TimeSpan.FromSeconds(8)),
+            $"Administrator terminal pair launched {worker.StartedCount} of {fixture.Package.SelectedCount} jobs.");
+
+        Pass1ExecutionStatusResponse terminal = await WaitForDrainedStatusAsync(
+            client,
+            started.Pass1ExecutionId,
+            fixture.Package.SelectedCount,
+            TimeSpan.FromSeconds(8));
+
+        Assert.Equal("ReadyForResolution", terminal.Phase);
+        Assert.Equal(1, await fixture.Context.Pass1Outcomes.CountAsync(value =>
+            value.PairExecutionId == started.Pass1ExecutionId));
+        worker.ReleaseAll();
+    }
+
+    [Fact]
     public async Task ReconciliationConflict_ReloadsAndRetriesOnlyTheSameStillEligibleTerminalPair()
     {
         await using PreparedScanPostgreSqlFixture fixture = await CreatePreparedPairAsync();
@@ -436,6 +472,9 @@ public sealed class Pass1ProductionExecutionCapacityTests
         Assert.Equal(0, drained.RunningCount);
         Assert.Equal(0, drained.RetryScheduledCount);
         Assert.Equal(fixture.Package.SelectedCount, worker.StartedCount);
+        Assert.True(
+            await WaitForReconciliationCallsAsync(reconciliation, 2, TimeSpan.FromSeconds(3)),
+            "The exact conflict retry did not reach the second reconciliation call.");
         Assert.Equal(2, reconciliation.ReconciliationCalls);
         worker.ReleaseAll();
     }
@@ -450,6 +489,7 @@ public sealed class Pass1ProductionExecutionCapacityTests
             fixture.Package,
             time,
             new AlwaysHealthyProviderProbe());
+        await EnsureFixtureAuthorizationIdentityAsync(host, fixture);
         await ConfigureWorkerProviderAsync(host, fixture.SystemId);
         ControllableWorker worker = host.Services.GetRequiredService<ControllableWorker>();
         worker.UseProviderUnavailableReasonCode = true;
@@ -520,6 +560,7 @@ public sealed class Pass1ProductionExecutionCapacityTests
             fixture.ConnectionString,
             fixture.Package,
             time);
+        await EnsureFixtureAuthorizationIdentityAsync(host, fixture);
         Guid pairExecutionId;
         PreparedPass1ClaimResult remoteClaim;
         await using (AsyncServiceScope scope = host.Services.CreateAsyncScope())
@@ -608,6 +649,7 @@ public sealed class Pass1ProductionExecutionCapacityTests
             fixture.ConnectionString,
             fixture.Package,
             time);
+        await EnsureFixtureAuthorizationIdentityAsync(host, fixture);
 
         Guid pairExecutionId;
         PreparedPass1ClaimResult abandonedLease;
@@ -947,7 +989,46 @@ public sealed class Pass1ProductionExecutionCapacityTests
 
     private static async Task<HttpClient> CreateAuthenticatedClientAsync(
         WebApplicationFactory<Program> host,
+        PreparedScanPostgreSqlFixture fixture) =>
+        await CreateAuthenticatedClientAsync(host, fixture, RoleNames.SystemOwner, assignOwner: true);
+
+    private static async Task EnsureFixtureAuthorizationIdentityAsync(
+        WebApplicationFactory<Program> host,
         PreparedScanPostgreSqlFixture fixture)
+    {
+        await using AsyncServiceScope scope = host.Services.CreateAsyncScope();
+        UserManager<ApplicationUser> userManager =
+            scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+        string userId = fixture.Authorization.UserId.ToString("D");
+        if (await userManager.FindByIdAsync(userId) is not null)
+        {
+            return;
+        }
+
+        string email = $"fixture-authorization-{fixture.Authorization.UserId:N}@example.com";
+        ApplicationUser user = new()
+        {
+            Id = userId,
+            UserName = email,
+            Email = email,
+            EmailConfirmed = true,
+        };
+        IdentityResult created = await userManager.CreateAsync(user);
+        Assert.True(created.Succeeded, string.Join(", ", created.Errors.Select(error => error.Description)));
+        IdentityResult role = await userManager.AddToRoleAsync(user, RoleNames.SystemOwner);
+        Assert.True(role.Succeeded, string.Join(", ", role.Errors.Select(error => error.Description)));
+    }
+
+    private static async Task<HttpClient> CreateAuthenticatedAdministratorClientAsync(
+        WebApplicationFactory<Program> host,
+        PreparedScanPostgreSqlFixture fixture) =>
+        await CreateAuthenticatedClientAsync(host, fixture, RoleNames.Administrator, assignOwner: false);
+
+    private static async Task<HttpClient> CreateAuthenticatedClientAsync(
+        WebApplicationFactory<Program> host,
+        PreparedScanPostgreSqlFixture fixture,
+        string role,
+        bool assignOwner)
     {
         string email = $"pass1-capacity-{Guid.NewGuid():N}@example.com";
         const string password = "Valid1!Pass";
@@ -958,11 +1039,14 @@ public sealed class Pass1ProductionExecutionCapacityTests
             ApplicationUser user = new() { UserName = email, Email = email, EmailConfirmed = true };
             IdentityResult result = await userManager.CreateAsync(user, password);
             Assert.True(result.Succeeded, string.Join(", ", result.Errors.Select(error => error.Description)));
-            await userManager.AddToRoleAsync(user, RoleNames.SystemOwner);
-            VulgataDbContext domain = scope.ServiceProvider.GetRequiredService<VulgataDbContext>();
-            domain.SystemOwnerAssignments.Add(SystemOwnerAssignment.Create(
-                fixture.SystemId, user.Id, PreparedScanTestHost.FixedUtcNow));
-            await domain.SaveChangesAsync();
+            await userManager.AddToRoleAsync(user, role);
+            if (assignOwner)
+            {
+                VulgataDbContext domain = scope.ServiceProvider.GetRequiredService<VulgataDbContext>();
+                domain.SystemOwnerAssignments.Add(SystemOwnerAssignment.Create(
+                    fixture.SystemId, user.Id, PreparedScanTestHost.FixedUtcNow));
+                await domain.SaveChangesAsync();
+            }
         }
 
         HttpClient client = host.CreateClient(new WebApplicationFactoryClientOptions

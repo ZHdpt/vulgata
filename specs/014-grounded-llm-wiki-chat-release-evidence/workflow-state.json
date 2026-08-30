@@ -6,10 +6,10 @@
   "stage": "implement",
   "preflight": {
     "branch": "demo0831/story-12-5-trackC",
-    "head": "1c1631c4abd38e978c8d1df6e1e9bd41d785c71e",
+    "head": "a0e8fc7e5c90b50b2f9aa4aac8d97a357cb52b67",
     "git_identity_sha256": "de2f94642d7a3423ec503a8c50fcb7c9b75950fc3e14052eb9041e61d7459243",
     "status_sha256": "99667edc885d74709a5093a3d3631c327554092e587b84272d5196f9eb4462fc",
-    "observed_at": "2026-08-30T21:01:36.4213634Z"
+    "observed_at": "2026-08-30T21:17:44.6071663Z"
   },
   "artifacts": {
     "spec": {"path":"specs/014-grounded-llm-wiki-chat-release-evidence/spec.md","sha256":"469f72c4e7fc62874e082a7f425351d9f46cf422ae8641d4bee7b64915dd67c0"},
@@ -43,15 +43,15 @@
     "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/quality-review/prepared-scan-initiation-quality-review-03.json",
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/prepared-scan-initiation-implementation-accepted-01.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/track-c-mvp/run-03/release-report.md",
-    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/tdd/run-03-pass1-claim-retry-strategy-correction-02.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/tdd/run-03-pass1-failure-retry-strategy-correction-03.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/tdd/run-03-pass1-navigation-marker-retry-strategy-correction-04.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/tdd/run-03-pass1-recovery-retry-strategy-correction-05.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/tdd/run-03-pass1-navigation-reservation-retry-strategy-correction-06.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/tdd/run-03-pass1-document-commit-retry-strategy-correction-07.md",
-    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/tdd/run-03-pass1-reconciliation-retry-strategy-correction-08.md"
+    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/tdd/run-03-pass1-reconciliation-retry-strategy-correction-08.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/tdd/run-03-pass1-administrator-reconciliation-authorization-correction-09.md"
   ],
-  "checkpoint": {"checkpoint_id":"bmad-12-5-implement-20260830T210136Z-reconciliation","stage":"implement","commit_sha":null,"binding_status":"pending"},
-  "resume": {"stage":"implement","reason":"Production Pass 1 reconciliation now executes its existing sole terminal transaction through EF Core's configured retry strategy. Restart the bounded host and replay the authenticated activation for the retained terminal run-03 pair.","evidence_path":"specs/014-grounded-llm-wiki-chat-release-evidence/evidence/tdd/run-03-pass1-reconciliation-retry-strategy-correction-08.md"},
-  "updated_at": "2026-08-30T21:01:36.4213634Z"
+  "checkpoint": {"checkpoint_id":"bmad-12-5-implement-20260830T211744Z-adminauth","stage":"implement","commit_sha":null,"binding_status":"pending"},
+  "resume": {"stage":"implement","reason":"The final Pass 1 recheck now uses the current Administrator-or-System-Owner authority and exact Repository pair. Restart the guarded host and replay the retained terminal pair.","evidence_path":"specs/014-grounded-llm-wiki-chat-release-evidence/evidence/tdd/run-03-pass1-administrator-reconciliation-authorization-correction-09.md"},
+  "updated_at": "2026-08-30T21:17:44.6071663Z"
 }
