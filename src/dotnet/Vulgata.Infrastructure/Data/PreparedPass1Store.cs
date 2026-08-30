@@ -4,6 +4,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 using Npgsql;
 using Vulgata.Core.DomainServices;
 using Vulgata.Core.Entities;
@@ -1431,52 +1432,55 @@ public sealed class PreparedPass1Store(
 
         try
         {
-            await using var transaction = await context.Database.BeginTransactionAsync(
-                IsolationLevel.Serializable,
-                cancellationToken);
-
-            StartSnapshot? snapshot = await ReconstructAsync(
-                authorizationScope,
-                handoff,
-                cancellationToken);
-            if (snapshot is null)
+            IExecutionStrategy strategy = context.Database.CreateExecutionStrategy();
+            return await strategy.ExecuteAsync(async () =>
             {
-                await transaction.RollbackAsync(CancellationToken.None);
-                context.ChangeTracker.Clear();
-                return Result(PreparedPass1StartOutcome.NotFound);
-            }
+                await using var transaction = await context.Database.BeginTransactionAsync(
+                    IsolationLevel.Serializable,
+                    cancellationToken);
 
-            Pass1PairExecution? existing = await context.Pass1PairExecutions
-                .SingleOrDefaultAsync(value => value.CoordinationId == handoff.CoordinationId, cancellationToken);
-            if (existing is not null)
-            {
-                PreparedPass1StartOutcome outcome = await IsExactReplayAsync(
-                    existing,
-                    snapshot,
+                StartSnapshot? snapshot = await ReconstructAsync(
+                    authorizationScope,
                     handoff,
-                    concurrencyLimit,
-                    cancellationToken)
-                    ? PreparedPass1StartOutcome.Replay
-                    : PreparedPass1StartOutcome.Conflict;
-                await transaction.RollbackAsync(CancellationToken.None);
-                context.ChangeTracker.Clear();
-                return new(outcome, existing.Id, existing.ConcurrencyLimit);
-            }
+                    cancellationToken);
+                if (snapshot is null)
+                {
+                    await transaction.RollbackAsync(CancellationToken.None);
+                    context.ChangeTracker.Clear();
+                    return Result(PreparedPass1StartOutcome.NotFound);
+                }
 
-            if (snapshot.Coordination.Phase != TwoRepositoryScanCoordinationPhase.Preparing ||
-                snapshot.Executions.Any(value => value.Phase != ScanExecutionPhase.Prepared))
-            {
-                await transaction.RollbackAsync(CancellationToken.None);
-                context.ChangeTracker.Clear();
-                return Result(PreparedPass1StartOutcome.Conflict);
-            }
+                Pass1PairExecution? existing = await context.Pass1PairExecutions
+                    .SingleOrDefaultAsync(value => value.CoordinationId == handoff.CoordinationId, cancellationToken);
+                if (existing is not null)
+                {
+                    PreparedPass1StartOutcome outcome = await IsExactReplayAsync(
+                        existing,
+                        snapshot,
+                        handoff,
+                        concurrencyLimit,
+                        cancellationToken)
+                        ? PreparedPass1StartOutcome.Replay
+                        : PreparedPass1StartOutcome.Conflict;
+                    await transaction.RollbackAsync(CancellationToken.None);
+                    context.ChangeTracker.Clear();
+                    return new(outcome, existing.Id, existing.ConcurrencyLimit);
+                }
 
-            DateTimeOffset now = snapshot.Executions
+                if (snapshot.Coordination.Phase != TwoRepositoryScanCoordinationPhase.Preparing ||
+                    snapshot.Executions.Any(value => value.Phase != ScanExecutionPhase.Prepared))
+                {
+                    await transaction.RollbackAsync(CancellationToken.None);
+                    context.ChangeTracker.Clear();
+                    return Result(PreparedPass1StartOutcome.Conflict);
+                }
+
+                DateTimeOffset now = snapshot.Executions
                 .Select(value => value.UpdatedAt ?? snapshot.Coordination.UpdatedAt)
                 .Append(snapshot.Coordination.UpdatedAt)
                 .Max();
-            PreparedPass1CanonicalArtifact identity = CreatePairIdentity(snapshot, handoff);
-            Pass1PairExecution pair = Pass1PairExecution.Create(
+                PreparedPass1CanonicalArtifact identity = CreatePairIdentity(snapshot, handoff);
+                Pass1PairExecution pair = Pass1PairExecution.Create(
                 identity.Id!.Value,
                 handoff.CoordinationId,
                 authorizationScope.SystemId,
@@ -1495,30 +1499,31 @@ public sealed class PreparedPass1Store(
                 CountHighValueSeeds(snapshot.Entries),
                 now);
 
-            context.Pass1PairExecutions.Add(pair);
-            foreach (PreparedFileCodeUnitDraft unit in snapshot.Units)
-            {
-                ScanExecution execution = snapshot.Executions.Single(value => value.RepositoryId == unit.RepositoryId);
-                ScanJobExecution job = ScanJobExecution.Create(
+                context.Pass1PairExecutions.Add(pair);
+                foreach (PreparedFileCodeUnitDraft unit in snapshot.Units)
+                {
+                    ScanExecution execution = snapshot.Executions.Single(value => value.RepositoryId == unit.RepositoryId);
+                    ScanJobExecution job = ScanJobExecution.Create(
                     execution.Id,
                     unit.RepositoryId,
                     unit.ScanRunId,
                     unit.Id,
                     unit.ManifestOrdinal,
                     now);
-                context.ScanJobExecutions.Add(job);
-                context.Pass1NavigationBudgets.Add(Pass1NavigationBudget.Create(job.Id, pair.Id, now));
-            }
+                    context.ScanJobExecutions.Add(job);
+                    context.Pass1NavigationBudgets.Add(Pass1NavigationBudget.Create(job.Id, pair.Id, now));
+                }
 
-            foreach (ScanExecution execution in snapshot.Executions)
-            {
-                execution.BeginRunning(execution.StateVersion, now);
-            }
+                foreach (ScanExecution execution in snapshot.Executions)
+                {
+                    execution.BeginRunning(execution.StateVersion, now);
+                }
 
-            snapshot.Coordination.BeginPass1(snapshot.Coordination.StateVersion, now);
-            await context.SaveChangesAsync(cancellationToken);
-            await transaction.CommitAsync(cancellationToken);
-            return new(PreparedPass1StartOutcome.Created, pair.Id, pair.ConcurrencyLimit);
+                snapshot.Coordination.BeginPass1(snapshot.Coordination.StateVersion, now);
+                await context.SaveChangesAsync(cancellationToken);
+                await transaction.CommitAsync(cancellationToken);
+                return new(PreparedPass1StartOutcome.Created, pair.Id, pair.ConcurrencyLimit);
+            });
         }
         catch (OperationCanceledException)
         {

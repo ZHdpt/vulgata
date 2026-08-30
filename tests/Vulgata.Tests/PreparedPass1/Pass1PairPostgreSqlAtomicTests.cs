@@ -83,6 +83,26 @@ public sealed class Pass1PairPostgreSqlAtomicTests
     }
 
     [Fact]
+    public async Task PostgreSql17_RetryingExecutionStrategy_StartsPreparedPairWithoutTransactionRejectionAsync()
+    {
+        await using PreparedScanPostgreSqlFixture fixture = await CreateFixtureAsync();
+        await CommitPreparedPairAsync(fixture);
+        await PromoteFixtureScanExecutionsAsync(fixture);
+        await using VulgataDbContext retryingContext = CreateRetryingContext(
+            fixture.ConnectionString);
+
+        PreparedPass1StartResult started = await new PreparedPass1Store(retryingContext)
+            .StartAsync(
+                fixture.Authorization,
+                CreateHandoff(fixture.Package),
+                2,
+                CancellationToken.None);
+
+        Assert.Equal(PreparedPass1StartOutcome.Created, started.Outcome);
+        Assert.NotNull(started.PairExecutionId);
+    }
+
+    [Fact]
     public async Task PostgreSql17_CompetingClaimers_SeeOnlyCommittedCompleteQueueAndRespectPairLimitAsync()
     {
         await using PreparedScanPostgreSqlFixture fixture = await CreateFixtureAsync();
@@ -684,6 +704,15 @@ public sealed class Pass1PairPostgreSqlAtomicTests
 
     private static IPreparedPass1Store CreatePass1Store(VulgataDbContext context) =>
         new PreparedPass1Store(context);
+
+    private static VulgataDbContext CreateRetryingContext(string connectionString)
+    {
+        DbContextOptions<VulgataDbContext> options =
+            new DbContextOptionsBuilder<VulgataDbContext>()
+                .UseNpgsql(connectionString, npgsql => npgsql.EnableRetryOnFailure(3))
+                .Options;
+        return new VulgataDbContext(options);
+    }
 
     private static MethodInfo RequireRevisionBindingFailureMethod()
     {

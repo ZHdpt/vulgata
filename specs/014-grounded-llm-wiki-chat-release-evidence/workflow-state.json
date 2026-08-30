@@ -47,11 +47,11 @@
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/verification/prepared-scan-initiation-regression-01.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/quality-review/prepared-scan-initiation-quality-review-03.json",
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/prepared-scan-initiation-implementation-accepted-01.md",
-    "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/run-03-task-group-approval-01.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/track-c-mvp/run-03/release-report.md",
-    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/run-03-t034-t035-01.md"
+    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/run-03-t034-t035-01.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/tdd/run-03-pass1-retry-strategy-correction-01.md"
   ],
-  "checkpoint": {"checkpoint_id":"bmad-12-5-implement-20260830T160911Z-24e509","stage":"implement","commit_sha":null,"binding_status":"pending"},
-  "resume": {"stage":"implement","reason":"The user authorized T036-T045, real bounded remote-LLM source/evidence submission, and guarded temporary databases. Execute the run-03 lane through technical completion or a proven hard blocker.","evidence_path":"specs/014-grounded-llm-wiki-chat-release-evidence/decisions/run-03-all-remaining-tasks-approval-02.md"},
-  "updated_at": "2026-08-30T16:09:11.0305547Z"
+  "checkpoint": {"checkpoint_id":"bmad-12-5-implement-20260830T163000Z-pass1retry","stage":"implement","commit_sha":null,"binding_status":"pending"},
+  "resume": {"stage":"implement","reason":"The production Pass 1 start retry-strategy integration defect has an honest PostgreSQL RED/GREEN correction. Restart the verified host and resume T036 from the existing two Prepared Scan Manifests.","evidence_path":"specs/014-grounded-llm-wiki-chat-release-evidence/evidence/tdd/run-03-pass1-retry-strategy-correction-01.md"},
+  "updated_at": "2026-08-30T16:30:00.0000000Z"
 }
