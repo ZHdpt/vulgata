@@ -1,6 +1,6 @@
 # Data Model: Story 12.5 Track C-MVP
 
-Track C-MVP introduces no new persistent entity or persistence shape. The bounded initiation correction creates one exact tuple from existing Scan Run, Scan Execution and Two-Repository Scan Coordination entities; the remaining concepts are represented in one Markdown report and adjacent screenshot files. Existing Track A/B and Story 12.4 domain/persistence authorities remain unchanged.
+Track C-MVP introduces no new persistent entity or persistence shape. The bounded initiation correction creates one exact tuple from existing Scan Run, Scan Execution and Two-Repository Scan Coordination entities. The reviewed exact-profile seed correction adds only immutable in-memory values and one closed existing Manifest score; the remaining concepts are represented in one Markdown report and adjacent screenshot files. Existing Track A/B and Story 12.4 domain/persistence authorities remain unchanged.
 
 ## 1. Existing persistent authorities
 
@@ -16,6 +16,61 @@ The combined run observes, but does not reshape:
 - LLM provider configuration through non-secret identity only.
 
 No release report row, signature, run graph or screenshot row is added to VulgataDbContext.
+
+### ReviewedExactProfileSeedRequest (Core value, non-persistent)
+
+| Field | Rule |
+| --- | --- |
+| repositories | exactly two distinct bindings; canonical result is independent of request order |
+| repositoryId | non-empty server-observed Repository ID |
+| stableGitIdentity | exact persisted `Repository.Name`, compared ordinally to existing profile `StableGitIdentity`; not caller input, `NormalizedName`, alias or Git URL |
+| requestedRef | exact existing safe full Git ref |
+| profiledRevision | exact lowercase commit bound to the initiated execution |
+
+The public `PreparedScanRequest` does not expose this value. `PreparedScanPairBuilder` constructs it only from the accepted initiated tuple, loaded Repository records and revision bindings after the initiation transaction has closed.
+
+### ReviewedExactProfileSeedAuthorityResult (Core value, non-persistent)
+
+| Field | Rule |
+| --- | --- |
+| outcome | closed `NonMatching`, `Matched`, or `Unavailable` |
+| profileId / profileVersion / profileFingerprint | present only for `Matched`; copied from the existing validated embedded profile; in-memory authority metadata, not a new database/report field |
+| requiredSources | empty for `NonMatching`; canonical nonempty immutable set for `Matched` |
+| repositoryId | exact runtime Repository selected by one-to-one stable-identity match |
+| relativePath | existing profile-validated canonical Repository-relative path |
+| roles | nonempty canonical union of `Consumer`, `ProviderDeclaration`, `ProviderImplementation`, `UnsupportedObservationOwner` |
+
+An overlapping path has one required-source row with multiple roles. A path is never accepted without its matched Repository binding. Catalog integrity failure is `Unavailable`; a partial identity/ref/revision match is `NonMatching` and has no selection effect.
+
+### Reviewed exact-profile candidate state (existing Manifest fields)
+
+No new entity or column is added. For a matched profile, every exact bounded `PreparedFileCodeUnitDraft` segment whose `(RepositoryId, RelativePath)` is required uses:
+
+| Existing field | Required value |
+| --- | --- |
+| DirectBusinessScore | `1100` |
+| FinalBusinessScore | exact `1100`; existing related-file expansion cannot outrank the direct required score |
+| SelectionReason | existing `DirectBusinessEvidence` |
+| Manifest/Pair ordinal | existing stable score -> Repository -> path -> segment ordering |
+
+The new closed `PreparedBusinessEvidence.ReviewedExactResolutionProfile` maps to 1,100. Existing values 1,000/900/800/700/400/100 remain unchanged. Existing Pass 1 high-value accounting (`DirectBusinessScore >= 400`, maximum 20 per Manifest) therefore includes every reviewed segment without a new Pass 1 field or policy.
+
+Matched state transitions:
+
+```text
+exact identity match
+  -> canonical required Repository/path set
+  -> exact inventory/safe-split mapping
+  -> all required candidate segments score 1100
+  -> all required segments present in existing top-20 seeds and 50-150 plan
+  -> existing atomic two-Manifest publication
+  -> existing Pass 1 mandatory-seed accounting
+  -> all required succeed: exact resolution eligible
+  -> any required fails: FailedPass1, exact resolution/Pass 2 not started
+
+nonmatch -> empty authority result -> existing generic candidates/scores/audits/fingerprints
+matched incomplete/unsafe/ambiguous/split-invalid/over-bound -> rejected before Manifest publication
+```
 
 ### PreparedPass1ContractIdentity (Core value, non-persistent)
 
@@ -190,7 +245,7 @@ Required query identities:
 
 The query observes existing authority. It does not infer an exact Edge from prose or a Flow Group from unrelated rows.
 
-For a passed report, highValueSeedFailedCount is zero and highValueSeedSelectedCount equals highValueSeedSucceededCount. These are observations of existing Scan output; they do not add or alter seed selection behavior.
+For a passed report, highValueSeedFailedCount is zero and highValueSeedSelectedCount equals highValueSeedSucceededCount. These report observations do not themselves add or alter selection behavior; the sole matched reviewed-profile selection exception is defined above.
 
 ## 7. TrackCMvpChatEvaluationRow
 
@@ -281,7 +336,7 @@ planned -> running -> passed
 
 not-run is permitted only for work never started. Passed requires every retained release value. Failed/blocked reports retain completed truthful observations and never synthesize missing success values.
 
-Failure-correction boundary: evidence-file, operator-command and read-only-query corrections may remain within the accepted run. Any production correction beyond the approved Prepared Scan initiation plan returns to correct-course and fresh review/scope-hash binding; it is not an alternate transition within this report aggregate.
+Failure-correction boundary: evidence-file, operator-command and read-only-query corrections may remain within the accepted run. Any production correction beyond the approved Prepared Scan initiation and reviewed exact-profile seed plans returns to correct-course and fresh review/scope-hash binding; it is not an alternate transition within this report aggregate.
 
 ## 11. Relationship overview
 
@@ -292,6 +347,14 @@ PreparedScanInitiationCommand
   -> atomic 1 existing Two-Repository Scan Coordination
   -> existing PreparedScanCoordinator/PreparedScanPairBuilder
   -> existing Prepared Scan Manifest publication
+
+ReviewedExactProfileSeedRequest
+  <- accepted initiated tuple + loaded Repository records
+  -> IReviewedExactProfileSeedAuthority
+  -> 0 required sources when NonMatching
+  -> canonical matched required Repository/path/role set
+  -> existing Prepared File Code Unit score/audit/Manifest fields
+  -> existing Pass 1 high-value-seed outcome
 
 TrackCMvpReleaseReport
   -> 1 TrackCMvpPreflight
@@ -309,4 +372,4 @@ ReleaseEvidenceRunEnvelope, signed stream attestation, immutable supersession/cl
 
 ## 13. Migration disposition
 
-No migration. No `VulgataDbContext`, entity configuration or `VulgataDbContextModelSnapshot` change. No new table or public request/response. One specific Infrastructure initiation store over the existing model is planned; a diff touching model/migration paths fails the Track C-MVP guard and returns to plan.
+No migration. No `VulgataDbContext`, entity configuration or `VulgataDbContextModelSnapshot` change. No new table or public request/response. The accepted Infrastructure initiation store remains unchanged; the new Infrastructure seed authority is read-only and does not use EF. A diff touching model/migration paths fails the Track C-MVP guard and returns to plan.

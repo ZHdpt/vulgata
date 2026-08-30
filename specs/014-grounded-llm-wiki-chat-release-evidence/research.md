@@ -2,13 +2,14 @@
 
 ## Sources inspected
 
-- corrected Story 12.5 specification and approved 2026-08-29 Track C-MVP plus 2026-08-30 Prepared Scan initiation proposals;
+- corrected Story 12.5 specification and approved 2026-08-29 Track C-MVP, 2026-08-30 Prepared Scan initiation, and 2026-08-31 exact-profile seed-selection proposals;
 - PRD Section 0.1, Story 12.5, August 30 architecture and docs/judge-rubric.txt;
 - Constitution, AGENTS.md, Ubiquitous Language and accepted Track B final verification;
 - existing Track A/B release-gate tests, fixed question corpus and database-name guard;
 - production Prepared Scan endpoint/coordinator/builder/store, Scan Run/new-path Execution/Two-Repository coordination factories and EF mappings, `WorkerAgentDispatchIdentitySource`, embedded Prepared Pass 1 v2 prompt/dispatcher, runtime/prompt/schema identity sources, Pass 1/Pass 2, production Scan-status and Prepared Chat composition;
-- accepted planned-change decision `story-12-5-planned-change-prepared-pass1-identity-authority-02` (approved hash `7a9e3fc5fc4b9485cd7538e61f2b2153a81bcc8388a89935750d5a29dbf931b2`) and the blocked T026 identity-authority checkpoint;
+- accepted Prepared Pass 1 identity decision/history plus current exact-profile seed-selection authorization `story-12-5-run-03-all-remaining-tasks-approval-02`;
 - current contracts under contracts/, treated as downstream artifacts rather than authority.
+- run-03 immutable Prepared Scan/Pass 1/audit evidence and the production `ExactResolutionProfileCatalog`, `PreparedScanPairBuilder`, `PreparedScanPlanner`, `PreparedRelatedFileExpansion`, `PreparedPass1Store`, and exact-resolution coordinator/source seams.
 
 No unresolved design unknown remains. Machine- and credential-specific values are runtime prerequisites with fail-closed outcomes.
 
@@ -37,7 +38,7 @@ No unresolved design unknown remains. Machine- and credential-specific values ar
 - create a separate story or release-only endpoint/harness — rejected by the approved in-place correction;
 - add persistence for release evidence — still rejected because the report remains a repository artifact.
 
-**Gate implication**: this is a material Scan scheduling/grouping/retry entrance change. Independent plan-only review and the explicit AGENTS.md planned-change authorization are required before task generation; no expired standing authorization applies.
+**Historical gate implication**: this material Scan entrance change completed its own independent review and authorization cycle. The current correction preserves that accepted implementation and opens a new material selection trigger under R-22.
 
 ## R-3: Database safety must precede every product connection
 
@@ -146,9 +147,9 @@ No unresolved design unknown remains. Machine- and credential-specific values ar
 
 ## R-12: Planned-change trigger
 
-**Decision**: require fresh independent plan-only review, then apply accepted decision `story-12-5-planned-change-prepared-pass1-identity-authority-02` only to the narrow identity-authority correction and proceed to affected task regeneration/definition review. Require a newly bound implementation approval before any production write.
+**Decision**: require fresh independent plan-only and definition review for the reviewed-profile seed architecture. After acceptance, persist the normal scope-bound decision artifacts and use current authorization `story-12-5-run-03-all-remaining-tasks-approval-02` to continue task generation and implementation without another human pause.
 
-**Rationale**: the plan adds no Agent tool and does not weaken the PRD, but it materially changes the production Scan entrance and its server-owned identity composition. AGENTS.md explicitly gates Scan strategy changes. The user approved decision hash `7a9e3fc5fc4b9485cd7538e61f2b2153a81bcc8388a89935750d5a29dbf931b2` for return-to-plan, fresh review, task regeneration and definition review only; no earlier standing or implementation authorization is reused.
+**Rationale**: the plan adds no Agent tool and does not weaken the PRD, but it materially changes matched-pair Scan seed selection. AGENTS.md explicitly gates Scan strategy changes. The current user authorization covers remaining in-scope human gates and implementation, but it does not replace the independent reviews, TDD, convergence, quality, E2E, isolation or final-verification gates.
 
 ## R-13: One short store transaction is required
 
@@ -245,3 +246,31 @@ The current `ConfiguredAnalysisRuntimeHealthProbe` already performs the complete
 - add a public request field — rejected because callers cannot select server contract identity.
 
 **Consequences**: default DI has exactly one Core-port-to-Agents mapping. The existing v2 prompt, dispatcher, provider, tools and retry/scheduling behavior remain unchanged; the legacy source and recovery tests remain unchanged. Authority/composition tests independently compute the resource hash, pin the exact prefix/schema, prove coordinator constructor separation, prove legacy output preservation, and prove hostile identity values fail before authorization recheck/store/external analysis. No EF, project-file, public DTO or persistence change follows from this decision.
+
+## R-22: The embedded reviewed exact profile may contribute mandatory seeds only after a complete identity match
+
+**Decision**: add Core `IReviewedExactProfileSeedAuthority` and one stateless Infrastructure `ReviewedExactProfileSeedAuthority` over the unchanged `ExactResolutionProfileCatalog`. The input is exactly two server-observed bindings: Repository ID, persisted `Repository.Name` as the profile's ordinal stable identity, safe full requested ref and lowercase Profiled Revision. The adapter returns `NonMatching` with no paths unless both bindings map one-to-one to both profile repositories and every identity/ref/revision equals the reviewed value. On a match it derives the canonical union of consumer files, provider declaration files, provider implementation Document paths and unsupported-observation owner Document paths, bound to the matched Repository IDs.
+
+`PreparedScanPairBuilder` marks every exact bounded candidate segment for those required Repository/path pairs as new `PreparedBusinessEvidence.ReviewedExactResolutionProfile`, score 1,100. That is the single closed tier above confirmed communication 1,000 and therefore survives the existing per-Repository top-20 seed choice before optional high-value evidence. All existing 20-per-Repository, 150-pair, CodeGraph expansion, stable ordering, audit, Manifest fingerprint and Pass 1 `>=400` mandatory-seed behavior remains in force.
+
+**Rationale**: run-03 selected 150 units but zero high-value seeds; all selected units belonged to one Repository. Three safe reviewed sources were excluded by the pair cap, so exact resolution correctly refused for lack of current source-anchored Documents. The profile already is the reviewed source of truth for exact consumer/provider/unsupported selectors. Reusing it through a server-owned read-only adapter closes the cross-stage prerequisite without duplicating sample values or changing Story 12.4. Score 1,100 is necessary because a tie at 1,000 could still allow unrelated earlier paths to occupy a full 20-seed set. Existing Pass 1 reconciliation already turns any selected high-value failure into `FailedPass1`, so no second failure policy is required.
+
+**Exact failure boundary**:
+
+- embedded profile unavailable/invalid: `Unavailable`, zero Manifest;
+- complete identity nonmatch: neutral `NonMatching`, no classification, score, audit or fingerprint effect;
+- matched required path missing or duplicated in inventory, filtered, unsafe, empty/hash-invalid, without an exact bounded Java/XML split, or producing more than 20 required segments in a Repository: closed rejected preparation before CodeGraph expansion/Manifest commit;
+- matched valid path: every segment is required, rather than guessing one symbol/line segment or adding a second selector parser;
+- required Pass 1 job failure: existing `FailedPass1`, zero exact resolution/Pass 2 start.
+
+**Alternatives considered**:
+
+- keep generic selection and increase the pair cap — rejected because it does not guarantee reviewed evidence and violates the 150 bound;
+- hardcode four paths/sample names in Core or Web — rejected by PRD/architecture and duplicates the profile;
+- add paths/profile to the public request or operator configuration — rejected because untrusted input may not select evidence;
+- reuse score 1,000 — rejected because top-20 ties do not make reviewed candidates mandatory;
+- insert candidates after planning — rejected because it bypasses canonical audit/fingerprint/Pass 1 accounting;
+- parse profile selectors in Web and pick one split by line/symbol — rejected because it creates a second exact-resolution parser and cannot safely identify every required source segment;
+- change `ExactResolutionProfile`, its catalog/resource, exact resolver, Pass 1 store/policy, Story 12.4 contracts or persistence model — rejected as unnecessary and prohibited.
+
+**Consequences**: the architecture trigger is a material matched-pair Scan-selection change and requires independent plan review. Implementation ownership is limited to the new Core port/value, new Infrastructure adapter, one planner enum/score, builder validation/promotion, `Program.cs`, and their tests. Neutral fixtures must preserve exact prior selections and fingerprints. Run-03 remains historical diagnostic evidence; after technical acceptance the release restarts from a fresh guarded database.

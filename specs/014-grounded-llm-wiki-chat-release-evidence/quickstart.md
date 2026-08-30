@@ -1,4 +1,4 @@
-# Quickstart: Story 12.5 Track C-MVP with Prepared Scan Initiation
+# Quickstart: Story 12.5 Track C-MVP with Prepared Scan Initiation and Reviewed Exact-Profile Seeds
 
 This guide validates the corrected definition, the bounded production Prepared Scan entrance, and the single combined host integration/release run. It does not create planned-change or implementation approval and does not permit use of the main/Story 12.4 database.
 
@@ -11,7 +11,7 @@ This guide validates the corrected definition, the bounded production Prepared S
     git merge-base --is-ancestor 4798b97d9f23aef587829175df7ab7ebc3daf995 HEAD
     Get-FileHash specs/014-grounded-llm-wiki-chat-release-evidence/spec.md -Algorithm SHA256
 
-Expected before implementation: branch demo0831/story-12-5-trackC; Story 12.4 is ancestral; only explicitly owned corrected-definition files are dirty. Planned-change decision `story-12-5-planned-change-prepared-pass1-identity-authority-02` authorizes affected task regeneration after fresh independent plan-review acceptance. Independent definition review and a newly bound implementation approval remain mandatory before any production write.
+Expected before implementation: branch demo0831/story-12-5-trackC; Story 12.4 is ancestral; only explicitly owned corrected-definition files are dirty. The exact-profile seed-selection plan must receive independent plan and definition acceptance before its standing in-scope implementation authorization is bound.
 
 ## 2. Validate corrected plan artifacts
 
@@ -20,7 +20,7 @@ Expected before implementation: branch demo0831/story-12-5-trackC; Story 12.4 is
 
 Expected: no unresolved placeholder; removed mechanisms appear only as explicitly deferred/historical material; diff check passes.
 
-Also inspect [contracts/prepared-scan-initiation.md](contracts/prepared-scan-initiation.md) and confirm the plan selects one Web coordinator, one Core Prepared Pass 1 contract-identity port, one sole Agents v2/hash/`code-logic/file-v2` implementation, one Core store port, one Infrastructure transaction, a PostgreSQL advisory lock, no migration/model change, and no external work inside the transaction. Confirm `WorkerAgentDispatchIdentitySource` remains the unchanged v1 recovery authority and is absent from the initiation coordinator constructor.
+Also inspect [contracts/prepared-scan-initiation.md](contracts/prepared-scan-initiation.md) and confirm the accepted initiation/identity design remains unchanged. Confirm the current delta adds exactly one Core reviewed-seed port/value, one read-only Infrastructure adapter over the existing profile catalog, one closed score-1,100 evidence value, builder validation/composition and one DI registration. Confirm no public profile/path field, sample production literal, migration/model change, long transaction, bound increase, Story 12.4 mutation or Pass 1 policy change.
 
 ## 3. Tier 1 regression
 
@@ -34,6 +34,13 @@ After approved implementation, add the bounded initiation verification:
 
     dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter "FullyQualifiedName~PreparedPass1ContractIdentitySourceTests|FullyQualifiedName~PreparedScanInitiationIdentityTests|FullyQualifiedName~PreparedScanInitiationCoordinatorTests|FullyQualifiedName~PreparedScanInitiationApiTests|FullyQualifiedName~PreparedScanRuntimeIdentityResolverTests"
     dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter "FullyQualifiedName~PreparedScanInitiationPostgreSqlTests"
+
+Add the reviewed-profile correction verification selected by regenerated tasks:
+
+    dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter "FullyQualifiedName~ReviewedExactProfileSeedAuthorityTests|FullyQualifiedName~PreparedSelectionPlannerTests|FullyQualifiedName~PreparedScanApiTests|FullyQualifiedName~PreparedScanReleaseQualificationTests"
+    dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter "FullyQualifiedName~PreparedScanExactProfilePostgreSqlTests"
+
+The first reviewed-profile command proves exact match, canonical required paths/roles, nonmatch-neutral selection/fingerprints, score 1,100, unchanged 20/150 bounds and every matched incomplete/unsafe/duplicate/split/cap failure before Manifest commit. The PostgreSQL command begins from ordinary System/Repository records with no lifecycle/content/relationship rows, publishes both Manifests, runs deterministic test Pass 1 through the real committer, then invokes the unchanged exact-resolution coordinator/store to prove the exact REFERENCES Edge and honest Uncertainty. A required-seed failure must reach `FailedPass1` with zero exact/Pass 2 work.
 
 The first command owns the default Agents v2 prompt hash/schema authority, unchanged legacy v1 recovery identity, null/v1/malformed/wrong-schema fail-closed vectors, request/outcome/composition/no-later-stage behavior, the fresh pre-store authorization recheck, phase-aware handoff recovery, default/test runtime-resolver composition and fixed execution-identity vectors. The second must use disposable PostgreSQL and owns identical/competing concurrency, advisory-lock timeout, rollback and exact replay. A SQLite run cannot substitute for the second command.
 
@@ -79,13 +86,13 @@ Through the authenticated existing UI/API:
 
 1. production-bootstrap one Administrator, one ordinary authorized System, provider assignment, and exactly two ordinary real Java/XML Repository records; do not seed Scan Runs, Pre-Scan Results, Scan Executions, coordination, Manifests, File Code Units or Documents;
 2. submit the existing authenticated `POST /api/systems/{systemId}/prepared-scans` request with exactly two safe full Git refs and exact Profiled Revisions;
-3. after the synchronous endpoint completes, query one complete initiation tuple and two real Prepared Scan Manifests; verify both new-path Scan Executions carry one prompt identity matching `pass1-code-logic-worker.v2/sha256/{lowercase-64-hex}` and exact schema `code-logic/file-v2`, then verify CodeGraph 1.5, JDT LS Java readiness and safe XML catalog evidence; use the accepted Tier 1 transaction-order test—not operator query timing—to prove that the tuple committed before external analysis began;
-4. start the accepted Pass 1 path and allow it to reach terminal state;
+3. after the synchronous endpoint completes, query one complete initiation tuple and two real Prepared Scan Manifests; verify both new-path Scan Executions carry one prompt identity matching `pass1-code-logic-worker.v2/sha256/{lowercase-64-hex}` and exact schema `code-logic/file-v2`, then verify CodeGraph 1.5, JDT LS Java readiness and safe XML catalog evidence; query every source derived from the embedded reviewed profile and prove every bounded segment is selected with direct score 1,100 inside the unchanged bounds; use Tier 1—not operator query timing—to prove tuple commit and matched validation ordering;
+4. start the accepted Pass 1 path and allow it to reach terminal state; prove every reviewed score-1,100 seed succeeded before exact resolution;
 5. run exact Cross-Repository Resolution and the accepted Pass 2 path;
 6. use 继续扫描 only for an eligible durable paused state;
 7. observe terminal Scan state in the production Chinese management UI.
 
-Repeat the same Prepared Scan request once after Manifest publication but before Pass 1 and prove the existing handoff/response returns with the same Run/Execution/coordination/Manifest identities, zero external preparation rerun and zero duplicates. Tier 1 separately proves induced pre-publication failure retry and advanced-phase recovery. Do not invoke `/scan-runs`, `RepositoryProfilingCoordinator`, `CodeGraphContextProvider`, or a Story 12.4 qualification database/harness. Do not change selection, dispatch, XML or relationship behavior beyond the approved initiation/replay entrance.
+Repeat the same Prepared Scan request once after Manifest publication but before Pass 1 and prove the existing handoff/response returns with the same Run/Execution/coordination/Manifest identities, zero external preparation rerun and zero duplicates. Tier 1 separately proves induced pre-publication failure retry and advanced-phase recovery. Do not invoke `/scan-runs`, `RepositoryProfilingCoordinator`, `CodeGraphContextProvider`, or a Story 12.4 qualification database/harness. Do not change generic nonmatching selection, bounds, dispatch, XML, Pass 1 policy or relationship behavior beyond the accepted initiation and matched reviewed-profile seed exceptions.
 
 ## 7. Run straightforward read-only queries
 
@@ -163,4 +170,4 @@ Only an evidence-file, operator-command or read-only-query defect may be correct
     git diff --check
     dotnet build src/dotnet/Vulgata.Web/Vulgata.Web.csproj --no-restore
 
-The forbidden-path diff must show no Track C-MVP change. Also verify production DI resolves exactly one Agents-owned `IPreparedPass1ContractIdentitySource`, keeps the legacy recovery source unchanged and out of initiation, resolves CodeGraph 1.5 ports, and does not resolve CGC/historical profiling. Then run the pinned sprint-loop verification and required E2E gate. Planned-change and implementation approvals do not replace technical acceptance.
+The forbidden-path diff must show no Track C-MVP change. Also verify production DI resolves exactly one Agents-owned `IPreparedPass1ContractIdentitySource` and exactly one Infrastructure `IReviewedExactProfileSeedAuthority`, keeps the legacy recovery source unchanged and out of initiation, resolves CodeGraph 1.5 ports, and does not resolve CGC/historical profiling. Run a source-literal guard proving sample Repository/path/endpoint/symbol/line values occur only in the pre-existing embedded profile/tests/evidence, not the new production slice. Then run pinned sprint-loop verification and required fresh-database E2E. Approvals do not replace technical acceptance.

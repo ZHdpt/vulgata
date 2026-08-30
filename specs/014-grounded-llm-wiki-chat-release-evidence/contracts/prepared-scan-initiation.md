@@ -2,7 +2,7 @@
 
 ## Status and scope
 
-This is the closed Story 12.5 contract for entering the existing exactly-two-Repository Prepared Scan path from ordinary production records. It adds no endpoint, request field, persistence shape, legacy profiling bridge or general Scan lifecycle.
+This is the closed Story 12.5 contract for entering the existing exactly-two-Repository Prepared Scan path from ordinary production records and, only for a complete reviewed-profile identity match, retaining its required sources as mandatory high-value seeds. It adds no endpoint, request field, persistence shape, legacy profiling bridge or general Scan lifecycle.
 
 ## Public API
 
@@ -28,6 +28,8 @@ The existing `PreparedScanRequest` remains unchanged:
 ```
 
 The IDs above illustrate shape only. A valid request requires two distinct non-empty Repository IDs in the route System, safe full refs, and exact lowercase 40-hex expected Profiled Revisions. Runtime, prompt, Document schema, tuple, lock and authorization identities are server-owned and are never request fields.
+
+Profile ID/version/fingerprint, Repository alias/stable identity, required path, role, score and selector are also never request fields.
 
 Successful responses remain the existing `PreparedScanResponse`:
 
@@ -185,12 +187,38 @@ The Infrastructure store reports artifact presence only: any Manifest, prepared-
 - the existing Prepared Scan store alone creates current snapshots, prepared Pre-Scan Results, Prepared Scan Manifests and File Code Units.
 - old v1 profiling state cannot satisfy replay or prepared handoff.
 
+## Reviewed exact-profile seed authority
+
+`IReviewedExactProfileSeedAuthority` is a Core read-only value port. Default production DI maps exactly one instance to Infrastructure `ReviewedExactProfileSeedAuthority`, which reads the existing validated `ExactResolutionProfileCatalog`. The builder supplies exactly two server-observed bindings from the initiated tuple and loaded Repository records:
+
+```text
+RepositoryId
+Repository.Name as exact ordinal StableGitIdentity
+RequestedRef
+ProfiledRevision
+```
+
+Only a complete one-to-one match to both profile repositories, expected full refs and expected commits returns `Matched`. A complete nonmatch returns `NonMatching` and an empty source set; it changes no evidence, score, candidate, audit, selection or fingerprint. Catalog integrity failure returns `Unavailable`. No caller, provider, LLM, environment file or external profile may supply or alter the values.
+
+For `Matched`, the adapter returns the canonical union of profile consumer files, provider declaration files, provider implementation Document paths and unsupported-observation owner Document paths, each bound to the matched Repository ID and one or more closed roles. It returns no public sample value.
+
+The existing safe inventory/split path must then prove:
+
+1. exactly one inventory file for every required Repository/path;
+2. eligibility, containment, hash/raw-byte integrity and safe Java/XML processing;
+3. at least one exact bounded candidate segment per required path;
+4. every segment for that path has `PreparedBusinessEvidence.ReviewedExactResolutionProfile`, direct score 1,100 and existing `DirectBusinessEvidence` reason;
+5. no Repository has more than 20 required segments;
+6. the existing seed and final selection contain every required segment inside the unchanged 20/150 bounds.
+
+Failure of any matched check returns `prepared-scan-reviewed-profile-seed-incomplete` as a rejected preparation before either Manifest commits. Authority unavailability returns `prepared-scan-reviewed-profile-unavailable`. The existing `PreparedPass1Store` remains unchanged: direct score `>=400` and top 20 per Manifest are mandatory, so any required-seed job failure reaches `FailedPass1` and exact resolution/Pass 2 cannot start.
+
 ## Required verification
 
 The public production-composition vertical begins with only an authenticated authorized user, one ordinary System, two ordinary Repositories, exact ref/revision bindings, and ready accepted CodeGraph 1.5/JDT-LS ports. It pre-seeds no Scan Run, Pre-Scan Result, Scan Execution, coordination, Prepared Scan Manifest, File Code Unit or Document.
 
-It proves creation/handoff/publication; pre-publication retry; post-publication and advanced-phase handoff recovery without analysis; partial/corrupt conflict; mismatch conflict; revocation between initial and fresh pre-store checks with zero store calls/writes; tuple-required coordinator/builder composition; default Agents contract-identity and configured runtime resolver plus test-only replacement of those narrow seams; CodeGraph 1.5/no-CGC composition; and zero later-stage work. Identity tests independently hash the v2 embedded prompt, pin prefix/hash/schema, preserve legacy v1 recovery output, and reject null/v1/malformed-hash/wrong-schema values before recheck/store. Disposable PostgreSQL tests independently prove identical and competing concurrency, advisory timeout, rollback and complete-tuple visibility. Golden Core tests pin domain/kind/identity outputs. The focused real CodeGraph CLI 2/2 qualification is supporting tool evidence only.
+It proves creation/handoff/publication; pre-publication retry; post-publication and advanced-phase handoff recovery without analysis; partial/corrupt conflict; mismatch conflict; revocation between initial and fresh pre-store checks with zero store calls/writes; tuple-required coordinator/builder composition; default Agents contract-identity and configured runtime resolver plus test-only replacement of those narrow seams; CodeGraph 1.5/no-CGC composition; and zero later-stage work. It also proves exact profile match and required-segment promotion, nonmatch-neutral fingerprints, matched missing/unsafe/duplicate/split/cap rejection before Manifest, sole default seed authority/no public profile fields, all required seeds successful in Pass 1, required-seed failure blocking exact work, and one no-preseed PostgreSQL path to the unchanged exact decision/current REFERENCES Edge/honest Uncertainty. Identity tests independently hash the v2 embedded prompt, pin prefix/hash/schema, preserve legacy v1 recovery output, and reject null/v1/malformed-hash/wrong-schema values before recheck/store. Disposable PostgreSQL tests independently prove identical and competing concurrency, advisory timeout, rollback and complete-tuple visibility. Golden Core tests pin domain/kind/identity outputs. The focused real CodeGraph CLI 2/2 qualification is supporting tool evidence only.
 
 ## Explicit exclusions
 
-No `CodeGraphContextProvider`, historical `RepositoryProfilingCoordinator`, `/scan-runs` repair, general/single/N-Repository lifecycle, EF/model/migration change, Story 12.4 change, accepted Track A/B change, `WorkerAgentDispatchIdentitySource` change, prompt/dispatcher/provider/tool/retry change, Worker/Pass/Chat behavior change, fake Backup B evidence, or retained-database deletion is part of this contract.
+No caller profile/path, production sample literal, bound increase, `ExactResolutionProfile`/catalog/parser/resource change, `CodeGraphContextProvider`, historical `RepositoryProfilingCoordinator`, `/scan-runs` repair, general/single/N-Repository lifecycle, EF/model/migration change, Story 12.4 change, accepted Track A/B change, `WorkerAgentDispatchIdentitySource` change, prompt/dispatcher/provider/tool/retry change, Pass 1 failure-policy/store change, Pass 2/Chat behavior change, fake Backup B evidence, run-03 repair/reuse, or retained-database deletion is part of this contract.

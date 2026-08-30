@@ -1,0 +1,57 @@
+{
+  "schema_version": "1.0",
+  "gate": "plan-review",
+  "verdict": "ACCEPT",
+  "reviewed_commit": "7fc5bd1b8b787d5ff205378abb9e6a464bf00eb5",
+  "reviewed_boundary": {
+    "base_commit": "7fc5bd1b8b787d5ff205378abb9e6a464bf00eb5",
+    "candidate_commit": null,
+    "diff_sha256": "e590ebf18f765e2c85b46bffa47c2936279e5cd1de12faf802a3edde3d58cafa",
+    "artifact_hashes": {
+      "specs/014-grounded-llm-wiki-chat-release-evidence/spec.md": "6da3e251b217ab8dd8190f84c4cf864b994be1e87090558a29e125f5648ec8b7",
+      "specs/014-grounded-llm-wiki-chat-release-evidence/contracts/prepared-scan-initiation.md": "833e55b2eaf41b1666bdd204fd8a628ca05120e0e14149323a63838047e7c055",
+      "specs/014-grounded-llm-wiki-chat-release-evidence/data-model.md": "6d273fe2417d505fdd47400a6e364a8646637adf7998d7c9911ba905e511c2fa",
+      "specs/014-grounded-llm-wiki-chat-release-evidence/plan.md": "35766983a07db621efbdef3fa45934b2f66d86514d15deb490b5eca83ca75c43",
+      "specs/014-grounded-llm-wiki-chat-release-evidence/quickstart.md": "5166abe0f36e7a7c2c964901440e592fc4bc5457d80dc9f88904aa3023f5f009",
+      "specs/014-grounded-llm-wiki-chat-release-evidence/research.md": "2f68c51cd0b89b4743cae67b06f36db9dd436a4e9db5e7952e424fc1c25ed03a",
+      "docs/bmad/epics.md": "b5b90c4d8d82d0a69c7dd74df93312674902f170725bbe0ac71bfc4672db1706",
+      "docs/bmad/planning-artifacts/architecture/august-30-bounded-scanning-design.md": "6fa9bed2bd90e0abad5333b05381638bcf471088480b00ec94229c96f173878c",
+      "docs/bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md": "e14783b0e8b80f7226f6f4875ddf02135d06523e83e3c82d0d9202e3424b571b",
+      "docs/bmad/planning-artifacts/sprint-change-proposal-2026-08-31-story-12-5-exact-profile-seed-selection.md": "c5b31c6591f4b1400e18133e0b9b58926bedc1ec1a3df960f3243038ab7e9233"
+    },
+    "owned_paths": [
+      "specs/014-grounded-llm-wiki-chat-release-evidence/contracts/prepared-scan-initiation.md",
+      "specs/014-grounded-llm-wiki-chat-release-evidence/data-model.md",
+      "specs/014-grounded-llm-wiki-chat-release-evidence/plan.md",
+      "specs/014-grounded-llm-wiki-chat-release-evidence/quickstart.md",
+      "specs/014-grounded-llm-wiki-chat-release-evidence/research.md"
+    ]
+  },
+  "reviewed_artifacts": [
+    "AGENTS.md",
+    ".specify/memory/constitution.md",
+    "docs/UBIQUITOUS_LANGUAGE.md",
+    "docs/bmad/epics.md",
+    "docs/bmad/planning-artifacts/architecture/august-30-bounded-scanning-design.md",
+    "docs/bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md",
+    "docs/bmad/planning-artifacts/sprint-change-proposal-2026-08-31-story-12-5-exact-profile-seed-selection.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/spec.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/plan.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/research.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/data-model.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/quickstart.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/contracts/prepared-scan-initiation.md",
+    "src/dotnet/Vulgata.Core/DomainServices/PreparedScanPlanner.cs",
+    "src/dotnet/Vulgata.Core/DomainServices/ExactResolutionContracts.cs",
+    "src/dotnet/Vulgata.Infrastructure/Analysis/CodeGraph/PreparedRelatedFileExpansion.cs",
+    "src/dotnet/Vulgata.Infrastructure/CrossRepository/ExactResolutionProfileCatalog.cs",
+    "src/dotnet/Vulgata.Infrastructure/CrossRepository/Profiles/demo-resolution-profile.v1.json",
+    "src/dotnet/Vulgata.Infrastructure/Data/PreparedPass1Store.cs",
+    "src/dotnet/Vulgata.Web/Data/PreparedScanPairBuilder.cs",
+    "src/dotnet/Vulgata.Web/Data/ExactCrossRepositoryResolutionCoordinator.cs",
+    "src/dotnet/Vulgata.Web/Program.cs",
+    "tests/Vulgata.Tests/ExactResolutionProfileTests.cs"
+  ],
+  "findings": [],
+  "summary": "ACCEPT. Independent plan-only review confirms that the corrected five-file plan set is consistent with the corrected specification and repository authorities and is feasible at the current seams. The exact activation tuple is closed and server-observed: two distinct Repository IDs, ordinal persisted Repository.Name values, safe full refs, and lowercase Profiled Revisions must map one-to-one to the existing validated embedded profile. The adapter derives the complete consumer, provider-declaration, provider-implementation, and unsupported-observation-owner Repository/path/role union without exposing caller-supplied profile data. Score 1,100 is technically necessary and sufficient to outrank existing 1,000 evidence while preserving the existing top-20-per-Repository and 150-pair bounds; the plan explicitly updates the planner's closed enum, score, reason, and candidate-validation tables rather than bypassing them. Every exact bounded segment for each required path is mandatory, matched absent/filtered/unsafe/duplicate/split-invalid/cap-invalid evidence rejects before CodeGraph expansion or Manifest commit, and nonmatching pairs remain byte-for-byte neutral. Existing PreparedPass1Store direct-score >=400 reconciliation makes all retained reviewed segments mandatory and blocks exact resolution/Pass 2 on any required-seed failure without a policy or persistence change. The no-preseed production vertical is testable using existing endpoint, builder, Pass 1 committer, and exact-resolution coordinator/store seams and is correctly supplemented, not replaced, by real CodeGraph qualification and a fresh real database run. The plan preserves deterministic replay, atomic pair publication, final authorization recheck, CGC exclusion, Story 12.4 contracts, generic selection, Track A/B, EF/model/migrations, and all prohibited boundaries. This is a material Scan-selection and architecture planned-change trigger; downstream planned-change authorization and task regeneration may proceed under the user's current explicit remaining-task authorization, but this verdict itself performs no authorization or implementation."
+}
