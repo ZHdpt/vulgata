@@ -3,13 +3,13 @@
   "bmad_story_key": "12-5-grounded-llm-wiki-chat-and-august-30-release-evidence",
   "bmad_epic_key": "12",
   "feature_directory": "specs/014-grounded-llm-wiki-chat-release-evidence",
-  "stage": "quality-review",
+  "stage": "implement",
   "preflight": {
     "branch": "demo0831/story-12-5-trackC",
-    "head": "f71bd9113286bfcb4536abcf3208e881630c0db0",
+    "head": "a0794b746bf9600965c88a36600628ea27e9e376",
     "git_identity_sha256": "48fbb13a606c298b332318e363fda009bc0444c2fd9436dbd600d4406010c447",
     "status_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-    "observed_at": "2026-08-30T09:02:00Z"
+    "observed_at": "2026-08-30T09:08:00Z"
   },
   "artifacts": {
     "spec": {"path":"specs/014-grounded-llm-wiki-chat-release-evidence/spec.md","sha256":"469f72c4e7fc62874e082a7f425351d9f46cf422ae8641d4bee7b64915dd67c0"},
@@ -19,7 +19,7 @@
   "gates": {
     "plan-review": {"status":"accepted","attempt":3,"verdict_path":"specs/014-grounded-llm-wiki-chat-release-evidence/reviews/plan-review/plan-review-prepared-pass1-identity-authority-03.json"},
     "definition-review": {"status":"accepted","attempt":4,"verdict_path":"specs/014-grounded-llm-wiki-chat-release-evidence/reviews/definition-review/definition-review-prepared-pass1-identity-authority-04.json"},
-    "quality-review": {"status":"pending","attempt":2,"verdict_path":"specs/014-grounded-llm-wiki-chat-release-evidence/reviews/quality-review/prepared-scan-initiation-quality-review-02.json"}
+    "quality-review": {"status":"revised","attempt":2,"verdict_path":"specs/014-grounded-llm-wiki-chat-release-evidence/reviews/quality-review/prepared-scan-initiation-quality-review-02.json"}
   },
   "attempts": {"definition-review":0,"converge":2,"quality-review":2},
   "approvals": [
@@ -36,7 +36,7 @@
     {"decision_id":"story-12-5-implementation-approval-prepared-pass1-identity-authority-02","status":"accepted","scope_sha256":"f5690de4e4ca6b188fbeeab54745c12266585601583a05f9ffd81516c088ebd1","evidence_path":"specs/014-grounded-llm-wiki-chat-release-evidence/decisions/implementation-approval-prepared-pass1-identity-authority-02.md","decided_at":"2026-08-30T06:59:19.4028059Z"},
     {"decision_id":"story-12-5-planned-change-prepared-pass1-identity-authority-02","status":"accepted","scope_sha256":"7a9e3fc5fc4b9485cd7538e61f2b2153a81bcc8388a89935750d5a29dbf931b2","evidence_path":"specs/014-grounded-llm-wiki-chat-release-evidence/decisions/planned-change-prepared-pass1-identity-authority-02.md","decided_at":"2026-08-30T05:59:15.4510419Z"}
   ],
-  "convergence": {"status":"accepted","attempt":2,"outcome":"converged","report_path":"specs/014-grounded-llm-wiki-chat-release-evidence/evidence/convergence/prepared-scan-initiation-02.md"},
+  "convergence": {"status":"pending","attempt":3,"outcome":"pending","report_path":"specs/014-grounded-llm-wiki-chat-release-evidence/evidence/convergence/prepared-scan-initiation-03.md"},
   "e2e": {"result":"pending","decision_path":null},
   "current_evidence_paths": [
     "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/plan-review/plan-review-prepared-pass1-identity-authority-03.json",
@@ -47,12 +47,12 @@
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/tdd/prepared-pass1-identity-authority-red-01.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/verification/prepared-scan-initiation-identity-authority-01.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/verification/prepared-scan-initiation-regression-01.md",
-    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/convergence/prepared-scan-initiation-01.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/quality-review/prepared-scan-initiation-quality-review-02.json",
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/review/prepared-scan-initiation-quality-input-01.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/quality-review/prepared-scan-initiation-quality-review-01.json",
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/tdd/prepared-pass1-identity-hostile-red-01.md"
   ],
-  "checkpoint": {"checkpoint_id":"bmad-12-5-quality-review-20260830T090200Z-b8d2c0","stage":"quality-review","commit_sha":"f71bd9113286bfcb4536abcf3208e881630c0db0","binding_status":"bound"},
-  "resume": {"stage":"quality-review","reason":"Convergence attempt 02 is accepted with zero findings after QR-PSI-001 correction. Dispatch fresh T032 quality review; T034-T045 and run-03 remain closed.","evidence_path":"specs/014-grounded-llm-wiki-chat-release-evidence/evidence/review/prepared-scan-initiation-quality-input-01.md"},
-  "updated_at": "2026-08-30T09:02:00Z"
+  "checkpoint": {"checkpoint_id":"bmad-12-5-quality-review-20260830T090800Z-650eff","stage":"quality-review","commit_sha":"a0794b746bf9600965c88a36600628ea27e9e376","binding_status":"bound"},
+  "resume": {"stage":"implement","reason":"Quality attempt 02 returned QR-PSI-002 to T025 TDD. Add public endpoint RED and minimal GREEN, then rerun T029/T030, convergence and quality review; T034-T045 remain closed.","evidence_path":"specs/014-grounded-llm-wiki-chat-release-evidence/reviews/quality-review/prepared-scan-initiation-quality-review-02.json"},
+  "updated_at": "2026-08-30T09:08:00Z"
 }
