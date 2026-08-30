@@ -138,6 +138,16 @@ public sealed class Pass1CodeLogicDocumentCommitter(VulgataDbContext context)
             return Rejected("invalid-authoritative-result");
         }
 
+        var strategy = context.Database.CreateExecutionStrategy();
+        return await strategy.ExecuteAsync(() =>
+            CommitWithinTransactionAsync(request, projection, cancellationToken));
+    }
+
+    private async Task<Pass1DocumentCommitResult> CommitWithinTransactionAsync(
+        Pass1DocumentCommitRequest request,
+        CodeLogicFileV2Projection projection,
+        CancellationToken cancellationToken)
+    {
         await using var transaction = await context.Database.BeginTransactionAsync(cancellationToken);
         context.ChangeTracker.Clear();
 
@@ -359,8 +369,12 @@ public sealed class Pass1CodeLogicDocumentCommitter(VulgataDbContext context)
             request.CommittedAt);
         await context.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
-        return new(Pass1DocumentCommitStatus.Committed, request.LogicalDocumentId,
-            request.DocumentVersionId, commitFingerprint, null);
+        return new Pass1DocumentCommitResult(
+            Pass1DocumentCommitStatus.Committed,
+            request.LogicalDocumentId,
+            request.DocumentVersionId,
+            commitFingerprint,
+            null);
     }
 
     private async Task<bool> CanonicalGraphMatchesAsync(

@@ -215,6 +215,33 @@ public sealed class Pass1DocumentPostgreSqlAtomicTests
             value.ScanJobExecutionId == request.JobId));
     }
 
+    [Fact]
+    public async Task PostgreSql17_RetryingExecutionStrategy_CommitsPass1DocumentWithoutTransactionRejectionAsync()
+    {
+        string administrator = GetAdministratorConnectionStringOrSkip();
+        await using CommitFixture fixture = await CommitFixture.CreateAsync(administrator);
+        DbContextOptions<VulgataDbContext> options =
+            new DbContextOptionsBuilder<VulgataDbContext>()
+                .UseNpgsql(fixture.ConnectionString, npgsql => npgsql.EnableRetryOnFailure(3))
+                .Options;
+        await using VulgataDbContext retryingContext = new(options);
+        IPass1CodeLogicDocumentCommitter committer =
+            new Pass1CodeLogicDocumentCommitter(retryingContext);
+
+        Pass1DocumentCommitResult committed = await committer.CommitAsync(
+            fixture.Request,
+            CancellationToken.None);
+
+        Assert.Equal(Pass1DocumentCommitStatus.Committed, committed.Status);
+        Assert.Equal(fixture.Request.DocumentVersionId, committed.DocumentVersionId);
+        Assert.Equal(1, await retryingContext.DocumentVersions.CountAsync(value =>
+            value.Id == fixture.Request.DocumentVersionId));
+        Assert.Equal(ScanJobExecutionState.Completed, await retryingContext.ScanJobExecutions
+            .Where(value => value.Id == fixture.Request.Packet.JobId)
+            .Select(value => value.State)
+            .SingleAsync());
+    }
+
     private static async Task<(PreparedPass1NavigationScope Scope, PreparedPass1NavigationRequestInput Request)>
         CreateNavigationBindingAsync(CommitFixture fixture)
     {
