@@ -31,6 +31,7 @@ the competition release:
 - [August 30 Bounded Scanning and LLM-Wiki Design](architecture/august-30-bounded-scanning-design.md)
 - [Sprint Change Proposal: August 30 Bounded Scanning Recovery](sprint-change-proposal-2026-08-17-august-30-bounded-scanning-recovery.md)
 - [Sprint Change Proposal: August Demo Host Runtime and JDT-LS Pin](sprint-change-proposal-2026-08-18-august-demo-host-runtime-and-jdtls-pin.md)
+- [Sprint Change Proposal: Story 12.5 Prepared Scan Initiation](sprint-change-proposal-2026-08-30-story-12-5-prepared-scan-initiation.md)
 
 Where those artifacts conflict with this document or the July scanning
 supplements, the August 30 design supersedes the older scanning, orchestration,

@@ -110,6 +110,36 @@ PreScan completes before Pass 1 for each Repository:
 PreScan performs no LLM call and does not create final Cross-Repository Edges.
 Partial preparation is never dispatchable.
 
+### 4.0 Production Prepared Scan initiation
+
+The August two-Repository production entrance begins at the authenticated
+Prepared Scan endpoint, not the historical Repository profiling endpoint. A
+narrow application coordinator validates one visible System, exactly two
+visible distinct Repositories, safe full Git refs, exact expected Profiled
+Revisions, and the current prompt, Document schema, and Analysis Runtime
+identities.
+
+An Infrastructure-owned short transaction then creates or replays exactly two
+revision-bound Scan Runs, two `ScanExecution.CreateNewPath` records, and their
+canonical `TwoRepositoryScanCoordination.Create` record in `Preparing`. It uses
+only existing tables, domain factories, and constraints. The transaction
+exposes the entire initiation tuple or none of it and closes before source
+acquisition or any Git, CodeGraph, JDT-LS, XML, Worker, LLM, or other
+long-running operation.
+
+An exact authorized retry returns the same tuple. A mismatch in System,
+Repository pair, Profiled Revision, runtime identity, prompt identity, Document
+schema identity, or authorization scope conflicts or fails closed. Concurrent
+identical requests cannot publish duplicate or cross-paired tuples. If later
+preparation fails, the tuple remains safely replayable and the existing
+Prepared Scan pipeline resumes or replays its own work.
+
+After initiation commits, the existing `PreparedScanCoordinator` owns source
+acquisition, CodeGraph 1.5, JDT-LS, safe XML, deterministic selection, the
+authorization recheck immediately before publication, and atomic Prepared Scan
+Manifest/handoff publication. No old v1 profiling result can satisfy this
+entrance. CodeGraphContext remains excluded.
+
 ### 4.1 File Code Units
 
 Pass 1 operates on `CodeUnitType.File`. One bounded file produces one Worker
@@ -366,6 +396,11 @@ PreScan may prepare Repositories sequentially to bound CodeGraph/JDT LS
 resources. A provider outage pauses shared dispatch. A Repository integrity
 failure fails the combined Cross-Repository outcome, while already committed
 valid Documents remain available. Every phase is idempotent on resume.
+
+The Preparing coordination and its two bound new-path Scan Executions are
+created only by the bounded production initiation boundary in Section 4.0 or
+by explicit test fixtures. General Scan initiation, standalone profiling, and
+arbitrary N-Repository coordination remain deferred.
 
 ## 11. Cross-Repository Resolution
 

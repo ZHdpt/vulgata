@@ -1427,6 +1427,27 @@ or fails
 bounded failure summary, and `继续扫描` action
 **And** isolated fake Backup B state shall not support release evidence
 
+**Given** an authenticated authorized user, one ordinary System, exactly two
+ordinary distinct Repositories, safe full Git refs, exact expected Profiled
+Revisions, and a ready accepted analysis runtime
+**When** the user starts the bounded Prepared Scan through production
+composition
+**Then** Vulgata shall validate System/Repository visibility before creation and
+atomically create or replay two exact revision-bound Scan Runs, two new-path
+Scan Executions bound to the current runtime, prompt, and Document schema
+identities, and one canonical Preparing Two-Repository coordination
+**And** the complete initiation tuple or none of it shall be visible before the
+existing Prepared Scan pipeline begins Git, CodeGraph 1.5, JDT-LS, safe XML,
+selection, and Prepared Scan Manifest work outside that transaction
+**And** an identical authorized retry shall reuse the same tuple, including
+after later preparation failure, while a changed System, Repository pair,
+Profiled Revision, runtime/prompt/schema identity, or authorization scope shall
+fail closed without cross-pairing or attaching to the existing tuple
+**And** unauthorized initiation shall create nothing, the established
+authorization recheck immediately before prepared-state publication shall
+remain, and no legacy profiling result, CGC path, Worker, Pass 1/2, Document,
+Edge, Uncertainty, Chat, or LLM action shall satisfy or occur inside initiation
+
 **Given** the August 30 release candidate is verified
 **When** Tier 1 regression and one combined host integration and real release
 run execute

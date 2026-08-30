@@ -21,6 +21,7 @@ is defined by:
 - [Sprint Change Proposal: August Demo Host Runtime and JDT-LS Pin](../../sprint-change-proposal-2026-08-18-august-demo-host-runtime-and-jdtls-pin.md)
 - [August 30 Bounded Scanning and LLM-Wiki Design](../../architecture/august-30-bounded-scanning-design.md)
 - [Sprint Change Proposal: Story 12.5 Track C-MVP](../../sprint-change-proposal-2026-08-29-story-12-5-track-c-mvp.md)
+- [Sprint Change Proposal: Story 12.5 Prepared Scan Initiation](../../sprint-change-proposal-2026-08-30-story-12-5-prepared-scan-initiation.md)
 
 For the August 30 release boundary, those documents supersede conflicting V1
 details in FR-4.1 through FR-4.5, FR-4.9, FR-4.12, FR-5.8, FR-6.1/6.2,
@@ -59,6 +60,20 @@ and a dedicated release-summary product feature are post-competition backlog.
 This correction does not weaken source revision binding, Source Anchors,
 authorization/currentness, citation validation, accepted Track B streaming
 bounds, or any existing security behavior.
+
+For the bounded two-Repository August path, an authenticated authorized
+Prepared Scan request begins with one System, exactly two ordinary Repository
+records, safe full Git refs, and exact expected Profiled Revisions. Before any
+external analysis, Vulgata atomically creates or replays two revision-bound
+Scan Runs, two new-path Scan Executions carrying the current runtime, prompt,
+and Document schema identities, and their canonical Preparing Two-Repository
+coordination. The transaction exposes the complete initiation tuple or none of
+it and ends before Git, CodeGraph, JDT-LS, XML, or other long-running analysis
+begins. Exact replay is idempotent; any changed System, Repository pair,
+Profiled Revision, runtime/prompt/schema identity, or authorization scope fails
+closed. The existing Prepared Scan pipeline retains ownership of analysis,
+selection, atomic Prepared Scan Manifest publication, and the authorization
+recheck immediately before publication.
 
 General 10,000-file validation, method-level scheduling, arbitrary protocols,
 general graph clustering, Worker cross-verification waves, dynamic PreScan HITL,
