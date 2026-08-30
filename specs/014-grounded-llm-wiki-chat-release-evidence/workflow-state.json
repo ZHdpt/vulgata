@@ -3,23 +3,23 @@
   "bmad_story_key": "12-5-grounded-llm-wiki-chat-and-august-30-release-evidence",
   "bmad_epic_key": "12",
   "feature_directory": "specs/014-grounded-llm-wiki-chat-release-evidence",
-  "stage": "quality-review",
+  "stage": "implementation-approval",
   "preflight": {
     "branch": "demo0831/story-12-5-trackC",
-    "head": "083a70d14d23b677908a987e72109ed7dad45b4f",
+    "head": "be8f51907b98335ec8ffc73a823aff27651cbe32",
     "git_identity_sha256": "48fbb13a606c298b332318e363fda009bc0444c2fd9436dbd600d4406010c447",
     "status_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-    "observed_at": "2026-08-30T09:34:00Z"
+    "observed_at": "2026-08-30T09:48:00Z"
   },
   "artifacts": {
     "spec": {"path":"specs/014-grounded-llm-wiki-chat-release-evidence/spec.md","sha256":"469f72c4e7fc62874e082a7f425351d9f46cf422ae8641d4bee7b64915dd67c0"},
     "plan": {"path":"specs/014-grounded-llm-wiki-chat-release-evidence/plan.md","sha256":"6ebb0a525721716bfcbb3dce0d330b4846a6f3cf50c604ceb2bf9b0ed41346a8"},
-    "tasks": {"path":"specs/014-grounded-llm-wiki-chat-release-evidence/tasks.md","sha256":"cc73c8e7d43ecb03ec4a8c177c8aeabcacbb8142659029fda40b5a151bf75e22"}
+    "tasks": {"path":"specs/014-grounded-llm-wiki-chat-release-evidence/tasks.md","sha256":"87b751ce78d29f744acb37227db4abeaf8d1b893914217b5d5bac40282980507"}
   },
   "gates": {
     "plan-review": {"status":"accepted","attempt":3,"verdict_path":"specs/014-grounded-llm-wiki-chat-release-evidence/reviews/plan-review/plan-review-prepared-pass1-identity-authority-03.json"},
     "definition-review": {"status":"accepted","attempt":4,"verdict_path":"specs/014-grounded-llm-wiki-chat-release-evidence/reviews/definition-review/definition-review-prepared-pass1-identity-authority-04.json"},
-    "quality-review": {"status":"pending","attempt":3,"verdict_path":"specs/014-grounded-llm-wiki-chat-release-evidence/reviews/quality-review/prepared-scan-initiation-quality-review-03.json"}
+    "quality-review": {"status":"accepted","attempt":3,"verdict_path":"specs/014-grounded-llm-wiki-chat-release-evidence/reviews/quality-review/prepared-scan-initiation-quality-review-03.json"}
   },
   "attempts": {"definition-review":0,"converge":3,"quality-review":3},
   "approvals": [
@@ -47,12 +47,12 @@
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/tdd/prepared-pass1-identity-authority-red-01.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/verification/prepared-scan-initiation-identity-authority-01.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/verification/prepared-scan-initiation-regression-01.md",
-    "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/quality-review/prepared-scan-initiation-quality-review-02.json",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/quality-review/prepared-scan-initiation-quality-review-03.json",
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/review/prepared-scan-initiation-quality-input-01.md",
-    "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/quality-review/prepared-scan-initiation-quality-review-01.json",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/prepared-scan-initiation-implementation-accepted-01.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/tdd/prepared-pass1-identity-activation-red-01.md"
   ],
-  "checkpoint": {"checkpoint_id":"bmad-12-5-quality-review-20260830T093400Z-941355","stage":"quality-review","commit_sha":"083a70d14d23b677908a987e72109ed7dad45b4f","binding_status":"bound"},
-  "resume": {"stage":"quality-review","reason":"Convergence attempt 03 accepted after QR-PSI-002 public 503 correction. Dispatch fresh T032 quality review attempt 03; T034-T045 remain closed.","evidence_path":"specs/014-grounded-llm-wiki-chat-release-evidence/evidence/review/prepared-scan-initiation-quality-input-01.md"},
-  "updated_at": "2026-08-30T09:34:00Z"
+  "checkpoint": {"checkpoint_id":"bmad-12-5-implement-accepted-20260830T094800Z-941355","stage":"verify","commit_sha":"be8f51907b98335ec8ffc73a823aff27651cbe32","binding_status":"bound"},
+  "resume": {"stage":"implementation-approval","reason":"T025-T033 are implementation-accepted and checkpointed. Stop before T034-T045/run-03; a new explicit authorization is required for the external release run.","evidence_path":"specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/prepared-scan-initiation-implementation-accepted-01.md"},
+  "updated_at": "2026-08-30T09:48:00Z"
 }
