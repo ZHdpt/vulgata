@@ -242,6 +242,35 @@ public sealed class Pass1DocumentPostgreSqlAtomicTests
             .SingleAsync());
     }
 
+    [Fact]
+    public async Task PostgreSql17_RetryingExecutionStrategy_ReconcilesTerminalPairWithoutTransactionRejectionAsync()
+    {
+        string administrator = GetAdministratorConnectionStringOrSkip();
+        await using CommitFixture fixture = await CommitFixture.CreateAsync(administrator);
+        await fixture.PrepareForReconciliationAsync();
+        PreparedPass1ReconciliationRequest request =
+            await fixture.CreateReconciliationRequestAsync();
+        DbContextOptions<VulgataDbContext> options =
+            new DbContextOptionsBuilder<VulgataDbContext>()
+                .UseNpgsql(fixture.ConnectionString, npgsql => npgsql.EnableRetryOnFailure(3))
+                .Options;
+        await using VulgataDbContext retryingContext = new(options);
+        PreparedPass1Store store = new(retryingContext);
+
+        PreparedPass1ReconciliationResult reconciled = await store.ReconcileAsync(
+            fixture.PairExecutionId,
+            request,
+            CancellationToken.None);
+
+        Assert.Equal(PreparedPass1ReconciliationOutcome.Reconciled, reconciled.Outcome);
+        Assert.Equal(Pass1PairExecutionPhase.ReadyForResolution, await retryingContext.Pass1PairExecutions
+            .Where(value => value.Id == fixture.PairExecutionId)
+            .Select(value => value.Phase)
+            .SingleAsync());
+        Assert.Equal(1, await retryingContext.Pass1Outcomes.CountAsync(value =>
+            value.PairExecutionId == fixture.PairExecutionId));
+    }
+
     private static async Task<(PreparedPass1NavigationScope Scope, PreparedPass1NavigationRequestInput Request)>
         CreateNavigationBindingAsync(CommitFixture fixture)
     {

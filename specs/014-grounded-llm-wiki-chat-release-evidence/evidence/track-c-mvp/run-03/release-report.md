@@ -9,12 +9,12 @@ databases remain immutable historical blocked evidence. This report cannot say
 `passed` until every retained Scan, real streaming Chat, restart, screenshot,
 E2E and final-verification threshold accepts the same candidate.
 
-Preflight observed at `2026-08-30T14:04:55.3127121Z` on branch
-`demo0831/story-12-5-trackC`, clean integration HEAD
-`1844817f56da1d2101c1bd045ea004caee15d0dd`, production candidate
-`9413558a42b39f8f2a9ce41a717a0b37c9f72a98`, and accepted T033 checkpoint
-`be8f51907b98335ec8ffc73a823aff27651cbe32`. The accepted Story 12.4
-dependency is `4798b97d9f23aef587829175df7ab7ebc3daf995`.
+Preflight began at `2026-08-30T14:04:55.3127121Z` on branch
+`demo0831/story-12-5-trackC`.  The active integration checkpoint is
+`1c1631c4` plus the pending eighth narrowly observed PostgreSQL retry-strategy correction;
+the final candidate remains pending until run-03 and its technical gates
+finish. The accepted Story 12.4 dependency is
+`4798b97d9f23aef587829175df7ab7ebc3daf995`.
 
 ## Lightweight preflight
 
@@ -56,6 +56,13 @@ Prepared Scan configuration.
 | 14 | 2026-08-30 14:15 | Register/authenticate the first user and create the System, encrypted Worker provider assignment and exactly two ordinary Repositories through production HTTP surfaces | all calls succeeded; operator credential protected locally with DPAPI and excluded from evidence | completed |
 | 15 | 2026-08-30 14:16 | Query only the replacement database and perform an independent fresh login | exact allowed counts; every prohibited lifecycle/content count zero; login HTTP 200 | completed |
 | 16 | 2026-08-30 14:17 | Stop the verified owned Vulgata host before T036 | exact process identity checked; host stopped | completed |
+| 17 | 2026-08-30 14:25 | Start the guarded host and submit the corrected authenticated exactly-two-Repository Prepared Scan request | HTTP 201; two approved Manifests published | completed |
+| 18 | 2026-08-30 14:36 | Repeat the identical Prepared Scan request | HTTP 200 replay; same Runs, executions, coordination and Manifests; zero duplicate rows | completed |
+| 19 | 2026-08-30 16:10-18:17 | Exercise real Pass 1 and correct seven observed PostgreSQL retry-strategy transaction seams through public RED/GREEN tests | checkpoints `31327043`, `6a014a06`, `3ea71c30`, `6feb6284`, `3690f894`, `d699a323`, `1c1631c4`; workflow valid | completed |
+| 20 | 2026-08-30 17:36 | Invoke authenticated production recovery for the retained pair | pair returned to `Running`; no direct database repair | completed |
+| 21 | 2026-08-30 17:49-17:58 | Recover four expired leases, observe the durable navigation-reservation transaction rejection, and checkpoint its public RED/GREEN correction | exact attempts re-leased without duplicates; pair fail-closed to `PausedInspection`; guarded host stopped for rebuild | completed |
+| 22 | 2026-08-30 18:10-18:17 | Resume real provider execution through the corrected navigation boundary, observe the Pass 1 document-publication transaction rejection, and checkpoint its public RED/GREEN correction | two tool attempts and one durable navigation receipt preceded the fail-closed pause; exact regression 1/1 and complete PostgreSQL atomicity class 71/71 passed; no partial Document graph | completed |
+| 23 | 2026-08-30 18:22-21:01 | Complete the retained Pass 1 jobs, diagnose the terminal phase stall, and correct the sole reconciliation transaction through public RED/GREEN evidence | 148 Documents and two bounded ordinary failures were durable; exact regression 1/1, PostgreSQL atomicity 72/72, and production capacity 19/19 passed; no direct database repair | completed |
 
 No command or evidence artifact records a credential, token, password,
 connection string, provider response body, source content, absolute host path,
@@ -63,7 +70,8 @@ fake Backup B state or retained-database content.
 
 ## Combined host integration and real release run
 
-T035 production bootstrap is complete against the final run-03 database. The
+T035 production bootstrap and the corrected Prepared Scan entrance are complete
+against the final run-03 database. The
 production host applied only the repository's existing migrations, seeded the
 three existing roles, registered one Administrator, created System
 `72438237-cb8e-4570-a3ba-fb28694832ab`, configured encrypted Worker provider
@@ -75,9 +83,21 @@ exactly these ordinary Repositories:
 - `mbs_channel`: `0c2f940f-4462-47eb-a016-44b2561dd3d9`, pinned revision
   `47f6b627a7598f862873610413eec1e1e7bf46bf`.
 
-No Prepared Scan request, historical `/scan-runs` request, Pass 1, Pass 2,
-Cross-Repository Resolution, Chat or source-bearing provider request has run.
-The verified owned host was stopped before T036.
+The authenticated Prepared Scan request created one exact initiation tuple and
+two approved Manifests through the production CodeGraph 1.5/JDT-LS/safe-XML
+path.  The identical replay returned HTTP 200 with the same durable identities
+and zero duplicate rows.  The historical `/scan-runs` route and CGC were not
+used.  The pair selected 150 File Code Units from `mbs_channel`; the
+`mbs_account` Manifest honestly selected zero because that Repository contained
+no eligible units under the accepted catalog path.
+
+Real source-bearing Pass 1 has durably finished all 150 jobs: 148 current Code
+Logic Documents were published and two jobs ended in the honest bounded
+ordinary `JobTransient` category. The two failures remain within the five-job
+budget. The pair is still `Running` only because the first terminal
+reconciliation attempt reached the newly observed retry-strategy transaction
+composition defect; correction 08 is GREEN and awaits restart/replay against
+the same guarded database. Pass 2, Chat, restart and screenshots remain pending.
 
 ## Straightforward database query table
 
@@ -86,9 +106,11 @@ The verified owned host was stopped before T036.
 | Administrator users / Administrator role bindings | 1 / 1 |
 | Systems / encrypted providers / System provider assignments | 1 / 1 / 1 |
 | Repositories (`mbs_account`, `mbs_channel`) | 2 |
-| Scan Runs / Pre-Scan Results / Scan Executions | 0 / 0 / 0 |
-| Two-Repository coordinations / Prepared Scan Manifests | 0 / 0 |
-| Code Units / Logical Documents / Document Versions | 0 / 0 / 0 |
+| Scan Runs / Pre-Scan Results / Scan Executions | 2 / 2 / 2 |
+| Two-Repository coordinations / Prepared Scan Manifests | 1 / 2 |
+| Prepared Scan selected File Code Units | 150 |
+| Pass 1 dispatched / high-value seed count | 150 / 0 |
+| Pass 1 completed Documents / ordinary failed jobs | 148 / 2 |
 
 The stored provider base identity is `https://opencode.ai/zen/go/v1`; the
 encrypted API-key field is non-empty. No query printed or compared the secret.
@@ -120,11 +142,22 @@ Pending. No historical, retained-run or fake Backup B screenshot is substituted.
   unchanged as excluded failed-attempt evidence. No identity row was edited or
   repaired. The compiled guard generated the final replacement lane before any
   connection to it.
-- T036-T045 remain unauthorized. The final database is preserved and the host
-  is stopped before the Prepared Scan request.
+- Two real Pass 1 jobs ended in the bounded ordinary `JobTransient` category
+  after bounded attempts.  Their provider content was not retained or
+  published; run-03 keeps the failures as evidence and must remain within the
+  accepted ordinary failure budget.
+- Eight explicit PostgreSQL transaction boundaries used by the production run were not
+  initially composed through EF's configured retry strategy: pair start,
+  claim, failure recording, the eight-call navigation marker, recovery, and
+  navigation reservation/reserved-receipt persistence, Document publication,
+  and terminal reconciliation.
+  Each was corrected only after an observed public-seam RED, with focused and
+  surrounding PostgreSQL GREEN evidence and no schema or Scan-strategy change.
 
 ## Passing checklist
 
-Not passed. T034 and T035 are complete. The final database and production
-bootstrap are ready, while every Prepared Scan, generated-output, Chat,
-restart, screenshot, E2E and final-verification requirement remains pending.
+Not passed. T034-T035 and the real Prepared Scan/replay portion of T036 are
+complete. All real Pass 1 jobs are terminal and correction 08 is ready for an
+authenticated reconciliation replay; Pass 2, generated Business Logic
+Documents, Chat, restart, screenshots, E2E and final verification remain
+pending.

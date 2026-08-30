@@ -6,10 +6,10 @@
   "stage": "implement",
   "preflight": {
     "branch": "demo0831/story-12-5-trackC",
-    "head": "d699a323e28dea087f847b344896511aea41df42",
+    "head": "1c1631c4abd38e978c8d1df6e1e9bd41d785c71e",
     "git_identity_sha256": "de2f94642d7a3423ec503a8c50fcb7c9b75950fc3e14052eb9041e61d7459243",
     "status_sha256": "99667edc885d74709a5093a3d3631c327554092e587b84272d5196f9eb4462fc",
-    "observed_at": "2026-08-30T18:17:55.2662713Z"
+    "observed_at": "2026-08-30T21:01:36.4213634Z"
   },
   "artifacts": {
     "spec": {"path":"specs/014-grounded-llm-wiki-chat-release-evidence/spec.md","sha256":"469f72c4e7fc62874e082a7f425351d9f46cf422ae8641d4bee7b64915dd67c0"},
@@ -38,7 +38,6 @@
   "convergence": {"status":"accepted","attempt":3,"outcome":"converged","report_path":"specs/014-grounded-llm-wiki-chat-release-evidence/evidence/convergence/prepared-scan-initiation-03.md"},
   "e2e": {"result":"pending","decision_path":null},
   "current_evidence_paths": [
-    "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/planned-change-prepared-pass1-identity-authority-02.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/verification/prepared-scan-initiation-identity-authority-01.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/verification/prepared-scan-initiation-regression-01.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/quality-review/prepared-scan-initiation-quality-review-03.json",
@@ -49,9 +48,10 @@
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/tdd/run-03-pass1-navigation-marker-retry-strategy-correction-04.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/tdd/run-03-pass1-recovery-retry-strategy-correction-05.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/tdd/run-03-pass1-navigation-reservation-retry-strategy-correction-06.md",
-    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/tdd/run-03-pass1-document-commit-retry-strategy-correction-07.md"
+    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/tdd/run-03-pass1-document-commit-retry-strategy-correction-07.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/tdd/run-03-pass1-reconciliation-retry-strategy-correction-08.md"
   ],
-  "checkpoint": {"checkpoint_id":"bmad-12-5-implement-20260830T181755Z-documentcommit","stage":"implement","commit_sha":null,"binding_status":"pending"},
-  "resume": {"stage":"implement","reason":"Production Pass 1 document publication now supports the retry strategy as one atomic retriable unit. Restart the bounded host and invoke the authenticated recovery endpoint against the retained run-03 pair.","evidence_path":"specs/014-grounded-llm-wiki-chat-release-evidence/evidence/tdd/run-03-pass1-document-commit-retry-strategy-correction-07.md"},
-  "updated_at": "2026-08-30T18:17:55.2662713Z"
+  "checkpoint": {"checkpoint_id":"bmad-12-5-implement-20260830T210136Z-reconciliation","stage":"implement","commit_sha":null,"binding_status":"pending"},
+  "resume": {"stage":"implement","reason":"Production Pass 1 reconciliation now executes its existing sole terminal transaction through EF Core's configured retry strategy. Restart the bounded host and replay the authenticated activation for the retained terminal run-03 pair.","evidence_path":"specs/014-grounded-llm-wiki-chat-release-evidence/evidence/tdd/run-03-pass1-reconciliation-retry-strategy-correction-08.md"},
+  "updated_at": "2026-08-30T21:01:36.4213634Z"
 }

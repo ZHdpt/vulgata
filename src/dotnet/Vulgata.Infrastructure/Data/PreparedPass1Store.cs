@@ -895,11 +895,14 @@ public sealed class PreparedPass1Store(
 
         try
         {
-            await using var transaction = await context.Database.BeginTransactionAsync(
-                IsolationLevel.Serializable,
-                cancellationToken);
-            context.ChangeTracker.Clear();
-            Pass1PairExecution? pair = await LockPairAsync(pairExecutionId, cancellationToken);
+            IExecutionStrategy strategy = context.Database.CreateExecutionStrategy();
+            return await strategy.ExecuteAsync(async () =>
+            {
+                await using var transaction = await context.Database.BeginTransactionAsync(
+                    IsolationLevel.Serializable,
+                    cancellationToken);
+                context.ChangeTracker.Clear();
+                Pass1PairExecution? pair = await LockPairAsync(pairExecutionId, cancellationToken);
             if (pair is null ||
                 !await IsAuthorizedForPairAsync(pair, reconciliation.AuthorizationScope, cancellationToken))
             {
@@ -1373,14 +1376,15 @@ public sealed class PreparedPass1Store(
 
             await transaction.CommitAsync(cancellationToken);
             context.ChangeTracker.Clear();
-            return ReconciliationResult(
-                PreparedPass1ReconciliationOutcome.Reconciled,
-                pair,
-                fingerprint,
-                edges,
-                orderedWarnings,
-                pairJobs.Length,
-                bindingValid: true);
+                return ReconciliationResult(
+                    PreparedPass1ReconciliationOutcome.Reconciled,
+                    pair,
+                    fingerprint,
+                    edges,
+                    orderedWarnings,
+                    pairJobs.Length,
+                    bindingValid: true);
+            });
         }
         catch (OperationCanceledException)
         {
