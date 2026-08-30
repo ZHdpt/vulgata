@@ -591,84 +591,88 @@ public sealed class PreparedPass1Store(
         ArgumentNullException.ThrowIfNull(scope);
         ArgumentNullException.ThrowIfNull(request);
         ArgumentNullException.ThrowIfNull(cursor);
-        await using var transaction = await context.Database.BeginTransactionAsync(
-            IsolationLevel.Serializable,
-            cancellationToken);
-        context.ChangeTracker.Clear();
-        try
+        IExecutionStrategy strategy = context.Database.CreateExecutionStrategy();
+        return await strategy.ExecuteAsync(async () =>
         {
-            (Pass1PairExecution? pair, ScanJobExecution? job, Pass1NavigationBudget? budget) =
-                await LockReservationOwnersAsync(request, cancellationToken);
-            DateTimeOffset now = _timeProvider.GetUtcNow();
-            if (!await IsCurrentNavigationAuthorizationAsync(
-                    scope, request, pair, job, budget, now, cancellationToken) ||
-                !TicketMatches(cursor, request, budget!) ||
-                budget.ToolAttemptCount != 8)
+            await using var transaction = await context.Database.BeginTransactionAsync(
+                IsolationLevel.Serializable,
+                cancellationToken);
+            context.ChangeTracker.Clear();
+            try
             {
-                throw new InvalidOperationException("The navigation call-cap marker authorization is stale.");
-            }
-
-            Pass1NavigationReceipt? existing = await context.Pass1NavigationReceipts
-                .SingleOrDefaultAsync(value =>
-                    value.ScanJobExecutionId == request.JobId &&
-                    value.BoundKind == CoreEntities.Pass1NavigationBoundKind.Calls,
-                    cancellationToken);
-            if (existing is null)
-            {
-                PreparedPass1NavigationReceiptInput canonicalInput = new(
-                    null,
-                    request.JobId,
-                    9,
-                    null,
-                    null,
-                    null,
-                    PreparedPass1NavigationOutcome.BoundExceeded,
-                    PreparedPass1NavigationBoundKind.Calls,
-                    [],
-                    0,
-                    0,
-                    (ulong)budget.AcceptedCallCount,
-                    (ulong)budget.EvidenceBytes);
-                PreparedPass1CanonicalArtifact artifact =
-                    PreparedPass1CanonicalCodec.CreateNavigationReceipt(canonicalInput);
-                context.Pass1NavigationReceipts.Add(CoreEntities.Pass1NavigationReceipt.Create(
-                    artifact.Id!.Value,
-                    request.JobId,
-                    budget.PairExecutionId,
-                    9,
-                    null,
-                    null,
-                    null,
-                    CoreEntities.Pass1NavigationOutcomeKind.BoundExceeded,
-                    CoreEntities.Pass1NavigationBoundKind.Calls,
-                    null,
-                    artifact.FingerprintHex,
-                    0,
-                    0,
-                    "{}",
-                    now));
-                await context.SaveChangesAsync(cancellationToken);
-                await transaction.CommitAsync(cancellationToken);
-            }
-            else
-            {
-                if (existing.ReceiptOrdinal != 9 || existing.ToolAttemptOrdinal is not null)
+                (Pass1PairExecution? pair, ScanJobExecution? job, Pass1NavigationBudget? budget) =
+                    await LockReservationOwnersAsync(request, cancellationToken);
+                DateTimeOffset now = _timeProvider.GetUtcNow();
+                if (!await IsCurrentNavigationAuthorizationAsync(
+                        scope, request, pair, job, budget, now, cancellationToken) ||
+                    !TicketMatches(cursor, request, budget!) ||
+                    budget.ToolAttemptCount != 8)
                 {
-                    throw new InvalidOperationException("The navigation call-cap marker conflicts with durable state.");
+                    throw new InvalidOperationException("The navigation call-cap marker authorization is stale.");
                 }
 
+                Pass1NavigationReceipt? existing = await context.Pass1NavigationReceipts
+                    .SingleOrDefaultAsync(value =>
+                        value.ScanJobExecutionId == request.JobId &&
+                        value.BoundKind == CoreEntities.Pass1NavigationBoundKind.Calls,
+                        cancellationToken);
+                if (existing is null)
+                {
+                    PreparedPass1NavigationReceiptInput canonicalInput = new(
+                        null,
+                        request.JobId,
+                        9,
+                        null,
+                        null,
+                        null,
+                        PreparedPass1NavigationOutcome.BoundExceeded,
+                        PreparedPass1NavigationBoundKind.Calls,
+                        [],
+                        0,
+                        0,
+                        (ulong)budget.AcceptedCallCount,
+                        (ulong)budget.EvidenceBytes);
+                    PreparedPass1CanonicalArtifact artifact =
+                        PreparedPass1CanonicalCodec.CreateNavigationReceipt(canonicalInput);
+                    context.Pass1NavigationReceipts.Add(CoreEntities.Pass1NavigationReceipt.Create(
+                        artifact.Id!.Value,
+                        request.JobId,
+                        budget.PairExecutionId,
+                        9,
+                        null,
+                        null,
+                        null,
+                        CoreEntities.Pass1NavigationOutcomeKind.BoundExceeded,
+                        CoreEntities.Pass1NavigationBoundKind.Calls,
+                        null,
+                        artifact.FingerprintHex,
+                        0,
+                        0,
+                        "{}",
+                        now));
+                    await context.SaveChangesAsync(cancellationToken);
+                    await transaction.CommitAsync(cancellationToken);
+                }
+                else
+                {
+                    if (existing.ReceiptOrdinal != 9 || existing.ToolAttemptOrdinal is not null)
+                    {
+                        throw new InvalidOperationException("The navigation call-cap marker conflicts with durable state.");
+                    }
+
+                    await transaction.RollbackAsync(CancellationToken.None);
+                    context.ChangeTracker.Clear();
+                }
+
+                return CreateTicket(request, new(8, budget.ToolAttemptCount, budget.StateVersion));
+            }
+            catch
+            {
                 await transaction.RollbackAsync(CancellationToken.None);
                 context.ChangeTracker.Clear();
+                throw;
             }
-
-            return CreateTicket(request, new(8, budget.ToolAttemptCount, budget.StateVersion));
-        }
-        catch
-        {
-            await transaction.RollbackAsync(CancellationToken.None);
-            context.ChangeTracker.Clear();
-            throw;
-        }
+        });
     }
 
     private async Task<(Pass1PairExecution? Pair, ScanJobExecution? Job, Pass1NavigationBudget? Budget)>

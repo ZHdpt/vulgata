@@ -6,10 +6,10 @@
   "stage": "implement",
   "preflight": {
     "branch": "demo0831/story-12-5-trackC",
-    "head": "6a014a06378e9052b8968fb3c04044ba1cae1aa0",
-    "git_identity_sha256": "ad3c27e36a55cf89044eb07c23a4debffdd618814124178b60cd1cdf6c145584",
-    "status_sha256": "3dbb64bba63dafd2494b1a0adfd16ce25a9b4dcb7448b37e02de11cd336f2cdd",
-    "observed_at": "2026-08-30T16:56:44.3014608Z"
+    "head": "3ea71c3072fabb096f1f49dc981da2f18780aa26",
+    "git_identity_sha256": "1854077ed9bf0c4f189e0d84392cdf301d84ccb5c8043056f087ffa14d81a034",
+    "status_sha256": "db9e23137ae75a2f0bf48a8cde5e7807ac5296495c2cd8d263751e64b22d97d8",
+    "observed_at": "2026-08-30T17:28:26.9804904Z"
   },
   "artifacts": {
     "spec": {"path":"specs/014-grounded-llm-wiki-chat-release-evidence/spec.md","sha256":"469f72c4e7fc62874e082a7f425351d9f46cf422ae8641d4bee7b64915dd67c0"},
@@ -38,7 +38,6 @@
   "convergence": {"status":"accepted","attempt":3,"outcome":"converged","report_path":"specs/014-grounded-llm-wiki-chat-release-evidence/evidence/convergence/prepared-scan-initiation-03.md"},
   "e2e": {"result":"pending","decision_path":null},
   "current_evidence_paths": [
-    "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/definition-review/definition-review-prepared-pass1-identity-authority-04.json",
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/convergence/prepared-scan-initiation-03.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/planned-change-prepared-pass1-identity-authority-02.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/verification/prepared-scan-initiation-identity-authority-01.md",
@@ -49,9 +48,10 @@
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/run-03-t034-t035-01.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/tdd/run-03-pass1-retry-strategy-correction-01.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/tdd/run-03-pass1-claim-retry-strategy-correction-02.md",
-    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/tdd/run-03-pass1-failure-retry-strategy-correction-03.md"
+    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/tdd/run-03-pass1-failure-retry-strategy-correction-03.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/tdd/run-03-pass1-navigation-marker-retry-strategy-correction-04.md"
   ],
-  "checkpoint": {"checkpoint_id":"bmad-12-5-implement-20260830T165700Z-pass1failure","stage":"implement","commit_sha":null,"binding_status":"pending"},
-  "resume": {"stage":"implement","reason":"Failure recording now supports the production retry strategy. Bootstrap one ordinary System Owner through production behavior, then resume the same durable pair after its four existing leases expire.","evidence_path":"specs/014-grounded-llm-wiki-chat-release-evidence/evidence/tdd/run-03-pass1-failure-retry-strategy-correction-03.md"},
-  "updated_at": "2026-08-30T16:57:00.0000000Z"
+  "checkpoint": {"checkpoint_id":"bmad-12-5-implement-20260830T172826Z-pass1marker","stage":"implement","commit_sha":null,"binding_status":"pending"},
+  "resume": {"stage":"implement","reason":"The eight-call navigation marker now supports the production retry strategy. Resume the same durable run-03 pair through production recovery; retain the ordinal-one provider-result rejection as honest evidence.","evidence_path":"specs/014-grounded-llm-wiki-chat-release-evidence/evidence/tdd/run-03-pass1-navigation-marker-retry-strategy-correction-04.md"},
+  "updated_at": "2026-08-30T17:28:26.9804904Z"
 }

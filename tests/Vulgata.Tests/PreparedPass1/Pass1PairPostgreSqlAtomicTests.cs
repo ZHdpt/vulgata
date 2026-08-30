@@ -162,6 +162,54 @@ public sealed class Pass1PairPostgreSqlAtomicTests
     }
 
     [Fact]
+    public async Task PostgreSql17_RetryingExecutionStrategy_PersistsNavigationCallsMarkerWithoutTransactionRejectionAsync()
+    {
+        await using PreparedScanPostgreSqlFixture fixture = await CreateFixtureAsync();
+        await CommitPreparedPairAsync(fixture);
+        await PromoteFixtureScanExecutionsAsync(fixture);
+        await using VulgataDbContext retryingContext = CreateRetryingContext(
+            fixture.ConnectionString);
+        PreparedPass1Store store = new(
+            retryingContext,
+            new PreparedScanning.TestDoubles.FixedTimeProvider(PreparedScanTestHost.FixedUtcNow));
+        PreparedPass1StartResult started = await store.StartAsync(
+            fixture.Authorization,
+            CreateHandoff(fixture.Package),
+            2,
+            CancellationToken.None);
+        PreparedPass1ClaimResult claimed = await store.ClaimNextAsync(
+            started.PairExecutionId!.Value,
+            PreparedScanTestHost.FixedUtcNow,
+            TimeSpan.FromMinutes(5),
+            CancellationToken.None);
+        Assert.Equal(PreparedPass1ClaimOutcome.Claimed, claimed.Outcome);
+        await retryingContext.Pass1NavigationBudgets
+            .Where(value => value.ScanJobExecutionId == claimed.JobId)
+            .ExecuteUpdateAsync(setters => setters.SetProperty(
+                value => value.ToolAttemptCount,
+                8));
+
+        bool persisted = await ((IPass1NavigationCallsMarkerRepairStore)store)
+            .EnsureNavigationCallsMarkerAsync(
+                new(
+                    started.PairExecutionId.Value,
+                    claimed.JobId,
+                    claimed.JobStateVersion,
+                    claimed.PairStateVersion,
+                    claimed.LeaseToken,
+                    claimed.LeaseExpiresAt,
+                    PreparedPass1AuthorizationBinding.Create(fixture.Authorization)),
+                CancellationToken.None);
+
+        Assert.True(persisted);
+        Assert.Equal(
+            1,
+            await retryingContext.Pass1NavigationReceipts.CountAsync(value =>
+                value.ScanJobExecutionId == claimed.JobId &&
+                value.BoundKind == Pass1NavigationBoundKind.Calls));
+    }
+
+    [Fact]
     public async Task PostgreSql17_CompetingClaimers_SeeOnlyCommittedCompleteQueueAndRespectPairLimitAsync()
     {
         await using PreparedScanPostgreSqlFixture fixture = await CreateFixtureAsync();
