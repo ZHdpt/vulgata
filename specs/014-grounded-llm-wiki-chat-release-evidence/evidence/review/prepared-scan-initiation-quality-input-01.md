@@ -7,13 +7,13 @@ This packet is verdict-neutral. The independent reviewer must inspect raw author
 - Story: `12.5-grounded-llm-wiki-chat-and-august-30-release-evidence`
 - Feature: `specs/014-grounded-llm-wiki-chat-release-evidence`
 - Base: `9d626259c0d64173fb5269be6690d6fbe455dd58`
-- Implementation candidate: `d8c5151d362fce6d0bf21dcba30f7939bf7023a6`
-- Workflow binding: `8886c81101b74af737a6ce5f79c290ce0536997f`
+- Implementation candidate: `25b3d13ae46601c407327487471c749ca6ce85e9`
+- Workflow binding: `b8d2c084ee04acd92423142e161b6984195899ff`
 - Accepted scope: `f5690de4e4ca6b188fbeeab54745c12266585601583a05f9ffd81516c088ebd1`
 - Spec SHA-256: `469f72c4e7fc62874e082a7f425351d9f46cf422ae8641d4bee7b64915dd67c0`
 - Plan SHA-256: `6ebb0a525721716bfcbb3dce0d330b4846a6f3cf50c604ceb2bf9b0ed41346a8`
 - Tasks SHA-256: `6117b0b8eeea9e139868e60274a4b3ba1b25d38312555a06fce225f73cc9968e`
-- Convergence report SHA-256: `66a0b3dbda277438e1de533c10e8ceee7d75f4fc1449b95796b14c96f6e7dc35`
+- Convergence attempt-02 report SHA-256: `063b2fbbd5acd447173b3fda948f3708f3402de09817e5eb57796afa7b88b053`
 
 ## Owned implementation and test seams
 
@@ -24,7 +24,7 @@ This packet is verdict-neutral. The independent reviewer must inspect raw author
 - Tests: `PreparedPass1ContractIdentitySourceTests`, `PreparedScanInitiationCoordinatorTests`, and public PostgreSQL `PreparedScanInitiationApiTests` fixture/assertion corrections.
 - Evidence/task state: T025 RED, T029/T030 verification and T025-T030 task completion only.
 
-The exact review diff is `git diff 9d626259c0d64173fb5269be6690d6fbe455dd58..d8c5151d362fce6d0bf21dcba30f7939bf7023a6`.
+The exact review diff is `git diff 9d626259c0d64173fb5269be6690d6fbe455dd58..25b3d13ae46601c407327487471c749ca6ce85e9`.
 
 ## Required review questions
 
@@ -40,13 +40,26 @@ The exact review diff is `git diff 9d626259c0d64173fb5269be6690d6fbe455dd58..d8c
 
 - T025 honest RED: `1 passed / 3 expected RED`; final identity/coordinator GREEN `18/18`.
 - Corrected public replay test `1/1`; ready-runtime/transient retry `2/2`.
-- Combined identity/coordinator/runtime/public API/PostgreSQL/atomic/store: `100 passed, 1 environment-dependent skip, 0 failed`.
+- Combined identity/coordinator/runtime/public API/PostgreSQL/atomic/store after QR-PSI-001 correction: `111 passed, 1 environment-dependent skip, 0 failed`.
 - Track A Scan status/resume and release contracts: `116/116`.
 - Track B retrieval/currentness/packet/citation/conversation/strict streaming/publication/UI/integration: `423/423` after the two default Data Protection cases were rerun with normal host access.
 - Deterministic Prepared Scan/Story 12.2 applicable suites: `70/70`.
 - Web build: `0 errors`; existing package/version warnings only.
 - Official workflow validator: valid. `git diff --check`: clean.
-- Independent convergence: `converged`, zero findings, no appended tasks.
+- Independent convergence attempt 02: `converged`, zero findings, no appended tasks.
+
+## Quality attempt-01 correction
+
+The immutable attempt-01 verdict is
+`reviews/quality-review/prepared-scan-initiation-quality-review-01.json`
+(`REVISE`, finding `QR-PSI-001`). The correction adds executable coordinator
+vectors for null, v1, malformed-hash, wrong-schema and throwing authorities,
+proving zero runtime, fresh-authorization, store and preparation calls. It adds
+executable embedded-resource vectors for missing, duplicate, empty, invalid
+UTF-8 and schema-inconsistent content plus exact decoded-text SHA-256 binding.
+The matrix passed `29/29`; no public contract, prompt or Scan behavior changed.
+Attempt 02 must judge the corrected candidate independently and write a new raw
+verdict without modifying attempt 01.
 
 ## Environment and exclusion facts
 
