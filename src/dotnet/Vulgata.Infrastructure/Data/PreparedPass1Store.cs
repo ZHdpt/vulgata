@@ -1558,140 +1558,144 @@ public sealed class PreparedPass1Store(
 
         try
         {
-            await using var transaction = await context.Database.BeginTransactionAsync(
-                IsolationLevel.ReadCommitted,
-                cancellationToken);
-            context.ChangeTracker.Clear();
-            Pass1PairExecution? pair = await LockPairAsync(pairExecutionId, cancellationToken);
-            if (pair is null)
+            IExecutionStrategy strategy = context.Database.CreateExecutionStrategy();
+            return await strategy.ExecuteAsync(async () =>
             {
-                await transaction.RollbackAsync(CancellationToken.None);
                 context.ChangeTracker.Clear();
-                return ClaimResult(PreparedPass1ClaimOutcome.NotFound);
-            }
+                await using var transaction = await context.Database.BeginTransactionAsync(
+                    IsolationLevel.ReadCommitted,
+                    cancellationToken);
+                Pass1PairExecution? pair = await LockPairAsync(pairExecutionId, cancellationToken);
+                if (pair is null)
+                {
+                    await transaction.RollbackAsync(CancellationToken.None);
+                    context.ChangeTracker.Clear();
+                    return ClaimResult(PreparedPass1ClaimOutcome.NotFound);
+                }
 
-            bool policyDrain = IsPass1PolicyDrain(pair);
-            if (pair.Phase != Pass1PairExecutionPhase.Running ||
-                pair.CircuitState != Pass1CircuitState.Closed && !policyDrain)
-            {
-                await transaction.RollbackAsync(CancellationToken.None);
-                context.ChangeTracker.Clear();
-                return ClaimResult(
-                    PreparedPass1ClaimOutcome.Ineligible,
-                    activeLeaseCount: 0,
-                    concurrencyLimit: pair.ConcurrencyLimit);
-            }
+                bool policyDrain = IsPass1PolicyDrain(pair);
+                if (pair.Phase != Pass1PairExecutionPhase.Running ||
+                    pair.CircuitState != Pass1CircuitState.Closed && !policyDrain)
+                {
+                    await transaction.RollbackAsync(CancellationToken.None);
+                    context.ChangeTracker.Clear();
+                    return ClaimResult(
+                        PreparedPass1ClaimOutcome.Ineligible,
+                        activeLeaseCount: 0,
+                        concurrencyLimit: pair.ConcurrencyLimit);
+                }
 
-            PairJob[] jobs = await LoadPairJobsAsync(pair, cancellationToken);
-            if (policyDrain)
-            {
+                PairJob[] jobs = await LoadPairJobsAsync(pair, cancellationToken);
+                if (policyDrain)
+                {
+                    foreach (PairJob expired in jobs.Where(value =>
+                                 value.Job.State == ScanJobExecutionState.Running &&
+                                 value.Job.LeaseExpiresAt is DateTimeOffset expiresAt &&
+                                 expiresAt < now))
+                    {
+                        expired.Job.Cancel(
+                            expired.Job.StateVersion,
+                            expired.Job.LeaseToken,
+                            "pass1-policy-cancelled",
+                            now);
+                    }
+
+                    DateTimeOffset? nextEligibleAt = jobs
+                        .Where(value => value.Job.State == ScanJobExecutionState.Running)
+                        .Select(value => value.Job.LeaseExpiresAt)
+                        .Where(value => value is not null)
+                        .Min();
+                    int drainingLeaseCount = jobs.Count(value =>
+                        value.Job.State == ScanJobExecutionState.Running);
+                    await context.SaveChangesAsync(cancellationToken);
+                    await transaction.CommitAsync(cancellationToken);
+                    return ClaimResult(
+                        PreparedPass1ClaimOutcome.Ineligible,
+                        activeLeaseCount: drainingLeaseCount,
+                        concurrencyLimit: pair.ConcurrencyLimit,
+                        nextEligibleAt: nextEligibleAt);
+                }
+
                 foreach (PairJob expired in jobs.Where(value =>
                              value.Job.State == ScanJobExecutionState.Running &&
                              value.Job.LeaseExpiresAt is DateTimeOffset expiresAt &&
                              expiresAt < now))
                 {
-                    expired.Job.Cancel(
-                        expired.Job.StateVersion,
-                        expired.Job.LeaseToken,
-                        "pass1-policy-cancelled",
-                        now);
+                    expired.Job.RecoverExpiredLease(expired.Job.StateVersion, now);
                 }
 
-                DateTimeOffset? nextEligibleAt = jobs
-                    .Where(value => value.Job.State == ScanJobExecutionState.Running)
-                    .Select(value => value.Job.LeaseExpiresAt)
-                    .Where(value => value is not null)
-                    .Min();
-                int drainingLeaseCount = jobs.Count(value =>
-                    value.Job.State == ScanJobExecutionState.Running);
+                foreach (PairJob dueRetry in jobs.Where(value =>
+                             value.Job.State == ScanJobExecutionState.RetryScheduled &&
+                             value.Job.NextAttemptAt is DateTimeOffset nextAttemptAt &&
+                             nextAttemptAt <= now))
+                {
+                    dueRetry.Job.RecoverDueRetry(dueRetry.Job.StateVersion, now);
+                }
+
+                int activeLeaseCount = jobs.Count(value =>
+                    value.Job.State == ScanJobExecutionState.Running &&
+                    value.Job.LeaseExpiresAt > now);
+                if (activeLeaseCount >= pair.ConcurrencyLimit)
+                {
+                    DateTimeOffset? nextEligibleAt = jobs
+                        .Where(value =>
+                            value.Job.State == ScanJobExecutionState.Running &&
+                            value.Job.LeaseExpiresAt > now)
+                        .Min(value => value.Job.LeaseExpiresAt);
+                    await context.SaveChangesAsync(cancellationToken);
+                    await transaction.CommitAsync(cancellationToken);
+                    return ClaimResult(
+                        PreparedPass1ClaimOutcome.AtCapacity,
+                        activeLeaseCount: activeLeaseCount,
+                        concurrencyLimit: pair.ConcurrencyLimit,
+                        nextEligibleAt: nextEligibleAt);
+                }
+
+                PairJob? next = jobs
+                    .Where(value => value.Job.State == ScanJobExecutionState.Pending)
+                    .OrderBy(value => value.PairSelectionOrdinal)
+                    .ThenBy(value => value.Job.Id)
+                    .FirstOrDefault();
+                if (next is null)
+                {
+                    DateTimeOffset? nextEligibleAt = jobs
+                        .Select(value => value.Job.State switch
+                        {
+                            ScanJobExecutionState.Running => value.Job.LeaseExpiresAt,
+                            ScanJobExecutionState.RetryScheduled => value.Job.NextAttemptAt,
+                            _ => null,
+                        })
+                        .Where(value => value is not null)
+                        .Min();
+                    await context.SaveChangesAsync(cancellationToken);
+                    await transaction.CommitAsync(cancellationToken);
+                    return ClaimResult(
+                        nextEligibleAt is null
+                            ? PreparedPass1ClaimOutcome.Exhausted
+                            : PreparedPass1ClaimOutcome.AtCapacity,
+                        activeLeaseCount: activeLeaseCount,
+                        concurrencyLimit: pair.ConcurrencyLimit,
+                        nextEligibleAt: nextEligibleAt);
+                }
+
+                Guid leaseToken = Guid.NewGuid();
+                DateTimeOffset leaseExpiresAt = now.Add(leaseDuration);
+                next.Job.AcquireLease(leaseToken, leaseExpiresAt, now);
                 await context.SaveChangesAsync(cancellationToken);
+                await context.Entry(next.Job).ReloadAsync(cancellationToken);
                 await transaction.CommitAsync(cancellationToken);
-                return ClaimResult(
-                    PreparedPass1ClaimOutcome.Ineligible,
-                    activeLeaseCount: drainingLeaseCount,
-                    concurrencyLimit: pair.ConcurrencyLimit,
-                    nextEligibleAt: nextEligibleAt);
-            }
-
-            foreach (PairJob expired in jobs.Where(value =>
-                         value.Job.State == ScanJobExecutionState.Running &&
-                         value.Job.LeaseExpiresAt is DateTimeOffset expiresAt &&
-                         expiresAt < now))
-            {
-                expired.Job.RecoverExpiredLease(expired.Job.StateVersion, now);
-            }
-
-            foreach (PairJob dueRetry in jobs.Where(value =>
-                         value.Job.State == ScanJobExecutionState.RetryScheduled &&
-                         value.Job.NextAttemptAt is DateTimeOffset nextAttemptAt &&
-                         nextAttemptAt <= now))
-            {
-                dueRetry.Job.RecoverDueRetry(dueRetry.Job.StateVersion, now);
-            }
-
-            int activeLeaseCount = jobs.Count(value =>
-                value.Job.State == ScanJobExecutionState.Running &&
-                value.Job.LeaseExpiresAt > now);
-            if (activeLeaseCount >= pair.ConcurrencyLimit)
-            {
-                DateTimeOffset? nextEligibleAt = jobs
-                    .Where(value =>
-                        value.Job.State == ScanJobExecutionState.Running &&
-                        value.Job.LeaseExpiresAt > now)
-                    .Min(value => value.Job.LeaseExpiresAt);
-                await context.SaveChangesAsync(cancellationToken);
-                await transaction.CommitAsync(cancellationToken);
-                return ClaimResult(
-                    PreparedPass1ClaimOutcome.AtCapacity,
-                    activeLeaseCount: activeLeaseCount,
-                    concurrencyLimit: pair.ConcurrencyLimit,
-                    nextEligibleAt: nextEligibleAt);
-            }
-
-            PairJob? next = jobs
-                .Where(value => value.Job.State == ScanJobExecutionState.Pending)
-                .OrderBy(value => value.PairSelectionOrdinal)
-                .ThenBy(value => value.Job.Id)
-                .FirstOrDefault();
-            if (next is null)
-            {
-                DateTimeOffset? nextEligibleAt = jobs
-                    .Select(value => value.Job.State switch
-                    {
-                        ScanJobExecutionState.Running => value.Job.LeaseExpiresAt,
-                        ScanJobExecutionState.RetryScheduled => value.Job.NextAttemptAt,
-                        _ => null,
-                    })
-                    .Where(value => value is not null)
-                    .Min();
-                await context.SaveChangesAsync(cancellationToken);
-                await transaction.CommitAsync(cancellationToken);
-                return ClaimResult(
-                    nextEligibleAt is null
-                        ? PreparedPass1ClaimOutcome.Exhausted
-                        : PreparedPass1ClaimOutcome.AtCapacity,
-                    activeLeaseCount: activeLeaseCount,
-                    concurrencyLimit: pair.ConcurrencyLimit,
-                    nextEligibleAt: nextEligibleAt);
-            }
-
-            Guid leaseToken = Guid.NewGuid();
-            DateTimeOffset leaseExpiresAt = now.Add(leaseDuration);
-            next.Job.AcquireLease(leaseToken, leaseExpiresAt, now);
-            await context.SaveChangesAsync(cancellationToken);
-            await context.Entry(next.Job).ReloadAsync(cancellationToken);
-            await transaction.CommitAsync(cancellationToken);
-            return new(
-                PreparedPass1ClaimOutcome.Claimed,
-                next.Job.Id,
-                leaseToken,
-                next.Job.LeaseExpiresAt!.Value,
-                next.PairSelectionOrdinal,
-                next.Job.ManifestOrdinal,
-                activeLeaseCount + 1,
-                pair.ConcurrencyLimit,
-                next.Job.StateVersion,
-                pair.StateVersion);
+                return new(
+                    PreparedPass1ClaimOutcome.Claimed,
+                    next.Job.Id,
+                    leaseToken,
+                    next.Job.LeaseExpiresAt!.Value,
+                    next.PairSelectionOrdinal,
+                    next.Job.ManifestOrdinal,
+                    activeLeaseCount + 1,
+                    pair.ConcurrencyLimit,
+                    next.Job.StateVersion,
+                    pair.StateVersion);
+            });
         }
         catch (OperationCanceledException)
         {
