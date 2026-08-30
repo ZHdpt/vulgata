@@ -1740,6 +1740,9 @@ public sealed class PreparedPass1Store(
 
         try
         {
+            IExecutionStrategy strategy = context.Database.CreateExecutionStrategy();
+            return await strategy.ExecuteAsync(async () =>
+            {
             await using var transaction = await context.Database.BeginTransactionAsync(
                 IsolationLevel.Serializable,
                 cancellationToken);
@@ -1968,6 +1971,7 @@ public sealed class PreparedPass1Store(
                 continued: pending > 0,
                 isReplay: !changed,
                 pairBindingValid: true);
+            });
         }
         catch (OperationCanceledException)
         {

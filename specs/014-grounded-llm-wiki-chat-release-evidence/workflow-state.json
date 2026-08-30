@@ -6,10 +6,10 @@
   "stage": "implement",
   "preflight": {
     "branch": "demo0831/story-12-5-trackC",
-    "head": "3ea71c3072fabb096f1f49dc981da2f18780aa26",
-    "git_identity_sha256": "1854077ed9bf0c4f189e0d84392cdf301d84ccb5c8043056f087ffa14d81a034",
+    "head": "6feb6284470557cce52f80f21120941c4d1abb0e",
+    "git_identity_sha256": "51cb02946158b3853b666ad274b8fe8b3071764ad69b101e9f2beb8388da5d65",
     "status_sha256": "db9e23137ae75a2f0bf48a8cde5e7807ac5296495c2cd8d263751e64b22d97d8",
-    "observed_at": "2026-08-30T17:28:26.9804904Z"
+    "observed_at": "2026-08-30T17:35:11.0513140Z"
   },
   "artifacts": {
     "spec": {"path":"specs/014-grounded-llm-wiki-chat-release-evidence/spec.md","sha256":"469f72c4e7fc62874e082a7f425351d9f46cf422ae8641d4bee7b64915dd67c0"},
@@ -45,13 +45,13 @@
     "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/quality-review/prepared-scan-initiation-quality-review-03.json",
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/prepared-scan-initiation-implementation-accepted-01.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/track-c-mvp/run-03/release-report.md",
-    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/run-03-t034-t035-01.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/tdd/run-03-pass1-retry-strategy-correction-01.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/tdd/run-03-pass1-claim-retry-strategy-correction-02.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/tdd/run-03-pass1-failure-retry-strategy-correction-03.md",
-    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/tdd/run-03-pass1-navigation-marker-retry-strategy-correction-04.md"
+    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/tdd/run-03-pass1-navigation-marker-retry-strategy-correction-04.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/tdd/run-03-pass1-recovery-retry-strategy-correction-05.md"
   ],
-  "checkpoint": {"checkpoint_id":"bmad-12-5-implement-20260830T172826Z-pass1marker","stage":"implement","commit_sha":null,"binding_status":"pending"},
-  "resume": {"stage":"implement","reason":"The eight-call navigation marker now supports the production retry strategy. Resume the same durable run-03 pair through production recovery; retain the ordinal-one provider-result rejection as honest evidence.","evidence_path":"specs/014-grounded-llm-wiki-chat-release-evidence/evidence/tdd/run-03-pass1-navigation-marker-retry-strategy-correction-04.md"},
-  "updated_at": "2026-08-30T17:28:26.9804904Z"
+  "checkpoint": {"checkpoint_id":"bmad-12-5-implement-20260830T173511Z-pass1recovery","stage":"implement","commit_sha":null,"binding_status":"pending"},
+  "resume": {"stage":"implement","reason":"Production recovery now supports the retry strategy. Restart the bounded host and invoke the same authenticated resume endpoint against the retained run-03 pair.","evidence_path":"specs/014-grounded-llm-wiki-chat-release-evidence/evidence/tdd/run-03-pass1-recovery-retry-strategy-correction-05.md"},
+  "updated_at": "2026-08-30T17:35:11.0513140Z"
 }

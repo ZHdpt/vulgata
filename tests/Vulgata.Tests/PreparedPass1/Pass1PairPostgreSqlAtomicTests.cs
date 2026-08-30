@@ -210,6 +210,40 @@ public sealed class Pass1PairPostgreSqlAtomicTests
     }
 
     [Fact]
+    public async Task PostgreSql17_RetryingExecutionStrategy_RecoversPreparedPairWithoutTransactionRejectionAsync()
+    {
+        await using PreparedScanPostgreSqlFixture fixture = await CreateFixtureAsync();
+        await CommitPreparedPairAsync(fixture);
+        await PromoteFixtureScanExecutionsAsync(fixture);
+        await using VulgataDbContext retryingContext = CreateRetryingContext(
+            fixture.ConnectionString);
+        PreparedPass1Store store = new(retryingContext);
+        PreparedPass1StartResult started = await store.StartAsync(
+            fixture.Authorization,
+            CreateHandoff(fixture.Package),
+            2,
+            CancellationToken.None);
+        Assert.Equal(PreparedPass1StartOutcome.Created, started.Outcome);
+
+        PreparedPass1RecoveryResult recovered = await store.RecoverAsync(
+            started.PairExecutionId!.Value,
+            fixture.Authorization,
+            providerAvailable: true,
+            PreparedScanTestHost.FixedUtcNow.AddMinutes(1),
+            CancellationToken.None);
+
+        Assert.Contains(
+            recovered.Outcome,
+            new[]
+            {
+                PreparedPass1RecoveryOutcome.Continued,
+                PreparedPass1RecoveryOutcome.NoOpReplay,
+            });
+        Assert.Equal(Pass1PairExecutionPhase.Running, recovered.PairState);
+        Assert.True(recovered.PairBindingValid);
+    }
+
+    [Fact]
     public async Task PostgreSql17_CompetingClaimers_SeeOnlyCommittedCompleteQueueAndRespectPairLimitAsync()
     {
         await using PreparedScanPostgreSqlFixture fixture = await CreateFixtureAsync();
