@@ -1,0 +1,83 @@
+{
+  "schema_version": "1.0",
+  "gate": "definition-review",
+  "verdict": "ACCEPT",
+  "reviewed_commit": "5ab54e61e852aed765d9c84a1c1f219c36f77c79",
+  "reviewed_boundary": {
+    "base_commit": "5ab54e61e852aed765d9c84a1c1f219c36f77c79",
+    "candidate_commit": null,
+    "diff_sha256": "ab93ff33cbeed63ca88034476436228971bc6b0962bc4be605245afc49bf8cd4",
+    "artifact_hashes": {
+      "AGENTS.md": "a62e1a9ed71cff0dce44f9d50a68ee61c370d13e27f6e1ebf569a22ab05acf00",
+      ".specify/memory/constitution.md": "1c5e7319a6fa6ef6576e92a97f65db74057baa2226ca4bf28b45d884e7bd8971",
+      "docs/UBIQUITOUS_LANGUAGE.md": "1f1075f98f8cd36c244e3b020bba1bca530bc90f4165469eda0562d763b050e4",
+      "docs/bmad/epics.md": "b5b90c4d8d82d0a69c7dd74df93312674902f170725bbe0ac71bfc4672db1706",
+      "docs/bmad/implementation-artifacts/12-5-grounded-llm-wiki-chat-and-august-30-release-evidence.md": "8480058ef634194103f2eb5f1e3ceebc7efce83b953b97a48af45dbcb8e3618a",
+      "docs/bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md": "e14783b0e8b80f7226f6f4875ddf02135d06523e83e3c82d0d9202e3424b571b",
+      "docs/bmad/planning-artifacts/architecture/august-30-bounded-scanning-design.md": "6fa9bed2bd90e0abad5333b05381638bcf471088480b00ec94229c96f173878c",
+      "docs/bmad/planning-artifacts/sprint-change-proposal-2026-08-31-story-12-5-exact-profile-seed-selection.md": "c5b31c6591f4b1400e18133e0b9b58926bedc1ec1a3df960f3243038ab7e9233",
+      "specs/014-grounded-llm-wiki-chat-release-evidence/spec.md": "6da3e251b217ab8dd8190f84c4cf864b994be1e87090558a29e125f5648ec8b7",
+      "specs/014-grounded-llm-wiki-chat-release-evidence/plan.md": "35766983a07db621efbdef3fa45934b2f66d86514d15deb490b5eca83ca75c43",
+      "specs/014-grounded-llm-wiki-chat-release-evidence/research.md": "2f68c51cd0b89b4743cae67b06f36db9dd436a4e9db5e7952e424fc1c25ed03a",
+      "specs/014-grounded-llm-wiki-chat-release-evidence/data-model.md": "6d273fe2417d505fdd47400a6e364a8646637adf7998d7c9911ba905e511c2fa",
+      "specs/014-grounded-llm-wiki-chat-release-evidence/quickstart.md": "5166abe0f36e7a7c2c964901440e592fc4bc5457d80dc9f88904aa3023f5f009",
+      "specs/014-grounded-llm-wiki-chat-release-evidence/contracts/prepared-scan-initiation.md": "833e55b2eaf41b1666bdd204fd8a628ca05120e0e14149323a63838047e7c055",
+      "specs/014-grounded-llm-wiki-chat-release-evidence/contracts/release-evidence-contract.md": "4fd8505274c7308257977a7af93b0bd5bfd196a9327f35b9ced2ec5d688bd23b",
+      "specs/014-grounded-llm-wiki-chat-release-evidence/tasks.md": "b5da3c9a92611cc918ed871830c80d28f7a690b5f5854b739edd7cf72f4d8f24",
+      "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/plan-review/plan-review-exact-profile-seeds-01.json": "31c848cfdc4e5522b57efb4c9673b13f16569d49d2f38891e810cf4cca2fb49a",
+      "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/planned-change-authorization-exact-profile-seed-selection-03.md": "f04c16379e64a2ac6ef886288ef184140b571edcdfcd781d4abcae07a9b90274"
+    },
+    "owned_paths": [
+      "specs/014-grounded-llm-wiki-chat-release-evidence/tasks.md"
+    ]
+  },
+  "reviewed_artifacts": [
+    "AGENTS.md",
+    ".specify/memory/constitution.md",
+    "docs/UBIQUITOUS_LANGUAGE.md",
+    "docs/bmad/epics.md",
+    "docs/bmad/implementation-artifacts/12-5-grounded-llm-wiki-chat-and-august-30-release-evidence.md",
+    "docs/bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md",
+    "docs/bmad/planning-artifacts/architecture/august-30-bounded-scanning-design.md",
+    "docs/bmad/planning-artifacts/sprint-change-proposal-2026-08-31-story-12-5-exact-profile-seed-selection.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/spec.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/plan.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/research.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/data-model.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/quickstart.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/contracts/prepared-scan-initiation.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/contracts/release-evidence-contract.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/tasks.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/plan-review/plan-review-exact-profile-seeds-01.json",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/planned-change-authorization-exact-profile-seed-selection-03.md",
+    "src/dotnet/Vulgata.Core/DomainServices/PreparedScanPlanner.cs",
+    "src/dotnet/Vulgata.Core/DomainServices/ExactResolutionContracts.cs",
+    "src/dotnet/Vulgata.Infrastructure/CrossRepository/ExactResolutionProfileCatalog.cs",
+    "src/dotnet/Vulgata.Infrastructure/CrossRepository/Profiles/demo-resolution-profile.v1.json",
+    "src/dotnet/Vulgata.Infrastructure/Data/PreparedPass1Store.cs",
+    "src/dotnet/Vulgata.Web/Data/PreparedScanPairBuilder.cs",
+    "src/dotnet/Vulgata.Web/Data/ExactCrossRepositoryResolutionCoordinator.cs",
+    "src/dotnet/Vulgata.Web/Program.cs",
+    "tests/Vulgata.Tests/ExactResolutionProfileTests.cs",
+    "tests/Vulgata.Tests/PreparedScanning/PreparedSelectionPlannerTests.cs",
+    "tests/Vulgata.Tests/PreparedScanning/PreparedScanInitiationApiTests.cs",
+    "tests/Vulgata.Tests/PreparedScanning/PreparedScanReleaseQualificationTests.cs",
+    "tests/Vulgata.Tests/PreparedScanning/PreparedScanProductionLiteralQualificationTests.cs",
+    "tests/Vulgata.Tests/PreparedScanning/PreparedScanBoundaryTests.cs",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1PairPostgreSqlAtomicTests.cs"
+  ],
+  "findings": [
+    {
+      "id": "S125-DR-EPS-001",
+      "severity": "LOW",
+      "category": "ledger-consistency",
+      "artifact": "specs/014-grounded-llm-wiki-chat-release-evidence/tasks.md",
+      "location": "line 11, Regeneration disposition",
+      "affected_requirement": "Current executable task range and preserved-history traceability",
+      "evidence": "The disposition says the former lane is replaced by T036-T061, but the file contains exactly 60 unique contiguous tasks T001-T060, the dependency graph terminates at T060, and every later table and self-review correctly names T036-T060.",
+      "correction_outcome": "At the next tasks metadata maintenance point, replace T036-T061 with T036-T060. The typo creates no missing task, ownership ambiguity, dependency gap, or execution uncertainty and does not block implementation.",
+      "earliest_owner": "tasks"
+    }
+  ],
+  "summary": "ACCEPT. Independent definition review at source HEAD 5ab54e61e852aed765d9c84a1c1f219c36f77c79 binds the corrected spec, complete five-file plan set, prepared-scan contract, accepted plan review/planned-change decision, and tasks SHA-256 b5da3c9a92611cc918ed871830c80d28f7a690b5f5854b739edd7cf72f4d8f24. Read-only SpecKit analysis found 86 unique FRs, 29 unique SCs, 60 unique contiguous tasks T001-T060, 100% explicit FR/SC task coverage, no unresolved placeholder, no Constitution or authority conflict, and no unmapped current requirement. T001-T035 preserve completed history honestly; T036 binds the current implementation entry; T037-T039 require honest REDs at the pure authority/planner, authenticated builder/composition, and disposable-PostgreSQL no-preseed public seams; T040 assigns one exclusive coordinated owner to the exact five Core/Infrastructure/Web/Program production paths; T041-T048 order required-seed, nonmatch-neutrality, matched fail-closed, Pass 1, PostgreSQL, regression, convergence, quality, conditional E2E, and acceptance evidence; and T049-T060 require a fresh isolated run-04, real streaming LLM, restart, screenshots, release E2E, final verification, and completion. The definition preserves existing 20/150 bounds, current Pass 1 FailedPass1 authority, Story 12.4, CodeGraph 1.5/no-CGC composition, Track A/B, authorization/currentness/security, and every prohibited EF/model/migration/catalog/parser/caller-profile/generic-nonmatch boundary. One LOW tasks-ledger typo names T061 despite the actual unambiguous T060 terminus; it is nonblocking. The accepted definition may advance to the root-owned scope-bound implementation authorization and T036; this verdict itself edits no product, lifecycle state, index, or Git history."
+}

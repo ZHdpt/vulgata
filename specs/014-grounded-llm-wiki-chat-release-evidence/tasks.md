@@ -1,24 +1,24 @@
 ---
-description: "Dependency-ordered Story 12.5 Prepared Scan initiation and Track C-MVP release-continuation tasks"
+description: "Dependency-ordered Story 12.5 reviewed exact-profile seed and fresh Track C-MVP release tasks"
 ---
 
-# Tasks: Story 12.5 Prepared Scan Initiation and Release Continuation
+# Tasks: Story 12.5 Reviewed Exact-Profile Seeds and Fresh Release Continuation
 
-**Input**: `spec.md`, accepted corrected `plan.md`, `research.md`, `data-model.md`, `quickstart.md`, `contracts/prepared-scan-initiation.md`, `contracts/release-evidence-contract.md`, `.specify/memory/constitution.md`, `AGENTS.md`, Story 12.5 in `docs/bmad/epics.md`, the August 30 Prepared Scan Sprint Change Proposal, plan-review attempts 01-02, accepted planned-change authorization 01, the existing task/evidence history, and the current source/tests named below.
+**Input**: Corrected `spec.md`, accepted exact-profile `plan.md`, `research.md`, `data-model.md`, `quickstart.md`, `contracts/prepared-scan-initiation.md`, `contracts/release-evidence-contract.md`, `.specify/memory/constitution.md`, `AGENTS.md`, Story 12.5 in `docs/bmad/epics.md`, the August 31 exact-profile seed-selection Sprint Change Proposal, accepted `reviews/plan-review/plan-review-exact-profile-seeds-01.json`, accepted `decisions/planned-change-authorization-exact-profile-seed-selection-03.md`, the immutable run-03 diagnostic report, the existing task/evidence history, and the current source/tests named below.
 
-**Pinned definition**: Source commit `d84788f4d4cb7536dac119c62c60cd77352adeb1`; corrected spec SHA-256 `469f72c4e7fc62874e082a7f425351d9f46cf422ae8641d4bee7b64915dd67c0`; corrected plan SHA-256 `6ebb0a525721716bfcbb3dce0d330b4846a6f3cf50c604ceb2bf9b0ed41346a8`; accepted plan-review `reviews/plan-review/plan-review-prepared-pass1-identity-authority-03.json`; accepted Track A/Track B checkpoint `f292caec427f9844be3c0f65b4cb00a9292080a5`; immutable Story 12.4 dependency `4798b97d9f23aef587829175df7ab7ebc3daf995`.
+**Pinned definition**: Source checkpoint `7fc5bd1b8b787d5ff205378abb9e6a464bf00eb5`; corrected spec SHA-256 `6da3e251b217ab8dd8190f84c4cf864b994be1e87090558a29e125f5648ec8b7`; corrected plan SHA-256 `35766983a07db621efbdef3fa45934b2f66d86514d15deb490b5eca83ca75c43`; accepted plan-review SHA-256 `31c848cfdc4e5522b57efb4c9673b13f16569d49d2f38891e810cf4cca2fb49a`; accepted planned-change scope SHA-256 `c8aea284ced8fdc564bfc505c3eea73bd96f7aec5a56008f3df7a24e73f0eecc`; accepted Track A/Track B checkpoint `f292caec427f9844be3c0f65b4cb00a9292080a5`; immutable Story 12.4 dependency `4798b97d9f23aef587829175df7ab7ebc3daf995`.
 
-**Regeneration disposition**: T001-T024 remain checked and preserved, including the partial T025-T027 chronology as historical evidence only. Old T025 (runtime/Web GREEN), T026 (public all-nine RED), T027 (endpoint/DI GREEN), T028 (verification), T029 (regression), T030 (convergence), T031 (review input), T032 (quality review), and T033 (implementation gate) are replaced in-place by the corrected T025-T033 below; none of their unchecked completion claims transfers. New T025-T029 are the identity-authority RED/Core/Agents/Web/verification slice; new T030-T033 retain only the accepted regression, convergence/review, quality, and implementation-acceptance continuation. Historical run 01/run 02, blocked checkpoints, and the retained run-02 database remain immutable and are never reused or contacted.
+**Regeneration disposition**: T001-T035 remain checked and preserved as immutable completed history. This includes accepted Track A/B, the bounded Prepared Scan initiation entrance, the Prepared Pass 1 v2 identity authority, the public/postgreSQL replay and authorization corrections, all nine accepted run-03 Pass 1 retry-strategy corrections, and the completed run-03 preflight/database bootstrap. Run-03 subsequently completed Prepared Scan and Pass 1 but honestly exposed zero high-value seeds and a fail-closed exact-resolution refusal; its report and every associated database are immutable diagnostic evidence, never release success. The former unchecked T036-T045 release lane is replaced from the earliest affected boundary by T036-T060 below. No old unchecked completion claim transfers.
 
 **Definition-review correction disposition**: The accepted plan-review is `plan-review-prepared-pass1-identity-authority-03.json`. DR-PSI-001 remains closed by T020-T022; DR-PSI-002 by T023-T024 and corrected T028-T029; DR-PSI-003 by T015-T017. This file is the only regenerated task artifact; no upstream artifact, source, workflow state, evidence result, stage, or commit is changed.
 
-**Lifecycle authorization boundary**: The accepted planned-change decision authorizes this task generation and independent definition review only. Before T011 or any source/test/database/product write, an independent definition review must accept this exact `tasks.md`, the root orchestrator must obtain explicit implementation approval bound to the same definition hash, and T010 must pass. No checkbox, earlier Track C approval, expired standing authorization, or completed preflight transfers implementation authority.
+**Lifecycle authorization boundary**: Historical T001-T035 retain their then-valid approvals. For the current correction, accepted decision `story-12-5-planned-change-authorization-exact-profile-seed-selection-03` advances the accepted plan to task generation under `story-12-5-run-03-all-remaining-tasks-approval-02`. Before T037 or any new test/source/database/product write, an independent definition review must accept this exact `tasks.md`, the root orchestrator must persist an implementation-authorization binding to the accepted definition hash, and T036 must pass. The standing authorization covers the bounded correction, a fresh temporary database, and remote LLM egress, but waives no TDD, convergence, review, E2E, isolation, security, or final-verification gate.
 
 **Classification rule**: `EXISTING-EVIDENCE` preserves accepted evidence without manufacturing a RED. `COMPATIBILITY` may be green on first run. `RED` must be observed failing at the named behavioral seam before its paired `GREEN`. `GREEN` is the smallest approved production change that turns its owning RED green. `GATE`, `RUN`, `QUERY`, `RESTART`, `MANUAL`, `REPORT`, and `VERIFY` neither waive later gates nor authorize scope expansion.
 
-**TDD rule**: T011 is the preserved no-preseed public RED. Corrected T025 is the first new identity-authority RED and must run before T026-T028 production GREENs. A direct store test cannot substitute for T011 or the completed public vertical in T028-T029.
+**TDD rule**: T011 and T025 remain preserved historical REDs for the accepted entrance and Prepared Pass 1 identity correction. Current T037-T039 are the non-substitutable exact-profile authority/planner, authenticated builder/composition, and disposable-PostgreSQL no-preseed REDs. They must fail for the missing reviewed-profile seed authority before the sole coordinated production GREEN T040. A direct planner test, SQLite substitute, pre-seeded Document/Edge, or run-03 observation cannot satisfy T039/T043.
 
-**Hard boundaries**: No task may change `VulgataDbContext.cs`, `Data/Configurations/*`, migrations, `VulgataDbContextModelSnapshot`, Story 12.4, accepted Track A/B behavior/tests, general/single/N-Repository Scan behavior, selection/dispatch/retry algorithms, Worker/Pass/Document/Edge/Uncertainty/Chat/LLM behavior, `CodeGraphContextProvider`, `RepositoryProfilingCoordinator`, `/scan-runs`, project/package files, Git index/history, retained databases, or the historical release-envelope machinery. No external analysis may execute inside the initiation transaction. Any need for those changes is `BLOCKED` and returns to plan; it is not an implementation improvisation.
+**Hard boundaries**: No task may change `VulgataDbContext.cs`, `Data/Configurations/*`, migrations, `VulgataDbContextModelSnapshot`, any Story 12.4 contract/resolver/store, `ExactResolutionProfile`, `ExactResolutionProfileCatalog`, its embedded resource/parser, accepted Track A/B or Prepared Scan initiation/Pass 1 behavior, generic selection for a nonmatching pair, the existing 20-per-Repository or 150-pair bounds, Pass 1 failure/store policy, caller request/profile/path/alias/ref/revision authority, general/single/N-Repository Scan behavior, Worker/Pass 2/Chat/LLM behavior, `CodeGraphContextProvider`, `RepositoryProfilingCoordinator`, `/scan-runs`, project/package files, Git index/history, retained databases, or the historical release-envelope machinery. Production source may contain no reviewed sample Repository name, path, endpoint, symbol, or line literal. No external analysis may execute inside the initiation transaction. Any need for those changes is `BLOCKED` and returns to plan; it is not implementation improvisation.
 
 ## Immutable accepted-evidence ledger
 
@@ -185,29 +185,105 @@ description: "Dependency-ordered Story 12.5 Prepared Scan initiation and Track C
 
 ---
 
-## Phase 15: User Story 5 - Corrected Prepared Scan and one combined real release run (Priority: P1)
-
-**Goal**: Enter through the corrected endpoint, prove real Prepared Scan first, then continue the accepted Pass/relationship/Chat/restart evidence path.
-
-**Independent Test**: One host candidate and the fresh run-03 database produce the required two-Repository initiation/Manifests, 50-150 File Code Units, terminal Pass 1/Pass 2, exact Cross-Repository evidence, twelve real Chat rows, same-database restart, and five redacted screenshots.
-
-- [ ] T036 [US5] Classification: RUN — Start host-run Vulgata against only the T035 database, authenticate, and submit the corrected existing `POST /api/systems/{systemId}/prepared-scans` request with exactly the two ordinary Repositories and pinned refs/Profiled Revisions. Query one complete initiation tuple and two real approved Prepared Scan Manifests before Pass 1; repeat the request after publication and prove the same Runs/executions/coordination/Manifests, 200 replay, zero duplicate rows, and zero external preparation rerun. Only after real Prepared Scan succeeds, execute the accepted Pass 1, exact Cross-Repository Resolution, and Pass 2 surfaces to terminal state. Record real CodeGraph 1.5/JDT-LS/safe XML and sanitized commands/exits/durations in the run-03 report; never call `/scan-runs`, CGC, the historical profiling coordinator, or change downstream Scan behavior (FR-039, FR-042-FR-043, FR-049-FR-052, FR-062, FR-068, FR-073-FR-077, SC-010-SC-011, SC-018-SC-019, SC-023-SC-025).
-- [ ] T037 [US5] Classification: QUERY — Against only the run-03 database, record bounded read-only rows for the complete initiation tuple; two Manifests/revisions/tool bindings; 50-150 File Code Units; terminal Pass 1/Pass 2 jobs; high-value seeds selected/succeeded/failed with failed zero and selected equal succeeded; ordinary failure budget; source-anchored current Code Logic and Business Logic Documents; one accepted decision-bound exact Cross-Repository REFERENCES Edge; one honest Uncertainty; at least three Business Logic Documents; one published Cross-Repository Flow Group; and pre-restart Document/Edge/Flow Group identities/counts in the run-03 report. Use actual mappings, never insert/repair/recompute missing facts, and do not claim operator timing proves transaction ordering (FR-039, FR-043, FR-049-FR-051, FR-077, SC-010-SC-014).
-- [ ] T038 [US5] Classification: MANUAL — Before the first provider call, pin exactly `q01`-`q12` from `tests/Vulgata.Tests/ReleaseGate/Story125/Fixtures/story125-question-corpus.json`; execute every case through the authenticated Business/IT page and real configured `OpenAiCompatibleChatProviderStreamingTransport` with fresh `ChatConversationState` per row, topical lineage only for q01-q03, and q12 limited to `prompt-boundary-only`. Record all twelve rows, accepted/cited material-claim counts, usefulness, unauthorized disclosure, streaming, render duration, fingerprint when exposed, Tier 1 references, and limitations in the run-03 report; do not replace failures or count deterministic rescue/fake/non-streaming output (FR-037-FR-039, FR-044, FR-053-FR-060, FR-062, SC-008-SC-009, SC-013, SC-015-SC-018).
-- [ ] T039 [US5] Classification: RESTART — Record pre-restart process/database identity, stop only Vulgata, retain PostgreSQL and the run-03 database, restart with the same configuration, re-authenticate, open persisted wiki content, and submit one new grounded Chat request; exclude transient Conversation State survival from the claim and record closed results in the run-03 report (FR-039, FR-045, FR-053, SC-012-SC-013, SC-015).
-- [ ] T040 [US5] Classification: QUERY — Rerun read-only DocumentVersion, DocumentEdge, and FlowGroup identity/count observations after T039, compare with T037, and record persisted access, data-loss disposition, and zero restart-caused duplicate publication; never correct a product/result failure in the database (FR-039, FR-043, FR-045, FR-049-FR-051, SC-011-SC-014).
-- [ ] T041 [US5] Classification: MANUAL — Capture at least one real repository-relative screenshot at `specs/014-grounded-llm-wiki-chat-release-evidence/evidence/track-c-mvp/run-03/screenshots/scan.png`, `business-chat.png`, `it-chat-source-anchors.png`, `cross-repository-result.png`, and `post-restart-wiki-chat.png`; manually redact/reject secrets, credentials, connection strings, absolute host paths, fake Backup B state, retained-run state, or unrelated candidate output, and record category/time/real-state/redaction results without screenshot automation or hashes (FR-039, FR-046, FR-061-FR-062, SC-013, SC-018).
-- [ ] T042 [US5] Classification: REPORT — Complete `specs/014-grounded-llm-wiki-chat-release-evidence/evidence/track-c-mvp/run-03/release-report.md` against `contracts/release-evidence-contract.md` with exactly one truthful disposition; candidate/revisions/tool/provider/database identities; ordered sanitized commands/exits; all required query observations; twelve fresh-state rows when provider execution occurred; q12's bounded oracle; restart; five screenshot links for a pass; failures and limitations. `passed` requires every Scan/output/Chat/restart/screenshot threshold and no forbidden change (FR-039-FR-047, FR-053, FR-060-FR-062, FR-077, SC-009-SC-018).
+**Historical checkpoint**: T034-T035 and all later observations recorded in `evidence/track-c-mvp/run-03/release-report.md` are immutable diagnostic evidence. The run-03 database, report, commands, Pass 1 Documents, audits, and failed exact-resolution outcome may be inspected read-only but must never be repaired, migrated, restarted, deleted, or reused by T036 onward.
 
 ---
 
-## Phase 16: Independent E2E, final verification, and completion
+## Phase 15: Current exact-profile definition and implementation-entry gate
 
-**Purpose**: Apply remaining schema-v3 gates to the same accepted implementation candidate and run-03 report.
+**Purpose**: Bind the accepted exact-profile plan, independent definition verdict, and standing implementation authority before the first current RED.
 
-- [ ] T043 Classification: VERIFY — After T042, run the required independent E2E gate against the combined host-run evidence and only economical same-candidate browser/API checks needed for authenticated real Prepared Scan, real Scan state, Business/IT accepted-only Chat render, exact Cross-Repository result, and post-restart wiki/Chat access; do not create a second orchestration run or substitute mocks, and write the decision/execution evidence to `specs/014-grounded-llm-wiki-chat-release-evidence/evidence/e2e/track-c-mvp-run-03.md` (FR-039-FR-046, FR-053-FR-062, FR-063-FR-077, SC-009-SC-025).
-- [ ] T044 Classification: VERIFY — After T033 and T043 accept, run final focused/full-applicable tests, PostgreSQL initiation acceptance, Web build, `git diff --check`, exact hash inventory, candidate/Story 12.4 ancestry, run-03 database/revision/restart bindings, report checklist, five screenshot/redaction checks, no-secret scan, default CodeGraph 1.5/no-CGC composition, and every forbidden-path guard; write the pinned truthful verdict to `specs/014-grounded-llm-wiki-chat-release-evidence/evidence/verification/track-c-mvp-final-03.md` (FR-039-FR-078, SC-009-SC-025).
-- [ ] T045 Classification: GATE — Only after T044 verifies a passed run-03 report and every review/E2E/verification gate accepts the same candidate, bind completion in `specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/track-c-mvp-completion-03.md`; then only the root orchestrator may update Story 12.5 in `docs/bmad/implementation-artifacts/sprint-status.yaml` and workflow-owned state. Never mark done for blocked, failed, not-run, unreviewed, uncheckpointed, reused-database, or partial evidence (FR-039, FR-048-FR-052, FR-062-FR-078, SC-013-SC-025).
+- [ ] T036 Classification: GATE — Verify branch `demo0831/story-12-5-trackC`, accepted source checkpoint `7fc5bd1b8b787d5ff205378abb9e6a464bf00eb5`, spec/plan/review/planned-change hashes pinned above, accepted `plan-review-exact-profile-seeds-01.json`, accepted `planned-change-authorization-exact-profile-seed-selection-03.md`, a fresh independent `ACCEPT` at `specs/014-grounded-llm-wiki-chat-release-evidence/reviews/definition-review/definition-review-exact-profile-seeds-01.json`, and a root-owned implementation-authorization binding at `specs/014-grounded-llm-wiki-chat-release-evidence/decisions/implementation-approval-exact-profile-seed-selection-03.md`; record branch/HEAD/hashes/ancestry/owned diff, the immutable run-03 boundary, and the exclusive owners below in `specs/014-grounded-llm-wiki-chat-release-evidence/evidence/preflight/exact-profile-seed-entry-01.md`, stopping before T037 on any mismatch (FR-048-FR-052, FR-077-FR-086, SC-013-SC-014, SC-026-SC-029).
+
+---
+
+## Phase 16: User Story 5 - Exact-profile authority and planner RED (Priority: P1)
+
+**Goal**: Observe the missing closed server authority and 1,100 planner tier before production changes.
+
+**Independent Test**: A complete exact persisted-name/full-ref/Profiled-Revision match derives the canonical required Repository/path/role union and every required segment survives a saturated top-20 seed set; Repository order reversal is stable, while any complete nonmatch produces the byte-identical generic plan, audits, and fingerprint.
+
+- [ ] T037 [US5] Classification: RED — Add `tests/Vulgata.Tests/PreparedScanning/ReviewedExactProfileSeedAuthorityTests.cs` and extend `tests/Vulgata.Tests/PreparedScanning/PreparedSelectionPlannerTests.cs` first. Assert one-to-one exact activation from two distinct server-observed Repository IDs, ordinal persisted names, safe full refs, and lowercase Profiled Revisions; canonical consumer/provider-declaration/provider-implementation/unsupported-owner Repository-path-role derivation; request-order independence; catalog-unavailable closure; score 1,100 as `DirectBusinessEvidence`; all required split segments winning the unchanged top-20-per-Repository and 150-pair plan; and a nonmatching name/ref/revision/pair changing zero candidates, scores, order, audits, selection, or fingerprint. Observe compile/behavior RED for the absent Core port/evidence value/Infrastructure authority and record it in `specs/014-grounded-llm-wiki-chat-release-evidence/evidence/tdd/exact-profile-seed-authority-red-01.md` before any current `src/dotnet/` edit (US5 scenario 10; FR-079-FR-083, FR-085-FR-086, SC-026-SC-028).
+
+---
+
+## Phase 17: User Story 5 - Builder/public/composition RED (Priority: P1)
+
+**Goal**: Pin matched fail-closed behavior, nonmatch neutrality, and closed production composition at the authenticated Prepared Scan seam.
+
+**Independent Test**: The same no-preseed authenticated endpoint used by the accepted entrance promotes every matched required segment, but publishes neither Manifest when any matched requirement is absent, filtered, unsafe, non-contained, hash-invalid, duplicate/multiply mapped, split-invalid, ambiguous, or over the unchanged bound.
+
+- [ ] T038 [US5] Classification: RED — Extend `tests/Vulgata.Tests/PreparedScanning/PreparedScanInitiationApiTests.cs`, `PreparedScanReleaseQualificationTests.cs`, `PreparedScanProductionLiteralQualificationTests.cs`, and `PreparedScanBoundaryTests.cs` before production edits. Require matched promotion before CodeGraph expansion/`PreparedScanPlanner.Plan`; all segments of every required path at score 1,100; deterministic Manifest/audit/package fingerprints under candidate and Repository reversal; byte-identical nonmatch output; bounded `prepared-scan-reviewed-profile-seed-incomplete` rejection before either Manifest/store commit for missing, filtered, unsafe, non-contained, empty/hash-invalid, duplicate, ambiguous, exact-split-invalid, more-than-20-required-segment, and final-selection omission cases; bounded unavailable mapping for catalog integrity failure; exactly one default server-owned authority; no public/request profile/path/role/score/selector field; and no reviewed sample Repository/path/endpoint/symbol/line literal in current production source. Preserve accepted initiation/replay/authorization and no-CGC assertions, observe the current matched-path RED, and record it in `specs/014-grounded-llm-wiki-chat-release-evidence/evidence/tdd/exact-profile-seed-builder-red-01.md` (FR-079-FR-083, FR-085-FR-086, SC-026-SC-028).
+
+---
+
+## Phase 18: User Story 5 - No-preseed PostgreSQL exact-outcome RED (Priority: P1)
+
+**Goal**: Prove the missing behavior at the production-composition vertical rather than substituting pure planner or pre-seeded Story 12.4 fixtures.
+
+**Independent Test**: A fresh disposable PostgreSQL database begins only with an authenticated authorized user, one ordinary System, exactly two ordinary Repositories at the reviewed refs/revisions, provider/runtime configuration, and accessible source; the public endpoint must reach Prepared Manifests, terminal accepted Pass 1, the unchanged accepted exact decision/current REFERENCES Edge, and one honest Uncertainty without pre-seeded lifecycle/content rows or direct repair.
+
+- [ ] T039 [US5] Classification: RED — Add `tests/Vulgata.Tests/PreparedScanning/ReviewedExactProfileSeedPostgreSqlTests.cs` using only the accepted `PreparedScanInitiationPostgreSqlFixture` and a newly created lowercase `vulgata_story125_*` database per test boundary. Pre-seed no Scan Run, Pre-Scan Result, Scan Execution, coordination, Manifest, File Code Unit, Document, DocumentEdge, exact decision, Edge, or Uncertainty; enter only through authenticated `POST /api/systems/{systemId}/prepared-scans`; use production composition with bounded deterministic test doubles only for external CodeGraph/JDT-LS/Worker provider execution; assert both Repositories contribute every required selected score-1,100 segment, all required jobs succeed, exact resolution creates the accepted current exact REFERENCES Edge and honest Uncertainty, and a deliberately failed required job reaches existing `FailedPass1` with zero exact-resolution/Pass 2 start. Observe the matched release-pair RED without changing `PreparedPass1Store`, Story 12.4, or database rows, and record it in `specs/014-grounded-llm-wiki-chat-release-evidence/evidence/tdd/exact-profile-seed-postgresql-red-01.md` (FR-076-FR-086, SC-019, SC-024-SC-029).
+
+---
+
+## Phase 19: User Story 5 - Coordinated minimal production GREEN (Priority: P1)
+
+**Goal**: Turn T037-T039 green with one closed contract/value, one read-only adapter, and the smallest builder/DI composition.
+
+**Independent Test**: The exact same RED expectations pass without modifying persistence, profile/catalog/parser/resource, Story 12.4, Pass 1 policy, generic nonmatching behavior, bounds, public inputs, or accepted earlier paths.
+
+- [ ] T040 [US5] Classification: GREEN — After T037-T039 REDs, one exclusive coordinated production owner makes the minimal change across only `src/dotnet/Vulgata.Core/DomainServices/IReviewedExactProfileSeedAuthority.cs`, `src/dotnet/Vulgata.Core/DomainServices/PreparedScanPlanner.cs`, new `src/dotnet/Vulgata.Infrastructure/CrossRepository/ReviewedExactProfileSeedAuthority.cs`, `src/dotnet/Vulgata.Web/Data/PreparedScanPairBuilder.cs`, and shared `src/dotnet/Vulgata.Web/Program.cs`. Add immutable matched/nonmatching/unavailable Core values and closed roles; add `PreparedBusinessEvidence.ReviewedExactResolutionProfile`, score 1,100, direct-evidence mapping, and candidate validation; derive required paths only through the unchanged injected `ExactResolutionProfileCatalog`; activate only on the complete exact server-observed identity tuple; promote every exact bounded segment; validate all matched required sources before CodeGraph expansion/plan/commit; register exactly one server-owned authority; and map the two bounded failure outcomes. Do not edit EF/DbContext/configurations/migrations/snapshot, Story 12.4, `ExactResolutionProfile`/catalog/resource/parser, `PreparedPass1Store`/policy, accepted initiation/Pass 1 corrections, CGC/legacy profiling, caller DTOs, generic nonmatching values, bounds, or production sample literals (FR-079-FR-086, SC-026-SC-029).
+
+---
+
+## Phase 20: Focused verification and required-seed gate
+
+**Purpose**: Verify deterministic selection, matched failures, neutral generic behavior, existing Pass 1 authority, and the no-preseed vertical independently.
+
+- [ ] T041 [P] Classification: VERIFY — Run T037/T038 focused authority/planner/builder/public suites plus existing `PreparedSelectionPlannerTests`, `PreparedFileCodeUnitAndSelectionTests`, `PreparedScanAtomicReplayTests`, and `PreparedScanReleaseQualificationTests`; record exact matched/reversal/nonmatch vectors, prior-vs-current neutral fingerprints, every matched failure case before commit, 1,100 direct-evidence audit rows, unchanged 20/150 constants, default DI, no caller authority, no production sample literals, and RED/GREEN chronology in `specs/014-grounded-llm-wiki-chat-release-evidence/evidence/verification/exact-profile-seed-selection-01.md` (depends T040; FR-079-FR-083, FR-085-FR-086, SC-026-SC-028).
+- [ ] T042 [P] Classification: COMPATIBILITY — Extend only `tests/Vulgata.Tests/PreparedPass1/Pass1PairPostgreSqlAtomicTests.cs` with score-1,100 Manifest entries to prove the existing direct-score `>=400`, top-20-per-Manifest authority counts every reviewed segment as required, one required failure produces `FailedPass1`, and zero exact-resolution/Pass 2 activation occurs; run it with existing high-value/ordinary-failure tests and record unchanged store/policy hashes plus results in `specs/014-grounded-llm-wiki-chat-release-evidence/evidence/verification/exact-profile-required-pass1-gate-01.md`. Do not edit `PreparedPass1Store.cs`, its retry/reconciliation/failure policy, hosted services, or Worker behavior (depends T040; FR-084, FR-086, SC-026, SC-029).
+- [ ] T043 Classification: VERIFY — Run `ReviewedExactProfileSeedPostgreSqlTests` against a fresh lowercase disposable PostgreSQL 17 database, proving no lifecycle/content pre-seed, production endpoint/DI composition, two approved Manifests, required score-1,100 segments from both Repositories, all required Pass 1 success, unchanged exact decision/current REFERENCES Edge/honest Uncertainty, deliberate required-failure closure, no direct database repair, and cleanup of only the test-owned disposable; record database identity, exact commands/results, and source/row preconditions in `specs/014-grounded-llm-wiki-chat-release-evidence/evidence/verification/exact-profile-seed-postgresql-01.md`. SQLite, direct planner calls, run-03, pre-seeded Documents/Edges, and Story 12.4 provisioner fixtures cannot substitute (depends T041-T042; FR-076-FR-086, SC-019, SC-024-SC-029).
+
+---
+
+## Phase 21: Regression, convergence, quality, conditional E2E, and technical acceptance
+
+**Purpose**: Accept the same bounded candidate before any fresh release database or remote provider run.
+
+- [ ] T044 Classification: VERIFY — After T043, run surrounding accepted Prepared Scan initiation/replay/authorization/identity/PostgreSQL/CodeGraph 1.5/JDT-LS/XML suites, Prepared Pass 1 retry/reconciliation/production-capacity suites, Story 12.4 exact-resolution/Pass 2 suites, Track A/B Scan/Chat/security/streaming/corpus suites, Web build, `git diff --check`, and automated forbidden-path/source-literal/default-DI/nonmatch-golden guards. Record exact counts, environmental exclusions, owned diff, and hashes in `specs/014-grounded-llm-wiki-chat-release-evidence/evidence/verification/exact-profile-seed-regression-01.md`; any generic behavior, bound, Pass 1 policy, Story 12.4, EF/model, CGC/legacy, public-input, or production-literal change is a return-to-plan contradiction (FR-001-FR-086, SC-001-SC-029).
+- [ ] T045 Classification: VERIFY — Run independent convergence against the accepted corrected spec/plan/tasks and T037-T044 evidence; append only genuinely unbuilt in-scope work, otherwise produce `specs/014-grounded-llm-wiki-chat-release-evidence/evidence/convergence/exact-profile-seed-selection-01.md` and verdict-neutral input `specs/014-grounded-llm-wiki-chat-release-evidence/evidence/review/exact-profile-seed-quality-input-01.md` with candidate/base/diff, RED/GREEN chronology, FR-079-FR-086/SC-026-SC-029 matrix, neutral-golden hashes, PostgreSQL exact-outcome proof, preserved boundaries, and external exclusions (depends T044).
+- [ ] T046 Classification: GATE — Dispatch fresh independent quality review of the converged exact-profile definition and implementation; only the reviewer may write `specs/014-grounded-llm-wiki-chat-release-evidence/reviews/quality-review/exact-profile-seed-quality-review-01.json`. `REVISE` returns only to the owning approved TDD slice, `BLOCKED` preserves an honest checkpoint, and only `ACCEPT` advances (depends T045; FR-079-FR-086, SC-026-SC-029).
+- [ ] T047 Classification: VERIFY — After T046 `ACCEPT`, make and execute the conditional economical E2E decision against the same candidate: use the authenticated endpoint plus disposable PostgreSQL production composition to verify exact matched seed selection, no-preseed Prepared Scan, required Pass 1 gate, accepted exact Edge/Uncertainty, and no-CGC/no-later-stage leakage; real CodeGraph CLI 2/2 may supplement but never replace the product vertical. Write the decision/execution evidence to `specs/014-grounded-llm-wiki-chat-release-evidence/evidence/e2e/exact-profile-seed-selection-01.md`; do not start the release run or call the remote LLM here (depends T046; FR-076-FR-086, SC-019, SC-024-SC-029).
+- [ ] T048 Classification: GATE — After T047 accepts, rerun focused exact-profile/PostgreSQL/Pass 1 filters, Web build, diff check, authority hashes, forbidden-path guards, candidate/Story 12.4 ancestry, and immutable run-03 checks; bind the technically accepted correction in `specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/exact-profile-seed-implementation-accepted-01.md`. No fresh release database, host process, remote provider call, or screenshot begins before this checkpoint (depends T047; FR-048-FR-052, FR-077-FR-086, SC-013-SC-014, SC-026-SC-029).
+
+---
+
+## Phase 22: User Story 5 - Fresh guarded run-04 and one combined real release run (Priority: P1)
+
+**Goal**: Execute one fresh candidate/database lane after exact-profile technical acceptance, using real CodeGraph 1.5, JDT-LS, safe XML, remote streaming LLM, application restart, and manually redacted screenshots.
+
+**Independent Test**: A never-before-used guarded lowercase database starts from ordinary records and the corrected endpoint, retains every reviewed required seed, reaches the exact Edge and honest Uncertainty, serves grounded Business/IT Chat through the configured real streaming provider, and preserves wiki/Chat access after one application-process restart.
+
+- [ ] T049 [US5] Classification: GATE — Create new `specs/014-grounded-llm-wiki-chat-release-evidence/evidence/track-c-mvp/run-04/release-report.md` with truthful `running` or sanitized `blocked` disposition; pin the T048 candidate, exact two real Java/XML Repository stable identities/full refs/Profiled Revisions, clean owned state, PostgreSQL 17/Docker, CodeGraph 1.5 hashes, Java 21, JDT-LS identity/hash, non-secret configured remote streaming-provider identity/credential presence/network readiness, authenticated authorization readiness, and browser/manual-screenshot capability. Prove run-04 is not run-03 and preserve every run-01/run-02/run-03 report/database unchanged; never print secrets, connection strings, credentials, tokens, source, reviewed production sample literals, or absolute host paths (FR-039, FR-041-FR-047, FR-052, FR-062, FR-077, FR-085, SC-010, SC-013-SC-014, SC-018, SC-026-SC-029).
+- [ ] T050 [US5] Classification: GATE — Generate a fresh unique lowercase `vulgata_story125_*` name through the accepted preconnection guard, prove it differs from every retained and test-owned database and invokes zero product connection/host/query calls before acceptance, then create only that database with the approved administrator mechanism and production-bootstrap one Administrator, one authorized ordinary System, provider assignment, and exactly two ordinary Repository records at the reviewed refs/revisions. Pre-seed no Scan Run, Pre-Scan Result, Scan Execution, coordination, Manifest, File Code Unit, Document, Edge, exact decision, or Uncertainty; record sanitized purpose/owner/version/commands/exits in the run-04 report and never contact, clone, migrate, repair, delete, or reuse run-03 (depends T049; FR-041, FR-047, FR-051-FR-052, FR-062, FR-076-FR-077, SC-013-SC-014, SC-018-SC-019, SC-029).
+- [ ] T051 [US5] Classification: RUN — Start host-run Vulgata against only the T050 database, authenticate, and submit the corrected existing `POST /api/systems/{systemId}/prepared-scans` request with exactly the two ordinary Repositories and reviewed refs/Profiled Revisions. Query one complete initiation tuple and two approved real Manifests before Pass 1; prove every reviewed required Repository/path/segment is selected at direct score 1,100, high-value, and inside unchanged 20/150 bounds; repeat after publication and prove identical replay with no duplicate or analysis rerun. Only after these predicates pass, execute accepted Pass 1, exact Cross-Repository Resolution, and Pass 2 to terminal state; any required-seed failure must stop at existing `FailedPass1`. Record real CodeGraph 1.5/JDT-LS/safe XML plus sanitized commands/exits/durations in the run-04 report; never use `/scan-runs`, CGC, legacy profiling, direct database repair, or run-03 state (depends T050; FR-039, FR-042-FR-043, FR-049-FR-052, FR-062, FR-068, FR-073-FR-086, SC-010-SC-011, SC-018-SC-019, SC-023-SC-029).
+- [ ] T052 [US5] Classification: QUERY — Against only the run-04 database, record bounded read-only rows for the complete initiation tuple; two Manifests/revisions/tool bindings; 50-150 File Code Units; each reviewed required Repository/path/segment selected with score 1,100; terminal Pass 1/Pass 2 jobs; required/high-value selected/succeeded/failed counts with required failed zero; ordinary failure budget; source-anchored current Code Logic and Business Logic Documents; one accepted decision-bound exact Cross-Repository REFERENCES Edge; one honest Uncertainty; at least three Business Logic Documents; one published Cross-Repository Flow Group; and pre-restart Document/Edge/Flow Group identities/counts. Use actual mappings, never insert/repair/recompute missing facts, and treat a missing predicate as failed/blocked evidence (depends T051; FR-039, FR-043, FR-049-FR-051, FR-077, FR-081-FR-085, SC-010-SC-014, SC-026, SC-029).
+- [ ] T053 [US5] Classification: MANUAL — Before the first remote provider call, pin exactly `q01`-`q12` from `tests/Vulgata.Tests/ReleaseGate/Story125/Fixtures/story125-question-corpus.json`; execute every case through the authenticated Business/IT page and the real configured remote `OpenAiCompatibleChatProviderStreamingTransport` with fresh `ChatConversationState` per row, topical lineage only for q01-q03, and q12 limited to `prompt-boundary-only`. Record all twelve rows, accepted/cited material-claim counts, usefulness, unauthorized disclosure, mandatory streaming, render duration, fingerprint when exposed, Tier 1 references, provider availability, and limitations in the run-04 report; sanitize egress evidence and do not replace failures or count deterministic rescue/fake/non-streaming output (depends T052; FR-037-FR-039, FR-044, FR-053-FR-060, FR-062, SC-008-SC-009, SC-013, SC-015-SC-018).
+- [ ] T054 [US5] Classification: RESTART — Record pre-restart process/database/candidate/revision identity, stop only Vulgata, retain PostgreSQL and the run-04 database, restart with identical configuration, re-authenticate, open persisted wiki content, and submit one new grounded Chat request through the real configured streaming provider; exclude transient Conversation State survival from the claim and record closed results in the run-04 report. Never start or contact run-03 (depends T053; FR-039, FR-045, FR-053, FR-077, SC-012-SC-015).
+- [ ] T055 [US5] Classification: QUERY — Rerun read-only DocumentVersion, DocumentEdge, FlowGroup, exact decision/Edge, Uncertainty, required-seed audit and publication identity/count observations after T054, compare with T052, and record persisted access, data-loss disposition, stable Profiled Revision bindings, and zero restart-caused duplicate publication; never correct a product/result failure in the database (depends T054; FR-039, FR-043, FR-045, FR-049-FR-051, FR-077, FR-083-FR-084, SC-011-SC-014, SC-026, SC-029).
+- [ ] T056 [US5] Classification: MANUAL — Capture at least one real repository-relative screenshot at `specs/014-grounded-llm-wiki-chat-release-evidence/evidence/track-c-mvp/run-04/screenshots/scan.png`, `business-chat.png`, `it-chat-source-anchors.png`, `cross-repository-result.png`, and `post-restart-wiki-chat.png`; manually redact/reject secrets, credentials, connection strings, absolute host paths, fake Backup B state, any run-03 state, or unrelated candidate output, and record category/time/real-state/redaction results without screenshot automation or hashes (depends T055; FR-039, FR-046, FR-061-FR-062, FR-077, SC-013, SC-018).
+- [ ] T057 [US5] Classification: REPORT — Complete `specs/014-grounded-llm-wiki-chat-release-evidence/evidence/track-c-mvp/run-04/release-report.md` against `contracts/release-evidence-contract.md` with exactly one truthful disposition; candidate/revisions/tool/provider/database identities; ordered sanitized commands/exits; exact-profile required-seed rows; all required query observations; twelve fresh-state remote-provider rows when provider execution occurred; q12's bounded oracle; restart; five screenshot links for a pass; failures and limitations. `passed` requires every Scan/seed/exact-output/Chat/restart/screenshot threshold, no forbidden change, and explicit proof that no run-03 database or artifact supplied the result (depends T056; FR-039-FR-047, FR-053, FR-060-FR-062, FR-077-FR-086, SC-009-SC-018, SC-026-SC-029).
+
+---
+
+## Phase 23: Independent release E2E, final verification, and completion
+
+**Purpose**: Apply remaining schema-v3 gates to the same accepted implementation candidate and run-04 report.
+
+- [ ] T058 Classification: VERIFY — After T057, run the required independent release E2E gate against the run-04 combined host evidence and only economical same-candidate browser/API checks needed for authenticated real Prepared Scan, reviewed required seeds, real Scan state, Business/IT accepted-only remote-streaming Chat render, exact Cross-Repository result, and post-restart wiki/Chat access; do not create a second orchestration run, contact run-03, or substitute mocks, and write the decision/execution evidence to `specs/014-grounded-llm-wiki-chat-release-evidence/evidence/e2e/track-c-mvp-run-04.md` (FR-039-FR-046, FR-053-FR-062, FR-063-FR-086, SC-009-SC-029).
+- [ ] T059 Classification: VERIFY — After T048 and T058 accept, run final focused/full-applicable tests, exact-profile/PostgreSQL no-preseed acceptance, required Pass 1 gate, Web build, `git diff --check`, exact hash inventory, candidate/Story 12.4 ancestry, immutable run-03 checks, run-04 database/revision/restart bindings, report checklist, five screenshot/redaction checks, no-secret/sample-literal scan, neutral golden fingerprints, default sole seed authority, CodeGraph 1.5/no-CGC composition, and every forbidden-path guard; write the pinned truthful verdict to `specs/014-grounded-llm-wiki-chat-release-evidence/evidence/verification/track-c-mvp-final-04.md` (FR-039-FR-086, SC-009-SC-029).
+- [ ] T060 Classification: GATE — Only after T059 verifies a passed run-04 report and every definition/TDD/convergence/quality/E2E/final-verification gate accepts the same candidate, bind completion in `specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/track-c-mvp-completion-04.md`; then only the root orchestrator may update Story 12.5 in `docs/bmad/implementation-artifacts/sprint-status.yaml` and workflow-owned state. Never mark done for blocked, failed, not-run, unreviewed, uncheckpointed, run-03 reuse/repair, generic drift, missing required seed, reused database, or partial evidence (FR-039, FR-048-FR-052, FR-062-FR-086, SC-013-SC-029).
 
 ---
 
@@ -215,43 +291,52 @@ description: "Dependency-ordered Story 12.5 Prepared Scan initiation and Track C
 
 ### Phase dependencies
 
-1. T001-T009 are immutable completed evidence; they authorize nothing current.
-2. Fresh definition review and explicit implementation approval precede `T010`; `T010 -> T011`.
-3. `T011 -> T012 -> T013 -> T014` establishes the public RED and Core identity/contract.
-4. `T014 -> T015 -> T016 -> T017` establishes PostgreSQL atomicity/replay before Web integration.
-5. `T017 -> T018 -> T019`; exact-tuple builder/handoff behavior precedes application orchestration.
-6. `T019 -> T020 -> T021 -> T022` updates and verifies every accepted caller of the removed tuple-less seam before application orchestration proceeds.
-7. T018-T024 are preserved completed/existing-evidence history bound to the retained checkpoint; they authorize no rerun and are not dependencies for new production edits.
-8. Fresh definition acceptance plus newly bound implementation approval -> T025; `T025 -> T026 -> T027 -> T028 -> T029`. T025 is the corrected identity/layering RED, T026/T027 are only Core/Agents identity GREEN, T028 is the exclusive Web/rechecker composition GREEN, and the original T011 public expectation must turn GREEN at T028.
-9. `T029 -> T030 -> T031 -> T032 -> T033`; no real external release run begins before implementation acceptance.
-10. `T033 -> T034 -> T035 -> T036 -> T037 -> T038 -> T039 -> T040 -> T041 -> T042` is one fresh candidate/database/report lane.
-11. `T042 -> T043 -> T044 -> T045`; task completion never substitutes for independent gate acceptance.
-12. Any authority contradiction or external blocker follows the named blocked protocol and prevents all dependent tasks.
+1. T001-T035 are immutable completed evidence. They preserve accepted Track A/B, Prepared Scan initiation, Prepared Pass 1 corrections, and run-03 history; they authorize no current source write or release reuse.
+2. Fresh definition acceptance plus the scope-bound implementation authorization precedes `T036`; `T036 -> T037`.
+3. T037, T038, and T039 are ordered current REDs at pure authority/planner, authenticated builder/composition, and disposable-PostgreSQL exact-outcome seams. All three must fail for the missing matched-profile authority before T040.
+4. `T037 -> T038 -> T039 -> T040`; T040 is the sole coordinated production GREEN and no other task may concurrently edit its five owned production paths.
+5. After T040, T041 and T042 may run in parallel because they own disjoint test/evidence paths; `T041 + T042 -> T043` proves the production-composition vertical.
+6. `T043 -> T044 -> T045 -> T046 -> T047 -> T048`; surrounding regression, convergence, independent quality, conditional economical E2E, and technical acceptance precede all release work.
+7. `T048 -> T049 -> T050 -> T051 -> T052 -> T053 -> T054 -> T055 -> T056 -> T057` is one fresh run-04 candidate/database/report lane. Run-03 is never a dependency or input.
+8. `T057 -> T058 -> T059 -> T060`; release E2E, final verification, and completion never substitute for earlier technical gates.
+9. Any authority contradiction or external blocker follows the named blocked protocol and prevents all dependent tasks.
 
 ### Dependency graph
 
 ```text
-historical completed evidence T001-T009
-                 |
-definition review -> implementation approval -> T010 -> T011 public RED
-                                                        |
-                                                        v
-T012 -> T013 -> T014 -> T015 -> T016 -> T017 -> T018 -> T019 -> T020 -> T021 -> T022
-                                                                                      |-> T023 --|
-                                                                                      |-> T024 --|-> T025 -> T026 -> T027 -> T028 -> T029
-                                                                                                                                |
-                                                                                                                                v
-T030 -> T031 -> T032 -> T033 -> T034 -> T035 -> T036 -> T037 -> T038 -> T039 -> T040 -> T041 -> T042 -> T043 -> T044 -> T045
+historical accepted implementation/evidence T001-T033
+historical immutable run-03 entry/evidence T034-T035
+                         |
+definition ACCEPT + authorization binding -> T036
+                         |
+                         v
+T037 authority/planner RED -> T038 builder/public RED -> T039 PostgreSQL exact-outcome RED
+                                                                    |
+                                                                    v
+                                                         T040 coordinated GREEN
+                                                           /                 \
+                                                        T041               T042
+                                                           \                 /
+                                                                    T043
+                                                                     |
+T044 -> T045 -> T046 quality -> T047 conditional E2E -> T048 technical acceptance
+                                                                     |
+                                                                     v
+T049 -> T050 -> T051 -> T052 -> T053 remote LLM -> T054 -> T055 -> T056 -> T057
+                                                                     |
+                                                                     v
+                                                       T058 -> T059 -> T060
 ```
 
 ### Preserved evidence boundary
 
 ```text
-T018-T024 are checked existing evidence and are not rerun. Fresh definition
-acceptance plus implementation approval starts the executable T025 boundary.
+T001-T035 are checked history and are not regenerated or rerun by this task
+definition. Fresh exact-profile definition acceptance plus its implementation
+binding starts the executable T036 boundary. Run-03 remains read-only forever.
 ```
 
-All other current tasks are serial because they depend on an observed RED, share production composition, use one PostgreSQL/candidate/report lane, or are ordered acceptance gates.
+Only T041/T042 are parallel: they follow the same GREEN but own disjoint suites. All other current tasks are serial because they depend on an observed RED, share production composition, use one PostgreSQL/candidate/report lane, or are ordered acceptance gates.
 
 ---
 
@@ -268,8 +353,14 @@ All other current tasks are serial because they depend on an observed RED, share
 | Core Identity Owner (T026) | `src/dotnet/Vulgata.Core/DomainServices/PreparedPass1ContractIdentity.cs`; `IPreparedPass1ContractIdentitySource.cs` | Dependency-free value/port only; no EF, prompt text, provider, dispatcher, transaction, persistence, or public DTO. |
 | Agents Identity Owner (T027) | `src/dotnet/Vulgata.Agents/WorkerExecution/EmbeddedPreparedPass1ContractIdentitySource.cs` | Must not edit `WorkerAgentDispatchIdentitySource.cs`, prompts, dispatcher/provider/tools, retry, or scheduling. |
 | Exclusive Web/Composition Owner (T028) | `src/dotnet/Vulgata.Web/Data/PreparedScanInitiationCoordinator.cs`; `PreparedScanEndpoints.cs`; `Program.cs`; existing runtime/rechecker paths | One coordinated owner only; no legacy recovery source, Web hardcode, DTO, CGC, `/scan-runs`, or later-stage change. |
-| Verification/review owners (T029-T033, T043-T045) | Exact evidence/review/checkpoint paths named in each task | Source changes only through the owning approved TDD task; root alone owns state/staging/commit. |
-| Run-03 Evidence Owner (T034-T042) | `evidence/track-c-mvp/run-03/release-report.md`; five named files under `run-03/screenshots/`; optional blocked checkpoint 03 | Product/database rows observed only; no repair/insertion/deletion or retained-run mutation. |
+| Historical verification/review owners (T029-T033) | Existing evidence/review/checkpoint paths named in those completed tasks | Accepted history; no regeneration or source write. |
+| Immutable Run-03 Evidence Owner (T034-T035 and later diagnostic observations) | Existing `evidence/track-c-mvp/run-03/release-report.md` and its database/artifacts | Read-only/no-contact authority; no repair, migration, restart, clone, deletion, or release reuse. |
+| Exact-Profile Test Owners (T037-T039) | `tests/Vulgata.Tests/PreparedScanning/ReviewedExactProfileSeedAuthorityTests.cs`; `PreparedSelectionPlannerTests.cs`; `PreparedScanInitiationApiTests.cs`; `PreparedScanReleaseQualificationTests.cs`; `PreparedScanProductionLiteralQualificationTests.cs`; `PreparedScanBoundaryTests.cs`; new `ReviewedExactProfileSeedPostgreSqlTests.cs` | Production untouched until all three REDs are recorded; catalog/resource/parser, Story 12.4, Pass 1 store/policy, EF/model, retained databases forbidden. |
+| Exclusive Exact-Profile Production Owner (T040) | `src/dotnet/Vulgata.Core/DomainServices/IReviewedExactProfileSeedAuthority.cs`; `PreparedScanPlanner.cs`; `src/dotnet/Vulgata.Infrastructure/CrossRepository/ReviewedExactProfileSeedAuthority.cs`; `src/dotnet/Vulgata.Web/Data/PreparedScanPairBuilder.cs`; `src/dotnet/Vulgata.Web/Program.cs` | One coordinated owner only. No concurrent shared-file edit; no catalog/resource/parser, caller profile/path, sample literal, generic nonmatch, bound, Pass 1 policy, EF/model, Story 12.4, CGC/legacy change. |
+| Required-Seed Compatibility Owner (T042) | `tests/Vulgata.Tests/PreparedPass1/Pass1PairPostgreSqlAtomicTests.cs`; named verification evidence | `src/dotnet/Vulgata.Infrastructure/Data/PreparedPass1Store.cs`, retry/reconciliation/failure policy, Worker and hosted services read-only. |
+| Technical verification/review owners (T041-T048) | Exact evidence/review/checkpoint paths named in each task | Source changes only through the owning approved TDD task; root alone owns state/staging/commit. |
+| Run-04 Evidence Owner (T049-T057) | `evidence/track-c-mvp/run-04/release-report.md`; five named files under `run-04/screenshots/`; optional run-04 blocked checkpoint | Product/database rows observed only; no repair/insertion/deletion, no run-03 contact, and no second release lane. |
+| Final E2E/verification owners (T058-T060) | Exact run-04 E2E, verification, and checkpoint paths named in each task | Same candidate only; root alone owns workflow state, staging, commit, and completion. |
 
 All workers are not alone in the codebase: they must re-observe shared files, preserve unrelated edits, never revert another owner's work, and stop on ownership overlap. Root alone stages, commits, updates workflow state, or exercises user gates.
 
@@ -291,19 +382,39 @@ All workers are not alone in the codebase: they must re-observe shared files, pr
 
 ---
 
+## User Story 5 exact-profile scenario traceability
+
+| Exact-profile/release outcome | Primary RED/GREEN/verification owners | Success evidence |
+| --- | --- | --- |
+| Complete exact pair/ref/revision match derives all four closed source roles | T037 -> T040 -> T041/T043 | FR-079-FR-081; SC-026 |
+| Repository/candidate order remains deterministic | T037-T038 -> T040 -> T041/T043 | FR-083; SC-026-SC-028 |
+| Nonmatching pair/ref/revision is byte-identically neutral | T037-T038 -> T040 -> T041/T044 | FR-080, FR-086; SC-028 |
+| Missing/filtered/unsafe/non-contained/duplicate/ambiguous/split-invalid/over-bound required evidence publishes zero Manifest | T038-T039 -> T040 -> T041/T043 | FR-082; SC-027 |
+| Every required segment is score 1,100, selected, and high-value inside unchanged 20/150 bounds | T037-T039 -> T040 -> T041/T043/T051-T052 | FR-081-FR-083; SC-026 |
+| Required Pass 1 failure uses existing `FailedPass1` and blocks exact work | T039 -> T040 -> T042-T043 | FR-084, FR-086; SC-029 |
+| Default DI is server-owned with no caller profile/path or production sample literals | T038 -> T040 -> T041/T044/T059 | FR-079, FR-085-FR-086; SC-028 |
+| No-preseed PostgreSQL vertical reaches unchanged exact Edge and honest Uncertainty | T039 -> T040 -> T043/T047/T051-T052 | FR-076-FR-086; SC-029 |
+| Fresh release proof uses remote streaming LLM, restart, screenshots, and never run-03 | T049-T057 -> T058-T060 | FR-039-FR-047, FR-053-FR-062, FR-077; SC-009-SC-018 |
+
+---
+
 ## Requirement and success-criterion coverage
 
 | Boundary | Requirements | Success criteria | Owner |
 | --- | --- | --- | --- |
-| Immutable Track A/B and support/preflight evidence | FR-001-FR-062 | SC-001-SC-018 | Ledger, T001-T009, T029 |
+| Immutable Track A/B and support/preflight evidence | FR-001-FR-062 | SC-001-SC-018 | Ledger, T001-T009, T029-T035, T044 |
 | Request, identity, fresh authorization | FR-063-FR-064, FR-066, FR-069-FR-070 | SC-019-SC-022 | T011-T014, T023-T025, T028-T029 |
 | Atomic tuple, transaction and concurrency | FR-065-FR-067, FR-069-FR-073 | SC-019-SC-023, SC-025 | T015-T019, T028-T029 |
 | Exact existing-pipeline handoff, tuple-seam compatibility, and phase-aware recovery | FR-068-FR-073 | SC-019-SC-023 | T018-T022, T028-T029 |
 | Production composition and zero later-stage effects | FR-074-FR-076 | SC-024-SC-025 | T023-T029 |
-| Fresh real-run continuation | FR-077 | SC-009-SC-014, SC-018-SC-025 | T034-T044 |
-| Explicit non-goals/backlog guard | FR-048-FR-052, FR-061-FR-062, FR-073-FR-075, FR-078 | SC-013-SC-018, SC-024-SC-025 | Every phase; especially T029-T033 and T044 |
+| Immutable run-03 diagnostic boundary and fresh continuation | FR-077 | SC-009-SC-014, SC-018-SC-029 | T034-T036, T048-T060 |
+| Sole exact-profile authority and complete activation | FR-079-FR-081, FR-085 | SC-026, SC-028 | T037-T041, T043-T044 |
+| Matched fail-closed required sources and deterministic unchanged bounds | FR-082-FR-083, FR-086 | SC-026-SC-028 | T037-T041, T043-T044 |
+| Existing required Pass 1 gate and exact outcome | FR-084, FR-086 | SC-026, SC-029 | T039-T043, T047, T051-T052 |
+| Fresh real release, remote LLM, restart, screenshots, final proof | FR-039-FR-047, FR-053-FR-062, FR-077-FR-086 | SC-009-SC-018, SC-026-SC-029 | T049-T060 |
+| Explicit non-goals/backlog guard | FR-048-FR-052, FR-061-FR-062, FR-073-FR-075, FR-078, FR-085-FR-086 | SC-013-SC-018, SC-024-SC-029 | Every phase; especially T040-T048 and T059 |
 
-All FR-063-FR-078, SC-019-SC-025, and all nine US6 scenarios have an owning RED, GREEN, and verification path. FR-001-FR-062 and SC-001-SC-018 remain either immutable accepted behavior plus regression or exact run-03 release work; none is silently reimplemented.
+All FR-063-FR-086, SC-019-SC-029, all nine US6 scenarios, and every reviewed exact-profile outcome have an owning RED/GREEN/verification or preserved accepted path. FR-001-FR-062 and SC-001-SC-018 remain immutable accepted behavior plus surrounding regression and the fresh run-04 release lane; run-03 remains diagnostic history and none is silently reimplemented.
 
 ---
 
@@ -311,21 +422,21 @@ All FR-063-FR-078, SC-019-SC-025, and all nine US6 scenarios have an owning RED,
 
 ### MVP-first sequence
 
-1. Accept this definition and obtain explicit implementation approval.
-2. Observe the public no-preseed RED.
-3. Implement Core identity/contract, PostgreSQL atomicity, exact-tuple handoff, accepted-caller compatibility, shared health/initiation runtime identity, Web authorization, and public composition in that order.
-4. Prove all nine US6 scenarios and surrounding regression.
-5. Converge, independently review, and checkpoint the implementation candidate.
-6. Start a fresh guarded run 03; prove Prepared Scan before any Pass 1 continuation.
-7. Finish one Scan + Chat + restart + screenshot report, E2E, final verification, and root-owned completion checkpoint.
+1. Accept this exact task definition and bind the standing implementation authority to its hash.
+2. Observe T037-T039 RED at the authority/planner, authenticated builder/public, and PostgreSQL no-preseed exact-outcome seams.
+3. Use one coordinated owner for the minimal Core/Infrastructure/Web/Program GREEN.
+4. Prove matched failure cases, deterministic unchanged bounds, byte-identical nonmatch neutrality, existing required Pass 1 failure behavior, and the production-composition exact Edge/Uncertainty vertical.
+5. Run surrounding regression, convergence, independent quality review, conditional economical E2E, and technical acceptance.
+6. Create fresh guarded run-04 and a new database only after T048; prove reviewed required seeds before Pass 1 and never contact run-03.
+7. Finish one real Scan + remote streaming Chat + application restart + screenshot report, release E2E, final verification, and root-owned completion checkpoint.
 
 ### Failure boundaries
 
-- A migration/model/Story 12.4/CGC/legacy/general-Scan/later-stage need is `BLOCKED`; return to plan without editing upstream authority or inventing a workaround.
+- Any need for EF/DbContext/configuration/migration/snapshot, Story 12.4, exact profile/catalog/resource/parser, caller profile/path, production sample literal, bound increase, generic nonmatch change, Pass 1 policy/store, CGC/legacy/general-Scan, or Track A/B rewrite is `BLOCKED`; return to plan without inventing a workaround.
 - A PostgreSQL test cannot fall back to SQLite and must use only its own disposable lowercase `vulgata_story125_*` database.
-- A run-03 external prerequisite failure is sanitized blocked evidence, not permission to reuse run 02, fake evidence, or rerun unchanged.
+- Run-03 is immutable diagnostic evidence. A run-04 external prerequisite failure is sanitized blocked evidence, not permission to contact/reuse/repair run-03, fake evidence, or repeat an unchanged expensive run.
 - A missing release row is a product/result failure; never insert, repair, delete, or reinterpret database state.
-- Production implementation approval does not authorize Git staging/commit, database cleanup, external egress beyond separately approved run prerequisites, or Story completion.
+- Standing implementation/egress authority does not authorize Git staging/commit, retained-database cleanup, secret disclosure, scope expansion, or Story completion.
 
 ---
 
@@ -333,20 +444,21 @@ All FR-063-FR-078, SC-019-SC-025, and all nine US6 scenarios have an owning RED,
 
 | Lens | Result | Evidence |
 | --- | --- | --- |
-| Accepted-definition coverage | PASS | Corrected spec/plan/research/data model/quickstart/contracts, Story 12.5, Sprint Change Proposal, plan reviews, authorization, existing tasks, current source/tests, and truthful blocked run evidence are represented. |
-| Completed-evidence preservation | PASS | T001-T024 are checked/preserved, with T018-T024 explicitly bound to the retained checkpoint as existing evidence; run 01/run 02 and blocked checkpoints remain immutable. No prior unchecked task or success claim transfers. |
-| Public-seam TDD honesty | PASS | T011 is the preserved endpoint/PostgreSQL no-preseed RED; corrected T025 is the identity-authority RED before T026-T028 Core/Agents/Web GREENs, and T029 verifies the same public seam. |
-| Dependency ordering | PASS | Public RED -> Core -> Infrastructure -> exact handoff -> accepted-caller compatibility -> shared runtime/auth -> endpoint/DI -> regression -> convergence/review/acceptance -> fresh run 03 -> E2E/final verification. |
-| Exact ownership | PASS | Every source/test/evidence file has one owner; the four old-seam suites belong only to T020-T022, and Program/endpoints/shared integration is serialized under one exclusive Program/Prepared Scan Integration Owner. Root retains state, staging, commit, and user gates. |
-| Tuple-seam compatibility | PASS | T020-T022 name all four accepted callers, update only immutable-tuple fixture/composition calls and graph assertions, preserve behavioral assertions, and prohibit a tuple-less production overload. |
-| Prepared Pass 1 identity authority | PASS | T025 tests v2/hash/schema and hostile fail-closed ordering plus unchanged v1 recovery; T026 owns the Core value/port; T027 owns the sole Agents implementation; T028 replaces only Web composition. |
-| PostgreSQL acceptance | PASS | T011/T015/T017/T028/T029 require fresh lowercase `vulgata_story125_*` disposable databases, independent connections, identical/competing races, rollback, cancellation, and lock timeout; SQLite is explicitly insufficient. Pre-commit failure proves zero rows, while ambiguous post-commit acknowledgement proves unavailable plus exact-retry convergence without a false absence claim. |
-| Authorization/security | PASS | Initial, fresh pre-store, and pre-publication checks are distinct. Administrator/SystemOwner/assignment/Repository revocation is missing-equivalent with zero store calls/writes and no protected detail. |
-| Replay/recovery | PASS | Fixed identity vectors, mismatch dimensions, retryable pre-publication replay, prepared/advanced no-analysis recovery, and corrupt/legacy conflict are explicit. |
-| Composition/side effects | PASS | Default CodeGraph 1.5/JDT-LS and no-CGC composition are tested; Worker/Pass/Document/Edge/Uncertainty/Chat/LLM effects are counted as zero; transaction visibility/order is observable. |
-| Scope exclusions | PASS | No migration/DbContext/configuration/snapshot, Story 12.4, Track A/B, general/single/N-Repository Scan, later-stage behavior, fake evidence, retained-database deletion, or external analysis in transaction is authorized. |
-| Release continuation | PASS | Run 03 is fresh, starts only after implementation acceptance, enters the corrected endpoint from ordinary records, and retains every current Track C Scan/query/Chat/restart/screenshot/report gate. |
-| FR/SC/scenario traceability | PASS | Coverage tables own FR-063-FR-078, SC-019-SC-025, and each of nine US6 scenarios while preserving FR-001-FR-062/SC-001-SC-018 authority. |
-| Checklist format | PASS | All 45 tasks use sequential `T###`, checkbox, optional `[P]`, required story label in story phases, classification, exact paths, and dependency-aware descriptions. |
+| Accepted-definition coverage | PASS | Corrected spec/plan/research/data model/quickstart/prepared-scan contract, August 31 Sprint Change Proposal, accepted exact-profile plan review and planned-change decision, current source/tests, run-03 diagnostic report, and fresh-run obligations are represented. |
+| Completed-evidence preservation | PASS | T001-T035 remain checked. Track A/B, Prepared Scan initiation, Prepared Pass 1 identity/transaction corrections, and run-03 diagnostic evidence are immutable; no unchecked old T036-T045 success claim transfers. |
+| Earliest affected boundary | PASS | T036 is the first current gate after run-03 exposed the seed-definition gap. No accepted earlier implementation is regenerated or relabeled as current RED/GREEN. |
+| Public-seam TDD honesty | PASS | T037-T039 must fail first at pure authority/planner, authenticated builder/public, and PostgreSQL no-preseed exact-outcome seams. T040 is the sole production GREEN; direct planner tests and SQLite cannot replace T039/T043. |
+| Dependency ordering | PASS | Definition/authorization -> three REDs -> one coordinated GREEN -> deterministic/failure/Pass 1/PostgreSQL verification -> regression -> convergence -> quality -> conditional E2E -> technical acceptance -> fresh run-04 -> release E2E/final verification. |
+| Exact ownership | PASS | T040 alone owns all five coordinated production paths. Test, Pass 1 compatibility, review, run-04 evidence, and final gate owners are disjoint; root retains state, staging, commit, and user gates. |
+| Exact activation and neutrality | PASS | Complete ordinal persisted-name/full-ref/Profiled-Revision matching, one-to-one Repository binding, canonical role/path derivation, reversal determinism, catalog-unavailable closure, and byte-identical nonmatch behavior are explicit. |
+| Matched failure coverage | PASS | Missing, filtered, unsafe, non-contained, empty/hash-invalid, duplicate/multiply mapped, ambiguous, split-invalid, >20 required segments, selection omission, and unavailable authority all reject before either Manifest commits. |
+| Deterministic bounds | PASS | Score 1,100 is the sole new closed tier; existing 20-per-Repository and 150-pair bounds, ordering, audits, package fingerprints, Manifests, and neutral golden outputs are pinned without increases. |
+| Existing Pass 1 authority | PASS | T042 proves score 1,100 flows through unchanged direct-score `>=400`/top-20 mandatory accounting and existing `FailedPass1`; `PreparedPass1Store`/policy/Worker/hosted-service edits are forbidden. |
+| PostgreSQL exact outcome | PASS | T039/T043 begin without lifecycle/content rows and drive the production endpoint through required seeds and Pass 1 to unchanged exact decision/current REFERENCES Edge and honest Uncertainty; Story 12.4 fixtures, row repair, SQLite, and run-03 cannot substitute. |
+| Composition and security | PASS | Exactly one server-owned default authority, zero caller profile/path/role/score/selector fields, zero production sample literals, CodeGraph 1.5/JDT-LS/no-CGC composition, existing authorization/replay checks, and no later-stage preparation leakage are guarded. |
+| Scope exclusions | PASS | EF/DbContext/configuration/migration/snapshot, Story 12.4, profile/catalog/resource/parser, generic nonmatch, bounds, Pass 1 policy, caller authority, production samples, CGC/legacy/general Scan, and accepted Track A/B/initiation/Pass 1 rewrites are explicitly forbidden. |
+| Release continuation | PASS | Run-04 begins only after T048, uses a new guarded database, proves required seeds before Pass 1, invokes the real remote streaming provider, restarts only Vulgata, captures five redacted screenshots, and never contacts or reuses run-03. |
+| FR/SC/source traceability | PASS | Coverage tables own FR-079-FR-086 and SC-026-SC-029 while preserving FR-001-FR-078/SC-001-SC-025; every corrected source authority has at least one RED/GREEN/verification or immutable-preservation task. |
+| Checklist format | PASS | All 60 tasks are sequential, use checkbox + `T###`, include `[P]` only for disjoint T041/T042 work, carry required `[US5]/[US6]` labels in story phases, and name exact source/test/evidence paths. |
 
-**Self-review conclusion**: `TASKS_READY_FOR_INDEPENDENT_DEFINITION_REVIEW_ATTEMPT_04`. Raw findings `DR-PSI-IA-003-001` and `DR-PSI-IA-003-002` are addressed at the tasks owner: T018-T024 are checked existing evidence, T025 is the layering/identity RED, T026/T027 are only Core/Agents GREEN, and T028-T030 explicitly remove and guard Web EF access. This task definition authorizes no production implementation by itself; the next action is the independent definition review, followed by the explicit implementation-approval pause.
+**Self-review conclusion**: `TASKS_READY_FOR_INDEPENDENT_DEFINITION_REVIEW_EXACT_PROFILE_SEEDS_ATTEMPT_01`. T001-T035 remain accepted history; T036 is the earliest current gate; T037-T039 supply honest REDs; T040 is the single coordinated minimal GREEN; T041-T048 prove deterministic/fail-closed/neutral/Pass 1/PostgreSQL/regression/review/E2E acceptance; and T049-T060 require a fresh run-04 with remote LLM, restart, screenshots, and final verification. This task definition authorizes no production implementation by itself; the next action is independent definition review and the root-owned implementation-authorization binding already permitted by the standing decision.
