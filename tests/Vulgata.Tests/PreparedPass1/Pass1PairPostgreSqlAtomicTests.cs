@@ -129,6 +129,39 @@ public sealed class Pass1PairPostgreSqlAtomicTests
     }
 
     [Fact]
+    public async Task PostgreSql17_RetryingExecutionStrategy_RecordsClaimFailureWithoutTransactionRejectionAsync()
+    {
+        await using PreparedScanPostgreSqlFixture fixture = await CreateFixtureAsync();
+        await CommitPreparedPairAsync(fixture);
+        await PromoteFixtureScanExecutionsAsync(fixture);
+        await using VulgataDbContext retryingContext = CreateRetryingContext(
+            fixture.ConnectionString);
+        PreparedPass1Store store = new(retryingContext);
+        PreparedPass1StartResult started = await store.StartAsync(
+            fixture.Authorization,
+            CreateHandoff(fixture.Package),
+            2,
+            CancellationToken.None);
+        PreparedPass1ClaimResult claimed = await store.ClaimNextAsync(
+            started.PairExecutionId!.Value,
+            PreparedScanTestHost.FixedUtcNow,
+            TimeSpan.FromMinutes(5),
+            CancellationToken.None);
+        Assert.Equal(PreparedPass1ClaimOutcome.Claimed, claimed.Outcome);
+
+        PreparedPass1FailureResult failed = await store.RecordFailureAsync(
+            started.PairExecutionId.Value,
+            claimed.JobId,
+            claimed.JobStateVersion,
+            claimed.LeaseToken,
+            ScanJobFailureCategory.JobPermanent,
+            PreparedScanTestHost.FixedUtcNow.AddSeconds(1),
+            CancellationToken.None);
+
+        Assert.Equal(PreparedPass1FailureOutcome.Recorded, failed.Outcome);
+    }
+
+    [Fact]
     public async Task PostgreSql17_CompetingClaimers_SeeOnlyCommittedCompleteQueueAndRespectPairLimitAsync()
     {
         await using PreparedScanPostgreSqlFixture fixture = await CreateFixtureAsync();

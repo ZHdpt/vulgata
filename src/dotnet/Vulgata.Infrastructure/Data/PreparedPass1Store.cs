@@ -2014,10 +2014,13 @@ public sealed class PreparedPass1Store(
 
         try
         {
-            await using var transaction = await context.Database.BeginTransactionAsync(
-                IsolationLevel.Serializable,
-                cancellationToken);
-            context.ChangeTracker.Clear();
+            IExecutionStrategy strategy = context.Database.CreateExecutionStrategy();
+            return await strategy.ExecuteAsync(async () =>
+            {
+                await using var transaction = await context.Database.BeginTransactionAsync(
+                    IsolationLevel.Serializable,
+                    cancellationToken);
+                context.ChangeTracker.Clear();
             Pass1PairExecution? pair = await LockPairAsync(pairExecutionId, cancellationToken);
             if (pair is null)
             {
@@ -2231,13 +2234,14 @@ public sealed class PreparedPass1Store(
                 await context.SaveChangesAsync(cancellationToken);
             }
             await transaction.CommitAsync(cancellationToken);
-            return FailureResult(
-                outcome,
-                failureCategory,
-                failureCode,
-                pair,
-                job,
-                ordinaryFailureCount: ordinaryFailures);
+                return FailureResult(
+                    outcome,
+                    failureCategory,
+                    failureCode,
+                    pair,
+                    job,
+                    ordinaryFailureCount: ordinaryFailures);
+            });
         }
         catch (OperationCanceledException)
         {
