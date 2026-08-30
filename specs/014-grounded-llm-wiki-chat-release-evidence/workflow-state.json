@@ -3,13 +3,13 @@
   "bmad_story_key": "12-5-grounded-llm-wiki-chat-and-august-30-release-evidence",
   "bmad_epic_key": "12",
   "feature_directory": "specs/014-grounded-llm-wiki-chat-release-evidence",
-  "stage": "plan-review",
+  "stage": "tasks",
   "preflight": {
     "branch": "demo0831/story-12-5-trackC",
-    "head": "34c6cb8e3d2ea0858cf8a2711aa17d46526df1b9",
-    "git_identity_sha256": "f8cfbfb0ca91f5a410e6be4571c1885f4f96fbdfeed763f66baced479487808d",
+    "head": "8b914ba514ae87d435ec31c0784cdda4c0b474bc",
+    "git_identity_sha256": "bd56e78834bd508d431785612e1ab887c803d9e7ea94494f3d1b11452d60a1b4",
     "status_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-    "observed_at": "2026-08-30T02:01:31.4103972Z"
+    "observed_at": "2026-08-30T02:04:56.4056655Z"
   },
   "artifacts": {
     "spec": {"path":"specs/014-grounded-llm-wiki-chat-release-evidence/spec.md","sha256":"469f72c4e7fc62874e082a7f425351d9f46cf422ae8641d4bee7b64915dd67c0"},
@@ -31,12 +31,12 @@
     {"decision_id":"story-12-5-track-c-mvp-postgresql-provider-authorization-01","status":"accepted","scope_sha256":"6e88b42958a615399a9b4167a1c9fc27f7229ea7cedcc7f4febedafd8c775400","evidence_path":"specs/014-grounded-llm-wiki-chat-release-evidence/decisions/postgresql-provider-preflight-authorization-01.md","decided_at":"2026-08-29T23:16:52.1463747Z"},
     {"decision_id":"story-12-5-track-c-mvp-host-startup-authorization-01","status":"accepted","scope_sha256":"6e88b42958a615399a9b4167a1c9fc27f7229ea7cedcc7f4febedafd8c775400","evidence_path":"specs/014-grounded-llm-wiki-chat-release-evidence/decisions/track-c-mvp-host-startup-authorization-01.md","decided_at":"2026-08-29T23:28:00Z"},
     {"decision_id":"story-12-5-return-to-plan-scan-composition-01","status":"accepted","scope_sha256":"72ecb3bee01e498acb2dacd9c21719b48f307cbbb597bf6c09393bad13d5b1d3","evidence_path":"specs/014-grounded-llm-wiki-chat-release-evidence/decisions/return-to-plan-scan-composition-01.md","decided_at":"2026-08-30T00:10:24.4661357Z"},
-    {"decision_id":"story-12-5-correct-course-prepared-scan-initiation-01","status":"accepted","scope_sha256":"97385cc24150140de882bb839dcdd6cbb7046701033ac76560409927b5a3bb56","evidence_path":"specs/014-grounded-llm-wiki-chat-release-evidence/decisions/correct-course-prepared-scan-initiation-01.md","decided_at":"2026-08-30T00:49:56.0824234Z"}
+    {"decision_id":"story-12-5-correct-course-prepared-scan-initiation-01","status":"accepted","scope_sha256":"97385cc24150140de882bb839dcdd6cbb7046701033ac76560409927b5a3bb56","evidence_path":"specs/014-grounded-llm-wiki-chat-release-evidence/decisions/correct-course-prepared-scan-initiation-01.md","decided_at":"2026-08-30T00:49:56.0824234Z"},
+    {"decision_id":"story-12-5-planned-change-authorization-prepared-scan-initiation-01","status":"accepted","scope_sha256":"50958154329acbac8070ecec04f5b6c3527a6cc047129feac024c0e093eb1eab","evidence_path":"specs/014-grounded-llm-wiki-chat-release-evidence/decisions/planned-change-authorization-prepared-scan-initiation-01.md","decided_at":"2026-08-30T02:04:56.4056655Z"}
   ],
   "convergence": {"status":"pending","attempt":0,"outcome":"pending","report_path":null},
   "e2e": {"result":"pending","decision_path":null},
   "current_evidence_paths": [
-    "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/implementation-approval-track-c-mvp-01.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/verification/track-b-final-01.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/postgresql-provider-preflight-authorization-01.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/track-c-mvp/run-02/release-report.md",
@@ -47,9 +47,10 @@
     "docs/bmad/planning-artifacts/sprint-change-proposal-2026-08-30-story-12-5-prepared-scan-initiation.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/correct-course-prepared-scan-initiation-01.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/plan-review/plan-review-prepared-scan-initiation-01.json",
-    "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/plan-review/plan-review-prepared-scan-initiation-02.json"
+    "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/plan-review/plan-review-prepared-scan-initiation-02.json",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/planned-change-authorization-prepared-scan-initiation-01.md"
   ],
-  "checkpoint": {"checkpoint_id":"bmad-12-5-plan-review-20260830T020131Z-509581","stage":"plan-review","commit_sha":null,"binding_status":"pending"},
-  "resume": {"stage":"plan-review","reason":"Independent plan-only review attempt 02 accepted the bounded Prepared Scan initiation plan. Task generation is paused at the AGENTS.md Scan planned-change authorization gate.","evidence_path":"specs/014-grounded-llm-wiki-chat-release-evidence/reviews/plan-review/plan-review-prepared-scan-initiation-02.json"},
-  "updated_at": "2026-08-30T02:01:31.4103972Z"
+  "checkpoint": {"checkpoint_id":"bmad-12-5-plan-review-20260830T020456Z-509581","stage":"plan-review","commit_sha":null,"binding_status":"pending"},
+  "resume": {"stage":"tasks","reason":"The exact accepted Prepared Scan initiation plan has explicit planned-change authorization. Regenerate tasks and obtain fresh independent definition review before implementation approval.","evidence_path":"specs/014-grounded-llm-wiki-chat-release-evidence/decisions/planned-change-authorization-prepared-scan-initiation-01.md"},
+  "updated_at": "2026-08-30T02:04:56.4056655Z"
 }
