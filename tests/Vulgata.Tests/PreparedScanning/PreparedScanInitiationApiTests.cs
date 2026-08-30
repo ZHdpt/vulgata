@@ -37,7 +37,12 @@ public sealed class PreparedScanInitiationApiTests
         await using PreparedScanInitiationPostgreSqlFixture database =
             await PreparedScanInitiationPostgreSqlFixture.CreateAsync();
         using WebApplicationFactory<Program> factory =
-            CreateFactory(database.ConnectionString);
+            CreateFactory(database.ConnectionString, services =>
+            {
+                services.RemoveAll<IPreparedScanRuntimeIdentityResolver>();
+                services.AddSingleton<IPreparedScanRuntimeIdentityResolver>(
+                    new PublicPreparedScanRuntimeIdentityResolver());
+            });
 
         await using (AsyncServiceScope scope = factory.Services.CreateAsyncScope())
         {
@@ -90,11 +95,13 @@ public sealed class PreparedScanInitiationApiTests
             $"/api/systems/{system.Id:D}/prepared-scans",
             request);
         string body = await response.Content.ReadAsStringAsync();
+        PreparedScanInitiationCounts diagnosticCounts = await ReadCountsAsync(database);
 
         Assert.True(
             response.StatusCode == HttpStatusCode.Created,
             $"Expected 201 from the public initiation seam for owned database " +
-            $"{database.DatabaseName}; actual status was {(int)response.StatusCode}.");
+            $"{database.DatabaseName}; actual status was {(int)response.StatusCode}; " +
+            $"durable counts were {diagnosticCounts}; response was {body}.");
         using JsonDocument document = JsonDocument.Parse(body);
         JsonElement root = document.RootElement;
         Assert.NotEqual(Guid.Empty, root.GetProperty("coordinationId").GetGuid());
@@ -102,7 +109,7 @@ public sealed class PreparedScanInitiationApiTests
         Assert.InRange(root.GetProperty("selectedCount").GetInt32(), 50, 150);
 
         PreparedScanInitiationCounts after = await ReadCountsAsync(database);
-        Assert.Equal(new PreparedScanInitiationCounts(2, 0, 2, 1, 2, 0, 0), after);
+        Assert.Equal(new PreparedScanInitiationCounts(2, 2, 2, 1, 2, 120, 0), after);
     }
 
     [Fact]
@@ -112,8 +119,13 @@ public sealed class PreparedScanInitiationApiTests
 
         using HttpResponseMessage first = await scenario.Client.PostAsJsonAsync(
             scenario.Route, scenario.Request);
-        Assert.Equal(HttpStatusCode.Created, first.StatusCode);
         string firstBody = await first.Content.ReadAsStringAsync();
+        PreparedScanInitiationCounts firstDiagnosticCounts = await ReadCountsAsync(scenario.Database);
+        Assert.True(
+            first.StatusCode == HttpStatusCode.Created,
+            $"Expected 201; actual {(int)first.StatusCode}; durable counts were " +
+            $"{firstDiagnosticCounts}; CodeGraph calls {scenario.CodeGraphCalls}; " +
+            $"Java calls {scenario.JavaReadinessCalls}; response was {firstBody}.");
         using JsonDocument firstDocument = JsonDocument.Parse(firstBody);
         Guid coordinationId = firstDocument.RootElement.GetProperty("coordinationId").GetGuid();
         PreparedScanInitiationCounts afterFirst = await ReadCountsAsync(scenario.Database);
@@ -223,7 +235,14 @@ public sealed class PreparedScanInitiationApiTests
         using HttpResponseMessage retry = await scenario.Client.PostAsJsonAsync(
             scenario.Route, scenario.Request);
         Assert.Equal(HttpStatusCode.Created, retry.StatusCode);
-        Assert.Equal(afterFailure, await ReadCountsAsync(scenario.Database));
+        PreparedScanInitiationCounts afterRetry = await ReadCountsAsync(scenario.Database);
+        Assert.Equal(afterFailure.ScanRuns, afterRetry.ScanRuns);
+        Assert.Equal(afterFailure.ScanExecutions, afterRetry.ScanExecutions);
+        Assert.Equal(afterFailure.Coordinations, afterRetry.Coordinations);
+        Assert.Equal(2, afterRetry.PreScanResults);
+        Assert.Equal(2, afterRetry.Manifests);
+        Assert.Equal(120, afterRetry.CodeUnits);
+        Assert.Equal(0, afterRetry.LogicalDocuments);
     }
 
     [Fact]
@@ -430,8 +449,8 @@ public sealed class PreparedScanInitiationApiTests
                     return new PreparedRevisionAcquisitionResult(
                         null,
                         new PreparedScanFailure(
-                            PreparedScanFailureReason.SourceIdentityMismatch,
-                            "test-preparation-failure",
+                            PreparedScanFailureReason.AnalysisNotReady,
+                            "test-preparation-unavailable",
                             "induced post-initiation failure"));
                 }
                 await using VulgataDbContext context =

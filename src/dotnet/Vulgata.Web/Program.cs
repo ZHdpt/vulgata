@@ -362,6 +362,9 @@ public static class VulgataWebComposition
         builder.Services.AddScoped<
             IScanRecoveryDispatchIdentitySource,
             WorkerAgentDispatchIdentitySource>();
+        builder.Services.AddScoped<
+            IPreparedPass1ContractIdentitySource,
+            EmbeddedPreparedPass1ContractIdentitySource>();
         builder.Services.AddScoped<WorkerAgentDispatcher>();
         builder.Services.AddScoped<IWorkerAgentDispatcher>(services =>
             new RuntimeGatedWorkerAgentDispatcher(

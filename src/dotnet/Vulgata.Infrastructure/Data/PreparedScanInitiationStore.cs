@@ -33,8 +33,33 @@ public sealed class PreparedScanInitiationStore(VulgataDbContext context) :
             return new(PreparedScanInitiationOutcome.Rejected);
         }
 
+        IExecutionStrategy strategy = context.Database.CreateExecutionStrategy();
+        try
+        {
+            return await strategy.ExecuteAsync(() =>
+                CreateOrReplayInTransactionAsync(normalized, cancellationToken));
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            return new(PreparedScanInitiationOutcome.Cancelled);
+        }
+        catch (PostgresException exception) when (exception.SqlState == PostgresErrorCodes.LockNotAvailable)
+        {
+            return new(PreparedScanInitiationOutcome.Unavailable);
+        }
+        catch (Exception)
+        {
+            return new(PreparedScanInitiationOutcome.Unavailable);
+        }
+    }
+
+    private async Task<PreparedScanInitiationResult> CreateOrReplayInTransactionAsync(
+        NormalizedCommand normalized,
+        CancellationToken cancellationToken)
+    {
         IDbContextTransaction? transaction = null;
         bool committed = false;
+        bool commitAttempted = false;
         try
         {
             transaction = await context.Database.BeginTransactionAsync(
@@ -61,6 +86,7 @@ public sealed class PreparedScanInitiationStore(VulgataDbContext context) :
             {
                 if (existing.Outcome == PreparedScanInitiationOutcome.Replay)
                 {
+                    commitAttempted = true;
                     await transaction.CommitAsync(cancellationToken);
                     committed = true;
                     return new(existing.Outcome.Value, existing.Tuple);
@@ -73,24 +99,34 @@ public sealed class PreparedScanInitiationStore(VulgataDbContext context) :
 
             PreparedScanInitiationTuple created = CreateTuple(normalized);
             await context.SaveChangesAsync(cancellationToken);
+            commitAttempted = true;
             await transaction.CommitAsync(cancellationToken);
             committed = true;
             return new(PreparedScanInitiationOutcome.Created, created);
         }
-        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        catch (OperationCanceledException) when (
+            cancellationToken.IsCancellationRequested &&
+            !commitAttempted)
         {
             await RollbackAndClearAsync(transaction, committed);
             return new(PreparedScanInitiationOutcome.Cancelled);
         }
-        catch (PostgresException exception) when (exception.SqlState == PostgresErrorCodes.LockNotAvailable)
+        catch (PostgresException exception) when (
+            exception.SqlState == PostgresErrorCodes.LockNotAvailable &&
+            !commitAttempted)
         {
             await RollbackAndClearAsync(transaction, committed);
             return new(PreparedScanInitiationOutcome.Unavailable);
         }
-        catch (Exception)
+        catch (Exception exception)
         {
             await RollbackAndClearAsync(transaction, committed);
-            return new(PreparedScanInitiationOutcome.Unavailable);
+            if (commitAttempted)
+            {
+                throw new CommitAcknowledgementException(exception);
+            }
+
+            throw;
         }
         finally
         {
@@ -472,6 +508,7 @@ public sealed class PreparedScanInitiationStore(VulgataDbContext context) :
             throw new ArgumentException("Two distinct Repository identities are required.");
         }
 
+        DateTimeOffset initiatedAt = CanonicalizePostgreSqlInstant(command.InitiatedAt);
         NormalizedRepository[] normalized = repositories
             .Select(repository => NormalizeRepository(command, repository))
             .ToArray();
@@ -481,10 +518,15 @@ public sealed class PreparedScanInitiationStore(VulgataDbContext context) :
             command.SystemId,
             command.PromptIdentity,
             command.DocumentSchemaIdentity,
-            command.InitiatedAt,
+            initiatedAt,
             scopeFingerprint,
             normalized);
     }
+
+    private static DateTimeOffset CanonicalizePostgreSqlInstant(DateTimeOffset value) =>
+        new(
+            value.Ticks - (value.Ticks % TimeSpan.TicksPerMicrosecond),
+            TimeSpan.Zero);
 
     private static NormalizedRepository NormalizeRepository(
         PreparedScanInitiationCommand command,
@@ -563,4 +605,7 @@ public sealed class PreparedScanInitiationStore(VulgataDbContext context) :
         internal static ExistingTupleState Rejected { get; } =
             new(PreparedScanInitiationOutcome.Rejected);
     }
+
+    private sealed class CommitAcknowledgementException(Exception innerException) :
+        Exception("The Prepared Scan initiation commit acknowledgement was not observed.", innerException);
 }

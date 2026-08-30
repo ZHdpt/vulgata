@@ -8,7 +8,7 @@ namespace Vulgata.Web.Data;
 internal sealed class PreparedScanInitiationCoordinator(
     ISystemRepository systemRepository,
     IRepositoryRepository repositoryRepository,
-    IScanRecoveryDispatchIdentitySource dispatchIdentitySource,
+    IPreparedPass1ContractIdentitySource contractIdentitySource,
     IPreparedScanRuntimeIdentityResolver runtimeIdentityResolver,
     IPreparedScanInitiationAuthorizationRechecker authorizationRechecker,
     IPreparedScanInitiationStore initiationStore,
@@ -41,14 +41,17 @@ internal sealed class PreparedScanInitiationCoordinator(
             return NotFound();
         }
 
-        ScanRecoveryDispatchIdentity? dispatchIdentity =
-            await dispatchIdentitySource.GetAsync(systemId, cancellationToken);
-        if (dispatchIdentity is null ||
-            string.IsNullOrWhiteSpace(dispatchIdentity.PromptIdentity) ||
-            !string.Equals(
-                dispatchIdentity.DocumentSchemaIdentity,
-                "code-logic/file-v2",
-                StringComparison.Ordinal))
+        PreparedPass1ContractIdentity? contractIdentity;
+        try
+        {
+            contractIdentity = contractIdentitySource.GetCurrent();
+        }
+        catch (Exception)
+        {
+            return Unavailable("prepared_scan_identity_unavailable");
+        }
+
+        if (contractIdentity is null || !HasExactPreparedPass1Identity(contractIdentity))
         {
             return Unavailable("prepared_scan_identity_unavailable");
         }
@@ -103,8 +106,8 @@ internal sealed class PreparedScanInitiationCoordinator(
             freshAuthorization.EffectiveAuthorizationMode,
             systemId,
             initiationRepositories,
-            dispatchIdentity.PromptIdentity,
-            dispatchIdentity.DocumentSchemaIdentity,
+            contractIdentity.PromptIdentity,
+            contractIdentity.DocumentSchemaIdentity,
             _providerProcessTimeoutSeconds,
             TimeProvider.System.GetUtcNow());
         PreparedScanInitiationResult initiation =
@@ -179,6 +182,22 @@ internal sealed class PreparedScanInitiationCoordinator(
     private static bool IsExactRevision(string? value) =>
         value is { Length: 40 } &&
         value.All(character => character is >= '0' and <= '9' or >= 'a' and <= 'f');
+
+    private static bool HasExactPreparedPass1Identity(
+        PreparedPass1ContractIdentity identity)
+    {
+        const string promptIdentityPrefix =
+            "pass1-code-logic-worker.v2/sha256/";
+        return string.Equals(
+                identity.DocumentSchemaIdentity,
+                "code-logic/file-v2",
+                StringComparison.Ordinal) &&
+            identity.PromptIdentity is { } promptIdentity &&
+            promptIdentity.Length == promptIdentityPrefix.Length + 64 &&
+            promptIdentity.StartsWith(promptIdentityPrefix, StringComparison.Ordinal) &&
+            promptIdentity[promptIdentityPrefix.Length..].All(
+                character => character is >= '0' and <= '9' or >= 'a' and <= 'f');
+    }
 
     private static bool IsSafeFullRef(string? value)
     {

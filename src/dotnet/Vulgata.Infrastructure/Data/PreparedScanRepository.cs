@@ -238,17 +238,23 @@ internal sealed class PreparedScanRepository(VulgataDbContext context)
                 context.PreparedScanAudits.Add(audit);
             }
 
-            PreScanResult result = await context.PreScanResults.SingleAsync(
+            PreScanResult? result = await context.PreScanResults.SingleOrDefaultAsync(
                 value => value.Id == package.ScanRunId && value.RepositoryId == package.RepositoryId,
                 cancellationToken);
+            PreScanResult prepared = PreScanResult.CreatePreparedApproved(
+                package, manifestId, pair.PairPackageFingerprint, "预扫描已批准——已准备确定性扫描清单");
+            if (result is null)
+            {
+                context.PreScanResults.Add(prepared);
+                continue;
+            }
+
             context.Entry(result).Collection(nameof(PreScanResult.Classifications)).CurrentValue =
                 package.Classifications.ToList();
             foreach (CommunicationKindClassification classification in package.Classifications)
             {
                 context.Entry(classification).State = EntityState.Added;
             }
-            PreScanResult prepared = PreScanResult.CreatePreparedApproved(
-                package, manifestId, pair.PairPackageFingerprint, "预扫描已批准——已准备确定性扫描清单");
             foreach (string property in new[]
             {
                 nameof(result.State), nameof(result.SchemaVersion), nameof(result.ApprovedAt),

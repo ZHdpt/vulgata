@@ -1,5 +1,6 @@
 using System.Data;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 using Npgsql;
 using Vulgata.Core.DomainServices;
 
@@ -19,11 +20,59 @@ public sealed class PreparedScanStore(VulgataDbContext context) : IPreparedScanS
                 PreparedScanFailureReason.Cancelled, "prepared-scan.cancelled", "Preparation was cancelled before commit.");
         }
 
-        var repository = new PreparedScanRepository(context);
+        IExecutionStrategy strategy = context.Database.CreateExecutionStrategy();
         try
         {
-            await using var transaction = await context.Database.BeginTransactionAsync(
+            return await strategy.ExecuteAsync(() => CommitPairInTransactionAsync(
+                authorizationScope,
+                pairPackage,
+                expectedCoordinationVersion,
+                cancellationToken));
+        }
+        catch (OperationCanceledException)
+        {
+            context.ChangeTracker.Clear();
+            return Result(PreparedScanCommitOutcome.Cancelled, pairPackage.PairPackageFingerprint,
+                PreparedScanFailureReason.Cancelled, "prepared-scan.cancelled", "Preparation was cancelled.");
+        }
+        catch (DbUpdateException)
+        {
+            return await ResolveConcurrentWriteAsync(
+                authorizationScope, pairPackage, expectedCoordinationVersion, cancellationToken);
+        }
+        catch (NpgsqlException)
+        {
+            return await ResolveConcurrentWriteAsync(
+                authorizationScope, pairPackage, expectedCoordinationVersion, cancellationToken);
+        }
+        catch (CommitAcknowledgementException)
+        {
+            return await ResolveConcurrentWriteAsync(
+                authorizationScope, pairPackage, expectedCoordinationVersion, cancellationToken);
+        }
+        catch (InvalidOperationException)
+        {
+            context.ChangeTracker.Clear();
+            return Result(PreparedScanCommitOutcome.Failed, pairPackage.PairPackageFingerprint,
+                PreparedScanFailureReason.PersistenceFailure, "prepared-scan.persistence-failure",
+                "The pair transaction could not be completed.");
+        }
+    }
+
+    private async Task<PreparedScanCommitResult> CommitPairInTransactionAsync(
+        PreparedScanAuthorizationScope authorizationScope,
+        PreparedScanPairPackage pairPackage,
+        long expectedCoordinationVersion,
+        CancellationToken cancellationToken)
+    {
+        IDbContextTransaction? transaction = null;
+        bool committed = false;
+        bool commitAttempted = false;
+        try
+        {
+            transaction = await context.Database.BeginTransactionAsync(
                 IsolationLevel.Serializable, cancellationToken);
+            var repository = new PreparedScanRepository(context);
             PreparedScanCommitOutcome? inspected = await repository.InspectAsync(
                 authorizationScope, pairPackage, expectedCoordinationVersion, cancellationToken);
             if (inspected is not null)
@@ -42,31 +91,34 @@ public sealed class PreparedScanStore(VulgataDbContext context) : IPreparedScanS
             }
 
             await repository.PersistAsync(pairPackage, cancellationToken);
+            commitAttempted = true;
             await transaction.CommitAsync(cancellationToken);
+            committed = true;
             return new(PreparedScanCommitOutcome.Committed, pairPackage.PairPackageFingerprint, null);
         }
-        catch (OperationCanceledException)
+        catch (OperationCanceledException) when (
+            cancellationToken.IsCancellationRequested &&
+            !commitAttempted)
         {
-            context.ChangeTracker.Clear();
-            return Result(PreparedScanCommitOutcome.Cancelled, pairPackage.PairPackageFingerprint,
-                PreparedScanFailureReason.Cancelled, "prepared-scan.cancelled", "Preparation was cancelled.");
+            await RollbackAndClearAsync(transaction, committed);
+            throw;
         }
-        catch (DbUpdateException)
+        catch (Exception exception)
         {
-            return await ResolveConcurrentWriteAsync(
-                authorizationScope, pairPackage, expectedCoordinationVersion, cancellationToken);
+            await RollbackAndClearAsync(transaction, committed);
+            if (commitAttempted)
+            {
+                throw new CommitAcknowledgementException(exception);
+            }
+
+            throw;
         }
-        catch (NpgsqlException)
+        finally
         {
-            return await ResolveConcurrentWriteAsync(
-                authorizationScope, pairPackage, expectedCoordinationVersion, cancellationToken);
-        }
-        catch (InvalidOperationException)
-        {
-            context.ChangeTracker.Clear();
-            return Result(PreparedScanCommitOutcome.Failed, pairPackage.PairPackageFingerprint,
-                PreparedScanFailureReason.PersistenceFailure, "prepared-scan.persistence-failure",
-                "The pair transaction could not be completed.");
+            if (transaction is not null)
+            {
+                await transaction.DisposeAsync();
+            }
         }
     }
 
@@ -106,4 +158,26 @@ public sealed class PreparedScanStore(VulgataDbContext context) : IPreparedScanS
             PreparedScanFailureReason.CanonicalConflict, "prepared-scan.persistence-conflict",
             "Durable state rejected the pair package.");
     }
+
+    private async Task RollbackAndClearAsync(
+        IDbContextTransaction? transaction,
+        bool committed)
+    {
+        if (!committed && transaction is not null)
+        {
+            try
+            {
+                await transaction.RollbackAsync(CancellationToken.None);
+            }
+            catch (Exception)
+            {
+                // A commit acknowledgement can fail after PostgreSQL has committed.
+            }
+        }
+
+        context.ChangeTracker.Clear();
+    }
+
+    private sealed class CommitAcknowledgementException(Exception innerException) :
+        Exception("The Prepared Scan commit acknowledgement was not observed.", innerException);
 }

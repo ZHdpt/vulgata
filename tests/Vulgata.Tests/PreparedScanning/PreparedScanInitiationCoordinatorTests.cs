@@ -304,11 +304,12 @@ public sealed class PreparedScanInitiationCoordinatorTests
             (method, args) => method.Name is "GetBySystemAndIdAsync" or "GetByIdAsync"
                 ? Task.FromResult<Repository?>(ResolveRepository(args, state, first, second))
                 : null);
-        IScanRecoveryDispatchIdentitySource identity = CreateProxy<IScanRecoveryDispatchIdentitySource>(
+        IPreparedPass1ContractIdentitySource identity = CreateProxy<IPreparedPass1ContractIdentitySource>(
             out _,
-            (method, _) => method.Name == "GetAsync"
-                ? Task.FromResult<ScanRecoveryDispatchIdentity?>(
-                    new("prepared-scan-prompt", "code-logic/file-v2"))
+            (method, _) => method.Name == "GetCurrent"
+                ? new PreparedPass1ContractIdentity(
+                    "pass1-code-logic-worker.v2/sha256/5b1e48e50b83c5d12b7916d72d1973f4984db8bf60d1fa62df5cb9f4bcd27e7b",
+                    "code-logic/file-v2")
                 : null);
         IPreparedScanHandoffSource handoff = CreateProxy<IPreparedScanHandoffSource>(out _);
         IPreparedScanPairBuilder pairBuilder = CreateProxy<IPreparedScanPairBuilder>(out _);
@@ -325,7 +326,7 @@ public sealed class PreparedScanInitiationCoordinatorTests
         object?[] arguments = constructor.GetParameters()
             .Select(parameter => parameter.ParameterType == typeof(ISystemRepository) ? systems :
                 parameter.ParameterType == typeof(IRepositoryRepository) ? repositories :
-                parameter.ParameterType == typeof(IScanRecoveryDispatchIdentitySource) ? identity :
+                parameter.ParameterType == typeof(IPreparedPass1ContractIdentitySource) ? identity :
                 parameter.ParameterType == typeof(IPreparedScanInitiationStore) ? store :
                 parameter.ParameterType == typeof(IPreparedScanRuntimeIdentityResolver) ? runtime :
                 parameter.ParameterType == typeof(IPreparedScanInitiationAuthorizationRechecker) ? authorization :

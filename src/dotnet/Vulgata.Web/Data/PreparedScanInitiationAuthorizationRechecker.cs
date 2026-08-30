@@ -1,7 +1,5 @@
 using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
 using Vulgata.Core.DomainServices;
-using Vulgata.Infrastructure.Data;
 using Vulgata.Shared;
 
 namespace Vulgata.Web.Data;
@@ -51,30 +49,52 @@ internal sealed class PreparedScanInitiationAuthorizationRechecker(
         await using AsyncServiceScope scope = scopeFactory.CreateAsyncScope();
         UserManager<ApplicationUser> userManager =
             scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
-        VulgataDbContext dbContext =
-            scope.ServiceProvider.GetRequiredService<VulgataDbContext>();
-
-        bool systemExists = await dbContext.Systems
-            .AsNoTracking()
-            .AnyAsync(value => value.Id == systemId, cancellationToken);
-        int repositoryCount = await dbContext.Repositories
-            .AsNoTracking()
-            .CountAsync(
-                value => value.SystemId == systemId &&
-                    canonicalRepositoryIds.Contains(value.Id),
-                cancellationToken);
-        if (!systemExists || repositoryCount != canonicalRepositoryIds.Length)
-        {
-            return PreparedScanInitiationAuthorizationResult.Denied;
-        }
-
         ApplicationUser? user = await userManager.FindByIdAsync(userId);
         if (user is null)
         {
             return PreparedScanInitiationAuthorizationResult.Denied;
         }
 
-        if (await userManager.IsInRoleAsync(user, RoleNames.Administrator))
+        bool isAdministrator =
+            await userManager.IsInRoleAsync(user, RoleNames.Administrator);
+        bool isSystemOwner = !isAdministrator &&
+            await userManager.IsInRoleAsync(user, RoleNames.SystemOwner);
+        if (!isAdministrator && !isSystemOwner)
+        {
+            return PreparedScanInitiationAuthorizationResult.Denied;
+        }
+
+        ISystemRepository systemRepository =
+            scope.ServiceProvider.GetRequiredService<ISystemRepository>();
+        IRepositoryRepository repositoryRepository =
+            scope.ServiceProvider.GetRequiredService<IRepositoryRepository>();
+        SystemOwnerFilter filter = isAdministrator
+            ? SystemOwnerFilter.AllSystems()
+            : SystemOwnerFilter.OwnedBy(userId);
+        Vulgata.Core.Entities.System? system =
+            await systemRepository.GetVisibleByIdAsync(
+                systemId,
+                filter,
+                cancellationToken);
+        if (system?.Id != systemId)
+        {
+            return PreparedScanInitiationAuthorizationResult.Denied;
+        }
+
+        foreach (Guid repositoryId in canonicalRepositoryIds)
+        {
+            Vulgata.Core.Entities.Repository? repository =
+                await repositoryRepository.GetBySystemAndIdAsync(
+                    systemId,
+                    repositoryId,
+                    cancellationToken);
+            if (repository?.Id != repositoryId || repository.SystemId != systemId)
+            {
+                return PreparedScanInitiationAuthorizationResult.Denied;
+            }
+        }
+
+        if (isAdministrator)
         {
             return new(
                 true,
@@ -83,19 +103,10 @@ internal sealed class PreparedScanInitiationAuthorizationRechecker(
                 canonicalRepositoryIds);
         }
 
-        bool isSystemOwner = await userManager.IsInRoleAsync(user, RoleNames.SystemOwner);
-        bool hasAssignment = isSystemOwner &&
-            await dbContext.SystemOwnerAssignments
-                .AsNoTracking()
-                .AnyAsync(
-                    value => value.SystemId == systemId && value.UserId == userId,
-                    cancellationToken);
-        return hasAssignment
-            ? new PreparedScanInitiationAuthorizationResult(
-                true,
-                authorizationUserId,
-                RoleNames.SystemOwner,
-                canonicalRepositoryIds)
-            : PreparedScanInitiationAuthorizationResult.Denied;
+        return new PreparedScanInitiationAuthorizationResult(
+            true,
+            authorizationUserId,
+            RoleNames.SystemOwner,
+            canonicalRepositoryIds);
     }
 }
