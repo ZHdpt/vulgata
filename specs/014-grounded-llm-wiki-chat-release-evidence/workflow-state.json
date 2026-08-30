@@ -3,7 +3,7 @@
   "bmad_story_key": "12-5-grounded-llm-wiki-chat-and-august-30-release-evidence",
   "bmad_epic_key": "12",
   "feature_directory": "specs/014-grounded-llm-wiki-chat-release-evidence",
-  "stage": "implement",
+  "stage": "plan",
   "preflight": {
     "branch": "demo0831/story-12-5-trackC",
     "head": "2fb097a0311965bfb0c4abef46dcf73de7e274eb",
@@ -17,8 +17,8 @@
     "tasks": {"path":"specs/014-grounded-llm-wiki-chat-release-evidence/tasks.md","sha256":"1f6bad50ce1e8b415b7a0870d999a4ed3073a0e49944b397721a8b0bba47c7ed"}
   },
   "gates": {
-    "plan-review": {"status":"accepted","attempt":2,"verdict_path":"specs/014-grounded-llm-wiki-chat-release-evidence/reviews/plan-review/plan-review-prepared-scan-initiation-02.json"},
-    "definition-review": {"status":"accepted","attempt":2,"verdict_path":"specs/014-grounded-llm-wiki-chat-release-evidence/reviews/definition-review/definition-review-prepared-scan-initiation-02.json"},
+    "plan-review": {"status":"pending","attempt":2,"verdict_path":"specs/014-grounded-llm-wiki-chat-release-evidence/reviews/plan-review/plan-review-prepared-scan-initiation-02.json"},
+    "definition-review": {"status":"pending","attempt":2,"verdict_path":"specs/014-grounded-llm-wiki-chat-release-evidence/reviews/definition-review/definition-review-prepared-scan-initiation-02.json"},
     "quality-review": {"status":"pending","attempt":0,"verdict_path":null}
   },
   "attempts": {"definition-review":0,"converge":0,"quality-review":0},
@@ -46,12 +46,12 @@
     "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/correct-course-prepared-scan-initiation-01.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/plan-review/plan-review-prepared-scan-initiation-02.json",
     "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/planned-change-authorization-prepared-scan-initiation-01.md",
-    "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/definition-review/definition-review-prepared-scan-initiation-01.json",
     "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/definition-review/definition-review-prepared-scan-initiation-02.json",
     "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/implementation-approval-prepared-scan-initiation-01.md",
-    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/preflight/prepared-scan-initiation-entry-01.md"
+    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/prepared-scan-initiation-identity-authority-blocked-01.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/planned-change-prepared-pass1-identity-authority-02.md"
   ],
-  "checkpoint": {"checkpoint_id":"bmad-12-5-implement-20260830T023718Z-f6a6e1","stage":"implement","commit_sha":null,"binding_status":"pending"},
-  "resume": {"stage":"implement","reason":"Implementation approval is bound to the accepted definition. T010 passed; execute T011-T033 through the accepted RED/GREEN, convergence, quality and checkpoint sequence, then stop before T034.","evidence_path":"specs/014-grounded-llm-wiki-chat-release-evidence/evidence/preflight/prepared-scan-initiation-entry-01.md"},
-  "updated_at": "2026-08-30T02:37:18.4173106Z"
+  "checkpoint": {"checkpoint_id":"bmad-12-5-plan-20260830T052614Z-identity-authority","stage":"plan","commit_sha":null,"binding_status":"pending"},
+  "resume": {"stage":"plan","reason":"T026 proved the accepted recovery identity source is legacy v1/knowledge-schema, not Prepared Pass 1 v2/code-logic. Await planned-change authorization for one narrow Agents-owned identity source.","evidence_path":"specs/014-grounded-llm-wiki-chat-release-evidence/decisions/planned-change-prepared-pass1-identity-authority-02.md"},
+  "updated_at": "2026-08-30T05:26:14.4800872Z"
 }

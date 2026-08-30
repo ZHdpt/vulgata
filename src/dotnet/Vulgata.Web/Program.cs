@@ -288,6 +288,10 @@ public static class VulgataWebComposition
         builder.Services.AddScoped<IApprovedPreScanHandoffSource, ApprovedPreScanHandoffSource>();
         builder.Services.AddScoped<IPreparedScanStore, PreparedScanStore>();
         builder.Services.AddScoped<IPreparedScanHandoffSource, PreparedScanHandoffSource>();
+        builder.Services.AddScoped<IPreparedScanInitiationStore, PreparedScanInitiationStore>();
+        builder.Services.AddScoped<IPreparedScanInitiationAuthorizationRechecker,
+            PreparedScanInitiationAuthorizationRechecker>();
+        builder.Services.AddScoped<PreparedScanInitiationCoordinator>();
         builder.Services.AddScoped<IPreparedScanPairBuilder, PreparedScanPairBuilder>();
         builder.Services.AddScoped<PreparedScanCoordinator>();
         builder.Services.AddScoped<ICodeUnitSource, CodeUnitSource>();
@@ -382,6 +386,8 @@ public static class VulgataWebComposition
             builder.Configuration["AnalysisRuntime:JavaHome"] ??
                 @"C:\Program Files\Java\latest\jdk-21"));
         builder.Services.AddSingleton<AnalysisRuntimeReadiness>();
+        builder.Services.AddSingleton<IPreparedScanRuntimeIdentityResolver,
+            ConfiguredPreparedScanRuntimeIdentityResolver>();
         builder.Services.AddSingleton<IAnalysisRuntimeHealthProbe, ConfiguredAnalysisRuntimeHealthProbe>();
         builder.Services.AddScoped<CodeGraphAnalysisAdapter>(services => new CodeGraphAnalysisAdapter(
             services.GetRequiredService<AnalysisRuntimeOptions>(),
@@ -471,7 +477,6 @@ public static class VulgataWebComposition
         builder.Services.AddScoped<ILlmProviderRepository, LlmProviderRepository>();
         builder.Services.AddScoped<ISystemLlmProviderOverrideRepository, SystemLlmProviderOverrideRepository>();
         builder.Services.AddScoped<IRepositoryManagementCoordinator, RepositoryManagementCoordinator>();
-        builder.Services.AddScoped<IRepositoryProfilingCoordinator, RuntimeUnavailableRepositoryProfilingCoordinator>();
         builder.Services.AddScoped<IPreScanHandoffService, PreScanHandoffService>();
         builder.Services.AddScoped<IRepositoryDatabaseConnectionCoordinator, RepositoryDatabaseConnectionCoordinator>();
         builder.Services.AddScoped<ILlmProviderConnectionTestService, LlmProviderConnectionTestService>();
@@ -558,289 +563,21 @@ internal sealed class AnalysisRuntimeReadiness
 }
 
 internal sealed class ConfiguredAnalysisRuntimeHealthProbe(
-    IConfiguration configuration) : IAnalysisRuntimeHealthProbe
+    IPreparedScanRuntimeIdentityResolver runtimeIdentityResolver) : IAnalysisRuntimeHealthProbe
 {
-    private const string _jdtRelease = "jdt-language-server-1.61.0-202608141332";
-    private const string _jdtLauncher =
-        "plugins/org.eclipse.equinox.launcher_1.8.0.v20260804-1928.jar";
-    private const string _jdtConfiguration = "config_win";
-    private const string _streamJsonRpcVersion = "2.25.29";
-
-    private static readonly IReadOnlyDictionary<string, string> _codeGraphHashes =
-        new Dictionary<string, string>(StringComparer.Ordinal)
-        {
-            ["lib/dist/bin/codegraph.js"] =
-                "03e4c791cc0dd91ed264278461bf9a56c0278aa0670d5942fc4732311c66de03",
-            ["node.exe"] =
-                "b3094d0b49f9ad602262a9921551737bb97637c05dd357a06ae98188d7290aa3",
-            ["npm-shim.js"] =
-                "80419260f06862d7a422d13ef69e3b24c7a21dbef4309bce41db02ad642b1877",
-        };
-
     public async Task<AnalysisHealthProbeResult> CheckConfiguredIntegrityAsync(
         AnalysisScope scope,
         CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(scope);
-        cancellationToken.ThrowIfCancellationRequested();
-
-        string? archivePath = Value("JdtLsDistributionArchivePath");
-        string? archiveName = Value("JdtLsDistributionArchiveName");
-        string? expectedArchiveSha256 = Value("JdtLsDistributionArchiveSha256");
-        if (string.IsNullOrWhiteSpace(expectedArchiveSha256))
-        {
-            return NotReady(
-                "jdt_distribution_archive_checksum_missing",
-                "JDT LS archive checksum missing",
-                "jdt-ls");
-        }
-
-        if (!IsSha256(expectedArchiveSha256))
-        {
-            return NotReady(
-                "jdt_distribution_archive_checksum_missing",
-                "JDT LS archive checksum invalid",
-                "jdt-ls");
-        }
-
-        if (string.IsNullOrWhiteSpace(archivePath) ||
-            string.IsNullOrWhiteSpace(archiveName) ||
-            !IsApprovedArchiveName(archiveName) ||
-            !string.Equals(Path.GetFileName(archivePath), archiveName, StringComparison.Ordinal) ||
-            !File.Exists(archivePath))
-        {
-            return NotReady(
-                "jdt_distribution_archive_missing",
-                "JDT LS archive identity missing",
-                "jdt-ls");
-        }
-
-        string actualArchiveSha256 = await ComputeSha256Async(archivePath, cancellationToken);
-        if (!string.Equals(
-                actualArchiveSha256,
-                expectedArchiveSha256,
-                StringComparison.OrdinalIgnoreCase))
-        {
-            return NotReady(
-                "jdt_distribution_archive_checksum_mismatch",
-                "JDT LS archive checksum mismatch",
-                "jdt-ls");
-        }
-
-        string? installationRoot = Value("JdtLsInstallationRoot");
-        string? release = Value("JdtLsReleaseIdentity");
-        string? launcher = Value("JdtLsLauncher")?.Replace('\\', '/');
-        string? jdtConfiguration = Value("JdtLsConfiguration");
-        if (string.IsNullOrWhiteSpace(installationRoot) ||
-            !string.Equals(release, _jdtRelease, StringComparison.Ordinal) ||
-            !string.Equals(
-                Path.GetFileName(Path.TrimEndingDirectorySeparator(installationRoot)),
-                _jdtRelease,
-                StringComparison.Ordinal) ||
-            !string.Equals(launcher, _jdtLauncher, StringComparison.Ordinal) ||
-            !string.Equals(jdtConfiguration, _jdtConfiguration, StringComparison.Ordinal) ||
-            !File.Exists(Path.Combine(installationRoot, _jdtLauncher.Replace('/', Path.DirectorySeparatorChar))) ||
-            !Directory.Exists(Path.Combine(installationRoot, _jdtConfiguration)))
-        {
-            return NotReady("jdt_identity_mismatch", "JDT LS identity mismatch", "jdt-ls");
-        }
-
-        string? javaHome = Value("JavaHome");
-        string javaPath = Path.Combine(javaHome ?? string.Empty, "bin", "java.exe");
-        if (!string.Equals(Value("JavaMajorVersion"), "21", StringComparison.Ordinal) ||
-            !File.Exists(javaPath) ||
-            System.Diagnostics.FileVersionInfo.GetVersionInfo(javaPath).FileMajorPart != 21)
-        {
-            return NotReady("java_major_version_mismatch", "Java major version mismatch", "java");
-        }
-
-        if (!string.Equals(Value("StreamJsonRpcName"), "StreamJsonRpc", StringComparison.Ordinal) ||
-            !string.Equals(Value("StreamJsonRpcVersion"), _streamJsonRpcVersion, StringComparison.Ordinal) ||
-            !HasExpectedStreamJsonRpcAssembly())
-        {
-            return NotReady(
-                "streamjsonrpc_identity_mismatch",
-                "StreamJsonRpc identity mismatch",
-                "streamjsonrpc");
-        }
-
-        string? commandPath = Value("CodeGraphCommandPath");
-        if (!HasExpectedCodeGraphConfiguration(commandPath))
-        {
-            return NotReady("codegraph_identity_mismatch", "CodeGraph identity mismatch", "codegraph");
-        }
-
-        string packageRoot = Path.Combine(
-            Path.GetDirectoryName(commandPath!)!,
-            "node_modules",
-            "@colbymchenry",
-            "codegraph");
-        if (!HasExpectedCodeGraphPackage(packageRoot))
-        {
-            return NotReady("codegraph_identity_mismatch", "CodeGraph package mismatch", "codegraph");
-        }
-
-        foreach ((string component, string expectedHash) in _codeGraphHashes)
-        {
-            string configuredHash = Value($"CodeGraphHashes:{component}") ?? string.Empty;
-            string componentPath = component == "npm-shim.js"
-                ? Path.Combine(packageRoot, component)
-                : Path.Combine(
-                    packageRoot,
-                    "node_modules",
-                    "@colbymchenry",
-                    "codegraph-win32-x64",
-                    component.Replace('/', Path.DirectorySeparatorChar));
-            if (!string.Equals(configuredHash, expectedHash, StringComparison.OrdinalIgnoreCase) ||
-                !File.Exists(componentPath) ||
-                !string.Equals(
-                    await ComputeSha256Async(componentPath, cancellationToken),
-                    expectedHash,
-                    StringComparison.Ordinal))
-            {
-                return NotReady(
-                    "codegraph_integrity_mismatch",
-                    "CodeGraph integrity mismatch",
-                    "codegraph");
-            }
-        }
-
-        AnalysisRuntimeIdentity identity;
-        try
-        {
-            identity = AnalysisRuntimeIdentity.Create(
-                new AnalysisRuntimeOptions(commandPath!, installationRoot, javaHome!),
+        PreparedScanRuntimeIdentityResolution resolution =
+            await runtimeIdentityResolver.ResolveAsync(
                 scope.RepositoryId,
                 scope.ProfiledRevision,
-                Value("CodeGraphPackageName")!,
-                Value("CodeGraphPackageVersion")!,
-                Value("CodeGraphRepository")!,
-                Value("CodeGraphCommand")!,
-                Value("CodeGraphBundle")!,
-                _codeGraphHashes
-                    .OrderBy(value => value.Key, StringComparer.Ordinal)
-                    .Select(value => new AnalysisRuntimeComponentHash(value.Key, value.Value))
-                    .ToArray(),
-                release!,
-                archiveName,
-                expectedArchiveSha256,
-                21,
-                Value("StreamJsonRpcName")!,
-                Value("StreamJsonRpcVersion")!,
-                "stdio");
-        }
-        catch (ArgumentException)
-        {
-            return NotReady("analysis_runtime_identity_mismatch", "Runtime identity mismatch", "identity");
-        }
-
-        return new AnalysisHealthProbeResult(
-            AnalysisRuntimeHealthStatus.Ready,
-            "none",
-            string.Empty,
-            DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
-            [
-                new AnalysisHealthCheck("codegraph", AnalysisRuntimeHealthStatus.Ready),
-                new AnalysisHealthCheck("java", AnalysisRuntimeHealthStatus.Ready),
-                new AnalysisHealthCheck("jdt-ls", AnalysisRuntimeHealthStatus.Ready),
-                new AnalysisHealthCheck("streamjsonrpc", AnalysisRuntimeHealthStatus.Ready),
-            ],
-            identity.Sha256);
+                cancellationToken);
+        return resolution.Health;
     }
-
-    private string? Value(string key) => configuration[$"AnalysisRuntime:{key}"]?.Trim();
-
-    private static bool IsSha256(string value) =>
-        value.Length == 64 && value.All(Uri.IsHexDigit);
-
-    private static bool IsApprovedArchiveName(string value) =>
-        string.Equals(value, $"{_jdtRelease}.zip", StringComparison.Ordinal) ||
-        string.Equals(value, $"{_jdtRelease}.tar.gz", StringComparison.Ordinal);
-
-    private bool HasExpectedCodeGraphConfiguration(string? commandPath) =>
-        !string.IsNullOrWhiteSpace(commandPath) &&
-        File.Exists(commandPath) &&
-        string.Equals(Path.GetFileName(commandPath), "codegraph.ps1", StringComparison.OrdinalIgnoreCase) &&
-        string.Equals(Value("CodeGraphCommand"), "codegraph", StringComparison.Ordinal) &&
-        string.Equals(Value("CodeGraphPackageName"), "@colbymchenry/codegraph", StringComparison.Ordinal) &&
-        string.Equals(Value("CodeGraphPackageVersion"), "1.5.0", StringComparison.Ordinal) &&
-        string.Equals(
-            Value("CodeGraphRepository"),
-            "https://github.com/colbymchenry/codegraph",
-            StringComparison.OrdinalIgnoreCase) &&
-        string.Equals(
-            Value("CodeGraphBundle"),
-            "@colbymchenry/codegraph-win32-x64@1.5.0",
-            StringComparison.Ordinal);
-
-    private static bool HasExpectedCodeGraphPackage(string packageRoot)
-    {
-        string manifestPath = Path.Combine(packageRoot, "package.json");
-        string bundleRoot = Path.Combine(
-            packageRoot,
-            "node_modules",
-            "@colbymchenry",
-            "codegraph-win32-x64");
-        if (!File.Exists(manifestPath) || !Directory.Exists(bundleRoot))
-        {
-            return false;
-        }
-
-        using System.Text.Json.JsonDocument manifest =
-            System.Text.Json.JsonDocument.Parse(File.ReadAllBytes(manifestPath));
-        System.Text.Json.JsonElement root = manifest.RootElement;
-        return root.TryGetProperty("name", out System.Text.Json.JsonElement name) &&
-               string.Equals(name.GetString(), "@colbymchenry/codegraph", StringComparison.Ordinal) &&
-               root.TryGetProperty("version", out System.Text.Json.JsonElement version) &&
-               string.Equals(version.GetString(), "1.5.0", StringComparison.Ordinal) &&
-               root.TryGetProperty("repository", out System.Text.Json.JsonElement repository) &&
-               repository.TryGetProperty("url", out System.Text.Json.JsonElement repositoryUrl) &&
-               string.Equals(
-                   repositoryUrl.GetString(),
-                   "git+https://github.com/colbymchenry/codegraph.git",
-                   StringComparison.OrdinalIgnoreCase);
-    }
-
-    private static bool HasExpectedStreamJsonRpcAssembly()
-    {
-        System.Reflection.Assembly assembly = System.Reflection.Assembly.Load("StreamJsonRpc");
-        System.Diagnostics.FileVersionInfo version =
-            System.Diagnostics.FileVersionInfo.GetVersionInfo(assembly.Location);
-        return string.Equals(assembly.GetName().Name, "StreamJsonRpc", StringComparison.Ordinal) &&
-               version.ProductVersion?.StartsWith(
-                   $"{_streamJsonRpcVersion}+",
-                   StringComparison.Ordinal) == true;
-    }
-
-    private static async Task<string> ComputeSha256Async(
-        string path,
-        CancellationToken cancellationToken)
-    {
-        await using FileStream stream = new(
-            path,
-            FileMode.Open,
-            FileAccess.Read,
-            FileShare.Read,
-            65_536,
-            FileOptions.Asynchronous | FileOptions.SequentialScan);
-        byte[] hash = await System.Security.Cryptography.SHA256.HashDataAsync(
-            stream,
-            cancellationToken);
-        return Convert.ToHexStringLower(hash);
-    }
-
-    private static AnalysisHealthProbeResult NotReady(
-        string code,
-        string diagnostic,
-        string component) =>
-        new(
-            AnalysisRuntimeHealthStatus.NotReady,
-            code,
-            diagnostic,
-            DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
-            [new AnalysisHealthCheck(component, AnalysisRuntimeHealthStatus.NotReady)]);
 }
-
 internal sealed class RuntimeGatedWorkerAgentDispatcher(
     WorkerAgentDispatcher inner,
     AnalysisRuntimeReadiness readiness) : IWorkerAgentDispatcher

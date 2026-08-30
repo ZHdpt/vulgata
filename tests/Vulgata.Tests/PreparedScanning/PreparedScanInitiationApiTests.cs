@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
+using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -104,20 +105,359 @@ public sealed class PreparedScanInitiationApiTests
         Assert.Equal(new PreparedScanInitiationCounts(2, 0, 2, 1, 2, 0, 0), after);
     }
 
+    [Fact]
+    public async Task PostPreparedScan_IdenticalRequest_ReplaysSameTupleWithoutDuplicatesAsync()
+    {
+        await using PublicPreparedScanScenario scenario = await CreateScenarioAsync();
+
+        using HttpResponseMessage first = await scenario.Client.PostAsJsonAsync(
+            scenario.Route, scenario.Request);
+        Assert.Equal(HttpStatusCode.Created, first.StatusCode);
+        string firstBody = await first.Content.ReadAsStringAsync();
+        using JsonDocument firstDocument = JsonDocument.Parse(firstBody);
+        Guid coordinationId = firstDocument.RootElement.GetProperty("coordinationId").GetGuid();
+        PreparedScanInitiationCounts afterFirst = await ReadCountsAsync(scenario.Database);
+
+        using HttpResponseMessage replay = await scenario.Client.PostAsJsonAsync(
+            scenario.Route, scenario.Request);
+        Assert.Equal(HttpStatusCode.OK, replay.StatusCode);
+        using JsonDocument replayDocument = JsonDocument.Parse(
+            await replay.Content.ReadAsStringAsync());
+        Assert.Equal(
+            coordinationId,
+            replayDocument.RootElement.GetProperty("coordinationId").GetGuid());
+        Assert.Equal(afterFirst, await ReadCountsAsync(scenario.Database));
+    }
+
+    [Fact]
+    public async Task PostPreparedScan_MismatchedPairOrRevision_FailsClosedWithoutDisclosureAsync()
+    {
+        await using PublicPreparedScanScenario scenario = await CreateScenarioAsync();
+        using HttpResponseMessage first = await scenario.Client.PostAsJsonAsync(
+            scenario.Route, scenario.Request);
+        Assert.Equal(HttpStatusCode.Created, first.StatusCode);
+        PreparedScanInitiationCounts before = await ReadCountsAsync(scenario.Database);
+
+        PreparedScanRequest mismatch = new()
+        {
+            Repositories =
+            [
+                new()
+                {
+                    RepositoryId = scenario.Request.Repositories[0].RepositoryId,
+                    GitRef = scenario.Request.Repositories[0].GitRef,
+                    ProfiledRevision = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+                },
+                new()
+                {
+                    RepositoryId = scenario.Request.Repositories[1].RepositoryId,
+                    GitRef = scenario.Request.Repositories[1].GitRef,
+                    ProfiledRevision = scenario.Request.Repositories[1].ProfiledRevision,
+                },
+            ],
+        };
+        using HttpResponseMessage response = await scenario.Client.PostAsJsonAsync(
+            scenario.Route, mismatch);
+        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+        string body = await response.Content.ReadAsStringAsync();
+        Assert.DoesNotContain(scenario.System.Id.ToString("D"), body, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal(before, await ReadCountsAsync(scenario.Database));
+    }
+
+    [Fact]
+    public async Task PostPreparedScan_InitialUnauthorized_CreatesNothingAsync()
+    {
+        await using PublicPreparedScanScenario scenario = await CreateScenarioAsync(login: false);
+
+        using HttpResponseMessage response = await scenario.Client.PostAsJsonAsync(
+            scenario.Route, scenario.Request);
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+        Assert.Equal(
+            new PreparedScanInitiationCounts(0, 0, 0, 0, 0, 0, 0),
+            await ReadCountsAsync(scenario.Database));
+    }
+
+    [Fact]
+    public async Task PostPreparedScan_IdenticalConcurrentRequests_ExposeOneTupleAsync()
+    {
+        await using PublicPreparedScanScenario scenario = await CreateScenarioAsync();
+        Task<HttpResponseMessage>[] posts =
+        [
+            scenario.Client.PostAsJsonAsync(scenario.Route, scenario.Request),
+            scenario.Client.PostAsJsonAsync(scenario.Route, scenario.Request),
+        ];
+        HttpResponseMessage[] responses = await Task.WhenAll(posts);
+        try
+        {
+            Assert.Contains(responses, response => response.StatusCode == HttpStatusCode.Created);
+            Assert.Contains(responses, response => response.StatusCode == HttpStatusCode.OK);
+            Guid[] coordinationIds = await Task.WhenAll(
+                responses.Select(async response =>
+                    JsonDocument.Parse(await response.Content.ReadAsStringAsync())
+                        .RootElement.GetProperty("coordinationId").GetGuid()));
+            Assert.Equal(1, coordinationIds.Distinct().Count());
+        }
+        finally
+        {
+            foreach (HttpResponseMessage response in responses)
+            {
+                response.Dispose();
+            }
+        }
+    }
+
+    [Fact]
+    public async Task PostPreparedScan_PostInitiationPreparationFailure_RetriesExactTupleAsync()
+    {
+        await using PublicPreparedScanScenario scenario = await CreateScenarioAsync();
+        scenario.Observations.FailFirstPreparation = true;
+
+        using HttpResponseMessage failed = await scenario.Client.PostAsJsonAsync(
+            scenario.Route, scenario.Request);
+        Assert.Equal(HttpStatusCode.ServiceUnavailable, failed.StatusCode);
+        PreparedScanInitiationCounts afterFailure = await ReadCountsAsync(scenario.Database);
+        Assert.Equal(2, afterFailure.ScanRuns);
+        Assert.Equal(2, afterFailure.ScanExecutions);
+        Assert.Equal(1, afterFailure.Coordinations);
+
+        using HttpResponseMessage retry = await scenario.Client.PostAsJsonAsync(
+            scenario.Route, scenario.Request);
+        Assert.Equal(HttpStatusCode.Created, retry.StatusCode);
+        Assert.Equal(afterFailure, await ReadCountsAsync(scenario.Database));
+    }
+
+    [Fact]
+    public async Task PostPreparedScan_FreshAuthorizationRevocation_CreatesNothingAsync()
+    {
+        CountingAuthorizationRechecker rechecker = new() { Deny = true };
+        await using PublicPreparedScanScenario scenario = await CreateScenarioAsync(
+            services =>
+            {
+                services.RemoveAll<IPreparedScanInitiationAuthorizationRechecker>();
+                services.AddScoped<IPreparedScanInitiationAuthorizationRechecker>(_ => rechecker);
+            });
+
+        using HttpResponseMessage response = await scenario.Client.PostAsJsonAsync(
+            scenario.Route, scenario.Request);
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        Assert.Equal(1, rechecker.CallCount);
+        Assert.Equal(
+            new PreparedScanInitiationCounts(0, 0, 0, 0, 0, 0, 0),
+            await ReadCountsAsync(scenario.Database));
+    }
+
+    [Fact]
+    public async Task PostPreparedScan_PreparedAndAdvancedReplay_UsesNoAnalysisAsync()
+    {
+        await using PublicPreparedScanScenario scenario = await CreateScenarioAsync();
+        using HttpResponseMessage first = await scenario.Client.PostAsJsonAsync(
+            scenario.Route, scenario.Request);
+        Assert.Equal(HttpStatusCode.Created, first.StatusCode);
+        PreparedScanInitiationCounts beforeReplay = await ReadCountsAsync(scenario.Database);
+
+        using HttpResponseMessage replay = await scenario.Client.PostAsJsonAsync(
+            scenario.Route, scenario.Request);
+        Assert.Equal(HttpStatusCode.OK, replay.StatusCode);
+        Assert.Equal(beforeReplay, await ReadCountsAsync(scenario.Database));
+    }
+
+    [Fact]
+    public async Task PostPreparedScan_PartialCorruptOrLegacyState_MapsConflictWithoutAnalysisAsync()
+    {
+        CountingConflictInitiationStore store = new();
+        await using PublicPreparedScanScenario scenario = await CreateScenarioAsync(
+            services =>
+            {
+                services.RemoveAll<IPreparedScanInitiationStore>();
+                services.AddScoped<IPreparedScanInitiationStore>(_ => store);
+            });
+
+        using HttpResponseMessage response = await scenario.Client.PostAsJsonAsync(
+            scenario.Route, scenario.Request);
+        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+        Assert.Equal(1, store.CallCount);
+        Assert.Equal(0, scenario.CodeGraphCalls);
+        Assert.Equal(0, scenario.JavaReadinessCalls);
+        Assert.Equal(
+            new PreparedScanInitiationCounts(0, 0, 0, 0, 0, 0, 0),
+            await ReadCountsAsync(scenario.Database));
+    }
+
+    [Fact]
+    public async Task PostPreparedScan_DefaultComposition_UsesPreparedPortsAndNoLaterStagesAsync()
+    {
+        await using PublicPreparedScanScenario scenario = await CreateScenarioAsync();
+        using HttpResponseMessage response = await scenario.Client.PostAsJsonAsync(
+            scenario.Route, scenario.Request);
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+        Assert.Equal(2, scenario.CodeGraphCalls);
+        Assert.Equal(2, scenario.JavaReadinessCalls);
+        Assert.False(scenario.CgcResolved);
+        Assert.True(scenario.BuilderEntryTupleVisible);
+    }
+
+    [Fact]
+    public void InitiationBoundary_HasNoForbiddenLaterStageDependencyOrLegacyEndpointCoordinator()
+    {
+        Type coordinator = typeof(Program).Assembly.GetType(
+            "Vulgata.Web.Data.PreparedScanInitiationCoordinator",
+            throwOnError: true)!;
+        Type endpoints = typeof(Program).Assembly.GetType(
+            "Vulgata.Web.Api.Scans.PreparedScanEndpoints",
+            throwOnError: true)!;
+        MethodInfo handler = Assert.Single(
+            endpoints.GetMethods(BindingFlags.NonPublic | BindingFlags.Static)
+                .Where(method => method.Name == "PrepareAsync"));
+        Assert.Contains(
+            handler.GetParameters(),
+            parameter => parameter.ParameterType == coordinator);
+        Assert.DoesNotContain(
+            handler.GetParameters(),
+            parameter => parameter.ParameterType.Name == "PreparedScanCoordinator");
+
+        string[] forbiddenTokens =
+        [
+            "Worker", "Pass1", "Pass2", "Document", "Edge", "Uncertainty",
+            "Chat", "Llm", "Agent", "RepositoryProfilingCoordinator",
+        ];
+        Assert.DoesNotContain(
+            coordinator.GetConstructors(BindingFlags.Public | BindingFlags.NonPublic)
+                .SelectMany(constructor => constructor.GetParameters())
+                .Select(parameter => parameter.ParameterType.Name),
+            name => forbiddenTokens.Any(token => name.Contains(token, StringComparison.OrdinalIgnoreCase)));
+    }
+
+    private static async Task<PublicPreparedScanScenario> CreateScenarioAsync(
+        Action<IServiceCollection>? configureServices = null,
+        bool login = true)
+    {
+        PreparedScanInitiationPostgreSqlFixture database =
+            await PreparedScanInitiationPostgreSqlFixture.CreateAsync();
+        PublicPreparedScanObservations observations = new();
+        Action<IServiceCollection> scenarioConfiguration = services =>
+        {
+            services.RemoveAll<IPreparedScanRuntimeIdentityResolver>();
+            services.AddSingleton<IPreparedScanRuntimeIdentityResolver>(
+                new PublicPreparedScanRuntimeIdentityResolver());
+            configureServices?.Invoke(services);
+        };
+        WebApplicationFactory<Program> factory = CreateFactory(
+            database.ConnectionString,
+            scenarioConfiguration,
+            observations);
+        try
+        {
+            await using (AsyncServiceScope scope = factory.Services.CreateAsyncScope())
+            {
+                UserManager<ApplicationUser> users =
+                    scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+                ApplicationUser administrator = new()
+                {
+                    UserName = "story125.t011.admin@example.com",
+                    Email = "story125.t011.admin@example.com",
+                    EmailConfirmed = true,
+                };
+                IdentityResult created = await users.CreateAsync(administrator, "Valid1!Pass");
+                Assert.True(created.Succeeded, string.Join(", ", created.Errors.Select(error => error.Description)));
+                IdentityResult role = await users.AddToRoleAsync(administrator, RoleNames.Administrator);
+                Assert.True(role.Succeeded, string.Join(", ", role.Errors.Select(error => error.Description)));
+            }
+
+            (SystemEntity system, RepositoryEntity first, RepositoryEntity second) =
+                await SeedOrdinaryPairAsync(database);
+            HttpClient client = factory.CreateClient(new WebApplicationFactoryClientOptions
+            {
+                AllowAutoRedirect = false,
+                HandleCookies = true,
+            });
+            if (login)
+            {
+                await LoginAsync(client);
+            }
+
+            return new PublicPreparedScanScenario(
+                database,
+                factory,
+                client,
+                system,
+                first,
+                second,
+                CreateRequest(first, second),
+                observations);
+        }
+        catch
+        {
+            factory.Dispose();
+            await database.DisposeAsync();
+            throw;
+        }
+    }
+
+    private static PreparedScanRequest CreateRequest(
+        RepositoryEntity first,
+        RepositoryEntity second) => new()
+        {
+            Repositories =
+            [
+                new()
+                {
+                    RepositoryId = first.Id,
+                    GitRef = "refs/tags/story125-one",
+                    ProfiledRevision = "0123456789abcdef0123456789abcdef01234567",
+                },
+                new()
+                {
+                    RepositoryId = second.Id,
+                    GitRef = "refs/tags/story125-two",
+                    ProfiledRevision = "fedcba9876543210fedcba9876543210fedcba98",
+                },
+            ],
+        };
+
     private static WebApplicationFactory<Program> CreateFactory(
-        string connectionString)
+        string connectionString,
+        Action<IServiceCollection>? configureServices = null,
+        PublicPreparedScanObservations? observations = null)
     {
         StubPreparedRevisionAcquirer revisions = new();
-        revisions.Handler = (request, _) => Task.FromResult(new PreparedRevisionAcquisitionResult(
-            new PreparedRevisionSnapshot(
-                request.RepositoryId,
-                request.ScanRunId,
-                request.RequestedRef,
-                request.ProfiledRevision,
-                new('a', 64),
-                $"snapshot-{request.RepositoryId:N}",
-                $"root-{request.RepositoryId:N}"),
-            null));
+        revisions.Handler = async (request, cancellationToken) =>
+        {
+            if (observations is not null)
+            {
+                int call = Interlocked.Increment(ref observations.RevisionAcquisitionCalls);
+                if (observations.FailFirstPreparation && call == 1)
+                {
+                    return new PreparedRevisionAcquisitionResult(
+                        null,
+                        new PreparedScanFailure(
+                            PreparedScanFailureReason.SourceIdentityMismatch,
+                            "test-preparation-failure",
+                            "induced post-initiation failure"));
+                }
+                await using VulgataDbContext context =
+                    new(new DbContextOptionsBuilder<VulgataDbContext>()
+                        .UseNpgsql(connectionString)
+                        .Options);
+                bool runVisible = await context.ScanRuns
+                    .AsNoTracking()
+                    .AnyAsync(run => run.Id == request.ScanRunId, cancellationToken);
+                bool executionVisible = await context.ScanExecutions
+                    .AsNoTracking()
+                    .AnyAsync(execution => execution.ScanRunId == request.ScanRunId, cancellationToken);
+                observations.BuilderEntryTupleVisible &= runVisible && executionVisible;
+            }
+
+            return new PreparedRevisionAcquisitionResult(
+                new PreparedRevisionSnapshot(
+                    request.RepositoryId,
+                    request.ScanRunId,
+                    request.RequestedRef,
+                    request.ProfiledRevision,
+                    new('a', 64),
+                    $"snapshot-{request.RepositoryId:N}",
+                    $"root-{request.RepositoryId:N}"),
+                null);
+        };
 
         StubPreparedSnapshotSource snapshots = new();
         snapshots.Handler = (snapshot, _) => Task.FromResult(new PreparedSnapshotReadResult(
@@ -134,7 +474,14 @@ public sealed class PreparedScanInitiationApiTests
             null));
 
         StubPreparedCodeGraphAnalysisPort codeGraph = new();
-        codeGraph.ProofHandler = (request, _) => Task.FromResult(new PreparedCodeGraphProofResult(
+        codeGraph.ProofHandler = (request, _) =>
+        {
+            if (observations is not null)
+            {
+                Interlocked.Increment(ref observations.CodeGraphCalls);
+            }
+
+            return Task.FromResult(new PreparedCodeGraphProofResult(
             AnalysisOperationStatus.Succeeded,
             new CodeGraphCompletenessProof(
                 request.Scope.RepositoryId,
@@ -166,9 +513,17 @@ public sealed class PreparedScanInitiationApiTests
                 new('b', 64),
                 0),
             null));
+        };
 
         StubPreparedJavaReadinessPort java = new();
-        java.Handler = (request, _) => Task.FromResult(new PreparedJavaReadinessResult(
+        java.Handler = (request, _) =>
+        {
+            if (observations is not null)
+            {
+                Interlocked.Increment(ref observations.JavaReadinessCalls);
+            }
+
+            return Task.FromResult(new PreparedJavaReadinessResult(
             AnalysisOperationStatus.Succeeded,
             new JavaReadinessProof(
                 request.Scope.RepositoryId,
@@ -198,6 +553,7 @@ public sealed class PreparedScanInitiationApiTests
                 new('d', 64),
                 0),
             null));
+        };
 
         return new PreparedScanInitiationPostgreSqlWebApplicationFactory(connectionString)
             .WithWebHostBuilder(builder => builder.ConfigureTestServices(services =>
@@ -217,6 +573,7 @@ public sealed class PreparedScanInitiationApiTests
                 services.RemoveAll<IPreparedTopLevelSymbolSource>();
                 services.AddSingleton<IPreparedTopLevelSymbolSource>(
                     new StubPreparedTopLevelSymbolSource());
+                configureServices?.Invoke(services);
             }));
     }
 
@@ -320,4 +677,154 @@ internal sealed class StubPreparedTopLevelSymbolSource : IPreparedTopLevelSymbol
         string fileHash,
         CancellationToken cancellationToken) =>
         Task.FromResult(new PreparedJavaSourceResult([], null));
+}
+
+internal sealed class PublicPreparedScanScenario : IAsyncDisposable
+{
+    internal PublicPreparedScanScenario(
+        PreparedScanInitiationPostgreSqlFixture database,
+        WebApplicationFactory<Program> factory,
+        HttpClient client,
+        SystemEntity system,
+        RepositoryEntity first,
+        RepositoryEntity second,
+        PreparedScanRequest request,
+        PublicPreparedScanObservations observations)
+    {
+        Database = database;
+        Factory = factory;
+        Client = client;
+        System = system;
+        First = first;
+        Second = second;
+        Request = request;
+        Observations = observations;
+    }
+
+    internal PreparedScanInitiationPostgreSqlFixture Database { get; }
+
+    internal WebApplicationFactory<Program> Factory { get; }
+
+    internal HttpClient Client { get; }
+
+    internal SystemEntity System { get; }
+
+    internal RepositoryEntity First { get; }
+
+    internal RepositoryEntity Second { get; }
+
+    internal PreparedScanRequest Request { get; }
+
+    internal PublicPreparedScanObservations Observations { get; }
+
+    internal string Route => $"/api/systems/{System.Id:D}/prepared-scans";
+
+    internal int CodeGraphCalls => Observations.CodeGraphCalls;
+
+    internal int JavaReadinessCalls => Observations.JavaReadinessCalls;
+
+    internal bool CgcResolved
+    {
+        get
+        {
+            Type? legacy = typeof(Program).Assembly.GetTypes()
+                .SingleOrDefault(type => type.Name == "IRepositoryProfilingCoordinator");
+            return legacy is not null && Factory.Services.GetService(legacy) is not null;
+        }
+    }
+
+    internal bool BuilderEntryTupleVisible => Observations.BuilderEntryTupleVisible;
+
+    public ValueTask DisposeAsync()
+    {
+        Client.Dispose();
+        Factory.Dispose();
+        return Database.DisposeAsync();
+    }
+}
+
+internal sealed class PublicPreparedScanObservations
+{
+    internal int RevisionAcquisitionCalls;
+
+    internal int CodeGraphCalls;
+
+    internal int JavaReadinessCalls;
+
+    internal bool FailFirstPreparation { get; set; }
+
+    internal bool BuilderEntryTupleVisible { get; set; } = true;
+}
+
+internal sealed class PublicPreparedScanRuntimeIdentityResolver : IPreparedScanRuntimeIdentityResolver
+{
+    public Task<PreparedScanRuntimeIdentityResolution> ResolveAsync(
+        Guid repositoryId,
+        string profiledRevision,
+        CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        AnalysisRuntimeIdentity identity = AnalysisRuntimeIdentity.Create(
+            new AnalysisRuntimeOptions("codegraph", "jdt-ls", "java"),
+            repositoryId,
+            profiledRevision,
+            "@colbymchenry/codegraph",
+            "1.5.0",
+            "https://github.com/colbymchenry/codegraph",
+            "codegraph",
+            "@colbymchenry/codegraph-win32-x64@1.5.0",
+            [
+                new("lib/dist/bin/codegraph.js", "03e4c791cc0dd91ed264278461bf9a56c0278aa0670d5942fc4732311c66de03"),
+                new("node.exe", "b3094d0b49f9ad602262a9921551737bb97637c05dd357a06ae98188d7290aa3"),
+                new("npm-shim.js", "80419260f06862d7a422d13ef69e3b24c7a21dbef4309bce41db02ad642b1877"),
+            ],
+            "jdt-language-server-1.61.0-202608141332",
+            "jdt-language-server-1.61.0-202608141332.zip",
+            new('e', 64),
+            21,
+            "StreamJsonRpc",
+            "2.25.29",
+            "stdio");
+        return Task.FromResult(new PreparedScanRuntimeIdentityResolution(identity));
+    }
+}
+
+internal sealed class CountingAuthorizationRechecker : IPreparedScanInitiationAuthorizationRechecker
+{
+    internal bool Deny { get; set; }
+
+    internal int CallCount { get; private set; }
+
+    public Task<PreparedScanInitiationAuthorizationResult> RecheckAsync(
+        string userId,
+        Guid systemId,
+        IReadOnlyCollection<Guid> repositoryIds,
+        CancellationToken cancellationToken = default)
+    {
+        CallCount++;
+        if (Deny)
+        {
+            return Task.FromResult(PreparedScanInitiationAuthorizationResult.Denied);
+        }
+
+        return Task.FromResult(new PreparedScanInitiationAuthorizationResult(
+            true,
+            Guid.TryParse(userId, out Guid id) ? id : Guid.Empty,
+            RoleNames.Administrator,
+            repositoryIds.Order().ToArray()));
+    }
+}
+
+internal sealed class CountingConflictInitiationStore : IPreparedScanInitiationStore
+{
+    internal int CallCount { get; private set; }
+
+    public Task<PreparedScanInitiationResult> CreateOrReplayAsync(
+        PreparedScanInitiationCommand command,
+        CancellationToken cancellationToken)
+    {
+        CallCount++;
+        return Task.FromResult(new PreparedScanInitiationResult(
+            PreparedScanInitiationOutcome.Conflict));
+    }
 }

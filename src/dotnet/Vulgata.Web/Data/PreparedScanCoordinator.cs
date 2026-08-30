@@ -33,7 +33,7 @@ public sealed record PreparedScanPairBuildResult(
 public interface IPreparedScanPairBuilder
 {
     Task<PreparedScanPairBuildResult> BuildAsync(
-        Guid systemId,
+        PreparedScanInitiationTuple tuple,
         IReadOnlyList<RepositoryEntity> repositories,
         IReadOnlyList<PreparedScanRepositoryRevisionBinding> revisionBindings,
         CancellationToken cancellationToken);
@@ -46,22 +46,38 @@ public sealed class PreparedScanCoordinator(
     IPreparedScanStore store,
     IPreparedScanHandoffSource handoffSource)
 {
-    public async Task<PreparedScanPreparationResult> PrepareAsync(
+    public async Task<PreparedScanPreparationResult> PrepareInitiatedAsync(
         Guid systemId,
         PreparedScanRequest request,
         IUserContext user,
+        PreparedScanInitiationTuple tuple,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(request);
         ArgumentNullException.ThrowIfNull(user);
+        ArgumentNullException.ThrowIfNull(tuple);
         if (systemId == Guid.Empty ||
             request.Repositories is not { Count: 2 } bindings ||
             bindings.Any(binding => binding.RepositoryId == Guid.Empty) ||
             bindings.Select(binding => binding.RepositoryId).Distinct().Count() != 2 ||
             !Guid.TryParse(user.UserId, out Guid userId) ||
-            userId == Guid.Empty)
+            userId == Guid.Empty ||
+            !HasExactTupleBindings(tuple, systemId, bindings))
         {
             return NotFound();
+        }
+
+        PreparedScanAuthorizationScope authorizationScope = new(
+            userId,
+            systemId,
+            bindings
+                .Select(binding => binding.RepositoryId)
+                .OrderBy(id => id.ToString("D"), StringComparer.Ordinal)
+                .ToArray());
+        if (tuple.CoordinationPhase != TwoRepositoryScanCoordinationPhase.Preparing ||
+            tuple.PreparedArtifactPresence != PreparedScanArtifactPresence.None)
+        {
+            return await RecoverPreparedAsync(authorizationScope, tuple, cancellationToken);
         }
 
         RepositoryEntity[]? repositories = await ReadAuthorizedRepositoriesAsync(
@@ -78,7 +94,7 @@ public sealed class PreparedScanCoordinator(
         try
         {
             build = await pairBuilder.BuildAsync(
-                systemId,
+                tuple,
                 repositories,
                 bindings,
                 cancellationToken);
@@ -114,13 +130,6 @@ public sealed class PreparedScanCoordinator(
             return NotFound();
         }
 
-        PreparedScanAuthorizationScope authorizationScope = new(
-            userId,
-            systemId,
-            bindings
-                .Select(binding => binding.RepositoryId)
-                .OrderBy(id => id.ToString("D"), StringComparer.Ordinal)
-                .ToArray());
         PreparedScanCommitResult commit = await store.CommitPairAsync(
             authorizationScope,
             pairPackage,
@@ -154,6 +163,42 @@ public sealed class PreparedScanCoordinator(
                 ? PreparedScanPreparationOutcome.Created
                 : PreparedScanPreparationOutcome.Replay,
             response);
+    }
+
+    public async Task<PreparedScanPreparationResult> RecoverPreparedAsync(
+        PreparedScanAuthorizationScope authorizationScope,
+        PreparedScanInitiationTuple tuple,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(authorizationScope);
+        ArgumentNullException.ThrowIfNull(tuple);
+        Guid[] repositoryIds = authorizationScope.RepositoryIds
+            .Distinct()
+            .OrderBy(id => id.ToString("D"), StringComparer.Ordinal)
+            .ToArray();
+        if (authorizationScope.UserId == Guid.Empty ||
+            authorizationScope.SystemId != tuple.SystemId ||
+            tuple.CoordinationId == Guid.Empty ||
+            tuple.Repositories is not { Count: 2 } repositories ||
+            repositoryIds.Length != 2 ||
+            !repositoryIds.SequenceEqual(
+                repositories.Select(repository => repository.RepositoryId)
+                    .OrderBy(id => id.ToString("D"), StringComparer.Ordinal)))
+        {
+            return Conflict("prepared_scan_initiation_tuple_conflict");
+        }
+
+        PreparedScanHandoff? handoff = await handoffSource.GetAsync(
+            authorizationScope,
+            tuple.CoordinationId,
+            cancellationToken);
+        PreparedScanResponse? response = handoff is null ? null : MapResponse(handoff);
+        if (response is null || !HandoffMatchesTuple(response, tuple))
+        {
+            return Conflict("prepared_scan_handoff_conflict");
+        }
+
+        return new PreparedScanPreparationResult(PreparedScanPreparationOutcome.Replay, response);
     }
 
     private async Task<RepositoryEntity[]?> ReadAuthorizedRepositoriesAsync(
@@ -210,6 +255,66 @@ public sealed class PreparedScanCoordinator(
                 package.ScanRunId == Guid.Empty ||
                 !StringComparer.Ordinal.Equals(package.RequestedRef, binding.GitRef) ||
                 !StringComparer.Ordinal.Equals(package.ProfiledRevision, binding.ProfiledRevision))
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private static bool HasExactTupleBindings(
+        PreparedScanInitiationTuple tuple,
+        Guid systemId,
+        IReadOnlyList<PreparedScanRepositoryRevisionBinding> bindings)
+    {
+        if (tuple.SystemId != systemId ||
+            tuple.CoordinationId == Guid.Empty ||
+            tuple.InitiatedAt.Offset != TimeSpan.Zero ||
+            string.IsNullOrWhiteSpace(tuple.EffectiveAuthorizationScopeFingerprint) ||
+            !Enum.IsDefined(tuple.CoordinationPhase) ||
+            !Enum.IsDefined(tuple.PreparedArtifactPresence) ||
+            tuple.Repositories is not { Count: 2 } repositories ||
+            repositories.Select(repository => repository.RepositoryId).Distinct().Count() != 2 ||
+            repositories.Any(repository => !Enum.IsDefined(repository.ScanExecutionPhase)))
+        {
+            return false;
+        }
+
+        foreach (PreparedScanRepositoryRevisionBinding binding in bindings)
+        {
+            PreparedScanInitiationRepositoryTuple? repository = repositories.SingleOrDefault(
+                candidate => candidate.RepositoryId == binding.RepositoryId);
+            if (repository is null ||
+                repository.ScanRunId == Guid.Empty ||
+                repository.ScanExecutionId == Guid.Empty ||
+                !StringComparer.Ordinal.Equals(repository.RequestedRef, binding.GitRef) ||
+                !StringComparer.Ordinal.Equals(repository.ProfiledRevision, binding.ProfiledRevision))
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private static bool HandoffMatchesTuple(
+        PreparedScanResponse response,
+        PreparedScanInitiationTuple tuple)
+    {
+        if (response.CoordinationId != tuple.CoordinationId ||
+            response.Manifests is not { Count: 2 } manifests)
+        {
+            return false;
+        }
+
+        foreach (PreparedScanInitiationRepositoryTuple repository in tuple.Repositories)
+        {
+            PreparedScanManifestResponse? manifest = manifests.SingleOrDefault(
+                candidate => candidate.RepositoryId == repository.RepositoryId);
+            if (manifest is null ||
+                manifest.ScanRunId != repository.ScanRunId ||
+                !StringComparer.Ordinal.Equals(manifest.ProfiledRevision, repository.ProfiledRevision))
             {
                 return false;
             }

@@ -1,4 +1,5 @@
 using FluentValidation;
+using Microsoft.AspNetCore.Mvc;
 using Vulgata.Core.DomainServices;
 using Vulgata.Shared;
 using Vulgata.Shared.Repositories;
@@ -106,7 +107,7 @@ internal static class RepositoryApiEndpoints
         repoApi.MapPost("/{repositoryId:guid}/scan-runs", async (
             Guid systemId,
             Guid repositoryId,
-            IRepositoryProfilingCoordinator coordinator,
+            [FromServices] IRepositoryProfilingCoordinator coordinator,
             IUserContext user,
             CancellationToken cancellationToken) =>
         {
@@ -124,7 +125,7 @@ internal static class RepositoryApiEndpoints
             Guid systemId,
             Guid repositoryId,
             Guid scanRunId,
-            IRepositoryProfilingCoordinator coordinator,
+            [FromServices] IRepositoryProfilingCoordinator coordinator,
             IPreScanHandoffService handoffService,
             IUserContext user,
             CancellationToken cancellationToken) =>
@@ -208,7 +209,7 @@ internal static class RepositoryApiEndpoints
 
         standaloneRepoApi.MapPost("/{repositoryId:guid}/scan-runs", async (
             Guid repositoryId,
-            IRepositoryProfilingCoordinator coordinator,
+            [FromServices] IRepositoryProfilingCoordinator coordinator,
             IUserContext user,
             CancellationToken cancellationToken) =>
         {
@@ -224,7 +225,7 @@ internal static class RepositoryApiEndpoints
         standaloneRepoApi.MapGet("/{repositoryId:guid}/scan-runs/{scanRunId:guid}", async (
             Guid repositoryId,
             Guid scanRunId,
-            IRepositoryProfilingCoordinator coordinator,
+            [FromServices] IRepositoryProfilingCoordinator coordinator,
             IPreScanHandoffService handoffService,
             IUserContext user,
             CancellationToken cancellationToken) =>

@@ -23,6 +23,11 @@ namespace Vulgata.Tests.PreparedScanning;
 [Collection(PreparedScanningCollection.Name)]
 public sealed class PreparedScanReleaseQualificationTests(ITestOutputHelper output)
 {
+    private const string PromptIdentity = "prepared-scan-prompt/story122-v1";
+    private const string DocumentSchemaIdentity = "code-logic/file-v2";
+    private const string RuntimeIdentityJson = "{\"runtime\":\"prepared-release-test\"}";
+    private static readonly string RuntimeIdentityHash = new('9', 64);
+
     [Fact]
     public void PreparedJavaRangeSource_ExposesRevisionBoundExactTopLevelRangeSeam()
     {
@@ -500,6 +505,7 @@ public sealed class PreparedScanReleaseQualificationTests(ITestOutputHelper outp
         private readonly SystemEntity _system;
         private readonly RepositoryEntity[] _repositories;
         private readonly PreparedScanRepositoryRevisionBinding[] _bindings;
+        private readonly PreparedScanInitiationTuple _tuple;
         private readonly StubPreparedCodeGraphAnalysisPort _codeGraph;
         private readonly QualificationJavaRangeSource _javaRangeSource;
         private readonly List<string> _analysisEvents;
@@ -522,6 +528,7 @@ public sealed class PreparedScanReleaseQualificationTests(ITestOutputHelper outp
             SystemEntity system,
             RepositoryEntity[] repositories,
             PreparedScanRepositoryRevisionBinding[] bindings,
+            PreparedScanInitiationTuple tuple,
             StubPreparedCodeGraphAnalysisPort codeGraph,
             QualificationJavaRangeSource javaRangeSource,
             List<string> analysisEvents,
@@ -535,6 +542,7 @@ public sealed class PreparedScanReleaseQualificationTests(ITestOutputHelper outp
             _system = system;
             _repositories = repositories;
             _bindings = bindings;
+            _tuple = tuple;
             _codeGraph = codeGraph;
             _javaRangeSource = javaRangeSource;
             _analysisEvents = analysisEvents;
@@ -645,8 +653,9 @@ public sealed class PreparedScanReleaseQualificationTests(ITestOutputHelper outp
             VulgataDbContext db = scope.ServiceProvider.GetRequiredService<VulgataDbContext>();
             (SystemEntity system, RepositoryEntity[] repositories, PreparedScanRepositoryRevisionBinding[] bindings) =
                 await SeedAsync(db);
+            PreparedScanInitiationTuple tuple = CreateInitiationTuple(db, system, repositories, bindings);
             IPreparedScanPairBuilder builder = scope.ServiceProvider.GetRequiredService<IPreparedScanPairBuilder>();
-            harness = new(baseFactory, factory, scope, builder, system, repositories, bindings, codeGraph, javaRangeSource, analysisEvents, javaRequests, output);
+            harness = new(baseFactory, factory, scope, builder, system, repositories, bindings, tuple, codeGraph, javaRangeSource, analysisEvents, javaRequests, output);
             codeGraphTimings = harness._codeGraphMilliseconds;
             javaTimings = harness._javaMilliseconds;
             harness._starts = starts;
@@ -662,7 +671,7 @@ public sealed class PreparedScanReleaseQualificationTests(ITestOutputHelper outp
             PreparedScanRepositoryRevisionBinding[] bindings = reverseInputs ? [.. _bindings.Reverse()] : _bindings;
             Stopwatch total = Stopwatch.StartNew();
             PreparedScanPairBuildResult result = await _builder.BuildAsync(
-                _system.Id,
+                _tuple,
                 repositories,
                 bindings,
                 CancellationToken.None);
@@ -869,8 +878,12 @@ public sealed class PreparedScanReleaseQualificationTests(ITestOutputHelper outp
             new('f', 64), "预扫描已批准——继续进入顺序演示运行器", ConfirmedCommunicationKinds.None, 0, 0, 0, false, []);
         PreScanResult secondPreScan = PreScanResult.CreateApproved(second.Id, secondRun.Id, secondRevision, now,
             new('1', 64), "预扫描已批准——继续进入顺序演示运行器", ConfirmedCommunicationKinds.None, 0, 0, 0, false, []);
-        ScanExecution firstExecution = ScanExecution.Start(Guid.NewGuid(), first.Id, system.Id, firstRun.Id, firstPreScan.Id, firstRevision, now);
-        ScanExecution secondExecution = ScanExecution.Start(Guid.NewGuid(), second.Id, system.Id, secondRun.Id, secondPreScan.Id, secondRevision, now);
+        ScanExecution firstExecution = ScanExecution.CreateNewPath(
+            Guid.NewGuid(), first.Id, system.Id, firstRun.Id, firstRevision,
+            PromptIdentity, DocumentSchemaIdentity, RuntimeIdentityJson, RuntimeIdentityHash, now);
+        ScanExecution secondExecution = ScanExecution.CreateNewPath(
+            Guid.NewGuid(), second.Id, system.Id, secondRun.Id, secondRevision,
+            PromptIdentity, DocumentSchemaIdentity, RuntimeIdentityJson, RuntimeIdentityHash, now);
         TwoRepositoryScanCoordination coordination = TwoRepositoryScanCoordination.Create(firstExecution, secondExecution, now);
         db.Systems.Add(system);
         db.ScanRuns.AddRange(firstRun, secondRun);
@@ -884,6 +897,47 @@ public sealed class PreparedScanReleaseQualificationTests(ITestOutputHelper outp
             new() { RepositoryId = first.Id, GitRef = "refs/tags/release-a", ProfiledRevision = firstRevision },
             new() { RepositoryId = second.Id, GitRef = "refs/tags/release-b", ProfiledRevision = secondRevision },
         ]);
+    }
+
+    private static PreparedScanInitiationTuple CreateInitiationTuple(
+        VulgataDbContext db,
+        SystemEntity system,
+        IReadOnlyList<RepositoryEntity> repositories,
+        IReadOnlyList<PreparedScanRepositoryRevisionBinding> bindings)
+    {
+        TwoRepositoryScanCoordination coordination = db.TwoRepositoryScanCoordinations
+            .Single(value => value.SystemId == system.Id);
+        PreparedScanInitiationRepositoryTuple[] tupleRepositories = repositories
+            .Select(repository =>
+            {
+                PreparedScanRepositoryRevisionBinding binding = bindings.Single(
+                    value => value.RepositoryId == repository.Id);
+                ScanExecution execution = db.ScanExecutions.Single(
+                    value => value.RepositoryId == repository.Id);
+                ScanRun run = db.ScanRuns.Single(value => value.Id == execution.ScanRunId);
+                return new PreparedScanInitiationRepositoryTuple(
+                    repository.Id,
+                    binding.GitRef,
+                    binding.ProfiledRevision,
+                    run.Id,
+                    execution.Id,
+                    execution.Phase,
+                    execution.PromptIdentity!,
+                    execution.DocumentSchemaIdentity!,
+                    execution.AnalysisRuntimeIdentityJson!,
+                    execution.AnalysisRuntimeIdentityHash!,
+                    execution.PreScanResultId);
+            })
+            .ToArray();
+        return new(
+            system.Id,
+            new string('a', 64),
+            coordination.CreatedAt,
+            coordination.Id,
+            coordination.StateVersion,
+            coordination.Phase,
+            PreparedScanArtifactPresence.None,
+            tupleRepositories);
     }
 
     private static string Hash(string value) =>

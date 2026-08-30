@@ -44,6 +44,10 @@ public sealed class PreparedScanRealQualificationTests
         "0123456789abcdef0123456789abcdef01234567";
     private const string RuntimeIdentityHash =
         "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+    private const string PreparedPromptIdentity = "prepared-scan-prompt/story122-v1";
+    private const string PreparedDocumentSchemaIdentity = "code-logic/file-v2";
+    private const string PreparedRuntimeIdentityJson = "{\"runtime\":\"prepared-real-test\"}";
+    private static readonly string PreparedRuntimeIdentityHash = new('9', 64);
 
     [Fact]
     public async Task ExactGit_PrivateFullRefAcquisition_BindsCommitAndCleansItsLease()
@@ -351,9 +355,14 @@ public sealed class PreparedScanRealQualificationTests
                     secondRef);
             IPreparedScanPairBuilder builder = scope.ServiceProvider
                 .GetRequiredService<IPreparedScanPairBuilder>();
+            PreparedScanInitiationTuple tuple = CreateInitiationTuple(
+                db,
+                system,
+                [first, second],
+                bindings);
 
             PreparedScanPairBuildResult result = await builder.BuildAsync(
-                system.Id,
+                tuple,
                 [first, second],
                 bindings,
                 CancellationToken.None);
@@ -470,9 +479,14 @@ public sealed class PreparedScanRealQualificationTests
                     secondRef);
             IPreparedScanPairBuilder builder = scope.ServiceProvider
                 .GetRequiredService<IPreparedScanPairBuilder>();
+            PreparedScanInitiationTuple tuple = CreateInitiationTuple(
+                db,
+                system,
+                [first, second],
+                bindings);
 
             PreparedScanPairBuildResult result = await builder.BuildAsync(
-                system.Id,
+                tuple,
                 [first, second],
                 bindings,
                 CancellationToken.None);
@@ -671,22 +685,14 @@ public sealed class PreparedScanRealQualificationTests
             0,
             false,
             []);
-        ScanExecution firstExecution = ScanExecution.Start(
-            Guid.NewGuid(),
-            first.Id,
-            system.Id,
-            firstRun.Id,
-            firstPreScan.Id,
-            firstRevision,
-            now);
-        ScanExecution secondExecution = ScanExecution.Start(
-            Guid.NewGuid(),
-            second.Id,
-            system.Id,
-            secondRun.Id,
-            secondPreScan.Id,
-            secondRevision,
-            now);
+        ScanExecution firstExecution = ScanExecution.CreateNewPath(
+            Guid.NewGuid(), first.Id, system.Id, firstRun.Id, firstRevision,
+            PreparedPromptIdentity, PreparedDocumentSchemaIdentity,
+            PreparedRuntimeIdentityJson, PreparedRuntimeIdentityHash, now);
+        ScanExecution secondExecution = ScanExecution.CreateNewPath(
+            Guid.NewGuid(), second.Id, system.Id, secondRun.Id, secondRevision,
+            PreparedPromptIdentity, PreparedDocumentSchemaIdentity,
+            PreparedRuntimeIdentityJson, PreparedRuntimeIdentityHash, now);
         TwoRepositoryScanCoordination coordination = TwoRepositoryScanCoordination.Create(
             firstExecution,
             secondExecution,
@@ -708,6 +714,47 @@ public sealed class PreparedScanRealQualificationTests
                 new() { RepositoryId = first.Id, GitRef = firstRef, ProfiledRevision = firstRevision },
                 new() { RepositoryId = second.Id, GitRef = secondRef, ProfiledRevision = secondRevision },
             ]);
+    }
+
+    private static PreparedScanInitiationTuple CreateInitiationTuple(
+        VulgataDbContext db,
+        SystemEntity system,
+        IReadOnlyList<RepositoryEntity> repositories,
+        IReadOnlyList<PreparedScanRepositoryRevisionBinding> bindings)
+    {
+        TwoRepositoryScanCoordination coordination = db.TwoRepositoryScanCoordinations
+            .Single(value => value.SystemId == system.Id);
+        PreparedScanInitiationRepositoryTuple[] tupleRepositories = repositories
+            .Select(repository =>
+            {
+                PreparedScanRepositoryRevisionBinding binding = bindings.Single(
+                    value => value.RepositoryId == repository.Id);
+                ScanExecution execution = db.ScanExecutions.Single(
+                    value => value.RepositoryId == repository.Id);
+                ScanRun run = db.ScanRuns.Single(value => value.Id == execution.ScanRunId);
+                return new PreparedScanInitiationRepositoryTuple(
+                    repository.Id,
+                    binding.GitRef,
+                    binding.ProfiledRevision,
+                    run.Id,
+                    execution.Id,
+                    execution.Phase,
+                    execution.PromptIdentity!,
+                    execution.DocumentSchemaIdentity!,
+                    execution.AnalysisRuntimeIdentityJson!,
+                    execution.AnalysisRuntimeIdentityHash!,
+                    execution.PreScanResultId);
+            })
+            .ToArray();
+        return new(
+            system.Id,
+            new string('a', 64),
+            coordination.CreatedAt,
+            coordination.Id,
+            coordination.StateVersion,
+            coordination.Phase,
+            PreparedScanArtifactPresence.None,
+            tupleRepositories);
     }
 
     [Fact]

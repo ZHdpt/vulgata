@@ -1,5 +1,6 @@
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Vulgata.Core.DomainServices;
 using Vulgata.Core.Entities;
@@ -27,26 +28,49 @@ internal sealed class PreparedScanPairBuilder(
     TimeProvider timeProvider) : IPreparedScanPairBuilder
 {
     public async Task<PreparedScanPairBuildResult> BuildAsync(
-        Guid systemId,
+        PreparedScanInitiationTuple tuple,
         IReadOnlyList<RepositoryEntity> repositories,
         IReadOnlyList<PreparedScanRepositoryRevisionBinding> revisionBindings,
         CancellationToken cancellationToken)
     {
-        if (systemId == Guid.Empty || repositories is not { Count: 2 } ||
+        ArgumentNullException.ThrowIfNull(tuple);
+        if (tuple.SystemId == Guid.Empty || repositories is not { Count: 2 } ||
             revisionBindings is not { Count: 2 } ||
-            repositories.Select(repository => repository.Id).Distinct().Count() != 2)
+            tuple.Repositories is not { Count: 2 } initiationRepositories ||
+            repositories.Select(repository => repository.Id).Distinct().Count() != 2 ||
+            initiationRepositories.Select(repository => repository.RepositoryId).Distinct().Count() != 2 ||
+            !repositories.Select(repository => repository.Id).Order().SequenceEqual(
+                initiationRepositories.Select(repository => repository.RepositoryId).Order()) ||
+            tuple.CoordinationId == Guid.Empty ||
+            tuple.CoordinationPhase != TwoRepositoryScanCoordinationPhase.Preparing ||
+            tuple.PreparedArtifactPresence != PreparedScanArtifactPresence.None)
         {
             return Reject(PreparedScanFailureReason.UnsafeInput, "prepared-scan-invalid-pair");
         }
 
-        string[] runtimeHashes = runtimeReadiness.Current.RuntimeIdentityHash is { } runtimeHash
-            ? [runtimeHash]
-            : [];
-        if (runtimeHashes.Length != 1)
+        if (runtimeReadiness.Current.Status != AnalysisRuntimeHealthStatus.Ready)
         {
             return Reject(
                 PreparedScanFailureReason.AnalysisNotReady,
                 "prepared-scan-analysis-runtime-unavailable");
+        }
+
+        Guid[] scanRunIds = initiationRepositories.Select(repository => repository.ScanRunId).ToArray();
+        ScanRun[] scanRuns = await dbContext.ScanRuns
+            .AsNoTracking()
+            .Where(run => scanRunIds.Contains(run.Id))
+            .ToArrayAsync(cancellationToken);
+        TwoRepositoryScanCoordination? coordination = await dbContext.TwoRepositoryScanCoordinations
+            .AsNoTracking()
+            .SingleOrDefaultAsync(candidate => candidate.Id == tuple.CoordinationId, cancellationToken);
+        Guid[] executionIds = initiationRepositories.Select(repository => repository.ScanExecutionId).ToArray();
+        ScanExecution[] executions = await dbContext.ScanExecutions
+            .AsNoTracking()
+            .Where(execution => executionIds.Contains(execution.Id))
+            .ToArrayAsync(cancellationToken);
+        if (!TupleStateMatches(tuple, coordination, scanRuns, executions))
+        {
+            return Reject(PreparedScanFailureReason.NotFound, "prepared-scan-coordination-not-found");
         }
 
         CoreCatalog? catalog;
@@ -58,35 +82,21 @@ internal sealed class PreparedScanPairBuilder(
                 "prepared-scan-catalog-unavailable"));
         }
 
-        Guid[] repositoryIds = repositories.Select(repository => repository.Id).ToArray();
-        ScanRun[] scanRuns = await dbContext.ScanRuns
-            .AsNoTracking()
-            .Where(run => repositoryIds.Contains(run.RepositoryId))
-            .ToArrayAsync(cancellationToken);
-        TwoRepositoryScanCoordination? coordination = await dbContext.TwoRepositoryScanCoordinations
-            .AsNoTracking()
-            .SingleOrDefaultAsync(candidate =>
-                candidate.SystemId == systemId &&
-                repositoryIds.Contains(candidate.RepositoryOneId) &&
-                repositoryIds.Contains(candidate.RepositoryTwoId),
-                cancellationToken);
-        if (coordination is null || coordination.Phase != TwoRepositoryScanCoordinationPhase.Preparing)
-        {
-            return Reject(PreparedScanFailureReason.NotFound, "prepared-scan-coordination-not-found");
-        }
-
         var work = new List<RepositoryWork>(2);
         foreach (RepositoryEntity repository in repositories
                      .OrderBy(value => value.Id.ToString("D"), StringComparer.Ordinal))
         {
             PreparedScanRepositoryRevisionBinding? binding = revisionBindings.SingleOrDefault(
                 value => value.RepositoryId == repository.Id);
-            ScanRun? scanRun = binding is null
+            PreparedScanInitiationRepositoryTuple? initiation = initiationRepositories.SingleOrDefault(
+                value => value.RepositoryId == repository.Id);
+            ScanRun? scanRun = initiation is null
                 ? null
-                : scanRuns.SingleOrDefault(run =>
-                    run.RepositoryId == repository.Id &&
-                    StringComparer.Ordinal.Equals(run.ProfiledRevision, binding.ProfiledRevision));
-            if (binding is null || scanRun is null || repository.SystemId != systemId)
+                : scanRuns.SingleOrDefault(run => run.Id == initiation.ScanRunId);
+            if (binding is null || initiation is null || scanRun is null ||
+                repository.SystemId != tuple.SystemId ||
+                !StringComparer.Ordinal.Equals(binding.GitRef, initiation.RequestedRef) ||
+                !StringComparer.Ordinal.Equals(binding.ProfiledRevision, initiation.ProfiledRevision))
             {
                 return Reject(PreparedScanFailureReason.NotFound, "prepared-scan-binding-not-found");
             }
@@ -96,8 +106,8 @@ internal sealed class PreparedScanPairBuilder(
                     repository.Id,
                     scanRun.Id,
                     repository.GitUrl,
-                    binding.GitRef,
-                    binding.ProfiledRevision),
+                    initiation.RequestedRef,
+                    initiation.ProfiledRevision),
                 cancellationToken);
             if (acquisition.Snapshot is not PreparedRevisionSnapshot revision)
             {
@@ -118,9 +128,9 @@ internal sealed class PreparedScanPairBuilder(
             AnalysisScope scope = new(
                 repository.Id,
                 scanRun.Id,
-                binding.ProfiledRevision,
+                initiation.ProfiledRevision,
                 revision.SnapshotBindingToken,
-                runtimeHashes[0],
+                initiation.RuntimeIdentityHash,
                 new AnalysisDeadline(timeProvider.GetUtcNow().AddMinutes(2).ToUnixTimeMilliseconds()));
             if (codeGraph is CodeGraphAnalysisAdapter)
             {
@@ -159,7 +169,8 @@ internal sealed class PreparedScanPairBuilder(
                     $"index-{repository.Id:N}"),
                 cancellationToken);
             if (codeGraphResult.Status != AnalysisOperationStatus.Succeeded ||
-                codeGraphResult.Proof is not CodeGraphCompletenessProof proof)
+                codeGraphResult.Proof is not CodeGraphCompletenessProof proof ||
+                !ProofMatches(initiation, revision.SnapshotIdentity, proof))
             {
                 return Reject(PreparedScanFailureReason.AnalysisNotReady, "prepared-scan-codegraph-not-ready");
             }
@@ -181,7 +192,8 @@ internal sealed class PreparedScanPairBuilder(
                     javaPaths),
                 cancellationToken);
             if (javaResult.Status != AnalysisOperationStatus.Succeeded ||
-                javaResult.Proof is not JavaReadinessProof javaProof)
+                javaResult.Proof is not JavaReadinessProof javaProof ||
+                !ProofMatches(initiation, revision.SnapshotIdentity, javaProof))
             {
                 return Reject(PreparedScanFailureReason.AnalysisNotReady, "prepared-scan-java-not-ready");
             }
@@ -191,12 +203,19 @@ internal sealed class PreparedScanPairBuilder(
             work.Add(new(repository, scanRun, binding, revision, inventory.Files, proof, javaProof, scope));
         }
 
-        return await BuildPackageAsync(systemId, coordination, catalog, work, cancellationToken);
+        return await BuildPackageAsync(
+            tuple.SystemId,
+            coordination!,
+            tuple.InitiatedAt,
+            catalog,
+            work,
+            cancellationToken);
     }
 
     private async Task<PreparedScanPairBuildResult> BuildPackageAsync(
         Guid systemId,
         TwoRepositoryScanCoordination coordination,
+        DateTimeOffset initiatedAt,
         CoreCatalog catalog,
         IReadOnlyList<RepositoryWork> work,
         CancellationToken cancellationToken)
@@ -441,7 +460,7 @@ internal sealed class PreparedScanPairBuilder(
 
         IReadOnlyList<PreparedScanAuditDraft> selectionAudits =
             PreparedScanPlanner.CreateSelectionAuditLinks(selection);
-        DateTimeOffset now = timeProvider.GetUtcNow();
+        DateTimeOffset now = initiatedAt;
         var repositoryPackages = new List<PreparedRepositoryPackage>(2);
         foreach (RepositoryWork repository in work)
         {
@@ -620,6 +639,114 @@ internal sealed class PreparedScanPairBuilder(
 
     private static string HashToken(string value) =>
         Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(value)));
+
+    private static bool TupleStateMatches(
+        PreparedScanInitiationTuple tuple,
+        TwoRepositoryScanCoordination? coordination,
+        IReadOnlyList<ScanRun> scanRuns,
+        IReadOnlyList<ScanExecution> executions)
+    {
+        if (coordination is null ||
+            scanRuns.Count != 2 ||
+            executions.Count != 2 ||
+            tuple.InitiatedAt.Offset != TimeSpan.Zero ||
+            coordination.Id != tuple.CoordinationId ||
+            coordination.SystemId != tuple.SystemId ||
+            coordination.StateVersion != tuple.CoordinationStateVersion ||
+            coordination.Phase != tuple.CoordinationPhase ||
+            coordination.CreatedAt != tuple.InitiatedAt)
+        {
+            return false;
+        }
+
+        foreach (PreparedScanInitiationRepositoryTuple repository in tuple.Repositories)
+        {
+            ScanRun? run = scanRuns.SingleOrDefault(candidate => candidate.Id == repository.ScanRunId);
+            ScanExecution? execution = executions.SingleOrDefault(
+                candidate => candidate.Id == repository.ScanExecutionId);
+            if (run is null ||
+                execution is null ||
+                run.RepositoryId != repository.RepositoryId ||
+                run.StartedAt != tuple.InitiatedAt ||
+                !StringComparer.Ordinal.Equals(run.ProfiledRevision, repository.ProfiledRevision) ||
+                execution.RepositoryId != repository.RepositoryId ||
+                execution.SystemId != tuple.SystemId ||
+                execution.ScanRunId != repository.ScanRunId ||
+                execution.PreScanResultId != repository.PreScanResultId ||
+                execution.Phase != repository.ScanExecutionPhase ||
+                execution.StartedAt != tuple.InitiatedAt ||
+                !StringComparer.Ordinal.Equals(execution.ProfiledRevision, repository.ProfiledRevision) ||
+                !StringComparer.Ordinal.Equals(execution.PromptIdentity, repository.PromptIdentity) ||
+                !StringComparer.Ordinal.Equals(
+                    execution.DocumentSchemaIdentity,
+                    repository.DocumentSchemaIdentity) ||
+                !JsonEquals(execution.AnalysisRuntimeIdentityJson, repository.RuntimeIdentityJson) ||
+                !StringComparer.Ordinal.Equals(
+                    execution.AnalysisRuntimeIdentityHash,
+                    repository.RuntimeIdentityHash) ||
+                !CoordinationMatchesRepository(coordination, repository))
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private static bool CoordinationMatchesRepository(
+        TwoRepositoryScanCoordination coordination,
+        PreparedScanInitiationRepositoryTuple repository) =>
+        coordination.RepositoryOneId == repository.RepositoryId
+            ? coordination.ScanRunOneId == repository.ScanRunId &&
+                coordination.ScanExecutionOneId == repository.ScanExecutionId &&
+                StringComparer.Ordinal.Equals(
+                    coordination.ProfiledRevisionOne,
+                    repository.ProfiledRevision)
+            : coordination.RepositoryTwoId == repository.RepositoryId &&
+                coordination.ScanRunTwoId == repository.ScanRunId &&
+                coordination.ScanExecutionTwoId == repository.ScanExecutionId &&
+                StringComparer.Ordinal.Equals(
+                    coordination.ProfiledRevisionTwo,
+                    repository.ProfiledRevision);
+
+    private static bool ProofMatches(
+        PreparedScanInitiationRepositoryTuple initiation,
+        string snapshotIdentity,
+        CodeGraphCompletenessProof proof) =>
+        proof.RepositoryId == initiation.RepositoryId &&
+        proof.ScanRunId == initiation.ScanRunId &&
+        StringComparer.Ordinal.Equals(proof.ProfiledRevision, initiation.ProfiledRevision) &&
+        StringComparer.Ordinal.Equals(proof.SnapshotIdentity, snapshotIdentity) &&
+        StringComparer.Ordinal.Equals(proof.RuntimeIdentityHash, initiation.RuntimeIdentityHash);
+
+    private static bool ProofMatches(
+        PreparedScanInitiationRepositoryTuple initiation,
+        string snapshotIdentity,
+        JavaReadinessProof proof) =>
+        proof.RepositoryId == initiation.RepositoryId &&
+        proof.ScanRunId == initiation.ScanRunId &&
+        StringComparer.Ordinal.Equals(proof.ProfiledRevision, initiation.ProfiledRevision) &&
+        StringComparer.Ordinal.Equals(proof.SnapshotIdentity, snapshotIdentity) &&
+        StringComparer.Ordinal.Equals(proof.RuntimeIdentityHash, initiation.RuntimeIdentityHash);
+
+    private static bool JsonEquals(string? stored, string expected)
+    {
+        if (stored is null)
+        {
+            return false;
+        }
+
+        try
+        {
+            using JsonDocument storedDocument = JsonDocument.Parse(stored);
+            using JsonDocument expectedDocument = JsonDocument.Parse(expected);
+            return JsonElement.DeepEquals(storedDocument.RootElement, expectedDocument.RootElement);
+        }
+        catch (JsonException)
+        {
+            return false;
+        }
+    }
 
     private static bool HasJavaSourceContent(ReadOnlySpan<byte> rawBytes)
     {

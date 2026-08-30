@@ -23,6 +23,11 @@ namespace Vulgata.Tests.PreparedScanning;
 /// </summary>
 public sealed class PreparedScanApiTests
 {
+    private const string PromptIdentity = "prepared-scan-prompt/story122-v1";
+    private const string DocumentSchemaIdentity = "code-logic/file-v2";
+    private const string RuntimeIdentityJson = "{\"runtime\":\"prepared-api-test\"}";
+    private static readonly string RuntimeIdentityHash = new('9', 64);
+
     [Fact]
     public void PreparedScanRequest_RequiresExactlyTwoRepositoryRevisionBindings()
     {
@@ -118,6 +123,37 @@ public sealed class PreparedScanApiTests
                 method => method.Name.Contains("Dispatch", StringComparison.OrdinalIgnoreCase) ||
                 method.Name.Contains("Worker", StringComparison.OrdinalIgnoreCase) ||
                 method.Name.Contains("Document", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public void PreparedScanSeams_RequireImmutableInitiationTuple()
+    {
+        MethodInfo[] buildMethods = typeof(IPreparedScanPairBuilder).GetMethods(
+            BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static)
+            .Where(method => method.Name == nameof(IPreparedScanPairBuilder.BuildAsync))
+            .ToArray();
+        Assert.NotEmpty(buildMethods);
+        Assert.All(buildMethods, method =>
+        {
+            ParameterInfo? firstParameter = method.GetParameters().FirstOrDefault();
+            Assert.NotNull(firstParameter);
+            Assert.Equal(typeof(PreparedScanInitiationTuple), firstParameter!.ParameterType);
+        });
+        Assert.DoesNotContain(
+            buildMethods,
+            method => method.GetParameters().FirstOrDefault()?.ParameterType == typeof(Guid));
+
+        MethodInfo[] coordinatorPreparationMethods = typeof(PreparedScanCoordinator).GetMethods(
+            BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static)
+            .Where(method =>
+                method.GetParameters().Any(parameter => parameter.ParameterType == typeof(PreparedScanRequest)) &&
+                method.GetParameters().Any(parameter => parameter.ParameterType == typeof(IUserContext)))
+            .ToArray();
+        Assert.NotEmpty(coordinatorPreparationMethods);
+        Assert.DoesNotContain(
+            coordinatorPreparationMethods,
+            method => !method.GetParameters().Any(parameter =>
+                parameter.ParameterType == typeof(PreparedScanInitiationTuple)));
     }
 
     [Fact]
@@ -271,9 +307,10 @@ public sealed class PreparedScanApiTests
             coordination.SystemId == system.Id));
         IPreparedScanPairBuilder builder = scope.ServiceProvider
             .GetRequiredService<IPreparedScanPairBuilder>();
+        PreparedScanInitiationTuple tuple = CreateInitiationTuple(db, system, [first, second], bindings);
 
         PreparedScanPairBuildResult result = await builder.BuildAsync(
-            system.Id,
+            tuple,
             [first, second],
             bindings,
             CancellationToken.None);
@@ -402,22 +439,12 @@ public sealed class PreparedScanApiTests
             0,
             false,
             []);
-        ScanExecution firstExecution = ScanExecution.Start(
-            Guid.NewGuid(),
-            first.Id,
-            system.Id,
-            firstRun.Id,
-            firstPreScan.Id,
-            firstRevision,
-            now);
-        ScanExecution secondExecution = ScanExecution.Start(
-            Guid.NewGuid(),
-            second.Id,
-            system.Id,
-            secondRun.Id,
-            secondPreScan.Id,
-            secondRevision,
-            now);
+        ScanExecution firstExecution = ScanExecution.CreateNewPath(
+            Guid.NewGuid(), first.Id, system.Id, firstRun.Id, firstRevision,
+            PromptIdentity, DocumentSchemaIdentity, RuntimeIdentityJson, RuntimeIdentityHash, now);
+        ScanExecution secondExecution = ScanExecution.CreateNewPath(
+            Guid.NewGuid(), second.Id, system.Id, secondRun.Id, secondRevision,
+            PromptIdentity, DocumentSchemaIdentity, RuntimeIdentityJson, RuntimeIdentityHash, now);
         TwoRepositoryScanCoordination coordination = TwoRepositoryScanCoordination.Create(
             firstExecution,
             secondExecution,
@@ -439,6 +466,47 @@ public sealed class PreparedScanApiTests
                 new() { RepositoryId = first.Id, GitRef = "refs/tags/release-a", ProfiledRevision = firstRevision },
                 new() { RepositoryId = second.Id, GitRef = "refs/tags/release-b", ProfiledRevision = secondRevision },
             ]);
+    }
+
+    private static PreparedScanInitiationTuple CreateInitiationTuple(
+        VulgataDbContext db,
+        SystemEntity system,
+        IReadOnlyList<RepositoryEntity> repositories,
+        IReadOnlyList<PreparedScanRepositoryRevisionBinding> bindings)
+    {
+        TwoRepositoryScanCoordination coordination = db.TwoRepositoryScanCoordinations
+            .Single(value => value.SystemId == system.Id);
+        PreparedScanInitiationRepositoryTuple[] tupleRepositories = repositories
+            .Select(repository =>
+            {
+                PreparedScanRepositoryRevisionBinding binding = bindings.Single(
+                    value => value.RepositoryId == repository.Id);
+                ScanExecution execution = db.ScanExecutions.Single(
+                    value => value.RepositoryId == repository.Id);
+                ScanRun run = db.ScanRuns.Single(value => value.Id == execution.ScanRunId);
+                return new PreparedScanInitiationRepositoryTuple(
+                    repository.Id,
+                    binding.GitRef,
+                    binding.ProfiledRevision,
+                    run.Id,
+                    execution.Id,
+                    execution.Phase,
+                    execution.PromptIdentity!,
+                    execution.DocumentSchemaIdentity!,
+                    execution.AnalysisRuntimeIdentityJson!,
+                    execution.AnalysisRuntimeIdentityHash!,
+                    execution.PreScanResultId);
+            })
+            .ToArray();
+        return new(
+            system.Id,
+            new string('a', 64),
+            coordination.CreatedAt,
+            coordination.Id,
+            coordination.StateVersion,
+            coordination.Phase,
+            PreparedScanArtifactPresence.None,
+            tupleRepositories);
     }
 
     private static Type RequireSharedType(Func<Type, bool> predicate)

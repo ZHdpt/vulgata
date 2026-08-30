@@ -23,7 +23,7 @@ public static class PreparedScanEndpoints
         [FromServices] IAuthorizationService authorization,
         [FromServices] IValidator<PreparedScanRequest> validator,
         [FromServices] IUserContext user,
-        [FromServices] PreparedScanCoordinator coordinator,
+        [FromServices] PreparedScanInitiationCoordinator coordinator,
         CancellationToken cancellationToken)
     {
         if (httpContext.User.Identity?.IsAuthenticated != true)
@@ -52,7 +52,7 @@ public static class PreparedScanEndpoints
                 string.Join(" ", validation.Errors.Select(error => error.ErrorMessage).Distinct()));
         }
 
-        PreparedScanPreparationResult result = await coordinator.PrepareAsync(
+        PreparedScanPreparationResult result = await coordinator.InitiateAsync(
             systemId,
             request,
             user,
@@ -71,7 +71,7 @@ public static class PreparedScanEndpoints
                 "系统或仓库不存在，或当前用户无权访问。"),
             PreparedScanPreparationOutcome.Conflict => Problem(
                 StatusCodes.Status409Conflict,
-                result.FailureCode ?? PreparedScanProblemCodes.Conflict,
+                PreparedScanProblemCodes.InitiationConflict,
                 "准备输入或已批准包已变更，请刷新后重试。"),
             PreparedScanPreparationOutcome.Rejected => Problem(
                 StatusCodes.Status422UnprocessableEntity,
@@ -79,7 +79,7 @@ public static class PreparedScanEndpoints
                 "扫描准备校验未通过，未产生已批准交接。"),
             _ => Problem(
                 StatusCodes.Status503ServiceUnavailable,
-                result.FailureCode ?? PreparedScanProblemCodes.Unavailable,
+                PreparedScanProblemCodes.InitiationUnavailable,
                 "分析运行时当前不可用，请稍后重试。"),
         };
     }
@@ -105,6 +105,8 @@ public static class PreparedScanEndpoints
         internal const string InvalidRequest = "invalid-prepared-scan-request";
         internal const string Forbidden = "prepared-scan-forbidden";
         internal const string NotFound = "prepared-scan-not-found";
+        internal const string InitiationConflict = "prepared-scan-initiation-conflict";
+        internal const string InitiationUnavailable = "prepared-scan-initiation-unavailable";
         internal const string Conflict = "prepared-scan-conflict";
         internal const string Rejected = "prepared-scan-rejected";
         internal const string Unavailable = "prepared-scan-unavailable";
