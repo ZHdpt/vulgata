@@ -3,13 +3,13 @@
   "bmad_story_key": "12-5-grounded-llm-wiki-chat-and-august-30-release-evidence",
   "bmad_epic_key": "12",
   "feature_directory": "specs/014-grounded-llm-wiki-chat-release-evidence",
-  "stage": "implement",
+  "stage": "specify",
   "preflight": {
     "branch": "demo0831/story-12-5-trackC",
-    "head": "d8f60354004cff7233f30570feb7d3cc4594441f",
-    "git_identity_sha256": "256a2c89b4543f2b557ad6bbbf1c4307097ff60a4be64b498bbb58e12cd8dcff",
+    "head": "c710bc315b477eb1040b026ea6f10aa1c2613b60",
+    "git_identity_sha256": "723cb0a7902f1df537e04e6940d3caddfb08088aa37f6993f7a3f43ebeba919f",
     "status_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-    "observed_at": "2026-08-29T23:29:44.3209131Z"
+    "observed_at": "2026-08-30T00:10:44.4635305Z"
   },
   "artifacts": {
     "spec": {"path":"specs/014-grounded-llm-wiki-chat-release-evidence/spec.md","sha256":"15bc1cc7afe3d7250d8d247546da4ab72086f030bcb81e7b33b875701ffba309"},
@@ -17,8 +17,8 @@
     "tasks": {"path":"specs/014-grounded-llm-wiki-chat-release-evidence/tasks.md","sha256":"1a388144bf59674aa74ab859f16a3d46ec3d60f344881fdff5d9ef069e8a165e"}
   },
   "gates": {
-    "plan-review": {"status":"accepted","attempt":2,"verdict_path":"specs/014-grounded-llm-wiki-chat-release-evidence/reviews/plan-review/plan-review-track-c-mvp-02.json"},
-    "definition-review": {"status":"accepted","attempt":2,"verdict_path":"specs/014-grounded-llm-wiki-chat-release-evidence/reviews/definition-review/definition-review-track-c-mvp-02.json"},
+    "plan-review": {"status":"pending","attempt":0,"verdict_path":null},
+    "definition-review": {"status":"pending","attempt":0,"verdict_path":null},
     "quality-review": {"status":"pending","attempt":0,"verdict_path":null}
   },
   "attempts": {"definition-review":0,"converge":0,"quality-review":0},
@@ -29,7 +29,8 @@
     {"decision_id":"story-12-5-implementation-approval-track-c-mvp-01","status":"accepted","scope_sha256":"6e88b42958a615399a9b4167a1c9fc27f7229ea7cedcc7f4febedafd8c775400","evidence_path":"specs/014-grounded-llm-wiki-chat-release-evidence/decisions/implementation-approval-track-c-mvp-01.md","decided_at":"2026-08-29T16:33:56.9454670Z"},
     {"decision_id":"story-12-5-track-c-mvp-overnight-standing-authorization-02","status":"accepted","scope_sha256":"6e88b42958a615399a9b4167a1c9fc27f7229ea7cedcc7f4febedafd8c775400","evidence_path":"specs/014-grounded-llm-wiki-chat-release-evidence/decisions/standing-authorization-track-c-mvp-02.md","decided_at":"2026-08-29T17:08:44.9350501Z"},
     {"decision_id":"story-12-5-track-c-mvp-postgresql-provider-authorization-01","status":"accepted","scope_sha256":"6e88b42958a615399a9b4167a1c9fc27f7229ea7cedcc7f4febedafd8c775400","evidence_path":"specs/014-grounded-llm-wiki-chat-release-evidence/decisions/postgresql-provider-preflight-authorization-01.md","decided_at":"2026-08-29T23:16:52.1463747Z"},
-    {"decision_id":"story-12-5-track-c-mvp-host-startup-authorization-01","status":"accepted","scope_sha256":"6e88b42958a615399a9b4167a1c9fc27f7229ea7cedcc7f4febedafd8c775400","evidence_path":"specs/014-grounded-llm-wiki-chat-release-evidence/decisions/track-c-mvp-host-startup-authorization-01.md","decided_at":"2026-08-29T23:28:00Z"}
+    {"decision_id":"story-12-5-track-c-mvp-host-startup-authorization-01","status":"accepted","scope_sha256":"6e88b42958a615399a9b4167a1c9fc27f7229ea7cedcc7f4febedafd8c775400","evidence_path":"specs/014-grounded-llm-wiki-chat-release-evidence/decisions/track-c-mvp-host-startup-authorization-01.md","decided_at":"2026-08-29T23:28:00Z"},
+    {"decision_id":"story-12-5-return-to-plan-scan-composition-01","status":"accepted","scope_sha256":"72ecb3bee01e498acb2dacd9c21719b48f307cbbb597bf6c09393bad13d5b1d3","evidence_path":"specs/014-grounded-llm-wiki-chat-release-evidence/decisions/return-to-plan-scan-composition-01.md","decided_at":"2026-08-30T00:10:24.4661357Z"}
   ],
   "convergence": {"status":"pending","attempt":0,"outcome":"pending","report_path":null},
   "e2e": {"result":"pending","decision_path":null},
@@ -38,16 +39,14 @@
     "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/plan-review/plan-review-track-c-mvp-02.json",
     "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/definition-review/definition-review-track-c-mvp-02.json",
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/verification/track-b-final-01.md",
-    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/preflight/track-c-mvp-entry-01.md",
-    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/verification/track-c-mvp-support-01.md",
-    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/verification/track-c-mvp-tier1-01.md",
-    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/corrections/track-c-mvp-preflight-classification-01.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/postgresql-provider-preflight-authorization-01.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/track-c-mvp/run-02/release-report.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/track-c-mvp-host-startup-authorization-01.md",
-    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/track-c-mvp-blocked-02.md"
+    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/track-c-mvp-blocked-02.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/return-to-plan-scan-composition-01.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/corrections/track-c-scan-composition-feasibility-01.md"
   ],
-  "checkpoint": {"checkpoint_id":"bmad-12-5-implement-20260829T234116Z-trackcmvpt010blocked02","stage":"implement","commit_sha":null,"binding_status":"pending"},
-  "resume": {"stage":"implement","reason":"T010 blocked: production composition exposes only RuntimeUnavailableRepositoryProfilingCoordinator, so the clean database cannot create Scan prerequisites. Return to plan and Scan planned-change authority; never substitute Story 12.4 data.","evidence_path":"specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/track-c-mvp-blocked-02.md"},
-  "updated_at": "2026-08-29T23:41:16.7585449Z"
+  "checkpoint": {"checkpoint_id":"bmad-12-5-specify-20260830T001044Z-3568fe","stage":"specify","commit_sha":null,"binding_status":"pending"},
+  "resume": {"stage":"specify","reason":"Composition-only planning is infeasible: the real coordinator requires retired ICodeGraphProvider while production requires closed CodeGraph 1.5 ports. Correct-course/specification authority or a separate corrective story is required.","evidence_path":"specs/014-grounded-llm-wiki-chat-release-evidence/evidence/corrections/track-c-scan-composition-feasibility-01.md"},
+  "updated_at": "2026-08-30T00:10:44.4635305Z"
 }
