@@ -3,22 +3,22 @@
   "bmad_story_key": "12-5-grounded-llm-wiki-chat-and-august-30-release-evidence",
   "bmad_epic_key": "12",
   "feature_directory": "specs/014-grounded-llm-wiki-chat-release-evidence",
-  "stage": "plan",
+  "stage": "implementation-approval",
   "preflight": {
     "branch": "demo0831/story-12-5-trackC",
-    "head": "5b4b5d15f3700240bb1916675a99430a3b18097e",
+    "head": "d84788f4d4cb7536dac119c62c60cd77352adeb1",
     "git_identity_sha256": "f8d5ef6181f2d5861e5a6a50c221bf14c2875c5d3dd48f7c79119b01f3d355ba",
     "status_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-    "observed_at": "2026-08-30T05:30:18.5783002Z"
+    "observed_at": "2026-08-30T05:59:15.4510419Z"
   },
   "artifacts": {
     "spec": {"path":"specs/014-grounded-llm-wiki-chat-release-evidence/spec.md","sha256":"469f72c4e7fc62874e082a7f425351d9f46cf422ae8641d4bee7b64915dd67c0"},
-    "plan": {"path":"specs/014-grounded-llm-wiki-chat-release-evidence/plan.md","sha256":"ee13bddfcae94937831a6184f51e7f452bdc0eeec6b91b0b320ac5bed29f35ca"},
-    "tasks": {"path":"specs/014-grounded-llm-wiki-chat-release-evidence/tasks.md","sha256":"1f6bad50ce1e8b415b7a0870d999a4ed3073a0e49944b397721a8b0bba47c7ed"}
+    "plan": {"path":"specs/014-grounded-llm-wiki-chat-release-evidence/plan.md","sha256":"6ebb0a525721716bfcbb3dce0d330b4846a6f3cf50c604ceb2bf9b0ed41346a8"},
+    "tasks": {"path":"specs/014-grounded-llm-wiki-chat-release-evidence/tasks.md","sha256":"469956462085136a1d1a6acf1b59ab895da403e0de409631c3f10b3b8f90015b"}
   },
   "gates": {
-    "plan-review": {"status":"pending","attempt":2,"verdict_path":"specs/014-grounded-llm-wiki-chat-release-evidence/reviews/plan-review/plan-review-prepared-scan-initiation-02.json"},
-    "definition-review": {"status":"pending","attempt":2,"verdict_path":"specs/014-grounded-llm-wiki-chat-release-evidence/reviews/definition-review/definition-review-prepared-scan-initiation-02.json"},
+    "plan-review": {"status":"accepted","attempt":3,"verdict_path":"specs/014-grounded-llm-wiki-chat-release-evidence/reviews/plan-review/plan-review-prepared-pass1-identity-authority-03.json"},
+    "definition-review": {"status":"accepted","attempt":4,"verdict_path":"specs/014-grounded-llm-wiki-chat-release-evidence/reviews/definition-review/definition-review-prepared-pass1-identity-authority-04.json"},
     "quality-review": {"status":"pending","attempt":0,"verdict_path":null}
   },
   "attempts": {"definition-review":0,"converge":0,"quality-review":0},
@@ -33,7 +33,8 @@
     {"decision_id":"story-12-5-return-to-plan-scan-composition-01","status":"accepted","scope_sha256":"72ecb3bee01e498acb2dacd9c21719b48f307cbbb597bf6c09393bad13d5b1d3","evidence_path":"specs/014-grounded-llm-wiki-chat-release-evidence/decisions/return-to-plan-scan-composition-01.md","decided_at":"2026-08-30T00:10:24.4661357Z"},
     {"decision_id":"story-12-5-correct-course-prepared-scan-initiation-01","status":"accepted","scope_sha256":"97385cc24150140de882bb839dcdd6cbb7046701033ac76560409927b5a3bb56","evidence_path":"specs/014-grounded-llm-wiki-chat-release-evidence/decisions/correct-course-prepared-scan-initiation-01.md","decided_at":"2026-08-30T00:49:56.0824234Z"},
     {"decision_id":"story-12-5-planned-change-authorization-prepared-scan-initiation-01","status":"accepted","scope_sha256":"50958154329acbac8070ecec04f5b6c3527a6cc047129feac024c0e093eb1eab","evidence_path":"specs/014-grounded-llm-wiki-chat-release-evidence/decisions/planned-change-authorization-prepared-scan-initiation-01.md","decided_at":"2026-08-30T02:04:56.4056655Z"},
-    {"decision_id":"story-12-5-implementation-approval-prepared-scan-initiation-01","status":"accepted","scope_sha256":"f6a6e1d2365e72db62a713033b218597d96706810b12069e4417a9bcb0493a6b","evidence_path":"specs/014-grounded-llm-wiki-chat-release-evidence/decisions/implementation-approval-prepared-scan-initiation-01.md","decided_at":"2026-08-30T02:37:18.4173106Z"}
+    {"decision_id":"story-12-5-implementation-approval-prepared-pass1-identity-authority-02","status":"pending","scope_sha256":"f5690de4e4ca6b188fbeeab54745c12266585601583a05f9ffd81516c088ebd1","evidence_path":"specs/014-grounded-llm-wiki-chat-release-evidence/decisions/implementation-approval-prepared-pass1-identity-authority-02.md","decided_at":null},
+    {"decision_id":"story-12-5-planned-change-prepared-pass1-identity-authority-02","status":"accepted","scope_sha256":"7a9e3fc5fc4b9485cd7538e61f2b2153a81bcc8388a89935750d5a29dbf931b2","evidence_path":"specs/014-grounded-llm-wiki-chat-release-evidence/decisions/planned-change-prepared-pass1-identity-authority-02.md","decided_at":"2026-08-30T05:59:15.4510419Z"}
   ],
   "convergence": {"status":"pending","attempt":0,"outcome":"pending","report_path":null},
   "e2e": {"result":"pending","decision_path":null},
@@ -44,14 +45,14 @@
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/corrections/track-c-scan-composition-feasibility-01.md",
     "docs/bmad/planning-artifacts/sprint-change-proposal-2026-08-30-story-12-5-prepared-scan-initiation.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/correct-course-prepared-scan-initiation-01.md",
-    "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/plan-review/plan-review-prepared-scan-initiation-02.json",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/plan-review/plan-review-prepared-pass1-identity-authority-03.json",
     "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/planned-change-authorization-prepared-scan-initiation-01.md",
-    "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/definition-review/definition-review-prepared-scan-initiation-02.json",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/definition-review/definition-review-prepared-pass1-identity-authority-04.json",
     "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/implementation-approval-prepared-scan-initiation-01.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/prepared-scan-initiation-identity-authority-blocked-01.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/planned-change-prepared-pass1-identity-authority-02.md"
   ],
-  "checkpoint": {"checkpoint_id":"bmad-12-5-plan-20260830T052614Z-identity-authority","stage":"plan","commit_sha":"5b4b5d15f3700240bb1916675a99430a3b18097e","binding_status":"bound"},
-  "resume": {"stage":"plan","reason":"T026 proved the accepted recovery identity source is legacy v1/knowledge-schema, not Prepared Pass 1 v2/code-logic. Await planned-change authorization for one narrow Agents-owned identity source.","evidence_path":"specs/014-grounded-llm-wiki-chat-release-evidence/decisions/planned-change-prepared-pass1-identity-authority-02.md"},
-  "updated_at": "2026-08-30T05:30:18.5783002Z"
+  "checkpoint": {"checkpoint_id":"bmad-12-5-implementation-approval-20260830T065447Z-aac00e","stage":"implementation-approval","commit_sha":null,"binding_status":"pending"},
+  "resume": {"stage":"implementation-approval","reason":"Corrected definition accepted at attempt 04. Await explicit implementation approval bound to scope f5690de4e4ca6b188fbeeab54745c12266585601583a05f9ffd81516c088ebd1 before T025.","evidence_path":"specs/014-grounded-llm-wiki-chat-release-evidence/decisions/implementation-approval-prepared-pass1-identity-authority-02.md"},
+  "updated_at": "2026-08-30T06:54:37.2907458Z"
 }

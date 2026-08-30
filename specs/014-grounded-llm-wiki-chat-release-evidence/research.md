@@ -6,7 +6,8 @@
 - PRD Section 0.1, Story 12.5, August 30 architecture and docs/judge-rubric.txt;
 - Constitution, AGENTS.md, Ubiquitous Language and accepted Track B final verification;
 - existing Track A/B release-gate tests, fixed question corpus and database-name guard;
-- production Prepared Scan endpoint/coordinator/builder/store, Scan Run/new-path Execution/Two-Repository coordination factories and EF mappings, runtime/prompt/schema identity sources, Pass 1/Pass 2, production Scan-status and Prepared Chat composition;
+- production Prepared Scan endpoint/coordinator/builder/store, Scan Run/new-path Execution/Two-Repository coordination factories and EF mappings, `WorkerAgentDispatchIdentitySource`, embedded Prepared Pass 1 v2 prompt/dispatcher, runtime/prompt/schema identity sources, Pass 1/Pass 2, production Scan-status and Prepared Chat composition;
+- accepted planned-change decision `story-12-5-planned-change-prepared-pass1-identity-authority-02` (approved hash `7a9e3fc5fc4b9485cd7538e61f2b2153a81bcc8388a89935750d5a29dbf931b2`) and the blocked T026 identity-authority checkpoint;
 - current contracts under contracts/, treated as downstream artifacts rather than authority.
 
 No unresolved design unknown remains. Machine- and credential-specific values are runtime prerequisites with fail-closed outcomes.
@@ -145,9 +146,9 @@ No unresolved design unknown remains. Machine- and credential-specific values ar
 
 ## R-12: Planned-change trigger
 
-**Decision**: require fresh independent plan-only review and then pause for explicit planned-change authorization.
+**Decision**: require fresh independent plan-only review, then apply accepted decision `story-12-5-planned-change-prepared-pass1-identity-authority-02` only to the narrow identity-authority correction and proceed to affected task regeneration/definition review. Require a newly bound implementation approval before any production write.
 
-**Rationale**: the plan adds no Agent tool and does not weaken the PRD, but it materially changes the production Scan entrance by creating/grouping the exact pair and defining retry/replay. AGENTS.md explicitly gates Scan scheduling, grouping and retry changes. The earlier standing authorization expired and cannot decide this gate.
+**Rationale**: the plan adds no Agent tool and does not weaken the PRD, but it materially changes the production Scan entrance and its server-owned identity composition. AGENTS.md explicitly gates Scan strategy changes. The user approved decision hash `7a9e3fc5fc4b9485cd7538e61f2b2153a81bcc8388a89935750d5a29dbf931b2` for return-to-plan, fresh review, task regeneration and definition review only; no earlier standing or implementation authorization is reused.
 
 ## R-13: One short store transaction is required
 
@@ -207,7 +208,7 @@ No unresolved design unknown remains. Machine- and credential-specific values ar
 
 **Alternatives considered**: new initiation endpoint/DTO, caller-supplied runtime identity, or returning internal tuple IDs on failure are unnecessary and weaken the closed boundary.
 
-The current `ConfiguredAnalysisRuntimeHealthProbe` already performs the complete tool/file integrity checks and creates the canonical Repository/Profiled-Revision-specific `AnalysisRuntimeIdentity`, but retains only its hash in readiness state. A narrow internal `IPreparedScanRuntimeIdentityResolver` makes this one seam replaceable by the public vertical test; sole default `ConfiguredPreparedScanRuntimeIdentityResolver` contains the extracted checked implementation and remains covered by composition, configured-integrity and real CLI tests. The abstraction is internal Web composition only, not public, caller-selected, Agent-facing, CGC-backed or a general analysis port.
+The current `ConfiguredAnalysisRuntimeHealthProbe` already performs the complete tool/file integrity checks and creates the canonical Repository/Profiled-Revision-specific `AnalysisRuntimeIdentity`, but retains only its hash in readiness state. A narrow internal `IPreparedScanRuntimeIdentityResolver` makes runtime resolution replaceable by the public vertical test; sole default `ConfiguredPreparedScanRuntimeIdentityResolver` contains the extracted checked implementation and remains covered by composition, configured-integrity and real CLI tests. The abstraction is internal Web composition only, not public, caller-selected, Agent-facing, CGC-backed or a general analysis port. Prepared Pass 1 prompt/schema identity is a separate Core value port with one Agents implementation under R-21; it does not widen the runtime resolver.
 
 ## R-18: Authorization is checked three times, including a fresh pre-write check
 
@@ -228,3 +229,19 @@ The current `ConfiguredAnalysisRuntimeHealthProbe` already performs the complete
 **Decision**: add Core `PreparedScanInitiationIdentityBuilder`, allow exact `CanonicalEnvelope` domain `vulgata/story-12.5/prepared-scan-initiation-execution/1.0`, and pass its SHA-256 to exact kind `PreparedScanInitiationExecution`. Golden tests freeze two execution GUID constants, Repository-reversal stability and the derived coordination GUID constant.
 
 **Rationale**: an unowned delimiter preimage or unpinned kind literal permits silent replay identity drift. Reusing the established tagged canonical grammar gives one framing authority; literal expected outputs detect changes independently of the builder under test.
+
+## R-21: Prepared Pass 1 identity must be owned beside the v2 prompt
+
+**Decision**: add Core `PreparedPass1ContractIdentity` and `IPreparedPass1ContractIdentitySource.GetCurrent()`. Add one production implementation, Agents-owned `EmbeddedPreparedPass1ContractIdentitySource`, which resolves the exact embedded logical resource `Vulgata.Agents.Prompts.pass1-code-logic-worker.v2.md`, decodes it as strict UTF-8, validates that the text is nonempty and declares `code-logic/file-v2`, hashes the exact decoded string re-encoded as UTF-8, and returns `pass1-code-logic-worker.v2/sha256/{lowercase-64-hex}` plus `code-logic/file-v2`. `PreparedScanInitiationCoordinator` consumes this port and rejects null, legacy-v1, malformed-hash or wrong-schema output as unavailable before fresh authorization or persistence.
+
+**Rationale**: source inspection proves `WorkerAgentDispatchIdentitySource` is the accepted legacy recovery authority: it hashes `pass1-code-logic-worker.v1.md` and returns `vulgata.knowledge-document/1.0`. Source also proves Prepared Pass 1 dispatch loads `pass1-code-logic-worker.v2.md` and its validator requires `code-logic/file-v2`. Reusing the recovery source cannot produce a valid new-path identity. Agents already owns and embeds the executed prompt, so it is the only layer that can authoritatively bind the prompt bytes without a Web hardcode. Core exposes only the dependency-free two-string value/port.
+
+**Alternatives considered**:
+
+- modify `WorkerAgentDispatchIdentitySource` — rejected because it changes accepted recovery identity behavior and compatibility evidence;
+- hardcode v2/schema in `PreparedScanInitiationCoordinator` — rejected because Web would become a second drift-prone prompt authority;
+- accept the generic knowledge schema — rejected because it violates FR-066 and the Prepared Pass 1 parser/committer contract;
+- inject `PreparedPass1WorkerDispatcher` or a provider — rejected because initiation needs identity only and must not acquire an Agent execution surface;
+- add a public request field — rejected because callers cannot select server contract identity.
+
+**Consequences**: default DI has exactly one Core-port-to-Agents mapping. The existing v2 prompt, dispatcher, provider, tools and retry/scheduling behavior remain unchanged; the legacy source and recovery tests remain unchanged. Authority/composition tests independently compute the resource hash, pin the exact prefix/schema, prove coordinator constructor separation, prove legacy output preservation, and prove hostile identity values fail before authorization recheck/store/external analysis. No EF, project-file, public DTO or persistence change follows from this decision.

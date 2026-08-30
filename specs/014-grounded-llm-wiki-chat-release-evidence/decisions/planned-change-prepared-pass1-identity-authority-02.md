@@ -2,7 +2,20 @@
 
 Decision ID: `story-12-5-planned-change-prepared-pass1-identity-authority-02`
 
-Status: **pending explicit user authorization**
+Status: **accepted**
+
+Approved decision SHA-256: `7a9e3fc5fc4b9485cd7538e61f2b2153a81bcc8388a89935750d5a29dbf931b2`
+
+Decided at: `2026-08-30T05:59:15.4510419Z`
+
+## User authorization
+
+The user explicitly approved this decision and authorized return to plan to
+introduce the narrow Agents-owned Prepared Pass 1 prompt/schema identity
+authority, preserve `WorkerAgentDispatchIdentitySource` unchanged, run
+independent plan review, regenerate affected tasks and run independent
+definition review. This authorization does not permit production
+implementation; a newly bound implementation approval remains mandatory.
 
 ## Trigger
 

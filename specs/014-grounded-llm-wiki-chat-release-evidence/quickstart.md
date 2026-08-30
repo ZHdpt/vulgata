@@ -11,7 +11,7 @@ This guide validates the corrected definition, the bounded production Prepared S
     git merge-base --is-ancestor 4798b97d9f23aef587829175df7ab7ebc3daf995 HEAD
     Get-FileHash specs/014-grounded-llm-wiki-chat-release-evidence/spec.md -Algorithm SHA256
 
-Expected before implementation: branch demo0831/story-12-5-trackC; Story 12.4 is ancestral; only explicitly owned corrected-definition files are dirty. After independent plan-review acceptance, stop for the AGENTS.md Scan planned-change authorization before generating tasks.
+Expected before implementation: branch demo0831/story-12-5-trackC; Story 12.4 is ancestral; only explicitly owned corrected-definition files are dirty. Planned-change decision `story-12-5-planned-change-prepared-pass1-identity-authority-02` authorizes affected task regeneration after fresh independent plan-review acceptance. Independent definition review and a newly bound implementation approval remain mandatory before any production write.
 
 ## 2. Validate corrected plan artifacts
 
@@ -20,7 +20,7 @@ Expected before implementation: branch demo0831/story-12-5-trackC; Story 12.4 is
 
 Expected: no unresolved placeholder; removed mechanisms appear only as explicitly deferred/historical material; diff check passes.
 
-Also inspect [contracts/prepared-scan-initiation.md](contracts/prepared-scan-initiation.md) and confirm the plan selects one Web coordinator, one Core store port, one Infrastructure transaction, a PostgreSQL advisory lock, no migration/model change, and no external work inside the transaction.
+Also inspect [contracts/prepared-scan-initiation.md](contracts/prepared-scan-initiation.md) and confirm the plan selects one Web coordinator, one Core Prepared Pass 1 contract-identity port, one sole Agents v2/hash/`code-logic/file-v2` implementation, one Core store port, one Infrastructure transaction, a PostgreSQL advisory lock, no migration/model change, and no external work inside the transaction. Confirm `WorkerAgentDispatchIdentitySource` remains the unchanged v1 recovery authority and is absent from the initiation coordinator constructor.
 
 ## 3. Tier 1 regression
 
@@ -32,10 +32,10 @@ Run the current focused corpus, database guard, Prepared Chat, streaming, author
 
 After approved implementation, add the bounded initiation verification:
 
-    dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter "FullyQualifiedName~PreparedScanInitiationIdentityTests|FullyQualifiedName~PreparedScanInitiationCoordinatorTests|FullyQualifiedName~PreparedScanInitiationApiTests|FullyQualifiedName~PreparedScanRuntimeIdentityResolverTests"
+    dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter "FullyQualifiedName~PreparedPass1ContractIdentitySourceTests|FullyQualifiedName~PreparedScanInitiationIdentityTests|FullyQualifiedName~PreparedScanInitiationCoordinatorTests|FullyQualifiedName~PreparedScanInitiationApiTests|FullyQualifiedName~PreparedScanRuntimeIdentityResolverTests"
     dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter "FullyQualifiedName~PreparedScanInitiationPostgreSqlTests"
 
-The first command owns request/outcome/composition/no-later-stage behavior, the fresh pre-store authorization recheck, phase-aware handoff recovery, default/test runtime-resolver composition and fixed identity vectors. The second must use disposable PostgreSQL and owns identical/competing concurrency, advisory-lock timeout, rollback and exact replay. A SQLite run cannot substitute for the second command.
+The first command owns the default Agents v2 prompt hash/schema authority, unchanged legacy v1 recovery identity, null/v1/malformed/wrong-schema fail-closed vectors, request/outcome/composition/no-later-stage behavior, the fresh pre-store authorization recheck, phase-aware handoff recovery, default/test runtime-resolver composition and fixed execution-identity vectors. The second must use disposable PostgreSQL and owns identical/competing concurrency, advisory-lock timeout, rollback and exact replay. A SQLite run cannot substitute for the second command.
 
 Historical envelope tests remain unchanged and green as accepted Track A compatibility evidence, but Track C-MVP tasks and release acceptance must not implement or require their attestation, ten-check, counter-recomputation, supersession/closure, duplicate-orchestration, outage or screenshot-automation concepts. New current-boundary coverage targets the Markdown report and preconnection guard. Track A corpus and Track B product-security coverage remain unchanged.
 
@@ -79,7 +79,7 @@ Through the authenticated existing UI/API:
 
 1. production-bootstrap one Administrator, one ordinary authorized System, provider assignment, and exactly two ordinary real Java/XML Repository records; do not seed Scan Runs, Pre-Scan Results, Scan Executions, coordination, Manifests, File Code Units or Documents;
 2. submit the existing authenticated `POST /api/systems/{systemId}/prepared-scans` request with exactly two safe full Git refs and exact Profiled Revisions;
-3. after the synchronous endpoint completes, query one complete initiation tuple and two real Prepared Scan Manifests, then verify CodeGraph 1.5, JDT LS Java readiness and safe XML catalog evidence; use the accepted Tier 1 transaction-order test—not operator query timing—to prove that the tuple committed before external analysis began;
+3. after the synchronous endpoint completes, query one complete initiation tuple and two real Prepared Scan Manifests; verify both new-path Scan Executions carry one prompt identity matching `pass1-code-logic-worker.v2/sha256/{lowercase-64-hex}` and exact schema `code-logic/file-v2`, then verify CodeGraph 1.5, JDT LS Java readiness and safe XML catalog evidence; use the accepted Tier 1 transaction-order test—not operator query timing—to prove that the tuple committed before external analysis began;
 4. start the accepted Pass 1 path and allow it to reach terminal state;
 5. run exact Cross-Repository Resolution and the accepted Pass 2 path;
 6. use 继续扫描 only for an eligible durable paused state;
@@ -163,4 +163,4 @@ Only an evidence-file, operator-command or read-only-query defect may be correct
     git diff --check
     dotnet build src/dotnet/Vulgata.Web/Vulgata.Web.csproj --no-restore
 
-The forbidden-path diff must show no Track C-MVP change. Also verify production DI resolves CodeGraph 1.5 ports and does not resolve CGC/historical profiling. Then run the pinned sprint-loop verification and required E2E gate. Planned-change and implementation approvals do not replace technical acceptance.
+The forbidden-path diff must show no Track C-MVP change. Also verify production DI resolves exactly one Agents-owned `IPreparedPass1ContractIdentitySource`, keeps the legacy recovery source unchanged and out of initiation, resolves CodeGraph 1.5 ports, and does not resolve CGC/historical profiling. Then run the pinned sprint-loop verification and required E2E gate. Planned-change and implementation approvals do not replace technical acceptance.

@@ -45,7 +45,7 @@ The response exposes prepared Manifest/handoff identities only. It does not expo
 | malformed route/request/cardinality/ref/revision | 400 | `invalid-prepared-scan-request` |
 | invisible System/Repository or unauthorized effective scope | 404 | `prepared-scan-not-found` |
 | existing tuple is mismatched, legacy, partial, ambiguous or incompatible | 409 | `prepared-scan-initiation-conflict` |
-| configured prompt/schema/runtime identity is not Ready | 503 | `prepared-scan-initiation-unavailable` |
+| configured Prepared Pass 1 contract or runtime identity is not Ready/mismatched | 503 | `prepared-scan-initiation-unavailable` |
 | advisory-lock timeout, cancellation before commit or persistence failure | 503 | `prepared-scan-initiation-unavailable` |
 | downstream prepared-package conflict/rejection/unavailability | existing mapping | existing prepared codes |
 
@@ -57,16 +57,39 @@ Denied/missing outcomes disclose no Repository, revision, tuple or authorization
 
 1. validate the authenticated `IUserContext` and exactly one initially visible System;
 2. read exactly two distinct Repositories in that System and normalize canonical order;
-3. obtain the current Pass 1 prompt/Document schema identity from the existing server authority;
+3. obtain `PreparedPass1ContractIdentity` through Core `IPreparedPass1ContractIdentitySource`; accept only prompt identity `pass1-code-logic-worker.v2/sha256/{lowercase-64-hex}` and exact Document schema identity `code-logic/file-v2` from the sole Agents production source;
 4. obtain one complete canonical `analysis-runtime/1` JSON/hash for each Repository/Profiled Revision through internal `IPreparedScanRuntimeIdentityResolver`; sole default `ConfiguredPreparedScanRuntimeIdentityResolver` rechecks configured tool integrity and is also used by runtime readiness;
 5. after identity resolution, perform a fresh isolated-scope live authorization/ownership recheck: reload the user and roles, verify Repository membership, and require either current Administrator role or both current SystemOwner role and current SystemOwner assignment;
-6. on any revocation/drift return missing-equivalent NotFound with zero store calls; otherwise call `IPreparedScanInitiationStore.CreateOrReplayAsync` immediately with the newly observed effective mode;
+6. on any identity unavailability/mismatch return Unavailable before the rechecker/store; on any authorization revocation/drift return missing-equivalent NotFound with zero store calls; otherwise call `IPreparedScanInitiationStore.CreateOrReplayAsync` immediately with the newly observed effective mode;
 7. outside the transaction, apply the phase-aware replay table below: call `PreparedScanCoordinator.RecoverPreparedAsync(authorizationScope, tuple, cancellationToken)` to reuse the existing handoff source/mapper without analysis, or call `PrepareInitiatedAsync` only for a new/exact retryable pre-publication tuple;
 8. require `IPreparedScanPairBuilder.BuildAsync(tuple, repositories, revisionBindings, cancellationToken)` to load/validate the exact Runs/executions/coordination by ID and preserve the third live authorization recheck immediately before atomic Prepared Scan publication.
 
-The production endpoint resolves only `PreparedScanInitiationCoordinator`. The tuple-less coordinator/builder call shape is replaced, not retained as a production fallback.
+The production endpoint resolves only `PreparedScanInitiationCoordinator`. Its constructor requires `IPreparedPass1ContractIdentitySource` and MUST NOT accept `IScanRecoveryDispatchIdentitySource`. The tuple-less coordinator/builder call shape is replaced, not retained as a production fallback.
 
 No source-acquisition, analysis, Worker, Pass, Document, Edge, Uncertainty, Chat or LLM port is available to the initiation store.
+
+## Prepared Pass 1 contract-identity port
+
+The Core contract is closed and non-executing:
+
+```text
+IPreparedPass1ContractIdentitySource.GetCurrent()
+  -> PreparedPass1ContractIdentity? {
+       promptIdentity,
+       documentSchemaIdentity
+     }
+```
+
+The sole production implementation is Agents-owned `EmbeddedPreparedPass1ContractIdentitySource`. It:
+
+1. resolves exactly one embedded logical resource `Vulgata.Agents.Prompts.pass1-code-logic-worker.v2.md`;
+2. decodes the resource with strict UTF-8 and rejects empty or schema-inconsistent content;
+3. hashes the exact decoded string re-encoded as UTF-8 with SHA-256;
+4. returns `pass1-code-logic-worker.v2/sha256/{lowercase-64-hex}` and `code-logic/file-v2`.
+
+It does not expose prompt text and has no System, Repository, provider, dispatch, retry, scheduling, parsing, persistence, Agent-tool or public-API input. Missing, duplicate, invalid or mismatched authority maps to the existing bounded 503 before fresh authorization or store access.
+
+`IScanRecoveryDispatchIdentitySource`/`WorkerAgentDispatchIdentitySource` is explicitly not this port. It remains unchanged for durable recovery with v1 prompt identity and `vulgata.knowledge-document/1.0`; neither initiation nor its tests may adapt that legacy value into the new-path contract.
 
 ## Core persistence port
 
@@ -166,8 +189,8 @@ The Infrastructure store reports artifact presence only: any Manifest, prepared-
 
 The public production-composition vertical begins with only an authenticated authorized user, one ordinary System, two ordinary Repositories, exact ref/revision bindings, and ready accepted CodeGraph 1.5/JDT-LS ports. It pre-seeds no Scan Run, Pre-Scan Result, Scan Execution, coordination, Prepared Scan Manifest, File Code Unit or Document.
 
-It proves creation/handoff/publication; pre-publication retry; post-publication and advanced-phase handoff recovery without analysis; partial/corrupt conflict; mismatch conflict; revocation between initial and fresh pre-store checks with zero store calls/writes; tuple-required coordinator/builder composition; default configured runtime resolver plus test-only replacement of that seam; CodeGraph 1.5/no-CGC composition; and zero later-stage work. Disposable PostgreSQL tests independently prove identical and competing concurrency, advisory timeout, rollback and complete-tuple visibility. Golden Core tests pin domain/kind/identity outputs. The focused real CodeGraph CLI 2/2 qualification is supporting tool evidence only.
+It proves creation/handoff/publication; pre-publication retry; post-publication and advanced-phase handoff recovery without analysis; partial/corrupt conflict; mismatch conflict; revocation between initial and fresh pre-store checks with zero store calls/writes; tuple-required coordinator/builder composition; default Agents contract-identity and configured runtime resolver plus test-only replacement of those narrow seams; CodeGraph 1.5/no-CGC composition; and zero later-stage work. Identity tests independently hash the v2 embedded prompt, pin prefix/hash/schema, preserve legacy v1 recovery output, and reject null/v1/malformed-hash/wrong-schema values before recheck/store. Disposable PostgreSQL tests independently prove identical and competing concurrency, advisory timeout, rollback and complete-tuple visibility. Golden Core tests pin domain/kind/identity outputs. The focused real CodeGraph CLI 2/2 qualification is supporting tool evidence only.
 
 ## Explicit exclusions
 
-No `CodeGraphContextProvider`, historical `RepositoryProfilingCoordinator`, `/scan-runs` repair, general/single/N-Repository lifecycle, EF/model/migration change, Story 12.4 change, accepted Track A/B change, Worker/Pass/Chat change, fake Backup B evidence, or retained-database deletion is part of this contract.
+No `CodeGraphContextProvider`, historical `RepositoryProfilingCoordinator`, `/scan-runs` repair, general/single/N-Repository lifecycle, EF/model/migration change, Story 12.4 change, accepted Track A/B change, `WorkerAgentDispatchIdentitySource` change, prompt/dispatcher/provider/tool/retry change, Worker/Pass/Chat behavior change, fake Backup B evidence, or retained-database deletion is part of this contract.

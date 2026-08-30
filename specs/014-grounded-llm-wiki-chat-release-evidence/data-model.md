@@ -17,6 +17,17 @@ The combined run observes, but does not reshape:
 
 No release report row, signature, run graph or screenshot row is added to VulgataDbContext.
 
+### PreparedPass1ContractIdentity (Core value, non-persistent)
+
+One server-owned value crosses from the sole Agents implementation to Web initiation through `IPreparedPass1ContractIdentitySource.GetCurrent()`:
+
+| Field | Rule |
+| --- | --- |
+| promptIdentity | exact `pass1-code-logic-worker.v2/sha256/{lowercase-64-hex}`; the hash covers the strict-UTF-8-decoded embedded v2 prompt string re-encoded as UTF-8 |
+| documentSchemaIdentity | exact `code-logic/file-v2` |
+
+The source has no caller/System/Repository/provider/tool input and returns no prompt content. Null, wrong version/prefix, malformed hash, wrong schema, missing/duplicate resource, invalid UTF-8 or schema-inconsistent prompt content is Not Ready and produces no initiation write. `WorkerAgentDispatchIdentitySource` is a separate unchanged legacy recovery authority and is not a value source for this model.
+
 ## 2. PreparedScanInitiationCommand (Core value contract)
 
 One normalized server-owned command crosses from Web orchestration to the Infrastructure store.
@@ -30,8 +41,8 @@ One normalized server-owned command crosses from Web orchestration to the Infras
 | repositoryId | non-empty and belongs to `systemId` |
 | requestedRef | existing safe full `refs/heads/*` or `refs/tags/*` validation |
 | profiledRevision | exact lowercase 40-hex expected commit |
-| promptIdentity | current server-owned Pass 1 prompt identity from `IScanRecoveryDispatchIdentitySource` |
-| documentSchemaIdentity | exact current `code-logic/file-v2` identity |
+| promptIdentity | exact current Prepared Pass 1 identity from `IPreparedPass1ContractIdentitySource`; `pass1-code-logic-worker.v2/sha256/{lowercase-64-hex}` only |
+| documentSchemaIdentity | exact current `code-logic/file-v2` returned by the same Agents-owned authority |
 | runtimeIdentityJson | full canonical `analysis-runtime/1` JSON for this Repository/revision, no host path |
 | runtimeIdentityHash | lowercase SHA-256 of that canonical JSON |
 | providerProcessTimeoutSeconds | exact established value `1800` for `ScanRun.Start`; grants no CGC execution or configuration |
@@ -275,6 +286,7 @@ Failure-correction boundary: evidence-file, operator-command and read-only-query
 ## 11. Relationship overview
 
 PreparedScanInitiationCommand
+  <- PreparedPass1ContractIdentity (Core port, sole Agents authority)
   -> atomic 2 existing Scan Runs
   -> atomic 2 existing new-path Scan Executions
   -> atomic 1 existing Two-Repository Scan Coordination
