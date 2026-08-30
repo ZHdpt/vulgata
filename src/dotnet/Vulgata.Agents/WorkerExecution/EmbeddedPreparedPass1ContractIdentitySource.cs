@@ -1,4 +1,3 @@
-using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
 using Vulgata.Core.DomainServices;
@@ -14,10 +13,34 @@ public sealed class EmbeddedPreparedPass1ContractIdentitySource
     private const string _promptResourceName =
         "Vulgata.Agents.Prompts.pass1-code-logic-worker.v2.md";
 
+    private readonly Func<string[]> _getResourceNames;
+    private readonly Func<string, Stream?> _openResource;
+
+    public EmbeddedPreparedPass1ContractIdentitySource()
+        : this(
+            () => typeof(EmbeddedPreparedPass1ContractIdentitySource).Assembly
+                .GetManifestResourceNames(),
+            name => typeof(EmbeddedPreparedPass1ContractIdentitySource).Assembly
+                .GetManifestResourceStream(name))
+    {
+    }
+
+    internal EmbeddedPreparedPass1ContractIdentitySource(
+        Func<string[]> getResourceNames,
+        Func<string, Stream?> openResource)
+    {
+        ArgumentNullException.ThrowIfNull(getResourceNames);
+        ArgumentNullException.ThrowIfNull(openResource);
+
+        _getResourceNames = getResourceNames;
+        _openResource = openResource;
+
+        _ = GetCurrent();
+    }
+
     public PreparedPass1ContractIdentity? GetCurrent()
     {
-        Assembly assembly = typeof(EmbeddedPreparedPass1ContractIdentitySource).Assembly;
-        string[] matches = [.. assembly.GetManifestResourceNames()
+        string[] matches = [.. _getResourceNames()
             .Where(name => string.Equals(name, _promptResourceName, StringComparison.Ordinal))
         ];
         if (matches.Length != 1)
@@ -26,7 +49,7 @@ public sealed class EmbeddedPreparedPass1ContractIdentitySource
                 "The fixed prepared Pass 1 v2 prompt is unavailable or ambiguous.");
         }
 
-        using Stream stream = assembly.GetManifestResourceStream(matches[0])
+        using Stream stream = _openResource(matches[0])
             ?? throw new InvalidOperationException(
                 "The fixed prepared Pass 1 v2 prompt is unavailable.");
         using var reader = new StreamReader(

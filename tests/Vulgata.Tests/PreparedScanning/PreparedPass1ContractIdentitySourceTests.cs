@@ -1,4 +1,6 @@
 using System.Reflection;
+using System.Runtime.ExceptionServices;
+using System.Security.Cryptography;
 using System.Text;
 using Vulgata.Agents.WorkerExecution;
 using Vulgata.Core.DomainServices;
@@ -94,6 +96,122 @@ public sealed class PreparedPass1ContractIdentitySourceTests
         Assert.Contains("UserManager<ApplicationUser>", source, StringComparison.Ordinal);
         Assert.Contains("ISystemRepository", source, StringComparison.Ordinal);
         Assert.Contains("IRepositoryRepository", source, StringComparison.Ordinal);
+    }
+
+    [Theory]
+    [InlineData("missing")]
+    [InlineData("duplicate")]
+    [InlineData("empty")]
+    [InlineData("invalid-utf8")]
+    [InlineData("schema-inconsistent")]
+    public void EmbeddedPreparedPass1Source_HostileResource_IsRejected(string scenario)
+    {
+        string resourceName = FindPreparedPass1ResourceName();
+        string[] names = scenario switch
+        {
+            "missing" => [],
+            "duplicate" => [resourceName, resourceName],
+            _ => [resourceName],
+        };
+        byte[] content = scenario switch
+        {
+            "empty" => [],
+            "invalid-utf8" => [0xC3, 0x28],
+            "schema-inconsistent" => Encoding.UTF8.GetBytes(
+                "`schemaIdentity` is exactly `knowledge-document/file-v1`.") ,
+            _ => ReadPreparedPass1Resource(),
+        };
+
+        Exception exception = Assert.ThrowsAny<Exception>(() => InvokeWithResourceProvider(
+            () => names,
+            _ => new MemoryStream(content, writable: false)));
+
+        Assert.True(
+            exception is InvalidOperationException or InvalidDataException or DecoderFallbackException,
+            $"Unexpected hostile-resource exception: {exception.GetType().FullName}: {exception.Message}");
+    }
+
+    [Fact]
+    public void EmbeddedPreparedPass1Source_BindsExactDecodedTextSha256()
+    {
+        string resourceName = FindPreparedPass1ResourceName();
+        object source = InvokeWithResourceProvider(
+            () => [resourceName],
+            _ => new MemoryStream(ReadPreparedPass1Resource(), writable: false));
+
+        object identity = InvokeGetCurrent(source);
+        Assert.Equal(
+            ExpectedPreparedPass1PromptIdentity,
+            identity.GetType().GetProperty("PromptIdentity")?.GetValue(identity));
+
+        string decodedText = Encoding.UTF8.GetString(ReadPreparedPass1Resource());
+        string expectedHash = Convert.ToHexStringLower(
+            SHA256.HashData(Encoding.UTF8.GetBytes(decodedText)));
+        Assert.Equal(
+            $"pass1-code-logic-worker.v2/sha256/{expectedHash}",
+            identity.GetType().GetProperty("PromptIdentity")?.GetValue(identity));
+    }
+
+    private static object InvokeWithResourceProvider(
+        Func<string[]> names,
+        Func<string, Stream?> stream)
+    {
+        Type sourceType = RequireType(
+            typeof(WorkerAgentDispatchIdentitySource).Assembly,
+            PreparedPass1SourceTypeName);
+        ConstructorInfo? constructor = sourceType.GetConstructor(
+            BindingFlags.Instance | BindingFlags.NonPublic,
+            binder: null,
+            [typeof(Func<string[]>), typeof(Func<string, Stream>)],
+            modifiers: null);
+        Assert.NotNull(
+            constructor);
+        try
+        {
+            return constructor!.Invoke([names, stream]);
+        }
+        catch (TargetInvocationException exception) when (exception.InnerException is not null)
+        {
+            ExceptionDispatchInfo.Capture(exception.InnerException).Throw();
+            throw;
+        }
+    }
+
+    private static object InvokeGetCurrent(object source)
+    {
+        MethodInfo getCurrent = Assert.Single(
+            source.GetType().GetMethods(BindingFlags.Public | BindingFlags.Instance),
+            method => method.Name == "GetCurrent");
+        try
+        {
+            return getCurrent.Invoke(source, null)!;
+        }
+        catch (TargetInvocationException exception) when (exception.InnerException is not null)
+        {
+            ExceptionDispatchInfo.Capture(exception.InnerException).Throw();
+            throw;
+        }
+    }
+
+    private static string FindPreparedPass1ResourceName()
+    {
+        string[] names = typeof(WorkerAgentDispatchIdentitySource).Assembly
+            .GetManifestResourceNames()
+            .Where(name => name.EndsWith(
+                "pass1-code-logic-worker.v2.md",
+                StringComparison.Ordinal))
+            .ToArray();
+        return Assert.Single(names);
+    }
+
+    private static byte[] ReadPreparedPass1Resource()
+    {
+        string resourceName = FindPreparedPass1ResourceName();
+        using Stream stream = typeof(WorkerAgentDispatchIdentitySource).Assembly
+            .GetManifestResourceStream(resourceName)!;
+        using var buffer = new MemoryStream();
+        stream.CopyTo(buffer);
+        return buffer.ToArray();
     }
 
     private static Type RequireType(Assembly assembly, string fullName)

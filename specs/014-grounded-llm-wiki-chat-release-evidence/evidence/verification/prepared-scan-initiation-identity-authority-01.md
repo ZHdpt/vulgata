@@ -41,3 +41,20 @@ Every PostgreSQL test used a fresh lowercase `vulgata_story125_<32 hex>` databas
 - No EF migration, model snapshot, `VulgataDbContext` model shape, Story 12.4 contract, Worker dispatch source, Agent tool, general Scan lifecycle or later-stage behavior changed.
 
 Verdict: T025-T029 are verified GREEN for the accepted bounded correction.
+
+## QR-PSI-001 correction verification
+
+Quality review attempt 01 correctly found that the earlier hostile-identity
+claim exceeded the executable evidence. The corrected suite now directly
+executes null, legacy-v1, malformed-hash, wrong-schema and throwing identity
+sources and proves zero runtime-resolution, fresh-authorization,
+initiation-store and pair-builder/preparation calls. It also executes missing,
+duplicate, empty, invalid-UTF8 and schema-inconsistent embedded resources and
+binds the exact decoded-text SHA-256.
+
+The focused hostile/ordering matrix passed `29/29`. The complete corrected
+identity, coordinator, runtime-resolver, public API, PostgreSQL initiation,
+atomic publication and store filter passed `111`, skipped one explicitly
+environment-dependent concurrent-store case, and failed zero (`112 total`).
+All PostgreSQL databases remained fresh disposable lowercase
+`vulgata_story125_<32 hex>` instances.

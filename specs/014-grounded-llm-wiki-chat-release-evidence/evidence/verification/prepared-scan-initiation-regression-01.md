@@ -26,3 +26,19 @@ The broad exploratory filter also selected real-runtime qualification cases. The
 - Track A and Track B production behavior is unchanged and fully regressed.
 
 Verdict: T030 passes for the accepted candidate. External real-runtime assets remain reserved for the separately unauthorized T034-T045/run-03 boundary.
+
+## QR-PSI-001 correction regression
+
+After the non-public Agents resource-provider seam and hostile tests were
+added, the invalidated surrounding verification was rerun:
+
+- corrected T029 boundary: `111 passed, 1 environment-dependent skip, 0 failed`;
+- Track A Scan status/resume and release contracts: `116/116`;
+- complete Track B prepared-chat boundary with normal Data Protection access:
+  `423/423`;
+- Web build: zero errors with existing warnings only;
+- `git diff --check`: clean apart from line-ending information.
+
+No Track A/B production file, public identity contract, prompt, dispatcher,
+provider, Agent tool, migration/model, Story 12.4 contract, CGC/legacy path or
+run-03 external boundary changed.

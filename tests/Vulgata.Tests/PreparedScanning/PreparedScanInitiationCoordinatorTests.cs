@@ -147,6 +147,63 @@ public sealed class PreparedScanInitiationCoordinatorTests
         Assert.Null(result.Response);
     }
 
+    [Theory]
+    [InlineData("null")]
+    [InlineData("legacy-v1")]
+    [InlineData("malformed-hash")]
+    [InlineData("wrong-schema")]
+    [InlineData("throwing-source")]
+    public async Task HostilePreparedPass1Identity_IsUnavailableBeforeRuntimeAuthorizationOrPreparationAsync(
+        string scenario)
+    {
+        MutableAuthorizationState state = new();
+        CountingInitiationStore store = new();
+        object coordinator = CreateInitiationCoordinator(
+            CreateCallbackProxy<IPreparedScanRuntimeIdentityResolver>(
+                method =>
+                {
+                    if (method.Name == "ResolveAsync")
+                    {
+                        state.RuntimeIdentityChecks++;
+                    }
+                },
+                (method, args) => CreateCompletedReturn(method, success: true, args)),
+            CreateCallbackProxy<IPreparedScanInitiationAuthorizationRechecker>(
+                method => state.FreshAuthorizationChecks++,
+                (method, args) => CreateCompletedReturn(method, success: true, args)),
+            store,
+            state,
+            () => scenario switch
+            {
+                "null" => null,
+                "legacy-v1" => new PreparedPass1ContractIdentity(
+                    "pass1-code-logic-worker.v1/sha256/4f7afc804335ac7e7cc2c10aa6cb034af9d4cdad224e64493dd3f1589ebd6673",
+                    "knowledge-document/file-v1"),
+                "malformed-hash" => new PreparedPass1ContractIdentity(
+                    "pass1-code-logic-worker.v2/sha256/not-a-sha256",
+                    "code-logic/file-v2"),
+                "wrong-schema" => new PreparedPass1ContractIdentity(
+                    "pass1-code-logic-worker.v2/sha256/5b1e48e50b83c5d12b7916d72d1973f4984db8bf60d1fa62df5cb9f4bcd27e7b",
+                    "knowledge-document/file-v1"),
+                "throwing-source" => throw new InvalidOperationException("hostile identity source"),
+                _ => throw new ArgumentOutOfRangeException(nameof(scenario)),
+            });
+
+        PreparedScanPreparationResult result = await InvokeInitiateAsync(
+            coordinator,
+            TestSystemId,
+            CreateValidRequest(),
+            new TestUserContext(TestUserId));
+
+        Assert.Equal(PreparedScanPreparationOutcome.Unavailable, result.Outcome);
+        Assert.Equal("prepared_scan_identity_unavailable", result.FailureCode);
+        Assert.Equal(0, state.RuntimeIdentityChecks);
+        Assert.Equal(0, state.FreshAuthorizationChecks);
+        Assert.Equal(0, store.CallCount);
+        Assert.Equal(0, state.PairBuilderCalls);
+        Assert.Null(result.Response);
+    }
+
     [Fact]
     public void PrePublicationRevocation_RemainsASeparatePreparedCoordinatorBoundary()
     {
@@ -284,7 +341,8 @@ public sealed class PreparedScanInitiationCoordinatorTests
         CallbackProxy runtime,
         CallbackProxy authorization,
         CountingInitiationStore store,
-        MutableAuthorizationState state)
+        MutableAuthorizationState state,
+        Func<object?>? identityFactory = null)
     {
         Type coordinatorType = RequireInitiationCoordinator();
         SystemEntity system = new("test", null, null, DateTimeOffset.UtcNow);
@@ -307,12 +365,15 @@ public sealed class PreparedScanInitiationCoordinatorTests
         IPreparedPass1ContractIdentitySource identity = CreateProxy<IPreparedPass1ContractIdentitySource>(
             out _,
             (method, _) => method.Name == "GetCurrent"
-                ? new PreparedPass1ContractIdentity(
-                    "pass1-code-logic-worker.v2/sha256/5b1e48e50b83c5d12b7916d72d1973f4984db8bf60d1fa62df5cb9f4bcd27e7b",
-                    "code-logic/file-v2")
+                ? identityFactory is not null
+                    ? identityFactory()
+                    : new PreparedPass1ContractIdentity(
+                        "pass1-code-logic-worker.v2/sha256/5b1e48e50b83c5d12b7916d72d1973f4984db8bf60d1fa62df5cb9f4bcd27e7b",
+                        "code-logic/file-v2")
                 : null);
         IPreparedScanHandoffSource handoff = CreateProxy<IPreparedScanHandoffSource>(out _);
-        IPreparedScanPairBuilder pairBuilder = CreateProxy<IPreparedScanPairBuilder>(out _);
+        IPreparedScanPairBuilder pairBuilder = CreateProxy<IPreparedScanPairBuilder>(out InvocationProxy pairBuilderProxy);
+        state.PairBuilder = pairBuilderProxy;
         IPreparedScanStore preparedStore = CreateProxy<IPreparedScanStore>(out _);
         PreparedScanCoordinator preparedCoordinator = new(
             systems,
@@ -654,6 +715,10 @@ public sealed class PreparedScanInitiationCoordinatorTests
         public int RuntimeIdentityChecks { get; set; }
 
         public int FreshAuthorizationChecks { get; set; }
+
+        public InvocationProxy? PairBuilder { get; set; }
+
+        public int PairBuilderCalls => PairBuilder?.InvocationCount ?? 0;
     }
 
     private sealed class TestUserContext(string userId) : IUserContext
