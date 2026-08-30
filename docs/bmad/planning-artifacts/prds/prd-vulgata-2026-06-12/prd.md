@@ -22,6 +22,7 @@ is defined by:
 - [August 30 Bounded Scanning and LLM-Wiki Design](../../architecture/august-30-bounded-scanning-design.md)
 - [Sprint Change Proposal: Story 12.5 Track C-MVP](../../sprint-change-proposal-2026-08-29-story-12-5-track-c-mvp.md)
 - [Sprint Change Proposal: Story 12.5 Prepared Scan Initiation](../../sprint-change-proposal-2026-08-30-story-12-5-prepared-scan-initiation.md)
+- [Sprint Change Proposal: Story 12.5 Exact-Profile Seed Selection](../../sprint-change-proposal-2026-08-31-story-12-5-exact-profile-seed-selection.md)
 
 For the August 30 release boundary, those documents supersede conflicting V1
 details in FR-4.1 through FR-4.5, FR-4.9, FR-4.12, FR-5.8, FR-6.1/6.2,
@@ -74,6 +75,16 @@ Profiled Revision, runtime/prompt/schema identity, or authorization scope fails
 closed. The existing Prepared Scan pipeline retains ownership of analysis,
 selection, atomic Prepared Scan Manifest publication, and the authorization
 recheck immediately before publication.
+
+For the fixed reviewed exact-resolution release profile, automatic selection
+also treats every safe eligible source file required to prove its consumer,
+provider declaration, provider implementation, and unsupported observation as
+a mandatory high-value seed. This applies only when the complete pair matches
+the profile's exact two Repository stable identities, full Git refs, and
+Profiled Revisions. A caller cannot supply a profile or path. A matched profile
+with a missing, unsafe, filtered, ambiguous, or out-of-bound required source
+fails preparation before Manifest publication; a nonmatching pair retains the
+general selection behavior unchanged.
 
 General 10,000-file validation, method-level scheduling, arbitrary protocols,
 general graph clustering, Worker cross-verification waves, dynamic PreScan HITL,

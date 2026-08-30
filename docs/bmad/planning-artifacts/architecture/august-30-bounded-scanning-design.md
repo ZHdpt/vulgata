@@ -196,7 +196,20 @@ The ordering algorithm uses at most 20 seeds per Repository, two CodeGraph
 hops over Calls/Imports/Inherits, 200 expanded files, and five seconds after
 index readiness. Fixed scores and normalized path order break ties. Failure or
 timeout falls back to deterministic production-path ordering and does not fail
-PreScan. No LLM, PageRank, clustering, or sample profile chooses seeds.
+PreScan.
+
+The fixed reviewed exact-resolution release profile is the sole bounded
+exception to the general-evidence seed rule. A server-owned adapter may derive
+its required consumer, provider-declaration, provider-implementation, and
+unsupported-observation paths from the existing embedded profile only after the
+complete pair matches the profile's exact two Repository stable identities,
+full Git refs, and Profiled Revisions. Matching safe eligible File Code Units
+become mandatory high-value seeds within the existing 20-per-Repository and
+150-pair bounds. Activation is all-or-none: missing, filtered, unsafe,
+ambiguous, or out-of-bound required sources fail before Manifest publication.
+A nonmatching pair receives no profile effect. No caller-supplied or arbitrary
+sample profile, LLM, PageRank, or clustering chooses seeds, and production code
+contains no sample Repository name, path, endpoint, or line number.
 
 ## 5. CodeGraph and Java LSP Runtime Contract
 

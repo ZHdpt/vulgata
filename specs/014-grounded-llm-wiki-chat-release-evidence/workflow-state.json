@@ -3,25 +3,25 @@
   "bmad_story_key": "12-5-grounded-llm-wiki-chat-and-august-30-release-evidence",
   "bmad_epic_key": "12",
   "feature_directory": "specs/014-grounded-llm-wiki-chat-release-evidence",
-  "stage": "implement",
+  "stage": "specify",
   "preflight": {
     "branch": "demo0831/story-12-5-trackC",
-    "head": "a0e8fc7e5c90b50b2f9aa4aac8d97a357cb52b67",
-    "git_identity_sha256": "de2f94642d7a3423ec503a8c50fcb7c9b75950fc3e14052eb9041e61d7459243",
-    "status_sha256": "99667edc885d74709a5093a3d3631c327554092e587b84272d5196f9eb4462fc",
-    "observed_at": "2026-08-30T21:17:44.6071663Z"
+    "head": "0ba7f10c00c26e10896006cbf1788f954ff737ee",
+    "git_identity_sha256": "8e59e7a94d0b577e4733ec4e3abfed7a0a1a2038626bc571b00521424896e7c7",
+    "status_sha256": "befca692c408e638476c2a27f8d5073d8121036c22dbd9be1640bcb83ec84c9c",
+    "observed_at": "2026-08-30T21:39:51.5612393Z"
   },
   "artifacts": {
-    "spec": {"path":"specs/014-grounded-llm-wiki-chat-release-evidence/spec.md","sha256":"469f72c4e7fc62874e082a7f425351d9f46cf422ae8641d4bee7b64915dd67c0"},
-    "plan": {"path":"specs/014-grounded-llm-wiki-chat-release-evidence/plan.md","sha256":"6ebb0a525721716bfcbb3dce0d330b4846a6f3cf50c604ceb2bf9b0ed41346a8"},
-    "tasks": {"path":"specs/014-grounded-llm-wiki-chat-release-evidence/tasks.md","sha256":"2e5e6f100f37a2688129304f8cd82478846fc4df98d5ff1a51363d80a6d4d4ab"}
+    "spec": {"path":"specs/014-grounded-llm-wiki-chat-release-evidence/spec.md","sha256":"6da3e251b217ab8dd8190f84c4cf864b994be1e87090558a29e125f5648ec8b7"},
+    "plan": null,
+    "tasks": null
   },
   "gates": {
-    "plan-review": {"status":"accepted","attempt":3,"verdict_path":"specs/014-grounded-llm-wiki-chat-release-evidence/reviews/plan-review/plan-review-prepared-pass1-identity-authority-03.json"},
-    "definition-review": {"status":"accepted","attempt":4,"verdict_path":"specs/014-grounded-llm-wiki-chat-release-evidence/reviews/definition-review/definition-review-prepared-pass1-identity-authority-04.json"},
-    "quality-review": {"status":"accepted","attempt":3,"verdict_path":"specs/014-grounded-llm-wiki-chat-release-evidence/reviews/quality-review/prepared-scan-initiation-quality-review-03.json"}
+    "plan-review": {"status":"invalidated","attempt":0,"verdict_path":null},
+    "definition-review": {"status":"invalidated","attempt":0,"verdict_path":null},
+    "quality-review": {"status":"invalidated","attempt":0,"verdict_path":null}
   },
-  "attempts": {"definition-review":0,"converge":3,"quality-review":3},
+  "attempts": {"definition-review":0,"converge":0,"quality-review":0},
   "approvals": [
     {"decision_id":"story-12-5-correct-course-track-c-mvp-01","status":"accepted","scope_sha256":"4c8ae61ce8136d058d51809a1b74593222c7b68d2845cd1ef2a7daf778a27db8","evidence_path":"specs/014-grounded-llm-wiki-chat-release-evidence/decisions/correct-course-track-c-mvp-01.md","decided_at":"2026-08-29T14:41:26.1917101Z"},
     {"decision_id":"story-12-5-planned-change-authorization-track-c-mvp-rebind-01","status":"accepted","scope_sha256":"6e88b42958a615399a9b4167a1c9fc27f7229ea7cedcc7f4febedafd8c775400","evidence_path":"specs/014-grounded-llm-wiki-chat-release-evidence/decisions/planned-change-authorization-track-c-mvp-rebind-01.md","decided_at":"2026-08-29T16:29:09.3191133Z"},
@@ -33,25 +33,17 @@
     {"decision_id":"story-12-5-planned-change-authorization-prepared-scan-initiation-01","status":"accepted","scope_sha256":"50958154329acbac8070ecec04f5b6c3527a6cc047129feac024c0e093eb1eab","evidence_path":"specs/014-grounded-llm-wiki-chat-release-evidence/decisions/planned-change-authorization-prepared-scan-initiation-01.md","decided_at":"2026-08-30T02:04:56.4056655Z"},
     {"decision_id":"story-12-5-implementation-approval-prepared-pass1-identity-authority-02","status":"accepted","scope_sha256":"f5690de4e4ca6b188fbeeab54745c12266585601583a05f9ffd81516c088ebd1","evidence_path":"specs/014-grounded-llm-wiki-chat-release-evidence/decisions/implementation-approval-prepared-pass1-identity-authority-02.md","decided_at":"2026-08-30T06:59:19.4028059Z"},
     {"decision_id":"story-12-5-planned-change-prepared-pass1-identity-authority-02","status":"accepted","scope_sha256":"7a9e3fc5fc4b9485cd7538e61f2b2153a81bcc8388a89935750d5a29dbf931b2","evidence_path":"specs/014-grounded-llm-wiki-chat-release-evidence/decisions/planned-change-prepared-pass1-identity-authority-02.md","decided_at":"2026-08-30T05:59:15.4510419Z"},
-    {"decision_id":"story-12-5-run-03-all-remaining-tasks-approval-02","status":"accepted","scope_sha256":"24e509779b785e8aac8dd262e4b9a913a3bf92d9cbb5df1a2cde97fc3de69b1b","evidence_path":"specs/014-grounded-llm-wiki-chat-release-evidence/decisions/run-03-all-remaining-tasks-approval-02.md","decided_at":"2026-08-30T16:09:11.0305547Z"}
+    {"decision_id":"story-12-5-run-03-all-remaining-tasks-approval-02","status":"accepted","scope_sha256":"24e509779b785e8aac8dd262e4b9a913a3bf92d9cbb5df1a2cde97fc3de69b1b","evidence_path":"specs/014-grounded-llm-wiki-chat-release-evidence/decisions/run-03-all-remaining-tasks-approval-02.md","decided_at":"2026-08-30T16:09:11.0305547Z"},
+    {"decision_id":"story-12-5-correct-course-exact-profile-seed-selection-03","status":"accepted","scope_sha256":"1e461a95a26bc6505d0d9976d2d634dee308f1943ec5bf981995167ef526ffc6","evidence_path":"specs/014-grounded-llm-wiki-chat-release-evidence/decisions/correct-course-exact-profile-seed-selection-03.md","decided_at":"2026-08-30T21:39:51.5612393Z"}
   ],
-  "convergence": {"status":"accepted","attempt":3,"outcome":"converged","report_path":"specs/014-grounded-llm-wiki-chat-release-evidence/evidence/convergence/prepared-scan-initiation-03.md"},
+  "convergence": {"status":"invalidated","attempt":0,"outcome":"pending","report_path":null},
   "e2e": {"result":"pending","decision_path":null},
   "current_evidence_paths": [
-    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/verification/prepared-scan-initiation-identity-authority-01.md",
-    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/verification/prepared-scan-initiation-regression-01.md",
-    "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/quality-review/prepared-scan-initiation-quality-review-03.json",
-    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/prepared-scan-initiation-implementation-accepted-01.md",
-    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/track-c-mvp/run-03/release-report.md",
-    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/tdd/run-03-pass1-failure-retry-strategy-correction-03.md",
-    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/tdd/run-03-pass1-navigation-marker-retry-strategy-correction-04.md",
-    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/tdd/run-03-pass1-recovery-retry-strategy-correction-05.md",
-    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/tdd/run-03-pass1-navigation-reservation-retry-strategy-correction-06.md",
-    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/tdd/run-03-pass1-document-commit-retry-strategy-correction-07.md",
-    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/tdd/run-03-pass1-reconciliation-retry-strategy-correction-08.md",
-    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/tdd/run-03-pass1-administrator-reconciliation-authorization-correction-09.md"
+    "docs/bmad/planning-artifacts/sprint-change-proposal-2026-08-31-story-12-5-exact-profile-seed-selection.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/correct-course-exact-profile-seed-selection-03.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/track-c-mvp/run-03/release-report.md"
   ],
-  "checkpoint": {"checkpoint_id":"bmad-12-5-implement-20260830T211744Z-adminauth","stage":"implement","commit_sha":null,"binding_status":"pending"},
-  "resume": {"stage":"implement","reason":"The final Pass 1 recheck now uses the current Administrator-or-System-Owner authority and exact Repository pair. Restart the guarded host and replay the retained terminal pair.","evidence_path":"specs/014-grounded-llm-wiki-chat-release-evidence/evidence/tdd/run-03-pass1-administrator-reconciliation-authorization-correction-09.md"},
-  "updated_at": "2026-08-30T21:17:44.6071663Z"
+  "checkpoint": {"checkpoint_id":"bmad-12-5-specify-20260830T213951Z-exactseeds","stage":"specify","commit_sha":null,"binding_status":"pending"},
+  "resume": {"stage":"plan","reason":"Corrected exact-profile seed-selection authorities and specification are accepted; regenerate the plan from this bounded Scan-selection exception.","evidence_path":"specs/014-grounded-llm-wiki-chat-release-evidence/decisions/correct-course-exact-profile-seed-selection-03.md"},
+  "updated_at": "2026-08-30T21:39:51.5612393Z"
 }

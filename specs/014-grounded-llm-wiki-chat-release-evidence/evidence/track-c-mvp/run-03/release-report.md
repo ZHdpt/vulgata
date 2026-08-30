@@ -11,7 +11,7 @@ E2E and final-verification threshold accepts the same candidate.
 
 Preflight began at `2026-08-30T14:04:55.3127121Z` on branch
 `demo0831/story-12-5-trackC`.  The active integration checkpoint is
-`a0e8fc7e` plus the pending ninth bounded run-03 correction;
+`0ba7f10c` after nine bounded run-03 corrections;
 the final candidate remains pending until run-03 and its technical gates
 finish. The accepted Story 12.4 dependency is
 `4798b97d9f23aef587829175df7ab7ebc3daf995`.
@@ -64,6 +64,9 @@ Prepared Scan configuration.
 | 22 | 2026-08-30 18:10-18:17 | Resume real provider execution through the corrected navigation boundary, observe the Pass 1 document-publication transaction rejection, and checkpoint its public RED/GREEN correction | two tool attempts and one durable navigation receipt preceded the fail-closed pause; exact regression 1/1 and complete PostgreSQL atomicity class 71/71 passed; no partial Document graph | completed |
 | 23 | 2026-08-30 18:22-21:01 | Complete the retained Pass 1 jobs, diagnose the terminal phase stall, and correct the sole reconciliation transaction through public RED/GREEN evidence | 148 Documents and two bounded ordinary failures were durable; exact regression 1/1, PostgreSQL atomicity 72/72, and production capacity 19/19 passed; no direct database repair | completed |
 | 24 | 2026-08-30 21:03-21:17 | Replay the terminal activation, identify the Administrator-versus-System-Owner final-recheck mismatch, and align it with the existing durable Management Access authority | Administrator RED 1/1 observed then GREEN; complete production-capacity suite 20/20 passed; revocation remains fail-closed | completed |
+| 25 | 2026-08-30 21:18 | Restart the guarded host and replay the authenticated terminal pair | `ReadyForResolution`; 148 completed Code Logic Documents, two bounded ordinary failures | completed |
+| 26 | 2026-08-31 | Bind the reviewed exact-resolution profile to the two durable Scan Runs/executions and invoke production exact-resolution composition | coordinator returned fail-closed `Refused`; no exact Edge or Pass 2 state was created | diagnostic completed |
+| 27 | 2026-08-31 | Query immutable Prepared Scan audits for the four reviewed-profile source paths | one selected; three safe eligible paths excluded by the 150-unit cap; all 150 selected units came from `mbs_channel` | definition defect confirmed |
 
 No command or evidence artifact records a credential, token, password,
 connection string, provider response body, source content, absolute host path,
@@ -92,15 +95,21 @@ used.  The pair selected 150 File Code Units from `mbs_channel`; the
 `mbs_account` Manifest honestly selected zero because that Repository contained
 no eligible units under the accepted catalog path.
 
-Real source-bearing Pass 1 has durably finished all 150 jobs: 148 current Code
-Logic Documents were published and two jobs ended in the honest bounded
-ordinary `JobTransient` category. The two failures remain within the five-job
-budget. The pair is still `Running` because the first post-correction activation
-then exposed an assignment-only final recheck that rejected the valid
-Administrator operator. Correction 09 now reuses the existing current
-Administrator-or-System-Owner and exact two-Repository authority and awaits
-restart/replay against the same guarded database. Pass 2, Chat, restart and
-screenshots remain pending.
+Real source-bearing Pass 1 durably finished all 150 jobs and reached
+`ReadyForResolution`: 148 current Code Logic Documents were published and two
+jobs ended in the honest bounded ordinary `JobTransient` category. The two
+failures remain within the five-job budget and were unrelated XML files.
+
+The next production exact-resolution composition correctly returned
+`Refused`. The reviewed profile requires a consumer invocation, provider XML
+declaration, provider implementation, and unsupported-observation owner. Only
+the provider implementation had a current Source Anchor. Immutable Prepared
+Scan audits prove that the other three files were safe and eligible but lost to
+the 150-unit selection cap; the pair contained zero high-value seeds and all
+150 selected units came from `mbs_channel`. This is a cross-stage definition
+defect, not a Story 12.4 resolver or CodeGraph failure. No exact Edge, Pass 2,
+Chat, restart, or screenshot claim was made. Run-03 is retained unchanged as
+diagnostic evidence and cannot become the passed release lane.
 
 ## Straightforward database query table
 
@@ -114,6 +123,9 @@ screenshots remain pending.
 | Prepared Scan selected File Code Units | 150 |
 | Pass 1 dispatched / high-value seed count | 150 / 0 |
 | Pass 1 completed Documents / ordinary failed jobs | 148 / 2 |
+| Pass 1 terminal phase | ReadyForResolution |
+| Reviewed exact-profile required paths selected / excluded by cap | 1 / 3 |
+| Exact-resolution outcome | Refused (fail closed) |
 
 The stored provider base identity is `https://opencode.ai/zen/go/v1`; the
 encrypted API-key field is non-empty. No query printed or compared the secret.
@@ -161,11 +173,20 @@ Pending. No historical, retained-run or fake Backup B screenshot is substituted.
   also accepts Administrators. It now reuses the existing current role,
   System-visibility and exact Repository-pair rechecker; no role or ownership
   policy was weakened.
+- The accepted generic fallback ordering selected all 150 units from
+  `mbs_channel`, zero from `mbs_account`, and zero high-value seeds. Three of
+  four reviewed exact-resolution profile paths were eligible but excluded by
+  the cap, so the accepted exact coordinator had no complete current
+  source-anchored evidence set and correctly refused. The bounded
+  exact-profile seed-selection correct course preserves this database as
+  historical diagnostic evidence and requires a fresh database after its
+  technical gates pass.
 
 ## Passing checklist
 
-Not passed. T034-T035 and the real Prepared Scan/replay portion of T036 are
-complete. All real Pass 1 jobs are terminal and correction 09 is ready for an
-authenticated reconciliation replay; Pass 2, generated Business Logic
-Documents, Chat, restart, screenshots, E2E and final verification remain
-pending.
+Not passed. T034-T035, Prepared Scan/replay, and real Pass 1 reached
+`ReadyForResolution`, but T036 exposed the reviewed-profile selection gap and
+exact resolution refused without mutation. Run-03 is now diagnostic historical
+evidence. A corrected definition, reviewed implementation, and fresh guarded
+database are required before Pass 2, generated Business Logic Documents, Chat,
+restart, screenshots, E2E, or final verification may proceed.

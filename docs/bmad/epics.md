@@ -1472,6 +1472,20 @@ Track B streaming counters, require a rigid release envelope, duplicate the
 real run with a separate automated orchestration harness, inject a live outage,
 or add a release-summary product feature for the August 30 boundary
 
+**Given** the exact two release Repositories match the embedded reviewed
+exact-resolution profile's stable identities, full Git refs, and Profiled
+Revisions
+**When** the existing Prepared Scan performs automatic bounded selection
+**Then** every safe eligible File Code Unit required for the profile's consumer,
+provider declaration, provider implementation, and unsupported observation
+shall be retained as a mandatory high-value seed inside the existing per-
+Repository and pair bounds
+**And** a missing, filtered, unsafe, ambiguous, or out-of-bound required source
+shall fail preparation before Prepared Scan Manifest publication
+**And** no caller-supplied profile/path, production-code sample path, legacy
+profiling path, Story 12.4 contract change, or nonmatching-pair selection change
+shall be introduced
+
 ---
 
 ### Epic 5: Core Single Repository Scanning
