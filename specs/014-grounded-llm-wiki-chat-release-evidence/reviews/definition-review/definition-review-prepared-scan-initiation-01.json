@@ -1,0 +1,78 @@
+{
+  "schema_version": "definition-review/1.0",
+  "gate": "definition-review",
+  "verdict": "REVISE",
+  "reviewed_source_commit": "2fb097a0311965bfb0c4abef46dcf73de7e274eb",
+  "reviewed_sha256": {
+    "spec.md": "469f72c4e7fc62874e082a7f425351d9f46cf422ae8641d4bee7b64915dd67c0",
+    "plan.md": "ee13bddfcae94937831a6184f51e7f452bdc0eeec6b91b0b320ac5bed29f35ca",
+    "tasks.md": "4fd5435651883bb75f1439df04fdf74712f9907a127482209b2352fba4030228",
+    "research.md": "fb566247414073f1b9d6ae6552bbe82a33fb08cad42cf07fcede07c7a204c152",
+    "data-model.md": "b8e1c60519c72813cb1156bf5620c073faf69c53d538c393260d36cc3b578680",
+    "quickstart.md": "3bbbd2a8a09940522c518ef9e44aa1088d8b356b69214231c03b676f7de44d65",
+    "contracts/prepared-scan-initiation.md": "1ac56d9f1ed21820b2eb39cb6d029267c7ec589ddf6f242049140ceb9a6bfcd1",
+    "contracts/release-evidence-contract.md": "4fd8505274c7308257977a7af93b0bd5bfd196a9327f35b9ced2ec5d688bd23b",
+    "checklists/requirements.md": "057f4a47c3b6ae5f35a358b9a2fc396f9c0e5c60ad4690b5a386362c1a699dbb",
+    "planned-change-authorization.md": "d164283cc773245209f3d43f6506052e0b970c1202b7800591ff87c78497559c"
+  },
+  "findings": [
+    {
+      "id": "DR-PSI-001",
+      "severity": "HIGH",
+      "earliest_owner": "tasks",
+      "authority_citations": ["plan.md:104,115,351-352", "contracts/prepared-scan-initiation.md:65", "tasks.md:129-154,253-264"],
+      "finding": "The accepted plan replaces the tuple-less IPreparedScanPairBuilder.BuildAsync shape and requires exact-tuple coordinator composition, but the tasks assign no writable owner for existing Prepared Scan tests that directly call the old builder signature or assert the old production graph.",
+      "evidence": [
+        "tests/Vulgata.Tests/PreparedScanning/PreparedScanApiTests.cs:272-275",
+        "tests/Vulgata.Tests/PreparedScanning/PreparedScanReleaseQualificationTests.cs:499-521,648-664",
+        "tests/Vulgata.Tests/AnalysisRuntime/PreparedScanRealQualificationTests.cs:352-355,471-474",
+        "tests/Vulgata.Tests/PreparedScanning/PreparedScanBoundaryTests.cs:53-69"
+      ],
+      "recommended_correction": "Add an explicit dependency-ordered compatibility RED/update/verification slice owned by the exclusive Prepared Scan integration-test owner. Name every affected existing test file, update only fixture/composition calls to construct and pass the immutable initiation tuple and assert the new initiation coordinator graph, preserve all existing behavioral assertions, and forbid retaining a tuple-less production overload merely to keep tests compiling."
+    },
+    {
+      "id": "DR-PSI-002",
+      "severity": "HIGH",
+      "earliest_owner": "tasks",
+      "authority_citations": ["plan.md:96-104,351-352", "research.md:R-17", "tasks.md:138-153"],
+      "finding": "The plan requires the current analysis health probe and Prepared Scan initiation to share one extracted configured-integrity/runtime-identity implementation, but no task explicitly authorizes the semantic delegation/extraction needed in the existing ConfiguredAnalysisRuntimeHealthProbe.",
+      "evidence": [
+        "src/dotnet/Vulgata.Web/Program.cs:560-735 currently owns the configured CodeGraph/JDT-LS integrity checks and constructs AnalysisRuntimeIdentity internally.",
+        "The current health result exposes the identity hash, not the complete canonical analysis-runtime/1 JSON required by initiation.",
+        "T022 permits only three new Web files and T024 limits Program.cs to registrations and compile-only adjustments."
+      ],
+      "recommended_correction": "Amend T020-T024 so the exclusive Program.cs integration owner extracts or delegates ConfiguredAnalysisRuntimeHealthProbe integrity/identity construction to ConfiguredPreparedScanRuntimeIdentityResolver. Characterize identical health behavior and hashes, complete per-Repository runtime JSON/hash, and no duplicated integrity algorithm."
+    },
+    {
+      "id": "DR-PSI-003",
+      "severity": "MEDIUM",
+      "earliest_owner": "tasks",
+      "authority_citations": ["plan.md:117-140", "contracts/prepared-scan-initiation.md:96-111", "tasks.md:115-118"],
+      "finding": "T015 requires an injected commit failure to expose zero rows, while the accepted plan and contract guarantee rollback only for failures before commit; a genuine client-visible commit failure may be outcome-ambiguous.",
+      "evidence": ["T015 separately expands the accepted pre-commit rollback guarantee to commit failure with zero rows."],
+      "recommended_correction": "Use an explicitly injected pre-commit transaction failure proving zero rows, or test ambiguous-commit recovery as unavailable followed by exact retry materializing or replaying the one canonical tuple."
+    }
+  ],
+  "coverage_summary": {
+    "functional_requirements": 78,
+    "success_criteria": 25,
+    "tasks": 42,
+    "unique_task_ids": 42,
+    "missing_task_ids": [],
+    "unresolved_placeholders": 0,
+    "declared_coverage": "All FR-001 through FR-078 and SC-001 through SC-025 have declared owners, but the compatibility and runtime ownership gaps prevent deterministic execution."
+  },
+  "task_order_and_ownership_assessment": {
+    "overall": "The public RED, Core, PostgreSQL, tuple handoff, authorization/runtime, composition, regression, convergence, quality, and run-03 ordering is otherwise coherent.",
+    "tdd_honesty": "PASS",
+    "blocking_issue": "Known affected compatibility tests and the semantic health-probe refactor lack writable owners."
+  },
+  "prohibited_boundary_confirmation": "All prohibited CGC, legacy profiling, general Scan, EF/model, Story 12.4, Track A/B, security, fake evidence, retained database, later-stage, and transaction boundaries remain preserved.",
+  "implementation_approval_scope_summary": {
+    "status": "not ready for approval",
+    "reason": "Correct DR-PSI-001 through DR-PSI-003 and obtain a fresh independent ACCEPT.",
+    "eventual_production_scope": "The bounded exactly-two-Repository Prepared Scan initiation implementation and tests only.",
+    "explicit_exclusion": "No production write is authorized."
+  },
+  "rationale": "REVISE. The specification and accepted plan are coherent and feasible, but tasks omit mandatory compatibility ownership, omit the shared runtime-identity semantic owner, and overstate one transaction failure guarantee."
+}
