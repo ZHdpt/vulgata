@@ -3,7 +3,7 @@
   "bmad_story_key": "12-5-grounded-llm-wiki-chat-and-august-30-release-evidence",
   "bmad_epic_key": "12",
   "feature_directory": "specs/014-grounded-llm-wiki-chat-release-evidence",
-  "stage": "implementation-approval",
+  "stage": "implement",
   "preflight": {
     "branch": "demo0831/story-12-5-trackC",
     "head": "2fb097a0311965bfb0c4abef46dcf73de7e274eb",
@@ -32,14 +32,13 @@
     {"decision_id":"story-12-5-track-c-mvp-host-startup-authorization-01","status":"accepted","scope_sha256":"6e88b42958a615399a9b4167a1c9fc27f7229ea7cedcc7f4febedafd8c775400","evidence_path":"specs/014-grounded-llm-wiki-chat-release-evidence/decisions/track-c-mvp-host-startup-authorization-01.md","decided_at":"2026-08-29T23:28:00Z"},
     {"decision_id":"story-12-5-return-to-plan-scan-composition-01","status":"accepted","scope_sha256":"72ecb3bee01e498acb2dacd9c21719b48f307cbbb597bf6c09393bad13d5b1d3","evidence_path":"specs/014-grounded-llm-wiki-chat-release-evidence/decisions/return-to-plan-scan-composition-01.md","decided_at":"2026-08-30T00:10:24.4661357Z"},
     {"decision_id":"story-12-5-correct-course-prepared-scan-initiation-01","status":"accepted","scope_sha256":"97385cc24150140de882bb839dcdd6cbb7046701033ac76560409927b5a3bb56","evidence_path":"specs/014-grounded-llm-wiki-chat-release-evidence/decisions/correct-course-prepared-scan-initiation-01.md","decided_at":"2026-08-30T00:49:56.0824234Z"},
-    {"decision_id":"story-12-5-planned-change-authorization-prepared-scan-initiation-01","status":"accepted","scope_sha256":"50958154329acbac8070ecec04f5b6c3527a6cc047129feac024c0e093eb1eab","evidence_path":"specs/014-grounded-llm-wiki-chat-release-evidence/decisions/planned-change-authorization-prepared-scan-initiation-01.md","decided_at":"2026-08-30T02:04:56.4056655Z"}
+    {"decision_id":"story-12-5-planned-change-authorization-prepared-scan-initiation-01","status":"accepted","scope_sha256":"50958154329acbac8070ecec04f5b6c3527a6cc047129feac024c0e093eb1eab","evidence_path":"specs/014-grounded-llm-wiki-chat-release-evidence/decisions/planned-change-authorization-prepared-scan-initiation-01.md","decided_at":"2026-08-30T02:04:56.4056655Z"},
+    {"decision_id":"story-12-5-implementation-approval-prepared-scan-initiation-01","status":"accepted","scope_sha256":"f6a6e1d2365e72db62a713033b218597d96706810b12069e4417a9bcb0493a6b","evidence_path":"specs/014-grounded-llm-wiki-chat-release-evidence/decisions/implementation-approval-prepared-scan-initiation-01.md","decided_at":"2026-08-30T02:37:18.4173106Z"}
   ],
   "convergence": {"status":"pending","attempt":0,"outcome":"pending","report_path":null},
   "e2e": {"result":"pending","decision_path":null},
   "current_evidence_paths": [
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/verification/track-b-final-01.md",
-    "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/postgresql-provider-preflight-authorization-01.md",
-    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/track-c-mvp/run-02/release-report.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/track-c-mvp-blocked-02.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/return-to-plan-scan-composition-01.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/corrections/track-c-scan-composition-feasibility-01.md",
@@ -48,9 +47,11 @@
     "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/plan-review/plan-review-prepared-scan-initiation-02.json",
     "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/planned-change-authorization-prepared-scan-initiation-01.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/definition-review/definition-review-prepared-scan-initiation-01.json",
-    "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/definition-review/definition-review-prepared-scan-initiation-02.json"
+    "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/definition-review/definition-review-prepared-scan-initiation-02.json",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/implementation-approval-prepared-scan-initiation-01.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/preflight/prepared-scan-initiation-entry-01.md"
   ],
-  "checkpoint": {"checkpoint_id":"bmad-12-5-definition-review-20260830T023249Z-f6a6e1","stage":"definition-review","commit_sha":null,"binding_status":"pending"},
-  "resume": {"stage":"implementation-approval","reason":"Independent definition review attempt 02 accepted the complete Prepared Scan initiation definition. Production remains closed pending explicit implementation approval bound to the accepted spec, plan and tasks hashes.","evidence_path":"specs/014-grounded-llm-wiki-chat-release-evidence/reviews/definition-review/definition-review-prepared-scan-initiation-02.json"},
-  "updated_at": "2026-08-30T02:32:49.8864729Z"
+  "checkpoint": {"checkpoint_id":"bmad-12-5-implement-20260830T023718Z-f6a6e1","stage":"implement","commit_sha":null,"binding_status":"pending"},
+  "resume": {"stage":"implement","reason":"Implementation approval is bound to the accepted definition. T010 passed; execute T011-T033 through the accepted RED/GREEN, convergence, quality and checkpoint sequence, then stop before T034.","evidence_path":"specs/014-grounded-llm-wiki-chat-release-evidence/evidence/preflight/prepared-scan-initiation-entry-01.md"},
+  "updated_at": "2026-08-30T02:37:18.4173106Z"
 }
