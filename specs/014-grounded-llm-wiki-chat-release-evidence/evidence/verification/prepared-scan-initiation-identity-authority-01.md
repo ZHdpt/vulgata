@@ -58,3 +58,17 @@ atomic publication and store filter passed `111`, skipped one explicitly
 environment-dependent concurrent-store case, and failed zero (`112 total`).
 All PostgreSQL databases remained fresh disposable lowercase
 `vulgata_story125_<32 hex>` instances.
+
+## QR-PSI-002 correction verification
+
+Quality review attempt 02 found that strict embedded-resource validation ran
+during scoped DI activation, before the coordinator could map failure to the
+accepted sanitized 503 contract. A public authenticated endpoint RED observed
+HTTP 500 with zero side effects. The minimal correction defers the unchanged
+strict validation to `GetCurrent`; hostile resource failures now traverse the
+coordinator's existing fail-closed mapping.
+
+The source/coordinator/public boundary passed `41/41`. The broader identity,
+initiation, PostgreSQL, atomic, store and runtime-resolver boundary passed
+`116`, skipped one known environment-dependent concurrency case, and failed
+zero (`117 total`).

@@ -34,8 +34,6 @@ public sealed class EmbeddedPreparedPass1ContractIdentitySource
 
         _getResourceNames = getResourceNames;
         _openResource = openResource;
-
-        _ = GetCurrent();
     }
 
     public PreparedPass1ContractIdentity? GetCurrent()

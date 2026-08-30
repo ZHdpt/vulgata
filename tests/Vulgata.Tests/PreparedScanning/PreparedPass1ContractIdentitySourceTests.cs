@@ -122,9 +122,10 @@ public sealed class PreparedPass1ContractIdentitySourceTests
             _ => ReadPreparedPass1Resource(),
         };
 
-        Exception exception = Assert.ThrowsAny<Exception>(() => InvokeWithResourceProvider(
+        object source = InvokeWithResourceProvider(
             () => names,
-            _ => new MemoryStream(content, writable: false)));
+            _ => new MemoryStream(content, writable: false));
+        Exception exception = Assert.ThrowsAny<Exception>(() => InvokeGetCurrent(source));
 
         Assert.True(
             exception is InvalidOperationException or InvalidDataException or DecoderFallbackException,

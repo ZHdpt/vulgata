@@ -42,3 +42,14 @@ added, the invalidated surrounding verification was rerun:
 No Track A/B production file, public identity contract, prompt, dispatcher,
 provider, Agent tool, migration/model, Story 12.4 contract, CGC/legacy path or
 run-03 external boundary changed.
+
+## QR-PSI-002 correction regression
+
+After validation was moved from source construction to `GetCurrent`, the
+broader initiation boundary passed `116` with one known environment-dependent
+skip, Track A Scan/release contracts passed `121/121`, the prepared-chat
+product boundary passed `455/455`, and the Web build completed with zero
+errors. The intentionally broad Chat diagnostic also selected one pre-existing
+fixture that requires the explicitly prohibited legacy profiling coordinator;
+that authority defect is separated from the passing product boundary and was
+not repaired in this scope.

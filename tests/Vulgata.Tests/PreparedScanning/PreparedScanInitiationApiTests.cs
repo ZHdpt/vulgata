@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.TestHost;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Vulgata.Agents.WorkerExecution;
 using Vulgata.Core.DomainServices;
 using Vulgata.Core.Entities;
 using Vulgata.Infrastructure.Data;
@@ -31,6 +32,98 @@ namespace Vulgata.Tests.PreparedScanning;
 [Collection(PreparedScanningCollection.Name)]
 public sealed class PreparedScanInitiationApiTests
 {
+    [Fact]
+    public async Task PostPreparedScan_HostilePass1ResourceActivation_Returns503WithoutSideEffectsAsync()
+    {
+        CountingAuthorizationRechecker rechecker = new();
+        CountingConflictInitiationStore initiationStore = new();
+        await using PublicPreparedScanScenario scenario = await CreateScenarioAsync(
+            services =>
+            {
+                services.RemoveAll<IPreparedPass1ContractIdentitySource>();
+                services.AddSingleton<IPreparedPass1ContractIdentitySource>(_ =>
+                    new EmbeddedPreparedPass1ContractIdentitySource(
+                        getResourceNames: static () => [],
+                        openResource: static _ => null));
+                services.RemoveAll<IPreparedScanInitiationAuthorizationRechecker>();
+                services.AddScoped<IPreparedScanInitiationAuthorizationRechecker>(_ => rechecker);
+                services.RemoveAll<IPreparedScanInitiationStore>();
+                services.AddScoped<IPreparedScanInitiationStore>(_ => initiationStore);
+            });
+
+        using HttpResponseMessage response = await scenario.Client.PostAsJsonAsync(
+            scenario.Route,
+            scenario.Request);
+        string body = await response.Content.ReadAsStringAsync();
+
+        List<string> failures = [];
+        if (response.StatusCode != HttpStatusCode.ServiceUnavailable)
+        {
+            failures.Add($"HTTP status was {(int)response.StatusCode} instead of 503.");
+        }
+
+        string? mediaType = response.Content.Headers.ContentType?.MediaType;
+        if (!string.Equals(mediaType, "application/problem+json", StringComparison.Ordinal))
+        {
+            failures.Add($"Content-Type was '{mediaType ?? "<missing>"}' instead of application/problem+json.");
+        }
+
+        if (response.StatusCode == HttpStatusCode.ServiceUnavailable)
+        {
+            try
+            {
+                using JsonDocument problem = JsonDocument.Parse(body);
+                if (problem.RootElement.GetProperty("status").GetInt32() != 503)
+                {
+                    failures.Add("ProblemDetails status was not 503.");
+                }
+                if (!string.Equals(
+                        problem.RootElement.GetProperty("code").GetString(),
+                        "prepared-scan-initiation-unavailable",
+                        StringComparison.Ordinal))
+                {
+                    failures.Add("ProblemDetails code was not prepared-scan-initiation-unavailable.");
+                }
+            }
+            catch (Exception exception)
+            {
+                failures.Add($"503 response was not valid ProblemDetails: {exception.Message}");
+            }
+        }
+
+        if (body.Contains("pass1-code-logic-worker", StringComparison.OrdinalIgnoreCase))
+        {
+            failures.Add("The response disclosed the prepared Pass 1 identity.");
+        }
+
+        if (rechecker.CallCount != 0)
+        {
+            failures.Add($"Fresh authorization was called {rechecker.CallCount} time(s).");
+        }
+        if (initiationStore.CallCount != 0)
+        {
+            failures.Add($"Initiation store was called {initiationStore.CallCount} time(s).");
+        }
+        if (scenario.Observations.RevisionAcquisitionCalls != 0 ||
+            scenario.CodeGraphCalls != 0 ||
+            scenario.JavaReadinessCalls != 0)
+        {
+            failures.Add(
+                $"Preparation calls were revision={scenario.Observations.RevisionAcquisitionCalls}, " +
+                $"codegraph={scenario.CodeGraphCalls}, java={scenario.JavaReadinessCalls}.");
+        }
+
+        PreparedScanInitiationCounts counts = await ReadCountsAsync(scenario.Database);
+        if (counts != new PreparedScanInitiationCounts(0, 0, 0, 0, 0, 0, 0))
+        {
+            failures.Add($"Durable initiation state was created: {counts}.");
+        }
+
+        Assert.True(
+            failures.Count == 0,
+            string.Join(" ", failures));
+    }
+
     [Fact]
     public async Task PostPreparedScan_NoPreseededLifecycleState_CreatesCompletePairAndManifestsAsync()
     {
