@@ -41,6 +41,7 @@ public static class CanonicalEnvelope
         "vulgata/story-12.2/prepared-scan-manifest/1.0",
         "vulgata/story-12.2/prepared-scan-pair-package/1.0",
         "vulgata/story-12.2/deterministic-uuid/1.0",
+        "vulgata/story-12.5/prepared-scan-initiation-execution/1.0",
     };
 
     public static CanonicalValue Null() => new CanonicalValue.NullCanonicalValue();
