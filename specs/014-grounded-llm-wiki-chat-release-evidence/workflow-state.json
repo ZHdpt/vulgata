@@ -3,18 +3,18 @@
   "bmad_story_key": "12-5-grounded-llm-wiki-chat-and-august-30-release-evidence",
   "bmad_epic_key": "12",
   "feature_directory": "specs/014-grounded-llm-wiki-chat-release-evidence",
-  "stage": "implement",
+  "stage": "implementation-approval",
   "preflight": {
     "branch": "demo0831/story-12-5-trackC",
-    "head": "d4845ce5cddb843bf42344ba562930160d555d39",
-    "git_identity_sha256": "20ff1cc31956f75ea47e51ea531328c8037dc8c90c85a62d5ca796d95e589efd",
+    "head": "1844817f56da1d2101c1bd045ea004caee15d0dd",
+    "git_identity_sha256": "41ceb8e0c6e8f9929fe63c622c6b5acae5e42e45880f222fe707a8989c1f5ab5",
     "status_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-    "observed_at": "2026-08-30T13:59:34.1508253Z"
+    "observed_at": "2026-08-30T14:04:55.3127121Z"
   },
   "artifacts": {
     "spec": {"path":"specs/014-grounded-llm-wiki-chat-release-evidence/spec.md","sha256":"469f72c4e7fc62874e082a7f425351d9f46cf422ae8641d4bee7b64915dd67c0"},
     "plan": {"path":"specs/014-grounded-llm-wiki-chat-release-evidence/plan.md","sha256":"6ebb0a525721716bfcbb3dce0d330b4846a6f3cf50c604ceb2bf9b0ed41346a8"},
-    "tasks": {"path":"specs/014-grounded-llm-wiki-chat-release-evidence/tasks.md","sha256":"87b751ce78d29f744acb37227db4abeaf8d1b893914217b5d5bac40282980507"}
+    "tasks": {"path":"specs/014-grounded-llm-wiki-chat-release-evidence/tasks.md","sha256":"2e5e6f100f37a2688129304f8cd82478846fc4df98d5ff1a51363d80a6d4d4ab"}
   },
   "gates": {
     "plan-review": {"status":"accepted","attempt":3,"verdict_path":"specs/014-grounded-llm-wiki-chat-release-evidence/reviews/plan-review/plan-review-prepared-pass1-identity-authority-03.json"},
@@ -44,15 +44,15 @@
     "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/definition-review/definition-review-prepared-pass1-identity-authority-04.json",
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/convergence/prepared-scan-initiation-03.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/planned-change-prepared-pass1-identity-authority-02.md",
-    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/tdd/prepared-pass1-identity-authority-red-01.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/verification/prepared-scan-initiation-identity-authority-01.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/verification/prepared-scan-initiation-regression-01.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/quality-review/prepared-scan-initiation-quality-review-03.json",
-    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/review/prepared-scan-initiation-quality-input-01.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/prepared-scan-initiation-implementation-accepted-01.md",
-    "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/run-03-task-group-approval-01.md"
+    "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/run-03-task-group-approval-01.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/track-c-mvp/run-03/release-report.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/run-03-t034-t035-01.md"
   ],
-  "checkpoint": {"checkpoint_id":"bmad-12-5-implement-20260830T135934Z-28311e","stage":"implement","commit_sha":null,"binding_status":"pending"},
-  "resume": {"stage":"implement","reason":"User approved only the next dependency group, T034-T035. Run fresh sanitized preflight and create/bootstrap one guarded database; stop before T036.","evidence_path":"specs/014-grounded-llm-wiki-chat-release-evidence/decisions/run-03-task-group-approval-01.md"},
-  "updated_at": "2026-08-30T13:59:34.1508253Z"
+  "checkpoint": {"checkpoint_id":"bmad-12-5-implementation-approval-20260830T141700Z-t035","stage":"implementation-approval","commit_sha":null,"binding_status":"pending"},
+  "resume": {"stage":"implementation-approval","reason":"T034-T035 are complete and checkpointed. The final guarded database is production-bootstrapped and the verified host is stopped. Explicit approval is required before T036-T045.","evidence_path":"specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/run-03-t034-t035-01.md"},
+  "updated_at": "2026-08-30T14:17:00Z"
 }
