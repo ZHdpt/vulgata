@@ -1,0 +1,128 @@
+{
+  "schema_version": "1.0",
+  "gate": "quality-review",
+  "attempt": 2,
+  "verdict": "REVISE",
+  "reviewed_commit": "25b3d13ae46601c407327487471c749ca6ce85e9",
+  "review_binding_head": "650effcd95fa8ea2dd7ee03c07936809f89059a7",
+  "reviewed_boundary": {
+    "base_commit": "9d626259c0d64173fb5269be6690d6fbe455dd58",
+    "candidate_commit": "25b3d13ae46601c407327487471c749ca6ce85e9",
+    "accepted_scope_sha256": "f5690de4e4ca6b188fbeeab54745c12266585601583a05f9ffd81516c088ebd1",
+    "artifact_hashes": {
+      "AGENTS.md": "a62e1a9ed71cff0dce44f9d50a68ee61c370d13e27f6e1ebf569a22ab05acf00",
+      ".specify/memory/constitution.md": "1c5e7319a6fa6ef6576e92a97f65db74057baa2226ca4bf28b45d884e7bd8971",
+      "docs/UBIQUITOUS_LANGUAGE.md": "1f1075f98f8cd36c244e3b020bba1bca530bc90f4165469eda0562d763b050e4",
+      "docs/bmad/epics.md": "ea978e57f22a0bca9798ec65c1df9e3f248d220526546b6b86dd44ebeb955778",
+      "docs/bmad/planning-artifacts/sprint-change-proposal-2026-08-30-story-12-5-prepared-scan-initiation.md": "08ab64e68350911619f86983f0e3ca9a05c2ffb4a3f0693ab33c9a8e0c28f43f",
+      "specs/014-grounded-llm-wiki-chat-release-evidence/spec.md": "469f72c4e7fc62874e082a7f425351d9f46cf422ae8641d4bee7b64915dd67c0",
+      "specs/014-grounded-llm-wiki-chat-release-evidence/plan.md": "6ebb0a525721716bfcbb3dce0d330b4846a6f3cf50c604ceb2bf9b0ed41346a8",
+      "specs/014-grounded-llm-wiki-chat-release-evidence/tasks.md@review-binding": "cc73c8e7d43ecb03ec4a8c177c8aeabcacbb8142659029fda40b5a151bf75e22",
+      "specs/014-grounded-llm-wiki-chat-release-evidence/contracts/prepared-scan-initiation.md": "2234243212da60fddf94287f4b4946d57d2a600be3161c4d2673b4ae624b7c6d",
+      "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/convergence/prepared-scan-initiation-02.md": "063b2fbbd5acd447173b3fda948f3708f3402de09817e5eb57796afa7b88b053",
+      "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/review/prepared-scan-initiation-quality-input-01.md": "f969de4500b09a9cbef11438625fafd8ec88bb1cd01f5ab71976d2ef415f7f7f",
+      "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/tdd/prepared-pass1-identity-hostile-red-01.md": "a7def44e517db9bba80d303280bfea698ddf9a98007195249b31982648795a22",
+      "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/verification/prepared-scan-initiation-identity-authority-01.md": "fb4ddb0b92cca5d1f78689a9e567194f3570a925e2644aace06eb75dba454a0b",
+      "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/verification/prepared-scan-initiation-regression-01.md": "0543f685c874e00852575d8e2843c5e0dd9dd3466e69a255711b816a50905896"
+    }
+  },
+  "reviewed_paths": [
+    "AGENTS.md",
+    ".specify/memory/constitution.md",
+    "docs/UBIQUITOUS_LANGUAGE.md",
+    "docs/bmad/epics.md",
+    "docs/bmad/planning-artifacts/sprint-change-proposal-2026-08-30-story-12-5-prepared-scan-initiation.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/spec.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/plan.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/tasks.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/contracts/prepared-scan-initiation.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/convergence/prepared-scan-initiation-02.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/review/prepared-scan-initiation-quality-input-01.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/tdd/prepared-pass1-identity-hostile-red-01.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/verification/prepared-scan-initiation-identity-authority-01.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/verification/prepared-scan-initiation-regression-01.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/quality-review/prepared-scan-initiation-quality-review-01.json",
+    "src/dotnet/Vulgata.Core/DomainServices/PreparedPass1ContractIdentity.cs",
+    "src/dotnet/Vulgata.Core/DomainServices/IPreparedPass1ContractIdentitySource.cs",
+    "src/dotnet/Vulgata.Agents/WorkerExecution/EmbeddedPreparedPass1ContractIdentitySource.cs",
+    "src/dotnet/Vulgata.Infrastructure/Data/PreparedScanInitiationStore.cs",
+    "src/dotnet/Vulgata.Infrastructure/Data/PreparedScanStore.cs",
+    "src/dotnet/Vulgata.Infrastructure/Data/PreparedScanRepository.cs",
+    "src/dotnet/Vulgata.Web/Data/PreparedScanInitiationAuthorizationRechecker.cs",
+    "src/dotnet/Vulgata.Web/Data/PreparedScanInitiationCoordinator.cs",
+    "src/dotnet/Vulgata.Web/Api/Scans/PreparedScanEndpoints.cs",
+    "src/dotnet/Vulgata.Web/Program.cs",
+    "tests/Vulgata.Tests/PreparedScanning/PreparedPass1ContractIdentitySourceTests.cs",
+    "tests/Vulgata.Tests/PreparedScanning/PreparedScanInitiationCoordinatorTests.cs",
+    "tests/Vulgata.Tests/PreparedScanning/PreparedScanInitiationApiTests.cs"
+  ],
+  "independent_commands": [
+    {
+      "command": "git status/branch/HEAD/ancestry and git diff --name-status/stat/check 9d626259c0d64173fb5269be6690d6fbe455dd58..25b3d13ae46601c407327487471c749ca6ce85e9",
+      "result": "PASS: branch demo0831/story-12-5-trackC at binding HEAD 650effcd; corrected candidate is ancestral; worktree/index were clean before this report; pinned diff check is clean."
+    },
+    {
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --no-restore --filter PreparedPass1ContractIdentitySourceTests|PreparedScanInitiationCoordinatorTests",
+      "result": "PASS: 29 passed, 0 skipped, 0 failed. QR-PSI-001 hostile value/resource vectors execute at the source and coordinator seams."
+    },
+    {
+      "command": "dotnet build src/dotnet/Vulgata.Web/Vulgata.Web.csproj --no-restore -p:WarningLevel=0",
+      "result": "PASS: 0 errors and 9 existing NU1507/MSB3277 warnings."
+    },
+    {
+      "command": "read-only source-to-contract trace of EmbeddedPreparedPass1ContractIdentitySource construction, scoped DI resolution and PreparedScanEndpoints parameter binding",
+      "result": "FAIL: hostile embedded-resource validation executes in the scoped service constructor before PreparedScanInitiationCoordinator.InitiateAsync can catch GetCurrent failures and map them to the required bounded 503."
+    }
+  ],
+  "prior_finding_disposition": [
+    {
+      "id": "QR-PSI-001",
+      "disposition": "CLOSED",
+      "evidence": "The corrected suite executes null, legacy-v1, malformed-hash, wrong-schema and throwing identity-source cases with zero runtime, fresh-authorization, store and pair-builder calls, plus missing, duplicate, empty, invalid-UTF8 and schema-inconsistent embedded-resource cases and exact decoded-text hash binding. The focused matrix passed 29/29."
+    }
+  ],
+  "findings": [
+    {
+      "id": "QR-PSI-002",
+      "severity": "MEDIUM",
+      "category": "correctness-and-public-failure-contract",
+      "owner": "tdd-test-author",
+      "blocking": true,
+      "title": "Hostile embedded-resource failures bypass the required Prepared Scan 503 mapping during DI activation",
+      "evidence": [
+        "contracts/prepared-scan-initiation.md:90 requires missing, duplicate, invalid or mismatched Prepared Pass 1 authority to map to bounded HTTP 503 before fresh authorization or store access; tasks.md:156 requires those hostile authorities to fail HTTP 503.",
+        "EmbeddedPreparedPass1ContractIdentitySource.cs:19-38 constructs the scoped production service and eagerly calls GetCurrent; missing, duplicate, empty, invalid-UTF8 and schema-inconsistent resource cases therefore throw from service construction.",
+        "Program.cs:365-367 registers that implementation as the scoped IPreparedPass1ContractIdentitySource required to construct PreparedScanInitiationCoordinator, while PreparedScanEndpoints.cs:26 injects the coordinator as a handler parameter. Service activation necessarily precedes the coordinator method's try/catch around GetCurrent.",
+        "PreparedPass1ContractIdentitySourceTests.cs:102-131 asserts only that hostile-resource construction throws. PreparedScanInitiationCoordinatorTests.cs:150-205 proves bounded Unavailable only with a proxy whose GetCurrent throws after the coordinator already exists. PreparedScanInitiationApiTests has no hostile embedded-resource public 503 vector."
+      ],
+      "impact": "The path remains fail-closed with respect to initiation writes because handler activation fails before the endpoint body, but the API returns an unhandled activation failure/ordinary 500 path instead of the accepted sanitized 503 ProblemDetails contract. The executable evidence therefore still does not prove the complete T025 public behavior for packaging/resource failures.",
+      "remediation": "Return to the T025 test-first owner. Add a public WebApplicationFactory endpoint vector for missing, duplicate, invalid-UTF8 and schema-inconsistent embedded authority that observes HTTP 503 with the bounded problem code and zero runtime, fresh-authorization, store and preparation calls. Observe the current activation failure as RED. Then make the smallest correction that lets the coordinator own GetCurrent failure mapping, for example defer resource validation from service construction to GetCurrent while retaining strict validation and the sole Agents-owned source. Rerun the 29-case matrix, the public initiation/API boundary, T029/T030 regression, convergence and a fresh quality review."
+    }
+  ],
+  "boundary_assessment": {
+    "correctness": "QR-PSI-002 is the only observed candidate defect. Exact tuple normalization, prepared-v2 result creation/legacy upgrade, phase-aware replay, and handoff publication otherwise align with the accepted boundary.",
+    "security": "Initial visibility, fresh pre-store authorization and pre-publication authorization remain distinct; denied scope is missing-equivalent and no hostile identity reaches durable creation. The defect is bounded failure semantics and availability, not an observed disclosure or write-before-authorization issue.",
+    "transactions_and_replay": "Initiation and publication transactions execute inside EF execution strategies, use bounded isolation/advisory serialization, canonicalize PostgreSQL instants, clear tracking on failure, and close before external Git/CodeGraph/JDT-LS/XML work. Exact retry and ambiguous publication acknowledgement are resolved against durable state.",
+    "architecture": "Core remains dependency-free, Agents owns the embedded prompt authority, Infrastructure owns EF/transactions, Web owns Identity/orchestration, and the rechecker uses materialized specific Core repositories without EF/DbContext access. QR-PSI-002 is an integration-order defect at the Agents-to-Web DI seam.",
+    "test_quality": "QR-PSI-001 is honestly closed by executable hostile source/coordinator vectors and the focused 29/29 result. PostgreSQL and surrounding Track A/B evidence is broad. The remaining gap is that source-construction rejection and coordinator exception mapping are tested separately, so the production DI/public endpoint composition between them is not exercised for hostile resources.",
+    "prohibited_scope": "No EF migration, VulgataDbContext/model snapshot, Story 12.4 contract, WorkerAgentDispatchIdentitySource, Agent tool, CGC/legacy profiling coordinator, general/single/arbitrary-N Scan lifecycle, Track A/B production behavior, or T034-T045/run-03 work appears in the pinned production/test diff.",
+    "regression_risk": "Moderate until QR-PSI-002 is corrected. The correction can remain inside the existing T025-T028 identity/composition slice and requires no authority expansion."
+  },
+  "environment_separated_observations": [
+    {
+      "id": "OBS-PSI-001",
+      "disposition": "PRE_EXISTING_TEST_DEFECT_OUTSIDE_REVIEWED_DIFF",
+      "detail": "The unchanged Story 12.2 PreparedScanBoundaryTests literal-location assertion searches Program.cs for the CodeGraph package literal even though current authority is in PreparedScanRuntimeIdentityResolver. Resolver and production-literal qualifications pass. This is not a candidate product defect and is not reported as an environment failure."
+    },
+    {
+      "id": "OBS-PSI-002",
+      "disposition": "EXTERNAL_ASSET_NOT_REQUIRED_FOR_T025_T033",
+      "detail": "The local JDT-LS qualification archive is absent. Real-runtime qualification remains in the closed T034-T045/run-03 lane and this review makes no real release claim."
+    }
+  ],
+  "residual_risks": [
+    "T034-T045/run-03 remains closed, so this verdict does not claim a real CodeGraph/JDT-LS/LLM release run, restart, screenshots, E2E acceptance or Story 12.5 completion.",
+    "The existing package-source and EF assembly-version build warnings remain outside this bounded diff."
+  ],
+  "summary": "REVISE with one Medium correctness/public-contract finding. QR-PSI-001 is closed by executable hostile identity tests, and the remaining Prepared Scan initiation design, authorization ordering, replay/transaction behavior, prepared-v2 publication, composition and prohibited-scope guards are coherent. However the production embedded authority validates eagerly in its scoped constructor, so hostile resource failures occur during DI activation before the coordinator can map GetCurrent failures to the required bounded HTTP 503. Return only to the T025 identity/composition TDD slice; keep T034-T045/run-03 closed."
+}
