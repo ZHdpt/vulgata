@@ -1,0 +1,59 @@
+{
+  "schema_version": "plan-review/1.0",
+  "review_kind": "plan-only",
+  "verdict": "REVISE",
+  "pinned_state": {
+    "branch": "demo0831/story-12-5-trackC",
+    "authority_checkpoint": "34c6cb8e3d2ea0858cf8a2711aa17d46526df1b9"
+  },
+  "reviewed_sha256": {
+    "spec.md": "469f72c4e7fc62874e082a7f425351d9f46cf422ae8641d4bee7b64915dd67c0",
+    "plan.md": "84a2650bd7626fe06b9bfdff68b0511b17c7e7a23f7224b2cc115823e8b416b3",
+    "research.md": "beb61026e51bcf95190b11ecb52305a30172959b88b092678a6c5fee8d55f57d",
+    "data-model.md": "805e3f0a626933a147bc7053523505bd2b57735443985d4ce06a26ba013af96d",
+    "quickstart.md": "59824bad942b06920b4f0f2f5d47b7e8c207225e4b61a11187feb43951333fe2",
+    "prepared-scan-initiation.md": "fef4fff353ad22ee19420d4d68d26a587a2b820e55f5562961841a1cbbbec46b"
+  },
+  "findings": [
+    {
+      "id": "PSI-PLAN-001",
+      "severity": "high",
+      "earliest_owner": "plan",
+      "finding": "The plan did not define a fresh live Administrator/SystemOwner recheck after runtime identity resolution and immediately before initiation persistence.",
+      "required_correction": "Add a Web-owned live reauthorization seam and revoked-between-checks zero-write test; retain initial and pre-publication checks."
+    },
+    {
+      "id": "PSI-PLAN-002",
+      "severity": "high",
+      "earliest_owner": "plan",
+      "finding": "Exact replay after Prepared publication or coordination phase advance was undefined even though the public idempotency requirement is not phase-qualified.",
+      "required_correction": "Define phase-aware replay that returns or recovers the existing prepared handoff without rerunning analysis or creating state."
+    },
+    {
+      "id": "PSI-PLAN-003",
+      "severity": "medium",
+      "earliest_owner": "plan",
+      "finding": "The case-sensitive kind argument to PreparedScanIdentityBuilders.CreateDeterministicIdentity was not pinned.",
+      "required_correction": "Pin the kind literal, framing owner, and fixed identity vectors."
+    },
+    {
+      "id": "PSI-PLAN-004",
+      "severity": "medium",
+      "earliest_owner": "plan",
+      "finding": "The configured runtime identity design lacked a replaceable internal seam for the public no-preseed vertical while retaining real production integrity checks.",
+      "required_correction": "Define an internal server-owned resolver abstraction with the configured implementation as the sole production default and separate composition/integrity proof."
+    }
+  ],
+  "planned_change_trigger": {
+    "triggered": true,
+    "trigger": "The plan materially changes the Scan scheduling, grouping, and retry entrance.",
+    "implementation_intent": "After corrected plan review ACCEPT and explicit user authorization, regenerate tasks and complete later gates before production writes."
+  },
+  "scope_confirmation": {
+    "bounded_strategy": true,
+    "schema_free_transaction_feasible": true,
+    "prohibited_boundaries_preserved": true,
+    "task_generation_ready": false
+  },
+  "rationale": "The bounded architecture is viable, but task generation would otherwise invent four material security, idempotency, durability, and testability decisions."
+}

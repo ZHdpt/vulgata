@@ -1,6 +1,6 @@
-# Quickstart: Story 12.5 Track C-MVP
+# Quickstart: Story 12.5 Track C-MVP with Prepared Scan Initiation
 
-This guide validates the corrected definition and describes the single combined host integration/release run. It does not create approval, authorize production changes, or permit use of the main/Story 12.4 database.
+This guide validates the corrected definition, the bounded production Prepared Scan entrance, and the single combined host integration/release run. It does not create planned-change or implementation approval and does not permit use of the main/Story 12.4 database.
 
 ## 1. Re-observe the pinned boundary
 
@@ -11,7 +11,7 @@ This guide validates the corrected definition and describes the single combined 
     git merge-base --is-ancestor 4798b97d9f23aef587829175df7ab7ebc3daf995 HEAD
     Get-FileHash specs/014-grounded-llm-wiki-chat-release-evidence/spec.md -Algorithm SHA256
 
-Expected before implementation: branch demo0831/story-12-5-trackC; Story 12.4 is ancestral; only explicitly owned corrected-definition files are dirty.
+Expected before implementation: branch demo0831/story-12-5-trackC; Story 12.4 is ancestral; only explicitly owned corrected-definition files are dirty. After independent plan-review acceptance, stop for the AGENTS.md Scan planned-change authorization before generating tasks.
 
 ## 2. Validate corrected plan artifacts
 
@@ -20,6 +20,8 @@ Expected before implementation: branch demo0831/story-12-5-trackC; Story 12.4 is
 
 Expected: no unresolved placeholder; removed mechanisms appear only as explicitly deferred/historical material; diff check passes.
 
+Also inspect [contracts/prepared-scan-initiation.md](contracts/prepared-scan-initiation.md) and confirm the plan selects one Web coordinator, one Core store port, one Infrastructure transaction, a PostgreSQL advisory lock, no migration/model change, and no external work inside the transaction.
+
 ## 3. Tier 1 regression
 
 Run the current focused corpus, database guard, Prepared Chat, streaming, authorization/currentness, citation, publication/reset and production Scan UI suites selected by regenerated tasks. The baseline commands remain:
@@ -27,6 +29,13 @@ Run the current focused corpus, database guard, Prepared Chat, streaming, author
     dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter "FullyQualifiedName~Story125EvaluationContractTests|FullyQualifiedName~Story125Tier2PostgreSqlTests|FullyQualifiedName~Story125ReleaseHarnessTests"
     dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter "FullyQualifiedName~PreparedChatIntegrationTests|FullyQualifiedName~PreparedChatCoordinatorTests|FullyQualifiedName~ChatEvidenceRetrievalTests|FullyQualifiedName~ChatEvidencePacketBuilderTests|FullyQualifiedName~ChatProviderStreamAssemblerTests|FullyQualifiedName~OpenAiCompatibleChatProviderStreamingTransportTests|FullyQualifiedName~ChatPageTests|FullyQualifiedName~ProductionScanStatusReaderTests"
     dotnet build src/dotnet/Vulgata.Web/Vulgata.Web.csproj --no-restore
+
+After approved implementation, add the bounded initiation verification:
+
+    dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter "FullyQualifiedName~PreparedScanInitiationIdentityTests|FullyQualifiedName~PreparedScanInitiationCoordinatorTests|FullyQualifiedName~PreparedScanInitiationApiTests|FullyQualifiedName~PreparedScanRuntimeIdentityResolverTests"
+    dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter "FullyQualifiedName~PreparedScanInitiationPostgreSqlTests"
+
+The first command owns request/outcome/composition/no-later-stage behavior, the fresh pre-store authorization recheck, phase-aware handoff recovery, default/test runtime-resolver composition and fixed identity vectors. The second must use disposable PostgreSQL and owns identical/competing concurrency, advisory-lock timeout, rollback and exact replay. A SQLite run cannot substitute for the second command.
 
 Historical envelope tests remain unchanged and green as accepted Track A compatibility evidence, but Track C-MVP tasks and release acceptance must not implement or require their attestation, ten-check, counter-recomputation, supersession/closure, duplicate-orchestration, outage or screenshot-automation concepts. New current-boundary coverage targets the Markdown report and preconnection guard. Track A corpus and Track B product-security coverage remain unchanged.
 
@@ -60,7 +69,7 @@ Immediately record database name and non-secret owner identity, PostgreSQL versi
 
 Do not delete any database as part of this guide. Cleanup requires a separate explicit integrity check and command.
 
-## 6. Run the existing product path
+## 6. Run the corrected production entrance and existing product path
 
 Start Vulgata on the Windows host with the owned database:
 
@@ -68,15 +77,15 @@ Start Vulgata on the Windows host with the owned database:
 
 Through the authenticated existing UI/API:
 
-1. select one authorized System and exactly two real Java/XML Repositories;
-2. prepare both Repositories at the recorded Profiled Revisions;
-3. verify real CodeGraph index and JDT LS Java readiness plus safe XML catalog evidence;
+1. production-bootstrap one Administrator, one ordinary authorized System, provider assignment, and exactly two ordinary real Java/XML Repository records; do not seed Scan Runs, Pre-Scan Results, Scan Executions, coordination, Manifests, File Code Units or Documents;
+2. submit the existing authenticated `POST /api/systems/{systemId}/prepared-scans` request with exactly two safe full Git refs and exact Profiled Revisions;
+3. after the synchronous endpoint completes, query one complete initiation tuple and two real Prepared Scan Manifests, then verify CodeGraph 1.5, JDT LS Java readiness and safe XML catalog evidence; use the accepted Tier 1 transaction-order test—not operator query timing—to prove that the tuple committed before external analysis began;
 4. start the accepted Pass 1 path and allow it to reach terminal state;
 5. run exact Cross-Repository Resolution and the accepted Pass 2 path;
 6. use 继续扫描 only for an eligible durable paused state;
 7. observe terminal Scan state in the production Chinese management UI.
 
-Do not invoke or copy a Story 12.4 qualification database/harness. Do not change selection, scheduling, retry, dispatch, XML or relationship behavior.
+Repeat the same Prepared Scan request once after Manifest publication but before Pass 1 and prove the existing handoff/response returns with the same Run/Execution/coordination/Manifest identities, zero external preparation rerun and zero duplicates. Tier 1 separately proves induced pre-publication failure retry and advanced-phase recovery. Do not invoke `/scan-runs`, `RepositoryProfilingCoordinator`, `CodeGraphContextProvider`, or a Story 12.4 qualification database/harness. Do not change selection, dispatch, XML or relationship behavior beyond the approved initiation/replay entrance.
 
 ## 7. Run straightforward read-only queries
 
@@ -146,12 +155,12 @@ Follow contracts/release-evidence-contract.md. The report must contain:
 
 Never turn a blocked/not-run observation into a success value. A passed report requires every retained release value.
 
-Only an evidence-file, operator-command or read-only-query defect may be corrected inside this run, while preserving the original failure record. If any correction requires production source, stop: the no-production implementation approval is invalid, and work returns to plan, fresh downstream review and scope-hash rebinding before any TDD task may start.
+Only an evidence-file, operator-command or read-only-query defect may be corrected inside this run, while preserving the original failure record. Any production correction beyond the accepted Prepared Scan initiation plan stops the run and returns to correct-course, fresh review and scope-hash binding before new TDD.
 
 ## 12. Final guards
 
-    git diff --name-only 4798b97d9f23aef587829175df7ab7ebc3daf995..HEAD -- src/dotnet/Vulgata.Infrastructure/Data/VulgataDbContext.cs src/dotnet/Vulgata.Infrastructure/Data/Migrations specs/013-exact-cross-repository-flow-pass2
+    git diff --name-only 4798b97d9f23aef587829175df7ab7ebc3daf995..HEAD -- src/dotnet/Vulgata.Infrastructure/Data/VulgataDbContext.cs src/dotnet/Vulgata.Infrastructure/Data/Configurations src/dotnet/Vulgata.Infrastructure/Data/Migrations specs/013-exact-cross-repository-flow-pass2
     git diff --check
     dotnet build src/dotnet/Vulgata.Web/Vulgata.Web.csproj --no-restore
 
-The forbidden-path diff must show no Track C-MVP change. Then run the pinned sprint-loop verification and required E2E gate. Human preauthorization does not replace technical acceptance.
+The forbidden-path diff must show no Track C-MVP change. Also verify production DI resolves CodeGraph 1.5 ports and does not resolve CGC/historical profiling. Then run the pinned sprint-loop verification and required E2E gate. Planned-change and implementation approvals do not replace technical acceptance.

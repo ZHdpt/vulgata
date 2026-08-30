@@ -3,21 +3,21 @@
   "bmad_story_key": "12-5-grounded-llm-wiki-chat-and-august-30-release-evidence",
   "bmad_epic_key": "12",
   "feature_directory": "specs/014-grounded-llm-wiki-chat-release-evidence",
-  "stage": "specify",
+  "stage": "plan-review",
   "preflight": {
     "branch": "demo0831/story-12-5-trackC",
-    "head": "a7c1a3d76a52cfd9e8457eaff87df12d9c615ba0",
-    "git_identity_sha256": "272b78c8d7c1dfacd15700a49d2b02878be22d2dfe393c74b10608b5ea0eacbd",
+    "head": "34c6cb8e3d2ea0858cf8a2711aa17d46526df1b9",
+    "git_identity_sha256": "f8cfbfb0ca91f5a410e6be4571c1885f4f96fbdfeed763f66baced479487808d",
     "status_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-    "observed_at": "2026-08-30T00:49:56.0824234Z"
+    "observed_at": "2026-08-30T02:01:31.4103972Z"
   },
   "artifacts": {
-    "spec": {"path":"specs/014-grounded-llm-wiki-chat-release-evidence/spec.md","sha256":"15bc1cc7afe3d7250d8d247546da4ab72086f030bcb81e7b33b875701ffba309"},
-    "plan": {"path":"specs/014-grounded-llm-wiki-chat-release-evidence/plan.md","sha256":"614bf140543847a396ca04eedb1f007a7e937e260619818838506f053c1cc0d7"},
+    "spec": {"path":"specs/014-grounded-llm-wiki-chat-release-evidence/spec.md","sha256":"469f72c4e7fc62874e082a7f425351d9f46cf422ae8641d4bee7b64915dd67c0"},
+    "plan": {"path":"specs/014-grounded-llm-wiki-chat-release-evidence/plan.md","sha256":"ee13bddfcae94937831a6184f51e7f452bdc0eeec6b91b0b320ac5bed29f35ca"},
     "tasks": {"path":"specs/014-grounded-llm-wiki-chat-release-evidence/tasks.md","sha256":"1a388144bf59674aa74ab859f16a3d46ec3d60f344881fdff5d9ef069e8a165e"}
   },
   "gates": {
-    "plan-review": {"status":"pending","attempt":0,"verdict_path":null},
+    "plan-review": {"status":"accepted","attempt":2,"verdict_path":"specs/014-grounded-llm-wiki-chat-release-evidence/reviews/plan-review/plan-review-prepared-scan-initiation-02.json"},
     "definition-review": {"status":"pending","attempt":0,"verdict_path":null},
     "quality-review": {"status":"pending","attempt":0,"verdict_path":null}
   },
@@ -45,9 +45,11 @@
     "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/return-to-plan-scan-composition-01.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/corrections/track-c-scan-composition-feasibility-01.md",
     "docs/bmad/planning-artifacts/sprint-change-proposal-2026-08-30-story-12-5-prepared-scan-initiation.md",
-    "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/correct-course-prepared-scan-initiation-01.md"
+    "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/correct-course-prepared-scan-initiation-01.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/plan-review/plan-review-prepared-scan-initiation-01.json",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/plan-review/plan-review-prepared-scan-initiation-02.json"
   ],
-  "checkpoint": {"checkpoint_id":"bmad-12-5-specify-20260830T005752Z-9bba08","stage":"specify","commit_sha":null,"binding_status":"pending"},
-  "resume": {"stage":"specify","reason":"Bounded Prepared Scan initiation correct-course is accepted. Regenerate the Story 12.5 specification and plan, then obtain independent plan-only review before the Scan planned-change gate.","evidence_path":"specs/014-grounded-llm-wiki-chat-release-evidence/decisions/correct-course-prepared-scan-initiation-01.md"},
-  "updated_at": "2026-08-30T00:57:52.9647866Z"
+  "checkpoint": {"checkpoint_id":"bmad-12-5-plan-review-20260830T020131Z-509581","stage":"plan-review","commit_sha":null,"binding_status":"pending"},
+  "resume": {"stage":"plan-review","reason":"Independent plan-only review attempt 02 accepted the bounded Prepared Scan initiation plan. Task generation is paused at the AGENTS.md Scan planned-change authorization gate.","evidence_path":"specs/014-grounded-llm-wiki-chat-release-evidence/reviews/plan-review/plan-review-prepared-scan-initiation-02.json"},
+  "updated_at": "2026-08-30T02:01:31.4103972Z"
 }

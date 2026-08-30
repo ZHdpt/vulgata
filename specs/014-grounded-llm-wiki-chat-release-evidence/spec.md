@@ -6,7 +6,7 @@
 
 **Status**: Draft
 
-**Input**: Approved Story 12.5 Track C-MVP correction at `1517d8c85eed643a092fbb1c997f232c90e6b52c`, applied over the accepted Track B checkpoint `f292caec427f9844be3c0f65b4cb00a9292080a5`. The correction preserves accepted Track A/Track B behavior and tests while replacing only the deferred Track C release-proof automation with one lightweight, human-auditable combined host integration and real release run. `specs/008-demo-chat-release-gate` remains implementation history only, never lifecycle authority.
+**Input**: Approved Story 12.5 Track C-MVP correction at `1517d8c85eed643a092fbb1c997f232c90e6b52c`, applied over the accepted Track B checkpoint `f292caec427f9844be3c0f65b4cb00a9292080a5`, plus the bounded in-place Prepared Scan initiation correction `story-12-5-correct-course-prepared-scan-initiation-01` accepted at authority checkpoint `34c6cb8e3d2ea0858cf8a2711aa17d46526df1b9`. The corrections preserve accepted Track A/Track B behavior and tests, add only the missing production entrance to the existing exactly-two-Repository Prepared Scan path, and retain one lightweight, human-auditable combined host integration and real release run. `specs/008-demo-chat-release-gate` remains implementation history only, never lifecycle authority.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -106,6 +106,28 @@ As a release owner, I can inspect one lightweight, human-auditable Track C-MVP e
 8. **Given** Track C-MVP is implemented, **When** scope is reviewed, **Then** it adds no ECDSA attestation sink, private/public key lifecycle, sealed raw-adapter admission, Track C counter recomputation, rigid ten-check release envelope, schema-2.2 semantic machinery, immutable supersession/closure graph, duplicate Tier 2 orchestration, live outage injection, automated screenshot validator, or release-summary product feature.
 9. **Given** a required real tool, configured provider, credential, network route, or host prerequisite is unavailable, **When** Track C-MVP preflight or execution reaches that dependency, **Then** the report records a sanitized blocked disposition and the missing prerequisite without claiming the corresponding run, question results, screenshots, or Story completion.
 
+---
+
+### User Story 6 - Initiate the Exact Prepared Scan from Ordinary Records (Priority: P1, Track C Prerequisite)
+
+As an authenticated authorized user, I can start the bounded two-Repository Prepared Scan from one ordinary System, exactly two ordinary Repositories, and their exact requested revisions, so that a clean production database can reach the accepted Prepared Scan pipeline without seeded lifecycle records or a retired profiling path.
+
+**Why this priority**: The real release run cannot begin from ordinary production records today. The existing preparation pipeline is accepted, but its durable entrance must create one complete, replayable pair before external analysis can safely begin.
+
+**Independent Test**: Through default production composition, begin with only an authenticated authorized user, one ordinary System, exactly two ordinary Repository records, exact Git-ref/Profiled-Revision bindings, and a ready accepted CodeGraph 1.5/JDT-LS runtime. Do not pre-seed a Scan Run, Pre-Scan Result, Scan Execution, Two-Repository coordination, Prepared Scan Manifest, File Code Unit, or Document.
+
+**Acceptance Scenarios**:
+
+1. **Given** the independent-test starting state, **When** the user submits the authenticated Prepared Scan request, **Then** the production entrance creates or replays exactly two revision-bound Scan Runs, two new-path Scan Executions, and one canonical Preparing Two-Repository coordination as one complete durable initiation tuple.
+2. **Given** that tuple is accepted, **When** initiation completes, **Then** the existing Prepared Scan pipeline receives the exact tuple and publishes the pair's Prepared Scan Manifests through its established authorization and atomic-publication behavior.
+3. **Given** the same authorized System, canonical Repository pair, Git refs, Profiled Revisions, Analysis Runtime, prompt, and Document schema identities, **When** the request is repeated, **Then** it returns the same durable tuple and does not create duplicates.
+4. **Given** an existing initiation tuple, **When** a request changes a Repository, Profiled Revision, identity binding, or pair membership, **Then** it fails closed without attaching to or changing the existing tuple.
+5. **Given** a user lacks authorization for the System or either Repository, **When** initiation is requested, **Then** it creates no initiation record and reveals no protected Repository or revision detail.
+6. **Given** the initiation tuple commits but preparation later fails, **When** the exact authorized request is retried, **Then** it reuses the same tuple and can safely resume or replay preparation without partial or cross-paired durable state.
+7. **Given** identical requests race, **When** initiation settles, **Then** every successful caller observes one canonical tuple and no partially visible, duplicate, or cross-paired tuple exists.
+8. **Given** default production composition, **When** the pair is prepared, **Then** the accepted CodeGraph 1.5, JDT-LS, and safe XML path is used and neither CodeGraphContext nor the historical profiling entrance resolves or executes.
+9. **Given** initiation and preparation are in progress, **When** their effects are inspected, **Then** initiation performs no Git or analysis work inside its durable atomic boundary, and neither initiation nor preparation starts a Worker, Pass 1, Cross-Repository Resolution, Pass 2, Document, Edge, Uncertainty, Chat, or LLM action owned by a later stage.
+
 ### Edge Cases
 
 - The query contains only stop words or terms outside the selected scope; retrieval returns insufficient evidence rather than unrelated popular Documents.
@@ -126,6 +148,11 @@ As a release owner, I can inspect one lightweight, human-auditable Track C-MVP e
 - Track C-MVP points at a database whose name does not match `vulgata_story125_*`, or targets Story 12.4's qualification database or the main development database; verification fails before product data is read or written.
 - A screenshot contains fake Backup B state, secrets, absolute host paths, or a result from a different candidate; it is rejected from the release evidence set.
 - A real LLM or analysis-tool prerequisite is unavailable; the attempt is reported as blocked with sanitized diagnostics and no release-success claim rather than being replaced by fake provider state, a duplicate harness, or fabricated evidence.
+- Two identical Prepared Scan initiation requests race before either observes durable state; both settle on one canonical pair and neither can expose a half-created or cross-paired tuple.
+- A retry changes only one Repository, one Profiled Revision, one Git ref, the Analysis Runtime identity, prompt identity, Document schema identity, or authorization scope; it conflicts or fails closed rather than attaching to the earlier tuple.
+- Prepared Scan initiation commits and source acquisition or later preparation fails; the exact authorized retry reuses the committed tuple and does not create replacement Scan Runs or a second coordination.
+- A historical v1 profiling result exists for either Repository; it cannot satisfy, replace, or be attached to the new-path Prepared Scan handoff.
+- Authorization changes after initiation but before Prepared Scan Manifest publication; the established publication recheck withholds the prepared result without disclosing protected state.
 
 ## Requirements *(mandatory)*
 
@@ -138,17 +165,19 @@ This classification describes the current pinned boundary: Story 12.4 is an acce
 | Accepted Track A | Real persisted Chinese Scan-state presentation, authorized manual resume, the fixed 12–20 question corpus and scoring rules, release preparation, and Unicode-safe post-validation reveal characterization | Preserve the accepted behavior and tests unchanged; Track C observes the real product and uses the prepared corpus. |
 | Accepted Track B | Deterministic current LLM-Wiki retrieval, accepted Story 12.4 relationship authority, one-hop expansion, bounded Evidence Packets and Conversation State, authorization/currentness/citation validation, and grounded Business/IT presentation | Preserve the accepted behavior and tests unchanged; Track C does not create a parallel retrieval or validation path. |
 | Accepted Track B | Mandatory provider streaming, bounded server-side assembly, strict UTF-8 handling, cancellation/deadline/terminal fail-closed behavior, whole-answer validation, sole accepted-result publication, and zero pre-validation reveal | Preserve the accepted behavior and tests unchanged; Track C may cite accepted observations and exercise the production path but does not recompute transport byte domains or counters. |
-| Required Track C-MVP | One combined host integration and real release run over two real Java/XML Repositories and their exact Profiled Revisions, with real CodeGraph, JDT LS, safe XML parsing, configured real LLM, and at least 50 automatically selected File Code Units | Execute the existing product path against one clean `vulgata_story125_*` database; do not add or change Scan behavior. |
+| Required Track C prerequisite | One authenticated production entrance from an ordinary System, exactly two ordinary Repositories, and exact Git-ref/Profiled-Revision bindings into the existing Prepared Scan pipeline | Add only the missing atomic, idempotent initiation boundary; preserve the accepted CodeGraph 1.5, JDT-LS, safe XML, selection, and Prepared Scan Manifest behavior unchanged. |
+| Required Track C-MVP | One combined host integration and real release run over two real Java/XML Repositories and their exact Profiled Revisions, with real CodeGraph, JDT LS, safe XML parsing, configured real LLM, and at least 50 automatically selected File Code Units | Execute the corrected production path against one clean `vulgata_story125_*` database; do not create a duplicate Scan or Chat harness. |
 | Required Track C-MVP | Straightforward queries for source-anchored Pass 1/Pass 2 output, one exact Cross-Repository REFERENCES Edge, one honest Uncertainty, and three Business Logic Documents including a Cross-Repository flow | Record the observed results in one human-readable report without a second release-proof data model. |
 | Required Track C-MVP | Twelve representative questions when the provider is available, same-database application-process restart, and five manually captured redacted real screenshot categories | Record manual results, persisted access, failures, and limitations; report unavailable prerequisites as blocked rather than fabricating evidence. |
 | Deferred post-competition | Cryptographic attestation/key lifecycle, sealed raw-adapter admission, Track C counter recomputation, rigid ten-check release envelope, schema-2.2 proof machinery, immutable supersession/closure graphs, exhaustive hashing/cross-linking, duplicate controlled-provider orchestration, live outage injection, automated screenshot binding, and a release-summary product feature | Excluded from current acceptance and MUST NOT be restored by planning or implementation. |
 | Invalidated downstream evidence | The existing Track C release contract, release schema, proof-oriented harness obligations, plan, and tasks that encode the deferred mechanisms | Read-only historical evidence until regenerated by their owning downstream stages; they do not define this specification's acceptance boundary. |
-| Forbidden change | EF migrations, `VulgataDbContext`, `VulgataDbContextModelSnapshot`, Story 12.4 contracts or implementation, and new or changed Scan behavior | No change is permitted in Track C-MVP. |
+| Forbidden change | EF migrations, `VulgataDbContext`, `VulgataDbContextModelSnapshot`, Story 12.4 contracts or implementation, and Scan behavior outside the accepted exactly-two-Repository initiation exception | No change is permitted beyond the bounded entrance defined by this correction. |
 
 ### Dependency and Delivery Gates
 
 - **Track A — accepted and preserved**: its production Scan-state UI, evaluation fixtures and corpus, release preparation, and post-validation reveal evidence are accepted ancestry of `f292caec427f9844be3c0f65b4cb00a9292080a5`; this correction authorizes no Track A rewrite.
 - **Track B — accepted and preserved**: its grounded retrieval, relationship expansion, mandatory streaming, fail-closed validation, publication, authorization, currentness, Source Anchor, citation, and Conversation State behavior and tests are accepted at `f292caec427f9844be3c0f65b4cb00a9292080a5`; this correction authorizes no Track B rewrite.
+- **Track C prerequisite — corrected Prepared Scan entrance**: `story-12-5-correct-course-prepared-scan-initiation-01` permits specification, planning, and independent plan review for only the missing exactly-two-Repository initiation boundary. Because this is a material Scan-path change, task generation remains closed until independent plan-review acceptance and explicit planned-change authorization.
 - **Track C-MVP — corrected final verification**: the correct-course authority at `1517d8c85eed643a092fbb1c997f232c90e6b52c` permits definition and planning for one combined run, but execution remains subject to the normal schema-v3 plan review, planned-change decision, task/definition review, implementation decision, convergence, quality, E2E, and final verification gates.
 - Story 12.4 is already accepted and integrated at `4798b97d9f23aef587829175df7ab7ebc3daf995`; Track C-MVP MUST consume it unchanged.
 - Existing proof-oriented Track C contracts, schemas, plan, and tasks are invalidated downstream evidence only and MUST NOT be treated as current authority before their owning stages regenerate them.
@@ -223,9 +252,9 @@ This classification describes the current pinned boundary: Story 12.4 is an acce
 #### Dependency, Ownership, and Change Boundaries
 
 - **FR-048**: Track A and Track B behavior and tests accepted at `f292caec427f9844be3c0f65b4cb00a9292080a5` MUST remain unchanged by the Track C-MVP correction; Track C execution MUST still pass every downstream schema-v3 authorization and verification gate.
-- **FR-049**: Track C-MVP MUST NOT alter Story 12.4 contracts or implementation and MUST NOT add or materially change Scan parsing, filtering, scheduling, grouping, retry, dispatch, or other Scan behavior.
+- **FR-049**: Track C-MVP MUST NOT alter Story 12.4 contracts or implementation and MUST NOT add or materially change Scan parsing, filtering, scheduling, grouping, retry, dispatch, or other analysis behavior. The sole Scan-path exception is the bounded exactly-two-Repository initiation boundary in FR-063 through FR-078; that exception MUST NOT change the accepted downstream Prepared Scan pipeline.
 - **FR-050**: Track C-MVP MUST NOT add or change EF migrations, `VulgataDbContext`, or `VulgataDbContextModelSnapshot`.
-- **FR-051**: Track C-MVP support MUST be limited to the database guard and lightweight preflight, execution-command recording, straightforward output queries, manual evidence capture, and Markdown reporting necessary to observe the existing product path; it MUST NOT recreate Scan or Chat orchestration in a duplicate harness.
+- **FR-051**: Track C-MVP support MUST be limited to the bounded production Prepared Scan initiation exception in FR-063 through FR-078 plus the database guard, lightweight preflight, execution-command recording, straightforward output queries, manual evidence capture, and Markdown reporting necessary to execute and observe the existing product path; it MUST NOT recreate Scan or Chat orchestration in a duplicate harness.
 - **FR-052**: Story 12.5 MUST NOT modify, clean, stage, or depend on uncommitted files, temporary directories, databases, or Git state in a separate worktree.
 
 #### Streaming Transport and Validated Reveal
@@ -241,6 +270,25 @@ This classification describes the current pinned boundary: Story 12.4 is an acce
 - **FR-061**: Track C-MVP MUST NOT add cryptographic attestation or key lifecycle, sealed raw-adapter admission, a rigid ten-check release envelope, schema-2.2 release-proof machinery, immutable run supersession or closure graphs, exhaustive artifact hashing/cross-linking, separate controlled-provider orchestration, live outage injection, automated screenshot binding, or a release-summary product feature.
 - **FR-062**: If a required real tool, configured provider, credential, network route, or host prerequisite is unavailable, Track C-MVP MUST record a sanitized blocked disposition and MUST NOT substitute fake provider state, fabricated evidence, or a completion claim for the unavailable work.
 
+#### Bounded Prepared Scan Initiation
+
+- **FR-063**: The authenticated Prepared Scan request MUST identify exactly one authorized System, exactly two distinct authorized Repositories belonging to that System, a safe full Git ref for each Repository, and the exact expected lowercase Profiled Revision for each ref.
+- **FR-064**: System and Repository visibility, ownership, and request authorization MUST be validated before any initiation state is created; the established authorization recheck immediately before Prepared Scan Manifest publication MUST remain in force.
+- **FR-065**: One atomic durable boundary MUST create or replay the complete initiation tuple: exactly two Profiled-Revision-bound Scan Runs, exactly two new-path Scan Executions, and exactly one canonical Preparing Two-Repository coordination. The complete tuple or none of it MUST be visible.
+- **FR-066**: Each new-path Scan Execution MUST retain the accepted current Analysis Runtime, prompt, Document schema, Repository, and Profiled Revision identities, and the coordination MUST bind the canonical pair without permitting a cross-paired execution.
+- **FR-067**: The initiation atomic boundary MUST close before source acquisition or any Git, CodeGraph, JDT-LS, XML, or other long-running external analysis begins.
+- **FR-068**: After initiation succeeds, the existing Prepared Scan behavior MUST receive the exact tuple and retain ownership of source acquisition, CodeGraph 1.5, JDT-LS, safe XML processing, deterministic selection, atomic Prepared Scan Manifest publication, final authorization recheck, and the existing prepared handoff/response.
+- **FR-069**: Repeating an identical authorized request with the same System, canonical Repository pair, Git refs, Profiled Revisions, Analysis Runtime, prompt, Document schema, and authorization scope MUST return the same initiation tuple and MUST NOT create duplicate Scan Runs, Scan Executions, or coordination.
+- **FR-070**: A request that differs in System, Repository pair or membership, Git ref, Profiled Revision, Analysis Runtime identity, prompt identity, Document schema identity, or authorization scope MUST conflict or fail closed and MUST NOT attach to, mutate, or disclose the existing tuple.
+- **FR-071**: Concurrent identical requests MUST settle on one canonical initiation tuple; no caller or observer MAY see a partial, duplicate, or cross-paired tuple.
+- **FR-072**: If initiation commits and later preparation fails, an exact authorized retry MUST reuse the same tuple and safely resume or replay the accepted Prepared Scan behavior without replacement initiation state.
+- **FR-073**: A historical v1 profiling result, legacy Pre-Scan result, or legacy profiling entrance MUST NOT create, satisfy, replace, or authorize the new-path Prepared Scan handoff.
+- **FR-074**: Default production composition MUST use the accepted CodeGraph 1.5 and JDT-LS analysis boundaries and MUST NOT resolve, register, modify, bridge, adapt, fall back to, or execute `CodeGraphContextProvider`, the historical `RepositoryProfilingCoordinator`, or the obsolete `/scan-runs` profiling entrance for this path.
+- **FR-075**: Initiation MUST NOT acquire source, run external analysis, or mutate a File Code Unit, Document, Edge, Uncertainty, or LLM-visible artifact. Initiation and preparation MUST NOT start Worker, Pass 1, Cross-Repository Resolution, Pass 2, Chat, or LLM work owned by an accepted later stage.
+- **FR-076**: A production-composition vertical test MUST begin only with an authenticated authorized user, one ordinary System, exactly two ordinary Repository records, exact Git-ref/Profiled-Revision bindings, and a ready accepted CodeGraph 1.5/JDT-LS runtime. It MUST pre-seed no Scan Run, Pre-Scan Result, Scan Execution, Two-Repository coordination, Prepared Scan Manifest, File Code Unit, or Document, and MUST prove all nine acceptance scenarios in User Story 6. Real CodeGraph CLI qualification MAY support but MUST NOT substitute for this test.
+- **FR-077**: After implementation acceptance, the retained blocked Track C database MUST remain unchanged as historical evidence. The release continuation MUST create a fresh guarded lowercase `vulgata_story125_*` database, repeat sanitized preflight and production bootstrap, enter through the corrected Prepared Scan path, and continue Track C only after the real Prepared Scan succeeds.
+- **FR-078**: This correction MUST NOT redesign the general Scan lifecycle, restore standalone or single-Repository profiling, support arbitrary N-Repository initiation, delete historical tables or compatibility code, or consolidate legacy Scan entrances. Those obligations remain explicit post-competition backlog.
+
 ### Key Entities
 
 - **Chat Scope**: The selected mode, authorized System, and two authorized release Repositories that bound one question and its follow-ups.
@@ -252,6 +300,7 @@ This classification describes the current pinned boundary: Story 12.4 is an acce
 - **Conversation State**: The bounded transient context from at most two prior questions and validated answers, previously cited handles, selected scope, and mode; it is never source evidence.
 - **Chat Evaluation Case**: One fixed question, scope, mode, expected evidence themes, scoring expectations, timing, and observed result in the 12–20 question corpus.
 - **Release Evidence Set**: The candidate-bound Markdown report, lightweight preflight, command/exit log, database query results, manual evaluation table, redacted screenshots, restart proof, failures, and limitations from the combined Track C-MVP run.
+- **Prepared Scan Initiation Tuple**: The all-or-nothing durable binding of exactly two Profiled-Revision-bound Scan Runs, their two new-path Scan Executions with current Analysis Runtime, prompt, and Document schema identities, and one canonical Preparing Two-Repository coordination.
 
 ## Success Criteria *(mandatory)*
 
@@ -275,6 +324,13 @@ This classification describes the current pinned boundary: Story 12.4 is an acce
 - **SC-016**: Across streamed partial JSON, split UTF-8, disconnect, ten-second inactivity, cancellation, overflow, malformed UTF-8, missing terminal, duplicate or contradictory terminal, and post-terminal-data cases, zero provider fragments, claims, citations, handles, relationships, or source details render before complete validation.
 - **SC-017**: For 100% of accepted streamed answers, all retrieval, streaming, optional repair, validation, and accepted-result completion fit within one under-30-second budget, and any progressive UI reveal contains only Unicode-safe units from the already validated Grounded Answer.
 - **SC-018**: For 100% of unavailable required external prerequisites, the report identifies the sanitized blocked condition, records no fabricated observation, and makes zero success claims for the unexecuted release work.
+- **SC-019**: From the no-preseed production-composition starting state, 100% of authorized successful initiations create one complete tuple and reach Prepared Scan Manifest publication through the accepted preparation path.
+- **SC-020**: Across repeated and concurrent identical authorized initiation requests, 100% of successful results identify the same two Scan Runs, two new-path Scan Executions, and one coordination, with zero duplicate, partial, or cross-paired tuple.
+- **SC-021**: Across changed Repository pair, Git ref, Profiled Revision, runtime, prompt, Document schema, or authorization-scope requests, zero mismatched requests attach to or mutate an existing tuple and zero protected tuple detail is disclosed.
+- **SC-022**: Across unauthorized initiation attempts, zero Scan Runs, Scan Executions, or Two-Repository coordination records are created.
+- **SC-023**: After an induced failure between committed initiation and Prepared Scan Manifest publication, an exact authorized retry reuses the same tuple and can reach publication without replacement or cross-paired initiation state.
+- **SC-024**: In 100% of production-composition checks, the Prepared Scan path uses the accepted CodeGraph 1.5/JDT-LS boundaries, resolves no CodeGraphContext or historical profiling fallback, and starts zero Worker, Pass 1, Cross-Repository Resolution, Pass 2, Document, Edge, Uncertainty, Chat, or LLM activity owned by a later stage.
+- **SC-025**: In 100% of observed initiations, the complete durable tuple becomes visible before external analysis begins, and no transaction that creates or replays that tuple remains open during Git, CodeGraph, JDT-LS, XML, or other long-running analysis.
 
 ## Assumptions
 
@@ -284,12 +340,13 @@ This classification describes the current pinned boundary: Story 12.4 is an acce
 - Existing authentication, Repository authorization, LLM provider configuration, immutable Document storage, Source Anchors, and durable Scan recovery remain available and retain their existing security boundaries.
 - Conversation state is transient and bounded; saved Chat sessions, uploads, long-term memory, automatic scope determination, and broad post-August V1 Chat tools remain out of scope.
 - The configured real LLM is expected to support the accepted mandatory streaming Chat path. If the provider or another required external prerequisite is unavailable, the honest result is blocked evidence rather than a substituted fake run.
-- No EF migration, `VulgataDbContext`, model-snapshot, Story 12.4, or Scan-behavior change is permitted in Track C-MVP.
+- No EF migration, `VulgataDbContext`, model-snapshot, Story 12.4, or Scan-behavior change outside the bounded FR-063 through FR-078 initiation exception is permitted in Track C-MVP.
 
 ## Source Traceability
 
 - `docs/bmad/epics.md` — canonical Story 12.5 user story and acceptance criteria.
 - `docs/bmad/planning-artifacts/sprint-change-proposal-2026-08-29-story-12-5-track-c-mvp.md` — approved Track C-MVP retained/deferred boundary and success conditions.
+- `docs/bmad/planning-artifacts/sprint-change-proposal-2026-08-30-story-12-5-prepared-scan-initiation.md` — approved bounded in-place Prepared Scan initiation correction, transaction/replay outcomes, vertical-test boundary, and post-competition exclusions.
 - `docs/bmad/implementation-artifacts/12-5-grounded-llm-wiki-chat-and-august-30-release-evidence.md` — original activation and ownership history, superseded wherever the approved Track C-MVP correction differs.
 - `docs/bmad/planning-artifacts/sprint-change-proposal-2026-08-17-august-30-bounded-scanning-recovery.md` — August 30 scope, tiered verification, UI states, release metrics, and explicit deferrals.
 - `docs/bmad/planning-artifacts/architecture/august-30-bounded-scanning-design.md` — controlling retrieval, expansion, packet, conversation, runtime, and release bounds.
@@ -298,5 +355,6 @@ This classification describes the current pinned boundary: Story 12.4 is an acce
 - `.specify/memory/constitution.md` and `AGENTS.md` — security, ownership, UI, validation, and project-governance constraints.
 - `specs/014-grounded-llm-wiki-chat-release-evidence/evidence/verification/track-b-final-01.md` — accepted Track B behavior, tests, conditional E2E, and exact verification inventory.
 - `specs/014-grounded-llm-wiki-chat-release-evidence/decisions/correct-course-track-c-mvp-01.md` — accepted Track C-MVP correction decision.
+- `specs/014-grounded-llm-wiki-chat-release-evidence/decisions/correct-course-prepared-scan-initiation-01.md` — accepted specification/planning authority for the missing production Prepared Scan entrance; it does not authorize tasks or implementation.
 - `specs/013-exact-cross-repository-flow-pass2/` — accepted Story 12.4 dependency evidence consumed unchanged by Story 12.5.
 - `specs/008-demo-chat-release-gate/` and current Prepared Chat production/tests — stale specification history and reusable implementation evidence only.

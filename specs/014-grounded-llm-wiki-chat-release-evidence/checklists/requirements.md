@@ -30,11 +30,19 @@
 - [x] Provider streaming, chunk/response bounds, UTF-8 assembly, deadlines, cancellation, terminal handling, and fail-closed outcomes are explicit
 - [x] Provider chunks remain non-renderable until complete syntax, packet, authorization, currentness, citation, and semantic validation
 - [x] Post-validation progressive reveal is distinguished from provider streaming and assigned consistently across Tracks A/B/C
+- [x] The bounded Prepared Scan initiation exception replaces the contradictory blanket no-Scan-change language without weakening accepted downstream Scan behavior
+- [x] Initiation defines exactly one System, exactly two distinct authorized Repositories, exact Git refs/Profiled Revisions, current runtime/prompt/schema identities, and one all-or-nothing durable pair
+- [x] Identical replay, mismatched replay, concurrent initiation, authorization denial, and retry after later preparation failure have explicit fail-closed acceptance
+- [x] The initiation atomic boundary ends before Git, CodeGraph 1.5, JDT-LS, XML, or other long-running external analysis
+- [x] The no-preseed production-composition test defines all nine required outcomes and distinguishes real CodeGraph CLI qualification as supporting evidence only
+- [x] Legacy `/scan-runs`, `RepositoryProfilingCoordinator`, and `CodeGraphContextProvider` restoration or fallback are explicitly forbidden
+- [x] General Scan lifecycle redesign, standalone/single-Repository profiling, arbitrary N-Repository initiation, historical deletion, and legacy entry consolidation remain post-competition backlog
+- [x] Fresh-database release continuation preserves the retained blocked database and cannot claim completion before real Prepared Scan succeeds
 
 ## Feature Readiness
 
 - [x] All functional requirements have clear acceptance coverage
-- [x] User scenarios cover grounded retrieval, streaming multi-turn validation, real Scan UI, evaluation preparation, and release verification
+- [x] User scenarios cover grounded retrieval, streaming multi-turn validation, real Scan UI, evaluation preparation, bounded Prepared Scan initiation, and release verification
 - [x] Feature meets measurable outcomes defined in Success Criteria
 - [x] The specification preserves WHAT and WHY and leaves architecture choices to planning
 - [x] Canonical terminology matches `docs/UBIQUITOUS_LANGUAGE.md`
@@ -43,15 +51,15 @@
 
 ## Self-Review
 
-- **Bounded intent**: PASS — fresh Story 12.5 delta; no stale Story 11.5 lifecycle, no Story 12.4 contract mutation, and no deferred vector/agentic scope.
-- **Measurable acceptance**: PASS — 31 acceptance scenarios, 60 functional requirements, and 17 measurable success criteria cover A/B/C tracks.
+- **Bounded intent**: PASS — one in-place Story 12.5 Prepared Scan entrance; no separate story, stale Story 11.5 lifecycle, Story 12.4 contract mutation, accepted Track A/B behavior change, general Scan redesign, or deferred vector/agentic scope.
+- **Measurable acceptance**: PASS — 42 acceptance scenarios, 78 functional requirements, and 25 measurable success criteria cover accepted Tracks A/B, the bounded Track C initiation prerequisite, and the Track C-MVP release run.
 - **Canonical terminology**: PASS — uses System, Repository, Document, Document Version, Source Anchor, REFERENCES Edge, GENERATED_FROM Edge, Cross-Repository Resolution, Uncertainty, Flow Group, Scan, and Profiled Revision consistently.
-- **Completeness**: PASS — dispositions, dependency gates, streaming transport, UTF-8/size/deadline/terminal handling, no pre-validation reveal, authorization, currentness, evidence bounds, UI states, evaluation corpus, tiered verification, restart, screenshots, and database isolation are covered.
+- **Completeness**: PASS — dispositions, dependency gates, exact two-Repository initiation identities, atomic visibility, transaction boundary, replay/concurrency/retry behavior, no-preseed production composition, legacy-path exclusion, streaming transport, UTF-8/size/deadline/terminal handling, no pre-validation reveal, authorization, currentness, evidence bounds, UI states, evaluation corpus, real-run continuation, restart, screenshots, and database isolation are covered.
 - **Unresolved placeholders**: PASS — none found.
-- **Authority conflicts**: PASS — no conflict found. The pinned boundary contains v2 candidate seams but not Story 12.4 acceptance; this is represented as a hard Track B/C gate.
+- **Authority conflicts**: PASS — no conflict found. The bounded initiation exception follows the approved 2026-08-30 Sprint Change Proposal, preserves Story 12.4 and accepted Track A/B behavior, and remains subject to the post-plan-review Scan planned-change authorization gate.
 
 ## Notes
 
-- Correction validation iteration 1 passed all checklist items after the explicit streaming requirement was incorporated.
+- Prepared Scan initiation correction validation iteration 1 passed all checklist items after qualifying FR-049/FR-051 and adding the exact initiation, replay, transaction, production-composition, and release-continuation outcomes.
 - The specification records 8 already implemented, 9 partially implemented, 5 obsolete, and 8 missing Prepared Chat obligations or seams.
 - Optional post-specification hook available: `speckit.agent-context.update`; it was not executed because this dispatch permits writes only to the specification and checklist.

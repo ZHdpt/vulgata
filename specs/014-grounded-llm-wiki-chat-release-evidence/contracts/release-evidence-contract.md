@@ -64,6 +64,8 @@ One run uses:
 - the existing source-anchored Pass 1, exact Cross-Repository Resolution and Pass 2 path;
 - the configured real LLM through the accepted mandatory streaming Prepared Chat path.
 
+The run starts from ordinary authenticated product state through [prepared-scan-initiation.md](prepared-scan-initiation.md). It pre-seeds no Scan Run, Pre-Scan Result, Scan Execution, Two-Repository coordination, Prepared Scan Manifest, File Code Unit or Document. Before Pass 1, the report records the existing endpoint outcome and straightforward rows proving one complete initiation tuple, two approved Prepared Scan Manifests, exact identity binding and an identical-request replay with zero duplicates. `/scan-runs`, historical Repository profiling and CGC are ineligible.
+
 There is no separate automated Tier 2 orchestration, live outage injection or duplicate release coordinator.
 
 ## Straightforward database query table
@@ -122,7 +124,7 @@ Reject or redact screenshots containing fake Backup B state, secrets, credential
 
 The report always has a failures/limitations section. Missing PostgreSQL/Docker, Repository revision, tool identity, provider credential/network route, authentication or screenshot capability is recorded as a sanitized blocked condition. Do not rerun an unchanged expensive operation until the prerequisite or product failure is classified.
 
-Only evidence-file, operator-command and read-only-query corrections remain inside the approved Track C-MVP lane. If correcting an observed defect requires any production-source change, stop and record the defect: the current no-production approval is invalid, and work must return to plan, fresh downstream review and scope-hash rebinding before TDD may begin. Scan, Story 12.4, persistence and accepted Chat-security changes additionally remain authority contradictions.
+Only evidence-file, operator-command and read-only-query corrections remain inside the accepted real-run lane. If correcting an observed defect requires production work beyond the accepted Prepared Scan initiation plan, stop and record the defect: work must return to correct-course, fresh downstream review and scope-hash binding before TDD may begin. General Scan, Story 12.4, persistence-shape and accepted Chat-security changes remain authority contradictions.
 
 ## Passing checklist
 
@@ -130,6 +132,7 @@ A report may say passed only when:
 
 - preflight and database ownership passed before product access;
 - the one real two-Repository run met Scan and minimum persisted-output thresholds;
+- the corrected production Prepared Scan entrance created/replayed one exact tuple from ordinary records and default composition used CodeGraph 1.5 with no CGC/historical profiling fallback;
 - high-value-seed selected/succeeded/failed counts were recorded, failed was zero, and selected equaled succeeded;
 - the provider-available twelve-question table met every metric;
 - restart continuity passed;

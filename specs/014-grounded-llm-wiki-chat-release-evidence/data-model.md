@@ -1,6 +1,6 @@
 # Data Model: Story 12.5 Track C-MVP
 
-Track C-MVP introduces no persistent application entity. The entities below are bounded evidence concepts represented in one Markdown report and adjacent screenshot files. Existing Track A/B and Story 12.4 domain/persistence authorities remain unchanged.
+Track C-MVP introduces no new persistent entity or persistence shape. The bounded initiation correction creates one exact tuple from existing Scan Run, Scan Execution and Two-Repository Scan Coordination entities; the remaining concepts are represented in one Markdown report and adjacent screenshot files. Existing Track A/B and Story 12.4 domain/persistence authorities remain unchanged.
 
 ## 1. Existing persistent authorities
 
@@ -17,7 +17,81 @@ The combined run observes, but does not reshape:
 
 No release report row, signature, run graph or screenshot row is added to VulgataDbContext.
 
-## 2. TrackCMvpPreflight
+## 2. PreparedScanInitiationCommand (Core value contract)
+
+One normalized server-owned command crosses from Web orchestration to the Infrastructure store.
+
+| Field | Rule |
+| --- | --- |
+| authorizationUserId | exact authenticated user ID; never returned publicly |
+| authorizationMode | exact `Administrator` or `SystemOwner` result from the fresh live recheck immediately before the store call; never copied from the initial cached request context |
+| systemId | one non-empty visible System |
+| repositories | exactly two, distinct, ordered by `Guid.CompareTo` |
+| repositoryId | non-empty and belongs to `systemId` |
+| requestedRef | existing safe full `refs/heads/*` or `refs/tags/*` validation |
+| profiledRevision | exact lowercase 40-hex expected commit |
+| promptIdentity | current server-owned Pass 1 prompt identity from `IScanRecoveryDispatchIdentitySource` |
+| documentSchemaIdentity | exact current `code-logic/file-v2` identity |
+| runtimeIdentityJson | full canonical `analysis-runtime/1` JSON for this Repository/revision, no host path |
+| runtimeIdentityHash | lowercase SHA-256 of that canonical JSON |
+| providerProcessTimeoutSeconds | exact established value `1800` for `ScanRun.Start`; grants no CGC execution or configuration |
+| initiatedAt | one UTC instant shared by both Scan Runs and executions |
+
+Core `PreparedScanInitiationIdentityBuilder` owns `CanonicalEnvelope` domain `vulgata/story-12.5/prepared-scan-initiation-execution/1.0`; tags 1 through 10 are normalized user UUID, authorization mode, System UUID, Repository UUID, exact case-sensitive ref, lowercase Profiled Revision, prompt identity, Document schema identity, runtime JSON and runtime-hash bytes. The lowercase SHA-256 is passed to exact kind literal `PreparedScanInitiationExecution`. The public request supplies no server-owned identity.
+
+## 3. PreparedScanInitiationTuple (existing persistent entities)
+
+### Scan Run x2
+
+Created only through `ScanRun.Start`, then `BindProfiledRevision` before persistence.
+
+| Invariant | Rule |
+| --- | --- |
+| RepositoryId | one canonical command Repository |
+| ProfiledRevision | exact command revision, immutable |
+| Status | `Profiling`; this is an initiation carrier, not proof that legacy profiling ran |
+| StartedAt | command `initiatedAt` |
+| ProviderProcessTimeoutSeconds | established 1,800-second compatibility value only; CGC is not resolved, configured or called |
+
+Historical uncoordinated Scan Runs, even for the same Repository/revision, are ignored and never replay candidates.
+
+### New-path Scan Execution x2
+
+Created only through `ScanExecution.CreateNewPath`.
+
+| Invariant | Rule |
+| --- | --- |
+| Id | deterministic Repository-specific command identity |
+| System/Repository/ScanRun/ProfiledRevision | exact tuple binding |
+| Phase | `Prepared`, state version 0 |
+| PromptIdentity / DocumentSchemaIdentity | exact current server authorities |
+| AnalysisRuntimeIdentityJson/Hash | complete per-Repository canonical identity and matching hash |
+| StartedAt / UpdatedAt | common `initiatedAt` |
+| PreScanResultId | `Guid.Empty`, the accepted new-path compatibility marker; no legacy result is created or attached |
+
+### Two-Repository Scan Coordination x1
+
+Created only through `TwoRepositoryScanCoordination.Create(executionOne, executionTwo, initiatedAt)`. The factory canonicalizes Repository order and deterministically derives the coordination ID from System and the two deterministic execution IDs. Initial phase is `Preparing`, state version 0.
+
+### Tuple state and visibility
+
+```text
+absent --atomic create--> Preparing initiation tuple
+absent --rollback/cancel/lock timeout--> absent
+Preparing exact tuple --identical authorized request--> same tuple (Replay)
+Preparing exact tuple --mismatched/legacy/ambiguous request--> Conflict, unchanged
+Preparing exact tuple --external preparation failure--> same replayable tuple
+Preparing exact tuple --prepared publication--> existing Prepared Scan state/hand-off
+Preparing exact tuple + exact hand-off --replay--> existing response, no analysis
+advanced exact coordination + exact hand-off --replay--> existing response, no analysis
+advanced coordination without exact hand-off --> Conflict, unchanged
+```
+
+The transaction exposes all five rows or none and reports the observed coordination phase plus `preparedArtifactPresence` (`None` or `Present`). Presence covers any Manifest, prepared-v2 Pre-Scan Result, context snapshot, Manifest Entry/audit or File Code Unit bound through the exact coordination/Run/Manifest IDs. It does not construct or validate a handoff. Outside the transaction, existing `IPreparedScanHandoffSource` validates a complete exact handoff. Only `Preparing + None` may enter/re-enter external preparation; `Present` or an advanced phase must recover the handoff or conflict without rerunning analysis. A later prepared context snapshot uses `initiatedAt` as `CapturedAt`, satisfying the existing snapshot/execution temporal invariant; its Manifest and proofs use the bound execution runtime hash. The accepted Prepared Scan store, not initiation, creates current Prepared Scan Manifests, File Code Units, prepared Pre-Scan Results and snapshots.
+
+The 1,800-second value satisfies the existing durable `ScanRun` field only. It is not a CGC runtime identity or an analysis timeout selected by the obsolete profiling coordinator.
+
+## 4. TrackCMvpPreflight
 
 One report section recorded before product data access.
 
@@ -47,7 +121,7 @@ Validation:
 - no connection string, API key, token, password or absolute secret-bearing path;
 - a blocked required prerequisite prevents dependent success claims.
 
-## 2A. Preserved Track B compatibility vocabulary
+## 4A. Preserved Track B compatibility vocabulary
 
 Track C-MVP retains the accepted historical/current compatibility literals without recalculating them:
 
@@ -59,7 +133,7 @@ Track C-MVP retains the accepted historical/current compatibility literals witho
 
 The Markdown report may quote those fields from accepted Track B content-dark observations. No Track C-MVP entity recomputes the counter domains, signs them or promotes them into a new release receipt.
 
-## 3. TrackCMvpCommandObservation
+## 5. TrackCMvpCommandObservation
 
 One row per material operator command or application action.
 
@@ -75,7 +149,7 @@ One row per material operator command or application action.
 
 There is no hash graph, closure graph, supersession identity or signature. Rows remain ordered and truthful.
 
-## 4. TrackCMvpQueryObservation
+## 6. TrackCMvpQueryObservation
 
 One bounded report table for each required read-only query.
 
@@ -107,7 +181,7 @@ The query observes existing authority. It does not infer an exact Edge from pros
 
 For a passed report, highValueSeedFailedCount is zero and highValueSeedSelectedCount equals highValueSeedSucceededCount. These are observations of existing Scan output; they do not add or alter seed selection behavior.
 
-## 5. TrackCMvpChatEvaluationRow
+## 7. TrackCMvpChatEvaluationRow
 
 Exactly twelve observed rows selected from the accepted 12-20 case corpus.
 
@@ -144,7 +218,7 @@ If the provider is unavailable, dependent rows are blocked/not-run and no metric
 
 `q01` (Business), `q02` (IT) and `q03` (Business) form a topical sequence only. Each mode transition clears the accepted transient Conversation State, so these are three independent observations. `q12` uses the same authorized principal and exactly-two-Repositories scope; it proves only that an outside-scope request does not elicit confirmation or disclosure about that Repository. It does not prove an exercised denied principal, known protected Repository, revocation or true missing-equivalent result. Accepted Tier 1 tests remain the authority for those actual security/currentness and same-mode multi-turn behaviors.
 
-## 6. TrackCMvpRestartObservation
+## 8. TrackCMvpRestartObservation
 
 | Field | Rule |
 | --- | --- |
@@ -159,7 +233,7 @@ If the provider is unavailable, dependent rows are blocked/not-run and no metric
 
 Transient conversation state is excluded from persistence expectations.
 
-## 7. TrackCMvpScreenshotObservation
+## 9. TrackCMvpScreenshotObservation
 
 Exactly one or more row in each category:
 
@@ -173,7 +247,7 @@ Each row records a repository-relative screenshot path, capture time, category, 
 
 Redaction rejects visible secrets, credentials, connection strings, absolute host paths, fake Backup B state and unrelated candidate output.
 
-## 8. TrackCMvpReleaseReport
+## 10. TrackCMvpReleaseReport
 
 The report is the aggregate root for evidence presentation only.
 
@@ -196,9 +270,16 @@ planned -> running -> passed
 
 not-run is permitted only for work never started. Passed requires every retained release value. Failed/blocked reports retain completed truthful observations and never synthesize missing success values.
 
-Failure-correction boundary: evidence-file, operator-command and read-only-query corrections may remain within the approved run. Any correction requiring production source invalidates the no-production approval and returns to plan plus fresh review/scope-hash rebinding before TDD; it is not an alternate transition within this report aggregate.
+Failure-correction boundary: evidence-file, operator-command and read-only-query corrections may remain within the accepted run. Any production correction beyond the approved Prepared Scan initiation plan returns to correct-course and fresh review/scope-hash binding; it is not an alternate transition within this report aggregate.
 
-## 9. Relationship overview
+## 11. Relationship overview
+
+PreparedScanInitiationCommand
+  -> atomic 2 existing Scan Runs
+  -> atomic 2 existing new-path Scan Executions
+  -> atomic 1 existing Two-Repository Scan Coordination
+  -> existing PreparedScanCoordinator/PreparedScanPairBuilder
+  -> existing Prepared Scan Manifest publication
 
 TrackCMvpReleaseReport
   -> 1 TrackCMvpPreflight
@@ -210,10 +291,10 @@ TrackCMvpReleaseReport
 
 The report points to existing product identifiers for review; it does not own or mutate those identities.
 
-## 10. Historical deferred model
+## 12. Historical deferred model
 
 ReleaseEvidenceRunEnvelope, signed stream attestation, immutable supersession/closure graph, rigid ten-check inventory and exhaustive artifact binding are post-competition concepts. The legacy story125-release-evidence.schema.json remains marked deferred for historical compatibility only and is not a Track C-MVP runtime or acceptance entity.
 
-## 11. Migration disposition
+## 13. Migration disposition
 
-No migration. No VulgataDbContext or VulgataDbContextModelSnapshot change. No new table, entity configuration, repository or public API. A diff touching those paths fails the Track C-MVP guard and returns to plan.
+No migration. No `VulgataDbContext`, entity configuration or `VulgataDbContextModelSnapshot` change. No new table or public request/response. One specific Infrastructure initiation store over the existing model is planned; a diff touching model/migration paths fails the Track C-MVP guard and returns to plan.
