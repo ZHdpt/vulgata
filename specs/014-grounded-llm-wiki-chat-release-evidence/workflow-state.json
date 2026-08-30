@@ -3,25 +3,25 @@
   "bmad_story_key": "12-5-grounded-llm-wiki-chat-and-august-30-release-evidence",
   "bmad_epic_key": "12",
   "feature_directory": "specs/014-grounded-llm-wiki-chat-release-evidence",
-  "stage": "converge",
+  "stage": "quality-review",
   "preflight": {
     "branch": "demo0831/story-12-5-trackC",
-    "head": "d8c5151d362fce6d0bf21dcba30f7939bf7023a6",
-    "git_identity_sha256": "9b139486c36de6d0e342b1bb19b6e41078b269812037b1876412dd0adb575b44",
+    "head": "da1ae8c0cfb7762f31dbd1ead7d39369a2f5d46d",
+    "git_identity_sha256": "43aae8f03c8e305bdab910174ccbd74be2474cc7d22794e0daf1855604cfd3d8",
     "status_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-    "observed_at": "2026-08-30T08:07:41.8782024Z"
+    "observed_at": "2026-08-30T08:15:31.2334374Z"
   },
   "artifacts": {
     "spec": {"path":"specs/014-grounded-llm-wiki-chat-release-evidence/spec.md","sha256":"469f72c4e7fc62874e082a7f425351d9f46cf422ae8641d4bee7b64915dd67c0"},
     "plan": {"path":"specs/014-grounded-llm-wiki-chat-release-evidence/plan.md","sha256":"6ebb0a525721716bfcbb3dce0d330b4846a6f3cf50c604ceb2bf9b0ed41346a8"},
-    "tasks": {"path":"specs/014-grounded-llm-wiki-chat-release-evidence/tasks.md","sha256":"6117b0b8eeea9e139868e60274a4b3ba1b25d38312555a06fce225f73cc9968e"}
+    "tasks": {"path":"specs/014-grounded-llm-wiki-chat-release-evidence/tasks.md","sha256":"cc73c8e7d43ecb03ec4a8c177c8aeabcacbb8142659029fda40b5a151bf75e22"}
   },
   "gates": {
     "plan-review": {"status":"accepted","attempt":3,"verdict_path":"specs/014-grounded-llm-wiki-chat-release-evidence/reviews/plan-review/plan-review-prepared-pass1-identity-authority-03.json"},
     "definition-review": {"status":"accepted","attempt":4,"verdict_path":"specs/014-grounded-llm-wiki-chat-release-evidence/reviews/definition-review/definition-review-prepared-pass1-identity-authority-04.json"},
-    "quality-review": {"status":"pending","attempt":0,"verdict_path":null}
+    "quality-review": {"status":"pending","attempt":1,"verdict_path":"specs/014-grounded-llm-wiki-chat-release-evidence/reviews/quality-review/prepared-scan-initiation-quality-review-01.json"}
   },
-  "attempts": {"definition-review":0,"converge":1,"quality-review":0},
+  "attempts": {"definition-review":0,"converge":1,"quality-review":1},
   "approvals": [
     {"decision_id":"story-12-5-correct-course-track-c-mvp-01","status":"accepted","scope_sha256":"4c8ae61ce8136d058d51809a1b74593222c7b68d2845cd1ef2a7daf778a27db8","evidence_path":"specs/014-grounded-llm-wiki-chat-release-evidence/decisions/correct-course-track-c-mvp-01.md","decided_at":"2026-08-29T14:41:26.1917101Z"},
     {"decision_id":"story-12-5-planned-change-authorization-track-c-mvp-01","status":"accepted","scope_sha256":"2bec1009dbefde3cc8d9452b1579456cb57a9b61f78a063e8ca42d419708ae22","evidence_path":"specs/014-grounded-llm-wiki-chat-release-evidence/decisions/planned-change-authorization-track-c-mvp-01.md","decided_at":"2026-08-29T15:13:00.8104505Z"},
@@ -36,10 +36,9 @@
     {"decision_id":"story-12-5-implementation-approval-prepared-pass1-identity-authority-02","status":"accepted","scope_sha256":"f5690de4e4ca6b188fbeeab54745c12266585601583a05f9ffd81516c088ebd1","evidence_path":"specs/014-grounded-llm-wiki-chat-release-evidence/decisions/implementation-approval-prepared-pass1-identity-authority-02.md","decided_at":"2026-08-30T06:59:19.4028059Z"},
     {"decision_id":"story-12-5-planned-change-prepared-pass1-identity-authority-02","status":"accepted","scope_sha256":"7a9e3fc5fc4b9485cd7538e61f2b2153a81bcc8388a89935750d5a29dbf931b2","evidence_path":"specs/014-grounded-llm-wiki-chat-release-evidence/decisions/planned-change-prepared-pass1-identity-authority-02.md","decided_at":"2026-08-30T05:59:15.4510419Z"}
   ],
-  "convergence": {"status":"pending","attempt":1,"outcome":"pending","report_path":"specs/014-grounded-llm-wiki-chat-release-evidence/evidence/convergence/prepared-scan-initiation-01.md"},
+  "convergence": {"status":"accepted","attempt":1,"outcome":"converged","report_path":"specs/014-grounded-llm-wiki-chat-release-evidence/evidence/convergence/prepared-scan-initiation-01.md"},
   "e2e": {"result":"pending","decision_path":null},
   "current_evidence_paths": [
-    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/verification/track-b-final-01.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/return-to-plan-scan-composition-01.md",
     "docs/bmad/planning-artifacts/sprint-change-proposal-2026-08-30-story-12-5-prepared-scan-initiation.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/plan-review/plan-review-prepared-pass1-identity-authority-03.json",
@@ -49,9 +48,11 @@
     "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/planned-change-prepared-pass1-identity-authority-02.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/tdd/prepared-pass1-identity-authority-red-01.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/verification/prepared-scan-initiation-identity-authority-01.md",
-    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/verification/prepared-scan-initiation-regression-01.md"
+    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/verification/prepared-scan-initiation-regression-01.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/convergence/prepared-scan-initiation-01.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/review/prepared-scan-initiation-quality-input-01.md"
   ],
-  "checkpoint": {"checkpoint_id":"bmad-12-5-converge-20260830T080608Z-4ed943","stage":"converge","commit_sha":"d8c5151d362fce6d0bf21dcba30f7939bf7023a6","binding_status":"bound"},
-  "resume": {"stage":"converge","reason":"T025-T030 are implemented and verified at the pinned candidate. Run independent convergence for T031; T034-T045 and run-03 remain closed.","evidence_path":"specs/014-grounded-llm-wiki-chat-release-evidence/evidence/verification/prepared-scan-initiation-regression-01.md"},
-  "updated_at": "2026-08-30T08:07:41.8782024Z"
+  "checkpoint": {"checkpoint_id":"bmad-12-5-quality-review-20260830T081435Z-76a163","stage":"quality-review","commit_sha":"da1ae8c0cfb7762f31dbd1ead7d39369a2f5d46d","binding_status":"bound"},
+  "resume": {"stage":"quality-review","reason":"T031 independently converged with no appended tasks. Run fresh T032 quality review; T034-T045 and run-03 remain closed.","evidence_path":"specs/014-grounded-llm-wiki-chat-release-evidence/evidence/review/prepared-scan-initiation-quality-input-01.md"},
+  "updated_at": "2026-08-30T08:15:31.2334374Z"
 }
