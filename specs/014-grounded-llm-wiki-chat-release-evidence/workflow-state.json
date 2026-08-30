@@ -3,13 +3,13 @@
   "bmad_story_key": "12-5-grounded-llm-wiki-chat-and-august-30-release-evidence",
   "bmad_epic_key": "12",
   "feature_directory": "specs/014-grounded-llm-wiki-chat-release-evidence",
-  "stage": "implementation-approval",
+  "stage": "implement",
   "preflight": {
     "branch": "demo0831/story-12-5-trackC",
-    "head": "be8f51907b98335ec8ffc73a823aff27651cbe32",
-    "git_identity_sha256": "48fbb13a606c298b332318e363fda009bc0444c2fd9436dbd600d4406010c447",
+    "head": "d4845ce5cddb843bf42344ba562930160d555d39",
+    "git_identity_sha256": "20ff1cc31956f75ea47e51ea531328c8037dc8c90c85a62d5ca796d95e589efd",
     "status_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-    "observed_at": "2026-08-30T09:48:00Z"
+    "observed_at": "2026-08-30T13:59:34.1508253Z"
   },
   "artifacts": {
     "spec": {"path":"specs/014-grounded-llm-wiki-chat-release-evidence/spec.md","sha256":"469f72c4e7fc62874e082a7f425351d9f46cf422ae8641d4bee7b64915dd67c0"},
@@ -27,7 +27,7 @@
     {"decision_id":"story-12-5-planned-change-authorization-track-c-mvp-01","status":"accepted","scope_sha256":"2bec1009dbefde3cc8d9452b1579456cb57a9b61f78a063e8ca42d419708ae22","evidence_path":"specs/014-grounded-llm-wiki-chat-release-evidence/decisions/planned-change-authorization-track-c-mvp-01.md","decided_at":"2026-08-29T15:13:00.8104505Z"},
     {"decision_id":"story-12-5-planned-change-authorization-track-c-mvp-rebind-01","status":"accepted","scope_sha256":"6e88b42958a615399a9b4167a1c9fc27f7229ea7cedcc7f4febedafd8c775400","evidence_path":"specs/014-grounded-llm-wiki-chat-release-evidence/decisions/planned-change-authorization-track-c-mvp-rebind-01.md","decided_at":"2026-08-29T16:29:09.3191133Z"},
     {"decision_id":"story-12-5-implementation-approval-track-c-mvp-01","status":"accepted","scope_sha256":"6e88b42958a615399a9b4167a1c9fc27f7229ea7cedcc7f4febedafd8c775400","evidence_path":"specs/014-grounded-llm-wiki-chat-release-evidence/decisions/implementation-approval-track-c-mvp-01.md","decided_at":"2026-08-29T16:33:56.9454670Z"},
-    {"decision_id":"story-12-5-track-c-mvp-overnight-standing-authorization-02","status":"accepted","scope_sha256":"6e88b42958a615399a9b4167a1c9fc27f7229ea7cedcc7f4febedafd8c775400","evidence_path":"specs/014-grounded-llm-wiki-chat-release-evidence/decisions/standing-authorization-track-c-mvp-02.md","decided_at":"2026-08-29T17:08:44.9350501Z"},
+    {"decision_id":"story-12-5-run-03-task-group-approval-01","status":"accepted","scope_sha256":"28311e4f690b7b3e529184ffbcc147df42dde3a7088e88aa90a6292767f61b6e","evidence_path":"specs/014-grounded-llm-wiki-chat-release-evidence/decisions/run-03-task-group-approval-01.md","decided_at":"2026-08-30T13:59:34.1508253Z"},
     {"decision_id":"story-12-5-track-c-mvp-postgresql-provider-authorization-01","status":"accepted","scope_sha256":"6e88b42958a615399a9b4167a1c9fc27f7229ea7cedcc7f4febedafd8c775400","evidence_path":"specs/014-grounded-llm-wiki-chat-release-evidence/decisions/postgresql-provider-preflight-authorization-01.md","decided_at":"2026-08-29T23:16:52.1463747Z"},
     {"decision_id":"story-12-5-track-c-mvp-host-startup-authorization-01","status":"accepted","scope_sha256":"6e88b42958a615399a9b4167a1c9fc27f7229ea7cedcc7f4febedafd8c775400","evidence_path":"specs/014-grounded-llm-wiki-chat-release-evidence/decisions/track-c-mvp-host-startup-authorization-01.md","decided_at":"2026-08-29T23:28:00Z"},
     {"decision_id":"story-12-5-return-to-plan-scan-composition-01","status":"accepted","scope_sha256":"72ecb3bee01e498acb2dacd9c21719b48f307cbbb597bf6c09393bad13d5b1d3","evidence_path":"specs/014-grounded-llm-wiki-chat-release-evidence/decisions/return-to-plan-scan-composition-01.md","decided_at":"2026-08-30T00:10:24.4661357Z"},
@@ -50,9 +50,9 @@
     "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/quality-review/prepared-scan-initiation-quality-review-03.json",
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/review/prepared-scan-initiation-quality-input-01.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/prepared-scan-initiation-implementation-accepted-01.md",
-    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/tdd/prepared-pass1-identity-activation-red-01.md"
+    "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/run-03-task-group-approval-01.md"
   ],
-  "checkpoint": {"checkpoint_id":"bmad-12-5-implement-accepted-20260830T094800Z-941355","stage":"verify","commit_sha":"be8f51907b98335ec8ffc73a823aff27651cbe32","binding_status":"bound"},
-  "resume": {"stage":"implementation-approval","reason":"T025-T033 are implementation-accepted and checkpointed. Stop before T034-T045/run-03; a new explicit authorization is required for the external release run.","evidence_path":"specs/014-grounded-llm-wiki-chat-release-evidence/evidence/checkpoints/prepared-scan-initiation-implementation-accepted-01.md"},
-  "updated_at": "2026-08-30T09:48:00Z"
+  "checkpoint": {"checkpoint_id":"bmad-12-5-implement-20260830T135934Z-28311e","stage":"implement","commit_sha":null,"binding_status":"pending"},
+  "resume": {"stage":"implement","reason":"User approved only the next dependency group, T034-T035. Run fresh sanitized preflight and create/bootstrap one guarded database; stop before T036.","evidence_path":"specs/014-grounded-llm-wiki-chat-release-evidence/decisions/run-03-task-group-approval-01.md"},
+  "updated_at": "2026-08-30T13:59:34.1508253Z"
 }
