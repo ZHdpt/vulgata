@@ -162,6 +162,27 @@ public sealed class PreparedScanBoundaryTests
     }
 
     [Fact]
+    public void ReviewedProfileSeedAuthority_IsAClosedServerOwnedPort()
+    {
+        Type? authority = typeof(PreparedScanPlanner).Assembly.GetType(
+            "Vulgata.Core.DomainServices.IReviewedExactProfileSeedAuthority");
+        Assert.NotNull(authority);
+        Assert.True(authority!.IsInterface);
+        Assert.Contains(
+            authority.GetMethods(BindingFlags.Public | BindingFlags.Instance),
+            method => method.Name == "Evaluate" &&
+                method.GetParameters().Length == 1 &&
+                method.ReturnType.Name.Contains("ReviewedExactProfileSeedAuthorityResult", StringComparison.Ordinal));
+
+        Type request = typeof(Vulgata.Shared.Scans.PreparedScanRequest);
+        Assert.DoesNotContain(
+            request!.GetProperties(BindingFlags.Public | BindingFlags.Instance),
+            property => property.Name.Contains("Profile", StringComparison.OrdinalIgnoreCase) ||
+                property.Name.Contains("Path", StringComparison.OrdinalIgnoreCase) ||
+                property.Name.Contains("Score", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
     public void ApprovedRuntimeAndWorkflowPins_MatchAcceptedBoundary()
     {
         string repositoryRoot = FindRepositoryRoot();
@@ -186,11 +207,20 @@ public sealed class PreparedScanBoundaryTests
 
         string program = File.ReadAllText(Path.Combine(
             repositoryRoot, "src", "dotnet", "Vulgata.Web", "Program.cs"));
+        string runtimeIdentity = File.ReadAllText(Path.Combine(
+            repositoryRoot, "src", "dotnet", "Vulgata.Core", "DomainServices",
+            "AnalysisRuntimeIdentity.cs"));
+        string runtimeResolver = File.ReadAllText(Path.Combine(
+            repositoryRoot, "src", "dotnet", "Vulgata.Web", "Data",
+            "PreparedScanRuntimeIdentityResolver.cs"));
         string packages = File.ReadAllText(Path.Combine(repositoryRoot, "Directory.Packages.props"));
         string compose = File.ReadAllText(Path.Combine(repositoryRoot, "docker-compose.yml"));
-        Assert.Contains("@colbymchenry/codegraph-win32-x64@1.5.0", program, StringComparison.Ordinal);
+        Assert.Contains(
+            "@colbymchenry/codegraph-win32-x64@1.5.0",
+            runtimeIdentity,
+            StringComparison.Ordinal);
         Assert.Contains("jdt-language-server-1.61.0-202608141332", program, StringComparison.Ordinal);
-        Assert.Contains("JavaMajorVersion\"), \"21\"", program, StringComparison.Ordinal);
+        Assert.Contains("JavaMajorVersion\"), \"21\"", runtimeResolver, StringComparison.Ordinal);
         Assert.Contains("StreamJsonRpc\" Version=\"2.25.29\"", packages, StringComparison.Ordinal);
         Assert.Contains("image: postgres:17-alpine", compose, StringComparison.Ordinal);
     }

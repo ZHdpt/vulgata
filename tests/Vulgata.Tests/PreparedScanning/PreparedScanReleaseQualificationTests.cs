@@ -28,6 +28,238 @@ public sealed class PreparedScanReleaseQualificationTests(ITestOutputHelper outp
     private const string RuntimeIdentityJson = "{\"runtime\":\"prepared-release-test\"}";
     private static readonly string RuntimeIdentityHash = new('9', 64);
 
+    public enum ReviewedSeedFixtureMode
+    {
+        None,
+        Missing,
+        Filtered,
+        Unsafe,
+        NonContained,
+        EmptyHash,
+        Duplicate,
+        Ambiguous,
+        SplitInvalid,
+        MoreThanTwentySegments,
+        FinalSelectionOmission,
+        CatalogUnavailable,
+    }
+
+    [Fact]
+    public async Task ProductionPairBuilder_MatchedReviewedProfile_PromotesEveryRequiredSegmentAsync()
+    {
+        await using ReleaseHarness harness = await ReleaseHarness.CreateAsync(output, reviewedPair: true);
+
+        PreparedScanPairBuildResult result = await harness.BuildAsync(reverseInputs: false);
+
+        Assert.Null(result.Failure);
+        Assert.NotNull(result.PairPackage);
+        PreparedFileCodeUnitDraft[] required = result.PairPackage!.Repositories
+            .SelectMany(repository => repository.FileCodeUnits)
+            .Where(unit => unit.DirectBusinessScore == 1_100)
+            .ToArray();
+        Assert.Equal(4, required.Length);
+        Assert.All(required, unit =>
+        {
+            Assert.Equal(1_100, unit.FinalBusinessScore);
+            Assert.Equal(PreparedSelectionReason.DirectBusinessEvidence, unit.SelectionReason);
+        });
+        Assert.Equal(2, harness.AnalysisEvents.Count(value => value.StartsWith("proof:", StringComparison.Ordinal)));
+        Assert.All(harness.JavaRequests, paths => Assert.NotEmpty(paths));
+    }
+
+    [Theory]
+    [InlineData(ReviewedSeedFixtureMode.Missing)]
+    [InlineData(ReviewedSeedFixtureMode.Filtered)]
+    [InlineData(ReviewedSeedFixtureMode.Unsafe)]
+    [InlineData(ReviewedSeedFixtureMode.NonContained)]
+    [InlineData(ReviewedSeedFixtureMode.EmptyHash)]
+    [InlineData(ReviewedSeedFixtureMode.Duplicate)]
+    [InlineData(ReviewedSeedFixtureMode.Ambiguous)]
+    [InlineData(ReviewedSeedFixtureMode.SplitInvalid)]
+    [InlineData(ReviewedSeedFixtureMode.MoreThanTwentySegments)]
+    public async Task ProductionPairBuilder_MatchedReviewedProfile_InvalidRequiredEvidenceFailsBeforeManifestAsync(
+        ReviewedSeedFixtureMode mode)
+    {
+        await using ReleaseHarness harness = await ReleaseHarness.CreateAsync(
+            output,
+            reviewedPair: true,
+            reviewedSeedFixtureMode: mode);
+
+        PreparedScanPairBuildResult result = await harness.BuildAsync(reverseInputs: false);
+
+        Assert.Null(result.PairPackage);
+        Assert.NotNull(result.Failure);
+        Assert.Equal("prepared-scan-reviewed-profile-seed-incomplete", result.Failure!.FailureCode);
+        Assert.Equal(0, harness.AnalysisEvents.Count(value => value.StartsWith("proof:", StringComparison.Ordinal)));
+    }
+
+    [Fact]
+    public async Task ProductionPairBuilder_MatchedReviewedProfile_SelectionOverflowPreservesRequiredSegmentsAsync()
+    {
+        await using ReleaseHarness harness = await ReleaseHarness.CreateAsync(
+            output,
+            reviewedPair: true,
+            reviewedSeedFixtureMode: ReviewedSeedFixtureMode.FinalSelectionOmission);
+
+        PreparedScanPairBuildResult result = await harness.BuildAsync(reverseInputs: false);
+
+        Assert.Null(result.Failure);
+        Assert.NotNull(result.PairPackage);
+        Assert.Equal(
+            4,
+            result.PairPackage!.Repositories
+                .SelectMany(repository => repository.FileCodeUnits)
+                .Count(unit => unit.DirectBusinessScore == 1_100));
+    }
+
+    [Fact]
+    public async Task ProductionPairBuilder_NonMatchingPair_IsByteIdenticalToGenericSelectionAsync()
+    {
+        await using ReleaseHarness harness = await ReleaseHarness.CreateAsync(output);
+
+        PreparedScanPairBuildResult first = await harness.BuildAsync(reverseInputs: false);
+        PreparedScanPairBuildResult reversed = await harness.BuildAsync(reverseInputs: true);
+
+        Assert.Null(first.Failure);
+        Assert.Null(reversed.Failure);
+        Assert.Equal(ReleaseProjection(first.PairPackage!), ReleaseProjection(reversed.PairPackage!));
+        Assert.DoesNotContain(
+            first.PairPackage!.Repositories.SelectMany(repository => repository.FileCodeUnits),
+            unit => unit.DirectBusinessScore == 1_100);
+    }
+
+    [Fact]
+    public async Task ProductionPairBuilder_MatchedReviewedProfile_CatalogUnavailableMapsClosedOutcomeAsync()
+    {
+        await using ReleaseHarness harness = await ReleaseHarness.CreateAsync(
+            output,
+            reviewedPair: true,
+            reviewedSeedFixtureMode: ReviewedSeedFixtureMode.CatalogUnavailable);
+
+        PreparedScanPairBuildResult result = await harness.BuildAsync(reverseInputs: false);
+
+        Assert.Null(result.PairPackage);
+        Assert.NotNull(result.Failure);
+        Assert.Equal("prepared-scan-reviewed-profile-unavailable", result.Failure!.FailureCode);
+        Assert.Equal(0, harness.AnalysisEvents.Count(value => value.StartsWith("proof:", StringComparison.Ordinal)));
+    }
+
+    [Fact]
+    public void ReviewedProfileEvidence_IsScore1100AndAllRequiredSegmentsRemainMandatory()
+    {
+        bool parsed = Enum.TryParse(
+            "ReviewedExactResolutionProfile",
+            ignoreCase: false,
+            out PreparedBusinessEvidence reviewed);
+        Assert.True(parsed, "The reviewed exact-profile evidence value is not present yet.");
+        Assert.Equal(1_100, PreparedScanPlanner.Score(reviewed));
+
+        Guid firstRepository = Guid.Parse("00000000-0000-0000-0000-000000000101");
+        Guid secondRepository = Guid.Parse("00000000-0000-0000-0000-000000000102");
+        PreparedFileCodeUnitDraft[] candidates =
+        [
+            .. RequiredCandidates(firstRepository, reviewed),
+            .. RequiredCandidates(secondRepository, reviewed),
+            .. Enumerable.Range(0, 10).Select(index =>
+                PreparedScanPlanner.CreateFileCodeUnit(new PreparedFileCodeUnitInput(
+                    index % 2 == 0 ? firstRepository : secondRepository,
+                    Guid.Parse("00000000-0000-0000-0000-000000000201"),
+                    new string('a', 40),
+                    $"src/optional/{index:D2}.java",
+                    Hash($"optional-file:{index}"),
+                    0,
+                    16,
+                    1,
+                    1,
+                    1,
+                    1,
+                    Hash($"optional-range:{index}"),
+                    [PreparedBusinessEvidence.ProductionFallback])))
+        ];
+
+        PreparedSelectionPlan plan = PreparedScanPlanner.Plan(candidates, 50, 150);
+        PreparedFileCodeUnitDraft[] required = candidates
+            .Where(candidate => candidate.DirectBusinessScore == 1_100)
+            .ToArray();
+        Assert.Equal(40, required.Length);
+        Assert.All(required, candidate =>
+        {
+            Assert.Equal(1_100, candidate.FinalBusinessScore);
+            Assert.Equal(PreparedSelectionReason.DirectBusinessEvidence, candidate.SelectionReason);
+            Assert.Contains(plan.Selected, selected =>
+                selected.IdentityFingerprint == candidate.IdentityFingerprint);
+        });
+    }
+
+    [Fact]
+    public void ReviewedProfileSelection_IsIndependentOfRepositoryAndCandidateOrder()
+    {
+        bool parsed = Enum.TryParse(
+            "ReviewedExactResolutionProfile",
+            ignoreCase: false,
+            out PreparedBusinessEvidence reviewed);
+        Assert.True(parsed, "The reviewed exact-profile evidence value is not present yet.");
+        Guid firstRepository = Guid.Parse("00000000-0000-0000-0000-000000000111");
+        Guid secondRepository = Guid.Parse("00000000-0000-0000-0000-000000000112");
+        PreparedFileCodeUnitDraft[] candidates =
+        [
+            .. RequiredCandidates(firstRepository, reviewed),
+            .. RequiredCandidates(secondRepository, reviewed),
+            .. Enumerable.Range(0, 10).Select(index =>
+                PreparedScanPlanner.CreateFileCodeUnit(new PreparedFileCodeUnitInput(
+                    index % 2 == 0 ? firstRepository : secondRepository,
+                    Guid.Parse("00000000-0000-0000-0000-000000000211"),
+                    new string('b', 40),
+                    $"src/optional/{index:D2}.xml",
+                    Hash($"optional-reversal:{index}"),
+                    0,
+                    16,
+                    1,
+                    1,
+                    1,
+                    1,
+                    Hash($"optional-range-reversal:{index}"),
+                    [PreparedBusinessEvidence.ProductionFallback])))
+        ];
+
+        static string Projection(PreparedSelectionPlan value) => string.Join(
+            "|",
+            value.Selected
+                .OrderBy(candidate => candidate.RepositoryId)
+                .ThenBy(candidate => candidate.RelativePath, StringComparer.Ordinal)
+                .ThenBy(candidate => candidate.SegmentOrdinal)
+                .Select(candidate =>
+                    $"{candidate.RepositoryId:D}:{candidate.RelativePath}:{candidate.SegmentOrdinal}:" +
+                    $"{candidate.DirectBusinessScore}:{candidate.IdentityFingerprint}"));
+
+        string forward = Projection(PreparedScanPlanner.Plan(candidates, 50, 150));
+        string reversed = Projection(PreparedScanPlanner.Plan([.. candidates.Reverse()], 50, 150));
+        Assert.Equal(forward, reversed);
+    }
+
+    private static IEnumerable<PreparedFileCodeUnitDraft> RequiredCandidates(
+        Guid repositoryId,
+        PreparedBusinessEvidence reviewed)
+    {
+        for (int index = 0; index < 20; index++)
+        {
+            yield return PreparedScanPlanner.CreateFileCodeUnit(new PreparedFileCodeUnitInput(
+                repositoryId,
+                Guid.Parse("00000000-0000-0000-0000-000000000301"),
+                new string('c', 40),
+                $"src/reviewed/required-{index:D2}.java",
+                Hash($"required-file:{repositoryId:D}:{index}"),
+                0,
+                16,
+                1,
+                1,
+                1,
+                1,
+                Hash($"required-range:{repositoryId:D}:{index}"),
+                [reviewed]));
+        }
+    }
+
     [Fact]
     public void PreparedJavaRangeSource_ExposesRevisionBoundExactTopLevelRangeSeam()
     {
@@ -511,6 +743,8 @@ public sealed class PreparedScanReleaseQualificationTests(ITestOutputHelper outp
         private readonly List<string> _analysisEvents;
         private readonly List<IReadOnlyList<string>> _javaRequests;
         private readonly ITestOutputHelper _output;
+        private readonly bool _reviewedPair;
+        private readonly ReviewedSeedFixtureMode _reviewedSeedFixtureMode;
         private readonly Dictionary<Guid, List<long>> _codeGraphMilliseconds = [];
         private readonly Dictionary<Guid, List<long>> _javaMilliseconds = [];
         private readonly Dictionary<Guid, List<long>> _preScanMilliseconds = [];
@@ -533,7 +767,9 @@ public sealed class PreparedScanReleaseQualificationTests(ITestOutputHelper outp
             QualificationJavaRangeSource javaRangeSource,
             List<string> analysisEvents,
             List<IReadOnlyList<string>> javaRequests,
-            ITestOutputHelper output)
+            ITestOutputHelper output,
+            bool reviewedPair,
+            ReviewedSeedFixtureMode reviewedSeedFixtureMode)
         {
             _baseFactory = baseFactory;
             _factory = factory;
@@ -548,6 +784,8 @@ public sealed class PreparedScanReleaseQualificationTests(ITestOutputHelper outp
             _analysisEvents = analysisEvents;
             _javaRequests = javaRequests;
             _output = output;
+            _reviewedPair = reviewedPair;
+            _reviewedSeedFixtureMode = reviewedSeedFixtureMode;
         }
 
         internal StubPreparedCodeGraphAnalysisPort CodeGraph => _codeGraph;
@@ -566,7 +804,10 @@ public sealed class PreparedScanReleaseQualificationTests(ITestOutputHelper outp
 
         internal void EnableEmptyJavaReadinessCandidate() => _includeEmptyJavaReadinessCandidate = true;
 
-        internal static async Task<ReleaseHarness> CreateAsync(ITestOutputHelper output)
+        internal static async Task<ReleaseHarness> CreateAsync(
+            ITestOutputHelper output,
+            bool reviewedPair = false,
+            ReviewedSeedFixtureMode reviewedSeedFixtureMode = ReviewedSeedFixtureMode.None)
         {
             Dictionary<Guid, List<long>>? codeGraphTimings = null;
             Dictionary<Guid, List<long>>? javaTimings = null;
@@ -603,7 +844,11 @@ public sealed class PreparedScanReleaseQualificationTests(ITestOutputHelper outp
                     harness?._omitOversizedXmlForRelatedExpansion != true &&
                         harness?._includeJavaRangeQualification != true &&
                         harness?._includeInventoryEdgeCases != true,
-                    harness?._includeEmptyJavaReadinessCandidate == true),
+                    harness?._includeEmptyJavaReadinessCandidate == true,
+                    harness?._reviewedPair == true,
+                    harness?._reviewedPair == true &&
+                        harness._repositories[0].Id == snapshot.RepositoryId,
+                    harness?._reviewedSeedFixtureMode ?? ReviewedSeedFixtureMode.None),
                 null));
             var codeGraph = new StubPreparedCodeGraphAnalysisPort();
             codeGraph.ProofHandler = (request, _) =>
@@ -628,7 +873,14 @@ public sealed class PreparedScanReleaseQualificationTests(ITestOutputHelper outp
             };
             var catalog = new StubPreparedCommunicationCatalogSource
             {
-                Handler = _ => Task.FromResult(new PreparedCatalogLoadResult(CreateCatalog(), null)),
+                Handler = reviewedSeedFixtureMode == ReviewedSeedFixtureMode.CatalogUnavailable
+                    ? _ => Task.FromResult(new PreparedCatalogLoadResult(
+                        null,
+                        new PreparedScanFailure(
+                            PreparedScanFailureReason.AnalysisNotReady,
+                            "catalog-unavailable",
+                            "catalog-unavailable")))
+                    : _ => Task.FromResult(new PreparedCatalogLoadResult(CreateCatalog(), null)),
             };
             var runtimeProbe = new StubReadyAnalysisRuntimeHealthProbe();
             WebApplicationFactory<Program> factory = baseFactory.WithWebHostBuilder(web =>
@@ -652,10 +904,25 @@ public sealed class PreparedScanReleaseQualificationTests(ITestOutputHelper outp
             AsyncServiceScope scope = factory.Services.CreateAsyncScope();
             VulgataDbContext db = scope.ServiceProvider.GetRequiredService<VulgataDbContext>();
             (SystemEntity system, RepositoryEntity[] repositories, PreparedScanRepositoryRevisionBinding[] bindings) =
-                await SeedAsync(db);
+                await SeedAsync(db, reviewedPair);
             PreparedScanInitiationTuple tuple = CreateInitiationTuple(db, system, repositories, bindings);
             IPreparedScanPairBuilder builder = scope.ServiceProvider.GetRequiredService<IPreparedScanPairBuilder>();
-            harness = new(baseFactory, factory, scope, builder, system, repositories, bindings, tuple, codeGraph, javaRangeSource, analysisEvents, javaRequests, output);
+            harness = new(
+                baseFactory,
+                factory,
+                scope,
+                builder,
+                system,
+                repositories,
+                bindings,
+                tuple,
+                codeGraph,
+                javaRangeSource,
+                analysisEvents,
+                javaRequests,
+                output,
+                reviewedPair,
+                reviewedSeedFixtureMode);
             codeGraphTimings = harness._codeGraphMilliseconds;
             javaTimings = harness._javaMilliseconds;
             harness._starts = starts;
@@ -734,7 +1001,10 @@ public sealed class PreparedScanReleaseQualificationTests(ITestOutputHelper outp
         bool includeInventoryEdgeCases = false,
         bool includeJavaRangeQualification = false,
         bool includeOversizedXml = true,
-        bool includeEmptyJavaReadinessCandidate = false)
+        bool includeEmptyJavaReadinessCandidate = false,
+        bool reviewedPair = false,
+        bool reviewedAccountRepository = false,
+        ReviewedSeedFixtureMode reviewedSeedFixtureMode = ReviewedSeedFixtureMode.None)
     {
         var files = new List<PreparedSnapshotFile>(61);
         for (int index = 0; index < 60; index++)
@@ -808,6 +1078,97 @@ public sealed class PreparedScanReleaseQualificationTests(ITestOutputHelper outp
                 null,
                 ReadOnlyMemory<byte>.Empty));
         }
+
+        if (reviewedPair)
+        {
+            string[] requiredPaths = reviewedAccountRepository
+                ? [
+                    "src/main/java/cn/com/yitong/actions/mobile/UpdateChannelSessionOp.java",
+                    "src/main/java/cn/com/yitong/actions/cust/UploadOcrToOssOp.java",
+                ]
+                : [
+                    "src/main/resources/disgram/in/cust/updateSession.xml",
+                    "src/main/java/cn/com/yitong/actions/domain/login/UpdateSessionOp.java",
+                ];
+            for (int index = 0; index < requiredPaths.Length; index++)
+            {
+                string path = requiredPaths[index];
+                bool omit = reviewedSeedFixtureMode == ReviewedSeedFixtureMode.Missing && index == 0;
+                if (omit)
+                {
+                    continue;
+                }
+
+                string language = path.EndsWith(".xml", StringComparison.Ordinal) ? "XML" : "Java";
+                string source = language == "XML"
+                    ? "<?xml version=\"1.0\" encoding=\"UTF-8\"?><configuration><trans name=\"in/cust/updateSession\" /></configuration>"
+                    : "package reviewed; public final class Required {}";
+                PreparedSnapshotFile required = File(path, language, source);
+                if (reviewedSeedFixtureMode == ReviewedSeedFixtureMode.Filtered)
+                {
+                    required = required with { IsEligible = false, Outcome = "ExcludedTestPath" };
+                }
+                else if (reviewedSeedFixtureMode == ReviewedSeedFixtureMode.Unsafe && language == "XML")
+                {
+                    required = new PreparedSnapshotFile(
+                        path,
+                        language,
+                        true,
+                        "EligibleProductionSource",
+                        required.FileHash,
+                        required.SourceHash,
+                        required.RawByteCount,
+                        required.LogicalLineCount,
+                        required.EncodingIdentity,
+                        Encoding.UTF8.GetBytes(
+                            "<!DOCTYPE configuration [<!ENTITY xxe SYSTEM \"file:///secret\">]>" +
+                            "<configuration><endpoint url=\"&xxe;\" /></configuration>"));
+                }
+                else if (reviewedSeedFixtureMode == ReviewedSeedFixtureMode.NonContained)
+                {
+                    required = required with { RelativePath = "../outside/required.java" };
+                }
+                else if (reviewedSeedFixtureMode == ReviewedSeedFixtureMode.EmptyHash)
+                {
+                    required = required with { FileHash = null, SourceHash = null };
+                }
+                else if (reviewedSeedFixtureMode == ReviewedSeedFixtureMode.SplitInvalid && language == "XML")
+                {
+                    required = File(path, language, CreateInvalidSplitXml());
+                }
+
+                files.Add(required);
+                if (reviewedSeedFixtureMode is ReviewedSeedFixtureMode.Duplicate or ReviewedSeedFixtureMode.Ambiguous)
+                {
+                    files.Add(reviewedSeedFixtureMode == ReviewedSeedFixtureMode.Ambiguous
+                        ? File(path, language, source + " // ambiguous")
+                        : required);
+                }
+            }
+
+            if (reviewedSeedFixtureMode == ReviewedSeedFixtureMode.MoreThanTwentySegments && !reviewedAccountRepository)
+            {
+                string path = "src/main/resources/disgram/in/cust/updateSession.xml";
+                StringBuilder source = new("<?xml version=\"1.0\" encoding=\"UTF-8\"?><configuration>");
+                for (int index = 0; index < 21; index++)
+                {
+                    source.Append("<entry name=\"").Append(index).Append("\">")
+                        .Append(new string('x', 4_000))
+                        .Append("</entry>");
+                }
+                source.Append("</configuration>");
+                files.RemoveAll(file => file.RelativePath == path);
+                files.Add(File(path, "XML", source.ToString()));
+            }
+
+            if (reviewedSeedFixtureMode == ReviewedSeedFixtureMode.FinalSelectionOmission && reviewedAccountRepository)
+            {
+                for (int index = 0; index < 140; index++)
+                {
+                    files.Add(File($"src/optional/overflow-{index:D3}.java", "Java", "package overflow; final class Optional {}"));
+                }
+            }
+        }
         return reverse ? [.. files.AsEnumerable().Reverse()] : files;
     }
 
@@ -860,14 +1221,31 @@ public sealed class PreparedScanReleaseQualificationTests(ITestOutputHelper outp
         null);
 
     private static async Task<(SystemEntity, RepositoryEntity[], PreparedScanRepositoryRevisionBinding[])> SeedAsync(
-        VulgataDbContext db)
+        VulgataDbContext db,
+        bool reviewedPair = false)
     {
         DateTimeOffset now = PreparedScanTestHost.FixedUtcNow;
-        const string firstRevision = "0123456789abcdef0123456789abcdef01234567";
-        const string secondRevision = "fedcba9876543210fedcba9876543210fedcba98";
+        string firstRevision = reviewedPair
+            ? "19c60cd3f3976b7697c487c7bafd96142e3a7625"
+            : "0123456789abcdef0123456789abcdef01234567";
+        string secondRevision = reviewedPair
+            ? "47f6b627a7598f862873610413eec1e1e7bf46bf"
+            : "fedcba9876543210fedcba9876543210fedcba98";
+        string firstRef = reviewedPair ? "refs/tags/vulgata/August15th-sample" : "refs/tags/release-a";
+        string secondRef = reviewedPair ? "refs/tags/vulgata/August15th-sample" : "refs/tags/release-b";
         SystemEntity system = new("Release qualification system", "neutral", "global", now);
-        RepositoryEntity first = system.AddRepository("release-one", "https://example.invalid/release-one.git", null, "one", now);
-        RepositoryEntity second = system.AddRepository("release-two", "https://example.invalid/release-two.git", null, "two", now);
+        RepositoryEntity first = system.AddRepository(
+            reviewedPair ? "mbs_account" : "release-one",
+            "https://example.invalid/release-one.git",
+            null,
+            "one",
+            now);
+        RepositoryEntity second = system.AddRepository(
+            reviewedPair ? "mbs_channel" : "release-two",
+            "https://example.invalid/release-two.git",
+            null,
+            "two",
+            now);
         ScanRun firstRun = ScanRun.Start(first.Id, 1_800, now);
         ScanRun secondRun = ScanRun.Start(second.Id, 1_800, now);
         firstRun.BindProfiledRevision(firstRevision);
@@ -894,8 +1272,8 @@ public sealed class PreparedScanReleaseQualificationTests(ITestOutputHelper outp
         await db.SaveChangesAsync();
         return (system, [first, second],
         [
-            new() { RepositoryId = first.Id, GitRef = "refs/tags/release-a", ProfiledRevision = firstRevision },
-            new() { RepositoryId = second.Id, GitRef = "refs/tags/release-b", ProfiledRevision = secondRevision },
+            new() { RepositoryId = first.Id, GitRef = firstRef, ProfiledRevision = firstRevision },
+            new() { RepositoryId = second.Id, GitRef = secondRef, ProfiledRevision = secondRevision },
         ]);
     }
 

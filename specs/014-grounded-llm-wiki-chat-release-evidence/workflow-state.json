@@ -6,10 +6,10 @@
   "stage": "implement",
   "preflight": {
     "branch": "demo0831/story-12-5-trackC",
-    "head": "5ab54e61e852aed765d9c84a1c1f219c36f77c79",
-    "git_identity_sha256": "3c88e4b1d34e8626ac1ac7448eac5e6c1e97659b84c891b81dd8e8e7fe9b89ab",
-    "status_sha256": "dcbf5385e9e9a1b79bc25aa647b68f274847b6b0ff293b8abf18dcf25dadcbf7",
-    "observed_at": "2026-08-30T22:17:44.2123148Z"
+    "head": "705657c9c4fbea26724930f206fd880277038cc0",
+    "git_identity_sha256": "81120c83b33c411e9d9b7be7dcdcda366606f2f3e60c8cdfe6429c92228e73a4",
+    "status_sha256": "4e6da207474c9ebb4509d062689077da261d35c2a0003d49834ecbf554940cb8",
+    "observed_at": "2026-08-31T01:57:51.8589509Z"
   },
   "artifacts": {
     "spec": {"path":"specs/014-grounded-llm-wiki-chat-release-evidence/spec.md","sha256":"6da3e251b217ab8dd8190f84c4cf864b994be1e87090558a29e125f5648ec8b7"},
@@ -45,9 +45,11 @@
     "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/implementation-approval-exact-profile-seed-selection-03.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/plan-review/plan-review-exact-profile-seeds-01.json",
     "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/definition-review/definition-review-exact-profile-seeds-02.json",
-    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/track-c-mvp/run-03/release-report.md"
+    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/track-c-mvp/run-03/release-report.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/diagnostics/exact-resolution-owner-binding-gap-01.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/handoffs/bmad-correct-course-exact-owner-binding-01.md"
   ],
-  "checkpoint": {"checkpoint_id":"bmad-12-5-definition-review-20260830T221744Z-exactseeds","stage":"definition-review","commit_sha":null,"binding_status":"pending"},
-  "resume": {"stage":"implement","reason":"Definition review accepted T001-T060 and implementation approval is bound; execute T036 preflight before the first exact-profile RED.","evidence_path":"specs/014-grounded-llm-wiki-chat-release-evidence/decisions/implementation-approval-exact-profile-seed-selection-03.md"},
-  "updated_at": "2026-08-30T22:17:44.2123148Z"
+  "checkpoint": {"checkpoint_id":"bmad-12-5-implement-20260831T015751Z-exact-owner-gap","stage":"implement","commit_sha":null,"binding_status":"pending"},
+  "resume": {"stage":"plan","reason":"T043 proved a plan-owned semantic owner identity gap between Prepared Scan File Code Units and the unchanged Story 12.4 unsupported-observation lookup; run bmad-correct-course before task or production continuation.","evidence_path":"specs/014-grounded-llm-wiki-chat-release-evidence/evidence/handoffs/bmad-correct-course-exact-owner-binding-01.md"},
+  "updated_at": "2026-08-31T01:57:51.8589509Z"
 }

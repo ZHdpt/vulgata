@@ -353,41 +353,51 @@
     {
       "Identity": "Vulgata.Agents.dll",
       "Version": "1.0.0.0",
-      "ModuleVersionId": "18d063ad-cf47-4aa4-86c2-f7917b8230a3",
-      "Sha256": "406f2b1c964bcb26ef4dcf5070c71666f37c0c0c0418a74ef3ad70aa35669793"
+      "ModuleVersionId": "c40bf5e8-919f-40c5-a9e7-9369ebf7c43f",
+      "Sha256": "48d07c2380041debdce84ccf673849b8ff2e03a159f9d391707b42a3c4147619"
     },
     {
       "Identity": "Vulgata.Core.dll",
       "Version": "1.0.0.0",
-      "ModuleVersionId": "38fece04-02bd-473e-8467-f8f7ba8b7d5b",
-      "Sha256": "3365b5ca9c5a84606ffc1eb119bcc5ee21662883f8d33d07195559bc2cfa76fa"
+      "ModuleVersionId": "099b3be0-1433-4a30-a369-2fdf47fd2dca",
+      "Sha256": "6079f47383ad4be6e0c8822220ee2feea28ed9c336c62d124b7df432ae3ea744"
     },
     {
       "Identity": "Vulgata.Infrastructure.dll",
       "Version": "1.0.0.0",
-      "ModuleVersionId": "39372ddc-d039-4170-83a1-4b3a4d856f96",
-      "Sha256": "159758698462f7ce6e843bc102c0edaeb82b8cd13171871eda39c989e1b0ec57"
+      "ModuleVersionId": "3960166b-9d16-4e6f-89e3-887eac7ee0b7",
+      "Sha256": "d6090805218de05ef48b8d628a692b4eede65bd35ee7ba7a9bafa217e8f89c29"
     },
     {
       "Identity": "Vulgata.Shared.dll",
       "Version": "1.0.0.0",
-      "ModuleVersionId": "b94058d0-a2cb-41de-80b0-e6f072397bcc",
-      "Sha256": "ba74e209df5ae9e34402b60646864f3219723c782c673422b29c54ef632377d0"
+      "ModuleVersionId": "c03c1f8e-a641-4a32-8d84-80a9a4035035",
+      "Sha256": "4a283e729863a8d9268cc6390add5716d414e7288dbc49db38c4866af8134225"
     },
     {
       "Identity": "Vulgata.Web.ViewModels.dll",
       "Version": "1.0.0.0",
-      "ModuleVersionId": "786bf44f-b317-4713-9ec1-63af4bd6573a",
-      "Sha256": "f515e1fb4af58a3a751f9a66fa1aa50d2c8d861ec2f81604a5cf88df738a7e3c"
+      "ModuleVersionId": "aa0cd249-c726-4747-a783-d61a785268ea",
+      "Sha256": "4c29b0aba008e513db9969e6486ff28acdb1bd950e413f5ec18c66351cdec058"
     },
     {
       "Identity": "Vulgata.Web.dll",
       "Version": "1.0.0.0",
-      "ModuleVersionId": "6b009ccd-0a34-455c-a113-7cc300129900",
-      "Sha256": "f8b91ccd618cc04d61ab9f93c116ae89650fefc074824c6b125b7339b8ea1a9c"
+      "ModuleVersionId": "ed7c3749-bfe5-45e9-8d4f-8029ec9cdda4",
+      "Sha256": "a22b39f26a381479942ac4b13b4e4e009aed0c6d8e10c1480b3f3f1ac432e1dc"
     }
   ],
   "InspectedResources": [
+    {
+      "Identity": "Vulgata.Agents.dll::Vulgata.Agents.Contracts.business-logic-flow-v1.schema.json",
+      "Bytes": 7746,
+      "Sha256": "758eccc19eef53fe9a510bd1627c6700c4fba77bb95a72660de6b6924131553b"
+    },
+    {
+      "Identity": "Vulgata.Agents.dll::Vulgata.Agents.Contracts.code-logic-file-v2.schema.json",
+      "Bytes": 15333,
+      "Sha256": "87c8fc21f261779a0d130f09eccf574363b56e6d7138ea9d8933172e6cdaac9a"
+    },
     {
       "Identity": "Vulgata.Agents.dll::Vulgata.Agents.PreparedFlows.demo-business-flow.v1.json",
       "Bytes": 1270,
@@ -409,9 +419,24 @@
       "Sha256": "4f7afc804335ac7e7cc2c10aa6cb034af9d4cdad224e64493dd3f1589ebd6673"
     },
     {
+      "Identity": "Vulgata.Agents.dll::Vulgata.Agents.Prompts.pass1-code-logic-worker.v2.md",
+      "Bytes": 10579,
+      "Sha256": "5b1e48e50b83c5d12b7916d72d1973f4984db8bf60d1fa62df5cb9f4bcd27e7b"
+    },
+    {
       "Identity": "Vulgata.Agents.dll::Vulgata.Agents.Prompts.pass2-business-flow-worker.v1.md",
       "Bytes": 6721,
       "Sha256": "47f4e2f4e10d706c8f51c38a4b10ba1c529c2522af0d47624f8aacd09a92213c"
+    },
+    {
+      "Identity": "Vulgata.Agents.dll::Vulgata.Agents.Prompts.pass2-business-logic-worker.v1.md",
+      "Bytes": 2195,
+      "Sha256": "99e39bc8a5250d4bc9fbd9cdc9b03ab437543f34c7c3201137e8c77755956bda"
+    },
+    {
+      "Identity": "Vulgata.Core.dll::Vulgata.Core.Contracts.business-logic-flow-v1.schema.json",
+      "Bytes": 7746,
+      "Sha256": "758eccc19eef53fe9a510bd1627c6700c4fba77bb95a72660de6b6924131553b"
     },
     {
       "Identity": "Vulgata.Infrastructure.dll::Vulgata.Infrastructure.CommunicationDetection.Catalog.communication-evidence-rules.v1.json",
@@ -420,8 +445,8 @@
     },
     {
       "Identity": "Vulgata.Infrastructure.dll::Vulgata.Infrastructure.CommunicationDetection.Catalog.communication-pattern-catalog.v1.json",
-      "Bytes": 804,
-      "Sha256": "d8cb15b874628264cb767b4fb93e5b7d66a1b5d12e170532c49f957324d08d79"
+      "Bytes": 838,
+      "Sha256": "9c052645c321cf7580fe2b9910513fc2ea39bfe35d44c9f9879e640c2b1fa159"
     },
     {
       "Identity": "Vulgata.Infrastructure.dll::Vulgata.Infrastructure.CrossRepository.Profiles.demo-resolution-profile.v1.json",
@@ -438,7 +463,7 @@
     {
       "Identity": "CommunicationCatalogLoader.LoadEmbedded",
       "Bytes": 661,
-      "Sha256": "6f0732955a4c002a911160c59600cd1894d98f7dbbbca8a3e63854b13f6de0f8"
+      "Sha256": "dcf4e115e643544eeef5abedaf2fce0b25c8b63ea5ead46bc1fb35ae5c17e762"
     }
   ],
   "Exclusions": [

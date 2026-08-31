@@ -439,6 +439,25 @@ public sealed class PreparedScanInitiationApiTests
             name => forbiddenTokens.Any(token => name.Contains(token, StringComparison.OrdinalIgnoreCase)));
     }
 
+    [Fact]
+    public void PreparedScanPairBuilder_RequiresExactlyOneServerOwnedReviewedProfileAuthority()
+    {
+        Type builder = typeof(Program).Assembly.GetType(
+            "Vulgata.Web.Data.PreparedScanPairBuilder",
+            throwOnError: true)!;
+        Type? authority = typeof(PreparedScanPlanner).Assembly.GetType(
+            "Vulgata.Core.DomainServices.IReviewedExactProfileSeedAuthority");
+
+        Assert.NotNull(authority);
+        ParameterInfo[] matches = builder.GetConstructors(
+                BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
+            .SelectMany(constructor => constructor.GetParameters())
+            .Where(parameter => parameter.ParameterType == authority)
+            .ToArray();
+        Assert.Single(matches);
+        Assert.False(matches[0].HasDefaultValue);
+    }
+
     private static async Task<PublicPreparedScanScenario> CreateScenarioAsync(
         Action<IServiceCollection>? configureServices = null,
         bool login = true)

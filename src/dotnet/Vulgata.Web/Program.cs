@@ -330,6 +330,7 @@ public static class VulgataWebComposition
         builder.Services.AddScoped<IChatRevealDelay, ChatRevealDelay>();
         builder.Services.AddScoped<DemoScanUiState>();
         builder.Services.AddSingleton<ExactResolutionProfileCatalog>();
+        builder.Services.AddScoped<IReviewedExactProfileSeedAuthority, ReviewedExactProfileSeedAuthority>();
         builder.Services.AddScoped<ExactGitRevisionSnapshotService>();
         builder.Services.AddScoped<IExactGitRevisionSnapshotService>(services =>
             services.GetRequiredService<ExactGitRevisionSnapshotService>());

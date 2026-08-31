@@ -1,5 +1,7 @@
 using System.Reflection;
+using System.Text.Json;
 using Vulgata.Core.DomainServices;
+using Vulgata.Core.Entities;
 
 namespace Vulgata.Tests.PreparedScanning;
 
@@ -86,7 +88,144 @@ public sealed class PreparedSelectionPlannerTests
                 method.Name.Contains("Fingerprint", StringComparison.OrdinalIgnoreCase));
     }
 
+    [Fact]
+    public void Planner_ReviewedExactProfileEvidenceScores1100AsDirectBusinessEvidence()
+    {
+        PreparedBusinessEvidence evidence = Enum.Parse<PreparedBusinessEvidence>(
+            "ReviewedExactResolutionProfile",
+            ignoreCase: false);
+
+        Assert.Equal(1_100, PreparedScanPlanner.Score(evidence));
+        PreparedFileCodeUnitDraft candidate = CreateCandidate(
+            RepositoryA,
+            "src/required-01.java",
+            evidence,
+            segmentOrdinal: 1,
+            segmentCount: 1);
+        Assert.Equal(1_100, candidate.DirectBusinessScore);
+        Assert.Equal(1_100, candidate.FinalBusinessScore);
+        Assert.Equal(PreparedSelectionReason.DirectBusinessEvidence, candidate.SelectionReason);
+    }
+
+    [Fact]
+    public void Planner_AllRequiredSplitSegmentsWinUnchangedTop20And150PairBounds()
+    {
+        PreparedBusinessEvidence evidence = Enum.Parse<PreparedBusinessEvidence>(
+            "ReviewedExactResolutionProfile",
+            ignoreCase: false);
+        List<PreparedFileCodeUnitDraft> candidates = [];
+        foreach ((Guid repository, string prefix) in new[]
+        {
+            (RepositoryA, "account"),
+            (RepositoryB, "channel"),
+        })
+        {
+            for (int segment = 1; segment <= 20; segment++)
+            {
+                candidates.Add(CreateCandidate(
+                    repository,
+                    $"src/{prefix}/required-{segment:00}.java",
+                    evidence,
+                    segment,
+                    20));
+            }
+
+            for (int optional = 1; optional <= 10; optional++)
+            {
+                candidates.Add(CreateCandidate(
+                    repository,
+                    $"src/{prefix}/optional-{optional:00}.java",
+                    PreparedBusinessEvidence.ProductionFallback,
+                    1,
+                    1));
+            }
+        }
+
+        IReadOnlyList<PreparedFileCodeUnitDraft> seeds = PreparedScanPlanner.SelectSeeds(candidates);
+        PreparedSelectionPlan plan = PreparedScanPlanner.Plan(candidates);
+        IReadOnlySet<string> required = candidates
+            .Where(candidate => candidate.DirectBusinessScore == 1_100)
+            .Select(candidate => candidate.IdentityFingerprint)
+            .ToHashSet(StringComparer.Ordinal);
+
+        Assert.Equal(40, required.Count);
+        Assert.All(required, identity => Assert.Contains(
+            plan.Selected,
+            candidate => candidate.IdentityFingerprint == identity));
+        Assert.All(required, identity => Assert.Contains(
+            seeds,
+            candidate => candidate.IdentityFingerprint == identity));
+        Assert.InRange(plan.Selected.Count, 50, 150);
+        Assert.All(
+            plan.Selected.Where(candidate => required.Contains(candidate.IdentityFingerprint)),
+            candidate => Assert.Equal(1_100, candidate.DirectBusinessScore));
+    }
+
+    [Fact]
+    public void Planner_NonMatchingAuthorityLeavesCandidatesAuditsSelectionAndFingerprintByteNeutral()
+    {
+        PreparedFileCodeUnitDraft[] baseline = Enumerable.Range(1, 60)
+            .Select(index => CreateCandidate(
+                index % 2 == 0 ? RepositoryA : RepositoryB,
+                $"src/generic/{index:00}.java",
+                index <= 4 ? PreparedBusinessEvidence.ConfirmedCommunication :
+                    PreparedBusinessEvidence.ProductionFallback,
+                1,
+                1))
+            .ToArray();
+        PreparedSelectionPlan before = PreparedScanPlanner.Plan(baseline);
+        string beforeFingerprint = Fingerprint(before, PreparedScanPlanner.CreateSelectionAuditLinks(before));
+
+        // NonMatching has an empty required-source set; the planner receives
+        // the same generic candidate sequence and therefore must remain byte-neutral.
+        PreparedSelectionPlan after = PreparedScanPlanner.Plan(baseline.ToArray());
+        string afterFingerprint = Fingerprint(after, PreparedScanPlanner.CreateSelectionAuditLinks(after));
+
+        Assert.Equal(beforeFingerprint, afterFingerprint);
+        Assert.Equal(
+            before.Selected.Select(candidate => candidate.IdentityFingerprint),
+            after.Selected.Select(candidate => candidate.IdentityFingerprint));
+    }
+
     private const int NormativeGoldenCaseCount = 5;
+
+    private static PreparedFileCodeUnitDraft CreateCandidate(
+        Guid repositoryId,
+        string relativePath,
+        PreparedBusinessEvidence evidence,
+        int segmentOrdinal,
+        int segmentCount) =>
+        PreparedScanPlanner.CreateFileCodeUnit(new PreparedFileCodeUnitInput(
+            repositoryId,
+            Guid.Parse("30000000-0000-4000-8000-000000000001"),
+            "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            relativePath,
+            new string('b', 64),
+            segmentOrdinal,
+            segmentOrdinal + 10,
+            segmentOrdinal,
+            segmentOrdinal,
+            segmentOrdinal,
+            segmentCount,
+            new string('c', 64),
+            [evidence]));
+
+    private static string Fingerprint(
+        PreparedSelectionPlan plan,
+        IReadOnlyList<PreparedScanAuditDraft> audits) =>
+        JsonSerializer.Serialize(new
+        {
+            selected = plan.Selected.Select(candidate => candidate.IdentityFingerprint),
+            excluded = plan.Excluded.Select(candidate => candidate.IdentityFingerprint),
+            audits = audits.Select(audit => new
+            {
+                audit.Ordinal,
+                audit.RelativePath,
+                audit.Outcome,
+                audit.Reason,
+                audit.DetailFingerprint,
+            }),
+        });
 
     private static Type RequirePlanner()
     {

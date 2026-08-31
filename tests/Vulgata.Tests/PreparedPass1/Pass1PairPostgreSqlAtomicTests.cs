@@ -843,6 +843,98 @@ public sealed class Pass1PairPostgreSqlAtomicTests
                 "SELECT count(*)::integer FROM vulgata.\"DocumentVersions\";"));
     }
 
+    [Fact]
+    public async Task PostgreSql17_ReviewedExactScore1100Entries_UseExistingDirectScoreAndTop20AuthorityWithoutLaterPassActivationAsync()
+    {
+        await using PreparedScanPostgreSqlFixture fixture = await CreateFixtureAsync();
+        PreparedScanPairPackage package = WithReviewedExactProfileSeeds(fixture.Package);
+        await CommitPreparedPairAsync(fixture, package);
+        await PromoteFixtureScanExecutionsAsync(fixture);
+
+        PreparedPass1StartResult started = await CreatePass1Store(fixture.Context).StartAsync(
+            fixture.Authorization,
+            CreateHandoff(package),
+            2,
+            CancellationToken.None);
+
+        Assert.Equal(PreparedPass1StartOutcome.Created, started.Outcome);
+        Assert.Equal(
+            PreparedScanPlanner.MaximumHighValueSeedsPerRepository * 2,
+            await ScalarAsync<int>(fixture.ConnectionString,
+                "SELECT \"HighValueSeedCount\"::integer FROM vulgata.\"Pass1PairExecutions\" LIMIT 1;"));
+        Assert.Equal(50, await ScalarAsync<int>(fixture.ConnectionString,
+            "SELECT count(*)::integer FROM vulgata.\"ScanJobExecutions\";"));
+        Assert.Equal(50, await ScalarAsync<int>(fixture.ConnectionString,
+            "SELECT count(*)::integer FROM vulgata.\"PreparedScanManifestEntries\" WHERE \"DirectBusinessScore\" = 1100;"));
+        Assert.Equal("Pass1", await ScalarAsync<string>(fixture.ConnectionString,
+            "SELECT \"Phase\" FROM vulgata.\"TwoRepositoryScanCoordinations\" LIMIT 1;"));
+        Assert.Equal(0, await ScalarAsync<int>(fixture.ConnectionString,
+            "SELECT count(*)::integer FROM vulgata.\"Pass2Executions\";"));
+        Assert.Equal(0, await ScalarAsync<int>(fixture.ConnectionString,
+            "SELECT count(*)::integer FROM vulgata.\"CrossRepositoryResolutionDecisions\";"));
+    }
+
+    [Fact]
+    public async Task PostgreSql17_ReviewedExactScore1100RequiredFailure_ProducesFailedPass1WithoutExactResolutionOrPass2Async()
+    {
+        await using PreparedScanPostgreSqlFixture fixture = await CreateFixtureAsync();
+        PreparedScanPairPackage package = WithReviewedExactProfileSeeds(fixture.Package);
+        await CommitPreparedPairAsync(fixture, package);
+        await PromoteFixtureScanExecutionsAsync(fixture);
+
+        PreparedPass1StartResult started = await CreatePass1Store(fixture.Context).StartAsync(
+            fixture.Authorization,
+            CreateHandoff(package),
+            2,
+            CancellationToken.None);
+        Assert.Equal(PreparedPass1StartOutcome.Created, started.Outcome);
+        Guid pairId = Assert.IsType<Guid>(started.PairExecutionId);
+
+        await MaterializeCompletedDocumentsAsync(fixture, pairId);
+        Guid failedJobId = await fixture.Context.ScanJobExecutions
+            .AsNoTracking()
+            .Join(
+                fixture.Context.CodeUnits.AsNoTracking(),
+                job => job.FileCodeUnitId,
+                unit => unit.Id,
+                (job, unit) => new { job, unit })
+            .Where(value => value.unit.FilePath == "src/entry-00.java")
+            .OrderBy(value => value.job.Id)
+            .Select(value => value.job.Id)
+            .FirstAsync();
+        DateTimeOffset failedAt = PreparedScanTestHost.FixedUtcNow.AddMinutes(2);
+        await fixture.Context.ScanJobExecutions
+            .Where(value => value.Id == failedJobId)
+            .ExecuteUpdateAsync(setters => setters
+                .SetProperty(value => value.State, ScanJobExecutionState.Failed)
+                .SetProperty(value => value.StateVersion, 2L)
+                .SetProperty(value => value.LeaseToken, (Guid?)null)
+                .SetProperty(value => value.LeaseExpiresAt, (DateTimeOffset?)null)
+                .SetProperty(value => value.NextAttemptAt, (DateTimeOffset?)null)
+                .SetProperty(value => value.FailureCategory, (ScanJobFailureCategory?)ScanJobFailureCategory.JobPermanent)
+                .SetProperty(value => value.FailureCode, "required-seed-failed")
+                .SetProperty(value => value.CommittedDocumentVersionId, (Guid?)null)
+                .SetProperty(value => value.StateChangedAt, failedAt));
+
+        PreparedPass1CompletionResult completion = await CreatePass1Store(fixture.Context).CompletePass1Async(
+            pairId,
+            fixture.Authorization,
+            failedAt.AddMinutes(1),
+            CancellationToken.None);
+
+        Assert.Equal(PreparedPass1CompletionOutcome.FailedPass1, completion.Outcome);
+        Assert.Equal(PreparedScanPlanner.MaximumHighValueSeedsPerRepository * 2, completion.HighValueSeedCount);
+        Assert.Equal(completion.HighValueSeedCount - 1, completion.SucceededHighValueSeedCount);
+        Assert.False(completion.LaterPassAuthorized);
+        Assert.Equal(TwoRepositoryScanCoordinationPhase.FailedPass1, completion.CoordinationPhase);
+        Assert.Equal("FailedPass1", await ScalarAsync<string>(fixture.ConnectionString,
+            $"SELECT \"Phase\" FROM vulgata.\"Pass1PairExecutions\" WHERE \"Id\" = '{pairId:D}';"));
+        Assert.Equal(0, await ScalarAsync<int>(fixture.ConnectionString,
+            "SELECT count(*)::integer FROM vulgata.\"CrossRepositoryResolutionDecisions\";"));
+        Assert.Equal(0, await ScalarAsync<int>(fixture.ConnectionString,
+            "SELECT count(*)::integer FROM vulgata.\"Pass2Executions\";"));
+    }
+
     private static IPreparedPass1Store CreatePass1Store(VulgataDbContext context) =>
         new PreparedPass1Store(context);
 
@@ -1009,12 +1101,77 @@ public sealed class Pass1PairPostgreSqlAtomicTests
             package.SelectedCount);
 
     private static async Task CommitPreparedPairAsync(PreparedScanPostgreSqlFixture fixture)
+        => await CommitPreparedPairAsync(fixture, fixture.Package);
+
+    private static async Task CommitPreparedPairAsync(
+        PreparedScanPostgreSqlFixture fixture,
+        PreparedScanPairPackage package)
     {
         PreparedScanCommitResult result = await PreparedScanPostgreSqlFixture
             .CreateStore(fixture.Context)
-            .CommitPairAsync(fixture.Authorization, fixture.Package, 0, CancellationToken.None);
+            .CommitPairAsync(fixture.Authorization, package, 0, CancellationToken.None);
         Assert.Equal(PreparedScanCommitOutcome.Committed, result.Outcome);
     }
+
+    private static PreparedScanPairPackage WithReviewedExactProfileSeeds(
+        PreparedScanPairPackage package)
+    {
+        PreparedRepositoryPackage[] repositories = package.Repositories
+            .Select(repository => repository with
+            {
+                FileCodeUnits = repository.FileCodeUnits
+                    .Select(unit => unit with
+                    {
+                        DirectBusinessScore = 1_100,
+                        FinalBusinessScore = 1_100,
+                    })
+                    .ToArray(),
+            })
+            .ToArray();
+        string selectionFingerprint = InvokePairSelectionFingerprint(
+            package.CoordinationId,
+            repositories);
+        repositories = repositories
+            .Select(repository => InvokeManifestIdentity(repository, selectionFingerprint))
+            .ToArray();
+        string packageFingerprint = InvokePairPackageFingerprint(
+            package.CoordinationId,
+            selectionFingerprint,
+            repositories,
+            package.SelectedCount);
+        return package with
+        {
+            PairSelectionFingerprint = selectionFingerprint,
+            PairPackageFingerprint = packageFingerprint,
+            Repositories = repositories,
+        };
+    }
+
+    private static string InvokePairSelectionFingerprint(
+        Guid coordinationId,
+        IReadOnlyList<PreparedRepositoryPackage> repositories) =>
+        (string)(typeof(PreparedScanAtomicReplayTests)
+            .GetMethod("CreatePairSelectionFingerprint", BindingFlags.Static | BindingFlags.NonPublic)
+            ?.Invoke(null, [coordinationId, repositories])
+            ?? throw new InvalidOperationException("The accepted pair-selection fingerprint builder is unavailable."));
+
+    private static PreparedRepositoryPackage InvokeManifestIdentity(
+        PreparedRepositoryPackage repository,
+        string selectionFingerprint) =>
+        (PreparedRepositoryPackage)(typeof(PreparedScanAtomicReplayTests)
+            .GetMethod("ApplyManifestIdentity", BindingFlags.Static | BindingFlags.NonPublic)
+            ?.Invoke(null, [repository, selectionFingerprint])
+            ?? throw new InvalidOperationException("The accepted manifest fingerprint builder is unavailable."));
+
+    private static string InvokePairPackageFingerprint(
+        Guid coordinationId,
+        string selectionFingerprint,
+        IReadOnlyList<PreparedRepositoryPackage> repositories,
+        int selectedCount) =>
+        (string)(typeof(PreparedScanAtomicReplayTests)
+            .GetMethod("CreatePairPackageFingerprint", BindingFlags.Static | BindingFlags.NonPublic)
+            ?.Invoke(null, [coordinationId, selectionFingerprint, repositories, selectedCount])
+            ?? throw new InvalidOperationException("The accepted pair-package fingerprint builder is unavailable."));
 
     private static async Task PromoteFixtureScanExecutionsAsync(
         PreparedScanPostgreSqlFixture fixture)

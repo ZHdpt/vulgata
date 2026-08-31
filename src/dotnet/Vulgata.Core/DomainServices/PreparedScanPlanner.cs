@@ -4,6 +4,7 @@ namespace Vulgata.Core.DomainServices;
 
 public enum PreparedBusinessEvidence
 {
+    ReviewedExactResolutionProfile,
     ProductionFallback,
     CommunicationHint,
     ResolvedImplementation,
@@ -25,6 +26,7 @@ public static class PreparedScanPlanner
 
     public static int Score(PreparedBusinessEvidence evidence) => evidence switch
     {
+        PreparedBusinessEvidence.ReviewedExactResolutionProfile => 1_100,
         PreparedBusinessEvidence.ConfirmedCommunication => 1_000,
         PreparedBusinessEvidence.ExactXmlCommunicationDeclaration => 900,
         PreparedBusinessEvidence.EndpointOrApplicationEntry => 800,
@@ -50,7 +52,7 @@ public static class PreparedScanPlanner
         int directScore = input.Evidence.Max(Score);
         PreparedSelectionReason reason = directScore switch
         {
-            1_000 or 900 or 800 or 700 or 400 => PreparedSelectionReason.DirectBusinessEvidence,
+            1_100 or 1_000 or 900 or 800 or 700 or 400 => PreparedSelectionReason.DirectBusinessEvidence,
             100 => PreparedSelectionReason.ProductionFallback,
             _ => throw new InvalidOperationException("The direct score is outside the closed table."),
         };
@@ -261,7 +263,7 @@ public static class PreparedScanPlanner
         PreparedFileCodeUnitDraft[] copy = candidates.ToArray();
         if (copy.Any(candidate => candidate is null) ||
             copy.GroupBy(candidate => candidate.IdentityFingerprint, StringComparer.Ordinal).Any(group => group.Count() > 1) ||
-            copy.Any(candidate => candidate.DirectBusinessScore is not (100 or 400 or 700 or 800 or 900 or 1_000) ||
+            copy.Any(candidate => candidate.DirectBusinessScore is not (100 or 400 or 700 or 800 or 900 or 1_000 or 1_100) ||
                 candidate.FinalBusinessScore < candidate.DirectBusinessScore))
         {
             throw new ArgumentException("Candidates must have unique identities and closed valid scores.", nameof(candidates));

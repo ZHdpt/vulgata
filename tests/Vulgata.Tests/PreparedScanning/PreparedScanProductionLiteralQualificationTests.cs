@@ -13,6 +13,36 @@ public sealed class PreparedScanProductionLiteralQualificationTests
         "artifacts/qualification/story-12.2/production-literal-inspection.json";
 
     [Fact]
+    public void ReviewedProfileSeedAdapter_ContainsNoReviewedSampleLiterals()
+    {
+        string repositoryRoot = FindRepositoryRoot();
+        string adapterPath = Path.Combine(
+            repositoryRoot,
+            "src",
+            "dotnet",
+            "Vulgata.Infrastructure",
+            "CrossRepository",
+            "ReviewedExactProfileSeedAuthority.cs");
+        Assert.True(File.Exists(adapterPath),
+            "The server-owned reviewed-profile adapter is not present yet.");
+
+        string source = File.ReadAllText(adapterPath);
+        string[] forbidden =
+        [
+            "mbs_account",
+            "mbs_channel",
+            "UpdateChannelSessionOp.java",
+            "updateSession.xml",
+            "UpdateSessionOp.java",
+            "UploadOcrToOssOp.java",
+            "19c60cd3f3976b7697c487c7bafd96142e3a7625",
+            "47f6b627a7598f862873610413eec1e1e7bf46bf",
+        ];
+        Assert.DoesNotContain(forbidden, literal =>
+            source.Contains(literal, StringComparison.Ordinal));
+    }
+
+    [Fact]
     public void ProductionArtifacts_FixtureDerivedDenylist_HasZeroExactMatches()
     {
         string repositoryRoot = FindRepositoryRoot();

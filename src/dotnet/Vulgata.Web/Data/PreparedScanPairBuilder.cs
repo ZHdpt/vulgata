@@ -25,6 +25,7 @@ internal sealed class PreparedScanPairBuilder(
     IPreparedTopLevelSymbolSource javaRangeSource,
     PreparedJavaRangeProvider javaRangeProvider,
     AnalysisRuntimeReadiness runtimeReadiness,
+    IReviewedExactProfileSeedAuthority reviewedProfileSeedAuthority,
     TimeProvider timeProvider) : IPreparedScanPairBuilder
 {
     public async Task<PreparedScanPairBuildResult> BuildAsync(
@@ -73,16 +74,50 @@ internal sealed class PreparedScanPairBuilder(
             return Reject(PreparedScanFailureReason.NotFound, "prepared-scan-coordination-not-found");
         }
 
+        ReviewedExactProfileSeedAuthorityResult reviewedProfile;
+        try
+        {
+            reviewedProfile = reviewedProfileSeedAuthority.Evaluate(new ReviewedExactProfileSeedRequest(
+                repositories.Select(repository =>
+                {
+                    PreparedScanRepositoryRevisionBinding binding = revisionBindings.Single(
+                        value => value.RepositoryId == repository.Id);
+                    return new ReviewedExactProfileSeedRepositoryBinding(
+                        repository.Id,
+                        repository.Name,
+                        binding.GitRef,
+                        binding.ProfiledRevision);
+                })));
+        }
+        catch (Exception exception) when (exception is ArgumentException or InvalidOperationException)
+        {
+            return Reject(PreparedScanFailureReason.UnsafeInput, "prepared-scan-invalid-pair");
+        }
+
+        if (reviewedProfile.Outcome == ReviewedExactProfileSeedAuthorityOutcome.Unavailable)
+        {
+            return Reject(
+                PreparedScanFailureReason.AnalysisNotReady,
+                "prepared-scan-reviewed-profile-unavailable");
+        }
+
         CoreCatalog? catalog;
         PreparedCatalogLoadResult catalogResult = await catalogSource.LoadAsync(cancellationToken);
         if ((catalog = catalogResult.Catalog) is null)
         {
+            if (reviewedProfile.Outcome == ReviewedExactProfileSeedAuthorityOutcome.Matched)
+            {
+                return Reject(
+                    PreparedScanFailureReason.AnalysisNotReady,
+                    "prepared-scan-reviewed-profile-unavailable");
+            }
+
             return new(null, 0, catalogResult.Failure ?? Failure(
                 PreparedScanFailureReason.UnsafeInput,
                 "prepared-scan-catalog-unavailable"));
         }
 
-        var work = new List<RepositoryWork>(2);
+        var inventoryWork = new List<InventoryWork>(2);
         foreach (RepositoryEntity repository in repositories
                      .OrderBy(value => value.Id.ToString("D"), StringComparer.Ordinal))
         {
@@ -124,7 +159,6 @@ internal sealed class PreparedScanPairBuilder(
                 return new(null, coordination.StateVersion, inventory.Failure);
             }
 
-            string rootBindingHash = HashToken(revision.ContainedRootToken);
             AnalysisScope scope = new(
                 repository.Id,
                 scanRun.Id,
@@ -132,9 +166,23 @@ internal sealed class PreparedScanPairBuilder(
                 revision.SnapshotBindingToken,
                 initiation.RuntimeIdentityHash,
                 new AnalysisDeadline(timeProvider.GetUtcNow().AddMinutes(2).ToUnixTimeMilliseconds()));
+            inventoryWork.Add(new(repository, scanRun, binding, initiation, revision, inventory.Files, scope));
+        }
+
+        if (reviewedProfile.Outcome == ReviewedExactProfileSeedAuthorityOutcome.Matched &&
+            !await HasCompleteReviewedSourcesAsync(reviewedProfile, inventoryWork, cancellationToken))
+        {
+            return Reject(
+                PreparedScanFailureReason.AnalysisNotReady,
+                "prepared-scan-reviewed-profile-seed-incomplete");
+        }
+
+        var work = new List<RepositoryWork>(2);
+        foreach (InventoryWork inventory in inventoryWork)
+        {
             if (codeGraph is CodeGraphAnalysisAdapter)
             {
-                AnalysisIndexResult initialized = await codeGraph.IndexAsync(scope, cancellationToken);
+                AnalysisIndexResult initialized = await codeGraph.IndexAsync(inventory.Scope, cancellationToken);
                 if (initialized.Status != AnalysisOperationStatus.Succeeded || initialized.Failure is not null)
                 {
                     return Reject(
@@ -142,7 +190,7 @@ internal sealed class PreparedScanPairBuilder(
                         "prepared-scan-codegraph-not-ready");
                 }
 
-                AnalysisIndexResult rebuilt = await codeGraph.RebuildAsync(scope, cancellationToken);
+                AnalysisIndexResult rebuilt = await codeGraph.RebuildAsync(inventory.Scope, cancellationToken);
                 if (rebuilt.Status != AnalysisOperationStatus.Succeeded || rebuilt.Failure is not null)
                 {
                     return Reject(
@@ -150,7 +198,7 @@ internal sealed class PreparedScanPairBuilder(
                         "prepared-scan-codegraph-not-ready");
                 }
 
-                CodeGraphStatusResult status = await codeGraph.GetStatusAsync(scope, cancellationToken);
+                CodeGraphStatusResult status = await codeGraph.GetStatusAsync(inventory.Scope, cancellationToken);
                 if (status.Status != AnalysisOperationStatus.Succeeded || status.Failure is not null ||
                     !status.Ready || status.Stale)
                 {
@@ -162,15 +210,15 @@ internal sealed class PreparedScanPairBuilder(
 
             PreparedCodeGraphProofResult codeGraphResult = await codeGraph.BuildCompletenessProofAsync(
                 new PreparedCodeGraphProofRequest(
-                    scope,
-                    revision.SnapshotIdentity,
-                    rootBindingHash,
-                    $"repository-{repository.Id:N}",
-                    $"index-{repository.Id:N}"),
+                    inventory.Scope,
+                    inventory.Revision.SnapshotIdentity,
+                    HashToken(inventory.Revision.ContainedRootToken),
+                    $"repository-{inventory.Repository.Id:N}",
+                    $"index-{inventory.Repository.Id:N}"),
                 cancellationToken);
             if (codeGraphResult.Status != AnalysisOperationStatus.Succeeded ||
                 codeGraphResult.Proof is not CodeGraphCompletenessProof proof ||
-                !ProofMatches(initiation, revision.SnapshotIdentity, proof))
+                !ProofMatches(inventory.Initiation, inventory.Revision.SnapshotIdentity, proof))
             {
                 return Reject(PreparedScanFailureReason.AnalysisNotReady, "prepared-scan-codegraph-not-ready");
             }
@@ -186,21 +234,29 @@ internal sealed class PreparedScanPairBuilder(
                 .ToArray();
             PreparedJavaReadinessResult javaResult = await javaReadiness.ProveReadinessAsync(
                 new PreparedJavaReadinessRequest(
-                    scope,
-                    revision.SnapshotIdentity,
-                    HashToken($"jdt:{revision.SnapshotBindingToken}"),
+                    inventory.Scope,
+                    inventory.Revision.SnapshotIdentity,
+                    HashToken($"jdt:{inventory.Revision.SnapshotBindingToken}"),
                     javaPaths),
                 cancellationToken);
             if (javaResult.Status != AnalysisOperationStatus.Succeeded ||
                 javaResult.Proof is not JavaReadinessProof javaProof ||
-                !ProofMatches(initiation, revision.SnapshotIdentity, javaProof))
+                !ProofMatches(inventory.Initiation, inventory.Revision.SnapshotIdentity, javaProof))
             {
                 return Reject(PreparedScanFailureReason.AnalysisNotReady, "prepared-scan-java-not-ready");
             }
             PreparedCanonicalArtifact javaIdentity = PreparedScanIdentityBuilders.CreateJavaReadiness(javaProof);
             javaProof = javaProof with { IdentityHash = javaIdentity.Fingerprint };
 
-            work.Add(new(repository, scanRun, binding, revision, inventory.Files, proof, javaProof, scope));
+            work.Add(new(
+                inventory.Repository,
+                inventory.ScanRun,
+                inventory.Binding,
+                inventory.Revision,
+                inventory.Files,
+                proof,
+                javaProof,
+                inventory.Scope));
         }
 
         return await BuildPackageAsync(
@@ -209,6 +265,7 @@ internal sealed class PreparedScanPairBuilder(
             tuple.InitiatedAt,
             catalog,
             work,
+            reviewedProfile,
             cancellationToken);
     }
 
@@ -218,11 +275,15 @@ internal sealed class PreparedScanPairBuilder(
         DateTimeOffset initiatedAt,
         CoreCatalog catalog,
         IReadOnlyList<RepositoryWork> work,
+        ReviewedExactProfileSeedAuthorityResult reviewedProfile,
         CancellationToken cancellationToken)
     {
         var candidates = new List<PreparedFileCodeUnitDraft>();
         var classifications = new Dictionary<Guid, PreparedCommunicationClassificationResult>();
         var inventoryAudits = new Dictionary<Guid, List<PreparedScanAuditDraft>>();
+        HashSet<(Guid RepositoryId, string RelativePath)> reviewedSources = reviewedProfile.RequiredSources
+            .Select(value => (value.RepositoryId, value.RelativePath))
+            .ToHashSet();
         InfrastructureCatalog evaluationCatalog = CreateEvaluationCatalog(catalog);
         foreach (RepositoryWork repository in work)
         {
@@ -254,8 +315,14 @@ internal sealed class PreparedScanPairBuilder(
                     continue;
                 }
 
-                IReadOnlyList<PreparedBusinessEvidence> evidence =
-                    [PreparedBusinessEvidence.ProductionFallback];
+                bool reviewedSource = reviewedSources.Contains(
+                    (repository.Repository.Id, file.RelativePath));
+                IReadOnlyList<PreparedBusinessEvidence> evidence = reviewedSource
+                    ? [
+                        PreparedBusinessEvidence.ReviewedExactResolutionProfile,
+                        PreparedBusinessEvidence.ProductionFallback,
+                    ]
+                    : [PreparedBusinessEvidence.ProductionFallback];
                 PreparedSourceSplitPlan? xmlSplit = null;
                 if (StringComparer.OrdinalIgnoreCase.Equals(file.Language, "XML"))
                 {
@@ -299,11 +366,16 @@ internal sealed class PreparedScanPairBuilder(
                         match.CatalogRuleIdentity)));
                     if (matches.Length > 0)
                     {
-                        evidence =
-                        [
-                            PreparedBusinessEvidence.ConfirmedCommunication,
-                            PreparedBusinessEvidence.ExactXmlCommunicationDeclaration,
-                        ];
+                        evidence = reviewedSource
+                            ? [
+                                PreparedBusinessEvidence.ReviewedExactResolutionProfile,
+                                PreparedBusinessEvidence.ConfirmedCommunication,
+                                PreparedBusinessEvidence.ExactXmlCommunicationDeclaration,
+                            ]
+                            : [
+                                PreparedBusinessEvidence.ConfirmedCommunication,
+                                PreparedBusinessEvidence.ExactXmlCommunicationDeclaration,
+                            ];
                     }
 
                     if (file.RawBytes.Length > PreparedSourceRangePlanner.MaximumRawBytes ||
@@ -397,6 +469,13 @@ internal sealed class PreparedScanPairBuilder(
                 PreparedCommunicationDetector.Detect(repository.ScanRun.Id, observations));
         }
 
+        if (!ReviewedCandidatesAreComplete(reviewedProfile, candidates))
+        {
+            return Reject(
+                PreparedScanFailureReason.AnalysisNotReady,
+                "prepared-scan-reviewed-profile-seed-incomplete");
+        }
+
         var expansion = new PreparedRelatedFileExpansion(codeGraph);
         foreach (RepositoryWork repository in work)
         {
@@ -456,6 +535,13 @@ internal sealed class PreparedScanPairBuilder(
         catch (InvalidOperationException)
         {
             return Reject(PreparedScanFailureReason.SelectionBounds, "prepared-scan-selection-bounds");
+        }
+
+        if (!ReviewedCandidatesAreComplete(reviewedProfile, selection.Selected))
+        {
+            return Reject(
+                PreparedScanFailureReason.AnalysisNotReady,
+                "prepared-scan-reviewed-profile-seed-incomplete");
         }
 
         IReadOnlyList<PreparedScanAuditDraft> selectionAudits =
@@ -563,6 +649,126 @@ internal sealed class PreparedScanPairBuilder(
             range.SegmentCount,
             range.SourceHash,
             evidence));
+
+    private async Task<bool> HasCompleteReviewedSourcesAsync(
+        ReviewedExactProfileSeedAuthorityResult authority,
+        IReadOnlyList<InventoryWork> work,
+        CancellationToken cancellationToken)
+    {
+        var segmentCounts = new Dictionary<Guid, int>();
+        foreach (ReviewedExactProfileRequiredSource required in authority.RequiredSources)
+        {
+            InventoryWork? repository = work.SingleOrDefault(
+                value => value.Repository.Id == required.RepositoryId);
+            PreparedSnapshotFile[] matches = repository?.Files
+                .Where(file => StringComparer.Ordinal.Equals(file.RelativePath, required.RelativePath))
+                .ToArray() ?? [];
+            if (repository is null || matches.Length != 1)
+            {
+                return false;
+            }
+
+            PreparedSnapshotFile file = matches[0];
+            if (!file.IsEligible || file.FileHash is null || file.SourceHash is null || file.RawBytes.IsEmpty ||
+                !StringComparer.Ordinal.Equals(file.RelativePath, required.RelativePath))
+            {
+                return false;
+            }
+
+            int segmentCount = 1;
+            if (StringComparer.OrdinalIgnoreCase.Equals(file.Language, "XML"))
+            {
+                SafeXmlReadResult read = SafeXmlReader.Read(file.RelativePath, file.RawBytes);
+                if (read.Projection is not SafeXmlProjection projection)
+                {
+                    return false;
+                }
+
+                if (file.RawBytes.Length > PreparedSourceRangePlanner.MaximumRawBytes ||
+                    PreparedSourceRangePlanner.CountLogicalLines(file.RawBytes.Span) >
+                        PreparedSourceRangePlanner.MaximumLogicalLines)
+                {
+                    PreparedSourceSplitPlan split = PreparedXmlRangeProvider.PlanRanges(
+                        file.RawBytes,
+                        projection.DirectChildRanges);
+                    if (split.Outcome != PreparedRangeOutcome.Exact)
+                    {
+                        return false;
+                    }
+
+                    segmentCount = split.Ranges.Count;
+                }
+            }
+            else if (StringComparer.OrdinalIgnoreCase.Equals(file.Language, "Java"))
+            {
+                int logicalLines = PreparedSourceRangePlanner.CountLogicalLines(file.RawBytes.Span);
+                if (file.RawBytes.Length > PreparedSourceRangePlanner.MaximumRawBytes ||
+                    logicalLines > PreparedSourceRangePlanner.MaximumLogicalLines)
+                {
+                    PreparedJavaSourceResult sourceRanges = await javaRangeSource.GetRangesAsync(
+                        repository.Scope,
+                        file.RelativePath,
+                        file.FileHash,
+                        cancellationToken);
+                    PreparedSourceSplitPlan split = sourceRanges.Failure is null
+                        ? javaRangeProvider.GetRanges(file.RawBytes, file.FileHash, sourceRanges.Ranges)
+                        : new PreparedSourceSplitPlan(PreparedRangeOutcome.Skipped, "missing_java_ranges", []);
+                    if (split.Outcome != PreparedRangeOutcome.Exact)
+                    {
+                        return false;
+                    }
+
+                    segmentCount = split.Ranges.Count;
+                }
+            }
+            else
+            {
+                return false;
+            }
+
+            segmentCounts[required.RepositoryId] =
+                segmentCounts.GetValueOrDefault(required.RepositoryId) + segmentCount;
+            if (segmentCount < 1 ||
+                segmentCounts[required.RepositoryId] > PreparedScanPlanner.MaximumHighValueSeedsPerRepository)
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private static bool ReviewedCandidatesAreComplete(
+        ReviewedExactProfileSeedAuthorityResult authority,
+        IEnumerable<PreparedFileCodeUnitDraft> candidates)
+    {
+        if (authority.Outcome != ReviewedExactProfileSeedAuthorityOutcome.Matched)
+        {
+            return true;
+        }
+
+        PreparedFileCodeUnitDraft[] reviewed = candidates
+            .Where(candidate => candidate.DirectBusinessScore == 1_100)
+            .ToArray();
+        return reviewed
+                .GroupBy(candidate => candidate.RepositoryId)
+                .All(group => group.Count() <= PreparedScanPlanner.MaximumHighValueSeedsPerRepository) &&
+            reviewed.All(candidate => authority.RequiredSources.Any(required =>
+                required.RepositoryId == candidate.RepositoryId &&
+                StringComparer.Ordinal.Equals(required.RelativePath, candidate.RelativePath))) &&
+            authority.RequiredSources.All(required =>
+            {
+                PreparedFileCodeUnitDraft[] segments = reviewed.Where(candidate =>
+                        candidate.RepositoryId == required.RepositoryId &&
+                        StringComparer.Ordinal.Equals(candidate.RelativePath, required.RelativePath))
+                    .OrderBy(candidate => candidate.SegmentOrdinal)
+                    .ToArray();
+                return segments.Length > 0 &&
+                    segments.All(candidate => candidate.SegmentCount == segments.Length) &&
+                    segments.Select(candidate => candidate.SegmentOrdinal)
+                        .SequenceEqual(Enumerable.Range(1, segments.Length));
+            });
+    }
 
     private static PreparedScanAuditDraft CreateInventoryAudit(
         RepositoryWork repository,
@@ -764,6 +970,15 @@ internal sealed class PreparedScanPairBuilder(
 
     private static PreparedScanFailure Failure(PreparedScanFailureReason reason, string code) =>
         new(reason, code, "Prepared scan pair construction failed closed.");
+
+    private sealed record InventoryWork(
+        RepositoryEntity Repository,
+        ScanRun ScanRun,
+        PreparedScanRepositoryRevisionBinding Binding,
+        PreparedScanInitiationRepositoryTuple Initiation,
+        PreparedRevisionSnapshot Revision,
+        IReadOnlyList<PreparedSnapshotFile> Files,
+        AnalysisScope Scope);
 
     private sealed record RepositoryWork(
         RepositoryEntity Repository,
