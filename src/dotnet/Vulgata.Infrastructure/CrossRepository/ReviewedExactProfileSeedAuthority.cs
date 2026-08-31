@@ -50,16 +50,45 @@ public sealed class ReviewedExactProfileSeedAuthority(ExactResolutionProfileCata
         ReviewedExactProfileRequiredSource[] sources = required
             .OrderBy(value => value.Key.RepositoryId.ToString("D"), StringComparer.Ordinal)
             .ThenBy(value => value.Key.RelativePath, StringComparer.Ordinal)
-            .Select(value => new ReviewedExactProfileRequiredSource(
-                value.Key.RepositoryId,
-                value.Key.RelativePath,
-                value.Value))
+            .Select(value => CreateRequiredSource(profile, bindings, value.Key, value.Value))
             .ToArray();
         return new(
             ReviewedExactProfileSeedAuthorityOutcome.Matched,
             sources,
             profile.ProfileId,
             profile.ProfileFingerprint);
+    }
+
+    private static ReviewedExactProfileRequiredSource CreateRequiredSource(
+        ExactResolutionProfile profile,
+        IReadOnlyDictionary<string, ReviewedExactProfileSeedRepositoryBinding> bindings,
+        (Guid RepositoryId, string RelativePath) key,
+        IReadOnlyCollection<ReviewedExactProfileSeedRole> roles)
+    {
+        UnsupportedObservation[] owners = profile.UnsupportedObservations
+            .Where(observation =>
+                RepositoryId(profile, bindings, observation.OwnerAlias) == key.RepositoryId &&
+                StringComparer.Ordinal.Equals(
+                    observation.OwnerDocument.RepositoryRelativePath,
+                    key.RelativePath))
+            .ToArray();
+        if (owners.Length == 0)
+        {
+            return new(key.RepositoryId, key.RelativePath, roles);
+        }
+
+        if (owners.Length != 1)
+        {
+            throw new InvalidDataException("The reviewed semantic owner is ambiguous.");
+        }
+
+        UnsupportedObservation owner = owners[0];
+        return new(
+            key.RepositoryId,
+            key.RelativePath,
+            roles,
+            owner.OwnerDocument.Symbol,
+            owner.Selector.Line);
     }
 
     private static Guid RepositoryId(

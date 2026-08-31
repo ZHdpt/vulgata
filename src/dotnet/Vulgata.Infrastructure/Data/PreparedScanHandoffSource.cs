@@ -165,7 +165,10 @@ public sealed class PreparedScanHandoffSource(VulgataDbContext dbContext)
                     entry.FinalBusinessScore,
                     entry.SelectionReason,
                     entry.ManifestOrdinal,
-                    entry.PairSelectionOrdinal));
+                    entry.PairSelectionOrdinal)
+                {
+                    SymbolName = unit.SymbolName,
+                });
             }
         }
 

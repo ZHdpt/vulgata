@@ -17,6 +17,9 @@ public sealed class PreparedJavaSplitRangeTests
     private const string _rangeProviderName =
         "Vulgata.Infrastructure.Analysis.Java.PreparedJavaRangeProvider";
 
+    private const string _rangeSourceName =
+        "Vulgata.Infrastructure.Analysis.Java.PreparedJavaRangeSource";
+
     private static readonly string[] _requiredRangeProperties =
     [
         "ByteStart",
@@ -79,6 +82,38 @@ public sealed class PreparedJavaSplitRangeTests
                 .Select(property => property.Name),
             name => name == "FileHash");
         Assert.NotNull(plannerType);
+    }
+
+    [Fact]
+    public void JavaSplit_MatchedOwner_BindsFqnToOneContainingSegmentAndKeepsSiblingsPathValued()
+    {
+        Type sourceType = RequireType(typeof(JdtLsAnalysisSessionFactory).Assembly, _rangeSourceName);
+        MethodInfo[] methods = sourceType.GetMethods(
+            BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static);
+
+        Assert.Contains(
+            methods,
+            method => (method.Name.Contains("Owner", StringComparison.Ordinal) ||
+                method.Name.Contains("Semantic", StringComparison.Ordinal)) &&
+                method.GetParameters().Any(parameter =>
+                    parameter.ParameterType == typeof(int) ||
+                    parameter.Name is "selectorLine" or "fullyQualifiedSymbol"));
+    }
+
+    [Fact]
+    public void JavaSplit_MatchedOwner_RejectsAmbiguousOrNonContainingObservationBeforePublication()
+    {
+        Type sourceType = RequireType(typeof(JdtLsAnalysisSessionFactory).Assembly, _rangeSourceName);
+        MethodInfo[] methods = sourceType.GetMethods(
+            BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static);
+
+        Assert.Contains(
+            methods,
+            method => (method.Name.Contains("Owner", StringComparison.Ordinal) ||
+                method.Name.Contains("Semantic", StringComparison.Ordinal)) &&
+                (method.ReturnType.Name.Contains("Failure", StringComparison.Ordinal) ||
+                    method.ReturnType.Name.Contains("Outcome", StringComparison.Ordinal) ||
+                    method.ReturnType.Name.Contains("Result", StringComparison.Ordinal)));
     }
 
     private static Type RequireType(Assembly assembly, string fullName)

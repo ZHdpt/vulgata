@@ -30,6 +30,13 @@ public enum AnalysisSymbolKind
     Constructor,
 }
 
+public enum AnalysisSymbolHierarchyProvenance
+{
+    Unspecified,
+    RootDocumentSymbol,
+    FlatSymbolInformation,
+}
+
 public sealed class AnalysisDeadline
 {
     public AnalysisDeadline(long unixTimeMilliseconds)
@@ -258,6 +265,7 @@ public sealed record AnalysisSymbolEvidence(
     AnalysisLineRange Range)
 {
     public PreparedJdtSymbolSpan? ExactUtf16Range { get; init; }
+    public AnalysisSymbolHierarchyProvenance Provenance { get; init; }
 }
 
 public sealed record AnalysisRelationshipEvidence(
@@ -615,7 +623,10 @@ public interface IPreparedJavaReadinessPort
 
 public sealed record PreparedJavaSourceResult(
     IReadOnlyList<PreparedJdtSymbolSpan> Ranges,
-    AnalysisPortFailure? Failure);
+    AnalysisPortFailure? Failure)
+{
+    public IReadOnlyList<AnalysisSymbolEvidence> Evidence { get; init; } = [];
+}
 
 public interface IPreparedTopLevelSymbolSource
 {

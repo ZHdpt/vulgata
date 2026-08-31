@@ -74,6 +74,27 @@ public sealed class Pass1DeepSeekPromptCompositionTests
     }
 
     [Fact]
+    public async Task PreparedDispatcher_PromptAndClosedToolsContainNoServerOwnedSymbolNameAsync()
+    {
+        RecordingExecutor executor = new();
+        PreparedPass1FileCodeUnitAssignment assignment = CreateAssignment();
+        var dispatcher = new PreparedPass1WorkerDispatcher(executor);
+
+        await dispatcher.DispatchAsync(
+            new([assignment], [CreateContext(assignment)], [], 1));
+
+        string prompt = Assert.Single(executor.Prompts);
+        Assert.DoesNotContain("SymbolName", prompt, StringComparison.Ordinal);
+        Assert.Contains("navigate_code", prompt, StringComparison.Ordinal);
+        Assert.Contains("submit_code_logic", prompt, StringComparison.Ordinal);
+
+        // Characterization: only the two already-closed tool factories are
+        // exposed; the semantic identity is never a provider/tool input.
+        Assert.NotNull(typeof(PreparedNavigateCodeFunction));
+        Assert.NotNull(typeof(PreparedSubmitCodeLogicFunction));
+    }
+
+    [Fact]
     public async Task PreparedDispatcher_Prompt_BindsSoleSubmissionAndPreflightedNavigationBatchRulesAsync()
     {
         RecordingExecutor executor = new();

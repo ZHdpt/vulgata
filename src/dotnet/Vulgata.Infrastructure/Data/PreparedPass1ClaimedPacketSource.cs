@@ -175,6 +175,7 @@ public sealed class PreparedPass1ClaimedPacketSource(
                 binding.ContextSnapshot,
                 binding.CommunicationClassifications)
             {
+                SymbolName = binding.SymbolName,
                 NavigationBudget = budget,
                 RemainingNavigationBudget = 8 - budget.ToolAttemptCount,
             };
@@ -299,11 +300,12 @@ public sealed class PreparedPass1ClaimedPacketSource(
             return null;
         }
 
-        PreparedCanonicalArtifact unitIdentity = PreparedScanIdentityBuilders.CreateFileCodeUnitIdentity(
+        PreparedCanonicalArtifact unitIdentity = PreparedScanIdentityBuilders.CreateApplicableFileCodeUnitIdentity(
             unit.RepositoryId,
             unit.ScanRunId,
             manifest.ProfiledRevision,
             unit.FilePath,
+            unit.SymbolName,
             unit.FileHash,
             unit.ByteStart.Value,
             unit.ByteEndExclusive.Value,
@@ -377,6 +379,7 @@ public sealed class PreparedPass1ClaimedPacketSource(
             manifest.Fingerprint,
             pair.PairPackageFingerprint,
             unit.FilePath,
+            unit.SymbolName,
             unit.ByteStart.Value,
             unit.ByteEndExclusive.Value,
             unit.LineStart,
@@ -448,6 +451,7 @@ public sealed class PreparedPass1ClaimedPacketSource(
         string PreparedScanManifestFingerprint,
         string PairPackageFingerprint,
         string RepositoryRelativePath,
+        string SymbolName,
         long ByteStart,
         long ByteEnd,
         int LineStart,

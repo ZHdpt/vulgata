@@ -55,7 +55,10 @@ public sealed class PreparedJavaRangeSource(
                 "jdt_ranges_incomplete"));
         }
 
-        return new PreparedJavaSourceResult(ranges, null);
+        return new PreparedJavaSourceResult(ranges, null)
+        {
+            Evidence = symbols.Evidence.ToArray(),
+        };
     }
 
     private static string RequireRelativePath(string value)
@@ -86,4 +89,110 @@ public sealed class PreparedJavaRangeSource(
     private static AnalysisPortFailure Failure(
         AnalysisPortFailureReason reason,
         string code) => new(reason, code, code.Replace('_', ' '));
+
+    public static PreparedJavaSemanticOwnerResult BindSemanticOwner(
+        ReadOnlyMemory<byte> strictUtf8Source,
+        string expectedFileHash,
+        string relativePath,
+        string fullyQualifiedSymbol,
+        int selectorLine,
+        PreparedJavaSourceResult observation)
+    {
+        ArgumentNullException.ThrowIfNull(observation);
+        if (string.IsNullOrWhiteSpace(fullyQualifiedSymbol) || selectorLine < 1 ||
+            !StringComparer.OrdinalIgnoreCase.Equals(Path.GetExtension(relativePath), ".java") ||
+            observation.Failure is not null)
+        {
+            return PreparedJavaSemanticOwnerResult.Unavailable("reviewed_owner_invalid");
+        }
+
+        string simpleName = fullyQualifiedSymbol.Split('.').Last();
+        AnalysisSymbolEvidence[] matches = observation.Evidence
+            .Where(value => value.Provenance == AnalysisSymbolHierarchyProvenance.RootDocumentSymbol &&
+                StringComparer.Ordinal.Equals(value.RelativePath, relativePath) &&
+                StringComparer.Ordinal.Equals(value.ExactUtf16Range?.TypeName, simpleName) &&
+                value.ExactUtf16Range is not null && ContainsLine(value.ExactUtf16Range, selectorLine))
+            .ToArray();
+        if (matches.Length != 1)
+        {
+            return PreparedJavaSemanticOwnerResult.Unavailable("reviewed_owner_ambiguous");
+        }
+
+        int logicalLines = PreparedSourceRangePlanner.CountLogicalLines(strictUtf8Source.Span);
+        PreparedSourceSplitPlan split;
+        if (strictUtf8Source.Length <= PreparedSourceRangePlanner.MaximumRawBytes &&
+            logicalLines is >= 1 and <= PreparedSourceRangePlanner.MaximumLogicalLines)
+        {
+            string actualFileHash = Convert.ToHexStringLower(
+                System.Security.Cryptography.SHA256.HashData(strictUtf8Source.Span));
+            if (!StringComparer.Ordinal.Equals(actualFileHash, expectedFileHash))
+            {
+                return PreparedJavaSemanticOwnerResult.Unavailable("reviewed_owner_file_hash_mismatch");
+            }
+
+            PreparedSourceRange range = PreparedSourceRangePlanner.Create(
+                strictUtf8Source.Span,
+                0,
+                strictUtf8Source.Length,
+                1);
+            split = new(
+                PreparedRangeOutcome.Exact,
+                null,
+                [new PreparedJavaRange(
+                    range.ByteStart,
+                    range.ByteEndExclusive,
+                    range.LineStart,
+                    range.LineEnd,
+                    actualFileHash,
+                    range.SourceHash,
+                    1,
+                    1,
+                    PreparedRangeOutcome.Exact,
+                    null)]);
+        }
+        else
+        {
+            split = PreparedSourceRangePlanner.PlanJavaRanges(
+                strictUtf8Source,
+                expectedFileHash,
+                observation.Ranges);
+        }
+
+        if (split.Outcome != PreparedRangeOutcome.Exact)
+        {
+            return PreparedJavaSemanticOwnerResult.Unavailable("reviewed_owner_split_unavailable");
+        }
+
+        PreparedJavaRange[] owners = split.Ranges
+            .Where(range => selectorLine >= range.LineStart && selectorLine <= range.LineEnd)
+            .ToArray();
+        if (owners.Length != 1)
+        {
+            return PreparedJavaSemanticOwnerResult.Unavailable("reviewed_owner_segment_ambiguous");
+        }
+
+        int ownerOrdinal = owners[0].SegmentOrdinal;
+        PreparedJavaRange[] bound = [.. split.Ranges.Select(range => range with
+        {
+            SymbolName = range.SegmentOrdinal == ownerOrdinal ? fullyQualifiedSymbol : relativePath,
+        })];
+        return new(PreparedRangeOutcome.Exact, null, Array.AsReadOnly(bound), ownerOrdinal);
+    }
+
+    private static bool ContainsLine(PreparedJdtSymbolSpan span, int oneBasedLine)
+    {
+        int zeroBasedLine = oneBasedLine - 1;
+        int inclusiveEndLine = span.EndCharacter == 0 ? span.EndLine - 1 : span.EndLine;
+        return zeroBasedLine >= span.StartLine && zeroBasedLine <= inclusiveEndLine;
+    }
+}
+
+public sealed record PreparedJavaSemanticOwnerResult(
+    PreparedRangeOutcome Outcome,
+    string? FailureCode,
+    IReadOnlyList<PreparedJavaRange> Ranges,
+    int? OwningSegmentOrdinal)
+{
+    public static PreparedJavaSemanticOwnerResult Unavailable(string failureCode) =>
+        new(PreparedRangeOutcome.Skipped, failureCode, [], null);
 }

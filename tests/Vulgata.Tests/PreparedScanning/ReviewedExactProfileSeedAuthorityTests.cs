@@ -78,6 +78,28 @@ public sealed class ReviewedExactProfileSeedAuthorityTests
     }
 
     [Fact]
+    public void MatchedUnsupportedOwner_ExposesProfileOwnedQualifiedSymbolAndSelectorLine()
+    {
+        ExactResolutionProfile profile = new ExactResolutionProfileCatalog().Load();
+        UnsupportedObservation observation = Assert.Single(profile.UnsupportedObservations);
+        object result = Evaluate(CreateAuthority(), CreateRequest(profile));
+
+        object source = Assert.Single(
+            Items(Property(result, "RequiredSources")),
+            value => Items(Property(value, "Roles"))
+                .Any(role => string.Equals(
+                    role.ToString(),
+                    "UnsupportedObservationOwner",
+                    StringComparison.Ordinal)));
+
+        // The reviewed profile owns this authority. The current implementation
+        // only returns path/role data, so these assertions are an honest RED
+        // until the closed server-owned symbol/selector seam exists.
+        Assert.Equal(observation.OwnerDocument.Symbol, Property(source, "FullyQualifiedSymbol"));
+        Assert.Equal(observation.Selector.Line, Property(source, "SelectorLine"));
+    }
+
+    [Fact]
     public void PartialNameRefOrRevisionMatch_IsNonMatchingWithNoRequiredSources()
     {
         ExactResolutionProfile profile = new ExactResolutionProfileCatalog().Load();

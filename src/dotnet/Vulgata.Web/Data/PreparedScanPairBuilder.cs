@@ -169,8 +169,13 @@ internal sealed class PreparedScanPairBuilder(
             inventoryWork.Add(new(repository, scanRun, binding, initiation, revision, inventory.Files, scope));
         }
 
+        var javaObservations = new Dictionary<JavaObservationKey, PreparedJavaSourceResult>();
         if (reviewedProfile.Outcome == ReviewedExactProfileSeedAuthorityOutcome.Matched &&
-            !await HasCompleteReviewedSourcesAsync(reviewedProfile, inventoryWork, cancellationToken))
+            !await HasCompleteReviewedSourcesAsync(
+                reviewedProfile,
+                inventoryWork,
+                javaObservations,
+                cancellationToken))
         {
             return Reject(
                 PreparedScanFailureReason.AnalysisNotReady,
@@ -266,6 +271,7 @@ internal sealed class PreparedScanPairBuilder(
             catalog,
             work,
             reviewedProfile,
+            javaObservations,
             cancellationToken);
     }
 
@@ -276,6 +282,7 @@ internal sealed class PreparedScanPairBuilder(
         CoreCatalog catalog,
         IReadOnlyList<RepositoryWork> work,
         ReviewedExactProfileSeedAuthorityResult reviewedProfile,
+        IDictionary<JavaObservationKey, PreparedJavaSourceResult> javaObservations,
         CancellationToken cancellationToken)
     {
         var candidates = new List<PreparedFileCodeUnitDraft>();
@@ -315,6 +322,9 @@ internal sealed class PreparedScanPairBuilder(
                     continue;
                 }
 
+                ReviewedExactProfileRequiredSource? requiredSource = reviewedProfile.RequiredSources
+                    .SingleOrDefault(value => value.RepositoryId == repository.Repository.Id &&
+                        StringComparer.Ordinal.Equals(value.RelativePath, file.RelativePath));
                 bool reviewedSource = reviewedSources.Contains(
                     (repository.Repository.Id, file.RelativePath));
                 IReadOnlyList<PreparedBusinessEvidence> evidence = reviewedSource
@@ -324,6 +334,38 @@ internal sealed class PreparedScanPairBuilder(
                     ]
                     : [PreparedBusinessEvidence.ProductionFallback];
                 PreparedSourceSplitPlan? xmlSplit = null;
+                if (requiredSource?.FullyQualifiedSymbol is not null &&
+                    requiredSource.SelectorLine is int selectorLine)
+                {
+                    PreparedJavaSourceResult observation = await GetJavaObservationAsync(
+                        repository.Repository.Id,
+                        repository.Binding.ProfiledRevision,
+                        repository.Scope,
+                        file,
+                        javaObservations,
+                        cancellationToken);
+                    PreparedJavaSemanticOwnerResult owner = PreparedJavaRangeSource.BindSemanticOwner(
+                        file.RawBytes,
+                        file.FileHash,
+                        file.RelativePath,
+                        requiredSource.FullyQualifiedSymbol,
+                        selectorLine,
+                        observation);
+                    if (owner.Outcome != PreparedRangeOutcome.Exact)
+                    {
+                        return Reject(
+                            PreparedScanFailureReason.AnalysisNotReady,
+                            "prepared-scan-reviewed-owner-symbol-unavailable");
+                    }
+
+                    foreach (PreparedJavaRange range in owner.Ranges)
+                    {
+                        candidates.Add(CreateFileCodeUnit(repository, file, range, evidence));
+                    }
+
+                    continue;
+                }
+
                 if (StringComparer.OrdinalIgnoreCase.Equals(file.Language, "XML"))
                 {
                     SafeXmlReadResult read = SafeXmlReader.Read(file.RelativePath, file.RawBytes);
@@ -413,10 +455,12 @@ internal sealed class PreparedScanPairBuilder(
                 {
                     if (StringComparer.OrdinalIgnoreCase.Equals(file.Language, "Java"))
                     {
-                        PreparedJavaSourceResult sourceRanges = await javaRangeSource.GetRangesAsync(
+                        PreparedJavaSourceResult sourceRanges = await GetJavaObservationAsync(
+                            repository.Repository.Id,
+                            repository.Binding.ProfiledRevision,
                             repository.Scope,
-                            file.RelativePath,
-                            file.FileHash,
+                            file,
+                            javaObservations,
                             cancellationToken);
                         PreparedSourceSplitPlan split = sourceRanges.Failure is null
                             ? javaRangeProvider.GetRanges(file.RawBytes, file.FileHash, sourceRanges.Ranges)
@@ -648,11 +692,13 @@ internal sealed class PreparedScanPairBuilder(
             range.SegmentOrdinal,
             range.SegmentCount,
             range.SourceHash,
+            range.SymbolName ?? file.RelativePath,
             evidence));
 
     private async Task<bool> HasCompleteReviewedSourcesAsync(
         ReviewedExactProfileSeedAuthorityResult authority,
         IReadOnlyList<InventoryWork> work,
+        IDictionary<JavaObservationKey, PreparedJavaSourceResult> javaObservations,
         CancellationToken cancellationToken)
     {
         var segmentCounts = new Dictionary<Guid, int>();
@@ -701,14 +747,41 @@ internal sealed class PreparedScanPairBuilder(
             }
             else if (StringComparer.OrdinalIgnoreCase.Equals(file.Language, "Java"))
             {
+                if (required.FullyQualifiedSymbol is not null && required.SelectorLine is int selectorLine)
+                {
+                    PreparedJavaSourceResult observation = await GetJavaObservationAsync(
+                        repository.Repository.Id,
+                        repository.Binding.ProfiledRevision,
+                        repository.Scope,
+                        file,
+                        javaObservations,
+                        cancellationToken);
+                    PreparedJavaSemanticOwnerResult owner = PreparedJavaRangeSource.BindSemanticOwner(
+                        file.RawBytes,
+                        file.FileHash,
+                        file.RelativePath,
+                        required.FullyQualifiedSymbol,
+                        selectorLine,
+                        observation);
+                    if (owner.Outcome != PreparedRangeOutcome.Exact)
+                    {
+                        return false;
+                    }
+
+                    segmentCount = owner.Ranges.Count;
+                }
+                else
+                {
                 int logicalLines = PreparedSourceRangePlanner.CountLogicalLines(file.RawBytes.Span);
                 if (file.RawBytes.Length > PreparedSourceRangePlanner.MaximumRawBytes ||
                     logicalLines > PreparedSourceRangePlanner.MaximumLogicalLines)
                 {
-                    PreparedJavaSourceResult sourceRanges = await javaRangeSource.GetRangesAsync(
+                    PreparedJavaSourceResult sourceRanges = await GetJavaObservationAsync(
+                        repository.Repository.Id,
+                        repository.Binding.ProfiledRevision,
                         repository.Scope,
-                        file.RelativePath,
-                        file.FileHash,
+                        file,
+                        javaObservations,
                         cancellationToken);
                     PreparedSourceSplitPlan split = sourceRanges.Failure is null
                         ? javaRangeProvider.GetRanges(file.RawBytes, file.FileHash, sourceRanges.Ranges)
@@ -719,6 +792,7 @@ internal sealed class PreparedScanPairBuilder(
                     }
 
                     segmentCount = split.Ranges.Count;
+                }
                 }
             }
             else
@@ -736,6 +810,33 @@ internal sealed class PreparedScanPairBuilder(
         }
 
         return true;
+    }
+
+    private async Task<PreparedJavaSourceResult> GetJavaObservationAsync(
+        Guid repositoryId,
+        string profiledRevision,
+        AnalysisScope scope,
+        PreparedSnapshotFile file,
+        IDictionary<JavaObservationKey, PreparedJavaSourceResult> observations,
+        CancellationToken cancellationToken)
+    {
+        var key = new JavaObservationKey(
+            repositoryId,
+            profiledRevision,
+            file.RelativePath,
+            file.FileHash!);
+        if (observations.TryGetValue(key, out PreparedJavaSourceResult? cached))
+        {
+            return cached;
+        }
+
+        PreparedJavaSourceResult observed = await javaRangeSource.GetRangesAsync(
+            scope,
+            file.RelativePath,
+            file.FileHash!,
+            cancellationToken);
+        observations.Add(key, observed);
+        return observed;
     }
 
     private static bool ReviewedCandidatesAreComplete(
@@ -898,6 +999,12 @@ internal sealed class PreparedScanPairBuilder(
 
         return true;
     }
+
+    private sealed record JavaObservationKey(
+        Guid RepositoryId,
+        string ProfiledRevision,
+        string RelativePath,
+        string FileHash);
 
     private static bool CoordinationMatchesRepository(
         TwoRepositoryScanCoordination coordination,

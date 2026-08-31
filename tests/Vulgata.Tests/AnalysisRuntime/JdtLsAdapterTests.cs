@@ -2,6 +2,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using System.IO.Pipes;
+using System.Reflection;
 using Vulgata.Core.DomainServices;
 using Vulgata.Infrastructure.Analysis.Java;
 
@@ -406,6 +407,111 @@ public sealed class JdtLsAdapterTests
         }
     }
 
+    [Fact]
+    public async Task StreamJsonRpcJdtLsClient_DocumentSymbolRoot_PreservesAuthorityProvenanceAndTypeNameAsync()
+    {
+        string root = Path.Combine(
+            Path.GetTempPath(),
+            "vulgata-story125-jdt-owner-" + Guid.NewGuid().ToString("N"));
+        string evidenceRoot = Path.Combine(root, "evidence");
+        Directory.CreateDirectory(evidenceRoot);
+        await File.WriteAllTextAsync(
+            Path.Combine(evidenceRoot, "Fixture.java"),
+            "package example;\nclass Fixture { }\n");
+
+        AnonymousPipeServerStream serverInput =
+            new(PipeDirection.In, HandleInheritability.None);
+        AnonymousPipeClientStream clientInput = new(
+            PipeDirection.Out,
+            serverInput.GetClientHandleAsString());
+        AnonymousPipeServerStream serverOutput =
+            new(PipeDirection.Out, HandleInheritability.None);
+        AnonymousPipeClientStream clientOutput = new(
+            PipeDirection.In,
+            serverOutput.GetClientHandleAsString());
+        RpcProcess process = new(clientInput, clientOutput);
+        using CancellationTokenSource serverCancellation = new(TimeSpan.FromSeconds(5));
+        object response = new[]
+        {
+            new
+            {
+                name = "Fixture",
+                kind = 5,
+                range = new
+                {
+                    start = new { line = 1, character = 0 },
+                    end = new { line = 1, character = 17 },
+                },
+                selectionRange = new
+                {
+                    start = new { line = 1, character = 6 },
+                    end = new { line = 1, character = 13 },
+                },
+                children = Array.Empty<object>(),
+            },
+        };
+        Task server = RunDocumentSymbolRpcServerAsync(
+            serverInput,
+            serverOutput,
+            response,
+            serverCancellation.Token);
+        StreamJsonRpcJdtLsProtocolClient client =
+            new(process, responseByteLimit: 16_384);
+        AnalysisScope scope = new(
+            _repositoryId,
+            Guid.Parse("12000000-0000-4000-8000-000000000013"),
+            ProfiledRevision,
+            "binding-prepared-jdt-owner",
+            new string('a', 64),
+            new AnalysisDeadline(DateTimeOffset.UtcNow.AddMinutes(1).ToUnixTimeMilliseconds()));
+        JdtLsWorkspaceBinding binding = new(
+            scope.RepositoryId,
+            scope.ScanRunId,
+            scope.ProfiledRevision,
+            scope.WorkingCopyBindingToken,
+            root,
+            evidenceRoot);
+        JavaNavigationRequest request = new(
+            "Fixture.java",
+            position: null,
+            bounds: new AnalysisOperationBounds(itemLimit: 8, byteLimit: 4_096));
+
+        try
+        {
+            await client.InitializeAsync(binding, TimeSpan.FromSeconds(2), CancellationToken.None);
+            await client.InitializedAsync(CancellationToken.None);
+            JavaNavigationResult result = await client.NavigateAsync(
+                "textDocument/documentSymbol",
+                scope,
+                request,
+                TimeSpan.FromSeconds(2),
+                CancellationToken.None);
+            await client.ShutdownAsync(TimeSpan.FromSeconds(2), CancellationToken.None);
+            await client.ExitAsync(CancellationToken.None);
+            await server;
+
+            Assert.Equal(AnalysisOperationStatus.Succeeded, result.Status);
+            AnalysisSymbolEvidence evidence = Assert.Single(result.Evidence);
+            PropertyInfo? provenance = typeof(AnalysisSymbolEvidence).GetProperty("Provenance");
+            Assert.NotNull(provenance);
+            Assert.Equal("RootDocumentSymbol", provenance!.GetValue(evidence)?.ToString());
+            PreparedJdtSymbolSpan span = Assert.IsType<PreparedJdtSymbolSpan>(evidence.ExactUtf16Range);
+            PropertyInfo? typeName = typeof(PreparedJdtSymbolSpan).GetProperty("TypeName");
+            Assert.NotNull(typeName);
+            Assert.Equal("Fixture", typeName!.GetValue(span));
+        }
+        finally
+        {
+            await client.DisposeAsync();
+            serverCancellation.Cancel();
+            clientInput.Dispose();
+            clientOutput.Dispose();
+            serverInput.Dispose();
+            serverOutput.Dispose();
+            DeleteWithoutFollowingReparsePoints(root);
+        }
+    }
+
     private static AnalysisRuntimeIdentity CreateIdentity(
         string? jdtLsDistributionArchiveName =
             "jdt-language-server-1.61.0-202608141332.zip",
@@ -531,6 +637,40 @@ public sealed class JdtLsAdapterTests
                             },
                         },
                     },
+                    cancellationToken);
+            }
+            else if (method == "shutdown")
+            {
+                await SendRpcResponseAsync(output, root.GetProperty("id"), null, cancellationToken);
+            }
+            else if (method == "exit")
+            {
+                return;
+            }
+        }
+    }
+
+    private static async Task RunDocumentSymbolRpcServerAsync(
+        Stream input,
+        Stream output,
+        object response,
+        CancellationToken cancellationToken)
+    {
+        while (true)
+        {
+            using JsonDocument message = await ReadRpcMessageAsync(input, cancellationToken);
+            JsonElement root = message.RootElement;
+            string method = root.GetProperty("method").GetString()!;
+            if (method == "initialize")
+            {
+                await SendRpcResponseAsync(output, root.GetProperty("id"), new { }, cancellationToken);
+            }
+            else if (method == "textDocument/documentSymbol")
+            {
+                await SendRpcResponseAsync(
+                    output,
+                    root.GetProperty("id"),
+                    response,
                     cancellationToken);
             }
             else if (method == "shutdown")

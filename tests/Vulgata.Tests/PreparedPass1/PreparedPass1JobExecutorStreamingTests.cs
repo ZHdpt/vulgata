@@ -99,6 +99,34 @@ public sealed class PreparedPass1JobExecutorStreamingTests
     }
 
     [Fact]
+    public async Task ExecuteAsync_ProviderRequestOmitsServerOwnedSymbolNameAndRetainsStreamingShapeAsync()
+    {
+        PreparedPass1WorkerPacket packet = CreatePacket();
+        string document = CreateValidDocumentJson(packet);
+        SubmitCodeLogicHandler transport = new(document, document);
+        PreparedPass1JobExecutor executor = CreateExecutor(
+            transport,
+            new TestTimeProvider(),
+            _testInactivityTimeout,
+            _testAbsoluteTimeout);
+
+        PreparedPass1RawWorkerResult result = await executor.ExecuteAsync(
+            packet,
+            "Return the bounded code-logic/file-v2 result.");
+
+        // Characterization: this boundary is already provider-shape safe.
+        // T047 must preserve it while adding server-only integrity checks.
+        Assert.Equal(PreparedPass1RawWorkerOutcome.Completed, result.Outcome);
+        Assert.NotEmpty(transport.RequestBodies);
+        Assert.All(
+            transport.RequestBodies,
+            body => Assert.DoesNotContain("SymbolName", body, StringComparison.Ordinal));
+        Assert.All(
+            transport.RequestBodies,
+            body => Assert.Contains("\"stream\":true", body, StringComparison.Ordinal));
+    }
+
+    [Fact]
     public async Task ExecuteAsync_RawSseDataAtEof_ProducesCanonicalResultWithoutRetainingRawBytesAsync()
     {
         PreparedPass1WorkerPacket packet = CreatePacket();

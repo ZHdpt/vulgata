@@ -1,5 +1,6 @@
 using System.Reflection;
 using System.Security.Cryptography;
+using System.Text;
 using System.Text.Json;
 using Vulgata.Core.DomainServices;
 using Vulgata.Infrastructure.Data;
@@ -180,6 +181,76 @@ public sealed class PreparedScanBoundaryTests
             property => property.Name.Contains("Profile", StringComparison.OrdinalIgnoreCase) ||
                 property.Name.Contains("Path", StringComparison.OrdinalIgnoreCase) ||
                 property.Name.Contains("Score", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public void DocumentSymbolEvidence_DeclaresRootAndFlatProvenanceAndServerTypeName()
+    {
+        Type evidence = typeof(AnalysisSymbolEvidence);
+        PropertyInfo? provenance = evidence.GetProperty(
+            "Provenance",
+            BindingFlags.Public | BindingFlags.Instance);
+        Assert.NotNull(provenance);
+        Assert.Equal("AnalysisSymbolHierarchyProvenance", provenance!.PropertyType.Name);
+        Assert.Contains(
+            Enum.GetNames(provenance.PropertyType),
+            value => string.Equals(value, "RootDocumentSymbol", StringComparison.Ordinal));
+        Assert.Contains(
+            Enum.GetNames(provenance.PropertyType),
+            value => string.Equals(value, "FlatSymbolInformation", StringComparison.Ordinal));
+
+        PropertyInfo? typeName = typeof(PreparedJdtSymbolSpan).GetProperty(
+            "TypeName",
+            BindingFlags.Public | BindingFlags.Instance);
+        Assert.NotNull(typeName);
+    }
+
+    [Fact]
+    public void FileCodeUnitIdentity_PathValuedV1RemainsByteStable()
+    {
+        PreparedCanonicalArtifact pathIdentity = PreparedScanIdentityBuilders.CreateFileCodeUnitIdentity(
+            Guid.Parse("10213243-5465-7687-98a9-bacbdcedfe0f"),
+            Guid.Parse("11111111-2222-4333-8444-555555555555"),
+            new string('d', 40),
+            "src/Order.java",
+            new string('a', 64),
+            0,
+            128,
+            1,
+            8,
+            1,
+            1,
+            new string('b', 64));
+
+        Assert.Contains(
+            "vulgata/story-12.2/file-code-unit-identity/1.0",
+            Encoding.UTF8.GetString(pathIdentity.Envelope.Span),
+            StringComparison.Ordinal);
+        Assert.DoesNotContain(
+            "vulgata/story-12.2/file-code-unit-identity/2.0",
+            Encoding.UTF8.GetString(pathIdentity.Envelope.Span),
+            StringComparison.Ordinal);
+        Assert.True(
+            string.Equals(
+                pathIdentity.Fingerprint,
+            "21870acdebeb7d142f39f4bf7cf51cafee74e84f037ca1bef0c62aac5d48e76d",
+                StringComparison.Ordinal),
+            "The path-valued v1 identity fingerprint changed.");
+    }
+
+    [Fact]
+    public void FileCodeUnitIdentity_SemanticOwnerUsesSeparateV2BuilderWithOrdinalFqnBinding()
+    {
+        MethodInfo[] semanticBuilders = typeof(PreparedScanIdentityBuilders)
+            .GetMethods(BindingFlags.Public | BindingFlags.Static)
+            .Where(method => method.Name.Contains("FileCodeUnit", StringComparison.Ordinal))
+            .Where(method => method.GetParameters().Any(parameter =>
+                parameter.Name is "symbolName" or "fullyQualifiedSymbol"))
+            .ToArray();
+        Assert.Contains(
+            semanticBuilders,
+            method => method.Name.Contains("Semantic", StringComparison.Ordinal) &&
+                method.ReturnType == typeof(PreparedCanonicalArtifact));
     }
 
     [Fact]

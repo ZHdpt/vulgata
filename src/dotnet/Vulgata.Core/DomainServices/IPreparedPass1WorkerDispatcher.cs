@@ -82,6 +82,7 @@ public sealed record PreparedPass1FileCodeUnitAssignment(
     int PairSelectionOrdinal,
     ReadOnlyMemory<byte> SourceUtf8)
 {
+    public string SymbolName { get; init; } = RepositoryRelativePath;
     public int RemainingNavigationBudget { get; init; } = 8;
     public PreparedPass1NavigationBudgetProjection? NavigationBudget { get; init; }
     public PreparedPass1ServerAuthorization? ServerAuthorization { get; init; }
@@ -156,6 +157,7 @@ public sealed record PreparedPass1WorkerPacket(
     PreparedPass1ContextSnapshotProjection ContextSnapshot,
     IReadOnlyList<PreparedPass1CommunicationClassificationProjection> CommunicationClassifications)
 {
+    public string SymbolName { get; init; } = RepositoryRelativePath;
     public int RemainingNavigationBudget { get; init; } = 8;
     public PreparedPass1NavigationBudgetProjection? NavigationBudget { get; init; }
     public PreparedPass1ServerAuthorization? ServerAuthorization { get; init; }

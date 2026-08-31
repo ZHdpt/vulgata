@@ -1100,6 +1100,7 @@ internal sealed class StreamJsonRpcJdtLsProtocolClient : IJdtLsProtocolClient
             }
 
             return ParseEvidence(
+                method,
                 response,
                 request,
                 _workspacePath,
@@ -1141,6 +1142,7 @@ internal sealed class StreamJsonRpcJdtLsProtocolClient : IJdtLsProtocolClient
     }
 
     private static JavaNavigationResult ParseEvidence(
+        string method,
         JsonElement response,
         JavaNavigationRequest request,
         string? workspacePath,
@@ -1149,6 +1151,15 @@ internal sealed class StreamJsonRpcJdtLsProtocolClient : IJdtLsProtocolClient
         if (response.ValueKind == JsonValueKind.Null)
         {
             return new JavaNavigationResult(AnalysisOperationStatus.Succeeded, [], null);
+        }
+
+        if (string.Equals(method, "textDocument/documentSymbol", StringComparison.Ordinal))
+        {
+            return ParseDocumentSymbolEvidence(
+                response,
+                request,
+                workspacePath,
+                evidenceRootPath);
         }
 
         IEnumerable<JsonElement> elements = response.ValueKind == JsonValueKind.Array
@@ -1199,6 +1210,211 @@ internal sealed class StreamJsonRpcJdtLsProtocolClient : IJdtLsProtocolClient
 
         return new JavaNavigationResult(AnalysisOperationStatus.Succeeded, evidence, null);
     }
+
+    private static JavaNavigationResult ParseDocumentSymbolEvidence(
+        JsonElement response,
+        JavaNavigationRequest request,
+        string? workspacePath,
+        string? evidenceRootPath)
+    {
+        if (response.ValueKind != JsonValueKind.Array)
+        {
+            return Failed(
+                AnalysisPortFailureReason.MalformedResponse,
+                "jdt_document_symbol_response_malformed");
+        }
+
+        JsonElement[] elements = response.EnumerateArray().ToArray();
+        if (elements.Length == 0)
+        {
+            return new JavaNavigationResult(AnalysisOperationStatus.Succeeded, [], null);
+        }
+
+        bool[] flatShapes = [.. elements.Select(element => element.ValueKind == JsonValueKind.Object &&
+            element.TryGetProperty("location", out _))];
+        if (flatShapes.Any(value => value) && !flatShapes.All(value => value))
+        {
+            return Failed(
+                AnalysisPortFailureReason.MalformedResponse,
+                "jdt_document_symbol_response_malformed");
+        }
+
+        if (flatShapes.All(value => value))
+        {
+            JavaNavigationResult flat = ParseFlatDocumentSymbols(
+                elements,
+                request,
+                workspacePath,
+                evidenceRootPath);
+            return flat;
+        }
+
+        var evidence = new List<AnalysisSymbolEvidence>(elements.Length);
+        foreach (JsonElement element in elements)
+        {
+            if (evidence.Count == request.Bounds.ItemLimit)
+            {
+                return Failed(AnalysisPortFailureReason.MalformedResponse, "jdt_item_limit_exceeded");
+            }
+
+            if (element.ValueKind != JsonValueKind.Object ||
+                !element.TryGetProperty("name", out JsonElement nameElement) ||
+                nameElement.ValueKind != JsonValueKind.String ||
+                string.IsNullOrWhiteSpace(nameElement.GetString()) ||
+                !element.TryGetProperty("kind", out JsonElement kindElement) ||
+                kindElement.ValueKind != JsonValueKind.Number ||
+                !kindElement.TryGetInt32(out int kind))
+            {
+                return Failed(
+                    AnalysisPortFailureReason.MalformedResponse,
+                    element.ValueKind == JsonValueKind.Object && element.TryGetProperty("kind", out _)
+                        ? "jdt_document_symbol_response_malformed"
+                        : "jdt_document_symbol_kind_malformed");
+            }
+
+            if (kind is not (5 or 10 or 11 or 23))
+            {
+                return Failed(
+                    AnalysisPortFailureReason.MalformedResponse,
+                    kind is >= 1 and <= 26
+                        ? "jdt_document_symbol_kind_unsupported"
+                        : "jdt_document_symbol_kind_malformed");
+            }
+
+            if (!TryReadSpan(element, "range", out PreparedJdtSymbolSpan? range) ||
+                !TryReadSpan(element, "selectionRange", out PreparedJdtSymbolSpan? selectionRange) ||
+                !Contains(range!, selectionRange!) ||
+                (element.TryGetProperty("children", out JsonElement children) &&
+                    children.ValueKind != JsonValueKind.Array))
+            {
+                return Failed(
+                    AnalysisPortFailureReason.MalformedResponse,
+                    "jdt_document_symbol_response_malformed");
+            }
+
+            string relativePath = request.RelativePath;
+            string evidencePath = ResolveContainedPath(
+                evidenceRootPath ?? throw new JsonException("jdt_evidence_root_unavailable"),
+                relativePath,
+                "jdt_location_outside_evidence");
+            if (!File.Exists(evidencePath))
+            {
+                return Failed(
+                    AnalysisPortFailureReason.MalformedResponse,
+                    "jdt_document_symbol_response_malformed");
+            }
+
+            string typeName = nameElement.GetString()!;
+            PreparedJdtSymbolSpan typedRange = range! with { TypeName = typeName };
+            int startLine = typedRange.StartLine + 1;
+            int endLine = Math.Max(startLine, typedRange.EndLine + 1);
+            evidence.Add(new AnalysisSymbolEvidence(
+                typeName,
+                AnalysisSymbolKind.Type,
+                relativePath,
+                new AnalysisLineRange(startLine, endLine))
+            {
+                ExactUtf16Range = typedRange,
+                Provenance = AnalysisSymbolHierarchyProvenance.RootDocumentSymbol,
+            });
+        }
+
+        return new JavaNavigationResult(AnalysisOperationStatus.Succeeded, evidence, null);
+    }
+
+    private static JavaNavigationResult ParseFlatDocumentSymbols(
+        IReadOnlyList<JsonElement> elements,
+        JavaNavigationRequest request,
+        string? workspacePath,
+        string? evidenceRootPath)
+    {
+        var evidence = new List<AnalysisSymbolEvidence>(elements.Count);
+        foreach (JsonElement element in elements)
+        {
+            if (evidence.Count == request.Bounds.ItemLimit ||
+                !element.TryGetProperty("name", out JsonElement name) ||
+                name.ValueKind != JsonValueKind.String ||
+                string.IsNullOrWhiteSpace(name.GetString()) ||
+                !element.TryGetProperty("location", out JsonElement location) ||
+                !TryReadSpan(location, "range", out PreparedJdtSymbolSpan? range))
+            {
+                return Failed(
+                    AnalysisPortFailureReason.MalformedResponse,
+                    "jdt_document_symbol_response_malformed");
+            }
+
+            string relativePath = ResolveRelativePath(location, request.RelativePath, workspacePath);
+            string evidencePath = ResolveContainedPath(
+                evidenceRootPath ?? throw new JsonException("jdt_evidence_root_unavailable"),
+                relativePath,
+                "jdt_location_outside_evidence");
+            if (!File.Exists(evidencePath))
+            {
+                return Failed(
+                    AnalysisPortFailureReason.MalformedResponse,
+                    "jdt_document_symbol_response_malformed");
+            }
+
+            int startLine = range!.StartLine + 1;
+            evidence.Add(new AnalysisSymbolEvidence(
+                name.GetString()!,
+                AnalysisSymbolKind.Type,
+                relativePath,
+                new AnalysisLineRange(startLine, Math.Max(startLine, range.EndLine + 1)))
+            {
+                ExactUtf16Range = range,
+                Provenance = AnalysisSymbolHierarchyProvenance.FlatSymbolInformation,
+            });
+        }
+
+        return new JavaNavigationResult(AnalysisOperationStatus.Succeeded, evidence, null);
+    }
+
+    private static bool TryReadSpan(
+        JsonElement owner,
+        string propertyName,
+        out PreparedJdtSymbolSpan? span)
+    {
+        span = null;
+        if (!owner.TryGetProperty(propertyName, out JsonElement range) ||
+            range.ValueKind != JsonValueKind.Object ||
+            !range.TryGetProperty("start", out JsonElement start) ||
+            !range.TryGetProperty("end", out JsonElement end) ||
+            !TryReadPosition(start, out int startLine, out int startCharacter) ||
+            !TryReadPosition(end, out int endLine, out int endCharacter) ||
+            Compare(startLine, startCharacter, endLine, endCharacter) >= 0)
+        {
+            return false;
+        }
+
+        span = new(startLine, startCharacter, endLine, endCharacter);
+        return true;
+    }
+
+    private static bool TryReadPosition(
+        JsonElement value,
+        out int line,
+        out int character)
+    {
+        line = 0;
+        character = 0;
+        return value.ValueKind == JsonValueKind.Object &&
+            value.TryGetProperty("line", out JsonElement lineElement) &&
+            lineElement.ValueKind == JsonValueKind.Number &&
+            lineElement.TryGetInt32(out line) && line >= 0 &&
+            value.TryGetProperty("character", out JsonElement characterElement) &&
+            characterElement.ValueKind == JsonValueKind.Number &&
+            characterElement.TryGetInt32(out character) && character >= 0;
+    }
+
+    private static bool Contains(PreparedJdtSymbolSpan outer, PreparedJdtSymbolSpan inner) =>
+        Compare(outer.StartLine, outer.StartCharacter, inner.StartLine, inner.StartCharacter) <= 0 &&
+        Compare(inner.EndLine, inner.EndCharacter, outer.EndLine, outer.EndCharacter) <= 0;
+
+    private static int Compare(int leftLine, int leftCharacter, int rightLine, int rightCharacter) =>
+        leftLine != rightLine
+            ? leftLine.CompareTo(rightLine)
+            : leftCharacter.CompareTo(rightCharacter);
 
     private static string ResolveRelativePath(
         JsonElement location,

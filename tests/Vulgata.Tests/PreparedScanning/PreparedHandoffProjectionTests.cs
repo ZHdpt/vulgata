@@ -91,4 +91,24 @@ public sealed class PreparedHandoffProjectionTests
             typeof(PreparedScanHandoff).GetProperty("SelectedCount") is not null,
             "The handoff must expose the complete selected count, not an unbounded query.");
     }
+
+    [Fact]
+    public void PreparedPass1Handoff_RequiresServerOwnedSymbolNameForPathAndSemanticUnits()
+    {
+        // T045 RED: path-v1 units carry the Repository-relative path while a
+        // matched semantic-v2 unit carries the reviewed fully qualified
+        // symbol. Both values must survive the prepared handoff boundary.
+        foreach (Type type in new[]
+        {
+            typeof(PreparedPass1FileCodeUnitAssignment),
+            typeof(PreparedPass1WorkerPacket),
+        })
+        {
+            PropertyInfo? symbolName = type.GetProperty(
+                "SymbolName",
+                BindingFlags.Public | BindingFlags.Instance);
+            Assert.NotNull(symbolName);
+            Assert.Equal(typeof(string), symbolName!.PropertyType);
+        }
+    }
 }

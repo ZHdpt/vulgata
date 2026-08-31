@@ -352,6 +352,31 @@ public sealed class PreparedPass1JobExecutor(
                 "security-failure");
         }
 
+        try
+        {
+            _ = PreparedScanIdentityBuilders.CreateApplicableFileCodeUnitIdentity(
+                packet.RepositoryId,
+                packet.ScanRunId,
+                packet.ProfiledRevision,
+                packet.RepositoryRelativePath,
+                packet.SymbolName,
+                packet.FileHash,
+                packet.ByteStart,
+                packet.ByteEnd,
+                packet.LineStart,
+                packet.LineEnd,
+                packet.SegmentOrdinal,
+                packet.SegmentCount,
+                packet.SourceHash);
+        }
+        catch (Exception exception) when (exception is ArgumentException or OverflowException)
+        {
+            return new(
+                PreparedPass1RawWorkerOutcome.Rejected,
+                ReadOnlyMemory<byte>.Empty,
+                "integrity-failure");
+        }
+
         ResolvedWorkerAgentProvider provider;
         string apiKey;
         try

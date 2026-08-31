@@ -48,6 +48,31 @@ public sealed class Pass1ClaimedPacketExecutionTests
         Assert.Equal(1, reader.ReadCount);
     }
 
+    [Fact]
+    public async Task CurrentClaim_HydratesServerOwnedPathOrSemanticSymbolNameAfterExactRefetchAsync()
+    {
+        RequireClaimedPacketSourceContract();
+        await using ClaimedFixture fixture = await CreateClaimedFixtureAsync();
+        RecordingSourceReader reader = new(fixture.SourceText);
+
+        object? result = await InvokeHydrateAsync(
+            fixture.Prepared.Context,
+            reader,
+            fixture.PairId,
+            fixture.Claim);
+        PreparedPass1WorkerPacket packet = Assert.IsType<PreparedPass1WorkerPacket>(result);
+        PropertyInfo symbolProperty = typeof(PreparedPass1WorkerPacket).GetProperty(
+            "SymbolName",
+            BindingFlags.Public | BindingFlags.Instance)
+            ?? throw new Xunit.Sdk.XunitException(
+                "T045 RED: claimed packet lacks the revalidated server-owned SymbolName.");
+
+        // This fixture is path-v1; semantic-v2 uses the same re-fetch seam
+        // with the reviewed FQN instead of the relative path.
+        Assert.Equal(fixture.RelativePath, symbolProperty.GetValue(packet));
+        Assert.Equal(1, reader.ReadCount);
+    }
+
     [Theory]
     [InlineData("replaced-owner-token")]
     [InlineData("job-version")]

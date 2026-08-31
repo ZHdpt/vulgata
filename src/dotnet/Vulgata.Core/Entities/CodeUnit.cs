@@ -108,7 +108,39 @@ public sealed class CodeUnit
         int segmentOrdinal,
         int segmentCount,
         string identityFingerprint,
-        string language)
+        string language) => CreatePreparedFileCodeUnit(
+            id,
+            scanRunId,
+            repositoryId,
+            filePath,
+            fileHash,
+            sourceHash,
+            byteStart,
+            byteEndExclusive,
+            lineStart,
+            lineEnd,
+            segmentOrdinal,
+            segmentCount,
+            identityFingerprint,
+            language,
+            filePath);
+
+    public static CodeUnit CreatePreparedFileCodeUnit(
+        Guid id,
+        Guid scanRunId,
+        Guid repositoryId,
+        string filePath,
+        string fileHash,
+        string sourceHash,
+        long byteStart,
+        long byteEndExclusive,
+        int lineStart,
+        int lineEnd,
+        int segmentOrdinal,
+        int segmentCount,
+        string identityFingerprint,
+        string language,
+        string symbolName)
     {
         if (id == Guid.Empty || byteStart < 0 || byteEndExclusive <= byteStart ||
             byteEndExclusive - byteStart > 65_536 || lineEnd - lineStart + 1 > 2_000 ||
@@ -125,7 +157,7 @@ public sealed class CodeUnit
             sourceHash,
             lineStart,
             lineEnd,
-            filePath,
+            symbolName,
             CodeUnitType.File,
             RangeConfidence.Exact,
             language)

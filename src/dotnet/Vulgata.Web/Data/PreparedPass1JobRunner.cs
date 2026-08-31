@@ -420,6 +420,7 @@ public sealed class PreparedPass1JobRunner(
             packet.PairSelectionOrdinal,
             packet.SourceUtf8)
         {
+            SymbolName = packet.SymbolName,
             RemainingNavigationBudget = packet.RemainingNavigationBudget,
             NavigationBudget = packet.NavigationBudget,
             ServerAuthorization = packet.ServerAuthorization,

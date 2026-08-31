@@ -198,6 +198,120 @@ public sealed class ReviewedExactProfileSeedPostgreSqlTests
     }
 
     [Fact]
+    public async Task PostPreparedScan_MatchedSemanticOwnerFailsBeforePublication_AndNonmatchingInputRemainsByteNeutralAsync()
+    {
+        ExactResolutionProfile profile = new ExactResolutionProfileCatalog().Load();
+
+        await using (PreparedScanInitiationPostgreSqlFixture database =
+                     await PreparedScanInitiationPostgreSqlFixture.CreateAsync())
+        {
+            await ApplyExistingSchemaAsync(database);
+            (SystemEntity system, RepositoryEntity first, RepositoryEntity second) =
+                await SeedProfilePairAsync(database, profile);
+            using WebApplicationFactory<Program> factory = CreateFactory(
+                database.ConnectionString,
+                profile,
+                new Dictionary<Guid, string>
+                {
+                    [first.Id] = profile.Repositories[0].Alias,
+                    [second.Id] = profile.Repositories[1].Alias,
+                },
+                out T039PairBuilderDiagnostics diagnostics);
+            await SeedAdministratorAsync(
+                factory,
+                "story125.t046.nonmatch@example.com",
+                system.Id);
+
+            using HttpClient client = factory.CreateClient(new WebApplicationFactoryClientOptions
+            {
+                AllowAutoRedirect = false,
+                HandleCookies = true,
+            });
+            await LoginAsync(client, "story125.t046.nonmatch@example.com");
+
+            PreparedScanRequest nonmatching = CreateRequest(profile, first.Id, second.Id);
+            PreparedScanRepositoryRevisionBinding original = nonmatching.Repositories[0];
+            nonmatching = new()
+            {
+                Repositories =
+                [
+                    new()
+                    {
+                        RepositoryId = original.RepositoryId,
+                        GitRef = original.GitRef,
+                        ProfiledRevision = new string('f', 40),
+                    },
+                    nonmatching.Repositories[1],
+                ],
+            };
+
+            using HttpResponseMessage response = await client.PostAsJsonAsync(
+                $"/api/systems/{system.Id:D}/prepared-scans",
+                nonmatching);
+            string body = await response.Content.ReadAsStringAsync();
+            Assert.True(
+                response.StatusCode == HttpStatusCode.Created,
+                $"A nonmatching profile must retain generic preparation; status={(int)response.StatusCode}, " +
+                $"body={body}, pair-builder={diagnostics.Exception}");
+
+            await using VulgataDbContext context = database.CreateContext();
+            var pathUnits = await context.CodeUnits.AsNoTracking()
+                .Select(unit => new { unit.FilePath, unit.SymbolName, unit.FileCodeUnitIdentityFingerprint })
+                .ToArrayAsync();
+            Assert.NotEmpty(pathUnits);
+            Assert.All(pathUnits, unit =>
+            {
+                Assert.Equal(unit.FilePath, unit.SymbolName);
+                Assert.DoesNotContain(
+                    profile.UnsupportedObservations.Select(value => value.OwnerDocument.Symbol),
+                    symbol => StringComparer.Ordinal.Equals(symbol, unit.SymbolName));
+            });
+            Assert.All(pathUnits, unit => Assert.NotNull(unit.FileCodeUnitIdentityFingerprint));
+        }
+
+        await using (PreparedScanInitiationPostgreSqlFixture database =
+                     await PreparedScanInitiationPostgreSqlFixture.CreateAsync())
+        {
+            await ApplyExistingSchemaAsync(database);
+            (SystemEntity system, RepositoryEntity first, RepositoryEntity second) =
+                await SeedProfilePairAsync(database, profile);
+            using WebApplicationFactory<Program> factory = CreateFactory(
+                database.ConnectionString,
+                profile,
+                new Dictionary<Guid, string>
+                {
+                    [first.Id] = profile.Repositories[0].Alias,
+                    [second.Id] = profile.Repositories[1].Alias,
+                },
+                out T039PairBuilderDiagnostics diagnostics);
+            await SeedAdministratorAsync(
+                factory,
+                "story125.t046.matched@example.com",
+                system.Id);
+
+            using HttpClient client = factory.CreateClient(new WebApplicationFactoryClientOptions
+            {
+                AllowAutoRedirect = false,
+                HandleCookies = true,
+            });
+            await LoginAsync(client, "story125.t046.matched@example.com");
+            T039Counts before = await ReadCountsAsync(database);
+            using HttpResponseMessage response = await client.PostAsJsonAsync(
+                $"/api/systems/{system.Id:D}/prepared-scans",
+                CreateRequest(profile, first.Id, second.Id));
+            string body = await response.Content.ReadAsStringAsync();
+            T039Counts after = await ReadCountsAsync(database);
+
+            Assert.True(
+                response.StatusCode == HttpStatusCode.UnprocessableEntity,
+                $"Matched semantic-owner evidence must fail closed before publication; " +
+                $"status={(int)response.StatusCode}, before={before}, after={after}, body={body}, " +
+                $"pair-builder={diagnostics.Exception}");
+            Assert.Equal(before, after);
+        }
+    }
+
+    [Fact]
     public async Task PostPreparedScan_ThenPublicPass1_ExactResolutionOwnerSymbolMismatch_IsPreciselyCharacterizedAsync()
     {
         await using PreparedScanInitiationPostgreSqlFixture database =

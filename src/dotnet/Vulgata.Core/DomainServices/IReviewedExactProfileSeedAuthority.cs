@@ -91,9 +91,44 @@ public sealed record ReviewedExactProfileRequiredSource
         Roles = Array.AsReadOnly(copy);
     }
 
+    public ReviewedExactProfileRequiredSource(
+        Guid repositoryId,
+        string relativePath,
+        IEnumerable<ReviewedExactProfileSeedRole> roles,
+        string fullyQualifiedSymbol,
+        int selectorLine)
+        : this(repositoryId, relativePath, roles)
+    {
+        if (!Roles.Contains(ReviewedExactProfileSeedRole.UnsupportedObservationOwner) ||
+            !IsFullyQualifiedJavaSymbol(fullyQualifiedSymbol) || selectorLine < 1)
+        {
+            throw new ArgumentException("A reviewed semantic owner requires one exact Java symbol and selector line.");
+        }
+
+        FullyQualifiedSymbol = fullyQualifiedSymbol;
+        SelectorLine = selectorLine;
+    }
+
     public Guid RepositoryId { get; }
     public string RelativePath { get; }
     public IReadOnlyList<ReviewedExactProfileSeedRole> Roles { get; }
+    public string? FullyQualifiedSymbol { get; }
+    public int? SelectorLine { get; }
+
+    private static bool IsFullyQualifiedJavaSymbol(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value) || value.Length > 512 ||
+            !StringComparer.Ordinal.Equals(value, value.Trim()))
+        {
+            return false;
+        }
+
+        string[] segments = value.Split('.');
+        return segments.Length > 1 && segments.All(segment =>
+            segment.Length > 0 &&
+            (char.IsLetter(segment[0]) || segment[0] is '_' or '$') &&
+            segment.Skip(1).All(character => char.IsLetterOrDigit(character) || character is '_' or '$'));
+    }
 }
 
 public sealed record ReviewedExactProfileSeedAuthorityResult

@@ -91,6 +91,38 @@ public sealed class PreparedFileCodeUnitAndSelectionTests
         Assert.Equal(firstFingerprint, secondFingerprint);
     }
 
+    [Fact]
+    public void MatchedOwner_FileCodeUnitSeamCarriesServerOwnedSymbolName()
+    {
+        PropertyInfo[] inputProperties = typeof(PreparedFileCodeUnitInput)
+            .GetProperties(BindingFlags.Public | BindingFlags.Instance);
+        PropertyInfo[] draftProperties = typeof(PreparedFileCodeUnitDraft)
+            .GetProperties(BindingFlags.Public | BindingFlags.Instance);
+
+        Assert.Contains(
+            inputProperties,
+            property => property.Name == "SymbolName" && property.PropertyType == typeof(string));
+        Assert.Contains(
+            draftProperties,
+            property => property.Name == "SymbolName" && property.PropertyType == typeof(string));
+    }
+
+    [Fact]
+    public void SemanticOwner_UsesSeparateV2IdentityBuilderWithOrdinalFqnBinding()
+    {
+        MethodInfo[] identityMethods = typeof(PreparedScanIdentityBuilders)
+            .GetMethods(BindingFlags.Public | BindingFlags.Static)
+            .Where(method => method.Name.Contains("FileCodeUnit", StringComparison.Ordinal))
+            .ToArray();
+
+        Assert.Contains(
+            identityMethods,
+            method => method.Name.Contains("Semantic", StringComparison.Ordinal) &&
+                method.ReturnType == typeof(PreparedCanonicalArtifact) &&
+                method.GetParameters().Any(parameter =>
+                    parameter.Name is "symbolName" or "fullyQualifiedSymbol"));
+    }
+
     private static PreparedFileCodeUnitDraft CreateDraft(int manifestOrdinal, int pairOrdinal) =>
         new(
             Guid.Parse("aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee"),

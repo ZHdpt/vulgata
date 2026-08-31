@@ -3450,11 +3450,12 @@ public sealed class PreparedPass1Store(
                 return null;
             }
 
-            PreparedCanonicalArtifact unitIdentity = PreparedScanIdentityBuilders.CreateFileCodeUnitIdentity(
+            PreparedCanonicalArtifact unitIdentity = PreparedScanIdentityBuilders.CreateApplicableFileCodeUnitIdentity(
                 unit.RepositoryId,
                 unit.ScanRunId,
                 manifest.ProfiledRevision,
                 unit.FilePath,
+                unit.SymbolName,
                 unit.FileHash,
                 unit.ByteStart.Value,
                 unit.ByteEndExclusive.Value,

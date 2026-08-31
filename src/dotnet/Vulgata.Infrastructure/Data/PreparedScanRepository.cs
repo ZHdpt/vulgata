@@ -202,7 +202,7 @@ internal sealed class PreparedScanRepository(VulgataDbContext context)
                     draft.Id, draft.ScanRunId, draft.RepositoryId, draft.RelativePath,
                     draft.FileHash, draft.SourceHash, draft.ByteStart, draft.ByteEndExclusive,
                     draft.LineStart, draft.LineEnd, draft.SegmentOrdinal, draft.SegmentCount,
-                    draft.IdentityFingerprint, draft.Language);
+                    draft.IdentityFingerprint, draft.Language, draft.SymbolName);
                 context.CodeUnits.Add(unit);
                 PreparedScanManifestEntry entry = NewEntity<PreparedScanManifestEntry>();
                 Set(entry, nameof(entry.FileCodeUnitId), draft.Id);
@@ -625,13 +625,15 @@ internal sealed class PreparedScanRepository(VulgataDbContext context)
             return false;
         }
 
-        PreparedCanonicalArtifact reconstructed = PreparedScanIdentityBuilders.CreateFileCodeUnitIdentity(
+        PreparedCanonicalArtifact reconstructed = PreparedScanIdentityBuilders.CreateApplicableFileCodeUnitIdentity(
             stored.RepositoryId, stored.ScanRunId, supplied.ProfiledRevision, stored.FilePath,
+            stored.SymbolName,
             stored.FileHash, stored.ByteStart.Value, stored.ByteEndExclusive.Value,
             stored.LineStart, stored.LineEnd, stored.SegmentOrdinal.Value, stored.SegmentCount.Value,
             stored.SourceHash);
         return stored.RepositoryId == supplied.RepositoryId && stored.ScanRunId == supplied.ScanRunId &&
             StringComparer.Ordinal.Equals(stored.FilePath, supplied.RelativePath) &&
+            StringComparer.Ordinal.Equals(stored.SymbolName, supplied.SymbolName) &&
             StringComparer.Ordinal.Equals(stored.FileHash, supplied.FileHash) &&
             stored.ByteStart == supplied.ByteStart && stored.ByteEndExclusive == supplied.ByteEndExclusive &&
             stored.LineStart == supplied.LineStart && stored.LineEnd == supplied.LineEnd &&

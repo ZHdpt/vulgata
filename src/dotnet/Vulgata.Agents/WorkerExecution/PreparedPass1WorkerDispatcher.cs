@@ -270,6 +270,7 @@ public sealed class PreparedPass1WorkerDispatcher(
             snapshot,
             Array.AsReadOnly(classifications))
         {
+            SymbolName = assignment.SymbolName,
             RemainingNavigationBudget = assignment.RemainingNavigationBudget,
             NavigationBudget = assignment.NavigationBudget,
             ServerAuthorization = assignment.ServerAuthorization,

@@ -56,11 +56,16 @@ public static class PreparedScanPlanner
             100 => PreparedSelectionReason.ProductionFallback,
             _ => throw new InvalidOperationException("The direct score is outside the closed table."),
         };
-        PreparedCanonicalArtifact identity = PreparedScanIdentityBuilders.CreateFileCodeUnitIdentity(
+        string relativePath = AnalysisContractGuard.RequireRelativePath(input.RelativePath);
+        string symbolName = string.IsNullOrWhiteSpace(input.SymbolName)
+            ? throw new ArgumentException("A File Code Unit requires one server-owned symbol identity.", nameof(input))
+            : input.SymbolName;
+        PreparedCanonicalArtifact identity = PreparedScanIdentityBuilders.CreateApplicableFileCodeUnitIdentity(
             input.RepositoryId,
             input.ScanRunId,
             input.ProfiledRevision,
-            input.RelativePath,
+            relativePath,
+            symbolName,
             RequireExactSha256(input.FileHash, nameof(input.FileHash)),
             input.ByteStart,
             input.ByteEndExclusive,
@@ -77,7 +82,7 @@ public static class PreparedScanPlanner
             input.RepositoryId,
             input.ScanRunId,
             input.ProfiledRevision,
-            AnalysisContractGuard.RequireRelativePath(input.RelativePath),
+            relativePath,
             input.FileHash,
             input.ByteStart,
             input.ByteEndExclusive,
@@ -91,7 +96,10 @@ public static class PreparedScanPlanner
             directScore,
             reason,
             0,
-            0);
+            0)
+        {
+            SymbolName = symbolName,
+        };
     }
 
     public static PreparedFileCodeUnitConstruction BuildFileCodeUnit(
@@ -118,7 +126,8 @@ public static class PreparedScanPlanner
             draft.SegmentOrdinal,
             draft.SegmentCount,
             draft.IdentityFingerprint,
-            language);
+            language,
+            draft.SymbolName);
         return new PreparedFileCodeUnitConstruction(draft, entity);
     }
 
@@ -242,11 +251,12 @@ public static class PreparedScanPlanner
         .ThenBy(candidate => candidate.SegmentOrdinal);
 
     public static string FingerprintIdentity(PreparedFileCodeUnitDraft candidate) =>
-        PreparedScanIdentityBuilders.CreateFileCodeUnitIdentity(
+        PreparedScanIdentityBuilders.CreateApplicableFileCodeUnitIdentity(
             (candidate ?? throw new ArgumentNullException(nameof(candidate))).RepositoryId,
             candidate.ScanRunId,
             candidate.ProfiledRevision,
             candidate.RelativePath,
+            candidate.SymbolName,
             candidate.FileHash,
             candidate.ByteStart,
             candidate.ByteEndExclusive,

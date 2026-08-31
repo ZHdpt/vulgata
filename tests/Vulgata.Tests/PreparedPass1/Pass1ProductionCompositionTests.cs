@@ -79,6 +79,22 @@ public sealed class Pass1ProductionCompositionTests
     }
 
     [Fact]
+    public void JobRunnerDispatchBridge_ForwardsServerOwnedSymbolNameWithoutDefaulting()
+    {
+        // T045 RED: the sole hydrated-packet-to-assignment bridge must
+        // preserve path-v1 and semantic-v2 SymbolName without inference.
+        Assert.NotNull(typeof(PreparedPass1FileCodeUnitAssignment).GetProperty(
+            "SymbolName", BindingFlags.Public | BindingFlags.Instance));
+        Assert.NotNull(typeof(PreparedPass1WorkerPacket).GetProperty(
+            "SymbolName", BindingFlags.Public | BindingFlags.Instance));
+
+        MethodInfo bridge = typeof(PreparedPass1JobRunner)
+            .GetMethods(BindingFlags.Static | BindingFlags.NonPublic)
+            .Single(method => method.Name == "CreateDispatchRequest");
+        Assert.Equal(typeof(PreparedPass1WorkerPacket), bridge.GetParameters()[0].ParameterType);
+    }
+
+    [Fact]
     public async Task ClaimedFileCodeUnit_ReachesRealDispatcherAndRecordingExecutorAsync()
     {
         PreparedPass1FileCodeUnitAssignment assignment = CreateAssignment();

@@ -21,7 +21,10 @@ public sealed record PreparedJdtSymbolSpan(
     int StartLine,
     int StartCharacter,
     int EndLine,
-    int EndCharacter);
+    int EndCharacter)
+{
+    public string? TypeName { get; init; }
+}
 
 public sealed record PreparedJavaRange(
     long ByteStart,
@@ -33,7 +36,10 @@ public sealed record PreparedJavaRange(
     int SegmentOrdinal,
     int SegmentCount,
     PreparedRangeOutcome Outcome,
-    string? SkipReason);
+    string? SkipReason)
+{
+    public string? SymbolName { get; init; }
+}
 
 public sealed record PreparedSourceSplitPlan(
     PreparedRangeOutcome Outcome,

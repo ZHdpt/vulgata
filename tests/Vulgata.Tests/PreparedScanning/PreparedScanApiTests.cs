@@ -157,6 +157,26 @@ public sealed class PreparedScanApiTests
     }
 
     [Fact]
+    public void PreparedScanApi_SemanticOwnerIsServerOwnedAndInputCarriesRequiredFqn()
+    {
+        Type request = RequireSharedType(
+            type => type.Name.Contains("PreparedScan", StringComparison.Ordinal) &&
+                type.Name.Contains("Request", StringComparison.Ordinal));
+        Assert.DoesNotContain(
+            request.GetProperties(BindingFlags.Public | BindingFlags.Instance),
+            property => property.Name.Contains("Symbol", StringComparison.OrdinalIgnoreCase) ||
+                property.Name.Contains("Owner", StringComparison.OrdinalIgnoreCase));
+
+        ConstructorInfo[] inputConstructors = typeof(PreparedFileCodeUnitInput)
+            .GetConstructors(BindingFlags.Public | BindingFlags.Instance);
+        Assert.Contains(
+            inputConstructors.SelectMany(constructor => constructor.GetParameters()),
+            parameter => parameter.Name == "symbolName" &&
+                parameter.ParameterType == typeof(string) &&
+                !parameter.IsOptional);
+    }
+
+    [Fact]
     public async Task PreparedScanPairBuilder_ProductionCompositionBuildsNeutralExactTwoPackageAsync()
     {
         int revisionAcquisitionCalls = 0;

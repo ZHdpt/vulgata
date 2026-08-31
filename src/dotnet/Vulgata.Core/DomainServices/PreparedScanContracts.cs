@@ -58,6 +58,8 @@ public sealed record PreparedFileCodeUnitDraft(
     int ManifestOrdinal,
     int PairSelectionOrdinal)
 {
+    public string SymbolName { get; init; } = RelativePath;
+
     public string Language => Path.GetExtension(RelativePath).ToLowerInvariant() switch
     {
         ".java" => "java",
@@ -82,7 +84,43 @@ public sealed record PreparedFileCodeUnitInput(
     int SegmentOrdinal,
     int SegmentCount,
     string SourceHash,
-    IReadOnlyList<PreparedBusinessEvidence> Evidence);
+    IReadOnlyList<PreparedBusinessEvidence> Evidence)
+{
+    public PreparedFileCodeUnitInput(
+        Guid repositoryId,
+        Guid scanRunId,
+        string profiledRevision,
+        string relativePath,
+        string fileHash,
+        long byteStart,
+        long byteEndExclusive,
+        int lineStart,
+        int lineEnd,
+        int segmentOrdinal,
+        int segmentCount,
+        string sourceHash,
+        string symbolName,
+        IReadOnlyList<PreparedBusinessEvidence> evidence)
+        : this(
+            repositoryId,
+            scanRunId,
+            profiledRevision,
+            relativePath,
+            fileHash,
+            byteStart,
+            byteEndExclusive,
+            lineStart,
+            lineEnd,
+            segmentOrdinal,
+            segmentCount,
+            sourceHash,
+            evidence)
+    {
+        SymbolName = symbolName;
+    }
+
+    public string SymbolName { get; init; } = RelativePath;
+}
 
 public sealed record PreparedFileCodeUnitConstruction(
     PreparedFileCodeUnitDraft Draft,
@@ -469,6 +507,89 @@ public static class PreparedScanIdentityBuilders
                 Field(11, CanonicalEnvelope.UInt64((ulong)segmentCount)),
                 Field(12, Hash(sourceHash)),
             ]);
+    }
+
+    public static PreparedCanonicalArtifact CreateSemanticFileCodeUnitIdentity(
+        Guid repositoryId,
+        Guid scanRunId,
+        string profiledRevision,
+        string relativePath,
+        string fileHash,
+        long byteStart,
+        long byteEndExclusive,
+        int lineStart,
+        int lineEnd,
+        int segmentOrdinal,
+        int segmentCount,
+        string sourceHash,
+        string symbolName)
+    {
+        if (byteStart < 0 || byteEndExclusive <= byteStart || lineStart < 1 || lineEnd < lineStart ||
+            segmentOrdinal < 1 || segmentCount < segmentOrdinal)
+        {
+            throw new ArgumentOutOfRangeException(nameof(byteStart), "File Code Unit ranges and segment ordinals must be exact and bounded.");
+        }
+
+        return CreateArtifact(
+            "vulgata/story-12.2/file-code-unit-identity/2.0",
+            [
+                Field(1, CanonicalEnvelope.Uuid(repositoryId)),
+                Field(2, CanonicalEnvelope.Uuid(scanRunId)),
+                Field(3, CanonicalEnvelope.String(RequireRevision(profiledRevision))),
+                Field(4, CanonicalEnvelope.String(AnalysisContractGuard.RequireRelativePath(relativePath))),
+                Field(5, Hash(fileHash)),
+                Field(6, CanonicalEnvelope.UInt64((ulong)byteStart)),
+                Field(7, CanonicalEnvelope.UInt64((ulong)byteEndExclusive)),
+                Field(8, CanonicalEnvelope.UInt64((ulong)lineStart)),
+                Field(9, CanonicalEnvelope.UInt64((ulong)lineEnd)),
+                Field(10, CanonicalEnvelope.UInt64((ulong)segmentOrdinal)),
+                Field(11, CanonicalEnvelope.UInt64((ulong)segmentCount)),
+                Field(12, Hash(sourceHash)),
+                Field(13, CanonicalEnvelope.String(RequireJavaSymbol(symbolName))),
+            ]);
+    }
+
+    public static PreparedCanonicalArtifact CreateApplicableFileCodeUnitIdentity(
+        Guid repositoryId,
+        Guid scanRunId,
+        string profiledRevision,
+        string relativePath,
+        string symbolName,
+        string fileHash,
+        long byteStart,
+        long byteEndExclusive,
+        int lineStart,
+        int lineEnd,
+        int segmentOrdinal,
+        int segmentCount,
+        string sourceHash) =>
+        StringComparer.Ordinal.Equals(relativePath, symbolName)
+            ? CreateFileCodeUnitIdentity(
+                repositoryId, scanRunId, profiledRevision, relativePath, fileHash,
+                byteStart, byteEndExclusive, lineStart, lineEnd, segmentOrdinal, segmentCount, sourceHash)
+            : CreateSemanticFileCodeUnitIdentity(
+                repositoryId, scanRunId, profiledRevision, relativePath, fileHash,
+                byteStart, byteEndExclusive, lineStart, lineEnd, segmentOrdinal, segmentCount, sourceHash,
+                symbolName);
+
+    private static string RequireJavaSymbol(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value) || value.Length > 512 ||
+            !StringComparer.Ordinal.Equals(value, value.Trim()))
+        {
+            throw new ArgumentException("A canonical fully qualified Java symbol is required.", nameof(value));
+        }
+
+        string[] segments = value.Split('.');
+        if (segments.Length < 2 || segments.Any(segment =>
+            segment.Length == 0 ||
+            (!char.IsLetter(segment[0]) && segment[0] is not '_' and not '$') ||
+            segment.Skip(1).Any(character => !char.IsLetterOrDigit(character) && character is not '_' and not '$')))
+        {
+            throw new ArgumentException("A canonical fully qualified Java symbol is required.", nameof(value));
+        }
+
+        return value;
     }
 
     public static PreparedCanonicalArtifact CreateCommunicationClassification(

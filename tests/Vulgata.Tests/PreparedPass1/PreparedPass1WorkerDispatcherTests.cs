@@ -98,6 +98,17 @@ public sealed class PreparedPass1WorkerDispatcherTests
     }
 
     [Fact]
+    public void PreparedDispatcher_AssignmentAndPacketRequireOneServerOwnedSymbolName()
+    {
+        // T045 RED: dispatcher validation must compare SymbolName as part of
+        // the exact binding before invoking the executor.
+        Assert.NotNull(typeof(PreparedPass1FileCodeUnitAssignment).GetProperty(
+            "SymbolName", BindingFlags.Public | BindingFlags.Instance));
+        Assert.NotNull(typeof(PreparedPass1WorkerPacket).GetProperty(
+            "SymbolName", BindingFlags.Public | BindingFlags.Instance));
+    }
+
+    [Fact]
     public void PreparedDispatcher_PacketProjectionCarriesExactUnitIdentityAndNoCompletionOrder()
     {
         ApprovedPreparedManifestPairSeed pair =
