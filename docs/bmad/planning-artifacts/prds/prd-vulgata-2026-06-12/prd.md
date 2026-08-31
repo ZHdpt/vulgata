@@ -23,6 +23,7 @@ is defined by:
 - [Sprint Change Proposal: Story 12.5 Track C-MVP](../../sprint-change-proposal-2026-08-29-story-12-5-track-c-mvp.md)
 - [Sprint Change Proposal: Story 12.5 Prepared Scan Initiation](../../sprint-change-proposal-2026-08-30-story-12-5-prepared-scan-initiation.md)
 - [Sprint Change Proposal: Story 12.5 Exact-Profile Seed Selection](../../sprint-change-proposal-2026-08-31-story-12-5-exact-profile-seed-selection.md)
+- [Sprint Change Proposal: Story 12.5 Exact Owner Semantic Identity](../../sprint-change-proposal-2026-08-31-story-12-5-exact-owner-semantic-identity.md)
 
 For the August 30 release boundary, those documents supersede conflicting V1
 details in FR-4.1 through FR-4.5, FR-4.9, FR-4.12, FR-5.8, FR-6.1/6.2,

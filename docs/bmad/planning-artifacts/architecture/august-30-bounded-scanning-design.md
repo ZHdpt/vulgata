@@ -160,6 +160,34 @@ XML may split only at safely parsed top-level elements. A file with no safe
 bounded split is explicitly skipped with a reason; it is never silently
 truncated.
 
+For the exact two-Repository pair that completely matches the embedded reviewed
+exact-resolution profile, one required Java unsupported-observation owner is a
+closed exception to the generic path-valued `SymbolName` rule. The server-owned
+profile authority supplies its fully qualified Java type symbol and reviewed
+selector line. Prepared Scan must obtain current revision-bound JDT-LS document-
+symbol evidence even when that file fits the whole-file bounds and require
+exactly one top-level type on the same Repository-relative path whose exact
+range contains the selector line and whose reported type name matches the
+terminal segment of the profile symbol ordinally. The profile and JDT-LS
+evidence must agree; neither can establish the binding alone.
+
+The scheduled unit remains `CodeUnitType.File`. A bounded owner keeps its whole-
+file range; for an oversized owner, only the exact safe segment containing the
+reviewed line receives the fully qualified semantic symbol. That symbol is
+bound through the File Code Unit's versioned canonical identity, persistence,
+replay, prepared handoff, Pass 1 Worker packet, and resulting Source Anchor.
+Path-valued units continue to use their existing identity bytes. Missing,
+duplicate, ambiguous, wrong-path, wrong-name, non-containing, stale, malformed,
+or unavailable JDT-LS evidence rejects the matched preparation before either
+Manifest publishes. Nonmatching pairs do not perform this validation and retain
+their existing selection and fingerprint behavior.
+
+This exception adds no class- or method-level scheduling, public profile/path/
+symbol input, new bound, database shape, or Story 12.4 behavior. It executes
+after the accepted initiation transaction and exact revision/inventory checks,
+before CodeGraph expansion, deterministic selection, and atomic Manifest
+publication; no external analysis runs inside a database transaction.
+
 ### 4.2 XML Communication Evidence
 
 XML parsing is generic and safe, not sample-Repository code:
