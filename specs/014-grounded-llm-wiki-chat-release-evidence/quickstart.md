@@ -1,4 +1,4 @@
-# Quickstart: Story 12.5 Track C-MVP with Prepared Scan Initiation and Reviewed Exact-Profile Seeds
+# Quickstart: Story 12.5 Track C-MVP with Prepared Scan Initiation and Exact Owner Semantic Identity
 
 This guide validates the corrected definition, the bounded production Prepared Scan entrance, and the single combined host integration/release run. It does not create planned-change or implementation approval and does not permit use of the main/Story 12.4 database.
 
@@ -11,7 +11,7 @@ This guide validates the corrected definition, the bounded production Prepared S
     git merge-base --is-ancestor 4798b97d9f23aef587829175df7ab7ebc3daf995 HEAD
     Get-FileHash specs/014-grounded-llm-wiki-chat-release-evidence/spec.md -Algorithm SHA256
 
-Expected before implementation: branch demo0831/story-12-5-trackC; Story 12.4 is ancestral; only explicitly owned corrected-definition files are dirty. The exact-profile seed-selection plan must receive independent plan and definition acceptance before its standing in-scope implementation authorization is bound.
+Expected before implementation: branch demo0831/story-12-5-trackC; Story 12.4 is ancestral; only explicitly owned corrected-definition files plus preserved user-owned changes are dirty. The exact-owner plan must receive independent plan acceptance, explicit AGENTS.md Scan planned-change authorization, regenerated-task independent definition acceptance, and a newly bound implementation approval. No expired standing authorization applies.
 
 ## 2. Validate corrected plan artifacts
 
@@ -20,7 +20,7 @@ Expected before implementation: branch demo0831/story-12-5-trackC; Story 12.4 is
 
 Expected: no unresolved placeholder; removed mechanisms appear only as explicitly deferred/historical material; diff check passes.
 
-Also inspect [contracts/prepared-scan-initiation.md](contracts/prepared-scan-initiation.md) and confirm the accepted initiation/identity design remains unchanged. Confirm the current delta adds exactly one Core reviewed-seed port/value, one read-only Infrastructure adapter over the existing profile catalog, one closed score-1,100 evidence value, builder validation/composition and one DI registration. Confirm no public profile/path field, sample production literal, migration/model change, long transaction, bound increase, Story 12.4 mutation or Pass 1 policy change.
+Also inspect [contracts/prepared-scan-initiation.md](contracts/prepared-scan-initiation.md) and confirm the accepted initiation/seed design remains unchanged. Confirm AD-PSI-7 adds only an optional Core semantic-owner value, root-DocumentSymbol hierarchy provenance with mandatory contained selectionRange, flat SymbolInformation non-authority, semantic-only file-identity v2, symbol-aware persistence/handoff/internal packet/assignment reconstruction, exact job-runner forwarding, dispatcher/executor validation, and builder cache. Confirm path-valued v1 remains byte-identical and there is no new DI mapping, public/provider-visible symbol field, prompt/tool/job-state/scheduling/retry change, sample literal, migration/model change, long transaction, bound increase, Story 12.4 mutation or Pass 1 policy change.
 
 ## 3. Tier 1 regression
 
@@ -38,9 +38,16 @@ After approved implementation, add the bounded initiation verification:
 Add the reviewed-profile correction verification selected by regenerated tasks:
 
     dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter "FullyQualifiedName~ReviewedExactProfileSeedAuthorityTests|FullyQualifiedName~PreparedSelectionPlannerTests|FullyQualifiedName~PreparedScanApiTests|FullyQualifiedName~PreparedScanReleaseQualificationTests"
-    dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter "FullyQualifiedName~PreparedScanExactProfilePostgreSqlTests"
+    dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter "FullyQualifiedName~ReviewedExactProfileSeedPostgreSqlTests"
+
+Add the exact-owner correction verification selected by regenerated tasks:
+
+    dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter "FullyQualifiedName~ReviewedExactProfileSeedAuthorityTests|FullyQualifiedName~JdtLsAdapterTests|FullyQualifiedName~PreparedJavaSplitRangeTests|FullyQualifiedName~PreparedFileCodeUnitAndSelectionTests|FullyQualifiedName~PreparedScanApiTests|FullyQualifiedName~PreparedHandoffProjectionTests"
+    dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter "FullyQualifiedName~Pass1ProductionCompositionTests|FullyQualifiedName~PreparedPass1WorkerDispatcherTests|FullyQualifiedName~Pass1ClaimedPacketExecutionTests|FullyQualifiedName~PreparedPass1JobExecutor|FullyQualifiedName~Pass1RecoveryAndResumeApiTests|FullyQualifiedName~Pass1ReconciliationTests|FullyQualifiedName~ReviewedExactProfileSeedPostgreSqlTests"
 
 The first reviewed-profile command proves exact match, canonical required paths/roles, nonmatch-neutral selection/fingerprints, score 1,100, unchanged 20/150 bounds and every matched incomplete/unsafe/duplicate/split/cap failure before Manifest commit. The PostgreSQL command begins from ordinary System/Repository records with no lifecycle/content/relationship rows, publishes both Manifests, runs deterministic test Pass 1 through the real committer, then invokes the unchanged exact-resolution coordinator/store to prove the exact REFERENCES Edge and honest Uncertainty. A required-seed failure must reach `FailedPass1` with zero exact/Pass 2 work.
+
+The exact-owner commands prove only homogeneous array-root `DocumentSymbol[]` Class/Enum/Interface/Struct evidence with mandatory contained selectionRange supplies semantic TypeName; children are not flattened. Mixed/malformed roots, missing/uncontained selectionRange and non-Type roots fail. Homogeneous `SymbolInformation[]` is flat coordinate-only evidence, containerName never implies hierarchy, generic splitting remains possible, and a matched owner publishes zero Manifests. Definition/references/implementation remain unchanged. Whole-file/oversized and v1/v2 golden vectors remain. Claimed-source pre/post-fetch plus `Pass1ProductionCompositionTests` prove semantic FQN/v2 and path/v1 hydrated packet -> job-runner assignment -> dispatcher packet round-trip; omission/mutation rejects before executor/provider. Provider shape excludes SymbolName. PostgreSQL must persist the FQN/v2, current Source Anchor and unchanged exact Edge/Uncertainty without preseed/repair.
 
 The first command owns the default Agents v2 prompt hash/schema authority, unchanged legacy v1 recovery identity, null/v1/malformed/wrong-schema fail-closed vectors, request/outcome/composition/no-later-stage behavior, the fresh pre-store authorization recheck, phase-aware handoff recovery, default/test runtime-resolver composition and fixed execution-identity vectors. The second must use disposable PostgreSQL and owns identical/competing concurrency, advisory-lock timeout, rollback and exact replay. A SQLite run cannot substitute for the second command.
 
@@ -86,7 +93,7 @@ Through the authenticated existing UI/API:
 
 1. production-bootstrap one Administrator, one ordinary authorized System, provider assignment, and exactly two ordinary real Java/XML Repository records; do not seed Scan Runs, Pre-Scan Results, Scan Executions, coordination, Manifests, File Code Units or Documents;
 2. submit the existing authenticated `POST /api/systems/{systemId}/prepared-scans` request with exactly two safe full Git refs and exact Profiled Revisions;
-3. after the synchronous endpoint completes, query one complete initiation tuple and two real Prepared Scan Manifests; verify both new-path Scan Executions carry one prompt identity matching `pass1-code-logic-worker.v2/sha256/{lowercase-64-hex}` and exact schema `code-logic/file-v2`, then verify CodeGraph 1.5, JDT LS Java readiness and safe XML catalog evidence; query every source derived from the embedded reviewed profile and prove every bounded segment is selected with direct score 1,100 inside the unchanged bounds; use Tier 1—not operator query timing—to prove tuple commit and matched validation ordering;
+3. after the synchronous endpoint completes, query one complete initiation tuple and two real Prepared Scan Manifests; verify both new-path Scan Executions carry one prompt identity matching `pass1-code-logic-worker.v2/sha256/{lowercase-64-hex}` and exact schema `code-logic/file-v2`, then verify CodeGraph 1.5, JDT LS Java readiness and safe XML catalog evidence; query every source derived from the embedded reviewed profile and prove every bounded segment is selected with direct score 1,100 inside the unchanged bounds; prove the reviewed unsupported-owner File Code Unit carries its profile-owned FQN, v2 identity and exact current range while path-valued units retain v1; use Tier 1—not operator query timing—to prove tuple commit and matched validation ordering;
 4. start the accepted Pass 1 path and allow it to reach terminal state; prove every reviewed score-1,100 seed succeeded before exact resolution;
 5. run exact Cross-Repository Resolution and the accepted Pass 2 path;
 6. use 继续扫描 only for an eligible durable paused state;
@@ -101,7 +108,7 @@ Use psql or an equivalent read-only client against only the owned database. Reco
 1. two approved PreparedScanManifests and total selected PreparedScanManifestEntries (50-150);
 2. exact Repository/Profiled Revision and real CodeGraph/JDT LS/catalog bindings;
 3. terminal Pass 1/Pass 2 executions/jobs, explicit high-value-seed selected/succeeded/failed counts, failed count zero, selected count equal to succeeded count, and ordinary failure budget;
-4. current Code Logic and Business Logic DocumentVersions with SourceAnchors;
+4. current Code Logic and Business Logic DocumentVersions with SourceAnchors, including the reviewed owner Source Anchor joined to the exact symbol-bound File Code Unit/path/range/Profiled Revision;
 5. at least one accepted CrossRepositoryResolutionDecision joined to its current cross-Repository REFERENCES DocumentEdge;
 6. at least one honest Uncertainty;
 7. at least three current Business Logic Documents and one published Cross-Repository FlowGroup;
@@ -170,4 +177,4 @@ Only an evidence-file, operator-command or read-only-query defect may be correct
     git diff --check
     dotnet build src/dotnet/Vulgata.Web/Vulgata.Web.csproj --no-restore
 
-The forbidden-path diff must show no Track C-MVP change. Also verify production DI resolves exactly one Agents-owned `IPreparedPass1ContractIdentitySource` and exactly one Infrastructure `IReviewedExactProfileSeedAuthority`, keeps the legacy recovery source unchanged and out of initiation, resolves CodeGraph 1.5 ports, and does not resolve CGC/historical profiling. Run a source-literal guard proving sample Repository/path/endpoint/symbol/line values occur only in the pre-existing embedded profile/tests/evidence, not the new production slice. Then run pinned sprint-loop verification and required fresh-database E2E. Approvals do not replace technical acceptance.
+The forbidden-path diff must show no Track C-MVP change. Verify DI remains unchanged. Keep legacy recovery unchanged, resolve CodeGraph 1.5/JDT-LS, and do not resolve CGC. Pin path-v1 identity/packet/job-runner behavior and semantic-only v2. Prove semantic authority requires root DocumentSymbol with contained selectionRange, SymbolInformation is flat/non-authoritative, unrelated navigation is unchanged, the job runner only forwards SymbolName, and provider JSON/prompts/tools contain no symbol input. Source-literal, pinned sprint-loop and fresh-database E2E guards remain mandatory.

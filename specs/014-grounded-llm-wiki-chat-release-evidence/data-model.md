@@ -1,6 +1,6 @@
 # Data Model: Story 12.5 Track C-MVP
 
-Track C-MVP introduces no new persistent entity or persistence shape. The bounded initiation correction creates one exact tuple from existing Scan Run, Scan Execution and Two-Repository Scan Coordination entities. The reviewed exact-profile seed correction adds only immutable in-memory values and one closed existing Manifest score; the remaining concepts are represented in one Markdown report and adjacent screenshot files. Existing Track A/B and Story 12.4 domain/persistence authorities remain unchanged.
+Track C-MVP introduces no new persistent entity or persistence shape. The bounded initiation correction creates one exact tuple from existing Scan Run, Scan Execution and Two-Repository Scan Coordination entities. The reviewed exact-profile correction adds immutable in-memory authority/protocol-typed JDT values, one closed existing Manifest score, a versioned canonical identity for the one semantic-owner File Code Unit, and server-only SymbolName propagation through existing Prepared Pass 1 assignment/packet values; the existing `CodeUnit.SymbolName` and fingerprint columns persist it. The remaining concepts are represented in one Markdown report and adjacent screenshot files. Existing Track A/B, provider-visible Worker contracts and Story 12.4 domain/persistence authorities remain unchanged.
 
 ## 1. Existing persistent authorities
 
@@ -39,8 +39,22 @@ The public `PreparedScanRequest` does not expose this value. `PreparedScanPairBu
 | repositoryId | exact runtime Repository selected by one-to-one stable-identity match |
 | relativePath | existing profile-validated canonical Repository-relative path |
 | roles | nonempty canonical union of `Consumer`, `ProviderDeclaration`, `ProviderImplementation`, `UnsupportedObservationOwner` |
+| semanticOwner | absent unless roles include `UnsupportedObservationOwner`; otherwise exactly one validated profile-owned fully qualified Java symbol plus positive one-based selector line |
 
-An overlapping path has one required-source row with multiple roles. A path is never accepted without its matched Repository binding. Catalog integrity failure is `Unavailable`; a partial identity/ref/revision match is `NonMatching` and has no selection effect.
+An overlapping path has one required-source row with multiple roles. A path is never accepted without its matched Repository binding. Two distinct semantic owners collapsed onto one path, invalid symbol/line state, or a semantic owner on a non-Java path makes the catalog authority `Unavailable`; it is never arbitrarily selected. A partial identity/ref/revision match is `NonMatching` and has no selection effect.
+
+### ReviewedExactProfileSemanticOwner and JDT evidence (Core values, non-persistent)
+
+| Value/field | Rule |
+| --- | --- |
+| fullyQualifiedSymbol | exact ordinal profile-owned qualified Java type; never caller/provider/environment input |
+| simpleTypeName | terminal segment derived in Core from `fullyQualifiedSymbol`; nonempty and ordinal |
+| selectorLine | positive one-based reviewed line |
+| JDT TypeName | nonempty server-observed top-level `AnalysisSymbolKind.Type` name on the exact ordinal path |
+| JDT UTF-16 span | existing zero-based, end-exclusive exact coordinates; valid within the bound file |
+| observation key | exact Repository ID, Profiled Revision, Relative Path and lowercase file hash; at most one JDT call per key/build |
+
+The semantic owner is accepted only when exactly one current JDT top-level Type has the same simple name and a span containing `selectorLine - 1`. An end position at character zero excludes its end line; a nonzero end character includes that line for selector-line ownership. Missing, duplicate, stale, malformed, wrong-name/path/range or unavailable evidence is not a partial value.
 
 ### Reviewed exact-profile candidate state (existing Manifest fields)
 
@@ -70,6 +84,67 @@ exact identity match
 
 nonmatch -> empty authority result -> existing generic candidates/scores/audits/fingerprints
 matched incomplete/unsafe/ambiguous/split-invalid/over-bound -> rejected before Manifest publication
+```
+
+### Semantic-owner Prepared File Code Unit (existing entity shape)
+
+| Existing/new value | Path-valued unit | Semantic-owner unit |
+| --- | --- | --- |
+| CodeUnitType / RangeConfidence | existing `File` / `Exact` | unchanged `File` / `Exact` |
+| FilePath | canonical Repository-relative path | same path |
+| SymbolName | same value as FilePath | profile-owned fully qualified Java owner symbol |
+| whole-file range | unchanged | unchanged when bounded |
+| oversized range | unchanged safe segment | only the unique safe segment containing selector line receives semantic symbol |
+| direct score | existing selection result | existing reviewed 1,100; every required sibling segment remains 1,100 |
+| identity domain | existing `vulgata/story-12.2/file-code-unit-identity/1.0` | `vulgata/story-12.2/file-code-unit-identity/2.0` |
+| canonical tags | existing 1-12 | identical 1-12 plus tag 13 ordinal fully qualified symbol |
+
+The v1 domain and bytes are selected only when `SymbolName == RelativePath`. The semantic v2 fingerprint derives the deterministic File Code Unit ID and is carried by the existing Code Unit, Manifest Entry, audit, pair-selection, Manifest and package fields. Replay/handoff reconstruction chooses v1/v2 from persisted `SymbolName` and requires exact path, symbol, range, deterministic ID and fingerprint agreement. The current Prepared Pass 1 assignment and packet lack the symbol, so both gain required server-only `SymbolName`; the existing Pass 1 commit creates a Source Anchor over the same Code Unit/range. No persistence or Source Anchor field is needed.
+
+### Typed JDT document-symbol projection (non-persistent)
+
+| Protocol input | Projection rule |
+| --- | --- |
+| `null` | successful empty observation; a required semantic owner then fails unavailable |
+| homogeneous root `DocumentSymbol[]` | sole semantic authority; every root requires nonempty name, integer supported Type kind, direct exact range, direct exact selectionRange wholly contained by range, and array-valued children when present; children are not flattened; provenance `RootDocumentSymbol` |
+| homogeneous `SymbolInformation[]` | protocol-valid flat coordinate evidence only; exact location URI/range required; `containerName` is ignored for hierarchy; provenance `FlatSymbolInformation`; never supplies semantic TypeName |
+| root kind 5 / 10 / 11 / 23 | Class / Enum / Interface / Struct maps to `AnalysisSymbolKind.Type` |
+| root supported non-type kind | reject the complete operation as `jdt_document_symbol_kind_unsupported` |
+| missing, non-integer, unknown or out-of-range kind | reject the complete operation as `jdt_document_symbol_kind_malformed` |
+| non-array, mixed shape, malformed name/path/range/selectionRange/children, or uncontained selectionRange | reject the complete operation as `jdt_document_symbol_response_malformed` |
+
+Core `AnalysisSymbolEvidence` carries the init-only provenance above; existing evidence defaults to `Unspecified`. Flat SymbolInformation may preserve unrelated generic splitting coordinates, but a matched owner with no named root span fails before Manifest publication. This projection is exclusive to `textDocument/documentSymbol`; definition, references and implementation retain their existing navigation response model.
+
+### Prepared Pass 1 semantic assignment and packet (Core values, non-persistent)
+
+| Field/invariant | Path-valued unit | Semantic-owner unit |
+| --- | --- | --- |
+| RepositoryRelativePath | canonical path | same canonical path |
+| SymbolName | same canonical path | profile-owned FQN |
+| FileCodeUnitId / Fingerprint | exact v1 reconstruction | exact v2 reconstruction |
+| range/hash/runtime fields | unchanged | unchanged and identical to persisted semantic unit |
+| provider projection | existing closed JSON members; no SymbolName member | same closed JSON members; no SymbolName member |
+
+The claimed source loads and validates this tuple before reading exact source, clears tracking, reloads and validates it again after the read, and returns a packet only when both bindings are equal including SymbolName. Web `PreparedPass1JobRunner.CreateDispatchRequest` copies hydrated packet SymbolName unchanged into the assignment; semantic FQN/v2 and path/v1 both round-trip without defaulting. The dispatcher repeats reconstruction before executor invocation. After authorization, the executor repeats reconstruction before provider resolution/request creation. Omission/mutation or any mismatch stops with existing integrity-failure behavior and zero provider call. No job state, scheduling, retry or failure-policy value changes.
+
+Semantic-owner state transitions:
+
+```text
+matched required owner + current exact JDT evidence
+  -> bounded whole-file or unchanged safe split
+  -> exactly one owning range
+  -> semantic SymbolName + file-identity v2 before selection
+  -> atomic existing Manifest publication
+  -> exact replay/handoff reconstruction
+  -> server-only hydrated Prepared Pass 1 packet SymbolName
+  -> exact job-runner forwarding into assignment and dispatcher packet
+  -> v1/v2 validation before source read, after source re-fetch, before executor and before provider
+  -> unchanged provider-visible request and current Source Anchor
+  -> unchanged Story 12.4 exact owner lookup
+
+authority/JDT/segment mismatch -> zero Manifest
+persisted or in-flight path/symbol/range/id/fingerprint mismatch -> conflict/integrity rejection; zero provider/exact continuation
+generic or nonmatching unit -> unchanged path-valued file-identity v1
 ```
 
 ### PreparedPass1ContractIdentity (Core value, non-persistent)
@@ -353,8 +428,13 @@ ReviewedExactProfileSeedRequest
   -> IReviewedExactProfileSeedAuthority
   -> 0 required sources when NonMatching
   -> canonical matched required Repository/path/role set
+  -> optional profile-owned semantic owner FQN/selector line
+  -> current revision-bound named JDT top-level span
+  -> exactly one whole-file/safe-segment owner
+  -> v1 path-valued or v2 semantic File Code Unit identity
   -> existing Prepared File Code Unit score/audit/Manifest fields
   -> existing Pass 1 high-value-seed outcome
+  -> existing Source Anchor and unchanged exact owner lookup
 
 TrackCMvpReleaseReport
   -> 1 TrackCMvpPreflight
@@ -372,4 +452,4 @@ ReleaseEvidenceRunEnvelope, signed stream attestation, immutable supersession/cl
 
 ## 13. Migration disposition
 
-No migration. No `VulgataDbContext`, entity configuration or `VulgataDbContextModelSnapshot` change. No new table or public request/response. The accepted Infrastructure initiation store remains unchanged; the new Infrastructure seed authority is read-only and does not use EF. A diff touching model/migration paths fails the Track C-MVP guard and returns to plan.
+No migration. No `VulgataDbContext`, entity configuration or `VulgataDbContextModelSnapshot` change. No new table, column or public request/response. Existing `CodeUnit.SymbolName` and File Code Unit fingerprint fields carry the semantic value/identity. The accepted initiation store remains unchanged; the profile authority remains read-only. Infrastructure readers, Web job-runner bridge and Agents dispatcher/executor change only provenance/canonical reconstruction/equality/forwarding around internal SymbolName, not EF shape, provider-visible schema, job state, scheduling, retry or policy. A diff touching model/migration paths fails the guard and returns to plan.

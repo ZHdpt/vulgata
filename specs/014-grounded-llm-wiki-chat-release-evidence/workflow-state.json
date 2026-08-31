@@ -3,21 +3,21 @@
   "bmad_story_key": "12-5-grounded-llm-wiki-chat-and-august-30-release-evidence",
   "bmad_epic_key": "12",
   "feature_directory": "specs/014-grounded-llm-wiki-chat-release-evidence",
-  "stage": "plan",
+  "stage": "plan-review",
   "preflight": {
     "branch": "demo0831/story-12-5-trackC",
-    "head": "dc93318abdcf5f1b44cb726cb6303b1f680c7264",
-    "git_identity_sha256": "75b75d77e3ce4c2623b5b1bcfaf2b6d60d655618d8fa129f965a9ba311bf0099",
-    "status_sha256": "2559a81718b99aee17d6b47359ec57ea39a004d1924a40a0dd2fc4a2766896a3",
-    "observed_at": "2026-08-31T02:50:20.7668575Z"
+    "head": "75065c0be1e22ebc6b9c37f8bee463d40f86a865",
+    "git_identity_sha256": "b58e9ff224f83b5aa8725469d93397fde8ab196098173ad15110e6cbf11254b4",
+    "status_sha256": "e9891e27089a04702ae21c2665e36d976744949521873eff74eb62f08d6ebb22",
+    "observed_at": "2026-08-31T03:38:26.2500050Z"
   },
   "artifacts": {
     "spec": {"path":"specs/014-grounded-llm-wiki-chat-release-evidence/spec.md","sha256":"6da3e251b217ab8dd8190f84c4cf864b994be1e87090558a29e125f5648ec8b7"},
-    "plan": {"path":"specs/014-grounded-llm-wiki-chat-release-evidence/plan.md","sha256":"35766983a07db621efbdef3fa45934b2f66d86514d15deb490b5eca83ca75c43"},
+    "plan": {"path":"specs/014-grounded-llm-wiki-chat-release-evidence/plan.md","sha256":"fd7feea32f1e7a992e0b6e1fdfe0aabdd380968c842bb67bd3ee1794e4373d1d"},
     "tasks": {"path":"specs/014-grounded-llm-wiki-chat-release-evidence/tasks.md","sha256":"6ba9c8ed9336d3526b1d842a527e42381121be6adf1dddd936c4a529aebee041"}
   },
   "gates": {
-    "plan-review": {"status":"pending","attempt":0,"verdict_path":null},
+    "plan-review": {"status":"accepted","attempt":3,"verdict_path":"specs/014-grounded-llm-wiki-chat-release-evidence/reviews/plan-review/plan-review-exact-owner-03.json"},
     "definition-review": {"status":"invalidated","attempt":0,"verdict_path":null},
     "quality-review": {"status":"invalidated","attempt":0,"verdict_path":null}
   },
@@ -39,19 +39,16 @@
   "convergence": {"status":"invalidated","attempt":0,"outcome":"pending","report_path":null},
   "e2e": {"result":"pending","decision_path":null},
   "current_evidence_paths": [
-    "docs/bmad/planning-artifacts/sprint-change-proposal-2026-08-31-story-12-5-exact-profile-seed-selection.md",
-    "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/correct-course-exact-profile-seed-selection-03.md",
-    "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/planned-change-authorization-exact-profile-seed-selection-03.md",
-    "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/implementation-approval-exact-profile-seed-selection-03.md",
-    "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/plan-review/plan-review-exact-profile-seeds-01.json",
-    "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/definition-review/definition-review-exact-profile-seeds-02.json",
-    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/track-c-mvp/run-03/release-report.md",
+    "docs/bmad/planning-artifacts/sprint-change-proposal-2026-08-31-story-12-5-exact-owner-semantic-identity.md",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/correct-course-exact-owner-semantic-identity-04.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/diagnostics/exact-resolution-owner-binding-gap-01.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/handoffs/bmad-correct-course-exact-owner-binding-01.md",
-    "docs/bmad/planning-artifacts/sprint-change-proposal-2026-08-31-story-12-5-exact-owner-semantic-identity.md",
-    "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/correct-course-exact-owner-semantic-identity-04.md"
+    "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/plan-review/plan-review-exact-owner-01.json",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/plan-review/plan-review-exact-owner-02.json",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/plan-review/plan-review-exact-owner-03.json",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/track-c-mvp/run-03/release-report.md"
   ],
-  "checkpoint": {"checkpoint_id":"bmad-12-5-plan-20260831T025020Z-8251bb","stage":"plan","commit_sha":null,"binding_status":"pending"},
-  "resume": {"stage":"plan","reason":"The approved exact-owner semantic-identity correction is finalized; correct the plan, self-review it, and run independent plan-only review before the Scan planned-change authorization gate.","evidence_path":"specs/014-grounded-llm-wiki-chat-release-evidence/decisions/correct-course-exact-owner-semantic-identity-04.md"},
-  "updated_at": "2026-08-31T02:50:20.7668575Z"
+  "checkpoint": {"checkpoint_id":"bmad-12-5-plan-review-20260831T033826Z-31fe15","stage":"plan-review","commit_sha":null,"binding_status":"pending"},
+  "resume": {"stage":"plan-review","reason":"Independent plan-review attempt 03 accepted AD-PSI-7; explicit AGENTS.md Scan planned-change authorization is required before task regeneration.","evidence_path":"specs/014-grounded-llm-wiki-chat-release-evidence/reviews/plan-review/plan-review-exact-owner-03.json"},
+  "updated_at": "2026-08-31T03:38:26.2500050Z"
 }

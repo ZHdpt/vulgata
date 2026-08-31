@@ -29,7 +29,7 @@ The existing `PreparedScanRequest` remains unchanged:
 
 The IDs above illustrate shape only. A valid request requires two distinct non-empty Repository IDs in the route System, safe full refs, and exact lowercase 40-hex expected Profiled Revisions. Runtime, prompt, Document schema, tuple, lock and authorization identities are server-owned and are never request fields.
 
-Profile ID/version/fingerprint, Repository alias/stable identity, required path, role, score and selector are also never request fields.
+Profile ID/version/fingerprint, Repository alias/stable identity, required path, role, score, semantic symbol and selector line are also never request fields.
 
 Successful responses remain the existing `PreparedScanResponse`:
 
@@ -200,7 +200,7 @@ ProfiledRevision
 
 Only a complete one-to-one match to both profile repositories, expected full refs and expected commits returns `Matched`. A complete nonmatch returns `NonMatching` and an empty source set; it changes no evidence, score, candidate, audit, selection or fingerprint. Catalog integrity failure returns `Unavailable`. No caller, provider, LLM, environment file or external profile may supply or alter the values.
 
-For `Matched`, the adapter returns the canonical union of profile consumer files, provider declaration files, provider implementation Document paths and unsupported-observation owner Document paths, each bound to the matched Repository ID and one or more closed roles. It returns no public sample value.
+For `Matched`, the adapter returns the canonical union of profile consumer files, provider declaration files, provider implementation Document paths and unsupported-observation owner Document paths, each bound to the matched Repository ID and one or more closed roles. Only an `UnsupportedObservationOwner` source may also carry one internal profile-owned fully qualified Java symbol and one positive one-based selector line. Distinct duplicate owner bindings on one path, invalid qualified-symbol/line state, or a semantic owner on a non-Java path makes the authority `Unavailable`. It returns no public sample value.
 
 The existing safe inventory/split path must then prove:
 
@@ -211,14 +211,38 @@ The existing safe inventory/split path must then prove:
 5. no Repository has more than 20 required segments;
 6. the existing seed and final selection contain every required segment inside the unchanged 20/150 bounds.
 
-Failure of any matched check returns `prepared-scan-reviewed-profile-seed-incomplete` as a rejected preparation before either Manifest commits. Authority unavailability returns `prepared-scan-reviewed-profile-unavailable`. The existing `PreparedPass1Store` remains unchanged: direct score `>=400` and top 20 per Manifest are mandatory, so any required-seed job failure reaches `FailedPass1` and exact resolution/Pass 2 cannot start.
+Failure of any matched check returns `prepared-scan-reviewed-profile-seed-incomplete` as a rejected preparation before either Manifest commits. Authority unavailability returns `prepared-scan-reviewed-profile-unavailable`. Existing Prepared Pass 1 policy remains unchanged: direct score `>=400` and top 20 per Manifest are mandatory, so any required-seed job failure reaches `FailedPass1` and exact resolution/Pass 2 cannot start. AD-PSI-7 changes only typed document-symbol projection, File Code Unit identity construction/reconstruction, and server-only propagation/revalidation of that identity through existing Prepared Pass 1 assignment/packet seams.
+
+## Matched semantic-owner binding
+
+The semantic owner is a joint server-owned authority. The embedded profile supplies the fully qualified Java symbol and selector line. The revision-bound JDT-LS document-symbol path supplies the current same-path top-level Type name and exact zero-based, end-exclusive UTF-16 range. Neither alone may bind `CodeUnit.SymbolName`.
+
+`textDocument/documentSymbol` MUST use a dedicated typed protocol projection with explicit Core hierarchy provenance. Only homogeneous array-root `DocumentSymbol[]` may authorize the semantic owner. Every root requires nonempty name, integer Class=5/Enum=10/Interface=11/Struct=23 kind, direct exact range, direct exact selectionRange wholly contained by range, and array-valued children when present; children are not flattened. Valid root non-Type kinds reject as `jdt_document_symbol_kind_unsupported`; missing/non-integer/unknown kind rejects as `jdt_document_symbol_kind_malformed`; mixed/non-array/malformed name/path/range/selectionRange/children or uncontained selectionRange rejects as `jdt_document_symbol_response_malformed`.
+
+Homogeneous `SymbolInformation[]` is protocol-valid flat coordinate evidence only. It is marked `FlatSymbolInformation`; `containerName` MUST NOT be used to infer hierarchy. Its valid exact coordinates may continue supporting unrelated generic splitting, but it never supplies semantic TypeName. A matched owner receiving flat-only or null evidence returns `prepared-scan-reviewed-owner-symbol-unavailable` before Manifest publication. Definition, references and implementation parsing remain unchanged.
+
+For the one matched semantic-owner source:
+
+1. obtain at most one JDT document-symbol result per exact Repository ID/Profiled Revision/path/file-hash build key, even when the file fits whole-file bounds;
+2. require exactly one same-path top-level Type whose ordinal name equals the terminal segment of the profile symbol and whose UTF-16 line interval contains `selectorLine - 1`;
+3. keep a bounded source as one whole-file `CodeUnitType.File`; for oversized Java, reuse the same JDT result for the existing safe split and require exactly one segment containing the selector line;
+4. bind the profile FQN only to that owning File Code Unit's `SymbolName`; every other required segment remains path-valued while retaining score 1,100;
+5. complete the binding before CodeGraph expansion, selection, package fingerprints or atomic Manifest publication.
+
+Missing, duplicate, stale, malformed, wrong-name/path/range, unavailable or ambiguous JDT evidence returns `prepared-scan-reviewed-owner-symbol-unavailable`. No unique owning safe range returns `prepared-scan-reviewed-owner-segment-incomplete`. Both publish zero Manifests. Cancellation retains the existing cancellation result.
+
+Path-valued units preserve exact canonical domain `vulgata/story-12.2/file-code-unit-identity/1.0` and tags 1-12. A semantic unit uses `vulgata/story-12.2/file-code-unit-identity/2.0`, preserves tags 1-12 exactly and binds the ordinal FQN as tag 13. The identity fingerprint derives the File Code Unit ID and existing selection/Manifest/package fingerprints. Persistence, handoff and recovery readers reconstruct v1 only when `SymbolName == FilePath`; otherwise they validate/reconstruct v2 and reject any path/symbol/range/ID/fingerprint disagreement.
+
+`PreparedPass1FileCodeUnitAssignment` and `PreparedPass1WorkerPacket` MUST carry required server-only `SymbolName`. `PreparedPass1ClaimedPacketSource` validates v1/v2 before exact source read and after tracking-clear/re-fetch. Web `PreparedPass1JobRunner.CreateDispatchRequest` MUST forward hydrated `packet.SymbolName` unchanged into the assignment; no defaulting or inference is allowed. The dispatcher validates before executor invocation; the executor validates after authorization and before provider resolution. Omission, mutation or mismatch uses existing integrity failure with zero executor/provider continuation. `SymbolName` MUST NOT enter provider JSON, prompts, tools, navigate/submit schemas or results. Path-valued v1 and semantic FQN/v2 both round-trip through packet -> runner -> assignment -> dispatcher packet. Job state, scheduling, retry and failure policy remain unchanged. The Pass 1 commit and Source Anchor retain the same Code Unit/range.
+
+No database transaction spans the profile/JDT observation or any other external analysis. The initiation transaction has already closed, and the existing atomic publication transaction starts only after the complete symbol-bound package exists.
 
 ## Required verification
 
 The public production-composition vertical begins with only an authenticated authorized user, one ordinary System, two ordinary Repositories, exact ref/revision bindings, and ready accepted CodeGraph 1.5/JDT-LS ports. It pre-seeds no Scan Run, Pre-Scan Result, Scan Execution, coordination, Prepared Scan Manifest, File Code Unit or Document.
 
-It proves creation/handoff/publication; pre-publication retry; post-publication and advanced-phase handoff recovery without analysis; partial/corrupt conflict; mismatch conflict; revocation between initial and fresh pre-store checks with zero store calls/writes; tuple-required coordinator/builder composition; default Agents contract-identity and configured runtime resolver plus test-only replacement of those narrow seams; CodeGraph 1.5/no-CGC composition; and zero later-stage work. It also proves exact profile match and required-segment promotion, nonmatch-neutral fingerprints, matched missing/unsafe/duplicate/split/cap rejection before Manifest, sole default seed authority/no public profile fields, all required seeds successful in Pass 1, required-seed failure blocking exact work, and one no-preseed PostgreSQL path to the unchanged exact decision/current REFERENCES Edge/honest Uncertainty. Identity tests independently hash the v2 embedded prompt, pin prefix/hash/schema, preserve legacy v1 recovery output, and reject null/v1/malformed-hash/wrong-schema values before recheck/store. Disposable PostgreSQL tests independently prove identical and competing concurrency, advisory timeout, rollback and complete-tuple visibility. Golden Core tests pin domain/kind/identity outputs. The focused real CodeGraph CLI 2/2 qualification is supporting tool evidence only.
+It proves creation/handoff/publication, replay/conflict/authorization/atomicity, CodeGraph 1.5/no-CGC composition and zero later-stage work. The corrected path additionally proves root DocumentSymbol supported Type kinds, mandatory contained selectionRange, flat SymbolInformation non-authority with generic coordinate compatibility, malformed closure and unrelated navigation; whole-file/oversized binding; v1/v2 identity; semantic/path hydrated packet -> job runner -> assignment -> dispatcher packet SymbolName round-trip; omission/mutation rejection before executor/provider; unchanged provider shape; current Source Anchor and unchanged exact Edge/Uncertainty without seeding or repair. Existing identity, PostgreSQL concurrency and CodeGraph CLI evidence remain required.
 
 ## Explicit exclusions
 
-No caller profile/path, production sample literal, bound increase, `ExactResolutionProfile`/catalog/parser/resource change, `CodeGraphContextProvider`, historical `RepositoryProfilingCoordinator`, `/scan-runs` repair, general/single/N-Repository lifecycle, EF/model/migration change, Story 12.4 change, accepted Track A/B change, `WorkerAgentDispatchIdentitySource` change, prompt/dispatcher/provider/tool/retry change, Pass 1 failure-policy/store change, Pass 2/Chat behavior change, fake Backup B evidence, run-03 repair/reuse, or retained-database deletion is part of this contract.
+No caller/provider symbol input, containerName hierarchy inference, sample literal, bound increase, profile parser/resource change, CGC/legacy path, EF/model/migration, Story 12.4, Track A/B, recovery identity, prompt/provider JSON/tool/job-state/retry/scheduling/result-policy, Pass 1 policy, Pass 2/Chat, fake evidence, run-03 repair or retained-database deletion is allowed. Internal assignment/packet/claimed-source/job-runner bridge/dispatcher/executor may change only to carry/reconstruct SymbolName.

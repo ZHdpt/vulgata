@@ -2,14 +2,15 @@
 
 ## Sources inspected
 
-- corrected Story 12.5 specification and approved 2026-08-29 Track C-MVP, 2026-08-30 Prepared Scan initiation, and 2026-08-31 exact-profile seed-selection proposals;
+- unchanged accepted Story 12.5 specification and approved 2026-08-29 Track C-MVP, 2026-08-30 Prepared Scan initiation, 2026-08-31 exact-profile seed-selection, and 2026-08-31 exact-owner semantic-identity proposals;
 - PRD Section 0.1, Story 12.5, August 30 architecture and docs/judge-rubric.txt;
 - Constitution, AGENTS.md, Ubiquitous Language and accepted Track B final verification;
 - existing Track A/B release-gate tests, fixed question corpus and database-name guard;
 - production Prepared Scan endpoint/coordinator/builder/store, Scan Run/new-path Execution/Two-Repository coordination factories and EF mappings, `WorkerAgentDispatchIdentitySource`, embedded Prepared Pass 1 v2 prompt/dispatcher, runtime/prompt/schema identity sources, Pass 1/Pass 2, production Scan-status and Prepared Chat composition;
-- accepted Prepared Pass 1 identity decision/history plus current exact-profile seed-selection authorization `story-12-5-run-03-all-remaining-tasks-approval-02`;
+- accepted Prepared Pass 1/seed decision history plus current plan-only exact-owner decision `story-12-5-correct-course-exact-owner-semantic-identity-04`;
 - current contracts under contracts/, treated as downstream artifacts rather than authority.
-- run-03 immutable Prepared Scan/Pass 1/audit evidence and the production `ExactResolutionProfileCatalog`, `PreparedScanPairBuilder`, `PreparedScanPlanner`, `PreparedRelatedFileExpansion`, `PreparedPass1Store`, and exact-resolution coordinator/source seams.
+- run-03 immutable Prepared Scan/Pass 1/audit evidence, the T043 exact owner-binding diagnosis/handoff, and the production `ExactResolutionProfileCatalog`, `PreparedScanPairBuilder`, `JdtLsAnalysisAdapter`, `PreparedJavaRangeSource`, File Code Unit identity/persistence/handoff, Prepared Pass 1 assignment/packet/claimed-source/dispatcher/executor seams, `PreparedPass1Store`, and unchanged exact-resolution coordinator/source seams;
+- official Language Server Protocol 3.18 specification for the `textDocument/documentSymbol` response union and `SymbolKind` numeric values: <https://microsoft.github.io/language-server-protocol/specifications/lsp/3.18/specification/>.
 
 No unresolved design unknown remains. Machine- and credential-specific values are runtime prerequisites with fail-closed outcomes.
 
@@ -137,19 +138,19 @@ No unresolved design unknown remains. Machine- and credential-specific values ar
 - substitute fixtures/fake provider — cannot support release evidence;
 - print full environment/connection details — secret leakage risk.
 
-## R-11: No migration, Story 12.4 or downstream Scan-strategy change
+## R-11: No migration or Story 12.4 change; only explicitly approved bounded Scan deltas
 
-**Decision**: freeze `VulgataDbContext`, entity configurations, migrations, model snapshot, Story 12.4 contracts, and all parsing/filtering/selection/Worker/Pass behavior. Use the existing `ScanRuns`, `ScanExecutions`, and `TwoRepositoryScanCoordinations` tables for only the approved exactly-two-Repository entrance.
+**Decision**: freeze `VulgataDbContext`, entity configurations, migrations, model snapshot, Story 12.4 contracts, profile parser/resource, generic/nonmatching Scan behavior, Worker tools/prompts, and Pass 1 policy. Use existing tables and `CodeUnit.SymbolName`. Only the approved complete matched-profile seed classification and AD-PSI-7 JDT semantic-owner/identity path may differ.
 
 **Rationale**: existing factories, keys and foreign keys express the complete tuple. The missing property is transaction ownership, not storage shape.
 
-**Alternatives considered**: a tuple table, idempotency column, unique pair index, changed model constraint, Story 12.4 contract, or general lifecycle consolidation is outside authorization and unnecessary for the bounded entrance.
+**Alternatives considered**: a tuple table, semantic-owner column, idempotency column, unique pair index, changed model constraint, Story 12.4 contract, path-only lookup, or general lifecycle consolidation is outside the bounded design and unnecessary.
 
 ## R-12: Planned-change trigger
 
-**Decision**: require fresh independent plan-only and definition review for the reviewed-profile seed architecture. After acceptance, persist the normal scope-bound decision artifacts and use current authorization `story-12-5-run-03-all-remaining-tasks-approval-02` to continue task generation and implementation without another human pause.
+**Decision**: require a fresh independent plan-only review for AD-PSI-7. After `ACCEPT`, pause for explicit AGENTS.md Scan planned-change authorization before task generation. Then require regenerated-task independent definition review and a newly bound implementation approval before production work. Prior standing/seed approvals do not authorize the semantic-owner scope.
 
-**Rationale**: the plan adds no Agent tool and does not weaken the PRD, but it materially changes matched-pair Scan seed selection. AGENTS.md explicitly gates Scan strategy changes. The current user authorization covers remaining in-scope human gates and implementation, but it does not replace the independent reviews, TDD, convergence, quality, E2E, isolation or final-verification gates.
+**Rationale**: the plan adds no Agent tool and does not weaken the PRD, but it materially changes matched-pair JDT invocation and File Code Unit identity. AGENTS.md explicitly gates Scan strategy changes. The approved correct-course decision covers only plan correction/review and does not replace the planned-change, definition, implementation, TDD, convergence, quality, E2E, isolation or final-verification gates.
 
 ## R-13: One short store transaction is required
 
@@ -245,7 +246,7 @@ The current `ConfiguredAnalysisRuntimeHealthProbe` already performs the complete
 - inject `PreparedPass1WorkerDispatcher` or a provider — rejected because initiation needs identity only and must not acquire an Agent execution surface;
 - add a public request field — rejected because callers cannot select server contract identity.
 
-**Consequences**: default DI has exactly one Core-port-to-Agents mapping. The existing v2 prompt, dispatcher, provider, tools and retry/scheduling behavior remain unchanged; the legacy source and recovery tests remain unchanged. Authority/composition tests independently compute the resource hash, pin the exact prefix/schema, prove coordinator constructor separation, prove legacy output preservation, and prove hostile identity values fail before authorization recheck/store/external analysis. No EF, project-file, public DTO or persistence change follows from this decision.
+**Consequences**: default DI has exactly one Core-port-to-Agents mapping. R-21 itself changes no v2 prompt, dispatcher, provider, tool or retry/scheduling behavior; the legacy source and recovery tests remain unchanged. R-23 separately permits only server-side assignment/packet integrity checks while preserving provider-visible behavior. Authority/composition tests independently compute the resource hash, pin the exact prefix/schema, prove coordinator constructor separation, prove legacy output preservation, and prove hostile identity values fail before authorization recheck/store/external analysis. No EF, project-file, public DTO or persistence change follows from this decision.
 
 ## R-22: The embedded reviewed exact profile may contribute mandatory seeds only after a complete identity match
 
@@ -274,3 +275,44 @@ The current `ConfiguredAnalysisRuntimeHealthProbe` already performs the complete
 - change `ExactResolutionProfile`, its catalog/resource, exact resolver, Pass 1 store/policy, Story 12.4 contracts or persistence model — rejected as unnecessary and prohibited.
 
 **Consequences**: the architecture trigger is a material matched-pair Scan-selection change and requires independent plan review. Implementation ownership is limited to the new Core port/value, new Infrastructure adapter, one planner enum/score, builder validation/promotion, `Program.cs`, and their tests. Neutral fixtures must preserve exact prior selections and fingerprints. Run-03 remains historical diagnostic evidence; after technical acceptance the release restarts from a fresh guarded database.
+
+## R-23: The matched unsupported owner needs joint profile and current JDT-LS authority
+
+**Decision**: preserve the unchanged Story 12.4 owner query and bind the reviewed unsupported-observation File Code Unit to the profile's fully qualified Java symbol only after one current revision-bound JDT-LS document-symbol observation proves the terminal simple type name and exact UTF-16 range containing the reviewed selector line. The profile is the sole FQN/line authority; JDT-LS is the sole current source-structure authority. Neither is sufficient alone.
+
+The current JDT adapter cannot be used as typed authority as-is: its shared evidence parser labels every response item `AnalysisSymbolKind.Type` without reading the LSP kind or response hierarchy. Therefore `textDocument/documentSymbol` gets a dedicated protocol parser plus Core hierarchy provenance. The official union remains `DocumentSymbol[] | SymbolInformation[] | null`, but only homogeneous array-root `DocumentSymbol[]` can authorize the semantic owner. Each root requires nonempty name, integer Class=5/Enum=10/Interface=11/Struct=23 kind, positive exact range, positive exact selectionRange wholly contained by range, and array-valued children when present. Root children are not flattened. Missing/uncontained selectionRange, root non-Type kind, mixed shapes or malformed fields reject the operation.
+
+`SymbolInformation[]` is a protocol-valid flat list and its `containerName` is UI information, not hierarchy. It is therefore marked `FlatSymbolInformation`; no containerName value is inspected to infer top-level state. Its valid exact coordinates remain usable by unrelated generic safe splitting, but `PreparedJavaRangeSource` never projects a semantic TypeName from it. A matched reviewed owner receiving only flat evidence fails before Manifest publication. `null` is empty and also non-authoritative. Definition, references and implementation keep the existing parser and behavior.
+
+The existing `PreparedJdtSymbolSpan` keeps its four-coordinate constructor and gains optional observed type name, which `PreparedJavaRangeSource` projects only from this typed same-path evidence. The builder caches one observation per Repository/revision/path/file hash. A bounded matched owner remains one whole-file File Code Unit; an oversized owner reuses the same observation for the existing safe split and binds the FQN only to the unique segment containing the selector line. Other required segments remain path-valued and all remain score 1,100.
+
+Path-valued units retain exact file-identity v1 bytes. A semantic unit uses `vulgata/story-12.2/file-code-unit-identity/2.0`, with v1 tags 1-12 unchanged and tag 13 binding the ordinal FQN. Persistence and handoff reconstruct v1 when `SymbolName == RelativePath`, otherwise validated v2. The current Prepared Pass 1 assignment and packet do not carry `SymbolName`, so they gain it as required server-only metadata. The claimed source reconstructs v1/v2 before source read and again after tracking-clear/re-fetch. `PreparedPass1JobRunner.CreateDispatchRequest`, the sole hydrated-packet-to-assignment bridge, forwards SymbolName unchanged. The dispatcher validates the assignment before executor invocation; the executor validates the packet after authorization and before provider resolution. The provider request deliberately does not project SymbolName, preserving prompt/tool/request behavior. The existing column, Pass 1 commit and Source Anchor need no migration or Story 12.4 mapping.
+
+**Rationale**: T043 reaches terminal required Pass 1 with one consumer and one provider candidate, but the persisted owner SymbolName is the path and the exact query requires the FQN. Source inspection proves three exact gaps: the adapter synthesizes Type without hierarchy; the internal assignment/packet omit SymbolName; and the job runner reconstructs assignment positionally. Protocol-root provenance, contained selectionRange validation, two internal fields and one exact forwarding bridge close them without a second Java parser, provider-visible change, post-commit repair or wider lifecycle.
+
+**Exact failure boundary**:
+
+- malformed/duplicate profile owner binding or non-Java owner path: authority `Unavailable`, zero Manifest;
+- root DocumentSymbol non-array/mixed shape, malformed name/path/range/selectionRange/children, uncontained selectionRange, or missing/non-integer/unknown kind: adapter `MalformedResponse`; supported root non-Type kind: `jdt_document_symbol_kind_unsupported`; all yield zero Manifest;
+- homogeneous SymbolInformation: valid flat generic coordinates, never semantic TypeName; matched owner unavailable with zero Manifest regardless of containerName;
+- JDT unavailable, wrong typed path/name, missing/duplicate range, stale hash/revision or selector line outside the range: `prepared-scan-reviewed-owner-symbol-unavailable`, zero Manifest;
+- no unique owning whole-file/safe segment: `prepared-scan-reviewed-owner-segment-incomplete`, zero Manifest;
+- persisted or in-flight path/symbol/range/ID/fingerprint disagreement, including packet-to-assignment omission/mutation: replay/handoff conflict or claimed-source/job-runner/dispatcher/executor integrity rejection before Worker provider invocation or exact continuation;
+- cancellation: existing cancelled result, no fallback or partial publication.
+
+**Alternatives considered**:
+
+- weaken Story 12.4 to path-only — rejected because it removes accepted semantic ownership;
+- update the symbol after Pass 1 or directly repair the database — rejected because it breaks immutable evidence and canonical replay;
+- infer package/FQN from path or source text — rejected because Web would become a second Java parser;
+- trust only the embedded profile — rejected because it cannot prove current-revision source structure;
+- trust only JDT's simple name — rejected because it cannot supply the reviewed fully qualified identity;
+- keep synthesizing Type in the shared JDT parser — rejected because method/field/other evidence could falsely satisfy the semantic authority and because changing the shared parser risks unrelated navigation;
+- infer top-level hierarchy from `SymbolInformation.containerName` — rejected because the protocol defines a flat list and containerName is not hierarchy authority;
+- reject all SymbolInformation coordinates — rejected because explicit flat provenance preserves unrelated generic splitting without granting semantic authority;
+- add SymbolName to provider JSON/prompt/tools — rejected because the symbol is a server-side integrity input, not a provider-selected result, and no provider behavior change is required;
+- schedule a class/method Code Unit — rejected because Story 12.2 File Code Unit bounds and Pass 1 policy must remain unchanged;
+- add symbol to the public request or a new column — rejected because callers cannot select evidence and the existing column is sufficient;
+- rewrite every File Code Unit identity — rejected because generic/nonmatching v1 compatibility is required.
+
+**Consequences**: this is a material matched Scan-strategy and canonical-identity change requiring independent plan review and explicit AGENTS.md authorization. The production delta is limited to Core semantic/JDT/provenance/draft/identity/internal packet values, Infrastructure root/flat projection and claimed-source reconstruction, Agents validation, Web builder/cache plus job-runner forwarding, and focused/PostgreSQL tests. `Program.cs`, EF shape, profile resource/parser, Story 12.4, provider-visible prompts/tools/JSON, job state/scheduling/retry, Pass 1 policy and Track A/B remain unchanged.
