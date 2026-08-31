@@ -6,10 +6,10 @@
   "stage": "implement",
   "preflight": {
     "branch": "demo0831/story-12-5-trackC",
-    "head": "619682bb858614fa1cf7ea67ade692550cf4ee83",
-    "git_identity_sha256": "e7445ebdef2cec76ec782f90d73aa48a916634847b6364cdf6aa96ef5702a308",
-    "status_sha256": "2e8fd57a8b7b96a32204c9407b5ca74a5a6ff770bfd705f72c0dd89c7105af7b",
-    "observed_at": "2026-08-31T07:11:30.9342863Z"
+    "head": "e7a4cb10bec4037eb8fe5576423b004a00d7847c",
+    "git_identity_sha256": "38f82e7ccc5ec423c4c6befc3fba622d2ce47ada926dde08bf8888b2313cfca3",
+    "status_sha256": "37e617ad71a0a1c18cca9d6d0dc112d1692b8c02415f0532d66b4da47e8cb859",
+    "observed_at": "2026-08-31T07:29:28.8626111Z"
   },
   "artifacts": {
     "spec": {"path":"specs/014-grounded-llm-wiki-chat-release-evidence/spec.md","sha256":"6da3e251b217ab8dd8190f84c4cf864b994be1e87090558a29e125f5648ec8b7"},
@@ -44,15 +44,15 @@
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/diagnostics/exact-resolution-owner-binding-gap-01.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/handoffs/bmad-correct-course-exact-owner-binding-01.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/tdd/exact-owner-green-01.md",
-    "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/plan-review/plan-review-exact-owner-02.json",
+    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/tdd/exact-owner-postgresql-red-01.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/plan-review/plan-review-exact-owner-03.json",
     "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/definition-review/definition-review-exact-owner-04.json",
     "specs/014-grounded-llm-wiki-chat-release-evidence/reviews/definition-review/definition-review-exact-owner-05.json",
     "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/planned-change-authorization-exact-owner-semantic-identity-04.md",
     "specs/014-grounded-llm-wiki-chat-release-evidence/decisions/implementation-approval-exact-owner-semantic-identity-05.md",
-    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/track-c-mvp/run-03/release-report.md"
+    "specs/014-grounded-llm-wiki-chat-release-evidence/evidence/verification/exact-owner-semantic-identity-01.md"
   ],
-  "checkpoint": {"checkpoint_id":"bmad-12-5-implement-20260831T071130Z-bad6ab","stage":"implement","commit_sha":null,"binding_status":"pending"},
-  "resume": {"stage":"implement","reason":"T043-T047 RED/GREEN boundary is verified; resume at T048 focused and surrounding verification, with PostgreSQL qualification retained for T049.","evidence_path":"specs/014-grounded-llm-wiki-chat-release-evidence/evidence/tdd/exact-owner-green-01.md"},
-  "updated_at": "2026-08-31T07:11:30.9342863Z"
+  "checkpoint": {"checkpoint_id":"bmad-12-5-implement-20260831T072928Z-c4e8a1","stage":"implement","commit_sha":null,"binding_status":"pending"},
+  "resume": {"stage":"implement","reason":"T046 PostgreSQL vectors pass. T048 is blocked because the pinned JDT-LS 1.61.0-202608141332 archive is absent; do not advance to T049 until real qualification passes with that archive identity.","evidence_path":"specs/014-grounded-llm-wiki-chat-release-evidence/evidence/verification/exact-owner-semantic-identity-01.md"},
+  "updated_at": "2026-08-31T07:29:28.8626111Z"
 }

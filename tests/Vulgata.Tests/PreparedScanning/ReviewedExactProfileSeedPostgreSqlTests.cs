@@ -296,6 +296,9 @@ public sealed class ReviewedExactProfileSeedPostgreSqlTests
             });
             await LoginAsync(client, "story125.t046.matched@example.com");
             T039Counts before = await ReadCountsAsync(database);
+            Assert.Equal(
+                new T039Counts(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+                before);
             using HttpResponseMessage response = await client.PostAsJsonAsync(
                 $"/api/systems/{system.Id:D}/prepared-scans",
                 CreateRequest(profile, first.Id, second.Id));
@@ -307,7 +310,9 @@ public sealed class ReviewedExactProfileSeedPostgreSqlTests
                 $"Matched semantic-owner evidence must fail closed before publication; " +
                 $"status={(int)response.StatusCode}, before={before}, after={after}, body={body}, " +
                 $"pair-builder={diagnostics.Exception}");
-            Assert.Equal(before, after);
+            Assert.Equal(
+                new T039Counts(2, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0),
+                after);
         }
     }
 
