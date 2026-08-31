@@ -455,3 +455,21 @@ The workflow advances to TDD implementation for Track A only. The full-story
 implementation approval remains pending; Track B and C retain their accepted
 dependency gates. No EF, Story 12.4, fake Backup B release-evidence, or
 unaccepted architecture scope is authorized.
+
+### User-requested blocked termination
+
+On 2026-08-31 the user explicitly terminated Story 12.5. The repository has no
+separate BMad `blocked` lifecycle value, so the honest lifecycle status remains
+`in-progress`; the workflow remains at `implement` with closure disposition
+`terminated-blocked-incomplete`. This is not a `review`, `done`, release or
+completion transition.
+
+Accepted Track A/B, Prepared Scan initiation, Prepared Pass 1 reliability and
+identity, exact-profile selection, Exact Owner Semantic Identity T043-T047, and
+their immutable evidence remain preserved. T048 real production JDT-LS
+qualification is blocked by the unresolved pinned-archive versus extracted-
+installation deployment and source-navigation architecture boundary. T049-
+T066 and the complete real Scan/Pass 1/Cross-Repository Resolution/Pass 2/
+remote streaming Chat/restart/screenshot/release proof remain uncompleted and
+unclaimed. The durable termination and later-architecture handoff is
+`specs/014-grounded-llm-wiki-chat-release-evidence/evidence/handoffs/story-12-5-termination-blocked-01.md`.
