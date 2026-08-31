@@ -187,6 +187,12 @@ public static class VulgataWebComposition
     public static FrameworkCatalog ConfigureServices(WebApplicationBuilder builder)
     {
         ArgumentNullException.ThrowIfNull(builder);
+        builder.Services.AddOptions<ChatProviderReasoningOptions>()
+            .Bind(builder.Configuration.GetSection(ChatProviderReasoningOptions.SectionName))
+            .Validate(
+                options => ChatProviderReasoningOptions.IsSupported(options.ReasoningEffort),
+                "ChatProvider:ReasoningEffort must be none, minimal, low, medium, high, xhigh, or max.")
+            .ValidateOnStart();
         IDataProtectionBuilder dataProtection = builder.Services.AddDataProtection();
         string? keyRingPath = builder.Configuration["DataProtection:KeyRingPath"];
         string? applicationName = builder.Configuration["DataProtection:ApplicationName"];

@@ -4,6 +4,7 @@ using System.Text;
 using System.Text.Json;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Vulgata.Core.DomainServices;
 using Vulgata.Shared;
 
@@ -24,6 +25,7 @@ public sealed class ChatAgentDispatcher : IChatAgentDispatcher
     private readonly TimeProvider _timeProvider;
     private readonly IChatProviderStreamingTransport? _streamingTransport;
     private readonly ILogger<ChatAgentDispatcher>? _logger;
+    private readonly string? _reasoningEffort;
 
     public ChatAgentDispatcher(
         ChatAgentProviderResolver providerResolver,
@@ -59,6 +61,9 @@ public sealed class ChatAgentDispatcher : IChatAgentDispatcher
             logger)
     {
         _streamingTransport = services.GetRequiredService<IChatProviderStreamingTransport>();
+        _reasoningEffort = ChatProviderReasoningOptions.Normalize(
+            services.GetService<IOptions<ChatProviderReasoningOptions>>()?
+                .Value.ReasoningEffort);
     }
 
     public async Task<ChatSynthesisOutcome> GenerateAsync(
@@ -181,21 +186,42 @@ public sealed class ChatAgentDispatcher : IChatAgentDispatcher
         long absoluteDeadline,
         CancellationToken cancellationToken)
     {
-        string requestFingerprint = Convert.ToHexStringLower(SHA256.HashData(
-            Encoding.UTF8.GetBytes(string.Join(
-                '\u001f',
+        string[] requestFingerprintParts = _reasoningEffort is null
+            ? [
                 synthesisRequest.RequestId,
                 attemptKind,
                 provider.ProviderId.ToString("D"),
                 synthesisRequest.EvidenceFingerprint,
                 "stream=true",
-                prompt))));
+                prompt,
+            ]
+            : [
+                synthesisRequest.RequestId,
+                attemptKind,
+                provider.ProviderId.ToString("D"),
+                synthesisRequest.EvidenceFingerprint,
+                "stream=true",
+                $"reasoningEffort={_reasoningEffort}",
+                prompt,
+            ];
+        string requestFingerprint = Convert.ToHexStringLower(SHA256.HashData(
+            Encoding.UTF8.GetBytes(string.Join('\u001f', requestFingerprintParts))));
+        string[] providerConfigurationFingerprintParts = _reasoningEffort is null
+            ? [
+                provider.ProviderId.ToString("D"),
+                provider.Endpoint.AbsoluteUri,
+                provider.Model,
+            ]
+            : [
+                provider.ProviderId.ToString("D"),
+                provider.Endpoint.AbsoluteUri,
+                provider.Model,
+                $"reasoningEffort={_reasoningEffort}",
+            ];
         string providerConfigurationFingerprint = Convert.ToHexStringLower(
             SHA256.HashData(Encoding.UTF8.GetBytes(string.Join(
                 '\u001f',
-                provider.ProviderId.ToString("D"),
-                provider.Endpoint.AbsoluteUri,
-                provider.Model))));
+                providerConfigurationFingerprintParts))));
         var streamRequest = new ChatProviderStreamRequest(
             synthesisRequest.RequestId,
             attemptKind,
@@ -204,7 +230,8 @@ public sealed class ChatAgentDispatcher : IChatAgentDispatcher
             prompt,
             synthesisRequest.EvidenceFingerprint,
             requestFingerprint,
-            absoluteDeadline);
+            absoluteDeadline,
+            _reasoningEffort);
         using var deadline = new CancellationTokenSource(
             TimeSpan.FromMilliseconds(Math.Max(
                 1,
@@ -244,7 +271,13 @@ public sealed class ChatAgentDispatcher : IChatAgentDispatcher
                 ChatProviderStreamSignal signal = signals.Current;
                 if (signal.Kind == ChatProviderStreamSignalKind.ProviderError)
                 {
-                    return DispatchAttemptResult.Failed(ChatContractFailureCode.ProviderFailure);
+                    ChatContractFailureCode failureCode = cancellationToken.IsCancellationRequested
+                        ? ChatContractFailureCode.Cancelled
+                        : deadline.IsCancellationRequested ||
+                            inactivity?.IsCancellationRequested == true
+                            ? ChatContractFailureCode.TimedOut
+                            : ChatContractFailureCode.ProviderFailure;
+                    return DispatchAttemptResult.Failed(failureCode);
                 }
 
                 if (signal.Kind == ChatProviderStreamSignalKind.Terminal)
@@ -380,7 +413,8 @@ public sealed class ChatAgentDispatcher : IChatAgentDispatcher
                 return DispatchAttemptResult.Generated(result, responseJson);
             }
             catch (Exception exception) when (
-                exception is JsonException or InvalidOperationException or ChatContractException)
+                exception is JsonException or InvalidOperationException or
+                    KeyNotFoundException or ChatContractException)
             {
                 _logger?.LogWarning(
                     "Prepared Chat provider result contract validation failed with {ErrorType}: {ErrorMessage}",

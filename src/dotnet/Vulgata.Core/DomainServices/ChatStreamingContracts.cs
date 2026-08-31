@@ -15,7 +15,8 @@ public sealed record ChatProviderStreamRequest(
     string Prompt,
     string EvidencePacketFingerprint,
     string StreamingRequestFingerprint,
-    long AbsoluteDeadlineUnixTimeMilliseconds);
+    long AbsoluteDeadlineUnixTimeMilliseconds,
+    string? ReasoningEffort = null);
 
 public sealed record ChatStreamCompletionSummary(
     string CompletionSummaryId,

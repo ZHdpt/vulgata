@@ -93,6 +93,57 @@ public sealed class OpenAiCompatibleChatProviderStreamingTransportTests
     }
 
     [Fact]
+    public async Task StreamAsync_ConfiguredReasoningEffort_SerializesOpenAiCompatibleFieldAsync()
+    {
+        var provider = CreateProvider();
+        using var responseBody = new MemoryStream(Encoding.UTF8.GetBytes(
+            CreateSseEvent("answer", finishReason: "stop") + "data: [DONE]\n\n"));
+        using var handler = new CapturingRequestHandler(responseBody);
+        var transport = new OpenAiCompatibleChatProviderStreamingTransport(
+            new FakeProviderRepository(provider),
+            new FakeEncryptionService(),
+            handler,
+            new ChatStreamRuntimeObservationRecorder());
+        ChatProviderStreamRequest request = CreateRequest(
+            provider,
+            "stream-125-reasoning-none") with
+        {
+            ReasoningEffort = "none",
+        };
+
+        List<ChatProviderStreamSignal> signals = await CollectSignalsAsync(transport, request);
+
+        Assert.Contains(signals, signal => signal.Kind == ChatProviderStreamSignalKind.Terminal);
+        using JsonDocument body = JsonDocument.Parse(Assert.IsType<string>(handler.RequestBody));
+        Assert.Equal(
+            "none",
+            body.RootElement.GetProperty("reasoning_effort").GetString());
+    }
+
+    [Fact]
+    public async Task StreamAsync_OmittedReasoningEffort_LeavesProviderDefaultUnspecifiedAsync()
+    {
+        var provider = CreateProvider();
+        using var responseBody = new MemoryStream(Encoding.UTF8.GetBytes(
+            CreateSseEvent("answer", finishReason: "stop") + "data: [DONE]\n\n"));
+        using var handler = new CapturingRequestHandler(responseBody);
+        var transport = new OpenAiCompatibleChatProviderStreamingTransport(
+            new FakeProviderRepository(provider),
+            new FakeEncryptionService(),
+            handler,
+            new ChatStreamRuntimeObservationRecorder());
+        ChatProviderStreamRequest request = CreateRequest(
+            provider,
+            "stream-125-reasoning-omitted");
+
+        List<ChatProviderStreamSignal> signals = await CollectSignalsAsync(transport, request);
+
+        Assert.Contains(signals, signal => signal.Kind == ChatProviderStreamSignalKind.Terminal);
+        using JsonDocument body = JsonDocument.Parse(Assert.IsType<string>(handler.RequestBody));
+        Assert.False(body.RootElement.TryGetProperty("reasoning_effort", out _));
+    }
+
+    [Fact]
     public async Task StreamAsync_PhysicalIOException_EmitsOneBoundedNeutralDisconnectObservationAsync()
     {
         var provider = new LlmProvider(
@@ -757,6 +808,28 @@ public sealed class OpenAiCompatibleChatProviderStreamingTransportTests
                     },
                 },
             });
+    }
+
+    private sealed class CapturingRequestHandler(Stream body) : HttpMessageHandler
+    {
+        internal string? RequestBody { get; private set; }
+
+        protected override async Task<HttpResponseMessage> SendAsync(
+            HttpRequestMessage request,
+            CancellationToken cancellationToken)
+        {
+            RequestBody = await request.Content!.ReadAsStringAsync(cancellationToken);
+            return new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StreamContent(body)
+                {
+                    Headers =
+                    {
+                        ContentType = new MediaTypeHeaderValue("text/event-stream"),
+                    },
+                },
+            };
+        }
     }
 
     private sealed class ByteAtATimeSseStream(byte[] body, bool oneChunk = false) : Stream

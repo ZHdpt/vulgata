@@ -2,6 +2,7 @@ using System.Net.Http.Headers;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using Vulgata.Core.DomainServices;
 using Vulgata.Core.Entities;
 using Vulgata.Shared;
@@ -18,6 +19,10 @@ internal sealed class OpenAiCompatibleChatProviderStreamingTransport(
     private const int _maximumRawBodyBytes = 1_048_576;
     private const int _maximumReadBytes = 16_384;
     private static readonly UTF8Encoding _strictUtf8 = new(false, true);
+    private static readonly JsonSerializerOptions _requestSerializerOptions = new()
+    {
+        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+    };
 
     public async IAsyncEnumerable<ChatProviderStreamSignal> StreamAsync(
         ChatProviderStreamRequest request,
@@ -127,7 +132,8 @@ internal sealed class OpenAiCompatibleChatProviderStreamingTransport(
             model = provider.Name,
             stream = true,
             messages = new[] { new { role = "user", content = request.Prompt } },
-        });
+            reasoning_effort = request.ReasoningEffort,
+        }, _requestSerializerOptions);
         using var message = new HttpRequestMessage(
             HttpMethod.Post,
             ResolveChatCompletionsEndpoint(endpoint));
@@ -372,7 +378,8 @@ internal sealed class OpenAiCompatibleChatProviderStreamingTransport(
             string.IsNullOrWhiteSpace(request.Prompt) ||
             _strictUtf8.GetByteCount(request.Prompt) > 131_072 ||
             !IsSha256(request.EvidencePacketFingerprint) ||
-            !IsSha256(request.StreamingRequestFingerprint))
+            !IsSha256(request.StreamingRequestFingerprint) ||
+            !ChatProviderReasoningOptions.IsSupported(request.ReasoningEffort))
         {
             throw new ArgumentException("The raw Chat streaming request is invalid.", nameof(request));
         }

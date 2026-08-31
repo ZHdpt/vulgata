@@ -15,6 +15,7 @@ public static class DependencyInjection
     public static IServiceCollection AddPreparedPass2Agents(this IServiceCollection services)
     {
         ArgumentNullException.ThrowIfNull(services);
+        services.AddOptions<ChatProviderReasoningOptions>();
         services.AddScoped<ChatStreamRuntimeObservationRecorder>();
         services.AddScoped<IChatStreamCompletionSummaryRecorder>(provider =>
             provider.GetRequiredService<ChatStreamRuntimeObservationRecorder>());

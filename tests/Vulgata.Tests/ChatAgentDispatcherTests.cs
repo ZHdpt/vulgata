@@ -266,6 +266,80 @@ public sealed class ChatAgentDispatcherTests
     }
 
     [Fact]
+    public async Task GenerateAsync_StrictMissingModeEcho_ReturnsInvalidSelectionAsync()
+    {
+        ChatSynthesisRequest request = CreateRequest(ChatMode.Business);
+        string providerJson = CreateRawSelectionJson(request).Replace(
+            "\"mode\": \"business\",",
+            string.Empty,
+            StringComparison.Ordinal);
+        var provider = new LlmProvider(
+            "chat-model",
+            "https://chat-provider.example.com/v1",
+            "encrypted-chat-key",
+            ApiType.ChatCompletions,
+            AgentType.Chat,
+            DateTimeOffset.UtcNow);
+        var transport = new RecordingStreamTransport([providerJson]);
+        var services = new ServiceCollection();
+        services.AddPreparedPass2Agents();
+        services.AddScoped<IChatProviderStreamingTransport>(_ => transport);
+        using ServiceProvider serviceProvider = services.BuildServiceProvider();
+        using IServiceScope scope = serviceProvider.CreateScope();
+        var dispatcher = new ChatAgentDispatcher(
+            scope.ServiceProvider,
+            new ChatAgentProviderResolver(
+                new FakeOverrideRepository(null),
+                new FakeProviderRepository([provider])),
+            new CapturingEncryptionService("plaintext-chat-key"),
+            new ChatPromptCatalog(),
+            new OpenAiCaptureHandler(() => string.Empty),
+            TimeProvider.System);
+
+        ChatSynthesisOutcome outcome = await dispatcher.GenerateAsync(request);
+
+        Assert.Equal(ChatContractFailureCode.InvalidSelection, outcome.FailureCode);
+        Assert.Null(outcome.Result);
+        Assert.Null(outcome.RawSelectionJson);
+        Assert.Single(transport.Requests);
+    }
+
+    [Fact]
+    public async Task GenerateAsync_ConfiguredReasoningEffort_PropagatesToStreamingRequestAsync()
+    {
+        ChatSynthesisRequest request = CreateRequest(ChatMode.Business);
+        var provider = new LlmProvider(
+            "chat-model",
+            "https://chat-provider.example.com/v1",
+            "encrypted-chat-key",
+            ApiType.ChatCompletions,
+            AgentType.Chat,
+            DateTimeOffset.UtcNow);
+        var transport = new RecordingStreamTransport([CreateRawSelectionJson(request)]);
+        var services = new ServiceCollection();
+        services.Configure<ChatProviderReasoningOptions>(options =>
+            options.ReasoningEffort = "none");
+        services.AddPreparedPass2Agents();
+        services.AddScoped<IChatProviderStreamingTransport>(_ => transport);
+        using ServiceProvider serviceProvider = services.BuildServiceProvider();
+        using IServiceScope scope = serviceProvider.CreateScope();
+        var dispatcher = new ChatAgentDispatcher(
+            scope.ServiceProvider,
+            new ChatAgentProviderResolver(
+                new FakeOverrideRepository(null),
+                new FakeProviderRepository([provider])),
+            new CapturingEncryptionService("plaintext-chat-key"),
+            new ChatPromptCatalog(),
+            new OpenAiCaptureHandler(() => string.Empty),
+            TimeProvider.System);
+
+        ChatSynthesisOutcome outcome = await dispatcher.GenerateAsync(request);
+
+        Assert.NotNull(outcome.Result);
+        Assert.Equal("none", Assert.Single(transport.Requests).ReasoningEffort);
+    }
+
+    [Fact]
     public async Task GenerateAsync_UnsupportedQuestion_AcceptsExplicitEmptySelection()
     {
         ChatSynthesisRequest request = CreateRequest(ChatMode.Business);
@@ -680,6 +754,47 @@ public sealed class ChatAgentDispatcherTests
             {
             }
         }
+    }
+
+    [Fact]
+    public async Task GenerateAsync_DeadlineCancellationReportedAsProviderError_ReturnsTimedOut()
+    {
+        var clock = new ControllableTimeProvider(DateTimeOffset.UnixEpoch);
+        ChatSynthesisRequest request = CreateRequest(
+            ChatMode.Business,
+            DateTimeOffset.UnixEpoch.AddSeconds(30).ToUnixTimeMilliseconds());
+        var provider = new LlmProvider(
+            "chat-model",
+            "https://chat-provider.example.com/v1",
+            "encrypted-chat-key",
+            ApiType.ChatCompletions,
+            AgentType.Chat,
+            DateTimeOffset.UtcNow);
+        var transport = new ProviderErrorOnCancellationStreamTransport();
+        var services = new ServiceCollection();
+        services.AddPreparedPass2Agents();
+        services.AddScoped<IChatProviderStreamingTransport>(_ => transport);
+        using ServiceProvider serviceProvider = services.BuildServiceProvider();
+        using IServiceScope scope = serviceProvider.CreateScope();
+        var dispatcher = new ChatAgentDispatcher(
+            scope.ServiceProvider,
+            new ChatAgentProviderResolver(
+                new FakeOverrideRepository(null),
+                new FakeProviderRepository([provider])),
+            new CapturingEncryptionService("plaintext-chat-key"),
+            new ChatPromptCatalog(),
+            new OpenAiCaptureHandler(() => string.Empty),
+            clock);
+
+        Task<ChatSynthesisOutcome> pending = dispatcher.GenerateAsync(request);
+        await transport.Started.Task.WaitAsync(TimeSpan.FromSeconds(2));
+        clock.Fire(TimeSpan.FromSeconds(30));
+        ChatSynthesisOutcome outcome = await pending.WaitAsync(TimeSpan.FromSeconds(2));
+
+        Assert.Equal(ChatContractFailureCode.TimedOut, outcome.FailureCode);
+        Assert.Null(outcome.Result);
+        Assert.Null(outcome.RawSelectionJson);
+        Assert.Single(transport.Requests);
     }
 
     [Fact]
@@ -1246,6 +1361,38 @@ public sealed class ChatAgentDispatcherTests
             }
 
             yield break;
+        }
+    }
+
+    private sealed class ProviderErrorOnCancellationStreamTransport :
+        IChatProviderStreamingTransport
+    {
+        public TaskCompletionSource Started { get; } = new(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+        public List<ChatProviderStreamRequest> Requests { get; } = [];
+
+        public async IAsyncEnumerable<ChatProviderStreamSignal> StreamAsync(
+            ChatProviderStreamRequest request,
+            [EnumeratorCancellation] CancellationToken cancellationToken)
+        {
+            Requests.Add(request);
+            Started.TrySetResult();
+            bool cancellationObserved = false;
+            try
+            {
+                await Task.Delay(Timeout.InfiniteTimeSpan, cancellationToken);
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                cancellationObserved = true;
+            }
+
+            if (cancellationObserved)
+            {
+                yield return new ChatProviderStreamSignal(
+                    ChatProviderStreamSignalKind.ProviderError,
+                    ReadOnlyMemory<byte>.Empty);
+            }
         }
     }
 
