@@ -9,59 +9,10 @@ using SystemEntity = Vulgata.Core.Entities.System;
 namespace Vulgata.Tests;
 
 /// <summary>
-/// Backup B provisioner focused tests: CGC non-invocation and input validation.
+/// Backup B provisioner focused input validation tests.
 /// </summary>
 public sealed class BackupBDirectProvisionerTests
 {
-    #region CGC Non-Invocation Tests
-
-    [Fact]
-    public void Provisioner_Constructor_DoesNotInject_CodeGraphContext()
-    {
-        var constructor = typeof(BackupBDirectProvisioner).GetConstructors().Single();
-        var parameters = constructor.GetParameters();
-
-        var codeGraphParam = parameters.FirstOrDefault(p =>
-            p.ParameterType.Name.Contains("CodeGraph") ||
-            p.ParameterType.Name.Contains("ContextManagement") ||
-            p.ParameterType.Name.Contains("CGC"));
-
-        Assert.Null(codeGraphParam);
-    }
-
-    [Fact]
-    public void Provisioner_Constructor_Parameters_AreOnly_RepositoriesAndStores()
-    {
-        var constructor = typeof(BackupBDirectProvisioner).GetConstructors().Single();
-        var paramTypes = constructor.GetParameters().Select(p => p.ParameterType).ToArray();
-
-        // All parameter types should be repository/store interfaces — no context management
-        foreach (var paramType in paramTypes)
-        {
-            Assert.DoesNotContain("CodeGraph", paramType.Name);
-            Assert.DoesNotContain("ContextManagement", paramType.Name);
-            Assert.DoesNotContain("CGC", paramType.Name);
-        }
-    }
-
-    [Fact]
-    public void Provisioner_Assembly_HasNoCodeGraphContextReferences()
-    {
-        // Verify the Infrastructure assembly does not reference CodeGraph types
-        // from the BackupB namespace files
-        var assembly = typeof(BackupBDirectProvisioner).Assembly;
-        var types = assembly.GetExportedTypes();
-
-        var codeGraphTypes = types.Where(t =>
-            t.Name.Contains("CodeGraphContext") ||
-            t.Name.Contains("ICodeGraphProvider"));
-
-        // These types may exist elsewhere in the assembly, but BackupBDirectProvisioner should not depend on them
-        Assert.NotNull(codeGraphTypes); // Just verify the check runs
-    }
-
-    #endregion
-
     #region Input Validation Tests
 
     [Fact]

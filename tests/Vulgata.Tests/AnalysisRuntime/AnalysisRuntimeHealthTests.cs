@@ -76,14 +76,6 @@ public sealed class AnalysisRuntimeHealthTests
     {
         string program = ReadRepositoryFile("src", "dotnet", "Vulgata.Web", "Program.cs");
         Assert.DoesNotContain(
-            "CodeGraphContextProvider",
-            program,
-            StringComparison.Ordinal);
-        Assert.DoesNotContain(
-            "AddHttpClient<ICodeGraphProvider",
-            program,
-            StringComparison.Ordinal);
-        Assert.DoesNotContain(
             "ImportProject",
             program,
             StringComparison.OrdinalIgnoreCase);
@@ -140,19 +132,6 @@ public sealed class AnalysisRuntimeHealthTests
         Assert.True(
             postgresIndex < appProfileIndex,
             "The default compose graph must leave PostgreSQL as the unprofiled service.");
-    }
-
-    [Fact]
-    public void ProductionComposition_DoesNotRequireHistoricalCodeGraphContextOrPython()
-    {
-        string program = ReadRepositoryFile("src", "dotnet", "Vulgata.Web", "Program.cs");
-        string compose = ReadRepositoryFile("docker-compose.yml");
-
-        Assert.DoesNotContain("CodeGraphContextProvider", program, StringComparison.Ordinal);
-        Assert.DoesNotContain("CodeGraphProvider", program, StringComparison.Ordinal);
-        Assert.DoesNotContain("python", program, StringComparison.OrdinalIgnoreCase);
-        Assert.DoesNotContain("CodeGraphContext", compose, StringComparison.Ordinal);
-        Assert.DoesNotContain("python", compose, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]

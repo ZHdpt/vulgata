@@ -21,7 +21,6 @@ public sealed class NavigateCodeSecurityTests
         "unauthorized ownership scope",
         "raw LSP message",
         "raw CodeGraph query/storage",
-        "CodeGraphContext",
         "shell/process",
         "network",
         "unrestricted filesystem",
@@ -194,7 +193,6 @@ public sealed class NavigateCodeSecurityTests
         [
             "JsonRpc",
             "LspClient",
-            "CodeGraphContext",
             "DbContext",
             "ProcessStartInfo",
             "HttpClient",
@@ -225,7 +223,6 @@ public sealed class NavigateCodeSecurityTests
             "RawLsp",
             "RawCodeGraph",
             "CodeGraphStorage",
-            "CodeGraphContext",
             "Shell",
             "Process",
             "Network",

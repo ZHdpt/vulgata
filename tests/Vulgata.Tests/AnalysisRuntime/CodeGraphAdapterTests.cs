@@ -2,7 +2,6 @@ using System.Reflection;
 using System.Text;
 using Vulgata.Core.DomainServices;
 using Vulgata.Infrastructure.Analysis.CodeGraph;
-using Vulgata.Infrastructure.CodeGraph;
 
 namespace Vulgata.Tests.AnalysisRuntime;
 
@@ -66,7 +65,7 @@ public sealed class CodeGraphAdapterTests
             },
             identity.CodeGraphFiles);
 
-        Assembly infrastructureAssembly = typeof(CodeGraphContextProvider).Assembly;
+        Assembly infrastructureAssembly = typeof(CodeGraphAnalysisAdapter).Assembly;
         Type[] adapterTypes = infrastructureAssembly
             .GetTypes()
             .Where(type =>

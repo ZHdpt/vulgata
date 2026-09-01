@@ -184,27 +184,15 @@ public sealed class PreparedScanRuntimeIdentityResolverTests
     }
 
     [Fact]
-    public async Task DefaultComposition_UsesCodeGraph15AndJdtLsPortsWithoutLegacyProfiling()
+    public async Task DefaultComposition_UsesCodeGraph15AndJdtLsPorts()
     {
-        Type legacyProfilingContract = FindWebType("IRepositoryProfilingCoordinator");
         await using AsyncServiceScope scope = _factory.Services.CreateAsyncScope();
-        Assert.Null(scope.ServiceProvider.GetService(legacyProfilingContract));
 
         string program = ReadRepositoryFile("src", "dotnet", "Vulgata.Web", "Program.cs");
         Assert.Contains("CodeGraphAnalysisAdapter", program, StringComparison.Ordinal);
         Assert.Contains("ICodeGraphAnalysisPort", program, StringComparison.Ordinal);
         Assert.Contains("JdtLsAnalysisSessionFactory", program, StringComparison.Ordinal);
         Assert.Contains("IJavaAnalysisSessionFactory", program, StringComparison.Ordinal);
-        Assert.DoesNotContain("CodeGraphContextProvider", program, StringComparison.Ordinal);
-        Assert.DoesNotContain("ICodeGraphProvider", program, StringComparison.Ordinal);
-        Assert.DoesNotContain(
-            "AddScoped<IRepositoryProfilingCoordinator",
-            program,
-            StringComparison.Ordinal);
-        Assert.DoesNotContain(
-            "GetRequiredService<IRepositoryProfilingCoordinator",
-            program,
-            StringComparison.Ordinal);
     }
 
     [Fact]

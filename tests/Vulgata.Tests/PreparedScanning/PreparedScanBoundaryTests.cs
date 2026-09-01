@@ -29,7 +29,6 @@ public sealed class PreparedScanBoundaryTests
         "Pass2",
         "Chat",
         "BackupB",
-        "CodeGraphContext",
         "LlmProvider",
     ];
 
@@ -145,7 +144,6 @@ public sealed class PreparedScanBoundaryTests
             "IChatAgentDispatcher",
             "IPreparedChatScopeResolver",
             "BackupB",
-            "CodeGraphContext",
             "ILlmProviderRepository",
         ];
         string[] matches =

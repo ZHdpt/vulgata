@@ -51,7 +51,6 @@ public sealed class Pass1ProductionBoundaryQualificationTests
 
     private static readonly string[] ForbiddenWorkerLiterals =
     [
-        "CodeGraphContext",
         "retrieve_code_logic",
         "PreparedPass2",
         "BusinessLogicDocument",

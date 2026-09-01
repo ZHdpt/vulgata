@@ -80,7 +80,6 @@ public sealed class PreparedCodeGraphReadinessTests
             typeof(CodeGraphAnalysisAdapter).Assembly,
             _preparedAdapterName);
 
-        Assert.DoesNotContain("CodeGraphContext", adapterType.FullName!, StringComparison.Ordinal);
         Assert.DoesNotContain(
             adapterType.GetMethods(BindingFlags.Public | BindingFlags.Instance),
             method => new[] { "Explore", "Node", "Files", "Daemon", "Unlock", "Install", "Upgrade" }

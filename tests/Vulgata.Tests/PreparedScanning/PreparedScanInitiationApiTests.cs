@@ -404,7 +404,6 @@ public sealed class PreparedScanInitiationApiTests
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
         Assert.Equal(2, scenario.CodeGraphCalls);
         Assert.Equal(2, scenario.JavaReadinessCalls);
-        Assert.False(scenario.CgcResolved);
         Assert.True(scenario.BuilderEntryTupleVisible);
     }
 
@@ -853,16 +852,6 @@ internal sealed class PublicPreparedScanScenario : IAsyncDisposable
     internal int CodeGraphCalls => Observations.CodeGraphCalls;
 
     internal int JavaReadinessCalls => Observations.JavaReadinessCalls;
-
-    internal bool CgcResolved
-    {
-        get
-        {
-            Type? legacy = typeof(Program).Assembly.GetTypes()
-                .SingleOrDefault(type => type.Name == "IRepositoryProfilingCoordinator");
-            return legacy is not null && Factory.Services.GetService(legacy) is not null;
-        }
-    }
 
     internal bool BuilderEntryTupleVisible => Observations.BuilderEntryTupleVisible;
 

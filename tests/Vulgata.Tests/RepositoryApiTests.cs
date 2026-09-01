@@ -613,51 +613,6 @@ public sealed class RepositoryApiTests
         AssertNoProfilingDisclosure(body);
     }
 
-    [Fact]
-    public async Task ManagementSystemScanRunRead_WhenVisibilityIsRevokedDuringRead_ReturnsNotFoundWithoutProfilingDisclosureAsync()
-    {
-        var system = new Vulgata.Core.Entities.System(
-            "权限撤销系统",
-            description: null,
-            context: null,
-            DateTimeOffset.UtcNow);
-        Vulgata.Core.Entities.Repository repository = system.AddRepository(
-            "权限撤销仓库",
-            "https://example.invalid/revoked.git",
-            description: null,
-            context: null,
-            DateTimeOffset.UtcNow);
-        ScanRun run = CreateSensitiveRun(repository.Id);
-        var visibility = new VisibleThenRevokedSystemRepository(system);
-        var coordinator = new RepositoryProfilingCoordinator(
-            visibility,
-            new FixedRepositoryRepository(repository),
-            new FixedScanRunRepository(run),
-            null!,
-            new UnusedCommittedSnapshotService(),
-            null!,
-            null!,
-            null!,
-            null!,
-            null!,
-            null!,
-            new UnusedPreScanCommunicationDetector());
-        using WebApplicationFactory<Program> factory = CreateFactoryWithCoordinator(coordinator);
-        const string email = "story42.visibility-revoked-read.admin@example.com";
-        await CreateUserWithRoleAsync(factory.Services, email, RoleNames.Administrator);
-        using HttpClient client = CreateClient(factory);
-        await LoginAsync(client, email);
-
-        using HttpResponseMessage response = await client.GetAsync(
-            $"/api/systems/{system.Id}/repositories/{repository.Id}/scan-runs/{run.Id}");
-        string body = await response.Content.ReadAsStringAsync();
-
-        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
-        Assert.Equal(2, visibility.VisibilityChecks);
-        Assert.Contains("扫描记录不存在", body, StringComparison.Ordinal);
-        AssertNoProfilingDisclosure(body);
-    }
-
     private WebApplicationFactory<Program> CreateFactory(
         ScanRunSummaryDto? summary,
         RepositoryProfilingResult? startResult = null,
