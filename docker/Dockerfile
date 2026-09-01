@@ -2,18 +2,6 @@ ARG VULGATA_SOURCE_COMMIT
 ARG VULGATA_SOURCE_TREE
 ARG VULGATA_PRODUCTION_SOURCE_MANIFEST_SHA256
 
-# Stage 0: exact CodeGraphContext provider qualification runtime.
-# The user-provided local CPython base is immutable and must never be pulled by
-# qualification. The hash-locked installation happens only at image build time.
-FROM python:3.12-bookworm@sha256:9bed8554e926c07c6f908841d5ee88c33e8df9236b191526bbce81a9062ab43a AS codegraph
-WORKDIR /opt/codegraph
-
-COPY docker/codegraph/requirements.lock ./requirements.lock
-ENV PIP_INDEX_URL=https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple/
-RUN python -m pip install --no-cache-dir --index-url "$PIP_INDEX_URL" --retries 10 --timeout 60 --require-hashes --requirement requirements.lock \
-    && python --version \
-    && cgc version
-
 # Stage 1: build and publish
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
@@ -33,8 +21,8 @@ LABEL org.vulgata.source-commit=${VULGATA_SOURCE_COMMIT} \
     org.vulgata.source-tree=${VULGATA_SOURCE_TREE} \
     org.vulgata.production-source-manifest-sha256=${VULGATA_PRODUCTION_SOURCE_MANIFEST_SHA256}
 
-# Install the application runtime dependency. CodeGraphContext is copied from
-# the exact, hash-verified build stage above; no runtime resolver is invoked.
+# Install application runtime prerequisites for repository operations and
+# health checks.
 # Use the user-approved Tsinghua mirror for the ordinary Noble archives while
 # retaining Ubuntu's official security archive.
 RUN printf '%s\n' \
@@ -54,8 +42,6 @@ RUN apt-get -o Acquire::Retries=5 -o Acquire::http::Timeout=30 -o Acquire::https
     && apt-get -o Acquire::Retries=5 -o Acquire::http::Timeout=30 -o Acquire::https::Timeout=30 install -y --no-install-recommends git ca-certificates curl \
     && rm -rf /var/lib/apt/lists/*
 
-COPY --from=codegraph /usr/local /usr/local
-COPY --from=codegraph /opt/codegraph/requirements.lock /opt/codegraph/requirements.lock
 RUN mkdir --parents /var/lib/vulgata-codegraph \
     && chown --recursive app:app /var/lib/vulgata-codegraph
 
@@ -63,9 +49,7 @@ COPY --from=build /app/publish .
 
 EXPOSE 8080
 ENV ASPNETCORE_URLS=http://+:8080 \
-    HOME=/home/app \
-    PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONNOUSERSITE=1
+    HOME=/home/app
 
 USER app
 ENTRYPOINT ["dotnet", "Vulgata.Web.dll"]
