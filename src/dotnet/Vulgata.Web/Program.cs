@@ -12,7 +12,6 @@ using Vulgata.Agents;
 using Vulgata.Core.DomainServices;
 using Vulgata.Core.DomainServices.BackupB;
 using Vulgata.Core.Entities;
-using Vulgata.Infrastructure.CodeGraph;
 using Vulgata.Infrastructure.Analysis.CodeGraph;
 using Vulgata.Infrastructure.Analysis.Java;
 using Vulgata.Infrastructure.Analysis.PreparedNavigation;
@@ -487,6 +486,7 @@ public static class VulgataWebComposition
         builder.Services.AddScoped<ILlmProviderRepository, LlmProviderRepository>();
         builder.Services.AddScoped<ISystemLlmProviderOverrideRepository, SystemLlmProviderOverrideRepository>();
         builder.Services.AddScoped<IRepositoryManagementCoordinator, RepositoryManagementCoordinator>();
+        builder.Services.AddScoped<IRepositoryProfilingCoordinator, RepositoryProfilingCoordinator>();
         builder.Services.AddScoped<IPreScanHandoffService, PreScanHandoffService>();
         builder.Services.AddScoped<IRepositoryDatabaseConnectionCoordinator, RepositoryDatabaseConnectionCoordinator>();
         builder.Services.AddScoped<ILlmProviderConnectionTestService, LlmProviderConnectionTestService>();
@@ -505,11 +505,6 @@ public static class VulgataWebComposition
                                    (OperatingSystem.IsLinux()
                                        ? "/var/lib/vulgata-codegraph"
                                        : Path.Combine(builder.Environment.ContentRootPath, "data", "profiling"));
-        builder.Services.AddSingleton(new CodeGraphOptions(
-            Path.Combine(profilingDataRoot, "codegraph"),
-            builder.Configuration.GetValue(
-                "CodeGraph:WholeRepositoryProcessTimeoutSeconds",
-                1_800)));
         builder.Services.AddSingleton(new GitWorkingCopyOptions(
             Path.Combine(profilingDataRoot, "repositories")));
         builder.Services.AddScoped<IGitWorkingCopyService, GitWorkingCopyService>();
@@ -537,7 +532,6 @@ public static class VulgataWebComposition
         return frameworkCatalog;
     }
 }
-
 internal static class AnalysisRuntimeStartupScope
 {
     internal static AnalysisScope Create() => new(
@@ -948,53 +942,5 @@ internal sealed class UnboundRevisionSourceReader : IRevisionBoundSourceReader
                 AnalysisPortFailureReason.NotReady,
                 "source_binding_unavailable",
                 "source binding unavailable")));
-    }
-}
-
-internal sealed class RuntimeUnavailableRepositoryProfilingCoordinator
-    : IRepositoryProfilingCoordinator
-{
-    public Task<RepositoryProfilingResult> StartSystemRepositoryAsync(
-        Guid systemId,
-        Guid repositoryId,
-        IUserContext user,
-        CancellationToken cancellationToken = default)
-    {
-        cancellationToken.ThrowIfCancellationRequested();
-        return Task.FromResult(new RepositoryProfilingResult(
-            RepositoryProfilingOutcome.ProviderUnavailable,
-            Message: "Analysis Runtime is NotReady."));
-    }
-
-    public Task<RepositoryProfilingResult> StartStandaloneRepositoryAsync(
-        Guid repositoryId,
-        IUserContext user,
-        CancellationToken cancellationToken = default)
-    {
-        cancellationToken.ThrowIfCancellationRequested();
-        return Task.FromResult(new RepositoryProfilingResult(
-            RepositoryProfilingOutcome.ProviderUnavailable,
-            Message: "Analysis Runtime is NotReady."));
-    }
-
-    public Task<ScanRunSummaryDto?> GetSystemRepositoryRunAsync(
-        Guid systemId,
-        Guid repositoryId,
-        Guid scanRunId,
-        IUserContext user,
-        CancellationToken cancellationToken = default)
-    {
-        cancellationToken.ThrowIfCancellationRequested();
-        return Task.FromResult<ScanRunSummaryDto?>(null);
-    }
-
-    public Task<ScanRunSummaryDto?> GetStandaloneRepositoryRunAsync(
-        Guid repositoryId,
-        Guid scanRunId,
-        IUserContext user,
-        CancellationToken cancellationToken = default)
-    {
-        cancellationToken.ThrowIfCancellationRequested();
-        return Task.FromResult<ScanRunSummaryDto?>(null);
     }
 }

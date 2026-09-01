@@ -171,7 +171,7 @@ results per call, 65,536 evidence bytes total, explicit depth three, and ten
 provider turns. Respect `Unavailable` and metadata-only `BoundExceeded`
 responses; never retry them to probe hidden scope.
 
-No raw LSP, raw CodeGraph storage/query, CodeGraphContext, shell, process,
+No raw LSP, raw CodeGraph storage/query, legacy analysis-provider access, shell, process,
 network, database, arbitrary filesystem, host path, write operation, or other
 tool is available. If the packet cannot support a schema-valid result, return
 the smallest truthful bounded result allowed by the schema; never weaken a

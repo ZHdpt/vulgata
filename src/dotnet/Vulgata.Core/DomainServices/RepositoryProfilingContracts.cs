@@ -35,14 +35,6 @@ public interface IScanCandidateEnumerator
         CancellationToken cancellationToken = default);
 }
 
-public interface ICodeGraphProvider
-{
-    Task<CodeGraphProviderResult> ProfileAsync(
-        string workingCopyPath,
-        TimeSpan timeout,
-        CancellationToken cancellationToken = default);
-}
-
 public interface IFrameworkEvidenceDetector
 {
     Task<IReadOnlyList<PackageEvidence>> DetectAsync(
@@ -255,94 +247,6 @@ public sealed record ScanSourceCandidate(
     bool IsFiltered,
     string Category,
     int AuditGroupOrdinal);
-
-public sealed record CodeGraphProviderResult(
-    bool Succeeded,
-    IReadOnlyList<ProviderCodeUnit> CodeUnits,
-    IReadOnlyList<ProviderStructuralRelationship> Relationships,
-    IReadOnlyList<ProviderCandidateOutcome> CandidateOutcomes,
-    int ParsedFileCount,
-    TimeSpan Duration,
-    string? Error)
-{
-    public static CodeGraphProviderResult Failure(string error, TimeSpan duration) =>
-        new(false, [], [], [], 0, duration, error);
-}
-
-public sealed record ProviderCodeUnit(
-    string RelativePath,
-    string SymbolName,
-    CodeUnitType UnitType,
-    int LineStart,
-    int LineEnd,
-    string EndpointIdentity,
-    RangeConfidence RangeConfidence,
-    string? Language = null);
-
-public sealed record ProviderStructuralRelationship(
-    string SourceEndpointIdentity,
-    string TargetEndpointIdentity,
-    StructuralRelationshipKind RelationshipKind);
-
-public sealed record SafeProviderPath
-{
-    public const string UnknownValue = "(unknown)";
-
-    private SafeProviderPath(string value, bool isKnown)
-    {
-        Value = value;
-        IsKnown = isKnown;
-    }
-
-    public string Value { get; }
-    public bool IsKnown { get; }
-
-    public static SafeProviderPath FromProviderScalar(string? path)
-    {
-        if (string.IsNullOrWhiteSpace(path) ||
-            path.Length > 2_048 ||
-            path.Length != path.Trim().Length ||
-            path.Any(char.IsControl) ||
-            (path[0] is '/' or '\\') ||
-            Path.IsPathRooted(path) ||
-            (path.Length >= 2 && char.IsAsciiLetter(path[0]) && path[1] == ':'))
-        {
-            return Unknown();
-        }
-
-        string normalized = path.Trim().Replace('\\', '/');
-        string[] segments = normalized.Split('/');
-        if (StringComparer.Ordinal.Equals(normalized, UnknownValue) ||
-            normalized.Length is 0 or > 2_048 ||
-            segments.Any(segment => segment is "" or "." or ".."))
-        {
-            return Unknown();
-        }
-
-        return new(normalized, isKnown: true);
-    }
-
-    public static SafeProviderPath Revalidate(SafeProviderPath? path) =>
-        FromProviderScalar(path?.Value);
-
-    public override string ToString() => Value;
-
-    private static SafeProviderPath Unknown() => new(UnknownValue, isKnown: false);
-}
-
-public sealed record ProviderCandidateOutcome(
-    SafeProviderPath RelativePath,
-    ScanCandidateOutcomeKind Outcome,
-    string Reason)
-{
-    public ProviderCandidateOutcome(
-        string? relativePath,
-        ScanCandidateOutcomeKind outcome,
-        string reason)
-        : this(SafeProviderPath.FromProviderScalar(relativePath), outcome, reason)
-    {
-    }
-}
 
 public static class ScanCandidateOutcomeReasons
 {

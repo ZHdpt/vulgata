@@ -11,7 +11,7 @@ namespace Vulgata.Infrastructure.Git.BackupB;
 /// <summary>
 /// Test/demo-only provisioner for the Backup B deadline contingency.
 /// Creates pre-scan state directly from a reviewed manifest without invoking
-/// CodeGraphContext or ICodeGraphProvider.
+/// the retired legacy analysis provider.
 /// </summary>
 public sealed class BackupBDirectProvisioner : IBackupBDirectProvisioner
 {
