@@ -6,7 +6,9 @@
 
 **Scope classification:** Major project correction; bounded first implementation phase
 
-**Implementation authority:** Not granted by this proposal
+**Proposal status:** Approved by the user on 2026-09-01
+
+**Implementation authority:** Granted to a fresh Developer session through the referenced implementation plan
 
 ## 1. Issue Summary
 
@@ -208,4 +210,12 @@ The user approved:
 - successful compilation as the sole technical acceptance gate;
 - preservation of Epic 12's CodeGraph 1.5/JDT-LS/Prepared Scan replacement path after an explicit Epic 12 audit.
 
-Implementation remains pending a written-design review and execution handoff.
+### Final checklist and routing
+
+- [x] **6.1 Checklist completion:** all cleanup-phase items are resolved; post-cleanup epic/PRD questions are explicitly deferred to the assessment phase.
+- [x] **6.2 Proposal accuracy:** the proposal is consistent with the approved architectural design and verified Epic 12 replacement map.
+- [x] **6.3 User approval:** the user explicitly approved the written design and proposal on 2026-09-01.
+- [N/A] **6.4 Sprint status:** no epic or story is added, removed, renumbered, or resumed in this phase; `sprint-status.yaml` remains unchanged.
+- [x] **6.5 Handoff:** execution is routed to a fresh Developer session; the current session retains architecture and post-cleanup assessment ownership.
+
+Implementation is authorized only within the approved design and implementation plan. The current design session does not execute production changes.
