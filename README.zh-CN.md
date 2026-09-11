@@ -2,11 +2,11 @@
 
 **将跨仓库源代码转化为可追溯的业务知识。**
 
-[English](README.md) · [产品需求文档](docs/bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md) · [技术架构](docs/bmad/planning-artifacts/architecture/scanning-v1-technical-plan.md)
+[English](README.md) · [产品需求文档](docs/bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md) · [技术架构](docs/bmad/planning-artifacts/architecture.md)
 
 Vulgata是一款面向大型组织的LLM代码知识库平台，帮助用户理解分散在多套系统、多个代码仓库、不同语言和团队中的真实业务逻辑。
 
-它以源代码为事实依据，生成结构化的代码逻辑文档与业务逻辑文档，连接跨仓库证据，并通过对话给出能够回溯到具体源码位置的答案。
+目标产品以源码为依据，生成结构化的代码逻辑文档与业务逻辑文档，连接跨仓库证据，并通过对话提供绑定具体文档版本的引用。通用流程仍在开发中；以下介绍的是已采纳的产品方向，而非已经完成的发布版本。
 
 ## 为什么需要Vulgata
 
@@ -18,67 +18,65 @@ Vulgata面向产品经理、业务分析师、合规人员、新员工和开发�
 
 ## 核心特点
 
-- **理解业务，而非只搜索代码。** 第一阶段解释边界明确的代码单元，第二阶段从经过验证的证据中归纳端到端业务流程。
-- **确定性编排。** 非LLM编排器负责调度、并发、重试和持久化；LLM工作智能体只执行范围受限的分析与综合任务。
+- **理解业务，而非只搜索代码。** 第一阶段按完整文件工作流识别有意义的代码单元，第二阶段解释有源码依据的逻辑流程，并明确保留信息缺口。
+- **确定性编排。** Scan Control负责调度与恢复，Knowledge负责语义结果接纳；Microsoft Agent Framework执行范围受限的分析与综合。
 - **结论可追溯。** 文档保留仓库版本、文件路径、符号、代码行范围和哈希，使每项关键结论都能回到源码验证。
-- **跨仓库理解。** 系统能够解析RPC和HTTP调用的消费方与提供方；尚未找到目标的关系会作为未决项明确保存。
-- **同一知识库服务两类用户。** 业务模式提供易懂的流程叙述，IT模式展示调用链、实现细节和源码位置。
+- **跨仓库理解。** 独立扫描的仓库提供通信证据；有界的关系协调处理后续加入的目标和循环引用，并保留未决项。
+- **同一知识库服务两类用户。** 业务模式只读取业务逻辑文档；IT模式还可读取代码逻辑文档，并在特定缺口下访问授权的精确源码。两者都支持有引用的多文档连续对话。
 - **支持私有化部署。** 可接入OpenAI兼容服务或组织内部模型，敏感源代码无需离开内网。
 
-## 工作原理
+## 目标工作流程
 
 ```mermaid
 flowchart LR
-    A[代码仓库] --> B[扫描前结构分析]
-    B --> C[代码单元]
-    C --> D[第一阶段工作智能体]
-    D --> E[代码逻辑文档]
+    A[独立仓库扫描] --> B[精确源码与轻量准备]
+    B --> D[第一阶段文件工作流]
+    D --> E[已接纳的代码单元与代码逻辑文档]
     E --> F[跨仓库关系解析]
     F --> G[第二阶段工作智能体]
-    G --> H[业务逻辑文档]
+    G --> H[按逻辑流程发布业务文档]
     H --> I[(PostgreSQL知识库)]
     I --> J[业务／IT对话]
     J -. 源码引用 .-> A
 ```
 
-1. **结构分析。** CodeGraphContext配合保守过滤策略识别语言、框架、符号、依赖以及精确的代码单元边界。
-2. **代码解释。** 第一阶段工作智能体读取绑定到指定Git版本的源码片段，生成代码逻辑文档。
-3. **关系连接。** 确定性解析服务连接跨仓库通信证据，并保留暂时无法解析的关系。
-4. **业务综合。** 第二阶段工作智能体根据准备好的流程证据生成业务逻辑文档，并记录完整来源链。
-5. **知识问答。** 对话智能体只检索当前用户有权访问且仍然有效的证据，答案附带文档和源码引用。
+1. **准备。** 保留精确Git版本，列举可分析源码并捕获辅助上下文，准备原生CodeGraph MCP及选定LSP配置。预扫描不决定永久代码单元身份。
+2. **解释。** 第一阶段渐进处理纳入范围的文件，接纳语义代码单元文档；覆盖缺口单独报告。
+3. **连接。** 在授权仓库范围内协调绑定版本的已接纳证据，缺失的外部信息不会被编造成确定关系。
+4. **综合。** 解释仓库内部或跨仓库逻辑流程，按流程原子发布文档及其精确依赖。
+5. **问答。** 每一轮对话使用稳定的授权知识视图，实时输出暂定答案，并保留持久会话、精确引用和明确的中断状态。
 
-生成的文档版本不可变。重新扫描会创建新版本，而不是静默改写旧内容，因此每次回答背后的证据链都可以被保留和审计。
+生成的文档版本不可变。新的源码分析或已接纳流程证据变化可以产生新版本，而不改写历史。有界的知识协调不等于自动更新源码扫描；后者仍属延期范围。
 
-## 竞赛演示范围
+## 当前状态与交付范围
 
-8月15日竞赛演示版本优先完成一条真实、完整、可检查的端到端路径，而不是提供大量但浅层的功能。
+9月11日规划调整采纳了[通用架构](docs/bmad/planning-artifacts/architecture/ARCHITECTURE-SPINE.md)，替换未来交付中的竞赛专用规则，但不会自动改变历史证据或现有实现。
 
 **已实现的基础能力**
 
 - ASP.NET Core Identity、角色权限与系统所有权管理
 - 系统、仓库、补充上下文、LLM服务及数据库连接管理
-- 基于CodeGraphContext的仓库分析、语言／框架识别和保守扫描前审查
 - PostgreSQL知识存储、检索投影、源码锚点和不可变文档版本
-- 顺序执行的类型化工作智能体调度，以及两阶段演示文档生成
-- 面向准备好的双仓库流程进行精确RPC／HTTP跨仓库关系解析
+- 可复用但需要适配的持久化准备扫描、Pass 1、Pass 2、精确双仓库解析，以及对话传输和检索代码
 
-**正在进行最终评审的发布门禁**
+**尚未形成完整通用版本**
 
-- 基于当前授权证据的业务模式与IT模式对话
-- 文档与源码引用，包括有效的代码行范围
-- 全新PostgreSQL 17数据库、双仓库、Docker及浏览器级发布验证
+- 可执行的CodeGraphContext已移除，旧仓库分析入口有意抛出`NotImplementedException`。
+- 现有准备阶段与对话实现尚未组成新的通用源码到知识库端到端流程。
+- Story 11.5未完成；Story 12.5已在未完成状态下终止，不是等待自动恢复的发布门禁。
+- Docker内置原生工具、精确源码保留、通用关系协调、新对话流式机制和一致恢复仍需实施与验证。
 
-**赛后路线图**
+**当前方向与明确延期范围**
 
-- 通用业务流程发现及更多通信模式识别
-- 增量扫描、影响分析与过期文档再生成
-- 人机协同问题确认与未决项处理流程
-- 实时扫描看板与知识图谱可视化
-- 服务拓扑MCP集成及更高级的检索能力
+- 当前：独立仓库与独立库扫描、语义代码单元知识、跨仓库理解、多文档流式对话、真实扫描进度、版本化文档阅读和基本手动刷新图谱。
+- 延期：自动／增量扫描、产品HITL、对话附件、局部库扫描、外部运行信息查询、对外知识MCP和高级／实时全局图谱。
+- 提示词工作台及通用自定义MCP管理等原有未完成功能继续明确记录；核心交付序列不代表完整V1全部完成。
 
-项目的权威进度记录位于[sprint-status.yaml](docs/bmad/implementation-artifacts/sprint-status.yaml)。README不会把规划中的能力描述成已经完成的功能。
+采用与队列状态参见[已批准调整](docs/bmad/planning-artifacts/sprint-change-proposal-2026-09-11-generic-product-reconciliation.md)、[Epic](docs/bmad/epics.md)及[扫描交付跟踪](docs/bmad/implementation-artifacts/sprint-status.yaml)。此前发布记录保留为[历史](docs/bmad/history/pre-generic-adoption-2026-09-11/README.md)。
 
-## 使用Docker快速启动
+## 运行现有Docker基线
+
+以下命令启动现有应用基线，不代表通用扫描栈已通过验证。目标是两个服务：包含本地工具的应用与PostgreSQL；当前Docker打包仍需完成对应交付。不显式启用应用profile时，Compose仅启动PostgreSQL。
 
 ### 环境要求
 
@@ -90,26 +88,26 @@ flowchart LR
 git clone https://github.com/ZHdpt/vulgata.git
 cd vulgata
 Copy-Item .env.example .env
-docker compose up --build
+docker compose --profile post-deadline-app up --build
 ```
 
 打开<http://localhost:8080>。第一个注册账号会自动获得管理员角色，可通过界面完成系统、仓库和LLM服务的初始配置。
 
 默认数据库密码仅供本地开发使用。在共享环境中运行前，请修改`.env`中的`DB_PASSWORD`。
 
-首次构建需要安装经过哈希锁定的CodeGraphContext运行时和.NET依赖，因此可能比后续构建耗时更长。
+当前镜像不再安装CGC，也尚未包含目标CodeGraph／JDT-LS运行时。构建或启动命令本身不证明扫描工具或模型服务已就绪。
 
 停止服务：
 
 ```powershell
-docker compose down
+docker compose --profile post-deadline-app down
 ```
 
 只有在确定需要删除本地PostgreSQL数据卷时，才应添加`--volumes`参数。
 
 ## 本地开发
 
-Vulgata使用.NET 10，默认连接`localhost:5432`上的PostgreSQL 17。开发连接配置位于`appsettings.json`。
+Vulgata使用.NET 10，默认连接`localhost:5432`上的PostgreSQL 17。开发连接配置位于`appsettings.json`。以下仍是现有基线的诊断方式；已采纳的开发目标是内置工具的Docker栈。
 
 ```powershell
 docker compose up -d postgres
@@ -130,11 +128,11 @@ dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj
 |---|---|
 | Web | .NET 10、ASP.NET Core、Blazor交互式服务端渲染、Fluent UI Blazor |
 | 智能体 | Microsoft Agent Framework及OpenAI兼容的工作／对话智能体 |
-| 编排 | 采用类型化任务和受限LLM工作的确定性扫描执行器 |
-| 源码结构 | 哈希锁定的CodeGraphContext运行时、精确Git版本及源码边界 |
+| 编排目标 | 确定性Scan Control、Knowledge语义接纳与有界MAF工作 |
+| 源码／工具目标 | 保留精确源码、原生CodeGraph MCP、绑定快照的选定LSP；暂时禁用自动导入／依赖还原 |
 | 持久化 | PostgreSQL 17、EF Core、Npgsql、不可变文档版本和关系型图边 |
 | 安全 | ASP.NET Core Identity、范围化授权、Data Protection密钥加密 |
-| 部署 | 通过Docker Compose运行单个应用容器与PostgreSQL |
+| 部署目标 | 含本地工具的应用容器与PostgreSQL；可配置存储／限额及一致备份恢复 |
 
 PostgreSQL同时承担权威知识库和文档图谱的职责。类型化邻接边与递归查询提供关系遍历和来源追踪，V1无需额外引入图数据库。
 
@@ -166,8 +164,8 @@ docker/                      可复现应用镜像及结构分析运行时
 ## 项目文档
 
 - [产品需求文档](docs/bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md)
-- [扫描V1技术方案](docs/bmad/planning-artifacts/architecture/scanning-v1-technical-plan.md)
-- [扫描V1数据契约](docs/bmad/planning-artifacts/architecture/scanning-v1-data-contracts.md)
+- [当前技术架构](docs/bmad/planning-artifacts/architecture.md)
+- [通用扫描、知识与对话架构主干](docs/bmad/planning-artifacts/architecture/ARCHITECTURE-SPINE.md)
 - [统一语言表](docs/UBIQUITOUS_LANGUAGE.md)
 - [Epic与用户故事](docs/bmad/epics.md)
 

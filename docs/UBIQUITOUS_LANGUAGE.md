@@ -1,113 +1,136 @@
 # Ubiquitous Language
 
-*Extracted from the AnchorDB+ document graph architecture plan and cross-referenced with the existing PRD glossary.*
+## Authority and adoption — 2026-09-11
 
-## Scanning & Agents
+This is the single canonical domain glossary for the approved generic Scan, Knowledge and Chat target. It accompanies the [current PRD](bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md) and [adopted architecture spine](bmad/planning-artifacts/architecture/ARCHITECTURE-SPINE.md), under the [approved reconciliation proposal](bmad/planning-artifacts/sprint-change-proposal-2026-09-11-generic-product-reconciliation.md). These definitions do not claim current implementation or runtime qualification. Detailed schemas and algorithms belong to their owning feature contracts, not this glossary.
 
-| Term | Definition | Aliases to avoid |
-|------|------------|------------------|
-| **Scan Coordinator** | A non-LLM background service that manages the operational lifecycle of scans: queuing requests, enforcing concurrency limits, triggering Cross-Repository Resolution, and monitoring scan workflow health. | Scan Scheduler, Scan Manager |
-| **Orchestrator** | A deterministic per-Repository workflow service that plans scan states, creates jobs, groups supersteps and flow groups, enforces retry/concurrency policy, and dispatches Worker Agents through typed tools. | Orchestrator Agent, Magnet Orchestrator |
-| **Worker Agent** | An LLM agent dispatched by the Orchestrator to process a single Code Unit (Pass 1) or synthesize a Business Logic Document for one flow group (Pass 2). | Scanner, Document Generator |
-| **Superstep** | A deterministic batch of related Code Units dispatched concurrently to Worker Agents, enabling bounded cross-verification within the batch before the next superstep begins. | Batch, Wave |
-| **Pass 1** | The first phase of document generation: Code Logic Documents are produced per Code Unit, with intra-repo REFERENCES edges and cross-repo uncertainties. | CL Doc Generation |
-| **Pass 2** | The second phase: deterministic planning traces path-aware graph slices from entry points, clusters them into flow groups, and dispatches one Worker Agent per flow group to synthesize Business Logic Documents from Code Logic Documents and trace evidence. | BL Doc Generation |
-| **Document Pre-Allocation** | Creating logical Document slots or planned version rows for filtered Code Units before Worker Agents run, so same-scan references can target stable identities without treating unfinished placeholders as generated Documents. | Pre-seeding |
-| **Profiled Revision** | The immutable Git commit identity from which one ScanRun profile and its Pre-Scan Result are derived. Later consumers must use that exact revision rather than whichever commit is currently checked out. | Current Revision, Working-Copy Revision |
-| **Scan Context Snapshot** | The immutable Global, System, and Repository advisory context captured once for one Repository Scan Run at one Profiled Revision. It is context for later analysis, not source evidence, and cannot be edited after capture. | Context Bundle, Scan Context |
-| **Prepared Scan Manifest** | The immutable, schema-versioned, canonically ordered and fingerprinted result of complete deterministic PreScan for one Repository. It binds the exact source inventory, selection and audit outcomes, File Code Units, analysis-readiness proof, Communication Kind Classification references, and Scan Context Snapshot. | Work Manifest, Scan Queue |
-| **File Code Unit** | A `CodeUnitType.File` scheduling unit representing one complete bounded file or one exact safe segment of an oversized file at one Profiled Revision. It is not a method-level Code Unit and does not imply Worker execution or a Document. | File Job, File Chunk |
-| **Pre-Scan Result** | The immutable, ScanRun-scoped deterministic result produced after Repository profiling. It records `pre_scan_approved`, confirmed communication kinds, bounded evidence samples, warnings, and integrity metadata without dispatching any Worker Agent. | Pre-Scan Report, Scan Approval |
-| **Communication Kind Classification** | A conservative classification of an observed prepared communication kind as Confirmed, Hint, or Warning. It identifies only the kind of communication and does not resolve providers, consumers, endpoints, or Cross-Repository relationships. | Communication Type Detection, Endpoint Detection |
-| **Evidence Locator** | A bounded Repository-relative source location plus rule and provenance metadata supporting a Communication Kind Classification. It never contains source content or an absolute path. | Evidence Record, Source Snippet |
-| **Pre-Scan Handoff** | The versioned, authorized view of an approved Pre-Scan Result supplied to a downstream scan runner. It is bound to the Profiled Revision and grants no dispatch authority by itself. | Typed Pre-Scan Handoff, Dispatch Handoff |
-| **Two-Repository Scan Coordination** | A lightweight persisted operational record that binds exactly two independent Repository Scan lifecycles within one System to one bounded release outcome. It is not a Scan, does not duplicate per-file job state, and does not replace the Scan Coordinator. | System-level Scan, Multi-Repository Scan, Paired Scan |
+The [pre-adoption glossary](bmad/history/pre-generic-adoption-2026-09-11/files/docs/UBIQUITOUS_LANGUAGE.md) preserves earlier wording. Historical terms below retain their old contract meaning; their presence in persisted records does not make them generic requirements. There is no competing `CONTEXT.md` glossary.
 
-## Graph & Relationships
+## Organization and source
 
 | Term | Definition | Aliases to avoid |
-|------|------------|------------------|
-| **Edge** | A typed, directed relationship between two Document Versions in the graph, usually surfaced through a current-version view of Logical Documents. | Link, Connection |
-| **Logical Document** | A stable semantic slot for a Document across scans or refinements, such as "this Code Unit's Code Logic Document" or "this flow group's Business Logic Document." | Mutable Document |
-| **Document Version** | An immutable generated snapshot of a Logical Document. Version Chain links preserve history, while retrieval normally reads the current version for an authorized Logical Document. | Revision |
-| **REFERENCES Edge** | A dependency edge: one Document Version's content references or depends on another Document Version. Used for both intra-repo and cross-repo relationships. | Dependency Edge, Call Edge |
-| **GENERATED_FROM Edge** | A provenance edge from a Business Logic Document Version to the Code Logic Document Version(s) it was synthesized from. Drives two-pass re-scan impact analysis. | Provenance Edge, Derivation Edge |
-| **Cross-Repo Edge** | Not a separate edge type — any REFERENCES edge where `source.repo_id != target.repo_id` is cross-repo. Discovered at query time, not stored as a schema concept. | Cross-System Edge (deprecated) |
-| **Dangling Link** | A cross-repo uncertainty that never resolves — a known unknown. Recorded with available identifying information; does not block scan completion. | Orphan Link, Unresolved Reference |
-| **Version Chain** | A linked list of document versions via `superseded_by_id`, preserving full history. Old versions are never deleted. | Document History, Revision Chain |
+| --- | --- | --- |
+| **System** | An organizational grouping of Repositories. Membership is neither communication evidence nor the compulsory boundary of Cross-Repository Resolution. | Communication Scope |
+| **Repository** | A registered source-code repository, optionally organized under a System. A standalone Repository, including source-available library code, is eligible for an ordinary Scan. | System |
+| **Profiled Revision** | The exact full Git commit identity fixed for a Repository Scan Run. A branch or tag is resolved once; subsequent work and source references retain that committed revision. | Current Revision, Working-Copy Revision, Snapshot Version |
+| **Source Snapshot** | The retained exact-source capability for a Repository at its Profiled Revision, providing authorized metadata and reads. It is transparent source access, not another public version identity. Reopening identical bytes creates no new source version. | Source Version, Snapshot Version, Working Copy |
+| **Tool Workspace** | A contained, replaceable working area for trusted tools to inspect a Source Snapshot. Tool state is separate from canonical source and does not define its identity. | Source Snapshot, Canonical Source |
+| **Source Anchor** | A trace from a knowledge claim to its Repository, Profiled Revision and Code Unit/file/range. Public locations are Repository-relative, not host paths. | Workspace Path |
+| **Source Anchoring** | Preservation of exact source locations supporting knowledge and its history. Source availability is separate from a Document Version's continued existence and provenance. | A particular parser or reverse-index schema |
+| **Scan Context Snapshot** | Immutable advisory Global, System and Repository context captured for a Repository Scan Run. It aids interpretation but is not source proof; later context edits do not alter pinned inputs. | Source Snapshot, Mutable Scan Context |
 
-## Uncertainty & Resolution
-
-| Term | Definition | Aliases to avoid |
-|------|------------|------------------|
-| **Cross-Repository Resolution** | Deterministic post-processing that runs after a repository scan completes: matches unresolved cross-repo uncertainties against the newly-scanned repo's documents and creates REFERENCES edges. | Cross-System Resolution (deprecated), Link Resolution |
-| **Deadlock-Breaking Protocol** | When two repos have mutual pending cross-repo uncertainties, the repo with fewer pending resolves first; if tied, the older scan yields. | Circular Dependency Resolution |
-| **Uncertainty sub_status** | Internal refinement of the `unresolved` state: `cross_repo` (target repo known, waiting for scan), `unknown_target` (no repo identified), `ambiguous` (multiple possible targets). | Uncertainty subtype |
-
-## Re-Scan & Impact
+## Scan and Agents
 
 | Term | Definition | Aliases to avoid |
-|------|------------|------------------|
-| **Impact Analysis** | A 4-step SQL cascade that finds all Documents affected by a set of changed source files: direct impact → intra-repo transitive closure → cross-repo reachability → uncertainty reopening. | Blast Radius, Change Propagation |
-| **Two-Phase Change Detection** | Phase 1 (line-overlap filter via reverse_index) eliminates most candidates; Phase 2 (hash comparison) verifies the remaining candidates. Fast AND correct. | Sub-File Change Detection |
-| **Source Anchoring** | Three-layer traceability: CodeGraph parses source into Code Units (structural), document_sources links Documents to Code Units (semantic), reverse_index provides O(1) line→document lookup (fast). | Provenance, Traceability |
-| **File Identity Hash** | SHA-256 of the first 4096 bytes of a source file, used to detect renames — if a file disappears and another appears with the same hash, it's a rename, not a delete+create. | File Fingerprint |
-| **Cross-Repo Stale Notice** | An informational record posted when a document changes, notifying other repos that link to it. No automatic cascade — each repo's owner decides when to re-scan. | Stale Notification |
+| --- | --- | --- |
+| **Scan** | The user-requested source-to-knowledge workflow for exactly one Repository. A System or selection action starts independent Repository Scan Runs, not a shared correctness barrier. | System-level Scan, Pair Scan |
+| **Repository Scan Run** | One durable Scan execution bound to one Source Snapshot, with its own work, coverage, recovery and recorded current-promotion or history-only intent. | Paired Scan, Global Scan |
+| **Scan Campaign** | Optional batch controls and aggregate progress for independent Repository Scan Runs. It does not own their source or semantic acceptance. | Multi-Repository Scan identity |
+| **Scan Control** | The deterministic owner of Scan requests, plans, jobs, progress, fair bounded dispatch and explicit pause/resume/cancel behavior. It dispatches model work but is not an LLM coordinator. | Orchestrator Agent, Magentic Orchestrator |
+| **PreScan** | Preparation that records source inventory, format/language/layout facts and unknowns, and establishes required analysis-tool readiness. It neither preallocates semantic Code Units nor determines communication truth. | Semantic Extraction, Complete Coverage Proof |
+| **Repository Profile** | The factual inventory and structural description of a Repository's exact source used to plan analysis. Unknowns remain explicit. | Semantic Model, Advisory Overview |
+| **Advisory Overview** | A bounded model-assisted interpretation of structure and supplied context, separate from profile facts. Its hypotheses may influence ordering, not remove admitted source or prove coverage. | Confirmed Profile, Coverage Authority |
+| **Scan Work Plan** | The explicit policy-based selection and organization of source work. Primary source requires a truthful outcome; supporting source may supply evidence without becoming a Code Logic generation job. | Prepared Scan Manifest |
+| **File Workstream** | One logical Pass 1 analysis of a complete admitted file, continued in bounded windows if needed. Neither a file job nor a window is automatically a Code Unit or Document identity. | File Code Unit, Semantic Chunk |
+| **Code Unit** | A meaningful source element discovered by analysis, such as an operation, handler or declarative construct. Each owns a Code Logic Logical Document. Units may nest or share anchors; folders and moving ranges do not establish identity. | File Job, Source Window, Preallocated Symbol |
+| **Worker Agent** | An LLM agent dispatched for bounded file analysis, focused resolution investigation or Flow synthesis using authorized tools/evidence. It proposes results; it neither accepts Knowledge nor schedules arbitrary Repository work. | Scan Coordinator, Semantic Authority |
+| **Pass 1** | File-based analysis that discovers Code Units and proposes their Code Logic Documents, communication observations and Uncertainties. Other source can supply context; validated drafts are not accepted knowledge. | One Agent Call per Code Unit |
+| **Accepted File Manifest** | The accepted exact-version result set for a file: its Code Units, Code Logic Documents, observations and truthful coverage disposition. Only accepted results become reconciliation evidence; failed partial drafts do not. | Draft Manifest, Pre-Scan Manifest |
+| **Analysis Checkpoint** | A declared point at which accepted file results and explicit gaps can form a selected Code Logic corpus. Root-run static Flow synthesis also requires terminal outcomes for every admitted primary item; paused work is not terminal coverage. | Entire Portfolio Completion |
+| **Pass 2** | Synthesis of a supported Business Logic explanation from a pinned Flow Group Version. Additional authorized evidence actually used enters accepted dependencies; synthesis does not create authoritative relationships. | Remote-call-only Generation |
+| **Flow Synthesis Job** | Bounded Pass 2 work explaining one fixed Flow Group Version, including conditions, alternatives, effects and unknowns. | New Scan, Relationship Acceptance |
+| **Concurrency Control** | Fair, bounded sharing of Scan/Worker capacity, per-run admission, shared Scan/Chat provider capacity and safe tool capacity. Independent ready work can progress; waiting for an unscanned target is not active Worker work. | Rate Limiting alone, Superstep |
 
-## Resource Management
+## Knowledge, Documents and Logical Flows
 
 | Term | Definition | Aliases to avoid |
-|------|------------|------------------|
-| **Concurrency Control** | Configurable limits on concurrent scans (global) and workers per scan, enforced by the Scan Coordinator. Prevents resource exhaustion. | Rate Limiting, Throttling |
+| --- | --- | --- |
+| **Knowledge** | Accepted Code Units, Documents, relationship evidence, Uncertainties and their version-bound selections. Knowledge owns semantic acceptance and read selection; model drafts and conversation text are not wiki knowledge. | Agent Output, Chat History |
+| **Document** | A generated Code Logic or Business Logic explanation. Use Logical Document for enduring identity and Document Version for particular immutable content. | Mutable Wiki Page |
+| **Code Logic Document (CL)** | The explanation owned by one Code Unit, grounded in exact source. A file may contain several Code Units and therefore several CL Logical Documents. | File Document, Whole-Repository Summary |
+| **Business Logic Document (BL)** | The explanation owned by one Logical Flow, synthesized from exact accepted dependencies. It may describe local or Cross-Repository behavior and preserves supported alternatives and gaps. | Repository Summary, Proven Runtime Trace |
+| **Logical Document** | A stable semantic Document identity: one Code Unit's CL or one Logical Flow's BL. It is distinct from its immutable Document Versions. | Mutable Document, Flow Group Version |
+| **Document Version** | One immutable generated content version of a Logical Document. Selection determines what is current; older versions and their exact dependencies remain historical. | Profiled Revision, Source Snapshot |
+| **Version Chain** | The preserved succession of a Logical Document's immutable versions. Supersession changes selection, not earlier content or provenance. | Overwritten History |
+| **Logical Flow** | A distinct source-backed business-flow identity rooted in an exported operation, handler, schedule, declarative workflow or selected Code Unit, initially homed at its root Repository. Local-only flows qualify; shared helpers, folders and call cycles do not merge business purposes. | Flow Group Version, Folder, Connected Component |
+| **Flow Group Version** | One immutable bounded directed evidence slice for a Logical Flow: selected members and exact versions, branches, relationships and uncertain frontiers. It supports BL synthesis, not a claim that every branch executes in one runtime sequence. | Logical Flow, Runtime Trace |
+| **Knowledge Publication** | Atomic promotion of a coherent per-Logical-Flow selection, including BL version and exact evidence dependencies. Relationship/Uncertainty selections also have publication identity independent of Document text. This is not global revision synchronization. | Portfolio Barrier, Document Save alone |
+| **Knowledge Read Context** | One version-bound authorized selection for discovery, membership, pagination, content and citations. It may represent current selections or explicitly labelled history; it is not a wiki copy. | Current Graph, Cached Documents only |
+| **Knowledge Currentness** | Whether selected knowledge reflects desired accepted evidence, or is pending, stale, failed, partial or retired. Operational Scan completion and primary-source coverage are separate facts. | Scan Percentage, Latest Finish Time |
+| **Retirement / Withdrawal** | Removal of obsolete current eligibility when validated replacement-source evidence establishes absence. History survives; failed/unfinished analysis, exclusion and model omission alone do not prove deletion. | Deletion of History |
 
-## Relationships
+## Relationships, Uncertainties and reconciliation
 
-- A **System** contains one or more **Repositories** (organizational grouping only — no detection significance).
-- A **Scan** targets exactly one **Repository**.
-- A **Two-Repository Scan Coordination** binds exactly two independent Repository Scan lifecycles within one **System** without changing either Scan's Repository scope.
-- An **Orchestrator** manages one **Scan** and dispatches N **Worker Agents**.
-- A **ScanRun** profiles exactly one **Profiled Revision** and produces at most one **Pre-Scan Result** for that revision.
-- A **Scan Context Snapshot** captures immutable advisory context for that **ScanRun** and **Profiled Revision**.
-- A complete **Prepared Scan Manifest** orders the bounded **File Code Units** selected for one Repository without authorizing Worker Agent dispatch.
-- A **Pre-Scan Result** contains zero or more **Communication Kind Classifications**, each supported by bounded **Evidence Locators**.
-- An authorized **Pre-Scan Handoff** exposes an approved **Pre-Scan Result** to a downstream runner, which must verify the same **Profiled Revision** before continuing.
-- A **Worker Agent** processes one **Code Unit** (Pass 1) or one flow group's Code Logic Documents and trace evidence (Pass 2).
-- A **Code Logic Document** is generated from one or more **Code Units** (via `document_sources`).
-- A **Business Logic Document** is generated from one or more **Code Logic Documents** (via `GENERATED_FROM` edges).
-- A **REFERENCES Edge** connects two **Document Versions** — intra-repo or cross-repo, determined at query time.
-- An **Uncertainty** belongs to one **Document** and may resolve to a **Document** in another **Repository**.
-- **Cross-Repository Resolution** runs after each **Repository Scan** completes and is bidirectional (resolves both outgoing and incoming uncertainties).
+| Term | Definition | Aliases to avoid |
+| --- | --- | --- |
+| **Communication Observation** | A source-backed description of an interaction's owner, role, mechanism, operation, literals/expressions, namespace, evidence status and provenance. Unknown mechanisms and missing bindings remain explicit. | Resolved Endpoint, Deployment Fact |
+| **Edge** | A typed directed relationship between exact Document Versions, viewed through a selected relationship/evidence version. Relationship history is preserved independently from Document text. | Untyped Link, Inferred Runtime Event |
+| **REFERENCES Edge** | An accepted reference or dependency relationship, within or across Repositories. It states its supported meaning; source linkage does not prove runtime execution. | Every Edge is a Call |
+| **GENERATED_FROM Edge** | Exact provenance from a BL Document Version to the CL Document Versions used in synthesis. Historical targets never retarget to today's CL or graph. | Current-source Shortcut |
+| **Cross-Repository Edge** | A REFERENCES Edge whose source and target belong to different Repositories, whether or not they share a System. It is not another Edge type. | Cross-System Edge, Cross-Repo Edge |
+| **Uncertainty** | An explicit unresolved, ambiguous, missing or conflicting knowledge claim with evidence and limitations. It can coexist with accepted analysis; it is not a fabricated Edge or mandatory owner question. | Error, Assumed Relationship |
+| **Dangling Link** | An unresolved Cross-Repository reference whose target cannot currently be established. It does not block Scan completion and may become resolvable when evidence arrives. | Permanently Unresolvable Link |
+| **Cross-Repository Resolution** | The domain activity of establishing or revising supported Cross-Repository relationships from accepted evidence. It includes unresolved outcomes rather than guessing missing identity. | Cross-System Resolution, Post-Scan-only Matching |
+| **Resolution Reconciliation** | Bounded Cross-Repository Resolution over a finite pinned set of accepted evidence and authorized candidates. Later accepted knowledge can resolve earlier Uncertainties and refresh affected Logical Flows without re-analyzing unchanged source. | Recursive Repository Scan, Global Deadlock Resolution |
+| **Resolution Epoch** | One finite reconciliation round with fixed evidence and scope. Publication does not start another round; later independent inputs may justify one. | Portfolio Transaction, Publication Loop |
+| **Resolution Change Set** | Accepted relationship/Uncertainty changes from reconciliation, distinct from rewriting caller CL content. | Source Change Set |
+| **Focused Resolution Investigation** | Bounded inquiry into a fixed caller/candidate question using available authorized evidence. Supporting/opposing findings inform acceptance; confidence and unavailable tools prove neither matches nor absence. | Peer Superstep Verification, Arbitrary Repository Discovery |
+| **Call Cycle** | A cycle in source-backed directed relationships. Traversal records the cycle and terminates within its bound; independent Repository work does not wait for a cycle-breaking scan order. | Deadlock |
+| **Uncertain Frontier** | A boundary where supported Flow traversal ends because evidence, scope or bounds do not establish further behavior. | Invented Target, Complete Trace |
 
-## Example Dialogue
+## Chat
 
-> **Dev:** "The working copy advanced after profiling. Can the scan runner use the approved pre-scan data with the newer commit?"
+| Term | Definition | Aliases to avoid |
+| --- | --- | --- |
+| **Chat** | Wiki-first conversational synthesis of useful permitted multi-document explanations. It consumes Knowledge and owns dialogue; it does not initiate Scans, repair Knowledge or treat retrieved text as instructions. | Selected-candidate Replay, Source Scanner |
+| **Business Mode** | The light-theme conversational and reader mode restricted server-side to BL knowledge. It excludes CL, source code and technical source metadata from tools, history, previews, citations and graphs. | Prompt-only Business Filter |
+| **IT Mode** | The dark-theme mode that may read permitted BL and CL, with exceptional read-only exact-source inspection for specific gaps. Mode choice never grants Repository authorization. | Unrestricted Source Access |
+| **Conversation** | Durable ordered dialogue, separate from wiki Documents. Authorized history survives browser/circuit lifetime; initially only one answer is active per Conversation. | In-memory Session |
+| **Inference Context** | Bounded permitted history, mode and scope supplied to model execution. Changing mode/scope creates fresh inference context without deleting authorized older dialogue or importing prohibited technical material. | Entire Conversation Transcript |
+| **Chat Turn** | One identified user request and answer lifecycle, bound to its originating context and one Knowledge Read Context. Later turns can read fresher Knowledge; earlier references keep original versions. | Every Network Reconnect |
+| **Provisional Answer** | Genuine live answer text before durable completion, with hypotheses labelled when first shown. Useful interrupted text retains its reason and is not normal completed factual history. | Verified Answer, Completed-answer Typewriter Replay |
+| **Durable Completion** | Valid untruncated provider completion with finished tools and one accepted content/reference/status save. Lost save acknowledgements are resolved from durable state, not new generation; completion does not prove every assertion. | Stream End, Semantic Certification |
+| **Reattachment** | Authorized browser reconnection to the same host-owned Chat Turn and its current/saved state without new generation or renewed budgets. Disconnect differs from cancellation and host failure. | Regeneration, Transparent Host Recovery |
 
-> **Domain expert:** "No. The **Pre-Scan Result** and **Pre-Scan Handoff** are bound to the original **Profiled Revision**. A downstream runner must acquire and verify that exact commit or fail closed."
+## Domain relationships and boundary examples
 
-> **Dev:** "Does a confirmed HTTP classification mean we have already found the provider, consumer, and endpoint?"
+- A System organizes Repositories; a standalone Repository uses the same Scan workflow. Membership proves no communication and does not limit authorized discovery by itself.
+- One Repository Scan Run fixes one Profiled Revision through a Source Snapshot. Public source identity remains Repository and Git commit, not a renamed snapshot version.
+- One File Workstream may discover several Code Units. Each owns its CL Logical Document; source windows are work boundaries, not identities. Unproven renames, splits and merges cannot silently reuse identity.
+- Each Logical Flow owns one BL Logical Document across System/Repository browsing appearances. Each BL version pins its exact CL, relationship, Uncertainty and direct-source dependencies; old readers never follow today's graph by accident.
+- Accepted external files may support reconciliation before their whole Repository finishes. Root-run synthesis still needs terminal outcomes for all admitted primary work and explicit dispositions for matching work in the frozen target. Gaps remain visible without a portfolio barrier.
+- Later target evidence may resolve an Uncertainty and coalesce bounded BL refresh. Unchanged caller source need not be scanned again; publication starts no reconciliation loop. Call Cycles are finite graph structure, not the historical Deadlock-Breaking Protocol.
+- Narrowing discovery scope or losing access changes visibility or records not-evaluated-in-scope; it does not disprove broader accepted relationship evidence. Authorization remains live over every contributor, including composite prose and metadata.
+- History survives workspace cleanup. Current Knowledge and active work retain required exact source, including older contributing revisions; initial policy does not automatically prune canonical retained source. Historical source availability remains explicit and separate from immutable provenance.
+- Paused Scan work requires explicit prerequisite-checked resume; restart does not resume it. A disconnected browser may reattach to its still-running Chat Turn; host failure instead leaves interrupted work requiring explicit retry.
 
-> **Domain expert:** "No. A **Communication Kind Classification** only says that direct evidence confirmed the prepared HTTP kind. Endpoint roles and **Cross-Repository Resolution** happen later, and the handoff itself does not authorize dispatch."
+## Historical vocabulary — not generic execution requirements
 
-> **Dev:** "When we scan `mbank-core` and it detects a call to `riskeng-service`, what happens if `riskeng-service` hasn't been scanned yet?"
+Exact earlier definitions and schemas remain in the pre-adoption glossary and archived planning artifacts. Do not silently rename persisted historical contracts into equivalent generic records.
 
-> **Domain expert:** "The Worker Agent creates an **Uncertainty** with `status = 'unresolved'` and `sub_status = 'cross_repo'`. The **REFERENCES Edge** is NOT created — you can't have an edge to a document that doesn't exist. Instead, the uncertainty IS the placeholder. Blazor.Diagrams renders it as a dashed edge to a diamond node."
+| Historical term | Preserved meaning and current distinction |
+| --- | --- |
+| **Scan Coordinator / Orchestrator** | Earlier global/per-Repository workflow service names. Generic ownership is Scan Control; old superstep/pair contracts are not inherited. |
+| **Superstep** | Earlier batch of preselected Code Units with peer cross-verification. Generic concurrency is independently eligible bounded work. |
+| **Document Pre-Allocation** | Earlier precreated Document slots for filtered units. Generic Pass 1 discovers semantic units and Knowledge accepts their identity. |
+| **File Code Unit** | Earlier file/segment scheduling identity, including `CodeUnitType.File`. Historical file Documents are not relabelled as newly discovered semantic-unit Documents. |
+| **Prepared Scan Manifest** | Earlier deterministic inventory/selection/classification/handoff contract. It is not the generic Scan Work Plan or Accepted File Manifest. |
+| **Pre-Scan Result / Pre-Scan Handoff** | Earlier revision-bound deterministic approval/handoff records, which did not dispatch Workers. Generic preparation is part of one Scan action. |
+| **Communication Kind Classification / Evidence Locator** | Earlier prepared-kind classification and bounded locator contracts. Generic observations arise from detailed analysis; preparation is not communication truth. |
+| **Two-Repository Scan Coordination** | Earlier exact-two, same-System release coordination. A generic Scan Campaign has no pair-only identity or correctness barrier. |
+| **Deadlock-Breaking Protocol** | Earlier fewer-pending/older-scan yield rule. Superseded by finite pinned reconciliation and cycle-aware bounded traversal. |
+| **Uncertainty sub_status** | Earlier storage refinement such as `cross_repo`, `unknown_target` and `ambiguous`. These persisted fields are not a mandatory generic lifecycle schema. |
+| **File Identity Hash** | Earlier first-4096-byte rename heuristic. It is not sufficient semantic-identity proof or a current rename guarantee. |
 
-> **Dev:** "And when `riskeng-service` is scanned later?"
+## Deferred and retained future vocabulary
 
-> **Domain expert:** "**Cross-Repository Resolution** runs. It queries all uncertainties targeting `riskeng-service`, normalizes the endpoint identifiers using the **Communication Pattern Catalog**, and matches against the newly-generated documents. If it finds a match, it creates the **REFERENCES Edge** and marks the uncertainty `resolved`. The dashed edge becomes solid."
+| Term or capability | Current disposition |
+| --- | --- |
+| **Impact Analysis / Two-Phase Change Detection** | Automatic/incremental source-update impact and reuse are deferred. The old SQL cascade, line-overlap implementation and hash heuristic are historical proposals, not domain guarantees. Ordinary explicit static Scans, bounded later-knowledge reconciliation and Document history remain current. |
+| **Cross-Repo Stale Notice** | Earlier owner-notification approach. Product notification/HITL actions are deferred; visible Knowledge Currentness and bounded accepted-evidence refresh remain current. Use Cross-Repository in current prose. |
+| **Human-in-the-Loop (HITL)** | Product notification/inbox/question/answer-dismiss and human `wontfix` actions are deferred. Visible Uncertainties, lower-authority advisory context, historical decisions, operational controls and development approvals remain. |
+| **Partial Library Scan** | Worker/caller-triggered partial analysis is deferred; ordinary explicit standalone Repository Scans remain current. |
+| **External Operational Knowledge** | New agent-facing operational lookup/integration is deferred. Missing database/gateway/registry facts remain Uncertainties; existing database configuration is preserved. |
+| **Outward Knowledge MCP / Chat Attachments / Advanced Graph** | Outward wiki exposure, file/image Chat uploads and live/advanced portfolio visualization are deferred. Native CodeGraph MCP consumption, internal wiki tools, typed Chat, real streaming, reader/history and basic manual graph remain current. |
 
-> **Dev:** "What if both repos have pending uncertainties pointing at each other?"
-
-> **Domain expert:** "That's a **Deadlock**. The **Deadlock-Breaking Protocol** kicks in: the repo with fewer pending uncertainties resolves first. If tied, the older scan yields. Once the first side resolves, the second side may now have matches."
-
-> **Dev:** "And if a Business Logic Document was generated before the cross-repo target was scanned?"
-
-> **Domain expert:** "Known V1 limitation. The BL Doc body may say 'unscanned.' The Chat Agent may use the now-resolved Cross-Repository edge at query time, but it must mark the BL Doc as generated before that resolution and cite both the stale BL Doc and the newer target evidence. Full BL Doc regeneration on Cross-Repository Resolution is V2."
-
-## Flagged Ambiguities
-
-- "Cross-System" was used throughout the original PRD to mean "Cross-Repository." The architecture plan has renamed this to **Cross-Repository** because detection granularity is at the repository level, and intra-System cross-repo calls were invisible under the old terminology. "System" is now purely an organizational grouping.
-- "Scan" previously meant "either a single repository or an entire system." Now it always means "a single repository." There is no System-level scan — scanning all repos in a System is a convenience trigger that queues N independent repo scans.
-- "Uncertainty" previously had 3 user-facing states. The architecture plan adds `sub_status` for internal refinement and a `wontfix` terminal state for human-accepted dangling links.
-- A **Communication Kind Classification** is a pre-scan hypothesis about prepared RPC or HTTP communication. It is not an endpoint, provider/consumer role, REFERENCES Edge, or completed Cross-Repository detection.
-- A **Pre-Scan Handoff** means that deterministic pre-scan checks were approved for a specific Profiled Revision. It does not authorize or perform Worker Agent dispatch.
+Deferral is not completion. Prompt Workbench, dedicated unknown-library inference and general custom MCP configuration/consumption remain separately tracked original capabilities in the PRD; absence from the core generic sequence does not erase them.

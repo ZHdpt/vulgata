@@ -12,4 +12,6 @@ The skills speak in terms of five canonical triage roles. This file maps those r
 
 When a skill mentions a role (e.g. "apply the AFK-ready triage label"), use the corresponding label string from this table.
 
-Edit the right-hand column to match whatever vocabulary you actually use.
+This is the project vocabulary mapping, not proof that every label currently exists
+on GitHub. Verify the target repository before an authorized external change. Update
+the **Label in our tracker** column only when the project's vocabulary actually changes.

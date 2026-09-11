@@ -1,39 +1,26 @@
-# Domain Docs
+# Domain guidance
 
-How the engineering skills should consume this repo's domain documentation when exploring the codebase.
+For domain names, use [UBIQUITOUS_LANGUAGE.md](../UBIQUITOUS_LANGUAGE.md). For current
+Scan/Knowledge/Chat responsibilities and decisions, read the
+[architecture gateway](../bmad/planning-artifacts/architecture.md) and its spine.
+These are current authorities; historical plans/specs describe their own accepted scope.
 
-## Before exploring, read these
+## Conditional context documents
 
-- **`CONTEXT-MAP.md`** at the repo root — it points at one `CONTEXT.md` per context. Read each one relevant to the topic.
-- **`docs/adr/`** — read ADRs that touch the area you're about to work in. In multi-context repos, also check `src/<context>/docs/adr/` for context-scoped decisions.
+If `CONTEXT-MAP.md` exists at the repository root, follow its pointers to the relevant
+`CONTEXT.md` files. If `docs/adr/` or context-scoped `src/<context>/docs/adr/` exists,
+read decisions relevant to the change. Their absence is not a requirement to scaffold
+new documents before useful work; this repository currently uses the canonical glossary
+and architecture spine rather than a populated context-map/ADR tree.
 
-If any of these files don't exist, **proceed silently**. Don't flag their absence; don't suggest creating them upfront. The producer skill (`/grill-with-docs`) creates them lazily when terms or decisions actually get resolved.
+Context descriptions complement the canonical vocabulary; they do not silently replace
+it. When a needed term or ownership seam is genuinely missing, surface that specific gap
+through the applicable domain/architecture workflow instead of inventing another glossary.
 
-## File structure
+## Conflicts and history
 
-Multi-context repo (presence of `CONTEXT-MAP.md` at the root):
-
-```
-/
-├── CONTEXT-MAP.md
-├── docs/adr/                          ← system-wide decisions
-└── src/
-    ├── ordering/
-    │   ├── CONTEXT.md
-    │   └── docs/adr/                  ← context-specific decisions
-    └── billing/
-        ├── CONTEXT.md
-        └── docs/adr/
-```
-
-## Use the glossary's vocabulary
-
-When your output names a domain concept (in an issue title, a refactor proposal, a hypothesis, a test name), use the term as defined in `CONTEXT.md`. Don't drift to synonyms the glossary explicitly avoids.
-
-If the concept you need isn't in the glossary yet, that's a signal — either you're inventing language the project doesn't use (reconsider) or there's a real gap (note it for `/grill-with-docs`).
-
-## Flag ADR conflicts
-
-If your output contradicts an existing ADR, surface it explicitly rather than silently overriding:
-
-> _Contradicts ADR-0007 (event-sourced orders) — but worth reopening because…_
+Identify the exact conflicting requirement/decision, scope and evidence. Propose a
+scoped correction through the owning workflow; neither file age, an archived accepted
+plan nor an as-built workaround automatically supersedes the adopted target. Preserve
+historical evidence and distinguish accepted design, existing code and demonstrated
+runtime behavior.

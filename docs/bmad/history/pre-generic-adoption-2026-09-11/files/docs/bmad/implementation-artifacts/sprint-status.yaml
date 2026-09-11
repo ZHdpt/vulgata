@@ -1,0 +1,150 @@
+# generated: 2026-07-10
+# last_updated: 2026-08-18
+# project: vulgata
+# project_key: NOKEY
+# tracking_system: file-system
+# story_location: docs/bmad/implementation-artifacts
+
+# STATUS DEFINITIONS:
+# ==================
+# Epic Status:
+#   - backlog: Epic not yet started
+#   - in-progress: Epic actively being worked on
+#   - done: All stories in epic completed
+#
+# Epic Status Transitions:
+#   - backlog -> in-progress: Automatically when first story is created (via create-story)
+#   - in-progress -> done: Manually when all stories reach 'done' status
+#
+# Story Status:
+#   - backlog: Story only exists in epic file
+#   - ready-for-dev: Story file created in stories folder
+#   - in-progress: Developer actively working on implementation
+#   - review: Ready for code review (via Dev's code-review workflow)
+#   - done: Story completed
+#
+# Retrospective Status:
+#   - optional: Can be completed but not required
+#   - done: Retrospective has been completed
+#
+# WORKFLOW NOTES:
+# ===============
+# - Epic transitions to 'in-progress' automatically when first story is created
+# - Stories can be worked in parallel if team capacity allows
+# - Developer typically creates next story after previous one is 'done' to incorporate learnings
+# - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
+
+generated: 2026-07-10
+last_updated: 2026-08-18
+project: vulgata
+project_key: NOKEY
+tracking_system: file-system
+story_location: docs/bmad/implementation-artifacts
+
+delivery_scope:
+  name: august-30-bounded-production-scan-recovery
+  deadline: 2026-08-30
+  execution_level: unified
+  planning_state: active-unified-sprint-loop
+  authority: docs/bmad/planning-artifacts/sprint-change-proposal-2026-08-17-august-30-bounded-scanning-recovery.md
+  active_sequence:
+    - epic-12
+  historical_incomplete_release_path:
+    - 11-5-demo-chat-citations-and-release-gate
+  deferred_until_after_deadline:
+    - epic-5
+    - epic-6
+    - epic-7
+    - epic-8
+    - epic-9
+    - epic-10
+
+development_status:
+  pre-epic-gate: done
+  sp-1-worker-agent-execution-adapter-validation-spike: done
+  pre-epic-gate-retrospective: optional
+  epic-1: done
+  1-1-solution-scaffolding-and-docker-deployment: done
+  1-2-user-registration: done
+  1-3-login-and-logout: done
+  1-4-profile-management: done
+  1-5-role-seeding-and-authorization-policies: done
+  1-6-administrator-role-assignment: done
+  epic-1-retrospective: done
+  epic-2: done
+  2-1-system-crud-systemowner-administrator: done
+  2-2-grant-system-ownership: done
+  2-3-repository-management: done
+  2-4-standalone-repository-creation: done
+  2-5-user-supplied-context: done
+  epic-2-retrospective: done
+  epic-3: done
+  3-1-llm-provider-configuration-administrator: done
+  3-2-per-system-llm-provider-override: done
+  3-3-database-connection-configuration: done
+  epic-3-retrospective: done
+  epic-4: done
+  4-1-codegraph-integration-and-code-unit-extraction: done
+  4-2-language-and-framework-detection: done
+  4-3-conservative-pre-scan-gate-and-communication-type-detection: done
+  epic-4-retrospective: done
+  epic-11: in-progress
+  11-1-minimal-knowledge-store-and-retrieval-projection: done
+  11-2-sequential-scan-runner-and-typed-agent-dispatch: done
+  11-3-pass-1-and-pass-2-demo-document-generation: done
+  11-4-exact-rpc-http-cross-repository-demo-resolution: done
+  11-5-demo-chat-citations-and-release-gate: review
+  epic-11-retrospective: optional
+  epic-12: in-progress
+  12-1-durable-scan-foundation-and-analysis-runtime: done
+  12-2-lightweight-java-xml-pre-scan-and-prepared-scan-manifest: done
+  12-3-resumable-file-pass-1-and-code-logic-documents: done
+  12-4-exact-cross-repository-flow-and-pass-2: done
+  12-5-grounded-llm-wiki-chat-and-august-30-release-evidence: in-progress
+  epic-12-retrospective: optional
+  epic-5: backlog
+  5-1-document-version-and-source-anchor-store: backlog
+  5-2-graph-edge-endpoint-and-uncertainty-store: backlog
+  5-3-flow-trace-and-provenance-store: backlog
+  5-4-retrieval-indexes-virtual-tree-and-export-artifacts: backlog
+  5-5-scan-coordinator: backlog
+  5-6-orchestrator-and-superstep-dispatch: backlog
+  5-7-worker-agent-pass-1-code-logic-documents: backlog
+  5-8-worker-agent-pass-2-business-logic-documents: backlog
+  5-9-database-tools-for-worker-agents: backlog
+  5-10-uncertainty-recording-and-same-repository-resolution-infrastructure: backlog
+  epic-5-retrospective: optional
+  epic-6: backlog
+  6-1-well-known-library-allowlist: backlog
+  6-2-on-demand-standalone-repository-scanning: backlog
+  6-3-unknown-library-llm-inference: backlog
+  epic-6-retrospective: optional
+  epic-7: backlog
+  7-1-communication-pattern-catalog-management: backlog
+  7-2-worker-prompt-injection-and-detection-result-contract: backlog
+  7-3-rpc-and-http-endpoint-detection: backlog
+  7-4-message-queue-and-file-based-communication-detection: backlog
+  7-5-cross-repo-page-navigation-detection: backlog
+  7-6-object-flow-analysis-for-indirect-targets: backlog
+  7-7-service-topology-mcp-resolution: backlog
+  7-8-prompt-workbench-for-detection-patterns: backlog
+  7-9-cross-repository-resolution-finalization: backlog
+  epic-7-retrospective: optional
+  epic-8: backlog
+  8-1-scan-progress-dashboard: backlog
+  8-2-hitl-notification-center: backlog
+  8-3-hitl-answer-dismiss-and-metadata-flow: backlog
+  8-4-signalr-state-replay-and-authorization: backlog
+  8-5-live-knowledge-graph-projection: backlog
+  8-6-graph-filtering-details-and-error-states: backlog
+  8-7-pre-scan-llm-question-and-approval-lifecycle: backlog
+  epic-8-retrospective: optional
+  epic-9: backlog
+  9-1-chat-page-shell-and-mode-switching: backlog
+  9-2-system-and-repository-context-selection: backlog
+  9-3-file-upload-for-chat-context: backlog
+  9-4-database-backed-llm-wiki-retrieval-pipeline: backlog
+  9-5-citation-linking-and-answer-rendering: backlog
+  epic-9-retrospective: optional
+  epic-10: backlog
+  epic-10-retrospective: optional

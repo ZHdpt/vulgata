@@ -3,7 +3,7 @@ project: vulgata
 type: design
 status: final
 created: 2026-06-22
-updated: 2026-06-22
+updated: 2026-09-11
 colors:
   primary: '#445E7A'
   primary-foreground: '#FFFFFF'
@@ -62,9 +62,13 @@ components:
 sources:
   - docs/bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md
   - docs/bmad/planning-artifacts/architecture.md
-  - docs/bmad/planning-artifacts/architecture/document-graph-anchordb-plus-plan.md
-  - docs/bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/review-rubric.md
+  - docs/bmad/planning-artifacts/architecture/ARCHITECTURE-SPINE.md
+  - docs/UBIQUITOUS_LANGUAGE.md
 ---
+
+## Scope adoption — 2026-09-11
+
+The [approved reconciliation](../../sprint-change-proposal-2026-09-11-generic-product-reconciliation.md) aligns behavior to the generic target; it does not claim implementation or runtime qualification. Existing Library Oak tokens, Fluent defaults, Chinese-only UI, chat-first navigation, management layout and basic accessibility are preserved. [EXPERIENCE.md](EXPERIENCE.md) defines the affected Scan, reader, graph and Chat behavior. Product HITL, Chat attachments and advanced/live portfolio graph are deferred; real Scan progress, genuine Chat streaming and the basic manual-refresh graph remain current. Historical mockups are visual references, not authority for deferred behavior.
 
 ## Brand & Style
 
@@ -78,12 +82,12 @@ Vulgata is a single-language product: the UI is Chinese (Simplified). All labels
 
 ## Colors
 
-The Vulgata palette is two brand colors plus Fluent UI-derived surface tokens. Vulgata runs in two modes — **业务模式** (Business, light theme) and **技术模式** (IT, dark theme) — with each mode locked to its respective theme. There is no mid-session theme toggle; switching modes starts a new chat session.
+The Vulgata palette is two brand colors plus Fluent UI-derived surface tokens. Vulgata runs in two modes — **业务模式** (Business, light theme) and **技术模式** (IT, dark theme) — with each mode locked to its respective theme. There is no mid-session theme toggle; switching modes starts a fresh inference context and new-chat surface while retaining authorized earlier dialogue.
 
 ### Brand Colors
 
 - **Primary (`#445E7A` light / `#6A83A2` dark)** — Warm blue-gray. Used on primary buttons, the active mode badge, selected nav items, link underlines, and the mode-selector banner. Replaces Fluent's default brand color.
-- **Accent (`#B98B6B` light / `#D4A88C` dark)** — Oak tan. Used for system/repo selection tags, the active/in-focus system indicator in the management tree, and HITL notification dot. The accent marks *contextual selection* — which system or repo is currently active. Never used for chrome, never used decoratively, never used for status badges.
+- **Accent (`#B98B6B` light / `#D4A88C` dark)** — Oak tan. Used for system/repo selection tags and the active/in-focus system indicator in the management tree. The historical HITL dot is deferred with that feature. The accent marks *contextual selection* — which system or repo is currently active. Never used for chrome, never used decoratively, never used for status badges.
 
 ### Surface Tokens (Light / 业务模式)
 
@@ -139,7 +143,8 @@ Key layout rules:
 - **Mode selector**: Positioned above the chat input area, not in a toolbar or settings panel. Visible and accessible before every message.
 - **System/repo selector**: Inline within the chat area — not a separate page, not a modal. Contextual to the conversation.
 - **Management link**: A peripheral navigation element at the edge of the chat page. Not the primary action. Labeled *"管理"*.
-- **HITL notification**: A bell icon in the app shell corner, visible on both chat and management surfaces. Globally accessible.
+- **Knowledge access**: Document/history/citation and basic graph reads use Knowledge authorization, including entry from Chat; placement near management does not require management rights.
+- **HITL notification — deferred**: The historical global bell/inbox placement is retained as design history, not an active shell requirement.
 
 ## Elevation & Depth
 
@@ -165,19 +170,19 @@ Brand-layer-overridden components:
 
 - **System/Repo Tag** — The inline selector chips in the chat area showing which system and repository are active. `{colors.accent}` fill, `{colors.accent-foreground}` text, `{rounded.sm}` corner. Removable, selectable. Appears in the chat context bar and in the management tree as active-node highlight.
 
-- **Chat Bubble (Assistant)** — `{colors.muted}` background in light mode, `{colors.muted-dark}` in dark mode. Left-aligned. Contains markdown-rendered LLM responses with citation links.
+- **Chat Bubble (Assistant)** — `{colors.muted}` background in light mode, `{colors.muted-dark}` in dark mode. Left-aligned. Contains genuine provisional streamed Markdown with authorized mode-appropriate citations, then an explicit saved or interrupted outcome. No raw reasoning or completed-answer typewriter replay.
 
 - **Chat Bubble (User)** — `{colors.surface}` background in light mode, `{colors.surface-dark}` in dark mode. Right-aligned. Plain text.
 
 - **Mode-Select Banner** — The interstitial shown when starting a new session (after mode switch). `display` typography, `{colors.primary}` as text color, centered. Text: *"开始新的对话"* with the selected mode name beneath.
 
-- **HITL Notification Icon** — Fluent's bell icon with a `{colors.accent}` dot when there are pending HITL questions. Positioned in the app shell corner (top-right). Globally visible across both chat and management surfaces.
+- **HITL Notification Icon — deferred** — Historical Fluent bell and contextual dot, with global top-right placement. Do not introduce a notification/inbox/answer-dismiss control under the current scope.
 
 - **Management Tree View** — Fluent's `FluentTreeView` with the active system/repo node highlighted in `{colors.accent}`. Systems as parent nodes, repositories as child nodes. Scans in progress show a `FluentProgressRing` adjacent to the repo name. Plus a "+ 新建系统" button at the top.
 
-- **Knowledge Graph** — Rendered via Z.Blazor.Diagrams (the sole non-Fluent exception). Nodes for documents, edges for references. Intra-repo edges = solid light-gray; cross-repo = dashed colored; unresolved = dashed to red diamond placeholder; disputed = yellow dashed with warning icon. Background matches `{colors.background}` / `{colors.background-dark}`. Toolbar uses `{colors.primary}` for active controls.
+- **Knowledge Graph** — Basic manual-refresh Logical Flow/Document-neighborhood graph via Z.Blazor.Diagrams (the sole non-Fluent exception), bound to selected version/evidence. Preserve authorized Document/reference styling: intra-Repository solid light-gray; Cross-Repository dashed; explicit Uncertainty may use a diamond and Fluent warning semantics. Labels explain actual relationship meaning, not invented business dependencies. Business receives BL-only permitted data, including labels/counts/tooltips. Background uses `{colors.background}` / `{colors.background-dark}`; active toolbar controls use `{colors.primary}`. Live animation and advanced portfolio visualization are deferred; layout does not edit domain Edges.
 
-- **Document Viewer** — Markdown-rendered content on `{colors.surface}` background. Code blocks with `{colors.muted}` background. Document metadata header uses `{colors.primary}` for the title. Type badges: blue for Code Logic Docs, green for Business Logic Docs.
+- **Document Viewer** — Markdown-rendered content on `{colors.surface}` with `{colors.primary}` titles. Preserve type badges: blue for Code Logic Documents, green for Business Logic Documents. CL browsing follows Repository/file/Code Unit; BL browsing follows Logical Flows within System/Repository views. Provide version history and exact cited sections, truthful stale/partial/source-unavailable states, and IT-only authorized source details at the recorded Profiled Revision. Business displays BL content/references without code, file paths, line ranges or Git metadata. IT code blocks retain `{colors.muted}` backgrounds. Source Snapshot is not a public version label.
 
 - **Admin Pages (LLM Config, User Management)** — Standard Fluent UI forms and grids, no brand overrides beyond primary buttons and surface tokens. Inherit Fluent defaults.
 
@@ -186,7 +191,7 @@ Brand-layer-overridden components:
 | Do | Don't |
 |---|---|
 | Inherit Fluent UI defaults for everything not in the brand layer | Override Fluent's color tokens beyond `primary` and `accent` |
-| Use `{colors.accent}` only for contextual selection (active system/repo, HITL dot) | Use accent for status badges, chrome decoration, or hover affordances |
+| Use `{colors.accent}` only for contextual selection (active system/repo) | Use accent for status badges, chrome decoration, or hover affordances |
 | `display` typography sparingly — empty states, greetings, section headers | Set body text or chat content in `display` to "make it pretty" |
 | Use Chinese for all UI strings — labels, buttons, placeholders, empty states | Mix Chinese and English in labels or expose English-only UI strings |
 | Lock theme to mode — 业务模式 always light, 技术模式 always dark | Allow mid-session theme toggling or decouple mode from theme |
@@ -200,6 +205,8 @@ Brand-layer-overridden components:
 ---
 
 ## Mockups
+
+These June artifacts remain unchanged visual/layout references. Their HITL, advanced graph, source-preview and recovery behavior is superseded by the scoped current contracts above and in EXPERIENCE.md.
 
 - [Chat 界面 (业务模式 + 技术模式)](mockups/chat.html) — 双模式对话界面，林和王的关键流程
 - [管理后台 (Holy Grail 布局)](mockups/management.html) — 系统管理 + 仓库详情 + 扫描仪表盘，张的关键流程

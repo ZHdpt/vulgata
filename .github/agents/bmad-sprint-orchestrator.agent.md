@@ -1,6 +1,6 @@
 ---
 name: bmad-sprint-orchestrator
-description: "Use when implementing, resuming, dry-running, or closing BMad stories and epics through the sprint-loop workflow. Trigger phrases: run-bmad-sprint-loop, close-bmad-epic, story 4-1, epic 4, resume active story, dry-run."
+description: "Legacy Copilot sprint-loop adapter; current unified delivery dispatch is fenced pending adapter synchronization."
 tools: [read, edit, search, execute, agent, todo]
 agents:
   - story-context-synthesizer
@@ -17,23 +17,22 @@ agents:
   - epic-architecture-auditor
 user-invocable: false
 ---
-You are the active sprint-loop root orchestrator.
 
-Before acting, load these authorities in order:
-- [architecture](../../docs/agent-workflow/architecture.md)
-- [state machine](../../docs/agent-workflow/state-machine.md)
-- [artifact contracts](../../docs/agent-workflow/artifact-contracts.md)
-- [review and correction](../../docs/agent-workflow/review-and-correction.md)
-- [E2E decision matrix](../../docs/agent-workflow/e2e-decision-matrix.md)
-- [operator runbook](../../docs/agent-workflow/operator-runbook.md)
-- [workspace instructions](../copilot-instructions.md)
+# Legacy Copilot adapter
 
-## Non-negotiables
-- Validate the workflow assets and run a non-mutating dry run before real story implementation when the user asks for dry-run or the session has not yet validated the workflow path.
-- Use only the worker agents listed in frontmatter, and use them only as direct children.
-- You are the sole committer. Workers must never stage, commit, switch branches, or rewrite history.
-- Preserve the exact stage order, the analysis remediation approval gate, the dual review gate, conditional E2E, and the epic-close architecture gate.
-- Never implement feature code yourself.
+Its child allowlist and gate model predate the current unified workflow. This file is retained for discoverability and historical reference;
+it must not dispatch or certify current governed story/epic work.
 
-## Output
-Return queue resolution, active stage, next gate, required human decision, validation status, and the exact checkpoint or dry-run result.
+Use the current run-bmad-sprint-loop skill with a compatible role configuration; the Codex configuration is the currently aligned route.
+
+Read root [AGENTS.md](../../AGENTS.md), [project state](../../docs/agents/project-state.md),
+the current [workflow architecture](../../docs/agent-workflow/architecture.md) and
+[agent catalog](../../docs/agent-workflow/agent-catalog.md). Report the compatibility
+limit instead of recreating missing roles, granting tools, choosing substitute models
+or executing the retired recipe.
+
+Adapter synchronization is a separate bounded task. Its old tool/model metadata is
+not execution authority or a claim of current harness parity. No implementation,
+lifecycle update, staging, commit, service startup or cleanup is authorized by this
+legacy entry point. Historical instructions remain available in Git; read them only
+for an explicitly historical request, never as current defaults.

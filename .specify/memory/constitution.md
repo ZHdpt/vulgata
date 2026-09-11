@@ -1,274 +1,224 @@
 <!--
 Sync Impact Report
-==================
-Version change: 0.0.0 (uninitialized template) → 1.0.0
-Bump rationale: MINOR — initial ratification. The file was the unfilled
-constitution-template.md with bracketed placeholders. Filling all
-placeholders with concrete project-derived content is a material
-addition of governance, so the initial ratified version is 1.0.0.
+Version change: 1.0.0 -> 2.0.0
+Bump: MAJOR. Align previously incompatible project/data ownership and Document
+versioning rules with the user-approved September 11 generic-product architecture.
+This local amendment is not a claim of completed PR/Administrator review or merge.
 
-Modified principles (old → new):
-  - [PRINCIPLE_1_NAME] → I. Layered Project Boundaries
-  - [PRINCIPLE_2_NAME] → II. Domain Purity & Ubiquitous Language
-  - [PRINCIPLE_3_NAME] → III. Validation & API Contract Discipline
-  - [PRINCIPLE_4_NAME] → IV. Test-First Integration Harness
-  - [PRINCIPLE_5_NAME] → V. Security & Data Stewardship
+Modified principles:
+- I. Layered Project Boundaries: truthful Web/Data Identity exception; one owning
+  module per contract; remove the inaccurate one-direction project-reference diagram.
+- II. Domain Purity & Ubiquitous Language: immutable versions also follow changed
+  accepted evidence/flow dependencies; canonical JSON and historical provenance.
+- III. Validation & API Contract Discipline: preserve validation, API and Chinese UI
+  rules; replace unavailable named-memory references with project-local guidance.
+- IV. Test-First Integration Harness: align behavioral TDD and nonbehavioral evidence
+  with the current unified workflow; no fabricated RED or runtime claims.
+- V. Security & Data Stewardship: live contributor/purpose/mode/source authority and
+  provider boundaries; retain protected secrets and read-only/non-production DB tools.
 
-Added sections:
-  - "Additional Constraints" (was [SECTION_2_NAME])
-  - "Development Workflow & Quality Gates" (was [SECTION_3_NAME])
-  - Governance section filled
-
-Removed sections: none
-
-Templates requiring updates:
-  - .specify/templates/plan-template.md — ✅ no change needed; its
-    "Constitution Check" gate is generic ("Gates determined based on
-    constitution file") and resolves against this file at plan time.
-  - .specify/templates/spec-template.md — ✅ no change needed; spec
-    template is technology-agnostic by design and does not reference
-    constitution principles by name.
-  - .specify/templates/tasks-template.md — ✅ no change needed; task
-    phases (Setup / Foundational / User Story / Polish) already align
-    with Principle IV's integration-test-first discipline.
-  - .specify/templates/commands/*.md — N/A (no commands folder exists).
-
-Follow-up TODOs: none. All placeholders resolved.
+Additional Constraints and Development Workflow updated to the adopted target:
+deterministic Scan Control, bounded MAF execution, no implicit provider failover,
+two-service Docker target and genuine Chat streaming/manual graph distinction.
+No principles or maintainer amendment/review requirements removed.
+Resolved constitution-template successfully; dependent templates/commands read this
+file at runtime and were not modified by this constitution update.
+Ratified date preserved. No unresolved template placeholders or deferred implementation.
 -->
 
 # Vulgata Constitution
+
+This is development governance for the adopted generic product, not a statement that
+the current code implements or qualifies that target. Product scope and dispositions
+come from the current PRD; terminology from the canonical glossary; design from the
+architecture gateway/spine. The working tree may still contain explicitly scoped
+legacy implementations while replacement stories are delivered.
 
 ## Core Principles
 
 ### I. Layered Project Boundaries
 
-Vulgata is a multi-project .NET 10 solution. Each project has a single,
-enforced responsibility, and dependencies flow in one direction:
-Shared → Core ← Infrastructure ← Web ← Tests.
+Each project MUST retain its recorded responsibility. Domain and agent execution
+code MUST NOT acquire database, arbitrary filesystem or process authority merely
+because an infrastructure implementation is available.
 
-- **Vulgata.Core** holds domain entities (`Entities/`) and domain service
-  interfaces (`DomainServices/`) only. It MUST NOT reference
-  `Microsoft.EntityFrameworkCore.*` or any infrastructure package.
-- **Vulgata.Infrastructure** owns `VulgataDbContext`, `ApplicationDbContext`,
-  EF migrations, `Data/Configurations/` (one `IEntityTypeConfiguration<T>` per
-  aggregate), repository implementations, and `Git/`. It is the only project
-  permitted to touch EF Core or the database.
-- **Vulgata.Shared** holds request/response DTOs, FluentValidation validators,
-  `LoadState`, `AuthorizationPolicyNames`, and `RoleNames`. It is referenced by
-  Web and Tests but MUST NOT depend on Infrastructure or Web.
-- **Vulgata.Web** is the Blazor host: `Program.cs` (DI + middleware + startup
-  migration), `Components/`, `Api/` (minimal API groups), `Data/`, `Validators/`.
-- **Vulgata.Agents** holds agent types and `Prompts/` as embedded resources.
+- **Vulgata.Core** owns domain entities/rules and service/repository contracts. It
+  MUST NOT depend on EF Core, Infrastructure or Web.
+- **Vulgata.Infrastructure** owns domain persistence, `VulgataDbContext`, domain
+  migrations/configurations and source/tool/storage adapters.
+- **Identity placement exception:** the existing `ApplicationDbContext`, Identity
+  migrations and seeding remain in `Vulgata.Web/Data`. Web startup composes and
+  migrates both contexts. Planning adoption does not relocate these files or prove
+  that only Infrastructure currently touches EF/database APIs.
+- **Vulgata.Shared** owns DTOs, validation and common presentation/access constants;
+  it MUST NOT depend on Infrastructure or Web.
+- **Vulgata.Agents** executes bounded conversations through injected domain/tool
+  contracts and externalized prompts, without direct EF or arbitrary host access.
+- **Vulgata.Web** owns composition, API/presentation and the recorded Identity
+  exception; ViewModels retain their testable presentation responsibility.
 
-Rationale: the layering prevents domain logic from leaking into UI/infra code
-and keeps the domain testable in isolation. Violations are caught at compile
-time via project references and MUST be fixed, not worked around.
+Scan Control MUST own scheduling/recovery; Knowledge MUST own semantic acceptance,
+publication and read selection; Chat MUST own dialogue/turns. Computational modules
+propose, and Infrastructure implements the owners' atomic/fenced contracts. New
+records and abstractions MUST be introduced when an owning story needs them, not as
+an upfront schema for every future feature.
+
+Rationale: preserve testable domain boundaries and one policy owner while stating
+the existing layout accurately.
 
 ### II. Domain Purity & Ubiquitous Language
 
-Domain entities and documents are the source of truth; the database is a
-persistence detail.
+- Domain entities MUST have no data annotations. Domain EF mappings live in
+  Infrastructure's `IEntityTypeConfiguration<T>` configurations.
+- Each aggregate root MUST use a specific repository contract; no generic
+  `IRepository<T>`. Domain persistence MUST NOT expose `IQueryable` or `DbSet`
+  through its public repository boundary. The existing Identity context is the
+  explicit project-placement exception, not permission to leak domain storage.
+- Accepted Code Logic and Business Logic content MUST use immutable Document
+  Versions and canonical structured JSON. Markdown/reading projections are derived,
+  not competing editable authorities.
+- New versions MAY result from accepted source analysis or changed accepted
+  relationship/evidence/flow dependencies. Relationship selection may advance
+  without rewriting unchanged Code Logic. Exact historical dependencies and Version
+  Chains MUST survive; previous Document Versions are never deleted or retargeted.
+- Drafts, incomplete file results and unqualified legacy representations MUST NOT
+  be relabelled as newly accepted generic Knowledge.
+- Use [the canonical glossary](../../docs/UBIQUITOUS_LANGUAGE.md) verbatim. Surface
+  missing or conflicting domain concepts rather than inventing a competing glossary.
 
-- **No data annotations** on domain entities. All EF mapping lives in
-  `IEntityTypeConfiguration<T>` classes under
-  `Infrastructure/Data/Configurations/`, registered by assembly scan.
-- **No generic `IRepository<T>`.** Each aggregate root gets a specific
-  repository interface in `Core/DomainServices/` with a concrete
-  implementation in `Infrastructure/Data/`.
-- **Never expose `IQueryable` or `DbSet`** outside Infrastructure. Repositories
-  return materialized results or tracked entities only.
-- **Documents are immutable.** The only mutation path is code change → re-scan
-  → regenerate. Previous versions are preserved via `superseded_by_id`
-  (Version Chain) and are never deleted.
-- **Ubiquitous language is authoritative.** `docs/UBIQUITOUS_LANGUAGE.md`
-  defines canonical terms (System, Repository, Code Unit, Document, Edge,
-  Uncertainty, Cross-Repository Resolution, etc.). Output MUST use these terms
-  verbatim and MUST NOT drift to deprecated synonyms (e.g. "Cross-System" →
-  use "Cross-Repository"). If a needed concept is absent from the glossary,
-  surface the gap rather than inventing language.
-
-Rationale: a stable, code-free domain model keeps the business logic
-inspectable by non-technical staff and keeps the wiki generation pipeline
-deterministic.
+Rationale: versioned Knowledge can improve after later evidence without requiring
+unchanged-source rescans or losing historical meaning.
 
 ### III. Validation & API Contract Discipline
 
-All input is validated; all API errors are structured; all UI is Chinese.
+- Use FluentValidation for domain/request input and the established Blazor form
+  integration. Do not substitute entity data annotations for domain validation.
+- Minimal APIs MUST use the recorded plural-resource grouping and ProblemDetails
+  convention. API failures MUST retain correct 401/403 behavior rather than cookie
+  redirects or HTML status-page rewrites.
+- Product UI MUST remain Simplified Chinese for V1, with the approved Fluent/Library
+  Oak patterns and accessibility floor. This does not dictate the language of
+  developer conversation.
+- Async methods use the `Async` suffix, private fields use `_camelCase`, and
+  persistent tables/columns use PascalCase. Domain events and hub methods use past
+  tense.
 
-- **FluentValidation** is the sole input validation mechanism. Validators are
-  registered via `AddValidatorsFromAssemblyContaining<T>()` and Blazor forms
-  use the FluentValidation validator component. Data annotations are not used
-  for domain validation.
-- **Minimal APIs** live under `/api/` with plural nouns, grouped in
-  `Web/Api/<area>/` and registered via `MapVulgataApiEndpoints()`. Errors use
-  `ProblemDetails` — no wrapping envelope. API requests are excluded from
-  status-code-page rewrites and cookie redirects (see `IsApiRequest` in
-  `Program.cs`) so auth failures return proper 401/403.
-- **Chinese-only UI (Simplified)** for V1 — no i18n. Identity error messages
-  use `ChineseIdentityErrorDescriber`. DataAnnotations that must render
-  Chinese need explicit `ErrorMessage` text (see repo memory
-  `vulgata-identity-localization`).
-- **Naming:** `Async` suffix mandatory on async methods. `_camelCase` for
-  private fields. PascalCase for DB tables/columns. Domain events and SignalR
-  hub methods use past tense.
-
-Rationale: a single validation + error contract keeps the API machine-readable
-and the UI consistent for the target audience.
+Runtime/source details and verified commands belong in
+[development guidance](../../docs/agents/development.md); test-harness caveats belong
+in [testing guidance](../../docs/agents/testing.md).
 
 ### IV. Test-First Integration Harness
 
-Tests are integration-first and mirror the source structure.
+- Behavioral implementation MUST follow the selected repository workflow's honest
+  RED, minimal GREEN and surrounding-regression evidence. Tests and production
+  changes retain the workflow's separate ownership.
+- Documentation, configuration metadata and other nonbehavioral work MUST use
+  proportionate truthful checks; never fabricate a failing test to satisfy a stage.
+- Retain the single `tests/Vulgata.Tests` project and established integration
+  harness. New behavior SHOULD cover its happy path and applicable authorization
+  boundary; a missing applicable boundary test requires explicit review rationale.
+- Required build/tests and risk checks MUST pass at the governed delivery boundary.
+  Preserve the actual analyzer configuration/severity; do not call warnings errors
+  without configuration or command evidence.
+- Fixtures, SQLite, schema validity and old passing tests MUST NOT substitute for
+  required PostgreSQL, real tool/provider, lifecycle or usefulness qualification.
+  Explicitly distinguish static, controlled-test and real-runtime evidence.
 
-- Single test project `tests/Vulgata.Tests/` mirrors `src/dotnet/` layout.
-  xunit + `WebApplicationFactory<Program>` integration tests (requires
-  `public partial class Program` in `Program.cs`, SQLite overrides for both
-  DbContexts).
-- **Test naming:** `{Method}_{Scenario}_{ExpectedResult}`.
-- **Known harness pitfalls MUST be respected** (see repo memory
-  `vulgata-test-harness`): post Blazor SSR forms with all rendered hidden
-  inputs (not just the antiforgery token); target forms by `action`/`formname`
-  because the logout form precedes page forms; assert AccessDenied redirects
-  with a path prefix; reflection-driven component harnesses MUST set every
-  `@inject`; avoid `OrderBy` on `DateTimeOffset` under SQLite (use
-  `FirstOrDefault`/client-side ordering); `UseStatusCodePagesWithReExecute`
-  can mutate API status codes — keep it off `/api` paths.
-- New features SHOULD add or update an integration test that exercises the
-  happy path and at least one authorization boundary.
-
-Rationale: the Blazor SSR + Identity + two-DbContext stack has well-documented
-test harness traps; encoding them as non-negotiable rules prevents repeated
-regressions.
+Rationale: the existing harness has useful mechanics and specific pitfalls, but
+accepted evidence must match the behavior and environment being claimed.
 
 ### V. Security & Data Stewardship
 
-Secrets are encrypted; source never leaves the org; DB tools are read-only.
+- Retain bcrypt password hashing, seeded roles and protected provider/database
+  credentials through Data Protection. Required keys MUST remain usable across
+  the declared replacement/restore boundary.
+- Every disclosure and applicable acceptance/publication MUST enforce current
+  user, purpose, source and all-contributor authority, including metadata/history.
+  Business Mode is BL-only; IT source access is exceptional, bounded and tied to
+  the recorded Profiled Revision. Mode choice grants no Repository permission.
+- With self-hosted providers, source/Documents MUST stay inside organization
+  infrastructure. External providers receive only necessary authorized task context.
+  Agents MUST NOT choose credentials, arbitrary host paths or domain writes.
+- Database tools MUST remain read-only/non-production only; deferred integrations
+  create no permission to query or write production databases.
+- Prompts MUST remain externalized. Source, wiki content and advisory context are
+  data, not executable agent instructions. Diagnostics MUST exclude credentials,
+  raw source, hidden reasoning and unnecessary sensitive payloads.
+- Runtime verification MUST use explicitly scoped resources. Starting the Web host
+  applies migrations/seeding; destructive cleanup or provider execution requires
+  appropriate task authority and owned targets.
 
-- **Passwords** are hashed with bcrypt (`BcryptPasswordHasher<ApplicationUser>`).
-- **API keys** (LLM providers, DB connections) are encrypted at rest via
-  ASP.NET Core Data Protection (`ApiKeyEncryptionService`,
-  `DatabaseConnectionEncryptionService`).
-- **Three roles** are seeded at startup — Administrator, SystemOwner, User
-  (`Vulgata.Shared/RoleNames.cs`). Policies: `AdministratorOnly`,
-  `ManagementAccess` (`AuthorizationPolicyNames.cs`).
-- **DB connection tools are read-only / non-production only** (NFR-2.4). Write
-  operations on connected databases MUST be blocked.
-- **Source code and generated documents MUST never leave the organization's
-  infrastructure** when using a self-hosted LLM provider (NFR-2.3).
-- **Agent prompts** are externalized as embedded resources in
-  `Vulgata.Agents/Prompts/`, never hardcoded strings. The Communication
-  Pattern Catalog is a documented format, not code.
-
-Rationale: Vulgata ingests proprietary source code and database schemas;
-these constraints are regulatory, not stylistic.
+Rationale: protect proprietary source and generated Knowledge without confusing
+configured capabilities with execution or disclosure permission.
 
 ## Additional Constraints
 
-**Technology stack (fixed for V1):**
+The [architecture gateway](../../docs/bmad/planning-artifacts/architecture.md) and
+[AD-1–AD-32 spine](../../docs/bmad/planning-artifacts/architecture/ARCHITECTURE-SPINE.md)
+own the platform/project layout and generic Scan/Knowledge/Chat design. Package/build
+files own installed versions/settings; a documentation target is not runtime proof.
 
-- .NET 10 (`net10.0`), Blazor Web App (interactive server render mode),
-  ASP.NET Core Identity (cookie auth, individual accounts).
-- PostgreSQL 17 via EF Core + Npgsql. Two `DbContext`s sharing one database:
-  `ApplicationDbContext` (schema `identity`, separate migration history table
-  `__IdentityMigrationsHistory`) and `VulgataDbContext` (schema `vulgata`).
-  Migrations run at startup via `MigrateAsync()`; the app fails fast if
-  migration/seeding fails.
-- Microsoft Fluent UI Blazor (primary components), Z.Blazor.Diagrams (graph
-  viz, planned), CommunityToolkit.Mvvm (MVVM source generators).
-- SignalR hubs `ScanHub` / `GraphHub` (planned), all `[Authorize]`.
-- Microsoft agent framework with Magentic orchestration (planned); OpenAI SDK
-  against OpenAI-compatible endpoints with multi-provider failover.
-- Deployment: single Docker container + PostgreSQL via `docker-compose.yml`
-  (see `docker/Dockerfile`).
+Retain the .NET 10/Blazor modular monolith, PostgreSQL 17 and approved UI stack.
+Deterministic Scan Control owns orchestration; Microsoft Agent Framework owns
+bounded model/tool conversations. Configured providers do not imply failover.
 
-**Solution-wide build settings** (`Directory.Build.props`): `Nullable=enable`,
-`ImplicitUsings=enable`, `AnalysisMode=AllEnabledByDefault`,
-`EnforceCodeStyleInBuild=true`. Central package versioning via
-`Directory.Packages.props`.
+The deployment target is Vulgata with bundled local CodeGraph/JDT-LS plus PostgreSQL
+as two Compose services, with non-root application/tools, configured limits and
+separate durable source/data/keys versus disposable tool state. Initial LSP policy
+disables automatic import/build/dependency restore, not all networking. Genuine Scan
+progress and Chat deltas differ from the basic manual-refresh graph.
 
-**UI theme:** "Library Oak" — primary `#445E7A` (light) / `#6A83A2` (dark),
-accent `#B98B6B` / `#D4A88C`. Business mode locked to light, IT mode locked to
-dark. Display text in Noto Serif SC. See
-`docs/bmad/planning-artifacts/ux-designs/ux-vulgata-2026-06-22/`.
-
-**Information architecture:** two top-level routes — 对话 (chat, default
-landing) and 管理后台 (management, holy-grail layout). Chat-first: login
-lands in chat, not a dashboard.
-
-**ViewModels:** every data-loading ViewModel exposes a `LoadState`
-(`Idle|Loading|Loaded|Refreshing|Empty|NoResults|Error|Cancelling`) — see
-`Vulgata.Shared/LoadState.cs`.
+Current required/deferred/historical/original-unmet scope is recorded in the
+[PRD](../../docs/bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md). Automatic
+source-update scanning, product HITL and other deferred features MUST NOT silently
+re-enter through old specs or examples. Native CodeGraph is not CodeGraphContext.
 
 ## Development Workflow & Quality Gates
 
-**Build, run, test commands:**
+For BMad story work, follow the current `run-bmad-sprint-loop` skill and its
+[workflow architecture](../../docs/agent-workflow/architecture.md) and
+[state machine](../../docs/agent-workflow/state-machine.md). Resolve work from the
+[current backlog](../../docs/bmad/epics.md) and
+[tracker](../../docs/bmad/implementation-artifacts/sprint-status.yaml), then deliberately
+activate its feature. Historical specs and file modification times are not selectors.
 
-```pwsh
-dotnet build src/dotnet/Vulgata.Web/Vulgata.Web.csproj
-dotnet run --project src/dotnet/Vulgata.Web/Vulgata.Web.csproj
-docker compose up --build
-dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj
-dotnet ef migrations add <Name> --project src/dotnet/Vulgata.Infrastructure --startup-project src/dotnet/Vulgata.Web
-```
+The root owns state/checkpoints and any authorized local commits. Preserve independent
+definition/quality review, separate behavioral test/production ownership, convergence,
+conditional E2E and pinned verification. A story-definition acceptance is not
+implementation approval; earlier deadline/compile-only waivers do not carry forward.
 
-**Quality gates (every change):**
-
-- `dotnet build` MUST succeed with `AnalysisMode=AllEnabledByDefault` and
-  `EnforceCodeStyleInBuild=true` — analyzer warnings are errors in practice.
-- `dotnet test` MUST pass. New features SHOULD add a covering integration test.
-- EF migrations: add from the Infrastructure project with the Web project as
-  startup. Migrations are applied automatically at startup; never require
-  manual `database update` in normal dev flow.
-- Code review MUST verify: project boundary compliance (Principle I), no data
-  annotations on entities (Principle II), FluentValidation used for input
-  (Principle III), integration test added/updated (Principle IV), secrets
-  encrypted and DB tools read-only (Principle V).
-
-**Domain docs & decisions:**
-
-- `docs/UBIQUITOUS_LANGUAGE.md` is authoritative for terminology.
-- `docs/adr/` (system-wide) and `src/<context>/docs/adr/` (context-scoped)
-  hold ADRs. If a change contradicts an ADR, surface it explicitly rather than
-  silently overriding.
-- `CONTEXT-MAP.md` at repo root points at one `CONTEXT.md` per context (see
-  `docs/agents/domain.md`).
-
-**Issue tracker:** GitHub Issues on `ZHdpt/vulgata`. Triage labels:
-`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`
-(see `docs/agents/triage-labels.md`).
+After independent plan acceptance and before tasks, explicit user approval remains
+required for new/materially changed Agent tools, Scan strategy or PRD requirements,
+as detailed in [AGENTS.md](../../AGENTS.md). The current workflow also governs
+architecture decisions and other human gates. Do not substitute a cached role catalog
+or obsolete harness adapter for those authorities.
 
 ## Governance
 
-This constitution is the highest-authority development guidance for Vulgata.
-It supersedes conflicting ad-hoc practices but does not override the
-ubiquitous language (`docs/UBIQUITOUS_LANGUAGE.md`) or ADRs (`docs/adr/`) —
-those are peer authorities and conflicts MUST be surfaced explicitly.
+This constitution defines development constraints and supersedes conflicting ad-hoc
+practices. The PRD owns product dispositions, the glossary owns terms, and approved
+architecture/ADRs own design. Conflicts MUST be surfaced rather than silently resolved
+by date, convenience or an old spec. Historical accepted boundaries remain evidence.
 
 **Amendment procedure:**
 
-1. Propose an amendment as a PR that edits `.specify/memory/constitution.md`.
-2. The PR MUST include: the old text, the new text, the rationale, and a
-   migration plan for any in-flight work that the amendment affects.
-3. Amendment requires review by at least one Administrator-role maintainer.
-4. On merge, update `LAST_AMENDED_DATE` and bump `CONSTITUTION_VERSION`
-   per semantic versioning:
-   - **MAJOR**: backward-incompatible governance change or principle
-     removal/redefinition.
-   - **MINOR**: new principle or materially expanded guidance.
-   - **PATCH**: clarification, wording, typo, non-semantic refinement.
+1. Propose the amendment in a PR editing this file.
+2. Include old/new text, rationale and a migration plan for affected in-flight work.
+3. Obtain review by at least one Administrator-role maintainer.
+4. On merge, update the amendment date and semantic version: MAJOR for incompatible
+   principle/governance redefinition, MINOR for material additions, PATCH for
+   non-semantic clarification.
 
-**Versioning policy:** `MAJOR.MINOR.PATCH` (semantic versioning). The version
-line at the bottom of this file is the single source of truth for the current
-constitution version.
+The version line is the single current version identifier. This working-tree update
+does not assert a PR, maintainer review or merge has occurred. Its migration is
+documentation/agent-authority alignment with the already approved generic design;
+new feature plans must check this version, while historical feature records remain
+unchanged.
 
-**Compliance review:** every PR MUST self-certify compliance with the five
-Core Principles. Reviewers MAY block a PR for any principle violation. When a
-principle is intentionally violated for a justified reason, the PR MUST record
-the violation, the justification, and the rejected simpler alternative in the
-plan's Complexity Tracking table (see `.specify/templates/plan-template.md`).
+Every PR MUST self-certify compliance with these five principles. Reviewers MAY block
+a PR for a principle violation. An intentional exception requires recorded justification
+and rejected simpler alternatives in the plan's Complexity Tracking section; it is not
+an implicit waiver.
+Day-to-day instructions are in [AGENTS.md](../../AGENTS.md).
 
-**Runtime development guidance:** see `AGENTS.md` at the repo root for
-build/run/test commands, project boundaries, coding rules, UI conventions,
-and testing discipline. This constitution defines the non-negotiable rules;
-`AGENTS.md` provides the day-to-day operating instructions.
-
-**Version**: 1.0.0 | **Ratified**: 2026-07-07 | **Last Amended**: 2026-07-07
+**Version**: 2.0.0 | **Ratified**: 2026-07-07 | **Last Amended**: 2026-09-11

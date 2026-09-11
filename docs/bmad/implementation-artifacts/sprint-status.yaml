@@ -1,150 +1,92 @@
-# generated: 2026-07-10
-# last_updated: 2026-08-18
-# project: vulgata
-# project_key: NOKEY
-# tracking_system: file-system
-# story_location: docs/bmad/implementation-artifacts
-
 # STATUS DEFINITIONS:
 # ==================
 # Epic Status:
 #   - backlog: Epic not yet started
 #   - in-progress: Epic actively being worked on
 #   - done: All stories in epic completed
-#
-# Epic Status Transitions:
-#   - backlog -> in-progress: Automatically when first story is created (via create-story)
-#   - in-progress -> done: Manually when all stories reach 'done' status
-#
+
 # Story Status:
 #   - backlog: Story only exists in epic file
-#   - ready-for-dev: Story file created in stories folder
+#   - ready-for-dev: Story file created, ready for development
 #   - in-progress: Developer actively working on implementation
-#   - review: Ready for code review (via Dev's code-review workflow)
+#   - review: Implementation complete, ready for review
 #   - done: Story completed
-#
+
 # Retrospective Status:
 #   - optional: Can be completed but not required
 #   - done: Retrospective has been completed
-#
+
+# Action Item Status:
+#   - open: Committed during a retrospective, not yet addressed
+#   - in-progress: Actively being worked on
+#   - done: Completed
+
 # WORKFLOW NOTES:
 # ===============
-# - Epic transitions to 'in-progress' automatically when first story is created
+# - Epic transitions to 'in-progress' automatically when its first story starts (via build's sprint sync)
 # - Stories can be worked in parallel if team capacity allows
-# - Developer typically creates next story after previous one is 'done' to incorporate learnings
+# - Developer typically creates the next story after the previous one is 'done' to incorporate learnings
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
-
-generated: 2026-07-10
-last_updated: 2026-08-18
+# - Retrospective appends its action items to action_items; the status view surfaces open ones
+generated: 09-11-2026 18:29
+last_updated: 09-11-2026 18:29
 project: vulgata
 project_key: NOKEY
 tracking_system: file-system
 story_location: docs/bmad/implementation-artifacts
-
-delivery_scope:
-  name: august-30-bounded-production-scan-recovery
-  deadline: 2026-08-30
-  execution_level: unified
-  planning_state: active-unified-sprint-loop
-  authority: docs/bmad/planning-artifacts/sprint-change-proposal-2026-08-17-august-30-bounded-scanning-recovery.md
-  active_sequence:
-    - epic-12
-  historical_incomplete_release_path:
-    - 11-5-demo-chat-citations-and-release-gate
-  deferred_until_after_deadline:
-    - epic-5
-    - epic-6
-    - epic-7
-    - epic-8
-    - epic-9
-    - epic-10
-
 development_status:
-  pre-epic-gate: done
-  sp-1-worker-agent-execution-adapter-validation-spike: done
-  pre-epic-gate-retrospective: optional
-  epic-1: done
-  1-1-solution-scaffolding-and-docker-deployment: done
-  1-2-user-registration: done
-  1-3-login-and-logout: done
-  1-4-profile-management: done
-  1-5-role-seeding-and-authorization-policies: done
-  1-6-administrator-role-assignment: done
-  epic-1-retrospective: done
-  epic-2: done
-  2-1-system-crud-systemowner-administrator: done
-  2-2-grant-system-ownership: done
-  2-3-repository-management: done
-  2-4-standalone-repository-creation: done
-  2-5-user-supplied-context: done
-  epic-2-retrospective: done
-  epic-3: done
-  3-1-llm-provider-configuration-administrator: done
-  3-2-per-system-llm-provider-override: done
-  3-3-database-connection-configuration: done
-  epic-3-retrospective: done
-  epic-4: done
-  4-1-codegraph-integration-and-code-unit-extraction: done
-  4-2-language-and-framework-detection: done
-  4-3-conservative-pre-scan-gate-and-communication-type-detection: done
-  epic-4-retrospective: done
-  epic-11: in-progress
-  11-1-minimal-knowledge-store-and-retrieval-projection: done
-  11-2-sequential-scan-runner-and-typed-agent-dispatch: done
-  11-3-pass-1-and-pass-2-demo-document-generation: done
-  11-4-exact-rpc-http-cross-repository-demo-resolution: done
-  11-5-demo-chat-citations-and-release-gate: review
-  epic-11-retrospective: optional
-  epic-12: in-progress
-  12-1-durable-scan-foundation-and-analysis-runtime: done
-  12-2-lightweight-java-xml-pre-scan-and-prepared-scan-manifest: done
-  12-3-resumable-file-pass-1-and-code-logic-documents: done
-  12-4-exact-cross-repository-flow-and-pass-2: done
-  12-5-grounded-llm-wiki-chat-and-august-30-release-evidence: in-progress
-  epic-12-retrospective: optional
-  epic-5: backlog
-  5-1-document-version-and-source-anchor-store: backlog
-  5-2-graph-edge-endpoint-and-uncertainty-store: backlog
-  5-3-flow-trace-and-provenance-store: backlog
-  5-4-retrieval-indexes-virtual-tree-and-export-artifacts: backlog
-  5-5-scan-coordinator: backlog
-  5-6-orchestrator-and-superstep-dispatch: backlog
-  5-7-worker-agent-pass-1-code-logic-documents: backlog
-  5-8-worker-agent-pass-2-business-logic-documents: backlog
-  5-9-database-tools-for-worker-agents: backlog
-  5-10-uncertainty-recording-and-same-repository-resolution-infrastructure: backlog
-  epic-5-retrospective: optional
-  epic-6: backlog
-  6-1-well-known-library-allowlist: backlog
-  6-2-on-demand-standalone-repository-scanning: backlog
-  6-3-unknown-library-llm-inference: backlog
-  epic-6-retrospective: optional
-  epic-7: backlog
-  7-1-communication-pattern-catalog-management: backlog
-  7-2-worker-prompt-injection-and-detection-result-contract: backlog
-  7-3-rpc-and-http-endpoint-detection: backlog
-  7-4-message-queue-and-file-based-communication-detection: backlog
-  7-5-cross-repo-page-navigation-detection: backlog
-  7-6-object-flow-analysis-for-indirect-targets: backlog
-  7-7-service-topology-mcp-resolution: backlog
-  7-8-prompt-workbench-for-detection-patterns: backlog
-  7-9-cross-repository-resolution-finalization: backlog
-  epic-7-retrospective: optional
-  epic-8: backlog
-  8-1-scan-progress-dashboard: backlog
-  8-2-hitl-notification-center: backlog
-  8-3-hitl-answer-dismiss-and-metadata-flow: backlog
-  8-4-signalr-state-replay-and-authorization: backlog
-  8-5-live-knowledge-graph-projection: backlog
-  8-6-graph-filtering-details-and-error-states: backlog
-  8-7-pre-scan-llm-question-and-approval-lifecycle: backlog
-  epic-8-retrospective: optional
-  epic-9: backlog
-  9-1-chat-page-shell-and-mode-switching: backlog
-  9-2-system-and-repository-context-selection: backlog
-  9-3-file-upload-for-chat-context: backlog
-  9-4-database-backed-llm-wiki-retrieval-pipeline: backlog
-  9-5-citation-linking-and-answer-rendering: backlog
-  epic-9-retrospective: optional
-  epic-10: backlog
-  epic-10-retrospective: optional
+  epic-13: backlog
+  13-1-retain-exact-repository-source-with-scoped-read-access: backlog
+  13-2-run-vulgata-in-docker-with-durable-storage-and-bundled-analy: backlog
+  13-3-inventory-repository-source-and-explain-file-eligibility: backlog
+  13-4-inspect-structured-and-unfamiliar-source-without-executing-i: backlog
+  13-5-prepare-exact-repository-source-for-native-codegraph-mcp-use: backlog
+  13-6-navigate-exact-source-through-one-declared-language-neutral: backlog
+  13-7-recover-and-control-durable-repository-preparation-with-shar: backlog
+  13-8-add-bounded-advisory-repository-overview-and-file-ordering: backlog
+  13-9-accept-semantic-file-knowledge-with-stable-identities-and-or: backlog
+  13-10-read-selected-code-logic-exact-history-and-authorized-source: backlog
+  13-11-produce-useful-whole-file-code-logic-through-bounded-real-wo: backlog
+  13-12-continue-large-file-analysis-with-durable-whole-file-progres: backlog
+  13-13-plan-rooted-local-logical-flows-from-accepted-evidence: backlog
+  13-14-publish-and-read-coherent-local-business-logic-versions: backlog
+  13-15-synthesize-useful-local-business-explanations-with-bounded-v: backlog
+  13-16-replace-current-local-knowledge-without-erasing-history: backlog
+  13-17-complete-one-real-repository-scan-through-the-ordinary-produ: backlog
+  13-18-follow-real-scan-progress-controls-and-history-in-the-dashbo: backlog
+  13-19-run-and-control-several-independent-repository-scans-fairly: backlog
+  epic-13-retrospective: optional
+
+  epic-14: backlog
+  14-1-preserve-generic-source-backed-communication-observations: backlog
+  14-2-pin-finite-authorized-evidence-targets-across-repositories: backlog
+  14-3-accept-evidence-backed-one-to-many-relationships-and-unresol: backlog
+  14-4-investigate-ambiguous-targets-through-bounded-source-backed: backlog
+  14-5-reconcile-later-evidence-with-finite-cycles-and-coalesced-re: backlog
+  14-6-publish-useful-cross-repository-business-explanations-with-e: backlog
+  14-7-qualify-ordinary-cross-repository-workflow-beyond-a-pair: backlog
+  epic-14-retrospective: optional
+
+  epic-15: backlog
+  15-1-explore-permitted-wiki-evidence-through-mode-safe-chat-tools: backlog
+  15-2-preserve-durable-dialogue-with-isolated-bounded-inference-co: backlog
+  15-3-save-terminal-chat-outcomes-once-and-expose-truthful-progres: backlog
+  15-4-stream-useful-real-wiki-conversations-with-faithful-referenc: backlog
+  15-5-reattach-to-the-same-bounded-host-owned-chat-turn: backlog
+  15-6-use-chinese-chat-with-real-scope-streaming-and-durable-histo: backlog
+  15-7-preview-exact-claim-linked-references-without-crossing-mode: backlog
+  15-8-deliver-and-qualify-ordinary-production-wiki-conversations: backlog
+  epic-15-retrospective: optional
+
+  epic-16: backlog
+  16-1-complete-cohesive-dedicated-document-browsing-and-history-na: backlog
+  16-2-query-an-authorized-graph-of-exact-knowledge-evidence: backlog
+  16-3-explore-the-basic-graph-through-manual-refresh-and-exact-rea: backlog
+  epic-16-retrospective: optional
+
+  epic-17: backlog
+  17-1-configure-and-diagnose-the-product-through-one-operational-c: backlog
+  17-2-capture-a-coherent-protected-maintenance-window-backup: backlog
+  17-3-restore-isolated-service-state-without-replaying-paid-work: backlog
+  17-4-qualify-complete-product-behavior-under-declared-operating-l: backlog
+  epic-17-retrospective: optional

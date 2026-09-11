@@ -164,3 +164,9 @@ Full audit of FRs in PRD sections 5.4–5.9 against the plan. No contradictions 
 8. The adjacency list IS the graph database at Vulgata's scale
 9. Document immutability via superseded_by_id linked list
 10. SignalR is the correct tech for live graph updates (NFR-1.3)
+
+---
+
+## September 11, 2026 — Historical disposition after generic-product approval
+
+The user-approved [September 11 planning correction](../sprint-change-proposal-2026-09-11-generic-product-reconciliation.md) supersedes this debate's active design routing. The [current architecture gateway](../architecture.md) assigns authority by subject; the [AD-1–AD-32 spine](ARCHITECTURE-SPINE.md) carries the accepted generic target, with repository adoption review/finalization pending. All prior entries above remain unchanged chronological evidence, not current fallback requirements or generic implementation/runtime qualification. This disposition neither reopens the candidates nor authorizes code, schema, tool, service or package changes.

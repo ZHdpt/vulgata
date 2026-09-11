@@ -1,3 +1,5 @@
+> Historical Epic 12 design — retired as active delivery authority; Story 12.5 remains terminated incomplete. The user-approved September 11, 2026 correction routes new design through the [current architecture gateway](../architecture.md) and [AD-1–AD-32 spine](ARCHITECTURE-SPINE.md), whose repository adoption review is pending. The dated body below remains scoped release evidence, not generic eligibility, implementation authorization or runtime qualification.
+
 # August 30 Bounded Scanning and LLM-Wiki Design
 
 **Date:** 2026-08-18

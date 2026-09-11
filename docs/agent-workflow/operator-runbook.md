@@ -6,13 +6,15 @@ Examples:
 
 ```text
 Use $run-bmad-sprint-loop for next.
-Use $run-bmad-sprint-loop for story 4-2.
-Use $run-bmad-sprint-loop for epic 4.
+Use $run-bmad-sprint-loop for story 13-1.
+Use $run-bmad-sprint-loop for epic 13.
 Use $run-bmad-sprint-loop resume.
-Use $run-bmad-sprint-loop dry-run for epic 4.
+Use $run-bmad-sprint-loop dry-run for next.
 ```
 
-New and resumed work uses the compact schema-v3 unified flow.
+New and resumed work uses the compact schema-v3 unified flow. Resolve the actual
+scope from current tracking; examples do not reactivate historical stories. See
+[activation guidance](activation-handoff.md) for current harness compatibility.
 
 ## Expected Progress
 

@@ -2,11 +2,11 @@
 
 **Turn cross-repository source code into traceable business knowledge.**
 
-[简体中文](README.zh-CN.md) · [Product requirements](docs/bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md) · [Architecture](docs/bmad/planning-artifacts/architecture/scanning-v1-technical-plan.md)
+[简体中文](README.zh-CN.md) · [Product requirements](docs/bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md) · [Architecture](docs/bmad/planning-artifacts/architecture.md)
 
 Vulgata is an LLM-powered codebase knowledge platform for organizations whose business rules are spread across many systems, repositories, languages, and teams.
 
-It reads source code as the source of truth, generates structured Code Logic Documents and Business Logic Documents, connects evidence across Repository boundaries, and answers questions with citations back to the exact source.
+The target product reads source, generates structured Code Logic Documents and Business Logic Documents, connects evidence across Repository boundaries, and answers wiki questions with useful version-bound references. The generic workflow is under development; the capabilities below describe its adopted direction, not a completed release.
 
 ## Why Vulgata
 
@@ -18,67 +18,65 @@ Vulgata helps product managers, business analysts, compliance staff, new team me
 
 ## What makes it different
 
-- **Business logic, not just code search.** Pass 1 explains bounded Code Units; Pass 2 synthesizes end-to-end business flows from verified evidence.
-- **Deterministic orchestration.** A non-LLM Orchestrator owns scheduling, concurrency, retries, and persistence. LLM Worker Agents only perform bounded analysis and synthesis.
+- **Business logic, not just code search.** Pass 1 analyzes whole-file workstreams and discovers meaningful Code Units; Pass 2 explains source-backed Logical Flows with explicit gaps.
+- **Deterministic orchestration.** Scan Control owns scheduling and recovery; Knowledge owns accepted semantic records. Microsoft Agent Framework executes bounded analysis and synthesis.
 - **Source-grounded answers.** Documents retain the Repository revision, file path, symbol, line range, and hash needed to trace a claim back to code.
-- **Cross-Repository understanding.** RPC and HTTP evidence can be resolved from consumer to provider while unresolved targets remain explicit Uncertainties.
-- **Two audiences, one knowledge base.** Business Mode favors clear process narratives; IT Mode exposes call chains, implementation detail, and source locators.
+- **Cross-Repository understanding.** Independently scanned Repositories contribute communication evidence; bounded reconciliation handles late targets and cycles while preserving Uncertainties.
+- **Two audiences, one knowledge base.** Business Mode reads Business Logic Documents only. IT Mode also uses Code Logic Documents and exceptional authorized source inspection. Both support useful multi-document dialogue and references.
 - **Private deployment.** OpenAI-compatible and self-hosted providers are supported so sensitive source can remain inside the organization.
 
-## How it works
+## Target workflow
 
 ```mermaid
 flowchart LR
-    A[Repositories] --> B[Pre-Scan Profiling]
-    B --> C[Code Units]
-    C --> D[Pass 1 Worker Agents]
-    D --> E[Code Logic Documents]
+    A[Independent Repository Scans] --> B[Exact source and lightweight preparation]
+    B --> D[Pass 1 file workstreams]
+    D --> E[Accepted Code Units and Code Logic Documents]
     E --> F[Cross-Repository Resolution]
     F --> G[Pass 2 Worker Agent]
-    G --> H[Business Logic Documents]
+    G --> H[Per-flow Business Logic publication]
     H --> I[(PostgreSQL Knowledge Store)]
     I --> J[Business / IT Chat]
     J -. citations .-> A
 ```
 
-1. **Profile.** CodeGraphContext and conservative filters identify languages, frameworks, symbols, dependencies, and exact Code Unit boundaries.
-2. **Explain.** Pass 1 Worker Agents generate Code Logic Documents from revision-bound source slices.
-3. **Connect.** Deterministic resolution links supported communication evidence across Repositories and preserves unresolved cases.
-4. **Synthesize.** Pass 2 Worker Agents turn prepared flow evidence into Business Logic Documents with explicit provenance.
-5. **Ask.** The Chat Agent retrieves only authorized, current evidence and returns a grounded answer with Document and source citations.
+1. **Prepare.** Retain an exact Git revision, inventory eligible source, capture advisory context and prepare native CodeGraph MCP and the selected LSP profile. PreScan does not define permanent Code Unit identities.
+2. **Explain.** Pass 1 processes admitted files progressively and publishes accepted semantic-unit Documents, with coverage gaps reported separately.
+3. **Connect.** Reconcile pinned accepted evidence across authorized Repositories; missing external information does not become an invented relationship.
+4. **Synthesize.** Explain local or Cross-Repository Logical Flows and atomically publish each flow with its exact dependencies.
+5. **Ask.** Read a stable authorized wiki selection per turn and stream useful provisional answers. Preserve durable dialogue, exact references and honest interruption states.
 
-Generated Document Versions are immutable. Re-scanning creates a new version instead of silently rewriting history, preserving the evidence chain behind each answer.
+Generated Document Versions remain immutable. Accepted source analysis or changed accepted flow evidence can produce new versions without rewriting history. Bounded knowledge reconciliation is separate from the deferred automatic source-update engine.
 
-## Competition demonstration slice
+## Current state and delivery scope
 
-The August 15 demonstration slice prioritizes one complete, inspectable path over broad but shallow feature coverage.
+The September 11 planning correction adopts the [generic architecture](docs/bmad/planning-artifacts/architecture/ARCHITECTURE-SPINE.md). It replaces competition-specific future delivery rules, not historical evidence or implementation automatically.
 
 **Implemented baseline**
 
 - ASP.NET Core Identity, role-based access, and System ownership
 - System, Repository, supplementary context, LLM Provider, and database connection management
-- CodeGraphContext-backed profiling, language/framework detection, and conservative pre-scan review
 - PostgreSQL knowledge storage, retrieval projection, Source Anchors, and immutable Document Versions
-- Sequential typed Worker Agent dispatch and two-pass demo document generation
-- Exact RPC/HTTP Cross-Repository Resolution for the prepared two-Repository flow
+- Durable prepared Scan/Pass 1/Pass 2 and exact-pair resolution assets, plus Chat transport and retrieval code that require adaptation
 
-**Final release gate under review**
+**Not a completed generic release**
 
-- Business and IT chat grounded in current authorized evidence
-- Document and source citations, including positive line ranges
-- Clean PostgreSQL 17, two-Repository, Docker, and browser-level release proof
+- Executable CodeGraphContext was removed; the legacy Repository profiling entry intentionally throws `NotImplementedException`.
+- Existing prepared stages and Chat are not yet the new end-to-end, generic source-to-wiki workflow.
+- Story 11.5 is incomplete. Story 12.5 was terminated incomplete; it is not a release gate awaiting automatic resumption.
+- Native tools bundled in Docker, persistent exact source, generic reconciliation, new Chat streaming and coherent recovery need new implementation qualification.
 
-**Post-competition roadmap**
+**Current direction and explicit later scope**
 
-- General flow discovery and broader communication-pattern coverage
-- Incremental re-scan, impact analysis, and stale-document regeneration
-- Human-in-the-Loop questions and resolution workflows
-- Live Scan dashboard and knowledge graph visualization
-- Service-topology MCP integration and advanced retrieval
+- Current: independent Repository/standalone Scans, semantic-unit knowledge, Cross-Repository understanding, multi-document streaming Chat, real Scan progress, version-aware reader and basic manual-refresh graph.
+- Deferred: automatic/incremental scans, product HITL, Chat attachments, partial library scans, external operational lookup, outward wiki MCP and advanced/live portfolio graph.
+- Original unmet backlog such as Prompt Workbench and general custom MCP management remains explicitly tracked; the core sequence does not claim full-V1 completion.
 
-The canonical status is maintained in [sprint-status.yaml](docs/bmad/implementation-artifacts/sprint-status.yaml). Planned capabilities are not presented as completed features.
+Use the [approved reconciliation](docs/bmad/planning-artifacts/sprint-change-proposal-2026-09-11-generic-product-reconciliation.md), [epics](docs/bmad/epics.md) and [sprint tracker](docs/bmad/implementation-artifacts/sprint-status.yaml) for adoption and queue status. Earlier release records remain [historical](docs/bmad/history/pre-generic-adoption-2026-09-11/README.md).
 
-## Quick start with Docker
+## Run the existing Docker baseline
+
+This starts the existing application baseline, not a qualified generic scanning stack. The target is two services—app with bundled local tools, and PostgreSQL—but current Docker packaging still needs that delivery work. Without the explicit application profile, Compose starts PostgreSQL only.
 
 ### Prerequisites
 
@@ -90,26 +88,26 @@ The canonical status is maintained in [sprint-status.yaml](docs/bmad/implementat
 git clone https://github.com/ZHdpt/vulgata.git
 cd vulgata
 Copy-Item .env.example .env
-docker compose up --build
+docker compose --profile post-deadline-app up --build
 ```
 
 Open <http://localhost:8080>. The first registered account is promoted to Administrator so the initial System, Repository, and LLM Provider configuration can be completed through the UI.
 
 The default database password is for development only. Change `DB_PASSWORD` in `.env` before using any shared environment.
 
-The first Docker build installs the hash-locked CodeGraphContext runtime and .NET dependencies, so it can take longer than later builds.
+The current image does not install CGC and does not yet bundle the target CodeGraph/JDT-LS runtime. Build/start instructions are not evidence that Scan or provider prerequisites are ready.
 
 Stop the stack with:
 
 ```powershell
-docker compose down
+docker compose --profile post-deadline-app down
 ```
 
 Add `--volumes` only when you intentionally want to remove the local PostgreSQL data volume.
 
 ## Local development
 
-Vulgata targets .NET 10 and expects PostgreSQL 17 on `localhost:5432` with the development connection settings in `appsettings.json`.
+Vulgata targets .NET 10 and expects PostgreSQL 17 on `localhost:5432` with the development connection settings in `appsettings.json`. The following remains a baseline diagnostic workflow; the adopted development target is the bundled-tool Docker stack.
 
 ```powershell
 docker compose up -d postgres
@@ -130,11 +128,11 @@ dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj
 |---|---|
 | Web | .NET 10, ASP.NET Core, Blazor interactive server rendering, Fluent UI Blazor |
 | Agents | Microsoft Agent Framework with OpenAI-compatible Worker and Chat Agents |
-| Orchestration | Deterministic Scan runner with typed jobs and bounded LLM work |
-| Source structure | Hash-locked CodeGraphContext runtime with exact revision and source boundaries |
+| Orchestration target | Deterministic Scan Control, Knowledge-owned acceptance and bounded MAF work |
+| Source/tool target | Retained exact source, native CodeGraph MCP, selected snapshot-bound LSP; temporary no-import/no-restore profile |
 | Persistence | PostgreSQL 17, EF Core, Npgsql, immutable Document Versions, relational graph edges |
 | Security | ASP.NET Core Identity, scoped authorization, Data Protection encryption for provider secrets |
-| Deployment | One application container plus PostgreSQL through Docker Compose |
+| Deployment target | One application container with local tools plus PostgreSQL; configurable storage/limits and coherent backup/restore |
 
 PostgreSQL is both the canonical knowledge store and the document graph. Typed adjacency edges and recursive queries provide traversal and provenance without requiring a separate graph database for the V1 scale.
 
@@ -166,8 +164,8 @@ docker/                      Reproducible application image and profiling runtim
 ## Project documentation
 
 - [Product Requirements Document](docs/bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md)
-- [Scanning V1 Technical Plan](docs/bmad/planning-artifacts/architecture/scanning-v1-technical-plan.md)
-- [Scanning V1 Data Contracts](docs/bmad/planning-artifacts/architecture/scanning-v1-data-contracts.md)
+- [Current Architecture](docs/bmad/planning-artifacts/architecture.md)
+- [Generic Scan, Knowledge and Chat Spine](docs/bmad/planning-artifacts/architecture/ARCHITECTURE-SPINE.md)
 - [Canonical Ubiquitous Language](docs/UBIQUITOUS_LANGUAGE.md)
 - [Epics and Stories](docs/bmad/epics.md)
 

@@ -1,12 +1,16 @@
 ---
 name: "Close BMad Epic"
-description: "Use when every story in a BMad epic appears complete and the epic needs final verification, architecture review, and safe closure. Trigger phrases: close-bmad-epic, close epic 4, verify epic 4."
-argument-hint: "epic 4 | epic 5"
+description: "Legacy Copilot close entry point; requires a synchronized current delivery adapter."
+argument-hint: "current epic whose stories are all durably done"
 agent: bmad-sprint-orchestrator
 ---
-Use the sprint-loop orchestrator to close `$ARGUMENTS` through the epic-close gate.
 
-Before staging any epic-close artifacts:
-- validate the workflow customizations and schemas the close flow depends on;
-- confirm the current epic-close run is starting from a non-mutating validation pass;
-- keep the architecture audit, dispositions, and checkpoint binding separate from any remediation work.
+The referenced Copilot orchestrator is not synchronized with the current unified
+workflow. Do not certify an epic through that legacy adapter.
+
+Read root [AGENTS.md](../../AGENTS.md), current lifecycle evidence and
+[activation guidance](../../docs/agent-workflow/activation-handoff.md). Use the current
+close-bmad-epic skill with a compatible harness only when all intended stories are
+durably complete. Definition acceptance is not implementation completion. Preserve
+the pinned independent audit, dispositions and checkpoint boundaries; this entry point
+authorizes no implicit staging, commit, remediation or runtime work.

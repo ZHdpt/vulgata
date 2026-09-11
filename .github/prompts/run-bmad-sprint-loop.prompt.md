@@ -1,14 +1,17 @@
 ---
 name: "Run BMad Sprint Loop"
-description: "Use when implementing, resuming, or dry-running a BMad story or epic through the gated sprint-loop workflow. Trigger phrases: run-bmad-sprint-loop, story 4-1, epic 4, resume active story, dry-run."
-argument-hint: "story 4-1 | epic 4 | epics 4 and 5 | resume | story 4-1 in dry-run mode"
+description: "Legacy Copilot entry point; consult current workflow/harness compatibility before delivery."
+argument-hint: "next | story 13-1 | epic 13 | resume | dry-run"
 agent: bmad-sprint-orchestrator
 ---
-Use the sprint-loop orchestrator for `$ARGUMENTS`.
 
-Before any real story implementation in this session:
-- validate the workflow customizations and supporting assets that the workflow depends on;
-- run a non-mutating dry run for the requested scope;
-- stop and report the dry-run result before making implementation changes.
+The referenced Copilot orchestrator is a legacy adapter whose role allowlist and
+ownership/gates are not synchronized with the current unified workflow. Do not start
+current delivery through it or silently recreate missing roles.
 
-When the scope is unclear, resolve it to exactly one of: story, epic, story list, epic list, or resume.
+Read root [AGENTS.md](../../AGENTS.md) and
+[activation guidance](../../docs/agent-workflow/activation-handoff.md). Report the
+compatibility limit and use the current repository skill with a compatible harness
+for the explicitly requested scope. Old examples/feature timestamps never reactivate
+historical stories. Adapter synchronization is a separate bounded request, not implicit
+permission for implementation, model/tool changes or runtime operations.

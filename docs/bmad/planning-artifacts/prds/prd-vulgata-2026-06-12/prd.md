@@ -1,511 +1,249 @@
 ---
 title: "PRD: Vulgata"
-status: draft
+status: final
 created: 2026-06-12
-updated: 2026-08-18
+updated: 2026-09-11
 ---
 
 # PRD: Vulgata
 
-## 0. Document Purpose
-
-This PRD defines the V1 scope for Vulgata, an LLM-powered cross-repository business logic extraction platform. It is written for the development team (2 people + AI coding agents), competition judges evaluating the project, and downstream BMad workflows (architecture, epics, stories). The PRD builds on the product brief, PRFAQ, brainstorming session, domain research, and technical research already completed. It uses a Glossary-anchored vocabulary — every domain term is defined once and used consistently throughout. Features are grouped with nested functional requirements (FRs) numbered globally. Assumptions are tagged inline and indexed.
-
-## 0.1 August 30, 2026 Delivery Overlay
-
-The competition deadline moved to August 30, 2026 after the August 15 slice
-failed to establish a reliable general scanning path. The approved correction
-is defined by:
-
-- [Sprint Change Proposal: August 30 Bounded Scanning Recovery](../../sprint-change-proposal-2026-08-17-august-30-bounded-scanning-recovery.md)
-- [Sprint Change Proposal: August Demo Host Runtime and JDT-LS Pin](../../sprint-change-proposal-2026-08-18-august-demo-host-runtime-and-jdtls-pin.md)
-- [August 30 Bounded Scanning and LLM-Wiki Design](../../architecture/august-30-bounded-scanning-design.md)
-- [Sprint Change Proposal: Story 12.5 Track C-MVP](../../sprint-change-proposal-2026-08-29-story-12-5-track-c-mvp.md)
-- [Sprint Change Proposal: Story 12.5 Prepared Scan Initiation](../../sprint-change-proposal-2026-08-30-story-12-5-prepared-scan-initiation.md)
-- [Sprint Change Proposal: Story 12.5 Exact-Profile Seed Selection](../../sprint-change-proposal-2026-08-31-story-12-5-exact-profile-seed-selection.md)
-- [Sprint Change Proposal: Story 12.5 Exact Owner Semantic Identity](../../sprint-change-proposal-2026-08-31-story-12-5-exact-owner-semantic-identity.md)
-
-For the August 30 release boundary, those documents supersede conflicting V1
-details in FR-4.1 through FR-4.5, FR-4.9, FR-4.12, FR-5.8, FR-6.1/6.2,
-FR-11.6, NFR-1.1, and NFR-4.1. The complete long-term V1 requirements remain in this
-PRD as post-deadline backlog and are not deleted or falsely marked complete.
-
-The dated release shall prove:
-
-- two real Java/XML Repositories bound to exact Git Profiled Revisions;
-- CodeGraph indexing, Eclipse JDT LS Java navigation, and safe catalog-driven
-  XML parsing without CodeGraphContext in the production path;
-- 50–150 automatically selected bounded File Code Units;
-- real source-anchored Pass 1 and Pass 2 generation;
-- exact selected Custom RPC and safe HTTP Cross-Repository Resolution with
-  honest Uncertainties for unsupported or ambiguous evidence;
-- durable bounded Worker scheduling, provider backoff, pause, restart, and
-  manual resume;
-- a Windows-hosted Vulgata, CodeGraph, Java 21, and Eclipse JDT LS runtime with
-  PostgreSQL 17 as the only required Docker service;
-- database-backed non-vector section retrieval and one-hop persisted
-  relationship expansion; and
-- Business/IT Chat synthesis in under 30 seconds with every accepted material
-  technical claim cited to current authorized Documents and Source Anchors.
-
-For Story 12.5 Track C-MVP, one combined host integration and real release run
-may satisfy the final release-proof boundary. It uses one clean isolated
-`vulgata_story125_*` PostgreSQL database and records candidate commit, exact
-Repository Profiled Revisions, tool/provider versions, non-secret provider
-configuration identity, database ownership, commands and exit results. It then
-records straightforward database queries, one Vulgata process restart against
-the same database, a twelve-question manual evaluation table, and manually
-captured redacted screenshots. Cryptographic attestation, exhaustive transport
-counter recomputation, rigid release-envelope semantics, duplicate controlled-
-provider orchestration, live outage injection, automated screenshot binding,
-and a dedicated release-summary product feature are post-competition backlog.
-This correction does not weaken source revision binding, Source Anchors,
-authorization/currentness, citation validation, accepted Track B streaming
-bounds, or any existing security behavior.
-
-For the bounded two-Repository August path, an authenticated authorized
-Prepared Scan request begins with one System, exactly two ordinary Repository
-records, safe full Git refs, and exact expected Profiled Revisions. Before any
-external analysis, Vulgata atomically creates or replays two revision-bound
-Scan Runs, two new-path Scan Executions carrying the current runtime, prompt,
-and Document schema identities, and their canonical Preparing Two-Repository
-coordination. The transaction exposes the complete initiation tuple or none of
-it and ends before Git, CodeGraph, JDT-LS, XML, or other long-running analysis
-begins. Exact replay is idempotent; any changed System, Repository pair,
-Profiled Revision, runtime/prompt/schema identity, or authorization scope fails
-closed. The existing Prepared Scan pipeline retains ownership of analysis,
-selection, atomic Prepared Scan Manifest publication, and the authorization
-recheck immediately before publication.
-
-For the fixed reviewed exact-resolution release profile, automatic selection
-also treats every safe eligible source file required to prove its consumer,
-provider declaration, provider implementation, and unsupported observation as
-a mandatory high-value seed. This applies only when the complete pair matches
-the profile's exact two Repository stable identities, full Git refs, and
-Profiled Revisions. A caller cannot supply a profile or path. A matched profile
-with a missing, unsafe, filtered, ambiguous, or out-of-bound required source
-fails preparation before Manifest publication; a nonmatching pair retains the
-general selection behavior unchanged.
-
-General 10,000-file validation, method-level scheduling, arbitrary protocols,
-general graph clustering, Worker cross-verification waves, dynamic PreScan HITL,
-vector/embedding RAG, unrestricted Agent tool loops, and the remaining Epics
-5–10 scope are deferred beyond the August 30 release.
-
-## 1. Vision
-
-Vulgata is a platform that reads source code across multiple systems and repositories, extracts the business logic embedded within, and makes it accessible to everyone in the organization — product managers, compliance officers, new team members, and developers alike. It answers the question that currently takes days of manual code-diving: "what actually happens when a user does X?"
-
-In a large bank, business logic is scattered across dozens of systems in different languages and architectures. A single business flow — a risk evaluation in the mobile app — can touch six or more systems. No single person, and no single document, holds the full picture. Vulgata closes this gap by scanning every repository connected to a business flow, producing structured documents that explain both what the code does and what business rules it implements, and linking documents across system boundaries to form a complete, navigable map.
-
-The V1 demo scope covers two systems consisting of approximately a dozen repositories — including microservices, a web application, and an Android application. The vision is larger: Vulgata becomes the knowledge backbone for the department that builds it, then expands across the organization, and eventually becomes a standard part of the enterprise development lifecycle — where the gap between "what the business thinks the systems do" and "what the code actually does" is closed, and stays closed.
-
-## 2. Why Now
-
-Vulgata is being developed for an internal AI programming competition with a 9-week timeline (June 12 → August 15, 2026). The competition rubric allocates points across four dimensions: innovation and creativity (30 points), technical implementation and complexity (25 points), practical value and deployability (25 points), and user experience and interaction design (20 points). The primary success criterion is a working end-to-end live demo that traces a real cross-repo business flow.
-
-Beyond the competition, three forces make this the right moment: (1) LLM inference costs have dropped to <1 CNY per million input tokens, making agent-based code analysis economically viable; (2) the Microsoft Agent Framework provides production-grade multi-agent orchestration with MCP integration; (3) the industry is shifting from "AI as code generator" to "AI as code understander" — and no existing tool addresses the cross-repository business logic extraction problem that Vulgata targets.
-
-## 3. Glossary
-
-*Every domain term used in this PRD is defined here. FRs, UJs, and SMs use these terms exactly. No synonyms.*
+## 0. Purpose, authority and scope
 
-### Core Concepts
+Vulgata turns source code into a source-grounded, cross-Repository knowledge base explaining technical behavior and business logic. This canonical PRD is finalized under the user-approved [September 11 reconciliation](../../sprint-change-proposal-2026-09-11-generic-product-reconciliation.md), following input reconciliation, independent rubric/cross-document review and editorial checks. It defines target obligations, not implemented or qualified behavior.
 
-- **System** — A logical grouping of repositories that together implement a business capability (e.g., "Mobile Banking," "Risk Assessment"). Purely organizational — used for dashboard grouping and chat context selection. Has no detection significance. Cardinality: 1 system → N repositories.
-- **Repository** — A git repository containing source code. Belongs to exactly one system, or can be standalone (for shared libraries not owned by any system). Linked to a remote git URL. The fundamental unit of scanning and detection.
-- **Scan** — The process of reading a single Repository's source code through deterministic orchestration and LLM Worker Agents to produce structured Documents. Scans are always per-Repository. Scanning all Repositories in a System is a convenience trigger that queues N independent Repository scans. Scans are incremental when triggered by code changes.
-- **Code Unit** — The smallest unit of code processed by a Worker Agent. Typically a function, method, class, or file — determined by CodeGraph/tree-sitter during pre-scan profiling with exact line ranges.
-- **Document** — A generated knowledge artifact linked to source, graph, and retrieval metadata. V1 distinguishes a stable Logical Document from immutable Document Versions. Two classifications: Code Logic Document and Business Logic Document. Organized in a tree structure mirroring the source directory hierarchy.
-- **Logical Document** — A stable semantic slot for a Document across scans or refinements, such as "this Code Unit's Code Logic Document" or "this flow group's Business Logic Document."
-- **Document Version** — An immutable generated snapshot of a Logical Document. Version Chain links preserve history; retrieval normally reads the current authorized Document Version.
-- **Code Logic Document** — A document describing what code does structurally: architecture, data flow, call chains, framework usage. Readable by developers and AI agents. Generated in Pass 1.
-- **Business Logic Document** — A document describing the business rules and processes implemented by code: validation rules, decision flows, regulatory checks, business process steps. Readable by non-technical users. Synthesized from Code Logic Documents in Pass 2.
+Use the [canonical glossary](../../../../UBIQUITOUS_LANGUAGE.md), [architecture entry point](../../architecture.md) and adopted [generic architecture spine](../../architecture/ARCHITECTURE-SPINE.md) together. AD-1–AD-32 own technical decisions; this PRD states product implications. The [exact pre-adoption PRD](../../../history/pre-generic-adoption-2026-09-11/files/docs/bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md) and original [.decision-log.md](.decision-log.md) preserve earlier wording, not competing current instructions.
 
-### Scanning Pipeline
+All 89 original FR and 15 original NFR identifiers remain. Status labels mean:
 
-- **Scan Coordinator** — A non-LLM background service that manages the operational lifecycle of scans: queuing requests, enforcing concurrency limits, performing git operations, triggering the per-Repository Orchestrator, and triggering Cross-Repository Resolution after each Repository scan completes. Deterministic application code.
-- **Orchestrator** — A deterministic per-Repository workflow service that plans scan states, creates jobs, groups supersteps and flow groups, enforces retry/concurrency policy, dispatches Worker Agents through typed jobs, and triggers post-scan steps.
-- **Worker Agent** — An LLM agent dispatched by the Orchestrator to process a single Code Unit (Pass 1) or synthesize one Business Logic Document for one flow group (Pass 2). Detects cross-repo communication and produces structured output with metadata.
-- **Superstep** — A batch of related Code Units dispatched concurrently to Worker Agents, enabling cross-verification within the batch before the next superstep begins.
-- **Pass 1** — The first phase of document generation: Code Logic Documents are produced per Code Unit, with intra-repo REFERENCES edges created immediately and cross-repo calls recorded as uncertainties.
-- **Pass 2** — The second phase: deterministic planning traces path-aware graph slices from entry points, clusters them into flow groups, and dispatches one Worker Agent per flow group to synthesize Business Logic Documents from Code Logic Documents and trace evidence.
-- **Document Pre-Allocation** — Bulk-creating documents rows for every filtered Code Unit before any Worker runs, so all document IDs are known and intra-repo REFERENCES edges can be created immediately. Eliminates dangling references within the same repo.
-- **Cross-Verification** — When two Worker Agents process related Code Units in the same superstep, they read each other's draft output and confirm or dispute claims. Disputed edges are kept with lowered confidence (0.5) and rendered as yellow dashed lines pending HITL resolution.
+- **Current:** required by adopted product scope, preserved or revised; not a claim of implementation.
+- **Deferred:** explicitly postponed; the ID and retained safeguards remain visible.
+- **Original unmet backlog:** an original obligation outside the core redesign, neither newly deferred nor completed by adjacent work.
+- **History:** a superseded mechanism or dated activity, preserved rather than re-executed.
 
-### Graph & Relationships
+Mixed clauses separate current and deferred portions. Replacement Epics 13–17 cover the core redesign, not every V1 obligation. Prompt Workbench, dedicated unknown-library inference and general configurable MCP management need later decomposition or explicit disposition. Their absence from that sequence cannot establish full-V1 completion.
 
-- **Edge** — A typed, directed relationship between two Documents in the document graph. Stored in a single edges table with edge_type discriminator.
-- **REFERENCES Edge** — A doc→doc dependency edge: Document A's content references or depends on Document B. Used for both intra-repo and cross-repo relationships. Cross-repo-ness is discovered at query time when source.repo_id != target.repo_id — not a separate edge type.
-- **GENERATED_FROM Edge** — A provenance edge from a Business Logic Document to the Code Logic Document(s) it was synthesized from. Drives two-pass re-scan impact analysis: if a CL Doc changes, all BL Docs with GENERATED_FROM edges to it are flagged stale.
-- **Version Chain** — A linked list of document versions via superseded_by_id, preserving full history. Old versions are never deleted (immutability guarantee).
-- **Dangling Link** — A cross-repo uncertainty that never resolves — a known unknown. Recorded with available identifying information; does not block scan completion. Acceptable per FR-6.4.
+This revision claims no generic runtime, tool/provider readiness, Docker operation, recovery or explanation-quality qualification. Implementation follows governed specification, independent review, applicable planned-change approval, testing and qualification. Documentation approval grants no production, migration, provider or database execution authority.
 
-### Cross-Repository Communication Detection
+## 1. Vision and intended users
 
-- **Cross-Repository Communication Detection** — A prompt-driven subsystem that identifies when code in one Repository communicates with another Repository. Covers RPC, HTTP APIs, message queues, file-based communication (local filesystem, remote filesystem, OSS, HDFS, etc.), and cross-repo page navigation (in native and web apps). Detection happens during Worker Agent processing (Model A — Worker-embedded). For each detected communication, identifies the provider role and consumer role, tags consumer count per interface, and handles cases where provider or consumer is absent (not in any scanned Repository). Uses the Communication Pattern Catalog, object flow analysis, and service topology resolution. Note: cross-repo page navigation is inherently loose-coupled — provider and consumer identification may be unreliable and is flagged as low-confidence when detected.
-- **Communication Pattern Catalog** — A per-system configuration specifying how that System's repositories communicate externally: RPC frameworks, HTTP API patterns, message queue topics, file paths and storage systems, cross-repo navigation patterns. Written by the System Owner. [NOTE: Architecture decision is to move this to per-repo (matching the repo-boundary scan model), but that migration is deferred to a separate design doc. V1 ships with per-system CP as specified.]
-- **Provider Role** — The Repository (or external entity) that exposes a communication interface (RPC service, HTTP endpoint, message queue topic, file location, navigable page). Tagged on each detected cross-repo communication.
-- **Consumer Role** — The Repository (or external entity) that calls or reads from a communication interface. Tagged on each detected cross-repo communication. Multiple consumers may exist per interface; consumer count is tracked.
-- **Service Topology** — The mapping of service codes and communication endpoints to target Repositories. Resolved via an MCP tool that queries a mock service platform.
+Business logic is distributed across Repositories, languages and Systems. Understanding a risk evaluation, payment decision or customer journey can require days of code reading and coordination. Vulgata gives business staff and developers a navigable explanation of what available source supports, where evidence comes from and what remains unknown.
 
-### Uncertainty & Resolution
+The product supports independent Scans of one, several or standalone Repositories. Local explanations are useful, but local-only delivery does not fulfill the Cross-Repository goal. System membership organizes access and browsing; it neither proves communication nor restricts resolution to a fixed pair or one System. Source-backed relationships are not claims that a path actually executed in deployment.
 
-- **Uncertainty** — A first-class entity attached to a document when the generating agent cannot determine something with confidence. Four states: resolved (linked to a document in another repo), unresolved/cross_repo (target repo known, waiting for scan), unresolved/unknown_target (no repo identified), wontfix (terminal non-resolution — human decision). Uncertainties are collected and processed by the cross-repo resolution engine.
-- **Cross-Repository Resolution** — Deterministic post-processing (not an LLM agent) that runs after a repository scan completes. Matches unresolved cross-repo uncertainties against the newly-scanned repo's documents using repo-qualified endpoint matching. Creates REFERENCES edges for matches. Bidirectional — resolves both outgoing and incoming uncertainties.
-- **Deadlock-Breaking Protocol** — When two repos have mutual pending cross-repo uncertainties, the repo with fewer pending resolves first; if tied, the older scan yields. Prevents circular dependency stalls.
+- **JTBD-1 — Understand behavior:** ask questions, read explanations and follow permitted references. Business Mode emphasizes business meaning; IT Mode adds technical detail and exceptional source inspection.
+- **JTBD-2 — Supply knowledge:** onboard Systems/Repositories, configure providers and advisory context, initiate Scans, understand progress/gaps and explicitly recover interrupted work.
 
-### Re-Scan & Impact
+Existing journeys remain: Lin the PM asks about risk evaluation in Business Mode; Chen the new analyst explores Business Logic Documents; Wang the developer follows technical evidence in IT Mode; Zhang the System Owner onboards Repositories and starts Scans. None requires competition samples, maintained service mappings or a mandatory question inbox.
 
-- **Impact Analysis** — A 4-step SQL cascade that finds all Documents affected by a set of changed source files: direct impact (reverse_index) → intra-repo transitive closure (recursive CTE) → cross-repo reachability → uncertainty reopening.
-- **Two-Phase Change Detection** — Phase 1 (line-overlap filter via reverse_index) eliminates most candidates; Phase 2 (hash comparison via source_hash) verifies the remaining candidates. Fast AND correct for incremental re-scan.
-- **Source Anchoring** — Three-layer traceability: CodeGraph parses source into Code Units (structural), document_sources links Documents to Code Units (semantic), reverse_index provides O(1) line→document lookup (fast).
-- **File Identity Hash** — SHA-256 of the first 4096 bytes of a source file, used to detect renames during incremental re-scan.
-- **Cross-Repo Stale Notice** — An informational record posted when a document changes, notifying other repos that link to it. No automatic cascade — each repo's owner decides when to re-scan. Eventually consistent by design.
+## 2. Concepts and preserved experience
 
-### Resource Management
+The canonical glossary owns definitions. These distinctions organize requirements:
 
-- **Concurrency Control** — Configurable limits on concurrent scans (global) and workers per scan, enforced by the Scan Coordinator. Prevents resource exhaustion. Limits can be changed dynamically during scans.
+- A Repository Scan Run fixes one Source Snapshot. System/selection actions may aggregate independent runs through a Scan Campaign, not pair-wide correctness.
+- A file workstream is not necessarily a Code Unit. Pass 1 discovers Code Units and their Code Logic Documents; stable Logical Documents have immutable Document Versions.
+- Cross-Repository Resolution evaluates observations and records Edges and Uncertainties. Later accepted knowledge can resolve gaps without re-analyzing unchanged source.
+- A Logical Flow identifies a source-backed root. Its Flow Group Version selects bounded evidence for Pass 2's Business Logic Document and exact GENERATED_FROM dependencies.
+- Operational progress, primary-source coverage and knowledge currentness differ. Accepted history survives failure, cancellation, replacement and workspace cleanup.
 
-### Tools & Interfaces
+Preserve Simplified Chinese-only V1 UI, localized errors, Library Oak visual language, Business light/IT dark themes, chat-first login, the distinct management surface and established keyboard/basic accessibility behavior. This is scope reconciliation, not visual redesign. Reader placement must not turn ordinary Knowledge access into management permission.
 
-- **Prompt Workbench** — A development-time tool for iterating on agent prompts against known code patterns. Feeds validated prompts into the Communication Pattern Catalog.
-- **Pre-Scan Profiling** — The initial reconnaissance phase of a scan: CodeGraph parses source into code_units, identifies languages and frameworks, applies scan filter excluding non-code files, and groups code_units into supersteps.
-- **LLM-Wiki** — Vulgata's database-backed search and retrieval approach: `index_entries`, `document_sections`, graph tables, endpoint records, flow traces, and Source Anchoring are queried through typed retrieval tools; the Chat Agent synthesizes answers from returned sections and evidence. No vector database or embedding pipeline is required for V1.
-- **index.md** — Optional auto-generated export/readability artifact after each Scan. It may contain structured entries per Document, but it is not the canonical retrieval source.
-- **log.md** — Append-only activity log with parseable timestamps in format `## [YYYY-MM-DD HH:MM] operation | target`. Records all scans, queries, and system events.
-- **Business Mode** — Chat interface mode producing business-level narrative answers without code references. Uses a lighter UI theme and a system prompt focused on business process explanation. For non-technical users.
-- **IT Mode** — Chat interface mode producing full technical answers with code references and source links. Uses a darker UI theme and a system prompt focused on technical detail. For developers and AI agents.
-- **System Owner** — A user role responsible for adding and configuring systems in Vulgata: creating systems, linking repositories, configuring Communication Pattern Catalogs, assigning LLM Providers to agents, and starting scans. Distinct from knowledge-seeking users and platform administrators.
-- **MCP (Model Context Protocol)** — Anthropic's open protocol for AI-tool integration. Vulgata both consumes MCP tools (for scanning and chat) and exposes its knowledge base as an MCP server (for external AI coding agents).
-- **Human-in-the-Loop (HITL)** — The mechanism by which agents surface ambiguities as questions to users during scanning. User answers are marked as human input and carry lower priority than code-derived facts.
-- **CodeGraph** — A pre-indexed code intelligence system that provides structural information (call graphs, symbol resolution, dependency maps) to accelerate scanning. Used during pre-scan profiling for deterministic code_unit extraction.
-- **LLM Provider** — A configured LLM backend (e.g., DeepSeek V4, self-hosted model) with an endpoint, API key, and supported APIs (chat, responses, messages). Multiple providers can be configured; each agent can be assigned a specific provider. Per-system default + per-repository override.
-- **LSP (Language Server Protocol)** — Optional integration for scanning. Provides IDE-level code intelligence (symbol resolution, type information, references) to augment LLM-based analysis. V1 only if time permits.
+## 3. Functional requirements
 
-## 4. Target User
+### 3.1 Authentication and user management
 
-### 4.1 Jobs To Be Done
+- **FR-1.1:** [Current] Users shall register with email and password.
+- **FR-1.2:** [Current] Users shall log in and log out.
+- **FR-1.3:** [Current] Users shall view/edit their profile, including display name, email and password change.
+- **FR-1.4:** [Current] Retain Administrator, System Owner and User roles. Administrators assign roles; System Owners manage authorized Systems; Users consume permitted Chat/Documents. Self-service role requests and new fine-grained RBAC are outside scope. Knowledge, history and source disclosure shall enforce current server-side authorization.
 
-- **JTBD-1:** When I need to understand how business logic works across systems — whether I'm a product manager proposing a change, a new hire learning the landscape, a compliance officer verifying a rule, or a developer tracing a flow — I ask Vulgata a natural-language question and receive an answer grounded in scanned Documents. I can switch between Business Mode (business-level narrative, non-technical language, lighter UI theme) and IT Mode (full technical detail, code references, darker UI theme) depending on what I need. Each mode uses a different system prompt so the LLM focuses its answers appropriately.
+### 3.2 System and Repository management
 
-- **JTBD-2:** When I own or manage one or more Systems, I add them to Vulgata — creating the System, linking its Repositories, configuring Communication Pattern Catalogs, assigning LLM Providers to agents, and starting Scans. I monitor Scan progress and respond to agent questions during the Human-in-the-Loop process. This role is distinct from both the knowledge-seeking user and the Vulgata platform administrator.
+- **FR-2.1:** [Current] System Owners shall create/edit/delete authorized Systems with name, description and optional context. Organizational changes do not themselves prove or disprove communication.
+- **FR-2.2:** [Current] System Owners shall add Repositories with name, description, Git remote and optional context, without fixed-pair, sample-name or release-profile prerequisites.
+- **FR-2.3:** [Current] System Owners shall remove Repositories from Systems. Membership/visibility changes preserve immutable history and current access rules; they shall not silently replace accepted relationship evidence.
+- **FR-2.4:** [Current] System Owners shall create standalone Repositories for organization-owned shared-library source and explicitly Scan them through the ordinary static pipeline.
+- **FR-2.5:** [Current] Repository creation includes best-effort Git reachability validation; authentication failure does not prevent creating the record. A later Scan must acquire/verify exact authorized source or report its prerequisite failure.
 
-### 4.2 Key User Journeys
+### 3.3 LLM Provider management
 
-- **UJ-1. Lin the PM asks how risk evaluation works.** Lin, a product manager planning a feature change, logs into Vulgata, selects the Mobile Banking System, ensures she is in Business Mode, and asks "what happens during a risk evaluation in the mobile app?" She receives a step-by-step business narrative tracing the flow across Repositories. When she wants technical detail, she switches to IT Mode, confirms a new chat session, and asks the question again to see the code-level trace.
+- **FR-3.1:** [Current; revised] Administrators shall maintain the global provider registry and default task assignments, including provider names, endpoints, protected keys and supported API types. Preserve chat-completions, responses and messages configuration vocabulary without implying every adapter is qualified. PreScan model work is bounded advisory overview, not deterministic inventory or scheduling.
+- **FR-3.2:** [Current] Multiple providers shall be configurable simultaneously. This does not imply automatic switching or silently changing a running task's provider identity.
+- **FR-3.3:** [Current; revised] System Owners shall assign providers per System to permitted overview, Worker Agent and Chat Agent roles using the global registry. Different roles and different Systems may use different providers; deterministic Scan Control needs no model assignment. Configuration remains usable outside demo composition.
+- **FR-3.4:** [Current] Administrators shall explicitly test provider connections. Routine health checks shall not incur paid inference; provider availability remains separate from application, database and analysis-tool readiness.
 
-- **UJ-2. Chen the new hire explores the systems.** Chen, a new business analyst in her first week, opens Vulgata, browses the System overview, and asks "how does loan approval work?" in Business Mode. The chat guides her through the relevant Systems and Documents. She reads the Business Logic Documents to understand the process without touching code.
+### 3.4 Scan and knowledge production
 
-- **UJ-3. Wang the developer traces a cross-repo flow.** Wang, a developer assigned to build a new feature, switches to IT Mode and asks the same risk evaluation question. He receives the full technical trace with code references, follows the cross-repo links to understand every communication (RPC, HTTP, message queue, file), and reads the Code Logic Documents for implementation detail.
+- **FR-4.1:** [Current; revised] PreScan shall inventory exact committed source, record language/format/layout facts and unknowns, and separately provide bounded advisory overview. Explicit policy selects primary/supporting evidence. Handwritten code, configuration, templates, schemas and DSLs remain eligible; tests, identifiable generated source and vendored dependencies default to supporting evidence. README/explanatory documents supply context, not automatic Code Logic jobs. Index omission, filenames, unfamiliar extensions or overview ranking shall not silently exclude admitted source.
+- **FR-4.2:** [Current; revised] One Repository Scan action durably initiates preparation through knowledge production; System/selection actions start independent runs. Deterministic Scan Control fairly schedules bounded Repository, file, inquiry and synthesis work with shared limits and exclusive file ownership. Workers neither schedule arbitrary Repositories nor await unscanned targets while consuming capacity. Cancellation stops request-owned pending/downstream work without deleting accepted history or cancelling independent consumers of shared evidence. Unavailable generic capabilities remain visibly unavailable; a request shall not silently switch to a legacy pair workflow.
+- **FR-4.3:** [Current; revised] Pass 1 processes a logical file workstream, discovering meaningful Code Units and a separate Code Logic Logical Document for each. Large files may require several runs/windows; those boundaries do not redefine semantics or truncate coverage. Other files provide authorized context. Workers propose evidence/content; the application derives identities, validates provenance and accepts knowledge. Legacy file Documents shall not be relabelled as newly analyzed semantic-unit results; preserve their historical meaning and explicit lineage into new accepted analysis.
+- **FR-4.4:** [Current; revised] Accept validated file results and authoritative progress together. Only accepted results expose Code Units, Documents and observations to resolution; drafts remain unavailable as knowledge. Failed required files expose gaps, and zero-unit outcomes require truthful dispositions. Preallocated tool symbols and model-produced edges are not permanent identity or relationship authority.
+- **FR-4.5:** [Current; revised] Pass 2 explains pinned bounded directed evidence for source-backed exported operations, handlers, schedules, workflows or selected Code Units. Each root keeps distinct Logical Flow identity; helpers/folders do not merge business purpose. Local/Cross-Repository flows qualify. Synthesis requires explicit outcomes for all admitted primary work in its root run and frozen matching target; paused work does not qualify. Accepted external files may contribute before their whole runs finish. Synthesis may verify details with the same authorized source and declared tools, without changing accepted Code Logic or authoritative Edges; discrepancies become explicit uncertainty or bounded correction proposals, not recursive automatic repair. Explanations include branches, effects, bounds and unknowns, with exact dependencies for every Code Logic/source contribution actually used.
+- **FR-4.6:** [Current; revised] Code Logic browsing provides a virtual Repository/file/Code Unit hierarchy without synthetic directory Documents. Business Logic browsing groups Logical Flows through System/Repository views without duplicating cross-Repository Documents. Preserve nesting and justified identity lineage; moving ranges, unproven renames, splits or merges shall not silently reuse identity.
+- **FR-4.7:** [Current; revised] Persist canonical Code Logic and Business Logic Document content as structured JSON; Markdown or other human-readable forms are derived when needed, not parallel editable authorities. Accepted knowledge supports PostgreSQL-backed sections/search and authorized version-aware browsing. Current Code Logic selection and coherent per-flow Business Logic publication differ from drafts and labelled history. Failed current files shall not silently inherit old versions as newly analyzed. Other staged/history results require labelled inspection; selection must expose coverage gaps. A flow's content, dependencies and selection become visible together. Optional index.md remains an export, never canonical retrieval; incompatible evidence selections require explicit qualification.
+- **FR-4.8:** [Current] Maintain an append-only sanitized log.md trace for Scans, queries and system events using `## [YYYY-MM-DD HH:MM] operation | target`. Represent queries/targets without raw source, credentials, hidden reasoning or unnecessary sensitive content. Structured diagnostics may supplement, not silently replace, this retained output.
+- **FR-4.9:** [Current; revised] Require authorized Source Snapshot acquisition and CodeGraph preparation/native MCP access, with declared applicable LSP and structured-content capabilities. Readers get scoped retained-source access, not arbitrary host paths. Tools provide evidence/limitations, not complete coverage or permanent Code Unit identity. Retain exact source needed by selected current knowledge and active work, including older contributing revisions; reacquisition must verify identical bytes. Public provenance remains Repository, Profiled Revision and source locations, not another snapshot version axis. Required CodeGraph failure shall not silently trigger source-only fallback; CGC is not restored.
+- **FR-4.10:** [Current; revised] Documents remain immutable without human content editing. New versions may follow source analysis or changed accepted relationship/flow/evidence dependencies. Preserve exact historical provenance and Version Chains; REFERENCES may change without rewriting caller Code Logic or retargeting old GENERATED_FROM. Ordered current-promotion intent prevents late older work replacing newer selections; history-only analysis cannot implicitly promote. When validated replacement-source evidence proves removal, withdraw/retire that current knowledge while preserving history. Omission, exclusion, access loss or failed analysis alone cannot prove deletion or erase history.
+- **FR-4.11:** [History] Preserve the original Week-1 Worker adapter spike and actual evidence, without repeating its expired schedule or treating it as generic runtime qualification. Current agent/tool integration requires independent qualification.
+- **FR-4.12:** [History] Mandatory same-superstep peer verification, fixed 0.5 confidence and yellow-dashed/HITL treatment are superseded. Focused resolution inquiry is not its completion. Future peer verification requires its own scope; confidence alone never proves an Edge.
 
-- **UJ-4. Zhang the System Owner onboards his systems.** Zhang manages two Systems in his department. He creates both Systems in the dashboard, adds their Repositories with git URLs, configures the Communication Pattern Catalog for each System's communication mechanisms, assigns LLM Providers to pre-scan, Worker Agent, and Chat Agent task roles, and starts the first Scan. He monitors progress on the dashboard as Documents appear and cross-repo links resolve. When agents surface questions, he answers them to improve Scan quality.
+### 3.5 Cross-Repository Communication Detection
 
-## 5. Features
+- **FR-5.1:** [Current; revised] Preserve optional per-System Communication Pattern Catalog/framework context. Generic Scan shall not require a catalog, detailed service-to-Repository mappings or their maintenance workflow. Context assists interpretation, not deployed identity. The earlier deferred per-Repository catalog migration note grants no automatic migration.
+- **FR-5.2:** [Current; revised] Detect source-supported RPC, HTTP, queue, file/storage and page-navigation communication, recording mechanism, operation, roles, namespaces, source literals/expressions and unknowns. Extensible observations do not guarantee universal protocol understanding. gRPC-specific guaranteed implementation remains excluded; unknown mechanisms may still be represented honestly.
+- **FR-5.3:** [Current] Record provider/consumer roles with supporting evidence, including unknown/absent parties. Static linkage is not proof of deployed routing or runtime execution.
+- **FR-5.4:** [Current] Support multiple consumers per interface with evidence/access-scoped counts. Counts must not leak restricted Repositories or imply complete deployment inventory.
+- **FR-5.5:** [Current] Record available identifiers for unscanned, unavailable or unknown parties as external references and Uncertainties. Their absence shall not block otherwise valid analysis or initiate automatic Scans.
+- **FR-5.6:** [Current; revised] Page-navigation observations disclose loose coupling and unresolved identity. Confidence labels alone cannot establish provider/consumer relationships.
+- **FR-5.7:** [Current; revised] Investigate indirect targets through available object/provenance evidence. Bounded tools/inquiry may clarify candidates; missing classpaths, incomplete indexes and unresolved expressions remain limitations, not negative proof or invented endpoint values.
+- **FR-5.8:** [Current; revised] Workers receive relevant bounded snapshotted advisory context, including supplied framework/catalog knowledge. Mutable catalogs, fixed XML recipes and demo profiles are not mandatory communication truth. Preserve context provenance and separation from source facts.
+- **FR-5.9:** [Original unmet backlog] Retain a dedicated development-time Prompt Workbench for refining prompts against known patterns. Validated prompts/context may assist detection, without mandatory catalog coupling. Externalized prompts/native tools do not fulfill this distinct feature; later design or explicit disposition is required outside the core sequence.
+- **FR-5.10:** [Current; revised] Preserve named RPC endpoint evidence for unknown providers. It is discoverable through authorized mode-appropriate wiki content/retrieval, without raw technical disclosure to Business Mode or a separate tool per record type.
+- **FR-5.11:** [Current; revised] Treat supported file/storage communication as observations with roles/locations. Shared paths, mounts or object labels alone cannot prove cross-Repository identity. Do not fetch external storage or operational configuration to fill gaps in this scope.
+- **FR-5.12:** [Current; revised] Record supported URL patterns, deep links and app-to-app navigation with explicit uncertainty about bindings/counterparties. A possible static path is not an executed journey.
+- **FR-5.13:** [Deferred / History] Retire mandatory mock Service Topology MCP and prepopulated owner mappings. Defer a uniform third-party operational-information interface, including adapters, credentials and refresh policy. Decisive absent database, gateway or registry facts remain Uncertainties; introduce no placeholder integration.
+- **FR-5.14:** [Current; revised] Documented configuration supports new patterns and organization-wide framework knowledge without code changes within its supported format. New syntax/dialects may require implementation; dynamic parser generation, plugin loading, configuration execution and external fetching are not promised. Preserve structure/locations despite unknown meaning and distinguish malformed recognized content.
 
-### 5.1 Authentication & User Management
+### 3.6 Resolution, uncertainty and knowledge refresh
 
-Basic web application identity. Not the product's core value — sufficient for demo and single-department deployment.
+- **FR-6.1:** [Current; revised] Record Uncertainties for missing/ambiguous targets, bindings, mechanisms and capabilities, retaining known/unknown-target distinctions where meaningful. Workers propose; Knowledge owns accepted evidence/state. Valid semantic uncertainty may accompany accepted analysis.
+- **FR-6.2:** [Current; revised] Reconcile finite pinned accepted evidence across authorized discovery, including other Systems, late targets and accepted files of unfinished external runs. Select a designated analysis candidate per Repository, not arbitrary history. A unique visible candidate, shared name or confidence alone cannot prove a match. Focused bounded inquiry gathers supporting/opposing evidence; domain validation decides relationships. Deduplicate unchanged inquiries and recheck access/bindings before acceptance; publication cannot recursively trigger investigation.
+- **FR-6.3:** [Current; revised] Preserve cycle safety without historical fewer-pending-first/older-scan-yields waiting. Record cycles, terminate bounded traversal and give every selected matching item an explicit outcome. Unknown targets shall not hold Worker capacity indefinitely or create global completion barriers.
+- **FR-6.4:** [Current / Deferred] Preserve nonblocking Dangling Links, available identifiers and historical human wontfix decisions. Defer new owner accept/dismiss/wontfix actions with product HITL; uncertainty visibility/history remain current.
+- **FR-6.5:** [Current] Provide Chat-accessible unresolved-link explanations/counts, with endpoint/target information only where permitted by evidence, mode and live authorization. Aggregates must not leak restricted facts.
+- **FR-6.6:** [Current; revised] Show stale/pending/failed refresh. Changed accepted evidence may trigger bounded reconciliation and coalesced per-flow refresh without source re-analysis; active inputs stay fixed. Publication shall not create endless refresh. Scope narrowing/access loss alone changes visibility or records unevaluated scope, not broader accepted relationship truth. Automatic source-Scan cascades remain outside current scope.
+- **FR-6.7:** [Deferred] Incremental changed-source Impact Analysis/reuse, including the former four-stage cascade, remain deferred. Static replacement/retirement and later-knowledge reconciliation are current, not completed incremental scanning.
 
-- **FR-1.1:** Users shall register with email and password.
-- **FR-1.2:** Users shall log in and log out.
-- **FR-1.3:** Users shall view and edit their own profile (display name, email, password change).
-- **FR-1.4:** The system shall support basic role-based access: Administrator (full platform management), System Owner (manage assigned systems), User (chat and document access). [ASSUMPTION: Roles are assigned by an administrator; self-service role requests are out of scope.]
+### 3.7 Human input
 
-### 5.2 System & Repository Management
+- **FR-7.1:** [Deferred] Worker question notifications and mandatory owner response are deferred. Visible source-backed Uncertainties may state missing information without creating an inbox or blocking ordinary analysis.
+- **FR-7.2:** [Deferred] Dashboard answering and answer attachment are deferred; no automatic repair workflow is substituted.
+- **FR-7.3:** [Current] Identify human-supplied context and give it lower authority than code-derived facts. Preserve the distinction in Documents, prompts and dialogue; conflicts shall not silently turn assertions into source-qualified knowledge.
+- **FR-7.4:** [Deferred] Pending-question counts and view/answer/dismiss UI are deferred. Operational status, pause/resume, authorization and development approvals remain.
 
-The administrative surface for System Owners to onboard their systems into Vulgata.
+### 3.8 Third-party libraries
 
-- **FR-2.1:** System Owners shall create, edit, and delete Systems. A System has a name, description, and optional supplementary context.
-- **FR-2.2:** System Owners shall add Repositories to a System. A Repository has a name, description, git remote URL, and optional supplementary context.
-- **FR-2.3:** System Owners shall remove Repositories from a System.
-- **FR-2.4:** System Owners shall create standalone Repositories (not belonging to any System) for shared libraries whose source code is owned by the organization.
-- **FR-2.5:** The system shall validate git URL reachability when a Repository is added. [ASSUMPTION: Validation is a best-effort connectivity check; authentication failures do not block repository creation.]
+- **FR-8.1:** [Current] Organization-owned library source is addable as ordinary standalone Repositories and eligible for explicit static Scan.
+- **FR-8.2:** [Deferred] Caller/Worker-triggered partial on-demand library Scans are deferred. Missing source shall not cause implicit dependency downloads or arbitrary Repository work.
+- **FR-8.3:** [Deferred] Multiple-caller library-Scan coordination is deferred with that feature. Ordinary Repository/file ownership and resource controls remain mandatory.
+- **FR-8.4:** [Current; revised] Common library imports shall not automatically become cross-Repository communication gaps. Familiarity does not prove all behavior; decisive unsupported behavior remains a limitation or labelled hypothesis.
+- **FR-8.5:** [Original unmet backlog / Deferred] Retain dedicated inference for unknown source-unavailable libraries outside the core redesign. Ordinary useful hypotheses do not complete it, and inference is not source proof. Mandatory owner notification is deferred with HITL; external-information lookup is not implied.
 
-### 5.3 LLM Provider Management
+### 3.9 Git monitoring and incremental Scan
 
-System-level configuration of LLM backends. Enables per-LLM-task provider assignment and self-hosted deployments.
+- **FR-9.1:** [Deferred] Automatic remote monitoring remains deferred; periodic polling is the retained original direction, not a current background task. Webhook triggers remain excluded.
+- **FR-9.2:** [Deferred] Automatic pull-on-behind is deferred. Explicit static acquisition still resolves a selected Git ref once and shall not change an existing run's source.
+- **FR-9.3:** [Deferred] Incremental re-scan of changed/dependent Code Units and analysis reuse remain deferred. Repeated explicit static Scans and late-knowledge reconciliation remain current.
+- **FR-9.4:** [Current] Previous Document Versions and original dependencies remain accessible under authorization. Reader/history/citation navigation is current minimum product, independent of incremental scanning.
+- **FR-9.5:** [Deferred] The incremental-Scan overlap rule stays with deferred update scheduling. Current static runs follow exclusive ownership and ordered publication, not an unintended blanket prohibition inherited from an incremental-only clause.
 
-- **FR-3.1:** Administrators shall configure LLM Providers at the global level. Each provider has a name, base endpoint URL, API key, supported API types (chat completions, responses, messages), and default LLM task-type assignments (pre-scan, Worker Agents, Chat Agent).
-- **FR-3.2:** The system shall support multiple LLM Providers simultaneously.
-- **FR-3.3:** System Owners shall assign a specific LLM Provider to each LLM task role (pre-scan profiling, Worker Agents, Chat Agent) within a System. Different LLM task roles may use different providers. The deterministic Orchestrator does not require an LLM Provider assignment.
-- **FR-3.4:** The system shall provide a connection test for each configured LLM Provider.
+### 3.10 Database connections
 
-### 5.4 Scanning Pipeline
+- **FR-10.1:** [Current] Preserve per-Repository database type, connection details and protected credentials managed by authorized System Owners. Administration does not grant new agent-facing access.
+- **FR-10.2:** [Deferred] New Worker database-schema inspection is deferred with external operational-information tools. Available source/accepted knowledge remain the investigation boundary; no placeholder tool is introduced.
+- **FR-10.3:** [Deferred] New sample-data query tools are deferred. Any preserved/future surface retains limited rows, non-production/read-only access and blocked writes. Production database access is not authorized.
 
-The core engine. Scan Coordinator queues Repository scans → deterministic Orchestrator plans the per-Repository workflow → Worker Agents generate Documents in bounded jobs → retrieval indexes and exports are rebuilt → Cross-Repository Resolution runs.
+### 3.11 Chat and knowledge consumption
 
-- **FR-4.1:** Pre-Scan Profiling shall run before worker dispatch. It shall use CodeGraph/tree-sitter to parse source into Code Units with exact line ranges, identify programming languages and frameworks, and apply a scan filter excluding non-code files (build artifacts, generated code, test fixtures, configuration data).
-- **FR-4.2:** The Scan Coordinator (non-LLM background service) shall manage the scan queue, enforce concurrency limits, perform git operations, and trigger one deterministic Orchestrator per Repository scan. The Orchestrator shall dispatch Worker Agents through typed jobs to process Code Units in batches (supersteps). Each superstep fans out a batch of Code Units to workers, then fans in results before dispatching the next batch.
-- **FR-4.3:** Each Worker Agent shall read its assigned Code Unit, identify the business logic, and produce a structured Document linked to the source code location. Worker Agents shall detect cross-repo communication during Code Unit processing (Model A — Worker-embedded detection).
-- **FR-4.4:** In Pass 1, Worker Agents shall produce Code Logic Documents describing structural code behavior: architecture, data flow, call chains, framework usage. Intra-repo REFERENCES edges shall be created immediately via Document Pre-Allocation. Cross-repo calls shall be recorded as Uncertainties.
-- **FR-4.5:** In Pass 2, the Orchestrator shall perform graph-first, path-aware flow tracing from Pass 1 entry points and deterministically cluster traces into flow groups. One Worker Agent per flow group shall synthesize a Business Logic Document from the prepared trace packet and Code Logic Documents. Business Logic Documents shall have GENERATED_FROM edges to the Code Logic Document Versions actually used.
-- **FR-4.6:** Generated Documents shall be organized in a tree structure mirroring the source code directory hierarchy. The tree shall be computed from document paths at display time (virtual tree); no synthetic directory-document rows shall be created.
-- **FR-4.7:** After each Scan commits Document Versions, the system shall materialize PostgreSQL-backed retrieval indexes, including `index_entries` and `document_sections`, from document metadata and `content_jsonb`. The system may also auto-generate `index.md` as an export/readability artifact with structured entries, but `index.md` is not the canonical retrieval source.
-- **FR-4.8:** The system shall maintain an append-only log.md recording all Scans, queries, and system events with parseable timestamps in the format `## [YYYY-MM-DD HH:MM] operation | target`.
-- **FR-4.9:** The scanning pipeline shall integrate with CodeGraph for pre-indexed structural information (call graphs, symbol resolution, dependency maps) to accelerate agent processing and provide deterministic code_unit boundaries.
-- **FR-4.10:** Documents shall be immutable — the only mutation path is code change → re-scan → regenerate. Human edits to Documents are not supported. Previous versions shall be preserved via a superseded_by_id linked list (Version Chain).
-- **FR-4.11:** Week 1 shall include a Worker Agent execution adapter validation spike: validate that the Microsoft Agent Framework can execute Vulgata Worker Agents and typed tool calls under deterministic Orchestrator control before committing to the Worker Agent adapter. If the spike fails, fall back to a simpler Worker Agent execution adapter.
-- **FR-4.12:** When two Worker Agents process related Code Units (e.g., caller and callee within the same Repository) in the same superstep, they shall cross-verify business logic claims where possible. Disputed edges shall be kept with lowered confidence (0.5) and rendered as yellow dashed lines pending HITL resolution. Cross-verified claims shall be tagged as such in the generated Documents.
+- **FR-11.1:** [Current; revised] Business Mode provides business narratives in the light theme and reads Business Logic only. Enforce this in tools, history, summaries, graphs and citation targets, not just prompts. Useful Business Logic references remain available without Code Logic/source disclosure.
+- **FR-11.2:** [Current; revised] Dark-themed IT Mode permits authorized Business Logic, Code Logic and technical references. Exceptional read-only source inspection may address specific gaps at the recorded Profiled Revision; Chat shall not routinely re-prove the wiki, initiate Scans or repair knowledge.
+- **FR-11.3:** [Current; revised] Confirm mode switches, save the authorized session and start a new session with the selected theme/prompt and fresh inference context. Mode/scope changes shall not import disallowed technical history or cached summaries. Preserve durable ordered conversations and bounded useful completed history separately from model context. Summaries retain hypothesis status and contributor access scope, never upgrade speculation. Initially permit one active answer per conversation; replay shall not generate twice.
+- **FR-11.4:** [Current; revised] Users select authorized Systems/Repositories; first use defaults to all accessible Systems and permits adjustment/clearing. Knowledge provides a stable published read selection per turn, including discovery, pagination and later-discovered Documents. New publication alone does not invalidate that turn; later turns use fresh permitted knowledge. Authorization stays live.
+- **FR-11.5:** [Deferred] Chat file/image upload, attachment storage and parsing are deferred. Typed questions, dialogue and permitted advisory text remain.
+- **FR-11.6:** [Current; revised] Synthesize useful multi-document/follow-up explanations through shared wiki search, browse, section/content and existing-related-Document navigation. Tools return provenance, coverage and Uncertainties under the same turn/mode/access context. Retrieval is evidence, not instructions or infallible truth. Do not mandate per-record tools, fixed candidate sentences, embeddings or index.md input. Shared code alone does not prove business dependency.
+- **FR-11.7:** [Current; revised] Provide useful claim-linked references to exact permitted Document Versions/sections and appropriate IT source locations. Show genuine provisional deltas/concise progress, never hidden reasoning/secrets; label hypotheses from their first text. Completion requires valid provider completion, no truncation/unfinished tools and one durable content/reference/status save, not mandatory complete-candidate JSON or whole-answer semantic verification. Preserve useful authorized interrupted text with its reason, not as normal completed factual history. Never automatically restart generation after visible output. Browser disconnect is not cancellation: host-owned work may continue within original time/cost limits, and authorized reconnect joins the same turn without duplicate generation or lost/duplicated text. Host failure interrupts orphaned turns and requires explicit retry. Revocation stops further unauthorized disclosure; references retain original versions, and history/summary reuse rechecks contributing access.
+- **FR-11.8:** [Current; retained original behavior] When selection is empty, determine relevant Systems/Repositories using retrieval signals inside server-approved authorized discovery and display scope for adjustment. Inferred relevance shall not grant the model authority to choose access scope.
 
-### 5.5 Cross-Repository Communication Detection
+### 3.12 Scan progress and knowledge exploration
 
-The subsystem that identifies when code in one Repository communicates with another Repository. Detection happens during Worker Agent processing (Model A — Worker-embedded). Covers RPC, HTTP APIs, message queues, file-based communication, and page navigation.
+- **FR-12.1:** [Current; revised] Show real per-Repository operational status and System/selection aggregates separately from primary coverage and knowledge freshness. Include queued, executing, paused, cancelled and terminal outcomes with gaps. Users need no separate Pass 1/resolution/Pass 2 start calls. Recovery distinguishes explicit Scan resume from Chat retry.
+- **FR-12.2:** [Current] Show real active Worker counts for permitted work, without fictional progress or multiplying per-run limits into uncontrolled global totals.
+- **FR-12.3:** [Current; revised] Show admitted primary files and accepted/pending/failed coverage. File, semantic Code Unit and Document counts differ; sample quotas or completed-job counts are not coverage proof.
+- **FR-12.4:** [Current] Show errors, classified failures and accessible warning/failed-file summaries. Missing analysis capabilities need not prevent reading existing knowledge. Production status uses real state, never demo fixtures.
+- **FR-12.5:** [Deferred] Dashboard HITL answer/dismiss UI is deferred; retain Uncertainty disclosure and operational controls.
+- **FR-12.6:** [Current / Deferred] Provide an authorized Document reader, exact cited sections and basic manual-refresh Logical Flow/Document-neighborhood graph bound to versions/evidence. Enforce mode/user scope server-side for nodes, relationships, labels, counts and tooltips. Show stale, partial and unavailable-source states; sparse graphs are valid. Layout interaction cannot edit domain Edges. Live animation/advanced portfolio visualization are deferred, not Scan progress or genuine Chat streaming.
 
-- **FR-5.1:** System Owners shall configure a Communication Pattern Catalog per System specifying how that System's repositories communicate externally: RPC frameworks, HTTP API patterns, message queue topics, file paths and storage systems, cross-repo navigation patterns. [NOTE: Architecture decision is to move this to per-repo, but that migration is deferred. V1 ships with per-System CP.]
-- **FR-5.2:** The detection layer shall identify when code in one Repository communicates with another Repository. Communication types include: RPC calls (SOFA, Dubbo, gRPC), HTTP API calls (REST, GraphQL), message queue production and consumption, file-based communication (local filesystem, remote filesystem, OSS, HDFS, etc.), and cross-repo page navigation (in native and web apps).
-- **FR-5.3:** For each detected cross-repo communication, the system shall identify the provider role (the Repository or external entity exposing the interface) and the consumer role (the Repository or external entity calling or reading from the interface).
-- **FR-5.4:** The system shall track consumer count per communication interface — a single provider interface may have multiple consumers across different Repositories.
-- **FR-5.5:** The system shall handle cases where the provider or consumer is absent (not in any scanned Repository). Absent entities shall be recorded as external references with available identifying information (service name, URL pattern, topic name, file path, etc.).
-- **FR-5.6:** Cross-repo page navigation detection (e.g., navigating from one app to a page in another repo's app) shall be flagged as low-confidence due to inherently loose coupling. Provider and consumer identification may be unreliable for page navigation.
-- **FR-5.7:** The system shall use object flow analysis to trace communication targets through object creation and provenance, resolving indirect calls where the target is accessed through intermediate objects or factories.
-- **FR-5.8:** The Communication Pattern Catalog shall be used during scanning to guide detection. The Worker Agent's prompt shall dynamically inject the current System's Communication Pattern Catalog.
-- **FR-5.9:** The Prompt Workbench shall provide a development-time tool for iterating on agent prompts against known code patterns, feeding validated prompts into the Communication Pattern Catalog.
-- **FR-5.10:** The system shall record all detected RPC endpoints as named entities even when the provider is unscanned or unknown. These named entities shall be discoverable through the chat interface.
-- **FR-5.11:** The system shall handle file-based communication detection: local filesystem paths, remote filesystem mounts, OSS object storage, HDFS, and other file storage systems. File paths shall be treated as communication endpoints with provider and consumer roles.
-- **FR-5.12:** The system shall detect cross-repo page navigation: URL patterns, deep links, and app-to-app navigation flows in both native and web applications. Page navigation detection shall be flagged as low-confidence (see FR-5.6).
-- **FR-5.13:** The system shall resolve communication endpoints to target Repositories using a Service Topology — the mapping of service codes and communication endpoints to Repositories. This shall be resolved via an MCP tool that queries a mock service platform. [ASSUMPTION: The mock service platform is pre-populated with known service-to-repo mappings before the demo.]
-- **FR-5.14:** The detection system shall be extensible — new communication patterns shall be addable to the Communication Pattern Catalog without code changes. The catalog format shall support organization-wide framework knowledge (e.g., "all services in this organization use SOFA RPC with these conventions").
+### 3.13 MCP integration
 
-### 5.6 Uncertainty Resolution
+- **FR-13.1:** [Current / Original unmet backlog] Native CodeGraph MCP consumption is required under application-selected source/tool authority. General Repository/System/global registered MCP consumption remains distinct original backlog outside the core redesign; this adapter neither fulfills it nor authorizes arbitrary tools. Preserve original low priority without treating it as approved deferral.
+- **FR-13.2:** [Original unmet backlog] General externally configured MCP consumption in Chat remains original backlog. Internal wiki tools and exceptional scoped IT source reads do not complete it or add external operational-information authority.
+- **FR-13.3:** [Current] Scan and Chat tool use require separate approvals/scopes. Scan approval never implies Chat approval or Business access; enforce purpose per invocation.
+- **FR-13.4:** [Deferred] Outward wiki MCP serving is deferred, without an endpoint or placeholder. Internal wiki tools/native CodeGraph MCP consumption remain current.
+- **FR-13.5:** [Original unmet backlog] Retain three-level Repository/System/global configurable MCP management with purpose-specific approvals. Later design/decomposition is required; native tools provide neither implicit execution authority nor completion credit.
 
-Handles the gaps that cross-repo detection creates. Uncertainties are first-class entities with four states. Resolution is deterministic post-processing triggered after each repo scan completes.
+### 3.14 User-supplied context
 
-- **FR-6.1:** When a Worker Agent detects a cross-repo communication but the target Repository has not been scanned, it shall record an Uncertainty with status `unresolved` and sub_status `cross_repo`. The Uncertainty shall include the endpoint identifier, protocol, and any available identifying information.
-- **FR-6.2:** Cross-Repository Resolution shall run after each Repository scan completes. It shall match unresolved cross-repo uncertainties against the newly-scanned repo's documents using repo-qualified endpoint matching. Matched uncertainties shall be resolved and REFERENCES edges created. Resolution is bidirectional — both outgoing and incoming uncertainties are resolved.
-- **FR-6.3:** When two Repositories have mutual pending cross-repo uncertainties (deadlock), the Deadlock-Breaking Protocol shall apply: the repo with fewer pending uncertainties resolves first; if tied, the older scan yields.
-- **FR-6.4:** The system shall support Dangling Links — cross-repo uncertainties that never resolve. These shall be recorded with available identifying information and shall not block scan completion. The `wontfix` terminal state shall be available for human-accepted dangling links.
-- **FR-6.5:** The system shall provide a chat-accessible uncertainty summary: "This Document has N unresolved cross-repo links" with the endpoint identifiers and target repo names where known.
-- **FR-6.6:** Cross-Repo Stale Notices shall be posted when a document changes, notifying other repos that link to it. No automatic cascade — each repo's owner decides when to re-scan. Eventually consistent by design.
-- **FR-6.7:** The system shall provide an Impact Analysis query that finds all Documents affected by a set of changed source files: direct impact → intra-repo transitive closure → cross-repo reachability → uncertainty reopening. Cycle detection via UNION (not UNION ALL) with depth guard.
+- **FR-14.1:** [Current] Preserve authorized global advisory context applying to Systems, without broadening global-management permissions.
+- **FR-14.2:** [Current] Preserve System advisory context for its Repositories, without making membership communication evidence.
+- **FR-14.3:** [Current] Preserve Repository advisory context, including standalone Repositories.
+- **FR-14.4:** [Current; revised] Active Scans retain selected context; edits during affected work queue for later application rather than silently changing pinned analysis. Deferred HITL supplies no current mutation exception. Chat histories/summaries/mode contexts have separate access and selection rules and cannot mutate Scan evidence.
 
-### 5.7 Human-in-the-Loop
+### 3.15 LSP support
 
-Surfaces agent questions to users during scanning. User answers improve scan quality but carry lower authority than code-derived facts.
+- **FR-15.1:** [Current; revised] Provide applicable declared LSP navigation alongside required CodeGraph/source access. Initial offline/local-source operation is temporary and disables automatic imports/builds/dependency restoration; it is neither permanent local-only topology nor network air-gapping. Readiness does not imply semantic completeness.
+- **FR-15.2:** [Current; revised] Available type/reference information may augment understanding with explicit capability/classpath limitations. Missing tool results are not proof that a relationship does not exist.
+- **FR-15.3:** [Current; revised] Profiles are application-selected per Repository; models cannot select arbitrary adapters, snapshots or physical workspaces. Initially allow at most one LSP session per snapshot. Dependency-aware imports/restores and multiple sessions are later scope requiring separate authorization/qualification.
 
-- **FR-7.1:** When a Worker Agent encounters an ambiguity it cannot resolve from code alone, it shall surface a question to the System Owner. Questions appear as notifications in the dashboard.
-- **FR-7.2:** System Owners shall answer agent questions through the dashboard. Answers are attached to the relevant Document as metadata.
-- **FR-7.3:** Human-provided answers shall be marked as "human input" and shall carry lower priority than code-derived facts when conflicts arise.
-- **FR-7.4:** The dashboard shall display a count of pending questions. System Owners shall be able to view, answer, or dismiss questions.
+## 4. Non-functional requirements
 
-### 5.8 Third-Party Library Handling
+### 4.1 Performance and resource behavior
 
-Handles dependencies on external libraries without treating every import as a cross-repo boundary.
+- **NFR-1.1:** [Current; revised] Qualify Scan duration, coverage and resource use against representative Repositories/configurations, including progressive large files. No fixed sample quota or competition preparation deadline applies. Configured limits may queue, pause or honestly fail work, never silently exclude source; one machine's measurements are not universal throughput guarantees.
+- **NFR-1.2:** [Current; revised] Measure first useful answer delivery, total duration and multi-document/follow-up usefulness under declared provider/configuration limits. Replace the universal 30-second/five-Document guarantee with environment-qualified results and bounded execution. Five Documents is not a retrieval cap; no replacement universal latency promise is invented.
+- **NFR-1.3:** [Deferred] The five-second live-graph target is deferred with animation. Real Scan status and Chat streaming retain measured responsiveness/correctness obligations.
 
-- **FR-8.1:** System Owners shall add libraries with organization-owned source code as standalone Repositories (not belonging to any System).
-- **FR-8.2:** Standalone Repositories shall be scanned partially and on-demand — only the Code Units actually called by other Repositories are scanned, triggered by the Worker Agent responsible for the caller.
-- **FR-8.3:** The system shall use a lock mechanism to prevent concurrent scanning of the same standalone Repository from multiple callers.
-- **FR-8.4:** Well-known common libraries (standard libraries, widely-used open-source packages) shall be treated as understood and shall not generate cross-repo uncertainties.
-- **FR-8.5:** For unknown libraries without available source code, the system shall attempt LLM-based inference of behavior. If inference fails, the user shall be notified to provide context manually.
+### 4.2 Security
 
-### 5.9 Git Monitoring & Incremental Scan
+- **NFR-2.1:** [Current] Hash passwords using a modern algorithm such as bcrypt or Argon2.
+- **NFR-2.2:** [Current] Encrypt provider/database secrets at rest. Preserve required Data Protection keys across replacement and coherent backup/restore; credentials must not enter prompts, logs or diagnostics.
+- **NFR-2.3:** [Current; strengthened] With self-hosted providers, source/Documents stay inside organization infrastructure; external providers receive only necessary authorized task context. Bind tools/source to granted scope, budgets and provenance. Recheck live authority over every composite contributor, not merely displayed citations, before publication/disclosure. Restricted histories, counts and paths cannot leak through otherwise permitted output. Agents cannot choose credentials, arbitrary host paths or domain writes.
+- **NFR-2.4:** [Current] Database tools remain non-production/read-only-replica only, with writes blocked. This survives tool deferral and binds preserved or later authorized surfaces.
 
-Keeps Documents current with code changes. **Deferrable — may be dropped if time is tight.**
+### 4.3 Reliability and recovery
 
-- **FR-9.1:** The system shall monitor connected git repositories for remote changes. [ASSUMPTION: Monitoring uses periodic polling; webhook-based triggers are out of scope for V1.]
-- **FR-9.2:** When the local clone is behind the remote, the system shall pull changes.
-- **FR-9.3:** After pulling changes, the system shall incrementally re-scan only the affected Code Units (files that changed, plus files that depend on changed files).
-- **FR-9.4:** The system shall preserve Document history — previous versions of updated Documents shall be archived and accessible.
-- **FR-9.5:** Incremental re-scan shall not start if a Scan is already in progress for the same Repository.
+- **NFR-3.1:** [Current; revised] Isolated Worker failures shall not collapse unrelated work. Distinguish integrity/security failures, recoverable job errors and provider outages; use bounded classified retries, not universal once-and-continue. Accept no partial failed-file drafts as knowledge. Expose gaps and settle owned work/capacity on cancellation, timeout or lost ownership.
+- **NFR-3.2:** [Current; revised] Temporary Scan-provider failures receive bounded increasing retries then durable pause; configuration failures require correction. Explicit resume rechecks prerequisites, source and authority. Restart shall not resume paused work or silently switch provider/source. Shared provider admission covers Scan/Chat, but Chat follows its distinct interruption/completion rules and never silently restarts a visible answer.
+- **NFR-3.3:** [Current; revised] Preserve authoritative Scan progress, accepted knowledge, source and durable Chat history across restart. Replayed acceptance/save acknowledgements shall not duplicate knowledge or generate again. Browser reconnect reuses existing bounded work; host failure interrupts orphaned Chat and leaves Scan explicitly recoverable. Recovery promises neither zero repeated external billing nor transparent per-token replay.
 
-### 5.10 Database Connection Tools
+### 4.4 Deployment and operations
 
-Enables LLM agents to inspect database schemas and query sample data during scanning, improving document accuracy for data-dependent business logic.
+- **NFR-4.1:** [Current; revised] Deploy two Compose services: Vulgata with bundled local analysis tools, and PostgreSQL. Declare tool versions/dependencies and portable storage/provider/Worker/tool limits without host-profile dependencies or an extra remote tool bridge. Preserve database data, required source and keys apart from disposable workspaces/caches. Initially do not auto-prune canonical retained source; clean only unleased disposable state. Provide coherent operator maintenance-window backup/restore of data, source, keys and restore configuration outside primary volumes; volumes alone are not backups. Isolated restore qualification disables provider dispatch, invalidates old ownership and prevents automatic replay of saved running work. Recheck source/access before explicit resume/retry.
 
-- **FR-10.1:** System Owners shall configure database connections per Repository — specifying connection string, database type, and access credentials.
-- **FR-10.2:** During scanning, Worker Agents shall be able to inspect database schemas (tables, columns, types, constraints) via a tool interface.
-- **FR-10.3:** During scanning, Worker Agents shall be able to query sample data (limited rows) via a tool interface. [ASSUMPTION: Database connections are to non-production environments or read-only replicas. Production database access is explicitly out of scope for V1.]
+### 4.5 Usability and maintainability
 
-### 5.11 Chat Interface
+- **NFR-5.1:** [Current] Nontechnical users shall log in, select permitted context and understand Business answers without training/documentation. Assess explanation usefulness and citation faithfulness separately from schema validity or reference identity.
+- **NFR-5.2:** [Current] Preserve Blazor's basic accessibility facilities and established accessible interactions. No new WCAG certification/compliance commitment is introduced; remove the expired competition rationale.
+- **NFR-6.1:** [Current] Prompts remain externalized configurable text, never hardcoded strings. Native agent-framework adoption does not change this.
+- **NFR-6.2:** [Current; revised] Document supported catalog/advisory-context formats so owners contribute framework knowledge without developer assistance. Do not require detailed service mappings or promise arbitrary executable dialect extensions through configuration.
 
-The primary user-facing surface for knowledge consumption. Two modes, database-backed LLM-Wiki retrieval, and source-grounded answers.
+## 5. Success measures and acceptance boundaries
 
-- **FR-11.1:** Business Mode shall present a lighter UI theme and use a system prompt focused on business process explanation. Answers shall be business-level narratives without code references.
-- **FR-11.2:** IT Mode shall present a darker UI theme and use a system prompt focused on technical detail. Answers shall include code references and source links.
-- **FR-11.3:** Users shall switch between Business Mode and IT Mode from the chat interface. Switching modes shall show a confirmation dialog, save the current chat session, start a new chat session in the selected mode, update the UI theme, and use the selected mode's system prompt for that new session.
-- **FR-11.4:** Users shall select which Systems or Repositories to include as context for their questions. On first use, the selector shall default to all Systems the user has access to; users may clear or adjust this scope.
-- **FR-11.5:** Users shall upload files (documents, images) as supplementary context for their questions.
-- **FR-11.6:** The Chat Agent shall use typed LLM-Wiki retrieval tools over database-backed indexes and graph tables: `search_documents`, `get_document`, `get_document_sections`, `expand_related_documents`, `get_uncertainty_summary`, `get_endpoint_context`, `get_flow_trace_context`, `get_source_anchor_context`, and `get_scan_status`. Retrieval shall be section-level by default, graph-aware, authorization-aware, and able to synthesize answers with citations to source Documents and source anchors. `index.md` shall not be used as the canonical retrieval input.
-- **FR-11.7:** Every answer shall include citations linking claims to the source Documents and, where applicable, to the source code lines that generated those Documents.
-- **FR-11.8:** When no Systems or Repositories are selected, Vulgata shall autonomously determine which Systems or Repositories are relevant to the user's question using database-backed retrieval signals, and display the auto-determined scope with an option to adjust.
+- **SM-1 — Generic understanding:** prove real one/several/standalone Repository operation and source-backed Cross-Repository explanations, including beyond-pair contracts, late targets, one-to-many cases and cycles. Local synthesis is intermediate, not sufficient completion.
+- **SM-2 — Scan quality:** nontechnical reviewers understand Business Logic; technical reviewers trace representative claims/unknowns to exact accepted evidence. Schema correctness alone is insufficient.
+- **SM-3 — Relationship accuracy:** accepted links identify supported providers/consumers correctly; missing bindings/incomplete tools remain visible. Low Uncertainty counts are not a quality goal by themselves.
+- **SM-4 — Chat usefulness:** representative multi-document/follow-up questions yield understandable mode-appropriate explanations, useful exact references, truthful gaps and real streaming. Qualify context switches, revocation, reattachment, interruption and save replay.
+- **SM-5 — Incremental update:** remains deferred; repeated static Scans and later-knowledge reconciliation do not prove it.
 
-### 5.12 Dashboard & Scan Progress
+Record declared source/tool/provider configuration, durations and available usage/costs; unknown usage is not zero. Track failed/pending coverage, stale refresh and unresolved frontiers without optimizing them away through exclusion. Separate application liveness, database readiness, Scan-tool readiness and provider availability using sanitized correlation/status information and no paid routine health calls.
 
-Real-time visibility into scanning operations. Includes the live knowledge graph visualization.
+Qualify real declared tools, retained source, bundled Docker, coherent restore, parallel admission/cleanup, durable recovery, compatible version selection and authorized publication/history reads. Explain useful content quality independently of schema and structural checks. Existing tests/checkpoints may support reuse but cannot alone qualify changed contracts. Current design adoption supplies no runtime evidence.
 
-- **FR-12.1:** The dashboard shall display real-time Scan status for each System: not started, profiling, scanning, completed, failed.
-- **FR-12.2:** During an active Scan, the dashboard shall display the number of active Worker Agents.
-- **FR-12.3:** During an active Scan, the dashboard shall display the count of files processed and total files to process.
-- **FR-12.4:** During an active Scan, the dashboard shall display the count of errors encountered.
-- **FR-12.5:** The dashboard shall display pending Human-in-the-Loop questions with the ability to view, answer, or dismiss each.
-- **FR-12.6:** The dashboard shall include a live knowledge graph visualization using Blazor.Diagrams. As the Scan progresses: Documents shall appear as nodes, cross-repo links shall appear as edges when resolved, and unresolved uncertainties shall appear as dashed edges to placeholder nodes.
+## 6. Boundaries and future decisions
 
-### 5.13 MCP Integration
+Initial acquisition uses committed Git. Additional origins, dependency-aware import/build/restore, private mirrors, multiple LSP sessions per snapshot, separate-business-root merging, automatic whole-Repository expansion and update triggers are later scope. No remote analysis bridge, local LLM deployment, distributed scheduler, privileged Docker control, HA/PITR service or automatic historical-source pruning is required.
 
-Model Context Protocol integration for tool consumption and knowledge serving. **Lowest priority — may be deferred if time is tight.**
+Existing exclusions remain: enterprise SSO, new fine-grained RBAC, production database access, webhook monitoring, formal WCAG compliance, automated compliance reporting, separate Audition Agent, dedicated answer-confidence scoring, gRPC-specific guaranteed detection and shared-database communication detection. Normal authorization/scope safety is mandatory, not an optional “chat boundary guards” feature. Generic unfamiliar-mechanism/source recording does not promise universal language/protocol support.
 
-- **FR-13.1:** The scanning pipeline shall be able to consume MCP tools registered at the Repository, System, or global level.
-- **FR-13.2:** The chat interface shall be able to consume MCP tools registered at the Repository, System, or global level.
-- **FR-13.3:** MCP tools shall require separate approval for scanning use and chat use. A tool approved for scanning is not automatically available in chat, and vice versa.
-- **FR-13.4:** Vulgata shall expose its knowledge base (Documents, `index_entries`, `document_sections`, graph relationships, flow traces, uncertainties, source anchors, and cross-repo links) as an MCP server, allowing external AI coding agents to query business logic through the same authorization-aware retrieval model used by chat.
-- **FR-13.5:** MCP tools shall be configurable at three levels: Repository (scoped to one repo), System (scoped to all repos in a system), and Global (available to all systems).
+No unresolved product choice blocks this approved reconciliation. Owning plans settle detailed identity/version/lifecycle contracts, configured defaults, budgets, retention procedures and fixtures before dependent work splits. Detail cannot reintroduce fixed pairs, excluded source, compulsory human mappings, inaccessible readers or competing acceptance owners. Retained original backlog requires later explicit design, not automatic dispatch or false full-V1 completion.
 
-### 5.14 User-Supplied Context
+## 7. Historical scope and supersession
 
-Allows System Owners to provide supplementary information that improves scan quality, applied at controlled times to avoid inconsistency.
+Preserve historical decisions through the archive and dated proposals; dates alone do not establish blanket precedence:
 
-- **FR-14.1:** System Owners shall supply context at the global level (applies to all Systems).
-- **FR-14.2:** System Owners shall supply context at the System level (applies to all Repositories in that System).
-- **FR-14.3:** System Owners shall supply context at the Repository level (applies to a single Repository).
-- **FR-14.4:** User-supplied context shall only be applied when no Scan is running for the affected scope, or when the user is responding to an agent question during the Human-in-the-Loop process. Context changes during an active Scan shall be queued and applied after the Scan completes.
+- [August 17 recovery](../../sprint-change-proposal-2026-08-17-august-30-bounded-scanning-recovery.md) temporarily replaced specified clauses with Epic 12's Java/XML pair release scope while retaining longer-term backlog.
+- [August 18 host-runtime amendment](../../sprint-change-proposal-2026-08-18-august-demo-host-runtime-and-jdtls-pin.md) changed deployment proof/tool pins only, not every Scan/evidence rule.
+- [August 29 Track C-MVP](../../sprint-change-proposal-2026-08-29-story-12-5-track-c-mvp.md) simplified release-proof machinery without weakening then-accepted Track A/B behavior.
+- [August 31 termination/integration baseline](../../../implementation-artifacts/epic-12-post-termination-chat-integration-baseline-2026-08-31.md) preserves selective Chat hardening and Story 12.5's terminated-incomplete status. It neither authorized the later streaming replacement nor completed real release qualification.
+- [September 1 decommission](../../sprint-change-proposal-2026-09-01-cgc-executable-decommission.md) retired Epic 12's active deadline authority, removed executable CGC and preserved useful assets. Compilation-only acceptance applied solely to cleanup; PRD/architecture decisions awaited this correction.
+- September 11 approval adopts the finalized generic design and replaces active unstarted backlog. Preserve completed Epics 1–4, Epic 11 Stories 11.1–11.4, incomplete Story 11.5, accepted Epic 12 Stories 12.1–12.4 and terminated-incomplete Story 12.5 without rewriting their evidence.
 
-### 5.15 LSP Support
-
-Optional Language Server Protocol integration for IDE-level code intelligence during scanning. **V1 only if time permits.**
-
-- **FR-15.1:** The scanning pipeline shall optionally integrate with Language Servers for symbol resolution (go-to-definition, find-references).
-- **FR-15.2:** The scanning pipeline shall optionally use LSP type information to augment LLM-based code understanding.
-- **FR-15.3:** LSP integration shall be configurable per Repository, with language-specific server configuration.
-
-### 5.16 Historical August 15 Demonstration MVP Boundary
-
-**Superseded for release planning:** This section records the historical
-August 15 slice. The approved Section 0.1 August 30 overlay is the current dated
-acceptance authority. Completion or review state from this slice does not prove
-the August 30 release.
-
-The delivery deadline for the competition demonstration is **2026-08-15**.
-The full V1 requirements remain the product backlog, but the deadline-bound
-demonstration is accepted against the following vertical slice:
-
-- two prepared, organization-controlled demo Repositories with one known RPC
-  or HTTP Cross-Repository flow;
-- deterministic CodeGraphContext-backed profiling and a non-blocking,
-  automatically approved pre-scan result;
-- a sequential, one-Scan-at-a-time runner with one deterministic dispatch
-  path and no concurrent supersteps;
-- generation and persistence of Code Logic Documents and at least one Business
-  Logic Document for the prepared flow;
-- exact source anchors, the minimal graph/reference facts needed by the demo,
-  and database-backed retrieval sections;
-- exact configured RPC/HTTP provider-consumer matching between the two demo
-  Repositories;
-- a minimal Chinese chat experience with Business/IT prompt modes,
-  Repository/System selection for the prepared scope, grounded retrieval, and
-  citations to Documents and source lines; and
-- one clean-database end-to-end rehearsal and one final Docker image build.
-
-The following are explicitly deferred beyond the August 15 demonstration:
-
-- pre-scan LLM question generation, seven-day review lifecycle, and the full
-  Human-in-the-Loop review surface;
-- concurrent scans, superstep concurrency, leases, state replay, advanced
-  retry, and dynamic provider failover;
-- Worker Agent database tools and advanced uncertainty-resolution policies;
-- third-party library on-demand scanning and unknown-library inference;
-- message-queue, file/storage, page-navigation, object-flow, Service Topology
-  MCP, and Prompt Workbench detection;
-- the full notification center, SignalR dashboard, live graph, graph filters,
-  and graph detail interactions;
-- chat file upload and autonomous scope determination; and
-- git monitoring and incremental re-scan.
-
-This deadline boundary does not permit a failing delivery branch. Deferred
-edge cases are removed from the August acceptance boundary and documented as
-known limitations. Included tests, authorization checks, migrations, the Web
-build, and the final demonstration path must be green.
-
-## 6. Non-Functional Requirements
-
-### 6.1 Performance
-
-- **NFR-1.1:** A Scan of a repository with ~10,000 source files shall complete within a timeframe that allows the demo to be prepared in advance (scans are not performed live during the demo). Exact scan duration depends on LLM API throughput, agent count, and code complexity — benchmarking during development will establish realistic expectations.
-- **NFR-1.2:** Chat responses shall be delivered within 30 seconds for questions spanning up to 5 Documents.
-- **NFR-1.3:** The live knowledge graph visualization shall update within 5 seconds of a Document being generated or a cross-repo link being resolved.
-
-### 6.2 Security
-
-- **NFR-2.1:** All user passwords shall be hashed using a modern algorithm (bcrypt or Argon2).
-- **NFR-2.2:** API keys for LLM Providers and database connections shall be stored encrypted at rest.
-- **NFR-2.3:** Source code and generated Documents shall never leave the organization's infrastructure when using a self-hosted LLM Provider. When using external LLM Providers, only the code context necessary for the current agent task shall be transmitted.
-- **NFR-2.4:** Database connection tools shall only connect to non-production environments or read-only replicas. Write operations on connected databases shall be blocked.
-
-### 6.3 Reliability
-
-- **NFR-3.1:** A failed Worker Agent task shall not fail the entire Scan. The Orchestrator shall retry the task once, then record the failure and continue with remaining Code Units.
-- **NFR-3.2:** The system shall gracefully handle LLM API unavailability — queuing or pausing agent tasks until the API recovers.
-- **NFR-3.3:** Scan state shall be persisted such that a server restart does not lose progress on an in-progress Scan. The specific persistence mechanism is deferred to architecture.
-
-### 6.4 Deployability
-
-- **NFR-4.1:** Vulgata shall deploy as a single Docker container. Specific deployment plan, database selection, and infrastructure decisions are deferred to architecture discussion.
-
-**August 30 exception:** NFR-4.1 remains post-deadline V1 work and is not a
-blocking competition-release condition. The dated release runs Vulgata,
-CodeGraph, Java 21, and Eclipse JDT LS on the documented Windows host while
-PostgreSQL 17 runs in Docker. Application-process restart against the same
-database replaces application-container restart proof. A final application
-image build is optional, non-blocking evidence.
-
-### 6.5 Usability
-
-- **NFR-5.1:** A non-technical user shall be able to log in, select a System, and ask a business question in Business Mode without training or documentation.
-- **NFR-5.2:** The dashboard shall use Blazor's built-in accessibility features. WCAG compliance is not required for the competition demo.
-
-### 6.6 Maintainability
-
-- **NFR-6.1:** Agent prompts shall be externalized from code — stored as configurable text resources, not hardcoded strings.
-- **NFR-6.2:** The Communication Pattern Catalog format shall be documented so that System Owners can write catalogs for new Systems without developer assistance.
-
-## 7. Success Metrics
-
-- **SM-1 (Competition Demo):** A live demo traces a cross-repo business question ("what happens during a risk evaluation in the mobile app?") across at least two Repositories, with every step linked to source code. The demo runs live, not as a recording.
-- **SM-2 (Scan Quality):** Generated Business Logic Documents are readable and understandable by a non-technical reviewer (product manager or business analyst) without developer assistance.
-- **SM-3 (Cross-Repo Accuracy):** When Repository A communicates with Repository B, the Document for Repository A references the correct Document in Repository B. Provider and consumer roles are correctly tagged.
-- **SM-4 (Chat Quality):** A non-technical user can log in, select a System, ask a business question in Business Mode, and receive an answer they understand — without training or documentation.
-- **SM-5 (Incremental Update):** After an initial Scan, pushing a code change triggers an incremental re-scan that updates only affected Documents. *(Deferrable — measured only if FR-9.x is implemented.)*
-
-**Counter-metrics (what we track but don't optimize for in V1):**
-- Scan duration (acceptable as long as demo can be prepared in advance)
-- Token cost per scan (acceptable given DeepSeek V4 pricing)
-- Dangling link count (acceptable — each is a known unknown)
-
-## 8. Assumptions Index
-
-*All [ASSUMPTION] tags from FRs and NFRs, collected here for visibility.*
-
-- **A-1:** User roles (Administrator, System Owner, User) are assigned by an administrator; self-service role requests are out of scope. (FR-1.4)
-- **A-2:** Git URL validation is a best-effort connectivity check; authentication failures do not block repository creation. (FR-2.5)
-- **A-3:** The mock service platform for Service Topology resolution is pre-populated with known service-to-system mappings before the demo. (FR-5.13)
-- **A-4:** Git monitoring uses periodic polling; webhook-based triggers are out of scope for V1. (FR-9.1)
-- **A-5:** Database connections are to non-production environments or read-only replicas. Production database access is explicitly out of scope for V1. (FR-10.3)
-- **A-6:** WCAG compliance is not required for the competition demo. (NFR-5.2)
-
-## 9. Open Questions
-
-*Questions that should be resolved before or during architecture. Not blockers for PRD approval.*
-
-- **OQ-1:** What are the specific demo repositories, and do they contain compelling cross-repo communication patterns (RPC, HTTP, message queue, file, page navigation)?
-- **OQ-2:** What communication mechanisms do the demo Repositories use, and can the Communication Pattern Catalog cover them?
-- **OQ-3:** Will the Business Logic Documents produced by the scanning pipeline actually be readable by a non-technical reviewer?
-- **OQ-4:** What is the fallback LLM Provider if DeepSeek V4 is unavailable during the demo?
-- **OQ-5:** What is the target scan duration for the demo repositories? (To be established during development benchmarking.)
-- **OQ-6:** How are cross-repo communication patterns discovered when the System Owner does not know all of them upfront? (Human-in-the-Loop discovery vs. pre-configuration.)
-- **OQ-7:** How do we validate document correctness before the demo? (Manual review of critical paths, cross-verification between agents, sample question testing.)
-
-## 10. Out of Scope
-
-*Explicitly excluded from V1. Listed here so they are not rediscovered during architecture or implementation.*
-
-- Full RBAC with fine-grained permissions
-- Multi-language scanning beyond the languages present in the demo repositories
-- Automated compliance reporting or audit trail generation
-- High-availability deployment or multi-instance orchestration
-- Integration with enterprise SSO or identity providers
-- Audition Agent (independent document verification)
-- Answer confidence scoring and chat boundary guards
-- gRPC communication detection (not used in the target organization)
-- Database shared access as a cross-repo communication pattern
-- Production database access
-- Webhook-based git change detection
-- WCAG compliance
+Competition dates, judging rubrics, samples, quotas, mandatory mock topology, Windows-host exception, screenshot ceremonies and attestation machinery are not current acceptance. The former §0.1/§5.16 overlays remain archived, not active fallback requirements. Generic design explicitly replaces preallocation, superstep waiting, deadlock yielding, code-change-only regeneration and full-answer-before-reveal Chat; immutable history/security survive those mechanism changes.

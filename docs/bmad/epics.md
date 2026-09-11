@@ -1,2580 +1,2619 @@
 ---
 stepsCompleted: [1, 2, 3, 4]
 inputDocuments:
-  - prds/prd-vulgata-2026-06-12/prd.md
-  - architecture.md
-  - ux-designs/ux-vulgata-2026-06-22/DESIGN.md
-  - ux-designs/ux-vulgata-2026-06-22/EXPERIENCE.md
+  - docs/bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md
+  - docs/UBIQUITOUS_LANGUAGE.md
+  - docs/bmad/planning-artifacts/architecture.md
+  - docs/bmad/planning-artifacts/architecture/ARCHITECTURE-SPINE.md
+  - docs/bmad/planning-artifacts/ux-designs/ux-vulgata-2026-06-22/DESIGN.md
+  - docs/bmad/planning-artifacts/ux-designs/ux-vulgata-2026-06-22/EXPERIENCE.md
+  - docs/bmad/planning-artifacts/sprint-change-proposal-2026-09-11-generic-product-reconciliation.md
+currentStep: complete
+status: final
+definitionValidatedOn: 2026-09-11
+readiness: ready-for-governed-story-planning
+newStoryImplementationStatus: backlog
+inputSetConfirmed: 2026-09-11
+requirementsConfirmed: true
+requirementsConfirmedOn: 2026-09-11
+epicDesignConfirmed: true
+epicDesignConfirmedOn: 2026-09-11
+epicDesignSourceSha256: 83B4E0157D968A998AC1DCAF3B40CACAAE629893652801C70FE3CD9E7DE80281
+storiesConfirmed: true
+storiesConfirmedOn: 2026-09-11
+epicDefinitionsCompleted: [13, 14, 15, 16, 17]
+approvedStories: ['13.1', '13.2', '13.3', '13.4', '13.5', '13.6', '13.7', '13.8', '13.9', '13.10', '13.11', '13.12', '13.13', '13.14', '13.15', '13.16', '13.17', '13.18', '13.19', '14.1', '14.2', '14.3', '14.4', '14.5', '14.6', '14.7', '15.1', '15.2', '15.3', '15.4', '15.5', '15.6', '15.7', '15.8', '16.1', '16.2', '16.3', '17.1', '17.2', '17.3', '17.4']
+explicitlyApprovedStories: ['13.1', '13.2', '13.3']
+delegatedStories: ['13.4', '13.5', '13.6', '13.7', '13.8', '13.9', '13.10', '13.11', '13.12', '13.13', '13.14', '13.15', '13.16', '13.17', '13.18', '13.19', '14.1', '14.2', '14.3', '14.4', '14.5', '14.6', '14.7', '15.1', '15.2', '15.3', '15.4', '15.5', '15.6', '15.7', '15.8', '16.1', '16.2', '16.3', '17.1', '17.2', '17.3', '17.4']
+boundaryApprovalMode: delegated-when-confident
+boundaryApprovalDelegatedOn: 2026-09-11
 ---
 
 # Vulgata - Epic Breakdown
 
 ## Overview
 
-This document provides the complete epic and story breakdown for Vulgata, decomposing the requirements from the PRD and Architecture requirements into implementable stories.
+The user confirmed the requirement inventory and approved the five-epic design with C under the [September 11 planning correction](planning-artifacts/sprint-change-proposal-2026-09-11-generic-product-reconciliation.md). All four definition steps are complete: 41 stories across Epics 13–17 passed coverage, ownership, dependency and readiness checks. Stories 13.1–13.3 were explicitly approved; later boundaries were accepted under the user's confident-boundary delegation. The backlog is ready for governed story specification and technical planning, not direct implementation or runtime qualification. [Sprint tracking](implementation-artifacts/sprint-status.yaml) owns the active delivery queue; deliberate feature activation and later plan/approval/verification gates remain required.
+
+The inventory preserves all 89 functional and 15 non-functional requirement IDs and their exact canonical PRD text/status. Architecture and UX requirements are extracted separately; they add implementation constraints without replacing product dispositions. Current means required, not delivered. Deferred, Original unmet backlog and History never earn current coverage credit. Mixed-status requirements retain each clause's disposition. The canonical [glossary](../UBIQUITOUS_LANGUAGE.md) owns terminology.
+
+### Historical disposition and reserved future IDs
+
+The [exact pre-adoption epic document](history/pre-generic-adoption-2026-09-11/files/docs/bmad/epics.md) preserves the former definitions and evidence. Its SHA-256 before replacement was `2BD311C87BA4595FD567F3F7722EF88859894EA64E2CC04A8D25FA610F2E67C3`; the active pre-image was verified identical.
+
+- Epics 1–4 retain completed history and reusable implementation.
+- Stories 11.1–11.4 retain completed history; Story 11.5 remains incomplete. The old release route is not active.
+- Stories 12.1–12.4 retain accepted/completed history; Story 12.5 remains terminated incomplete. No release-completion or automatic-resume claim is made.
+- Old Epics 5–10 are superseded as active planning definitions, not marked done. SP.1 and previous reviews/qualification remain historical evidence.
+- Epic IDs 13–17 and all 41 story definitions are accepted; new story implementation remains backlog. IDs 1–12 will not be reused.
+
+The original-capability register remains visible through FR-5.9 (Prompt Workbench), FR-8.5 (dedicated unknown-library inference, with the notification portion deferred), and FR-13.1/13.2/13.5 (general Repository/System/global MCP configuration/consumption). These need later design/decomposition or explicit disposition. The five core replacement epics do not by themselves represent full-V1 coverage, and this register does not authorize dispatch.
+
+### Extracted source boundary
+
+Hashes identify the read inputs, not runtime acceptance. Revalidate affected requirements/stories if an owning source changes; do not silently carry these definition approvals onto changed scope.
+
+| Input | SHA-256 |
+| --- | --- |
+| [Canonical PRD](planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md) | `9DEE4DDA7920C9DFAB8D0FF4E6FFA5AEE2F6DE7942BECBF32349C9E3584A1399` |
+| [Canonical glossary](../UBIQUITOUS_LANGUAGE.md) | `680494A9E766270A18AE02D5C92670771A72912A87F632946350431D4696550D` |
+| [Architecture gateway](planning-artifacts/architecture.md) | `DDD60353114C2C5A16C36074DA170A5AF97DB2C97C0BB0DC4B481A5F471F667D` |
+| [Architecture spine](planning-artifacts/architecture/ARCHITECTURE-SPINE.md) | `A55381DF21FE95E827664CA6B2082FB0D30054CFC6A075AD93DF3638F6261943` |
+| [UX DESIGN](planning-artifacts/ux-designs/ux-vulgata-2026-06-22/DESIGN.md) | `87B022E601BC4603AB75DC0211C1E10F1F0F4B90CEB3250ECCA8166FFA3C2CAC` |
+| [UX EXPERIENCE](planning-artifacts/ux-designs/ux-vulgata-2026-06-22/EXPERIENCE.md) | `A550D650B01F6EF732FC4F11004D6EADDCCF511FE34916F1B1CE5ECE3AF1B87F` |
+| [Approved proposal](planning-artifacts/sprint-change-proposal-2026-09-11-generic-product-reconciliation.md) | `C62312D92E5F32CFCCCE639D79AB7AA46C15F2223836679AAE09F842921D3BAA` |
 
 ## Requirements Inventory
 
 ### Functional Requirements
 
-FR-1.1: Users shall register with email and password.
-FR-1.2: Users shall log in and log out.
-FR-1.3: Users shall view and edit their own profile (display name, email, password change).
-FR-1.4: The system shall support basic role-based access: Administrator (full platform management), System Owner (manage assigned systems), User (chat and document access).
+All 89 entries below are copied verbatim from the canonical PRD §3, preserving every ID and status classification.
 
-FR-2.1: System Owners shall create, edit, and delete Systems. A System has a name, description, and optional supplementary context.
-FR-2.2: System Owners shall add Repositories to a System. A Repository has a name, description, git remote URL, and optional supplementary context.
-FR-2.3: System Owners shall remove Repositories from a System.
-FR-2.4: System Owners shall create standalone Repositories (not belonging to any System) for shared libraries whose source code is owned by the organization.
-FR-2.5: The system shall validate git URL reachability when a Repository is added.
+- **FR-1.1:** [Current] Users shall register with email and password.
 
-FR-3.1: Administrators shall configure LLM Providers at the global level. Each provider has a name, base endpoint URL, API key, supported API types (chat completions, responses, messages), and default LLM task-type assignments (pre-scan, worker, chat).
-FR-3.2: The system shall support multiple LLM Providers simultaneously.
-FR-3.3: System Owners may override the global default LLM Provider for each LLM task role within their System. The deterministic Orchestrator does not require an LLM Provider assignment.
-FR-3.4: The system shall provide a connection test for each configured LLM Provider.
-FR-4.1: Pre-Scan Profiling shall run before worker dispatch. It shall use CodeGraph/tree-sitter to parse source into Code Units with exact line ranges, identify programming languages and frameworks, and apply a scan filter excluding non-code files. After profiling, agents may surface questions to the System Owner; the scan waits for user answers and approval before proceeding to worker dispatch.
-FR-4.2: The Scan Coordinator (non-LLM background service) shall manage the scan queue, enforce concurrency limits, perform git operations, and trigger one deterministic Orchestrator per Repository scan. The Orchestrator shall dispatch Worker Agents through typed jobs to process Code Units in batches (supersteps).
-FR-4.3: Each Worker Agent shall read its assigned Code Unit, identify the business logic, and produce a structured Document linked to the source code location. Worker Agents shall detect cross-repo communication during Code Unit processing (Model A — Worker-embedded detection).
-FR-4.4: In Pass 1, Worker Agents shall produce Code Logic Documents describing structural code behavior. Intra-repo REFERENCES edges shall be created immediately via Document Pre-Allocation. Cross-repo calls shall be recorded as Uncertainties.
-FR-4.5: In Pass 2, the Orchestrator shall perform graph-first, path-aware flow tracing from Pass 1 entry points and deterministically cluster traces into flow groups. One Worker Agent per flow group shall synthesize a Business Logic Document from the prepared trace packet and Code Logic Documents. Business Logic Documents shall have GENERATED_FROM edges to the Code Logic Document Versions actually used.
-FR-4.6: Generated Documents shall be organized in a tree structure mirroring the source code directory hierarchy. The tree shall be computed from document paths at display time (virtual tree).
-FR-4.7: After each Scan commits Document Versions, the system shall materialize PostgreSQL-backed retrieval indexes, including `index_entries` and `document_sections`, from document metadata and `content_jsonb`. The system may also auto-generate `index.md` as an export/readability artifact, but `index.md` is not the canonical retrieval source.
-FR-4.8: The system shall maintain an append-only log.md recording all Scans, queries, and system events with parseable timestamps.
-FR-4.9: The scanning pipeline shall integrate with CodeGraph for pre-indexed structural information (call graphs, symbol resolution, dependency maps).
-FR-4.10: Documents shall be immutable — the only mutation path is code change → re-scan → regenerate. Previous versions shall be preserved via a superseded_by_id linked list (Version Chain).
-FR-4.11: Week 1 shall include a Worker Agent execution adapter validation spike: validate that the Microsoft Agent Framework can execute Vulgata Worker Agents and typed tool calls under deterministic Orchestrator control before committing to the Worker Agent adapter.
-FR-4.12: When two Worker Agents process related Code Units in the same superstep, they shall cross-verify business logic claims. Disputed edges shall be kept with lowered confidence (0.5) and rendered as yellow dashed lines pending HITL resolution.
-FR-5.1: System Owners shall configure a Communication Pattern Catalog per System specifying how that System's repositories communicate externally: RPC frameworks, HTTP API patterns, message queue topics, file paths and storage systems, cross-repo navigation patterns. RPC catalogs shall be included in the pre-scan context; agents may attempt to validate catalog entries during pre-scan profiling.
-FR-5.2: The detection layer shall identify when code in one Repository communicates with another Repository. Communication types include: RPC calls, HTTP API calls, message queue production and consumption, file-based communication, and cross-repo page navigation.
-FR-5.3: For each detected cross-repo communication, the system shall identify the provider role and the consumer role.
-FR-5.4: The system shall track consumer count per communication interface.
-FR-5.5: The system shall handle cases where the provider or consumer is absent (not in any scanned Repository). Absent entities shall be recorded as external references.
-FR-5.6: Cross-repo page navigation detection shall be flagged as low-confidence due to inherently loose coupling.
-FR-5.7: The system shall use object flow analysis to trace communication targets through object creation and provenance.
-FR-5.8: The Communication Pattern Catalog shall be used during scanning to guide detection. The Worker Agent's prompt shall dynamically inject the current System's Communication Pattern Catalog.
-FR-5.9: The Prompt Workbench shall provide a development-time tool for iterating on agent prompts against known code patterns, feeding validated prompts into the Communication Pattern Catalog.
-FR-5.10: The system shall record all detected RPC endpoints as named entities even when the provider is unscanned or unknown.
-FR-5.11: The system shall handle file-based communication detection: local filesystem paths, remote filesystem mounts, OSS object storage, HDFS, and other file storage systems.
-FR-5.12: The system shall detect cross-repo page navigation: URL patterns, deep links, and app-to-app navigation flows in both native and web applications.
-FR-5.13: The system shall resolve communication endpoints to target Repositories using a Service Topology — resolved via an MCP tool that queries a mock service platform.
-FR-5.14: The detection system shall be extensible — new communication patterns shall be addable to the Communication Pattern Catalog without code changes.
+- **FR-1.2:** [Current] Users shall log in and log out.
 
-FR-6.1: When a Worker Agent detects a cross-repo communication but the target Repository has not been scanned, it shall record an Uncertainty with status unresolved and sub_status cross_repo.
-FR-6.2: Cross-Repository Resolution shall run after each Repository scan completes. It shall match unresolved cross-repo uncertainties against the newly-scanned repo's documents using repo-qualified endpoint matching. Resolution is bidirectional.
-FR-6.3: When two Repositories have mutual pending cross-repo uncertainties (deadlock), the Deadlock-Breaking Protocol shall apply: the repo with fewer pending uncertainties resolves first; if tied, the older scan yields.
-FR-6.4: The system shall support Dangling Links — cross-repo uncertainties that never resolve. The wontfix terminal state shall be available for human-accepted dangling links.
-FR-6.5: The system shall provide a chat-accessible uncertainty summary: "This Document has N unresolved cross-repo links" with endpoint identifiers and target repo names where known.
-FR-6.6: Cross-Repo Stale Notices shall be posted when a document changes, notifying other repos that link to it. No automatic cascade — eventually consistent by design.
-FR-6.7: The system shall provide an Impact Analysis query that finds all Documents affected by a set of changed source files: direct impact → intra-repo transitive closure → cross-repo reachability → uncertainty reopening.
+- **FR-1.3:** [Current] Users shall view/edit their profile, including display name, email and password change.
 
-FR-7.1: When a Worker Agent encounters an ambiguity it cannot resolve from code alone, it shall surface a question to the System Owner as a dashboard notification.
-FR-7.2: System Owners shall answer agent questions through the dashboard. Answers are attached to the relevant Document as metadata.
-FR-7.3: Human-provided answers shall be marked as "human input" and shall carry lower priority than code-derived facts when conflicts arise.
-FR-7.4: The dashboard shall display a count of pending questions. System Owners shall be able to view, answer, or dismiss questions.
+- **FR-1.4:** [Current] Retain Administrator, System Owner and User roles. Administrators assign roles; System Owners manage authorized Systems; Users consume permitted Chat/Documents. Self-service role requests and new fine-grained RBAC are outside scope. Knowledge, history and source disclosure shall enforce current server-side authorization.
 
-FR-8.1: System Owners shall add libraries with organization-owned source code as standalone Repositories (not belonging to any System).
-FR-8.2: Standalone Repositories shall be scanned partially and on-demand — only the Code Units actually called by other Repositories are scanned.
-FR-8.3: The system shall use a lock mechanism to prevent concurrent scanning of the same standalone Repository from multiple callers.
-FR-8.4: Well-known common libraries (standard libraries, widely-used open-source packages) shall be treated as understood and shall not generate cross-repo uncertainties.
-FR-8.5: For unknown libraries without available source code, the system shall attempt LLM-based inference of behavior. If inference fails, the user shall be notified to provide context manually.
+- **FR-2.1:** [Current] System Owners shall create/edit/delete authorized Systems with name, description and optional context. Organizational changes do not themselves prove or disprove communication.
 
-FR-9.1: The system shall monitor connected git repositories for remote changes (periodic polling).
-FR-9.2: When the local clone is behind the remote, the system shall pull changes.
-FR-9.3: After pulling changes, the system shall incrementally re-scan only the affected Code Units.
-FR-9.4: The system shall preserve Document history — previous versions of updated Documents shall be archived and accessible.
-FR-9.5: Incremental re-scan shall not start if a Scan is already in progress for the same Repository.
+- **FR-2.2:** [Current] System Owners shall add Repositories with name, description, Git remote and optional context, without fixed-pair, sample-name or release-profile prerequisites.
 
-FR-10.1: System Owners shall configure database connections per Repository — specifying connection string, database type, and access credentials.
-FR-10.2: During scanning, Worker Agents shall be able to inspect database schemas (tables, columns, types, constraints) via a tool interface.
-FR-10.3: During scanning, Worker Agents shall be able to query sample data (limited rows) via a tool interface.
+- **FR-2.3:** [Current] System Owners shall remove Repositories from Systems. Membership/visibility changes preserve immutable history and current access rules; they shall not silently replace accepted relationship evidence.
 
-FR-11.1: Business Mode shall present a lighter UI theme and use a system prompt focused on business process explanation. Answers shall be business-level narratives without code references.
-FR-11.2: IT Mode shall present a darker UI theme and use a system prompt focused on technical detail. Answers shall include code references and source links.
-FR-11.3: Users shall switch between Business Mode and IT Mode from the chat interface by confirming a new chat session in the selected mode.
-FR-11.4: Users shall select which Systems or Repositories to include as context for their questions.
-FR-11.5: Users shall upload files (documents, images) as supplementary context for their questions.
-FR-11.6: The Chat Agent shall use typed LLM-Wiki retrieval tools over database-backed indexes and graph tables: search, section retrieval, graph expansion, uncertainty, endpoint, flow-trace, source-anchor, and scan-status context. Retrieval shall be section-level by default and `index.md` shall not be the canonical retrieval input.
-FR-11.7: Every answer shall include citations linking claims to the source Documents and source code lines.
-FR-11.8: When no Systems or Repositories are selected, Vulgata shall autonomously determine which Systems or Repositories are relevant to the user's question.
+- **FR-2.4:** [Current] System Owners shall create standalone Repositories for organization-owned shared-library source and explicitly Scan them through the ordinary static pipeline.
 
-FR-12.1: The dashboard shall display real-time Scan status for each System: not started, profiling, scanning, completed, failed.
-FR-12.2: During an active Scan, the dashboard shall display the number of active Worker Agents.
-FR-12.3: During an active Scan, the dashboard shall display the count of files processed and total files to process.
-FR-12.4: During an active Scan, the dashboard shall display the count of errors encountered.
-FR-12.5: The dashboard shall display pending Human-in-the-Loop questions with the ability to view, answer, or dismiss each.
-FR-12.6: The dashboard shall include a live knowledge graph visualization using Blazor.Diagrams: Documents as nodes, cross-repo links as edges, unresolved uncertainties as dashed edges to placeholder nodes.
+- **FR-2.5:** [Current] Repository creation includes best-effort Git reachability validation; authentication failure does not prevent creating the record. A later Scan must acquire/verify exact authorized source or report its prerequisite failure.
 
-FR-13.1: The scanning pipeline shall be able to consume MCP tools registered at the Repository, System, or global level. (DEFERRED)
-FR-13.2: The chat interface shall be able to consume MCP tools registered at the Repository, System, or global level. (DEFERRED)
-FR-13.3: MCP tools shall require separate approval for scanning use and chat use. (DEFERRED)
-FR-13.4: Vulgata shall expose its knowledge base through the same authorization-aware retrieval model used by chat, including Documents, `index_entries`, `document_sections`, graph relationships, flow traces, uncertainties, source anchors, and cross-repo links. (DEFERRED)
-FR-13.5: MCP tools shall be configurable at three levels: Repository, System, and Global. (DEFERRED)
+- **FR-3.1:** [Current; revised] Administrators shall maintain the global provider registry and default task assignments, including provider names, endpoints, protected keys and supported API types. Preserve chat-completions, responses and messages configuration vocabulary without implying every adapter is qualified. PreScan model work is bounded advisory overview, not deterministic inventory or scheduling.
 
-FR-14.1: Administrators shall supply context at the global level (applies to all Systems).
-FR-14.2: System Owners shall supply context at the System level (applies to all Repositories in that System).
-FR-14.3: System Owners shall supply context at the Repository level (applies to a single Repository).
-FR-14.4: User-supplied context shall only be applied when no Scan is running for the affected scope, or when responding to an agent question during HITL. Context changes during an active Scan shall be queued.
+- **FR-3.2:** [Current] Multiple providers shall be configurable simultaneously. This does not imply automatic switching or silently changing a running task's provider identity.
 
-FR-15.1: The scanning pipeline shall optionally integrate with Language Servers for symbol resolution. (DEFERRED)
-FR-15.2: The scanning pipeline shall optionally use LSP type information to augment LLM-based code understanding. (DEFERRED)
-FR-15.3: LSP integration shall be configurable per Repository, with language-specific server configuration. (DEFERRED)
+- **FR-3.3:** [Current; revised] System Owners shall assign providers per System to permitted overview, Worker Agent and Chat Agent roles using the global registry. Different roles and different Systems may use different providers; deterministic Scan Control needs no model assignment. Configuration remains usable outside demo composition.
+
+- **FR-3.4:** [Current] Administrators shall explicitly test provider connections. Routine health checks shall not incur paid inference; provider availability remains separate from application, database and analysis-tool readiness.
+
+- **FR-4.1:** [Current; revised] PreScan shall inventory exact committed source, record language/format/layout facts and unknowns, and separately provide bounded advisory overview. Explicit policy selects primary/supporting evidence. Handwritten code, configuration, templates, schemas and DSLs remain eligible; tests, identifiable generated source and vendored dependencies default to supporting evidence. README/explanatory documents supply context, not automatic Code Logic jobs. Index omission, filenames, unfamiliar extensions or overview ranking shall not silently exclude admitted source.
+
+- **FR-4.2:** [Current; revised] One Repository Scan action durably initiates preparation through knowledge production; System/selection actions start independent runs. Deterministic Scan Control fairly schedules bounded Repository, file, inquiry and synthesis work with shared limits and exclusive file ownership. Workers neither schedule arbitrary Repositories nor await unscanned targets while consuming capacity. Cancellation stops request-owned pending/downstream work without deleting accepted history or cancelling independent consumers of shared evidence. Unavailable generic capabilities remain visibly unavailable; a request shall not silently switch to a legacy pair workflow.
+
+- **FR-4.3:** [Current; revised] Pass 1 processes a logical file workstream, discovering meaningful Code Units and a separate Code Logic Logical Document for each. Large files may require several runs/windows; those boundaries do not redefine semantics or truncate coverage. Other files provide authorized context. Workers propose evidence/content; the application derives identities, validates provenance and accepts knowledge. Legacy file Documents shall not be relabelled as newly analyzed semantic-unit results; preserve their historical meaning and explicit lineage into new accepted analysis.
+
+- **FR-4.4:** [Current; revised] Accept validated file results and authoritative progress together. Only accepted results expose Code Units, Documents and observations to resolution; drafts remain unavailable as knowledge. Failed required files expose gaps, and zero-unit outcomes require truthful dispositions. Preallocated tool symbols and model-produced edges are not permanent identity or relationship authority.
+
+- **FR-4.5:** [Current; revised] Pass 2 explains pinned bounded directed evidence for source-backed exported operations, handlers, schedules, workflows or selected Code Units. Each root keeps distinct Logical Flow identity; helpers/folders do not merge business purpose. Local/Cross-Repository flows qualify. Synthesis requires explicit outcomes for all admitted primary work in its root run and frozen matching target; paused work does not qualify. Accepted external files may contribute before their whole runs finish. Synthesis may verify details with the same authorized source and declared tools, without changing accepted Code Logic or authoritative Edges; discrepancies become explicit uncertainty or bounded correction proposals, not recursive automatic repair. Explanations include branches, effects, bounds and unknowns, with exact dependencies for every Code Logic/source contribution actually used.
+
+- **FR-4.6:** [Current; revised] Code Logic browsing provides a virtual Repository/file/Code Unit hierarchy without synthetic directory Documents. Business Logic browsing groups Logical Flows through System/Repository views without duplicating cross-Repository Documents. Preserve nesting and justified identity lineage; moving ranges, unproven renames, splits or merges shall not silently reuse identity.
+
+- **FR-4.7:** [Current; revised] Persist canonical Code Logic and Business Logic Document content as structured JSON; Markdown or other human-readable forms are derived when needed, not parallel editable authorities. Accepted knowledge supports PostgreSQL-backed sections/search and authorized version-aware browsing. Current Code Logic selection and coherent per-flow Business Logic publication differ from drafts and labelled history. Failed current files shall not silently inherit old versions as newly analyzed. Other staged/history results require labelled inspection; selection must expose coverage gaps. A flow's content, dependencies and selection become visible together. Optional index.md remains an export, never canonical retrieval; incompatible evidence selections require explicit qualification.
+
+- **FR-4.8:** [Current] Maintain an append-only sanitized log.md trace for Scans, queries and system events using `## [YYYY-MM-DD HH:MM] operation | target`. Represent queries/targets without raw source, credentials, hidden reasoning or unnecessary sensitive content. Structured diagnostics may supplement, not silently replace, this retained output.
+
+- **FR-4.9:** [Current; revised] Require authorized Source Snapshot acquisition and CodeGraph preparation/native MCP access, with declared applicable LSP and structured-content capabilities. Readers get scoped retained-source access, not arbitrary host paths. Tools provide evidence/limitations, not complete coverage or permanent Code Unit identity. Retain exact source needed by selected current knowledge and active work, including older contributing revisions; reacquisition must verify identical bytes. Public provenance remains Repository, Profiled Revision and source locations, not another snapshot version axis. Required CodeGraph failure shall not silently trigger source-only fallback; CGC is not restored.
+
+- **FR-4.10:** [Current; revised] Documents remain immutable without human content editing. New versions may follow source analysis or changed accepted relationship/flow/evidence dependencies. Preserve exact historical provenance and Version Chains; REFERENCES may change without rewriting caller Code Logic or retargeting old GENERATED_FROM. Ordered current-promotion intent prevents late older work replacing newer selections; history-only analysis cannot implicitly promote. When validated replacement-source evidence proves removal, withdraw/retire that current knowledge while preserving history. Omission, exclusion, access loss or failed analysis alone cannot prove deletion or erase history.
+
+- **FR-4.11:** [History] Preserve the original Week-1 Worker adapter spike and actual evidence, without repeating its expired schedule or treating it as generic runtime qualification. Current agent/tool integration requires independent qualification.
+
+- **FR-4.12:** [History] Mandatory same-superstep peer verification, fixed 0.5 confidence and yellow-dashed/HITL treatment are superseded. Focused resolution inquiry is not its completion. Future peer verification requires its own scope; confidence alone never proves an Edge.
+
+- **FR-5.1:** [Current; revised] Preserve optional per-System Communication Pattern Catalog/framework context. Generic Scan shall not require a catalog, detailed service-to-Repository mappings or their maintenance workflow. Context assists interpretation, not deployed identity. The earlier deferred per-Repository catalog migration note grants no automatic migration.
+
+- **FR-5.2:** [Current; revised] Detect source-supported RPC, HTTP, queue, file/storage and page-navigation communication, recording mechanism, operation, roles, namespaces, source literals/expressions and unknowns. Extensible observations do not guarantee universal protocol understanding. gRPC-specific guaranteed implementation remains excluded; unknown mechanisms may still be represented honestly.
+
+- **FR-5.3:** [Current] Record provider/consumer roles with supporting evidence, including unknown/absent parties. Static linkage is not proof of deployed routing or runtime execution.
+
+- **FR-5.4:** [Current] Support multiple consumers per interface with evidence/access-scoped counts. Counts must not leak restricted Repositories or imply complete deployment inventory.
+
+- **FR-5.5:** [Current] Record available identifiers for unscanned, unavailable or unknown parties as external references and Uncertainties. Their absence shall not block otherwise valid analysis or initiate automatic Scans.
+
+- **FR-5.6:** [Current; revised] Page-navigation observations disclose loose coupling and unresolved identity. Confidence labels alone cannot establish provider/consumer relationships.
+
+- **FR-5.7:** [Current; revised] Investigate indirect targets through available object/provenance evidence. Bounded tools/inquiry may clarify candidates; missing classpaths, incomplete indexes and unresolved expressions remain limitations, not negative proof or invented endpoint values.
+
+- **FR-5.8:** [Current; revised] Workers receive relevant bounded snapshotted advisory context, including supplied framework/catalog knowledge. Mutable catalogs, fixed XML recipes and demo profiles are not mandatory communication truth. Preserve context provenance and separation from source facts.
+
+- **FR-5.9:** [Original unmet backlog] Retain a dedicated development-time Prompt Workbench for refining prompts against known patterns. Validated prompts/context may assist detection, without mandatory catalog coupling. Externalized prompts/native tools do not fulfill this distinct feature; later design or explicit disposition is required outside the core sequence.
+
+- **FR-5.10:** [Current; revised] Preserve named RPC endpoint evidence for unknown providers. It is discoverable through authorized mode-appropriate wiki content/retrieval, without raw technical disclosure to Business Mode or a separate tool per record type.
+
+- **FR-5.11:** [Current; revised] Treat supported file/storage communication as observations with roles/locations. Shared paths, mounts or object labels alone cannot prove cross-Repository identity. Do not fetch external storage or operational configuration to fill gaps in this scope.
+
+- **FR-5.12:** [Current; revised] Record supported URL patterns, deep links and app-to-app navigation with explicit uncertainty about bindings/counterparties. A possible static path is not an executed journey.
+
+- **FR-5.13:** [Deferred / History] Retire mandatory mock Service Topology MCP and prepopulated owner mappings. Defer a uniform third-party operational-information interface, including adapters, credentials and refresh policy. Decisive absent database, gateway or registry facts remain Uncertainties; introduce no placeholder integration.
+
+- **FR-5.14:** [Current; revised] Documented configuration supports new patterns and organization-wide framework knowledge without code changes within its supported format. New syntax/dialects may require implementation; dynamic parser generation, plugin loading, configuration execution and external fetching are not promised. Preserve structure/locations despite unknown meaning and distinguish malformed recognized content.
+
+- **FR-6.1:** [Current; revised] Record Uncertainties for missing/ambiguous targets, bindings, mechanisms and capabilities, retaining known/unknown-target distinctions where meaningful. Workers propose; Knowledge owns accepted evidence/state. Valid semantic uncertainty may accompany accepted analysis.
+
+- **FR-6.2:** [Current; revised] Reconcile finite pinned accepted evidence across authorized discovery, including other Systems, late targets and accepted files of unfinished external runs. Select a designated analysis candidate per Repository, not arbitrary history. A unique visible candidate, shared name or confidence alone cannot prove a match. Focused bounded inquiry gathers supporting/opposing evidence; domain validation decides relationships. Deduplicate unchanged inquiries and recheck access/bindings before acceptance; publication cannot recursively trigger investigation.
+
+- **FR-6.3:** [Current; revised] Preserve cycle safety without historical fewer-pending-first/older-scan-yields waiting. Record cycles, terminate bounded traversal and give every selected matching item an explicit outcome. Unknown targets shall not hold Worker capacity indefinitely or create global completion barriers.
+
+- **FR-6.4:** [Current / Deferred] Preserve nonblocking Dangling Links, available identifiers and historical human wontfix decisions. Defer new owner accept/dismiss/wontfix actions with product HITL; uncertainty visibility/history remain current.
+
+- **FR-6.5:** [Current] Provide Chat-accessible unresolved-link explanations/counts, with endpoint/target information only where permitted by evidence, mode and live authorization. Aggregates must not leak restricted facts.
+
+- **FR-6.6:** [Current; revised] Show stale/pending/failed refresh. Changed accepted evidence may trigger bounded reconciliation and coalesced per-flow refresh without source re-analysis; active inputs stay fixed. Publication shall not create endless refresh. Scope narrowing/access loss alone changes visibility or records unevaluated scope, not broader accepted relationship truth. Automatic source-Scan cascades remain outside current scope.
+
+- **FR-6.7:** [Deferred] Incremental changed-source Impact Analysis/reuse, including the former four-stage cascade, remain deferred. Static replacement/retirement and later-knowledge reconciliation are current, not completed incremental scanning.
+
+- **FR-7.1:** [Deferred] Worker question notifications and mandatory owner response are deferred. Visible source-backed Uncertainties may state missing information without creating an inbox or blocking ordinary analysis.
+
+- **FR-7.2:** [Deferred] Dashboard answering and answer attachment are deferred; no automatic repair workflow is substituted.
+
+- **FR-7.3:** [Current] Identify human-supplied context and give it lower authority than code-derived facts. Preserve the distinction in Documents, prompts and dialogue; conflicts shall not silently turn assertions into source-qualified knowledge.
+
+- **FR-7.4:** [Deferred] Pending-question counts and view/answer/dismiss UI are deferred. Operational status, pause/resume, authorization and development approvals remain.
+
+- **FR-8.1:** [Current] Organization-owned library source is addable as ordinary standalone Repositories and eligible for explicit static Scan.
+
+- **FR-8.2:** [Deferred] Caller/Worker-triggered partial on-demand library Scans are deferred. Missing source shall not cause implicit dependency downloads or arbitrary Repository work.
+
+- **FR-8.3:** [Deferred] Multiple-caller library-Scan coordination is deferred with that feature. Ordinary Repository/file ownership and resource controls remain mandatory.
+
+- **FR-8.4:** [Current; revised] Common library imports shall not automatically become cross-Repository communication gaps. Familiarity does not prove all behavior; decisive unsupported behavior remains a limitation or labelled hypothesis.
+
+- **FR-8.5:** [Original unmet backlog / Deferred] Retain dedicated inference for unknown source-unavailable libraries outside the core redesign. Ordinary useful hypotheses do not complete it, and inference is not source proof. Mandatory owner notification is deferred with HITL; external-information lookup is not implied.
+
+- **FR-9.1:** [Deferred] Automatic remote monitoring remains deferred; periodic polling is the retained original direction, not a current background task. Webhook triggers remain excluded.
+
+- **FR-9.2:** [Deferred] Automatic pull-on-behind is deferred. Explicit static acquisition still resolves a selected Git ref once and shall not change an existing run's source.
+
+- **FR-9.3:** [Deferred] Incremental re-scan of changed/dependent Code Units and analysis reuse remain deferred. Repeated explicit static Scans and late-knowledge reconciliation remain current.
+
+- **FR-9.4:** [Current] Previous Document Versions and original dependencies remain accessible under authorization. Reader/history/citation navigation is current minimum product, independent of incremental scanning.
+
+- **FR-9.5:** [Deferred] The incremental-Scan overlap rule stays with deferred update scheduling. Current static runs follow exclusive ownership and ordered publication, not an unintended blanket prohibition inherited from an incremental-only clause.
+
+- **FR-10.1:** [Current] Preserve per-Repository database type, connection details and protected credentials managed by authorized System Owners. Administration does not grant new agent-facing access.
+
+- **FR-10.2:** [Deferred] New Worker database-schema inspection is deferred with external operational-information tools. Available source/accepted knowledge remain the investigation boundary; no placeholder tool is introduced.
+
+- **FR-10.3:** [Deferred] New sample-data query tools are deferred. Any preserved/future surface retains limited rows, non-production/read-only access and blocked writes. Production database access is not authorized.
+
+- **FR-11.1:** [Current; revised] Business Mode provides business narratives in the light theme and reads Business Logic only. Enforce this in tools, history, summaries, graphs and citation targets, not just prompts. Useful Business Logic references remain available without Code Logic/source disclosure.
+
+- **FR-11.2:** [Current; revised] Dark-themed IT Mode permits authorized Business Logic, Code Logic and technical references. Exceptional read-only source inspection may address specific gaps at the recorded Profiled Revision; Chat shall not routinely re-prove the wiki, initiate Scans or repair knowledge.
+
+- **FR-11.3:** [Current; revised] Confirm mode switches, save the authorized session and start a new session with the selected theme/prompt and fresh inference context. Mode/scope changes shall not import disallowed technical history or cached summaries. Preserve durable ordered conversations and bounded useful completed history separately from model context. Summaries retain hypothesis status and contributor access scope, never upgrade speculation. Initially permit one active answer per conversation; replay shall not generate twice.
+
+- **FR-11.4:** [Current; revised] Users select authorized Systems/Repositories; first use defaults to all accessible Systems and permits adjustment/clearing. Knowledge provides a stable published read selection per turn, including discovery, pagination and later-discovered Documents. New publication alone does not invalidate that turn; later turns use fresh permitted knowledge. Authorization stays live.
+
+- **FR-11.5:** [Deferred] Chat file/image upload, attachment storage and parsing are deferred. Typed questions, dialogue and permitted advisory text remain.
+
+- **FR-11.6:** [Current; revised] Synthesize useful multi-document/follow-up explanations through shared wiki search, browse, section/content and existing-related-Document navigation. Tools return provenance, coverage and Uncertainties under the same turn/mode/access context. Retrieval is evidence, not instructions or infallible truth. Do not mandate per-record tools, fixed candidate sentences, embeddings or index.md input. Shared code alone does not prove business dependency.
+
+- **FR-11.7:** [Current; revised] Provide useful claim-linked references to exact permitted Document Versions/sections and appropriate IT source locations. Show genuine provisional deltas/concise progress, never hidden reasoning/secrets; label hypotheses from their first text. Completion requires valid provider completion, no truncation/unfinished tools and one durable content/reference/status save, not mandatory complete-candidate JSON or whole-answer semantic verification. Preserve useful authorized interrupted text with its reason, not as normal completed factual history. Never automatically restart generation after visible output. Browser disconnect is not cancellation: host-owned work may continue within original time/cost limits, and authorized reconnect joins the same turn without duplicate generation or lost/duplicated text. Host failure interrupts orphaned turns and requires explicit retry. Revocation stops further unauthorized disclosure; references retain original versions, and history/summary reuse rechecks contributing access.
+
+- **FR-11.8:** [Current; retained original behavior] When selection is empty, determine relevant Systems/Repositories using retrieval signals inside server-approved authorized discovery and display scope for adjustment. Inferred relevance shall not grant the model authority to choose access scope.
+
+- **FR-12.1:** [Current; revised] Show real per-Repository operational status and System/selection aggregates separately from primary coverage and knowledge freshness. Include queued, executing, paused, cancelled and terminal outcomes with gaps. Users need no separate Pass 1/resolution/Pass 2 start calls. Recovery distinguishes explicit Scan resume from Chat retry.
+
+- **FR-12.2:** [Current] Show real active Worker counts for permitted work, without fictional progress or multiplying per-run limits into uncontrolled global totals.
+
+- **FR-12.3:** [Current; revised] Show admitted primary files and accepted/pending/failed coverage. File, semantic Code Unit and Document counts differ; sample quotas or completed-job counts are not coverage proof.
+
+- **FR-12.4:** [Current] Show errors, classified failures and accessible warning/failed-file summaries. Missing analysis capabilities need not prevent reading existing knowledge. Production status uses real state, never demo fixtures.
+
+- **FR-12.5:** [Deferred] Dashboard HITL answer/dismiss UI is deferred; retain Uncertainty disclosure and operational controls.
+
+- **FR-12.6:** [Current / Deferred] Provide an authorized Document reader, exact cited sections and basic manual-refresh Logical Flow/Document-neighborhood graph bound to versions/evidence. Enforce mode/user scope server-side for nodes, relationships, labels, counts and tooltips. Show stale, partial and unavailable-source states; sparse graphs are valid. Layout interaction cannot edit domain Edges. Live animation/advanced portfolio visualization are deferred, not Scan progress or genuine Chat streaming.
+
+- **FR-13.1:** [Current / Original unmet backlog] Native CodeGraph MCP consumption is required under application-selected source/tool authority. General Repository/System/global registered MCP consumption remains distinct original backlog outside the core redesign; this adapter neither fulfills it nor authorizes arbitrary tools. Preserve original low priority without treating it as approved deferral.
+
+- **FR-13.2:** [Original unmet backlog] General externally configured MCP consumption in Chat remains original backlog. Internal wiki tools and exceptional scoped IT source reads do not complete it or add external operational-information authority.
+
+- **FR-13.3:** [Current] Scan and Chat tool use require separate approvals/scopes. Scan approval never implies Chat approval or Business access; enforce purpose per invocation.
+
+- **FR-13.4:** [Deferred] Outward wiki MCP serving is deferred, without an endpoint or placeholder. Internal wiki tools/native CodeGraph MCP consumption remain current.
+
+- **FR-13.5:** [Original unmet backlog] Retain three-level Repository/System/global configurable MCP management with purpose-specific approvals. Later design/decomposition is required; native tools provide neither implicit execution authority nor completion credit.
+
+- **FR-14.1:** [Current] Preserve authorized global advisory context applying to Systems, without broadening global-management permissions.
+
+- **FR-14.2:** [Current] Preserve System advisory context for its Repositories, without making membership communication evidence.
+
+- **FR-14.3:** [Current] Preserve Repository advisory context, including standalone Repositories.
+
+- **FR-14.4:** [Current; revised] Active Scans retain selected context; edits during affected work queue for later application rather than silently changing pinned analysis. Deferred HITL supplies no current mutation exception. Chat histories/summaries/mode contexts have separate access and selection rules and cannot mutate Scan evidence.
+
+- **FR-15.1:** [Current; revised] Provide applicable declared LSP navigation alongside required CodeGraph/source access. Initial offline/local-source operation is temporary and disables automatic imports/builds/dependency restoration; it is neither permanent local-only topology nor network air-gapping. Readiness does not imply semantic completeness.
+
+- **FR-15.2:** [Current; revised] Available type/reference information may augment understanding with explicit capability/classpath limitations. Missing tool results are not proof that a relationship does not exist.
+
+- **FR-15.3:** [Current; revised] Profiles are application-selected per Repository; models cannot select arbitrary adapters, snapshots or physical workspaces. Initially allow at most one LSP session per snapshot. Dependency-aware imports/restores and multiple sessions are later scope requiring separate authorization/qualification.
 
 ### NonFunctional Requirements
 
-NFR-1.1: A Scan of a repository with ~10,000 source files shall complete within a timeframe that allows the demo to be prepared in advance.
-NFR-1.2: Chat responses shall be delivered within 30 seconds for questions spanning up to 5 Documents.
-NFR-1.3: The live knowledge graph visualization shall update within 5 seconds of a Document being generated or a cross-repo link being resolved.
+All 15 entries below are copied verbatim from the canonical PRD §4, preserving every ID and status classification.
 
-NFR-2.1: All user passwords shall be hashed using a modern algorithm (bcrypt or Argon2).
-NFR-2.2: API keys for LLM Providers and database connections shall be stored encrypted at rest.
-NFR-2.3: Source code and generated Documents shall never leave the organization's infrastructure when using a self-hosted LLM Provider.
-NFR-2.4: Database connection tools shall only connect to non-production environments or read-only replicas. Write operations on connected databases shall be blocked.
+- **NFR-1.1:** [Current; revised] Qualify Scan duration, coverage and resource use against representative Repositories/configurations, including progressive large files. No fixed sample quota or competition preparation deadline applies. Configured limits may queue, pause or honestly fail work, never silently exclude source; one machine's measurements are not universal throughput guarantees.
 
-NFR-3.1: A failed Worker Agent task shall not fail the entire Scan. The Orchestrator shall retry the task once, then record the failure and continue.
-NFR-3.2: The system shall gracefully handle LLM API unavailability — queuing or pausing agent tasks until the API recovers.
-NFR-3.3: Scan state shall be persisted such that a server restart does not lose progress on an in-progress Scan.
+- **NFR-1.2:** [Current; revised] Measure first useful answer delivery, total duration and multi-document/follow-up usefulness under declared provider/configuration limits. Replace the universal 30-second/five-Document guarantee with environment-qualified results and bounded execution. Five Documents is not a retrieval cap; no replacement universal latency promise is invented.
 
-NFR-4.1: Vulgata shall deploy as a single Docker container (docker-compose with PostgreSQL).
+- **NFR-1.3:** [Deferred] The five-second live-graph target is deferred with animation. Real Scan status and Chat streaming retain measured responsiveness/correctness obligations.
 
-NFR-5.1: A non-technical user shall be able to log in, select a System, and ask a business question in Business Mode without training or documentation.
-NFR-5.2: The dashboard shall use Blazor's built-in accessibility features.
+- **NFR-2.1:** [Current] Hash passwords using a modern algorithm such as bcrypt or Argon2.
 
-NFR-6.1: Agent prompts shall be externalized from code — stored as configurable text resources, not hardcoded strings.
-NFR-6.2: The Communication Pattern Catalog format shall be documented so that System Owners can write catalogs for new Systems without developer assistance.
+- **NFR-2.2:** [Current] Encrypt provider/database secrets at rest. Preserve required Data Protection keys across replacement and coherent backup/restore; credentials must not enter prompts, logs or diagnostics.
+
+- **NFR-2.3:** [Current; strengthened] With self-hosted providers, source/Documents stay inside organization infrastructure; external providers receive only necessary authorized task context. Bind tools/source to granted scope, budgets and provenance. Recheck live authority over every composite contributor, not merely displayed citations, before publication/disclosure. Restricted histories, counts and paths cannot leak through otherwise permitted output. Agents cannot choose credentials, arbitrary host paths or domain writes.
+
+- **NFR-2.4:** [Current] Database tools remain non-production/read-only-replica only, with writes blocked. This survives tool deferral and binds preserved or later authorized surfaces.
+
+- **NFR-3.1:** [Current; revised] Isolated Worker failures shall not collapse unrelated work. Distinguish integrity/security failures, recoverable job errors and provider outages; use bounded classified retries, not universal once-and-continue. Accept no partial failed-file drafts as knowledge. Expose gaps and settle owned work/capacity on cancellation, timeout or lost ownership.
+
+- **NFR-3.2:** [Current; revised] Temporary Scan-provider failures receive bounded increasing retries then durable pause; configuration failures require correction. Explicit resume rechecks prerequisites, source and authority. Restart shall not resume paused work or silently switch provider/source. Shared provider admission covers Scan/Chat, but Chat follows its distinct interruption/completion rules and never silently restarts a visible answer.
+
+- **NFR-3.3:** [Current; revised] Preserve authoritative Scan progress, accepted knowledge, source and durable Chat history across restart. Replayed acceptance/save acknowledgements shall not duplicate knowledge or generate again. Browser reconnect reuses existing bounded work; host failure interrupts orphaned Chat and leaves Scan explicitly recoverable. Recovery promises neither zero repeated external billing nor transparent per-token replay.
+
+- **NFR-4.1:** [Current; revised] Deploy two Compose services: Vulgata with bundled local analysis tools, and PostgreSQL. Declare tool versions/dependencies and portable storage/provider/Worker/tool limits without host-profile dependencies or an extra remote tool bridge. Preserve database data, required source and keys apart from disposable workspaces/caches. Initially do not auto-prune canonical retained source; clean only unleased disposable state. Provide coherent operator maintenance-window backup/restore of data, source, keys and restore configuration outside primary volumes; volumes alone are not backups. Isolated restore qualification disables provider dispatch, invalidates old ownership and prevents automatic replay of saved running work. Recheck source/access before explicit resume/retry.
+
+- **NFR-5.1:** [Current] Nontechnical users shall log in, select permitted context and understand Business answers without training/documentation. Assess explanation usefulness and citation faithfulness separately from schema validity or reference identity.
+
+- **NFR-5.2:** [Current] Preserve Blazor's basic accessibility facilities and established accessible interactions. No new WCAG certification/compliance commitment is introduced; remove the expired competition rationale.
+
+- **NFR-6.1:** [Current] Prompts remain externalized configurable text, never hardcoded strings. Native agent-framework adoption does not change this.
+
+- **NFR-6.2:** [Current; revised] Document supported catalog/advisory-context formats so owners contribute framework knowledge without developer assistance. Do not require detailed service mappings or promise arbitrary executable dialect extensions through configuration.
 
 ### Additional Requirements
 
-From Architecture — Technical implementation requirements that affect epic and story creation:
+These are requirement-level extractions from the [architecture gateway](planning-artifacts/architecture.md) and [AD-1–AD-32 spine](planning-artifacts/architecture/ARCHITECTURE-SPINE.md). The cited AD remains the normative technical rule; this inventory does not create a parallel detailed design. No greenfield starter template or new Epic 1/Story 1 is required: preserve and explicitly adapt the existing modular monolith.
 
-- **Starter Template**: Architecture specifies a greenfield Blazor Web App with ASP.NET Core Identity (individual accounts). The Blazor template's built-in Login/Register/Manage pages are used with Fluent UI styling. This impacts Epic 1 Story 1.
-- **Database**: PostgreSQL 17 via EF Core with Npgsql provider. Two DbContexts (ApplicationDbContext for Identity, VulgataDbContext for domain) sharing one database with separate schemas. Migrations run at startup via MigrateAsync().
-- **Container Deployment**: docker-compose with two containers (Blazor app + PostgreSQL 17). Multi-stage Dockerfile. Git and CodeGraph CLI installed in runtime stage. Non-root user.
-- **UI Framework**: Microsoft Fluent UI Blazor as primary component library. Z.Blazor.Diagrams for graph visualization only. CommunityToolkit.Mvvm for MVVM source generators.
-- **Agent Framework**: Microsoft.Agents.AI.Foundry + Microsoft.Agents.AI.Workflows (prerelease) for Worker Agent execution. Week 1 Worker Agent adapter validation spike required with documented fallback.
-- **LLM Client**: OpenAI SDK for DeepSeek V4 via OpenAI-compatible endpoint. Multi-provider with automatic failover.
-- **Real-time**: ASP.NET Core SignalR with two hubs (ScanHub, GraphHub). Diff-based graph updates. All hubs require [Authorize].
-- **Code Analysis**: CodeGraph CLI for pre-scan structural analysis. Shell invocation via CodeGraphCliService.
-- **Git Operations**: System git installed in container. GitCloneService shells out for clone/pull at scan time.
-- **Background Jobs**: BackgroundService + Channel<T> for agent task execution. ScanJobWorker dequeues and processes work items off the request thread.
-- **Domain Events**: Collected during SaveChanges, dispatched after commit via IDomainEventDispatcher. Separate from agent integration events.
-- **Validation**: FluentValidation for all input validation. Validators registered via AddValidatorsFromAssemblyContaining<T>(). Blazor forms use FluentValidationValidator component.
-- **API Design**: Minimal API endpoints under /api/ prefix. ProblemDetails for error responses. No wrapping envelope.
-- **Repository Pattern**: Specific repositories per aggregate root. Interfaces in Core, implementations in Infrastructure. No generic IRepository<T>. No IQueryable or DbSet exposure.
-- **EF Core Configuration**: IEntityTypeConfiguration<T> classes in Configurations/ folder. Assembly scanning for registration. No data annotations on entities.
-- **Logging**: ILogger<T> with structured logging. Decision rules for log levels (Debug/Information/Warning/Error/Critical).
-- **LoadState Enum**: Idle, Loading, Loaded, Refreshing, Empty, NoResults, Error, Cancelling. Every data-loading ViewModel exposes LoadState.
-- **Agent Task State Machine**: Queued → Running → Completed | Failed | Cancelled. One retry with fallback LLM provider on failure.
-- **SignalR Reconnection**: On reconnect, server replays current scan/graph status. Scan progress uses structured model (Phase, CurrentFile, FilesProcessed, TotalFiles, ReferencesFound, EstimatedSecondsRemaining).
-- **Naming Conventions**: Async suffix mandatory. _camelCase private fields. PascalCase tables/columns. /api/ prefix + plural nouns. Past-tense domain events and hub methods.
-- **Project Structure**: 5 .NET projects (Web, Web.ViewModels, Core, Infrastructure, Agents) + Shared. Future Java/Python/Node placeholder directories.
-- **Security**: ASP.NET Core Identity with cookie auth. Three roles (Administrator, SystemOwner, User) seeded at startup. API keys encrypted via ASP.NET Core Data Protection.
-- **Configuration Externalization**: Agent prompts as embedded resources in Vulgata.Agents/Prompts/. Communication Pattern Catalog as documented format.
-- **PostgreSQL Specific**: Recursive CTEs for graph traversal. MVCC for concurrent read/write. Connection pooling via Npgsql. Separate migration history tables for two DbContexts.
-- **Docker Volumes**: pgdata named volume for PostgreSQL persistence. ./prompts bind mount for prompt iteration.
-- **Development Workflow**: dotnet run, dotnet build, dotnet test, dotnet format. Hot reload enabled. Local dev without Docker possible (just PostgreSQL container).
-- **Testing**: Single test project (Vulgata.Tests) mirroring source structure. Integration tests with SampleRepositories. Test naming: {Method}_{Scenario}_{ExpectedResult}.
-- **Enforcement**: .editorconfig for naming rules. Roslyn analyzers for patterns .editorconfig cannot express. dotnet format in CI. Code review checklist.
+#### Preserved platform and delivery constraints
+
+- Preserve .NET 10/Blazor Interactive Server, PostgreSQL 17/EF Core/Npgsql, Fluent UI, CommunityToolkit.Mvvm and the six existing .NET project boundaries. The spine's version seed is observed context, not a package/tool upgrade instruction. Conceptual modules need not become new projects/services.
+- Keep domain entities and aggregate-specific interfaces in Core, persistence/adapters behind Infrastructure, DTOs/validators/LoadState in Shared, injected bounded execution/externalized prompts in Agents, testable ViewModels, and Web composition/presentation. No EF dependency in Core, generic repository, exposed IQueryable/DbSet, or cross-module table mutation. Preserve the current Web placement of Identity context/migrations as an existing exception, not a relocation task.
+- Preserve structured JSON as canonical Code Logic/Business Logic content behind the existing ContentJson/PostgreSQL jsonb boundary; Markdown and retrieval projections derive from it, never competing editable authorities. This is wiki content, not a requirement for Chat complete-candidate JSON or buffered answers.
+- Preserve separate identity/vulgata schemas and migration histories, startup migration/role-seeding behavior, nullable/analyzer/central-package conventions, Async/private-field naming, explicit existing mappings and assembly-scanned entity configurations without domain data annotations.
+- Preserve FluentValidation, plural-noun /api/ groups, direct DTOs/ProblemDetails and correct API 401/403 behavior without cookie/status-page rewrites; UTC timestamps, established JSON conventions, authorized hubs and past-tense events/hub methods.
+- Preserve cookie Identity, bcrypt, seeded roles/scoped System Owner assignments, protected provider/database secrets and required Data Protection keys. Knowledge reader/history access is not management access. Continue source/Document organization-boundary protection with self-hosted providers and read-only/non-production database-tool safeguards.
+- Keep long-running jobs outside HTTP/circuit lifetimes, durable ownership/acceptance as truth and in-memory wakeups/post-commit notifications replaceable. Preserve sanitized structured diagnostics plus the separate exact log.md output obligation. Externalized prompts support declared deployment overrides; retrieved source/wiki content is evidence, not instructions.
+- Before dependent builders split, a single owner must settle shared identity/selectors/lineage, lifecycle schemas, acceptance/publication/read-context contracts and common runtime limits. One integration owner controls any future migrations; isolated databases precede user databases.
+- Use current governed feature activation, analysis, honest TDD, independent reviews and conditional E2E/integration/real qualification. Preserve the single xunit/WebApplicationFactory test project, naming and existing harness cautions; SQLite tests are not PostgreSQL/runtime proof. After accepted plan review and before tasks, applicable Agent-tool, Scan-strategy or PRD changes still require explicit user approval. No code, test, migration, provider or runtime action is authorized by this inventory.
+
+#### Architecture requirements
+
+- **AR-1 — Independent source ownership (AD-1):** One Repository Scan Run fixes one Source Snapshot; System/selection actions create independent runs. Standalone Repositories use the same pipeline. Optional Scan Campaign controls/progress create no pair-wide correctness identity, communication proof or global barrier.
+- **AR-2 — Acceptance and state ownership (AD-2):** Scan Control owns durable requests/plans/jobs/progress; Knowledge accepts semantics and selects knowledge; Resolver/Flow Planner proposes; Chat owns dialogue; MAF executes injected bounded tools. Infrastructure supplies the shared fenced atomic acceptance and Chat completion contracts, not a competing policy. Domain builders derive public identities/fingerprints.
+- **AR-3 — Exact source and contained tools (AD-3):** Resolve committed Git once; expose Repository/full Profiled Revision/relative Source Anchors. Server-granted metadata/list/range reads carry cumulative budgets/deadlines; only trusted adapters obtain contained physical Tool Workspace leases. Retain exact source for selected knowledge/active work, including old contributors; verify identical bytes on reopening. Tool state/source/version identity remain distinct, and historical provenance survives cleanup.
+- **AR-4 — Generic preparation and declared readiness (AD-4):** Separate factual inventory/profile/unknowns from bounded advisory overview. Require CodeGraph preparation/native MCP before Pass 1 and applicable declared LSP. Initially use whole-Repository local-source workspaces, separate tool state and at most one LSP session per snapshot; disable Maven/Gradle import/execution/download. Dependency-aware analysis needs separate authority/qualification, and readiness proves no semantic completeness.
+- **AR-5 — Explicit coverage and structured source (AD-5):** Apply explicit primary/supporting policy to source/configuration/templates/schemas/DSLs; explanatory documents are context. File names, unfamiliar extensions, index omissions and overview ranking cannot silently exclude admitted source. One extensible Source Content Analysis contract preserves locations, compact structure and on-demand detail, including unknown versus malformed content, without executable configuration, external fetch, dynamic parser generation or mandatory demo recipes/quotas.
+- **AR-6 — Native exploration under application policy (AD-6):** MAF owns conversations/tool loops; expose the native recommended CodeGraph MCP surface with application-bound projectPath, language-neutral LSP and bounded source/content tools. Models cannot choose arbitrary adapters/snapshots/workspaces/credentials or domain writes. Return normalized locations/evidence/limitations/receipts and recover required CodeGraph failures without automatic source-only fallback or CGC restoration.
+- **AR-7 — File work and semantic identities (AD-7):** A complete logical File Workstream discovers meaningful possibly nested Code Units, each owning CL Logical Documents/immutable versions; windows and tool IDs are not identities. Other files supply context, not duplicate authorship. Unify selectors/nesting/aliases/lineage; unproven rename/split/merge mappings cannot reuse identity silently.
+- **AR-8 — Durable progressive acceptance (AD-8):** Continue large files across bounded windows/runs with atomic validated-draft/progress checkpoints. Only accepted file manifests expose units/Documents/observations. Required unprocessed source remains pending; terminal failures expose gaps but no partial drafts. Zero-unit results need truthful dispositions. Fenced idempotence prevents duplicate knowledge, not repeated external billing.
+- **AR-9 — Evidence-based communication (AD-9):** Preserve owner/role/mechanism/operation/literals/expressions/namespaces/status/provenance, including unknown mechanisms; matching records its inputs/rule/outcome. A lone visible candidate, shared path/topic or confidence cannot prove identity. Missing/ambiguous bindings remain Uncertainties; static links are not deployed execution proof.
+- **AR-10 — Finite reconciliation and coalesced refresh (AD-10):** Pin finite accepted matching targets, handle late knowledge without unchanged-source re-analysis, terminate cycles and deduplicate affected flows. Root-run synthesis needs terminal outcomes for every admitted primary item and explicit matching outcomes; paused work is not terminal. Accepted external files may qualify before their runs finish. Coalesce latest unstarted flow demand while active inputs stay fixed; publication starts no new resolution epoch.
+- **AR-11 — Rooted Logical Flows (AD-11):** Give source-backed operations/handlers/schedules/workflows/selected Code Units distinct Logical Flow identities, initially homed at root Repositories. Cross-Repository browsing appearances share one Logical Document. Plan bounded directed evidence slices with branches/frontiers/exact versions; local flows qualify. Helpers/folders/cycles do not merge purpose; separate-business-root merging is later scope.
+- **AR-12 — Supported Pass 2 explanation (AD-12):** Explain pinned Flow Group Versions with conditions, alternatives, data/state effects and unknowns. Include supplementary authorized CL actually used in final validated dependencies. Synthesis cannot widen access, invent targets or alter accepted relationships.
+- **AR-13 — Coherent per-flow publication (AD-13):** Atomically promote Flow Group/BL versions, dependencies and selection; pin exact GENERATED_FROM, relationship/resolution/frontier/direct-source inputs. Relationship/Uncertainty publication has independent identity; REFERENCES can advance without CL rewrite, while historical provenance never retargets. Expose stale/pending/failed/incompatible selections and recheck all composite contributors, counts and paths.
+- **AR-14 — One real workflow and truthful controls (AD-14):** A single Scan action durably starts preparation through knowledge; System/selection aggregates independent runs. Report operations, primary coverage and Knowledge Currentness separately using real permitted data. Cancellation fences owned pending/unpublished downstream work without deleting accepted history or cancelling independent consumers. Demos require separate composition.
+- **AR-15 — Explicit bounded recovery (AD-15):** Use bundled-tool two-service Docker with recoverable source/keys and temporary no-import/no-restore LSP policy, not network air-gapping. Temporary Scan-provider failures receive bounded increasing retries then durable pause; configuration failures need correction. Release permits/unneeded leases, fence late writers, and require prerequisite-checked explicit resume. Restart never auto-resumes paused work or substitutes source/provider; Chat follows its distinct lifecycle.
+- **AR-16 — Versioned replacement and honest history (AD-16):** Introduce explicit generic contracts/production routing and migrate only equivalent semantics. Preserve pair-era artifacts and historical file Documents; new semantic analysis requires explicit lineage. Cut over capabilities after generic vertical/history-read proof, with Cross-Repository proof beyond local synthesis. Unimplemented generic routes remain visibly unavailable, never legacy fallback.
+- **AR-17 — Selected evidence and public visibility (AD-17):** Knowledge pins root binding and accepted exact manifests from one designated analysis candidate per other authorized Repository, not all history or only one System. Current-promotion checkpoints expose accepted CL and explicit gaps; default readers use selected corpora/published dependencies. Other staged/history views are labelled. Failed current files cannot inherit old analysis; narrowed scope/access loss does not disprove broader relationship truth.
+- **AR-18 — Ordered conditional publication (AD-18):** Record current-promotion/history-only intent and order selection within Repository lineage. Transactionally validate expected head, desired target, authorization and cancellation before publication. Late superseded results may remain history but cannot displace newer selection; commit hashes/finish times do not establish recency. Manual work retains its initiating identity/approved scope; service-principal policy is separate.
+- **AR-19 — Evidence-based withdrawal (AD-19):** Withdraw current units/observations/roots only when validated selected replacement-source evidence proves absence. Omission/exclusion/failed or unfinished analysis cannot prove deletion. Preserve history, expose revalidation gaps, reopen affected references and retire absent roots through bounded reconciliation. Revocation blocks disclosure immediately.
+- **AR-20 — Focused investigation (AD-20):** Dispatch bounded inquiry over a finite application-pinned caller/candidate/evidence/source/access set. Return supporting/opposing evidence, conclusions/conditions and capability limits, not Worker-written Edges. Deduplicate on original question/input/policy fingerprints excluding outputs/receipts; retry by bounded policy. Unavailable tools are not negative proof. Revalidate target/access/fence; publication cannot recursively inquire.
+- **AR-21 — Bounded synthesis verification (AD-21):** Pass 2 may use granted snapshot source/structured/native CodeGraph/LSP tools to verify pinned evidence. Record every extra CL/direct-source contribution and Source Anchor. Tools cannot widen source scope or select arbitrary paths; discrepancies become uncertainty or bounded proposals to owners, never accepted CL/Edge rewrites or recursive repair scheduling.
+- **AR-22 — External-information boundary (AD-22; deferred integration):** Require no owner-maintained service-to-Repository mapping. Use authorized source/accepted knowledge and optional advisory context; absent decisive database/gateway/registry facts remain Uncertainties. Defer uniform external-information APIs/adapters/credentials/permissions/refresh with no placeholder. Required CodeGraph and configured provider execution remain current.
+- **AR-23 — Shared bounded parallelism (AD-23):** Deterministically and fairly admit independent Repository/file/inquiry/flow work with one valid run/snapshot/file lease owner, global/per-run Worker limits and shared Scan/Chat provider admission. Tool Runtime bounds/serializes unqualified shared operations. Workers cannot allocate Workers or hold capacity awaiting targets. Pause/cancel/timeout/lease loss must stop and clean owned work/permits, not merely fence writes.
+- **AR-24 — Wiki-first mode-safe Chat (AD-24):** Provide shared authorized search/browse/section/content/related-Document tools with provenance/coverage/pagination/Uncertainties. Business reads BL only; IT adds CL and exceptional exact-source gaps. Synthesize useful multi-document/follow-up answers and labelled hypotheses, without per-record tools, mandatory vectors, routine source re-proof, source scanning or Knowledge repair. Shared code does not prove business dependency; citation identity is not semantic certification.
+- **AR-25 — Stable turn read selection (AD-25):** One Knowledge Read Context pins discovery/membership/pagination/content/citations, including later-discovered Documents. Later publication does not retarget the turn; later turns read fresh selections while original references persist. Live authorization still applies. Accept one owning storage/index contract; a Document cache, wiki copy or long-lived network transaction is not a substitute.
+- **AR-26 — Durable isolated dialogue (AD-26):** Store ordered Conversations/Chat Turns separately from Documents and bounded Inference Context, initially one active answer per Conversation with identity replay deduplication. Reuse only permitted completed history/references; summaries preserve hypotheses/contributor scope. Mode/scope changes get fresh contexts; late output/saves remain origin-bound. Recheck access and exclude affected generated material on revocation; persistence triggers no reconciliation.
+- **AR-27 — Genuine output and durable completion (AD-27):** Relay actual provisional deltas/concise progress with first-text hypothesis labels and authorized references, not hidden reasoning or completed-answer replay. Completion needs valid untruncated provider termination, finished tools and one fenced idempotent content/reference/status save. Resolve lost acknowledgements from storage; telemetry cannot undo completion. Retain useful authorized interrupted text/reason separately from completed history; visible output never auto-restarts. Host failure interrupts orphaned turns and requires explicit retry/cleanup, not transparent token replay.
+- **AR-28 — Same-turn reattachment (AD-28):** Host-owned started turns may finish after browser disconnect within original budgets/scope/context. Authorized reconnect joins saved/current state and subsequent updates without loss, duplication, regeneration or renewed limits. Disconnect differs from cancellation/host failure; explicit cancellation, exhaustion, access loss and terminal failures still settle work.
+- **AR-29 — Reader and basic scoped graph (AD-29):** Provide Knowledge-authorized Document/version/history/exact-section navigation and available authorized recorded-revision IT source. Manual-refresh Logical Flow/Document-neighborhood graph binds exact evidence/version and filters every node/edge/label/count/tooltip/target server-side, including Business BL-only access. Show sparse/partial/stale/unavailable-source states; layout edits no domain Edges. Advanced/live graph is deferred, not real Scan/Chat streaming.
+- **AR-30 — Portable two-service deployment (AD-30):** Bundle Vulgata/CodeGraph/JDT-LS with declared tool versions/dependencies and PostgreSQL as the second Compose service; use configured durable source/data/key volumes separate from disposable tool state. Run app/tools non-root with required writable mounts. Configure Worker/per-run/provider/tool/storage limits without host-profile paths or machine-defined coverage. Exhaustion queues/pauses/fails honestly; volumes are neither backups nor automatic migration. No remote bridge/local LLM/distributed scheduler/privileged Docker control is required.
+- **AR-31 — Conservative retention and coherent restore (AD-31):** Preserve immutable history and source pinned by knowledge/work; initially auto-clean only unleased disposable state, never canonical retained source. Quiesce writers/cleanup for protected outside-volume backups of coherent PostgreSQL/source/keys/restore configuration including required roles/extensions. Qualify isolated restore with providers disabled; reconcile completions/invalidate old leases/prevent saved-state replay. Unfinished Scans become explicitly recoverable/paused and Chat interrupted, with source/access checks before resume/retry. No online/PITR/HA service is required.
+- **AR-32 — Observable environment-qualified delivery (AD-32):** Document bounded deployment-overridable defaults and distinct app/database/Scan-tool/provider readiness, preserving existing wiki reads when analysis is unavailable. Emit sanitized correlated states/counts/durations/failures/available usage; unknown usage is not zero, and routine health uses no paid inference. Qualify real two-service tools/persistence/restore; one/several/standalone and beyond-pair/late/cycle cases; progressive source/semantic coverage/recovery/concurrency/compatible reads; useful multi-document/follow-up streaming Chat with exact references and lifecycle checks. Assess usefulness/faithfulness independently of schemas and record configuration/timing/cost without universal deadline/throughput claims.
+
+#### Product success and scope guardrails
+
+PRD §5 requires source-backed Cross-Repository understanding beyond local-only delivery, independently assessed Code Logic/Business Logic usefulness, evidence/relationship accuracy with visible gaps, and representative mode-appropriate multi-document/follow-up Chat with exact references and correct streaming/recovery. Incremental-update success remains deferred. Architecture verification obligations are future evidence, not completed tests.
+
+PRD §6 and the approved proposal retain explicit later scope: new source origins, dependency-aware import/build/restore/private mirrors, multiple LSPs per snapshot, separate-business-root merging, automatic whole-Repository expansion/update triggers, product HITL, caller-triggered partial library scans, external operational information, outward wiki MCP, attachments and advanced/live portfolio graph. Preserve the distinct original unmet backlog, not an invented blanket deferral. Existing exclusions remain enterprise SSO/new fine-grained RBAC, production database access, webhooks, formal WCAG certification, automated compliance reporting, separate Audition Agent, dedicated answer-confidence scoring, guaranteed gRPC-specific detection and shared-database communication detection. Safety, basic readers, real progress, real streaming, static Scans and bounded accepted-evidence reconciliation remain current.
 
 ### UX Design Requirements
 
-From `DESIGN.md` and `EXPERIENCE.md` (`docs/bmad/planning-artifacts/ux-designs/ux-vulgata-2026-06-22/`).
+The paired [DESIGN.md](planning-artifacts/ux-designs/ux-vulgata-2026-06-22/DESIGN.md) and [EXPERIENCE.md](planning-artifacts/ux-designs/ux-vulgata-2026-06-22/EXPERIENCE.md) are first-class inputs. Each entry identifies its source section. Requirements marked Deferred/History preserve boundaries and are not active UI work. The June mockups remain visual/layout references, not authority to restore superseded behavior.
 
-**UX-DR-1 (Brand & Style):** Library Oak theme — warm professional register. Two brand colors: primary `#445E7A` (light) / `#6A83A2` (dark), accent `#B98B6B` (light) / `#D4A88C` (dark). All UI inherits Fluent UI Blazor defaults except primary buttons, mode badge, system/repo tags, and display typography.
+#### Foundation, tokens and layout
 
-**UX-DR-2 (Typography):** Display text in Noto Serif SC (思源宋体) at 32px/22px — used for empty-state greetings, section headers, mode-select banner. All body, label, button, form, and chat text inherits Fluent's default sans-serif.
+- **UX-DR1 — Platform and compatibility boundary [Current]:** Preserve the desktop-browser Blazor Interactive Server/SignalR experience. There is no offline-operation promise, mobile-specific breakpoint contract, new responsive redesign or new accessibility certification commitment in this input set. Distinguish browser reconnect from host failure. (EXPERIENCE: Foundation.)
+- **UX-DR2 — Chinese-only voice [Current]:** All V1 labels, buttons, placeholders, errors, system messages and empty states use Simplified Chinese; no i18n surface. Business explanations use plain narrative language without technical jargon; IT explanations use precise code-aware language. Uncertainty/status/errors are neutral, non-blaming and give a permitted next step without requiring an owner inbox. (DESIGN: Brand & Style; EXPERIENCE: Voice and Tone.)
+- **UX-DR3 — Brand theme tokens [Current]:** Preserve Library Oak primary light/dark #445E7A/#6A83A2 and primary foreground #FFFFFF; accent light/dark #B98B6B/#D4A88C with foreground #FFFFFF/#1D2026. Business Mode is locked to light and IT Mode to dark; no independent mid-session theme toggle. Primary marks actions/mode/selected navigation/link underlines; accent marks contextual System/Repository selection only, never status/chrome/decoration/hover affordances. (DESIGN: Colors.)
+- **UX-DR4 — Surface tokens [Current]:** Preserve light background/foreground/surface/muted/muted-foreground/border #F6F4F0/#1D2026/#FFFFFF/#EDE9E3/#7A7A7A/#D9D3CA and dark #1D2026/#F6F4F0/#24272E/#282B33/#9A9DA5/#383B44. Use flat solid backgrounds, Fluent semantic destructive/warning/success tokens and no third brand color/gradients. Surface layering, not new shadow effects, conveys depth. (DESIGN: Colors; Elevation & Depth.)
+- **UX-DR5 — Display typography [Current]:** Noto Serif SC display is 32px/400/1.3, with display-sm 22px/400/1.35, restricted to Chinese greetings/new-chat banners, designated section headers and display empty states. Body/labels/captions/buttons/inputs/grids/chat content inherit Fluent sans-serif; no serif interactive elements or bold display. (DESIGN: Typography and frontmatter.)
+- **UX-DR6 — Fluent spacing and shapes [Current]:** Retain Fluent's 4px-based inherited spacing scale, subtle default elevation and native 4px/8px/12px radii. No custom spacing/radius system, pill shapes or decorative elevation. (DESIGN: Layout & Spacing; Elevation & Depth; Shapes.)
+- **UX-DR7 — Standard components [Current]:** Preserve uncustomized FluentButton non-primary variants, FluentDialog, FluentDataGrid, FluentNavMenu, FluentTextField, FluentTextArea, FluentToast, FluentTooltip, FluentBreadcrumb, FluentProgressBar, FluentProgressRing, FluentBadge, FluentIcon, FluentDivider, FluentTreeView, FluentTab, FluentCard, FluentCombobox, FluentSelect and FluentSwitch, except the explicit brand-layer deltas below. (DESIGN: Components.)
+- **UX-DR8 — Shared navigation shell [Current]:** After login, land directly in Chat, not a landing dashboard. Preserve the shared navbar with brand, 「对话」, authorized 「管理后台」 and avatar actions 「个人资料」/「退出登录」. Chat and management remain two top-level routes; the peripheral Chat management link is 「管理」, not its primary action. (DESIGN: Layout & Spacing; EXPERIENCE: Information Architecture.)
+- **UX-DR9 — Chat layout [Current]:** Keep a single-column comfortable-max-width Chat surface with visible mode control, inline System/Repository selector, message stream and bottom-fixed input. Mode selection stays above the input, with EXPERIENCE's explicit component order placing it above the System/Repository selector and conversation. Selection is not a separate page or modal. (DESIGN: Layout & Spacing; EXPERIENCE: Chat structure/ModeSelector/InlineSelector.)
+- **UX-DR10 — Management layout/navigation [Current]:** Retain the holy-grail topbar/left-sidebar/main-detail shell; default management landing is System management. Sidebar/main content changes for System tree/details, graph permitted scope/neighborhood, mode-appropriate Document tree/version reader, Scan history list/results, and Administrator settings navigation/forms. Do not add a new top-level reader layout. (EXPERIENCE: Information Architecture.)
+- **UX-DR11 — Knowledge access independent of management [Current]:** Authorized Users can reach Document/history/citation/basic graph reads through Chat and reader navigation without management rights. Existing Administrator/SystemOwner and assigned-System policies control management actions; UI placement never adds management authorization to Knowledge reads. (DESIGN: Layout & Spacing; EXPERIENCE: App Shell and component entry points.)
+- **UX-DR12 — Preserved administration flows [Current]:** Retain email/password registration/login, profile/logout, authorized System/Repository CRUD including standalone Repositories, provider configuration/overrides, protected database-connection configuration and Global/System/Repository advisory context. LLM configuration/User management use standard Fluent forms/grids and only specified primary/surface styling, with no new role/management authority. (DESIGN: Admin Pages; EXPERIENCE: Scope adoption/Information Architecture; PRD preserved scope.)
 
-**UX-DR-3 (Dual-Mode Theme):** 业务模式 locked to light theme, 技术模式 locked to dark theme. Mode switch starts a new session with confirmation dialog. Theme transition 200-400ms.
+#### Brand components and Chat behavior
 
-**UX-DR-4 (Language):** Chinese-only UI (Simplified). All labels, buttons, placeholders, empty states, and system messages are in Chinese. No i18n for V1.
+- **UX-DR13 — Primary Button [Current]:** Apply primary fill/primary-foreground and 8px radius to 「发送」, 「开始扫描」 and management 「保存」; keep other button variants Fluent-default. (DESIGN: Components—Primary Button.)
+- **UX-DR14 — Mode Badge [Current]:** Show a compact non-interactive 「业务模式」/「技术模式」 session-state label above input/in the conversation header using primary/primary-foreground and 4px radius; switching is a separate control. (DESIGN: Mode Badge; EXPERIENCE: ChatArea.)
+- **UX-DR15 — System/Repository Tags [Current]:** Render selected scope as selectable/removable inline tags with accent/accent-foreground and 4px radius, including × removal above input. Use the same contextual accent for active tree nodes; do not use it for operational status. (DESIGN: System/Repo Tag; EXPERIENCE: ChatArea.)
+- **UX-DR16 — User and assistant bubbles [Current]:** Right-align plain-text user bubbles on surface light/dark tokens; left-align assistant Markdown on muted light/dark tokens. Display genuine provisional deltas, then explicit saved/interrupted outcome with permitted references; never hidden reasoning/secrets or completed-answer typewriter replay. (DESIGN: Chat Bubble components; EXPERIENCE: ChatArea.)
+- **UX-DR17 — Mode-Select Banner [Current]:** A confirmed mode switch opens a centered new-chat banner 「开始新的对话」 with selected mode beneath, display typography and primary text. Preserve 200–400ms theme transition and new-chat welcome without claiming an unsaved answer was saved. (DESIGN: Mode-Select Banner; EXPERIENCE: Mode switch state.)
+- **UX-DR18 — Chat input and greetings [Current]:** Enter sends and Shift+Enter adds a newline; placeholder changes by mode. New Business sessions show 「你好，想了解什么业务流程？」 and IT sessions 「你好，需要追踪哪段逻辑？」 with designated display typography, as specified by EXPERIENCE's concrete ChatArea/EmptyState rules. DESIGN's alternative greeting remains a visual example, not a second required simultaneous greeting. (EXPERIENCE: ChatArea/EmptyState; DESIGN: Typography.)
+- **UX-DR19 — ModeSelector [Current]:** Use the two-label control above the inline selector with primary selected state. Confirm using 「切换模式将开始新对话，已保存的历史仍可查看。确定切换？」 before creating fresh inference context/new-chat surface and matching theme. Confirmed switching has no undo. Preserve authorized older dialogue; active turn output/saves remain in the originating context, never old IT prompts/summaries/caches/late deltas in Business. (EXPERIENCE: ModeSelector; State Patterns; Interaction Primitives.)
+- **UX-DR20 — InlineSelector options/defaults [Current]:** Use inline Fluent multi-selection for only authorized Systems/Repositories including standalone Repositories, supporting whole-System and individual Repository selection. Retain last-used selection filtered by live access; first use selects all permitted Systems and eligible standalone Repositories. Grouping is not communication evidence or management authority. (EXPERIENCE: InlineSelector.)
+- **UX-DR21 — Empty and changed scope [Current]:** Empty selection may automatically infer relevant scope only within current authorization; show 「已自动选择以下范围：{范围名称}」 and 「调整范围」. Never broaden access or initiate a Scan. Scope changes create fresh inference context and recheck completed history/summaries; older turns/references retain originating contexts. (EXPERIENCE: InlineSelector.)
+- **UX-DR22 — Claim-linked citations/previews [Current]:** Attach useful exact permitted Document Version/section references to supported claims, not fabricated references for greetings/no-results. Clicking opens a mode-safe inline preview and exact-section reader; old references never retarget to current versions. Business shows BL title/section/business content only; IT may follow permitted CL/BL and relevant available recorded-revision source. Recheck live contributor access before disclosure. (EXPERIENCE: ChatArea and Chat references.)
+- **UX-DR23 — Stable reading and durable history [Current]:** Within a turn, discovery/related membership/pagination/content/citations share one Knowledge Read Context. Later publications do not replace the active answer; later turns may read newer knowledge. Durable ordered conversations/original references survive reconnect; initially one answer is active per Conversation. Only permitted completed history feeds inference, preserving interrupted/hypothesis status. (EXPERIENCE: ChatArea.)
+- **UX-DR24 — Waiting, retrieval and generation states [Current]:** Show the three-dot typing indicator at 200ms intervals when awaiting reply, 「正在查找相关文档…」 while retrieving and 「正在生成」 for actual provisional output. Label hypotheses from first text; do not show hidden reasoning or buffered complete-answer replay. No-results uses 「未找到相关文档。试试调整系统选择范围或换个问法。」. (EXPERIENCE: Chat loading states.)
+- **UX-DR25 — Save and completion states [Current]:** Show 「正在保存」 only after valid provider completion, not yet completed history; truncation/unfinished tools cannot complete. Display completed only after one durable content/reference/status save. On lost save acknowledgement show 「正在确认保存结果」 while checking durable state; on failure show 「回答未完成保存」 with useful permitted text/status and retry the same save where possible, never generation. Telemetry failure cannot undo saved completion. (EXPERIENCE: Chat loading states.)
+- **UX-DR26 — Disconnect and reattachment [Current]:** Show 「连接已断开，重新连接后将查看同一条回答。」. Host-owned work may finish within original limits; authorized reconnect joins that same answer and reconciles accumulated/new text and status without loss/duplication/new generation/renewed budgets, including completion during attachment. Disconnect is not cancellation. (EXPERIENCE: Chat loading states.)
+- **UX-DR27 — Interruption and live revocation [Current]:** Explicit cancellation, limits or terminal/host failure shows 「回答已中断」 plus reason and useful authorized partial text, separate from completed factual history. Host failure requires explicit 「重试」; never auto-restart generation after visible output. Revocation stops further unauthorized disclosure and excludes affected generated history/summary content, even within a stable turn selection. (EXPERIENCE: Chat loading states.)
 
-**UX-DR-5 (Information Architecture):** Two top-level routes — 对话 (chat, default landing) and 管理后台 (management). Chat-first: login lands in chat, not a dashboard. Top navbar: brand + 对话/管理后台 nav + bell icon (HITL notifications) + user avatar.
+#### Management, Scan and Knowledge components
 
-**UX-DR-6 (Management Holy Grail Layout):** 管理后台 uses holy grail layout — top tab bar (系统管理/图谱/文档/扫描历史/设置) + left sidebar (content varies by tab) + main content area. System/repo creation via inline dialogs, not separate pages.
+- **UX-DR28 — SystemTree [Current]:** Use Fluent TreeView with System parents, Repository children, expand/collapse arrows, accent active node and 「+ 新建系统」. Clicking selects corresponding main details; System context actions offer authorized edit/delete. Preserve assigned-System visibility. Real Scan states use text/icons, with an adjacent FluentProgressRing for active work, never color-only or fabricated progress. (DESIGN: Management Tree View; EXPERIENCE: SystemTree.)
+- **UX-DR29 — RepoDetail [Current]:** Show Repository name/description/edit/delete, Git URL, last Scan, operational status and Document count. 「开始扫描」 starts one durable source-to-knowledge workflow; active/paused work exposes real progress and authorized controls/dashboard. 「查看文档」 opens permitted selected Knowledge including gaps. Only authorized owners edit metadata. (EXPERIENCE: RepoDetail and Information Architecture.)
+- **UX-DR30 — SystemDetail [Current]:** Show System name/description/edit/delete, Repository total, currently scanning/completed Repository counts and Document total. Use a FluentDataGrid for Repository name/Scan status/last Scan/Document count and row 「查看」, plus 「+ 新建仓库」. Batch System/selection actions start independent Repository Scan Runs; aggregate Scan Campaign progress introduces no pair/global barrier. (EXPERIENCE: SystemDetail.)
+- **UX-DR31 — ScanDashboard entry and data [Current]:** Preserve the existing inline/detail dashboard arrangement for active, paused and recorded terminal work. Use genuine SignalR state: admitted/accepted/pending/failed primary-source counts, explicit gaps, active Worker/error counts and separate knowledge publication/refresh state. No elapsed-time simulation or fictional percentages. (EXPERIENCE: ScanDashboard.)
+- **UX-DR32 — Scan work indicators [Current]:** Show observed operations such as 「源代码准备」, 「代码分析」, 「跨仓库解析」, 「业务说明生成」 and 「知识发布」 without asserting a single sequential bar. Independent runs/flow refresh overlap; file windows and files are not Code Unit/Document counts. A percentage needs its real defined denominator and does not merge work, coverage and publication. (EXPERIENCE: ScanDashboard and Scan states.)
+- **UX-DR33 — Explicit Scan recovery/control [Current]:** Temporary-provider retries are bounded/increasing and may end in 「已暂停」 with sanitized cause. Configuration errors require correction; 「恢复扫描」 explicitly checks source/prerequisites/authorization. Restart/provider recovery never auto-resumes paused work or switches provider/source. Permitted pause/cancel controls settle owned unfinished work without deleting accepted history or cancelling independent consumers. No separate user Pass 1/resolution/Pass 2 start calls. (EXPERIENCE: RepoDetail/ScanDashboard/Scan entry.)
+- **UX-DR34 — Scan state presentation [Current]:** Unscanned shows gray point plus 「未扫描」 and start; queued shows observed 「排队中」, not begun Worker work; active shows 「扫描中」/real operations/dashboard; paused shows cause/resume; cancellation distinguishes 「正在取消」 cleanup from 「已取消」; terminal shows actual successful or gap-bearing result/timestamp/coverage; failure shows sanitized reason and permitted explicit recovery. Accepted history remains readable; terminal state proves neither total coverage nor all BL refresh current. These are display meanings, not new lifecycle schemas. (EXPERIENCE: Scan states.)
+- **UX-DR35 — Separate scoped counts/currentness [Current]:** All trees/details/dashboard/history expose operational status separately from primary admitted/accepted/pending/failed coverage and knowledge published/pending/stale/failed/retired state as applicable. Count only permitted scope, including contributor-aware access; never infer coverage from jobs/file windows, hide failed files using old analysis, or leak restricted counts. (EXPERIENCE: SystemTree/ScanDashboard/Scan state notes.)
+- **UX-DR36 — Dedicated GraphView [Current]:** Provide Knowledge-authorized 「图谱」 and reader navigation to the sole non-Fluent Z.Blazor.Diagrams basic Logical Flow/Document-neighborhood view, with 「刷新」, pan/zoom and authorized scope filters. Background follows light/dark background tokens and active toolbar controls primary; interaction changes presentation only, never domain Edges. (DESIGN: Knowledge Graph; EXPERIENCE: GraphView.)
+- **UX-DR37 — Graph evidence/style [Current]:** Bind all graph data to selected versions/evidence. Preserve permitted CL blue/BL green node styling, intra-Repository solid light-gray versus Cross-Repository dashed references and explicit Uncertainty dashed frontier/diamond using Fluent warning semantics. Label actual REFERENCES/GENERATED_FROM meanings; create no invented targets/business dependencies/failed-draft Documents. Shared code alone proves no business dependency. (DESIGN: Knowledge Graph; EXPERIENCE: GraphView.)
+- **UX-DR38 — Graph authorization and refresh [Current]:** Server-filter every node/Edge/label/count/tooltip/destination by live user/mode/scope and composite contributors; Business receives BL-only data, never fetched hidden IT graphs. Manual refresh may select newer Knowledge and reports selection/currentness; historical graphs remain version-bound. Sparse/partial/stale permitted graphs are valid. (EXPERIENCE: GraphView.)
+- **UX-DR39 — DocumentTree organization/search [Current]:** Authorized readers enter via 「文档」 or exact Chat references without management rights. CL tree is Repository/file/Code Unit, supporting several semantic-unit Documents per file without synthetic directory Documents; BL view is Logical Flows grouped by System/Repository, sharing one Logical Document across appearances. Business exposes BL only, IT may show both type badges. Sidebar title/keyword search filters results. (DESIGN: Document Viewer; EXPERIENCE: DocumentTree.)
+- **UX-DR40 — Document Viewer and history [Current]:** Render selected authorized Markdown on surface with primary titles, blue CL/green BL type badges and IT code blocks on muted background. Provide explicit 「版本历史」 and exact cited sections. Historical Documents preserve original dependencies/relationships rather than today's graph; show pending/stale/failed refresh and coverage gaps. (DESIGN: Document Viewer; EXPERIENCE: DocumentTree.)
+- **UX-DR41 — Mode-safe source detail [Current]:** Business receives no CL/code/file paths/ranges/Git metadata in body/header/preview/citation targets. IT may show Repository/full Profiled Revision/relative source locations and open only authorized recorded-revision source. If unavailable, show 「该版本源代码暂不可用，文档及来源记录仍保留。」, never substitute current checkout. Source Snapshot is not a new public version label; retained history does not promise perpetual source availability. Recheck live access to composite/history contributors. (DESIGN: Document Viewer; EXPERIENCE: DocumentTree.)
+- **UX-DR42 — Scan history navigation [Current]:** Preserve management 「扫描历史」 with a record-list sidebar and selected detailed results. Active/paused/terminal dashboards remain reachable from Repository details; retained accepted history, actual outcomes and exact provenance stay distinct from current-selection claims or new generic qualification. (EXPERIENCE: Information Architecture; ScanDashboard.)
 
-**UX-DR-7 (Chat Interface Structure):** Top navbar → mode selector (业务/技术 toggle) → inline system/repo selector → message bubble stream → fixed-bottom input. User bubbles right-aligned (surface bg), assistant left-aligned (muted bg) with markdown + citation links.
+#### Empty/loading/error states and accessible interaction
 
-**UX-DR-8 (Mode Selector):** Dual-tab toggle above chat input. Switching modes shows confirmation dialog and starts a new session. Current mode shown as compact badge (non-interactive label).
+- **UX-DR43 — EmptyState: System and Repository administration [Current]:** Empty management shows 「尚未添加任何系统。创建你的第一个系统开始扫描。」 and 「创建系统」. An empty System Repository list shows 「该系统下暂无仓库。添加第一个仓库。」 and 「新建仓库」. Show creation actions only under management authorization; follow the concrete EmptyState body/display rules. (EXPERIENCE: EmptyState/SystemTree.)
+- **UX-DR44 — EmptyState: Knowledge readers [Current]:** Graph empty state is 「当前范围暂无可用图谱。可调整范围或稍后刷新。」 with permitted adjust/refresh; Document empty state is 「当前范围暂无可用文档。可调整范围或稍后再试。」 with permitted scope adjustment. Do not force readers to management or fabricate content to fill sparse data. (EXPERIENCE: GraphView/DocumentTree/EmptyState.)
+- **UX-DR45 — Loading and refresh [Current]:** Every data-loading ViewModel preserves the shared Idle/Loading/Loaded/Refreshing/Empty/NoResults/Error/Cancelling vocabulary. Loading uses 4–6 Fluent Shimmer skeleton rows matching expected layout; Refreshing retains visible content with a thin indeterminate top bar and does not block interaction. (EXPERIENCE: LoadState; architecture gateway: Security and user experience.)
+- **UX-DR46 — Empty/search/error feedback [Current]:** Empty views offer the scoped guidance and one permitted primary action from the EmptyState contract. NoResults shows 「未找到匹配结果。试试调整关键词或系统选择范围。」. Error shows non-blaming next-step/retry text; Business exposes no technical details and IT only simplified safe diagnostics. Distinguish missing data/no results/partial/stale/error rather than substituting fixtures. (EXPERIENCE: LoadState; Voice and Tone.)
+- **UX-DR47 — Keyboard interactions [Current]:** Preserve reading-order Tab navigation, Enter send, Shift+Enter newline and Esc closing the active/topmost dialog or panel. Chat remains keyboard-first; mouse-oriented management still retains Fluent's existing keyboard floor. (EXPERIENCE: Interaction Primitives and Accessibility Floor.)
+- **UX-DR48 — Mouse and dialog/paging limits [Current]:** Citations open mode-safe preview/exact reader; Repository-row hover reveals actions; all actions give immediate feedback. No drag/drop or drag reordering, infinite scrolling, or stacked modals: use pagination/「加载更多」 and at most one dialog. Graph pan/zoom is presentation, not domain editing. (EXPERIENCE: Interaction Primitives.)
+- **UX-DR49 — Screen-reader and contrast floor [Current]:** Announce view switches as 「对话界面」/「管理系统界面」. Operational states and meaningful generation/completion/interruption changes use accessible text and announcements, not color-only meaning or every streamed token. Verify contrast/keyboard/screen-reader behavior during implementation while preserving Fluent/Library Oak; make no fresh qualification or certification claim from adoption. (EXPERIENCE: Accessibility Floor.)
 
-**UX-DR-9 (System/Repo Selector):** Inline Fluent Dropdown multi-select above chat, below mode selector. Remember last selection; default to all authorized systems.
+#### End-to-end journeys and explicit deferrals
 
-**UX-DR-10 (System Tree View):** Fluent TreeView — systems as parent nodes, repos as children. Active node highlighted in accent color. Scan status dots: gray (unscanned), pulsing green (scanning), green (complete), red (failed). "+ 新建系统" button at top.
-
-**UX-DR-11 (Dashboard — Repo Detail):** Repo name, description, edit/delete. Info cards: git URL, last scan, scan status, document count. "开始扫描" button (when idle) or progress bar + phase indicator (when scanning).
-
-**UX-DR-12 (Dashboard — System Detail):** System name, description, edit/delete. Stat cards: total repos, scanning, completed, total docs. FluentDataGrid of repos with status, last scan, doc count. "+ 新建仓库" button.
-
-**UX-DR-13 (Knowledge Graph):** Full-screen Z.Blazor.Diagrams page under 管理后台 → 图谱. Floating toolbar: layout toggle (hierarchical/force-directed), zoom, system/repo filter. Nodes: blue/green by doc type, red border for failed docs. Edges: solid gray (intra-repo), dashed colored (cross-repo), dashed + red diamond (unresolved), yellow dashed + warning icon (disputed). 200-400ms animations.
-
-**UX-DR-14 (Document Viewer):** Split-pane under 管理后台 → 文档. Left: virtual directory tree with type badges (blue=CL, green=BL) + search. Right: Markdown-rendered doc with title, type badge, repo/source path.
-
-**UX-DR-15 (Notification Center):** Slide-out right panel (400px) triggered by bell icon. HITL question cards: repo name, question summary, timestamp, answer/dismiss. Red badge count on bell icon for unread.
-
-**UX-DR-16 (Empty States):** Noto Serif SC greeting per mode ("你好，想了解什么业务流程？" / "你好，需要追踪哪段逻辑？"). No-system: CTA "创建系统". No-repo: CTA "新建仓库". No-graph/docs: CTA "去系统管理". No-notifications: informational text.
-
-**UX-DR-17 (LoadState Enum):** Loading=Fluent Shimmer skeleton; Refreshing=content visible + top indeterminate bar; Empty=guided CTA; NoResults=filter adjustment guidance; Error=non-blaming + retry (tech details in IT mode only).
-
-**UX-DR-18 (Voice & Tone):** 业务模式 — plain, narrative, no jargon. 技术模式 — precise, code-aware, direct. Notifications — neutral, actionable. Errors — no blame, state fact + next step.
-
-**UX-DR-19 (Component Discipline):** Fluent UI defaults for 90% of components. Brand overrides only for primary buttons (send/scan/save), mode badge, system/repo tags, chat bubbles, mode-select banner, HITL notification dot, tree-view active node, and graph. No gradient surfaces, no pill shapes, no custom radius/spacing.
+- **UX-DR50 — Business question/follow-up journey [Current]:** Preserve Lin's path from email login directly to default light Business Chat, authorized inline scope selection and Enter-submitted question, retrieval feedback, genuine streamed Chinese business narrative with BL references and a useful follow-up. Optional confirmed IT/new-chat switch creates a separate dark inference context and grants no new access. Example bank names are illustrative, not required samples. (EXPERIENCE: Key Flows—Lin.)
+- **UX-DR51 — Business exploration journey [Current]:** Preserve Chen's path from Business Chat through permitted System selection/question, understandable business-only explanation, citation preview/Document reading and a more specific follow-up, without code disclosure or management access prerequisites. (EXPERIENCE: Key Flows—Chen.)
+- **UX-DR52 — IT evidence journey [Current]:** Preserve Wang's confirmed IT switch, authorized Repository question, source-supported Cross-Repository explanation and exact cited section/available recorded-revision source navigation. Show branches/cycles/missing bindings and explain Document Versions/Profiled Revisions/Uncertainties when asked. Do not claim executed paths, automatic update detection or knowledge of unseen latest commits. (EXPERIENCE: Key Flows—Wang.)
+- **UX-DR53 — Owner-to-Knowledge journey [Current]:** Preserve Zhang's authorized management tree, Repository creation/form/save, detail selection, single Scan action and real dashboard; show gaps/Uncertainties and explicit prerequisite-corrected resume after bounded provider pause. After actual checkpoint/publication, allow manual graph refresh and CL/BL/history reading, then Business Chat over permitted published BL with provisional output/durable completion and same-answer reconnect. Terminal Scan alone does not assert current BL. (EXPERIENCE: Key Flows—Zhang.)
+- **UX-DR54 — HITL shell/NotificationCenter [Deferred/History]:** Do not require the historical global bell, contextual dot, unread/count badges, 400px notification panel/cards, inbox, question/answer-dismiss or new human 「不再处理」 action. Preserve visible Uncertainties, historical decisions and lower-authority advisory text; no missing fact forces intervention or invalidates otherwise accepted analysis. Operational controls and development approvals remain current. (DESIGN: HITL Notification Icon; EXPERIENCE: NotificationCenter/Scope adoption.)
+- **UX-DR55 — Chat attachments [Deferred]:** Do not add file/image upload buttons, attachment storage or parsing. Typed questions, dialogue and permitted advisory text remain current. (DESIGN: Scope adoption; EXPERIENCE: ChatArea attachments.)
+- **UX-DR56 — Advanced/live graph [Deferred]:** Do not add live node animation, advanced portfolio visualization or its former five-second target. Retain dedicated basic manual-refresh graph, real Scan progress and genuine live Chat/reattachment. (DESIGN: Knowledge Graph; EXPERIENCE: GraphView/Scope adoption; NFR-1.3.)
+- **UX-DR57 — Historical mockup authority [History]:** Keep June Chat/management/IA mockups as visual/layout references only; their superseded HITL, advanced graph, technical source-preview and recovery behaviors cannot override the current component/state/access contracts. No fixed illustrative System/Repository/code example is a runtime prerequisite or proof. (DESIGN/EXPERIENCE: Mockups; EXPERIENCE: Key Flows preface.)
 
 ### FR Coverage Map
 
-| FR | Epic | Description |
-|----|------|-------------|
-| FR-1.1 | Epic 1 | User registration with email and password |
-| FR-1.2 | Epic 1 | User login and logout |
-| FR-1.3 | Epic 1 | View and edit own profile |
-| FR-1.4 | Epic 1 | Role-based access (Administrator, SystemOwner, User) |
-| FR-2.1 | Epic 2 | Create, edit, delete Systems |
-| FR-2.2 | Epic 2 | Add Repositories to a System |
-| FR-2.3 | Epic 2 | Remove Repositories from a System |
-| FR-2.4 | Epic 2 | Create standalone Repositories |
-| FR-2.5 | Epic 2 | Validate git URL reachability |
-| FR-3.1 | Epic 3 | Configure LLM Providers at global level with default LLM task-type assignment |
-| FR-3.2 | Epic 3 | Support multiple LLM Providers simultaneously |
-| FR-3.3 | Epic 3 | System Owners may override global default provider per LLM task role |
-| FR-3.4 | Epic 3 | Connection test for each LLM Provider |
-| FR-10.1 | Epic 3 | Configure database connections per Repository (connection string, type, credentials) |
-| FR-4.1 | Epic 4 | Pre-Scan Profiling: CodeGraph → Code Units; agents may ask questions; scan waits for approval |
-| FR-4.11 | Spike Gate | Week 1 Worker Agent execution adapter validation spike (go/no-go gate) |
-| FR-4.2 | Epic 5 | Scan Coordinator + deterministic Orchestrator: queue, concurrency, git ops, typed Worker Agent dispatch |
-| FR-4.3 | Epic 5 | Worker Agent: read Code Unit, identify business logic, produce Document |
-| FR-4.4 | Epic 5 | Pass 1: Code Logic Documents, intra-repo REFERENCES, cross-repo Uncertainties |
-| FR-4.5 | Epic 5 | Pass 2: path-aware flow tracing, flow-group clustering, BL Docs with GENERATED_FROM edges |
-| FR-4.6 | Epic 5 | Document tree structure mirroring source directory hierarchy |
-| FR-4.7 | Epic 5 | Materialize `index_entries` and `document_sections`; export `index.md` only as readability artifact |
-| FR-4.8 | Epic 5 | Append-only log.md with parseable timestamps |
-| FR-4.9 | Epic 5 | CodeGraph integration for pre-indexed structural information |
-| FR-4.10 | Epic 5 | Document immutability with Version Chain (superseded_by_id) |
-| FR-4.12 | Epic 5 | Cross-verification of related Code Units in same superstep |
-| FR-10.2 | Epic 5 | Worker Agent database schema inspection tool |
-| FR-10.3 | Epic 5 | Worker Agent sample data query tool (limited rows) |
-| FR-6.1 | Epic 5 | Record Uncertainty with unresolved/cross_repo status |
-| FR-6.2 | Epic 5 + Epic 7 | Epic 5 builds same-repo/best-effort infrastructure; Epic 7 completes bidirectional Cross-Repository Resolution with full detection evidence |
-| FR-6.3 | Epic 5 + Epic 7 | Deadlock-Breaking Protocol recorded in infrastructure and applied during final resolution |
-| FR-6.4 | Epic 5 | Dangling Links — wontfix terminal state |
-| FR-6.5 | Epic 5 + Epic 8 | Chat/dashboard-accessible uncertainty summary |
-| FR-6.6 | Epic 5 + Epic 7 | Cross-Repo Stale Notices on document change after resolution updates graph truth |
-| FR-6.7 | Epic 5 + Epic 7 | Impact Analysis query (direct → intra-repo → cross-repo → uncertainty) |
-| FR-8.1 | Epic 6 | Add org-owned libraries as standalone Repositories |
-| FR-8.2 | Epic 6 | Partial on-demand scanning of standalone repos |
-| FR-8.3 | Epic 6 | Lock mechanism preventing concurrent standalone repo scanning |
-| FR-8.4 | Epic 6 | Well-known common libraries treated as understood |
-| FR-8.5 | Epic 6 | LLM-based inference for unknown libraries without source |
-| FR-5.1 | Epic 7 | Configure CP Catalog; RPC catalogs in pre-scan context with agent validation |
-| FR-5.2 | Epic 7 | Detect cross-repo communication: RPC, HTTP, MQ, file, page nav |
-| FR-5.3 | Epic 7 | Identify provider and consumer roles |
-| FR-5.4 | Epic 7 | Track consumer count per communication interface |
-| FR-5.5 | Epic 7 | Handle absent provider/consumer as external references |
-| FR-5.6 | Epic 7 | Flag cross-repo page navigation as low-confidence |
-| FR-5.7 | Epic 7 | Object flow analysis for indirect communication targets |
-| FR-5.8 | Epic 7 | Dynamic CP Catalog injection into Worker prompt |
-| FR-5.9 | Epic 7 | Prompt Workbench for agent prompt iteration |
-| FR-5.10 | Epic 7 | Record RPC endpoints as named entities (even unscanned) |
-| FR-5.11 | Epic 7 | File-based communication detection (local, remote, OSS, HDFS) |
-| FR-5.12 | Epic 7 | Cross-repo page navigation detection (URLs, deep links, app-to-app) |
-| FR-5.13 | Epic 7 | Service Topology resolution via MCP tool |
-| FR-5.14 | Epic 7 | Extensible detection — new patterns without code changes |
-| FR-7.1 | Epic 8 | Surface agent ambiguities as dashboard notifications |
-| FR-7.2 | Epic 8 | Answer agent questions through dashboard |
-| FR-7.3 | Epic 8 | Human input marked with lower priority than code-derived facts |
-| FR-7.4 | Epic 8 | Dashboard pending question count with view/answer/dismiss |
-| FR-12.1 | Epic 8 | Real-time Scan status: not started, profiling, scanning, completed, failed |
-| FR-12.2 | Epic 8 | Display active Worker Agent count during Scan |
-| FR-12.3 | Epic 8 | Display files processed / total files during Scan |
-| FR-12.4 | Epic 8 | Display error count during Scan |
-| FR-12.5 | Epic 8 | Display pending HITL questions with view/answer/dismiss |
-| FR-12.6 | Epic 8 | Live knowledge graph: Blazor.Diagrams, nodes, edges, dashed uncertainties |
-| FR-11.1 | Epic 9 | Business Mode: lighter UI, business narrative, no code refs |
-| FR-11.2 | Epic 9 | IT Mode: darker UI, technical detail, code references |
-| FR-11.3 | Epic 9 | Switch between Business Mode and IT Mode via confirmed new session |
-| FR-11.4 | Epic 9 | Select Systems/Repositories as chat context |
-| FR-11.5 | Epic 9 | Upload files as supplementary chat context |
-| FR-11.6 | Epic 9 | Database-backed LLM-Wiki retrieval: typed tools → sections → graph expansion → synthesize |
-| FR-11.7 | Epic 9 | Citations linking claims to source Documents and code lines |
-| FR-11.8 | Epic 9 | Auto-determine relevant Systems/Repos when none selected |
-| FR-9.1 | Epic 10 | Monitor git repos for remote changes (periodic polling) |
-| FR-9.2 | Epic 10 | Pull changes when local clone behind remote |
-| FR-9.3 | Epic 10 | Incremental re-scan of only affected Code Units |
-| FR-9.4 | Epic 10 | Preserve Document history for updated Documents |
-| FR-9.5 | Epic 10 | Block incremental re-scan if Scan in progress |
-| FR-13.1 | Deferred | MCP tool consumption for scanning pipeline |
-| FR-13.2 | Deferred | MCP tool consumption for chat interface |
-| FR-13.3 | Deferred | Separate MCP approval for scanning vs chat |
-| FR-13.4 | Deferred | Expose authorization-aware knowledge base retrieval as MCP server |
-| FR-13.5 | Deferred | MCP tools at Repository/System/Global levels |
-| FR-14.1 | Epic 2 | Administrators supply context at global level |
-| FR-14.2 | Epic 2 | User-supplied context at System level |
-| FR-14.3 | Epic 2 | User-supplied context at Repository level |
-| FR-14.4 | Epic 2 | Context applied only when no Scan running or during HITL |
-| FR-15.1 | Deferred | LSP integration for symbol resolution |
-| FR-15.2 | Deferred | LSP type information for code understanding |
-| FR-15.3 | Deferred | LSP configurable per Repository with language-specific settings |
+F1/F2/F3 mean preserved Foundation & Identity, System & Repository Management, and Provider/Database Configuration respectively. They are historical foundations, not new active epics or blanket proof of revised clauses. E13–E17 refer to the approved delivery epics in the Epic List. Ownership here is delivery responsibility; semantic records retain the single owners in the architecture.
 
-### August 30 delivery overlay mapping
+Every FR appears below. Non-current feature clauses receive an explicit disposition instead of a fabricated active-epic assignment or completion credit. Current safeguards surviving inside deferred/history clauses remain binding where noted. This preserves the approved PRD rather than forcing all V1 work into the core sequence.
 
-Epic 12 is the approved dated implementation overlay for FR-4.1–4.5, FR-4.9,
-FR-4.12, FR-5.8, FR-6.1/6.2, FR-11.6/11.7, NFR-1.1/1.2, and
-NFR-3.1–3.3. It supersedes conflicting Epic 4/Epic 11 release-path behavior
-without marking the broader Epics 5–10 requirements complete. The authoritative
-boundary is
-`docs/bmad/planning-artifacts/architecture/august-30-bounded-scanning-design.md`.
-For the dated release, NFR-4.1 is deferred: Vulgata and analysis tools run on
-the Windows host, PostgreSQL 17 is the only required Docker service, and
-application-process restart replaces application-container restart proof.
+| FR ID | Exact PRD status | Retained/current ownership and clause boundary | Non-current disposition; no core completion credit |
+| --- | --- | --- | --- |
+| FR-1.1 | Current | F1: retained email/password registration. | None. |
+| FR-1.2 | Current | F1: retained login/logout. | None. |
+| FR-1.3 | Current | F1: retained profile, display name, email and password change. | None. |
+| FR-1.4 | Current | F1: existing roles/assignment/management scope. E13: live Knowledge/history/source authorization baseline; E14: composite contributors; E15: tools/history/summaries/citations; E16: all exploration surfaces; E17: integrated verification. | No self-service role requests or new fine-grained RBAC. |
+| FR-2.1 | Current | F2: authorized System CRUD/context. E13/E14: organizational changes cannot prove or disprove communication or silently rewrite evidence. | None. |
+| FR-2.2 | Current | F2: Repository metadata/Git/context CRUD. E13: generic onboarding and Scan without pair, sample or release-profile prerequisites. | None. |
+| FR-2.3 | Current | F2: remove Repository membership. E13: immutable history/current access; E14: membership/visibility changes do not replace accepted relationship evidence. | None. |
+| FR-2.4 | Current | F2: standalone organization-owned library Repository creation. E13: same explicit ordinary static Scan as any Repository. | No caller-triggered partial library scanning inferred. |
+| FR-2.5 | Current | F2: best-effort Git reachability with authentication failure allowed at record creation. E13: exact authorized source acquisition/verification or truthful prerequisite failure at Scan. | None. |
+| FR-3.1 | Current; revised | F3: registry/default assignments/names/endpoints/protected keys/API vocabulary. E13: bounded advisory overview separate from factual inventory/control; E15: declared Chat adapter consumption; E17: integrated adapter/readiness qualification. | Configuration vocabulary does not qualify every adapter; no model scheduling role. |
+| FR-3.2 | Current | F3: multiple simultaneous provider configurations. E13/E15: preserve a task's selected provider identity; E17: qualified operational behavior. | No automatic failover or silent switching. |
+| FR-3.3 | Current; revised | F3: authorized per-System role assignment through global registry. E13: overview/Worker consumption outside demo composition, no Scan Control model; E15: Chat role consumption. | None. |
+| FR-3.4 | Current | F3: explicit administrator connection test. E13/E15: no paid-inference routine health and truthful prerequisite handling; E17: separate app/database/tool/provider readiness and integrated verification. | Explicit provider testing is not automatic inference health probing. |
+| FR-4.1 | Current; revised | E13: exact committed inventory, language/format/layout facts and unknowns, separate bounded overview, explicit primary/supporting policy, source/configuration/template/schema/DSL eligibility, contextual README, truthful non-exclusion. | No index/ranking/filename/extension-based silent coverage cuts. |
+| FR-4.2 | Current; revised | E13: one durable Scan action, independent runs, shared bounded fair work/file ownership, cancellation settlement and visibly unavailable capabilities. E14: inquiry/flow scheduling under same control; E15: shared provider admission; E17: integrated limits/recovery qualification. | No Worker-controlled arbitrary scans, indefinite target waiting, pair fallback or cancellation of independent consumers. |
+| FR-4.3 | Current; revised | E13: whole logical file workstreams, progressive windows, meaningful nested Code Units and separate CL Logical Documents, application-derived identities/provenance/acceptance, preserved historical file semantics and explicit lineage. | No relabelling old file Documents as new semantic-unit analysis. |
+| FR-4.4 | Current; revised | E13: atomic accepted file results/progress, truthful zero-unit outcomes/gaps and draft isolation. E14 consumes accepted observations only and validates relationships. | Tool symbols/model-proposed edges are not permanent identity/relationship authority. |
+| FR-4.5 | Current; revised | E13: distinct rooted local Logical Flows, terminal primary/matching outcomes before synthesis, pinned evidence, bounded verification and exact contributions. E14: Cross-Repository flows, frozen targets and accepted external-file contributions before entire external runs finish. | No paused-work qualification, purpose-merging helpers, accepted Edge/CL rewrite or recursive repair during synthesis. |
+| FR-4.6 | Current; revised | E13: usable virtual Repository/file/Code Unit and local Logical Flow reads with truthful identity/nesting. E14: one cross-Repository Logical Document across appearances. E16: complete organized CL/BL browsing and lineage/navigation experience. | No synthetic directory Documents or unjustified identity reuse. |
+| FR-4.7 | Current; revised | E13: canonical structured JSON, derived presentation/search/sections, selected CL, atomic local BL publication, gaps, labelled history/staging and compatible read contract. E14: cross-contributor per-flow publication and incompatible-selection handling. E15: stable turn use of published read selection. E16: full version-aware browsing. | index.md remains optional export, never retrieval authority; failed current files cannot inherit old analysis as new. |
+| FR-4.8 | Current | E13: sanitized append-only Scan/system log.md trace in required timestamp/operation/target format. E15: sanitized query trace. E17: consolidated operational trace retention/output and qualification. | Structured diagnostics do not replace log.md; no raw source/secrets/hidden reasoning/unnecessary sensitive payloads. |
+| FR-4.9 | Current; revised | E13: authorized exact Source Snapshot, required CodeGraph/native MCP, applicable LSP/structured capabilities, scoped source access and retained selected/active revisions. E14: scoped inquiry/synthesis use; E15: exceptional IT reads; E16: recorded-revision reader UX; E17: durable storage/restore qualification. | No arbitrary host paths, snapshot public-version axis, source-only fallback after required CodeGraph failure, or CGC restoration. |
+| FR-4.10 | Current; revised | E13: immutable versions/Version Chains, exact historical provenance, ordered promotion/history-only intent and replacement-evidence withdrawal/retirement. E14: accepted relationship/evidence-dependent versions/refresh without caller CL rewrite or historical GENERATED_FROM retargeting. E16: complete historical exploration. | Omission/exclusion/access loss/failure do not prove deletion; no human content editing. |
+| FR-4.11 | History | Preserve the original spike/evidence as history. E13/E14/E15 qualify their new agent/tool integrations; E17 integrates qualification under current obligations, not as completion of this spike. | Week-1 adapter spike/schedule remains historical; no repeated dated gate or generic qualification credit. |
+| FR-4.12 | History | Preserve supersession record. E13/E14 retain evidence-based validation under current FRs; bounded inquiry is not peer-verification completion. | Mandatory same-superstep peer verification, fixed 0.5 confidence and yellow-dashed/HITL mechanism superseded. Future peer verification needs separate scope. |
+| FR-5.1 | Current; revised | F2: retained System advisory context administration. E13: optional catalog/framework context, never an onboarding/Scan prerequisite. E14: interpretation without treating context as deployed identity. | No mandatory maintained service mappings or automatic per-Repository catalog migration. |
+| FR-5.2 | Current; revised | E13: accepted observation contract and truthful initial gaps. E14: source-supported RPC/HTTP/queue/file-storage/page-navigation mechanisms, operations, roles, namespaces, literals/expressions and unknowns. | No universal protocol claim; guaranteed gRPC-specific implementation remains excluded. |
+| FR-5.3 | Current | E14: provider/consumer roles backed by evidence, including unknown/absent parties and explicit static-versus-runtime meaning. E13 supplies accepted local evidence. | Static linkage does not prove deployed routing/execution. |
+| FR-5.4 | Current | E14: one-to-many consumers with evidence/access-scoped counts. E15/E16: authorized explanation/exploration of those relationships/counts. | Counts are not complete deployment inventory and must not leak restricted Repositories. |
+| FR-5.5 | Current | E13: unscanned/unavailable/unknown-party identifiers and nonblocking Uncertainties in local results. E14: durable external-reference resolution/reconciliation behavior. | No automatic target Scan or blocking otherwise valid analysis. |
+| FR-5.6 | Current; revised | E14: page-navigation observation semantics, loose coupling and unresolved identity; E13 retains truthful unresolved evidence. | Confidence labels do not prove relationships. |
+| FR-5.7 | Current; revised | E13: bounded source/tool evidence with capability limitations. E14: focused indirect-target investigation using object/provenance evidence. | Incomplete indexes/classpaths/unresolved expressions are not negative proof or invented endpoint values. |
+| FR-5.8 | Current; revised | F2: context supply. E13: bounded snapshotted Worker context with provenance and source/advisory distinction. E14: relevant optional detection context. | No mutable-catalog, fixed-XML-recipe or demo-profile communication authority. |
+| FR-5.9 | Original unmet backlog | No active core owner/completion credit. Preserve an explicit original-capability register entry. | Dedicated development-time Prompt Workbench needs later design/decomposition or explicit disposition; externalized prompts/native tools do not fulfill it. No new Epic 18 invented. |
+| FR-5.10 | Current; revised | E14: preserve named RPC endpoint evidence for unknown providers. E13: authorized wiki representation/read contract; E15: mode-appropriate retrieval/explanation; E16: permitted exploration. | No raw technical disclosure in Business Mode and no required per-record tool. |
+| FR-5.11 | Current; revised | E14: supported file/storage observations with roles/locations and honest identity limits. E13: capture source-backed facts through admitted analysis. | Shared paths/mounts/object labels alone prove no cross-Repository identity; no external storage/configuration fetching. |
+| FR-5.12 | Current; revised | E14: URL patterns/deep links/app navigation with uncertain bindings/counterparties; E15/E16 expose permitted supported explanation/evidence. | Possible static path is not executed journey. |
+| FR-5.13 | Deferred / History | E13/E14: absent decisive database/gateway/registry facts remain Uncertainties, with no placeholder integration. | History: mandatory mock topology MCP/prepopulated owner mappings retired. Deferred: uniform operational-information interface/adapters/credentials/refresh. |
+| FR-5.14 | Current; revised | E13: documented supported configuration/content-analysis format, preservation of structure/locations and unknown-versus-malformed distinction. E14: supported new patterns/framework knowledge via that format. | No arbitrary new syntax through config, dynamic parsers/plugins/executable configuration or external fetching. |
+| FR-6.1 | Current; revised | E13: accepted Uncertainty contract/source-backed gaps, Worker proposal versus Knowledge authority. E14: missing/ambiguous targets/bindings/mechanisms/capabilities, including meaningful known/unknown-target distinctions. | Valid semantic uncertainty does not invalidate otherwise accepted analysis. |
+| FR-6.2 | Current; revised | E14: finite pinned accepted evidence across authorized Systems, late targets/accepted unfinished-run files, designated candidate per Repository, bounded supporting/opposing inquiry, deduplication and live revalidation before domain acceptance. | Unique visible candidate/name/confidence alone proves no match; publication does not recursively investigate. |
+| FR-6.3 | Current; revised | E13: no indefinite Worker waiting/global completion barrier. E14: cycle-safe bounded traversal with explicit outcome for every selected matching item. | Historical fewer-pending-first/older-scan-yields deadlock protocol is not restored. |
+| FR-6.4 | Current / Deferred | E13/E14: nonblocking Dangling Links, identifiers, visible Uncertainties and preserved historical human wontfix decisions. E16: history/exploration presentation. | Deferred: new owner accept/dismiss/wontfix actions and product HITL. |
+| FR-6.5 | Current | E14: truthful unresolved-link evidence/counts contract. E15: useful Chat-accessible explanations under mode/live authorization, using existing wiki tools. | No restricted aggregate/endpoint/target leakage. |
+| FR-6.6 | Current; revised | E13: truthful currentness/coverage presentation baseline. E14: changed-accepted-evidence reconciliation and coalesced per-flow refresh with fixed active inputs and finite publication; E15/E16: stale/pending/failed visibility in reads. | No source re-analysis cascade; narrowed access/selection alone is not disproval of broader accepted truth. |
+| FR-6.7 | Deferred | E13: explicit static replacement/retirement. E14: later-knowledge reconciliation. These remain independently current and do not earn incremental-feature credit. | Deferred: changed-source Impact Analysis/reuse/four-stage cascade. |
+| FR-7.1 | Deferred | E13/E14: source-backed visible Uncertainties may explain missing information without blocking ordinary analysis. | Deferred: Worker question notifications and mandatory owner response/inbox. |
+| FR-7.2 | Deferred | E13/E14: preserve uncertainty and bounded-correction boundaries; do not substitute an automatic repair workflow. | Deferred: dashboard answering and answer attachment. |
+| FR-7.3 | Current | F2: advisory context supply. E13/E14: source facts outrank human assertions in prompts/Documents/accepted evidence. E15: dialogue/hypotheses preserve that lower authority and conflicts. | No human assertion becomes source-qualified Knowledge silently. |
+| FR-7.4 | Deferred | F1: authorization preserved. E13: current operational status/pause/resume; E17: integrated recovery. Existing development approval gates remain binding throughout. | Deferred: pending-question counts/view/answer/dismiss UI. |
+| FR-8.1 | Current | F2: organization-owned library source as standalone Repository. E13: explicit ordinary static Scan, same pipeline and user outcome. | Not specialized on-demand library work. |
+| FR-8.2 | Deferred | E13: no implicit dependency downloads/arbitrary Repository work; explicit standalone Scan remains available under FR-8.1. | Deferred: caller/Worker-triggered partial on-demand library Scans. |
+| FR-8.3 | Deferred | E13: ordinary Repository/file ownership and shared resource controls. E17: integrated concurrency/cleanup qualification. | Deferred: multiple-caller coordination for the specialized partial library-Scan feature. |
+| FR-8.4 | Current; revised | E13: imports do not automatically create communication gaps; unfamiliar/unsupported behavior remains a limitation. E14: distinguish library use from communication evidence; E15: label useful hypotheses without claiming source proof. | Familiarity does not establish all library behavior or fulfill dedicated inference. |
+| FR-8.5 | Original unmet backlog / Deferred | No active core completion credit for dedicated inference. E13–15 honor hypothesis/source-authority safeguards in ordinary analysis/Chat. | Original unmet backlog: dedicated unknown source-unavailable library inference. Deferred: mandatory owner notification. No external-information lookup implied; no new epic invented. |
+| FR-9.1 | Deferred | E13: Scans remain explicit; do not create background monitoring. | Deferred: automatic remote monitoring, with periodic polling retained only as original future direction; webhooks excluded. |
+| FR-9.2 | Deferred | E13: explicit static acquisition resolves selected Git ref once and pins unchanged source for that run. | Deferred: automatic pull-on-behind. |
+| FR-9.3 | Deferred | E13: repeated explicit static Scans. E14: late-knowledge reconciliation without unchanged-source re-analysis. | Deferred: incremental changed/dependent Code Unit re-scan and analysis reuse. |
+| FR-9.4 | Current | E13: exact accessible previous versions/dependencies and minimum history reader from the first new Scan result. E15: original-version citation navigation. E16: complete dedicated history exploration. | No dependency on incremental scanning. |
+| FR-9.5 | Deferred | E13: exclusive current static-work ownership and ordered publication; E17: integrated concurrent-run qualification. | Deferred: incremental scheduling overlap rule; do not inherit a blanket ban into static runs. |
+| FR-10.1 | Current | F3: authorized per-Repository DB type/connection/protected-credential administration. E13/E15: configuration grants no new agent-facing access; E17: preservation/security qualification. | No new schema/sample tool entitlement. |
+| FR-10.2 | Deferred | E13/E14: source/accepted Knowledge remains investigation boundary; required missing operational facts stay explicit. | Deferred: new Worker database-schema inspection under external operational-information scope; no placeholder tool. |
+| FR-10.3 | Deferred | F3: preserve existing configuration protection. E13–17: any preserved surface continues non-production/read-only/limited-row/no-write safeguards; this imposes no new tool feature. | Deferred: new sample-data query tools. Production database access remains unauthorized. |
+| FR-11.1 | Current; revised | E15: useful light-theme Business narrative, BL-only tools/history/summaries/citation targets. E13 establishes mode-safe Knowledge reads; E16 applies same server-side rule to graph/exploration. | No CL/source/technical target disclosure to Business Mode. |
+| FR-11.2 | Current; revised | E15: dark IT mode with authorized BL/CL/technical references and exceptional gap-specific exact-revision source reads; E13 supplies scoped source contract, E16 reader navigation. | No routine source re-proof, Scan initiation or Knowledge repair from Chat. |
+| FR-11.3 | Current; revised | E15: confirmed mode switch, authorized saved session/new isolated inference context, ordered durable conversations, bounded completed history, access-aware non-upgrading summaries and one active answer with replay deduplication. | No disallowed history/cache import across mode/scope changes. |
+| FR-11.4 | Current; revised | E13: owning stable published read-selection contract. E15: authorized user selection/defaults/clearing and per-turn discovery/pagination/later-document stability under live access; later turns use fresh selections. | Publication alone does not invalidate or retarget active turn. |
+| FR-11.5 | Deferred | E15: typed questions, dialogue and permitted advisory text remain current. | Deferred: file/image upload, attachment storage and parsing. |
+| FR-11.6 | Current; revised | E15: useful multi-document/follow-up synthesis through shared authorized wiki search/browse/sections/content/related navigation, carrying provenance/coverage/Uncertainties. E13 supplies owning wiki contract; E14 supplies richer cross-Repository evidence. | No mandatory per-record tools, candidate sentences, embeddings or index.md; retrieval is evidence, not instructions; shared code is not business dependency. |
+| FR-11.7 | Current; revised | E15: exact claim-linked references and working previews/readers; genuine provisional deltas, first-text hypotheses, valid-provider/untruncated/tool-finished durable completion, useful interrupted text, same-turn reconnect, host-failure explicit retry, no duplicate generation and live contributor revocation/history checks. E16 may extend navigation, never gate these basics; E17 integrates lifecycle qualification. | No hidden reasoning/secrets, full-answer replay, mandatory complete-candidate JSON/whole-answer semantic verification, or automatic restart after visible output. |
+| FR-11.8 | Current; retained original behavior | E15: empty selection infers relevant Systems/Repositories only through server-authorized retrieval/discovery, displays scope and supports adjustment. | Inferred relevance grants no model access authority. |
+| FR-12.1 | Current; revised | E13: real per-Repository/aggregate operational status, gaps, separate primary coverage/Knowledge currentness and one end-to-end Scan action; E14: independent-run/refresh states; E15: distinct Chat retry; E17: integrated recovery diagnostics. | No staged user start calls, fake progress or conflation of Scan resume with Chat retry. |
+| FR-12.2 | Current | E13: actual permitted active Worker counts under global/per-run limits; E14: count bounded inquiry/flow activity honestly; E17: integrated concurrency/resource qualification. | No fictional counts or multiplied uncontrolled global budgets. |
+| FR-12.3 | Current; revised | E13: admitted primary/accepted/pending/failed counts distinct from file windows, semantic Code Units and Documents; E14/E16 preserve scoped presentation; E17 qualifies representative coverage. | No sample quota/job-count coverage proof. |
+| FR-12.4 | Current | E13: actual classified errors/warnings/failed-file summaries and existing Knowledge access when analysis capabilities unavailable; E14/E15: truthful component failures; E17: consolidated sanitized diagnostics/readiness. | No demo fixtures in production status. |
+| FR-12.5 | Deferred | E13/E14: visible Uncertainties/current operational controls. E17 integrates those controls, not an inbox. | Deferred: dashboard HITL answer/dismiss UI. |
+| FR-12.6 | Current / Deferred | E13: authorized basic Document/history reader and truthful gaps/source availability. E15: exact cited-section reader. E16: complete basic manual-refresh Logical Flow/Document-neighborhood graph and version/evidence-aware exploration, server-filtering all node/relationship/label/count/tooltip data by mode/user/contributors. | Deferred: live animation and advanced portfolio visualization. Layout cannot edit domain Edges; real Scan progress/Chat streaming stay current. |
+| FR-13.1 | Current / Original unmet backlog | E13: required native CodeGraph MCP under application-selected source/tool authority; E14: reuse approved bounded Scan invocation. | Original unmet backlog: general Repository/System/global registered MCP consumption, preserving original low priority; native adapter gives no completion credit or arbitrary tool permission. |
+| FR-13.2 | Original unmet backlog | No active core owner/completion credit; retain explicit original-capability register. E15 internal wiki/exceptional scoped source tools remain separate. | General externally configured MCP consumption in Chat needs later design/disposition; no external operational-information authority inferred. |
+| FR-13.3 | Current | E13/E14: Scan-purpose granted scope per invocation. E15: separate Chat-purpose approval/scope and Business restriction. E16: reader access cannot inherit agent tool authority. E17: integrated permission qualification. | Scan approval never grants Chat/Business approval. |
+| FR-13.4 | Deferred | E13/E14: native CodeGraph MCP remains current. E15: internal wiki tools remain current. | Deferred: outward wiki MCP serving; no endpoint/placeholder. |
+| FR-13.5 | Original unmet backlog | No active core owner/completion credit; preserve explicit original-capability register with purpose approvals. | Three-level Repository/System/global configurable MCP management requires later design/decomposition; native tools do not fulfill it or grant implicit execution authority. |
+| FR-14.1 | Current | F2: authorized global advisory context applied to Systems. E13: bounded pinned application in Scan; E15: any permitted dialogue context obeys separate access rules. | No expanded global-management authority. |
+| FR-14.2 | Current | F2: System advisory context for Repositories. E13: snapshotted advisory use; E14: membership is not communication evidence. | None. |
+| FR-14.3 | Current | F2: Repository advisory context including standalone Repositories. E13: pinned analysis consumption. | None. |
+| FR-14.4 | Current; revised | F2: retained editing surface, adapted by E13 so affected active work retains selected context and edits queue for later application. E15: separate history/summary/mode context rules that cannot mutate Scan evidence. | Deferred HITL supplies no mutation exception. |
+| FR-15.1 | Current; revised | E13: applicable declared language-neutral LSP plus required CodeGraph/source capability, qualified temporary offline/local-source operation with no automatic import/build/dependency restore. E14 uses same bounded declared navigation; E17 integrates runtime qualification. | Temporary policy is not permanent topology or network air-gapping; readiness is not semantic completeness. |
+| FR-15.2 | Current; revised | E13: available type/reference evidence with explicit capability/classpath limits. E14: limitations remain explicit in target investigation and relationship decisions. | Missing tool result is not proof of no relationship. |
+| FR-15.3 | Current; revised | E13: application-selected Repository profiles, contained adapters/snapshots/workspaces, initially at most one LSP session per snapshot; E14 follows same authority; E17 qualifies containment/limits. | Dependency-aware import/restore and multiple sessions require later separate authorization/qualification. |
+
+### Cross-cutting NFR responsibility
+
+| NFR | Earliest/current responsibility | Later integration without delaying earlier safety |
+| --- | --- | --- |
+| NFR-1.1 | E13 Scan coverage/budgets/performance; E14 adds Cross-Repository workloads | E17 records representative whole-product results |
+| NFR-1.2 | E15 useful-delta/terminal timing and multi-document quality under declared limits | E17 integrated workloads; no fixed five-Document cap or universal SLA |
+| NFR-1.3 | Live graph target remains Deferred; E13 Scan/E15 Chat responsiveness remain current | E16 manual graph only; no deferred-feature completion credit |
+| NFR-2.1 | F1 password-hashing foundation preserved by every changed path | Regression/integration checks, not identity reimplementation |
+| NFR-2.2 | F3 protected configuration; E13 persistent usable keys/source/data baseline | E17 coherent backup/restore protection |
+| NFR-2.3 | E13 source/job/read scope; E14 composite evidence; E15 dialogue/tools; E16 all reader/graph surfaces | E17 integrated permission/recovery qualification |
+| NFR-2.4 | F3 and all preserved surfaces retain read-only/non-production restrictions | New database tools remain deferred; no implied access |
+| NFR-3.1 | E13 classified failure/isolation/cleanup; E14 inquiry/flow work and E15 Chat follow their owners | E17 integrated failure qualification |
+| NFR-3.2 | E13 explicit Scan backoff/pause/resume; E14 same controller; E15 distinct Chat interruption | E17 recovery scenarios, not first implementation |
+| NFR-3.3 | E13 durable acceptance/progress/source; E14 versioned refresh; E15 durable Chat/save/reconnect | E17 coherent service restore |
+| NFR-4.1 | E13 bundled two-service/non-root runtime, configured limits, persistent source/keys and safe cache cleanup | E17 complete backup/restore/operator procedures and qualification |
+| NFR-5.1 | E13 useful local BL reading; E14 cross-Repository explanations; E15 usable Business Chat; E16 exploration | E17 quality evidence; schemas alone prove no usefulness |
+| NFR-5.2 | Every changed surface preserves basic accessibility; E15/16 verify their journeys | No new WCAG certification promise |
+| NFR-6.1 | E13 externalized overview/Worker prompts; E14 inquiry/synthesis; E15 Chat | Each owner verifies configuration, not a late rewrite |
+| NFR-6.2 | E13 documented supported advisory/format interface; E14 communication use | Preserve original workbench/MCP backlog separately |
+
+## Architecture and UX allocation
+
+All architecture invariants bind their consumers; assignment identifies the first owning contract, not permission for another epic to violate it.
+
+| Architecture requirements | Delivery allocation |
+| --- | --- |
+| AR-1–AR-8 | E13 shared scope/ownership/source/preparation/tool/semantic-unit/durable-acceptance contracts |
+| AR-9–AR-13 | E13 local evidence/flow/publication baseline; E14 Cross-Repository extension and reconciliation |
+| AR-14–AR-19 | E13 real control, recovery, transition/current selection/withdrawal; E14 extends evidence changes; E15/16 consume exact read/history rules |
+| AR-20 | E14 focused investigation under existing E13 owners |
+| AR-21–AR-23 | E13 bounded Pass 2 tools/external-information safeguards/shared admission; E14 expands inquiry/evidence; E15 joins shared provider admission |
+| AR-24–AR-28 | E13 establishes the shared Knowledge read contract; E15 owns conversational execution, completion and reattachment |
+| AR-29 | E13 minimum reader/history; E15 usable citations; E16 complete exploration/basic graph |
+| AR-30–AR-32 | E13 runtime/persistence/limits/readiness baseline; each epic verifies its own contracts; E17 coherent restore/operator and integrated qualification |
+
+| UX requirements | Delivery allocation |
+| --- | --- |
+| UX-DR1–UX-DR12 | Retained platform/brand/navigation/administration constraints on all changed surfaces; E13 adapts Scan/reader, E15 Chat, E16 exploration |
+| UX-DR13–UX-DR18 | Existing component styling retained; E13 Scan/save/read actions and E15 Chat components |
+| UX-DR19–UX-DR27 | E15 mode/scope/history/citation/live-output/save/reconnect/interruption journeys |
+| UX-DR28–UX-DR35 | E13 real management/Scan/control/count/currentness; E14 adds reconciliation states without another dashboard owner |
+| UX-DR36–UX-DR42 | E13 minimum readable results/history/source; E15 working citation routes; E16 complete graph/tree/history navigation |
+| UX-DR43–UX-DR49 | Every owning surface supplies its empty/loading/error/paging/keyboard/accessibility behavior; never wait for a later polish epic |
+| UX-DR50–UX-DR52 | E15 Business/IT dialogue and evidence journeys; E14 supplies Cross-Repository scenarios, E16 enriches exploration |
+| UX-DR53 | E13 owner-to-local-Knowledge journey, extended by E14–16 as those capabilities arrive |
+| UX-DR54–UX-DR57 | Preserve explicit Deferred/History boundaries and still-current uncertainty/safety guidance; no active feature completion credit |
 
 ## Epic List
 
-### Epic 1: Foundation & Identity
-Users can register, log in, manage their profile, and access the application with role-based authorization. Establishes the Blazor Web App shell with Fluent UI layout, navigation, Docker + PostgreSQL infrastructure, and ASP.NET Core Identity with three seeded roles.
-**FRs covered:** FR-1.1, FR-1.2, FR-1.3, FR-1.4
-**Architecture:** SP-1 — Greenfield Blazor Web App starter template, docker-compose with PostgreSQL 17, ASP.NET Core Identity (cookie auth), Fluent UI shell, role seeding (Administrator/SystemOwner/User), ApplicationUser + ApplicationDbContext.
+### Epic 13: Independent Repository Scan and Local Wiki
 
-### Epic 2: System & Repository Management
-System Owners can create and manage Systems, add/remove Repositories with git URL validation, and supply context at system and repository levels. Administrators supply global-level context. Context changes are applied only when no scan is running or during HITL.
-**FRs covered:** FR-2.1, FR-2.2, FR-2.3, FR-2.4, FR-2.5, FR-14.1, FR-14.2, FR-14.3, FR-14.4
-**Architecture:** SP-2 — System and Repository domain entities (aggregate roots), ISystemRepository/IRepositoryRepository, CRUD pages with Fluent UI DataGrid, git URL reachability check, user-supplied context with scope-based application timing rules (global=Administrator only, system/repo=SystemOwner).
+**User outcome:** An authorized owner can start one ordinary Repository Scan, follow its real progress, and read useful local Code Logic and Business Logic Documents with exact provenance, history and honest gaps. System/selection actions queue independent runs, and standalone Repositories use the same route.
 
-### Epic 3: LLM Provider & Database Connection Configuration
-Administrators configure multiple LLM backends at the global level with default LLM task-type assignments, and test connections. System Owners may override global defaults per LLM task role within their System. The deterministic Orchestrator does not need an LLM Provider assignment. System Owners also configure database connections per Repository for schema inspection and sample data queries during scanning. Includes automatic provider failover and API key encryption.
-**FRs covered:** FR-3.1, FR-3.2, FR-3.3, FR-3.4, FR-10.1
-**Architecture:** LLMProvider entity, LLMProviderManager with multi-provider failover, API key encryption via ASP.NET Core Data Protection, connection testing, global default + per-System override provider assignment, database connection configuration per Repository, Administrator configuration pages.
+**Completion boundary:** Deliver the declared bundled-tool Docker baseline, retained exact Source Snapshots, generic lightweight preparation, native CodeGraph MCP and applicable local-source LSP, progressive whole-file analysis and semantic Code Units, accepted-file evidence, local references/Logical Flows, per-flow publication and a minimum authorized reader. Source, selection, acceptance and read-reference contracts are established here before dependent implementation splits. The reader can open selected/historical versions and exact locations without needing Chat or the graph. Core pause/resume, cancellation, idempotency, shared admission, key/source persistence, sanitized Scan/system log.md and truthful coverage/currentness are part of this epic.
 
-### Pre-Epic Gate: Worker Agent Execution Adapter Validation Spike
-Before any scanning infrastructure is built, validate that the Microsoft Agent Framework can execute Vulgata Worker Agents and typed tool calls under deterministic Orchestrator control. This is a go/no-go decision point for the Worker Agent execution adapter; if MAF fails, a documented fallback adapter must be selected before Worker Agent implementation proceeds.
-**FRs covered:** FR-4.11
-**Architecture:** Isolated prototype — instantiate the deterministic Orchestrator harness and a Worker Agent execution adapter, dispatch mock typed jobs, verify tool-call wiring and result collection. Document fallback options (direct OpenAI SDK, LangChain.NET, custom worker adapter) with migration effort estimates.
+**Primary FRs covered:** FR-4.1–4.10; FR-5.1/5.5/5.8/5.14; FR-6.1/6.3/6.4 current clauses; FR-7.3; FR-8.1/8.4; FR-9.4; FR-12.1–12.4; FR-13.1 native-tool and FR-13.3 Scan-purpose clauses; FR-14.4; FR-15.1–15.3. The coverage map identifies foundation integration and later extensions.
 
-### Epic 4: Pre-Scan Profiling
-**Implementation status:** Done — exact-source verification and the Epic architecture gate passed.
-**August 30 release note:** This completion remains historical. Epic 12
-supersedes the CGC-dependent production path without rewriting Epic 4's
-accepted implementation record.
-Before worker dispatch, the system profiles each Repository using CodeGraph/tree-sitter to parse source into Code Units with exact line ranges, identify programming languages and frameworks, apply a scan filter, and derive deterministic communication-kind hypotheses. For the August 15 demonstration, all profiling outcomes continue conservatively to an automatically approved pre-scan handoff; the LLM question generator and Human-in-the-Loop review lifecycle are deferred.
-**FRs covered:** FR-4.1
-**Architecture:** CodeGraphContextProvider HTTP integration, Code Unit data model (file path, line range, language, framework), scan filter rules, deterministic communication-kind hypotheses, and a persisted automatically approved handoff. Output: a structured pre-scan result ready for the deadline delivery slice; Epic 4 does not implement the Scan Coordinator queue or Worker Agent dispatch.
+**Dependencies:** Retained foundation capabilities only. No dependency on Epics 14–17.
 
-### Epic 11: August 15 Demonstration Slice
-Deliver one prepared two-Repository path from source profiling through sequential Worker Agent generation, exact RPC/HTTP Cross-Repository matching, database-backed retrieval, and a cited Business/IT chat answer. This is the deadline delivery overlay; it implements deliberately narrow seams that later Epics 5–10 deepen rather than duplicate.
-**FRs covered for the demonstration:** FR-4.2–4.8 (sequential/minimal subset), FR-5.1–5.5 and FR-5.8 (configured RPC/HTTP subset), FR-6.1–6.3 (exact prepared-flow subset), FR-11.1–11.6 (prepared-scope subset), NFR-2.3, NFR-3.3, NFR-4.1, NFR-6.1
-**Architecture:** PostgreSQL-backed minimal Document/source/reference/retrieval store; one-Scan-at-a-time deterministic runner; one typed Worker Agent path for Pass 1 and Pass 2; configured exact RPC/HTTP matching for two prepared Repositories; Chinese Business/IT chat with citations; one final clean-database E2E and Docker build.
+**Boundary:** Capture external communication observations/Uncertainties without pretending general Cross-Repository resolution is complete. Unavailable generic capabilities stay visibly unavailable, with no silent legacy-pair fallback. Local-only success is an intermediate outcome, not completion of the full product.
 
-### Epic 12: August 30 Bounded Production Scan Recovery
-Deliver a real bounded two-Repository Java/XML path after removing
-CodeGraphContext from the release-critical pipeline. The system prepares 50–150
-automatically selected File Code Units with CodeGraph, Eclipse JDT LS, and safe
-catalog-driven XML parsing; generates resumable source-anchored Pass 1 and
-endpoint-centered Pass 2 Documents; resolves selected exact Cross-Repository
-communication; and answers grounded Business/IT questions through non-vector
-database-backed LLM-Wiki retrieval.
-**FRs covered for the dated release:** bounded overlay of FR-4.1–4.5, FR-4.7,
-FR-4.9/4.10, FR-5.1–5.5/5.8, FR-6.1/6.2, FR-11.1–11.4/11.6/11.7,
-NFR-1.1/1.2, NFR-2.3, NFR-3.1–3.3, and NFR-6.1/6.2. NFR-4.1 remains
-post-deadline V1 work under the approved host-runtime exception.
-**Architecture:** the approved August 30 Bounded Scanning and LLM-Wiki Design;
-revision-bound CodeGraph/JDT-LS adapters, File Code Units, safe XML catalog,
-durable bounded dispatch and pause/resume, exact endpoint matching,
-endpoint-centered flow groups, immutable Documents and projections, and
-grounded non-vector Chat.
+### Epic 14: Cross-Repository Business Understanding
 
-### Epic 5: Core Single Repository Scanning
-The core scanning engine: Document Graph Store as the data foundation, Scan Coordinator managing the scan lifecycle, deterministic Orchestrator planning the per-Repository workflow, and LLM-powered Worker Agents generating Code Logic Documents (Pass 1) and Business Logic Documents (Pass 2). Cross-repo calls detected during scanning are recorded as Uncertainties and dispatch sites; Epic 5 owns same-Repository resolution and best-effort matching against already-scanned Repositories, while final Cross-Repository Resolution is completed in Epic 7 after full detection evidence exists. Includes database schema inspection and sample data query tools. The dashboard receives its first minimal version (scan progress only) during this epic.
-**FRs covered:** FR-4.2, FR-4.3, FR-4.4, FR-4.5, FR-4.6, FR-4.7, FR-4.8, FR-4.9, FR-4.10, FR-4.12, FR-6.1, FR-6.2, FR-6.3, FR-6.4, FR-6.5, FR-6.6, FR-6.7, FR-10.2, FR-10.3
-**Architecture:** SP-3 + SP-4 + SP-5 + SP-7 — Logical Document/Document Version, Edge, Uncertainty, ScanRun, entry point, endpoint, dispatch-site, flow-group, flow-trace, `index_entries`, and `document_sections` entities; recursive CTE query services; export `index.md`/`log.md` generation; BackgroundService + Channel<T> scan job worker; GitCloneService; CodeGraphCliService; V1 concurrency control; deterministic Orchestrator; Worker Agent execution adapter; superstep dispatch; Pass 1 CL Docs; bounded refinement; Pass 2 path-aware trace planning and flow-group BL Docs; lightweight cross-verification; document pre-allocation; uncertainty recording engine with cross-repo deferral; deadlock-breaking protocol; dangling links; stale notices; impact analysis; database schema inspection + sample data query tools; minimal scan progress dashboard.
+**User outcome:** Users can follow source-supported business behavior across independently scanned Repositories/Systems, understand missing or ambiguous links, and see explanations improve when later accepted knowledge arrives without rescanning unchanged source.
 
-### Epic 6: Third-Party Library Handling
-System Owners can add organization-owned libraries as standalone repositories for partial on-demand scanning. Well-known libraries are treated as understood; unknown libraries trigger LLM-based inference with user notification fallback.
-**FRs covered:** FR-8.1, FR-8.2, FR-8.3, FR-8.4, FR-8.5
-**Architecture:** Standalone Repository scanning (no System), on-demand partial scan triggered by caller's Worker Agent, lock mechanism preventing concurrent scans, well-known library allowlist, LLM inference fallback for unknown libraries.
+**Completion boundary:** Extend the existing Scan Control/Knowledge owners with generic communication evidence, one-to-many relationships, finite evidence selection, bounded focused investigation, cycle handling, late/missing targets and coalesced per-flow refresh. Cover source-supported RPC/HTTP, messaging, files and navigation within declared capability limits, not fixed profiles or guaranteed universal protocol detection. Reuse Epic 13's reader and source/publication contracts; produce readable Cross-Repository results before Chat or graph exploration exists.
 
-### Epic 7: Cross-Repository Detection
-The detection layer identifies when code in one Repository communicates with another across five communication types (RPC, HTTP, MQ, file-based, page navigation). Includes Communication Pattern Catalog configuration with RPC catalog validation during pre-scan, provider/consumer role tagging, object flow analysis, Prompt Workbench, Service Topology resolution, and extensible pattern support. This epic also completes the cross-repo uncertainties that were recorded but left unresolved during Epic 5 — it runs the resolution engine with the newly built cross-repo detection results.
-**FRs covered:** FR-5.1, FR-5.2, FR-5.3, FR-5.4, FR-5.5, FR-5.6, FR-5.7, FR-5.8, FR-5.9, FR-5.10, FR-5.11, FR-5.12, FR-5.13, FR-5.14, FR-6.2, FR-6.3, FR-6.6, FR-6.7
-**Architecture:** SP-6 — CommunicationPattern entity + catalog, RPC catalog pre-scan validation, Worker prompt dynamic injection, provider/consumer role detection, consumer count tracking, absent entity external references, page navigation low-confidence flagging, object flow analysis, Prompt Workbench development tool, named RPC endpoint recording, file-based detection (local/remote/OSS/HDFS), page navigation detection (URLs/deep links/app-to-app), Service Topology MCP tool integration, extensible catalog format, cross-repo uncertainty resolution engine integration.
+**Primary FRs covered:** FR-5.2–5.8, FR-5.10–5.12/5.14, FR-6.1–6.6 current clauses; Cross-Repository extensions of FR-4.2/4.4–4.7/4.9–4.10 and FR-8.4. Preserve optional context rather than mandatory owner mappings.
 
-### Epic 8: Dashboard & Real-Time Monitoring
-System Owners see live scan progress (minimal version available after Epic 5, enhanced here) and a real-time knowledge graph visualization using Blazor.Diagrams showing Documents as nodes, cross-repo links as edges, and unresolved uncertainties as dashed edges. System Owners can answer agent questions surfaced during scanning via Human-in-the-Loop.
-**FRs covered:** FR-7.1, FR-7.2, FR-7.3, FR-7.4, FR-6.5, FR-12.1, FR-12.2, FR-12.3, FR-12.4, FR-12.5, FR-12.6
-**Architecture:** SP-9 — ScanHub + GraphHub (SignalR with [Authorize]), Blazor.Diagrams live graph (nodes=Documents, edges=REFERENCES, dashed=uncertainties, yellow=disputed), scan progress dashboard (status, workers, files, errors), HITL question management (notifications, answer, dismiss), diff-based graph updates with viewport preservation, SignalR reconnection with state replay.
+**Dependencies:** Epic 13. No dependency on Epics 15–17.
 
-### Epic 9: Chat Interface
-Users ask natural-language questions in Business Mode (non-technical narrative) or IT Mode (technical detail with code references) and receive grounded answers with citations using database-backed LLM-Wiki retrieval across scanned Documents. When no Systems or Repositories are selected, Vulgata autonomously determines the relevant scope.
-**FRs covered:** FR-11.1, FR-11.2, FR-11.3, FR-11.4, FR-11.5, FR-11.6, FR-11.7, FR-11.8
-**Architecture:** SP-8 — Chat Agent, typed retrieval tools over `index_entries`, `document_sections`, graph relationships, endpoint records, flow traces, uncertainties, and source anchors; Business/IT dual mode with theme switching and system prompt changes; System/Repository context selection; auto-scope determination when nothing selected; file upload support; citation linking to source Documents and code lines.
+**Boundary:** Missing deployed/registry/database facts remain Uncertainties. No external-information connector, automatic source-update engine, human question inbox, confidence-only matching or recursive regeneration flood is introduced.
 
-### Epic 10: Git Monitoring & Incremental Re-scan ⚠️ Deferrable
-Documents stay current with code changes — periodic git polling detects remote changes, pulls updates, and incrementally re-scans only affected Code Units using two-phase change detection.
-**FRs covered:** FR-9.1, FR-9.2, FR-9.3, FR-9.4, FR-9.5
-**Architecture:** Git polling service, pull on behind-remote detection, two-phase change detection (line-overlap filter → hash comparison), incremental re-scan with impact analysis, document history preservation, concurrent scan guard.
+### Epic 15: Useful Streaming Wiki Conversations
 
-### Deferred Features
-**FRs covered:** FR-13.1, FR-13.2, FR-13.3, FR-13.4, FR-13.5 (MCP Integration), FR-15.1, FR-15.2, FR-15.3 (LSP Support)
-Architecture supports adding these later via Infrastructure project and MCP/LSP client packages. No stories generated for deferred features.
+**User outcome:** Business and technical users can hold useful multi-document, follow-up wiki conversations with exact usable references, genuine live output and durable dialogue that survives browser disconnect without duplicate generation.
 
----
+**Completion boundary:** Deliver Business BL-only and IT BL/CL plus exceptional exact-source access, authorized manual/automatic relevance scope selection, stable per-turn Knowledge reads, bounded authorized history, isolated mode/scope contexts and real provisional streaming. Valid provider completion and one durable terminal save govern completion; reconnect joins the same bounded turn, while host failure interrupts it. Include working mode-safe citation previews and exact-section/history/source navigation on the existing reader. Add sanitized query log.md events.
 
-## Stories
+**Primary FRs covered:** FR-11.1–11.4/11.6–11.8, FR-6.5 Chat consumption, FR-7.3 dialogue authority, FR-13.3 Chat-purpose approval; consumer extensions of FR-4.7–4.9 and FR-9.4. Provider/role configuration is retained and adapted, not rebuilt.
 
-### Pre-Epic Gate: Worker Agent Execution Adapter Validation Spike
+**Dependencies:** Epic 13's published Knowledge/read contracts. Epic 14 supplies the planned Cross-Repository answer scenarios; the default delivery order completes 14 before 15. Local dialogue does not intrinsically require 14. No dependency on Epic 16 for usable citations or on Epic 17 for completion/reconnect safety.
 
-#### Story SP.1: Worker Agent Execution Adapter Validation Spike
+**Boundary:** No candidate-sentence restriction, mandatory whole-answer JSON/semantic verifier, routine source audit, Scan/repair authority, attachments or general custom MCP delivery. Canonical JSON wiki Documents do not turn Chat prose into a buffered JSON answer contract.
 
-As a **developer**,
-I want to validate that the Microsoft Agent Framework can execute Vulgata Worker Agents through typed jobs under deterministic Orchestrator control,
-So that the team can commit to an execution adapter for Worker Agent tasks or select a documented fallback.
+### Epic 16: Version-Aware Knowledge Exploration
+
+**User outcome:** Authorized readers can explore Code Logic by source structure and Business Logic by Logical Flow, inspect history and exact dependencies, and navigate a useful manually refreshed scoped graph without management privileges or hidden technical-data disclosure.
+
+**Completion boundary:** Extend the minimum reader already delivered by 13 and citation navigation delivered by 15 into cohesive dedicated browsing/search/history and graph journeys. Reuse selected-version/source/read-reference contracts; show sparse, stale, partial, retired and unavailable-source states truthfully. Filter every graph node, relationship, label, count, tooltip and destination server-side. Graph layout changes presentation, not domain Edges.
+
+**Primary FRs covered:** Exploration portions of FR-4.6/4.7/4.10, FR-9.4 and FR-12.6 current clauses; permitted relationship presentation under FR-5.4/5.10–5.12 and FR-6.4/6.6. Existing readers must not be withheld until this epic.
+
+**Dependencies:** Epics 13–14 and their versioned Knowledge. Reuse the shared citation contract, including 15's delivered behavior when present; the default order follows 15, but independent reader/graph correctness does not require a Chat session.
+
+**Boundary:** No new publication authority, business relationships inferred merely from shared code, live graph animation, advanced portfolio graph, human editing of Documents or new HITL workflow.
+
+### Epic 17: Recoverable Product Operations and Qualification
+
+**User outcome:** An operator can configure, observe, back up and restore the delivered knowledge service coherently, and users retain authorized usable knowledge/dialogue after supported interruptions rather than losing source/key dependencies or replaying paid work.
+
+**Completion boundary:** Integrate portable resource/storage configuration, distinct app/database/tool/provider readiness, sanitized activity traces and useful diagnostics. Deliver the operator maintenance-window backup/isolated-restore procedure for database, retained source, keys and required restore configuration. Restored leases/running states never regain execution authority; preserve completed outcomes and require fresh checks plus explicit Scan resume or Chat retry. Qualify representative complete-product behavior, performance/usage and explanation/citation quality across one/several/standalone Repositories, late targets, cycles and lifecycle failures.
+
+**Primary FRs covered:** Integrated operational aspects of FR-3.4, FR-4.8, FR-12.1–12.4 and the reliability/deployment/security NFRs. It integrates earlier functional outcomes rather than acquiring their ownership.
+
+**Dependencies:** Delivered Epics 13–16.
+
+**Boundary:** Earlier epics already ship their own safety, Docker execution, source/key persistence, core recovery and verification. This is not a testing-only or deferred infrastructure epic. No extra tool service, distributed scheduler, HA/PITR daemon, paid routine health probes, new universal throughput guarantee or competition evidence ceremony is required.
+
+### Dependency and overlap decision
+
+| Epic | What must already work | What later epics must not supply |
+| --- | --- | --- |
+| 13 | Retained identity/administration/configuration/persistence, adapted explicitly | First usable reader, source retention, core Docker/recovery or truthful progress |
+| 14 | 13's accepted source/Knowledge/Scan contracts and readable local outcomes | Chat or graph as the only way to consume resolved knowledge |
+| 15 | 13's published read/source contracts; 14 precedes full Cross-Repository scenarios in the chosen sequence | 16's full exploration or 17's operational integration as prerequisites for citations/stream completion |
+| 16 | 13–14's selected version/evidence; one shared reader/reference contract | A new competing Knowledge writer or later publication implementation |
+| 17 | The delivered 13–16 product boundaries | Any essential safety or verification omitted from earlier completion |
+
+Retain the five-way split. Shared Knowledge storage, source adapters and views are meaningful overlap, but the risk/feedback boundaries differ: first real semantic Scan, Cross-Repository interpretation, conversational usefulness, exploration usability, then coherent operational recovery. Settle one owning shared contract early and extend it; do not create rival implementations per epic. This is not an authorization to dispatch parallel stories; default execution remains sequential.
+
+## Epic 13: Independent Repository Scan and Local Wiki
+
+An authorized owner can start one ordinary Repository Scan, follow its real progress, and read useful local Code Logic and Business Logic Documents with exact provenance, history and honest gaps. System/selection actions queue independent runs, and standalone Repositories use the same route. The approved Epic List and coverage map above govern the complete outcome; the stories below are authored and approved sequentially.
+
+### Story 13.1: Retain exact Repository source with scoped read access
+
+As a System Owner,
+I want the source used for authorized Repository analysis to be pinned, retained and accessible through a common read-only interface,
+So that analysis and later knowledge reads can use the same committed code despite working-copy changes, temporary cleanup or process restarts.
 
 **Acceptance Criteria:**
 
-**Given** a .NET console prototype project with Microsoft.Agents.AI.Foundry and Microsoft.Agents.AI.Workflows packages referenced
-**When** the deterministic Orchestrator harness dispatches a mock superstep (batch of 3 synthetic Code Units) as typed Worker Agent jobs
-**Then** all 3 Worker Agents shall receive and process their assigned Code Units independently
-**And** the Orchestrator shall collect and aggregate all Worker Agent results through the adapter
-**And** each Worker Agent shall log its assigned Code Unit path, start time, end time, and status (Completed/Failed)
+**Given** an existing authorized Repository, including an eligible standalone Repository, and a permitted Git ref,
+**When** a trusted application service acquires a Source Snapshot,
+**Then** it checks Repository authority and resolves/pins one full Profiled Revision before capture,
+**And** the resulting source identity is Repository plus the exact Git commit, with integrity metadata and an internal storage locator,
+**And** it requires neither a Repository pair/PairExecutionId nor a parent System solely to capture standalone source. (FR-2.4/2.5, FR-4.9; AR-1/3.)
 
-**Given** one Worker Agent is configured to throw an exception during processing
-**When** the Orchestrator dispatches the superstep
-**Then** the failed Worker Agent task shall be retried once
-**And** the Orchestrator shall continue processing remaining Worker Agents
-**And** the final result shall include both successful results and the failed task with error details
+**Given** a completed capture and a server-granted read context,
+**When** an ordinary consumer lists directories/files or reads a bounded source range/content after a working copy or remote ref has changed,
+**Then** the common interface returns metadata/content from the captured committed bytes, with Repository-relative locations,
+**And** it never substitutes the mutable checkout, changes canonical bytes through decoding or uses tool-index data as the source authority,
+**And** unavailable text/entry capabilities are explicit rather than silently altered or omitted. (FR-4.9; AR-3/5.)
 
-**Given** the spike completes successfully
-**When** the developer documents the results
-**Then** a spike report shall be produced containing: (1) pass/fail verdict, (2) latency measurements per superstep, (3) any MAF API limitations discovered, (4) fallback architecture options with estimated migration effort if MAF is rejected
+**Given** a completed capture stored under deployment-configured durable source storage,
+**When** the original consumer lease is disposed and a fresh process/application instance reopens the source while the original remote is unavailable,
+**Then** a newly authorized consumer can verify and read the same retained bytes without relying on the former in-memory token registry, temporary operation directory or a new remote clone,
+**And** source retention/configuration is independent of CodeGraph's cache/data-root lifetime. (FR-4.9; source portions of NFR-3.3/4.1; AR-3/30/31.)
 
----
+**Given** a source read request,
+**When** its grant has expired, access has been revoked, its Repository/revision binding is wrong, or its path is absolute, escaping or resolves outside the captured source,
+**Then** the application denies the operation without disclosing unauthorized source or metadata,
+**And** ordinary read contracts and sanitized errors do not expose the infrastructure's physical RootPath or credentials,
+**And** any necessary physical-path seam remains restricted to trusted adapters rather than becoming an ordinary Scan/Agent file API. (FR-4.9; NFR-2.3; AR-3/6.)
 
-### Epic 1: Foundation & Identity
+**Given** a server-issued source-access budget and deadline,
+**When** multiple operations exhaust the cumulative permitted work or cancellation occurs,
+**Then** the operation stops with an explicit bounded limit/cancellation outcome and releases its owned transient resources,
+**And** repeated calls cannot bypass the shared read-context limits by receiving an automatic fresh budget,
+**And** cancellation never promotes a partial capture to a completed source object. (FR-4.9; NFR-3.1; AR-3/8/15.)
 
-#### Story 1.1: Solution Scaffolding & Docker Deployment
+**Given** retries or multiple authorized consumers referring to the same Repository and Profiled Revision,
+**When** capture completion is published, a verified capture is reopened, or one lease is released,
+**Then** source identity/integrity remain stable and no reader observes a partly published capture,
+**And** cleanup of one operation does not invalidate another consumer or delete verified canonical source,
+**And** the initial policy performs no automatic pruning of retained canonical source; only safe unretained/disposable operation state is cleaned. (FR-4.9; NFR-3.3/4.1 source portions; AR-3/31.)
 
-As a **developer**,
-I want a greenfield Blazor Web App solution with docker-compose, PostgreSQL 17, and the 6-project structure,
-So that the team has a deployable foundation for all subsequent epics.
+**Given** Git authentication/transport/ref failure, missing or corrupted retained bytes, or unavailable storage capacity,
+**When** acquisition or reopening cannot meet the exact-source contract,
+**Then** it returns a truthful sanitized failure/limitation with enough logical Repository/revision context for an authorized caller to respond,
+**And** it neither silently selects another ref/source nor labels failed/partial data as a usable completed capture,
+**And** any later reacquisition/retry requires fresh authority and exact-byte verification rather than trusting a new temporary path. (FR-2.5/4.9; NFR-2.3/3.1/3.3.)
 
-**Acceptance Criteria:**
+**Given** this story's source capability and isolated local Git fixtures,
+**When** its acquisition, bounded listing/reading, denial, concurrent-lifetime and fresh-process reopening behavior is verified against declared persistent-storage configuration,
+**Then** it works independently without invoking CodeGraph, LSP, an LLM or future semantic Code Unit/Document/flow tables,
+**And** only source-owned records/configuration needed for this capability are added or adapted,
+**And** no test or result labels this source-only capability as a completed Scan, generated wiki or newly qualified full Docker analysis stack. (AR-2/3/16/30/32.)
 
-**Given** the solution is scaffolded
-**When** the developer runs `dotnet build`
-**Then** all 6 projects (Vulgata.Web, Vulgata.Web.ViewModels, Vulgata.Core, Vulgata.Infrastructure, Vulgata.Agents, Vulgata.Shared) shall compile without errors
-**And** placeholder directories shall exist at solution root for future Java, Python, and Node projects
+**Scope and dependencies:**
 
-**Given** the solution uses the Blazor Web App template with ASP.NET Core Identity (Individual Accounts)
-**When** the developer inspects the project
-**Then** Vulgata.Web shall use interactive server render mode with Fluent UI Blazor as the primary component library
-**And** the default Identity pages (Login, Register, Manage) shall be scaffolded with Fluent UI styling
+- **User-visible value:** exact source survives beyond the former disposable lease, so later authorized evidence reads have a trustworthy committed input. This is delivered as a callable application/source capability; no new public Snapshot UI is required.
+- **Prior dependencies:** retained Repository management/authorization and existing Git acquisition primitives only. This story does not depend on any later Story 13.x.
+- **Included:** source identity/atomic capture, durable retention/reopen, generic bounded relative metadata/list/read operations, source authority and safe operation cleanup. Define the source contract before consumers depend on it.
+- **Compatibility boundary:** implement a new generic durable source owner using reusable acquisition/reading mechanics. Preserve existing legacy pair consumers unless a minimal compatibility adapter is needed; wholesale pair-registry migration or rewriting every RootPath consumer is outside this story. Ordinary consumers of the new interface still receive only scoped relative access.
+- **Excluded:** CodeGraph/JDT-LS installation or invocation, detailed parsing/semantic units, advisory LLM overview, file scheduling, Document/Edge/flow generation, Chat, full Scan activation and operator backup/restore. Their requirements remain in Epic 13 or later approved epic scope; they are not credited as complete here.
+- **Scope of requirement credit:** completes the source acquisition/read/retention contribution to FR-4.9 and the corresponding source/privacy/durability portions of the cited NFR/ARs. It does not complete all composite FR-4.9 or NFR-4.1 obligations.
+- **Later gates:** story approval accepts this delivery definition only. Technical planning must still pass independent review and any triggered Agent-tool/Scan-strategy/PRD authorization before tasks/implementation; data/schema changes remain owned and minimal.
 
-**Given** the solution
-**When** configured
-**Then** two top-level layouts shall exist: MainLayout (top navbar: brand + 对话/管理后台 nav + bell + avatar) and ManagementLayout (nested holy grail: top tab bar + left sidebar + main content)
-**And** the default route "/" shall render the Chat page
+**Definition approval:** The user approved Story 13.1 on 2026-09-11. Approved proposal SHA-256: `2FAB3D492CA0DD5958B60DB5BF07DAEBEF4BEFA337FB59897A3C8FFD89003F83`. This is story-definition approval, not implementation, feature activation or runtime qualification.
 
-**Given** docker-compose.yml exists at solution root
-**When** `docker compose up` is executed
-**Then** two containers shall start: the Blazor application and PostgreSQL 17
-**And** the Blazor container shall have Git and CodeGraph CLI installed in its runtime stage
-**And** the Blazor container shall run as a non-root user
-**And** a pgdata named volume shall persist PostgreSQL data
+### Story 13.2: Run Vulgata in Docker with durable storage and bundled analysis tools
 
-**Given** the Dockerfile
-**When** the image is built
-**Then** it shall use multi-stage build (SDK stage → publish → runtime stage)
-**And** a ./prompts bind mount shall be configured for prompt file iteration during development
-
-**Given** the solution
-**When** the developer runs `dotnet format`
-**Then** an .editorconfig shall enforce naming conventions (async suffix, _camelCase private fields, PascalCase tables/columns)
-**And** Roslyn analyzers shall cover patterns .editorconfig cannot express
-
-#### Story 1.2: User Registration
-
-As a **new user**,
-I want to register with my email and password,
-So that I can access Vulgata.
-
-**Acceptance Criteria:**
-
-**Given** I am on the registration page
-**When** I enter a valid email and password meeting complexity requirements (minimum 8 characters, uppercase, lowercase, digit, special character)
-**Then** my account shall be created
-**And** my password shall be stored hashed using bcrypt or Argon2 (NFR-2.1)
-**And** I shall be redirected to the login page or auto-signed-in
-
-**Given** I enter an email already registered
-**When** I submit the registration form
-**Then** I shall see a validation error "该邮箱已被注册" (This email is already registered)
-
-**Given** I enter a password that does not meet complexity requirements
-**When** I submit the registration form
-**Then** I shall see a validation error describing the missing requirements
-**And** my account shall not be created
-
-**Given** the ApplicationDbContext schema
-**When** the database is migrated
-**Then** Identity tables shall reside in a dedicated schema, separate from the Vulgata domain schema
-
-#### Story 1.3: Login & Logout
-
-As a **registered user**,
-I want to log in with my email and password and securely log out,
-So that I can access my authorized features and protect my session.
+As an Administrator,
+I want to run Vulgata and PostgreSQL through a documented two-service Docker deployment with retained data/source/keys and declared bundled tools,
+So that I can develop and operate the application without installing its analysis tools on the host or losing protected information when containers are replaced.
 
 **Acceptance Criteria:**
 
-**Given** I have a registered account
-**When** I enter correct email and password on the login page
-**Then** I shall be authenticated via ASP.NET Core cookie authentication
-**And** I shall be redirected to the Chat page (default landing, UX-DR-5)
+**Given** a declared supported container platform and isolated operator-configured storage and credentials,
+**When** the documented Compose deployment starts from a clean database,
+**Then** it starts only the Vulgata application and PostgreSQL services, applies the existing startup migration/seeding contract to the configured database, and makes the existing authenticated administration capabilities usable,
+**And** application startup requires no host-installed Git/Node/Java/CodeGraph/JDT-LS, local LLM service, remote analysis bridge or live provider inference,
+**And** no fixed sample Repository or exactly-two Repository binding is a deployment prerequisite. (NFR-4.1; AR-15/30/32; retained foundation and UX-DR1–12 constraints.)
 
-**Given** I enter incorrect credentials
-**When** I submit the login form
-**Then** I shall see a generic error "邮箱或密码错误" (Invalid email or password)
-**And** I shall NOT be authenticated
+**Given** the versioned application image and its declared tool inventory,
+**When** the image is built and its installed assets are checked on the supported container platform,
+**Then** it contains the required Git/runtime dependencies, CodeGraph 1.5.0, Java 21 and JDT-LS archive 1.61.0-202608141332 at container-owned configured paths,
+**And** tool versions, platform-specific asset identities and installation inputs are reproducible and checked rather than inferred from a developer's host installation or copied Windows executable hashes,
+**And** missing or mismatched required build assets fail explicitly; an installation/version check never claims a connected native MCP session, an indexed Source Snapshot or usable LSP navigation. (FR-4.9/15.1 deployment contribution; NFR-4.1; AR-6/30/32.)
 
-**Given** I am logged in
-**When** I click Logout
-**Then** my authentication cookie shall be cleared
-**And** I shall be redirected to the login page
+**Given** the application image and its required source/key/workspace/log locations,
+**When** the application and bounded installation-check processes run,
+**Then** they run as a non-root container user with writable access limited to the required configured state locations,
+**And** ordinary runtime operation requires neither privileged containers/Docker-daemon access nor a mounted developer home, source checkout or host tool installation,
+**And** missing required mount permissions produce a sanitized actionable failure rather than elevating privileges or silently switching to ephemeral storage or a fresh temporary key ring,
+**And** container health checks use commands actually present in the image. (Architecture gateway runtime security baseline; NFR-2.2/2.3/4.1; AR-3/30.)
 
-**Given** I am logged in
-**When** my authentication cookie remains valid
-**Then** navigating to any page shall maintain my authenticated session
-**And** the top navbar shall display: brand, 对话/管理后台 nav, bell icon, and user avatar dropdown (profile, logout)
+**Given** persisted administration data, a protected test credential and an exact Source Snapshot captured through Story 13.1 in the container,
+**When** the application and database containers are recreated with the same configured durable volumes and the original Git remote is unavailable,
+**Then** the application can still read the persisted records, use the protected credential through its existing authorized boundary, and reopen/read the same exact retained source through a fresh authorized grant,
+**And** this does not depend on a previous process, in-memory lease registry or disposable Tool Workspace,
+**And** if container termination interrupts another Source Snapshot capture, restart does not expose that unfinished capture as completed, while previously verified retained source remains reopenable through fresh authorization,
+**And** canonical source, PostgreSQL data and Data Protection keys remain separate from replaceable tool state; disposing unleased temporary state does not delete retained source, keys or database data. (FR-4.9 source contribution; NFR-2.2/3.3/4.1; AR-3/30/31.)
 
-**Given** I attempt to access a page requiring authentication while logged out
-**When** I navigate to a protected route
-**Then** I shall be redirected to the login page with a return URL parameter
+**Given** deployment-provided storage locations, container resource limits and the source limits already owned by Story 13.1,
+**When** these settings are changed within the declared supported profile or required storage is invalid, unavailable or exhausted,
+**Then** the application uses the declared configuration and reports the affected capability truthfully without relying on a particular workstation path or capacity,
+**And** failure does not silently redirect durable state, prune canonical source, alter Repository eligibility or report incomplete capture as success,
+**And** documentation distinguishes these implemented limits from later Worker/provider/tool admission controls and distinguishes retained volumes from backup or cross-host migration. (NFR-3.1/4.1 source/runtime contribution; AR-30–32.)
 
-#### Story 1.4: Profile Management
+**Given** an otherwise usable application/database with analysis integration unavailable, invalid tool configuration or no configured provider,
+**When** an operator inspects readiness or a user opens existing authorized application/knowledge surfaces,
+**Then** application/database status, bundled-tool installation status and unqualified/unavailable Scan/provider capability are distinguishable,
+**And** unavailable analysis does not by itself prevent existing authorized reads or falsely mark the generic Scan ready,
+**And** checking packaged Linux assets never satisfies an old pair-era Worker runtime gate or enables legacy Prepared Scan/Pass 1/Resolution/Pass 2 execution as the generic workflow,
+**And** routine startup/health inspection makes no provider inference calls and does not dispatch saved or legacy Scan work as a fallback; any necessary composition guard is limited to enforcing that boundary. (FR-3.4/12.4; NFR-3.2/3.3; AR-15/16/32.)
 
-As a **registered user**,
-I want to view and edit my profile information,
-So that I can keep my display name, email, and password current.
+**Given** the deployment instructions and this story's isolated fixtures,
+**When** its runtime boundary is qualified,
+**Then** evidence covers a real two-service startup, non-root identity and installation checks, Story 13.1 source use, container recreation with data/key/source continuity, and truthful failure/readiness behavior,
+**And** configuration/proxy/CA/secret injection and stop/recreate instructions avoid committed credentials, baked-in secrets and privileged host prerequisites,
+**And** the result records the tested platform/configuration and does not claim backup/restore, automatic Scan recovery, functional MCP/LSP analysis, a generated wiki, real LLM answers or universal deployment/performance qualification. (NFR-2.2/4.1; AR-30–32.)
 
-**Acceptance Criteria:**
+**Scope and dependencies:**
 
-**Given** I am logged in
-**When** I click my avatar in the top navbar and select "个人资料" (Profile)
-**Then** I shall see my current display name and email displayed in a Fluent UI form
+- **User value:** a usable application and durable source capability on the actual development deployment, with fewer hidden host dependencies and no loss of encrypted configuration on container replacement.
+- **Prior dependencies:** approved Story 13.1 plus retained application/Identity/administration/persistence. No future Epic 13 story or Epic 14–17 is needed for the acceptance scenarios.
+- **Included:** image/Compose packaging, supported platform/tool installation identity, configured durable mounts and key persistence, minimal startup/configuration/readiness adaptation, a non-root runtime, and bounded real container qualification of this slice.
+- **Not an empty infrastructure task:** completion requires authenticated application use and source capture/reopen across recreation, not only a successful image build or a list of installed binaries.
+- **Compatibility boundary:** preserve retained administration and historical read behavior. Make only the startup/configuration guards needed to avoid invalid global tool assumptions and unintended legacy dispatch. Do not migrate the pair-era execution model or implement the generic Scan coordinator here.
+- **Excluded:** CodeGraph indexing/native MCP exposure, snapshot-bound LSP launch/navigation and its no-import/no-restore enforcement, file classification/structured-content analysis, Agent execution, Worker/provider/tool scheduling, Scan activation/recovery and new knowledge readers. Those remain later Epic 13 work. No XML/sample workflow, new tool service, package-upgrade campaign, general deployment framework or public Snapshot UI is added.
+- **Later operations:** coherent backup/isolated restore, cross-host migration and comprehensive operator diagnostics are not container recreation and remain outside this story. The initial source policy still forbids automatic canonical-source pruning.
+- **Requirement credit:** only the described Docker/installation/persistence/readiness contributions to the cited composite requirements. Native tools, full recovery/admission and complete NFR-4.1 qualification remain outstanding. Existing Chinese UI/accessibility/authorization constraints apply to any touched surface; no UX redesign is required.
+- **Later gates:** story approval accepts the definition only. A concrete technical plan must pass independent review and any triggered Agent-tool/Scan-strategy/PRD authorization before task generation, with proportionate TDD/review/runtime verification afterward.
 
-**Given** I am on the Profile page
-**When** I change my display name and save
-**Then** my display name shall be updated
-**And** a success notification shall appear
+**Definition approval:** The user approved Story 13.2 on 2026-09-11. Approved proposal SHA-256: `60A06088341CA9C7251D7947EEA3B337A60631BD6E3DF98C94B27E00D5100B00`. This is story-definition approval, not implementation, feature activation or runtime qualification.
 
-**Given** I am on the Profile page
-**When** I change my email to an address not already in use and save
-**Then** my email shall be updated
-**And** a confirmation message shall be displayed
 
-**Given** I am on the Profile page
-**When** I change my email to one already registered by another user and save
-**Then** I shall see a validation error
-**And** my email shall remain unchanged
+### Story 13.3: Inventory Repository source and explain file eligibility
 
-**Given** I am on the Change Password section of the Profile page
-**When** I enter my current password, a new password meeting complexity requirements, and confirm the new password
-**Then** my password shall be updated
-**And** I shall remain logged in with my current session
-
-**Given** I enter an incorrect current password in the Change Password form
-**When** I submit
-**Then** I shall see an error "当前密码不正确" (Current password is incorrect)
-**And** my password shall not be changed
-
-#### Story 1.5: Role Seeding & Authorization Policies
-
-As an **administrator**,
-I want three predefined roles seeded at startup with appropriate authorization policies,
-So that role-based access control is enforced from day one.
-
-**Acceptance Criteria:**
-
-**Given** the application starts for the first time
-**When** the database is migrated
-**Then** three roles shall be seeded: Administrator, SystemOwner, and User
-
-**Given** the authorization policies
-**When** configured
-**Then** Administrator shall have full platform management access
-**And** SystemOwner shall have access scoped to the Systems they are explicitly assigned to
-**And** User shall have read-only access to chat and documents
-
-**Given** I am logged in as a User
-**When** I attempt to access an Administrator-only page
-**Then** I shall be redirected to an "Access Denied" page
-**And** the 管理后台 nav link shall not be visible in my top navbar (SystemOwner-only and Administrator, UX-DR-10)
-
-**Given** the role seeding mechanism
-**When** the application restarts
-**Then** existing roles shall not be duplicated (idempotent seed)
-
-#### Story 1.6: Administrator Role Assignment
-
-As an **administrator**,
-I want to promote a registered user to the Administrator role,
-So that I can delegate platform management.
+As a System Owner,
+I want an exact-source inventory and a factual Repository Profile with explicit file-selection reasons,
+So that analysis can cover the Repository deliberately without silently losing unfamiliar source or confusing preparation with completed understanding.
 
 **Acceptance Criteria:**
 
-**Given** I am logged in as an Administrator
-**When** I navigate to 管理后台 → 设置 → 用户管理 (User Management)
-**Then** I shall see a list of all registered users with their current roles
+**Given** an authorized retained Source Snapshot, including one from a standalone Repository,
+**When** the inventory capability enumerates it through Story 13.1's scoped source interface,
+**Then** it records the captured directory/file structure and available file metadata under the exact Repository and Profiled Revision,
+**And** every discovered entry has an explicit outcome, with Repository-relative locations rather than physical workspace paths,
+**And** directories remain structural metadata, not synthetic files, work items or Code Units,
+**And** enumeration requires neither a Repository pair nor CodeGraph, LSP, an LLM or the mutable working copy. (FR-4.1/4.9 inventory contribution; AR-1/3/4.)
 
-**Given** I am on the User Management page
-**When** I select a User and assign them the Administrator role
-**Then** the user shall immediately gain Administrator privileges
-**And** a confirmation notification shall appear
+**Given** source metadata and bounded non-executing format/signature inspection,
+**When** preparation records language, format and layout information,
+**Then** the Repository Profile distinguishes observed facts, evidence-backed classifications and unknown or ambiguous information,
+**And** bounded probes identify the detector/rule, inspected extent and any limitation rather than claiming whole-file understanding,
+**And** filename/extension hints do not become unsupported framework or business-behavior claims,
+**And** any shared format recognition uses the Source Content Analysis contract, not a second preparation-only parser system,
+**And** this step does not extract semantic Code Units, interpret a fixed XML/RPC workflow, execute source/configuration/builds or fetch external information. (FR-4.1; AR-4/5/7.)
 
-**Given** I am on the User Management page
-**When** I remove the Administrator role from a user
-**Then** the user shall revert to the User role (unless they hold SystemOwner on specific Systems)
-**And** they shall immediately lose Administrator access
+**Given** an explicit application-owned Scan policy and the factual inventory,
+**When** Scan Control derives the file-selection contribution to the Scan Work Plan,
+**Then** it records a primary, supporting, context-only or explicitly excluded disposition and the applicable policy/evidence reason for each inventoried file,
+**And** handwritten code, configuration, templates, schemas and DSLs remain eligible; identified tests, generated source and vendored dependencies default to supporting evidence, while README/explanatory documents supply context rather than automatic Code Logic work,
+**And** automatic classification cannot silently exclude or downgrade source based solely on a filename, unfamiliar extension, CodeGraph omission or advisory ranking,
+**And** an explicit policy exclusion remains visible as a policy choice rather than a claim that the source was analyzed. (FR-4.1; AR-2/5.)
 
-**Given** I am logged in as a SystemOwner or User
-**When** I view the management interface
-**Then** the 用户管理 page shall not be visible in settings navigation
-**And** I shall be denied access if I attempt to navigate to it directly
+**Given** unfamiliar extensions/dialects, conflicting format hints, unsupported content access or files too large for a bounded inspection,
+**When** the inventory/profile result is produced,
+**Then** unknown classification, capability limitation and source eligibility remain separate facts, with unfamiliar source kept eligible under the declared policy rather than silently discarded,
+**And** the result distinguishes observed entry/disposition counts from source actually analyzed, Code Units or generated Documents,
+**And** neither bounded inspection nor an empty eligible set is reported as completed semantic coverage. (FR-4.1; NFR-1.1; AR-4/5/8; UX-DR35 data contract.)
 
-**Given** the first Administrator account
-**When** the application starts with an empty database
-**Then** the registration of the very first user shall automatically assign the Administrator role
-**And** subsequent registrations shall default to the User role
+**Given** a completed inventory/profile result and its exact-source and policy bindings,
+**When** a later authorized consumer reads it or the same declared inputs are evaluated again,
+**Then** the result has stable, inspectable source/policy provenance and does not follow a moved Git ref or silently adopt changed policy,
+**And** identical source, policy and declared inspection rules produce the same factual classifications and selection outcomes rather than relying on incidental enumeration order,
+**And** a changed policy produces a separately identified selection result without rewriting source facts or earlier results,
+**And** Source Snapshot owns inventory; Scan Control owns the Repository Profile and policy selection; only records needed for these results are introduced, not future job, Code Unit or Knowledge schemas. (FR-4.1/4.9; AR-2/3/4 and the shared record-ownership table.)
 
----
+**Given** bounded traversal/inspection limits, pagination, cancellation, access revocation or an unreadable entry,
+**When** the capability cannot finish the requested inventory or inspection,
+**Then** it returns an explicit incomplete/limited/failed outcome and preserves the distinction between enumerated entries and unknown remainder; pagination or capped output cannot masquerade as a complete inventory,
+**And** it honors the shared source grant/budget, stops owned work and exposes no unauthorized content, paths or counts,
+**And** a limited inspection of one entry is distinguished from incomplete Repository enumeration; neither silently turns unfinished source into excluded or analyzed work. (NFR-1.1/2.3/3.1; AR-3/4/5/8.)
 
-### Epic 2: System & Repository Management
+**Given** isolated committed-source fixtures on the Story 13.2 deployment baseline,
+**When** this capability is verified against mixed languages, configuration/templates/schemas/DSLs, unfamiliar extensions, misleading filenames, supporting/context files, explicit policy exclusions and interrupted/limited enumeration,
+**Then** exact binding, reasoned dispositions, explicit unknowns and honest completeness/counts are observable through the real application/source contracts without any model or analysis-tool calls,
+**And** these checks do not activate the generic Scan route, manufacture Code Units/Documents, qualify tool readiness or waive required CodeGraph preparation before Pass 1. (FR-4.1/4.9; AR-4/5/7/16/32.)
 
-#### Story 2.1: System CRUD (SystemOwner/Administrator)
+**Scope and dependencies:**
 
-As a **SystemOwner or administrator**,
-I want to create, edit, and delete Systems,
-So that I can organize repositories into logical groupings.
+- **Value:** explain what exact source exists and why it is eligible, supporting, context-only or excluded before expensive analysis. A callable result is sufficient; no new inventory-management UI or additional user start button is required.
+- **Dependencies:** Stories 13.1–13.2 and retained Repository authorization only. This capability must work without future structured parsers, tool sessions, Worker execution or the complete Scan coordinator.
+- **No hidden execution prerequisite:** bind directly to the Source Snapshot, policy and declared inspection rules; require no ScanRun/Repository Scan Run or job record. Reusing an existing persistence type must not introduce those prerequisites. Later Scan Control can attach the result to its execution contract.
+- **Ownership:** establish inventory and profile/policy-selection behavior under their adopted owners. Later ordering/scheduling extends the same Scan Control selection contract; it must not create a competing eligibility authority. Technical planning chooses the minimal result storage/bindings required, without preallocating the entire Scan lifecycle.
+- **Shallow inspection only:** bounded signature/format recognition and layout facts are in scope. Implement only the factual probing operation needed now behind the single Source Content Analysis contract, without a parallel temporary parser or placeholder future methods. Structured trees, dialect meaning, detailed on-demand content tools and dynamic parser/plugin generation are not required here; unfamiliar content remains accessible through scoped source reads.
+- **Excluded:** LLM Advisory Overview, CodeGraph indexing/MCP, LSP startup/navigation, semantic Code Unit extraction, communication classification/resolution, Worker scheduling, full Scan recovery/progress UI, Knowledge publication and automatic update scanning. No fixed language/sample-repository recipe is adopted.
+- **Requirement credit:** the inventory/profile/explicit file-selection portion of FR-4.1 and related source/coverage/privacy invariants only. This does not complete all PreScan, FR-4.9, source analysis or the full UX-DR35 presentation requirement.
+- **Later gates:** definition approval does not authorize implementation. The concrete Scan-strategy plan requires independent plan review and the explicit planned-change approval before task generation, followed by normal verification gates.
 
-**Acceptance Criteria:**
+**Definition approval:** The user approved Story 13.3 on 2026-09-11. Approved proposal SHA-256: `B32234963DBF46FADAE1091B155AE379046970728A521F3D69BD1B6D01F083C6`. This is story-definition approval, not implementation, feature activation or runtime qualification.
 
-**Given** I am logged in as a SystemOwner or Administrator
-**When** I navigate to 管理后台 → 系统管理
-**Then** I shall see the system tree view in the left sidebar (FluentTreeView, UX-DR-10)
-**And** the main content area shall show system stats when a system is selected
 
-**Given** I am on the system tree view
-**When** I click "+ 新建系统" and enter a name (required), description (optional), and plain-text supplementary context (optional) in an inline CreateSystemDialog
-**Then** the System shall be created
-**And** it shall appear in the system tree immediately
-**And** if I am a SystemOwner, I shall be assigned as an owner of the newly-created System
+### Story 13.4: Inspect structured and unfamiliar source without executing it
 
-**Given** a System exists
-**When** I right-click the system node and select "编辑" (Edit) to open an edit dialog
-**Then** I shall be able to modify its name, description, or plain-text context
-**And** the changes shall be saved and reflected immediately
-
-**Given** a System exists with no assigned SystemOwners and no repositories
-**When** I right-click and select "删除" (Delete)
-**Then** a confirmation dialog shall appear
-**And** upon confirmation, the System shall be removed from the tree
-
-**Given** a System has assigned SystemOwners or repositories
-**When** I attempt to delete it
-**Then** I shall see an error "Cannot delete a System with assigned owners or repositories — remove them first"
-
-**Given** I attempt to create a System with a name that already exists
-**When** I submit the dialog
-**Then** I shall see a validation error
-
-**Given** I am logged in as a SystemOwner
-**When** I view the 系统管理 page
-**Then** I shall see only Systems I am assigned to in the tree
-**And** I shall see the "+ 新建系统" button
-
-**Given** I am logged in as a regular User
-**When** I view the application
-**Then** the 管理后台 nav link shall not be visible
-
-#### Story 2.2: Grant System Ownership
-
-As an **administrator**,
-I want to assign a registered user as the SystemOwner of a specific System,
-So that the user can manage that System's repositories, scans, and context.
+As a System Owner,
+I want exact-source configuration, schema, template and DSL content to remain inspectable through a shared safe format capability,
+So that unfamiliar meaning does not silently remove useful evidence or become invented business behavior.
 
 **Acceptance Criteria:**
 
-**Given** I am logged in as an Administrator viewing a System's detail in 系统管理
-**When** I see the System detail panel (UX-DR-12: name, description, stat cards, repo grid)
-**Then** there shall be an "管理所有者" (Manage Owners) action
-**And** it shall display the current list of SystemOwners for that System
-**And** include a searchable user picker to add new owners
+**Given** an authorized Source Snapshot and Story 13.3's factual inventory,
+**When** a consumer requests a compact format summary or bounded structural detail,
+**Then** the same Source Content Analysis contract used for shallow recognition provides the declared XML, JSON, YAML and properties support,
+**And** results retain Repository, Profiled Revision, relative locations, inspected extent and format/profile provenance, without treating parsed nodes as Code Units. (FR-4.1/4.9/5.14; AR-3/5.)
 
-**Given** I select a registered user in the SystemOwner assignment dialog
-**When** I confirm the assignment
-**Then** the user shall be granted the SystemOwner role for that System
-**And** the user shall immediately see the System in their system tree view
-**And** the user shall be able to manage repositories, trigger scans, and supply context for that System
+**Given** recognized syntax containing an unfamiliar framework/dialect or unsupported semantic construct,
+**When** the format reader processes it,
+**Then** useful supported structure and source locations remain available while unknown meaning and any unsupported portion are explicit,
+**And** an optional declared dialect interpreter cannot turn absent knowledge into confirmed communication or deployment facts. (FR-5.8/5.14; AR-4/5/22.)
 
-**Given** a user is assigned as SystemOwner for a System
-**When** I remove their SystemOwner assignment
-**Then** they shall immediately lose access to manage that System
-**And** if they held no other SystemOwner assignments or Administrator role, 管理后台 shall no longer appear in their navbar
+**Given** unrecognized syntax, ambiguous format hints or malformed recognized content,
+**When** inspection finishes,
+**Then** results distinguish these outcomes from one another and from source-access failure,
+**And** authorized source reading remains available for unfamiliar syntax; any partial structure is labelled with its limitation,
+**And** no outcome silently changes Story 13.3's eligibility or claims whole-file analysis. (FR-4.1/5.14; AR-3/5.)
 
-**Given** I assign the SystemOwner role to a user who currently holds only the User role
-**When** the assignment is saved
-**Then** the user shall be promoted to the SystemOwner role
-**And** their authorization scope shall be limited to the assigned System(s)
+**Given** documented supported format/profile configuration,
+**When** an owner supplies supported framework/context patterns or a consumer parses hostile content,
+**Then** permitted declarative configuration works without a code change within its documented format,
+**And** the capability performs no configuration execution, external entity/resource fetching, dependency restoration, dynamic parser generation or plugin loading,
+**And** unsupported syntax extensions explicitly require implementation rather than pretending configuration can supply arbitrary parsers. (FR-5.14; NFR-2.3/6.2; AR-5/22.)
 
-**Given** I attempt to assign a user who is already an Administrator as a SystemOwner
-**When** I search for the user in the assignment dialog
-**Then** the user shall be excluded from the available list (Administrators already have full access)
+**Given** cumulative source/output/deadline limits, deep or expansive input, pagination, cancellation or access revocation,
+**When** requested inspection exceeds its authority or safe budget,
+**Then** it stops with an explicit bounded/incomplete outcome, preserving located evidence already permitted without presenting truncation as completeness,
+**And** repeated detail calls share their granted budget and disclose no unauthorized source, counts or physical paths. (NFR-1.1/2.3/3.1; AR-3/5/6.)
 
-#### Story 2.3: Repository Management
+**Given** isolated committed fixtures containing all declared formats, an unfamiliar extension/dialect and malformed/hostile content,
+**When** real application consumers call summary and detail operations on the Docker baseline,
+**Then** verification demonstrates preserved locations, safe bounded inspection and truthful unknown/malformed distinctions without an LLM, CodeGraph or LSP requirement,
+**And** no result is labelled a generated Document, accepted communication observation or completed Scan. (FR-4.9/5.14; AR-5/16/32.)
 
-As a **SystemOwner**,
-I want to add and remove repositories to my granted Systems with git URL validation,
-So that Vulgata can scan the source code within those repositories.
+**Scope and dependencies:**
 
-**Acceptance Criteria:**
+- Depends only on Stories 13.1–13.3. Extend their Source Content Analysis seam and only necessary storage; no parallel parser, fixed RPC/XML recipe or mandatory dialect interpreter.
+- Callable inspection needs no new preparation button. UX-DR35/46 constrain truthful limitations/counts; preserve UX-DR45/47–49 if UI changes, without claiming full dashboard/reader delivery.
+- The spine identifies `Infrastructure/CommunicationDetection/` and source readers as reuse candidates, not proven generic support. Technical planning verifies reuse and passes the Agent-tool/Scan-strategy approval gate.
 
-**Given** I am logged in as a SystemOwner viewing a System I am assigned to in 系统管理
-**When** I select the System in the tree
-**Then** the main content area shall show the system detail with a FluentDataGrid of repositories (UX-DR-12)
-**And** each row shall display: repo name, scan status, last scan time, document count, and a "查看" action
+**Definition acceptance:** Accepted under the user's 2026-09-11 confident-boundary delegation after source-grounded scope/coverage checks. Story 13.4 grants no implementation or runtime authority.
 
-**Given** I click "+ 新建仓库" above the repo grid
-**When** I enter name (required), description (optional), git remote URL (required), and plain-text context (optional) in an inline CreateRepoDialog
-**Then** the system shall validate the git URL is reachable by attempting `git ls-remote`
-**And** on success, the Repository shall be created and added to the System
-**And** it shall appear in the repo grid and system tree immediately
+### Story 13.5: Prepare exact Repository source for native CodeGraph MCP use
 
-**Given** I enter a git URL that is not reachable
-**When** the validation runs
-**Then** I shall see an error "Git URL 不可达：{details}" (Git URL is not reachable)
-**And** the Repository shall not be created
-
-**Given** I enter a git URL that requires authentication
-**When** validation runs
-**Then** I shall see an error indicating authentication is required
-**And** the URL validation shall not expose credentials in error messages
-
-**Given** a Repository exists in my System
-**When** I select it in the tree and use the "删除" (Delete) action
-**Then** a confirmation dialog shall appear
-**And** upon confirmation, the Repository shall be removed
-**And** all Documents and scan results for that Repository shall be preserved
-
-**Given** I am a SystemOwner of System A
-**When** I view System B (not assigned to me) in the tree
-**Then** System B shall not appear
-
-#### Story 2.4: Standalone Repository Creation
-
-As a **SystemOwner**,
-I want to create standalone Repositories not belonging to any System,
-So that shared libraries with organization-owned source code can be scanned independently.
+As a System Owner,
+I want required CodeGraph preparation and native MCP access bound to the exact authorized Repository source,
+So that later analysis can investigate real structural evidence without querying a different checkout or silently losing a required capability.
 
 **Acceptance Criteria:**
 
-**Given** I am logged in as a SystemOwner
-**When** I navigate to the system tree view
-**Then** I shall see a section for "独立仓库" (Standalone Repositories) below the system list
-**And** a "新建独立仓库" button shall be available
+**Given** an authorized Source Snapshot on Story 13.2's Docker baseline,
+**When** the application requests CodeGraph preparation,
+**Then** a trusted adapter materializes or reopens a contained Tool Workspace from verified canonical bytes, performs required native preparation and connects the native MCP surface,
+**And** preparation records its source binding, declared tool/configuration identity and actual outcome; installation alone is not readiness. (FR-4.9/13.1; AR-3/4/6/30.)
 
-**Given** I create a Standalone Repository
-**When** I enter name, description, git URL, and optional plain-text context in the CreateRepoDialog
-**Then** the git URL shall be validated for reachability
-**And** the Repository shall be created without a System association
-**And** it shall appear under the "独立仓库" section in the tree
+**Given** a prepared authorized binding and an approved Scan-purpose invocation,
+**When** the native recommended CodeGraph MCP tools are exposed or invoked,
+**Then** the application fixes `projectPath` outside model-controlled arguments and applies granted scope, cumulative budgets and provenance,
+**And** a caller cannot switch project, Repository, revision, credentials or physical workspace through arguments, identifiers or returned paths,
+**And** Scan permission grants neither Chat approval nor Business Mode source access. (FR-13.1/13.3; NFR-2.3; AR-3/6.)
 
-**Given** a Standalone Repository exists
-**When** displayed in the tree
-**Then** it shall be visually distinguished from System-associated repositories
-**And** its detail panel shall display "独立仓库" as its System
+**Given** successful native tool results, index omissions or unsupported constructs,
+**When** the application returns evidence to an authorized consumer,
+**Then** native exploration remains usable with exact source provenance and explicit capability/index limitations,
+**And** any returned source obeys the same disclosure authority as scoped source reads,
+**And** transient tool symbols, absent results and index completion establish neither permanent Code Unit identity nor complete source coverage. (FR-4.1/4.9; AR-4/5/6/7.)
 
-**Given** I am a SystemOwner who created a Standalone Repository
-**When** other SystemOwners view the tree
-**Then** they shall see all Standalone Repositories (shared across SystemOwners)
+**Given** startup, preparation, connection or later required-CodeGraph failure,
+**When** capability readiness is evaluated,
+**Then** the result identifies the failing prerequisite and permits an authorized bounded retry of that exact binding,
+**And** required readiness remains unavailable until re-established, without source-only fallback, CGC restoration or legacy pair routing,
+**And** application/database readiness and existing authorized Knowledge reading remain separate. (FR-4.9/12.4; NFR-3.1; AR-15/16/32.)
 
-#### Story 2.5: User-Supplied Context
+**Given** concurrent consumers, cancellation, timeout, access loss or preparation failure,
+**When** the Tool Runtime settles the operation,
+**Then** configured tool capacity and ownership prevent unsafe shared mutation, stop owned work and release disposable leases/process resources within a declared finite cleanup policy,
+**And** cleanup preserves canonical retained source and another authorized consumer's still-owned tool state. (NFR-2.3/3.1/4.1; AR-3/23/31.)
 
-As an **administrator or SystemOwner**,
-I want to supply plain-text context at global, System, or Repository level,
-So that agents have supplementary information when scanning and answering questions.
+**Given** isolated real Repository fixtures inside the two-service deployment,
+**When** qualification exercises actual preparation, MCP discovery/invocation, wrong-project rejection, limitations and failure/reopen paths,
+**Then** evidence shows real native MCP use against the captured revision without host-tool installations or a remote bridge,
+**And** records distinguish native-tool qualification from model quality or completed Scan. (FR-4.9/13.1; NFR-4.1; AR-30/32.)
 
-**Acceptance Criteria:**
+**Scope and dependencies:**
 
-**Given** I am logged in as an Administrator
-**When** I navigate to 管理后台 → 设置 → 全局上下文 (Global Context)
-**Then** I shall see a plain-text context field labelled "全局上下文（适用于所有系统）"
-**And** I shall be able to edit and save it
+- Depends on Stories 13.1–13.4, not a Repository Scan Run or future Worker/Knowledge schemas. Tool Runtime owns process/workspace leases; later durable control composes this capability.
+- Native recommended exploration, not a homegrown query protocol. General configurable MCP remains original backlog. No LSP, semantic acceptance or public Scan cutover.
+- UX-DR34/46 constrain readiness feedback; preserve UX-DR45/47–49 if touched. The spine identifies `Infrastructure/Analysis/CodeGraph/` for reuse, not runtime proof. Technical planning qualifies native package/launch behavior and obtains tool/Scan-strategy approval.
 
-**Given** I am logged in as a SystemOwner viewing a System I am assigned to
-**When** I open the System's "设置" (Settings)
-**Then** I shall see a plain-text context field labelled "系统上下文"
-**And** I shall be able to edit and save it
+**Definition acceptance:** Accepted under the user's 2026-09-11 confident-boundary delegation after source-grounded scope/coverage checks. Story 13.5 grants no implementation or runtime authority.
 
-**Given** I am logged in as a SystemOwner viewing a Repository in my System
-**When** I open the Repository's "设置" (Settings)
-**Then** I shall see a plain-text context field labelled "仓库上下文"
-**And** I shall be able to edit and save it
+### Story 13.6: Navigate exact source through one declared language-neutral LSP session
 
-**Given** context is supplied at multiple levels (global + system + repo)
-**When** agents use context during scanning or chat
-**Then** all three levels shall be combined (global → system → repo) and provided to the agent
-**And** context shall be plain text only — no structured formats, markdown, or attachments at this stage
-
-**Given** a Scan is running for a Repository
-**When** a SystemOwner attempts to change the Repository's context
-**Then** the change shall be queued and applied after the Scan completes
-**And** the SystemOwner shall see a notification "上下文修改将在当前扫描完成后生效"
-
-**Given** no Scan is running
-**When** context is updated at any level
-**Then** the change shall take effect immediately for subsequent scans and chat queries
-
-**Given** I am logged in as a regular User
-**When** I view System or Repository settings
-**Then** context fields shall be visible as read-only
-**And** I shall not see edit controls
-
----
-
-### Epic 3: LLM Provider & Database Connection Configuration
-
-#### Story 3.1: LLM Provider Configuration (Administrator)
-
-As an **administrator**,
-I want to configure multiple LLM providers at the global level with default LLM task-type assignments and test connections,
-So that the platform has reliable LLM access with automatic failover for all LLM-powered tasks.
+As a System Owner,
+I want applicable language navigation over the exact Repository source with honest tool limitations,
+So that analysis can use available type/reference evidence without silently importing dependencies or confusing incomplete navigation with absent behavior.
 
 **Acceptance Criteria:**
 
-**Given** I am logged in as an Administrator
-**When** I navigate to 管理后台 → 设置 → LLM 提供商
-**Then** I shall see a list of all configured LLM Providers with their name, base URL, supported API types, and default LLM task-type assignment
-**And** a "添加提供商" button shall be available
+**Given** a retained Source Snapshot and factual Repository Profile,
+**When** the application selects the declared applicable LSP profile,
+**Then** selection is deterministic application policy, with JDT-LS as the initially implemented adapter and an explicit not-applicable/unsupported outcome elsewhere,
+**And** callers cannot choose adapters, revisions or physical workspaces; language-neutral capability contracts do not promise support for unimplemented languages. (FR-15.1/15.3; AR-4/6.)
 
-**Given** I click "添加提供商"
-**When** I enter a provider name (required), base endpoint URL (required), API key (required, masked input), supported API types — chat completions, responses, messages (multi-select checkboxes), and a default LLM task-type assignment — pre-scan, worker, chat (dropdown per task type)
-**Then** the API key shall be stored encrypted at rest via ASP.NET Core Data Protection (NFR-2.2)
-**And** the provider shall appear in the list
+**Given** an applicable JDT-LS profile on the bundled Docker baseline,
+**When** Tool Runtime starts or reuses navigation,
+**Then** at most one LSP session serves that Source Snapshot using its whole-Repository contained workspace and separate replaceable state,
+**And** canonical source remains unchanged and session provenance records the selected profile, tool/runtime inputs and exact source binding. (FR-4.9/15.3; AR-3/4/30.)
 
-**Given** a provider exists in the list
-**When** I click "测试连接"
-**Then** the system shall send a minimal API call to verify the endpoint and credentials
-**And** display a success notification "连接成功" or an error "连接失败：{details}"
-**And** the test shall not consume significant token quota (minimal payload)
+**Given** source containing Maven/Gradle build declarations, wrappers or missing dependencies,
+**When** initial local-source navigation initializes and runs,
+**Then** the qualified launch policy disables automatic project import, build/wrapper execution and dependency restoration/download rather than merely documenting client settings,
+**And** it does not acquire hidden host dependency state,
+**And** unavailable classpath/dependency evidence is explicit; this temporary policy neither promises permanent local-only topology nor imposes network air-gapping. (FR-15.1–15.3; AR-4/15.)
 
-**Given** a provider in the list
-**When** I edit its name, URL, API key, API types, or default LLM task-type assignment
-**Then** the changes shall be saved immediately
-**And** the provider's updated defaults shall apply to all Systems that use the global default (no per-System override set)
+**Given** an authorized source location and a declared navigation capability,
+**When** a consumer requests supported definition/type/reference information,
+**Then** normalized Repository-relative locations or evidence handles, limitations and invocation receipts support subsequent scoped source reads,
+**And** the response distinguishes successful, incomplete, unsupported and failed navigation,
+**And** empty results or missing external types do not prove absence of a relationship or complete semantic understanding. (FR-15.2; NFR-2.3; AR-3/6.)
 
-**Given** a provider is currently in use by any active Scan
-**When** I view the provider in the list
-**Then** the "删除" button shall be disabled
-**And** a tooltip shall display "该提供商正被扫描使用，无法删除"
+**Given** concurrent requests, exhausted limits, cancellation, access revocation or a failed session,
+**When** Tool Runtime processes or settles work,
+**Then** shared operations queue or serialize where safety is unqualified, respect cumulative deadlines/budgets and stop owned requests within the declared cleanup bound,
+**And** source grants and session leases prevent cross-Repository disclosure or disposal underneath independent authorized consumers,
+**And** any replacement session retains the same verified source/profile binding. (NFR-3.1/4.1; AR-3/6/23/31.)
 
-**Given** a provider is not in use by any active Scan
-**When** I click "删除"
-**Then** a confirmation dialog shall appear
-**And** upon confirmation, the provider shall be removed
-**And** if this provider was the only one configured, the system shall warn "删除后无可用提供商，扫描和对话功能将不可用"
+**Given** real isolated Java Repository fixtures in Docker, including whole-snapshot local references and missing-dependency/build-trigger cases,
+**When** qualification exercises supported navigation, concurrent reuse, denied scope and failure cleanup,
+**Then** evidence proves actual JDT-LS requests and the no-import/build/restore policy at the tested configuration, not merely archive presence or startup,
+**And** results make no complete-classpath, multiple-session, multi-language or full-Scan claim. (FR-15.1–15.3; AR-4/30/32.)
 
-**Given** multiple providers are configured
-**When** the LLMProviderManager selects a provider for an LLM task
-**Then** the default provider per task type shall be used first
-**And** on failure, the next available provider supporting the required API type shall be used (automatic failover)
+**Scope and dependencies:**
 
-**Given** I am logged in as a SystemOwner or User
-**When** I view settings
-**Then** the LLM Provider configuration section shall not be visible
+- Depends only on Stories 13.1–13.5, not future Workers/Knowledge schemas. LSP never substitutes for required CodeGraph.
+- Initially only JDT-LS; no dependency-aware import/builds/restores, multiple sessions, remote bridge or host-install prerequisite. One runtime contract owns tool/profile details.
+- UX-DR34/46 constrain applicability/limitations; preserve UX-DR45/47–49 if touched. The spine identifies `Infrastructure/Analysis/Java/` for reuse; assets and VS Code settings do not qualify standalone behavior. Agent-tool/Scan-strategy plan approval remains mandatory.
 
-#### Story 3.2: Per-System LLM Provider Override
+**Definition acceptance:** Accepted under the user's 2026-09-11 confident-boundary delegation after source-grounded scope/coverage checks. Story 13.6 grants no implementation or runtime authority.
 
-As a **SystemOwner**,
-I want to override the global default LLM provider for each LLM task role within my System,
-So that different Systems can use different LLM backends.
+### Story 13.7: Recover and control durable Repository preparation with shared limits
 
-**Acceptance Criteria:**
-
-**Given** I am logged in as a SystemOwner viewing a System I am assigned to
-**When** I navigate to the System's 设置 page
-**Then** I shall see an "LLM 提供商" section showing the current provider assignment for each LLM task type (pre-scan, worker, chat)
-**And** each shall default to "使用全局默认 — {provider name}"
-
-**Given** I am on the System LLM settings page
-**When** I select a different provider from the dropdown for the pre-scan task type
-**Then** that System's pre-scan LLM profiling tasks shall use the selected provider instead of the global default
-**And** the dropdown shall only show providers whose supported API types include the required capability for that task role
-
-**Given** I have overridden the worker agent provider for System A
-**When** System A triggers a scan
-**Then** Worker Agents for that System shall use the overridden provider
-**And** Systems without overrides shall continue using global defaults
-
-**Given** I have overridden a provider for my System
-**When** I select "使用全局默认" from the dropdown
-**Then** the override shall be cleared
-**And** the System shall revert to the global default for that LLM task type
-
-**Given** the global default provider is deleted by an Administrator while a System was using it without an override
-**When** the deletion completes
-**Then** the System's LLM task type shall fall back to the next available global default provider
-**And** the SystemOwner shall see a notification "全局默认提供商已变更" on next visit
-
-**Given** I am a SystemOwner of System A
-**When** I view System B's settings (not assigned to me)
-**Then** System B shall not be accessible
-
-#### Story 3.3: Database Connection Configuration
-
-As a **SystemOwner**,
-I want to configure database connections per Repository with encrypted credentials,
-So that Worker Agents can inspect database schemas and query sample data during scanning.
+As a System Owner,
+I want Repository preparation to have durable ownership, real status and explicit recovery under shared limits,
+So that interruption or competing work does not lose exact-source progress, double-own work or consume capacity indefinitely.
 
 **Acceptance Criteria:**
 
-**Given** I am logged in as a SystemOwner viewing a Repository in my System
-**When** I navigate to the Repository's 设置 → 数据库连接
-**Then** I shall see a form to add a database connection with fields: connection name (required), connection string (required, masked input), database type — PostgreSQL, SQL Server, MySQL, Oracle (dropdown), and credentials — username/password (required, masked input)
-**And** a list of any already-configured connections for this Repository
+**Given** an authorized Repository preparation request, including a standalone Repository,
+**When** Scan Control accepts it through a callable application entry point,
+**Then** durable execution fixes one Source Snapshot, intent, authority, preparation jobs and outcomes outside request/circuit lifetime,
+**And** existing inventory/tool capabilities require no pair identity or Repository completion barrier. (FR-4.2/4.9; AR-1/2/3/14.)
 
-**Given** I submit a valid database connection configuration
-**When** I click "测试连接"
-**Then** the system shall attempt to connect to the database with read-only access
-**And** display success "连接成功" or error "连接失败：{details}"
-**And** credentials shall be stored encrypted at rest via ASP.NET Core Data Protection (NFR-2.2)
+**Given** concurrent eligible preparation and bounded source-inspection jobs,
+**When** Scan Control admits work,
+**Then** deterministic fair scheduling enforces configured global/per-run capacity and one valid run/snapshot/file lease owner for the relevant exclusive work,
+**And** Agent Execution provider admission and Tool Runtime capacity remain application-wide, not multiplied per run,
+**And** waiting work holds no Worker permit while awaiting unavailable dependencies. (FR-4.2/12.2; AR-2/23/30.)
 
-**Given** I configure a database connection
-**When** saved
-**Then** the connection shall default to read-only mode (NFR-2.4)
-**And** write operations shall be blocked at the connection level
+**Given** a job completion replay, lost acknowledgement, expired ownership or host restart,
+**When** durable state is reconciled,
+**Then** completed results are reused idempotently and stale attempts cannot advance progress,
+**And** unfinished work becomes explicitly recoverable/paused with old ownership invalidated, rather than automatically replaying saved running state,
+**And** source, preparation evidence and history remain intact. (NFR-3.3/4.1; AR-15/31.)
 
-**Given** a database connection is configured
-**When** I edit its name, connection string, type, or credentials
-**Then** the changes shall be saved and encrypted immediately
+**Given** temporary provider errors, configuration failure or required-tool failure,
+**When** the controller applies its classified recovery policy,
+**Then** temporary Scan-provider failures receive bounded increasing retries and then durable pause; configuration failures require correction,
+**And** explicit resume rechecks current authority, exact source, provider identity and required capabilities without silent provider/source substitution,
+**And** Chat retains its distinct lifecycle. (NFR-3.1/3.2; AR-15/23.)
 
-**Given** a database connection is configured
-**When** I delete it
-**Then** a confirmation dialog shall appear
-**And** upon confirmation, the connection shall be removed
-**And** encrypted credentials shall be purged
+**Given** pause, cancellation, deadline expiry or lease loss during queued/running work,
+**When** control settles that request,
+**Then** it fences late results, stops owned pending/downstream work and completes or reports failed cleanup within a configured finite bound,
+**And** permits/processes/unneeded leases are reclaimed without cancelling independent consumers or deleting retained source,
+**And** cancelling remains distinct from confirmed cancellation; one reusable append-only `log.md` sink records controller/system events as `## [YYYY-MM-DD HH:MM] operation | target`, without source, credentials or hidden reasoning; available usage is reported and unknown usage is not zero. (FR-4.8/12.4; NFR-3.1; AR-14/23/32.)
 
-**Given** I have configured a database connection for a Repository
-**When** that Repository is scanned
-**Then** Worker Agents shall be able to use the connection for schema inspection (FR-10.2) and sample data queries (FR-10.3) via tool interfaces implemented in Story 5.9
+**Given** completed preparation, a failure, or exhaustion of available capacity,
+**When** status is read and isolated restart/concurrency/replay scenarios are verified,
+**Then** actual operations and admitted primary pending work are inspectable separately from semantic coverage and Knowledge Currentness,
+**And** preparation completion never marks files analyzed, invents Worker/Document counts or enables the incomplete generic Scan action. (FR-12.1–12.4; AR-8/14/16/32; UX-DR31–35.)
 
-**Given** I am a SystemOwner of Repository A
-**When** I view Repository B (not in my System)
-**Then** I shall not see its database connection settings
+**Scope and dependencies:**
 
----
+- Depends on Stories 13.1–13.6. Deliver preparation/inspection handlers and callable status/control; only necessary execution/lease/progress records, no Knowledge schemas, full dashboard or stage-start buttons.
+- Own shared admission/recovery; later jobs extend it. Controlled clients verify provider-failure policy before 13.8's real overview. Later Scan stages/Epic 15 queries reuse the log sink; no whole-FR-4.8 credit yet.
+- UX-DR33–35/46 constrain control/status; preserve UX-DR45/47–49 if touched. The spine flags pair coordination for decomposition, not automatic migration. Independent review and Scan-strategy approval remain required.
 
-### Epic 4: Pre-Scan Profiling
+**Definition acceptance:** Accepted under the user's 2026-09-11 confident-boundary delegation after source-grounded scope/coverage checks. Story 13.7 grants no implementation or runtime authority.
 
-#### Story 4.1: CodeGraph Integration & Code Unit Extraction
+### Story 13.8: Add bounded advisory Repository overview and file ordering
 
-As a **SystemOwner**,
-I want the system to automatically parse a repository's source code into Code Units with call-graph edges using CodeGraph before scanning begins,
-So that Worker Agents receive well-defined, line-range-bounded code segments with structural context instead of raw files.
-
-**Acceptance Criteria:**
-
-**Given** a Repository has been added with a validated git URL
-**When** the SystemOwner triggers a scan (via "开始扫描" button in RepoDetail)
-**Then** the system shall clone or pull the repository via GitCloneService into a local working directory
-**And** invoke CodeGraph CLI in batches of ~1,000 files with a configurable per-file timeout (default 30s)
-**And** the parse output shall be captured as a `CodeGraphParseResult` containing: list of extracted CodeUnits, list of skipped files with reasons, list of errored files with error messages, parse duration, and total files parsed
-
-**Given** the CodeGraph parse output is received
-**When** the results are validated
-**Then** malformed JSON entries shall be rejected and logged at Warning level with file path
-**And** files that cause parse hangs or crashes shall be isolated: skipped with error reason recorded, processing continues with remaining files
-**And** if parse returns 0 Code Units from 500+ source files, a Warning shall be logged and the scan flagged for human review
-
-**Given** the CodeGraph parse completes
-**When** the results are processed
-**Then** a scan filter shall exclude non-code files: generated code, vendored directories, binary files, minified JavaScript, auto-generated protobuf/Thrift stubs, and files in `.gitignore`-excluded paths
-**And** filtered Code Units shall be stored with status `Filtered` (preserved for auditability, not deleted)
-
-**Given** valid Code Units have been extracted
-**When** stored to the `code_units` table
-**Then** each Code Unit shall contain: `id` (UUID), `scan_id` (FK → scan_runs), `repo_id` (FK → repositories), `file_path`, `file_identity_hash` (SHA-256 of canonical path — for rename detection in Epic 10), `line_start`, `line_end`, `symbol_name`, `unit_type` (enum mapping from CodeGraph symbol kind: function→Function, class→Class, method→Method, namespace→Namespace, module→Module), `source_hash` (SHA-256 of source content — for change detection in Epic 10), `range_confidence` (enum: Exact, Approximate, Heuristic), `language` (populated in Story 4.2), and `status` (Extracted → Pending → Dispatched → Completed | Failed | Skipped, with Filtered as a terminal state for excluded files)
-**And** the status shall be set to `Pending` for all non-filtered Code Units
-
-**Given** CodeGraph produces call-graph edges (symbol → symbol relationships)
-**When** the results are stored
-**Then** each call-graph edge shall be stored in a `code_unit_edges` table containing: `id` (UUID), `source_code_unit_id` (FK), `target_code_unit_id` (FK), `edge_type` (enum: Calls, Imports, Inherits, Contains), and `is_resolved` (boolean — whether the target symbol was found in the same repository)
-**And** these edges shall be available for: superstep grouping (batch related code units), Worker context injection (each Worker receives its callers/callees), and cross-repo detection seed data (unresolved edges = cross-repo candidates for Epic 7)
-
-**Given** a repository has 10,000 source files
-**When** the CodeGraph parse runs
-**Then** extraction shall complete within a timeframe that does not block the overall scan pipeline
-**And** progress shall be reported via minimal dashboard (files parsed / total files, Epic 8 builds the full dashboard)
-
-**Given** CodeGraph CLI is not installed in the container
-**When** the parse is triggered
-**Then** the system shall log an Error-level message "CodeGraph CLI not found" and abort the scan with a user-visible error
-
-**Given** the repository clone fails (network error, auth failure)
-**When** the scan is triggered
-**Then** the system shall log the error and display "仓库克隆失败：{details}" to the SystemOwner
-**And** the scan shall transition to Failed status
-
-#### Story 4.2: Language & Framework Detection
-
-As a **SystemOwner**,
-I want the system to automatically identify the programming languages and frameworks used in each Code Unit during pre-scan profiling,
-So that Worker Agents receive accurate language context for prompt generation.
+As a System Owner,
+I want a bounded overview of Repository structure and supplied context with traceable advisory ordering,
+So that analysis can start with useful orientation while source facts, file eligibility and scheduling authority remain reliable.
 
 **Acceptance Criteria:**
 
-**Given** Code Units have been extracted from a repository
-**When** profiling continues
-**Then** each Code Unit's `language` column shall be populated using tree-sitter parser identification via CodeGraph (not file extension heuristics alone)
-**And** supported languages shall include: C#, Java, Python, JavaScript, TypeScript, Go, Kotlin, Swift, Rust, C, C++, and any language CodeGraph supports at the CLI level
+**Given** authorized Global, System and Repository context plus an exact-source inventory/profile and selection,
+**When** Scan Control creates the overview job,
+**Then** it captures the immutable Scan Context Snapshot with provenance, including absent context for standalone Repositories,
+**And** edits queue for later application; optional context/catalog assertions are not source proof and require no detailed service-to-Repository mappings. (FR-5.1/5.8/14.1–14.4; AR-2/4/22.)
 
-**Given** a repository's Code Units span multiple languages
-**When** profiling completes
-**Then** the system shall produce a language breakdown visible in the scan overview (e.g., "C#: 450 files, TypeScript: 120 files, Python: 30 files")
+**Given** retained global provider registration, simultaneous provider configurations, per-System role assignments and an externalized prompt,
+**When** Agent Execution runs the bounded model task,
+**Then** the application pins provider/task assignment and prompt; standalone Repositories use the documented global assignment without a System override or automatic failover,
+**And** MAF owns the loop under shared admission/recovery and separate Scan-purpose tool grants,
+**And** shared Agent Execution safeguards keep source/Documents within organization infrastructure for self-hosted providers; external providers receive only necessary authorized context,
+**And** bounded inputs grant no credential, workspace, Repository-selection or Worker-allocation authority. (FR-3.1–3.3/5.8/13.3; NFR-2.3/6.1; AR-2/4/6/23.)
 
-**Given** Code Units are language-tagged
-**When** profiling continues
-**Then** each Code Unit shall be tagged with detected frameworks where identifiable from imports, package references, or project files (e.g., ASP.NET Core, Spring Boot, React, Express, Django, Blazor)
-**And** framework detection shall be a deterministic pass — package manifest analysis only (.csproj, package.json, pom.xml, requirements.txt, go.mod, Cargo.toml, etc.) — no LLM involvement
-**And** detected frameworks shall be stored in a `code_unit_frameworks` join table: `code_unit_id` (FK), `framework_name`, `detection_source` (e.g., "package.json:dependencies.react"), `confidence` (High for direct dependency declaration, Medium for transitive inference)
-**And** unknown or ambiguous frameworks shall be recorded as empty — no guesswork, no LLM inference at this stage
+**Given** model-assisted interpretations, suggested priorities and unknowns,
+**When** Scan Control validates and stores the response,
+**Then** Advisory Overview is separate from the factual Repository Profile and identifies its source/context/provider/prompt inputs, limitations and hypotheses,
+**And** advisory claims do not become semantic Code Units, Code Logic Documents, accepted observations or source-confirmed framework facts. (FR-4.1/5.8; AR-2/4/5/7.)
 
-**Given** a repository contains a code file with an unrecognized file extension
-**When** profiling runs
-**Then** the file shall be tagged as language "Unknown" and filtered out of the scan with status `Filtered`
-**And** the profiling summary shall include a count of skipped unknown files with their paths for audit
+**Given** Story 13.3's explicit file dispositions and valid advisory ordering hints,
+**When** Scan Control extends that same Scan Work Plan with ordering,
+**Then** the admitted primary set is unchanged and every admitted file remains represented, including unfamiliar formats and files omitted from model output or CodeGraph indexes,
+**And** duplicate/invalid hints are rejected or ignored with a recorded reason while deterministic application tie-breaking preserves a complete order,
+**And** ranking cannot create primary jobs from supporting/context-only files. (FR-4.1; AR-4/5/23.)
 
-#### Story 4.3: Conservative Pre-Scan Gate & Communication Type Detection
+**Given** hostile instructions in supplied text, truncated/invalid output, access revocation, cancellation or provider failure,
+**When** overview execution or acceptance cannot safely complete,
+**Then** content remains data, disclosure stays authorized and the durable job records its actual failure/pause outcome,
+**And** no partial overview becomes completed advice; resume preserves pinned source/context/provider/prompt, while changed inputs require separately identified subsequent work. (NFR-2.3/3.1/3.2; AR-4/15/23.)
 
-As a **SystemOwner**,
-I want the system to detect Cross-Repository communication kinds
-deterministically after profiling and persist a conservative automatically
-approved pre-scan handoff,
-So that the August 15 Scan can proceed without treating weak hints as confirmed
-facts or waiting for an LLM/Human-in-the-Loop cycle.
+**Given** mixed-source and standalone fixtures plus supplied context changed during execution,
+**When** boundary tests and a recorded real configured-provider Docker run exercise the capability,
+**Then** evidence verifies provider input boundaries, useful orientation, context provenance and unchanged eligibility, with measured limits and explicit unknown usage,
+**And** the result is callable/readable without Worker dispatch or a completed Scan; routine health checks perform no inference. (FR-3.4/4.1; NFR-1.1/6.2; AR-32.)
 
-**Acceptance Criteria:**
+**Scope and dependencies:**
 
-**Given** pre-scan profiling has completed for a Repository (Code Units extracted, languages and frameworks tagged)
-**When** the deterministic communication type detection pass runs
-**Then** the system shall scan the profiling results (imports, annotations, package manifests, config files) for evidence of cross-repo communication technologies — RPC frameworks (Dubbo, gRPC, Thrift, SOFA annotations/imports), HTTP API patterns (REST controllers, HttpClient calls, OpenAPI/Swagger), message queue usage (Kafka, RabbitMQ, RocketMQ configuration/annotations), file-based communication (shared filesystems, object storage references), and page navigation patterns (URLs, deep links)
-**And** each detected type shall include evidence (e.g., "Dubbo annotations in 12 files: com.example.rpc.ServiceA, com.example.rpc.ServiceB")
-**And** this is a purely deterministic pass using CodeGraph structural data and package manifest analysis — no LLM involvement
+- Depends on Stories 13.1–13.7 and retained administration; only necessary overview/context records, no Knowledge schema prerequisite.
+- Bounded structure/supplied context only: no detailed source analysis, unrestricted navigation, new admin editor, Prompt Workbench, fixed recipe or model scheduler. Unavailable advice remains explicit.
+- UX-DR35/46/53 cover preparation/provenance only; preserve UX-DR45/47–49 if touched. The gateway identifies provider/context reuse, not qualified adapters. Scan-strategy/tool plan approval follows independent review.
 
-**Given** the deterministic communication type detection pass completes
-**When** the results are compiled
-**Then** high-confidence detections (framework annotations found, config entries matched) shall be automatically marked as confirmed and seeded into the Communication Pattern Catalog for the System
-**And** ordinary low-confidence hints (only import found without config, weak URL or path hints) shall be retained as conservative, auditable scan metadata without blocking the scan
-**And** blocking ambiguities shall be converted to conservative scope warnings for the August 15 demonstration rather than invoking an LLM or waiting for human review
-**And** warnings shall not be promoted to confirmed code-derived facts
+**Definition acceptance:** Accepted under the user's 2026-09-11 confident-boundary delegation after source-grounded scope/coverage checks. Story 13.8 grants no implementation or runtime authority.
 
-**Given** pre-scan profiling and deterministic communication-kind detection complete
-**When** the August 15 pre-scan gate runs
-**Then** the persisted result shall transition directly to `pre_scan_approved` without an LLM call or human wait
-**And** it shall contain confirmed high-confidence types, conservative hints and warnings, evidence locators, and provenance as bounded supplementary scan metadata
-**And** it shall be exposed through a typed handoff without implementing a Scan Coordinator queue, Worker Agent lease, retry policy, or dispatch
-**And** the scan log shall record "Pre-scan approved with conservative warnings — proceeding to the sequential demo runner"
+### Story 13.9: Accept semantic file Knowledge with stable identities and ordered selection
 
-**Deferred beyond the August 15 demonstration:** bounded LLM question generation, the five-question limit, confirm/exclude/add interactions, the `等待回答` state, the bell badge, the seven-day review lifecycle, and manual `确认并开始扫描` approval. These move to post-deadline Story 8.7 with the existing Epic 8 HITL stories and are not claimed complete by Story 4.3.
-
----
-
-### Epic 11: August 15 Demonstration Slice
-
-This deadline overlay delivers one prepared two-Repository business path. Its
-minimal interfaces become foundations for the post-demo Epics 5–10; it does
-not mark their broader acceptance criteria complete.
-
-#### Story 11.1: Minimal Knowledge Store & Retrieval Projection
-
-As a **SystemOwner**,
-I want generated Documents, source anchors, essential references, and retrieval sections stored durably,
-So that the demonstration can persist and retrieve a traceable Cross-Repository business flow.
+As a System Owner,
+I want validated whole-file results to become durable, versioned Code Logic Knowledge,
+So that accepted analysis has trustworthy identity and provenance without unfinished or older work replacing it.
 
 **Acceptance Criteria:**
 
-**Given** the VulgataDbContext is migrated
-**When** the deadline knowledge-store migration is applied
-**Then** it shall add the minimum Logical Document, immutable Document Version, source-anchor, REFERENCES/GENERATED_FROM relationship, flow-evidence, `index_entries`, and `document_sections` shapes required by the prepared demo
-**And** entity configuration shall remain in Infrastructure with indexed foreign keys and Repository-scoped authorization paths
-**And** a clean database shall migrate successfully with no pending model changes
+**Given** a complete file proposal bound to an admitted File Workstream,
+**When** Knowledge validates its meaningful Code Units,
+**Then** one owning versioned contract defines canonical selectors, nesting, aliases and justified identity lineage, with application-derived identities, fingerprints and source/run bindings,
+**And** each Code Unit owns a CL Logical Document; shared anchors are allowed, but conflicting identity and duplicate cross-file authorship are rejected,
+**And** tool IDs, window boundaries, moving ranges and unproven rename/split/merge mappings cannot silently establish identity. (FR-4.3/4.6; AR-2/7/16.)
 
-**Given** a Code Logic Document or Business Logic Document is committed
-**When** its retrieval projection is rebuilt
-**Then** its current version, source anchors, essential relationships, Markdown/content payload, and searchable sections shall be retrievable without reading `index.md` as canonical state
-**And** superseded immutable versions shall not be deleted or mutated
+**Given** validated source provenance, content, observations and complete-file disposition,
+**When** the current lease owner submits acceptance,
+**Then** Infrastructure atomically persists the Accepted File Manifest, Code Units, immutable canonical JSON CL versions, Communication Observations, accepted Uncertainties and authoritative Scan Control progress under the same fence,
+**And** every contribution retains its exact Source Anchor and access scope; generic observations preserve available roles/mechanisms/operations/namespaces/literals/expressions and explicit unknowns, including available identifiers and known/unknown-target distinctions for missing parties,
+**And** existing historical human wontfix decisions remain preserved without new HITL actions; Workers neither assign authoritative relationships nor directly write Knowledge. (FR-4.4/4.7/4.9, FR-5.5, FR-6.1/6.4; NFR-2.3/3.3; AR-2/8/9.)
 
-#### Story 11.2: Sequential Scan Runner & Typed Agent Dispatch
+**Given** a zero-unit proposal or replacement-source absence claim,
+**When** validation evaluates its evidence,
+**Then** zero units require an explicit truthful whole-file disposition; omission or an incomplete response cannot masquerade as successful analysis,
+**And** validated replacement-source evidence may withdraw obsolete current Code Units/observations while preserving history; exclusion, failed/unfinished analysis, model omission or access loss alone cannot prove removal. (FR-4.4/4.10; AR-8/19.)
 
-As a **SystemOwner**,
-I want one prepared Repository Scan to run sequentially from approved pre-scan metadata into typed Worker Agent jobs,
-So that the demonstration has a reliable execution path without unfinished concurrency infrastructure.
+**Given** an Analysis Checkpoint with accepted files and explicit pending/failed gaps,
+**When** current Code Logic selection is requested,
+**Then** Knowledge transactionally checks recorded ordered current-promotion intent, expected selected head, still-current target, cancellation and live initiating-identity/contributor authority,
+**And** history-only or superseded results cannot replace newer intent; Git hashes and finish times do not determine recency,
+**And** failed current files do not silently inherit old analysis, while other staged/history results remain explicitly distinguished. (FR-4.7/4.10, FR-12.3; AR-17/18; UX-DR35 data contract.)
 
-**Acceptance Criteria:**
+**Given** replay, lost acknowledgement, cancellation, revocation or expired ownership,
+**When** acceptance or selection is retried,
+**Then** durable identity returns the existing committed result or rejects stale work without duplicate Documents/progress or unauthorized promotion,
+**And** pre-commit failure exposes no partial accepted file; post-commit failure preserves accepted history and recoverable acknowledgement. (NFR-2.3/3.1/3.3; AR-8/18/23.)
 
-**Given** a Repository has a `pre_scan_approved` result
-**When** the SystemOwner starts the deadline Scan
-**Then** deterministic application code shall create one durable Scan execution, process one Repository at a time, and dispatch typed jobs sequentially
-**And** the runner shall persist enough state to report current phase, success, and failure after a server restart
-**And** the runner shall not implement concurrent supersteps, dynamic leases, state replay, provider failover, or multi-Repository scheduling
+**Given** isolated exact-source fixtures and test-only proposals,
+**When** these contracts are qualified,
+**Then** evidence covers multi-unit/nested identity, zero-unit validation, version lineage, partial checkpoints, reversed completion order and failure/replay boundaries,
+**And** legacy file Documents retain their meaning and provenance rather than becoming newly analyzed semantic units. (FR-9.4; AR-16/32.)
 
-**Given** a Worker Agent job fails
-**When** the sequential runner records the failure
-**Then** the Scan shall stop with a durable, Chinese user-visible failure rather than continue from partially trusted output
-**And** no generated Document Version shall be committed from an invalid result
+**Scope and dependencies:** Depends on Stories 13.1–13.3 and 13.7; consumes their source, eligibility, request-intent and fencing contracts. Knowledge owns accepted semantics/selection; Scan Control retains operational state. Establish only required CL/manifest/observation/Uncertainty/selection records. No mandatory LLM execution, reader UI, full Scan completion, local relationship resolution, Logical Flow/BL schemas or later-epic prerequisite. Requirement credit is limited to this acceptance/selection contribution; test proposals are never production fixture fallback.
 
-#### Story 11.3: Pass 1 & Pass 2 Demo Document Generation
+**Definition acceptance:** Accepted under the user's 2026-09-11 confident-boundary delegation after source-grounded scope/coverage checks. Story 13.9 grants no implementation or runtime authority.
 
-As a **SystemOwner**,
-I want bounded Worker Agents to generate technical and business explanations for the prepared flow,
-So that the demonstration produces source-grounded Code Logic Documents and an understandable Business Logic Document.
+### Story 13.10: Read selected Code Logic, exact history and authorized source
 
-**Acceptance Criteria:**
-
-**Given** the sequential runner dispatches a Pass 1 job
-**When** the Worker Agent receives a bounded Code Unit packet
-**Then** it shall return schema-validated Code Logic Document content, source claims, essential local references, and communication evidence
-**And** prompts shall be embedded resources and only the source/context required for the job shall be transmitted
-
-**Given** Pass 1 committed current Code Logic Document Versions for both product-created demo Repositories and exact resolution committed the accepted directed relationship
-**When** the bounded demo Pass 2 planner prepares the single flow
-**Then** it shall bind the actual System, Repository, Scan execution, Worker job, Code Unit, Logical Document, Document Version, Source Anchor, and exact relationship identities into a server-owned `ResolvedPreparedPass2Flow`
-**And** each ordinary Pass 1 Worker job identity shall be derived deterministically by the server from its actual Scan execution, Scan run, Repository, Code Unit, and Profiled Revision boundary so the planner can independently recompute the historical identity without a migration or fabricated member ID
-**And** the flow shall be anchored to the consumer Repository while its fixed authorized support contains exactly the two prepared Repositories
-**And** no embedded demo GUID, fixture SQL, `DbSet`, reflection, or general clustering identity may be used
-**And** the sequential runner shall dispatch exactly one schema-validated Pass 2 job and persist one Business Logic Document with `GENERATED_FROM` provenance to every Code Logic Document Version actually used
-**And** bounded refinement, cross-verification waves, partial-failure continuation, and general flow clustering shall remain deferred
-
-#### Story 11.4: Exact RPC/HTTP Cross-Repository Demo Resolution
-
-As a **SystemOwner**,
-I want one configured RPC or HTTP communication path resolved across the two prepared Repositories,
-So that the demonstration can trace a real business flow across a Repository boundary.
+As an authorized IT reader,
+I want to browse Code Logic and open its exact versions, sections and source,
+So that I can inspect accepted explanations and their limitations without management rights, Chat or a graph.
 
 **Acceptance Criteria:**
 
-**Given** a version-controlled demo communication configuration identifies the allowed RPC interface or HTTP route patterns
-**When** Pass 1 results from both prepared Repositories are available
-**Then** deterministic matching shall identify provider and consumer roles from exact normalized evidence
-**And** the resulting Cross-Repository REFERENCES relationship shall preserve endpoint identifiers, evidence, confidence, and source anchors
-**And** ambiguous or unmatched evidence shall remain a warning or Uncertainty and shall not create a false exact relationship
+**Given** permitted selected CL accepted through Story 13.9,
+**When** I open 「文档」 or a Repository's 「查看文档」 entry,
+**Then** a minimal Repository/file/Code Unit hierarchy supports several Documents per file, title/keyword search, sections and bounded pagination,
+**And** readable Markdown derives from canonical JSON without a second editable content store or synthetic directory Documents,
+**And** Document access does not require System Owner or management permissions. (FR-1.4, FR-4.6/4.7, FR-12.6 reader clause; AR-29; UX-DR29/39/40.)
 
-**Given** a communication type is MQ, file/storage, page navigation, indirect object flow, or requires Service Topology MCP
-**When** the deadline resolver encounters it
-**Then** it shall record the unsupported/deferred condition without attempting general resolution
+**Given** a Knowledge Read Context for authorized current or explicitly labelled staged/historical selection,
+**When** discovery, later pages, existing-related-Document navigation or section/content reads occur while newer Knowledge becomes selected,
+**Then** all operations retain that context's exact version/membership selection, including Documents not previously read,
+**And** references bind the same exact Document Version/section; an explicitly fresh context may observe newer Knowledge,
+**And** empty related results remain empty rather than inventing Edges. (FR-4.7, FR-9.4; AR-24/25 read-contract contribution; UX-DR23 contract/48.)
 
-#### Story 11.5: Demo Chat, Citations & Release Gate
+**Given** selected, staged, withdrawn or historical accepted results,
+**When** I inspect a Document or 「版本历史」,
+**Then** default reads use selected Knowledge and expose coverage gaps; other staged/history inspection is explicitly labelled,
+**And** old references retain original content, provenance and any recorded dependencies instead of following today's selection,
+**And** failed drafts never appear as Documents or substitute for failed current files. (FR-4.7/4.10, FR-9.4; AR-16–19/29; UX-DR35/40.)
 
-As a **user**,
-I want to ask Business or IT questions about the prepared two-Repository flow and verify every answer,
-So that the competition demonstration proves Vulgata's end-to-end value.
+**Given** a request, page cursor, exact reference or cached context,
+**When** mode, scope or contributor authority disallows disclosure or is revoked,
+**Then** the server denies or filters content, sections, labels, metadata, related membership and counts before disclosure,
+**And** Business Mode receives no CL, code, file/range/Git metadata or source targets; this CL-only slice may truthfully return no permitted Documents,
+**And** a stable context never freezes authorization or grants Scan/Agent tool authority. (NFR-2.3; AR-24/25/29; UX-DR41.)
 
-**Acceptance Criteria:**
+**Given** an authorized IT Source Anchor,
+**When** I open its recorded location,
+**Then** Story 13.1 supplies only bounded exact Profiled Revision source with relative locations; neither host paths nor the current checkout substitutes for it,
+**And** unavailable source shows 「该版本源代码暂不可用，文档及来源记录仍保留。」 while preserving permitted Document/history reading. (FR-4.9, FR-9.4; AR-3/29; UX-DR41.)
 
-**Given** I open the Chinese chat page
-**When** I select Business or IT mode and the prepared System/Repositories
-**Then** the chat shall use database-backed retrieval over the current Documents, sections, source anchors, and exact Cross-Repository relationship
-**And** Business mode shall return an understandable narrative while IT mode may include technical detail
-**And** autonomous scope selection and file upload shall remain deferred
+**Given** empty, loading, no-results, failed or partial reader states,
+**When** I navigate, refresh or recover,
+**Then** the Chinese Fluent/Library Oak reader uses existing LoadState and accessible keyboard/status patterns, truthful scoped messages, pagination and at most one dialog,
+**And** isolated accepted fixtures verify these journeys, exact-reference stability and live revocation without a provider call. (NFR-5.2; UX-DR44–49.)
 
-**Given** the Chat Agent returns an answer
-**When** claims are rendered
-**Then** every material claim shall cite a persisted Document and available source line range
-**And** unauthorized Systems, Repositories, Documents, source anchors, and credentials shall not be retrieved or rendered
+**Scope and dependencies:** Depends on Stories 13.1 and 13.9 plus preserved authorization/UI foundations. Knowledge owns the reusable read-context/storage/index/reference contract; later BL, graph and Chat consume it rather than create competing readers. Introduce only current reader needs, not future flow/BL/conversation schemas, embeddings, outward MCP, graph exploration or Scan-stage controls. This establishes the minimum CL reader/shared read contract, not complete later consumer requirements.
 
-**Given** the deadline slice is ready for release
-**When** final verification runs from a clean database
-**Then** the included tests, authorization checks, migrations, Web build, one two-Repository end-to-end demonstration path, and one final Docker image build shall pass
-**And** no deliberately failing or unresolved RED test shall be committed
-**And** known post-demo limitations shall be shown separately from completed acceptance criteria
+**Definition acceptance:** Accepted under the user's 2026-09-11 confident-boundary delegation after source-grounded scope/coverage checks. Story 13.10 grants no implementation or runtime authority.
 
----
+### Story 13.11: Produce useful whole-file Code Logic through bounded real Worker analysis
 
-### Epic 12: August 30 Bounded Production Scan Recovery
-
-This approved deadline overlay replaces the failed CGC-dependent release path
-without rewriting completed Epic 4 or Epic 11 history. It proves a bounded real
-product path; Epics 5–10 remain the broader post-deadline V1 backlog.
-
-#### Story 12.1: Durable Scan Foundation & Analysis Runtime
-
-As a **SystemOwner**,
-I want Scan progress, context, and analysis-tool identity persisted durably,
-So that a bounded two-Repository Scan can pause, restart, and resume without
-losing trusted work.
+As a System Owner,
+I want an admitted file analyzed by a real bounded Worker Agent using the declared tools,
+So that I can read meaningful source-grounded Code Logic rather than only validated synthetic proposals.
 
 **Acceptance Criteria:**
 
-**Given** the August 30 migration is applied to a clean PostgreSQL database
-**When** the model is inspected
-**Then** it shall persist one immutable Scan Context Snapshot per Repository
-Scan Run, deterministic per-file Scan Job Execution state, the required
-paused/completed-with-warning phases, and one lightweight System-level
-coordination record binding exactly two release Repositories
-**And** existing immutable Document, Source Anchor, Edge, Uncertainty, and
-prepared-demo rows shall remain readable
-**And** apply, rollback, reapply, concurrent update, and no-pending-model-change
-verification shall pass
+**Given** an authorized File Workstream that fits the declared bounded whole-file execution envelope,
+**When** Scan Control admits it after exact-source, profile, required native CodeGraph and applicable LSP readiness,
+**Then** Microsoft Agent Framework executes the configured Worker conversation/tool loop with the selected provider and pinned Scan Context Snapshot/Advisory Overview,
+**And** the application injects Stories 13.4–13.6's source/content/native MCP/language-neutral tools under Story 13.7's leases and shared admission; no pair or sample profile is required. (FR-4.3/4.9, FR-5.8, FR-15.1–15.3; AR-1/4/6/23.)
 
-**Given** production composition starts
-**When** analysis dependencies are verified
-**Then** CodeGraph shall mean npm package `@colbymchenry/codegraph@1.5.0` from
-`https://github.com/colbymchenry/codegraph`, command `codegraph`, with its
-approved Windows x64 platform bundle and recorded installed-file SHA-256 values
-**And** Eclipse JDT LS
-`jdt-language-server-1.61.0-202608141332` shall be pinned to exact versions and
-checksums
-**And** JDT LS shall run on Java 21 with an isolated workspace per Repository
-revision
-**And** the Java LSP adapter shall use centrally pinned StreamJsonRpc `2.25.29`
-over stdio while keeping installation paths machine-configurable
-**And** Vulgata, CodeGraph, Java 21, and JDT LS shall run on the documented
-Windows host while PostgreSQL 17 remains the only required Docker service
-**And** CodeGraphContext, its Python runtime, and its qualification harness
-shall not be required by production startup or the release gate
+**Given** handwritten or declarative source and permitted supporting context,
+**When** the Worker completes detailed file analysis,
+**Then** it proposes meaningful Code Units and separate source-grounded CL content explaining behavior, conditions, effects and limitations, without requiring one model invocation per unit,
+**And** other files provide attributable context rather than duplicate authorship; unfamiliar syntax and incomplete tool knowledge remain explicit,
+**And** source-backed Communication Observations retain available evidence and unknowns without inventing deployed bindings or authoritative Edges,
+**And** common-library imports alone never create communication gaps; familiarity does not prove unsourced behavior, and decisive unsupported behavior remains a limitation or labelled hypothesis. (FR-4.3, FR-5.5/5.8/5.14, FR-6.1, FR-8.4; AR-5/7/9.)
 
-**Given** Vulgata invokes analysis services
-**When** Core or Worker code requests structural evidence
-**Then** it shall use typed CodeGraph, Java LSP, and revision-bound source-reader
-ports
-**And** raw CLI, raw LSP messages, internal CodeGraph storage, shell access,
-network access, and unrestricted filesystem reads shall not cross the ports
+**Given** retrieved source, supplied advisory context and tool responses,
+**When** they enter a model/tool interaction,
+**Then** externalized prompts treat them as evidence rather than executable instructions, preserve advisory-versus-source provenance and restrict every invocation to its granted purpose/source/budget,
+**And** Agent Execution keeps source/Documents inside organization infrastructure with self-hosted providers and sends external providers only necessary authorized task context; qualification checks actual provider inputs and boundaries without logging raw source or credentials,
+**And** the Worker cannot choose credentials/workspaces, import/build/restore dependencies, schedule arbitrary work or write Knowledge; missing required CodeGraph capability follows explicit failure handling, not source-only fallback. (FR-7.3, FR-13.3; NFR-2.3/6.1; AR-6/15.)
 
-**Given** a Scan Execution is persisted with completed, pending, running, or
-retry-scheduled jobs
-**When** the application restarts or an operator resumes it
-**Then** committed Documents shall be retained, expired leases shall return to
-Pending, committed jobs shall not duplicate Documents, and remaining jobs shall
-resume only after Repository access, Profiled Revision, hashes, prompt/schema
-identity, and provider availability are revalidated
+**Given** a valid complete-file proposal,
+**When** Story 13.9 accepts it and a permitted Analysis Checkpoint selects it,
+**Then** Story 13.10 displays its actual immutable CL versions, exact sections/source and visible Uncertainties,
+**And** truncation, unfinished tools, rejected provenance or a merely schema-valid partial response cannot accept the file,
+**And** larger unfinished files remain explicitly pending without falsely completing the Repository Scan or silently excluding them. (FR-4.4/4.7, FR-12.3; AR-8/17; UX-DR35/39–41.)
 
-#### Story 12.2: Lightweight Java/XML PreScan & Prepared Scan Manifest
+**Given** provider failure, cancellation, limits or lost ownership,
+**When** bounded execution cannot finish,
+**Then** the existing controller classifies retry/pause/failure, fences late writes and settles owned work/permits while independent work and accepted reading remain available,
+**And** no fallback provider, automatic paused-work restart or fresh budget is inferred. (NFR-1.1/3.1–3.3; AR-15/23.)
 
-As a **SystemOwner**,
-I want a complete fast deterministic PreScan over my Java/XML Repositories,
-So that Worker Agents receive an automatically selected, revision-bound File
-Code Unit manifest without waiting for CodeGraphContext.
+**Given** the declared two-service environment and representative bounded committed-source fixtures,
+**When** real provider/MAF/tool execution is qualified through acceptance and reading,
+**Then** evidence demonstrates useful multiple-unit analysis and faithful exact references, exercising the required native tools and applicable declared navigation,
+**And** separately evaluate explanatory usefulness/unsupported claims versus schema/identity validity; record provider/configuration, timing, limits and available usage without universal SLA or historical-test substitution. (AR-32; UX-DR53 CL contribution.)
+
+**Scope and dependencies:** Depends on Stories 13.1–13.10. This production-composed file-analysis capability uses Scan Control, not a new user-facing Pass 1 start action. No complete ordinary-Scan/BL outcome, Cross-Repository Resolution, automatic library Scan or large-file continuation is claimed. Generic observation capture prepares later resolution without preallocating schemas or requiring another Repository.
+
+**Definition acceptance:** Accepted under the user's 2026-09-11 confident-boundary delegation after source-grounded scope/coverage checks. Story 13.11 grants no implementation or runtime authority.
+
+### Story 13.12: Continue large-file analysis with durable whole-file progress
+
+As a System Owner,
+I want large admitted files to continue across bounded analysis windows and Worker runs,
+So that context limits and interruptions do not truncate coverage or expose unfinished analysis as Knowledge.
 
 **Acceptance Criteria:**
 
-**Given** an authorized Repository and requested Git reference
-**When** PreScan begins
-**Then** Vulgata shall acquire one exact Profiled Revision, enumerate contained
-files, apply deterministic filters, identify supported Java/XML inputs, and
-calculate documented exact file/source hashes
-**And** no Worker shall dispatch until the complete Prepared Scan Manifest,
-communication classifications, Scan Context Snapshot, and approved handoff
-commit atomically
+**Given** an admitted file exceeding its single-run context/window limit,
+**When** Scan Control continues its File Workstream across bounded windows and completed MAF runs,
+**Then** required source remains represented by authoritative pending/completed work, including constructs spanning windows,
+**And** one whole-file semantic result may contain nested/shared-anchor Code Units; windows, repeated reads and individual runs do not create permanent identities or duplicate authorship,
+**And** no fixed terminal-turn count silently ends required analysis. (FR-4.3/4.4; NFR-1.1; AR-7/8.)
 
-**Given** the prepared scope contains Java
-**When** analysis services start
-**Then** CodeGraph shall build and report a complete revision-bound index
-**And** JDT LS shall initialize and successfully return document symbols for a
-known eligible Java file within the bounded readiness timeout
-**And** a failure shall stop PreScan before any LLM cost
+**Given** a current attempt's validated draft/progress,
+**When** a continuation checkpoint is saved,
+**Then** Scan Control atomically persists both under its ownership/version fence with exact source/context/binding and sufficient continuation information to resume consistently,
+**And** replay or lost acknowledgement resolves the same durable checkpoint without advancing progress twice,
+**And** conversation history may assist recovery but cannot replace authoritative draft/progress or become Knowledge. (FR-4.4; NFR-3.3; AR-2/8.)
 
-**Given** relevant XML configuration is present
-**When** the safe XML pipeline evaluates it
-**Then** it shall prohibit DTDs, external entities, XInclude, schema-network
-fetches, and custom resolvers; enforce file/depth/element/attribute bounds; and
-use only the closed Communication Pattern Catalog selector grammar
-**And** confirmed/hint/warning evidence shall retain exact locators and
-provenance without creating a final Cross-Repository Edge
-**And** neutral fixtures shall prove the implementation contains no sample
-Repository names, paths, endpoints, or line numbers
+**Given** limits, provider outage or host interruption between windows or checkpoints,
+**When** work pauses or becomes recoverable,
+**Then** committed drafts/progress survive, uncommitted progress cannot become authoritative, and unfinished required source remains pending with a truthful cause,
+**And** explicit resume uses Story 13.7's prerequisite/authority checks and Story 13.1's identical-source verification while retaining provider/context identity and accounted consumption,
+**And** restart/provider recovery neither resumes paused work nor resets cumulative budgets. (NFR-1.1/3.2/3.3; AR-3/8/15; UX-DR33/34 data contract.)
 
-**Given** eligible bounded source files are retained
-**When** the manifest is built
-**Then** each file shall become one `CodeUnitType.File` pending Code Unit
-**And** only oversized files may split at safe Java top-level or parsed XML
-top-level boundaries; unsafe files shall be explicitly skipped, never silently
-truncated
-**And** deterministic business-seeded ordering shall use bounded general
-evidence and CodeGraph expansion with a stable path fallback
+**Given** cancellation, timeout, access revocation or expired file ownership,
+**When** execution and tool activity settle,
+**Then** the controller fences late checkpoints/acceptance, stops owned dispatch/activity and releases permits/unneeded disposable leases under existing runtime ownership,
+**And** cleanup preserves durable accepted history, required source and independent consumers; failed partial drafts remain unavailable to readers or reconciliation,
+**And** terminal file failure records a coverage gap rather than an accepted prefix. (NFR-2.3/3.1/3.3; AR-8/15/23.)
 
-#### Story 12.3: Resumable File Pass 1 & Code Logic Documents
+**Given** a validated whole-file proposal after several continuations,
+**When** Story 13.9 accepts it,
+**Then** its semantic units, canonical CL versions, observations and authoritative progress appear atomically through the existing acceptance contract,
+**And** exactly one accepted result is recoverable after an acknowledgement failure; earlier windows never become standalone Documents,
+**And** current selection still follows ordered intent, not the final window's finish time. (FR-4.3/4.4/4.7/4.10; AR-7/8/18.)
 
-As a **SystemOwner**,
-I want bounded File Code Units analyzed concurrently with durable recovery,
-So that Vulgata produces trustworthy Code Logic Documents without losing an
-entire Scan to an LLM outage or one peripheral file failure.
+**Given** a fixture requiring real multiple-run continuation and controlled interruptions,
+**When** the capability is qualified on the declared deployment,
+**Then** evidence covers a boundary-spanning unit, checkpoint/restart/replay, explicit resume, stale-writer rejection, cleanup and reader fidelity,
+**And** report file/window/unit/Document counts separately, account for limits, and assess whole-file usefulness independently of structural validity; acceptance idempotence promises no duplicate Knowledge, not zero repeated external billing. (NFR-1.1/3.3; AR-32; UX-DR32/35.)
 
-**Acceptance Criteria:**
+**Scope and dependencies:** Depends on Stories 13.7, 13.9–13.11 and their source/tool foundations. Extend Scan Control's draft/progress contract and Knowledge acceptance with necessary continuation state only. No separate reader, scheduling service, token ledger, automatic source-update Scan, full-Scan completion claim or later-epic prerequisite. Technical planning sets bounded window/progress/default policies without changing semantics or coverage.
 
-**Given** two approved Prepared Scan Manifests
-**When** Pass 1 begins
-**Then** deterministic application code shall dispatch one Worker job per File
-Code Unit through a shared concurrency limit defaulting to two and configurable
-from one through four
-**And** completion order shall not change job identity, Document identity,
-reconciliation, or display ordering
+**Definition acceptance:** Accepted under the user's 2026-09-11 confident-boundary delegation after source-grounded scope/coverage checks. Story 13.12 grants no implementation or runtime authority.
 
-**Given** the Worker needs additional code evidence
-**When** it calls `navigate_code`
-**Then** the typed tool shall provide bounded definition, references,
-implementations, callers, callees, symbol search, related files, or exact source
-evidence only within the authorized Repository and Profiled Revision
-**And** it shall prefer a current same-scan/current-hash Code Logic Document
-when one exists, otherwise return source evidence immediately
-**And** it shall not schedule another file, exceed eight calls, 20 results per
-call, 64 KiB, or explicit navigation depth three
 
-**Given** a Worker returns a Pass 1 result
-**When** Vulgata validates and commits it
-**Then** the authoritative `code-logic/file-v2` JSON shall contain bounded
-file purpose, internal units, rules, data flow, communication evidence,
-references, deferred observations, and Source Anchor associations
-**And** Vulgata shall deterministically materialize Markdown, Document Sections,
-and Index Entry projections without independent LLM-authored representations
-**And** invalid identity, path, hash, range, authorization, bound, or schema
-shall commit no Document
+### Story 13.13: Plan rooted local Logical Flows from accepted evidence
 
-**Given** the provider is transiently unavailable
-**When** five bounded probes using increasing 10-second, 30-second, one-minute,
-two-minute, and five-minute windows do not recover
-**Then** new dispatch shall stop and the Scan shall persist a provider-unavailable
-paused state with a Chinese manual-resume action
-**And** isolated transient jobs shall retry once while integrity/security
-failures fail the Scan and unclassified systemic failures pause for inspection
-
-**Given** ordinary file-specific failures occur
-**When** all Pass 1 jobs become terminal
-**Then** the Scan may continue with warnings only if every high-value seed
-succeeded and failures do not exceed `min(5, floor(10% of dispatched files))`
-**And** post-Pass1 deterministic reconciliation may create exact current
-`REFERENCES` Edges from deferred observations without rewriting Documents
-
-#### Story 12.4: Exact Cross-Repository Flow & Pass 2
-
-As a **SystemOwner**,
-I want exact communication evidence converted into bounded cross-Repository
-business flows,
-So that Vulgata explains a real process without inventing provider targets or
-unsupported relationships.
+As an authorized Repository owner,
+I want accepted local relationships organized into bounded source-backed Logical Flows,
+So that business explanations can follow supported behavior without merging unrelated purposes or waiting for unscanned systems.
 
 **Acceptance Criteria:**
 
-**Given** current authorized consumer and provider evidence exists across the
-two release Repositories
-**When** deterministic Cross-Repository Resolution runs
-**Then** it shall match by protocol and exact normalized endpoint identifier
-**And** only one unique current provider may create a Cross-Repository
-`REFERENCES` Edge
-**And** no provider, multiple providers, conflicts, stale evidence, or
-unsupported communication shall create or retain an honest Uncertainty
+**Given** an exact root Repository Scan Run with accepted file results and admitted primary work,
+**When** Scan Control requests its static Flow planning checkpoint,
+**Then** the checkpoint requires explicit terminal outcomes for every admitted primary item; paused or unprocessed work does not qualify,
+**And** Knowledge pins exact Accepted File Manifests, CL versions, coverage gaps and a finite local matching target; each matching item receives a completed or explicit failure/Uncertainty disposition before synthesis eligibility.
 
-**Given** exact Cross-Repository Resolution finishes
-**When** Pass2 flow planning runs
-**Then** it shall create endpoint-centered groups bounded by System, protocol,
-normalized endpoint, consumer entry, and provider Repository
-**And** each group may contain the consumer Document, exact Edge, provider XML
-Document, provider implementation Document, and at most one hop of validated
-same-Repository references
-**And** raw CodeGraph proximity or LLM output shall not add members or change
-the deterministic provider decision
+**Given** source-backed reference proposals from accepted file analysis,
+**When** Knowledge validates local relationship evidence,
+**Then** accepted REFERENCES record exact endpoints, supported relationship meaning, inputs/rule/outcome and provenance, independently of unchanged CL text,
+**And** drafts, shared names, lone candidates, confidence and missing tool results cannot alone prove identity; unscanned/external parties retain available identifiers and nonblocking Uncertainties without automatic Scans or Cross-Repository matching.
 
-**Given** a Pass2 Worker needs supporting knowledge
-**When** it uses `retrieve_code_logic`
-**Then** it may retrieve bounded current Code Logic sections, Source Anchors,
-source excerpts, and related Documents within the authorized System scope
-**And** every additional Document actually used shall be revalidated and added
-to `GENERATED_FROM`
-**And** direct Pass2 JDT-LS/CodeGraph verification shall remain optional and may
-be cut without weakening mandatory Document/source retrieval
+**Given** exported operations, handlers, schedules, declarative workflows or selected Code Units supported by accepted source,
+**When** Flow Planner proposes roots and Knowledge accepts their identities,
+**Then** each distinct business root owns a Logical Flow initially homed at its root Repository,
+**And** two roots sharing helpers or a Call Cycle remain distinct; folders, connected components and transient tool identifiers neither create nor merge business purpose, and local-only behavior qualifies.
 
-**Given** one flow group fails or lacks required Documents
-**When** Pass2 completes the remaining groups
-**Then** the failed group shall be omitted with a visible warning and shall not
-be synthesized from incomplete evidence
+**Given** pinned roots, exact accepted relationships and configured traversal bounds,
+**When** Flow Planner derives a Flow Group Version,
+**Then** it records an immutable bounded directed evidence slice with exact member versions, branches, cycles, conditions supported by evidence and Uncertain Frontiers,
+**And** traversal terminates on cycles/bounds, records the stopping reason, preserves alternatives and does not describe all branches as one executed runtime sequence; identical inputs yield the same canonical planning fingerprint.
 
-#### Story 12.5: Grounded LLM-Wiki Chat & August 30 Release Evidence
+**Given** accepted local evidence and proposed Flow Group Versions,
+**When** persistence is replayed, ownership is lost, or an authorized reader inspects results,
+**Then** existing fenced acceptance prevents duplicate or stale acceptance and the Story 13.10 read contract exposes permitted local references with exact versions and gaps,
+**And** integration checks inspect accepted roots/membership through the owning contracts without an LLM, graph UI, BL draft publication or future-epic service; revoked evidence is not disclosed.
 
-As a **user**,
-I want multi-turn Business/IT answers grounded in the generated LLM-Wiki,
-So that I can understand the demonstrated cross-Repository business flow and
-verify every material technical claim.
+**Scope and traceability:**
 
-**Acceptance Criteria:**
+- **Prior dependencies:** 13.7 and 13.9–13.12, including their source/identity/read contracts. Knowledge owns references, Uncertainties, Logical Flows and immutable membership; Flow Planner proposes; Scan Control owns checkpoint/job eligibility.
+- **Independent value/boundary:** accepted local references are inspectable and local BL inputs are finite and reproducible. No Cross-Repository Resolver/investigation, remote-target waiting, business-root merging, graph presentation or synthesis execution.
+- **Mapped requirements:** local FR-4.5/4.6/4.10, FR-5.5, FR-6.1/6.3/6.4 current clauses; NFR-2.3/3.1/3.3; AR-2/9–11/13/17/23; UX-DR35/39–41 data contributions only.
 
-**Given** a scoped authorized question
-**When** Chat retrieves evidence
-**Then** deterministic lexical scoring over current Index Entries and Document
-Sections shall select at most five Documents and bounded primary sections
-**And** one-hop expansion shall use only current persisted `REFERENCES`,
-`GENERATED_FROM`, exact Cross-Repository Edges, and Flow Groups
-**And** retrieval shall enforce mode-specific ranking, authorization,
-currentness, cardinality, byte, cycle, and relationship bounds without a vector
-database or unrestricted Agent tool loop
+**Definition acceptance:** Accepted under the user's 2026-09-11 confident-boundary delegation after source-grounded scope/coverage checks. Story 13.13 grants no implementation or runtime authority.
 
-**Given** a bounded evidence packet is ready
-**When** the LLM synthesizes an answer
-**Then** the packet shall contain opaque evidence handles, a canonical SHA-256
-fingerprint, current sections, Source Anchors, required relationships, bounded
-context, and bounded conversation state
-**And** Vulgata shall accept only claims citing valid packet evidence, allow at
-most one syntax repair when time remains, and reject the whole answer on
-semantic evidence failure
-**And** previous answers shall be conversation context rather than evidence;
-underlying previously cited Documents shall be re-fetched and revalidated
+### Story 13.14: Publish and read coherent local Business Logic versions
 
-**Given** a SystemOwner views a real Scan
-**When** it prepares, runs, retries, pauses, resumes, completes with warnings,
-or fails
-**Then** the Chinese UI shall show the real persisted state, counts, next retry,
-bounded failure summary, and `继续扫描` action
-**And** isolated fake Backup B state shall not support release evidence
-
-**Given** an authenticated authorized user, one ordinary System, exactly two
-ordinary distinct Repositories, safe full Git refs, exact expected Profiled
-Revisions, and a ready accepted analysis runtime
-**When** the user starts the bounded Prepared Scan through production
-composition
-**Then** Vulgata shall validate System/Repository visibility before creation and
-atomically create or replay two exact revision-bound Scan Runs, two new-path
-Scan Executions bound to the current runtime, prompt, and Document schema
-identities, and one canonical Preparing Two-Repository coordination
-**And** the complete initiation tuple or none of it shall be visible before the
-existing Prepared Scan pipeline begins Git, CodeGraph 1.5, JDT-LS, safe XML,
-selection, and Prepared Scan Manifest work outside that transaction
-**And** an identical authorized retry shall reuse the same tuple, including
-after later preparation failure, while a changed System, Repository pair,
-Profiled Revision, runtime/prompt/schema identity, or authorization scope shall
-fail closed without cross-pairing or attaching to the existing tuple
-**And** unauthorized initiation shall create nothing, the established
-authorization recheck immediately before prepared-state publication shall
-remain, and no legacy profiling result, CGC path, Worker, Pass 1/2, Document,
-Edge, Uncertainty, Chat, or LLM action shall satisfy or occur inside initiation
-
-**Given** the August 30 release candidate is verified
-**When** Tier 1 regression and one combined host integration and real release
-run execute
-**Then** the final real-LLM host path shall use one clean isolated
-`vulgata_story125_*` PostgreSQL database, two
-real sample Repositories, real CodeGraph/JDT LS/LLM, and 50–150 automatically
-selected File Code Units
-**And** every seed shall succeed, ordinary failures shall stay within budget,
-at least one exact Cross-Repository Edge, one honest Uncertainty, and three
-Business Logic Documents shall exist
-**And** twelve representative Chat questions shall achieve at least 80% useful answers, 100% of
-accepted material technical claims cited, zero unauthorized evidence, and
-answers under 30 seconds
-**And** Vulgata application-process restart against the same PostgreSQL database
-shall preserve wiki/Chat access and evidence shall record
-the candidate commit, exact Repository Profiled Revisions, counts, durations,
-tool/provider versions, non-secret provider identity, database ownership,
-commands and exit results, straightforward query results, a manual evaluation
-table, redacted real screenshots, failures, and limitations
-**And** Track C shall not add cryptographic attestation, recompute accepted
-Track B streaming counters, require a rigid release envelope, duplicate the
-real run with a separate automated orchestration harness, inject a live outage,
-or add a release-summary product feature for the August 30 boundary
-
-**Given** the exact two release Repositories match the embedded reviewed
-exact-resolution profile's stable identities, full Git refs, and Profiled
-Revisions
-**When** the existing Prepared Scan performs automatic bounded selection
-**Then** every safe eligible File Code Unit required for the profile's consumer,
-provider declaration, provider implementation, and unsupported observation
-shall be retained as a mandatory high-value seed inside the existing per-
-Repository and pair bounds
-**And** a missing, filtered, unsafe, ambiguous, or out-of-bound required source
-shall fail preparation before Prepared Scan Manifest publication
-**And** no caller-supplied profile/path, production-code sample path, legacy
-profiling path, Story 12.4 contract change, or nonmatching-pair selection change
-shall be introduced
-
----
-
-### Epic 5: Core Single Repository Scanning
-
-**Post-August 15 continuation:** this epic deepens the minimal Epic 11 seams
-with the full graph store, concurrent Scan Coordinator, deterministic
-Orchestrator, retries, Worker Agent policies, uncertainty infrastructure, and
-database tools. Epic 11 completion does not mark these stories done.
-
-#### Story 5.1: Document Version & Source Anchor Store
-
-As a **SystemOwner**,
-I want each generated Document to be stored as an immutable version linked to exact source code anchors,
-So that scan results remain auditable, citeable, and safe to supersede when code changes.
+As an authorized Knowledge reader,
+I want each local Business Logic version published with its exact evidence and preserved history,
+So that I can read one coherent explanation without hidden partial updates or changed historical references.
 
 **Acceptance Criteria:**
 
-**Given** the VulgataDbContext is migrated
-**When** the document storage schema is created
-**Then** the minimum V1 storage model shall represent Logical Documents and immutable Document Versions with: stable logical identity, immutable version identity, `doc_type`, `content_jsonb`, `content_markdown`, `export_md_path`, `schema_version`, `is_current`, `superseded_by_id`, `scan_id`, `generation_status`, `resolution_outdated_at`, and `resolution_outdated_reason`
-**And** all timestamps shall use `timestamp with time zone`
-**And** all foreign keys shall be indexed
-**And** current-version lookup indexes shall support Repository, Logical Document, Document Version, and `doc_type` queries
+**Given** a pinned Flow Group Version and a validated BL proposal,
+**When** Knowledge accepts its publication,
+**Then** immutable canonical structured JSON, derived sections/search/Markdown, BL version, Flow Group Version, dependencies and selected publication become visible atomically,
+**And** dependencies pin every actually used CL version through GENERATED_FROM, relationship/resolution evidence, Uncertain Frontier and direct-source Source Anchor; absent, incompatible or ungranted contributions cannot silently enter current Knowledge.
 
-**Given** a Worker Agent produces a Document Version
-**When** the Document Version is committed
-**Then** `document_sources` shall store the Repository, file path, source hash, line range, symbol name, and Code Unit reference used to generate the Document Version
-**And** `reverse_index` shall map source files, source hashes, and Code Units back to impacted Document Versions for later impact analysis
-**And** citations shall resolve from a Document Version to exact source file and line-range anchors
+**Given** an ordered current-promotion request or explicitly history-only result,
+**When** the publication transaction executes,
+**Then** it checks the expected selected head, still-current desired flow target, initiating identity/approved scope, all contributor authority and cancellation/lease fences together,
+**And** late superseded work cannot replace newer desired/current selections; history-only work cannot implicitly promote, and Git hashes or completion times never determine recency.
 
-**Given** a Document Version is generated
-**When** stored
-**Then** the Document content shall be immutable — no UPDATE on content fields
-**And** when code changes trigger a re-scan (Epic 10), the new version shall be inserted with a `superseded_by_id` pointing to the old version
-**And** the old version's `is_current` shall become false and its status shall transition to `Superseded`
-**And** the Version Chain shall be traversable via `superseded_by_id`
+**Given** concurrent publication, a process failure or a lost commit acknowledgement,
+**When** the operation is retried through the existing acceptance owner,
+**Then** readers see either the prior coherent selection or the committed new selection and replay resolves from durable state without duplicate versions/dependencies,
+**And** unrelated flows remain independently publishable; pending, stale, failed or incompatible refresh remains visible without a Repository-wide publication barrier.
 
-#### Story 5.2: Graph Edge, Endpoint & Uncertainty Store
+**Given** a prior BL version and separately advancing relationship/Uncertainty selections,
+**When** current or historical content is read,
+**Then** historical BL retains its original exact dependencies and relationship selection; old GENERATED_FROM never retargets and unchanged caller CL need not be rewritten,
+**And** every discovery, membership, page, section and exact-reference operation uses Story 13.10's stable Knowledge Read Context rather than a new BL-only cache or today's graph.
 
-As a **SystemOwner**,
-I want scan results to persist references, communication surfaces, dispatch sites, and unresolved uncertainties as structured graph facts,
-So that Vulgata can resolve relationships deterministically and expose trustworthy graph and chat evidence.
+**Given** an authorized reader without management permissions,
+**When** they browse local Logical Flows and open selected BL, exact sections or 「版本历史」,
+**Then** the existing reader presents derived content with original versions, gaps and refresh state, grouped through System/Repository views without duplicate Logical Documents,
+**And** Business Mode receives only permitted BL business content; IT may follow permitted CL and available recorded-revision source, with established Chinese unavailable-source/empty/loading states.
 
-**Acceptance Criteria:**
+**Given** a contributor whose access is revoked, including one used in prose but omitted from displayed citations,
+**When** publication, search, counts, metadata, content or history is requested,
+**Then** live contributor authorization blocks prohibited disclosure without deleting immutable history,
+**And** test-only proposals exercise the actual persistence/reader operations and concurrent failure boundaries; no production fixture BL or LLM call is required to prove this story.
 
-**Given** the VulgataDbContext is migrated
-**When** the graph fact schema is created
-**Then** `edges` shall store Document Version endpoints, edge_type `REFERENCES`/`GENERATED_FROM`, source and target Repository IDs, resolution metadata, candidate-group metadata, confidence, disputed flag, and impact traversal eligibility
-**And** same-scan references staged against Logical Documents shall be resolved to generated Document Versions during scan finalization or downgraded to Uncertainties
-**And** indexes shall support edge traversal by source Document Version, target Document Version, source Repository, target Repository, edge type, and confidence
+**Scope and traceability:**
 
-**Given** a Worker Agent identifies a provider-side communication surface
-**When** the Document Version is committed
-**Then** `communication_endpoints` shall store protocol, endpoint identifier, normalized identifier, provider Repository, provider Document Version, service/code hints, catalog evidence, and confidence
-**And** duplicate endpoint identifiers in the same Repository shall be collapsed into one canonical endpoint with multiple source evidence rows when appropriate
+- **Prior dependencies:** 13.7, 13.9, 13.10 and 13.13. Extend their fenced acceptance, selection ordering and reader; introduce only needed BL/publication records.
+- **Independent value/boundary:** coherent local BL publication and usable authorized history. No synthesis executor, graph, Chat, automatic source updates or general Cross-Repository matching.
+- **Mapped requirements:** FR-4.5–4.7/4.10, FR-9.4, FR-11.1/11.2 reader portions, FR-12.6 reader portion; NFR-2.3/3.3/5.2; AR-2/12/13/17/18/25/29; UX-DR2–7/11/39–41/44–49.
 
-**Given** a Worker Agent identifies a consumer-side invocation
-**When** the Document Version is committed
-**Then** `dispatch_sites` shall store the caller Document Version, protocol, endpoint identifier, normalized identifier, invocation expression, object-flow provenance, candidate target hints, and confidence
-**And** `dispatch_site_endpoint_candidates` shall store candidate endpoint matches with match reason, rank, confidence, and resolution status
+**Definition acceptance:** Accepted under the user's 2026-09-11 confident-boundary delegation after source-grounded scope/coverage checks. Story 13.14 grants no implementation or runtime authority.
 
-**Given** a target cannot be resolved during the Repository scan
-**When** the graph facts are committed
-**Then** an `uncertainties` row shall store status, sub_status, endpoint identifier, protocol, source Document Version, source Repository, target Repository hint, resolved Document Version fields, confidence, and HITL metadata
-**And** `cross_repo` Uncertainties shall remain unresolved until same-System evidence or Epic 7 detection/resolution can resolve them
+### Story 13.15: Synthesize useful local business explanations with bounded verification
 
-#### Story 5.3: Flow Trace & Provenance Store
-
-As a **SystemOwner**,
-I want Pass 2 business-flow synthesis to persist the traces and evidence it used,
-So that every Business Logic Document can explain which Code Logic Documents and graph paths generated it.
+As a permitted business reader,
+I want useful local Business Logic synthesized from accepted source-backed evidence,
+So that I understand supported conditions, alternatives, effects and source limitations.
 
 **Acceptance Criteria:**
 
-**Given** Pass 1 has produced Code Logic Documents and graph facts
-**When** the Orchestrator plans Pass 2
-**Then** `entry_points` shall identify starting Document Versions and source symbols eligible for business-flow tracing
-**And** `flow_groups` shall store the Repository, scan, business-flow title candidate, grouping reason, and synthesis status
-**And** `flow_traces` shall store ordered trace IDs, entry point, termination reason, loop summary, and confidence
+**Given** a synthesis-eligible pinned Flow Group Version and authorized configured provider assignment,
+**When** Scan Control dispatches its Flow Synthesis Job,
+**Then** real MAF execution uses an externalized prompt, accepted CL/relationship inputs and bounded snapshotted advisory context to propose structured BL,
+**And** the existing shared admission, job lease, deadline/call/cost limits and recorded provider identity apply; Workers neither create jobs nor write accepted Knowledge.
+**And** shared Agent Execution policy keeps source/Documents inside organization infrastructure with self-hosted providers; external providers receive only necessary authorized context.
 
-**Given** a flow trace is persisted
-**When** it contains graph traversal decisions
-**Then** `flow_trace_steps` shall store ordered Document Version visits and edge traversals
-**And** `flow_trace_candidate_selections` shall store unresolved candidate groups, selected candidate, rejected candidates, and selection reason
-**And** `flow_trace_dispatch_bindings` and `flow_trace_endpoint_bindings` shall connect trace steps to dispatch sites and communication endpoints used during synthesis
+**Given** a precise detail needing verification within the supplied evidence set,
+**When** the Worker uses source, Source Content Analysis, native CodeGraph MCP or applicable language-neutral LSP,
+**Then** Stories 13.4–13.6 enforce granted snapshot handles, Scan-purpose authority, cumulative budgets, exact locations and capability limitations,
+**And** tools cannot select arbitrary paths/snapshots/adapters, restore dependencies or widen Repository access; at most one LSP session per snapshot remains enforced and required CodeGraph failure has no automatic source-only fallback.
 
-**Given** a Business Logic Document is generated
-**When** it is stored
-**Then** `GENERATED_FROM` edges shall connect the Business Logic Document Version to each Code Logic Document Version actually used
-**And** the Business Logic Document shall store references to its flow group and flow traces
-**And** query services shall be able to retrieve the trace evidence packet for chat citations and stale-notice analysis
+**Given** supplementary authorized CL or direct source actually used to explain behavior,
+**When** the final proposal reaches Story 13.14 acceptance,
+**Then** every additional contribution and exact Source Anchor enters validated dependencies, including details absent from CL,
+**And** changed authorization, invalid provenance, incompatible inputs or a superseded desired target prevent inappropriate current publication; citation lists alone do not define contributor scope.
 
-#### Story 5.4: Retrieval Indexes, Virtual Tree & Export Artifacts
+**Given** unsupported bindings, conflicting source/CL, missing external facts or incomplete tool evidence,
+**When** synthesis describes the flow,
+**Then** it preserves explicit Uncertainties, bounds and lower-authority advisory claims without inventing remote parties or deployed execution,
+**And** discrepancies may produce bounded proposals to the owning analysis/resolution contract, never accepted CL/Edge rewrites, recursive correction scheduling, automatic library Scans or external-information tools.
 
-As a **user**,
-I want generated Documents to be searchable, browsable by source path, and exportable,
-So that chat and management views can find the right knowledge without reading `index.md` as canonical data.
+**Given** representative local roots with shared helpers, alternatives, a cycle and uncertain frontiers,
+**When** real provider results are published and reviewed through the existing reader,
+**Then** explanations identify the business purpose, conditions, branches, data/state effects and unknowns in usable Simplified Chinese,
+**And** independent content review records usefulness and claim-to-source faithfulness separately from schema/reference validity, with exact examples and declared provider/configuration/timing/available usage; local success supplies no Cross-Repository qualification.
 
-**Acceptance Criteria:**
+**Given** temporary provider failure, invalid configuration, timeout, cancellation or lost ownership during synthesis,
+**When** recovery and acceptance are exercised,
+**Then** the Story 13.7 policy bounds increasing retries, durably pauses where required, releases owned capacity and requires prerequisite-checked explicit resume without provider/source substitution,
+**And** late proposals cannot publish, prior accepted history survives and other ready flows continue; restart/replay does not claim zero repeated external billing.
 
-**Given** a Scan commits Document Versions for a repository
-**When** the post-scan hook runs
-**Then** `index_entries` shall be rebuilt from Document metadata and `content_jsonb`
-**And** `document_sections` shall be rebuilt from `content_jsonb.sections`
-**And** `scan_llm_usage` shall record LLM provider, task role, token usage where available, latency, and failure status for scan observability
-**And** `index_entries` and `document_sections` shall be treated as the canonical retrieval sources for chat and MCP knowledge serving
+**Scope and traceability:**
 
-**Given** the document tree query is invoked
-**When** a repository's documents are queried by virtual path
-**Then** the tree structure shall be computed from document paths at display time (no stored tree — virtual computation)
-**And** the query shall support depth limiting and path prefix filtering
-**And** directory nodes shall be derived from source paths rather than stored as synthetic Documents
+- **Prior dependencies:** 13.4–13.8, 13.10, 13.13 and 13.14. Reuse established owners.
+- **Independent value/boundary:** real useful local BL is readable end-to-end from accepted CL. No general Cross-Repository reconciliation, Chat, graph or automatic repair/update pipeline.
+- **Mapped requirements:** FR-4.5/4.7/4.9, FR-5.1/5.8, FR-6.1, FR-7.3, FR-13.3 Scan portion, FR-14.4, FR-15.1–15.3; NFR-1.1/2.3/3.1–3.3/5.1/6.1; AR-6/12/13/15/18/21–23/32; UX-DR2/40/41/46.
 
-**Given** a Scan completes for a repository
-**When** export artifacts are generated
-**Then** an `index.md` file may be generated with YAML frontmatter per current Document Version as an export/readability artifact
-**And** the generated `index.md` shall not be stored as the canonical retrieval source or as a special SYSTEM Document
-**And** an append-only `log.md` shall record each scan/query/system event with ISO 8601 timestamp, event_type, actor, details JSON, and scan_id where applicable
-**And** `log.md` shall be stored as an export/system artifact but shall not replace structured scan state in the database
+**Definition acceptance:** Accepted under the user's 2026-09-11 confident-boundary delegation after source-grounded scope/coverage checks. Story 13.15 grants no implementation or runtime authority.
 
-#### Story 5.5: Scan Coordinator
+### Story 13.16: Replace current local Knowledge without erasing history
 
-As a **SystemOwner**,
-I want a Scan Coordinator that manages the scan lifecycle — queuing, cloning, concurrency control, and state transitions,
-So that scans execute reliably without overwhelming the system.
+As an authorized Repository owner and Knowledge reader,
+I want explicit static replacement Scans to select newer evidence and retire proven-absent behavior safely,
+So that current explanations do not preserve obsolete behavior or erase history because analysis was incomplete.
 
 **Acceptance Criteria:**
 
-**Given** a SystemOwner clicks "开始扫描" for a Repository that has passed pre-scan profiling and the question gate (Epic 4)
-**When** the scan is triggered
-**Then** the Scan Coordinator shall enqueue a scan work item into a `Channel<ScanWorkItem>`
-**And** respond to the SystemOwner immediately (async — no blocking)
+**Given** a Repository with accepted local Knowledge,
+**When** full static replacement analysis exercises existing callable source/analysis/publication contracts with recorded owner current-promotion or history-only intent,
+**Then** it fixes exact source and uses ordered selection/publication without mutating prior runs,
+**And** history-only analysis never implicitly promotes, late older work cannot displace newer intent and no remote polling, automatic pull, incremental impact/reuse or background update trigger is added.
 
-**Given** a scan work item is dequeued by the BackgroundService
-**When** processing begins
-**Then** the Scan Coordinator shall clone or pull the repository via `GitCloneService` into a unique working directory per scan
-**And** handle git operation errors gracefully: network timeout → retry once, auth failure → transition scan to Failed with error detail
+**Given** validated selected replacement-source evidence proving that a prior file, Code Unit, observation or flow root is absent,
+**When** Knowledge evaluates withdrawal,
+**Then** inventory-confirmed deletion or validated semantic absence may withdraw obsolete current eligibility and retire absent roots' current flow selections,
+**And** the evidence, prior identity, affected selections and reason remain recorded; unproven rename/split/merge mappings cannot silently reuse identity.
 
-**Given** a scan is in progress for a Repository
-**When** another scan is triggered for the same Repository
-**Then** the system shall reject the request with "该仓库已有扫描任务进行中"
+**Given** a model omission, policy exclusion, failed/unfinished replacement file or unresolved identity correspondence,
+**When** current replacement results are selected,
+**Then** absence remains a coverage/revalidation gap rather than proof of deletion,
+**And** failed current files cannot silently inherit earlier CL as newly analyzed; authorized prior versions remain labelled history, while current coverage and stale/pending/failed Knowledge are explicitly distinguished.
 
-**Given** the system is under load
-**When** multiple scans are triggered
-**Then** the Scan Coordinator shall enforce a configurable maximum concurrent scans (default: 3)
-**And** new scans shall be queued and shown as "排队中" in the dashboard
-**And** the scan_runs table shall track each scan's status through the state machine: NotStarted → Profiling → AwaitingApproval → Scanning → Completed | Failed | Expired
+**Given** validated withdrawal or changed accepted local dependencies,
+**When** affected local Logical Flows are reconsidered,
+**Then** a finite target reopens affected local references as needed, retires missing roots and replans surviving rooted slices through Story 13.13,
+**And** unstarted refresh demands coalesce to the latest desired target while active inputs remain fixed; Story 13.14 prevents outdated promotion and publication itself initiates no recursive planning/synthesis loop.
 
-**Given** a scan is running
-**When** the server restarts
-**Then** any in-progress scan shall be marked as Failed with a note "服务器重启，扫描中断"
-**And** the SystemOwner shall be notified of the failure on next dashboard visit
+**Given** System membership, selected discovery scope or contributor authorization changes without evidence of source removal,
+**When** visibility and replacement eligibility are evaluated,
+**Then** restricted disclosure stops immediately and any unevaluated scope is recorded without treating access loss or scope narrowing as relationship disproof,
+**And** immutable content/provenance is preserved; publication still rechecks the initiating identity and every actual contributor rather than silently adopting service-principal authority.
 
-**Given** the Scan Coordinator dispatches work to the Orchestrator
-**When** the Orchestrator starts processing (Story 5.6)
-**Then** the scan coordinator shall expose progress via SignalR ScanHub: `Phase`, `CurrentFile`, `FilesProcessed`, `TotalFiles`, `ReferencesFound`, `EstimatedSecondsRemaining`
-**And** the minimal dashboard (from Epic 4) shall display this progress
+**Given** two explicit revisions, an out-of-order completion, a history-only run and both proven-deletion and failed-file cases,
+**When** the owner/reader inspects current and historical results,
+**Then** expected selections and retirement/gap labels are demonstrable through the existing reader, including original GENERATED_FROM, relationship evidence and exact Source Anchors,
+**And** retained old contributors remain source-pinned where required; unavailable historical source is explicit, and pair-era file Documents retain historical meaning rather than being relabelled generic semantic analysis.
 
-#### Story 5.6: Orchestrator & Superstep Dispatch
+**Scope and traceability:**
 
-As a **developer**,
-I want a deterministic Orchestrator that batches Code Units into supersteps using CodeGraph call-graph edges and dispatches Worker Agents through typed jobs,
-So that related Code Units are processed together and cross-verification is possible.
+- **Prior dependencies:** 13.1, 13.3, 13.7 and 13.9–13.15. Use existing callable owners; no public Scan-start route or later-story prerequisite.
+- **Independent value/boundary:** full static replacement yields honest current/history selections and retirement through component contracts. No incremental scanning, generic Cross-Repository refresh, new source origins, automatic historical-source pruning or editable Documents.
+- **Mapped requirements:** FR-2.3 preservation, FR-4.7/4.10, FR-6.6 local currentness contribution, FR-9.4; NFR-2.3/3.3; AR-3/7/13/16–19/31; UX-DR35/39–42/46.
 
-**Acceptance Criteria:**
+**Definition acceptance:** Accepted under the user's 2026-09-11 confident-boundary delegation after source-grounded scope/coverage checks. Story 13.16 grants no implementation or runtime authority.
 
-**Given** a scan work item is ready and Code Units with `code_unit_edges` exist for the repository (from Epic 4)
-**When** the Orchestrator starts
-**Then** it shall group Code Units into supersteps using a scheduling algorithm: caller/callee pairs from `code_unit_edges` shall be placed in the same superstep where possible
-**And** each superstep shall respect `MaxWorkersPerScan` (default: 5 for V1)
-**And** superstep order shall respect dependency chains where a Code Unit's callees are processed before or alongside its caller
+### Story 13.17: Complete one real Repository Scan through the ordinary product route
 
-**Given** a superstep is assembled
-**When** the Orchestrator dispatches Worker Agents (Story 5.7)
-**Then** each Worker Agent shall receive a typed job packet with: its assigned Code Unit, exact source slice, file path and symbol name, neighboring symbols, CodeGraph callers/callees/imports/implementations, relevant resource files, pre-scan hints, the System's Communication Pattern Catalog (seeded in Epic 4), user-supplied context (global + system + repo), and related outputs for lightweight cross-verification
-**And** dispatch shall use the selected Worker Agent execution adapter validated in the pre-epic spike
-
-**Given** a Worker Agent task completes
-**When** the result is collected
-**Then** the Orchestrator shall aggregate results and track superstep completion
-**And** on Worker failure, the task shall be retried once with the fallback LLM provider
-**And** after retry exhaustion, the failure shall be recorded in the scan log and the scan shall continue with remaining tasks
-
-**Given** all supersteps complete
-**When** Pass 1 generation is done
-**Then** the Orchestrator shall run bounded refinement only for satisfied material-enrichment predicates
-**And** the Orchestrator shall initiate Pass 2 (Story 5.8) by planning path-aware traces, clustering flow groups, and selecting one Worker Agent per flow group to synthesize Business Logic Documents
-
-**Given** the Orchestrator runs
-**When** scanning is in progress
-**Then** progress events (superstep started/completed, document generated) shall be pushed via the ScanHub for real-time dashboard updates
-
-#### Story 5.7: Worker Agent — Pass 1 Code Logic Documents
-
-As a **SystemOwner**,
-I want Worker Agents to read Code Units and produce Code Logic Documents describing the structural code behavior,
-So that the codebase is documented at a technical level with intra-repo references and cross-verification.
+As an authorized Repository owner,
+I want one Scan action to produce readable local Knowledge with truthful status and explicit recovery,
+So that I can complete the ordinary workflow without manually starting internal stages.
 
 **Acceptance Criteria:**
 
-**Given** a Worker Agent receives a superstep assignment
-**When** it processes each Code Unit
-**Then** it shall read the source code within the Code Unit's line range from the working copy
-**And** produce a structured Code Logic Document (doc_type=CL) containing: title (symbol_name), file path, line range, language, framework, summary (2-3 sentence technical description), key_symbols (array of referenced symbols), content_markdown (detailed code behavior description), and confidence (0.0–1.0)
+**Given** an authorized ordinary or standalone source-available Repository,
+**When** its owner selects 「开始扫描」,
+**Then** one durable generic request composes exact acquisition, inventory/overview, required tools, policy planning, progressive Pass 1, accepted local evidence/Flow planning, Pass 2 and publication through established owners,
+**And** the owner needs no separate stage-start calls, fixed sample name, catalog recipe, paired Repository, PairExecutionId or parent System for standalone work.
 
-**Given** the Worker Agent identifies a reference to another symbol within the same repository
-**When** the Code Unit is processed
-**Then** an intra-repo `REFERENCES` edge shall be created between the source document and the target document
-**And** document pre-allocation shall be used: if the referenced symbol's document doesn't exist yet, a placeholder document with status `Pending` shall be created so the edge can be established immediately
-**And** the edge confidence shall be `High` (1.0) for same-file references, `Medium` (0.7) for same-repo different-file references
+**Given** queued, active, paused, cancelling, cancelled or terminal work,
+**When** the owner opens or refreshes Repository details,
+**Then** minimal Chinese status reads actual durable state and provides permitted controls plus separate coverage/gap and Knowledge Currentness summaries,
+**And** queued work does not imply Worker execution and terminal status never asserts complete primary coverage or current BL; this usable route requires neither a future dashboard nor fabricated progress.
 
-**Given** the Worker Agent identifies a call to a symbol that may reside in another repository
-**When** the Code Unit is processed
-**Then** an `Uncertainty` shall be recorded with: status `unresolved`, sub_status `cross_repo`, the endpoint identifier, the inferred communication type (from the CP Catalog), the source document reference, and the target repo hint if known
-**And** the Uncertainty shall be left unresolved — final cross-repo resolution is completed in Epic 7 after full Cross-Repository Communication Detection
+**Given** a bounded provider outage, configuration failure, host restart or requested cancellation,
+**When** the owner uses the existing controls,
+**Then** Repository details expose sanitized reasons, truthful 「正在取消」 cleanup and explicit 「恢复扫描」 with source/prerequisite/live-authority checks,
+**And** restart/provider recovery cannot auto-resume paused work or switch provider/source; owned downstream work is fenced and cleaned while accepted history and independent consumers survive.
 
-**Given** two Worker Agents in the same superstep process related Code Units (caller/callee pair)
-**When** both documents are generated
-**Then** a cross-verification step shall compare the business logic claims from both sides
-**And** if claims agree → the existing edge is kept at current confidence
-**And** if claims disagree → the edge confidence shall be lowered to 0.5 and flagged as `disputed`
-**And** disputed edges shall render as yellow dashed lines in the knowledge graph (UX-DR-13)
+**Given** accepted generic or historical Knowledge and temporarily unavailable analysis capabilities,
+**When** a permitted User opens 「查看文档」, exact sections or history,
+**Then** Story 13.10/13.14 readers remain usable without management rights and preserve mode/contributor authorization, currentness, gaps and recorded-revision source behavior,
+**And** the user can inspect selected and historical CL/BL now, without waiting for detailed Scan-history UI, Chat or graph exploration.
 
-**Given** a Worker Agent encounters a database connection configured for the repository (Story 3.3)
-**When** the code references database tables or queries
-**Then** the Worker Agent may invoke the schema inspection tool (Story 5.9) to validate table/column references
-**And** may invoke the sample data query tool (Story 5.9) to understand data patterns
-**And** database-derived information shall be cited in the document with a `db_source` annotation
+**Given** generic production routing and retained historical artifacts,
+**When** a request is dispatched or its capability is unavailable,
+**Then** it has one explicit versioned workflow owner, with no silent legacy-pair execution; unimplemented Cross-Repository capability remains visibly unavailable and demos remain separate,
+**And** historical file Documents retain their original meaning and required data/source/key persistence remains active; existing readiness/diagnostics stay sanitized and routine checks incur no inference.
 
-**Given** a Worker Agent fails during Code Unit processing
-**When** the error is caught
-**Then** the task shall be retried once with the fallback LLM provider
-**And** on second failure, the Code Unit shall be marked as Failed with error details in the scan log
-**And** the scan shall continue with remaining Code Units
+**Given** the two-service runtime and representative ordinary plus standalone/library-source Repositories,
+**When** source-to-local-wiki journeys exercise bounded and progressive files, recovery and history reads,
+**Then** configured native tools/providers and persistence produce useful CL/BL with exact references and truthful gaps before cutover,
+**And** record configuration, timing, available usage and independent usefulness/faithfulness review separately from tests/history; claim no quota, universal throughput or Cross-Repository completion.
 
-#### Story 5.8: Worker Agent — Pass 2 Business Logic Documents
+**Scope and traceability:**
 
-As a **SystemOwner**,
-I want the system to synthesize Business Logic Documents from completed Code Logic Documents,
-So that business stakeholders can understand business processes without reading code.
+- **Prior dependencies:** 13.1–13.16 plus retained authorized administration. Integration and minimal Repository-detail/routing adapters only; missing core behavior returns to its earlier owner.
+- **Independent value/boundary:** one usable local Scan with status/recovery and existing reader/history. Detailed dashboards/Scan-history presentation, System/batch initiation, graph, Chat, generic Cross-Repository matching and operator restore are excluded.
+- **Mapped requirements:** FR-2.2/2.4/2.5 integration, FR-4.2/4.9, FR-8.1, FR-12.1/12.3/12.4 minimal status portions; NFR-1.1/2.2/2.3/3.1–3.3/4.1 runtime portion/5.1/5.2; AR-1/14–16/29/30/32; UX-DR1–13/29/33–35/45–49/53 Scan-reader portion/57.
 
-**Acceptance Criteria:**
+**Definition acceptance:** Accepted under the user's 2026-09-11 confident-boundary delegation after source-grounded scope/coverage checks. Story 13.17 grants no implementation or runtime authority.
 
-**Given** Pass 1 is complete for a Repository and all required bounded refinements have either run or been explicitly skipped
-**When** Pass 2 begins
-**Then** the Orchestrator shall start from Pass 1 entry points, traverse REFERENCES edges, candidate groups, dispatch sites, endpoint records, and uncertainties with path state, persist flow traces used for BL generation, and cluster traces into flow groups
-**And** one Worker Agent per flow group shall be assigned to synthesize a Business Logic Document
-**And** the Worker Agent shall receive a prepared flow-group packet containing ordered traces, trace steps, termination reasons, loop summaries, candidate selections, unresolved candidate groups, dispatch bindings, endpoint bindings, relevant Code Logic Documents, relevant resource/config Documents, and Cross-Repository uncertainties
+### Story 13.18: Follow real Scan progress, controls and history in the dashboard
 
-**Given** the Worker Agent processes Pass 2
-**When** a Business Logic Document is generated
-**Then** it shall contain (doc_type=BL): title (business process name), summary (narrative in plain language, no code references — Business Mode compatible), key_business_entities, flow_description, trace_evidence_refs, unresolved_branch_notes, source_documents, generation-time resolution state, and confidence
-**And** `GENERATED_FROM` edges shall connect the Business Logic Document Version to each Code Logic Document Version actually used
-
-**Given** the BL Doc synthesis
-**When** the Worker Agent identifies a business flow that spans multiple repositories
-**Then** the BL Doc shall reference all involved repositories
-**And** Cross-Repository scope shall be derived from Repository boundaries on REFERENCES edges, endpoint bindings, and uncertainties rather than stored as a separate edge type
-**And** the BL Doc summary shall acknowledge cross-repo scope (e.g., "This process spans 手机银行, 风控引擎, and 核心系统")
-
-**Given** a BL Doc is generated
-**When** the document content is reviewed
-**Then** the executive summary shall be in non-technical language (glossary-anchored terminology from the System's context)
-**And** flow descriptions shall be in the pattern: "Step 1: User submits X → Step 2: System validates Y → Step 3: ..."
-**And** no source code references, line numbers, or code snippets shall appear in the BL Doc body
-
-**Given** Pass 2 completes
-**When** all BL Docs are generated
-**Then** `index_entries` and `document_sections` shall be rebuilt for the new Business Logic Document Versions
-**And** export artifacts such as `index.md` may be regenerated to include BL Docs
-**And** the scan status shall transition through post-scan and Cross-Repository Resolution states before `Completed`
-
-#### Story 5.9: Database Tools for Worker Agents
-
-As a **SystemOwner**,
-I want Worker Agents to inspect database schemas and query sample data during scanning,
-So that business logic involving database interactions is accurately documented.
+As an authorized Repository owner,
+I want a live dashboard and navigable Scan history showing real work, coverage and Knowledge Currentness,
+So that I can understand outcomes and recover affected work without confusing operational completion with complete Knowledge.
 
 **Acceptance Criteria:**
 
-**Given** a Repository has a configured database connection (Story 3.3)
-**When** a Worker Agent processes a Code Unit that references database tables or queries
-**Then** the Worker Agent shall be able to invoke a schema inspection tool that returns: table names, column names, data types, primary/foreign keys, indexes, and constraints for the specified schema or entire database
-**And** the tool shall operate read-only — no DDL or write operations permitted (NFR-2.4)
+**Given** active, paused and terminal Repository Scan Runs,
+**When** the owner opens 「仪表盘」 from Repository details or the Scan-history record list,
+**Then** inline/detail arrangement shows observed operations, active Worker/error counts and admitted/accepted/pending/failed primary coverage separately from Knowledge publication/refresh state,
+**And** windows, files, Code Units and Documents retain distinct counts, percentages declare genuine denominators, and overlapping work is not depicted as one mandatory sequential progress bar.
 
-**Given** the schema inspection tool is invoked
-**When** the database connection is configured as read-only
-**Then** schema metadata shall be returned
-**And** if the database is not read-only, the tool shall refuse with "数据库连接未配置为只读模式"
+**Given** an authorized dashboard subscription, connection loss or publication while attaching,
+**When** SignalR updates arrive or the browser reconnects,
+**Then** permitted live updates reconcile with durable state without duplicate totals, lost final outcomes or elapsed-time simulation,
+**And** live access filters every run, contributor-dependent count, label and detail; refresh/reconnection neither dispatches another Scan nor grants source/management authority, and unavailable analysis does not disable existing Knowledge reads.
 
-**Given** a Worker Agent needs to understand data patterns
-**When** the sample data query tool is invoked with a table name and optional column filter
-**Then** the tool shall execute `SELECT * FROM {table} LIMIT 10` (configurable row limit, default 10, max 100)
-**And** results shall be returned as structured JSON with column names and sample values
-**And** connection strings and credentials shall never be exposed to the Worker Agent's prompt — the tool abstracts access
+**Given** queued, running, paused, cancelling, cancelled or failed work,
+**When** the owner uses dashboard pause/resume/cancel controls,
+**Then** the existing Scan Control contract supplies sanitized causes, bounded-retry/pause state, explicit prerequisite-checked 「恢复扫描」 and 「正在取消」 until cleanup completes,
+**And** restart/provider recovery cannot auto-resume or change provider/source; cancellation respects request-owned downstream work, accepted history and independent consumers rather than adding UI-owned lifecycle rules.
 
-**Given** a database query times out or fails
-**When** the tool is invoked
-**Then** the error shall be caught and returned to the Worker Agent as "数据库查询超时/失败：{reason}"
-**And** the Worker Agent shall continue processing with the note "Database verification skipped — connection issue"
+**Given** current, history-only, superseded, gap-bearing or retired outcomes,
+**When** the owner selects a recorded Scan and follows its accepted results,
+**Then** details distinguish operational outcome, primary coverage and published/pending/stale/failed/retired Knowledge and link to the existing exact-version reader/history,
+**And** old references retain original dependencies, historical artifacts gain no generic qualification, restricted metadata is absent and reader access itself never requires management permission.
 
-**Given** a Code Unit references a table or column that does not exist in the connected database
-**When** the schema inspection tool is used
-**Then** the Worker Agent shall record an `Uncertainty` with: "Referenced table/column {name} not found in database schema"
-**And** the uncertainty shall be surfaced for HITL review
+**Given** real stage/controller/system events across the completed route,
+**When** the dashboard and operational evidence are checked,
+**Then** the Story 13.7 logging owner receives the wired events and appends sanitized `log.md` entries using `## [YYYY-MM-DD HH:MM] operation | target`, supplemented by correlated states/counts/durations/failures/available usage,
+**And** secrets, raw source and hidden reasoning are absent, unknown usage is not zero and routine readiness makes no inference calls; structured logging does not replace the required file format.
 
-#### Story 5.10: Uncertainty Recording & Same-Repository Resolution Infrastructure
+**Given** real bundled-runtime Scan, pause/resume/cancel, failure, reconnect and history scenarios,
+**When** presentation is qualified,
+**Then** Simplified Chinese Fluent/Library Oak views preserve tree/detail/history navigation, LoadState, loading/refresh/empty/error behavior, keyboard interaction and meaningful accessible announcements,
+**And** evidence records responsiveness and status/count correctness without fictional fixtures, a universal latency guarantee, advanced graph animation or a new accessibility certification claim.
 
-As a **SystemOwner**,
-I want cross-repo calls detected during scanning to be recorded as Uncertainties with same-Repository and best-effort same-System resolution infrastructure,
-So that Epic 7 can complete final Cross-Repository Resolution after full detection evidence is available.
+**Scope and traceability:**
 
-**Acceptance Criteria:**
+- **Prior dependencies:** 13.7 and 13.17, consuming established source, Knowledge, reader and control owners. Presentation/event wiring and its qualification only; no new scheduler, lifecycle, logging sink or recovery engine.
+- **Independent value/boundary:** live operational inspection, recovery controls and Scan-history navigation for an already usable single-Repository route. No Campaign initiation, Chat, graph or operator restore.
+- **Mapped requirements:** FR-4.8, FR-9.4 navigation, FR-12.1–12.4; NFR-1.1/2.3/3.1–3.3/5.2; AR-14–16/29/32; UX-DR1–13/28/29/31–35/42–49/53 operational portion/57.
 
-**Given** Worker Agents have generated Pass 1 documents with cross-repo Uncertainties
-**When** a Repository's scan completes
-**Then** all Uncertainties with sub_status `cross_repo` shall be preserved in the `uncertainties` table with status `unresolved`
-**And** intra-repo Uncertainties (where both caller and callee are in the same repository) shall be resolved during this epic using the same-repo document graph
-**And** resolved intra-repo Uncertainties shall transition to status `resolved` with `resolved_by_edge_id` pointing to the established edge
+**Definition acceptance:** Accepted under the user's 2026-09-11 confident-boundary delegation after source-grounded scope/coverage checks. Story 13.18 grants no implementation or runtime authority.
 
-**Given** multiple Repositories within the same System have been scanned
-**When** each Repository scan completes
-**Then** a cross-repository check shall run: for each unresolved Uncertainty from the just-completed repo, search for a matching endpoint in already-scanned repos within the same System (best-effort partial resolution)
-**And** if a match is found, the Uncertainty shall be resolved immediately
-**And** if no match is found, the Uncertainty remains `unresolved` for Epic 7 to handle with full cross-repo detection
+### Story 13.19: Run and control several independent Repository Scans fairly
 
-**Given** two Repositories have mutual pending cross-repo Uncertainties (deadlock)
-**When** the deadlock-breaking protocol evaluates
-**Then** the repo with fewer pending uncertainties shall resolve first
-**And** if tied, the older scan shall yield
-**And** the protocol decision shall be recorded in the scan log
-
-**Given** a cross-repo Uncertainty never resolves (target repo never scanned, endpoint removed)
-**When** a SystemOwner reviews it
-**Then** they shall be able to mark it as `wontfix` (terminal state for dangling links)
-**And** the dashboard shall display the `wontfix` status with a note
-
-**Given** scan results are queried for chat or dashboard
-**When** a Document has unresolved cross-repo links
-**Then** a chat-accessible summary shall be available: "This Document has N unresolved cross-repo links: endpoint1→unknown, endpoint2→targetRepo"
-
-**Given** a Document changes (re-scanned in Epic 10 or during partial resolution)
-**When** the document graph updates
-**Then** cross-repo stale notices shall be posted to other repositories that reference the changed Document
-**And** the notices shall be advisory only — no automatic cascade (eventually consistent by design)
-
-**Given** the impact analysis query is invoked
-**When** a set of changed source files is provided
-**Then** the query shall return: (1) directly impacted Documents, (2) intra-repo transitive closure via REFERENCES edges, (3) Cross-Repository reachability derived from source and target Repository IDs on REFERENCES edges, (4) Uncertainties that should be reopened due to the change
-**And** the query shall use recursive CTE with `SET max_recursion_depth` (PostgreSQL-specific, configurable limit)
-
----
-
-### Epic 6: Third-Party Library Handling
-
-#### Story 6.1: Well-Known Library Allowlist
-
-As a **developer**,
-I want a well-known library allowlist so common open-source libraries are treated as understood,
-So that agents don't waste time generating documents for standard libraries or creating cross-repo uncertainties for them.
+As an authorized System Owner,
+I want System and selected-Repository actions to run independent Scans under shared bounded capacity,
+So that useful results progress fairly even when another Repository is delayed, paused or cancelled.
 
 **Acceptance Criteria:**
 
-**Given** a Worker Agent encounters an import/reference to an external library during Code Unit processing
-**When** the reference is evaluated against the cross-repo detection logic
-**Then** the system shall first check the reference against the well-known library allowlist
-**And** if the library is on the allowlist, no Uncertainty shall be generated for it
-**And** no on-demand scan shall be triggered for it
+**Given** authorized Repositories across Systems and standalone Repositories,
+**When** the owner starts a System or selected-Repository Scan action,
+**Then** each selected Repository obtains an independent Repository Scan Run with its Source Snapshot, intent, coverage, recovery and local Knowledge lifecycle,
+**And** optional Scan Campaign identity owns batch controls/aggregation only; duplicate submission handling does not create unintended runs, and membership neither proves communication nor creates a correctness barrier.
 
-**Given** the well-known library allowlist
-**When** it is loaded at application startup
-**Then** it shall be sourced from a configurable external file (JSON or YAML) stored in the `prompts/` directory (bind-mounted volume for hot-reload)
-**And** the allowlist shall be loaded into memory with a configurable refresh interval (default: every 5 minutes)
+**Given** more ready Repository/file/Flow Synthesis work than configured capacity,
+**When** Story 13.7's shared scheduler admits work,
+**Then** global Worker, per-run, shared provider and Tool Runtime limits remain bounded without multiplying by Repository count; eligible work eventually receives capacity under the declared fair policy,
+**And** one valid run/snapshot/file lease owner performs each work item, unsafe shared tool operations serialize, and Workers do not allocate Workers or occupy capacity waiting for unscanned targets.
 
-**Given** the default allowlist
-**When** shipped with Vulgata
-**Then** it shall include at minimum: standard libraries for each supported language (System.*, java.*, javax.*, Python stdlib, Node.js built-ins, Go standard library), widely-used open-source packages (Newtonsoft.Json, AutoMapper, Dapper, Serilog, ASP.NET Core packages, Spring Boot packages, Express.js, React, Vue.js, axios, lodash, etc.), and testing frameworks (NUnit, xUnit, JUnit, pytest, Jest, Mocha)
-**And** the allowlist format shall include: `name`, `package_pattern` (regex for import/package matching), `language`, `notes`
+**Given** concurrently progressing independent runs,
+**When** one suffers a file failure, tool prerequisite failure, provider pause or cancellation,
+**Then** unrelated eligible work can continue and publish its local Knowledge without waiting for every Campaign member,
+**And** affected dispatch/work/permits are stopped and cleaned, late writers are fenced, and shared evidence/history or independent consumers are not cancelled merely because the originating request stops.
 
-**Given** an Administrator wants to customize the allowlist
-**When** they edit the allowlist file
-**Then** additions shall take effect within the configurable refresh interval (no restart required)
-**And** removals from the allowlist shall cause existing documents that relied on that library being understood to be flagged for review during the next scan
+**Given** a Campaign and individually controllable runs,
+**When** authorized pause/resume/cancel is requested for one run or an explicit batch scope,
+**Then** existing controls act only on the addressed owned work under live authorization, including request-owned pending downstream jobs,
+**And** each resumed run independently rechecks source/provider/tools/authority; successful members are not restarted and new/out-of-scope Repositories are not silently added to an earlier action.
 
-**Given** a library reference is ambiguous — could match an allowlist entry or could be an internal org library
-**When** the evaluation runs
-**Then** the ambiguity shall be surfaced to the System Owner as a question in the post-deadline pre-scan approval lifecycle (Story 8.7)
-**And** the System Owner's answer shall be cached per Repository for future scans
+**Given** mixed queued, executing, paused, failed and published results,
+**When** System details, Repository grids and Campaign/dashboard views aggregate progress,
+**Then** permitted run/Worker counts, admitted/accepted/pending/failed coverage and published/pending/stale/failed/retired Knowledge remain separate and reconcile with per-run durable state,
+**And** live access filters every count/title/detail and contributor-dependent Document total; updates/reconnects create neither fictional progress nor duplicate totals, preserving Chinese states, LoadState and accessible feedback.
 
-#### Story 6.2: On-Demand Standalone Repository Scanning
+**Given** the bundled two-service runtime with at least three concurrent Repositories spanning multiple Systems and a standalone case,
+**When** qualification applies bounded capacity, delays one run and cancels or pauses another,
+**Then** another independently completes usable local CL/BL and history reads; admission/cleanup and ownership evidence verifies fairness and bounded totals without pair-specific contracts,
+**And** check shared-provider competition through the existing admission contract without requiring Chat; report configuration/timing/available usage and local-only evidence, not Cross-Repository relationship qualification.
 
-As a **SystemOwner**,
-I want standalone organization-owned libraries to be partially scanned on-demand when called by other repositories,
-So that shared library code is documented without scanning every unused function.
+**Scope and traceability:**
 
-**Acceptance Criteria:**
+- **Prior dependencies:** 13.7, 13.17 and 13.18, consuming established owners. No new scheduler, admission policy, reader or future-epic dependency.
+- **Independent value/boundary:** multi-Repository initiation, control and aggregate progress with real beyond-pair independence. No global semantic publication, general Cross-Repository Resolution, distributed scheduler or automatic Scan expansion.
+- **Mapped requirements:** FR-2.4/4.2/8.1, FR-12.1–12.4; NFR-1.1/2.3/3.1–3.3/4.1 limits portion/5.2; AR-1/14/15/18/23/30/32; UX-DR28/30–35/42/45–49.
 
-**Given** a Worker Agent in Repository A encounters a call to a function in an organization-owned standalone library (Repository B, a standalone repository created in Story 2.4)
-**When** the Worker Agent processes the Code Unit
-**Then** it shall record an Uncertainty pointing to Repository B's function
-**And** if Repository B has not yet been scanned for that function, an on-demand partial scan shall be triggered: only the Code Units directly called by Repository A (and their transitive callers/callees within Repository B) shall be scanned
-**And** the partial scan shall produce documents scoped to the requested Code Units — not the full repository
+**Definition acceptance:** Accepted under the user's 2026-09-11 confident-boundary delegation after source-grounded scope/coverage checks. Story 13.19 grants no implementation or runtime authority.
 
-**Given** an on-demand scan is triggered for a standalone Repository
-**When** another Worker Agent (from a different Repository) also triggers scanning the same standalone Repository
-**Then** a lock mechanism shall prevent concurrent scanning of the same standalone Repository
-**And** the second caller shall wait for the first scan to complete or re-use the first scan's results if the requested Code Units overlap
-**And** the lock shall be in-memory with a configurable timeout (default: 30 minutes)
+**Epic 13 definition acceptance:** All 19 story boundaries are accepted: 13.1–13.3 explicitly by the user; 13.4–13.19 under delegated confidence after independent coverage/dependency review. Core source-to-local-Knowledge, readers, Docker, safety, recovery and real qualification are covered without later-epic prerequisites. This completes definition of the epic, not its implementation. Proceed to Epic 14 under the same bounded delegation.
 
-**Given** a partial scan of a standalone Repository completes
-**When** documents are generated
-**Then** the scanned functions shall be documented with CL Docs
-**And** unscanned functions shall remain unscanned (no placeholder documents)
-**And** a scan note shall record "Partial scan: {N} of {M} Code Units scanned — triggered by {caller_repo}"
 
-**Given** the same standalone Repository is later referenced by additional callers needing different Code Units
-**When** a new on-demand scan is triggered
-**Then** only newly-requested Code Units shall be scanned (incremental partial scan)
-**And** previously scanned Code Units shall not be re-scanned unless their source code has changed
+## Epic 14: Cross-Repository Business Understanding
 
-**Given** a standalone Repository is a direct dependency (not a transitive one)
-**When** the SystemOwner views the repository
-**Then** they shall be able to trigger a full scan manually (not just on-demand partial)
-**And** a full scan shall produce documents for all Code Units in the repository
+Users can follow source-supported business behavior across independently scanned Repositories/Systems, understand missing or ambiguous links, and see explanations improve when later accepted knowledge arrives without rescanning unchanged source. Epic 13 supplies the established source, control, Knowledge and reader owners; this epic requires no later Chat, graph or operations epic.
 
-#### Story 6.3: Unknown Library LLM Inference
 
-As a **SystemOwner**,
-I want the system to attempt LLM-based inference for unknown libraries without source code,
-So that I receive a reasonable behavioral summary rather than a blank gap in the knowledge graph.
+### Story 14.1: Preserve generic source-backed communication observations
+
+As an authorized IT reader,
+I want accepted analysis to describe communication mechanisms, parties and unresolved bindings consistently,
+So that I can distinguish source-supported interactions from missing information before any Cross-Repository match is accepted.
 
 **Acceptance Criteria:**
 
-**Given** a Worker Agent encounters an import/reference to an external library that is NOT on the well-known library allowlist AND has no standalone Repository in Vulgata
-**When** the library is unknown (no source code available)
-**Then** the system shall attempt LLM-based inference: the Worker Agent's LLM provider shall be asked to describe the likely behavior of the library based on the library name, the import statement, the calling code context, and the function/method names being invoked
-**And** the inference result shall include a `confidence` score (0.0–1.0) reflecting how speculative the description is
-**And** the result shall be stored as a Document with doc_type=CL, status `Inferred`, and a citation `"Inferred from LLM knowledge — no source code available"`
+**Given** admitted exact source containing RPC/HTTP, queue, file/storage or page-navigation behavior,
+**When** the existing Pass 1 Worker analyzes complete File Workstreams,
+**Then** proposals retain owner, provider/consumer role, mechanism, operation, logical namespace, source literals/expressions, evidence status and exact Source Anchors,
+**And** representative cases cover each listed family without a fixed demo profile, mandatory XML workflow, universal protocol claim or guaranteed gRPC-specific implementation.
 
-**Given** LLM inference produces a result with confidence ≥ 0.7
-**When** the document is stored
-**Then** it shall be used as a normal CL Doc (with the `Inferred` status visible in the document viewer)
-**And** edges from calling code to the inferred document shall carry `Inferred` confidence
+**Given** indirect expressions, unknown mechanisms or unscanned/unavailable counterparties,
+**When** observations are accepted through Story 13.9,
+**Then** available identifiers and meaningful known/unknown-target distinctions survive with explicit Uncertainties, including named RPC endpoints,
+**And** missing database/gateway/registry facts remain nonblocking gaps; Workers invent neither deployed values nor relationships and initiate no automatic target/library Scan.
 
-**Given** LLM inference produces a result with confidence < 0.7 OR the LLM call fails
-**When** the inference attempt concludes
-**Then** the SystemOwner shall be notified: "无法推断 {library_name} 的功能，请手动提供上下文"
-**And** a placeholder Document shall be created with status `Missing`
-**And** the SystemOwner shall be able to supply plain-text context for the library via a "提供上下文" action, which shall be stored as a user-supplied document
+**Given** optional catalog/framework context in Story 13.4's documented supported format,
+**When** an owner supplies a new supported pattern and a later Scan snapshots that context,
+**Then** interpretation can use it without application-code changes within that format, preserving context provenance and lower authority than source,
+**And** edits do not mutate active inputs; new syntax may require implementation, and dynamic parsers/plugins, executable configuration, external fetching or maintained service mappings are not promised.
 
-**Given** an Administrator has configured an LLM provider that does not support general knowledge queries (code-only model)
-**When** inference is attempted and fails due to model capability
-**Then** the system shall fall back immediately to the manual context notification (skip inference)
-**And** the scan log shall record "LLM inference skipped — provider does not support general knowledge"
+**Given** shared file paths/topics, navigation links or familiar library imports,
+**When** observations describe their meaning,
+**Then** file/storage roles and locations, URL patterns/deep links and loose navigation coupling remain explicit without claiming executed routing,
+**And** shared names/paths and confidence do not prove counterpart identity; ordinary library use alone creates no communication gap, while unsupported behavior remains a limitation.
 
-**Given** the same unknown library is encountered by multiple Worker Agents across different repositories
-**When** inference results are shared
-**Then** the first inference result shall be cached per library identifier
-**And** subsequent encounters shall reuse the cached result (not re-query the LLM)
-**And** the cache shall be invalidated if an Administrator or SystemOwner provides manual context for the library
+**Given** valid proposals, failed drafts and restricted source contributions,
+**When** acceptance and existing wiki discovery/section reads are exercised,
+**Then** only accepted exact-version observations are visible under live mode/contributor authorization; IT can find permitted endpoint evidence, while Business receives no technical CL/source metadata,
+**And** real bounded Worker examples independently verify observation/source faithfulness, unknown-versus-malformed handling and truthful gaps, not merely JSON validity; shared Agent Execution preserves organization boundaries and necessary authorized external-provider context.
 
----
+**Scope and traceability:**
 
-### Epic 7: Cross-Repository Detection
+- **Prior dependencies:** 13.4–13.12 and 13.17. Extend existing content, Worker, acceptance and reader owners; no Cross-Repository matcher or new tool type.
+- **Independent value/boundary:** useful accepted communication evidence is discoverable before resolution. Preserve historical human wontfix decisions; no new HITL actions, external operational lookup or dedicated unknown-library inference.
+- **Mapped requirements:** FR-5.1–5.3/5.5–5.8/5.10–5.12/5.14, FR-6.1/6.4 current clauses, FR-7.3/8.4/14.4; NFR-2.3/3.1/6.1/6.2; AR-5/6/8/9/22; UX-DR2/35/39–41/46.
 
-#### Story 7.1: Communication Pattern Catalog Management
+**Definition acceptance:** Accepted under the user's 2026-09-11 confident-boundary delegation after source-grounded scope/coverage checks. Story 14.1 grants no implementation or runtime authority.
 
-As a **SystemOwner**,
-I want to define the communication patterns used by my System,
-So that Worker Agents can detect cross-Repository communication using organization-specific conventions instead of guessing.
+### Story 14.2: Pin finite authorized evidence targets across Repositories
 
-**Acceptance Criteria:**
-
-**Given** I am a SystemOwner viewing a System I manage
-**When** I open the Communication Pattern Catalog editor
-**Then** I shall be able to configure patterns for RPC frameworks, HTTP API conventions, message queue topics, file/storage paths, and cross-repo page navigation
-**And** each pattern shall include: pattern type, human-readable name, match rules, endpoint identifier extraction rule, provider/consumer hints, confidence default, examples, and active/inactive status
-
-**Given** I save a catalog
-**When** validation runs
-**Then** invalid match rules shall be rejected with field-level errors
-**And** duplicate active pattern names within the same System shall be rejected
-**And** the catalog shall be versioned so scans can record which catalog version influenced their results
-
-**Given** a scan is already running for the System
-**When** I edit the catalog
-**Then** the change shall be queued for the next scan and shall not alter the active scan's prompt context
-**And** I shall see "通信目录修改将在当前扫描完成后生效"
-
-**Given** a new communication pattern is needed
-**When** I add it through the catalog editor
-**Then** no code deployment shall be required for Worker Agents to receive the new pattern in future scans
-**And** the catalog format shall be documented in the UI help text with examples suitable for System Owners
-
-#### Story 7.2: Worker Prompt Injection & Detection Result Contract
-
-As a **SystemOwner**,
-I want each Worker Agent to receive the active Communication Pattern Catalog and return structured detection results,
-So that cross-Repository findings are consistent, parseable, and traceable to evidence.
+As an authorized Scan owner,
+I want reconciliation to use a finite reproducible selection of accepted Repository evidence,
+So that available knowledge can contribute without mixing arbitrary history or waiting for an entire portfolio.
 
 **Acceptance Criteria:**
 
-**Given** a Worker Agent job is created for Pass 1
-**When** the Orchestrator builds the typed job packet
-**Then** it shall include the active System Communication Pattern Catalog version and only the patterns relevant to the Code Unit's language/framework hints
-**And** the Worker prompt shall include pattern examples, endpoint extraction rules, and confidence guidance
+**Given** a root Repository Scan Run and its initiating identity/approved discovery scope,
+**When** Knowledge constructs a reconciliation target,
+**Then** it fixes the root binding and one designated analysis candidate per other authorized Repository, pinning exact Accepted File Manifest, Document and observation versions with the supplied selection policy,
+**And** scope may include other Systems and standalone Repositories only when authorized; organizational membership grants no additional access or compulsory same-System restriction.
 
-**Given** a Worker Agent detects external communication
-**When** it returns the Pass 1 result
-**Then** the result shall include a structured `detected_communications` collection with: communication type, source code location, endpoint identifier, normalized endpoint identifier, provider/consumer role, matched catalog pattern, confidence, evidence excerpt, object-flow provenance if known, and unresolved reason if not resolved
-**And** malformed detection results shall fail validation and be retried once as a bounded refinement request
+**Given** accepted files in an external Repository whose run is unfinished,
+**When** their designated candidate is selected,
+**Then** those committed files may enter the target before the external run's checkpoint/completion,
+**And** partial drafts, failed-file drafts and unrelated historical candidates cannot enter; absent files remain explicit gaps rather than silently inherited old analysis or a requirement that every Repository finish.
 
-**Given** no catalog pattern matches but the Worker Agent sees likely cross-repo communication
-**When** the result is committed
-**Then** it shall create a low-confidence detection candidate
-**And** it shall surface a Human-in-the-Loop question asking the SystemOwner to confirm or add the missing catalog pattern
+**Given** a frozen target and later accepted evidence,
+**When** work reads the target or records its matching-item dispositions,
+**Then** its finite membership and exact versions remain unchanged and every selected item can retain an explicit completed, failure or Uncertainty outcome,
+**And** later evidence requires a distinct target rather than changing active inputs; root-run BL eligibility still requires terminal admitted primary work and terminal matching-target outcomes, not merely successful target construction.
 
-#### Story 7.3: RPC and HTTP Endpoint Detection
+**Given** a narrowed scope or revoked contributor access after broader evidence was selected,
+**When** selection, disclosure or application is revalidated,
+**Then** restricted data is withheld immediately and unavailable scope is recorded as not evaluated where appropriate,
+**And** scope narrowing/access loss alone cannot disprove or replace broader accepted relationship truth; current authority is checked without deleting original provenance or inventing service-principal permission.
 
-As a **SystemOwner**,
-I want Vulgata to detect RPC and HTTP provider/consumer relationships across Repositories,
-So that cross-service business flows can be traced through service boundaries.
+**Given** multiple candidate histories, concurrent acceptance and interrupted/replayed target creation,
+**When** isolated integration checks use the existing callable Knowledge/control contracts,
+**Then** deterministic canonical identity and durable fences reproduce the selected target without duplication, mutable membership or cross-scope leakage,
+**And** default readers remain on selected CL/published-flow dependencies while target/staged/history inspection is explicitly labelled; no accepted target is presented as a resolved relationship or completed Scan.
 
-**Acceptance Criteria:**
+**Scope and traceability:**
 
-**Given** a Worker Agent processes code that exposes an RPC or HTTP endpoint
-**When** the provider-side pattern matches
-**Then** a `communication_endpoint` shall be recorded with protocol, endpoint identifier, normalized endpoint identifier, provider Repository, provider Document Version, source location, catalog evidence, and confidence
-**And** RPC endpoints shall be recorded as named entities even when no consumer has been scanned yet
+- **Prior dependencies:** 14.1 plus 13.7, 13.9/13.10 and 13.13/13.14. Knowledge owns evidence sets; Scan Control owns operational target work. Only target selection/inspection records needed here are added.
+- **Independent value/boundary:** a bounded reproducible evidence set is callable and inspectable, including accepted unfinished-run contributions. No matching algorithm, inquiry execution, automatic source acquisition, future-epic reader or global correctness barrier.
+- **Mapped requirements:** FR-4.4/4.5, FR-6.2/6.3/6.6 scope clauses, FR-2.1/2.3 preservation; NFR-2.3/3.1/3.3; AR-1/2/10/17/18/23; UX-DR35/40/41 data/inspection portions.
 
-**Given** a Worker Agent processes code that calls an RPC or HTTP endpoint
-**When** the consumer-side pattern matches
-**Then** a `dispatch_site` shall be recorded with protocol, invocation expression, normalized endpoint identifier, source Document Version, caller Repository, and object-flow hints
-**And** the system shall attempt to match the dispatch site to known communication endpoints in already-scanned Repositories
+**Definition acceptance:** Accepted under the user's 2026-09-11 confident-boundary delegation after source-grounded scope/coverage checks. Story 14.2 grants no implementation or runtime authority.
 
-**Given** a provider and consumer are matched
-**When** the match is committed
-**Then** the REFERENCES edge shall identify provider and consumer roles
-**And** the provider endpoint's consumer count shall increase
-**And** the edge shall cite the dispatch-site evidence and provider endpoint evidence
+### Story 14.3: Accept evidence-backed one-to-many relationships and unresolved outcomes
 
-**Given** only one side is scanned
-**When** no matching Repository can be found
-**Then** the unresolved side shall be recorded as an external reference with available service name, URL, RPC interface, or endpoint identifier
-
-#### Story 7.4: Message Queue and File-Based Communication Detection
-
-As a **SystemOwner**,
-I want message queue and file/storage communication to be detected across Repositories,
-So that asynchronous and file-based business processes are not invisible in the knowledge graph.
+As an authorized Knowledge reader,
+I want Cross-Repository relationships and unresolved outcomes selected from explicit evidence,
+So that I can follow supported references without guessing counterpart identity or changing historical explanations.
 
 **Acceptance Criteria:**
 
-**Given** a Worker Agent processes producer or consumer code for a message queue
-**When** a catalog pattern matches a topic, queue, exchange, routing key, or subscription
-**Then** the system shall record a communication endpoint or dispatch site with protocol `mq`, normalized topic identifier, provider/consumer role, source location, and confidence
-**And** producer and consumer roles shall be matched by normalized topic and System catalog rules
+**Given** Story 14.2's finite pinned caller/candidate evidence,
+**When** Resolver applies declared deterministic matching rules,
+**Then** each decision records exact input versions, applicable mechanism/operation/role/namespace evidence, rule identity and outcome for Knowledge validation,
+**And** a lone visible candidate, shared name/path/topic, organizational membership or model confidence alone cannot establish identity; incompatible or insufficient bindings remain explicit Uncertainties.
 
-**Given** a Worker Agent processes file or object-storage access
-**When** a catalog pattern matches local filesystem, remote filesystem, OSS object storage, HDFS, or equivalent path conventions
-**Then** the system shall record a file-based communication endpoint with normalized storage system, path pattern, provider/consumer role, source Document Version, and confidence
-**And** wildcard or environment-specific paths shall be stored with both raw and normalized forms
+**Given** source-supported evidence for several consumers of one provider/interface,
+**When** relationships are accepted,
+**Then** each justified pair becomes an exact-version REFERENCES Edge with its supported meaning, without a single-consumer or exactly-two-Repository restriction,
+**And** counts include only supported currently permitted relationships and do not imply a complete deployment inventory; source linkage and possible navigation remain distinct from executed routing.
+**And** multiple evidence-supported counterparties remain valid; candidate cardinality alone determines neither matching nor ambiguity.
 
-**Given** a file or message communication target cannot be resolved
-**When** the detection is committed
-**Then** the system shall create an Uncertainty with sub_status `cross_repo`, endpoint identifier, protocol, target hint where known, and candidate resolution notes
-**And** the dashboard shall later be able to present this Uncertainty for HITL review
+**Given** unknown parties, ambiguous alternatives or missing operational facts,
+**When** matching settles the frozen target,
+**Then** every item receives a supported match or explicit unresolved/ambiguous/failure disposition, retaining known identifiers and meaningful known/unknown-target distinctions,
+**And** Dangling Links do not block otherwise valid analysis or hold Worker capacity awaiting a target; no automatic Scan, mandatory owner question or confidence-only fallback occurs.
 
-#### Story 7.5: Cross-Repo Page Navigation Detection
+**Given** accepted relationship/Uncertainty changes and an existing CL body/publication,
+**When** Knowledge commits their selection through the fenced acceptance owner,
+**Then** relationship evidence has independent publication identity without rewriting unchanged caller CL; expected selection, target, initiating authority, contributor and cancellation checks apply atomically,
+**And** replay or late superseded results cannot duplicate/regress selections, while historical REFERENCES and old BL GENERATED_FROM retain original versions rather than following today's relationship selection.
+**And** existing BL remains readable at original dependencies; affected dependency changes immediately mark it stale/pending through existing currentness, without refresh execution.
 
-As a **SystemOwner**,
-I want Vulgata to detect cross-Repository page navigation while marking it as low-confidence,
-So that UI navigation flows are visible without overstating loose coupling as hard service dependency.
+**Given** current/history reads, live revocation or narrowed discovery scope,
+**When** users inspect related Documents, unresolved explanations or scoped counts through the existing read contract,
+**Then** stable Knowledge Read Context and live contributor/mode authorization govern all content, metadata and membership, without management-only access or a separate tool per record,
+**And** narrowed scope/access loss does not disprove broader relationships; matched, ambiguous, one-to-many and contradictory-namespace cases independently demonstrate decision correctness and visibility without an LLM call.
 
-**Acceptance Criteria:**
+**Scope and traceability:**
 
-**Given** a Worker Agent processes frontend, mobile, or routing code
-**When** it detects URL patterns, deep links, app-to-app navigation, route names, or webview launches that match the Communication Pattern Catalog
-**Then** it shall record a page-navigation dispatch site with source route/screen, target URL or route pattern, source Document Version, and extracted target hints
-**And** ownership evidence shall include at least one of: route ownership, base path, host/tenant mapping, deployment topology, or Service Topology evidence
-**And** confidence shall default below service-call confidence unless ownership evidence confirms the target Repository
+- **Prior dependencies:** 14.1/14.2 plus 13.7, 13.9/13.10 and 13.13/13.14. Extend existing Knowledge relationship/publication/read ownership; Resolver proposes only.
+- **Independent value/boundary:** readers follow Cross-Repository references and unresolved evidence before Cross-Repository BL. Deterministic matching settles without later inquiry. No focused Worker, graph, Chat, human dismissal workflow or external-information adapter.
+- **Mapped requirements:** FR-4.4/4.7/4.10, FR-5.3–5.6/5.10–5.12, FR-6.1–6.5 evidence/count clauses; NFR-2.3/3.1/3.3; AR-9/13/17/18/22/25; UX-DR11/35/39–41/46.
 
-**Given** page navigation is detected
-**When** provider or consumer role cannot be identified reliably
-**Then** the detection shall be stored as low-confidence
-**And** graph rendering shall use the unresolved/low-confidence visual treatment rather than a confirmed solid edge
+**Definition acceptance:** Accepted under the user's 2026-09-11 confident-boundary delegation after source-grounded scope/coverage checks. Story 14.3 grants no implementation or runtime authority.
 
-**Given** a SystemOwner reviews page-navigation Uncertainties
-**When** they confirm a target Repository or mark the link as external
-**Then** the Uncertainty shall record the human input and retain lower priority than code-derived facts if later evidence conflicts
+### Story 14.4: Investigate ambiguous targets through bounded source-backed inquiry
 
-#### Story 7.6: Object Flow Analysis for Indirect Targets
-
-As a **SystemOwner**,
-I want Vulgata to trace communication targets through object creation and assignment,
-So that indirect service clients, factories, and configuration-driven targets can still be resolved.
+As an authorized Scan owner,
+I want ambiguous indirect targets investigated when useful evidence is available,
+So that supported relationships can improve without treating model confidence or unavailable tools as proof.
 
 **Acceptance Criteria:**
 
-**Given** a Code Unit contains a communication call through a client object, injected dependency, factory, configuration object, or wrapper method
-**When** Worker Agent detection runs
-**Then** the detection result shall include object-flow provenance: source symbol, assignment chain, constructor/factory call, configuration key where known, and confidence
-**And** CodeGraph caller/callee/import evidence shall be included in the Worker job packet when available
+**Given** an ambiguous matching question with useful available evidence,
+**When** Scan Control dispatches a Focused Resolution Investigation,
+**Then** Knowledge pins the finite caller/candidate set, exact snapshots/accepted Documents, original question and approved access/policy inputs,
+**And** real MAF execution uses an externalized prompt and existing bounded admission; uninvestigable deployment/Repository facts remain explicit nonblocking Uncertainties instead of speculative inquiry loops.
 
-**Given** object-flow analysis finds multiple possible targets
-**When** the detection is committed
-**Then** candidate targets shall be stored in `dispatch_site_endpoint_candidates` with rank, confidence, and match reason
-**And** the Orchestrator shall not force a single target when confidence is below the configured threshold
+**Given** a dispatched inquiry,
+**When** its Worker inspects CL/source/configuration through existing Source Content Analysis, native CodeGraph MCP and applicable LSP,
+**Then** Stories 13.4–13.6 enforce granted handles, Scan-purpose scope, cumulative budgets, locations and limitations, with at most one LSP session per snapshot,
+**And** no arbitrary paths/snapshots/adapters, dependency restoration, external-information tools or Repository Scan initiation is permitted; required CodeGraph failure has no automatic source-only fallback.
 
-**Given** object-flow evidence is insufficient
-**When** no safe target can be selected
-**Then** the system shall create an Uncertainty and ask a HITL question only if the ambiguity affects a generated Document or cross-Repository edge
+**Given** supporting/opposing findings and candidate conclusions,
+**When** inquiry completion reaches the shared fenced acceptance owner,
+**Then** accepted findings, exact evidence/conditions/limitations and terminal Scan Control job progress commit atomically after bound-target, live initiating/contributor-authority and job-fence checks,
+**And** Workers neither write Edges nor overwrite CL; Story 14.3 applies relationships through its separate idempotent owning contract, and unresolved expressions, incomplete indexes/classpaths or unavailable tools cannot become negative proof or fabricated endpoint values.
 
-#### Story 7.7: Service Topology MCP Resolution
+**Given** a completed inquiry or repeated delivery of the same question,
+**When** eligibility is evaluated again,
+**Then** deduplication uses the original question/candidate/evidence/policy fingerprint, excluding inquiry outputs and receipts,
+**And** unchanged inputs do not redispatch completed inquiry; independently changed inputs or an explicit authorized operator request may justify bounded reinvestigation, but publication never recursively triggers it.
+**And** pre-commit failure exposes neither accepted findings nor completed job; post-commit/lost-acknowledgement replay returns durable findings and progress without repeating the model call, verified at both completion boundaries.
 
-As a **SystemOwner**,
-I want Vulgata to use the mock Service Topology platform to map communication endpoints to Repositories,
-So that endpoint names can resolve even when code-level naming differs across Repositories.
+**Given** provider outage, configuration failure, cancellation, deadline or ownership loss,
+**When** the existing controller settles inquiry work,
+**Then** classified increasing bounded retries/pause, explicit prerequisite-checked resume and owned capacity cleanup apply without provider/source substitution,
+**And** late application is fenced and unrelated work continues; shared Agent Execution keeps self-hosted source/Documents inside organization infrastructure and external-provider context necessary and authorized.
 
-**Acceptance Criteria:**
+**Given** representative indirect-target ambiguity with both clarifying evidence and unavailable evidence,
+**When** actual bounded MAF/tool execution is qualified,
+**Then** review separates useful source-faithful findings, domain matching decisions and unchanged Uncertainties from schema validity,
+**And** original-input replay, revocation and failure checks produce sanitized timing/usage evidence without claiming zero repeated external billing or restoring historical peer-verification/HITL rules.
 
-**Given** the Service Topology MCP tool is configured and approved for scanning
-**When** a communication endpoint or dispatch site has a service code, URL host, topic namespace, or other topology key
-**Then** the Cross-Repository Resolution service shall query the mock Service Topology tool for candidate Repositories
-**And** the query and response shall be recorded as resolution evidence without exposing secrets in prompts or logs
+**Scope and traceability:**
 
-**Given** the Service Topology returns one high-confidence Repository match
-**When** provider/consumer evidence supports the match
-**Then** the Uncertainty shall transition to `resolved`
-**And** a REFERENCES edge shall be created between the consumer and provider Document Versions
+- **Prior dependencies:** 14.1–14.3 plus 13.4–13.7 and 13.11. Add inquiry jobs/evidence under existing owners, without new tools or scheduler.
+- **Independent value/boundary:** a real focused inquiry can improve an existing matching outcome or explain why it cannot. No arbitrary discovery, automatic correction or new service-principal policy.
+- **Mapped requirements:** FR-4.2/4.9, FR-5.7/5.8, FR-6.1/6.2, FR-13.1 native/13.3 Scan portions, FR-15.1–15.3; NFR-1.1/2.3/3.1–3.3/6.1; AR-2/6/9/15/17/18/20/22/23; UX-DR33–35/40/46.
 
-**Given** the Service Topology returns no match or multiple conflicting matches
-**When** code evidence cannot decide
-**Then** the system shall preserve the Uncertainty with candidate Repository hints
-**And** the HITL dashboard shall show the candidates and evidence for SystemOwner review
+**Definition acceptance:** Accepted under the user's 2026-09-11 confident-boundary delegation after source-grounded scope/coverage checks. Story 14.4 grants no implementation or runtime authority.
 
-**Given** the target provider or consumer is not in any scanned Repository
-**When** resolution completes
-**Then** the absent entity shall be recorded as an external reference with the available identifier, protocol, service/topology hints, and confidence
+### Story 14.5: Reconcile later evidence with finite cycles and coalesced refresh
 
-#### Story 7.8: Prompt Workbench for Detection Patterns
-
-As a **developer or SystemOwner**,
-I want a Prompt Workbench to test detection prompts against known code examples,
-So that catalog patterns and Worker prompt changes can be validated before they affect production scans.
+As an authorized Knowledge reader,
+I want accepted later evidence to improve relationships without rescanning unchanged source,
+So that missing targets can become understandable while refresh remains bounded and honest.
 
 **Acceptance Criteria:**
 
-**Given** I open the Prompt Workbench
-**When** I select a Communication Pattern Catalog pattern and provide a code example
-**Then** the workbench shall run the Worker detection prompt against the example using the selected LLM provider
-**And** it shall show structured detection output, validation errors, confidence, and evidence excerpts
+**Given** existing Dangling Links and independently accepted new Repository evidence,
+**When** reconciliation is requested under the recorded initiating authority/approved scope,
+**Then** Scan Control creates a finite Resolution Epoch using Story 14.2's pinned selection, including eligible accepted files of unfinished external runs,
+**And** it neither re-analyzes unchanged caller source nor starts automatic source acquisition, whole-Repository expansion or incremental update scanning.
 
-**Given** I have expected detection output for a sample
-**When** the prompt run completes
-**Then** the workbench shall compare actual output to expected output
-**And** mismatches shall be highlighted by field: communication type, endpoint identifier, provider/consumer role, source location, and confidence
+**Given** late/missing targets and directed Call Cycles in that target,
+**When** matching and eligible bounded inquiry are completed,
+**Then** traversal records cycles and terminates within configured bounds, with each matching item completed or explicitly failed/uncertain,
+**And** unknown targets hold no Worker capacity indefinitely; BL eligibility additionally requires terminal outcomes for every admitted primary item of the root run, so paused root work never qualifies.
 
-**Given** a prompt or catalog pattern is validated
-**When** I choose to save it
-**Then** the updated pattern shall be saved as a new catalog version
-**And** existing scans shall continue using their original catalog version
-**And** the scan log shall record future scans that use the new version
+**Given** validated changed relationship/Uncertainty evidence,
+**When** Knowledge accepts a Resolution Change Set,
+**Then** unchanged caller CL and original source remain intact while affected Logical Flows are deduplicated from relevant content/evidence versions and membership,
+**And** unrelated flows do not refresh; publication of Documents or relationship selections starts neither another Resolution Epoch nor recursive inquiry.
 
-#### Story 7.9: Cross-Repository Resolution Finalization
+**Given** several newer checkpoints affecting one flow while another target is active,
+**When** desired refresh work is recorded,
+**Then** unstarted demands coalesce to one latest desired target and active inputs stay fixed,
+**And** existing expected-head/desired-target/cancellation checks prevent outdated current promotion; pending/stale/failed refresh is visible, not a global publication barrier or silently rewritten active job.
 
-As a **SystemOwner**,
-I want unresolved cross-repo detections to resolve once enough provider, consumer, and topology evidence exists,
-So that Vulgata's graph shows actual Cross-Repository relationships rather than permanent unknowns.
+**Given** validated replacement evidence, failed source analysis or narrowed access/scope,
+**When** references and affected roots are reconsidered,
+**Then** Story 13.16's evidence-based withdrawal may reopen obsolete references or retire absent roots while preserving exact history,
+**And** model omission/exclusion/failure cannot prove deletion, and narrower scope/access loss alone records visibility/not-evaluated changes rather than disproving broader accepted relationships.
 
-**Acceptance Criteria:**
+**Given** duplicate events, lost acknowledgement, restart or cancellation during reconciliation,
+**When** the existing controller and acceptance contracts recover,
+**Then** durable targets/outcomes/demands remain idempotent, old ownership is fenced and paused work requires explicit prerequisite-checked resume with owned cleanup,
+**And** callable-contract tests demonstrate late relationship improvement, cycle termination and coalesced demands through existing readers/status without requiring Cross-Repository BL execution or a future UI.
 
-**Given** Epic 5 has recorded cross-repo Uncertainties and Epic 7 has committed provider/consumer detections
-**When** a Repository scan completes
-**Then** Cross-Repository Resolution shall evaluate unresolved dispatch sites, communication endpoints, topology candidates, and Uncertainties across all scanned Repositories in the same System
-**And** resolution shall use repo-qualified endpoint matching before falling back to lower-confidence name or topology hints
+**Scope and traceability:**
 
-**Given** a resolution match is accepted
-**When** the graph is updated
-**Then** the system shall create or update REFERENCES edges with provider/consumer roles, confidence, evidence links, and source/target Repository IDs
-**And** consumer counts per communication interface shall be recalculated from current resolved edges
-**And** resolved Uncertainties shall reference the edge or Document Version that resolved them
+- **Prior dependencies:** 14.1–14.4 plus 13.7, 13.10 and 13.13–13.16. Reuse established relationship, flow-target, publication and recovery owners.
+- **Independent value/boundary:** later evidence improves readable relationship selections and creates finite durable refresh demand. No source rescans, new controller, recursive regeneration flood, Chat or graph.
+- **Mapped requirements:** FR-4.2/4.5/4.10, FR-5.5, FR-6.2–6.6, FR-12.1–12.4 state portions; NFR-1.1/2.3/3.1–3.3; AR-10/14/15/17–20/23; UX-DR31–35/40/42/46.
 
-**Given** mutual pending cross-repo Uncertainties create a resolution ordering conflict
-**When** the Deadlock-Breaking Protocol runs
-**Then** the Repository with fewer pending Uncertainties shall resolve first
-**And** if tied, the older scan yields
-**And** the decision shall be recorded in `log.md` and structured scan events
+**Definition acceptance:** Accepted under the user's 2026-09-11 confident-boundary delegation after source-grounded scope/coverage checks. Story 14.5 grants no implementation or runtime authority.
 
-**Given** resolution changes graph truth after a Business Logic Document was generated
-**When** the affected Document Version is queried
-**Then** Vulgata shall mark the affected Business Logic Document Version with `resolution_outdated_at` or an equivalent stale notice
-**And** no automatic cascade regeneration shall occur in V1
-**And** chat shall be able to cite both the stale Document Version and newer graph evidence
+### Story 14.6: Publish useful Cross-Repository business explanations with exact history
 
----
-
-### Epic 8: Dashboard & Real-Time Monitoring
-
-#### Story 8.1: Scan Progress Dashboard
-
-As a **SystemOwner**,
-I want to see real-time scan status and progress for my Systems and Repositories,
-So that I know whether Vulgata is profiling, scanning, blocked, completed, or failed.
+As an authorized business or IT reader,
+I want coherent Business Logic that follows supported behavior across Repositories,
+So that I understand the flow's conditions, effects and limits through usable exact references.
 
 **Acceptance Criteria:**
 
-**Given** I open 管理后台 → 系统管理
-**When** a System or Repository has scan history
-**Then** the detail panel shall show the latest scan status: not started, profiling, awaiting approval, scanning, completed, failed, or expired
-**And** status labels shall use Chinese UI text and Fluent UI state components
+**Given** accepted Cross-Repository relationships and a source-backed root,
+**When** Flow Planner extends its bounded directed slice,
+**Then** one Logical Flow retains its root-Repository home and Logical Document across System/Repository browsing appearances, with exact members, branches, cycles and Uncertain Frontiers,
+**And** shared helpers/folders/cycles never merge distinct business roots or imply a business dependency merely from shared code.
 
-**Given** a scan is active
-**When** ScanHub publishes progress
-**Then** the dashboard shall show active Worker Agent count, files processed, total files, current file or phase, references found, errors encountered, and estimated seconds remaining where available
-**And** refreshing progress shall not shift the surrounding layout
+**Given** a proposed Cross-Repository Flow Group Version,
+**When** synthesis eligibility is evaluated,
+**Then** every admitted primary root-run item has a terminal disposition and every frozen matching item is completed or explicitly failed/uncertain,
+**And** paused root work does not qualify; accepted external files may contribute while their runs continue, without requiring global completion or globally synchronized source revisions.
 
-**Given** a scan fails
-**When** the dashboard renders the failure
-**Then** it shall show a non-blaming error message with retry affordance where safe
-**And** technical details shall be available to SystemOwners without exposing API keys, database credentials, or source snippets beyond authorized scope
+**Given** an eligible fixed Flow Group Version,
+**When** Story 13.15 executes real MAF synthesis,
+**Then** it explains purpose, conditions, alternatives, effects and unknowns from accepted evidence, using only existing granted source/content/CodeGraph/LSP verification capabilities,
+**And** every supplementary CL/direct-source contribution actually used enters exact validated dependencies; discrepancies remain Uncertainties/bounded proposals, never Worker-written CL/Edges or recursive repair, and existing provider/data-boundary policy applies.
 
-#### Story 8.2: HITL Notification Center
+**Given** a validated BL proposal with several contributors,
+**When** Story 13.14 publishes it,
+**Then** structured JSON, derived presentation, Flow Group/BL versions and dependencies become selected atomically under expected-head/desired-target, history-only intent, cancellation and live authority checks over every contributor including composite prose,
+**And** incompatible evidence is qualified, late superseded results cannot regress current selection and pending/stale/failed refresh remains visible; historical GENERATED_FROM/relationships/direct-source dependencies never retarget.
 
-As a **SystemOwner**,
-I want agent questions to appear in a global notification center,
-So that I can quickly find ambiguities that need human input before scanning can continue.
+**Given** a permitted reader without management rights,
+**When** they browse the flow, follow exact sections or open history using the existing Knowledge Read Context,
+**Then** discovery/membership/pagination/content/references remain version-bound with live contributor authorization; Business receives BL-only business content, while IT may follow permitted exact CL/source,
+**And** counts/titles/paths cannot leak restricted contributors, unavailable recorded-revision source is explicit and no current checkout substitutes for it.
 
-**Acceptance Criteria:**
+**Given** representative supported branches, shared helpers and unresolved external facts,
+**When** real published explanations are independently assessed through the reader,
+**Then** usable Simplified Chinese narrative and claim-to-source faithfulness are evaluated separately from schema/reference validity with exact examples,
+**And** bounds, static-versus-executed meaning and missing facts remain clear without a graph, Chat, owner mappings or external-information integration.
 
-**Given** a Worker Agent or pre-scan gate creates a HITL question
-**When** the question is persisted
-**Then** the app shell bell icon shall show a pending-count badge
-**And** the notification panel shall list each question with System, Repository, scan phase, summary, created time, confidence, and urgency
+**Scope and traceability:**
 
-**Given** I click the bell icon
-**When** the notification panel opens
-**Then** HITL questions shall be grouped by System and Repository
-**And** each item shall provide "回答" and "忽略" actions
-**And** questions I am not authorized to answer shall not appear
+- **Prior dependencies:** 14.1–14.5 plus 13.4–13.7 and 13.10/13.13–13.15. Extend callable flow/synthesis/publication and existing reader contracts only.
+- **Independent value/boundary:** readable real Cross-Repository BL and history before broad route qualification. No new reader, business-root merging, conversation/graph surface or global transaction.
+- **Mapped requirements:** FR-4.5–4.7/4.9/4.10, FR-6.1/6.5/6.6, FR-9.4; NFR-1.1/2.3/3.3/5.1/5.2/6.1; AR-11–13/17/18/21/25/29; UX-DR2/11/35/39–41/44–49/52 reader-evidence portion.
 
-**Given** there are no pending questions
-**When** I open the notification panel
-**Then** it shall show the UX empty state text and no disabled fake actions
+**Definition acceptance:** Accepted under the user's 2026-09-11 confident-boundary delegation after source-grounded scope/coverage checks. Story 14.6 grants no implementation or runtime authority.
 
-#### Story 8.3: HITL Answer, Dismiss & Metadata Flow
+### Story 14.7: Qualify ordinary Cross-Repository workflow beyond a pair
 
-As a **SystemOwner**,
-I want to answer or dismiss agent questions with traceable metadata,
-So that human input improves scans without overwriting code-derived facts.
-
-**Acceptance Criteria:**
-
-**Given** I answer a HITL question
-**When** I submit the answer
-**Then** the answer shall be attached to the relevant Document, Uncertainty, scan run, or catalog candidate as metadata
-**And** the answer shall be marked as `human input`
-**And** the scan or pending refinement shall be notified that the answer is available
-
-**Given** human input conflicts with code-derived evidence
-**When** the graph or document generator evaluates the conflict
-**Then** code-derived facts shall retain higher priority
-**And** the conflict shall remain visible as a disputed or low-confidence item rather than silently overwriting evidence
-
-**Given** I dismiss a HITL question
-**When** dismissal is submitted
-**Then** the question shall leave the pending list with status `dismissed`
-**And** the scan shall either continue with lowered confidence or remain blocked according to the question's required/optional flag
-**And** the decision shall be recorded in scan events
-
-#### Story 8.4: SignalR State Replay and Authorization
-
-As a **SystemOwner**,
-I want real-time dashboard and graph updates to survive reconnects and respect authorization,
-So that monitoring remains accurate during long-running scans.
+As an authorized owner and Knowledge reader,
+I want ordinary Scans to deliver and refresh reliable Cross-Repository explanations,
+So that late evidence and independent failures need no special demo operations.
 
 **Acceptance Criteria:**
 
-**Given** ScanHub and GraphHub are registered
-**When** a client connects
-**Then** both hubs shall require authorization
-**And** hub groups shall be scoped by authorized System and Repository IDs
-**And** unauthorized users shall not receive scan, question, document, or graph events for inaccessible Systems
+**Given** the one-action Scan route and independently accepted file evidence,
+**When** generic reconciliation and Cross-Repository flow work are composed,
+**Then** Scan Control routes matching/inquiry/refresh/publication without separate stage-start calls, fixed samples, pair identities or mandatory catalogs,
+**And** each request retains one explicit owner; local capability remains usable and Cross-Repository cutover occurs only after real replacement/history-read proof, with no legacy fallback.
 
-**Given** the browser loses and regains the SignalR connection
-**When** the client reconnects
-**Then** the server shall replay the latest scan status, pending HITL count, and graph snapshot/diff sequence for the authorized scope
-**And** duplicate events shall not create duplicate UI rows or graph nodes
+**Given** at least three representative Repositories spanning multiple Systems under explicit authorized scope,
+**When** real bounded tools/providers exercise supported one-to-many, late, missing, ambiguous and cyclic cases,
+**Then** supported CL references and useful Cross-Repository BL include an accepted target file from an unfinished external run,
+**And** unchanged caller source is not rescanned, missing operational facts remain nonblocking Uncertainties and configured bounds terminate cycles rather than imposing a shared completion barrier.
 
-**Given** hub delivery fails
-**When** the dashboard detects stale connection state
-**Then** it shall show a reconnecting indicator
-**And** the user shall still be able to refresh the page to retrieve current state from database-backed queries
+**Given** concurrent independent runs, inquiry and flow refresh,
+**When** one run pauses/cancels or its provider/tools fail,
+**Then** shared global/per-run/provider/tool limits and fair admission remain bounded; owned pending/downstream work is fenced and cleaned without cancelling independent consumers or deleting accepted evidence,
+**And** other eligible work progresses while explicit resume checks current prerequisites/source/authority without provider substitution or automatic restart dispatch.
 
-#### Story 8.5: Live Knowledge Graph Projection
+**Given** overlapping replacement/publication, access revocation or a lost acknowledgement,
+**When** durable recovery and read operations are exercised,
+**Then** stale writers cannot regress desired/current selections, replay duplicates no accepted Knowledge, and every composite contributor remains authorized before disclosure/publication,
+**And** retained history preserves exact original dependencies; restricted counts/paths vanish without treating access loss as relationship disproof or requiring whole-product restore implementation.
 
-As a **SystemOwner**,
-I want a live knowledge graph page showing generated Documents, references, and unresolved Uncertainties,
-So that I can understand scan progress and relationship quality visually.
+**Given** reconciliation/inquiry/refresh activity,
+**When** the established dashboard/history/SignalR and wiki contracts expose results,
+**Then** scoped unresolved explanations/counts and real Worker/error activity remain distinct from primary coverage and Knowledge Currentness,
+**And** reader access is not management-only, Business receives no technical endpoint/source metadata, Chinese LoadState/accessibility remains intact and sanitized correlated events use the existing required `log.md` sink.
 
-**Acceptance Criteria:**
+**Given** the bundled two-service environment and version-bound evidence,
+**When** this integration is accepted,
+**Then** evidence separates automated boundary checks, real tools/provider execution, independently reviewed explanation usefulness/faithfulness and historical results,
+**And** record configuration, capabilities, durations and available usage with unknown usage explicit; claim neither universal protocol detection/throughput nor Chat, graph or deferred operational-information completion.
 
-**Given** a scan generates or updates a Document Version
-**When** GraphHub publishes a `NodeAdded`, `NodeUpdated`, or `NodeRemoved` diff event
-**Then** the graph page shall add or update a node for the current Logical Document/Document Version with doc type, title, Repository, status, and confidence
-**And** Code Logic Documents and Business Logic Documents shall use distinct type badges consistent with UX-DR-13
+**Scope and traceability:**
 
-**Given** a REFERENCES or GENERATED_FROM edge is created or updated
-**When** GraphHub publishes an `EdgeAdded`, `EdgeUpdated`, or `EdgeRemoved` diff event
-**Then** the graph shall render intra-repo edges as solid gray, cross-repo edges as dashed colored, unresolved Uncertainties as dashed edges to placeholder nodes, and disputed edges as yellow dashed lines with warning icon
-**And** edge metadata shall include source/target Document Versions, source/target Repositories, confidence, provider/consumer roles where available, and Uncertainty status where relevant
+- **Prior dependencies:** 14.1–14.6 and 13.17–13.19. Composition/qualification only; missing core behavior returns to its owner.
+- **Independent value/boundary:** readable beyond-pair understanding and bounded later-knowledge improvement. No new scheduler, separately deployed service, graph, Chat, automatic source updates or backup/restore feature.
+- **Mapped requirements:** FR-4.2/4.5/4.7–4.10, FR-5.2–5.8/5.10–5.12, FR-6.1–6.6, FR-12.1–12.4; NFR-1.1/2.3/3.1–3.3/4.1 runtime portion/5.1/5.2; AR-1/9–18/20–23/30/32; UX-DR28–35/39–42/45–49/52–53 non-Chat/non-graph portions/57.
 
-**Given** graph updates arrive while the user is panning or zooming
-**When** nodes or edges change
-**Then** the viewport shall be preserved
-**And** updates shall animate within the 200-400ms UX budget without resetting layout
+**Definition acceptance:** Accepted under the user's 2026-09-11 confident-boundary delegation after source-grounded scope/coverage checks. Story 14.7 grants no implementation or runtime authority.
 
-#### Story 8.6: Graph Filtering, Details & Error States
+**Epic 14 definition acceptance:** Seven story boundaries accepted under the user's confident-boundary delegation. Independent review found no forward dependency or new product choice; its inquiry atomic-completion finding was corrected and verified. This completes definition, not implementation or runtime qualification. Proceed to Epic 15.
 
-As a **SystemOwner**,
-I want graph controls and detail panels for scanning evidence,
-So that I can inspect the specific Documents, edges, and Uncertainties behind a graph view.
 
-**Acceptance Criteria:**
+## Epic 15: Useful Streaming Wiki Conversations
 
-**Given** I open 管理后台 → 图谱
-**When** the graph page renders
-**Then** it shall provide a floating toolbar with layout toggle (hierarchical/force-directed), zoom controls, and System/Repository filter
-**And** filters shall update the graph without navigating away from the page
+Business and technical users can hold useful multi-document, follow-up wiki conversations with exact usable references, genuine live output and durable dialogue that survives browser disconnect without duplicate generation. This epic consumes the established Knowledge/read/source/admission owners and requires no later graph or operations epic.
 
-**Given** I select a graph node
-**When** the detail panel opens
-**Then** it shall show Document title, type, Repository, source path, summary, scan status, confidence, and a link to 管理后台 → 文档
-**And** failed or superseded Documents shall show their status and explanation
 
-**Given** I select a graph edge or unresolved placeholder
-**When** the detail panel opens
-**Then** it shall show edge type, confidence, provider/consumer role, evidence references, Uncertainty status, and any HITL actions available to my role
+### Story 15.1: Explore permitted wiki evidence through mode-safe Chat tools
 
-**Given** there is no graph data
-**When** the page renders
-**Then** it shall show the UX empty state "尚无扫描数据。启动一次扫描后，知识图谱将在此展示。" with a primary action to go to 系统管理
-**And** graph loading and error states shall use the shared `LoadState` conventions
-
-#### Story 8.7: Pre-Scan LLM Question & Approval Lifecycle
-
-As a **SystemOwner**,
-I want blocking pre-scan ambiguities converted into bounded LLM-generated
-questions with an explicit approval lifecycle,
-So that post-deadline Scans can resolve genuine unknowns without asking about
-deterministically known facts.
+As an authorized Business or IT user,
+I want Chat to discover and read permitted wiki evidence within my selected scope,
+So that answers can use relevant Knowledge without exposing restricted content or starting another Scan.
 
 **Acceptance Criteria:**
 
-**Given** Story 4.3 has persisted deterministic facts, conservative hints, and
-blocking ambiguity evidence
-**When** the post-deadline question generator runs
-**Then** it shall ask at most five concise questions only for ambiguities that
-materially affect Scan scope or Cross-Repository interpretation
-**And** it shall not ask about high-confidence detections or ordinary weak hints
-**And** every question shall preserve its evidence locators and provenance
+**Given** authorized Systems/Repositories, including standalone Repositories,
+**When** scope preparation receives manual selection, first use, remembered selection or an empty selection,
+**Then** it preserves whole-System/individual choices, defaults initially to permitted Systems/eligible standalone Repositories and filters remembered choices by live access,
+**And** empty-selection relevance uses retrieval only inside server-approved discovery and returns the inferred scope for adjustment; model relevance grants no authority.
 
-**Given** at least one blocking question is generated
-**When** the pre-scan lifecycle begins
-**Then** the Scan shall enter `等待回答`
-**And** authorized System Owners shall receive the Epic 8 notification and
-answer/dismiss interactions
-**And** answers shall support confirm, exclude, or add semantics without
-promoting unsupported LLM output to code-derived fact
+**Given** an approved Chat-purpose binding,
+**When** search, browse, section/content or existing-related-Document tools are invoked,
+**Then** they consume the existing Knowledge read contract and return bounded permitted evidence, exact reference descriptors, provenance, coverage, Uncertainties and pagination,
+**And** no-results and empty related membership remain truthful; neither a fixed five-Document limit, per-record tools, embeddings nor index.md is mandatory.
 
-**Given** all blocking questions are resolved
-**When** an authorized System Owner selects `确认并开始扫描`
-**Then** the system shall persist the reviewed pre-scan result and approval
-metadata before dispatch
-**And** unanswered reviews shall remain available for seven days under the
-documented lifecycle rather than silently autoapproving
+**Given** a Knowledge Read Context pinned before discovery,
+**When** later pages, newly discovered Documents, related membership or content are read during concurrent publication,
+**Then** all calls/references retain that exact selection rather than merely caching previously read Documents,
+**And** a fresh context may observe newer Knowledge; historical references never retarget and material stale/conflicting evidence remains explicit.
 
----
+**Given** Business or IT mode and separate purpose-specific approval,
+**When** a tool request is authorized,
+**Then** Business receives BL-only content/references without CL, code, paths, ranges or Git metadata,
+**And** IT may read permitted CL/BL and exceptionally inspect bounded source for a specific gap at its recorded Profiled Revision through Story 13.1; unavailable source is explicit, never substituted with current source.
 
-### Epic 9: Chat Interface
+**Given** forged references/cursors, scope widening or revoked contributor access,
+**When** any tool would disclose data,
+**Then** the server validates live user/mode/purpose/scope and every composite contributor before returning content, metadata, counts or targets,
+**And** Scan approval grants no Chat authority; tools cannot grant CodeGraph/LSP access, choose host paths, initiate Scans, repair Knowledge or fetch external operational facts.
 
-#### Story 9.1: Chat Page Shell & Mode Switching
+**Given** isolated selected and historical Knowledge fixtures,
+**When** controlled callers exercise these callable tools,
+**Then** checks demonstrate cross-System/standalone scope, empty-scope inference, later-document stability, pagination, revocation and exact-source denial without a model call,
+**And** permissions are enforced in actual returned inputs, not prompt instructions or hidden UI elements.
 
-As a **user**,
-I want a chat interface as the default landing page with Business Mode and IT Mode switching,
-So that I can choose the right interaction style for my role.
+**Scope and traceability:**
 
-**Acceptance Criteria:**
+- **Prior dependencies:** 13.1, 13.7, 13.10 and 13.14; retained role/provider configuration. Knowledge keeps read-context/storage/index/reference ownership; this story adds the Chat-purpose tool adapter and bounded scope preparation, not durable Conversations or UI.
+- **Mapped requirements:** FR-4.7/4.9, FR-6.5 read support, FR-11.1/11.2/11.4/11.6/11.8, FR-13.3; NFR-1.2/2.3; AR-3/23–25/29; UX-DR20–23/41 backend portions. Later UI displays scope/preview states; no later-story dependency or general MCP connector.
 
-**Given** I log in to Vulgata
-**When** authenticated
-**Then** I shall land on the Chat page at route "/" (not a dashboard — chat-first per UX-DR-5)
+**Definition acceptance:** Accepted under the user's 2026-09-11 confident-boundary delegation after source-grounded scope/coverage checks. Story 15.1 grants no implementation or runtime authority.
 
-**Given** the Chat page loads
-**When** rendered
-**Then** the layout shall be top-to-bottom: top navbar (brand + 对话/管理后台 nav + bell + avatar), mode selector (业务模式/技术模式 toggle), inline system/repo selector, message bubble stream, and fixed-bottom input with "发送" button
+### Story 15.2: Preserve durable dialogue with isolated bounded inference contexts
 
-**Given** I am in a chat session
-**When** I click the mode selector to switch modes (e.g., 业务模式 → 技术模式)
-**Then** a confirmation dialog shall appear: "切换模式将开始新对话，当前对话将被保存。确定切换？"
-**And** upon confirmation, the chat area shall clear, the theme shall transition (light ↔ dark, 200-400ms), the new session welcome message shall appear in Noto Serif SC: "你好，想了解什么业务流程？" (Business) or "你好，需要追踪哪段逻辑？" (IT)
-**And** the previous session shall be saved and accessible in chat history
-
-**Given** I am in 业务模式
-**When** the ChatAgent receives my question
-**Then** the system prompt shall instruct: use plain narrative language, no code references, business-level explanations, glossary-anchored terminology
-**And** the UI shall use light theme tokens (background #F6F4F0, foreground #1D2026, per UX-DR-3)
-
-**Given** I am in 技术模式
-**When** the ChatAgent receives my question
-**Then** the system prompt shall instruct: use precise technical language, include code references and source file paths, detailed call chains
-**And** the UI shall use dark theme tokens (background #1D2026, foreground #F6F4F0, per UX-DR-3)
-
-**Given** a mode switch occurs mid-session
-**When** the new session starts
-**Then** the mode-select banner shall display centered in Noto Serif SC: "开始新的对话 — {模式名}" (UX-DR-7)
-**And** the current mode badge shall show the active mode as a compact label above the input
-
-**Given** I am awaiting a response
-**When** the ChatAgent is processing
-**Then** the chat shall show a three-dot typing indicator with 200ms interval
-**And** a temporary "正在查找相关文档…" hint shall appear during the retrieval phase
-**And** responses shall stream in character-by-character with a blinking cursor
-
-#### Story 9.2: System & Repository Context Selection
-
-As a **user**,
-I want to select which Systems or Repositories to include as chat context or have Vulgata auto-determine the scope,
-So that my questions target the right codebase without manual selection when I'm unsure.
+As an authorized Chat user,
+I want ordered Conversations and useful permitted history to survive beyond a browser session,
+So that follow-up questions retain context without mixing modes, scopes or unfinished answers.
 
 **Acceptance Criteria:**
 
-**Given** I am on the Chat page
-**When** the inline system/repo selector renders (Fluent Dropdown multi-select, UX-DR-9)
-**Then** it shall list all Systems I have access to, with repositories as expandable children
-**And** I shall be able to select entire Systems (all repos) or individual Repositories
-**And** selected Systems/Repos shall appear as accent-colored tags above the chat input with ✕ to remove
+**Given** an authorized user starting or reopening a Conversation,
+**When** Chat stores and loads its ordered questions, Chat Turns and original references,
+**Then** durable records preserve ownership, originating mode/scope, Inference Context, Knowledge Read Context and terminal/hypothesis meaning independently of circuit lifetime,
+**And** dialogue remains separate from immutable wiki Documents and creates no Knowledge publication or reconciliation.
 
-**Given** I am a SystemOwner
-**When** the system/repo selector loads
-**Then** I shall see only the Systems I am assigned to
-**And** standalone Repositories (shared) shall be listed separately
+**Given** duplicate initiation or concurrent questions for one Conversation,
+**When** the callable turn-initiation operation executes,
+**Then** atomic initiation permits one active answer and binds one turn identity to its original question/context; replay returns that same turn without a second dispatch,
+**And** conflicting identity reuse is rejected, and pending/saving/unconfirmed work cannot silently admit a competing answer before authoritative terminal settlement.
 
-**Given** I am a regular User
-**When** the system/repo selector loads
-**Then** I shall see all Systems and Repositories (read-only access) for context selection
+**Given** prior completed answers, questions and optional advisory text,
+**When** Chat prepares bounded Inference Context,
+**Then** useful permitted completed history/references fit declared limits instead of copying an unbounded transcript,
+**And** any summaries preserve hypothesis status, contributor scope and exact references; interrupted text is not promoted to completed factual history, and human context remains lower-authority advice.
 
-**Given** I start a new session
-**When** the system/repo selector defaults
-**Then** it shall remember my last-used selection from the previous session
-**And** on first-ever use, it shall default to all authorized Systems
+**Given** a confirmed mode change or a changed scope,
+**When** the backend creates the fresh Inference Context/new-chat binding required by that operation,
+**Then** authorized older dialogue remains durable while the new context excludes disallowed prompts, histories, summaries and caches,
+**And** active-turn deltas/results/saves remain attached to their originating turn/context; late IT output cannot enter the new Business context.
 
-**Given** I submit a question with no Systems or Repositories selected
-**When** the question is received (FR-11.8)
-**Then** Vulgata shall autonomously determine which Systems or Repositories are relevant by: (1) extracting keywords and entities from the question, (2) calling `search_documents` over authorized `index_entries` and `document_sections` across all accessible Systems, including exact symbols, endpoint identifiers, business-term aliases, and Chinese/mixed-language trigram fallback, (3) ranking relevance by match strength and recency, (4) selecting the top 3 matching Systems
-**And** the auto-determined scope shall be displayed in the chat: "已自动选择以下系统：{system_names}" with an option to adjust
+**Given** contributor revocation or narrower current scope,
+**When** stored dialogue is disclosed or reused for inference,
+**Then** every contributing source is reauthorized, including composite answers/summaries whose visible citations omit a restricted contributor,
+**And** affected generated material is excluded from disclosure/reuse without erasing original provenance; knowing a Conversation/turn identifier grants no access.
 
-**Given** I change the system/repo selection mid-session
-**When** I submit a new question
-**Then** the new selection shall apply to the next question only (not retroactively to previous answers)
-**And** the selection shall persist for subsequent questions until changed
+**Given** isolated ordered-history fixtures and controlled initiation clients,
+**When** restart, concurrent initiation, replay, context change and live revocation are exercised,
+**Then** the callable persistence/context contracts retain correct order, identity and bounded permitted history without provider generation,
+**And** history fixtures do not create production completion shortcuts or require a later UI story.
 
-#### Story 9.3: File Upload for Chat Context
+**Scope and traceability:**
 
-As a **user**,
-I want to upload documents or images as supplementary context for my questions,
-So that the ChatAgent can incorporate information beyond the scanned codebase.
+- **Prior dependencies:** 15.1 and preserved Identity/persistence. Chat owns Conversation/turn/Inference Context and bounded-history records; Infrastructure persists them, and Knowledge still owns read selection. Establish only records needed here; terminal-save safety follows in 15.3 without being a prerequisite for initiation/history tests.
+- **Mapped requirements:** FR-7.3, FR-9.4 reference preservation, FR-11.1–11.4/11.7; NFR-2.3/3.3; AR-2/25/26; UX-DR19/21/23/27 backend portions. UI confirmation/theme/history navigation remains later work; no attachments or new Knowledge storage.
 
-**Acceptance Criteria:**
+**Definition acceptance:** Accepted under the user's 2026-09-11 confident-boundary delegation after source-grounded scope/coverage checks. Story 15.2 grants no implementation or runtime authority.
 
-**Given** I am on the Chat page
-**When** I click the "📎" attachment button next to the input
-**Then** a file picker shall open accepting: documents (.txt, .md, .pdf, .docx) and images (.png, .jpg, .webp)
-**And** maximum file size shall be 10 MB per file, 5 files per message
+### Story 15.3: Save terminal Chat outcomes once and expose truthful progress
 
-**Given** I upload a text document
-**When** the file is received
-**Then** the document content shall be extracted and appended to the chat context alongside the user's question
-**And** the uploaded file shall appear as a chip above the message: file name + size + ✕ to remove
-
-**Given** I upload an image
-**When** the file is received
-**Then** the image shall be sent to the LLM provider if the provider supports vision/image inputs
-**And** if the provider does not support images, the user shall be notified "当前 LLM 提供商不支持图片识别"
-**And** the image shall render as a thumbnail in the chat with the ability to expand
-
-**Given** I remove an uploaded file before sending
-**When** I click ✕ on the file chip
-**Then** the file shall be removed from the message context
-**And** the file shall not be permanently stored — ephemeral, session-only
-
-**Given** file upload fails (network error, file too large, unsupported format)
-**When** the error occurs
-**Then** a non-blaming error shall appear: "文件上传失败：{reason}" with retry option
-**And** the chat input shall remain intact
-
-#### Story 9.4: Database-Backed LLM-Wiki Retrieval Pipeline
-
-As a **user**,
-I want the ChatAgent to find the most relevant documents, read them, follow cross-repo links, and synthesize an answer,
-So that I get comprehensive, well-grounded responses across the scanned knowledge base.
+As a Chat user,
+I want answer progress and completion to reflect durable reality,
+So that a failed or unconfirmed save never appears completed and recovery never regenerates my answer accidentally.
 
 **Acceptance Criteria:**
 
-**Given** I submit a question in the Chat page
-**When** the ChatAgent begins retrieval
-**Then** it shall execute the LLM-Wiki pipeline through typed retrieval tools: (1) call `search_documents` for the selected Systems/Repos, (2) retrieve relevant sections using `get_document_sections`, (3) expand related Documents using `expand_related_documents`, (4) enrich evidence with `get_uncertainty_summary`, `get_endpoint_context`, `get_flow_trace_context`, and `get_source_anchor_context` as needed, (5) synthesize a final answer grounded in the retrieved sections and evidence
-**And** the pipeline shall be section-level by default and have a maximum retrieval budget of 10 Documents total (3-5 direct + up to 5 graph-expanded related Documents)
-**And** `index.md` shall not be read as the canonical retrieval input
+**Given** a turn initiated through Story 15.2 and a controlled streaming client,
+**When** retrieval, actual answer deltas and provider completion are observed,
+**Then** one Chat-owned output contract distinguishes waiting/retrieval, provisional generation, saving, save-unconfirmed, completed and interrupted/failed-save outcomes,
+**And** when hypothesis-labelled content is emitted, its label accompanies the first provisional text and survives interruption/terminal save; controlled clients verify no unlabelled interval, without semantic hypothesis detection or whole-answer verification,
+**And** it relays actual provisional text/status rather than buffered complete-answer replay, exposing neither hidden reasoning nor secrets.
 
-**Given** the retrieval identifies relevant Documents
-**When** reading each Document
-**Then** the ChatAgent shall prioritize: BL Docs for 业务模式 questions (business narratives), CL Docs for 技术模式 questions (code details)
-**And** if a Document has a `confidence < 0.5`, it shall be excluded from retrieval (too unreliable)
+**Given** a provider reports completion,
+**When** Chat evaluates terminal eligibility,
+**Then** completed status requires valid provider completion, no truncation and no unfinished tools, followed by one durable content/reference/status save,
+**And** stream closure, schema validity or emitted text alone cannot complete; no mandatory whole-answer JSON or semantic-verification gate is introduced.
 
-**Given** a Document is too large for the context window
-**When** the ChatAgent reads it
-**Then** retrieval shall prefer relevant `document_sections` over full `content_markdown`
-**And** if section-level retrieval is still too large, a summarization fallback shall use the Document summary plus the highest-ranked sections
-**And** the answer shall note "文档内容过长，已根据摘要和相关章节回答"
+**Given** an eligible terminal outcome and originating turn/context,
+**When** Infrastructure executes Chat's fenced idempotent save,
+**Then** content, exact authorized reference descriptors, contributor/hypothesis metadata and terminal status commit together once under current ownership/context checks,
+**And** readers see the previous state or committed outcome; conflicting replay, stale writers and cross-context saves cannot overwrite it, and live authority still governs disclosure.
 
-**Given** the retrieval finds zero relevant Documents
-**When** the pipeline completes
-**Then** the ChatAgent shall respond: "未找到相关文档。试试调整系统选择范围或换个问法。" (UX-DR-16 NoResults)
-**And** PostgreSQL full-text search shall run where it works well, with exact symbol/endpoint matching and trigram fallback for Chinese and mixed Chinese/English text
-**And** if full-text search also returns nothing, the response shall suggest "请确认相关系统已完成扫描"
+**Given** lost save acknowledgement, storage failure or telemetry failure,
+**When** completion is reconciled,
+**Then** durable lookup by the same turn/save identity recovers an existing commit or permits retry of the same pending save, never another model generation,
+**And** unconfirmed/failed-save status remains truthful with useful permitted text; telemetry failure cannot undo a committed completion or fabricate one.
 
-**Given** a retrieved Business Logic Document Version has `resolution_outdated_at` set
-**When** the ChatAgent synthesizes an answer
-**Then** it shall distinguish generation-time BL prose from query-time graph evidence
-**And** citations shall expose both the stale BL Document Version and the newer graph evidence where they differ
+**Given** cancellation, limits, truncation, unfinished tools, revocation or terminal execution failure,
+**When** the turn settles,
+**Then** useful authorized partial text and its reason retain interrupted status distinct from completed factual history; affected revoked material is withheld,
+**And** owned work/capacity is stopped and settled, late completion is fenced and visible output never triggers automatic generation restart.
 
-**Given** the retrieval finds Documents but the LLM call fails
-**When** the error occurs
-**Then** the system shall retry once with the fallback provider
-**And** on second failure, respond: "暂时无法回答，请稍后重试。"
-**And** log the error with the query and attempted documents
+**Given** controlled valid/invalid endings and fault injection around the terminal transaction,
+**When** pre-commit failure, post-commit acknowledgement loss, replay, stale ownership and disclosure are checked,
+**Then** durable outcomes and emitted statuses agree without duplicate completed turns or regenerated answers,
+**And** checks prove lifecycle/storage behavior, not explanation truth or real-provider qualification.
 
-**Given** the ChatAgent synthesizes an answer
-**When** the response is streamed to the user
-**Then** the response shall be in the voice appropriate to the mode: business narrative (业务模式) or technical detail (技术模式) per UX-DR-18
-**And** response time shall be within 30 seconds for questions spanning up to 5 Documents (NFR-1.2)
+**Scope and traceability:**
 
-#### Story 9.5: Citation Linking & Answer Rendering
+- **Prior dependencies:** 15.1/15.2 and 13.7's shared admission/diagnostic contracts. Chat owns streamed-output/terminal policy; Infrastructure implements the atomic completion contract. Controlled clients precede real MAF; no production fixture-answer route is added.
+- **Mapped requirements:** FR-11.3/11.7; NFR-2.3/3.2/3.3; AR-2/23/26/27; UX-DR23–25/27 status-contract portions. Later UI maps these states, and 15.5 adds browser attachment behavior; neither is required for this callable boundary.
 
-As a **user**,
-I want every system answer to include citations linking claims to source Documents and code lines,
-So that I can verify the information and navigate to the original source.
+**Definition acceptance:** Accepted under the user's 2026-09-11 confident-boundary delegation after source-grounded scope/coverage checks. Story 15.3 grants no implementation or runtime authority.
+
+### Story 15.4: Stream useful real wiki conversations with faithful references
+
+As a Business or IT user,
+I want useful multi-document answers and follow-ups generated from permitted Knowledge,
+So that I can understand supported behavior and uncertainties while seeing genuine progress.
 
 **Acceptance Criteria:**
 
-**Given** the ChatAgent synthesizes an answer
-**When** the response includes claims from retrieved Documents
-**Then** each claim shall be appended with a citation marker: `[1]`, `[2]`, etc.
-**And** at the end of the response, a "参考资料" section shall list each citation: doc title, doc type badge (blue=CL, green=BL), repository name, file path
+**Given** an authorized initiated turn with bounded history and one Knowledge Read Context,
+**When** Agent Execution runs the configured Chat provider through Microsoft Agent Framework,
+**Then** the real conversation/tool loop uses externalized mode prompts and Story 15.1's wiki tools to synthesize useful explanations rather than fixed candidate sentences,
+**And** native framework execution does not grant extra tools, domain writes or a second completion owner.
 
-**Given** a citation is rendered
-**When** I click on a citation link
-**Then** an inline preview panel shall expand showing: the Document's summary, source code location (file:line for CL Docs), and a "在文档查看器中打开" link
-**And** the preview shall not navigate away from the chat — inline overlay only
+**Given** Business/IT questions, follow-ups and retrieved multi-document evidence,
+**When** the model explains behavior,
+**Then** Business uses BL-only permitted business content; IT may use authorized CL/BL and exceptional gap-specific recorded-revision source without routinely re-proving the wiki,
+**And** retrieval/advisory text is evidence rather than instructions; shared code alone proves no business dependency, and unsupported or conflicting facts remain explicit limitations.
 
-**Given** a citation references a CL Doc
-**When** I click "在文档查看器中打开"
-**Then** the 管理后台 → 文档 page shall open in a new browser tab with the specific document selected
+**Given** answer generation and claim-linked references,
+**When** actual provider deltas arrive,
+**Then** provisional text and concise progress are observable before generation finishes, with hypotheses labelled from their first text and exact permitted Document Version/section references,
+**And** greetings/no-results need no invented citations; hidden reasoning, secrets and buffered typewriter replay are excluded without requiring complete-answer JSON or whole-answer semantic approval.
 
-**Given** message bubbles render
-**When** displayed
-**Then** user messages shall be right-aligned with surface background (UX-DR-7)
-**And** assistant messages shall be left-aligned with muted background
-**And** assistant messages shall render Markdown (headings, lists, bold, italic, code blocks with muted background)
-**And** code blocks within assistant messages shall include language labels where detected
+**Given** shared provider demand and execution/data limits,
+**When** inference and tool calls are admitted,
+**Then** existing application-wide admission and cumulative time/call/cost budgets apply; self-hosted source/Documents stay inside organization infrastructure and external providers receive only necessary authorized context,
+**And** actual provider inputs are checked against these boundaries; no silent provider substitution, fresh budget on retry or automatic restart after visible output occurs.
 
-**Given** a response contains low-confidence information (confidence < 0.7)
-**When** the answer is rendered
-**Then** the ChatAgent shall include a disclaimer in the response: "⚠️ 以下信息置信度较低，请验证"
-**And** the corresponding citations shall be flagged with a confidence indicator
+**Given** valid completion or interrupted/failed execution,
+**When** real provider events reach Story 15.3,
+**Then** its sole terminal-save contract determines durable completion, interrupted text and acknowledgement recovery without regeneration,
+**And** sanitized query/system events reach Story 13.7's existing `log.md` sink; available usage stays separate from unknown usage and telemetry cannot undo completion.
 
-**Given** no relevant Documents were found (Story 9.4 fallback exhausted)
-**When** the empty result renders
-**Then** the chat shall display: "未找到相关文档。试试调整系统选择范围或换个问法。" (UX-DR-16) with suggestions for broader scope or different phrasing
-**And** in 技术模式, the response may additionally show: "搜索关键词：{extracted_keywords}，搜索范围：{selected_systems}"
+**Given** multi-document and follow-up questions, sparse Knowledge and explicit uncertainties,
+**When** conversations are independently assessed under declared configuration,
+**Then** evidence evaluates useful Simplified Chinese explanations and claim-to-source faithfulness separately from valid IDs/schema, measures first useful delivery and total duration, and includes discovery beyond five Documents when needed,
+**And** no universal latency, mandatory retrieval count, whole-wiki audit or historical qualification claim replaces those results.
 
----
+**Scope and traceability:**
 
-### Epic 10: Git Monitoring & Incremental Re-scan
-**Deferred beyond initial Sprint Planning** — 5 FRs (FR-9.1–9.5). Detail this epic only if git monitoring and incremental re-scan are reprioritized into an implementation wave.
+- **Prior dependencies:** 15.1–15.3, 13.7/13.8's shared Agent Execution policy and existing published Knowledge; Epic 14 supplies Cross-Repository scenarios. Real callable streamed conversation requires no later UI.
+- **Mapped requirements:** FR-4.8, FR-6.5, FR-7.3, FR-11.1/11.2/11.4/11.6/11.7, FR-13.3; NFR-1.2/2.3/3.2/3.3/5.1/6.1; AR-23–27/32; UX-DR22–25/27 backend portions. No Scan/repair scheduling, CodeGraph/LSP Chat grant, external connector or new reader.
 
----
+**Definition acceptance:** Accepted under the user's 2026-09-11 confident-boundary delegation after source-grounded scope/coverage checks. Story 15.4 grants no implementation or runtime authority.
 
-### Deferred Features
-**FRs covered:** FR-13.1, FR-13.2, FR-13.3, FR-13.4, FR-13.5 (MCP Integration), FR-15.1, FR-15.2, FR-15.3 (LSP Support)
-Architecture supports adding these later via Infrastructure project and MCP/LSP client packages. No stories generated for deferred features.
+### Story 15.5: Reattach to the same bounded host-owned Chat Turn
+
+As a Chat user,
+I want a browser disconnect to preserve the answer already in progress,
+So that reconnecting shows the same text and outcome without another generation or lost history.
+
+**Acceptance Criteria:**
+
+**Given** a started turn whose browser transport disconnects,
+**When** the host remains available,
+**Then** Chat may continue that same turn outside request/circuit lifetime within its original identity, mode/scope, Knowledge Read Context and time/cost limits,
+**And** disconnection is not cancellation, completion or permission to restart generation; finishing while detached still uses Story 15.3's sole durable save.
+
+**Given** an authorized client reconnecting to a running, saving, interrupted or completed turn,
+**When** it attaches through the callable reattachment contract,
+**Then** the server validates Conversation/turn ownership and live contributor access and joins the existing work or saved outcome,
+**And** attachment neither initiates a new turn/model call nor renews budgets, changes source selection or retargets references.
+
+**Given** accumulated text/status and concurrent new deltas or terminal completion,
+**When** initial attachment state is reconciled with subsequent updates,
+**Then** the client-observable sequence contains no lost or duplicated answer text/status, including completion during attachment and repeated reconnects,
+**And** updates remain origin-bound so a switched mode/scope cannot receive late content belonging to another context.
+
+**Given** host-process failure instead of browser disconnection,
+**When** durable conversation state is reopened,
+**Then** completed saves remain authoritative and orphaned unfinished turns become interrupted with preserved durable history and explicit retry required,
+**And** recovery first resolves saved completion rather than overwriting it, never automatically resumes generation and promises neither transparent per-token host recovery nor a durable token ledger.
+
+**Given** explicit cancellation, budget exhaustion, revoked contributor access or lost execution ownership,
+**When** an attached or detached turn settles,
+**Then** owned inference/tool activity and capacity are stopped/released, late writes/disclosure are fenced and useful permitted interrupted text retains its reason,
+**And** revocation blocks future unauthorized output/history/summary reuse without deleting provenance or pretending already delivered text can be recalled; unrelated work survives.
+
+**Given** controlled detach/attach races and real bounded streaming conversations,
+**When** repeated reconnect, completion-during-attachment, save acknowledgement loss, cancellation, revocation and host failure are qualified,
+**Then** evidence distinguishes same-generation reattachment from explicit retry and demonstrates nonduplicating/lossless browser recovery under original limits,
+**And** durable outcomes remain correct without requiring a future UI, operator restore or fresh provider generation to recover a saved answer.
+
+**Scope and traceability:**
+
+- **Prior dependencies:** 15.1–15.4 and 13.7's shared capacity contracts. Chat owns host execution/attachment state; Infrastructure supplies existing persistence, and transport adapters expose the callable contract. Do not add another lifecycle, reader or token store.
+- **Mapped requirements:** FR-11.3/11.7; NFR-2.3/3.2/3.3; AR-23/25–28; UX-DR19/23/25–27 backend portions. Later UI renders disconnect/rejoin/retry states; no source Scan, automatic regeneration or new tool authority.
+
+**Definition acceptance:** Accepted under the user's 2026-09-11 confident-boundary delegation after source-grounded scope/coverage checks. Story 15.5 grants no implementation or runtime authority.
+
+### Story 15.6: Use Chinese Chat with real scope, streaming and durable history
+
+As an authorized user,
+I want a usable Chinese Chat interface for asking questions and following answers through their real lifecycle,
+So that I can understand permitted Knowledge without managing execution stages or losing the meaning of interrupted work.
+
+**Acceptance Criteria:**
+
+**Given** successful login or a new Conversation,
+**When** I enter 「对话」,
+**Then** the Chinese Fluent/Library Oak single-column Chat retains mode control, inline scope, message stream and bottom input in the specified order, with light Business/dark IT themes,
+**And** successful login defaults to 「对话」 in light Business Mode; explicit IT switching or authorized session navigation preserves the intended mode,
+**And** new-session greetings are 「你好，想了解什么业务流程？」 or 「你好，需要追踪哪段逻辑？」; mode-specific placeholders, 「发送」, Enter-send and Shift+Enter-newline work.
+
+**Given** my current Repository permissions,
+**When** I select, remove or clear whole Systems or individual/standalone Repositories,
+**Then** options and remembered selection are access-filtered; first use selects permitted Systems and eligible standalone Repositories,
+**And** empty-selection inference stays within authorized discovery and displays 「已自动选择以下范围：{范围名称}」 with 「调整范围」, without initiating Scans.
+
+**Given** a requested mode or scope change,
+**When** I confirm 「切换模式将开始新对话，已保存的历史仍可查看。确定切换？」 for a mode switch,
+**Then** 「开始新的对话」 and the 200–400ms theme transition accompany fresh inference context; scope changes also isolate context,
+**And** permitted saved history remains accessible, but old IT prompts, summaries, caches and late output/saves never enter Business; unsaved work is not declared saved.
+
+**Given** an active answer,
+**When** retrieval, genuine deltas and durable completion advance,
+**Then** the UI shows the 200ms three-dot waiting indicator, 「正在查找相关文档…」, genuine 「正在生成」, first-text hypothesis labels and 「正在保存」 only after valid provider completion,
+**And** only durable save marks completion; acknowledgement recovery shows 「正在确认保存结果」, while 「回答未完成保存」 permits the same save retry, never generation replay.
+
+**Given** disconnect, cancellation, interruption or reopened history,
+**When** I reconnect or use a permitted recovery action,
+**Then** disconnect shows 「连接已断开，重新连接后将查看同一条回答。」 and permits same-turn lossless/nonduplicating reattachment; interruption shows 「回答已中断」 with reason/useful authorized text, and host failure requires explicit 「重试」,
+**And** one active answer per Conversation, origin-bound history and server-side Business BL-only disclosure remain enforced,
+**And** usable claim-linked exact-section links open the existing reader now, without waiting for previews.
+
+**Given** loading, empty/no-results/error states and keyboard/screen-reader interaction,
+**When** the implemented Chat journeys are verified,
+**Then** shared LoadState, specified Chinese feedback (including 「未找到相关文档。试试调整系统选择范围或换个问法。」), Fluent loading/refresh, Tab/Esc, pagination and meaningful announcements work without color-only states or token-by-token announcements,
+**And** verification checks contrast, live revocation, correct state transitions and readable references; no fixtures or completed-answer typewriter simulate production.
+
+**Scope and dependencies:**
+
+- Depends on 15.1–15.5 and the existing 13.10/13.14 reader; adapt existing Chat components, not administration or a second lifecycle owner. No attachments, new graph or preview prerequisite.
+- Mapped: FR-11.1–11.4/11.6–11.8, FR-9.4; NFR-2.3/3.3/5.1/5.2; AR-24–29; UX-DR1–9/11–27/45–50/53. UX-DR10/12/43–44 remain preserved outside changed surfaces; preview-specific UX-DR22/51 continues in 15.7.
+
+**Definition acceptance:** Accepted under the user's 2026-09-11 confident-boundary delegation after source-grounded scope/coverage checks. Story 15.6 grants no implementation or runtime authority.
+
+### Story 15.7: Preview exact claim-linked references without crossing mode or access boundaries
+
+As an authorized Knowledge reader,
+I want to preview an answer's cited evidence and open its exact section, history or permitted source,
+So that I can inspect what supported the claim without references silently changing or revealing restricted information.
+
+**Acceptance Criteria:**
+
+**Given** an answer with an authorized claim-linked reference,
+**When** I select its citation,
+**Then** an inline preview identifies the exact permitted Document Version/section and offers the working existing-reader destination,
+**And** the reference retains the originating turn's Knowledge Read Context and exact evidence binding; a title or current-document lookup cannot replace it.
+
+**Given** Business Mode,
+**When** preview, reader, history or cached reference data is requested,
+**Then** server-side authorization returns only permitted BL titles, sections and business content,
+**And** CL, source code, technical paths/ranges/Git metadata and forbidden target/count/tooltip data are neither returned nor merely hidden by the UI,
+**And** reading needs Knowledge permission, not management rights.
+
+**Given** IT Mode and a relevant exact reference or specific source-evidence gap,
+**When** I follow permitted CL/BL history or an available Source Anchor,
+**Then** the existing reader opens the recorded Document Version/section and bounded source at its Profiled Revision under separate current authority,
+**And** unavailable source shows 「该版本源代码暂不可用，文档及来源记录仍保留。」; current checkout, arbitrary host paths, routine source auditing and Scan/repair actions are unavailable.
+
+**Given** newer publication, changed relationships or a reference from an older Conversation,
+**When** I reopen that reference and inspect history,
+**Then** original content and exact dependencies remain selected, with applicable historical/partial/stale/unavailable states,
+**And** deliberate navigation to another permitted version does not rewrite the original citation or retarget old GENERATED_FROM evidence.
+
+**Given** access revoked for any contributor, including one used in composite prose but absent from displayed citations,
+**When** preview, content, history or reference navigation would disclose affected material,
+**Then** the shared server-side read/disclosure contracts block that material and associated metadata before further disclosure,
+**And** stable selections and cached previews grant no authorization exception; feedback is safe and does not identify restricted contributors.
+
+**Given** greetings, no-result answers, sparse references or unavailable/denied targets,
+**When** citation interactions and error recovery are verified,
+**Then** no reference is invented; Chinese feedback distinguishes absence, limitation and denial without fabricating evidence,
+**And** keyboard activation, Esc dismissal, focus return and exact-reader navigation work with at most one dialog; tests cover Business/IT, old versions and live revocation,
+**And** reference identity is not presented as proof that every answer claim is correct.
+
+**Scope and dependencies:**
+
+- Depends on 15.1–15.6 and 13.10/13.14. Add preview/navigation presentation to existing Knowledge authorization/history/source contracts, not a separate reader, cache authority or source Agent.
+- Mapped: FR-4.9/9.4/11.1–11.4/11.6/11.7; NFR-2.3/5.1/5.2; AR-3/24–26/29; UX-DR2–7/11/22/23/39–41/44–49/51/52. No Epic 16 prerequisite, attachments, outward MCP, graph expansion or new tool approval scope.
+
+**Definition acceptance:** Accepted under the user's 2026-09-11 confident-boundary delegation after source-grounded scope/coverage checks. Story 15.7 grants no implementation or runtime authority.
+
+### Story 15.8: Deliver and qualify ordinary production wiki conversations
+
+As a Business or IT user,
+I want the ordinary Chat route to provide useful real wiki answers and reliable recovery,
+So that I can rely on the product's actual behavior rather than a sample-specific demonstration.
+
+**Acceptance Criteria:**
+
+**Given** authorized published Knowledge and configured providers,
+**When** the ordinary application composes Chat,
+**Then** it uses Stories 15.1–15.7 through one explicit production route without fixed Repository pairs, sample identities, candidate-sentence answers or silent legacy fallback,
+**And** existing authorized history keeps its recorded meaning; only equivalent semantics migrate, and unavailable capabilities remain visibly unavailable.
+
+**Given** real local and Cross-Repository multi-document Knowledge,
+**When** representative Business/IT multi-round questions run through configured MAF/provider execution and the actual UI,
+**Then** useful Chinese explanations address follow-ups, supported alternatives, gaps and Uncertainties with readable exact references and first-text hypothesis labels,
+**And** Business remains BL-only; IT stays wiki-first with exceptional scoped source, not a code Agent,
+**And** explanatory usefulness and citation faithfulness are assessed separately from schemas/reference identity, without a fixed five-Document cap.
+
+**Given** new publication during a turn, later-discovered Documents and mode/scope changes,
+**When** retrieval, later pages, follow-ups and historical citations are exercised,
+**Then** active discovery/content/references retain one stable selection, later turns can use fresh Knowledge and earlier citations remain exact,
+**And** fresh inference context excludes disallowed prompts, history, summaries/caches and late output; live contributor revocation overrides selection stability.
+
+**Given** production-composed streaming and controlled completion/storage faults,
+**When** genuine generation, truncation, unfinished tools, save failure or lost acknowledgement occur,
+**Then** useful deltas precede valid completion, invalid termination cannot appear completed and durable-state reconciliation avoids duplicate save/generation,
+**And** interrupted permitted text retains its reason; no whole-answer JSON/semantic gate, hidden reasoning or buffered typewriter replaces genuine streaming.
+
+**Given** detach/reattach during generation or saving, cancellation, host failure and authorization loss,
+**When** isolated lifecycle checks exercise the real hosting/transport boundaries,
+**Then** same-turn attachment reconciles text/status without loss, duplication or renewed budgets; host failure requires explicit retry,
+**And** affected work/permits settle within declared bounds, revocation stops further disclosure and visible answers never automatically restart.
+
+**Given** actual queries and lifecycle events in the two-service Docker deployment,
+**When** integration evidence is recorded,
+**Then** Story 13.7's shared append-only `log.md` sink receives sanitized query events using `## [YYYY-MM-DD HH:MM] operation | target`, without raw sensitive queries/source, credentials or hidden reasoning,
+**And** evidence records configuration, first-useful/total timing, limits, available usage and quality/access outcomes; unknown usage is not zero, routine health makes no inference and no universal latency/cost guarantee is claimed.
+
+**Scope and dependencies:**
+
+- Depends on 15.1–15.7 and Epics 13–14. Own production cutover/integration; earlier stories verify their own capabilities. No deferred single evidence gate or Epic 16–17 prerequisite.
+- Mapped: FR-4.8/6.5/7.3/11.1–11.4/11.6–11.8/13.3; NFR-1.2/2.3/3.1–3.3/5.1/5.2/6.1; AR-16/23–29/32; UX-DR19–27/45–53. No attachments, vector service, outward MCP or expanded tool authority. Qualification requires actual evidence.
+
+**Definition acceptance:** Accepted under the user's 2026-09-11 confident-boundary delegation after source-grounded scope/coverage checks. Story 15.8 grants no implementation or runtime authority.
+
+**Epic 15 definition acceptance:** Eight story boundaries accepted under the user's confident-boundary delegation after independent scope/dependency review and closure of default-entry/first-text-label findings. Stable reads, real streaming, durable completion and same-turn reattachment are defined without later-reader or graph prerequisites. This is definition acceptance only. Proceed to Epic 16.
+
+
+## Epic 16: Version-Aware Knowledge Exploration
+
+Authorized readers can explore the integrated Document workspace, exact history and a basic manually refreshed Logical Flow/Document-neighborhood graph. Existing minimum readers remain available; all exploration reuses Knowledge's version selection and live authorization, without a Chat-session or later-operations prerequisite.
+
+
+### Story 16.1: Complete cohesive dedicated Document browsing and history navigation
+
+As an authorized Knowledge reader,
+I want the dedicated Document workspace to connect source-oriented and Logical Flow browsing with exact reading and history,
+So that I can explore available explanations coherently without management privileges or losing which evidence I am viewing.
+
+**Acceptance Criteria:**
+
+**Given** the existing CL/BL reader and Chat reference routes,
+**When** I enter 「文档」, open an exact reference or navigate between permitted browsing views,
+**Then** the existing sidebar/main-detail shell coherently selects the corresponding tree item, Document Version/section and history state,
+**And** this works without a Chat session, graph or management permission; no new top-level reader layout or role is introduced.
+
+**Given** permitted local and Cross-Repository Knowledge,
+**When** I browse CL or BL,
+**Then** the integrated sidebar preserves CL Repository/file/Code Unit nesting and BL Logical Flows grouped through System/Repository views,
+**And** multiple appearances identify the same Logical Document, without synthetic directory Documents, duplicate BL identities or inferred rename/split/merge lineage,
+**And** Business shows only permitted BL; IT may use both types.
+
+**Given** title/keyword search, authorized paging and selected or explicitly labelled staged/historical reading,
+**When** I refine results or navigate while newer Knowledge is published,
+**Then** the existing Knowledge Read Context keeps discovery, pages, selected content and exact links coherent,
+**And** explicit fresh-selection navigation may observe newer Knowledge without retargeting an existing historical reference or claiming failed drafts as Documents.
+
+**Given** historical versions, coverage gaps or pending/stale/failed/retired Knowledge,
+**When** I open 「版本历史」 or return to selected content,
+**Then** the workspace displays actual selection/currentness and gaps separately from operational Scan completion,
+**And** old dependencies remain exact; failed current analysis cannot be disguised by presenting older analysis as newly accepted.
+
+**Given** source navigation or changing contributor authority,
+**When** reader headers, sections, metadata, counts or source targets are disclosed,
+**Then** shared live authorization protects every contributor; Business receives no technical metadata,
+**And** IT sees only permitted Repository/full Profiled Revision/relative locations; unavailable historical source uses the established Chinese message without current-checkout substitution or a new Source Snapshot version axis.
+
+**Given** the completed navigation integration,
+**When** isolated application/UI checks exercise Business/IT, standalone/Cross-Repository browsing, old references, revocation and loading/error paths,
+**Then** Chinese Fluent/Library Oak styling, shared LoadState, title/keyword search, pagination, Tab/Esc/focus and accessible feedback remain usable,
+**And** empty/partial/unavailable states stay truthful; existing administration and Scan-history routes remain intact without a graph or provider prerequisite.
+
+**Scope and dependencies:**
+
+- Depends on 13.10/13.14, Epic 14's published Knowledge and 15.6/15.7 navigation. Integrate existing UI/read contracts only; no new storage/index/acceptance authority, editable Documents or duplicate minimum-reader implementation.
+- Mapped: FR-4.6/4.7/4.9/4.10/9.4/12.6 reader portions; NFR-2.3/5.1/5.2; AR-13/17/19/25/29; UX-DR10–12/39–49/51–53. UX-DR12/42/43 are preservation constraints, not new administration delivery. Verify this story independently; no future graph or Epic 17 gate.
+
+**Definition acceptance:** Accepted under the user's 2026-09-11 confident-boundary delegation after source-grounded scope/coverage checks. Story 16.1 grants no implementation or runtime authority.
+
+### Story 16.2: Query an authorized graph of exact Knowledge evidence
+
+As an authorized Knowledge consumer,
+I want a bounded Logical Flow or Document-neighborhood graph bound to selected versions and evidence,
+So that exploration can show actual relationships and limits without inventing dependencies or disclosing restricted Knowledge.
+
+**Acceptance Criteria:**
+
+**Given** a permitted Logical Flow or Document and an existing Knowledge Read Context,
+**When** the application requests its bounded graph projection,
+**Then** Knowledge supplies version-bound nodes, recorded relationships, exact reader targets and applicable Uncertain Frontiers from accepted evidence,
+**And** selected/current or historical context is explicit; CodeGraph indexes, model output and failed drafts are not wiki graph authorities.
+
+**Given** REFERENCES, GENERATED_FROM, unresolved evidence and shared dependencies,
+**When** the projection describes links and frontiers,
+**Then** it preserves their actual directed meanings and exact historical dependencies without retargeting old GENERATED_FROM,
+**And** no shared helper, name, organizational membership or absence of visible candidates creates a business dependency, deployed-path claim or fabricated target,
+**And** a frontier remains an explicit limitation rather than an accepted relationship.
+
+**Given** mode/user/scope restrictions or access loss for any contributor,
+**When** graph data is requested, paged or refreshed,
+**Then** the server filters every node, Edge, title, label, count, tooltip and destination before the client receives it, including composite contributors not named in visible citations,
+**And** Business receives only permitted BL data, never an IT graph hidden by presentation; narrowed visibility does not rewrite accepted relationships.
+
+**Given** large neighborhoods, cycles, sparse results or configured query limits,
+**When** the graph operation executes,
+**Then** traversal terminates within declared bounds with honest scope, partial/limited status and supported continuation rather than pretending the result is complete,
+**And** permitted counts distinguish returned/bounded coverage without leaking excluded contributors; sparse or empty graphs are valid.
+
+**Given** newer publication or changed current selection,
+**When** an explicit manual refresh requests a fresh current graph,
+**Then** all returned graph fields share the newly selected read context rather than mixing old and new evidence,
+**And** historical graphs retain their original version/evidence binding; currentness and historical-source availability remain separate,
+**And** reading/refresh starts no Scan, reconciliation, model generation or publication.
+
+**Given** the callable query on isolated accepted local/Cross-Repository data,
+**When** integration checks exercise cycles, unresolved frontiers, concurrent publication, restrictive Business views and live contributor revocation,
+**Then** real persistence/query results demonstrate exact bindings, boundedness and non-disclosure without a graph UI or provider call,
+**And** sanitized failures identify unavailable data/capabilities without arbitrary host paths or false completeness.
+
+**Scope and dependencies:**
+
+- Depends on the existing 13.10/13.14 Knowledge read contract, Epic 14 evidence and 16.1 reader destinations. Knowledge owns projection semantics; Infrastructure implements its queries. No graph database, independent snapshot cache authority, new relationship owner or mandatory index.
+- Mapped: FR-4.7/4.10/5.4/5.10–5.12/6.4/6.6/9.4/12.6; NFR-2.3/3.1; AR-2/9/13/17/25/29; UX-DR36–38/40/41/44/46 data-contract portions. This delivers usable query/refresh capability, not UI qualification or a freshness SLA.
+
+**Definition acceptance:** Accepted under the user's 2026-09-11 confident-boundary delegation after source-grounded scope/coverage checks. Story 16.2 grants no implementation or runtime authority.
+
+### Story 16.3: Explore the basic graph through manual refresh and exact reader navigation
+
+As a Business or IT reader,
+I want a clear Chinese graph that I can refresh, pan, zoom and use to open exact Knowledge,
+So that I can explore a permitted neighborhood while understanding its versions, gaps and limits.
+
+**Acceptance Criteria:**
+
+**Given** permitted Knowledge and Story 16.2's projection,
+**When** I open 「图谱」 or follow authorized reader navigation,
+**Then** the existing application shell presents the basic Z.Blazor.Diagrams Logical Flow/Document-neighborhood view, authorized scope filters and 「刷新」 without requiring management rights,
+**And** Business/light and IT/dark backgrounds, primary toolbar controls and existing Fluent conventions are retained.
+
+**Given** visible permitted nodes, relationships and Uncertain Frontiers,
+**When** the graph renders,
+**Then** CL blue/BL green styling, intra-Repository solid light-gray versus Cross-Repository dashed references and explicit warning frontier/diamond styling accompany meaningful labels,
+**And** REFERENCES/GENERATED_FROM meanings are distinguishable without color alone; no invented targets, hidden fetched IT data or implied business dependencies fill sparse views.
+
+**Given** a selected current or historical graph,
+**When** I pan, zoom, select a node or deliberately refresh,
+**Then** interactions provide immediate feedback and exact reader/history navigation, while refresh reports the applicable selection/currentness,
+**And** historical targets remain bound to original evidence; no drag/drop, node/Edge editing or automatic live-graph animation changes the domain or silently switches history to current.
+
+**Given** loading, refresh, empty, partial, stale, retired, unavailable-source or error results,
+**When** state changes,
+**Then** shared LoadState and Chinese feedback distinguish these outcomes; empty graph shows 「当前范围暂无可用图谱。可调整范围或稍后刷新。」,
+**And** refreshing retains permitted content with the specified progress treatment, limits/gaps remain visible and the existing reader handles unavailable source without replacing historical bytes.
+
+**Given** keyboard/screen-reader use, mode/scope changes or contributor revocation,
+**When** I navigate controls, inspect nodes or open reader targets,
+**Then** focus order, keyboard-accessible selection/navigation, Esc dismissal, contrast and meaningful announcements meet the existing accessibility floor,
+**And** subsequent disclosures recheck current authority, including labels/tooltips/counts; Business receives BL-only content and at most one dialog is active.
+
+**Given** isolated accepted local/Cross-Repository Knowledge in the ordinary application,
+**When** the declared Z.Blazor.Diagrams dependency and Business/IT reader/graph/Chat-reference journeys are qualified through real query/UI integration,
+**Then** manual refresh, exact historical navigation, sparse/partial results and authorization changes behave as specified without provider inference to render the graph,
+**And** existing real Scan progress and genuine Chat streaming/reattachment remain unchanged; recorded evidence identifies tested configuration and limits without a live-graph or certification claim.
+
+**Scope and dependencies:**
+
+- Depends on 16.1–16.2 and prior 13–15 reader/Chat delivery. Include the planned Z.Blazor.Diagrams package through central versioning and qualify integration; it is the adopted non-Fluent exception, not an already-installed dependency. No Epic 17 prerequisite.
+- Mapped: FR-4.6/4.7/4.10/9.4/12.6; NFR-2.3/5.1/5.2; AR-25/29/32; UX-DR10/11/36–41/44–49/51–53. No advanced portfolio graph, live animation, authoring, new top-level layout/roles, publication authority or artificial freshness SLA.
+
+**Definition acceptance:** Accepted under the user's 2026-09-11 confident-boundary delegation after source-grounded scope/coverage checks. Story 16.3 grants no implementation or runtime authority.
+
+**Epic 16 definition acceptance:** Three bounded definitions accepted under delegated confidence after independent review found no material gap or forward dependency. Existing reader ownership, live mode/contributor filtering, exact history and manual graph boundaries are preserved. This is definition acceptance only. Proceed to Epic 17.
+
+
+## Epic 17: Recoverable Product Operations and Qualification
+
+An operator can configure, observe, back up and restore the delivered knowledge service coherently. Authorized users retain usable Knowledge and dialogue after supported interruptions without losing required source/keys or replaying paid work. Earlier epics already own their functional safety and qualification; this epic adds coherent operations and integrated proof.
+
+
+### Story 17.1: Configure and diagnose the product through one operational contract
+
+As an authorized operator,
+I want portable configuration and distinct trustworthy readiness information,
+So that I can identify prerequisite and capacity problems without guessing whether Knowledge remains usable.
+
+**Acceptance Criteria:**
+
+**Given** the existing two-service deployment and operational owners,
+**When** deployment configuration is documented and validated,
+**Then** bounded defaults and overrides cover storage/retention, container resources, Worker/per-run/provider/tool admission, tool versions/dependencies and required secret/proxy/CA configuration,
+**And** examples require no developer-profile paths, host-installed tools, fixed machine capacity, extra service or new configuration owner; invalid required values fail explicitly.
+
+**Given** application, database, installed tools, snapshot-bound analysis and provider observations,
+**When** readiness is inspected,
+**Then** each category reports its own scope, observation time, known/unknown state and sanitized cause,
+**And** installed assets do not imply native MCP/index/LSP readiness or semantic completeness; missing analysis capabilities need not disable authorized existing wiki/history reads.
+
+**Given** routine health polling or an Administrator's explicit provider connection test,
+**When** availability is checked,
+**Then** routine health performs no paid inference and cannot dispatch saved work; explicit testing remains separately authorized and identified,
+**And** stale/unknown provider results are not fabricated readiness, and neither failures nor multiple configured providers imply automatic failover or provider identity changes.
+
+**Given** exhausted storage/capacity or classified operational failure,
+**When** existing controllers report queue/pause/failure and recovery choices,
+**Then** diagnostics preserve explicit gaps and separate operational state, primary coverage and Knowledge Currentness with permitted real counts,
+**And** exhaustion cannot silently exclude admitted source, delete pinned Knowledge/source or multiply global limits; source/key/data retention stays separate from disposable tool-state cleanup.
+
+**Given** Scan, query and system events across the delivered routes,
+**When** operational evidence is collected,
+**Then** the existing append-only sink retains `log.md` entries as `## [YYYY-MM-DD HH:MM] operation | target`, supplemented by correlation IDs, states/counts, durations, failures and available usage,
+**And** raw source, credentials, hidden reasoning and unnecessary sensitive payloads are absent; unknown usage is not zero, and documented output/access/retention handling never silently substitutes structured logs for the required trace.
+
+**Given** the declared deployment and controlled prerequisite/resource failures,
+**When** operator procedures and existing status surfaces are qualified,
+**Then** configuration portability, distinct readiness, explicit test authorization, sanitized diagnostics and continued permitted reading are demonstrated,
+**And** evidence identifies the tested configuration without claiming backup/restore, universal throughput or complete provider-adapter coverage.
+
+**Scope and traceability:**
+
+- **Prior dependencies:** 13.2/13.7/13.18, 14.7, 15.4/15.8 and delivered reader/status contracts. Consolidate operator documentation/configuration/diagnostic adapters, not schedulers, recovery engines, logging sinks or product roles. No new operational dashboard is required.
+- **Mapped requirements:** FR-3.4/4.8/12.1–12.4; NFR-1.1/2.2/2.3/3.1/3.2/4.1; AR-15/23/30/32; UX-DR12/31–35/45–49 existing-surface portions. Missing earlier behavior returns to its owner.
+
+**Definition acceptance:** Accepted under the user's 2026-09-11 confident-boundary delegation after source-grounded scope/coverage checks. Story 17.1 grants no implementation or runtime authority.
+
+### Story 17.2: Capture a coherent protected maintenance-window backup
+
+As an authorized operator,
+I want an inspectable backup of the service's coherent durable state,
+So that database records do not outlive the exact source, keys or configuration required to recover them.
+
+**Acceptance Criteria:**
+
+**Given** explicit source/destination locations and a planned maintenance window,
+**When** backup preflight evaluates the selected resources,
+**Then** the procedure identifies the owned application/database/source/key/configuration boundary, required capacity and a protected destination outside primary volumes,
+**And** destination mistakes, insufficient access/capacity or missing required components stop capture without overwriting live resources or an earlier successful backup.
+
+**Given** active or queued Scan, inquiry, publication, Chat and administration work,
+**When** maintenance quiescence begins,
+**Then** new writers/dispatch are prevented and existing writers settle through their owners before capture; source cleanup and key/configuration mutations also remain quiesced,
+**And** the procedure verifies that stable boundary throughout capture rather than relying only on a database dump while source, keys or selections continue changing.
+
+**Given** verified quiescence,
+**When** the backup is captured,
+**Then** it includes a consistent PostgreSQL view of Identity/domain data, retained canonical source including older pinned contributors, required Data Protection keys and matched restore configuration,
+**And** required existing database roles/extensions and component/schema/tool compatibility information are retained; disposable Tool Workspaces/caches are not substituted for canonical source or treated as recovery authority.
+
+**Given** the captured components,
+**When** the procedure assembles and checks their backup manifest,
+**Then** one capture identity binds required components, integrity evidence, source references and configuration/version information, with sensitive restore material protected from unauthorized access,
+**And** inspection verifies completeness and referenced-source consistency without exposing secrets in manifests/logs; copied volumes alone never constitute a successful coherent-backup claim.
+
+**Given** interruption, failed copying, failed integrity checks or loss of quiescence,
+**When** capture cannot complete,
+**Then** the result is explicitly failed/incomplete and cannot be selected as a successful backup; live state and previous successful backups remain intact,
+**And** maintenance exit follows the existing owners' safe controls, without automatically resuming paused work, replaying Chat or silently changing source/provider/configuration.
+
+**Given** isolated owned fixtures with accepted history, active-work checkpoints, source and protected credentials,
+**When** the operator performs capture and independent manifest/component inspection,
+**Then** evidence demonstrates stable capture, complete/incomplete classification, protected external storage and useful failure guidance without provider dispatch,
+**And** this proves an inspectable backup artifact, not successful restoration, cross-host migration or a future story's outcome.
+
+**Scope and traceability:**
+
+- **Prior dependencies:** 17.1 and Epics 13–16's persistence/ownership contracts. Infrastructure implements the operator procedure; Scan Control/Chat and configuration owners quiesce their work. Only needed maintenance/capture state and artifacts are added; no restore prerequisite or backup UI.
+- **Mapped requirements:** FR-4.9/9.4 preservation; NFR-2.2/2.3/3.3/4.1; AR-2/3/30/31; UX-DR25/27/33–35 truthful maintenance outcomes. No new roles, backup daemon, HA/PITR service or automatic canonical-source pruning.
+
+**Definition acceptance:** Accepted under the user's 2026-09-11 confident-boundary delegation after source-grounded scope/coverage checks. Story 17.2 grants no implementation or runtime authority.
+
+### Story 17.3: Restore isolated service state without replaying paid work
+
+As an authorized operator,
+I want a qualified isolated restoration with explicit recovery decisions,
+So that restored Knowledge remains usable without copied leases or running records starting unauthorized work.
+
+**Acceptance Criteria:**
+
+**Given** a successful Story 17.2 backup and explicitly selected isolated owned resources,
+**When** restore preflight validates destination, integrity, required components and compatible configuration,
+**Then** the procedure rejects incomplete/mismatched captures before opening writers and does not overwrite unrelated/live resources,
+**And** provider dispatch is disabled before service startup and remains disabled throughout restore qualification, including explicit connection-test paths and copied pending requests.
+
+**Given** a validated capture,
+**When** PostgreSQL data, existing required roles/extensions, exact retained source, Data Protection keys and restore configuration are restored together,
+**Then** referenced source/configuration and protected-key usability are checked before normal service reopening,
+**And** missing bytes, incompatible configuration or unusable keys produce explicit recovery failure; current checkout, temporary caches, new credentials or a freshly acquired revision cannot silently substitute.
+
+**Given** copied completion records, leases and queued/running operational states,
+**When** recovery reconciles durable state,
+**Then** pre-restore ownership is invalidated and confirmed accepted Knowledge/Chat saves are preserved before remaining unfinished Scan work becomes recoverable/paused and orphaned Chat becomes interrupted,
+**And** copied wakeups, leases and running statuses never authorize dispatch; replay cannot duplicate Knowledge, regress current selection or overwrite a confirmed completion as interrupted.
+
+**Given** restored users, selected/historical Knowledge, source references and Conversations,
+**When** authorized application reads and protected-credential checks are exercised,
+**Then** actual restored CL/BL/history, exact dependencies, available recorded-revision source and ordered dialogue remain usable under live mode/contributor authorization,
+**And** key checks reveal no secret values and make no provider request; unavailable historical source remains distinct from retained Document provenance.
+
+**Given** unfinished restored work and an explicit Scan-resume or Chat-retry request,
+**When** existing eligibility contracts evaluate recovery,
+**Then** fresh authority, exact source where applicable, configuration and prerequisite checks are mandatory; prior identity or restored permission data alone does not reinstate execution ownership,
+**And** qualification retains its dispatch guard, validates eligible/denied outcomes without real inference, and distinguishes Chat retry from browser reattachment or transparent host token replay.
+
+**Given** restore interruptions, corrupted components and copied active/completed work,
+**When** the isolated procedure is qualified,
+**Then** evidence demonstrates safe failure, coherent reads/key use, completion reconciliation and zero real provider requests throughout restoration,
+**And** the operator receives explicit reopening/recovery steps; restoration never implies automatic job resume or another environment's throughput.
+
+**Scope and traceability:**
+
+- **Prior dependencies:** 17.1/17.2, 13.7/13.16, 14.5 and 15.2/15.3/15.5 with existing readers. Restore integration only; earlier owners retain lifecycle/authorization rules. No production cutover, new service-principal policy, HA/PITR or token ledger.
+- **Mapped requirements:** FR-4.9/9.4/11.3/11.7/12.1/12.4; NFR-2.2/2.3/3.1–3.3/4.1; AR-3/15/18/26–28/30/31; UX-DR23/25/27/33–35/40/41/46.
+
+**Definition acceptance:** Accepted under the user's 2026-09-11 confident-boundary delegation after source-grounded scope/coverage checks. Story 17.3 grants no implementation or runtime authority.
+
+### Story 17.4: Qualify complete-product behavior under declared operating limits
+
+As a product owner and operator,
+I want evidence of useful, secure and recoverable behavior,
+So that acceptance reflects demonstrated configuration-specific outcomes rather than inherited tests or competition claims.
+
+**Acceptance Criteria:**
+
+**Given** delivered Epics 13–16 and Stories 17.1–17.3,
+**When** the qualification boundary and representative workloads are fixed,
+**Then** record application/schema/tool/provider versions, two-service non-root configuration, storage/resource/admission limits and scenario expectations,
+**And** reuse earlier evidence only where contract, configuration and exercised behavior remain applicable; changed or uncovered combinations require fresh evidence, not automatic completion credit.
+
+**Given** one/several/standalone Repositories and beyond-pair scope,
+**When** real source-to-Knowledge routes exercise mixed supported source and progressive large files,
+**Then** exact source, required native tools, accepted semantic units, useful CL/BL and readable history work without sample identities or fixed quotas,
+**And** report admitted/accepted/pending/failed coverage separately from file windows, Code Units, Documents and operational completion, retaining explicit tool/content limitations.
+
+**Given** independently arriving evidence, multiple Systems, one-to-many relationships and cycles,
+**When** bounded matching/inquiry and per-flow refresh execute,
+**Then** late accepted target files can contribute without global completion or unchanged-source rescanning; cycles terminate and missing facts remain Uncertainties,
+**And** ordered publication, coalesced demands, exact historical dependencies and incompatible/partial/stale states remain truthful under concurrency.
+
+**Given** Business/IT multi-document questions, follow-ups and sparse or conflicting Knowledge,
+**When** real Chat, exact citations, reader/history and manual graph journeys are assessed,
+**Then** genuine provisional output, first-text hypotheses, durable completion and same-turn reconnect behave correctly; independent review records explanation usefulness and claim-to-source faithfulness separately from schema/identifier validity,
+**And** measure first useful answer and total duration without a fixed five-Document cap or universal latency promise.
+
+**Given** competing Scan/Chat demand, revocation, failures and recovery boundaries,
+**When** the integrated product is exercised,
+**Then** shared limits/fairness, cleanup, pause/resume versus Chat retry, save/acceptance replay and live composite authorization prevent duplicate work authority, unauthorized disclosure and capacity leaks,
+**And** actual provider inputs respect self-hosted organization boundaries and necessary authorized external context; source/data/key continuity and backup/restore proof remain valid, distinguishing provider-disabled restore qualification from authorized normal-operation inference.
+
+**Given** results and gaps,
+**When** acceptance evidence is assembled,
+**Then** it distinguishes static checks, automated boundaries, actual runtime/provider behavior, recovery proof and independently reviewed quality, with configuration, timings, available usage/cost and unknowns explicit,
+**And** missing core behavior returns to its owning story before qualification; no green schema, old artifact or final-story implementation bucket substitutes for the required outcome.
+
+**Scope and traceability:**
+
+- **Prior dependencies:** 17.1–17.3 and Epics 13–16. Own the integrated workload/evidence and narrowly required operational composition only; no new product capabilities, competition rubric, fixed sample names or universal protocol/throughput guarantee.
+- **Mapped requirements:** integrated FR-3.4/4.8/12.1–12.4 and earlier journey obligations; NFR-1.1/1.2/2.2/2.3/3.1–3.3/4.1/5.1/5.2; AR-23/25–32; UX-DR19–27/31–41/45–53. Preserve Chinese/accessibility conventions; no new certification, advanced graph, external connector or deferred-feature completion credit.
+
+**Definition acceptance:** Accepted under the user's 2026-09-11 confident-boundary delegation after source-grounded scope/coverage checks. Story 17.4 grants no implementation or runtime authority.
+
+**Epic 17 definition acceptance:** Four definitions accepted under delegated confidence after independent review found no material gap or forward dependency. Coherent protected backup, isolated provider-disabled restore, earlier-owner reuse and honest integrated qualification are explicit. No backup, restore, service or provider action was performed.
+
+**Step 3 completion:** All five epic definitions and 41 story boundaries are accepted, preserving every requirement's current, deferred, historical or original-backlog disposition. Under the user's 2026-09-11 confident-boundary delegation, Continue is selected for final definition validation. This does not select a feature or authorize implementation.

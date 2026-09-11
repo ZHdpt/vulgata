@@ -1,3 +1,5 @@
+> Historical plan — superseded for new design by the user-approved September 11, 2026 planning correction. Use the [current architecture gateway](../architecture.md) and [AD-1–AD-32 spine](ARCHITECTURE-SPINE.md), whose repository adoption review is pending. The dated body below is preserved evidence, not current fallback instructions or generic implementation qualification.
+
 # Vulgata V1 Scanning Technical Plan
 
 **Date:** 2026-07-09

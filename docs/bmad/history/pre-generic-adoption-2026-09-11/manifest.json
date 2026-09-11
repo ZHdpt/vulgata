@@ -1,0 +1,94 @@
+{
+  "kind": "immutable-pre-adoption-snapshot",
+  "date": "2026-09-11",
+  "baselineCommit": "2bb83c3b44fc0afc07ae253ec1df5fab4399b964",
+  "proposalApprovedSha256": "EE7878FD8AF814BCFAE2D2ECA6C7305BB56BBF2618E4AD124F8CDB97432C675A",
+  "purpose": "Historical pre-images, not active planning or implementation instructions",
+  "files": [
+    {
+      "Original": "docs/bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md",
+      "Snapshot": "docs/bmad/history/pre-generic-adoption-2026-09-11/files/docs/bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md",
+      "SHA256": "35E8B0D8333154BEE54CB3A88D0D7C7124B4D27C61DA11CF8F7A6014204791FD"
+    },
+    {
+      "Original": "docs/UBIQUITOUS_LANGUAGE.md",
+      "Snapshot": "docs/bmad/history/pre-generic-adoption-2026-09-11/files/docs/UBIQUITOUS_LANGUAGE.md",
+      "SHA256": "1F1075F98F8CD36C244E3B020BBA1BCA530BC90F4165469EDA0562D763B050E4"
+    },
+    {
+      "Original": "docs/bmad/planning-artifacts/architecture.md",
+      "Snapshot": "docs/bmad/history/pre-generic-adoption-2026-09-11/files/docs/bmad/planning-artifacts/architecture.md",
+      "SHA256": "0148DC95094BE6E3D4F4A2B9BB2B6790209CA50A8C3D0E9FF879FF33E0DCDF42"
+    },
+    {
+      "Original": "docs/bmad/epics.md",
+      "Snapshot": "docs/bmad/history/pre-generic-adoption-2026-09-11/files/docs/bmad/epics.md",
+      "SHA256": "2BD311C87BA4595FD567F3F7722EF88859894EA64E2CC04A8D25FA610F2E67C3"
+    },
+    {
+      "Original": "docs/bmad/implementation-artifacts/sprint-status.yaml",
+      "Snapshot": "docs/bmad/history/pre-generic-adoption-2026-09-11/files/docs/bmad/implementation-artifacts/sprint-status.yaml",
+      "SHA256": "9771C5E1F842965E43FF19BBE088E96CE75ED871DBF99DF67D67DF7C62A26C5D"
+    },
+    {
+      "Original": "docs/bmad/planning-artifacts/ux-designs/ux-vulgata-2026-06-22/DESIGN.md",
+      "Snapshot": "docs/bmad/history/pre-generic-adoption-2026-09-11/files/docs/bmad/planning-artifacts/ux-designs/ux-vulgata-2026-06-22/DESIGN.md",
+      "SHA256": "86478274D145A5FA42347A694DCDD33C3A873850CD37E5065855B99F0E213128"
+    },
+    {
+      "Original": "docs/bmad/planning-artifacts/ux-designs/ux-vulgata-2026-06-22/EXPERIENCE.md",
+      "Snapshot": "docs/bmad/history/pre-generic-adoption-2026-09-11/files/docs/bmad/planning-artifacts/ux-designs/ux-vulgata-2026-06-22/EXPERIENCE.md",
+      "SHA256": "7D9BD4D3DC470196F53A4E0FC795F464C9DABE3F435A7D21DFA682FB3CAE0177"
+    },
+    {
+      "Original": "AGENTS.md",
+      "Snapshot": "docs/bmad/history/pre-generic-adoption-2026-09-11/files/AGENTS.md",
+      "SHA256": "9FBABEA3C46C3147C645A5E28F6F00676F8828CC533131CE9EB0CE812F1D4E91"
+    },
+    {
+      "Original": "README.md",
+      "Snapshot": "docs/bmad/history/pre-generic-adoption-2026-09-11/files/README.md",
+      "SHA256": "B9B2FCBAEC3A28A90211FBD5F4A253AFC1A799365217299CAB94168905582B46"
+    },
+    {
+      "Original": "README.zh-CN.md",
+      "Snapshot": "docs/bmad/history/pre-generic-adoption-2026-09-11/files/README.zh-CN.md",
+      "SHA256": "786B86F5B438184549CCB6A626B4092C22CAF663CE43E870E79665088A28C568"
+    },
+    {
+      "Original": ".specify/feature.json",
+      "Snapshot": "docs/bmad/history/pre-generic-adoption-2026-09-11/files/.specify/feature.json",
+      "SHA256": "6AC764D2C3C0D434644FCF2A3FA719192514595B789FED49FC76628B122905DC"
+    },
+    {
+      "Original": "docs/bmad/planning-artifacts/architecture/scanning-v1-technical-plan.md",
+      "Snapshot": "docs/bmad/history/pre-generic-adoption-2026-09-11/files/docs/bmad/planning-artifacts/architecture/scanning-v1-technical-plan.md",
+      "SHA256": "B9EEEDC4AFC93F16E3CAD2A8B8809DCBA5BA4B764D60E8EC2471E3CA1FC1D147"
+    },
+    {
+      "Original": "docs/bmad/planning-artifacts/architecture/scanning-v1-data-contracts.md",
+      "Snapshot": "docs/bmad/history/pre-generic-adoption-2026-09-11/files/docs/bmad/planning-artifacts/architecture/scanning-v1-data-contracts.md",
+      "SHA256": "B3EA479F18ED8E08CD7F030DDA2233E8BAB7217CF27A8209BCD1440E73C118A7"
+    },
+    {
+      "Original": "docs/bmad/planning-artifacts/architecture/august-30-bounded-scanning-design.md",
+      "Snapshot": "docs/bmad/history/pre-generic-adoption-2026-09-11/files/docs/bmad/planning-artifacts/architecture/august-30-bounded-scanning-design.md",
+      "SHA256": "D3AA91D2967F737F1BD55B25C7A0798CB7FDF852B52486E01B6BB50861347A54"
+    },
+    {
+      "Original": "docs/bmad/planning-artifacts/architecture/document-graph-anchordb-plus-plan.md",
+      "Snapshot": "docs/bmad/history/pre-generic-adoption-2026-09-11/files/docs/bmad/planning-artifacts/architecture/document-graph-anchordb-plus-plan.md",
+      "SHA256": "979822994AC9154F9805B4682E93E87F86EF013AEE31DB0AF556D837284C94D2"
+    },
+    {
+      "Original": "docs/bmad/planning-artifacts/architecture/document-graph-decision-log.md",
+      "Snapshot": "docs/bmad/history/pre-generic-adoption-2026-09-11/files/docs/bmad/planning-artifacts/architecture/document-graph-decision-log.md",
+      "SHA256": "BC0C77FEA7ED1C7D11E1297AAD76EC502EFF66B57C336AD962C6EBB0A47BDF2A"
+    },
+    {
+      "Original": "docs/bmad/planning-artifacts/sprint-change-proposal-2026-09-11-generic-product-reconciliation.md",
+      "Snapshot": "docs/bmad/history/pre-generic-adoption-2026-09-11/files/docs/bmad/planning-artifacts/sprint-change-proposal-2026-09-11-generic-product-reconciliation.md",
+      "SHA256": "EE7878FD8AF814BCFAE2D2ECA6C7305BB56BBF2618E4AD124F8CDB97432C675A"
+    }
+  ]
+}

@@ -1,3 +1,5 @@
+> Historical contracts — superseded for new design by the user-approved September 11, 2026 planning correction. Use the [current architecture gateway](../architecture.md) and [AD-1–AD-32 spine](ARCHITECTURE-SPINE.md), whose repository adoption review is pending. Preserve the dated schemas below as evidence; generic identity/acceptance/read contracts require explicit versioned adaptation, not automatic reuse or migration.
+
 # Vulgata V1 Scanning Data Contracts
 
 **Date:** 2026-07-09

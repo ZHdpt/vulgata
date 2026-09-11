@@ -1,26 +1,29 @@
-# Workflow Activation Handoff
+# Workflow activation guidance
 
-The implemented workflow is committed on branch `codex/bmad-speckit-sprint-loop`. Codex discovers repository skills when a session starts, so the session root must contain that branch's `.agents/skills/` and `.codex/agents/` files.
+Use the assigned current checkout, root [AGENTS.md](../../AGENTS.md) and
+[project state](../agents/project-state.md). Verify Git identity, local changes and the
+[current tracker](../bmad/implementation-artifacts/sprint-status.yaml) before resolving
+work. No specific old branch or worktree is required.
 
-## Use the Existing Worktree
+The generic replacement backlog is defined in [epics](../bmad/epics.md). At the
+September 11 planning checkpoint it begins with Story 13.1; read live tracking rather
+than treating this dated sentence as an active feature selector. Historical Epics 4,
+11 and 12, the SP.1 checkpoint and old specs remain evidence, not a resumed queue.
 
-```powershell
-Set-Location G:\source\repos\vulgata\.worktrees\codex-sprint-loop
-git branch --show-current
-git status --short
-codex
-```
+Use the current repository skill with the matching harness/role configuration. Codex
+roles implement the unified workflow; legacy Copilot delivery adapters are fenced
+until separately synchronized. Start a fresh session after changing installed skills
+or role configuration when the harness loads those at session startup.
 
-Require branch `codex/bmad-speckit-sprint-loop` and a clean status. Start a new Codex session after changing checkout/worktree; an already-running session rooted at ordinary `main` will not retroactively discover these skills.
-
-Then use an exact entry prompt from [the operator runbook](operator-runbook.md), for example:
+See [the operator runbook](operator-runbook.md) for invocation and gates. A safe
+orientation request is:
 
 ```text
-Use $run-bmad-sprint-loop for epics 4 and 5.
+Use $run-bmad-sprint-loop dry-run for next.
 ```
 
-The current Vulgata queue will pause before Story 4.1 until the out-of-scope `SP.1 Worker Agent Execution Adapter Validation Spike` is authorized/completed or its blocking boundary is changed through BMad course correction.
-
-## Integrate Later
-
-If a human chooses to integrate the feature branch into `main`, perform that Git operation separately, resolve it under the repository's normal review policy, and restart Codex from the resulting checkout. The workflow never merges, rebases, pushes, or opens a PR implicitly.
+Deliberately activate the selected story's feature before feature-specific commands.
+Pass its actual plan path when refreshing agent context; never infer activation from
+a recently modified historical plan. Preserve unrelated working-tree changes and
+follow workflow ownership. Git integration/cleanup is a separate authorized action;
+this handoff does not require a reset, branch switch, merge, rebase or commit.

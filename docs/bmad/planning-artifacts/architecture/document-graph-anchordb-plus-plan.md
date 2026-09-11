@@ -1,3 +1,5 @@
+> Historical recommendation — superseded for new design by the user-approved September 11, 2026 planning correction. Use the [current architecture gateway](../architecture.md) and [AD-1–AD-32 spine](ARCHITECTURE-SPINE.md), whose repository adoption review is pending. The dated candidate-derived body below remains evidence, not current graph/update/HITL/schema instructions or a readiness claim.
+
 # AnchorDB+ v2 — Winning Document Graph Architecture
 
 **Status:** Final Recommendation
