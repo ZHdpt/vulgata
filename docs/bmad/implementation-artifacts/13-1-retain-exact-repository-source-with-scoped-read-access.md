@@ -104,3 +104,181 @@ Root owns lifecycle, state, decisions, evidence, staging and local checkpoints. 
 Activation mapping completed at 2026-09-14T09:07:01.6134605Z. Lifecycle: backlog -> ready-for-dev (bounded accepted definition materialized above) -> in-progress. Epic 13 is in-progress; every other story remains backlog. Pending activation checkpoint: bmad-13-1-context-20260914T090701Z-1e6853. Manifest: this record, canonical activation, sprint-status.yaml, .specify/feature.json, and the new feature workflow-state.json. Specification/checklist remain outside the activation checkpoint pending definition acceptance.
 
 Selector persistence note: .specify/feature.json is intentionally ignored by .specify/.gitignore. It remains the local canonical selector; the durable activation/state/development mapping reproduces it on recovery. The checkpoint manifest therefore excludes this local-only selector.
+
+## Plan dispatch
+
+1. role_and_objective: plan-architect-high, Sol/high; run speckit-plan plus self-review. Architecture trigger: new generic shared source owner must settle storage/publication, integrity, source-specific live authorization, grants/budgets and ordinary/trusted interfaces under AD-2/3/30/31.
+2. authoritative_inputs: spec.md SHA256 6400232780739b7574760afd74b0dcba02c19b17d19383f3b0954b85bee88bca; raw Story 13.1; AGENTS; project-state/development/testing/domain guides; architecture gateway/spine; canonical PRD/glossary/constitution and activation authority hashes; applicable current source/tests/package versions.
+3. workflow_boundary: plan, Story 13.1, specs/015-retained-source-access, HEAD cd82c8994063fa522253264f59c13b1cbc08a3f2. Activation commit changed metadata only. Specification/checklist and root state/evidence are expected uncommitted inputs.
+4. constraints_and_skills: speckit-plan/current sprint loop; no delegation, production/tests/runtime/DB/provider execution, historical plans or waivers. Preserve other writers, source-only scope and legacy consumers. Root handles explicit-path optional context refresh after plan return.
+5. write_boundary: feature plan.md, research.md, data-model.md, quickstart.md, contracts/* and implementation-design.md only if required. No spec/checklist/state/lifecycle/Git writes.
+6. output_and_evidence: complete plan file/hash manifest; source references; author self-review; precise approval triggers/effects; alternatives/consequences and scoped verification/infrastructure needs. Resolve failure/cancellation/concurrency/integrity/auth/encoding/entry limitations and configurable budgets concretely, with only source-owned records.
+7. completion_and_failure: finish after feasible source-grounded complete plan/self-review; return authority conflicts/blockers, never ask for user approval or claim independent acceptance. Root dispatches fresh plan reviewer before approval/task generation.
+
+## Activation checkpoint verification
+
+The checkpoint trailer resolved uniquely to cd82c8994063fa522253264f59c13b1cbc08a3f2 and was verified ancestral to HEAD. Its four-file manifest contains only the development record, activation record, sprint tracker and new workflow state. Staged whitespace validation and the workflow validator passed before commit. The initial restricted git-add attempt failed to create .git/index.lock; the explicitly owned staging and local commit then succeeded through sandbox escalation. No external publication occurred. The source/specification authority set remained unchanged.
+
+## Plan completion and context pointer
+
+The six-file plan set passed author self-review at plan.md#inline-plan-self-review. Root verified all returned SHA-256 values and persisted evidence/plan-self-review-01.json. The selected feature remains specs/015-retained-source-access. The author reported a rejected all-in-one patch that made no changes, then completed incremental writes.
+
+The optional explicit-path agent-context helper ran but skipped because its Python fallback lacks PyYAML. Root performed the bounded managed-block update directly using the selected plan and workflow-state paths. Only that block changed in AGENTS.md; baseline activation hashes remain historical preflight evidence, and the current review packet pins the updated AGENTS bytes. No workflow rule or approval gate changed.
+
+## Plan-only independent review dispatch
+
+1. role_and_objective: fresh definition-reviewer, Sol/medium; independent plan-only review before user plan authorization/task generation.
+2. authoritative_inputs: every raw artifact in specs/015-retained-source-access/evidence/plan-review-boundary-01.json, including raw BMad story/spec, full plan set, constitution, gateway/spine, PRD/glossary/AGENTS/project guides; current relevant source/tests; current workflow contracts and verdict schema.
+3. workflow_boundary: plan-review; Story 13.1; specs/015-retained-source-access; dev HEAD cd82c8994063fa522253264f59c13b1cbc08a3f2. Diff identity f5d98b71fc95d8a48514d1b6ecdbb23959356a537399529c91257422f0fb7593; canonical manifest algorithm and all raw hashes in review packet. Application source unchanged.
+4. constraints_and_skills: current plan-only discipline; no delegation or writes/runtime/Git mutation. Inspect raw authorities and feasibility/security/bounds/atomicity/recovery/compatibility/verification; do not substitute author conclusions. speckit-analyze's tasks prerequisite belongs to later definition review.
+5. write_boundary: read-only; return raw verdict to root for unchanged persistence.
+6. output_and_evidence: exactly verdict.schema.json object with gate plan-review, verified reviewed_boundary, raw artifact paths, required findings and earliest_owner; precise evidence/correction for blockers. No inflated cosmetic severity or ACCEPT with blockers.
+7. completion_and_failure: independent ACCEPT/REVISE/BLOCKED; ordinary repair to earliest author; no user question or implementation authority.
+
+## Plan correction 1
+
+Independent plan-review-01 returned REVISE with one HIGH finding, PR-13.1-001 (earliest owner: plan). Raw verdict is preserved unchanged in specs/015-retained-source-access/evidence/plan-review-01.json and passed runtime verdict validation. This is the first consecutive plan-phase revision; no human approval is requested for ordinary correction.
+
+1. role_and_objective: plan-architect-high corrects PR-13.1-001 and self-reviews the coherent plan set.
+2. authoritative_inputs: unchanged raw finding/full verdict at evidence/plan-review-01.json, current Story/spec/authority set.
+3. workflow_boundary: plan correction, Story 13.1, same feature and HEAD cd82c8994063fa522253264f59c13b1cbc08a3f2; no tasks exist.
+4. constraints_and_skills: current speckit-plan/sprint-loop, Sol/high, no delegation/Git/production/tests; preserve other writes and bounded source scope.
+5. write_boundary: six existing plan artifacts only; root retains all state/evidence/lifecycle/Git ownership.
+6. output_and_evidence: coherent single-owner capture limits across signature/configuration/failures/planned tests; full updated manifest and self-review/disposition returned to root.
+7. completion_and_failure: finish after correction/self-review, then independent re-review; blockers returned unchanged, no user question or acceptance claim.
+
+## Plan-only re-review dispatch 2
+
+1. role_and_objective: independent definition-reviewer, Sol/medium, re-review corrected boundary after first REVISE.
+2. authoritative_inputs: raw plan-review-01.json and all raw artifacts pinned in plan-review-boundary-02.json; revised plan/research/quickstart/application contract plus unchanged complete definition and authorities.
+3. workflow_boundary: attempt 2, Story 13.1, same feature and HEAD; diff identity 0dd320e5015dae3efecb7721c862b4c9a479c320c770b5f925904cbb97955e4b. No tasks/production/tests changed.
+4. constraints_and_skills: same read-only plan review; reassess PR-13.1-001 and correction consistency/regression; no delegation/runtime/Git mutations.
+5. write_boundary: none; return raw verdict to root.
+6. output_and_evidence: schema-valid verdict with new verified boundary, raw artifact list, exact findings and earliest owners; acceptance excludes all blockers.
+7. completion_and_failure: one independent ACCEPT/REVISE/BLOCKED, no user question or task generation.
+
+## Current pause: planned-change authorization
+
+Plan-review attempt 2 independently ACCEPTED the corrected six-file plan with no findings. PR-13.1-001 is resolved; the consecutive plan revision count resets after acceptance. Raw verdict and reviewed hashes are in specs/015-retained-source-access/evidence/plan-review-02.json and plan-review-boundary-02.json. Root reverified every accepted artifact hash and validated the raw verdict plus compact workflow state.
+
+The pending user decision is specs/015-retained-source-access/evidence/plan-authorization-01.md, scope SHA-256 0dd320e5015dae3efecb7721c862b4c9a479c320c770b5f925904cbb97955e4b. Approval is solely to progress to tasks; fresh combined definition review and separate implementation approval follow. No user approval has been inferred, no tasks were generated, and no application/test code or runtime resources were changed.
+
+Activation checkpoint remains cd82c8994063fa522253264f59c13b1cbc08a3f2. Current definition/evidence/pointer changes remain uncommitted until the accepted-definition checkpoint. All other stories remain backlog; no unrelated work was present or changed.
+
+## Plan authorization accepted
+
+At 2026-09-14T10:18:58.368839Z, the user replied exactly: "Approval authorizes only progression to tasks". Root verified the accepted plan boundary, selector/mapping, compact schema, Git branch/HEAD and unique ancestral activation checkpoint. Scope remains 0dd320e5015dae3efecb7721c862b4c9a479c320c770b5f925904cbb97955e4b. The decision is recorded in evidence/plan-authorization-01.md. Only task generation and subsequent definition review proceed; production implementation remains gated. Current changes are the owned definition/evidence/pointer files from this story; index is empty and no unrelated changes were observed.
+
+## Task author dispatch
+
+1. role_and_objective: task-author, configured Luna/medium; run speckit-tasks and self-review Story 13.1 only.
+2. authoritative_inputs: raw Story 13.1/spec, complete accepted six-file plan set, plan-review-02 ACCEPT and recorded task-only user authorization; AGENTS/constitution/architecture/PRD/glossary/project guides and current relevant source/tests.
+3. workflow_boundary: tasks; specs/015-retained-source-access; dev HEAD cd82c8994063fa522253264f59c13b1cbc08a3f2; accepted scope 0dd320e5015dae3efecb7721c862b4c9a479c320c770b5f925904cbb97955e4b; no application/test changes or historical activation.
+4. constraints_and_skills: speckit-tasks/current sprint loop; mandatory vertical behavioral TDD, source-only scope, current model strategy and E2E predicates. No delegation/runtime/Git writes. Preserve other writers. Current skill overrides stale Terra/low E2E and three-revision reference prose; the configured runner is Luna/high and revision pause is fourth consecutive.
+5. write_boundary: tasks.md only. Root retains state/evidence/lifecycle/Git; no spec/plan/code/tests edits.
+6. output_and_evidence: strict checklist tasks, exact paths, dependency order, FR/SC/source coverage, coherent TDD groups and separate test/production ownership; truthful separate-process/PostgreSQL verification; file hash/counts/self-review/hooks returned to root.
+7. completion_and_failure: actionable self-reviewed tasks or raw upstream defect/blocker, no implementation/independent acceptance claim.
+
+## Combined definition review dispatch 1
+
+Task author returned 38 tasks and a passing self-review. Root verified the returned hash and sequential checklist IDs; these mechanical checks do not establish semantic acceptance.
+
+1. role_and_objective: fresh definition-reviewer, Sol/medium; combined independent definition review plus read-only speckit-analyze.
+2. authoritative_inputs: all raw paths/hashes in specs/015-retained-source-access/evidence/definition-review-boundary-01.json, including Story/spec/full plan/tasks/authorities/task-only user authorization; relevant current source/tests; current workflow/analyze/verdict contracts.
+3. workflow_boundary: definition-review attempt 1; Story 13.1; feature specs/015-retained-source-access; dev HEAD cd82c8994063fa522253264f59c13b1cbc08a3f2; nonrecursive diff 2644ebf01e273507b052a59c5f1e90a6062ab0dc76b4ed359cc8822de38c5bb7; no production/test writes.
+4. constraints_and_skills: read-only analyze/review, no delegation/runtime/Git mutation or user question; judge coverage, source fit, executable dependency order, honest vertical public-seam TDD, exact paths/parallel ownership, and required qualification. Apply current models/fourth-revision threshold over stale reference prose.
+5. write_boundary: none; return raw verdict and analysis to root.
+6. output_and_evidence: schema-valid definition-review verdict with verified packet boundary and earliest-owner findings; separate bounded analyze coverage/metrics/prerequisite/hook evidence.
+7. completion_and_failure: independent ACCEPT/REVISE/BLOCKED, correction routing to earliest author, no implementation execution or approval claim.
+
+## Definition correction 1
+
+Independent definition review returned REVISE: DR-13.1-001 (CRITICAL behavioral TDD ordering) and DR-13.1-002 (HIGH Core-facing trusted-workspace contradiction). Raw verdict: evidence/definition-review-01.json; analyze report: evidence/definition-analysis-01.md; rejected tasks preimage retained under evidence/history/tasks-definition-01.md. Both findings are task-owned, so accepted spec/plan hashes and the user's task-only plan authorization remain valid.
+
+1. role_and_objective: task-author Luna/medium corrects both raw findings and self-reviews tasks.
+2. authoritative_inputs: unchanged raw definition-review-01 findings; accepted spec/plan/authorization; current Constitution/TDD/workflow.
+3. workflow_boundary: first definition revision; tasks stage; same feature/HEAD; no upstream or implementation edits.
+4. constraints_and_skills: tasks-only current loop; no delegation; compilation failures are intermediate diagnostics, not sufficient behavioral RED. Recheck executable dependencies, shared-file parallelism, ownership, single-project separate-process fixture, and tested delete/logging behavior.
+5. write_boundary: tasks.md only.
+6. output_and_evidence: explicit RED/GREEN/verification groups, tested Infrastructure-only workspace boundary, corrected hash/counts/dispositions/self-review.
+7. completion_and_failure: return after self-review for independent re-review; no user request or acceptance/implementation claim; upstream defects routed to root.
+
+The first task correction handoff (47 tasks, hash 5cb6ad8ed6077f1b50d6597787898232effbffc3e8dba7fe84f8c208812c875a4) failed root mechanical/dependency validation before independent re-review. Exact findings are in evidence/task-author-validation-02.md; its raw preimage is evidence/history/tasks-author-correction-01.md. The same task author was instructed through the seven-slot contract to rewrite tasks coherently and report results for all eight findings. This continues definition revision 1; no independent gate attempt or user-approved scope changed.
+
+## Definition re-review dispatch 2
+
+1. role_and_objective: independent definition-reviewer Sol/medium re-reviews rewritten tasks and refreshed analyze coverage.
+2. authoritative_inputs: unchanged raw first verdict plus all raw artifacts in evidence/definition-review-boundary-02.json; accepted upstream artifacts and authorization unchanged.
+3. workflow_boundary: definition-review attempt 2; same feature/HEAD; diff SHA256 2ad54fbb7628b9b121aa3ee05bbe8ad7e5edff5fc2bed6f4a093636453bbc573; task hash 23d3583d309accb734ccc3a597f92cf35b95bef48c16df11db23b2382b2e1f9b; 45 sequential tasks.
+4. constraints_and_skills: current read-only unified review/analyze, no delegation/runtime/user question/Git mutation. Check actual public-test prerequisites for every GREEN, not merely RED/GREEN labels. Compile/nonexistent-helper failures are insufficient behavioral RED.
+5. write_boundary: none.
+6. output_and_evidence: raw schema-valid verdict with exact updated boundary, earliest-owner findings and refreshed analysis evidence.
+7. completion_and_failure: independent ACCEPT/REVISE/BLOCKED, no implementation execution or approval claim.
+
+## Definition correction 2
+
+Attempt 2 returned REVISE with DR-13.1-001 still CRITICAL: broad public tests could not become GREEN after their partial implementation tasks, and the separate-process RED preceded its harness. DR-13.1-002 is resolved. Raw verdict/analysis: evidence/definition-review-02.json and definition-analysis-02.md. Spec/plan remain unchanged; the existing plan authorization remains valid.
+
+1. role_and_objective: task-author Luna/medium resolves executable TDD dependency order.
+2. authoritative_inputs: unchanged raw second verdict/finding and accepted spec/plan/approval.
+3. workflow_boundary: second consecutive definition revision; tasks stage; same feature/HEAD; no production/test writes.
+4. constraints_and_skills: current loop/TDD; group one public RED with every production prerequisite, claim GREEN only after the last; defer detailed capture/open cases until that seam exists; complete child scaffolding before runtime proof; allow truthful already-correct test-only GREEN; contract declarations cannot hide validation behavior.
+5. write_boundary: tasks.md only.
+6. output_and_evidence: sequential task groups with explicit entry prerequisites, RED/all production/GREEN task mapping and separate ownership, complete source coverage, returned hash/count/self-review.
+7. completion_and_failure: finish after verifying every claimed GREEN is executable at its graph position; otherwise report specific upstream contradiction; no user question/implementation/Git/delegation.
+
+## Definition re-review dispatch 3
+
+1. role_and_objective: independent definition-reviewer Sol/medium, attempt 3 after two task-owned revisions.
+2. authoritative_inputs: raw prior verdict and all raw artifacts in evidence/definition-review-boundary-03.json; only tasks changed.
+3. workflow_boundary: same Story/feature/HEAD; diff SHA256 893ebdd6af1ac54d43881d83e63d4d14ae479b711cd2f7c9eb04c2d8f9b23826; task hash d7e9e3f0173716ca161275d1202af8ce6ea281665aba3e64f5ec6b1c408beba2; 40 sequential tasks.
+4. constraints_and_skills: current read-only review/analyze, no delegation/runtime/Git/user question; check actual group prerequisites, retained failure/policy coverage, declaration vs validation, capture/open availability and truthful test-only evidence; distinguish harmless bootstrap from untested feature behavior.
+5. write_boundary: none.
+6. output_and_evidence: raw schema-valid verdict and concise refreshed analysis, precise correcting prerequisites for any remaining blocker.
+7. completion_and_failure: independent ACCEPT/REVISE/BLOCKED; fourth consecutive REVISE is the pause threshold, not this attempt; no implementation authority.
+
+## Definition correction 3
+
+Attempt 3 returned REVISE with DR-13.1-001 (identity validation and early open ordering) and DR-13.1-003 (omitted explicit capture-policy/failure/prepublication-authorization/ref-mutation/PostgreSQL-constraint RED tests). Large integrated groups, child scaffolding and Infrastructure-only workspace boundary are now accepted aspects. Raw verdict/analysis: evidence/definition-review-03.json and definition-analysis-03.md. Counter is 3; a fourth consecutive REVISE requires user direction.
+
+1. role_and_objective: task-author Luna/medium makes precise remaining corrections while preserving accepted group structure.
+2. authoritative_inputs: unchanged raw attempt3 findings and accepted spec/plan/user authorization.
+3. workflow_boundary: third correction; same Story/feature/HEAD; no upstream or implementation changes.
+4. constraints_and_skills: current loop/TDD, no delegation; declarations before validation RED, then explicit validation implementation and GREEN; early manifest capture-only, open assertions after open exists; restore every omitted test before its production chain; compiled-contract initial runtime bootstrap is accepted by reviewer.
+5. write_boundary: tasks.md only.
+6. output_and_evidence: sequential IDs/references and case-by-case RED/production/GREEN coverage table for all raw omitted obligations, preserving child/test-only/trusted boundaries; exact hash/count/self-review returned.
+7. completion_and_failure: return after all raw points/dependencies checked or specific blocker; no user request, scope change, implementation or Git action.
+
+The correction3 handoff returned 43 tasks (hash ddb8c55cd380884a8d321194cfd707daa6c34bda271a53f27b8a853024ea3d13). Before pinning attempt4, root returned two exact output-consistency checks to the same task author: PostgreSQL table GREEN must point to checklist T019 after complete EF/migration/repository/composition prerequisites, and T009 must explicitly test each configured cap exhaustion separately from caller non-override and disk exhaustion. The seven-slot follow-up limited writes to tasks.md and required preserving the current structure. This is author handoff correction, not another independent verdict or scope change.
+
+## Definition re-review dispatch 4
+
+1. role_and_objective: independent definition-reviewer Sol/medium reviews corrected tasks and refreshed analyze.
+2. authoritative_inputs: raw attempt3 findings and all raw paths in evidence/definition-review-boundary-04.json; accepted upstream/approval artifacts unchanged.
+3. workflow_boundary: attempt4, same Story/feature/HEAD; task hash 261a5fd227ee134b1355541b6e644cd9049958b370b1127527c66a8a3536a1d0; boundary d7fe3e5dae8f16499680b600bf6d6bed6aeb9c2254cce162d68f9fbd9bf77265; 43 sequential tasks.
+4. constraints_and_skills: current read-only loop/analyze, no delegation/runtime/Git/user question; verify identity/open ordering, restored exact failure/policy/ref/authority/PostgreSQL test cases and tables; preserve unchanged accepted bootstrap/workspace aspects; assess severity accurately independent of attempt count.
+5. write_boundary: none.
+6. output_and_evidence: raw schema-valid verdict with verified boundary and concise analysis.
+7. completion_and_failure: independent ACCEPT/REVISE/BLOCKED; a fourth consecutive REVISE requires root to pause for user direction. No implementation authority.
+
+## Checkpoint formatting/hash maintenance
+
+After definition ACCEPT, root discovered nine trailing Markdown-space lines in the new spec/plan/checklist. Earlier unstaged diff checks do not inspect untracked files. Root removed only trailing horizontal whitespace and preserved exact original preimages under evidence/history; every content token and original line-ending sequence is unchanged. The proof is evidence/definition-whitespace-normalization-01.json.
+
+Feature-local .gitattributes rules preserve exact reviewed bytes across checkouts and permit CR as a terminator while retaining active-artifact whitespace checks; historical preimages alone preserve original whitespace. This metadata does not change product/architecture/task scope. Prior task-only plan authorization remains recorded against its original bytes; equivalence is explicit, not a newly inferred implementation approval.
+
+1. role_and_objective: definition-reviewer Sol/medium independently rebinds acceptance after metadata-only hash invalidation.
+2. authoritative_inputs: prior ACCEPT, raw new boundary05, exact whitespace proof/preimages and .gitattributes; task bytes unchanged.
+3. workflow_boundary: same Story/feature/HEAD; boundary a68d54ba9b28a4d1dd6058c3a010a273f8f8b5e8bf23ad9f6949a145ba00dd50. Last ACCEPT reset consecutive revisions to0; this is not another REVISE.
+4. constraints_and_skills: bounded read-only equivalence/attribute/hash review, no delegation/runtime/Git/user question; preserve prior conclusions only after verification; flag any real scope change.
+5. write_boundary: none.
+6. output_and_evidence: raw schema-valid new-boundary verdict and brief equivalent-content analysis.
+7. completion_and_failure: independent verdict before checkpoint and implementation-approval request; no writes/implementation or alteration of prior verdicts.
+
+## Accepted definition and implementation-approval pause
+
+Definition review attempt4 ACCEPTED all 43 tasks/32 obligations. A subsequent metadata-only rebind (attempt5) independently confirmed exact trailing-whitespace equivalence, unchanged task bytes, preserved active checks and no scope/authority change. Current raw verdict: evidence/definition-review-05.json; scope SHA256 a68d54ba9b28a4d1dd6058c3a010a273f8f8b5e8bf23ad9f6949a145ba00dd50. The prior plan authorization remains valid for identical content. Consecutive definition revisions reset to0.
+
+Pending implementation decision: evidence/implementation-approval-01.md. No production/test/runtime work has begun. Convergence, quality, E2E and final application verification remain pending.
+
+Accepted-definition checkpoint ID: bmad-13-1-definition-review-20260914T111049Z-a96ea6. Expected parent: cd82c8994063fa522253264f59c13b1cbc08a3f2. Root stages only the explicit manifest in evidence/definition-checkpoint-01.json after fresh ownership/hash/schema/whitespace checks. Historical rejected task files under evidence/history are audit preimages only and never executable feature selectors. No unrelated changes were observed.

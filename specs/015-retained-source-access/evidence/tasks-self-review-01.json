@@ -1,0 +1,17 @@
+{
+  "id": "13-1/tasks/1",
+  "kind": "self-review",
+  "stage": "tasks",
+  "result": "PASS",
+  "source_commit": "cd82c8994063fa522253264f59c13b1cbc08a3f2",
+  "observed_at": "2026-09-14T10:25:25.148918Z",
+  "artifact_paths": [
+    {
+      "path": "specs/015-retained-source-access/tasks.md",
+      "sha256": "5f771d895f27dfd97b61c530b1ed5ad8f7070a203611c2f5b1228fc17915d69f"
+    }
+  ],
+  "summary": "Author reports 38 tasks, shared 11/US1 8/US2 7/US3 9/US4 3, eight parallel tasks, complete FR-001-022/SC-001-010 mapping and passing path/dependency/vertical-slice/scope/validation self-review. Independent review pending.",
+  "hooks": "No before_tasks/after_tasks hooks configured; no hooks executed.",
+  "root_checks": "Returned hash matches; 38 unique sequential checklist task IDs."
+}

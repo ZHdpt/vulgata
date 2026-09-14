@@ -1,0 +1,16 @@
+{
+  "id": "13-1/tasks/2",
+  "kind": "self-review",
+  "stage": "tasks",
+  "result": "PASS",
+  "source_commit": "cd82c8994063fa522253264f59c13b1cbc08a3f2",
+  "observed_at": "2026-09-14T10:41:16.020660Z",
+  "artifact_paths": [
+    {
+      "path": "specs/015-retained-source-access/tasks.md",
+      "sha256": "23d3583d309accb734ccc3a597f92cf35b95bef48c16df11db23b2382b2e1f9b"
+    }
+  ],
+  "summary": "Task author reports coherent rewrite with 45 sequential tasks, eight handoff checks resolved, explicit Chinese409 implementation, migration/publication ordering, single-project separate-process invocation and no shared-file parallel claims. Independent re-review pending.",
+  "root_checks": "Hash verified and exact sequential T001-T045 checklist IDs; semantic acceptance delegated to independent reviewer."
+}

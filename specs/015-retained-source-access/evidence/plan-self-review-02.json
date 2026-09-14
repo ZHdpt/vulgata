@@ -1,0 +1,35 @@
+{
+  "id": "13-1/plan/2",
+  "kind": "self-review",
+  "stage": "plan",
+  "result": "PASS",
+  "source_commit": "cd82c8994063fa522253264f59c13b1cbc08a3f2",
+  "observed_at": "2026-09-14T09:51:36.515500Z",
+  "artifact_paths": [
+    {
+      "path": "specs/015-retained-source-access/plan.md",
+      "sha256": "8087c6eb61d58041a72d25ec1912075e7ca647df9f164d45d12bea032740b9df"
+    },
+    {
+      "path": "specs/015-retained-source-access/research.md",
+      "sha256": "47de6015785a6b323b8dce1142e1900e613cab6e22796a1d018b8410fde3441a"
+    },
+    {
+      "path": "specs/015-retained-source-access/data-model.md",
+      "sha256": "fed9bedd3b2ef11fff7a4f41bef3ff3e4276aa845eb29ce7bf48c059404a99d7"
+    },
+    {
+      "path": "specs/015-retained-source-access/quickstart.md",
+      "sha256": "e7669fc91a2783f865887057d8761449d48c9b53e1b397683f60fc5498a798fb"
+    },
+    {
+      "path": "specs/015-retained-source-access/contracts/retained-source-application-contract.md",
+      "sha256": "f2b0629fa5ed7f6780281f6cdf3a420f9984da6f25ca8c59006c63c9d2b29bdf"
+    },
+    {
+      "path": "specs/015-retained-source-access/contracts/retained-source-manifest-v1.schema.json",
+      "sha256": "c80791c82e1268841b08c9da2e214a1db3a148aa2c6ba340583a5cb0bff5e300"
+    }
+  ],
+  "summary": "Author corrected PR-13.1-001: capture accepts only Repository, permitted ref and cancellation; one startup-validated immutable SourceCapturePolicy owns caps/deadline. Signature/configuration/failures/planned tests aligned. Placeholder, manifest parse and targeted whitespace checks pass. Independent review pending."
+}

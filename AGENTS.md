@@ -96,9 +96,8 @@ Preserve a pitfall until its cause is removed. `CLAUDE.md` links to this file; C
 and Trae entry points should route here rather than duplicate its rules.
 
 <!-- SPECKIT START -->
-No feature is selected after retirement of the competition queue. Resolve the next
-story from the current tracker and deliberately activate its feature before using a
-feature plan. Existing specs/* retain historical scope. Refresh this managed block
-only with the explicitly selected feature's actual plan path; never auto-select a
-plan by modification time. The agent-context extension targets AGENTS.md.
+Story 13.1 is active in specs/015-retained-source-access. Read its
+plan at specs/015-retained-source-access/plan.md and its workflow-state.json
+for the current stage and pending approvals. Existing specs/001 through specs/014
+retain historical scope. The selected plan does not bypass approval gates.
 <!-- SPECKIT END -->

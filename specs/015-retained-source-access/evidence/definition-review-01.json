@@ -1,0 +1,92 @@
+{
+  "schema_version": "1.0",
+  "gate": "definition-review",
+  "verdict": "REVISE",
+  "reviewed_commit": "cd82c8994063fa522253264f59c13b1cbc08a3f2",
+  "reviewed_boundary": {
+    "base_commit": "cd82c8994063fa522253264f59c13b1cbc08a3f2",
+    "candidate_commit": null,
+    "diff_sha256": "2644ebf01e273507b052a59c5f1e90a6062ab0dc76b4ed359cc8822de38c5bb7",
+    "artifact_hashes": {
+      ".specify/memory/constitution.md": "77c0475020121c2724296bac55a700e923737b5bd254bbdd914b038c351db8ba",
+      "AGENTS.md": "34bf18243557cd252f49f4ac7ed73963e72d38e082b2411b24e6c9a0a1293afa",
+      "docs/UBIQUITOUS_LANGUAGE.md": "680494a9e766270a18ae02d5c92670771a72912a87f632946350431d4696550d",
+      "docs/agents/development.md": "babd2b01b5260f9a720b020c34dc790f0e1f6fe589c737a7cb416a8ccc71d28a",
+      "docs/agents/domain.md": "e40367d22b3db3301dedee4ddf7f0bd1abf736ef6ff1aa857da2e12baa83f050",
+      "docs/agents/project-state.md": "c2caae672ff882c01460ebaba70c687cca9419506737441c5110008a87ebf23b",
+      "docs/agents/testing.md": "2ff9eaebf780aa9e97353e8b453217023198044bbfb3ddc201473529aaa33be0",
+      "docs/bmad/epics.md": "340c6ffadf94f3a4a009dcd4ddba1294213f22ffc07638ee9c7dfecae5de6c7a",
+      "docs/bmad/planning-artifacts/architecture.md": "ddd60353114c2c5a16c36074da170a5af97db2c97c0bb0dc4b481a5f471f667d",
+      "docs/bmad/planning-artifacts/architecture/ARCHITECTURE-SPINE.md": "a55381df21fe95e827664ca6b2082fb0d30054cfc6a075ad93df3638f6261943",
+      "docs/bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md": "9dee4dda7920c9dfab8d0ff4e6ffa5aee2f6de7942becbf32349c9e3584a1399",
+      "specs/015-retained-source-access/contracts/retained-source-application-contract.md": "f2b0629fa5ed7f6780281f6cdf3a420f9984da6f25ca8c59006c63c9d2b29bdf",
+      "specs/015-retained-source-access/contracts/retained-source-manifest-v1.schema.json": "c80791c82e1268841b08c9da2e214a1db3a148aa2c6ba340583a5cb0bff5e300",
+      "specs/015-retained-source-access/data-model.md": "fed9bedd3b2ef11fff7a4f41bef3ff3e4276aa845eb29ce7bf48c059404a99d7",
+      "specs/015-retained-source-access/evidence/plan-authorization-01.md": "ad1c86eaea565f39143c3fd28fa4b190e8e7571fd8750df388839b68a40a786b",
+      "specs/015-retained-source-access/plan.md": "8087c6eb61d58041a72d25ec1912075e7ca647df9f164d45d12bea032740b9df",
+      "specs/015-retained-source-access/quickstart.md": "e7669fc91a2783f865887057d8761449d48c9b53e1b397683f60fc5498a798fb",
+      "specs/015-retained-source-access/research.md": "47de6015785a6b323b8dce1142e1900e613cab6e22796a1d018b8410fde3441a",
+      "specs/015-retained-source-access/spec.md": "6400232780739b7574760afd74b0dcba02c19b17d19383f3b0954b85bee88bca",
+      "specs/015-retained-source-access/tasks.md": "5f771d895f27dfd97b61c530b1ed5ad8f7070a203611c2f5b1228fc17915d69f"
+    },
+    "owned_paths": [
+      "specs/015-retained-source-access/contracts/retained-source-application-contract.md",
+      "specs/015-retained-source-access/contracts/retained-source-manifest-v1.schema.json",
+      "specs/015-retained-source-access/data-model.md",
+      "specs/015-retained-source-access/plan.md",
+      "specs/015-retained-source-access/quickstart.md",
+      "specs/015-retained-source-access/research.md",
+      "specs/015-retained-source-access/spec.md",
+      "AGENTS.md",
+      "specs/015-retained-source-access/tasks.md",
+      "specs/015-retained-source-access/evidence/plan-authorization-01.md"
+    ]
+  },
+  "reviewed_artifacts": [
+    ".specify/memory/constitution.md",
+    "AGENTS.md",
+    "docs/UBIQUITOUS_LANGUAGE.md",
+    "docs/agents/development.md",
+    "docs/agents/domain.md",
+    "docs/agents/project-state.md",
+    "docs/agents/testing.md",
+    "docs/bmad/epics.md",
+    "docs/bmad/planning-artifacts/architecture.md",
+    "docs/bmad/planning-artifacts/architecture/ARCHITECTURE-SPINE.md",
+    "docs/bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md",
+    "specs/015-retained-source-access/contracts/retained-source-application-contract.md",
+    "specs/015-retained-source-access/contracts/retained-source-manifest-v1.schema.json",
+    "specs/015-retained-source-access/data-model.md",
+    "specs/015-retained-source-access/evidence/plan-authorization-01.md",
+    "specs/015-retained-source-access/plan.md",
+    "specs/015-retained-source-access/quickstart.md",
+    "specs/015-retained-source-access/research.md",
+    "specs/015-retained-source-access/spec.md",
+    "specs/015-retained-source-access/tasks.md"
+  ],
+  "findings": [
+    {
+      "id": "DR-13.1-001",
+      "severity": "CRITICAL",
+      "category": "Constitution alignment and TDD sequencing",
+      "artifact": "specs/015-retained-source-access/tasks.md",
+      "location": "lines 23-31, 39-42, 78-90, and 135-149",
+      "affected_requirement": "Constitution Principle IV lines 112-120; tasks.md line 11; run-bmad-sprint-loop observable-behavior RED-before-GREEN contract",
+      "evidence": "T006 implements startup configuration validation and fail-closed composition before T010 tests those behaviors; T007 implements canonical manifest serialization and validation before capture/open tests exercise the codec; T008 implements EF constraints and delete behavior before T024 supplies the PostgreSQL RED; and T030 implements trusted-workspace refusal and cleanup without an explicit preceding behavioral test for that seam. These are observable production behaviors, while the Constitution requires honest RED before behavioral implementation with separate test and production ownership. The phase claim that these implementations are merely seams needed by later RED tests does not satisfy that MUST.",
+      "correction_outcome": "The task author must revise tasks only: place an explicit public-seam behavioral test task before each observable policy, codec, EF/publication, and trusted-workspace implementation; permit compile-failing tests where contracts do not yet exist; then order each coherent test RED, minimal production GREEN, and focused plus surrounding verification. Contract declarations may precede behavior only where a preceding contract-shape RED owns that exact declaration.",
+      "earliest_owner": "tasks"
+    },
+    {
+      "id": "DR-13.1-002",
+      "severity": "HIGH",
+      "category": "Architecture seam inconsistency",
+      "artifact": "specs/015-retained-source-access/tasks.md",
+      "location": "line 28 (T005), compared with line 89 (T030)",
+      "affected_requirement": "FR-012; plan Architecture Decision 6; retained-source-application-contract.md lines 108-112; Constitution Principle I",
+      "evidence": "T005 directs Core application/authorization interfaces to cover trusted workspace access, while the accepted plan and application contract require the physical-workspace provider to remain internal to Infrastructure and not be exported as an ordinary Core or Agent contract. T030 correctly assigns the provider to Infrastructure, leaving T005 internally contradictory and capable of producing a forbidden Core-facing workspace seam.",
+      "correction_outcome": "The task author must remove trusted-workspace access from the Core application-interface responsibility in T005. Keep only logical source identity and authorization inputs in Core where needed; define and implement the provider interface and physical lease entirely within Infrastructure, expose it only to separately authorized Infrastructure adapters, and add the preceding behavioral boundary test required by DR-13.1-001.",
+      "earliest_owner": "tasks"
+    }
+  ],
+  "summary": "REVISE. The pinned packet is intact: all 20 artifact hashes and the canonical nonrecursive diff SHA-256 match, and the prerequisite check resolves the intended feature with tasks present. The raw Story 13.1, specification, accepted six-file plan set, authorities, current repository seams, and all 32 buildable FR/SC obligations are otherwise coherent and fully mapped across 38 tasks. The previously accepted plan conclusions remain unchanged. Tasks require correction because observable configuration, manifest, EF/publication, and trusted-workspace production behavior is scheduled without the required preceding behavioral RED, violating Constitution Principle IV, and T005 contradicts the accepted Infrastructure-only trusted-workspace boundary. Both findings are task-owned; spec and plan regeneration is unnecessary."
+}

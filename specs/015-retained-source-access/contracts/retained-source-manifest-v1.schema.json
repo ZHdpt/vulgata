@@ -1,0 +1,104 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vulgata.local/contracts/retained-source-manifest-v1.schema.json",
+  "title": "Retained Source Manifest 1.0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaIdentity",
+    "repositoryId",
+    "profiledRevision",
+    "gitObjectFormat",
+    "entryCount",
+    "totalBlobBytes",
+    "entries"
+  ],
+  "properties": {
+    "schemaIdentity": { "const": "retained-source-manifest/1.0" },
+    "repositoryId": { "type": "string", "format": "uuid" },
+    "profiledRevision": { "type": "string", "pattern": "^(?:[0-9a-f]{40}|[0-9a-f]{64})$" },
+    "gitObjectFormat": { "enum": ["sha1", "sha256"] },
+    "entryCount": { "type": "integer", "minimum": 0 },
+    "totalBlobBytes": { "type": "integer", "minimum": 0 },
+    "entries": { "type": "array", "items": { "$ref": "#/$defs/entry" } }
+  },
+  "$defs": {
+    "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "gitObjectId": { "type": "string", "pattern": "^(?:[0-9a-f]{40}|[0-9a-f]{64})$" },
+    "entry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "ordinal", "pathBytesBase64", "relativePath", "entryKind", "gitMode",
+        "gitObjectId", "byteLength", "contentSha256", "storageBlobKey",
+        "capabilities", "limitationCode"
+      ],
+      "properties": {
+        "ordinal": { "type": "integer", "minimum": 0 },
+        "pathBytesBase64": { "type": "string", "minLength": 1 },
+        "relativePath": { "type": ["string", "null"], "minLength": 1, "maxLength": 4096 },
+        "entryKind": { "enum": ["regularFile", "executableFile", "symbolicLink", "gitlink"] },
+        "gitMode": { "enum": ["100644", "100755", "120000", "160000"] },
+        "gitObjectId": { "$ref": "#/$defs/gitObjectId" },
+        "byteLength": { "type": ["integer", "null"], "minimum": 0 },
+        "contentSha256": {
+          "anyOf": [{ "$ref": "#/$defs/sha256" }, { "type": "null" }]
+        },
+        "storageBlobKey": {
+          "type": ["string", "null"],
+          "pattern": "^[A-Za-z0-9/_-]+$",
+          "maxLength": 256
+        },
+        "capabilities": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "enum": ["metadata", "byteRange", "strictUtf8Text"] }
+        },
+        "limitationCode": {
+          "type": ["string", "null"],
+          "pattern": "^[a-z0-9_]+$",
+          "maxLength": 128
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "entryKind": { "const": "gitlink" } } },
+          "then": {
+            "properties": {
+              "byteLength": { "type": "null" },
+              "contentSha256": { "type": "null" },
+              "storageBlobKey": { "type": "null" },
+              "capabilities": { "const": ["metadata"] },
+              "limitationCode": { "type": "string", "minLength": 1 }
+            }
+          },
+          "else": {
+            "properties": {
+              "byteLength": { "type": "integer", "minimum": 0 },
+              "contentSha256": { "$ref": "#/$defs/sha256" },
+              "storageBlobKey": { "type": "string", "minLength": 1 }
+            }
+          }
+        },
+        {
+          "if": { "properties": { "relativePath": { "type": "null" } } },
+          "then": {
+            "properties": {
+              "capabilities": { "maxItems": 1 },
+              "limitationCode": { "type": "string", "minLength": 1 }
+            }
+          }
+        },
+        {
+          "if": { "properties": { "entryKind": { "const": "symbolicLink" } } },
+          "then": {
+            "properties": {
+              "capabilities": { "const": ["metadata"] },
+              "limitationCode": { "type": "string", "minLength": 1 }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

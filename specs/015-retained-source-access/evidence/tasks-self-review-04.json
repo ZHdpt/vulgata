@@ -1,0 +1,15 @@
+{
+  "id": "13-1/tasks/4",
+  "kind": "self-review",
+  "stage": "tasks",
+  "result": "PASS",
+  "source_commit": "cd82c8994063fa522253264f59c13b1cbc08a3f2",
+  "observed_at": "2026-09-14T10:58:56.337443Z",
+  "artifact_paths": [
+    {
+      "path": "specs/015-retained-source-access/tasks.md",
+      "sha256": "261a5fd227ee134b1355541b6e644cd9049958b370b1127527c66a8a3536a1d0"
+    }
+  ],
+  "summary": "Author returns 43 sequential tasks, identity declarations/RED/implementation/GREEN separation, capture-only early manifest assertions, later open integrity cases, explicit failure/policy/prepublication/PostgreSQL RED cases, and synchronized PostgreSQL T019 and delete T023 verification maps. Root verified hash/IDs; independent review pending."
+}

@@ -1,0 +1,43 @@
+{
+  "artifact_paths": [
+    {
+      "sha256": "6400232780739B7574760AFD74B0DCBA02C19B17D19383F3B0954B85BEE88BCA",
+      "path": "specs/015-retained-source-access/spec.md"
+    },
+    {
+      "sha256": "6EB5BBD5A96341726CC5610AEBD79C477443FB38D8A5B1DB6C376CD3041EFC7B",
+      "path": "specs/015-retained-source-access/checklists/requirements.md"
+    },
+    {
+      "sha256": "CFDFF4DDBBC5A74A001AEAFE917984D3C4A35C4B21554A3CD3CB231C1712CF20",
+      "path": ".specify/feature.json"
+    }
+  ],
+  "summary": {
+    "measurable_acceptance": "PASS",
+    "canonical_terminology": "PASS",
+    "unresolved_placeholders": 0,
+    "completeness": "PASS",
+    "functional_requirements": 22,
+    "bounded_intent": "PASS",
+    "success_criteria": 10,
+    "raw_story_acceptance_groups_covered": 8,
+    "acceptance_scenarios": 13,
+    "user_stories": 4
+  },
+  "observed_at": "2026-09-14T09:07:58.9831422Z",
+  "checklist": {
+    "open_items": 0,
+    "validation_iterations": 1,
+    "result": "PASS"
+  },
+  "kind": "self-review",
+  "hooks": {
+    "after_specify": "Optional agent-context hook registered but skipped because this fresh feature has no plan; no historical plan was selected.",
+    "before_specify": "none registered"
+  },
+  "result": "PASS",
+  "source_commit": "bff540980800eb67254170a0c82e38678b63576d",
+  "stage": "specify",
+  "id": "13-1/specify/1"
+}

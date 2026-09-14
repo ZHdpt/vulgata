@@ -21,3 +21,8 @@
 
 # Preserve raw-byte pre-images, including their original whitespace and line endings.
 /docs/bmad/history/pre-generic-adoption-2026-09-11/files/** -text -whitespace
+
+# Preserve exact reviewed workflow artifact bytes across checkouts.
+/specs/015-retained-source-access/** -text whitespace=cr-at-eol
+# Historical review preimages retain their original whitespace.
+/specs/015-retained-source-access/evidence/history/** -text -whitespace

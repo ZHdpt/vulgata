@@ -1,0 +1,36 @@
+{
+  "id": "13-1/plan/1",
+  "kind": "self-review",
+  "stage": "plan",
+  "result": "PASS",
+  "source_commit": "cd82c8994063fa522253264f59c13b1cbc08a3f2",
+  "observed_at": "2026-09-14T09:35:49Z",
+  "artifact_paths": [
+    {
+      "path": "specs/015-retained-source-access/plan.md",
+      "sha256": "8a3a67fb368f343db64215d5fcf940cb35e8e8b113e3ed744d73ad0a2f39ae4c"
+    },
+    {
+      "path": "specs/015-retained-source-access/research.md",
+      "sha256": "0cdab6ea2419062dac434bddf29bf36966e4e7b8ca74123a27c1b7aacbe09b2b"
+    },
+    {
+      "path": "specs/015-retained-source-access/data-model.md",
+      "sha256": "fed9bedd3b2ef11fff7a4f41bef3ff3e4276aa845eb29ce7bf48c059404a99d7"
+    },
+    {
+      "path": "specs/015-retained-source-access/quickstart.md",
+      "sha256": "c4aa73868777de59d84bee15319f1e79b3095b580ce13089c69be5601c265c73"
+    },
+    {
+      "path": "specs/015-retained-source-access/contracts/retained-source-application-contract.md",
+      "sha256": "62f29ff5e4b6cbe084aec7317ee1f5a5690600f02e750e71b983fc0b0495cda8"
+    },
+    {
+      "path": "specs/015-retained-source-access/contracts/retained-source-manifest-v1.schema.json",
+      "sha256": "c80791c82e1268841b08c9da2e214a1db3a148aa2c6ba340583a5cb0bff5e300"
+    }
+  ],
+  "summary": "Author inline self-review passed feasibility, invariants, publication/cancellation, integrity, authorization, failure behavior, test seams, migration compatibility, alternatives and authority alignment. No unresolved placeholders; manifest parses; targeted diff check passes. Independent plan acceptance remains pending.",
+  "inline_evidence_path": "specs/015-retained-source-access/plan.md"
+}

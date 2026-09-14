@@ -1,0 +1,32 @@
+{
+  "id": "13-1/definition-review/5",
+  "kind": "artifact-hash",
+  "stage": "definition-review",
+  "source_commit": "cd82c8994063fa522253264f59c13b1cbc08a3f2",
+  "observed_at": "2026-09-14T11:05:57.066996Z",
+  "summary": "Checkpoint-only formatting repair: nine Markdown trailing-space lines removed; text tokens/line endings unchanged. New feature attributes preserve reviewed raw bytes, allowing CR as the line terminator without disabling active-artifact trailing-space checks. Historical raw preimages retain original whitespace. No product/architecture/task scope changes; prior plan authorization remains scoped to identical content. Hash invalidation is not a judge revision.",
+  "changes": [
+    {
+      "path": "specs/015-retained-source-access/spec.md",
+      "before_sha256": "6400232780739b7574760afd74b0dcba02c19b17d19383f3b0954b85bee88bca",
+      "after_sha256": "34a822ccfb53128af8e523795d2f259c3d73aed604812c0d0a4ed1d84f27f44d",
+      "preimage_path": "specs/015-retained-source-access/evidence/history/pre-whitespace-spec.md",
+      "change": "Remove trailing horizontal whitespace only; all content tokens and line endings preserved."
+    },
+    {
+      "path": "specs/015-retained-source-access/plan.md",
+      "before_sha256": "8087c6eb61d58041a72d25ec1912075e7ca647df9f164d45d12bea032740b9df",
+      "after_sha256": "5267bd81d9f0b519f3c1e93250395089dae9ae97474195686b58a2446b2578ac",
+      "preimage_path": "specs/015-retained-source-access/evidence/history/pre-whitespace-plan.md",
+      "change": "Remove trailing horizontal whitespace only; all content tokens and line endings preserved."
+    },
+    {
+      "path": "specs/015-retained-source-access/checklists/requirements.md",
+      "before_sha256": "6eb5bbd5a96341726cc5610aebd79c477443fb38d8a5b1db6c376cd3041efc7b",
+      "after_sha256": "990644f60089f9c241ecfc6e01b74e95ff417417063c216d4fe7629571b3ac74",
+      "preimage_path": "specs/015-retained-source-access/evidence/history/pre-whitespace-checklists-requirements.md",
+      "change": "Remove trailing horizontal whitespace only; all content tokens and line endings preserved."
+    }
+  ],
+  "metadata_path": ".gitattributes"
+}

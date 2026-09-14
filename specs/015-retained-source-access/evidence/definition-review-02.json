@@ -1,0 +1,81 @@
+{
+  "schema_version": "1.0",
+  "gate": "definition-review",
+  "verdict": "REVISE",
+  "reviewed_commit": "cd82c8994063fa522253264f59c13b1cbc08a3f2",
+  "reviewed_boundary": {
+    "base_commit": "cd82c8994063fa522253264f59c13b1cbc08a3f2",
+    "candidate_commit": null,
+    "diff_sha256": "2ad54fbb7628b9b121aa3ee05bbe8ad7e5edff5fc2bed6f4a093636453bbc573",
+    "artifact_hashes": {
+      ".specify/memory/constitution.md": "77c0475020121c2724296bac55a700e923737b5bd254bbdd914b038c351db8ba",
+      "AGENTS.md": "34bf18243557cd252f49f4ac7ed73963e72d38e082b2411b24e6c9a0a1293afa",
+      "docs/UBIQUITOUS_LANGUAGE.md": "680494a9e766270a18ae02d5c92670771a72912a87f632946350431d4696550d",
+      "docs/agents/development.md": "babd2b01b5260f9a720b020c34dc790f0e1f6fe589c737a7cb416a8ccc71d28a",
+      "docs/agents/domain.md": "e40367d22b3db3301dedee4ddf7f0bd1abf736ef6ff1aa857da2e12baa83f050",
+      "docs/agents/project-state.md": "c2caae672ff882c01460ebaba70c687cca9419506737441c5110008a87ebf23b",
+      "docs/agents/testing.md": "2ff9eaebf780aa9e97353e8b453217023198044bbfb3ddc201473529aaa33be0",
+      "docs/bmad/epics.md": "340c6ffadf94f3a4a009dcd4ddba1294213f22ffc07638ee9c7dfecae5de6c7a",
+      "docs/bmad/planning-artifacts/architecture.md": "ddd60353114c2c5a16c36074da170a5af97db2c97c0bb0dc4b481a5f471f667d",
+      "docs/bmad/planning-artifacts/architecture/ARCHITECTURE-SPINE.md": "a55381df21fe95e827664ca6b2082fb0d30054cfc6a075ad93df3638f6261943",
+      "docs/bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md": "9dee4dda7920c9dfab8d0ff4e6ffa5aee2f6de7942becbf32349c9e3584a1399",
+      "specs/015-retained-source-access/contracts/retained-source-application-contract.md": "f2b0629fa5ed7f6780281f6cdf3a420f9984da6f25ca8c59006c63c9d2b29bdf",
+      "specs/015-retained-source-access/contracts/retained-source-manifest-v1.schema.json": "c80791c82e1268841b08c9da2e214a1db3a148aa2c6ba340583a5cb0bff5e300",
+      "specs/015-retained-source-access/data-model.md": "fed9bedd3b2ef11fff7a4f41bef3ff3e4276aa845eb29ce7bf48c059404a99d7",
+      "specs/015-retained-source-access/evidence/plan-authorization-01.md": "ad1c86eaea565f39143c3fd28fa4b190e8e7571fd8750df388839b68a40a786b",
+      "specs/015-retained-source-access/plan.md": "8087c6eb61d58041a72d25ec1912075e7ca647df9f164d45d12bea032740b9df",
+      "specs/015-retained-source-access/quickstart.md": "e7669fc91a2783f865887057d8761449d48c9b53e1b397683f60fc5498a798fb",
+      "specs/015-retained-source-access/research.md": "47de6015785a6b323b8dce1142e1900e613cab6e22796a1d018b8410fde3441a",
+      "specs/015-retained-source-access/spec.md": "6400232780739b7574760afd74b0dcba02c19b17d19383f3b0954b85bee88bca",
+      "specs/015-retained-source-access/tasks.md": "23d3583d309accb734ccc3a597f92cf35b95bef48c16df11db23b2382b2e1f9b"
+    },
+    "owned_paths": [
+      "specs/015-retained-source-access/contracts/retained-source-application-contract.md",
+      "specs/015-retained-source-access/contracts/retained-source-manifest-v1.schema.json",
+      "specs/015-retained-source-access/data-model.md",
+      "specs/015-retained-source-access/plan.md",
+      "specs/015-retained-source-access/quickstart.md",
+      "specs/015-retained-source-access/research.md",
+      "specs/015-retained-source-access/spec.md",
+      "AGENTS.md",
+      "specs/015-retained-source-access/tasks.md",
+      "specs/015-retained-source-access/evidence/plan-authorization-01.md"
+    ]
+  },
+  "reviewed_artifacts": [
+    ".specify/memory/constitution.md",
+    "AGENTS.md",
+    "docs/UBIQUITOUS_LANGUAGE.md",
+    "docs/agents/development.md",
+    "docs/agents/domain.md",
+    "docs/agents/project-state.md",
+    "docs/agents/testing.md",
+    "docs/bmad/epics.md",
+    "docs/bmad/planning-artifacts/architecture.md",
+    "docs/bmad/planning-artifacts/architecture/ARCHITECTURE-SPINE.md",
+    "docs/bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md",
+    "specs/015-retained-source-access/contracts/retained-source-application-contract.md",
+    "specs/015-retained-source-access/contracts/retained-source-manifest-v1.schema.json",
+    "specs/015-retained-source-access/data-model.md",
+    "specs/015-retained-source-access/evidence/plan-authorization-01.md",
+    "specs/015-retained-source-access/plan.md",
+    "specs/015-retained-source-access/quickstart.md",
+    "specs/015-retained-source-access/research.md",
+    "specs/015-retained-source-access/spec.md",
+    "specs/015-retained-source-access/tasks.md"
+  ],
+  "findings": [
+    {
+      "id": "DR-13.1-001",
+      "severity": "CRITICAL",
+      "category": "Constitution alignment and executable TDD order",
+      "artifact": "specs/015-retained-source-access/tasks.md",
+      "location": "lines 17-28, 34-47, 53-58, and 65-71",
+      "affected_requirement": "Constitution Principle IV lines 112-120; tasks.md line 9; run-bmad-sprint-loop observable-behavior RED/minimal-GREEN contract",
+      "evidence": "The revised checklist adds RED prose but several named microcycles cannot reach the claimed GREEN at that point. T008 exercises canonical manifest behavior through public capture/open, but the capture service, Git reader, durable store, authorization verifier, EF shape, migration, repository, and composition remain absent until T011-T23; implementing only the codec in T009 cannot make T008 GREEN. T010 likewise exercises complete authorized capture, while T011 adds only Git acquisition and cannot make it GREEN. T012 covers orchestration, policy, publication, and cleanup outcomes, while T013 adds only storage and cannot make it GREEN. T024 covers grant plus listing, metadata, containment, cursors, and unsupported entries, while T025 adds only grant/deadline reservations and listing is deferred to T027. T031 covers repository publication plus locking, seal/adopt, crash recovery, cleanup, and concurrency, while T032 adds only repository visibility and locking/recovery remains deferred to T033. T036 launches a filtered child whose file/mode does not yet exist until T037, so its expected failure is missing harness rather than retained-source behavior. Current inspection confirms RetainedSourceCaptureService.cs, GitCommittedObjectReader.cs, DurableRetainedSourceStore.cs, and RetainedSourceSeparateProcessChild.cs are absent. Compilation, an absent facade, or an absent child test is not behavioral RED. Therefore the task graph still conflicts with the Constitution MUST despite eventually naming all required production work.",
+      "correction_outcome": "Revise tasks only so every RED runs through an already executable public seam and each claimed GREEN has all production prerequisites required by that test. Split broad tests by the smallest behavior the following implementation can satisfy, or group all required implementation tasks after one RED and claim GREEN only after the last prerequisite. Remove premature GREEN claims from T009, T011, T013, T025, and T032 unless their tests are narrowed accordingly. Create the separate-process child harness as test scaffolding within or before T036, then observe behavior through it; do not use its absence as RED. Also give T004 identity/value validation its own preceding behavioral test or narrow it to declarations already owned by T003 and explicitly verify T003 GREEN after T004-T005.",
+      "earliest_owner": "tasks"
+    }
+  ],
+  "summary": "REVISE. Boundary 02 is intact: all 20 current artifact hashes and canonical diff SHA-256 match, prerequisites resolve the intended feature, and no analyze hooks apply. DR-13.1-002 is resolved because Core now explicitly excludes the trusted-workspace provider and T034-T035 keep it in Infrastructure. Requirement coverage remains complete across all 22 FRs and 10 SCs, terminology and paths remain aligned, and the unchanged accepted specification and plan conclusions remain sound. DR-13.1-001 remains blocking because multiple broad public RED tasks cannot become GREEN after their named implementation step, and the separate-process RED relies on a child harness created only afterward. Correction remains task-owned; spec and plan regeneration is unnecessary."
+}

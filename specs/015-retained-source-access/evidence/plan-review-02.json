@@ -1,0 +1,63 @@
+{
+  "schema_version": "1.0",
+  "gate": "plan-review",
+  "verdict": "ACCEPT",
+  "reviewed_commit": "cd82c8994063fa522253264f59c13b1cbc08a3f2",
+  "reviewed_boundary": {
+    "base_commit": "cd82c8994063fa522253264f59c13b1cbc08a3f2",
+    "candidate_commit": null,
+    "diff_sha256": "0dd320e5015dae3efecb7721c862b4c9a479c320c770b5f925904cbb97955e4b",
+    "artifact_hashes": {
+      ".specify/memory/constitution.md": "77c0475020121c2724296bac55a700e923737b5bd254bbdd914b038c351db8ba",
+      "AGENTS.md": "34bf18243557cd252f49f4ac7ed73963e72d38e082b2411b24e6c9a0a1293afa",
+      "docs/UBIQUITOUS_LANGUAGE.md": "680494a9e766270a18ae02d5c92670771a72912a87f632946350431d4696550d",
+      "docs/agents/development.md": "babd2b01b5260f9a720b020c34dc790f0e1f6fe589c737a7cb416a8ccc71d28a",
+      "docs/agents/domain.md": "e40367d22b3db3301dedee4ddf7f0bd1abf736ef6ff1aa857da2e12baa83f050",
+      "docs/agents/project-state.md": "c2caae672ff882c01460ebaba70c687cca9419506737441c5110008a87ebf23b",
+      "docs/agents/testing.md": "2ff9eaebf780aa9e97353e8b453217023198044bbfb3ddc201473529aaa33be0",
+      "docs/bmad/epics.md": "340c6ffadf94f3a4a009dcd4ddba1294213f22ffc07638ee9c7dfecae5de6c7a",
+      "docs/bmad/planning-artifacts/architecture.md": "ddd60353114c2c5a16c36074da170a5af97db2c97c0bb0dc4b481a5f471f667d",
+      "docs/bmad/planning-artifacts/architecture/ARCHITECTURE-SPINE.md": "a55381df21fe95e827664ca6b2082fb0d30054cfc6a075ad93df3638f6261943",
+      "docs/bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md": "9dee4dda7920c9dfab8d0ff4e6ffa5aee2f6de7942becbf32349c9e3584a1399",
+      "specs/015-retained-source-access/contracts/retained-source-application-contract.md": "f2b0629fa5ed7f6780281f6cdf3a420f9984da6f25ca8c59006c63c9d2b29bdf",
+      "specs/015-retained-source-access/contracts/retained-source-manifest-v1.schema.json": "c80791c82e1268841b08c9da2e214a1db3a148aa2c6ba340583a5cb0bff5e300",
+      "specs/015-retained-source-access/data-model.md": "fed9bedd3b2ef11fff7a4f41bef3ff3e4276aa845eb29ce7bf48c059404a99d7",
+      "specs/015-retained-source-access/plan.md": "8087c6eb61d58041a72d25ec1912075e7ca647df9f164d45d12bea032740b9df",
+      "specs/015-retained-source-access/quickstart.md": "e7669fc91a2783f865887057d8761449d48c9b53e1b397683f60fc5498a798fb",
+      "specs/015-retained-source-access/research.md": "47de6015785a6b323b8dce1142e1900e613cab6e22796a1d018b8410fde3441a",
+      "specs/015-retained-source-access/spec.md": "6400232780739b7574760afd74b0dcba02c19b17d19383f3b0954b85bee88bca"
+    },
+    "owned_paths": [
+      "specs/015-retained-source-access/contracts/retained-source-application-contract.md",
+      "specs/015-retained-source-access/contracts/retained-source-manifest-v1.schema.json",
+      "specs/015-retained-source-access/data-model.md",
+      "specs/015-retained-source-access/plan.md",
+      "specs/015-retained-source-access/quickstart.md",
+      "specs/015-retained-source-access/research.md",
+      "specs/015-retained-source-access/spec.md",
+      "AGENTS.md"
+    ]
+  },
+  "reviewed_artifacts": [
+    ".specify/memory/constitution.md",
+    "AGENTS.md",
+    "docs/UBIQUITOUS_LANGUAGE.md",
+    "docs/agents/development.md",
+    "docs/agents/domain.md",
+    "docs/agents/project-state.md",
+    "docs/agents/testing.md",
+    "docs/bmad/epics.md",
+    "docs/bmad/planning-artifacts/architecture.md",
+    "docs/bmad/planning-artifacts/architecture/ARCHITECTURE-SPINE.md",
+    "docs/bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md",
+    "specs/015-retained-source-access/contracts/retained-source-application-contract.md",
+    "specs/015-retained-source-access/contracts/retained-source-manifest-v1.schema.json",
+    "specs/015-retained-source-access/data-model.md",
+    "specs/015-retained-source-access/plan.md",
+    "specs/015-retained-source-access/quickstart.md",
+    "specs/015-retained-source-access/research.md",
+    "specs/015-retained-source-access/spec.md"
+  ],
+  "findings": [],
+  "summary": "ACCEPT. The corrected boundary and all artifact hashes match the review packet. PR-13.1-001 is resolved: capture exposes no caller limit or deadline input, one startup-validated immutable SourceCapturePolicy owns all capture bounds, invalid configuration prevents capture before Git or storage activity, runtime cap and deadline failures are distinct, and focused tests prevent overload or DI bypass. The unchanged plan remains feasible and aligned with Story 13.1, the specification, current source seams, Constitution, PRD, and AD-1/2/3/5/6/8/15/16/30/31/32 across source ownership, exact Git bytes, atomic publication, recovery, authorization, disclosure, concurrency, cancellation, persistence, migration, compatibility, PostgreSQL qualification, and true separate-process reopening. The architecture-decision and material Scan-strategy triggers remain correctly declared, so the accepted plan now advances to the repository-mandated user authorization before task generation."
+}

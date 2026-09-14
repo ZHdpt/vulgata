@@ -3,29 +3,38 @@
   "bmad_story_key": "13-1-retain-exact-repository-source-with-scoped-read-access",
   "bmad_epic_key": "epic-13",
   "feature_directory": "specs/015-retained-source-access",
-  "stage": "specify",
+  "stage": "implementation-approval",
   "preflight": {
     "branch": "dev",
-    "head": "bff540980800eb67254170a0c82e38678b63576d",
+    "head": "cd82c8994063fa522253264f59c13b1cbc08a3f2",
     "git_identity_sha256": "3a4a427ec44ae1e77e7a198707893773021bd309f6dd6a8404b054bb16671d3f",
-    "status_sha256": "e5593eb72414a61dc3bcdb17445567dff3ead9404fe30fc1a2ee2ad149346f20",
-    "observed_at": "2026-09-14T09:01:02.3617369Z"
+    "status_sha256": "42acf17f0e29ca8c65557af245aae5300aa8d3c3c3050a11cf3a855c65e12486",
+    "observed_at": "2026-09-14T11:10:49.621856Z"
   },
   "artifacts": {
-    "spec": null,
-    "plan": null,
-    "tasks": null
+    "spec": {
+      "sha256": "34a822ccfb53128af8e523795d2f259c3d73aed604812c0d0a4ed1d84f27f44d",
+      "path": "specs/015-retained-source-access/spec.md"
+    },
+    "plan": {
+      "path": "specs/015-retained-source-access/plan.md",
+      "sha256": "5267bd81d9f0b519f3c1e93250395089dae9ae97474195686b58a2446b2578ac"
+    },
+    "tasks": {
+      "path": "specs/015-retained-source-access/tasks.md",
+      "sha256": "261a5fd227ee134b1355541b6e644cd9049958b370b1127527c66a8a3536a1d0"
+    }
   },
   "gates": {
     "definition-review": {
-      "status": "pending",
-      "verdict_path": null,
-      "attempt": 0
+      "status": "accepted",
+      "attempt": 5,
+      "verdict_path": "specs/015-retained-source-access/evidence/definition-review-05.json"
     },
     "plan-review": {
-      "status": "pending",
-      "verdict_path": null,
-      "attempt": 0
+      "status": "accepted",
+      "attempt": 2,
+      "verdict_path": "specs/015-retained-source-access/evidence/plan-review-02.json"
     },
     "quality-review": {
       "status": "pending",
@@ -38,7 +47,22 @@
     "converge": 0,
     "quality-review": 0
   },
-  "approvals": [],
+  "approvals": [
+    {
+      "decision_id": "13-1/plan-authorization/1",
+      "status": "accepted",
+      "scope_sha256": "0dd320e5015dae3efecb7721c862b4c9a479c320c770b5f925904cbb97955e4b",
+      "evidence_path": "specs/015-retained-source-access/evidence/plan-authorization-01.md",
+      "decided_at": "2026-09-14T10:18:58.368839Z"
+    },
+    {
+      "decision_id": "13-1/implementation-approval/1",
+      "status": "pending",
+      "scope_sha256": "a68d54ba9b28a4d1dd6058c3a010a273f8f8b5e8bf23ad9f6949a145ba00dd50",
+      "evidence_path": "specs/015-retained-source-access/evidence/implementation-approval-01.md",
+      "decided_at": null
+    }
+  ],
   "convergence": {
     "status": "pending",
     "report_path": null,
@@ -51,18 +75,28 @@
   },
   "current_evidence_paths": [
     "docs/bmad/implementation-artifacts/13-1-retain-exact-repository-source-with-scoped-read-access.md",
-    "docs/bmad/implementation-artifacts/workflow-activations/13-1-retain-exact-repository-source-with-scoped-read-access.json"
+    "docs/bmad/implementation-artifacts/workflow-activations/13-1-retain-exact-repository-source-with-scoped-read-access.json",
+    "specs/015-retained-source-access/evidence/spec-self-review-01.json",
+    "specs/015-retained-source-access/evidence/plan-self-review-02.json",
+    "specs/015-retained-source-access/evidence/plan-review-02.json",
+    "specs/015-retained-source-access/evidence/plan-authorization-01.md",
+    "specs/015-retained-source-access/evidence/tasks-self-review-04.json",
+    "specs/015-retained-source-access/evidence/definition-review-boundary-05.json",
+    "specs/015-retained-source-access/evidence/definition-review-05.json",
+    "specs/015-retained-source-access/evidence/definition-analysis-05.md",
+    "specs/015-retained-source-access/evidence/implementation-approval-01.md",
+    "specs/015-retained-source-access/evidence/definition-checkpoint-01.json"
   ],
   "checkpoint": {
-    "binding_status": "pending",
-    "stage": "context",
+    "checkpoint_id": "bmad-13-1-definition-review-20260914T111049Z-a96ea6",
+    "stage": "definition-review",
     "commit_sha": null,
-    "checkpoint_id": "bmad-13-1-context-20260914T090701Z-1e6853"
+    "binding_status": "pending"
   },
   "resume": {
-    "evidence_path": "docs/bmad/implementation-artifacts/13-1-retain-exact-repository-source-with-scoped-read-access.md",
-    "reason": "Await specification author self-review, then proceed to architecture planning.",
-    "stage": "specify"
+    "stage": "implementation-approval",
+    "reason": "Complete definition ACCEPTED with metadata equivalence verified. Await explicit implementation approval; task-only approval remains the sole user authorization.",
+    "evidence_path": "specs/015-retained-source-access/evidence/implementation-approval-01.md"
   },
-  "updated_at": "2026-09-14T09:07:01.6134605Z"
+  "updated_at": "2026-09-14T11:10:49.621856Z"
 }

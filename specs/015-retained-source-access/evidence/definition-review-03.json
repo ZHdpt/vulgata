@@ -1,0 +1,92 @@
+{
+  "schema_version": "1.0",
+  "gate": "definition-review",
+  "verdict": "REVISE",
+  "reviewed_commit": "cd82c8994063fa522253264f59c13b1cbc08a3f2",
+  "reviewed_boundary": {
+    "base_commit": "cd82c8994063fa522253264f59c13b1cbc08a3f2",
+    "candidate_commit": null,
+    "diff_sha256": "893ebdd6af1ac54d43881d83e63d4d14ae479b711cd2f7c9eb04c2d8f9b23826",
+    "artifact_hashes": {
+      ".specify/memory/constitution.md": "77c0475020121c2724296bac55a700e923737b5bd254bbdd914b038c351db8ba",
+      "AGENTS.md": "34bf18243557cd252f49f4ac7ed73963e72d38e082b2411b24e6c9a0a1293afa",
+      "docs/UBIQUITOUS_LANGUAGE.md": "680494a9e766270a18ae02d5c92670771a72912a87f632946350431d4696550d",
+      "docs/agents/development.md": "babd2b01b5260f9a720b020c34dc790f0e1f6fe589c737a7cb416a8ccc71d28a",
+      "docs/agents/domain.md": "e40367d22b3db3301dedee4ddf7f0bd1abf736ef6ff1aa857da2e12baa83f050",
+      "docs/agents/project-state.md": "c2caae672ff882c01460ebaba70c687cca9419506737441c5110008a87ebf23b",
+      "docs/agents/testing.md": "2ff9eaebf780aa9e97353e8b453217023198044bbfb3ddc201473529aaa33be0",
+      "docs/bmad/epics.md": "340c6ffadf94f3a4a009dcd4ddba1294213f22ffc07638ee9c7dfecae5de6c7a",
+      "docs/bmad/planning-artifacts/architecture.md": "ddd60353114c2c5a16c36074da170a5af97db2c97c0bb0dc4b481a5f471f667d",
+      "docs/bmad/planning-artifacts/architecture/ARCHITECTURE-SPINE.md": "a55381df21fe95e827664ca6b2082fb0d30054cfc6a075ad93df3638f6261943",
+      "docs/bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md": "9dee4dda7920c9dfab8d0ff4e6ffa5aee2f6de7942becbf32349c9e3584a1399",
+      "specs/015-retained-source-access/contracts/retained-source-application-contract.md": "f2b0629fa5ed7f6780281f6cdf3a420f9984da6f25ca8c59006c63c9d2b29bdf",
+      "specs/015-retained-source-access/contracts/retained-source-manifest-v1.schema.json": "c80791c82e1268841b08c9da2e214a1db3a148aa2c6ba340583a5cb0bff5e300",
+      "specs/015-retained-source-access/data-model.md": "fed9bedd3b2ef11fff7a4f41bef3ff3e4276aa845eb29ce7bf48c059404a99d7",
+      "specs/015-retained-source-access/evidence/plan-authorization-01.md": "ad1c86eaea565f39143c3fd28fa4b190e8e7571fd8750df388839b68a40a786b",
+      "specs/015-retained-source-access/plan.md": "8087c6eb61d58041a72d25ec1912075e7ca647df9f164d45d12bea032740b9df",
+      "specs/015-retained-source-access/quickstart.md": "e7669fc91a2783f865887057d8761449d48c9b53e1b397683f60fc5498a798fb",
+      "specs/015-retained-source-access/research.md": "47de6015785a6b323b8dce1142e1900e613cab6e22796a1d018b8410fde3441a",
+      "specs/015-retained-source-access/spec.md": "6400232780739b7574760afd74b0dcba02c19b17d19383f3b0954b85bee88bca",
+      "specs/015-retained-source-access/tasks.md": "d7e9e3f0173716ca161275d1202af8ce6ea281665aba3e64f5ec6b1c408beba2"
+    },
+    "owned_paths": [
+      "specs/015-retained-source-access/contracts/retained-source-application-contract.md",
+      "specs/015-retained-source-access/contracts/retained-source-manifest-v1.schema.json",
+      "specs/015-retained-source-access/data-model.md",
+      "specs/015-retained-source-access/plan.md",
+      "specs/015-retained-source-access/quickstart.md",
+      "specs/015-retained-source-access/research.md",
+      "specs/015-retained-source-access/spec.md",
+      "AGENTS.md",
+      "specs/015-retained-source-access/tasks.md",
+      "specs/015-retained-source-access/evidence/plan-authorization-01.md"
+    ]
+  },
+  "reviewed_artifacts": [
+    ".specify/memory/constitution.md",
+    "AGENTS.md",
+    "docs/UBIQUITOUS_LANGUAGE.md",
+    "docs/agents/development.md",
+    "docs/agents/domain.md",
+    "docs/agents/project-state.md",
+    "docs/agents/testing.md",
+    "docs/bmad/epics.md",
+    "docs/bmad/planning-artifacts/architecture.md",
+    "docs/bmad/planning-artifacts/architecture/ARCHITECTURE-SPINE.md",
+    "docs/bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md",
+    "specs/015-retained-source-access/contracts/retained-source-application-contract.md",
+    "specs/015-retained-source-access/contracts/retained-source-manifest-v1.schema.json",
+    "specs/015-retained-source-access/data-model.md",
+    "specs/015-retained-source-access/evidence/plan-authorization-01.md",
+    "specs/015-retained-source-access/plan.md",
+    "specs/015-retained-source-access/quickstart.md",
+    "specs/015-retained-source-access/research.md",
+    "specs/015-retained-source-access/spec.md",
+    "specs/015-retained-source-access/tasks.md"
+  ],
+  "findings": [
+    {
+      "id": "DR-13.1-001",
+      "severity": "CRITICAL",
+      "category": "Constitution alignment and executable TDD order",
+      "artifact": "specs/015-retained-source-access/tasks.md",
+      "location": "lines 18-20 and 39-40",
+      "affected_requirement": "Constitution Principle IV lines 112-120; tasks.md line 9; application contract lines 40-52",
+      "evidence": "T004 combines harmless contract declarations with new revision, object-format, count, and outcome validation behavior. T005 is explicitly written after T004 to test that validation, so the validation can only be verified GREEN and never observed as behavioral RED. Separately, T017 requires detailed assertions through public capture/open, but T016 establishes capture only; public grant opening and reopen verification do not exist until T022. T018 changes only the manifest codec/store validation and therefore cannot make the T017 public open assertions GREEN. The task graph correctly solves the broader bootstrap problem for T007-T016, but these two subgroups still violate the declared RED/prerequisites/GREEN rule.",
+      "correction_outcome": "Revise tasks only. Limit T004 to declarative types and signatures with no validation behavior, place T005 RED next, then add the minimal validation implementation before T006 GREEN. For manifest detail, either narrow T017 to public capture behavior that T018 can fully satisfy, or move its public open assertions after T022 and add the precise production change needed there before claiming GREEN. Do not require a circular fully implemented capability before the initial T007 RED; its compiled public contract plus runtime-missing behavior is an acceptable integrated bootstrap because T008-T015 are all declared prerequisites and only T016 claims GREEN.",
+      "earliest_owner": "tasks"
+    },
+    {
+      "id": "DR-13.1-003",
+      "severity": "CRITICAL",
+      "category": "Behavioral and integration test coverage regression",
+      "artifact": "specs/015-retained-source-access/tasks.md",
+      "location": "lines 26-35, 41-42, 56-61, and 92",
+      "affected_requirement": "FR-001, FR-005, FR-017-FR-020; SC-001, SC-005, SC-008; plan Verification Strategy and quickstart lines 46-61 and 75-77",
+      "evidence": "The rewrite removed the explicit RED tests for invalid SourceStorage configuration, caller-unraiseable capture limits, configured entry/blob/aggregate exhaustion, monotonic capture deadline, cancellation before verification/publication, Git authentication/transport/ref failures, owned staging cleanup, pre-publication authority revocation/origin-System rebinding, and PostgreSQL fixed/check/immutability constraints. T007 specifies only a simple successful capture. T016 says to verify ref/working-copy changes, no partial capture, SC-005, and SC-008, but no preceding test-author task defines those assertions; running unspecified surrounding tests cannot supply new Story 13.1 behavior because no retained-source tests exist in the current source. T019 tests only deletion conflict, and T028 covers publication races/retry but not the omitted capture failure matrix or all migration constraints. T034-T035 are qualification/classification checks after implementation and cannot substitute for behavioral RED or PostgreSQL constraint tests. Thus the coverage table maps requirements to implementation/verification task ranges while material accepted failure and migration obligations have no authored test.",
+      "correction_outcome": "Add task-owned behavioral RED groups before their production changes: a capture-policy group covering every configured bound, invalid startup policy, caller non-override, and monotonic deadline before or within T008; a capture failure/authorization group covering auth-before-Git, transport/ref failure, pre-publication revocation or Repository rebinding, cancellation boundaries, storage exhaustion, cleanup, sanitized result, and zero partial publication before the applicable T010-T015 implementation chain; and an owned PostgreSQL migration/constraint group covering actual migration application, fixed/check constraints, uniqueness, immutable row behavior, and Restrict before claiming migration GREEN. Make ref/working-copy mutation assertions explicit in a test-author task rather than only in T016 run prose. Route each group through separate test and production ownership and retain test-only qualification afterward.",
+      "earliest_owner": "tasks"
+    }
+  ],
+  "summary": "REVISE. Boundary 03 is intact: all 20 artifact hashes and the canonical diff SHA-256 match, prerequisites resolve the intended feature, and no analyze hooks apply. The rewrite resolves the large integrated-cycle ordering, prepares the separate-process harness before qualification, preserves the Infrastructure-only workspace seam, and keeps specification and accepted-plan conclusions unchanged. Two task-owned blockers remain: identity validation is implemented before its RED and manifest open assertions precede the open capability; additionally, material capture policy/failure/authorization and PostgreSQL migration-constraint tests were removed while their SC coverage is still claimed. This is the third consecutive REVISE, so ordinary task correction remains autonomous under the workflow."
+}

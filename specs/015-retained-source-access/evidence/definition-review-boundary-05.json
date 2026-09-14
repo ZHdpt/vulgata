@@ -1,0 +1,192 @@
+{
+  "id": "13-1/definition-review/5",
+  "observed_at": "2026-09-14T11:06:32.800498Z",
+  "boundary_algorithm": "SHA256 of UTF-8 canonical JSON manifest, sorted keys and compact separators; sorted path entries contain base_sha256 of HEAD bytes (null if absent) and sha256 of current bytes. Excludes state/reviews/evidence to avoid recursion.",
+  "manifest": [
+    {
+      "path": ".gitattributes",
+      "base_sha256": "d929cf90c350d0c090d66b9087a59e2290521f809ff42176f32145df93ea7b86",
+      "sha256": "1ff17e0918911e81f46424c1846014fd763e94f40b3890c12f7c79fa8200b49a"
+    },
+    {
+      "path": ".specify/memory/constitution.md",
+      "base_sha256": "77c0475020121c2724296bac55a700e923737b5bd254bbdd914b038c351db8ba",
+      "sha256": "77c0475020121c2724296bac55a700e923737b5bd254bbdd914b038c351db8ba"
+    },
+    {
+      "path": "AGENTS.md",
+      "base_sha256": "f90274ef5059680ea87d682364c491484105af505d236344b17d866759232c5f",
+      "sha256": "34bf18243557cd252f49f4ac7ed73963e72d38e082b2411b24e6c9a0a1293afa"
+    },
+    {
+      "path": "docs/UBIQUITOUS_LANGUAGE.md",
+      "base_sha256": "680494a9e766270a18ae02d5c92670771a72912a87f632946350431d4696550d",
+      "sha256": "680494a9e766270a18ae02d5c92670771a72912a87f632946350431d4696550d"
+    },
+    {
+      "path": "docs/agents/development.md",
+      "base_sha256": "babd2b01b5260f9a720b020c34dc790f0e1f6fe589c737a7cb416a8ccc71d28a",
+      "sha256": "babd2b01b5260f9a720b020c34dc790f0e1f6fe589c737a7cb416a8ccc71d28a"
+    },
+    {
+      "path": "docs/agents/domain.md",
+      "base_sha256": "e40367d22b3db3301dedee4ddf7f0bd1abf736ef6ff1aa857da2e12baa83f050",
+      "sha256": "e40367d22b3db3301dedee4ddf7f0bd1abf736ef6ff1aa857da2e12baa83f050"
+    },
+    {
+      "path": "docs/agents/project-state.md",
+      "base_sha256": "c2caae672ff882c01460ebaba70c687cca9419506737441c5110008a87ebf23b",
+      "sha256": "c2caae672ff882c01460ebaba70c687cca9419506737441c5110008a87ebf23b"
+    },
+    {
+      "path": "docs/agents/testing.md",
+      "base_sha256": "2ff9eaebf780aa9e97353e8b453217023198044bbfb3ddc201473529aaa33be0",
+      "sha256": "2ff9eaebf780aa9e97353e8b453217023198044bbfb3ddc201473529aaa33be0"
+    },
+    {
+      "path": "docs/bmad/epics.md",
+      "base_sha256": "340c6ffadf94f3a4a009dcd4ddba1294213f22ffc07638ee9c7dfecae5de6c7a",
+      "sha256": "340c6ffadf94f3a4a009dcd4ddba1294213f22ffc07638ee9c7dfecae5de6c7a"
+    },
+    {
+      "path": "docs/bmad/planning-artifacts/architecture.md",
+      "base_sha256": "ddd60353114c2c5a16c36074da170a5af97db2c97c0bb0dc4b481a5f471f667d",
+      "sha256": "ddd60353114c2c5a16c36074da170a5af97db2c97c0bb0dc4b481a5f471f667d"
+    },
+    {
+      "path": "docs/bmad/planning-artifacts/architecture/ARCHITECTURE-SPINE.md",
+      "base_sha256": "a55381df21fe95e827664ca6b2082fb0d30054cfc6a075ad93df3638f6261943",
+      "sha256": "a55381df21fe95e827664ca6b2082fb0d30054cfc6a075ad93df3638f6261943"
+    },
+    {
+      "path": "docs/bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md",
+      "base_sha256": "9dee4dda7920c9dfab8d0ff4e6ffa5aee2f6de7942becbf32349c9e3584a1399",
+      "sha256": "9dee4dda7920c9dfab8d0ff4e6ffa5aee2f6de7942becbf32349c9e3584a1399"
+    },
+    {
+      "path": "specs/015-retained-source-access/checklists/requirements.md",
+      "base_sha256": null,
+      "sha256": "990644f60089f9c241ecfc6e01b74e95ff417417063c216d4fe7629571b3ac74"
+    },
+    {
+      "path": "specs/015-retained-source-access/contracts/retained-source-application-contract.md",
+      "base_sha256": null,
+      "sha256": "f2b0629fa5ed7f6780281f6cdf3a420f9984da6f25ca8c59006c63c9d2b29bdf"
+    },
+    {
+      "path": "specs/015-retained-source-access/contracts/retained-source-manifest-v1.schema.json",
+      "base_sha256": null,
+      "sha256": "c80791c82e1268841b08c9da2e214a1db3a148aa2c6ba340583a5cb0bff5e300"
+    },
+    {
+      "path": "specs/015-retained-source-access/data-model.md",
+      "base_sha256": null,
+      "sha256": "fed9bedd3b2ef11fff7a4f41bef3ff3e4276aa845eb29ce7bf48c059404a99d7"
+    },
+    {
+      "path": "specs/015-retained-source-access/evidence/definition-whitespace-normalization-01.json",
+      "base_sha256": null,
+      "sha256": "906bf9cdf40bd060dafde09bcc3afc4c0195dc44fdfaf66ee5817784c34b1de5"
+    },
+    {
+      "path": "specs/015-retained-source-access/evidence/plan-authorization-01.md",
+      "base_sha256": null,
+      "sha256": "ad1c86eaea565f39143c3fd28fa4b190e8e7571fd8750df388839b68a40a786b"
+    },
+    {
+      "path": "specs/015-retained-source-access/plan.md",
+      "base_sha256": null,
+      "sha256": "5267bd81d9f0b519f3c1e93250395089dae9ae97474195686b58a2446b2578ac"
+    },
+    {
+      "path": "specs/015-retained-source-access/quickstart.md",
+      "base_sha256": null,
+      "sha256": "e7669fc91a2783f865887057d8761449d48c9b53e1b397683f60fc5498a798fb"
+    },
+    {
+      "path": "specs/015-retained-source-access/research.md",
+      "base_sha256": null,
+      "sha256": "47de6015785a6b323b8dce1142e1900e613cab6e22796a1d018b8410fde3441a"
+    },
+    {
+      "path": "specs/015-retained-source-access/spec.md",
+      "base_sha256": null,
+      "sha256": "34a822ccfb53128af8e523795d2f259c3d73aed604812c0d0a4ed1d84f27f44d"
+    },
+    {
+      "path": "specs/015-retained-source-access/tasks.md",
+      "base_sha256": null,
+      "sha256": "261a5fd227ee134b1355541b6e644cd9049958b370b1127527c66a8a3536a1d0"
+    }
+  ],
+  "reviewed_boundary": {
+    "base_commit": "cd82c8994063fa522253264f59c13b1cbc08a3f2",
+    "candidate_commit": null,
+    "diff_sha256": "a68d54ba9b28a4d1dd6058c3a010a273f8f8b5e8bf23ad9f6949a145ba00dd50",
+    "artifact_hashes": {
+      ".gitattributes": "1ff17e0918911e81f46424c1846014fd763e94f40b3890c12f7c79fa8200b49a",
+      ".specify/memory/constitution.md": "77c0475020121c2724296bac55a700e923737b5bd254bbdd914b038c351db8ba",
+      "AGENTS.md": "34bf18243557cd252f49f4ac7ed73963e72d38e082b2411b24e6c9a0a1293afa",
+      "docs/UBIQUITOUS_LANGUAGE.md": "680494a9e766270a18ae02d5c92670771a72912a87f632946350431d4696550d",
+      "docs/agents/development.md": "babd2b01b5260f9a720b020c34dc790f0e1f6fe589c737a7cb416a8ccc71d28a",
+      "docs/agents/domain.md": "e40367d22b3db3301dedee4ddf7f0bd1abf736ef6ff1aa857da2e12baa83f050",
+      "docs/agents/project-state.md": "c2caae672ff882c01460ebaba70c687cca9419506737441c5110008a87ebf23b",
+      "docs/agents/testing.md": "2ff9eaebf780aa9e97353e8b453217023198044bbfb3ddc201473529aaa33be0",
+      "docs/bmad/epics.md": "340c6ffadf94f3a4a009dcd4ddba1294213f22ffc07638ee9c7dfecae5de6c7a",
+      "docs/bmad/planning-artifacts/architecture.md": "ddd60353114c2c5a16c36074da170a5af97db2c97c0bb0dc4b481a5f471f667d",
+      "docs/bmad/planning-artifacts/architecture/ARCHITECTURE-SPINE.md": "a55381df21fe95e827664ca6b2082fb0d30054cfc6a075ad93df3638f6261943",
+      "docs/bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md": "9dee4dda7920c9dfab8d0ff4e6ffa5aee2f6de7942becbf32349c9e3584a1399",
+      "specs/015-retained-source-access/checklists/requirements.md": "990644f60089f9c241ecfc6e01b74e95ff417417063c216d4fe7629571b3ac74",
+      "specs/015-retained-source-access/contracts/retained-source-application-contract.md": "f2b0629fa5ed7f6780281f6cdf3a420f9984da6f25ca8c59006c63c9d2b29bdf",
+      "specs/015-retained-source-access/contracts/retained-source-manifest-v1.schema.json": "c80791c82e1268841b08c9da2e214a1db3a148aa2c6ba340583a5cb0bff5e300",
+      "specs/015-retained-source-access/data-model.md": "fed9bedd3b2ef11fff7a4f41bef3ff3e4276aa845eb29ce7bf48c059404a99d7",
+      "specs/015-retained-source-access/evidence/definition-whitespace-normalization-01.json": "906bf9cdf40bd060dafde09bcc3afc4c0195dc44fdfaf66ee5817784c34b1de5",
+      "specs/015-retained-source-access/evidence/plan-authorization-01.md": "ad1c86eaea565f39143c3fd28fa4b190e8e7571fd8750df388839b68a40a786b",
+      "specs/015-retained-source-access/plan.md": "5267bd81d9f0b519f3c1e93250395089dae9ae97474195686b58a2446b2578ac",
+      "specs/015-retained-source-access/quickstart.md": "e7669fc91a2783f865887057d8761449d48c9b53e1b397683f60fc5498a798fb",
+      "specs/015-retained-source-access/research.md": "47de6015785a6b323b8dce1142e1900e613cab6e22796a1d018b8410fde3441a",
+      "specs/015-retained-source-access/spec.md": "34a822ccfb53128af8e523795d2f259c3d73aed604812c0d0a4ed1d84f27f44d",
+      "specs/015-retained-source-access/tasks.md": "261a5fd227ee134b1355541b6e644cd9049958b370b1127527c66a8a3536a1d0"
+    },
+    "owned_paths": [
+      "specs/015-retained-source-access/contracts/retained-source-application-contract.md",
+      "specs/015-retained-source-access/contracts/retained-source-manifest-v1.schema.json",
+      "specs/015-retained-source-access/data-model.md",
+      "specs/015-retained-source-access/plan.md",
+      "specs/015-retained-source-access/quickstart.md",
+      "specs/015-retained-source-access/research.md",
+      "specs/015-retained-source-access/spec.md",
+      "AGENTS.md",
+      "specs/015-retained-source-access/tasks.md",
+      "specs/015-retained-source-access/evidence/plan-authorization-01.md",
+      ".gitattributes",
+      "specs/015-retained-source-access/checklists/requirements.md",
+      "specs/015-retained-source-access/evidence/definition-whitespace-normalization-01.json"
+    ]
+  },
+  "raw_artifacts": [
+    ".gitattributes",
+    ".specify/memory/constitution.md",
+    "AGENTS.md",
+    "docs/UBIQUITOUS_LANGUAGE.md",
+    "docs/agents/development.md",
+    "docs/agents/domain.md",
+    "docs/agents/project-state.md",
+    "docs/agents/testing.md",
+    "docs/bmad/epics.md",
+    "docs/bmad/planning-artifacts/architecture.md",
+    "docs/bmad/planning-artifacts/architecture/ARCHITECTURE-SPINE.md",
+    "docs/bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md",
+    "specs/015-retained-source-access/checklists/requirements.md",
+    "specs/015-retained-source-access/contracts/retained-source-application-contract.md",
+    "specs/015-retained-source-access/contracts/retained-source-manifest-v1.schema.json",
+    "specs/015-retained-source-access/data-model.md",
+    "specs/015-retained-source-access/evidence/definition-whitespace-normalization-01.json",
+    "specs/015-retained-source-access/evidence/plan-authorization-01.md",
+    "specs/015-retained-source-access/plan.md",
+    "specs/015-retained-source-access/quickstart.md",
+    "specs/015-retained-source-access/research.md",
+    "specs/015-retained-source-access/spec.md",
+    "specs/015-retained-source-access/tasks.md"
+  ]
+}
