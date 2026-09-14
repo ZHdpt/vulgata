@@ -1,0 +1,65 @@
+{
+  "schema_version": "3.0",
+  "bmad_story_key": "13-1-retain-exact-repository-source-with-scoped-read-access",
+  "bmad_epic_key": "epic-13",
+  "status": "superseded",
+  "requested_feature_directory": "specs/015-retained-source-access",
+  "feature_directory": "specs/015-retained-source-access",
+  "preflight": {
+    "branch": "dev",
+    "head": "bff540980800eb67254170a0c82e38678b63576d",
+    "git_identity_sha256": "3a4a427ec44ae1e77e7a198707893773021bd309f6dd6a8404b054bb16671d3f",
+    "status_sha256": "e5593eb72414a61dc3bcdb17445567dff3ead9404fe30fc1a2ee2ad149346f20",
+    "observed_at": "2026-09-14T09:01:02.3617369Z"
+  },
+  "authorities": [
+    {
+      "path": "AGENTS.md",
+      "sha256": "f90274ef5059680ea87d682364c491484105af505d236344b17d866759232c5f"
+    },
+    {
+      "path": "docs/agents/project-state.md",
+      "sha256": "c2caae672ff882c01460ebaba70c687cca9419506737441c5110008a87ebf23b"
+    },
+    {
+      "path": "docs/bmad/epics.md",
+      "sha256": "340c6ffadf94f3a4a009dcd4ddba1294213f22ffc07638ee9c7dfecae5de6c7a"
+    },
+    {
+      "path": "docs/bmad/planning-artifacts/architecture.md",
+      "sha256": "ddd60353114c2c5a16c36074da170a5af97db2c97c0bb0dc4b481a5f471f667d"
+    },
+    {
+      "path": "docs/bmad/planning-artifacts/architecture/ARCHITECTURE-SPINE.md",
+      "sha256": "a55381df21fe95e827664ca6b2082fb0d30054cfc6a075ad93df3638f6261943"
+    },
+    {
+      "path": "docs/bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md",
+      "sha256": "9dee4dda7920c9dfab8d0ff4e6ffa5aee2f6de7942becbf32349c9e3584a1399"
+    },
+    {
+      "path": ".specify/memory/constitution.md",
+      "sha256": "77c0475020121c2724296bac55a700e923737b5bd254bbdd914b038c351db8ba"
+    },
+    {
+      "path": "docs/UBIQUITOUS_LANGUAGE.md",
+      "sha256": "680494a9e766270a18ae02d5c92670771a72912a87f632946350431d4696550d"
+    }
+  ],
+  "owned_paths": [
+    "docs/bmad/implementation-artifacts/workflow-activations/13-1-retain-exact-repository-source-with-scoped-read-access.json",
+    "docs/bmad/implementation-artifacts/13-1-retain-exact-repository-source-with-scoped-read-access.md",
+    "docs/bmad/implementation-artifacts/sprint-status.yaml",
+    ".specify/feature.json",
+    "specs/015-retained-source-access/"
+  ],
+  "unrelated_paths": [],
+  "git_identity": {
+    "repository_root": "G:/source/repos/vulgata",
+    "common_directory": "G:/source/repos/vulgata/.git",
+    "worktree": "G:\\source\\repos\\vulgata"
+  },
+  "porcelain_v2": "# branch.oid bff540980800eb67254170a0c82e38678b63576d\n# branch.head dev\n# branch.upstream origin/dev\n# branch.ab +2 -0",
+  "created_at": "2026-09-14T09:01:02.3617369Z",
+  "scope": "Story 13.1 only; no historical feature or waiver; production approval pending"
+}

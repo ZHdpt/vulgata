@@ -1,0 +1,68 @@
+{
+  "schema_version": "3.0",
+  "bmad_story_key": "13-1-retain-exact-repository-source-with-scoped-read-access",
+  "bmad_epic_key": "epic-13",
+  "feature_directory": "specs/015-retained-source-access",
+  "stage": "specify",
+  "preflight": {
+    "branch": "dev",
+    "head": "bff540980800eb67254170a0c82e38678b63576d",
+    "git_identity_sha256": "3a4a427ec44ae1e77e7a198707893773021bd309f6dd6a8404b054bb16671d3f",
+    "status_sha256": "e5593eb72414a61dc3bcdb17445567dff3ead9404fe30fc1a2ee2ad149346f20",
+    "observed_at": "2026-09-14T09:01:02.3617369Z"
+  },
+  "artifacts": {
+    "spec": null,
+    "plan": null,
+    "tasks": null
+  },
+  "gates": {
+    "definition-review": {
+      "status": "pending",
+      "verdict_path": null,
+      "attempt": 0
+    },
+    "plan-review": {
+      "status": "pending",
+      "verdict_path": null,
+      "attempt": 0
+    },
+    "quality-review": {
+      "status": "pending",
+      "verdict_path": null,
+      "attempt": 0
+    }
+  },
+  "attempts": {
+    "definition-review": 0,
+    "converge": 0,
+    "quality-review": 0
+  },
+  "approvals": [],
+  "convergence": {
+    "status": "pending",
+    "report_path": null,
+    "attempt": 0,
+    "outcome": "pending"
+  },
+  "e2e": {
+    "result": "pending",
+    "decision_path": null
+  },
+  "current_evidence_paths": [
+    "docs/bmad/implementation-artifacts/13-1-retain-exact-repository-source-with-scoped-read-access.md",
+    "docs/bmad/implementation-artifacts/workflow-activations/13-1-retain-exact-repository-source-with-scoped-read-access.json"
+  ],
+  "checkpoint": {
+    "binding_status": "pending",
+    "stage": "context",
+    "commit_sha": null,
+    "checkpoint_id": "bmad-13-1-context-20260914T090701Z-1e6853"
+  },
+  "resume": {
+    "evidence_path": "docs/bmad/implementation-artifacts/13-1-retain-exact-repository-source-with-scoped-read-access.md",
+    "reason": "Await specification author self-review, then proceed to architecture planning.",
+    "stage": "specify"
+  },
+  "updated_at": "2026-09-14T09:07:01.6134605Z"
+}
