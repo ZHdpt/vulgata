@@ -6,10 +6,10 @@
   "stage": "implement",
   "preflight": {
     "branch": "dev",
-    "head": "2f5dcd60b33796b8f5a57481d54c2a26205d88e4",
-    "git_identity_sha256": "47c8174a7a643d78167eb629a9f99819b9b4e11248b2a042ad60e3f43f639668",
-    "status_sha256": "03fae338dff7c59c1bbcfc9fa6eaf8ecf79558892c5a39b4c8f4167173437cb3",
-    "observed_at": "2026-09-15T06:55:26.281182Z"
+    "head": "37253b9c03fbc2c347d98fa902d1c13aff5d8b71",
+    "git_identity_sha256": "b02f1a3312d4eeb7615603be918c12a3417aa85a8183d1140d90537b46485cb2",
+    "status_sha256": "b47eab8b4214fd068edf76cc13a7e94e52d61e62943fff612acf3b6f6e9ec480",
+    "observed_at": "2026-09-15T09:09:03.023998Z"
   },
   "artifacts": {
     "spec": {
@@ -22,7 +22,7 @@
     },
     "tasks": {
       "path": "specs/015-retained-source-access/tasks.md",
-      "sha256": "914d9cfa0d42c23ec80aa59483cdf631b7e607fb8ece4deb8bc6154f8b8966bf"
+      "sha256": "c8742102fe400091bded7ab1a5b633774e085a8a0d17f97f645e4d297bb9bbb1"
     }
   },
   "gates": {
@@ -81,21 +81,21 @@
     "specs/015-retained-source-access/evidence/definition-review-05.json",
     "specs/015-retained-source-access/evidence/implementation-approval-01.md",
     "specs/015-retained-source-access/evidence/runtime-boundary-01.json",
-    "specs/015-retained-source-access/evidence/manifest-checkpoint-01.json",
     "specs/015-retained-source-access/evidence/baseline-verification-blocker-01.json",
-    "specs/015-retained-source-access/evidence/source-read-verified-01.json",
-    "specs/015-retained-source-access/evidence/source-read-checkpoint-01.json"
+    "specs/015-retained-source-access/evidence/source-read-checkpoint-01.json",
+    "specs/015-retained-source-access/evidence/range-group-verified-02.json",
+    "specs/015-retained-source-access/evidence/range-checkpoint-01.json"
   ],
   "checkpoint": {
-    "checkpoint_id": "bmad-13-1-implement-20260915T065526Z-efd086",
+    "checkpoint_id": "bmad-13-1-implement-20260915T082431Z-ae7553",
     "stage": "implement",
     "commit_sha": null,
     "binding_status": "pending"
   },
   "resume": {
     "stage": "implement",
-    "reason": "T024/T025 verified. Next T026/T027 byte/text reads. T023 strict surrounding gate remains blocked by5 unchanged baseline tests; user reconciliation scope decision pending.",
-    "evidence_path": "specs/015-retained-source-access/evidence/source-read-verified-01.json"
+    "reason": "Corrected T026/T027 verified70/70. Next T028/T029 live denial. T023 strict baseline5-test gate/user reconciliation scope decision remain pending.",
+    "evidence_path": "specs/015-retained-source-access/evidence/range-group-verified-02.json"
   },
-  "updated_at": "2026-09-15T06:55:26.281182Z"
+  "updated_at": "2026-09-15T09:09:03.023998Z"
 }

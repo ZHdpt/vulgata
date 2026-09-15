@@ -1,0 +1,22 @@
+{
+  "id": "13-1/implement/34",
+  "kind": "test-red",
+  "stage": "implement",
+  "source_commit": "37253b9c03fbc2c347d98fa902d1c13aff5d8b71",
+  "observed_at": "2026-09-15T07:10:22.660471Z",
+  "summary": "First T026 exact range/text test: capture then mutate checkout/ref; original retained context opens, byte read unavailable instead of Succeeded; text assertions not reached.",
+  "result": {
+    "passed": 0,
+    "failed": 1,
+    "total": 1,
+    "exit_code": 1
+  },
+  "artifacts": [
+    {
+      "path": "tests/Vulgata.Tests/RetainedSource/RetainedSourceRangeReadTests.cs",
+      "sha256": "b70e35b3ecba6b46ea4181b4a851591a3004517ea616b0f611278ef80670f945"
+    }
+  ],
+  "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\read-range-initial-red.trx",
+  "next": "Minimal retained byte/text implementation; full T026/T027 boundaries remain unverified."
+}

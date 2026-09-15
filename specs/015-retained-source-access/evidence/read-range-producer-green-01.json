@@ -1,0 +1,21 @@
+{
+  "id": "13-1/implement/35",
+  "kind": "test-green",
+  "stage": "implement",
+  "source_commit": "37253b9c03fbc2c347d98fa902d1c13aff5d8b71",
+  "observed_at": "2026-09-15T07:19:55.758677Z",
+  "summary": "Producer first range/text tracer1/1 plus metadata24,capture27,manifest3 GREEN. Owned range buffers, streaming full-blob integrity, one reservation per call and final auth/cancel/deadline checks.",
+  "artifacts": [
+    {
+      "path": "src/dotnet/Vulgata.Infrastructure/Source/RetainedSourceReadContext.cs",
+      "sha256": "59f777962b316367b2b44f1f4b01134a04c57de65999e1b12ba5364cf9e93f87"
+    },
+    {
+      "path": "src/dotnet/Vulgata.Infrastructure/Source/DurableRetainedSourceStore.cs",
+      "sha256": "9271e5f46a282d0e6f329f9829753c644aee9cc7e21eef5659fd67843500cb79"
+    }
+  ],
+  "raw_directory": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results",
+  "raw_prefix": "producer-range-initial-",
+  "limits": "T026/T027 incomplete; independent tracer and range/encoding/concurrent budget edge tests dispatched."
+}

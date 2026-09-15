@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.Security.Cryptography;
+using System.Text;
 using Vulgata.Core.DomainServices;
 using Vulgata.Core.Entities;
 
@@ -7,6 +8,7 @@ namespace Vulgata.Infrastructure.Source;
 
 internal sealed class RetainedSourceReadContext : ISourceReadContext
 {
+    private static readonly TimeSpan MaximumTimerDelay = TimeSpan.FromDays(20);
     private readonly VerifiedRetainedSourceObject _source;
     private readonly SourceAuthorizationSubject _subject;
     private readonly AuthorizedSourceRepository _binding;
@@ -20,6 +22,8 @@ internal sealed class RetainedSourceReadContext : ISourceReadContext
     private readonly int _maximumBytesPerOperation;
     private readonly object _budgetGate = new();
     private readonly CancellationTokenSource _lifetime = new();
+    private readonly CancellationTokenSource _deadlineCancellation = new();
+    private readonly ITimer _deadlineTimer;
     private readonly ConcurrentDictionary<string, CursorState> _cursors = new(StringComparer.Ordinal);
     private int _remainingOperations;
     private int _remainingMetadataEntries;
@@ -60,6 +64,11 @@ internal sealed class RetainedSourceReadContext : ISourceReadContext
             requestedDeadline < policy.ReadDeadline
                 ? requestedDeadline
                 : policy.ReadDeadline;
+        _deadlineTimer = timeProvider.CreateTimer(
+            static state => ((RetainedSourceReadContext)state!).OnDeadlineTimer(),
+            this,
+            NextDeadlineTimerDelay(),
+            Timeout.InfiniteTimeSpan);
     }
 
     public Guid ContextId { get; } = Guid.NewGuid();
@@ -191,47 +200,254 @@ internal sealed class RetainedSourceReadContext : ISourceReadContext
             null);
     }
 
-    public Task<SourceBytesResult> ReadBytesAsync(
+    public async Task<SourceBytesResult> ReadBytesAsync(
         string relativePath,
         long byteOffset,
         int maximumBytes,
-        CancellationToken cancellationToken = default) =>
-        Task.FromResult(new SourceBytesResult(
-            SourceReadStatus.NotFoundOrUnavailable,
-            "source_read_unavailable",
-            Guid.NewGuid(),
-            RepositoryId,
-            ProfiledRevision,
-            _source.Snapshot.ManifestSha256,
-            null,
-            ReadOnlyMemory<byte>.Empty,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null));
+        CancellationToken cancellationToken = default)
+    {
+        Guid correlationId = Guid.NewGuid();
+        if (IsDisposed())
+        {
+            return BytesFailure(SourceReadStatus.Cancelled, "source_cancelled", correlationId);
+        }
+        if (!IsCanonicalPath(relativePath, allowEmpty: false) || byteOffset < 0 || maximumBytes <= 0)
+        {
+            return BytesFailure(SourceReadStatus.Denied, "source_denied", correlationId);
+        }
+        if (maximumBytes > _maximumBytesPerOperation)
+        {
+            return BytesFailure(
+                SourceReadStatus.BudgetExceeded,
+                "source_budget_bytes_per_operation_exceeded",
+                correlationId,
+                SourceBudgetDimension.BytesPerOperation);
+        }
+        if (!TryReserve(metadataEntries: 0, maximumBytes, out SourceBudgetDimension? exhausted))
+        {
+            return BytesFailure(
+                SourceReadStatus.BudgetExceeded,
+                BudgetCode(exhausted),
+                correlationId,
+                exhausted);
+        }
 
-    public Task<SourceTextResult> ReadTextAsync(
-        string relativePath,
-        long byteOffset,
-        int maximumBytes,
-        CancellationToken cancellationToken = default) =>
-        Task.FromResult(new SourceTextResult(
-            SourceReadStatus.NotFoundOrUnavailable,
-            "source_read_unavailable",
-            Guid.NewGuid(),
+        using CancellationTokenSource linked = CancellationTokenSource.CreateLinkedTokenSource(
+            _lifetime.Token,
+            _deadlineCancellation.Token,
+            cancellationToken);
+        SourceReadStatus? unavailable = await RevalidateOperationAsync(cancellationToken);
+        if (unavailable is { } status)
+        {
+            return BytesFailure(status, StatusCode(status), correlationId);
+        }
+
+        RetainedSourceManifestEntry? entry = FindManifestEntry(relativePath);
+        if (entry is null)
+        {
+            return BytesFailure(
+                SourceReadStatus.NotFoundOrUnavailable,
+                "source_not_found_or_unavailable",
+                correlationId);
+        }
+        if (!entry.Capabilities.Contains("byteRange", StringComparer.Ordinal))
+        {
+            return BytesFailure(
+                SourceReadStatus.Unsupported,
+                "source_unsupported",
+                correlationId,
+                relativePath: relativePath,
+                limitationCode: entry.LimitationCode);
+        }
+        if (entry.ByteLength is null || byteOffset > entry.ByteLength.Value)
+        {
+            return BytesFailure(SourceReadStatus.InvalidRange, "source_invalid_range", correlationId);
+        }
+
+        VerifiedRetainedSourceRange range;
+        try
+        {
+            range = await _store.ReadVerifiedRangeAsync(
+                _source.Snapshot,
+                entry,
+                byteOffset,
+                maximumBytes,
+                linked.Token);
+        }
+        catch (OperationCanceledException)
+        {
+            SourceReadStatus cancellationStatus = CancellationStatus(cancellationToken);
+            return BytesFailure(
+                cancellationStatus,
+                StatusCode(cancellationStatus),
+                correlationId);
+        }
+        catch (RetainedSourceIntegrityException)
+        {
+            return BytesFailure(
+                SourceReadStatus.IntegrityFailure,
+                "source_integrity_failed",
+                correlationId);
+        }
+        catch (RetainedSourceStorageException)
+        {
+            return BytesFailure(
+                SourceReadStatus.StorageFailure,
+                "source_storage_unavailable",
+                correlationId);
+        }
+
+        unavailable = await CheckAvailabilityAsync(cancellationToken);
+        if (unavailable is { } finalStatus)
+        {
+            return BytesFailure(finalStatus, StatusCode(finalStatus), correlationId);
+        }
+        return new(
+            SourceReadStatus.Succeeded,
+            "source_bytes_succeeded",
+            correlationId,
             RepositoryId,
             ProfiledRevision,
             _source.Snapshot.ManifestSha256,
+            relativePath,
+            range.Content,
+            byteOffset,
+            range.Content.Length,
+            entry.ByteLength,
+            entry.ContentSha256,
             null,
+            null);
+    }
+
+    public async Task<SourceTextResult> ReadTextAsync(
+        string relativePath,
+        long byteOffset,
+        int maximumBytes,
+        CancellationToken cancellationToken = default)
+    {
+        Guid correlationId = Guid.NewGuid();
+        if (IsDisposed())
+        {
+            return TextFailure(SourceReadStatus.Cancelled, "source_cancelled", correlationId);
+        }
+        if (!IsCanonicalPath(relativePath, allowEmpty: false) || byteOffset < 0 || maximumBytes <= 0)
+        {
+            return TextFailure(SourceReadStatus.Denied, "source_denied", correlationId);
+        }
+        if (maximumBytes > _maximumBytesPerOperation)
+        {
+            return TextFailure(
+                SourceReadStatus.BudgetExceeded,
+                "source_budget_bytes_per_operation_exceeded",
+                correlationId,
+                SourceBudgetDimension.BytesPerOperation);
+        }
+        if (!TryReserve(metadataEntries: 0, maximumBytes, out SourceBudgetDimension? exhausted))
+        {
+            return TextFailure(
+                SourceReadStatus.BudgetExceeded,
+                BudgetCode(exhausted),
+                correlationId,
+                exhausted);
+        }
+
+        using CancellationTokenSource linked = CancellationTokenSource.CreateLinkedTokenSource(
+            _lifetime.Token,
+            _deadlineCancellation.Token,
+            cancellationToken);
+        SourceReadStatus? unavailable = await RevalidateOperationAsync(cancellationToken);
+        if (unavailable is { } status)
+        {
+            return TextFailure(status, StatusCode(status), correlationId);
+        }
+
+        RetainedSourceManifestEntry? entry = FindManifestEntry(relativePath);
+        if (entry is null)
+        {
+            return TextFailure(
+                SourceReadStatus.NotFoundOrUnavailable,
+                "source_not_found_or_unavailable",
+                correlationId);
+        }
+        if (!entry.Capabilities.Contains("strictUtf8Text", StringComparer.Ordinal))
+        {
+            return TextFailure(
+                SourceReadStatus.Unsupported,
+                "source_unsupported",
+                correlationId,
+                relativePath: relativePath,
+                limitationCode: entry.LimitationCode);
+        }
+        if (entry.ByteLength is null || byteOffset > entry.ByteLength.Value)
+        {
+            return TextFailure(SourceReadStatus.InvalidRange, "source_invalid_range", correlationId);
+        }
+
+        VerifiedRetainedSourceRange range;
+        try
+        {
+            range = await _store.ReadVerifiedRangeAsync(
+                _source.Snapshot,
+                entry,
+                byteOffset,
+                maximumBytes,
+                linked.Token);
+        }
+        catch (OperationCanceledException)
+        {
+            SourceReadStatus cancellationStatus = CancellationStatus(cancellationToken);
+            return TextFailure(
+                cancellationStatus,
+                StatusCode(cancellationStatus),
+                correlationId);
+        }
+        catch (RetainedSourceIntegrityException)
+        {
+            return TextFailure(
+                SourceReadStatus.IntegrityFailure,
+                "source_integrity_failed",
+                correlationId);
+        }
+        catch (RetainedSourceStorageException)
+        {
+            return TextFailure(
+                SourceReadStatus.StorageFailure,
+                "source_storage_unavailable",
+                correlationId);
+        }
+
+        string content;
+        try
+        {
+            content = new UTF8Encoding(encoderShouldEmitUTF8Identifier: false, throwOnInvalidBytes: true)
+                .GetString(range.Content);
+        }
+        catch (DecoderFallbackException)
+        {
+            return TextFailure(SourceReadStatus.InvalidRange, "source_invalid_range", correlationId);
+        }
+
+        unavailable = await CheckAvailabilityAsync(cancellationToken);
+        if (unavailable is { } finalStatus)
+        {
+            return TextFailure(finalStatus, StatusCode(finalStatus), correlationId);
+        }
+        return new(
+            SourceReadStatus.Succeeded,
+            "source_text_succeeded",
+            correlationId,
+            RepositoryId,
+            ProfiledRevision,
+            _source.Snapshot.ManifestSha256,
+            relativePath,
+            content,
+            byteOffset,
+            range.Content.Length,
+            entry.ByteLength,
+            entry.ContentSha256,
             null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null));
+            null);
+    }
 
     public ValueTask DisposeAsync()
     {
@@ -244,6 +460,8 @@ internal sealed class RetainedSourceReadContext : ISourceReadContext
             _disposed = true;
         }
         _lifetime.Cancel();
+        _deadlineTimer.Dispose();
+        _deadlineCancellation.Dispose();
         _lifetime.Dispose();
         _cursors.Clear();
         return ValueTask.CompletedTask;
@@ -255,13 +473,15 @@ internal sealed class RetainedSourceReadContext : ISourceReadContext
         {
             return SourceReadStatus.Cancelled;
         }
-        if (_timeProvider.GetElapsedTime(_issuedTimestamp) >= _deadline)
+        if (_deadlineCancellation.IsCancellationRequested ||
+            _timeProvider.GetElapsedTime(_issuedTimestamp) >= _deadline)
         {
             return SourceReadStatus.DeadlineExceeded;
         }
 
         using CancellationTokenSource linked = CancellationTokenSource.CreateLinkedTokenSource(
             _lifetime.Token,
+            _deadlineCancellation.Token,
             callCancellation);
         try
         {
@@ -281,7 +501,7 @@ internal sealed class RetainedSourceReadContext : ISourceReadContext
         }
         catch (OperationCanceledException)
         {
-            return SourceReadStatus.Cancelled;
+            return CancellationStatus(callCancellation);
         }
 
         return _timeProvider.GetElapsedTime(_issuedTimestamp) >= _deadline
@@ -290,30 +510,34 @@ internal sealed class RetainedSourceReadContext : ISourceReadContext
     }
 
     private async Task<SourceReadStatus?> RevalidateOperationAsync(
-        CancellationToken cancellationToken)
+        CancellationToken callCancellation)
     {
-        SourceReadStatus? unavailable = await CheckAvailabilityAsync(cancellationToken);
+        SourceReadStatus? unavailable = await CheckAvailabilityAsync(callCancellation);
         if (unavailable is not null)
         {
             return unavailable;
         }
 
+        using CancellationTokenSource linked = CancellationTokenSource.CreateLinkedTokenSource(
+            _lifetime.Token,
+            _deadlineCancellation.Token,
+            callCancellation);
         try
         {
             SourceSnapshot? current = await _snapshots.GetAsync(
                 RepositoryId,
                 ProfiledRevision,
-                cancellationToken);
+                linked.Token);
             if (current is null || !SameSnapshotBinding(current, _source.Snapshot))
             {
                 return SourceReadStatus.IntegrityFailure;
             }
 
-            await _store.VerifyManifestBindingAsync(current, cancellationToken);
+            await _store.VerifyManifestBindingAsync(current, linked.Token);
         }
         catch (OperationCanceledException)
         {
-            return SourceReadStatus.Cancelled;
+            return CancellationStatus(callCancellation);
         }
         catch (RetainedSourceIntegrityException)
         {
@@ -324,7 +548,49 @@ internal sealed class RetainedSourceReadContext : ISourceReadContext
             return SourceReadStatus.StorageFailure;
         }
 
-        return await CheckAvailabilityAsync(cancellationToken);
+        return await CheckAvailabilityAsync(callCancellation);
+    }
+
+    private void OnDeadlineTimer()
+    {
+        try
+        {
+            TimeSpan remaining = _deadline - _timeProvider.GetElapsedTime(_issuedTimestamp);
+            if (remaining <= TimeSpan.Zero)
+            {
+                _deadlineCancellation.Cancel();
+                return;
+            }
+
+            _deadlineTimer.Change(
+                remaining < MaximumTimerDelay ? remaining : MaximumTimerDelay,
+                Timeout.InfiniteTimeSpan);
+        }
+        catch (ObjectDisposedException)
+        {
+        }
+    }
+
+    private TimeSpan NextDeadlineTimerDelay()
+    {
+        TimeSpan remaining = _deadline - _timeProvider.GetElapsedTime(_issuedTimestamp);
+        if (remaining <= TimeSpan.Zero)
+        {
+            return TimeSpan.Zero;
+        }
+        return remaining < MaximumTimerDelay ? remaining : MaximumTimerDelay;
+    }
+
+    private SourceReadStatus CancellationStatus(CancellationToken callCancellation)
+    {
+        if (_disposed || _lifetime.IsCancellationRequested || callCancellation.IsCancellationRequested)
+        {
+            return SourceReadStatus.Cancelled;
+        }
+        return _deadlineCancellation.IsCancellationRequested ||
+            _timeProvider.GetElapsedTime(_issuedTimestamp) >= _deadline
+                ? SourceReadStatus.DeadlineExceeded
+                : SourceReadStatus.Cancelled;
     }
 
     private static bool SameSnapshotBinding(
@@ -399,6 +665,10 @@ internal sealed class RetainedSourceReadContext : ISourceReadContext
                 ? Directory(relativePath)
                 : null;
     }
+
+    private RetainedSourceManifestEntry? FindManifestEntry(string relativePath) =>
+        _source.Manifest.Entries.FirstOrDefault(entry =>
+            StringComparer.Ordinal.Equals(entry.RelativePath, relativePath));
 
     private IReadOnlyList<ListProjectionItem> ImmediateChildren(string relativeDirectory)
     {
@@ -486,6 +756,52 @@ internal sealed class RetainedSourceReadContext : ISourceReadContext
         Guid correlationId,
         SourceBudgetDimension? dimension = null) =>
         new(status, code, correlationId, RepositoryId, ProfiledRevision, null, [], [], null, dimension);
+
+    private SourceBytesResult BytesFailure(
+        SourceReadStatus status,
+        string code,
+        Guid correlationId,
+        SourceBudgetDimension? dimension = null,
+        string? relativePath = null,
+        string? limitationCode = null) =>
+        new(
+            status,
+            code,
+            correlationId,
+            RepositoryId,
+            ProfiledRevision,
+            null,
+            relativePath,
+            ReadOnlyMemory<byte>.Empty,
+            null,
+            null,
+            null,
+            null,
+            limitationCode,
+            dimension);
+
+    private SourceTextResult TextFailure(
+        SourceReadStatus status,
+        string code,
+        Guid correlationId,
+        SourceBudgetDimension? dimension = null,
+        string? relativePath = null,
+        string? limitationCode = null) =>
+        new(
+            status,
+            code,
+            correlationId,
+            RepositoryId,
+            ProfiledRevision,
+            null,
+            relativePath,
+            null,
+            null,
+            null,
+            null,
+            null,
+            limitationCode,
+            dimension);
 
     private static string StatusCode(SourceReadStatus status) => status switch
     {

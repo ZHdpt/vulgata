@@ -402,3 +402,9 @@ T022 observed actual owned-PostgreSQL2RED/1GREEN: coordinator deletion fails bef
 T024/T025 complete:24read,27capture,3manifest,4PostgreSQL tests pass. T023 focused conflict3/3 and isolated-key login12/12 also pass;5 unchanged pre-story baseline API/management tests still block its strict surrounding gate. User scope question is pending; no old tests are changed/skipped and no gate is waived. Evidence source-read-verified-01.json and baseline-verification-blocker-01.json. T023 remains unchecked.
 
 Recovery checkpoint bmad-13-1-implement-20260915T065526Z-efd086 records verified source increments and their honest pending gate. Next dependency-ready work is T026/T027 byte/text reads. It is not a converged/reviewed/completed story.
+
+## Bounded byte/text group verified
+
+T026/T027 initially reached a green candidate after actual unavailable-range RED, concurrent EF-query RED and active-grant deadline RED. The unentered wait fixture was classified as a harness defect and fixed before deadline evidence was accepted. Exact retained ranges, strict UTF8/BOM/newlines, no-refund budgets, multiple admitted concurrent reads, corruption outside the selected range, post-I/O cancellation and long timer intervals are verified. Independent11range+24metadata+27capture+3manifest+4PG pass; root parsed TRX and frozen hashes in range-group-verified-01.json.
+
+Pending checkpoint bmad-13-1-implement-20260915T082431Z-ae7553 was withheld before commit: precommit inspection found an incorrect at-EOF expectation and missing empty-file read coverage. The corrected EOF/empty-file cases subsequently observed2RED, received minimal range-bound correction, and were independently verified with the complete70-test group in range-group-verified-02.json. T026/T027 are now complete. T023 remains pending5 unchanged baseline failures/user scope decision. T028/T029 follows; no convergence/quality/E2E completion yet.

@@ -1,0 +1,74 @@
+{
+  "id": "13-1/implement/44",
+  "kind": "test-green",
+  "stage": "implement",
+  "source_commit": "37253b9c03fbc2c347d98fa902d1c13aff5d8b71",
+  "observed_at": "2026-09-15T09:04:51.434461Z",
+  "summary": "Corrected T026/T027 independently70/70 GREEN including exact-EOF/empty-file successful receipts, positive reservation/no refund, strictly past-EOF failure, all previous range/grant/concurrency/integrity cases. Supersedes unaccepted candidate41.",
+  "runs": [
+    {
+      "suite": "range",
+      "passed": 12,
+      "failed": 0,
+      "exit_code": 0,
+      "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\eof-verified-range.trx",
+      "sha256": "44033e5949ab8049cfc219ed7330798bd579e3f83dbdb683885fe4c57819a84b"
+    },
+    {
+      "suite": "metadata",
+      "passed": 24,
+      "failed": 0,
+      "exit_code": 0,
+      "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\eof-verified-metadata.trx",
+      "sha256": "364431f9a19270ef2f5e4c234073c227b0a238632638fee80445087bd409bac7"
+    },
+    {
+      "suite": "capture",
+      "passed": 27,
+      "failed": 0,
+      "exit_code": 0,
+      "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\eof-verified-capture.trx",
+      "sha256": "2c67a5579cd2af0dc875386ebe19bb86d6cc9b0a73b2a18dfe3c958dc9d486a8"
+    },
+    {
+      "suite": "manifest",
+      "passed": 3,
+      "failed": 0,
+      "exit_code": 0,
+      "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\eof-verified-manifest.trx",
+      "sha256": "80749099bff5f0556099cbb54c0a0729090e8f84b072d1fd958778adb4c65a45"
+    },
+    {
+      "suite": "persistence",
+      "passed": 4,
+      "failed": 0,
+      "exit_code": 0,
+      "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\eof-verified-persistence.trx",
+      "sha256": "ea5c430ccb10ef5416c3d5947eafe88ecbfe9282862d15c42f266f44588d197b"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "src/dotnet/Vulgata.Infrastructure/Source/RetainedSourceReadContext.cs",
+      "sha256": "764a792bd0fce952e0c9bfc8b0c469b311f527571d1831604ffe806c32581f47"
+    },
+    {
+      "path": "src/dotnet/Vulgata.Infrastructure/Source/DurableRetainedSourceStore.cs",
+      "sha256": "424adc1add2b018bde98f0b16eb17c694dd9b24ce43f17cdfb559cf2760a0149"
+    },
+    {
+      "path": "src/dotnet/Vulgata.Infrastructure/Data/RetainedSourceRepository.cs",
+      "sha256": "cbecac37a77acd36c160b56a44681c18c71e04d5dcde650fdc9f3455c225481c"
+    },
+    {
+      "path": "tests/Vulgata.Tests/RetainedSource/RetainedSourceRangeReadTests.cs",
+      "sha256": "7f96be72afb8991ef407021fd28acad9b2e554b5c2ba454fce0ec2a1699bb1e9"
+    },
+    {
+      "path": "tests/Vulgata.Tests/RetainedSource/RetainedSourceCaptureApplicationFixture.cs",
+      "sha256": "db50910c6f9128d3b804359c9a0007de3c2de5c00ee2ab43976f11d3f763c99f"
+    }
+  ],
+  "supersedes": "specs/015-retained-source-access/evidence/range-group-verified-01.json",
+  "remaining": "Baseline5-test scope decision/T023 gate pending; T028/T029 next."
+}

@@ -1,0 +1,19 @@
+{
+  "id": "13-1/implement/38",
+  "kind": "analysis",
+  "stage": "implement",
+  "source_commit": "37253b9c03fbc2c347d98fa902d1c13aff5d8b71",
+  "observed_at": "2026-09-15T07:40:09.295575Z",
+  "status": "planned-not-executed",
+  "summary": "Read-only resource preflight for later required full-suite execution; no databases or environment were changed.",
+  "admin_variables": [
+    "VULGATA_STORY131_POSTGRES_ADMIN",
+    "VULGATA_TEST_POSTGRES_ADMIN",
+    "VULGATA_TEST_ADMIN_CONNECTION"
+  ],
+  "target_variable": "VULGATA_TEST_POSTGRES",
+  "target_requirement": "Fresh uniquely named database in exact owned Story13.1 container. NEVER assign administrator/postgres/shared database: KnowledgeStorePostgreSqlConcurrencyTests.ResetAndSeedAsync calls EnsureDeletedAsync on this variable.",
+  "legacy_fixtures": "DisposablePostgreSqlDatabase/PreparedScanPostgreSqlFixture create/drop unique guarded names using supplied owned administrator. ExactCrossRepositoryMigrationTests creates its own unique database from the target connection server.",
+  "environment_rule": "Clear inherited VULGATA_T* qualification/connection flags only in the test child shell, then explicitly set owned database variables. Also clear inherited VULGATA_STORY131_POSTGRES_TARGET and VULGATA_RETAINED_SOURCE_CHILD. Do not activate historical real-provider/source qualification flags or reuse their keys.",
+  "execution_rule": "Serialize builds/tests; inspect exact container ID/labels/loopback binding before resource creation. No extra Docker containers or shared database/keyring access. Keep owned DataProtection fixture configuration."
+}

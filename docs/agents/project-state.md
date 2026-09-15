@@ -1,8 +1,8 @@
 # Project state for agent resumption
 
-Updated: 2026-09-15. Retained-source capture/manifest checkpoint:
-`2f5dcd60b33796b8f5a57481d54c2a26205d88e4`. Story 13.1 has verified incremental
-capture and metadata-read evidence in its active feature; complete feature and
+Updated: 2026-09-15. Retained-source metadata checkpoint:
+`37253b9c03fbc2c347d98fa902d1c13aff5d8b71`. Story 13.1 has verified incremental
+capture, metadata and byte/text-read evidence in its active feature; complete feature and
 full-suite verification remain pending. Other as-built notes retain the earlier
 static baseline `2bb83c3b44fc0afc07ae253ec1df5fab4399b964`. Reobserve the assigned
 checkout, tracker and source before reuse; do not require an old worktree or clean
@@ -44,7 +44,7 @@ runtime workflow:
 | Area | Existing value and limit |
 | --- | --- |
 | Administration/persistence | Reusable Identity, roles, configuration and domain persistence; Identity remains in Web/Data. |
-| Source preparation | Story 13.1 has verified raw-Git retained capture, canonical manifests, and scoped metadata reads. Byte/text, restart/concurrency qualification and final gates remain pending in the active feature. Legacy disposable leases and prepared pair contracts remain separate. |
+| Source preparation | Story 13.1 has verified raw-Git retained capture, canonical manifests, and scoped metadata and byte/text reads. Remaining live-denial, durable restart/concurrency qualification and final gates remain pending in the active feature. Legacy disposable leases and prepared pair contracts remain separate. |
 | CodeGraph/LSP | CodeGraph 1.5 integration is CLI/JSON, not native MCP; tool identity/launch paths are Windows-oriented. JDT protocol/containment mechanisms need the new declared Docker/profile qualification. |
 | Knowledge | Atomic persistence/provenance mechanics exist, but file-level CL/paired Flow semantics are not the new semantic Code Unit/Logical Flow contracts. |
 | Resolution | Finite exact matching is profile-bound; generic inquiry, late-evidence reconciliation and the ordinary production caller are not delivered. |

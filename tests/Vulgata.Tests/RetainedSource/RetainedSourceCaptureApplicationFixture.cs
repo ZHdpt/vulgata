@@ -69,6 +69,7 @@ internal sealed class RetainedSourceCaptureApplicationFixture : IAsyncDisposable
         Func<string, Task>? mutateBeforeComposition = null,
         Func<string, Task>? mutateAfterFirstAuthorization = null,
         int mutateAfterAuthorizationCount = 1,
+        Func<SourceAuthorizationRequest, CancellationToken, Task>? authorizationWait = null,
         CancellationToken cancellationToken = default)
     {
         RetainedSourcePostgreSqlDatabase database =
@@ -102,7 +103,8 @@ internal sealed class RetainedSourceCaptureApplicationFixture : IAsyncDisposable
                 mutateAfterFirstAuthorization is null
                     ? null
                     : () => mutateAfterFirstAuthorization(database.ConnectionString),
-                mutateAfterAuthorizationCount);
+                mutateAfterAuthorizationCount,
+                authorizationWait);
             IServiceScope scope = application.Services.CreateScope();
             IHttpContextAccessor accessor =
                 application.Services.GetRequiredService<IHttpContextAccessor>();
@@ -139,7 +141,8 @@ internal sealed class RetainedSourceCaptureApplicationFixture : IAsyncDisposable
         bool systemOwner,
         TimeProvider? timeProvider,
         Func<Task>? mutateAfterFirstAuthorization,
-        int mutateAfterAuthorizationCount)
+        int mutateAfterAuthorizationCount,
+        Func<SourceAuthorizationRequest, CancellationToken, Task>? authorizationWait)
     {
         var options = new WebApplicationOptions
         {
@@ -183,6 +186,19 @@ internal sealed class RetainedSourceCaptureApplicationFixture : IAsyncDisposable
                         ResolveVerifier(services, verifier),
                         mutateAfterFirstAuthorization,
                         mutateAfterAuthorizationCount));
+            }
+        }
+        else if (authorizationWait is not null)
+        {
+            ServiceDescriptor? waitVerifier = builder.Services.LastOrDefault(
+                descriptor => descriptor.ServiceType == typeof(ISourceRepositoryAuthorizationVerifier));
+            if (waitVerifier is not null)
+            {
+                builder.Services.Remove(waitVerifier);
+                builder.Services.AddScoped<ISourceRepositoryAuthorizationVerifier>(services =>
+                    new RetainedSourceAuthorizationWaitDecorator(
+                        ResolveVerifier(services, waitVerifier),
+                        authorizationWait));
             }
         }
         if (timeProvider is not null)
@@ -473,6 +489,25 @@ internal sealed class RetainedSourceAuthorizationMutationDecorator(
     }
 }
 
+internal sealed class RetainedSourceAuthorizationWaitDecorator(
+    ISourceRepositoryAuthorizationVerifier inner,
+    Func<SourceAuthorizationRequest, CancellationToken, Task> wait)
+    : ISourceRepositoryAuthorizationVerifier
+{
+    public async Task<AuthorizedSourceRepository?> AuthorizeAsync(
+        SourceAuthorizationRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        AuthorizedSourceRepository? result = await inner.AuthorizeAsync(request, cancellationToken);
+        if (result is not null)
+        {
+            await wait(request, cancellationToken);
+        }
+
+        return result;
+    }
+}
+
 internal sealed class RetainedSourceTestNavigationManager : NavigationManager
 {
     public RetainedSourceTestNavigationManager()
@@ -546,4 +581,19 @@ internal sealed class AdvancingRetainedSourceTimeProvider(TimeSpan advancePerRea
 
     public override long GetTimestamp() =>
         Interlocked.Add(ref _timestamp, _advanceTimestamp);
+}
+
+internal sealed class ControlledRetainedSourceTimeProvider : TimeProvider
+{
+    private long _timestamp = Stopwatch.GetTimestamp();
+
+    public override DateTimeOffset GetUtcNow() => DateTimeOffset.UtcNow;
+
+    public override long GetTimestamp() => Volatile.Read(ref _timestamp);
+
+    internal void Advance(TimeSpan duration)
+    {
+        long ticks = checked((long)(duration.TotalSeconds * Stopwatch.Frequency));
+        Interlocked.Add(ref _timestamp, ticks);
+    }
 }

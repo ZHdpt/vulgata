@@ -40,6 +40,8 @@ internal sealed record VerifiedRetainedSourceObject(
     SourceSnapshot Snapshot,
     RetainedSourceManifestDocument Manifest);
 
+internal sealed record VerifiedRetainedSourceRange(byte[] Content);
+
 internal sealed class DurableRetainedSourceStore(RetainedSourceCapturePolicy policy)
 {
     internal async Task<RetainedSourceStaging> StageAsync(
@@ -292,6 +294,86 @@ internal sealed class DurableRetainedSourceStore(RetainedSourceCapturePolicy pol
             {
                 throw new RetainedSourceIntegrityException();
             }
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (RetainedSourceIntegrityException)
+        {
+            throw;
+        }
+        catch
+        {
+            throw new RetainedSourceStorageException();
+        }
+    }
+
+    internal async Task<VerifiedRetainedSourceRange> ReadVerifiedRangeAsync(
+        SourceSnapshot snapshot,
+        RetainedSourceManifestEntry entry,
+        long byteOffset,
+        int maximumBytes,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            if (entry.StorageBlobKey is null || entry.ContentSha256 is null ||
+                entry.ByteLength is null || byteOffset < 0 || maximumBytes <= 0 ||
+                byteOffset > entry.ByteLength.Value)
+            {
+                throw new RetainedSourceIntegrityException();
+            }
+
+            int resultLength = checked((int)Math.Min(
+                maximumBytes,
+                entry.ByteLength.Value - byteOffset));
+            byte[] content = new byte[resultLength];
+            byte[] buffer = new byte[policy.VerificationBufferBytes];
+            using IncrementalHash hash = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
+            string objectRoot = ResolveContained(policy.RootPath, snapshot.InternalStorageKey);
+            string blobPath = ResolveContained(objectRoot, entry.StorageBlobKey);
+            await using var stream = new FileStream(
+                blobPath,
+                FileMode.Open,
+                FileAccess.Read,
+                FileShare.Read,
+                buffer.Length,
+                FileOptions.Asynchronous | FileOptions.SequentialScan);
+
+            long position = 0;
+            int copied = 0;
+            int read;
+            while ((read = await stream.ReadAsync(buffer.AsMemory(), cancellationToken)) > 0)
+            {
+                hash.AppendData(buffer, 0, read);
+                long chunkEnd = checked(position + read);
+                long requestedEnd = checked(byteOffset + resultLength);
+                long copyStart = Math.Max(position, byteOffset);
+                long copyEnd = Math.Min(chunkEnd, requestedEnd);
+                if (copyStart < copyEnd)
+                {
+                    int sourceOffset = checked((int)(copyStart - position));
+                    int copyLength = checked((int)(copyEnd - copyStart));
+                    Buffer.BlockCopy(buffer, sourceOffset, content, copied, copyLength);
+                    copied += copyLength;
+                }
+                position = chunkEnd;
+                if (position > entry.ByteLength.Value)
+                {
+                    throw new RetainedSourceIntegrityException();
+                }
+            }
+
+            if (position != entry.ByteLength.Value || copied != resultLength ||
+                !CryptographicOperations.FixedTimeEquals(
+                    hash.GetHashAndReset(),
+                    Convert.FromHexString(entry.ContentSha256)))
+            {
+                throw new RetainedSourceIntegrityException();
+            }
+
+            return new(content);
         }
         catch (OperationCanceledException)
         {

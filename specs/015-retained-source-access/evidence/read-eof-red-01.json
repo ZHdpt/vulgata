@@ -1,0 +1,17 @@
+{
+  "id": "13-1/implement/43",
+  "kind": "test-red",
+  "stage": "implement",
+  "source_commit": "37253b9c03fbc2c347d98fa902d1c13aff5d8b71",
+  "observed_at": "2026-09-15T08:49:35.887363Z",
+  "summary": "Corrected contract tests observe2RED: exact EOF and zero-byte regular file reads return InvalidRange instead of successful empty receipts. Requested maximum remains reserved; strictly past EOF invalid.",
+  "result": {
+    "passed": 0,
+    "failed": 2,
+    "total": 2,
+    "exit_code": 1
+  },
+  "test_sha256": "7f96be72afb8991ef407021fd28acad9b2e554b5c2ba454fce0ec2a1699bb1e9",
+  "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\range-eof-corrected-red.trx",
+  "disposition": "Prior EOF-invalid characterization and pending range checkpoint are superseded/withheld until correction."
+}

@@ -1,0 +1,75 @@
+{
+  "id": "13-1/implement/41",
+  "kind": "test-green",
+  "stage": "implement",
+  "source_commit": "37253b9c03fbc2c347d98fa902d1c13aff5d8b71",
+  "observed_at": "2026-09-15T08:24:31.829584Z",
+  "summary": "T026/T027 independently verified69/69: exact retained byte/text receipts, EOF/scalar/unsupported bounds, requested budgets, concurrent admission, post-I/O cancellation/integrity and active/long grant deadlines. Root parsed exact TRX counters and verified frozen hashes.",
+  "runs": [
+    {
+      "suite": "range-final-verified",
+      "passed": 11,
+      "failed": 0,
+      "exit_code": 0,
+      "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\range-final-verified.trx",
+      "sha256": "871566b873c6e30d4f153a63480b790d2451300dae6d898eb4a2dbc8e0bfb763"
+    },
+    {
+      "suite": "range-verified-metadata",
+      "passed": 24,
+      "failed": 0,
+      "exit_code": 0,
+      "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\range-verified-metadata.trx",
+      "sha256": "2ecab4d57a18501dfb42697b58ac8a4e6f0c9c41c2e91c5e253ca23b966b4b1a"
+    },
+    {
+      "suite": "range-verified-capture",
+      "passed": 27,
+      "failed": 0,
+      "exit_code": 0,
+      "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\range-verified-capture.trx",
+      "sha256": "4d873c68d722d45ebe8a7914b65e0790065cd4e01860b529c682656a6565c4ea"
+    },
+    {
+      "suite": "range-verified-manifest",
+      "passed": 3,
+      "failed": 0,
+      "exit_code": 0,
+      "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\range-verified-manifest.trx",
+      "sha256": "a33cdcb7a377587c4bc39a3ebf137ad7dd6fb6c040a6fc058c83cb87ffa703f0"
+    },
+    {
+      "suite": "range-verified-persistence",
+      "passed": 4,
+      "failed": 0,
+      "exit_code": 0,
+      "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\range-verified-persistence.trx",
+      "sha256": "0dc523a2453f6f4b3beeddaa3bb5787d8e4d15a3001de95fdf61e65c75e47468"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "src/dotnet/Vulgata.Infrastructure/Source/RetainedSourceReadContext.cs",
+      "sha256": "e9383bb65616a565d7b47c9c1f7c75243e52f7973365f2ce97a023897d75820f"
+    },
+    {
+      "path": "src/dotnet/Vulgata.Infrastructure/Source/DurableRetainedSourceStore.cs",
+      "sha256": "9271e5f46a282d0e6f329f9829753c644aee9cc7e21eef5659fd67843500cb79"
+    },
+    {
+      "path": "src/dotnet/Vulgata.Infrastructure/Data/RetainedSourceRepository.cs",
+      "sha256": "cbecac37a77acd36c160b56a44681c18c71e04d5dcde650fdc9f3455c225481c"
+    },
+    {
+      "path": "tests/Vulgata.Tests/RetainedSource/RetainedSourceRangeReadTests.cs",
+      "sha256": "b90c587f09866d96549eaaebd2871cbf6795a0f80e9120dcd911f19ce35c0aad"
+    },
+    {
+      "path": "tests/Vulgata.Tests/RetainedSource/RetainedSourceCaptureApplicationFixture.cs",
+      "sha256": "db50910c6f9128d3b804359c9a0007de3c2de5c00ee2ab43976f11d3f763c99f"
+    }
+  ],
+  "remaining": "T028/T029 live denial group next. Baseline5-test scope decision and strict T023 gate remain pending; no story completion.",
+  "validity": "partial-coverage-checkpoint-withheld",
+  "gap": "Root precommit inspection found incorrect at-EOF test expectation and no empty-file read coverage. Counts remain observed, but T026/T027 conformance is not accepted until corrected tests and production pass."
+}

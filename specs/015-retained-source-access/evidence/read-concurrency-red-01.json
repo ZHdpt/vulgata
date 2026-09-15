@@ -1,0 +1,22 @@
+{
+  "id": "13-1/implement/36",
+  "kind": "test-red",
+  "stage": "implement",
+  "source_commit": "37253b9c03fbc2c347d98fa902d1c13aff5d8b71",
+  "observed_at": "2026-09-15T07:27:18.442622Z",
+  "summary": "Range edges5/6 GREEN; admitted concurrent reads throw EF InvalidOperationException from shared DbContext during revalidation, so concurrent success/budget outcomes are unverified.",
+  "result": {
+    "passed": 5,
+    "failed": 1,
+    "total": 6,
+    "exit_code": 1
+  },
+  "artifacts": [
+    {
+      "path": "tests/Vulgata.Tests/RetainedSource/RetainedSourceRangeReadTests.cs",
+      "sha256": "c553f2ac4103ea33b44349c2221ab79a7a0ac9d0234171fd649f707270abe8b2"
+    }
+  ],
+  "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\range-final.trx",
+  "next": "Use existing context factory for independent read queries; preserve publication writes and do not hide concurrency errors as budget results."
+}

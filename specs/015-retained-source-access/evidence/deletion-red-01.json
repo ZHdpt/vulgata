@@ -22,5 +22,8 @@
       "sha256": "0671f7751aeb0e195672addab80d2cf2a3d1fe631770cbb8b7b40bbde2b0ad82"
     }
   ],
-  "fixture_change": "Owned endpoint fixture clears Windows EventLog providers to avoid environment masking actual exception."
+  "fixture_change": "Owned endpoint fixture clears Windows EventLog providers to avoid environment masking actual exception.",
+  "validity": "invalidated-harness-contradiction",
+  "superseded_by": "specs/015-retained-source-access/evidence/deletion-baseline-reconstruction-01.json",
+  "disposition": "Original test draft required both a non-null and null exception. Do not count it as an accepted TDD RED. Corrected tests were rerun against exact prior production and recorded in the reconstruction evidence before restored-source GREEN verification."
 }

@@ -1,0 +1,18 @@
+{
+  "id": "13-1/implement/40",
+  "kind": "test-red",
+  "stage": "implement",
+  "source_commit": "37253b9c03fbc2c347d98fa902d1c13aff5d8b71",
+  "observed_at": "2026-09-15T08:01:16.330742Z",
+  "summary": "Corrected cooperative authorization wait entered and honored cancellation. No active grant deadline cancellation occurred;10s watchdog won, actualCancelled instead ofDeadlineExceeded. Other8 range casesGREEN.",
+  "result": {
+    "passed": 8,
+    "failed": 1,
+    "total": 9,
+    "exit_code": 1
+  },
+  "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\range-active-deadline-corrected-02.trx",
+  "test_sha256": "683d15a3317836d0870485cd71f368ba4e9612633edb8feba5ec4c1ad14fb4ca",
+  "fixture_sha256": "db50910c6f9128d3b804359c9a0007de3c2de5c00ee2ab43976f11d3f763c99f",
+  "next": "Active monotonic context expiry linked to in-flight calls, with explicit cancellation/disposal classification and owned monitor cleanup."
+}

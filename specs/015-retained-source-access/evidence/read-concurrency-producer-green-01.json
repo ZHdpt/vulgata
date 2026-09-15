@@ -1,0 +1,17 @@
+{
+  "id": "13-1/implement/37",
+  "kind": "test-green",
+  "stage": "implement",
+  "source_commit": "37253b9c03fbc2c347d98fa902d1c13aff5d8b71",
+  "observed_at": "2026-09-15T07:35:41.589743Z",
+  "summary": "Producer concurrent range fix6/6 plus metadata24,capture27,PG4,deletion3 GREEN; exactly2 concurrent successes and2 budget denials. Query methods use independent factory contexts; publication Add/Save unchanged.",
+  "artifacts": [
+    {
+      "path": "src/dotnet/Vulgata.Infrastructure/Data/RetainedSourceRepository.cs",
+      "sha256": "cbecac37a77acd36c160b56a44681c18c71e04d5dcde650fdc9f3455c225481c"
+    }
+  ],
+  "raw_directory": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results",
+  "raw_prefix": "producer-read-concurrency-",
+  "limits": "Independent verification and remaining active deadline/post-I/O cancellation/integrity tests pending; T026/T027 not complete."
+}
