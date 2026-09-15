@@ -28,65 +28,6 @@ public sealed class RepositoryApiTests
     }
 
     [Fact]
-    public void ScanRunSummaryMapping_WithUnsortedLanguageSummaries_ReturnsOrdinallySortedBreakdown()
-    {
-        Guid repositoryId = Guid.NewGuid();
-        ScanRun run = ScanRun.Start(repositoryId, 1_800, DateTimeOffset.UtcNow);
-        run.SetCandidateCount(0);
-        run.Complete(0, 0, DateTimeOffset.UtcNow);
-        run.LanguageSummaries.Add(new ScanRunLanguageSummary(run.Id, repositoryId, "zig_0+#.-", 1));
-        run.LanguageSummaries.Add(new ScanRunLanguageSummary(run.Id, repositoryId, "typescript", 3));
-        run.LanguageSummaries.Add(new ScanRunLanguageSummary(run.Id, repositoryId, "c_sharp", 2));
-        MethodInfo? map = typeof(RepositoryProfilingCoordinator).GetMethod(
-            "Map",
-            BindingFlags.NonPublic | BindingFlags.Static);
-        Assert.NotNull(map);
-
-        var summary = Assert.IsType<ScanRunSummaryDto>(map!.Invoke(null, [run]));
-
-        Assert.Equal(
-            [
-                new LanguageValue("c_sharp", 2),
-                new LanguageValue("typescript", 3),
-                new LanguageValue("zig_0+#.-", 1),
-            ],
-            ReadLanguages(summary));
-    }
-
-    [Fact]
-    public void ScanRunSummaryMapping_WithDuplicateUnsortedUnknownOutcomes_ReturnsExactDistinctOrdinalPaths()
-    {
-        Guid repositoryId = Guid.NewGuid();
-        ScanRun run = ScanRun.Start(repositoryId, 1_800, DateTimeOffset.UtcNow);
-        run.SetCandidateCount(3);
-        run.Complete(0, 0, DateTimeOffset.UtcNow);
-        foreach (string path in
-                 new[] { "src/Zeta.txt", "src/Alpha.txt", "src/Zeta.txt", "src/Middle.txt" })
-        {
-            run.CandidateOutcomes.Add(new ScanCandidateOutcome(
-                run.Id,
-                path,
-                ScanCandidateOutcomeKind.Filtered,
-                ScanCandidateOutcomeReasons.UnknownLanguage,
-                0,
-                DateTimeOffset.UtcNow));
-        }
-
-        MethodInfo? map = typeof(RepositoryProfilingCoordinator).GetMethod(
-            "Map",
-            BindingFlags.NonPublic | BindingFlags.Static);
-        Assert.NotNull(map);
-
-        var summary = Assert.IsType<ScanRunSummaryDto>(map!.Invoke(null, [run]));
-
-        UnknownLanguageValue unknownLanguage = ReadUnknownLanguage(summary);
-        Assert.Equal(3, unknownLanguage.DistinctFileCount);
-        Assert.Equal(
-            ["src/Alpha.txt", "src/Middle.txt", "src/Zeta.txt"],
-            unknownLanguage.Paths);
-    }
-
-    [Fact]
     public async Task ManagementScanRunRoutes_AuthorizedResponse_ContainsEverySortedLanguageAndDistinctFileCountAsync()
     {
         ScanRunSummaryDto summary = CreateSummaryWithLanguages();
@@ -259,52 +200,6 @@ public sealed class RepositoryApiTests
     }
 
     [Fact]
-    public async Task ManagementScanRunRoute_WithDurableFrameworkAudit_ReturnsClosedChineseDetailAsync()
-    {
-        Guid repositoryId = Guid.NewGuid();
-        ScanRun run = ScanRun.Start(repositoryId, 1_800, DateTimeOffset.UtcNow);
-        run.SetCandidateCount(0);
-        run.SetFrameworkEvidenceAuditTotalOutcomeCount(1);
-        run.CandidateOutcomes.Add(new ScanCandidateOutcome(
-            run.Id,
-            "audit/package.json",
-            ScanCandidateOutcomeKind.Skipped,
-            ScanCandidateOutcomeReasons.FrameworkEvidenceUnsupported,
-            0,
-            DateTimeOffset.UtcNow));
-        run.Complete(0, 0, DateTimeOffset.UtcNow);
-        MethodInfo? map = typeof(RepositoryProfilingCoordinator).GetMethod(
-            "Map",
-            BindingFlags.NonPublic | BindingFlags.Static);
-        Assert.NotNull(map);
-        var summary = Assert.IsType<ScanRunSummaryDto>(map!.Invoke(null, [run]));
-        using WebApplicationFactory<Program> factory = CreateFactory(summary);
-        const string email = "story42.audit-disclosure.admin@example.com";
-        await CreateUserWithRoleAsync(factory.Services, email, RoleNames.Administrator);
-        using HttpClient client = CreateClient(factory);
-        await LoginAsync(client, email);
-
-        using HttpResponseMessage response = await client.GetAsync(
-            $"/api/repositories/standalone/{repositoryId}/scan-runs/{run.Id}");
-        string body = await response.Content.ReadAsStringAsync();
-        using JsonDocument document = JsonDocument.Parse(body);
-
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        JsonElement detail = document.RootElement
-            .GetProperty("frameworkEvidenceAudit")
-            .GetProperty("details")[0];
-        Assert.Equal("audit/package.json", detail.GetProperty("path").GetString());
-        Assert.Equal("已跳过", detail.GetProperty("outcome").GetString());
-        Assert.Equal("框架证据格式不受支持。", detail.GetProperty("reason").GetString());
-        Assert.InRange(detail.GetRawText().Length, 1, 256);
-        Assert.DoesNotContain("Skipped", body, StringComparison.Ordinal);
-        Assert.DoesNotContain(
-            ScanCandidateOutcomeReasons.FrameworkEvidenceUnsupported,
-            body,
-            StringComparison.Ordinal);
-    }
-
-    [Fact]
     public async Task ManagementScanRunRoute_AuthorizedResponse_ContainsAllTenThousandSortedUnknownPathsAsync()
     {
         string[] expectedPaths =
@@ -446,43 +341,6 @@ public sealed class RepositoryApiTests
         Assert.Equal(HttpStatusCode.BadGateway, response.StatusCode);
         Assert.Contains(safeMessage, body, StringComparison.Ordinal);
         Assert.InRange(body.Length, 1, 1_024);
-        Assert.DoesNotContain("MATCH", body, StringComparison.Ordinal);
-        Assert.DoesNotContain("Secret", body, StringComparison.Ordinal);
-        Assert.DoesNotContain("C:\\", body, StringComparison.OrdinalIgnoreCase);
-        Assert.DoesNotContain("attacker-value", body, StringComparison.Ordinal);
-        Assert.DoesNotContain("hunter2", body, StringComparison.Ordinal);
-        Assert.DoesNotContain("sk-live-secret", body, StringComparison.Ordinal);
-        Assert.DoesNotContain("9876ms", body, StringComparison.Ordinal);
-    }
-
-    [Fact]
-    public async Task ManagementScanRunRoute_WithAdversarialDurableTerminalMessage_ReturnsClosedChineseSummaryAsync()
-    {
-        const string rawDiagnostic =
-            "MATCH (n) RETURN n; source=class Secret {}; C:\\host\\repo\\Secret.cs; " +
-            "package=attacker-value; password=hunter2; token=sk-live-secret; elapsed=9876ms";
-        const string safeMessage = "代码结构分析失败，请稍后重试。";
-        Guid repositoryId = Guid.NewGuid();
-        ScanRun run = ScanRun.Start(repositoryId, 1_800, DateTimeOffset.UtcNow);
-        run.Fail(rawDiagnostic, DateTimeOffset.UtcNow);
-        MethodInfo? map = typeof(RepositoryProfilingCoordinator).GetMethod(
-            "Map",
-            BindingFlags.NonPublic | BindingFlags.Static);
-        Assert.NotNull(map);
-        var summary = Assert.IsType<ScanRunSummaryDto>(map!.Invoke(null, [run]));
-        using WebApplicationFactory<Program> factory = CreateFactory(summary);
-        const string email = "story42.terminal-disclosure.admin@example.com";
-        await CreateUserWithRoleAsync(factory.Services, email, RoleNames.Administrator);
-        using HttpClient client = CreateClient(factory);
-        await LoginAsync(client, email);
-
-        using HttpResponseMessage response = await client.GetAsync(
-            $"/api/repositories/standalone/{repositoryId}/scan-runs/{run.Id}");
-        string body = await response.Content.ReadAsStringAsync();
-        using JsonDocument document = JsonDocument.Parse(body);
-
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        Assert.Equal(safeMessage, document.RootElement.GetProperty("message").GetString());
         Assert.DoesNotContain("MATCH", body, StringComparison.Ordinal);
         Assert.DoesNotContain("Secret", body, StringComparison.Ordinal);
         Assert.DoesNotContain("C:\\", body, StringComparison.OrdinalIgnoreCase);

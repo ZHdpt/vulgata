@@ -1,0 +1,18 @@
+{
+  "source_commit": "06b3585423a17c896dc9a2b4c3ea4d49228c1719",
+  "observed_at": "2026-09-15T10:29:16.420091Z",
+  "files": [
+    {
+      "original_path": "tests/Vulgata.Tests/RepositoryApiTests.cs",
+      "archive_path": "specs/015-retained-source-access/evidence/history/baseline-tests-before-reconciliation/RepositoryApiTests.cs.txt",
+      "sha256": "fce3c6ca65b5c8fb845af226493fe4195ec05bfee58babf777e13449849d49b4",
+      "git_blob": "e30b0ca01ed8d57eee80c479df54195aa1d97d71"
+    },
+    {
+      "original_path": "tests/Vulgata.Tests/RepositoryManagementTests.cs",
+      "archive_path": "specs/015-retained-source-access/evidence/history/baseline-tests-before-reconciliation/RepositoryManagementTests.cs.txt",
+      "sha256": "24ff9f4d980ff73d13d55ddf3374ee84159fd11bf1c71fad549140cb17adac4a",
+      "git_blob": "a5e21b85272de351771ec1db3e7443b4dfd37bbd"
+    }
+  ]
+}

@@ -1,0 +1,33 @@
+{
+  "id": "13-1/implement/51",
+  "kind": "command",
+  "stage": "implement",
+  "source_commit": "06b3585423a17c896dc9a2b4c3ea4d49228c1719",
+  "observed_at": "2026-09-15T10:41:25.705722Z",
+  "checkpoint_id": "bmad-13-1-implement-20260915T104125Z-e83403",
+  "expected_parent": "06b3585423a17c896dc9a2b4c3ea4d49228c1719",
+  "owned_paths": [
+    "docs/bmad/implementation-artifacts/13-1-retain-exact-repository-source-with-scoped-read-access.md",
+    "specs/015-retained-source-access/evidence/baseline-reconciliation-approval-01.json",
+    "specs/015-retained-source-access/evidence/baseline-reconciliation-checkpoint-01.json",
+    "specs/015-retained-source-access/evidence/baseline-reconciliation-proposal-01.md",
+    "specs/015-retained-source-access/evidence/baseline-reconciliation-verified-01.json",
+    "specs/015-retained-source-access/evidence/baseline-verification-blocker-01.json",
+    "specs/015-retained-source-access/evidence/history/baseline-tests-before-reconciliation/RepositoryApiTests.cs.txt",
+    "specs/015-retained-source-access/evidence/history/baseline-tests-before-reconciliation/RepositoryManagementTests.cs.txt",
+    "specs/015-retained-source-access/evidence/history/baseline-tests-before-reconciliation/manifest.json",
+    "specs/015-retained-source-access/tasks.md",
+    "specs/015-retained-source-access/workflow-state.json",
+    "tests/Vulgata.Tests/RepositoryApiTests.cs",
+    "tests/Vulgata.Tests/RepositoryManagementTests.cs"
+  ],
+  "git_identity": {
+    "branch": "dev",
+    "head": "06b3585423a17c896dc9a2b4c3ea4d49228c1719",
+    "root": "G:/source/repos/vulgata",
+    "common_directory": ".git",
+    "worktree": "G:\\source\\repos\\vulgata"
+  },
+  "observed_status": "M docs/bmad/implementation-artifacts/13-1-retain-exact-repository-source-with-scoped-read-access.md\n M specs/015-retained-source-access/evidence/baseline-verification-blocker-01.json\n M specs/015-retained-source-access/tasks.md\n M specs/015-retained-source-access/workflow-state.json\n M tests/Vulgata.Tests/RepositoryApiTests.cs\n M tests/Vulgata.Tests/RepositoryManagementTests.cs\n?? specs/015-retained-source-access/evidence/baseline-reconciliation-approval-01.json\n?? specs/015-retained-source-access/evidence/baseline-reconciliation-proposal-01.md\n?? specs/015-retained-source-access/evidence/baseline-reconciliation-verified-01.json\n?? specs/015-retained-source-access/evidence/history/baseline-tests-before-reconciliation/",
+  "summary": "Verified approved baseline test maintenance; T023 unblocked."
+}

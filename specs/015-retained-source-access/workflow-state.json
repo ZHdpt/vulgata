@@ -6,10 +6,10 @@
   "stage": "implement",
   "preflight": {
     "branch": "dev",
-    "head": "cd593d281e5d7baba5e79b804ac904eb30cc3140",
-    "git_identity_sha256": "bf802521164e0e1f4e5e44d9fc05e8d06ae189d29b6c9d730bfb206881655cfd",
-    "status_sha256": "5ff3ffbb59031255a0acb039f059eda057760dd172334778f35ff9991f251401",
-    "observed_at": "2026-09-15T09:43:07.531566Z"
+    "head": "06b3585423a17c896dc9a2b4c3ea4d49228c1719",
+    "git_identity_sha256": "08008ff3062730eede1b8e0657b25c6a510f00edd7eec92f85631530aa659674",
+    "status_sha256": "2738a85e00a79ce1a26b8091923f3c11032db5cec5e463b644d181f0f827a9fd",
+    "observed_at": "2026-09-15T10:41:25.705722Z"
   },
   "artifacts": {
     "spec": {
@@ -22,7 +22,7 @@
     },
     "tasks": {
       "path": "specs/015-retained-source-access/tasks.md",
-      "sha256": "169aa5193bbf46da5fd7c439dbcf52d2c9a94619baf3dc6b9451cd1d3c3526e2"
+      "sha256": "501a8d0619d9f052f9cb44b817c01484a0c01306789b14bc295b626849d1e466"
     }
   },
   "gates": {
@@ -61,6 +61,13 @@
       "scope_sha256": "a68d54ba9b28a4d1dd6058c3a010a273f8f8b5e8bf23ad9f6949a145ba00dd50",
       "evidence_path": "specs/015-retained-source-access/evidence/implementation-approval-01.md",
       "decided_at": "2026-09-15T01:39:28.276503Z"
+    },
+    {
+      "decision_id": "13-1/baseline-reconciliation/1",
+      "status": "accepted",
+      "scope_sha256": "a72b34df08cec443afac91e475408f4ee2206dd6511786aaea347ea665a47cd2",
+      "evidence_path": "specs/015-retained-source-access/evidence/baseline-reconciliation-approval-01.json",
+      "decided_at": "2026-09-15T10:29:16.420091Z"
     }
   ],
   "convergence": {
@@ -81,21 +88,21 @@
     "specs/015-retained-source-access/evidence/definition-review-05.json",
     "specs/015-retained-source-access/evidence/implementation-approval-01.md",
     "specs/015-retained-source-access/evidence/runtime-boundary-01.json",
-    "specs/015-retained-source-access/evidence/baseline-verification-blocker-01.json",
-    "specs/015-retained-source-access/evidence/range-checkpoint-01.json",
-    "specs/015-retained-source-access/evidence/authorization-group-verified-01.json",
-    "specs/015-retained-source-access/evidence/authorization-checkpoint-01.json"
+    "specs/015-retained-source-access/evidence/authorization-checkpoint-01.json",
+    "specs/015-retained-source-access/evidence/baseline-reconciliation-approval-01.json",
+    "specs/015-retained-source-access/evidence/baseline-reconciliation-verified-01.json",
+    "specs/015-retained-source-access/evidence/baseline-reconciliation-checkpoint-01.json"
   ],
   "checkpoint": {
-    "checkpoint_id": "bmad-13-1-implement-20260915T094307Z-1730e3",
+    "checkpoint_id": "bmad-13-1-implement-20260915T104125Z-e83403",
     "stage": "implement",
     "commit_sha": null,
     "binding_status": "pending"
   },
   "resume": {
     "stage": "implement",
-    "reason": "T028-T030 independently104/104 verified. Next T031 publication/recovery/concurrency. T023 baseline5-test gate/user reconciliation scope decision remain pending.",
-    "evidence_path": "specs/015-retained-source-access/evidence/authorization-group-verified-01.json"
+    "reason": "Approved baseline reconciliation verified122/122; T023 complete. Next T031 publication/concurrency/recovery. All later gates remain required.",
+    "evidence_path": "specs/015-retained-source-access/evidence/baseline-reconciliation-verified-01.json"
   },
-  "updated_at": "2026-09-15T09:43:07.531566Z"
+  "updated_at": "2026-09-15T10:41:25.705722Z"
 }

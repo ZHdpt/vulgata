@@ -37,7 +37,7 @@ description: "Dependency-ordered tasks for Story 13.1 retained source access"
 - [x] T020 [US1] Add public capture-only RED tests in `tests/Vulgata.Tests/RetainedSource/RetainedSourceManifestTests.cs` for canonical UTF-8 manifest bytes, raw-path order, count/byte sums, object-format/revision agreement, and explicit unsupported entries (FR-004/008/009; SC-003).
 - [x] T021 [US1] Implement/complete `src/dotnet/Vulgata.Infrastructure/Source/RetainedSourceManifestCodec.cs` and store validation for T020 without adding open/reopen assertions; run T020 plus capture surrounding tests to GREEN.
 - [x] T022 [US1] Add public deletion-conflict RED tests in `tests/Vulgata.Tests/RetainedSource/RetainedSourcePostgreSqlTests.cs` for existing Repository deletion returning sanitized Chinese `409` when retained source is referenced (FR-017/018).
-- [ ] T023 [US1] Implement the approved mapping in `src/dotnet/Vulgata.Web/Api/Repositories/RepositoryApiEndpoints.cs` and `src/dotnet/Vulgata.Web/Data/RepositoryManagementCoordinator.cs`; run T022 and surrounding Repository tests to GREEN without DTO/UI/schema.
+- [x] T023 [US1] Implement the approved mapping in `src/dotnet/Vulgata.Web/Api/Repositories/RepositoryApiEndpoints.cs` and `src/dotnet/Vulgata.Web/Data/RepositoryManagementCoordinator.cs`; run T022 and surrounding Repository tests to GREEN without DTO/UI/schema.
 
 ## Phase 3: User Story 2 — Read Retained Source Through a Scoped Grant (P1)
 

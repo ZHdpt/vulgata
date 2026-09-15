@@ -28,7 +28,7 @@
   ],
   "results": {
     "RepositoryApiTests": "13/17;4missing private Map on deliberately decommissioned profiler",
-    "RepositoryManagementTests": "8/9; expected retired UI text 最近扫描时间 absent",
+    "RepositoryManagementTests": "8/9; test expects 最近扫描时间 while unchanged live UI declares 最后扫描时间",
     "LoginLogoutTests": "12/12",
     "RetainedSourceRepositoryDeletionTests": "3/3",
     "RetainedSourcePostgreSqlTests": "4/4",
@@ -37,9 +37,15 @@
   "raw_trx_directory": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results",
   "raw_prefix": "owned-key-",
   "scope_decision": {
-    "status": "pending",
+    "status": "accepted",
     "question": "May root expand scope only to reconcile5 stale baseline tests with accepted decommissioned baseline, preserving prior assertions as historical evidence?",
     "dependent_work": "Legacy test reconciliation only; current Story13.1 source-read work can continue.",
-    "no_waiver": "No test skipped, historical plan resumed or final gate waived."
-  }
+    "no_waiver": "No test skipped, historical plan resumed or final gate waived.",
+    "proposal_path": "specs/015-retained-source-access/evidence/baseline-reconciliation-proposal-01.md",
+    "user_quote": "Approve to remove obsolete    tests",
+    "decision_path": "specs/015-retained-source-access/evidence/baseline-reconciliation-approval-01.json",
+    "decided_at": "2026-09-15T10:29:16.420091Z"
+  },
+  "status": "resolved-by-approved-test-reconciliation",
+  "resolution_evidence": "specs/015-retained-source-access/evidence/baseline-reconciliation-verified-01.json"
 }

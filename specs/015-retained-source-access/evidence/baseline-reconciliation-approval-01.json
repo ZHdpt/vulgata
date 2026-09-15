@@ -1,0 +1,12 @@
+{
+  "id": "13-1/implement/49",
+  "kind": "human approval",
+  "stage": "implement",
+  "source_commit": "06b3585423a17c896dc9a2b4c3ea4d49228c1719",
+  "observed_at": "2026-09-15T10:29:16.420091Z",
+  "user_quote": "Approve to remove obsolete    tests",
+  "scope_sha256": "a72b34df08cec443afac91e475408f4ee2206dd6511786aaea347ea665a47cd2",
+  "proposal_path": "specs/015-retained-source-access/evidence/baseline-reconciliation-proposal-01.md",
+  "scope": "Apply the pending bounded proposal: retire four obsolete private-Map tests with exact archived originals and correct the single stale UI label assertion. No production revival or verification waiver.",
+  "archive_manifest": "specs/015-retained-source-access/evidence/history/baseline-tests-before-reconciliation/manifest.json"
+}

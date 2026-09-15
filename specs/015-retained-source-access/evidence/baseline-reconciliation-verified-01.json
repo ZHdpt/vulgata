@@ -1,0 +1,83 @@
+{
+  "id": "13-1/implement/50",
+  "kind": "test-green",
+  "stage": "implement",
+  "source_commit": "06b3585423a17c896dc9a2b4c3ea4d49228c1719",
+  "observed_at": "2026-09-15T10:41:25.705722Z",
+  "summary": "User-approved bounded test reconciliation verified122/122. Exact originals preserved; four obsolete private-Map tests retired, one label corrected. T023 surrounding gate now satisfied; no production revival or waiver.",
+  "runs": [
+    {
+      "suite": "RepositoryApiTests",
+      "passed": 13,
+      "failed": 0,
+      "exit_code": 0,
+      "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\baseline-reconciled-RepositoryApiTests.trx",
+      "sha256": "8112f4d1a7c82244dc54a1c3955edfc43f956ac5099ff2903f2e413d88d4f419"
+    },
+    {
+      "suite": "RepositoryManagementTests",
+      "passed": 9,
+      "failed": 0,
+      "exit_code": 0,
+      "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\baseline-reconciled-RepositoryManagementTests.trx",
+      "sha256": "180094f01a438f9d81edb215e6da11d3ff1b9ed507535c772ce939c84989fae4"
+    },
+    {
+      "suite": "RetainedSourceRepositoryDeletionTests",
+      "passed": 3,
+      "failed": 0,
+      "exit_code": 0,
+      "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\baseline-reconciled-RetainedSourceRepositoryDeletionTests.trx",
+      "sha256": "f48f9e67408e51d535f8505f60aa38c183508ab113192349898f906f3007e9f3"
+    },
+    {
+      "suite": "UserContextTests",
+      "passed": 6,
+      "failed": 0,
+      "exit_code": 0,
+      "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\baseline-reconciled-UserContextTests.trx",
+      "sha256": "6985741b92ee2ec3f3b360f9afbb78401506f1383855eecd0b3834a26d102fb5"
+    },
+    {
+      "suite": "LoginLogoutTests",
+      "passed": 12,
+      "failed": 0,
+      "exit_code": 0,
+      "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\baseline-reconciled-LoginLogoutTests.trx",
+      "sha256": "6f86c450caaf0e42562c67def6118f0ecae52a58e0bc1a65a167118821d9efd8"
+    },
+    {
+      "suite": "RetainedSourceAuthorizationTests",
+      "passed": 16,
+      "failed": 0,
+      "exit_code": 0,
+      "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\baseline-reconciled-RetainedSourceAuthorizationTests.trx",
+      "sha256": "ef58237718a70a1731e18d20e9f4ac4ec1624b6bf7e838d90a12f90041719aa3"
+    },
+    {
+      "suite": "RetainedSourceReadContextTests",
+      "passed": 24,
+      "failed": 0,
+      "exit_code": 0,
+      "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\baseline-reconciled-RetainedSourceReadContextTests.trx",
+      "sha256": "104fd1e9c9cdf972e5d5150724e86a35a40024efcbc18d734b115aea886e1919"
+    },
+    {
+      "suite": "RetainedSourceRangeReadTests",
+      "passed": 12,
+      "failed": 0,
+      "exit_code": 0,
+      "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\baseline-reconciled-RetainedSourceRangeReadTests.trx",
+      "sha256": "506bbfbb4e101f41577cd6db01a670301a80354bbfe041b587b1ee86626a3e92"
+    },
+    {
+      "suite": "RetainedSourceCaptureTests",
+      "passed": 27,
+      "failed": 0,
+      "exit_code": 0,
+      "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\baseline-reconciled-RetainedSourceCaptureTests.trx",
+      "sha256": "bb24f5af738a3d7044e1c9254f6ed6f825d1e2d618d3377ae4f135effa9b140f"
+    }
+  ],
+  "archive_manifest": "specs/015-retained-source-access/evidence/history/baseline-tests-before-reconciliation/manifest.json"
+}

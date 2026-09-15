@@ -412,3 +412,7 @@ Pending checkpoint bmad-13-1-implement-20260915T082431Z-ae7553 was withheld befo
 ## Live authorization group verified
 
 T028-T030 complete:16authorization+24metadata+12range+27capture+3manifest+4PG+6UserContext+12login tests independently pass. A real anonymous principal carrying an authorized user identifier reproduced replay/open access; the existing Web UserContext adapter now derives IDs only within authenticated identities, preserving its documented contract. Mixed-identity cases prevent borrowing an anonymous auxiliary identifier while preserving valid authenticated identities. Source auth interfaces remain generic, with no HTTP-only requirement. Evidence authorization-group-verified-01.json; checkpoint bmad-13-1-implement-20260915T094307Z-1730e3. Next T031 publication/recovery/concurrency. T023 and baseline scope decision remain pending.
+
+## Approved baseline reconciliation verified
+
+User approved the bounded proposal: “Approve to remove obsolete    tests”. Exact originals were archived before edits. Only four named obsolete private-Map tests were retired and the existing 最后扫描时间 label expectation corrected. Nine current suites independently pass122/122; root verified raw counters/archive hashes in baseline-reconciliation-verified-01.json. T023 is now complete. No production implementation, historical feature, or verification waiver was introduced. Checkpoint bmad-13-1-implement-20260915T104125Z-e83403; next T031 publication/concurrency/recovery.

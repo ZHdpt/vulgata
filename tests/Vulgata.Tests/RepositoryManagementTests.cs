@@ -82,7 +82,7 @@ public sealed class RepositoryManagementTests : IClassFixture<LoginLogoutTests.C
         Assert.Contains("主业务仓库", html, StringComparison.Ordinal);
         Assert.Contains("仓库名称", html, StringComparison.Ordinal);
         Assert.Contains("扫描状态", html, StringComparison.Ordinal);
-        Assert.Contains("最近扫描时间", html, StringComparison.Ordinal);
+        Assert.Contains("最后扫描时间", html, StringComparison.Ordinal);
         Assert.Contains("文档数量", html, StringComparison.Ordinal);
         Assert.Contains("查看", html, StringComparison.Ordinal);
         Assert.Contains("+ 新建仓库", html, StringComparison.Ordinal);
