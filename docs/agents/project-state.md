@@ -44,7 +44,7 @@ runtime workflow:
 | Area | Existing value and limit |
 | --- | --- |
 | Administration/persistence | Reusable Identity, roles, configuration and domain persistence; Identity remains in Web/Data. |
-| Source preparation | Story 13.1 has verified raw-Git retained capture, canonical manifests, and scoped metadata and byte/text reads. Remaining live-denial, durable restart/concurrency qualification and final gates remain pending in the active feature. Legacy disposable leases and prepared pair contracts remain separate. |
+| Source preparation | Story 13.1 has verified raw-Git retained capture, canonical manifests, and scoped metadata and byte/text reads. Live denial is verified; durable restart/concurrency qualification and final gates remain pending in the active feature. Legacy disposable leases and prepared pair contracts remain separate. |
 | CodeGraph/LSP | CodeGraph 1.5 integration is CLI/JSON, not native MCP; tool identity/launch paths are Windows-oriented. JDT protocol/containment mechanisms need the new declared Docker/profile qualification. |
 | Knowledge | Atomic persistence/provenance mechanics exist, but file-level CL/paired Flow semantics are not the new semantic Code Unit/Logical Flow contracts. |
 | Resolution | Finite exact matching is profile-bound; generic inquiry, late-evidence reconciliation and the ordinary production caller are not delivered. |

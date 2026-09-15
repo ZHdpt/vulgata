@@ -1,0 +1,30 @@
+{
+  "id": "13-1/implement/48",
+  "kind": "command",
+  "stage": "implement",
+  "source_commit": "cd593d281e5d7baba5e79b804ac904eb30cc3140",
+  "observed_at": "2026-09-15T09:43:07.531566Z",
+  "checkpoint_id": "bmad-13-1-implement-20260915T094307Z-1730e3",
+  "expected_parent": "cd593d281e5d7baba5e79b804ac904eb30cc3140",
+  "owned_paths": [
+    "docs/agents/project-state.md",
+    "docs/bmad/implementation-artifacts/13-1-retain-exact-repository-source-with-scoped-read-access.md",
+    "specs/015-retained-source-access/evidence/authorization-checkpoint-01.json",
+    "specs/015-retained-source-access/evidence/authorization-group-verified-01.json",
+    "specs/015-retained-source-access/evidence/source-authentication-producer-green-01.json",
+    "specs/015-retained-source-access/evidence/source-authentication-red-01.json",
+    "specs/015-retained-source-access/tasks.md",
+    "specs/015-retained-source-access/workflow-state.json",
+    "src/dotnet/Vulgata.Web/RequestPipeline/UserContext.cs",
+    "tests/Vulgata.Tests/RetainedSource/RetainedSourceAuthorizationTests.cs"
+  ],
+  "git_identity": {
+    "branch": "dev",
+    "head": "cd593d281e5d7baba5e79b804ac904eb30cc3140",
+    "root": "G:/source/repos/vulgata",
+    "common_directory": ".git",
+    "worktree": "G:\\source\\repos\\vulgata"
+  },
+  "observed_status": "M docs/agents/project-state.md\n M docs/bmad/implementation-artifacts/13-1-retain-exact-repository-source-with-scoped-read-access.md\n M specs/015-retained-source-access/tasks.md\n M specs/015-retained-source-access/workflow-state.json\n M src/dotnet/Vulgata.Web/RequestPipeline/UserContext.cs\n?? specs/015-retained-source-access/evidence/authorization-group-verified-01.json\n?? specs/015-retained-source-access/evidence/source-authentication-producer-green-01.json\n?? specs/015-retained-source-access/evidence/source-authentication-red-01.json\n?? tests/Vulgata.Tests/RetainedSource/RetainedSourceAuthorizationTests.cs",
+  "summary": "Verified live source identity/denial group; baseline and later gates remain pending."
+}

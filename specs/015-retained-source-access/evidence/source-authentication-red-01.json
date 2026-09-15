@@ -1,0 +1,17 @@
+{
+  "id": "13-1/implement/45",
+  "kind": "test-red",
+  "stage": "implement",
+  "source_commit": "cd593d281e5d7baba5e79b804ac904eb30cc3140",
+  "observed_at": "2026-09-15T09:27:30.235403Z",
+  "summary": "T028 first13 denial cases characterize GREEN. Added real authorized identifier on unauthenticated principal in fresh scope: expected Denied, actual captureReplay and openSucceeded. No new row was inserted, but source authority was borrowed.",
+  "result": {
+    "passed": 0,
+    "failed": 1,
+    "total": 1,
+    "exit_code": 1
+  },
+  "test_sha256": "1af83703c68d6905388ac8a04a32a04af2e5996e5dbf415a412efd399949d34e",
+  "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\source-anonymous-id-boundary.trx",
+  "constraint": "Existing IUserContext contract requires empty identifier if unauthenticated. Narrow Web adapter correction authorized within current source authentication scope; no HTTP-only coupling or legacy policy redesign."
+}

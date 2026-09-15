@@ -1,0 +1,84 @@
+{
+  "id": "13-1/implement/47",
+  "kind": "test-green",
+  "stage": "implement",
+  "source_commit": "cd593d281e5d7baba5e79b804ac904eb30cc3140",
+  "observed_at": "2026-09-15T09:43:07.531566Z",
+  "summary": "T028-T030 independently104/104 GREEN, including authenticated-identity selection, live revocation/rebinding, unsafe scope/path denials and complete current reads/capture. No baseline waiver or full story completion.",
+  "runs": [
+    {
+      "suite": "auth",
+      "passed": 16,
+      "failed": 0,
+      "exit_code": 0,
+      "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\auth-final-auth.trx",
+      "sha256": "a01ea32714718145ba9c92f5d74373927ee80c99d7b9d2b90049381f2339c361"
+    },
+    {
+      "suite": "metadata",
+      "passed": 24,
+      "failed": 0,
+      "exit_code": 0,
+      "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\auth-final-metadata.trx",
+      "sha256": "c77c17390b32a6304ef53ad75e2cd6b2619063cdedefb629aeed7d823c918bd0"
+    },
+    {
+      "suite": "range",
+      "passed": 12,
+      "failed": 0,
+      "exit_code": 0,
+      "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\auth-final-range.trx",
+      "sha256": "8f419b2c404091cc59263fc25a63c90f63e2dccb1a98e013227d1a022b45968f"
+    },
+    {
+      "suite": "capture",
+      "passed": 27,
+      "failed": 0,
+      "exit_code": 0,
+      "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\auth-final-capture.trx",
+      "sha256": "c8d9c19e605bf43eaeec32ddbbe5e8b4e8efd1ae61342fd61b1b3c3309c6d017"
+    },
+    {
+      "suite": "manifest",
+      "passed": 3,
+      "failed": 0,
+      "exit_code": 0,
+      "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\auth-final-manifest.trx",
+      "sha256": "cf524debe442becb7876b2827bcfe3a7411ef9bc0fbc6921cb78a3f281bf6767"
+    },
+    {
+      "suite": "persistence",
+      "passed": 4,
+      "failed": 0,
+      "exit_code": 0,
+      "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\auth-final-persistence.trx",
+      "sha256": "b0fc1b663b0d988a5b6b79df92a8d4ccb00531434f35b8d62fe409361541e93e"
+    },
+    {
+      "suite": "usercontext",
+      "passed": 6,
+      "failed": 0,
+      "exit_code": 0,
+      "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\auth-final-usercontext.trx",
+      "sha256": "3185ac99efd5533b32accad6d00ef2379b3b303050b4d91f8fcb0df21b99de2c"
+    },
+    {
+      "suite": "login",
+      "passed": 12,
+      "failed": 0,
+      "exit_code": 0,
+      "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\auth-final-login.trx",
+      "sha256": "494c3ef8caa158cc925e52a8e515cf53a62a3808c1070c1202ff69ab228d3a6b"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "src/dotnet/Vulgata.Web/RequestPipeline/UserContext.cs",
+      "sha256": "977a9596e555836ec0cbdd820b63d999f62da9636c780d7178e69a46ed772ea4"
+    },
+    {
+      "path": "tests/Vulgata.Tests/RetainedSource/RetainedSourceAuthorizationTests.cs",
+      "sha256": "9d25b9fd90b9a050f2e099f41b3a0fe08969316edd1adbf33b0b50d84ff2d13a"
+    }
+  ]
+}

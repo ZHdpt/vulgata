@@ -1,0 +1,17 @@
+{
+  "id": "13-1/implement/46",
+  "kind": "test-green",
+  "stage": "implement",
+  "source_commit": "cd593d281e5d7baba5e79b804ac904eb30cc3140",
+  "observed_at": "2026-09-15T09:34:48.820629Z",
+  "summary": "Producer T029 authenticated-identity correction GREEN: source auth14,UserContext6,login12,metadata24,capture27. Identifier selected only within authenticated identities; per-request caching and non-HTTP IUserContext contract preserved.",
+  "artifacts": [
+    {
+      "path": "src/dotnet/Vulgata.Web/RequestPipeline/UserContext.cs",
+      "sha256": "977a9596e555836ec0cbdd820b63d999f62da9636c780d7178e69a46ed772ea4"
+    }
+  ],
+  "raw_directory": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results",
+  "raw_prefix": "producer-source-identity-",
+  "limits": "Independent mixed-identity and complete read/capture verification dispatched; T028-T030 not yet complete."
+}
