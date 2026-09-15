@@ -488,6 +488,383 @@ public sealed class RetainedSourcePersistenceTests
     }
 
     [Fact]
+    public async Task AcquireAsync_AgedUnreferencedSealedObject_RemovesOnlyUnreferencedRevisionAsync()
+    {
+        await using RetainedSourceFixture fixture =
+            await RetainedSourceFixture.CreateAsync();
+        await using RetainedSourceCaptureApplicationFixture appFixture =
+            await RetainedSourceCaptureApplicationFixture.CreateAsync(
+                fixture,
+                standalone: true,
+                configurationOverrides: new Dictionary<string, string?>
+                {
+                    ["SourceStorage:OperationStaleAfterMinutes"] = "1",
+                },
+                configureServices: FailOnPublishNumber(2));
+
+        IRetainedSourceApplication application = appFixture.Scope.ServiceProvider
+            .GetRequiredService<IRetainedSourceApplication>();
+        string permittedRef = await fixture.Repository.RunGitAsync(["symbolic-ref", "HEAD"]);
+        using var testCancellation = new CancellationTokenSource(TimeSpan.FromSeconds(60));
+
+        SourceCaptureResult revisionA = await application.AcquireAsync(
+            fixture.RepositoryId,
+            permittedRef,
+            testCancellation.Token);
+        string revisionAId = await fixture.Repository.ResolveRevisionAsync();
+
+        fixture.Repository.WriteText(
+            "src/retained-source.txt",
+            "revision-b\n");
+        await fixture.Repository.CommitAsync("retained-source revision B");
+        string revisionBId = await fixture.Repository.ResolveRevisionAsync();
+        SourceCaptureResult revisionB = await application.AcquireAsync(
+            fixture.RepositoryId,
+            permittedRef,
+            testCancellation.Token);
+        string[] revisionBObjects = GetSealedObjectPaths(
+            fixture.SourceStorageRoot,
+            fixture.RepositoryId,
+            revisionBId);
+        Assert.Single(revisionBObjects);
+        Directory.SetLastWriteTimeUtc(
+            revisionBObjects[0],
+            DateTime.UtcNow.Subtract(TimeSpan.FromMinutes(5)));
+        Directory.SetLastWriteTimeUtc(
+            GetSingleSealedObjectPath(fixture.SourceStorageRoot, fixture.RepositoryId, revisionAId),
+            DateTime.UtcNow.Subtract(TimeSpan.FromMinutes(5)));
+
+        fixture.Repository.WriteText(
+            "src/retained-source.txt",
+            "revision-c\n");
+        await fixture.Repository.CommitAsync("retained-source revision C");
+        string revisionCId = await fixture.Repository.ResolveRevisionAsync();
+        SourceCaptureResult revisionC = await application.AcquireAsync(
+            fixture.RepositoryId,
+            permittedRef,
+            testCancellation.Token);
+        List<SourceSnapshot> snapshots = await LoadSnapshotsAsync(
+            appFixture,
+            fixture.RepositoryId);
+        int revisionAObjects = CountSealedObjects(
+            fixture.SourceStorageRoot,
+            fixture.RepositoryId,
+            revisionAId);
+        int revisionBObjectsAfterCleanup = CountSealedObjects(
+            fixture.SourceStorageRoot,
+            fixture.RepositoryId,
+            revisionBId);
+        int revisionCObjects = CountSealedObjects(
+            fixture.SourceStorageRoot,
+            fixture.RepositoryId,
+            revisionCId);
+        OpenSourceReadContextResult reopenedA = await application.OpenReadContextAsync(
+            fixture.RepositoryId,
+            revisionAId,
+            new SourceReadGrantRequest(),
+            testCancellation.Token);
+        SourceTextResult sourceA = await reopenedA.Context!.ReadTextAsync(
+            "src/retained-source.txt",
+            0,
+            1_024,
+            testCancellation.Token);
+        _output.WriteLine(
+            $"A={revisionA.Status}/{revisionA.Code}; " +
+            $"B={revisionB.Status}/{revisionB.Code}; " +
+            $"C={revisionC.Status}/{revisionC.Code}; " +
+            $"rows={snapshots.Count}; AObjects={revisionAObjects}; " +
+            $"BObjectsAfterCleanup={revisionBObjectsAfterCleanup}; " +
+            $"CObjects={revisionCObjects}; " +
+            $"reopenA={reopenedA.Status}/{reopenedA.Code}; " +
+            $"readA={sourceA.Status}/{sourceA.Code}");
+        await reopenedA.Context.DisposeAsync();
+
+        Assert.Equal(SourceCaptureStatus.Completed, revisionA.Status);
+        Assert.Equal(SourceCaptureStatus.StorageFailure, revisionB.Status);
+        Assert.Equal("source_storage_unavailable", revisionB.Code);
+        Assert.Equal(SourceCaptureStatus.Completed, revisionC.Status);
+        Assert.Equal(2, snapshots.Count);
+        Assert.Equal(1, revisionAObjects);
+        Assert.Equal(0, revisionBObjectsAfterCleanup);
+        Assert.Equal(1, revisionCObjects);
+        Assert.Equal(SourceReadStatus.Succeeded, reopenedA.Status);
+        Assert.Equal(SourceReadStatus.Succeeded, sourceA.Status);
+        Assert.Equal("retained-source-fixture\n", sourceA.Content);
+    }
+
+    [Fact]
+    public async Task AcquireAsync_YoungerUnreferencedSealedObject_PreservesObjectWithinGraceAsync()
+    {
+        await using RetainedSourceFixture fixture =
+            await RetainedSourceFixture.CreateAsync();
+        await using RetainedSourceCaptureApplicationFixture appFixture =
+            await RetainedSourceCaptureApplicationFixture.CreateAsync(
+                fixture,
+                standalone: true,
+                configurationOverrides: new Dictionary<string, string?>
+                {
+                    ["SourceStorage:OperationStaleAfterMinutes"] = "1",
+                },
+                configureServices: FailOnPublishNumber(1));
+
+        IRetainedSourceApplication application = appFixture.Scope.ServiceProvider
+            .GetRequiredService<IRetainedSourceApplication>();
+        string permittedRef = await fixture.Repository.RunGitAsync(["symbolic-ref", "HEAD"]);
+        using var testCancellation = new CancellationTokenSource(TimeSpan.FromSeconds(60));
+
+        SourceCaptureResult revisionB = await application.AcquireAsync(
+            fixture.RepositoryId,
+            permittedRef,
+            testCancellation.Token);
+        string revisionBId = await fixture.Repository.ResolveRevisionAsync();
+        string revisionBObject = GetSingleSealedObjectPath(
+            fixture.SourceStorageRoot,
+            fixture.RepositoryId,
+            revisionBId);
+        Directory.SetLastWriteTimeUtc(
+            revisionBObject,
+            DateTime.UtcNow.Subtract(TimeSpan.FromSeconds(5)));
+
+        fixture.Repository.WriteText(
+            "src/retained-source.txt",
+            "revision-c\n");
+        await fixture.Repository.CommitAsync("retained-source revision C");
+        string revisionCId = await fixture.Repository.ResolveRevisionAsync();
+        SourceCaptureResult revisionC = await application.AcquireAsync(
+            fixture.RepositoryId,
+            permittedRef,
+            testCancellation.Token);
+        List<SourceSnapshot> snapshots = await LoadSnapshotsAsync(
+            appFixture,
+            fixture.RepositoryId);
+        int revisionBObjects = CountSealedObjects(
+            fixture.SourceStorageRoot,
+            fixture.RepositoryId,
+            revisionBId);
+        int revisionCObjects = CountSealedObjects(
+            fixture.SourceStorageRoot,
+            fixture.RepositoryId,
+            revisionCId);
+        _output.WriteLine(
+            $"B={revisionB.Status}/{revisionB.Code}; C={revisionC.Status}/{revisionC.Code}; " +
+            $"rows={snapshots.Count}; BObjectsWithinGrace={revisionBObjects}; " +
+            $"CObjects={revisionCObjects}");
+
+        Assert.Equal(SourceCaptureStatus.StorageFailure, revisionB.Status);
+        Assert.Equal(SourceCaptureStatus.Completed, revisionC.Status);
+        Assert.Equal(1, snapshots.Count);
+        Assert.Equal(1, revisionBObjects);
+        Assert.Equal(1, revisionCObjects);
+    }
+
+    [Fact]
+    public async Task AcquireAsync_AgedMalformedManifestObject_PreservesUnknownOwnedStateAsync()
+    {
+        await using RetainedSourceFixture fixture =
+            await RetainedSourceFixture.CreateAsync();
+        await using RetainedSourceCaptureApplicationFixture appFixture =
+            await RetainedSourceCaptureApplicationFixture.CreateAsync(
+                fixture,
+                standalone: true,
+                configurationOverrides: new Dictionary<string, string?>
+                {
+                    ["SourceStorage:OperationStaleAfterMinutes"] = "1",
+                });
+
+        IRetainedSourceApplication application = appFixture.Scope.ServiceProvider
+            .GetRequiredService<IRetainedSourceApplication>();
+        string permittedRef = await fixture.Repository.RunGitAsync(["symbolic-ref", "HEAD"]);
+        using var testCancellation = new CancellationTokenSource(TimeSpan.FromSeconds(60));
+        SourceCaptureResult revisionA = await application.AcquireAsync(
+            fixture.RepositoryId,
+            permittedRef,
+            testCancellation.Token);
+        string revisionAId = await fixture.Repository.ResolveRevisionAsync();
+
+        string unknownRevision = new('a', 40);
+        string unknownManifest = new('b', 64);
+        string unknownObject = Path.Combine(
+            fixture.SourceStorageRoot,
+            "snapshots",
+            fixture.RepositoryId.ToString("N"),
+            unknownRevision,
+            unknownManifest);
+        Directory.CreateDirectory(unknownObject);
+        File.WriteAllText(Path.Combine(unknownObject, "manifest.json"), "{ malformed");
+        Directory.SetLastWriteTimeUtc(
+            unknownObject,
+            DateTime.UtcNow.Subtract(TimeSpan.FromMinutes(5)));
+
+        fixture.Repository.WriteText(
+            "src/retained-source.txt",
+            "revision-c\n");
+        await fixture.Repository.CommitAsync("retained-source revision C");
+        string revisionCId = await fixture.Repository.ResolveRevisionAsync();
+        SourceCaptureResult revisionC = await application.AcquireAsync(
+            fixture.RepositoryId,
+            permittedRef,
+            testCancellation.Token);
+        List<SourceSnapshot> snapshots = await LoadSnapshotsAsync(
+            appFixture,
+            fixture.RepositoryId);
+        int revisionAObjects = CountSealedObjects(
+            fixture.SourceStorageRoot,
+            fixture.RepositoryId,
+            revisionAId);
+        int revisionCObjects = CountSealedObjects(
+            fixture.SourceStorageRoot,
+            fixture.RepositoryId,
+            revisionCId);
+        _output.WriteLine(
+            $"A={revisionA.Status}/{revisionA.Code}; C={revisionC.Status}/{revisionC.Code}; " +
+            $"rows={snapshots.Count}; AObjects={revisionAObjects}; " +
+            $"CObjects={revisionCObjects}; unknownExists={Directory.Exists(unknownObject)}; " +
+            $"unknownManifestExists={File.Exists(Path.Combine(unknownObject, "manifest.json"))}");
+
+        Assert.Equal(SourceCaptureStatus.Completed, revisionA.Status);
+        Assert.Equal(SourceCaptureStatus.Completed, revisionC.Status);
+        Assert.Equal(2, snapshots.Count);
+        Assert.Equal(1, revisionAObjects);
+        Assert.Equal(1, revisionCObjects);
+        Assert.True(Directory.Exists(unknownObject));
+        Assert.True(File.Exists(Path.Combine(unknownObject, "manifest.json")));
+    }
+
+    [Fact]
+    public async Task AcquireAsync_AgedSealedObjectWithBusyIdentityLock_PreservesUntilLockReleasedAsync()
+    {
+        await using RetainedSourceFixture fixture =
+            await RetainedSourceFixture.CreateAsync();
+        await using RetainedSourceCaptureApplicationFixture appFixture =
+            await RetainedSourceCaptureApplicationFixture.CreateAsync(
+                fixture,
+                standalone: true,
+                configurationOverrides: new Dictionary<string, string?>
+                {
+                    ["SourceStorage:OperationStaleAfterMinutes"] = "1",
+                });
+        IRetainedSourceApplication application = appFixture.Scope.ServiceProvider
+            .GetRequiredService<IRetainedSourceApplication>();
+        string permittedRef = await fixture.Repository.RunGitAsync(["symbolic-ref", "HEAD"]);
+        using var testCancellation = new CancellationTokenSource(TimeSpan.FromSeconds(60));
+        SourceCaptureResult revisionA = await application.AcquireAsync(
+            fixture.RepositoryId,
+            permittedRef,
+            testCancellation.Token);
+
+        fixture.Repository.WriteText(
+            "src/retained-source.txt",
+            "revision-b\n");
+        await fixture.Repository.CommitAsync("retained-source revision B");
+        string revisionBId = await fixture.Repository.ResolveRevisionAsync();
+        string markerPath = RetainedSourceOwnedPaths.ResolveChild(
+            fixture.RootPath,
+            "busy-child-ready.marker");
+        ProcessStartInfo startInfo = RetainedSourceSeparateProcessRunner.CreateStartInfo(
+            ResolveRepositoryRoot());
+        startInfo.Environment[RetainedSourceSeparateProcessChild.ConnectionVariable] =
+            appFixture.Database.ConnectionString;
+        startInfo.Environment[RetainedSourceSeparateProcessChild.StorageRootVariable] =
+            fixture.SourceStorageRoot;
+        startInfo.Environment[RetainedSourceSeparateProcessChild.UserVariable] =
+            appFixture.UserId;
+        startInfo.Environment[RetainedSourceSeparateProcessChild.RepositoryVariable] =
+            fixture.RepositoryId.ToString("D");
+        startInfo.Environment[RetainedSourceSeparateProcessChild.RefVariable] = permittedRef;
+        startInfo.Environment[RetainedSourceSeparateProcessChild.ReadyMarkerVariable] =
+            markerPath;
+        startInfo.Environment[RetainedSourceSeparateProcessChild.StaleMinutesVariable] = "1";
+
+        using var child = new Process { StartInfo = startInfo };
+        Assert.True(child.Start());
+        Task<string> childOutput = child.StandardOutput.ReadToEndAsync();
+        Task<string> childError = child.StandardError.ReadToEndAsync();
+        try
+        {
+            await WaitForFileAsync(markerPath, testCancellation.Token);
+            int markerProcessId = int.Parse(File.ReadAllText(markerPath));
+            using Process testHost = Process.GetProcessById(markerProcessId);
+            DateTime testHostStartTime = testHost.StartTime;
+            string revisionBObject = GetSingleSealedObjectPath(
+                fixture.SourceStorageRoot,
+                fixture.RepositoryId,
+                revisionBId);
+            Directory.SetLastWriteTimeUtc(
+                revisionBObject,
+                DateTime.UtcNow.Subtract(TimeSpan.FromMinutes(5)));
+            string lockPath = Path.Combine(
+                fixture.SourceStorageRoot,
+                ".locks",
+                $"{fixture.RepositoryId:N}-{revisionBId}.lock");
+            Assert.True(File.Exists(lockPath));
+
+            fixture.Repository.WriteText(
+                "src/retained-source.txt",
+                "revision-c\n");
+            await fixture.Repository.CommitAsync("retained-source revision C");
+            string revisionCId = await fixture.Repository.ResolveRevisionAsync();
+            SourceCaptureResult revisionC = await application.AcquireAsync(
+                fixture.RepositoryId,
+                permittedRef,
+                testCancellation.Token);
+            int revisionBObjectsWhileBusy = CountSealedObjects(
+                fixture.SourceStorageRoot,
+                fixture.RepositoryId,
+                revisionBId);
+
+            Assert.False(child.HasExited);
+            Assert.Equal(SourceCaptureStatus.Completed, revisionC.Status);
+            Assert.Equal(1, revisionBObjectsWhileBusy);
+
+            child.Kill(entireProcessTree: true);
+            await child.WaitForExitAsync(testCancellation.Token);
+            Assert.NotEqual(0, child.ExitCode);
+            await WaitForProcessExitAsync(testHost, testHostStartTime, testCancellation.Token);
+
+            SourceCaptureResult replayC = await application.AcquireAsync(
+                fixture.RepositoryId,
+                permittedRef,
+                testCancellation.Token);
+            List<SourceSnapshot> snapshots = await LoadSnapshotsAsync(
+                appFixture,
+                fixture.RepositoryId);
+            int revisionBObjectsAfterRelease = CountSealedObjects(
+                fixture.SourceStorageRoot,
+                fixture.RepositoryId,
+                revisionBId);
+            int revisionCObjects = CountSealedObjects(
+                fixture.SourceStorageRoot,
+                fixture.RepositoryId,
+                revisionCId);
+            _output.WriteLine(
+                $"A={revisionA.Status}/{revisionA.Code}; C={revisionC.Status}/{revisionC.Code}; " +
+                $"replayC={replayC.Status}/{replayC.Code}; " +
+                $"BObjectsWhileBusy={revisionBObjectsWhileBusy}; " +
+                $"BObjectsAfterRelease={revisionBObjectsAfterRelease}; " +
+                $"CObjects={revisionCObjects}; rows={snapshots.Count}; " +
+                $"childExit={child.ExitCode}");
+
+            Assert.Equal(SourceCaptureStatus.Completed, revisionA.Status);
+            Assert.Equal(SourceCaptureStatus.Completed, revisionC.Status);
+            Assert.Equal(SourceCaptureStatus.Replay, replayC.Status);
+            Assert.Equal(2, snapshots.Count);
+            Assert.Equal(0, revisionBObjectsAfterRelease);
+            Assert.Equal(1, revisionCObjects);
+        }
+        finally
+        {
+            if (!child.HasExited)
+            {
+                child.Kill(entireProcessTree: true);
+                await child.WaitForExitAsync(CancellationToken.None);
+            }
+
+            _ = await childOutput;
+            _ = await childError;
+        }
+    }
+
+    [Fact]
     public async Task AcquireAsync_DifferentRepositories_ConcurrentPublicationReturnsCompletedAndOneRowEachAsync()
     {
         await using RetainedSourceFixture firstSource =
@@ -590,6 +967,27 @@ public sealed class RetainedSourcePersistenceTests
             : 0;
     }
 
+    private static string[] GetSealedObjectPaths(
+        string sourceStorageRoot,
+        Guid repositoryId,
+        string profiledRevision)
+    {
+        string identityRoot = Path.Combine(
+            sourceStorageRoot,
+            "snapshots",
+            repositoryId.ToString("N"),
+            profiledRevision);
+        return Directory.Exists(identityRoot)
+            ? Directory.GetDirectories(identityRoot)
+            : [];
+    }
+
+    private static string GetSingleSealedObjectPath(
+        string sourceStorageRoot,
+        Guid repositoryId,
+        string profiledRevision) =>
+        Assert.Single(GetSealedObjectPaths(sourceStorageRoot, repositoryId, profiledRevision));
+
     private static async Task WaitForFileAsync(
         string path,
         CancellationToken cancellationToken)
@@ -646,6 +1044,9 @@ public sealed class RetainedSourcePersistenceTests
     }
 
     private static Action<IServiceCollection> FailOnceBeforePublish()
+        => FailOnPublishNumber(1);
+
+    private static Action<IServiceCollection> FailOnPublishNumber(int failureNumber)
     {
         return services =>
         {
@@ -653,8 +1054,9 @@ public sealed class RetainedSourcePersistenceTests
                 candidate.ServiceType == typeof(IRetainedSourceRepository));
             services.Remove(descriptor);
             services.AddScoped<IRetainedSourceRepository>(serviceProvider =>
-                new FailOnceRetainedSourceRepository(
-                    ResolveRepository(serviceProvider, descriptor)));
+                new FailAtPublishNumberRetainedSourceRepository(
+                    ResolveRepository(serviceProvider, descriptor),
+                    failureNumber));
         };
     }
 
@@ -671,10 +1073,11 @@ public sealed class RetainedSourcePersistenceTests
         return (IRetainedSourceRepository)implementation;
     }
 
-    private sealed class FailOnceRetainedSourceRepository(
-        IRetainedSourceRepository inner) : IRetainedSourceRepository
+    private sealed class FailAtPublishNumberRetainedSourceRepository(
+        IRetainedSourceRepository inner,
+        int failureNumber) : IRetainedSourceRepository
     {
-        private int _remainingFailures = 1;
+        private int _publishCount;
 
         public Task<bool> HasForRepositoryAsync(
             Guid repositoryId,
@@ -691,7 +1094,7 @@ public sealed class RetainedSourcePersistenceTests
             SourceSnapshot sourceSnapshot,
             CancellationToken cancellationToken = default)
         {
-            if (Interlocked.Exchange(ref _remainingFailures, 0) == 1)
+            if (Interlocked.Increment(ref _publishCount) == failureNumber)
             {
                 throw new InvalidOperationException("Injected pre-row publication failure.");
             }

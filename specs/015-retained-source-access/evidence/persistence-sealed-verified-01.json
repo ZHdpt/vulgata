@@ -1,0 +1,47 @@
+{
+  "id": "13-1/implement/68",
+  "kind": "test-green",
+  "stage": "implement",
+  "source_commit": "104847ba0419fcb913b52af1441c8e903994f47b",
+  "observed_at": "2026-09-15T12:36:25.051331Z",
+  "summary": "Sealed cleanup independently63/63GREEN at corrected fixture expectation; A/C completed retained and Aread succeeds, unreferenced staleB removed. Busy-lock, grace and unknown-object adversaries still pending before checkpoint.",
+  "runs": [
+    {
+      "suite": "persistence",
+      "passed": 8,
+      "failed": 0,
+      "exit_code": 0,
+      "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\independent-sealed-persistence.trx",
+      "sha256": "42f9b675adbfafdcecd96f5196f2d826b2600309e825910b83f990354a0e996b"
+    },
+    {
+      "suite": "capture",
+      "passed": 27,
+      "failed": 0,
+      "exit_code": 0,
+      "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\independent-sealed-capture.trx",
+      "sha256": "e7d92ad7970dc5f7c861d8968faffbeab5961a426872addec998aa626fafaf98"
+    },
+    {
+      "suite": "postgresql",
+      "passed": 4,
+      "failed": 0,
+      "exit_code": 0,
+      "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\independent-sealed-postgresql.trx",
+      "sha256": "c38244b456a69a95cb854f7e2ab492ef669833c63dd0d3cf2978427b9f931fe0"
+    },
+    {
+      "suite": "metadata",
+      "passed": 24,
+      "failed": 0,
+      "exit_code": 0,
+      "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\independent-sealed-metadata.trx",
+      "sha256": "c0a5b0307c21136ad0504a65b337dca7d6a0a1dc255823b95f23fd6ab958a4ae"
+    }
+  ],
+  "test_sha256": "aa0be5e71546a69ded42327342270914315f8930ba9fb4dbdeefd0a22c9a927b",
+  "source_hashes": {
+    "store": "20b8456f98d280ee8e468faf7d076549f980790c97ddb9fcf20d9a1323196600",
+    "capture": "db11ce06f0e183fbc02aa9765f2296b477370ffa45ab6f3949a15c4dc2a1ea8c"
+  }
+}

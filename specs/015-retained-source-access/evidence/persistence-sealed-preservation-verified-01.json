@@ -1,0 +1,48 @@
+{
+  "id": "13-1/implement/69",
+  "kind": "test-green",
+  "stage": "implement",
+  "source_commit": "104847ba0419fcb913b52af1441c8e903994f47b",
+  "observed_at": "2026-09-15T12:46:19.846576Z",
+  "summary": "Three new preservation characterizations GREEN plus full persistence11/11: busy same-identity child lock skips cleanup until exit, below-grace orphan preserved, unknown malformed manifest preserved. Production unchanged since independent63/63 evidence. Complete sealed cleanup sub-group; T031/T032 remain partial for remaining identity/conflict/reader lifecycle and root mapping.",
+  "files": {
+    "src/dotnet/Vulgata.Infrastructure/Source/DurableRetainedSourceStore.cs": "20b8456f98d280ee8e468faf7d076549f980790c97ddb9fcf20d9a1323196600",
+    "src/dotnet/Vulgata.Infrastructure/Source/RetainedSourceCaptureService.cs": "db11ce06f0e183fbc02aa9765f2296b477370ffa45ab6f3949a15c4dc2a1ea8c",
+    "tests/Vulgata.Tests/RetainedSource/RetainedSourcePersistenceTests.cs": "521005382e95eb292b2b5e3c77447ca6255a728774bde8c0b938f9b72fecab9e"
+  },
+  "runs": [
+    {
+      "suite": "sealed-preservation-grace",
+      "passed": 1,
+      "failed": 0,
+      "exit_code": 0,
+      "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\sealed-preservation-grace.trx",
+      "sha256": "8758802639344841f03ae5bf609b32ebb193014d0b3c73b57009e622bf01c6bc"
+    },
+    {
+      "suite": "sealed-preservation-unknown",
+      "passed": 1,
+      "failed": 0,
+      "exit_code": 0,
+      "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\sealed-preservation-unknown.trx",
+      "sha256": "12ca149da36c96198ebd1947beaad0b137fd4a57c0e6af734f5d9024cd05db03"
+    },
+    {
+      "suite": "sealed-preservation-lock",
+      "passed": 1,
+      "failed": 0,
+      "exit_code": 0,
+      "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\sealed-preservation-lock.trx",
+      "sha256": "f6ea0037cf98bcf7112b57b58a810fac6fcfc7decbcbd14db871fcc8410e0d52"
+    },
+    {
+      "suite": "sealed-preservation-persistence-final",
+      "passed": 11,
+      "failed": 0,
+      "exit_code": 0,
+      "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\sealed-preservation-persistence-final.trx",
+      "sha256": "e0da8efd2e689647c134407275ce0c49325c0e44dfb97f4f26a04cbf853f7749"
+    }
+  ],
+  "surrounding_evidence": "specs/015-retained-source-access/evidence/persistence-sealed-verified-01.json"
+}

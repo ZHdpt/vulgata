@@ -1,4 +1,5 @@
 using System.Security.Cryptography;
+using Vulgata.Core.DomainServices;
 using Vulgata.Core.Entities;
 
 namespace Vulgata.Infrastructure.Source;
@@ -255,6 +256,216 @@ internal sealed class DurableRetainedSourceStore(RetainedSourceCapturePolicy pol
         {
         }
     }
+
+    internal async Task TryCleanupStaleSealedObjectsAsync(
+        Guid repositoryId,
+        IRetainedSourceRepository snapshots,
+        TimeProvider timeProvider,
+        long startedTimestamp,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            string snapshotsRoot = ResolveContained(policy.RootPath, "snapshots");
+            string repositoryRoot = ResolveContained(snapshotsRoot, repositoryId.ToString("N"));
+            if (!IsRegularDirectory(snapshotsRoot) || !IsRegularDirectory(repositoryRoot))
+            {
+                return;
+            }
+
+            DateTime staleBefore = timeProvider.GetUtcNow().UtcDateTime - policy.OperationStaleAfter;
+            foreach (string revisionRoot in Directory.EnumerateDirectories(repositoryRoot))
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                ThrowIfCaptureDeadlineExceeded(timeProvider, startedTimestamp);
+                var revisionDirectory = new DirectoryInfo(revisionRoot);
+                string profiledRevision = revisionDirectory.Name;
+                if (!IsRegularDirectory(revisionRoot) ||
+                    !IsCanonicalLowerHex(profiledRevision, 40, 64))
+                {
+                    continue;
+                }
+
+                foreach (string objectRoot in Directory.EnumerateDirectories(revisionRoot))
+                {
+                    await TryCleanupStaleSealedObjectAsync(
+                        repositoryId,
+                        profiledRevision,
+                        objectRoot,
+                        staleBefore,
+                        snapshots,
+                        timeProvider,
+                        startedTimestamp,
+                        cancellationToken);
+                }
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (TimeoutException)
+        {
+            throw;
+        }
+        catch
+        {
+        }
+    }
+
+    private async Task TryCleanupStaleSealedObjectAsync(
+        Guid repositoryId,
+        string profiledRevision,
+        string objectRoot,
+        DateTime staleBefore,
+        IRetainedSourceRepository snapshots,
+        TimeProvider timeProvider,
+        long startedTimestamp,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            var objectDirectory = new DirectoryInfo(objectRoot);
+            string manifestSha256 = objectDirectory.Name;
+            if (!IsCanonicalLowerHex(manifestSha256, 64) ||
+                !await IsOwnedStaleSealedObjectAsync(
+                    objectDirectory,
+                    repositoryId,
+                    profiledRevision,
+                    manifestSha256,
+                    staleBefore,
+                    cancellationToken))
+            {
+                return;
+            }
+
+            cancellationToken.ThrowIfCancellationRequested();
+            ThrowIfCaptureDeadlineExceeded(timeProvider, startedTimestamp);
+            await using FileStream? identityLock = TryAcquireIdentityLock(
+                repositoryId,
+                profiledRevision);
+            if (identityLock is null)
+            {
+                return;
+            }
+
+            SourceSnapshot? completed = await snapshots.GetAsync(
+                repositoryId,
+                profiledRevision,
+                cancellationToken);
+            if (completed is not null ||
+                !await IsOwnedStaleSealedObjectAsync(
+                    objectDirectory,
+                    repositoryId,
+                    profiledRevision,
+                    manifestSha256,
+                    staleBefore,
+                    cancellationToken))
+            {
+                return;
+            }
+
+            cancellationToken.ThrowIfCancellationRequested();
+            ThrowIfCaptureDeadlineExceeded(timeProvider, startedTimestamp);
+            TryDeleteOwnedOperation(objectDirectory.FullName);
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (TimeoutException)
+        {
+            throw;
+        }
+        catch
+        {
+        }
+    }
+
+    private async Task<bool> IsOwnedStaleSealedObjectAsync(
+        DirectoryInfo objectDirectory,
+        Guid repositoryId,
+        string profiledRevision,
+        string manifestSha256,
+        DateTime staleBefore,
+        CancellationToken cancellationToken)
+    {
+        objectDirectory.Refresh();
+        if (!objectDirectory.Exists ||
+            objectDirectory.Attributes.HasFlag(FileAttributes.ReparsePoint) ||
+            objectDirectory.LastWriteTimeUtc > staleBefore)
+        {
+            return false;
+        }
+
+        string manifestPath = ResolveContained(objectDirectory.FullName, "manifest.json");
+        if (!File.Exists(manifestPath) ||
+            File.GetAttributes(manifestPath).HasFlag(FileAttributes.ReparsePoint) ||
+            !await HasExpectedHashAsync(
+                manifestPath,
+                manifestSha256,
+                expectedLength: null,
+                cancellationToken))
+        {
+            return false;
+        }
+
+        await using var manifestStream = new FileStream(
+            manifestPath,
+            FileMode.Open,
+            FileAccess.Read,
+            FileShare.Read,
+            policy.VerificationBufferBytes,
+            FileOptions.Asynchronous | FileOptions.SequentialScan);
+        RetainedSourceManifestDocument manifest = await RetainedSourceManifestCodec.ParseAsync(
+            manifestStream,
+            cancellationToken);
+        string expectedObjectFormat = profiledRevision.Length == 40 ? "sha1" : "sha256";
+        return manifest.RepositoryId == repositoryId &&
+            StringComparer.Ordinal.Equals(manifest.ProfiledRevision, profiledRevision) &&
+            StringComparer.Ordinal.Equals(manifest.GitObjectFormat, expectedObjectFormat);
+    }
+
+    private FileStream? TryAcquireIdentityLock(Guid repositoryId, string profiledRevision)
+    {
+        string locksRoot = ResolveContained(policy.RootPath, ".locks");
+        Directory.CreateDirectory(locksRoot);
+        string lockPath = ResolveContained(
+            locksRoot,
+            $"{repositoryId:N}-{profiledRevision}.lock");
+        try
+        {
+            return new FileStream(
+                lockPath,
+                FileMode.OpenOrCreate,
+                FileAccess.ReadWrite,
+                FileShare.None,
+                1,
+                FileOptions.Asynchronous);
+        }
+        catch (IOException)
+        {
+            return null;
+        }
+    }
+
+    private void ThrowIfCaptureDeadlineExceeded(
+        TimeProvider timeProvider,
+        long startedTimestamp)
+    {
+        if (timeProvider.GetElapsedTime(startedTimestamp) >= policy.CaptureDeadline)
+        {
+            throw new TimeoutException();
+        }
+    }
+
+    private static bool IsRegularDirectory(string path) =>
+        Directory.Exists(path) &&
+        !File.GetAttributes(path).HasFlag(FileAttributes.ReparsePoint);
+
+    private static bool IsCanonicalLowerHex(string value, params int[] supportedLengths) =>
+        supportedLengths.Contains(value.Length) &&
+        value.All(static character => character is >= '0' and <= '9' or >= 'a' and <= 'f');
 
     private void TryCleanupStaleOperation(
         string operationsRoot,

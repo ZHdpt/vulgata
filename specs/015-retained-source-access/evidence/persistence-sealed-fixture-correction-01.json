@@ -1,0 +1,18 @@
+{
+  "id": "13-1/implement/67",
+  "kind": "failure",
+  "stage": "implement",
+  "source_commit": "104847ba0419fcb913b52af1441c8e903994f47b",
+  "observed_at": "2026-09-15T12:25:16.875978Z",
+  "classification": "test-fixture-assertion-defect",
+  "summary": "Producer reaches intended A1/B0/C1 and two rows; retained A opens/reads. Downstream assertion expects revision-a text although A was captured from original retained-source-fixture bytes. Same author corrects expected initial bytes only. Original Bcleanup expected0/actual1 RED remains valid; its assertion is unchanged. No production correction for wrong fixture expectation.",
+  "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\producer-sealed-focused.trx",
+  "trx_sha256": "c44cd65777494df63f91d4470dcd0dc14780c5bc4485dbd489317d9bce3eaafe",
+  "passed": 0,
+  "failed": 1,
+  "exit_code": 1,
+  "source_hashes": {
+    "store": "20b8456f98d280ee8e468faf7d076549f980790c97ddb9fcf20d9a1323196600",
+    "capture": "db11ce06f0e183fbc02aa9765f2296b477370ffa45ab6f3949a15c4dc2a1ea8c"
+  }
+}

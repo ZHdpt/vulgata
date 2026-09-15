@@ -1,0 +1,31 @@
+{
+  "id": "13-1/implement/70",
+  "kind": "command",
+  "stage": "implement",
+  "source_commit": "104847ba0419fcb913b52af1441c8e903994f47b",
+  "observed_at": "2026-09-15T12:46:19.846576Z",
+  "checkpoint_id": "bmad-13-1-implement-20260915T124619Z-334d9a",
+  "expected_parent": "104847ba0419fcb913b52af1441c8e903994f47b",
+  "owned_paths": [
+    "docs/bmad/implementation-artifacts/13-1-retain-exact-repository-source-with-scoped-read-access.md",
+    "specs/015-retained-source-access/evidence/persistence-sealed-checkpoint-01.json",
+    "specs/015-retained-source-access/evidence/persistence-sealed-cleanup-red-01.json",
+    "specs/015-retained-source-access/evidence/persistence-sealed-fixture-correction-01.json",
+    "specs/015-retained-source-access/evidence/persistence-sealed-preservation-verified-01.json",
+    "specs/015-retained-source-access/evidence/persistence-sealed-verified-01.json",
+    "specs/015-retained-source-access/workflow-state.json",
+    "src/dotnet/Vulgata.Infrastructure/Source/DurableRetainedSourceStore.cs",
+    "src/dotnet/Vulgata.Infrastructure/Source/RetainedSourceCaptureService.cs",
+    "tests/Vulgata.Tests/RetainedSource/RetainedSourcePersistenceTests.cs"
+  ],
+  "git_identity": {
+    "branch": "dev",
+    "head": "104847ba0419fcb913b52af1441c8e903994f47b",
+    "root": "G:/source/repos/vulgata",
+    "common_directory": ".git",
+    "worktree": "G:\\source\\repos\\vulgata"
+  },
+  "observed_status": " M docs/bmad/implementation-artifacts/13-1-retain-exact-repository-source-with-scoped-read-access.md\n M specs/015-retained-source-access/workflow-state.json\n M src/dotnet/Vulgata.Infrastructure/Source/DurableRetainedSourceStore.cs\n M src/dotnet/Vulgata.Infrastructure/Source/RetainedSourceCaptureService.cs\n M tests/Vulgata.Tests/RetainedSource/RetainedSourcePersistenceTests.cs\n?? specs/015-retained-source-access/evidence/persistence-sealed-cleanup-red-01.json\n?? specs/015-retained-source-access/evidence/persistence-sealed-fixture-correction-01.json\n?? specs/015-retained-source-access/evidence/persistence-sealed-preservation-verified-01.json\n?? specs/015-retained-source-access/evidence/persistence-sealed-verified-01.json\n",
+  "observed_index_paths": [],
+  "summary": "Verified sealed cleanup sub-group; T031/T032 and all later gates remain pending."
+}

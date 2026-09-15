@@ -50,6 +50,12 @@ internal sealed class RetainedSourceCaptureService(
             operationToken.ThrowIfCancellationRequested();
             ThrowIfDeadlineExceeded(startedTimestamp);
             store.TryCleanupStaleOperations(timeProvider.GetUtcNow());
+            await store.TryCleanupStaleSealedObjectsAsync(
+                repositoryId,
+                snapshots,
+                timeProvider,
+                startedTimestamp,
+                operationToken);
             operationLease = store.CreateOperation();
             operationRoot = operationLease.OperationRoot;
             GitCommittedObjectResult acquired = await git.CaptureAsync(

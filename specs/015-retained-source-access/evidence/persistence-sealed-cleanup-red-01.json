@@ -1,0 +1,15 @@
+{
+  "id": "13-1/implement/66",
+  "kind": "test-red",
+  "stage": "implement",
+  "source_commit": "104847ba0419fcb913b52af1441c8e903994f47b",
+  "observed_at": "2026-09-15T12:20:46.630572Z",
+  "summary": "Public real revisionsA/B/C: ACompleted, injected Bprepublication failure/no row, CCompleted. A/C rows2; sealedA1/B1/C1 after agingB; expected abandonedB0. CompletedA still opens/reads. Missing stale unreferenced sealed cleanup, not a canonical-pruning failure.",
+  "test_sha256": "a8192cb7ef7f937e40a7a478a3422f6c868863e52fa4d933239416a191521eb9",
+  "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\persistence-sealed-cleanup-initial.trx",
+  "trx_sha256": "7a1e297de21ae3eda18b10e4215d2cd36f2dbfd26438de2ebd730e413cec2646",
+  "passed": 0,
+  "failed": 1,
+  "exit_code": 1,
+  "correction_boundary": "Internal requested-Repository cleanup only, exact publication identity lock plus fresh row recheck and stale/owned-manifest validation; never prune completed source."
+}

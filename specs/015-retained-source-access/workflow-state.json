@@ -6,10 +6,10 @@
   "stage": "implement",
   "preflight": {
     "branch": "dev",
-    "head": "4014e953afe0b06237c62e5cf46eda498981abd7",
-    "git_identity_sha256": "79481acc9375f4ad4d4c57f206415b25a78126b5bcb1586f92f594002c293d75",
-    "status_sha256": "df7faa572614e5edf222ade2bce3ff55776d10e0ab76f8e804ebbc9ae1c39419",
-    "observed_at": "2026-09-15T12:14:47.677177Z"
+    "head": "104847ba0419fcb913b52af1441c8e903994f47b",
+    "git_identity_sha256": "982dac85697ccde29f684615597c133c616bea097ff9e698189fc6e8e9f8e108",
+    "status_sha256": "93219d59b59780f0bab22d2082a85973bf1dd351c0f8e7fb46dc5519a83a1644",
+    "observed_at": "2026-09-15T12:46:19.846576Z"
   },
   "artifacts": {
     "spec": {
@@ -89,20 +89,20 @@
     "specs/015-retained-source-access/evidence/implementation-approval-01.md",
     "specs/015-retained-source-access/evidence/runtime-boundary-01.json",
     "specs/015-retained-source-access/evidence/baseline-reconciliation-approval-01.json",
-    "specs/015-retained-source-access/evidence/persistence-publication-checkpoint-01.json",
-    "specs/015-retained-source-access/evidence/persistence-cleanup-isolated-verified-01.json",
-    "specs/015-retained-source-access/evidence/persistence-cleanup-checkpoint-01.json"
+    "specs/015-retained-source-access/evidence/persistence-cleanup-checkpoint-01.json",
+    "specs/015-retained-source-access/evidence/persistence-sealed-preservation-verified-01.json",
+    "specs/015-retained-source-access/evidence/persistence-sealed-checkpoint-01.json"
   ],
   "checkpoint": {
-    "checkpoint_id": "bmad-13-1-implement-20260915T121447Z-0ba224",
+    "checkpoint_id": "bmad-13-1-implement-20260915T124619Z-334d9a",
     "stage": "implement",
     "commit_sha": null,
     "binding_status": "pending"
   },
   "resume": {
     "stage": "implement",
-    "reason": "Operation cleanup/recovery independentlyGREEN62/62 with isolated fixture. T031/T032 partial; next sealed-object cleanup, lock/conflict and reader-lifecycle coverage.",
-    "evidence_path": "specs/015-retained-source-access/evidence/persistence-cleanup-isolated-verified-01.json"
+    "reason": "Sealed cleanup verified; full persistence11/11 plus current-source surrounding63/63. T031/T032 partial: remaining identity/conflict, reader lifecycle and root mapping.",
+    "evidence_path": "specs/015-retained-source-access/evidence/persistence-sealed-preservation-verified-01.json"
   },
-  "updated_at": "2026-09-15T12:14:47.677177Z"
+  "updated_at": "2026-09-15T12:46:19.846576Z"
 }
