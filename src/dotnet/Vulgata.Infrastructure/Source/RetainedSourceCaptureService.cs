@@ -242,19 +242,122 @@ internal sealed class RetainedSourceCaptureService(
         }
     }
 
-    public Task<OpenSourceReadContextResult> OpenReadContextAsync(
+    public async Task<OpenSourceReadContextResult> OpenReadContextAsync(
         Guid repositoryId,
         string profiledRevision,
         SourceReadGrantRequest requestedGrant,
-        CancellationToken cancellationToken = default) =>
-        Task.FromResult(new OpenSourceReadContextResult(
-            SourceReadStatus.NotFoundOrUnavailable,
-            "source_read_unavailable",
-            Guid.NewGuid(),
-            repositoryId,
-            profiledRevision,
-            null,
-            null));
+        CancellationToken cancellationToken = default)
+    {
+        Guid correlationId = Guid.NewGuid();
+        try
+        {
+            var subject = new SourceAuthorizationSubject(user.UserId);
+            var request = new SourceAuthorizationRequest(
+                subject,
+                SourceAuthorizationPurpose.Read,
+                repositoryId,
+                profiledRevision);
+            AuthorizedSourceRepository? initial = await authorization.AuthorizeAsync(
+                request,
+                cancellationToken);
+            if (initial is null)
+            {
+                return OpenFailure(
+                    SourceReadStatus.Denied,
+                    "source_denied",
+                    correlationId,
+                    repositoryId,
+                    profiledRevision);
+            }
+
+            if (!IsValidGrant(requestedGrant))
+            {
+                return OpenFailure(
+                    SourceReadStatus.BudgetExceeded,
+                    "source_grant_invalid",
+                    correlationId,
+                    repositoryId,
+                    profiledRevision);
+            }
+
+            SourceSnapshot? snapshot = await snapshots.GetAsync(
+                repositoryId,
+                profiledRevision,
+                cancellationToken);
+            if (snapshot is null)
+            {
+                return OpenFailure(
+                    SourceReadStatus.NotFoundOrUnavailable,
+                    "source_not_found_or_unavailable",
+                    correlationId,
+                    repositoryId,
+                    profiledRevision);
+            }
+
+            VerifiedRetainedSourceObject source = await store.OpenVerifiedAsync(
+                snapshot,
+                cancellationToken);
+            AuthorizedSourceRepository? current = await authorization.AuthorizeAsync(
+                request,
+                cancellationToken);
+            if (current is null || current != initial)
+            {
+                return OpenFailure(
+                    SourceReadStatus.Denied,
+                    "source_denied",
+                    correlationId,
+                    repositoryId,
+                    profiledRevision);
+            }
+
+            cancellationToken.ThrowIfCancellationRequested();
+            var context = new RetainedSourceReadContext(
+                source,
+                subject,
+                initial,
+                policy,
+                requestedGrant,
+                authorization,
+                snapshots,
+                store,
+                timeProvider);
+            return new(
+                SourceReadStatus.Succeeded,
+                "source_context_opened",
+                correlationId,
+                repositoryId,
+                profiledRevision,
+                snapshot.ManifestSha256,
+                context);
+        }
+        catch (OperationCanceledException)
+        {
+            return OpenFailure(
+                SourceReadStatus.Cancelled,
+                "source_cancelled",
+                correlationId,
+                repositoryId,
+                profiledRevision);
+        }
+        catch (RetainedSourceIntegrityException)
+        {
+            return OpenFailure(
+                SourceReadStatus.IntegrityFailure,
+                "source_integrity_failed",
+                correlationId,
+                repositoryId,
+                profiledRevision);
+        }
+        catch (RetainedSourceStorageException)
+        {
+            return OpenFailure(
+                SourceReadStatus.StorageFailure,
+                "source_storage_unavailable",
+                correlationId,
+                repositoryId,
+                profiledRevision);
+        }
+    }
 
     private void ThrowIfDeadlineExceeded(long startedTimestamp)
     {
@@ -318,4 +421,21 @@ internal sealed class RetainedSourceCaptureService(
             null,
             null,
             null);
+
+    private static OpenSourceReadContextResult OpenFailure(
+        SourceReadStatus status,
+        string code,
+        Guid correlationId,
+        Guid repositoryId,
+        string profiledRevision) =>
+        new(status, code, correlationId, repositoryId, profiledRevision, null, null);
+
+    private static bool IsValidGrant(SourceReadGrantRequest? grant) =>
+        grant is not null &&
+        grant.MaximumOperations is not <= 0 &&
+        grant.MaximumMetadataEntries is not <= 0 &&
+        grant.MaximumReturnedBytes is not <= 0 &&
+        grant.MaximumEntriesPerOperation is not <= 0 &&
+        grant.MaximumBytesPerOperation is not <= 0 &&
+        (grant.Deadline is null || grant.Deadline > TimeSpan.Zero);
 }

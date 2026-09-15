@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
 using Vulgata.Core.DomainServices;
 using Vulgata.Shared.Repositories;
 using RepositoryEntity = Vulgata.Core.Entities.Repository;
@@ -38,6 +39,7 @@ public enum RepositoryMutationOutcome
     DuplicateName,
     GitAuthenticationRequired,
     GitUnreachable,
+    RetainedSourceConflict,
 }
 
 public sealed record RepositoryMutationResult<T>(RepositoryMutationOutcome Outcome, T? Value = default, string? Message = null)
@@ -55,12 +57,16 @@ public sealed record RepositoryMutationResult<T>(RepositoryMutationOutcome Outco
 
     public static RepositoryMutationResult<T> GitUnreachable(string message) =>
         new(RepositoryMutationOutcome.GitUnreachable, default, message);
+
+    public static RepositoryMutationResult<T> RetainedSourceConflict(string message) =>
+        new(RepositoryMutationOutcome.RetainedSourceConflict, default, message);
 }
 
 public sealed class RepositoryManagementCoordinator(
     ISystemRepository systemRepository,
     IRepositoryRepository repositoryRepository,
-    IGitRemoteValidationService gitRemoteValidationService)
+    IGitRemoteValidationService gitRemoteValidationService,
+    IRetainedSourceRepository retainedSources)
     : IRepositoryManagementCoordinator
 {
     public async Task<IReadOnlyList<RepositorySummaryDto>> ListVisibleAsync(
@@ -190,8 +196,22 @@ public sealed class RepositoryManagementCoordinator(
             return RepositoryMutationResult<bool>.RepositoryNotFound;
         }
 
-        repositoryRepository.Remove(repository);
-        await repositoryRepository.SaveChangesAsync(cancellationToken);
+        if (await retainedSources.HasForRepositoryAsync(repositoryId, cancellationToken))
+        {
+            return RepositoryMutationResult<bool>.RetainedSourceConflict(
+                "该仓库已有保留源快照，无法删除。");
+        }
+
+        try
+        {
+            repositoryRepository.Remove(repository);
+            await repositoryRepository.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateException exception) when (IsRetainedSourceConflict(exception))
+        {
+            return RepositoryMutationResult<bool>.RetainedSourceConflict(
+                "该仓库已有保留源快照，无法删除。");
+        }
 
         return RepositoryMutationResult<bool>.Success(true);
     }
@@ -203,6 +223,13 @@ public sealed class RepositoryManagementCoordinator(
     {
         return await systemRepository.GetVisibleByIdAsync(systemId, user.ToSystemOwnerFilter(), cancellationToken);
     }
+
+    private static bool IsRetainedSourceConflict(DbUpdateException exception) =>
+        exception.InnerException is PostgresException
+        {
+            SqlState: PostgresErrorCodes.ForeignKeyViolation,
+            ConstraintName: "FK_SourceSnapshots_Repositories_RepositoryId",
+        };
 
     private static RepositorySummaryDto MapToSummary(RepositoryEntity repository)
     {

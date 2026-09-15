@@ -1,5 +1,6 @@
 using System.Net;
 using System.Text.RegularExpressions;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -460,6 +461,12 @@ public sealed partial class LoginLogoutTests : IClassFixture<LoginLogoutTests.Cu
 
             builder.ConfigureServices(services =>
             {
+                string keyDirectory = Path.Combine(_databaseDirectory, "keys");
+                Directory.CreateDirectory(keyDirectory);
+                services.AddDataProtection()
+                    .PersistKeysToFileSystem(new DirectoryInfo(keyDirectory))
+                    .SetApplicationName("Vulgata.Tests");
+
                 services.RemoveAll<DbContextOptions<ApplicationDbContext>>();
                 services.RemoveAll<DbContextOptions<VulgataDbContext>>();
                 services.RemoveAll<IDbContextFactory<VulgataDbContext>>();

@@ -1,9 +1,12 @@
 # Project state for agent resumption
 
-Verified: 2026-09-11. Code baseline: `2bb83c3b44fc0afc07ae253ec1df5fab4399b964`.
-The September planning and agent-guidance checkpoint changes documentation/metadata,
-not implementation qualification. Reobserve Git, tracker and source before
-using this dated note; do not require an old branch/worktree or clean unrelated work.
+Updated: 2026-09-15. Retained-source capture/manifest checkpoint:
+`2f5dcd60b33796b8f5a57481d54c2a26205d88e4`. Story 13.1 has verified incremental
+capture and metadata-read evidence in its active feature; complete feature and
+full-suite verification remain pending. Other as-built notes retain the earlier
+static baseline `2bb83c3b44fc0afc07ae253ec1df5fab4399b964`. Reobserve the assigned
+checkout, tracker and source before reuse; do not require an old worktree or clean
+unrelated work.
 
 ## Current authority and delivery
 
@@ -13,14 +16,15 @@ using this dated note; do not require an old branch/worktree or clean unrelated 
 - [Architecture gateway](../bmad/planning-artifacts/architecture.md) and its spine:
   adopted generic target and project responsibilities; not as-built qualification.
 - [Epics](../bmad/epics.md) define delivery; [sprint status](../bmad/implementation-artifacts/sprint-status.yaml)
-  owns lifecycle. At this checkpoint, Epics 13–17 contain 41 definitions
-  (19/7/8/3/4), all unimplemented backlog. Default sequence begins with Story 13.1.
+  owns lifecycle. Epics 13–17 contain 41 definitions (19/7/8/3/4). Story 13.1
+  is active; the remaining stories are backlog. Incremental source capability
+  evidence is not completed Story 13.1 or generic Scan qualification.
 - [Constitution](../../.specify/memory/constitution.md), root AGENTS and the current
   story workflow govern development. The constitution's 2.0.0 local amendment aligns
   prior conflicting rules; it does not claim maintainer PR review/merge.
 
-No feature is selected at this checkpoint. Explicitly activate the selected story's
-feature; existing `specs/*/plan.md` files remain historical. The agent-context extension
+Story 13.1 deliberately activated `specs/015-retained-source-access`; its plan and
+workflow state govern current work. Specs 001–014 retain historical scope. The agent-context extension
 targets root AGENTS; pass the selected feature's actual plan path. Its no-argument
 auto-discovery chooses by modification time and must not select a historical plan.
 Optional after-specify refresh is inapplicable when that feature has no plan yet.
@@ -33,12 +37,14 @@ Full/Standard/expedited or overnight/deadline waivers from historical handoffs.
 
 ## As-built reuse boundaries
 
-These are static source/composition observations, not tests run by this refresh:
+Outside the active retained-source work, these remain earlier static observations.
+Use the feature evidence for current controlled source tests; no row proves a full
+runtime workflow:
 
 | Area | Existing value and limit |
 | --- | --- |
 | Administration/persistence | Reusable Identity, roles, configuration and domain persistence; Identity remains in Web/Data. |
-| Source preparation | Safe exact Git/archive and bounded reading mechanisms exist, but current leases/registries are disposable/process-local and prepared contracts remain pair-era. Story 13.1 must deliver the retained generic capability. |
+| Source preparation | Story 13.1 has verified raw-Git retained capture, canonical manifests, and scoped metadata reads. Byte/text, restart/concurrency qualification and final gates remain pending in the active feature. Legacy disposable leases and prepared pair contracts remain separate. |
 | CodeGraph/LSP | CodeGraph 1.5 integration is CLI/JSON, not native MCP; tool identity/launch paths are Windows-oriented. JDT protocol/containment mechanisms need the new declared Docker/profile qualification. |
 | Knowledge | Atomic persistence/provenance mechanics exist, but file-level CL/paired Flow semantics are not the new semantic Code Unit/Logical Flow contracts. |
 | Resolution | Finite exact matching is profile-bound; generic inquiry, late-evidence reconciliation and the ordinary production caller are not delivered. |

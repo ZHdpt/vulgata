@@ -1,0 +1,46 @@
+{
+  "id": "13-1/implement/24",
+  "kind": "command",
+  "stage": "implement",
+  "source_commit": "2f5dcd60b33796b8f5a57481d54c2a26205d88e4",
+  "observed_at": "2026-09-15T05:35:14.665936Z",
+  "status": "producer-restored",
+  "summary": "Original deletion tests required contradictory null/non-null exception and are invalidated. Corrected test will run against exact prior4-file source baseline, then preserved producer bytes restored forGREEN. No Git history/index mutation.",
+  "backup_manifest": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\deletion-baseline-c79380cb\\manifest.json",
+  "files": [
+    {
+      "path": "src/dotnet/Vulgata.Core/DomainServices/IRetainedSourceRepository.cs",
+      "backup": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\deletion-baseline-c79380cb\\0.bin",
+      "new_sha256": "807d218cd542eb3f877f53a00f4eb7314bb12c6123ace57ced074c8c4533aec4",
+      "baseline_sha256": "8ea9ed8f7b02b41c90ab005a1b234ba0180c01413ceb87fa924562332a487564"
+    },
+    {
+      "path": "src/dotnet/Vulgata.Infrastructure/Data/RetainedSourceRepository.cs",
+      "backup": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\deletion-baseline-c79380cb\\1.bin",
+      "new_sha256": "0d6b0bc0253400ee0416304f901f9e81b14a56dee418475424fdd810136ea392",
+      "baseline_sha256": "e89616856dd44faed0a1fb43d0ca84b6989794ef66d3670a054c48bca7d0506b"
+    },
+    {
+      "path": "src/dotnet/Vulgata.Web/Data/RepositoryManagementCoordinator.cs",
+      "backup": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\deletion-baseline-c79380cb\\2.bin",
+      "new_sha256": "5c83c06f5b88f12fcd184c411ea7377d77f8d079387a8ad97ac0567be36a72ad",
+      "baseline_sha256": "4a6144882cd69539fefcce61e0a64340ef8fbebbc48d889b95677122a9250216"
+    },
+    {
+      "path": "src/dotnet/Vulgata.Web/Api/Repositories/RepositoryApiEndpoints.cs",
+      "backup": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\deletion-baseline-c79380cb\\3.bin",
+      "new_sha256": "018ee18bddda9ab5ff805b3232079d0a4fdbc09a8f68158a43ab24bb9158eaf2",
+      "baseline_sha256": "822a7997ecbd6be336cbfe15709913b39d9b38025fa079214aedd434c22145be"
+    }
+  ],
+  "corrected_test_sha256": "d47bcbb223ae5771324ecee16841add19524abf255f0e3ef00347e10272488c3",
+  "restored_at": "2026-09-15T05:36:14.559388Z",
+  "baseline_result": {
+    "passed": 1,
+    "failed": 2,
+    "total": 3,
+    "exit_code": 1,
+    "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\deletion-corrected-baseline-red.trx",
+    "summary": "Corrected tests observe actual tracked-relationship and exact PostgreSQL FK failures on prior source; ordinary deletion succeeds."
+  }
+}

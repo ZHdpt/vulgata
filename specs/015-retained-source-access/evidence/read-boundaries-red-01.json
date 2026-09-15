@@ -1,0 +1,36 @@
+{
+  "id": "13-1/implement/29",
+  "kind": "test-red",
+  "stage": "implement",
+  "source_commit": "2f5dcd60b33796b8f5a57481d54c2a26205d88e4",
+  "observed_at": "2026-09-15T06:18:24.597435Z",
+  "summary": "First open/list independentlyGREEN. Current6-case read suite4pass2fail: post-open manifest mutation still returns metadata; cancellation after real metadata authorization still returns payload.",
+  "result": {
+    "passed": 4,
+    "failed": 2,
+    "total": 6,
+    "exit_code": 1
+  },
+  "failures": [
+    {
+      "expected": "IntegrityFailure/no entry after manifest mutation",
+      "actual": "Succeeded"
+    },
+    {
+      "expected": "Cancelled/no entry after authorization callback cancellation",
+      "actual": "Succeeded"
+    }
+  ],
+  "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\read-boundaries-red-02.trx",
+  "artifacts": [
+    {
+      "path": "tests/Vulgata.Tests/RetainedSource/RetainedSourceReadContextTests.cs",
+      "sha256": "36a987425a2c6d39a9a0d995e33474bf9bac842fc31738b421c1517fb3384701"
+    },
+    {
+      "path": "tests/Vulgata.Tests/RetainedSource/RetainedSourceCaptureApplicationFixture.cs",
+      "sha256": "fecd7351e663f97ed133aa0903980e4b887f786610ac8b47a827cee709ac2ee3"
+    }
+  ],
+  "fixture_fix": "Revocation uses actual identity.AspNetUserRoles table; current fixture operations verified on owned database."
+}

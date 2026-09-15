@@ -60,21 +60,24 @@ namespace Vulgata.Infrastructure.Data.Migrations
                 columns: ["RepositoryId", "ProfiledRevision"],
                 unique: true);
 
-            migrationBuilder.Sql(
-                """
-                CREATE FUNCTION "vulgata"."RejectSourceSnapshotMutation"()
-                RETURNS trigger
-                LANGUAGE plpgsql
-                AS $function$
-                BEGIN
-                    RAISE EXCEPTION 'SourceSnapshots are immutable.';
-                END;
-                $function$;
+            if (ActiveProvider.Contains("Npgsql", StringComparison.Ordinal))
+            {
+                migrationBuilder.Sql(
+                    """
+                    CREATE FUNCTION "vulgata"."RejectSourceSnapshotMutation"()
+                    RETURNS trigger
+                    LANGUAGE plpgsql
+                    AS $function$
+                    BEGIN
+                        RAISE EXCEPTION 'SourceSnapshots are immutable.';
+                    END;
+                    $function$;
 
-                CREATE TRIGGER "TR_SourceSnapshots_Immutable"
-                BEFORE UPDATE OR DELETE ON "vulgata"."SourceSnapshots"
-                FOR EACH ROW EXECUTE FUNCTION "vulgata"."RejectSourceSnapshotMutation"();
-                """);
+                    CREATE TRIGGER "TR_SourceSnapshots_Immutable"
+                    BEFORE UPDATE OR DELETE ON "vulgata"."SourceSnapshots"
+                    FOR EACH ROW EXECUTE FUNCTION "vulgata"."RejectSourceSnapshotMutation"();
+                    """);
+            }
         }
 
         /// <inheritdoc />
@@ -86,8 +89,11 @@ namespace Vulgata.Infrastructure.Data.Migrations
                 name: "SourceSnapshots",
                 schema: "vulgata");
 
-            migrationBuilder.Sql(
-                "DROP FUNCTION IF EXISTS \"vulgata\".\"RejectSourceSnapshotMutation\"();");
+            if (ActiveProvider.Contains("Npgsql", StringComparison.Ordinal))
+            {
+                migrationBuilder.Sql(
+                    "DROP FUNCTION IF EXISTS \"vulgata\".\"RejectSourceSnapshotMutation\"();");
+            }
         }
     }
 }

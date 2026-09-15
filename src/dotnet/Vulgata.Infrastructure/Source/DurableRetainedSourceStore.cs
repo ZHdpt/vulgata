@@ -1,4 +1,5 @@
 using System.Security.Cryptography;
+using Vulgata.Core.Entities;
 
 namespace Vulgata.Infrastructure.Source;
 
@@ -34,6 +35,10 @@ internal sealed class RetainedSourceStaging : IAsyncDisposable
 }
 
 internal sealed record SealedRetainedSource(string InternalStorageKey, bool AlreadyExisted);
+
+internal sealed record VerifiedRetainedSourceObject(
+    SourceSnapshot Snapshot,
+    RetainedSourceManifestDocument Manifest);
 
 internal sealed class DurableRetainedSourceStore(RetainedSourceCapturePolicy policy)
 {
@@ -198,6 +203,110 @@ internal sealed class DurableRetainedSourceStore(RetainedSourceCapturePolicy pol
             expected,
             cancellationToken);
 
+    internal async Task<VerifiedRetainedSourceObject> OpenVerifiedAsync(
+        SourceSnapshot snapshot,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            string objectRoot = ResolveContained(policy.RootPath, snapshot.InternalStorageKey);
+            string manifestPath = ResolveContained(objectRoot, "manifest.json");
+            if (!File.Exists(manifestPath) ||
+                !await HasExpectedHashAsync(
+                    manifestPath,
+                    snapshot.ManifestSha256,
+                    expectedLength: null,
+                    cancellationToken))
+            {
+                throw new RetainedSourceIntegrityException();
+            }
+
+            await using var manifestStream = new FileStream(
+                manifestPath,
+                FileMode.Open,
+                FileAccess.Read,
+                FileShare.Read,
+                policy.VerificationBufferBytes,
+                FileOptions.Asynchronous | FileOptions.SequentialScan);
+            RetainedSourceManifestDocument manifest = await RetainedSourceManifestCodec.ParseAsync(
+                manifestStream,
+                cancellationToken);
+            if (manifest.RepositoryId != snapshot.RepositoryId ||
+                !StringComparer.Ordinal.Equals(manifest.ProfiledRevision, snapshot.ProfiledRevision) ||
+                !StringComparer.Ordinal.Equals(manifest.GitObjectFormat, snapshot.GitObjectFormat) ||
+                manifest.EntryCount != snapshot.EntryCount ||
+                manifest.TotalBlobBytes != snapshot.TotalBlobBytes)
+            {
+                throw new RetainedSourceIntegrityException();
+            }
+
+            foreach (RetainedSourceManifestEntry entry in manifest.Entries)
+            {
+                if (entry.StorageBlobKey is null || entry.ContentSha256 is null)
+                {
+                    continue;
+                }
+
+                string blobPath = ResolveContained(objectRoot, entry.StorageBlobKey);
+                if (!File.Exists(blobPath) || entry.ByteLength is null ||
+                    !await HasExpectedHashAsync(
+                        blobPath,
+                        entry.ContentSha256,
+                        entry.ByteLength.Value,
+                        cancellationToken))
+                {
+                    throw new RetainedSourceIntegrityException();
+                }
+            }
+
+            return new(snapshot, manifest);
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (RetainedSourceIntegrityException)
+        {
+            throw;
+        }
+        catch
+        {
+            throw new RetainedSourceStorageException();
+        }
+    }
+
+    internal async Task VerifyManifestBindingAsync(
+        SourceSnapshot snapshot,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            string objectRoot = ResolveContained(policy.RootPath, snapshot.InternalStorageKey);
+            string manifestPath = ResolveContained(objectRoot, "manifest.json");
+            if (!File.Exists(manifestPath) ||
+                !await HasExpectedHashAsync(
+                    manifestPath,
+                    snapshot.ManifestSha256,
+                    expectedLength: null,
+                    cancellationToken))
+            {
+                throw new RetainedSourceIntegrityException();
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (RetainedSourceIntegrityException)
+        {
+            throw;
+        }
+        catch
+        {
+            throw new RetainedSourceStorageException();
+        }
+    }
+
     private async Task VerifyObjectAsync(
         string objectRoot,
         RetainedSourceManifestDocument manifest,
@@ -237,7 +346,7 @@ internal sealed class DurableRetainedSourceStore(RetainedSourceCapturePolicy pol
     private async Task<bool> HasExpectedHashAsync(
         string path,
         string expectedSha256,
-        long expectedLength,
+        long? expectedLength,
         CancellationToken cancellationToken)
     {
         byte[] buffer = new byte[policy.VerificationBufferBytes];
@@ -254,14 +363,15 @@ internal sealed class DurableRetainedSourceStore(RetainedSourceCapturePolicy pol
         while ((read = await stream.ReadAsync(buffer.AsMemory(), cancellationToken)) > 0)
         {
             length = checked(length + read);
-            if (length > expectedLength)
+            if (expectedLength is not null && length > expectedLength.Value)
             {
                 return false;
             }
             hash.AppendData(buffer, 0, read);
         }
 
-        return length == expectedLength && CryptographicOperations.FixedTimeEquals(
+        return (expectedLength is null || length == expectedLength.Value) &&
+            CryptographicOperations.FixedTimeEquals(
             hash.GetHashAndReset(),
             Convert.FromHexString(expectedSha256));
     }

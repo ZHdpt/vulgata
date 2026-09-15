@@ -82,26 +82,32 @@ internal static class RepositoryApiEndpoints
         repoApi.MapDelete("/{repositoryId:guid}", async (
             Guid systemId,
             Guid repositoryId,
-            ISystemRepository systemRepository,
-            IRepositoryRepository repositoryRepository,
+            IRepositoryManagementCoordinator coordinator,
             IUserContext user,
             CancellationToken cancellationToken) =>
         {
-            if (await systemRepository.GetVisibleByIdAsync(systemId, user.ToSystemOwnerFilter(), cancellationToken) is null)
+            RepositoryMutationResult<bool> result = await coordinator.DeleteAsync(
+                systemId,
+                repositoryId,
+                user,
+                cancellationToken);
+            if (result.Outcome == RepositoryMutationOutcome.Success)
             {
-                return Results.Problem(detail: "系统不存在。", statusCode: StatusCodes.Status404NotFound);
+                return Results.NoContent();
             }
 
-            var repo = await repositoryRepository.GetBySystemAndIdAsync(systemId, repositoryId, cancellationToken);
-            if (repo is null)
+            if (result.Outcome == RepositoryMutationOutcome.RetainedSourceConflict)
             {
-                return Results.Problem(detail: "仓库不存在。", statusCode: StatusCodes.Status404NotFound);
+                return Results.Problem(
+                    detail: result.Message ?? "该仓库已有保留源快照，无法删除。",
+                    statusCode: StatusCodes.Status409Conflict);
             }
 
-            repositoryRepository.Remove(repo);
-            await repositoryRepository.SaveChangesAsync(cancellationToken);
-
-            return Results.NoContent();
+            return Results.Problem(
+                detail: result.Outcome == RepositoryMutationOutcome.SystemNotFound
+                    ? "系统不存在。"
+                    : "仓库不存在。",
+                statusCode: StatusCodes.Status404NotFound);
         });
 
         repoApi.MapPost("/{repositoryId:guid}/scan-runs", async (

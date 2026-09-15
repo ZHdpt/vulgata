@@ -384,3 +384,21 @@ Pending checkpoint: bmad-13-1-implement-20260915T045638Z-d487d3. Next T020/T021 
 ## Manifest characterization verified
 
 T020/T021 complete as test-only existing-correct behavior:3manifest,27capture,16surrounding tests pass. Raw Git mktree binary-input fixtures preserve unsafe/nonUTF8 names without checkout. Canonical bytes/ordering/accounting, export-attribute immunity and explicit symlink/gitlink/path limitations verified. No production write or fabricated RED. Evidence manifest-verified-01.json; checkpoint bmad-13-1-implement-20260915T051458Z-02d72f. Next T022/T023 Repository deletion conflict.
+
+## Retained-source deletion conflict TDD
+
+T022 observed actual owned-PostgreSQL2RED/1GREEN: coordinator deletion fails before SaveChanges while severing a tracked required SourceSnapshot relationship; endpoint deletion reaches precise PostgreSQL23503 FK_SourceSnapshots_Repositories_RepositoryId; retained rows remain. Ordinary no-source deletion passes. Test fixture clears Windows EventLog providers so host logging permissions do not mask product failure. Raw evidence deletion-red-01.json.
+
+1. role_and_objective: Sol/medium producer implements T023 sanitized retained-source conflict behavior.
+2. authoritative_inputs: Accepted plan section1/FR017018 and raw deletion test/fixture/TRX hashes; current2f5dcd60 checkpoint.
+3. workflow_boundary: Only Story13.1, current source/tests frozen; dedicated owned PostgreSQL fixture.
+4. constraints_and_skills: Current TDD; preserve authorization/not-found, exact constraint race handling, immutable retained rows, Chinese409; no broad InvalidOperationException/FK swallowing, UI/DTO/new endpoint, delegation or tests/Git edits.
+5. write_boundary: Web RepositoryApiEndpoints and RepositoryManagementCoordinator; root approved narrow HasForRepositoryAsync query addition to existing Core IRetainedSourceRepository and Infrastructure RetainedSourceRepository after producer explained tracked-relationship failure. This implements accepted persistence ownership, not a new plan/architecture decision. No nullable fallback to avoid test adaptation.
+6. output_and_evidence: Focused deletion and surrounding Repository/PG/capture checks, logs/TRX/full hashes; any constructor/fake test adaptation returns to test author.
+7. completion_and_failure: ReturnGREEN or precise blocker; root alone records state/tasks/checkpoints/commits.
+
+## Scoped metadata reads verified; baseline gate remains pending
+
+T024/T025 complete:24read,27capture,3manifest,4PostgreSQL tests pass. T023 focused conflict3/3 and isolated-key login12/12 also pass;5 unchanged pre-story baseline API/management tests still block its strict surrounding gate. User scope question is pending; no old tests are changed/skipped and no gate is waived. Evidence source-read-verified-01.json and baseline-verification-blocker-01.json. T023 remains unchecked.
+
+Recovery checkpoint bmad-13-1-implement-20260915T065526Z-efd086 records verified source increments and their honest pending gate. Next dependency-ready work is T026/T027 byte/text reads. It is not a converged/reviewed/completed story.

@@ -1,0 +1,25 @@
+{
+  "id": "13-1/implement/30",
+  "kind": "test-green",
+  "stage": "implement",
+  "source_commit": "2f5dcd60b33796b8f5a57481d54c2a26205d88e4",
+  "observed_at": "2026-09-15T06:25:32.564942Z",
+  "summary": "Producer metadata correction6read27capture7boundary3manifest GREEN. Per-call immutable row and streaming manifest revalidation plus final auth/cancellation prevent stale or cancelled payload.",
+  "artifacts": [
+    {
+      "path": "src/dotnet/Vulgata.Infrastructure/Source/RetainedSourceReadContext.cs",
+      "sha256": "6533887ea78aed8020521b967f8b6045faefb5c772aa7124377fd9071a486f63"
+    },
+    {
+      "path": "src/dotnet/Vulgata.Infrastructure/Source/DurableRetainedSourceStore.cs",
+      "sha256": "76358c62dde9c8bd417774e2760b1b086d7cfacbfaaba8256aebadec99b22e13"
+    },
+    {
+      "path": "src/dotnet/Vulgata.Infrastructure/Source/RetainedSourceCaptureService.cs",
+      "sha256": "c86dc73c6814a1d1c21762465f1e5f0983350fa6edef954df8e81213f8c0b0b2"
+    }
+  ],
+  "raw_directory": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results",
+  "raw_prefix": "producer-read-boundary-",
+  "limits": "Independent verification and remaining T024 metadata edge tests dispatched. No byte/text or full-read acceptance."
+}

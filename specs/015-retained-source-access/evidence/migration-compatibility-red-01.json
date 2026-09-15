@@ -1,0 +1,15 @@
+{
+  "id": "13-1/implement/25",
+  "kind": "test-red",
+  "stage": "implement",
+  "source_commit": "2f5dcd60b33796b8f5a57481d54c2a26205d88e4",
+  "observed_at": "2026-09-15T05:43:17.373643Z",
+  "summary": "Required surrounding RepositoryAPI17 and RepositoryManagement9 tests fail during SQLite startup migration at new retained-source PostgreSQL CREATE FUNCTION SQL. Current-source regression, not preexisting failure. Focused corrected deletion3/3, PG4/4,capture27/27GREEN.",
+  "raw_trx": [
+    "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\deletion-surrounding-api.trx",
+    "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\deletion-surrounding-management.trx"
+  ],
+  "earliest_owner": "implement",
+  "affected_path": "src/dotnet/Vulgata.Infrastructure/Data/Migrations/20260915025243_AddRetainedSourceSnapshots.cs",
+  "correction": "Provider-aware PG-specific function/trigger SQL consistent with existing migrations; no global migration bypass or PG immutability weakening."
+}

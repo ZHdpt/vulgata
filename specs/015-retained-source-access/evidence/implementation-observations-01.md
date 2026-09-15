@@ -13,10 +13,17 @@ All remain scoped to the accepted Story13.1 contracts and should be resolved thr
 - Capture deadline currently checks elapsed time around Git calls but does not visibly cancel a stalled Git operation at the configured deadline. Verify bounded completion with a controlled owned Git transport/process fixture, and route any behavioral failure through TDD.
 - After root-preserving normalization, Contains still appends a separator unconditionally. Test configured filesystem root versus a tool subdirectory: a doubled separator may defeat root-overlap rejection. Include this policy containment boundary in subsequent regression work.
 
-Current dispositions (before T019 acceptance):
+Current dispositions after capture checkpoint dede5daa:
 - Root normalization and unrepresentable capture/stale durations: observed3RED, minimal policy correction, independently GREEN.
 - Active deadline on stalled Git: observed actual endpoint/watchdog RED, monotonic monitor correction, independently GREEN.
 - Final authority after identity-lock wait: observed Completed/visible-row RED after revocation, final fresh check correction, independently GREEN. Final-publication cancellation characterization also GREEN.
-- Filesystem root/excluded-child overlap: observed no-exception RED, minimal prefix correction, producer7/7boundary GREEN; independent verification dispatched.
-- Streaming/no whole-snapshot buffering: measurable public capture allocation regression dispatched; unresolved.
+- Filesystem root/excluded-child overlap: observed no-exception RED, minimal prefix correction, producer and independent7/7boundary GREEN.
+- Streaming/no whole-snapshot buffering: observed344,123,784 allocated bytes for64MiB payload RED; streaming correction independently measured78,413,312 bytes below128MiB ceiling. Resource1, boundary7, capture27, PostgreSQL4 and surrounding16 all GREEN; T019 checkpoint bound.
 - PostgreSQL helper port portability remains pending before final qualification.
+
+Read-context first-slice observations (not an independent review verdict):
+- The accepted ordinary-operation protocol requires row/manifest revalidation per call. First implementation reads cached manifest metadata after authorization; test post-open tampering before claiming T025 complete.
+- Metadata/list post-authorization cancellation must discard payload even when cancellation is signaled immediately after the verifier returns. Test the public operation boundary before correction.
+- Disposal/read concurrency and active read deadlines remain scheduled for the later read/concurrency groups; initial open/list GREEN is not those qualifications.
+- For T031 replay qualification, compare all stable public receipt fields, including CompletedAt: PostgreSQL timestamp precision can differ from an in-memory DateTimeOffset immediately after insert. Confirm actual behavior before any correction.
+- T026/T031 concurrent tests should admit multiple simultaneous operations, not only reject all but one by budget. Verify real repository/context composition tolerates concurrent access and returns the promised logical outcomes; do not assume a scoped EF context is safe for concurrent calls.

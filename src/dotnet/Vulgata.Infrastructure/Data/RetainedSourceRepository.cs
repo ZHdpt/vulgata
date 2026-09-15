@@ -7,6 +7,13 @@ namespace Vulgata.Infrastructure.Data;
 internal sealed class RetainedSourceRepository(VulgataDbContext context) :
     IRetainedSourceRepository
 {
+    public Task<bool> HasForRepositoryAsync(
+        Guid repositoryId,
+        CancellationToken cancellationToken = default) =>
+        context.SourceSnapshots
+            .AsNoTracking()
+            .AnyAsync(snapshot => snapshot.RepositoryId == repositoryId, cancellationToken);
+
     public Task<SourceSnapshot?> GetAsync(
         Guid repositoryId,
         string profiledRevision,

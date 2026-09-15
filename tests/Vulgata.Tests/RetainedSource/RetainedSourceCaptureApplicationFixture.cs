@@ -9,6 +9,7 @@ using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Logging;
 using Npgsql;
 using Vulgata.Core.DomainServices;
 using Vulgata.Core.Entities;
@@ -147,6 +148,7 @@ internal sealed class RetainedSourceCaptureApplicationFixture : IAsyncDisposable
             EnvironmentName = "Development",
         };
         WebApplicationBuilder builder = WebApplication.CreateBuilder(options);
+        builder.Logging.ClearProviders();
         var settings = new Dictionary<string, string?>(StringComparer.Ordinal)
         {
             ["ConnectionStrings:DefaultConnection"] = connectionString,
@@ -423,7 +425,7 @@ internal sealed class RetainedSourceCaptureApplicationFixture : IAsyncDisposable
         await using var identity = new NpgsqlConnection(connectionString);
         await identity.OpenAsync();
         await using var role = new NpgsqlCommand(
-            "DELETE FROM \"identity\".\"UserRoles\" WHERE \"UserId\" = @userId;",
+            "DELETE FROM \"identity\".\"AspNetUserRoles\" WHERE \"UserId\" = @userId;",
             identity);
         role.Parameters.AddWithValue("userId", userId);
         await role.ExecuteNonQueryAsync();

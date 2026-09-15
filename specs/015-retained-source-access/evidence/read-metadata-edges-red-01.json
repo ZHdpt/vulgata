@@ -1,0 +1,27 @@
+{
+  "id": "13-1/implement/31",
+  "kind": "test-red",
+  "stage": "implement",
+  "source_commit": "2f5dcd60b33796b8f5a57481d54c2a26205d88e4",
+  "observed_at": "2026-09-15T06:33:36.045102Z",
+  "summary": "Expanded metadata22 cases:19GREEN,3RED for disposed classification, nonpositive grant default broadening, and missing unsafe-path root limitation summaries.",
+  "result": {
+    "passed": 19,
+    "failed": 3,
+    "total": 22,
+    "exit_code": 1
+  },
+  "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\read-metadata-edges.trx",
+  "artifacts": [
+    {
+      "path": "tests/Vulgata.Tests/RetainedSource/RetainedSourceReadContextTests.cs",
+      "sha256": "72bd7719fa4d8e838478c3cd66050ee8e29c847fbae74fe461decd01bd2c17f7"
+    }
+  ],
+  "failures": [
+    "Disposed context expected Cancelled, actual BudgetExceeded",
+    "Nonpositive proposed bounds produced a usable larger default grant",
+    "Root with2 unsafe retained leaves returned0 required limitation summaries"
+  ],
+  "constraints": "Limitation+ordinary metadata page shares one reserved limit; no unsafe raw paths disclosed. No byte/text work yet."
+}

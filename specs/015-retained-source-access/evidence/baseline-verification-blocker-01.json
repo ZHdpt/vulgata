@@ -1,0 +1,45 @@
+{
+  "id": "13-1/implement/26",
+  "kind": "command",
+  "stage": "implement",
+  "source_commit": "2f5dcd60b33796b8f5a57481d54c2a26205d88e4",
+  "observed_at": "2026-09-15T05:54:57.368809Z",
+  "summary": "Owned-key current verification isolates5 unchanged pre-story baseline failures. No inherited waiver or skipped tests. Source/migration/key regressions corrected; strict surrounding/full-suite gate not yet satisfied.",
+  "baseline_commit": "bff540980800eb67254170a0c82e38678b63576d",
+  "proof": [
+    {
+      "path": "tests/Vulgata.Tests/RepositoryApiTests.cs",
+      "working_sha256": "fce3c6ca65b5c8fb845af226493fe4195ec05bfee58babf777e13449849d49b4",
+      "baseline_blob": "e30b0ca01ed8d57eee80c479df54195aa1d97d71",
+      "equivalence": "Same logical bytes; Git CRLF normalization only permitted."
+    },
+    {
+      "path": "tests/Vulgata.Tests/RepositoryManagementTests.cs",
+      "working_sha256": "24ff9f4d980ff73d13d55ddf3374ee84159fd11bf1c71fad549140cb17adac4a",
+      "baseline_blob": "a5e21b85272de351771ec1db3e7443b4dfd37bbd",
+      "equivalence": "Same logical bytes; Git CRLF normalization only permitted."
+    },
+    {
+      "path": "src/dotnet/Vulgata.Web/Data/RepositoryProfilingCoordinator.cs",
+      "working_sha256": "ddeff9234c7bc57e0d13f61a372e5787fd848f9358277c8586013f6ac0c48c47",
+      "baseline_blob": "0e27d2ebb43d67118e83b2b6ea5da4966f65a4bd",
+      "equivalence": "Same logical bytes; Git CRLF normalization only permitted."
+    }
+  ],
+  "results": {
+    "RepositoryApiTests": "13/17;4missing private Map on deliberately decommissioned profiler",
+    "RepositoryManagementTests": "8/9; expected retired UI text 最近扫描时间 absent",
+    "LoginLogoutTests": "12/12",
+    "RetainedSourceRepositoryDeletionTests": "3/3",
+    "RetainedSourcePostgreSqlTests": "4/4",
+    "RetainedSourceCaptureTests": "27/27"
+  },
+  "raw_trx_directory": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results",
+  "raw_prefix": "owned-key-",
+  "scope_decision": {
+    "status": "pending",
+    "question": "May root expand scope only to reconcile5 stale baseline tests with accepted decommissioned baseline, preserving prior assertions as historical evidence?",
+    "dependent_work": "Legacy test reconciliation only; current Story13.1 source-read work can continue.",
+    "no_waiver": "No test skipped, historical plan resumed or final gate waived."
+  }
+}

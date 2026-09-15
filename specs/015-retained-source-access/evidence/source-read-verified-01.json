@@ -1,0 +1,114 @@
+{
+  "id": "13-1/implement/32",
+  "kind": "test-green",
+  "stage": "implement",
+  "source_commit": "2f5dcd60b33796b8f5a57481d54c2a26205d88e4",
+  "observed_at": "2026-09-15T06:55:26.281182Z",
+  "summary": "T024/T025 open/list verified24/24 plus capture27/27,manifest3/3,PG4/4. Retention conflict3/3 and owned-key login12/12 verified. Five unchanged baseline API/management tests still block strict surrounding/full-suite gate; T023 remains pending. No waiver or story completion.",
+  "runs": [
+    {
+      "suite": "read-open-list-final",
+      "passed": 24,
+      "failed": 0,
+      "exit_code": 0,
+      "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\read-open-list-final.trx",
+      "sha256": "8afdffdf016016450c9c14a2298c0a885049af4b8991bc25376c699a58339c79"
+    },
+    {
+      "suite": "read-open-list-capture-final",
+      "passed": 27,
+      "failed": 0,
+      "exit_code": 0,
+      "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\read-open-list-capture-final.trx",
+      "sha256": "f25c3379cab50c1f9f0df0529efbd61b404b3bf63a13c20872091d95200e7c6a"
+    },
+    {
+      "suite": "read-open-list-manifest-final",
+      "passed": 3,
+      "failed": 0,
+      "exit_code": 0,
+      "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\read-open-list-manifest-final.trx",
+      "sha256": "9a5f5d6ed99bd09543689835ae07ecdbda1554de1d83ef5b46fca5fa4e072bb5"
+    },
+    {
+      "suite": "read-open-list-persistence-final",
+      "passed": 4,
+      "failed": 0,
+      "exit_code": 0,
+      "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\read-open-list-persistence-final.trx",
+      "sha256": "7daffce2a4d3d918f325ad3d128e5f3b9cfc7f99282aa6f139fedc617ada2378"
+    },
+    {
+      "suite": "owned-key-deletion",
+      "passed": 3,
+      "failed": 0,
+      "exit_code": 0,
+      "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\owned-key-deletion.trx",
+      "sha256": "7b618ce8232950fc1b090310f516dff59af256c527efe5e519586b8b43164db8"
+    },
+    {
+      "suite": "owned-key-login",
+      "passed": 12,
+      "failed": 0,
+      "exit_code": 0,
+      "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\owned-key-login.trx",
+      "sha256": "4b7f1f9d9afba7db6b7294293f60dd1b84e1850be3eb3b258e8dd54e3d6d8b36"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "src/dotnet/Vulgata.Core/DomainServices/IRetainedSourceRepository.cs",
+      "sha256": "807d218cd542eb3f877f53a00f4eb7314bb12c6123ace57ced074c8c4533aec4"
+    },
+    {
+      "path": "src/dotnet/Vulgata.Infrastructure/Data/Migrations/20260915025243_AddRetainedSourceSnapshots.cs",
+      "sha256": "fd0b5538858b11b8fae0e7f75e9d89a9623b9929e8e7cedb7129b458be541f25"
+    },
+    {
+      "path": "src/dotnet/Vulgata.Infrastructure/Data/RetainedSourceRepository.cs",
+      "sha256": "0d6b0bc0253400ee0416304f901f9e81b14a56dee418475424fdd810136ea392"
+    },
+    {
+      "path": "src/dotnet/Vulgata.Infrastructure/Source/DurableRetainedSourceStore.cs",
+      "sha256": "76358c62dde9c8bd417774e2760b1b086d7cfacbfaaba8256aebadec99b22e13"
+    },
+    {
+      "path": "src/dotnet/Vulgata.Infrastructure/Source/RetainedSourceCaptureService.cs",
+      "sha256": "346ace4da21b596e530c9499023c76a44dc41ff53d3dd0214ac50a3ea5a93465"
+    },
+    {
+      "path": "src/dotnet/Vulgata.Infrastructure/Source/RetainedSourceManifestCodec.cs",
+      "sha256": "099405998a4f4238ccef1288a235fc4d5205743838be107f427b73f2c5f74ad0"
+    },
+    {
+      "path": "src/dotnet/Vulgata.Infrastructure/Source/RetainedSourceReadContext.cs",
+      "sha256": "0ae6eb4c1caba51e942d6c4970e72bcfcab24cef55e69c177891739fd2d6c665"
+    },
+    {
+      "path": "src/dotnet/Vulgata.Web/Api/Repositories/RepositoryApiEndpoints.cs",
+      "sha256": "018ee18bddda9ab5ff805b3232079d0a4fdbc09a8f68158a43ab24bb9158eaf2"
+    },
+    {
+      "path": "src/dotnet/Vulgata.Web/Data/RepositoryManagementCoordinator.cs",
+      "sha256": "5c83c06f5b88f12fcd184c411ea7377d77f8d079387a8ad97ac0567be36a72ad"
+    },
+    {
+      "path": "tests/Vulgata.Tests/LoginLogoutTests.cs",
+      "sha256": "3014fa16793abcca5572a471e131c3b4bde06d50cc2bee6a1c2ac168bde92006"
+    },
+    {
+      "path": "tests/Vulgata.Tests/RetainedSource/RetainedSourceCaptureApplicationFixture.cs",
+      "sha256": "fecd7351e663f97ed133aa0903980e4b887f786610ac8b47a827cee709ac2ee3"
+    },
+    {
+      "path": "tests/Vulgata.Tests/RetainedSource/RetainedSourceReadContextTests.cs",
+      "sha256": "bbf38abb870c27486a0850dc51e2287d0085361b574300559bf652031248478a"
+    },
+    {
+      "path": "tests/Vulgata.Tests/RetainedSource/RetainedSourceRepositoryDeletionTests.cs",
+      "sha256": "2d8e2ee6ea877a0dccd1b917a42d5aebe5d773b606f2dcc10db8d83a5bca8c7e"
+    }
+  ],
+  "pending_gate": "baseline-verification-blocker-01.json; user scope decision pending",
+  "scope": "Verified implementation recovery checkpoint only. No byte/text, fresh-process, convergence, quality or E2E completion."
+}

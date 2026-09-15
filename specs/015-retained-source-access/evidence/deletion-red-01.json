@@ -1,0 +1,26 @@
+{
+  "id": "13-1/implement/23",
+  "kind": "test-red",
+  "stage": "implement",
+  "source_commit": "2f5dcd60b33796b8f5a57481d54c2a26205d88e4",
+  "observed_at": "2026-09-15T05:28:55.285259Z",
+  "summary": "T022 actual retained-source deletion conflict reaches production: coordinator tracked required relationship throws InvalidOperationException; endpoint DB delete throws precise PostgreSQL23503 FK conflict. Existing ordinary deletion passes; both retained rows remain.",
+  "result": {
+    "passed": 1,
+    "failed": 2,
+    "total": 3,
+    "exit_code": 1
+  },
+  "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\deletion-red-07.trx",
+  "artifacts": [
+    {
+      "path": "tests/Vulgata.Tests/RetainedSource/RetainedSourceRepositoryDeletionTests.cs",
+      "sha256": "513220e8bdc6de39bdf0252b635ff4011ed008f03dee2d8ad44577e02621c6c2"
+    },
+    {
+      "path": "tests/Vulgata.Tests/RetainedSource/RetainedSourceCaptureApplicationFixture.cs",
+      "sha256": "0671f7751aeb0e195672addab80d2cf2a3d1fe631770cbb8b7b40bbde2b0ad82"
+    }
+  ],
+  "fixture_change": "Owned endpoint fixture clears Windows EventLog providers to avoid environment masking actual exception."
+}

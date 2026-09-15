@@ -1,0 +1,29 @@
+{
+  "id": "13-1/implement/28",
+  "kind": "test-green",
+  "stage": "implement",
+  "source_commit": "2f5dcd60b33796b8f5a57481d54c2a26205d88e4",
+  "observed_at": "2026-09-15T06:11:15.296658Z",
+  "summary": "Producer first open/list slice GREEN: read1,capture27,boundary7,manifest3,PG4. Independent read verification and additional T024 boundaries dispatched; byte/text still unavailable.",
+  "artifacts": [
+    {
+      "path": "src/dotnet/Vulgata.Infrastructure/Source/RetainedSourceReadContext.cs",
+      "sha256": "92ceea422cb1c64e1c52861bae989f7cf7179bf8f53b049d5531e0f1ad8d9974"
+    },
+    {
+      "path": "src/dotnet/Vulgata.Infrastructure/Source/DurableRetainedSourceStore.cs",
+      "sha256": "1f10211a1d5f7b5f4ad9731c3db5d52129c1b4c85a83f7bc2c4bc1a930e1002b"
+    },
+    {
+      "path": "src/dotnet/Vulgata.Infrastructure/Source/RetainedSourceCaptureService.cs",
+      "sha256": "7a6b54cfbb50fc000d87609d671c57691f5919547464f390366ff852adb06716"
+    },
+    {
+      "path": "src/dotnet/Vulgata.Infrastructure/Source/RetainedSourceManifestCodec.cs",
+      "sha256": "099405998a4f4238ccef1288a235fc4d5205743838be107f427b73f2c5f74ad0"
+    }
+  ],
+  "raw_directory": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results",
+  "raw_prefix": "producer-read-open-",
+  "limits": "T024/T025 incomplete; no broader grant/corruption/cursor/disposal/byte/text coverage claimed."
+}

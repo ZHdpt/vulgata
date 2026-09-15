@@ -1,0 +1,22 @@
+{
+  "id": "13-1/implement/27",
+  "kind": "test-red",
+  "stage": "implement",
+  "source_commit": "2f5dcd60b33796b8f5a57481d54c2a26205d88e4",
+  "observed_at": "2026-09-15T05:58:51.840779Z",
+  "summary": "First T024 vertical slice: capture completes, public reopen returns unavailable instead of bound successful context. Metadata/list/cursor assertions not yet reached; no byte/text calls.",
+  "result": {
+    "passed": 0,
+    "failed": 1,
+    "total": 1,
+    "exit_code": 1
+  },
+  "artifacts": [
+    {
+      "path": "tests/Vulgata.Tests/RetainedSource/RetainedSourceReadContextTests.cs",
+      "sha256": "46772543ec1e3c86df1bec917d6c9971481af7d39e0bfad8cfaa13f573b187f9"
+    }
+  ],
+  "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\read-open-list-red-01.trx",
+  "next": "Minimal verified retained open/list producer then same-author additionalT024cases; T024/T025 not complete."
+}
