@@ -1,0 +1,27 @@
+{
+  "id": "13-1/implement/4",
+  "kind": "test-green",
+  "stage": "implement",
+  "source_commit": "68240bb86a93b946253ded0e48f9635a4047d8ec",
+  "observed_at": "2026-09-15T02:06:00.821903Z",
+  "owner": "source_declarations (Sol/medium producer)",
+  "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter FullyQualifiedName~RetainedSourceApplicationContractTests --no-restore",
+  "result": {
+    "exit_code": 0,
+    "passed": 25,
+    "failed": 0,
+    "skipped": 0,
+    "duration_ms": 29
+  },
+  "artifact_paths": [
+    {
+      "path": "src/dotnet/Vulgata.Core/Entities/SourceSnapshot.cs",
+      "sha256": "a1b19b6c00a33fc3207f7e54e4b5fec5934006f01a038506e29f1f926d4659fa"
+    },
+    {
+      "path": "tests/Vulgata.Tests/RetainedSource/RetainedSourceApplicationContractTests.cs",
+      "sha256": "4d1daa18a62549a64d236dc685f9fdd6ccaaadf9a4f8f4d850f204b9321f7fd1"
+    }
+  ],
+  "summary": "Minimal SourceSnapshot identity/value guards only. Original22 RED cases now pass with original test hash unchanged. Test-author independent focused/surrounding verification is pending."
+}

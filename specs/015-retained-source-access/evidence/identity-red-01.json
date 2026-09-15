@@ -1,0 +1,44 @@
+{
+  "id": "13-1/implement/3",
+  "kind": "test-red",
+  "stage": "implement",
+  "source_commit": "68240bb86a93b946253ded0e48f9635a4047d8ec",
+  "observed_at": "2026-09-15T01:55:20.184542Z",
+  "test_author": "source_tests (Luna/high)",
+  "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter FullyQualifiedName~RetainedSourceApplicationContractTests --no-restore",
+  "result": {
+    "compiled": true,
+    "failed": 22,
+    "passed": 3,
+    "total": 25,
+    "failure": "All 22 invalid identity/value theory cases failed with No exception was thrown from declaration-only SourceSnapshot.Create.",
+    "exit": "test failure"
+  },
+  "artifact_paths": [
+    {
+      "path": "tests/Vulgata.Tests/RetainedSource/RetainedSourceApplicationContractTests.cs",
+      "sha256": "4d1daa18a62549a64d236dc685f9fdd6ccaaadf9a4f8f4d850f204b9321f7fd1"
+    },
+    {
+      "path": "tests/Vulgata.Tests/RetainedSource/RetainedSourceFixture.cs",
+      "sha256": "67f5d1d5457a2eeef693449691bd3f774510030705a78301d34d1296e47db5b2"
+    },
+    {
+      "path": "tests/Vulgata.Tests/RetainedSource/RetainedSourceSeparateProcessChild.cs",
+      "sha256": "3d9e0f8b4a6112e1b4263e15bd7a63f99d7b5e6626f8c2e40f561814b30e0fb2"
+    },
+    {
+      "path": "tests/Vulgata.Tests/RetainedSource/RetainedSourceSeparateProcessTests.cs",
+      "sha256": "938a9bded46260a777287d599886b9aba8791206ac97d2cceb05beb34e5b37ce"
+    },
+    {
+      "path": "tests/Vulgata.Tests/RetainedSource/RetainedSourceTestFixtures.cs",
+      "sha256": "4c2baf3adb332840a697aef629de0bdc073a7fa58683867e92d1b352f78d3071"
+    },
+    {
+      "path": "src/dotnet/Vulgata.Core/Entities/SourceSnapshot.cs",
+      "sha256": "5812ac1c581291b7c20097ae3218a344ded5c27acf464a7f8fe2d09c87f31959"
+    }
+  ],
+  "summary": "Honest runtime RED for public identity/value validation. Three passing valid/ordinary-shape checks are existing-correct coverage, not fabricated RED. T001-T003 scaffolding compiled; child mode is scaffolding only and claims no reopen qualification."
+}

@@ -282,3 +282,39 @@ Definition review attempt4 ACCEPTED all 43 tasks/32 obligations. A subsequent me
 Pending implementation decision: evidence/implementation-approval-01.md. No production/test/runtime work has begun. Convergence, quality, E2E and final application verification remain pending.
 
 Accepted-definition checkpoint ID: bmad-13-1-definition-review-20260914T111049Z-a96ea6. Expected parent: cd82c8994063fa522253264f59c13b1cbc08a3f2. Root stages only the explicit manifest in evidence/definition-checkpoint-01.json after fresh ownership/hash/schema/whitespace checks. Historical rejected task files under evidence/history are audit preimages only and never executable feature selectors. No unrelated changes were observed.
+
+## Implementation approval accepted
+
+At 2026-09-15T01:39:28.276503Z, the user response "Approve implementation" was recorded against scope a68d54ba9b28a4d1dd6058c3a010a273f8f8b5e8bf23ad9f6949a145ba00dd50. Resume verified all accepted hashes, the selected feature, clean assigned dev checkout and uniquely bound definition checkpoint 68240bb86a93b946253ded0e48f9635a4047d8ec. The interrupted prior turn had issued no tool calls or mutations. Implementation now proceeds through the accepted TDD groups; only Story13.1 and owned verification resources are authorized.
+
+## Implementation bootstrap dispatch and runtime preflight
+
+1. role_and_objective: tdd-implementer Sol/medium performs approved T004 declarations only, no behavioral GREEN claim.
+2. authoritative_inputs: accepted spec/plan/data-model/contracts/tasks, AGENTS, constitution/development and accepted implementation approval.
+3. workflow_boundary: implement; T004 precedes runtime identity RED; HEAD68240bb86a93b946253ded0e48f9635a4047d8ec.
+4. constraints_and_skills: no validation/EF/filesystem/Git/DI behavior; no delegation; preserve other writers; no Core workspace path seam.
+5. write_boundary: Core SourceSnapshot.cs, RetainedSourceContracts.cs, IRetainedSourceRepository.cs only.
+6. output_and_evidence: exact API shapes for test author, declaration-only build evidence, changed paths; no fabricated RED.
+7. completion_and_failure: declarations compile or specific blocker; no stage/commit/state writes.
+
+Runtime preflight found .NET10 available, Docker engine unavailable and no configured PostgreSQL test-admin connection. Pending async authorization asks whether to start Docker Desktop (which can resume preexisting auto-start containers) for the proposed isolated PostgreSQL17 fixture. Exact planned boundary is evidence/runtime-boundary-01.json. Core declaration/validation work continues; no database/container startup is authorized by elapsed time.
+
+## Test scaffolding and identity RED dispatch
+
+1. role_and_objective: tdd-test-author Luna/high prepares T001-T003 owned fixtures, then T005 public identity/value runtime RED.
+2. authoritative_inputs: accepted source definition, actual completed Core declarations, current testing/TDD/constitution guidance and accepted implementation decision.
+3. workflow_boundary: implement first identity group T004-T007; HEAD68240bb86a93b946253ded0e48f9635a4047d8ec; Core author finished its build before test build scheduling.
+4. constraints_and_skills: no delegation or production writes; unique contained fixture directories; no fabricated compile/harness RED; already-correct shape checks reported test-only; no Web/DB/provider startup for Core-only T005. Later PG uses only the dedicated verified Story13.1 container and private connection file without logging credentials.
+5. write_boundary: RetainedSourceFixture.cs, RetainedSourceTestFixtures.cs, RetainedSourceSeparateProcessTests.cs, RetainedSourceSeparateProcessChild.cs, and RetainedSourceApplicationContractTests.cs only.
+6. output_and_evidence: exact public API tests, focused command/result/failures, hashes and scaffold checks returned; no implementation or qualification overclaim.
+7. completion_and_failure: stop after honest runtime RED for producer dispatch, then same author returns for focused/surrounding GREEN; no stage/commit/state writes.
+
+User reported starting Docker and database. Read-only inspection found existing vulgata-postgres; it was preserved. Root created separately owned vulgata-story131-34705378c4 using already-installed postgres:17-alpine, verified labels/container ID/loopback port5511 and PostgreSQL17.10 readiness. Runtime boundary evidence contains only non-secret facts and the private OS-temp connection-file path. No shared database credentials were reused.
+
+## Identity TDD group verified
+
+T001-T007 complete. T005 runtime RED was22 failing invalid-value cases plus3 existing-correct passes; minimal T006 validation changed only SourceSnapshot.cs; same test author verified25/25 focused and109/109 surrounding domain tests. Evidence: identity-red-01.json, identity-producer-green-01.json and identity-verified-green-01.json. Fixture-only BOM/reparse cleanup fixes preserve test ownership. No capture, persistence, source read or runtime qualification is claimed yet.
+
+T006 and T007 dispatches used the same seven-slot contract: raw test/source hashes and accepted model as inputs; Sol/medium production owned only SourceSnapshot.cs (RetainedSourceContracts.cs only if required, untouched); Luna/high test author owned the five test/scaffold files; no delegation/state/Git writes; returned focused and surrounding evidence.
+
+Pending coherent identity checkpoint: bmad-13-1-implement-20260915T020953Z-28b894. Next work is T008/T009/T014 integrated capture/policy/failure/PostgreSQL RED, then only the minimum accepted production chain required by those tests.

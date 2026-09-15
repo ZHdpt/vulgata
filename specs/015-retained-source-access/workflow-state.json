@@ -3,13 +3,13 @@
   "bmad_story_key": "13-1-retain-exact-repository-source-with-scoped-read-access",
   "bmad_epic_key": "epic-13",
   "feature_directory": "specs/015-retained-source-access",
-  "stage": "implementation-approval",
+  "stage": "implement",
   "preflight": {
     "branch": "dev",
-    "head": "cd82c8994063fa522253264f59c13b1cbc08a3f2",
+    "head": "68240bb86a93b946253ded0e48f9635a4047d8ec",
     "git_identity_sha256": "3a4a427ec44ae1e77e7a198707893773021bd309f6dd6a8404b054bb16671d3f",
-    "status_sha256": "42acf17f0e29ca8c65557af245aae5300aa8d3c3c3050a11cf3a855c65e12486",
-    "observed_at": "2026-09-14T11:10:49.621856Z"
+    "status_sha256": "1f16e757d7455ca2ca0f225bf69fd2fbb1ffb8a4a076f1723b3a5cdec728cfca",
+    "observed_at": "2026-09-15T02:09:53.056578Z"
   },
   "artifacts": {
     "spec": {
@@ -22,7 +22,7 @@
     },
     "tasks": {
       "path": "specs/015-retained-source-access/tasks.md",
-      "sha256": "261a5fd227ee134b1355541b6e644cd9049958b370b1127527c66a8a3536a1d0"
+      "sha256": "c8113ad080b74459790d7449482f7f561a25d5497127b590b8956544fc6cfdaf"
     }
   },
   "gates": {
@@ -57,10 +57,10 @@
     },
     {
       "decision_id": "13-1/implementation-approval/1",
-      "status": "pending",
+      "status": "accepted",
       "scope_sha256": "a68d54ba9b28a4d1dd6058c3a010a273f8f8b5e8bf23ad9f6949a145ba00dd50",
       "evidence_path": "specs/015-retained-source-access/evidence/implementation-approval-01.md",
-      "decided_at": null
+      "decided_at": "2026-09-15T01:39:28.276503Z"
     }
   ],
   "convergence": {
@@ -76,27 +76,26 @@
   "current_evidence_paths": [
     "docs/bmad/implementation-artifacts/13-1-retain-exact-repository-source-with-scoped-read-access.md",
     "docs/bmad/implementation-artifacts/workflow-activations/13-1-retain-exact-repository-source-with-scoped-read-access.json",
-    "specs/015-retained-source-access/evidence/spec-self-review-01.json",
-    "specs/015-retained-source-access/evidence/plan-self-review-02.json",
     "specs/015-retained-source-access/evidence/plan-review-02.json",
     "specs/015-retained-source-access/evidence/plan-authorization-01.md",
-    "specs/015-retained-source-access/evidence/tasks-self-review-04.json",
     "specs/015-retained-source-access/evidence/definition-review-boundary-05.json",
     "specs/015-retained-source-access/evidence/definition-review-05.json",
-    "specs/015-retained-source-access/evidence/definition-analysis-05.md",
     "specs/015-retained-source-access/evidence/implementation-approval-01.md",
-    "specs/015-retained-source-access/evidence/definition-checkpoint-01.json"
+    "specs/015-retained-source-access/evidence/runtime-boundary-01.json",
+    "specs/015-retained-source-access/evidence/identity-red-01.json",
+    "specs/015-retained-source-access/evidence/identity-verified-green-01.json",
+    "specs/015-retained-source-access/evidence/identity-checkpoint-01.json"
   ],
   "checkpoint": {
-    "checkpoint_id": "bmad-13-1-definition-review-20260914T111049Z-a96ea6",
-    "stage": "definition-review",
+    "checkpoint_id": "bmad-13-1-implement-20260915T020953Z-28b894",
+    "stage": "implement",
     "commit_sha": null,
     "binding_status": "pending"
   },
   "resume": {
-    "stage": "implementation-approval",
-    "reason": "Complete definition ACCEPTED with metadata equivalence verified. Await explicit implementation approval; task-only approval remains the sole user authorization.",
-    "evidence_path": "specs/015-retained-source-access/evidence/implementation-approval-01.md"
+    "stage": "implement",
+    "reason": "Identity/scaffold group T001-T007 verified. Next author real capture/policy/failure/PostgreSQL RED using owned fixtures before source implementation.",
+    "evidence_path": "specs/015-retained-source-access/evidence/identity-checkpoint-01.json"
   },
-  "updated_at": "2026-09-14T11:10:49.621856Z"
+  "updated_at": "2026-09-15T02:09:53.056578Z"
 }

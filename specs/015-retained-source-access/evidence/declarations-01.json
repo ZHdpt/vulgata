@@ -1,0 +1,27 @@
+{
+  "id": "13-1/implement/2",
+  "kind": "command",
+  "stage": "implement",
+  "source_commit": "68240bb86a93b946253ded0e48f9635a4047d8ec",
+  "observed_at": "2026-09-15T01:48:26.844230Z",
+  "task_ids": [
+    "T004"
+  ],
+  "artifact_paths": [
+    {
+      "path": "src/dotnet/Vulgata.Core/Entities/SourceSnapshot.cs",
+      "sha256": "5812ac1c581291b7c20097ae3218a344ded5c27acf464a7f8fe2d09c87f31959"
+    },
+    {
+      "path": "src/dotnet/Vulgata.Core/DomainServices/IRetainedSourceRepository.cs",
+      "sha256": "8ea9ed8f7b02b41c90ab005a1b234ba0180c01413ceb87fa924562332a487564"
+    },
+    {
+      "path": "src/dotnet/Vulgata.Core/DomainServices/RetainedSourceContracts.cs",
+      "sha256": "559df3a75b3b39f38536ce42f5fd5009d895c4e571a4766656a0c35f73336de0"
+    }
+  ],
+  "command": "dotnet build src/dotnet/Vulgata.Core/Vulgata.Core.csproj --no-restore",
+  "result": "Build succeeded: 0 errors, 438 warnings. Worker reports no warning named the three new declaration files.",
+  "summary": "Declaration-only bootstrap, no validation/IO/authorization/DI behavior and no behavioral RED/GREEN credit. Ordinary results exclude physical storage/origin; trusted authorization descriptor alone carries GitOrigin and source aggregate alone has internal logical locator."
+}

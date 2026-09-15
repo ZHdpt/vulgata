@@ -1,0 +1,47 @@
+{
+  "id": "13-1/implement/5",
+  "kind": "test-green",
+  "stage": "implement",
+  "source_commit": "68240bb86a93b946253ded0e48f9635a4047d8ec",
+  "observed_at": "2026-09-15T02:09:53.056578Z",
+  "owner": "source_tests (Luna/high test author)",
+  "commands": [
+    {
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter FullyQualifiedName~RetainedSourceApplicationContractTests --no-restore",
+      "passed": 25,
+      "failed": 0
+    },
+    {
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter FullyQualifiedName~KnowledgeStoreDomainTests --no-restore",
+      "passed": 109,
+      "failed": 0
+    }
+  ],
+  "artifact_paths": [
+    {
+      "path": "src/dotnet/Vulgata.Core/Entities/SourceSnapshot.cs",
+      "sha256": "a1b19b6c00a33fc3207f7e54e4b5fec5934006f01a038506e29f1f926d4659fa"
+    },
+    {
+      "path": "tests/Vulgata.Tests/RetainedSource/RetainedSourceApplicationContractTests.cs",
+      "sha256": "4d1daa18a62549a64d236dc685f9fdd6ccaaadf9a4f8f4d850f204b9321f7fd1"
+    },
+    {
+      "path": "tests/Vulgata.Tests/RetainedSource/RetainedSourceFixture.cs",
+      "sha256": "5d73d7b7839daae38d993b69e063117fd4818fd73aa614f0aea35f4d6c22bcd7"
+    },
+    {
+      "path": "tests/Vulgata.Tests/RetainedSource/RetainedSourceSeparateProcessChild.cs",
+      "sha256": "3d9e0f8b4a6112e1b4263e15bd7a63f99d7b5e6626f8c2e40f561814b30e0fb2"
+    },
+    {
+      "path": "tests/Vulgata.Tests/RetainedSource/RetainedSourceSeparateProcessTests.cs",
+      "sha256": "938a9bded46260a777287d599886b9aba8791206ac97d2cceb05beb34e5b37ce"
+    },
+    {
+      "path": "tests/Vulgata.Tests/RetainedSource/RetainedSourceTestFixtures.cs",
+      "sha256": "4c2baf3adb332840a697aef629de0bdc073a7fa58683867e92d1b352f78d3071"
+    }
+  ],
+  "summary": "Independent test-author GREEN for original22 runtime RED cases and3 existing-correct cases; surrounding109 domain tests pass. Fixture BOM emission corrected and reparse entries skipped before attribute mutation. No severity/package changes. This qualifies identity/value validation only, not capture/reopen/Scan."
+}

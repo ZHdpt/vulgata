@@ -1,0 +1,32 @@
+{
+  "id": "13-1/implement/6",
+  "kind": "command",
+  "stage": "implement",
+  "source_commit": "68240bb86a93b946253ded0e48f9635a4047d8ec",
+  "observed_at": "2026-09-15T02:09:53.056578Z",
+  "checkpoint_id": "bmad-13-1-implement-20260915T020953Z-28b894",
+  "expected_parent": "68240bb86a93b946253ded0e48f9635a4047d8ec",
+  "owned_paths": [
+    "docs/bmad/implementation-artifacts/13-1-retain-exact-repository-source-with-scoped-read-access.md",
+    "specs/015-retained-source-access/evidence/declarations-01.json",
+    "specs/015-retained-source-access/evidence/identity-checkpoint-01.json",
+    "specs/015-retained-source-access/evidence/identity-producer-green-01.json",
+    "specs/015-retained-source-access/evidence/identity-red-01.json",
+    "specs/015-retained-source-access/evidence/identity-verified-green-01.json",
+    "specs/015-retained-source-access/evidence/implementation-approval-01.md",
+    "specs/015-retained-source-access/evidence/runtime-boundary-01.json",
+    "specs/015-retained-source-access/tasks.md",
+    "specs/015-retained-source-access/workflow-state.json",
+    "src/dotnet/Vulgata.Core/DomainServices/IRetainedSourceRepository.cs",
+    "src/dotnet/Vulgata.Core/DomainServices/RetainedSourceContracts.cs",
+    "src/dotnet/Vulgata.Core/Entities/SourceSnapshot.cs",
+    "tests/Vulgata.Tests/RetainedSource/RetainedSourceApplicationContractTests.cs",
+    "tests/Vulgata.Tests/RetainedSource/RetainedSourceFixture.cs",
+    "tests/Vulgata.Tests/RetainedSource/RetainedSourceSeparateProcessChild.cs",
+    "tests/Vulgata.Tests/RetainedSource/RetainedSourceSeparateProcessTests.cs",
+    "tests/Vulgata.Tests/RetainedSource/RetainedSourceTestFixtures.cs"
+  ],
+  "test_red": "identity-red-01.json",
+  "test_green": "identity-verified-green-01.json",
+  "summary": "Verified declaration/scaffold/identity TDD group T001-T007. No source acquisition or PostgreSQL behavior implemented yet."
+}

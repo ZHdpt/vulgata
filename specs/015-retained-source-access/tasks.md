@@ -12,13 +12,13 @@ description: "Dependency-ordered tasks for Story 13.1 retained source access"
 
 ## Phase 1: Setup and declarations
 
-- [ ] T001 [P] Create isolated local-Git and persistent-source-storage fixtures in `tests/Vulgata.Tests/RetainedSource/RetainedSourceFixture.cs`, with no semantic/tool dependencies (quickstart.md; SC-009).
-- [ ] T002 [P] Add test-only child-process scaffolding in `tests/Vulgata.Tests/RetainedSource/RetainedSourceSeparateProcessTests.cs` and `tests/Vulgata.Tests/RetainedSource/RetainedSourceSeparateProcessChild.cs`, including `VULGATA_RETAINED_SOURCE_CHILD=1` and the filtered existing-project invocation; do not claim qualification yet (FR-015/021).
-- [ ] T003 [P] Add source-only evidence labels/utilities in `tests/Vulgata.Tests/RetainedSource/RetainedSourceTestFixtures.cs`, targeting the existing test project (FR-021/022; SC-009/010).
-- [ ] T004 Define only declarative `SourceSnapshot`, outcome types, acquire/reopen/grant/read signatures, and logical authorization inputs in `src/dotnet/Vulgata.Core/Entities/SourceSnapshot.cs`, `src/dotnet/Vulgata.Core/DomainServices/IRetainedSourceRepository.cs`, and `src/dotnet/Vulgata.Core/DomainServices/RetainedSourceContracts.cs`; include no validation behavior and no workspace/provider contract (FR-003/004/006/012; DR-13.1-002).
-- [ ] T005 Add public runtime RED contract tests in `tests/Vulgata.Tests/RetainedSource/RetainedSourceApplicationContractTests.cs` for revision/object-format/count validation, capture arguments (Repository/ref/cancellation only), ordinary logical results, and absence of physical workspace data (FR-003/004/012; SC-001/010).
-- [ ] T006 Implement the identity/value validation exercised by T005 in `src/dotnet/Vulgata.Core/Entities/SourceSnapshot.cs` and `src/dotnet/Vulgata.Core/DomainServices/RetainedSourceContracts.cs`, preserving Core purity and no workspace access.
-- [ ] T007 Run T005 focused and surrounding contract tests to GREEN; this verifies declarations plus validation only and does not claim capture behavior.
+- [x] T001 [P] Create isolated local-Git and persistent-source-storage fixtures in `tests/Vulgata.Tests/RetainedSource/RetainedSourceFixture.cs`, with no semantic/tool dependencies (quickstart.md; SC-009).
+- [x] T002 [P] Add test-only child-process scaffolding in `tests/Vulgata.Tests/RetainedSource/RetainedSourceSeparateProcessTests.cs` and `tests/Vulgata.Tests/RetainedSource/RetainedSourceSeparateProcessChild.cs`, including `VULGATA_RETAINED_SOURCE_CHILD=1` and the filtered existing-project invocation; do not claim qualification yet (FR-015/021).
+- [x] T003 [P] Add source-only evidence labels/utilities in `tests/Vulgata.Tests/RetainedSource/RetainedSourceTestFixtures.cs`, targeting the existing test project (FR-021/022; SC-009/010).
+- [x] T004 Define only declarative `SourceSnapshot`, outcome types, acquire/reopen/grant/read signatures, and logical authorization inputs in `src/dotnet/Vulgata.Core/Entities/SourceSnapshot.cs`, `src/dotnet/Vulgata.Core/DomainServices/IRetainedSourceRepository.cs`, and `src/dotnet/Vulgata.Core/DomainServices/RetainedSourceContracts.cs`; include no validation behavior and no workspace/provider contract (FR-003/004/006/012; DR-13.1-002).
+- [x] T005 Add public runtime RED contract tests in `tests/Vulgata.Tests/RetainedSource/RetainedSourceApplicationContractTests.cs` for revision/object-format/count validation, capture arguments (Repository/ref/cancellation only), ordinary logical results, and absence of physical workspace data (FR-003/004/012; SC-001/010).
+- [x] T006 Implement the identity/value validation exercised by T005 in `src/dotnet/Vulgata.Core/Entities/SourceSnapshot.cs` and `src/dotnet/Vulgata.Core/DomainServices/RetainedSourceContracts.cs`, preserving Core purity and no workspace access.
+- [x] T007 Run T005 focused and surrounding contract tests to GREEN; this verifies declarations plus validation only and does not claim capture behavior.
 
 ## Phase 2: User Story 1 — Capture an Exact Source Snapshot (P1, MVP)
 
