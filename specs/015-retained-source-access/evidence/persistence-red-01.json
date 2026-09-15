@@ -1,0 +1,28 @@
+{
+  "id": "13-1/implement/7",
+  "kind": "test-red",
+  "stage": "implement",
+  "source_commit": "cbd1b498a975295ed1c474da140631d930a0d294",
+  "observed_at": "2026-09-15T02:48:56.845328Z",
+  "owner": "source_tests (Luna/high)",
+  "command": "VULGATA_STORY131_POSTGRES_ADMIN supplied from private task runtime file; dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter FullyQualifiedName~RetainedSourcePostgreSqlTests --no-restore",
+  "result": {
+    "compiled": true,
+    "failed": 4,
+    "passed": 0,
+    "total": 4,
+    "failures": [
+      "SourceSnapshot model entity absent",
+      "vulgata.SourceSnapshots table absent",
+      "DbSet<SourceSnapshot> unavailable"
+    ],
+    "owned_database_creation_cleanup": "completed through guarded unique-prefix harness"
+  },
+  "artifact_paths": [
+    {
+      "path": "tests/Vulgata.Tests/RetainedSource/RetainedSourcePostgreSqlTests.cs",
+      "sha256": "5c1c83c0f2decfb98101f8fe642c89301ced36090ae03773d0b63aa23908f483"
+    }
+  ],
+  "summary": "Valid persistence-specific runtime RED on owned PostgreSQL17.10. Capture tests are still harness-incomplete and claim no RED. Implement only the independently ready T015/T016 model/migration prerequisites; T019 integrated capture GREEN remains pending."
+}

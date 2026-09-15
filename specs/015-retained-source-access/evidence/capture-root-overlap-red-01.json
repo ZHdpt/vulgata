@@ -1,0 +1,25 @@
+{
+  "id": "13-1/implement/17",
+  "kind": "test-red",
+  "stage": "implement",
+  "source_commit": "cbd1b498a975295ed1c474da140631d930a0d294",
+  "observed_at": "2026-09-15T04:40:05.885763Z",
+  "summary": "Fresh current service2B5193 boundary6/7GREEN and capture27/27GREEN. Lock revocation and final cancellation correct; root plus excluded tool child incorrectly accepted.",
+  "artifacts": [
+    {
+      "path": "tests/Vulgata.Tests/RetainedSource/RetainedSourceCaptureBoundaryTests.cs",
+      "sha256": "623697472c293b189c2be42f39624dc7a4a3a5d07c57189f8078aa3917f73e73"
+    }
+  ],
+  "result": {
+    "passed": 6,
+    "failed": 1,
+    "total": 7,
+    "exit_code": 1
+  },
+  "expected": "source_configuration_invalid for filesystem root containing excluded child",
+  "actual": "No exception",
+  "raw_log": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\boundary-current-01.log",
+  "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\boundary-current-01.trx",
+  "verification_note": "Prior worker response repeated superseded results and was rejected. Current fresh source hash/results used; hash changed only from adding two requested tests."
+}

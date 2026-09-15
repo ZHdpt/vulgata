@@ -1,0 +1,42 @@
+{
+  "id": "13-1/implement/8",
+  "kind": "test-green",
+  "stage": "implement",
+  "source_commit": "cbd1b498a975295ed1c474da140631d930a0d294",
+  "observed_at": "2026-09-15T03:22:47.921058Z",
+  "owner": "source_tests independent verification after source_declarations production change",
+  "command": "VULGATA_STORY131_POSTGRES_ADMIN supplied privately; dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter FullyQualifiedName~RetainedSourcePostgreSqlTests --no-restore",
+  "result": {
+    "passed": 4,
+    "failed": 0,
+    "postgres_version": "17.10",
+    "owned_database_setup_cleanup": "completed"
+  },
+  "artifact_paths": [
+    {
+      "path": "src/dotnet/Vulgata.Infrastructure/Data/Configurations/SourceSnapshotConfiguration.cs",
+      "sha256": "8a8660b2194599f14b0c12053edf4a968db483ca1f4f340c4315bb8243f10f8a"
+    },
+    {
+      "path": "src/dotnet/Vulgata.Infrastructure/Data/VulgataDbContext.cs",
+      "sha256": "f3fe1e3e5dd9be2d57320294413e273892c0bbc86119cfdd34e5b718f9111c1e"
+    },
+    {
+      "path": "src/dotnet/Vulgata.Infrastructure/Data/Migrations/20260915025243_AddRetainedSourceSnapshots.cs",
+      "sha256": "9e09f364e8dc570137a7a68f9196c634eb3b81b821459743e4105b3b1d5c4a16"
+    },
+    {
+      "path": "src/dotnet/Vulgata.Infrastructure/Data/Migrations/20260915025243_AddRetainedSourceSnapshots.Designer.cs",
+      "sha256": "1a6c803971e36456370f2df2cb934555314eabc3f7e8d622e3aebffcff4d664e"
+    },
+    {
+      "path": "src/dotnet/Vulgata.Infrastructure/Data/Migrations/VulgataDbContextModelSnapshot.cs",
+      "sha256": "6832e4b708f483cab17ac353be93a124eb05b450d044883fd7b599bb8effcfe7"
+    },
+    {
+      "path": "tests/Vulgata.Tests/RetainedSource/RetainedSourcePostgreSqlTests.cs",
+      "sha256": "5c1c83c0f2decfb98101f8fe642c89301ced36090ae03773d0b63aa23908f483"
+    }
+  ],
+  "summary": "Observed four missing model/table RED cases now GREEN. Migration adds only source-owned table/constraints/indexes/immutable-row trigger. Web/Infrastructure builds and migration script/no-pending-model checks passed. No capture capability qualification implied."
+}

@@ -23,17 +23,28 @@
   "constraints": "No shared database changes, unrelated process stop/container removal, provider calls or full Docker analysis qualification. Exact container ownership inspected before cleanup. Core-only work can proceed while waiting.",
   "user_runtime_response": "I have started docker and database",
   "actual_resources": {
-    "container_name": "vulgata-story131-34705378c4",
+    "container_name": "vulgata-story131-29b3a12eba",
     "host": "127.0.0.1",
     "preserved_container": "vulgata-postgres",
-    "private_runtime_file": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-34705378c4\\runtime.json",
+    "private_runtime_file": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\runtime.json",
     "image_id": "sha256:dc17045ccfd343b49600570ea734b9c4991cf1c3f3302e67df51e3b402dd55c4",
     "database_scope": "Only this new test container; new feature uses vulgata_story131_ names and legacy full-suite fixtures may use their unique test prefixes.",
-    "container_id": "ebf6e881337cf10eecbe0bdbaee56d9999858733077d9a25bcec23e2a59578a0",
+    "container_id": "04df68dff01aa09fb1a3003f088d86fdc49f63161fb9504629e1f0b545918946",
     "port": 5511,
     "image": "postgres:17-alpine"
   },
   "readiness_observed_at": "2026-09-15T01:48:26.844230Z",
   "postgres_version": "17.10",
-  "ownership_verified": true
+  "ownership_verified": true,
+  "prior_resource": {
+    "container_name": "vulgata-story131-34705378c4",
+    "container_id": "ebf6e881337cf10eecbe0bdbaee56d9999858733077d9a25bcec23e2a59578a0",
+    "disposition": "Exact-ID inspection reported no such object; no cleanup or shared-resource mutation performed."
+  },
+  "recovery": {
+    "observed_at": "2026-09-15T03:54:27.567932Z",
+    "reason": "Prior auto-remove fixture disappeared; capture run failed during setup and supplied no behavior evidence. Recreated same authorized isolated scope with fresh credentials.",
+    "verification": "Exact ID, ownership labels, loopback 127.0.0.1:5511 mapping verified; pg_isready accepts connections.",
+    "auto_remove": false
+  }
 }

@@ -3388,6 +3388,71 @@ namespace Vulgata.Infrastructure.Data.Migrations
                         });
                 });
 
+            modelBuilder.Entity("Vulgata.Core.Entities.SourceSnapshot", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CompletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<long>("EntryCount")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("GitObjectFormat")
+                        .IsRequired()
+                        .HasMaxLength(6)
+                        .HasColumnType("character varying(6)");
+
+                    b.Property<string>("InternalStorageKey")
+                        .IsRequired()
+                        .HasMaxLength(2048)
+                        .HasColumnType("character varying(2048)");
+
+                    b.Property<string>("ManifestSchemaIdentity")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<string>("ManifestSha256")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character(64)")
+                        .IsFixedLength();
+
+                    b.Property<string>("ProfiledRevision")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<Guid>("RepositoryId")
+                        .HasColumnType("uuid");
+
+                    b.Property<long>("TotalBlobBytes")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("InternalStorageKey")
+                        .IsUnique();
+
+                    b.HasIndex("RepositoryId", "ProfiledRevision")
+                        .IsUnique();
+
+                    b.ToTable("SourceSnapshots", "vulgata", t =>
+                        {
+                            t.HasCheckConstraint("CK_SourceSnapshots_Counts", "\"EntryCount\" >= 0 AND \"TotalBlobBytes\" >= 0");
+
+                            t.HasCheckConstraint("CK_SourceSnapshots_InternalStorageKey", "length(\"InternalStorageKey\") BETWEEN 1 AND 2048");
+
+                            t.HasCheckConstraint("CK_SourceSnapshots_ManifestSchemaIdentity", "\"ManifestSchemaIdentity\" = 'retained-source-manifest/1.0'");
+
+                            t.HasCheckConstraint("CK_SourceSnapshots_ManifestSha256", "length(\"ManifestSha256\") = 64 AND replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(\"ManifestSha256\", '0', ''), '1', ''), '2', ''), '3', ''), '4', ''), '5', ''), '6', ''), '7', ''), '8', ''), '9', ''), 'a', ''), 'b', ''), 'c', ''), 'd', ''), 'e', ''), 'f', '') = ''");
+
+                            t.HasCheckConstraint("CK_SourceSnapshots_ProfiledRevision", "((\"GitObjectFormat\" = 'sha1' AND length(\"ProfiledRevision\") = 40) OR (\"GitObjectFormat\" = 'sha256' AND length(\"ProfiledRevision\") = 64)) AND replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(\"ProfiledRevision\", '0', ''), '1', ''), '2', ''), '3', ''), '4', ''), '5', ''), '6', ''), '7', ''), '8', ''), '9', ''), 'a', ''), 'b', ''), 'c', ''), 'd', ''), 'e', ''), 'f', '') = ''");
+                        });
+                });
+
             modelBuilder.Entity("Vulgata.Core.Entities.System", b =>
                 {
                     b.Property<Guid>("Id")
@@ -4506,6 +4571,17 @@ namespace Vulgata.Infrastructure.Data.Migrations
                     b.Navigation("DocumentVersion");
 
                     b.Navigation("ScanRun");
+                });
+
+            modelBuilder.Entity("Vulgata.Core.Entities.SourceSnapshot", b =>
+                {
+                    b.HasOne("Vulgata.Core.Entities.Repository", "Repository")
+                        .WithMany()
+                        .HasForeignKey("RepositoryId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Repository");
                 });
 
             modelBuilder.Entity("Vulgata.Core.Entities.SystemLlmProviderOverride", b =>

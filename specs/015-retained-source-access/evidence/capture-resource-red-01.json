@@ -1,0 +1,27 @@
+{
+  "id": "13-1/implement/18",
+  "kind": "test-red",
+  "stage": "implement",
+  "source_commit": "cbd1b498a975295ed1c474da140631d930a0d294",
+  "observed_at": "2026-09-15T04:45:18.618833Z",
+  "summary": "Public AcquireAsync completes64MiB committed payload but exceeds generous128MiB managed-allocation ceiling, demonstrating whole-snapshot buffering gap.",
+  "artifacts": [
+    {
+      "path": "tests/Vulgata.Tests/RetainedSource/RetainedSourceCaptureResourceTests.cs",
+      "sha256": "875b559705267de0fed548af3be8ed5681226969310aeedc7f062443cd06b343"
+    }
+  ],
+  "result": {
+    "passed": 0,
+    "failed": 1,
+    "total": 1,
+    "exit_code": 1,
+    "payload_bytes": 67108864,
+    "allocated_bytes": 344123784,
+    "ceiling_bytes": 134217728,
+    "capture_status": "Completed"
+  },
+  "raw_log": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\capture-resource-red-01.log",
+  "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\capture-resource-red-01.trx",
+  "prerequisite": "Current policy correction independently7/7boundary GREEN: boundary-verify-03 log/TRX."
+}

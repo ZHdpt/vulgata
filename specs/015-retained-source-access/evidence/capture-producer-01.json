@@ -1,0 +1,57 @@
+{
+  "id": "13-1/implement/11",
+  "kind": "command",
+  "stage": "implement",
+  "source_commit": "cbd1b498a975295ed1c474da140631d930a0d294",
+  "observed_at": "2026-09-15T03:58:04.237584Z",
+  "summary": "Producer initial capture chain builds;26/27 capture cases pass with one authority fixture defect routed to same test author;4/4 PostgreSQL cases pass. Not an accepted GREEN checkpoint.",
+  "artifacts": [
+    {
+      "path": "src/dotnet/Vulgata.Infrastructure/Source/GitCommittedObjectReader.cs",
+      "sha256": "b0aca8fa882437f81b705ecf8992e4ab64cb96e68ad9d597fd0c485d53ea4e1f"
+    },
+    {
+      "path": "src/dotnet/Vulgata.Infrastructure/Source/DurableRetainedSourceStore.cs",
+      "sha256": "693c70c97bbf376c3dea612be908a6dfb647d501c975aad2808770d66fe80125"
+    },
+    {
+      "path": "src/dotnet/Vulgata.Infrastructure/Source/RetainedSourceCaptureService.cs",
+      "sha256": "c5a67ae03297c21f0423a7bd0ecc73e3210de5ce5f39d587f1bbb1869f47c7fb"
+    },
+    {
+      "path": "src/dotnet/Vulgata.Infrastructure/Source/RetainedSourceManifestCodec.cs",
+      "sha256": "ac9d307542d8c3c8d296bf0b627d0e25901093b86d62f8ce9bd6d7068e655cec"
+    },
+    {
+      "path": "src/dotnet/Vulgata.Infrastructure/Data/RetainedSourceRepository.cs",
+      "sha256": "e89616856dd44faed0a1fb43d0ca84b6989794ef66d3670a054c48bca7d0506b"
+    },
+    {
+      "path": "src/dotnet/Vulgata.Web/Data/SourceRepositoryAuthorizationVerifier.cs",
+      "sha256": "5b2fce86a6d5f054c954e86ed1dfac8d3097f7b12dc2f891b3829543dc434f66"
+    },
+    {
+      "path": "src/dotnet/Vulgata.Infrastructure/DependencyInjection.cs",
+      "sha256": "bfc883b88f6ff05b44d08f08baf2fdba027104836ac72af177bd75a7855a381b"
+    },
+    {
+      "path": "src/dotnet/Vulgata.Web/Program.cs",
+      "sha256": "932ae526f383a560e33fc8bd70c5d90bbd4c3542418c62c9ff0f5238b18a9eaf"
+    }
+  ],
+  "remaining_work": "Root implementation-observations-01.md records streaming, active deadline and final publication authority gaps; ordinary read remains unavailable.",
+  "raw_output_directory": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results",
+  "results": {
+    "capture": {
+      "passed": 26,
+      "failed": 1,
+      "total": 27
+    },
+    "postgresql": {
+      "passed": 4,
+      "failed": 0,
+      "total": 4
+    },
+    "web_build_errors": 0
+  }
+}

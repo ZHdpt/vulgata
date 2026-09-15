@@ -1,0 +1,17 @@
+{
+  "id": "13-1/implement/9",
+  "kind": "test-red",
+  "stage": "implement",
+  "source_commit": "cbd1b498a975295ed1c474da140631d930a0d294",
+  "observed_at": "2026-09-15T03:22:47.921058Z",
+  "command": "VULGATA_STORY131_POSTGRES_ADMIN supplied privately; dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter FullyQualifiedName~RetainedSourceCaptureTests --no-restore",
+  "reported_test_sha256": "1eeed3f83cc134db38d50755170ff95e6a9ec4692f5e230538786b4e1a317350",
+  "result": {
+    "compiled": true,
+    "failed": 26,
+    "passed": 0,
+    "missing_registration_cases": 16,
+    "invalid_configuration_not_rejected": 10
+  },
+  "summary": "Configuration subset is genuine RED for missing startup validation. Fixture migrated/seeded real owned DBs. Other missing-registration cases do not yet qualify every named predicate: root found unwired mutations, nondeterministic deadline setup and invalid aggregate-cap setup; test author is correcting those. Do not drive production to satisfy those defective case expectations."
+}

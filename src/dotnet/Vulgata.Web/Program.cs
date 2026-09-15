@@ -23,6 +23,7 @@ using Vulgata.Infrastructure.Data;
 using Vulgata.Infrastructure.FrameworkDetection;
 using Vulgata.Infrastructure.Git;
 using Vulgata.Infrastructure.Git.BackupB;
+using Vulgata.Infrastructure.Source;
 using Vulgata.Infrastructure;
 using Vulgata.Shared;
 using Vulgata.Shared.Chat;
@@ -505,8 +506,19 @@ public static class VulgataWebComposition
                                    (OperatingSystem.IsLinux()
                                        ? "/var/lib/vulgata-codegraph"
                                        : Path.Combine(builder.Environment.ContentRootPath, "data", "profiling"));
-        builder.Services.AddSingleton(new GitWorkingCopyOptions(
-            Path.Combine(profilingDataRoot, "repositories")));
+        var gitWorkingCopyOptions = new GitWorkingCopyOptions(
+            Path.Combine(profilingDataRoot, "repositories"));
+        builder.Services.AddSingleton(gitWorkingCopyOptions);
+        string configuredWorkspaceRoot = builder.Configuration["AnalysisRuntime:JdtLsWorkspaceRoot"] ??
+            Path.Combine(gitWorkingCopyOptions.RootPath, ".jdtls-runtime");
+        builder.Services.AddRetainedSourceInfrastructure(
+            RetainedSourceCapturePolicy.Create(
+                builder.Configuration,
+                builder.Environment.ContentRootPath,
+                profilingDataRoot,
+                configuredWorkspaceRoot));
+        builder.Services.AddScoped<ISourceRepositoryAuthorizationVerifier,
+            SourceRepositoryAuthorizationVerifier>();
         builder.Services.AddScoped<IGitWorkingCopyService, GitWorkingCopyService>();
         builder.Services.AddScoped<ICommittedRepositorySnapshotService, CommittedRepositorySnapshotService>();
         builder.Services.AddScoped<IScanCandidateEnumerator, ScanCandidateEnumerator>();

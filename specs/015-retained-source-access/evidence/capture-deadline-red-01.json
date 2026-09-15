@@ -1,0 +1,32 @@
+{
+  "id": "13-1/implement/14",
+  "kind": "test-red",
+  "stage": "implement",
+  "source_commit": "cbd1b498a975295ed1c474da140631d930a0d294",
+  "observed_at": "2026-09-15T04:18:17.824842Z",
+  "summary": "Owned stalled Git endpoint was reached; configured1s deadline did not interrupt.10s watchdog cancelled capture, yielding Cancelled instead of DeadlineExceeded. No row/manifest; owned cleanup completed.",
+  "test": "AcquireAsync_StalledLoopbackGit_StopsAtConfiguredDeadlineBeforeWatchdog",
+  "result": {
+    "passed": 0,
+    "failed": 1,
+    "total": 1,
+    "exit_code": 1
+  },
+  "raw_log": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\capture-deadline-red-05.log",
+  "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\capture-deadline-red-05.trx",
+  "prerequisite_verification": "Policy3/3 and initial capture27/27 independently GREEN after policy correction.",
+  "artifacts": [
+    {
+      "path": "tests/Vulgata.Tests/RetainedSource/RetainedSourceCaptureBoundaryTests.cs",
+      "sha256": "4524f0d697794b9a8d9fb01f8343d9692b591c4f5820176cdf054d23418250f4"
+    },
+    {
+      "path": "tests/Vulgata.Tests/RetainedSource/RetainedSourceCaptureApplicationFixture.cs",
+      "sha256": "0cc0e7eef848c8557ace5b90cb14758e22b3acb0822ea76d4cf4c5b7c1a881d6"
+    },
+    {
+      "path": "src/dotnet/Vulgata.Infrastructure/Source/RetainedSourceCapturePolicy.cs",
+      "sha256": "a92538b527b58210d80446577c067aafee4fc3e5f371b525710d8df609e37857"
+    }
+  ]
+}

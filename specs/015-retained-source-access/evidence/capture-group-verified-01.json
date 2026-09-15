@@ -1,0 +1,138 @@
+{
+  "id": "13-1/implement/19",
+  "kind": "test-green",
+  "stage": "implement",
+  "source_commit": "cbd1b498a975295ed1c474da140631d930a0d294",
+  "observed_at": "2026-09-15T04:56:38.873757Z",
+  "summary": "Same test author independently verifies initial capture group; root parsed each raw TRX counter and hashes.55/55 current tests pass.",
+  "runs": [
+    {
+      "suite": "resource",
+      "passed": 1,
+      "failed": 0,
+      "exit_code": 0,
+      "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\streaming-resource-verify-01.trx",
+      "sha256": "aae7cb9a4c4742ceb44ab7a3a3e9f6d69e0c4d533ef6ebcb306231998687c8e7"
+    },
+    {
+      "suite": "boundary",
+      "passed": 7,
+      "failed": 0,
+      "exit_code": 0,
+      "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\streaming-boundary-verify-01.trx",
+      "sha256": "ea0f0beb45fc2561f76010af71fe21b6e6f7435e59804b3531d6d0ba04d077ba"
+    },
+    {
+      "suite": "capture",
+      "passed": 27,
+      "failed": 0,
+      "exit_code": 0,
+      "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\streaming-capture-verify-01.trx",
+      "sha256": "d7cbff9d67919321ea0ccbafef9821d04fc0f8f50270fe8aeea63881c5bae509"
+    },
+    {
+      "suite": "persistence",
+      "passed": 4,
+      "failed": 0,
+      "exit_code": 0,
+      "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\streaming-persistence-verify-01.trx",
+      "sha256": "dba690b4b4b5d332a04d673a86ae4c8bf419a2e8c5d352744d45967e1f9c5ad6"
+    },
+    {
+      "suite": "surrounding",
+      "passed": 16,
+      "failed": 0,
+      "exit_code": 0,
+      "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\streaming-surrounding-verify-01.trx",
+      "sha256": "f3bb3c50d1b0347f225fa5e14b281558f31a7cbefcd7c24a6a71d3c15e2eaab3"
+    }
+  ],
+  "resource": {
+    "payload_bytes": 67108864,
+    "allocated_bytes": 78413312,
+    "ceiling_bytes": 134217728
+  },
+  "artifacts": [
+    {
+      "path": "src/dotnet/Vulgata.Infrastructure/Source/DurableRetainedSourceStore.cs",
+      "sha256": "11283bcb2fa93392f23b0ce7f61b5f3648d837335dedec94c241813fd0d780e1"
+    },
+    {
+      "path": "src/dotnet/Vulgata.Infrastructure/Source/GitCommittedObjectReader.cs",
+      "sha256": "fcd99e0496c0fdeee0f94fb29f1eecdf7f1f388741e57e3dfdd8695c1acd92f4"
+    },
+    {
+      "path": "src/dotnet/Vulgata.Infrastructure/Source/RetainedSourceCapturePolicy.cs",
+      "sha256": "12bee787aa1550d546d93b7dd8a58d46106f1f509c4fabe83b9e5de02f0df5fe"
+    },
+    {
+      "path": "src/dotnet/Vulgata.Infrastructure/Source/RetainedSourceCaptureService.cs",
+      "sha256": "2b5193a88ec78e3cff0b4d1c4d058aaa708f1bae800a88426db38afb62a68d68"
+    },
+    {
+      "path": "src/dotnet/Vulgata.Infrastructure/Source/RetainedSourceManifestCodec.cs",
+      "sha256": "3d1061c06fd986b6e7038a456cf1abb9b78de11345f7400c32a5060da2c85168"
+    },
+    {
+      "path": "tests/Vulgata.Tests/RetainedSource/RetainedSourceApplicationContractTests.cs",
+      "sha256": "4d1daa18a62549a64d236dc685f9fdd6ccaaadf9a4f8f4d850f204b9321f7fd1"
+    },
+    {
+      "path": "tests/Vulgata.Tests/RetainedSource/RetainedSourceCaptureApplicationFixture.cs",
+      "sha256": "dd6632cd5836567fcd61a0377b2813d4139c8f9f4859076bc17b9f359b5ac8b2"
+    },
+    {
+      "path": "tests/Vulgata.Tests/RetainedSource/RetainedSourceCaptureBoundaryTests.cs",
+      "sha256": "623697472c293b189c2be42f39624dc7a4a3a5d07c57189f8078aa3917f73e73"
+    },
+    {
+      "path": "tests/Vulgata.Tests/RetainedSource/RetainedSourceCaptureResourceTests.cs",
+      "sha256": "875b559705267de0fed548af3be8ed5681226969310aeedc7f062443cd06b343"
+    },
+    {
+      "path": "tests/Vulgata.Tests/RetainedSource/RetainedSourceCaptureTests.cs",
+      "sha256": "7855060a465ec4cec1169bb4e03f082becd9767f25ad1466eee87035a0b8d71e"
+    },
+    {
+      "path": "tests/Vulgata.Tests/RetainedSource/RetainedSourceFixture.cs",
+      "sha256": "5d73d7b7839daae38d993b69e063117fd4818fd73aa614f0aea35f4d6c22bcd7"
+    },
+    {
+      "path": "tests/Vulgata.Tests/RetainedSource/RetainedSourcePostgreSqlTests.cs",
+      "sha256": "5c1c83c0f2decfb98101f8fe642c89301ced36090ae03773d0b63aa23908f483"
+    },
+    {
+      "path": "tests/Vulgata.Tests/RetainedSource/RetainedSourceSeparateProcessChild.cs",
+      "sha256": "3d9e0f8b4a6112e1b4263e15bd7a63f99d7b5e6626f8c2e40f561814b30e0fb2"
+    },
+    {
+      "path": "tests/Vulgata.Tests/RetainedSource/RetainedSourceSeparateProcessTests.cs",
+      "sha256": "938a9bded46260a777287d599886b9aba8791206ac97d2cceb05beb34e5b37ce"
+    },
+    {
+      "path": "tests/Vulgata.Tests/RetainedSource/RetainedSourceTestFixtures.cs",
+      "sha256": "4c2baf3adb332840a697aef629de0bdc073a7fa58683867e92d1b352f78d3071"
+    },
+    {
+      "path": "src/dotnet/Vulgata.Infrastructure/Data/RetainedSourceRepository.cs",
+      "sha256": "e89616856dd44faed0a1fb43d0ca84b6989794ef66d3670a054c48bca7d0506b"
+    },
+    {
+      "path": "src/dotnet/Vulgata.Infrastructure/Data/Configurations/SourceSnapshotConfiguration.cs",
+      "sha256": "8a8660b2194599f14b0c12053edf4a968db483ca1f4f340c4315bb8243f10f8a"
+    },
+    {
+      "path": "src/dotnet/Vulgata.Web/Data/SourceRepositoryAuthorizationVerifier.cs",
+      "sha256": "5b2fce86a6d5f054c954e86ed1dfac8d3097f7b12dc2f891b3829543dc434f66"
+    },
+    {
+      "path": "src/dotnet/Vulgata.Infrastructure/DependencyInjection.cs",
+      "sha256": "bfc883b88f6ff05b44d08f08baf2fdba027104836ac72af177bd75a7855a381b"
+    },
+    {
+      "path": "src/dotnet/Vulgata.Web/Program.cs",
+      "sha256": "932ae526f383a560e33fc8bd70c5d90bbd4c3542418c62c9ff0f5238b18a9eaf"
+    }
+  ],
+  "scope": "T008-T019 only; no ordinary read/workspace/fresh-process/convergence/quality/E2E completion."
+}

@@ -1,0 +1,27 @@
+{
+  "id": "13-1/implement/16",
+  "kind": "test-red",
+  "stage": "implement",
+  "source_commit": "cbd1b498a975295ed1c474da140631d930a0d294",
+  "observed_at": "2026-09-15T04:29:49.366099Z",
+  "summary": "Real SystemOwner assignment revoked during owned identity-lock wait after second real authorization; release led to Completed and visible new row instead of Denied/no row.",
+  "test": "AcquireAsync_RevokedSystemOwnerWhileIdentityLockIsHeld_DeniesWithoutNewRow",
+  "result": {
+    "passed": 0,
+    "failed": 1,
+    "exit_code": 1
+  },
+  "raw_log": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\capture-lock-red-03.log",
+  "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\capture-lock-red-03.trx",
+  "prerequisites": "Deadline correction independently4/4 boundary and27/27 capture GREEN; boundary-verify-02 and capture-verify-03 logs/TRX under owned runtime.",
+  "artifacts": [
+    {
+      "path": "tests/Vulgata.Tests/RetainedSource/RetainedSourceCaptureBoundaryTests.cs",
+      "sha256": "efe7b72225a7eefd690642da7dfa9d25886a9f0c18cc5de1aa0dae875fa68c07"
+    },
+    {
+      "path": "tests/Vulgata.Tests/RetainedSource/RetainedSourceCaptureApplicationFixture.cs",
+      "sha256": "dd6632cd5836567fcd61a0377b2813d4139c8f9f4859076bc17b9f359b5ac8b2"
+    }
+  ]
+}

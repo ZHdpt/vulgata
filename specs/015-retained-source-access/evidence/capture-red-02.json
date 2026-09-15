@@ -1,0 +1,32 @@
+{
+  "id": "13-1/implement/10",
+  "kind": "test-red",
+  "stage": "implement",
+  "source_commit": "cbd1b498a975295ed1c474da140631d930a0d294",
+  "observed_at": "2026-09-15T03:36:56.266613Z",
+  "command": "Private VULGATA_STORY131_POSTGRES_ADMIN; dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter FullyQualifiedName~RetainedSourceCaptureTests --no-restore",
+  "result": {
+    "exit_code": 1,
+    "total": 27,
+    "passed": 10,
+    "failed": 17,
+    "passed_cases": "All10 invalid configuration cases reject with source_configuration_invalid.",
+    "failed_cases": "All17 remaining cases fail at missing IRetainedSourceApplication registration after real owned DB migration/seed/scoped composition.",
+    "limitations": "Mutation/deadline hooks are configured but not invoked while service absent; no capture functionality claimed."
+  },
+  "artifact_paths": [
+    {
+      "path": "tests/Vulgata.Tests/RetainedSource/RetainedSourceCaptureTests.cs",
+      "sha256": "ca622b71c95b24afa988b273866c8f5488b1106b6122e320e352e5b565c4ce5a"
+    },
+    {
+      "path": "tests/Vulgata.Tests/RetainedSource/RetainedSourceCaptureApplicationFixture.cs",
+      "sha256": "f6b25061b522abbd381370add7d6e26570797b7b4c252e4f9f48f325a64d7361"
+    },
+    {
+      "path": "src/dotnet/Vulgata.Infrastructure/Source/RetainedSourceCapturePolicy.cs",
+      "sha256": "836dbcd93bf432e684b3a0bb5e0ee8477fe164107dfcd9a2b64b94355f353307"
+    }
+  ],
+  "summary": "Fresh current-file mixed result replaces stale26-case report. Valid integrated runtime capture RED plus independently observed T010 configuration GREEN. Four frozen PG tests remain GREEN."
+}

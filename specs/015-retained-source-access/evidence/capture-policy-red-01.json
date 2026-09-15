@@ -1,0 +1,28 @@
+{
+  "id": "13-1/implement/13",
+  "kind": "test-red",
+  "stage": "implement",
+  "source_commit": "cbd1b498a975295ed1c474da140631d930a0d294",
+  "observed_at": "2026-09-15T04:07:46.582091Z",
+  "artifacts": [
+    {
+      "path": "tests/Vulgata.Tests/RetainedSource/RetainedSourceCaptureBoundaryTests.cs",
+      "sha256": "2d30abe2da8b503633811ad94ea9845a067ac4f334bfed2faa84c5071a3e21ab"
+    }
+  ],
+  "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter FullyQualifiedName~RetainedSourceCaptureBoundaryTests --no-restore --logger trx;LogFileName=capture-boundary-01.trx",
+  "result": {
+    "passed": 0,
+    "failed": 3,
+    "total": 3,
+    "exit_code": 1
+  },
+  "failures": [
+    "Filesystem root expected C:\\ actual C:",
+    "CaptureDeadlineSeconds Int64.MaxValue expected source_configuration_invalid actual ArgumentOutOfRangeException",
+    "OperationStaleAfterMinutes Int64.MaxValue expected source_configuration_invalid actual ArgumentOutOfRangeException"
+  ],
+  "raw_log": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\capture-boundary-01.log",
+  "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\capture-boundary-01.trx",
+  "summary": "Actual public policy behavior failures; minimal policy-only producer correction dispatched."
+}

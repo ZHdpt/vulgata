@@ -1,0 +1,25 @@
+{
+  "id": "13-1/implement/15",
+  "kind": "test-green",
+  "stage": "implement",
+  "source_commit": "cbd1b498a975295ed1c474da140631d930a0d294",
+  "observed_at": "2026-09-15T04:22:44.767268Z",
+  "summary": "Producer active capture deadline correction: stalled Git1/1, boundary4/4, capture27/27 GREEN. Same-author independent verification dispatched.",
+  "artifacts": [
+    {
+      "path": "src/dotnet/Vulgata.Infrastructure/Source/RetainedSourceCaptureService.cs",
+      "sha256": "9e2b10f5fa3b10eabfefbc8b8d9e80b67e2d016ccceb027cf3b5f771eabf2477"
+    }
+  ],
+  "raw_directory": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results",
+  "raw_files": [
+    "producer-deadline-stalled.trx",
+    "producer-deadline-stalled.log",
+    "producer-deadline-boundary.trx",
+    "producer-deadline-boundary.log",
+    "producer-deadline-capture.trx",
+    "producer-deadline-capture.log"
+  ],
+  "implementation": "Monotonic TimeProvider monitor with at-most-minute chunks links deadline/caller cancellation for prelinearization operations; explicit caller cancellation precedence; final row insertion non-cancellable.",
+  "limits": "Final lock-time authority and streaming still pending; no T019 checkpoint acceptance."
+}

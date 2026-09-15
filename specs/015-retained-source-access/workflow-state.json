@@ -6,10 +6,10 @@
   "stage": "implement",
   "preflight": {
     "branch": "dev",
-    "head": "68240bb86a93b946253ded0e48f9635a4047d8ec",
-    "git_identity_sha256": "3a4a427ec44ae1e77e7a198707893773021bd309f6dd6a8404b054bb16671d3f",
-    "status_sha256": "1f16e757d7455ca2ca0f225bf69fd2fbb1ffb8a4a076f1723b3a5cdec728cfca",
-    "observed_at": "2026-09-15T02:09:53.056578Z"
+    "head": "cbd1b498a975295ed1c474da140631d930a0d294",
+    "git_identity_sha256": "eb9127080010f0c54347a2538557f485844e78c9dea1401d400a66f3d0eb9335",
+    "status_sha256": "d99543d5dce03787f9095eb47a3a752fef3e1a24cf609bba95bf5a9ecea5c4e3",
+    "observed_at": "2026-09-15T04:56:38.873757Z"
   },
   "artifacts": {
     "spec": {
@@ -22,7 +22,7 @@
     },
     "tasks": {
       "path": "specs/015-retained-source-access/tasks.md",
-      "sha256": "c8113ad080b74459790d7449482f7f561a25d5497127b590b8956544fc6cfdaf"
+      "sha256": "101157076ba9fd055171976a40d9e1d1b7ff2eaf922a07d54359e7305b575821"
     }
   },
   "gates": {
@@ -76,26 +76,26 @@
   "current_evidence_paths": [
     "docs/bmad/implementation-artifacts/13-1-retain-exact-repository-source-with-scoped-read-access.md",
     "docs/bmad/implementation-artifacts/workflow-activations/13-1-retain-exact-repository-source-with-scoped-read-access.json",
-    "specs/015-retained-source-access/evidence/plan-review-02.json",
     "specs/015-retained-source-access/evidence/plan-authorization-01.md",
     "specs/015-retained-source-access/evidence/definition-review-boundary-05.json",
     "specs/015-retained-source-access/evidence/definition-review-05.json",
     "specs/015-retained-source-access/evidence/implementation-approval-01.md",
     "specs/015-retained-source-access/evidence/runtime-boundary-01.json",
-    "specs/015-retained-source-access/evidence/identity-red-01.json",
-    "specs/015-retained-source-access/evidence/identity-verified-green-01.json",
-    "specs/015-retained-source-access/evidence/identity-checkpoint-01.json"
+    "specs/015-retained-source-access/evidence/identity-checkpoint-01.json",
+    "specs/015-retained-source-access/evidence/implementation-observations-01.md",
+    "specs/015-retained-source-access/evidence/capture-group-verified-01.json",
+    "specs/015-retained-source-access/evidence/capture-checkpoint-01.json"
   ],
   "checkpoint": {
-    "checkpoint_id": "bmad-13-1-implement-20260915T020953Z-28b894",
+    "checkpoint_id": "bmad-13-1-implement-20260915T045638Z-d487d3",
     "stage": "implement",
     "commit_sha": null,
     "binding_status": "pending"
   },
   "resume": {
     "stage": "implement",
-    "reason": "Identity/scaffold group T001-T007 verified. Next author real capture/policy/failure/PostgreSQL RED using owned fixtures before source implementation.",
-    "evidence_path": "specs/015-retained-source-access/evidence/identity-checkpoint-01.json"
+    "reason": "T008-T019 independently verified55/55. Next T020/T021 canonical manifest detail; ordinary reads/reopen and downstream gates remain.",
+    "evidence_path": "specs/015-retained-source-access/evidence/capture-group-verified-01.json"
   },
-  "updated_at": "2026-09-15T02:09:53.056578Z"
+  "updated_at": "2026-09-15T04:56:38.873757Z"
 }

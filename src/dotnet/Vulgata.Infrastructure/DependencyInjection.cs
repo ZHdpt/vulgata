@@ -3,11 +3,26 @@ using Microsoft.Extensions.DependencyInjection;
 using Vulgata.Core.DomainServices;
 using Vulgata.Core.Entities;
 using Vulgata.Infrastructure.Data;
+using Vulgata.Infrastructure.Source;
 
 namespace Vulgata.Infrastructure;
 
 public static class DependencyInjection
 {
+    public static IServiceCollection AddRetainedSourceInfrastructure(
+        this IServiceCollection services,
+        RetainedSourceCapturePolicy capturePolicy)
+    {
+        ArgumentNullException.ThrowIfNull(services);
+        ArgumentNullException.ThrowIfNull(capturePolicy);
+        services.AddSingleton(capturePolicy);
+        services.AddSingleton<GitCommittedObjectReader>();
+        services.AddSingleton<DurableRetainedSourceStore>();
+        services.AddScoped<IRetainedSourceRepository, RetainedSourceRepository>();
+        services.AddScoped<IRetainedSourceApplication, RetainedSourceCaptureService>();
+        return services;
+    }
+
     public static IServiceCollection AddPreparedPass2Infrastructure(
         this IServiceCollection services)
     {

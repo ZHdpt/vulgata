@@ -318,3 +318,65 @@ T001-T007 complete. T005 runtime RED was22 failing invalid-value cases plus3 exi
 T006 and T007 dispatches used the same seven-slot contract: raw test/source hashes and accepted model as inputs; Sol/medium production owned only SourceSnapshot.cs (RetainedSourceContracts.cs only if required, untouched); Luna/high test author owned the five test/scaffold files; no delegation/state/Git writes; returned focused and surrounding evidence.
 
 Pending coherent identity checkpoint: bmad-13-1-implement-20260915T020953Z-28b894. Next work is T008/T009/T014 integrated capture/policy/failure/PostgreSQL RED, then only the minimum accepted production chain required by those tests.
+
+## Integrated capture RED dispatch
+
+1. role_and_objective: same tdd-test-author Luna/high authors T008/T009/T014 against actual production composition and owned Git/PostgreSQL fixtures.
+2. authoritative_inputs: accepted definition/current Core contracts, VulgataWebComposition, Identity/management authority, existing context factory/migrations, testing/TDD/constitution and runtime ownership evidence.
+3. workflow_boundary: implement after bound identity checkpoint cbd1b498a975295ed1c474da140631d930a0d294. No source acquisition/store/EF mapping implemented yet.
+4. constraints_and_skills: no delegation; compiled runtime missing new capability is accepted bootstrap, not compile/environment RED. Real application seams, no mocks of source internals, no premature open/read dependency or full Web/tool/provider runtime.
+5. write_boundary: RetainedSourceCaptureTests.cs, RetainedSourcePostgreSqlTests.cs and retained-source test fixture helpers only; unique databases inside dedicated task container only; no secrets in repo/logs.
+6. output_and_evidence: exact runtime RED for explicit success/policy/failure/auth/ref/mutation/cancellation/cleanup/PostgreSQL-constraint cases, commands/hashes/DB names/cleanup outcomes.
+7. completion_and_failure: stop at meaningful RED for Sol/medium producer; no production/state/Git edits or stage/commit/delegation.
+
+## Persistence RED and split work
+
+The test author observed4 compiled runtime PostgreSQL failures for missing SourceSnapshot model/table/DbSet, with guarded unique-database setup/cleanup succeeding. Raw evidence is persistence-red-01.json. Capture tests still have setup gaps and claim no RED; root did not treat a missing POSTGRES_TARGET variable as a user blocker because the owned admin connection/helper can create it.
+
+1. role_and_objective: Sol/medium producer implements independently ready T015/T016 EF mapping/migration only; Luna/high test author repairs capture-specific application fixture in parallel.
+2. authoritative_inputs: frozen PostgreSQL test hash5c1c83c0f2decfb98101f8fe642c89301ced36090ae03773d0b63aa23908f483 and raw persistence RED; accepted source model/plan and current Web/Identity composition APIs.
+3. workflow_boundary: same Story/feature at cbd1b498a975295ed1c474da140631d930a0d294; no capture behavior claimed. Production Web builds and static capture-test edits have disjoint source trees; test-project builds wait for coordination.
+4. constraints_and_skills: current TDD/loop, no delegation; producer preserves SQLite harness and PostgreSQL semantics, uses design-time factory only to generate migrations, never its default connection for runtime updates. Test author creates/migrates/seeds a real unique target via existing helper, uses real user/Repository/role state, full symbolic refs and real source authorization; no dead callback mocks or unseeded placeholder data.
+5. write_boundary: producer SourceSnapshotConfiguration.cs, VulgataDbContext.cs, new source migration/designer/model snapshot only; test author capture tests and capture-specific helper files only, frozen PostgreSQL tests unchanged.
+6. output_and_evidence: producer returns source-owned migration/build readiness before tests; test author returns static fixture readiness before tests. Root schedules subsequent focused run serially.
+7. completion_and_failure: no capture GREEN, no state/Git writes by workers, no unowned DB changes; raw blockers returned for bounded correction.
+
+## Source configuration and capture production dispatch
+
+Fresh current capture test run:27 total,10 invalid configuration GREEN,17 remaining missing application-service RED. The corrected fixture is real/migrated/seeded; its future mutation/time hooks are present but have not executed while the service is missing. Current raw evidence: capture-red-02.json.
+
+1. role_and_objective: Sol/medium producer implements the minimum T011/T012/T013/T017/T018 capture chain needed by the observed runtime RED.
+2. authoritative_inputs: raw capture-red-02/test+fixture hashes, accepted full definition, current validated policy/schema and actual Core interfaces.
+3. workflow_boundary: same feature/HEAD with verified EF and config prerequisites; tests frozen and no competing builds.
+4. constraints_and_skills: current TDD/loop, no delegation; raw Git objects, server subject/live fresh authority, exact ref/bytes, bounded/cancellable work, atomic seal then immutable row, safe owned cleanup and sanitized outcomes; no ordinary reads/workspace/other-story implementation yet.
+5. write_boundary: GitCommittedObjectReader, DurableRetainedSourceStore, RetainedSourceCaptureService, minimum manifest codec/types, RetainedSourceRepository, SourceRepositoryAuthorizationVerifier, DI and Web composition; no tests/schema/intent/state/Git changes.
+6. output_and_evidence: focused capture and frozen PG results with private owned runtime env; source hashes, cleanup/publication handling and raw blockers; no malformed-test accommodation.
+7. completion_and_failure: minimal integrated GREEN or specific blocker, then same test-author independent verification; no stage/commit/delegation.
+
+## Initial capture verification and boundary regression dispatch
+
+Producer reached26/27 capture and4/4 PostgreSQL after root recreated the vanished auto-remove test container within the same authorized isolated scope. Updated exact resource identity is in runtime-boundary-01.json; no shared container/database was changed. The sole capture failure was an Administrator fixture incorrectly expecting denial after only SystemOwner-assignment removal. Same test author corrected it to a SystemOwner-only principal, then independently observed27/27 capture,4/4 PostgreSQL and16/16 surrounding Git/UserContext tests. Evidence: capture-producer-01.json and capture-verified-green-01.json. Final independent runs lacked persisted raw logs; their direct tool-observed counts are recorded without claiming an attachment.
+
+T019 is not accepted yet. Root and producer identified remaining streaming, active deadline and final lock-time publication checks; implementation-observations-01.md records them with configuration edge cases. No additional implementation approval is needed: these enforce the unchanged accepted plan.
+
+1. role_and_objective: Same Luna/high test author adds bounded public-seam capture regressions for the recorded gaps.
+2. authoritative_inputs: Raw implementation-observations-01.md, accepted plan sections2/3/7/8, FR005/014/019/020, current frozen production and green tests.
+3. workflow_boundary: HEAD cbd1b498a975295ed1c474da140631d930a0d294; initial capture tests green but T019 incomplete; owned replacement PostgreSQL fixture only.
+4. constraints_and_skills: Current TDD; actual authorization and owned Git/DB fixtures; no implementation-mirroring assertions, fabricated RED, delegation or concurrent production edits. Resource streaming needs measurable behavior or an honest verification-method report.
+5. write_boundary: RetainedSourceCaptureTests.cs, RetainedSourceCaptureApplicationFixture.cs, RetainedSourceFixture.cs and optional RetainedSourceCaptureBoundaryTests.cs; PostgreSQL helper portability only, retaining loopback/unique-DB safeguards.
+6. output_and_evidence: Persist unique raw log/TRX files in private runtime results directory; exact expected/actual, RED versus characterization, commands/exits/counts/hashes and hook-execution evidence.
+7. completion_and_failure: Return observed RED or precise seam obstacle for minimal Sol/medium production correction; no later read/workspace group, lifecycle/state/Git writes or commits.
+
+## Capture boundary corrections
+
+Policy boundary tests observed3RED: filesystem root normalization and unrepresentable capture/stale durations. Sol/medium changed only RetainedSourceCapturePolicy; same Luna/high author independently verified3/3 and27/27 capture. Next owned stalled-HTTP-Git test observed a real deadlineRED: request reached endpoint, but10s watchdog returned Cancelled instead of configured1s DeadlineExceeded. Producer added a monotonic chunked deadline monitor in capture service, retaining caller cancellation precedence and noncancellable row insertion. Same author independently verified4/4 boundary and27/27 capture. Evidence: capture-policy-red-01.json, capture-deadline-red-01.json and capture-deadline-producer-green-01.json; raw verification log/TRX paths are recorded in capture-lock-red-01.json.
+
+The next public capture regression held an owned identity lock, observed real pre-lock authorization, revoked a SystemOwner-only subject's assignment, then released the lock. Actual Completed/visible row violated expected Denied/no row. Producer added fresh authority/binding/cancellation/deadline checks after sealing before row insertion and after replay verification before disclosure. Producer1/1 focused,5/5 boundary,27/27 capture GREEN. Current service SHA2B5193A88EC78E3CFF0B4D1C4D058AAA708F1BAE800A88426DB38AFB62A68D68. Independent verification and policy-root-overlap/cancellation characterization are dispatched. T019 remains pending, with streaming still unresolved.
+
+All correction dispatches use the same seven slots: (1) named test/production role and single bounded objective; (2) accepted plan plus raw test/log/hash findings; (3) unchanged HEAD and approved feature boundary; (4) TDD/no delegation/no scope expansion; (5) disjoint exact test or production files; (6) raw counts/exits/log/TRX/hashes; (7) return at RED/GREEN for root routing, no state/stage/commit. No production worker edits tests and no test author edits production. Independent test runs and production builds are serialized.
+
+## Initial capture group verified
+
+T008-T019 complete after honest configuration, stalled-Git deadline, final-authority-lock and bounded-streaming RED/GREEN corrections. Independent current verification: resource1, boundary7, capture27, PostgreSQL4, surrounding16 all pass. Root parsed raw TRX counters and recorded full hashes in capture-group-verified-01.json.64MiB source payload allocated78,413,312 managed bytes, below134,217,728 ceiling. No ordinary reads/workspace/fresh-process qualification yet.
+
+Pending checkpoint: bmad-13-1-implement-20260915T045638Z-d487d3. Next T020/T021 canonical manifest detail, then scoped Repository deletion and read-context groups. No other story is activated.

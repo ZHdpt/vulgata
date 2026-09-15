@@ -1,0 +1,44 @@
+{
+  "id": "13-1/implement/12",
+  "kind": "test-green",
+  "stage": "implement",
+  "source_commit": "cbd1b498a975295ed1c474da140631d930a0d294",
+  "observed_at": "2026-09-15T04:01:17.229430Z",
+  "summary": "Same test author corrected SystemOwner-only revocation fixture and independently verified initial capture27/27, PostgreSQL4/4 and surrounding16/16. T019 remains incomplete pending known boundary regressions.",
+  "artifacts": [
+    {
+      "path": "tests/Vulgata.Tests/RetainedSource/RetainedSourceCaptureTests.cs",
+      "sha256": "7855060a465ec4cec1169bb4e03f082becd9767f25ad1466eee87035a0b8d71e"
+    },
+    {
+      "path": "tests/Vulgata.Tests/RetainedSource/RetainedSourceCaptureApplicationFixture.cs",
+      "sha256": "f6b25061b522abbd381370add7d6e26570797b7b4c252e4f9f48f325a64d7361"
+    },
+    {
+      "path": "tests/Vulgata.Tests/RetainedSource/RetainedSourcePostgreSqlTests.cs",
+      "sha256": "5c1c83c0f2decfb98101f8fe642c89301ced36090ae03773d0b63aa23908f483"
+    }
+  ],
+  "commands": [
+    {
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter FullyQualifiedName~RetainedSourceCaptureTests --no-restore",
+      "passed": 27,
+      "failed": 0,
+      "exit_code": 0
+    },
+    {
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter FullyQualifiedName~RetainedSourcePostgreSqlTests --no-restore",
+      "passed": 4,
+      "failed": 0,
+      "exit_code": 0
+    },
+    {
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter \"FullyQualifiedName~ExactGitRevisionAcquisitionTests|FullyQualifiedName~UserContextTests\" --no-restore",
+      "passed": 16,
+      "failed": 0,
+      "exit_code": 0
+    }
+  ],
+  "evidence_limit": "Worker returned direct tool-observed results but did not persist final raw logs; no log attachment or broader qualification is claimed. Regression dispatch requires persisted logs.",
+  "next": "Author regressions from implementation-observations-01.md before producer correction and T019 acceptance."
+}

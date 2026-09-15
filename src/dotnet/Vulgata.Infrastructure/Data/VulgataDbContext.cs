@@ -28,6 +28,7 @@ public class VulgataDbContext(DbContextOptions<VulgataDbContext> options) :
 
     public DbSet<SystemEntity> Systems => Set<SystemEntity>();
     public DbSet<RepositoryEntity> Repositories => Set<RepositoryEntity>();
+    public DbSet<SourceSnapshot> SourceSnapshots => Set<SourceSnapshot>();
     public DbSet<DatabaseConnection> DatabaseConnections => Set<DatabaseConnection>();
     public DbSet<LlmProvider> LlmProviders => Set<LlmProvider>();
     public DbSet<SystemLlmProviderOverride> SystemLlmProviderOverrides => Set<SystemLlmProviderOverride>();
