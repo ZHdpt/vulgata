@@ -30,3 +30,9 @@ Read-context first-slice observations (not an independent review verdict):
 - For T031 grant-lifecycle concurrency, exercise a timer callback during scheduling through the public TimeProvider seam. The constructor assigns _deadlineTimer from CreateTimer while the callback may reschedule through that field; verify initialization ordering before any correction.
 
 - T031/final containment inspection: DurableRetainedSourceStore.ResolveContained still trims all root separators even though policy normalization now preserves filesystem roots. Verify a filesystem-root storage value with excluded tool roots on a different volume through a supported public boundary before any production correction; this is an unproven observation, not a failure claim.
+
+Filesystem-root mapping disposition: read-only public Windows reopen characterization root-mapping-characterization-01.json passes; current Path.Combine restores the separator after the drive designator. The hypothesized cwd alias is not selected. No volume-root write or production correction; do not carry this suspicion as a confirmed defect.
+
+- Full-suite harness preflight: RetainedSourceCaptureResourceTests uses process-wide GC.GetTotalAllocatedBytes and currently has no nonparallel collection. No assembly/runner parallel-disabling setting was found. Isolate this allocation-measuring class with an explicit xUnit nonparallel collection before grouped/full-suite execution so unrelated concurrent allocations cannot invalidate its measurement; this is test scheduling/isolation, not a production defect or skipped test.
+
+Reader lifecycle/harness dispositions: actual timer NullReferenceException RED corrected and verified in persistence-lifecycle-complete-01.json; disposing one context preserves its sibling. Allocation/cwd tests now use a nonparallel collection, full source138passes. PostgreSQL helper port portability remains pending before final qualification.

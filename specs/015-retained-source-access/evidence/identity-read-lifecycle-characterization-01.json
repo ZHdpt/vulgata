@@ -1,0 +1,34 @@
+{
+  "id": "13-1/implement/72",
+  "kind": "test-green",
+  "stage": "implement",
+  "source_commit": "3b55723363dc51ced1f00b813fda15dcfb81d531",
+  "observed_at": "2026-09-15T13:11:14.290900Z",
+  "summary": "Existing-correct same-identity Completed+Replay/one row/object; conflicting immutable digest rejected without overwrite; disposed context cancels admitted read with no payload while sibling remains usable.",
+  "runs": [
+    {
+      "suite": "identity-concurrent-initial",
+      "passed": 1,
+      "failed": 0,
+      "exit_code": 0,
+      "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\identity-concurrent-initial.trx",
+      "sha256": "96fa74650c200ff9f2094036a68614f1ec4395e58a5cf09c924d6e0c3b90e4cf"
+    },
+    {
+      "suite": "identity-conflict-initial",
+      "passed": 1,
+      "failed": 0,
+      "exit_code": 0,
+      "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\identity-conflict-initial.trx",
+      "sha256": "438fc7201d5a5b431eb49997bbece90465712c3a0c4c4fa841c763663d3a1814"
+    },
+    {
+      "suite": "read-lifecycle-dispose-initial",
+      "passed": 1,
+      "failed": 0,
+      "exit_code": 0,
+      "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\read-lifecycle-dispose-initial.trx",
+      "sha256": "7ed467e3c46fa8b15d0d70f9e035a8fd023ead85e3e74c940b8fbce4cf678b4d"
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "id": "13-1/implement/71",
+  "kind": "test-green",
+  "stage": "implement",
+  "source_commit": "3b55723363dc51ced1f00b813fda15dcfb81d531",
+  "observed_at": "2026-09-15T12:55:24.123402Z",
+  "summary": "Existing-correct Windows volume-root mapping. Normal owned capture then read-only attached volume-root reopen refuses a guarded cwd-relative object alias with IntegrityFailure/no context. True volume-root object absent; no volume-root writes. Path.Combine also observed adding separator after G:. Original drive-relative suspicion is not reproduced; no production change.",
+  "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\root-mapping-verified.trx",
+  "trx_sha256": "2fc6af376bb71e61155fdeea9c42f3641568165a43a6a29981cb19323ef5ec69",
+  "passed": 1,
+  "failed": 0,
+  "exit_code": 0,
+  "test_sha256": "63e3f743c0e13e9c628d0172e8a8571cf59fc1b2c165d1ef1b25d95c5a9ea74a",
+  "fixture_sha256": "c7567e93548dd57861386b8ff7cef469fd4e427714b2daceed05c5b2cc362d51"
+}

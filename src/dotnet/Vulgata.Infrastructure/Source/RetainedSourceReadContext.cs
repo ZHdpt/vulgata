@@ -67,8 +67,9 @@ internal sealed class RetainedSourceReadContext : ISourceReadContext
         _deadlineTimer = timeProvider.CreateTimer(
             static state => ((RetainedSourceReadContext)state!).OnDeadlineTimer(),
             this,
-            NextDeadlineTimerDelay(),
+            Timeout.InfiniteTimeSpan,
             Timeout.InfiniteTimeSpan);
+        _deadlineTimer.Change(NextDeadlineTimerDelay(), Timeout.InfiniteTimeSpan);
     }
 
     public Guid ContextId { get; } = Guid.NewGuid();

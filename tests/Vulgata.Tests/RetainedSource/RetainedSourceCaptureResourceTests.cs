@@ -4,6 +4,7 @@ using Vulgata.Core.DomainServices;
 
 namespace Vulgata.Tests.RetainedSource;
 
+[Collection(RetainedSourceProcessGlobalCollection.Name)]
 public sealed class RetainedSourceCaptureResourceTests(ITestOutputHelper output)
 {
     [Fact]

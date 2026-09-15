@@ -1,0 +1,103 @@
+{
+  "id": "13-1/implement/74",
+  "kind": "test-green",
+  "stage": "implement",
+  "source_commit": "3b55723363dc51ced1f00b813fda15dcfb81d531",
+  "observed_at": "2026-09-15T13:22:25.170264Z",
+  "summary": "Current source group138passed,0failed,1explicit child-only opt-in skip; exit0. T031/T032 complete. Trusted workspace, fresh-process remote-unavailable reopen and all later gates remain pending.",
+  "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\independent-retained-source-complete.trx",
+  "trx_sha256": "3ad9a8636811c2016996c7517e68062a2d449c60d78538904a3abdd39bd988aa",
+  "counters": {
+    "total": "139",
+    "executed": "138",
+    "passed": "138",
+    "failed": "0",
+    "error": "0",
+    "timeout": "0",
+    "aborted": "0",
+    "inconclusive": "0",
+    "passedButRunAborted": "0",
+    "notRunnable": "0",
+    "notExecuted": "0",
+    "disconnected": "0",
+    "warning": "0",
+    "completed": "0",
+    "inProgress": "0",
+    "pending": "0"
+  },
+  "result_outcomes": {
+    "Passed": 138,
+    "NotExecuted": 1
+  },
+  "exit_code": 0,
+  "classes": {
+    "Vulgata.Tests.RetainedSource.RetainedSourceRangeReadTests": {
+      "Passed": 12
+    },
+    "Vulgata.Tests.RetainedSource.RetainedSourceCaptureBoundaryTests": {
+      "Passed": 7
+    },
+    "Vulgata.Tests.RetainedSource.RetainedSourceCaptureTests": {
+      "Passed": 27
+    },
+    "Vulgata.Tests.RetainedSource.RetainedSourceApplicationContractTests": {
+      "Passed": 25
+    },
+    "Vulgata.Tests.RetainedSource.RetainedSourceAuthorizationTests": {
+      "Passed": 16
+    },
+    "Vulgata.Tests.RetainedSource.RetainedSourcePostgreSqlTests": {
+      "Passed": 4
+    },
+    "Vulgata.Tests.RetainedSource.RetainedSourceReadContextTests": {
+      "Passed": 24
+    },
+    "Vulgata.Tests.RetainedSource.RetainedSourcePersistenceTests": {
+      "Passed": 13
+    },
+    "Vulgata.Tests.RetainedSource.RetainedSourceManifestTests": {
+      "Passed": 3
+    },
+    "Vulgata.Tests.RetainedSource.RetainedSourceRepositoryDeletionTests": {
+      "Passed": 3
+    },
+    "Vulgata.Tests.RetainedSource.RetainedSourceReadLifecycleTests": {
+      "Passed": 2
+    },
+    "Vulgata.Tests.RetainedSource.RetainedSourceCaptureResourceTests": {
+      "Passed": 1
+    },
+    "Vulgata.Tests.RetainedSource.RetainedSourceSeparateProcessChildTests": {
+      "NotExecuted": 1
+    },
+    "Vulgata.Tests.RetainedSource.RetainedSourceRootMappingTests": {
+      "Passed": 1
+    }
+  },
+  "files": {
+    "src/dotnet/Vulgata.Infrastructure/Source/RetainedSourceReadContext.cs": "8cca23c75807f0fcbeb7a2c9054c4e9127ab0b3baf71d15656c352f728653127",
+    "tests/Vulgata.Tests/RetainedSource/RetainedSourceCaptureApplicationFixture.cs": "513fce4e59537f0b8eed848a857da7c42f26c093ac7087a05e9df81772743494",
+    "tests/Vulgata.Tests/RetainedSource/RetainedSourceCaptureResourceTests.cs": "b9bf555809e49faaf18fb031865a7024b4466cce311a16aac866b86f765f6f90",
+    "tests/Vulgata.Tests/RetainedSource/RetainedSourcePersistenceTests.cs": "905826303361f4072f3d6cb8ef7557b39eb599fee2ac5157133009b9598b99c0",
+    "tests/Vulgata.Tests/RetainedSource/RetainedSourceProcessGlobalCollection.cs": "17b8f142e77e1f0e08a0ea2cc06e9bb714324307a282b33c31636d09379e060f",
+    "tests/Vulgata.Tests/RetainedSource/RetainedSourceReadLifecycleTests.cs": "02cae466c34bae13adf9075c67e526fe97b3bb638aad130a09d0723bcc204f13",
+    "tests/Vulgata.Tests/RetainedSource/RetainedSourceRootMappingTests.cs": "a4048f48d18e6424e9c50bdd86cae7943d404b1726e6d917c19aa54e60ae98c7"
+  },
+  "allocation": {
+    "payload_bytes": 67108864,
+    "allocated_bytes": 8402568,
+    "ceiling_bytes": 134217728,
+    "scope": "isolated process-wide counter in warm grouped run; not peak-memory/capacity proof"
+  },
+  "task_coverage": {
+    "replay_identity": "Persistence SameIdentityReplay/SameIdentityConcurrentPublication/DifferentRepositories",
+    "cross_process_lock": "Persistence AgedSealedObjectWithBusyIdentityLock actual child and live operation preservation",
+    "atomic_publication_recovery": "Persistence InjectedPrePublishFailure and AgedAbandonedOperation actual terminated child",
+    "cleanup_no_prune": "Persistence AgedUnreferencedSealedObject preserves agedA/read; grace/unknown/foreign/unmarked/reparse cases",
+    "digest_conflict": "Persistence ConflictingRecordedDigest without overwrite",
+    "readers_lease_release": "Range ConcurrentReservations and ReadLifecycle DisposedContextCancelsAdmittedRead_AndLeavesSiblingUsable",
+    "fresh_authority_retry": "Persistence actual verifier callbacks4->7 plus Authorization16tests",
+    "timer": "ReadLifecycle SynchronousFirstTimerEvent corrected after runtimeRED"
+  },
+  "child_skip": "UnitTestResult NotExecuted1 (TRX counters notExecuted=0); parent launches owned child cases explicitly. T035 fresh-process reopen still pending."
+}

@@ -130,7 +130,9 @@ internal sealed class RetainedSourceCaptureApplicationFixture : IAsyncDisposable
         string sourceStorageRoot,
         string userId,
         IReadOnlyDictionary<string, string?>? configurationOverrides = null,
-        Func<SourceAuthorizationRequest, CancellationToken, Task>? authorizationWait = null)
+        Func<SourceAuthorizationRequest, CancellationToken, Task>? authorizationWait = null,
+        string? dataProtectionKeyRingPath = null,
+        TimeProvider? timeProvider = null)
     {
         WebApplication application = BuildApplication(
             sourceStorageRoot,
@@ -140,11 +142,12 @@ internal sealed class RetainedSourceCaptureApplicationFixture : IAsyncDisposable
             authenticated: true,
             administrator: true,
             systemOwner: false,
-            timeProvider: null,
+            timeProvider: timeProvider,
             mutateAfterFirstAuthorization: null,
             mutateAfterAuthorizationCount: 1,
             authorizationWait: authorizationWait,
-            configureServices: null);
+            configureServices: null,
+            dataProtectionKeyRingPath: dataProtectionKeyRingPath);
         IServiceScope scope = application.Services.CreateScope();
         IHttpContextAccessor accessor =
             application.Services.GetRequiredService<IHttpContextAccessor>();
@@ -177,7 +180,8 @@ internal sealed class RetainedSourceCaptureApplicationFixture : IAsyncDisposable
         Func<Task>? mutateAfterFirstAuthorization,
         int mutateAfterAuthorizationCount,
         Func<SourceAuthorizationRequest, CancellationToken, Task>? authorizationWait,
-        Action<IServiceCollection>? configureServices)
+        Action<IServiceCollection>? configureServices,
+        string? dataProtectionKeyRingPath = null)
     {
         var options = new WebApplicationOptions
         {
@@ -187,7 +191,7 @@ internal sealed class RetainedSourceCaptureApplicationFixture : IAsyncDisposable
         };
         WebApplicationBuilder builder = WebApplication.CreateBuilder(options);
         builder.Logging.ClearProviders();
-        string keyRingPath = Path.Combine(
+        string keyRingPath = dataProtectionKeyRingPath ?? Path.Combine(
             Directory.GetParent(sourceStorageRoot)!.FullName,
             ".test-keyring");
         Directory.CreateDirectory(keyRingPath);

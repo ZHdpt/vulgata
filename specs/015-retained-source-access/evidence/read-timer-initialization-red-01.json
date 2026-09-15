@@ -1,0 +1,20 @@
+{
+  "id": "13-1/implement/73",
+  "kind": "test-red",
+  "stage": "implement",
+  "source_commit": "3b55723363dc51ced1f00b813fda15dcfb81d531",
+  "observed_at": "2026-09-15T13:11:14.290900Z",
+  "summary": "Public OpenReadContext throws NullReferenceException from OnDeadlineTimer before _deadlineTimer assignment. Conformant controlled provider advances the positive first20-day due interval inside100-day grant and calls back during CreateTimer; disabled creation/Change scheduling also supported. Correct assignment before activation is required.",
+  "evidence_level": "controlled timer scheduling, real source/PG composition; not20days of wall-clock execution",
+  "test_hashes": {
+    "RetainedSourceReadLifecycleTests.cs": "02cae466c34bae13adf9075c67e526fe97b3bb638aad130a09d0723bcc204f13",
+    "RetainedSourcePersistenceTests.cs": "905826303361f4072f3d6cb8ef7557b39eb599fee2ac5157133009b9598b99c0",
+    "RetainedSourceCaptureApplicationFixture.cs": "513fce4e59537f0b8eed848a857da7c42f26c093ac7087a05e9df81772743494",
+    "RetainedSourceRootMappingTests.cs": "63e3f743c0e13e9c628d0172e8a8571cf59fc1b2c165d1ef1b25d95c5a9ea74a"
+  },
+  "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\read-lifecycle-timer-initial.trx",
+  "trx_sha256": "19dd6421235f7349dc482d44767d6e5e8a842dfafa9a93ffafcca35f77b01b3d",
+  "passed": 0,
+  "failed": 1,
+  "exit_code": 1
+}

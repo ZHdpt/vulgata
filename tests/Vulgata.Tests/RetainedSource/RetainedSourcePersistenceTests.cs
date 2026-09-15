@@ -865,6 +865,110 @@ public sealed class RetainedSourcePersistenceTests
     }
 
     [Fact]
+    public async Task AcquireAsync_SameIdentityConcurrentPublication_ReturnsCompletedAndReplayAsync()
+    {
+        await using RetainedSourceFixture fixture =
+            await RetainedSourceFixture.CreateAsync();
+        var barrier = new SameIdentityAuthorizationBarrier();
+        await using RetainedSourceCaptureApplicationFixture appFixture =
+            await RetainedSourceCaptureApplicationFixture.CreateAsync(
+                fixture,
+                standalone: true,
+                authorizationWait: barrier.WaitAsync);
+        IRetainedSourceApplication application = appFixture.Scope.ServiceProvider
+            .GetRequiredService<IRetainedSourceApplication>();
+        string permittedRef = await fixture.Repository.RunGitAsync(["symbolic-ref", "HEAD"]);
+        using var testCancellation = new CancellationTokenSource(TimeSpan.FromSeconds(60));
+        SourceCaptureResult[] results = await Task.WhenAll(
+            application.AcquireAsync(fixture.RepositoryId, permittedRef, testCancellation.Token),
+            application.AcquireAsync(fixture.RepositoryId, permittedRef, testCancellation.Token));
+        SourceCaptureResult completed =
+            Assert.Single(results, result => result.Status == SourceCaptureStatus.Completed);
+        SourceCaptureResult replay =
+            Assert.Single(results, result => result.Status == SourceCaptureStatus.Replay);
+        List<SourceSnapshot> snapshots = await LoadSnapshotsAsync(
+            appFixture,
+            fixture.RepositoryId);
+        int sealedObjectCount = CountSealedObjects(
+            fixture.SourceStorageRoot,
+            fixture.RepositoryId,
+            completed.ProfiledRevision!);
+        _output.WriteLine(
+            $"completed={completed.Status}/{completed.Code}; replay={replay.Status}/{replay.Code}; " +
+            $"rows={snapshots.Count}; sealedObjects={sealedObjectCount}");
+
+        Assert.NotEqual(completed.CorrelationId, replay.CorrelationId);
+        Assert.Equal(completed.RepositoryId, replay.RepositoryId);
+        Assert.Equal(completed.ProfiledRevision, replay.ProfiledRevision);
+        Assert.Equal(completed.GitObjectFormat, replay.GitObjectFormat);
+        Assert.Equal(completed.ManifestSha256, replay.ManifestSha256);
+        Assert.Equal(completed.EntryCount, replay.EntryCount);
+        Assert.Equal(completed.TotalBlobBytes, replay.TotalBlobBytes);
+        Assert.Equal(completed.CompletedAt, replay.CompletedAt);
+        Assert.Single(snapshots);
+        Assert.Equal(1, sealedObjectCount);
+    }
+
+    [Fact]
+    public async Task AcquireAsync_ConflictingRecordedDigest_ReturnsIntegrityFailureWithoutOverwriteAsync()
+    {
+        await using RetainedSourceFixture fixture =
+            await RetainedSourceFixture.CreateAsync();
+        await using RetainedSourceCaptureApplicationFixture appFixture =
+            await RetainedSourceCaptureApplicationFixture.CreateAsync(
+                fixture,
+                standalone: true);
+        string revision = await fixture.Repository.ResolveRevisionAsync();
+        string conflictingDigest = new('f', 64);
+        string conflictingKey =
+            $"snapshots/{fixture.RepositoryId:N}/{revision}/{conflictingDigest}";
+        SourceSnapshot conflicting = SourceSnapshot.Create(
+            fixture.RepositoryId,
+            revision,
+            "sha1",
+            conflictingDigest,
+            0,
+            0,
+            conflictingKey,
+            DateTimeOffset.UtcNow);
+        IDbContextFactory<VulgataDbContext> factory = appFixture.Scope.ServiceProvider
+            .GetRequiredService<IDbContextFactory<VulgataDbContext>>();
+        await using (VulgataDbContext seedContext = await factory.CreateDbContextAsync())
+        {
+            seedContext.SourceSnapshots.Add(conflicting);
+            await seedContext.SaveChangesAsync();
+        }
+
+        string conflictingObject = Path.Combine(
+            fixture.SourceStorageRoot,
+            conflictingKey.Replace('/', Path.DirectorySeparatorChar));
+        Directory.CreateDirectory(conflictingObject);
+        string sentinel = Path.Combine(conflictingObject, "conflict-sentinel.txt");
+        File.WriteAllText(sentinel, "preserve");
+        IRetainedSourceApplication application = appFixture.Scope.ServiceProvider
+            .GetRequiredService<IRetainedSourceApplication>();
+        string permittedRef = await fixture.Repository.RunGitAsync(["symbolic-ref", "HEAD"]);
+        using var testCancellation = new CancellationTokenSource(TimeSpan.FromSeconds(60));
+        SourceCaptureResult capture = await application.AcquireAsync(
+            fixture.RepositoryId,
+            permittedRef,
+            testCancellation.Token);
+        SourceSnapshot persisted = Assert.Single(await LoadSnapshotsAsync(
+            appFixture,
+            fixture.RepositoryId));
+        _output.WriteLine(
+            $"capture={capture.Status}/{capture.Code}; rows=1; " +
+            $"persistedDigest={persisted.ManifestSha256}; " +
+            $"sentinelExists={File.Exists(sentinel)}");
+
+        Assert.Equal(SourceCaptureStatus.IntegrityFailure, capture.Status);
+        Assert.Equal("source_integrity_failed", capture.Code);
+        Assert.Equal(conflictingDigest, persisted.ManifestSha256);
+        Assert.True(File.Exists(sentinel));
+        Assert.Equal("preserve", File.ReadAllText(sentinel));
+    }
+
+    [Fact]
     public async Task AcquireAsync_DifferentRepositories_ConcurrentPublicationReturnsCompletedAndOneRowEachAsync()
     {
         await using RetainedSourceFixture firstSource =
@@ -1143,6 +1247,45 @@ public sealed class RetainedSourcePersistenceTests
                     }
 
                     release = _allFinalAuthorizations.Task;
+                }
+            }
+
+            return release.WaitAsync(cancellationToken);
+        }
+    }
+
+    private sealed class SameIdentityAuthorizationBarrier
+    {
+        private readonly object _gate = new();
+        private readonly TaskCompletionSource _revisionAuthorizations =
+            new(TaskCreationOptions.RunContinuationsAsynchronously);
+        private int _profileAuthorizations;
+
+        internal Task WaitAsync(
+            SourceAuthorizationRequest request,
+            CancellationToken cancellationToken)
+        {
+            if (request.ProfiledRevision is null)
+            {
+                return Task.CompletedTask;
+            }
+
+            Task release;
+            lock (_gate)
+            {
+                int profileCount = ++_profileAuthorizations;
+                if (profileCount <= 2)
+                {
+                    if (profileCount == 2)
+                    {
+                        _revisionAuthorizations.TrySetResult();
+                    }
+
+                    release = _revisionAuthorizations.Task;
+                }
+                else
+                {
+                    return Task.CompletedTask;
                 }
             }
 
