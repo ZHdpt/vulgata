@@ -1,0 +1,99 @@
+{
+  "id": "13-1/implement/86",
+  "kind": "test-green",
+  "stage": "implement",
+  "source_commit": "454e40c11fc6932b9237ee2a94d3bff8ee21c675",
+  "observed_at": "2026-09-15T14:55:26.496098Z",
+  "summary": "T033/T034 complete: source-wide154passed/0failed/1child-only opt-in skip. Internal trusted provider uses live server subject/root, exact verified streaming materialization, no ordinary/Core/Agent root exposure, unsupported path refusal, fresh final authority/cancellation, integrity and owned lease cleanup. T035+ and final gates pending.",
+  "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\trusted-retained-source-final.trx",
+  "trx_sha256": "32e7c15f7b280c11557c27021d8524382462d0023cb0bfd4cea3f341815894f0",
+  "raw_log": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\trusted-retained-source-final.log",
+  "log_sha256": "72b90e5fe8dd6e804020ae9e49eef478ad15352457b27150972433304c551f62",
+  "counters": {
+    "total": "155",
+    "executed": "154",
+    "passed": "154",
+    "failed": "0",
+    "error": "0",
+    "timeout": "0",
+    "aborted": "0",
+    "inconclusive": "0",
+    "passedButRunAborted": "0",
+    "notRunnable": "0",
+    "notExecuted": "0",
+    "disconnected": "0",
+    "warning": "0",
+    "completed": "0",
+    "inProgress": "0",
+    "pending": "0"
+  },
+  "result_outcomes": {
+    "Passed": 154,
+    "NotExecuted": 1
+  },
+  "classes": {
+    "Vulgata.Tests.RetainedSource.RetainedSourceCaptureTests": {
+      "Passed": 27
+    },
+    "Vulgata.Tests.RetainedSource.RetainedSourceCaptureBoundaryTests": {
+      "Passed": 7
+    },
+    "Vulgata.Tests.RetainedSource.RetainedSourcePersistenceTests": {
+      "Passed": 13
+    },
+    "Vulgata.Tests.RetainedSource.RetainedSourceRootMappingTests": {
+      "Passed": 1
+    },
+    "Vulgata.Tests.RetainedSource.RetainedSourceManifestTests": {
+      "Passed": 3
+    },
+    "Vulgata.Tests.RetainedSource.RetainedSourceReadContextTests": {
+      "Passed": 24
+    },
+    "Vulgata.Tests.RetainedSource.RetainedSourceRepositoryDeletionTests": {
+      "Passed": 3
+    },
+    "Vulgata.Tests.RetainedSource.RetainedSourceAuthorizationTests": {
+      "Passed": 16
+    },
+    "Vulgata.Tests.RetainedSource.TrustedSourceWorkspaceTests": {
+      "Passed": 16
+    },
+    "Vulgata.Tests.RetainedSource.RetainedSourceRangeReadTests": {
+      "Passed": 12
+    },
+    "Vulgata.Tests.RetainedSource.RetainedSourceApplicationContractTests": {
+      "Passed": 25
+    },
+    "Vulgata.Tests.RetainedSource.RetainedSourceReadLifecycleTests": {
+      "Passed": 2
+    },
+    "Vulgata.Tests.RetainedSource.RetainedSourceSeparateProcessChildTests": {
+      "NotExecuted": 1
+    },
+    "Vulgata.Tests.RetainedSource.RetainedSourcePostgreSqlTests": {
+      "Passed": 4
+    },
+    "Vulgata.Tests.RetainedSource.RetainedSourceCaptureResourceTests": {
+      "Passed": 1
+    }
+  },
+  "exit_code": 0,
+  "files": {
+    "src/dotnet/Vulgata.Infrastructure/Source/TrustedSourceWorkspaceContracts.cs": "7349c1f2ee1abd967d878111dfae465c2da9267139cbfd70dd61212b78cf4334",
+    "src/dotnet/Vulgata.Infrastructure/Source/TrustedSourceWorkspaceProvider.cs": "dcfbb4765e6ed9c141bdedfba5539cd3e2dea2bfe854988259b11065f302b66c",
+    "src/dotnet/Vulgata.Infrastructure/Source/DurableRetainedSourceStore.cs": "eae42fadb88da16ae2bd10dc616dcc0d75b62b62645feef26e4bd6610f3fea24",
+    "src/dotnet/Vulgata.Infrastructure/DependencyInjection.cs": "16855b58337c68ef5f49d5964bf27d6c3fe23fb1f28ae2bf9893cd31176a008c",
+    "src/dotnet/Vulgata.Web/Program.cs": "d2a13e1f17be20f22919c0afacbae9b36fa267e3511a1690a958bf0aa2484616",
+    "tests/Vulgata.Tests/RetainedSource/TrustedSourceWorkspaceTests.cs": "c3b6207a264e8453c3a803d428ed43930aa9c9927c2e7940cf64c416ee65760d",
+    "tests/Vulgata.Tests/RetainedSource/RetainedSourceCaptureApplicationFixture.cs": "7bcb6539a5f36b77c582be3c3f9ac0017260fcb8334fdfeef0a40a202f4ecf25"
+  },
+  "allocation": {
+    "payload_bytes": 67108864,
+    "allocated_bytes": 8364840,
+    "ceiling_bytes": 134217728,
+    "scope": "warm grouped run, isolated process-wide allocation measure; not peak-memory/capacity qualification"
+  },
+  "boundary_evidence": "specs/015-retained-source-access/evidence/trusted-boundaries-complete-01.json",
+  "limitations": "Windows host workspace behavior qualified; no real CodeGraph/LSP/LLM, generic Scan/Knowledge/Chat, Docker-stack or production-readiness claim. Fresh-process remote-unavailable reopen remains T035."
+}

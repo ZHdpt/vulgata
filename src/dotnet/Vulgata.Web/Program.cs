@@ -516,7 +516,8 @@ public static class VulgataWebComposition
                 builder.Configuration,
                 builder.Environment.ContentRootPath,
                 profilingDataRoot,
-                configuredWorkspaceRoot));
+                configuredWorkspaceRoot),
+            configuredWorkspaceRoot);
         builder.Services.AddScoped<ISourceRepositoryAuthorizationVerifier,
             SourceRepositoryAuthorizationVerifier>();
         builder.Services.AddScoped<IGitWorkingCopyService, GitWorkingCopyService>();

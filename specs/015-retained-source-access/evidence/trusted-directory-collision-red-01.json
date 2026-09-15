@@ -1,0 +1,14 @@
+{
+  "id": "13-1/implement/81",
+  "kind": "test-red",
+  "stage": "implement",
+  "source_commit": "454e40c11fc6932b9237ee2a94d3bff8ee21c675",
+  "observed_at": "2026-09-15T14:12:23.778949Z",
+  "summary": "On Windows, committed Foo/a.txt and foo/b.txt are silently merged by workspace materialization. ActualSucceeded/lease present, expectedUnsupported/no lease. Directory spelling collisions require preflight rejection; source itself remains retained unchanged.",
+  "test_sha256": "c5c21a3deafe0d831d9ad753d459f41db794e8cc2be99cda86d0ec5c355b06fc",
+  "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\trusted-boundary-case-collision.trx",
+  "trx_sha256": "7fb29a125b3fca212b1e31985a4f9b9c355581abb1ca507694ae2618e454f477",
+  "passed": 0,
+  "failed": 1,
+  "exit_code": 1
+}

@@ -1,0 +1,50 @@
+{
+  "id": "13-1/implement/80",
+  "kind": "test-green",
+  "stage": "implement",
+  "source_commit": "454e40c11fc6932b9237ee2a94d3bff8ee21c675",
+  "observed_at": "2026-09-15T14:12:23.778949Z",
+  "summary": "Trusted happy/config cases plus pre-acquire live revocation denial, unknown-purpose Unsupported, symlink and gitlink Unsupported independentlyGREEN6/6. Partial only; directory collision RED and remaining cases pending.",
+  "runs": [
+    {
+      "suite": "independent-trusted-root",
+      "passed": 2,
+      "failed": 0,
+      "exit_code": 0,
+      "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\independent-trusted-root.trx",
+      "sha256": "32202a28916bd4572838e95eab4b0b5bc0380c9f7170c81a9c8c59ef4b075a37"
+    },
+    {
+      "suite": "trusted-boundary-revocation",
+      "passed": 1,
+      "failed": 0,
+      "exit_code": 0,
+      "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\trusted-boundary-revocation.trx",
+      "sha256": "464e5aac5bc3bc3e22e373a870b15b7621f38cde0f815d3df661a601378736fc"
+    },
+    {
+      "suite": "trusted-boundary-purpose",
+      "passed": 1,
+      "failed": 0,
+      "exit_code": 0,
+      "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\trusted-boundary-purpose.trx",
+      "sha256": "e8b8a84a29712adeacb356dfdf0f36407498070e46630f12e47e666e3a8af235"
+    },
+    {
+      "suite": "trusted-boundary-symlink",
+      "passed": 1,
+      "failed": 0,
+      "exit_code": 0,
+      "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\trusted-boundary-symlink.trx",
+      "sha256": "c03f1f7d2409b613708ebf3cb2359500664c950e81e3bce2a2a556126adcce80"
+    },
+    {
+      "suite": "trusted-boundary-gitlink",
+      "passed": 1,
+      "failed": 0,
+      "exit_code": 0,
+      "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\trusted-boundary-gitlink.trx",
+      "sha256": "b913cb1c4f915a1f3436f894f46ee583d8770499997711058d25d196cafd018e"
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "id": "13-1/implement/84",
+  "kind": "test-green",
+  "stage": "implement",
+  "source_commit": "454e40c11fc6932b9237ee2a94d3bff8ee21c675",
+  "observed_at": "2026-09-15T14:48:08.422007Z",
+  "summary": "Host path-representation correction independently8/8GREEN on providerDCFBB476. Entry PathTooLong/Windows invalid-name mapsUnsupported; storage failures remain distinct. Later worker report accidentally re-cited historical C3BF long-path RED; root verified current source hash and this passing run, requested fresh full workspace verification, and made no speculative production change.",
+  "provider_sha256": "dcfbb4765e6ed9c141bdedfba5539cd3e2dea2bfe854988259b11065f302b66c",
+  "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\independent-trusted-long-path.trx",
+  "trx_sha256": "b361b2bf93496967437a340245a0be9a945993458da5310a9797572a26988c36",
+  "passed": 8,
+  "failed": 0,
+  "exit_code": 0,
+  "supersedes_failure": "specs/015-retained-source-access/evidence/trusted-long-path-red-01.json"
+}

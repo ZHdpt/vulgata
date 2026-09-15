@@ -713,6 +713,69 @@ internal sealed class DurableRetainedSourceStore(RetainedSourceCapturePolicy pol
         }
     }
 
+    internal async Task CopyVerifiedBlobToAsync(
+        VerifiedRetainedSourceObject source,
+        RetainedSourceManifestEntry entry,
+        Stream destination,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            if (entry.StorageBlobKey is null || entry.ContentSha256 is null ||
+                entry.ByteLength is null || !destination.CanWrite)
+            {
+                throw new RetainedSourceIntegrityException();
+            }
+
+            byte[] buffer = new byte[policy.VerificationBufferBytes];
+            using IncrementalHash hash = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
+            string objectRoot = ResolveContained(
+                policy.RootPath,
+                source.Snapshot.InternalStorageKey);
+            string blobPath = ResolveContained(objectRoot, entry.StorageBlobKey);
+            await using var input = new FileStream(
+                blobPath,
+                FileMode.Open,
+                FileAccess.Read,
+                FileShare.Read,
+                buffer.Length,
+                FileOptions.Asynchronous | FileOptions.SequentialScan);
+            long length = 0;
+            int read;
+            while ((read = await input.ReadAsync(buffer.AsMemory(), cancellationToken)) > 0)
+            {
+                length = checked(length + read);
+                if (length > entry.ByteLength.Value)
+                {
+                    throw new RetainedSourceIntegrityException();
+                }
+                hash.AppendData(buffer, 0, read);
+                await destination.WriteAsync(buffer.AsMemory(0, read), cancellationToken);
+            }
+
+            if (length != entry.ByteLength.Value ||
+                !CryptographicOperations.FixedTimeEquals(
+                    hash.GetHashAndReset(),
+                    Convert.FromHexString(entry.ContentSha256)))
+            {
+                throw new RetainedSourceIntegrityException();
+            }
+            await destination.FlushAsync(cancellationToken);
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (RetainedSourceIntegrityException)
+        {
+            throw;
+        }
+        catch
+        {
+            throw new RetainedSourceStorageException();
+        }
+    }
+
     private async Task VerifyObjectAsync(
         string objectRoot,
         RetainedSourceManifestDocument manifest,

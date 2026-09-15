@@ -1,0 +1,14 @@
+{
+  "id": "13-1/implement/77",
+  "kind": "test-red",
+  "stage": "implement",
+  "source_commit": "454e40c11fc6932b9237ee2a94d3bff8ee21c675",
+  "observed_at": "2026-09-15T13:39:34.690190Z",
+  "summary": "Real source capture and internal store verification succeed; production DI lacks internal ITrustedSourceWorkspaceProvider. Typed module capability assertion fails before materialization; remaining test asserts contained unique lease, exact text/binary/executable bytes, identity, owned disposal and retained-source reopen. No test-only provider.",
+  "test_sha256": "aaa9dad9a82ca445213579e9b77cd3d8f71d71cbb581b9939854d5ce183af4da",
+  "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\trusted-workspace-initial.trx",
+  "trx_sha256": "404101bf203c2761a60652519bb61f04b4aa00519b6244d6bfdd020871496dc8",
+  "passed": 0,
+  "failed": 1,
+  "exit_code": 1
+}

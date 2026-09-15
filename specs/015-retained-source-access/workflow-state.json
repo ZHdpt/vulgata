@@ -6,10 +6,10 @@
   "stage": "implement",
   "preflight": {
     "branch": "dev",
-    "head": "3b55723363dc51ced1f00b813fda15dcfb81d531",
-    "git_identity_sha256": "8012db2f6584b17329309470a0a41f03394c323255fb6e6af21e2c6a2e76b604",
-    "status_sha256": "f7f80d7e11a7d1ee718d1ce67bf06813f00264ce86724b3415fd7a5be58b86b4",
-    "observed_at": "2026-09-15T13:22:25.170264Z"
+    "head": "454e40c11fc6932b9237ee2a94d3bff8ee21c675",
+    "git_identity_sha256": "752a43d25fbb67c94e0b41f1bc1e3510adf421be75db322e57b49b150868282f",
+    "status_sha256": "cad100f75cc8cfcfb303d2e7a7fb2add12136ab7f7a75fafbb4da212d8a4e350",
+    "observed_at": "2026-09-15T14:55:26.496098Z"
   },
   "artifacts": {
     "spec": {
@@ -22,7 +22,7 @@
     },
     "tasks": {
       "path": "specs/015-retained-source-access/tasks.md",
-      "sha256": "9eb24eaf6beaa7b2c85bd5fcc5e057a317f086b925de57acf155b1287c537acf"
+      "sha256": "f50b9d0766755b9641b48e280adb849a67b35d20db07bec8d68a576c0cec70d3"
     }
   },
   "gates": {
@@ -89,20 +89,20 @@
     "specs/015-retained-source-access/evidence/implementation-approval-01.md",
     "specs/015-retained-source-access/evidence/runtime-boundary-01.json",
     "specs/015-retained-source-access/evidence/baseline-reconciliation-approval-01.json",
-    "specs/015-retained-source-access/evidence/persistence-sealed-checkpoint-01.json",
-    "specs/015-retained-source-access/evidence/persistence-lifecycle-complete-01.json",
-    "specs/015-retained-source-access/evidence/persistence-lifecycle-checkpoint-01.json"
+    "specs/015-retained-source-access/evidence/persistence-lifecycle-checkpoint-01.json",
+    "specs/015-retained-source-access/evidence/trusted-workspace-complete-01.json",
+    "specs/015-retained-source-access/evidence/trusted-workspace-checkpoint-01.json"
   ],
   "checkpoint": {
-    "checkpoint_id": "bmad-13-1-implement-20260915T132225Z-aa1a7c",
+    "checkpoint_id": "bmad-13-1-implement-20260915T145526Z-54e65f",
     "stage": "implement",
     "commit_sha": null,
     "binding_status": "pending"
   },
   "resume": {
     "stage": "implement",
-    "reason": "T001-T032 complete; source138passed/1child-only skip. Next T033/T034 trusted workspace; fresh-process reopen and all final gates remain pending.",
-    "evidence_path": "specs/015-retained-source-access/evidence/persistence-lifecycle-complete-01.json"
+    "reason": "T001-T034 complete; current source154passed/1child-only skip. Next T035/T036 fresh-process reopen and fixture portability; all final gates remain pending.",
+    "evidence_path": "specs/015-retained-source-access/evidence/trusted-workspace-complete-01.json"
   },
-  "updated_at": "2026-09-15T13:22:25.170264Z"
+  "updated_at": "2026-09-15T14:55:26.496098Z"
 }

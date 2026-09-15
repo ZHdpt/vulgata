@@ -1,0 +1,13 @@
+{
+  "id": "13-1/implement/82",
+  "kind": "test-green",
+  "stage": "implement",
+  "source_commit": "454e40c11fc6932b9237ee2a94d3bff8ee21c675",
+  "observed_at": "2026-09-15T14:19:00.985974Z",
+  "summary": "Directory spelling collision correction independently7/7GREEN; repeated identical parents remain usable, distinct host-aliasing source directories Unsupported. Remaining workspace cases pending.",
+  "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\independent-trusted-collision.trx",
+  "trx_sha256": "e64119ffea38803ad72f130cd8a1d3d8f0a35fa08b8b8872de0d13bfc901af4c",
+  "passed": 7,
+  "failed": 0,
+  "exit_code": 0
+}

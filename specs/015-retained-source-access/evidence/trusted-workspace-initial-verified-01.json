@@ -1,0 +1,13 @@
+{
+  "id": "13-1/implement/78",
+  "kind": "test-green",
+  "stage": "implement",
+  "source_commit": "454e40c11fc6932b9237ee2a94d3bff8ee21c675",
+  "observed_at": "2026-09-15T13:56:23.581148Z",
+  "summary": "Initial trusted workspace1 + ordinary contract25/capture27/read24 independently77/77GREEN. Partial only; later root separation RED and remaining boundary cases gate T033/T034.",
+  "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\independent-trusted-initial.trx",
+  "trx_sha256": "3ba8d01343b80141fc518898f1fa5b84dee24c9f978d12c06430f98dc909de08",
+  "passed": 77,
+  "failed": 0,
+  "exit_code": 0
+}

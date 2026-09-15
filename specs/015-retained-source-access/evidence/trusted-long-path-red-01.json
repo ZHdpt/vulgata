@@ -1,0 +1,14 @@
+{
+  "id": "13-1/implement/83",
+  "kind": "test-red",
+  "stage": "implement",
+  "source_commit": "454e40c11fc6932b9237ee2a94d3bff8ee21c675",
+  "observed_at": "2026-09-15T14:19:00.985974Z",
+  "summary": "Real captured300-character raw Git component cannot materialize on host. ActualStorageFailure, expectedUnsupported; no lease and partial workspace0 already preserved. Narrow path-representation classification required, not blanket IO remapping or filename truncation.",
+  "test_sha256": "028d87a51d87a498148b05b9c0435435edb70c793896b5dd0ca8f54beaca89ce",
+  "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\trusted-boundary-long-path.trx",
+  "trx_sha256": "c3bf104e5b8cf8472436f209026b9944742c4897adf2bcbba88e1f21cb865c4f",
+  "passed": 0,
+  "failed": 1,
+  "exit_code": 1
+}

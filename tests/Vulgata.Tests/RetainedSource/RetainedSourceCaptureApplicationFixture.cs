@@ -70,12 +70,14 @@ internal sealed class RetainedSourceCaptureApplicationFixture : IAsyncDisposable
         Func<string, Task>? mutateAfterFirstAuthorization = null,
         int mutateAfterAuthorizationCount = 1,
         Func<SourceAuthorizationRequest, CancellationToken, Task>? authorizationWait = null,
+        Func<SourceAuthorizationRequest, CancellationToken, Task>? beforeAuthorization = null,
         Action<IServiceCollection>? configureServices = null,
+        string? subjectId = null,
         CancellationToken cancellationToken = default)
     {
         RetainedSourcePostgreSqlDatabase database =
             await RetainedSourcePostgreSqlDatabase.CreateAsync(cancellationToken);
-        string userId = $"retained-source-{Guid.NewGuid():N}";
+        string userId = subjectId ?? $"retained-source-{Guid.NewGuid():N}";
         Guid systemId = Guid.Parse("13000000-0000-4000-8000-000000000201");
         try
         {
@@ -106,6 +108,7 @@ internal sealed class RetainedSourceCaptureApplicationFixture : IAsyncDisposable
                     : () => mutateAfterFirstAuthorization(database.ConnectionString),
                 mutateAfterAuthorizationCount,
                 authorizationWait,
+                beforeAuthorization,
                 configureServices);
             IServiceScope scope = application.Services.CreateScope();
             IHttpContextAccessor accessor =
@@ -146,6 +149,7 @@ internal sealed class RetainedSourceCaptureApplicationFixture : IAsyncDisposable
             mutateAfterFirstAuthorization: null,
             mutateAfterAuthorizationCount: 1,
             authorizationWait: authorizationWait,
+            beforeAuthorization: null,
             configureServices: null,
             dataProtectionKeyRingPath: dataProtectionKeyRingPath);
         IServiceScope scope = application.Services.CreateScope();
@@ -180,6 +184,7 @@ internal sealed class RetainedSourceCaptureApplicationFixture : IAsyncDisposable
         Func<Task>? mutateAfterFirstAuthorization,
         int mutateAfterAuthorizationCount,
         Func<SourceAuthorizationRequest, CancellationToken, Task>? authorizationWait,
+        Func<SourceAuthorizationRequest, CancellationToken, Task>? beforeAuthorization,
         Action<IServiceCollection>? configureServices,
         string? dataProtectionKeyRingPath = null)
     {
@@ -194,6 +199,11 @@ internal sealed class RetainedSourceCaptureApplicationFixture : IAsyncDisposable
         string keyRingPath = dataProtectionKeyRingPath ?? Path.Combine(
             Directory.GetParent(sourceStorageRoot)!.FullName,
             ".test-keyring");
+        string fixtureOwnerRoot = Directory.GetParent(keyRingPath)!.FullName;
+        string codeGraphRoot = Path.Combine(fixtureOwnerRoot, ".test-codegraph");
+        string jdtLsRoot = Path.Combine(fixtureOwnerRoot, ".test-jdtls");
+        Directory.CreateDirectory(codeGraphRoot);
+        Directory.CreateDirectory(jdtLsRoot);
         Directory.CreateDirectory(keyRingPath);
         var settings = new Dictionary<string, string?>(StringComparer.Ordinal)
         {
@@ -201,6 +211,8 @@ internal sealed class RetainedSourceCaptureApplicationFixture : IAsyncDisposable
             ["SourceStorage:RootPath"] = sourceStorageRoot,
             ["DataProtection:KeyRingPath"] = keyRingPath,
             ["DataProtection:ApplicationName"] = "Vulgata.Tests.RetainedSource",
+            ["CodeGraph:DataRootPath"] = codeGraphRoot,
+            ["AnalysisRuntime:JdtLsWorkspaceRoot"] = jdtLsRoot,
             ["SourceStorage:MaximumEntries"] = "10000",
             ["SourceStorage:MaximumBlobBytes"] = "8388608",
             ["SourceStorage:MaximumAggregateBlobBytes"] = "67108864",
@@ -220,7 +232,20 @@ internal sealed class RetainedSourceCaptureApplicationFixture : IAsyncDisposable
         VulgataWebComposition.ConfigureServices(builder);
         configureServices?.Invoke(builder.Services);
         builder.Services.AddSingleton<NavigationManager, RetainedSourceTestNavigationManager>();
-        if (mutateAfterFirstAuthorization is not null)
+        if (beforeAuthorization is not null)
+        {
+            ServiceDescriptor? verifier = builder.Services.LastOrDefault(
+                descriptor => descriptor.ServiceType == typeof(ISourceRepositoryAuthorizationVerifier));
+            if (verifier is not null)
+            {
+                builder.Services.Remove(verifier);
+                builder.Services.AddScoped<ISourceRepositoryAuthorizationVerifier>(services =>
+                    new RetainedSourceAuthorizationBeforeDecorator(
+                        ResolveVerifier(services, verifier),
+                        beforeAuthorization));
+            }
+        }
+        else if (mutateAfterFirstAuthorization is not null)
         {
             ServiceDescriptor? verifier = builder.Services.LastOrDefault(
                 descriptor => descriptor.ServiceType == typeof(ISourceRepositoryAuthorizationVerifier));
@@ -523,6 +548,20 @@ internal sealed class RetainedSourceAttachedApplication(
 }
 
 internal sealed record RetainedSourceAuthenticatedSubject(string UserId);
+
+internal sealed class RetainedSourceAuthorizationBeforeDecorator(
+    ISourceRepositoryAuthorizationVerifier inner,
+    Func<SourceAuthorizationRequest, CancellationToken, Task> beforeAuthorization)
+    : ISourceRepositoryAuthorizationVerifier
+{
+    public async Task<AuthorizedSourceRepository?> AuthorizeAsync(
+        SourceAuthorizationRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        await beforeAuthorization(request, cancellationToken);
+        return await inner.AuthorizeAsync(request, cancellationToken);
+    }
+}
 
 internal sealed class RetainedSourceAuthorizationMutationDecorator(
     ISourceRepositoryAuthorizationVerifier inner,

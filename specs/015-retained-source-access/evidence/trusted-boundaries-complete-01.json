@@ -1,0 +1,18 @@
+{
+  "id": "13-1/implement/85",
+  "kind": "test-green",
+  "stage": "implement",
+  "source_commit": "454e40c11fc6932b9237ee2a94d3bff8ee21c675",
+  "observed_at": "2026-09-15T14:50:28.483208Z",
+  "summary": "Fresh current workspace class16/16GREEN; historical long-path RED resolved. Exact copy, root separation, before-acquire and actual copied-file-observed revocation, purpose, link/gitlink/case/long/unsafe/nonUTF8 rejection, cancellation, integrity, independent leases and changed-root guards. Source-wide regression still pending for T033/T034 checkpoint.",
+  "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\trusted-workspace-current-complete.trx",
+  "trx_sha256": "d8553497ae302968a89719c12ff7df75ed1354e9e36fc5e8f06f2e5076daa09f",
+  "passed": 16,
+  "failed": 0,
+  "exit_code": 0,
+  "provider_sha256": "dcfbb4765e6ed9c141bdedfba5539cd3e2dea2bfe854988259b11065f302b66c",
+  "test_sha256": "c3b6207a264e8453c3a803d428ed43930aa9c9927c2e7940cf64c416ee65760d",
+  "fixture_sha256": "7bcb6539a5f36b77c582be3c3f9ac0017260fcb8334fdfeef0a40a202f4ecf25",
+  "timing_evidence": "Earlier mutation-after-auth4 case proved revocation between probes, not post-copy timing. Corrected before-inner final authorization hook explicitly observed copied data; final cancellation also observes copied data.",
+  "harness_notes": "Link guard fixture initially placed link before registration and got the intended registration rejection; corrected runtime case replaces root after registration. No production correction was made for that setup error."
+}

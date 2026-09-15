@@ -23,6 +23,19 @@ public static class DependencyInjection
         return services;
     }
 
+    public static IServiceCollection AddRetainedSourceInfrastructure(
+        this IServiceCollection services,
+        RetainedSourceCapturePolicy capturePolicy,
+        string configuredWorkspaceRoot)
+    {
+        services.AddRetainedSourceInfrastructure(capturePolicy);
+        services.AddSingleton(new TrustedSourceWorkspaceOptions(
+            configuredWorkspaceRoot,
+            capturePolicy.RootPath));
+        services.AddScoped<ITrustedSourceWorkspaceProvider, TrustedSourceWorkspaceProvider>();
+        return services;
+    }
+
     public static IServiceCollection AddPreparedPass2Infrastructure(
         this IServiceCollection services)
     {
