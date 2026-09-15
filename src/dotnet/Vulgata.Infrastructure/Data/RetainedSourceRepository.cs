@@ -5,7 +5,6 @@ using Vulgata.Core.Entities;
 namespace Vulgata.Infrastructure.Data;
 
 internal sealed class RetainedSourceRepository(
-    VulgataDbContext context,
     IDbContextFactory<VulgataDbContext> contextFactory) :
     IRetainedSourceRepository
 {
@@ -35,11 +34,15 @@ internal sealed class RetainedSourceRepository(
                 cancellationToken);
     }
 
-    public async Task AddAsync(
+    public async Task PublishAsync(
         SourceSnapshot sourceSnapshot,
-        CancellationToken cancellationToken = default) =>
-        _ = await context.SourceSnapshots.AddAsync(sourceSnapshot, cancellationToken);
-
-    public async Task SaveChangesAsync(CancellationToken cancellationToken = default) =>
-        _ = await context.SaveChangesAsync(cancellationToken);
+        CancellationToken cancellationToken = default)
+    {
+        await using VulgataDbContext publicationContext =
+            await contextFactory.CreateDbContextAsync(cancellationToken);
+        _ = await publicationContext.SourceSnapshots.AddAsync(
+            sourceSnapshot,
+            cancellationToken);
+        _ = await publicationContext.SaveChangesAsync(cancellationToken);
+    }
 }

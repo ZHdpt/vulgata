@@ -168,7 +168,9 @@ internal sealed class RetainedSourceCaptureService(
 
             operationToken.ThrowIfCancellationRequested();
             ThrowIfDeadlineExceeded(startedTimestamp);
-            DateTimeOffset completedAt = timeProvider.GetUtcNow();
+            DateTimeOffset completedAtUtc = timeProvider.GetUtcNow().ToUniversalTime();
+            DateTimeOffset completedAt = completedAtUtc.AddTicks(
+                -(completedAtUtc.Ticks % TimeSpan.TicksPerMicrosecond));
             SourceSnapshot snapshot = SourceSnapshot.Create(
                 repositoryId,
                 acquired.Capture.ProfiledRevision,
@@ -178,8 +180,7 @@ internal sealed class RetainedSourceCaptureService(
                 staging.Manifest.TotalBlobBytes,
                 sealedSource.InternalStorageKey,
                 completedAt);
-            await snapshots.AddAsync(snapshot, CancellationToken.None);
-            await snapshots.SaveChangesAsync(CancellationToken.None);
+            await snapshots.PublishAsync(snapshot, CancellationToken.None);
             return Success(SourceCaptureStatus.Completed, snapshot, correlationId);
         }
         catch (OperationCanceledException)

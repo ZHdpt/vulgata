@@ -1,0 +1,37 @@
+{
+  "id": "13-1/implement/53",
+  "kind": "test-green",
+  "stage": "implement",
+  "source_commit": "f45109ef5f00160e89ddfdb765d12f31aa50a999",
+  "observed_at": "2026-09-15T11:01:04.091022Z",
+  "summary": "Same test author independently verified stable UTC microsecond receipt, one PostgreSQL row and one actual immediate sealed directory. Production canonicalizes before insert; no post-commit reload. T031/T032 remain partial pending concurrency/recovery.",
+  "red_evidence": "specs/015-retained-source-access/evidence/persistence-replay-red-01.json",
+  "production_sha256": "77b9482c05a376aa8a3d2f3daf58af8d0deaea51531acf87fefb18d574bb083c",
+  "test_sha256": "b559eb55353aeb763b3e626c6b56e40d2400e06dea663d3444744b16e5c77239",
+  "runs": [
+    {
+      "name": "replay-verified",
+      "passed": 1,
+      "failed": 0,
+      "exit_code": 0,
+      "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\replay-verified.trx",
+      "sha256": "b68da462278996b5070912d477998f1630ec63f77ae00db5c07a7610738b3616"
+    },
+    {
+      "name": "replay-capture-regression",
+      "passed": 27,
+      "failed": 0,
+      "exit_code": 0,
+      "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\replay-capture-regression.trx",
+      "sha256": "19006b4c5480e541eb831c6b35d5c5f472617d14301196afa9b8d19f7a36f02a"
+    },
+    {
+      "name": "replay-postgresql-regression",
+      "passed": 4,
+      "failed": 0,
+      "exit_code": 0,
+      "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\replay-postgresql-regression.trx",
+      "sha256": "7df5ad54151440d598b2776ec78e4abd21b7a27eb0a629caead771759e9d2615"
+    }
+  ]
+}

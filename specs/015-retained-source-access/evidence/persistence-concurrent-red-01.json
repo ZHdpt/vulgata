@@ -1,0 +1,32 @@
+{
+  "id": "13-1/implement/54",
+  "kind": "test-red",
+  "stage": "implement",
+  "source_commit": "f45109ef5f00160e89ddfdb765d12f31aa50a999",
+  "observed_at": "2026-09-15T11:06:16.162714Z",
+  "summary": "Two distinct Repositories through one scoped application, real final-authorization barrier: first StorageFailure, second Completed, one committed row instead of two; watchdog did not fire. SealedObjects diagnostic counts row-referenced directories only, not all unreferenced objects.",
+  "test_path": "tests/Vulgata.Tests/RetainedSource/RetainedSourcePersistenceTests.cs",
+  "test_sha256": "264d11940991bc334394d4ab2acce0c4f4c44ce31b39509f68c29c657d005616",
+  "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\persistence-concurrent-initial.trx",
+  "trx_sha256": "8d77971c02ef0f095f5dbda86c93ba96a74840d03160895cd1d289d42442abc0",
+  "counters": {
+    "total": "1",
+    "executed": "1",
+    "passed": "0",
+    "failed": "1",
+    "error": "0",
+    "timeout": "0",
+    "aborted": "0",
+    "inconclusive": "0",
+    "passedButRunAborted": "0",
+    "notRunnable": "0",
+    "notExecuted": "0",
+    "disconnected": "0",
+    "warning": "0",
+    "completed": "0",
+    "inProgress": "0",
+    "pending": "0"
+  },
+  "exit_code": 1,
+  "correction_boundary": "Replace Add+Save with atomic PublishAsync through the existing specific repository and a fresh context per insertion; preserve final authority and noncancellable row linearization. Internal seam within accepted plan, no new architecture or approval trigger."
+}

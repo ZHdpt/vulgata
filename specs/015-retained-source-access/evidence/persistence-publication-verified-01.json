@@ -1,0 +1,52 @@
+{
+  "id": "13-1/implement/55",
+  "kind": "test-green",
+  "stage": "implement",
+  "source_commit": "f45109ef5f00160e89ddfdb765d12f31aa50a999",
+  "observed_at": "2026-09-15T11:13:35.014777Z",
+  "summary": "Same test author independently verified36/36 after atomic per-publication-context correction; public outcomes match two committed rows. Replay receipt precision stable. T031/T032 remain partial; crash recovery, stale cleanup, locks, reader lifecycle and later gates pending.",
+  "red_evidence": [
+    "specs/015-retained-source-access/evidence/persistence-replay-red-01.json",
+    "specs/015-retained-source-access/evidence/persistence-concurrent-red-01.json"
+  ],
+  "files": {
+    "src/dotnet/Vulgata.Core/DomainServices/IRetainedSourceRepository.cs": "2b19b207ac3b6b0adbf6807be40052fa2b5b5b280f48c6a7be939d8b0f1139f0",
+    "src/dotnet/Vulgata.Infrastructure/Data/RetainedSourceRepository.cs": "be11a2757bdc18b5d29873a37036527667c8166992674f3509eaef2e3e00d108",
+    "src/dotnet/Vulgata.Infrastructure/Source/RetainedSourceCaptureService.cs": "7e40de87fb2c6cb55c0a24d764667270c44a66d286e6a5fae5cabb199f4f3761",
+    "tests/Vulgata.Tests/RetainedSource/RetainedSourcePersistenceTests.cs": "264d11940991bc334394d4ab2acce0c4f4c44ce31b39509f68c29c657d005616"
+  },
+  "runs": [
+    {
+      "suite": "persistence",
+      "passed": 2,
+      "failed": 0,
+      "exit_code": 0,
+      "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\independent-concurrent-persistence.trx",
+      "sha256": "d9c678bfcc310a9905618d8fb034a4246e7f1d2bfb47a4e2b2d9d44d73aa3390"
+    },
+    {
+      "suite": "capture",
+      "passed": 27,
+      "failed": 0,
+      "exit_code": 0,
+      "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\independent-concurrent-capture.trx",
+      "sha256": "36dbe800a7735561c42063d9cfac9e6a60f401dc5f6c9e579dfb1dd9a0dfba78"
+    },
+    {
+      "suite": "postgresql",
+      "passed": 4,
+      "failed": 0,
+      "exit_code": 0,
+      "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\independent-concurrent-postgresql.trx",
+      "sha256": "1548865ffe8ec8597df2e4140c4031771f669125842e9ce55f4c3c4a1a38927d"
+    },
+    {
+      "suite": "deletion",
+      "passed": 3,
+      "failed": 0,
+      "exit_code": 0,
+      "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\independent-concurrent-deletion.trx",
+      "sha256": "9f7a5536bed4963c49bb2ec8e969e071bc0b470e2ad9b230ffd5c6fc1151f9ff"
+    }
+  ]
+}

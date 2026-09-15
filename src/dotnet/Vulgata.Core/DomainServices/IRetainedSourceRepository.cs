@@ -13,9 +13,7 @@ public interface IRetainedSourceRepository
         string profiledRevision,
         CancellationToken cancellationToken = default);
 
-    Task AddAsync(
+    Task PublishAsync(
         SourceSnapshot sourceSnapshot,
         CancellationToken cancellationToken = default);
-
-    Task SaveChangesAsync(CancellationToken cancellationToken = default);
 }

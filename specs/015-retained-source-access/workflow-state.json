@@ -6,10 +6,10 @@
   "stage": "implement",
   "preflight": {
     "branch": "dev",
-    "head": "06b3585423a17c896dc9a2b4c3ea4d49228c1719",
-    "git_identity_sha256": "08008ff3062730eede1b8e0657b25c6a510f00edd7eec92f85631530aa659674",
-    "status_sha256": "2738a85e00a79ce1a26b8091923f3c11032db5cec5e463b644d181f0f827a9fd",
-    "observed_at": "2026-09-15T10:41:25.705722Z"
+    "head": "f45109ef5f00160e89ddfdb765d12f31aa50a999",
+    "git_identity_sha256": "6768b7a68b849370c1f7632e41a70f3c2e88db5842aa6e0101a9443a490b3445",
+    "status_sha256": "63454c6e882bc7ac82c88cfdc3bc49fe71a76316b8ff6a4243fb1dd99bbf9cfd",
+    "observed_at": "2026-09-15T11:13:35.014777Z"
   },
   "artifacts": {
     "spec": {
@@ -88,21 +88,21 @@
     "specs/015-retained-source-access/evidence/definition-review-05.json",
     "specs/015-retained-source-access/evidence/implementation-approval-01.md",
     "specs/015-retained-source-access/evidence/runtime-boundary-01.json",
-    "specs/015-retained-source-access/evidence/authorization-checkpoint-01.json",
     "specs/015-retained-source-access/evidence/baseline-reconciliation-approval-01.json",
-    "specs/015-retained-source-access/evidence/baseline-reconciliation-verified-01.json",
-    "specs/015-retained-source-access/evidence/baseline-reconciliation-checkpoint-01.json"
+    "specs/015-retained-source-access/evidence/baseline-reconciliation-checkpoint-01.json",
+    "specs/015-retained-source-access/evidence/persistence-publication-verified-01.json",
+    "specs/015-retained-source-access/evidence/persistence-publication-checkpoint-01.json"
   ],
   "checkpoint": {
-    "checkpoint_id": "bmad-13-1-implement-20260915T104125Z-e83403",
+    "checkpoint_id": "bmad-13-1-implement-20260915T111335Z-671f2c",
     "stage": "implement",
     "commit_sha": null,
     "binding_status": "pending"
   },
   "resume": {
     "stage": "implement",
-    "reason": "Approved baseline reconciliation verified122/122; T023 complete. Next T031 publication/concurrency/recovery. All later gates remain required.",
-    "evidence_path": "specs/015-retained-source-access/evidence/baseline-reconciliation-verified-01.json"
+    "reason": "Replay/concurrent publication independently GREEN36/36. T031/T032 partial; next crash/adoption, cross-process locks, stale cleanup and reader lifecycle.",
+    "evidence_path": "specs/015-retained-source-access/evidence/persistence-publication-verified-01.json"
   },
-  "updated_at": "2026-09-15T10:41:25.705722Z"
+  "updated_at": "2026-09-15T11:13:35.014777Z"
 }

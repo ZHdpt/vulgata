@@ -416,3 +416,9 @@ T028-T030 complete:16authorization+24metadata+12range+27capture+3manifest+4PG+6U
 ## Approved baseline reconciliation verified
 
 User approved the bounded proposal: “Approve to remove obsolete    tests”. Exact originals were archived before edits. Only four named obsolete private-Map tests were retired and the existing 最后扫描时间 label expectation corrected. Nine current suites independently pass122/122; root verified raw counters/archive hashes in baseline-reconciliation-verified-01.json. T023 is now complete. No production implementation, historical feature, or verification waiver was introduced. Checkpoint bmad-13-1-implement-20260915T104125Z-e83403; next T031 publication/concurrency/recovery.
+
+## Durable replay receipt correction
+
+T031 first public replay test observed a PostgreSQL timestamp precision RED: initial receipt retained one extra100ns tick, replay lost it. Sol/medium canonicalized UTC completion time to microseconds before row insertion, with no post-commit reload. Same Luna/high author independently verified replay1, capture27 and PostgreSQL4; strengthened characterization enumerates the actual single sealed object directory. Evidence persistence-replay-red-01.json and persistence-replay-verified-01.json. T031/T032 remain partial; concurrent publication and recovery are next.
+
+Concurrent publication observed1RED with one StorageFailure and one Completed/one row. The specific repository now exposes atomic PublishAsync using a fresh context per insertion, preserving final authority and noncancellable commit. Same test author independently verified2persistence+27capture+4PostgreSQL+3deletion GREEN. Evidence persistence-concurrent-red-01.json and persistence-publication-verified-01.json. T031/T032 remain partial.
