@@ -70,6 +70,7 @@ internal sealed class RetainedSourceCaptureApplicationFixture : IAsyncDisposable
         Func<string, Task>? mutateAfterFirstAuthorization = null,
         int mutateAfterAuthorizationCount = 1,
         Func<SourceAuthorizationRequest, CancellationToken, Task>? authorizationWait = null,
+        Action<IServiceCollection>? configureServices = null,
         CancellationToken cancellationToken = default)
     {
         RetainedSourcePostgreSqlDatabase database =
@@ -92,7 +93,7 @@ internal sealed class RetainedSourceCaptureApplicationFixture : IAsyncDisposable
                 await mutateBeforeComposition(database.ConnectionString);
             }
             WebApplication application = BuildApplication(
-                source,
+                source.SourceStorageRoot,
                 database.ConnectionString,
                 userId,
                 configurationOverrides,
@@ -104,7 +105,8 @@ internal sealed class RetainedSourceCaptureApplicationFixture : IAsyncDisposable
                     ? null
                     : () => mutateAfterFirstAuthorization(database.ConnectionString),
                 mutateAfterAuthorizationCount,
-                authorizationWait);
+                authorizationWait,
+                configureServices);
             IServiceScope scope = application.Services.CreateScope();
             IHttpContextAccessor accessor =
                 application.Services.GetRequiredService<IHttpContextAccessor>();
@@ -123,6 +125,38 @@ internal sealed class RetainedSourceCaptureApplicationFixture : IAsyncDisposable
         }
     }
 
+    internal static RetainedSourceAttachedApplication CreateAttached(
+        string connectionString,
+        string sourceStorageRoot,
+        string userId,
+        IReadOnlyDictionary<string, string?>? configurationOverrides = null,
+        Func<SourceAuthorizationRequest, CancellationToken, Task>? authorizationWait = null)
+    {
+        WebApplication application = BuildApplication(
+            sourceStorageRoot,
+            connectionString,
+            userId,
+            configurationOverrides,
+            authenticated: true,
+            administrator: true,
+            systemOwner: false,
+            timeProvider: null,
+            mutateAfterFirstAuthorization: null,
+            mutateAfterAuthorizationCount: 1,
+            authorizationWait: authorizationWait,
+            configureServices: null);
+        IServiceScope scope = application.Services.CreateScope();
+        IHttpContextAccessor accessor =
+            application.Services.GetRequiredService<IHttpContextAccessor>();
+        accessor.HttpContext = CreateHttpContext(
+            application.Services,
+            userId,
+            authenticated: true,
+            administrator: true,
+            systemOwner: false);
+        return new(application, scope);
+    }
+
     public async ValueTask DisposeAsync()
     {
         Scope.Dispose();
@@ -132,7 +166,7 @@ internal sealed class RetainedSourceCaptureApplicationFixture : IAsyncDisposable
     }
 
     private static WebApplication BuildApplication(
-        RetainedSourceFixture source,
+        string sourceStorageRoot,
         string connectionString,
         string userId,
         IReadOnlyDictionary<string, string?>? configurationOverrides,
@@ -142,20 +176,27 @@ internal sealed class RetainedSourceCaptureApplicationFixture : IAsyncDisposable
         TimeProvider? timeProvider,
         Func<Task>? mutateAfterFirstAuthorization,
         int mutateAfterAuthorizationCount,
-        Func<SourceAuthorizationRequest, CancellationToken, Task>? authorizationWait)
+        Func<SourceAuthorizationRequest, CancellationToken, Task>? authorizationWait,
+        Action<IServiceCollection>? configureServices)
     {
         var options = new WebApplicationOptions
         {
             ApplicationName = typeof(Program).Assembly.GetName().Name,
             ContentRootPath = Directory.GetCurrentDirectory(),
-            EnvironmentName = "Development",
+            EnvironmentName = "Testing",
         };
         WebApplicationBuilder builder = WebApplication.CreateBuilder(options);
         builder.Logging.ClearProviders();
+        string keyRingPath = Path.Combine(
+            Directory.GetParent(sourceStorageRoot)!.FullName,
+            ".test-keyring");
+        Directory.CreateDirectory(keyRingPath);
         var settings = new Dictionary<string, string?>(StringComparer.Ordinal)
         {
             ["ConnectionStrings:DefaultConnection"] = connectionString,
-            ["SourceStorage:RootPath"] = source.SourceStorageRoot,
+            ["SourceStorage:RootPath"] = sourceStorageRoot,
+            ["DataProtection:KeyRingPath"] = keyRingPath,
+            ["DataProtection:ApplicationName"] = "Vulgata.Tests.RetainedSource",
             ["SourceStorage:MaximumEntries"] = "10000",
             ["SourceStorage:MaximumBlobBytes"] = "8388608",
             ["SourceStorage:MaximumAggregateBlobBytes"] = "67108864",
@@ -173,6 +214,7 @@ internal sealed class RetainedSourceCaptureApplicationFixture : IAsyncDisposable
 
         builder.Configuration.AddInMemoryCollection(settings);
         VulgataWebComposition.ConfigureServices(builder);
+        configureServices?.Invoke(builder.Services);
         builder.Services.AddSingleton<NavigationManager, RetainedSourceTestNavigationManager>();
         if (mutateAfterFirstAuthorization is not null)
         {
@@ -458,6 +500,21 @@ internal sealed class RetainedSourceCaptureApplicationFixture : IAsyncDisposable
             connection);
         command.Parameters.AddWithValue("systemId", systemId);
         await command.ExecuteNonQueryAsync();
+    }
+}
+
+internal sealed class RetainedSourceAttachedApplication(
+    WebApplication application,
+    IServiceScope scope) : IAsyncDisposable
+{
+    internal WebApplication Application { get; } = application;
+
+    internal IServiceScope Scope { get; } = scope;
+
+    public async ValueTask DisposeAsync()
+    {
+        Scope.Dispose();
+        await Application.DisposeAsync();
     }
 }
 

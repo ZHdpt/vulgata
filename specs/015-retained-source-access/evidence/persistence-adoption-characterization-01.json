@@ -1,0 +1,16 @@
+{
+  "id": "13-1/implement/57",
+  "kind": "test-green",
+  "stage": "implement",
+  "source_commit": "4014e953afe0b06237c62e5cf46eda498981abd7",
+  "observed_at": "2026-09-15T11:23:28.823025Z",
+  "summary": "Existing-correct injected pre-row publication failure: StorageFailure, zero rows, one actual sealed object, public reopen unavailable; retry Completed with one row/object and real authorization callbacks4->7. Test-only characterization, not process crash or revoked-role proof.",
+  "test_sha256": "813a307f26dea0ff822273520a6f67fb10875718426af91eb188627047641281",
+  "fixture_sha256": "44de16c1524da01b4aa75c22467542ff15d8f6a69724d7cc323e6dacadcefdcd",
+  "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\persistence-pre-row-retry-verified.trx",
+  "trx_sha256": "f183a73795e81e99a07e6557466cec59f9f8b082d2cb1fde94cdc04b6093fc3f",
+  "passed": 1,
+  "failed": 0,
+  "exit_code": 0,
+  "remaining": "True process termination, stale cleanup, identity-lock competition, digest conflict, reader lifetime and later gates."
+}

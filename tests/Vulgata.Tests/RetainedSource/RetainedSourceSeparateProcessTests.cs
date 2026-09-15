@@ -25,6 +25,14 @@ internal static class RetainedSourceSeparateProcessRunner
                 "The retained-source child process working directory does not exist.");
         }
 
+        string projectPath = Path.Combine(fullRepositoryRoot, ProjectPath);
+        if (!File.Exists(projectPath))
+        {
+            throw new FileNotFoundException(
+                "The retained-source child process project cannot be found.",
+                projectPath);
+        }
+
         var startInfo = new ProcessStartInfo("dotnet")
         {
             WorkingDirectory = fullRepositoryRoot,

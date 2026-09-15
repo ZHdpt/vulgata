@@ -1,0 +1,26 @@
+{
+  "id": "13-1/implement/58",
+  "kind": "test-red",
+  "stage": "implement",
+  "source_commit": "4014e953afe0b06237c62e5cf46eda498981abd7",
+  "observed_at": "2026-09-15T11:35:25.651087Z",
+  "summary": "Actual owned capture child reached post-seal final authorization marker, launcher5072 and testhost47644 exited after owned tree termination. Parent aged actual abandoned operation beyond grace and retried successfully: one row, one sealed object, sentinel preserved, but two operation directories remained instead of zero.",
+  "evidence_level": "controlled real separate-process termination, PostgreSQL and local Git/storage",
+  "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\persistence-stale-cleanup-harness-02.trx",
+  "trx_sha256": "3840a732ee19f0680d0eb1a7e3a3917f40f56abd2ca7f0df23996d580b4e5aa0",
+  "test_hashes": {
+    "RetainedSourcePersistenceTests.cs": "1d69079571248c4fe4d4da64cbfff66f142608e11bc1113d994140d3703a758c",
+    "RetainedSourceCaptureApplicationFixture.cs": "623e0168df7fef4a5da09ef7de9deb2c22daa3a90eac65ff6de26b82f311eac0",
+    "RetainedSourceSeparateProcessTests.cs": "66b980e9677b1e05275e6f94c37fc53af11b8753a8f321d26ed762e195f174a1",
+    "RetainedSourceSeparateProcessChild.cs": "711779ed43dbd698e031df70a96077c561ffe2e96ffe0504dbf7b799f99b0646"
+  },
+  "passed": 0,
+  "failed": 1,
+  "exit_code": 1,
+  "invalidated_harness_attempts": [
+    "persistence-stale-cleanup-initial.trx",
+    "persistence-stale-cleanup-harness.trx"
+  ],
+  "harness_corrections": "Resolve project root from marker; distinguish launcher/testhost PID and verify owned exit; explicit child-only discovery skip; fail if child capture returns unexpectedly. Earlier timeouts are not TDD RED.",
+  "correction_boundary": "Internal cleanup during authorized Acquire, owned exclusive operation leases and stale disposable cleanup only. No new public API/tool and no sealed-source pruning."
+}

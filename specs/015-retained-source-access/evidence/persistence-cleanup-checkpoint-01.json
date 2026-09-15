@@ -1,0 +1,39 @@
+{
+  "id": "13-1/implement/65",
+  "kind": "command",
+  "stage": "implement",
+  "source_commit": "4014e953afe0b06237c62e5cf46eda498981abd7",
+  "observed_at": "2026-09-15T12:14:47.677177Z",
+  "checkpoint_id": "bmad-13-1-implement-20260915T121447Z-0ba224",
+  "expected_parent": "4014e953afe0b06237c62e5cf46eda498981abd7",
+  "owned_paths": [
+    "docs/bmad/implementation-artifacts/13-1-retain-exact-repository-source-with-scoped-read-access.md",
+    "specs/015-retained-source-access/evidence/implementation-observations-01.md",
+    "specs/015-retained-source-access/evidence/persistence-adoption-characterization-01.json",
+    "specs/015-retained-source-access/evidence/persistence-cleanup-checkpoint-01.json",
+    "specs/015-retained-source-access/evidence/persistence-cleanup-isolated-verified-01.json",
+    "specs/015-retained-source-access/evidence/persistence-cleanup-verified-01.json",
+    "specs/015-retained-source-access/evidence/persistence-foreign-marker-red-01.json",
+    "specs/015-retained-source-access/evidence/persistence-marker-live-verified-01.json",
+    "specs/015-retained-source-access/evidence/persistence-operation-cleanup-red-01.json",
+    "specs/015-retained-source-access/evidence/persistence-operation-reparse-red-01.json",
+    "specs/015-retained-source-access/evidence/persistence-operation-verified-01.json",
+    "specs/015-retained-source-access/workflow-state.json",
+    "src/dotnet/Vulgata.Infrastructure/Source/DurableRetainedSourceStore.cs",
+    "src/dotnet/Vulgata.Infrastructure/Source/RetainedSourceCaptureService.cs",
+    "tests/Vulgata.Tests/RetainedSource/RetainedSourceCaptureApplicationFixture.cs",
+    "tests/Vulgata.Tests/RetainedSource/RetainedSourcePersistenceTests.cs",
+    "tests/Vulgata.Tests/RetainedSource/RetainedSourceSeparateProcessChild.cs",
+    "tests/Vulgata.Tests/RetainedSource/RetainedSourceSeparateProcessTests.cs"
+  ],
+  "git_identity": {
+    "branch": "dev",
+    "head": "4014e953afe0b06237c62e5cf46eda498981abd7",
+    "root": "G:/source/repos/vulgata",
+    "common_directory": ".git",
+    "worktree": "G:\\source\\repos\\vulgata"
+  },
+  "observed_status": " M docs/bmad/implementation-artifacts/13-1-retain-exact-repository-source-with-scoped-read-access.md\n M specs/015-retained-source-access/evidence/implementation-observations-01.md\n M specs/015-retained-source-access/workflow-state.json\n M src/dotnet/Vulgata.Infrastructure/Source/DurableRetainedSourceStore.cs\n M src/dotnet/Vulgata.Infrastructure/Source/RetainedSourceCaptureService.cs\n M tests/Vulgata.Tests/RetainedSource/RetainedSourceCaptureApplicationFixture.cs\n M tests/Vulgata.Tests/RetainedSource/RetainedSourcePersistenceTests.cs\n M tests/Vulgata.Tests/RetainedSource/RetainedSourceSeparateProcessChild.cs\n M tests/Vulgata.Tests/RetainedSource/RetainedSourceSeparateProcessTests.cs\n?? specs/015-retained-source-access/evidence/persistence-adoption-characterization-01.json\n?? specs/015-retained-source-access/evidence/persistence-cleanup-isolated-verified-01.json\n?? specs/015-retained-source-access/evidence/persistence-cleanup-verified-01.json\n?? specs/015-retained-source-access/evidence/persistence-foreign-marker-red-01.json\n?? specs/015-retained-source-access/evidence/persistence-marker-live-verified-01.json\n?? specs/015-retained-source-access/evidence/persistence-operation-cleanup-red-01.json\n?? specs/015-retained-source-access/evidence/persistence-operation-reparse-red-01.json\n?? specs/015-retained-source-access/evidence/persistence-operation-verified-01.json\n",
+  "observed_index_paths": [],
+  "summary": "Verified operation recovery/cleanup sub-group; no task or later gate completion implied."
+}

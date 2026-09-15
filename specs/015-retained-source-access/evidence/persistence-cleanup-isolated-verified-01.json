@@ -1,0 +1,51 @@
+{
+  "id": "13-1/implement/64",
+  "kind": "test-green",
+  "stage": "implement",
+  "source_commit": "4014e953afe0b06237c62e5cf46eda498981abd7",
+  "observed_at": "2026-09-15T12:14:47.677177Z",
+  "summary": "Current isolated test fixture independently62/62GREEN. Actual process termination/adoption and stale operation cleanup; foreign/unmarked/live preservation; reparse operation-root refusal; replay and concurrent publication. Testing environment and owned sibling keyring avoid developer-profile configuration. T031/T032 remain partial.",
+  "files": {
+    "src/dotnet/Vulgata.Infrastructure/Source/DurableRetainedSourceStore.cs": "1426973a632415ce6608b04139530cbc0491eff3070ae5e95deebf79d659dd3f",
+    "src/dotnet/Vulgata.Infrastructure/Source/RetainedSourceCaptureService.cs": "e0e4258b749a5cfbaf317cd95565235d2c9ea3515f258085e38f62e302030a69",
+    "tests/Vulgata.Tests/RetainedSource/RetainedSourceCaptureApplicationFixture.cs": "a6794c56e85b130516c9288c3c81b116bd136e15caca098d6e3b3eec0fa1a333",
+    "tests/Vulgata.Tests/RetainedSource/RetainedSourcePersistenceTests.cs": "df31d56fca3fe883afb79953c6a7a45ba2373f9efbe8c41fc4aa5b3f0e4a8de3",
+    "tests/Vulgata.Tests/RetainedSource/RetainedSourceSeparateProcessChild.cs": "711779ed43dbd698e031df70a96077c561ffe2e96ffe0504dbf7b799f99b0646",
+    "tests/Vulgata.Tests/RetainedSource/RetainedSourceSeparateProcessTests.cs": "66b980e9677b1e05275e6f94c37fc53af11b8753a8f321d26ed762e195f174a1"
+  },
+  "runs": [
+    {
+      "suite": "persistence",
+      "passed": 7,
+      "failed": 0,
+      "exit_code": 0,
+      "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\isolated-cleanup-persistence-final.trx",
+      "sha256": "d702f42d22220a77209c773bb35b0519c6697506e036e6843bb6f5f242a127b0"
+    },
+    {
+      "suite": "capture",
+      "passed": 27,
+      "failed": 0,
+      "exit_code": 0,
+      "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\isolated-cleanup-capture-final.trx",
+      "sha256": "9011482ac97e15e5bc4da096d66e75261c6ae4f573ac377e9b76b0e5430c4a3e"
+    },
+    {
+      "suite": "postgresql",
+      "passed": 4,
+      "failed": 0,
+      "exit_code": 0,
+      "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\isolated-cleanup-postgresql-final.trx",
+      "sha256": "ad4094957b52dbc57adc7fecdd95debb75c06680c855cfe59676181ca86da75c"
+    },
+    {
+      "suite": "metadata",
+      "passed": 24,
+      "failed": 0,
+      "exit_code": 0,
+      "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\isolated-cleanup-metadata-final.trx",
+      "sha256": "6dc461a2a9c3f95d7cf8186dcb1a232bf1d4c04cf1d5ad94a701bdd8f00c7175"
+    }
+  ],
+  "harness_correction": "Initial keyring placement affected an empty-source-root assertion; moved to owned sibling and all62 rerun. No production change or product RED claimed for fixture isolation."
+}

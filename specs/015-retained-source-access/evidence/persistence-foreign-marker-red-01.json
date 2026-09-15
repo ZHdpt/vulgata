@@ -1,0 +1,14 @@
+{
+  "id": "13-1/implement/60",
+  "kind": "test-red",
+  "stage": "implement",
+  "source_commit": "4014e953afe0b06237c62e5cf46eda498981abd7",
+  "observed_at": "2026-09-15T11:49:21.470736Z",
+  "summary": "Public capture completed but cleanup deleted an unknown agedGUID directory and sentinel based only on foreign nonempty .lease filename. Unmarked directory preserved; actual remaining1 expected2. Recognized production marker is empty; validate marker after exclusive acquisition.",
+  "test_sha256": "9a2095774de2ad9103fddf03a37a57111cb3c6fef24a469c655ececd6bb62c9a",
+  "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\preservation-unknown-initial.trx",
+  "trx_sha256": "c2ab85133626ec618dff0d18d043c62b581a4a82a67abc534f7af6108737c5f5",
+  "passed": 0,
+  "failed": 1,
+  "exit_code": 1
+}

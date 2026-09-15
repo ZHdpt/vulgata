@@ -1,0 +1,47 @@
+{
+  "id": "13-1/implement/63",
+  "kind": "test-green",
+  "stage": "implement",
+  "source_commit": "4014e953afe0b06237c62e5cf46eda498981abd7",
+  "observed_at": "2026-09-15T12:06:59.200811Z",
+  "summary": "Complete current cleanup group independently62/62GREEN: real child crash/adoption, stale operation removal, live/foreign/unmarked preservation, reparse-root refusal, replay/concurrent publication. T031/T032 remain partial for sealed cleanup, locks and reader lifecycle. Pre-checkpoint fixture-isolation correction will receive fresh verification.",
+  "runs": [
+    {
+      "suite": "persistence",
+      "passed": 7,
+      "failed": 0,
+      "exit_code": 0,
+      "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\independent-cleanup-persistence.trx",
+      "sha256": "42b2f475e5af8a7d5bff10d7d77f63deb3dadba402a6e78d4b111fc4374c5dde"
+    },
+    {
+      "suite": "capture",
+      "passed": 27,
+      "failed": 0,
+      "exit_code": 0,
+      "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\independent-cleanup-capture.trx",
+      "sha256": "976a3dd1050d6f404399c330c32b328a7064de92ae18707ff98ae5874202ef38"
+    },
+    {
+      "suite": "postgresql",
+      "passed": 4,
+      "failed": 0,
+      "exit_code": 0,
+      "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\independent-cleanup-postgresql.trx",
+      "sha256": "6e5f80209c611cb7b8907f961b24289678923415496215fec30edd16145d029d"
+    },
+    {
+      "suite": "metadata",
+      "passed": 24,
+      "failed": 0,
+      "exit_code": 0,
+      "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\independent-cleanup-metadata.trx",
+      "sha256": "edd9846731aa02818e51b70d08bcc4a860a68d4f7fe2e2808e894f5ab6956801"
+    }
+  ],
+  "source_hashes": {
+    "store": "1426973a632415ce6608b04139530cbc0491eff3070ae5e95deebf79d659dd3f",
+    "capture": "e0e4258b749a5cfbaf317cd95565235d2c9ea3515f258085e38f62e302030a69"
+  },
+  "fixture_isolation_observation": "Fixture Development host plus Web UserSecretsId configures possible developer user-secrets loading. No actual secret presence/read/use is asserted. Switch test fixture only to Testing and owned key path; do not inspect secrets."
+}

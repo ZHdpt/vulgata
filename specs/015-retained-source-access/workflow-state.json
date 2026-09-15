@@ -6,10 +6,10 @@
   "stage": "implement",
   "preflight": {
     "branch": "dev",
-    "head": "f45109ef5f00160e89ddfdb765d12f31aa50a999",
-    "git_identity_sha256": "6768b7a68b849370c1f7632e41a70f3c2e88db5842aa6e0101a9443a490b3445",
-    "status_sha256": "63454c6e882bc7ac82c88cfdc3bc49fe71a76316b8ff6a4243fb1dd99bbf9cfd",
-    "observed_at": "2026-09-15T11:13:35.014777Z"
+    "head": "4014e953afe0b06237c62e5cf46eda498981abd7",
+    "git_identity_sha256": "79481acc9375f4ad4d4c57f206415b25a78126b5bcb1586f92f594002c293d75",
+    "status_sha256": "df7faa572614e5edf222ade2bce3ff55776d10e0ab76f8e804ebbc9ae1c39419",
+    "observed_at": "2026-09-15T12:14:47.677177Z"
   },
   "artifacts": {
     "spec": {
@@ -89,20 +89,20 @@
     "specs/015-retained-source-access/evidence/implementation-approval-01.md",
     "specs/015-retained-source-access/evidence/runtime-boundary-01.json",
     "specs/015-retained-source-access/evidence/baseline-reconciliation-approval-01.json",
-    "specs/015-retained-source-access/evidence/baseline-reconciliation-checkpoint-01.json",
-    "specs/015-retained-source-access/evidence/persistence-publication-verified-01.json",
-    "specs/015-retained-source-access/evidence/persistence-publication-checkpoint-01.json"
+    "specs/015-retained-source-access/evidence/persistence-publication-checkpoint-01.json",
+    "specs/015-retained-source-access/evidence/persistence-cleanup-isolated-verified-01.json",
+    "specs/015-retained-source-access/evidence/persistence-cleanup-checkpoint-01.json"
   ],
   "checkpoint": {
-    "checkpoint_id": "bmad-13-1-implement-20260915T111335Z-671f2c",
+    "checkpoint_id": "bmad-13-1-implement-20260915T121447Z-0ba224",
     "stage": "implement",
     "commit_sha": null,
     "binding_status": "pending"
   },
   "resume": {
     "stage": "implement",
-    "reason": "Replay/concurrent publication independently GREEN36/36. T031/T032 partial; next crash/adoption, cross-process locks, stale cleanup and reader lifecycle.",
-    "evidence_path": "specs/015-retained-source-access/evidence/persistence-publication-verified-01.json"
+    "reason": "Operation cleanup/recovery independentlyGREEN62/62 with isolated fixture. T031/T032 partial; next sealed-object cleanup, lock/conflict and reader-lifecycle coverage.",
+    "evidence_path": "specs/015-retained-source-access/evidence/persistence-cleanup-isolated-verified-01.json"
   },
-  "updated_at": "2026-09-15T11:13:35.014777Z"
+  "updated_at": "2026-09-15T12:14:47.677177Z"
 }

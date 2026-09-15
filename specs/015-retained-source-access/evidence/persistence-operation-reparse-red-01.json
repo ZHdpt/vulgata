@@ -1,0 +1,14 @@
+{
+  "id": "13-1/implement/62",
+  "kind": "test-red",
+  "stage": "implement",
+  "source_commit": "4014e953afe0b06237c62e5cf46eda498981abd7",
+  "observed_at": "2026-09-15T11:58:17.952442Z",
+  "summary": "Public capture follows fixture-owned .operations symlink and returnsCompleted/row1 instead of sanitizedStorageFailure/no row. Different owned target and sentinel retained; outsideWrites0 is measured after cleanup and does not prove absence of transient staging escape.",
+  "test_sha256": "df31d56fca3fe883afb79953c6a7a45ba2373f9efbe8c41fc4aa5b3f0e4a8de3",
+  "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\preservation-reparse-initial.trx",
+  "trx_sha256": "1e3736669870d2f5351742dc2d475c489ce671e8387fa9451ecc089c5bc476fc",
+  "passed": 0,
+  "failed": 1,
+  "exit_code": 1
+}

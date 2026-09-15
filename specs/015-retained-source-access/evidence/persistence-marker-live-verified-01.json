@@ -1,0 +1,35 @@
+{
+  "id": "13-1/implement/61",
+  "kind": "test-green",
+  "stage": "implement",
+  "source_commit": "4014e953afe0b06237c62e5cf46eda498981abd7",
+  "observed_at": "2026-09-15T11:58:17.952442Z",
+  "summary": "Independent marker32/32 plus actual live-child lease characterization1/1 GREEN. Second Repository completes without deleting aged live operation/lease. Cleanup acceptance still withheld for reparse RED.",
+  "runs": [
+    {
+      "suite": "independent-marker-persistence",
+      "passed": 5,
+      "failed": 0,
+      "exit_code": 0,
+      "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\independent-marker-persistence.trx",
+      "sha256": "fa4aa621b46c71c34b4b483cb2d38dfac82b155a9ab9010a6fcecbf8b93e300c"
+    },
+    {
+      "suite": "independent-marker-capture",
+      "passed": 27,
+      "failed": 0,
+      "exit_code": 0,
+      "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\independent-marker-capture.trx",
+      "sha256": "a457784e347df6faa21ed6e45cfd315aa145f1e0b7cc3ba29a2028e0ddc2e767"
+    },
+    {
+      "suite": "preservation-live-lease",
+      "passed": 1,
+      "failed": 0,
+      "exit_code": 0,
+      "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\preservation-live-lease.trx",
+      "sha256": "4dc3a47074781f51ccf0e55f92ad695911359648fcfeaff9498ded574dd55ab9"
+    }
+  ],
+  "store_sha256": "f2c8bc4c88605f37b94d2e2f438c41ed7250a3cd83d7f7a887e1653d3691ff8d"
+}

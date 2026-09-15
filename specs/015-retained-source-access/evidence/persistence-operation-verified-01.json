@@ -1,0 +1,46 @@
+{
+  "id": "13-1/implement/59",
+  "kind": "test-green",
+  "stage": "implement",
+  "source_commit": "4014e953afe0b06237c62e5cf46eda498981abd7",
+  "observed_at": "2026-09-15T11:49:21.470736Z",
+  "summary": "Independent59/59 operation/recovery regressions GREEN. Actual abandoned process state cleaned and canonical row/object/sentinel preserved. Partial only: subsequent unknown-marker preservation RED withholds cleanup acceptance.",
+  "runs": [
+    {
+      "suite": "persistence",
+      "passed": 4,
+      "failed": 0,
+      "exit_code": 0,
+      "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\independent-operation-persistence.trx",
+      "sha256": "f748f8e83b92be858d06ee586ec1d69580f4ace744bfd16f2bb762a4194a52d9"
+    },
+    {
+      "suite": "capture",
+      "passed": 27,
+      "failed": 0,
+      "exit_code": 0,
+      "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\independent-operation-capture.trx",
+      "sha256": "1c63cdd2bde3a780726725ad206232174d58e6991e482e654df3d27687f7a610"
+    },
+    {
+      "suite": "postgresql",
+      "passed": 4,
+      "failed": 0,
+      "exit_code": 0,
+      "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\independent-operation-postgresql.trx",
+      "sha256": "78e18f467da35b1d60cfe80d5eeb48d2aab9c6b6b2553c085818c17675df0a42"
+    },
+    {
+      "suite": "metadata",
+      "passed": 24,
+      "failed": 0,
+      "exit_code": 0,
+      "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\independent-operation-metadata.trx",
+      "sha256": "9b26273c6f15f17c56b76694a795559b6c09d779008821b2bb877ca863c30f68"
+    }
+  ],
+  "source_hashes": {
+    "store": "41bf4e705605990a07ee01b4f77c9794a8fa36558590b49ba6fe38bebbd91d8c",
+    "capture": "e0e4258b749a5cfbaf317cd95565235d2c9ea3515f258085e38f62e302030a69"
+  }
+}

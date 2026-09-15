@@ -86,6 +86,408 @@ public sealed class RetainedSourcePersistenceTests
     }
 
     [Fact]
+    public async Task AcquireAsync_InjectedPrePublishFailure_LeavesNoVisibleRowAndFreshRetryAdoptsSealedObjectAsync()
+    {
+        await using RetainedSourceFixture fixture =
+            await RetainedSourceFixture.CreateAsync();
+        int authorizationCount = 0;
+        await using RetainedSourceCaptureApplicationFixture appFixture =
+            await RetainedSourceCaptureApplicationFixture.CreateAsync(
+                fixture,
+                standalone: true,
+                configureServices: FailOnceBeforePublish(),
+                authorizationWait: (_, _) =>
+                {
+                    Interlocked.Increment(ref authorizationCount);
+                    return Task.CompletedTask;
+                });
+
+        IRetainedSourceApplication application = appFixture.Scope.ServiceProvider
+            .GetRequiredService<IRetainedSourceApplication>();
+        string permittedRef = await fixture.Repository.RunGitAsync(["symbolic-ref", "HEAD"]);
+        string revision = await fixture.Repository.ResolveRevisionAsync();
+        using var testCancellation = new CancellationTokenSource(TimeSpan.FromSeconds(60));
+
+        SourceCaptureResult failedCapture = await application.AcquireAsync(
+            fixture.RepositoryId,
+            permittedRef,
+            testCancellation.Token);
+        List<SourceSnapshot> afterFailure =
+            await LoadSnapshotsAsync(appFixture, fixture.RepositoryId);
+        int sealedObjectsAfterFailure = CountSealedObjects(
+            fixture.SourceStorageRoot,
+            fixture.RepositoryId,
+            revision);
+        OpenSourceReadContextResult unavailable = await application.OpenReadContextAsync(
+            fixture.RepositoryId,
+            revision,
+            new SourceReadGrantRequest(),
+            testCancellation.Token);
+
+        int authorizationsBeforeRetry = Volatile.Read(ref authorizationCount);
+        SourceCaptureResult retry = await application.AcquireAsync(
+            fixture.RepositoryId,
+            permittedRef,
+            testCancellation.Token);
+        List<SourceSnapshot> afterRetry =
+            await LoadSnapshotsAsync(appFixture, fixture.RepositoryId);
+        int sealedObjectsAfterRetry = CountSealedObjects(
+            fixture.SourceStorageRoot,
+            fixture.RepositoryId,
+            revision);
+        _output.WriteLine(
+            $"failed={failedCapture.Status}/{failedCapture.Code}; " +
+            $"unavailable={unavailable.Status}/{unavailable.Code}; " +
+            $"retry={retry.Status}/{retry.Code}; " +
+            $"rowsAfterFailure={afterFailure.Count}; " +
+            $"objectsAfterFailure={sealedObjectsAfterFailure}; " +
+            $"rowsAfterRetry={afterRetry.Count}; " +
+            $"objectsAfterRetry={sealedObjectsAfterRetry}; " +
+            $"authorizationsBeforeRetry={authorizationsBeforeRetry}; " +
+            $"authorizationsAfterRetry={Volatile.Read(ref authorizationCount)}");
+
+        Assert.Equal(SourceCaptureStatus.StorageFailure, failedCapture.Status);
+        Assert.Equal("source_storage_unavailable", failedCapture.Code);
+        Assert.Empty(afterFailure);
+        Assert.Equal(1, sealedObjectsAfterFailure);
+        Assert.Equal(SourceReadStatus.NotFoundOrUnavailable, unavailable.Status);
+        Assert.Null(unavailable.Context);
+        Assert.Equal(SourceCaptureStatus.Completed, retry.Status);
+        Assert.Equal("source_completed", retry.Code);
+        Assert.Single(afterRetry);
+        Assert.Equal(1, sealedObjectsAfterRetry);
+        Assert.Equal(revision, retry.ProfiledRevision);
+        Assert.True(Volatile.Read(ref authorizationCount) > authorizationsBeforeRetry);
+    }
+
+    [Fact]
+    public async Task AcquireAsync_AgedAbandonedOperation_IsRemovedAfterSuccessfulAdoptionAsync()
+    {
+        await using RetainedSourceFixture fixture =
+            await RetainedSourceFixture.CreateAsync();
+        IReadOnlyDictionary<string, string?> configuration =
+            new Dictionary<string, string?>
+            {
+                ["SourceStorage:OperationStaleAfterMinutes"] = "1",
+            };
+        await using RetainedSourceCaptureApplicationFixture appFixture =
+            await RetainedSourceCaptureApplicationFixture.CreateAsync(
+                fixture,
+                standalone: true,
+                configurationOverrides: configuration);
+        string permittedRef = await fixture.Repository.RunGitAsync(["symbolic-ref", "HEAD"]);
+        string revision = await fixture.Repository.ResolveRevisionAsync();
+        string markerPath = RetainedSourceOwnedPaths.ResolveChild(
+            fixture.RootPath,
+            "child-ready.marker");
+        string sentinelPath = RetainedSourceOwnedPaths.ResolveChild(
+            fixture.SourceStorageRoot,
+            "unrelated-sentinel.txt");
+        File.WriteAllText(sentinelPath, "preserve");
+
+        ProcessStartInfo startInfo = RetainedSourceSeparateProcessRunner.CreateStartInfo(
+            ResolveRepositoryRoot());
+        startInfo.Environment[RetainedSourceSeparateProcessChild.ConnectionVariable] =
+            appFixture.Database.ConnectionString;
+        startInfo.Environment[RetainedSourceSeparateProcessChild.StorageRootVariable] =
+            fixture.SourceStorageRoot;
+        startInfo.Environment[RetainedSourceSeparateProcessChild.UserVariable] =
+            appFixture.UserId;
+        startInfo.Environment[RetainedSourceSeparateProcessChild.RepositoryVariable] =
+            fixture.RepositoryId.ToString("D");
+        startInfo.Environment[RetainedSourceSeparateProcessChild.RefVariable] = permittedRef;
+        startInfo.Environment[RetainedSourceSeparateProcessChild.ReadyMarkerVariable] =
+            markerPath;
+        startInfo.Environment[RetainedSourceSeparateProcessChild.StaleMinutesVariable] = "1";
+
+        using var child = new Process { StartInfo = startInfo };
+        Assert.True(child.Start());
+        Task<string> childOutput = child.StandardOutput.ReadToEndAsync();
+        Task<string> childError = child.StandardError.ReadToEndAsync();
+        using var testCancellation = new CancellationTokenSource(TimeSpan.FromSeconds(60));
+        try
+        {
+            await WaitForFileAsync(markerPath, testCancellation.Token);
+            int markerProcessId = int.Parse(File.ReadAllText(markerPath));
+            using Process testHost = Process.GetProcessById(markerProcessId);
+            DateTime testHostStartTime = testHost.StartTime;
+
+            string operationsRoot = Path.Combine(fixture.SourceStorageRoot, ".operations");
+            string[] abandonedOperations = Directory.Exists(operationsRoot)
+                ? Directory.GetDirectories(operationsRoot)
+                : [];
+            string abandonedOperation = Assert.Single(abandonedOperations);
+            RetainedSourceOwnedPaths.EnsureOwnedPath(abandonedOperation);
+
+            child.Kill(entireProcessTree: true);
+            await child.WaitForExitAsync(testCancellation.Token);
+            Assert.NotEqual(0, child.ExitCode);
+            await WaitForProcessExitAsync(testHost, testHostStartTime, testCancellation.Token);
+
+            Directory.SetLastWriteTimeUtc(
+                abandonedOperation,
+                DateTime.UtcNow.Subtract(TimeSpan.FromMinutes(5)));
+
+            IRetainedSourceApplication application = appFixture.Scope.ServiceProvider
+                .GetRequiredService<IRetainedSourceApplication>();
+            SourceCaptureResult capture = await application.AcquireAsync(
+                fixture.RepositoryId,
+                permittedRef,
+                testCancellation.Token);
+            List<SourceSnapshot> snapshots = await LoadSnapshotsAsync(
+                appFixture,
+                fixture.RepositoryId);
+            string[] remainingOperations = Directory.Exists(operationsRoot)
+                ? Directory.GetDirectories(operationsRoot)
+                : [];
+            int sealedObjectCount = CountSealedObjects(
+                fixture.SourceStorageRoot,
+                fixture.RepositoryId,
+                revision);
+            _output.WriteLine(
+                $"childExit={child.ExitCode}; capture={capture.Status}/{capture.Code}; " +
+                $"launcherPid={child.Id}; testHostPid={markerProcessId}; " +
+                $"rows={snapshots.Count}; sealedObjects={sealedObjectCount}; " +
+                $"remainingOperations={remainingOperations.Length}; " +
+                $"sentinelExists={File.Exists(sentinelPath)}");
+
+            Assert.Equal(SourceCaptureStatus.Completed, capture.Status);
+            Assert.Equal("source_completed", capture.Code);
+            Assert.Single(snapshots);
+            Assert.Equal(1, sealedObjectCount);
+            Assert.True(File.Exists(sentinelPath));
+            Assert.Empty(remainingOperations);
+        }
+        finally
+        {
+            if (!child.HasExited)
+            {
+                child.Kill(entireProcessTree: true);
+                await child.WaitForExitAsync(CancellationToken.None);
+            }
+
+            string childStandardOutput = await childOutput;
+            string childStandardError = await childError;
+            _output.WriteLine(
+                $"childExitObserved={child.HasExited}; childExitCode={child.ExitCode}; " +
+                $"childOutputLength={childStandardOutput.Length}; " +
+                $"childErrorLength={childStandardError.Length}");
+            if (childStandardError.Length > 0)
+            {
+                _output.WriteLine(
+                    childStandardError[^Math.Min(childStandardError.Length, 2_000)..]);
+            }
+        }
+    }
+
+    [Fact]
+    public async Task AcquireAsync_AgedUnknownOperations_PreservesForeignStateAndSentinelsAsync()
+    {
+        await using RetainedSourceFixture fixture =
+            await RetainedSourceFixture.CreateAsync();
+        await using RetainedSourceCaptureApplicationFixture appFixture =
+            await RetainedSourceCaptureApplicationFixture.CreateAsync(
+                fixture,
+                standalone: true,
+                configurationOverrides: new Dictionary<string, string?>
+                {
+                    ["SourceStorage:OperationStaleAfterMinutes"] = "1",
+                });
+
+        string operationsRoot = Path.Combine(fixture.SourceStorageRoot, ".operations");
+        Directory.CreateDirectory(operationsRoot);
+        string unmarkedOperation = Path.Combine(
+            operationsRoot,
+            Guid.NewGuid().ToString("N"));
+        string foreignOperation = Path.Combine(
+            operationsRoot,
+            Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(unmarkedOperation);
+        Directory.CreateDirectory(foreignOperation);
+        RetainedSourceOwnedPaths.EnsureOwnedPath(unmarkedOperation);
+        RetainedSourceOwnedPaths.EnsureOwnedPath(foreignOperation);
+        string foreignLease = Path.Combine(foreignOperation, ".lease");
+        string foreignSentinel = Path.Combine(foreignOperation, "foreign-sentinel.txt");
+        File.WriteAllText(foreignLease, "foreign-lease-payload");
+        File.WriteAllText(foreignSentinel, "preserve");
+        DateTime staleAt = DateTime.UtcNow.Subtract(TimeSpan.FromMinutes(5));
+        Directory.SetLastWriteTimeUtc(unmarkedOperation, staleAt);
+        Directory.SetLastWriteTimeUtc(foreignOperation, staleAt);
+
+        IRetainedSourceApplication application = appFixture.Scope.ServiceProvider
+            .GetRequiredService<IRetainedSourceApplication>();
+        string permittedRef = await fixture.Repository.RunGitAsync(["symbolic-ref", "HEAD"]);
+        using var testCancellation = new CancellationTokenSource(TimeSpan.FromSeconds(60));
+        SourceCaptureResult capture = await application.AcquireAsync(
+            fixture.RepositoryId,
+            permittedRef,
+            testCancellation.Token);
+        string[] remainingOperations = Directory.Exists(operationsRoot)
+            ? Directory.GetDirectories(operationsRoot)
+            : [];
+        _output.WriteLine(
+            $"capture={capture.Status}/{capture.Code}; " +
+            $"remainingOperations={remainingOperations.Length}; " +
+            $"unmarkedExists={Directory.Exists(unmarkedOperation)}; " +
+            $"foreignExists={Directory.Exists(foreignOperation)}; " +
+            $"foreignLeaseExists={File.Exists(foreignLease)}; " +
+            $"foreignSentinelExists={File.Exists(foreignSentinel)}");
+
+        Assert.Equal(SourceCaptureStatus.Completed, capture.Status);
+        Assert.True(Directory.Exists(unmarkedOperation));
+        Assert.True(Directory.Exists(foreignOperation));
+        Assert.True(File.Exists(foreignLease));
+        Assert.True(File.Exists(foreignSentinel));
+        Assert.Equal(2, remainingOperations.Length);
+    }
+
+    [Fact]
+    public async Task AcquireAsync_WhileAnotherRepositoryHoldsLiveLease_PreservesLiveOperationAsync()
+    {
+        await using RetainedSourceFixture firstSource =
+            await RetainedSourceFixture.CreateAsync();
+        await using RetainedSourceFixture secondSource =
+            await RetainedSourceFixture.CreateAsync();
+        await using RetainedSourceCaptureApplicationFixture appFixture =
+            await RetainedSourceCaptureApplicationFixture.CreateAsync(
+                firstSource,
+                standalone: true,
+                configurationOverrides: new Dictionary<string, string?>
+                {
+                    ["SourceStorage:OperationStaleAfterMinutes"] = "1",
+                });
+        await AddStandaloneRepositoryAsync(
+            appFixture.Database.ConnectionString,
+            secondSource);
+
+        string markerPath = RetainedSourceOwnedPaths.ResolveChild(
+            firstSource.RootPath,
+            "live-child-ready.marker");
+        string permittedRef = await secondSource.Repository.RunGitAsync(["symbolic-ref", "HEAD"]);
+        ProcessStartInfo startInfo = RetainedSourceSeparateProcessRunner.CreateStartInfo(
+            ResolveRepositoryRoot());
+        startInfo.Environment[RetainedSourceSeparateProcessChild.ConnectionVariable] =
+            appFixture.Database.ConnectionString;
+        startInfo.Environment[RetainedSourceSeparateProcessChild.StorageRootVariable] =
+            firstSource.SourceStorageRoot;
+        startInfo.Environment[RetainedSourceSeparateProcessChild.UserVariable] =
+            appFixture.UserId;
+        startInfo.Environment[RetainedSourceSeparateProcessChild.RepositoryVariable] =
+            firstSource.RepositoryId.ToString("D");
+        startInfo.Environment[RetainedSourceSeparateProcessChild.RefVariable] =
+            await firstSource.Repository.RunGitAsync(["symbolic-ref", "HEAD"]);
+        startInfo.Environment[RetainedSourceSeparateProcessChild.ReadyMarkerVariable] =
+            markerPath;
+        startInfo.Environment[RetainedSourceSeparateProcessChild.StaleMinutesVariable] = "1";
+
+        using var child = new Process { StartInfo = startInfo };
+        Assert.True(child.Start());
+        Task<string> childOutput = child.StandardOutput.ReadToEndAsync();
+        Task<string> childError = child.StandardError.ReadToEndAsync();
+        using var testCancellation = new CancellationTokenSource(TimeSpan.FromSeconds(60));
+        try
+        {
+            await WaitForFileAsync(markerPath, testCancellation.Token);
+            int markerProcessId = int.Parse(File.ReadAllText(markerPath));
+            using Process testHost = Process.GetProcessById(markerProcessId);
+            DateTime testHostStartTime = testHost.StartTime;
+            string operationsRoot = Path.Combine(firstSource.SourceStorageRoot, ".operations");
+            string[] liveOperations = Directory.Exists(operationsRoot)
+                ? Directory.GetDirectories(operationsRoot)
+                : [];
+            string liveOperation = Assert.Single(liveOperations);
+            string liveLease = Path.Combine(liveOperation, ".lease");
+
+            IRetainedSourceApplication application = appFixture.Scope.ServiceProvider
+                .GetRequiredService<IRetainedSourceApplication>();
+            SourceCaptureResult secondCapture = await application.AcquireAsync(
+                secondSource.RepositoryId,
+                permittedRef,
+                testCancellation.Token);
+            List<SourceSnapshot> snapshots = await LoadSnapshotsAsync(
+                appFixture,
+                secondSource.RepositoryId);
+            string[] remainingOperations = Directory.Exists(operationsRoot)
+                ? Directory.GetDirectories(operationsRoot)
+                : [];
+            _output.WriteLine(
+                $"childLauncherPid={child.Id}; childTestHostPid={markerProcessId}; " +
+                $"second={secondCapture.Status}/{secondCapture.Code}; rows={snapshots.Count}; " +
+                $"liveOperationExists={Directory.Exists(liveOperation)}; " +
+                $"liveLeaseExists={File.Exists(liveLease)}; " +
+                $"remainingOperations={remainingOperations.Length}");
+
+            Assert.Equal(SourceCaptureStatus.Completed, secondCapture.Status);
+            Assert.Single(snapshots);
+            Assert.True(Directory.Exists(liveOperation));
+            Assert.True(File.Exists(liveLease));
+            Assert.Contains(liveOperation, remainingOperations, StringComparer.OrdinalIgnoreCase);
+
+            child.Kill(entireProcessTree: true);
+            await child.WaitForExitAsync(testCancellation.Token);
+            Assert.NotEqual(0, child.ExitCode);
+            await WaitForProcessExitAsync(testHost, testHostStartTime, testCancellation.Token);
+        }
+        finally
+        {
+            if (!child.HasExited)
+            {
+                child.Kill(entireProcessTree: true);
+                await child.WaitForExitAsync(CancellationToken.None);
+            }
+
+            _ = await childOutput;
+            _ = await childError;
+        }
+    }
+
+    [Fact]
+    public async Task AcquireAsync_WhenOperationsRootIsOwnedReparsePoint_FailsWithoutOutsideWritesAsync()
+    {
+        await using RetainedSourceFixture fixture =
+            await RetainedSourceFixture.CreateAsync();
+        await using RetainedSourceCaptureApplicationFixture appFixture =
+            await RetainedSourceCaptureApplicationFixture.CreateAsync(
+                fixture,
+                standalone: true);
+
+        string operationsRoot = Path.Combine(fixture.SourceStorageRoot, ".operations");
+        string reparseTarget = RetainedSourceOwnedPaths.ResolveChild(
+            fixture.RootPath,
+            "operations-reparse-target");
+        Directory.CreateDirectory(reparseTarget);
+        string targetSentinel = Path.Combine(reparseTarget, "outside-sentinel.txt");
+        File.WriteAllText(targetSentinel, "preserve");
+        Directory.CreateSymbolicLink(operationsRoot, reparseTarget);
+
+        IRetainedSourceApplication application = appFixture.Scope.ServiceProvider
+            .GetRequiredService<IRetainedSourceApplication>();
+        string permittedRef = await fixture.Repository.RunGitAsync(["symbolic-ref", "HEAD"]);
+        using var testCancellation = new CancellationTokenSource(TimeSpan.FromSeconds(60));
+        SourceCaptureResult capture = await application.AcquireAsync(
+            fixture.RepositoryId,
+            permittedRef,
+            testCancellation.Token);
+        List<SourceSnapshot> snapshots = await LoadSnapshotsAsync(
+            appFixture,
+            fixture.RepositoryId);
+        string[] outsideEntries = Directory.GetFileSystemEntries(reparseTarget)
+            .Where(path => !StringComparer.OrdinalIgnoreCase.Equals(path, targetSentinel))
+            .ToArray();
+        _output.WriteLine(
+            $"capture={capture.Status}/{capture.Code}; rows={snapshots.Count}; " +
+            $"outsideWrites={outsideEntries.Length}; " +
+            $"operationsReparse={File.GetAttributes(operationsRoot).HasFlag(FileAttributes.ReparsePoint)}; " +
+            $"sentinelExists={File.Exists(targetSentinel)}");
+
+        Assert.Equal(SourceCaptureStatus.StorageFailure, capture.Status);
+        Assert.Equal("source_storage_unavailable", capture.Code);
+        Assert.Empty(snapshots);
+        Assert.Empty(outsideEntries);
+        Assert.True(File.Exists(targetSentinel));
+    }
+
+    [Fact]
     public async Task AcquireAsync_DifferentRepositories_ConcurrentPublicationReturnsCompletedAndOneRowEachAsync()
     {
         await using RetainedSourceFixture firstSource =
@@ -159,6 +561,143 @@ public sealed class RetainedSourcePersistenceTests
             .SetValue(repository, source.RepositoryId);
         context.Repositories.Add(repository);
         await context.SaveChangesAsync();
+    }
+
+    private static async Task<List<SourceSnapshot>> LoadSnapshotsAsync(
+        RetainedSourceCaptureApplicationFixture appFixture,
+        Guid repositoryId)
+    {
+        IDbContextFactory<VulgataDbContext> contextFactory = appFixture.Scope.ServiceProvider
+            .GetRequiredService<IDbContextFactory<VulgataDbContext>>();
+        await using VulgataDbContext context = await contextFactory.CreateDbContextAsync();
+        return await context.SourceSnapshots
+            .Where(snapshot => snapshot.RepositoryId == repositoryId)
+            .ToListAsync();
+    }
+
+    private static int CountSealedObjects(
+        string sourceStorageRoot,
+        Guid repositoryId,
+        string profiledRevision)
+    {
+        string identityRoot = Path.Combine(
+            sourceStorageRoot,
+            "snapshots",
+            repositoryId.ToString("N"),
+            profiledRevision);
+        return Directory.Exists(identityRoot)
+            ? Directory.GetDirectories(identityRoot).Length
+            : 0;
+    }
+
+    private static async Task WaitForFileAsync(
+        string path,
+        CancellationToken cancellationToken)
+    {
+        while (!File.Exists(path))
+        {
+            await Task.Delay(TimeSpan.FromMilliseconds(100), cancellationToken);
+        }
+    }
+
+    private static async Task WaitForProcessExitAsync(
+        Process process,
+        DateTime startTime,
+        CancellationToken cancellationToken)
+    {
+        while (true)
+        {
+            if (process.HasExited)
+            {
+                return;
+            }
+
+            try
+            {
+                if (process.StartTime != startTime)
+                {
+                    return;
+                }
+            }
+            catch (InvalidOperationException)
+            {
+                return;
+            }
+
+            await Task.Delay(TimeSpan.FromMilliseconds(100), cancellationToken);
+        }
+    }
+
+    private static string ResolveRepositoryRoot()
+    {
+        DirectoryInfo? current = new(AppContext.BaseDirectory);
+        while (current is not null)
+        {
+            if (File.Exists(Path.Combine(current.FullName, RetainedSourceSeparateProcessRunner.ProjectPath)))
+            {
+                return current.FullName;
+            }
+
+            current = current.Parent;
+        }
+
+        throw new DirectoryNotFoundException(
+            "The retained-source test repository root could not be resolved.");
+    }
+
+    private static Action<IServiceCollection> FailOnceBeforePublish()
+    {
+        return services =>
+        {
+            ServiceDescriptor descriptor = services.Last(candidate =>
+                candidate.ServiceType == typeof(IRetainedSourceRepository));
+            services.Remove(descriptor);
+            services.AddScoped<IRetainedSourceRepository>(serviceProvider =>
+                new FailOnceRetainedSourceRepository(
+                    ResolveRepository(serviceProvider, descriptor)));
+        };
+    }
+
+    private static IRetainedSourceRepository ResolveRepository(
+        IServiceProvider services,
+        ServiceDescriptor descriptor)
+    {
+        object implementation = descriptor.ImplementationInstance ??
+            descriptor.ImplementationFactory?.Invoke(services) ??
+            (descriptor.ImplementationType is not null
+                ? ActivatorUtilities.CreateInstance(services, descriptor.ImplementationType)
+                : throw new InvalidOperationException(
+                    "The retained-source repository registration has no implementation."));
+        return (IRetainedSourceRepository)implementation;
+    }
+
+    private sealed class FailOnceRetainedSourceRepository(
+        IRetainedSourceRepository inner) : IRetainedSourceRepository
+    {
+        private int _remainingFailures = 1;
+
+        public Task<bool> HasForRepositoryAsync(
+            Guid repositoryId,
+            CancellationToken cancellationToken = default) =>
+            inner.HasForRepositoryAsync(repositoryId, cancellationToken);
+
+        public Task<SourceSnapshot?> GetAsync(
+            Guid repositoryId,
+            string profiledRevision,
+            CancellationToken cancellationToken = default) =>
+            inner.GetAsync(repositoryId, profiledRevision, cancellationToken);
+
+        public Task PublishAsync(
+            SourceSnapshot sourceSnapshot,
+            CancellationToken cancellationToken = default)
+        {
+            if (Interlocked.Exchange(ref _remainingFailures, 0) == 1)
+            {
+                throw new InvalidOperationException("Injected pre-row publication failure.");
+            }
+
+            return inner.PublishAsync(sourceSnapshot, cancellationToken);
+        }
     }
 
     private sealed class FinalAuthorizationBarrier(HashSet<Guid> repositoryIds)

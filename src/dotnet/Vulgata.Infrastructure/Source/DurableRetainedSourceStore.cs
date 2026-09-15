@@ -14,21 +14,36 @@ internal sealed class RetainedSourceIntegrityException : Exception
 internal sealed class RetainedSourceStaging : IAsyncDisposable
 {
     internal RetainedSourceStaging(
-        string operationRoot,
         string objectRoot,
         RetainedSourceManifestDocument manifest)
     {
-        OperationRoot = operationRoot;
         ObjectRoot = objectRoot;
         Manifest = manifest;
     }
 
-    internal string OperationRoot { get; }
     internal string ObjectRoot { get; }
     internal RetainedSourceManifestDocument Manifest { get; }
 
+    public ValueTask DisposeAsync() => ValueTask.CompletedTask;
+}
+
+internal sealed class RetainedSourceOperationLease(
+    string operationRoot,
+    FileStream lease) : IAsyncDisposable
+{
+    private FileStream? _lease = lease;
+
+    internal string OperationRoot { get; } = operationRoot;
+
     public ValueTask DisposeAsync()
     {
+        FileStream? ownedLease = Interlocked.Exchange(ref _lease, null);
+        if (ownedLease is null)
+        {
+            return ValueTask.CompletedTask;
+        }
+
+        ownedLease.Dispose();
         DurableRetainedSourceStore.TryDeleteOwnedOperation(OperationRoot);
         return ValueTask.CompletedTask;
     }
@@ -77,7 +92,7 @@ internal sealed class DurableRetainedSourceStore(RetainedSourceCapturePolicy pol
                 manifest.Bytes,
                 cancellationToken);
             await VerifyObjectAsync(objectRoot, manifest, cancellationToken);
-            return new(operationRoot, objectRoot, manifest);
+            return new(objectRoot, manifest);
         }
         catch (OperationCanceledException)
         {
@@ -180,19 +195,117 @@ internal sealed class DurableRetainedSourceStore(RetainedSourceCapturePolicy pol
         }
     }
 
-    internal string CreateOperationRoot()
+    internal RetainedSourceOperationLease CreateOperation()
+    {
+        string? operationRoot = null;
+        try
+        {
+            string operationsRoot = ResolveContained(policy.RootPath, ".operations");
+            if (Directory.Exists(operationsRoot) &&
+                File.GetAttributes(operationsRoot).HasFlag(FileAttributes.ReparsePoint))
+            {
+                throw new RetainedSourceStorageException();
+            }
+
+            Directory.CreateDirectory(operationsRoot);
+            if (File.GetAttributes(operationsRoot).HasFlag(FileAttributes.ReparsePoint))
+            {
+                throw new RetainedSourceStorageException();
+            }
+
+            operationRoot = ResolveContained(operationsRoot, Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(operationRoot);
+            string leasePath = ResolveContained(operationRoot, ".lease");
+            var lease = new FileStream(
+                leasePath,
+                FileMode.CreateNew,
+                FileAccess.ReadWrite,
+                FileShare.Delete,
+                1,
+                FileOptions.Asynchronous);
+            return new(operationRoot, lease);
+        }
+        catch
+        {
+            if (operationRoot is not null)
+            {
+                TryDeleteOwnedOperation(operationRoot);
+            }
+            throw new RetainedSourceStorageException();
+        }
+    }
+
+    internal void TryCleanupStaleOperations(DateTimeOffset utcNow)
     {
         try
         {
             string operationsRoot = ResolveContained(policy.RootPath, ".operations");
-            Directory.CreateDirectory(operationsRoot);
-            string operationRoot = ResolveContained(operationsRoot, Guid.NewGuid().ToString("N"));
-            Directory.CreateDirectory(operationRoot);
-            return operationRoot;
+            if (!Directory.Exists(operationsRoot) ||
+                File.GetAttributes(operationsRoot).HasFlag(FileAttributes.ReparsePoint))
+            {
+                return;
+            }
+
+            foreach (string candidate in Directory.EnumerateDirectories(operationsRoot))
+            {
+                TryCleanupStaleOperation(operationsRoot, candidate, utcNow.UtcDateTime);
+            }
         }
         catch
         {
-            throw new RetainedSourceStorageException();
+        }
+    }
+
+    private void TryCleanupStaleOperation(
+        string operationsRoot,
+        string candidate,
+        DateTime utcNow)
+    {
+        try
+        {
+            var operation = new DirectoryInfo(candidate);
+            if (!Guid.TryParseExact(operation.Name, "N", out Guid operationId) ||
+                !StringComparer.Ordinal.Equals(operation.Name, operationId.ToString("N")) ||
+                !StringComparer.Ordinal.Equals(
+                    ResolveContained(operationsRoot, operation.Name),
+                    operation.FullName) ||
+                operation.Attributes.HasFlag(FileAttributes.ReparsePoint) ||
+                operation.LastWriteTimeUtc > utcNow - policy.OperationStaleAfter)
+            {
+                return;
+            }
+
+            string leasePath = ResolveContained(operation.FullName, ".lease");
+            if (!File.Exists(leasePath) ||
+                File.GetAttributes(leasePath).HasFlag(FileAttributes.ReparsePoint))
+            {
+                return;
+            }
+
+            using var lease = new FileStream(
+                leasePath,
+                FileMode.Open,
+                FileAccess.ReadWrite,
+                FileShare.Delete,
+                1,
+                FileOptions.None);
+            if (lease.Length != 0)
+            {
+                return;
+            }
+
+            operation.Refresh();
+            if (!operation.Exists ||
+                operation.Attributes.HasFlag(FileAttributes.ReparsePoint) ||
+                operation.LastWriteTimeUtc > utcNow - policy.OperationStaleAfter)
+            {
+                return;
+            }
+
+            TryDeleteOwnedOperation(operation.FullName);
+        }
+        catch
+        {
         }
     }
 
@@ -482,11 +595,56 @@ internal sealed class DurableRetainedSourceStore(RetainedSourceCapturePolicy pol
         {
             if (Directory.Exists(operationRoot))
             {
-                Directory.Delete(operationRoot, recursive: true);
+                DeleteOwnedTree(operationRoot);
             }
         }
         catch
         {
         }
+    }
+
+    private static void DeleteOwnedTree(string directoryPath)
+    {
+        FileAttributes directoryAttributes = File.GetAttributes(directoryPath);
+        if (directoryAttributes.HasFlag(FileAttributes.ReparsePoint))
+        {
+            Directory.Delete(directoryPath, recursive: false);
+            return;
+        }
+
+        foreach (string entry in Directory.EnumerateFileSystemEntries(directoryPath))
+        {
+            FileAttributes attributes = File.GetAttributes(entry);
+            if (attributes.HasFlag(FileAttributes.ReparsePoint))
+            {
+                if (attributes.HasFlag(FileAttributes.Directory))
+                {
+                    Directory.Delete(entry, recursive: false);
+                }
+                else
+                {
+                    File.Delete(entry);
+                }
+                continue;
+            }
+
+            if (attributes.HasFlag(FileAttributes.Directory))
+            {
+                DeleteOwnedTree(entry);
+                continue;
+            }
+
+            if (attributes.HasFlag(FileAttributes.ReadOnly))
+            {
+                File.SetAttributes(entry, attributes & ~FileAttributes.ReadOnly);
+            }
+            File.Delete(entry);
+        }
+
+        if (directoryAttributes.HasFlag(FileAttributes.ReadOnly))
+        {
+            File.SetAttributes(directoryPath, directoryAttributes & ~FileAttributes.ReadOnly);
+        }
+        Directory.Delete(directoryPath, recursive: false);
     }
 }

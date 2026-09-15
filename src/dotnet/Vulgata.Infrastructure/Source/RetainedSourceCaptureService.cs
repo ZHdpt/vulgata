@@ -20,6 +20,7 @@ internal sealed class RetainedSourceCaptureService(
         Guid correlationId = Guid.NewGuid();
         long startedTimestamp = timeProvider.GetTimestamp();
         string? operationRoot = null;
+        RetainedSourceOperationLease? operationLease = null;
         using var deadlineCancellation = new CancellationTokenSource();
         using var deadlineMonitorStop = new CancellationTokenSource();
         Task deadlineMonitor = MonitorDeadlineAsync(
@@ -48,7 +49,9 @@ internal sealed class RetainedSourceCaptureService(
 
             operationToken.ThrowIfCancellationRequested();
             ThrowIfDeadlineExceeded(startedTimestamp);
-            operationRoot = store.CreateOperationRoot();
+            store.TryCleanupStaleOperations(timeProvider.GetUtcNow());
+            operationLease = store.CreateOperation();
+            operationRoot = operationLease.OperationRoot;
             GitCommittedObjectResult acquired = await git.CaptureAsync(
                 initial.GitOrigin,
                 permittedRef,
@@ -236,9 +239,9 @@ internal sealed class RetainedSourceCaptureService(
             {
             }
 
-            if (operationRoot is not null)
+            if (operationLease is not null)
             {
-                DurableRetainedSourceStore.TryDeleteOwnedOperation(operationRoot);
+                await operationLease.DisposeAsync();
             }
         }
     }
