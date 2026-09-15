@@ -1,0 +1,27 @@
+{
+  "id": "13-1/implement/22",
+  "kind": "command",
+  "stage": "implement",
+  "source_commit": "dede5daa4fa10ef671046c1b95e3779fa4e641f9",
+  "observed_at": "2026-09-15T05:14:58.166864Z",
+  "checkpoint_id": "bmad-13-1-implement-20260915T051458Z-02d72f",
+  "expected_parent": "dede5daa4fa10ef671046c1b95e3779fa4e641f9",
+  "owned_paths": [
+    "docs/bmad/implementation-artifacts/13-1-retain-exact-repository-source-with-scoped-read-access.md",
+    "specs/015-retained-source-access/evidence/manifest-checkpoint-01.json",
+    "specs/015-retained-source-access/evidence/manifest-verified-01.json",
+    "specs/015-retained-source-access/tasks.md",
+    "specs/015-retained-source-access/workflow-state.json",
+    "tests/Vulgata.Tests/RetainedSource/RetainedSourceFixture.cs",
+    "tests/Vulgata.Tests/RetainedSource/RetainedSourceManifestTests.cs"
+  ],
+  "summary": "T020/T021 test-only verified manifest group46/46; no production changes.",
+  "git_identity": {
+    "branch": "dev",
+    "head": "dede5daa4fa10ef671046c1b95e3779fa4e641f9",
+    "root": "G:/source/repos/vulgata",
+    "common_directory": ".git",
+    "worktree": "G:\\source\\repos\\vulgata"
+  },
+  "observed_status": "M docs/bmad/implementation-artifacts/13-1-retain-exact-repository-source-with-scoped-read-access.md\n M specs/015-retained-source-access/tasks.md\n M specs/015-retained-source-access/workflow-state.json\n M tests/Vulgata.Tests/RetainedSource/RetainedSourceFixture.cs\n?? specs/015-retained-source-access/evidence/manifest-checkpoint-01.json\n?? specs/015-retained-source-access/evidence/manifest-verified-01.json\n?? tests/Vulgata.Tests/RetainedSource/RetainedSourceManifestTests.cs"
+}

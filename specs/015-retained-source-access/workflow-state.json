@@ -6,10 +6,10 @@
   "stage": "implement",
   "preflight": {
     "branch": "dev",
-    "head": "cbd1b498a975295ed1c474da140631d930a0d294",
-    "git_identity_sha256": "eb9127080010f0c54347a2538557f485844e78c9dea1401d400a66f3d0eb9335",
-    "status_sha256": "d99543d5dce03787f9095eb47a3a752fef3e1a24cf609bba95bf5a9ecea5c4e3",
-    "observed_at": "2026-09-15T04:56:38.873757Z"
+    "head": "dede5daa4fa10ef671046c1b95e3779fa4e641f9",
+    "git_identity_sha256": "e1c973dd82f960df6afe2ffd245dac2dee08fcf7f2329adbe10326cd6dd5f3c7",
+    "status_sha256": "2c551adaea34ed5e9d9e034912946eaca018da2b6c28d12181089d6e5291af1d",
+    "observed_at": "2026-09-15T05:15:17.599791Z"
   },
   "artifacts": {
     "spec": {
@@ -22,7 +22,7 @@
     },
     "tasks": {
       "path": "specs/015-retained-source-access/tasks.md",
-      "sha256": "101157076ba9fd055171976a40d9e1d1b7ff2eaf922a07d54359e7305b575821"
+      "sha256": "106baee685531946232185ab98507523927a53943f80697c8716f305a594c20f"
     }
   },
   "gates": {
@@ -82,20 +82,20 @@
     "specs/015-retained-source-access/evidence/implementation-approval-01.md",
     "specs/015-retained-source-access/evidence/runtime-boundary-01.json",
     "specs/015-retained-source-access/evidence/identity-checkpoint-01.json",
-    "specs/015-retained-source-access/evidence/implementation-observations-01.md",
-    "specs/015-retained-source-access/evidence/capture-group-verified-01.json",
-    "specs/015-retained-source-access/evidence/capture-checkpoint-01.json"
+    "specs/015-retained-source-access/evidence/capture-checkpoint-01.json",
+    "specs/015-retained-source-access/evidence/manifest-verified-01.json",
+    "specs/015-retained-source-access/evidence/manifest-checkpoint-01.json"
   ],
   "checkpoint": {
-    "checkpoint_id": "bmad-13-1-implement-20260915T045638Z-d487d3",
+    "checkpoint_id": "bmad-13-1-implement-20260915T051458Z-02d72f",
     "stage": "implement",
     "commit_sha": null,
     "binding_status": "pending"
   },
   "resume": {
     "stage": "implement",
-    "reason": "T008-T019 independently verified55/55. Next T020/T021 canonical manifest detail; ordinary reads/reopen and downstream gates remain.",
-    "evidence_path": "specs/015-retained-source-access/evidence/capture-group-verified-01.json"
+    "reason": "T020/T021 canonical manifest characterization verified46/46. Next T022/T023 retained-source Repository deletion conflict.",
+    "evidence_path": "specs/015-retained-source-access/evidence/manifest-verified-01.json"
   },
-  "updated_at": "2026-09-15T04:56:38.873757Z"
+  "updated_at": "2026-09-15T05:14:58.166864Z"
 }

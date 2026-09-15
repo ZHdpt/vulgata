@@ -160,6 +160,16 @@ internal sealed class RetainedSourceGitRepository : IAsyncDisposable
         CancellationToken cancellationToken = default) =>
         CommitCoreAsync(message, cancellationToken);
 
+    internal async Task<string> CommitIndexAsync(
+        string message = "retained-source fixture index update",
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(message);
+        await RunGitAsync(["commit", "--quiet", "--message", message], cancellationToken);
+        Commit = await ResolveRevisionAsync("HEAD", cancellationToken);
+        return Commit;
+    }
+
     internal Task<string> ResolveRevisionAsync(
         string permittedRef = "HEAD",
         CancellationToken cancellationToken = default) =>
@@ -169,6 +179,98 @@ internal sealed class RetainedSourceGitRepository : IAsyncDisposable
         IReadOnlyList<string> arguments,
         CancellationToken cancellationToken = default) =>
         RunGitProcessAsync(RootPath, arguments, cancellationToken);
+
+    internal Task<string> RunGitWithInputAsync(
+        IReadOnlyList<string> arguments,
+        ReadOnlyMemory<byte> input,
+        CancellationToken cancellationToken = default) =>
+        RunGitProcessAsync(RootPath, arguments, cancellationToken, input);
+
+    /// <summary>
+    /// Adds a symbolic-link tree entry through the Git index. The fixture does
+    /// not create an operating-system link, so this remains portable on hosts
+    /// where link privileges are unavailable.
+    /// </summary>
+    internal async Task AddSymbolicLinkEntryAsync(
+        string relativePath,
+        string target,
+        CancellationToken cancellationToken = default)
+    {
+        string blobId = await RunGitWithInputAsync(
+            ["hash-object", "-w", "--stdin"],
+            Encoding.UTF8.GetBytes(target),
+            cancellationToken);
+        await RunGitAsync(
+            ["update-index", "--add", "--cacheinfo", $"120000,{blobId},{relativePath}"],
+            cancellationToken);
+    }
+
+    /// <summary>
+    /// Adds a gitlink tree entry from an owned commit object created with Git
+    /// plumbing. No nested checkout or external repository is involved.
+    /// </summary>
+    internal async Task AddGitlinkEntryAsync(
+        string relativePath,
+        CancellationToken cancellationToken = default)
+    {
+        string blobId = await RunGitWithInputAsync(
+            ["hash-object", "-w", "--stdin"],
+            Encoding.UTF8.GetBytes("gitlink-fixture\n"),
+            cancellationToken);
+        string treeId = await RunGitWithInputAsync(
+            ["mktree"],
+            Encoding.UTF8.GetBytes($"100644 blob {blobId}\tchild.txt\n"),
+            cancellationToken);
+        string commitId = await RunGitWithInputAsync(
+            ["commit-tree", treeId, "-m", "gitlink fixture"],
+            ReadOnlyMemory<byte>.Empty,
+            cancellationToken);
+        await RunGitAsync(
+            ["update-index", "--add", "--cacheinfo", $"160000,{commitId},{relativePath}"],
+            cancellationToken);
+    }
+
+    /// <summary>
+    /// Replaces HEAD with a commit whose leaf names are supplied as raw bytes.
+    /// This is used only for Git tree entries that a Windows checkout cannot
+    /// represent, such as invalid UTF-8 or unsafe path bytes.
+    /// </summary>
+    internal async Task<string> CommitRawTreeAsync(
+        IReadOnlyList<(byte[] PathBytes, byte[] Content)> entries,
+        string message = "retained-source raw tree fixture",
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(entries);
+        if (entries.Count == 0)
+        {
+            throw new ArgumentException("At least one raw tree entry is required.", nameof(entries));
+        }
+
+        var treeInput = new List<byte>();
+        foreach ((byte[] pathBytes, byte[] content) in entries)
+        {
+            string blobId = await RunGitWithInputAsync(
+                ["hash-object", "-w", "--stdin"],
+                content,
+                cancellationToken);
+            treeInput.AddRange(Encoding.ASCII.GetBytes($"100644 blob {blobId}\t"));
+            treeInput.AddRange(pathBytes);
+            treeInput.Add(0);
+        }
+
+        string treeId = await RunGitWithInputAsync(
+            ["mktree", "-z"],
+            treeInput.ToArray(),
+            cancellationToken);
+        string commitId = await RunGitWithInputAsync(
+            ["commit-tree", treeId, "-m", message],
+            ReadOnlyMemory<byte>.Empty,
+            cancellationToken);
+        string headRef = await RunGitAsync(["symbolic-ref", "HEAD"], cancellationToken);
+        await RunGitAsync(["update-ref", headRef, commitId], cancellationToken);
+        Commit = await ResolveRevisionAsync("HEAD", cancellationToken);
+        return Commit;
+    }
 
     public ValueTask DisposeAsync() => RetainedSourceOwnedPaths.DeleteAsync(RootPath);
 
@@ -186,13 +288,15 @@ internal sealed class RetainedSourceGitRepository : IAsyncDisposable
     private static async Task<string> RunGitProcessAsync(
         string workingDirectory,
         IReadOnlyList<string> arguments,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        ReadOnlyMemory<byte>? input = null)
     {
         var startInfo = new ProcessStartInfo("git")
         {
             WorkingDirectory = workingDirectory,
             RedirectStandardOutput = true,
             RedirectStandardError = true,
+            RedirectStandardInput = input is not null,
             UseShellExecute = false,
             CreateNoWindow = true,
         };
@@ -210,6 +314,13 @@ internal sealed class RetainedSourceGitRepository : IAsyncDisposable
         {
             throw new InvalidOperationException(
                 "The retained-source Git fixture could not start Git.");
+        }
+
+        if (input is not null)
+        {
+            await process.StandardInput.BaseStream.WriteAsync(input.Value, cancellationToken);
+            await process.StandardInput.BaseStream.FlushAsync(cancellationToken);
+            process.StandardInput.Close();
         }
 
         Task<string> outputTask = process.StandardOutput.ReadToEndAsync(cancellationToken);

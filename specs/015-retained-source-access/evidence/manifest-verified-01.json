@@ -1,0 +1,41 @@
+{
+  "id": "13-1/implement/21",
+  "kind": "test-green",
+  "stage": "implement",
+  "source_commit": "dede5daa4fa10ef671046c1b95e3779fa4e641f9",
+  "observed_at": "2026-09-15T05:14:58.166864Z",
+  "summary": "T020/T021 test-only characterization: canonical manifest bytes/order/raw Git accounting/export-attribute immunity, symlink/gitlink and unsafe/nonUTF8 path limitations all pass. No fabricated RED or production change.",
+  "runs": [
+    {
+      "passed": 3,
+      "failed": 0,
+      "exit_code": 0,
+      "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\manifest-paths-current.trx",
+      "sha256": "123255ba593ffbdbd061e0ac59c8b136c836d7742867b6f840afc4bbd71fe1f5"
+    },
+    {
+      "passed": 27,
+      "failed": 0,
+      "exit_code": 0,
+      "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\manifest-paths-capture-current.trx",
+      "sha256": "b792fa53e697c177176f1cf6b310f565f62e6b9f06177747dace0fe9d735c920"
+    },
+    {
+      "passed": 16,
+      "failed": 0,
+      "exit_code": 0,
+      "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\manifest-paths-surrounding-current.trx",
+      "sha256": "e03d4cbd4564ed368d00d85a930496209658649ec25329df5e54bb2d31afaa42"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "tests/Vulgata.Tests/RetainedSource/RetainedSourceManifestTests.cs",
+      "sha256": "13e3d0b2703c9067e90408adff23915dd3ee27fe40343de34aaa0989d9378a77"
+    },
+    {
+      "path": "tests/Vulgata.Tests/RetainedSource/RetainedSourceFixture.cs",
+      "sha256": "44b150bc528495d1f25e03da2d2342a29052fd4ed1d5075cb07957896fcb499b"
+    }
+  ]
+}

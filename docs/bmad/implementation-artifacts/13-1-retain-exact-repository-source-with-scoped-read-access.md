@@ -380,3 +380,7 @@ All correction dispatches use the same seven slots: (1) named test/production ro
 T008-T019 complete after honest configuration, stalled-Git deadline, final-authority-lock and bounded-streaming RED/GREEN corrections. Independent current verification: resource1, boundary7, capture27, PostgreSQL4, surrounding16 all pass. Root parsed raw TRX counters and recorded full hashes in capture-group-verified-01.json.64MiB source payload allocated78,413,312 managed bytes, below134,217,728 ceiling. No ordinary reads/workspace/fresh-process qualification yet.
 
 Pending checkpoint: bmad-13-1-implement-20260915T045638Z-d487d3. Next T020/T021 canonical manifest detail, then scoped Repository deletion and read-context groups. No other story is activated.
+
+## Manifest characterization verified
+
+T020/T021 complete as test-only existing-correct behavior:3manifest,27capture,16surrounding tests pass. Raw Git mktree binary-input fixtures preserve unsafe/nonUTF8 names without checkout. Canonical bytes/ordering/accounting, export-attribute immunity and explicit symlink/gitlink/path limitations verified. No production write or fabricated RED. Evidence manifest-verified-01.json; checkpoint bmad-13-1-implement-20260915T051458Z-02d72f. Next T022/T023 Repository deletion conflict.
