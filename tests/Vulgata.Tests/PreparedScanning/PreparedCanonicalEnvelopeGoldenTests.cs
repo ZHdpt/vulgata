@@ -93,6 +93,35 @@ public sealed class PreparedCanonicalEnvelopeGoldenTests
                 method.Name.Contains("Identity", StringComparison.OrdinalIgnoreCase));
     }
 
+    [Fact]
+    public void FileCodeUnitIdentity_V1GoldenRemainsByteAndIdentityStable()
+    {
+        PreparedCanonicalArtifact artifact = PreparedScanIdentityBuilders.CreateFileCodeUnitIdentity(
+            Guid.Parse("10213243-5465-7687-98a9-bacbdcedfe0f"),
+            Guid.Parse("11111111-2222-4333-8444-555555555555"),
+            new string('d', 40),
+            "src/Order.java",
+            new string('a', 64),
+            0,
+            128,
+            1,
+            8,
+            1,
+            1,
+            new string('b', 64));
+
+        Assert.Equal(
+            "5647434501060000002e76756c676174612f73746f72792d31322e322f66696c652d636f64652d756e69742d6964656e746974792f312e30090000000c000104102132435465768798a9bacbdcedfe0f0002041111111122224333844455555555555500030600000028646464646464646464646464646464646464646464646464646464646464646464646464646464640004060000000e7372632f4f726465722e6a61766100050700000020aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa0006030000000000000000000703000000000000008000080300000000000000010009030000000000000008000a030000000000000001000b030000000000000001000c0700000020bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            Convert.ToHexString(artifact.Envelope.Span).ToLowerInvariant());
+        Assert.Equal(
+            "21870acdebeb7d142f39f4bf7cf51cafee74e84f037ca1bef0c62aac5d48e76d",
+            artifact.Fingerprint);
+        Assert.Equal(
+            Guid.Parse("c0aae19f-7fe9-8d69-b20b-bcf2e25dedbf"),
+            PreparedScanIdentityBuilders.CreateDeterministicIdentity("FileCodeUnit", artifact.Fingerprint));
+        Assert.True(CanonicalEnvelope.Validate(artifact.Envelope.Span));
+    }
+
     private static Type RequirePreparedIdentityBuilder()
     {
         Assembly assembly = typeof(CodeGraphCompletenessProof).Assembly;

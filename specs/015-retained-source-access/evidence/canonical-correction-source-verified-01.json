@@ -1,0 +1,21 @@
+{
+  "id": "13-1/implement/122",
+  "kind": "test-green",
+  "stage": "implement",
+  "source_commit": "93695f21fb1b296abd7548ecb762d5733ec68084",
+  "observed_at": "2026-09-16T06:51:08.425929Z",
+  "summary": "T048retained-source159passes/4explicit child-only skips after independentlyGREEN19Core and28affected fixture tests. One approved production literal; all observed negative cases preserved. No full-suite/final gate completion yet.",
+  "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\canonical-correction-t048-retained-source.trx",
+  "sha256": "8366ee92c4dbc7c7737b28f6ce06efa1ed215677265174326c96cc8ba2ab901f",
+  "outcomes": {
+    "Passed": 159,
+    "NotExecuted": 4
+  },
+  "production_sha256": "a354ac29606b183d844095a5518889a46fd229f0196e8afb4dd2abe340c2f749",
+  "skipped_tests": [
+    "Vulgata.Tests.RetainedSource.RetainedSourceSeparateProcessChildTests.OpenReadContextAsync_FromFreshProductionComposition_ReadsRetainedBytesAfterRemoteUnavailable",
+    "Vulgata.Tests.RetainedSource.RetainedSourceSeparateProcessChildTests.CaptureAsync_FromFreshProductionComposition_CompletesAndRecordsIdentity",
+    "Vulgata.Tests.RetainedSource.RetainedSourceSeparateProcessChildTests.CaptureAsync_WhenParentTerminatesAfterSeal_LeavesOwnedAbandonedOperation",
+    "Vulgata.Tests.RetainedSource.RetainedSourceSeparateProcessChildTests.OpenReadContextAsync_WhenRetainedBlobIsCorrupt_DeniesWithoutContext"
+  ]
+}

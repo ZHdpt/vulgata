@@ -1,0 +1,34 @@
+{
+  "id": "13-1/implement/120",
+  "kind": "analysis",
+  "stage": "implement",
+  "source_commit": "93695f21fb1b296abd7548ecb762d5733ec68084",
+  "observed_at": "2026-09-16T06:38:22.130790Z",
+  "summary": "T04727passed/1failed. Previously implicit path-vs-FQN mismatch no longer exists after approved aligned fixture; public resolution reaches separate pre-existing stable-key defect and returnsConflict. Restore explicit wrong-owner negative fixture, not production repair or expectation-toConflict rebaseline.",
+  "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\canonical-correction-t047-postgres.trx",
+  "sha256": "f7c4e7443f2b74295069426ebd401d79c83371a8e09b77820a3199c004c4f487",
+  "outcomes": {
+    "Passed": 27,
+    "Failed": 1
+  },
+  "known_out_of_scope_defect": {
+    "producer": "ExactCandidateExtractors.ExtractConsumersAsync constructs ConsumerDispatchCandidate without consumerEntryStableKey; defaultsnull.",
+    "consumer": "ExactCrossRepositoryResolutionStore.PrepareV2ExactWriteAsync guards IsLowerSha256(source.ConsumerEntryStableKey), fails closed withConflict.",
+    "source_proof": [
+      {
+        "path": "src/dotnet/Vulgata.Infrastructure/CrossRepository/ExactCandidateExtractors.cs",
+        "baseline_blob": "74a1bcfd296577db271c2c3e6097a47d1e24bab3",
+        "head_blob": "74a1bcfd296577db271c2c3e6097a47d1e24bab3",
+        "working_sha256": "278adfe63607a2459b1d206896435a406300af0f8223cfe12dd8485be8e8af7a"
+      },
+      {
+        "path": "src/dotnet/Vulgata.Infrastructure/Data/ExactCrossRepositoryResolutionStore.cs",
+        "baseline_blob": "2b41f9ec7f4b8561bacc9dc846ebb09288f0348a",
+        "head_blob": "2b41f9ec7f4b8561bacc9dc846ebb09288f0348a",
+        "working_sha256": "ffedb1de03a39470a3ea355c961c48a9227fde6a9701fe43ed5a0d8be2a31798"
+      }
+    ],
+    "disposition": "Production unchanged; retained as known historical failure outside Story13.1 and exact-domain correction. No successful composite Resolution/Scan qualification claimed."
+  },
+  "fixture_disposition": "Preserve original meaningful negative test by explicitly mismatching one owned consumer CodeUnit symbol after proving alignedsetup; retainRefused/code/zero-write assertions. Verification pending."
+}

@@ -32,6 +32,7 @@ public static class CanonicalEnvelope
     private static readonly HashSet<string> _domains = new(StringComparer.Ordinal)
     {
         "vulgata/story-12.2/file-code-unit-identity/1.0",
+        "vulgata/story-12.2/file-code-unit-identity/2.0",
         "vulgata/story-12.2/codegraph-completeness-proof/1.0",
         "vulgata/story-12.2/java-readiness/1.0",
         "vulgata/story-12.2/prepared-scan-context-snapshot/1.0",

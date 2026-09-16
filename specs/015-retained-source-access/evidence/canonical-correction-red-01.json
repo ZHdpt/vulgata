@@ -1,0 +1,17 @@
+{
+  "id": "13-1/implement/117",
+  "kind": "test-red",
+  "stage": "implement",
+  "source_commit": "93695f21fb1b296abd7548ecb762d5733ec68084",
+  "observed_at": "2026-09-16T06:12:07.897898Z",
+  "summary": "T044initial public semantic2.0 producer regression1/1RED: existing registry rejects exact producer domain. No production edits.",
+  "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter FullyQualifiedName~PreparedCanonicalEnvelopeTests.SemanticFileCodeUnitIdentity_ApprovedV2Domain_ProducesValidCanonicalEnvelope --logger trx --results-directory <owned-results>",
+  "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\canonical-correction-t044-red.trx",
+  "sha256": "e8dfa54e7c4784a81eba86b94c60722c5d1505c8523f58eba9ec93d976c1c615",
+  "exit_code": 1,
+  "test": "Vulgata.Tests.PreparedScanning.PreparedCanonicalEnvelopeTests.SemanticFileCodeUnitIdentity_ApprovedV2Domain_ProducesValidCanonicalEnvelope",
+  "message": "System.ArgumentException : Unknown canonical envelope domain. (Parameter 'domain')",
+  "tested_source_sha256": "3ed55278d5ba3a94da399a29198b2a76115b2fb5957c3a78addace7f7ab2923e",
+  "current_source_sha256": "a73a557080c4a3fa551105ca530386f266b5ec12af058f80fa2d2fccfa2ae6fe",
+  "formatting_correction": "Root restored archived original helper indentation/final newline, preserving new test statements exactly. Raw test output moved unchanged to private owned results; no rawTRX committed."
+}

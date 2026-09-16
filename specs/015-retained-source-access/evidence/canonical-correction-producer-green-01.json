@@ -1,0 +1,19 @@
+{
+  "id": "13-1/implement/118",
+  "kind": "command",
+  "stage": "implement",
+  "source_commit": "93695f21fb1b296abd7548ecb762d5733ec68084",
+  "observed_at": "2026-09-16T06:16:42.398197Z",
+  "summary": "Sol/medium producer added exact v2 domain literal only; focused previouslyRED test now1/1GREEN. Independent same-author verification/companions/surrounding runs remain pending.",
+  "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\canonical-correction-producer-green.trx",
+  "sha256": "d602cd9ac08d1eb59ee4e0a5c0cea5154b41aa922e496854697a49e80d0c4bcf",
+  "raw_log": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\canonical-correction-producer-green.log",
+  "log_sha256": "33013bb75bb15aa84274e21314a82d46748578f420a8dc4a0f0625c1cc2d6d67",
+  "exit_code": 0,
+  "outcomes": {
+    "Passed": 1
+  },
+  "production_path": "src/dotnet/Vulgata.Core/DomainServices/CanonicalEnvelope.cs",
+  "production_sha256": "a354ac29606b183d844095a5518889a46fd229f0196e8afb4dd2abe340c2f749",
+  "production_diff": "1insertion,0deletions; only literal vulgata/story-12.2/file-code-unit-identity/2.0"
+}

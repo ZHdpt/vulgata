@@ -3,13 +3,13 @@
   "bmad_story_key": "13-1-retain-exact-repository-source-with-scoped-read-access",
   "bmad_epic_key": "epic-13",
   "feature_directory": "specs/015-retained-source-access",
-  "stage": "implementation-approval",
+  "stage": "implement",
   "preflight": {
     "branch": "dev",
-    "head": "b9517a01a07f171107d253d4b62287e373abf49c",
-    "git_identity_sha256": "679f5ed11a0885bdf10b3530ee02c1b66f5c3e078c074ea4f5b0dd4d267bf2f8",
-    "status_sha256": "1e305496c532c9fbd2844226bf6b0559b3131b83a716d0a22333057c873e0630",
-    "observed_at": "2026-09-16T04:53:35.457115Z"
+    "head": "93695f21fb1b296abd7548ecb762d5733ec68084",
+    "git_identity_sha256": "7a3b61430a562351b8f726c4604d8231ffd87c69b6fe234e967ce2979cecec59",
+    "status_sha256": "d4867c729be063cbd959e02e7090a6762451974ef93f9c1656f84d7ba8be808c",
+    "observed_at": "2026-09-16T06:51:08.425929Z"
   },
   "artifacts": {
     "spec": {
@@ -22,7 +22,7 @@
     },
     "tasks": {
       "path": "specs/015-retained-source-access/tasks.md",
-      "sha256": "086f9695130a42e603c2ef658ad955deccd3ab696e4319d58cba1668edc84c34"
+      "sha256": "3baea833a4feb5043ce563690117a746034ef25b128613c44d6d0138a09f1d0a"
     }
   },
   "gates": {
@@ -92,10 +92,10 @@
     },
     {
       "decision_id": "13-1/implementation-approval/2",
-      "status": "pending",
+      "status": "accepted",
       "scope_sha256": "796eee971fc5f9b1ff003468602bd7ddab3a2356d2e9fce02a2445e671a327fa",
-      "evidence_path": "specs/015-retained-source-access/evidence/canonical-correction-implementation-request-02.md",
-      "decided_at": null
+      "evidence_path": "specs/015-retained-source-access/evidence/canonical-correction-implementation-approval-02.json",
+      "decided_at": "2026-09-16T06:03:12.857870Z"
     }
   ],
   "convergence": {
@@ -113,25 +113,25 @@
     "docs/bmad/implementation-artifacts/workflow-activations/13-1-retain-exact-repository-source-with-scoped-read-access.json",
     "specs/015-retained-source-access/evidence/plan-authorization-01.md",
     "specs/015-retained-source-access/evidence/implementation-approval-01.md",
-    "specs/015-retained-source-access/evidence/baseline-production-scope-approval-01.json",
-    "specs/015-retained-source-access/evidence/canonical-correction-definition-boundary-06.json",
     "specs/015-retained-source-access/evidence/definition-review-06.json",
-    "specs/015-retained-source-access/evidence/canonical-correction-definition-accepted-06.json",
-    "specs/015-retained-source-access/evidence/canonical-correction-implementation-request-02.md",
-    "specs/015-retained-source-access/evidence/canonical-correction-definition-checkpoint-06.json",
-    "specs/015-retained-source-access/evidence/baseline-fixtures-independent-03.json",
+    "specs/015-retained-source-access/evidence/canonical-correction-implementation-approval-02.json",
+    "specs/015-retained-source-access/evidence/canonical-correction-red-01.json",
+    "specs/015-retained-source-access/evidence/canonical-correction-core-verified-01.json",
+    "specs/015-retained-source-access/evidence/canonical-correction-affected-verified-01.json",
+    "specs/015-retained-source-access/evidence/canonical-correction-source-verified-01.json",
+    "specs/015-retained-source-access/evidence/canonical-correction-checkpoint-01.json",
     "specs/015-retained-source-access/evidence/runtime-boundary-01.json"
   ],
   "checkpoint": {
-    "checkpoint_id": "bmad-13-1-definition-review-20260916T045335Z-ce06c9",
-    "stage": "definition-review",
+    "checkpoint_id": "bmad-13-1-implement-20260916T065108Z-2ebc08",
+    "stage": "implement",
     "commit_sha": null,
     "binding_status": "pending"
   },
   "resume": {
-    "stage": "implementation-approval",
-    "reason": "Amended correction definition independently ACCEPTED; no new plan-change trigger. Await distinct approval to implement exact2.0 registry correction and T044-T049. Production unchanged.",
-    "evidence_path": "specs/015-retained-source-access/evidence/canonical-correction-definition-accepted-06.json"
+    "stage": "implement",
+    "reason": "T044-T048 verified: Core19/19, affected28/28, source159passes/4child-only skips. NextT049full owned suite, T041-T043, convergence/quality/E2E/finalverification.",
+    "evidence_path": "specs/015-retained-source-access/evidence/canonical-correction-source-verified-01.json"
   },
-  "updated_at": "2026-09-16T04:53:35.457115Z"
+  "updated_at": "2026-09-16T06:51:08.425929Z"
 }

@@ -458,3 +458,9 @@ Corrected semantic-owner fixtures expose an existing production mismatch: Prepar
 ## Canonical compatibility definition accepted
 
 User authorized preparation of the bounded production correction, not implementation. Spec CP-FR/CP-SC001-004, the updated plan/research/quickstart, and T044-T049 now cover exact2.0 registration with1.0 golden/deterministic compatibility, symbol binding and closed unknown rejection. Fresh Sol/medium definition-review06 ACCEPT has no findings and confirms no new architecture/tool/Scan/PRD trigger. Scope796eee971fc5f9b1ff003468602bd7ddab3a2356d2e9fce02a2445e671a327fa awaits separate implementation approval. Source tasksT001-T040 and two owned pending profile fixture edits remain preserved; no production correction written.
+
+## Canonical compatibility correction verified
+
+User separately approved implementation on accepted scope796eee97. One public producer/validator regression observed Unknown canonical envelope domain RED before the sole production change: adding exact file-code-unit-identity/2.0 to the closed registry. Independent Core19/19GREEN proves v2bytes/fingerprint/UUID stability and symbol binding, invalid symbols, fixed1.0bytes/identity and unknown-domain rejection with validcontrol. The affected28/28 and retained-source159passes/4child-only skips pass. T044-T048 complete; fullT049 and remaining final gates pending.
+
+The original owner-symbol-mismatch characterization now deliberately mutates exactlyone verified owned fixture row to restore its stated negative premise; Refused/refused and zero-write assertions remain. An unrelated unchanged consumer stable-key omission still fails closed in successful exact-resolution attempts and is recorded as an existing limitation, not fixed or claimed qualified. No genericScan/Knowledge/Chat success is implied.

@@ -691,19 +691,42 @@ public sealed class PreparedScanReleaseQualificationTests(ITestOutputHelper outp
             Calls++;
             Assert.NotEqual(Guid.Empty, scope.RepositoryId);
             Assert.False(string.IsNullOrWhiteSpace(scope.ProfiledRevision));
-            Assert.Equal(ReleaseHarness.OversizedJavaPath, relativePath);
-            Assert.Equal(Hash(CreateOversizedJavaSource()), fileHash);
+            bool oversized = relativePath == ReleaseHarness.OversizedJavaPath;
+            string expectedSource = oversized
+                ? CreateOversizedJavaSource()
+                : CreateReviewedJavaSource(relativePath);
+            Assert.Equal(Hash(expectedSource), fileHash);
             cancellationToken.ThrowIfCancellationRequested();
 
-            string[] lines = CreateOversizedJavaSource().Split('\n');
+            string[] lines = expectedSource.Split('\n');
+            PreparedJdtSymbolSpan semanticOwnerSpan = new(0, 0, 65, 1)
+            {
+                TypeName = Path.GetFileNameWithoutExtension(relativePath),
+            };
+            AnalysisSymbolEvidence semanticOwner = new(
+                Path.GetFileNameWithoutExtension(relativePath),
+                AnalysisSymbolKind.Type,
+                relativePath,
+                new AnalysisLineRange(1, 66))
+            {
+                ExactUtf16Range = semanticOwnerSpan,
+                Provenance = AnalysisSymbolHierarchyProvenance.RootDocumentSymbol,
+            };
             return Task.FromResult(Mode switch
             {
-                JavaRangeFixtureMode.Exact => new PreparedJavaSourceResult(
-                    [
-                        new(1, 0, 1, lines[1].Length),
-                        new(2, 0, 2, lines[2].Length),
-                    ],
-                    null),
+                JavaRangeFixtureMode.Exact => oversized
+                    ? new PreparedJavaSourceResult(
+                        [
+                            new(1, 0, 1, lines[1].Length),
+                            new(2, 0, 2, lines[2].Length),
+                        ],
+                        null)
+                    : new PreparedJavaSourceResult(
+                        [semanticOwnerSpan],
+                        null)
+                    {
+                        Evidence = [semanticOwner],
+                    },
                 JavaRangeFixtureMode.Missing => new PreparedJavaSourceResult(
                     [],
                     new AnalysisPortFailure(
@@ -1102,7 +1125,7 @@ public sealed class PreparedScanReleaseQualificationTests(ITestOutputHelper outp
                 string language = path.EndsWith(".xml", StringComparison.Ordinal) ? "XML" : "Java";
                 string source = language == "XML"
                     ? "<?xml version=\"1.0\" encoding=\"UTF-8\"?><configuration><trans name=\"in/cust/updateSession\" /></configuration>"
-                    : "package reviewed; public final class Required {}";
+                    : CreateReviewedJavaSource(path);
                 PreparedSnapshotFile required = File(path, language, source);
                 if (reviewedSeedFixtureMode == ReviewedSeedFixtureMode.Filtered)
                 {
@@ -1170,6 +1193,23 @@ public sealed class PreparedScanReleaseQualificationTests(ITestOutputHelper outp
             }
         }
         return reverse ? [.. files.AsEnumerable().Reverse()] : files;
+    }
+
+    private static string CreateReviewedJavaSource(string path)
+    {
+        string typeName = Path.GetFileNameWithoutExtension(path);
+        var builder = new StringBuilder();
+        for (int line = 1; line < 66; line++)
+        {
+            builder.Append("// reviewed fixture line ")
+                .Append(line)
+                .Append('\n');
+        }
+
+        return builder.Append("public final class ")
+            .Append(typeName)
+            .Append(" {}\n")
+            .ToString();
     }
 
     private static PreparedSnapshotFile File(string path, string language, string source)

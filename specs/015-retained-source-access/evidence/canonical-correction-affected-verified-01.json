@@ -1,0 +1,19 @@
+{
+  "id": "13-1/implement/121",
+  "kind": "test-green",
+  "stage": "implement",
+  "source_commit": "93695f21fb1b296abd7548ecb762d5733ec68084",
+  "observed_at": "2026-09-16T06:47:29.926155Z",
+  "summary": "T047affected profile fixtures28/28passes. Negative scenario now explicitly invalidates exactlyone verified owned consumer symbol after proving alignedsetup; originalRefused/code/mismatch/zero-write assertions retained. No stable-key production repair or successful compositeResolution claim.",
+  "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\canonical-correction-t047-postgres-green.trx",
+  "sha256": "e3222152cc07d9551697b6758c8290b3dd46bacda6fe9e50b79cfd60bf52f193",
+  "outcomes": {
+    "Passed": 28
+  },
+  "files": {
+    "tests/Vulgata.Tests/PreparedScanning/PreparedScanReleaseQualificationTests.cs": "1fe690993c05c32a4153d6f04d9f621fecbad8c0fb3f5b17c75ba5aee9b99614",
+    "tests/Vulgata.Tests/PreparedScanning/ReviewedExactProfileSeedPostgreSqlTests.cs": "f8fb7c78147c4abd6fac6da386fa9af7c375542fe5554cb384fc9f5c4f5178a7"
+  },
+  "negative_case_isolation": "Unique owned PostgreSQL fixture; fixed qualified vulgata.CodeUnits UPDATE with typed ID/Repository/FilePath/oldSymbol guards; assert1affected row; no shared data touched.",
+  "known_limit": "Unchanged consumer stable-key gap remains recorded in canonical-correction-affected-fixture-diagnosis-01.json."
+}

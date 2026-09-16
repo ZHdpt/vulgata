@@ -1,0 +1,20 @@
+{
+  "id": "13-1/implement/119",
+  "kind": "test-green",
+  "stage": "implement",
+  "source_commit": "93695f21fb1b296abd7548ecb762d5733ec68084",
+  "observed_at": "2026-09-16T06:38:22.130790Z",
+  "summary": "T044-T046 independentlyGREEN19/19: exact v2 producer/validator, byte/fingerprint/UUID determinism and symbol differentiation, invalidsymbol rejection, frozen1.0 vector/identity, valid-control and closed unknown creation/validation. Honest initialRED117 preceded exactone-entry production fix.",
+  "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\canonical-correction-focused5.trx",
+  "sha256": "2931a62afe82ccfd90159836e8bb810298bfa823e80f799116ba4101199fa67d",
+  "outcomes": {
+    "Passed": 19
+  },
+  "files": {
+    "src/dotnet/Vulgata.Core/DomainServices/CanonicalEnvelope.cs": "a354ac29606b183d844095a5518889a46fd229f0196e8afb4dd2abe340c2f749",
+    "tests/Vulgata.Tests/PreparedScanning/PreparedCanonicalEnvelopeTests.cs": "7b383a5866a330380229f1c640328bed291e796ee0a7507077fd350bacdaee99",
+    "tests/Vulgata.Tests/PreparedScanning/PreparedCanonicalEnvelopeGoldenTests.cs": "d8aa6a4152f6d4bcfc27083310dc755f6c9af959f761d1cd60d0bf8744af3220",
+    "tests/Vulgata.Tests/PreparedScanning/PreparedFileCodeUnitAndSelectionTests.cs": "8f3cae56f43598ba0bebb673f37e4e17e4e8c7f6766c34a705ca638cc8e8d3cc"
+  },
+  "v1_vector_provenance": "Fixed worked canonical vector added without changing originalgoldens. Root independently computed SHA25621870acdebeb7d142f39f4bf7cf51cafee74e84f037ca1bef0c62aac5d48e76d and deterministicFileCodeUnitUUIDc0aae19f-7fe9-8d69-b20b-bcf2e25dedbf from its literal bytes/canonical grammar; no historical runtime claim."
+}

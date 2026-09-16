@@ -1,0 +1,12 @@
+{
+  "id": "13-1/implement/115",
+  "kind": "human approval",
+  "stage": "implement",
+  "source_commit": "93695f21fb1b296abd7548ecb762d5733ec68084",
+  "observed_at": "2026-09-16T06:03:12.857870Z",
+  "user_quote": "Approve",
+  "scope_sha256": "796eee971fc5f9b1ff003468602bd7ddab3a2356d2e9fce02a2445e671a327fa",
+  "scope": "Implement independently accepted exact canonical2.0 domain correction via T044-T049 and resume finalT041-T043. All TDD/convergence/quality/E2E/final gates remain required; no broader production defect or external tool qualification authorized.",
+  "request_path": "specs/015-retained-source-access/evidence/canonical-correction-implementation-request-02.md",
+  "verdict_path": "specs/015-retained-source-access/evidence/definition-review-06.json"
+}

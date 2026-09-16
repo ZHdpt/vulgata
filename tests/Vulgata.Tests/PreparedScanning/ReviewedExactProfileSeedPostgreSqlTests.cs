@@ -283,7 +283,8 @@ public sealed class ReviewedExactProfileSeedPostgreSqlTests
                     [first.Id] = profile.Repositories[0].Alias,
                     [second.Id] = profile.Repositories[1].Alias,
                 },
-                out T039PairBuilderDiagnostics diagnostics);
+                out T039PairBuilderDiagnostics diagnostics,
+                includeSemanticOwnerEvidence: false);
             await SeedAdministratorAsync(
                 factory,
                 "story125.t046.matched@example.com",
@@ -391,6 +392,25 @@ public sealed class ReviewedExactProfileSeedPostgreSqlTests
             Assert.True(
                 terminal.CompletedCount > 0 && terminal.CompletedCount == terminal.DispatchedCount,
                 $"T043 Pass 1 did not complete all bounded jobs: {JsonSerializer.Serialize(terminal)}; start={startBody}");
+
+            UnsupportedObservation mismatchObservation = Assert.Single(profile.UnsupportedObservations);
+            Guid mismatchRepositoryId = StringComparer.Ordinal.Equals(
+                mismatchObservation.OwnerAlias,
+                profile.Repositories[0].Alias)
+                ? first.Id
+                : second.Id;
+            await using VulgataDbContext ownerVerification = database.CreateContext();
+            var persistedOwner = await ownerVerification.CodeUnits.AsNoTracking()
+                .Where(value => value.RepositoryId == mismatchRepositoryId &&
+                    value.FilePath == mismatchObservation.OwnerDocument.RepositoryRelativePath)
+                .Select(value => new { value.Id, value.RepositoryId, value.FilePath, value.SymbolName })
+                .SingleAsync();
+            Assert.Equal(mismatchObservation.OwnerDocument.Symbol, persistedOwner.SymbolName);
+            // Deliberately invalidate only the reviewed owner symbol for this negative fixture.
+            int mutatedRows = await ownerVerification.Database.ExecuteSqlInterpolatedAsync(
+                $"""UPDATE "vulgata"."CodeUnits" SET "SymbolName" = {mismatchObservation.OwnerDocument.RepositoryRelativePath} WHERE "Id" = {persistedOwner.Id} AND "RepositoryId" = {persistedOwner.RepositoryId} AND "FilePath" = {persistedOwner.FilePath} AND "SymbolName" = {persistedOwner.SymbolName}""");
+            Assert.Equal(1, mutatedRows);
+            ownerVerification.ChangeTracker.Clear();
 
             ExactResolutionRuntimeRequest runtime = await CreateRuntimeRequestAsync(
                 database,
@@ -814,7 +834,8 @@ public sealed class ReviewedExactProfileSeedPostgreSqlTests
         string connectionString,
         ExactResolutionProfile profile,
         IReadOnlyDictionary<Guid, string> repositoryAliases,
-        out T039PairBuilderDiagnostics diagnostics)
+        out T039PairBuilderDiagnostics diagnostics,
+        bool includeSemanticOwnerEvidence = true)
     {
         diagnostics = new();
         T039PairBuilderDiagnostics capturedDiagnostics = diagnostics;
@@ -915,10 +936,49 @@ public sealed class ReviewedExactProfileSeedPostgreSqlTests
                 services.RemoveAll<IPreparedJavaReadinessPort>();
                 services.AddSingleton<IPreparedJavaReadinessPort>(java);
                 services.RemoveAll<IPreparedTopLevelSymbolSource>();
-                services.AddSingleton<IPreparedTopLevelSymbolSource>(new StubPreparedTopLevelSymbolSource());
+                if (includeSemanticOwnerEvidence)
+                {
+                    services.AddSingleton<IPreparedTopLevelSymbolSource>(
+                        new ReviewedProfileJavaRangeSource());
+                }
+                else
+                {
+                    services.AddSingleton<IPreparedTopLevelSymbolSource>(
+                        new StubPreparedTopLevelSymbolSource());
+                }
             }));
     }
 
+    private sealed class ReviewedProfileJavaRangeSource : IPreparedTopLevelSymbolSource
+    {
+        public Task<PreparedJavaSourceResult> GetRangesAsync(
+            AnalysisScope scope,
+            string relativePath,
+            string fileHash,
+            CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            PreparedJdtSymbolSpan semanticOwnerSpan = new(0, 0, 65, 1)
+            {
+                TypeName = Path.GetFileNameWithoutExtension(relativePath),
+            };
+            AnalysisSymbolEvidence semanticOwner = new(
+                Path.GetFileNameWithoutExtension(relativePath),
+                AnalysisSymbolKind.Type,
+                relativePath,
+                new AnalysisLineRange(1, 66))
+            {
+                ExactUtf16Range = semanticOwnerSpan,
+                Provenance = AnalysisSymbolHierarchyProvenance.RootDocumentSymbol,
+            };
+            return Task.FromResult(new PreparedJavaSourceResult(
+                [semanticOwnerSpan],
+                null)
+            {
+                Evidence = [semanticOwner],
+            });
+        }
+    }
     private static PreparedScanRequest CreateRequest(
         ExactResolutionProfile profile,
         Guid firstId,

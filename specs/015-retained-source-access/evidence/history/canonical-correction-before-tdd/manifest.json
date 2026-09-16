@@ -1,0 +1,27 @@
+{
+  "id": "13-1/implement/116",
+  "kind": "artifact-hash",
+  "stage": "implement",
+  "source_commit": "93695f21fb1b296abd7548ecb762d5733ec68084",
+  "observed_at": "2026-09-16T06:03:12.857870Z",
+  "entries": [
+    {
+      "path": "tests/Vulgata.Tests/PreparedScanning/PreparedCanonicalEnvelopeTests.cs",
+      "archive": "specs/015-retained-source-access/evidence/history/canonical-correction-before-tdd/PreparedCanonicalEnvelopeTests.cs",
+      "sha256": "d0db3be9b54814aefe12221f865b1ca2c6745b9e2a51c6da17d60b9a39074352",
+      "head_blob": "ed43765bc499bf38e297b4b554140f85ce462fd9"
+    },
+    {
+      "path": "tests/Vulgata.Tests/PreparedScanning/PreparedCanonicalEnvelopeGoldenTests.cs",
+      "archive": "specs/015-retained-source-access/evidence/history/canonical-correction-before-tdd/PreparedCanonicalEnvelopeGoldenTests.cs",
+      "sha256": "9c59ef9c0a40c8c9a6ea1d306740dc6607063393febe0dc75a586f8e5b698c5c",
+      "head_blob": "7ef1e93fd14ac96bb3ace88aa85227210485ed80"
+    },
+    {
+      "path": "tests/Vulgata.Tests/PreparedScanning/PreparedFileCodeUnitAndSelectionTests.cs",
+      "archive": "specs/015-retained-source-access/evidence/history/canonical-correction-before-tdd/PreparedFileCodeUnitAndSelectionTests.cs",
+      "sha256": "14eb4a43a4faac10a9fb6f54317f61d8802236ee2a084cfd40dfe2942fcaeb93",
+      "head_blob": "2be631c9ef1956f59f3c7759e4576c52e458a411"
+    }
+  ]
+}

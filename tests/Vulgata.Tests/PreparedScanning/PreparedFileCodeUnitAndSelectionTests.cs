@@ -123,6 +123,26 @@ public sealed class PreparedFileCodeUnitAndSelectionTests
                     parameter.Name is "symbolName" or "fullyQualifiedSymbol"));
     }
 
+    [Fact]
+    public void CanonicalEnvelope_UnknownDomainAndVersion_AreRejectedByCreateAndValidate()
+    {
+        Assert.Throws<ArgumentException>(() => CanonicalEnvelope.Create(
+            "vulgata/story-12.2/file-code-unit-identity/9.9",
+            Array.Empty<CanonicalField>()));
+        Assert.Throws<ArgumentException>(() => CanonicalEnvelope.Create(
+            "vulgata/example/unregistered/1.0",
+            Array.Empty<CanonicalField>()));
+
+        byte[] validControl = CanonicalEnvelope.Create(
+            "vulgata/story-12.2/file-code-unit-identity/1.0",
+            Array.Empty<CanonicalField>());
+        Assert.True(CanonicalEnvelope.Validate(validControl));
+        Assert.False(CanonicalEnvelope.Validate(
+            Convert.FromHexString("564743450106000000046576696c0900000000")));
+        Assert.False(CanonicalEnvelope.Validate(
+            Convert.FromHexString("5647434501060000002e76756c676174612f73746f72792d31322e322f66696c652d636f64652d756e69742d6964656e746974792f392e390900000000")));
+    }
+
     private static PreparedFileCodeUnitDraft CreateDraft(int manifestOrdinal, int pairOrdinal) =>
         new(
             Guid.Parse("aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee"),
