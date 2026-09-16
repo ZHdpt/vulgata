@@ -1,0 +1,18 @@
+{
+  "id": "13-1/specify/109",
+  "kind": "self-review",
+  "stage": "specify",
+  "source_commit": "b9517a01a07f171107d253d4b62287e373abf49c",
+  "observed_at": "2026-09-16T04:31:33.866652Z",
+  "summary": "Spec author Sol/medium added separate CP-FR001-004/CP-SC001-004 compatibility prerequisite; original FR001-022 and SC001-010 unchanged. Author self-reviewPASS for authorized scope, measurable acceptance, terminology, completeness and source-only separation; no authority conflict. Not independent acceptance.",
+  "files": {
+    "specs/015-retained-source-access/spec.md": "7dce86d54a67b925eb11fc51662077260be2d98a018c68dc8f6770941e767d14",
+    "specs/015-retained-source-access/checklists/requirements.md": "9da433431a7ef12025a9cf2281b443a3a9b838e1680ce4fec6c92fd8464102b2"
+  },
+  "checks": [
+    "40unique requirement/outcome IDs;0duplicates",
+    "0unresolved placeholders/clarifications",
+    "git diff --check clean"
+  ],
+  "hook_disposition": "Optional agent-context refresh skipped; current AGENTS already routes015 and plan update pending."
+}

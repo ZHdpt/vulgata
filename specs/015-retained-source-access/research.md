@@ -6,6 +6,18 @@ Decisions use Story 13.1 in `docs/bmad/epics.md`, the active specification, PRD 
 
 These decisions cover exact source acquisition, retention, reopening, and scoped reads only. They do not settle semantic source formats, Scan work planning, Knowledge/Chat, container backup/restore, or tool installation.
 
+The authorized compatibility prerequisite is narrower still: it repairs the existing canonical File Code Unit identity producer/validator mismatch needed to complete Story 13.1 full-suite verification. It does not adopt a historical feature plan or extend the source design below.
+
+## R0 — Register the already-emitted semantic File Code Unit identity domain
+
+**Decision**: Add only `vulgata/story-12.2/file-code-unit-identity/2.0` to `CanonicalEnvelope`'s literal closed domain registry. Preserve the existing 2.0 producer, field order, field 13 canonical symbol validation/binding, 1.0 producer and bytes, envelope grammar, deterministic derivation, and rejection of every other unregistered domain/version.
+
+**Rationale**: Current source already selects the 2.0 domain in `PreparedScanIdentityBuilders.CreateSemanticFileCodeUnitIdentity` and validates its fully qualified Java symbol before creating the canonical artifact. `CanonicalEnvelope` rejects that exact domain only because its otherwise closed registry contains 1.0 but omits 2.0. One literal registration restores internal contract consistency without creating a new format or decision. It aligns with AD-7's server-derived canonical identity and Constitution II/IV's exact-history and behavioral-regression requirements.
+
+**Alternatives considered**: Reverting the producer to 1.0 would collide semantically distinct identities and discard the bound symbol; changing 1.0 would break byte compatibility; wildcard/prefix/version-range acceptance would weaken closed validation; caller-extensible registration would move domain authority outside Core; changing profiles, schemas, Scan behavior, or historical plans would exceed the approved prerequisite. All are rejected.
+
+**Consequences**: Focused public-seam tests must prove valid 2.0 creation/validation and determinism, different valid symbols produce different bytes/identities, invalid symbols remain rejected, literal 1.0 golden bytes/identities remain unchanged, and representative unknown domains fail through creation and validation. Then rerun the two fixtures that exposed the defect, retained-source regressions, and the full suite. Passing canonical tests are controlled compatibility evidence, not generic Scan qualification.
+
 ## R1 — Canonical source comes from Git objects
 
 **Decision**: Fetch the permitted ref into an operation-local bare repository, resolve it once, enumerate its committed tree with NUL-delimited Git plumbing, and read blobs by object ID through a binary-safe bounded process adapter.

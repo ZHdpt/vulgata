@@ -1,6 +1,6 @@
 # Implementation Plan: Retained Source Access
 
-**Branch**: `dev` (no branch switch; logical feature directory `015-retained-source-access`) | **Date**: 2026-09-14 | **Spec**: [spec.md](spec.md)
+**Branch**: `dev` (no branch switch; logical feature directory `015-retained-source-access`) | **Date**: 2026-09-16 | **Spec**: [spec.md](spec.md)
 
 **Input**: Story 13.1 and `specs/015-retained-source-access/spec.md`
 
@@ -10,6 +10,8 @@ Create one generic retained-source owner for a Repository at one full Git commit
 
 The design deliberately does not reuse `git archive` as the canonical byte source: existing exact snapshot services are process-local leases and archive materialization can apply committed export attributes. It also does not reuse `RepositoryAuthorizationVerifier`, whose current contract is constrained to one or two Repositories under one System, or `RepositoryAccessScope`, which permits operation without a live verifier. Legacy pair consumers remain composed as they are.
 
+The authorized compatibility prerequisite repairs one pre-existing closed-registry mismatch exposed by full-suite verification: `PreparedScanIdentityBuilders.CreateSemanticFileCodeUnitIdentity` already emits `vulgata/story-12.2/file-code-unit-identity/2.0` with the validated canonical symbol in field 13, while `CanonicalEnvelope` accepts only the corresponding 1.0 domain. The correction adds exactly that emitted 2.0 domain to the closed allowlist. It does not change the envelope grammar, the 1.0 builder or bytes, symbol validation, identity derivation, profiles, source retention, persistence, or Scan behavior.
+
 ## Technical Context
 
 **Language/Version**: C# on .NET 10 (`net10.0`)
@@ -18,7 +20,7 @@ The design deliberately does not reuse `git archive` as the canonical byte sourc
 
 **Storage**: PostgreSQL source-owned completion records plus a deployment-configured durable filesystem object store, separate from CodeGraph data and disposable Tool Workspaces
 
-**Testing**: xUnit 2.9.3 in `tests/Vulgata.Tests`; isolated local Git fixtures; controlled persistent-directory restart fixtures; PostgreSQL integration for uniqueness/publication/migration behavior
+**Testing**: xUnit 2.9.3 in `tests/Vulgata.Tests`; isolated local Git fixtures; controlled persistent-directory restart fixtures; PostgreSQL integration for uniqueness/publication/migration behavior; public Core canonical-envelope/identity regressions for the bounded compatibility prerequisite
 
 **Target Platform**: Current .NET 10 Web host on Windows development and the adopted Linux container target; same-volume atomic directory rename is a configured storage prerequisite
 
@@ -29,6 +31,8 @@ The design deliberately does not reuse `git archive` as the canonical byte sourc
 **Constraints**: Exact committed bytes; no export filters, checkout filters, decoding replacement, mutable checkout fallback, tool-index authority, physical-path disclosure, null live verifier, automatic budget refresh, or canonical-source pruning. Configuration exhaustion is explicit and cannot become coverage semantics.
 
 **Scale/Scope**: One source identity per `(RepositoryId, ProfiledRevision)`. Capture defaults retain the current 10,000-entry / 8 MiB-entry / 64 MiB-aggregate baseline but are deployment-overridable. Ordinary grant defaults are 64 operations, 4,096 returned metadata entries, 4 MiB returned bytes, 60 seconds, and per-operation caps of 512 entries / 1 MiB; deployments may change them without changing source identity.
+
+**Compatibility amendment**: One literal closed-domain registration for the already-emitted semantic File Code Unit identity version 2.0. Version 1.0 remains byte-for-byte stable; all other unregistered domains remain rejected. No data migration, schema, configuration, package, public API, or runtime resource is added.
 
 No `NEEDS CLARIFICATION` items remain. Choices and alternatives are in [research.md](research.md).
 
@@ -44,6 +48,7 @@ No `NEEDS CLARIFICATION` items remain. Choices and alternatives are in [research
 | IV. Test-First Harness; AD-32 | Public contract seams support honest RED/GREEN. PostgreSQL and fresh-instance evidence remain distinct from unit/static checks; no tool/provider/Scan claim is made. | PASS |
 | V. Security; NFR-2.3 | Server-derived subject/purpose are mandatory, authority is live at issue and every operation, paths are logical, and source/credentials/physical locators are excluded from outcomes/logs. | PASS |
 | Runtime/storage; AD-15/30/31 | Source has its own configured durable root and immutable published objects; operation state is separately cleanable; no completed-source pruning. Story 13.2 still owns container volume wiring and backup/restore qualification. | PASS |
+| Compatibility prerequisite; Constitution II/IV; AD-7/32 | The existing semantic identity producer and closed validator are made internally consistent by registering one literal 2.0 domain. Golden 1.0 bytes, deterministic identities, symbol validation/binding, and unknown-domain rejection remain executable test obligations. No semantic owner, profile, Scan strategy, or accepted Knowledge contract changes. | PASS |
 
 ## Project Structure
 
@@ -61,7 +66,7 @@ specs/015-retained-source-access/
     └── retained-source-manifest-v1.schema.json
 ```
 
-`tasks.md` is intentionally absent at this stage.
+`tasks.md` contains the accepted retained-source work completed through T040. It remains unchanged during this plan update and will be regenerated only for the bounded compatibility prerequisite after plan acceptance, before the updated delivery definition receives independent review.
 
 ### Source Code (repository root)
 
@@ -69,7 +74,8 @@ specs/015-retained-source-access/
 src/dotnet/
 ├── Vulgata.Core/
 │   ├── Entities/SourceSnapshot.cs
-│   └── DomainServices/{IRetainedSourceRepository,RetainedSourceContracts}.cs
+│   └── DomainServices/{IRetainedSourceRepository,RetainedSourceContracts,
+│                      CanonicalEnvelope,PreparedScanContracts}.cs
 ├── Vulgata.Infrastructure/
 │   ├── Data/{Configurations/SourceSnapshotConfiguration,RetainedSourceRepository,VulgataDbContext}.cs
 │   ├── Data/Migrations/<generated retained-source migration>.cs
@@ -87,9 +93,14 @@ tests/Vulgata.Tests/RetainedSource/
 ├── RetainedSourceAuthorizationTests.cs
 ├── RetainedSourcePersistenceTests.cs
 └── RetainedSourcePostgreSqlTests.cs
+
+tests/Vulgata.Tests/PreparedScanning/
+├── PreparedCanonicalEnvelopeTests.cs
+├── PreparedCanonicalEnvelopeGoldenTests.cs
+└── PreparedFileCodeUnitAndSelectionTests.cs
 ```
 
-**Structure Decision**: Keep the modular monolith. Core exposes no EF, ASP.NET, process, filesystem, or physical-path type. Infrastructure is the single retained-source writer. Web derives the authorization subject and checks current Identity/Repository authority. No changes are planned in Agents, Shared, CodeGraph, LSP, Knowledge, Chat, or legacy pair contracts. File names may consolidate during task generation, but these responsibilities and dependency directions are fixed.
+**Structure Decision**: Keep the modular monolith. Core exposes no EF, ASP.NET, process, filesystem, or physical-path type. Infrastructure is the single retained-source writer. Web derives the authorization subject and checks current Identity/Repository authority. The compatibility amendment remains inside the existing Core canonical registry and its existing public identity/envelope test seams. No changes are planned in Agents, Shared, Infrastructure, Web, persistence, CodeGraph, LSP, Knowledge, Chat, profiles, or legacy pair contracts for that amendment. File names may consolidate during task generation, but these responsibilities and dependency directions are fixed.
 
 ## Architecture Decisions
 
@@ -175,12 +186,26 @@ SQLite/unit tests may cover contract logic. PostgreSQL publication/migration/FK 
 
 These keys are the sole capture-limit/deadline authority. Startup validation produces one immutable internal `SourceCapturePolicy`; `AcquireAsync` accepts no limit/deadline input, and an in-flight capture retains the policy snapshot with which it started. Changing deployment values requires new application composition/restart. Invalid/missing required configuration fails source-capability registration/startup with `source_configuration_invalid`; it never falls back to CodeGraph storage, a temporary directory, or an unbounded value. Crossing a valid configured cap returns `source_capture_limit_exceeded`, and crossing the configured monotonic capture deadline returns `source_deadline_exceeded`. These defaults are safety/admission values, not supported-Repository eligibility or proof of capacity.
 
+## Compatibility Correction Plan
+
+This is implementation planning for an already-established producer contract, not a ninth architecture decision. The producer already chose the semantic identity domain, canonical field shape, symbol binding, and validation rule. The correction closes the observed implementation mismatch at the existing validator registry.
+
+The technical authority is the current source in `src/dotnet/Vulgata.Core/DomainServices/PreparedScanContracts.cs` and `CanonicalEnvelope.cs`, constrained by AD-7's server-derived canonical identity rule and the Constitution's exact-history/test-first requirements. The current PRD's FR-2.4, FR-2.5, FR-4.9, NFR-3.1, NFR-3.3, and NFR-4.1 retained-source obligations remain unchanged; its section 5 compatible-version qualification boundary is served by executable compatibility evidence rather than a new product requirement.
+
+`CanonicalEnvelope` remains a closed literal registry. Add only `vulgata/story-12.2/file-code-unit-identity/2.0`, matching the domain already emitted by `PreparedScanIdentityBuilders.CreateSemanticFileCodeUnitIdentity`. Do not add prefix, wildcard, version-range, caller-supplied registration, fallback, or version coercion.
+
+The existing 2.0 producer remains the contract owner for its canonical fields. Field 13 continues to contain `RequireJavaSymbol(symbolName)`, so changing only a valid symbol changes canonical bytes and the derived identity, while invalid symbols fail before an artifact is returned. The 1.0 producer and grammar remain untouched; literal 1.0 golden bytes and deterministic identity values are regression invariants. `CanonicalEnvelope.Create` and `CanonicalEnvelope.Validate` must still reject every unregistered domain/version.
+
+Behavioral TDD starts at the current public Core seams. The first RED proves that a valid semantic 2.0 artifact can be created and validates, while the same fixture remains deterministic. Companion tests prove symbol differentiation, invalid-symbol rejection, exact 1.0 golden compatibility, and representative unknown-domain rejection through both creation and validation. The minimal GREEN is the single allowlist entry unless the RED exposes a separately classified defect. The two pending full-suite fixture edits remain test-maintenance work and are not production authority.
+
 ## Planned-Change and Approval Gates
 
 1. **Architecture-decision trigger**: this plan settles cross-resource publication, raw Git-object capture, source-specific authorization, cumulative grants, and ordinary/trusted boundaries under AD-2/3/30/31. A plan-only independent review must accept the raw plan set.
 2. **Repository planned-change trigger — material Scan strategy change (`AGENTS.md`)**: the generic acquisition/retry route replaces archive/process-lease semantics for new Scan inputs, supports standalone source without pair/System identity, and changes capture/reopen/retry behavior. It affects PRD FR-2.4, FR-2.5, FR-4.9 and source portions of NFR-3.1/3.3/4.1. After plan acceptance, the root must obtain explicit user authorization before `speckit-tasks`.
 
 No Worker Agent/Agent tool is added or exposed and no PRD requirement is weakened. This approval covers only progression from accepted plan hashes to task generation. Implementation still requires accepted complete definition and the separate implementation approval, then TDD, convergence, quality, E2E decision, security/migration checks, and pinned verification.
+
+**Compatibility-delta gate classification**: no new architecture decision is required. The delta makes an existing producer and its existing closed validator agree on the producer's already-selected literal version; it introduces no new identity algorithm, schema grammar, ownership seam, persistence model, or runtime topology. The original retained-source architecture classification and its accepted material Scan-strategy plan-change approval remain intact and are not inherited as a waiver. The compatibility delta itself triggers none of the additional `AGENTS.md` planned-change gates: it adds no Agent tool, changes no parsing/filtering/scheduling/grouping/retry/dispatch or other Scan strategy, and does not change, weaken, or conflict with a current PRD requirement. After plan acceptance, ordinary progression to regenerated affected tasks is appropriate; independent definition review and the preserved implementation approval gate still follow before implementation.
 
 ## Repository Fit and Source Evidence
 
@@ -195,6 +220,10 @@ No Worker Agent/Agent tool is added or exposed and no PRD requirement is weakene
 | `src/dotnet/Vulgata.Web/Api/Repositories/RepositoryApiEndpoints.cs` | Owns the existing System-Repository delete response that must sanitize a retained-source conflict. |
 | `src/dotnet/Vulgata.Infrastructure/Data/VulgataDbContext.cs` and configurations | Add one source-owned DbSet/configuration/migration with specific repository and PostgreSQL constraints. |
 | Existing exact-Git, revision-reader, and Repository-management tests | Reuse harness mechanics without crediting them as generic behavior. |
+| `src/dotnet/Vulgata.Core/DomainServices/CanonicalEnvelope.cs` | The literal closed domain registry accepts File Code Unit identity 1.0 but omits the semantic producer's exact 2.0 domain; preserve closed rejection and the byte grammar. |
+| `src/dotnet/Vulgata.Core/DomainServices/PreparedScanContracts.cs` | `CreateSemanticFileCodeUnitIdentity` already emits the exact 2.0 domain and binds a validated canonical symbol at field 13; do not redesign the producer. |
+| `tests/Vulgata.Tests/PreparedScanning/PreparedCanonicalEnvelopeTests.cs`, `PreparedCanonicalEnvelopeGoldenTests.cs`, and `PreparedFileCodeUnitAndSelectionTests.cs` | Extend current public seams with executable 2.0 acceptance/determinism/symbol tests, 1.0 byte/identity compatibility, invalid-symbol rejection, and closed unknown-domain rejection. |
+| `tests/Vulgata.Tests/PreparedScanning/PreparedScanReleaseQualificationTests.cs` and `ReviewedExactProfileSeedPostgreSqlTests.cs` | These are the current full-suite fixtures that exposed the mismatch. Re-run them as affected regression evidence after focused Core tests, without treating profile/Scan execution as changed scope. |
 
 ## Failure and Recovery Behavior
 
@@ -236,3 +265,23 @@ No Constitution violation is requested. PostgreSQL and durable files cannot shar
 **Finding disposition**: `PR-13.1-001` corrected at the earliest owner. The caller-controlled `SourceCaptureLimits` parameter was removed and application contract, configuration ownership, failures, and planned tests now use one fail-closed server policy.
 
 **Self-review verdict**: PASS. The corrected plan set is coherent and reviewable with no unresolved clarification, authority contradiction, or hidden implementation waiver. It is ready for independent plan-only re-review, not task generation or implementation.
+
+## Compatibility-Amendment Self-Review
+
+**Evidence kind**: self-review
+**Stage**: plan update
+**Observed at**: 2026-09-16
+**Pinned source**: `b9517a01a07f171107d253d4b62287e373abf49c`
+**Pinned specification**: SHA-256 `7DCE86D54A67B925EB11FC51662077260BE2D98A018C68DC8F6770941E767D14`
+
+| Review lens | Result | Evidence / consequence checked |
+| --- | --- | --- |
+| Feasibility | PASS | The implementation is one literal addition to the existing `HashSet<string>`; no package, migration, configuration, service, or runtime resource is needed. |
+| Repository fit and ownership | PASS | Both the closed validator and semantic identity producer are existing Core domain services. Tests use existing public Core seams in the single test project. No project dependency direction changes. |
+| Failure behavior | PASS | Known 2.0 becomes valid. Invalid symbols still fail in `RequireJavaSymbol`; unknown domains still fail in `RequireDomain`/return false from validation. No fallback or open-ended matching is introduced. |
+| Public test seams | PASS | Public `CreateSemanticFileCodeUnitIdentity`, `CanonicalEnvelope.Create`, and `CanonicalEnvelope.Validate` cover valid 2.0, determinism, symbol binding, invalid symbols, 1.0 goldens, and unknown rejection. The two failing full-suite fixtures and retained-source regressions provide surrounding evidence. |
+| Constitution / ADR alignment | PASS | Preserves domain purity, deterministic canonical identity, exact history, test-first delivery, and truthful evidence under Constitution II/IV and AD-7/32. It makes no new architecture decision. |
+| PRD / planned-change gates | PASS | The delta neither changes nor weakens the PRD and changes no Agent tool or Scan strategy. The original retained-source plan-change approval remains separately binding; no waiver is inherited. |
+| Scope preservation | PASS | Source T001-T040 and their design remain unchanged. No historical feature is activated, no profile/schema/public API is changed, and no broader semantic or Scan qualification is claimed. |
+
+**Amendment verdict**: PASS. No clarification or new architecture decision is required. The amended plan set is ready for regeneration of only the affected compatibility tasks and subsequent independent definition review; it is not implementation authority.

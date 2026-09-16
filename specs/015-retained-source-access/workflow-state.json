@@ -3,33 +3,33 @@
   "bmad_story_key": "13-1-retain-exact-repository-source-with-scoped-read-access",
   "bmad_epic_key": "epic-13",
   "feature_directory": "specs/015-retained-source-access",
-  "stage": "implement",
+  "stage": "implementation-approval",
   "preflight": {
     "branch": "dev",
-    "head": "70c4c4fa1835fabd2236cc70e1e7226b2be9ed7e",
-    "git_identity_sha256": "f994355ec3d9363c2d89595a8a35f81f78f6eef19b8a04c3d70c4196af809ef4",
-    "status_sha256": "afe0f23e91c148f33e4be2559620d360fb8de58d826d4a6df0e894dabef6bd12",
-    "observed_at": "2026-09-16T03:57:17.326242Z"
+    "head": "b9517a01a07f171107d253d4b62287e373abf49c",
+    "git_identity_sha256": "679f5ed11a0885bdf10b3530ee02c1b66f5c3e078c074ea4f5b0dd4d267bf2f8",
+    "status_sha256": "1e305496c532c9fbd2844226bf6b0559b3131b83a716d0a22333057c873e0630",
+    "observed_at": "2026-09-16T04:53:35.457115Z"
   },
   "artifacts": {
     "spec": {
-      "sha256": "34a822ccfb53128af8e523795d2f259c3d73aed604812c0d0a4ed1d84f27f44d",
+      "sha256": "7dce86d54a67b925eb11fc51662077260be2d98a018c68dc8f6770941e767d14",
       "path": "specs/015-retained-source-access/spec.md"
     },
     "plan": {
       "path": "specs/015-retained-source-access/plan.md",
-      "sha256": "5267bd81d9f0b519f3c1e93250395089dae9ae97474195686b58a2446b2578ac"
+      "sha256": "ebb8cd5c883247521ee522e51765815442035bf9f21146c63257bdb203802290"
     },
     "tasks": {
       "path": "specs/015-retained-source-access/tasks.md",
-      "sha256": "cbfb9e26ca77ed8eb2625c262ca644fe0a585e04c5733922e44cf55567e42e03"
+      "sha256": "086f9695130a42e603c2ef658ad955deccd3ab696e4319d58cba1668edc84c34"
     }
   },
   "gates": {
     "definition-review": {
       "status": "accepted",
-      "attempt": 5,
-      "verdict_path": "specs/015-retained-source-access/evidence/definition-review-05.json"
+      "attempt": 6,
+      "verdict_path": "specs/015-retained-source-access/evidence/definition-review-06.json"
     },
     "plan-review": {
       "status": "accepted",
@@ -82,6 +82,20 @@
       "scope_sha256": "af919734731d70d81da2d156518a57b583dc154f451b188ef5e03b2a71aa5eaa",
       "evidence_path": "specs/015-retained-source-access/evidence/baseline-reconciliation-approval-03.json",
       "decided_at": "2026-09-16T03:21:15.721159Z"
+    },
+    {
+      "decision_id": "13-1/baseline-production-scope/1",
+      "status": "accepted",
+      "scope_sha256": "cc12ced948cc15d099904b92318a7eb8391d12367fb99ff58bae002fa80a6728",
+      "evidence_path": "specs/015-retained-source-access/evidence/baseline-production-scope-approval-01.json",
+      "decided_at": "2026-09-16T04:27:33.798069Z"
+    },
+    {
+      "decision_id": "13-1/implementation-approval/2",
+      "status": "pending",
+      "scope_sha256": "796eee971fc5f9b1ff003468602bd7ddab3a2356d2e9fce02a2445e671a327fa",
+      "evidence_path": "specs/015-retained-source-access/evidence/canonical-correction-implementation-request-02.md",
+      "decided_at": null
     }
   ],
   "convergence": {
@@ -98,26 +112,26 @@
     "docs/bmad/implementation-artifacts/13-1-retain-exact-repository-source-with-scoped-read-access.md",
     "docs/bmad/implementation-artifacts/workflow-activations/13-1-retain-exact-repository-source-with-scoped-read-access.json",
     "specs/015-retained-source-access/evidence/plan-authorization-01.md",
-    "specs/015-retained-source-access/evidence/definition-review-boundary-05.json",
-    "specs/015-retained-source-access/evidence/definition-review-05.json",
     "specs/015-retained-source-access/evidence/implementation-approval-01.md",
-    "specs/015-retained-source-access/evidence/runtime-boundary-01.json",
-    "specs/015-retained-source-access/evidence/baseline-reconciliation-approval-02.json",
-    "specs/015-retained-source-access/evidence/baseline-reconciliation-approval-03.json",
-    "specs/015-retained-source-access/evidence/source-diagnostics-complete-01.json",
-    "specs/015-retained-source-access/evidence/baseline-production-blocker-01.json",
-    "specs/015-retained-source-access/evidence/baseline-repairs-checkpoint-02.json"
+    "specs/015-retained-source-access/evidence/baseline-production-scope-approval-01.json",
+    "specs/015-retained-source-access/evidence/canonical-correction-definition-boundary-06.json",
+    "specs/015-retained-source-access/evidence/definition-review-06.json",
+    "specs/015-retained-source-access/evidence/canonical-correction-definition-accepted-06.json",
+    "specs/015-retained-source-access/evidence/canonical-correction-implementation-request-02.md",
+    "specs/015-retained-source-access/evidence/canonical-correction-definition-checkpoint-06.json",
+    "specs/015-retained-source-access/evidence/baseline-fixtures-independent-03.json",
+    "specs/015-retained-source-access/evidence/runtime-boundary-01.json"
   ],
   "checkpoint": {
-    "checkpoint_id": "bmad-13-1-implement-20260916T035717Z-9deac8",
-    "stage": "implement",
+    "checkpoint_id": "bmad-13-1-definition-review-20260916T045335Z-ce06c9",
+    "stage": "definition-review",
     "commit_sha": null,
     "binding_status": "pending"
   },
   "resume": {
-    "stage": "implement",
-    "reason": "Approved baseline test repairs verified. Six profile successes blocked by pre-existing canonical2.0 domain rejection; separate correction scope approval pending;2fixture edits remain uncommitted.",
-    "evidence_path": "specs/015-retained-source-access/evidence/baseline-production-blocker-01.json"
+    "stage": "implementation-approval",
+    "reason": "Amended correction definition independently ACCEPTED; no new plan-change trigger. Await distinct approval to implement exact2.0 registry correction and T044-T049. Production unchanged.",
+    "evidence_path": "specs/015-retained-source-access/evidence/canonical-correction-definition-accepted-06.json"
   },
-  "updated_at": "2026-09-16T03:57:17.326242Z"
+  "updated_at": "2026-09-16T04:53:35.457115Z"
 }

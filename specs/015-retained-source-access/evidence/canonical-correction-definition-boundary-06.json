@@ -1,0 +1,408 @@
+{
+  "id": "13-1/definition-review/112",
+  "observed_at": "2026-09-16T04:44:20.199149Z",
+  "boundary_algorithm": "SHA256 canonical JSON sorted-key compact manifest of sorted path/base_sha256/current sha256 entries. Review/state/evidence excluded from digest to avoid recursion.",
+  "manifest": [
+    {
+      "path": ".specify/memory/constitution.md",
+      "base_sha256": "77c0475020121c2724296bac55a700e923737b5bd254bbdd914b038c351db8ba",
+      "sha256": "77c0475020121c2724296bac55a700e923737b5bd254bbdd914b038c351db8ba"
+    },
+    {
+      "path": "AGENTS.md",
+      "base_sha256": "34bf18243557cd252f49f4ac7ed73963e72d38e082b2411b24e6c9a0a1293afa",
+      "sha256": "34bf18243557cd252f49f4ac7ed73963e72d38e082b2411b24e6c9a0a1293afa"
+    },
+    {
+      "path": "docs/UBIQUITOUS_LANGUAGE.md",
+      "base_sha256": "680494a9e766270a18ae02d5c92670771a72912a87f632946350431d4696550d",
+      "sha256": "680494a9e766270a18ae02d5c92670771a72912a87f632946350431d4696550d"
+    },
+    {
+      "path": "docs/agent-workflow/agent-catalog.md",
+      "base_sha256": "a3641c504d9448a88b2c4a501510b8b35976bbd44bc8c0ecc22bd76c951e3878",
+      "sha256": "f4bc7e1fb07ee7124947089907274c2a35c442c5574dc01f5ec3d69f05955712"
+    },
+    {
+      "path": "docs/agent-workflow/architecture.md",
+      "base_sha256": "5b432d532415a0d02260fde9f0433e5cbfd7bac99c38412e350d23c8ff0a5f62",
+      "sha256": "541a9d915abceeeb32dc36f3664029f81aa34911d098e57a71f872561f048458"
+    },
+    {
+      "path": "docs/agent-workflow/e2e-decision-matrix.md",
+      "base_sha256": "11bc684eb9c5e16ea31e516c099d33ea405b9123fd0873ce6336ef10561c1e3e",
+      "sha256": "0250cfaaf0bedd2dd1553c0f7aabdffe67ba784165151994fa97fd829ce92c1e"
+    },
+    {
+      "path": "docs/agent-workflow/review-and-correction.md",
+      "base_sha256": "39304e8db379d33e0f34bd76664350947c3b30e4ebaf2f6d2481c497d68119f5",
+      "sha256": "b1a9143d96f023b16c91f7dcc7629be099c71116cf814d29071ef4300f4ee9b0"
+    },
+    {
+      "path": "docs/agent-workflow/state-machine.md",
+      "base_sha256": "ad836d5309021802aa24ac36b6957d4c22e531ab20f8dc58999bf4f67c4cecfd",
+      "sha256": "48572176f6d07b73df4f920424533aa6e8c05df7a57255509ebd9e8855aa0127"
+    },
+    {
+      "path": "docs/agents/development.md",
+      "base_sha256": "babd2b01b5260f9a720b020c34dc790f0e1f6fe589c737a7cb416a8ccc71d28a",
+      "sha256": "babd2b01b5260f9a720b020c34dc790f0e1f6fe589c737a7cb416a8ccc71d28a"
+    },
+    {
+      "path": "docs/agents/project-state.md",
+      "base_sha256": "e05b981da0d3a99952397f90c04beb73d6e3e061d6058cca3f68db8cdb6d26b1",
+      "sha256": "af7af94c1c4f6bd33ebe0c4d837b1bdad60abdf480b71d3c78dc82f06f9f6764"
+    },
+    {
+      "path": "docs/agents/testing.md",
+      "base_sha256": "2ff9eaebf780aa9e97353e8b453217023198044bbfb3ddc201473529aaa33be0",
+      "sha256": "2ff9eaebf780aa9e97353e8b453217023198044bbfb3ddc201473529aaa33be0"
+    },
+    {
+      "path": "docs/bmad/epics.md",
+      "base_sha256": "340c6ffadf94f3a4a009dcd4ddba1294213f22ffc07638ee9c7dfecae5de6c7a",
+      "sha256": "340c6ffadf94f3a4a009dcd4ddba1294213f22ffc07638ee9c7dfecae5de6c7a"
+    },
+    {
+      "path": "docs/bmad/implementation-artifacts/sprint-status.yaml",
+      "base_sha256": "1703e04d2c537f8e313886ff3d9d84bb1c8b00d408eba1d2128444b87a2c3322",
+      "sha256": "1703e04d2c537f8e313886ff3d9d84bb1c8b00d408eba1d2128444b87a2c3322"
+    },
+    {
+      "path": "docs/bmad/planning-artifacts/architecture.md",
+      "base_sha256": "ddd60353114c2c5a16c36074da170a5af97db2c97c0bb0dc4b481a5f471f667d",
+      "sha256": "ddd60353114c2c5a16c36074da170a5af97db2c97c0bb0dc4b481a5f471f667d"
+    },
+    {
+      "path": "docs/bmad/planning-artifacts/architecture/ARCHITECTURE-SPINE.md",
+      "base_sha256": "a55381df21fe95e827664ca6b2082fb0d30054cfc6a075ad93df3638f6261943",
+      "sha256": "a55381df21fe95e827664ca6b2082fb0d30054cfc6a075ad93df3638f6261943"
+    },
+    {
+      "path": "docs/bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md",
+      "base_sha256": "9dee4dda7920c9dfab8d0ff4e6ffa5aee2f6de7942becbf32349c9e3584a1399",
+      "sha256": "9dee4dda7920c9dfab8d0ff4e6ffa5aee2f6de7942becbf32349c9e3584a1399"
+    },
+    {
+      "path": "specs/015-retained-source-access/checklists/requirements.md",
+      "base_sha256": "990644f60089f9c241ecfc6e01b74e95ff417417063c216d4fe7629571b3ac74",
+      "sha256": "9da433431a7ef12025a9cf2281b443a3a9b838e1680ce4fec6c92fd8464102b2"
+    },
+    {
+      "path": "specs/015-retained-source-access/contracts/retained-source-application-contract.md",
+      "base_sha256": "f2b0629fa5ed7f6780281f6cdf3a420f9984da6f25ca8c59006c63c9d2b29bdf",
+      "sha256": "f2b0629fa5ed7f6780281f6cdf3a420f9984da6f25ca8c59006c63c9d2b29bdf"
+    },
+    {
+      "path": "specs/015-retained-source-access/contracts/retained-source-manifest-v1.schema.json",
+      "base_sha256": "c80791c82e1268841b08c9da2e214a1db3a148aa2c6ba340583a5cb0bff5e300",
+      "sha256": "c80791c82e1268841b08c9da2e214a1db3a148aa2c6ba340583a5cb0bff5e300"
+    },
+    {
+      "path": "specs/015-retained-source-access/data-model.md",
+      "base_sha256": "fed9bedd3b2ef11fff7a4f41bef3ff3e4276aa845eb29ce7bf48c059404a99d7",
+      "sha256": "fed9bedd3b2ef11fff7a4f41bef3ff3e4276aa845eb29ce7bf48c059404a99d7"
+    },
+    {
+      "path": "specs/015-retained-source-access/plan.md",
+      "base_sha256": "5267bd81d9f0b519f3c1e93250395089dae9ae97474195686b58a2446b2578ac",
+      "sha256": "ebb8cd5c883247521ee522e51765815442035bf9f21146c63257bdb203802290"
+    },
+    {
+      "path": "specs/015-retained-source-access/quickstart.md",
+      "base_sha256": "bd44a4cd18fc2940b92515b99717d764a7172260563e5708ba2ce2b901f76bb9",
+      "sha256": "6935751aa2c9036f51ea1923d18ea5a34c76abacbed92f8e2951fce69a14f0e6"
+    },
+    {
+      "path": "specs/015-retained-source-access/research.md",
+      "base_sha256": "47de6015785a6b323b8dce1142e1900e613cab6e22796a1d018b8410fde3441a",
+      "sha256": "33d6195069c982e3ac4cf0fcfc5243e95d58ba84181bde530f3d03c8c664ce83"
+    },
+    {
+      "path": "specs/015-retained-source-access/spec.md",
+      "base_sha256": "34a822ccfb53128af8e523795d2f259c3d73aed604812c0d0a4ed1d84f27f44d",
+      "sha256": "7dce86d54a67b925eb11fc51662077260be2d98a018c68dc8f6770941e767d14"
+    },
+    {
+      "path": "specs/015-retained-source-access/tasks.md",
+      "base_sha256": "cbfb9e26ca77ed8eb2625c262ca644fe0a585e04c5733922e44cf55567e42e03",
+      "sha256": "086f9695130a42e603c2ef658ad955deccd3ab696e4319d58cba1668edc84c34"
+    },
+    {
+      "path": "src/dotnet/Vulgata.Core/DomainServices/CanonicalEnvelope.cs",
+      "base_sha256": "8e2640f407e774d4319e170368939f735e34e33d44ae2af638742dcba70194d2",
+      "sha256": "64d0b27fc554ca6567fb6646b697015ef553d46de3cacbe2766ff61c1beb538c"
+    },
+    {
+      "path": "src/dotnet/Vulgata.Core/DomainServices/IRetainedSourceRepository.cs",
+      "base_sha256": "2b19b207ac3b6b0adbf6807be40052fa2b5b5b280f48c6a7be939d8b0f1139f0",
+      "sha256": "2b19b207ac3b6b0adbf6807be40052fa2b5b5b280f48c6a7be939d8b0f1139f0"
+    },
+    {
+      "path": "src/dotnet/Vulgata.Core/DomainServices/PreparedScanContracts.cs",
+      "base_sha256": "533b28ef1ceab811d1dadd1986e8cb6a30e01ad19bdf67b46450af637ed3e5e2",
+      "sha256": "e7cabec723cd1ac2194045839505d1a858538aca24d2448743fd0a4779099e48"
+    },
+    {
+      "path": "src/dotnet/Vulgata.Core/DomainServices/RetainedSourceContracts.cs",
+      "base_sha256": "559df3a75b3b39f38536ce42f5fd5009d895c4e571a4766656a0c35f73336de0",
+      "sha256": "559df3a75b3b39f38536ce42f5fd5009d895c4e571a4766656a0c35f73336de0"
+    },
+    {
+      "path": "src/dotnet/Vulgata.Core/Entities/SourceSnapshot.cs",
+      "base_sha256": "a1b19b6c00a33fc3207f7e54e4b5fec5934006f01a038506e29f1f926d4659fa",
+      "sha256": "a1b19b6c00a33fc3207f7e54e4b5fec5934006f01a038506e29f1f926d4659fa"
+    },
+    {
+      "path": "src/dotnet/Vulgata.Infrastructure/Data/Configurations/SourceSnapshotConfiguration.cs",
+      "base_sha256": "8a8660b2194599f14b0c12053edf4a968db483ca1f4f340c4315bb8243f10f8a",
+      "sha256": "8a8660b2194599f14b0c12053edf4a968db483ca1f4f340c4315bb8243f10f8a"
+    },
+    {
+      "path": "src/dotnet/Vulgata.Infrastructure/Data/Migrations/20260915025243_AddRetainedSourceSnapshots.Designer.cs",
+      "base_sha256": "32646f66a6d79a12c3e375ca44500589831d56f18b602447f8c2f7a6d831d8ed",
+      "sha256": "1a6c803971e36456370f2df2cb934555314eabc3f7e8d622e3aebffcff4d664e"
+    },
+    {
+      "path": "src/dotnet/Vulgata.Infrastructure/Data/Migrations/20260915025243_AddRetainedSourceSnapshots.cs",
+      "base_sha256": "55da51f08f9614388ed389b6ea15aab73a0b2b46c0e93b43ea312f00295d06f0",
+      "sha256": "fd0b5538858b11b8fae0e7f75e9d89a9623b9929e8e7cedb7129b458be541f25"
+    },
+    {
+      "path": "src/dotnet/Vulgata.Infrastructure/Data/Migrations/VulgataDbContextModelSnapshot.cs",
+      "base_sha256": "6a34244ffae97ba3baa54acc1c4d04bffb23f7f235216863f22b9bb5d64256a4",
+      "sha256": "6832e4b708f483cab17ac353be93a124eb05b450d044883fd7b599bb8effcfe7"
+    },
+    {
+      "path": "src/dotnet/Vulgata.Infrastructure/Data/RetainedSourceRepository.cs",
+      "base_sha256": "be11a2757bdc18b5d29873a37036527667c8166992674f3509eaef2e3e00d108",
+      "sha256": "be11a2757bdc18b5d29873a37036527667c8166992674f3509eaef2e3e00d108"
+    },
+    {
+      "path": "src/dotnet/Vulgata.Infrastructure/Data/VulgataDbContext.cs",
+      "base_sha256": "d468722dc3716b03549401ff0a7c1b84472e85a9fb926a737080a4508ce38fa7",
+      "sha256": "f3fe1e3e5dd9be2d57320294413e273892c0bbc86119cfdd34e5b718f9111c1e"
+    },
+    {
+      "path": "src/dotnet/Vulgata.Infrastructure/DependencyInjection.cs",
+      "base_sha256": "09077062ece401c5e4f7cab39e781bccc3d3512957e5ba704e234acd79acc4a7",
+      "sha256": "16855b58337c68ef5f49d5964bf27d6c3fe23fb1f28ae2bf9893cd31176a008c"
+    },
+    {
+      "path": "src/dotnet/Vulgata.Infrastructure/Source/DurableRetainedSourceStore.cs",
+      "base_sha256": "eae42fadb88da16ae2bd10dc616dcc0d75b62b62645feef26e4bd6610f3fea24",
+      "sha256": "eae42fadb88da16ae2bd10dc616dcc0d75b62b62645feef26e4bd6610f3fea24"
+    },
+    {
+      "path": "src/dotnet/Vulgata.Infrastructure/Source/GitCommittedObjectReader.cs",
+      "base_sha256": "fcd99e0496c0fdeee0f94fb29f1eecdf7f1f388741e57e3dfdd8695c1acd92f4",
+      "sha256": "fcd99e0496c0fdeee0f94fb29f1eecdf7f1f388741e57e3dfdd8695c1acd92f4"
+    },
+    {
+      "path": "src/dotnet/Vulgata.Infrastructure/Source/RetainedSourceCapturePolicy.cs",
+      "base_sha256": "12bee787aa1550d546d93b7dd8a58d46106f1f509c4fabe83b9e5de02f0df5fe",
+      "sha256": "12bee787aa1550d546d93b7dd8a58d46106f1f509c4fabe83b9e5de02f0df5fe"
+    },
+    {
+      "path": "src/dotnet/Vulgata.Infrastructure/Source/RetainedSourceCaptureService.cs",
+      "base_sha256": "db11ce06f0e183fbc02aa9765f2296b477370ffa45ab6f3949a15c4dc2a1ea8c",
+      "sha256": "db11ce06f0e183fbc02aa9765f2296b477370ffa45ab6f3949a15c4dc2a1ea8c"
+    },
+    {
+      "path": "src/dotnet/Vulgata.Infrastructure/Source/RetainedSourceManifestCodec.cs",
+      "base_sha256": "099405998a4f4238ccef1288a235fc4d5205743838be107f427b73f2c5f74ad0",
+      "sha256": "099405998a4f4238ccef1288a235fc4d5205743838be107f427b73f2c5f74ad0"
+    },
+    {
+      "path": "src/dotnet/Vulgata.Infrastructure/Source/RetainedSourceReadContext.cs",
+      "base_sha256": "8cca23c75807f0fcbeb7a2c9054c4e9127ab0b3baf71d15656c352f728653127",
+      "sha256": "8cca23c75807f0fcbeb7a2c9054c4e9127ab0b3baf71d15656c352f728653127"
+    },
+    {
+      "path": "src/dotnet/Vulgata.Infrastructure/Source/TrustedSourceWorkspaceContracts.cs",
+      "base_sha256": "7349c1f2ee1abd967d878111dfae465c2da9267139cbfd70dd61212b78cf4334",
+      "sha256": "7349c1f2ee1abd967d878111dfae465c2da9267139cbfd70dd61212b78cf4334"
+    },
+    {
+      "path": "src/dotnet/Vulgata.Infrastructure/Source/TrustedSourceWorkspaceProvider.cs",
+      "base_sha256": "dcfbb4765e6ed9c141bdedfba5539cd3e2dea2bfe854988259b11065f302b66c",
+      "sha256": "dcfbb4765e6ed9c141bdedfba5539cd3e2dea2bfe854988259b11065f302b66c"
+    },
+    {
+      "path": "src/dotnet/Vulgata.Web/Api/Repositories/RepositoryApiEndpoints.cs",
+      "base_sha256": "36a0dd63d7524409f23f480655dbda4b647e3339097c89a2012fbd75e53af9f1",
+      "sha256": "018ee18bddda9ab5ff805b3232079d0a4fdbc09a8f68158a43ab24bb9158eaf2"
+    },
+    {
+      "path": "src/dotnet/Vulgata.Web/Data/RepositoryManagementCoordinator.cs",
+      "base_sha256": "5922f42d516e68d461ab379bbc507e483a26d1cd0a0cddab5d8bd24b7baf82fc",
+      "sha256": "5c83c06f5b88f12fcd184c411ea7377d77f8d079387a8ad97ac0567be36a72ad"
+    },
+    {
+      "path": "src/dotnet/Vulgata.Web/Data/SourceRepositoryAuthorizationVerifier.cs",
+      "base_sha256": "5b2fce86a6d5f054c954e86ed1dfac8d3097f7b12dc2f891b3829543dc434f66",
+      "sha256": "5b2fce86a6d5f054c954e86ed1dfac8d3097f7b12dc2f891b3829543dc434f66"
+    },
+    {
+      "path": "src/dotnet/Vulgata.Web/Program.cs",
+      "base_sha256": "b8f9f77138cc25bd1f6e44488014be8cf8c32a77dbdeaa19dd74f402b68656f6",
+      "sha256": "d2a13e1f17be20f22919c0afacbae9b36fa267e3511a1690a958bf0aa2484616"
+    },
+    {
+      "path": "src/dotnet/Vulgata.Web/RequestPipeline/UserContext.cs",
+      "base_sha256": "254ca790a97a3d92565be776298c21213af0853af0fef78431ba544149ffe2c7",
+      "sha256": "977a9596e555836ec0cbdd820b63d999f62da9636c780d7178e69a46ed772ea4"
+    },
+    {
+      "path": "src/dotnet/Vulgata.Web/appsettings.json",
+      "base_sha256": "aff783192ba78b5590a580fb7f07398926bb7e22f03462475d36793548c065b8",
+      "sha256": "be598d66e0d95a58c59a7151c1bfd4657e59b520da1e854b3d0290ad42aa0ee6"
+    },
+    {
+      "path": "tests/Vulgata.Tests/PreparedScanning/PreparedCanonicalEnvelopeGoldenTests.cs",
+      "base_sha256": "4935b4ce33ac995c0c0a5e4daeb0b622cbfbed47fe06259753625c2108c1540c",
+      "sha256": "9c59ef9c0a40c8c9a6ea1d306740dc6607063393febe0dc75a586f8e5b698c5c"
+    },
+    {
+      "path": "tests/Vulgata.Tests/PreparedScanning/PreparedCanonicalEnvelopeTests.cs",
+      "base_sha256": "6fb2e12402909bbcc8085979bfd87e1cd8f51d6a6ffcfbe2dc030c587fe9239b",
+      "sha256": "d0db3be9b54814aefe12221f865b1ca2c6745b9e2a51c6da17d60b9a39074352"
+    },
+    {
+      "path": "tests/Vulgata.Tests/PreparedScanning/PreparedFileCodeUnitAndSelectionTests.cs",
+      "base_sha256": "f8306c005013643afc4f763f2d6cb6d22f770581053ea9a6247e1f05dfaf6cfc",
+      "sha256": "14eb4a43a4faac10a9fb6f54317f61d8802236ee2a084cfd40dfe2942fcaeb93"
+    },
+    {
+      "path": "tests/Vulgata.Tests/PreparedScanning/PreparedScanReleaseQualificationTests.cs",
+      "base_sha256": "b6bff53c74a123f7b493ef639b7739a42d71077d7ff19e32c46063b8eb267313",
+      "sha256": "1fe690993c05c32a4153d6f04d9f621fecbad8c0fb3f5b17c75ba5aee9b99614"
+    },
+    {
+      "path": "tests/Vulgata.Tests/PreparedScanning/ReviewedExactProfileSeedPostgreSqlTests.cs",
+      "base_sha256": "65e2ececa20cc0d4af3d8567d4c60fef88bb1025f5e1c679b4c89b4b680dee09",
+      "sha256": "50ef7828fa8b7c758e3f28cfaeeb2170cce51f918a28f3fb3aa788138a2de1f5"
+    }
+  ],
+  "source_boundary": {
+    "base_commit": "b9517a01a07f171107d253d4b62287e373abf49c",
+    "candidate_commit": null,
+    "diff_sha256": "796eee971fc5f9b1ff003468602bd7ddab3a2356d2e9fce02a2445e671a327fa",
+    "artifact_hashes": {
+      ".specify/memory/constitution.md": "77c0475020121c2724296bac55a700e923737b5bd254bbdd914b038c351db8ba",
+      "AGENTS.md": "34bf18243557cd252f49f4ac7ed73963e72d38e082b2411b24e6c9a0a1293afa",
+      "docs/UBIQUITOUS_LANGUAGE.md": "680494a9e766270a18ae02d5c92670771a72912a87f632946350431d4696550d",
+      "docs/agent-workflow/agent-catalog.md": "f4bc7e1fb07ee7124947089907274c2a35c442c5574dc01f5ec3d69f05955712",
+      "docs/agent-workflow/architecture.md": "541a9d915abceeeb32dc36f3664029f81aa34911d098e57a71f872561f048458",
+      "docs/agent-workflow/e2e-decision-matrix.md": "0250cfaaf0bedd2dd1553c0f7aabdffe67ba784165151994fa97fd829ce92c1e",
+      "docs/agent-workflow/review-and-correction.md": "b1a9143d96f023b16c91f7dcc7629be099c71116cf814d29071ef4300f4ee9b0",
+      "docs/agent-workflow/state-machine.md": "48572176f6d07b73df4f920424533aa6e8c05df7a57255509ebd9e8855aa0127",
+      "docs/agents/development.md": "babd2b01b5260f9a720b020c34dc790f0e1f6fe589c737a7cb416a8ccc71d28a",
+      "docs/agents/project-state.md": "af7af94c1c4f6bd33ebe0c4d837b1bdad60abdf480b71d3c78dc82f06f9f6764",
+      "docs/agents/testing.md": "2ff9eaebf780aa9e97353e8b453217023198044bbfb3ddc201473529aaa33be0",
+      "docs/bmad/epics.md": "340c6ffadf94f3a4a009dcd4ddba1294213f22ffc07638ee9c7dfecae5de6c7a",
+      "docs/bmad/implementation-artifacts/sprint-status.yaml": "1703e04d2c537f8e313886ff3d9d84bb1c8b00d408eba1d2128444b87a2c3322",
+      "docs/bmad/planning-artifacts/architecture.md": "ddd60353114c2c5a16c36074da170a5af97db2c97c0bb0dc4b481a5f471f667d",
+      "docs/bmad/planning-artifacts/architecture/ARCHITECTURE-SPINE.md": "a55381df21fe95e827664ca6b2082fb0d30054cfc6a075ad93df3638f6261943",
+      "docs/bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md": "9dee4dda7920c9dfab8d0ff4e6ffa5aee2f6de7942becbf32349c9e3584a1399",
+      "specs/015-retained-source-access/checklists/requirements.md": "9da433431a7ef12025a9cf2281b443a3a9b838e1680ce4fec6c92fd8464102b2",
+      "specs/015-retained-source-access/contracts/retained-source-application-contract.md": "f2b0629fa5ed7f6780281f6cdf3a420f9984da6f25ca8c59006c63c9d2b29bdf",
+      "specs/015-retained-source-access/contracts/retained-source-manifest-v1.schema.json": "c80791c82e1268841b08c9da2e214a1db3a148aa2c6ba340583a5cb0bff5e300",
+      "specs/015-retained-source-access/data-model.md": "fed9bedd3b2ef11fff7a4f41bef3ff3e4276aa845eb29ce7bf48c059404a99d7",
+      "specs/015-retained-source-access/plan.md": "ebb8cd5c883247521ee522e51765815442035bf9f21146c63257bdb203802290",
+      "specs/015-retained-source-access/quickstart.md": "6935751aa2c9036f51ea1923d18ea5a34c76abacbed92f8e2951fce69a14f0e6",
+      "specs/015-retained-source-access/research.md": "33d6195069c982e3ac4cf0fcfc5243e95d58ba84181bde530f3d03c8c664ce83",
+      "specs/015-retained-source-access/spec.md": "7dce86d54a67b925eb11fc51662077260be2d98a018c68dc8f6770941e767d14",
+      "specs/015-retained-source-access/tasks.md": "086f9695130a42e603c2ef658ad955deccd3ab696e4319d58cba1668edc84c34",
+      "src/dotnet/Vulgata.Core/DomainServices/CanonicalEnvelope.cs": "64d0b27fc554ca6567fb6646b697015ef553d46de3cacbe2766ff61c1beb538c",
+      "src/dotnet/Vulgata.Core/DomainServices/IRetainedSourceRepository.cs": "2b19b207ac3b6b0adbf6807be40052fa2b5b5b280f48c6a7be939d8b0f1139f0",
+      "src/dotnet/Vulgata.Core/DomainServices/PreparedScanContracts.cs": "e7cabec723cd1ac2194045839505d1a858538aca24d2448743fd0a4779099e48",
+      "src/dotnet/Vulgata.Core/DomainServices/RetainedSourceContracts.cs": "559df3a75b3b39f38536ce42f5fd5009d895c4e571a4766656a0c35f73336de0",
+      "src/dotnet/Vulgata.Core/Entities/SourceSnapshot.cs": "a1b19b6c00a33fc3207f7e54e4b5fec5934006f01a038506e29f1f926d4659fa",
+      "src/dotnet/Vulgata.Infrastructure/Data/Configurations/SourceSnapshotConfiguration.cs": "8a8660b2194599f14b0c12053edf4a968db483ca1f4f340c4315bb8243f10f8a",
+      "src/dotnet/Vulgata.Infrastructure/Data/Migrations/20260915025243_AddRetainedSourceSnapshots.Designer.cs": "1a6c803971e36456370f2df2cb934555314eabc3f7e8d622e3aebffcff4d664e",
+      "src/dotnet/Vulgata.Infrastructure/Data/Migrations/20260915025243_AddRetainedSourceSnapshots.cs": "fd0b5538858b11b8fae0e7f75e9d89a9623b9929e8e7cedb7129b458be541f25",
+      "src/dotnet/Vulgata.Infrastructure/Data/Migrations/VulgataDbContextModelSnapshot.cs": "6832e4b708f483cab17ac353be93a124eb05b450d044883fd7b599bb8effcfe7",
+      "src/dotnet/Vulgata.Infrastructure/Data/RetainedSourceRepository.cs": "be11a2757bdc18b5d29873a37036527667c8166992674f3509eaef2e3e00d108",
+      "src/dotnet/Vulgata.Infrastructure/Data/VulgataDbContext.cs": "f3fe1e3e5dd9be2d57320294413e273892c0bbc86119cfdd34e5b718f9111c1e",
+      "src/dotnet/Vulgata.Infrastructure/DependencyInjection.cs": "16855b58337c68ef5f49d5964bf27d6c3fe23fb1f28ae2bf9893cd31176a008c",
+      "src/dotnet/Vulgata.Infrastructure/Source/DurableRetainedSourceStore.cs": "eae42fadb88da16ae2bd10dc616dcc0d75b62b62645feef26e4bd6610f3fea24",
+      "src/dotnet/Vulgata.Infrastructure/Source/GitCommittedObjectReader.cs": "fcd99e0496c0fdeee0f94fb29f1eecdf7f1f388741e57e3dfdd8695c1acd92f4",
+      "src/dotnet/Vulgata.Infrastructure/Source/RetainedSourceCapturePolicy.cs": "12bee787aa1550d546d93b7dd8a58d46106f1f509c4fabe83b9e5de02f0df5fe",
+      "src/dotnet/Vulgata.Infrastructure/Source/RetainedSourceCaptureService.cs": "db11ce06f0e183fbc02aa9765f2296b477370ffa45ab6f3949a15c4dc2a1ea8c",
+      "src/dotnet/Vulgata.Infrastructure/Source/RetainedSourceManifestCodec.cs": "099405998a4f4238ccef1288a235fc4d5205743838be107f427b73f2c5f74ad0",
+      "src/dotnet/Vulgata.Infrastructure/Source/RetainedSourceReadContext.cs": "8cca23c75807f0fcbeb7a2c9054c4e9127ab0b3baf71d15656c352f728653127",
+      "src/dotnet/Vulgata.Infrastructure/Source/TrustedSourceWorkspaceContracts.cs": "7349c1f2ee1abd967d878111dfae465c2da9267139cbfd70dd61212b78cf4334",
+      "src/dotnet/Vulgata.Infrastructure/Source/TrustedSourceWorkspaceProvider.cs": "dcfbb4765e6ed9c141bdedfba5539cd3e2dea2bfe854988259b11065f302b66c",
+      "src/dotnet/Vulgata.Web/Api/Repositories/RepositoryApiEndpoints.cs": "018ee18bddda9ab5ff805b3232079d0a4fdbc09a8f68158a43ab24bb9158eaf2",
+      "src/dotnet/Vulgata.Web/Data/RepositoryManagementCoordinator.cs": "5c83c06f5b88f12fcd184c411ea7377d77f8d079387a8ad97ac0567be36a72ad",
+      "src/dotnet/Vulgata.Web/Data/SourceRepositoryAuthorizationVerifier.cs": "5b2fce86a6d5f054c954e86ed1dfac8d3097f7b12dc2f891b3829543dc434f66",
+      "src/dotnet/Vulgata.Web/Program.cs": "d2a13e1f17be20f22919c0afacbae9b36fa267e3511a1690a958bf0aa2484616",
+      "src/dotnet/Vulgata.Web/RequestPipeline/UserContext.cs": "977a9596e555836ec0cbdd820b63d999f62da9636c780d7178e69a46ed772ea4",
+      "src/dotnet/Vulgata.Web/appsettings.json": "be598d66e0d95a58c59a7151c1bfd4657e59b520da1e854b3d0290ad42aa0ee6",
+      "tests/Vulgata.Tests/PreparedScanning/PreparedCanonicalEnvelopeGoldenTests.cs": "9c59ef9c0a40c8c9a6ea1d306740dc6607063393febe0dc75a586f8e5b698c5c",
+      "tests/Vulgata.Tests/PreparedScanning/PreparedCanonicalEnvelopeTests.cs": "d0db3be9b54814aefe12221f865b1ca2c6745b9e2a51c6da17d60b9a39074352",
+      "tests/Vulgata.Tests/PreparedScanning/PreparedFileCodeUnitAndSelectionTests.cs": "14eb4a43a4faac10a9fb6f54317f61d8802236ee2a084cfd40dfe2942fcaeb93",
+      "tests/Vulgata.Tests/PreparedScanning/PreparedScanReleaseQualificationTests.cs": "1fe690993c05c32a4153d6f04d9f621fecbad8c0fb3f5b17c75ba5aee9b99614",
+      "tests/Vulgata.Tests/PreparedScanning/ReviewedExactProfileSeedPostgreSqlTests.cs": "50ef7828fa8b7c758e3f28cfaeeb2170cce51f918a28f3fb3aa788138a2de1f5"
+    },
+    "owned_paths": [
+      ".specify/memory/constitution.md",
+      "AGENTS.md",
+      "docs/UBIQUITOUS_LANGUAGE.md",
+      "docs/agent-workflow/agent-catalog.md",
+      "docs/agent-workflow/architecture.md",
+      "docs/agent-workflow/e2e-decision-matrix.md",
+      "docs/agent-workflow/review-and-correction.md",
+      "docs/agent-workflow/state-machine.md",
+      "docs/agents/development.md",
+      "docs/agents/project-state.md",
+      "docs/agents/testing.md",
+      "docs/bmad/epics.md",
+      "docs/bmad/implementation-artifacts/sprint-status.yaml",
+      "docs/bmad/planning-artifacts/architecture.md",
+      "docs/bmad/planning-artifacts/architecture/ARCHITECTURE-SPINE.md",
+      "docs/bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md",
+      "specs/015-retained-source-access/checklists/requirements.md",
+      "specs/015-retained-source-access/contracts/retained-source-application-contract.md",
+      "specs/015-retained-source-access/contracts/retained-source-manifest-v1.schema.json",
+      "specs/015-retained-source-access/data-model.md",
+      "specs/015-retained-source-access/plan.md",
+      "specs/015-retained-source-access/quickstart.md",
+      "specs/015-retained-source-access/research.md",
+      "specs/015-retained-source-access/spec.md",
+      "specs/015-retained-source-access/tasks.md",
+      "src/dotnet/Vulgata.Core/DomainServices/CanonicalEnvelope.cs",
+      "src/dotnet/Vulgata.Core/DomainServices/IRetainedSourceRepository.cs",
+      "src/dotnet/Vulgata.Core/DomainServices/PreparedScanContracts.cs",
+      "src/dotnet/Vulgata.Core/DomainServices/RetainedSourceContracts.cs",
+      "src/dotnet/Vulgata.Core/Entities/SourceSnapshot.cs",
+      "src/dotnet/Vulgata.Infrastructure/Data/Configurations/SourceSnapshotConfiguration.cs",
+      "src/dotnet/Vulgata.Infrastructure/Data/Migrations/20260915025243_AddRetainedSourceSnapshots.Designer.cs",
+      "src/dotnet/Vulgata.Infrastructure/Data/Migrations/20260915025243_AddRetainedSourceSnapshots.cs",
+      "src/dotnet/Vulgata.Infrastructure/Data/Migrations/VulgataDbContextModelSnapshot.cs",
+      "src/dotnet/Vulgata.Infrastructure/Data/RetainedSourceRepository.cs",
+      "src/dotnet/Vulgata.Infrastructure/Data/VulgataDbContext.cs",
+      "src/dotnet/Vulgata.Infrastructure/DependencyInjection.cs",
+      "src/dotnet/Vulgata.Infrastructure/Source/DurableRetainedSourceStore.cs",
+      "src/dotnet/Vulgata.Infrastructure/Source/GitCommittedObjectReader.cs",
+      "src/dotnet/Vulgata.Infrastructure/Source/RetainedSourceCapturePolicy.cs",
+      "src/dotnet/Vulgata.Infrastructure/Source/RetainedSourceCaptureService.cs",
+      "src/dotnet/Vulgata.Infrastructure/Source/RetainedSourceManifestCodec.cs",
+      "src/dotnet/Vulgata.Infrastructure/Source/RetainedSourceReadContext.cs",
+      "src/dotnet/Vulgata.Infrastructure/Source/TrustedSourceWorkspaceContracts.cs",
+      "src/dotnet/Vulgata.Infrastructure/Source/TrustedSourceWorkspaceProvider.cs",
+      "src/dotnet/Vulgata.Web/Api/Repositories/RepositoryApiEndpoints.cs",
+      "src/dotnet/Vulgata.Web/Data/RepositoryManagementCoordinator.cs",
+      "src/dotnet/Vulgata.Web/Data/SourceRepositoryAuthorizationVerifier.cs",
+      "src/dotnet/Vulgata.Web/Program.cs",
+      "src/dotnet/Vulgata.Web/RequestPipeline/UserContext.cs",
+      "src/dotnet/Vulgata.Web/appsettings.json",
+      "tests/Vulgata.Tests/PreparedScanning/PreparedCanonicalEnvelopeGoldenTests.cs",
+      "tests/Vulgata.Tests/PreparedScanning/PreparedCanonicalEnvelopeTests.cs",
+      "tests/Vulgata.Tests/PreparedScanning/PreparedFileCodeUnitAndSelectionTests.cs",
+      "tests/Vulgata.Tests/PreparedScanning/PreparedScanReleaseQualificationTests.cs",
+      "tests/Vulgata.Tests/PreparedScanning/ReviewedExactProfileSeedPostgreSqlTests.cs"
+    ]
+  }
+}

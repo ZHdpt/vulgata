@@ -110,6 +110,15 @@ As a product owner, I can qualify exact source retention and scoped reads as a b
 - **FR-021**: The retained-source capability MUST be independently usable and verifiable without CodeGraph, LSP, an LLM, semantic Code Units, Documents, Edges, Logical Flows, Chat, or full Scan activation.
 - **FR-022**: Evidence and status for this capability MUST distinguish completed retained-source behavior from later Scan, Knowledge, Chat, wiki, tool, Docker-stack, backup, and restore qualification.
 
+### Authorized Compatibility Prerequisite
+
+The following bounded prerequisite repairs a pre-existing canonical-identity contract mismatch exposed by Story 13.1 full-suite verification. It does not change retained-source behavior, complete semantic analysis, qualify a Scan, activate historical Story 12.5 work, or expand the requirement credit of this feature.
+
+- **CP-FR-001**: The existing semantic File Code Unit identity producer for canonical domain version 2.0 MUST produce an envelope that the closed canonical validator accepts under that same approved domain version.
+- **CP-FR-002**: Existing canonical domain version 1.0 File Code Unit identities MUST retain their exact bytes and deterministic identity for identical inputs.
+- **CP-FR-003**: A canonical semantic symbol MUST remain bound into each version 2.0 semantic File Code Unit identity so that otherwise identical inputs with different valid symbols produce different canonical bytes and identities, while invalid symbols remain rejected.
+- **CP-FR-004**: Canonical validation MUST remain closed: every domain other than the explicitly approved canonical domains MUST be rejected rather than accepted through a wildcard, prefix, or open-ended version rule.
+
 ### Scope Boundaries
 
 **Included**:
@@ -151,6 +160,13 @@ As a product owner, I can qualify exact source retention and scoped reads as a b
 - **SC-009**: The full Story 13.1 acceptance suite completes using isolated local Git fixtures and declared persistent source storage with zero CodeGraph, LSP, LLM, semantic Knowledge, Chat, or full Scan dependencies.
 - **SC-010**: Reviewers can classify every Story 13.1 result as source capability success, limitation, denial, cancellation, or failure from its public outcome, while zero results claim completion of a Scan, wiki, Chat flow, full Docker analysis stack, backup, or restore.
 
+### Compatibility Prerequisite Outcomes
+
+- **CP-SC-001**: For the declared version 2.0 semantic identity fixtures, 100% of valid produced envelopes pass canonical validation and repeated identical inputs produce byte-identical envelopes and identical deterministic identities.
+- **CP-SC-002**: All version 1.0 golden compatibility fixtures remain byte-for-byte unchanged and retain their prior deterministic identities.
+- **CP-SC-003**: In every symbol-binding fixture, changing only the valid canonical symbol changes the version 2.0 canonical bytes and identity, while every invalid-symbol fixture is rejected before an identity is accepted.
+- **CP-SC-004**: In every unknown-domain fixture, canonical creation or validation is rejected; the approved version 2.0 domain does not make any other unregistered domain or version valid.
+
 ## Assumptions
 
 - Existing Repository records, management authorization, and Git acquisition primitives remain available as prior dependencies; this feature does not redesign Repository administration or Git credential management.
@@ -159,3 +175,4 @@ As a product owner, I can qualify exact source retention and scoped reads as a b
 - Public provenance continues to use Repository, Profiled Revision, and Repository-relative source locations. Source Snapshot does not introduce another user-visible source version.
 - The initial policy retains verified canonical source without automatic pruning. Broader historical retention, backup, restore, and cross-host migration policies remain separate work.
 - Existing pair-era consumers and historical evidence retain their own meaning. This feature establishes the generic source contract without crediting or relabelling legacy behavior as the replacement workflow.
+- The approved compatibility prerequisite is limited to the existing canonical File Code Unit identity contract needed to unblock full-suite verification. It neither adopts historical feature plans nor authorizes broader semantic, Scan, profile, publication, or source-retention changes.

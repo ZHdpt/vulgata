@@ -1,0 +1,21 @@
+{
+  "id": "13-1/specify/108",
+  "kind": "analysis",
+  "stage": "specify",
+  "source_commit": "b9517a01a07f171107d253d4b62287e373abf49c",
+  "observed_at": "2026-09-16T04:29:05.273547Z",
+  "summary": "Current correction definition resume: same active015, user-approved scope only, two owned pending fixture edits retained, no production changes; original completed source tasks preserved.",
+  "git_identity": {
+    "branch": "dev",
+    "head": "b9517a01a07f171107d253d4b62287e373abf49c",
+    "root": "G:/source/repos/vulgata",
+    "common_directory": ".git",
+    "worktree": "G:\\source\\repos\\vulgata"
+  },
+  "status": " M specs/015-retained-source-access/workflow-state.json\n M tests/Vulgata.Tests/PreparedScanning/PreparedScanReleaseQualificationTests.cs\n M tests/Vulgata.Tests/PreparedScanning/ReviewedExactProfileSeedPostgreSqlTests.cs\n?? specs/015-retained-source-access/evidence/baseline-production-scope-approval-01.json\n",
+  "source_paths": [
+    "src/dotnet/Vulgata.Core/DomainServices/CanonicalEnvelope.cs",
+    "src/dotnet/Vulgata.Core/DomainServices/PreparedScanContracts.cs"
+  ],
+  "scope_approval": "specs/015-retained-source-access/evidence/baseline-production-scope-approval-01.json"
+}

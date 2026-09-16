@@ -1,0 +1,12 @@
+{
+  "id": "13-1/definition-review/113",
+  "kind": "review",
+  "stage": "definition-review",
+  "source_commit": "b9517a01a07f171107d253d4b62287e373abf49c",
+  "observed_at": "2026-09-16T04:51:59.917086Z",
+  "summary": "Fresh independent Sol/medium ACCEPT with no findings; parsed raw verdict preserved. Root checked exact pinned manifest digest/current hashes and verdict structure.",
+  "verdict_path": "specs/015-retained-source-access/evidence/definition-review-06.json",
+  "scope_sha256": "796eee971fc5f9b1ff003468602bd7ddab3a2356d2e9fce02a2445e671a327fa",
+  "root_verified_artifact_count": 56,
+  "clerical_note": "Reviewer summary says55; returned boundary contains56entries exactly matching pinned input. Count wording preserved in raw verdict; no missing artifact/hash or scope change."
+}

@@ -86,6 +86,19 @@ Expected: Process B succeeds without Process A memory/token, new clone, remote, 
 
 Use the owned PostgreSQL fixture to prove migration/check constraints, unique Repository/revision and storage key, immutable row behavior, and restrictive Repository deletion. Verify the existing System-Repository endpoint/coordinator maps only this retained-source conflict to sanitized Chinese `409`, with no EF/path detail. SQLite is not evidence for these behaviors.
 
+## Canonical identity compatibility prerequisite
+
+Run the focused public Core tests for the existing canonical envelope and File Code Unit identity seams before the affected full-suite fixtures. The focused boundary must prove:
+
+1. the existing semantic File Code Unit identity producer creates and validates the literal `vulgata/story-12.2/file-code-unit-identity/2.0` domain;
+2. identical valid inputs produce byte-identical envelopes and identical deterministic identities;
+3. changing only the valid canonical symbol changes the 2.0 bytes and identity;
+4. invalid symbols remain rejected before an artifact is accepted;
+5. existing 1.0 golden bytes and deterministic identities remain exactly unchanged; and
+6. representative unknown domains/versions remain rejected by both canonical creation and validation.
+
+Then run `PreparedScanReleaseQualificationTests` and `ReviewedExactProfileSeedPostgreSqlTests` with their owned test resources, followed by retained-source regressions and the full suite. Record the tested assembly/build boundary and exact results. These checks qualify only the bounded compatibility prerequisite; they do not change a profile or qualify semantic analysis, a Scan, CodeGraph, LSP, or a provider.
+
 ## Surrounding verification
 
 ```powershell

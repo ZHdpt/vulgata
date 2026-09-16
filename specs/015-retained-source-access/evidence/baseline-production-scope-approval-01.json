@@ -1,0 +1,11 @@
+{
+  "id": "13-1/plan/107",
+  "kind": "human approval",
+  "stage": "plan",
+  "source_commit": "b9517a01a07f171107d253d4b62287e373abf49c",
+  "observed_at": "2026-09-16T04:27:33.798069Z",
+  "user_quote": "Approve",
+  "scope_sha256": "cc12ced948cc15d099904b92318a7eb8391d12367fb99ff58bae002fa80a6728",
+  "proposal_path": "specs/015-retained-source-access/evidence/baseline-production-correction-proposal-01.md",
+  "scope": "Prepare/review current bounded production-correction definition only; no production write, historical feature activation, or implementation approval."
+}

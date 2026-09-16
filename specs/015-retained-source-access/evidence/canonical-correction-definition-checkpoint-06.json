@@ -1,0 +1,43 @@
+{
+  "id": "13-1/definition-review/114",
+  "kind": "command",
+  "stage": "definition-review",
+  "source_commit": "b9517a01a07f171107d253d4b62287e373abf49c",
+  "observed_at": "2026-09-16T04:53:35.457115Z",
+  "checkpoint_id": "bmad-13-1-definition-review-20260916T045335Z-ce06c9",
+  "expected_parent": "b9517a01a07f171107d253d4b62287e373abf49c",
+  "owned_paths": [
+    "docs/bmad/implementation-artifacts/13-1-retain-exact-repository-source-with-scoped-read-access.md",
+    "specs/015-retained-source-access/checklists/requirements.md",
+    "specs/015-retained-source-access/evidence/baseline-production-scope-approval-01.json",
+    "specs/015-retained-source-access/evidence/canonical-correction-definition-accepted-06.json",
+    "specs/015-retained-source-access/evidence/canonical-correction-definition-boundary-06.json",
+    "specs/015-retained-source-access/evidence/canonical-correction-definition-checkpoint-06.json",
+    "specs/015-retained-source-access/evidence/canonical-correction-implementation-request-02.md",
+    "specs/015-retained-source-access/evidence/canonical-correction-plan-self-review-01.json",
+    "specs/015-retained-source-access/evidence/canonical-correction-preflight-01.json",
+    "specs/015-retained-source-access/evidence/canonical-correction-spec-self-review-01.json",
+    "specs/015-retained-source-access/evidence/canonical-correction-tasks-self-review-01.json",
+    "specs/015-retained-source-access/evidence/definition-review-06.json",
+    "specs/015-retained-source-access/plan.md",
+    "specs/015-retained-source-access/quickstart.md",
+    "specs/015-retained-source-access/research.md",
+    "specs/015-retained-source-access/spec.md",
+    "specs/015-retained-source-access/tasks.md",
+    "specs/015-retained-source-access/workflow-state.json"
+  ],
+  "git_identity": {
+    "branch": "dev",
+    "head": "b9517a01a07f171107d253d4b62287e373abf49c",
+    "root": "G:/source/repos/vulgata",
+    "common_directory": ".git",
+    "worktree": "G:\\source\\repos\\vulgata"
+  },
+  "observed_status": " M docs/bmad/implementation-artifacts/13-1-retain-exact-repository-source-with-scoped-read-access.md\n M specs/015-retained-source-access/checklists/requirements.md\n M specs/015-retained-source-access/plan.md\n M specs/015-retained-source-access/quickstart.md\n M specs/015-retained-source-access/research.md\n M specs/015-retained-source-access/spec.md\n M specs/015-retained-source-access/tasks.md\n M specs/015-retained-source-access/workflow-state.json\n M tests/Vulgata.Tests/PreparedScanning/PreparedScanReleaseQualificationTests.cs\n M tests/Vulgata.Tests/PreparedScanning/ReviewedExactProfileSeedPostgreSqlTests.cs\n?? specs/015-retained-source-access/evidence/baseline-production-scope-approval-01.json\n?? specs/015-retained-source-access/evidence/canonical-correction-definition-accepted-06.json\n?? specs/015-retained-source-access/evidence/canonical-correction-definition-boundary-06.json\n?? specs/015-retained-source-access/evidence/canonical-correction-implementation-request-02.md\n?? specs/015-retained-source-access/evidence/canonical-correction-plan-self-review-01.json\n?? specs/015-retained-source-access/evidence/canonical-correction-preflight-01.json\n?? specs/015-retained-source-access/evidence/canonical-correction-spec-self-review-01.json\n?? specs/015-retained-source-access/evidence/canonical-correction-tasks-self-review-01.json\n?? specs/015-retained-source-access/evidence/definition-review-06.json\n",
+  "observed_index_paths": [],
+  "preserved_pending_work": {
+    "tests/Vulgata.Tests/PreparedScanning/PreparedScanReleaseQualificationTests.cs": "1fe690993c05c32a4153d6f04d9f621fecbad8c0fb3f5b17c75ba5aee9b99614",
+    "tests/Vulgata.Tests/PreparedScanning/ReviewedExactProfileSeedPostgreSqlTests.cs": "50ef7828fa8b7c758e3f28cfaeeb2170cce51f918a28f3fb3aa788138a2de1f5"
+  },
+  "summary": "Accepted amended definition checkpoint only; production unchanged; separate implementation approval pending. Two owned profile fixture edits remain uncommitted."
+}

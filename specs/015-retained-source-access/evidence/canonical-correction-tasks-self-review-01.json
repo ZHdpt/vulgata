@@ -1,0 +1,15 @@
+{
+  "id": "13-1/tasks/111",
+  "kind": "self-review",
+  "stage": "tasks",
+  "source_commit": "b9517a01a07f171107d253d4b62287e373abf49c",
+  "observed_at": "2026-09-16T04:44:20.199149Z",
+  "summary": "Task author Luna/medium regenerated bounded correction group T044-T049; completed T001-T040 and pending T041-T043 preserved. Core RED->singleliteralGREEN->focused/fixture/source/full verification; final tasks depend onT049. T042 reconciles same current-boundary full run without redundant execution. CP-FR/SC coverage/group map updated.",
+  "tasks_sha256": "086f9695130a42e603c2ef658ad955deccd3ab696e4319d58cba1668edc84c34",
+  "checks": [
+    "Root verified current final task bytes after duplicate-full-run correction",
+    "Original completed IDs retained; exact paths and dependency edges",
+    "git diff --check passes; no after_tasks hooks"
+  ],
+  "independent_acceptance": false
+}

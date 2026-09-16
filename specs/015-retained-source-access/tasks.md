@@ -18,7 +18,7 @@ description: "Dependency-ordered tasks for Story 13.1 retained source access"
 - [x] T004 Define only declarative `SourceSnapshot`, outcome types, acquire/reopen/grant/read signatures, and logical authorization inputs in `src/dotnet/Vulgata.Core/Entities/SourceSnapshot.cs`, `src/dotnet/Vulgata.Core/DomainServices/IRetainedSourceRepository.cs`, and `src/dotnet/Vulgata.Core/DomainServices/RetainedSourceContracts.cs`; include no validation behavior and no workspace/provider contract (FR-003/004/006/012; DR-13.1-002).
 - [x] T005 Add public runtime RED contract tests in `tests/Vulgata.Tests/RetainedSource/RetainedSourceApplicationContractTests.cs` for revision/object-format/count validation, capture arguments (Repository/ref/cancellation only), ordinary logical results, and absence of physical workspace data (FR-003/004/012; SC-001/010).
 - [x] T006 Implement the identity/value validation exercised by T005 in `src/dotnet/Vulgata.Core/Entities/SourceSnapshot.cs` and `src/dotnet/Vulgata.Core/DomainServices/RetainedSourceContracts.cs`, preserving Core purity and no workspace access.
-- [x] T007 Run T005 focused and surrounding contract tests to GREEN; this verifies declarations plus validation only and does not claim capture behavior.
+- [x] T007 Run T005 in `tests/Vulgata.Tests/RetainedSource/RetainedSourceApplicationContractTests.cs` plus its surrounding contract tests to GREEN; this verifies declarations plus validation only and does not claim capture behavior.
 
 ## Phase 2: User Story 1 — Capture an Exact Source Snapshot (P1, MVP)
 
@@ -47,7 +47,7 @@ description: "Dependency-ordered tasks for Story 13.1 retained source access"
 - [x] T027 [US2] Implement byte/range/text operations and post-I/O bounds in `src/dotnet/Vulgata.Infrastructure/Source/RetainedSourceReadContext.cs` and `src/dotnet/Vulgata.Infrastructure/Source/DurableRetainedSourceStore.cs`; run T026 and surrounding list/open tests to GREEN.
 - [x] T028 [US2] Add live-denial RED tests in `tests/Vulgata.Tests/RetainedSource/RetainedSourceAuthorizationTests.cs` for expiry/revocation, Repository/revision mismatch, absolute/backslash/dot/NUL/control/escaping/outside paths, and no credential/physical-path disclosure (FR-010–012; SC-004).
 - [x] T029 [US2] Implement every-operation authority recheck and sanitized denial in `src/dotnet/Vulgata.Web/Data/SourceRepositoryAuthorizationVerifier.cs` and `src/dotnet/Vulgata.Infrastructure/Source/RetainedSourceCaptureService.cs`; run T028 plus T024–T027 surrounding suites to GREEN.
-- [x] T030 [US2] Run the complete focused US2 suite and capture regressions, recording SC-003/004/005 and confirming ordinary consumers never receive trusted workspace paths.
+- [x] T030 [US2] Run the complete focused US2 suite in `tests/Vulgata.Tests/RetainedSource/RetainedSourceReadContextTests.cs` and `tests/Vulgata.Tests/RetainedSource/RetainedSourceAuthorizationTests.cs` plus capture regressions, recording SC-003/004/005 and confirming ordinary consumers never receive trusted workspace paths.
 
 ## Phase 4: User Story 3 — Reopen Durable Source Safely (P1)
 
@@ -56,7 +56,7 @@ description: "Dependency-ordered tasks for Story 13.1 retained source access"
 - [x] T033 [US3] Add trusted-workspace RED tests in `tests/Vulgata.Tests/RetainedSource/TrustedSourceWorkspaceTests.cs` for Infrastructure-only authorization, contained materialization, symlink/gitlink/unsafe/collision refusal, and owned cleanup (FR-012/014/016; plan AD-6).
 - [x] T034 [US3] Implement `src/dotnet/Vulgata.Infrastructure/Source/TrustedSourceWorkspaceProvider.cs` and run T033 plus surrounding source-read tests to GREEN; no Core/ordinary workspace contract.
 - [x] T035 [US3] Run the prepared child harness from T002 as a test-only fresh-process qualification in `tests/Vulgata.Tests/RetainedSource/RetainedSourceSeparateProcessTests.cs`, invoking `dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --filter FullyQualifiedName~RetainedSourceSeparateProcessChild` with `VULGATA_RETAINED_SOURCE_CHILD=1`; verify fresh authorization/context, remote unavailable, original process/lease gone, and no token/clone/temp/cache dependency (FR-015/016/021; SC-006/009).
-- [x] T036 [US3] Run PostgreSQL migration, persistence, trusted-workspace, and fresh-process suites together, recording SC-006/007/008 and independence from CodeGraph data-root/workspace cleanup.
+- [x] T036 [US3] Run `tests/Vulgata.Tests/RetainedSource/RetainedSourcePostgreSqlTests.cs`, `tests/Vulgata.Tests/RetainedSource/RetainedSourcePersistenceTests.cs`, `tests/Vulgata.Tests/RetainedSource/TrustedSourceWorkspaceTests.cs`, and `tests/Vulgata.Tests/RetainedSource/RetainedSourceSeparateProcessTests.cs` together, recording SC-006/007/008 and independence from CodeGraph data-root/workspace cleanup.
 
 ## Phase 5: User Story 4 and final validation (P2)
 
@@ -64,9 +64,20 @@ description: "Dependency-ordered tasks for Story 13.1 retained source access"
 - [x] T038 [US4] Add test-only outcome/evidence classification in `tests/Vulgata.Tests/RetainedSource/RetainedSourceCapabilityBoundaryTests.cs` for success, limitation, denial, cancellation, acquisition/integrity/storage failure, and source-only labels (FR-019/022; SC-010).
 - [x] T039 [P] Add RED sanitized-logging tests in `tests/Vulgata.Tests/RetainedSource/RetainedSourceLoggingTests.cs` for capture, reopen, authorization, deletion conflict, and failure diagnostics, asserting no source, credentials, origin URL, unsafe path, storage key, or physical path (FR-012/019; NFR-2.3).
 - [x] T040 Implement sanitized diagnostics in `src/dotnet/Vulgata.Infrastructure/Source/RetainedSourceCaptureService.cs`, `src/dotnet/Vulgata.Infrastructure/Source/DurableRetainedSourceStore.cs`, and `src/dotnet/Vulgata.Web/Data/SourceRepositoryAuthorizationVerifier.cs`; run T039 focused/surrounding tests to GREEN.
-- [ ] T041 Validate `specs/015-retained-source-access/quickstart.md` commands and distinct static/controlled/PostgreSQL/separate-process evidence; leave later E2E predicates to the governed gate (FR-022; SC-009/010).
-- [ ] T042 Run `dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore` plus all retained-source, migration, Repository-management, and separate-process suites; confirm SC-001–SC-010 and no unrelated edits.
-- [ ] T043 Perform final traceability against `spec.md`, `plan.md`, `research.md`, `data-model.md`, `quickstart.md`, both contracts, and `docs/agent-workflow/e2e-decision-matrix.md`; document source-only qualification and no composite Scan/Knowledge/Chat claim.
+
+## Phase 5A: Compatibility prerequisite (accepted bounded correction)
+
+**Purpose**: Restore consistency between the existing semantic File Code Unit identity producer and the closed canonical-domain validator. This group changes one Core registry literal and preserves all existing 1.0 bytes, identity derivation, symbol validation, and closed-domain rejection behavior.
+
+- [ ] T044 [US4] Add public Core RED regressions in `tests/Vulgata.Tests/PreparedScanning/PreparedCanonicalEnvelopeTests.cs`, `tests/Vulgata.Tests/PreparedScanning/PreparedCanonicalEnvelopeGoldenTests.cs`, and `tests/Vulgata.Tests/PreparedScanning/PreparedFileCodeUnitAndSelectionTests.cs` for creation and validation of the exact `vulgata/story-12.2/file-code-unit-identity/2.0` domain, repeated-input byte/identity determinism, different valid symbol binding, invalid-symbol rejection, unchanged literal 1.0 golden bytes/identities, and representative unknown-domain/version rejection through both `CanonicalEnvelope.Create` and `CanonicalEnvelope.Validate`; use the existing public methods `PreparedScanIdentityBuilders.CreateSemanticFileCodeUnitIdentity`, `CanonicalEnvelope.Create`, and `CanonicalEnvelope.Validate`.
+- [ ] T045 [US4] Add only the literal `vulgata/story-12.2/file-code-unit-identity/2.0` entry to the closed domain registry in `src/dotnet/Vulgata.Core/DomainServices/CanonicalEnvelope.cs`; preserve the existing 1.0 producer/bytes, field-13 `RequireJavaSymbol` binding, deterministic identity derivation, envelope grammar, and rejection of every other unregistered domain/version.
+- [ ] T046 [US4] Run the focused public Core compatibility suite in `tests/Vulgata.Tests/PreparedScanning/PreparedCanonicalEnvelopeTests.cs`, `tests/Vulgata.Tests/PreparedScanning/PreparedCanonicalEnvelopeGoldenTests.cs`, and `tests/Vulgata.Tests/PreparedScanning/PreparedFileCodeUnitAndSelectionTests.cs` after T045; record valid 2.0 creation/validation, deterministic bytes/identities, symbol differentiation, invalid-symbol rejection, exact 1.0 golden compatibility, and unknown-domain rejection as compatibility evidence only.
+- [ ] T047 [US4] Run the two affected owned-resource fixtures `tests/Vulgata.Tests/PreparedScanning/PreparedScanReleaseQualificationTests.cs` and `tests/Vulgata.Tests/PreparedScanning/ReviewedExactProfileSeedPostgreSqlTests.cs` after T046; record the corrected compatibility outcome without changing profile, Scan, persistence, or historical-plan scope.
+- [ ] T048 [US4] Run the retained-source regression suites under `tests/Vulgata.Tests/RetainedSource/` after T047 using the approved Story 13.1 resources; confirm the compatibility correction leaves capture, scoped reads, authorization, persistence, migration, trusted-workspace, diagnostics, and separate-process behavior unchanged.
+- [ ] T049 [US4] Run the full owned repository suite from `specs/015-retained-source-access/quickstart.md` after T048, including `dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore`; record the tested build boundary and distinguish compatibility evidence from retained-source and unrelated historical results.
+- [ ] T041 Validate `specs/015-retained-source-access/quickstart.md` commands and distinct static/controlled/PostgreSQL/separate-process evidence after T049; leave later E2E predicates to the governed gate (FR-022; SC-009/010).
+- [ ] T042 Reconcile the T049 full-suite result with the retained-source, migration, Repository-management, and separate-process evidence after T049; confirm SC-001–SC-010 and no unrelated edits without rerunning an unchanged full command.
+- [ ] T043 Perform final traceability against `spec.md`, `plan.md`, `research.md`, `data-model.md`, `quickstart.md`, both contracts, and `docs/agent-workflow/e2e-decision-matrix.md` after T049; document source-only qualification and no composite Scan/Knowledge/Chat claim.
 
 ## Integrated group map and omission coverage
 
@@ -83,6 +94,10 @@ description: "Dependency-ordered tasks for Story 13.1 retained source access"
 | Trusted workspace | T033 | T034 | T034 | T032 |
 | Fresh process | test-only T035 | T002 scaffolding | T035/T036 | T032/T034 |
 | Logging | T039 | T040 | T040 | T019–T038 |
+| Canonical compatibility RED | T044 | T045 | T046 | T040 |
+| Affected compatibility fixtures | T044 | T045 | T047 | T046 |
+| Retained-source regression | T044 | T045 | T048 | T047 |
+| Full repository verification | T044 | T045 | T049 | T048 |
 
 | Omitted case from review | RED coverage | Production | GREEN |
 | --- | --- | --- | --- |
@@ -96,6 +111,6 @@ description: "Dependency-ordered tasks for Story 13.1 retained source access"
 
 ## Coverage and self-review
 
-FR-001–005: T004–T023. FR-006–014: T024–T030, T033–T034, T039–T040. FR-015–020: T014–T023, T031–T036. FR-021–022: T001–T003, T035–T043. SC-001/002: T008–T019. SC-003/004: T020–T030. SC-005: T009/T019/T026–T030. SC-006/007/008: T031–T036. SC-009/010: T001–T003/T035–T043.
+FR-001–005: T004–T023. FR-006–014: T024–T030, T033–T034, T039–T040. FR-015–020: T014–T023, T031–T036. FR-021–022: T001–T003, T035–T043, T048–T049. CP-FR-001–004: T044–T046. CP-SC-001–004: T044–T047. SC-001/002: T008–T019. SC-003/004: T020–T030. SC-005: T009/T019/T026–T030. SC-006/007/008: T031–T036/T048. SC-009/010: T001–T003/T035–T043/T048–T049.
 
-Self-review: IDs are sequential T001–T043; each referenced task exists and precedes its dependent GREEN claim; T004 is declarations only; T005 RED precedes T006 implementation and T007 GREEN; T020 is capture-only and open integrity belongs to T024/T025; T002 scaffolds the child before T035 qualification; T009 explicitly authors separate entry/blob/aggregate cap and deadline cases with distinct outcomes; all omitted review cases have explicit RED/production/GREEN mapping above; T019 is the PostgreSQL GREEN only after T015–T018, while T023 is the separate public deletion GREEN; PostgreSQL tests are owned and run after actual migration/configuration; Core exposes no workspace seam; no shared production tasks are marked parallel. Existing-correct qualification tasks T035/T037/T038/T041 are test-only and make no fabricated RED claim.
+Self-review: Stable IDs T001–T049 are preserved, with T001–T040 completed and T041–T043 pending; every new task has exact repository paths and explicit dependency edges; T044 is an honest public-seam RED covering the exact emitted 2.0 literal, determinism, symbol binding, invalid symbols, 1.0 golden compatibility, and closed unknown rejection; T045 is the single-file, single-literal GREEN prerequisite; T046, T047, T048, and T049 are independent focused, affected-fixture, retained-source, and full-suite verification slices in dependency order; T041–T043 explicitly depend on T049 without implying prior source tests were rerun; T004 is declarations only; T005 RED precedes T006 implementation and T007 GREEN; T020 is capture-only and open integrity belongs to T024/T025; T002 scaffolds the child before T035 qualification; T009 explicitly authors separate entry/blob/aggregate cap and deadline cases with distinct outcomes; all omitted review cases have explicit RED/production/GREEN mapping above; T019 is the PostgreSQL GREEN only after T015–T018, while T023 is the separate public deletion GREEN; PostgreSQL tests are owned and run after actual migration/configuration; Core exposes no workspace seam; no shared production tasks are marked parallel. Existing-correct qualification tasks T035/T037/T038/T041 and compatibility verification T046–T049 make no fabricated RED or composite Scan/Knowledge/Chat claim.
