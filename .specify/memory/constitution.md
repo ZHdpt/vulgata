@@ -175,9 +175,9 @@ re-enter through old specs or examples. Native CodeGraph is not CodeGraphContext
 
 ## Development Workflow & Quality Gates
 
-For BMad story work, follow the current `run-bmad-sprint-loop` skill and its
-[workflow architecture](../../docs/agent-workflow/architecture.md) and
-[state machine](../../docs/agent-workflow/state-machine.md). Resolve work from the
+For BMad story work, follow the installed `run-governed-delivery` skill and its
+[workflow architecture](../../.agents/skills/run-governed-delivery/references/architecture.md) and
+[state machine](../../.agents/skills/run-governed-delivery/references/state-machine.md). Resolve work from the
 [current backlog](../../docs/bmad/epics.md) and
 [tracker](../../docs/bmad/implementation-artifacts/sprint-status.yaml), then deliberately
 activate its feature. Historical specs and file modification times are not selectors.

@@ -21,8 +21,8 @@ definitions and historical passing tests do not prove the replacement workflow w
   requirements. Authority follows subject and accepted disposition, not file age.
 - **Deliver a story:** use [epics](docs/bmad/epics.md) for its definition and
   [sprint status](docs/bmad/implementation-artifacts/sprint-status.yaml) for lifecycle.
-  Follow the current `run-bmad-sprint-loop` skill and
-  [workflow architecture](docs/agent-workflow/architecture.md); preserve its current
+  Follow the installed [`run-governed-delivery`](.agents/skills/run-governed-delivery/SKILL.md) skill and
+  [workflow adoption](docs/agent-workflow/adoption-0.7.md); preserve its current
   model/escalation strategy and single-owner gates. Deliberately activate one feature.
 - **Write production code, APIs, UI or migrations:** read
   [development conventions](docs/agents/development.md) and the
@@ -32,8 +32,8 @@ definitions and historical passing tests do not prove the replacement workflow w
   Use owned resources and evidence appropriate to the claimed behavior.
 - **Explore domain decisions:** follow [domain guidance](docs/agents/domain.md).
   **Edit workflow customizations:** follow
-  [the customization rules](.github/instructions/sprint-loop-customizations.instructions.md).
-  Legacy Copilot delivery adapters are fenced; see project state before dispatching.
+  [the customization rules](.github/instructions/governed-delivery-customizations.instructions.md).
+  Governed delivery uses the installed Codex profiles; no Copilot workflow parity is claimed.
 - **Use GitHub issues:** follow [issue-tracker guidance](docs/agents/issue-tracker.md)
   and [triage labels](docs/agents/triage-labels.md); publishing requires task authority.
 
@@ -89,6 +89,15 @@ advances without this additional approval.
 
 ## Maintaining these instructions
 
+Governed delivery 0.7.0 is configured in `.governed-delivery/config.toml` with BMad
+6.12 and SpecKit 1.0.6. New stories use state 3.1; historical states/evidence stay
+unchanged. One retained definition author owns spec/plan/tasks and corrections;
+the independent reviewer retains review history. Coherent implementation groups
+retain separate test and production owners. Root owns bounded recovery, selective
+lookback, lifecycle/evidence/approvals and Git. Read the installed conditional
+references instead of reconstructing rules from historical workflow documents.
+Optional drafting questions are not approval; preserve every formal gate above.
+
 Keep always-needed constraints here and conditional details in linked project-local
 guides. After meaningful implementation or workflow changes, recheck the dated project
 state and affected pointers; correct obsolete facts instead of appending turn logs.
@@ -96,8 +105,9 @@ Preserve a pitfall until its cause is removed. `CLAUDE.md` links to this file; C
 and Trae entry points should route here rather than duplicate its rules.
 
 <!-- SPECKIT START -->
-Story 13.1 is active in specs/015-retained-source-access. Read its
-plan at specs/015-retained-source-access/plan.md and its workflow-state.json
-for the current stage and pending approvals. Existing specs/001 through specs/014
-retain historical scope. The selected plan does not bypass approval gates.
+Story 13.1 is complete in specs/015-retained-source-access. Its plan, workflow state
+and evidence record the completed boundary, not an active feature selection.
+No story is activated by workflow installation. Story 13.2 remains backlog;
+select and activate the next authorized story deliberately from the current tracker.
+Existing specs/001 through specs/015 retain historical scope and approval boundaries.
 <!-- SPECKIT END -->

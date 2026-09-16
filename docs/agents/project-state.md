@@ -34,17 +34,44 @@ verification before reuse.
   story workflow govern development. The constitution's 2.0.0 local amendment aligns
   prior conflicting rules; it does not claim maintainer PR review/merge.
 
-Story 13.1 deliberately activated `specs/015-retained-source-access`; its plan and
-workflow state govern current work. Specs 001–014 retain historical scope. The agent-context extension
-targets root AGENTS; pass the selected feature's actual plan path. Its no-argument
-auto-discovery chooses by modification time and must not select a historical plan.
-Optional after-specify refresh is inapplicable when that feature has no plan yet.
+No story is active after the workflow installation. Story 13.1's
+`specs/015-retained-source-access` plan, state and evidence are completed history;
+Story 13.2 remains backlog and requires deliberate activation. Specs 001–014 also
+retain historical scope. The agent-context extension targets root AGENTS; pass the
+selected feature's actual plan path. Its no-argument auto-discovery chooses by
+modification time and must not select a historical plan. Optional after-specify
+refresh is inapplicable when that feature has no plan yet.
 
 Story definitions were accepted under explicit approval for 13.1–13.3 and a scoped
 confidence delegation for the rest. That completed planning delegation is not standing
 authority to bypass a later feature's plan/tool/Scan/PRD or implementation approval.
 Use the current unified workflow and configured risk escalation; do not revive old
 Full/Standard/expedited or overnight/deadline waivers from historical handoffs.
+
+The installed workflow is governed-delivery 0.7.0, using BMad 6.12 and SpecKit
+1.0.6 through `.governed-delivery/config.toml`. Use `$run-governed-delivery`;
+new story states use schema 3.1. One persistent Sol/medium definition author owns
+spec, plan, tasks and later document corrections; each coherent implementation
+group retains separate Luna/high test and Sol/medium production owners. Root owns
+lifecycle, evidence, approvals, selective project lessons and Git. See the installed
+[agent catalog](../../.agents/skills/run-governed-delivery/references/agent-catalog.md)
+for conditional architecture/recovery escalation, and the
+[adoption record](../agent-workflow/adoption-0.7.md) for installation verification.
+Consumer development rules and planned-change/implementation approval gates remain
+in force; installation grants no product-story authorization.
+
+Existing story-state files and historical activation/epic receipts were not migrated.
+The aggregate validation reports 258 historical compatibility findings, broader than
+missing configuration; see the adoption record for the exact verification boundary.
+Completed pre-configuration checkpoints cannot be requalified by adding configuration
+today. In particular, strict Epic 13 closure remains blocked by Story 13.1's original
+pre-configuration checkpoint until a separately reviewed distribution compatibility
+fix is available. This installation grants no waiver: preserve historical state and
+commits rather than bypassing the gate. New configured checkpoints use the current
+contract. A genuinely active 3.0 state would need bounded root-owned adoption, not a
+bulk rewrite; no such current story was found. Project lessons are maintained
+selectively when warranted, not by creating an empty file or retrofitting completed
+stories.
 
 ## As-built reuse boundaries
 
@@ -84,11 +111,14 @@ remain deferred; native CodeGraph/internal wiki tools do not complete general MC
 
 ## Harness compatibility
 
-Root `CLAUDE.md` is a symlink to AGENTS; Copilot and Trae share root guidance. The
-current Codex role configuration follows the unified workflow. Legacy Copilot
-sprint-loop role allowlists/test-ownership adapters are not synchronized with that
-workflow and are fenced from current delivery dispatch. Updating their roles/models/
-tool permissions is a separate bounded adapter task, not a memory refresh.
+Root `CLAUDE.md` is a symlink to AGENTS; Copilot and Trae share root guidance.
+Only the installed Codex governed-delivery profiles currently support governed
+story delivery. Obsolete Copilot sprint-loop agents and run/close prompts were
+removed; remaining unrelated helpers are not alternative delivery orchestrators.
+Copilot/Trae assistance remains subject to AGENTS and must not imply workflow
+harness parity. Start a fresh Codex session after installation so the new skills and
+profiles are discovered. Any other delivery-harness adapter requires a separate
+bounded compatibility task.
 Scan architecture helpers use current authorities; July work requires explicit
 historical scope. Legacy test/seeding recipes grant no runtime or credential authority.
 

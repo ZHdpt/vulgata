@@ -1,37 +1,33 @@
-# Sprint Loop Customization Guide
+# Vulgata governed-delivery customization
 
-## Stable Spine
+The portable workflow owns its installed skills, profiles, adapters and validators.
+Vulgata owns [AGENTS.md](../../AGENTS.md), the Constitution, product authorities,
+build/test commands, lifecycle artifacts and local approval requirements. Configure
+the integration through `.governed-delivery/config.toml`; do not fork copied
+workflow contracts or edit upstream BMad, SpecKit or unrelated skills incidentally.
 
-Preserve these invariants when adapting the workflow:
+Use the installed [catalog](../../.agents/skills/run-governed-delivery/references/agent-catalog.md)
+and [dispatch contract](../../.agents/skills/run-governed-delivery/references/dispatch-contract.md).
+Preserve direct-child roles, disjoint writes, independent reviews and root-only
+lifecycle/evidence/Git authority. Local policy may add constraints; it does not
+silently remove approval gates, refresh retry allowance or combine authors/reviewers.
 
-1. BMad owns queue/lifecycle; one story maps to one SpecKit feature.
-2. Spec, plan, and tasks each self-review, then one independent definition reviewer judges the complete set.
-3. Repository planned-change authorization remains after accepted early plan review and before tasks.
-4. Observable behavior changes use honest RED then minimal GREEN.
-5. Implementation repeats until speckit-converge reports clean.
-6. One independent quality review examines the converged boundary.
-7. E2E is predicate-driven; final verification is pinned.
-8. The active root alone writes lifecycle/state and commits explicit owned paths.
-9. Epic close retains exact-commit verification and independent architecture audit.
+Keep consumer guidance short and link to installed references. Changes to portable
+behavior belong in the distribution project and need a reviewed release; changes to
+consumer policy need appropriate Vulgata authority. A different delivery harness
+requires explicit compatibility work, not a renamed entry point.
 
-## Model Policy
-
-Defaults are stored in `.codex/agents/*.toml` and summarized in agent-catalog.md. Luna/high owns context, tests, convergence, and E2E; Luna/medium owns tasks; Sol/medium owns orchestration, specification, planning, production, definition review, and quality review. Escalate named architecture/risk work to Sol/high and record the trigger in the dispatch.
-
-Changing model IDs must preserve sandbox and write boundaries. Cost reduction cannot combine author and independent reviewer or let a test author edit production.
-
-## Progressive Disclosure
-
-Keep run-bmad-sprint-loop as the short executable spine. Put schema details in artifact-contracts, invalidation/migration in state-machine, models in agent-catalog, corrections in review-and-correction, and operational examples here. One rule has one authoritative home; other documents link rather than restate it.
-
-## Validation
-
-After customization, run:
+After an authorized integration change, run:
 
 ```powershell
-python .agents/skills/run-bmad-sprint-loop/scripts/validate_workflow.py --repo .
-cd .agents/skills/run-bmad-sprint-loop/scripts
-python -m unittest tests.test_validate_workflow
+python .agents/skills/run-governed-delivery/scripts/check_dependencies.py --target .
+python .agents/skills/run-governed-delivery/scripts/validate_workflow.py --repo .
+git diff --check
 ```
 
-Also verify model-visible discovery from a fresh repository session. Do not modify installed upstream BMad, SpecKit, or Matt Pocock skills; adapt them through repository-owned orchestration roles and contracts.
+Report historical compatibility findings separately, including pre-configuration
+checkpoint failures, as explained in [adoption](adoption-0.7.md); do not rewrite
+completed stories to make an aggregate check pass. Those findings are not waived
+for affected future gates. Validate the changed contract at its source and verify
+fresh-session discovery. Live agent forward-testing is not a prerequisite, and
+installation checks are not product/runtime qualification.

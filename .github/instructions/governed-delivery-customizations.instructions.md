@@ -1,9 +1,9 @@
 ---
-description: "Use when editing sprint-loop customizations under .github. Preserve current workflow ownership and flag adapter incompatibility."
+description: "Use when editing delivery customizations under .github. Preserve governed workflow ownership and harness boundaries."
 applyTo: ".github/agents/*.agent.md, .github/prompts/*.prompt.md, .github/hooks/*.json, .github/hooks/scripts/*.ps1, .github/instructions/*.instructions.md"
 ---
 
-# Sprint-loop customization rules
+# Governed delivery customization rules
 
 - Read root [AGENTS.md](../../AGENTS.md) and the current
   [workflow architecture](../../docs/agent-workflow/architecture.md),
@@ -13,13 +13,14 @@ applyTo: ".github/agents/*.agent.md, .github/prompts/*.prompt.md, .github/hooks/
   do not reproduce obsolete v1 gate rules here.
 - Use native Copilot discovery locations: `.github/agents`, `.github/prompts`,
   `.github/instructions` and `.github/hooks`. Prompts are entry points; durable
-  workflow law remains in `docs/agent-workflow/`.
+  workflow law remains in `.agents/skills/run-governed-delivery/`; `docs/agent-workflow/`
+  contains consumer adoption guidance and forwarding links, not copied contracts.
 - Preserve direct-child workflow topology and disjoint writes. The active root alone
   owns lifecycle/state and authorized commits; tests, production, convergence and
   independent reviewers follow the current catalog rather than an old combined role.
-- Current Copilot sprint-loop role adapters are not synchronized with the unified
-  workflow and are fenced from delivery dispatch. Their presence is not harness
-  parity. Synchronization is a separate bounded task; do not expand permissions or
+- The obsolete Copilot sprint-loop roles and entry points were removed. The installed
+  Codex profiles are the supported governed-delivery route; unrelated Copilot helpers
+  do not establish harness parity. Synchronization is a separate task; do not expand permissions or
   change models/allowlists as incidental memory maintenance.
 - Reference installed skills/adapters rather than copying their bodies. Keep hooks
   small, auditable and repository-relative. Git safety must protect destructive or
