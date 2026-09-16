@@ -132,9 +132,9 @@
   "checkpoint": {
     "checkpoint_id": "bmad-13-1-complete-20260916T124058Z-a927b9",
     "stage": "complete",
-    "commit_sha": null,
-    "binding_status": "pending"
+    "commit_sha": "6f312858264ecba8088c87c6b09a00813a652091",
+    "binding_status": "bound"
   },
   "resume": null,
-  "updated_at": "2026-09-16T12:40:58.344738Z"
+  "updated_at": "2026-09-16T12:42:25.276972Z"
 }
