@@ -1,0 +1,36 @@
+{
+  "id": "13-1/implement/147",
+  "kind": "command",
+  "stage": "implement",
+  "source_commit": "f2b040edc3b95bf40b9779c90ee9fa782efc6394",
+  "observed_at": "2026-09-16T11:27:41.882660Z",
+  "checkpoint_id": "bmad-13-1-test-repair-20260916T112741Z-5fe095",
+  "expected_parent": "f2b040edc3b95bf40b9779c90ee9fa782efc6394",
+  "owned_paths": [
+    "docs/agents/project-state.md",
+    "docs/bmad/implementation-artifacts/13-1-retain-exact-repository-source-with-scoped-read-access.md",
+    "specs/015-retained-source-access/evidence/baseline-reconciliation-approval-04.json",
+    "specs/015-retained-source-access/evidence/baseline-reconciliation-checkpoint-04.json",
+    "specs/015-retained-source-access/evidence/baseline-reconciliation-proposal-04.md",
+    "specs/015-retained-source-access/evidence/baseline-reconciliation-proposal-04.patch",
+    "specs/015-retained-source-access/evidence/baseline-reconciliation-verified-04.json",
+    "specs/015-retained-source-access/evidence/capacity-observation-diagnosis-01.json",
+    "specs/015-retained-source-access/evidence/full-suite-failures-03.json",
+    "specs/015-retained-source-access/evidence/full-suite-isolated-diagnosis-03.json",
+    "specs/015-retained-source-access/evidence/full-suite-verified-04.json",
+    "specs/015-retained-source-access/evidence/traceability-01.md",
+    "specs/015-retained-source-access/tasks.md",
+    "specs/015-retained-source-access/workflow-state.json",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1ProductionExecutionCapacityTests.cs"
+  ],
+  "git_identity": {
+    "branch": "dev",
+    "head": "f2b040edc3b95bf40b9779c90ee9fa782efc6394",
+    "root": "G:/source/repos/vulgata",
+    "common_directory": ".git",
+    "worktree": "G:\\source\\repos\\vulgata"
+  },
+  "observed_status": " M docs/agents/project-state.md\n M docs/bmad/implementation-artifacts/13-1-retain-exact-repository-source-with-scoped-read-access.md\n M specs/015-retained-source-access/evidence/traceability-01.md\n M specs/015-retained-source-access/tasks.md\n M specs/015-retained-source-access/workflow-state.json\n M tests/Vulgata.Tests/PreparedPass1/Pass1ProductionExecutionCapacityTests.cs\n?? specs/015-retained-source-access/evidence/baseline-reconciliation-approval-04.json\n?? specs/015-retained-source-access/evidence/baseline-reconciliation-proposal-04.md\n?? specs/015-retained-source-access/evidence/baseline-reconciliation-proposal-04.patch\n?? specs/015-retained-source-access/evidence/baseline-reconciliation-verified-04.json\n?? specs/015-retained-source-access/evidence/capacity-observation-diagnosis-01.json\n?? specs/015-retained-source-access/evidence/full-suite-failures-03.json\n?? specs/015-retained-source-access/evidence/full-suite-isolated-diagnosis-03.json\n?? specs/015-retained-source-access/evidence/full-suite-verified-04.json\n",
+  "observed_index_paths": [],
+  "summary": "Userapprovedexacttestrepair, actualfailedandpassingverification evidence; fullsuitepasses, renewedgatespending."
+}

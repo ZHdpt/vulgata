@@ -1,0 +1,16 @@
+{
+  "id": "13-1/implement/142",
+  "kind": "failure",
+  "stage": "implement",
+  "source_commit": "f2b040edc3b95bf40b9779c90ee9fa782efc6394",
+  "observed_at": "2026-09-16T09:23:51.551000Z",
+  "summary": "Exact7isolated rerun:6pass1fail. Four cleanup timeouts and two streaming failures do not reproduce. Capacity assertion observes Running after alljobslaunch plus250ms delay. Root retains original failure; next single-case diagnostic pending.",
+  "raw_log": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\isolated-seven-20260916\\isolated-seven.log",
+  "log_sha256": "785a21722f245c33ff121039939f7e0e0b9eb399732a6ada5618706c886319cb",
+  "outcomes": {
+    "Passed": 6,
+    "Failed": 1
+  },
+  "evidence_limit": "Worker removed generated workspace TRX without preserving private copy; only raw console log survives. No rawTRX hash/count claims are made for this rerun.",
+  "source_changed": false
+}

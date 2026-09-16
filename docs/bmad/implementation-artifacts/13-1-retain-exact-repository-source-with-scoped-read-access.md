@@ -476,3 +476,15 @@ Independent quality review returnedREVISE with twoHIGH implementation findings: 
 ## Quality corrections verified
 
 QR001 now sanitizes unexpected authorization and snapshot repository failures at grant-open and live operations. QR002 passes operation cancellation through production Identity user and role stores. Honest RED/minimal GREEN and independent tests are recorded in evidence130-139. Retained-source166passes/4child-only skips and final Identity3/3 pass; fresh full suite, convergence, quality review and E2E remain pending. Approved intent is unchanged.
+
+## Post-correction full-suite diagnosis
+
+At checkpointf2b040ed, fullsuite3127passes/7failures/15skips. All7new review regression cases pass. Six full failures do not reproduce in isolation; the remaining unchanged legacy capacity test repeatedly reads Running after a250ms fixed sleep following worker launch. Proposal04 contains the exact un-applied bounded polling edit and awaits separate scope approval. Production remains unchanged; fullsuite and downstream gates remain open. The two full-run target databases were cleaned up under their recorded ownership.
+
+## Proposal04 approval recorded
+
+User explicitly approved the exact proposal/patch scope27852d3c3814f8f77351d9a49ab774a22d185b3bd2b9ad3e81ae7aa0bfd15336. Only the fixed terminal-observation sleep/read may become existing bounded8secondpolling; launchwait/count/ReadyForResolution assertions remain. Stop this remediation if the affectedtest fails, preserving elapsed/count/state/reconciliation evidence. Original fullsuite launchwaitfailure and isolatedterminalstatefailure remain distinct; pollingpass cannot explain the former. No production, additional legacy repairs, new skips or repeated unchanged attempts are authorized. Evidence baseline-reconciliation-approval-04.json.
+
+## Proposal04 and controlled full suite verified
+
+The exactapproved testpatch replaces only terminal sleep/read with existing8secondpolling. Affected1/1andneighbors3/3passed. Root removed worker-introduced formattingnoise beforefullrun. Controlledfullsuite (collectionparallelismdisabled) passed3134/3149with15unchangedskips and0failures in34m58s; source166passes/4child-onlyskips; Web0errors9warnings.929inputs unchanged and historicalreports restored. Both full-run ownedtargetDBs removed. Originalfullsuite launchwaitfailure (48launched) remainsunexplained; passingterminalpoll doesnotexplainit. T041-T043/T049close; renewedconvergence/quality/requiredHTTP E2E/finalgates pending. Evidence145-146.

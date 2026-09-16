@@ -1,0 +1,52 @@
+{
+  "id": "13-1/implement/145",
+  "kind": "test-green",
+  "stage": "implement",
+  "source_commit": "f2b040edc3b95bf40b9779c90ee9fa782efc6394",
+  "observed_at": "2026-09-16T10:48:31.227655Z",
+  "approval_scope_sha256": "27852d3c3814f8f77351d9a49ab774a22d185b3bd2b9ad3e81ae7aa0bfd15336",
+  "reports": [
+    {
+      "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\proposal04-affected-20260916\\proposal04-affected.trx",
+      "trx_sha256": "f8e9f226c6ee7646186e165d2e625e6af653e12cd1e017cbf7ed504975cd793c",
+      "raw_log": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\proposal04-affected-20260916\\proposal04-affected.log",
+      "log_sha256": "d1650607172b0f26736ca310a77ffcceeb99cfb03f64bbc8ef215f9269b62ec6",
+      "tests": [
+        {
+          "name": "Vulgata.Tests.PreparedPass1.Pass1ProductionExecutionCapacityTests.TerminalWorkerResults_StopLaunchAndDrainLocallyBeforeFreshDurableExhaustion",
+          "outcome": "Passed",
+          "duration": "00:00:16.6283166"
+        }
+      ]
+    },
+    {
+      "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\proposal04-neighbors-20260916\\proposal04-neighbors.trx",
+      "trx_sha256": "3b10f4ee0d448400b23d18f68965ab8fb405f8de8a0ec5c8d14bac2974585990",
+      "raw_log": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\proposal04-neighbors-20260916\\proposal04-neighbors.log",
+      "log_sha256": "88f5df1613af6d940c7e69c0d4509572a5d54960110a6e346c37f5951ca4e961",
+      "tests": [
+        {
+          "name": "Vulgata.Tests.PreparedPass1.Pass1ProductionExecutionCapacityTests.FullyDrainedPair_UsesReconcileAsTheSoleNormalTerminalTransaction_AndLeavesNoReconcilingState",
+          "outcome": "Passed",
+          "duration": "00:00:09.7755359"
+        },
+        {
+          "name": "Vulgata.Tests.PreparedPass1.Pass1ProductionExecutionCapacityTests.FullyDrainedPair_AuthenticatedAdministratorWithoutOwnerAssignment_ReconcilesNormally",
+          "outcome": "Passed",
+          "duration": "00:00:14.1369162"
+        },
+        {
+          "name": "Vulgata.Tests.PreparedPass1.Pass1ProductionExecutionCapacityTests.ReconciliationConflict_ReloadsAndRetriesOnlyTheSameStillEligibleTerminalPair",
+          "outcome": "Passed",
+          "duration": "00:00:08.6846589"
+        }
+      ]
+    }
+  ],
+  "target_preimage_sha256": "2850693c68d0d51685e716323049fcb1a2fc200992a3fcba9b4dc52c7edea8ab",
+  "tested_file_sha256": "01cf1029fdb9ea6c3fb670aa42c83fe222af6eb864d52103653d123c9e4823c3",
+  "exact_patch_file_sha256": "81c3e6bfa836dffc17d33ed158743257b0f1dd5e6a51f0004a4651e83a77cec5",
+  "formatting_correction": "Worker turn introduced unrelated whitespace formatting despite exactpatch instruction; root observed file clean beforedispatch. Root restored exactapprovedpreimage plusapprovedpatch. Focused runs included formattingnoise; final fullsuite will build exactpatch. No repeatedfocused rerun solelytogetgreen.",
+  "failure_distinction": "Original full-suite failure was8second launchwait (48launched); isolatedfailure was terminal Running afteralllaunched+250ms. Passingboundedterminalpoll doesnotexplain original launchfailure.",
+  "summary": "Affected1/1pass and3neighbor passes. Approved assertions andlaunchbound unchanged; freshcontrolledfullsuite remainsrequired."
+}

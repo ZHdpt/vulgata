@@ -1,0 +1,16 @@
+{
+  "id": "13-1/implement/143",
+  "kind": "failure",
+  "stage": "implement",
+  "source_commit": "f2b040edc3b95bf40b9779c90ee9fa782efc6394",
+  "observed_at": "2026-09-16T09:27:15.722821Z",
+  "summary": "Single capacity test with collectionparallelism disabled stillobserves Running afterallworkersstarted plus250ms. Test and PreparedPass1Store unchanged fromactivationbase. This supports observationrace; direct completioneventtrace absent. Proposed test-only boundedpolling has NOT been applied or verified.",
+  "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter FullyQualifiedName=Vulgata.Tests.PreparedPass1.Pass1ProductionExecutionCapacityTests.TerminalWorkerResults_StopLaunchAndDrainLocallyBeforeFreshDurableExhaustion --logger trx;LogFileName=capacity-single.trx --results-directory <owned-private-root> -- xUnit.ParallelizeTestCollections=false",
+  "outcomes": {
+    "Failed": 1
+  },
+  "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\capacity-single-20260916\\capacity-single.trx",
+  "trx_sha256": "008cfec048d05924b24116b14dabf6c09207210a147d64fc7b66bf66947ef779",
+  "raw_log": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\capacity-single-20260916\\capacity-single.log",
+  "log_sha256": "75890e431f1f3fd1a0a443fd1f884b287adf8a9470bf34f87f39408bcd86b16c"
+}

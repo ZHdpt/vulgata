@@ -1,0 +1,80 @@
+{
+  "id": "13-1/implement/146",
+  "kind": "test-green",
+  "stage": "implement",
+  "source_commit": "f2b040edc3b95bf40b9779c90ee9fa782efc6394",
+  "observed_at": "2026-09-16T11:27:05.268592Z",
+  "summary": "Exactapprovedproposal04 plusverifiedsourcequalitycorrections: controlledfullsuite3134passes/15unchangedskips/0failures; Web0errors9existingwarnings.929inputs unchanged. No reruns ofthisfullattempt.",
+  "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --logger trx;LogFileName=full-suite.trx --results-directory <owned-run-root> -- xUnit.ParallelizeTestCollections=false",
+  "duration": "34m58s",
+  "outcomes": {
+    "Passed": 3134,
+    "NotExecuted": 15
+  },
+  "retained_source_outcomes": {
+    "Passed": 166,
+    "NotExecuted": 4
+  },
+  "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\full-suite-11747a86db3f4b0497b2cbcf27950288\\full-suite.trx",
+  "trx_sha256": "2ab523e388b70f934c10bdedd7a18ad03db9641cfba01b37d239794ffe6841af",
+  "raw_log": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\full-suite-11747a86db3f4b0497b2cbcf27950288\\full-suite.log",
+  "log_sha256": "64c9ded9b9df16c1343122f0935cb3f8d0d2427f2d5c9e2a607debe2fff4df8f",
+  "skipped_tests": [
+    "Vulgata.Tests.PreparedPass1.Pass1DeepSeekContractQualificationTests.SourceFreeHandshake_LiveBetaCapability_WritesSanitizedEvidenceAsync",
+    "Vulgata.Tests.PreparedPass1.Pass1DeepSeekContractQualificationTests.ApprovedFileCodeUnit_DeepSeekResponse_IsSchemaValidAtDispatcherSeamAsync",
+    "Vulgata.Tests.PreparedPass1.Pass1HostRuntimeQualificationTests.ProductionComposition_RequiresBoundRevisionSourceBeforeClaimedNavigation",
+    "Vulgata.Tests.PreparedScanning.PreparedScanStoreRegressionTests.PreparedStore_ConcurrentIdenticalWriters_CommitOnceAndReplayOnceAsync",
+    "Vulgata.Tests.PreparedPass1.Pass1HostRuntimeQualificationTests.PinnedHostTools_AreExactAndJdtLsUsesStdioFactory",
+    "Vulgata.Tests.PreparedPass1.Pass1ProductionExecutionTests.HostedRevisionBinding_CurrentRunningPair_LoadsAndAcquiresExactTwoRequestsAsync",
+    "Vulgata.Tests.PreparedPass1.Pass1ProductionProviderOutageTests.AuthenticatedRealPair_ProviderUnavailable_PausesDurablyAndStopsNewDispatch",
+    "Vulgata.Tests.PreparedPass1.Pass1ProductionExecutionTests.AuthenticatedApprovedPair_StartsRealRunAtEveryLimit_AndPersistsTerminalEvidence",
+    "Vulgata.Tests.RetainedSource.RetainedSourceSeparateProcessChildTests.OpenReadContextAsync_WhenRetainedBlobIsCorrupt_DeniesWithoutContext",
+    "Vulgata.Tests.PreparedPass2.Pass2ProductionQualificationTests.ApprovedTwoRepositoryPair_ProducesSanitizedSourceGroundedBusinessDocumentAsync",
+    "Vulgata.Tests.PreparedPass1.Pass1HostRuntimeQualificationTests.PinnedRuntimeQualification_MustReachAuthenticatedPreparedPass1Execution",
+    "Vulgata.Tests.RetainedSource.RetainedSourceSeparateProcessChildTests.OpenReadContextAsync_FromFreshProductionComposition_ReadsRetainedBytesAfterRemoteUnavailable",
+    "Vulgata.Tests.RetainedSource.RetainedSourceSeparateProcessChildTests.CaptureAsync_WhenParentTerminatesAfterSeal_LeavesOwnedAbandonedOperation",
+    "Vulgata.Tests.RetainedSource.RetainedSourceSeparateProcessChildTests.CaptureAsync_FromFreshProductionComposition_CompletesAndRecordsIdentity",
+    "Vulgata.Tests.PreparedPass1.Pass1DeepSeekIsolatedSourceQualificationTests.ThreeIsolatedSourceJobs_CompleteCommitAndReplayWithoutLeakingPayloadsAsync"
+  ],
+  "capacity_test": [
+    {
+      "name": "Vulgata.Tests.PreparedPass1.Pass1ProductionExecutionCapacityTests.TerminalWorkerResults_StopLaunchAndDrainLocallyBeforeFreshDurableExhaustion",
+      "outcome": "Passed",
+      "duration": "00:00:07.4446491"
+    }
+  ],
+  "source_manifest": {
+    "raw_path": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\full-suite-11747a86db3f4b0497b2cbcf27950288\\tested-source-manifest.json",
+    "file_sha256": "58119c71405167b2261521e0c34c28cb54a70937bc5b144622ab510094c52005",
+    "entries_sha256": "40d8064dbe9938e7ddaa3ed2caa193cd3006fda3b651f1d4c1a2cbd9d2c22439",
+    "count": 929,
+    "drift": []
+  },
+  "web_build": {
+    "exit_code": 0,
+    "warnings": 9,
+    "errors": 0,
+    "raw_log": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\full-suite-11747a86db3f4b0497b2cbcf27950288\\web-build.log",
+    "sha256": "d99c3762beb9c2e9a962a4e6eab88409b475e91b65f535856e47a2136b4ffacb"
+  },
+  "runtime_ownership": {
+    "root": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\full-suite-11747a86db3f4b0497b2cbcf27950288",
+    "default_database": "vulgata_story131_ec073e7aa8a947b3b758d5504ccbe8bf",
+    "database": "vulgata_story131_524f7cb8002e464ca16a3d57f9973768",
+    "container_id": "04df68dff01aa09fb1a3003f088d86fdc49f63161fb9504629e1f0b545918946",
+    "created_at": "2026-09-16T10:49:10.3379094Z"
+  },
+  "runtime_cleanup": {
+    "databases": [
+      "vulgata_story131_524f7cb8002e464ca16a3d57f9973768",
+      "vulgata_story131_ec073e7aa8a947b3b758d5504ccbe8bf"
+    ],
+    "dropped_at": "2026-09-16T11:26:07.7233295Z",
+    "container_id": "04df68dff01aa09fb1a3003f088d86fdc49f63161fb9504629e1f0b545918946"
+  },
+  "historical_reports_restored": [
+    "artifacts/qualification/story-12.2/production-literal-inspection.json",
+    "artifacts/qualification/story-12.3/production-boundary-inspection.json"
+  ],
+  "limits": "Controlled collection scheduling is evidence for this execution only; original8secondlaunchwaitfailure with48launched remains unexplained, distinct from repairedterminalobservation. Internaltestconcurrency assertions remain. No genericScan/Knowledge/Chat/tools/provider qualification."
+}

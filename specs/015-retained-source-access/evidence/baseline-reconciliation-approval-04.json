@@ -1,0 +1,31 @@
+{
+  "id": "13-1/implement/144",
+  "kind": "human-approval",
+  "stage": "implement",
+  "source_commit": "f2b040edc3b95bf40b9779c90ee9fa782efc6394",
+  "observed_at": "2026-09-16T10:41:46.826878Z",
+  "decision_id": "13-1/baseline-reconciliation/4",
+  "status": "accepted",
+  "scope_sha256": "27852d3c3814f8f77351d9a49ab774a22d185b3bd2b9ad3e81ae7aa0bfd15336",
+  "scope_algorithm": "SHA256 of canonical sorted-key compact JSON mapping proposal and patch paths to exact byte SHA256",
+  "artifact_hashes": {
+    "specs/015-retained-source-access/evidence/baseline-reconciliation-proposal-04.md": "6baa9688bb6afa9ffb1f42677cbc5adae64f54d0dc0ed66e0d9e87757b4c619f",
+    "specs/015-retained-source-access/evidence/baseline-reconciliation-proposal-04.patch": "884a4fd44b12a11dd82ba520cb3220426f45a66077b5ed308fee3d42226a9e47"
+  },
+  "target_path": "tests/Vulgata.Tests/PreparedPass1/Pass1ProductionExecutionCapacityTests.cs",
+  "target_preimage_sha256": "2850693c68d0d51685e716323049fcb1a2fc200992a3fcba9b4dc52c7edea8ab",
+  "authorized_change": "Only TerminalWorkerResults_StopLaunchAndDrainLocallyBeforeFreshDurableExhaustion: replace250ms sleep/single read with existing WaitForDrainedStatusAsync8secondpoll. Preserve launchtimeout/countassertions/ReadyForResolution.",
+  "verification": [
+    "Affected test and neighboring capacity/reconciliation tests on existing approved owned resources",
+    "One controlled full suite, preserving actualresults",
+    "Distinguish original full-suite launch-wait failure from isolatedterminal-state failure; pollingpass doesnot explain launchfailure"
+  ],
+  "limits": [
+    "No production changes or broader legacyrefactor",
+    "No testdeletion/assertionweakening/launchtimeoutincrease/newskips/quarantines/exclusions",
+    "No unchanged reruns merelytoobtaingreen",
+    "If affectedtest fails stop remediation and report elapsedtime,count,state,reconciliation evidence",
+    "Classifyotherfailures separately; noadditionaloutofscope repairs",
+    "Resume convergence/quality/HTTP E2E/finalverification onlyaftersuccess; no13.1completion/13.2activation beforegates"
+  ]
+}

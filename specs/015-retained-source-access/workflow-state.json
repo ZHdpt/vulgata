@@ -3,13 +3,13 @@
   "bmad_story_key": "13-1-retain-exact-repository-source-with-scoped-read-access",
   "bmad_epic_key": "epic-13",
   "feature_directory": "specs/015-retained-source-access",
-  "stage": "implement",
+  "stage": "converge",
   "preflight": {
     "branch": "dev",
-    "head": "deea5f1e0b9cc8f435a77bf179d5576d47e9a41f",
-    "git_identity_sha256": "4d7c8318424abf9e0867540d398002d8046b029d1cd1e52ea98962a939cd013b",
-    "status_sha256": "aa62fae8414cb3d915aad71b11389e59affdcc8c88d950d40ef4299bd1d41a45",
-    "observed_at": "2026-09-16T08:56:51.289374Z"
+    "head": "f2b040edc3b95bf40b9779c90ee9fa782efc6394",
+    "git_identity_sha256": "6db91742edcd6b73b2832a3f3f78396c594c66ea725cb935c0509ff6a4a534d9",
+    "status_sha256": "636e93525caf2ce2cf94965acd8025ec4e7f28e6cf250471d35a815bffb6a406",
+    "observed_at": "2026-09-16T11:27:41.882660Z"
   },
   "artifacts": {
     "spec": {
@@ -22,7 +22,7 @@
     },
     "tasks": {
       "path": "specs/015-retained-source-access/tasks.md",
-      "sha256": "21331720ce1f75649f2ed56a0890339bfe7adb1ffc9ab4c6decf6d348d157d1e"
+      "sha256": "753e456a37d04bcc5cacc35313f58e27a33c47481a567bf678b3fa5777f77b46"
     }
   },
   "gates": {
@@ -96,6 +96,13 @@
       "scope_sha256": "796eee971fc5f9b1ff003468602bd7ddab3a2356d2e9fce02a2445e671a327fa",
       "evidence_path": "specs/015-retained-source-access/evidence/canonical-correction-implementation-approval-02.json",
       "decided_at": "2026-09-16T06:03:12.857870Z"
+    },
+    {
+      "decision_id": "13-1/baseline-reconciliation/4",
+      "status": "accepted",
+      "scope_sha256": "27852d3c3814f8f77351d9a49ab774a22d185b3bd2b9ad3e81ae7aa0bfd15336",
+      "evidence_path": "specs/015-retained-source-access/evidence/baseline-reconciliation-approval-04.json",
+      "decided_at": "2026-09-16T10:41:46.826878Z"
     }
   ],
   "convergence": {
@@ -109,28 +116,29 @@
     "decision_path": null
   },
   "current_evidence_paths": [
-    "specs/015-retained-source-access/evidence/plan-authorization-01.md",
-    "specs/015-retained-source-access/evidence/implementation-approval-01.md",
-    "specs/015-retained-source-access/evidence/definition-review-06.json",
-    "specs/015-retained-source-access/evidence/canonical-correction-implementation-approval-02.json",
-    "specs/015-retained-source-access/evidence/canonical-correction-core-verified-01.json",
-    "specs/015-retained-source-access/evidence/canonical-correction-source-verified-01.json",
     "specs/015-retained-source-access/evidence/full-suite-verified-02.json",
     "specs/015-retained-source-access/evidence/convergence-report-01.json",
     "specs/015-retained-source-access/evidence/converged-candidate-checkpoint-01.json",
     "specs/015-retained-source-access/evidence/quality-review-01.json",
-    "specs/015-retained-source-access/evidence/quality-corrections-verified-01.json"
+    "specs/015-retained-source-access/evidence/quality-corrections-verified-01.json",
+    "specs/015-retained-source-access/evidence/full-suite-failures-03.json",
+    "specs/015-retained-source-access/evidence/full-suite-isolated-diagnosis-03.json",
+    "specs/015-retained-source-access/evidence/capacity-observation-diagnosis-01.json",
+    "specs/015-retained-source-access/evidence/baseline-reconciliation-proposal-04.md",
+    "specs/015-retained-source-access/evidence/baseline-reconciliation-approval-04.json",
+    "specs/015-retained-source-access/evidence/baseline-reconciliation-verified-04.json",
+    "specs/015-retained-source-access/evidence/full-suite-verified-04.json"
   ],
   "checkpoint": {
-    "checkpoint_id": "bmad-13-1-quality-correction-20260916T085651Z-63e97c",
+    "checkpoint_id": "bmad-13-1-test-repair-20260916T112741Z-5fe095",
     "stage": "implement",
     "commit_sha": null,
     "binding_status": "pending"
   },
   "resume": {
-    "stage": "implement",
-    "reason": "Quality corrections independently verified; checkpoint, then fresh full suite, convergence, quality, E2E and final verification.",
-    "evidence_path": "specs/015-retained-source-access/evidence/quality-corrections-verified-01.json"
+    "stage": "converge",
+    "reason": "All49tasksverified; controlledfullsuite3134/0/15. Rerunconvergence thenfreshquality,requiredHTTP E2Eandfinalverification.",
+    "evidence_path": "specs/015-retained-source-access/evidence/full-suite-verified-04.json"
   },
-  "updated_at": "2026-09-16T08:56:51.289374Z"
+  "updated_at": "2026-09-16T11:27:41.882660Z"
 }

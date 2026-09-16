@@ -5,10 +5,12 @@ publication/recovery, cleanup, trusted-workspace and fresh-process reopen eviden
 with the remote unavailable. Source-only boundaries/diagnostics pass; the full suite
 has verified baseline test repairs. The independently reviewed, user-approved
 canonical identity domain correction is verified by19Core,28affected-fixture and
-159retained-source passes. The prior full run passed3127tests with15explicit skips
-and Web build0errors. Quality review then found read-authorization failure/deadline
-gaps; both in-scope TDD corrections now pass focused verification (166 source passes,
-4 child-only skips). Fresh full-suite, convergence/review and final gates remain pending.
+159retained-source passes. The two source quality findings are corrected and independently tested. The exact
+approved capacity-test polling repair and neighbors pass. A controlled full suite
+now passes3134tests with15existing skips; retained-source166passes/4child-onlyskips
+and Web build0errors/9warnings. The prior launch-wait failure remains unexplained
+and is distinct from the repaired terminal-state observation. Renewed convergence,
+quality review, required HTTP E2E and final gates remain pending.
 Use the active feature workflow state for its latest bound checkpoint. Other as-built
 notes retain static baseline `2bb83c3b44fc0afc07ae253ec1df5fab4399b964`. Reobserve the
 assigned checkout, tracker and source before reuse; do not require an old worktree or
@@ -50,7 +52,7 @@ runtime workflow:
 | Area | Existing value and limit |
 | --- | --- |
 | Administration/persistence | Reusable Identity, roles, configuration and domain persistence; Identity remains in Web/Data. |
-| Source preparation | Story 13.1 has verified raw-Git retained capture, canonical manifests, and scoped metadata and byte/text reads. Live denial, concurrent publication and controlled process-crash cleanup are verified; trusted workspace materialization is verified; fresh-process remote-unavailable reopen is verified; source-only boundaries and diagnostics are verified; full-suite legacy failures and final gates remain pending in the active feature. Legacy disposable leases and prepared pair contracts remain separate. |
+| Source preparation | Story 13.1 has verified raw-Git retained capture, canonical manifests, and scoped metadata and byte/text reads. Live denial, concurrent publication and controlled process-crash cleanup are verified; trusted workspace materialization is verified; fresh-process remote-unavailable reopen is verified; source-only boundaries and diagnostics are verified; controlled full-suite verification passes; final independent gates remain pending in the active feature. Legacy disposable leases and prepared pair contracts remain separate. |
 | CodeGraph/LSP | CodeGraph 1.5 integration is CLI/JSON, not native MCP; tool identity/launch paths are Windows-oriented. JDT protocol/containment mechanisms need the new declared Docker/profile qualification. |
 | Knowledge | Atomic persistence/provenance mechanics exist, but file-level CL/paired Flow semantics are not the new semantic Code Unit/Logical Flow contracts. |
 | Resolution | Finite exact matching is profile-bound; generic inquiry, late-evidence reconciliation and the ordinary production caller are not delivered. Controlled baseline qualification also exposed an unchanged consumer candidate missing ConsumerEntryStableKey, which the V2 store rejects with Conflict; see specs/015-retained-source-access/evidence/canonical-correction-affected-fixture-diagnosis-01.json. |

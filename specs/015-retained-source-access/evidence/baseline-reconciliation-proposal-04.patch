@@ -1,0 +1,17 @@
+--- a/tests/Vulgata.Tests/PreparedPass1/Pass1ProductionExecutionCapacityTests.cs
++++ b/tests/Vulgata.Tests/PreparedPass1/Pass1ProductionExecutionCapacityTests.cs
+@@ -205,9 +205,11 @@
+         Assert.True(
+             await worker.WaitForAtLeastAsync(fixture.Package.SelectedCount, TimeSpan.FromSeconds(8)),
+             $"T050 RED: terminal results did not drain all prepared jobs; launched {worker.StartedCount}.");
+-        await Task.Delay(250);
+-
+-        Pass1ExecutionStatusResponse terminal = await ReadStatusAsync(client, started.Pass1ExecutionId);
++        Pass1ExecutionStatusResponse terminal = await WaitForDrainedStatusAsync(
++            client,
++            started.Pass1ExecutionId,
++            fixture.Package.SelectedCount,
++            TimeSpan.FromSeconds(8));
+         Assert.Equal(fixture.Package.SelectedCount, terminal.DispatchedCount);
+         Assert.Equal(fixture.Package.SelectedCount, worker.StartedCount);
+         Assert.Equal("ReadyForResolution", terminal.Phase);

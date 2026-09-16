@@ -1,6 +1,6 @@
 # Story 13.1 implementation traceability
 
-Status: implementation task verification complete at source checkpoint1b70029c39a9a5b46ca74c2854d105ae06bdb2e1. Full-suite evidence full-suite-verified-02.json records3127passes/15explicit skips/0failures and Web build0errors. Convergence, quality review, E2E decision and final acceptance remain separate pending gates.
+Status: implementation task verification complete at f2b040ed plus exact approved proposal04 patch. full-suite-verified-04.json records3134passes/15existing skips/0failures, source166passes/4child-only skips and Web0errors9warnings. Renewed convergence, quality, required HTTP E2E and final acceptance remain separate gates.
 
 ## Requirements and controlled evidence
 
@@ -8,10 +8,10 @@ Status: implementation task verification complete at source checkpoint1b70029c39
 | --- | --- | --- |
 | FR-001–004; SC-001/002 | SourceSnapshot identity, live SourceRepositoryAuthorizationVerifier, RetainedSourceCaptureService and GitCommittedObjectReader | RetainedSourceCaptureTests, RetainedSourceApplicationContractTests, RetainedSourceAuthorizationTests |
 | FR-005/017/018/020; SC-007/008 | Atomic RetainedSourceRepository.PublishAsync, DurableRetainedSourceStore seal/identity lock, owned operation and sealed-object cleanup | RetainedSourcePersistenceTests, RetainedSourcePostgreSqlTests, RetainedSourceReadLifecycleTests |
-| FR-006–011/013; SC-003–005 | RetainedSourceReadContext cumulative reservations/deadline, manifest/blob verification and strict relative reads | RetainedSourceReadContextTests, RetainedSourceRangeReadTests, RetainedSourceAuthorizationTests |
+| FR-006–011/013; SC-003–005 | RetainedSourceReadContext cumulative reservations/deadline, manifest/blob verification and strict relative reads | RetainedSourceReadContextTests, RetainedSourceRangeReadTests, RetainedSourceAuthorizationTests, RetainedSourceIdentityCancellationTests |
 | FR-012/014/016 | Infrastructure-internal TrustedSourceWorkspaceProvider, sanitized outcomes and owned disposal | TrustedSourceWorkspaceTests, RetainedSourceLoggingTests, RetainedSourceRepositoryDeletionTests |
 | FR-015/016; SC-006 | Durable store plus fresh production composition, without prior process, lease, remote or tool roots | RetainedSourceSeparateProcessTests and its explicitly opted-in child test modes |
-| FR-019; SC-008 | Distinct ref/acquisition/integrity/storage/authorization outcomes, no alternate source | RetainedSourceCaptureTests, RetainedSourceReadContextTests, RetainedSourceLoggingTests |
+| FR-019; SC-008 | Distinct ref/acquisition/integrity/storage/authorization outcomes, no alternate source | RetainedSourceCaptureTests, RetainedSourceReadContextTests, RetainedSourceLoggingTests, RetainedSourceReadFailureTests |
 | FR-021/022; SC-009/010 | Additive source composition, no semantic activation | RetainedSourceCapabilityBoundaryTests; domain SQL guard installed after fixture setup; exact outcome-to-test mappings |
 | CP-FR-001–004; CP-SC-001–004 | Exact existing semantic identity2.0 domain registered in CanonicalEnvelope; existing producer/grammar/1.0 remain unchanged | PreparedCanonicalEnvelopeTests, PreparedCanonicalEnvelopeGoldenTests, PreparedFileCodeUnitAndSelectionTests; affected reviewed-profile fixtures |
 
