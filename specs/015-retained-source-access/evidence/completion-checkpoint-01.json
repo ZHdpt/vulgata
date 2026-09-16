@@ -1,0 +1,34 @@
+{
+  "id": "13-1/complete/160",
+  "kind": "command",
+  "stage": "complete",
+  "source_commit": "49fab750e47656a773cf1b3ce89e33303119e4ad",
+  "observed_at": "2026-09-16T12:40:58.344738Z",
+  "checkpoint_id": "bmad-13-1-complete-20260916T124058Z-a927b9",
+  "expected_parent": "49fab750e47656a773cf1b3ce89e33303119e4ad",
+  "owned_paths": [
+    "docs/agents/project-state.md",
+    "docs/bmad/implementation-artifacts/13-1-retain-exact-repository-source-with-scoped-read-access.md",
+    "docs/bmad/implementation-artifacts/sprint-status.yaml",
+    "specs/015-retained-source-access/evidence/completion-checkpoint-01.json",
+    "specs/015-retained-source-access/evidence/completion-preconditions-01.json",
+    "specs/015-retained-source-access/evidence/e2e-decision-02.json",
+    "specs/015-retained-source-access/evidence/final-verification-01.json",
+    "specs/015-retained-source-access/evidence/quality-review-03.json",
+    "specs/015-retained-source-access/evidence/quality-review-boundary-03.json",
+    "specs/015-retained-source-access/evidence/traceability-01.md",
+    "specs/015-retained-source-access/workflow-state.json"
+  ],
+  "git_identity": {
+    "branch": "dev",
+    "head": "49fab750e47656a773cf1b3ce89e33303119e4ad",
+    "root": "G:/source/repos/vulgata",
+    "common_directory": ".git",
+    "worktree": "G:\\source\\repos\\vulgata"
+  },
+  "observed_status": " M docs/agents/project-state.md\n M docs/bmad/implementation-artifacts/13-1-retain-exact-repository-source-with-scoped-read-access.md\n M docs/bmad/implementation-artifacts/sprint-status.yaml\n M specs/015-retained-source-access/evidence/traceability-01.md\n M specs/015-retained-source-access/workflow-state.json\n?? specs/015-retained-source-access/evidence/completion-preconditions-01.json\n?? specs/015-retained-source-access/evidence/e2e-decision-02.json\n?? specs/015-retained-source-access/evidence/final-verification-01.json\n?? specs/015-retained-source-access/evidence/quality-review-03.json\n?? specs/015-retained-source-access/evidence/quality-review-boundary-03.json\n",
+  "observed_index_paths": [],
+  "summary": "Allgatespass; review-to-done completionmetadata. Pendingcommitbinding isintentional untiluniqueancestraltrailer verified; no production/testchange since reviewed/testedcandidate.",
+  "next_story": "13-2 remainsbacklog; notactivated",
+  "epic": "epic-13 remainsin-progress; noepicclosure"
+}

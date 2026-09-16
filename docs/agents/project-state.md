@@ -1,21 +1,23 @@
 # Project state for agent resumption
 
-Updated: 2026-09-16. Story 13.1 has verified incremental capture, scoped reads,
-publication/recovery, cleanup, trusted-workspace and fresh-process reopen evidence
-with the remote unavailable. Source-only boundaries/diagnostics pass; the full suite
-has verified baseline test repairs. The independently reviewed, user-approved
-canonical identity domain correction is verified by19Core,28affected-fixture and
-159retained-source passes. The two source quality findings are corrected and independently tested. The exact
-approved capacity-test polling repair and neighbors pass. A controlled full suite
-now passes3134tests with15existing skips; retained-source166passes/4child-onlyskips
-and Web build0errors/9warnings. The prior launch-wait failure remains unexplained
-and is distinct from the repaired terminal-state observation. Renewed convergence,
-quality review, required HTTP E2E and final gates remain pending. Convergence02
-is clean with all49tasks and101artifacts verified.
-Use the active feature workflow state for its latest bound checkpoint. Other as-built
-notes retain static baseline `2bb83c3b44fc0afc07ae253ec1df5fab4399b964`. Reobserve the
-assigned checkout, tracker and source before reuse; do not require an old worktree or
-clean unrelated work.
+Updated: 2026-09-16. Story 13.1 is complete in `specs/015-retained-source-access`.
+Exact retained capture, scoped reads, publication/recovery, cleanup, trusted
+workspaces and separate-process reopening have bounded controlled evidence.
+Convergence 02 is clean; quality review 03 accepted with no findings; required
+HTTP deletion checks using production startup and Identity cookies pass. Final
+verification passed 3,135 tests with 15 existing skips. This includes 167 retained-source
+passes and four child-only skips covered by parent tests. Web build: zero errors,
+nine existing warnings. See the feature's `evidence/final-verification-01.json`.
+
+The approved capacity-test polling repair preserves the launch timeout, counts and
+required terminal state. An earlier failure after 48 worker launches remains
+unexplained and is separate from the repaired terminal observation; controlled
+passing runs are not a causal explanation. The existing exact-resolution stable-key
+limitation below remains outside this story and unqualified. Story 13.2 remains
+backlog; Epic 13 remains in-progress. Use the feature's `workflow-state.json` for
+the bound completion checkpoint. Other as-built notes retain baseline
+`2bb83c3b44fc0afc07ae253ec1df5fab4399b964` and require fresh checkout/source
+verification before reuse.
 
 ## Current authority and delivery
 
@@ -26,8 +28,8 @@ clean unrelated work.
   adopted generic target and project responsibilities; not as-built qualification.
 - [Epics](../bmad/epics.md) define delivery; [sprint status](../bmad/implementation-artifacts/sprint-status.yaml)
   owns lifecycle. Epics 13–17 contain 41 definitions (19/7/8/3/4). Story 13.1
-  is active; the remaining stories are backlog. Incremental source capability
-  evidence is not completed Story 13.1 or generic Scan qualification.
+  is done; the remaining stories are backlog. Its bounded retained-source
+  qualification does not prove the generic Scan workflow.
 - [Constitution](../../.specify/memory/constitution.md), root AGENTS and the current
   story workflow govern development. The constitution's 2.0.0 local amendment aligns
   prior conflicting rules; it does not claim maintainer PR review/merge.
@@ -46,14 +48,14 @@ Full/Standard/expedited or overnight/deadline waivers from historical handoffs.
 
 ## As-built reuse boundaries
 
-Outside the active retained-source work, these remain earlier static observations.
+Outside the completed retained-source work, these remain earlier static observations.
 Use the feature evidence for current controlled source tests; no row proves a full
 runtime workflow:
 
 | Area | Existing value and limit |
 | --- | --- |
 | Administration/persistence | Reusable Identity, roles, configuration and domain persistence; Identity remains in Web/Data. |
-| Source preparation | Story 13.1 has verified raw-Git retained capture, canonical manifests, and scoped metadata and byte/text reads. Live denial, concurrent publication and controlled process-crash cleanup are verified; trusted workspace materialization is verified; fresh-process remote-unavailable reopen is verified; source-only boundaries and diagnostics are verified; controlled full-suite verification passes; final independent gates remain pending in the active feature. Legacy disposable leases and prepared pair contracts remain separate. |
+| Source preparation | Story 13.1 has verified raw-Git retained capture, canonical manifests, and scoped metadata and byte/text reads. Live denial, concurrent publication and controlled process-crash cleanup are verified; trusted workspace materialization is verified; fresh-process remote-unavailable reopen is verified; source-only boundaries and diagnostics are verified; controlled full-suite and all Story 13.1 independent gates pass; no generic Scan qualification is implied. Legacy disposable leases and prepared pair contracts remain separate. |
 | CodeGraph/LSP | CodeGraph 1.5 integration is CLI/JSON, not native MCP; tool identity/launch paths are Windows-oriented. JDT protocol/containment mechanisms need the new declared Docker/profile qualification. |
 | Knowledge | Atomic persistence/provenance mechanics exist, but file-level CL/paired Flow semantics are not the new semantic Code Unit/Logical Flow contracts. |
 | Resolution | Finite exact matching is profile-bound; generic inquiry, late-evidence reconciliation and the ordinary production caller are not delivered. Controlled baseline qualification also exposed an unchanged consumer candidate missing ConsumerEntryStableKey, which the V2 store rejects with Conflict; see specs/015-retained-source-access/evidence/canonical-correction-affected-fixture-diagnosis-01.json. |

@@ -1,0 +1,86 @@
+{
+  "id": "13-1/verify/158",
+  "kind": "test-green",
+  "stage": "verify",
+  "source_commit": "49fab750e47656a773cf1b3ce89e33303119e4ad",
+  "observed_at": "2026-09-16T12:39:44.216214Z",
+  "summary": "Finalreviewedboundary fullsuite3135passes/15unchangedskips/0failures; source167passes/4child-onlyskips; HTTPtestpasses; Web0errors9existingwarnings.931testedinputs and103reviewedartifacts unchanged beforecompletionmetadata.",
+  "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --logger trx;LogFileName=full-suite.trx --results-directory <owned-run-root> -- xUnit.ParallelizeTestCollections=false",
+  "duration": "30m46s",
+  "outcomes": {
+    "Passed": 3135,
+    "NotExecuted": 15
+  },
+  "retained_source_outcomes": {
+    "Passed": 167,
+    "NotExecuted": 4
+  },
+  "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\full-suite-cf3d49d437324e978b4b85d9af50b7ac\\full-suite.trx",
+  "trx_sha256": "5567552837b883e67da761ad8bdc15d21d72c5b8299bf218944dbdc6aa872db3",
+  "raw_log": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\full-suite-cf3d49d437324e978b4b85d9af50b7ac\\full-suite.log",
+  "log_sha256": "dc55d39a102e72f557e9d7e9b286de967067f1b6feb91197eae0f8b6b021f79d",
+  "skipped_tests": [
+    "Vulgata.Tests.PreparedPass1.Pass1HostRuntimeQualificationTests.PinnedRuntimeQualification_MustReachAuthenticatedPreparedPass1Execution",
+    "Vulgata.Tests.PreparedPass1.Pass1ProductionExecutionTests.HostedRevisionBinding_CurrentRunningPair_LoadsAndAcquiresExactTwoRequestsAsync",
+    "Vulgata.Tests.PreparedPass1.Pass1HostRuntimeQualificationTests.ProductionComposition_RequiresBoundRevisionSourceBeforeClaimedNavigation",
+    "Vulgata.Tests.RetainedSource.RetainedSourceSeparateProcessChildTests.CaptureAsync_WhenParentTerminatesAfterSeal_LeavesOwnedAbandonedOperation",
+    "Vulgata.Tests.RetainedSource.RetainedSourceSeparateProcessChildTests.CaptureAsync_FromFreshProductionComposition_CompletesAndRecordsIdentity",
+    "Vulgata.Tests.PreparedPass2.Pass2ProductionQualificationTests.ApprovedTwoRepositoryPair_ProducesSanitizedSourceGroundedBusinessDocumentAsync",
+    "Vulgata.Tests.PreparedPass1.Pass1HostRuntimeQualificationTests.PinnedHostTools_AreExactAndJdtLsUsesStdioFactory",
+    "Vulgata.Tests.PreparedPass1.Pass1DeepSeekContractQualificationTests.ApprovedFileCodeUnit_DeepSeekResponse_IsSchemaValidAtDispatcherSeamAsync",
+    "Vulgata.Tests.PreparedPass1.Pass1ProductionProviderOutageTests.AuthenticatedRealPair_ProviderUnavailable_PausesDurablyAndStopsNewDispatch",
+    "Vulgata.Tests.RetainedSource.RetainedSourceSeparateProcessChildTests.OpenReadContextAsync_FromFreshProductionComposition_ReadsRetainedBytesAfterRemoteUnavailable",
+    "Vulgata.Tests.PreparedPass1.Pass1ProductionExecutionTests.AuthenticatedApprovedPair_StartsRealRunAtEveryLimit_AndPersistsTerminalEvidence",
+    "Vulgata.Tests.PreparedPass1.Pass1DeepSeekContractQualificationTests.SourceFreeHandshake_LiveBetaCapability_WritesSanitizedEvidenceAsync",
+    "Vulgata.Tests.RetainedSource.RetainedSourceSeparateProcessChildTests.OpenReadContextAsync_WhenRetainedBlobIsCorrupt_DeniesWithoutContext",
+    "Vulgata.Tests.PreparedPass1.Pass1DeepSeekIsolatedSourceQualificationTests.ThreeIsolatedSourceJobs_CompleteCommitAndReplayWithoutLeakingPayloadsAsync",
+    "Vulgata.Tests.PreparedScanning.PreparedScanStoreRegressionTests.PreparedStore_ConcurrentIdenticalWriters_CommitOnceAndReplayOnceAsync"
+  ],
+  "key_tests": [
+    {
+      "name": "Vulgata.Tests.PreparedPass1.Pass1ProductionExecutionCapacityTests.TerminalWorkerResults_StopLaunchAndDrainLocallyBeforeFreshDurableExhaustion",
+      "outcome": "Passed",
+      "duration": "00:00:06.2049214"
+    },
+    {
+      "name": "Vulgata.Tests.RetainedSource.RetainedSourceHttpE2eTests.RepositoryDelete_WhenCaptured_UsesProductionHttpPipelineAndReturnsSanitizedConflict",
+      "outcome": "Passed",
+      "duration": "00:00:03.2548395"
+    }
+  ],
+  "source_manifest": {
+    "raw_path": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\full-suite-cf3d49d437324e978b4b85d9af50b7ac\\tested-source-manifest.json",
+    "file_sha256": "36e67d4b44953ea8cd487938878497618514ab7cc841792e99267f8b14d586da",
+    "entries_sha256": "494cd54c0f1acfca768ffef63c8f99680e69e16fa73c9070bb4fea47e4c9daf6",
+    "count": 931,
+    "drift": []
+  },
+  "reviewed_boundary_digest": "b0d708b601d445fd375cd9a5a628d78e4b41fe5c0d7518a4ebc331454fd1f10b",
+  "web_build": {
+    "exit_code": 0,
+    "warnings": 9,
+    "errors": 0,
+    "raw_log": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\full-suite-cf3d49d437324e978b4b85d9af50b7ac\\web-build.log",
+    "sha256": "98623751b758120710a98674703a709807b678faad9f73b3d90c28a82e721fc8"
+  },
+  "runtime_ownership": {
+    "created_at": "2026-09-16T12:06:18.3867579Z",
+    "root": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\full-suite-cf3d49d437324e978b4b85d9af50b7ac",
+    "container_id": "04df68dff01aa09fb1a3003f088d86fdc49f63161fb9504629e1f0b545918946",
+    "default_database": "vulgata_story131_89c09cddb5cf42ca8f186dc64b575781",
+    "database": "vulgata_story131_9faffb51e60f4583b17834168e397ecf"
+  },
+  "runtime_cleanup": {
+    "dropped_at": "2026-09-16T12:38:38.8516237Z",
+    "container_id": "04df68dff01aa09fb1a3003f088d86fdc49f63161fb9504629e1f0b545918946",
+    "databases": [
+      "vulgata_story131_9faffb51e60f4583b17834168e397ecf",
+      "vulgata_story131_89c09cddb5cf42ca8f186dc64b575781"
+    ]
+  },
+  "historical_reports_restored": [
+    "artifacts/qualification/story-12.2/production-literal-inspection.json",
+    "artifacts/qualification/story-12.3/production-boundary-inspection.json"
+  ],
+  "limits": "Existingexternalopt-ins remainunqualified; fourchild-onlymodes coveredbyparentprocess tests. Original48-workerlaunchwaitfailure remainsunexplained separatefromapprovedterminalpollrepair; passingcontrolledrun isnotcausalexplanation. Preexistingexactresolutionstablekeygap remainsoutofscope/unqualified. No genericScan/Knowledge/Chat/tools/provider/browser/backup claim."
+}

@@ -1,6 +1,6 @@
 # Story 13.1 development record
 
-Status: review
+Status: done
 Feature directory: specs/015-retained-source-access
 Workflow state: specs/015-retained-source-access/workflow-state.json
 
@@ -496,3 +496,26 @@ Convergence02 independently verified101artifacthashes and all49tasks withno rema
 ## Quality02 accepted and HTTP E2E added
 
 Freshquality02ACCEPT hasnofindings andverified101hashes. RequiredHTTP E2E nowusesrealProgramstartup, migrationsandIdentitycookies: authenticatedretaineddelete409andanonymous401 preservebothrows andsanitizedresponses. Initialfixturemigration/login failures and sourcepolicyisolationgap arepreserved; correctedfixture bindsconcreteownedpolicy andasserts actualcapturedfiles. HTTP1/1and7neighborspass. Twoaddedtestfilesinvalidatequality; freshreview andfinalfullsuite remainbeforecompletion. No productionchanges.
+
+## Completion
+
+All 49 tasks are complete. Convergence 02 is clean; quality review 03 accepted with
+no findings; required HTTP E2E passed. Final verification at reviewed code
+`49fab750e47656a773cf1b3ce89e33303119e4ad` passed 3,135 tests with 15 unchanged
+skips and zero failures in 30m46s. Retained-source coverage: 167 passes and four
+child-only skips qualified through parent tests. Web build: zero errors and nine
+existing warnings. All 931 tested inputs and 103 reviewed artifacts matched before
+completion metadata was updated. The capacity test passed in 6.205s and the HTTP
+test in 3.255s. See `final-verification-01.json` and `completion-preconditions-01.json`.
+Checkpoint `bmad-13-1-complete-20260916T124058Z-a927b9` binds review to done after
+root verification.
+
+Proposal 04 approval is bound to the exact proposal and patch hashes. That repair
+changed no production code, launch timeout or required assertion. The earlier
+48-worker launch-wait failure remains unexplained and distinct from the terminal
+observation repair. The pre-existing exact-resolution stable-key issue remains
+outside the approved scope and unqualified. This source capability evidence does
+not qualify generic Scan, Knowledge, Chat, providers, native tools, browser flows,
+backup or restore. Both final full-run target databases were removed; historical
+reports were restored; shared resources were untouched. Story 13.2 remains backlog
+and Epic 13 remains in-progress.

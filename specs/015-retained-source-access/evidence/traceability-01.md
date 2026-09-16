@@ -1,6 +1,6 @@
 # Story 13.1 implementation traceability
 
-Status: implementation task verification complete at f2b040ed plus exact approved proposal04 patch. full-suite-verified-04.json records3134passes/15existing skips/0failures, source166passes/4child-only skips and Web0errors9warnings. Renewed convergence, quality, required HTTP E2E and final acceptance remain separate gates.
+Status: Story 13.1 completion is bound by the workflow checkpoint. All 49 tasks, convergence 02, quality review 03 and required HTTP E2E pass. final-verification-01.json records 3,135 passes, 15 existing skips, zero failures, 167 source passes, four child-only skips, and Web build zero errors/nine warnings at reviewed code 49fab750. Completion metadata does not alter tested code.
 
 ## Requirements and controlled evidence
 
@@ -27,7 +27,7 @@ The application contract and manifest schema remain acceptance authorities. Cont
 
 ## Downstream gate predicates
 
-The E2E matrix triggers authorization, API/persistence/multi-module integration, and EF migration/data lifecycle. The Repository deletion conflict is an existing user-visible behavior change. Any coverage override must cite exact passing tests at the independently reviewed boundary; the existence of these test families alone does not authorize a skip. The root records that decision after quality review.
+The E2E matrix triggers authorization, API/persistence/multi-module integration, and EF migration/data lifecycle. The Repository deletion conflict is an existing user-visible behavior change. Any coverage override must cite exact passing tests at the independently reviewed boundary; the existence of these test families alone does not authorize a skip. The root recorded required execution passed in e2e-decision-02.json after quality03 accepted the added real HTTP/Identity-cookie test.
 
 ## Qualification limits
 

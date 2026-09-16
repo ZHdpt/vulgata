@@ -1,0 +1,38 @@
+{
+  "id": "13-1/verify/159",
+  "kind": "analysis",
+  "stage": "verify",
+  "source_commit": "49fab750e47656a773cf1b3ce89e33303119e4ad",
+  "observed_at": "2026-09-16T12:39:44.216214Z",
+  "summary": "Allcompletionpreconditions verified beforelifecyclemetadata transition.",
+  "gates": {
+    "definition": "definition-review-06.json ACCEPT",
+    "convergence": "convergence-report-02.json converged;49taskscomplete",
+    "quality": "quality-review-03.json ACCEPT;103hashesmatch",
+    "e2e": "e2e-decision-02.json required=true passed",
+    "final_tests": "final-verification-01.json3135/0/15",
+    "build": "Web0errors9warnings"
+  },
+  "artifact_hashes": {
+    "specs\\015-retained-source-access\\spec.md": "7dce86d54a67b925eb11fc51662077260be2d98a018c68dc8f6770941e767d14",
+    "specs\\015-retained-source-access\\plan.md": "ebb8cd5c883247521ee522e51765815442035bf9f21146c63257bdb203802290",
+    "specs\\015-retained-source-access\\tasks.md": "753e456a37d04bcc5cacc35313f58e27a33c47481a567bf678b3fa5777f77b46",
+    "specs\\015-retained-source-access\\evidence\\quality-review-03.json": "075e971edb83a5ee2a14013ef5e561b631c26b9669b7549df1db8aae59acd892",
+    "specs\\015-retained-source-access\\evidence\\e2e-decision-02.json": "e5579866d3857b4003013e06a345f4299f44513a03bd7461a70697cf193096fb"
+  },
+  "qualification_levels": [
+    "Staticarchitecture/contracts andsourceboundaryreview",
+    "ControlledGit/filesystem/sourceauthorizationtests",
+    "OwnedPostgreSQLmigration/constraints/immutability/deletion",
+    "ActualseparateOSprocesscapture/reopen/crashparents",
+    "ProductionProgram/IdentitycookieHTTPTestServer409/401integration"
+  ],
+  "completion_metadata_only_paths": [
+    "docs/agents/project-state.md",
+    "docs/bmad/implementation-artifacts/13-1-retain-exact-repository-source-with-scoped-read-access.md",
+    "docs/bmad/implementation-artifacts/sprint-status.yaml",
+    "specs/015-retained-source-access/workflow-state.json",
+    "specs/015-retained-source-access/evidence/"
+  ],
+  "next_story": "13-2 remainsbacklog; noactivation"
+}

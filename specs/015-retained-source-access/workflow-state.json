@@ -3,13 +3,13 @@
   "bmad_story_key": "13-1-retain-exact-repository-source-with-scoped-read-access",
   "bmad_epic_key": "epic-13",
   "feature_directory": "specs/015-retained-source-access",
-  "stage": "quality-review",
+  "stage": "complete",
   "preflight": {
     "branch": "dev",
-    "head": "e64ac169a5bf646f4e877c557ad774f710d7f4e1",
-    "git_identity_sha256": "dd7d85333e3897332b931b7447d680e850ed07eb62f624fbcb43f991aa8a1eab",
-    "status_sha256": "628940351dee36229258a38c849a411eab1e135785f78ef8a94bb535ce44ffb1",
-    "observed_at": "2026-09-16T12:04:57.387144Z"
+    "head": "49fab750e47656a773cf1b3ce89e33303119e4ad",
+    "git_identity_sha256": "f903fa3a640143c20d24f3a1ca884257653e4b7a65fdf2012211922891b446a7",
+    "status_sha256": "a2848e3e841588fe1ef6bc2ba0009aee9445e06092bf1bd23ba079dbbe919c4d",
+    "observed_at": "2026-09-16T12:40:58.344738Z"
   },
   "artifacts": {
     "spec": {
@@ -37,9 +37,9 @@
       "verdict_path": "specs/015-retained-source-access/evidence/plan-review-02.json"
     },
     "quality-review": {
-      "status": "invalidated",
-      "attempt": 2,
-      "verdict_path": "specs/015-retained-source-access/evidence/quality-review-02.json"
+      "status": "accepted",
+      "attempt": 3,
+      "verdict_path": "specs/015-retained-source-access/evidence/quality-review-03.json"
     }
   },
   "attempts": {
@@ -112,33 +112,29 @@
     "report_path": "specs/015-retained-source-access/evidence/convergence-report-02.json"
   },
   "e2e": {
-    "result": "pending",
-    "decision_path": "specs/015-retained-source-access/evidence/e2e-decision-01.json"
+    "result": "passed",
+    "decision_path": "specs/015-retained-source-access/evidence/e2e-decision-02.json"
   },
   "current_evidence_paths": [
-    "specs/015-retained-source-access/evidence/full-suite-isolated-diagnosis-03.json",
-    "specs/015-retained-source-access/evidence/capacity-observation-diagnosis-01.json",
-    "specs/015-retained-source-access/evidence/baseline-reconciliation-proposal-04.md",
+    "docs/bmad/implementation-artifacts/13-1-retain-exact-repository-source-with-scoped-read-access.md",
+    "specs/015-retained-source-access/evidence/definition-review-06.json",
     "specs/015-retained-source-access/evidence/baseline-reconciliation-approval-04.json",
     "specs/015-retained-source-access/evidence/baseline-reconciliation-verified-04.json",
-    "specs/015-retained-source-access/evidence/full-suite-verified-04.json",
-    "specs/015-retained-source-access/evidence/convergence-input-boundary-02.json",
     "specs/015-retained-source-access/evidence/convergence-report-02.json",
-    "specs/015-retained-source-access/evidence/quality-review-02.json",
-    "specs/015-retained-source-access/evidence/e2e-decision-01.json",
-    "specs/015-retained-source-access/evidence/http-e2e-fixture-diagnosis-01.json",
-    "specs/015-retained-source-access/evidence/http-e2e-verified-01.json"
+    "specs/015-retained-source-access/evidence/quality-review-03.json",
+    "specs/015-retained-source-access/evidence/quality-review-boundary-03.json",
+    "specs/015-retained-source-access/evidence/http-e2e-verified-01.json",
+    "specs/015-retained-source-access/evidence/e2e-decision-02.json",
+    "specs/015-retained-source-access/evidence/final-verification-01.json",
+    "specs/015-retained-source-access/evidence/completion-preconditions-01.json",
+    "specs/015-retained-source-access/evidence/completion-checkpoint-01.json"
   ],
   "checkpoint": {
-    "checkpoint_id": "bmad-13-1-http-e2e-20260916T120457Z-088ade",
-    "stage": "conditional-e2e",
+    "checkpoint_id": "bmad-13-1-complete-20260916T124058Z-a927b9",
+    "stage": "complete",
     "commit_sha": null,
     "binding_status": "pending"
   },
-  "resume": {
-    "stage": "quality-review",
-    "reason": "RequiredHTTPtest+isolationverification pass; newtrackedtests requirefreshquality andfinalfullsuite beforeE2Egate advances.",
-    "evidence_path": "specs/015-retained-source-access/evidence/http-e2e-verified-01.json"
-  },
-  "updated_at": "2026-09-16T12:04:57.387144Z"
+  "resume": null,
+  "updated_at": "2026-09-16T12:40:58.344738Z"
 }
