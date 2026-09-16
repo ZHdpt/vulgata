@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:governed-delivery:workflow:epic-architecture-gate:1.0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "epic_key", "status", "transaction_phase", "source_commit", "repository_preflight", "verification_boundary", "audit_validation", "complete_findings", "dispositions", "build_evidence_paths", "test_evidence_paths", "completion_status_paths", "durable_artifact_paths", "retrospective_decision", "checkpoint", "manifest_constraints", "earliest_safe_resume_step", "retryability", "failure"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "epic_key": {"type": "string", "minLength": 1},
+    "status": {"enum": ["idle", "active", "failed", "retrying", "ready", "provisional"]},
+    "transaction_phase": {"enum": ["idle", "prepared", "pending-binding"]},
+    "source_commit": {"$ref": "#/$defs/sha"},
+    "repository_preflight": {"$ref": "#/$defs/preflight"},
+    "verification_boundary": {"$ref": "#/$defs/boundary"},
+    "audit_validation": {"$ref": "#/$defs/audit"},
+    "complete_findings": {"type": "array", "items": {"$ref": "#/$defs/finding"}},
+    "dispositions": {"type": "array", "items": {"$ref": "#/$defs/disposition"}},
+    "build_evidence_paths": {"type": "array", "items": {"$ref": "#/$defs/repoPath"}},
+    "test_evidence_paths": {"type": "array", "items": {"$ref": "#/$defs/repoPath"}},
+    "completion_status_paths": {"type": "array", "minItems": 2, "uniqueItems": true, "items": {"$ref": "#/$defs/repoPath"}},
+    "durable_artifact_paths": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "#/$defs/repoPath"}},
+    "retrospective_decision": {"enum": ["pending", "run-after-close", "declined"]},
+    "checkpoint": {"$ref": "#/$defs/checkpoint"},
+    "manifest_constraints": {"$ref": "#/$defs/manifest"},
+    "earliest_safe_resume_step": {"type": "integer", "minimum": 0, "maximum": 6},
+    "retryability": {"enum": ["retryable", "user-direction", "not-retryable"]},
+    "failure": {"type": ["object", "null"]}
+  },
+  "allOf": [
+    {"if": {"properties": {"transaction_phase": {"const": "pending-binding"}}}, "then": {"properties": {"status": {"const": "provisional"}, "retrospective_decision": {"enum": ["run-after-close", "declined"]}}}},
+    {"if": {"properties": {"audit_validation": {"properties": {"verdict": {"const": "ACCEPT"}}}}}, "then": {"properties": {"audit_validation": {"properties": {"reserved_finding_count": {"const": 0}}}}}}
+  ],
+  "$defs": {
+    "sha": {"type": "string", "pattern": "^[0-9a-fA-F]{40}$"},
+    "hash": {"type": "string", "pattern": "^[0-9a-fA-F]{64}$"},
+    "repoPath": {"type": "string", "minLength": 1},
+    "preflight": {"type": "object", "required": ["branch", "head", "repository_root", "git_common_dir", "worktree", "index_empty_at_start", "target_preimages"], "properties": {"branch": {"type": "string", "minLength": 1}, "head": {"$ref": "#/$defs/sha"}, "repository_root": {"type": "string", "minLength": 1}, "git_common_dir": {"type": "string", "minLength": 1}, "worktree": {"type": "string", "minLength": 1}, "index_empty_at_start": {"const": true}, "target_preimages": {"type": "object", "minProperties": 1, "additionalProperties": {"anyOf": [{"$ref": "#/$defs/sha"}, {"type": "null"}]}}}, "additionalProperties": true},
+    "boundary": {"type": "object", "required": ["build", "audit", "source_equal"], "properties": {"build": {"$ref": "#/$defs/worktreeBoundary"}, "audit": {"$ref": "#/$defs/worktreeBoundary"}, "source_equal": {"const": true}}, "additionalProperties": true},
+    "worktreeBoundary": {"type": "object", "required": ["path", "git_identity", "head", "tree_id", "index_id", "clean", "disposed"], "properties": {"path": {"type": "string", "minLength": 1}, "git_identity": {"type": "string", "minLength": 1}, "head": {"$ref": "#/$defs/sha"}, "tree_id": {"$ref": "#/$defs/sha"}, "index_id": {"$ref": "#/$defs/sha"}, "clean": {"const": true}, "disposed": {"type": "boolean"}}, "additionalProperties": true},
+    "audit": {"type": "object", "required": ["verdict", "audit_source_commit", "authoritative_input_hashes", "raw_response_path", "raw_response_sha256", "report_temporary_path", "report_sha256", "audit_iteration", "normalized_payload_sha256", "one_to_one_mapping", "citations_verified", "visible_fields_equal", "schema_valid", "finding_count", "finding_ids", "reserved_finding_count", "validated_at"], "properties": {"verdict": {"enum": ["ACCEPT", "REVISE", "BLOCKED"]}, "audit_source_commit": {"$ref": "#/$defs/sha"}, "authoritative_input_hashes": {"type": "object", "minProperties": 1, "additionalProperties": {"$ref": "#/$defs/hash"}}, "raw_response_path": {"$ref": "#/$defs/repoPath"}, "raw_response_sha256": {"$ref": "#/$defs/hash"}, "report_temporary_path": {"type": "string", "minLength": 1}, "report_sha256": {"$ref": "#/$defs/hash"}, "audit_iteration": {"type": "integer", "minimum": 1}, "normalized_payload_sha256": {"$ref": "#/$defs/hash"}, "one_to_one_mapping": {"const": true}, "citations_verified": {"const": true}, "visible_fields_equal": {"const": true}, "schema_valid": {"const": true}, "finding_count": {"type": "integer", "minimum": 0}, "finding_ids": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}}, "reserved_finding_count": {"type": "integer", "minimum": 0}, "validated_at": {"type": "string", "format": "date-time", "pattern": "Z$"}}, "additionalProperties": true},
+    "citation": {"type": "object", "additionalProperties": false, "required": ["path", "blob_oid", "range", "excerpt_sha256"], "properties": {"path": {"$ref": "#/$defs/repoPath"}, "blob_oid": {"$ref": "#/$defs/sha"}, "range": {"type": "string", "minLength": 1}, "excerpt_sha256": {"$ref": "#/$defs/hash"}}},
+    "finding": {"type": "object", "required": ["raw_candidate_id", "strength", "severity", "applicable_categories", "must_violation", "adr_conflict", "citations"], "properties": {"raw_candidate_id": {"type": "string", "minLength": 1}, "strength": {"enum": ["Strong", "Worth exploring", "Speculative"]}, "severity": {"enum": ["CRITICAL", "HIGH", "MEDIUM", "LOW"]}, "applicable_categories": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"enum": ["critical-high", "must", "strong", "adr-conflict", "ordinary"]}}, "must_violation": {"type": "boolean"}, "adr_conflict": {"type": "boolean"}, "citations": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/citation"}}}, "additionalProperties": true},
+    "disposition": {"type": "object", "required": ["finding_id", "category_decisions", "rationale", "source_bound_evidence", "user_approval_evidence_id", "status"], "properties": {"finding_id": {"type": "string", "minLength": 1}, "category_decisions": {"type": "object", "minProperties": 1, "additionalProperties": {"type": "string", "minLength": 1}}, "rationale": {"type": "string", "minLength": 1}, "source_bound_evidence": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/citation"}}, "tracked_work": {"type": "object"}, "user_approval_evidence_id": {"type": "string", "minLength": 1}, "status": {"enum": ["accepted", "blocking"]}}, "additionalProperties": true},
+    "checkpoint": {"type": "object", "required": ["id", "expected_parent"], "properties": {"id": {"type": "string"}, "expected_parent": {"$ref": "#/$defs/sha"}}, "additionalProperties": true},
+    "nameStatus": {"type": "object", "additionalProperties": false, "required": ["path", "status"], "properties": {"path": {"$ref": "#/$defs/repoPath"}, "status": {"enum": ["A", "M", "D", "T"]}}},
+    "changeTuple": {"type": "object", "additionalProperties": false, "required": ["path", "status", "old_mode", "old_type", "old_oid", "new_mode", "new_type", "new_oid"], "properties": {"path": {"$ref": "#/$defs/repoPath"}, "status": {"enum": ["A", "M", "D", "T"]}, "old_mode": {"anyOf": [{"type": "string", "pattern": "^[0-7]{6}$"}, {"type": "null"}]}, "old_type": {"enum": ["blob", "tree", "commit", null]}, "old_oid": {"anyOf": [{"$ref": "#/$defs/sha"}, {"type": "null"}]}, "new_mode": {"anyOf": [{"type": "string", "pattern": "^[0-7]{6}$"}, {"type": "null"}]}, "new_type": {"enum": ["blob", "tree", "commit", null]}, "new_oid": {"anyOf": [{"$ref": "#/$defs/sha"}, {"type": "null"}]}}},
+    "manifest": {"type": "object", "required": ["expected_name_status", "non_gate_tuples", "gate_descriptor"], "properties": {"expected_name_status": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "#/$defs/nameStatus"}}, "non_gate_tuples": {"type": "array", "items": {"$ref": "#/$defs/changeTuple"}}, "gate_descriptor": {"type": "object", "required": ["path", "status", "mode", "object_type", "semantic_projection_sha256"], "properties": {"path": {"$ref": "#/$defs/repoPath"}, "status": {"enum": ["A", "M"]}, "mode": {"type": "string", "pattern": "^[0-7]{6}$"}, "object_type": {"const": "blob"}, "semantic_projection_sha256": {"$ref": "#/$defs/hash"}}, "additionalProperties": false}}, "additionalProperties": false}
+  }
+}

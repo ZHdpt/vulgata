@@ -1,4 +1,0 @@
-interface:
-  display_name: "Audit Epic Architecture"
-  short_description: "Run a read-only epic architecture gate"
-  default_prompt: "Use $audit-epic-architecture to audit the active BMad epic."

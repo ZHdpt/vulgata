@@ -1,0 +1,4 @@
+interface:
+  display_name: "Governed TDD"
+  short_description: "Produce behavioral RED and minimal GREEN evidence"
+  default_prompt: "Use $governed-tdd for this governed implementation slice."

@@ -1,0 +1,61 @@
+schema_version = "1.0"
+id = "speckit-1.0.6"
+capability = "definition"
+version = ">=1.0.6,<1.0.7"
+required_skills = ["speckit-specify", "speckit-plan", "speckit-tasks", "speckit-analyze", "speckit-converge"]
+required_files = [
+  ".specify/init-options.json",
+  ".specify/memory/constitution.md",
+  ".specify/templates/spec-template.md",
+  ".specify/templates/plan-template.md",
+  ".specify/templates/tasks-template.md",
+]
+
+[upstream]
+verified_version = "1.0.6"
+verified_commit = "96c9bd657bfd5de0d651a6165084932b7304ac99"
+version_source = "json-key"
+version_path = ".specify/init-options.json"
+version_key = "speckit_version"
+accepted_versions = ["1.0.6"]
+release_url = "https://github.com/github/spec-kit/releases/tag/v1.0.6"
+
+[script_files]
+ps = [
+  ".specify/scripts/powershell/check-prerequisites.ps1",
+  ".specify/scripts/powershell/setup-plan.ps1",
+  ".specify/scripts/powershell/setup-tasks.ps1",
+]
+sh = [
+  ".specify/scripts/bash/check-prerequisites.sh",
+  ".specify/scripts/bash/setup-plan.sh",
+  ".specify/scripts/bash/setup-tasks.sh",
+]
+py = [
+  ".specify/scripts/python/check_prerequisites.py",
+  ".specify/scripts/python/setup_plan.py",
+  ".specify/scripts/python/setup_tasks.py",
+]
+
+[skill_markers]
+speckit-specify = ["SPECIFY_FEATURE_DIRECTORY"]
+speckit-plan = ["FEATURE_DIR"]
+speckit-tasks = ["TASKS_TEMPLATE_CONTENT"]
+speckit-analyze = ["STRICTLY READ-ONLY"]
+speckit-converge = ["tasks_appended"]
+
+[outputs]
+feature_directory = "FEATURE_DIR"
+plan = ["FEATURE_SPEC", "IMPL_PLAN", "FEATURE_DIR", "BRANCH"]
+tasks = ["FEATURE_DIR", "TASKS_TEMPLATE_CONTENT", "TASKS_TEMPLATE", "AVAILABLE_DOCS"]
+
+[implementation]
+provider = "governed-tdd"
+behavior_evidence = ["accepted_tasks", "behavioral_red", "minimal_green", "final_green"]
+test_only_evidence = ["accepted_tasks", "test_green", "coverage_reason"]
+non_executable_evidence = ["accepted_tasks", "direct_verification"]
+converge_after_provider = true
+
+[hooks]
+unreadable_extensions = "blocked"
+analyze_remediation_owner = "delivery-orchestrator"

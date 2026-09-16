@@ -1,0 +1,31 @@
+schema_version = "1.0"
+id = "bmad-6.11"
+capability = "lifecycle"
+version = ">=6.11,<6.12"
+
+required_skills = [
+  "bmad-sprint-planning",
+  "bmad-correct-course",
+]
+optional_epic_skills = ["bmad-retrospective"]
+
+[upstream]
+verified_version = "6.11.0"
+version_source = "yaml-selector"
+version_path = "_bmad/_config/manifest.yaml"
+version_selector = "installation.version"
+version_prefix = "6.11."
+
+[paths]
+manifest = "_bmad/_config/manifest.yaml"
+sprint_status = "docs/bmad/implementation-artifacts/sprint-status.yaml"
+epics = "docs/bmad/epics.md"
+implementation_artifacts = "docs/bmad/implementation-artifacts"
+
+[states]
+story = ["backlog", "ready-for-dev", "in-progress", "review", "done"]
+epic = ["backlog", "in-progress", "done"]
+
+[skill_markers]
+bmad-sprint-planning = ["sprint_plan.py"]
+bmad-correct-course = ["correct course"]

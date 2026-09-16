@@ -1,0 +1,5 @@
+schema_version = "1.0"
+id = "bmad-review-codebase-design"
+capability = "architecture-review"
+status = "supported"
+required_skills = ["bmad-review", "codebase-design"]

@@ -1,4 +1,0 @@
-interface:
-  display_name: "Run BMad Sprint Loop"
-  short_description: "Orchestrate gated BMad story development"
-  default_prompt: "Use $run-bmad-sprint-loop to implement the next ready BMad story."

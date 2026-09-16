@@ -1,0 +1,33 @@
+schema_version = "1.0"
+id = "bmad-6.12"
+capability = "lifecycle"
+version = ">=6.12,<6.13"
+required_skills = ["bmad-sprint-planning", "bmad-correct-course"]
+optional_epic_skills = ["bmad-retrospective"]
+
+[upstream]
+verified_version = "6.12.0"
+verified_commit = "05bfbd46d00766ec88eb9b42e76be2c575d64d7b"
+version_source = "yaml-selector"
+version_path = "_bmad/_config/manifest.yaml"
+version_selector = "installation.version"
+version_prefix = "6.12."
+release_url = "https://github.com/bmad-code-org/BMAD-METHOD/releases/tag/v6.12.0"
+
+[paths]
+sprint_status = "docs/bmad/implementation-artifacts/sprint-status.yaml"
+epics = "docs/bmad/epics.md"
+implementation_artifacts = "docs/bmad/implementation-artifacts"
+
+[states]
+story = ["backlog", "ready-for-dev", "in-progress", "review", "done"]
+epic = ["backlog", "in-progress", "done"]
+
+[skill_markers]
+bmad-sprint-planning = ["sprint_plan.py"]
+bmad-correct-course = ["correct course"]
+
+[review]
+triage_requires_verdict = true
+triage_requires_evidence = true
+diff_variable = "diff_file"
