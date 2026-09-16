@@ -4,8 +4,11 @@ using System.Net.Http.Headers;
 using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
+using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Vulgata.Agents.WorkerExecution;
 using Vulgata.Core.DomainServices;
 using Vulgata.Core.Entities;
@@ -236,7 +239,14 @@ public sealed class Pass1DeepSeekPromptCompositionTests
     [Fact]
     public async Task ProductionWebScope_ResolvesPreparedExecutorAndBothClosedFunctionFactoriesAsync()
     {
-        await using AsyncServiceScope scope = _factory.Services.CreateAsyncScope();
+        using WebApplicationFactory<Program> isolatedFactory = _factory.WithWebHostBuilder(
+            builder => builder.ConfigureTestServices(services =>
+            {
+                services.RemoveAll<IJavaAnalysisSessionFactory>();
+                services.AddScoped<IJavaAnalysisSessionFactory>(
+                    _ => new TestJavaAnalysisSessionFactory());
+            }));
+        await using AsyncServiceScope scope = isolatedFactory.Services.CreateAsyncScope();
 
         Assert.IsType<PreparedPass1JobExecutor>(
             scope.ServiceProvider.GetRequiredService<IPreparedPass1JobExecutor>());
@@ -384,6 +394,14 @@ public sealed class Pass1DeepSeekPromptCompositionTests
         }
     }
 
+    private sealed class TestJavaAnalysisSessionFactory : IJavaAnalysisSessionFactory
+    {
+        public Task<IJavaAnalysisSession> OpenAsync(
+            AnalysisScope scope,
+            CancellationToken cancellationToken) =>
+            throw new InvalidOperationException(
+                "The composition test must not open a real JDT session.");
+    }
     private sealed class NoOpNavigationService : IPass1NavigationService
     {
         public Task<PreparedPass1NavigationResponse> NavigateAsync(

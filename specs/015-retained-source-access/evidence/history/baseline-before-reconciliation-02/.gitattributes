@@ -1,0 +1,28 @@
+/docker/codegraph/requirements.lock text eol=lf
+/specs/002-language-framework-detection/spec.md text eol=lf
+/specs/002-language-framework-detection/plan.md text eol=lf
+/specs/002-language-framework-detection/research.md text eol=lf
+/specs/002-language-framework-detection/data-model.md text eol=lf
+/specs/002-language-framework-detection/quickstart.md text eol=lf
+/specs/002-language-framework-detection/contracts/framework-detection.md text eol=lf
+/specs/002-language-framework-detection/contracts/provider-language-projection.md text eol=lf
+/specs/002-language-framework-detection/contracts/repository-scan-overview.md text eol=lf
+/specs/002-language-framework-detection/reviews/plan-review-10.json text eol=lf
+/specs/002-language-framework-detection/evidence/quality9-scan-strategy-remediation-approval.json text eol=lf
+/specs/001-codegraph-extraction/contracts/repository-profiling-api.md text eol=lf
+/specs/001-codegraph-extraction/reviews/plan-review-10.json text eol=lf
+/specs/001-codegraph-extraction/qualification/attempts/authorized.schema.json text eol=lf
+/specs/001-codegraph-extraction/qualification/attempts/started.schema.json text eol=lf
+/specs/001-codegraph-extraction/qualification/attempts/terminal.schema.json text eol=lf
+/specs/001-codegraph-extraction/qualification/attempts/attempt-0001/started.json text eol=lf
+/specs/001-codegraph-extraction/qualification/attempts/attempt-0001/terminal.json text eol=lf
+/specs/001-codegraph-extraction/qualification/attempts/attempt-0002/authorized.json text eol=crlf
+/specs/013-exact-cross-repository-flow-pass2/contracts/business-logic-flow-v1.schema.json text eol=lf
+
+# Preserve raw-byte pre-images, including their original whitespace and line endings.
+/docs/bmad/history/pre-generic-adoption-2026-09-11/files/** -text -whitespace
+
+# Preserve exact reviewed workflow artifact bytes across checkouts.
+/specs/015-retained-source-access/** -text whitespace=cr-at-eol
+# Historical review preimages retain their original whitespace.
+/specs/015-retained-source-access/evidence/history/** -text -whitespace

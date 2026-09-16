@@ -1,0 +1,462 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:vulgata:schema:code-logic:file-v2",
+  "title": "Vulgata authoritative file Code Logic Document",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaIdentity",
+    "binding",
+    "sourceAnchors",
+    "filePurpose",
+    "internalUnits",
+    "executionFlow",
+    "dataFlow",
+    "rules",
+    "dataAccess",
+    "communicationEvidence",
+    "knownReferences",
+    "deferredObservations",
+    "assumptions"
+  ],
+  "properties": {
+    "schemaIdentity": { "const": "code-logic/file-v2" },
+    "binding": { "$ref": "#/$defs/binding" },
+    "sourceAnchors": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 512,
+      "items": { "$ref": "#/$defs/sourceAnchor" }
+    },
+    "filePurpose": { "$ref": "#/$defs/filePurpose" },
+    "internalUnits": {
+      "type": "array",
+      "maxItems": 64,
+      "items": { "$ref": "#/$defs/internalUnit" }
+    },
+    "executionFlow": {
+      "type": "array",
+      "maxItems": 32,
+      "items": { "$ref": "#/$defs/orderedClaim" }
+    },
+    "dataFlow": {
+      "type": "array",
+      "maxItems": 32,
+      "items": { "$ref": "#/$defs/dataFlow" }
+    },
+    "rules": {
+      "type": "array",
+      "maxItems": 32,
+      "items": { "$ref": "#/$defs/rule" }
+    },
+    "dataAccess": {
+      "type": "array",
+      "maxItems": 32,
+      "items": { "$ref": "#/$defs/dataAccess" }
+    },
+    "communicationEvidence": {
+      "type": "array",
+      "maxItems": 32,
+      "items": { "$ref": "#/$defs/communicationEvidence" }
+    },
+    "knownReferences": {
+      "type": "array",
+      "maxItems": 64,
+      "items": { "$ref": "#/$defs/knownReference" }
+    },
+    "deferredObservations": {
+      "type": "array",
+      "maxItems": 64,
+      "items": { "$ref": "#/$defs/deferredObservation" }
+    },
+    "assumptions": {
+      "type": "array",
+      "maxItems": 16,
+      "items": { "$ref": "#/$defs/assumption" }
+    }
+  },
+  "$defs": {
+    "uuid": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "revision": {
+      "type": "string",
+      "pattern": "^(?:[0-9a-f]{40}|[0-9a-f]{64})$"
+    },
+    "boundedText": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 4096,
+      "pattern": "^[^\\u0000-\\u0008\\u000B\\u000C\\u000E-\\u001F\\u007F-\\u009F]+$"
+    },
+    "path": {
+      "allOf": [
+        { "$ref": "#/$defs/boundedText" },
+        { "maxLength": 2048 },
+        { "pattern": "^(?!/)(?![A-Za-z]:)(?!.*(?:^|/)\\.{1,2}(?:/|$))(?!.*\\\\).+$" }
+      ]
+    },
+    "anchorKey": {
+      "type": "string",
+      "pattern": "^a[0-9]{3}$"
+    },
+    "catalogRuleIdentity": {
+      "allOf": [
+        { "$ref": "#/$defs/boundedText" },
+        { "maxLength": 256 }
+      ]
+    },
+    "anchorRefs": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 32,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/anchorKey" }
+    },
+    "receiptRefs": {
+      "type": "array",
+      "maxItems": 8,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/uuid" }
+    },
+    "binding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "jobId",
+        "scanExecutionId",
+        "systemId",
+        "repositoryId",
+        "scanRunId",
+        "profiledRevision",
+        "fileCodeUnitId",
+        "fileCodeUnitIdentityFingerprint",
+        "preparedScanManifestId",
+        "preparedScanManifestFingerprint",
+        "pairPackageFingerprint",
+        "repositoryRelativePath",
+        "byteStart",
+        "byteEnd",
+        "lineStart",
+        "lineEnd",
+        "segmentOrdinal",
+        "segmentCount",
+        "fileHash",
+        "sourceHash",
+        "promptIdentity",
+        "documentSchemaIdentity",
+        "analysisRuntimeIdentityHash"
+      ],
+      "properties": {
+        "jobId": { "$ref": "#/$defs/uuid" },
+        "scanExecutionId": { "$ref": "#/$defs/uuid" },
+        "systemId": { "$ref": "#/$defs/uuid" },
+        "repositoryId": { "$ref": "#/$defs/uuid" },
+        "scanRunId": { "$ref": "#/$defs/uuid" },
+        "profiledRevision": { "$ref": "#/$defs/revision" },
+        "fileCodeUnitId": { "$ref": "#/$defs/uuid" },
+        "fileCodeUnitIdentityFingerprint": { "$ref": "#/$defs/sha256" },
+        "preparedScanManifestId": { "$ref": "#/$defs/uuid" },
+        "preparedScanManifestFingerprint": { "$ref": "#/$defs/sha256" },
+        "pairPackageFingerprint": { "$ref": "#/$defs/sha256" },
+        "repositoryRelativePath": { "$ref": "#/$defs/path" },
+        "byteStart": { "type": "integer", "minimum": 0 },
+        "byteEnd": { "type": "integer", "minimum": 1 },
+        "lineStart": { "type": "integer", "minimum": 1 },
+        "lineEnd": { "type": "integer", "minimum": 1 },
+        "segmentOrdinal": { "type": "integer", "minimum": 1 },
+        "segmentCount": { "type": "integer", "minimum": 1 },
+        "fileHash": { "$ref": "#/$defs/sha256" },
+        "sourceHash": { "$ref": "#/$defs/sha256" },
+        "promptIdentity": { "$ref": "#/$defs/boundedText" },
+        "documentSchemaIdentity": { "const": "code-logic/file-v2" },
+        "analysisRuntimeIdentityHash": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "sourceAnchor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "key",
+        "repositoryRelativePath",
+        "byteStart",
+        "byteEnd",
+        "lineStart",
+        "lineEnd",
+        "sourceHash",
+        "evidenceLocator"
+      ],
+      "properties": {
+        "key": { "$ref": "#/$defs/anchorKey" },
+        "repositoryRelativePath": { "$ref": "#/$defs/path" },
+        "byteStart": { "type": "integer", "minimum": 0 },
+        "byteEnd": { "type": "integer", "minimum": 1 },
+        "lineStart": { "type": "integer", "minimum": 1 },
+        "lineEnd": { "type": "integer", "minimum": 1 },
+        "sourceHash": { "$ref": "#/$defs/sha256" },
+        "evidenceLocator": { "$ref": "#/$defs/boundedText" }
+      }
+    },
+    "filePurpose": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["summary", "sourceAnchorRefs", "responsibilities"],
+      "properties": {
+        "summary": { "$ref": "#/$defs/boundedText" },
+        "sourceAnchorRefs": { "$ref": "#/$defs/anchorRefs" },
+        "responsibilities": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 16,
+          "items": { "$ref": "#/$defs/claim" }
+        }
+      }
+    },
+    "claim": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["description", "sourceAnchorRefs"],
+      "properties": {
+        "description": { "$ref": "#/$defs/boundedText" },
+        "sourceAnchorRefs": { "$ref": "#/$defs/anchorRefs" }
+      }
+    },
+    "orderedClaim": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["order", "description", "sourceAnchorRefs"],
+      "properties": {
+        "order": { "type": "integer", "minimum": 1 },
+        "description": { "$ref": "#/$defs/boundedText" },
+        "sourceAnchorRefs": { "$ref": "#/$defs/anchorRefs" }
+      }
+    },
+    "internalUnit": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "order",
+        "kind",
+        "qualifiedSymbol",
+        "signature",
+        "responsibility",
+        "byteStart",
+        "byteEnd",
+        "lineStart",
+        "lineEnd",
+        "sourceAnchorRefs"
+      ],
+      "properties": {
+        "order": { "type": "integer", "minimum": 1 },
+        "kind": {
+          "enum": ["Type", "Method", "Function", "Constructor", "Field", "Configuration", "XmlElement", "Other"]
+        },
+        "qualifiedSymbol": { "$ref": "#/$defs/boundedText" },
+        "signature": { "$ref": "#/$defs/boundedText" },
+        "responsibility": { "$ref": "#/$defs/boundedText" },
+        "byteStart": { "type": "integer", "minimum": 0 },
+        "byteEnd": { "type": "integer", "minimum": 1 },
+        "lineStart": { "type": "integer", "minimum": 1 },
+        "lineEnd": { "type": "integer", "minimum": 1 },
+        "sourceAnchorRefs": { "$ref": "#/$defs/anchorRefs" }
+      }
+    },
+    "dataFlow": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["order", "from", "to", "value", "description", "sourceAnchorRefs"],
+      "properties": {
+        "order": { "type": "integer", "minimum": 1 },
+        "from": { "$ref": "#/$defs/boundedText" },
+        "to": { "$ref": "#/$defs/boundedText" },
+        "value": { "$ref": "#/$defs/boundedText" },
+        "description": { "$ref": "#/$defs/boundedText" },
+        "sourceAnchorRefs": { "$ref": "#/$defs/anchorRefs" }
+      }
+    },
+    "rule": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["order", "kind", "condition", "effect", "sourceAnchorRefs"],
+      "properties": {
+        "order": { "type": "integer", "minimum": 1 },
+        "kind": { "enum": ["Business", "Code"] },
+        "condition": { "$ref": "#/$defs/boundedText" },
+        "effect": { "$ref": "#/$defs/boundedText" },
+        "sourceAnchorRefs": { "$ref": "#/$defs/anchorRefs" }
+      }
+    },
+    "dataAccess": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["order", "mode", "subject", "description", "sourceAnchorRefs"],
+      "properties": {
+        "order": { "type": "integer", "minimum": 1 },
+        "mode": { "enum": ["Read", "Write", "ReadWrite"] },
+        "subject": { "$ref": "#/$defs/boundedText" },
+        "description": { "$ref": "#/$defs/boundedText" },
+        "sourceAnchorRefs": { "$ref": "#/$defs/anchorRefs" }
+      }
+    },
+    "communicationEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "order",
+        "communicationKind",
+        "observation",
+        "classificationEvidence",
+        "navigationReceiptIds",
+        "sourceAnchorRefs"
+      ],
+      "properties": {
+        "order": { "type": "integer", "minimum": 1 },
+        "communicationKind": { "enum": ["Rpc", "Http"] },
+        "observation": { "$ref": "#/$defs/boundedText" },
+        "classificationEvidence": {
+          "type": "array",
+          "maxItems": 32,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/communicationClassificationEvidence" }
+        },
+        "navigationReceiptIds": { "$ref": "#/$defs/receiptRefs" },
+        "sourceAnchorRefs": { "$ref": "#/$defs/anchorRefs" }
+      },
+      "anyOf": [
+        { "properties": { "classificationEvidence": { "minItems": 1 } } },
+        { "properties": { "navigationReceiptIds": { "minItems": 1 } } }
+      ]
+    },
+    "communicationClassificationEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "classificationId",
+        "classificationFingerprint",
+        "communicationKind",
+        "level",
+        "confidence",
+        "evidenceRule",
+        "provenance",
+        "catalogRuleIdentity",
+        "evidenceLocator"
+      ],
+      "properties": {
+        "classificationId": { "$ref": "#/$defs/uuid" },
+        "classificationFingerprint": { "$ref": "#/$defs/sha256" },
+        "communicationKind": { "enum": ["Rpc", "Http"] },
+        "level": { "enum": ["Confirmed", "Hint", "Warning"] },
+        "confidence": { "enum": ["High", "Conservative", "None"] },
+        "evidenceRule": {
+          "enum": [
+            "RpcDirectAnnotation",
+            "RpcMatchedConfiguration",
+            "HttpControllerAnnotation",
+            "HttpClientAnnotation",
+            "HttpMatchedConfiguration",
+            "RpcImportOnly",
+            "HttpImportOnly",
+            "MalformedEvidence",
+            "UnsafePath",
+            "BoundExceeded",
+            "ContradictoryEvidence",
+            "UnsupportedFamily"
+          ]
+        },
+        "provenance": {
+          "enum": [
+            "StructuralAnnotation",
+            "FrameworkFact",
+            "PackageManifest",
+            "MatchedConfiguration",
+            "Import",
+            "Detector"
+          ]
+        },
+        "catalogRuleIdentity": { "$ref": "#/$defs/catalogRuleIdentity" },
+        "evidenceLocator": { "$ref": "#/$defs/boundedText" }
+      }
+    },
+    "knownReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "order",
+        "relationshipKind",
+        "targetDocumentVersionId",
+        "targetRepositoryRelativePath",
+        "targetSourceHash",
+        "navigationReceiptId",
+        "sourceClaimLocator",
+        "sourceAnchorRefs"
+      ],
+      "properties": {
+        "order": { "type": "integer", "minimum": 1 },
+        "relationshipKind": { "const": "References" },
+        "targetDocumentVersionId": { "$ref": "#/$defs/uuid" },
+        "targetRepositoryRelativePath": { "$ref": "#/$defs/path" },
+        "targetSourceHash": { "$ref": "#/$defs/sha256" },
+        "navigationReceiptId": { "$ref": "#/$defs/uuid" },
+        "sourceClaimLocator": { "$ref": "#/$defs/boundedText" },
+        "sourceAnchorRefs": { "$ref": "#/$defs/anchorRefs" }
+      }
+    },
+    "deferredObservation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "order",
+        "relationshipKind",
+        "outcome",
+        "sourceClaimLocator",
+        "targetSymbol",
+        "targetRepositoryRelativePath",
+        "targetSourceHash",
+        "navigationOperation",
+        "navigationDepth",
+        "navigationReceiptIds",
+        "sourceAnchorRefs"
+      ],
+      "properties": {
+        "order": { "type": "integer", "minimum": 1 },
+        "relationshipKind": { "const": "References" },
+        "outcome": { "enum": ["Insufficient", "Ambiguous", "Stale", "Unsupported", "CrossRepository", "BoundExceeded"] },
+        "sourceClaimLocator": { "$ref": "#/$defs/boundedText" },
+        "targetSymbol": { "oneOf": [{ "$ref": "#/$defs/boundedText" }, { "type": "null" }] },
+        "targetRepositoryRelativePath": { "oneOf": [{ "$ref": "#/$defs/path" }, { "type": "null" }] },
+        "targetSourceHash": { "oneOf": [{ "$ref": "#/$defs/sha256" }, { "type": "null" }] },
+        "navigationOperation": {
+          "enum": ["Definition", "References", "Implementations", "Callers", "Callees", "SymbolSearch", "RelatedFiles", "ExactSourceEvidence"]
+        },
+        "navigationDepth": { "type": "integer", "minimum": 1, "maximum": 4 },
+        "navigationReceiptIds": { "allOf": [{ "$ref": "#/$defs/receiptRefs" }, { "minItems": 1 }] },
+        "sourceAnchorRefs": { "$ref": "#/$defs/anchorRefs" }
+      },
+      "anyOf": [
+        { "properties": { "targetSymbol": { "type": "string" } } },
+        { "properties": { "targetRepositoryRelativePath": { "type": "string" } } }
+      ]
+    },
+    "assumption": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["order", "status", "description", "sourceAnchorRefs"],
+      "properties": {
+        "order": { "type": "integer", "minimum": 1 },
+        "status": { "const": "Unresolved" },
+        "description": { "$ref": "#/$defs/boundedText" },
+        "sourceAnchorRefs": {
+          "type": "array",
+          "maxItems": 32,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/anchorKey" }
+        }
+      }
+    }
+  }
+}

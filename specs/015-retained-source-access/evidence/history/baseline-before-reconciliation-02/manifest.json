@@ -1,0 +1,234 @@
+{
+  "source_commit": "70c4c4fa1835fabd2236cc70e1e7226b2be9ed7e",
+  "observed_at": "2026-09-16T02:59:07.159685Z",
+  "entries": [
+    {
+      "path": ".gitattributes",
+      "sha256": "1ff17e0918911e81f46424c1846014fd763e94f40b3890c12f7c79fa8200b49a",
+      "head_blob": "b86d8c6a3c67840350e7d1cf28682e611976c395",
+      "archive": "specs/015-retained-source-access/evidence/history/baseline-before-reconciliation-02/.gitattributes"
+    },
+    {
+      "path": "specs/012-resumable-file-pass1-code-logic/contracts/code-logic-file-v2.schema.json",
+      "sha256": "757985c26bb465d77cf28d6d916557e86c69e7a436d81437aaa56ba2229a5f4b",
+      "head_blob": "7b9860bb14b466be7ff3c06a2186cac18a16f4aa",
+      "archive": "specs/015-retained-source-access/evidence/history/baseline-before-reconciliation-02/specs/012-resumable-file-pass1-code-logic/contracts/code-logic-file-v2.schema.json"
+    },
+    {
+      "path": "src/dotnet/Vulgata.Agents/Prompts/pass1-code-logic-worker.v1.md",
+      "sha256": "7b2a0e33888fe3a28fd787892b8723137c4f1c02e5283159cb8d8df19eacade7",
+      "head_blob": "6a0a624f3b28cf8a58205bf7251a4f3a67e5a326",
+      "archive": "specs/015-retained-source-access/evidence/history/baseline-before-reconciliation-02/src/dotnet/Vulgata.Agents/Prompts/pass1-code-logic-worker.v1.md"
+    },
+    {
+      "path": "src/dotnet/Vulgata.Agents/Prompts/pass1-code-logic-worker.v2.md",
+      "sha256": "45951d6530dd7e39b55d32509749d053d221d53d217f40a25d93d1d637545a54",
+      "head_blob": "7c54a52a2bb10befc911b157df689d04d53d62ad",
+      "archive": "specs/015-retained-source-access/evidence/history/baseline-before-reconciliation-02/src/dotnet/Vulgata.Agents/Prompts/pass1-code-logic-worker.v2.md"
+    },
+    {
+      "path": "tests/Vulgata.Tests/AnalysisRuntime/AnalysisRuntimeFixtureTests.cs",
+      "sha256": "b17cf64ffcd1325a8446930a69b43e88a235f6ad355b414e42f873b746ed204f",
+      "head_blob": "b249794d197d911a9e339dd73d7c4f61b47360f1",
+      "archive": "specs/015-retained-source-access/evidence/history/baseline-before-reconciliation-02/tests/Vulgata.Tests/AnalysisRuntime/AnalysisRuntimeFixtureTests.cs"
+    },
+    {
+      "path": "tests/Vulgata.Tests/AnalysisRuntime/AnalysisRuntimeHealthTests.cs",
+      "sha256": "ae0dc16dd3a550928cd41ab5298a4a398d7a8788b5dfe59e829cf6442894db95",
+      "head_blob": "765546fc1cd1214fa04ae368bd567e178e2eb546",
+      "archive": "specs/015-retained-source-access/evidence/history/baseline-before-reconciliation-02/tests/Vulgata.Tests/AnalysisRuntime/AnalysisRuntimeHealthTests.cs"
+    },
+    {
+      "path": "tests/Vulgata.Tests/DashboardPanelTests.cs",
+      "sha256": "d8cb8dd64c6a1c4465fc9d6ab9e6926660c344170995cc2ab11fa7e1c0dafe7c",
+      "head_blob": "1a69c84bc936ea4a60f371b98560b8b4869d20cf",
+      "archive": "specs/015-retained-source-access/evidence/history/baseline-before-reconciliation-02/tests/Vulgata.Tests/DashboardPanelTests.cs"
+    },
+    {
+      "path": "tests/Vulgata.Tests/ExactCrossRepositoryTestFixtures.cs",
+      "sha256": "6200c5b363344188ba83ecf6c86868e6323c0034846c3507dcc4a4819027a8f6",
+      "head_blob": "3172c169e3bdf363976387cc8df5f0dd760a4575",
+      "archive": "specs/015-retained-source-access/evidence/history/baseline-before-reconciliation-02/tests/Vulgata.Tests/ExactCrossRepositoryTestFixtures.cs"
+    },
+    {
+      "path": "tests/Vulgata.Tests/KnowledgeStoreTestFixtures.cs",
+      "sha256": "7f9158d643703604cf818ac00f4f712407678d995561c36a386d29183be14727",
+      "head_blob": "b7aab0122b6896abc035a30c13d5375656dd404c",
+      "archive": "specs/015-retained-source-access/evidence/history/baseline-before-reconciliation-02/tests/Vulgata.Tests/KnowledgeStoreTestFixtures.cs"
+    },
+    {
+      "path": "tests/Vulgata.Tests/Migrations/DurableScanMigrationPostgreSqlTests.cs",
+      "sha256": "c4afd6bae6cfc9a69b26b8d0dac1cba36da610989d9912375ec156e1f0a6882c",
+      "head_blob": "3c0e23df6cc869db7077910917528018ba51f635",
+      "archive": "specs/015-retained-source-access/evidence/history/baseline-before-reconciliation-02/tests/Vulgata.Tests/Migrations/DurableScanMigrationPostgreSqlTests.cs"
+    },
+    {
+      "path": "tests/Vulgata.Tests/Migrations/PreparedScanMigrationPostgreSqlTests.cs",
+      "sha256": "a0fac9017a902380b9a45563347ec4515cd5e2f368cfb63570e346f1aad21aeb",
+      "head_blob": "9d95bd93d0d2cf65346432106ea23e7ce52168e2",
+      "archive": "specs/015-retained-source-access/evidence/history/baseline-before-reconciliation-02/tests/Vulgata.Tests/Migrations/PreparedScanMigrationPostgreSqlTests.cs"
+    },
+    {
+      "path": "tests/Vulgata.Tests/PreparedChatIntegrationTests.cs",
+      "sha256": "ffbc8e66670ac31da44ac93159da0df28579b008e94089e043e81e8a7c0b5a55",
+      "head_blob": "2f1e9407e9f9e7ff092ec5ea042ebd917d81f5e8",
+      "archive": "specs/015-retained-source-access/evidence/history/baseline-before-reconciliation-02/tests/Vulgata.Tests/PreparedChatIntegrationTests.cs"
+    },
+    {
+      "path": "tests/Vulgata.Tests/PreparedPass1/Fixtures/PreparedPass1ManifestPairFixtures.cs",
+      "sha256": "bd90734b02d4496f8fd2f5098e28b054e89b5225c93d94d4b9394a89eced0cbc",
+      "head_blob": "edf5383f4f9cdd2e9bbc7d512e6e8e4aa5698592",
+      "archive": "specs/015-retained-source-access/evidence/history/baseline-before-reconciliation-02/tests/Vulgata.Tests/PreparedPass1/Fixtures/PreparedPass1ManifestPairFixtures.cs"
+    },
+    {
+      "path": "tests/Vulgata.Tests/PreparedPass1/NavigateCodeSecurityTests.cs",
+      "sha256": "65ac40ee93d13672450ed72fa3ec09ec1a23e93795af55c2a1ca766e1773ae01",
+      "head_blob": "63b70d0a9eae2d9fc9e22029ab2db542ee9186b8",
+      "archive": "specs/015-retained-source-access/evidence/history/baseline-before-reconciliation-02/tests/Vulgata.Tests/PreparedPass1/NavigateCodeSecurityTests.cs"
+    },
+    {
+      "path": "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekContractQualificationTests.cs",
+      "sha256": "829e92aa341eed98d84c24bacc4e46ed3215e3323207e2e3e35cbe1ab5f106d2",
+      "head_blob": "3423c3146fe6622b62b0dc54786bc6cfd9f57fa1",
+      "archive": "specs/015-retained-source-access/evidence/history/baseline-before-reconciliation-02/tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekContractQualificationTests.cs"
+    },
+    {
+      "path": "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekPromptCompositionTests.cs",
+      "sha256": "dd4915c869a5c04f5649cc114d54b128ca82d50a804dc6d1431d67bc7b16f5d0",
+      "head_blob": "e10a91292925ed382dbd8d0ca87da9ace63e4c0c",
+      "archive": "specs/015-retained-source-access/evidence/history/baseline-before-reconciliation-02/tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekPromptCompositionTests.cs"
+    },
+    {
+      "path": "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekStreamingQualificationTests.cs",
+      "sha256": "925f1f9e64d5c21d20a512f197964fd8a5f791f34c2b485fc93270a3316af8f2",
+      "head_blob": "46a70b915fc81c069d3941eb4d633b4a526a055d",
+      "archive": "specs/015-retained-source-access/evidence/history/baseline-before-reconciliation-02/tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekStreamingQualificationTests.cs"
+    },
+    {
+      "path": "tests/Vulgata.Tests/PreparedPass1/Pass1DocumentPostgreSqlAtomicTests.cs",
+      "sha256": "82881ff3b5d2117392d3e0afae060497fd618e0e69a873e51a2bbc07352dfa23",
+      "head_blob": "df8b3b9a22cd0afc459422d34df2b65e93f15f2d",
+      "archive": "specs/015-retained-source-access/evidence/history/baseline-before-reconciliation-02/tests/Vulgata.Tests/PreparedPass1/Pass1DocumentPostgreSqlAtomicTests.cs"
+    },
+    {
+      "path": "tests/Vulgata.Tests/PreparedPass1/Pass1HostRuntimeQualificationTests.cs",
+      "sha256": "e67d5becbb8267747747331b70a30a7a4ca36a9b748c1bb3e27937ca49be75fa",
+      "head_blob": "16a5f4fb0ba9855862b9b520ad8496314506f701",
+      "archive": "specs/015-retained-source-access/evidence/history/baseline-before-reconciliation-02/tests/Vulgata.Tests/PreparedPass1/Pass1HostRuntimeQualificationTests.cs"
+    },
+    {
+      "path": "tests/Vulgata.Tests/PreparedPass1/PreparedPass1JobExecutorStreamingTests.cs",
+      "sha256": "74c29dc527e91d0f1ac3c5cbc0044136e3807cb0cae5f6c77b8826f98c7f2e73",
+      "head_blob": "4b4c3c0576e647e1a8beec5ab4ad7e82f8462891",
+      "archive": "specs/015-retained-source-access/evidence/history/baseline-before-reconciliation-02/tests/Vulgata.Tests/PreparedPass1/PreparedPass1JobExecutorStreamingTests.cs"
+    },
+    {
+      "path": "tests/Vulgata.Tests/PreparedPass2/ExactCrossRepositoryPostgreSqlTests.cs",
+      "sha256": "c4a9ce83bd38738d8b8ed1ecf7f4ef3fe44e0f5713734433081622afdbd88e15",
+      "head_blob": "719b6cf0ebc5f5adfbe30068b32b83b58a15ff0e",
+      "archive": "specs/015-retained-source-access/evidence/history/baseline-before-reconciliation-02/tests/Vulgata.Tests/PreparedPass2/ExactCrossRepositoryPostgreSqlTests.cs"
+    },
+    {
+      "path": "tests/Vulgata.Tests/PreparedPass2/Pass2DocumentPostgreSqlAtomicTests.cs",
+      "sha256": "d799a742a67aa1a1883ba49410da1f220d60d9208fe915bb5257cf204eb61f85",
+      "head_blob": "d6694ea20ed30180ced97e54dcc3b8edee785e1d",
+      "archive": "specs/015-retained-source-access/evidence/history/baseline-before-reconciliation-02/tests/Vulgata.Tests/PreparedPass2/Pass2DocumentPostgreSqlAtomicTests.cs"
+    },
+    {
+      "path": "tests/Vulgata.Tests/PreparedPass2/Pass2FlowPlanningPostgreSqlTests.cs",
+      "sha256": "cf61c274fec4b4ebffc1b4dac099e4147872115f33e6975376e360ca1e1291c4",
+      "head_blob": "4e301c18224665c03e3ba1b6bfe2b2efec326564",
+      "archive": "specs/015-retained-source-access/evidence/history/baseline-before-reconciliation-02/tests/Vulgata.Tests/PreparedPass2/Pass2FlowPlanningPostgreSqlTests.cs"
+    },
+    {
+      "path": "tests/Vulgata.Tests/PreparedPass2/Pass2MigrationTests.cs",
+      "sha256": "b026f7b853c89eca3503902ef34608a6d52bcf39a49a7d633ff33781e8a83f7d",
+      "head_blob": "e00d6ac790f93201f7105079e710603689e91b88",
+      "archive": "specs/015-retained-source-access/evidence/history/baseline-before-reconciliation-02/tests/Vulgata.Tests/PreparedPass2/Pass2MigrationTests.cs"
+    },
+    {
+      "path": "tests/Vulgata.Tests/PreparedPass2/Pass2ProductionQualificationTests.cs",
+      "sha256": "021725906bf0bae4f632a7d607a4d6211e6cc23eca6b93910e50232925b4ba29",
+      "head_blob": "005663f3b690801e3119e42045702c85a922a0df",
+      "archive": "specs/015-retained-source-access/evidence/history/baseline-before-reconciliation-02/tests/Vulgata.Tests/PreparedPass2/Pass2ProductionQualificationTests.cs"
+    },
+    {
+      "path": "tests/Vulgata.Tests/PreparedPass2/Pass2TestFixtures.cs",
+      "sha256": "b9bd036ed3e03fd7acb5d8bfeaf9cb51db6f42f50e62072d99f8fc30a37f567e",
+      "head_blob": "0b3f4a3fc1e9727587836cefbd8caa866458c82b",
+      "archive": "specs/015-retained-source-access/evidence/history/baseline-before-reconciliation-02/tests/Vulgata.Tests/PreparedPass2/Pass2TestFixtures.cs"
+    },
+    {
+      "path": "tests/Vulgata.Tests/PreparedPass2/RetrieveCodeLogicPostgreSqlBudgetTests.cs",
+      "sha256": "eb043f04bb36a41114a922c8947023cb654f54f08ce7c7e0d09b009f9471b75e",
+      "head_blob": "0ec2c8c5af38b850c414a25202e4fa3d0adee3c7",
+      "archive": "specs/015-retained-source-access/evidence/history/baseline-before-reconciliation-02/tests/Vulgata.Tests/PreparedPass2/RetrieveCodeLogicPostgreSqlBudgetTests.cs"
+    },
+    {
+      "path": "tests/Vulgata.Tests/PreparedScanning/PreparedPass1ContractIdentitySourceTests.cs",
+      "sha256": "2df09ed4d1c61d919930c33a8ef8ea0fc8d30e9a447e4c421582c7898d7151ae",
+      "head_blob": "0a5025faa7a323331ab79fe0f66669fd5c794e9b",
+      "archive": "specs/015-retained-source-access/evidence/history/baseline-before-reconciliation-02/tests/Vulgata.Tests/PreparedScanning/PreparedPass1ContractIdentitySourceTests.cs"
+    },
+    {
+      "path": "tests/Vulgata.Tests/PreparedScanning/PreparedScanInitiationPostgreSqlFixture.cs",
+      "sha256": "b2977b798d2073089c7e681f6e4667daf9ffb9d24627fca5e26f2c9a4328c0d6",
+      "head_blob": "76e490b539c24f656c3a3c54258b3a9a52f22807",
+      "archive": "specs/015-retained-source-access/evidence/history/baseline-before-reconciliation-02/tests/Vulgata.Tests/PreparedScanning/PreparedScanInitiationPostgreSqlFixture.cs"
+    },
+    {
+      "path": "tests/Vulgata.Tests/PreparedScanning/PreparedScanPostgreSqlFixture.cs",
+      "sha256": "d345cb49367124b2b7af1b1e0698e4e680a922988c6d351274ee3bfa550388bb",
+      "head_blob": "bb8011cada64800d12832803045baafa40487fed",
+      "archive": "specs/015-retained-source-access/evidence/history/baseline-before-reconciliation-02/tests/Vulgata.Tests/PreparedScanning/PreparedScanPostgreSqlFixture.cs"
+    },
+    {
+      "path": "tests/Vulgata.Tests/PreparedScanning/PreparedScanReleaseQualificationTests.cs",
+      "sha256": "118712deeb9267d1d58a9f195d92b25651109322b78081c9319c0c563dc89b6e",
+      "head_blob": "41971cfe05b4c64dad4841524d913009d4e4e731",
+      "archive": "specs/015-retained-source-access/evidence/history/baseline-before-reconciliation-02/tests/Vulgata.Tests/PreparedScanning/PreparedScanReleaseQualificationTests.cs"
+    },
+    {
+      "path": "tests/Vulgata.Tests/PreparedScanning/ReviewedExactProfileSeedPostgreSqlTests.cs",
+      "sha256": "ebed20435a89ca9eee2065b01dd607e9a5deb5bd462a2b81a875f71ea02a7b42",
+      "head_blob": "af14acef9ba7009f6ccd94864a6086ce3ef3ea05",
+      "archive": "specs/015-retained-source-access/evidence/history/baseline-before-reconciliation-02/tests/Vulgata.Tests/PreparedScanning/ReviewedExactProfileSeedPostgreSqlTests.cs"
+    },
+    {
+      "path": "tests/Vulgata.Tests/ReleaseGate/Story125/Story125ReleaseHarnessTests.cs",
+      "sha256": "beb2a739eecddb0b1c1423ba0f1d7e7aa717199e33691c2ae3c9ac43ba31bbf2",
+      "head_blob": "8dd6b111185cfb458a05415fc6202e1775854a56",
+      "archive": "specs/015-retained-source-access/evidence/history/baseline-before-reconciliation-02/tests/Vulgata.Tests/ReleaseGate/Story125/Story125ReleaseHarnessTests.cs"
+    },
+    {
+      "path": "tests/Vulgata.Tests/RetainedSource/RetainedSourceCaptureApplicationFixture.cs",
+      "sha256": "71c75797c863059e50802d5ad4b6c928b17881aa716fca23c8092639957cc208",
+      "head_blob": "92522ebd48db28bef3fa122e99de1bf315264a6e",
+      "archive": "specs/015-retained-source-access/evidence/history/baseline-before-reconciliation-02/tests/Vulgata.Tests/RetainedSource/RetainedSourceCaptureApplicationFixture.cs"
+    },
+    {
+      "path": "tests/Vulgata.Tests/RetainedSource/RetainedSourceFixture.cs",
+      "sha256": "ebad66cfd17236a50a4a4caca1e034f317ef2ed9e02482f81d5ce24e9235a6db",
+      "head_blob": "0695d9ceda6cb08e7d464ad88314c5d4f0019bbb",
+      "archive": "specs/015-retained-source-access/evidence/history/baseline-before-reconciliation-02/tests/Vulgata.Tests/RetainedSource/RetainedSourceFixture.cs"
+    },
+    {
+      "path": "tests/Vulgata.Tests/RetainedSource/RetainedSourceTestFixtures.cs",
+      "sha256": "4c2baf3adb332840a697aef629de0bdc073a7fa58683867e92d1b352f78d3071",
+      "head_blob": "846261e0393129cbbf5262cf1037ff69d9c8ae14",
+      "archive": "specs/015-retained-source-access/evidence/history/baseline-before-reconciliation-02/tests/Vulgata.Tests/RetainedSource/RetainedSourceTestFixtures.cs"
+    },
+    {
+      "path": "tests/Vulgata.Tests/WorkerAgentTestFixtures.cs",
+      "sha256": "dc39876c4173f20c296dd221ad2e3526467a9b8841aca75b5e00fd8202d13e72",
+      "head_blob": "836411529212d049505460aa585ddff624bf5a22",
+      "archive": "specs/015-retained-source-access/evidence/history/baseline-before-reconciliation-02/tests/Vulgata.Tests/WorkerAgentTestFixtures.cs"
+    },
+    {
+      "path": "tests/Vulgata.Tests/PreparedPass2/ExactCrossRepositoryResolutionTests.cs",
+      "sha256": "6cb6ff335d2f4ca1c45e4231c80095d5303e90135e94a9468cc4d42a55c68670",
+      "head_blob": "97b52fccaf2e88f8daf3827526b86cb079b197f8",
+      "archive": "specs/015-retained-source-access/evidence/history/baseline-before-reconciliation-02/tests/Vulgata.Tests/PreparedPass2/ExactCrossRepositoryResolutionTests.cs"
+    }
+  ]
+}

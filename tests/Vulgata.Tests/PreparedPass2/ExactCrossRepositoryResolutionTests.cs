@@ -798,10 +798,23 @@ public sealed class ExactCrossRepositoryResolutionTests
         await context.SaveChangesAsync();
         context.DocumentVersions.AddRange(consumer.DocumentVersion, provider.DocumentVersion);
         await context.SaveChangesAsync();
-        await context.Database.ExecuteSqlInterpolatedAsync(
-            $"UPDATE \"LogicalDocuments\" SET \"CurrentVersionId\" = {consumer.DocumentVersion.Id} WHERE \"Id\" = {consumer.LogicalDocument.Id}");
-        await context.Database.ExecuteSqlInterpolatedAsync(
-            $"UPDATE \"LogicalDocuments\" SET \"CurrentVersionId\" = {provider.DocumentVersion.Id} WHERE \"Id\" = {provider.LogicalDocument.Id}");
+        if (string.Equals(
+                context.Database.ProviderName,
+                "Npgsql.EntityFrameworkCore.PostgreSQL",
+                StringComparison.Ordinal))
+        {
+            await context.Database.ExecuteSqlInterpolatedAsync(
+                $"UPDATE \"vulgata\".\"LogicalDocuments\" SET \"CurrentVersionId\" = {consumer.DocumentVersion.Id} WHERE \"Id\" = {consumer.LogicalDocument.Id}");
+            await context.Database.ExecuteSqlInterpolatedAsync(
+                $"UPDATE \"vulgata\".\"LogicalDocuments\" SET \"CurrentVersionId\" = {provider.DocumentVersion.Id} WHERE \"Id\" = {provider.LogicalDocument.Id}");
+        }
+        else
+        {
+            await context.Database.ExecuteSqlInterpolatedAsync(
+                $"UPDATE \"LogicalDocuments\" SET \"CurrentVersionId\" = {consumer.DocumentVersion.Id} WHERE \"Id\" = {consumer.LogicalDocument.Id}");
+            await context.Database.ExecuteSqlInterpolatedAsync(
+                $"UPDATE \"LogicalDocuments\" SET \"CurrentVersionId\" = {provider.DocumentVersion.Id} WHERE \"Id\" = {provider.LogicalDocument.Id}");
+        }
         context.ChangeTracker.Clear();
     }
 

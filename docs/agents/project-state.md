@@ -3,7 +3,8 @@
 Updated: 2026-09-16. Story 13.1 has verified incremental capture, scoped reads,
 publication/recovery, cleanup, trusted-workspace and fresh-process reopen evidence
 with the remote unavailable. Source-only boundaries/diagnostics pass; the full suite
-has additional legacy failures awaiting bounded maintenance approval. Final gates remain pending.
+has verified baseline test repairs; a pre-existing canonical identity domain mismatch
+now blocks the full-suite gate. Its separate correction scope decision is pending.
 Use the active feature workflow state for its latest bound checkpoint. Other as-built
 notes retain static baseline `2bb83c3b44fc0afc07ae253ec1df5fab4399b964`. Reobserve the
 assigned checkout, tracker and source before reuse; do not require an old worktree or

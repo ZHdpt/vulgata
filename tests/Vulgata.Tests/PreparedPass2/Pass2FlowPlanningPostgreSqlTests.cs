@@ -416,7 +416,7 @@ public sealed class Pass2FlowPlanningPostgreSqlTests(ITestOutputHelper output)
             context.DocumentVersions.Add(documentVersion);
             await context.SaveChangesAsync();
             await context.Database.ExecuteSqlInterpolatedAsync(
-                $"UPDATE \"LogicalDocuments\" SET \"CurrentVersionId\" = {documentVersionId} WHERE \"Id\" = {logicalDocumentId}");
+                $"UPDATE \"vulgata\".\"LogicalDocuments\" SET \"CurrentVersionId\" = {documentVersionId} WHERE \"Id\" = {logicalDocumentId}");
             context.DocumentEdges.Add(new DocumentEdge(
                 edgeId,
                 seed.ProviderImplementation.DocumentVersion.Id,

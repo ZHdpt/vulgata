@@ -44,7 +44,7 @@ public sealed class Pass2ProductionQualificationTests
             $"{ProvisionExactHandoffVariable} must be an explicit boolean switch when supplied.");
     }
 
-    [Fact]
+    [T048ProductionQualificationFact]
     public async Task ApprovedTwoRepositoryPair_ProducesSanitizedSourceGroundedBusinessDocumentAsync()
     {
         RequireOptIn();
@@ -507,14 +507,21 @@ public sealed class Pass2ProductionQualificationTests
 
     private static void RequireOptIn()
     {
-        if (!IsTrue(Environment.GetEnvironmentVariable(OptInVariable)) ||
-            !IsTrue(Environment.GetEnvironmentVariable(ProviderContentVariable)))
-        {
-            throw Xunit.Sdk.SkipException.ForSkip(
-                $"T048 requires {OptInVariable}=1 and {ProviderContentVariable}=1.");
-        }
+        Assert.True(IsTrue(Environment.GetEnvironmentVariable(OptInVariable)),
+            $"T048 requires {OptInVariable}=1.");
+        Assert.True(IsTrue(Environment.GetEnvironmentVariable(ProviderContentVariable)),
+            $"T048 requires {ProviderContentVariable}=1.");
         Environment.SetEnvironmentVariable("VULGATA_T062_APPROVED_PAIR_REAL", "1");
         Environment.SetEnvironmentVariable("VULGATA_T062_SOURCE_BINDING_READY", "1");
+    }
+
+    internal sealed class T048ProductionQualificationFactAttribute : Xunit.FactAttribute
+    {
+        public T048ProductionQualificationFactAttribute() => Skip =
+            !IsTrue(Environment.GetEnvironmentVariable("VULGATA_T124_RUN_PRODUCTION_QUALIFICATION")) ||
+            !IsTrue(Environment.GetEnvironmentVariable("VULGATA_T124_ALLOW_PROVIDER_CONTENT"))
+                ? "T048 external qualification is opt-in; set both authorization flags to 1."
+                : null;
     }
 
     private static bool IsTrue(string? value) =>

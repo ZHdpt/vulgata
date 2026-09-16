@@ -1,0 +1,25 @@
+{
+  "id": "13-1/implement/105",
+  "kind": "test-green",
+  "stage": "implement",
+  "source_commit": "70c4c4fa1835fabd2236cc70e1e7226b2be9ed7e",
+  "observed_at": "2026-09-16T03:57:17.326242Z",
+  "summary": "Independent proposal03verification12/12passes after preserving owner-absent negative fixture and removing unrelated formatting.11composition cases plus negative profile owner case pass. Earlier affected4run had33P/7F/3skip; negative failure superseded here, six profile success cases remain production-blocked. No blanketGREEN or external qualification.",
+  "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\proposal03-independent\\proposal03-independent.trx",
+  "sha256": "dd7818eaf35903edbf2f2cb41b183e2676563520cab0bb80600c6ea89cd950a3",
+  "outcomes": {
+    "Passed": 12
+  },
+  "files": {
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DeepSeekPromptCompositionTests.cs": "1f16d678afc48c8d99503f8f18ad88c244a79a8597c6f668773a06eafe78a159",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1HostRuntimeQualificationTests.cs": "6dc87bc331b63d7eb3134e8448a5e03a005787ee8a36efe2c7ed4170ff35298a",
+    "tests/Vulgata.Tests/PreparedScanning/PreparedScanReleaseQualificationTests.cs": "1fe690993c05c32a4153d6f04d9f621fecbad8c0fb3f5b17c75ba5aee9b99614",
+    "tests/Vulgata.Tests/PreparedScanning/ReviewedExactProfileSeedPostgreSqlTests.cs": "50ef7828fa8b7c758e3f28cfaeeb2170cce51f918a28f3fb3aa788138a2de1f5"
+  },
+  "pending_uncommitted_files": [
+    "tests/Vulgata.Tests/PreparedScanning/PreparedScanReleaseQualificationTests.cs",
+    "tests/Vulgata.Tests/PreparedScanning/ReviewedExactProfileSeedPostgreSqlTests.cs"
+  ],
+  "private_reproducer_patch": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\pending-profile-fixtures.patch",
+  "patch_sha256": "6f11593082e715ca51d02d1e21f08319dba3678d6fb898a9046c7dd50ee15a9f"
+}

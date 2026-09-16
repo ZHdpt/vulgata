@@ -6,10 +6,10 @@
   "stage": "implement",
   "preflight": {
     "branch": "dev",
-    "head": "d42bae63838ef3f2df667d8365a51b356b9196cc",
-    "git_identity_sha256": "5682fa284306d66e7a4ff9ad0d87f72db9ec967b82edec06bdb477e23c778a62",
-    "status_sha256": "8f66bb258b326ac569e87575fde89ca71a260b8c3cefbef490414aeb8076334f",
-    "observed_at": "2026-09-16T02:44:05.772886Z"
+    "head": "70c4c4fa1835fabd2236cc70e1e7226b2be9ed7e",
+    "git_identity_sha256": "f994355ec3d9363c2d89595a8a35f81f78f6eef19b8a04c3d70c4196af809ef4",
+    "status_sha256": "afe0f23e91c148f33e4be2559620d360fb8de58d826d4a6df0e894dabef6bd12",
+    "observed_at": "2026-09-16T03:57:17.326242Z"
   },
   "artifacts": {
     "spec": {
@@ -68,6 +68,20 @@
       "scope_sha256": "a72b34df08cec443afac91e475408f4ee2206dd6511786aaea347ea665a47cd2",
       "evidence_path": "specs/015-retained-source-access/evidence/baseline-reconciliation-approval-01.json",
       "decided_at": "2026-09-15T10:29:16.420091Z"
+    },
+    {
+      "decision_id": "13-1/baseline-reconciliation/2",
+      "status": "accepted",
+      "scope_sha256": "b595d2ac00717939cf8e9cbf8f42164b26adf4cae1f3356c20c0652e83801a96",
+      "evidence_path": "specs/015-retained-source-access/evidence/baseline-reconciliation-approval-02.json",
+      "decided_at": "2026-09-16T02:59:07.159685Z"
+    },
+    {
+      "decision_id": "13-1/baseline-reconciliation/3",
+      "status": "accepted",
+      "scope_sha256": "af919734731d70d81da2d156518a57b583dc154f451b188ef5e03b2a71aa5eaa",
+      "evidence_path": "specs/015-retained-source-access/evidence/baseline-reconciliation-approval-03.json",
+      "decided_at": "2026-09-16T03:21:15.721159Z"
     }
   ],
   "convergence": {
@@ -88,22 +102,22 @@
     "specs/015-retained-source-access/evidence/definition-review-05.json",
     "specs/015-retained-source-access/evidence/implementation-approval-01.md",
     "specs/015-retained-source-access/evidence/runtime-boundary-01.json",
-    "specs/015-retained-source-access/evidence/baseline-reconciliation-approval-01.json",
-    "specs/015-retained-source-access/evidence/fresh-process-complete-01.json",
+    "specs/015-retained-source-access/evidence/baseline-reconciliation-approval-02.json",
+    "specs/015-retained-source-access/evidence/baseline-reconciliation-approval-03.json",
     "specs/015-retained-source-access/evidence/source-diagnostics-complete-01.json",
-    "specs/015-retained-source-access/evidence/full-suite-blocker-01.json",
-    "specs/015-retained-source-access/evidence/source-diagnostics-checkpoint-01.json"
+    "specs/015-retained-source-access/evidence/baseline-production-blocker-01.json",
+    "specs/015-retained-source-access/evidence/baseline-repairs-checkpoint-02.json"
   ],
   "checkpoint": {
-    "checkpoint_id": "bmad-13-1-implement-20260916T024405Z-086219",
+    "checkpoint_id": "bmad-13-1-implement-20260916T035717Z-9deac8",
     "stage": "implement",
     "commit_sha": null,
     "binding_status": "pending"
   },
   "resume": {
     "stage": "implement",
-    "reason": "T001-T040 verified. Full suite2816pass/309fail/13skip; source159pass/4skip; Web build passes. Additional bounded baseline maintenance approval pending.",
-    "evidence_path": "specs/015-retained-source-access/evidence/full-suite-blocker-01.json"
+    "reason": "Approved baseline test repairs verified. Six profile successes blocked by pre-existing canonical2.0 domain rejection; separate correction scope approval pending;2fixture edits remain uncommitted.",
+    "evidence_path": "specs/015-retained-source-access/evidence/baseline-production-blocker-01.json"
   },
-  "updated_at": "2026-09-16T02:44:05.772886Z"
+  "updated_at": "2026-09-16T03:57:17.326242Z"
 }

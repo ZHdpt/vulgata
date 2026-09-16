@@ -1,0 +1,11 @@
+{
+  "id": "13-1/implement/97",
+  "kind": "human approval",
+  "stage": "implement",
+  "source_commit": "70c4c4fa1835fabd2236cc70e1e7226b2be9ed7e",
+  "observed_at": "2026-09-16T02:59:07.159685Z",
+  "user_quote": "Approve",
+  "scope_sha256": "b595d2ac00717939cf8e9cbf8f42164b26adf4cae1f3356c20c0652e83801a96",
+  "proposal_path": "specs/015-retained-source-access/evidence/baseline-reconciliation-proposal-02.md",
+  "scope": "All and only bounded baseline-reconciliation-proposal-02 maintenance; no external qualification, product behavior change, additional retirement or gate waiver."
+}

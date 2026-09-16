@@ -75,7 +75,7 @@ public sealed class Pass1HostRuntimeQualificationTests
         Assert.False(started.IsReplay, body);
     }
 
-    [Fact]
+    [T046HostQualificationFact]
     public async Task PinnedHostTools_AreExactAndJdtLsUsesStdioFactory()
     {
         string codeGraphCommandPath = RequiredPath("VULGATA_T046_CODEGRAPH_COMMAND");
@@ -213,4 +213,25 @@ public sealed class Pass1HostRuntimeQualificationTests
         await using FileStream stream = File.OpenRead(path);
         return Convert.ToHexString(await SHA256.HashDataAsync(stream)).ToLowerInvariant();
     }
+
+    internal static string? HostQualificationSkipReason()
+    {
+        string[] required =
+        [
+            "VULGATA_T046_CODEGRAPH_COMMAND",
+            "VULGATA_T046_JAVA_EXECUTABLE",
+            "VULGATA_T046_JDT_LS_ROOT",
+            "VULGATA_T046_JDT_LS_ARCHIVE",
+        ];
+        string? missing = required.FirstOrDefault(name =>
+            string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable(name)));
+        return missing is null
+            ? null
+            : $"T046 host qualification is opt-in; {missing} is not configured.";
+    }
+}
+internal sealed class T046HostQualificationFactAttribute : FactAttribute
+{
+    public T046HostQualificationFactAttribute() => Skip =
+        Pass1HostRuntimeQualificationTests.HostQualificationSkipReason();
 }

@@ -2,6 +2,8 @@ using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text.Json;
 using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.AspNetCore.TestHost;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.DataProtection.KeyManagement;
 using Microsoft.AspNetCore.DataProtection.Repositories;
@@ -335,8 +337,12 @@ public sealed class PreparedChatIntegrationTests
         const string plaintext = "story-11-5-provider-secret";
 
         string cipher;
-        using (new DataProtectionEnvironment(keyRing.Path, _applicationName))
-        using (var provisioner = new LoginLogoutTests.CustomWebApplicationFactory())
+        using (var provisionerBase = new LoginLogoutTests.CustomWebApplicationFactory())
+        using (WebApplicationFactory<Program> provisioner = provisionerBase.WithWebHostBuilder(builder =>
+            builder.ConfigureTestServices(services =>
+                services.AddDataProtection()
+                    .PersistKeysToFileSystem(new DirectoryInfo(keyRing.Path))
+                    .SetApplicationName(_applicationName))))
         {
             using IServiceScope scope = provisioner.Services.CreateScope();
             Assert.Equal(
@@ -368,8 +374,12 @@ public sealed class PreparedChatIntegrationTests
                 File.ReadAllText(keyFile),
                 StringComparison.Ordinal));
 
-        using (new DataProtectionEnvironment(keyRing.Path, _applicationName))
-        using (var runtime = new LoginLogoutTests.CustomWebApplicationFactory())
+        using (var runtimeBase = new LoginLogoutTests.CustomWebApplicationFactory())
+        using (WebApplicationFactory<Program> runtime = runtimeBase.WithWebHostBuilder(builder =>
+            builder.ConfigureTestServices(services =>
+                services.AddDataProtection()
+                    .PersistKeysToFileSystem(new DirectoryInfo(keyRing.Path))
+                    .SetApplicationName(_applicationName))))
         {
             using IServiceScope scope = runtime.Services.CreateScope();
             string decrypted = await scope.ServiceProvider
@@ -378,10 +388,12 @@ public sealed class PreparedChatIntegrationTests
             Assert.Equal(plaintext, decrypted);
         }
 
-        using var isolatedEnvironment = new DataProtectionEnvironment(
-            keyRing.Path,
-            $"{_applicationName}.Other");
-        using var isolatedRuntime = new LoginLogoutTests.CustomWebApplicationFactory();
+        using var isolatedRuntimeBase = new LoginLogoutTests.CustomWebApplicationFactory();
+        using WebApplicationFactory<Program> isolatedRuntime = isolatedRuntimeBase.WithWebHostBuilder(
+            builder => builder.ConfigureTestServices(services =>
+                services.AddDataProtection()
+                    .PersistKeysToFileSystem(new DirectoryInfo(keyRing.Path))
+                    .SetApplicationName($"{_applicationName}.Other")));
         using IServiceScope isolatedScope = isolatedRuntime.Services.CreateScope();
         _ = await Assert.ThrowsAsync<CryptographicException>(() =>
             isolatedScope.ServiceProvider

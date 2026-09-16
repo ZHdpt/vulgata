@@ -1,0 +1,59 @@
+{
+  "id": "13-1/implement/103",
+  "kind": "failure",
+  "stage": "implement",
+  "source_commit": "70c4c4fa1835fabd2236cc70e1e7226b2be9ed7e",
+  "observed_at": "2026-09-16T03:40:26.264922Z",
+  "summary": "Proposal03initial run32passed/8failed/3explicit skips. Six failures are omitted owned legacy admin aliases, not product RED; two success-case fixture paths still return seed-incomplete and need diagnosis. No acceptance.",
+  "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\proposal03-affected4\\proposal03-affected4.trx",
+  "sha256": "4dcbc051e67bd50f144ae3e9c764a97059c8fd2ea77864bd7c6619e3275c426c",
+  "outcomes": {
+    "Passed": 32,
+    "Failed": 8,
+    "NotExecuted": 3
+  },
+  "failures": [
+    {
+      "test": "Vulgata.Tests.PreparedScanning.ReviewedExactProfileSeedPostgreSqlTests.PostPreparedScan_MatchedProfile_PublishesRequiredSeedsAndExactEvidenceAsync",
+      "message": "System.InvalidOperationException : T011 requires VULGATA_TEST_POSTGRES_ADMIN for an isolated PostgreSQL 17 database."
+    },
+    {
+      "test": "Vulgata.Tests.PreparedScanning.ReviewedExactProfileSeedPostgreSqlTests.PostPreparedScan_ThenPublicPass1_ExactResolutionOwnerSymbolMismatch_IsPreciselyCharacterizedAsync",
+      "message": "System.InvalidOperationException : T011 requires VULGATA_TEST_POSTGRES_ADMIN for an isolated PostgreSQL 17 database."
+    },
+    {
+      "test": "Vulgata.Tests.PreparedScanning.PreparedScanReleaseQualificationTests.ProductionPairBuilder_MatchedReviewedProfile_SelectionOverflowPreservesRequiredSegmentsAsync",
+      "message": "Assert.Null() Failure: Value is not null\r\nExpected: null\r\nActual:   PreparedScanFailure { Reason = AnalysisNotReady, FailureCode = prepared-scan-reviewed-profile-seed-incomplete, Diagnostic = Prepared scan pair construction failed closed. }"
+    },
+    {
+      "test": "Vulgata.Tests.PreparedScanning.ReviewedExactProfileSeedPostgreSqlTests.PostPreparedScan_ThenRejectedPass1_PersistsFailedPass1WithoutExactActivationAsync",
+      "message": "System.InvalidOperationException : T011 requires VULGATA_TEST_POSTGRES_ADMIN for an isolated PostgreSQL 17 database."
+    },
+    {
+      "test": "Vulgata.Tests.PreparedScanning.ReviewedExactProfileSeedPostgreSqlTests.PostPreparedScan_DoesNotStartPass1OrLeakLaterStagesAsync",
+      "message": "System.InvalidOperationException : T011 requires VULGATA_TEST_POSTGRES_ADMIN for an isolated PostgreSQL 17 database."
+    },
+    {
+      "test": "Vulgata.Tests.PreparedScanning.PreparedScanReleaseQualificationTests.ProductionPairBuilder_MatchedReviewedProfile_PromotesEveryRequiredSegmentAsync",
+      "message": "Assert.Null() Failure: Value is not null\r\nExpected: null\r\nActual:   PreparedScanFailure { Reason = AnalysisNotReady, FailureCode = prepared-scan-reviewed-profile-seed-incomplete, Diagnostic = Prepared scan pair construction failed closed. }"
+    },
+    {
+      "test": "Vulgata.Tests.PreparedPass1.Pass1HostRuntimeQualificationTests.PostgreSql17_OnlyRequiredDockerService_IsReachable",
+      "message": "T046 requires VULGATA_TEST_ADMIN_CONNECTION or VULGATA_TEST_POSTGRES_ADMIN."
+    },
+    {
+      "test": "Vulgata.Tests.PreparedScanning.ReviewedExactProfileSeedPostgreSqlTests.PostPreparedScan_MatchedSemanticOwnerFailsBeforePublication_AndNonmatchingInputRemainsByteNeutralAsync",
+      "message": "System.InvalidOperationException : T011 requires VULGATA_TEST_POSTGRES_ADMIN for an isolated PostgreSQL 17 database."
+    }
+  ],
+  "rerun": {
+    "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\proposal03-affected4-rerun\\proposal03-affected4-rerun.trx",
+    "sha256": "cdf6717b60c56896cfcf9dd24b6d8993b801d7248a9345ca1c8ca0e795c58672",
+    "outcomes": {
+      "Passed": 34,
+      "Failed": 6,
+      "NotExecuted": 3
+    },
+    "classification": "Admin aliases corrected;6remaining fixture seed-incomplete failures. Existing production BindSemanticOwner requires exact profile-qualified symbol, selector range and file hash, absent from synthetic fixture observations. Test-only correction underway; not product RED."
+  }
+}

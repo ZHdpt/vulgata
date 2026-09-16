@@ -1,0 +1,30 @@
+{
+  "id": "13-1/implement/102",
+  "kind": "test-green",
+  "stage": "implement",
+  "source_commit": "70c4c4fa1835fabd2236cc70e1e7226b2be9ed7e",
+  "observed_at": "2026-09-16T03:27:51.699941Z",
+  "summary": "Approved six-file harness repair74passes/1explicitT048opt-in skip. Final Story125 gate checks recorded historical termination boundary, preserving original restrictions. Dashboard exact approved obsolete test retired; missing database security case restored; key/application-name and startup database isolation corrected.",
+  "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\baseline-harness-03.trx",
+  "sha256": "22dac2228e049ac86aae31425d7ea4934e522dc12768db4c1500d744c8c26c57",
+  "outcomes": {
+    "Passed": 74,
+    "NotExecuted": 1
+  },
+  "skipped_tests": [
+    "Vulgata.Tests.PreparedPass2.Pass2ProductionQualificationTests.ApprovedTwoRepositoryPair_ProducesSanitizedSourceGroundedBusinessDocumentAsync"
+  ],
+  "files": {
+    "tests/Vulgata.Tests/DashboardPanelTests.cs": "2060765e92013daad169189ef3a8fecf33d1f3a0b74d7422967f4552f886bfaa",
+    "tests/Vulgata.Tests/PreparedPass1/NavigateCodeSecurityTests.cs": "c71dc40d82041956353a1ec20636d590e7bad644d565ca44dfa0237a89fd6246",
+    "tests/Vulgata.Tests/PreparedChatIntegrationTests.cs": "e5c1b4349e98413a50a41928d4ff9297c73cd580f6dd94ac82ceea5f1f6b04e8",
+    "tests/Vulgata.Tests/AnalysisRuntime/AnalysisRuntimeHealthTests.cs": "38bc2f2c7a5153d9bb99367ead4ce8ee05e5dd30c5e0d990947e35095ad30a71",
+    "tests/Vulgata.Tests/PreparedPass2/Pass2ProductionQualificationTests.cs": "a29a360512c2c1ebbda29445ddde803e841d1503effd7c986dd2311da319a264",
+    "tests/Vulgata.Tests/ReleaseGate/Story125/Story125ReleaseHarnessTests.cs": "e450eac7f7347efa396c9e765dee42eaeeecbbf73a75453f25e35656416bafaf"
+  },
+  "historical_boundary": {
+    "start": "4798b97d9f23aef587829175df7ab7ebc3daf995",
+    "end": "8d56f4601de7e04b51e12a82be05600ce90af496",
+    "authority": "specs/014-grounded-llm-wiki-chat-release-evidence/workflow-state.json"
+  }
+}

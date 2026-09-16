@@ -23,7 +23,7 @@ public sealed class PreparedPass1ContractIdentitySourceTests
         "Vulgata.Core.DomainServices.IPreparedPass1ContractIdentitySource";
 
     private const string ExpectedPreparedPass1PromptIdentity =
-        "pass1-code-logic-worker.v2/sha256/5b1e48e50b83c5d12b7916d72d1973f4984db8bf60d1fa62df5cb9f4bcd27e7b";
+        "pass1-code-logic-worker.v2/sha256/010247bbb9d8c07c2bd60a17353e5a088f7b7ea5ab490647712027d762b30937";
 
     [Fact]
     public void DefaultPreparedPass1Composition_ExposesV2PromptAndDocumentSchemaIdentity()
@@ -73,7 +73,7 @@ public sealed class PreparedPass1ContractIdentitySourceTests
 
         Assert.NotNull(identity);
         Assert.Equal(
-            "pass1-code-logic-worker.v1/sha256/4f7afc804335ac7e7cc2c10aa6cb034af9d4cdad224e64493dd3f1589ebd6673",
+            "pass1-code-logic-worker.v1/sha256/ad32930ab6e0c0b4e05e4e8c1f3e4298082b2a648198015d31687b53ac8ac37f",
             identity.PromptIdentity);
         Assert.Equal(KnowledgeDocumentLimits.SchemaIdentity, identity.DocumentSchemaIdentity);
     }

@@ -26,3 +26,8 @@
 /specs/015-retained-source-access/** -text whitespace=cr-at-eol
 # Historical review preimages retain their original whitespace.
 /specs/015-retained-source-access/evidence/history/** -text -whitespace
+
+# Embedded Pass 1 resources are hash-bound using their canonical LF bytes.
+/src/dotnet/Vulgata.Agents/Prompts/pass1-code-logic-worker.v1.md text eol=lf
+/src/dotnet/Vulgata.Agents/Prompts/pass1-code-logic-worker.v2.md text eol=lf
+/specs/012-resumable-file-pass1-code-logic/contracts/code-logic-file-v2.schema.json text eol=lf

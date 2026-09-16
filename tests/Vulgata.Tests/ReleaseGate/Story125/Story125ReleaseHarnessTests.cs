@@ -11,6 +11,8 @@ public sealed class Story125ReleaseHarnessTests
         "0d835c5f65f70a3c6a9561c6ff600069bb93e832";
     private const string AcceptedStory124CompletionCommit =
         "4798b97d9f23aef587829175df7ab7ebc3daf995";
+    private const string Story125TerminationCommit =
+        "8d56f4601de7e04b51e12a82be05600ce90af496";
     private const string AuthorizedStory124MetadataCorrectionPath =
         "specs/013-exact-cross-repository-flow-pass2/workflow-state.json";
 
@@ -19,6 +21,10 @@ public sealed class Story125ReleaseHarnessTests
     {
         string repositoryRoot = FindRepositoryRoot();
         IReadOnlyList<string> changedPaths = GetChangedPaths(repositoryRoot);
+        IReadOnlyList<string> historicalBoundaryChanges = GetCommittedChangedPaths(
+            repositoryRoot,
+            AcceptedStory124CompletionCommit,
+            Story125TerminationCommit);
 
         string[] forbiddenPaths =
         [
@@ -27,10 +33,10 @@ public sealed class Story125ReleaseHarnessTests
         ];
 
         Assert.DoesNotContain(
-            changedPaths,
+            historicalBoundaryChanges,
             path => forbiddenPaths.Contains(path, StringComparer.Ordinal));
         Assert.DoesNotContain(
-            changedPaths,
+            historicalBoundaryChanges,
             path => path.StartsWith(
                 "src/dotnet/Vulgata.Infrastructure/Data/Migrations/",
                 StringComparison.Ordinal));
@@ -110,7 +116,7 @@ public sealed class Story125ReleaseHarnessTests
             "Directory.Build.props",
         ];
         Assert.DoesNotContain(
-            changedPaths,
+            historicalBoundaryChanges,
             path => path is not null &&
                 IsUncoordinatedSharedIntegrationPath(
                     path,
@@ -118,7 +124,7 @@ public sealed class Story125ReleaseHarnessTests
                 !acceptedCompletionPaths.Contains(path) &&
                 !ownershipManifest.Contains(path, StringComparison.Ordinal));
         Assert.DoesNotContain(
-            postIntegrationChanges,
+            historicalBoundaryChanges,
             path => path is not null &&
                 IsUncoordinatedSharedIntegrationPath(
                     path,

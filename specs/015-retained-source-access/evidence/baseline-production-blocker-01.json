@@ -1,0 +1,41 @@
+{
+  "id": "13-1/implement/104",
+  "kind": "failure",
+  "stage": "implement",
+  "source_commit": "70c4c4fa1835fabd2236cc70e1e7226b2be9ed7e",
+  "observed_at": "2026-09-16T03:51:58.252070Z",
+  "summary": "Semantic-owner fixture correction exposes existing production canonical-domain mismatch.33passed/7failed/3explicit skips; no product correction authorized. Caller emits file-code-unit-identity/2.0 but CanonicalEnvelope allowlist has only1.0. Both production files unchanged from pre-story baseline. One negative fixture must remain owner-absent; owner completing separation.",
+  "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\proposal03-affected4-final\\proposal03-affected4-final.trx",
+  "sha256": "4d0918d8f05f64c3d1405ab0fea6ba3a8438345281dc3325663997b4be6459e3",
+  "outcomes": {
+    "Passed": 33,
+    "Failed": 7,
+    "NotExecuted": 3
+  },
+  "failures": [
+    "Vulgata.Tests.PreparedScanning.ReviewedExactProfileSeedPostgreSqlTests.PostPreparedScan_MatchedSemanticOwnerFailsBeforePublication_AndNonmatchingInputRemainsByteNeutralAsync",
+    "Vulgata.Tests.PreparedScanning.ReviewedExactProfileSeedPostgreSqlTests.PostPreparedScan_ThenPublicPass1_ExactResolutionOwnerSymbolMismatch_IsPreciselyCharacterizedAsync",
+    "Vulgata.Tests.PreparedScanning.PreparedScanReleaseQualificationTests.ProductionPairBuilder_MatchedReviewedProfile_SelectionOverflowPreservesRequiredSegmentsAsync",
+    "Vulgata.Tests.PreparedScanning.ReviewedExactProfileSeedPostgreSqlTests.PostPreparedScan_MatchedProfile_PublishesRequiredSeedsAndExactEvidenceAsync",
+    "Vulgata.Tests.PreparedScanning.ReviewedExactProfileSeedPostgreSqlTests.PostPreparedScan_DoesNotStartPass1OrLeakLaterStagesAsync",
+    "Vulgata.Tests.PreparedScanning.ReviewedExactProfileSeedPostgreSqlTests.PostPreparedScan_ThenRejectedPass1_PersistsFailedPass1WithoutExactActivationAsync",
+    "Vulgata.Tests.PreparedScanning.PreparedScanReleaseQualificationTests.ProductionPairBuilder_MatchedReviewedProfile_PromotesEveryRequiredSegmentAsync"
+  ],
+  "production_proof": [
+    {
+      "path": "src/dotnet/Vulgata.Core/DomainServices/CanonicalEnvelope.cs",
+      "working_sha256": "64d0b27fc554ca6567fb6646b697015ef553d46de3cacbe2766ff61c1beb538c",
+      "baseline_blob": "0ddf4d4901a3c9a696e3d44fbb5a66b0a800e2ec",
+      "head_blob": "0ddf4d4901a3c9a696e3d44fbb5a66b0a800e2ec"
+    },
+    {
+      "path": "src/dotnet/Vulgata.Core/DomainServices/PreparedScanContracts.cs",
+      "working_sha256": "e7cabec723cd1ac2194045839505d1a858538aca24d2448743fd0a4779099e48",
+      "baseline_blob": "50d4ba746babdf5cb95ed1e5cd7953b8a3b039fb",
+      "head_blob": "50d4ba746babdf5cb95ed1e5cd7953b8a3b039fb"
+    }
+  ],
+  "qualification_limit": "Existing historical defect exposed by controlled fixtures; not a retained-source regression or authority to revive Story12.5.",
+  "latest_independent_evidence": "specs/015-retained-source-access/evidence/baseline-fixtures-independent-03.json",
+  "latest_disposition": "Negative owner-absent fixture restored and verified; six original success scenarios remain blocked by version2 canonical-domain registry mismatch. Production untouched."
+}

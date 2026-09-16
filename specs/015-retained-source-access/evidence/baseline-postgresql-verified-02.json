@@ -1,0 +1,22 @@
+{
+  "id": "13-1/implement/101",
+  "kind": "test-green",
+  "stage": "implement",
+  "source_commit": "70c4c4fa1835fabd2236cc70e1e7226b2be9ed7e",
+  "observed_at": "2026-09-16T03:23:23.766100Z",
+  "summary": "Approved PostgreSQL fixture/migration repair173/173passes, including shared SQLite callers. Explicit vulgata qualification only on Npgsql; IDs parameterized; migration tests retain historical boundaries and recognize additive later migrations. No production changes.",
+  "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\baseline-pg-03\\baseline-pg-03.trx",
+  "sha256": "694e3359f03d5259f21f50692afd183668db527e7db7919470b0a2a6767ffa50",
+  "outcomes": {
+    "Passed": 173
+  },
+  "files": {
+    "tests/Vulgata.Tests/Migrations/DurableScanMigrationPostgreSqlTests.cs": "0158aedd7ff1fa7f3cfaeb57203018ce496094683e5881326ba269398549aa3d",
+    "tests/Vulgata.Tests/Migrations/PreparedScanMigrationPostgreSqlTests.cs": "e1f1bd314346a713acabb568e85bf0d925e907dc7ce44037a4ea10495abd7a0e",
+    "tests/Vulgata.Tests/PreparedPass1/Pass1DocumentPostgreSqlAtomicTests.cs": "b80187757b2f4bb88a7896c57657e2c1a018c925c712aae3e7c3fea938966045",
+    "tests/Vulgata.Tests/PreparedPass2/ExactCrossRepositoryResolutionTests.cs": "72a02be5f0ffd43d0f73f6d8b6696e8ac3f863fecd8a82b07dba62e9a5c60330",
+    "tests/Vulgata.Tests/PreparedPass2/Pass2FlowPlanningPostgreSqlTests.cs": "b3978bf4aa1abd7f9b6d1acece91d8413be70e8bc6764389812dc225eb6337b5",
+    "tests/Vulgata.Tests/PreparedPass2/Pass2MigrationTests.cs": "930f64fe9d06539488b4536f1c395487e6801b5d56cc8a236b142c563ab64bd9",
+    "tests/Vulgata.Tests/PreparedPass2/RetrieveCodeLogicPostgreSqlBudgetTests.cs": "f24af71e1efd3d68f9e9be0f00b47d3da4a57168b22382c8db048c546de985da"
+  }
+}

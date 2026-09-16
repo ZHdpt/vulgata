@@ -81,7 +81,7 @@ public sealed class Pass2MigrationTests
         using VulgataDbContext context = CreateSqliteContext();
         IMigrationsAssembly assembly = context.GetService<IMigrationsAssembly>();
         string[] storyMigrations = assembly.Migrations.Keys
-            .Where(value => StringComparer.Ordinal.Compare(value, BaselineMigration) > 0)
+            .Where(value => value.EndsWith(MigrationSuffix, StringComparison.Ordinal))
             .ToArray();
         Assert.Single(storyMigrations);
         KeyValuePair<string, TypeInfo> entry = Assert.Single(

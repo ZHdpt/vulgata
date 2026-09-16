@@ -265,14 +265,18 @@ public sealed class AnalysisRuntimeHealthTests
     [Fact]
     public void OrdinaryStartup_InvokesConfiguredHealthProbeOnceWithoutDispatchingTools()
     {
-        using StartupProbeFactory factory = new();
+        using var databaseFactory = new LoginLogoutTests.CustomWebApplicationFactory();
+        var probe = new RecordingHealthProbe();
+        using WebApplicationFactory<Program> factory = databaseFactory.WithWebHostBuilder(
+            builder => builder.ConfigureTestServices(services =>
+                services.AddSingleton<IAnalysisRuntimeHealthProbe>(probe)));
 
         _ = factory.Services;
 
-        Assert.Equal(1, factory.Probe.CallCount);
-        Assert.Equal(0, factory.Probe.CodeGraphOperationCount);
-        Assert.Equal(0, factory.Probe.JavaSessionCount);
-        Assert.Equal(0, factory.Probe.WorkerDispatchCount);
+        Assert.Equal(1, probe.CallCount);
+        Assert.Equal(0, probe.CodeGraphOperationCount);
+        Assert.Equal(0, probe.JavaSessionCount);
+        Assert.Equal(0, probe.WorkerDispatchCount);
     }
 
     private static AnalysisScope CreateScope(
@@ -377,25 +381,6 @@ public sealed class AnalysisRuntimeHealthTests
 
         return directory?.FullName
                ?? throw new InvalidOperationException("Repository root could not be located.");
-    }
-
-    private sealed class StartupProbeFactory : WebApplicationFactory<Program>
-    {
-        public StartupProbeFactory()
-        {
-            Probe = new RecordingHealthProbe();
-        }
-
-        public RecordingHealthProbe Probe { get; }
-
-        protected override void ConfigureWebHost(IWebHostBuilder builder)
-        {
-            builder.ConfigureTestServices(services =>
-            {
-                services.AddSingleton<IAnalysisRuntimeHealthProbe>(Probe);
-            });
-        }
-
     }
 
     private sealed class RecordingHealthProbe : IAnalysisRuntimeHealthProbe

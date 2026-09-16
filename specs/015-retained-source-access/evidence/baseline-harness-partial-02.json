@@ -1,0 +1,23 @@
+{
+  "id": "13-1/implement/99",
+  "kind": "command",
+  "stage": "implement",
+  "source_commit": "70c4c4fa1835fabd2236cc70e1e7226b2be9ed7e",
+  "observed_at": "2026-09-16T03:20:56.420527Z",
+  "summary": "Approved harness baseline repair preliminary run73passed/1failed/1explicitT048opt-in skip. Sole Story125 boundary failure corrected afterward; fresh verification required before acceptance. Initial missing Reflection import compile defect corrected by test owner.",
+  "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\baseline-harness-01.trx",
+  "sha256": "8858d37992f6045ab0de53c81b93726cfb792fa8d7285a5a4f331ebcd18dcd20",
+  "outcomes": {
+    "Passed": 73,
+    "Failed": 1,
+    "NotExecuted": 1
+  },
+  "failed_tests": [
+    "Vulgata.Tests.ReleaseGate.Story125ReleaseHarnessTests.Story125Boundary_NoMigrationDbContextStory124OrUncoordinatedSharedDelta_RemainsIntact"
+  ],
+  "historical_boundary": {
+    "start": "4798b97d9f23aef587829175df7ab7ebc3daf995",
+    "end": "8d56f4601de7e04b51e12a82be05600ce90af496",
+    "authority": "specs/014-grounded-llm-wiki-chat-release-evidence/workflow-state.json"
+  }
+}

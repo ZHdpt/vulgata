@@ -1,0 +1,33 @@
+{
+  "id": "13-1/implement/98",
+  "kind": "command",
+  "stage": "implement",
+  "source_commit": "70c4c4fa1835fabd2236cc70e1e7226b2be9ed7e",
+  "observed_at": "2026-09-16T03:04:16.996732Z",
+  "summary": "Approved resource repair: canonical LF bytes and two stale test hashes only; schema/prose unchanged. Group297passes/2skips/1JDT readiness failure. Cancellation2/2passes. No production behavior change or full-suite acceptance.",
+  "reports": [
+    {
+      "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\resource-hash-pass1-focused.trx",
+      "sha256": "7d57eb83519283254d6d8db1f7bd96000edd3e06367685784348b8cb99a9f131",
+      "outcomes": {
+        "Passed": 297,
+        "NotExecuted": 2,
+        "Failed": 1
+      },
+      "failures": [
+        {
+          "test": "Vulgata.Tests.PreparedPass1.Pass1DeepSeekPromptCompositionTests.ProductionWebScope_ResolvesPreparedExecutorAndBothClosedFunctionFactoriesAsync",
+          "message": "System.InvalidOperationException : jdt_distribution_archive_missing"
+        }
+      ]
+    },
+    {
+      "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\pass1-cancellation-focused.trx",
+      "sha256": "0cff7d39e0f6074e2453623e5d0cb064982f78c2702bb2b73aa03654c6e736fc",
+      "outcomes": {
+        "Passed": 2
+      },
+      "failures": []
+    }
+  ]
+}

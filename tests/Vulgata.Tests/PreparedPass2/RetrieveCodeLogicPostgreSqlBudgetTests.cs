@@ -468,7 +468,7 @@ public sealed class RetrieveCodeLogicPostgreSqlBudgetTests(ITestOutputHelper out
                 .Select(value => value.LogicalDocumentId)
                 .SingleAsync();
             await context.Database.ExecuteSqlInterpolatedAsync(
-                $"UPDATE \"LogicalDocuments\" SET \"CurrentVersionId\" = NULL WHERE \"Id\" = {logicalDocumentId}");
+                $"UPDATE \"vulgata\".\"LogicalDocuments\" SET \"CurrentVersionId\" = NULL WHERE \"Id\" = {logicalDocumentId}");
             context.ChangeTracker.Clear();
             Pass2RetrievalBudget beforeReplay = await context.Pass2RetrievalBudgets.SingleAsync();
             int receiptCount = await context.Pass2RetrievalReceipts.CountAsync();
@@ -1077,7 +1077,7 @@ public sealed class RetrieveCodeLogicPostgreSqlBudgetTests(ITestOutputHelper out
             context.DocumentVersions.Add(document);
             await context.SaveChangesAsync();
             await context.Database.ExecuteSqlInterpolatedAsync(
-                $"UPDATE \"LogicalDocuments\" SET \"CurrentVersionId\" = {documentVersionId} WHERE \"Id\" = {logicalDocumentId}");
+                $"UPDATE \"vulgata\".\"LogicalDocuments\" SET \"CurrentVersionId\" = {documentVersionId} WHERE \"Id\" = {logicalDocumentId}");
             context.IndexEntries.Add(IndexEntry.Create(
                 Guid.NewGuid(),
                 logicalDocumentId,

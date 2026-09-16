@@ -21,6 +21,8 @@ public sealed class DurableScanMigrationPostgreSqlTests
     private const string StoryMigration = "20260818124712_AddDurableScanFoundation";
     private const string LatestMigration = "20260820120000_AddPreparedScanManifest";
     private const string LaterMigration = "20260821114734_AddResumablePass1CodeLogic";
+    private const string CurrentPass2Migration = "20260826022909_ExactCrossRepositoryFlowPass2";
+    private const string CurrentRetainedSourceMigration = "20260915025243_AddRetainedSourceSnapshots";
     private static readonly DateTimeOffset CreatedAt =
         new(2026, 8, 18, 12, 0, 0, TimeSpan.Zero);
     private static readonly Guid SystemId = Guid.Parse("91000000-0000-0000-0000-000000000001");
@@ -72,9 +74,13 @@ public sealed class DurableScanMigrationPostgreSqlTests
             await using (VulgataDbContext context = CreateContext(database.ConnectionString))
             {
                 IMigrator migrator = context.GetService<IMigrator>();
+                string[] pendingMigrations = (await context.Database.GetPendingMigrationsAsync()).ToArray();
                 Assert.Equal(
                     [StoryMigration, LatestMigration, LaterMigration],
-                    await context.Database.GetPendingMigrationsAsync());
+                    pendingMigrations.Take(3));
+                Assert.Equal(
+                    [CurrentPass2Migration, CurrentRetainedSourceMigration],
+                    pendingMigrations.Skip(3));
                 await migrator.MigrateAsync(LatestMigration);
                 Assert.Contains(StoryMigration, await context.Database.GetAppliedMigrationsAsync());
                 await AssertProtectedRowsAsync(context);

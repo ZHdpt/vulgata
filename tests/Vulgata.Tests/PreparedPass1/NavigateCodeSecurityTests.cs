@@ -23,6 +23,7 @@ public sealed class NavigateCodeSecurityTests
         "raw CodeGraph query/storage",
         "shell/process",
         "network",
+        "database",
         "unrestricted filesystem",
         "absolute host path",
         "write operation",

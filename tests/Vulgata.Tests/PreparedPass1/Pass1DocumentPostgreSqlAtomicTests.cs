@@ -2076,7 +2076,7 @@ public sealed class Pass1DocumentPostgreSqlAtomicTests
             "{}",
             now));
         await context.SaveChangesAsync();
-        await context.Database.ExecuteSqlInterpolatedAsync($"UPDATE \"LogicalDocuments\" SET \"CurrentVersionId\" = {TargetDocumentVersionId} WHERE \"Id\" = {TargetLogicalDocumentId} AND \"RepositoryId\" = {targetUnit.RepositoryId}");
+        await context.Database.ExecuteSqlInterpolatedAsync($"UPDATE \"vulgata\".\"LogicalDocuments\" SET \"CurrentVersionId\" = {TargetDocumentVersionId} WHERE \"Id\" = {TargetLogicalDocumentId} AND \"RepositoryId\" = {targetUnit.RepositoryId}");
         context.ChangeTracker.Clear();
     }
 
