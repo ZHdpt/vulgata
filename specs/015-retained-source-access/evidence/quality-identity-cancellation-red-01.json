@@ -1,0 +1,19 @@
+{
+  "id": "13-1/implement/136",
+  "kind": "test-red",
+  "stage": "implement",
+  "source_commit": "deea5f1e0b9cc8f435a77bf179d5576d47e9a41f",
+  "observed_at": "2026-09-16T08:27:19.519451Z",
+  "finding": "QR-13.1-002",
+  "summary": "Public liveListAsync caller-cancellation regression1/1RED with realproduction Identity EFquery intercepted after validgrant: query receivesno cancellable token and cannotstop withinobserverbound. Owned gate releasedfinally; no production change yet.",
+  "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\qr002-identity-cancellation-red-sharp.trx",
+  "sha256": "f9019620ccd1a58be1b5205cfffa14e903718b8353d590a8055b3f5fcdc319cb",
+  "outcomes": {
+    "Failed": 1
+  },
+  "message": "Assert.True() Failure\r\nExpected: True\r\nActual:   False",
+  "stack": "   at Vulgata.Tests.RetainedSource.RetainedSourceIdentityCancellationTests.ListAsync_WhenProductionIdentityLookupIsCancelled_ReturnsBoundedCancellation() in G:\\source\\repos\\vulgata\\tests\\Vulgata.Tests\\RetainedSource\\RetainedSourceIdentityCancellationTests.cs:line 89\r\n   at Vulgata.Tests.RetainedSource.RetainedSourceIdentityCancellationTests.ListAsync_WhenProductionIdentityLookupIsCancelled_ReturnsBoundedCancellation() in G:\\source\\repos\\vulgata\\tests\\Vulgata.Tests\\RetainedSource\\RetainedSourceIdentityCancellationTests.cs:line 100\r\n   at Vulgata.Tests.RetainedSource.RetainedSourceIdentityCancellationTests.ListAsync_WhenProductionIdentityLookupIsCancelled_ReturnsBoundedCancellation() in G:\\source\\repos\\vulgata\\tests\\Vulgata.Tests\\RetainedSource\\RetainedSourceIdentityCancellationTests.cs:line 100\r\n   at Vulgata.Tests.RetainedSource.RetainedSourceIdentityCancellationTests.ListAsync_WhenProductionIdentityLookupIsCancelled_ReturnsBoundedCancellation() in G:\\source\\repos\\vulgata\\tests\\Vulgata.Tests\\RetainedSource\\RetainedSourceIdentityCancellationTests.cs:line 100\r\n   at Vulgata.Tests.RetainedSource.RetainedSourceIdentityCancellationTests.ListAsync_WhenProductionIdentityLookupIsCancelled_ReturnsBoundedCancellation() in G:\\source\\repos\\vulgata\\tests\\Vulgata.Tests\\RetainedSource\\RetainedSourceIdentityCancellationTests.cs:line 100\r\n--- End of stack trace from previous location ---",
+  "test_path": "tests/Vulgata.Tests/RetainedSource/RetainedSourceIdentityCancellationTests.cs",
+  "test_sha256": "5aad73af370d551bc699119721142086e853b050b9a42b6cdf39fa06dab86c3b",
+  "verification_note": "Author latestsummary mislabeled old3/3QR001asfour-case verification; root did not accept thatclaim. Independent full4case rerun remainsrequired afterQR002fix."
+}

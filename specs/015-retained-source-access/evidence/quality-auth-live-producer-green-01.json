@@ -1,0 +1,15 @@
+{
+  "id": "13-1/implement/133",
+  "kind": "command",
+  "stage": "implement",
+  "source_commit": "deea5f1e0b9cc8f435a77bf179d5576d47e9a41f",
+  "observed_at": "2026-09-16T08:10:15.486716Z",
+  "finding": "QR-13.1-001",
+  "summary": "Liveauthorization producerGREEN1/1. CheckAvailabilityAsync maps ordinaryfailure toStorageFailure while checking linkedcancellation/elapseddeadline first. Snapshotrevalidation and Identity querycancellation remain pending.",
+  "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\qr001-live-auth-producer-green.trx",
+  "sha256": "b2a3bdc630fe01d705cc7e2aa318638603e908c15a64becd3100146443eef013",
+  "exit_code": 0,
+  "production_path": "src/dotnet/Vulgata.Infrastructure/Source/RetainedSourceReadContext.cs",
+  "production_sha256": "881c5bc13ef2e036486a9ae982e49a5f8418a07a318fa3c71f43eb2992e7a240",
+  "production_diff": "7insertions only; no refactor."
+}

@@ -23,14 +23,29 @@ public sealed class SourceRepositoryAuthorizationVerifier(IServiceScopeFactory s
         await using AsyncServiceScope scope = scopeFactory.CreateAsyncScope();
         UserManager<ApplicationUser> users =
             scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
-        ApplicationUser? user = await users.FindByIdAsync(request.Subject.SubjectId);
+        IUserStore<ApplicationUser> userStore =
+            scope.ServiceProvider.GetRequiredService<IUserStore<ApplicationUser>>();
+        ApplicationUser? user = await userStore.FindByIdAsync(
+            request.Subject.SubjectId,
+            cancellationToken);
         if (user is null)
         {
             return null;
         }
 
-        bool administrator = await users.IsInRoleAsync(user, RoleNames.Administrator);
-        bool systemOwner = await users.IsInRoleAsync(user, RoleNames.SystemOwner);
+        if (userStore is not IUserRoleStore<ApplicationUser> roleStore)
+        {
+            throw new NotSupportedException("The Identity user store does not support roles.");
+        }
+
+        bool administrator = await roleStore.IsInRoleAsync(
+            user,
+            users.NormalizeName(RoleNames.Administrator),
+            cancellationToken);
+        bool systemOwner = await roleStore.IsInRoleAsync(
+            user,
+            users.NormalizeName(RoleNames.SystemOwner),
+            cancellationToken);
         if (!administrator && !systemOwner)
         {
             return null;

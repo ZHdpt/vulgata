@@ -367,6 +367,15 @@ internal sealed class RetainedSourceCaptureService(
                 repositoryId,
                 profiledRevision);
         }
+        catch
+        {
+            return OpenFailure(
+                SourceReadStatus.StorageFailure,
+                "source_storage_unavailable",
+                correlationId,
+                repositoryId,
+                profiledRevision);
+        }
     }
 
     private void ThrowIfDeadlineExceeded(long startedTimestamp)

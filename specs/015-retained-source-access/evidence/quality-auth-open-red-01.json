@@ -1,0 +1,18 @@
+{
+  "id": "13-1/implement/130",
+  "kind": "test-red",
+  "stage": "implement",
+  "source_commit": "deea5f1e0b9cc8f435a77bf179d5576d47e9a41f",
+  "observed_at": "2026-09-16T07:47:56.990151Z",
+  "finding": "QR-13.1-001",
+  "summary": "Public grant-open regression1/1RED: authorization backend InvalidOperationException escapes rather than documented sanitizedStorageFailure; successful real capture precedes injectedfault.",
+  "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\qr13-1-001-red.trx",
+  "sha256": "cda8def1fa740fb5459156db5145dd7a854be91a1edf82bd5bb5b34a67de2d8c",
+  "outcomes": {
+    "Failed": 1
+  },
+  "message": "Assert.Null() Failure: Value is not null\r\nExpected: null\r\nActual:   System.InvalidOperationException: synthetic_authorization_failure\r\n   at Vulgata.Tests.RetainedSource.RetainedSourceReadFailureTests.ThrowingSourceRepositoryAuthorizationVerifier.AuthorizeAsync(SourceAuthorizationRequest request, CancellationToken cancellationToken) in G:\\source\\repos\\vulgata\\tests\\Vulgata.Tests\\RetainedSource\\RetainedSourceReadFailureTests.cs:line 78\r\n   at Vulgata.Infrastructure.Source.RetainedSourceCaptureService.OpenReadContextAsync(Guid repositoryId, String profiledRevision, SourceReadGrantRequest requestedGrant, CancellationToken cancellationToken) in G:\\source\\repos\\vulgata\\src\\dotnet\\Vulgata.Infrastructure\\Source\\RetainedSourceCaptureService.cs:line 270\r\n   at Vulgata.Tests.RetainedSource.RetainedSourceReadFailureTests.OpenReadContextAsync_WhenAuthorizationInfrastructureThrows_ReturnsSanitizedStorageFailure() in G:\\source\\repos\\vulgata\\tests\\Vulgata.Tests\\RetainedSource\\RetainedSourceReadFailureTests.cs:line 38",
+  "test_path": "tests/Vulgata.Tests/RetainedSource/RetainedSourceReadFailureTests.cs",
+  "test_sha256": "cff4df214e37752876710b99d3b92f6404517e52f0e5aa124a955f980d2a5411",
+  "reproduction_command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter FullyQualifiedName~RetainedSourceReadFailureTests.OpenReadContextAsync_WhenAuthorizationInfrastructureThrows_ReturnsSanitizedStorageFailure"
+}

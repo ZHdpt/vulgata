@@ -1,0 +1,18 @@
+{
+  "id": "13-1/implement/137",
+  "kind": "command",
+  "stage": "implement",
+  "source_commit": "deea5f1e0b9cc8f435a77bf179d5576d47e9a41f",
+  "observed_at": "2026-09-16T08:37:43.306065Z",
+  "finding": "QR-13.1-002",
+  "summary": "ProducerGREEN1/1: actualIdentity lookup/role store reads receiveoperationtoken; UserManager.NormalizeName preservesrole semantics; public readcaller cancellation stopsinterceptedquery andreturnsCancelled/nopayload. Independentrole/deadline coveragepending.",
+  "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\qr002-producer-green.trx",
+  "sha256": "4a73dd82e4444729801879d544a565e205dcbe58c4f615de7c016d33a45b7039",
+  "raw_log": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\qr002-producer-green.log",
+  "log_sha256": "9c438acfcfb6630666b3e570d878eb2bed445d2a2d29fdf3eb78642e347dc160",
+  "exit_code": 0,
+  "production_path": "src/dotnet/Vulgata.Web/Data/SourceRepositoryAuthorizationVerifier.cs",
+  "production_sha256": "e23bbc9030b44578022299481545c2612cfcab2b0f145e20723e246909e712a1",
+  "production_diff": "18insertions/3deletions; scopedIUserStore andIUserRoleStore reads withoperationtoken; repository/assignment/binding logicunchanged.",
+  "compile_correction": "Initial UserManager.Store access wasprotected; corrected toregisteredDI IUserStore beforeGREEN, no behaviorRED claimed for compilation."
+}

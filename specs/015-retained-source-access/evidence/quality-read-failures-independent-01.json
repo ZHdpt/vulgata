@@ -1,0 +1,34 @@
+{
+  "id": "13-1/implement/138",
+  "kind": "test-green",
+  "stage": "implement",
+  "source_commit": "deea5f1e0b9cc8f435a77bf179d5576d47e9a41f",
+  "observed_at": "2026-09-16T08:41:02.217670Z",
+  "summary": "Fresh independentQR0014/4passes forauth/snapshot failures atopen/live read; independentQR002lookupcaller-cancellation1/1passes. Role-query/issueddeadline cases and broadregressions pending. Supersedes earlierincorrect3/3asfour-case summary.",
+  "reports": [
+    {
+      "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\qr001-four-cases-independent-green.trx",
+      "sha256": "6f7660f5286c4f4425ae04eebbc3af51a0fac883f8e48efa4eb48d77aa00f8f8",
+      "outcomes": {
+        "Passed": 4
+      },
+      "test_names": [
+        "Vulgata.Tests.RetainedSource.RetainedSourceReadFailureTests.OpenReadContextAsync_WhenAuthorizationInfrastructureThrows_ReturnsSanitizedStorageFailure",
+        "Vulgata.Tests.RetainedSource.RetainedSourceReadFailureTests.OpenReadContextAsync_WhenSnapshotRepositoryThrows_ReturnsSanitizedStorageFailure",
+        "Vulgata.Tests.RetainedSource.RetainedSourceReadFailureTests.ReadBytesAsync_WhenLiveSnapshotRepositoryThrows_ReturnsSanitizedStorageFailure",
+        "Vulgata.Tests.RetainedSource.RetainedSourceReadFailureTests.ListAsync_WhenLiveAuthorizationInfrastructureThrows_ReturnsSanitizedStorageFailure"
+      ]
+    },
+    {
+      "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\qr002-lookup-caller-cancellation-green.trx",
+      "sha256": "fc04ee7f63410283435745a4ed12cee25302ad2a05077e37b5ceabb3e73e26fd",
+      "outcomes": {
+        "Passed": 1
+      },
+      "test_names": [
+        "Vulgata.Tests.RetainedSource.RetainedSourceIdentityCancellationTests.ListAsync_WhenProductionIdentityLookupIsCancelled_ReturnsBoundedCancellation"
+      ]
+    }
+  ],
+  "review_status": "Raw qualityREVISE remains active untilfreshreview; this is correction evidence only."
+}

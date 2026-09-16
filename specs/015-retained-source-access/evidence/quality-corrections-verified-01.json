@@ -1,0 +1,39 @@
+{
+  "id": "13-1/implement/139",
+  "kind": "test-green",
+  "stage": "implement",
+  "source_commit": "deea5f1e0b9cc8f435a77bf179d5576d47e9a41f",
+  "observed_at": "2026-09-16T08:56:18.776101Z",
+  "summary": "Independent regression verification closes both quality findings at implementation level. Four sanitized failure cases and three production Identity cancellation/deadline cases pass. Full source suite passed before final harness-only collection/probe cleanup; final Identity class rerun passed after cleanup. Fresh full suite and independent review remain required.",
+  "reports": [
+    {
+      "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\retained-source-final-surrounding-green.trx",
+      "sha256": "ff82991fc3914ce6e69a6ebe0eeb4e09f5c530029f4b59e734b64930f972ebcc",
+      "outcomes": {
+        "Passed": 166,
+        "NotExecuted": 4
+      }
+    },
+    {
+      "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\qr002-identity-three-current-green.trx",
+      "sha256": "fa47a4e5b65a348d43efae29b61cd4568abd6631f1e3277702148a054731e701",
+      "outcomes": {
+        "Passed": 3
+      }
+    },
+    {
+      "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\qr001-qr002-focused-surrounding-green.trx",
+      "sha256": "939db68b2afdd1c1ac2af3cef3a4243454f63627cd73cbca5c774245ac6de910",
+      "outcomes": {
+        "Passed": 59
+      }
+    }
+  ],
+  "artifact_hashes": {
+    "src/dotnet/Vulgata.Infrastructure/Source/RetainedSourceCaptureService.cs": "5768898fbdc860b71bd6b51ff994a35a582738872034c3c8536a28eae5e01810",
+    "src/dotnet/Vulgata.Infrastructure/Source/RetainedSourceReadContext.cs": "e89848520dfb5a642cc303b771f924d51fab838a9027152a1c592290746e8fe5",
+    "src/dotnet/Vulgata.Web/Data/SourceRepositoryAuthorizationVerifier.cs": "e23bbc9030b44578022299481545c2612cfcab2b0f145e20723e246909e712a1",
+    "tests/Vulgata.Tests/RetainedSource/RetainedSourceReadFailureTests.cs": "2459ed2b6e9751dc2e5e04f23b27ce5f0297befda1530b9550cfad31a4d4eab3",
+    "tests/Vulgata.Tests/RetainedSource/RetainedSourceIdentityCancellationTests.cs": "5d4608faa2379c909e333536af375186cf6c78b5aaa50403e79afcbd3e62f701"
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "id": "13-1/implement/135",
+  "kind": "command",
+  "stage": "implement",
+  "source_commit": "deea5f1e0b9cc8f435a77bf179d5576d47e9a41f",
+  "observed_at": "2026-09-16T08:19:21.467005Z",
+  "finding": "QR-13.1-001",
+  "summary": "Final snapshot-revalidation producerGREEN1/1;7line catch preserves linkedcancel/deadline and explicitintegrity/storage priority. CumulativeReadContext change14insertions. Independent4case verification pending; QR002unchanged.",
+  "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\qr001-live-snapshot-producer-green.trx",
+  "sha256": "f242fd02ba13452cb8516b1d4cd8e3c92b9274267e991d903e6db5975555893f",
+  "exit_code": 0,
+  "production_path": "src/dotnet/Vulgata.Infrastructure/Source/RetainedSourceReadContext.cs",
+  "production_sha256": "e89848520dfb5a642cc303b771f924d51fab838a9027152a1c592290746e8fe5",
+  "tool_recovery": "Optional parallel test-draft dispatch hit agent thread limit; no work/authority advanced. Serial same-author followup succeeded after producerfinished."
+}

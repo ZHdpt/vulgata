@@ -1,6 +1,6 @@
 # Story 13.1 development record
 
-Status: review
+Status: in-progress
 Feature directory: specs/015-retained-source-access
 Workflow state: specs/015-retained-source-access/workflow-state.json
 
@@ -468,3 +468,11 @@ The original owner-symbol-mismatch characterization now deliberately mutates exa
 ## Converged review candidate
 
 Current full suite3127passes/15explicit skips/0failures and Web build0errors/9existing warnings are bound to executable source checkpoint1b70029c.927recorded source/test/contract inputs stayed unchanged. Independent convergence01 checked the full original and compatibility requirements,13acceptance scenarios,10edge cases,8plan decisions,5Constitution principles and49completed tasks with no findings or newtasks. BMad moves in-progress to review at this checkpoint; independent quality, E2E decision and final acceptance remain pending.
+
+## Quality01 correction required
+
+Independent quality review returnedREVISE with twoHIGH implementation findings: QR-13.1-001 raw authorization/snapshot-repository exceptions escape sanitized read outcomes; QR-13.1-002 production Identity calls do not receive the issued operation cancellation/deadline token. Both trace to acceptedFR013/019 and require ordinary TDD correction within existing approval. Relevant source and final verification task markers reopened; convergence invalidated; first consecutive quality revision. Prior full3127passes remains evidence for its earlier boundary, not proof these uncovered cases pass.
+
+## Quality corrections verified
+
+QR001 now sanitizes unexpected authorization and snapshot repository failures at grant-open and live operations. QR002 passes operation cancellation through production Identity user and role stores. Honest RED/minimal GREEN and independent tests are recorded in evidence130-139. Retained-source166passes/4child-only skips and final Identity3/3 pass; fresh full suite, convergence, quality review and E2E remain pending. Approved intent is unchanged.

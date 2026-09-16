@@ -1,0 +1,39 @@
+{
+  "id": "13-1/implement/132",
+  "kind": "test-red",
+  "stage": "implement",
+  "source_commit": "deea5f1e0b9cc8f435a77bf179d5576d47e9a41f",
+  "observed_at": "2026-09-16T08:02:49.810014Z",
+  "finding": "QR-13.1-001",
+  "summary": "Grant-open authorization fix independentlyGREEN1/1; snapshot-open failure characterizationGREEN1/1. Next liveListAsync authbackend failure is genuineRED1/1 after successfulgrant, rawsynthetic exceptionescapes CheckAvailabilityAsync.",
+  "reports": [
+    {
+      "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\qr001-open-independent-green.trx",
+      "sha256": "a4cbc8ae40ee233f58c8056a1620d65cd9e908b3ee4d508e997d788030711a81",
+      "outcomes": {
+        "Passed": 1
+      },
+      "errors": []
+    },
+    {
+      "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\qr001-snapshot-open-characterization-green.trx",
+      "sha256": "8a755beb962bb7d3becb9a5ca4a9e66fa3fc3738eae076a82012b292977d1a77",
+      "outcomes": {
+        "Passed": 1
+      },
+      "errors": []
+    },
+    {
+      "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\qr001-live-auth-red.trx",
+      "sha256": "89b1f3a181ccd8c28db2d750be7262dbe3bde000e0320848e03c31cef349aa01",
+      "outcomes": {
+        "Failed": 1
+      },
+      "errors": [
+        "Assert.Null() Failure: Value is not null\r\nExpected: null\r\nActual:   System.InvalidOperationException: synthetic_live_authorization_failure\r\n   at Vulgata.Tests.RetainedSource.RetainedSourceReadFailureTests.ThrowingLiveAuthorizationVerifier.AuthorizeAsync(SourceAuthorizationRequest request, CancellationToken cancellationToken) in G:\\source\\repos\\vulgata\\tests\\Vulgata.Tests\\RetainedSource\\RetainedSourceReadFailureTests.cs:line 265\r\n   at Vulgata.Infrastructure.Source.RetainedSourceReadContext.CheckAvailabilityAsync(CancellationToken callCancellation) in G:\\source\\repos\\vulgata\\src\\dotnet\\Vulgata.Infrastructure\\Source\\RetainedSourceReadContext.cs:line 489\r\n   at Vulgata.Infrastructure.Source.RetainedSourceReadContext.RevalidateOperationAsync(CancellationToken callCancellation) in G:\\source\\repos\\vulgata\\src\\dotnet\\Vulgata.Infrastructure\\Source\\RetainedSourceReadContext.cs:line 516\r\n   at Vulgata.Infrastructure.Source.RetainedSourceReadContext.ListAsync(String relativeDirectory, Int32 limit, String cursor, CancellationToken cancellationToken) in G:\\source\\repos\\vulgata\\src\\dotnet\\Vulgata.Infrastructure\\Source\\RetainedSourceReadContext.cs:line 159\r\n   at Vulgata.Tests.RetainedSource.RetainedSourceReadFailureTests.ListAsync_WhenLiveAuthorizationInfrastructureThrows_ReturnsSanitizedStorageFailure() in G:\\source\\repos\\vulgata\\tests\\Vulgata.Tests\\RetainedSource\\RetainedSourceReadFailureTests.cs:line 144"
+      ]
+    }
+  ],
+  "test_path": "tests/Vulgata.Tests/RetainedSource/RetainedSourceReadFailureTests.cs",
+  "test_sha256": "1ed194285bbb64e6b15761f8a87eafed98bc45a61c52e10310da009eae36fc58"
+}

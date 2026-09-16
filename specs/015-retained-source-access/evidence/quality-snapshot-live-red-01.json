@@ -1,0 +1,31 @@
+{
+  "id": "13-1/implement/134",
+  "kind": "test-red",
+  "stage": "implement",
+  "source_commit": "deea5f1e0b9cc8f435a77bf179d5576d47e9a41f",
+  "observed_at": "2026-09-16T08:15:00.707147Z",
+  "finding": "QR-13.1-001",
+  "summary": "Three existing sanitizedfailure cases independentlyGREEN; final liveReadBytes snapshotbackend exception genuineRED1/1 in RevalidateOperationAsync after successfulgrant.",
+  "reports": [
+    {
+      "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\qr001-three-cases-independent-green.trx",
+      "sha256": "1b67176dccf7da07761564688d2ede1fb2167ad6493f60a10a29ff053c5fb6ee",
+      "outcomes": {
+        "Passed": 3
+      },
+      "errors": []
+    },
+    {
+      "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\qr001-live-snapshot-red.trx",
+      "sha256": "f19bd31a8c1bb5a0e827337179088046b825f20fb901d388f7e8ff15544b7a4f",
+      "outcomes": {
+        "Failed": 1
+      },
+      "errors": [
+        "Assert.Null() Failure: Value is not null\r\nExpected: null\r\nActual:   System.InvalidOperationException: synthetic_live_snapshot_repository_failure\r\n   at Vulgata.Tests.RetainedSource.RetainedSourceReadFailureTests.ThrowingLiveSnapshotRepository.GetAsync(Guid repositoryId, String profiledRevision, CancellationToken cancellationToken) in G:\\source\\repos\\vulgata\\tests\\Vulgata.Tests\\RetainedSource\\RetainedSourceReadFailureTests.cs:line 368\r\n   at Vulgata.Infrastructure.Source.RetainedSourceReadContext.RevalidateOperationAsync(CancellationToken callCancellation) in G:\\source\\repos\\vulgata\\src\\dotnet\\Vulgata.Infrastructure\\Source\\RetainedSourceReadContext.cs:line 535\r\n   at Vulgata.Infrastructure.Source.RetainedSourceReadContext.ReadBytesAsync(String relativePath, Int64 byteOffset, Int32 maximumBytes, CancellationToken cancellationToken) in G:\\source\\repos\\vulgata\\src\\dotnet\\Vulgata.Infrastructure\\Source\\RetainedSourceReadContext.cs:line 240\r\n   at Vulgata.Tests.RetainedSource.RetainedSourceReadFailureTests.ReadBytesAsync_WhenLiveSnapshotRepositoryThrows_ReturnsSanitizedStorageFailure() in G:\\source\\repos\\vulgata\\tests\\Vulgata.Tests\\RetainedSource\\RetainedSourceReadFailureTests.cs:line 205"
+      ]
+    }
+  ],
+  "test_path": "tests/Vulgata.Tests/RetainedSource/RetainedSourceReadFailureTests.cs",
+  "test_sha256": "2459ed2b6e9751dc2e5e04f23b27ce5f0297befda1530b9550cfad31a4d4eab3"
+}

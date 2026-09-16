@@ -504,6 +504,13 @@ internal sealed class RetainedSourceReadContext : ISourceReadContext
         {
             return CancellationStatus(callCancellation);
         }
+        catch
+        {
+            return linked.IsCancellationRequested ||
+                _timeProvider.GetElapsedTime(_issuedTimestamp) >= _deadline
+                    ? CancellationStatus(callCancellation)
+                    : SourceReadStatus.StorageFailure;
+        }
 
         return _timeProvider.GetElapsedTime(_issuedTimestamp) >= _deadline
             ? SourceReadStatus.DeadlineExceeded
@@ -547,6 +554,13 @@ internal sealed class RetainedSourceReadContext : ISourceReadContext
         catch (RetainedSourceStorageException)
         {
             return SourceReadStatus.StorageFailure;
+        }
+        catch
+        {
+            return linked.IsCancellationRequested ||
+                _timeProvider.GetElapsedTime(_issuedTimestamp) >= _deadline
+                    ? CancellationStatus(callCancellation)
+                    : SourceReadStatus.StorageFailure;
         }
 
         return await CheckAvailabilityAsync(callCancellation);

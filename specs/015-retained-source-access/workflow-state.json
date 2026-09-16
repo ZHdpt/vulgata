@@ -3,13 +3,13 @@
   "bmad_story_key": "13-1-retain-exact-repository-source-with-scoped-read-access",
   "bmad_epic_key": "epic-13",
   "feature_directory": "specs/015-retained-source-access",
-  "stage": "quality-review",
+  "stage": "implement",
   "preflight": {
     "branch": "dev",
-    "head": "1b70029c39a9a5b46ca74c2854d105ae06bdb2e1",
-    "git_identity_sha256": "1b1ebe29e2970f415e11c8eb8586ef80fd4e378795bb6c17d35202b31434588c",
-    "status_sha256": "49ec95bdacfbd1897d5fb7a8204bb3a247dc297991aa5af23ec3b44872b0b9fb",
-    "observed_at": "2026-09-16T07:20:58.924427Z"
+    "head": "deea5f1e0b9cc8f435a77bf179d5576d47e9a41f",
+    "git_identity_sha256": "4d7c8318424abf9e0867540d398002d8046b029d1cd1e52ea98962a939cd013b",
+    "status_sha256": "aa62fae8414cb3d915aad71b11389e59affdcc8c88d950d40ef4299bd1d41a45",
+    "observed_at": "2026-09-16T08:56:51.289374Z"
   },
   "artifacts": {
     "spec": {
@@ -22,7 +22,7 @@
     },
     "tasks": {
       "path": "specs/015-retained-source-access/tasks.md",
-      "sha256": "e32194761417152b8e4d5ca84b1b0046b7d33ecd3222c1eed891b02a4159fbad"
+      "sha256": "21331720ce1f75649f2ed56a0890339bfe7adb1ffc9ab4c6decf6d348d157d1e"
     }
   },
   "gates": {
@@ -37,15 +37,15 @@
       "verdict_path": "specs/015-retained-source-access/evidence/plan-review-02.json"
     },
     "quality-review": {
-      "status": "pending",
+      "status": "revised",
       "attempt": 1,
-      "verdict_path": null
+      "verdict_path": "specs/015-retained-source-access/evidence/quality-review-01.json"
     }
   },
   "attempts": {
     "definition-review": 0,
     "converge": 0,
-    "quality-review": 0
+    "quality-review": 1
   },
   "approvals": [
     {
@@ -99,9 +99,9 @@
     }
   ],
   "convergence": {
-    "status": "accepted",
+    "status": "invalidated",
     "attempt": 1,
-    "outcome": "converged",
+    "outcome": "pending",
     "report_path": "specs/015-retained-source-access/evidence/convergence-report-01.json"
   },
   "e2e": {
@@ -109,8 +109,6 @@
     "decision_path": null
   },
   "current_evidence_paths": [
-    "docs/bmad/implementation-artifacts/13-1-retain-exact-repository-source-with-scoped-read-access.md",
-    "docs/bmad/implementation-artifacts/workflow-activations/13-1-retain-exact-repository-source-with-scoped-read-access.json",
     "specs/015-retained-source-access/evidence/plan-authorization-01.md",
     "specs/015-retained-source-access/evidence/implementation-approval-01.md",
     "specs/015-retained-source-access/evidence/definition-review-06.json",
@@ -118,20 +116,21 @@
     "specs/015-retained-source-access/evidence/canonical-correction-core-verified-01.json",
     "specs/015-retained-source-access/evidence/canonical-correction-source-verified-01.json",
     "specs/015-retained-source-access/evidence/full-suite-verified-02.json",
-    "specs/015-retained-source-access/evidence/convergence-input-boundary-01.json",
     "specs/015-retained-source-access/evidence/convergence-report-01.json",
-    "specs/015-retained-source-access/evidence/converged-candidate-checkpoint-01.json"
+    "specs/015-retained-source-access/evidence/converged-candidate-checkpoint-01.json",
+    "specs/015-retained-source-access/evidence/quality-review-01.json",
+    "specs/015-retained-source-access/evidence/quality-corrections-verified-01.json"
   ],
   "checkpoint": {
-    "checkpoint_id": "bmad-13-1-converge-20260916T072058Z-7f443e",
-    "stage": "converge",
+    "checkpoint_id": "bmad-13-1-quality-correction-20260916T085651Z-63e97c",
+    "stage": "implement",
     "commit_sha": null,
     "binding_status": "pending"
   },
   "resume": {
-    "stage": "quality-review",
-    "reason": "All49tasks verified; full3127pass/15skip/0fail, Web0errors/9warnings; independent convergence clean. Candidate pinned for fresh quality review.",
-    "evidence_path": "specs/015-retained-source-access/evidence/convergence-report-01.json"
+    "stage": "implement",
+    "reason": "Quality corrections independently verified; checkpoint, then fresh full suite, convergence, quality, E2E and final verification.",
+    "evidence_path": "specs/015-retained-source-access/evidence/quality-corrections-verified-01.json"
   },
-  "updated_at": "2026-09-16T07:20:58.924427Z"
+  "updated_at": "2026-09-16T08:56:51.289374Z"
 }

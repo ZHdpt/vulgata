@@ -1,0 +1,17 @@
+{
+  "id": "13-1/implement/131",
+  "kind": "command",
+  "stage": "implement",
+  "source_commit": "deea5f1e0b9cc8f435a77bf179d5576d47e9a41f",
+  "observed_at": "2026-09-16T07:55:32.188634Z",
+  "finding": "QR-13.1-001",
+  "summary": "Minimal grant-open producerGREEN1/1: finalcatch maps non-cancellation infrastructure errors to existing sanitizedStorageFailure; explicit classifications preserved. Independent verification and liveoperations remain pending.",
+  "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\qr001-open-producer-green.trx",
+  "sha256": "fe29a0f46b5d6d7a6d0efcc4ffbde829406634c7fb719d21971aac230343f3b4",
+  "raw_log": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\qr001-open-producer-green.log",
+  "log_sha256": "3bb985b4cf36d55f03be696019de9219f4cbf33e8462417d29fab810fe32b0e4",
+  "exit_code": 0,
+  "production_path": "src/dotnet/Vulgata.Infrastructure/Source/RetainedSourceCaptureService.cs",
+  "production_sha256": "5768898fbdc860b71bd6b51ff994a35a582738872034c3c8536a28eae5e01810",
+  "production_diff": "9insertions only; originalformat/newline restored."
+}
