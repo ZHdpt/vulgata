@@ -6,10 +6,10 @@
   "stage": "quality-review",
   "preflight": {
     "branch": "dev",
-    "head": "f2b040edc3b95bf40b9779c90ee9fa782efc6394",
-    "git_identity_sha256": "6db91742edcd6b73b2832a3f3f78396c594c66ea725cb935c0509ff6a4a534d9",
-    "status_sha256": "636e93525caf2ce2cf94965acd8025ec4e7f28e6cf250471d35a815bffb6a406",
-    "observed_at": "2026-09-16T11:27:41.882660Z"
+    "head": "e64ac169a5bf646f4e877c557ad774f710d7f4e1",
+    "git_identity_sha256": "dd7d85333e3897332b931b7447d680e850ed07eb62f624fbcb43f991aa8a1eab",
+    "status_sha256": "628940351dee36229258a38c849a411eab1e135785f78ef8a94bb535ce44ffb1",
+    "observed_at": "2026-09-16T12:04:57.387144Z"
   },
   "artifacts": {
     "spec": {
@@ -37,15 +37,15 @@
       "verdict_path": "specs/015-retained-source-access/evidence/plan-review-02.json"
     },
     "quality-review": {
-      "status": "revised",
-      "attempt": 1,
-      "verdict_path": "specs/015-retained-source-access/evidence/quality-review-01.json"
+      "status": "invalidated",
+      "attempt": 2,
+      "verdict_path": "specs/015-retained-source-access/evidence/quality-review-02.json"
     }
   },
   "attempts": {
     "definition-review": 0,
     "converge": 0,
-    "quality-review": 1
+    "quality-review": 0
   },
   "approvals": [
     {
@@ -106,20 +106,16 @@
     }
   ],
   "convergence": {
-    "status": "converged",
+    "status": "accepted",
     "attempt": 2,
     "outcome": "converged",
     "report_path": "specs/015-retained-source-access/evidence/convergence-report-02.json"
   },
   "e2e": {
     "result": "pending",
-    "decision_path": null
+    "decision_path": "specs/015-retained-source-access/evidence/e2e-decision-01.json"
   },
   "current_evidence_paths": [
-    "specs/015-retained-source-access/evidence/converged-candidate-checkpoint-01.json",
-    "specs/015-retained-source-access/evidence/quality-review-01.json",
-    "specs/015-retained-source-access/evidence/quality-corrections-verified-01.json",
-    "specs/015-retained-source-access/evidence/full-suite-failures-03.json",
     "specs/015-retained-source-access/evidence/full-suite-isolated-diagnosis-03.json",
     "specs/015-retained-source-access/evidence/capacity-observation-diagnosis-01.json",
     "specs/015-retained-source-access/evidence/baseline-reconciliation-proposal-04.md",
@@ -127,18 +123,22 @@
     "specs/015-retained-source-access/evidence/baseline-reconciliation-verified-04.json",
     "specs/015-retained-source-access/evidence/full-suite-verified-04.json",
     "specs/015-retained-source-access/evidence/convergence-input-boundary-02.json",
-    "specs/015-retained-source-access/evidence/convergence-report-02.json"
+    "specs/015-retained-source-access/evidence/convergence-report-02.json",
+    "specs/015-retained-source-access/evidence/quality-review-02.json",
+    "specs/015-retained-source-access/evidence/e2e-decision-01.json",
+    "specs/015-retained-source-access/evidence/http-e2e-fixture-diagnosis-01.json",
+    "specs/015-retained-source-access/evidence/http-e2e-verified-01.json"
   ],
   "checkpoint": {
-    "checkpoint_id": "bmad-13-1-converge-20260916T113724Z-33edf1",
-    "stage": "converge",
+    "checkpoint_id": "bmad-13-1-http-e2e-20260916T120457Z-088ade",
+    "stage": "conditional-e2e",
     "commit_sha": null,
     "binding_status": "pending"
   },
   "resume": {
     "stage": "quality-review",
-    "reason": "Convergence02clean; freshqualityreview thenrequiredHTTP E2Eandfinalverification.",
-    "evidence_path": "specs/015-retained-source-access/evidence/convergence-report-02.json"
+    "reason": "RequiredHTTPtest+isolationverification pass; newtrackedtests requirefreshquality andfinalfullsuite beforeE2Egate advances.",
+    "evidence_path": "specs/015-retained-source-access/evidence/http-e2e-verified-01.json"
   },
-  "updated_at": "2026-09-16T11:37:24.443345Z"
+  "updated_at": "2026-09-16T12:04:57.387144Z"
 }

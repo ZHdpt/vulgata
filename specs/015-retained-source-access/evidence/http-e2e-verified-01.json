@@ -1,0 +1,76 @@
+{
+  "id": "13-1/conditional-e2e/154",
+  "kind": "test-green",
+  "stage": "conditional-e2e",
+  "source_commit": "e64ac169a5bf646f4e877c557ad774f710d7f4e1",
+  "observed_at": "2026-09-16T12:04:57.387144Z",
+  "summary": "RequiredHTTP characterization1/1passes: realProgramstartup/migrations/Identitycookie, authorizedChinese409sanitized+rowsretained, anonymous401no disclosure+rowsretained. Effectivepolicy andactualcapturedfiles verifiedunderownedroot; defaultsourceabsent.7neighborpasses pre-finalisolationassertion change; fullfinalrun next.",
+  "reports": [
+    {
+      "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\e2e-preparation\\results\\retained-source-http-e2e-07.trx",
+      "sha256": "7c5f69c25379e5e4f84d7e3ff8f963ddeacde85b62bf0976f1d56b7339f0d91f",
+      "tests": [
+        {
+          "name": "Vulgata.Tests.RetainedSource.RetainedSourceHttpE2eTests.RepositoryDelete_WhenCaptured_UsesProductionHttpPipelineAndReturnsSanitizedConflict",
+          "outcome": "Passed",
+          "duration": "00:00:06.0772652"
+        }
+      ]
+    },
+    {
+      "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\e2e-preparation\\results\\retained-source-http-neighbors-06.trx",
+      "sha256": "c783c4110bb974d3a835e91ca13a408ddb54b5baefb517dd787595eb5ee3ee2e",
+      "tests": [
+        {
+          "name": "Vulgata.Tests.RetainedSource.RetainedSourceRepositoryDeletionTests.Coordinator_DeleteRepositoryWithoutRetainedSnapshot_Succeeds",
+          "outcome": "Passed",
+          "duration": "00:00:04.1743312"
+        },
+        {
+          "name": "Vulgata.Tests.RetainedSource.RetainedSourceRepositoryDeletionTests.Coordinator_DeleteCapturedRepository_ReturnsConflictAndPreservesRows",
+          "outcome": "Passed",
+          "duration": "00:00:02.4424667"
+        },
+        {
+          "name": "Vulgata.Tests.RetainedSource.RetainedSourcePostgreSqlTests.SourceSnapshot_PostgreSql17_DeclaresFixedShapeChecksAndRestrictiveRelationship",
+          "outcome": "Passed",
+          "duration": "00:00:01.0200957"
+        },
+        {
+          "name": "Vulgata.Tests.RetainedSource.RetainedSourcePostgreSqlTests.SourceSnapshot_PostgreSql17_RejectsDuplicateIdentityStorageAndNegativeCounts",
+          "outcome": "Passed",
+          "duration": "00:00:01.3719527"
+        },
+        {
+          "name": "Vulgata.Tests.RetainedSource.RetainedSourceRepositoryDeletionTests.RepositoryDeleteEndpoint_ReturnsSanitizedConflictAndPreservesRows",
+          "outcome": "Passed",
+          "duration": "00:00:02.3836868"
+        },
+        {
+          "name": "Vulgata.Tests.RetainedSource.RetainedSourcePostgreSqlTests.SourceSnapshot_PostgreSql17_RejectsMutationAndRestrictsRepositoryDeletion",
+          "outcome": "Passed",
+          "duration": "00:00:01.0623697"
+        },
+        {
+          "name": "Vulgata.Tests.RetainedSource.RetainedSourcePostgreSqlTests.Migration_PostgreSql17_CreatesSourceSnapshotStore",
+          "outcome": "Passed",
+          "duration": "00:00:03.1319033"
+        }
+      ]
+    }
+  ],
+  "artifact_hashes": {
+    "tests/Vulgata.Tests/RetainedSource/RetainedSourcePostgreSqlWebApplicationFactory.cs": "4ea96c18c56c3ed099e8e7e26dbaf6e03db4f48734f68abed01ab65a2dfd6107",
+    "tests/Vulgata.Tests/RetainedSource/RetainedSourceHttpE2eTests.cs": "22b705ea0cc3adc3c26da3321902d8a72a907b9775edb089e86a05f8f3aa41dd"
+  },
+  "build": {
+    "raw_log": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\e2e-preparation\\build-07.log",
+    "sha256": "994ef4b6bbc2568d2fe4466e5527467f7c760e203155188aae66ff5c19dc2829",
+    "exit_code": 0,
+    "errors": 0,
+    "warnings": 3781
+  },
+  "attempt_history": "01Identityschemahistory mismatch;02loginfixturefailure;03/04green beforeproductionmigration-firstrefactor;05/06green aftermaterialrefactor butisolationgap;07green afterconcretepolicybinding/rootassertions. No identical-green retry rationale.",
+  "fixture_boundary": "Productionservices/middleware/auth kept; owned DBcontext bindings and concretecapturepolicy injected for testresourceisolation. Captureprerequisite usestrusted applicationcontext; HTTPDELETE usesrealcookie. No realprovider/tool/UI qualification.",
+  "gate_status": "PassingE2Eevidenceheldforfreshqualityreviewaftertrackedtestadditions; finalfullsuite pending."
+}

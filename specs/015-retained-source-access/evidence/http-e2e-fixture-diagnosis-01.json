@@ -1,0 +1,160 @@
+{
+  "id": "13-1/conditional-e2e/153",
+  "kind": "failure",
+  "stage": "conditional-e2e",
+  "source_commit": "e64ac169a5bf646f4e877c557ad774f710d7f4e1",
+  "observed_at": "2026-09-16T12:01:35.844246Z",
+  "summary": "InitialHTTPfixture migrationhistory andloginsetup failures; laterHTTP1/1neighbors7/7pass butrootfound sourceisolationdefect soE2Eacceptancewithheld. Factory lateconfiguration leftimmutable storagepolicyatdefaultprojectroot. Fixonlynewtestfiles underway.",
+  "reports": [
+    {
+      "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\e2e-preparation\\results\\retained-source-http-e2e-02.trx",
+      "sha256": "d647f988dd02111174228eb2e50b40461e033a5c95b499ec1d200e4fbdc5ee0b",
+      "tests": [
+        {
+          "name": "Vulgata.Tests.RetainedSource.RetainedSourceHttpE2eTests.RepositoryDelete_WhenCaptured_UsesProductionHttpPipelineAndReturnsSanitizedConflict",
+          "outcome": "Failed",
+          "duration": "00:00:06.1302069",
+          "failure": "Assert.Equal() Failure: Values differ\r\nExpected: Found\r\nActual:   OK"
+        }
+      ]
+    },
+    {
+      "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\e2e-preparation\\results\\retained-source-http-e2e-03.trx",
+      "sha256": "92bb7f695b80116f063b17ec02f5af9c096f4d0a182e80f26fbe0922b021b515",
+      "tests": [
+        {
+          "name": "Vulgata.Tests.RetainedSource.RetainedSourceHttpE2eTests.RepositoryDelete_WhenCaptured_UsesProductionHttpPipelineAndReturnsSanitizedConflict",
+          "outcome": "Passed",
+          "duration": "00:00:06.9440553",
+          "failure": ""
+        }
+      ]
+    },
+    {
+      "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\e2e-preparation\\results\\retained-source-http-e2e-05.trx",
+      "sha256": "041d9e62abc4aba92a34d8cdba1162d0a297da8c4e66c87f66c924af06285b8a",
+      "tests": [
+        {
+          "name": "Vulgata.Tests.RetainedSource.RetainedSourceHttpE2eTests.RepositoryDelete_WhenCaptured_UsesProductionHttpPipelineAndReturnsSanitizedConflict",
+          "outcome": "Passed",
+          "duration": "00:00:06.7179070",
+          "failure": ""
+        }
+      ]
+    },
+    {
+      "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\e2e-preparation\\results\\retained-source-http-e2e.trx",
+      "sha256": "626bc690f1cebecca03b1c70054b7621f0ed2c83f0bd839c5779ceddb087fa3e",
+      "tests": [
+        {
+          "name": "Vulgata.Tests.RetainedSource.RetainedSourceHttpE2eTests.RepositoryDelete_WhenCaptured_UsesProductionHttpPipelineAndReturnsSanitizedConflict",
+          "outcome": "Failed",
+          "duration": "00:00:05.2358567",
+          "failure": "Npgsql.PostgresException : 42P07: relation \"AspNetRoles\" already exists"
+        }
+      ]
+    },
+    {
+      "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\e2e-preparation\\results\\retained-source-http-neighbors-04.trx",
+      "sha256": "39fe764e704c1628951e4be8c8033fe3314eb4f00d4694d49ab511bbb9c34d62",
+      "tests": [
+        {
+          "name": "Vulgata.Tests.RetainedSource.RetainedSourcePostgreSqlTests.SourceSnapshot_PostgreSql17_RejectsMutationAndRestrictsRepositoryDeletion",
+          "outcome": "Passed",
+          "duration": "00:00:01.0705074",
+          "failure": ""
+        },
+        {
+          "name": "Vulgata.Tests.RetainedSource.RetainedSourcePostgreSqlTests.Migration_PostgreSql17_CreatesSourceSnapshotStore",
+          "outcome": "Passed",
+          "duration": "00:00:02.6063768",
+          "failure": ""
+        },
+        {
+          "name": "Vulgata.Tests.RetainedSource.RetainedSourceRepositoryDeletionTests.Coordinator_DeleteCapturedRepository_ReturnsConflictAndPreservesRows",
+          "outcome": "Passed",
+          "duration": "00:00:02.5729339",
+          "failure": ""
+        },
+        {
+          "name": "Vulgata.Tests.RetainedSource.RetainedSourceRepositoryDeletionTests.RepositoryDeleteEndpoint_ReturnsSanitizedConflictAndPreservesRows",
+          "outcome": "Passed",
+          "duration": "00:00:02.4381674",
+          "failure": ""
+        },
+        {
+          "name": "Vulgata.Tests.RetainedSource.RetainedSourcePostgreSqlTests.SourceSnapshot_PostgreSql17_DeclaresFixedShapeChecksAndRestrictiveRelationship",
+          "outcome": "Passed",
+          "duration": "00:00:00.9202492",
+          "failure": ""
+        },
+        {
+          "name": "Vulgata.Tests.RetainedSource.RetainedSourcePostgreSqlTests.SourceSnapshot_PostgreSql17_RejectsDuplicateIdentityStorageAndNegativeCounts",
+          "outcome": "Passed",
+          "duration": "00:00:01.4871345",
+          "failure": ""
+        },
+        {
+          "name": "Vulgata.Tests.RetainedSource.RetainedSourceRepositoryDeletionTests.Coordinator_DeleteRepositoryWithoutRetainedSnapshot_Succeeds",
+          "outcome": "Passed",
+          "duration": "00:00:03.5413768",
+          "failure": ""
+        }
+      ]
+    },
+    {
+      "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\e2e-preparation\\results\\retained-source-http-neighbors-06.trx",
+      "sha256": "c783c4110bb974d3a835e91ca13a408ddb54b5baefb517dd787595eb5ee3ee2e",
+      "tests": [
+        {
+          "name": "Vulgata.Tests.RetainedSource.RetainedSourceRepositoryDeletionTests.Coordinator_DeleteRepositoryWithoutRetainedSnapshot_Succeeds",
+          "outcome": "Passed",
+          "duration": "00:00:04.1743312",
+          "failure": ""
+        },
+        {
+          "name": "Vulgata.Tests.RetainedSource.RetainedSourceRepositoryDeletionTests.Coordinator_DeleteCapturedRepository_ReturnsConflictAndPreservesRows",
+          "outcome": "Passed",
+          "duration": "00:00:02.4424667",
+          "failure": ""
+        },
+        {
+          "name": "Vulgata.Tests.RetainedSource.RetainedSourcePostgreSqlTests.SourceSnapshot_PostgreSql17_DeclaresFixedShapeChecksAndRestrictiveRelationship",
+          "outcome": "Passed",
+          "duration": "00:00:01.0200957",
+          "failure": ""
+        },
+        {
+          "name": "Vulgata.Tests.RetainedSource.RetainedSourcePostgreSqlTests.SourceSnapshot_PostgreSql17_RejectsDuplicateIdentityStorageAndNegativeCounts",
+          "outcome": "Passed",
+          "duration": "00:00:01.3719527",
+          "failure": ""
+        },
+        {
+          "name": "Vulgata.Tests.RetainedSource.RetainedSourceRepositoryDeletionTests.RepositoryDeleteEndpoint_ReturnsSanitizedConflictAndPreservesRows",
+          "outcome": "Passed",
+          "duration": "00:00:02.3836868",
+          "failure": ""
+        },
+        {
+          "name": "Vulgata.Tests.RetainedSource.RetainedSourcePostgreSqlTests.SourceSnapshot_PostgreSql17_RejectsMutationAndRestrictsRepositoryDeletion",
+          "outcome": "Passed",
+          "duration": "00:00:01.0623697",
+          "failure": ""
+        },
+        {
+          "name": "Vulgata.Tests.RetainedSource.RetainedSourcePostgreSqlTests.Migration_PostgreSql17_CreatesSourceSnapshotStore",
+          "outcome": "Passed",
+          "duration": "00:00:03.1319033",
+          "failure": ""
+        }
+      ]
+    }
+  ],
+  "owned_generated_archive": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\e2e-preparation\\default-source-isolation-failure",
+  "ownership_manifest_sha256": "18c08c7ae4ff69d2f55d2a81a659fc8e7b4d425e31989f1043c7c09e273f9938",
+  "generated_repository_id": "d079c510-4420-4fa7-a815-d45558c9a316",
+  "generated_revision": "73df937d67908e6f96b23e2a8eedc5dc08843567",
+  "cleanup": "Rootverifiedexactworkspacepathand3ownedfiles; copiedprivatearchive thenremovedonlyidentifieddefaultsource tree.",
+  "limits": "No productionchange; rawpassingHTTPassertions donotprovefixtureisolation. Quality02invalidatedbynewtrackedtests; freshreviewrequired."
+}

@@ -1,0 +1,31 @@
+{
+  "id": "13-1/conditional-e2e/155",
+  "kind": "command",
+  "stage": "conditional-e2e",
+  "source_commit": "e64ac169a5bf646f4e877c557ad774f710d7f4e1",
+  "observed_at": "2026-09-16T12:04:57.387144Z",
+  "checkpoint_id": "bmad-13-1-http-e2e-20260916T120457Z-088ade",
+  "expected_parent": "e64ac169a5bf646f4e877c557ad774f710d7f4e1",
+  "owned_paths": [
+    "docs/bmad/implementation-artifacts/13-1-retain-exact-repository-source-with-scoped-read-access.md",
+    "specs/015-retained-source-access/evidence/e2e-decision-01.json",
+    "specs/015-retained-source-access/evidence/http-e2e-checkpoint-01.json",
+    "specs/015-retained-source-access/evidence/http-e2e-fixture-diagnosis-01.json",
+    "specs/015-retained-source-access/evidence/http-e2e-verified-01.json",
+    "specs/015-retained-source-access/evidence/quality-review-02.json",
+    "specs/015-retained-source-access/evidence/quality-review-boundary-02.json",
+    "specs/015-retained-source-access/workflow-state.json",
+    "tests/Vulgata.Tests/RetainedSource/RetainedSourceHttpE2eTests.cs",
+    "tests/Vulgata.Tests/RetainedSource/RetainedSourcePostgreSqlWebApplicationFactory.cs"
+  ],
+  "git_identity": {
+    "branch": "dev",
+    "head": "e64ac169a5bf646f4e877c557ad774f710d7f4e1",
+    "root": "G:/source/repos/vulgata",
+    "common_directory": ".git",
+    "worktree": "G:\\source\\repos\\vulgata"
+  },
+  "observed_status": " M docs/bmad/implementation-artifacts/13-1-retain-exact-repository-source-with-scoped-read-access.md\n M specs/015-retained-source-access/workflow-state.json\n?? specs/015-retained-source-access/evidence/e2e-decision-01.json\n?? specs/015-retained-source-access/evidence/http-e2e-fixture-diagnosis-01.json\n?? specs/015-retained-source-access/evidence/http-e2e-verified-01.json\n?? specs/015-retained-source-access/evidence/quality-review-02.json\n?? specs/015-retained-source-access/evidence/quality-review-boundary-02.json\n?? tests/Vulgata.Tests/RetainedSource/RetainedSourceHttpE2eTests.cs\n?? tests/Vulgata.Tests/RetainedSource/RetainedSourcePostgreSqlWebApplicationFactory.cs\n",
+  "observed_index_paths": [],
+  "summary": "VerifiedHTTPtestincrement; qualityinvalidatedpendingfreshreview, finalfullsuite required."
+}
