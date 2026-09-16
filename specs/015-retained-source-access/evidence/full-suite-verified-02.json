@@ -1,0 +1,75 @@
+{
+  "id": "13-1/implement/125",
+  "kind": "test-green",
+  "stage": "implement",
+  "source_commit": "1b70029c39a9a5b46ca74c2854d105ae06bdb2e1",
+  "observed_at": "2026-09-16T07:13:08.787781Z",
+  "summary": "Required owned full repository suite passes3127/3142 with15explicit skips and0failures. Source159passes/4child-only skips. Web build passes0errors/9existing warnings.927recorded executable/test/contract inputs unchanged; historical generated reports restored byte-exact.",
+  "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --logger trx;LogFileName=full-suite.trx --results-directory <owned-run-root>",
+  "exit_code": 0,
+  "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\full-suite-738218a0f6d8453fa7fd064ccb2734b0\\full-suite.trx",
+  "trx_sha256": "460d785aea79da10aa7fe7c9dc4813db755076b5fd67a99b8db423425d38d50e",
+  "raw_log": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\full-suite-738218a0f6d8453fa7fd064ccb2734b0\\full-suite.log",
+  "log_sha256": "c11a65f7d5a8c76ef4bf3ac5acc7fdb78e2af013d0f72b309bbac12adc8ba6c8",
+  "outcomes": {
+    "Passed": 3127,
+    "NotExecuted": 15
+  },
+  "retained_source_outcomes": {
+    "Passed": 159,
+    "NotExecuted": 4
+  },
+  "skipped_tests": [
+    "Vulgata.Tests.PreparedPass1.Pass1HostRuntimeQualificationTests.PinnedRuntimeQualification_MustReachAuthenticatedPreparedPass1Execution",
+    "Vulgata.Tests.PreparedPass1.Pass1ProductionExecutionTests.HostedRevisionBinding_CurrentRunningPair_LoadsAndAcquiresExactTwoRequestsAsync",
+    "Vulgata.Tests.PreparedPass1.Pass1DeepSeekContractQualificationTests.ApprovedFileCodeUnit_DeepSeekResponse_IsSchemaValidAtDispatcherSeamAsync",
+    "Vulgata.Tests.PreparedScanning.PreparedScanStoreRegressionTests.PreparedStore_ConcurrentIdenticalWriters_CommitOnceAndReplayOnceAsync",
+    "Vulgata.Tests.PreparedPass1.Pass1HostRuntimeQualificationTests.PinnedHostTools_AreExactAndJdtLsUsesStdioFactory",
+    "Vulgata.Tests.RetainedSource.RetainedSourceSeparateProcessChildTests.OpenReadContextAsync_WhenRetainedBlobIsCorrupt_DeniesWithoutContext",
+    "Vulgata.Tests.RetainedSource.RetainedSourceSeparateProcessChildTests.OpenReadContextAsync_FromFreshProductionComposition_ReadsRetainedBytesAfterRemoteUnavailable",
+    "Vulgata.Tests.PreparedPass1.Pass1ProductionProviderOutageTests.AuthenticatedRealPair_ProviderUnavailable_PausesDurablyAndStopsNewDispatch",
+    "Vulgata.Tests.PreparedPass1.Pass1HostRuntimeQualificationTests.ProductionComposition_RequiresBoundRevisionSourceBeforeClaimedNavigation",
+    "Vulgata.Tests.RetainedSource.RetainedSourceSeparateProcessChildTests.CaptureAsync_WhenParentTerminatesAfterSeal_LeavesOwnedAbandonedOperation",
+    "Vulgata.Tests.RetainedSource.RetainedSourceSeparateProcessChildTests.CaptureAsync_FromFreshProductionComposition_CompletesAndRecordsIdentity",
+    "Vulgata.Tests.PreparedPass1.Pass1ProductionExecutionTests.AuthenticatedApprovedPair_StartsRealRunAtEveryLimit_AndPersistsTerminalEvidence",
+    "Vulgata.Tests.PreparedPass1.Pass1DeepSeekContractQualificationTests.SourceFreeHandshake_LiveBetaCapability_WritesSanitizedEvidenceAsync",
+    "Vulgata.Tests.PreparedPass2.Pass2ProductionQualificationTests.ApprovedTwoRepositoryPair_ProducesSanitizedSourceGroundedBusinessDocumentAsync",
+    "Vulgata.Tests.PreparedPass1.Pass1DeepSeekIsolatedSourceQualificationTests.ThreeIsolatedSourceJobs_CompleteCommitAndReplayWithoutLeakingPayloadsAsync"
+  ],
+  "skip_limits": "Four parent-run child-only cases are qualified through passing child-launch parent tests. External provider/host qualification remains disabled and is not credited. Existing provider-specific skipped store test does not replace owned PostgreSQL qualification.",
+  "source_manifest": {
+    "raw_path": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\full-suite-738218a0f6d8453fa7fd064ccb2734b0\\tested-source-manifest.json",
+    "file_sha256": "c519e9e619fd52f9d4023a55e66631e7a1ff656b2c84faf1935e7177ba22099d",
+    "entries_sha256": "85ca1318bbd1bd6f7549ab4d3d0799fc3686846a7133f562fba60cfb5c98d5bd",
+    "count": 927,
+    "drift": []
+  },
+  "web_build": {
+    "command": "dotnet build src/dotnet/Vulgata.Web/Vulgata.Web.csproj --no-restore",
+    "exit_code": 0,
+    "warnings": 9,
+    "errors": 0,
+    "raw_log": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\full-suite-738218a0f6d8453fa7fd064ccb2734b0\\web-build.log",
+    "sha256": "80703fff42ae0eefc8fae2e2235ff27083f14016b4305215bd9408317cd8cf7b"
+  },
+  "runtime_ownership": {
+    "container_id": "04df68dff01aa09fb1a3003f088d86fdc49f63161fb9504629e1f0b545918946",
+    "default_database": "vulgata_story131_628cac98ebc140a18504b4cde967f6dc",
+    "created_at": "2026-09-16T06:52:29.3223955Z",
+    "database": "vulgata_story131_2db5b3d981ba45808fdd4ab238ad603e",
+    "root": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\full-suite-738218a0f6d8453fa7fd064ccb2734b0"
+  },
+  "runtime_cleanup": {
+    "databases": [
+      "vulgata_story131_2db5b3d981ba45808fdd4ab238ad603e",
+      "vulgata_story131_628cac98ebc140a18504b4cde967f6dc"
+    ],
+    "container_id": "04df68dff01aa09fb1a3003f088d86fdc49f63161fb9504629e1f0b545918946",
+    "dropped_at": "2026-09-16T07:11:18.3181617Z"
+  },
+  "historical_reports_restored": [
+    "artifacts/qualification/story-12.2/production-literal-inspection.json",
+    "artifacts/qualification/story-12.3/production-boundary-inspection.json"
+  ],
+  "qualification_boundary": "Retained-source and approved bounded compatibility only; no genericScan/Knowledge/Chat/native tools/provider/Dockerstack/backup/restore claim."
+}

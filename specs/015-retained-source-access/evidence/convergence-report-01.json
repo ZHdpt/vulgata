@@ -1,0 +1,28 @@
+{
+  "id": "13-1/converge/127",
+  "kind": "convergence",
+  "stage": "converge",
+  "source_commit": "1b70029c39a9a5b46ca74c2854d105ae06bdb2e1",
+  "observed_at": "2026-09-16T07:20:58.924427Z",
+  "outcome": "converged",
+  "checked": {
+    "functional_requirements": 22,
+    "compatibility_requirements": 4,
+    "success_criteria": 10,
+    "compatibility_success_criteria": 4,
+    "acceptance_scenarios": 13,
+    "edge_cases": 10,
+    "plan_architecture_decisions": 8,
+    "constitution_principles": 5,
+    "tasks": 49,
+    "unchecked_tasks": 0,
+    "pinned_artifacts": 98,
+    "hash_mismatches": 0
+  },
+  "findings": [],
+  "appended_task_ids": [],
+  "tasks_sha256": "e32194761417152b8e4d5ca84b1b0046b7d33ecd3222c1eed891b02a4159fbad",
+  "input_boundary_sha256": "8b184f09b811e10b0bf787ef8fb45b51b5f517fdb081353c9d84935a086e6b54",
+  "summary": "Independent convergence found no actionable missing/partial/contradicts/unrequested gaps; tasks byte-for-byte unchanged. No authority defect. Historical exact-resolution stable-key gap is outside accepted scope and not converted to a task.",
+  "hooks": "No after_converge hooks registered."
+}

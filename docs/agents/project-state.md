@@ -5,7 +5,8 @@ publication/recovery, cleanup, trusted-workspace and fresh-process reopen eviden
 with the remote unavailable. Source-only boundaries/diagnostics pass; the full suite
 has verified baseline test repairs. The independently reviewed, user-approved
 canonical identity domain correction is verified by19Core,28affected-fixture and
-159retained-source passes. Full-suite and review gates remain pending.
+159retained-source passes. Full suite3127passes/15explicit skips and Web build
+0errors are verified; convergence is clean. Independent quality/E2E/final gates remain.
 Use the active feature workflow state for its latest bound checkpoint. Other as-built
 notes retain static baseline `2bb83c3b44fc0afc07ae253ec1df5fab4399b964`. Reobserve the
 assigned checkout, tracker and source before reuse; do not require an old worktree or

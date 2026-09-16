@@ -1,0 +1,26 @@
+{
+  "id": "13-1/implement/124",
+  "kind": "analysis",
+  "stage": "implement",
+  "source_commit": "1b70029c39a9a5b46ca74c2854d105ae06bdb2e1",
+  "observed_at": "2026-09-16T06:58:20.007354Z",
+  "summary": "Static quickstart/traceability checks pass for current definitions; no unresolved placeholders, manifest schema parses, CP scope separately mapped. FullsuiteT049running; Web build and T041-T043 completion still pending.",
+  "artifact_hashes": {
+    "specs/015-retained-source-access/spec.md": "7dce86d54a67b925eb11fc51662077260be2d98a018c68dc8f6770941e767d14",
+    "specs/015-retained-source-access/plan.md": "ebb8cd5c883247521ee522e51765815442035bf9f21146c63257bdb203802290",
+    "specs/015-retained-source-access/tasks.md": "3baea833a4feb5043ce563690117a746034ef25b128613c44d6d0138a09f1d0a",
+    "specs/015-retained-source-access/research.md": "33d6195069c982e3ac4cf0fcfc5243e95d58ba84181bde530f3d03c8c664ce83",
+    "specs/015-retained-source-access/data-model.md": "fed9bedd3b2ef11fff7a4f41bef3ff3e4276aa845eb29ce7bf48c059404a99d7",
+    "specs/015-retained-source-access/quickstart.md": "6935751aa2c9036f51ea1923d18ea5a34c76abacbed92f8e2951fce69a14f0e6",
+    "specs/015-retained-source-access/contracts/retained-source-application-contract.md": "f2b0629fa5ed7f6780281f6cdf3a420f9984da6f25ca8c59006c63c9d2b29bdf",
+    "specs/015-retained-source-access/contracts/retained-source-manifest-v1.schema.json": "c80791c82e1268841b08c9da2e214a1db3a148aa2c6ba340583a5cb0bff5e300"
+  },
+  "traceability_path": "specs/015-retained-source-access/evidence/traceability-01.md",
+  "evidence_levels": [
+    "static schema/definition checks",
+    "controlled Git/filesystem public-seam tests",
+    "owned PostgreSQL migration/persistence tests",
+    "actual separate-process parent/child source qualification"
+  ],
+  "limits": "No tool/provider/genericScan/Knowledge/Chat/backup/restore claim; known pre-existing exact-resolution stable-key gap retained."
+}

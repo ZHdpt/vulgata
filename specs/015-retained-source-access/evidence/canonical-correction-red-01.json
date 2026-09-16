@@ -13,5 +13,8 @@
   "message": "System.ArgumentException : Unknown canonical envelope domain. (Parameter 'domain')",
   "tested_source_sha256": "3ed55278d5ba3a94da399a29198b2a76115b2fb5957c3a78addace7f7ab2923e",
   "current_source_sha256": "a73a557080c4a3fa551105ca530386f266b5ec12af058f80fa2d2fccfa2ae6fe",
-  "formatting_correction": "Root restored archived original helper indentation/final newline, preserving new test statements exactly. Raw test output moved unchanged to private owned results; no rawTRX committed."
+  "formatting_correction": "Root restored archived original helper indentation/final newline, preserving new test statements exactly. Raw test output moved unchanged to private owned results; no rawTRX committed.",
+  "issued_command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter \"FullyQualifiedName~PreparedCanonicalEnvelopeTests.SemanticFileCodeUnitIdentity_ApprovedV2Domain_ProducesValidCanonicalEnvelope\" --logger \"trx;LogFileName=canonical-correction-t044-red.trx\" --results-directory specs/015-retained-source-access/evidence",
+  "raw_trx_original_path": "specs/015-retained-source-access/evidence/canonical-correction-t044-red.trx",
+  "command_note": "command is a normalized reproduction command; issued_command preserves actual author invocation. RawTRX relocated unchanged to private results before checkpoint."
 }

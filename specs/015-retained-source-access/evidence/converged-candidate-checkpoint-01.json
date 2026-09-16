@@ -1,0 +1,33 @@
+{
+  "id": "13-1/converge/128",
+  "kind": "command",
+  "stage": "converge",
+  "source_commit": "1b70029c39a9a5b46ca74c2854d105ae06bdb2e1",
+  "observed_at": "2026-09-16T07:20:58.924427Z",
+  "checkpoint_id": "bmad-13-1-converge-20260916T072058Z-7f443e",
+  "expected_parent": "1b70029c39a9a5b46ca74c2854d105ae06bdb2e1",
+  "owned_paths": [
+    "docs/agents/project-state.md",
+    "docs/bmad/implementation-artifacts/13-1-retain-exact-repository-source-with-scoped-read-access.md",
+    "docs/bmad/implementation-artifacts/sprint-status.yaml",
+    "specs/015-retained-source-access/evidence/canonical-correction-red-01.json",
+    "specs/015-retained-source-access/evidence/converged-candidate-checkpoint-01.json",
+    "specs/015-retained-source-access/evidence/convergence-input-boundary-01.json",
+    "specs/015-retained-source-access/evidence/convergence-report-01.json",
+    "specs/015-retained-source-access/evidence/final-definition-static-checks-01.json",
+    "specs/015-retained-source-access/evidence/full-suite-verified-02.json",
+    "specs/015-retained-source-access/evidence/traceability-01.md",
+    "specs/015-retained-source-access/tasks.md",
+    "specs/015-retained-source-access/workflow-state.json"
+  ],
+  "git_identity": {
+    "branch": "dev",
+    "head": "1b70029c39a9a5b46ca74c2854d105ae06bdb2e1",
+    "root": "G:/source/repos/vulgata",
+    "common_directory": ".git",
+    "worktree": "G:\\source\\repos\\vulgata"
+  },
+  "observed_status": " M docs/agents/project-state.md\n M docs/bmad/implementation-artifacts/13-1-retain-exact-repository-source-with-scoped-read-access.md\n M docs/bmad/implementation-artifacts/sprint-status.yaml\n M specs/015-retained-source-access/evidence/canonical-correction-red-01.json\n M specs/015-retained-source-access/evidence/traceability-01.md\n M specs/015-retained-source-access/tasks.md\n M specs/015-retained-source-access/workflow-state.json\n?? specs/015-retained-source-access/evidence/convergence-input-boundary-01.json\n?? specs/015-retained-source-access/evidence/convergence-report-01.json\n?? specs/015-retained-source-access/evidence/final-definition-static-checks-01.json\n?? specs/015-retained-source-access/evidence/full-suite-verified-02.json\n",
+  "observed_index_paths": [],
+  "summary": "Clean convergence pins review candidate; BMad review transition; only verification/lifecycle metadata since tested executable boundary."
+}
