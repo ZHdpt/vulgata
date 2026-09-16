@@ -1,0 +1,21 @@
+{
+  "id": "13-1/converge/150",
+  "kind": "command",
+  "stage": "converge",
+  "source_commit": "f3b7a0274a04f2dc2aabb5ab695b0cfbbf833969",
+  "observed_at": "2026-09-16T11:37:24.443345Z",
+  "checkpoint_id": "bmad-13-1-converge-20260916T113724Z-33edf1",
+  "expected_parent": "f3b7a0274a04f2dc2aabb5ab695b0cfbbf833969",
+  "owned_paths": [
+    "docs/agents/project-state.md",
+    "docs/bmad/implementation-artifacts/13-1-retain-exact-repository-source-with-scoped-read-access.md",
+    "docs/bmad/implementation-artifacts/sprint-status.yaml",
+    "specs/015-retained-source-access/evidence/converged-candidate-checkpoint-02.json",
+    "specs/015-retained-source-access/evidence/convergence-input-boundary-02.json",
+    "specs/015-retained-source-access/evidence/convergence-report-02.json",
+    "specs/015-retained-source-access/workflow-state.json"
+  ],
+  "observed_status": " M docs/agents/project-state.md\n M docs/bmad/implementation-artifacts/13-1-retain-exact-repository-source-with-scoped-read-access.md\n M docs/bmad/implementation-artifacts/sprint-status.yaml\n M specs/015-retained-source-access/workflow-state.json\n?? specs/015-retained-source-access/evidence/convergence-input-boundary-02.json\n?? specs/015-retained-source-access/evidence/convergence-report-02.json\n",
+  "observed_index_paths": [],
+  "summary": "Pin renewedcleanconvergence; onlylifecycle/evidence/documentation changes sinceverifiedcode."
+}

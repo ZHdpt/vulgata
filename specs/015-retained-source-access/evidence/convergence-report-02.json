@@ -1,0 +1,67 @@
+{
+  "outcome": "converged",
+  "checked": {
+    "functional_requirements": 22,
+    "compatibility_requirements": 4,
+    "success_criteria": 10,
+    "compatibility_success_criteria": 4,
+    "acceptance_scenarios": 13,
+    "edge_cases": 10,
+    "plan_architecture_decisions": 8,
+    "constitution_principles": 5,
+    "tasks": 49,
+    "unchecked_tasks": 0,
+    "boundary_artifacts": 101,
+    "hash_mismatches": 0
+  },
+  "findings": {
+    "items": [],
+    "by_gap_type": {
+      "missing": 0,
+      "partial": 0,
+      "contradicts": 0,
+      "unrequested": 0
+    },
+    "by_severity": {
+      "CRITICAL": 0,
+      "HIGH": 0,
+      "MEDIUM": 0,
+      "LOW": 0
+    },
+    "sources": [
+      "specs/015-retained-source-access/spec.md",
+      "specs/015-retained-source-access/plan.md",
+      "specs/015-retained-source-access/tasks.md",
+      ".specify/memory/constitution.md",
+      "docs/bmad/epics.md",
+      "docs/bmad/planning-artifacts/architecture.md",
+      "docs/bmad/planning-artifacts/architecture/ARCHITECTURE-SPINE.md",
+      "docs/bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md",
+      "specs/015-retained-source-access/evidence/full-suite-verified-04.json"
+    ]
+  },
+  "appended_task_ids": [],
+  "artifact_hashes": {
+    "input_boundary": "specs/015-retained-source-access/evidence/convergence-input-boundary-02.json",
+    "input_boundary_source_digest": "076f9473d16eba55385b796513e5aefadd14bc284c12a9d01d3588f8c123de79",
+    "manifest_verified": 101,
+    "spec_sha256": "7dce86d54a67b925eb11fc51662077260be2d98a018c68dc8f6770941e767d14",
+    "plan_sha256": "ebb8cd5c883247521ee522e51765815442035bf9f21146c63257bdb203802290",
+    "resulting_tasks_sha256": "753e456a37d04bcc5cacc35313f58e27a33c47481a567bf678b3fa5777f77b46",
+    "hash_mismatches": 0
+  },
+  "input_digest": "076f9473d16eba55385b796513e5aefadd14bc284c12a9d01d3588f8c123de79",
+  "summary": "All 49 tasks are complete. Current source matches the 101-artifact boundary. Existing evidence records 3134 passed, 15 unchanged skips, 0 failures, and Web build 0 errors. Quality corrections and the approved capacity-test repair are covered. tasks.md was left byte-for-byte unchanged.",
+  "authority_defects": {
+    "intent": [],
+    "authority": [
+      "The exact-resolution stable-key issue remains preexisting and outside the approved Story 13.1 boundary; it is unqualified and produces no convergence task."
+    ],
+    "return_to_definition": false
+  },
+  "id": "13-1/converge/149",
+  "kind": "convergence",
+  "stage": "converge",
+  "source_commit": "f3b7a0274a04f2dc2aabb5ab695b0cfbbf833969",
+  "observed_at": "2026-09-16T11:37:24.443345Z"
+}

@@ -10,7 +10,8 @@ approved capacity-test polling repair and neighbors pass. A controlled full suit
 now passes3134tests with15existing skips; retained-source166passes/4child-onlyskips
 and Web build0errors/9warnings. The prior launch-wait failure remains unexplained
 and is distinct from the repaired terminal-state observation. Renewed convergence,
-quality review, required HTTP E2E and final gates remain pending.
+quality review, required HTTP E2E and final gates remain pending. Convergence02
+is clean with all49tasks and101artifacts verified.
 Use the active feature workflow state for its latest bound checkpoint. Other as-built
 notes retain static baseline `2bb83c3b44fc0afc07ae253ec1df5fab4399b964`. Reobserve the
 assigned checkout, tracker and source before reuse; do not require an old worktree or

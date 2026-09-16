@@ -3,7 +3,7 @@
   "bmad_story_key": "13-1-retain-exact-repository-source-with-scoped-read-access",
   "bmad_epic_key": "epic-13",
   "feature_directory": "specs/015-retained-source-access",
-  "stage": "converge",
+  "stage": "quality-review",
   "preflight": {
     "branch": "dev",
     "head": "f2b040edc3b95bf40b9779c90ee9fa782efc6394",
@@ -106,18 +106,16 @@
     }
   ],
   "convergence": {
-    "status": "invalidated",
-    "attempt": 1,
-    "outcome": "pending",
-    "report_path": "specs/015-retained-source-access/evidence/convergence-report-01.json"
+    "status": "converged",
+    "attempt": 2,
+    "outcome": "converged",
+    "report_path": "specs/015-retained-source-access/evidence/convergence-report-02.json"
   },
   "e2e": {
     "result": "pending",
     "decision_path": null
   },
   "current_evidence_paths": [
-    "specs/015-retained-source-access/evidence/full-suite-verified-02.json",
-    "specs/015-retained-source-access/evidence/convergence-report-01.json",
     "specs/015-retained-source-access/evidence/converged-candidate-checkpoint-01.json",
     "specs/015-retained-source-access/evidence/quality-review-01.json",
     "specs/015-retained-source-access/evidence/quality-corrections-verified-01.json",
@@ -127,18 +125,20 @@
     "specs/015-retained-source-access/evidence/baseline-reconciliation-proposal-04.md",
     "specs/015-retained-source-access/evidence/baseline-reconciliation-approval-04.json",
     "specs/015-retained-source-access/evidence/baseline-reconciliation-verified-04.json",
-    "specs/015-retained-source-access/evidence/full-suite-verified-04.json"
+    "specs/015-retained-source-access/evidence/full-suite-verified-04.json",
+    "specs/015-retained-source-access/evidence/convergence-input-boundary-02.json",
+    "specs/015-retained-source-access/evidence/convergence-report-02.json"
   ],
   "checkpoint": {
-    "checkpoint_id": "bmad-13-1-test-repair-20260916T112741Z-5fe095",
-    "stage": "implement",
+    "checkpoint_id": "bmad-13-1-converge-20260916T113724Z-33edf1",
+    "stage": "converge",
     "commit_sha": null,
     "binding_status": "pending"
   },
   "resume": {
-    "stage": "converge",
-    "reason": "All49tasksverified; controlledfullsuite3134/0/15. Rerunconvergence thenfreshquality,requiredHTTP E2Eandfinalverification.",
-    "evidence_path": "specs/015-retained-source-access/evidence/full-suite-verified-04.json"
+    "stage": "quality-review",
+    "reason": "Convergence02clean; freshqualityreview thenrequiredHTTP E2Eandfinalverification.",
+    "evidence_path": "specs/015-retained-source-access/evidence/convergence-report-02.json"
   },
-  "updated_at": "2026-09-16T11:27:41.882660Z"
+  "updated_at": "2026-09-16T11:37:24.443345Z"
 }

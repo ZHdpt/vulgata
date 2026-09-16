@@ -1,6 +1,6 @@
 # Story 13.1 development record
 
-Status: in-progress
+Status: review
 Feature directory: specs/015-retained-source-access
 Workflow state: specs/015-retained-source-access/workflow-state.json
 
@@ -488,3 +488,7 @@ User explicitly approved the exact proposal/patch scope27852d3c3814f8f77351d9a49
 ## Proposal04 and controlled full suite verified
 
 The exactapproved testpatch replaces only terminal sleep/read with existing8secondpolling. Affected1/1andneighbors3/3passed. Root removed worker-introduced formattingnoise beforefullrun. Controlledfullsuite (collectionparallelismdisabled) passed3134/3149with15unchangedskips and0failures in34m58s; source166passes/4child-onlyskips; Web0errors9warnings.929inputs unchanged and historicalreports restored. Both full-run ownedtargetDBs removed. Originalfullsuite launchwaitfailure (48launched) remainsunexplained; passingterminalpoll doesnotexplainit. T041-T043/T049close; renewedconvergence/quality/requiredHTTP E2E/finalgates pending. Evidence145-146.
+
+## Renewed convergence accepted
+
+Convergence02 independently verified101artifacthashes and all49tasks withno remainingwork. Spec/plan/tasks unchanged; originalsource andcompatibility obligations covered. Candidate advances toreview; freshquality,requiredHTTP E2E andfinalverification remain mandatory. Existingexactresolution stable-key limitation remains outsideaccepted scope andunqualified.
