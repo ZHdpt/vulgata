@@ -1,0 +1,13 @@
+{
+  "id": "13-1/implement/93",
+  "kind": "analysis",
+  "stage": "implement",
+  "source_commit": "d42bae63838ef3f2df667d8365a51b356b9196cc",
+  "observed_at": "2026-09-16T02:08:39.812296Z",
+  "summary": "Focused2/2 with113forbidden registrations removed,30domain commands and onlyRepositories/SourceSnapshots,0forbidden attempts. Guard applies after migrations/seeding; no physical table absence claim. Outcome mappings still required correction: invalid-ref test asserts source_ref_invalid rather than source_acquisition_failed; limitation should trace actualUnsupported behavior. T037/T038 not marked complete from this partial result.",
+  "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\source-boundary-verified-v2.trx",
+  "trx_sha256": "e4e1cf1b91f3d0aa5248efdfbfd5761394249e08c3421bed1e579408574e3f49",
+  "observations": [
+    "sourceOnly=true; forbiddenServicesRemoved=113; capture=Completed/source_completed; list=Succeeded/source_list_succeeded; read=Succeeded/source_bytes_succeeded; concurrent=2 succeeded; cancelled=Cancelled/source_cancelled; reopen=Succeeded/source_context_opened; denied=Denied/source_denied; freshOpenDenied=Denied/source_denied; domainCommandsObserved=30; observedTables=Repositories,SourceSnapshots; forbiddenTableAttempts=0; resultLabel=retained-source-capability; guardAppliedAfterFixtureSetup=true"
+  ]
+}

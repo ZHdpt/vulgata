@@ -1,0 +1,35 @@
+{
+  "id": "13-1/implement/96",
+  "kind": "command",
+  "stage": "implement",
+  "source_commit": "d42bae63838ef3f2df667d8365a51b356b9196cc",
+  "observed_at": "2026-09-16T02:44:05.772886Z",
+  "checkpoint_id": "bmad-13-1-implement-20260916T024405Z-086219",
+  "expected_parent": "d42bae63838ef3f2df667d8365a51b356b9196cc",
+  "owned_paths": [
+    "docs/agents/project-state.md",
+    "docs/bmad/implementation-artifacts/13-1-retain-exact-repository-source-with-scoped-read-access.md",
+    "specs/015-retained-source-access/evidence/baseline-reconciliation-proposal-02.md",
+    "specs/015-retained-source-access/evidence/full-suite-blocker-01.json",
+    "specs/015-retained-source-access/evidence/source-boundary-partial-01.json",
+    "specs/015-retained-source-access/evidence/source-diagnostics-checkpoint-01.json",
+    "specs/015-retained-source-access/evidence/source-diagnostics-complete-01.json",
+    "specs/015-retained-source-access/evidence/traceability-01.md",
+    "specs/015-retained-source-access/quickstart.md",
+    "specs/015-retained-source-access/tasks.md",
+    "specs/015-retained-source-access/workflow-state.json",
+    "tests/Vulgata.Tests/RetainedSource/RetainedSourceCapabilityBoundaryTests.cs",
+    "tests/Vulgata.Tests/RetainedSource/RetainedSourceCaptureApplicationFixture.cs",
+    "tests/Vulgata.Tests/RetainedSource/RetainedSourceLoggingTests.cs"
+  ],
+  "git_identity": {
+    "branch": "dev",
+    "head": "d42bae63838ef3f2df667d8365a51b356b9196cc",
+    "root": "G:/source/repos/vulgata",
+    "common_directory": ".git",
+    "worktree": "G:\\source\\repos\\vulgata"
+  },
+  "observed_status": " M artifacts/qualification/story-12.2/production-literal-inspection.json\n M artifacts/qualification/story-12.3/production-boundary-inspection.json\n M docs/agents/project-state.md\n M docs/bmad/implementation-artifacts/13-1-retain-exact-repository-source-with-scoped-read-access.md\n M specs/015-retained-source-access/quickstart.md\n M specs/015-retained-source-access/tasks.md\n M specs/015-retained-source-access/workflow-state.json\n M tests/Vulgata.Tests/RetainedSource/RetainedSourceCaptureApplicationFixture.cs\n?? specs/015-retained-source-access/evidence/baseline-reconciliation-proposal-02.md\n?? specs/015-retained-source-access/evidence/full-suite-blocker-01.json\n?? specs/015-retained-source-access/evidence/source-boundary-partial-01.json\n?? specs/015-retained-source-access/evidence/source-diagnostics-complete-01.json\n?? specs/015-retained-source-access/evidence/traceability-01.md\n?? tests/Vulgata.Tests/RetainedSource/RetainedSourceCapabilityBoundaryTests.cs\n?? tests/Vulgata.Tests/RetainedSource/RetainedSourceLoggingTests.cs\n",
+  "observed_index_paths": [],
+  "summary": "Verified T037-T040 checkpoint; full-suite failure and concrete additional baseline proposal preserved. No story completion or failing-test waiver."
+}

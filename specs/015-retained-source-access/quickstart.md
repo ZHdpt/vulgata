@@ -13,6 +13,16 @@ This evidence boundary is source-only. No CodeGraph, LSP, LLM, semantic Knowledg
 
 Do not use shared repositories, source roots, databases, or another process's workspace. Web startup applies migrations and role seeding.
 
+## Test environment and resource ownership
+
+Supply `VULGATA_STORY131_POSTGRES_ADMIN` privately from an approved secret source. It must identify an explicitly owned PostgreSQL 17 instance with a numeric loopback host and an explicit `Port`; no implicit default port is accepted. Do not place connection strings in command arguments, committed files, or evidence logs. The fixture creates and removes only its guarded `vulgata_story131_<guid>` databases.
+
+The tests compose their own `SourceStorage` configuration, isolated source/tool directories, `Testing` environment, and owned Data Protection key directory. A deployed application still needs the explicit configuration described in `plan.md`.
+
+For the **full repository suite**, also supply `VULGATA_TEST_POSTGRES_ADMIN` and `VULGATA_TEST_ADMIN_CONNECTION` for the same owned instance. `VULGATA_TEST_POSTGRES` must point to a separately owned disposable target database: some tests intentionally delete and recreate it. Never assign the administrator `postgres` database or a shared database to this target variable. Historical provider/Scan qualification flags are not authorized by this story. Run the full suite in a child process with an isolated `APPDATA` directory and explicit temporary `DataProtection:KeyRingPath`/`DataProtection:ApplicationName`, `CodeGraph:DataRootPath`, `AnalysisRuntime:JdtLsWorkspaceRoot`, `SourceStorage:RootPath`, and `Logging:LocalFile:Path` settings for older Web fixtures. Keep database credentials private and clear inherited historical qualification flags in that child process only.
+
+Child-only tests are explicitly skipped in the parent run. The parent qualification launches them with the required opt-in mode after building the current test assembly; their separate process results are asserted by the parent. An opt-in skip is not a passing child qualification.
+
 ## Static contract checks
 
 ```powershell
@@ -28,7 +38,7 @@ Expected: no placeholder matches; JSON parse and diff check succeed.
 After approved implementation:
 
 ```powershell
-dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter "FullyQualifiedName~RetainedSource"
+dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter "FullyQualifiedName~RetainedSource"
 ```
 
 ### Exact committed bytes
@@ -79,8 +89,8 @@ Use the owned PostgreSQL fixture to prove migration/check constraints, unique Re
 ## Surrounding verification
 
 ```powershell
-dotnet build src/dotnet/Vulgata.Web/Vulgata.Web.csproj
-dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj
+dotnet build src/dotnet/Vulgata.Web/Vulgata.Web.csproj --no-restore
+dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore
 ```
 
 Report static/schema inspection, controlled Git/filesystem, owned PostgreSQL, and separate-process persistence independently. Passing proves only retained-source capture/reopen/scoped reads, never completed Scan/wiki/Chat, native MCP/LSP, full Docker stack, backup, restore, or universal capacity.

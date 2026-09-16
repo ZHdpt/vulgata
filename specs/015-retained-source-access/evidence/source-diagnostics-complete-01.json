@@ -1,0 +1,41 @@
+{
+  "id": "13-1/implement/94",
+  "kind": "test-green",
+  "stage": "implement",
+  "source_commit": "d42bae63838ef3f2df667d8365a51b356b9196cc",
+  "observed_at": "2026-09-16T02:28:55.154893Z",
+  "summary": "T037-T040 verified as existing-correct qualification: source-only dependency/SQL guards, corrected actual outcome references, real diagnostics and secret/path/storage-key checks. No production change or fabricated RED. Current source regression159passes/4child-only skips.",
+  "reports": [
+    {
+      "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\source-diagnostics-focused-final.trx",
+      "trx_sha256": "7974def76fd4d38802c8ea974fc3a68935da81bd122e615c6325a7f61717de7f",
+      "log_sha256": "e96b0e115637c5fc2f87243e1d1633d8d42cf0b20bca29158d6a82dee5fe83cb",
+      "outcomes": {
+        "Passed": 3
+      },
+      "observations": {
+        "Vulgata.Tests.RetainedSource.RetainedSourceCapabilityBoundaryTests.SourceCapability_WhenForbiddenSeamsAreRemoved_CompletesSourceOperationsOnly": "sourceOnly=true; forbiddenServicesRemoved=113; capture=Completed/source_completed; list=Succeeded/source_list_succeeded; read=Succeeded/source_bytes_succeeded; concurrent=2 succeeded; cancelled=Cancelled/source_cancelled; reopen=Succeeded/source_context_opened; denied=Denied/source_denied; freshOpenDenied=Denied/source_denied; domainCommandsObserved=30; observedTables=Repositories,SourceSnapshots; forbiddenTableAttempts=0; resultLabel=retained-source-capability; guardAppliedAfterFixtureSetup=true",
+        "Vulgata.Tests.RetainedSource.RetainedSourceLoggingTests.SourceDiagnostics_WhenCaptureReopenDenialAndDeletionConflictOccur_AreSanitized": "capture=Completed/source_completed; read=Succeeded/source_bytes_succeeded; unsafePath=Denied/source_denied; acquisition=AcquisitionFailure/source_acquisition_failed; deletionConflict=RetainedSourceConflict; reopen=Succeeded/source_context_opened; denied=Denied/source_denied; freshOpenDenied=Denied/source_denied; loggerEntries=107; loggerCategories=Microsoft.EntityFrameworkCore.Database.Command; unsafeLoggerEntries=0; unsafeDiagnostics=0; diagnosticEvidence=characterization"
+      }
+    },
+    {
+      "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\source-diagnostics-complete-final.trx",
+      "trx_sha256": "ad6a82871379672744b7216159e92f17bcf2a9a2c683a3562e71cc234c771dab",
+      "log_sha256": "9b4c837df7f198839dafa3607572453706d8bc49f2b02f3990355f1ab765b331",
+      "outcomes": {
+        "NotExecuted": 4,
+        "Passed": 159
+      },
+      "observations": {
+        "Vulgata.Tests.RetainedSource.RetainedSourceCapabilityBoundaryTests.SourceCapability_WhenForbiddenSeamsAreRemoved_CompletesSourceOperationsOnly": "sourceOnly=true; forbiddenServicesRemoved=113; capture=Completed/source_completed; list=Succeeded/source_list_succeeded; read=Succeeded/source_bytes_succeeded; concurrent=2 succeeded; cancelled=Cancelled/source_cancelled; reopen=Succeeded/source_context_opened; denied=Denied/source_denied; freshOpenDenied=Denied/source_denied; domainCommandsObserved=30; observedTables=Repositories,SourceSnapshots; forbiddenTableAttempts=0; resultLabel=retained-source-capability; guardAppliedAfterFixtureSetup=true",
+        "Vulgata.Tests.RetainedSource.RetainedSourceLoggingTests.SourceDiagnostics_WhenCaptureReopenDenialAndDeletionConflictOccur_AreSanitized": "capture=Completed/source_completed; read=Succeeded/source_bytes_succeeded; unsafePath=Denied/source_denied; acquisition=AcquisitionFailure/source_acquisition_failed; deletionConflict=RetainedSourceConflict; reopen=Succeeded/source_context_opened; denied=Denied/source_denied; freshOpenDenied=Denied/source_denied; loggerEntries=107; loggerCategories=Microsoft.EntityFrameworkCore.Database.Command; unsafeLoggerEntries=0; unsafeDiagnostics=0; diagnosticEvidence=characterization"
+      }
+    }
+  ],
+  "files": {
+    "tests/Vulgata.Tests/RetainedSource/RetainedSourceCapabilityBoundaryTests.cs": "384ec029e832eaad1c2f56ff1d648401f6a9fad94dfc738bf86edd28a1fb231a",
+    "tests/Vulgata.Tests/RetainedSource/RetainedSourceLoggingTests.cs": "69bca1762c80f82358957ff540f454c9a0d81889bf9822af8123f3dd3a8729fa",
+    "tests/Vulgata.Tests/RetainedSource/RetainedSourceCaptureApplicationFixture.cs": "71c75797c863059e50802d5ad4b6c928b17881aa716fca23c8092639957cc208"
+  },
+  "limits": "SQL guard runs after shared fixture schema/seed setup; no claim legacy schema absent. Logging captures107real entries with messages, structured values and exceptions. No generic Scan/Knowledge/Chat/tool/provider/Docker-stack/backup/restore qualification."
+}

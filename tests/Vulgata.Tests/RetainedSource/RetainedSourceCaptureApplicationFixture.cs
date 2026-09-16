@@ -136,7 +136,8 @@ internal sealed class RetainedSourceCaptureApplicationFixture : IAsyncDisposable
         Func<SourceAuthorizationRequest, CancellationToken, Task>? authorizationWait = null,
         string? dataProtectionKeyRingPath = null,
         TimeProvider? timeProvider = null,
-        bool createAuxiliaryRoots = true)
+        bool createAuxiliaryRoots = true,
+        Action<IServiceCollection>? configureServices = null)
     {
         WebApplication application = BuildApplication(
             sourceStorageRoot,
@@ -151,7 +152,7 @@ internal sealed class RetainedSourceCaptureApplicationFixture : IAsyncDisposable
             mutateAfterAuthorizationCount: 1,
             authorizationWait: authorizationWait,
             beforeAuthorization: null,
-            configureServices: null,
+            configureServices: configureServices,
             dataProtectionKeyRingPath: dataProtectionKeyRingPath,
             createAuxiliaryRoots: createAuxiliaryRoots);
         IServiceScope scope = application.Services.CreateScope();

@@ -442,3 +442,9 @@ Declaration-only internal contracts preceded missing-provider runtime RED. Produ
 ## T035/T036 fresh-process qualification complete
 
 A real capture child opens/disposes its context and exits; owned remote/tool roots become unavailable before a new process reopens, lists and reads exact bytes. Fresh-open role revocation denies access; an independent corruption case yields IntegrityFailure without replacing bytes. Current combined source run156passes/4explicit child-only skips. Existing crash tests13/13 pass after mode-compatibility correction; earlier marker timeouts are superseded. Fixture accepts explicit loopback ports while retaining unique-owned DB guards. Evidence fresh-process-complete-01.json records current hashes and actual process/remote/source observations. T035/T036 complete; source-only boundaries, diagnostics, full-suite/convergence/review/E2E/final gates remain pending.
+
+## T037-T040 source boundaries and diagnostics verified
+
+Source-only service/SQL guards and actual outcome traceability are verified. Diagnostics capture real logger messages, structured values and exceptions and check synthetic credentials, source, unsafe paths, physical roots and actual storage key. Current source regression159passes/4child-only skips. Existing-correct behavior needed no fabricated RED or new production logging. Evidence source-diagnostics-complete-01.json.
+
+Required full-suite run completed2816passes/309failures/13skips; retained-source subset159passes/4skips. Web build passes with9warnings/0errors. Additional legacy resource-identity/fixture/migration/opt-in failures block the full gate; proposal baseline-reconciliation-proposal-02.md awaits user approval. Earlier four-test approval is not expanded. Generated historical reports archived privately and tracked originals restored. T041-T043 and convergence/quality/E2E/final gates remain pending.
