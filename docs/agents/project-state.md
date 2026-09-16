@@ -1,8 +1,8 @@
 # Project state for agent resumption
 
-Updated: 2026-09-15. Story 13.1 has verified incremental capture, scoped reads,
-publication/recovery, cleanup and trusted-workspace evidence. Fresh-process reopen
-with the remote unavailable and final feature/full-suite verification remain pending.
+Updated: 2026-09-16. Story 13.1 has verified incremental capture, scoped reads,
+publication/recovery, cleanup, trusted-workspace and fresh-process reopen evidence
+with the remote unavailable. Final feature/full-suite verification remains pending.
 Use the active feature workflow state for its latest bound checkpoint. Other as-built
 notes retain static baseline `2bb83c3b44fc0afc07ae253ec1df5fab4399b964`. Reobserve the
 assigned checkout, tracker and source before reuse; do not require an old worktree or
@@ -44,7 +44,7 @@ runtime workflow:
 | Area | Existing value and limit |
 | --- | --- |
 | Administration/persistence | Reusable Identity, roles, configuration and domain persistence; Identity remains in Web/Data. |
-| Source preparation | Story 13.1 has verified raw-Git retained capture, canonical manifests, and scoped metadata and byte/text reads. Live denial, concurrent publication and controlled process-crash cleanup are verified; trusted workspace materialization is verified; fresh-process remote-unavailable reopen and final gates remain pending in the active feature. Legacy disposable leases and prepared pair contracts remain separate. |
+| Source preparation | Story 13.1 has verified raw-Git retained capture, canonical manifests, and scoped metadata and byte/text reads. Live denial, concurrent publication and controlled process-crash cleanup are verified; trusted workspace materialization is verified; fresh-process remote-unavailable reopen is verified; source-only boundaries and final gates remain pending in the active feature. Legacy disposable leases and prepared pair contracts remain separate. |
 | CodeGraph/LSP | CodeGraph 1.5 integration is CLI/JSON, not native MCP; tool identity/launch paths are Windows-oriented. JDT protocol/containment mechanisms need the new declared Docker/profile qualification. |
 | Knowledge | Atomic persistence/provenance mechanics exist, but file-level CL/paired Flow semantics are not the new semantic Code Unit/Logical Flow contracts. |
 | Resolution | Finite exact matching is profile-bound; generic inquiry, late-evidence reconciliation and the ordinary production caller are not delivered. |

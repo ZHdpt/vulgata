@@ -1,0 +1,16 @@
+{
+  "id": "13-1/implement/88",
+  "kind": "command",
+  "stage": "implement",
+  "source_commit": "828874c74b2b5c8a97cc4438549049c84d03d670",
+  "observed_at": "2026-09-16T01:13:30.004404Z",
+  "summary": "Resumed after explicit turn interruption. Current AGENTS/project state/skill/catalog and artifact hashes verified; checkpoint unique and ancestral; branchdev/index empty; only expected workflow cache initially dirty. Docker initially offline; user chose to start it, then exact previously authorized container identity/labels/loopback mapping verified. T035 test-only authoring/runtime released, approvals unchanged.",
+  "container_id": "04df68dff01aa09fb1a3003f088d86fdc49f63161fb9504629e1f0b545918946",
+  "container_name": "vulgata-story131-29b3a12eba",
+  "binding": "127.0.0.1:5511 ->5432/tcp",
+  "labels": {
+    "codex.thread": "01a09f20-8385-7552-802b-4438f714b076",
+    "vulgata.story": "13.1"
+  },
+  "runtime_secret_policy": "Existing private temp descriptor; values never logged/committed."
+}

@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Net;
 using System.Reflection;
 using System.Text.RegularExpressions;
+using System.Data.Common;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
 using Vulgata.Core.Entities;
@@ -262,6 +263,16 @@ internal sealed class RetainedSourcePostgreSqlDatabase : IAsyncDisposable
         CancellationToken cancellationToken = default)
     {
         string administratorConnectionString = RequireAdministratorConnection();
+        var suppliedConnection = new DbConnectionStringBuilder
+        {
+            ConnectionString = administratorConnectionString,
+        };
+        if (!suppliedConnection.ContainsKey("Port"))
+        {
+            throw new InvalidOperationException(
+                "Vulgata Story 13.1 PostgreSQL tests require an explicitly supplied administrator port.");
+        }
+
         var administrator = new NpgsqlConnectionStringBuilder(administratorConnectionString)
         {
             Pooling = false,
@@ -269,10 +280,10 @@ internal sealed class RetainedSourcePostgreSqlDatabase : IAsyncDisposable
             CommandTimeout = 15,
         };
         if (!IPAddress.TryParse(administrator.Host, out IPAddress? address) ||
-            !IPAddress.IsLoopback(address) || administrator.Port != 5511)
+            !IPAddress.IsLoopback(address) || administrator.Port is < 1 or > 65535)
         {
             throw new InvalidOperationException(
-                "Vulgata Story 13.1 PostgreSQL tests require loopback 127.0.0.1:5511.");
+                "Vulgata Story 13.1 PostgreSQL tests require a numeric loopback administrator endpoint.");
         }
 
         string databaseName = DatabaseNamePrefix + Guid.NewGuid().ToString("N");

@@ -135,7 +135,8 @@ internal sealed class RetainedSourceCaptureApplicationFixture : IAsyncDisposable
         IReadOnlyDictionary<string, string?>? configurationOverrides = null,
         Func<SourceAuthorizationRequest, CancellationToken, Task>? authorizationWait = null,
         string? dataProtectionKeyRingPath = null,
-        TimeProvider? timeProvider = null)
+        TimeProvider? timeProvider = null,
+        bool createAuxiliaryRoots = true)
     {
         WebApplication application = BuildApplication(
             sourceStorageRoot,
@@ -151,7 +152,8 @@ internal sealed class RetainedSourceCaptureApplicationFixture : IAsyncDisposable
             authorizationWait: authorizationWait,
             beforeAuthorization: null,
             configureServices: null,
-            dataProtectionKeyRingPath: dataProtectionKeyRingPath);
+            dataProtectionKeyRingPath: dataProtectionKeyRingPath,
+            createAuxiliaryRoots: createAuxiliaryRoots);
         IServiceScope scope = application.Services.CreateScope();
         IHttpContextAccessor accessor =
             application.Services.GetRequiredService<IHttpContextAccessor>();
@@ -186,7 +188,8 @@ internal sealed class RetainedSourceCaptureApplicationFixture : IAsyncDisposable
         Func<SourceAuthorizationRequest, CancellationToken, Task>? authorizationWait,
         Func<SourceAuthorizationRequest, CancellationToken, Task>? beforeAuthorization,
         Action<IServiceCollection>? configureServices,
-        string? dataProtectionKeyRingPath = null)
+        string? dataProtectionKeyRingPath = null,
+        bool createAuxiliaryRoots = true)
     {
         var options = new WebApplicationOptions
         {
@@ -202,9 +205,12 @@ internal sealed class RetainedSourceCaptureApplicationFixture : IAsyncDisposable
         string fixtureOwnerRoot = Directory.GetParent(keyRingPath)!.FullName;
         string codeGraphRoot = Path.Combine(fixtureOwnerRoot, ".test-codegraph");
         string jdtLsRoot = Path.Combine(fixtureOwnerRoot, ".test-jdtls");
-        Directory.CreateDirectory(codeGraphRoot);
-        Directory.CreateDirectory(jdtLsRoot);
-        Directory.CreateDirectory(keyRingPath);
+        if (createAuxiliaryRoots)
+        {
+            Directory.CreateDirectory(codeGraphRoot);
+            Directory.CreateDirectory(jdtLsRoot);
+            Directory.CreateDirectory(keyRingPath);
+        }
         var settings = new Dictionary<string, string?>(StringComparer.Ordinal)
         {
             ["ConnectionStrings:DefaultConnection"] = connectionString,
@@ -529,6 +535,17 @@ internal sealed class RetainedSourceCaptureApplicationFixture : IAsyncDisposable
             connection);
         command.Parameters.AddWithValue("systemId", systemId);
         await command.ExecuteNonQueryAsync();
+    }
+
+    internal static async Task DeleteAuxiliaryTestRootsAsync(string fixtureRoot)
+    {
+        RetainedSourceOwnedPaths.EnsureOwnedPath(fixtureRoot);
+        string[] auxiliaryRootNames = [".test-codegraph", ".test-jdtls", ".test-keyring"];
+        foreach (string name in auxiliaryRootNames)
+        {
+            string path = RetainedSourceOwnedPaths.ResolveChild(fixtureRoot, name);
+            await RetainedSourceOwnedPaths.DeleteAsync(path);
+        }
     }
 }
 

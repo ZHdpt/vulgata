@@ -1,0 +1,36 @@
+{
+  "id": "13-1/implement/92",
+  "kind": "command",
+  "stage": "implement",
+  "source_commit": "828874c74b2b5c8a97cc4438549049c84d03d670",
+  "observed_at": "2026-09-16T01:49:30.459796Z",
+  "checkpoint_id": "bmad-13-1-implement-20260916T014930Z-1e4c99",
+  "expected_parent": "828874c74b2b5c8a97cc4438549049c84d03d670",
+  "owned_paths": [
+    "docs/agents/project-state.md",
+    "docs/bmad/implementation-artifacts/13-1-retain-exact-repository-source-with-scoped-read-access.md",
+    "specs/015-retained-source-access/evidence/fresh-process-checkpoint-01.json",
+    "specs/015-retained-source-access/evidence/fresh-process-compatibility-verified-01.json",
+    "specs/015-retained-source-access/evidence/fresh-process-complete-01.json",
+    "specs/015-retained-source-access/evidence/fresh-process-partial-verification-01.json",
+    "specs/015-retained-source-access/evidence/implementation-observations-01.md",
+    "specs/015-retained-source-access/evidence/resume-runtime-boundary-02.json",
+    "specs/015-retained-source-access/tasks.md",
+    "specs/015-retained-source-access/workflow-state.json",
+    "tests/Vulgata.Tests/RetainedSource/RetainedSourceCaptureApplicationFixture.cs",
+    "tests/Vulgata.Tests/RetainedSource/RetainedSourceFixture.cs",
+    "tests/Vulgata.Tests/RetainedSource/RetainedSourcePostgreSqlTests.cs",
+    "tests/Vulgata.Tests/RetainedSource/RetainedSourceSeparateProcessChild.cs",
+    "tests/Vulgata.Tests/RetainedSource/RetainedSourceSeparateProcessTests.cs"
+  ],
+  "git_identity": {
+    "branch": "dev",
+    "head": "828874c74b2b5c8a97cc4438549049c84d03d670",
+    "root": "G:/source/repos/vulgata",
+    "common_directory": ".git",
+    "worktree": "G:\\source\\repos\\vulgata"
+  },
+  "observed_status": " M docs/agents/project-state.md\n M docs/bmad/implementation-artifacts/13-1-retain-exact-repository-source-with-scoped-read-access.md\n M specs/015-retained-source-access/evidence/implementation-observations-01.md\n M specs/015-retained-source-access/tasks.md\n M specs/015-retained-source-access/workflow-state.json\n M tests/Vulgata.Tests/RetainedSource/RetainedSourceCaptureApplicationFixture.cs\n M tests/Vulgata.Tests/RetainedSource/RetainedSourceFixture.cs\n M tests/Vulgata.Tests/RetainedSource/RetainedSourcePostgreSqlTests.cs\n M tests/Vulgata.Tests/RetainedSource/RetainedSourceSeparateProcessChild.cs\n M tests/Vulgata.Tests/RetainedSource/RetainedSourceSeparateProcessTests.cs\n?? specs/015-retained-source-access/evidence/fresh-process-compatibility-verified-01.json\n?? specs/015-retained-source-access/evidence/fresh-process-complete-01.json\n?? specs/015-retained-source-access/evidence/fresh-process-partial-verification-01.json\n?? specs/015-retained-source-access/evidence/resume-runtime-boundary-02.json\n",
+  "observed_index_paths": [],
+  "summary": "Verified T035/T036; later tasks and all final gates pending."
+}

@@ -78,7 +78,7 @@ internal sealed class RetainedSourceGitRepository : IAsyncDisposable
         RootPath = rootPath;
     }
 
-    internal string RootPath { get; }
+    internal string RootPath { get; private set; }
 
     internal string Commit { get; private set; } = string.Empty;
 
@@ -185,6 +185,24 @@ internal sealed class RetainedSourceGitRepository : IAsyncDisposable
         ReadOnlyMemory<byte> input,
         CancellationToken cancellationToken = default) =>
         RunGitProcessAsync(RootPath, arguments, cancellationToken, input);
+
+    internal Task<string> MakeRemoteUnavailableAsync()
+    {
+        RetainedSourceOwnedPaths.EnsureOwnedPath(RootPath);
+        string parent = Directory.GetParent(RootPath)!.FullName;
+        string unavailableRoot = RetainedSourceOwnedPaths.ResolveChild(
+            parent,
+            $"remote-unavailable-{Guid.NewGuid():N}");
+        if (!Directory.Exists(RootPath))
+        {
+            throw new DirectoryNotFoundException(
+                "The retained-source fixture remote is already unavailable.");
+        }
+
+        Directory.Move(RootPath, unavailableRoot);
+        RootPath = unavailableRoot;
+        return Task.FromResult(unavailableRoot);
+    }
 
     /// <summary>
     /// Adds a symbolic-link tree entry through the Git index. The fixture does

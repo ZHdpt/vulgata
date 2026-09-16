@@ -1,0 +1,44 @@
+{
+  "id": "13-1/implement/90",
+  "kind": "test-green",
+  "stage": "implement",
+  "source_commit": "828874c74b2b5c8a97cc4438549049c84d03d670",
+  "observed_at": "2026-09-16T01:41:02.594361Z",
+  "summary": "Current crash-mode compatibility13/13 and fresh-process success/denial parent1/1GREEN. Earlier marker timeouts superseded. Corrupt-object separate-process case and complete T036 group remain pending.",
+  "runs": [
+    {
+      "name": "fresh-process-crash-compatibility",
+      "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\fresh-process-crash-compatibility.trx",
+      "sha256": "d26c931df69c2bc0357af47cff09a205dbb668177b59b7b1e541b6c1d40943ae",
+      "passed": 13,
+      "failed": 0,
+      "exit_code": 0,
+      "observations": [
+        "first=Completed/source_completed; second=Completed/source_completed; databaseRows=2; sealedObjects=2",
+        "B=StorageFailure/source_storage_unavailable; C=Completed/source_completed; rows=1; BObjectsWithinGrace=1; CObjects=1",
+        "A=Completed/source_completed; C=Completed/source_completed; rows=2; AObjects=1; CObjects=1; unknownExists=True; unknownManifestExists=True",
+        "first=Completed/source_completed; replay=Replay/source_replay; databaseRows=1; sealedObjects=1; firstCompletedAt=2026-09-15T12:34:56.0000000+00:00; replayCompletedAt=2026-09-15T12:34:56.0000000+00:00",
+        "A=Completed/source_completed; B=StorageFailure/source_storage_unavailable; C=Completed/source_completed; rows=2; AObjects=1; BObjectsAfterCleanup=0; CObjects=1; reopenA=Succeeded/source_context_opened; readA=Succeeded/source_text_succeeded",
+        "childExit=-1; capture=Completed/source_completed; launcherPid=23724; testHostPid=10512; rows=1; sealedObjects=1; remainingOperations=0; sentinelExists=True\r\nchildExitObserved=True; childExitCode=-1; childOutputLength=556; childErrorLength=0",
+        "capture=Completed/source_completed; remainingOperations=2; unmarkedExists=True; foreignExists=True; foreignLeaseExists=True; foreignSentinelExists=True",
+        "completed=Completed/source_completed; replay=Replay/source_replay; rows=1; sealedObjects=1",
+        "childLauncherPid=7756; childTestHostPid=12260; second=Completed/source_completed; rows=1; liveOperationExists=True; liveLeaseExists=True; remainingOperations=1",
+        "A=Completed/source_completed; C=Completed/source_completed; replayC=Replay/source_replay; BObjectsWhileBusy=1; BObjectsAfterRelease=0; CObjects=1; rows=2; childExit=-1",
+        "capture=StorageFailure/source_storage_unavailable; rows=0; outsideWrites=0; operationsReparse=True; sentinelExists=True",
+        "failed=StorageFailure/source_storage_unavailable; unavailable=NotFoundOrUnavailable/source_not_found_or_unavailable; retry=Completed/source_completed; rowsAfterFailure=0; objectsAfterFailure=1; rowsAfterRetry=1; objectsAfterRetry=1; authorizationsBeforeRetry=4; authorizationsAfterRetry=7",
+        "capture=IntegrityFailure/source_integrity_failed; rows=1; persistedDigest=ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff; sentinelExists=True"
+      ]
+    },
+    {
+      "name": "fresh-process-t035-t036-v4",
+      "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\fresh-process-t035-t036-v4.trx",
+      "sha256": "c3569f36b43af3c148712f618dab58eb20325254203178c65b739955187ed562",
+      "passed": 1,
+      "failed": 0,
+      "exit_code": 0,
+      "observations": [
+        "captureLauncherPid=46088; captureTestHostPid=25752; captureLauncherExited=True; captureTestHostExited=True; remoteRootAbsent=True; remoteUnavailableRootOwned=True; auxiliaryRootsAbsent=True\r\nreopenLauncherPid=13872; reopenTestHostPid=48396; reopenLauncherExited=True; reopenTestHostExited=True; remoteRootAbsent=True; auxiliaryRootsAbsent=True; retainedSha256=BA5B86400A13849E5B3BD92E68392840DE8058530DC434A4E47FCEF7BE856614; retainedByteLength=24; freshOpenDenied=Denied/source_denied"
+      ]
+    }
+  ]
+}

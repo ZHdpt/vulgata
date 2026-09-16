@@ -1,0 +1,51 @@
+{
+  "id": "13-1/implement/91",
+  "kind": "test-green",
+  "stage": "implement",
+  "source_commit": "828874c74b2b5c8a97cc4438549049c84d03d670",
+  "observed_at": "2026-09-16T01:49:30.459796Z",
+  "summary": "T035/T036 complete: actual capture-process/context exit, unavailable owned remote and tool roots, new process/context exact retained read, live/fresh-open denial after role revocation, and corrupt-source IntegrityFailure without repair. Current source group156passed/4explicit child-only skips, no failures.",
+  "raw_trx": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\fresh-process-source-complete.trx",
+  "trx_sha256": "161e035c5d5c4d444f7231897e949c6793def309deca6ae634bca678993de6a2",
+  "raw_log": "C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-story131-29b3a12eba\\results\\fresh-process-source-complete.log",
+  "log_sha256": "5927d0ccdc071152e9b9cb7f63a16f25782ee5e5083e00ea0535a1a47b91b6c2",
+  "counters": {
+    "total": "160",
+    "executed": "156",
+    "passed": "156",
+    "failed": "0",
+    "error": "0",
+    "timeout": "0",
+    "aborted": "0",
+    "inconclusive": "0",
+    "passedButRunAborted": "0",
+    "notRunnable": "0",
+    "notExecuted": "0",
+    "disconnected": "0",
+    "warning": "0",
+    "completed": "0",
+    "inProgress": "0",
+    "pending": "0"
+  },
+  "result_outcomes": {
+    "Passed": 156,
+    "NotExecuted": 4
+  },
+  "exit_code": 0,
+  "observations": {
+    "Vulgata.Tests.RetainedSource.RetainedSourceSeparateProcessTests.CaptureThenOpen_WhenRetainedBlobIsCorrupt_DeniesWithoutRepair": [
+      "corruptionCaptureLauncherPid=46664; corruptionCaptureTestHostPid=48528; corruptionCaptureExited=True; remoteRootAbsent=True; auxiliaryRootsAbsent=True\r\ncorruptionReopenLauncherPid=30792; corruptionReopenTestHostPid=49920; corruptionReopenExited=True; corruptOpen=IntegrityFailure/source_integrity_failed; corruptedBytesPreserved=True"
+    ],
+    "Vulgata.Tests.RetainedSource.RetainedSourceSeparateProcessTests.CaptureThenReopen_WhenRemoteBecomesUnavailable_UsesFreshProductionComposition": [
+      "captureLauncherPid=28136; captureTestHostPid=48656; captureLauncherExited=True; captureTestHostExited=True; remoteRootAbsent=True; remoteUnavailableRootOwned=True; auxiliaryRootsAbsent=True\r\nreopenLauncherPid=43692; reopenTestHostPid=11692; reopenLauncherExited=True; reopenTestHostExited=True; remoteRootAbsent=True; auxiliaryRootsAbsent=True; retainedSha256=BA5B86400A13849E5B3BD92E68392840DE8058530DC434A4E47FCEF7BE856614; retainedByteLength=24; freshOpenDenied=Denied/source_denied"
+    ]
+  },
+  "files": {
+    "tests/Vulgata.Tests/RetainedSource/RetainedSourceSeparateProcessTests.cs": "967d8107a16f43b9df722146c77caa16dd7efc064ec00f76a44d20e7ffb3e79f",
+    "tests/Vulgata.Tests/RetainedSource/RetainedSourceSeparateProcessChild.cs": "96e72241a7d60eb7854a8f5860e0efe71eef9f9fa4c4eb35112e9cc244441ca9",
+    "tests/Vulgata.Tests/RetainedSource/RetainedSourceCaptureApplicationFixture.cs": "2351919eb544679f6588620eeda76848f56e00ca2e36bc329563b0e1ef443cb0",
+    "tests/Vulgata.Tests/RetainedSource/RetainedSourcePostgreSqlTests.cs": "830f709ddc637f6c8a7a832cf1ffd4da0c9735af9b5ff0e4f6b9026b938dc120",
+    "tests/Vulgata.Tests/RetainedSource/RetainedSourceFixture.cs": "ebad66cfd17236a50a4a4caca1e034f317ef2ed9e02482f81d5ce24e9235a6db"
+  },
+  "fixture_boundary": "Explicit Port key and numeric loopback required; unique owned database names preserved. No implicit default5432 fallback. Current run uses authorized5511."
+}
