@@ -1,6 +1,6 @@
 # Project state for agent resumption
 
-Updated: 2026-09-16. Story 13.1 is complete in `specs/015-retained-source-access`.
+Updated: 2026-09-17. Story 13.1 is complete in `specs/015-retained-source-access`.
 Exact retained capture, scoped reads, publication/recovery, cleanup, trusted
 workspaces and separate-process reopening have bounded controlled evidence.
 Convergence 02 is clean; quality review 03 accepted with no findings; required
@@ -48,7 +48,7 @@ authority to bypass a later feature's plan/tool/Scan/PRD or implementation appro
 Use the current unified workflow and configured risk escalation; do not revive old
 Full/Standard/expedited or overnight/deadline waivers from historical handoffs.
 
-The installed workflow is governed-delivery 0.7.0, using BMad 6.12 and SpecKit
+The installed workflow is governed-delivery 0.7.1, using BMad 6.12 and SpecKit
 1.0.6 through `.governed-delivery/config.toml`. Use `$run-governed-delivery`;
 new story states use schema 3.1. One persistent Sol/medium definition author owns
 spec, plan, tasks and later document corrections; each coherent implementation
@@ -61,14 +61,13 @@ Consumer development rules and planned-change/implementation approval gates rema
 in force; installation grants no product-story authorization.
 
 Existing story-state files and historical activation/epic receipts were not migrated.
-The aggregate validation reports 258 historical compatibility findings, broader than
-missing configuration; see the adoption record for the exact verification boundary.
-Completed pre-configuration checkpoints cannot be requalified by adding configuration
-today. In particular, strict Epic 13 closure remains blocked by Story 13.1's original
-pre-configuration checkpoint until a separately reviewed distribution compatibility
-fix is available. This installation grants no waiver: preserve historical state and
-commits rather than bypassing the gate. New configured checkpoints use the current
-contract. A genuinely active 3.0 state would need bounded root-owned adoption, not a
+The 0.7.1 compatibility patch validates Story 13.1's unchanged original completion
+checkpoint from its actual pre-distribution evidence; its missing-configuration
+blocker is resolved without migration or rebinding. This is not Epic 13 closure or
+new product verification. Aggregate validation still reports 256 other historical
+findings; no waiver or history rewrite was applied. See the adoption record for the
+exact boundary. New configured checkpoints use the current contract. A genuinely
+active 3.0 state would need bounded root-owned adoption, not a
 bulk rewrite; no such current story was found. Project lessons are maintained
 selectively when warranted, not by creating an empty file or retrofitting completed
 stories.

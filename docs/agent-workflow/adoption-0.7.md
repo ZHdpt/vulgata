@@ -1,12 +1,15 @@
 # Governed-delivery 0.7 adoption
 
-Updated: 2026-09-16. This is Vulgata's installation/resumption record, not product
+Updated: 2026-09-17. This is Vulgata's installation/resumption record, not product
 verification or authorization to start a story.
 
 ## Installed boundary
 
-- Distribution: **0.7.0**, copied from `governed-delivery-workflow` commit
-  `e2ca94dcdd15832381b589bbcee76a4981bb490d`; that source project remained read-only.
+- Distribution: **0.7.1**. The initial 0.7.0 installation on September 16 came from
+  `e2ca94dcdd15832381b589bbcee76a4981bb490d`, with the source project read-only.
+  The user separately authorized the September 17 compatibility patch and lifted
+  that restriction for the fix. Only the installed validator changed at runtime,
+  copied from source commit `992cf3b96c08a3501e1d80115b7cf4f41a1a202c`.
 - BMad: **6.12.0**, upgraded with the pinned official installer while retaining
   core/BMM, Codex/Copilot/Claude/Trae integrations, project paths and existing shims.
   See the [upstream release](https://github.com/bmad-code-org/BMAD-METHOD/releases/tag/v6.12.0).
@@ -28,8 +31,10 @@ Local checkpoints:
 1. `53f4afe22f424b2c55c97477a9968444a346d822` — BMad dependency upgrade.
 2. `015ec2de8e89e2b3f51c25bf054483da1cb755fa` — new workflow/configuration and
    legacy installation retirement.
-3. The subsequent `docs: align project guidance with governed delivery 0.7` commit
-   records this handoff, authority pointers and project-memory updates.
+3. `755c75c7cf0c097bab3cc69ee6054bfd2ff5b950` — initial handoff, authority pointers
+   and project-memory updates.
+4. The subsequent `fix: apply governed delivery 0.7.1 checkpoint compatibility`
+   commit records the bounded validator patch and corrected handoff.
 
 No branch switch, history rewrite, push, product-code change or story activation
 belongs to this installation.
@@ -60,7 +65,7 @@ claimed by preserving that hook or unrelated helpers.
 
 ## Verification and unresolved compatibility
 
-Observed installation checks:
+Initial installation checks (September 16):
 
 - BMad tracker validation: valid, no problems or legacy status mappings.
 - BMad sprint-planning tests: **37 passed**.
@@ -75,20 +80,27 @@ Observed installation checks:
 - Product authorities, story artifacts and lifecycle match the pre-upgrade baseline
   `8d937054025bf8865dff537c59ec253d5048c6b8`.
 
-The aggregate workflow validator is **not green**: it reports **258 findings**, all
-under preserved historical story records, with no installation/profile/schema or
-configuration-contract errors. These include old completion-commit schemas/pending
-snapshots, absent historical configuration, unresolved checkpoint IDs/trailers,
-plan hashes/classification and old counters. The old validator did not perform all
-of these checks. Installation does not repair or erase their evidence.
+The initial aggregate validator reported 258 historical findings. After the 0.7.1
+patch it reports **256 remaining findings**, all under preserved historical records,
+with no installation/profile/schema or configuration-contract errors. These include
+old completion-commit schemas/pending snapshots, unresolved checkpoint IDs/trailers,
+unqualified historical configuration, plan hashes/classification and old counters.
+The old validator did not perform all these checks; no unrelated defect was waived.
 
-In particular, Story 13.1 has one targeted failure: its completion commit
-`6f312858264ecba8088c87c6b09a00813a652091` predates
-`.governed-delivery/config.toml`. Adding configuration now cannot change that commit.
-**Strict Epic 13 closure remains blocked on this historical binding.** A separately
-reviewed legacy-checkpoint compatibility fix is needed in the distribution; do not
-waive the gate, synthesize approval, rewrite completed states/history, or claim
-epic-close readiness. The distribution was not modified during this adoption.
+The Story 13.1 blocker is **resolved**. Its original completion commit
+`6f312858264ecba8088c87c6b09a00813a652091` still predates portable configuration,
+but the patched validator proves its original legacy skill/schema, BMad 6.11
+manifest, full pre-adoption ancestry, exact tracker entry and existing checkpoint
+binding. It does not copy today's settings backward, invent a new completion,
+execute historical scripts, or change any story artifact. Modern/configured
+checkpoints, deletion downgrades, shallow history and ambiguous proof remain strict.
+
+Patch verification (September 17): **225 regression tests passed**, including 21
+new real-Git compatibility/rejection methods; independent review, distribution,
+workflow, lockfile and all four skill checks passed. Installed Story 13.1 validation
+returns `ok: true`; dependencies pass without warnings. The installed validator
+matches the release file. This removes that specific Epic 13 eligibility blocker;
+it is not an epic-close execution, gate waiver or new product qualification.
 
 No application build/full product test suite, live agent forward-test, paid model
 probe, provider run or database/runtime operation was performed for this installation.

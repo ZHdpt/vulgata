@@ -89,7 +89,7 @@ advances without this additional approval.
 
 ## Maintaining these instructions
 
-Governed delivery 0.7.0 is configured in `.governed-delivery/config.toml` with BMad
+Governed delivery 0.7.1 is configured in `.governed-delivery/config.toml` with BMad
 6.12 and SpecKit 1.0.6. New stories use state 3.1; historical states/evidence stay
 unchanged. One retained definition author owns spec/plan/tasks and corrections;
 the independent reviewer retains review history. Coherent implementation groups

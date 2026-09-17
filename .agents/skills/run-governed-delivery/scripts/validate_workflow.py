@@ -939,6 +939,127 @@ def _has_trailer(body: str, key: str, value: str) -> bool:
     return re.search(rf"^{re.escape(key)}: {re.escape(value)}$", body, re.MULTILINE) is not None
 
 
+def _legacy_plain_mapping_keys(
+    text: str, section: str | None = None, expected_scalar: tuple[str, str] | None = None,
+) -> bool:
+    """Accept only generated plain-key syntax at the legacy proof's mapping levels.
+
+    The scalar selector is intentionally not a YAML parser. Reject quoted/escaped,
+    merge, explicit and flow keys instead of overlooking conflicting aliases.
+    """
+    seen_root = False
+    root_keys: set[str] = set()
+    child_keys: set[str] = set()
+    selected = False
+    child_indent = None
+    for line in text.splitlines():
+        stripped = line.lstrip()
+        if not stripped or stripped.startswith("#"):
+            continue
+        indent = len(line) - len(stripped)
+        if "\t" in line[:indent] or (indent and not seen_root):
+            return False
+        if not indent:
+            if re.fullmatch(r"[A-Za-z0-9_-]+:(?:[ \t].*)?", line) is None:
+                return False
+            key = line.split(":", 1)[0]
+            if key in root_keys:
+                return False
+            root_keys.add(key)
+            seen_root = True
+            selected = section is not None and key == section
+            child_indent = None
+            child_keys = set()
+        elif selected:
+            if child_indent is None:
+                child_indent = indent
+            if indent < child_indent or (
+                indent == child_indent and re.fullmatch(r"[A-Za-z0-9_-]+:(?:[ \t].*)?", stripped) is None
+            ):
+                return False
+            if indent == child_indent:
+                key = stripped.split(":", 1)[0]
+                if key in child_keys:
+                    return False
+                child_keys.add(key)
+                if expected_scalar is not None and key == expected_scalar[0]:
+                    if _front_matter_scalar(stripped.split(":", 1)[1]) != expected_scalar[1]:
+                        return False
+    return seen_root
+
+
+def _legacy_completion_config(repo: Path, commit: str, current: dict, committed: Any) -> dict | None:
+    """Recognize the pre-distribution 3.0 contract using only immutable Git evidence.
+
+    This is not a default for missing modern configuration. A repository that has
+    ever adopted the portable workflow before this checkpoint cannot downgrade by
+    deleting its configuration and restoring legacy marker files.
+    """
+    if any(
+        not isinstance(state, dict)
+        or state.get("schema_version") != "3.0"
+        or state.get("stage") != "complete"
+        or validate_workflow_state(state)
+        for state in (current, committed)
+    ):
+        return None
+    if _git(repo, "rev-parse", "--is-shallow-repository") != "false":
+        return None  # Truncated ancestry cannot establish pre-adoption provenance.
+    portable_paths = (".governed-delivery", ".agents/skills/run-governed-delivery")
+    if any(_tree_entry(repo, commit, path) is not None for path in portable_paths):
+        return None
+    if _git(repo, "log", "--full-history", "--format=%H", "-1", commit, "--", *portable_paths):
+        return None
+
+    def regular_text(relative: str) -> str | None:
+        entry = _tree_entry(repo, commit, relative)
+        if entry is None or entry[0] not in {"100644", "100755"} or entry[1] != "blob":
+            return None
+        return _git(repo, "show", f"{commit}:{relative}")
+
+    skill = regular_text(".agents/skills/run-bmad-sprint-loop/SKILL.md")
+    schema = regular_text(".agents/skills/run-bmad-sprint-loop/references/workflow-state.schema.json")
+    manifest = regular_text("_bmad/_config/manifest.yaml")
+    if skill is None or schema is None or manifest is None:
+        return None
+    front_matter = re.match(r"\A---\r?\n(.*?)\r?\n---(?:\r?\n|\Z)", skill, re.DOTALL)
+    names = re.findall(r"^name:[ \t]*(.+?)[ \t]*$", front_matter[1], re.MULTILINE) if front_matter else []
+    if (
+        not front_matter or not _legacy_plain_mapping_keys(front_matter[1])
+        or len(names) != 1 or _front_matter_scalar(names[0]) != "run-bmad-sprint-loop"
+    ):
+        return None
+
+    def unique_object(pairs: list[tuple[str, Any]]) -> dict:
+        result = {}
+        for key, value in pairs:
+            if key in result:
+                raise ValueError("ambiguous legacy schema key")
+            result[key] = value
+        return result
+
+    try:
+        legacy_schema = json.loads(schema, object_pairs_hook=unique_object)
+        if legacy_schema["properties"]["schema_version"]["const"] != "3.0":
+            return None
+    except (ValueError, KeyError, TypeError):
+        return None
+    # Reuse the dependency checker's bounded YAML selector, never execute an old
+    # installed validator or infer historical settings from today's installation.
+    from check_dependencies import _yaml_selected_scalar
+    version = _yaml_selected_scalar(manifest, "installation.version")
+    if not isinstance(version, str) or re.fullmatch(r"6\.11\.[0-9]+", version) is None:
+        return None
+    if not _legacy_plain_mapping_keys(manifest, "installation", ("version", version)):
+        return None
+    if len(re.findall(r"^installation:\s*$", manifest, re.MULTILINE)) != 1:
+        return None
+    return {
+        "lifecycle": {"adapter": "bmad-6.11"},
+        "paths": {"sprint_status": "docs/bmad/implementation-artifacts/sprint-status.yaml"},
+    }
+
+
 def validate_checkpoint_binding(data: Any, repo: Path, state_path: Path) -> list[str]:
     errors: list[str] = []
     if not isinstance(data, dict) or data.get("stage") != "complete":
@@ -1022,6 +1143,7 @@ def validate_checkpoint_binding(data: Any, repo: Path, state_path: Path) -> list
 
         lifecycle_adapter = None
         workflow_config = {}
+        legacy_completion = False
         sprint_status_path = "docs/bmad/implementation-artifacts/sprint-status.yaml"
         try:
             committed_config_text = _git(repo, "show", f"{commit}:.governed-delivery/config.toml")
@@ -1039,7 +1161,14 @@ def validate_checkpoint_binding(data: Any, repo: Path, state_path: Path) -> list
             else:
                 sprint_status_path = configured_status_path
         except subprocess.CalledProcessError:
-            errors.append("committed governed-delivery configuration is missing")
+            legacy_config = _legacy_completion_config(repo, commit, data, committed_state)
+            if legacy_config is None:
+                errors.append("committed governed-delivery configuration is missing")
+            else:
+                workflow_config = legacy_config
+                lifecycle_adapter = legacy_config["lifecycle"]["adapter"]
+                sprint_status_path = legacy_config["paths"]["sprint_status"]
+                legacy_completion = True
         except tomllib.TOMLDecodeError as error:
             errors.append(f"committed governed-delivery configuration is invalid: {error}")
         if lifecycle_adapter is None:
@@ -1053,6 +1182,18 @@ def validate_checkpoint_binding(data: Any, repo: Path, state_path: Path) -> list
             status = _git(repo, "show", f"{commit}:{sprint_status_path}")
         except subprocess.CalledProcessError:
             status = None
+        if legacy_completion:
+            status_entry = _tree_entry(repo, commit, sprint_status_path)
+            if status_entry is None or status_entry[0] not in {"100644", "100755"}:
+                status = None
+            elif status is not None:
+                from check_dependencies import _yaml_selected_scalar
+                if (
+                    not _legacy_plain_mapping_keys(status, "development_status", (story_key, "done"))
+                    or len(re.findall(r"^development_status:\s*$", status, re.MULTILINE)) != 1
+                    or _yaml_selected_scalar(status, f"development_status.{story_key}") != "done"
+                ):
+                    errors.append("legacy checkpoint requires one development_status story entry set to done")
         if isinstance(lifecycle_adapter, str) and lifecycle_adapter in SUPPORTED_LIFECYCLE_ADAPTERS:
             if status is None:
                 errors.append("BMad story done transition file is missing from checkpoint commit")
