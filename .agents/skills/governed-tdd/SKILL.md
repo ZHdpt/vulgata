@@ -5,7 +5,20 @@ description: Apply governed behavioral RED/GREEN discipline and final-shape asse
 
 # Governed Test-Driven Development
 
-Use behavioral RED, minimal GREEN, and final-shape assessment for a coherent task group. Passing tests are necessary, not sufficient for completion. Read the applicable guidance before and during the loop.
+Use behavioral RED, minimal GREEN, and final-shape assessment for changed production behavior in a coherent task group. Apply the routing below before entering the loop; passing tests alone do not establish completion.
+
+## Choose the verification route
+
+Route by the accepted behavior and risk being changed, not file extension or the existence of a task. State the route and reason briefly in the existing task/dispatch evidence; add no separate gate or ledger.
+
+- Changed production behavior: behavioral RED/GREEN at an accepted seam. This includes behavior implemented in scripts, configuration, or integration glue.
+- Already-correct behavior needing coverage: test-only work with passing tests and a coverage reason; never fabricate RED.
+- Behavior-preserving refactor: use existing regression coverage, adding characterization tests where the seam is unprotected; verify before and after, without inventing a behavior change.
+- Nonbehavioral work: bounded normal execution plus direct verification appropriate to the risk. Documentation, dependency pins, supplied binaries, generated files, packaging, and environment setup do not automatically need new tests. Check affected build, integration, startup, or installation behavior where relevant; these categories are not exemptions when behavior actually changes.
+
+Before adding a test, identify the accepted obligation, observable outcome, and meaningful regression it would catch. Reuse adequate existing coverage. Never invent a requirement, test, production change, or failing assertion solely to supply RED/GREEN evidence. If the required behavior cannot be exercised, report the verification limitation through root rather than disguising it with a proxy test.
+
+Third-party artifact hashes are not product behavior by themselves. Only add integrity-verification behavior when required by accepted scope or repository authority; test our verifier's acceptance/rejection behavior using controlled fixtures. An authorized installation/release integrity check may be direct operational verification, not a permanent product regression test. Do not pin arbitrary vendor bytes, generated output, or source text merely to detect any change. This does not prohibit required integrity checks or workflow evidence hashes that bind reviewed artifacts.
 
 When exploring the codebase, read `CONTEXT.md` (if it exists) so test names and interface vocabulary match the project's domain language, and respect ADRs in the area you're touching.
 
@@ -33,6 +46,8 @@ When the shape of that interface is itself in question, return to the plan-conta
 
 ## Rules of the loop
 
+The RED/minimal-GREEN loop below applies to changed behavior. Other routes use their evidence requirements above; dispatch only needed owners, without a test-author turn solely for ceremony.
+
 - **Red before green.** Write the failing test first, then only enough code to pass it. Minimal GREEN limits speculative behavior and unnecessary scope, not code quality. Preserve the original raw RED observation unchanged. Already-correct behavior needing only coverage records no expected RED instead of fabricating one.
 - **One slice at a time.** One seam, one test, one minimal implementation per cycle.
 - **Assess final shape before completion.** Both authors inspect their final affected units in context, not just changed lines or passing commands. Production design should have cohesive responsibilities, meaningful names, understandable control flow, and justified abstractions, consistent with the accepted plan and applicable repository/language/framework conventions. Test design should have clear scenarios, independent expectations, understandable setup, useful failures, appropriate fixtures, and reliable isolation. Correct concrete local defects; do not mandate patterns, private-method layouts, or universal size limits.
@@ -40,6 +55,6 @@ When the shape of that interface is itself in question, return to the plan-conta
 
 ## Ownership and continuity
 
-Root retains one `tdd-test-author` (Luna/high) and one `tdd-implementer` (Sol/medium) for the coherent task group, using stage-scoped follow-ups and reusing available/current owners for later corrections. Test and production writes stay disjoint. An unavailable replacement receives raw artifacts, accepted scope, prior findings, and actual RED/GREEN evidence; runtime handles never enter durable state.
+For a behavioral TDD task group, root retains one `tdd-test-author` (Luna/high) and one `tdd-implementer` (Sol/medium), using stage-scoped follow-ups and reusing available/current owners for later corrections. Test and production writes stay disjoint. An unavailable replacement receives raw artifacts, accepted scope, prior findings, and applicable verification evidence; runtime handles never enter durable state.
 
 The implementer may challenge a defective or overconstrained test through root with evidence, but never edit or weaken it. The test owner may correct an independently evidenced test defect as dispatched, preserving the historical RED and recording the corrected expectation and applicable fresh checks; it must not weaken tests to fit faulty production behavior. Root alone controls lifecycle/workflow state, authoritative evidence, approvals, checkpoints, staging, and commits. An E2E product failure returns through root to this same regression-TDD correction path, not directly to a fresh production author.

@@ -2,21 +2,23 @@
 
 Defaults remain economical. Initial architecture planning uses its serialized Sol/high exception; diagnosed difficult definition recovery has an exclusive Astra author route. Other roles retain their listed model/effort.
 
+As of workflow 0.7.2, Sol and Luna mean GPT-6 Sol and GPT-6 Luna. This generation update preserves every role's reasoning effort, sandbox, ownership, and escalation conditions; it requires no state migration.
+
 | Agent | Default model / effort | Sandbox | Responsibility |
 |---|---|---|---|
-| delivery-orchestrator | gpt-5.6-sol / medium | workspace-write | Queue, state, gates, explicit-path checkpoints, sole local committer |
-| story-context-synthesizer | gpt-5.6-luna / high | read-only | Optional cited source synthesis for large or conflicting authority sets |
-| definition-author | gpt-5.6-sol / medium | workspace-write | Persistent, phase-scoped spec/plan/tasks author and correction owner |
-| plan-architect-high | gpt-5.6-sol / high | workspace-write | Retained current exception for architecture-classified plan and its corrections; plan set only |
+| delivery-orchestrator | gpt-6-sol / medium | workspace-write | Queue, state, gates, explicit-path checkpoints, sole local committer |
+| story-context-synthesizer | gpt-6-luna / high | read-only | Optional cited source synthesis for large or conflicting authority sets |
+| definition-author | gpt-6-sol / medium | workspace-write | Persistent, phase-scoped spec/plan/tasks author and correction owner |
+| plan-architect-high | gpt-6-sol / high | workspace-write | Retained current exception for architecture-classified plan and its corrections; plan set only |
 | definition-author-recovery | gpt-6-astra / medium | workspace-write | Exclusive retained spec/plan/tasks author after diagnosed difficult recovery |
 | definition-author-recovery-high | gpt-6-astra / high | workspace-write | Same exclusive ownership after a recorded deeper-analysis trigger |
-| definition-reviewer | gpt-5.6-sol / medium | read-only | Retained plan-only, complete-definition, and correction review plus speckit-analyze |
-| tdd-test-author | gpt-5.6-luna / high | workspace-write | Retained group test owner; behavioral tests, final-shape assessment, honest RED/final-GREEN |
-| tdd-implementer | gpt-5.6-sol / medium | workspace-write | Retained group production owner; minimal GREEN, final-shape assessment and conditional local refactor; no tests |
-| convergence-analyst | gpt-5.6-luna / high | workspace-write | speckit-converge; append-only tasks write |
-| quality-reviewer | gpt-5.6-sol / medium | read-only | Correctness, security, tests, architecture, regression on converged boundary |
-| e2e-runner | gpt-5.6-luna / high | workspace-write | Conditional E2E/API/integration tests; never production |
-| epic-architecture-auditor | gpt-5.6-sol / high | read-only | Independent pinned epic architecture classification |
+| definition-reviewer | gpt-6-sol / medium | read-only | Retained plan-only, complete-definition, and correction review plus speckit-analyze |
+| tdd-test-author | gpt-6-luna / high | workspace-write | Retained group test owner; behavioral tests, final-shape assessment, honest RED/final-GREEN |
+| tdd-implementer | gpt-6-sol / medium | workspace-write | Retained group production owner; minimal GREEN, final-shape assessment and conditional local refactor; no tests |
+| convergence-analyst | gpt-6-luna / high | workspace-write | speckit-converge; append-only tasks write |
+| quality-reviewer | gpt-6-sol / medium | read-only | Correctness, security, tests, architecture, regression on converged boundary |
+| e2e-runner | gpt-6-luna / high | workspace-write | Conditional E2E/API/integration tests; never production |
+| epic-architecture-auditor | gpt-6-sol / high | read-only | Independent pinned epic architecture classification |
 
 ## Escalation
 

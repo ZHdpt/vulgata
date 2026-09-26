@@ -31,7 +31,7 @@ Persistence and migration/data-lifecycle predicates remain Required unless a com
 
 ## Runner Boundary
 
-`e2e-runner` uses `gpt-5.6-luna` with high reasoning effort. It may add or update E2E, API, or integration test code and run the repository's existing test framework. It may not change production code, alter requirements, accept a failed product behavior, update lifecycle state, stage files, or commit.
+`e2e-runner` uses `gpt-6-luna` with high reasoning effort. It may add or update E2E, API, or integration test code and run the repository's existing test framework. It may not change production code, alter requirements, accept a failed product behavior, update lifecycle state, stage files, or commit.
 
 When the failure is in product behavior, the root routes raw evidence through regression TDD, reusing the appropriate task group's available/current test author and `tdd-implementer`. An unavailable owner is replaced from the accepted scope, current raw artifacts, prior findings, and RED/GREEN evidence. The affected review axes and E2E gate rerun. When the test itself is defective, only `e2e-runner` corrects it and reruns the gate. Ambiguous failures block rather than invite speculative production edits.
 

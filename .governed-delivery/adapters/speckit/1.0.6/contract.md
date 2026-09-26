@@ -7,7 +7,7 @@ This adapter owns version-specific feature activation, script selection, setup-o
 - PowerShell, Bash, and Python script installations are supported according to `.specify/init-options.json`.
 - An unreadable `extensions.yml` blocks the affected stage instead of being skipped.
 - `speckit-analyze` remains read-only. Its optional remediation question is suppressed; findings return to the delivery orchestrator's existing correction policy.
-- Governed delivery supplies the implementation provider; do not also invoke `speckit-implement`. Behavior-changing slices require accepted-task, RED, minimal-GREEN, and final-GREEN evidence. Test-only coverage requires accepted-task, passing-test, and coverage-reason evidence without fabricated RED. Documentation and non-executable metadata require accepted-task plus direct-verification evidence.
+- Governed delivery supplies the implementation provider; do not also invoke `speckit-implement`. Behavior-changing slices require accepted-task, RED, minimal-GREEN, and final-GREEN evidence. Test-only coverage requires accepted-task, passing-test, and coverage-reason evidence without fabricated RED. Nonbehavioral work requires accepted-task plus risk-appropriate direct-verification evidence; behavior-preserving refactors use before/after regression or characterization checks. Follow governed-tdd's verification routing rather than file type. The existing `non_executable_evidence` manifest key remains the direct-verification baseline, not a file-extension eligibility rule.
 
 SpecKit workflow slots and per-step integration configuration remain optional. The governed loop dispatches definition skills directly and does not add a second workflow engine.
 

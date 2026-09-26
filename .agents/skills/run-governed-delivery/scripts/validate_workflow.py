@@ -56,19 +56,19 @@ DESIGN_SECTIONS = {
 }
 
 ROLE_PROFILES = {
-    "delivery-orchestrator": ("gpt-5.6-sol", "medium", "workspace-write"),
-    "story-context-synthesizer": ("gpt-5.6-luna", "high", "read-only"),
-    "definition-author": ("gpt-5.6-sol", "medium", "workspace-write"),
+    "delivery-orchestrator": ("gpt-6-sol", "medium", "workspace-write"),
+    "story-context-synthesizer": ("gpt-6-luna", "high", "read-only"),
+    "definition-author": ("gpt-6-sol", "medium", "workspace-write"),
     "definition-author-recovery": ("gpt-6-astra", "medium", "workspace-write"),
     "definition-author-recovery-high": ("gpt-6-astra", "high", "workspace-write"),
-    "plan-architect-high": ("gpt-5.6-sol", "high", "workspace-write"),
-    "definition-reviewer": ("gpt-5.6-sol", "medium", "read-only"),
-    "tdd-test-author": ("gpt-5.6-luna", "high", "workspace-write"),
-    "tdd-implementer": ("gpt-5.6-sol", "medium", "workspace-write"),
-    "convergence-analyst": ("gpt-5.6-luna", "high", "workspace-write"),
-    "quality-reviewer": ("gpt-5.6-sol", "medium", "read-only"),
-    "e2e-runner": ("gpt-5.6-luna", "high", "workspace-write"),
-    "epic-architecture-auditor": ("gpt-5.6-sol", "high", "read-only"),
+    "plan-architect-high": ("gpt-6-sol", "high", "workspace-write"),
+    "definition-reviewer": ("gpt-6-sol", "medium", "read-only"),
+    "tdd-test-author": ("gpt-6-luna", "high", "workspace-write"),
+    "tdd-implementer": ("gpt-6-sol", "medium", "workspace-write"),
+    "convergence-analyst": ("gpt-6-luna", "high", "workspace-write"),
+    "quality-reviewer": ("gpt-6-sol", "medium", "read-only"),
+    "e2e-runner": ("gpt-6-luna", "high", "workspace-write"),
+    "epic-architecture-auditor": ("gpt-6-sol", "high", "read-only"),
 }
 OPTIONAL_ROLE_NAMES = {"epic-architecture-auditor"}
 RETIRED_ROLE_FILES = {"spec-author.toml", "plan-architect.toml", "task-author.toml"}
@@ -84,7 +84,7 @@ ROLE_INSTRUCTION_MARKERS = {
     "definition-author-recovery-high": ("spec|plan|tasks", "self-review", "exclusive", "never write production"),
     "definition-reviewer": ("speckit-analyze", "earliest_owner", "prior raw verdict", "never edit"),
     "tdd-test-author": ("expected red", "test code and test evidence only", "never edit production code"),
-    "tdd-implementer": ("red evidence", "minimal change", "do not write or weaken tests"),
+    "tdd-implementer": ("red evidence", "minimal change", "do not write or weaken tests", "verification routing"),
     "convergence-analyst": ("speckit-converge", "append-only", "never edit spec"),
     "quality-reviewer": ("converged immutable boundary", "skip style enforced by tooling", "cite documented standards"),
     "e2e-runner": ("test files and test evidence only", "never change production code"),

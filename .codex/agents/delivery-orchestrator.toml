@@ -1,6 +1,6 @@
 name = "delivery-orchestrator"
 description = "Control the configured story lifecycle, dispatch gated work, persist workflow state, and create sole-authority local commits."
-model = "gpt-5.6-sol"
+model = "gpt-6-sol"
 model_reasoning_effort = "medium"
 sandbox_mode = "workspace-write"
 developer_instructions = """

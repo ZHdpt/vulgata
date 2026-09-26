@@ -24,6 +24,8 @@ Characteristics:
 
 ## Bad Tests
 
+**Ceremony-only artifact checks**: A test that hashes a supplied vendor binary and compares it with today's bytes does not establish our integration works. Without an accepted exact-byte/integrity obligation, use relevant installation, startup, or integration verification instead. If integrity enforcement is a real product requirement, exercise our verifier with valid and corrupted controlled fixtures. An independent expected literal is necessary for some tests, but does not by itself make the test useful.
+
 **Implementation-detail tests**: Coupled to internal structure.
 
 ```typescript

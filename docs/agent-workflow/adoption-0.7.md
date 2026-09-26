@@ -1,11 +1,18 @@
 # Governed-delivery 0.7 adoption
 
-Updated: 2026-09-17. This is Vulgata's installation/resumption record, not product
+Updated: 2026-09-26. This is Vulgata's installation/resumption record, not product
 verification or authorization to start a story.
 
 ## Installed boundary
 
-- Distribution: **0.7.1**. The initial 0.7.0 installation on September 16 came from
+- Distribution: **0.7.2**. The September 26 update installs the validated local
+  source working tree based on `992cf3b96c08a3501e1d80115b7cf4f41a1a202c`;
+  the 0.7.2 source changes remain uncommitted; this consumer checkpoint records
+  the installed upgrade. Sol/Luna now use
+  GPT-6 with unchanged efforts and Astra recovery. Verification routing prevents
+  manufactured RED/tests and arbitrary third-party integrity requirements while
+  preserving required behavioral and authorized integrity verification.
+  The initial 0.7.0 installation on September 16 came from
   `e2ca94dcdd15832381b589bbcee76a4981bb490d`, with the source project read-only.
   The user separately authorized the September 17 compatibility patch and lifted
   that restriction for the fix. Only the installed validator changed at runtime,
@@ -64,6 +71,20 @@ The local Git safety hook was renamed, not removed; Copilot workflow parity is n
 claimed by preserving that hook or unrelated helpers.
 
 ## Verification and unresolved compatibility
+
+September 26 upgrade: all **225 distribution tests** and distribution/workflow,
+lockfile, whitespace and **four official skill checks** passed. PyYAML was installed
+only in a temporary validation environment with user authorization, resolving the
+previous validation blocker. No live-agent forward test or product build/test was
+performed; the existing accepted forward-testing risk remains.
+
+Installed dependency checks pass without warnings; Story 13.1 still passes its
+targeted historical completion validation. All **56 installed files** match source
+byte-for-byte, and all four installed skills pass the official validator. Aggregate validation has the identical
+**256 historical findings**, with no additions or removals. The upgrade preserves
+configuration, topology, upstream installations, product files, lifecycle and all
+14 workflow states. No migration or story activation occurred. Restart the workflow
+in a fresh session to load the updated profiles and instructions.
 
 Initial installation checks (September 16):
 

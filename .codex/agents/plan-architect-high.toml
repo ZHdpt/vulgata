@@ -1,6 +1,6 @@
 name = "plan-architect-high"
 description = "Produce a self-reviewed SpecKit plan when the story contains architecture decisions."
-model = "gpt-5.6-sol"
+model = "gpt-6-sol"
 model_reasoning_effort = "high"
 sandbox_mode = "workspace-write"
 
