@@ -31,6 +31,21 @@ boundaryApprovalDelegatedOn: 2026-09-11
 
 # Vulgata - Epic Breakdown
 
+## October release routing — adopted September 27, 2026
+
+The user approved adding October Epics 18–20 to the canonical sprint tracker while
+preserving Epics 13–17 and their existing statuses. The authoritative October
+requirements, shared rules and 17 story definitions remain in
+[October release epics](planning-artifacts/october-release-epics.md). Read that
+document for any 18.x, 19.x or 20.x story; the generic definitions below do not
+override its explicitly scoped October decisions.
+
+When refreshing sprint tracking, pass both this file and the October release epic
+file to `sprint_plan.py generate`; neither input alone represents the whole tracker.
+October stories are backlog. This routing does not activate a feature or authorize
+implementation; use `run-governed-delivery` and retain all formal story gates.
+The September 11 metadata and definitions below retain their original scope.
+
 ## Overview
 
 The user confirmed the requirement inventory and approved the five-epic design with C under the [September 11 planning correction](planning-artifacts/sprint-change-proposal-2026-09-11-generic-product-reconciliation.md). All four definition steps are complete: 41 stories across Epics 13–17 passed coverage, ownership, dependency and readiness checks. Stories 13.1–13.3 were explicitly approved; later boundaries were accepted under the user's confident-boundary delegation. The backlog is ready for governed story specification and technical planning, not direct implementation or runtime qualification. [Sprint tracking](implementation-artifacts/sprint-status.yaml) owns the active delivery queue; deliberate feature activation and later plan/approval/verification gates remain required.

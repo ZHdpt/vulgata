@@ -1,6 +1,6 @@
 # Project state for agent resumption
 
-Updated: 2026-09-17. Story 13.1 is complete in `specs/015-retained-source-access`.
+Updated: 2026-09-27. Story 13.1 is complete in `specs/015-retained-source-access`.
 Exact retained capture, scoped reads, publication/recovery, cleanup, trusted
 workspaces and separate-process reopening have bounded controlled evidence.
 Convergence 02 is clean; quality review 03 accepted with no findings; required
@@ -27,8 +27,13 @@ verification before reuse.
 - [Architecture gateway](../bmad/planning-artifacts/architecture.md) and its spine:
   adopted generic target and project responsibilities; not as-built qualification.
 - [Epics](../bmad/epics.md) define delivery; [sprint status](../bmad/implementation-artifacts/sprint-status.yaml)
-  owns lifecycle. Epics 13–17 contain 41 definitions (19/7/8/3/4). Story 13.1
-  is done; the remaining stories are backlog. Its bounded retained-source
+  owns lifecycle. Epics 13–17 contain 41 definitions (19/7/8/3/4). The user approved
+  adding October Epics 18–20 and their 17 definitions (12/3/2) to that tracker on
+  September 27; [October release epics](../bmad/planning-artifacts/october-release-epics.md)
+  owns their scoped requirements and definitions, routed from the canonical epic index.
+  Tracker refreshes require both epic files. Story 13.1 is done; all other stories,
+  including October, are backlog. No feature was activated by sprint planning.
+  Its bounded retained-source
   qualification does not prove the generic Scan workflow.
 - [Constitution](../../.specify/memory/constitution.md), root AGENTS and the current
   story workflow govern development. The constitution's 2.0.0 local amendment aligns
