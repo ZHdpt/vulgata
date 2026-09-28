@@ -1,78 +1,99 @@
 {
-  "schema_version": "3.1",
-  "bmad_story_key": "18-1-access-prepared-source-through-contained-read-only-tools",
-  "bmad_epic_key": "epic-18",
-  "feature_directory": "specs/016-contained-source-tools",
-  "stage": "implement",
-  "preflight": {
-    "branch": "(detached-native-handoff)",
-    "head": "0c0bf0cfb05edc5b28a346d8f3a63002d1e781ef",
-    "git_identity_sha256": "70fd67001872ef254ed52a93c4071cef6cb3751dd230e67e97213d3c2133be26",
-    "status_sha256": "811e45acb3329b898a1a92b4bc69e9a8b9fb70ef8e97a5beba0dacd2c4ca0a74",
-    "observed_at": "2026-09-28T03:33:29.3096814Z"
-  },
-  "artifacts": {
-    "spec": {
-      "path": "specs/016-contained-source-tools/spec.md",
-      "sha256": "48c92e4f6582471a1664e553b48756a811f22bb2b4f1334206e94303629b0b6d"
+  "approvals": [
+    {
+      "decided_at": "2026-09-28T04:25:28.9936733Z",
+      "decision_id": "18-1/plan-authorization/1",
+      "evidence_path": "specs/016-contained-source-tools/evidence/plan-authorization-01.json",
+      "scope_sha256": "2cc8a7aafd61c8fbd2e76dd4e9e58efef69d6e14c89ba0b23092eea87142d769",
+      "status": "accepted"
     },
+    {
+      "decided_at": "2026-09-28T05:03:16.4560797Z",
+      "decision_id": "18-1/implementation-approval/2",
+      "evidence_path": "specs/016-contained-source-tools/evidence/implementation-approval-02.json",
+      "scope_sha256": "47c617d0cfaecf2cfc18cb6b95fc25593aee8157647d2e201d69937f419f4ca8",
+      "status": "accepted"
+    }
+  ],
+  "artifacts": {
     "plan": {
       "path": "specs/016-contained-source-tools/plan.md",
       "sha256": "b375723e56c8cdc7990a4e7a624c5f58a78fde07d9a23edd79e25025c54fce08"
+    },
+    "spec": {
+      "path": "specs/016-contained-source-tools/spec.md",
+      "sha256": "48c92e4f6582471a1664e553b48756a811f22bb2b4f1334206e94303629b0b6d"
     },
     "tasks": {
       "path": "specs/016-contained-source-tools/tasks.md",
       "sha256": "b345d7322f8777d8fda77a153c48af954e7ed18a185cf648f8c309ef0d0a8a1b"
     }
   },
-  "gates": {
-    "plan-review": {"status": "accepted", "attempt": 4, "verdict_path": "specs/016-contained-source-tools/evidence/plan-review-result-09.json"},
-    "definition-review": {"status": "accepted", "attempt": 4, "verdict_path": "specs/016-contained-source-tools/evidence/definition-review-result-04.json"},
-    "quality-review": {"status": "pending", "attempt": 0, "verdict_path": null}
+  "bmad_epic_key": "epic-18",
+  "bmad_story_key": "18-1-access-prepared-source-through-contained-read-only-tools",
+  "checkpoint": {
+    "binding_status": "pending",
+    "checkpoint_id": "bmad-18-1-converged-20260928T095256Z-d3c8b1",
+    "commit_sha": null,
+    "stage": "lookback"
   },
-  "approvals": [
-    {
-      "decision_id": "18-1/plan-authorization/1",
-      "status": "accepted",
-      "scope_sha256": "2cc8a7aafd61c8fbd2e76dd4e9e58efef69d6e14c89ba0b23092eea87142d769",
-      "evidence_path": "specs/016-contained-source-tools/evidence/plan-authorization-01.json",
-      "decided_at": "2026-09-28T04:25:28.9936733Z"
-    },
-    {
-      "decision_id": "18-1/implementation-approval/2",
-      "status": "accepted",
-      "scope_sha256": "47c617d0cfaecf2cfc18cb6b95fc25593aee8157647d2e201d69937f419f4ca8",
-      "evidence_path": "specs/016-contained-source-tools/evidence/implementation-approval-02.json",
-      "decided_at": "2026-09-28T05:03:16.4560797Z"
-    }
-  ],
-  "convergence": {"status": "invalidated", "attempt": 0, "outcome": "pending", "report_path": null},
-  "e2e": {"result": "pending", "decision_path": null},
+  "convergence": {
+    "attempt": 1,
+    "outcome": "converged",
+    "report_path": "specs/016-contained-source-tools/evidence/convergence-result-02.json",
+    "status": "accepted"
+  },
   "current_evidence_paths": [
     "docs/bmad/implementation-artifacts/18-1-access-prepared-source-through-contained-read-only-tools.md",
-    "specs/016-contained-source-tools/evidence/spec-self-review-01.json",
-    "specs/016-contained-source-tools/evidence/plan-correction-self-review-result-02.json",
-    "specs/016-contained-source-tools/evidence/plan-review-result-07.json",
+    "specs/016-contained-source-tools/evidence/plan-review-result-09.json",
+    "specs/016-contained-source-tools/evidence/definition-review-result-04.json",
     "specs/016-contained-source-tools/evidence/plan-authorization-01.json",
-    "specs/016-contained-source-tools/evidence/tasks-correction-self-review-result-02.json",
-    "specs/016-contained-source-tools/evidence/definition-review-result-03.json",
-    "specs/016-contained-source-tools/evidence/workflow-transition-015-issuer-seam-plan-review-accept.json",
     "specs/016-contained-source-tools/evidence/implementation-approval-02.json",
     "specs/016-contained-source-tools/evidence/implementation-verification-01.json",
-    "specs/016-contained-source-tools/evidence/workflow-transition-001-activation.json"
+    "specs/016-contained-source-tools/evidence/convergence-result-02.json",
+    "specs/016-contained-source-tools/evidence/story-lookback-01.json",
+    "specs/016-contained-source-tools/evidence/workflow-transition-021-convergence-accept.json"
   ],
-  "checkpoint": {
-    "checkpoint_id": "bmad-18-1-implement-20260928T093850Z-7c91af",
-    "stage": "implement",
-    "commit_sha": null,
-    "binding_status": "pending"
+  "definition_author": {
+    "escalation_decision_id": null,
+    "profile": "definition-author"
   },
-  "resume": {
-    "stage": "converge",
-    "reason": "All 26 accepted tasks are complete with final prepared-source verification; selected retained-source regressions are explicitly blocked on their owned PostgreSQL administrator prerequisite.",
-    "evidence_path": "specs/016-contained-source-tools/evidence/implementation-verification-01.json"
+  "e2e": {
+    "decision_path": null,
+    "result": "pending"
   },
-  "updated_at": "2026-09-28T09:38:50.6460932Z",
+  "feature_directory": "specs/016-contained-source-tools",
+  "gates": {
+    "definition-review": {
+      "attempt": 4,
+      "status": "accepted",
+      "verdict_path": "specs/016-contained-source-tools/evidence/definition-review-result-04.json"
+    },
+    "plan-review": {
+      "attempt": 4,
+      "status": "accepted",
+      "verdict_path": "specs/016-contained-source-tools/evidence/plan-review-result-09.json"
+    },
+    "quality-review": {
+      "attempt": 0,
+      "status": "pending",
+      "verdict_path": null
+    }
+  },
+  "lookback": {
+    "evidence": {
+      "path": "specs/016-contained-source-tools/evidence/story-lookback-01.json",
+      "sha256": "bf4de3a284136d2a5c0df28f2e7bf5b21de2bdbfaabbc77f0a09a561b248858e"
+    },
+    "status": "current"
+  },
+  "preflight": {
+    "branch": "(detached-native-handoff)",
+    "git_identity_sha256": "70fd67001872ef254ed52a93c4071cef6cb3751dd230e67e97213d3c2133be26",
+    "head": "0c0bf0cfb05edc5b28a346d8f3a63002d1e781ef",
+    "observed_at": "2026-09-28T03:33:29.3096814Z",
+    "status_sha256": "811e45acb3329b898a1a92b4bc69e9a8b9fb70ef8e97a5beba0dacd2c4ca0a74"
+  },
   "recovery": {
     "action": "proceed",
     "closing_gate": "verify",
@@ -88,10 +109,16 @@
     },
     "pause_at": 4
   },
-  "definition_author": {"profile": "definition-author", "escalation_decision_id": null},
-  "transition_head": {
-    "path": "specs/016-contained-source-tools/evidence/workflow-transition-020-agent-seam-plan-review-accept.json",
-    "sha256": "16791565f2cf34759fae38f2a8dc79ecd8814ae05a912daf64112f46b47a923b"
+  "resume": {
+    "evidence_path": "specs/016-contained-source-tools/evidence/story-lookback-01.json",
+    "reason": "Convergence is clean and the root lookback is current; the candidate is pinned for independent quality review.",
+    "stage": "quality-review"
   },
-  "lookback": {"status": "invalidated", "evidence": null}
+  "schema_version": "3.1",
+  "stage": "quality-review",
+  "transition_head": {
+    "path": "specs/016-contained-source-tools/evidence/workflow-transition-021-convergence-accept.json",
+    "sha256": "499a3bbe750a87841e3b5871d74c4437ff6c9e6acc15f515b2e3a4cc4479117f"
+  },
+  "updated_at": "2026-09-28T09:52:56.8044262Z"
 }

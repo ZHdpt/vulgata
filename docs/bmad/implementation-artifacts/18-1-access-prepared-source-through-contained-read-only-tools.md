@@ -1,6 +1,6 @@
 # Story 18.1 development record
 
-Status: in-progress
+Status: review
 Feature directory: specs/016-contained-source-tools
 Workflow state: specs/016-contained-source-tools/workflow-state.json
 
@@ -70,3 +70,11 @@ T003-T015 then completed their governed slices through the contained Core/Infras
 T016-T025 completed the remaining Agent projection, authority-lifecycle, truthful-failure, cancellation and budget slices. The final prepared-source boundary passed 115 focused tests with zero skips on Microsoft Windows NT 10.0.26220.0 under the actual workspace user, including Windows handle-relative no-follow link and replacement-race cases. The Agent function subset passed 15 tests and the adjacent Agent regression subset passed 28 tests. The Web project built successfully with existing package-source and Entity Framework assembly-version warnings and no errors.
 
 T026 also attempted the selected retained Git-source regressions. All 63 selected cases were blocked before behavioral assertions because the owned PostgreSQL 17 administrator prerequisite `VULGATA_STORY131_POSTGRES_ADMIN` is not configured in this checkout. That run is recorded as an external-prerequisite blocker, not a passing or product-failing result. Static source inspection found no accidental Git, database, provider, CodeGraph, LSP, UI or CLI dependency in the six new production files, and `git diff --check` passed apart from Git's working-tree line-ending notices. Direct controlled tests qualify the prepared-source contract and Windows containment; they do not claim a real Worker/model/provider pipeline integration.
+
+## Story Lookback
+
+Story 18.1 converged without additional implementation tasks. Its contained list, range-read and literal-search boundary is covered through the accepted public issuer/context/function seams, including live authority loss, Windows no-follow containment, bounded disclosure, cancellation and resource settlement. The direct controlled evidence remains deliberately narrower than real Worker/model/provider integration.
+
+One reusable definition lesson was promoted to `docs/project-lessons.md`: before behavioral TDD begins, every planned public production seam that tests must call needs a concrete callable construction and invocation shape. This story discovered that omission twice—first at the trusted issuer and then at the Agent function factory—before test authors invented an API. No canonical PRD, architecture or glossary synchronization is required because both corrections clarified already-approved scope without changing product intent.
+
+The PostgreSQL-backed retained-source regression subset remains a nonblocking qualification prerequisite: `VULGATA_STORY131_POSTGRES_ADMIN` was absent, so those tests were neither passed nor treated as product failures. This limitation is retained in `specs/016-contained-source-tools/evidence/implementation-verification-01.json`; it does not weaken the 115 passing direct prepared-source tests or claim unchanged Git-bound behavior was requalified in this checkout.
