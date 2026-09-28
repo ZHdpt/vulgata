@@ -40,9 +40,9 @@
   "bmad_story_key": "18-1-access-prepared-source-through-contained-read-only-tools",
   "checkpoint": {
     "binding_status": "pending",
-    "checkpoint_id": "bmad-18-1-recovery-extension-20260928T110311Z-5ed174",
+    "checkpoint_id": "bmad-18-1-disposal-correction-20260928T112929Z-2f5e09",
     "commit_sha": null,
-    "stage": "quality-review"
+    "stage": "implement"
   },
   "convergence": {
     "attempt": 2,
@@ -56,8 +56,7 @@
     "specs/016-contained-source-tools/evidence/definition-review-result-04.json",
     "specs/016-contained-source-tools/evidence/plan-authorization-01.json",
     "specs/016-contained-source-tools/evidence/implementation-approval-02.json",
-    "specs/016-contained-source-tools/evidence/implementation-correction-01.json",
-    "specs/016-contained-source-tools/evidence/quality-correction-focused-result-01.json",
+    "specs/016-contained-source-tools/evidence/implementation-correction-02.json",
     "specs/016-contained-source-tools/evidence/quality-review-result-02.json",
     "specs/016-contained-source-tools/evidence/recovery-extension-01.json",
     "specs/016-contained-source-tools/evidence/quality-diagnosis-02.json",
@@ -125,8 +124,8 @@
     "pause_at": 6
   },
   "resume": {
-    "evidence_path": "specs/016-contained-source-tools/evidence/quality-diagnosis-02.json",
-    "reason": "The user approved a finite extension to six and the QR-18.1-03 disposal-race repair is diagnosed; resume behavioral TDD.",
+    "evidence_path": "specs/016-contained-source-tools/evidence/implementation-correction-02.json",
+    "reason": "QR-18.1-03 has qualified RED and final 119-test GREEN evidence; bind a current focused check, then reconverge.",
     "stage": "implement"
   },
   "schema_version": "3.1",
@@ -135,5 +134,5 @@
     "path": "specs/016-contained-source-tools/evidence/workflow-transition-028-extension-diagnosis.json",
     "sha256": "a22e2b45251da3bf196d2831d6fec1fb86b5362e2aff25e6eb55144dcd89ed6d"
   },
-  "updated_at": "2026-09-28T11:03:11.6077862Z"
+  "updated_at": "2026-09-28T11:29:29.2673677Z"
 }

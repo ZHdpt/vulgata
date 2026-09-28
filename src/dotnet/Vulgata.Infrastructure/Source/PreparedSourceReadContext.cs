@@ -82,9 +82,12 @@ internal sealed class PreparedSourceReadContext : IPreparedSourceReadContext
         }
 
         SafeFileHandle? openedDirectory = null;
+        using var gateCancellation = CancellationTokenSource.CreateLinkedTokenSource(
+            cancellationToken,
+            _disposalToken);
         try
         {
-            await _listGate.WaitAsync(cancellationToken);
+            await _listGate.WaitAsync(gateCancellation.Token);
         }
         catch (OperationCanceledException)
         {
@@ -93,6 +96,11 @@ internal sealed class PreparedSourceReadContext : IPreparedSourceReadContext
 
         try
         {
+            if (_disposalToken.IsCancellationRequested)
+            {
+                return Failure(operation, PreparedSourceOutcome.Cancelled);
+            }
+
             ListCursor? cursor = null;
             if (request.Continuation is not null &&
                 (!_listCursors.TryRemove(request.Continuation, out cursor) ||
@@ -107,6 +115,10 @@ internal sealed class PreparedSourceReadContext : IPreparedSourceReadContext
             if (!ReserveOperation())
             {
                 return Limited(operation, PreparedSourceStoppingLimit.GrantOperations);
+            }
+            if (_disposalToken.IsCancellationRequested)
+            {
+                return Failure(operation, PreparedSourceOutcome.Cancelled);
             }
             if (_remainingMetadataEntries == 0)
             {
@@ -150,6 +162,11 @@ internal sealed class PreparedSourceReadContext : IPreparedSourceReadContext
             _remainingMetadataEntries -= observed.Count;
             PreparedSourceTraversal.DirectoryIdentity? directoryAfter =
                 PreparedSourceTraversal.ObserveDirectory(directory);
+            if (_disposalToken.IsCancellationRequested)
+            {
+                return Failure(operation, PreparedSourceOutcome.Cancelled);
+            }
+
             if (directoryAfter is null || directoryAfter != directoryBefore ||
                 (cursor is not null && cursor.Directory != directoryBefore))
             {
@@ -258,6 +275,10 @@ internal sealed class PreparedSourceReadContext : IPreparedSourceReadContext
                 StoppingLimit = hasMore ? PreparedSourceStoppingLimit.PageSize : null,
             };
         }
+        catch (ObjectDisposedException) when (_disposalToken.IsCancellationRequested)
+        {
+            return Failure(operation, PreparedSourceOutcome.Cancelled);
+        }
         finally
         {
             openedDirectory?.Dispose();
@@ -293,10 +314,30 @@ internal sealed class PreparedSourceReadContext : IPreparedSourceReadContext
             return Limited(operation, PreparedSourceStoppingLimit.GrantOperations);
         }
 
-        (PreparedSourceTraversal.OpenStatus status, SafeFileHandle? file) =
-            PreparedSourceTraversal.OpenRelativeFile(_rootHandle, request.RelativePath);
+        if (_disposalToken.IsCancellationRequested)
+        {
+            return Failure(operation, PreparedSourceOutcome.Cancelled);
+        }
+
+        PreparedSourceTraversal.OpenStatus status;
+        SafeFileHandle? file;
+        try
+        {
+            (status, file) = PreparedSourceTraversal.OpenRelativeFile(
+                _rootHandle,
+                request.RelativePath);
+        }
+        catch (ObjectDisposedException) when (_disposalToken.IsCancellationRequested)
+        {
+            return Failure(operation, PreparedSourceOutcome.Cancelled);
+        }
         if (status != PreparedSourceTraversal.OpenStatus.Opened || file is null)
         {
+            if (_disposalToken.IsCancellationRequested)
+            {
+                return Failure(operation, PreparedSourceOutcome.Cancelled);
+            }
+
             return Failure(operation, status switch
             {
                 PreparedSourceTraversal.OpenStatus.Denied => PreparedSourceOutcome.Denied,
@@ -308,6 +349,11 @@ internal sealed class PreparedSourceReadContext : IPreparedSourceReadContext
 
         using (file)
         {
+            if (_disposalToken.IsCancellationRequested)
+            {
+                return Failure(operation, PreparedSourceOutcome.Cancelled);
+            }
+
             PreparedSourceTraversal.FileIdentity? fileBefore =
                 PreparedSourceTraversal.ObserveFile(file);
             if (fileBefore is null)
@@ -510,9 +556,12 @@ internal sealed class PreparedSourceReadContext : IPreparedSourceReadContext
             return Failure(operation, denied);
         }
 
+        using var gateCancellation = CancellationTokenSource.CreateLinkedTokenSource(
+            cancellationToken,
+            _disposalToken);
         try
         {
-            await _listGate.WaitAsync(cancellationToken);
+            await _listGate.WaitAsync(gateCancellation.Token);
         }
         catch (OperationCanceledException)
         {
@@ -521,6 +570,11 @@ internal sealed class PreparedSourceReadContext : IPreparedSourceReadContext
 
         try
         {
+            if (_disposalToken.IsCancellationRequested)
+            {
+                return Failure(operation, PreparedSourceOutcome.Cancelled);
+            }
+
             SearchCursor? cursor = null;
             if (request.Continuation is not null &&
                 (!_searchCursors.TryRemove(request.Continuation, out cursor) ||
@@ -536,8 +590,17 @@ internal sealed class PreparedSourceReadContext : IPreparedSourceReadContext
             {
                 return Limited(operation, PreparedSourceStoppingLimit.GrantOperations);
             }
+            if (_disposalToken.IsCancellationRequested)
+            {
+                return Failure(operation, PreparedSourceOutcome.Cancelled);
+            }
             var run = new SearchRun(request, literalBytes, cursor);
             await ScanDirectoryAsync(request.RelativeDirectory, run, cancellationToken);
+            if (_disposalToken.IsCancellationRequested)
+            {
+                return Failure(operation, PreparedSourceOutcome.Cancelled);
+            }
+
             if (run.FailureOutcome is { } failure)
             {
                 return run.FailureLocation is { } location
@@ -650,6 +713,10 @@ internal sealed class PreparedSourceReadContext : IPreparedSourceReadContext
                 Continuation = nextToken,
                 StoppingLimit = hasMore ? PreparedSourceStoppingLimit.PageSize : null,
             };
+        }
+        catch (ObjectDisposedException) when (_disposalToken.IsCancellationRequested)
+        {
+            return Failure(operation, PreparedSourceOutcome.Cancelled);
         }
         finally
         {

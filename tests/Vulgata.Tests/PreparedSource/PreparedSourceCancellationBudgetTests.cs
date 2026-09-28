@@ -187,6 +187,121 @@ public sealed class PreparedSourceCancellationBudgetTests
     }
 
     [Fact]
+    public async Task ListAsync_QueuedBeforeContextDisposal_ReturnsCancelledWithoutSourceFailure()
+    {
+        RequireWindowsHost();
+        await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
+        var authority = new GatePreparedSourceAuthority(fixture.Approval, pauseAtVerification: 3);
+        IPreparedSourceReadContext context = await IssueContextAsync(fixture, authority);
+        Task<PreparedSourceResult> active = context.ListAsync(
+            new PreparedSourceListRequest("", PageSize: 100));
+        Task<PreparedSourceResult>? queued = null;
+        bool contextDisposed = false;
+
+        try
+        {
+            await authority.PausedVerificationEntered.WaitAsync(TimeSpan.FromSeconds(5));
+
+            // The second verifier check returns synchronously, while the first
+            // call still owns the list gate. Its incomplete public task therefore
+            // proves it has passed authorization and queued on that operation gate.
+            queued = context.ListAsync(new PreparedSourceListRequest("", PageSize: 100));
+            Assert.False(queued.IsCompleted, "The second list call should be waiting behind the active list call.");
+
+            await context.DisposeAsync();
+            contextDisposed = true;
+        }
+        finally
+        {
+            authority.ReleasePausedVerification();
+            if (!contextDisposed)
+            {
+                await context.DisposeAsync();
+            }
+
+            await active.WaitAsync(TimeSpan.FromSeconds(5));
+            if (queued is not null)
+            {
+                await queued.WaitAsync(TimeSpan.FromSeconds(5));
+            }
+        }
+
+        PreparedSourceResult activeResult = await active;
+        PreparedSourceResult queuedResult = await queued!;
+
+        Assert.Equal(PreparedSourceOutcome.Cancelled, activeResult.Outcome);
+        Assert.Empty(activeResult.Entries);
+        Assert.Empty(activeResult.Limitations);
+        Assert.Null(activeResult.Continuation);
+        Assert.Equal(PreparedSourceOutcome.Cancelled, queuedResult.Outcome);
+        Assert.Empty(queuedResult.Entries);
+        Assert.Empty(queuedResult.Limitations);
+        Assert.Null(queuedResult.Continuation);
+        Assert.Null(queuedResult.StoppingLimit);
+        Assert.Equal(PreparedSourceContextLifetime.Disposed, context.Lifetime);
+    }
+
+    [Fact]
+    public async Task SearchTextAsync_QueuedBeforeContextDisposal_ReturnsCancelledWithoutSourceFailure()
+    {
+        RequireWindowsHost();
+        await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
+        const string relativeDirectory = "queued-search";
+        string searchRoot = Path.Combine(fixture.PreparedRootPath, relativeDirectory);
+        Directory.CreateDirectory(searchRoot);
+        await File.WriteAllTextAsync(Path.Combine(searchRoot, "match.oddx"), "needle");
+
+        var authority = new GatePreparedSourceAuthority(fixture.Approval, pauseAtVerification: 3);
+        IPreparedSourceReadContext context = await IssueContextAsync(fixture, authority);
+        Task<PreparedSourceResult> active = context.SearchTextAsync(
+            new PreparedSourceSearchTextRequest(relativeDirectory, "needle", PageSize: 64));
+        Task<PreparedSourceResult>? queued = null;
+        bool contextDisposed = false;
+
+        try
+        {
+            await authority.PausedVerificationEntered.WaitAsync(TimeSpan.FromSeconds(5));
+
+            // The active search has reached its first file chunk while holding
+            // the shared operation gate. An incomplete second task proves the
+            // queued request has passed authorization but cannot yet scan.
+            queued = context.SearchTextAsync(
+                new PreparedSourceSearchTextRequest(relativeDirectory, "needle", PageSize: 64));
+            Assert.False(queued.IsCompleted, "The second search call should wait behind the active search call.");
+
+            await context.DisposeAsync();
+            contextDisposed = true;
+        }
+        finally
+        {
+            authority.ReleasePausedVerification();
+            if (!contextDisposed)
+            {
+                await context.DisposeAsync();
+            }
+
+            await active.WaitAsync(TimeSpan.FromSeconds(5));
+            if (queued is not null)
+            {
+                await queued.WaitAsync(TimeSpan.FromSeconds(5));
+            }
+        }
+
+        PreparedSourceResult activeResult = await active;
+        PreparedSourceResult queuedResult = await queued!;
+
+        Assert.Equal(PreparedSourceOutcome.Cancelled, activeResult.Outcome);
+        Assert.Empty(activeResult.Matches);
+        Assert.Null(activeResult.Continuation);
+        Assert.Equal(PreparedSourceOutcome.Cancelled, queuedResult.Outcome);
+        Assert.Empty(queuedResult.Matches);
+        Assert.Null(queuedResult.Continuation);
+        Assert.Empty(queuedResult.Limitations);
+        Assert.Null(queuedResult.StoppingLimit);
+        Assert.Equal(PreparedSourceContextLifetime.Disposed, context.Lifetime);
+    }
+
+    [Fact]
     public async Task ConcurrentReadCalls_ReserveOperationAndReturnedByteBudgetsAtomically()
     {
         RequireWindowsHost();
