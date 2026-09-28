@@ -1,6 +1,6 @@
 # Story 18.1 development record
 
-Status: review
+Status: in-progress
 Feature directory: specs/016-contained-source-tools
 Workflow state: specs/016-contained-source-tools/workflow-state.json
 
@@ -74,6 +74,8 @@ T026 also attempted the selected retained Git-source regressions. All 63 selecte
 Quality-review-01 returned REVISE with two implementation-owned behavioral defects. The candidate incorrectly rejected every non-root list request, and range reads compared only length rather than the already-planned observed file identity/metadata. The causal assumption was that root-only listing plus recursive search satisfied discovery and that equal length was sufficient stability evidence; both contradict the accepted list contract and changed-input invariant. The bounded repair adds public-seam regression RED for nested-directory listing and same-length in-flight rewrite, then changes only the existing handle-relative list/read implementation before rerunning focused and full prepared-source tests, convergence, lookback and quality review.
 
 The retained test owner observed both intended REDs: nested listing returned `Incomplete` instead of `Complete`, and an equal-length in-flight rewrite returned `Complete` instead of `ChangedInput`. The retained implementer changed only `PreparedSourceReadContext`: nested listing now opens and disposes the requested child directory through existing held-root no-follow traversal, prefixes Repository-relative child locations and re-observes the directory before disclosure; range reads now compare the existing file identity/metadata observation before, after and immediately before disclosure. Final test-owner verification on a freshly rebuilt qualified Windows assembly passed the two regressions 2/2, their surrounding List/Failure classes 15/15 and the complete prepared-source suite 117/117 with no skips. This remains live-source detection at bounded observation points, not an immutable snapshot guarantee.
+
+Quality-review-02 confirmed both earlier findings resolved, then identified a separate lifecycle race: operations can pass their initial authority/disposal check, queue or approach a file open, and resume after `DisposeAsync` has cancelled activity and closed the root. Those operations may return a source failure instead of the accepted sanitized `Cancelled` outcome. This is the fourth failed result in recovery episode `18-1/implementation/1`; workflow is paused before repair and requires an accepted finite extension. The proposed bounded approach is regression RED for queued and approval-to-open disposal, then reuse the context lifetime cancellation token and post-wait/post-approval disposal checks without changing the public contract or architecture.
 
 ## Story Lookback
 
