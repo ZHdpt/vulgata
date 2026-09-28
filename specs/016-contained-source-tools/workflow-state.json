@@ -33,15 +33,15 @@
   "bmad_story_key": "18-1-access-prepared-source-through-contained-read-only-tools",
   "checkpoint": {
     "binding_status": "pending",
-    "checkpoint_id": "bmad-18-1-converged-20260928T095256Z-d3c8b1",
+    "checkpoint_id": "bmad-18-1-quality-correction-20260928T101721Z-f4912c",
     "commit_sha": null,
-    "stage": "lookback"
+    "stage": "implement"
   },
   "convergence": {
     "attempt": 1,
-    "outcome": "converged",
+    "outcome": "pending",
     "report_path": "specs/016-contained-source-tools/evidence/convergence-result-02.json",
-    "status": "accepted"
+    "status": "invalidated"
   },
   "current_evidence_paths": [
     "docs/bmad/implementation-artifacts/18-1-access-prepared-source-through-contained-read-only-tools.md",
@@ -50,9 +50,10 @@
     "specs/016-contained-source-tools/evidence/plan-authorization-01.json",
     "specs/016-contained-source-tools/evidence/implementation-approval-02.json",
     "specs/016-contained-source-tools/evidence/implementation-verification-01.json",
-    "specs/016-contained-source-tools/evidence/convergence-result-02.json",
-    "specs/016-contained-source-tools/evidence/story-lookback-01.json",
-    "specs/016-contained-source-tools/evidence/workflow-transition-021-convergence-accept.json"
+    "specs/016-contained-source-tools/evidence/quality-review-result-01.json",
+    "specs/016-contained-source-tools/evidence/quality-diagnosis-01.json",
+    "specs/016-contained-source-tools/evidence/workflow-transition-023-quality-diagnosis.json",
+    "specs/016-contained-source-tools/evidence/implementation-correction-01.json"
   ],
   "definition_author": {
     "escalation_decision_id": null,
@@ -75,9 +76,9 @@
       "verdict_path": "specs/016-contained-source-tools/evidence/plan-review-result-09.json"
     },
     "quality-review": {
-      "attempt": 0,
-      "status": "pending",
-      "verdict_path": null
+      "attempt": 1,
+      "status": "invalidated",
+      "verdict_path": "specs/016-contained-source-tools/evidence/quality-review-result-01.json"
     }
   },
   "lookback": {
@@ -85,7 +86,7 @@
       "path": "specs/016-contained-source-tools/evidence/story-lookback-01.json",
       "sha256": "bf4de3a284136d2a5c0df28f2e7bf5b21de2bdbfaabbc77f0a09a561b248858e"
     },
-    "status": "current"
+    "status": "invalidated"
   },
   "preflight": {
     "branch": "(detached-native-handoff)",
@@ -95,30 +96,36 @@
     "status_sha256": "811e45acb3329b898a1a92b4bc69e9a8b9fb70ef8e97a5beba0dacd2c4ca0a74"
   },
   "recovery": {
-    "action": "proceed",
+    "action": "correct",
     "closing_gate": "verify",
-    "diagnosis": null,
-    "earliest_owner": "tasks",
+    "diagnosis": {
+      "at_count": 3,
+      "evidence": {
+        "path": "specs/016-contained-source-tools/evidence/quality-diagnosis-01.json",
+        "sha256": "50b460f5c06484eb89349fa69e9150b9effa172d71f352b8ee196e11f987a73a"
+      }
+    },
+    "earliest_owner": "implement",
     "episode_id": "18-1/implementation/1",
     "extension_decision_id": null,
-    "failed_results": 2,
+    "failed_results": 3,
     "holds": [],
     "last_result": {
-      "path": "specs/016-contained-source-tools/evidence/plan-review-result-08.json",
-      "sha256": "364f8dfbc6ceeead59ee1c5a4062738393f128154d089e20d867e98bf447eadb"
+      "path": "specs/016-contained-source-tools/evidence/quality-review-result-01.json",
+      "sha256": "4d89833934650fe3e50f20669a4d2f9fa97ce4e20dcf75905c023715664fed7a"
     },
     "pause_at": 4
   },
   "resume": {
-    "evidence_path": "specs/016-contained-source-tools/evidence/story-lookback-01.json",
-    "reason": "Convergence is clean and the root lookback is current; the candidate is pinned for independent quality review.",
-    "stage": "quality-review"
+    "evidence_path": "specs/016-contained-source-tools/evidence/implementation-correction-01.json",
+    "reason": "Both diagnosed quality findings have honest RED and final 117-test GREEN evidence; rerun convergence on the corrected boundary.",
+    "stage": "converge"
   },
   "schema_version": "3.1",
-  "stage": "quality-review",
+  "stage": "implement",
   "transition_head": {
-    "path": "specs/016-contained-source-tools/evidence/workflow-transition-021-convergence-accept.json",
-    "sha256": "499a3bbe750a87841e3b5871d74c4437ff6c9e6acc15f515b2e3a4cc4479117f"
+    "path": "specs/016-contained-source-tools/evidence/workflow-transition-023-quality-diagnosis.json",
+    "sha256": "c7b7fb27673c0b4d5d82123297dd00e4b44ac6be12e7707647b9e3fd370f8b15"
   },
-  "updated_at": "2026-09-28T09:52:56.8044262Z"
+  "updated_at": "2026-09-28T10:17:21.3216611Z"
 }

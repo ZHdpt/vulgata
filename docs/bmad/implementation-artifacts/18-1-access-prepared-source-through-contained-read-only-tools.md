@@ -1,6 +1,6 @@
 # Story 18.1 development record
 
-Status: review
+Status: in-progress
 Feature directory: specs/016-contained-source-tools
 Workflow state: specs/016-contained-source-tools/workflow-state.json
 
@@ -70,6 +70,10 @@ T003-T015 then completed their governed slices through the contained Core/Infras
 T016-T025 completed the remaining Agent projection, authority-lifecycle, truthful-failure, cancellation and budget slices. The final prepared-source boundary passed 115 focused tests with zero skips on Microsoft Windows NT 10.0.26220.0 under the actual workspace user, including Windows handle-relative no-follow link and replacement-race cases. The Agent function subset passed 15 tests and the adjacent Agent regression subset passed 28 tests. The Web project built successfully with existing package-source and Entity Framework assembly-version warnings and no errors.
 
 T026 also attempted the selected retained Git-source regressions. All 63 selected cases were blocked before behavioral assertions because the owned PostgreSQL 17 administrator prerequisite `VULGATA_STORY131_POSTGRES_ADMIN` is not configured in this checkout. That run is recorded as an external-prerequisite blocker, not a passing or product-failing result. Static source inspection found no accidental Git, database, provider, CodeGraph, LSP, UI or CLI dependency in the six new production files, and `git diff --check` passed apart from Git's working-tree line-ending notices. Direct controlled tests qualify the prepared-source contract and Windows containment; they do not claim a real Worker/model/provider pipeline integration.
+
+Quality-review-01 returned REVISE with two implementation-owned behavioral defects. The candidate incorrectly rejected every non-root list request, and range reads compared only length rather than the already-planned observed file identity/metadata. The causal assumption was that root-only listing plus recursive search satisfied discovery and that equal length was sufficient stability evidence; both contradict the accepted list contract and changed-input invariant. The bounded repair adds public-seam regression RED for nested-directory listing and same-length in-flight rewrite, then changes only the existing handle-relative list/read implementation before rerunning focused and full prepared-source tests, convergence, lookback and quality review.
+
+The retained test owner observed both intended REDs: nested listing returned `Incomplete` instead of `Complete`, and an equal-length in-flight rewrite returned `Complete` instead of `ChangedInput`. The retained implementer changed only `PreparedSourceReadContext`: nested listing now opens and disposes the requested child directory through existing held-root no-follow traversal, prefixes Repository-relative child locations and re-observes the directory before disclosure; range reads now compare the existing file identity/metadata observation before, after and immediately before disclosure. Final test-owner verification on a freshly rebuilt qualified Windows assembly passed the two regressions 2/2, their surrounding List/Failure classes 15/15 and the complete prepared-source suite 117/117 with no skips. This remains live-source detection at bounded observation points, not an immutable snapshot guarantee.
 
 ## Story Lookback
 

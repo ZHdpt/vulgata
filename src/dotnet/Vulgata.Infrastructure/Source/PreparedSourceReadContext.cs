@@ -81,6 +81,7 @@ internal sealed class PreparedSourceReadContext : IPreparedSourceReadContext
             return Failure(operation, denied);
         }
 
+        SafeFileHandle? openedDirectory = null;
         try
         {
             await _listGate.WaitAsync(cancellationToken);
@@ -107,18 +108,35 @@ internal sealed class PreparedSourceReadContext : IPreparedSourceReadContext
             {
                 return Limited(operation, PreparedSourceStoppingLimit.GrantOperations);
             }
-            if (request.RelativeDirectory.Length != 0)
-            {
-                return Failure(operation, PreparedSourceOutcome.Incomplete);
-            }
-
             if (_remainingMetadataEntries == 0)
             {
                 return Limited(operation, PreparedSourceStoppingLimit.GrantMetadataEntries);
             }
 
+            SafeFileHandle directory = _rootHandle;
+            if (request.RelativeDirectory.Length != 0)
+            {
+                (PreparedSourceTraversal.OpenStatus openStatus, openedDirectory) =
+                    PreparedSourceTraversal.OpenRelativeDirectory(
+                        _rootHandle,
+                        request.RelativeDirectory);
+                if (openStatus != PreparedSourceTraversal.OpenStatus.Opened ||
+                    openedDirectory is null)
+                {
+                    return Failure(operation, openStatus switch
+                    {
+                        PreparedSourceTraversal.OpenStatus.Denied => PreparedSourceOutcome.Denied,
+                        PreparedSourceTraversal.OpenStatus.Missing => PreparedSourceOutcome.Missing,
+                        PreparedSourceTraversal.OpenStatus.Unreadable => PreparedSourceOutcome.Unreadable,
+                        _ => PreparedSourceOutcome.Incomplete,
+                    });
+                }
+
+                directory = openedDirectory;
+            }
+
             PreparedSourceTraversal.DirectoryIdentity? directoryBefore =
-                PreparedSourceTraversal.ObserveDirectory(_rootHandle);
+                PreparedSourceTraversal.ObserveDirectory(directory);
             if (directoryBefore is null)
             {
                 return Failure(operation, PreparedSourceOutcome.Incomplete);
@@ -127,11 +145,11 @@ internal sealed class PreparedSourceReadContext : IPreparedSourceReadContext
             (PreparedSourceTraversal.OpenStatus status,
                 IReadOnlyList<PreparedSourceTraversal.ListedEntry> observed,
                 bool complete) = PreparedSourceTraversal.ListImmediate(
-                    _rootHandle,
+                    directory,
                     _remainingMetadataEntries);
             _remainingMetadataEntries -= observed.Count;
             PreparedSourceTraversal.DirectoryIdentity? directoryAfter =
-                PreparedSourceTraversal.ObserveDirectory(_rootHandle);
+                PreparedSourceTraversal.ObserveDirectory(directory);
             if (directoryAfter is null || directoryAfter != directoryBefore ||
                 (cursor is not null && cursor.Directory != directoryBefore))
             {
@@ -182,7 +200,11 @@ internal sealed class PreparedSourceReadContext : IPreparedSourceReadContext
                         ? PreparedSourceEntryKind.Directory
                         : PreparedSourceEntryKind.RegularFile;
                 var listed = new PreparedSourceEntry(
-                    new PreparedSourceLocation(RepositoryId, entry.Name),
+                    new PreparedSourceLocation(
+                        RepositoryId,
+                        request.RelativeDirectory.Length == 0
+                            ? entry.Name
+                            : request.RelativeDirectory + "/" + entry.Name),
                     kind,
                     kind == PreparedSourceEntryKind.RegularFile ? entry.ByteLength : null);
                 entries.Add(listed);
@@ -198,6 +220,11 @@ internal sealed class PreparedSourceReadContext : IPreparedSourceReadContext
             if (authorization is { } stopped)
             {
                 return Failure(operation, stopped);
+            }
+
+            if (PreparedSourceTraversal.ObserveDirectory(directory) != directoryAfter)
+            {
+                return Failure(operation, PreparedSourceOutcome.ChangedInput);
             }
 
             string? nextToken = null;
@@ -233,6 +260,7 @@ internal sealed class PreparedSourceReadContext : IPreparedSourceReadContext
         }
         finally
         {
+            openedDirectory?.Dispose();
             _listGate.Release();
         }
     }
@@ -280,6 +308,13 @@ internal sealed class PreparedSourceReadContext : IPreparedSourceReadContext
 
         using (file)
         {
+            PreparedSourceTraversal.FileIdentity? fileBefore =
+                PreparedSourceTraversal.ObserveFile(file);
+            if (fileBefore is null)
+            {
+                return Failure(operation, PreparedSourceOutcome.ChangedInput);
+            }
+
             long fileLength;
             try
             {
@@ -303,6 +338,8 @@ internal sealed class PreparedSourceReadContext : IPreparedSourceReadContext
                 authorization = await CheckAuthorityAsync(cancellationToken);
                 return authorization is { } stoppedAtEof
                     ? Failure(operation, stoppedAtEof)
+                    : PreparedSourceTraversal.ObserveFile(file) != fileBefore
+                        ? Failure(operation, PreparedSourceOutcome.ChangedInput)
                     : new PreparedSourceResult
                     {
                         RepositoryId = RepositoryId,
@@ -405,7 +442,8 @@ internal sealed class PreparedSourceReadContext : IPreparedSourceReadContext
 
             try
             {
-                if (RandomAccess.GetLength(file) != fileLength)
+                if (RandomAccess.GetLength(file) != fileLength ||
+                    PreparedSourceTraversal.ObserveFile(file) != fileBefore)
                 {
                     RefundReturned(count);
                     return Failure(operation, PreparedSourceOutcome.ChangedInput);
@@ -422,6 +460,12 @@ internal sealed class PreparedSourceReadContext : IPreparedSourceReadContext
             {
                 RefundReturned(count);
                 return Failure(operation, stopped);
+            }
+
+            if (PreparedSourceTraversal.ObserveFile(file) != fileBefore)
+            {
+                RefundReturned(count);
+                return Failure(operation, PreparedSourceOutcome.ChangedInput);
             }
 
             bool limited = stoppingLimit is not null &&

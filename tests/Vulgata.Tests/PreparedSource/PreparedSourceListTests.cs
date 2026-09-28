@@ -99,6 +99,51 @@ public sealed class PreparedSourceListTests
     }
 
     [Fact]
+    public async Task ListAsync_NestedDirectory_ReturnsImmediateChildrenWithRepositoryRelativeLocations()
+    {
+        RequireWindowsHost();
+        await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
+        string nestedDirectory = Path.Combine(fixture.PreparedRootPath, "nested");
+        string childDirectory = Path.Combine(nestedDirectory, "child-dir");
+        Directory.CreateDirectory(childDirectory);
+        await File.WriteAllTextAsync(Path.Combine(nestedDirectory, "a.oddx"), "direct child");
+        await File.WriteAllTextAsync(Path.Combine(childDirectory, "deeper.oddx"), "not an immediate child");
+        await File.WriteAllTextAsync(Path.Combine(nestedDirectory, "z.datax"), "another direct child");
+        await using IPreparedSourceReadContext context = await IssueContextAsync(fixture);
+
+        PreparedSourceResult result = await context.ListAsync(
+            new PreparedSourceListRequest("nested", PageSize: 100));
+
+        Assert.Equal(PreparedSourceOutcome.Complete, result.Outcome);
+        Assert.Equal(PreparedSourceOperation.List, result.Operation);
+        Assert.Equal(fixture.Approval.RepositoryId, result.RepositoryId);
+        Assert.Collection(
+            result.Entries,
+            entry =>
+            {
+                Assert.Equal("nested/a.oddx", entry.Location.RelativePath);
+                Assert.Equal(fixture.Approval.RepositoryId, entry.Location.RepositoryId);
+                Assert.Equal(PreparedSourceEntryKind.RegularFile, entry.Kind);
+            },
+            entry =>
+            {
+                Assert.Equal("nested/child-dir", entry.Location.RelativePath);
+                Assert.Equal(fixture.Approval.RepositoryId, entry.Location.RepositoryId);
+                Assert.Equal(PreparedSourceEntryKind.Directory, entry.Kind);
+            },
+            entry =>
+            {
+                Assert.Equal("nested/z.datax", entry.Location.RelativePath);
+                Assert.Equal(fixture.Approval.RepositoryId, entry.Location.RepositoryId);
+                Assert.Equal(PreparedSourceEntryKind.RegularFile, entry.Kind);
+            });
+        Assert.DoesNotContain(result.Entries, entry => entry.Location.RelativePath == "nested/child-dir/deeper.oddx");
+        Assert.Empty(result.Limitations);
+        Assert.Null(result.Continuation);
+        Assert.Null(result.StoppingLimit);
+    }
+
+    [Fact]
     public async Task ListAsync_EmptyRoot_ReturnsCompleteEmpty()
     {
         RequireWindowsHost();

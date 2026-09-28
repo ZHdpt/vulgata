@@ -1,0 +1,23 @@
+{
+  "kind": "analysis",
+  "stage": "quality-review",
+  "evidence_id": "18-1/implementation/1/diagnosis/1",
+  "observed_at": "2026-09-28T10:06:00Z",
+  "summary": "Quality review disproved two implementation assumptions: root-only listing does not satisfy caller-directed nested discovery, and a stable file length does not satisfy the accepted observed identity/metadata drift invariant. The next repair adds public-seam regression RED for nested-directory listing and equal-length in-flight range-read mutation, then changes only the existing handle-relative list/read implementation. Verification requires focused RED, minimal GREEN, the complete prepared-source suite, clean convergence, refreshed lookback and fresh quality review.",
+  "failed_obligations": [
+    "list_prepared_source must enumerate immediate children of any authorized requested directory",
+    "ReadTextRange must return ChangedInput without text when observed file identity or metadata drifts"
+  ],
+  "affected_assumptions": [
+    "Root-only listing plus recursive search was sufficient for caller-directed discovery.",
+    "Equal file length before and after a range read was sufficient stability evidence."
+  ],
+  "earliest_owner": "implement",
+  "test_owner": "tests",
+  "changed_approach": "Reuse the accepted held-root no-follow traversal and ObserveFile mechanisms instead of adding a new seam or capability.",
+  "next_check": "Regression RED for both findings, focused GREEN, all PreparedSource tests, convergence, refreshed lookback and fresh quality review.",
+  "failed_result": {
+    "path": "specs/016-contained-source-tools/evidence/quality-review-result-01.json",
+    "sha256": "4d89833934650fe3e50f20669a4d2f9fa97ce4e20dcf75905c023715664fed7a"
+  }
+}
