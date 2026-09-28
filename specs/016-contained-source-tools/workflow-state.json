@@ -55,22 +55,22 @@
     "specs/016-contained-source-tools/evidence/plan-review-result-09.json",
     "specs/016-contained-source-tools/evidence/definition-review-result-04.json",
     "specs/016-contained-source-tools/evidence/implementation-approval-02.json",
-    "specs/016-contained-source-tools/evidence/implementation-correction-02.json",
-    "specs/016-contained-source-tools/evidence/quality-review-result-02.json",
     "specs/016-contained-source-tools/evidence/recovery-extension-01.json",
     "specs/016-contained-source-tools/evidence/quality-diagnosis-02.json",
-    "specs/016-contained-source-tools/evidence/disposal-correction-focused-result-01.json",
     "specs/016-contained-source-tools/evidence/convergence-result-04.json",
     "specs/016-contained-source-tools/evidence/story-lookback-03.json",
-    "specs/016-contained-source-tools/evidence/workflow-transition-030-disposal-convergence-accept.json"
+    "specs/016-contained-source-tools/evidence/quality-review-result-03.json",
+    "specs/016-contained-source-tools/evidence/e2e-result-01.json",
+    "specs/016-contained-source-tools/evidence/verify-full-test-blocker-01.json",
+    "specs/016-contained-source-tools/evidence/workflow-transition-033-verify-blocked.json"
   ],
   "definition_author": {
     "escalation_decision_id": null,
     "profile": "definition-author"
   },
   "e2e": {
-    "decision_path": null,
-    "result": "pending"
+    "decision_path": "specs/016-contained-source-tools/evidence/e2e-result-01.json",
+    "result": "skipped-covered"
   },
   "feature_directory": "specs/016-contained-source-tools",
   "gates": {
@@ -85,9 +85,9 @@
       "verdict_path": "specs/016-contained-source-tools/evidence/plan-review-result-09.json"
     },
     "quality-review": {
-      "attempt": 2,
-      "status": "revised",
-      "verdict_path": "specs/016-contained-source-tools/evidence/quality-review-result-02.json"
+      "attempt": 3,
+      "status": "accepted",
+      "verdict_path": "specs/016-contained-source-tools/evidence/quality-review-result-03.json"
     }
   },
   "lookback": {
@@ -105,7 +105,7 @@
     "status_sha256": "811e45acb3329b898a1a92b4bc69e9a8b9fb70ef8e97a5beba0dacd2c4ca0a74"
   },
   "recovery": {
-    "action": "proceed",
+    "action": "blocked",
     "closing_gate": "verify",
     "diagnosis": {
       "at_count": 4,
@@ -118,7 +118,9 @@
     "episode_id": "18-1/implementation/1",
     "extension_decision_id": "18-1/implementation/1/extension/1",
     "failed_results": 4,
-    "holds": [],
+    "holds": [
+      "blocked"
+    ],
     "last_result": {
       "path": "specs/016-contained-source-tools/evidence/quality-review-result-02.json",
       "sha256": "5d6e74e6dd4260a9dbd77c7b6ee7c164b084a5133c9ea94c6deb9a85203ee4ee"
@@ -126,15 +128,15 @@
     "pause_at": 6
   },
   "resume": {
-    "evidence_path": "specs/016-contained-source-tools/evidence/story-lookback-03.json",
-    "reason": "The disposal correction reconverged and lookback-03 is current; run fresh independent quality review.",
-    "stage": "quality-review"
+    "evidence_path": "specs/016-contained-source-tools/evidence/verify-full-test-blocker-01.json",
+    "reason": "Configured final verification is blocked until owned PostgreSQL 17 test connections and an owned different-drive Windows fixture path are available.",
+    "stage": "verify"
   },
   "schema_version": "3.1",
-  "stage": "quality-review",
+  "stage": "verify",
   "transition_head": {
-    "path": "specs/016-contained-source-tools/evidence/workflow-transition-030-disposal-convergence-accept.json",
-    "sha256": "e195b9b39f3dca1a6ff04134ead98af441aca1c4def7c610ef203a1ff73219e0"
+    "path": "specs/016-contained-source-tools/evidence/workflow-transition-033-verify-blocked.json",
+    "sha256": "7bd885df0fdec8667161b30cd69c4774d90d07c4eda40cf8b25d2d09af9d46f6"
   },
-  "updated_at": "2026-09-28T11:39:48.4371352Z"
+  "updated_at": "2026-09-28T12:04:50.8410777Z"
 }

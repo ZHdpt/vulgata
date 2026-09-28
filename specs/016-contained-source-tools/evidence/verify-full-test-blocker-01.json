@@ -1,0 +1,44 @@
+{
+  "kind": "analysis",
+  "stage": "verify",
+  "outcome": "blocked",
+  "source_commit": "305552699989efde75aeaf886e7ea0562fb2a459",
+  "observed_at": "2026-09-28T12:04:50.8410777Z",
+  "build": {
+    "command": "dotnet build src/dotnet/Vulgata.Web/Vulgata.Web.csproj",
+    "exit_code": 0,
+    "errors": 0,
+    "warnings": 3297,
+    "elapsed": "00:00:27.96"
+  },
+  "full_test": {
+    "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj",
+    "exit_code": 1,
+    "passed": 2851,
+    "failed": 347,
+    "skipped": 57,
+    "total": 3255,
+    "duration": "00:05:37"
+  },
+  "environment_checks": {
+    "VULGATA_STORY131_POSTGRES_ADMIN": false,
+    "VULGATA_TEST_POSTGRES": false,
+    "VULGATA_TEST_POSTGRES_ADMIN": false
+  },
+  "blockers": [
+    {
+      "requirement": "An owned PostgreSQL 17 administrator connection for retained-source tests",
+      "evidence": "RetainedSourcePostgreSqlDatabase.RequireAdministratorConnection failed before behavioral assertions because VULGATA_STORY131_POSTGRES_ADMIN is absent."
+    },
+    {
+      "requirement": "Disposable PostgreSQL 17 database and administrator connections for historical Knowledge and Prepared Scan tests",
+      "evidence": "KnowledgeStore and PreparedScanning fixtures failed before behavioral assertions because VULGATA_TEST_POSTGRES and VULGATA_TEST_POSTGRES_ADMIN are absent."
+    },
+    {
+      "requirement": "An owned temporary path on a different Windows drive",
+      "evidence": "RetainedSourceRootMappingTests.OpenReadContextAsync_VolumeRootConfiguration_DoesNotResolveCwdAliasAsync stopped because no owned different-drive path is available."
+    }
+  ],
+  "story_evidence": "The quality-reviewed PreparedSource namespace remains 119/119 passing under the actual Windows user. This configured full-suite result is not a Story 18.1 product failure and is not a passing final-verification proof.",
+  "summary": "Final verification is blocked: the configured build passed, but the required configured full test exited 1 because required owned PostgreSQL resources and a different-drive Windows fixture path are unavailable. Governed completion requires an actual exit-0 full-test command and cannot waive or relabel this run."
+}
