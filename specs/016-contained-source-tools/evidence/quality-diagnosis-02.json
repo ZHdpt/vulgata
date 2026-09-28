@@ -1,0 +1,24 @@
+{
+  "kind": "analysis",
+  "stage": "quality-review",
+  "evidence_id": "18-1/implementation/1/diagnosis/2",
+  "observed_at": "2026-09-28T11:03:11.6077862Z",
+  "summary": "QR-18.1-03 shows that disposal was treated as an entry-time condition rather than a lifetime stop signal across queue and approval-to-open boundaries. The next repair changes that assumption: public-seam tests will hold an operation at the existing list/search gate or authority boundary, dispose the context, and require sanitized Cancelled with no disclosure and settled work. Production will link waits to the existing lifetime cancellation token and recheck disposal after waits/approval before opening or using the root; no public contract, traversal policy or architecture changes.",
+  "failed_obligations": [
+    "Queued or opening operations must observe context disposal as Cancelled.",
+    "Disposed contexts must not resume against the closed root or disclose buffered data."
+  ],
+  "affected_assumption": "An initial authority/disposal check was sufficient for operations that later wait or open source handles.",
+  "earliest_owner": "implement",
+  "test_owner": "tests",
+  "changed_approach": "Treat the existing context lifetime cancellation token as authoritative across semaphore waits and add bounded post-wait/post-approval disposal checks before source access.",
+  "next_check": "Regression RED for queued and approval-to-open disposal, focused GREEN, full PreparedSource suite, convergence, refreshed lookback and fresh quality review.",
+  "failed_result": {
+    "path": "specs/016-contained-source-tools/evidence/quality-review-result-02.json",
+    "sha256": "5d6e74e6dd4260a9dbd77c7b6ee7c164b084a5133c9ea94c6deb9a85203ee4ee"
+  },
+  "extension_decision": {
+    "path": "specs/016-contained-source-tools/evidence/recovery-extension-01.json",
+    "sha256": "86fc3e4773f5746034fe66c066e5d8ab30817627bf934a43a5b5dfd52cdd5889"
+  }
+}

@@ -13,6 +13,13 @@
       "evidence_path": "specs/016-contained-source-tools/evidence/implementation-approval-02.json",
       "scope_sha256": "47c617d0cfaecf2cfc18cb6b95fc25593aee8157647d2e201d69937f419f4ca8",
       "status": "accepted"
+    },
+    {
+      "decided_at": "2026-09-28T11:00:33.9622954Z",
+      "decision_id": "18-1/implementation/1/extension/1",
+      "evidence_path": "specs/016-contained-source-tools/evidence/recovery-extension-01.json",
+      "scope_sha256": "77459b3cc4f34c34e78b1f0f996c700afaaed1ccf837ded85151725e7eaac032",
+      "status": "accepted"
     }
   ],
   "artifacts": {
@@ -33,7 +40,7 @@
   "bmad_story_key": "18-1-access-prepared-source-through-contained-read-only-tools",
   "checkpoint": {
     "binding_status": "pending",
-    "checkpoint_id": "bmad-18-1-quality-pause-20260928T103712Z-31bc7a",
+    "checkpoint_id": "bmad-18-1-recovery-extension-20260928T110311Z-5ed174",
     "commit_sha": null,
     "stage": "quality-review"
   },
@@ -51,10 +58,10 @@
     "specs/016-contained-source-tools/evidence/implementation-approval-02.json",
     "specs/016-contained-source-tools/evidence/implementation-correction-01.json",
     "specs/016-contained-source-tools/evidence/quality-correction-focused-result-01.json",
-    "specs/016-contained-source-tools/evidence/convergence-result-03.json",
-    "specs/016-contained-source-tools/evidence/story-lookback-02.json",
     "specs/016-contained-source-tools/evidence/quality-review-result-02.json",
-    "specs/016-contained-source-tools/evidence/workflow-transition-026-quality-review-revise-pause.json"
+    "specs/016-contained-source-tools/evidence/recovery-extension-01.json",
+    "specs/016-contained-source-tools/evidence/quality-diagnosis-02.json",
+    "specs/016-contained-source-tools/evidence/workflow-transition-028-extension-diagnosis.json"
   ],
   "definition_author": {
     "escalation_decision_id": null,
@@ -97,36 +104,36 @@
     "status_sha256": "811e45acb3329b898a1a92b4bc69e9a8b9fb70ef8e97a5beba0dacd2c4ca0a74"
   },
   "recovery": {
-    "action": "pause",
+    "action": "correct",
     "closing_gate": "verify",
     "diagnosis": {
-      "at_count": 3,
+      "at_count": 4,
       "evidence": {
-        "path": "specs/016-contained-source-tools/evidence/quality-diagnosis-01.json",
-        "sha256": "50b460f5c06484eb89349fa69e9150b9effa172d71f352b8ee196e11f987a73a"
+        "path": "specs/016-contained-source-tools/evidence/quality-diagnosis-02.json",
+        "sha256": "683fc4117bfd24c1da1f2b8c832c0f3c8ec4d0f9a204c2860f21febb1319b2d0"
       }
     },
     "earliest_owner": "implement",
     "episode_id": "18-1/implementation/1",
-    "extension_decision_id": null,
+    "extension_decision_id": "18-1/implementation/1/extension/1",
     "failed_results": 4,
     "holds": [],
     "last_result": {
       "path": "specs/016-contained-source-tools/evidence/quality-review-result-02.json",
       "sha256": "5d6e74e6dd4260a9dbd77c7b6ee7c164b084a5133c9ea94c6deb9a85203ee4ee"
     },
-    "pause_at": 4
+    "pause_at": 6
   },
   "resume": {
-    "evidence_path": "specs/016-contained-source-tools/evidence/quality-review-result-02.json",
-    "reason": "Recovery reached failed_results 4 on QR-18.1-03 and is paused pending an accepted finite extension before regression TDD may continue.",
+    "evidence_path": "specs/016-contained-source-tools/evidence/quality-diagnosis-02.json",
+    "reason": "The user approved a finite extension to six and the QR-18.1-03 disposal-race repair is diagnosed; resume behavioral TDD.",
     "stage": "implement"
   },
   "schema_version": "3.1",
-  "stage": "quality-review",
+  "stage": "implement",
   "transition_head": {
-    "path": "specs/016-contained-source-tools/evidence/workflow-transition-026-quality-review-revise-pause.json",
-    "sha256": "b4ceb3853d215be8e4eaeffcee4da82a00031f02e7322cfb0b6be7e123dd40cf"
+    "path": "specs/016-contained-source-tools/evidence/workflow-transition-028-extension-diagnosis.json",
+    "sha256": "a22e2b45251da3bf196d2831d6fec1fb86b5362e2aff25e6eb55144dcd89ed6d"
   },
-  "updated_at": "2026-09-28T10:37:12.8603156Z"
+  "updated_at": "2026-09-28T11:03:11.6077862Z"
 }
