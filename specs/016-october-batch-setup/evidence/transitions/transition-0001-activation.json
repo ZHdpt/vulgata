@@ -1,0 +1,1 @@
+{"kind":"analysis","transition":{"event":{"kind":"activation"},"previous_head":null,"projection":{"definition_author":{"escalation_decision_id":null,"profile":"definition-author"},"recovery":null},"sequence":1,"story_key":"18-4-prepare-an-owned-october-batch-with-valid-context-and-provid"}}

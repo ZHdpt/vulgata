@@ -1,0 +1,28 @@
+{
+  "schema_version": "1.0",
+  "story_key": "18-4-prepare-an-owned-october-batch-with-valid-context-and-provid",
+  "feature_directory": "specs/016-october-batch-setup",
+  "observed_at": "2026-09-28T08:39:49.4375537Z",
+  "repository_root": "C:/Users/13728/.codex/worktrees/d166/vulgata",
+  "git_common_directory": "G:/source/repos/vulgata/.git",
+  "worktree": "C:/Users/13728/.codex/worktrees/d166/vulgata",
+  "branch": "detached-managed-worktree",
+  "head": "5e5553374b342fb658776fbfcb86c6e06513832a",
+  "git_identity_sha256": "e8f846d29f6532bde02c1bacfcc601cecfb6ede376447e08cefff5c1a1e8cd28",
+  "status_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "index_and_worktree": "clean",
+  "native_handoff": "The user explicitly assigned this separate managed worktree. The checkout is detached at the supplied source commit; no branch switch, merge, reset, rebase or other checkout mutation was performed.",
+  "ownership": {
+    "owned": [
+      ".specify/feature.json",
+      "docs/bmad/implementation-artifacts/18-4-prepare-an-owned-october-batch-with-valid-context-and-provid.md",
+      "docs/bmad/implementation-artifacts/sprint-status.yaml",
+      "specs/016-october-batch-setup"
+    ],
+    "preserved": [
+      "Story 18.1's separate checkout, source-access implementation and source-identity/tool contracts",
+      "all existing specs and application/test source"
+    ]
+  },
+  "dependency_disposition": "Story 18.4 may define and plan independently decidable setup, selection, context, provider binding and isolation seams, but may not generate tasks or continue delivery until integrated verified Story 18.1 contracts are available and the plan is reconciled against them."
+}

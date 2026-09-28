@@ -1,0 +1,77 @@
+{
+  "schema_version": "3.1",
+  "bmad_story_key": "18-4-prepare-an-owned-october-batch-with-valid-context-and-provid",
+  "bmad_epic_key": "epic-18",
+  "feature_directory": "specs/016-october-batch-setup",
+  "stage": "context",
+  "preflight": {
+    "branch": "detached-managed-worktree",
+    "head": "5e5553374b342fb658776fbfcb86c6e06513832a",
+    "git_identity_sha256": "e8f846d29f6532bde02c1bacfcc601cecfb6ede376447e08cefff5c1a1e8cd28",
+    "status_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "observed_at": "2026-09-28T08:39:49.4375537Z"
+  },
+  "artifacts": {
+    "spec": null,
+    "plan": null,
+    "tasks": null
+  },
+  "gates": {
+    "plan-review": {
+      "status": "pending",
+      "attempt": 0,
+      "verdict_path": null
+    },
+    "definition-review": {
+      "status": "pending",
+      "attempt": 0,
+      "verdict_path": null
+    },
+    "quality-review": {
+      "status": "pending",
+      "attempt": 0,
+      "verdict_path": null
+    }
+  },
+  "approvals": [],
+  "convergence": {
+    "status": "pending",
+    "attempt": 0,
+    "outcome": "pending",
+    "report_path": null
+  },
+  "e2e": {
+    "result": "pending",
+    "decision_path": null
+  },
+  "current_evidence_paths": [
+    "docs/bmad/implementation-artifacts/18-4-prepare-an-owned-october-batch-with-valid-context-and-provid.md",
+    "specs/016-october-batch-setup/evidence/preflight-01.json",
+    "specs/016-october-batch-setup/evidence/transitions/transition-0001-activation.json"
+  ],
+  "checkpoint": {
+    "checkpoint_id": "bmad-18-4-context-20260928T083949Z-d166",
+    "stage": "context",
+    "commit_sha": null,
+    "binding_status": "pending"
+  },
+  "resume": {
+    "stage": "context",
+    "reason": "Define and plan only; task generation remains held for integrated verified Story 18.1 baseline and plan reconciliation.",
+    "evidence_path": "specs/016-october-batch-setup/evidence/preflight-01.json"
+  },
+  "updated_at": "2026-09-28T08:39:49.4375537Z",
+  "recovery": null,
+  "transition_head": {
+    "path": "specs/016-october-batch-setup/evidence/transitions/transition-0001-activation.json",
+    "sha256": "6c3cc954beb1daf8a504bcfa4db8e1ab6701c846f2b1692333da1f50aa4dfb30"
+  },
+  "definition_author": {
+    "profile": "definition-author",
+    "escalation_decision_id": null
+  },
+  "lookback": {
+    "status": "pending",
+    "evidence": null
+  }
+}
