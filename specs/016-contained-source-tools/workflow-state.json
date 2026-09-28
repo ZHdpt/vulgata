@@ -18,30 +18,30 @@
     },
     "plan": {
       "path": "specs/016-contained-source-tools/plan.md",
-      "sha256": "547b9cfab482494e81f182c19570f8af59e01055bd5b293f8a44e357abefdcff"
+      "sha256": "b375723e56c8cdc7990a4e7a624c5f58a78fde07d9a23edd79e25025c54fce08"
     },
     "tasks": {
       "path": "specs/016-contained-source-tools/tasks.md",
-      "sha256": "70d9cc0f033184be4d650ff72c49c6d9ba4ec8fb1405cf7e078707bd64555ca6"
+      "sha256": "704204445766c907771a785c510836801efe08d2e55f08096d39528437516c9a"
     }
   },
   "gates": {
-    "plan-review": {"status": "accepted", "attempt": 3, "verdict_path": "specs/016-contained-source-tools/evidence/plan-review-result-07.json"},
-    "definition-review": {"status": "accepted", "attempt": 3, "verdict_path": "specs/016-contained-source-tools/evidence/definition-review-result-03.json"},
+    "plan-review": {"status": "accepted", "attempt": 4, "verdict_path": "specs/016-contained-source-tools/evidence/plan-review-result-09.json"},
+    "definition-review": {"status": "accepted", "attempt": 4, "verdict_path": "specs/016-contained-source-tools/evidence/definition-review-result-04.json"},
     "quality-review": {"status": "pending", "attempt": 0, "verdict_path": null}
   },
   "approvals": [
     {
       "decision_id": "18-1/plan-authorization/1",
       "status": "accepted",
-      "scope_sha256": "ae5b4407349ca9d5f04843d830e084a12361b1e0e83bc2f64bae9b4310622f3f",
+      "scope_sha256": "2cc8a7aafd61c8fbd2e76dd4e9e58efef69d6e14c89ba0b23092eea87142d769",
       "evidence_path": "specs/016-contained-source-tools/evidence/plan-authorization-01.json",
       "decided_at": "2026-09-28T04:25:28.9936733Z"
     },
     {
       "decision_id": "18-1/implementation-approval/2",
       "status": "accepted",
-      "scope_sha256": "52545dc5cdb63c841b0ccc203e90e02fa7f5bf8e8aeabf2aa44d30175c1fbfd1",
+      "scope_sha256": "47c617d0cfaecf2cfc18cb6b95fc25593aee8157647d2e201d69937f419f4ca8",
       "evidence_path": "specs/016-contained-source-tools/evidence/implementation-approval-02.json",
       "decided_at": "2026-09-28T05:03:16.4560797Z"
     }
@@ -61,17 +61,17 @@
     "specs/016-contained-source-tools/evidence/workflow-transition-001-activation.json"
   ],
   "checkpoint": {
-    "checkpoint_id": "bmad-18-1-definition-correction-20260928T060211Z-7cae31",
+    "checkpoint_id": "bmad-18-1-agent-seam-correction-20260928T082340Z-4d1b8e",
     "stage": "definition-review",
     "commit_sha": null,
     "binding_status": "pending"
   },
   "resume": {
     "stage": "implement",
-    "reason": "The corrected issuer seam and tasks are independently accepted; existing plan and implementation approvals are rebound to the unchanged semantic scope, so resume T003 behavioral RED.",
-    "evidence_path": "specs/016-contained-source-tools/evidence/definition-review-result-03.json"
+    "reason": "The corrected Agent function seam and tasks are independently accepted; existing approvals are rebound to unchanged scope, so resume T016 behavioral RED.",
+    "evidence_path": "specs/016-contained-source-tools/evidence/definition-review-result-04.json"
   },
-  "updated_at": "2026-09-28T06:02:11.3091704Z",
+  "updated_at": "2026-09-28T08:23:40.6628207Z",
   "recovery": {
     "action": "proceed",
     "closing_gate": "verify",
@@ -79,18 +79,18 @@
     "earliest_owner": "tasks",
     "episode_id": "18-1/implementation/1",
     "extension_decision_id": null,
-    "failed_results": 1,
+    "failed_results": 2,
     "holds": [],
     "last_result": {
-      "path": "specs/016-contained-source-tools/evidence/plan-review-result-05.json",
-      "sha256": "21f258e0e0543d4ceb74a20a3d5c993b846b098961644a45a8dd43b7c08c559e"
+      "path": "specs/016-contained-source-tools/evidence/plan-review-result-08.json",
+      "sha256": "364f8dfbc6ceeead59ee1c5a4062738393f128154d089e20d867e98bf447eadb"
     },
     "pause_at": 4
   },
   "definition_author": {"profile": "definition-author", "escalation_decision_id": null},
   "transition_head": {
-    "path": "specs/016-contained-source-tools/evidence/workflow-transition-015-issuer-seam-plan-review-accept.json",
-    "sha256": "f158b173434b0b2fb28bb4f1d441a62ea26a81814d4728d0fb7a316d3156c951"
+    "path": "specs/016-contained-source-tools/evidence/workflow-transition-020-agent-seam-plan-review-accept.json",
+    "sha256": "16791565f2cf34759fae38f2a8dc79ecd8814ae05a912daf64112f46b47a923b"
   },
   "lookback": {"status": "invalidated", "evidence": null}
 }

@@ -38,6 +38,20 @@ Each tool result echoes the context's `repositoryId` and sanitized `outcome`, ne
 
 ## Closed model-visible operations
 
+The accepted callable Agent seam is one public type in namespace `Vulgata.Agents.WorkerExecution`:
+
+```csharp
+public sealed class PreparedSourceFunctions
+{
+    public PreparedSourceFunctions(IPreparedSourceReadContext context);
+    public IReadOnlyList<Microsoft.Extensions.AI.AIFunction> Create();
+}
+```
+
+The constructor rejects null context. Trusted composition supplies a successfully issued `IPreparedSourceReadContext`; this type cannot issue or change a grant. Each `Create()` returns exactly three functions in order: `list_prepared_source`, `read_prepared_source`, `search_prepared_source`; no fourth function, `CreateSession` variant, mutable registry or scheduler is part of this seam. The factory and functions borrow the same context. The caller that received the issue result owns `IAsyncDisposable` disposal after all function invocations settle; creating functions does not transfer or extend grant lifetime. Calling an already-created function after context disposal forwards to that terminal context and returns its sanitized `Cancelled` result, without reopening or reissuing source.
+
+Each valid invocation forwards its `CancellationToken` unchanged to the corresponding `IPreparedSourceReadContext.ListAsync`, `ReadTextRangeAsync` or `SearchTextAsync` call and returns that `PreparedSourceResult` without adding metadata, filesystem policy or retry. The functions expose exactly the argument names/types below with closed JSON object schemas (`additionalProperties: false`); nested or alternate authority selectors are absent. Unknown fields, malformed types, invalid JSON or unsupported write/command fields fail at the Agent function seam with a sanitized denied result for the bound Repository and no Core call. No parser exception text, raw arguments, host path or source content is emitted. A validly shaped request whose relative path/range/content is denied or limited by Core retains Core's own outcome; the Agent module does not reinterpret it.
+
 | Tool | Allowed arguments | Result payload |
 | --- | --- | --- |
 | `list_prepared_source` | `relativeDirectory` (empty means root), `pageSize` 1–100, optional opaque `continuation` | Ordered entries and relative limitations, outcome, optional next continuation or exhausted limit. |

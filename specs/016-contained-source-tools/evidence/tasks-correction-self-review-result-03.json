@@ -1,0 +1,19 @@
+{
+  "observed_after": {
+    "path": "specs/016-contained-source-tools/evidence/workflow-transition-017-agent-seam-plan-correction.json",
+    "sha256": "8da814ca9d11022ba1f4881019457f8b429a724dbf10d8589697b9fad3507fad"
+  },
+  "raw_result": {
+    "kind": "self-review",
+    "stage": "tasks",
+    "outcome": "passed",
+    "summary": "Narrowly reconciled T016/T017 with the corrected Agent function seam, preserving completed tasks, task order, RED/GREEN routing and accepted scope.",
+    "input_hashes": {
+      "specs/016-contained-source-tools/plan.md": "b375723e56c8cdc7990a4e7a624c5f58a78fde07d9a23edd79e25025c54fce08",
+      "specs/016-contained-source-tools/tasks.md": "704204445766c907771a785c510836801efe08d2e55f08096d39528437516c9a"
+    },
+    "owned_paths": [
+      "specs/016-contained-source-tools/tasks.md"
+    ]
+  }
+}
