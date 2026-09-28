@@ -53,12 +53,15 @@ authority to bypass a later feature's plan/tool/Scan/PRD or implementation appro
 Use the current unified workflow and configured risk escalation; do not revive old
 Full/Standard/expedited or overnight/deadline waivers from historical handoffs.
 
-The installed workflow is governed-delivery 0.7.2 (updated 2026-09-26), using BMad 6.12 and SpecKit
+The installed workflow is governed-delivery 0.7.3 (updated 2026-09-28), using BMad 6.12 and SpecKit
 1.0.6 through `.governed-delivery/config.toml`. Use `$run-governed-delivery`;
-new story states use schema 3.1. Sol/Luna profiles now use GPT-6, with existing efforts
+new story states use schema 3.1. Sol/Luna profiles use GPT-6, with existing efforts
 and Astra recovery unchanged. Verification follows accepted behavior/risk, not file
 type; nonbehavioral work does not require manufactured RED or new tests. This upgrade
-does not activate a story or alter existing states. One persistent Sol/medium definition author owns
+does not activate a story or alter existing states. User-designated delegates may
+authorize only planned changes and first implementation within their recorded scope;
+the story root records and validates those decisions. Human approval remains default,
+and all other gates remain human-only. One persistent Sol/medium definition author owns
 spec, plan, tasks and later document corrections; each coherent implementation
 group retains separate Luna/high test and Sol/medium production owners. Root owns
 lifecycle, evidence, approvals, selective project lessons and Git. See the installed

@@ -239,6 +239,8 @@ def validate_event_evidence(event: dict, state: dict, read: Reader, *, current: 
         read_record(repair.get("correction"), read, "correction")
     if event.get("resolution") is not None:
         resolved = read_record(event["resolution"], read, "blocker resolution")
+        from result_proofs import require_nondelegated_decision
+        require_nondelegated_decision(resolved)
         if resolved.get("status") not in ("accepted", "resolved") or not resolved.get("summary"):
             raise ValueError("blocker resolution needs explicit accepted/resolved evidence")
         if "authority" in event.get("resolved_holds", []):
@@ -268,6 +270,8 @@ def validate_event_evidence(event: dict, state: dict, read: Reader, *, current: 
             decision_record = None
         if not isinstance(decision_record, dict) or any(decision_record.get(k) != v for k, v in decision.items()):
             raise ValueError("decision payload differs from durable user/authorization evidence")
+        from result_proofs import require_nondelegated_decision
+        require_nondelegated_decision(decision_record)
     if kind == "phase_complete":
         envelope = read_record(event.get("result"), read, "author self-review")
         raw = envelope.get("raw_result", {})

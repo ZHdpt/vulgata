@@ -25,17 +25,17 @@ implementation-approval, implement, converge, lookback, quality-review,
 conditional-e2e, verify, complete
 ```
 
-Implementation design is classified inside `plan` as `none`, `bounded`, or `architecture`; it is not a stage. `plan-review` appears for a repository planned-change trigger or `architecture`. Before entering it, the root maps the plan path/hash into state, requires explicit governed classification/reason, and runs state-bound deterministic validation. The review must accept, and the named user authorization must be durable, before `tasks`.
+Implementation design is classified inside `plan` as `none`, `bounded`, or `architecture`; it is not a stage. `plan-review` appears for a repository planned-change trigger or `architecture`. Before entering it, the root maps the plan path/hash into state, requires explicit governed classification/reason, and runs state-bound deterministic validation. The review must accept, and the named authorization (human by default, or an explicitly designated delegate for this gate) must be durable, before `tasks`.
 
 | Stage | Owner | Exit |
 |---|---|---|
 | context | root; optional context synthesizer | pinned authority set and separable ownership |
 | specify | persistent definition author | specification plus successful self-review |
 | plan | same definition author follow-up; current escalation exception when triggered | complete plan, valid Markdown implementation-design contract, and successful self-review |
-| plan-review | retained definition reviewer in plan-only mode | accepted verdict and required user authorization |
+| plan-review | retained definition reviewer in plan-only mode | accepted verdict and scoped human or permitted delegated authorization |
 | tasks | same definition author follow-up | dependency-ordered tasks, complete design-ID coverage, and successful self-review |
 | definition-review | same retained definition reviewer, or history-complete recovery replacement | one accepted spec/plan/tasks/analyze verdict |
-| implementation-approval | root and user | accepted definition hashes explicitly authorized for production implementation |
+| implementation-approval | root and user or explicitly designated delegate | accepted definition hashes explicitly authorized for production implementation |
 | implement | retained task-group test author then implementer | honest RED, minimal GREEN, required final-shape assessment by both owners, conditional local refactor, final surrounding GREEN; or truthful nonbehavioral evidence |
 | converge | convergence analyst | clean outcome; reused/new tasks to existing owner; definition defect to earliest owner |
 | lookback | root | bounded Story Lookback section, selective lessons/approved-doc synchronization, current proof |

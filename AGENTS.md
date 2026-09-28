@@ -72,8 +72,9 @@ definitions and historical passing tests do not prove the replacement workflow w
 ## Planned-change authorization
 
 After an independent `plan-review` accepts a story plan and before task generation,
-the orchestrator MUST pause for explicit user approval when the plan does any of the
-following:
+the orchestrator MUST pause for explicit user approval (or applicable approval by
+the user's specifically designated delegate under "Delegated approval" below) when
+the plan does any of the following:
 
 - adds, exposes, or materially changes a **Worker Agent** tool or other agent tool;
 - adds or materially changes a **Scan** strategy, including parsing, filtering,
@@ -87,10 +88,28 @@ generation; it does not waive any later analysis, TDD, review, E2E, security, or
 verification gate. If none of these triggers applies, the ordinary workflow
 advances without this additional approval.
 
+## Delegated approval
+
+Human approval remains the default. For a specific story, the user may explicitly
+designate a stable Codex task/chat ID to authorize only planned-change authorization
+after accepted independent plan review and implementation approval after accepted
+independent definition review. The designation must state the story scope, conditions,
+and these gates, and must be recorded with its source in the story's existing decision
+evidence. The story root verifies the actual user instruction, delegate response,
+current accepted review and artifact hashes, and continued scope before proceeding;
+the delegate returns its decision but never writes approval files. A task title alone
+does not identify a delegate; no delegate may substitute another task or subdelegate.
+
+This designation does not cover recovery extensions, authority/blocker resolution,
+prior-authority conflicts, architecture changes outside the accepted plan, epic
+dispositions, retrospective choices, or separate access/spend/secret/production
+permissions. Existing gate order, recovery limits, worker ownership, and verification
+remain in force. If provenance, scope, or conditions are unclear, require the user.
+
 ## Maintaining these instructions
 
-Governed delivery 0.7.2 is installed with `.governed-delivery/config.toml` selecting BMad
-6.12 and SpecKit 1.0.6. New stories use state 3.1; historical states/evidence stay
+Governed delivery 0.7.3 is installed with `.governed-delivery/config.toml` selecting
+BMad 6.12 and SpecKit 1.0.6. New stories use state 3.1; historical states/evidence stay
 unchanged. One retained definition author owns spec/plan/tasks and corrections;
 the independent reviewer retains review history. Coherent implementation groups
 retain separate test and production owners. Root owns bounded recovery, selective

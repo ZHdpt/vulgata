@@ -50,6 +50,10 @@ Create a separate user-facing discussion task only on an explicit user request a
 
 On return, root reads the user's actual instruction and source context, not just the guide's assertion that approval occurred. Check it against current documents and prior authority, recording a real applicable decision once. A hypothetical or tentative preference is not consent. Reconcile a materially changed proposal through its owner and review; do not request the same unchanged approval again solely because it came from another conversation.
 
+## Delegated decisions
+
+For the two explicitly delegable gates only, apply [the optional delegated-approval rule](review-and-correction.md#explicit-delegated-approval-optional). Address the same useful decision briefing to the user-designated task, supplying raw accepted inputs and the independent verdict. The runner records the actual user delegation and delegate response; different working directories never transfer approval-file ownership. Other user decisions, including recovery direction below, remain human-only.
+
 ## Recovery brief
 
 Root reconciles worker evidence and reports why development is stuck. This is execution context, not a teaching task or a new standing agent. Lead with the failure and impact, then explain materially different repairs and their observed outcomes. Distinguish the initial failure, failed repairs, genuinely new defects, duplicate reports, expected RED, and technical retries.

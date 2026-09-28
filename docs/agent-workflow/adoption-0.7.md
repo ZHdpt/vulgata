@@ -1,9 +1,16 @@
 # Governed-delivery 0.7 adoption
 
-Updated: 2026-09-26. This is Vulgata's installation/resumption record, not product
+Updated: 2026-09-28. This is Vulgata's installation/resumption record, not product
 verification or authorization to start a story.
 
 ## Installed boundary
+
+- Distribution: **0.7.3**, installed September 28 from the validated governed-delivery
+  working tree based on source HEAD `0c0bf0cfb05edc5b28a346d8f3a63002d1e781ef`;
+  the 0.7.3 source changes remain uncommitted. This updates skills, profiles,
+  adapters and
+  validators and opts Vulgata into the two-gate delegation rule documented in its
+  root AGENTS.md. No story state or upstream installation changed.
 
 - Distribution: **0.7.2**. The September 26 update installs the validated local
   source working tree based on `992cf3b96c08a3501e1d80115b7cf4f41a1a202c`;
@@ -71,6 +78,23 @@ The local Git safety hook was renamed, not removed; Copilot workflow parity is n
 claimed by preserving that hook or unrelated helpers.
 
 ## Verification and unresolved compatibility
+
+September 28 upgrade to 0.7.3: installed workflow assets and profiles match the
+validated source release; dependency and targeted Story 13.1 checks pass. The
+aggregate validator still reports the **256 historical findings**. All 14 workflow
+states, config, sprint tracker, product files and upstream skills are preserved; no
+story or installation errors are reported and no story is activated. Root AGENTS.md
+opts Vulgata into only the two delegated gates supported by 0.7.3. The user designates
+a stable task/chat ID, story scope and conditions in an actual instruction; root
+records it and the delegate response in each story's existing decision evidence.
+
+For example: "For stories [list], I designate [task ID/chat link] to approve planned
+changes after independent plan review and implementation after independent definition
+review, within [scope/conditions], until [end condition]. The runner and this task may
+exchange gate requests/responses. No other authority is delegated." Use the actual
+task ID/chat link; a title alone is not enough. The delegate returns a decision, while
+the story root records the approval files and checks current accepted hashes. All
+other gates and execution permissions keep their existing rules.
 
 September 26 upgrade: all **225 distribution tests** and distribution/workflow,
 lockfile, whitespace and **four official skill checks** passed. PyYAML was installed
@@ -144,5 +168,6 @@ python .agents/skills/run-governed-delivery/scripts/check_dependencies.py --targ
 python .agents/skills/run-governed-delivery/scripts/validate_workflow.py --repo . --story-state specs/<selected-feature>/workflow-state.json --next-stage <stage> --json
 ```
 
-Preserve the existing planned-change and implementation approval gates. Optional
-drafting input is not consent, and installation approval does not activate Story 13.2.
+Preserve planned-change and implementation gate order; apply only the explicit,
+story-scoped delegate designation described above. Optional drafting input is not
+consent, and installation approval does not activate Story 13.2.

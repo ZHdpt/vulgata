@@ -2401,6 +2401,8 @@ def validate_story_request(repo: Path, state_path: Path, *, result_path: Path | 
             errors.extend(validate_state_plan_content(candidate, root))
 
             def approved(purpose: str) -> bool:
+                from result_proofs import validate_gate_approval
+                failures = []
                 for approval in state.get("approvals", []):
                     if approval.get("status") != "accepted":
                         continue
@@ -2411,10 +2413,15 @@ def validate_story_request(repo: Path, state_path: Path, *, result_path: Path | 
                         continue
                     if not isinstance(value, dict):
                         continue
-                    if (value.get("stage") == purpose and value.get("status") == "accepted"
-                            and value.get("decision_id") == approval["decision_id"]
-                            and value.get("scope_sha256") == approval["scope_sha256"]):
-                        return True
+                    if value.get("stage") != purpose:
+                        continue
+                    try:
+                        validate_gate_approval(approval, value, state, virtual_read, purpose)
+                    except (ValueError, TypeError, KeyError, AttributeError, UnicodeError) as exc:
+                        failures.append(f"{purpose} approval: {exc}")
+                        continue
+                    return True
+                errors.extend(failures)
                 return False
 
             if next_stage in {"implement", "converge", "lookback", "quality-review", "conditional-e2e", "verify", "complete"}:
@@ -2422,9 +2429,13 @@ def validate_story_request(repo: Path, state_path: Path, *, result_path: Path | 
                     errors.append("accepted definition review is required before implementation and later stages")
                 if not approved("implementation-approval"):
                     errors.append("current scoped implementation approval is required before production progression")
-            if classification == "architecture" and next_stage in {"tasks", "definition-review", "implementation-approval", "implement"}:
+            # An accepted early plan review also represents a consumer-policy
+            # trigger (e.g. a tool/Scan change), not just architecture.
+            planned_change = classification == "architecture" or state["gates"]["plan-review"]["status"] == "accepted"
+            if planned_change and next_stage in {"tasks", "definition-review", "implementation-approval", "implement"}:
                 if state["gates"]["plan-review"]["status"] != "accepted" or not approved("plan-review"):
-                    errors.append("architecture requires accepted plan review and scoped planned-change authorization")
+                    trigger = "architecture" if classification == "architecture" else "planned change"
+                    errors.append(f"{trigger} requires accepted plan review and scoped planned-change authorization")
             if next_stage == "converge":
                 from workflow_runtime import _task_map
                 task_artifact = state.get("artifacts", {}).get("tasks")

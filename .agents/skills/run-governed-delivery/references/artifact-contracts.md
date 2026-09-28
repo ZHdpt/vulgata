@@ -197,6 +197,21 @@ The committed state intentionally contains `commit_sha: null` while `binding_sta
 
 For the final checkpoint, the committed state may name stage `complete` with a pending binding. Completion becomes valid only after the commit succeeds, the unique trailer resolves to the current final checkpoint ID, its SHA is an ancestor of `HEAD`, and its committed paths contain the BMad `done` transition. Resume derives this binding before trusting `complete`.
 
+## Delegated decision evidence
+
+Available from distribution 0.7.3 only; human approval stays default. Keep the existing state `approvals` pointer unchanged. The runner records the user's designation in an ordinary story-local decision JSON artifact with `kind: "user-delegation"`, `status: "accepted"`, the stable `delegate_id`, exact `story_key`, `gates` (a nonempty subset of `plan-review` and `implementation-approval`), `scope` (including conditions), `user_source` (original message locator), and `user_instruction` (actual text). This is a record of the user's instruction, not a generated charter or inferred delegation. Root must verify its real source and continued applicability; a revoked/expired designation must not be used.
+
+The gate's existing decision artifact retains `decision_id`, `stage`, `status`, `scope_sha256`, and `summary`. For a delegated decision add:
+
+- `kind: "delegated-approval"`, `delegate_id`, and `story_key`;
+- `delegation: {path, sha256}` referencing the actual user-designation record;
+- `response_source` and `response_text` preserving the delegate's real response;
+- `review: {path, sha256}` referencing the current independent ACCEPT: plan review for planned-change authorization, definition review for implementation approval. Its existing boundary contains the accepted artifact hashes; do not duplicate that manifest.
+
+For these decisions, compute `scope_sha256` with the existing `workflow_runtime.digest(canonical_bytes({"story_key": story_key, "stage": stage, "review": review}))`. Store that value in both the decision and its existing approval pointer. The validator checks identity/story/gate consistency, recorded source presence, referenced hashes, the current accepted review/artifact boundary, and this scope digest. Human/legacy approval records retain their original interpretation. Post-implementation task progress uses existing review-proof allowances, not a new approval for every checkbox. These checks do not authenticate chats or infer the meaning of user scope; root remains responsible for both. The validator never writes records.
+
+Install instructions and validators together before using delegation. Earlier validators do not understand this evidence kind and must not be used for a delegated run; no downgrade or relabeling as human evidence. State schema remains 3.1 and historical records require no migration. Delegated evidence cannot authorize recovery extensions, hold resolution, or any other gate.
+
 ## Checkpoint Content Contract
 
 | Checkpoint | Preconditions | Owned contents |

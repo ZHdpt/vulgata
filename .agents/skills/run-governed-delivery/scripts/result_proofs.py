@@ -15,6 +15,68 @@ Reader = Callable[[str], bytes | None]
 SHA = re.compile(r"[0-9a-fA-F]{40}\Z")
 HASH = re.compile(r"[0-9a-fA-F]{64}\Z")
 TIMESTAMP = re.compile(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z\Z")
+DELEGATED_GATES = {"plan-review": "plan-review", "implementation-approval": "definition-review"}
+
+
+def is_delegated_decision(record):
+    """Recognize delegation even if its kind was incorrectly relabeled human."""
+    def marked(value):
+        return isinstance(value, Mapping) and (
+            value.get("kind") in ("delegated-approval", "user-delegation")
+            or "delegate_id" in value or "delegation" in value
+        )
+    return marked(record) or (isinstance(record, Mapping) and marked(record.get("raw_result")))
+
+
+def require_nondelegated_decision(record):
+    if is_delegated_decision(record):
+        raise ValueError("delegated approval cannot authorize recovery extensions or resolve holds")
+
+
+def validate_gate_approval(pointer, record, state, read, purpose):
+    """Check recorded delegation/boundary consistency, not message authenticity.
+
+    Human records retain their existing contract. Root alone verifies the actual
+    user instruction, response source, semantic scope and current conditions.
+    """
+    from workflow_runtime import canonical_bytes, digest
+    _object(record, "approval evidence")
+    if (pointer.get("status") != "accepted" or record.get("status") != "accepted"
+            or record.get("stage") != purpose
+            or record.get("decision_id") != pointer.get("decision_id")
+            or record.get("scope_sha256") != pointer.get("scope_sha256")):
+        raise ValueError("approval must match its accepted pointer, purpose and scope")
+    if not is_delegated_decision(record):
+        return
+    if record.get("kind") != "delegated-approval" or purpose not in DELEGATED_GATES:
+        raise ValueError("delegated approval is allowed only for planned-change and implementation authorization")
+    delegate = _text(record.get("delegate_id"), "delegate_id")
+    _text(record.get("response_source"), "delegate response source")
+    _text(record.get("response_text"), "delegate response text")
+    grant = _record(record.get("delegation"), read, "actual user delegation")
+    if grant.get("kind") != "user-delegation" or grant.get("status") != "accepted":
+        raise ValueError("delegated approval requires an accepted actual user delegation")
+    story = state.get("bmad_story_key")
+    if grant.get("delegate_id") != delegate or grant.get("story_key") != story or record.get("story_key") != story:
+        raise ValueError("delegated approval must match the designated delegate and current story")
+    gates = grant.get("gates")
+    if (not isinstance(gates, list) or not gates
+            or any(not isinstance(gate, str) or gate not in DELEGATED_GATES for gate in gates)
+            or len(set(gates)) != len(gates) or purpose not in gates):
+        raise ValueError("user delegation must explicitly cover this gate and no unsupported gate")
+    for field in ("user_source", "user_instruction", "scope"):
+        _text(grant.get(field), f"user delegation {field}")
+    review = record.get("review")
+    # The existing review proof binds all accepted artifact hashes. Reuse its
+    # normal post-implementation allowance for task checkboxes/convergence work.
+    recovery = state.get("recovery")
+    has_implementation = state.get("stage") in {
+        "implement", "converge", "lookback", "quality-review", "conditional-e2e", "verify", "complete"
+    } or (isinstance(recovery, Mapping) and recovery.get("closing_gate") == "verify")
+    _review(DELEGATED_GATES[purpose], review, state, read, historical_context=has_implementation)
+    expected = digest(canonical_bytes({"story_key": story, "stage": purpose, "review": review}))
+    if record.get("scope_sha256") != expected:
+        raise ValueError("delegated approval scope must bind this story, gate and accepted review boundary")
 
 
 def _object(value, label):
