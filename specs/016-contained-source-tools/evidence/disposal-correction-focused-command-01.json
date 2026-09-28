@@ -1,0 +1,24 @@
+{
+  "kind": "command",
+  "stage": "verify-focused",
+  "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --no-restore --filter FullyQualifiedName~Vulgata.Tests.PreparedSource --logger \"console;verbosity=minimal\"",
+  "source_commit": "623dba90995e1dc115750ae8ee89f7bef39ca112",
+  "observed_at": "2026-09-28T11:30:53.2588317Z",
+  "exit_code": 0,
+  "raw_output_path": "specs/016-contained-source-tools/evidence/disposal-correction-focused-output-01.txt",
+  "raw_output_sha256": "8c1e5fb17cb3acdf4be8b4a4825eba68c06591f2d1829f96a665d3ba3623a8a0",
+  "input_hashes": {
+    "specs/016-contained-source-tools/spec.md": "48c92e4f6582471a1664e553b48756a811f22bb2b4f1334206e94303629b0b6d",
+    "specs/016-contained-source-tools/plan.md": "b375723e56c8cdc7990a4e7a624c5f58a78fde07d9a23edd79e25025c54fce08",
+    "specs/016-contained-source-tools/tasks.md": "b345d7322f8777d8fda77a153c48af954e7ed18a185cf648f8c309ef0d0a8a1b",
+    "src/dotnet/Vulgata.Infrastructure/Source/PreparedSourceReadContext.cs": "87307eeebbdf8d9878113de05bd92271a3c69e1ebf60ae8c73acb427902f3ffc",
+    "tests/Vulgata.Tests/PreparedSource/PreparedSourceCancellationBudgetTests.cs": "d27837a98a7edb4734fe4393de3af22009e92ef534937d91d66fc167309febde"
+  },
+  "owned_paths": [
+    "specs/016-contained-source-tools/spec.md",
+    "specs/016-contained-source-tools/plan.md",
+    "specs/016-contained-source-tools/tasks.md",
+    "src/dotnet/Vulgata.Infrastructure/Source/PreparedSourceReadContext.cs",
+    "tests/Vulgata.Tests/PreparedSource/PreparedSourceCancellationBudgetTests.cs"
+  ]
+}

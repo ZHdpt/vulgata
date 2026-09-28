@@ -40,27 +40,29 @@
   "bmad_story_key": "18-1-access-prepared-source-through-contained-read-only-tools",
   "checkpoint": {
     "binding_status": "pending",
-    "checkpoint_id": "bmad-18-1-disposal-correction-20260928T112929Z-2f5e09",
+    "checkpoint_id": "bmad-18-1-final-quality-candidate-20260928T113948Z-91d30b",
     "commit_sha": null,
-    "stage": "implement"
+    "stage": "lookback"
   },
   "convergence": {
-    "attempt": 2,
-    "outcome": "pending",
-    "report_path": "specs/016-contained-source-tools/evidence/convergence-result-03.json",
-    "status": "invalidated"
+    "attempt": 3,
+    "outcome": "converged",
+    "report_path": "specs/016-contained-source-tools/evidence/convergence-result-04.json",
+    "status": "accepted"
   },
   "current_evidence_paths": [
     "docs/bmad/implementation-artifacts/18-1-access-prepared-source-through-contained-read-only-tools.md",
     "specs/016-contained-source-tools/evidence/plan-review-result-09.json",
     "specs/016-contained-source-tools/evidence/definition-review-result-04.json",
-    "specs/016-contained-source-tools/evidence/plan-authorization-01.json",
     "specs/016-contained-source-tools/evidence/implementation-approval-02.json",
     "specs/016-contained-source-tools/evidence/implementation-correction-02.json",
     "specs/016-contained-source-tools/evidence/quality-review-result-02.json",
     "specs/016-contained-source-tools/evidence/recovery-extension-01.json",
     "specs/016-contained-source-tools/evidence/quality-diagnosis-02.json",
-    "specs/016-contained-source-tools/evidence/workflow-transition-028-extension-diagnosis.json"
+    "specs/016-contained-source-tools/evidence/disposal-correction-focused-result-01.json",
+    "specs/016-contained-source-tools/evidence/convergence-result-04.json",
+    "specs/016-contained-source-tools/evidence/story-lookback-03.json",
+    "specs/016-contained-source-tools/evidence/workflow-transition-030-disposal-convergence-accept.json"
   ],
   "definition_author": {
     "escalation_decision_id": null,
@@ -90,10 +92,10 @@
   },
   "lookback": {
     "evidence": {
-      "path": "specs/016-contained-source-tools/evidence/story-lookback-02.json",
-      "sha256": "f32fd3b4cc525fec0f2def38a252e18d9db7e17cdf50f6cba8553821344616e6"
+      "path": "specs/016-contained-source-tools/evidence/story-lookback-03.json",
+      "sha256": "e3c7f4ebc74177b93c6ecc77ae808da4d40cc0f06d933a972af58831e54ade84"
     },
-    "status": "invalidated"
+    "status": "current"
   },
   "preflight": {
     "branch": "(detached-native-handoff)",
@@ -103,7 +105,7 @@
     "status_sha256": "811e45acb3329b898a1a92b4bc69e9a8b9fb70ef8e97a5beba0dacd2c4ca0a74"
   },
   "recovery": {
-    "action": "correct",
+    "action": "proceed",
     "closing_gate": "verify",
     "diagnosis": {
       "at_count": 4,
@@ -124,15 +126,15 @@
     "pause_at": 6
   },
   "resume": {
-    "evidence_path": "specs/016-contained-source-tools/evidence/implementation-correction-02.json",
-    "reason": "QR-18.1-03 has qualified RED and final 119-test GREEN evidence; bind a current focused check, then reconverge.",
-    "stage": "implement"
+    "evidence_path": "specs/016-contained-source-tools/evidence/story-lookback-03.json",
+    "reason": "The disposal correction reconverged and lookback-03 is current; run fresh independent quality review.",
+    "stage": "quality-review"
   },
   "schema_version": "3.1",
-  "stage": "implement",
+  "stage": "quality-review",
   "transition_head": {
-    "path": "specs/016-contained-source-tools/evidence/workflow-transition-028-extension-diagnosis.json",
-    "sha256": "a22e2b45251da3bf196d2831d6fec1fb86b5362e2aff25e6eb55144dcd89ed6d"
+    "path": "specs/016-contained-source-tools/evidence/workflow-transition-030-disposal-convergence-accept.json",
+    "sha256": "e195b9b39f3dca1a6ff04134ead98af441aca1c4def7c610ef203a1ff73219e0"
   },
-  "updated_at": "2026-09-28T11:29:29.2673677Z"
+  "updated_at": "2026-09-28T11:39:48.4371352Z"
 }
