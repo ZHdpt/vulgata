@@ -32,7 +32,7 @@ verification before reuse.
   September 27; [October release epics](../bmad/planning-artifacts/october-release-epics.md)
   owns their scoped requirements and definitions, routed from the canonical epic index.
   Tracker refreshes require both epic files. Story 13.1 is done. October Story 18.4
-  is active for definition/planning only in `specs/016-october-batch-setup`; its
+  is active for definition/planning only in `specs/017-october-batch-setup`; its
   corrected architecture plan has raw independent plan-only ACCEPT, but no tasks or
   implementation authority. Story 18.1 is actively implemented in another assigned
   worktree and is not integrated or verified in this checkout; this checkout retains
@@ -45,7 +45,7 @@ verification before reuse.
   prior conflicting rules; it does not claim maintainer PR review/merge.
 
 Story 18.4 is the only feature activated in this checkout after the workflow
-installation. Its `specs/016-october-batch-setup` state stops before tasks: prepared
+installation. Its `specs/017-october-batch-setup` state stops before tasks: prepared
 source identity/grant/tool seams remain dependent on an integrated, verified Story
 18.1 baseline and mandatory reconciliation/review. Story 13.1's
 `specs/015-retained-source-access` plan, state and evidence are completed history;

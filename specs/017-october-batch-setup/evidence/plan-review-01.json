@@ -1,6 +1,6 @@
 {
   "observed_after": {
-    "path": "specs/016-october-batch-setup/evidence/transitions/transition-0001-activation.json",
+    "path": "specs/017-october-batch-setup/evidence/transitions/transition-0001-activation.json",
     "sha256": "6c3cc954beb1daf8a504bcfa4db8e1ab6701c846f2b1692333da1f50aa4dfb30"
   },
   "raw_result": {
@@ -13,33 +13,33 @@
       "candidate_commit": null,
       "diff_sha256": "965ad012793864dc349cc5319ac8bedab5971ef553a282e70f1dffb169a4d8bd",
       "artifact_hashes": {
-        "specs/016-october-batch-setup/spec.md": "4783bf9004471a254d4b40837daea4fc79fe8244a4dea1882f076f4778a7ea26",
-        "specs/016-october-batch-setup/plan.md": "3e3e0916eaf1cd7497772bca7bf2c8b4c5eb99f48ffeee43a2fd77238fa95b95",
-        "specs/016-october-batch-setup/research.md": "c68856acdb0ea1046eac91163e79bcf4627c572e7dac99a0dd0df5fac5e48b95",
-        "specs/016-october-batch-setup/data-model.md": "722d4edcf93e5c49d066b7b29b754411be8bdb71f95fac63013b8bcd83890fad",
-        "specs/016-october-batch-setup/quickstart.md": "9c9734e9357ee6f9eaf4ad58c882b0010d8bc2f359a843e5f720e46917c2e013",
-        "specs/016-october-batch-setup/contracts/batch-setup-selection.md": "0ff6f068fe110e35e05eae68a93110607f346736fb9d00650d6cb473afa2370d",
-        "specs/016-october-batch-setup/contracts/provider-binding.md": "297df34e85b5c0e744c7ce803d0295857dfc28d5c276be295c5640b2ad321802"
+        "specs/017-october-batch-setup/spec.md": "4783bf9004471a254d4b40837daea4fc79fe8244a4dea1882f076f4778a7ea26",
+        "specs/017-october-batch-setup/plan.md": "3e3e0916eaf1cd7497772bca7bf2c8b4c5eb99f48ffeee43a2fd77238fa95b95",
+        "specs/017-october-batch-setup/research.md": "c68856acdb0ea1046eac91163e79bcf4627c572e7dac99a0dd0df5fac5e48b95",
+        "specs/017-october-batch-setup/data-model.md": "722d4edcf93e5c49d066b7b29b754411be8bdb71f95fac63013b8bcd83890fad",
+        "specs/017-october-batch-setup/quickstart.md": "9c9734e9357ee6f9eaf4ad58c882b0010d8bc2f359a843e5f720e46917c2e013",
+        "specs/017-october-batch-setup/contracts/batch-setup-selection.md": "0ff6f068fe110e35e05eae68a93110607f346736fb9d00650d6cb473afa2370d",
+        "specs/017-october-batch-setup/contracts/provider-binding.md": "297df34e85b5c0e744c7ce803d0295857dfc28d5c276be295c5640b2ad321802"
       },
       "owned_paths": [
-        "specs/016-october-batch-setup/spec.md",
-        "specs/016-october-batch-setup/plan.md",
-        "specs/016-october-batch-setup/research.md",
-        "specs/016-october-batch-setup/data-model.md",
-        "specs/016-october-batch-setup/quickstart.md",
-        "specs/016-october-batch-setup/contracts/batch-setup-selection.md",
-        "specs/016-october-batch-setup/contracts/provider-binding.md"
+        "specs/017-october-batch-setup/spec.md",
+        "specs/017-october-batch-setup/plan.md",
+        "specs/017-october-batch-setup/research.md",
+        "specs/017-october-batch-setup/data-model.md",
+        "specs/017-october-batch-setup/quickstart.md",
+        "specs/017-october-batch-setup/contracts/batch-setup-selection.md",
+        "specs/017-october-batch-setup/contracts/provider-binding.md"
       ]
     },
     "reviewed_artifacts": [
       "docs/bmad/planning-artifacts/october-release-epics.md",
-      "specs/016-october-batch-setup/spec.md",
-      "specs/016-october-batch-setup/plan.md",
-      "specs/016-october-batch-setup/research.md",
-      "specs/016-october-batch-setup/data-model.md",
-      "specs/016-october-batch-setup/quickstart.md",
-      "specs/016-october-batch-setup/contracts/batch-setup-selection.md",
-      "specs/016-october-batch-setup/contracts/provider-binding.md",
+      "specs/017-october-batch-setup/spec.md",
+      "specs/017-october-batch-setup/plan.md",
+      "specs/017-october-batch-setup/research.md",
+      "specs/017-october-batch-setup/data-model.md",
+      "specs/017-october-batch-setup/quickstart.md",
+      "specs/017-october-batch-setup/contracts/batch-setup-selection.md",
+      "specs/017-october-batch-setup/contracts/provider-binding.md",
       ".specify/memory/constitution.md",
       "docs/bmad/planning-artifacts/architecture/ARCHITECTURE-SPINE.md",
       "docs/bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md"
@@ -49,7 +49,7 @@
         "id": "P-18.4-01",
         "severity": "HIGH",
         "category": "Authorization boundary",
-        "artifact": "specs/016-october-batch-setup/plan.md",
+        "artifact": "specs/017-october-batch-setup/plan.md",
         "location": "ID-R01 and ID-I01, lines 54 and 60; shared contract lines 7–9",
         "affected_requirement": "FR-001, FR-002; Story 18.4 first acceptance criterion",
         "evidence": "The shared request carries an 'authenticated operator subject' and an 'authorized owned target reference,' while the contract says unnamed authorities validate them. It does not establish how either host obtains a non-forgeable operator identity, which authority proves an owned database target, or how permission is decided for a standalone Repository. Current IUserContext is Web request oriented; database reachability does not prove ownership. Those are consequential trust decisions for the generator/Web shared port and can be resolved independently of Story 18.1 source grants.",

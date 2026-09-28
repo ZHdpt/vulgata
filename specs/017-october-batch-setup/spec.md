@@ -1,6 +1,6 @@
 # Feature Specification: Owned October Batch Setup
 
-**Feature Branch**: `detached-managed-worktree` (assigned worktree; feature path is `specs/016-october-batch-setup`)
+**Feature Branch**: `detached-managed-worktree` (assigned worktree; feature path is `specs/017-october-batch-setup`)
 
 **Created**: 2026-09-28
 

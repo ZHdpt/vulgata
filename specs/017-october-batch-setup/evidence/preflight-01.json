@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0",
   "story_key": "18-4-prepare-an-owned-october-batch-with-valid-context-and-provid",
-  "feature_directory": "specs/016-october-batch-setup",
+  "feature_directory": "specs/017-october-batch-setup",
   "observed_at": "2026-09-28T08:39:49.4375537Z",
   "repository_root": "C:/Users/13728/.codex/worktrees/d166/vulgata",
   "git_common_directory": "G:/source/repos/vulgata/.git",
@@ -17,7 +17,7 @@
       ".specify/feature.json",
       "docs/bmad/implementation-artifacts/18-4-prepare-an-owned-october-batch-with-valid-context-and-provid.md",
       "docs/bmad/implementation-artifacts/sprint-status.yaml",
-      "specs/016-october-batch-setup"
+      "specs/017-october-batch-setup"
     ],
     "preserved": [
       "Story 18.1's separate checkout, source-access implementation and source-identity/tool contracts",

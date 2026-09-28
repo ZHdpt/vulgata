@@ -1,0 +1,28 @@
+{
+  "schema_version": "1.0",
+  "kind": "analysis",
+  "story_key": "18-4-prepare-an-owned-october-batch-with-valid-context-and-provid",
+  "observed_at": "2026-09-28T15:35:41.0943864Z",
+  "source_commit": "30936b949f05f98156dda0cc6f1093942b45ce4d",
+  "user_direction": "Rename the current spec folder to 017 because another runner has occupied 016, and assess whether Git history also needs rewriting.",
+  "old_feature_directory": "specs/016-october-batch-setup",
+  "new_feature_directory": "specs/017-october-batch-setup",
+  "reason": "Remove the live sequential feature-number collision before integration with the other runner.",
+  "history_disposition": "Preserve existing commits and add a normal rename/correction commit. Git merges operate on current trees and rename detection; rewriting detached checkpoint commits would change commit identities, complicate integration and remove stable provenance without preventing ordinary content conflicts.",
+  "content_disposition": "Specification and plan semantics are unchanged. Only the feature number/path labels, repository-relative evidence references and their dependent SHA-256 bindings were mechanically updated.",
+  "recovery_disposition": "The existing recovery episode, one failed result, retained author profile, gate statuses and Story 18.1 dependency hold are preserved without reset.",
+  "original_checkpoint_commits": [
+    "f693f2c575a2e8357ba5b74e8d7b89f0cb52776f",
+    "acc74c515d269ca4f3dc1ae83d7af59295a2632e",
+    "30936b949f05f98156dda0cc6f1093942b45ce4d"
+  ],
+  "rebound_hashes": {
+    "spec": {"before": "4783bf9004471a254d4b40837daea4fc79fe8244a4dea1882f076f4778a7ea26", "after": "5ef331c74a347962aaa783abbcbb274798837987199ed5084d85678a31a3e146"},
+    "plan": {"before": "66159f37dd60c6ea2a566692808ed1e2929bc792188646ce4b48695cd09e0270", "after": "9ad9c7ef49ec2ee390669f9d8b5fb0e096390f183b4691fac3e2f506611d800c"},
+    "plan_review_01": {"before": "f7b5cf535475d869aeb8d64308f54b61b30e5774b8ace02b88d5be6710c987ef", "after": "19ba31f3ce5bad1a5629d7cf45523da7bb32856cc43e118d602aab1a83bf45e7"},
+    "transition_0002": {"before": "bb92eb88c31a84b76cb0718065a160b3521451d3c8722331a3cec20a14e94f36", "after": "839e0a082522916b717caf03b95bf51901f2c311e42a664f8b4e59c6d82c8dba"},
+    "plan_correction_self_review_01": {"before": "871d1cac58a231ed154e9f556bdb1f02bc407b578685c25570f329e72dca7e96", "after": "ebb4be3ca3f99f102e7d8a19771dc35afdebab0907ec076fd863fac1d09bd97e"},
+    "transition_0003": {"before": "ed6e326ecfd71bc78251b7239ff0e97e00dbc9f2742b7f909af9af9e187e9135", "after": "f26b47cb2b767c5945847738439ec93a723c5ee8bfccb9b327eab682838f5071"},
+    "plan_review_02": {"before": "8a03bb46ce8dce552738c810451cdf8ebbeeafe86a2d82c394cc2f3505b0254d", "after": "bf73422da703006ed136a9be053d1b4fcd6158a9b49cf9c5480e0db2657bb494"}
+  }
+}

@@ -5,7 +5,7 @@ governed_delivery_reason: Adds a dedicated October persistence boundary and a sh
 
 # Implementation Plan: Owned October Batch Setup
 
-**Branch**: `016-october-batch-setup` (feature selector in an assigned detached managed worktree) | **Date**: 2026-09-28 | **Spec**: [spec.md](spec.md)
+**Branch**: `017-october-batch-setup` (feature selector in an assigned detached managed worktree) | **Date**: 2026-09-28 | **Spec**: [spec.md](spec.md)
 
 **Input**: October Story 18.4. Definition and planning only. Completion dependency 18.1 remains unverified in this worktree; no tasks or implementation follow this plan until integration and reconciliation.
 
@@ -141,7 +141,7 @@ This plan changes a shared persistence boundary and generator/Web selection cont
 ### Documentation (this feature)
 
 ```text
-specs/016-october-batch-setup/
+specs/017-october-batch-setup/
   spec.md
   plan.md
   research.md

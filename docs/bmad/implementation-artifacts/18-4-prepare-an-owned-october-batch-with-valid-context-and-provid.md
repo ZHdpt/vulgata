@@ -1,8 +1,8 @@
 # Story 18.4 development record
 
 Status: in-progress (definition and planning only)
-Feature directory: `specs/016-october-batch-setup`
-Workflow state: `specs/016-october-batch-setup/workflow-state.json`
+Feature directory: `specs/017-october-batch-setup`
+Workflow state: `specs/017-october-batch-setup/workflow-state.json`
 
 ## Lifecycle story
 
@@ -60,10 +60,10 @@ Definition and plan authoring may proceed using only accepted repository authori
 
 ## Specification result
 
-- The persistent definition author completed `specs/016-october-batch-setup/spec.md` and its requirements checklist. Root verified the returned hashes and the checklist's complete result.
+- The persistent definition author completed `specs/017-october-batch-setup/spec.md` and its requirements checklist. Root verified the returned hashes and the checklist's complete result.
 - The specification makes owned setup, exact database/batch selection, context provenance/conflicts, provider-role binding and October/ordinary isolation independently plannable.
 - FR-011, SC-006 and the Prepared Source Binding entity keep Repository/root/source identity, source grant and contained read-only tool binding explicitly dependent on Story 18.1. They do not define or claim those contracts.
-- Specification self-review: `specs/016-october-batch-setup/evidence/spec-self-review-01.json`.
+- Specification self-review: `specs/017-october-batch-setup/evidence/spec-self-review-01.json`.
 - No application/test/runtime/provider/database work occurred. The optional agent-context hook was not run because the stage write boundary excluded it.
 
 ## Architecture plan result
@@ -73,7 +73,7 @@ Definition and plan authoring may proceed using only accepted repository authori
 - Ordinary Web Identity/domain composition and migrations remain separate and unchanged. No new package, generator executable, CRUD UI, provider/database execution, source/test/migration edit or task is introduced by planning.
 - Plan IDs `ID-I04`, `ID-L03` and `ID-T04` reserve the prepared-source adapter, reuse and verification seams for the actual integrated 18.1 contracts. They deliberately leave contract names, storage shape, cardinality and grant semantics unspecified.
 - Deterministic plan-content validation passed the architecture front matter, required headings and stable ID shapes. All specification requirements and success criteria map to design IDs or the explicit 18.1 hold.
-- Plan self-review: `specs/016-october-batch-setup/evidence/plan-self-review-01.json`.
+- Plan self-review: `specs/017-october-batch-setup/evidence/plan-self-review-01.json`.
 - The architecture classification requires independent plan-only review. Current plan content does not itself establish an AGENTS.md Worker-tool, Scan-strategy or PRD-change authorization trigger; root and reviewer must reassess after 18.1 reconciliation.
 - The optional provider-source preference remains nonblocking: the draft uses one explicitly supplied, source-neutral configuration bundle per process, with no unspecified `.env` discovery or protected-row copy.
 
@@ -82,7 +82,7 @@ Definition and plan authoring may proceed using only accepted repository authori
 - Plan review 01 returned `REVISE` with one HIGH plan-owned finding: the first draft named an authenticated operator and owned target but did not define non-forgeable authority sources for October Web and the future headless generator. The recovery episode retains one failed result; no production started.
 - The retained architecture plan owner corrected the seam. Existing Web Identity and live `ManagementAccess` issue a short-lived, purpose-bound activation grant; October Web verifies it locally and the generator validates it through Web. Deployment-owned allowlists map opaque target IDs to canonical database descriptors, both hosts verify connected database identity before October migration/setup, and protected use repeats live authorization. Standalone Repository setup requires current management authority and a real `SystemId == null` Repository. This setup grant remains separate from Story 18.1 source grants.
 - Plan review 02 independently returned `ACCEPT` with no findings and confirmed the architecture classification, design IDs, corrected trust boundary, testability, absence of a current Worker-tool/Scan-strategy/PRD planned-change trigger, and continued 18.1 hold.
-- The raw accepted plan verdict is preserved at `specs/016-october-batch-setup/evidence/plan-review-02.json`. The complete-definition recovery episode cannot close until tasks and the later full definition review exist. Because the user prohibited task generation in this run, workflow state remains before tasks and no planned-change authorization or implementation approval is requested.
+- The raw accepted plan verdict is preserved at `specs/017-october-batch-setup/evidence/plan-review-02.json`. The complete-definition recovery episode cannot close until tasks and the later full definition review exist. Because the user prohibited task generation in this run, workflow state remains before tasks and no planned-change authorization or implementation approval is requested.
 
 ## Ready boundary and required resume
 
@@ -98,6 +98,14 @@ Definition and plan authoring may proceed using only accepted repository authori
 
 ## Workflow bookkeeping
 
-- Activation transition: `specs/016-october-batch-setup/evidence/transitions/transition-0001-activation.json`.
-- Preflight: `specs/016-october-batch-setup/evidence/preflight-01.json`.
+- Activation transition: `specs/017-october-batch-setup/evidence/transitions/transition-0001-activation.json`.
+- Preflight: `specs/017-october-batch-setup/evidence/preflight-01.json`.
 - Activation checkpoint will include only lifecycle/definition setup records; specification and plan follow under their own governed stage evidence.
+
+## Feature directory relocation
+
+- On 2026-09-28 the user reported that another runner had occupied sequential feature number `016` and directed this feature to move to `017`.
+- The live feature mapping is now `specs/017-october-batch-setup`. Specification and plan semantics, recovery count, author ownership, raw review outcomes and the Story 18.1 hold are unchanged.
+- Repository-relative evidence paths and their dependent hashes were mechanically rebound. The original exact bytes remain recoverable in commits `f693f2c5`, `acc74c51` and `30936b94`; relocation evidence is `specs/017-october-batch-setup/evidence/feature-directory-relocation-01.json`.
+- Existing Git history was not rewritten. A normal rename commit is safer for later merge/rebase because it preserves stable commit identities and lets Git apply rename detection against the other runner's current tree. History rewriting would not remove ordinary overlapping-content conflicts and would make shared checkpoint references stale.
+- Pending relocation checkpoint: `bmad-18-4-feature-relocation-20260928T153541Z-d166`.
