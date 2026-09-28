@@ -22,7 +22,7 @@
     },
     "tasks": {
       "path": "specs/016-contained-source-tools/tasks.md",
-      "sha256": "704204445766c907771a785c510836801efe08d2e55f08096d39528437516c9a"
+      "sha256": "b345d7322f8777d8fda77a153c48af954e7ed18a185cf648f8c309ef0d0a8a1b"
     }
   },
   "gates": {
@@ -58,20 +58,21 @@
     "specs/016-contained-source-tools/evidence/definition-review-result-03.json",
     "specs/016-contained-source-tools/evidence/workflow-transition-015-issuer-seam-plan-review-accept.json",
     "specs/016-contained-source-tools/evidence/implementation-approval-02.json",
+    "specs/016-contained-source-tools/evidence/implementation-verification-01.json",
     "specs/016-contained-source-tools/evidence/workflow-transition-001-activation.json"
   ],
   "checkpoint": {
-    "checkpoint_id": "bmad-18-1-agent-seam-correction-20260928T082340Z-4d1b8e",
-    "stage": "definition-review",
+    "checkpoint_id": "bmad-18-1-implement-20260928T093850Z-7c91af",
+    "stage": "implement",
     "commit_sha": null,
     "binding_status": "pending"
   },
   "resume": {
-    "stage": "implement",
-    "reason": "The corrected Agent function seam and tasks are independently accepted; existing approvals are rebound to unchanged scope, so resume T016 behavioral RED.",
-    "evidence_path": "specs/016-contained-source-tools/evidence/definition-review-result-04.json"
+    "stage": "converge",
+    "reason": "All 26 accepted tasks are complete with final prepared-source verification; selected retained-source regressions are explicitly blocked on their owned PostgreSQL administrator prerequisite.",
+    "evidence_path": "specs/016-contained-source-tools/evidence/implementation-verification-01.json"
   },
-  "updated_at": "2026-09-28T08:23:40.6628207Z",
+  "updated_at": "2026-09-28T09:38:50.6460932Z",
   "recovery": {
     "action": "proceed",
     "closing_gate": "verify",
