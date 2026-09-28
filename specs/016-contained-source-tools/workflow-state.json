@@ -33,15 +33,15 @@
   "bmad_story_key": "18-1-access-prepared-source-through-contained-read-only-tools",
   "checkpoint": {
     "binding_status": "pending",
-    "checkpoint_id": "bmad-18-1-quality-correction-20260928T101721Z-f4912c",
+    "checkpoint_id": "bmad-18-1-quality-candidate-20260928T102801Z-8a604e",
     "commit_sha": null,
-    "stage": "implement"
+    "stage": "lookback"
   },
   "convergence": {
-    "attempt": 1,
-    "outcome": "pending",
-    "report_path": "specs/016-contained-source-tools/evidence/convergence-result-02.json",
-    "status": "invalidated"
+    "attempt": 2,
+    "outcome": "converged",
+    "report_path": "specs/016-contained-source-tools/evidence/convergence-result-03.json",
+    "status": "accepted"
   },
   "current_evidence_paths": [
     "docs/bmad/implementation-artifacts/18-1-access-prepared-source-through-contained-read-only-tools.md",
@@ -49,11 +49,13 @@
     "specs/016-contained-source-tools/evidence/definition-review-result-04.json",
     "specs/016-contained-source-tools/evidence/plan-authorization-01.json",
     "specs/016-contained-source-tools/evidence/implementation-approval-02.json",
-    "specs/016-contained-source-tools/evidence/implementation-verification-01.json",
     "specs/016-contained-source-tools/evidence/quality-review-result-01.json",
     "specs/016-contained-source-tools/evidence/quality-diagnosis-01.json",
-    "specs/016-contained-source-tools/evidence/workflow-transition-023-quality-diagnosis.json",
-    "specs/016-contained-source-tools/evidence/implementation-correction-01.json"
+    "specs/016-contained-source-tools/evidence/implementation-correction-01.json",
+    "specs/016-contained-source-tools/evidence/quality-correction-focused-result-01.json",
+    "specs/016-contained-source-tools/evidence/convergence-result-03.json",
+    "specs/016-contained-source-tools/evidence/story-lookback-02.json",
+    "specs/016-contained-source-tools/evidence/workflow-transition-025-correction-convergence-accept.json"
   ],
   "definition_author": {
     "escalation_decision_id": null,
@@ -83,10 +85,10 @@
   },
   "lookback": {
     "evidence": {
-      "path": "specs/016-contained-source-tools/evidence/story-lookback-01.json",
-      "sha256": "bf4de3a284136d2a5c0df28f2e7bf5b21de2bdbfaabbc77f0a09a561b248858e"
+      "path": "specs/016-contained-source-tools/evidence/story-lookback-02.json",
+      "sha256": "f32fd3b4cc525fec0f2def38a252e18d9db7e17cdf50f6cba8553821344616e6"
     },
-    "status": "invalidated"
+    "status": "current"
   },
   "preflight": {
     "branch": "(detached-native-handoff)",
@@ -96,7 +98,7 @@
     "status_sha256": "811e45acb3329b898a1a92b4bc69e9a8b9fb70ef8e97a5beba0dacd2c4ca0a74"
   },
   "recovery": {
-    "action": "correct",
+    "action": "proceed",
     "closing_gate": "verify",
     "diagnosis": {
       "at_count": 3,
@@ -117,15 +119,15 @@
     "pause_at": 4
   },
   "resume": {
-    "evidence_path": "specs/016-contained-source-tools/evidence/implementation-correction-01.json",
-    "reason": "Both diagnosed quality findings have honest RED and final 117-test GREEN evidence; rerun convergence on the corrected boundary.",
-    "stage": "converge"
+    "evidence_path": "specs/016-contained-source-tools/evidence/story-lookback-02.json",
+    "reason": "The corrected boundary reconverged and the refreshed lookback is current; run fresh independent quality review.",
+    "stage": "quality-review"
   },
   "schema_version": "3.1",
-  "stage": "implement",
+  "stage": "quality-review",
   "transition_head": {
-    "path": "specs/016-contained-source-tools/evidence/workflow-transition-023-quality-diagnosis.json",
-    "sha256": "c7b7fb27673c0b4d5d82123297dd00e4b44ac6be12e7707647b9e3fd370f8b15"
+    "path": "specs/016-contained-source-tools/evidence/workflow-transition-025-correction-convergence-accept.json",
+    "sha256": "a1c82193e7ec5890a970a21d7f8d8e98a5d92031e60102670dcdb05bc5cf8b2e"
   },
-  "updated_at": "2026-09-28T10:17:21.3216611Z"
+  "updated_at": "2026-09-28T10:28:01.1713868Z"
 }

@@ -1,6 +1,6 @@
 # Story 18.1 development record
 
-Status: in-progress
+Status: review
 Feature directory: specs/016-contained-source-tools
 Workflow state: specs/016-contained-source-tools/workflow-state.json
 
@@ -77,8 +77,8 @@ The retained test owner observed both intended REDs: nested listing returned `In
 
 ## Story Lookback
 
-Story 18.1 converged without additional implementation tasks. Its contained list, range-read and literal-search boundary is covered through the accepted public issuer/context/function seams, including live authority loss, Windows no-follow containment, bounded disclosure, cancellation and resource settlement. The direct controlled evidence remains deliberately narrower than real Worker/model/provider integration.
+Story 18.1 reconverged without additional implementation tasks after quality review exposed and corrected two behavioral gaps. Nested directories are now listed through the held-root no-follow traversal, and range reads now reject observed same-length metadata drift before disclosure. The contained list, range-read and literal-search boundary is covered through the accepted public issuer/context/function seams, including live authority loss, Windows no-follow containment, bounded disclosure, cancellation and resource settlement. The final controlled correction suite passed 117/117 with no skips; this evidence remains deliberately narrower than real Worker/model/provider integration or immutable snapshot behavior.
 
 One reusable definition lesson was promoted to `docs/project-lessons.md`: before behavioral TDD begins, every planned public production seam that tests must call needs a concrete callable construction and invocation shape. This story discovered that omission twice—first at the trusted issuer and then at the Agent function factory—before test authors invented an API. No canonical PRD, architecture or glossary synchronization is required because both corrections clarified already-approved scope without changing product intent.
 
-The PostgreSQL-backed retained-source regression subset remains a nonblocking qualification prerequisite: `VULGATA_STORY131_POSTGRES_ADMIN` was absent, so those tests were neither passed nor treated as product failures. This limitation is retained in `specs/016-contained-source-tools/evidence/implementation-verification-01.json`; it does not weaken the 115 passing direct prepared-source tests or claim unchanged Git-bound behavior was requalified in this checkout.
+The PostgreSQL-backed retained-source regression subset remains a nonblocking qualification prerequisite: `VULGATA_STORY131_POSTGRES_ADMIN` was absent, so those tests were neither passed nor treated as product failures. This limitation is retained in `specs/016-contained-source-tools/evidence/implementation-verification-01.json`; it does not weaken the 117 passing direct prepared-source tests or claim unchanged Git-bound behavior was requalified in this checkout. No further reusable lesson or canonical PRD/architecture/glossary synchronization was identified by the correction.
