@@ -1,0 +1,54 @@
+{
+  "schema_version": "3.1",
+  "bmad_story_key": "18-1-access-prepared-source-through-contained-read-only-tools",
+  "bmad_epic_key": "epic-18",
+  "feature_directory": "specs/016-contained-source-tools",
+  "stage": "plan",
+  "preflight": {
+    "branch": "(detached-native-handoff)",
+    "head": "0c0bf0cfb05edc5b28a346d8f3a63002d1e781ef",
+    "git_identity_sha256": "70fd67001872ef254ed52a93c4071cef6cb3751dd230e67e97213d3c2133be26",
+    "status_sha256": "811e45acb3329b898a1a92b4bc69e9a8b9fb70ef8e97a5beba0dacd2c4ca0a74",
+    "observed_at": "2026-09-28T03:33:29.3096814Z"
+  },
+  "artifacts": {
+    "spec": {
+      "path": "specs/016-contained-source-tools/spec.md",
+      "sha256": "48c92e4f6582471a1664e553b48756a811f22bb2b4f1334206e94303629b0b6d"
+    },
+    "plan": null,
+    "tasks": null
+  },
+  "gates": {
+    "plan-review": {"status": "pending", "attempt": 0, "verdict_path": null},
+    "definition-review": {"status": "pending", "attempt": 0, "verdict_path": null},
+    "quality-review": {"status": "pending", "attempt": 0, "verdict_path": null}
+  },
+  "approvals": [],
+  "convergence": {"status": "pending", "attempt": 0, "outcome": "pending", "report_path": null},
+  "e2e": {"result": "pending", "decision_path": null},
+  "current_evidence_paths": [
+    "docs/bmad/implementation-artifacts/18-1-access-prepared-source-through-contained-read-only-tools.md",
+    "specs/016-contained-source-tools/evidence/spec-self-review-01.json",
+    "specs/016-contained-source-tools/evidence/workflow-transition-001-activation.json"
+  ],
+  "checkpoint": {
+    "checkpoint_id": "bmad-18-1-context-20260928T034100Z-7f2ba2",
+    "stage": "context",
+    "commit_sha": null,
+    "binding_status": "pending"
+  },
+  "resume": {
+    "stage": "plan",
+    "reason": "Specification self-review passed; continue with the retained definition author for plan only.",
+    "evidence_path": "specs/016-contained-source-tools/evidence/spec-self-review-01.json"
+  },
+  "updated_at": "2026-09-28T03:41:00.7806581Z",
+  "recovery": null,
+  "definition_author": {"profile": "definition-author", "escalation_decision_id": null},
+  "transition_head": {
+    "path": "specs/016-contained-source-tools/evidence/workflow-transition-001-activation.json",
+    "sha256": "44abaa6ec786fd88f63f65674aa174b8811365db162c727f2a51a7f4106687fb"
+  },
+  "lookback": {"status": "pending", "evidence": null}
+}
