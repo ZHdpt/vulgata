@@ -15,7 +15,7 @@ dotnet build src/dotnet/Vulgata.Web/Vulgata.Web.csproj
 dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --filter FullyQualifiedName~PreparedSource
 ```
 
-The test suite must invoke the production trusted issuer and Core read/current-authority interfaces, then the Agent tool facade. It should prove a valid approved batch/Repository/subject/purpose/root binding, live rechecks, no model root selector, finite caps, correct relative locations and sanitized errors. Agent wrapper/schema tests must reject unknown fields, writes and commands. A direct test must work without database/model/tool readiness.
+The test suite must construct public `Vulgata.Infrastructure.Source.PreparedSourceContextIssuer` with the fixture's `IPreparedSourceCurrentAuthorityVerifier`, call `IssueAsync(PreparedSourceGrantRequest, CancellationToken)` and assert `PreparedSourceIssueResult` status/context invariants before invoking the Core read context and Agent tool facade. Cover approved exact tuple, missing verifier, absent/mismatched/unavailable approval, malformed grant, unavailable root, cancellation and cleanup; failed issuance returns no context or host-path detail. It should then prove live rechecks, no model root selector, finite caps, correct relative locations and sanitized errors. Agent wrapper/schema tests reject unknown fields, writes and commands. Direct tests work without database/model/tool readiness.
 
 ## Behavior scenarios
 

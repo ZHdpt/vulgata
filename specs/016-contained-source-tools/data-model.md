@@ -18,6 +18,8 @@ These are transient contract values, not database entities. See [contracts/prepa
 
 An open grant is immutable in scope: neither operation arguments nor a continuation can change its batch, Repository, subject, purpose, approval/root-binding identity or root. Its approval is not assumed immortal: the injected current-authority verifier returns the present approval binding, revoked or unavailable for that exact tuple. Issuance and every operation use this seam without requiring a database; an in-memory adapter supplies direct tests. There is no persisted grant, tree hash or source-version entity.
 
+Trusted issuance is a separate public Infrastructure result from a Worker read result. `PreparedSourceContextIssuer(IPreparedSourceCurrentAuthorityVerifier)` accepts the existing `PreparedSourceGrantRequest` through `IssueAsync(request, cancellationToken)` and returns `PreparedSourceIssueResult(Status, Context)`. `Issued` has exactly one nonnull `IPreparedSourceReadContext`; `Denied`, `AuthorityUnavailable`, `RootUnavailable`, `UnsupportedPlatform`, `Cancelled` and `DeadlineExceeded` have null context and sanitized status only. The issuer closes a root handle acquired before any failure. Missing verifier is a construction error, never an implicit approval.
+
 ## Canonical source location
 
 `repositoryId` plus a `/`-separated path relative to the granted root. A root listing uses the empty path; file operations require a nonempty path. Paths reject absolute/drive/UNC forms, empty or dot segments, backslashes, NUL, Windows alternate streams, device aliases and invalid platform names. A read location adds `[byteStart, byteEndExclusive)`; a search match adds zero-based byte start/length and 1-based line/Unicode-scalar column. Physical host paths never appear.

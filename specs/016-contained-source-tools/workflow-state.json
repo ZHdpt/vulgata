@@ -3,7 +3,7 @@
   "bmad_story_key": "18-1-access-prepared-source-through-contained-read-only-tools",
   "bmad_epic_key": "epic-18",
   "feature_directory": "specs/016-contained-source-tools",
-  "stage": "implementation-approval",
+  "stage": "implement",
   "preflight": {
     "branch": "(detached-native-handoff)",
     "head": "0c0bf0cfb05edc5b28a346d8f3a63002d1e781ef",
@@ -18,66 +18,79 @@
     },
     "plan": {
       "path": "specs/016-contained-source-tools/plan.md",
-      "sha256": "926982636796b020bc9f22af3aab52214ddfc809bfef9fdcabaf85b32637884e"
+      "sha256": "547b9cfab482494e81f182c19570f8af59e01055bd5b293f8a44e357abefdcff"
     },
     "tasks": {
       "path": "specs/016-contained-source-tools/tasks.md",
-      "sha256": "dcc72158a1a8ad029f492bd90e063399ce53bfa5c65990f7ac454f19ee377d20"
+      "sha256": "70d9cc0f033184be4d650ff72c49c6d9ba4ec8fb1405cf7e078707bd64555ca6"
     }
   },
   "gates": {
-    "plan-review": {"status": "accepted", "attempt": 2, "verdict_path": "specs/016-contained-source-tools/evidence/plan-review-result-04.json"},
-    "definition-review": {"status": "accepted", "attempt": 2, "verdict_path": "specs/016-contained-source-tools/evidence/definition-review-result-02.json"},
+    "plan-review": {"status": "accepted", "attempt": 3, "verdict_path": "specs/016-contained-source-tools/evidence/plan-review-result-07.json"},
+    "definition-review": {"status": "accepted", "attempt": 3, "verdict_path": "specs/016-contained-source-tools/evidence/definition-review-result-03.json"},
     "quality-review": {"status": "pending", "attempt": 0, "verdict_path": null}
   },
   "approvals": [
     {
       "decision_id": "18-1/plan-authorization/1",
       "status": "accepted",
-      "scope_sha256": "eeb09f8d4555533d3609cfb22cce9701cd2408456d4261d9801c3fea9013ac69",
+      "scope_sha256": "ae5b4407349ca9d5f04843d830e084a12361b1e0e83bc2f64bae9b4310622f3f",
       "evidence_path": "specs/016-contained-source-tools/evidence/plan-authorization-01.json",
       "decided_at": "2026-09-28T04:25:28.9936733Z"
     },
     {
       "decision_id": "18-1/implementation-approval/2",
-      "status": "pending",
-      "scope_sha256": "7dcd83a3a24d177125de53d05d7dbd6ee71be53090a41c2fef611329cfb9ac46",
+      "status": "accepted",
+      "scope_sha256": "52545dc5cdb63c841b0ccc203e90e02fa7f5bf8e8aeabf2aa44d30175c1fbfd1",
       "evidence_path": "specs/016-contained-source-tools/evidence/implementation-approval-02.json",
-      "decided_at": null
+      "decided_at": "2026-09-28T05:03:16.4560797Z"
     }
   ],
-  "convergence": {"status": "pending", "attempt": 0, "outcome": "pending", "report_path": null},
+  "convergence": {"status": "invalidated", "attempt": 0, "outcome": "pending", "report_path": null},
   "e2e": {"result": "pending", "decision_path": null},
   "current_evidence_paths": [
     "docs/bmad/implementation-artifacts/18-1-access-prepared-source-through-contained-read-only-tools.md",
     "specs/016-contained-source-tools/evidence/spec-self-review-01.json",
-    "specs/016-contained-source-tools/evidence/plan-self-review-01.json",
-    "specs/016-contained-source-tools/evidence/plan-review-result-04.json",
+    "specs/016-contained-source-tools/evidence/plan-correction-self-review-result-02.json",
+    "specs/016-contained-source-tools/evidence/plan-review-result-07.json",
     "specs/016-contained-source-tools/evidence/plan-authorization-01.json",
-    "specs/016-contained-source-tools/evidence/tasks-self-review-01.json",
-    "specs/016-contained-source-tools/evidence/tasks-revalidation-self-review-01.json",
-    "specs/016-contained-source-tools/evidence/definition-review-result-02.json",
-    "specs/016-contained-source-tools/evidence/workflow-transition-010-definition-review-accept.json",
+    "specs/016-contained-source-tools/evidence/tasks-correction-self-review-result-02.json",
+    "specs/016-contained-source-tools/evidence/definition-review-result-03.json",
+    "specs/016-contained-source-tools/evidence/workflow-transition-015-issuer-seam-plan-review-accept.json",
     "specs/016-contained-source-tools/evidence/implementation-approval-02.json",
     "specs/016-contained-source-tools/evidence/workflow-transition-001-activation.json"
   ],
   "checkpoint": {
-    "checkpoint_id": "bmad-18-1-definition-review-20260928T043922Z-a605ed",
+    "checkpoint_id": "bmad-18-1-definition-correction-20260928T060211Z-7cae31",
     "stage": "definition-review",
     "commit_sha": null,
     "binding_status": "pending"
   },
   "resume": {
-    "stage": "implementation-approval",
-    "reason": "The refreshed complete-definition review accepted the corrected immutable boundary; implementation awaits explicit scoped user approval.",
-    "evidence_path": "specs/016-contained-source-tools/evidence/implementation-approval-02.json"
+    "stage": "implement",
+    "reason": "The corrected issuer seam and tasks are independently accepted; existing plan and implementation approvals are rebound to the unchanged semantic scope, so resume T003 behavioral RED.",
+    "evidence_path": "specs/016-contained-source-tools/evidence/definition-review-result-03.json"
   },
-  "updated_at": "2026-09-28T04:58:13.6392219Z",
-  "recovery": null,
+  "updated_at": "2026-09-28T06:02:11.3091704Z",
+  "recovery": {
+    "action": "proceed",
+    "closing_gate": "verify",
+    "diagnosis": null,
+    "earliest_owner": "tasks",
+    "episode_id": "18-1/implementation/1",
+    "extension_decision_id": null,
+    "failed_results": 1,
+    "holds": [],
+    "last_result": {
+      "path": "specs/016-contained-source-tools/evidence/plan-review-result-05.json",
+      "sha256": "21f258e0e0543d4ceb74a20a3d5c993b846b098961644a45a8dd43b7c08c559e"
+    },
+    "pause_at": 4
+  },
   "definition_author": {"profile": "definition-author", "escalation_decision_id": null},
   "transition_head": {
-    "path": "specs/016-contained-source-tools/evidence/workflow-transition-010-definition-review-accept.json",
-    "sha256": "a6214331e7811697d4e97636961203b213a1dd8b502252cb408934ad00b5aa51"
+    "path": "specs/016-contained-source-tools/evidence/workflow-transition-015-issuer-seam-plan-review-accept.json",
+    "sha256": "f158b173434b0b2fb28bb4f1d441a62ea26a81814d4728d0fb7a316d3156c951"
   },
   "lookback": {"status": "invalidated", "evidence": null}
 }

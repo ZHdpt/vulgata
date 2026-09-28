@@ -6,6 +6,32 @@ This is the Story 18.1 Worker-facing contract for an application-issued prepared
 
 The trusted application composition supplies an approved batch ID, Repository ID, subject, Worker-source-read purpose, opaque approval/root-binding identity, operator label and physical prepared-directory root to Infrastructure. An injected current-authority verifier checks that exact tuple at issuance and throughout every operation; it returns current matching approval, revoked/changed approval, or unavailable. A missing verifier or unavailable approval fails issuance closed; an unconditional production allow adapter is not permitted. Infrastructure opens/validates the root and issues one context with configured caps/deadline. The root path and operating-system handles remain private there. The Agent receives only this context through injection; no model-visible field or function can open/replace a grant. Story 18.1 directly qualifies issuance and calls using a controllable in-memory verifier, without database, batch management or model/provider dispatch. Future setup/integration owners may supply the production approval source; they cannot broaden this contract through tool arguments.
 
+The accepted public callable issuer seam is one concrete Infrastructure module; no extra Core issuer interface is required. Application composition and public-seam tests use the following type shape in namespace `Vulgata.Infrastructure.Source`:
+
+```csharp
+public sealed class PreparedSourceContextIssuer
+{
+    public PreparedSourceContextIssuer(
+        IPreparedSourceCurrentAuthorityVerifier authorityVerifier);
+
+    public Task<PreparedSourceIssueResult> IssueAsync(
+        PreparedSourceGrantRequest request,
+        CancellationToken cancellationToken = default);
+}
+
+public enum PreparedSourceIssueStatus
+{
+    Issued, Denied, AuthorityUnavailable, RootUnavailable,
+    UnsupportedPlatform, Cancelled, DeadlineExceeded
+}
+
+public sealed record PreparedSourceIssueResult(
+    PreparedSourceIssueStatus Status,
+    IPreparedSourceReadContext? Context);
+```
+
+The constructor requires a nonnull verifier and throws `ArgumentNullException` if missing; it supplies no default or always-allow adapter. `IssueAsync` takes the existing Core `PreparedSourceGrantRequest` (`PreparedSourceApproval`, application-held `PhysicalRootPath`, `PreparedSourceGrantLimits`) and checks exact current approval before returning a context. A null request is programmer misuse (`ArgumentNullException`); malformed or foreign grant fields return sanitized `Denied`. Verifier revocation/mismatch returns `Denied`; verifier failure/unavailability returns `AuthorityUnavailable`; missing/unreadable root returns `RootUnavailable`; a platform without qualified no-follow traversal returns `UnsupportedPlatform`; caller cancellation/deadline return their named statuses. `Status == Issued` if and only if `Context` is nonnull; every failure has `Context == null` and no physical path, approval identifier or raw exception detail. Any opened root handle is closed on failed issuance. This result is for trusted application composition and direct tests, not a model-visible tool result. The implementation may keep traversal and clock details private behind this module's small interface.
+
 Before an operation opens or enumerates source, between entries or bounded read/search chunks, and immediately before releasing any result, Infrastructure awaits the current-authority verifier for the exact batch/Repository/subject/purpose/approval/root-binding tuple. A revocation signal may stop work earlier, but cannot replace these checks. Revoked/changed approval or verifier failure/unavailability latches the context closed across concurrent calls, cancels owned activity, disposes open handles/streams and invalidates all continuations. Buffered entries, counts, text, matches and tokens are discarded. A later restored approval requires a new grant; no cached allow authorizes another response.
 
 Each tool result echoes the context's `repositoryId` and sanitized `outcome`, never a physical root, subject, approval identifier, Git commit, Profiled Revision, Source Snapshot ID, filesystem error message, stack trace or outside-root metadata. The operator label may be exposed only as a label and never as proof of content identity.
