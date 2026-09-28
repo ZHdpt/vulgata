@@ -58,6 +58,44 @@ So that generation and later readers address the intended data without polluting
 
 Definition and plan authoring may proceed using only accepted repository authorities and the explicit dependency boundary above. Task generation and every later delivery stage are held pending an integrated, verified Story 18.1 baseline and plan reconciliation against its actual accepted source identity/tool contracts.
 
+## Specification result
+
+- The persistent definition author completed `specs/016-october-batch-setup/spec.md` and its requirements checklist. Root verified the returned hashes and the checklist's complete result.
+- The specification makes owned setup, exact database/batch selection, context provenance/conflicts, provider-role binding and October/ordinary isolation independently plannable.
+- FR-011, SC-006 and the Prepared Source Binding entity keep Repository/root/source identity, source grant and contained read-only tool binding explicitly dependent on Story 18.1. They do not define or claim those contracts.
+- Specification self-review: `specs/016-october-batch-setup/evidence/spec-self-review-01.json`.
+- No application/test/runtime/provider/database work occurred. The optional agent-context hook was not run because the stage write boundary excluded it.
+
+## Architecture plan result
+
+- The ordinary definition author classified the plan as `architecture` before writing because the accepted story requires a dedicated October persistence boundary and a shared generator–Web exact-selection contract. Plan authorship therefore moved to the required retained `plan-architect-high` profile; the ordinary author remains retained for later non-architecture phases.
+- The plan selects one explicitly owned PostgreSQL database per batch, a fixed `october` schema and separate EF context/migration history/model snapshot, one shared setup/selection policy, exact immutable process-lifetime database/batch selection, retained context origins/conflicts, and complete explicitly sourced Worker/Chat provider profiles.
+- Ordinary Web Identity/domain composition and migrations remain separate and unchanged. No new package, generator executable, CRUD UI, provider/database execution, source/test/migration edit or task is introduced by planning.
+- Plan IDs `ID-I04`, `ID-L03` and `ID-T04` reserve the prepared-source adapter, reuse and verification seams for the actual integrated 18.1 contracts. They deliberately leave contract names, storage shape, cardinality and grant semantics unspecified.
+- Deterministic plan-content validation passed the architecture front matter, required headings and stable ID shapes. All specification requirements and success criteria map to design IDs or the explicit 18.1 hold.
+- Plan self-review: `specs/016-october-batch-setup/evidence/plan-self-review-01.json`.
+- The architecture classification requires independent plan-only review. Current plan content does not itself establish an AGENTS.md Worker-tool, Scan-strategy or PRD-change authorization trigger; root and reviewer must reassess after 18.1 reconciliation.
+- The optional provider-source preference remains nonblocking: the draft uses one explicitly supplied, source-neutral configuration bundle per process, with no unspecified `.env` discovery or protected-row copy.
+
+## Independent plan review and correction
+
+- Plan review 01 returned `REVISE` with one HIGH plan-owned finding: the first draft named an authenticated operator and owned target but did not define non-forgeable authority sources for October Web and the future headless generator. The recovery episode retains one failed result; no production started.
+- The retained architecture plan owner corrected the seam. Existing Web Identity and live `ManagementAccess` issue a short-lived, purpose-bound activation grant; October Web verifies it locally and the generator validates it through Web. Deployment-owned allowlists map opaque target IDs to canonical database descriptors, both hosts verify connected database identity before October migration/setup, and protected use repeats live authorization. Standalone Repository setup requires current management authority and a real `SystemId == null` Repository. This setup grant remains separate from Story 18.1 source grants.
+- Plan review 02 independently returned `ACCEPT` with no findings and confirmed the architecture classification, design IDs, corrected trust boundary, testability, absence of a current Worker-tool/Scan-strategy/PRD planned-change trigger, and continued 18.1 hold.
+- The raw accepted plan verdict is preserved at `specs/016-october-batch-setup/evidence/plan-review-02.json`. The complete-definition recovery episode cannot close until tasks and the later full definition review exist. Because the user prohibited task generation in this run, workflow state remains before tasks and no planned-change authorization or implementation approval is requested.
+
+## Ready boundary and required resume
+
+- Ready now: reviewed specification and architecture plan for owned setup, exact database/batch selection, context provenance/conflicts, explicit provider profiles, separate October persistence/migrations, ordinary-startup isolation, non-forgeable activation authority, and controlled/PostgreSQL verification seams.
+- Still dependent on 18.1: `FR-011`, `SC-006`, `ID-I04`, `ID-L03`, `ID-T04`, the prepared-source relationship/cardinality, source grant lifetime, contained read-only tool association, source failure/cancellation mapping and their tests.
+- Before task generation or any later delivery, integrate and verify Story 18.1 in this checkout, inspect its accepted spec/plan/review, production contracts, tests and verification evidence, replace the deferred source-binding assumptions, reconcile the affected spec/plan through the earliest owner, rerun deterministic validation and independent plan review, and reassess the repository planned-change triggers. Only then may the retained definition author generate tasks under a newly permitted continuation.
+- No implementation tasks, source/test/migration/configuration changes, database/provider/runtime activity or implementation approval occurred.
+
+## Planning checkpoint
+
+- Pending correction checkpoint: `bmad-18-4-plan-correction-20260928T092111Z-d166`.
+- Planned manifest: this development record, current feature definition/plan set, workflow state and current raw self-review/review/transition evidence. The ignored local `.specify/feature.json` selector is not part of the commit.
+
 ## Workflow bookkeeping
 
 - Activation transition: `specs/016-october-batch-setup/evidence/transitions/transition-0001-activation.json`.

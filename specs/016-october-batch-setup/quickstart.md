@@ -1,0 +1,23 @@
+# Validation Guide: Story 18.4 Plan
+
+This is a future validation guide, not a claim of executable Story 18.4 support. No migration, host, provider or database command was run during definition/planning. Do not use a shared database or copied credentials. The root must first obtain an integrated, verified Story 18.1 baseline, reconcile the plan/source association and complete the existing reviews and approvals before implementation or runtime work.
+
+## Prerequisites
+
+1. Two disposable, explicitly owned PostgreSQL databases with distinct target identities and identical fixed October schema/migration set. Register their exact descriptors under opaque IDs in deployment-owned allowlists for both hosts. Keep the ordinary Web/Identity database distinct; database reachability alone is not authorization.
+2. One System member and one standalone Repository with valid management authority and differing Global/System/Repository advisory context. Use a real authenticated Administrator/SystemOwner and an unauthorized user through existing Web Identity. Obtain a purpose-bound activation grant from the Web management authorization seam, not a supplied user ID. Use 18.1's actual accepted prepared-source fixtures/grants only after reconciliation.
+3. Explicit per-process provider configuration with complete Worker/Chat profiles and synthetic protected credentials; no paid endpoint is needed for setup checks.
+4. Separate generator and October Web compositions using the same [setup/selection contract](contracts/batch-setup-selection.md) and [provider binding](contracts/provider-binding.md).
+
+## Controlled checks after implementation authority
+
+1. With the permitted Web-authenticated operator, issue exact A/A and B/B activation grants, then prepare each batch through both host compositions. Confirm each selected context value has scope/origin, conflicts remain visible, the standalone Repository has no System value and is allowed only under current `ManagementAccess`, and no pair, FlowGroup, ScanRun completion or raw legacy Knowledge was manufactured. Retry identical setup and then a conflicting same-ID request; only the former may resolve to the committed result.
+2. Start each host with exact A/A and B/B grants/selections. Observe the same chosen setup identity in both hosts and no data read/write outside the selected database. Start with missing target, missing batch, A/B mismatch and a batch existing only in the other database. Each must fail before October migration/setup or batch access, with no earlier/latest fallback. Change selection only by restart and fresh authorization.
+3. Inspect model/migration metadata and ordinary startup against the pre-change boundary. October mappings/history/snapshot must be separate, normal `VulgataDbContext` must not discover October configurations, and ordinary startup must apply zero October migrations. Exercise explicitly enabled October migration only on an authorized disposable target.
+4. Supply complete distinct profiles, deliberate shared profile, omitted field and conflicting source values. Binding must follow one declared source/precedence, reject incomplete/conflicting profiles, expose no secret and never silently fail over. Do not make paid calls as part of setup validation.
+5. Exercise a request/CLI-supplied operator ID or connection string, forged/expired/substituted grant, reachable but unlisted database, mismatched host allowlists, denied or revoked operator, invalid System membership, standalone Repository under a non-management principal, Web authorization outage, cancellation before commit, storage failure and uncertain acknowledgement. Check denial before migration/setup and again at protected use after role/membership/allowlist changes. No selectable partial batch may remain; outcomes must be sanitized and must not claim source tools or Knowledge ready.
+6. With the reconciled 18.1 interface, verify accepted/foreign/unavailable Repository/root/source grant and read-only tool cases. Record the exact accepted contract and evidence that closes FR-011/SC-006; no Story 13.1 Git-bound substitute qualifies.
+
+## Evidence levels and command shapes
+
+Static inspection of this plan establishes only design intent. Focused xUnit tests in `tests/Vulgata.Tests`, the configured `dotnet build src/dotnet/Vulgata.Web/Vulgata.Web.csproj` and `dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj` can establish controlled behavior once written and run. PostgreSQL checks must identify both owned targets and observed schema/isolation results. Docker, real source tools, paid provider execution and later Knowledge publication require their own scoped runtime evidence; no success in this guide substitutes for them.

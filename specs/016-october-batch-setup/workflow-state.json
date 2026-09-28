@@ -3,7 +3,7 @@
   "bmad_story_key": "18-4-prepare-an-owned-october-batch-with-valid-context-and-provid",
   "bmad_epic_key": "epic-18",
   "feature_directory": "specs/016-october-batch-setup",
-  "stage": "context",
+  "stage": "plan-review",
   "preflight": {
     "branch": "detached-managed-worktree",
     "head": "5e5553374b342fb658776fbfcb86c6e06513832a",
@@ -12,8 +12,14 @@
     "observed_at": "2026-09-28T08:39:49.4375537Z"
   },
   "artifacts": {
-    "spec": null,
-    "plan": null,
+    "spec": {
+      "path": "specs/016-october-batch-setup/spec.md",
+      "sha256": "4783bf9004471a254d4b40837daea4fc79fe8244a4dea1882f076f4778a7ea26"
+    },
+    "plan": {
+      "path": "specs/016-october-batch-setup/plan.md",
+      "sha256": "66159f37dd60c6ea2a566692808ed1e2929bc792188646ce4b48695cd09e0270"
+    },
     "tasks": null
   },
   "gates": {
@@ -35,7 +41,7 @@
   },
   "approvals": [],
   "convergence": {
-    "status": "pending",
+    "status": "invalidated",
     "attempt": 0,
     "outcome": "pending",
     "report_path": null
@@ -47,31 +53,49 @@
   "current_evidence_paths": [
     "docs/bmad/implementation-artifacts/18-4-prepare-an-owned-october-batch-with-valid-context-and-provid.md",
     "specs/016-october-batch-setup/evidence/preflight-01.json",
-    "specs/016-october-batch-setup/evidence/transitions/transition-0001-activation.json"
+    "specs/016-october-batch-setup/evidence/plan-correction-self-review-01.json",
+    "specs/016-october-batch-setup/evidence/plan-review-01.json",
+    "specs/016-october-batch-setup/evidence/plan-review-02.json",
+    "specs/016-october-batch-setup/evidence/spec-self-review-01.json",
+    "specs/016-october-batch-setup/evidence/transitions/transition-0003-plan-correction-self-review.json"
   ],
   "checkpoint": {
-    "checkpoint_id": "bmad-18-4-context-20260928T083949Z-d166",
-    "stage": "context",
+    "checkpoint_id": "bmad-18-4-plan-correction-20260928T092111Z-d166",
+    "stage": "plan-review",
     "commit_sha": null,
     "binding_status": "pending"
   },
   "resume": {
-    "stage": "context",
-    "reason": "Define and plan only; task generation remains held for integrated verified Story 18.1 baseline and plan reconciliation.",
-    "evidence_path": "specs/016-october-batch-setup/evidence/preflight-01.json"
+    "stage": "plan-review",
+    "reason": "Corrected plan has raw independent ACCEPT; tasks remain intentionally withheld pending integrated verified Story 18.1 reconciliation.",
+    "evidence_path": "specs/016-october-batch-setup/evidence/plan-review-02.json"
   },
-  "updated_at": "2026-09-28T08:39:49.4375537Z",
-  "recovery": null,
+  "updated_at": "2026-09-28T09:21:11.8037659Z",
+  "recovery": {
+    "action": "correct",
+    "closing_gate": "definition-review",
+    "diagnosis": null,
+    "earliest_owner": "tasks",
+    "episode_id": "18-4-plan-review-authorization-boundary-01",
+    "extension_decision_id": null,
+    "failed_results": 1,
+    "holds": [],
+    "last_result": {
+      "path": "specs/016-october-batch-setup/evidence/plan-review-01.json",
+      "sha256": "f7b5cf535475d869aeb8d64308f54b61b30e5774b8ace02b88d5be6710c987ef"
+    },
+    "pause_at": 4
+  },
   "transition_head": {
-    "path": "specs/016-october-batch-setup/evidence/transitions/transition-0001-activation.json",
-    "sha256": "6c3cc954beb1daf8a504bcfa4db8e1ab6701c846f2b1692333da1f50aa4dfb30"
+    "path": "specs/016-october-batch-setup/evidence/transitions/transition-0003-plan-correction-self-review.json",
+    "sha256": "ed6e326ecfd71bc78251b7239ff0e97e00dbc9f2742b7f909af9af9e187e9135"
   },
   "definition_author": {
     "profile": "definition-author",
     "escalation_decision_id": null
   },
   "lookback": {
-    "status": "pending",
+    "status": "invalidated",
     "evidence": null
   }
 }

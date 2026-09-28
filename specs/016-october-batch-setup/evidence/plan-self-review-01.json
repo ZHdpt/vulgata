@@ -1,0 +1,32 @@
+{
+  "kind": "self-review",
+  "stage": "plan",
+  "outcome": "passed",
+  "summary": "Architecture classification and stable IDs pass deterministic shape validation. The design is feasible within existing Core/Infrastructure/Web ownership, preserves ordinary migrations and authorization, and supplies controlled and PostgreSQL test seams. Cross-database authority cannot be atomic, so protected use rechecks live permission. The accepted October proposal supports fixed database-per-batch storage; AD-2/3/6 and the Constitution support separate policy, persistence and source-tool ownership. No unresolved template placeholder remains; the 18.1 interface is an intentional dependency hold.",
+  "input_hashes": {
+    "specs/016-october-batch-setup/plan.md": "3e3e0916eaf1cd7497772bca7bf2c8b4c5eb99f48ffeee43a2fd77238fa95b95"
+  },
+  "artifact_manifest": {
+    "specs/016-october-batch-setup/research.md": "c68856acdb0ea1046eac91163e79bcf4627c572e7dac99a0dd0df5fac5e48b95",
+    "specs/016-october-batch-setup/data-model.md": "722d4edcf93e5c49d066b7b29b754411be8bdb71f95fac63013b8bcd83890fad",
+    "specs/016-october-batch-setup/quickstart.md": "9c9734e9357ee6f9eaf4ad58c882b0010d8bc2f359a843e5f720e46917c2e013",
+    "specs/016-october-batch-setup/contracts/batch-setup-selection.md": "0ff6f068fe110e35e05eae68a93110607f346736fb9d00650d6cb473afa2370d",
+    "specs/016-october-batch-setup/contracts/provider-binding.md": "297df34e85b5c0e744c7ce803d0295857dfc28d5c276be295c5640b2ad321802"
+  },
+  "classification": "architecture",
+  "classification_reason": "Adds a dedicated October persistence boundary and a shared generator-Web exact-selection contract under O-FR17/18 and O-AR03/04.",
+  "design_ids": [
+    "ID-R01", "ID-R02", "ID-R03",
+    "ID-I01", "ID-I02", "ID-I03", "ID-I04",
+    "ID-S01", "ID-S02", "ID-S03",
+    "ID-A01", "ID-F01", "ID-F02",
+    "ID-L01", "ID-L02", "ID-L03",
+    "ID-T01", "ID-T02", "ID-T03", "ID-T04",
+    "ID-X01", "ID-X02", "ID-X03",
+    "ID-C01", "ID-C02", "ID-C03"
+  ],
+  "planned_change_trigger_assessment": "Architecture classification requires early independent plan review. Current content does not add/materially change a Worker Agent tool or Scan strategy and does not change or weaken the PRD; reassess after 18.1 reconciliation.",
+  "dependency_hold": "ID-I04, ID-L03 and ID-T04 remain unresolved until an integrated verified Story 18.1 baseline is reconciled before task generation.",
+  "evidence_disposition": "Static planning only; no database, provider, host, migration, paid call or Story 18.1 runtime was exercised.",
+  "optional_preference_question": "The provisional source-neutral provider binding uses one explicitly supplied configuration source per process, no unspecified .env discovery and no protected-row copy."
+}
