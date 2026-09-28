@@ -1,6 +1,6 @@
 # Project state for agent resumption
 
-Updated: 2026-09-27. Story 13.1 is complete in `specs/015-retained-source-access`.
+Updated: 2026-09-28. Story 13.1 is complete in `specs/015-retained-source-access`.
 Exact retained capture, scoped reads, publication/recovery, cleanup, trusted
 workspaces and separate-process reopening have bounded controlled evidence.
 Convergence 02 is clean; quality review 03 accepted with no findings; required
@@ -31,21 +31,29 @@ verification before reuse.
   adding October Epics 18–20 and their 17 definitions (12/3/2) to that tracker on
   September 27; [October release epics](../bmad/planning-artifacts/october-release-epics.md)
   owns their scoped requirements and definitions, routed from the canonical epic index.
-  Tracker refreshes require both epic files. Story 13.1 is done; all other stories,
-  including October, are backlog. No feature was activated by sprint planning.
+  Tracker refreshes require both epic files. Story 13.1 is done. October Story 18.4
+  is active for definition/planning only in `specs/016-october-batch-setup`; its
+  corrected architecture plan has raw independent plan-only ACCEPT, but no tasks or
+  implementation authority. Story 18.1 is actively implemented in another assigned
+  worktree and is not integrated or verified in this checkout; this checkout retains
+  its tracker entry as backlog and does not claim its dependency satisfied. Every
+  other story remains backlog. Sprint planning alone activated no feature.
   Its bounded retained-source
   qualification does not prove the generic Scan workflow.
 - [Constitution](../../.specify/memory/constitution.md), root AGENTS and the current
   story workflow govern development. The constitution's 2.0.0 local amendment aligns
   prior conflicting rules; it does not claim maintainer PR review/merge.
 
-No story is active after the workflow installation. Story 13.1's
+Story 18.4 is the only feature activated in this checkout after the workflow
+installation. Its `specs/016-october-batch-setup` state stops before tasks: prepared
+source identity/grant/tool seams remain dependent on an integrated, verified Story
+18.1 baseline and mandatory reconciliation/review. Story 13.1's
 `specs/015-retained-source-access` plan, state and evidence are completed history;
 Story 13.2 remains backlog and requires deliberate activation. Specs 001–014 also
 retain historical scope. The agent-context extension targets root AGENTS; pass the
 selected feature's actual plan path. Its no-argument auto-discovery chooses by
-modification time and must not select a historical plan. Optional after-specify
-refresh is inapplicable when that feature has no plan yet.
+modification time and must not select a historical plan. The optional context hook
+was not run for 18.4 because its author write boundaries excluded root AGENTS.
 
 Story definitions were accepted under explicit approval for 13.1–13.3 and a scoped
 confidence delegation for the rest. That completed planning delegation is not standing
