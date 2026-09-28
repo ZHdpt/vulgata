@@ -1,0 +1,27 @@
+{
+  "kind": "human-approval",
+  "stage": "implementation-approval",
+  "decision_id": "18-1/implementation-approval/1",
+  "status": "superseded-before-request",
+  "scope_sha256": "b139a3ffc68078d8f270cfac5162cf667d8ddf184f23f51b0e334be0fe261ec4",
+  "requested_at": "2026-09-28T04:40:14.9342112Z",
+  "decided_at": null,
+  "superseded_reason": "Definition checkpoint whitespace validation required a nonsemantic plan byte correction and fresh accepted hashes before the implementation request could be sent.",
+  "accepted_definition": {
+    "spec": "48c92e4f6582471a1664e553b48756a811f22bb2b4f1334206e94303629b0b6d",
+    "plan": "b4fb3ae8b08dcf38a21d42e6c424ac2188ff5708b0a9c669508d851480347364",
+    "tasks": "dcc72158a1a8ad029f492bd90e063399ce53bfa5c65990f7ac454f19ee377d20",
+    "definition_review": "a695f0ad8db6210ccad8c5032fc55f888e4bbd5b6241cbe9bb41ff1343f0fc86"
+  },
+  "implementation_scope": "Implement the 26 accepted tasks for contained prepared-source list/read/search, current-authority enforcement, Windows no-follow containment, truthful bounded outcomes, cancellation/resource settlement, thin Worker Agent functions and Git-bound regression preservation.",
+  "verification_route": "Observable production behavior uses separate retained test and production owners with honest RED, minimal GREEN and final surrounding GREEN. Fixture setup and contract-only work use proportionate direct build/ownership checks without fabricated RED. Existing-correct Git behavior receives regression checks rather than manufactured failure.",
+  "coherent_groups": [
+    "T001-T009: owned fixture, Core seam, approved-root issuance, containment and basic list/read MVP",
+    "T010-T018: bounded listing, strict ranges, literal search and closed Agent tool functions",
+    "T019-T025: live revocation/unavailability, truthful failures, cancellation, budgets and resource settlement",
+    "T026: final build, focused tests, retained-source regressions and scope inspection"
+  ],
+  "principal_risk": "The Windows handle-relative no-follow adapter and authority checks must remain race-resistant and fail closed; controlled tests cannot be replaced by lexical path checks or cached authorization.",
+  "approval_permits": "First production/test writes for the accepted task boundary using governed TDD and direct verification routes.",
+  "approval_does_not_permit": "New architecture, broader Scan strategy, PRD changes, Git/copy/hash/retention/database/provider/CodeGraph/LSP/UI/CLI scope, destructive runtime operations, or bypassing convergence, lookback, quality, E2E and final verification."
+}

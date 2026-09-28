@@ -1,0 +1,27 @@
+{
+  "kind": "human-approval",
+  "stage": "implementation-approval",
+  "decision_id": "18-1/implementation-approval/2",
+  "status": "pending",
+  "scope_sha256": "7dcd83a3a24d177125de53d05d7dbd6ee71be53090a41c2fef611329cfb9ac46",
+  "scope_material": "18-1/implementation-approval/2|48c92e4f6582471a1664e553b48756a811f22bb2b4f1334206e94303629b0b6d|926982636796b020bc9f22af3aab52214ddfc809bfef9fdcabaf85b32637884e|dcc72158a1a8ad029f492bd90e063399ce53bfa5c65990f7ac454f19ee377d20|d70bde00a76f1b26dd4cd60c722de85b759427de848dfdd8985c56c2daff1e39",
+  "requested_at": "2026-09-28T04:58:13.6392219Z",
+  "decided_at": null,
+  "accepted_definition": {
+    "spec": "48c92e4f6582471a1664e553b48756a811f22bb2b4f1334206e94303629b0b6d",
+    "plan": "926982636796b020bc9f22af3aab52214ddfc809bfef9fdcabaf85b32637884e",
+    "tasks": "dcc72158a1a8ad029f492bd90e063399ce53bfa5c65990f7ac454f19ee377d20",
+    "definition_review": "d70bde00a76f1b26dd4cd60c722de85b759427de848dfdd8985c56c2daff1e39"
+  },
+  "implementation_scope": "Implement the 26 accepted tasks for contained prepared-source list/read/search, current-authority enforcement, Windows no-follow containment, truthful bounded outcomes, cancellation/resource settlement, thin Worker Agent functions and Git-bound regression preservation.",
+  "verification_route": "Observable production behavior uses separate retained test and production owners with honest RED, minimal GREEN and final surrounding GREEN. Fixture setup and contract-only work use proportionate direct build/ownership checks without fabricated RED. Existing-correct Git behavior receives regression checks rather than manufactured failure.",
+  "coherent_groups": [
+    "T001-T009: owned fixture, Core seam, approved-root issuance, containment and basic list/read MVP",
+    "T010-T018: bounded listing, strict ranges, literal search and closed Agent tool functions",
+    "T019-T025: live revocation/unavailability, truthful failures, cancellation, budgets and resource settlement",
+    "T026: final build, focused tests, retained-source regressions and scope inspection"
+  ],
+  "principal_risk": "The Windows handle-relative no-follow adapter and authority checks must remain race-resistant and fail closed; controlled tests cannot be replaced by lexical path checks or cached authorization.",
+  "approval_permits": "First production/test writes for the accepted task boundary using governed TDD and direct verification routes.",
+  "approval_does_not_permit": "New architecture, broader Scan strategy, PRD changes, Git/copy/hash/retention/database/provider/CodeGraph/LSP/UI/CLI scope, destructive runtime operations, or bypassing convergence, lookback, quality, E2E and final verification."
+}

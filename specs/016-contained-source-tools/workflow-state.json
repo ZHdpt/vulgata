@@ -3,7 +3,7 @@
   "bmad_story_key": "18-1-access-prepared-source-through-contained-read-only-tools",
   "bmad_epic_key": "epic-18",
   "feature_directory": "specs/016-contained-source-tools",
-  "stage": "plan",
+  "stage": "implementation-approval",
   "preflight": {
     "branch": "(detached-native-handoff)",
     "head": "0c0bf0cfb05edc5b28a346d8f3a63002d1e781ef",
@@ -16,39 +16,68 @@
       "path": "specs/016-contained-source-tools/spec.md",
       "sha256": "48c92e4f6582471a1664e553b48756a811f22bb2b4f1334206e94303629b0b6d"
     },
-    "plan": null,
-    "tasks": null
+    "plan": {
+      "path": "specs/016-contained-source-tools/plan.md",
+      "sha256": "926982636796b020bc9f22af3aab52214ddfc809bfef9fdcabaf85b32637884e"
+    },
+    "tasks": {
+      "path": "specs/016-contained-source-tools/tasks.md",
+      "sha256": "dcc72158a1a8ad029f492bd90e063399ce53bfa5c65990f7ac454f19ee377d20"
+    }
   },
   "gates": {
-    "plan-review": {"status": "pending", "attempt": 0, "verdict_path": null},
-    "definition-review": {"status": "pending", "attempt": 0, "verdict_path": null},
+    "plan-review": {"status": "accepted", "attempt": 2, "verdict_path": "specs/016-contained-source-tools/evidence/plan-review-result-04.json"},
+    "definition-review": {"status": "accepted", "attempt": 2, "verdict_path": "specs/016-contained-source-tools/evidence/definition-review-result-02.json"},
     "quality-review": {"status": "pending", "attempt": 0, "verdict_path": null}
   },
-  "approvals": [],
+  "approvals": [
+    {
+      "decision_id": "18-1/plan-authorization/1",
+      "status": "accepted",
+      "scope_sha256": "eeb09f8d4555533d3609cfb22cce9701cd2408456d4261d9801c3fea9013ac69",
+      "evidence_path": "specs/016-contained-source-tools/evidence/plan-authorization-01.json",
+      "decided_at": "2026-09-28T04:25:28.9936733Z"
+    },
+    {
+      "decision_id": "18-1/implementation-approval/2",
+      "status": "pending",
+      "scope_sha256": "7dcd83a3a24d177125de53d05d7dbd6ee71be53090a41c2fef611329cfb9ac46",
+      "evidence_path": "specs/016-contained-source-tools/evidence/implementation-approval-02.json",
+      "decided_at": null
+    }
+  ],
   "convergence": {"status": "pending", "attempt": 0, "outcome": "pending", "report_path": null},
   "e2e": {"result": "pending", "decision_path": null},
   "current_evidence_paths": [
     "docs/bmad/implementation-artifacts/18-1-access-prepared-source-through-contained-read-only-tools.md",
     "specs/016-contained-source-tools/evidence/spec-self-review-01.json",
+    "specs/016-contained-source-tools/evidence/plan-self-review-01.json",
+    "specs/016-contained-source-tools/evidence/plan-review-result-04.json",
+    "specs/016-contained-source-tools/evidence/plan-authorization-01.json",
+    "specs/016-contained-source-tools/evidence/tasks-self-review-01.json",
+    "specs/016-contained-source-tools/evidence/tasks-revalidation-self-review-01.json",
+    "specs/016-contained-source-tools/evidence/definition-review-result-02.json",
+    "specs/016-contained-source-tools/evidence/workflow-transition-010-definition-review-accept.json",
+    "specs/016-contained-source-tools/evidence/implementation-approval-02.json",
     "specs/016-contained-source-tools/evidence/workflow-transition-001-activation.json"
   ],
   "checkpoint": {
-    "checkpoint_id": "bmad-18-1-context-20260928T034100Z-7f2ba2",
-    "stage": "context",
+    "checkpoint_id": "bmad-18-1-definition-review-20260928T043922Z-a605ed",
+    "stage": "definition-review",
     "commit_sha": null,
     "binding_status": "pending"
   },
   "resume": {
-    "stage": "plan",
-    "reason": "Specification self-review passed; continue with the retained definition author for plan only.",
-    "evidence_path": "specs/016-contained-source-tools/evidence/spec-self-review-01.json"
+    "stage": "implementation-approval",
+    "reason": "The refreshed complete-definition review accepted the corrected immutable boundary; implementation awaits explicit scoped user approval.",
+    "evidence_path": "specs/016-contained-source-tools/evidence/implementation-approval-02.json"
   },
-  "updated_at": "2026-09-28T03:41:00.7806581Z",
+  "updated_at": "2026-09-28T04:58:13.6392219Z",
   "recovery": null,
   "definition_author": {"profile": "definition-author", "escalation_decision_id": null},
   "transition_head": {
-    "path": "specs/016-contained-source-tools/evidence/workflow-transition-001-activation.json",
-    "sha256": "44abaa6ec786fd88f63f65674aa174b8811365db162c727f2a51a7f4106687fb"
+    "path": "specs/016-contained-source-tools/evidence/workflow-transition-010-definition-review-accept.json",
+    "sha256": "a6214331e7811697d4e97636961203b213a1dd8b502252cb408934ad00b5aa51"
   },
-  "lookback": {"status": "pending", "evidence": null}
+  "lookback": {"status": "invalidated", "evidence": null}
 }

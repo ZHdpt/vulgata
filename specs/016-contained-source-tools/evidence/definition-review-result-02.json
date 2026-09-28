@@ -1,0 +1,78 @@
+{
+  "observed_after": {
+    "path": "specs/016-contained-source-tools/evidence/workflow-transition-009-plan-review-accept.json",
+    "sha256": "e7975472cbc1f4fcad525fe8b4c6b698c8b48515ee193ca8c21b12f84867cfd3"
+  },
+  "raw_result": {
+    "schema_version": "1.0",
+    "gate": "definition-review",
+    "verdict": "ACCEPT",
+    "reviewed_commit": "6de156569c95e2841e2452084052f95fa5f88168",
+    "reviewed_boundary": {
+      "base_commit": "6de156569c95e2841e2452084052f95fa5f88168",
+      "candidate_commit": null,
+      "diff_sha256": "77e35f441dcd0c767b3efc4ab1b25fe4548c75a681e0796666aa4cef7de0fce6",
+      "artifact_hashes": {
+        "specs/016-contained-source-tools/contracts/prepared-source-tools.md": "513dd8ddb3ba8ea02ce41653a436cb4bcb882347676ef29084c89a8d4b92015a",
+        "specs/016-contained-source-tools/data-model.md": "fa0a2496424b70e48ca207354de29890b54bd8b9bdab0178af7d9ca613e15bb8",
+        "specs/016-contained-source-tools/plan.md": "926982636796b020bc9f22af3aab52214ddfc809bfef9fdcabaf85b32637884e",
+        "specs/016-contained-source-tools/quickstart.md": "122ce3bd62a8fed32dd9508d256d1528d090c3b612f2e4d4e3b7f40965c3e38e",
+        "specs/016-contained-source-tools/research.md": "40f98b5061aa54fc9757e2377905450bea5a7e2fabcd9fa0a9b05f449e1c71de",
+        "specs/016-contained-source-tools/spec.md": "48c92e4f6582471a1664e553b48756a811f22bb2b4f1334206e94303629b0b6d",
+        "specs/016-contained-source-tools/tasks.md": "dcc72158a1a8ad029f492bd90e063399ce53bfa5c65990f7ac454f19ee377d20"
+      },
+      "owned_paths": [
+        "specs/016-contained-source-tools/spec.md",
+        "specs/016-contained-source-tools/plan.md",
+        "specs/016-contained-source-tools/research.md",
+        "specs/016-contained-source-tools/data-model.md",
+        "specs/016-contained-source-tools/quickstart.md",
+        "specs/016-contained-source-tools/contracts/prepared-source-tools.md",
+        "specs/016-contained-source-tools/tasks.md"
+      ]
+    },
+    "reviewed_artifacts": [
+      "specs/016-contained-source-tools/spec.md",
+      "specs/016-contained-source-tools/plan.md",
+      "specs/016-contained-source-tools/research.md",
+      "specs/016-contained-source-tools/data-model.md",
+      "specs/016-contained-source-tools/quickstart.md",
+      "specs/016-contained-source-tools/contracts/prepared-source-tools.md",
+      "specs/016-contained-source-tools/tasks.md",
+      "specs/016-contained-source-tools/evidence/definition-review-boundary-02.json",
+      "specs/016-contained-source-tools/evidence/plan-review-boundary-03.json",
+      "specs/016-contained-source-tools/evidence/plan-review-01.json",
+      "specs/016-contained-source-tools/evidence/plan-review-02.json",
+      "specs/016-contained-source-tools/evidence/plan-review-03.json",
+      "specs/016-contained-source-tools/evidence/plan-review-04.json",
+      "specs/016-contained-source-tools/evidence/definition-review-01.json",
+      "specs/016-contained-source-tools/evidence/definition-checkpoint-whitespace-01.json",
+      "specs/016-contained-source-tools/evidence/plan-whitespace-self-review-01.json",
+      "specs/016-contained-source-tools/evidence/tasks-revalidation-self-review-01.json",
+      "specs/016-contained-source-tools/evidence/plan-authorization-01.json",
+      "specs/016-contained-source-tools/evidence/workflow-transition-009-plan-review-accept.json",
+      "specs/016-contained-source-tools/workflow-state.json",
+      "docs/bmad/planning-artifacts/october-release-epics.md",
+      ".specify/memory/constitution.md",
+      "AGENTS.md",
+      "docs/agents/project-state.md",
+      "docs/agents/development.md",
+      "docs/agents/testing.md",
+      "docs/agents/domain.md",
+      "docs/UBIQUITOUS_LANGUAGE.md",
+      "docs/bmad/planning-artifacts/architecture.md",
+      "docs/bmad/planning-artifacts/architecture/ARCHITECTURE-SPINE.md",
+      "docs/bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md",
+      "src/dotnet/Vulgata.Core/DomainServices/RetainedSourceContracts.cs",
+      "src/dotnet/Vulgata.Infrastructure/Source/RetainedSourceReadContext.cs",
+      "src/dotnet/Vulgata.Infrastructure/Analysis/Source/RevisionBoundSourceReader.cs",
+      "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedNavigateCodeFunction.cs",
+      "tests/Vulgata.Tests/RetainedSource/RetainedSourceReadContextTests.cs",
+      "tests/Vulgata.Tests/RetainedSource/RetainedSourceReadLifecycleTests.cs",
+      "tests/Vulgata.Tests/RetainedSource/RetainedSourceRangeReadTests.cs",
+      "tests/Vulgata.Tests/RetainedSource/RetainedSourceRootMappingTests.cs"
+    ],
+    "findings": [],
+    "summary": "ACCEPT. All seven pinned hashes and the transition-head hash match; deterministic workflow validation and SpecKit prerequisites pass. Restoring the eight removed trailing-space pairs reconstructs the previously accepted plan hash exactly. The tasks file is unchanged, and read-only consistency analysis confirms all 19 required design IDs remain covered with no unknown references or placeholders. Task order, verification routing, authorization scope and resolution of PR-18.1-LIVE-AUTHORITY remain valid. This acceptance is for the complete definition; implementation approval and runtime qualification remain separate."
+  }
+}
