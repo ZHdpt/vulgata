@@ -5,6 +5,13 @@ verification or authorization to start a story.
 
 ## Installed boundary
 
+- Distribution: **0.7.4**, installed September 28 from the validated governed-delivery
+  working tree based on source HEAD `992cf3b96c08a3501e1d80115b7cf4f41a1a202c`;
+  release changes remain uncommitted in the source project. This updates workflow
+  assets, profiles, adapters and validators. Vulgata retains its existing two-gate
+  delegation policy; the new recovery-extension delegation capability is not enabled.
+  No story state or upstream installation changed.
+
 - Distribution: **0.7.3**, installed September 28 from the validated governed-delivery
   working tree based on source HEAD `0c0bf0cfb05edc5b28a346d8f3a63002d1e781ef`;
   the 0.7.3 source changes remain uncommitted. This updates skills, profiles,
@@ -78,6 +85,15 @@ The local Git safety hook was renamed, not removed; Copilot workflow parity is n
 claimed by preserving that hook or unrelated helpers.
 
 ## Verification and unresolved compatibility
+
+September 28 upgrade to 0.7.4: installed workflow assets and profiles match the
+validated source release; dependency and targeted Story 13.1 checks pass. The
+aggregate validator still reports the **256 historical findings**. All 14 workflow
+states, config, sprint tracker, product files and upstream skills are preserved; no
+story or installation errors are reported and no story is activated. Vulgata policy
+continues to allow delegation only for planned-change authorization and implementation
+approval; it does not opt into 0.7.4's finite recovery-extension delegation. Enabling
+that additional authority requires a separate consumer-policy decision.
 
 September 28 upgrade to 0.7.3: installed workflow assets and profiles match the
 validated source release; dependency and targeted Story 13.1 checks pass. The

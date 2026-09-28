@@ -270,8 +270,12 @@ def validate_event_evidence(event: dict, state: dict, read: Reader, *, current: 
             decision_record = None
         if not isinstance(decision_record, dict) or any(decision_record.get(k) != v for k, v in decision.items()):
             raise ValueError("decision payload differs from durable user/authorization evidence")
-        from result_proofs import require_nondelegated_decision
-        require_nondelegated_decision(decision_record)
+        from result_proofs import require_nondelegated_decision, validate_recovery_extension
+        if kind == "extension":
+            validate_recovery_extension(approval, decision_record, state, read,
+                                        current=current, expected_head=expected_head)
+        else:
+            require_nondelegated_decision(decision_record)
     if kind == "phase_complete":
         envelope = read_record(event.get("result"), read, "author self-review")
         raw = envelope.get("raw_result", {})

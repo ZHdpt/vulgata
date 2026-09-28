@@ -14,6 +14,18 @@ Use $run-governed-delivery dry-run for epic 4.
 
 New work uses state 3.1. Active 3.0 resumes adopt it once using bounded evidence; completed 3.0 stories retain their original checkpoint contract.
 
+### Select the feature directory
+
+After resolving the full canonical story key and ordinary preflight/dependency checks, root runs:
+
+```powershell
+python .agents/skills/run-governed-delivery/scripts/feature_selection.py --repo . --story-key 18-1-cancellation-boundary
+```
+
+The read-only JSON result is `mode: create` with `feature_directory`, `spec_file`, and an explicit `override` input, or `mode: resume` with the existing directory. New output is `specs/18-1-cancellation-boundary`, not a self-incrementing feature number. Resume retains old numeric paths; validate the mapped state/checkpoint and lifecycle before advancing, and never reactivate a completed story. The helper scans mapping identity only, not full historical evidence, and does not reserve a name or write files. Dry-run stops after reporting.
+
+Reconcile the existing activation/development record and root ownership before creating anything. Pass `SPECIFY_FEATURE_DIRECTORY` explicitly through the selected adapter. Preserve upstream template resolution and hooks; root owns `.specify/feature.json` persistence and all lifecycle/mapping records. The definition author writes only its dispatched definition paths. Recheck name availability after pre-hooks before creation; after specify, verify the returned path matches the selection before persisting both mapping sides. No counter, branch rename, init-options edit, upstream script patch, or historical directory migration is needed. Duplicate mappings, conflicting same-story directories, malformed state, or an adapter lacking explicit-directory support stop for reconciliation; do not overwrite, increment, or invent a suffix.
+
 ## Expected Progress
 
 The operator should see compact stage updates, not repeated ceremony explanations:
@@ -41,6 +53,8 @@ Pause only for:
 - reserved epic architecture findings and retrospective choice.
 
 Ordinary REVISE correction, independent ACCEPT, clean convergence, passing commands, and safe checkpoint binding do not need confirmation. Keep the pre-task gate's existing order and request design. At a real decision, expect an explanation of the choice, principal tradeoff, uncertainty, and precise authorization before supporting links. At a recovery stop, expect what failed, what different repairs established, the current hypothesis/unknowns, and the next bounded approach, not just a retry request. See `human-interaction.md`.
+
+Human approval is default. The user may separately designate a delegate for planned-change authorization, implementation approval, or finite recovery extensions within a user-set per-episode ceiling. At every reached recovery limit a fresh bound decision is required. This exception does not resolve holds or authorize the other listed gates; see `review-and-correction.md`.
 
 During spec/planning, optional questions may arrive while drafting continues. A missing answer creates no decision or retry. Actual late replies are reconciled against the current candidate and routed through existing invalidation/review; they never retroactively approve implementation. A deeper separate discussion task is created only when explicitly requested and supported, with read-only scope; root reads the actual user instruction before recording any applicable approval.
 

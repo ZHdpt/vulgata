@@ -89,6 +89,8 @@ Alongside the transition, an optional top-level `technical_event` is `{kind, ope
 
 The mapping is two-way and one-to-one between workflow state and the BMad development record. Before SpecKit creates the directory, the root owns the canonical activation record under `docs/bmad/implementation-artifacts/workflow-activations/`. After specify returns the actual directory, the root writes both mapping sides atomically and marks activation superseded. Missing, conflicting, duplicate, or many-to-one mapping stops.
 
+From 0.7.4, new directories are `specs/<full-canonical-bmad-story-key>`, preserving the epic and story numbers plus lifecycle slug. Existing mappings, including sequential names and completed stories, stay unchanged. The read-only selection helper checks current state mappings and story-number directory collisions; it is not an activation lock or completion validator. Root also reconciles the canonical activation/development record, validates resume eligibility, and verifies SpecKit returned exactly the selected directory before accepting the mapping. See `operator-runbook.md`; never use a numeric allocator or guess a new suffix on conflict.
+
 ## Verdict
 
 Independent reviews use `verdict.schema.json` with gate `plan-review`, `definition-review`, or `quality-review`. Verdict is `ACCEPT`, `REVISE`, or `BLOCKED` and binds the reviewed commit, nonrecursive diff identity, artifact hashes, owned paths, raw artifacts, findings, and summary.
@@ -199,9 +201,9 @@ For the final checkpoint, the committed state may name stage `complete` with a p
 
 ## Delegated decision evidence
 
-Available from distribution 0.7.3 only; human approval stays default. Keep the existing state `approvals` pointer unchanged. The runner records the user's designation in an ordinary story-local decision JSON artifact with `kind: "user-delegation"`, `status: "accepted"`, the stable `delegate_id`, exact `story_key`, `gates` (a nonempty subset of `plan-review` and `implementation-approval`), `scope` (including conditions), `user_source` (original message locator), and `user_instruction` (actual text). This is a record of the user's instruction, not a generated charter or inferred delegation. Root must verify its real source and continued applicability; a revoked/expired designation must not be used.
+Available from distribution 0.7.3 for review gates and 0.7.4 for recovery extensions; human approval stays default. Keep the existing state `approvals` pointer unchanged. The runner records the user's designation in an ordinary story-local decision JSON artifact with `kind: "user-delegation"`, `status: "accepted"`, the stable `delegate_id`, exact `story_key`, `gates` (a nonempty subset of `plan-review`, `implementation-approval`, `recovery-extension`), `scope` (including conditions), `user_source` (original message locator), and `user_instruction` (actual text). A grant including `recovery-extension` also requires integer `max_pause_at > 4`, explicitly set by the user as the cumulative per-episode ceiling. This is a record of the user's instruction, not a generated charter or inferred delegation. Root must verify its real source and continued applicability; a revoked/expired designation must not be used.
 
-The gate's existing decision artifact retains `decision_id`, `stage`, `status`, `scope_sha256`, and `summary`. For a delegated decision add:
+The gate's existing decision artifact retains `decision_id`, `stage`, `status`, `scope_sha256`, and `summary`. For a delegated review-gate decision add:
 
 - `kind: "delegated-approval"`, `delegate_id`, and `story_key`;
 - `delegation: {path, sha256}` referencing the actual user-designation record;
@@ -210,7 +212,11 @@ The gate's existing decision artifact retains `decision_id`, `stage`, `status`, 
 
 For these decisions, compute `scope_sha256` with the existing `workflow_runtime.digest(canonical_bytes({"story_key": story_key, "stage": stage, "review": review}))`. Store that value in both the decision and its existing approval pointer. The validator checks identity/story/gate consistency, recorded source presence, referenced hashes, the current accepted review/artifact boundary, and this scope digest. Human/legacy approval records retain their original interpretation. Post-implementation task progress uses existing review-proof allowances, not a new approval for every checkbox. These checks do not authenticate chats or infer the meaning of user scope; root remains responsible for both. The validator never writes records.
 
-Install instructions and validators together before using delegation. Earlier validators do not understand this evidence kind and must not be used for a delegated run; no downgrade or relabeling as human evidence. State schema remains 3.1 and historical records require no migration. Delegated evidence cannot authorize recovery extensions, hold resolution, or any other gate.
+For an extension, reuse the same identity/delegation/response fields, with `stage: "recovery-extension"`, `episode_id`, proposed integer `pause_at`, and nonempty `changed_approach`. Instead of `review`, record `recovery_boundary` with exactly the current recovery's `episode_id`, `failed_results`, `pause_at`, `last_result`, plus the current `transition_head` and `artifacts` map. Compute the scope as `digest(canonical_bytes({"story_key": story_key, "stage": "recovery-extension", "recovery_boundary": recovery_boundary, "pause_at": pause_at, "changed_approach": changed_approach}))`. Bind it in the decision, existing approval pointer, and existing extension event. Do not add fields to workflow state or its event decision shape.
+
+The extension validator requires a paused episode, current failure/head/artifact binding, actual designation/response metadata, and a higher finite limit no greater than the user's `max_pause_at`. Reached later limits require new decisions; changing phase, inputs, or model never resets count or ceiling. Extension still invalidates the old diagnosis and preserves all holds. Historical transition replay checks its original recovery boundary without demanding later corrected artifact bytes match it; new extensions always check current bytes. No passing independent review is required merely to authorize bounded recovery, and this decision cannot replace either review/implementation gate.
+
+Install instructions and validators together before using delegation (0.7.4+ for extensions). Earlier validators must not be used for newer delegated evidence; no downgrade or relabeling as human evidence. State schema remains 3.1 and historical records require no migration. Delegated evidence cannot resolve holds or authorize other gates.
 
 ## Checkpoint Content Contract
 

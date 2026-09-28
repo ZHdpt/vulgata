@@ -108,7 +108,7 @@ remain in force. If provenance, scope, or conditions are unclear, require the us
 
 ## Maintaining these instructions
 
-Governed delivery 0.7.3 is installed with `.governed-delivery/config.toml` selecting
+Governed delivery 0.7.4 is installed with `.governed-delivery/config.toml` selecting
 BMad 6.12 and SpecKit 1.0.6. New stories use state 3.1; historical states/evidence stay
 unchanged. One retained definition author owns spec/plan/tasks and corrections;
 the independent reviewer retains review history. Coherent implementation groups

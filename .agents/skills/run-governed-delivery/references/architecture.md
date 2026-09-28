@@ -61,7 +61,7 @@ Implementation design stays inside `plan.md`; it adds no stage or ordinary autho
 
 ## Atomic Identity and Ownership
 
-One story maps to exactly one SpecKit directory through activation, workflow state, and development record. The 12 KiB state 3.1 holds current recovery, retained author, transition-head, and lookback descriptors, not history. Detailed evidence remains in native artifacts and Git. Historical 3.0 completion validates unchanged. Durable paths are repository-relative; preflight stores checkout hashes.
+One story maps to exactly one SpecKit directory through activation, workflow state, and development record. New directories use the full canonical story key through the read-only selection helper and explicit-directory adapter; existing names remain unchanged and collisions stop. The 12 KiB state 3.1 holds current recovery, retained author, transition-head, and lookback descriptors, not history. Detailed evidence remains in native artifacts and Git. Historical 3.0 completion validates unchanged. Durable paths are repository-relative; preflight stores checkout hashes.
 
 Only the root writes shared lifecycle/state, stages explicit paths, and creates local commits. The definition author persists across stages but receives a separate phase-scoped write boundary on every follow-up. Definition, tests, production, convergence, review, and E2E retain disjoint ownership. Shared-file work is serialized.
 
