@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Net;
 using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Identity;
@@ -17,7 +18,8 @@ public sealed class AdministratorRoleAssignmentTests : IClassFixture<LoginLogout
         _factory = factory;
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task Register_FirstRegisteredUser_BecomesAdministrator()
     {
         await ResetUsersAsync();
@@ -33,7 +35,8 @@ public sealed class AdministratorRoleAssignmentTests : IClassFixture<LoginLogout
         Assert.Contains(RoleNames.Administrator, roles);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task Register_SubsequentUser_DefaultsToUserWhenAdministratorExists()
     {
         await ResetUsersAsync();
@@ -52,7 +55,8 @@ public sealed class AdministratorRoleAssignmentTests : IClassFixture<LoginLogout
         Assert.DoesNotContain(RoleNames.Administrator, roles);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task SettingsNavigation_HidesUserManagementForSystemOwner_AndDirectAccessIsDenied()
     {
         await EnsureApplicationStartedAsync();
@@ -74,7 +78,8 @@ public sealed class AdministratorRoleAssignmentTests : IClassFixture<LoginLogout
         Assert.StartsWith("/Account/AccessDenied", GetLocationPath(userManagementResponse), StringComparison.Ordinal);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task AdministratorCanGrantAdministratorRole_AndTargetSessionGainsAccessImmediately()
     {
         await EnsureApplicationStartedAsync();
@@ -124,7 +129,8 @@ public sealed class AdministratorRoleAssignmentTests : IClassFixture<LoginLogout
         Assert.Contains("用户管理", targetHtml, StringComparison.Ordinal);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task AdministratorCanRemoveAdministratorRole_AndTargetFallsBackToUserImmediately()
     {
         await EnsureApplicationStartedAsync();
@@ -159,7 +165,8 @@ public sealed class AdministratorRoleAssignmentTests : IClassFixture<LoginLogout
         Assert.StartsWith("/Account/AccessDenied", GetLocationPath(afterRemovalResponse), StringComparison.Ordinal);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task RemovingAdministrator_PreservesSystemOwnerRole()
     {
         await EnsureApplicationStartedAsync();
@@ -197,7 +204,8 @@ public sealed class AdministratorRoleAssignmentTests : IClassFixture<LoginLogout
         Assert.StartsWith("/Account/AccessDenied", GetLocationPath(userManagementResponse), StringComparison.Ordinal);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task LastAdministratorRemoval_IsBlocked()
     {
         await EnsureApplicationStartedAsync();

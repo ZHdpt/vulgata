@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using Vulgata.Core.DomainServices;
 using Vulgata.Core.Entities;
 
@@ -95,7 +96,8 @@ public sealed class SequentialScanRunnerStartTests
 
     // --- T021: valid start creates exactly one ScanExecution in Pass1Planning ---
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task StartAsync_ValidApprovedHandoff_CreatesOneExecutionInPass1Planning()
     {
         Guid repositoryId = NonEmptyGuid(3);
@@ -125,7 +127,8 @@ public sealed class SequentialScanRunnerStartTests
 
     // --- T022: refusal on missing/not-approved/missing-revision ---
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task StartAsync_MissingHandoff_RefusesWithMissingPrerequisite()
     {
         var handoffSource = new FakeHandoffSource(handoff: null);
@@ -139,7 +142,8 @@ public sealed class SequentialScanRunnerStartTests
         Assert.Null(store.LastPersisted);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task StartAsync_MissingProfiledRevision_RefusesWithMissingPrerequisite()
     {
         Guid repositoryId = NonEmptyGuid(3);
@@ -167,7 +171,8 @@ public sealed class SequentialScanRunnerStartTests
 
     // --- T023: refusal on duplicate active scan ---
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task StartAsync_DuplicateActiveScan_RefusesWithDuplicateActiveScan()
     {
         Guid repositoryId = NonEmptyGuid(3);
@@ -190,7 +195,8 @@ public sealed class SequentialScanRunnerStartTests
 
     // --- T024: no concurrency/lease/replay/failover/retry ---
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task StartAsync_DoesNotIntroduceConcurrencyOrRetry()
     {
         // The start path is a single sequential load + check + persist.

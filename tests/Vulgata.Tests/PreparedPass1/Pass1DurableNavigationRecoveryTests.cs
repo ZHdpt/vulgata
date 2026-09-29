@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Reflection;
 using System.Text.RegularExpressions;
 using Vulgata.Agents.WorkerExecution;
@@ -15,7 +16,8 @@ namespace Vulgata.Tests.PreparedPass1;
 /// </summary>
 public sealed class Pass1DurableNavigationRecoveryTests
 {
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void ClaimedPacketHydration_ReconstructsExactDurableBudgetProjection()
     {
         string source = ReadRepositorySource(
@@ -49,7 +51,8 @@ public sealed class Pass1DurableNavigationRecoveryTests
             StringComparison.Ordinal);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void HighWaterEight_RepairsCallsMarkerBeforeRetryOrTerminalVisibility()
     {
         string runner = ReadRepositorySource(
@@ -76,7 +79,8 @@ public sealed class Pass1DurableNavigationRecoveryTests
             "T109 RED: marker nine must be repaired before provider retry or terminal visibility.");
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void RetryLeaseRecoveryAndRestart_RehydrateOnlyDurableClaimState()
     {
         string runner = ReadRepositorySource(
@@ -112,7 +116,8 @@ public sealed class Pass1DurableNavigationRecoveryTests
             StringComparison.Ordinal);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void ReservationPort_IsReachableFromPreparedProductionComposition()
     {
         Type reservationPort = typeof(IPass1NavigationAttemptReservationStore);

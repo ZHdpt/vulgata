@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
@@ -47,7 +48,8 @@ public sealed class PreparedScanBoundaryTests
         "CommunicationPatternCatalog",
     ];
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void PreparedScanComposition_ReferencesNoStory123OrDemoService()
     {
         Type coordinator = typeof(PreparedScanCoordinator);
@@ -69,7 +71,8 @@ public sealed class PreparedScanBoundaryTests
         AssertNoForbiddenTypeIdentity(dependencies);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void PreparedScanPublicGraph_ExposesNoDispatchDocumentOrResolutionAuthority()
     {
         Assembly[] assemblies =
@@ -112,7 +115,8 @@ public sealed class PreparedScanBoundaryTests
         AssertNoForbiddenTypeIdentity(referencedIdentities);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void PreparedScanProductionSources_ContainNoForbiddenInvocationOrCreation()
     {
         string repositoryRoot = FindRepositoryRoot();
@@ -160,7 +164,8 @@ public sealed class PreparedScanBoundaryTests
         Assert.True(matches.Length == 0, string.Join(Environment.NewLine, matches));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void ReviewedProfileSeedAuthority_IsAClosedServerOwnedPort()
     {
         Type? authority = typeof(PreparedScanPlanner).Assembly.GetType(
@@ -181,7 +186,8 @@ public sealed class PreparedScanBoundaryTests
                 property.Name.Contains("Score", StringComparison.OrdinalIgnoreCase));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void DocumentSymbolEvidence_DeclaresRootAndFlatProvenanceAndServerTypeName()
     {
         Type evidence = typeof(AnalysisSymbolEvidence);
@@ -203,7 +209,8 @@ public sealed class PreparedScanBoundaryTests
         Assert.NotNull(typeName);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void FileCodeUnitIdentity_PathValuedV1RemainsByteStable()
     {
         PreparedCanonicalArtifact pathIdentity = PreparedScanIdentityBuilders.CreateFileCodeUnitIdentity(
@@ -236,7 +243,8 @@ public sealed class PreparedScanBoundaryTests
             "The path-valued v1 identity fingerprint changed.");
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void FileCodeUnitIdentity_SemanticOwnerUsesSeparateV2BuilderWithOrdinalFqnBinding()
     {
         MethodInfo[] semanticBuilders = typeof(PreparedScanIdentityBuilders)
@@ -251,7 +259,8 @@ public sealed class PreparedScanBoundaryTests
                 method.ReturnType == typeof(PreparedCanonicalArtifact));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void ApprovedRuntimeAndWorkflowPins_MatchAcceptedBoundary()
     {
         string repositoryRoot = FindRepositoryRoot();

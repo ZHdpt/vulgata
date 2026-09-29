@@ -83,7 +83,7 @@ runtime or a particular test suite is currently qualified.
 
 ```powershell
 dotnet build src/dotnet/Vulgata.Web/Vulgata.Web.csproj
-dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj
+pwsh -NoProfile -File eng/test.ps1
 dotnet run --project src/dotnet/Vulgata.Web/Vulgata.Web.csproj
 docker compose --profile post-deadline-app up --build
 dotnet ef migrations add <Name> --project src/dotnet/Vulgata.Infrastructure --startup-project src/dotnet/Vulgata.Web

@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Diagnostics;
 using System.Security.Cryptography;
 using Vulgata.Core.DomainServices;
@@ -39,7 +40,8 @@ public sealed class NavigateCodeRealToolQualificationTests
     private static readonly Guid RepositoryId =
         Guid.Parse("12000000-0000-4000-8000-000000000123");
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task PinnedHostRuntime_ReportsCodeGraph15Java21AndJdtLsStdio()
     {
         Assert.True(File.Exists(CodeGraphCommandPath),
@@ -97,7 +99,8 @@ public sealed class NavigateCodeRealToolQualificationTests
             JdtLsArchiveHash);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task RealTypedTools_NavigateJavaAndRejectXmlNavigation()
     {
         string fixture = FindFixtureRepository();
@@ -225,7 +228,8 @@ public sealed class NavigateCodeRealToolQualificationTests
         }
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task ExactSourceFallback_IsSanitizedAndRevisionBound()
     {
         string root = CreateTemporaryRoot();

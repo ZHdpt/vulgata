@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Npgsql;
@@ -28,13 +29,14 @@ public sealed class DurableScanConcurrencyPostgreSqlTests
     private const string FileIdentityHash =
         "a3f15bb08b2bd1684e84c4b2e2d673282c0e31f27a6a2e56aeb894ecff0c10f4";
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task PostgreSql17_CompetingClaimsAndTransitions_AllowExactlyOneWinnerAndRejectStaleLease()
     {
         string? administrator = Environment.GetEnvironmentVariable("VULGATA_TEST_POSTGRES_ADMIN");
         if (string.IsNullOrWhiteSpace(administrator))
         {
-            return;
+            throw new InvalidOperationException("Required PostgreSQL qualification prerequisite is unavailable; use eng/test.ps1 -Suite PostgreSql.");
         }
 
         await using DisposablePostgreSqlDatabase database =
@@ -101,7 +103,8 @@ public sealed class DurableScanConcurrencyPostgreSqlTests
         await AssertDatabaseWasDroppedAsync(administrator, databaseName);
     }
 
-    [Theory]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteTheory("PostgreSql")]
     [InlineData(1)]
     [InlineData(2)]
     [InlineData(3)]
@@ -111,7 +114,7 @@ public sealed class DurableScanConcurrencyPostgreSqlTests
         string? administrator = Environment.GetEnvironmentVariable("VULGATA_TEST_POSTGRES_ADMIN");
         if (string.IsNullOrWhiteSpace(administrator))
         {
-            return;
+            throw new InvalidOperationException("Required PostgreSQL qualification prerequisite is unavailable; use eng/test.ps1 -Suite PostgreSql.");
         }
 
         await using DisposablePostgreSqlDatabase database =
@@ -157,13 +160,14 @@ public sealed class DurableScanConcurrencyPostgreSqlTests
         await AssertDatabaseWasDroppedAsync(administrator, databaseName);
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task PostgreSql17_RecoveryBatch_TransientAfterSaveChanges_RetriesWithoutPartialState()
     {
         string? administrator = Environment.GetEnvironmentVariable("VULGATA_TEST_POSTGRES_ADMIN");
         if (string.IsNullOrWhiteSpace(administrator))
         {
-            return;
+            throw new InvalidOperationException("Required PostgreSQL qualification prerequisite is unavailable; use eng/test.ps1 -Suite PostgreSql.");
         }
 
         await using DisposablePostgreSqlDatabase database =
@@ -236,13 +240,14 @@ public sealed class DurableScanConcurrencyPostgreSqlTests
         await AssertDatabaseWasDroppedAsync(administrator, databaseName);
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task PostgreSql17_RecoveryBatch_AcknowledgementLostAfterCommit_ReplaysWithoutDuplicateStateAdvance()
     {
         string? administrator = Environment.GetEnvironmentVariable("VULGATA_TEST_POSTGRES_ADMIN");
         if (string.IsNullOrWhiteSpace(administrator))
         {
-            return;
+            throw new InvalidOperationException("Required PostgreSQL qualification prerequisite is unavailable; use eng/test.ps1 -Suite PostgreSql.");
         }
 
         await using DisposablePostgreSqlDatabase database =

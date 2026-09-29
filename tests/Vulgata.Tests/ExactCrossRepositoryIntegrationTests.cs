@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
@@ -16,7 +17,8 @@ namespace Vulgata.Tests;
 
 public sealed class ExactCrossRepositoryIntegrationTests
 {
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public void ResolveAfterPass1Async_ProductionCoordinator_ExposesBoundedContract()
     {
         Type coordinator = typeof(ExactCrossRepositoryResolutionCoordinator);
@@ -34,7 +36,8 @@ public sealed class ExactCrossRepositoryIntegrationTests
             method.GetParameters().Select(parameter => parameter.ParameterType));
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task ResolveAfterPass1Async_OneExecutionNotReady_WaitsBeforeGitSourceOrWriteAsync()
     {
         await using ExactCrossRepositoryTestFixture fixture =
@@ -89,7 +92,8 @@ public sealed class ExactCrossRepositoryIntegrationTests
         Assert.Empty(context.Uncertainties);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task ResolveAfterPass1Async_OneEndpointUnauthorized_RefusesBeforeBindingOrAccessAsync()
     {
         await using ExactCrossRepositoryTestFixture fixture =
@@ -127,7 +131,8 @@ public sealed class ExactCrossRepositoryIntegrationTests
         Assert.Equal(0, store.CallCount);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task ResolveAfterPass1Async_CancelledBeforeAccess_ReturnsBoundedCancelledAsync()
     {
         await using ExactCrossRepositoryTestFixture fixture =
@@ -168,7 +173,8 @@ public sealed class ExactCrossRepositoryIntegrationTests
         Assert.Equal(0, store.CallCount);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public void ProductionComposition_ExactServicesResolve_OrdinaryGitRegistrationIsUnchanged()
     {
         using var databaseFactory = new LoginLogoutTests.CustomWebApplicationFactory();
@@ -195,7 +201,8 @@ public sealed class ExactCrossRepositoryIntegrationTests
         Assert.Single(services.GetServices<IGitWorkingCopyService>());
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task ResolveAfterPass1Async_ReviewedBoundary_AppliesExactAndUnsupportedOnceAsync()
     {
         await using ExactCrossRepositoryTestFixture fixture =
@@ -286,7 +293,8 @@ public sealed class ExactCrossRepositoryIntegrationTests
         Assert.IsType<RestrictedRelationship>(Assert.Single(restricted.Relationships));
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task ResolverComposition_ReverseDirectionAndSameNameRemainOccurrenceLocalAsync()
     {
         ExactResolutionProfile reviewed = new ExactResolutionProfileCatalog().Load();
@@ -361,7 +369,8 @@ public sealed class ExactCrossRepositoryIntegrationTests
         Assert.Equal(accountProvider.RepositoryId, exact.Target?.RepositoryId);
     }
 
-    [Theory]
+    [Trait("Suite", "LocalTools")]
+    [SuiteTheory("LocalTools")]
     [InlineData("malformed_provider")]
     [InlineData("unmatched")]
     [InlineData("normalization_mismatch")]
@@ -446,7 +455,8 @@ public sealed class ExactCrossRepositoryIntegrationTests
         Assert.Equal(2, uncertainties.Length);
     }
 
-    [Theory]
+    [Trait("Suite", "LocalTools")]
+    [SuiteTheory("LocalTools")]
     [InlineData("zero")]
     [InlineData("multiple")]
     public async Task ResolveAfterPass1Async_StructurallyInvalidProviderWithoutUniqueCurrentOwner_RefusesWithoutWriteAsync(
@@ -519,7 +529,8 @@ public sealed class ExactCrossRepositoryIntegrationTests
         Assert.Empty(context.Uncertainties);
     }
 
-    [Theory]
+    [Trait("Suite", "LocalTools")]
+    [SuiteTheory("LocalTools")]
     [InlineData("variable_target")]
     [InlineData("disallowed_invocation")]
     [InlineData("malformed_provider")]
@@ -587,7 +598,8 @@ public sealed class ExactCrossRepositoryIntegrationTests
         Assert.Equal(2, uncertainties.Length);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task ResolveAfterPass1Async_OneLeaseCleanupFails_AttemptsEveryLeaseAndReturnsBoundedFailureAsync()
     {
         await using ExactCrossRepositoryTestFixture fixture =
@@ -631,7 +643,8 @@ public sealed class ExactCrossRepositoryIntegrationTests
         Assert.Equal(2, snapshotService.DisposeAttempts);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task ProductionGitComposition_ExactAndOrdinaryAcquisitionRemainConcurrentAsync()
     {
         await using ExactCrossRepositoryTestFixture fixture =

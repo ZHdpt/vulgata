@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
@@ -14,7 +15,8 @@ namespace Vulgata.Tests.Migrations;
 /// </summary>
 public sealed class DurableScanModelTests
 {
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void DurableScanModel_ContainsNewTablesAndBoundedColumns()
     {
         using VulgataDbContext db = CreatePostgreSqlModelContext();
@@ -56,7 +58,8 @@ public sealed class DurableScanModelTests
         AssertConcurrencyToken(execution, nameof(ScanExecution.StateVersion));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void DurableScanModel_UsesCompositeRepositoryOwnershipAndRestrictiveDeletes()
     {
         using VulgataDbContext db = CreatePostgreSqlModelContext();
@@ -131,7 +134,8 @@ public sealed class DurableScanModelTests
         }
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void DurableScanModel_EnforcesDeterministicUniqueIdentityAndFilteredCommitIndex()
     {
         using VulgataDbContext db = CreatePostgreSqlModelContext();
@@ -165,7 +169,8 @@ public sealed class DurableScanModelTests
         Assert.False(snapshot.FindProperty(nameof(ScanContextSnapshot.Id))!.ValueGenerated == ValueGenerated.OnAdd);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void DurableScanModel_ClosesStateLeaseRetryCompletionAndCoordinationShapes()
     {
         using VulgataDbContext db = CreatePostgreSqlModelContext();
@@ -205,7 +210,8 @@ public sealed class DurableScanModelTests
         Assert.Contains("StateVersion", executionChecks, StringComparison.Ordinal);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void DurableScanModel_RetainsLegacyScanExecutionAtomsAndColumnsForCompatibility()
     {
         using VulgataDbContext db = CreatePostgreSqlModelContext();
@@ -246,7 +252,8 @@ public sealed class DurableScanModelTests
         Assert.True(execution.FindProperty(nameof(ScanExecution.AnalysisRuntimeIdentityJson))!.IsNullable);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void DurableScanModel_PR003TemporalSecondInsertBoundary_UsesUtcBoundCompositeBindings()
     {
         using VulgataDbContext db = CreatePostgreSqlModelContext();

@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Net;
 using System.Security.Cryptography;
 using System.Text;
@@ -18,7 +19,8 @@ public sealed class WorkerAgentDispatcherTests
     private const string _pass2PromptResourceName =
         "Vulgata.Agents.Prompts.pass2-business-flow-worker.v1.md";
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task Pass1Prompt_FixedEmbeddedResource_IsFiniteAndNonEmpty()
     {
         var assembly = typeof(RevisionBoundWorkerContextHydrator).Assembly;
@@ -44,7 +46,8 @@ public sealed class WorkerAgentDispatcherTests
         Assert.Contains("Code Logic Document", prompt, StringComparison.Ordinal);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task Pass2Prompt_FixedEmbeddedResource_IsFiniteAndNonEmpty()
     {
         var assembly = typeof(RevisionBoundWorkerContextHydrator).Assembly;
@@ -74,7 +77,8 @@ public sealed class WorkerAgentDispatcherTests
         Assert.Contains("no base REFERENCES", prompt, StringComparison.OrdinalIgnoreCase);
     }
 
-    [Theory]
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
     [InlineData(true, "system.worker.invalid")]
     [InlineData(false, "global.worker.invalid")]
     public async Task DispatchAsync_WorkerAssignment_SendsOneMinimalStructuredPass1Call(
@@ -214,7 +218,8 @@ public sealed class WorkerAgentDispatcherTests
         }
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task DispatchAsync_PreparedPass2_SendsOneExactProjectionCallWithoutHydrationOrFallback()
     {
         WorkerAgentJobPacket packet = CreatePass2Packet();
@@ -321,7 +326,8 @@ public sealed class WorkerAgentDispatcherTests
         Assert.DoesNotContain("loopback-secret", capture.Body, StringComparison.Ordinal);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ResolveAsync_WithoutSystemOverride_UsesExistingGlobalWorkerAssignmentOnly()
     {
         var orchestratorProvider = new LlmProvider(
@@ -350,7 +356,8 @@ public sealed class WorkerAgentDispatcherTests
         Assert.False(result.IsSystemOverride);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Pass1Prompt_InvalidFixedResourceSet_FailsClosedWithoutRuntimeReplacement()
     {
         WorkerAgentPromptResource valid = new(
@@ -384,7 +391,8 @@ public sealed class WorkerAgentDispatcherTests
                 parameter.Name?.Contains("prompt", StringComparison.OrdinalIgnoreCase) == true);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task DispatchAsync_HttpError_ReturnsBoundedClosedErrorWithoutRawDiagnostic()
     {
         const string rawDiagnostic = "provider-secret-diagnostic";
@@ -412,7 +420,8 @@ public sealed class WorkerAgentDispatcherTests
         Assert.DoesNotContain(rawDiagnostic, result.ToString(), StringComparison.Ordinal);
     }
 
-    [Theory]
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
     [InlineData(InvalidProviderOutput.Oversized)]
     [InlineData(InvalidProviderOutput.ExcessiveDepth)]
     [InlineData(InvalidProviderOutput.TrailingJson)]
@@ -495,7 +504,8 @@ public sealed class WorkerAgentDispatcherTests
         Assert.DoesNotContain("C:/host", result.ToString(), StringComparison.OrdinalIgnoreCase);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void JsonPreflight_InvalidUtf8_IsRejectedBeforeDeserialization()
     {
         byte[] invalidUtf8 = [0x7b, 0x22, 0x78, 0x22, 0x3a, 0x22, 0xff, 0x22, 0x7d];
@@ -503,7 +513,8 @@ public sealed class WorkerAgentDispatcherTests
         _ = Assert.ThrowsAny<JsonException>(() => WorkerAgentJsonPreflight.Validate(invalidUtf8));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task DispatchAsync_Cancellation_PropagatesWithoutFabricatingResultAsync()
     {
         WorkerAgentJobPacket packet = WorkerAgentTestFixtures.CreatePass1Packet();
@@ -529,7 +540,8 @@ public sealed class WorkerAgentDispatcherTests
             dispatcher.DispatchAsync(context, cancellation.Token));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task DispatchAsync_Pass1PacketWithoutScope_RejectsBeforeHydrationAsync()
     {
         WorkerAgentJobPacket packet = WorkerAgentTestFixtures.CreatePass1Packet();
@@ -562,7 +574,8 @@ public sealed class WorkerAgentDispatcherTests
         Assert.Equal(0, source.CallCount);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task DispatchAsync_Pass2PacketWithoutScope_RejectsBeforeProviderTransmissionAsync()
     {
         WorkerAgentJobPacket packet = CreatePass2Packet();
@@ -593,7 +606,8 @@ public sealed class WorkerAgentDispatcherTests
         Assert.Equal(0, capture.CallCount);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task DispatchAsync_Pass1PacketWithScope_PropagatesExactScopeToHydrationAsync()
     {
         WorkerAgentJobPacket packet = WorkerAgentTestFixtures.CreatePass1Packet();

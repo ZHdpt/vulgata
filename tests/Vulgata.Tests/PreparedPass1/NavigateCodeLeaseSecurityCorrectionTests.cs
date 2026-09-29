@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Text;
 using System.Reflection;
 using Vulgata.Core.DomainServices;
@@ -30,7 +31,8 @@ public sealed class NavigateCodeLeaseSecurityCorrectionTests
     private const string JavaPath = "src/main/java/example/Service.java";
     private const string EvidenceLocator = "src/main/java/example/Service.java#L1-L2";
 
-    [Theory]
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
     [MemberData(nameof(AuthorizedOperations))]
     public async Task CurrentLease_EachAuthorizedOperation_ReturnsBoundedEvidenceAndOneReceipt(
         PreparedPass1NavigationOperation operation)
@@ -54,7 +56,8 @@ public sealed class NavigateCodeLeaseSecurityCorrectionTests
         });
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task Implementations_CurrentLease_ReachesBoundedJdtLsAndReturnsAuthorizedEvidence()
     {
         var harness = CreateHarness();
@@ -71,7 +74,8 @@ public sealed class NavigateCodeLeaseSecurityCorrectionTests
         Assert.Equal(EvidenceLocator, response.Results[0].EvidenceLocator);
     }
 
-    [Theory]
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
     [InlineData("expired lease")]
     [InlineData("replaced lease token")]
     [InlineData("paused circuit")]
@@ -135,13 +139,15 @@ public sealed class NavigateCodeLeaseSecurityCorrectionTests
         Assert.Equal(0, harness.SourceReader.ReadCalls);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void NavigationContracts_RequireServerOwnedAuthorizationBinding()
     {
         RequireServerAuthorizationSeam();
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task OwnershipChangesBetweenEvidenceAndReceiptCommit_DoesNotReleaseEvidenceOrWriteReceipt()
     {
         var harness = CreateHarness();
@@ -159,7 +165,8 @@ public sealed class NavigateCodeLeaseSecurityCorrectionTests
         Assert.Equal(0, harness.ReceiptSink.DurableBudgetMutations);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ForbiddenRead_UsesEmptyNondisclosingOutcomeAndPerformsNoMutation()
     {
         var harness = CreateHarness();

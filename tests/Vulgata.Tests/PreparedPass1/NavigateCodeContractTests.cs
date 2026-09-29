@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Reflection;
 using Vulgata.Agents.WorkerExecution;
 using Vulgata.Core.DomainServices;
@@ -16,7 +17,8 @@ public sealed class NavigateCodeContractTests
     private const string NavigationPortName =
         "Vulgata.Core.DomainServices.IPass1NavigationService";
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void NavigationPort_ExposesExactlyOneClosedAsyncMethodAndServerBoundRequest()
     {
         Type port = RequireNavigationPort();
@@ -52,7 +54,8 @@ public sealed class NavigateCodeContractTests
             method.Name.Contains("Await", StringComparison.OrdinalIgnoreCase));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void ExecutorComposition_ExposesTheDurableReservationStoreForNavigationCallbacks()
     {
         ConstructorInfo[] constructors = typeof(PreparedPass1JobExecutor)
@@ -64,7 +67,8 @@ public sealed class NavigateCodeContractTests
                 parameter.ParameterType == typeof(IPass1NavigationAttemptReservationStore)));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void NavigationOperation_ContainsExactlyTheEightAuthorizedOperations()
     {
         Type operation = typeof(PreparedPass1NavigationOperation);
@@ -90,7 +94,8 @@ public sealed class NavigateCodeContractTests
                 name.Contains("Shell", StringComparison.OrdinalIgnoreCase));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void NavigationRequest_BindsExactTargetIdentityAndExplicitDepthChain()
     {
         Type request = RequireNavigateRequestType();
@@ -115,7 +120,8 @@ public sealed class NavigateCodeContractTests
         Assert.Equal(typeof(Guid), request.GetProperty("SourceFileCodeUnitId")!.PropertyType);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void NavigationResponse_PreservesDocumentFirstAndImmediateSourceFallbackEvidence()
     {
         Type response = RequireNavigationResponseType();
@@ -145,7 +151,8 @@ public sealed class NavigateCodeContractTests
             property.Name is "SourceText" or "RawSource" or "HostPath");
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void NavigationResponse_RepresentsAllBoundedOutcomesAndMetadataOnlyRefusals()
     {
         Type response = RequireNavigationResponseType();
@@ -173,7 +180,8 @@ public sealed class NavigateCodeContractTests
             property.Name.Contains("Diagnostic", StringComparison.OrdinalIgnoreCase));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void NavigationResponse_ExposesCountersNeededForEightCallTwentyResultAnd64KiBBounds()
     {
         Type response = RequireNavigationResponseType();
@@ -192,7 +200,8 @@ public sealed class NavigateCodeContractTests
             property => property.Name is "ToolAttemptOrdinal" or "Operation");
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void NavigationContract_UsesTypedDescriptorsForStableTargetsAndDeduplicatesCycles()
     {
         Type response = RequireNavigationResponseType();

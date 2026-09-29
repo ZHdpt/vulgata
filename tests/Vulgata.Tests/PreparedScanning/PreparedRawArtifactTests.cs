@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Diagnostics;
 using System.Reflection;
 using System.Text;
@@ -13,7 +14,8 @@ namespace Vulgata.Tests.PreparedScanning;
 /// </summary>
 public sealed class PreparedRawArtifactTests
 {
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public void PreparedRawArtifactReader_ExposesRawByteBoundedReadPort()
     {
         Type reader = RequirePublicType(
@@ -33,7 +35,8 @@ public sealed class PreparedRawArtifactTests
             parameter => parameter.ParameterType == typeof(string));
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public void PreparedRawArtifactReader_ReturnModelCarriesBothExactHashesAndSnapshotBinding()
     {
         Type reader = RequirePublicType(
@@ -58,7 +61,8 @@ public sealed class PreparedRawArtifactTests
             property => property.Name.Contains("AbsolutePath", StringComparison.OrdinalIgnoreCase));
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task PreparedSnapshotSource_BinaryEligibleArtifact_RecordsClosedOutcomeAndContinuesSafeFiles()
     {
         string fixtureRoot = Path.Combine(

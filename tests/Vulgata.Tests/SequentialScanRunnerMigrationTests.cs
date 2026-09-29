@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
@@ -73,7 +74,8 @@ public sealed class SequentialScanRunnerMigrationTests
                 "\"TerminalReasonKind\" IS NULL OR \"TerminalReasonKind\" IN ('SchemaInvalid', 'Error', 'Unbounded', 'MissingPrerequisite', 'DuplicateActiveScan', 'MissingCodeUnit', 'ForbiddenContent', 'OverLimitPacket')",
         };
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void AddSequentialScanRunner_Operations_AreAdditiveCompleteAndReversible()
     {
         using VulgataDbContext db = CreateContext();
@@ -169,7 +171,8 @@ public sealed class SequentialScanRunnerMigrationTests
                 .Order(StringComparer.Ordinal));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void AddSequentialScanRunner_Model_ChecksAndIndexes_MatchAcceptedSchema()
     {
         using VulgataDbContext db = CreateContext();
@@ -229,7 +232,8 @@ public sealed class SequentialScanRunnerMigrationTests
             method => string.Equals(method.Name, "Delete", StringComparison.Ordinal));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void AddSequentialScanRunner_ApplyRollbackAndReapply_PreservesStory111Schema()
     {
         using var connection = new SqliteConnection(

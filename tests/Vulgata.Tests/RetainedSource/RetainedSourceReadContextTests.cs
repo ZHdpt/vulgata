@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Text;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -9,7 +10,8 @@ namespace Vulgata.Tests.RetainedSource;
 
 public sealed class RetainedSourceReadContextTests
 {
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task OpenReadContextAsync_AfterCaptureReturnsBoundGrantAndImmediateMetadata()
     {
         await using RetainedSourceFixture fixture = await RetainedSourceFixture.CreateAsync(
@@ -68,7 +70,8 @@ public sealed class RetainedSourceReadContextTests
         Assert.Null(secondPage.NextCursor);
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task ReadContext_RequestedGrantOnlyReducesServerBudgetAndBindsCursorsToContext()
     {
         await using RetainedSourceFixture fixture = await RetainedSourceFixture.CreateAsync(
@@ -125,7 +128,8 @@ public sealed class RetainedSourceReadContextTests
         Assert.Equal(SourceReadStatus.Denied, tamperedCursor.Status);
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task OpenReadContextAsync_AfterAuthorityRevocation_DeniesFreshGrant()
     {
         await using RetainedSourceFixture fixture = await RetainedSourceFixture.CreateAsync();
@@ -148,7 +152,8 @@ public sealed class RetainedSourceReadContextTests
         Assert.Null(opened.Context);
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task OpenReadContextAsync_WhenManifestIsCorrupt_ReturnsIntegrityFailureWithoutContext()
     {
         await using RetainedSourceFixture fixture = await RetainedSourceFixture.CreateAsync();
@@ -169,7 +174,8 @@ public sealed class RetainedSourceReadContextTests
         Assert.Null(opened.Context);
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task ReadContext_AfterManifestMutation_RevalidatesBeforeReturningMetadata()
     {
         await using RetainedSourceFixture fixture = await RetainedSourceFixture.CreateAsync();
@@ -193,7 +199,8 @@ public sealed class RetainedSourceReadContextTests
         Assert.Null(entry.Entry);
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task ReadContext_WhenCallerCancelsAfterMetadataAuthorization_ReturnsCancelled()
     {
         await using RetainedSourceFixture fixture = await RetainedSourceFixture.CreateAsync();
@@ -225,7 +232,8 @@ public sealed class RetainedSourceReadContextTests
         Assert.Null(entry.Entry);
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task ReadContext_DisposedContextRejectsFurtherMetadataAttempts()
     {
         await using RetainedSourceFixture fixture = await RetainedSourceFixture.CreateAsync();
@@ -248,7 +256,8 @@ public sealed class RetainedSourceReadContextTests
         Assert.Null(entry.Entry);
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task ReadContext_ExactOperationBudgetStopsTheSecondAttempt()
     {
         await using RetainedSourceFixture fixture = await RetainedSourceFixture.CreateAsync();
@@ -271,7 +280,8 @@ public sealed class RetainedSourceReadContextTests
         Assert.Null(second.Entry);
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task OpenReadContextAsync_NonPositiveRequestedLimitsAreRejected()
     {
         await using RetainedSourceFixture fixture = await RetainedSourceFixture.CreateAsync();
@@ -297,7 +307,8 @@ public sealed class RetainedSourceReadContextTests
         Assert.Null(entry.Entry);
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task OpenReadContextAsync_RequestCannotRaiseConfiguredReadCaps()
     {
         await using RetainedSourceFixture fixture = await RetainedSourceFixture.CreateAsync(
@@ -332,7 +343,8 @@ public sealed class RetainedSourceReadContextTests
         Assert.Empty(list.Entries);
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task OpenReadContextAsync_LoweredMonotonicDeadlineStopsMetadataAttempt()
     {
         await using RetainedSourceFixture fixture = await RetainedSourceFixture.CreateAsync();
@@ -360,7 +372,8 @@ public sealed class RetainedSourceReadContextTests
         Assert.Null(entry.Entry);
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task OpenReadContextAsync_MissingSourceAndEntryReturnSanitizedUnavailableResults()
     {
         await using RetainedSourceFixture fixture = await RetainedSourceFixture.CreateAsync();
@@ -389,7 +402,8 @@ public sealed class RetainedSourceReadContextTests
         Assert.Null(entry.Entry);
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task OpenReadContextAsync_MissingBlobReturnsIntegrityFailure()
     {
         await using RetainedSourceFixture fixture = await RetainedSourceFixture.CreateAsync();
@@ -410,7 +424,8 @@ public sealed class RetainedSourceReadContextTests
         Assert.Null(opened.Context);
     }
 
-    [Theory]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteTheory("PostgreSql")]
     [InlineData("")]
     [InlineData("/absolute")]
     [InlineData("../escape")]
@@ -439,7 +454,8 @@ public sealed class RetainedSourceReadContextTests
         Assert.Null(entry.Entry);
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task ReadContext_RootListingReportsUnsupportedRawPathLimitations()
     {
         byte[] unsafePath = Encoding.ASCII.GetBytes("unsafe\\name");
@@ -469,7 +485,8 @@ public sealed class RetainedSourceReadContextTests
             Assert.Equal("source_path_unsupported", limitation.LimitationCode));
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task ReadContext_RootListingPagesSafeAndUnsupportedMetadataWithinOneCumulativeBudget()
     {
         byte[] unsafePath = Encoding.ASCII.GetBytes("unsafe\\name");
@@ -528,7 +545,8 @@ public sealed class RetainedSourceReadContextTests
         Assert.Equal(2, allLimitations.Select(value => value.Ordinal).Distinct().Count());
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task OpenReadContextAsync_SameLengthBlobCorruptionReturnsIntegrityFailure()
     {
         await using RetainedSourceFixture fixture = await RetainedSourceFixture.CreateAsync();

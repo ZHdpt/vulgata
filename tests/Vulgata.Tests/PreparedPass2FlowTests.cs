@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Text;
 using System.Text.Json.Nodes;
 using Vulgata.Agents.WorkerExecution;
@@ -11,7 +12,8 @@ public sealed class PreparedPass2FlowTests
     private const string _profiledRevision =
         "0123456789abcdef0123456789abcdef01234567";
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Catalog_EmbeddedFixedManifest_LoadsExactlyOneClosedPreparedFlow()
     {
         PreparedPass2FlowCatalog catalog = PreparedPass2FlowCatalog.Load(
@@ -28,7 +30,8 @@ public sealed class PreparedPass2FlowTests
         Assert.Equal([1, 2], catalog.Flow.TraceEvidence.Select(evidence => evidence.Order));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Catalog_ZeroOrMultipleFixedResources_RejectsBeforeUse()
     {
         Assert.Throws<PreparedPass2FlowContractException>(() =>
@@ -41,7 +44,8 @@ public sealed class PreparedPass2FlowTests
             ]));
     }
 
-    [Theory]
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
     [InlineData("missing-schema")]
     [InlineData("wrong-schema")]
     [InlineData("extra-field")]
@@ -118,7 +122,8 @@ public sealed class PreparedPass2FlowTests
             PreparedPass2FlowCatalog.Load([Resource(manifest.ToJsonString())]));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Resolve_ExactCurrentCodeLogicDocuments_ReturnsManifestOrder()
     {
         PreparedPass2Flow flow = LoadFlow();
@@ -139,7 +144,8 @@ public sealed class PreparedPass2FlowTests
             resolved.CodeLogicDocuments.Select(document => document.DocumentVersionId));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Resolve_InvalidMemberResolution_RejectsWithZeroProviderCalls()
     {
         PreparedPass2Flow flow = LoadFlow();

@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Vulgata.Core.DomainServices;
@@ -15,7 +16,8 @@ public sealed class PreScanHandoffTests
     private const string ProfiledRevision = "0123456789abcdef0123456789abcdef01234567";
     private const string AdvancedRevision = "fedcba9876543210fedcba9876543210fedcba98";
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task GetApprovedPreScanHandoffAsync_TruncatedBothKindResult_MaterializesCompleteBoundedOrderedContractAsync()
     {
         await using VulgataDbContext db = await CreateDatabaseAsync();
@@ -63,7 +65,8 @@ public sealed class PreScanHandoffTests
             item => item.Kind == CommunicationKind.Http);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task GetSystemRepositoryAsync_VisibleExactRevision_MapsSchemaFieldsWithoutPersistenceInternalsAsync()
     {
         (SystemEntity system, RepositoryEntity repository) = CreateSystemRepository();
@@ -101,7 +104,8 @@ public sealed class PreScanHandoffTests
         Assert.DoesNotContain("Dispatch", json, StringComparison.OrdinalIgnoreCase);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task GetSystemRepositoryAsync_CheckoutAdvancedAfterApproval_ReturnsStableOriginalOnlyForRequestedProfiledRevisionAsync()
     {
         (SystemEntity system, RepositoryEntity repository) = CreateSystemRepository();
@@ -130,7 +134,8 @@ public sealed class PreScanHandoffTests
         Assert.Null(advanced);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task GetSystemRepositoryAsync_WrongSystemHiddenMissingOrRevoked_DisclosesNoHandoffAsync()
     {
         (SystemEntity system, RepositoryEntity repository) = CreateSystemRepository();
@@ -191,7 +196,8 @@ public sealed class PreScanHandoffTests
         Assert.Equal(1, revokedRead.MaterializationCount);
     }
 
-    [Theory]
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
     [InlineData(
         true,
         "预扫描已批准并保留审慎警告——继续进入顺序演示运行器")]
@@ -232,7 +238,8 @@ public sealed class PreScanHandoffTests
         Assert.Equal(2, handoffs.MaterializationCount);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task GetStandaloneRepositoryAsync_VisibilityRevokedAfterLoad_DisclosesNoHandoffAsync()
     {
         RepositoryEntity repository = RepositoryEntity.CreateStandalone(

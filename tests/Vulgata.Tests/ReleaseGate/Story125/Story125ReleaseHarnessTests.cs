@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Diagnostics;
 using System.Reflection;
 using System.Text.Json;
@@ -16,7 +17,8 @@ public sealed class Story125ReleaseHarnessTests
     private const string AuthorizedStory124MetadataCorrectionPath =
         "specs/013-exact-cross-repository-flow-pass2/workflow-state.json";
 
-    [Fact]
+    [Trait("Suite", "HistoricalBoundary")]
+    [SuiteFact("HistoricalBoundary")]
     public void Story125Boundary_NoMigrationDbContextStory124OrUncoordinatedSharedDelta_RemainsIntact()
     {
         string repositoryRoot = FindRepositoryRoot();
@@ -132,7 +134,8 @@ public sealed class Story125ReleaseHarnessTests
                 !ownershipManifest.Contains(path, StringComparison.Ordinal));
     }
 
-    [Fact]
+    [Trait("Suite", "HistoricalBoundary")]
+    [SuiteFact("HistoricalBoundary")]
     public void Story125DatabaseAndScreenshotPreflight_RejectsProtectedOrFakeBackupBState()
     {
         Assert.True(Story125ReleaseHarness.IsOwnedDatabaseName(
@@ -439,7 +442,8 @@ public sealed class Story125ReleaseHarnessTests
         })];
     }
 
-    [Theory]
+    [Trait("Suite", "HistoricalBoundary")]
+    [SuiteTheory("HistoricalBoundary")]
     [MemberData(nameof(SemanticEnvelopeRejectionVectors))]
     public void Story125SemanticValidation_RedVector_IsRejectedBeforeT016(
         string vector,

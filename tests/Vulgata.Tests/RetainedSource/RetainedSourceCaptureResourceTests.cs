@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using Xunit.Abstractions;
 using Microsoft.Extensions.DependencyInjection;
 using Vulgata.Core.DomainServices;
@@ -7,7 +8,8 @@ namespace Vulgata.Tests.RetainedSource;
 [Collection(RetainedSourceProcessGlobalCollection.Name)]
 public sealed class RetainedSourceCaptureResourceTests(ITestOutputHelper output)
 {
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task AcquireAsync_SixtyFourMiBCommittedPayload_StaysBelowBoundedAllocationCeiling()
     {
         const int blobSize = 8 * 1024 * 1024;

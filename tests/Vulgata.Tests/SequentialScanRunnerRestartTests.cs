@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using Vulgata.Core.DomainServices;
 using Vulgata.Core.Entities;
 
@@ -142,7 +143,8 @@ public sealed class SequentialScanRunnerRestartTests
     // and completed count after a transition
     // =====================================================================
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ReadStateAsync_PersistedState_ReportsPhaseInFlightJobAndCompletedCount()
     {
         Guid executionId = NonEmptyGuid(1);
@@ -172,7 +174,8 @@ public sealed class SequentialScanRunnerRestartTests
     // RestartIndicator increments (bounded 0–32) and persists
     // =====================================================================
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ReadStateAsync_OnRestartWithInFlightJob_IncrementsAndPersistsRestartIndicator()
     {
         Guid executionId = NonEmptyGuid(1);
@@ -202,7 +205,8 @@ public sealed class SequentialScanRunnerRestartTests
     // T044: restart does NOT silently resume LLM work or fabricate a result
     // =====================================================================
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ReadStateAsync_OnRestart_DoesNotResumeLlmWorkOrFabricateResult()
     {
         Guid executionId = NonEmptyGuid(1);
@@ -238,7 +242,8 @@ public sealed class SequentialScanRunnerRestartTests
     // and Cancelled using persisted state alone
     // =====================================================================
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ReadStateAsync_DistinguishesPass1RunningFromTerminalPhases()
     {
         Guid executionId = NonEmptyGuid(1);
@@ -307,7 +312,8 @@ public sealed class SequentialScanRunnerRestartTests
     // job is in flight; never overflows
     // =====================================================================
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ReadStateAsync_RestartIndicatorStaysBoundedAtMaxNeverOverflows()
     {
         Guid executionId = NonEmptyGuid(1);
@@ -342,7 +348,8 @@ public sealed class SequentialScanRunnerRestartTests
     // atomicity is covered by the G6 SQLite integration tests.
     // =====================================================================
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ReadStateAsync_EachRestartObservationPersistsAtomically_NoPartialState()
     {
         Guid executionId = NonEmptyGuid(1);

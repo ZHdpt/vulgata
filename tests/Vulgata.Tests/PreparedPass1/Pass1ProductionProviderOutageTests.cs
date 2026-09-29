@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Net;
 using System.Net.Http.Json;
 using System.Reflection;
@@ -33,6 +34,7 @@ public sealed class Pass1ProductionProviderOutageTests
     private const string ProbeDriverTypeName =
         "Vulgata.Web.Data.PreparedPass1ProbeDriver";
 
+    [Trait("Suite", "External")]
     [T062HostQualificationFact]
     public async Task AuthenticatedRealPair_ProviderUnavailable_PausesDurablyAndStopsNewDispatch()
     {
@@ -125,7 +127,8 @@ public sealed class Pass1ProductionProviderOutageTests
         await context.SaveChangesAsync();
     }
 
-    [Fact]
+    [Trait("Suite", "External")]
+    [SuiteFact("External")]
     public void ActiveProviderProbe_UsesInjectedTransportAndTimeInsteadOfConfigurationResolution()
     {
         using RecordingTransport transport = new();
@@ -152,7 +155,8 @@ public sealed class Pass1ProductionProviderOutageTests
                 header.Key.Contains("scan", StringComparison.OrdinalIgnoreCase));
     }
 
-    [Fact]
+    [Trait("Suite", "External")]
+    [SuiteFact("External")]
     public void ActiveProviderProbe_RequestContractIsSourceFreeAndRetriesAndLogsAreDisabled()
     {
         Type contract = RequireType("Vulgata.Core", HealthProbeContractTypeName);
@@ -185,7 +189,8 @@ public sealed class Pass1ProductionProviderOutageTests
         Assert.Single(transport.RequestBodies);
     }
 
-    [Theory]
+    [Trait("Suite", "External")]
+    [SuiteTheory("External")]
     [InlineData(HttpStatusCode.Unauthorized)]
     [InlineData(HttpStatusCode.Forbidden)]
     public void ActiveProviderProbe_MapsAuthenticationResponsesToConfigurationPause(
@@ -204,7 +209,8 @@ public sealed class Pass1ProductionProviderOutageTests
         Assert.Single(transport.Requests);
     }
 
-    [Theory]
+    [Trait("Suite", "External")]
+    [SuiteTheory("External")]
     [InlineData(HttpStatusCode.RequestTimeout)]
     [InlineData((HttpStatusCode)429)]
     [InlineData(HttpStatusCode.InternalServerError)]
@@ -227,7 +233,8 @@ public sealed class Pass1ProductionProviderOutageTests
         Assert.Single(transport.Requests);
     }
 
-    [Fact]
+    [Trait("Suite", "External")]
+    [SuiteFact("External")]
     public void ActiveProviderProbe_MapsTransportLossToUnavailableWithoutSdkRetry()
     {
         using RecordingTransport transport = new(() => throw new HttpRequestException("synthetic outage"));
@@ -248,7 +255,8 @@ public sealed class Pass1ProductionProviderOutageTests
         Assert.Single(transport.Requests);
     }
 
-    [Fact]
+    [Trait("Suite", "External")]
+    [SuiteFact("External")]
     public void ProviderProbeDriver_StopsAfterFifthFailureAndHasNoStartupOrBackgroundProbe()
     {
         Type driver = RequireType("Vulgata.Web", ProbeDriverTypeName);

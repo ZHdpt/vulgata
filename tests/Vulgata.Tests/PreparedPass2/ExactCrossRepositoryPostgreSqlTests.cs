@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
 using Vulgata.Core.DomainServices;
@@ -11,7 +12,8 @@ namespace Vulgata.Tests.PreparedPass2;
 
 public sealed class ExactCrossRepositoryPostgreSqlTests(ITestOutputHelper output)
 {
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task ApplyAsync_ExactBatchPersistsV2DecisionContributionsAndOneReusableEdgeAsync()
     {
         string? administratorConnectionString =
@@ -20,7 +22,7 @@ public sealed class ExactCrossRepositoryPostgreSqlTests(ITestOutputHelper output
         {
             output.WriteLine(
                 "Qualification not executed: VULGATA_TEST_POSTGRES_ADMIN is unset; no database was contacted.");
-            return;
+            throw new InvalidOperationException("Required PostgreSQL qualification prerequisite is unavailable; use eng/test.ps1 -Suite PostgreSql.");
         }
 
         await using DisposablePostgreSqlDatabase database =
@@ -81,7 +83,8 @@ public sealed class ExactCrossRepositoryPostgreSqlTests(ITestOutputHelper output
         await AssertDatabaseDroppedAsync(administratorConnectionString, databaseName);
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task ApplyAsync_ExactReplayAfterEvidenceDriftConflictsWithoutAdditionalV2WritesAsync()
     {
         string? administratorConnectionString =
@@ -90,7 +93,7 @@ public sealed class ExactCrossRepositoryPostgreSqlTests(ITestOutputHelper output
         {
             output.WriteLine(
                 "Qualification not executed: VULGATA_TEST_POSTGRES_ADMIN is unset; no database was contacted.");
-            return;
+            throw new InvalidOperationException("Required PostgreSQL qualification prerequisite is unavailable; use eng/test.ps1 -Suite PostgreSql.");
         }
 
         await using DisposablePostgreSqlDatabase database =
@@ -154,7 +157,8 @@ public sealed class ExactCrossRepositoryPostgreSqlTests(ITestOutputHelper output
         await AssertDatabaseDroppedAsync(administratorConnectionString, databaseName);
     }
 
-    [Theory]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteTheory("PostgreSql")]
     [InlineData("decision-provider-evidence-set")]
     public async Task ApplyAsync_NonExactReplayAfterAnyPersistedAuthorityDriftConflictsAsync(
         string mutation)
@@ -165,7 +169,7 @@ public sealed class ExactCrossRepositoryPostgreSqlTests(ITestOutputHelper output
         {
             output.WriteLine(
                 "Qualification not executed: VULGATA_TEST_POSTGRES_ADMIN is unset; no database was contacted.");
-            return;
+            throw new InvalidOperationException("Required PostgreSQL qualification prerequisite is unavailable; use eng/test.ps1 -Suite PostgreSql.");
         }
 
         await using DisposablePostgreSqlDatabase database =
@@ -225,7 +229,8 @@ public sealed class ExactCrossRepositoryPostgreSqlTests(ITestOutputHelper output
         await AssertDatabaseDroppedAsync(administratorConnectionString, databaseName);
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task ApplyAsync_AmbiguousProviderObservationsPersistDistinctContiguousOrdinalsAsync()
     {
         string? administratorConnectionString =
@@ -234,7 +239,7 @@ public sealed class ExactCrossRepositoryPostgreSqlTests(ITestOutputHelper output
         {
             output.WriteLine(
                 "Qualification not executed: VULGATA_TEST_POSTGRES_ADMIN is unset; no database was contacted.");
-            return;
+            throw new InvalidOperationException("Required PostgreSQL qualification prerequisite is unavailable; use eng/test.ps1 -Suite PostgreSql.");
         }
 
         await using DisposablePostgreSqlDatabase database =

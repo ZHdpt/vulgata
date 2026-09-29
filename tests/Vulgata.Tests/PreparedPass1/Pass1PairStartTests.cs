@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Cryptography;
 using System.Text;
@@ -17,7 +18,8 @@ namespace Vulgata.Tests.PreparedPass1;
 [Collection(PreparedScanningCollection.Name)]
 public sealed class Pass1PairStartTests
 {
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task StartAsync_ExactApprovedPair_CreatesCompletePendingJobSetWithReusedStory12Point1IdentityAsync()
     {
         await using PreparedScanPostgreSqlFixture fixture = await CreateFixtureAsync();
@@ -76,7 +78,8 @@ public sealed class Pass1PairStartTests
             (await fixture.Context.TwoRepositoryScanCoordinations.SingleAsync()).Phase);
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task StartAsync_MissingOrMismatchedPair_IsRejectedBeforeAnyPass1RowsAsync()
     {
         await using PreparedScanPostgreSqlFixture fixture = await CreateFixtureAsync();
@@ -116,7 +119,8 @@ public sealed class Pass1PairStartTests
         Assert.Equal(0, await fixture.Context.Pass1NavigationBudgets.CountAsync());
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task StartAsync_OutsideCurrentAuthorization_IsIndistinguishableAndMutationFreeAsync()
     {
         await using PreparedScanPostgreSqlFixture fixture = await CreateFixtureAsync();
@@ -143,7 +147,8 @@ public sealed class Pass1PairStartTests
             (await fixture.Context.TwoRepositoryScanCoordinations.SingleAsync()).Phase);
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task StartAsync_ExactReplayIsZeroWriteAndChangedInitialLimitIsConflictAsync()
     {
         await using PreparedScanPostgreSqlFixture fixture = await CreateFixtureAsync();

@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Reflection;
 using System.Security.Cryptography;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -28,7 +29,8 @@ public sealed class PreparedScanApiTests
     private const string RuntimeIdentityJson = "{\"runtime\":\"prepared-api-test\"}";
     private static readonly string RuntimeIdentityHash = new('9', 64);
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public void PreparedScanRequest_RequiresExactlyTwoRepositoryRevisionBindings()
     {
         Type request = RequireSharedType(
@@ -56,7 +58,8 @@ public sealed class PreparedScanApiTests
                 property.Name.Contains("Timeout", StringComparison.OrdinalIgnoreCase));
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public void PreparedScanEndpoints_ExposeManagementPostRouteAndCoordinatorSeam()
     {
         Type endpoints = typeof(Program).Assembly.GetType(
@@ -79,7 +82,8 @@ public sealed class PreparedScanApiTests
                 method.Name.Contains("Start", StringComparison.Ordinal));
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public void PreparedScanResponse_UsesNamedOrdinalScopesAndStableIdentityFields()
     {
         Type response = RequireSharedType(
@@ -106,7 +110,8 @@ public sealed class PreparedScanApiTests
                 property.Name.Contains("Document", StringComparison.OrdinalIgnoreCase));
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public void PreparedScanApi_DeclaresClosedProblemDetailsStatusMappingWithoutWorkerDispatch()
     {
         Type endpoints = typeof(Program).Assembly.GetType(
@@ -125,7 +130,8 @@ public sealed class PreparedScanApiTests
                 method.Name.Contains("Document", StringComparison.OrdinalIgnoreCase));
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public void PreparedScanSeams_RequireImmutableInitiationTuple()
     {
         MethodInfo[] buildMethods = typeof(IPreparedScanPairBuilder).GetMethods(
@@ -156,7 +162,8 @@ public sealed class PreparedScanApiTests
                 parameter.ParameterType == typeof(PreparedScanInitiationTuple)));
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public void PreparedScanApi_SemanticOwnerIsServerOwnedAndInputCarriesRequiredFqn()
     {
         Type request = RequireSharedType(
@@ -176,7 +183,8 @@ public sealed class PreparedScanApiTests
                 !parameter.IsOptional);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task PreparedScanPairBuilder_ProductionCompositionBuildsNeutralExactTwoPackageAsync()
     {
         int revisionAcquisitionCalls = 0;

@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using Vulgata.Core.DomainServices;
 using Vulgata.Core.Entities;
 using Vulgata.Infrastructure.CrossRepository;
@@ -39,7 +40,8 @@ public sealed class ExactResolutionExtractionTests
         { "<?xml version=\"1.0\"?>\n<trans name=\"&missing;\"/>" },
     };
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task ExtractConsumerAsync_ReviewedLine45DirectLiteral_MapsCurrentOwnerAsync()
     {
         await using ExactCrossRepositoryTestFixture fixture =
@@ -94,7 +96,8 @@ public sealed class ExactResolutionExtractionTests
             ExactResolutionLimits.MaxEvidenceLocatorLength);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task ExtractProvidersAsync_ReviewedLine2RootTransNameWithDescription_MapsExactImplementationOwnerAsync()
     {
         await using ExactCrossRepositoryTestFixture fixture =
@@ -157,7 +160,8 @@ public sealed class ExactResolutionExtractionTests
             ExactResolutionLimits.MaxEvidenceLocatorLength);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task ExtractProvidersAsync_DtdExternalResolution_IsRejectedAsync()
     {
         await using ExactCrossRepositoryTestFixture fixture =
@@ -186,7 +190,8 @@ public sealed class ExactResolutionExtractionTests
         Assert.IsType<System.Xml.XmlException>(exception.InnerException);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task ExtractConsumersAsync_FirstConfiguredInvocationIsVariable_ClassifiesVariableTargetAsync()
     {
         await using ExactCrossRepositoryTestFixture fixture =
@@ -234,7 +239,8 @@ public sealed class ExactResolutionExtractionTests
         Assert.Equal("variable_target", exception.ReasonCode);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task ExtractConsumersAsync_QualifiedReceiverMasqueradesAsSimpleMemberInvocation_ClassifiesDisallowedInvocationAsync()
     {
         await using ExactCrossRepositoryTestFixture fixture =
@@ -269,7 +275,8 @@ public sealed class ExactResolutionExtractionTests
         Assert.Equal("disallowed_invocation", exception.ReasonCode);
     }
 
-    [Theory]
+    [Trait("Suite", "LocalTools")]
+    [SuiteTheory("LocalTools")]
     [MemberData(nameof(InexactConsumerStatements))]
     public async Task ExtractConsumersAsync_InexactCallForms_ClassifyOnlyConfiguredNonliteralAsync(
         string statement,
@@ -308,7 +315,8 @@ public sealed class ExactResolutionExtractionTests
         }
     }
 
-    [Theory]
+    [Trait("Suite", "LocalTools")]
+    [SuiteTheory("LocalTools")]
     [MemberData(nameof(NonProviderDeclarations))]
     public async Task ExtractProvidersAsync_MissingWrongOrAmbiguousDeclaration_ClassifiesMappedMalformedProviderAsync(
         string xml)
@@ -343,7 +351,8 @@ public sealed class ExactResolutionExtractionTests
             StringComparison.Ordinal);
     }
 
-    [Theory]
+    [Trait("Suite", "LocalTools")]
+    [SuiteTheory("LocalTools")]
     [MemberData(nameof(MalformedProviderDeclarations))]
     public async Task ExtractProvidersAsync_MalformedXmlOrEntity_RejectsWithoutCandidateAsync(
         string xml)
@@ -372,7 +381,8 @@ public sealed class ExactResolutionExtractionTests
         Assert.IsType<System.Xml.XmlException>(exception.InnerException);
     }
 
-    [Theory]
+    [Trait("Suite", "LocalTools")]
+    [SuiteTheory("LocalTools")]
     [InlineData("consumer")]
     [InlineData("provider")]
     public async Task ExtractAsync_ZeroCurrentOwnerMapping_ProducesNoCandidateAsync(string side)
@@ -407,7 +417,8 @@ public sealed class ExactResolutionExtractionTests
         }
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task ExtractConsumersAsync_MultipleContainingSourceAnchors_ProducesNoCandidateAsync()
     {
         await using ExactCrossRepositoryTestFixture fixture =
@@ -440,7 +451,8 @@ public sealed class ExactResolutionExtractionTests
             occurrence));
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task ExtractProvidersAsync_StaleImplementationDocument_ProducesNoCandidateAsync()
     {
         await using ExactCrossRepositoryTestFixture fixture =
@@ -460,7 +472,8 @@ public sealed class ExactResolutionExtractionTests
             occurrence));
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task ExtractProvidersAsync_ReparseTraversal_IsRejectedAsync()
     {
         await using ExactCrossRepositoryTestFixture fixture =
@@ -505,7 +518,8 @@ public sealed class ExactResolutionExtractionTests
         Assert.Equal("provider_out_of_root", exception.ReasonCode);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task ExtractProvidersAsync_OverBoundListedFile_IsRejectedAsync()
     {
         await using ExactCrossRepositoryTestFixture fixture =
@@ -529,7 +543,8 @@ public sealed class ExactResolutionExtractionTests
                 occurrence));
     }
 
-    [Theory]
+    [Trait("Suite", "LocalTools")]
+    [SuiteTheory("LocalTools")]
     [InlineData("../updateSession.xml")]
     [InlineData("src/main/resources/disgram/in/../../outside.xml")]
     [InlineData("C:/outside.xml")]
@@ -546,7 +561,8 @@ public sealed class ExactResolutionExtractionTests
             occurrence.Provider.ImplementationDocument));
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task ExtractConsumersAsync_OverBoundListedFile_IsRejectedAsync()
     {
         await using ExactCrossRepositoryTestFixture fixture =

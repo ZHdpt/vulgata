@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Collections.Concurrent;
 using System.Data.Common;
 using System.Reflection;
@@ -24,7 +25,8 @@ namespace Vulgata.Tests.PreparedPass1;
 /// </summary>
 public sealed class Pass1ProductionCompositionTests
 {
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void ProductionComposition_ResolvesReservationPortToTheSolePreparedStore()
     {
         Type reservationPort = typeof(IPass1NavigationAttemptReservationStore);
@@ -43,7 +45,8 @@ public sealed class Pass1ProductionCompositionTests
             StringComparison.Ordinal);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void HighWaterEight_RepairsCallsMarkerBeforeProviderOrTerminalVisibility()
     {
         string runner = ReadRepositorySource(
@@ -62,7 +65,8 @@ public sealed class Pass1ProductionCompositionTests
             "T109 RED: Calls marker repair must precede provider execution visibility.");
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void JobRunner_RequiresDurableCallsMarkerRepairStore()
     {
         string runner = ReadRepositorySource(
@@ -78,7 +82,8 @@ public sealed class Pass1ProductionCompositionTests
             StringComparison.Ordinal);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void JobRunnerDispatchBridge_ForwardsServerOwnedSymbolNameWithoutDefaulting()
     {
         // T045 RED: the sole hydrated-packet-to-assignment bridge must
@@ -94,7 +99,8 @@ public sealed class Pass1ProductionCompositionTests
         Assert.Equal(typeof(PreparedPass1WorkerPacket), bridge.GetParameters()[0].ParameterType);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ClaimedFileCodeUnit_ReachesRealDispatcherAndRecordingExecutorAsync()
     {
         PreparedPass1FileCodeUnitAssignment assignment = CreateAssignment();
@@ -109,7 +115,8 @@ public sealed class Pass1ProductionCompositionTests
         Assert.Single(result.Results);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task OrdinaryRejectedWorkerResult_IsRetryClassifiedAndCannotReachAtomicCommitAsync()
     {
         DateTimeOffset now = new(2026, 8, 22, 12, 0, 0, TimeSpan.Zero);

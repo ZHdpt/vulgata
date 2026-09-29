@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Reflection;
 using Vulgata.Core.DomainServices;
 using Vulgata.Core.Entities;
@@ -18,7 +19,8 @@ public sealed class PreparedChatPublicationOwnerTests
     private const string CandidateTypeName = "Vulgata.Web.Data.PreparedChatPublicationCandidate";
     private const string CommitTypeName = "Vulgata.Web.Data.AcceptedPublicationCommit";
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void PublicationCandidateReady_HasNoLivePublicationEffectUntilAcceptedCommit()
     {
         Type ownerType = RequireType(OwnerTypeName);
@@ -33,7 +35,8 @@ public sealed class PreparedChatPublicationOwnerTests
             property => property.Name is "Answer" or "Conversation" or "CompletionSummary" or "Reveal");
     }
 
-    [Theory]
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
     [InlineData("Pending")]
     [InlineData("AcceptedPublicationCommit")]
     [InlineData("TimedOutBeforePublication")]
@@ -51,7 +54,8 @@ public sealed class PreparedChatPublicationOwnerTests
         Assert.Equal(1, names.Count(name => name == "AcceptedPublicationCommit"));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void CommitBoundary_UsesThreeSynchronousNonThrowingOwnerOperations()
     {
         Type ownerType = RequireType(OwnerTypeName);
@@ -77,7 +81,8 @@ public sealed class PreparedChatPublicationOwnerTests
             parameter => parameter.ParameterType.Name.Contains("PublicationCandidate", StringComparison.Ordinal));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void PublicationOwner_ReceivesCancellationAndMonotonicClockAtTheCommitSeam()
     {
         Type ownerType = RequireType(OwnerTypeName);
@@ -98,7 +103,8 @@ public sealed class PreparedChatPublicationOwnerTests
                 parameter.ParameterType.Name.Contains("Monotonic", StringComparison.Ordinal)));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void PublicationCandidate_PreparesAllFallibleValuesBeforeOwnerCommit()
     {
         Type candidateType = RequireType(CandidateTypeName);
@@ -113,7 +119,8 @@ public sealed class PreparedChatPublicationOwnerTests
         Assert.Contains(propertyNames, name => name.Contains("Deadline", StringComparison.Ordinal));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void PublicationCandidate_BindsImmutableConversationGeneration()
     {
         PropertyInfo[] generationProperties = typeof(PreparedChatPublicationCandidate)
@@ -126,7 +133,8 @@ public sealed class PreparedChatPublicationOwnerTests
         Assert.NotEqual(typeof(object), generation.PropertyType);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Coordinator_ComposesPublicationOwnerInsteadOfPublishingSuccessDirectly()
     {
         ConstructorInfo constructor = Assert.Single(typeof(PreparedChatCoordinator).GetConstructors());
@@ -138,7 +146,8 @@ public sealed class PreparedChatPublicationOwnerTests
             parameter => parameter.ParameterType == typeof(IChatStreamCompletionSummaryRecorder));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void PublicationOwner_RejectsCancellationOrDeadlineBeforeCommitWithoutPartialPublication()
     {
         Type commitType = RequireType(CommitTypeName);
@@ -152,7 +161,8 @@ public sealed class PreparedChatPublicationOwnerTests
         Assert.Contains(properties, name => name.Contains("Conversation", StringComparison.Ordinal));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Commit_CancellationBeforeSoleSample_ReturnsClosedCancelledWithoutPublication()
     {
         var clock = new PublicationClock(150);
@@ -172,7 +182,8 @@ public sealed class PreparedChatPublicationOwnerTests
         Assert.Equal(0, clock.SampleCount);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Commit_CandidateCapturedBeforeReset_CannotPublishOrReactivate()
     {
         var clock = new PublicationClock(150);
@@ -196,7 +207,8 @@ public sealed class PreparedChatPublicationOwnerTests
         Assert.Equal(PreparedChatPublicationState.CancelledBeforePublication, candidate.State);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task Commit_PreResetCandidate_FirstRepeatedAndConcurrentCallsRemainClosedAndNonCurrentAsync()
     {
         var clock = new PublicationClock(150);
@@ -223,7 +235,8 @@ public sealed class PreparedChatPublicationOwnerTests
         Assert.Equal(PreparedChatPublicationState.CancelledBeforePublication, candidate.State);
     }
 
-    [Theory]
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
     [InlineData(200)]
     [InlineData(201)]
     public void Commit_DeadlineAtOrAfterSoleSample_ReturnsClosedTimedOutWithoutPublication(
@@ -244,7 +257,8 @@ public sealed class PreparedChatPublicationOwnerTests
         Assert.Equal(1, clock.SampleCount);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Commit_StrictlyBeforeDeadline_RemainsAcceptedAfterSchedulerAdvance()
     {
         var clock = new PublicationClock(150);
@@ -261,7 +275,8 @@ public sealed class PreparedChatPublicationOwnerTests
         Assert.NotNull(commit.CompletionSummary);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Commit_GetElapsedTimeFailure_DoesNotStrandCandidatePending()
     {
         var clock = new PublicationClock(150) { ThrowOnElapsedTime = true };
@@ -280,7 +295,8 @@ public sealed class PreparedChatPublicationOwnerTests
         Assert.NotNull(acceptedCommit.CompletionSummary);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task Commit_ConcurrentRepeatedCalls_ReturnExactlyOneTerminalAcceptedCommitAsync()
     {
         var clock = new PublicationClock(150);
@@ -299,7 +315,8 @@ public sealed class PreparedChatPublicationOwnerTests
         Assert.Equal(1, clock.SampleCount);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Commit_AcceptedComposite_ContainsAnswerConversationSummaryAndRevealAtomically()
     {
         var clock = new PublicationClock(150);
@@ -319,7 +336,8 @@ public sealed class PreparedChatPublicationOwnerTests
             commit.CompletionSummary!.CompletionSummaryId);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void CompletionData_IsExposedOnlyThroughPublishedComposite()
     {
         Type candidateType = RequireType(CandidateTypeName);
@@ -357,7 +375,8 @@ public sealed class PreparedChatPublicationOwnerTests
             accepted.CompletionSummary!.CompletionSummaryId);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void PublicationCandidate_RevealDirectiveBindsUnicodeScheduleCostAndSafetyMargin()
     {
         Type directiveType = typeof(PreparedChatRevealDirective);
@@ -376,7 +395,8 @@ public sealed class PreparedChatPublicationOwnerTests
         Assert.True(Convert.ToInt64(margin) > 0);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Commit_AcceptedPublication_PreallocatesStableCompletionSummaryAuthority()
     {
         TimeProvider timeProvider = TimeProvider.System;

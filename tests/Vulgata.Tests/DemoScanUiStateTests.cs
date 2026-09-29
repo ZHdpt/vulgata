@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using Vulgata.Web.Data;
 
 namespace Vulgata.Tests;
@@ -7,7 +8,8 @@ public sealed class DemoScanUiStateTests
     private static readonly DateTimeOffset _now =
         new(2026, 8, 15, 10, 0, 0, TimeSpan.FromHours(8));
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void GetSnapshot_SameRepository_ReturnsStableReadyValues()
     {
         var state = new DemoScanUiState(new FixedTimeProvider(_now));
@@ -22,7 +24,8 @@ public sealed class DemoScanUiStateTests
         Assert.InRange(first.DocumentCount, 48, 240);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Start_ReadyRepository_ChangesOnlyThatRepositoryToScanning()
     {
         var state = new DemoScanUiState(new FixedTimeProvider(_now));
@@ -36,7 +39,8 @@ public sealed class DemoScanUiStateTests
         Assert.Equal(otherBefore, state.GetSnapshot(otherId));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Complete_ScanningRepository_ProducesSuccessfulFutureSummary()
     {
         var clock = new FixedTimeProvider(_now);

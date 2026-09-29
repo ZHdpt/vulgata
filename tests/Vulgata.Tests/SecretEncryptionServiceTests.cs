@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Security.Cryptography;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.Extensions.DependencyInjection;
@@ -15,7 +16,8 @@ namespace Vulgata.Tests;
 /// </summary>
 public sealed class SecretEncryptionServiceTests
 {
-    [Theory]
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
     [InlineData(SecretPurposes.LlmApiKey, "sk-deepseek-abc-123")]
     [InlineData(SecretPurposes.DatabaseConnection, "Host=localhost;Port=5432;Database=vulgata")]
     [InlineData(SecretPurposes.LlmApiKey, "")]
@@ -30,7 +32,8 @@ public sealed class SecretEncryptionServiceTests
         Assert.Equal((plain ?? string.Empty).Trim(), decrypted);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task Decrypt_WithWrongPurpose_ThrowsCryptographicException()
     {
         var service = BuildService();
@@ -40,7 +43,8 @@ public sealed class SecretEncryptionServiceTests
             service.DecryptAsync(SecretPurposes.DatabaseConnection, cipher));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task Decrypt_WithEmptyCipher_ReturnsEmptyString()
     {
         var service = BuildService();
@@ -50,7 +54,8 @@ public sealed class SecretEncryptionServiceTests
         Assert.Equal(string.Empty, await service.DecryptAsync(SecretPurposes.LlmApiKey, null!));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task Encrypt_TrimWhitespaceBeforeEncryption()
     {
         var service = BuildService();
@@ -61,7 +66,8 @@ public sealed class SecretEncryptionServiceTests
         Assert.Equal("sk-secret", decrypted);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task Encrypt_DifferentInvocationsProduceDifferentCiphertext()
     {
         var service = BuildService();
@@ -72,7 +78,8 @@ public sealed class SecretEncryptionServiceTests
         Assert.NotEqual(first, second);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task Decrypt_TamperedCiphertext_ThrowsCryptographicException()
     {
         var service = BuildService();
@@ -90,7 +97,7 @@ public sealed class SecretEncryptionServiceTests
     private static ISecretEncryptionService BuildService()
     {
         ServiceCollection services = new();
-        services.AddDataProtection();
+        services.AddDataProtection().UseEphemeralDataProtectionProvider();
         var provider = services.BuildServiceProvider();
         return new SecretEncryptionService(provider.GetRequiredService<IDataProtectionProvider>());
     }

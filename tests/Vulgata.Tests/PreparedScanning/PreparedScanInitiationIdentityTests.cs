@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using Vulgata.Core.DomainServices;
 using Vulgata.Core.Entities;
 
@@ -20,7 +21,8 @@ public sealed class PreparedScanInitiationIdentityTests
     private const string ExpectedSecondExecutionId = "c9074fec-6011-8b92-b902-551c2ebfbd2a";
     private const string ExpectedCoordinationId = "444950ba-c4f5-832d-acbd-71995d284230";
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void CreateExecution_UsesAcceptedDomainTagsAndLiteralGoldenIdentity()
     {
         PreparedCanonicalArtifact actual = Create(Baseline);
@@ -35,7 +37,8 @@ public sealed class PreparedScanInitiationIdentityTests
                 actual.Fingerprint));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void CreateExecution_RepositoryReversalPreservesCanonicalPairOrder()
     {
         PreparedCanonicalArtifact first = Create(Baseline);
@@ -89,7 +92,8 @@ public sealed class PreparedScanInitiationIdentityTests
         Assert.Equal(forward, reversed);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void CreateExecution_EachReplayBoundDimensionChangesTheIdentity()
     {
         PreparedCanonicalArtifact baseline = Create(Baseline);
@@ -121,7 +125,8 @@ public sealed class PreparedScanInitiationIdentityTests
         }
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void InitiationPort_CoreBoundary_HasNoEfOrOpenQueryDependency()
     {
         Assert.DoesNotContain(

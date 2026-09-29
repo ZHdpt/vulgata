@@ -1,5 +1,13 @@
 # Project state for agent resumption
 
+Test infrastructure (2026-09-29): the standard command is now
+`pwsh -NoProfile -File eng/test.ps1`, which builds current sources and selects the
+classified SelfContained suite. Direct CLI/IDE execution has the same safe default
+and external fixture guards. PostgreSQL qualification uses a new owned PostgreSQL 17
+container; tool/provider/E2E and historical suites remain explicit and retain their
+feature-specific gates. See [testing guidance](testing.md). This changes the routine
+regression boundary, not historical product evidence or story lifecycle state.
+
 Updated: 2026-09-27. Story 13.1 is complete in `specs/015-retained-source-access`.
 Exact retained capture, scoped reads, publication/recovery, cleanup, trusted
 workspaces and separate-process reopening have bounded controlled evidence.

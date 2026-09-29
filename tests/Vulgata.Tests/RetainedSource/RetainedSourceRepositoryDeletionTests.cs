@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Net;
 using System.Reflection;
 using System.Security.Claims;
@@ -14,7 +15,8 @@ namespace Vulgata.Tests.RetainedSource;
 
 public sealed class RetainedSourceRepositoryDeletionTests
 {
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task Coordinator_DeleteCapturedRepository_ReturnsConflictAndPreservesRows()
     {
         await using RetainedSourceFixture fixture = await RetainedSourceFixture.CreateAsync();
@@ -34,7 +36,8 @@ public sealed class RetainedSourceRepositoryDeletionTests
         Assert.Contains("保留", outcome.Message ?? string.Empty, StringComparison.Ordinal);
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task RepositoryDeleteEndpoint_ReturnsSanitizedConflictAndPreservesRows()
     {
         await using RetainedSourceFixture fixture = await RetainedSourceFixture.CreateAsync();
@@ -89,7 +92,8 @@ public sealed class RetainedSourceRepositoryDeletionTests
         Assert.DoesNotContain(fixture.SourceStorageRoot, responseBody, StringComparison.OrdinalIgnoreCase);
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task Coordinator_DeleteRepositoryWithoutRetainedSnapshot_Succeeds()
     {
         await using RetainedSourceFixture fixture = await RetainedSourceFixture.CreateAsync();

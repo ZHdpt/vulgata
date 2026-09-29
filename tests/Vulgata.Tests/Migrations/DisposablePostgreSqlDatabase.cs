@@ -59,6 +59,7 @@ internal sealed partial class DisposablePostgreSqlDatabase : IAsyncDisposable
             CommandTimeout = 15,
         };
         ValidateAdministratorConnection(administrator, databaseName);
+        Vulgata.Tests.TestInfrastructure.TestResourceScope.ValidateAdministrator(administratorConnectionString);
 
         await using var connection = new NpgsqlConnection(administrator.ConnectionString);
         await connection.OpenAsync(cancellationToken);
@@ -69,34 +70,10 @@ internal sealed partial class DisposablePostgreSqlDatabase : IAsyncDisposable
                 "The uniquely named Story 12.1 test database already exists.");
         }
 
-        try
-        {
-            await ExecuteOwnedDatabaseCommandAsync(
-                connection,
-                "CREATE DATABASE ",
-                databaseName,
-                cancellationToken);
-        }
-        catch (Exception createException)
-        {
-            try
-            {
-                await CleanupDatabaseAsync(
-                    administrator.ConnectionString,
-                    databaseName,
-                    CancellationToken.None);
-            }
-            catch (Exception cleanupException)
-            {
-                throw new AggregateException(
-                    "PostgreSQL database creation failed and exact-name cleanup could not be proved.",
-                    createException,
-                    cleanupException);
-            }
+        await ExecuteOwnedDatabaseCommandAsync(
+            connection, "CREATE DATABASE ", databaseName, cancellationToken);
 
-            throw;
-        }
-
+        Vulgata.Tests.TestInfrastructure.TestResourceScope.RecordCreated(administrator.ConnectionString, databaseName);
         var target = new NpgsqlConnectionStringBuilder(administrator.ConnectionString)
         {
             Database = databaseName,

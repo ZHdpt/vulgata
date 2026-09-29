@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Reflection;
 using System.Text;
 using Microsoft.EntityFrameworkCore;
@@ -22,7 +23,8 @@ namespace Vulgata.Tests.PreparedPass1;
 [Collection(PreparedScanningCollection.Name)]
 public sealed class Pass1ClaimedPacketExecutionTests
 {
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task CurrentClaim_HydratesOnlyTheClaimedUnitWithExactSourceAndServerBindingsAsync()
     {
         RequireClaimedPacketSourceContract();
@@ -48,7 +50,8 @@ public sealed class Pass1ClaimedPacketExecutionTests
         Assert.Equal(1, reader.ReadCount);
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task CurrentClaim_HydratesServerOwnedPathOrSemanticSymbolNameAfterExactRefetchAsync()
     {
         RequireClaimedPacketSourceContract();
@@ -73,7 +76,8 @@ public sealed class Pass1ClaimedPacketExecutionTests
         Assert.Equal(1, reader.ReadCount);
     }
 
-    [Theory]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteTheory("PostgreSql")]
     [InlineData("replaced-owner-token")]
     [InlineData("job-version")]
     [InlineData("expired-lease")]
@@ -107,7 +111,8 @@ public sealed class Pass1ClaimedPacketExecutionTests
         Assert.Equal(ScanJobExecutionState.Running, job.State);
     }
 
-    [Theory]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteTheory("PostgreSql")]
     [InlineData("authorization")]
     [InlineData("repository")]
     [InlineData("profiled-revision")]
@@ -131,7 +136,8 @@ public sealed class Pass1ClaimedPacketExecutionTests
         Assert.Equal(documentsBefore, await fixture.Prepared.Context.DocumentVersions.CountAsync());
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task Cancellation_ReturnsNoPacketAndDoesNotReadOrCommitAsync()
     {
         RequireClaimedPacketSourceContract();
@@ -155,7 +161,8 @@ public sealed class Pass1ClaimedPacketExecutionTests
         Assert.Equal(documentsBefore, await fixture.Prepared.Context.DocumentVersions.CountAsync());
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public void WorkerPacket_DoesNotExposeLeaseOrVersionAuthorization()
     {
         // Characterization only: no RED is expected for this already-correct
@@ -168,7 +175,8 @@ public sealed class Pass1ClaimedPacketExecutionTests
             "StateVersion" or "JobStateVersion" or "PairStateVersion");
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public void WorkerPacket_ExposesDurableBudgetHighWaterCursorAndEvidenceCounters()
     {
         PropertyInfo[] packetProperties = typeof(PreparedPass1WorkerPacket)

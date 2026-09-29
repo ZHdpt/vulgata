@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
@@ -25,7 +26,8 @@ public sealed class JdtLsAdapterTests
     private const string CodeGraphHash =
         "03e4c791cc0dd91ed264278461bf9a56c0278aa0670d5942fc4732311c66de03";
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void JavaSession_PublicLifecycle_ProvidesAsyncDisposalForShutdownAndCleanup()
     {
         Assert.True(
@@ -34,7 +36,8 @@ public sealed class JdtLsAdapterTests
             "exit, stream closure, bounded wait, and forced process-tree cleanup remain observable.");
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void JdtLsIdentity_MissingArchiveOrCoreJarSubstitution_RemainsFailClosed()
     {
         Assert.Throws<ArgumentException>(() => CreateIdentity(jdtLsDistributionArchiveName: null));
@@ -59,7 +62,8 @@ public sealed class JdtLsAdapterTests
         Assert.Equal("jdt_distribution_archive_checksum_missing", result.FailureCode);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task JdtLsAdapter_ClosedStdioLifecycle_BindsExactRuntimeAndRevisionWorkspace()
     {
         AnalysisRuntimeIdentity identity = CreateIdentity();
@@ -90,10 +94,10 @@ public sealed class JdtLsAdapterTests
         RecordingProcessLauncher launcher = new(process);
         RecordingProtocolClient protocol = new();
         RecordingProtocolClientFactory protocols = new(protocol);
+        using var distribution = new FakeJdtDistribution();
         JdtLsAdapterOptions options = new(
             JavaExecutablePath: @"C:\Program Files\Java\latest\jdk-21\bin\java.exe",
-            InstallationRoot:
-                @"C:\Users\13728\.local\jdt-language-server-1.61.0-202608141332",
+            InstallationRoot: distribution.Root,
             WorkspaceRoot: workspaceRoot,
             InitializationTimeout: TimeSpan.FromSeconds(2),
             RequestTimeout: TimeSpan.FromSeconds(2),
@@ -193,7 +197,8 @@ public sealed class JdtLsAdapterTests
         Assert.False(Directory.Exists(workspaceRoot));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task PreparedRevisionWorkspace_UsesContainedMutableProjectMirror_AndPreservesExactSnapshotIdentity()
     {
         string root = Path.Combine(
@@ -241,7 +246,8 @@ public sealed class JdtLsAdapterTests
         }
     }
 
-    [Theory]
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
     [InlineData(true)]
     [InlineData(false)]
     public async Task PreparedRevisionWorkspace_PreExistingReparsePointCleanup_FailsClosedWithoutTouchingExternalSentinel(
@@ -313,7 +319,8 @@ public sealed class JdtLsAdapterTests
         }
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task StreamJsonRpcJdtLsClient_UsesEvidenceBytesAndRejectsMirrorGeneratedResponseUri()
     {
         string root = Path.Combine(
@@ -407,7 +414,8 @@ public sealed class JdtLsAdapterTests
         }
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task StreamJsonRpcJdtLsClient_DocumentSymbolRoot_PreservesAuthorityProvenanceAndTypeNameAsync()
     {
         string root = Path.Combine(

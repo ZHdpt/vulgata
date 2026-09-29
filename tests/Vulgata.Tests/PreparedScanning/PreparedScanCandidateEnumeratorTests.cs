@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Reflection;
 using Vulgata.Infrastructure.Git;
 
@@ -10,7 +11,8 @@ namespace Vulgata.Tests.PreparedScanning;
 /// </summary>
 public sealed class PreparedScanCandidateEnumeratorTests
 {
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void PreparedCandidateEnumerator_ExposesDeterministicAsyncInventoryPort()
     {
         Type enumerator = RequirePublicType(
@@ -31,7 +33,8 @@ public sealed class PreparedScanCandidateEnumeratorTests
                 parameter.ParameterType.Name.Contains("Snapshot", StringComparison.Ordinal));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void PreparedCandidateEnumerator_UsesClosedPathAndExtensionRules()
     {
         Type enumerator = RequirePublicType(

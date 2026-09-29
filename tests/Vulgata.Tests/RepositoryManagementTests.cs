@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Diagnostics;
 using System.Net;
 using System.Net.Http.Json;
@@ -26,7 +27,8 @@ public sealed class RepositoryManagementTests : IClassFixture<LoginLogoutTests.C
         _factory = factory;
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task SystemOwner_CanCreateRepository_ForAssignedSystem_AndPageShowsRepositoryManagement()
     {
         await EnsureApplicationStartedAsync();
@@ -91,7 +93,8 @@ public sealed class RepositoryManagementTests : IClassFixture<LoginLogoutTests.C
         _ = hiddenSystemId;
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task ManagementUsers_CanCreateAndViewStandaloneRepositories_WithoutMixingIntoSystems()
     {
         await EnsureApplicationStartedAsync();
@@ -175,7 +178,8 @@ public sealed class RepositoryManagementTests : IClassFixture<LoginLogoutTests.C
         Assert.Contains("团队共享库", html, StringComparison.Ordinal);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task CreateStandaloneRepository_WithDuplicateName_ReturnsChineseValidationError()
     {
         await EnsureApplicationStartedAsync();
@@ -229,7 +233,8 @@ public sealed class RepositoryManagementTests : IClassFixture<LoginLogoutTests.C
         Assert.Equal("共享组件库", standaloneRepositories[0].Name);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task CreateStandaloneRepository_WithUnreachableGitUrl_ReturnsChineseProblem_AndDoesNotPersist()
     {
         await EnsureApplicationStartedAsync();
@@ -263,7 +268,8 @@ public sealed class RepositoryManagementTests : IClassFixture<LoginLogoutTests.C
         Assert.Empty(repositories);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task User_CannotAccessStandaloneRepositoryEndpoints()
     {
         await EnsureApplicationStartedAsync();
@@ -295,7 +301,8 @@ public sealed class RepositoryManagementTests : IClassFixture<LoginLogoutTests.C
         Assert.DoesNotContain("管理后台", html, StringComparison.Ordinal);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task CreateRepository_WithUnreachableGitUrl_ReturnsChineseProblem_AndDoesNotPersist()
     {
         await EnsureApplicationStartedAsync();
@@ -338,7 +345,8 @@ public sealed class RepositoryManagementTests : IClassFixture<LoginLogoutTests.C
         Assert.Empty(repositories);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task CreateRepository_WhenRemoteRequiresAuthentication_ReturnsChineseProblem_WithoutLeakingSecrets()
     {
         await EnsureApplicationStartedAsync();
@@ -387,7 +395,8 @@ public sealed class RepositoryManagementTests : IClassFixture<LoginLogoutTests.C
         Assert.Empty(repositories);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task SystemOwner_CannotManageRepositories_ForUnassignedSystem()
     {
         await EnsureApplicationStartedAsync();
@@ -451,7 +460,8 @@ public sealed class RepositoryManagementTests : IClassFixture<LoginLogoutTests.C
         Assert.Equal(hiddenRepository.Id, adminRepositories[0].Id);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task Administrator_CanManageRepositories_ForAnySystem_AndDeleteRefreshesManagementPage()
     {
         await EnsureApplicationStartedAsync();

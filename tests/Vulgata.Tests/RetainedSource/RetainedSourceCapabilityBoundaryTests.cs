@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Text;
 using System.Data.Common;
 using System.Reflection;
@@ -21,7 +22,8 @@ public sealed class RetainedSourceCapabilityBoundaryTests
         _output = output;
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task SourceCapability_WhenForbiddenSeamsAreRemoved_CompletesSourceOperationsOnly()
     {
         var forbidden = new RetainedSourceForbiddenDependencyGuard();
@@ -146,7 +148,8 @@ public sealed class RetainedSourceCapabilityBoundaryTests
             "guardAppliedAfterFixtureSetup=true");
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public void OutcomeEvidence_WhenMappedToCurrentPublicCodes_RemainsSourceOnly()
     {
         (MethodInfo? Test, RetainedSourceTestEvidence Evidence)[] traced =

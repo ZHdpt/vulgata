@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using Vulgata.Agents.ChatExecution;
 using Vulgata.Core.DomainServices;
 using Vulgata.Core.Entities;
@@ -6,7 +7,8 @@ namespace Vulgata.Tests;
 
 public sealed class ChatCandidateExtractorTests
 {
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Extract_PublicService_CanBeConstructedAndInvokedByExternalConsumer()
     {
         EvidencePacket packet = CreateSimplePacket(ChatMode.It, "可注册服务保留现有提取行为。");
@@ -17,7 +19,8 @@ public sealed class ChatCandidateExtractorTests
         Assert.Equal("可注册服务保留现有提取行为。", candidate.Text);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Extract_UnicodeParagraphsAndListItems_PreservesExactOffsetsAndCanonicalSupport()
     {
         const string firstMarkdown = "Cafe\u0301处理😀请求。\r\n\r\n- 后续😀步骤。";
@@ -59,7 +62,8 @@ public sealed class ChatCandidateExtractorTests
         Assert.Equal(expected.SupportSignature, candidates[0].SupportSignature);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Extract_SoftWrappedUnicodeParagraphAndListItem_PreservesExactContiguousSpans()
     {
         const string markdown = "第一段😀保留。\r\n  继续 Cafe\u0301，仍属于同一段。\r\n\r\n- 列表😀开始\n  延续 Cafe\u0301，仍属于列表。";
@@ -78,7 +82,8 @@ public sealed class ChatCandidateExtractorTests
         Assert.Equal(expectedListItem, markdown.Substring(candidates[1].SpanStart, candidates[1].SpanLength));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Extract_ModeAndSectionKinds_EmitsOnlyEligibleDocumentSections()
     {
         EvidenceDocument businessDocument = Document("d1", 1, DocumentType.BusinessLogic);
@@ -121,7 +126,8 @@ public sealed class ChatCandidateExtractorTests
             _extractor.Extract(itPacket).Select(candidate => candidate.Text));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Extract_BusinessBareDottedLocator_ExcludesCodeReferenceWithoutRejectingChinesePunctuation()
     {
         const string markdown = "客户提交订单后，系统完成审核。\n\nOrderService.Process 完成处理。\n\nsrc/Orders.cs:42 处理请求。\n\nOrders.cs 第 42 行处理请求。";
@@ -134,7 +140,8 @@ public sealed class ChatCandidateExtractorTests
         Assert.DoesNotContain(".cs", candidate.Text, StringComparison.OrdinalIgnoreCase);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Extract_BusinessCodeLogicFallback_AllowsInlineCodeMarkupForNarrativeRewrite()
     {
         const string markdown = "`CheckLoginPwdOp` 负责完成登录密码校验，并写入 `checkResult` 表示校验结果。";
@@ -154,7 +161,8 @@ public sealed class ChatCandidateExtractorTests
         Assert.True(candidate.AllowsBusinessNarrative);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Extract_BusinessCodeLogicFallback_IncludesBusinessRuleEvidence()
     {
         const string markdown = "密码不匹配时设置 `checkResult` 为 `\"0\"`。";
@@ -174,7 +182,8 @@ public sealed class ChatCandidateExtractorTests
         Assert.True(candidate.AllowsBusinessNarrative);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Extract_NonPlainMarkdown_ExcludesFencesTablesHtmlAndLinks()
     {
         const string markdown = "保留的普通段落。\n\n```csharp\nCall();\n```\n\n| 列一 | 列二 |\n| --- | --- |\n| 值一 | 值二 |\n\n<div>原始 HTML</div>\n\n[链接](https://example.test)\n\nhttps://example.test/raw";
@@ -185,7 +194,8 @@ public sealed class ChatCandidateExtractorTests
         Assert.Equal("保留的普通段落。", candidate.Text);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Extract_MissingAnchorOrRestrictedRelationshipSupport_ExcludesCandidate()
     {
         EvidencePacket packet = CreatePacket(
@@ -222,7 +232,8 @@ public sealed class ChatCandidateExtractorTests
         Assert.Equal(["r1"], candidates[1].RelationshipHandles);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Extract_CrossRepositoryReferences_LegacyProfileFingerprintOnly_IsRejected()
     {
         EvidencePacket packet = CreatePacket(
@@ -246,7 +257,8 @@ public sealed class ChatCandidateExtractorTests
         Assert.Empty(_extractor.Extract(packet));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Extract_CrossRepositoryReferences_IncompleteV2Authority_IsRejected()
     {
         EvidenceRelationship incompleteAuthority = new(
@@ -280,14 +292,16 @@ public sealed class ChatCandidateExtractorTests
         Assert.Empty(_extractor.Extract(packet));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void EvidenceRelationship_V2Authority_PublicSeam_ExposesDecisionCountAndSetFingerprint()
     {
         Assert.NotNull(typeof(EvidenceRelationship).GetProperty("ExactDecisionCount"));
         Assert.NotNull(typeof(EvidenceRelationship).GetProperty("ExactDecisionSetFingerprint"));
     }
 
-    [Theory]
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
     [InlineData(ChatRelationshipType.References)]
     [InlineData(ChatRelationshipType.GeneratedFrom)]
     public void Extract_ReversedSupportingRelationship_ExcludesCandidate(ChatRelationshipType relationshipType)
@@ -308,7 +322,8 @@ public sealed class ChatCandidateExtractorTests
         Assert.Empty(candidate.RelationshipHandles);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Extract_OverBoundSpan_ExcludesCandidateWithoutTruncatingOrConcatenating()
     {
         string maximum = new('界', 2_000);

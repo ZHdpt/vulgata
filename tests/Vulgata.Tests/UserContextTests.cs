@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Vulgata.Core.DomainServices;
@@ -15,7 +16,8 @@ public sealed class UserContextTests
 {
     private const string _testUserId = "user-123";
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void SystemOwnerFilter_AllSystems_AllowsAllAndHasNoOwnerId()
     {
         var filter = SystemOwnerFilter.AllSystems();
@@ -24,7 +26,8 @@ public sealed class UserContextTests
         Assert.Null(filter.OwnerId);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void SystemOwnerFilter_OwnedBy_HasUserIdAndDoesNotAllowAll()
     {
         var filter = SystemOwnerFilter.OwnedBy(_testUserId);
@@ -33,7 +36,8 @@ public sealed class UserContextTests
         Assert.Equal(_testUserId, filter.OwnerId);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task UserContext_AdministratorPrincipal_YieldsIsAdministratorTrueAndAllSystemsFilter()
     {
         var principal = BuildPrincipal(_testUserId, authenticated: true);
@@ -51,7 +55,8 @@ public sealed class UserContextTests
         await Task.CompletedTask;
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task UserContext_NonAdministratorPrincipal_YieldsIsAdministratorFalseAndOwnedByFilter()
     {
         var principal = BuildPrincipal(_testUserId, authenticated: true);
@@ -69,7 +74,8 @@ public sealed class UserContextTests
         await Task.CompletedTask;
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task UserContext_MissingNameIdentifierClaim_YieldsEmptyUserId()
     {
         var principal = new ClaimsPrincipal(new ClaimsIdentity(
@@ -83,7 +89,8 @@ public sealed class UserContextTests
         await Task.CompletedTask;
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void UserContext_AsyncAuthorizationUnderRendererContext_DoesNotDeadlock()
     {
         using var completed = new ManualResetEventSlim();

@@ -30,6 +30,8 @@ definitions and historical passing tests do not prove the replacement workflow w
   authoritative for installed versions; a planned dependency is not installed.
 - **Author or run tests:** read [testing and verification](docs/agents/testing.md).
   Use owned resources and evidence appropriate to the claimed behavior.
+  Default to `pwsh -NoProfile -File eng/test.ps1`; classify tests and helpers in the
+  enforced suite inventory before adding external dependencies.
 - **Explore domain decisions:** follow [domain guidance](docs/agents/domain.md).
   **Edit workflow customizations:** follow
   [the customization rules](.github/instructions/governed-delivery-customizations.instructions.md).

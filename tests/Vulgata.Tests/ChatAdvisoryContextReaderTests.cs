@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using Microsoft.EntityFrameworkCore;
 using Vulgata.Core.DomainServices;
 using Vulgata.Core.Entities;
@@ -12,7 +13,8 @@ namespace Vulgata.Tests;
 /// </summary>
 public sealed class ChatAdvisoryContextReaderTests
 {
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ReadAsync_AuthorizedScope_ComposesAppliedGlobalSystemAndExactlyTwoRepositoriesAsync()
     {
         await using AdvisoryContextFixture fixture = await AdvisoryContextFixture.CreateAsync();
@@ -28,7 +30,8 @@ public sealed class ChatAdvisoryContextReaderTests
         Assert.Equal(4, snapshot.SourceUnits.Count);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ReadAsync_AuthorizedScope_OrdersRepositoryUnitsByRfc4122IdRegardlessOfRequestOrderAsync()
     {
         await using AdvisoryContextFixture fixture = await AdvisoryContextFixture.CreateAsync();
@@ -43,7 +46,8 @@ public sealed class ChatAdvisoryContextReaderTests
         Assert.Equal(first.Terms, second.Terms);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ReadAsync_PendingContextAndCallerText_AreExcludedFromAppliedSnapshotAsync()
     {
         await using AdvisoryContextFixture fixture = await AdvisoryContextFixture.CreateAsync();
@@ -56,7 +60,8 @@ public sealed class ChatAdvisoryContextReaderTests
         Assert.DoesNotContain("调用方注入", snapshot.ComposedText, StringComparison.Ordinal);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ReadAsync_AuthorizationDenied_ReturnsMissingEquivalentWithoutIdentityAsync()
     {
         await using AdvisoryContextFixture fixture = await AdvisoryContextFixture.CreateAsync();
@@ -68,7 +73,8 @@ public sealed class ChatAdvisoryContextReaderTests
         Assert.Null(result.Snapshot);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ReadAsync_ScopeMembershipMismatch_ReturnsMissingEquivalentWithoutIdentityAsync()
     {
         await using AdvisoryContextFixture fixture = await AdvisoryContextFixture.CreateAsync();
@@ -82,7 +88,8 @@ public sealed class ChatAdvisoryContextReaderTests
         Assert.Null(result.Snapshot);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ReadAsync_AllAppliedValuesBlank_ReturnsCanonicalEmptySnapshotAsync()
     {
         await using AdvisoryContextFixture fixture = await AdvisoryContextFixture.CreateAsync(
@@ -99,7 +106,8 @@ public sealed class ChatAdvisoryContextReaderTests
         Assert.Matches("^[0-9a-f]{64}$", snapshot.AuthorityFingerprint);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ReadAsync_NormalizesNfcLineEndingsAndOuterWhitespaceBeforeFingerprintingAsync()
     {
         await using AdvisoryContextFixture fixture = await AdvisoryContextFixture.CreateAsync(
@@ -115,7 +123,8 @@ public sealed class ChatAdvisoryContextReaderTests
         Assert.DoesNotContain("  ", snapshot.ComposedText, StringComparison.Ordinal);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ReadAsync_NonmatchingAppliedContext_RemainsValidButContributesNoCallerTermsAsync()
     {
         await using AdvisoryContextFixture fixture = await AdvisoryContextFixture.CreateAsync(
@@ -131,7 +140,8 @@ public sealed class ChatAdvisoryContextReaderTests
         Assert.DoesNotContain("question", snapshot.Terms, StringComparer.OrdinalIgnoreCase);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ReadAsync_UsedContextMutation_ChangesAuthorityFingerprintAfterRefetchAsync()
     {
         await using AdvisoryContextFixture fixture = await AdvisoryContextFixture.CreateAsync();
@@ -144,7 +154,8 @@ public sealed class ChatAdvisoryContextReaderTests
         Assert.NotEqual(before.ComposedText, after.ComposedText);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ReadAsync_Exactly8192Utf8Bytes_SucceedsWithoutTruncationAsync()
     {
         await using AdvisoryContextFixture fixture = await AdvisoryContextFixture.CreateAsync(
@@ -163,7 +174,8 @@ public sealed class ChatAdvisoryContextReaderTests
         Assert.Equal(new string('a', 8_192), snapshot.ComposedText);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ReadAsync_8193Utf8Bytes_ReturnsInconsistentCurrentEvidenceWithoutTruncationAsync()
     {
         await using AdvisoryContextFixture fixture = await AdvisoryContextFixture.CreateAsync(

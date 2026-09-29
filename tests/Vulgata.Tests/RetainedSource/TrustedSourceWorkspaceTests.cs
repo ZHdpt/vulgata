@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Text;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -13,7 +14,8 @@ namespace Vulgata.Tests.RetainedSource;
 
 public sealed class TrustedSourceWorkspaceTests(ITestOutputHelper output)
 {
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task AcquireAsync_VerifiedSourceMaterializesContainedLeaseAndCleansOnlyLeaseAsync()
     {
         byte[] textBytes = "trusted-source-text\n"u8.ToArray();
@@ -114,7 +116,8 @@ public sealed class TrustedSourceWorkspaceTests(ITestOutputHelper output)
             $"leaseDisposed={!Directory.Exists(fullLeaseRoot)}; sourceRetained={reopened.Status}");
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task AddRetainedSourceInfrastructure_RejectsOverlappingWorkspaceRootAndAcceptsSiblingAsync()
     {
         await using RetainedSourceFixture fixture =
@@ -167,7 +170,8 @@ public sealed class TrustedSourceWorkspaceTests(ITestOutputHelper output)
             descriptor => descriptor.ServiceType == typeof(ITrustedSourceWorkspaceProvider));
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task AcquireAsync_AfterLiveAuthorityRevocation_DeniesWithoutWorkspaceLeaseAsync()
     {
         await using RetainedSourceFixture fixture =
@@ -225,7 +229,8 @@ public sealed class TrustedSourceWorkspaceTests(ITestOutputHelper output)
         Assert.Empty(Directory.GetDirectories(workspaceRoot));
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task AcquireAsync_UnknownWorkspacePurpose_ReturnsUnsupportedWithoutLeaseAsync()
     {
         await using RetainedSourceFixture fixture =
@@ -271,7 +276,8 @@ public sealed class TrustedSourceWorkspaceTests(ITestOutputHelper output)
         Assert.Null(unsupported.Workspace);
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task AcquireAsync_CommittedSymlinkEntry_ReturnsUnsupportedWithoutLeaseAsync()
     {
         await using RetainedSourceFixture fixture =
@@ -321,7 +327,8 @@ public sealed class TrustedSourceWorkspaceTests(ITestOutputHelper output)
         Assert.Null(unsupported.Workspace);
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task AcquireAsync_CommittedGitlinkEntry_ReturnsUnsupportedWithoutLeaseAsync()
     {
         await using RetainedSourceFixture fixture =
@@ -369,7 +376,8 @@ public sealed class TrustedSourceWorkspaceTests(ITestOutputHelper output)
         Assert.Null(unsupported.Workspace);
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task AcquireAsync_CaseCollidingDirectories_ReturnsUnsupportedWithoutLeaseAsync()
     {
         if (!OperatingSystem.IsWindows())
@@ -421,7 +429,8 @@ public sealed class TrustedSourceWorkspaceTests(ITestOutputHelper output)
         Assert.Null(unsupported.Workspace);
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task AcquireAsync_HostUnrepresentableLongPathComponent_ReturnsUnsupportedWithoutLeaseAsync()
     {
         if (!OperatingSystem.IsWindows())
@@ -486,7 +495,8 @@ public sealed class TrustedSourceWorkspaceTests(ITestOutputHelper output)
         Assert.Empty(Directory.GetDirectories(workspaceRoot));
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task AcquireAsync_UnsafeAndNonUtf8PathBytes_ReturnsUnsupportedWithoutLeaseAsync()
     {
         await using RetainedSourceFixture fixture =
@@ -547,7 +557,8 @@ public sealed class TrustedSourceWorkspaceTests(ITestOutputHelper output)
         Assert.Empty(Directory.GetDirectories(workspaceRoot));
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task AcquireAsync_AuthorityRevokedBeforeFinalReturn_DeniesAndCleansPartialWorkspaceAsync()
     {
         await using RetainedSourceFixture fixture =
@@ -629,7 +640,8 @@ public sealed class TrustedSourceWorkspaceTests(ITestOutputHelper output)
         Assert.True(copiedFileObserved);
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task AcquireAsync_CancelledBeforeWorkspaceAcquire_ReturnsCancelledWithoutLeaseAsync()
     {
         await using RetainedSourceFixture fixture =
@@ -687,7 +699,8 @@ public sealed class TrustedSourceWorkspaceTests(ITestOutputHelper output)
         Assert.Empty(Directory.GetDirectories(workspaceRoot));
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task AcquireAsync_CancelledAtFinalAuthorization_ReturnsCancelledAndCleansPartialWorkspaceAsync()
     {
         await using RetainedSourceFixture fixture =
@@ -760,7 +773,8 @@ public sealed class TrustedSourceWorkspaceTests(ITestOutputHelper output)
         Assert.True(copiedFileObserved);
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task AcquireAsync_TamperedRetainedBlob_ReturnsIntegrityFailureWithoutLeaseAsync()
     {
         await using RetainedSourceFixture fixture =
@@ -824,7 +838,8 @@ public sealed class TrustedSourceWorkspaceTests(ITestOutputHelper output)
         Assert.Empty(Directory.GetDirectories(workspaceRoot));
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task AcquireAsync_TwoIndependentLeases_DisposingOnePreservesSiblingAndSourceAsync()
     {
         await using RetainedSourceFixture fixture =
@@ -905,7 +920,8 @@ public sealed class TrustedSourceWorkspaceTests(ITestOutputHelper output)
         Assert.True(File.Exists(sentinel));
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task AcquireAsync_ConfiguredWorkspaceRootIsOwnedLink_FailsWithoutTouchingTargetAsync()
     {
         await using RetainedSourceFixture fixture =
@@ -936,7 +952,8 @@ public sealed class TrustedSourceWorkspaceTests(ITestOutputHelper output)
         Assert.Single(Directory.GetFiles(targetRoot));
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task AcquireAsync_ConfiguredWorkspaceRootIsOwnedFile_FailsWithoutTouchingFileAsync()
     {
         await using RetainedSourceFixture fixture =

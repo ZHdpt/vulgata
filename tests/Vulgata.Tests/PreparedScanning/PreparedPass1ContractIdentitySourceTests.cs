@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Reflection;
 using System.Runtime.ExceptionServices;
 using System.Security.Cryptography;
@@ -25,7 +26,8 @@ public sealed class PreparedPass1ContractIdentitySourceTests
     private const string ExpectedPreparedPass1PromptIdentity =
         "pass1-code-logic-worker.v2/sha256/010247bbb9d8c07c2bd60a17353e5a088f7b7ea5ab490647712027d762b30937";
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void DefaultPreparedPass1Composition_ExposesV2PromptAndDocumentSchemaIdentity()
     {
         Type corePort = RequireType(typeof(IPreparedScanInitiationStore).Assembly, PreparedPass1PortTypeName);
@@ -47,7 +49,8 @@ public sealed class PreparedPass1ContractIdentitySourceTests
             identity.GetType().GetProperty("DocumentSchemaIdentity")?.GetValue(identity));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void InitiationCoordinator_UsesDedicatedPreparedPass1PortAndNotLegacyRecoveryPort()
     {
         Type coordinator = typeof(PreparedScanCoordinator).Assembly.GetType(
@@ -64,7 +67,8 @@ public sealed class PreparedPass1ContractIdentitySourceTests
             parameterNames);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task LegacyRecoveryIdentity_RemainsV1AndKnowledgeDocumentSchemaAsync()
     {
         WorkerAgentDispatchIdentitySource source = new();
@@ -78,7 +82,8 @@ public sealed class PreparedPass1ContractIdentitySourceTests
         Assert.Equal(KnowledgeDocumentLimits.SchemaIdentity, identity.DocumentSchemaIdentity);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void AuthorizationRechecker_UsesWebIdentityAndMaterializedRepositorySeams()
     {
         string source = File.ReadAllText(Path.Combine(
@@ -98,7 +103,8 @@ public sealed class PreparedPass1ContractIdentitySourceTests
         Assert.Contains("IRepositoryRepository", source, StringComparison.Ordinal);
     }
 
-    [Theory]
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
     [InlineData("missing")]
     [InlineData("duplicate")]
     [InlineData("empty")]
@@ -132,7 +138,8 @@ public sealed class PreparedPass1ContractIdentitySourceTests
             $"Unexpected hostile-resource exception: {exception.GetType().FullName}: {exception.Message}");
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void EmbeddedPreparedPass1Source_BindsExactDecodedTextSha256()
     {
         string resourceName = FindPreparedPass1ResourceName();

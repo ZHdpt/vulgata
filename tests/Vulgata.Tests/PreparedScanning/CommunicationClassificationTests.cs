@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Reflection;
 using Vulgata.Core.DomainServices;
 using Vulgata.Core.Entities;
@@ -14,7 +15,8 @@ public sealed class CommunicationClassificationTests
     private const string _detectorName =
         "Vulgata.Infrastructure.CommunicationDetection.PreparedCommunicationDetector";
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void PreparedCommunicationDetector_ExposesClassificationOnlyDetectionSeam()
     {
         Type detector = RequireType(_detectorName);
@@ -32,7 +34,8 @@ public sealed class CommunicationClassificationTests
                 method.Name.Contains("Navigate", StringComparison.OrdinalIgnoreCase));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void PreparedClassification_ExposesClosedKindLevelConfidenceRuleProvenanceAndExactEvidence()
     {
         PropertyInfo[] properties = typeof(CommunicationKindClassification)
@@ -49,7 +52,8 @@ public sealed class CommunicationClassificationTests
                 property.Name.Contains("AbsolutePath", StringComparison.OrdinalIgnoreCase));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void PreparedClassification_OutcomeProjectionContainsBoundedTotalsAndRetentionMetadata()
     {
         Type detector = RequireType(_detectorName);
@@ -68,7 +72,8 @@ public sealed class CommunicationClassificationTests
         Assert.Contains(resultProperties, property => property.Name.Contains("Confirmed", StringComparison.Ordinal));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void PreparedClassification_ContractContainsWarningForContradictoryOrUnsupportedEvidence()
     {
         Assert.Contains(nameof(EvidenceRule.ContradictoryEvidence), Enum.GetNames<EvidenceRule>());
@@ -78,7 +83,8 @@ public sealed class CommunicationClassificationTests
         Assert.Contains(nameof(ConfidenceBand.None), Enum.GetNames<ConfidenceBand>());
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void PreparedCommunicationDetector_OverBoundWarningsRetainExactly256InNormativeOrder()
     {
         Guid preScanResultId = Guid.NewGuid();

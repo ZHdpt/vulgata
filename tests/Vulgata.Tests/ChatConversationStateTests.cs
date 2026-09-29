@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Text;
 using Vulgata.Core.DomainServices;
 
@@ -12,7 +13,8 @@ public sealed class ChatConversationStateTests
     private static readonly Guid FirstDocumentId = Guid.Parse("30000000-0000-0000-0000-000000000001");
     private static readonly Guid SecondDocumentId = Guid.Parse("30000000-0000-0000-0000-000000000002");
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void AppendValidatedTurn_InitialAndTwoFollowUps_RetainsOnlyCompleteValidatedTurnsInOrder()
     {
         ChatConversationState state = ChatConversationState.Empty(CreateScope(ChatMode.Business));
@@ -26,7 +28,8 @@ public sealed class ChatConversationStateTests
         Assert.DoesNotContain(state.Turns, turn => turn.AnswerText.Contains("partial", StringComparison.OrdinalIgnoreCase));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void AppendValidatedTurn_FourthTurn_EvictsOldestAndNeverExceedsTwoTurns()
     {
         ChatConversationState state = ChatConversationState.Empty(CreateScope(ChatMode.It));
@@ -40,7 +43,8 @@ public sealed class ChatConversationStateTests
         Assert.Equal(["h3", "h4"], state.Turns.Select(turn => turn.PacketFingerprint));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void ResetForScopeOrModeChange_ClearsPriorTurnsBeforeNextQuestion()
     {
         ChatConversationState state = ChatConversationState.Empty(CreateScope(ChatMode.Business))
@@ -56,7 +60,8 @@ public sealed class ChatConversationStateTests
         Assert.Equal([FirstRepositoryId, OtherRepositoryId], changedRepositories.Scope.RepositoryIds);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Reset_ClearsTurnsAndStartsAnEmptyBoundedConversation()
     {
         ChatConversationScope scope = CreateScope(ChatMode.Business);
@@ -70,7 +75,8 @@ public sealed class ChatConversationStateTests
         Assert.InRange(reset.EncodedUtf8Bytes, 0, 4_096);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void AppendValidatedTurn_ConversationEncodingOverFourKiB_IsRejectedWithoutTruncatingAnswer()
     {
         ChatConversationState state = ChatConversationState.Empty(CreateScope(ChatMode.Business));
@@ -84,7 +90,8 @@ public sealed class ChatConversationStateTests
         Assert.True(Encoding.UTF8.GetByteCount(oversizedAnswer) > 4_096);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void AppendValidatedTurn_ExactFourKiBConversationState_IsAcceptedAndPlusOneIsRejected()
     {
         ChatConversationScope scope = CreateScope(ChatMode.Business);
@@ -103,7 +110,8 @@ public sealed class ChatConversationStateTests
         Assert.Empty(empty.Turns);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void PriorLogicalDocumentHints_ExposeOnlyBoundedCitationAndDocumentHints_NotPriorEvidenceBody()
     {
         ChatConversationState state = ChatConversationState.Empty(CreateScope(ChatMode.Business))
@@ -116,7 +124,8 @@ public sealed class ChatConversationStateTests
         Assert.DoesNotContain("第二个完整答案", state.RetrievalContext, StringComparison.Ordinal);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void BuildRetrievalContext_ReFetchedHintLoss_ClearsConversationAndFailsClosed()
     {
         ChatConversationState state = ChatConversationState.Empty(CreateScope(ChatMode.Business))
@@ -133,7 +142,8 @@ public sealed class ChatConversationStateTests
         Assert.Empty(state.Turns);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void BuildRetrievalContext_AuthorizationLoss_ClearsConversationAndReturnsMissingEquivalentContext()
     {
         ChatConversationState state = ChatConversationState.Empty(CreateScope(ChatMode.Business))
@@ -149,7 +159,8 @@ public sealed class ChatConversationStateTests
         Assert.Empty(state.Turns);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void BuildRetrievalContext_PartialAuthorizationRevocation_ClearsAllPriorHintsAndFailsClosed()
     {
         ChatConversationState state = ChatConversationState.Empty(CreateScope(ChatMode.Business))
@@ -166,7 +177,8 @@ public sealed class ChatConversationStateTests
         Assert.Empty(state.Turns);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void BuildRetrievalContext_PartialCurrentnessMutation_ClearsAllPriorHintsAndFailsClosed()
     {
         ChatConversationState state = ChatConversationState.Empty(CreateScope(ChatMode.Business))

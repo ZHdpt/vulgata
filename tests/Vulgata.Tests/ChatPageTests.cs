@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Security.Claims;
 using System.Reflection;
 using System.Text.Json;
@@ -79,7 +80,8 @@ public sealed class ChatPageTests : BunitContext
             _publicationOwner));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void ChatPage_InitialRender_DefaultsToBusinessLightThemeAndHidesRepositorySelection()
     {
         Assert.NotNull(typeof(ChatPage).GetCustomAttribute<AuthorizeAttribute>());
@@ -112,7 +114,8 @@ public sealed class ChatPageTests : BunitContext
         Assert.DoesNotContain("实时通知", cut.Markup, StringComparison.Ordinal);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void ChatPage_Render_ExposesDedicatedAccessibleConversationScrollRegion()
     {
         IRenderedComponent<ChatPage> cut = Render<ChatPage>();
@@ -124,7 +127,8 @@ public sealed class ChatPageTests : BunitContext
         Assert.Equal("0", surface.GetAttribute("tabindex"));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ChatPage_NewConversation_ClearsTransientStateAndPreservesPreparedContextAsync()
     {
         IRenderedComponent<ChatPage> cut = Render<ChatPage>();
@@ -149,7 +153,8 @@ public sealed class ChatPageTests : BunitContext
             invocation => invocation.Identifier.Contains("focus", StringComparison.OrdinalIgnoreCase));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ChatPage_NewConversationAfterGroundedTurn_ResetsBackendConversationForIdenticalScopeAsync()
     {
         IRenderedComponent<ChatPage> cut = Render<ChatPage>();
@@ -207,7 +212,8 @@ public sealed class ChatPageTests : BunitContext
             documentId => secondRequest.Conversation.PriorLogicalDocumentHints.Contains(documentId));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ChatPage_NewConversationDuringInFlightCommit_RejectsStalePublicationAndNextRequestIsEmptyAsync()
     {
         IRenderedComponent<ChatPage> cut = Render<ChatPage>();
@@ -250,7 +256,8 @@ public sealed class ChatPageTests : BunitContext
         Assert.Empty(nextRequest.Conversation.PriorLogicalDocumentHints);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ChatPage_NewConversationDuringRequest_PreventsLateAnswerFromReappearingAsync()
     {
         IRenderedComponent<ChatPage> cut = Render<ChatPage>();
@@ -274,7 +281,8 @@ public sealed class ChatPageTests : BunitContext
         Assert.Contains("新对话已开始", cut.Markup, StringComparison.Ordinal);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void ChatPage_MissingCoordinatorRegistration_FailsRequiredComposition()
     {
         using var context = new BunitContext();
@@ -288,7 +296,8 @@ public sealed class ChatPageTests : BunitContext
         Assert.Contains(nameof(PreparedChatCoordinator), exception.Message, StringComparison.Ordinal);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void ChatPage_RepositoryPicker_OpensDemoBankCatalogAndSynchronizesCheckmarksWithChips()
     {
         IRenderedComponent<ChatPage> cut = Render<ChatPage>();
@@ -317,7 +326,8 @@ public sealed class ChatPageTests : BunitContext
         Assert.Empty(cut.FindAll(".repository-chip[data-repository-name='mbs_account']"));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ChatPage_RepositoryPicker_HoverFocusEscapeAndOutsideDismissRemainAccessibleAsync()
     {
         IRenderedComponent<ChatPage> cut = Render<ChatPage>();
@@ -338,7 +348,8 @@ public sealed class ChatPageTests : BunitContext
         Assert.Empty(cut.FindAll(".repository-menu"));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ChatPage_RepositoryPresentationState_NeverChangesFixedDemoBackendScopeAsync()
     {
         IRenderedComponent<ChatPage> cut = Render<ChatPage>();
@@ -366,7 +377,8 @@ public sealed class ChatPageTests : BunitContext
         });
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void ChatPage_ModeSelection_LocksThemeAndStartsFreshTransientQuestion()
     {
         IRenderedComponent<ChatPage> cut = Render<ChatPage>();
@@ -389,7 +401,8 @@ public sealed class ChatPageTests : BunitContext
         Assert.Equal("true", FindButton(cut, "业务模式").GetAttribute("aria-pressed"));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ChatPage_EnterWithExplicitValidRequest_DispatchesAndRendersChineseAnswer()
     {
         IRenderedComponent<ChatPage> cut = Render<ChatPage>();
@@ -414,7 +427,8 @@ public sealed class ChatPageTests : BunitContext
         Assert.DoesNotContain("暂时无法生成回答", cut.Markup, StringComparison.Ordinal);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ChatPage_UnrelatedQuestion_RendersUnsupportedAssistantResponse()
     {
         _dispatcher.Answerability = ChatAnswerability.Unsupported;
@@ -431,7 +445,8 @@ public sealed class ChatPageTests : BunitContext
         Assert.Empty(cut.FindAll(".document-citation"));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ChatPage_BusinessAnswer_RendersChineseDocumentCitationWithExpandableAuthorizedLocatorAsync()
     {
         IRenderedComponent<ChatPage> cut = Render<ChatPage>();
@@ -463,7 +478,8 @@ public sealed class ChatPageTests : BunitContext
         Assert.DoesNotContain("example.test", citation.TextContent, StringComparison.OrdinalIgnoreCase);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ChatPage_ItAnswer_RendersChineseDocumentCitationAndAuthorizedLocatorInlineAsync()
     {
         IRenderedComponent<ChatPage> cut = Render<ChatPage>();
@@ -486,7 +502,8 @@ public sealed class ChatPageTests : BunitContext
         Assert.DoesNotContain("example.test", citation.TextContent, StringComparison.OrdinalIgnoreCase);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ChatPage_EscapeDuringPendingRequest_CancelsWithoutPartialAnswer()
     {
         IRenderedComponent<ChatPage> cut = Render<ChatPage>();
@@ -516,7 +533,8 @@ public sealed class ChatPageTests : BunitContext
         Assert.DoesNotContain("complete-answer", cut.Markup, StringComparison.Ordinal);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ChatPage_SecondRequest_RetainsFirstTurnWhilePendingAndAfterCompletion()
     {
         IRenderedComponent<ChatPage> cut = Render<ChatPage>();
@@ -549,7 +567,8 @@ public sealed class ChatPageTests : BunitContext
         Assert.Equal(2, cut.FindAll(".document-citation").Count);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ChatPage_ModeScopeAndFailureChanges_RetainPriorCompletedTurns()
     {
         IRenderedComponent<ChatPage> cut = Render<ChatPage>();
@@ -590,7 +609,8 @@ public sealed class ChatPageTests : BunitContext
         Assert.Equal(3, cut.FindAll(".document-citation").Count);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ChatPage_StaleRevokedAndInvalidRequests_RetainPriorClaimsAndCitationsAsync()
     {
         IRenderedComponent<ChatPage> cut = Render<ChatPage>();
@@ -634,7 +654,8 @@ public sealed class ChatPageTests : BunitContext
         Assert.Equal(2, cut.FindAll(".document-citation").Count);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ChatPage_RetainedTimeline_DoesNotBecomeBackendConversationContext()
     {
         IRenderedComponent<ChatPage> cut = Render<ChatPage>();
@@ -651,7 +672,8 @@ public sealed class ChatPageTests : BunitContext
         Assert.Equal(2, cut.FindAll("[data-chat-turn]").Count);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ChatPage_SuccessfulAnswer_RevealsFirstElementThenCompletesWithCitations()
     {
         _revealDelay.Pause();
@@ -678,7 +700,8 @@ public sealed class ChatPageTests : BunitContext
         Assert.Equal("complete", cut.Find(".complete-answer").GetAttribute("data-answer-state"));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ChatPage_PendingProviderStream_ExposesNoUnvalidatedContentOrEvidenceToClientAsync()
     {
         IRenderedComponent<ChatPage> cut = Render<ChatPage>();
@@ -698,7 +721,8 @@ public sealed class ChatPageTests : BunitContext
         await sendTask;
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ChatPage_AcceptedAnswerWithInsufficientRemainingDeadline_RendersImmediatelyAsync()
     {
         _revealDelay.Pause();
@@ -727,7 +751,8 @@ public sealed class ChatPageTests : BunitContext
         }
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ChatPage_AcceptedLongUnicodeAnswerWithBudgetBelowRevealCost_RendersImmediatelyAsync()
     {
         _dispatcher.BeforeResult = () => _timeProvider.Advance(TimeSpan.FromSeconds(27.5));
@@ -747,7 +772,8 @@ public sealed class ChatPageTests : BunitContext
         Assert.Equal(0, _revealDelay.CallCount);
     }
 
-    [Theory]
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
     [InlineData(27.4)]
     [InlineData(27.399)]
     public async Task ChatPage_RevealScheduleAtOrWithinSafetyMargin_RendersImmediatelyAsync(
@@ -769,7 +795,8 @@ public sealed class ChatPageTests : BunitContext
         Assert.Equal(0, _revealDelay.CallCount);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ChatPage_StrictlyFittingProgressiveSchedule_RevealsAcceptedUnicodeContentAsync()
     {
         _revealDelay.Pause();
@@ -793,7 +820,8 @@ public sealed class ChatPageTests : BunitContext
         Assert.Single(cut.FindAll(".document-citation"));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ChatPage_AcceptedUnicodeReveal_UsesLiveAbsoluteDeadlineAfterRevealStartsAsync()
     {
         _revealDelay.Pause();
@@ -827,7 +855,8 @@ public sealed class ChatPageTests : BunitContext
         }
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ChatPage_ValidPendingRequest_ClearsComposerImmediately()
     {
         IRenderedComponent<ChatPage> cut = Render<ChatPage>();
@@ -844,7 +873,8 @@ public sealed class ChatPageTests : BunitContext
         await sendTask;
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ChatPage_NewMessages_KeepConversationPinnedToLatestContent()
     {
         IRenderedComponent<ChatPage> cut = Render<ChatPage>();
@@ -866,7 +896,8 @@ public sealed class ChatPageTests : BunitContext
         cut.WaitForAssertion(() => Assert.True(CountConversationScrolls() >= 2));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ChatPage_NewConversationDuringReveal_PreventsLateTextAndCitationFromReappearingAsync()
     {
         _revealDelay.Pause();
@@ -886,7 +917,8 @@ public sealed class ChatPageTests : BunitContext
         Assert.Empty(cut.FindAll("[data-chat-turn]"));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ChatPage_NewConversationDuringProgressiveReveal_DropsLateRevealAndCommittedConversationContextAsync()
     {
         _revealDelay.Pause();
@@ -941,7 +973,8 @@ public sealed class ChatPageTests : BunitContext
         Assert.DoesNotContain("provider-fragment", cut.Markup, StringComparison.Ordinal);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ChatPage_ProgressiveReveal_DoesNotSplitCombiningMarkOrFamilyEmoji()
     {
         _revealDelay.Pause();
@@ -966,7 +999,8 @@ public sealed class ChatPageTests : BunitContext
         Assert.Equal("e\u0301👨‍👩‍👧‍👦完成", cut.Find(".material-claim").TextContent);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ChatPage_CancelAfterAcceptedPublicationBeforeFirstProgressiveRevealDelay_PreservesCommittedAnswerCitationsAndConversationAsync()
     {
         _revealDelay.Pause();
@@ -995,7 +1029,8 @@ public sealed class ChatPageTests : BunitContext
         Assert.Equal(committedConversation.Turns, _retriever.Requests[1].Conversation.Turns);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ChatPage_CancelAfterAcceptedPublicationDuringLaterProgressiveRevealDelay_PreservesCommittedAnswerCitationsAndConversationAsync()
     {
         _revealDelay.Pause();
@@ -1028,7 +1063,8 @@ public sealed class ChatPageTests : BunitContext
         Assert.Equal(committedConversation.Turns, _retriever.Requests[1].Conversation.Turns);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ChatPage_ReducedMotion_PublishesCompleteAnswerWithoutDelay()
     {
         _chatModule.Setup<bool>("prefersReducedMotion").SetResult(true);
@@ -1046,7 +1082,8 @@ public sealed class ChatPageTests : BunitContext
         Assert.Equal(delayCalls, _revealDelay.CallCount);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ChatPage_InvalidQuestionAndShiftEnter_DoNotDispatch()
     {
         IRenderedComponent<ChatPage> cut = Render<ChatPage>();

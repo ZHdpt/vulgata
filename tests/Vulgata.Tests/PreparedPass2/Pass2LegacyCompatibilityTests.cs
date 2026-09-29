@@ -1,8 +1,10 @@
+using Vulgata.Tests.TestInfrastructure;
 namespace Vulgata.Tests.PreparedPass2;
 
 public sealed class Pass2LegacyCompatibilityTests
 {
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void LegacyExactCrossRepositoryEdgeEvidence_RemainsReadableAndUnchanged()
     {
         Type legacy = typeof(Vulgata.Core.Entities.ExactCrossRepositoryEdgeEvidence);
@@ -15,7 +17,8 @@ public sealed class Pass2LegacyCompatibilityTests
         Assert.Null(legacy.GetProperty("ResolutionDecisionId"));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void DocumentEdge_RemainsReusableByDocumentVersionTuple()
     {
         Type edge = typeof(Vulgata.Core.Entities.DocumentEdge);

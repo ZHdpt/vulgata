@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Reflection;
 using Vulgata.Core.DomainServices;
 using Vulgata.Core.Entities;
@@ -29,7 +30,8 @@ public sealed class PreparedCanonicalEnvelopeGoldenTests
     private const string SmallestContextEnvelopeHex =
         "5647434501060000003576756c676174612f73746f72792d31322e322f70726570617265642d7363616e2d636f6e746578742d736e617073686f742f312e300900000000";
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void GoldenVectors_ExposeAllRequiredStableArtifactDomains()
     {
         Type contracts = RequirePreparedIdentityBuilder();
@@ -41,7 +43,8 @@ public sealed class PreparedCanonicalEnvelopeGoldenTests
         Assert.NotNull(contracts);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void GoldenVectors_RequireLiteralCompleteCodeGraphReadyJavaXmlOnlyAndContextBytes()
     {
         RequirePreparedIdentityBuilder();
@@ -64,7 +67,8 @@ public sealed class PreparedCanonicalEnvelopeGoldenTests
             "T008 requires the literal Prepared Scan Context Snapshot vector after the production identity seam is available.");
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void GoldenVectors_RequireIndependentReconstructorAndCaptureTimeInvariance()
     {
         Type contracts = RequirePreparedIdentityBuilder();
@@ -79,7 +83,8 @@ public sealed class PreparedCanonicalEnvelopeGoldenTests
             method => method.Name.Contains("Context", StringComparison.OrdinalIgnoreCase));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void GoldenVectors_RequireOrdinalAndUnicodeMutationCoverage()
     {
         Type contracts = RequirePreparedIdentityBuilder();
@@ -93,7 +98,8 @@ public sealed class PreparedCanonicalEnvelopeGoldenTests
                 method.Name.Contains("Identity", StringComparison.OrdinalIgnoreCase));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void FileCodeUnitIdentity_V1GoldenRemainsByteAndIdentityStable()
     {
         PreparedCanonicalArtifact artifact = PreparedScanIdentityBuilders.CreateFileCodeUnitIdentity(

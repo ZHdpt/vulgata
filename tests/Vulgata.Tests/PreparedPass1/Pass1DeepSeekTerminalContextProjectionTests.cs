@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Text;
 using System.Text.Json;
 using Microsoft.Extensions.AI;
@@ -15,7 +16,8 @@ namespace Vulgata.Tests.PreparedPass1;
 /// </summary>
 public sealed class Pass1DeepSeekTerminalContextProjectionTests
 {
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Create_UsesDerivedInstructionExactPacketAndCanonicalServerContext()
     {
         byte[] packet = Encoding.UTF8.GetBytes("{\"jobId\":\"bounded-job\",\"sourceHash\":\"abc\"}");
@@ -55,7 +57,8 @@ public sealed class Pass1DeepSeekTerminalContextProjectionTests
         Assert.DoesNotContain("candidate", messages, StringComparison.OrdinalIgnoreCase);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Create_ProjectsOnlyClosedFirstSubmissionCorrectionCategory()
     {
         PreparedPass1TerminalContextProjectionResult projection =
@@ -89,7 +92,8 @@ public sealed class Pass1DeepSeekTerminalContextProjectionTests
         Assert.DoesNotContain("validator", correction.GetRawText(), StringComparison.OrdinalIgnoreCase);
     }
 
-    [Theory]
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
     [InlineData(
         PreparedPass1SubmissionRejectionKind.InvalidShape,
         PreparedPass1SubmissionRepairCode.UseMinimalValidDocument)]
@@ -124,7 +128,8 @@ public sealed class Pass1DeepSeekTerminalContextProjectionTests
         Assert.Equal(repairCode.ToString(), correction.GetProperty("repairCode").GetString());
     }
 
-    [Theory]
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
     [InlineData(
         PreparedPass1SubmissionRejectionKind.InvalidShape,
         PreparedPass1SubmissionRepairCode.CopyPacketBinding)]
@@ -150,7 +155,8 @@ public sealed class Pass1DeepSeekTerminalContextProjectionTests
                     new(1, category, repairCode))));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Create_RejectsUnknownRepairCodeBeforeWireSend()
     {
         Assert.Throws<InvalidDataException>(() =>
@@ -165,7 +171,8 @@ public sealed class Pass1DeepSeekTerminalContextProjectionTests
                         (PreparedPass1SubmissionRepairCode)999))));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Create_RejectsMissingSubmissionAsTerminalCorrectionCategory()
     {
         Assert.Throws<InvalidDataException>(() =>
@@ -177,7 +184,8 @@ public sealed class Pass1DeepSeekTerminalContextProjectionTests
                     new(1, PreparedPass1SubmissionRejectionKind.MissingSubmission))));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Create_RejectsCorrectionAttemptsOtherThanTheFirstSubmission()
     {
         Assert.Throws<InvalidDataException>(() =>
@@ -189,7 +197,8 @@ public sealed class Pass1DeepSeekTerminalContextProjectionTests
                     new(2, PreparedPass1SubmissionRejectionKind.InvalidShape))));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Create_ProjectsTheFixedBudgetExhaustionResultAsAnExactString()
     {
         PreparedPass1TerminalContextProjectionResult projection =
@@ -208,7 +217,8 @@ public sealed class Pass1DeepSeekTerminalContextProjectionTests
         Assert.Equal("navigation-budget-exhausted", result.GetString());
     }
 
-    [Theory]
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
     [InlineData(10, true)]
     [InlineData(4, true)]
     [InlineData(9, true)]
@@ -225,7 +235,8 @@ public sealed class Pass1DeepSeekTerminalContextProjectionTests
             PreparedPass1TerminalContextProjection.ShouldProject(providerTurn, correction));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void SerializeInvokedResult_PreservesTypedNavigationResponseFields()
     {
         string serialized = PreparedPass1TerminalContextProjection.SerializeInvokedResult(
@@ -240,7 +251,8 @@ public sealed class Pass1DeepSeekTerminalContextProjectionTests
         Assert.Single(results.EnumerateArray());
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Create_CapturesTypedInvokedResultUsingFunctionSerializerOptionsBeforeSourceMutation()
     {
         byte[] mutableSourceHash = Enumerable.Repeat((byte)0x11, 32).ToArray();
@@ -299,7 +311,8 @@ public sealed class Pass1DeepSeekTerminalContextProjectionTests
             captured.GetProperty("results")[0].GetProperty("sourceHash").GetString());
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Create_RejectsCanonicalTerminalContextAbove393216Utf8Bytes()
     {
         const int resultCount = 72;
@@ -338,7 +351,8 @@ public sealed class Pass1DeepSeekTerminalContextProjectionTests
                     10)));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Create_RejectsCrInsideMarkerDerivedResourceEagerly()
     {
         string prompt = CreatePrompt().Replace(
@@ -357,7 +371,8 @@ public sealed class Pass1DeepSeekTerminalContextProjectionTests
                 }));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void SerializeFixedResult_UsesOnlyTheExactBudgetExhaustionString()
     {
         Assert.Equal(
@@ -365,7 +380,8 @@ public sealed class Pass1DeepSeekTerminalContextProjectionTests
             PreparedPass1TerminalContextProjection.SerializeFixedResult());
     }
 
-    [Theory]
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
     [InlineData("unrelated-result")]
     public void Create_RejectsUnsupportedStringEvidenceValues(string value)
     {
@@ -378,7 +394,8 @@ public sealed class Pass1DeepSeekTerminalContextProjectionTests
             () => PreparedPass1TerminalContextProjection.Create(request));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Create_RejectsUnsupportedEvidenceValueTypes()
     {
         PreparedPass1TerminalContextProjectionRequest request = CreateRequest(
@@ -390,7 +407,8 @@ public sealed class Pass1DeepSeekTerminalContextProjectionTests
             () => PreparedPass1TerminalContextProjection.Create(request));
     }
 
-    [Theory]
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
     [InlineData(0)]
     [InlineData(1)]
     [InlineData(64)]
@@ -406,7 +424,8 @@ public sealed class Pass1DeepSeekTerminalContextProjectionTests
         Assert.Equal(count, accumulator.Snapshot().Count);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Accumulator_RejectsSixtyFifthResultWithoutChangingBoundedState()
     {
         using var accumulator = new PreparedPass1TerminalContextAccumulator();
@@ -419,7 +438,8 @@ public sealed class Pass1DeepSeekTerminalContextProjectionTests
         Assert.Equal(64, accumulator.Count);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Accumulator_ReleaseClearsReferencesAndClosesTheExecutionLocalSeam()
     {
         var accumulator = new PreparedPass1TerminalContextAccumulator();
@@ -433,7 +453,8 @@ public sealed class Pass1DeepSeekTerminalContextProjectionTests
         accumulator.Dispose();
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Accumulator_RejectsNoncontiguousOrderingBeforeProjection()
     {
         using var accumulator = new PreparedPass1TerminalContextAccumulator();
@@ -442,7 +463,8 @@ public sealed class Pass1DeepSeekTerminalContextProjectionTests
         Assert.Equal(0, accumulator.Count);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Accumulator_RejectsNullOrUnsupportedValuesWithoutChangingState()
     {
         using var accumulator = new PreparedPass1TerminalContextAccumulator();
@@ -456,7 +478,8 @@ public sealed class Pass1DeepSeekTerminalContextProjectionTests
         Assert.Equal(0, accumulator.Count);
     }
 
-    [Theory]
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
     [InlineData("missing")]
     [InlineData("duplicate")]
     [InlineData("out-of-order")]
@@ -494,7 +517,8 @@ public sealed class Pass1DeepSeekTerminalContextProjectionTests
                     with { PromptResource = prompt }));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Create_RejectsPacketAndPromptIdentityBindingMismatch()
     {
         PreparedPass1TerminalContextProjectionRequest request =
@@ -509,7 +533,8 @@ public sealed class Pass1DeepSeekTerminalContextProjectionTests
             () => PreparedPass1TerminalContextProjection.Create(request));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Create_RejectsEagerProjectionBeforeForcedTurnNineFinalization()
     {
         Assert.Throws<InvalidDataException>(() =>

@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Collections.Concurrent;
 using System.Net;
 using System.Net.Http.Json;
@@ -36,7 +37,8 @@ namespace Vulgata.Tests.PreparedPass1;
 [Collection(PreparedScanningCollection.Name)]
 public sealed class Pass1ProductionExecutionCapacityTests
 {
-    [Theory]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteTheory("PostgreSql")]
     [InlineData(2)]
     [InlineData(4)]
     public async Task Start_ApprovedPair_ActivatesCapacityFillingPumpAtTwoOrFourAndDoesNotUseSequentialCompletion(
@@ -76,7 +78,8 @@ public sealed class Pass1ProductionExecutionCapacityTests
         worker.ReleaseAll();
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task FourToOneDecrease_PreservesLeases_AndOneToFourIncreaseRefillsOnlyAfterDurableWakeUp()
     {
         await using PreparedScanPostgreSqlFixture fixture = await CreatePreparedPairAsync();
@@ -98,7 +101,8 @@ public sealed class Pass1ProductionExecutionCapacityTests
         worker.ReleaseAll();
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task OneToFourIncrease_RefillsImmediatelyWhileTheFirstLeaseRemainsHeld()
     {
         await using PreparedScanPostgreSqlFixture fixture = await CreatePreparedPairAsync();
@@ -140,7 +144,8 @@ public sealed class Pass1ProductionExecutionCapacityTests
         [new[] { 1, 2, 4, 3, 5, 6 }],
     ];
 
-    [Theory]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteTheory("PostgreSql")]
     [MemberData(nameof(DeterministicReleaseSchedules))]
     public async Task CompletionOrder_DoesNotChangeDeterministicForwardJobIdentity(
         int[] releaseSchedule)
@@ -178,7 +183,8 @@ public sealed class Pass1ProductionExecutionCapacityTests
         worker.ReleaseAll();
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task TerminalWorkerResults_StopLaunchAndDrainLocallyBeforeFreshDurableExhaustion()
     {
         await using PreparedScanPostgreSqlFixture fixture = await CreatePreparedPairAsync();
@@ -216,7 +222,8 @@ public sealed class Pass1ProductionExecutionCapacityTests
         worker.ReleaseAll();
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task FullyDrainedPair_UsesReconcileAsTheSoleNormalTerminalTransaction_AndLeavesNoReconcilingState()
     {
         await using PreparedScanPostgreSqlFixture fixture = await CreatePreparedPairAsync();
@@ -272,7 +279,8 @@ public sealed class Pass1ProductionExecutionCapacityTests
         worker.ReleaseAll();
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task FullyDrainedPair_AuthenticatedAdministratorWithoutOwnerAssignment_ReconcilesNormally()
     {
         await using PreparedScanPostgreSqlFixture fixture = await CreatePreparedPairAsync();
@@ -308,7 +316,8 @@ public sealed class Pass1ProductionExecutionCapacityTests
         worker.ReleaseAll();
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task ReconciliationConflict_ReloadsAndRetriesOnlyTheSameStillEligibleTerminalPair()
     {
         await using PreparedScanPostgreSqlFixture fixture = await CreatePreparedPairAsync();
@@ -341,7 +350,8 @@ public sealed class Pass1ProductionExecutionCapacityTests
         worker.ReleaseAll();
     }
 
-    [Theory]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteTheory("PostgreSql")]
     [InlineData(PreparedPass1RawWorkerOutcome.ProviderUnavailable)]
     [InlineData(PreparedPass1RawWorkerOutcome.Rejected)]
     public async Task Reconciliation_DoesNotRetryAfterProviderPauseOrIntegrityFailure(
@@ -384,7 +394,8 @@ public sealed class Pass1ProductionExecutionCapacityTests
         ["boundary"],
     ];
 
-    [Theory]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteTheory("PostgreSql")]
     [MemberData(nameof(ReconciliationDriftKinds))]
     public async Task Reconciliation_DoesNotRetryAfterAuthorizationOrBoundaryDrift(
         string driftKind)
@@ -429,7 +440,8 @@ public sealed class Pass1ProductionExecutionCapacityTests
         worker.ReleaseAll();
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task Drain_ReconcilesOnlyAfterFreshTerminalExhaustion_AndRetriesOneExactConflict()
     {
         await using PreparedScanPostgreSqlFixture fixture = await CreatePreparedPairAsync();
@@ -481,7 +493,8 @@ public sealed class Pass1ProductionExecutionCapacityTests
         worker.ReleaseAll();
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task ProviderUnavailableClaim_IsRelinquishedWithoutRetryBudget_AndEarlyRecoveryResumesDispatch()
     {
         await using PreparedScanPostgreSqlFixture fixture = await CreatePreparedPairAsync();
@@ -553,7 +566,8 @@ public sealed class Pass1ProductionExecutionCapacityTests
         worker.ReleaseAll();
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task ExhaustedWithNonLocalActiveLease_DoesNotReconcileOrBusyLoopBeforeActivation()
     {
         await using PreparedScanPostgreSqlFixture fixture = await CreatePreparedPairAsync();
@@ -642,7 +656,8 @@ public sealed class Pass1ProductionExecutionCapacityTests
             $"phase={phaseAfterActivation}, claimCalls={reconciliation.ClaimCalls}.");
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task RestartedPolicyDrain_OneActivation_WaitsForLeaseExpiryAndReachesFailedPass1Async()
     {
         await using PreparedScanPostgreSqlFixture fixture = await CreatePreparedPairAsync();
@@ -731,7 +746,8 @@ public sealed class Pass1ProductionExecutionCapacityTests
         }
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task Shutdown_WithCancellationResistantWorker_RetainsRevisionBindingsUntilLocalDrain()
     {
         await using PreparedScanPostgreSqlFixture fixture = await CreatePreparedPairAsync();

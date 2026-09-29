@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Collections;
 using System.Text.Json;
 using Vulgata.Core.DomainServices;
@@ -21,7 +22,8 @@ public sealed class AnalysisRuntimeIdentityTests
     private const string CodeGraphHash =
         "03E4C791CC0DD91ED264278461BF9A56C0278AA0670D5942FC4732311C66DE03";
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Create_ApprovedRuntime_NormalizesPinnedValuesAndRetainsRepositoryRevisionBinding()
     {
         AnalysisRuntimeIdentity identity = CreateIdentity();
@@ -49,7 +51,8 @@ public sealed class AnalysisRuntimeIdentityTests
         Assert.Equal(identity.Sha256, AnalysisRuntimeIdentity.ComputeSha256(identity.CanonicalJson));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void CanonicalJson_UsesSortedObjectFieldsAndExactClientVersionKey()
     {
         AnalysisRuntimeIdentity identity = CreateIdentity();
@@ -62,7 +65,8 @@ public sealed class AnalysisRuntimeIdentityTests
         Assert.False(client.TryGetProperty("version", out _));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Create_SameLogicalRuntimeWithDifferentHostRoots_HasIdenticalCanonicalJsonAndHash()
     {
         AnalysisRuntimeOptions firstOptions = new(
@@ -84,7 +88,8 @@ public sealed class AnalysisRuntimeIdentityTests
         Assert.DoesNotContain(@"C:\Program Files\Java", first.CanonicalJson, StringComparison.OrdinalIgnoreCase);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Create_InvalidVersionHashRevisionOrHostPathIdentity_IsRejected()
     {
         Assert.Throws<ArgumentException>(() => CreateIdentity(profiledRevision: "../../workspace"));
@@ -95,7 +100,8 @@ public sealed class AnalysisRuntimeIdentityTests
         Assert.Throws<ArgumentException>(() => CreateIdentity(jdtLsDistributionArchiveName: @"C:\temp\jdt.zip"));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Create_MissingJdtDistributionArchiveNameOrChecksum_IsRejected_CoreJarObservationCannotSubstitute()
     {
         Assert.Throws<ArgumentException>(() => CreateIdentity(jdtLsDistributionArchiveName: null));
@@ -105,7 +111,8 @@ public sealed class AnalysisRuntimeIdentityTests
                 "A58994113B7E493AA8CED51AD02DAB3E424973223E7213F7ED5B9D70861582E2"));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void HealthResult_NotReady_UsesOnlyClosedCategoriesAndSanitizedBoundedDiagnostics()
     {
         AnalysisRuntimeHealthResult result = AnalysisRuntimeHealthResult.NotReady(
@@ -143,7 +150,8 @@ public sealed class AnalysisRuntimeIdentityTests
         Assert.Equal(allowed.Order(), Enum.GetNames<AnalysisRuntimeHealthFailureCategory>().Order());
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void HealthResult_Ready_CarriesCanonicalIdentityAndNoRawHostDiagnostics()
     {
         AnalysisRuntimeIdentity identity = CreateIdentity();

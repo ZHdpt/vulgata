@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Text;
 using Vulgata.Core.DomainServices;
 using Vulgata.Infrastructure.Analysis.CodeGraph;
@@ -22,7 +23,8 @@ public sealed class AnalysisCapabilitySecurityTests
     private const string RuntimeHash =
         "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task CodeGraphPort_RejectsCliFlagLikeAtomsWithoutInvokingProcess()
     {
         AnalysisScope scope = CreateScope(RuntimeHash);
@@ -49,7 +51,8 @@ public sealed class AnalysisCapabilitySecurityTests
         Assert.Empty(process.Requests);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task CodeGraphPort_RejectsRuntimeIdentityDriftBeforeProcessEvidence()
     {
         AnalysisScope expected = CreateScope(RuntimeHash);
@@ -69,7 +72,8 @@ public sealed class AnalysisCapabilitySecurityTests
         Assert.Empty(process.Requests);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task CodeGraphPort_RejectsCrossRepositoryAndStaleRevisionOrBinding()
     {
         AnalysisScope expected = CreateScope(RuntimeHash);
@@ -107,7 +111,8 @@ public sealed class AnalysisCapabilitySecurityTests
         Assert.Empty(process.Requests);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void TypedRequests_RejectUnboundedRangesPathsAndPayloadsBeforeAnyAdapter()
     {
         Assert.Throws<ArgumentException>(() => new AnalysisSymbolQuery(
@@ -129,7 +134,8 @@ public sealed class AnalysisCapabilitySecurityTests
             new AnalysisOperationBounds(8, 4_096)));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task JavaSession_RejectsCrossRepositoryStaleRuntimeAndBindingScopesBeforeProtocol()
     {
         AnalysisScope expected = CreateScope(RuntimeHash);
@@ -180,7 +186,8 @@ public sealed class AnalysisCapabilitySecurityTests
         await session.DisposeAsync();
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task JavaWorkspaceLeaseProvider_RejectsConcurrentRevisionWorkspaceCollision()
     {
         string workspaceRoot = Path.Combine(

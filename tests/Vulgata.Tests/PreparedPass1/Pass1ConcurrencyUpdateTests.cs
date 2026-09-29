@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Reflection;
 using Vulgata.Core.DomainServices;
 using Vulgata.Core.Entities;
@@ -11,7 +12,8 @@ namespace Vulgata.Tests.PreparedPass1;
 /// </summary>
 public sealed class Pass1ConcurrencyUpdateTests
 {
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void PreparedPass1Store_ExposesVersionedAuthorizedConcurrencyUpdate()
     {
         Type contract = RequireStoreContract();
@@ -38,7 +40,8 @@ public sealed class Pass1ConcurrencyUpdateTests
         Assert.Contains(properties, property => property.Name == "StateVersion");
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void PreparedPass1ConcurrencyUpdate_UsesImmutableAuditFieldsAndCanonicalRevision()
     {
         _ = RequireUpdateMethod(RequireStoreContract());
@@ -58,7 +61,8 @@ public sealed class Pass1ConcurrencyUpdateTests
         Assert.NotNull(codec);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void PreparedPass1ConcurrencyUpdate_DeclaresExactReplayAndStaleWriterOutcomes()
     {
         Type result = UnwrapTask(RequireUpdateMethod(RequireStoreContract()).ReturnType);
@@ -73,7 +77,8 @@ public sealed class Pass1ConcurrencyUpdateTests
         Assert.Contains(names, name => name is "Updated" or "Changed" or "Committed");
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void PreparedPass1ConcurrencyUpdate_SeparatesInitialLimitFromEffectiveLimitAndPreservesLeases()
     {
         Type pair = typeof(Pass1PairExecution);
@@ -92,7 +97,8 @@ public sealed class Pass1ConcurrencyUpdateTests
         Assert.Contains(resultProperties, property => property.Name is "ConcurrencyRevision" or "ResultingConcurrencyRevision");
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void PreparedPass1ConcurrencyUpdate_AllowsOnlyOneThroughFourAsTheRequestedDomain()
     {
         _ = RequireUpdateMethod(RequireStoreContract());

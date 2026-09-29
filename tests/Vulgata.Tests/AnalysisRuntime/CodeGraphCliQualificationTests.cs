@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Security.Cryptography;
 using Vulgata.Core.DomainServices;
 using Vulgata.Infrastructure.Analysis.CodeGraph;
@@ -16,7 +17,8 @@ public sealed class CodeGraphCliQualificationTests
     private static readonly Guid RepositoryId =
         Guid.Parse("12000000-0000-4000-8000-000000000002");
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task InstalledBundle_HealthProbeIsReady_AndDoesNotCreateIndex()
     {
         Assert.True(File.Exists(CommandPath));
@@ -67,7 +69,8 @@ public sealed class CodeGraphCliQualificationTests
         }
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task RealCli_AllAllowedJsonOperations_ReturnTypedBoundedEvidence()
     {
         string fixture = CreateNeutralRepository();

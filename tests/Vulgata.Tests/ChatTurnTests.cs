@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using Vulgata.Core.DomainServices;
 using Vulgata.Core.Entities;
 using Vulgata.Web.Components.Pages;
@@ -6,7 +7,8 @@ namespace Vulgata.Tests;
 
 public sealed class ChatTurnTests
 {
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void ChatClaimReveal_RevealNext_AdvancesByUnicodeTextElement()
     {
         MaterialClaim claim = MaterialClaim.Create("claim-1", 1, "你👨‍👩‍👧‍👦e\u0301", ["citation-1"]);
@@ -22,7 +24,8 @@ public sealed class ChatTurnTests
         Assert.False(reveal.RevealNext());
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void ChatClaimReveal_Complete_PublishesWholeClaimWithoutPartialUnicode()
     {
         MaterialClaim claim = MaterialClaim.Create("claim-1", 1, "业务✅", ["citation-1"]);
@@ -34,7 +37,8 @@ public sealed class ChatTurnTests
         Assert.True(reveal.IsComplete);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void ChatTurn_BeginAndCompleteReveal_TransitionsValidatedAnswerState()
     {
         GroundedAnswer answer = CreateAnswer("第一条。", "第二条。");

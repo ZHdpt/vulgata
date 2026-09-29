@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Collections;
 using System.Reflection;
 using Vulgata.Core.Entities;
@@ -19,7 +20,8 @@ public sealed class PreparedXmlSplitRangeTests
     private const string _plannerName =
         "Vulgata.Core.DomainServices.PreparedSourceRangePlanner";
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void SafeXmlSplit_PublicSeamsExposeImmutableFileAndHashBoundDirectChildRanges()
     {
         Type rangeSet = RequireType(_rangeSetName, typeof(CommunicationEvidenceRuleCatalog).Assembly);
@@ -48,7 +50,8 @@ public sealed class PreparedXmlSplitRangeTests
         Assert.DoesNotContain(collectionProperties, property => property.PropertyType.IsArray);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void SafeXmlSplit_DirectChildRangeElementsCarryExactByteLineAndOrdinalFields()
     {
         Type rangeSet = RequireType(_rangeSetName, typeof(CommunicationEvidenceRuleCatalog).Assembly);
@@ -70,7 +73,8 @@ public sealed class PreparedXmlSplitRangeTests
         Assert.Contains(properties, property => property.Name is "FileHash" or "CanonicalPath");
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void SafeXmlSplit_MalformedOverlapOutOfBoundsAndOversizedRangesHaveWholeFileSkipOutcome()
     {
         Type planner = RequireType(_plannerName, typeof(CommunicationKindClassification).Assembly);

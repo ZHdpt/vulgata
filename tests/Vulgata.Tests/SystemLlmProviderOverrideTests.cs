@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Net;
 using System.Net.Http.Json;
 using System.Security.Claims;
@@ -27,7 +28,8 @@ public sealed class SystemLlmProviderOverrideTests : IClassFixture<LoginLogoutTe
         _factory = factory;
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task Administrator_CanCreateUpdateAndDeleteSystemLlmProviderOverride()
     {
         await EnsureApplicationStartedAsync();
@@ -110,7 +112,8 @@ public sealed class SystemLlmProviderOverrideTests : IClassFixture<LoginLogoutTe
         Assert.Equal(workerOverride.Id, afterDelete[0].Id);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task SystemOwner_CanManageOverrides_ForAssignedSystemOnly()
     {
         await EnsureApplicationStartedAsync();
@@ -179,7 +182,8 @@ public sealed class SystemLlmProviderOverrideTests : IClassFixture<LoginLogoutTe
         Assert.Contains("系统不存在", hiddenCandidatesProblem.Detail ?? string.Empty, StringComparison.Ordinal);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task CreateOverride_WithUnknownProvider_ReturnsChineseProblem()
     {
         await EnsureApplicationStartedAsync();
@@ -204,7 +208,8 @@ public sealed class SystemLlmProviderOverrideTests : IClassFixture<LoginLogoutTe
         Assert.Contains("LLM 提供商不存在", problem.Detail ?? string.Empty, StringComparison.Ordinal);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task CreateOverride_WithMismatchedAgentType_ReturnsChineseValidationError()
     {
         await EnsureApplicationStartedAsync();
@@ -232,7 +237,8 @@ public sealed class SystemLlmProviderOverrideTests : IClassFixture<LoginLogoutTe
         Assert.Contains(errors!, message => message.Contains("默认代理角色", StringComparison.Ordinal));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task DuplicateSystemAndAgentType_IsBlockedByDatabaseConstraint()
     {
         await EnsureApplicationStartedAsync();
@@ -275,7 +281,8 @@ public sealed class SystemLlmProviderOverrideTests : IClassFixture<LoginLogoutTe
         await Assert.ThrowsAnyAsync<SqliteException>(() => duplicateInsert.ExecuteNonQueryAsync());
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task DashboardPage_ShowsOverrideSection_AndEffectiveProviderFallsBackToGlobalDefault()
     {
         await EnsureApplicationStartedAsync();

@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Runtime.CompilerServices;
 using System.Net;
 using System.Text;
@@ -18,7 +19,8 @@ public sealed class ChatAgentDispatcherTests
     private const string _itPromptResourceName =
         "Vulgata.Agents.Prompts.chat-it.v1.md";
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ResolveAsync_ExactSystemChatOverride_TakesPrecedence()
     {
         Guid systemId = Guid.NewGuid();
@@ -52,7 +54,8 @@ public sealed class ChatAgentDispatcherTests
         Assert.True(result.IsSystemOverride);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ResolveAsync_WithoutOverride_UsesFirstOrderedGlobalChatAndNeverWorkerFallback()
     {
         var workerProvider = new LlmProvider(
@@ -92,7 +95,8 @@ public sealed class ChatAgentDispatcherTests
             workerOnlyResolver.ResolveAsync(Guid.NewGuid()));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ResolveAsync_InvalidChatProviderConfiguration_FailsClosed()
     {
         LlmProvider[] invalidProviders =
@@ -138,7 +142,8 @@ public sealed class ChatAgentDispatcherTests
         }
     }
 
-    [Theory]
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
     [InlineData(ChatMode.Business, _businessPromptResourceName, "Business")]
     [InlineData(ChatMode.It, _itPromptResourceName, "IT")]
     public void GetPrompt_Mode_MapsToOneVersionedEmbeddedResource(
@@ -160,7 +165,8 @@ public sealed class ChatAgentDispatcherTests
         Assert.DoesNotContain("citation", prompt, StringComparison.OrdinalIgnoreCase);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void GetPrompt_MissingDuplicateMalformedOrWrongModeResource_FailsClosed()
     {
         ChatPromptResource business = new(
@@ -184,7 +190,8 @@ public sealed class ChatAgentDispatcherTests
             ChatPromptCatalog.GetPrompt((ChatMode)999, [business, it]));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task GenerateAsync_ValidBusinessRequest_SendsOneSelectionOnlyCall()
     {
         ChatSynthesisRequest request = CreateRequest(ChatMode.Business);
@@ -265,7 +272,8 @@ public sealed class ChatAgentDispatcherTests
         Assert.DoesNotContain("plaintext-chat-key", capture.Body, StringComparison.Ordinal);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task GenerateAsync_StrictMissingModeEcho_ReturnsInvalidSelectionAsync()
     {
         ChatSynthesisRequest request = CreateRequest(ChatMode.Business);
@@ -304,7 +312,8 @@ public sealed class ChatAgentDispatcherTests
         Assert.Single(transport.Requests);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task GenerateAsync_ConfiguredReasoningEffort_PropagatesToStreamingRequestAsync()
     {
         ChatSynthesisRequest request = CreateRequest(ChatMode.Business);
@@ -339,7 +348,8 @@ public sealed class ChatAgentDispatcherTests
         Assert.Equal("none", Assert.Single(transport.Requests).ReasoningEffort);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task GenerateAsync_UnsupportedQuestion_AcceptsExplicitEmptySelection()
     {
         ChatSynthesisRequest request = CreateRequest(ChatMode.Business);
@@ -388,7 +398,8 @@ public sealed class ChatAgentDispatcherTests
         Assert.Null(outcome.FailureCode);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task GenerateAsync_JsonFenceAndKnownSchemaEcho_NormalizesClosedSelection()
     {
         ChatSynthesisRequest request = CreateRequest(ChatMode.Business);
@@ -431,7 +442,8 @@ public sealed class ChatAgentDispatcherTests
         Assert.Null(outcome.FailureCode);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task GenerateAsync_CallerCancelsInFlight_PreservesCancellationWithoutRetry()
     {
         ChatSynthesisRequest request = CreateRequest(ChatMode.It);
@@ -464,7 +476,8 @@ public sealed class ChatAgentDispatcherTests
         Assert.Equal(1, handler.CallCount);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task GenerateAsync_ProviderExceedsThirtySeconds_TimesOutWithoutRetry()
     {
         ChatSynthesisRequest request = CreateRequest(ChatMode.Business);
@@ -498,7 +511,8 @@ public sealed class ChatAgentDispatcherTests
         Assert.Equal(1, handler.CallCount);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task GenerateAsync_ProviderFailure_FailsClosedWithoutRetryOrDiagnosticLeak()
     {
         ChatSynthesisRequest request = CreateRequest(ChatMode.It);
@@ -529,7 +543,8 @@ public sealed class ChatAgentDispatcherTests
         Assert.DoesNotContain(rawDiagnostic, outcome.ToString(), StringComparison.Ordinal);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task GenerateAsync_MalformedSelection_FailsWithoutRetainingRawProviderContent()
     {
         ChatSynthesisRequest request = CreateRequest(ChatMode.Business);
@@ -562,7 +577,8 @@ public sealed class ChatAgentDispatcherTests
         Assert.DoesNotContain(malformedSelection, outcome.ToString(), StringComparison.Ordinal);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task GenerateAsync_SyntaxFailure_UsesOneStreamingRepairWithinTheSameBoundedRequest()
     {
         ChatSynthesisRequest request = CreateRequest(ChatMode.Business);
@@ -610,7 +626,8 @@ public sealed class ChatAgentDispatcherTests
             handler.RequestBodies[1].Contains(request.EvidenceFingerprint, StringComparison.Ordinal));
     }
 
-    [Theory]
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
     [InlineData("invalid-handle")]
     [InlineData("unsupported-selection")]
     [InlineData("mismatched-evidence-fingerprint")]
@@ -666,7 +683,8 @@ public sealed class ChatAgentDispatcherTests
         Assert.Single(transport.Requests);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task GenerateAsync_DirectConstructionAggregateJson_IsRejectedAsProviderFailure()
     {
         ChatSynthesisRequest request = CreateRequest(ChatMode.Business);
@@ -697,7 +715,8 @@ public sealed class ChatAgentDispatcherTests
         Assert.Equal(1, handler.CallCount);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task GenerateAsync_TenSecondsWithoutDecodedDataOrTerminal_CancelsUnderlyingProviderStreamAndTimesOut()
     {
         var clock = new ControllableTimeProvider(DateTimeOffset.UnixEpoch);
@@ -756,7 +775,8 @@ public sealed class ChatAgentDispatcherTests
         }
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task GenerateAsync_DeadlineCancellationReportedAsProviderError_ReturnsTimedOut()
     {
         var clock = new ControllableTimeProvider(DateTimeOffset.UnixEpoch);
@@ -797,7 +817,8 @@ public sealed class ChatAgentDispatcherTests
         Assert.Single(transport.Requests);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task GenerateAsync_UnregisteredDirectSseTransport_CannotProduceAcceptedAttempt()
     {
         ChatSynthesisRequest request = CreateRequest(ChatMode.Business);
@@ -828,7 +849,8 @@ public sealed class ChatAgentDispatcherTests
         Assert.Null(outcome.RawSelectionJson);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task GenerateAsync_DirectConstructionAggregateJsonDuringSyntaxRepair_IsRejectedWithoutAcceptedResult()
     {
         ChatSynthesisRequest request = CreateRequest(ChatMode.Business);
@@ -861,7 +883,8 @@ public sealed class ChatAgentDispatcherTests
         Assert.Equal(2, handler.CallCount);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task GenerateAsync_SyntaxRepair_UsesCanonicalAttemptNameAndPreservesBinding()
     {
         ChatSynthesisRequest request = CreateRequest(ChatMode.Business);
@@ -908,7 +931,8 @@ public sealed class ChatAgentDispatcherTests
         Assert.Contains("invalid", transport.Requests[1].Prompt, StringComparison.OrdinalIgnoreCase);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task GenerateAsync_SyntaxRepairWith2999MillisecondsRemaining_RefusesSecondStreamedAttempt()
     {
         var clock = new ControllableTimeProvider(DateTimeOffset.UnixEpoch);
@@ -944,7 +968,8 @@ public sealed class ChatAgentDispatcherTests
         Assert.Equal("primary", Assert.Single(transport.Requests).AttemptKind);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task GenerateAsync_SyntaxRepairWith3000MillisecondsRemaining_PermitsExactlyOneStreamedRepair()
     {
         var clock = new ControllableTimeProvider(DateTimeOffset.UnixEpoch);
@@ -980,7 +1005,8 @@ public sealed class ChatAgentDispatcherTests
         Assert.Equal(["primary", "syntax-repair"], transport.Requests.Select(item => item.AttemptKind));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task GenerateAsync_PrimarySyntaxFailureThenRepairSyntaxFailure_RecordsAttemptLifecycleInOrder()
     {
         ChatSynthesisRequest request = CreateRequest(ChatMode.Business);
@@ -1017,7 +1043,8 @@ public sealed class ChatAgentDispatcherTests
         Assert.Null(outcome.RawSelectionJson);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     // Characterization-only: the registered raw adapter already accepts a valid SSE response;
     // no RED is expected for this positive composition boundary.
     public async Task GenerateAsync_RegisteredRawSseTransport_AcceptsOnlyStreamedResponse()

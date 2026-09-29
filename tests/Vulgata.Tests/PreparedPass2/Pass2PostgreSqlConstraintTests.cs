@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
@@ -49,6 +50,7 @@ public sealed class Pass2PostgreSqlConstraintTests(ITestOutputHelper output)
         "Pass2RetrievalResults",
     ];
 
+    [Trait("Suite", "PostgreSql")]
     [PostgreSqlQualificationFact]
     public async Task Story124PostgreSql17_FreshApplyRollbackReapply_PreservesLegacySchema()
     {
@@ -136,6 +138,7 @@ public sealed class Pass2PostgreSqlConstraintTests(ITestOutputHelper output)
         await AssertDatabaseDroppedAsync(administratorConnectionString, databaseName);
     }
 
+    [Trait("Suite", "PostgreSql")]
     [PostgreSqlQualificationFact]
     public async Task Story124PostgreSql17_ConstraintsEnforceNullablePrepublicationAndReusableEdge()
     {
@@ -197,6 +200,7 @@ public sealed class Pass2PostgreSqlConstraintTests(ITestOutputHelper output)
         await AssertDatabaseDroppedAsync(administratorConnectionString, databaseName);
     }
 
+    [Trait("Suite", "PostgreSql")]
     [PostgreSqlQualificationFact]
     public async Task Story124PostgreSql17_RetrievalBudgetUsesJobPrimaryKeyAndUtcUpdatedAt()
     {
@@ -230,6 +234,7 @@ public sealed class Pass2PostgreSqlConstraintTests(ITestOutputHelper output)
         }
     }
 
+    [Trait("Suite", "PostgreSql")]
     [PostgreSqlQualificationFact]
     public async Task Story124PostgreSql17_RetrievalTablesEnforceContractChecksRelationally()
     {
@@ -279,6 +284,7 @@ public sealed class Pass2PostgreSqlConstraintTests(ITestOutputHelper output)
         }
     }
 
+    [Trait("Suite", "PostgreSql")]
     [PostgreSqlQualificationFact]
     public async Task Story124PostgreSql17_RetrievalFingerprintsRejectLowercaseNonHexValues()
     {
@@ -832,9 +838,9 @@ public sealed class Pass2PostgreSqlConstraintTests(ITestOutputHelper output)
 /// administrator connection as a skipped test, while setting the approved
 /// switch enables the same test body without changing the default suite.
 /// </summary>
-internal sealed class PostgreSqlQualificationFactAttribute : FactAttribute
+internal sealed class PostgreSqlQualificationFactAttribute : SuiteFactAttribute
 {
-    public PostgreSqlQualificationFactAttribute()
+    public PostgreSqlQualificationFactAttribute() : base("PostgreSql")
     {
         if (string.IsNullOrWhiteSpace(
                 Environment.GetEnvironmentVariable("VULGATA_TEST_POSTGRES_ADMIN")))

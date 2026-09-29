@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using Vulgata.Core.Entities;
 
 namespace Vulgata.Tests.DurableScanning;
@@ -19,7 +20,8 @@ public sealed class ScanJobExecutionTests
     private static readonly DateTimeOffset _createdAt =
         new(2026, 8, 30, 9, 0, 0, TimeSpan.Zero);
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void CreateAndAcquireLease_WithSamePreparedJob_ProducesDeterministicIdentityAndMonotonicRunningLease()
     {
         ScanJobExecution first = ScanJobExecution.Create(
@@ -65,7 +67,8 @@ public sealed class ScanJobExecutionTests
         Assert.Equal(_createdAt.AddSeconds(1), first.StateChangedAt);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void ScheduleRetry_WithCurrentLeaseAndVersion_ClearsLeaseAndAdvancesRetryStateWithoutAcceptingContradictions()
     {
         ScanJobExecution job = ScanJobExecution.Create(
@@ -116,7 +119,8 @@ public sealed class ScanJobExecutionTests
         Assert.Equal(retriedAt, job.StateChangedAt);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void RecoverAndReacquire_WithDueRetryOrExpiredLease_RejectsEarlyAndStaleTransitionsWithoutMutation()
     {
         ScanJobExecution retryingJob = ScanJobExecution.Create(
@@ -204,7 +208,8 @@ public sealed class ScanJobExecutionTests
         Assert.Equal(leaseExpiresAt.AddTicks(1), expiringJob.StateChangedAt);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Complete_WithCurrentRunningLeaseAndVersion_PreservesOnlyTheImmutableDocumentLinkAndRejectsFurtherMutation()
     {
         ScanJobExecution job = ScanJobExecution.Create(
@@ -260,7 +265,8 @@ public sealed class ScanJobExecutionTests
         Assert.Equal(documentVersionId, job.CommittedDocumentVersionId);
     }
 
-    [Theory]
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
     [InlineData(ScanJobFailureCategory.ProviderTransient)]
     [InlineData(ScanJobFailureCategory.ProviderConfiguration)]
     [InlineData(ScanJobFailureCategory.JobTransient)]
@@ -306,7 +312,8 @@ public sealed class ScanJobExecutionTests
         Assert.Equal(2, job.StateVersion);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Fail_FromRetryScheduled_UsesCurrentVersionWithoutLeaseAndRejectsFurtherMutation()
     {
         ScanJobExecution job = ScanJobExecution.Create(
@@ -344,7 +351,8 @@ public sealed class ScanJobExecutionTests
         Assert.Equal("invalid-result", job.FailureCode);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Cancel_FromPendingRunningOrRetryScheduled_RecordsCancellationAndLeavesNoLeaseOrDocument()
     {
         ScanJobExecution pending = ScanJobExecution.Create(

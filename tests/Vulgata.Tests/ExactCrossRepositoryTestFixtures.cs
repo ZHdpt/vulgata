@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Collections.Concurrent;
 using System.Data.Common;
 using System.Diagnostics;
@@ -17,7 +18,8 @@ namespace Vulgata.Tests;
 
 public sealed class ExactCrossRepositoryTestFixtureTests
 {
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task CreateAsync_DisposableTwoRepositoryFixture_IsReusableAndCleanedAsync()
     {
         ExactCrossRepositoryTestFixture fixture =
