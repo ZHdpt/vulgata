@@ -18,23 +18,23 @@
     },
     "plan": {
       "path": "specs/017-october-batch-setup/plan.md",
-      "sha256": "94bf6ce9c4d4cc9019453adaf1cea17921be62f30550e8ae4c221c7b7eb46821"
+      "sha256": "ea6440181d7200de742a18ee419873c89039e701fbe178ec54e169b31015abb2"
     },
     "tasks": {
       "path": "specs/017-october-batch-setup/tasks.md",
-      "sha256": "b14ce803897b7947ad0004c4b687f1e542cdfb643050cb8bcea29acaa86a1544"
+      "sha256": "e5302b509d0c6ee72b1670f5fc167f7811a8acdad61dd98681b85ca85c5e685a"
     }
   },
   "gates": {
     "plan-review": {
       "status": "accepted",
-      "attempt": 1,
-      "verdict_path": "specs/017-october-batch-setup/evidence/plan-review-05.json"
+      "attempt": 2,
+      "verdict_path": "specs/017-october-batch-setup/evidence/plan-review-06.json"
     },
     "definition-review": {
       "status": "accepted",
-      "attempt": 1,
-      "verdict_path": "specs/017-october-batch-setup/evidence/definition-review-03.json"
+      "attempt": 2,
+      "verdict_path": "specs/017-october-batch-setup/evidence/definition-review-05.json"
     },
     "quality-review": {
       "status": "pending",
@@ -47,7 +47,7 @@
       "decided_at": "2026-09-29T10:30:42.0336756Z",
       "decision_id": "18-4/plan-authorization/1",
       "evidence_path": "specs/017-october-batch-setup/evidence/plan-authorization-01.json",
-      "scope_sha256": "eec356a5ef940e3062f239e71ce15d4b80ce84ae1e8cb4d738f71e7c8bc4a9e0",
+      "scope_sha256": "1f07a6816f6056e4c5fe346d9e2ca4828e9025150e23cf6b7ac26fc05aa0351c",
       "status": "accepted"
     }
   ],
@@ -76,21 +76,21 @@
     "specs/017-october-batch-setup/evidence/transitions/transition-0003-plan-correction-self-review.json"
   ],
   "checkpoint": {
-    "checkpoint_id": "bmad-18-4-definition-review-20260929T103300Z-a4d9c2",
+    "checkpoint_id": "bmad-18-4-definition-review-20260929T111000Z-b7e4f1",
     "stage": "definition-review",
     "commit_sha": null,
     "binding_status": "pending"
   },
   "resume": {
     "stage": "implementation-approval",
-    "reason": "The planned-change authorization is durable and the complete definition is freshly accepted; separate implementation approval is required before production or test writes.",
-    "evidence_path": "specs/017-october-batch-setup/evidence/definition-review-03.json"
+    "reason": "The first-batch bootstrap ambiguity and stale task pointer are corrected and the complete definition is freshly accepted; request a new implementation decision.",
+    "evidence_path": "specs/017-october-batch-setup/evidence/definition-review-05.json"
   },
   "updated_at": "2026-09-29T02:14:26.4999515Z",
   "recovery": null,
   "transition_head": {
-    "path": "specs/017-october-batch-setup/evidence/transitions/transition-0017-definition-review-reaccept.json",
-    "sha256": "a9fcd58e64f6c4dd21e286ddd205574f1e67f7b05d9c8f46fd6aebbe84d7c736"
+    "path": "specs/017-october-batch-setup/evidence/transitions/transition-0025-bootstrap-definition-close.json",
+    "sha256": "704c9e2260cbe1e86b9273d6cc1f81006050fc14c5247a69cefb838d56d222b5"
   },
   "definition_author": {
     "profile": "definition-author",

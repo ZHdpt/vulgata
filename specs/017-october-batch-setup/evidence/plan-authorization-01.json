@@ -3,7 +3,7 @@
   "stage": "plan-review",
   "decision_id": "18-4/plan-authorization/1",
   "status": "accepted",
-  "scope_sha256": "eec356a5ef940e3062f239e71ce15d4b80ce84ae1e8cb4d738f71e7c8bc4a9e0",
+  "scope_sha256": "1f07a6816f6056e4c5fe346d9e2ca4828e9025150e23cf6b7ac26fc05aa0351c",
   "requested_at": "2026-09-29T10:28:46Z",
   "decided_at": "2026-09-29T10:30:42.0336756Z",
   "user_instruction": "Approve this change",
@@ -16,10 +16,17 @@
     "turn_id": "01a0ecb5-b550-7683-a65a-d1b2faa2da59",
     "message_id": "msg_02903580ee59b6b6016abb92eecdcc87d08851c870289f3e46"
   },
-  "scope_material": "18-4/plan-authorization/1|18-4-prepare-an-owned-october-batch-with-valid-context-and-provid|plan-review|specs/017-october-batch-setup/evidence/plan-review-05.json|021764203a1cd49f13e490f1b1b7a122016e203593ab78e9264130644d68971b|01a0ecb6-c84b-78a1-81ef-a419d8ca024f",
-  "review": {
+  "rebound_at": "2026-09-29T10:59:02.8079281Z",
+  "previous_scope_sha256": "eec356a5ef940e3062f239e71ce15d4b80ce84ae1e8cb4d738f71e7c8bc4a9e0",
+  "rebound_reason": "Independent plan-review-06 confirmed the bootstrap correction only makes the already approved four-route prepare/select and ordinary-startup-isolation design reachable. It narrows mode availability, adds no route, Worker tool, Scan strategy, PRD change or resource permission, and therefore remains within the user's approved semantic scope.",
+  "previous_review": {
     "path": "specs/017-october-batch-setup/evidence/plan-review-05.json",
     "sha256": "021764203a1cd49f13e490f1b1b7a122016e203593ab78e9264130644d68971b"
+  },
+  "scope_material": "18-4/plan-authorization/1|18-4-prepare-an-owned-october-batch-with-valid-context-and-provid|plan-review|specs/017-october-batch-setup/evidence/plan-review-06.json|1a4f6554484a17a517d1cd80ad72c0faa5d016253ff643112d7156f0df47648f|01a0ecb6-c84b-78a1-81ef-a419d8ca024f",
+  "review": {
+    "path": "specs/017-october-batch-setup/evidence/plan-review-06.json",
+    "sha256": "1a4f6554484a17a517d1cd80ad72c0faa5d016253ff643112d7156f0df47648f"
   },
   "trigger": "The accepted plan is governed_delivery_classification architecture and the installed validator requires scoped planned-change authorization before tasks or later definition stages.",
   "approved_scope": "Dedicated fixed-schema October persistence, exact owned database and batch selection, context provenance, explicit provider binding, four closed Web authority routes, minimal generator prepare/select composition, production adaptation of the existing Story 18.1 source approval/verifier/issuer/context/three-function contracts, and ordinary-startup isolation exactly as independently accepted in plan-review-05.",

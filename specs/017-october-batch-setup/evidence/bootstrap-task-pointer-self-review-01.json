@@ -1,0 +1,40 @@
+{
+  "kind": "self-review",
+  "stage": "tasks",
+  "outcome": "passed",
+  "summary": "Corrected only the task-list prerequisite pointer from superseded plan-review-05 to current independently accepted plan-review-06, while retaining the separately bound planned-change authorization and later complete-definition and implementation gates.",
+  "story_key": "18-4-prepare-an-owned-october-batch-with-valid-context-and-provid",
+  "feature_directory": "specs/017-october-batch-setup",
+  "source_finding": "D-18.4-04",
+  "source_transition": {
+    "path": "specs/017-october-batch-setup/evidence/transitions/transition-0022-bootstrap-definition-review-revise.json",
+    "sha256": "02bea36e704861762eed2f5008516caefb04e2bc4069358e509c3a93eddad5f9"
+  },
+  "input_hashes": {
+    "specs/017-october-batch-setup/plan.md": "ea6440181d7200de742a18ee419873c89039e701fbe178ec54e169b31015abb2",
+    "specs/017-october-batch-setup/evidence/definition-review-04.json": "a41d95d8dfddcc86d99553914eb44bafdc6b47c8a6556a96230f8c259c2183c9",
+    "specs/017-october-batch-setup/evidence/plan-review-06.json": "1a4f6554484a17a517d1cd80ad72c0faa5d016253ff643112d7156f0df47648f",
+    "specs/017-october-batch-setup/evidence/plan-authorization-01.json": "8f2fade312b25674362be6eb2cf4e3eae2c96391451e93fe577825ee67417073",
+    "specs/017-october-batch-setup/tasks.md": "e5302b509d0c6ee72b1670f5fc167f7811a8acdad61dd98681b85ca85c5e685a"
+  },
+  "owned_paths": [
+    "specs/017-october-batch-setup/tasks.md",
+    "specs/017-october-batch-setup/evidence/bootstrap-task-pointer-self-review-01.json"
+  ],
+  "finding_dispositions": {
+    "D-18.4-04": "The sole stale current-review prerequisite now cites evidence/plan-review-06.json. The same line separately cites the rebound scoped evidence/plan-authorization-01.json and retains complete-definition review, implementation approval and explicit owned-resource requirements. No task body, ID or dependency changed."
+  },
+  "checks": {
+    "stale_pointer": "No plan-review-05 reference remains in tasks.md; plan-review-06 and plan-authorization-01 each appear once in the prerequisite.",
+    "task_format": "30 sequential T001-T030 checklist lines; no malformed line or whitespace finding.",
+    "plan_task_design_content": "Installed validate_plan_implementation_design(plan, tasks, require_explicit=True) returned no errors and accepted design-ID coverage remains intact.",
+    "hooks": "No before_tasks or after_tasks hook is registered in readable .specify/extensions.yml."
+  },
+  "authority_effect": {
+    "recovery_count_changed": false,
+    "pause_at_changed": false,
+    "approval_granted": false,
+    "workflow_state_changed_by_author": false,
+    "production_or_test_code_written": false
+  }
+}
