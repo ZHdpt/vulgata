@@ -1,0 +1,19 @@
+{
+  "kind": "test-only-coverage",
+  "stage": "implement",
+  "tasks": ["T010", "T011"],
+  "slice": "existing factory distinguishes confirmed pre-return cleanup from unexpected unconfirmed exception",
+  "test_path": "tests/Vulgata.Tests/AnalysisRuntime/JdtLsPreparedNavigationTests.cs",
+  "test_sha256": "fd3c779de1533d0d21b07420e1da1ce898b8ee14b8f83e92698112b19d50f196",
+  "command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName~JdtLsPreparedNavigationTests|FullyQualifiedName~PreparedToolWorkspaceIssuerTests'",
+  "exit_code": 0,
+  "selected": 39,
+  "passed": 39,
+  "failed": 0,
+  "skipped": 0,
+  "trx_path": "TestResults/isolation-7facd12664aa424db4764270ff143cae/results.trx",
+  "trx_sha256": "57e7bcf54525c437c4edaa2eb0c9dfcbf5775c1d78f012813719dd3e63b4df48",
+  "environment": "Approved native launcher; restricted build denied test obj manifest write. Controlled injected runtime only; zero Java or JDT-LS process starts.",
+  "coverage_reason": "New tests exercise existing factory code: a typed pre-return failure with confirmed cleanup returns sanitized ReadinessFailed/null and permits another same-Repository open; an unexpected exception without attestation returns CleanupUnconfirmed/null and blocks a second runtime invocation. No production behavior change was made for this coverage.",
+  "final_shape": "Separate test owner assessed both controlled exception fixtures. Runtime and child-process cleanup itself is not proved by these fakes; real qualification remains T022–T024."
+}

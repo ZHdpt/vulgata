@@ -159,6 +159,26 @@ public sealed class PreparedJavaNavigationContextFactory
                 return Failed(Map(leaseStatus));
             }
 
+            bool stateRootIsSeparate = false;
+            PreparedToolWorkspaceCheckStatus stateCheck = await workspaceLease.UseContainedRootAsync(
+                PreparedToolPurpose.JdtNavigation,
+                (scope, _) =>
+                {
+                    stateRootIsSeparate = scope.IsSeparateDisposableStateRoot(
+                        _profile.DisposableStateRoot);
+                    return ValueTask.CompletedTask;
+                },
+                cancellationToken);
+            if (stateCheck != PreparedToolWorkspaceCheckStatus.Current)
+            {
+                return Failed(Map(stateCheck));
+            }
+
+            if (!stateRootIsSeparate)
+            {
+                return Failed(PreparedJavaNavigationOpenStatus.ConfigurationUnavailable);
+            }
+
             IPreparedJdtLsSession session;
             try
             {
