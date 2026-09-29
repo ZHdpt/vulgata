@@ -17,7 +17,7 @@ description: "Dependency-ordered Story 18.3 tasks for native CodeGraph MCP again
 
 **Purpose**: Establish the declared native client dependency without claiming integration.
 
-- [ ] T001 Verify the compatible official MCP C# SDK/API against declared Agent Framework packages, pin its version in `Directory.Packages.props` and reference it from `src/dotnet/Vulgata.Infrastructure/Vulgata.Infrastructure.csproj`; use direct restore/build verification, not an artifact-hash test. [ID-I03] [ID-L01]
+- [x] T001 Verify the compatible official MCP C# SDK/API against declared Agent Framework packages, pin its version in `Directory.Packages.props` and reference it from `src/dotnet/Vulgata.Infrastructure/Vulgata.Infrastructure.csproj`; use direct restore/build verification, not an artifact-hash test. [ID-I03] [ID-L01]
 
 ---
 
@@ -35,8 +35,8 @@ description: "Dependency-ordered Story 18.3 tasks for native CodeGraph MCP again
 
 ### Closed Worker seam — independent work
 
-- [ ] T002 [US1] Write behavioral RED tests for the accepted `ICodeGraphWorkerToolSession : IAsyncDisposable` and `CodeGraphFunctions` public seam in `tests/Vulgata.Tests/Agents/CodeGraphFunctionsTests.cs`: `DiscoverAsync(CancellationToken)` returns typed readiness, `ExploreAsync(string query, int maxFiles, CancellationToken)` returns typed sanitized result, `CreateAsync(CancellationToken)` exposes only one fixed `codegraph_explore` function on successful discovery, borrows the caller-owned session, and forwards cancellation. [ID-R01] [ID-R03] [ID-I04] [ID-L02] [ID-T01]
-- [ ] T003 [US1] Implement the minimal GREEN public contract and closed Agent wrapper in `src/dotnet/Vulgata.Core/DomainServices/CodeGraphWorkerToolContracts.cs` and `src/dotnet/Vulgata.Agents/WorkerExecution/CodeGraphFunctions.cs`; allow only nonempty UTF-8 `query` <=512 bytes and optional integral `maxFiles` 1–12 (default 4), reject `projectPath`, nested/unknown fields and malformed types before session dispatch, and expose no Story 18.1 fourth function. Recheck focused and surrounding tests after final-shape assessment. [ID-R01] [ID-R03] [ID-I02] [ID-I04] [ID-L02] [ID-T01]
+- [x] T002 [US1] Write behavioral RED tests for the accepted `ICodeGraphWorkerToolSession : IAsyncDisposable` and `CodeGraphFunctions` public seam in `tests/Vulgata.Tests/Agents/CodeGraphFunctionsTests.cs`: `DiscoverAsync(CancellationToken)` returns typed readiness, `ExploreAsync(string query, int maxFiles, CancellationToken)` returns typed sanitized result, `CreateAsync(CancellationToken)` exposes only one fixed `codegraph_explore` function on successful discovery, borrows the caller-owned session, and forwards cancellation. [ID-R01] [ID-R03] [ID-I04] [ID-L02] [ID-T01]
+- [x] T003 [US1] Implement the minimal GREEN public contract and closed Agent wrapper in `src/dotnet/Vulgata.Core/DomainServices/CodeGraphWorkerToolContracts.cs` and `src/dotnet/Vulgata.Agents/WorkerExecution/CodeGraphFunctions.cs`; allow only nonempty UTF-8 `query` <=512 bytes and optional integral `maxFiles` 1–12 (default 4), reject `projectPath`, nested/unknown fields and malformed types before session dispatch, and expose no Story 18.1 fourth function. Recheck focused and surrounding tests after final-shape assessment. [ID-R01] [ID-R03] [ID-I02] [ID-I04] [ID-L02] [ID-T01]
 
 ### Native client on owned fixture — independent work
 

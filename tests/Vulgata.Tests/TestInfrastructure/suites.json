@@ -1,4 +1,7 @@
 {
+  "Agents/CodeGraphFunctionsTests.cs": {
+    "suite": "SelfContained"
+  },
   "AdministratorRoleAssignmentTests.cs": {
     "suite": "SelfContained"
   },
