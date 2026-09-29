@@ -109,3 +109,11 @@ Definition and plan authoring may proceed using only accepted repository authori
 - Repository-relative evidence paths and their dependent hashes were mechanically rebound. The original exact bytes remain recoverable in commits `f693f2c5`, `acc74c51` and `30936b94`; relocation evidence is `specs/017-october-batch-setup/evidence/feature-directory-relocation-01.json`.
 - Existing Git history was not rewritten. A normal rename commit is safer for later merge/rebase because it preserves stable commit identities and lets Git apply rename detection against the other runner's current tree. History rewriting would not remove ordinary overlapping-content conflicts and would make shared checkpoint references stale.
 - Pending relocation checkpoint: `bmad-18-4-feature-relocation-20260928T153541Z-d166`.
+
+## Delegated authority registration
+
+- Verified user sources register this runner as stable chat `01a0e728-b7cc-78f1-8a3d-d0d49c7dfde2` and the October approver as stable chat `01a0e708-c489-7871-9f73-31413f20bf2c`; later title matching is not authority.
+- The designation covers the two existing delegated gates and permits consideration of a fresh finite recovery-extension decision at a reached pause limit, with cumulative `max_pause_at` no greater than 7. It is not an automatic extension and does not add seven attempts.
+- Story 18.4 remains explicitly PLAN-ONLY. Current recovery remains `failed_results: 1`, `pause_at: 4`; no gate, extension, task generation, implementation or resume is approved.
+- Recovery-extension delegation is not usable in this checkout yet: governed-delivery 0.7.3 and the current Vulgata consumer policy explicitly exclude it. Compatible 0.7.4 assets and policy must be integrated and validated before a future request can rely on that purpose.
+- The exact provenance, conditions and non-effects are recorded in `specs/017-october-batch-setup/evidence/delegated-authority-registration-01.json`. Any later use requires current raw evidence and a fresh delegate response; cumulative count/limit 7 returns to the human.

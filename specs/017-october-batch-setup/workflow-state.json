@@ -52,6 +52,7 @@
   },
   "current_evidence_paths": [
     "docs/bmad/implementation-artifacts/18-4-prepare-an-owned-october-batch-with-valid-context-and-provid.md",
+    "specs/017-october-batch-setup/evidence/delegated-authority-registration-01.json",
     "specs/017-october-batch-setup/evidence/feature-directory-relocation-01.json",
     "specs/017-october-batch-setup/evidence/preflight-01.json",
     "specs/017-october-batch-setup/evidence/plan-correction-self-review-01.json",
@@ -71,7 +72,7 @@
     "reason": "Corrected plan has raw independent ACCEPT; tasks remain intentionally withheld pending integrated verified Story 18.1 reconciliation.",
     "evidence_path": "specs/017-october-batch-setup/evidence/plan-review-02.json"
   },
-  "updated_at": "2026-09-28T15:35:41.0943864Z",
+  "updated_at": "2026-09-29T02:14:26.4999515Z",
   "recovery": {
     "action": "correct",
     "closing_gate": "definition-review",
