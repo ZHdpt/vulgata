@@ -26,11 +26,12 @@
 
 - [x] All functional requirements have clear acceptance scenarios or success criteria
 - [x] User scenarios cover primary, failure, and qualification flows
-- [x] Feature outcomes can be checked after the integrated Story 18.1 baseline is verified
+- [x] Independent client/wrapper work is separated from physical integration, which requires an identifiable verified Story 18.2 shared-workspace checkpoint and affected review
 - [x] No unselected implementation structure is prescribed
 
 ## Notes
 
 - Self-review passed on 2026-09-29. `CodeGraph`, `MCP`, and `Worker` are necessary product capability names, not a selected protocol replacement or code structure.
-- Story 18.1 remains an unresolved completion dependency. Before later delivery, reconcile the accepted spec and plan with its integrated, verified source/tool baseline and rerun affected gates. This is explicit dependency work, not a clarification marker or claim of readiness.
+- Story 18.1 is integrated and verified. This correction aligns the spec to its exact approval tuple, bounded read-context lifetime, live per-disclosure authority check and three read-only Agent functions. Its public Agent seam does not expose a trusted physical workspace lease. The integration coordinator assigned Story 18.2 ownership of the single shared trusted physical-workspace contract, implementation and focused tests. Under ordinary review and approval gates, Story 18.3 may task and implement independent native client/wrapper slices before Story 18.2's checkpoint. Physical integration and Vulgata native qualification remain held until that checkpoint is verified and affected plan/tasks are independently reviewed. The standalone probe is transport evidence only.
+- Applicable `docs/project-lessons.md` precautions: define the native public callable seam, ownership/disposal and cancellation explicitly in the next plan revision before TDD; qualify native filesystem behavior through the same launcher and effective permission boundary instead of treating a sandbox ancestor-open denial as a product defect. Database and hash-bound resource lessons are not applicable to this spec correction.
 - `.specify/extensions.yml` has no `before_specify` hook. Its enabled `after_specify` agent-context hook is optional and falls outside this dispatch's write boundary; root must decide whether to invoke it.

@@ -1,0 +1,61 @@
+{
+  "schema_version": "1.0",
+  "gate": "plan-review",
+  "verdict": "REVISE",
+  "reviewed_commit": "e6b76385eb74fa0f2bf2dc9f4aee0589ae9993ce",
+  "reviewed_boundary": {
+    "base_commit": "e6b76385eb74fa0f2bf2dc9f4aee0589ae9993ce",
+    "candidate_commit": null,
+    "diff_sha256": "8ca533b94fadd38c059915b913881eaceb2a4c0c292ea694daab3e344e4b763f",
+    "artifact_hashes": {
+      "specs/18-3-use-native-codegraph-mcp-against-prepared-source/spec.md": "11fc9b36d1b6b5eee36f4ffb028ad3a07e1a8266918a2f093a69a26b5a1682ff",
+      "specs/18-3-use-native-codegraph-mcp-against-prepared-source/plan.md": "9f973401d822c5df5d5350f249e4b5ba0ad2011ffdcfcf3e6fb3d93bae549aa5",
+      "specs/18-3-use-native-codegraph-mcp-against-prepared-source/research.md": "9d0d4d5c1f17d33c177e5297f280686a5513d0efc34bfd2f37cd112f265bf6ae",
+      "specs/18-3-use-native-codegraph-mcp-against-prepared-source/data-model.md": "8179ffcfe4e9cc94c46deb4a81c43cee635e3f06940d4637367e7146800cb0be",
+      "specs/18-3-use-native-codegraph-mcp-against-prepared-source/quickstart.md": "1c3b8fcca30565e6404107a161a3c5807d36396acf49a6199642abf49ba537b7",
+      "specs/18-3-use-native-codegraph-mcp-against-prepared-source/contracts/native-codegraph-boundary.md": "6beae020329821a70851192b44ca49ed8cc5b6393603404020aec777eb8b4fca",
+      "specs/18-3-use-native-codegraph-mcp-against-prepared-source/checklists/requirements.md": "cbebedd72ed3b72fec9c24d8eaf71546dfbf1e100cbe8e4230ec1c7580e42a79",
+      "specs/18-3-use-native-codegraph-mcp-against-prepared-source/evidence/native-mcp-standalone-01.json": "2392fcfe68e1ab1bbbb83d2b9b8a6e6b09c8b93016ece2c82151a94393563522",
+      "specs/18-3-use-native-codegraph-mcp-against-prepared-source/evidence/native-mcp-standalone-01.raw.json": "9db9ef2cc75e169d8deebddf4069365ca9fdf9c45bc7026d8f86863c9d6fef49",
+      "specs/18-3-use-native-codegraph-mcp-against-prepared-source/evidence/spec-shared-owner-self-review-01.json": "bec34f4f562e58d79a24f774a20b0153ca6c0a63e6fb7895d785a5e6040a8278",
+      "specs/18-3-use-native-codegraph-mcp-against-prepared-source/evidence/plan-reconciliation-self-review-02.json": "f042b51ac655b36fdae229d36955015af0da8471b409669b4b99c6d6011e6638"
+    },
+    "owned_paths": [
+      "specs/18-3-use-native-codegraph-mcp-against-prepared-source/spec.md",
+      "specs/18-3-use-native-codegraph-mcp-against-prepared-source/plan.md",
+      "specs/18-3-use-native-codegraph-mcp-against-prepared-source/research.md",
+      "specs/18-3-use-native-codegraph-mcp-against-prepared-source/data-model.md",
+      "specs/18-3-use-native-codegraph-mcp-against-prepared-source/quickstart.md",
+      "specs/18-3-use-native-codegraph-mcp-against-prepared-source/contracts/native-codegraph-boundary.md",
+      "specs/18-3-use-native-codegraph-mcp-against-prepared-source/checklists/requirements.md"
+    ]
+  },
+  "reviewed_artifacts": [
+    "specs/18-3-use-native-codegraph-mcp-against-prepared-source/spec.md",
+    "specs/18-3-use-native-codegraph-mcp-against-prepared-source/plan.md",
+    "specs/18-3-use-native-codegraph-mcp-against-prepared-source/research.md",
+    "specs/18-3-use-native-codegraph-mcp-against-prepared-source/data-model.md",
+    "specs/18-3-use-native-codegraph-mcp-against-prepared-source/quickstart.md",
+    "specs/18-3-use-native-codegraph-mcp-against-prepared-source/contracts/native-codegraph-boundary.md",
+    "specs/18-3-use-native-codegraph-mcp-against-prepared-source/checklists/requirements.md",
+    "specs/18-3-use-native-codegraph-mcp-against-prepared-source/evidence/native-mcp-standalone-01.json",
+    "specs/18-3-use-native-codegraph-mcp-against-prepared-source/evidence/native-mcp-standalone-01.raw.json",
+    "specs/18-3-use-native-codegraph-mcp-against-prepared-source/evidence/spec-shared-owner-self-review-01.json",
+    "specs/18-3-use-native-codegraph-mcp-against-prepared-source/evidence/plan-reconciliation-self-review-02.json",
+    "specs/18-3-use-native-codegraph-mcp-against-prepared-source/evidence/plan-review-01.json"
+  ],
+  "findings": [
+    {
+      "id": "PR-18-3-01",
+      "severity": "HIGH",
+      "category": "dependency-order",
+      "artifact": "specs/18-3-use-native-codegraph-mcp-against-prepared-source/plan.md",
+      "location": "ID-I05, ID-C03, Unresolved Dependencies item 5; compare spec.md:103 and checklists/requirements.md:35",
+      "affected_requirement": "Story 18.3 shared trusted physical-workspace dependency and accepted plan-to-tasks gate order",
+      "evidence": "The current specification says to consume an identifiable verified Story 18.2 shared-workspace checkpoint and reconcile the affected plan through independent review before tasks or implementation. The checklist repeats that hold. The plan instead permits task generation and independent native client/wrapper implementation before that checkpoint. The coordinator assigned ownership to 18.2 but did not supply the missing verified checkpoint or authorize this changed sequencing. The standalone native MCP probe proves transport on an owned fixture only, and cannot close the shared physical-access dependency.",
+      "correction_outcome": "Align the plan, quickstart and related plan artifacts with the specification: keep task generation and implementation held until the identifiable verified 18.2 shared-workspace checkpoint is reconciled into the plan and independently reviewed. Preserve the valid 18.1 and standalone MCP findings. If phased task generation is desired, first change the specification through its owner and rerun the affected independent review.",
+      "earliest_owner": "plan"
+    }
+  ],
+  "summary": "The prior raw plan-review-01 verdict had no findings but was invalidated after integrated 18.1 and the shared-owner decision changed the boundary. This is a newly introduced plan/spec sequencing conflict. The current plan otherwise grounds 18.1's exact approval, live verifier and three read functions in integrated source, confines the native codegraph_explore wrapper, and correctly limits the standalone CodeGraph 1.5.0 probe to transport evidence. The installed deterministic plan validator returned ok=true with no errors; it does not detect this semantic conflict. No tasks artifact exists, so speckit-analyze's task-dependent analysis is inapplicable. This verdict does not advance task generation or implementation."
+}

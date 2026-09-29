@@ -4,9 +4,9 @@
 
 **Created**: 2026-09-29
 
-**Status**: Draft — definition and planning only
+**Status**: Draft — phased delivery subject to normal gates and a verified Story 18.2 integration dependency
 
-**Input**: Story 18.3 in the October release epics, using the agreed source/tool F0 boundary. Story 18.1 is under implementation elsewhere; its integrated, verified source contract remains a completion dependency.
+**Input**: Story 18.3 in the October release epics, using the agreed source/tool F0 boundary and the integrated, verified Story 18.1 prepared-source contract. Story 18.2 owns the shared trusted physical-workspace contract; independent Story 18.3 work may proceed through normal gates before its checkpoint, while physical integration waits for an identifiable verified checkpoint and affected review.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -20,9 +20,10 @@ As a Worker-tool integrator, I want a Worker to discover and invoke CodeGraph's 
 
 **Acceptance Scenarios**:
 
-1. **Given** an application-approved prepared Repository root and a declared CodeGraph installation, **when** preparation and native MCP connection succeed, **then** the Worker-facing integration can discover and invoke granted native CodeGraph tools against that Repository.
+1. **Given** a current application-approved prepared Repository binding and a declared CodeGraph installation, **when** preparation and native MCP connection succeed, **then** the Worker-facing integration can discover and invoke granted native CodeGraph tools against that Repository without exposing its physical root to the Worker.
 2. **Given** a small indexed fixture, **when** a granted native tool is invoked, **then** its genuine result is observable with the correct Repository binding and usable source location or content; a CLI-only wrapper or CodeGraphContext result does not satisfy this outcome.
 3. **Given** a caller attempts to select a foreign Repository, physical path, or different project through tool arguments, **when** discovery or invocation occurs, **then** the request is denied or confined to the application-selected prepared root, without disclosing outside-root source.
+4. **Given** the current batch, Repository, subject, Worker-source-read purpose, approval and root-binding identity changes or cannot be verified, **when** a native result is about to be disclosed, **then** source content and locations are withheld and the prior binding cannot be reused.
 
 ---
 
@@ -60,7 +61,7 @@ As a delivery reviewer, I want evidence of the actual CodeGraph version and one 
 - An approved binding points to missing, changed, or unreadable prepared source before or during preparation or invocation.
 - An index is incomplete or a native tool returns no match; neither state proves source absence or complete semantic coverage.
 - A native result includes an absolute or outside-root location, or embeds source beyond the granted binding and response limit.
-- A caller reuses a stale tool handle after the application-selected Repository changes or access is revoked.
+- A caller reuses a stale tool handle after the application-selected Repository changes, exact approval/root binding changes, authority becomes unavailable, the tool session expires, or access is revoked.
 - A process exits unexpectedly, a request times out, or cancellation arrives while a tool is starting or returning output.
 - Multiple requests for different prepared Repositories occur concurrently; one request must not inherit another's project binding or output.
 
@@ -69,19 +70,20 @@ As a delivery reviewer, I want evidence of the actual CodeGraph version and one 
 ### Functional Requirements
 
 - **FR-001**: The system MUST prepare the application-approved prepared Repository with the declared CodeGraph installation and make native MCP discovery and invocation available through the application's Worker agent-tool integration. (O-FR05; Story 18.3)
-- **FR-002**: The system MUST bind each native CodeGraph operation to the application-selected approved Repository/root outside model-controlled arguments; a caller MUST NOT gain a different project or physical source path through tool input. (O-NFR01; AD-3/AD-6)
+- **FR-002**: The system MUST bind each native CodeGraph operation to the current application-selected batch, Repository, subject, Worker-source-read purpose, approval and root-binding identity outside model-controlled arguments; a caller MUST NOT gain a different project or physical source path through tool input. (O-NFR01; AD-3/AD-6; Story 18.1 F0)
 - **FR-003**: The system MUST expose only the granted native CodeGraph tool surface for the bound Worker purpose and constrain each response/work unit; native source results MUST obey the same source authority as the bound prepared root. (O-NFR01; AD-6)
 - **FR-004**: The system MUST distinguish preparation, native connection, discovery, invocation, limitation, cancellation, and unavailable outcomes in readiness and tool results. A successful preparation or connection alone MUST NOT be reported as proven native invocation. (Story 18.3)
 - **FR-005**: Required CodeGraph failure MUST remain explicit and MUST NOT silently select source-only analysis. Independently authorized Story 18.1 list/read/search capabilities MAY remain usable, but they do not satisfy CodeGraph readiness. (O-FR05; FR-4.9)
-- **FR-006**: On failure, timeout, or cancellation, the system MUST settle resources it owns for the request and MUST NOT terminate unrelated services or leave a foreign-root binding usable. (Story 18.3; O-NFR01)
+- **FR-006**: On failure, timeout, cancellation, authority loss or tool-session expiry, the system MUST settle resources it owns for the request and MUST NOT terminate unrelated services or leave a stale/foreign-root binding usable. (Story 18.3; O-NFR01; Story 18.1 F0)
 - **FR-007**: The system MUST provide reviewable evidence for the selected host composition that identifies the actual CodeGraph version and demonstrates native discovery, a useful invocation/result, and correct-root/foreign-root behavior against a small prepared fixture. (Story 18.3)
 - **FR-008**: CodeGraph results MUST be treated as bounded source evidence with explicit limitations, not as exhaustive coverage or permanent Code Unit identity. (FR-4.9; AD-4/AD-6)
+- **FR-009**: Native discovery, invocation and result disclosure MUST fail closed when the exact current prepared-source authority is revoked, changed or unavailable; a previously valid grant or expired tool session cannot authorize a later result. (Story 18.1 F0; O-NFR01)
 
 ### Key Entities
 
-- **Prepared Repository binding**: The application-approved Repository and root selected for this request under the source/tool F0 contract; it is not a model-selected physical path.
+- **Prepared Repository binding**: Story 18.1's exact application-approved batch, Repository, subject, Worker-source-read purpose, approval identity and root-binding identity. Its physical root and operating-system handles remain private to trusted Infrastructure and are not model-visible fields.
 - **CodeGraph readiness**: The separately observable preparation and native connection/discovery capability for that binding, including limitations or failures.
-- **Native tool grant**: The subset of CodeGraph's native MCP surface authorized for the Worker purpose and prepared binding.
+- **Native tool grant**: The subset of CodeGraph's native MCP surface authorized for the current Worker purpose and prepared binding during a bounded tool session.
 - **Invocation outcome**: The bounded native result or explicit failure, with its binding and source location/provenance where supplied by the tool.
 
 ## Success Criteria *(mandatory)*
@@ -93,11 +95,18 @@ As a delivery reviewer, I want evidence of the actual CodeGraph version and one 
 - **SC-003**: Controlled preparation, connection, invocation, timeout, and cancellation cases each produce an explicit outcome; none is recorded as ready after an unsuccessful required step or silently converted to source-only analysis.
 - **SC-004**: For controlled failure/cancellation cases, owned request resources are settled and an independent authorized file-tool request still succeeds.
 - **SC-005**: A reviewer can distinguish native MCP qualification evidence from existing CLI/JSON tests, simulated responses, and model/provider behavior without relying on inference.
+- **SC-006**: In controlled revocation, changed-approval, unavailable-authority and expired-session cases, zero buffered native source content or locations are disclosed after the loss of authority or session validity.
 
 ## Assumptions
 
-- The October proposal and agreed source/tool F0 contract authorize Story 18.3 definition and planning against a prepared Repository. Story 18.1 owns the approved prepared-root identity, binding, and contained list/read/search contract; this story consumes those contracts without defining a duplicate source service or changing 18.1's work.
-- Story 18.1 is active elsewhere and has not been integrated or verified in this checkout. This specification does not claim its implementation or the native MCP capability is complete. Before later delivery, reconcile this spec and plan with the integrated, verified 18.1 baseline and rerun affected content and independent review gates.
-- The selected host composition and declared CodeGraph installation are configuration/qualification inputs, not proof of availability. An actual version and native smoke result are required during later delivery; no runtime or provider qualification is claimed by this planning document.
+- Story 18.1 is integrated and verified in this checkout. Its accepted public Agent seam is one issued, bounded, disposable read context exposing only `list_prepared_source`, `read_prepared_source` and `search_prepared_source`. Trusted application composition supplies the physical prepared-directory root to Infrastructure; physical path and operating-system handles stay private. Its live exact-authority verification, terminal closure on revocation/unavailability, and caller-owned context disposal are binding inputs to this story. These facts do not establish native CodeGraph qualification.
+- Story 18.1 does not expose a trusted physical workspace lease through its public Agent seam. Native CodeGraph preparation and MCP need contained physical access. The integration coordinator assigned Story 18.2 ownership of one shared trusted physical-workspace contract, its implementation and focused tests. Its identifiable verified checkpoint does not yet exist in this boundary. Story 18.3 must not invent a parallel authority/lease contract, expose Story 18.1's private path/handles, alter its three-function public seam, or couple CodeGraph behavior to JDT-LS.
+- The selected host composition and declared CodeGraph installation are configuration/qualification inputs, not proof of availability. An actual version and native smoke result are required during delivery; this document claims no runtime or provider qualification.
 - Story 18.3 does not add general registered-MCP product management, arbitrary external tools, JDT-LS, Knowledge storage, real model generation, or a new research/protocol framework. Those have separate ownership or backlog dispositions.
 - Existing Git-bound Source Snapshot and CodeGraph CLI/JSON behavior remain historical/current implementation context. Prepared origin is a distinct October input, and CodeGraphContext or a CLI-only response wrapper cannot satisfy this story.
+
+## Delivery Sequencing
+
+- After an accepted independent plan review and the mandatory planned-change authorization, tasks may describe independent native MCP client, closed Worker tool wrapper and controlled-session test work. Implementation of those independent slices requires accepted complete-definition review and implementation approval. This sequencing is not itself an approval or evidence that any gate has passed.
+- Physical-root preparation/integration, application-bound native invocation and Vulgata host qualification remain conditional on an identifiable verified Story 18.2 shared-workspace checkpoint. Reconcile its actual authority, containment, lifetime and safe tool-state placement through the affected plan, tasks and independent review before executing those dependent slices. A task may name the dependency, but cannot treat the missing checkpoint as fulfilled.
+- The standalone native CodeGraph fixture probe establishes transport capability only. It does not prove Vulgata Agent integration, live Story 18.1 authorization, foreign-root denial, cancellation or safe production preparation.

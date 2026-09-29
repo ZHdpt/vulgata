@@ -1,0 +1,48 @@
+{
+  "schema_version": "1.0",
+  "gate": "plan-review",
+  "verdict": "ACCEPT",
+  "reviewed_commit": "e6b76385eb74fa0f2bf2dc9f4aee0589ae9993ce",
+  "reviewed_boundary": {
+    "base_commit": "e6b76385eb74fa0f2bf2dc9f4aee0589ae9993ce",
+    "candidate_commit": null,
+    "diff_sha256": "41aa22c7d0857e8cfa0f18079a1d90c1f55fb8ad87d5495b4e53b4527b35daa3",
+    "artifact_hashes": {
+      "specs/18-3-use-native-codegraph-mcp-against-prepared-source/spec.md": "59de4379720db7445561d2548fdefcb20dc2b82259ab3780b1658f94ff63ae2a",
+      "specs/18-3-use-native-codegraph-mcp-against-prepared-source/plan.md": "01940ff11ee91aa97b1347a44aa561686b4b023dc38963ad0741a892e11f660a",
+      "specs/18-3-use-native-codegraph-mcp-against-prepared-source/research.md": "1e0ab395c9dc2a27213877bcdf48ade9db510ccaf0ebceed3ee5e924cb38d265",
+      "specs/18-3-use-native-codegraph-mcp-against-prepared-source/data-model.md": "8179ffcfe4e9cc94c46deb4a81c43cee635e3f06940d4637367e7146800cb0be",
+      "specs/18-3-use-native-codegraph-mcp-against-prepared-source/quickstart.md": "8aa17839f78d09f2f455504e5e3315193f49a328ee75fd5dab1bfa52a07e82d2",
+      "specs/18-3-use-native-codegraph-mcp-against-prepared-source/contracts/native-codegraph-boundary.md": "d0a3cbc0aa3d5a8a8f981b149c38fd830a1436fb8c9a6f716523bbe476244d40",
+      "specs/18-3-use-native-codegraph-mcp-against-prepared-source/checklists/requirements.md": "b3bf5e211b9fe5fc95e9ed9e3a688e5beea2ebde3cc102e4df314a4beeb584e8",
+      "specs/18-3-use-native-codegraph-mcp-against-prepared-source/evidence/native-mcp-standalone-01.json": "2392fcfe68e1ab1bbbb83d2b9b8a6e6b09c8b93016ece2c82151a94393563522",
+      "specs/18-3-use-native-codegraph-mcp-against-prepared-source/evidence/native-mcp-standalone-01.raw.json": "9db9ef2cc75e169d8deebddf4069365ca9fdf9c45bc7026d8f86863c9d6fef49"
+    },
+    "owned_paths": [
+      "specs/18-3-use-native-codegraph-mcp-against-prepared-source/spec.md",
+      "specs/18-3-use-native-codegraph-mcp-against-prepared-source/plan.md",
+      "specs/18-3-use-native-codegraph-mcp-against-prepared-source/research.md",
+      "specs/18-3-use-native-codegraph-mcp-against-prepared-source/data-model.md",
+      "specs/18-3-use-native-codegraph-mcp-against-prepared-source/quickstart.md",
+      "specs/18-3-use-native-codegraph-mcp-against-prepared-source/contracts/native-codegraph-boundary.md",
+      "specs/18-3-use-native-codegraph-mcp-against-prepared-source/checklists/requirements.md"
+    ]
+  },
+  "reviewed_artifacts": [
+    "specs/18-3-use-native-codegraph-mcp-against-prepared-source/spec.md",
+    "specs/18-3-use-native-codegraph-mcp-against-prepared-source/plan.md",
+    "specs/18-3-use-native-codegraph-mcp-against-prepared-source/research.md",
+    "specs/18-3-use-native-codegraph-mcp-against-prepared-source/data-model.md",
+    "specs/18-3-use-native-codegraph-mcp-against-prepared-source/quickstart.md",
+    "specs/18-3-use-native-codegraph-mcp-against-prepared-source/contracts/native-codegraph-boundary.md",
+    "specs/18-3-use-native-codegraph-mcp-against-prepared-source/checklists/requirements.md",
+    "specs/18-3-use-native-codegraph-mcp-against-prepared-source/evidence/native-mcp-standalone-01.json",
+    "specs/18-3-use-native-codegraph-mcp-against-prepared-source/evidence/native-mcp-standalone-01.raw.json",
+    "specs/18-3-use-native-codegraph-mcp-against-prepared-source/evidence/spec-sequencing-self-review-01.json",
+    "specs/18-3-use-native-codegraph-mcp-against-prepared-source/evidence/plan-sequencing-self-review-01.json",
+    "specs/18-3-use-native-codegraph-mcp-against-prepared-source/evidence/plan-review-01.json",
+    "specs/18-3-use-native-codegraph-mcp-against-prepared-source/evidence/plan-review-02.json"
+  ],
+  "findings": [],
+  "summary": "PR-18-3-01 from plan-review-02 is resolved: spec.md Delivery Sequencing, plan.md ID-I05/C03 and dependency item 5, the contract, checklist and quickstart now agree. Independent native client, closed Worker wrapper and controlled tests may be tasked only after accepted plan review and planned-change authorization, then implemented only after accepted complete-definition review and implementation approval. Physical-root preparation, application-bound native invocation and Vulgata qualification remain held for an identifiable verified Story 18.2 workspace checkpoint, reconciliation of affected plan/tasks and independent review. The earlier plan-review-01 acceptance was invalidated by changed 18.1 and ownership inputs; its conclusions were checked against current raw artifacts, not reused as authority. Integrated 18.1 remains the exact source-authority owner, and the standalone CodeGraph probe proves native transport only. No new blocking problem was found. Current spec/plan hashes and the nine-file canonical digest match the pinned boundary; deterministic plan-content validation returned no errors. SpecKit analyze requires tasks.md and is inapplicable before task generation. ACCEPT satisfies this independent plan-review gate; the separate planned-change authorization still governs progression."
+}
