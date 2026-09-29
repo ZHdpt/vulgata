@@ -819,5 +819,41 @@
   "TestInfrastructure/SeededTargetTests.cs": {
     "suite": "External",
     "reason": "Explicit controlled local seed import/clone probe; requires -SeedDump with marker fixture."
+  },
+  "PreparedSource/PreparedSourceAuthorityLifecycleTests.cs": {
+    "suite": "SelfContained"
+  },
+  "PreparedSource/PreparedSourceBasicReadTests.cs": {
+    "suite": "SelfContained"
+  },
+  "PreparedSource/PreparedSourceCancellationBudgetTests.cs": {
+    "suite": "SelfContained"
+  },
+  "PreparedSource/PreparedSourceContainmentTests.cs": {
+    "suite": "SelfContained"
+  },
+  "PreparedSource/PreparedSourceFailureTests.cs": {
+    "suite": "SelfContained"
+  },
+  "PreparedSource/PreparedSourceFixture.cs": {
+    "suite": "SelfContained"
+  },
+  "PreparedSource/PreparedSourceGrantTests.cs": {
+    "suite": "SelfContained"
+  },
+  "PreparedSource/PreparedSourceListTests.cs": {
+    "suite": "SelfContained"
+  },
+  "PreparedSource/PreparedSourceRangeReadTests.cs": {
+    "suite": "SelfContained"
+  },
+  "PreparedSource/PreparedSourceSearchTests.cs": {
+    "suite": "SelfContained"
+  },
+  "PreparedSource/PreparedSourceToolFunctionTests.cs": {
+    "suite": "SelfContained"
+  },
+  "PostgreSqlHeavyCollection.cs": {
+    "suite": "PostgreSql"
   }
 }

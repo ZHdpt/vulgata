@@ -3,11 +3,14 @@ using Microsoft.Win32.SafeHandles;
 using Vulgata.Core.DomainServices;
 using Vulgata.Infrastructure.Source;
 
+using Vulgata.Tests.TestInfrastructure;
+
 namespace Vulgata.Tests.PreparedSource;
 
 public sealed class PreparedSourceCancellationBudgetTests
 {
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ReadTextRangeAsync_GrantDeadlineExpiresAfterIssuance_ReturnsDeadlineExceededWithoutPayload()
     {
         RequireWindowsHost();
@@ -32,7 +35,8 @@ public sealed class PreparedSourceCancellationBudgetTests
         Assert.Equal(PreparedSourceContextLifetime.ExpiredOrCancelled, context.Lifetime);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task SearchTextAsync_CancelledBetweenChunksDiscardsMatchAndSettlesFileHandle()
     {
         RequireWindowsHost();
@@ -79,7 +83,8 @@ public sealed class PreparedSourceCancellationBudgetTests
             FileShare.None);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ListAsync_CancelledBetweenEntriesDiscardsBufferedMetadata()
     {
         RequireWindowsHost();
@@ -111,7 +116,8 @@ public sealed class PreparedSourceCancellationBudgetTests
         Assert.Null(result.Continuation);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ReadTextRangeAsync_CancelledBeforeReleaseDiscardsTextAndSettlesFileHandle()
     {
         RequireWindowsHost();
@@ -148,7 +154,8 @@ public sealed class PreparedSourceCancellationBudgetTests
             FileShare.None);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ReadTextRangeAsync_DisposedWhileAwaitingFinalAuthoritySettlesFileAndRootHandles()
     {
         RequireWindowsHost();
@@ -186,7 +193,8 @@ public sealed class PreparedSourceCancellationBudgetTests
         using SafeFileHandle exclusiveRoot = OpenExclusiveDirectoryOrAssert(fixture.PreparedRootPath);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ListAsync_QueuedBeforeContextDisposal_ReturnsCancelledWithoutSourceFailure()
     {
         RequireWindowsHost();
@@ -241,7 +249,8 @@ public sealed class PreparedSourceCancellationBudgetTests
         Assert.Equal(PreparedSourceContextLifetime.Disposed, context.Lifetime);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task SearchTextAsync_QueuedBeforeContextDisposal_ReturnsCancelledWithoutSourceFailure()
     {
         RequireWindowsHost();
@@ -301,7 +310,8 @@ public sealed class PreparedSourceCancellationBudgetTests
         Assert.Equal(PreparedSourceContextLifetime.Disposed, context.Lifetime);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ConcurrentReadCalls_ReserveOperationAndReturnedByteBudgetsAtomically()
     {
         RequireWindowsHost();
@@ -345,7 +355,8 @@ public sealed class PreparedSourceCancellationBudgetTests
         Assert.Equal(1, results.Sum(result => result.Text?.Length ?? 0));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ConcurrentReadCalls_ReserveReturnedBytesAtomically()
     {
         RequireWindowsHost();
@@ -387,7 +398,8 @@ public sealed class PreparedSourceCancellationBudgetTests
         Assert.Equal(1, results.Sum(result => result.Text?.Length ?? 0));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ReadTextRangeAsync_DefaultGrantAllowsExactlyOneHundredOperations()
     {
         RequireWindowsHost();
@@ -410,7 +422,8 @@ public sealed class PreparedSourceCancellationBudgetTests
         Assert.Null(exhausted.ReadLocation);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ListAsync_DefaultGrantLimitsMetadataToOneThousandEntries()
     {
         RequireWindowsHost();
@@ -431,7 +444,8 @@ public sealed class PreparedSourceCancellationBudgetTests
         Assert.Null(result.Continuation);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ReadTextRangeAsync_DefaultGrantLimitsReturnedTextToOneMebibyte()
     {
         RequireWindowsHost();
@@ -465,7 +479,8 @@ public sealed class PreparedSourceCancellationBudgetTests
         Assert.Null(exhausted.NextByteOffset);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task SearchTextAsync_DefaultGrantLimitsExaminedBytesToEightMebibytes()
     {
         RequireWindowsHost();
@@ -496,7 +511,8 @@ public sealed class PreparedSourceCancellationBudgetTests
         Assert.Null(continuation);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task PreparedSourceGrant_DefaultLimitsRemainAtAcceptedApplicationMaxima()
     {
         RequireWindowsHost();

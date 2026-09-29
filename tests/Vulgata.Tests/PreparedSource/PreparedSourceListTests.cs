@@ -1,11 +1,14 @@
 using Vulgata.Core.DomainServices;
 using Vulgata.Infrastructure.Source;
 
+using Vulgata.Tests.TestInfrastructure;
+
 namespace Vulgata.Tests.PreparedSource;
 
 public sealed class PreparedSourceListTests
 {
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ListAsync_PageSizeOne_ContinuesInOrdinalOrderAndRejectsReplay()
     {
         RequireWindowsHost();
@@ -60,7 +63,8 @@ public sealed class PreparedSourceListTests
         Assert.Null(replay.Continuation);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ListAsync_ContinuationBoundToOriginalPageSize_IsDeniedForChangedScope()
     {
         RequireWindowsHost();
@@ -79,7 +83,8 @@ public sealed class PreparedSourceListTests
         Assert.Null(changedScope.Continuation);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ListAsync_PageSizeOneHundred_ReturnsAllImmediateChildrenAsComplete()
     {
         RequireWindowsHost();
@@ -98,7 +103,8 @@ public sealed class PreparedSourceListTests
         Assert.Null(result.StoppingLimit);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ListAsync_NestedDirectory_ReturnsImmediateChildrenWithRepositoryRelativeLocations()
     {
         RequireWindowsHost();
@@ -143,7 +149,8 @@ public sealed class PreparedSourceListTests
         Assert.Null(result.StoppingLimit);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ListAsync_EmptyRoot_ReturnsCompleteEmpty()
     {
         RequireWindowsHost();
@@ -163,7 +170,8 @@ public sealed class PreparedSourceListTests
         Assert.Null(result.Continuation);
     }
 
-    [Theory]
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
     [InlineData(0)]
     [InlineData(101)]
     public async Task ListAsync_PageSizeOutsideContract_IsDeniedWithoutEntries(int pageSize)
@@ -180,7 +188,8 @@ public sealed class PreparedSourceListTests
         Assert.Null(result.Continuation);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ListAsync_ObservedEntryChangesBeforeContinuation_ReturnsChangedInput()
     {
         RequireWindowsHost();
@@ -204,7 +213,8 @@ public sealed class PreparedSourceListTests
         Assert.Null(nextPage.Continuation);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ListAsync_MetadataBudgetExhaustion_IsExplicitAndDoesNotIssueContinuation()
     {
         RequireWindowsHost();
@@ -224,7 +234,8 @@ public sealed class PreparedSourceListTests
         Assert.Null(result.Continuation);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ListAsync_OperationBudgetExhaustion_IsExplicitOnLaterCall()
     {
         RequireWindowsHost();

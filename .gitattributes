@@ -21,6 +21,32 @@
 /specs/007-exact-cross-repo-resolution/contracts/demo-resolution-profile.v1.json text eol=lf
 /src/dotnet/Vulgata.Infrastructure/CrossRepository/Profiles/demo-resolution-profile.v1.json text eol=lf
 
+# Story 18.1 current definition and transition head are hash-bound across checkouts.
+/specs/016-contained-source-tools/spec.md text eol=lf
+/specs/016-contained-source-tools/plan.md text eol=lf
+/specs/016-contained-source-tools/tasks.md text eol=lf
+/specs/016-contained-source-tools/evidence/workflow-transition-*.json text eol=lf
+/specs/016-contained-source-tools/evidence/verify-test-failure-04.json text eol=lf
+/specs/016-contained-source-tools/evidence/verify-test-failure-output-04.txt text eol=lf
+/specs/016-contained-source-tools/evidence/verify-test-correction-focused-command-02.json text eol=lf
+/specs/016-contained-source-tools/evidence/verify-test-failure-03.json text eol=lf
+/specs/016-contained-source-tools/evidence/quality-diagnosis-03.json text eol=lf
+/specs/016-contained-source-tools/evidence/recovery-extension-02.json text eol=lf
+/specs/016-contained-source-tools/evidence/recovery-extension-03.json text eol=lf
+/specs/016-contained-source-tools/evidence/quality-diagnosis-04.json text eol=lf
+/specs/016-contained-source-tools/evidence/test-policy-red-01.json text eol=lf
+/specs/016-contained-source-tools/evidence/test-policy-red-output-01.txt text eol=lf
+/specs/016-contained-source-tools/evidence/test-policy-correction-01.json text eol=lf
+/specs/016-contained-source-tools/evidence/test-policy-correction-output-01.txt text eol=lf
+/specs/016-contained-source-tools/evidence/convergence-result-07.json text eol=lf
+/specs/016-contained-source-tools/evidence/story-lookback-06.json text eol=lf
+/specs/016-contained-source-tools/evidence/quality-review-result-06.json text eol=lf
+/specs/016-contained-source-tools/evidence/e2e-decision-04.json text eol=lf
+/specs/016-contained-source-tools/evidence/e2e-result-04.json text eol=lf
+/specs/016-contained-source-tools/evidence/final-verification-01.json text eol=lf
+/specs/016-contained-source-tools/evidence/final-verification-output-01.txt text eol=lf
+/specs/016-contained-source-tools/evidence/completion-close-01.json text eol=lf
+
 # Preserve raw-byte pre-images, including their original whitespace and line endings.
 /docs/bmad/history/pre-generic-adoption-2026-09-11/files/** -text -whitespace
 

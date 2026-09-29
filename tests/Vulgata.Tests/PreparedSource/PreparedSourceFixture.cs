@@ -1,6 +1,8 @@
 using System.Text;
 using Vulgata.Core.DomainServices;
 
+using Vulgata.Tests.TestInfrastructure;
+
 namespace Vulgata.Tests.PreparedSource;
 
 /// <summary>
@@ -272,7 +274,8 @@ internal sealed class PreparedSourceFixture : IAsyncDisposable
 
 public sealed class PreparedSourceFixtureTests
 {
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task CreateAsync_OwnsPreparedAndSiblingTrees_DisposalRemovesOnlyOwnedTree()
     {
         PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();

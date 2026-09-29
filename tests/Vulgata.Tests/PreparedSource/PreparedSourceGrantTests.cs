@@ -2,18 +2,22 @@ using System.Text.Json;
 using Vulgata.Core.DomainServices;
 using Vulgata.Infrastructure.Source;
 
+using Vulgata.Tests.TestInfrastructure;
+
 namespace Vulgata.Tests.PreparedSource;
 
 public sealed class PreparedSourceGrantTests
 {
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Constructor_MissingAuthorityVerifier_ThrowsArgumentNullException()
     {
         Assert.Throws<ArgumentNullException>(
             () => new PreparedSourceContextIssuer(null!));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task IssueAsync_NullRequest_ThrowsArgumentNullException()
     {
         await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
@@ -23,7 +27,8 @@ public sealed class PreparedSourceGrantTests
             () => issuer.IssueAsync(null!));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task IssueAsync_ExactApprovalTuple_ReturnsBoundContext()
     {
         await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
@@ -40,7 +45,8 @@ public sealed class PreparedSourceGrantTests
         await result.Context.DisposeAsync();
     }
 
-    [Theory]
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
     [InlineData("batch")]
     [InlineData("repository")]
     [InlineData("subject")]
@@ -62,7 +68,8 @@ public sealed class PreparedSourceGrantTests
         AssertFailureIsSanitized(result, fixture);
     }
 
-    [Theory]
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
     [InlineData("absent", PreparedSourceIssueStatus.Denied)]
     [InlineData("revoked", PreparedSourceIssueStatus.Denied)]
     [InlineData("unavailable", PreparedSourceIssueStatus.AuthorityUnavailable)]
@@ -94,7 +101,8 @@ public sealed class PreparedSourceGrantTests
         AssertFailureIsSanitized(result, fixture);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task IssueAsync_LabelRemainsDescriptiveAndDoesNotBecomeVersionIdentity()
     {
         await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
@@ -110,7 +118,8 @@ public sealed class PreparedSourceGrantTests
         await result.Context.DisposeAsync();
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task IssueAsync_NonDirectoryRoot_FailsWithoutLeakingFileHandle()
     {
         await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
@@ -133,7 +142,8 @@ public sealed class PreparedSourceGrantTests
         Assert.Equal("outside the approved prepared root", await File.ReadAllTextAsync(fixture.SentinelPath));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task IssueAsync_PreCancelledRequest_ReturnsCancelledWithoutContext()
     {
         await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
@@ -151,7 +161,8 @@ public sealed class PreparedSourceGrantTests
         AssertFailureIsSanitized(result, fixture);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task IssueAsync_ExpiredGrant_ReturnsDeadlineExceededWithoutContext()
     {
         await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();

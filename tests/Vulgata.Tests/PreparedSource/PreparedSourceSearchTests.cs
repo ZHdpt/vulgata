@@ -2,11 +2,14 @@ using System.Text;
 using Vulgata.Core.DomainServices;
 using Vulgata.Infrastructure.Source;
 
+using Vulgata.Tests.TestInfrastructure;
+
 namespace Vulgata.Tests.PreparedSource;
 
 public sealed class PreparedSourceSearchTests
 {
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task SearchTextAsync_UnfamiliarExtension_ReturnsExactUtf8MatchLocation()
     {
         RequireWindowsHost();
@@ -41,7 +44,8 @@ public sealed class PreparedSourceSearchTests
         Assert.Null(result.Continuation);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task SearchTextAsync_MultipleFiles_OrdersByPathThenByteAndCountsUnicodeScalarsAcrossCrlf()
     {
         RequireWindowsHost();
@@ -79,7 +83,8 @@ public sealed class PreparedSourceSearchTests
         Assert.Null(result.Continuation);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task SearchTextAsync_CaseSensitiveLiteralWith256Utf8Bytes_IsAcceptedAndCanBeCompleteEmpty()
     {
         RequireWindowsHost();
@@ -100,7 +105,8 @@ public sealed class PreparedSourceSearchTests
         Assert.Empty(maximumLiteral.Matches);
     }
 
-    [Theory]
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
     [InlineData("")]
     [InlineData("two\nlines")]
     [InlineData("two\r\nlines")]
@@ -118,7 +124,8 @@ public sealed class PreparedSourceSearchTests
         Assert.Null(result.Continuation);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task SearchTextAsync_LiteralOver256Utf8Bytes_IsDenied()
     {
         RequireWindowsHost();
@@ -133,7 +140,8 @@ public sealed class PreparedSourceSearchTests
         Assert.Null(result.Continuation);
     }
 
-    [Theory]
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
     [InlineData(0)]
     [InlineData(65)]
     public async Task SearchTextAsync_PageSizeOutsideOneThrough64_IsDenied(int pageSize)
@@ -150,7 +158,8 @@ public sealed class PreparedSourceSearchTests
         Assert.Null(result.Continuation);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task SearchTextAsync_PageSizeOne_ContinuesOnceAndRejectsReplay()
     {
         RequireWindowsHost();
@@ -180,7 +189,8 @@ public sealed class PreparedSourceSearchTests
         Assert.Null(replay.Continuation);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task SearchTextAsync_ContinuationBoundToLiteral_IsDeniedForChangedQuery()
     {
         RequireWindowsHost();
@@ -202,7 +212,8 @@ public sealed class PreparedSourceSearchTests
         Assert.Null(changedQuery.Continuation);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task SearchTextAsync_ExaminedByteBudgetExhaustion_IsExplicitForNoMatch()
     {
         RequireWindowsHost();
@@ -225,7 +236,8 @@ public sealed class PreparedSourceSearchTests
         Assert.Null(result.Continuation);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task SearchTextAsync_PerCallExaminedByteLimit_ResumesWithRemainingGrantCapacity()
     {
         RequireWindowsHost();

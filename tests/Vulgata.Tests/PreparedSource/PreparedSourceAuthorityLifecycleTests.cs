@@ -1,11 +1,14 @@
 using Vulgata.Core.DomainServices;
 using Vulgata.Infrastructure.Source;
 
+using Vulgata.Tests.TestInfrastructure;
+
 namespace Vulgata.Tests.PreparedSource;
 
 public sealed class PreparedSourceAuthorityLifecycleTests
 {
-    [Theory]
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
     [InlineData("batch")]
     [InlineData("repository")]
     [InlineData("subject")]
@@ -30,7 +33,8 @@ public sealed class PreparedSourceAuthorityLifecycleTests
         Assert.Equal(PreparedSourceContextLifetime.AuthorityClosed, context.Lifetime);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ListAsync_VerifierUnavailableBeforeCall_ReturnsAuthorityUnavailable()
     {
         RequireWindowsHost();
@@ -49,7 +53,8 @@ public sealed class PreparedSourceAuthorityLifecycleTests
         Assert.Equal(PreparedSourceContextLifetime.AuthorityClosed, context.Lifetime);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ListAsync_AuthorityUnavailableBetweenEntries_DiscardsBufferedEntriesAndClosesContext()
     {
         RequireWindowsHost();
@@ -80,7 +85,8 @@ public sealed class PreparedSourceAuthorityLifecycleTests
         Assert.Equal(PreparedSourceContextLifetime.AuthorityClosed, context.Lifetime);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task SearchTextAsync_AuthorityUnavailableBetweenChunks_DiscardsBufferedMatches()
     {
         RequireWindowsHost();
@@ -105,7 +111,8 @@ public sealed class PreparedSourceAuthorityLifecycleTests
         Assert.Equal(PreparedSourceContextLifetime.AuthorityClosed, context.Lifetime);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task SearchTextAsync_AuthorityUnavailableImmediatelyBeforeRelease_DiscardsMatchAndContinuation()
     {
         RequireWindowsHost();
@@ -128,7 +135,8 @@ public sealed class PreparedSourceAuthorityLifecycleTests
         Assert.Equal(PreparedSourceContextLifetime.AuthorityClosed, context.Lifetime);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ConcurrentAuthorityLoss_ClosesBlockedSearchAndCurrentReadWithoutDisclosure()
     {
         RequireWindowsHost();
@@ -180,7 +188,8 @@ public sealed class PreparedSourceAuthorityLifecycleTests
         Assert.Equal(PreparedSourceContextLifetime.AuthorityClosed, context.Lifetime);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task RevokedContinuation_AfterRestorationRequiresFreshGrant()
     {
         RequireWindowsHost();

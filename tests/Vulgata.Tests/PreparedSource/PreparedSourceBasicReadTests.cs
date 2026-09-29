@@ -4,11 +4,14 @@ using Vulgata.Core.DomainServices;
 using Vulgata.Infrastructure.Source;
 using Xunit.Sdk;
 
+using Vulgata.Tests.TestInfrastructure;
+
 namespace Vulgata.Tests.PreparedSource;
 
 public sealed class PreparedSourceBasicReadTests
 {
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ListAsync_Root_ReturnsImmediateRepositoryRelativeEntriesWithoutAdmissionDecisions()
     {
         RequireWindowsHost();
@@ -42,7 +45,8 @@ public sealed class PreparedSourceBasicReadTests
         AssertNoAdmissionDecisionFields(serialized);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ReadTextRangeAsync_UnfamiliarExtension_ReturnsBoundedRepositoryRelativeText()
     {
         RequireWindowsHost();
@@ -78,7 +82,8 @@ public sealed class PreparedSourceBasicReadTests
         AssertNoAdmissionDecisionFields(JsonSerializer.Serialize(result));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ListAsync_Root_ReportsEscapingLinkAsNonTraversableMetadata()
     {
         RequireWindowsHost();

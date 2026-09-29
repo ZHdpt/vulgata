@@ -4,11 +4,14 @@ using Vulgata.Core.DomainServices;
 using Vulgata.Infrastructure.Source;
 using Xunit.Sdk;
 
+using Vulgata.Tests.TestInfrastructure;
+
 namespace Vulgata.Tests.PreparedSource;
 
 public sealed class PreparedSourceFailureTests
 {
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ReadTextRangeAsync_MissingFile_ReturnsMissingWithoutSensitiveDetails()
     {
         RequireWindowsHost();
@@ -25,7 +28,8 @@ public sealed class PreparedSourceFailureTests
         AssertSanitized(result, fixture, "not-present.privatex");
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ReadTextRangeAsync_FileUnavailableForIo_ReturnsUnreadableWithoutPayload()
     {
         RequireWindowsHost();
@@ -51,7 +55,8 @@ public sealed class PreparedSourceFailureTests
         AssertSanitized(result, fixture, sentinelSource, relativePath);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ReadTextRangeAsync_EqualLengthRewriteBeforeRelease_ReturnsChangedInputWithoutText()
     {
         RequireWindowsHost();
@@ -97,7 +102,8 @@ public sealed class PreparedSourceFailureTests
         Assert.Equal(changedText, await File.ReadAllTextAsync(physicalPath));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task SearchTextAsync_UnreadableFileInScope_ReturnsIncompleteWithRelativeLimitationNotCompleteEmpty()
     {
         RequireWindowsHost();
@@ -132,7 +138,8 @@ public sealed class PreparedSourceFailureTests
             fixture.Approval.ApprovalIdentity, fixture.PreparedRootPath);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task SearchTextAsync_FullAuthorizedNoMatch_ReturnsCompleteEmpty()
     {
         RequireWindowsHost();

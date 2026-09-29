@@ -3,11 +3,14 @@ using Vulgata.Core.DomainServices;
 using Vulgata.Infrastructure.Source;
 using Xunit.Sdk;
 
+using Vulgata.Tests.TestInfrastructure;
+
 namespace Vulgata.Tests.PreparedSource;
 
 public sealed class PreparedSourceContainmentTests
 {
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ReadTextRangeAsync_SiblingTraversalPath_IsDeniedWithoutDisclosingOrChangingSentinel()
     {
         RequireWindowsHost();
@@ -27,7 +30,8 @@ public sealed class PreparedSourceContainmentTests
         Assert.Equal(sentinelWriteTimeBefore, File.GetLastWriteTimeUtc(fixture.SentinelPath));
     }
 
-    [Theory]
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
     [InlineData("dot-segment")]
     [InlineData("duplicate-separator")]
     [InlineData("backslash")]
@@ -55,7 +59,8 @@ public sealed class PreparedSourceContainmentTests
         Assert.Equal(sentinelBefore, await File.ReadAllTextAsync(fixture.SentinelPath));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task IssueAsync_RootWithReparseParent_IsRejected()
     {
         RequireWindowsHost();
@@ -90,7 +95,8 @@ public sealed class PreparedSourceContainmentTests
         }
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ReadTextRangeAsync_InRootAndEscapingLinks_AreNeverTraversed()
     {
         RequireWindowsHost();
@@ -131,7 +137,8 @@ public sealed class PreparedSourceContainmentTests
         Assert.Equal(sentinelBefore, await File.ReadAllTextAsync(fixture.SentinelPath));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ReadTextRangeAsync_RootPathReplacedWithSiblingLink_UsesOnlyHeldRoot()
     {
         RequireWindowsHost();

@@ -27,6 +27,13 @@
       "evidence_path": "specs/016-contained-source-tools/evidence/recovery-extension-02.json",
       "scope_sha256": "f16be621e87b3a8d9088fd7a83d73097ecb3b36cc539e8863bc127333b7dc920",
       "status": "accepted"
+    },
+    {
+      "decided_at": "2026-09-29T04:32:26.4603849Z",
+      "decision_id": "18-1/implementation/1/extension/3",
+      "evidence_path": "specs/016-contained-source-tools/evidence/recovery-extension-03.json",
+      "scope_sha256": "aa75a9f118e863c446aa112973dbe13f00dc4596509b436edfb6f77c76bda00b",
+      "status": "accepted"
     }
   ],
   "artifacts": {
@@ -47,9 +54,9 @@
   "bmad_story_key": "18-1-access-prepared-source-through-contained-read-only-tools",
   "checkpoint": {
     "binding_status": "pending",
-    "checkpoint_id": "bmad-18-1-verify-limit7-pause-20260929T032432Z-928a76",
+    "checkpoint_id": "bmad-18-1-policy-correction-20260929T044126Z-7dbc20",
     "commit_sha": null,
-    "stage": "verify"
+    "stage": "implement"
   },
   "convergence": {
     "attempt": 5,
@@ -61,11 +68,12 @@
     "docs/bmad/implementation-artifacts/18-1-access-prepared-source-through-contained-read-only-tools.md",
     "specs/016-contained-source-tools/evidence/plan-review-result-09.json",
     "specs/016-contained-source-tools/evidence/definition-review-result-04.json",
-    "specs/016-contained-source-tools/evidence/recovery-extension-02.json",
+    "specs/016-contained-source-tools/evidence/recovery-extension-03.json",
     "specs/016-contained-source-tools/evidence/verify-test-correction-focused-command-02.json",
-    "specs/016-contained-source-tools/evidence/quality-diagnosis-03.json",
+    "specs/016-contained-source-tools/evidence/quality-diagnosis-04.json",
     "specs/016-contained-source-tools/evidence/verify-test-failure-04.json",
-    "specs/016-contained-source-tools/evidence/workflow-transition-047-verify-test-limit-pause.json"
+    "specs/016-contained-source-tools/evidence/test-policy-correction-01.json",
+    "specs/016-contained-source-tools/evidence/workflow-transition-051-policy-correction-accept.json"
   ],
   "definition_author": {
     "escalation_decision_id": null,
@@ -108,36 +116,36 @@
     "status_sha256": "811e45acb3329b898a1a92b4bc69e9a8b9fb70ef8e97a5beba0dacd2c4ca0a74"
   },
   "recovery": {
-    "action": "pause",
+    "action": "proceed",
     "closing_gate": "verify",
     "diagnosis": {
-      "at_count": 6,
+      "at_count": 7,
       "evidence": {
-        "path": "specs/016-contained-source-tools/evidence/quality-diagnosis-03.json",
-        "sha256": "7210fe8de7b33f15a78a046113d2fca4ff9d92401e3217a7e78c64e3cda40532"
+        "path": "specs/016-contained-source-tools/evidence/quality-diagnosis-04.json",
+        "sha256": "034fedc22c9dd61614b7747acb2a5cc8eb2576d36eea114359377e235433337a"
       }
     },
     "earliest_owner": "tests",
     "episode_id": "18-1/implementation/1",
-    "extension_decision_id": "18-1/implementation/1/extension/2",
+    "extension_decision_id": "18-1/implementation/1/extension/3",
     "failed_results": 7,
     "holds": [],
     "last_result": {
       "path": "specs/016-contained-source-tools/evidence/verify-test-failure-04.json",
       "sha256": "928a765c5406aca7285cf6a0fc3171ada7390759882b6b7998538577e7d060a3"
     },
-    "pause_at": 7
+    "pause_at": 8
   },
   "resume": {
     "evidence_path": "specs/016-contained-source-tools/evidence/verify-test-failure-04.json",
-    "reason": "Paused after substantive recovery result 7 reached the approved cumulative ceiling. Human direction and any required higher recovery authority are needed before diagnosis, correction, or rerun.",
-    "stage": "verify"
+    "reason": "The rebased Story 18.1 tests satisfy the committed suite policy and pass 119/119; refresh convergence on the corrected boundary.",
+    "stage": "converge"
   },
   "schema_version": "3.1",
   "stage": "verify",
   "transition_head": {
-    "path": "specs/016-contained-source-tools/evidence/workflow-transition-047-verify-test-limit-pause.json",
-    "sha256": "0f36a0ea80dba5ca1dd6ec6b4a7bff0502c9b97f27d05eabaaccff43888678f7"
+    "path": "specs/016-contained-source-tools/evidence/workflow-transition-051-policy-correction-accept.json",
+    "sha256": "31e2711d000dfa9de219dd5bd9b8b541165e3a5f8fd33a6c2414aa09c8e0700d"
   },
-  "updated_at": "2026-09-29T03:24:32.9519688Z"
+  "updated_at": "2026-09-29T04:41:26.4745364Z"
 }

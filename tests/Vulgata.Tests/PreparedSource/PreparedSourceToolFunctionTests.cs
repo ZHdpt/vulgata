@@ -2,6 +2,8 @@ using Microsoft.Extensions.AI;
 using Vulgata.Agents.WorkerExecution;
 using Vulgata.Core.DomainServices;
 
+using Vulgata.Tests.TestInfrastructure;
+
 namespace Vulgata.Tests.PreparedSource;
 
 public sealed class PreparedSourceToolFunctionTests
@@ -9,7 +11,8 @@ public sealed class PreparedSourceToolFunctionTests
     private static readonly Guid RepositoryId =
         Guid.Parse("a6000000-0000-4000-8000-000000000001");
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Create_ExposesExactlyThreeOrderedFunctionsWithClosedArguments()
     {
         var context = new RecordingPreparedSourceReadContext(RepositoryId);
@@ -26,7 +29,8 @@ public sealed class PreparedSourceToolFunctionTests
         Assert.Equal(0, context.CallCount);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task Functions_ForwardExactRequestsAndCancellation_ReturnCoreResultsUnchanged()
     {
         var context = new RecordingPreparedSourceReadContext(RepositoryId);
@@ -71,7 +75,8 @@ public sealed class PreparedSourceToolFunctionTests
         Assert.Equal(0, context.DisposeCallCount);
     }
 
-    [Theory]
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
     [InlineData("unexpectedField")]
     [InlineData("batchId")]
     [InlineData("repositoryId")]
@@ -115,7 +120,8 @@ public sealed class PreparedSourceToolFunctionTests
         }
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Create_BorrowsContextAndDoesNotDisposeItsGrant()
     {
         var context = new RecordingPreparedSourceReadContext(RepositoryId);

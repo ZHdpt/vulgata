@@ -1,11 +1,14 @@
 using Vulgata.Core.DomainServices;
 using Vulgata.Infrastructure.Source;
 
+using Vulgata.Tests.TestInfrastructure;
+
 namespace Vulgata.Tests.PreparedSource;
 
 public sealed class PreparedSourceRangeReadTests
 {
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ReadTextRangeAsync_NonzeroOffset_UsesZeroBasedUtf8ByteLocations()
     {
         RequireWindowsHost();
@@ -27,7 +30,8 @@ public sealed class PreparedSourceRangeReadTests
         Assert.Equal(21L, result.ObservedFileByteLength);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ReadTextRangeAsync_OffsetStartsInsideMultibyteScalar_ReturnsInvalidRange()
     {
         RequireWindowsHost();
@@ -45,7 +49,8 @@ public sealed class PreparedSourceRangeReadTests
         Assert.Null(result.ReadLocation);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ReadTextRangeAsync_SliceEndsInsideMultibyteScalar_ReturnsInvalidRange()
     {
         RequireWindowsHost();
@@ -60,7 +65,8 @@ public sealed class PreparedSourceRangeReadTests
         Assert.Null(result.ReadLocation);
     }
 
-    [Theory]
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
     [InlineData(1)]
     [InlineData(65_536)]
     public async Task ReadTextRangeAsync_ByteCountAtSupportedBounds_ReturnsRequestedBytes(int byteCount)
@@ -79,7 +85,8 @@ public sealed class PreparedSourceRangeReadTests
         Assert.Equal(70_000L, result.ObservedFileByteLength);
     }
 
-    [Theory]
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
     [InlineData(-1, 1)]
     [InlineData(0, 0)]
     [InlineData(0, 65_537)]
@@ -97,7 +104,8 @@ public sealed class PreparedSourceRangeReadTests
         Assert.Null(result.ReadLocation);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ReadTextRangeAsync_InvalidUtf8Source_ReturnsUnsupportedTextWithoutPayload()
     {
         RequireWindowsHost();
@@ -112,7 +120,8 @@ public sealed class PreparedSourceRangeReadTests
         Assert.Null(result.ReadLocation);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ReadTextRangeAsync_InitialUtf8Bom_IsAccepted()
     {
         RequireWindowsHost();
@@ -133,7 +142,8 @@ public sealed class PreparedSourceRangeReadTests
         Assert.Equal(8, result.ReadLocation?.ByteEndExclusive);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ReadTextRangeAsync_EmptyFileAndExactEof_ReturnCompleteEmpty()
     {
         RequireWindowsHost();
@@ -155,7 +165,8 @@ public sealed class PreparedSourceRangeReadTests
         Assert.Equal(21, eof.ReadLocation?.ByteEndExclusive);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ReadTextRangeAsync_OffsetBeyondEof_ReturnsInvalidRange()
     {
         RequireWindowsHost();
@@ -170,7 +181,8 @@ public sealed class PreparedSourceRangeReadTests
         Assert.Null(result.ReadLocation);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ReadTextRangeAsync_GrantReturnedByteCap_ReportsExhaustionWithoutNextOffset()
     {
         RequireWindowsHost();

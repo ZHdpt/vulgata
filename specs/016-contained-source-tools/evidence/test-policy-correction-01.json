@@ -1,0 +1,83 @@
+{
+  "observed_after": {
+    "path": "specs/016-contained-source-tools/evidence/workflow-transition-050-policy-expected-red.json",
+    "sha256": "5453d4db3ba428fda0e56dd3e7286c6bfb1ec4d9b7e48431eb9b86ed999518ef"
+  },
+  "raw_result": {
+    "kind": "command",
+    "stage": "verify-focused",
+    "work_kind": "test-only",
+    "source_commit": "dfc9677a8af1cc3c5679332a20b766de776c0a4d",
+    "observed_at": "2026-09-29T04:41:26.4745364Z",
+    "command": "pwsh -NoProfile -File eng/test.ps1 -Filter 'FullyQualifiedName~Vulgata.Tests.PreparedSource'",
+    "policy_command": "pwsh -NoProfile -File eng/test-policy.ps1",
+    "focused_command": "pwsh -NoProfile -File eng/test.ps1 -Filter 'FullyQualifiedName~Vulgata.Tests.PreparedSource'",
+    "exit_code": 0,
+    "policy_counts": {
+      "classified_sources": 283,
+      "status": "passed"
+    },
+    "focused_counts": {
+      "suite": "SelfContained",
+      "discovered": 2811,
+      "selected": 119,
+      "passed": 119,
+      "failed": 0,
+      "skipped": 0
+    },
+    "raw_output_path": "specs/016-contained-source-tools/evidence/test-policy-correction-output-01.txt",
+    "raw_output_sha256": "16b9b0e25c2759e3b7be1d847598b63f2566bd135f011f3472b42966ba112e4c",
+    "input_hashes": {
+      "specs/016-contained-source-tools/spec.md": "48c92e4f6582471a1664e553b48756a811f22bb2b4f1334206e94303629b0b6d",
+      "specs/016-contained-source-tools/plan.md": "b375723e56c8cdc7990a4e7a624c5f58a78fde07d9a23edd79e25025c54fce08",
+      "specs/016-contained-source-tools/tasks.md": "b345d7322f8777d8fda77a153c48af954e7ed18a185cf648f8c309ef0d0a8a1b",
+      ".gitattributes": "dc887194057dcb1b7c455b137048cac0f6189d5d537a50ef51eec21509c9b945",
+      "tests/Vulgata.Tests/TestInfrastructure/suites.json": "2617583a8eb41b15428a220f1e1397234b4b670709f162dabb648e0ff2434eb0",
+      "tests/Vulgata.Tests/PostgreSqlHeavyCollection.cs": "9eac77216d1a45a910e31924402383d20a2b2aa4940ef663cafcb9a14c84225d",
+      "tests/Vulgata.Tests/PreparedSource/PreparedSourceAuthorityLifecycleTests.cs": "10f732fe6883434230dedd0e28b3a797dcd9e5b84e52ca02c4a2be803cdad418",
+      "tests/Vulgata.Tests/PreparedSource/PreparedSourceBasicReadTests.cs": "7e58c6ab6f8844fda7d6749492f32e89c1fad22b61f5833ae918388974546de5",
+      "tests/Vulgata.Tests/PreparedSource/PreparedSourceCancellationBudgetTests.cs": "fc143acd8f3ba9be0cfcb416705074583c4516653d4c5e894d424701b8940c42",
+      "tests/Vulgata.Tests/PreparedSource/PreparedSourceContainmentTests.cs": "252841e291f6a90df525ec748482846c2e6aa2175a59fbd488bbd288cb85483d",
+      "tests/Vulgata.Tests/PreparedSource/PreparedSourceFailureTests.cs": "4bff361e198b4c07ddfda9ed8cd55bb1a445da6363a95c0fbf0e88cfe501ee75",
+      "tests/Vulgata.Tests/PreparedSource/PreparedSourceFixture.cs": "1b1c8f34ae89f2c90eacdef808da5e09e492ecd41ab8ab3552fcfc3d67100888",
+      "tests/Vulgata.Tests/PreparedSource/PreparedSourceGrantTests.cs": "9b97e91f4f2fd89705129f250bcd8b5c9f12d3bb2f9aa012c490235971168c28",
+      "tests/Vulgata.Tests/PreparedSource/PreparedSourceListTests.cs": "8ea0b1a2037806b6feb7af7e3877da164f219c6e65c3f5fb1139d3489e21f2e0",
+      "tests/Vulgata.Tests/PreparedSource/PreparedSourceRangeReadTests.cs": "cd2932dfb7fe57645cf3f74d9dd24f401939122048085c170b58b43079526ac0",
+      "tests/Vulgata.Tests/PreparedSource/PreparedSourceSearchTests.cs": "ba8e7e9ad01fc144db9f28a734aa838c49cb45affe625fcae5e29ec112df6c82",
+      "tests/Vulgata.Tests/PreparedSource/PreparedSourceToolFunctionTests.cs": "063651738910308b7aaffa5a5da454465b8b4b67851c219ebc7778d0ef97de64"
+    },
+    "owned_paths": [
+      ".gitattributes",
+      "tests/Vulgata.Tests/TestInfrastructure/suites.json",
+      "tests/Vulgata.Tests/PostgreSqlHeavyCollection.cs",
+      "tests/Vulgata.Tests/PreparedSource/PreparedSourceAuthorityLifecycleTests.cs",
+      "tests/Vulgata.Tests/PreparedSource/PreparedSourceBasicReadTests.cs",
+      "tests/Vulgata.Tests/PreparedSource/PreparedSourceCancellationBudgetTests.cs",
+      "tests/Vulgata.Tests/PreparedSource/PreparedSourceContainmentTests.cs",
+      "tests/Vulgata.Tests/PreparedSource/PreparedSourceFailureTests.cs",
+      "tests/Vulgata.Tests/PreparedSource/PreparedSourceFixture.cs",
+      "tests/Vulgata.Tests/PreparedSource/PreparedSourceGrantTests.cs",
+      "tests/Vulgata.Tests/PreparedSource/PreparedSourceListTests.cs",
+      "tests/Vulgata.Tests/PreparedSource/PreparedSourceRangeReadTests.cs",
+      "tests/Vulgata.Tests/PreparedSource/PreparedSourceSearchTests.cs",
+      "tests/Vulgata.Tests/PreparedSource/PreparedSourceToolFunctionTests.cs"
+    ],
+    "test_paths": [
+      "tests/Vulgata.Tests/PostgreSqlHeavyCollection.cs",
+      "tests/Vulgata.Tests/PreparedSource/PreparedSourceAuthorityLifecycleTests.cs",
+      "tests/Vulgata.Tests/PreparedSource/PreparedSourceBasicReadTests.cs",
+      "tests/Vulgata.Tests/PreparedSource/PreparedSourceCancellationBudgetTests.cs",
+      "tests/Vulgata.Tests/PreparedSource/PreparedSourceContainmentTests.cs",
+      "tests/Vulgata.Tests/PreparedSource/PreparedSourceFailureTests.cs",
+      "tests/Vulgata.Tests/PreparedSource/PreparedSourceFixture.cs",
+      "tests/Vulgata.Tests/PreparedSource/PreparedSourceGrantTests.cs",
+      "tests/Vulgata.Tests/PreparedSource/PreparedSourceListTests.cs",
+      "tests/Vulgata.Tests/PreparedSource/PreparedSourceRangeReadTests.cs",
+      "tests/Vulgata.Tests/PreparedSource/PreparedSourceSearchTests.cs",
+      "tests/Vulgata.Tests/PreparedSource/PreparedSourceToolFunctionTests.cs"
+    ],
+    "coverage_reason": "PreparedSource tests and helpers use owned temporary files/directories plus in-memory controlled authority and have no external database, service, credential, listener, or native-process dependency, so SelfContained is the correct suite. PostgreSqlHeavyCollection is explicitly classified PostgreSql.",
+    "final_shape_assessment": "The adaptation is mechanical and one-to-one: every test has one matching Suite trait and guarded SuiteFact/SuiteTheory; helper classification is explicit; no bare Fact/Theory, assertion change, or production edit remains.",
+    "summary": "The rebased Story 18.1 test boundary now satisfies the repository test-isolation policy and the complete PreparedSource focused suite passes 119/119 with no skips."
+  }
+}

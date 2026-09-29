@@ -1,0 +1,15 @@
+Command: pwsh -NoProfile -File eng/test.ps1 -PolicyOnly
+Exit code: 1
+
+Unclassified source: PostgreSqlHeavyCollection.cs
+Unclassified source: PreparedSource/PreparedSourceAuthorityLifecycleTests.cs
+Unclassified source: PreparedSource/PreparedSourceBasicReadTests.cs
+Unclassified source: PreparedSource/PreparedSourceCancellationBudgetTests.cs
+Unclassified source: PreparedSource/PreparedSourceContainmentTests.cs
+Unclassified source: PreparedSource/PreparedSourceFailureTests.cs
+Unclassified source: PreparedSource/PreparedSourceFixture.cs
+Unclassified source: PreparedSource/PreparedSourceGrantTests.cs
+Unclassified source: PreparedSource/PreparedSourceListTests.cs
+Unclassified source: PreparedSource/PreparedSourceRangeReadTests.cs
+Unclassified source: PreparedSource/PreparedSourceSearchTests.cs
+Unclassified source: PreparedSource/PreparedSourceToolFunctionTests.cs
