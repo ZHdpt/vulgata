@@ -47,15 +47,15 @@
   "bmad_story_key": "18-1-access-prepared-source-through-contained-read-only-tools",
   "checkpoint": {
     "binding_status": "pending",
-    "checkpoint_id": "bmad-18-1-final-test-hygiene-20260929T024000Z-7210fe",
+    "checkpoint_id": "bmad-18-1-final-hygiene-quality-candidate-20260929T025714Z-44bb9e",
     "commit_sha": null,
-    "stage": "implement"
+    "stage": "lookback"
   },
   "convergence": {
-    "attempt": 4,
-    "outcome": "pending",
-    "report_path": "specs/016-contained-source-tools/evidence/convergence-result-05.json",
-    "status": "invalidated"
+    "attempt": 5,
+    "outcome": "converged",
+    "report_path": "specs/016-contained-source-tools/evidence/convergence-result-06.json",
+    "status": "accepted"
   },
   "current_evidence_paths": [
     "docs/bmad/implementation-artifacts/18-1-access-prepared-source-through-contained-read-only-tools.md",
@@ -63,13 +63,13 @@
     "specs/016-contained-source-tools/evidence/definition-review-result-04.json",
     "specs/016-contained-source-tools/evidence/recovery-extension-02.json",
     "specs/016-contained-source-tools/evidence/verify-infrastructure-resolution-01.json",
-    "specs/016-contained-source-tools/evidence/verify-test-correction-focused-command-01.json",
+    "specs/016-contained-source-tools/evidence/verify-test-correction-focused-command-02.json",
     "specs/016-contained-source-tools/evidence/quality-diagnosis-03.json",
-    "specs/016-contained-source-tools/evidence/diagnosis-retained-source-isolated-output-01.txt",
-    "specs/016-contained-source-tools/evidence/diagnosis-durable-scan-isolated-output-01.txt",
-    "specs/016-contained-source-tools/evidence/workflow-transition-042-diagnosis.json",
+    "specs/016-contained-source-tools/evidence/implementation-correction-03.json",
+    "specs/016-contained-source-tools/evidence/story-lookback-05.json",
+    "specs/016-contained-source-tools/evidence/convergence-result-06.json",
     "specs/016-contained-source-tools/evidence/verify-test-failure-03.json",
-    "specs/016-contained-source-tools/evidence/workflow-transition-040-verify-test-pause.json"
+    "specs/016-contained-source-tools/evidence/workflow-transition-044-convergence-accept.json"
   ],
   "definition_author": {
     "escalation_decision_id": null,
@@ -99,10 +99,10 @@
   },
   "lookback": {
     "evidence": {
-      "path": "specs/016-contained-source-tools/evidence/story-lookback-04.json",
-      "sha256": "1bace5e597cd1aba5e3e09898be9fdfabaac0b4d81958b4e783bba340d1b3653"
+      "path": "specs/016-contained-source-tools/evidence/story-lookback-05.json",
+      "sha256": "44bb9ee49b3538c1f269b0ec23cf85aad404dd489cd5209fda6f48e4ec48c8e5"
     },
-    "status": "invalidated"
+    "status": "current"
   },
   "preflight": {
     "branch": "(detached-native-handoff)",
@@ -112,7 +112,7 @@
     "status_sha256": "811e45acb3329b898a1a92b4bc69e9a8b9fb70ef8e97a5beba0dacd2c4ca0a74"
   },
   "recovery": {
-    "action": "correct",
+    "action": "proceed",
     "closing_gate": "verify",
     "diagnosis": {
       "at_count": 6,
@@ -134,14 +134,14 @@
   },
   "resume": {
     "evidence_path": "specs/016-contained-source-tools/evidence/verify-test-failure-03.json",
-    "reason": "Diagnosis at count 6 identifies a stale cross-platform fingerprint and PostgreSQL full-suite contention; apply only the bounded test/artifact correction.",
-    "stage": "implement"
+    "reason": "Fresh convergence and Story Lookback are current after the bounded test/artifact correction; run independent quality review.",
+    "stage": "quality-review"
   },
   "schema_version": "3.1",
-  "stage": "implement",
+  "stage": "quality-review",
   "transition_head": {
-    "path": "specs/016-contained-source-tools/evidence/workflow-transition-042-diagnosis.json",
-    "sha256": "5a02e1ba092cf1fde2fa3e6d23608d9eb2b666e955cbc5779a11fee957de32e9"
+    "path": "specs/016-contained-source-tools/evidence/workflow-transition-044-convergence-accept.json",
+    "sha256": "140be50c79e7f7aed52bd7a3a80e5b45f6f5122d2425ebc136de668d80a1c0a3"
   },
-  "updated_at": "2026-09-29T02:37:00Z"
+  "updated_at": "2026-09-29T02:59:00Z"
 }

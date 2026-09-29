@@ -11,3 +11,9 @@ Before implementation approval, verify that every new public seam names its cons
 Applies when a test constructs `VulgataDbContext` directly against PostgreSQL and migrates a disposable database across multiple contexts or target migrations. A fixture that relies on provider-default migration-history placement can create the domain schema successfully, then fail on its next context by replaying `InitialVulgataDomain` and colliding with an existing table.
 
 Configure Npgsql test contexts with `MigrationsHistoryTable("__EFMigrationsHistory", "public")`, matching production and current fixture composition. Prove the correction against a newly created owned database and the complete affected migration-test class; do not attribute `relation already exists` to retained database contamination until the unique-database lifecycle reproduces it. Last verified during Story 18.1 final verification on 2026-09-29.
+
+## Canonicalize hash-bound resources and serialize shared database pressure
+
+Applies when tests compare an embedded resource's exact fingerprint across platforms or when many isolated PostgreSQL fixtures share one local server during a large parallel suite. Identical logical JSON can compile to different resource bytes when checkout EOL policy is unspecified, and GUID database ownership prevents collisions but does not prevent connection, migration or cleanup pressure.
+
+Pin every hash-bound source and embedded copy to one EOL policy in `.gitattributes`, derive the reviewed fingerprint from those canonical bytes, and verify both copies remain identical. For database tests that are individually green but time out only in the parallel full suite, preserve their unique database names and cleanup assertions while placing the expensive classes in an explicit disabled-parallelization collection. Diagnose with serial fresh-database runs before changing timeouts or product code. Last verified during Story 18.1 final verification on 2026-09-29.
