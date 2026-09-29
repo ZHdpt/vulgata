@@ -1,3 +1,9 @@
+# LF pilot: exact paths only; preserve all existing artifact-specific rules.
+/.gitattributes text eol=lf
+/.editorconfig text eol=lf
+/.gitignore text eol=lf
+/docs/agent-workflow/lf-adoption-preparation-2026-09-29.md text eol=lf
+
 /docker/codegraph/requirements.lock text eol=lf
 /specs/002-language-framework-detection/spec.md text eol=lf
 /specs/002-language-framework-detection/plan.md text eol=lf
