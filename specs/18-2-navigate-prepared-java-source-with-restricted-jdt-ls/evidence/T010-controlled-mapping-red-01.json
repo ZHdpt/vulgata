@@ -1,0 +1,18 @@
+{
+  "kind": "behavioral-red",
+  "stage": "implement",
+  "task_id": "T010",
+  "slice": "controlled raw in-root JDT file URI maps through opened context to Repository-relative definition",
+  "test_path": "tests/Vulgata.Tests/AnalysisRuntime/JdtLsPreparedNavigationTests.cs",
+  "test_sha256": "c8b87cdceb471d2fd4e12c0b62adc8222d9d5065193e828b132f62becf9f0942",
+  "command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName~JdtLsPreparedNavigationTests'",
+  "exit_code": 1,
+  "selected": 2,
+  "passed": 1,
+  "failed": 1,
+  "skipped": 0,
+  "trx_path": "TestResults/isolation-b2765140394f4ba09ed2ebf4fd069384/results.trx",
+  "trx_sha256": "63d7d5ae8fee72e9d0957e1e113393d7ca96ee9f30d4b457cabb5bfd919a27c8",
+  "result": "Factory opened a current JdtNavigation context using an injected runtime. The test expected Observed with one literal Repository-relative Target.java range; actual context returned ConfigurationUnavailable before navigating. No process started.",
+  "environment": "Restricted build was denied Vulgata.Core obj cache write (MSB3491); approved native launcher reached product assertion."
+}

@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using Vulgata.Core.DomainServices;
 using Vulgata.Infrastructure.Source;
 
@@ -80,6 +81,15 @@ public sealed record PreparedJdtLsRawLocation(
 /// </summary>
 public sealed class PreparedJavaNavigationContextFactory
 {
+    private static readonly ConcurrentDictionary<Guid, RepositorySlot> RepositorySlots = new();
+
+    private sealed class RepositorySlot
+    {
+        internal SemaphoreSlim Gate { get; } = new(1, 1);
+
+        internal bool Quarantined { get; set; }
+    }
+
     private readonly PreparedJavaNavigationProfile _profile;
     private readonly IPreparedJdtLsRuntime _runtime;
 
@@ -119,37 +129,102 @@ public sealed class PreparedJavaNavigationContextFactory
             return Failed(Map(leaseStatus));
         }
 
-        IPreparedJdtLsSession session;
+        RepositorySlot slot = RepositorySlots.GetOrAdd(
+            workspaceLease.RepositoryId, static _ => new RepositorySlot());
+        using var waitDeadline = new CancellationTokenSource(_profile.InitializationTimeout);
+        using var waitToken = CancellationTokenSource.CreateLinkedTokenSource(
+            cancellationToken, waitDeadline.Token);
         try
         {
-            session = await _runtime.OpenAsync(workspaceLease, _profile, cancellationToken);
+            await slot.Gate.WaitAsync(waitToken.Token);
         }
-        catch (PreparedJdtLsOpenFailureException failure)
+        catch (OperationCanceledException)
         {
-            return Failed(failure.CleanupConfirmed
-                ? failure.Status
-                : PreparedJavaNavigationOpenStatus.CleanupUnconfirmed);
-        }
-        catch (Exception)
-        {
-            return Failed(PreparedJavaNavigationOpenStatus.CleanupUnconfirmed);
+            return Failed(cancellationToken.IsCancellationRequested
+                ? PreparedJavaNavigationOpenStatus.Cancelled
+                : PreparedJavaNavigationOpenStatus.DeadlineExceeded);
         }
 
-        if (session is null)
+        bool transferred = false;
+        try
         {
-            return Failed(PreparedJavaNavigationOpenStatus.CleanupUnconfirmed);
-        }
+            if (slot.Quarantined)
+            {
+                return Failed(PreparedJavaNavigationOpenStatus.CleanupUnconfirmed);
+            }
 
-        leaseStatus = await workspaceLease.CheckCurrentAsync(cancellationToken);
-        if (leaseStatus != PreparedToolWorkspaceCheckStatus.Current)
+            leaseStatus = await workspaceLease.CheckCurrentAsync(cancellationToken);
+            if (leaseStatus != PreparedToolWorkspaceCheckStatus.Current)
+            {
+                return Failed(Map(leaseStatus));
+            }
+
+            IPreparedJdtLsSession session;
+            try
+            {
+                session = await _runtime.OpenAsync(workspaceLease, _profile, cancellationToken);
+            }
+            catch (PreparedJdtLsOpenFailureException failure)
+            {
+                if (!failure.CleanupConfirmed)
+                {
+                    slot.Quarantined = true;
+                }
+
+                return Failed(failure.CleanupConfirmed
+                    ? failure.Status
+                    : PreparedJavaNavigationOpenStatus.CleanupUnconfirmed);
+            }
+            catch (Exception)
+            {
+                slot.Quarantined = true;
+                return Failed(PreparedJavaNavigationOpenStatus.CleanupUnconfirmed);
+            }
+
+            if (session is null)
+            {
+                slot.Quarantined = true;
+                return Failed(PreparedJavaNavigationOpenStatus.CleanupUnconfirmed);
+            }
+
+            leaseStatus = await workspaceLease.CheckCurrentAsync(cancellationToken);
+            if (leaseStatus != PreparedToolWorkspaceCheckStatus.Current)
+            {
+                try
+                {
+                    await session.DisposeAsync();
+                    return Failed(Map(leaseStatus));
+                }
+                catch (Exception)
+                {
+                    slot.Quarantined = true;
+                    return Failed(PreparedJavaNavigationOpenStatus.CleanupUnconfirmed);
+                }
+            }
+
+            transferred = true;
+            return new PreparedJavaNavigationOpenResult(
+                PreparedJavaNavigationOpenStatus.Opened,
+                new PreparedJdtLsNavigationContext(
+                    workspaceLease,
+                    session,
+                    cleanupConfirmed =>
+                    {
+                        if (!cleanupConfirmed)
+                        {
+                            slot.Quarantined = true;
+                        }
+
+                        slot.Gate.Release();
+                    }));
+        }
+        finally
         {
-            await session.DisposeAsync();
-            return Failed(Map(leaseStatus));
+            if (!transferred)
+            {
+                slot.Gate.Release();
+            }
         }
-
-        return new PreparedJavaNavigationOpenResult(
-            PreparedJavaNavigationOpenStatus.Opened,
-            new PreparedJdtLsNavigationContext(workspaceLease, session));
     }
 
     private static bool ValidProfile(PreparedJavaNavigationProfile profile) =>

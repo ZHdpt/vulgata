@@ -1,0 +1,24 @@
+{
+  "kind": "behavioral-green",
+  "stage": "implement",
+  "tasks": ["T010", "T011"],
+  "slice": "atomic same-Repository runtime-open slot and cancellable waiter; tasks incomplete",
+  "production": {
+    "src/dotnet/Vulgata.Infrastructure/Analysis/Java/PreparedJavaNavigationContextFactory.cs": "dfd57547345df8e72e7f5d8f2994e6f19c47bacbbf8a1e4624139d297256aff9",
+    "src/dotnet/Vulgata.Infrastructure/Analysis/Java/PreparedJdtLsNavigationContext.cs": "78d97b227b0efe53a8c79cfa75cd500d2ce06c81b3137fbbebca60e523948296"
+  },
+  "test_path": "tests/Vulgata.Tests/AnalysisRuntime/JdtLsPreparedNavigationTests.cs",
+  "test_sha256": "63f07724ff0f3ec4c66d36e661072bdd8b2727207f8655393dca1b47d95ba343",
+  "red_evidence": "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/evidence/T010-active-slot-red-01.json",
+  "command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName~JdtLsPreparedNavigationTests|FullyQualifiedName~PreparedToolWorkspaceIssuerTests'",
+  "exit_code": 0,
+  "selected": 35,
+  "passed": 35,
+  "failed": 0,
+  "skipped": 0,
+  "trx_path": "TestResults/isolation-e1824d2bac9a47ce8a3df0c977037f71/results.trx",
+  "trx_sha256": "d7c1560bcd0560638482e6c124a7f95e0c5afbdf7952a12fa854acc9e349c694",
+  "environment": "Approved native launcher; restricted build denied Infrastructure DLL write. Controlled injected runtime only; zero Java or JDT-LS process starts.",
+  "minimal_green": "Factory reserves a process-wide per-Repository slot before invoking runtime, waits with bounded/cancellable token, releases after confirmed failure or returned context disposal, and quarantines unconfirmed settlement.",
+  "final_shape": "Separate owners assessed factory/context and barrier test. Slot reservation/release is covered; profile/root separation, runtime-open timeout, quarantine resolution and broader protocol failure handling remain unfinished."
+}

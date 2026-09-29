@@ -1,0 +1,18 @@
+{
+  "kind": "behavioral-red",
+  "stage": "implement",
+  "task_id": "T010",
+  "slice": "unconfirmed runtime cleanup quarantines same Repository slot before another open",
+  "test_path": "tests/Vulgata.Tests/AnalysisRuntime/JdtLsPreparedNavigationTests.cs",
+  "test_sha256": "60ab2aa1169bcb7114db867b91635aaf01c34f88d8827ed28daa46e3525abadc",
+  "command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName~JdtLsPreparedNavigationTests'",
+  "exit_code": 1,
+  "selected": 3,
+  "passed": 2,
+  "failed": 1,
+  "skipped": 0,
+  "trx_path": "TestResults/isolation-50327fc1c8f8446ea99d7a8b165d300f/results.trx",
+  "trx_sha256": "7780f308bb93234d821453b67d79eb2507e3a1eadcb79bd556ab2f35f753a949",
+  "result": "Injected runtime reported ReadinessFailed with cleanupConfirmed=false on first open; first status was CleanupUnconfirmed with null context. Same-factory second open invoked runtime again (OpenCallCount actual 2, expected 1), leaving unconfirmed resource slot unquarantined.",
+  "environment": "Restricted build denied test obj manifest write (MSB4018); approved native launcher reached product assertion. No Java or JDT-LS process started."
+}

@@ -1,0 +1,23 @@
+{
+  "kind": "behavioral-green",
+  "stage": "implement",
+  "tasks": ["T010", "T011"],
+  "slice": "controlled raw in-root JDT file URI maps through opened context to Repository-relative definition; tasks incomplete",
+  "production": {
+    "src/dotnet/Vulgata.Infrastructure/Analysis/Java/PreparedJdtLsNavigationContext.cs": "fb79e25e3d4bc9dfbf075a153e66e71bc2cd0d67531919823621545a4e1bf3a0"
+  },
+  "test_path": "tests/Vulgata.Tests/AnalysisRuntime/JdtLsPreparedNavigationTests.cs",
+  "test_sha256": "c8b87cdceb471d2fd4e12c0b62adc8222d9d5065193e828b132f62becf9f0942",
+  "red_evidence": "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/evidence/T010-controlled-mapping-red-01.json",
+  "command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName~JdtLsPreparedNavigationTests|FullyQualifiedName~PreparedToolWorkspaceIssuerTests'",
+  "exit_code": 0,
+  "selected": 33,
+  "passed": 33,
+  "failed": 0,
+  "skipped": 0,
+  "trx_path": "TestResults/isolation-b651d77087454664b9c9d3637ec00641/results.trx",
+  "trx_sha256": "fe06c5ae9defe27952aeaf860b77689712ced6d4b8d22d19f9e0a99eff329b13",
+  "environment": "Approved native launcher; restricted build was denied Infrastructure DLL write. Controlled injected runtime only; zero Java or JDT-LS process starts.",
+  "minimal_green": "Context invokes the injected session, maps raw file URI only through short internal contained-root scope, then rechecks live authority before returning contained relative location and range.",
+  "final_shape": "Separate owners assessed the focused test and affected context; no local refactor required. Request timeout, raw limitation classification, adversarial mapping and session slot cleanup remain accepted unfinished work."
+}
