@@ -4,9 +4,9 @@
 
 **Created**: 2026-09-29
 
-**Status**: Draft — phased delivery subject to normal gates and a verified Story 18.2 integration dependency
+**Status**: Draft — CodeGraph index placement decision and Story 18.2 checkpoint unresolved
 
-**Input**: Story 18.3 in the October release epics, using the agreed source/tool F0 boundary and the integrated, verified Story 18.1 prepared-source contract. Story 18.2 owns the shared trusted physical-workspace contract; independent Story 18.3 work may proceed through normal gates before its checkpoint, while physical integration waits for an identifiable verified checkpoint and affected review.
+**Input**: Story 18.3 in the October release epics, using the agreed source/tool F0 boundary and the integrated, verified Story 18.1 prepared-source contract. Story 18.2 owns shared source/root authority and lease; Story 18.3 owns CodeGraph-specific writable index placement. Physical integration awaits an approved safe placement decision and an identifiable verified Story 18.2 checkpoint.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -24,6 +24,7 @@ As a Worker-tool integrator, I want a Worker to discover and invoke CodeGraph's 
 2. **Given** a small indexed fixture, **when** a granted native tool is invoked, **then** its genuine result is observable with the correct Repository binding and usable source location or content; a CLI-only wrapper or CodeGraphContext result does not satisfy this outcome.
 3. **Given** a caller attempts to select a foreign Repository, physical path, or different project through tool arguments, **when** discovery or invocation occurs, **then** the request is denied or confined to the application-selected prepared root, without disclosing outside-root source.
 4. **Given** the current batch, Repository, subject, Worker-source-read purpose, approval and root-binding identity changes or cannot be verified, **when** a native result is about to be disclosed, **then** source content and locations are withheld and the prior binding cannot be reused.
+5. **Given** CodeGraph requires writable index state within its project tree, **when** no approved source-bound disposable project/index placement exists, **then** production preparation and native invocation remain unavailable without writing the operator-prepared root or making an unapproved source copy.
 
 ---
 
@@ -64,6 +65,7 @@ As a delivery reviewer, I want evidence of the actual CodeGraph version and one 
 - A caller reuses a stale tool handle after the application-selected Repository changes, exact approval/root binding changes, authority becomes unavailable, the tool session expires, or access is revoked.
 - A process exits unexpectedly, a request times out, or cancellation arrives while a tool is starting or returning output.
 - Multiple requests for different prepared Repositories occur concurrently; one request must not inherit another's project binding or output.
+- CodeGraph preparation tries to create an in-project index under the operator-prepared live root, or an apparent external-index setting resolves back inside that root; no outside setting or fixture result makes this safe by itself.
 
 ## Requirements *(mandatory)*
 
@@ -78,12 +80,14 @@ As a delivery reviewer, I want evidence of the actual CodeGraph version and one 
 - **FR-007**: The system MUST provide reviewable evidence for the selected host composition that identifies the actual CodeGraph version and demonstrates native discovery, a useful invocation/result, and correct-root/foreign-root behavior against a small prepared fixture. (Story 18.3)
 - **FR-008**: CodeGraph results MUST be treated as bounded source evidence with explicit limitations, not as exhaustive coverage or permanent Code Unit identity. (FR-4.9; AD-4/AD-6)
 - **FR-009**: Native discovery, invocation and result disclosure MUST fail closed when the exact current prepared-source authority is revoked, changed or unavailable; a previously valid grant or expired tool session cannot authorize a later result. (Story 18.1 F0; O-NFR01)
+- **FR-010**: Story 18.3 MUST own a safe source-bound disposable placement for CodeGraph's writable in-project index before production preparation or native invocation. The operator-prepared live root MUST remain unchanged, source MUST NOT be copied without separately approved authority, and Story 18.2's shared source/root lease MUST NOT be expanded into a CodeGraph index-placement grant by inference. If these conditions cannot be met, preparation MUST report an explicit unavailable/blocking outcome rather than attempt an unsafe write or claim readiness. (O-FR05/O-NFR01; AD-3/AD-6)
 
 ### Key Entities
 
 - **Prepared Repository binding**: Story 18.1's exact application-approved batch, Repository, subject, Worker-source-read purpose, approval identity and root-binding identity. Its physical root and operating-system handles remain private to trusted Infrastructure and are not model-visible fields.
 - **CodeGraph readiness**: The separately observable preparation and native connection/discovery capability for that binding, including limitations or failures.
 - **Native tool grant**: The subset of CodeGraph's native MCP surface authorized for the current Worker purpose and prepared binding during a bounded tool session.
+- **CodeGraph index placement**: The Story 18.3-owned source-bound disposable project/index location required by the pinned CodeGraph tool; its mechanism and authority remain subject to an explicit architecture decision.
 - **Invocation outcome**: The bounded native result or explicit failure, with its binding and source location/provenance where supplied by the tool.
 
 ## Success Criteria *(mandatory)*
@@ -96,11 +100,13 @@ As a delivery reviewer, I want evidence of the actual CodeGraph version and one 
 - **SC-004**: For controlled failure/cancellation cases, owned request resources are settled and an independent authorized file-tool request still succeeds.
 - **SC-005**: A reviewer can distinguish native MCP qualification evidence from existing CLI/JSON tests, simulated responses, and model/provider behavior without relying on inference.
 - **SC-006**: In controlled revocation, changed-approval, unavailable-authority and expired-session cases, zero buffered native source content or locations are disclosed after the loss of authority or session validity.
+- **SC-007**: In a selected-host prepared-source check, production preparation either uses an approved source-bound disposable project/index location without writing the operator-prepared root or making an unapproved copy, or returns an explicit unavailable outcome before either action.
 
 ## Assumptions
 
 - Story 18.1 is integrated and verified in this checkout. Its accepted public Agent seam is one issued, bounded, disposable read context exposing only `list_prepared_source`, `read_prepared_source` and `search_prepared_source`. Trusted application composition supplies the physical prepared-directory root to Infrastructure; physical path and operating-system handles stay private. Its live exact-authority verification, terminal closure on revocation/unavailability, and caller-owned context disposal are binding inputs to this story. These facts do not establish native CodeGraph qualification.
-- Story 18.1 does not expose a trusted physical workspace lease through its public Agent seam. Native CodeGraph preparation and MCP need contained physical access. The integration coordinator assigned Story 18.2 ownership of one shared trusted physical-workspace contract, its implementation and focused tests. Its identifiable verified checkpoint does not yet exist in this boundary. Story 18.3 must not invent a parallel authority/lease contract, expose Story 18.1's private path/handles, alter its three-function public seam, or couple CodeGraph behavior to JDT-LS.
+- Story 18.1 does not expose a trusted physical workspace lease through its public Agent seam. The integration coordinator assigned Story 18.2 the shared prepared-source read/root authority and lease lifetime, implementation and focused tests. Story 18.3 owns CodeGraph-specific writable index placement; it consumes, but does not redefine, an identifiable verified Story 18.2 lease checkpoint that does not yet exist. It must not invent a parallel source authority/lease, expose Story 18.1's private path/handles, alter its three-function public seam, or couple CodeGraph behavior to JDT-LS.
+- The pinned CodeGraph 1.5.0 installation accepts only a single in-project directory segment for `CODEGRAPH_DIR`; absolute, separator and traversal overrides do not place its index outside the project, and its init/serve commands expose no external-index path. The previous assumption that Story 18.2 could simply supply separate writable `.codegraph` placement is invalid. The safe source-bound disposable project/index mechanism and any required source-copy or mount authority are an unresolved architecture decision for the user after an independently reviewed concrete plan. This specification grants neither a source copy nor a live-root write.
 - The selected host composition and declared CodeGraph installation are configuration/qualification inputs, not proof of availability. An actual version and native smoke result are required during delivery; this document claims no runtime or provider qualification.
 - Story 18.3 does not add general registered-MCP product management, arbitrary external tools, JDT-LS, Knowledge storage, real model generation, or a new research/protocol framework. Those have separate ownership or backlog dispositions.
 - Existing Git-bound Source Snapshot and CodeGraph CLI/JSON behavior remain historical/current implementation context. Prepared origin is a distinct October input, and CodeGraphContext or a CLI-only response wrapper cannot satisfy this story.
@@ -108,5 +114,5 @@ As a delivery reviewer, I want evidence of the actual CodeGraph version and one 
 ## Delivery Sequencing
 
 - After an accepted independent plan review and the mandatory planned-change authorization, tasks may describe independent native MCP client, closed Worker tool wrapper and controlled-session test work. Implementation of those independent slices requires accepted complete-definition review and implementation approval. This sequencing is not itself an approval or evidence that any gate has passed.
-- Physical-root preparation/integration, application-bound native invocation and Vulgata host qualification remain conditional on an identifiable verified Story 18.2 shared-workspace checkpoint. Reconcile its actual authority, containment, lifetime and safe tool-state placement through the affected plan, tasks and independent review before executing those dependent slices. A task may name the dependency, but cannot treat the missing checkpoint as fulfilled.
+- Physical-root preparation/integration, application-bound native invocation and Vulgata host qualification remain conditional on both an identifiable verified Story 18.2 shared-root/lease checkpoint and an approved Story 18.3 CodeGraph index-placement design. Reconcile the actual authority, containment, lifetime and placement through the affected plan, tasks and independent review before executing dependent slices. A task may name these dependencies, but cannot treat either as fulfilled. Completed independent client/wrapper work retains its valid evidence under the unchanged behavior boundary.
 - The standalone native CodeGraph fixture probe establishes transport capability only. It does not prove Vulgata Agent integration, live Story 18.1 authorization, foreign-root denial, cancellation or safe production preparation.
