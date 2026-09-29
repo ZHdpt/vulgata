@@ -1,0 +1,26 @@
+{
+  "observed_after": {
+    "path": "specs/016-contained-source-tools/evidence/workflow-transition-035-verify-test-failure.json",
+    "sha256": "c7bd546bd21ea3cab9f14792c3b7221c2c31c65525133b5a8a6d43509345e69a"
+  },
+  "raw_result": {
+    "kind": "command",
+    "stage": "verify-focused",
+    "source_commit": "fddf70e1432a5236f1fa09942288d0d33d75444b",
+    "observed_at": "2026-09-29T01:42:24.8838595Z",
+    "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --no-restore --filter \"FullyQualifiedName~Vulgata.Tests.ExactCrossRepositoryMigrationTests\" --logger \"console;verbosity=minimal\"",
+    "exit_code": 0,
+    "raw_output_path": "specs/016-contained-source-tools/evidence/verify-test-correction-focused-output-01.txt",
+    "raw_output_sha256": "1104d494b2353face9895307bf5c17eba4469f56a9cbf1951b940ace759d5cbc",
+    "input_hashes": {
+      "specs/016-contained-source-tools/spec.md": "48c92e4f6582471a1664e553b48756a811f22bb2b4f1334206e94303629b0b6d",
+      "specs/016-contained-source-tools/plan.md": "b375723e56c8cdc7990a4e7a624c5f58a78fde07d9a23edd79e25025c54fce08",
+      "specs/016-contained-source-tools/tasks.md": "b345d7322f8777d8fda77a153c48af954e7ed18a185cf648f8c309ef0d0a8a1b",
+      "tests/Vulgata.Tests/ExactCrossRepositoryMigrationTests.cs": "cdda4977218d32aebf8514ab3da139b6f54fbd29c720eb8b097f5975c576ebe2"
+    },
+    "owned_paths": [
+      "tests/Vulgata.Tests/ExactCrossRepositoryMigrationTests.cs"
+    ],
+    "summary": "All four exact cross-repository migration tests passed against PostgreSQL 17 after the test fixture adopted the repository-standard public migration-history table."
+  }
+}

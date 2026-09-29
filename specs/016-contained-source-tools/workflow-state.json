@@ -40,15 +40,15 @@
   "bmad_story_key": "18-1-access-prepared-source-through-contained-read-only-tools",
   "checkpoint": {
     "binding_status": "pending",
-    "checkpoint_id": "bmad-18-1-final-quality-candidate-20260928T113948Z-91d30b",
+    "checkpoint_id": "bmad-18-1-final-test-quality-candidate-20260929T015158Z-1bace5",
     "commit_sha": null,
     "stage": "lookback"
   },
   "convergence": {
-    "attempt": 3,
-    "outcome": "pending",
-    "report_path": "specs/016-contained-source-tools/evidence/convergence-result-04.json",
-    "status": "invalidated"
+    "attempt": 4,
+    "outcome": "converged",
+    "report_path": "specs/016-contained-source-tools/evidence/convergence-result-05.json",
+    "status": "accepted"
   },
   "current_evidence_paths": [
     "docs/bmad/implementation-artifacts/18-1-access-prepared-source-through-contained-read-only-tools.md",
@@ -59,7 +59,10 @@
     "specs/016-contained-source-tools/evidence/quality-diagnosis-02.json",
     "specs/016-contained-source-tools/evidence/verify-infrastructure-resolution-01.json",
     "specs/016-contained-source-tools/evidence/verify-test-failure-02.json",
-    "specs/016-contained-source-tools/evidence/workflow-transition-035-verify-test-failure.json"
+    "specs/016-contained-source-tools/evidence/verify-test-correction-focused-command-01.json",
+    "specs/016-contained-source-tools/evidence/convergence-result-05.json",
+    "specs/016-contained-source-tools/evidence/workflow-transition-037-convergence-accept.json",
+    "specs/016-contained-source-tools/evidence/story-lookback-04.json"
   ],
   "definition_author": {
     "escalation_decision_id": null,
@@ -89,10 +92,10 @@
   },
   "lookback": {
     "evidence": {
-      "path": "specs/016-contained-source-tools/evidence/story-lookback-03.json",
-      "sha256": "e3c7f4ebc74177b93c6ecc77ae808da4d40cc0f06d933a972af58831e54ade84"
+      "path": "specs/016-contained-source-tools/evidence/story-lookback-04.json",
+      "sha256": "1bace5e597cd1aba5e3e09898be9fdfabaac0b4d81958b4e783bba340d1b3653"
     },
-    "status": "invalidated"
+    "status": "current"
   },
   "preflight": {
     "branch": "(detached-native-handoff)",
@@ -102,7 +105,7 @@
     "status_sha256": "811e45acb3329b898a1a92b4bc69e9a8b9fb70ef8e97a5beba0dacd2c4ca0a74"
   },
   "recovery": {
-    "action": "correct",
+    "action": "proceed",
     "closing_gate": "verify",
     "diagnosis": {
       "at_count": 4,
@@ -123,15 +126,15 @@
     "pause_at": 6
   },
   "resume": {
-    "evidence_path": "specs/016-contained-source-tools/evidence/verify-test-failure-02.json",
-    "reason": "Correct the isolated PostgreSQL migration-history test fixture, then reconverge and repeat invalidated downstream gates.",
-    "stage": "implement"
+    "evidence_path": "specs/016-contained-source-tools/evidence/story-lookback-04.json",
+    "reason": "The test-only fixture correction reconverged and lookback-04 is current; run fresh independent quality review.",
+    "stage": "quality-review"
   },
   "schema_version": "3.1",
-  "stage": "implement",
+  "stage": "quality-review",
   "transition_head": {
-    "path": "specs/016-contained-source-tools/evidence/workflow-transition-035-verify-test-failure.json",
-    "sha256": "c7bd546bd21ea3cab9f14792c3b7221c2c31c65525133b5a8a6d43509345e69a"
+    "path": "specs/016-contained-source-tools/evidence/workflow-transition-037-convergence-accept.json",
+    "sha256": "d29d28a9392dd8c71c254d5694b2181eb01aeb0458cc03d01c63d486ab092e8c"
   },
-  "updated_at": "2026-09-29T01:33:12.5079989Z"
+  "updated_at": "2026-09-29T01:51:58.0517665Z"
 }
