@@ -61,15 +61,15 @@
   "bmad_story_key": "18-1-access-prepared-source-through-contained-read-only-tools",
   "checkpoint": {
     "binding_status": "pending",
-    "checkpoint_id": "bmad-18-1-convergence-t027-pause-20260929T045231Z-965de0",
+    "checkpoint_id": "bmad-18-1-converged-20260929T051942Z-5ef797",
     "commit_sha": null,
     "stage": "converge"
   },
   "convergence": {
-    "attempt": 5,
-    "outcome": "pending",
-    "report_path": "specs/016-contained-source-tools/evidence/convergence-result-06.json",
-    "status": "invalidated"
+    "attempt": 6,
+    "outcome": "converged",
+    "report_path": "specs/016-contained-source-tools/evidence/convergence-result-08.json",
+    "status": "accepted"
   },
   "current_evidence_paths": [
     "docs/bmad/implementation-artifacts/18-1-access-prepared-source-through-contained-read-only-tools.md",
@@ -80,9 +80,10 @@
     "specs/016-contained-source-tools/evidence/quality-diagnosis-05.json",
     "specs/016-contained-source-tools/evidence/verify-test-failure-04.json",
     "specs/016-contained-source-tools/evidence/test-policy-correction-01.json",
-    "specs/016-contained-source-tools/evidence/convergence-result-07.json",
+    "specs/016-contained-source-tools/evidence/convergence-result-08.json",
     "specs/016-contained-source-tools/evidence/t027-postgresql-qualification-01.json",
-    "specs/016-contained-source-tools/evidence/workflow-transition-055-t027-qualification-accept.json"
+    "specs/016-contained-source-tools/evidence/workflow-transition-056-convergence-accept.json",
+    "specs/016-contained-source-tools/evidence/story-lookback-06.json"
   ],
   "definition_author": {
     "escalation_decision_id": null,
@@ -112,10 +113,10 @@
   },
   "lookback": {
     "evidence": {
-      "path": "specs/016-contained-source-tools/evidence/story-lookback-05.json",
-      "sha256": "44bb9ee49b3538c1f269b0ec23cf85aad404dd489cd5209fda6f48e4ec48c8e5"
+      "path": "specs/016-contained-source-tools/evidence/story-lookback-06.json",
+      "sha256": "56ef1b9d7313202487901a875c939628f61ceb2ed7967fee30e3c8bf5812510a"
     },
-    "status": "invalidated"
+    "status": "current"
   },
   "preflight": {
     "branch": "(detached-native-handoff)",
@@ -146,15 +147,15 @@
     "pause_at": 9
   },
   "resume": {
-    "evidence_path": "specs/016-contained-source-tools/evidence/convergence-result-07.json",
-    "reason": "T027 passed 63/63 under the run-owned PostgreSql suite; mark the task complete and reconverge.",
-    "stage": "converge"
+    "evidence_path": "specs/016-contained-source-tools/evidence/story-lookback-06.json",
+    "reason": "Clean convergence and the refreshed current Story Lookback are ready for a fresh independent quality review.",
+    "stage": "quality-review"
   },
   "schema_version": "3.1",
-  "stage": "verify",
+  "stage": "quality-review",
   "transition_head": {
-    "path": "specs/016-contained-source-tools/evidence/workflow-transition-055-t027-qualification-accept.json",
-    "sha256": "a4beed30b0415b2f12b3f23e6a3cfd00a794d04a010921a8f0f2470cc6a0ce16"
+    "path": "specs/016-contained-source-tools/evidence/workflow-transition-056-convergence-accept.json",
+    "sha256": "89e5fc3c878f01379d8e803ca2a240cde12c05461e3f873fdb8051b11181f929"
   },
-  "updated_at": "2026-09-29T05:08:26.5606193Z"
+  "updated_at": "2026-09-29T05:18:35.1609446Z"
 }
