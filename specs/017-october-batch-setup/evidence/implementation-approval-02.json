@@ -1,0 +1,32 @@
+{
+  "kind": "human-approval",
+  "stage": "implementation-approval",
+  "decision_id": "18-4/implementation-approval/2",
+  "status": "accepted",
+  "scope_sha256": "724724bca7bfb3f57d82adf67512b590b4a3ff866938d4972616135ebab1853f",
+  "decided_at": "2026-09-29T11:22:29.4265806Z",
+  "user_instruction": "Approve implementation",
+  "user_source": {
+    "thread_id": "01a0e728-b7cc-78f1-8a3d-d0d49c7dfde2",
+    "turn_id": "01a0ece6-94fe-7d42-9a6f-c21cf773822a",
+    "message_id": "01a0ece6-95aa-72d2-9e2a-df68dd45edea"
+  },
+  "rebound_at": "2026-09-29T12:11:43.4684767Z",
+  "previous_scope_sha256": "3519a4110416b1a5ec4a56c043e4a48f55be895710c92a29a4d0398d65f5e2c0",
+  "rebound_reason": "Independent definition-review-06 confirmed the callable setup-seam and honest scaffold-to-RED sequencing clarification remain within the user's approved implementation semantics. It adds no new external resource permission, Worker tool, Scan strategy, PRD change or later-story scope.",
+  "previous_review": {
+    "path": "specs/017-october-batch-setup/evidence/definition-review-05.json",
+    "sha256": "dd5b0c1b7146a9098830a75a07dd0e8d075d1fd85ece4b6a4bdea90e369cd411"
+  },
+  "scope_material": "18-4/implementation-approval/2|18-4-prepare-an-owned-october-batch-with-valid-context-and-provid|implementation-approval|specs/017-october-batch-setup/evidence/definition-review-06.json|0cfd4b465720634a93ff115918486943d65459a6716eb6c40f36735af33c94c3|385bae441b60225f81da3d9dddedcaafc18aaa15|01a0ece6-95aa-72d2-9e2a-df68dd45edea",
+  "review": {
+    "path": "specs/017-october-batch-setup/evidence/definition-review-06.json",
+    "sha256": "0cfd4b465720634a93ff115918486943d65459a6716eb6c40f36735af33c94c3"
+  },
+  "checkpoint_commit": "385bae441b60225f81da3d9dddedcaafc18aaa15",
+  "approved_scope": "Implement and test the exact current Story 18.4 definition: authorization-only October Web, generator prepare/select, dedicated October persistence/migrations, exact database/batch selection, context provenance, provider binding, Story 18.1 approval/verifier/issuer composition, selected-data isolation and ordinary-startup isolation through the disclosed tasks T001-T030.",
+  "approval_permits": "Governed production and test changes for the accepted definition, using separate TDD test and production owners and all downstream review and verification gates.",
+  "approval_does_not_permit": "Creating or using external PostgreSQL, Identity or certificate resources; credentials or provider spending; destructive operations; JDT-LS, CodeGraph, Scan/Worker dispatch, Knowledge/Chat/later-story scope; recovery extensions; or verification waivers.",
+  "resource_hold": "T020 and T029 external qualification require a separate explicit owned-resource authorization and remain unavailable under this decision.",
+  "summary": "The user directly approved implementation after the corrected first-batch bootstrap definition received fresh independent plan and complete-definition acceptance."
+}

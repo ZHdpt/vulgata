@@ -35,7 +35,63 @@ Each handler and generator client forwards the request cancellation token throug
 
 The in-scope `src/dotnet/Vulgata.OctoberGenerator` console host has explicit `prepare` and `select` modes and no analysis loop. It takes mode, opaque target ID, exact batch ID, protected activation grant and, for `prepare`, the validated setup selection from a declared host configuration source. It never accepts a caller connection string or physical source path. First-batch `prepare` authenticates with the allowlisted client certificate against authorization-only bootstrap Web, validates the operator grant and local target mapping, checks the connected empty target identity read-only, then and only then runs authorized October migrations and atomically calls the shared `PrepareAsync` setup policy. It does not call `BindAsync` before the first batch exists. A failed check leaves the empty target unmigrated and no selectable batch. `select` validates the grant and calls the shared `BindAsync` selector for an existing exact batch, binds the selected setup capability for its process and emits sanitized target/batch/status before exiting; it runs no migration. Missing target, batch or mismatch exits nonzero before downstream October data access. Later stories may extend this host for generation without replacing its selection contract.
 
-The shared callable selector is `IOctoberBatchSelector.BindAsync(OctoberStartupSelection selection, CancellationToken cancellationToken)` where `OctoberStartupSelection` carries validated target ID, exact nonempty batch ID, and the trusted Web authorization result. It returns `OctoberSelectionResult` with a closed `Selected`, `MissingTarget`, `MissingBatch`, `BatchMismatch`, `Denied`, `AuthorityUnavailable`, or `Cancelled` status and a bound October setup-data capability only for `Selected`; no raw connection descriptor/EF context is exposed through the Core-facing result. A missing or mismatched pair cannot resolve a previous/latest batch. The shared setup policy has `PrepareAsync(OctoberSetupRequest request, OctoberAuthorizedSelection authority, CancellationToken cancellationToken)` returning a closed created/already-identical/conflict/denied/unavailable/cancelled outcome; only the selected Infrastructure writer opens the owned database after authorization.
+The shared callable selector is `IOctoberBatchSelector.BindAsync(OctoberStartupSelection selection, CancellationToken cancellationToken)` where `OctoberStartupSelection` carries validated target ID, exact nonempty batch ID, and the trusted Web authorization result. It returns `OctoberSelectionResult` with a closed `Selected`, `MissingTarget`, `MissingBatch`, `BatchMismatch`, `Denied`, `AuthorityUnavailable`, or `Cancelled` status and a bound October setup-data capability only for `Selected`; no raw connection descriptor/EF context is exposed through the Core-facing result. A missing or mismatched pair cannot resolve a previous/latest batch.
+
+### One callable Core setup policy
+
+The only Core setup policy callers invoke is `Vulgata.Core.DomainServices.OctoberBatchSetupPolicy`. Its public shape, including constructor, request/authority record construction and result, is fixed for test authors and both host compositions:
+
+```csharp
+public sealed class OctoberBatchSetupPolicy
+{
+    public OctoberBatchSetupPolicy(IOctoberSetupWriter writer);
+    public Task<OctoberPrepareResult> PrepareAsync(
+        OctoberSetupRequest request,
+        OctoberAuthorizedSelection authority,
+        CancellationToken cancellationToken = default);
+}
+
+public interface IOctoberSetupWriter
+{
+    Task<OctoberPrepareResult> CommitAsync(
+        OctoberSetupRequest request,
+        OctoberAuthorizedSelection authority,
+        CancellationToken cancellationToken = default);
+}
+
+public sealed record OctoberSetupRequest(
+    string TargetId,
+    Guid BatchId,
+    IReadOnlyList<OctoberRepositorySelection> Repositories,
+    IReadOnlyList<OctoberContextSelection> ContextSelections,
+    string SelectionDigest);
+public sealed record OctoberRepositorySelection(
+    Guid RepositoryId, Guid? SystemId,
+    string RootBindingIdentity, string OperatorLabel);
+public enum OctoberContextScope { Global, System, Repository }
+public sealed record OctoberContextSelection(
+    OctoberContextScope Scope, Guid RecordId);
+public sealed record OctoberAuthorizedSelection(
+    string TargetId, Guid BatchId, string SubjectId,
+    string CanonicalDatabaseIdentity,
+    IReadOnlyList<Guid> RepositoryIds,
+    string SelectionDigest);
+public enum OctoberPrepareStatus
+{
+    Created, AlreadyIdentical, Conflict, Denied,
+    AuthorityUnavailable, Cancelled, StorageFailure
+}
+public sealed record OctoberCommittedBatch(
+    string TargetId, Guid BatchId,
+    string CanonicalDatabaseIdentity, string SelectionDigest);
+public sealed record OctoberPrepareResult(
+    OctoberPrepareStatus Status,
+    OctoberCommittedBatch? CommittedBatch);
+```
+
+`IOctoberSetupWriter` is the existing planned Infrastructure persistence port injected into the policy constructor, with one `CommitAsync(OctoberSetupRequest, OctoberAuthorizedSelection, CancellationToken) -> Task<OctoberPrepareResult>` operation; it is not a second setup policy or a caller-facing database selector. A null writer is programmer misuse (`ArgumentNullException`); malformed/foreign field values are sanitized `Denied`. Trusted application composition constructs `OctoberAuthorizedSelection` only from the live Web validation result and deployment target mapping; it is never bound from an HTTP/CLI request body. The policy checks exact nonempty target/batch, Repository set and canonical selection digest equality between request and authority before the writer can open the owned database. The writer owns the one transaction and exact immutable-input comparison on uncertain acknowledgement.
+
+`Created` and `AlreadyIdentical` are the only success statuses: `CommittedBatch` is nonnull, equals the request's exact target/batch/digest and the authority's canonical database identity, and denotes a committed `Selectable` batch with all setup-owned rows in the selected database. `AlreadyIdentical` means an exact immutable retry observed that committed row without overwrite. `Conflict`, `Denied`, `AuthorityUnavailable`, `Cancelled` and `StorageFailure` have `CommittedBatch == null` and confer no bound capability or proof of partial success. Cancellation before commit leaves no selectable batch; cancellation after an acknowledged commit cannot relabel that commit as failure. No raw connection, physical path, token or exception is returned. Generator `prepare` may invoke this policy after live bootstrap validation and authorized empty-target migration without an existing batch; it never calls `BindAsync` first. After a success, a later generator `select` or selected-data Web must independently call `IOctoberBatchSelector.BindAsync` to obtain an existing-batch bound capability. `PrepareAsync` does not issue one.
 
 After the first batch commits, selected-data October Web and generator `select` each require a protected activation grant, exact allowlisted target ID and batch ID. Each validates authorization and its local canonical target mapping before its selected setup lookup. The shared selector binds one fixed connection/factory to that database, verifies the batch exists there and that its setup identity matches, and makes only that selection available to October consumers. Neither selected-data mode migrates an empty target. No latest/previous-batch query, other-database probe, dynamic EF schema, per-request selection or legacy-wiki fallback is permitted. Switching either element requires process restart and fresh authorization.
 

@@ -8,6 +8,7 @@
         <Project Path="src/dotnet/Vulgata.Agents/Vulgata.Agents.csproj"/>
         <Project Path="src/dotnet/Vulgata.Core/Vulgata.Core.csproj"/>
         <Project Path="src/dotnet/Vulgata.Infrastructure/Vulgata.Infrastructure.csproj"/>
+        <Project Path="src/dotnet/Vulgata.OctoberGenerator/Vulgata.OctoberGenerator.csproj"/>
         <Project Path="src/dotnet/Vulgata.Shared/Vulgata.Shared.csproj"/>
         <Project Path="src/dotnet/Vulgata.Web.ViewModels/Vulgata.Web.ViewModels.csproj"/>
         <Project Path="src/dotnet/Vulgata.Web/Vulgata.Web.csproj"/>

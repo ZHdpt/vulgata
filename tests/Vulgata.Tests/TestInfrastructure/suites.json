@@ -155,6 +155,12 @@
   "OpenAiCompatibleChatProviderStreamingTransportTests.cs": {
     "suite": "SelfContained"
   },
+  "October/OctoberPersistenceModelTests.cs": {
+    "suite": "SelfContained"
+  },
+  "October/OctoberSetupPolicyTests.cs": {
+    "suite": "SelfContained"
+  },
   "Pass1JobIdentityTests.cs": {
     "suite": "SelfContained"
   },

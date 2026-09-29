@@ -1,0 +1,49 @@
+{
+  "observed_after": {
+    "path": "specs/017-october-batch-setup/evidence/transitions/transition-0027-setup-seam-plan-review-invalidation.json",
+    "sha256": "b1fca594e90df4218b6b3c7321b63e3534f76d91f03fd38a33fc7ab6dd4f329b"
+  },
+  "raw_result": {
+    "schema_version": "1.0",
+    "gate": "plan-review",
+    "verdict": "ACCEPT",
+    "reviewed_commit": "385bae441b60225f81da3d9dddedcaafc18aaa15",
+    "reviewed_boundary": {
+      "base_commit": "385bae441b60225f81da3d9dddedcaafc18aaa15",
+      "candidate_commit": null,
+      "diff_sha256": "bd00e4af9657890bc144a9023955eb7357e99d0a03f7ac1948dcf906ba9e2607",
+      "artifact_hashes": {
+        "specs/017-october-batch-setup/spec.md": "09bd29f496be4a9c956a460f9d1fc8af952f88c031324e528becb19bbc15b3bc",
+        "specs/017-october-batch-setup/plan.md": "17abea835e9382e0b782be7307760ae92a7fb168bdcf9c32a24041112201e565",
+        "specs/017-october-batch-setup/research.md": "95716c4a811742c6c6964600410558dd8b9f644396bfe8fd634f6fcaff22b2b2",
+        "specs/017-october-batch-setup/data-model.md": "a5547480c2a53169c0c925be690b8c5016f5af94fec7373e327cf89739b15537",
+        "specs/017-october-batch-setup/quickstart.md": "8d383bf1890d34806a6d57bc8f41d92c1f58ca1be6237cd440481ad9c29adaa0",
+        "specs/017-october-batch-setup/contracts/batch-setup-selection.md": "a935831e0f8da2af12564f5b944a12583880de6f482ac88df2bcddfabcad1607",
+        "specs/017-october-batch-setup/contracts/provider-binding.md": "0c59b9d803c2d6770b9ebaf8d060bb73f6a6dd40b91a33947f72a033db48e3cd"
+      },
+      "owned_paths": [
+        "specs/017-october-batch-setup/spec.md",
+        "specs/017-october-batch-setup/plan.md",
+        "specs/017-october-batch-setup/research.md",
+        "specs/017-october-batch-setup/data-model.md",
+        "specs/017-october-batch-setup/quickstart.md",
+        "specs/017-october-batch-setup/contracts/batch-setup-selection.md",
+        "specs/017-october-batch-setup/contracts/provider-binding.md"
+      ]
+    },
+    "reviewed_artifacts": [
+      "AGENTS.md",
+      "specs/017-october-batch-setup/spec.md",
+      "specs/017-october-batch-setup/plan.md",
+      "specs/017-october-batch-setup/contracts/batch-setup-selection.md",
+      "specs/017-october-batch-setup/evidence/implementation-setup-seam-discovery-result-01.json",
+      "specs/017-october-batch-setup/evidence/implementation-setup-seam-plan-self-review-01.json",
+      "specs/017-october-batch-setup/evidence/plan-review-07-boundary.json",
+      "specs/016-contained-source-tools/contracts/prepared-source-tools.md",
+      "src/dotnet/Vulgata.OctoberGenerator/Program.cs",
+      "tests/Vulgata.Tests/October/OctoberSetupPolicyTests.cs"
+    ],
+    "findings": [],
+    "summary": "Fresh plan-only ACCEPT after transition-0027. I-18.4-SETUP-SEAM-01 is resolved: one constructible Core OctoberBatchSetupPolicy uses injected IOctoberSetupWriter, exact PrepareAsync request and trusted-authority records, closed prepare statuses/results, and a committed selectable identity only for Created or AlreadyIdentical. Negative outcomes return no identity or bound capability; cancellation, uncertain acknowledgement, conflict and exact retry remain distinct. First-batch prepare remains separate from BindAsync. Layer ownership and Story 18.1 contracts remain unchanged. This callable-shape clarification stays within the existing planned-change and implementation approvals' semantic scope; downstream hashes and proofs require rebinding before implementation resumes. No new Worker tool, Scan strategy, PRD change or resource permission is introduced."
+  }
+}

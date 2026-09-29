@@ -1,0 +1,54 @@
+{
+  "observed_after": {
+    "path": "specs/017-october-batch-setup/evidence/transitions/transition-0028-setup-seam-plan-review-accept.json",
+    "sha256": "7c55e3da9e514728900051fd9fcbdf33706c273c3b75e43b93965d936981db0c"
+  },
+  "raw_result": {
+  "kind": "self-review",
+  "stage": "tasks",
+  "outcome": "passed",
+  "summary": "Reconciled the retained 30 Story 18.4 tasks with plan-review-07's exact callable Core setup seam, separating a minimal compiling contract scaffold from observable behavioral RED and preserving the distinct existing-batch selector.",
+  "story_key": "18-4-prepare-an-owned-october-batch-with-valid-context-and-provid",
+  "feature_directory": "specs/017-october-batch-setup",
+  "source_finding": "I-18.4-SETUP-SEAM-01",
+  "source_plan_review": "specs/017-october-batch-setup/evidence/plan-review-07.json",
+  "source_plan_self_review": "specs/017-october-batch-setup/evidence/implementation-setup-seam-plan-self-review-01.json",
+  "input_hashes": {
+    "specs/017-october-batch-setup/spec.md": "09bd29f496be4a9c956a460f9d1fc8af952f88c031324e528becb19bbc15b3bc",
+    "specs/017-october-batch-setup/plan.md": "17abea835e9382e0b782be7307760ae92a7fb168bdcf9c32a24041112201e565",
+    "specs/017-october-batch-setup/research.md": "95716c4a811742c6c6964600410558dd8b9f644396bfe8fd634f6fcaff22b2b2",
+    "specs/017-october-batch-setup/data-model.md": "a5547480c2a53169c0c925be690b8c5016f5af94fec7373e327cf89739b15537",
+    "specs/017-october-batch-setup/quickstart.md": "8d383bf1890d34806a6d57bc8f41d92c1f58ca1be6237cd440481ad9c29adaa0",
+    "specs/017-october-batch-setup/contracts/batch-setup-selection.md": "a935831e0f8da2af12564f5b944a12583880de6f482ac88df2bcddfabcad1607",
+    "specs/017-october-batch-setup/contracts/provider-binding.md": "0c59b9d803c2d6770b9ebaf8d060bb73f6a6dd40b91a33947f72a033db48e3cd",
+    "specs/017-october-batch-setup/evidence/plan-review-07.json": "d248617b97ec6ad2b081d948253bffc02818036e12f21b50d605269fc5335cd3",
+    "specs/017-october-batch-setup/evidence/implementation-setup-seam-plan-self-review-01.json": "a23d9dcd5b7549bb766a9223f862226b389698dc49f2eeb98003f46c8ddb055c",
+    "specs/017-october-batch-setup/tasks.md": "daaba72756d94e5f855ee2cb696e7f985c6f7b03ffde74bbb82aebfb604beed2"
+  },
+  "owned_paths": [
+    "specs/017-october-batch-setup/tasks.md",
+    "specs/017-october-batch-setup/evidence/implementation-setup-seam-tasks-self-review-01.json"
+  ],
+  "finding_disposition": {
+    "I-18.4-SETUP-SEAM-01": "T003 first supplies only the accepted compiling declarations for OctoberBatchSetupPolicy(IOctoberSetupWriter), positional request/authority records, IOctoberSetupWriter.CommitAsync and closed prepare statuses/results. T002 then observes a behavioral RED through that public seam for exact trust checks, writer suppression and committed-identity result invariants; missing symbols are explicitly excluded as RED. T003 completes GREEN without changing the accepted constructor or introducing a second policy. T009 extends the same policy, T010/T011 implement the subordinate writer, and T019 consumes only Created/AlreadyIdentical with matching committed identity. PrepareAsync never substitutes for or returns BindAsync's selected-data capability."
+  },
+  "self_review": {
+    "coverage_and_order": "The prior T001 completed-scaffolding evidence is preserved without changing its checklist line. T002/T003 require declaration-only scaffold -> behavioral RED -> minimal/final GREEN sequencing; no new RED or GREEN is claimed here. T001-T030 IDs, user-story labels, remaining tasks and resource gates are retained; no new scope or task ID was added.",
+    "accepted_semantics": "Only Created/AlreadyIdentical may carry a matching committed selectable target/batch/digest/canonical-database identity. Conflict, Denied, AuthorityUnavailable, Cancelled and StorageFailure carry null CommittedBatch. Exact retry and uncertain acknowledgement remain with the Infrastructure writer. The first-batch prepare path remains distinct from existing-batch BindAsync.",
+    "authority_and_resources": "Plan-review-07 is the current prerequisite. The separate scoped planned-change authorization and corrected-hash implementation gate remain root-owned. No approval, PostgreSQL/certificate/credential access or later-story work is inferred.",
+    "project_lesson_precaution": "The Story 18.1 public-seam lesson is met by naming the complete constructor, method, records and result before behavioral TDD; preliminary compilation is treated as discovery, not a fabricated RED."
+  },
+  "checks": {
+    "task_format": "30 sequential T001-T030 checklist lines; user-story labels and explicit paths retained; no malformed line or trailing whitespace.",
+    "plan_task_design_content": "Installed validate_plan_implementation_design(plan, tasks, require_explicit=True) returned no errors; all accepted R/I/S/A/F/L/T IDs remain covered on checklist lines.",
+    "hooks": "Readable .specify/extensions.yml registers no before_tasks or after_tasks hook."
+  },
+  "authority_effect": {
+    "recovery_closed": false,
+    "definition_review_completed": false,
+    "approval_granted": false,
+    "workflow_state_changed_by_author": false,
+    "production_or_test_code_written_by_author": false
+  }
+  }
+}

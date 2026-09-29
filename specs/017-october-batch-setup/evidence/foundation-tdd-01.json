@@ -1,0 +1,59 @@
+{
+  "schema_version": "1.0",
+  "kind": "tdd-evidence",
+  "story_key": "18-4-prepare-an-owned-october-batch-with-valid-context-and-provid",
+  "task_group": ["T001", "T002", "T003", "T004", "T005"],
+  "recorded_at": "2026-09-29T12:42:00.7783028Z",
+  "declaration_scaffold": {
+    "result": "passed",
+    "claim": "Compilation only; neither RED nor GREEN.",
+    "command": "dotnet build tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore -v:q -clp:ErrorsOnly",
+    "errors": 0
+  },
+  "red": {
+    "result": "expected-failure",
+    "command": "pwsh -NoProfile -File eng/test.ps1 -Filter 'FullyQualifiedName~Vulgata.Tests.October.'",
+    "selected": 34,
+    "passed": 10,
+    "failed": 24,
+    "skipped": 0,
+    "trx": "TestResults/isolation-8b263a2a7f30409ebc1c75e1e61df7ce/results.trx",
+    "observed_failures": [
+      "Six mismatched or malformed authorization cases reached the writer instead of returning Denied with no identity.",
+      "Fifteen closed-result cases leaked a negative identity or accepted a missing or mismatched successful identity instead of returning a sanitized result.",
+      "The October context had no fixed schema, dedicated history table, or separate model snapshot."
+    ],
+    "already_correct": [
+      "Standalone Repository selection retained null SystemId.",
+      "Exact successful and negative-null writer results were preserved.",
+      "Cancellation was forwarded.",
+      "The ordinary Vulgata model contained no October mappings."
+    ]
+  },
+  "test_correction": {
+    "classification": "test-defect",
+    "change": "Require the exact adjacent Npgsql-rendered identifier october.\"__OctoberMigrationsHistory\" instead of incorrectly requiring quotes around the lowercase schema.",
+    "semantic_requirement_weakened": false
+  },
+  "green": {
+    "result": "passed",
+    "command": "pwsh -NoProfile -File eng/test.ps1 -Filter 'FullyQualifiedName~Vulgata.Tests.October'",
+    "selected": 34,
+    "passed": 34,
+    "failed": 0,
+    "skipped": 0,
+    "trx": "TestResults/isolation-5a1bb9ed2a394b2298bd1d217d1c9a8d/results.trx",
+    "policy_command": "pwsh -NoProfile -File eng/test.ps1 -PolicyOnly",
+    "policy_result": "passed",
+    "classified_source_files": 285,
+    "build_command": "dotnet build src/dotnet/Vulgata.Infrastructure/Vulgata.Infrastructure.csproj --no-restore -v:q -clp:ErrorsOnly",
+    "build_errors": 0,
+    "build_warnings": 4
+  },
+  "final_shape": {
+    "test_owner": "accepted",
+    "production_owner": "accepted",
+    "summary": "One Core policy validates the exact trusted selection before writer access and normalizes its closed result. October EF schema, history and snapshot remain isolated, and the ordinary context explicitly excludes October configuration namespaces. No database or external resource was used."
+  },
+  "external_resource_authority": "not granted; T020 and T029 remain held"
+}
