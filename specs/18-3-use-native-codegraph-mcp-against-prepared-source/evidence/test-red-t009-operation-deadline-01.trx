@@ -1,0 +1,60 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="e823f1f1-76c5-475e-b848-34302c7d1024" name="13728@ZHDPT-ASUS-5 2026-09-29 19:51:06" runUser="ZHDPT-ASUS-5\13728" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-09-29T19:51:06.5226451+08:00" queuing="2026-09-29T19:51:06.5226455+08:00" start="2026-09-29T19:50:57.0863935+08:00" finish="2026-09-29T19:51:06.5258476+08:00" />
+  <TestSettings name="default" id="8fb8be80-d5bb-4a4b-9650-99246a8bef03">
+    <Deployment runDeploymentRoot="13728_ZHDPT-ASUS-5_2026-09-29_19_51_06" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="881e2de4-2bc1-4332-9321-069dcb9f9ca1" testId="670785b7-4299-8e8e-1616-533795e53a7a" testName="Vulgata.Tests.AnalysisRuntime.NativeCodeGraphSessionOutcomeTests.NativeSession_OperationDeadlineWithholdsLateNativeResult" computerName="ZHDPT-ASUS-5" duration="00:00:07.2237333" startTime="2026-09-29T19:50:59.2193291+08:00" endTime="2026-09-29T19:51:06.4074760+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="881e2de4-2bc1-4332-9321-069dcb9f9ca1">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Equal() Failure: Values differ&#xD;
+Expected: TimedOut&#xD;
+Actual:   Complete</Message>
+          <StackTrace>   at Vulgata.Tests.AnalysisRuntime.NativeCodeGraphSessionOutcomeTests.NativeSession_OperationDeadlineWithholdsLateNativeResult() in C:\Users\13728\.codex\worktrees\2de8\vulgata\tests\Vulgata.Tests\AnalysisRuntime\NativeCodeGraphSessionOutcomeTests.cs:line 74&#xD;
+   at Vulgata.Tests.AnalysisRuntime.NativeCodeGraphSessionOutcomeTests.NativeSession_OperationDeadlineWithholdsLateNativeResult() in C:\Users\13728\.codex\worktrees\2de8\vulgata\tests\Vulgata.Tests\AnalysisRuntime\NativeCodeGraphSessionOutcomeTests.cs:line 79&#xD;
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="Vulgata.Tests.AnalysisRuntime.NativeCodeGraphSessionOutcomeTests.NativeSession_OperationDeadlineWithholdsLateNativeResult" storage="c:\users\13728\.codex\worktrees\2de8\vulgata\tests\vulgata.tests\bin\debug\net10.0\vulgata.tests.dll" id="670785b7-4299-8e8e-1616-533795e53a7a">
+      <Execution id="881e2de4-2bc1-4332-9321-069dcb9f9ca1" />
+      <TestMethod codeBase="C:\Users\13728\.codex\worktrees\2de8\vulgata\tests\Vulgata.Tests\bin\Debug\net10.0\Vulgata.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Vulgata.Tests.AnalysisRuntime.NativeCodeGraphSessionOutcomeTests" name="NativeSession_OperationDeadlineWithholdsLateNativeResult" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="670785b7-4299-8e8e-1616-533795e53a7a" executionId="881e2de4-2bc1-4332-9321-069dcb9f9ca1" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Failed">
+    <Counters total="1" executed="1" passed="0" failed="1" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v3.1.5+1b188a7b0a (64-bit .NET 10.0.12)&#xD;
+[xUnit.net 00:00:00.17]   Discovering: Vulgata.Tests&#xD;
+[xUnit.net 00:00:01.49]   Discovered:  Vulgata.Tests&#xD;
+[xUnit.net 00:00:01.51]   Starting:    Vulgata.Tests&#xD;
+[xUnit.net 00:00:08.76]       Assert.Equal() Failure: Values differ&#xD;
+[xUnit.net 00:00:08.76]       Expected: TimedOut&#xD;
+[xUnit.net 00:00:08.76]       Actual:   Complete&#xD;
+[xUnit.net 00:00:08.76]       Stack Trace:&#xD;
+[xUnit.net 00:00:08.76]         C:\Users\13728\.codex\worktrees\2de8\vulgata\tests\Vulgata.Tests\AnalysisRuntime\NativeCodeGraphSessionOutcomeTests.cs(74,0): at Vulgata.Tests.AnalysisRuntime.NativeCodeGraphSessionOutcomeTests.NativeSession_OperationDeadlineWithholdsLateNativeResult()&#xD;
+[xUnit.net 00:00:08.76]         C:\Users\13728\.codex\worktrees\2de8\vulgata\tests\Vulgata.Tests\AnalysisRuntime\NativeCodeGraphSessionOutcomeTests.cs(79,0): at Vulgata.Tests.AnalysisRuntime.NativeCodeGraphSessionOutcomeTests.NativeSession_OperationDeadlineWithholdsLateNativeResult()&#xD;
+[xUnit.net 00:00:08.76]         --- End of stack trace from previous location ---&#xD;
+[xUnit.net 00:00:08.78]   Finished:    Vulgata.Tests&#xD;
+</StdOut>
+    </Output>
+    <RunInfos>
+      <RunInfo computerName="ZHDPT-ASUS-5" outcome="Error" timestamp="2026-09-29T19:51:06.4093721+08:00">
+        <Text>[xUnit.net 00:00:08.76]     Vulgata.Tests.AnalysisRuntime.NativeCodeGraphSessionOutcomeTests.NativeSession_OperationDeadlineWithholdsLateNativeResult [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="ZHDPT-ASUS-5" outcome="Warning" timestamp="2026-09-29T19:51:06.4867007+08:00">
+        <Text>Data collector 'Blame' message: All tests finished running, Sequence file will not be generated.</Text>
+      </RunInfo>
+    </RunInfos>
+  </ResultSummary>
+</TestRun>

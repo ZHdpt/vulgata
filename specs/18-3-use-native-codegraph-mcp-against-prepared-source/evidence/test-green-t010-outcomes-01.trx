@@ -1,0 +1,93 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="176c97a4-7f03-4bfb-aa41-b65f70c141a8" name="13728@ZHDPT-ASUS-5 2026-09-29 20:22:09" runUser="ZHDPT-ASUS-5\13728" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-09-29T20:22:09.9205033+08:00" queuing="2026-09-29T20:22:09.9205034+08:00" start="2026-09-29T20:22:00.4983318+08:00" finish="2026-09-29T20:22:51.6783765+08:00" />
+  <TestSettings name="default" id="832b0b57-ce58-495a-a799-257b74c43dc4">
+    <Deployment runDeploymentRoot="13728_ZHDPT-ASUS-5_2026-09-29_20_22_09" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="79fe62da-99db-4376-be05-4863d85167b1" testId="6d59eed0-58e1-9013-7190-8c2df52f200c" testName="Vulgata.Tests.AnalysisRuntime.NativeCodeGraphSessionOutcomeTests.NativeSession_ExpiresAfterTwoMinutesWithoutDispatchingOrDisclosingBufferedSource" computerName="ZHDPT-ASUS-5" duration="00:00:05.4309683" startTime="2026-09-29T20:22:39.1094691+08:00" endTime="2026-09-29T20:22:44.5392944+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="79fe62da-99db-4376-be05-4863d85167b1" />
+    <UnitTestResult executionId="5d232231-0d14-40ab-a9cc-3fa1df0d21c0" testId="670785b7-4299-8e8e-1616-533795e53a7a" testName="Vulgata.Tests.AnalysisRuntime.NativeCodeGraphSessionOutcomeTests.NativeSession_OperationDeadlineWithholdsLateNativeResult" computerName="ZHDPT-ASUS-5" duration="00:00:07.5456417" startTime="2026-09-29T20:22:02.3748347+08:00" endTime="2026-09-29T20:22:09.8925624+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="5d232231-0d14-40ab-a9cc-3fa1df0d21c0" />
+    <UnitTestResult executionId="9d96da7d-ffa3-4c30-84b3-19fb7418abd9" testId="406c77f8-43f2-cc07-585a-6e13f4da67df" testName="Vulgata.Tests.AnalysisRuntime.NativeCodeGraphSessionOutcomeTests.NativeSession_DiscoveryDeadlineReturnsSanitizedFailure" computerName="ZHDPT-ASUS-5" duration="00:00:07.4230095" startTime="2026-09-29T20:22:20.8250474+08:00" endTime="2026-09-29T20:22:28.2463861+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="9d96da7d-ffa3-4c30-84b3-19fb7418abd9" />
+    <UnitTestResult executionId="23ebea3e-4144-403b-81e2-45a89c95f92d" testId="f80d2336-1ff4-bbd9-94ac-05cd6e5d58b6" testName="Vulgata.Tests.AnalysisRuntime.NativeCodeGraphSessionOutcomeTests.NativeSession_CallerCancellationWithholdsLateNativeResult" computerName="ZHDPT-ASUS-5" duration="00:00:05.4513256" startTime="2026-09-29T20:22:15.3743094+08:00" endTime="2026-09-29T20:22:20.8229337+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="23ebea3e-4144-403b-81e2-45a89c95f92d" />
+    <UnitTestResult executionId="b5475acd-2912-498f-8587-10e697cf0c6a" testId="f5ff5f70-a5a3-d0a9-062f-2f86c1341102" testName="Vulgata.Tests.AnalysisRuntime.NativeCodeGraphSessionOutcomeTests.NativeSession_OverBoundNativeResultIsLimitedWithoutDisclosure" computerName="ZHDPT-ASUS-5" duration="00:00:05.4773119" startTime="2026-09-29T20:22:09.9116945+08:00" endTime="2026-09-29T20:22:15.3714472+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="b5475acd-2912-498f-8587-10e697cf0c6a" />
+    <UnitTestResult executionId="97aad131-da33-455d-9b1f-5fe15408e2c1" testId="e73ac80a-dab4-0732-d454-0f64f1e416be" testName="Vulgata.Tests.AnalysisRuntime.NativeCodeGraphSessionOutcomeTests.NativeSession_NativeToolErrorReturnsSanitizedFailure" computerName="ZHDPT-ASUS-5" duration="00:00:05.4172886" startTime="2026-09-29T20:22:28.2503974+08:00" endTime="2026-09-29T20:22:33.6670741+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="97aad131-da33-455d-9b1f-5fe15408e2c1" />
+    <UnitTestResult executionId="c79df27f-cf32-4157-88a7-71207476af92" testId="038ff74e-a2e1-6734-c4bc-a4c4e5c659ef" testName="Vulgata.Tests.AnalysisRuntime.NativeCodeGraphSessionOutcomeTests.NativeSession_StopsAfterTenCallsAndWithholdsTheEleventhResult" computerName="ZHDPT-ASUS-5" duration="00:00:05.4398897" startTime="2026-09-29T20:22:33.6687704+08:00" endTime="2026-09-29T20:22:39.1073332+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="c79df27f-cf32-4157-88a7-71207476af92" />
+    <UnitTestResult executionId="50e353f1-04cc-4ec0-b375-321a6f940635" testId="7fe8b23e-a3fa-bf55-d306-69b0aad995f9" testName="Vulgata.Tests.AnalysisRuntime.NativeCodeGraphSessionOutcomeTests.NativeSession_HasControlledClockConstructionSeamForFiniteLifetimeBehavior" computerName="ZHDPT-ASUS-5" duration="00:00:00.0005417" startTime="2026-09-29T20:22:39.1086450+08:00" endTime="2026-09-29T20:22:39.1086691+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="50e353f1-04cc-4ec0-b375-321a6f940635" />
+    <UnitTestResult executionId="f91907f9-a6a4-4935-8258-79bf826abde9" testId="f210b88a-2b2c-0994-f96d-468c1ed5a788" testName="Vulgata.Tests.AnalysisRuntime.NativeCodeGraphSessionOutcomeTests.NativeSession_UnpreparedWorkspaceDoesNotStartNativeProcess" computerName="ZHDPT-ASUS-5" duration="00:00:00.0027160" startTime="2026-09-29T20:22:28.2480175+08:00" endTime="2026-09-29T20:22:28.2494380+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="f91907f9-a6a4-4935-8258-79bf826abde9" />
+    <UnitTestResult executionId="bc47c552-6162-4420-93c1-59cba257fbc5" testId="93c78a63-7018-c248-4cdb-8576c804b9f8" testName="Vulgata.Tests.AnalysisRuntime.NativeCodeGraphSessionOutcomeTests.NativeSession_ConnectionDeadlineReturnsSanitizedFailure" computerName="ZHDPT-ASUS-5" duration="00:00:07.0646445" startTime="2026-09-29T20:22:44.5406838+08:00" endTime="2026-09-29T20:22:51.6042275+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="bc47c552-6162-4420-93c1-59cba257fbc5" />
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="Vulgata.Tests.AnalysisRuntime.NativeCodeGraphSessionOutcomeTests.NativeSession_DiscoveryDeadlineReturnsSanitizedFailure" storage="c:\users\13728\.codex\worktrees\2de8\vulgata\tests\vulgata.tests\bin\debug\net10.0\vulgata.tests.dll" id="406c77f8-43f2-cc07-585a-6e13f4da67df">
+      <Execution id="9d96da7d-ffa3-4c30-84b3-19fb7418abd9" />
+      <TestMethod codeBase="C:\Users\13728\.codex\worktrees\2de8\vulgata\tests\Vulgata.Tests\bin\Debug\net10.0\Vulgata.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Vulgata.Tests.AnalysisRuntime.NativeCodeGraphSessionOutcomeTests" name="NativeSession_DiscoveryDeadlineReturnsSanitizedFailure" />
+    </UnitTest>
+    <UnitTest name="Vulgata.Tests.AnalysisRuntime.NativeCodeGraphSessionOutcomeTests.NativeSession_OverBoundNativeResultIsLimitedWithoutDisclosure" storage="c:\users\13728\.codex\worktrees\2de8\vulgata\tests\vulgata.tests\bin\debug\net10.0\vulgata.tests.dll" id="f5ff5f70-a5a3-d0a9-062f-2f86c1341102">
+      <Execution id="b5475acd-2912-498f-8587-10e697cf0c6a" />
+      <TestMethod codeBase="C:\Users\13728\.codex\worktrees\2de8\vulgata\tests\Vulgata.Tests\bin\Debug\net10.0\Vulgata.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Vulgata.Tests.AnalysisRuntime.NativeCodeGraphSessionOutcomeTests" name="NativeSession_OverBoundNativeResultIsLimitedWithoutDisclosure" />
+    </UnitTest>
+    <UnitTest name="Vulgata.Tests.AnalysisRuntime.NativeCodeGraphSessionOutcomeTests.NativeSession_HasControlledClockConstructionSeamForFiniteLifetimeBehavior" storage="c:\users\13728\.codex\worktrees\2de8\vulgata\tests\vulgata.tests\bin\debug\net10.0\vulgata.tests.dll" id="7fe8b23e-a3fa-bf55-d306-69b0aad995f9">
+      <Execution id="50e353f1-04cc-4ec0-b375-321a6f940635" />
+      <TestMethod codeBase="C:\Users\13728\.codex\worktrees\2de8\vulgata\tests\Vulgata.Tests\bin\Debug\net10.0\Vulgata.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Vulgata.Tests.AnalysisRuntime.NativeCodeGraphSessionOutcomeTests" name="NativeSession_HasControlledClockConstructionSeamForFiniteLifetimeBehavior" />
+    </UnitTest>
+    <UnitTest name="Vulgata.Tests.AnalysisRuntime.NativeCodeGraphSessionOutcomeTests.NativeSession_OperationDeadlineWithholdsLateNativeResult" storage="c:\users\13728\.codex\worktrees\2de8\vulgata\tests\vulgata.tests\bin\debug\net10.0\vulgata.tests.dll" id="670785b7-4299-8e8e-1616-533795e53a7a">
+      <Execution id="5d232231-0d14-40ab-a9cc-3fa1df0d21c0" />
+      <TestMethod codeBase="C:\Users\13728\.codex\worktrees\2de8\vulgata\tests\Vulgata.Tests\bin\Debug\net10.0\Vulgata.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Vulgata.Tests.AnalysisRuntime.NativeCodeGraphSessionOutcomeTests" name="NativeSession_OperationDeadlineWithholdsLateNativeResult" />
+    </UnitTest>
+    <UnitTest name="Vulgata.Tests.AnalysisRuntime.NativeCodeGraphSessionOutcomeTests.NativeSession_CallerCancellationWithholdsLateNativeResult" storage="c:\users\13728\.codex\worktrees\2de8\vulgata\tests\vulgata.tests\bin\debug\net10.0\vulgata.tests.dll" id="f80d2336-1ff4-bbd9-94ac-05cd6e5d58b6">
+      <Execution id="23ebea3e-4144-403b-81e2-45a89c95f92d" />
+      <TestMethod codeBase="C:\Users\13728\.codex\worktrees\2de8\vulgata\tests\Vulgata.Tests\bin\Debug\net10.0\Vulgata.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Vulgata.Tests.AnalysisRuntime.NativeCodeGraphSessionOutcomeTests" name="NativeSession_CallerCancellationWithholdsLateNativeResult" />
+    </UnitTest>
+    <UnitTest name="Vulgata.Tests.AnalysisRuntime.NativeCodeGraphSessionOutcomeTests.NativeSession_StopsAfterTenCallsAndWithholdsTheEleventhResult" storage="c:\users\13728\.codex\worktrees\2de8\vulgata\tests\vulgata.tests\bin\debug\net10.0\vulgata.tests.dll" id="038ff74e-a2e1-6734-c4bc-a4c4e5c659ef">
+      <Execution id="c79df27f-cf32-4157-88a7-71207476af92" />
+      <TestMethod codeBase="C:\Users\13728\.codex\worktrees\2de8\vulgata\tests\Vulgata.Tests\bin\Debug\net10.0\Vulgata.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Vulgata.Tests.AnalysisRuntime.NativeCodeGraphSessionOutcomeTests" name="NativeSession_StopsAfterTenCallsAndWithholdsTheEleventhResult" />
+    </UnitTest>
+    <UnitTest name="Vulgata.Tests.AnalysisRuntime.NativeCodeGraphSessionOutcomeTests.NativeSession_ExpiresAfterTwoMinutesWithoutDispatchingOrDisclosingBufferedSource" storage="c:\users\13728\.codex\worktrees\2de8\vulgata\tests\vulgata.tests\bin\debug\net10.0\vulgata.tests.dll" id="6d59eed0-58e1-9013-7190-8c2df52f200c">
+      <Execution id="79fe62da-99db-4376-be05-4863d85167b1" />
+      <TestMethod codeBase="C:\Users\13728\.codex\worktrees\2de8\vulgata\tests\Vulgata.Tests\bin\Debug\net10.0\Vulgata.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Vulgata.Tests.AnalysisRuntime.NativeCodeGraphSessionOutcomeTests" name="NativeSession_ExpiresAfterTwoMinutesWithoutDispatchingOrDisclosingBufferedSource" />
+    </UnitTest>
+    <UnitTest name="Vulgata.Tests.AnalysisRuntime.NativeCodeGraphSessionOutcomeTests.NativeSession_ConnectionDeadlineReturnsSanitizedFailure" storage="c:\users\13728\.codex\worktrees\2de8\vulgata\tests\vulgata.tests\bin\debug\net10.0\vulgata.tests.dll" id="93c78a63-7018-c248-4cdb-8576c804b9f8">
+      <Execution id="bc47c552-6162-4420-93c1-59cba257fbc5" />
+      <TestMethod codeBase="C:\Users\13728\.codex\worktrees\2de8\vulgata\tests\Vulgata.Tests\bin\Debug\net10.0\Vulgata.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Vulgata.Tests.AnalysisRuntime.NativeCodeGraphSessionOutcomeTests" name="NativeSession_ConnectionDeadlineReturnsSanitizedFailure" />
+    </UnitTest>
+    <UnitTest name="Vulgata.Tests.AnalysisRuntime.NativeCodeGraphSessionOutcomeTests.NativeSession_UnpreparedWorkspaceDoesNotStartNativeProcess" storage="c:\users\13728\.codex\worktrees\2de8\vulgata\tests\vulgata.tests\bin\debug\net10.0\vulgata.tests.dll" id="f210b88a-2b2c-0994-f96d-468c1ed5a788">
+      <Execution id="f91907f9-a6a4-4935-8258-79bf826abde9" />
+      <TestMethod codeBase="C:\Users\13728\.codex\worktrees\2de8\vulgata\tests\Vulgata.Tests\bin\Debug\net10.0\Vulgata.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Vulgata.Tests.AnalysisRuntime.NativeCodeGraphSessionOutcomeTests" name="NativeSession_UnpreparedWorkspaceDoesNotStartNativeProcess" />
+    </UnitTest>
+    <UnitTest name="Vulgata.Tests.AnalysisRuntime.NativeCodeGraphSessionOutcomeTests.NativeSession_NativeToolErrorReturnsSanitizedFailure" storage="c:\users\13728\.codex\worktrees\2de8\vulgata\tests\vulgata.tests\bin\debug\net10.0\vulgata.tests.dll" id="e73ac80a-dab4-0732-d454-0f64f1e416be">
+      <Execution id="97aad131-da33-455d-9b1f-5fe15408e2c1" />
+      <TestMethod codeBase="C:\Users\13728\.codex\worktrees\2de8\vulgata\tests\Vulgata.Tests\bin\Debug\net10.0\Vulgata.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Vulgata.Tests.AnalysisRuntime.NativeCodeGraphSessionOutcomeTests" name="NativeSession_NativeToolErrorReturnsSanitizedFailure" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="6d59eed0-58e1-9013-7190-8c2df52f200c" executionId="79fe62da-99db-4376-be05-4863d85167b1" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="670785b7-4299-8e8e-1616-533795e53a7a" executionId="5d232231-0d14-40ab-a9cc-3fa1df0d21c0" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="406c77f8-43f2-cc07-585a-6e13f4da67df" executionId="9d96da7d-ffa3-4c30-84b3-19fb7418abd9" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="f80d2336-1ff4-bbd9-94ac-05cd6e5d58b6" executionId="23ebea3e-4144-403b-81e2-45a89c95f92d" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="f5ff5f70-a5a3-d0a9-062f-2f86c1341102" executionId="b5475acd-2912-498f-8587-10e697cf0c6a" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="e73ac80a-dab4-0732-d454-0f64f1e416be" executionId="97aad131-da33-455d-9b1f-5fe15408e2c1" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="038ff74e-a2e1-6734-c4bc-a4c4e5c659ef" executionId="c79df27f-cf32-4157-88a7-71207476af92" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="7fe8b23e-a3fa-bf55-d306-69b0aad995f9" executionId="50e353f1-04cc-4ec0-b375-321a6f940635" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="f210b88a-2b2c-0994-f96d-468c1ed5a788" executionId="f91907f9-a6a4-4935-8258-79bf826abde9" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="93c78a63-7018-c248-4cdb-8576c804b9f8" executionId="bc47c552-6162-4420-93c1-59cba257fbc5" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Completed">
+    <Counters total="10" executed="10" passed="10" failed="0" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v3.1.5+1b188a7b0a (64-bit .NET 10.0.12)&#xD;
+[xUnit.net 00:00:00.17]   Discovering: Vulgata.Tests&#xD;
+[xUnit.net 00:00:01.28]   Discovered:  Vulgata.Tests&#xD;
+[xUnit.net 00:00:01.31]   Starting:    Vulgata.Tests&#xD;
+[xUnit.net 00:00:50.59]   Finished:    Vulgata.Tests&#xD;
+</StdOut>
+    </Output>
+    <RunInfos>
+      <RunInfo computerName="ZHDPT-ASUS-5" outcome="Warning" timestamp="2026-09-29T20:22:51.6548038+08:00">
+        <Text>Data collector 'Blame' message: All tests finished running, Sequence file will not be generated.</Text>
+      </RunInfo>
+    </RunInfos>
+  </ResultSummary>
+</TestRun>

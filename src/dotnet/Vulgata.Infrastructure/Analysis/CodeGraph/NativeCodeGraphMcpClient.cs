@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
@@ -14,19 +15,54 @@ namespace Vulgata.Infrastructure.Analysis.CodeGraph;
 /// </summary>
 internal sealed partial class NativeCodeGraphMcpClient : ICodeGraphWorkerToolSession
 {
+    private const int MaxNativeInvocations = 10;
+    private static readonly TimeSpan MaxSessionLifetime = TimeSpan.FromMinutes(2);
+    private static readonly TimeSpan MaxOperationTimeout = TimeSpan.FromSeconds(30);
     private const int MaxResultBytes = 256 * 1024;
     private const int MaxVerificationFileBytes = 1024 * 1024;
     private static readonly UTF8Encoding StrictUtf8 = new(false, true);
     private readonly Guid _repositoryId;
     private readonly string _commandPath;
     private readonly string _projectPath;
+    private readonly TimeProvider _timeProvider;
+    private readonly TimeSpan _operationTimeout;
+    private readonly DateTimeOffset _expiresAt;
     private readonly SemaphoreSlim _gate = new(1, 1);
     private McpClient? _client;
     private CodeGraphToolReadiness? _readiness;
+    private int _nativeInvocationCount;
+    private bool _expired;
+    private bool _timedOut;
     private bool _disposed;
 
     internal NativeCodeGraphMcpClient(Guid repositoryId, string commandPath, string projectPath)
+        : this(repositoryId, commandPath, projectPath, TimeProvider.System)
     {
+    }
+
+    internal NativeCodeGraphMcpClient(
+        Guid repositoryId,
+        string commandPath,
+        string projectPath,
+        TimeProvider timeProvider)
+        : this(repositoryId, commandPath, projectPath, timeProvider, MaxOperationTimeout)
+    {
+    }
+
+    internal NativeCodeGraphMcpClient(
+        Guid repositoryId,
+        string commandPath,
+        string projectPath,
+        TimeProvider timeProvider,
+        TimeSpan operationTimeout)
+    {
+        _timeProvider = timeProvider ?? throw new ArgumentNullException(nameof(timeProvider));
+        if (operationTimeout <= TimeSpan.Zero || operationTimeout > MaxOperationTimeout)
+        {
+            throw new ArgumentOutOfRangeException(nameof(operationTimeout));
+        }
+
+        _operationTimeout = operationTimeout;
         if (repositoryId == Guid.Empty)
         {
             throw new ArgumentException("A Repository binding is required.", nameof(repositoryId));
@@ -45,6 +81,7 @@ internal sealed partial class NativeCodeGraphMcpClient : ICodeGraphWorkerToolSes
         _repositoryId = repositoryId;
         _commandPath = Path.GetFullPath(commandPath);
         _projectPath = Path.GetFullPath(projectPath);
+        _expiresAt = _timeProvider.GetUtcNow() + MaxSessionLifetime;
     }
 
     public async Task<CodeGraphToolReadiness> DiscoverAsync(CancellationToken cancellationToken)
@@ -56,6 +93,12 @@ internal sealed partial class NativeCodeGraphMcpClient : ICodeGraphWorkerToolSes
             {
                 return Failure(CodeGraphToolReadinessStatus.Expired, CodeGraphToolStage.Discovery,
                     CodeGraphToolIssueCode.SessionExpired);
+            }
+
+            if (_expired || _timeProvider.GetUtcNow() >= _expiresAt)
+            {
+                await ExpireAsync();
+                return _readiness!;
             }
 
             if (_readiness is not null)
@@ -75,14 +118,36 @@ internal sealed partial class NativeCodeGraphMcpClient : ICodeGraphWorkerToolSes
                     CodeGraphToolStage.Preparation, CodeGraphToolIssueCode.SourceUnprepared);
             }
 
+            using var connectionCancellation = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            connectionCancellation.CancelAfter(_operationTimeout);
+            long connectionStartedAt = Stopwatch.GetTimestamp();
             try
             {
-                _client = await McpClient.CreateAsync(CreateTransport(), cancellationToken: cancellationToken);
+                _client = await McpClient.CreateAsync(CreateTransport(),
+                    cancellationToken: connectionCancellation.Token);
+                if (cancellationToken.IsCancellationRequested ||
+                    connectionCancellation.IsCancellationRequested ||
+                    Stopwatch.GetElapsedTime(connectionStartedAt) >= _operationTimeout)
+                {
+                    await _client.DisposeAsync();
+                    _client = null;
+                    return _readiness = cancellationToken.IsCancellationRequested
+                        ? Failure(CodeGraphToolReadinessStatus.Cancelled,
+                            CodeGraphToolStage.Connection, CodeGraphToolIssueCode.Cancelled)
+                        : Failure(CodeGraphToolReadinessStatus.ConnectionFailed,
+                            CodeGraphToolStage.Connection, CodeGraphToolIssueCode.DeadlineExceeded);
+                }
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {
                 return _readiness = Failure(CodeGraphToolReadinessStatus.Cancelled,
                     CodeGraphToolStage.Connection, CodeGraphToolIssueCode.Cancelled);
+            }
+            catch (Exception) when (connectionCancellation.IsCancellationRequested &&
+                !cancellationToken.IsCancellationRequested)
+            {
+                return _readiness = Failure(CodeGraphToolReadinessStatus.ConnectionFailed,
+                    CodeGraphToolStage.Connection, CodeGraphToolIssueCode.DeadlineExceeded);
             }
             catch (Exception)
             {
@@ -90,9 +155,32 @@ internal sealed partial class NativeCodeGraphMcpClient : ICodeGraphWorkerToolSes
                     CodeGraphToolStage.Connection, CodeGraphToolIssueCode.ConnectionFailed);
             }
 
+            using var discoveryCancellation = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            discoveryCancellation.CancelAfter(_operationTimeout);
+            long discoveryStartedAt = Stopwatch.GetTimestamp();
             try
             {
-                IList<McpClientTool> tools = await _client.ListToolsAsync(cancellationToken: cancellationToken);
+                if (_timeProvider.GetUtcNow() >= _expiresAt)
+                {
+                    await ExpireAsync();
+                    return _readiness!;
+                }
+
+                IList<McpClientTool> tools = await _client.ListToolsAsync(
+                    cancellationToken: discoveryCancellation.Token);
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    return _readiness = Failure(CodeGraphToolReadinessStatus.Cancelled,
+                        CodeGraphToolStage.Discovery, CodeGraphToolIssueCode.Cancelled);
+                }
+
+                if (discoveryCancellation.IsCancellationRequested ||
+                    Stopwatch.GetElapsedTime(discoveryStartedAt) >= _operationTimeout)
+                {
+                    return _readiness = Failure(CodeGraphToolReadinessStatus.DiscoveryFailed,
+                        CodeGraphToolStage.Discovery, CodeGraphToolIssueCode.DeadlineExceeded);
+                }
+
                 if (tools.Count != 1 || tools[0].Name != "codegraph_explore")
                 {
                     return _readiness = Failure(CodeGraphToolReadinessStatus.DiscoveryFailed,
@@ -105,6 +193,12 @@ internal sealed partial class NativeCodeGraphMcpClient : ICodeGraphWorkerToolSes
                         CodeGraphToolStage.Discovery, CodeGraphToolIssueCode.SchemaChanged);
                 }
 
+                if (_timeProvider.GetUtcNow() >= _expiresAt)
+                {
+                    await ExpireAsync();
+                    return _readiness!;
+                }
+
                 return _readiness = new CodeGraphToolReadiness(
                     CodeGraphToolReadinessStatus.Ready, _repositoryId);
             }
@@ -112,6 +206,12 @@ internal sealed partial class NativeCodeGraphMcpClient : ICodeGraphWorkerToolSes
             {
                 return _readiness = Failure(CodeGraphToolReadinessStatus.Cancelled,
                     CodeGraphToolStage.Discovery, CodeGraphToolIssueCode.Cancelled);
+            }
+            catch (Exception) when (discoveryCancellation.IsCancellationRequested &&
+                !cancellationToken.IsCancellationRequested)
+            {
+                return _readiness = Failure(CodeGraphToolReadinessStatus.DiscoveryFailed,
+                    CodeGraphToolStage.Discovery, CodeGraphToolIssueCode.DeadlineExceeded);
             }
             catch (Exception)
             {
@@ -141,10 +241,29 @@ internal sealed partial class NativeCodeGraphMcpClient : ICodeGraphWorkerToolSes
         await _gate.WaitAsync(cancellationToken);
         try
         {
-            if (_disposed || _readiness?.IsReady != true || _client is null)
+            if (_disposed)
             {
                 return Outcome(CodeGraphToolInvocationStatus.Unavailable,
                     CodeGraphToolIssueCode.SessionExpired);
+            }
+
+            if (_expired || _timeProvider.GetUtcNow() >= _expiresAt)
+            {
+                await ExpireAsync();
+                return Outcome(CodeGraphToolInvocationStatus.Expired,
+                    CodeGraphToolIssueCode.SessionExpired);
+            }
+
+            if (_timedOut)
+            {
+                return Outcome(CodeGraphToolInvocationStatus.TimedOut,
+                    CodeGraphToolIssueCode.DeadlineExceeded);
+            }
+
+            if (_readiness?.IsReady != true || _client is null)
+            {
+                return Outcome(CodeGraphToolInvocationStatus.Unavailable,
+                    _readiness?.IssueCode ?? CodeGraphToolIssueCode.SourceUnprepared);
             }
 
             if (string.IsNullOrWhiteSpace(query) || maxFiles is < 1 or > 12 ||
@@ -153,6 +272,17 @@ internal sealed partial class NativeCodeGraphMcpClient : ICodeGraphWorkerToolSes
                 return Outcome(CodeGraphToolInvocationStatus.Denied);
             }
 
+            if (_nativeInvocationCount >= MaxNativeInvocations)
+            {
+                return Outcome(CodeGraphToolInvocationStatus.Limited,
+                    CodeGraphToolIssueCode.ResultLimit);
+            }
+
+            _nativeInvocationCount++;
+
+            using var operationCancellation = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            operationCancellation.CancelAfter(_operationTimeout);
+            long startedAt = Stopwatch.GetTimestamp();
             try
             {
                 var arguments = new Dictionary<string, object?>
@@ -162,7 +292,29 @@ internal sealed partial class NativeCodeGraphMcpClient : ICodeGraphWorkerToolSes
                     ["projectPath"] = _projectPath,
                 };
                 CallToolResult result = await _client.CallToolAsync(
-                    "codegraph_explore", arguments, cancellationToken: cancellationToken);
+                    "codegraph_explore", arguments,
+                    cancellationToken: operationCancellation.Token);
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    return Outcome(CodeGraphToolInvocationStatus.Cancelled,
+                        CodeGraphToolIssueCode.Cancelled);
+                }
+
+                if (operationCancellation.IsCancellationRequested ||
+                    Stopwatch.GetElapsedTime(startedAt) >= _operationTimeout)
+                {
+                    await TimeoutAsync();
+                    return Outcome(CodeGraphToolInvocationStatus.TimedOut,
+                        CodeGraphToolIssueCode.DeadlineExceeded);
+                }
+
+                if (_timeProvider.GetUtcNow() >= _expiresAt)
+                {
+                    await ExpireAsync();
+                    return Outcome(CodeGraphToolInvocationStatus.Expired,
+                        CodeGraphToolIssueCode.SessionExpired);
+                }
+
                 if (result.IsError == true)
                 {
                     return Outcome(CodeGraphToolInvocationStatus.Failed,
@@ -175,6 +327,19 @@ internal sealed partial class NativeCodeGraphMcpClient : ICodeGraphWorkerToolSes
             {
                 return Outcome(CodeGraphToolInvocationStatus.Cancelled,
                     CodeGraphToolIssueCode.Cancelled);
+            }
+            catch (OperationCanceledException) when (operationCancellation.IsCancellationRequested)
+            {
+                await TimeoutAsync();
+                return Outcome(CodeGraphToolInvocationStatus.TimedOut,
+                    CodeGraphToolIssueCode.DeadlineExceeded);
+            }
+            catch (Exception) when (operationCancellation.IsCancellationRequested &&
+                !cancellationToken.IsCancellationRequested)
+            {
+                await TimeoutAsync();
+                return Outcome(CodeGraphToolInvocationStatus.TimedOut,
+                    CodeGraphToolIssueCode.DeadlineExceeded);
             }
             catch (Exception)
             {
@@ -208,6 +373,30 @@ internal sealed partial class NativeCodeGraphMcpClient : ICodeGraphWorkerToolSes
         finally
         {
             _gate.Release();
+        }
+    }
+
+    private async Task ExpireAsync()
+    {
+        _expired = true;
+        _readiness = Failure(CodeGraphToolReadinessStatus.Expired,
+            CodeGraphToolStage.Discovery, CodeGraphToolIssueCode.SessionExpired);
+        if (_client is not null)
+        {
+            await _client.DisposeAsync();
+            _client = null;
+        }
+    }
+
+    private async Task TimeoutAsync()
+    {
+        _timedOut = true;
+        _readiness = Failure(CodeGraphToolReadinessStatus.Unavailable,
+            CodeGraphToolStage.Invocation, CodeGraphToolIssueCode.DeadlineExceeded);
+        if (_client is not null)
+        {
+            await _client.DisposeAsync();
+            _client = null;
         }
     }
 
@@ -356,7 +545,7 @@ internal sealed partial class NativeCodeGraphMcpClient : ICodeGraphWorkerToolSes
     }
 
     private static string StripLineNumbers(string text) =>
-        string.Join("\n", text.Replace("\r\n", "\n", StringComparison.Ordinal)
+        string.Join("\n", text.Replace("\r\n", "\n", StringComparison.Ordinal).TrimEnd('\r')
             .Split('\n', StringSplitOptions.RemoveEmptyEntries)
             .Select(line => Regex.Replace(line, "^\\d+\\t", string.Empty)));
 
