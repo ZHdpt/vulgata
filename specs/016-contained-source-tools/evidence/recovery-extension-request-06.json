@@ -1,0 +1,10 @@
+{
+  "kind":"human-decision-request","stage":"verify","decision_id":"18-1/implementation/1/extension/6","status":"requested","episode_id":"18-1/implementation/1","failed_results":10,"current_pause_at":10,"proposed_pause_at":11,
+  "scope_sha256":"10ff6a65764edc852d7aca3d09a4f2b1ab50355800bc0d554e7c61ea9a649c75",
+  "scope_material":"18-1/implementation/1/extension/6|18-1/implementation/1|11|verify-test-failure-06|sandbox-access-denied-0xC0000022|outside-sandbox-selfcontained-qualification|reconverge-lookback-quality-e2e-final|one-negative-result",
+  "transition_head":{"path":"specs/016-contained-source-tools/evidence/workflow-transition-066-verify-self-contained-failure-pause.json","sha256":"f7954e1ecc79d357d4eca4411f15035cf375114077288e86d10871feb62f1d2d"},
+  "failure_evidence":{"path":"specs/016-contained-source-tools/evidence/verify-test-failure-06.json","sha256":"75ac72a332a00531454ddefc9b8aafe73900eeb7c935465a1d344c540db36e4e"},
+  "proposed_changed_approach":"Accept the controlled 0xC0000022 sandbox diagnosis, preserve native containment, record the repository testing guidance and project lesson, qualify the exact configured SelfContained suite only with approved execution outside the Codex filesystem sandbox, then refresh convergence/lookback/quality/E2E and close from a pinned outside-sandbox pass.",
+  "recommendation":"Approve cumulative recovery limit 11 so Story 18.1 can reconcile the proven execution-environment cause and complete without weakening tests or production containment.",
+  "requested_at":"2026-09-29T06:54:38.7078505Z"
+}

@@ -1,0 +1,63 @@
+{
+  "observed_after": {"path": "specs/016-contained-source-tools/evidence/workflow-transition-030-disposal-convergence-accept.json", "sha256": "e195b9b39f3dca1a6ff04134ead98af441aca1c4def7c610ef203a1ff73219e0"},
+  "raw_result": {
+    "schema_version": "1.0",
+    "gate": "quality-review",
+    "verdict": "ACCEPT",
+    "reviewed_commit": "305552699989efde75aeaf886e7ea0562fb2a459",
+    "reviewed_boundary": {
+      "base_commit": "4703e4fb9e268580988e976808316ced413f140f",
+      "candidate_commit": "305552699989efde75aeaf886e7ea0562fb2a459",
+      "diff_sha256": "cb09c4fc50215da17fbd796cb49f171ff5c6af57033122b749ee590ee624ec3c",
+      "artifact_hashes": {
+        "specs/016-contained-source-tools/spec.md": "48c92e4f6582471a1664e553b48756a811f22bb2b4f1334206e94303629b0b6d",
+        "specs/016-contained-source-tools/plan.md": "b375723e56c8cdc7990a4e7a624c5f58a78fde07d9a23edd79e25025c54fce08",
+        "specs/016-contained-source-tools/tasks.md": "b345d7322f8777d8fda77a153c48af954e7ed18a185cf648f8c309ef0d0a8a1b",
+        "specs/016-contained-source-tools/research.md": "b9fc717f704e8045d4816c018e730f3e8cc083ea5ad4db2b96676b58cfdb8d08",
+        "specs/016-contained-source-tools/data-model.md": "c6ff708a20a0598c4613dc90975cc73b5e0b21f6f16eb09381a01e318e53d9ce",
+        "specs/016-contained-source-tools/quickstart.md": "4628f035d44401fac2dd5b1944c799ce1fa01a1c58c3cb1722debe33bfdf70d9",
+        "specs/016-contained-source-tools/contracts/prepared-source-tools.md": "bc4318478f636398aeb921b5d5dc32f9aa1206fb02bc9c7faf147bd9bd87ba37",
+        "src/dotnet/Vulgata.Core/DomainServices/PreparedSourceContracts.cs": "4b9f0cddc3ef1082bf8ba3c0d1c11eca3ece70d26f893179e34673b038564e6e",
+        "src/dotnet/Vulgata.Infrastructure/Source/PreparedSourceContextIssuer.cs": "528342730ca9fb892893606a6a03eb2bfefa5d1e01734e5b4e8ce4c07843271d",
+        "src/dotnet/Vulgata.Infrastructure/Source/PreparedSourceReadContext.cs": "87307eeebbdf8d9878113de05bd92271a3c69e1ebf60ae8c73acb427902f3ffc",
+        "src/dotnet/Vulgata.Infrastructure/Source/PreparedSourceText.cs": "be0b6e411581360dcc9dc257979101c8c261ef5f8b264041acce4be96b1a0455",
+        "src/dotnet/Vulgata.Infrastructure/Source/PreparedSourceTraversal.cs": "0fda6e0867fba81788279e9aaf75e48f477fbb46e2eb29c5b05e35a153252d3f",
+        "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedSourceFunctions.cs": "20e1d5f554294e5163251b4e82dbd11d1714ff442af77249e7aa9a2ab368e1c7",
+        "tests/Vulgata.Tests/PreparedSource/PreparedSourceAuthorityLifecycleTests.cs": "c2331f1415d0ee136b1958a3bd3396f48939adfddf1a54646e7a06ad94f1b522",
+        "tests/Vulgata.Tests/PreparedSource/PreparedSourceBasicReadTests.cs": "2ecbcdfab82906890429051f273f6dc713eec508b7255238dc833a6d278f1f48",
+        "tests/Vulgata.Tests/PreparedSource/PreparedSourceCancellationBudgetTests.cs": "d27837a98a7edb4734fe4393de3af22009e92ef534937d91d66fc167309febde",
+        "tests/Vulgata.Tests/PreparedSource/PreparedSourceContainmentTests.cs": "7cb3cdef2a3c75aef81a5e81268063b226d72f78db1a09aa14614234e4732fbe",
+        "tests/Vulgata.Tests/PreparedSource/PreparedSourceFailureTests.cs": "fe180bc5d777249de6a91d9b5802d9a3648a637759f15f00ec1eb3da3bb46de5",
+        "tests/Vulgata.Tests/PreparedSource/PreparedSourceFixture.cs": "8e5525a53634ce5b3c88908422ce67fd59af25362fde3cca5d730f64ffcc4c1a",
+        "tests/Vulgata.Tests/PreparedSource/PreparedSourceGrantTests.cs": "a663c32070471494a7b98a19baec6a6d2a094a7ba1f75b79df3dd411eed5e772",
+        "tests/Vulgata.Tests/PreparedSource/PreparedSourceListTests.cs": "94329983898d7fd205ffa56ec5d2cd784d04b7ebb8794c97f5fe6fd076037fe0",
+        "tests/Vulgata.Tests/PreparedSource/PreparedSourceRangeReadTests.cs": "32e4e71f8cd58aec6ccc525f9ca5d026ccbf254b9a05e2288848f34358fe2d62",
+        "tests/Vulgata.Tests/PreparedSource/PreparedSourceSearchTests.cs": "ec40ea7ced6964bf3b9d1b54f4e8f0acc3a87f8955204346ad4f8d3e4387c521",
+        "tests/Vulgata.Tests/PreparedSource/PreparedSourceToolFunctionTests.cs": "c34aa0a38d77df9b393dd6d3fe23d9ebcb117fe3c95ade5510b1c2027453710e",
+        "specs/016-contained-source-tools/evidence/quality-review-result-01.json": "4d89833934650fe3e50f20669a4d2f9fa97ce4e20dcf75905c023715664fed7a",
+        "specs/016-contained-source-tools/evidence/quality-review-result-02.json": "5d6e74e6dd4260a9dbd77c7b6ee7c164b084a5133c9ea94c6deb9a85203ee4ee",
+        "specs/016-contained-source-tools/evidence/quality-diagnosis-01.json": "50b460f5c06484eb89349fa69e9150b9effa172d71f352b8ee196e11f987a73a",
+        "specs/016-contained-source-tools/evidence/quality-diagnosis-02.json": "683fc4117bfd24c1da1f2b8c832c0f3c8ec4d0f9a204c2860f21febb1319b2d0",
+        "specs/016-contained-source-tools/evidence/recovery-extension-01.json": "86fc3e4773f5746034fe66c066e5d8ab30817627bf934a43a5b5dfd52cdd5889",
+        "specs/016-contained-source-tools/evidence/implementation-correction-01.json": "2d2f5d3e99a46a296a84259092157ef3c3b2a27a203d0aa7a930bb0c4a837cce",
+        "specs/016-contained-source-tools/evidence/implementation-correction-02.json": "92bee02ded19c3bd59f5dca9f06da0c485e745dbdaeb1876efd94093b1b6ee41",
+        "specs/016-contained-source-tools/evidence/disposal-correction-focused-result-01.json": "8f974c4f631c694da47bc137e56525aa96c18b0824f02f622e068b4793b54714",
+        "specs/016-contained-source-tools/evidence/convergence-result-04.json": "97a2cda04799fae4ab82027d28897a91d14f309a5bdd4a763475c5e7bcb44428",
+        "specs/016-contained-source-tools/evidence/story-lookback-03.json": "e3c7f4ebc74177b93c6ecc77ae808da4d40cc0f06d933a972af58831e54ade84",
+        "docs/bmad/implementation-artifacts/18-1-access-prepared-source-through-contained-read-only-tools.md": "13b36ff4b5b95ec22d1e49e969d3e84439090cb0ac2778353ceb74651353cbe7",
+        "docs/project-lessons.md": "d436cef34d427621ffdccebd43b5c9e7b02dd327dcf6c7080eb312424f045d27",
+        "docs/bmad/implementation-artifacts/sprint-status.yaml": "17a8608a4aa524e7fc94d433b697cb8739333c73d0ae259b04b607e5afc442a3"
+      },
+      "owned_paths": [
+        "specs/016-contained-source-tools/spec.md", "specs/016-contained-source-tools/plan.md", "specs/016-contained-source-tools/tasks.md", "specs/016-contained-source-tools/research.md", "specs/016-contained-source-tools/data-model.md", "specs/016-contained-source-tools/quickstart.md", "specs/016-contained-source-tools/contracts/prepared-source-tools.md",
+        "src/dotnet/Vulgata.Core/DomainServices/PreparedSourceContracts.cs", "src/dotnet/Vulgata.Infrastructure/Source/PreparedSourceContextIssuer.cs", "src/dotnet/Vulgata.Infrastructure/Source/PreparedSourceReadContext.cs", "src/dotnet/Vulgata.Infrastructure/Source/PreparedSourceText.cs", "src/dotnet/Vulgata.Infrastructure/Source/PreparedSourceTraversal.cs", "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedSourceFunctions.cs",
+        "tests/Vulgata.Tests/PreparedSource/PreparedSourceAuthorityLifecycleTests.cs", "tests/Vulgata.Tests/PreparedSource/PreparedSourceBasicReadTests.cs", "tests/Vulgata.Tests/PreparedSource/PreparedSourceCancellationBudgetTests.cs", "tests/Vulgata.Tests/PreparedSource/PreparedSourceContainmentTests.cs", "tests/Vulgata.Tests/PreparedSource/PreparedSourceFailureTests.cs", "tests/Vulgata.Tests/PreparedSource/PreparedSourceFixture.cs", "tests/Vulgata.Tests/PreparedSource/PreparedSourceGrantTests.cs", "tests/Vulgata.Tests/PreparedSource/PreparedSourceListTests.cs", "tests/Vulgata.Tests/PreparedSource/PreparedSourceRangeReadTests.cs", "tests/Vulgata.Tests/PreparedSource/PreparedSourceSearchTests.cs", "tests/Vulgata.Tests/PreparedSource/PreparedSourceToolFunctionTests.cs",
+        "specs/016-contained-source-tools/evidence/quality-review-result-01.json", "specs/016-contained-source-tools/evidence/quality-review-result-02.json", "specs/016-contained-source-tools/evidence/quality-diagnosis-01.json", "specs/016-contained-source-tools/evidence/quality-diagnosis-02.json", "specs/016-contained-source-tools/evidence/recovery-extension-01.json", "specs/016-contained-source-tools/evidence/implementation-correction-01.json", "specs/016-contained-source-tools/evidence/implementation-correction-02.json", "specs/016-contained-source-tools/evidence/disposal-correction-focused-result-01.json", "specs/016-contained-source-tools/evidence/convergence-result-04.json", "specs/016-contained-source-tools/evidence/story-lookback-03.json",
+        "docs/bmad/implementation-artifacts/18-1-access-prepared-source-through-contained-read-only-tools.md", "docs/project-lessons.md", "docs/bmad/implementation-artifacts/sprint-status.yaml"
+      ]
+    },
+    "reviewed_artifacts": ["AGENTS.md", "docs/agents/development.md", "docs/agents/testing.md", ".specify/memory/constitution.md", "docs/bmad/planning-artifacts/architecture.md", "docs/bmad/planning-artifacts/architecture/ARCHITECTURE-SPINE.md", "docs/bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md", "specs/016-contained-source-tools/spec.md", "specs/016-contained-source-tools/plan.md", "specs/016-contained-source-tools/tasks.md", "specs/016-contained-source-tools/contracts/prepared-source-tools.md", "specs/016-contained-source-tools/evidence/quality-review-result-01.json", "specs/016-contained-source-tools/evidence/quality-review-result-02.json", "specs/016-contained-source-tools/evidence/implementation-correction-01.json", "specs/016-contained-source-tools/evidence/implementation-correction-02.json", "specs/016-contained-source-tools/evidence/convergence-result-04.json", "specs/016-contained-source-tools/evidence/story-lookback-03.json", "docs/bmad/implementation-artifacts/18-1-access-prepared-source-through-contained-read-only-tools.md", "docs/project-lessons.md"],
+    "findings": [],
+    "summary": "ACCEPT. QR-18.1-01, QR-18.1-02 and QR-18.1-03 are resolved on the pinned candidate. Nested listing uses the held-root no-follow traversal and returns immediate Repository-relative children. Range reads compare observed file identity and metadata before disclosure. Queued List/Search waits link to context disposal, and the read open/use path checks disposal and returns sanitized Cancelled. The queued regressions protect accepted lifecycle behavior; focused RED, final 119/119 controlled Windows GREEN, clean convergence, current lookback and scoped lesson are recorded. Resource ownership, bounded budgets, authority timing, closed Agent schemas and affected module/test shape show no further required finding. The PostgreSQL-backed retained-source regressions remain blocked by missing VULGATA_STORY131_POSTGRES_ADMIN; controlled tests do not establish immutable snapshots or real Worker/model/provider integration."
+  }
+}

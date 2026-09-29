@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Net;
 using System.Net.Http.Json;
 using System.Net.Sockets;
@@ -24,7 +25,8 @@ public sealed class LlmProviderConfigTests : IClassFixture<LoginLogoutTests.Cust
         _factory = factory;
     }
 
-    [Fact]
+    [Trait("Suite", "E2E")]
+    [SuiteFact("E2E")]
     public async Task Administrator_CanCreateListUpdateAndDeleteLlmProvider_AndApiKeyIsEncrypted()
     {
         await EnsureApplicationStartedAsync();
@@ -101,7 +103,8 @@ public sealed class LlmProviderConfigTests : IClassFixture<LoginLogoutTests.Cust
         Assert.Empty(afterDeleteProviders);
     }
 
-    [Fact]
+    [Trait("Suite", "E2E")]
+    [SuiteFact("E2E")]
     public async Task DuplicateLlmProviderName_ReturnsChineseValidationProblem()
     {
         await EnsureApplicationStartedAsync();
@@ -148,7 +151,8 @@ public sealed class LlmProviderConfigTests : IClassFixture<LoginLogoutTests.Cust
         Assert.NotEqual(existing.Id, another.Id);
     }
 
-    [Fact]
+    [Trait("Suite", "E2E")]
+    [SuiteFact("E2E")]
     public async Task ConnectionTest_WithMockHttp_ReturnsChineseSuccessAndFailureMessages()
     {
         await EnsureApplicationStartedAsync();
@@ -192,7 +196,8 @@ public sealed class LlmProviderConfigTests : IClassFixture<LoginLogoutTests.Cust
         Assert.DoesNotContain("wrong-key", failure.Detail ?? string.Empty, StringComparison.Ordinal);
     }
 
-    [Fact]
+    [Trait("Suite", "E2E")]
+    [SuiteFact("E2E")]
     public async Task SystemOwner_CannotManageLlmProviders_AndSettingsPageDoesNotExposeEntry()
     {
         await EnsureApplicationStartedAsync();

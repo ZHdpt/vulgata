@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using Vulgata.Core.DomainServices;
 using Vulgata.Core.Entities;
 
@@ -5,7 +6,8 @@ namespace Vulgata.Tests;
 
 public sealed class WorkerAgentContractTests
 {
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Pass1Contracts_CreateMatchingTypedAggregate_ReturnsClosedVariants()
     {
         WorkerAgentJobPacket packet = WorkerAgentTestFixtures.CreatePass1Packet();
@@ -30,7 +32,8 @@ public sealed class WorkerAgentContractTests
         Assert.Equal(packet.ProfiledRevision, result.ProfiledRevision);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Pass1JobPayload_NonCanonicalReferenceAllowlist_RejectsValue()
     {
         Assert.Throws<ArgumentException>(() =>
@@ -50,7 +53,8 @@ public sealed class WorkerAgentContractTests
                 ]));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Pass1JobPayload_NonCanonicalContextCollections_RejectsValue()
     {
         WorkerAgentStructuralContext context = WorkerAgentStructuralContext.Create(
@@ -76,7 +80,8 @@ public sealed class WorkerAgentContractTests
                 ]));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Pass1JobPayload_SourceSliceExceedsNamedLineBound_RejectsValue()
     {
         Assert.Throws<ArgumentOutOfRangeException>(() =>
@@ -95,7 +100,8 @@ public sealed class WorkerAgentContractTests
                 allowedReferenceDocumentVersionIds: []));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Pass1Result_ReferenceRequestsAreNotCanonicalOrAllowlisted_RejectsValue()
     {
         WorkerAgentJobPacket packet = WorkerAgentTestFixtures.CreatePass1Packet();
@@ -132,7 +138,8 @@ public sealed class WorkerAgentContractTests
                 outsideAllowlist));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Pass1Result_AnchorsAndCommunicationEvidenceAreNotCanonicalOrAuthorized_RejectsValue()
     {
         WorkerAgentJobPacket packet = WorkerAgentTestFixtures.CreatePass1Packet();
@@ -173,7 +180,8 @@ public sealed class WorkerAgentContractTests
                 outsideEvidenceAllowlist));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Pass1Result_PreparedCommunicationEvidenceIsOmitted_RejectsValue()
     {
         WorkerAgentJobPacket packet = WorkerAgentTestFixtures.CreatePass1Packet();
@@ -193,7 +201,8 @@ public sealed class WorkerAgentContractTests
                 omitted));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Pass1JobPayload_NonCanonicalPreparedAnchors_RejectsValue()
     {
         WorkerAgentPreparedSourceAnchor[] duplicate =
@@ -227,7 +236,8 @@ public sealed class WorkerAgentContractTests
                 preparedSourceAnchors: [outsideSlice]));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Pass1Result_AnchorIdIsNotEchoedFromPreparedAnchors_RejectsValue()
     {
         WorkerAgentJobPacket packet = WorkerAgentTestFixtures.CreatePass1Packet(
@@ -267,7 +277,8 @@ public sealed class WorkerAgentContractTests
                 inventedId));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Pass1Result_AnchorIsEchoedFromPreparedAnchors_AcceptsValue()
     {
         WorkerAgentJobPacket packet = WorkerAgentTestFixtures.CreatePass1Packet(
@@ -308,7 +319,8 @@ public sealed class WorkerAgentContractTests
         Assert.Equal(WorkerAgentResultOutcome.Valid, envelope.Outcome);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Pass1Result_ContentIsNotCodeLogic_RejectsValue()
     {
         WorkerAgentJobPacket packet = WorkerAgentTestFixtures.CreatePass1Packet();
@@ -334,7 +346,8 @@ public sealed class WorkerAgentContractTests
                 invalid));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Pass1Result_ContentCollectionsAreNotCanonical_RejectsValue()
     {
         WorkerAgentJobPacket packet = WorkerAgentTestFixtures.CreatePass1Packet();
@@ -360,7 +373,8 @@ public sealed class WorkerAgentContractTests
                 invalid));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Pass1Result_SectionMarkdownUsesNormalizedLfLayout_AcceptsValue()
     {
         WorkerAgentJobPacket packet = WorkerAgentTestFixtures.CreatePass1Packet();
@@ -387,7 +401,8 @@ public sealed class WorkerAgentContractTests
         Assert.Same(payload, envelope.Payload);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Pass1Result_HasNoSourceGrounding_RejectsValue()
     {
         WorkerAgentJobPacket packet = WorkerAgentTestFixtures.CreatePass1Packet();
@@ -413,7 +428,8 @@ public sealed class WorkerAgentContractTests
             payload));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Pass1JobPayload_ContextContainsHostPathOrSecret_RejectsValue()
     {
         Assert.Throws<ArgumentException>(() =>
@@ -429,7 +445,8 @@ public sealed class WorkerAgentContractTests
                 "password=secret"));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Pass2Contracts_ExactPreparedFlow_ReturnsSecondAndOnlyClosedVariant()
     {
         PreparedPass2Flow flow = CreatePreparedPass2Flow();
@@ -502,7 +519,8 @@ public sealed class WorkerAgentContractTests
             property => property.Name.Contains("Reference", StringComparison.OrdinalIgnoreCase));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Pass2Result_MainStepsOmitPreparedEvidence_RejectsValue()
     {
         PreparedPass2Flow flow = CreatePreparedPass2Flow();

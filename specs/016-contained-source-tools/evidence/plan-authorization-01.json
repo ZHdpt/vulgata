@@ -1,0 +1,42 @@
+{
+  "kind": "human-approval",
+  "stage": "plan-review",
+  "decision_id": "18-1/plan-authorization/1",
+  "status": "accepted",
+  "scope_sha256": "2cc8a7aafd61c8fbd2e76dd4e9e58efef69d6e14c89ba0b23092eea87142d769",
+  "requested_at": "2026-09-28T04:23:12.4637032Z",
+  "decided_at": "2026-09-28T04:25:28.9936733Z",
+  "user_instruction": "authorize",
+  "rebound_at": "2026-09-28T08:23:40.6628207Z",
+  "previous_scope_sha256": "ae5b4407349ca9d5f04843d830e084a12361b1e0e83bc2f64bae9b4310622f3f",
+  "rebound_reason": "The correction only specifies the callable Agent factory seam already required for the same three authorized Worker tools. Independent plan-review-09 and definition-review-04 confirmed tool surface, authority, behavior and scope are unchanged.",
+  "scope_material": "18-1/plan-authorization/1|48c92e4f6582471a1664e553b48756a811f22bb2b4f1334206e94303629b0b6d|b375723e56c8cdc7990a4e7a624c5f58a78fde07d9a23edd79e25025c54fce08|7693f45b5686c936e0a4a1c67a0060fba79a33de777cf8897ff60e63308eb4b8",
+  "prior_rebound": {
+    "scope_sha256": "eeb09f8d4555533d3609cfb22cce9701cd2408456d4261d9801c3fea9013ac69",
+    "rebound_at": "2026-09-28T04:50:55.4210843Z",
+    "previous_scope_sha256": "3af241cc21833a26bacb42565c06b8966a7a7e699cae1cc6f2733d77762f2def",
+    "reason": "Removed checkpoint-blocking trailing spaces without semantic change."
+  },
+  "trigger": "Adds and materially changes a Worker Agent tool surface: contained prepared-source list, ranged read and literal search.",
+  "proposed_approach": "Issue an application-approved prepared-source context whose physical root remains private to Infrastructure. Worker-visible list/read/search arguments cannot select a root. Infrastructure uses bounded handle-relative no-follow traversal, treats every symlink/reparse entry as non-traversable, returns Repository-relative locations and truthful completion states, and rechecks injected current batch/Repository/subject/purpose authority before and during disclosure.",
+  "effects": [
+    "Workers can inspect one approved live prepared directory without Git acquisition, copying, hashing, retention, database, CodeGraph or LSP.",
+    "Revoked, changed or unavailable authority closes the context, invalidates continuations, discards buffered output and settles owned work.",
+    "Prepared input remains a live operator-labelled origin, not a Profiled Revision or Source Snapshot.",
+    "All symlink and reparse traversal is denied, including links that currently point inside the root.",
+    "Existing retained Git source behavior remains separate and must pass regression coverage."
+  ],
+  "implementation_intent": "If authorized, generate dependency-ordered tasks for this reviewed design. Later implementation will still require separate approval after complete definition acceptance, behavioral TDD, review, conditional E2E and final verification.",
+  "affected_material": [
+    "specs/016-contained-source-tools/plan.md#implementation-design",
+    "specs/016-contained-source-tools/plan.md#planned-change-authorization-brief-for-root",
+    "specs/016-contained-source-tools/contracts/prepared-source-tools.md",
+    "docs/bmad/planning-artifacts/october-release-epics.md#story-181-access-prepared-source-through-contained-read-only-tools",
+    "docs/bmad/planning-artifacts/october-release-epics.md O-FR01, O-FR04 and O-NFR01",
+    "docs/bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md FR-4.9 and NFR-2.3"
+  ],
+  "recommendation": "Authorize task generation for the independently accepted plan. The main tradeoff is deliberately giving up traversal through otherwise-safe in-root links to keep one race-resistant containment rule.",
+  "uncertainty": "Windows handle-relative no-follow containment and revocation timing are accepted design obligations but remain unimplemented and unqualified until later test and review gates.",
+  "approval_permits": "Progression from the accepted plan to task generation for this exact scope.",
+  "approval_does_not_permit": "Production implementation, database/provider/runtime operations, a broader Scan strategy, PRD changes, or bypassing later analysis, TDD, review, E2E, security and verification gates."
+}

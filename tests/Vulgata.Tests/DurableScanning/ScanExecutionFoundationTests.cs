@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using Vulgata.Core.Entities;
 
 namespace Vulgata.Tests.DurableScanning;
@@ -22,7 +23,8 @@ public sealed class ScanExecutionFoundationTests
     private static readonly DateTimeOffset _startedAt =
         new(2026, 8, 30, 9, 0, 0, TimeSpan.Zero);
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void CreateNewPath_NormalizesTrustedBindingsRejectsHostPathsAndRetainsLegacyColumns()
     {
         ScanExecution execution = ScanExecution.CreateNewPath(
@@ -82,7 +84,8 @@ public sealed class ScanExecutionFoundationTests
         Assert.Null(legacy.UpdatedAt);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void NewPathTransitions_AdvanceVersionAndUpdatedAtThroughPausesAndWarningsWithoutAutomaticResume()
     {
         ScanExecution execution = CreateNewPath();
@@ -145,7 +148,8 @@ public sealed class ScanExecutionFoundationTests
         Assert.Equal(8, execution.StateVersion);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void NewPathFailuresAndCancellation_UseClosedReasonsAndKeepTerminalStatesImmutable()
     {
         ScanExecution integrityFailure = CreateNewPath();

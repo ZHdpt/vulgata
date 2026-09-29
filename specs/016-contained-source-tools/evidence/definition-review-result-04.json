@@ -1,0 +1,52 @@
+{
+  "observed_after": {
+    "path": "specs/016-contained-source-tools/evidence/workflow-transition-018-agent-seam-tasks-correction.json",
+    "sha256": "165be07fa60b91d891972d2eb1335be279495cf65f2981109c19188378b8f0f9"
+  },
+  "raw_result": {
+    "schema_version": "1.0",
+    "gate": "definition-review",
+    "verdict": "ACCEPT",
+    "reviewed_commit": "0510ba270d19fb524de8e656e8ef96efe81e666a",
+    "reviewed_boundary": {
+      "base_commit": "0510ba270d19fb524de8e656e8ef96efe81e666a",
+      "candidate_commit": null,
+      "diff_sha256": "297dd09c91f5b3f9658820ad33e3b65dfecde80005e57b2a0bfdcfc71226c498",
+      "artifact_hashes": {
+        "specs/016-contained-source-tools/contracts/prepared-source-tools.md": "bc4318478f636398aeb921b5d5dc32f9aa1206fb02bc9c7faf147bd9bd87ba37",
+        "specs/016-contained-source-tools/data-model.md": "c6ff708a20a0598c4613dc90975cc73b5e0b21f6f16eb09381a01e318e53d9ce",
+        "specs/016-contained-source-tools/plan.md": "b375723e56c8cdc7990a4e7a624c5f58a78fde07d9a23edd79e25025c54fce08",
+        "specs/016-contained-source-tools/quickstart.md": "4628f035d44401fac2dd5b1944c799ce1fa01a1c58c3cb1722debe33bfdf70d9",
+        "specs/016-contained-source-tools/research.md": "b9fc717f704e8045d4816c018e730f3e8cc083ea5ad4db2b96676b58cfdb8d08",
+        "specs/016-contained-source-tools/spec.md": "48c92e4f6582471a1664e553b48756a811f22bb2b4f1334206e94303629b0b6d",
+        "specs/016-contained-source-tools/tasks.md": "704204445766c907771a785c510836801efe08d2e55f08096d39528437516c9a"
+      },
+      "owned_paths": [
+        "specs/016-contained-source-tools/spec.md",
+        "specs/016-contained-source-tools/plan.md",
+        "specs/016-contained-source-tools/research.md",
+        "specs/016-contained-source-tools/data-model.md",
+        "specs/016-contained-source-tools/quickstart.md",
+        "specs/016-contained-source-tools/contracts/prepared-source-tools.md",
+        "specs/016-contained-source-tools/tasks.md"
+      ]
+    },
+    "reviewed_artifacts": [
+      "specs/016-contained-source-tools/plan.md",
+      "specs/016-contained-source-tools/contracts/prepared-source-tools.md",
+      "specs/016-contained-source-tools/tasks.md",
+      "specs/016-contained-source-tools/evidence/definition-review-boundary-04.json",
+      "specs/016-contained-source-tools/evidence/plan-review-08.json",
+      "specs/016-contained-source-tools/evidence/definition-review-03.json",
+      "specs/016-contained-source-tools/evidence/plan-correction-self-review-03.json",
+      "specs/016-contained-source-tools/evidence/tasks-correction-self-review-03.json",
+      "src/dotnet/Vulgata.Core/DomainServices/PreparedSourceContracts.cs",
+      "src/dotnet/Vulgata.Infrastructure/Source/PreparedSourceReadContext.cs",
+      "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedNavigateCodeFunction.cs",
+      "AGENTS.md",
+      ".specify/memory/constitution.md"
+    ],
+    "findings": [],
+    "summary": "ACCEPT. All seven pinned hashes and deterministic checks pass. PR-18.1-AGENT-FUNCTION-SEAM is resolved by one public PreparedSourceFunctions(context).Create() interface returning exactly three ordered AIFunctions, borrowed lifetime, closed arguments, sanitized invalid calls and unchanged cancellation/result forwarding. Earlier findings remain resolved. Existing approvals remain semantically applicable with corrected hash rebinding; T001-T015 do not prove Agent implementation."
+  }
+}

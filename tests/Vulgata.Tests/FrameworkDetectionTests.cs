@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Collections;
 using System.Diagnostics;
 using System.Reflection;
@@ -33,7 +34,8 @@ public sealed class FrameworkDetectionTests
         }
         """;
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public void Load_UnknownRootField_ThrowsInvalidDataException()
     {
         string json = CatalogJson(_reactEntry).Replace(
@@ -44,7 +46,8 @@ public sealed class FrameworkDetectionTests
         Assert.Throws<InvalidDataException>(() => Load(json));
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public void Load_UnknownEntryField_ThrowsInvalidDataException()
     {
         string entry = _reactEntry.Replace(
@@ -55,11 +58,13 @@ public sealed class FrameworkDetectionTests
         Assert.Throws<InvalidDataException>(() => Load(CatalogJson(entry)));
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public void Load_DuplicateCoordinate_ThrowsInvalidDataException() =>
         Assert.Throws<InvalidDataException>(() => Load(CatalogJson(_reactEntry, _reactEntry)));
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public void Load_AmbiguousCoordinate_ThrowsInvalidDataException()
     {
         string ambiguous = _reactEntry.Replace(
@@ -70,7 +75,8 @@ public sealed class FrameworkDetectionTests
         Assert.Throws<InvalidDataException>(() => Load(CatalogJson(_reactEntry, ambiguous)));
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public void Load_InvalidFrameworkName_ThrowsInvalidDataException()
     {
         string entry = _reactEntry.Replace(
@@ -81,7 +87,8 @@ public sealed class FrameworkDetectionTests
         Assert.Throws<InvalidDataException>(() => Load(CatalogJson(entry)));
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public void Load_InvalidLanguageToken_ThrowsInvalidDataException()
     {
         string entry = _reactEntry.Replace(
@@ -92,7 +99,8 @@ public sealed class FrameworkDetectionTests
         Assert.Throws<InvalidDataException>(() => Load(CatalogJson(entry)));
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public void Load_UnsupportedEvidenceKind_ThrowsInvalidDataException()
     {
         string entry = _reactEntry.Replace(
@@ -103,7 +111,8 @@ public sealed class FrameworkDetectionTests
         Assert.Throws<InvalidDataException>(() => Load(CatalogJson(entry)));
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public void Load_UnsupportedEcosystem_ThrowsInvalidDataException()
     {
         string entry = _reactEntry.Replace(
@@ -114,7 +123,8 @@ public sealed class FrameworkDetectionTests
         Assert.Throws<InvalidDataException>(() => Load(CatalogJson(entry)));
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public void FindExact_NearCoordinate_ReturnsNoMatch()
     {
         object catalog = Load(CatalogJson(_reactEntry));
@@ -125,7 +135,8 @@ public sealed class FrameworkDetectionTests
         Assert.Null(FindExact(catalog, "prefix-npm:react"));
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public void LoadEmbedded_InitialCoordinates_MatchAcceptedClosedCatalog()
     {
         object catalog = LoadEmbedded();
@@ -161,7 +172,8 @@ public sealed class FrameworkDetectionTests
                 .OrderBy(name => name, StringComparer.Ordinal));
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public void LoadEmbedded_Metadata_ReportsVersionAndExactContentSha256()
     {
         object catalog = LoadEmbedded();
@@ -179,7 +191,8 @@ public sealed class FrameworkDetectionTests
         Assert.Equal(Convert.ToHexStringLower(SHA256.HashData(stream)), sha256);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public void Program_Startup_RegistersValidatedEmbeddedCatalog()
     {
         Type catalogType = RequireCatalogType();
@@ -194,7 +207,8 @@ public sealed class FrameworkDetectionTests
             GetProperty<string>(catalog, "Sha256"));
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task DetectAsync_TrackedLiteralDirectEvidence_ReturnsExactCatalogMatchesAsync()
     {
         using var repository = new GitFixture();
@@ -278,7 +292,8 @@ public sealed class FrameworkDetectionTests
         Assert.Equal(expected, actual);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task DetectDetailedAsync_DuplicateMavenScalarChildren_IsolatesArtifactAndContinuesIndependentManifestAsync()
     {
         using var repository = new GitFixture();
@@ -353,7 +368,8 @@ public sealed class FrameworkDetectionTests
         Assert.DoesNotContain("ARTIFACT-SECOND-SECRET", retained, StringComparison.Ordinal);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task DetectDetailedAsync_ForeignXmlNamespaceLookalikes_IsolatesArtifactAndPreservesIndependentEvidenceAsync()
     {
         using var repository = new GitFixture();
@@ -496,7 +512,8 @@ public sealed class FrameworkDetectionTests
                 item.ArtifactPath.StartsWith("mixed/", StringComparison.Ordinal));
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task DetectAsync_DirtyTrackedDirectManifest_DoesNotCreateUncommittedFactAsync()
     {
         using var repository = new GitFixture();
@@ -515,7 +532,8 @@ public sealed class FrameworkDetectionTests
         AssertGlobalFailure(result, "DetectorFailed", "框架证据检测失败。");
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task DetectAsync_DirtyTrackedPairedLock_DoesNotCreateUncommittedFactAsync()
     {
         using var repository = new GitFixture();
@@ -557,7 +575,8 @@ public sealed class FrameworkDetectionTests
         AssertGlobalFailure(result, "DetectorFailed", "框架证据检测失败。");
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task DetectAsync_DirtyDeletionAndReparseSubstitution_FailsClosedWithoutFactsAsync()
     {
         using var repository = new GitFixture();
@@ -620,7 +639,8 @@ public sealed class FrameworkDetectionTests
         AssertGlobalFailure(result, "DetectorFailed", "框架证据检测失败。");
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task DetectAsync_HeadChangesAfterLease_FailsClosedWithoutSnapshotFactsAsync()
     {
         using var repository = new GitFixture();
@@ -640,7 +660,8 @@ public sealed class FrameworkDetectionTests
         AssertGlobalFailure(result, "DetectorFailed", "框架证据检测失败。");
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task DetectAsync_PairedCommittedLocks_ReturnsExactTransitiveMatchesAsync()
     {
         using var repository = new GitFixture();
@@ -769,7 +790,8 @@ public sealed class FrameworkDetectionTests
                 item.DetectionSource == "src/npm-v3/package.json#json:/optionalDependencies/react");
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public void DirectManifestOwnerContracts_ClosedStates_AreAvailable()
     {
         Assembly coreAssembly = typeof(Vulgata.Core.Entities.CodeUnit).Assembly;
@@ -799,7 +821,8 @@ public sealed class FrameworkDetectionTests
                 .OrderBy(name => name, StringComparer.Ordinal));
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task DetectApplicableDetailedAsync_NuGetUniqueValidOwners_WithAndWithoutDirectCatalogMatch_AllowEligibleLockAsync()
     {
         foreach ((string name, string project) in new[]
@@ -845,7 +868,8 @@ public sealed class FrameworkDetectionTests
         }
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task DetectApplicableDetailedAsync_NuGetDirectProjectSdkOwner_AllowsEligibleLockAsync()
     {
         using var repository = new GitFixture();
@@ -873,7 +897,8 @@ public sealed class FrameworkDetectionTests
         Assert.Empty(result.AuditOutcomes);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task DetectApplicableDetailedAsync_NuGetDirectItemGroupFrameworkReferenceOwner_AllowsEligibleLockAsync()
     {
         using var repository = new GitFixture();
@@ -905,7 +930,8 @@ public sealed class FrameworkDetectionTests
         Assert.Empty(result.AuditOutcomes);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task DetectApplicableDetailedAsync_NuGetTargetNestedOwner_RejectsLockWithOneClosedAuditAsync()
     {
         using var repository = new GitFixture();
@@ -946,7 +972,8 @@ public sealed class FrameworkDetectionTests
         Assert.DoesNotContain("Microsoft.AspNetCore.Mvc", audit.Message, StringComparison.Ordinal);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task DetectApplicableDetailedAsync_NuGetChooseWhenNestedOwner_RejectsLockAndPreservesIndependentEvidenceAsync()
     {
         using var repository = new GitFixture();
@@ -1008,7 +1035,8 @@ public sealed class FrameworkDetectionTests
         Assert.DoesNotContain("Microsoft.AspNetCore.Mvc", audit.Message, StringComparison.Ordinal);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task DetectApplicableDetailedAsync_NuGetInvalidOwnerShapes_RejectLockWithOneClosedAuditAsync()
     {
         foreach ((string name, string project, string expectedReason) in new[]
@@ -1053,7 +1081,8 @@ public sealed class FrameworkDetectionTests
         }
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task DetectApplicableDetailedAsync_NuGetOwnerCandidateSet_RejectsZeroMultipleInvalidBesideValidAndInapplicableAsync()
     {
         (string Name, Action<GitFixture> Arrange, string ExpectedReason)[] cases =
@@ -1115,7 +1144,8 @@ public sealed class FrameworkDetectionTests
         }
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task SnapshotLease_NuGetUnsafeReparseAndOversizeOwners_FailClosedBeforeDetectionAsync()
     {
         foreach (string ownerKind in new[] { "unsafe", "reparse", "oversize" })
@@ -1154,7 +1184,8 @@ public sealed class FrameworkDetectionTests
         }
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task DetectApplicableDetailedAsync_NpmUniqueValidOwners_WithAndWithoutDirectCatalogMatch_AllowEligibleLockAsync()
     {
         foreach ((string name, string manifest, string expectedRelationship) in new[]
@@ -1182,7 +1213,8 @@ public sealed class FrameworkDetectionTests
         }
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task DetectApplicableDetailedAsync_NpmInvalidOwnerShapes_RejectLockWithOneClosedAuditAsync()
     {
         foreach ((string name, string manifest, string expectedReason) in new[]
@@ -1208,7 +1240,8 @@ public sealed class FrameworkDetectionTests
         }
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task DetectDetailedAsync_DuplicateRelevantJsonProperties_IsolatesDirectOwnerAndLockEvidenceAsync()
     {
         using var repository = new GitFixture();
@@ -1278,7 +1311,8 @@ public sealed class FrameworkDetectionTests
         Assert.DoesNotContain("SECOND-SECRET", retained, StringComparison.Ordinal);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task DetectApplicableDetailedAsync_NpmOwnerCandidate_FailsClosedAtLeaseOrDetectionAsync()
     {
         foreach (string ownerKind in new[]
@@ -1339,7 +1373,8 @@ public sealed class FrameworkDetectionTests
         }
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task DetectApplicableDetailedAsync_InvalidOwnerLock_IndependentValidArtifactContinuesAsync()
     {
         using var repository = new GitFixture();
@@ -1369,7 +1404,8 @@ public sealed class FrameworkDetectionTests
         Assert.Equal("Direct", validFact.Relationship);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task DetectAsync_UntrackedIgnoredAndUnpairedLocks_ReturnsNoMatchesAsync()
     {
         using var repository = new GitFixture();
@@ -1419,7 +1455,8 @@ public sealed class FrameworkDetectionTests
         Assert.Empty(await DetectAsync(repository.Path));
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task DetectAsync_DynamicConditionalAndUnsupportedDeclarations_ReturnsNoMatchesAsync()
     {
         using var repository = new GitFixture();
@@ -1493,7 +1530,8 @@ public sealed class FrameworkDetectionTests
         Assert.Empty(await DetectAsync(repository.Path));
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task DetectDetailedAsync_InvalidPythonTrailingSyntax_IsolatedWhileIndependentEvidenceContinuesAsync()
     {
         using var repository = new GitFixture();
@@ -1518,7 +1556,8 @@ public sealed class FrameworkDetectionTests
         Assert.DoesNotContain("django???", RetainedDetectionText(result), StringComparison.Ordinal);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task DetectAsync_ForbiddenExecutionInferenceAndExternalSurfaces_ReturnsNoMatchesAsync()
     {
         using var repository = new GitFixture();
@@ -1587,7 +1626,8 @@ public sealed class FrameworkDetectionTests
         Assert.False(File.Exists(System.IO.Path.Combine(repository.Path, markerPath)));
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task DetectApplicableAsync_NestedManifest_SelectsDeepestAncestorScopeAsync()
     {
         using var repository = new GitFixture();
@@ -1620,7 +1660,8 @@ public sealed class FrameworkDetectionTests
         Assert.Equal(string.Empty, rootEvidence.ScopeRoot);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task DetectApplicableAsync_ParserLanguage_SelectsIndependentColocatedEcosystemAsync()
     {
         using var repository = new GitFixture();
@@ -1660,7 +1701,8 @@ public sealed class FrameworkDetectionTests
         Assert.Empty(incompatible);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task DetectApplicableAsync_SameEcosystemSameRootAmbiguity_ReturnsNoMatchesAsync()
     {
         using var repository = new GitFixture();
@@ -1691,7 +1733,8 @@ public sealed class FrameworkDetectionTests
             "c_sharp"));
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task DetectApplicableDetailedAsync_MatchedAndUnmatchedSameRootManifests_IsolatesOnlyAmbiguousEcosystemAsync()
     {
         using var repository = new GitFixture();
@@ -1746,7 +1789,8 @@ public sealed class FrameworkDetectionTests
         Assert.Equal("nuget-sdk:Microsoft.NET.Sdk.BlazorWebAssembly", blazor.PackageCoordinate);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task DetectApplicableDetailedAsync_TwoSameRootProjectsWithLockOnlyMatch_ReturnsOneAmbiguityAndNoFactAsync()
     {
         using var repository = new GitFixture();
@@ -1806,7 +1850,8 @@ public sealed class FrameworkDetectionTests
                 audit => audit.Reason == "FrameworkEvidenceAmbiguousScope"));
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task DetectApplicableAsync_UnpairedOrOutOfScopeEvidence_ReturnsNoMatchesAsync()
     {
         using var repository = new GitFixture();
@@ -1833,7 +1878,8 @@ public sealed class FrameworkDetectionTests
             "typescript"));
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task DetectApplicableAsync_DirectAndPairedLock_PreservesSingleDirectWinnerAsync()
     {
         using var repository = new GitFixture();
@@ -1874,7 +1920,8 @@ public sealed class FrameworkDetectionTests
             winner.DetectionSource);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task DetectApplicableAsync_NestedDuplicateFramework_SelectsDeepestThenOrdinalSourceAsync()
     {
         using var repository = new GitFixture();
@@ -1904,7 +1951,8 @@ public sealed class FrameworkDetectionTests
             winner.DetectionSource);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task DetectApplicableAsync_ExactDuplicates_CollapseToThreeClosedSafeLocatorFormsAsync()
     {
         using var repository = new GitFixture();
@@ -1974,7 +2022,8 @@ public sealed class FrameworkDetectionTests
         Assert.DoesNotContain("ARBITRARY-SOURCE-TEXT", persistedEvidence, StringComparison.Ordinal);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task DetectAsync_RepositoryRelativePathAndLocatorBounds_RejectOversizeEvidenceAsync()
     {
         using var repository = new GitFixture();
@@ -2065,7 +2114,8 @@ public sealed class FrameworkDetectionTests
         Assert.DoesNotContain("OVERSIZE-PATH-SECRET", exception.Message, StringComparison.Ordinal);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task DetectDetailedAsync_PerArtifactEightMiBBound_AcceptsMaximumAndRejectsOversizeLeaseAsync()
     {
         using var repository = new GitFixture();
@@ -2111,7 +2161,8 @@ public sealed class FrameworkDetectionTests
         Assert.DoesNotContain("OVERSIZE-SECRET-VALUE", exception.Message, StringComparison.Ordinal);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task DetectDetailedAsync_ParseDepth64Bound_IsolatesDeeperEvidenceAsync()
     {
         string maximumDepth = PackageJsonWithDepth("react", 64);
@@ -2160,7 +2211,8 @@ public sealed class FrameworkDetectionTests
         Assert.Equal("框架证据超出解析深度限制。", audit.Message);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task DetectDetailedAsync_MalformedAndUnsupportedArtifacts_UseClosedSafeChineseAuditsAsync()
     {
         using var repository = new GitFixture();
@@ -2213,7 +2265,8 @@ public sealed class FrameworkDetectionTests
         Assert.DoesNotContain("JsonException", retained, StringComparison.Ordinal);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task SnapshotLease_EscapeAndReparsePoint_FailClosedWithoutDisclosureAsync()
     {
         using var repository = new GitFixture();
@@ -2259,7 +2312,8 @@ public sealed class FrameworkDetectionTests
         Assert.DoesNotContain(repository.Path, exception.Message, StringComparison.OrdinalIgnoreCase);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public void FrameworkDetectionLimits_ProductionDefaults_MatchAcceptedRepositoryBounds()
     {
         object limits = GetProductionLimits();
@@ -2272,7 +2326,8 @@ public sealed class FrameworkDetectionTests
         Assert.Equal(100, GetProperty<int>(limits, "MaximumRetainedAuditDetails"));
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task DetectDetailedAsync_AggregateArtifactBytesOverflow_FailsClosedWithoutPartialFactsAsync()
     {
         using var repository = new GitFixture();
@@ -2294,7 +2349,8 @@ public sealed class FrameworkDetectionTests
         Assert.DoesNotContain("SECOND-SECRET", RetainedDetectionText(result), StringComparison.Ordinal);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task DetectDetailedAsync_LargeIrrelevantLease_RemainsBoundedAndHonorsCancellationAsync()
     {
         using var repository = new GitFixture();
@@ -2329,7 +2385,8 @@ public sealed class FrameworkDetectionTests
                 cancellationToken: cancellation.Token));
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task DetectDetailedAsync_SupportedArtifactOverflow_FailsClosedWithoutPartialFactsAsync()
     {
         using var repository = new GitFixture();
@@ -2349,7 +2406,8 @@ public sealed class FrameworkDetectionTests
         AssertGlobalFailure(result, "RepositoryBoundExceeded", "框架证据超出仓库级限制。");
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task DetectDetailedAsync_ParsedEntryOverflow_FailsClosedWithoutPartialFactsAsync()
     {
         using var repository = new GitFixture();
@@ -2373,7 +2431,8 @@ public sealed class FrameworkDetectionTests
         AssertGlobalFailure(result, "RepositoryBoundExceeded", "框架证据超出仓库级限制。");
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task DetectDetailedAsync_CandidateFactOverflow_FailsClosedWithoutPartialFactsAsync()
     {
         using var repository = new GitFixture();
@@ -2397,7 +2456,8 @@ public sealed class FrameworkDetectionTests
         AssertGlobalFailure(result, "RepositoryBoundExceeded", "框架证据超出仓库级限制。");
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task DetectApplicableDetailedAsync_FinalFactOverflow_FailsClosedWithoutPartialFactsAsync()
     {
         using var repository = new GitFixture();
@@ -2423,7 +2483,8 @@ public sealed class FrameworkDetectionTests
         AssertGlobalFailure(result, "RepositoryBoundExceeded", "框架证据超出仓库级限制。");
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task DetectDetailedAsync_MoreThanRetainedDetailLimit_SamplesWithoutLosingTotalCountAsync()
     {
         using var repository = new GitFixture();
@@ -2455,7 +2516,8 @@ public sealed class FrameworkDetectionTests
         Assert.DoesNotContain(repository.Path, retained, StringComparison.OrdinalIgnoreCase);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task DetectDetailedAsync_UnexpectedDetectorFailure_ReturnsClosedSafeFailureAsync()
     {
         string directory = System.IO.Path.Combine(

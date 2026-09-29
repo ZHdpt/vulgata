@@ -1,10 +1,12 @@
+using Vulgata.Tests.TestInfrastructure;
 using Vulgata.Core.DomainServices;
 
 namespace Vulgata.Tests;
 
 public sealed class PreparedDemoPass2FlowPlannerTests
 {
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void CreateRuntimeBinding_CurrentProductSupport_DerivesConsumerOwnedCanonicalFlow()
     {
         PreparedPass2RuntimeRepositoryBinding consumer = RepositoryBinding("consumer", 2, 3, 4, 'a');

@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Diagnostics;
 using System.Security.Cryptography;
 using System.Text.Json;
@@ -67,6 +68,8 @@ internal static class RetainedSourceSeparateProcessRunner
         startInfo.ArgumentList.Add("test");
         startInfo.ArgumentList.Add(ProjectPath);
         startInfo.ArgumentList.Add("--no-build");
+        startInfo.ArgumentList.Add("--settings");
+        startInfo.ArgumentList.Add(Path.Combine(fullRepositoryRoot, "tests", "Vulgata.Tests", "explicit-suites.runsettings"));
         startInfo.ArgumentList.Add("--filter");
         startInfo.ArgumentList.Add(ChildFilter);
         foreach (string name in RetainedSourceSeparateProcessChild.ContractVariables)
@@ -77,7 +80,14 @@ internal static class RetainedSourceSeparateProcessRunner
             RetainedSourceSeparateProcessChild.ModeValue;
         // A child receives a target database connection, never the administrator
         // credential used by the parent to create and dispose that database.
-        startInfo.Environment.Remove("VULGATA_STORY131_POSTGRES_ADMIN");
+        foreach (string administratorVariable in new[]
+        {
+            "VULGATA_STORY131_POSTGRES_ADMIN", "VULGATA_TEST_POSTGRES_ADMIN",
+            "VULGATA_TEST_ADMIN_CONNECTION", "VULGATA_TEST_POSTGRES", "VULGATA_TEST_OWNED_ADMIN",
+        })
+        {
+            startInfo.Environment.Remove(administratorVariable);
+        }
         if (environment is not null)
         {
             foreach ((string name, string? value) in environment)
@@ -170,7 +180,8 @@ public sealed class RetainedSourceSeparateProcessTests
         _output = output;
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task CaptureThenReopen_WhenRemoteBecomesUnavailable_UsesFreshProductionComposition()
     {
         await using RetainedSourceCaptureApplicationFixture applicationFixture =
@@ -278,7 +289,8 @@ public sealed class RetainedSourceSeparateProcessTests
             $"freshOpenDenied={reopen.DeniedOpenStatus}/{reopen.DeniedOpenCode}");
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task CaptureThenOpen_WhenRetainedBlobIsCorrupt_DeniesWithoutRepair()
     {
         await using RetainedSourceCaptureApplicationFixture applicationFixture =

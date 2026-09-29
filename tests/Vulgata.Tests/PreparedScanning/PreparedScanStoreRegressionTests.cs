@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Reflection;
 using Microsoft.EntityFrameworkCore;
 using Vulgata.Core.DomainServices;
@@ -17,7 +18,8 @@ namespace Vulgata.Tests.PreparedScanning;
 [Collection(PreparedScanningCollection.Name)]
 public sealed class PreparedScanStoreRegressionTests
 {
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task PreparedStore_StableProofAndSelectedChildMutation_ConflictsWithoutMutationAsync()
     {
         await using RegressionDatabase database = await RegressionDatabase.CreateAsync();
@@ -67,7 +69,8 @@ public sealed class PreparedScanStoreRegressionTests
         Assert.Equal(database.Package.SelectedCount, await database.Context.CodeUnits.CountAsync());
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task PreparedStore_PersistedFileCodeUnitFingerprintTamper_CannotReplayAsync()
     {
         await using RegressionDatabase database = await RegressionDatabase.CreateAsync();
@@ -90,7 +93,8 @@ public sealed class PreparedScanStoreRegressionTests
         Assert.Equal(database.Package.SelectedCount, await database.Context.CodeUnits.CountAsync());
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task PreparedStore_RetainedClassification_PersistsOneClassificationRowAsync()
     {
         await using RegressionDatabase database = await RegressionDatabase.CreateAsync();
@@ -108,7 +112,8 @@ public sealed class PreparedScanStoreRegressionTests
         Assert.Equal(1, await database.Context.CommunicationKindClassifications.CountAsync());
     }
 
-    [Fact(Skip = "PostgreSQL-only serializable writer arbitration remains qualified by T050; SQLite cannot represent it honestly.")]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql", Skip = "PostgreSQL-only serializable writer arbitration remains qualified by T050; SQLite cannot represent it honestly.")]
     public Task PreparedStore_ConcurrentIdenticalWriters_CommitOnceAndReplayOnceAsync() =>
         Task.CompletedTask;
 

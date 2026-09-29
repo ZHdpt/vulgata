@@ -102,6 +102,7 @@ internal sealed class PreparedScanPostgreSqlFixture : IAsyncDisposable
 
     internal static VulgataDbContext CreateContext(string connectionString)
     {
+        Vulgata.Tests.TestInfrastructure.TestResourceScope.ValidateOwnedTarget(connectionString);
         DbContextOptions<VulgataDbContext> options = new DbContextOptionsBuilder<VulgataDbContext>()
             .UseNpgsql(connectionString, npgsql =>
                 npgsql.MigrationsHistoryTable("__EFMigrationsHistory", "public"))

@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Net;
 using System.Reflection;
 using System.Text;
@@ -27,7 +28,8 @@ public sealed class RepositoryApiTests
         _factory = factory;
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ManagementScanRunRoutes_AuthorizedResponse_ContainsEverySortedLanguageAndDistinctFileCountAsync()
     {
         ScanRunSummaryDto summary = CreateSummaryWithLanguages();
@@ -67,7 +69,8 @@ public sealed class RepositoryApiTests
         }
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ManagementScanRunGetRoutes_ApprovedPreScanHandoff_ComposesBoundedContractWithoutChangingRouteAsync()
     {
         ScanRunSummaryDto summary = CreateSummaryWithLanguages();
@@ -121,7 +124,8 @@ public sealed class RepositoryApiTests
         }
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void RepositoryEndpoints_PreScanHandoff_AddsNoPublicRoute()
     {
         EndpointDataSource dataSource =
@@ -141,7 +145,8 @@ public sealed class RepositoryApiTests
                 pattern.Contains("pre-scan", StringComparison.OrdinalIgnoreCase));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ManagementScanRunRoutes_AuthorizedResponse_ContainsSortedFrameworksAndSharedAuditSamplesAsync()
     {
         ScanRunSummaryDto summary = CreateSummaryWithFrameworkOverview();
@@ -199,7 +204,8 @@ public sealed class RepositoryApiTests
         Assert.DoesNotContain("RAW-SECRET", body, StringComparison.Ordinal);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ManagementScanRunRoute_AuthorizedResponse_ContainsAllTenThousandSortedUnknownPathsAsync()
     {
         string[] expectedPaths =
@@ -232,7 +238,8 @@ public sealed class RepositoryApiTests
                 .ToArray());
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ManagementScanRunRoute_AuthorizedResponse_ContainsAllUnknownPathsAtSixteenMebibyteBoundAsync()
     {
         string[] expectedPaths = CreateExactUnknownAuditByteBoundPaths();
@@ -261,7 +268,8 @@ public sealed class RepositoryApiTests
                 .ToArray());
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ManagementScanRunRoute_AuthorizedUnsafeProviderAudit_ReturnsOnlyUnknownPathAsync()
     {
         ScanRunSummaryDto summary = CreateSummaryWithUnknownLanguage(["(unknown)"]);
@@ -289,7 +297,8 @@ public sealed class RepositoryApiTests
         Assert.DoesNotContain("host-secret", body, StringComparison.OrdinalIgnoreCase);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ManagementScanRunStartRoute_WhenCandidateAuditBoundIsExceeded_ReturnsBadRequestAsync()
     {
         Assert.True(Enum.TryParse(
@@ -315,7 +324,8 @@ public sealed class RepositoryApiTests
         Assert.DoesNotContain("提供程序", body, StringComparison.Ordinal);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ManagementScanRunStartRoute_WithAdversarialProviderFailure_ReturnsClosedChineseProblemAsync()
     {
         const string rawDiagnostic =
@@ -350,7 +360,8 @@ public sealed class RepositoryApiTests
         Assert.DoesNotContain("9876ms", body, StringComparison.Ordinal);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ManagementScanRunRoutes_WhenVisibilityIsRedacted_ReturnNotFoundWithoutLanguageDisclosureAsync()
     {
         using WebApplicationFactory<Program> factory = CreateFactory((ScanRunSummaryDto?)null);
@@ -386,7 +397,8 @@ public sealed class RepositoryApiTests
         }
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ManagementScanRunRoutes_Unauthenticated_ReturnUnauthorizedWithoutProfilingDisclosureAsync()
     {
         ScanRunSummaryDto summary = CreateSensitiveSummary();
@@ -415,7 +427,8 @@ public sealed class RepositoryApiTests
         }
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ManagementScanRunRoutes_UserWithoutManagementAccess_ReturnForbiddenAsync()
     {
         ScanRunSummaryDto summary = CreateSensitiveSummary();
@@ -449,7 +462,8 @@ public sealed class RepositoryApiTests
         }
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ManagementSystemScanRunStart_WhenVisibilityWasRevoked_ReturnsNotFoundWithoutProfilingDisclosureAsync()
     {
         ScanRunSummaryDto summary = CreateSensitiveSummary();

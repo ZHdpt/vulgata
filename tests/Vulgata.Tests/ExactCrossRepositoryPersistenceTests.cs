@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
@@ -10,7 +11,8 @@ namespace Vulgata.Tests;
 
 public sealed class ExactCrossRepositoryPersistenceTests
 {
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task ApplyAsync_ReviewedUnsupportedObservation_PersistsCanonicalNonterminalUncertaintyAsync()
     {
         await using ExactCrossRepositoryTestFixture fixture =
@@ -60,7 +62,8 @@ public sealed class ExactCrossRepositoryPersistenceTests
         Assert.Single(await context.ExactCrossRepositoryEdgeEvidence.AsNoTracking().ToArrayAsync());
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task ApplyAsync_EligibleNonExactReasons_UseOnlyCanonicalUnresolvedSubStatusesAsync()
     {
         await using ExactCrossRepositoryTestFixture fixture =
@@ -128,7 +131,8 @@ public sealed class ExactCrossRepositoryPersistenceTests
         Assert.Empty(await context.ExactCrossRepositoryEdgeEvidence.AsNoTracking().ToArrayAsync());
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task ApplyAsync_UnsupportedReplayAndDurableDrift_IsExactAndConflictSafeAsync()
     {
         await using ExactCrossRepositoryTestFixture fixture =
@@ -180,7 +184,8 @@ public sealed class ExactCrossRepositoryPersistenceTests
             (await context.Uncertainties.AsNoTracking().SingleAsync()).EvidenceLocator);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task Model_Uncertainty_RejectsUniqueForeignKeyAndClosedCheckViolationsAsync()
     {
         await using ExactCrossRepositoryTestFixture fixture =
@@ -241,7 +246,8 @@ public sealed class ExactCrossRepositoryPersistenceTests
         Assert.Single(await context.ExactCrossRepositoryEdgeEvidence.AsNoTracking().ToArrayAsync());
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task ApplyAsync_UnauthorizedScope_RefusesBeforeAnyDatabaseAccessAsync()
     {
         await using ExactCrossRepositoryTestFixture fixture =
@@ -278,7 +284,8 @@ public sealed class ExactCrossRepositoryPersistenceTests
         Assert.True(fixture.Access.Snapshot().IsZero);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task ApplyAsync_IdenticalReplayAndDrift_PreservesImmutableTruthAsync()
     {
         await using ExactCrossRepositoryTestFixture fixture =
@@ -335,7 +342,8 @@ public sealed class ExactCrossRepositoryPersistenceTests
         Assert.Equal(firstEvidence.CreatedAt, durableEvidence.CreatedAt);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task ApplyAsync_StaleCurrentPointerOrEvidenceFailure_RollsBackWholeWriteAsync()
     {
         await using ExactCrossRepositoryTestFixture staleFixture =
@@ -408,7 +416,8 @@ public sealed class ExactCrossRepositoryPersistenceTests
         Assert.Empty(await rollbackContext.Uncertainties.AsNoTracking().ToArrayAsync());
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task ApplyAsync_ExactDecision_AtomicallyPersistsEdgeAndEvidenceAsync()
     {
         await using ExactCrossRepositoryTestFixture fixture =
@@ -467,7 +476,8 @@ public sealed class ExactCrossRepositoryPersistenceTests
         Assert.Equal(edge.CreatedAt, evidence.CreatedAt);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public void Model_ExactEdgeEvidence_RequiresOwnerSafeRelationalShape()
     {
         DbContextOptions<VulgataDbContext> options =

@@ -1,0 +1,52 @@
+{
+  "observed_after": {
+    "path": "specs/016-contained-source-tools/evidence/workflow-transition-055-t027-qualification-accept.json",
+    "sha256": "a4beed30b0415b2f12b3f23e6a3cfd00a794d04a010921a8f0f2470cc6a0ce16"
+  },
+  "raw_result": {
+    "kind": "convergence",
+    "stage": "converge",
+    "outcome": "converged",
+    "source_commit": "2c7e801241c7ed3567cc885010b74270bfecc323",
+    "reused_task_ids": [],
+    "appended_task_ids": [],
+    "tasks_before": {
+      "path": "specs/016-contained-source-tools/evidence/tasks-pre-convergence-05.md",
+      "sha256": "6f619b75c759462dc1390fdfeaa165885216d1ad135a18a2de29ea18dfda8f10"
+    },
+    "tasks_after": {
+      "path": "specs/016-contained-source-tools/tasks.md",
+      "sha256": "6f619b75c759462dc1390fdfeaa165885216d1ad135a18a2de29ea18dfda8f10"
+    },
+    "unresolved_blockers": [],
+    "input_hashes": {
+      "specs/016-contained-source-tools/spec.md": "48c92e4f6582471a1664e553b48756a811f22bb2b4f1334206e94303629b0b6d",
+      "specs/016-contained-source-tools/plan.md": "b375723e56c8cdc7990a4e7a624c5f58a78fde07d9a23edd79e25025c54fce08",
+      "specs/016-contained-source-tools/tasks.md": "6f619b75c759462dc1390fdfeaa165885216d1ad135a18a2de29ea18dfda8f10",
+      "specs/016-contained-source-tools/contracts/prepared-source-tools.md": "f83cf4fae7c7d3b65f3fefb0b58aa6c73f7aacf8be08e138e8b94f850f6c0a81",
+      "specs/016-contained-source-tools/evidence/t027-postgresql-qualification-01.json": "cd2def40d46c92347dcdda6e86939813638a7f3c94683f925ca02d4429123219",
+      "specs/016-contained-source-tools/evidence/quality-diagnosis-05.json": "26d0a4808339b04d06c9539e648ae3e138935de92b5ce8842f09a213696468c4",
+      "specs/016-contained-source-tools/evidence/recovery-extension-04.json": "1196f4baacb463e197dfc7be39ed7947f4c17e075f33e3fd46400bf7a99040ff",
+      "specs/016-contained-source-tools/evidence/convergence-result-07.json": "965de0e631421b18d01acbb95c301eefd1c76c4610f896cb4c9db44ea6dbc2db",
+      "specs/016-contained-source-tools/evidence/test-policy-correction-01.json": "7dbc20f75316b3411f3d3f66301bdb493f2cc5beeb38208d223859e8ee4b0ce7",
+      "tests/Vulgata.Tests/TestInfrastructure/suites.json": "2617583a8eb41b15428a220f1e1397234b4b670709f162dabb648e0ff2434eb0",
+      "eng/test.ps1": "8e1438ab4a98e60f1b107d61d6befcd3e192a25ab0e947d9bda04cd083c5cb11"
+    },
+    "owned_paths": [
+      "specs/016-contained-source-tools/spec.md",
+      "specs/016-contained-source-tools/plan.md",
+      "specs/016-contained-source-tools/tasks.md",
+      "specs/016-contained-source-tools/contracts/prepared-source-tools.md",
+      "specs/016-contained-source-tools/evidence/t027-postgresql-qualification-01.json",
+      "specs/016-contained-source-tools/evidence/quality-diagnosis-05.json",
+      "specs/016-contained-source-tools/evidence/recovery-extension-04.json",
+      "specs/016-contained-source-tools/evidence/convergence-result-07.json",
+      "specs/016-contained-source-tools/evidence/test-policy-correction-01.json",
+      "tests/Vulgata.Tests/TestInfrastructure/suites.json",
+      "eng/test.ps1"
+    ],
+    "assessment": "T027 closes the remaining Story 18.1 qualification gap: the exact PostgreSql-suite run selected and passed all 63 retained-source tests with zero failures/skips and removed its run-owned container and volume. FR-011, SC-005, plan ID-T03 and the T026/T027 boundary are satisfied. PreparedSource remains 119/119 at its recorded policy-correction boundary. The configured SelfContained final command remains a separate pending verification gate.",
+    "verification_route": "Direct feature-specific PostgreSql qualification plus the existing test-only policy-adaptation evidence; no behavioral RED or product correction was required.",
+    "summary": "Converged with no task reuse, append, definition return, or unresolved blocker after T027 passed 63/63."
+  }
+}

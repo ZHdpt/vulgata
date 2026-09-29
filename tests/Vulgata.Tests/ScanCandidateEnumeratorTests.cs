@@ -1,10 +1,12 @@
+using Vulgata.Tests.TestInfrastructure;
 using Vulgata.Infrastructure.Git;
 
 namespace Vulgata.Tests;
 
 public sealed class ScanCandidateEnumeratorTests
 {
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task EnumerateAsync_WithMaterializedArchiveOutsideGit_EnumeratesDeterministicFilteredGroupsAsync()
     {
         string root = Path.Combine(Path.GetTempPath(), $"vulgata-archive-candidates-{Guid.NewGuid():N}");
@@ -53,7 +55,8 @@ public sealed class ScanCandidateEnumeratorTests
         }
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void SanitizeDiagnostic_WithCredentialAndTokenShapes_ReturnsChineseSecretSafeReason()
     {
         const string diagnostic =
@@ -67,7 +70,8 @@ public sealed class ScanCandidateEnumeratorTests
         Assert.DoesNotContain("hunter2", sanitized, StringComparison.Ordinal);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task EnumerateAsync_WithLargeGeneratedArchiveInventory_ClassifiesEveryGeneratedPathAsync()
     {
         string root = Path.Combine(Path.GetTempPath(), $"vulgata-candidates-{Guid.NewGuid():N}");
@@ -98,7 +102,8 @@ public sealed class ScanCandidateEnumeratorTests
         }
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task EnumerateAsync_WithSymbolicLinkOutsideRoot_RejectsCandidateWithoutReadingTargetAsync()
     {
         string parent = Path.Combine(Path.GetTempPath(), $"vulgata-candidates-{Guid.NewGuid():N}");

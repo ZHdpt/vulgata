@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Net;
 using System.Security.Claims;
 using System.Text.RegularExpressions;
@@ -18,7 +19,8 @@ namespace Vulgata.Tests.RetainedSource;
 [Collection(RetainedSourceProcessGlobalCollection.Name)]
 public sealed class RetainedSourceHttpE2eTests
 {
-    [Fact]
+    [Trait("Suite", "E2E")]
+    [SuiteFact("E2E")]
     public async Task RepositoryDelete_WhenCaptured_UsesProductionHttpPipelineAndReturnsSanitizedConflict()
     {
         await using RetainedSourceFixture source = await RetainedSourceFixture.CreateAsync();

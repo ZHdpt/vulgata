@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Diagnostics;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -17,7 +18,8 @@ public sealed class RetainedSourcePersistenceTests
         _output = output;
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task AcquireAsync_SameIdentityReplay_ReturnsStableReceiptAndOneVisibleObjectAsync()
     {
         await using RetainedSourceFixture fixture =
@@ -85,7 +87,8 @@ public sealed class RetainedSourcePersistenceTests
         Assert.Equal(first.CompletedAt, replay.CompletedAt);
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task AcquireAsync_InjectedPrePublishFailure_LeavesNoVisibleRowAndFreshRetryAdoptsSealedObjectAsync()
     {
         await using RetainedSourceFixture fixture =
@@ -160,7 +163,8 @@ public sealed class RetainedSourcePersistenceTests
         Assert.True(Volatile.Read(ref authorizationCount) > authorizationsBeforeRetry);
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task AcquireAsync_AgedAbandonedOperation_IsRemovedAfterSuccessfulAdoptionAsync()
     {
         await using RetainedSourceFixture fixture =
@@ -280,7 +284,8 @@ public sealed class RetainedSourcePersistenceTests
         }
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task AcquireAsync_AgedUnknownOperations_PreservesForeignStateAndSentinelsAsync()
     {
         await using RetainedSourceFixture fixture =
@@ -341,7 +346,8 @@ public sealed class RetainedSourcePersistenceTests
         Assert.Equal(2, remainingOperations.Length);
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task AcquireAsync_WhileAnotherRepositoryHoldsLiveLease_PreservesLiveOperationAsync()
     {
         await using RetainedSourceFixture firstSource =
@@ -441,7 +447,8 @@ public sealed class RetainedSourcePersistenceTests
         }
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task AcquireAsync_WhenOperationsRootIsOwnedReparsePoint_FailsWithoutOutsideWritesAsync()
     {
         await using RetainedSourceFixture fixture =
@@ -487,7 +494,8 @@ public sealed class RetainedSourcePersistenceTests
         Assert.True(File.Exists(targetSentinel));
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task AcquireAsync_AgedUnreferencedSealedObject_RemovesOnlyUnreferencedRevisionAsync()
     {
         await using RetainedSourceFixture fixture =
@@ -592,7 +600,8 @@ public sealed class RetainedSourcePersistenceTests
         Assert.Equal("retained-source-fixture\n", sourceA.Content);
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task AcquireAsync_YoungerUnreferencedSealedObject_PreservesObjectWithinGraceAsync()
     {
         await using RetainedSourceFixture fixture =
@@ -657,7 +666,8 @@ public sealed class RetainedSourcePersistenceTests
         Assert.Equal(1, revisionCObjects);
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task AcquireAsync_AgedMalformedManifestObject_PreservesUnknownOwnedStateAsync()
     {
         await using RetainedSourceFixture fixture =
@@ -730,7 +740,8 @@ public sealed class RetainedSourcePersistenceTests
         Assert.True(File.Exists(Path.Combine(unknownObject, "manifest.json")));
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task AcquireAsync_AgedSealedObjectWithBusyIdentityLock_PreservesUntilLockReleasedAsync()
     {
         await using RetainedSourceFixture fixture =
@@ -864,7 +875,8 @@ public sealed class RetainedSourcePersistenceTests
         }
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task AcquireAsync_SameIdentityConcurrentPublication_ReturnsCompletedAndReplayAsync()
     {
         await using RetainedSourceFixture fixture =
@@ -909,7 +921,8 @@ public sealed class RetainedSourcePersistenceTests
         Assert.Equal(1, sealedObjectCount);
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task AcquireAsync_ConflictingRecordedDigest_ReturnsIntegrityFailureWithoutOverwriteAsync()
     {
         await using RetainedSourceFixture fixture =
@@ -968,7 +981,8 @@ public sealed class RetainedSourcePersistenceTests
         Assert.Equal("preserve", File.ReadAllText(sentinel));
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task AcquireAsync_DifferentRepositories_ConcurrentPublicationReturnsCompletedAndOneRowEachAsync()
     {
         await using RetainedSourceFixture firstSource =

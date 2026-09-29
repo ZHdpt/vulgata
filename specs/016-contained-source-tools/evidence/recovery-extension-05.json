@@ -1,0 +1,19 @@
+{
+  "kind": "human-approval",
+  "stage": "verify",
+  "decision_id": "18-1/implementation/1/extension/5",
+  "status": "accepted",
+  "episode_id": "18-1/implementation/1",
+  "scope_sha256": "fa6ecdcb7b206e79c900b8df359b4b90841afd304056dbafa3f5f256ebf30af2",
+  "scope_material": "18-1/implementation/1/extension/5|18-1/implementation/1|10|verify-test-failure-05|capture-native-root-open-status|evidence-supported-isolation-or-implementation-correction|focused-and-configured-selfcontained|one-negative-result",
+  "pause_at": 10,
+  "requested_at": "2026-09-29T05:48:57.7976299Z",
+  "decided_at": "2026-09-29T05:48:57.7976299Z",
+  "user_instruction": "Retry and diagnostic   these fail tests",
+  "context_assessment": "This directly accepts the immediately preceding proposed extension to 10 for diagnosing and retrying the 88 Story 18.1 failures.",
+  "failed_results_at_decision": 9,
+  "approved_changed_approach": "Capture the exact failing Windows root-open step/status under a controlled reproduction, distinguish full-suite parallel/resource interference from an implementation defect, apply only the evidence-supported isolation or implementation correction, then rerun the focused PreparedSource boundary and exact configured SelfContained suite once.",
+  "limits": "This raises the cumulative pause limit from 9 to 10. It does not reset the counter or authorize an unchanged blind rerun. Any substantive negative result at count 10 returns to the human.",
+  "unchanged_gates": "Clean convergence, refreshed lookback, fresh independent quality review, conditional E2E and final configured build/test verification remain required after any correction.",
+  "summary": "The user authorized finite recovery extension 10 for diagnosis and retry of the 88 Story 18.1 PreparedSource failures."
+}

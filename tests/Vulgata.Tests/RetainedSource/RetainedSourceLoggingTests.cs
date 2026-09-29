@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Collections.Concurrent;
 using System.Text;
 using Microsoft.EntityFrameworkCore;
@@ -22,7 +23,8 @@ public sealed class RetainedSourceLoggingTests
         _output = output;
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task SourceDiagnostics_WhenCaptureReopenDenialAndDeletionConflictOccur_AreSanitized()
     {
         const string sourceMarker = "synthetic-source-content-marker";

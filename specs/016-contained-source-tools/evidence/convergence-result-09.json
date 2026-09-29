@@ -1,0 +1,74 @@
+{
+  "observed_after": {
+    "path": "specs/016-contained-source-tools/evidence/workflow-transition-062-isolation-correction-accept.json",
+    "sha256": "6f4f0a9c8111208e0670dfcfde74fc1fe8dea77a09e4c86e1ad10bc8217617bb"
+  },
+  "raw_result": {
+    "kind": "convergence",
+    "stage": "converge",
+    "outcome": "converged",
+    "source_commit": "6905584bc3b3d2b036fc0a3a0be36f35219adaa5",
+    "reused_task_ids": [],
+    "appended_task_ids": [],
+    "tasks_before": {
+      "path": "specs/016-contained-source-tools/evidence/tasks-pre-convergence-06.md",
+      "sha256": "6f619b75c759462dc1390fdfeaa165885216d1ad135a18a2de29ea18dfda8f10"
+    },
+    "tasks_after": {
+      "path": "specs/016-contained-source-tools/tasks.md",
+      "sha256": "6f619b75c759462dc1390fdfeaa165885216d1ad135a18a2de29ea18dfda8f10"
+    },
+    "unresolved_blockers": [],
+    "input_hashes": {
+      "specs/016-contained-source-tools/spec.md": "48c92e4f6582471a1664e553b48756a811f22bb2b4f1334206e94303629b0b6d",
+      "specs/016-contained-source-tools/plan.md": "b375723e56c8cdc7990a4e7a624c5f58a78fde07d9a23edd79e25025c54fce08",
+      "specs/016-contained-source-tools/tasks.md": "6f619b75c759462dc1390fdfeaa165885216d1ad135a18a2de29ea18dfda8f10",
+      "specs/016-contained-source-tools/contracts/prepared-source-tools.md": "f83cf4fae7c7d3b65f3fefb0b58aa6c73f7aacf8be08e138e8b94f850f6c0a81",
+      "specs/016-contained-source-tools/evidence/verify-test-failure-05.json": "d1995fa555b437b2403d78a413eab00a8d154954513d03ec50086e74f96c7f76",
+      "specs/016-contained-source-tools/evidence/recovery-extension-05.json": "52af3297fb23c21461b36b74e44150a45efbfa9bb3a3f7fcc6118a031cf52bdb",
+      "specs/016-contained-source-tools/evidence/quality-diagnosis-06.json": "161c6c9830fd6c54151a200b158c4555671033dae3ff1c5ec288fbb502802cfb",
+      "specs/016-contained-source-tools/evidence/prepared-source-isolation-correction-01.json": "1e6ee0603ee2ba5e155ad1dea691a6b7d4daed8413be868f8ce5e75607d015ff",
+      "specs/016-contained-source-tools/evidence/t027-postgresql-qualification-01.json": "cd2def40d46c92347dcdda6e86939813638a7f3c94683f925ca02d4429123219",
+      "tests/Vulgata.Tests/PreparedSource/PreparedSourceAuthorityLifecycleTests.cs": "827b048424120b4acd1989a61690a61c7f777ba80fd9aba153a36377983df96b",
+      "tests/Vulgata.Tests/PreparedSource/PreparedSourceBasicReadTests.cs": "68edf974d5f7293d7aa47df3e8428e400c6822761fe0857f6ef5c4a955b04c2c",
+      "tests/Vulgata.Tests/PreparedSource/PreparedSourceCancellationBudgetTests.cs": "aef89e0d520f411d097832ea3667b2c0f76f64ccafc98f0062c3eb41b1d94adf",
+      "tests/Vulgata.Tests/PreparedSource/PreparedSourceContainmentTests.cs": "7df7604061cc3d7270edc471586dacf3bf620194ca8a0dddd41cd36737e25ac5",
+      "tests/Vulgata.Tests/PreparedSource/PreparedSourceFailureTests.cs": "97ca8ebc38fdb39505ad0e8046662931c694c9a6d4d87296d35af4505dd6d2d0",
+      "tests/Vulgata.Tests/PreparedSource/PreparedSourceFixture.cs": "0bd3f2e78e71d8ab5782b6d23704144a703cfc69c33a028328710ca602a7e425",
+      "tests/Vulgata.Tests/PreparedSource/PreparedSourceGrantTests.cs": "3455a97353b710b6fa1c07fde8512178790381b127a7a1fbc32252903b60521f",
+      "tests/Vulgata.Tests/PreparedSource/PreparedSourceListTests.cs": "a4fd712cd0782c2f4de8b6c8e9430d738a14af718c0b9c2850364e3e2b7e81d5",
+      "tests/Vulgata.Tests/PreparedSource/PreparedSourceRangeReadTests.cs": "65bdcfee9cce1458eb621ad0e2adac174c48e4b681103e20f74cee35ebdca858",
+      "tests/Vulgata.Tests/PreparedSource/PreparedSourceSearchTests.cs": "3c1386b3f7b05ca2b603d8ffde9301eabbb7c7bb3674ca47f38064c2c0516188",
+      "tests/Vulgata.Tests/PreparedSource/PreparedSourceToolFunctionTests.cs": "cc89b38b284bd83b0c1dbe6ed38fa22b9cdfd8a777d4f2913ee7d8a7934c7cbd",
+      "tests/Vulgata.Tests/TestInfrastructure/suites.json": "2617583a8eb41b15428a220f1e1397234b4b670709f162dabb648e0ff2434eb0",
+      "eng/test.ps1": "8e1438ab4a98e60f1b107d61d6befcd3e192a25ab0e947d9bda04cd083c5cb11"
+    },
+    "owned_paths": [
+      "specs/016-contained-source-tools/spec.md",
+      "specs/016-contained-source-tools/plan.md",
+      "specs/016-contained-source-tools/tasks.md",
+      "specs/016-contained-source-tools/contracts/prepared-source-tools.md",
+      "specs/016-contained-source-tools/evidence/verify-test-failure-05.json",
+      "specs/016-contained-source-tools/evidence/recovery-extension-05.json",
+      "specs/016-contained-source-tools/evidence/quality-diagnosis-06.json",
+      "specs/016-contained-source-tools/evidence/prepared-source-isolation-correction-01.json",
+      "specs/016-contained-source-tools/evidence/t027-postgresql-qualification-01.json",
+      "tests/Vulgata.Tests/PreparedSource/PreparedSourceAuthorityLifecycleTests.cs",
+      "tests/Vulgata.Tests/PreparedSource/PreparedSourceBasicReadTests.cs",
+      "tests/Vulgata.Tests/PreparedSource/PreparedSourceCancellationBudgetTests.cs",
+      "tests/Vulgata.Tests/PreparedSource/PreparedSourceContainmentTests.cs",
+      "tests/Vulgata.Tests/PreparedSource/PreparedSourceFailureTests.cs",
+      "tests/Vulgata.Tests/PreparedSource/PreparedSourceFixture.cs",
+      "tests/Vulgata.Tests/PreparedSource/PreparedSourceGrantTests.cs",
+      "tests/Vulgata.Tests/PreparedSource/PreparedSourceListTests.cs",
+      "tests/Vulgata.Tests/PreparedSource/PreparedSourceRangeReadTests.cs",
+      "tests/Vulgata.Tests/PreparedSource/PreparedSourceSearchTests.cs",
+      "tests/Vulgata.Tests/PreparedSource/PreparedSourceToolFunctionTests.cs",
+      "tests/Vulgata.Tests/TestInfrastructure/suites.json",
+      "eng/test.ps1"
+    ],
+    "assessment": "The bounded test-only correction assigns every PreparedSource test class to one xUnit collection with DisableParallelization=true. Policy validation passed for 283 classified sources and the complete focused PreparedSource selection passed 119/119 with zero skips. Assertions and production code are unchanged. T027's separate retained-source PostgreSql qualification remains 63/63. No accepted Story 18.1 implementation obligation remains; the configured complete SelfContained rerun remains a later final-verification gate and is not claimed here.",
+    "verification_route": "Direct test-policy and focused-boundary evidence for the test-only isolation correction, retaining T027 as separate PostgreSql qualification.",
+    "summary": "Converged with no task reuse, append, definition return or unresolved blocker after the nonparallel PreparedSource correction passed 119/119."
+  }
+}

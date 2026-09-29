@@ -1,0 +1,859 @@
+{
+  "AdministratorRoleAssignmentTests.cs": {
+    "suite": "SelfContained"
+  },
+  "ArchitectureScaffoldingTests.cs": {
+    "suite": "SelfContained"
+  },
+  "BackupBDirectProvisionerTests.cs": {
+    "suite": "SelfContained"
+  },
+  "BoundedRetryWorkerAgentDispatcherTests.cs": {
+    "suite": "SelfContained"
+  },
+  "ChatAdvisoryContextReaderTests.cs": {
+    "suite": "SelfContained"
+  },
+  "ChatAgentDispatcherTests.cs": {
+    "suite": "SelfContained"
+  },
+  "ChatAgentResultValidatorTests.cs": {
+    "suite": "SelfContained"
+  },
+  "ChatCandidateExtractorTests.cs": {
+    "suite": "SelfContained"
+  },
+  "ChatCandidateRankerTests.cs": {
+    "suite": "SelfContained"
+  },
+  "ChatContractTests.cs": {
+    "suite": "SelfContained"
+  },
+  "ChatConversationStateTests.cs": {
+    "suite": "SelfContained"
+  },
+  "ChatEvidenceCurrentnessTests.cs": {
+    "suite": "LocalTools"
+  },
+  "ChatEvidencePacketBuilderTests.cs": {
+    "suite": "SelfContained"
+  },
+  "ChatEvidencePacketV22ContractTests.cs": {
+    "suite": "HistoricalBoundary"
+  },
+  "ChatEvidenceRetrievalTests.cs": {
+    "suite": "LocalTools"
+  },
+  "ChatPageTests.cs": {
+    "suite": "SelfContained"
+  },
+  "ChatPipelineCompositionTests.cs": {
+    "suite": "SelfContained"
+  },
+  "ChatProviderStreamAssemblerTests.cs": {
+    "suite": "SelfContained"
+  },
+  "ChatStreamObservationProvenanceTests.cs": {
+    "suite": "SelfContained"
+  },
+  "ChatSupplementaryEvidenceSelectorTests.cs": {
+    "suite": "SelfContained"
+  },
+  "ChatTurnTests.cs": {
+    "suite": "SelfContained"
+  },
+  "ChatValidatedRevealTests.cs": {
+    "suite": "SelfContained"
+  },
+  "ContextManagementCoordinatorTests.cs": {
+    "suite": "SelfContained"
+  },
+  "DashboardPanelTests.cs": {
+    "suite": "SelfContained"
+  },
+  "DatabaseConnectionConfigTests.cs": {
+    "suite": "LocalTools"
+  },
+  "DemoScanPageTests.cs": {
+    "suite": "SelfContained"
+  },
+  "DemoScanUiStateTests.cs": {
+    "suite": "SelfContained"
+  },
+  "ExactCrossRepositoryAuthorizationTests.cs": {
+    "suite": "LocalTools"
+  },
+  "ExactCrossRepositoryIntegrationTests.cs": {
+    "suite": "LocalTools"
+  },
+  "ExactCrossRepositoryMigrationTests.cs": {
+    "suite": "PostgreSql"
+  },
+  "ExactCrossRepositoryPersistenceTests.cs": {
+    "suite": "LocalTools"
+  },
+  "ExactCrossRepositoryResolverTests.cs": {
+    "suite": "LocalTools"
+  },
+  "ExactCrossRepositoryTestFixtures.cs": {
+    "suite": "LocalTools"
+  },
+  "ExactGitRevisionAcquisitionTests.cs": {
+    "suite": "LocalTools"
+  },
+  "ExactResolutionExtractionTests.cs": {
+    "suite": "LocalTools"
+  },
+  "ExactResolutionProfileTests.cs": {
+    "suite": "LocalTools"
+  },
+  "FrameworkDetectionArchiveLeaseTests.cs": {
+    "suite": "LocalTools"
+  },
+  "FrameworkDetectionTests.cs": {
+    "suite": "LocalTools"
+  },
+  "GrantSystemOwnershipTests.cs": {
+    "suite": "SelfContained"
+  },
+  "IdentityRegistrationTests.cs": {
+    "suite": "SelfContained"
+  },
+  "KnowledgeStoreDomainTests.cs": {
+    "suite": "SelfContained"
+  },
+  "KnowledgeStoreMigrationTests.cs": {
+    "suite": "SelfContained"
+  },
+  "KnowledgeStorePersistenceTests.cs": {
+    "suite": "SelfContained"
+  },
+  "KnowledgeStorePostgreSqlConcurrencyTests.cs": {
+    "suite": "PostgreSql"
+  },
+  "KnowledgeStoreRetrievalTests.cs": {
+    "suite": "SelfContained"
+  },
+  "KnowledgeStoreTestFixtures.cs": {
+    "suite": "SelfContained"
+  },
+  "KnowledgeStoreTestHarness.cs": {
+    "suite": "SelfContained"
+  },
+  "LlmProviderConfigTests.cs": {
+    "suite": "E2E"
+  },
+  "LoggingConfigurationTests.cs": {
+    "suite": "SelfContained"
+  },
+  "LoginLogoutTests.cs": {
+    "suite": "SelfContained"
+  },
+  "MigrationTests.cs": {
+    "suite": "SelfContained"
+  },
+  "OpenAiCompatibleChatProviderStreamingTransportTests.cs": {
+    "suite": "SelfContained"
+  },
+  "Pass1JobIdentityTests.cs": {
+    "suite": "SelfContained"
+  },
+  "PreparedChatCoordinatorTests.cs": {
+    "suite": "SelfContained"
+  },
+  "PreparedChatIntegrationTests.cs": {
+    "suite": "SelfContained",
+    "reason": "Reads/restores only its two test-owned data-protection environment variables; never service credentials.",
+    "exceptions": [
+      "test-owned-keyring-environment",
+      "modeled-http-handler-type"
+    ]
+  },
+  "PreparedChatPublicationOwnerTests.cs": {
+    "suite": "SelfContained"
+  },
+  "PreparedChatQuestionRequestValidatorTests.cs": {
+    "suite": "SelfContained"
+  },
+  "PreparedDemoPass2FlowPlannerTests.cs": {
+    "suite": "SelfContained"
+  },
+  "PreparedPass2FlowTests.cs": {
+    "suite": "SelfContained"
+  },
+  "PreparedPass2RuntimeDispatchTests.cs": {
+    "suite": "SelfContained"
+  },
+  "PreScanCommunicationDetectionTests.cs": {
+    "suite": "LocalTools"
+  },
+  "PreScanHandoffTests.cs": {
+    "suite": "SelfContained"
+  },
+  "ProductionScanPageTests.cs": {
+    "suite": "SelfContained"
+  },
+  "ProductionScanStatusReaderTests.cs": {
+    "suite": "SelfContained"
+  },
+  "ProfileManagementTests.cs": {
+    "suite": "SelfContained"
+  },
+  "ReconnectModalTests.cs": {
+    "suite": "SelfContained"
+  },
+  "RepositoryApiTests.cs": {
+    "suite": "SelfContained"
+  },
+  "RepositoryManagementTests.cs": {
+    "suite": "LocalTools"
+  },
+  "RoleSeedingAndAuthorizationTests.cs": {
+    "suite": "SelfContained"
+  },
+  "ScanCandidateEnumeratorTests.cs": {
+    "suite": "SelfContained"
+  },
+  "ScanExecutionRepositoryConcurrencyTests.cs": {
+    "suite": "SelfContained"
+  },
+  "SecretEncryptionServiceTests.cs": {
+    "suite": "SelfContained"
+  },
+  "SequentialScanRunnerContractTests.cs": {
+    "suite": "SelfContained"
+  },
+  "SequentialScanRunnerDispatchTests.cs": {
+    "suite": "SelfContained"
+  },
+  "SequentialScanRunnerDocumentGenerationTests.cs": {
+    "suite": "LocalTools"
+  },
+  "SequentialScanRunnerFailureTests.cs": {
+    "suite": "SelfContained"
+  },
+  "SequentialScanRunnerMigrationTests.cs": {
+    "suite": "SelfContained"
+  },
+  "SequentialScanRunnerRestartTests.cs": {
+    "suite": "SelfContained"
+  },
+  "SequentialScanRunnerStartTests.cs": {
+    "suite": "SelfContained"
+  },
+  "SystemCrudTests.cs": {
+    "suite": "SelfContained"
+  },
+  "SystemLlmProviderOverrideTests.cs": {
+    "suite": "SelfContained"
+  },
+  "UnitTest1.cs": {
+    "suite": "SelfContained"
+  },
+  "UserContextTests.cs": {
+    "suite": "SelfContained"
+  },
+  "UserSuppliedContextTests.cs": {
+    "suite": "LocalTools"
+  },
+  "WorkerAgentContractTests.cs": {
+    "suite": "SelfContained"
+  },
+  "WorkerAgentDispatcherTests.cs": {
+    "suite": "SelfContained"
+  },
+  "WorkerAgentHydrationTests.cs": {
+    "suite": "SelfContained"
+  },
+  "WorkerAgentProductionRegistrationTests.cs": {
+    "suite": "SelfContained"
+  },
+  "WorkerAgentResultCommitterTests.cs": {
+    "suite": "SelfContained"
+  },
+  "WorkerAgentTestFixtures.cs": {
+    "suite": "SelfContained"
+  },
+  "AnalysisRuntime/AnalysisCapabilitySecurityTests.cs": {
+    "suite": "SelfContained"
+  },
+  "AnalysisRuntime/AnalysisRuntimeFixtureTests.cs": {
+    "suite": "SelfContained"
+  },
+  "AnalysisRuntime/AnalysisRuntimeHealthTests.cs": {
+    "suite": "LocalTools",
+    "reason": "Production composition resolves the real JDT distribution; file conservatively assigned pending independent split."
+  },
+  "AnalysisRuntime/AnalysisRuntimeIdentityTests.cs": {
+    "suite": "SelfContained"
+  },
+  "AnalysisRuntime/BoundedAnalysisEvidenceTests.cs": {
+    "suite": "SelfContained"
+  },
+  "AnalysisRuntime/BoundedSanitizedDiagnostics.cs": {
+    "suite": "SelfContained"
+  },
+  "AnalysisRuntime/ClosedAnalysisPortTests.cs": {
+    "suite": "SelfContained"
+  },
+  "AnalysisRuntime/CodeGraphAdapterTests.cs": {
+    "suite": "SelfContained"
+  },
+  "AnalysisRuntime/CodeGraphCliQualificationTests.cs": {
+    "suite": "LocalTools"
+  },
+  "AnalysisRuntime/InMemoryFileSystemDouble.cs": {
+    "suite": "SelfContained"
+  },
+  "AnalysisRuntime/JdtLsAdapterTests.cs": {
+    "suite": "SelfContained"
+  },
+  "AnalysisRuntime/JdtLsMissingArchiveQualificationTests.cs": {
+    "suite": "LocalTools"
+  },
+  "AnalysisRuntime/JdtLsRealQualificationTests.cs": {
+    "suite": "LocalTools"
+  },
+  "AnalysisRuntime/PreparedScanRealQualificationTests.cs": {
+    "suite": "LocalTools"
+  },
+  "AnalysisRuntime/RecordingProcessLauncherDouble.cs": {
+    "suite": "SelfContained"
+  },
+  "AnalysisRuntime/RevisionBoundSourceReaderTests.cs": {
+    "suite": "SelfContained"
+  },
+  "AnalysisRuntime/Story121TestHelperTests.cs": {
+    "suite": "SelfContained"
+  },
+  "AnalysisRuntime/Utf8CanonicalHash.cs": {
+    "suite": "SelfContained"
+  },
+  "DurableScanning/AtomicDocumentJobCommitTests.cs": {
+    "suite": "SelfContained"
+  },
+  "DurableScanning/DeterministicTestIds.cs": {
+    "suite": "SelfContained"
+  },
+  "DurableScanning/DurableScanContractTests.cs": {
+    "suite": "SelfContained"
+  },
+  "DurableScanning/DurableScanRestartPostgreSqlTests.cs": {
+    "suite": "PostgreSql"
+  },
+  "DurableScanning/DurableScanStoreTests.cs": {
+    "suite": "SelfContained"
+  },
+  "DurableScanning/FixedTestClock.cs": {
+    "suite": "SelfContained"
+  },
+  "DurableScanning/ManualResumeApiTests.cs": {
+    "suite": "SelfContained"
+  },
+  "DurableScanning/RecoveryCoordinatorTests.cs": {
+    "suite": "SelfContained"
+  },
+  "DurableScanning/RuntimeScanRecoveryRevalidationTests.cs": {
+    "suite": "SelfContained"
+  },
+  "DurableScanning/ScanContextSnapshotTests.cs": {
+    "suite": "SelfContained"
+  },
+  "DurableScanning/ScanExecutionFoundationTests.cs": {
+    "suite": "SelfContained"
+  },
+  "DurableScanning/ScanJobExecutionTests.cs": {
+    "suite": "SelfContained"
+  },
+  "DurableScanning/TwoRepositoryScanCoordinationTests.cs": {
+    "suite": "SelfContained"
+  },
+  "Migrations/DisposablePostgreSqlDatabase.cs": {
+    "suite": "PostgreSql"
+  },
+  "Migrations/DisposablePostgreSqlDatabaseTests.cs": {
+    "suite": "PostgreSql"
+  },
+  "Migrations/DurableScanConcurrencyPostgreSqlTests.cs": {
+    "suite": "PostgreSql"
+  },
+  "Migrations/DurableScanMigrationPostgreSqlTests.cs": {
+    "suite": "PostgreSql"
+  },
+  "Migrations/DurableScanModelTests.cs": {
+    "suite": "SelfContained"
+  },
+  "Migrations/PreparedScanMigrationPostgreSqlTests.cs": {
+    "suite": "PostgreSql"
+  },
+  "PreparedPass1/CodeLogicFileV2ProjectionTests.cs": {
+    "suite": "SelfContained"
+  },
+  "PreparedPass1/CodeLogicFileV2SchemaTests.cs": {
+    "suite": "SelfContained"
+  },
+  "PreparedPass1/DeepSeekSourceFreeHandshakeHarness.cs": {
+    "suite": "SelfContained"
+  },
+  "PreparedPass1/NavigateCodeContractTests.cs": {
+    "suite": "SelfContained"
+  },
+  "PreparedPass1/NavigateCodeLeaseSecurityCorrectionTests.cs": {
+    "suite": "SelfContained"
+  },
+  "PreparedPass1/NavigateCodeRealToolQualificationTests.cs": {
+    "suite": "LocalTools"
+  },
+  "PreparedPass1/NavigateCodeSecurityTests.cs": {
+    "suite": "SelfContained"
+  },
+  "PreparedPass1/Pass1CanonicalEnvelopeTests.cs": {
+    "suite": "SelfContained"
+  },
+  "PreparedPass1/Pass1ClaimedPacketExecutionTests.cs": {
+    "suite": "PostgreSql"
+  },
+  "PreparedPass1/Pass1ConcurrencyAndOrderingTests.cs": {
+    "suite": "SelfContained"
+  },
+  "PreparedPass1/Pass1ConcurrencyUpdateTests.cs": {
+    "suite": "SelfContained"
+  },
+  "PreparedPass1/Pass1DeepSeekContractQualificationTests.cs": {
+    "suite": "External"
+  },
+  "PreparedPass1/Pass1DeepSeekIsolatedSourceQualificationTests.cs": {
+    "suite": "External"
+  },
+  "PreparedPass1/Pass1DeepSeekPromptCompositionTests.cs": {
+    "suite": "SelfContained"
+  },
+  "PreparedPass1/Pass1DeepSeekStreamingQualificationTests.cs": {
+    "suite": "SelfContained"
+  },
+  "PreparedPass1/Pass1DeepSeekTerminalContextProjectionTests.cs": {
+    "suite": "SelfContained"
+  },
+  "PreparedPass1/Pass1DocumentCommitTests.cs": {
+    "suite": "SelfContained"
+  },
+  "PreparedPass1/Pass1DocumentPostgreSqlAtomicTests.cs": {
+    "suite": "PostgreSql"
+  },
+  "PreparedPass1/Pass1DurableNavigationRecoveryTests.cs": {
+    "suite": "SelfContained"
+  },
+  "PreparedPass1/Pass1ExecutionApiTests.cs": {
+    "suite": "SelfContained"
+  },
+  "PreparedPass1/Pass1FailurePolicyTests.cs": {
+    "suite": "SelfContained"
+  },
+  "PreparedPass1/Pass1HostRuntimeQualificationTests.cs": {
+    "suite": "External"
+  },
+  "PreparedPass1/Pass1MigrationTests.cs": {
+    "suite": "SelfContained"
+  },
+  "PreparedPass1/Pass1NavigationBudgetPersistenceTests.cs": {
+    "suite": "SelfContained"
+  },
+  "PreparedPass1/Pass1PairPostgreSqlAtomicTests.cs": {
+    "suite": "PostgreSql"
+  },
+  "PreparedPass1/Pass1PairStartTests.cs": {
+    "suite": "PostgreSql"
+  },
+  "PreparedPass1/Pass1ProductionBoundaryQualificationTests.cs": {
+    "suite": "HistoricalBoundary"
+  },
+  "PreparedPass1/Pass1ProductionCompositionTests.cs": {
+    "suite": "SelfContained"
+  },
+  "PreparedPass1/Pass1ProductionExecutionCapacityTests.cs": {
+    "suite": "PostgreSql"
+  },
+  "PreparedPass1/Pass1ProductionExecutionTests.cs": {
+    "suite": "External"
+  },
+  "PreparedPass1/Pass1ProductionProviderOutageTests.cs": {
+    "suite": "External"
+  },
+  "PreparedPass1/Pass1ProviderCircuitTests.cs": {
+    "suite": "SelfContained"
+  },
+  "PreparedPass1/Pass1ReconciliationTests.cs": {
+    "suite": "SelfContained"
+  },
+  "PreparedPass1/Pass1RecoveryAndResumeApiTests.cs": {
+    "suite": "SelfContained"
+  },
+  "PreparedPass1/Pass1RevisionBindingLifecycleTests.cs": {
+    "suite": "SelfContained"
+  },
+  "PreparedPass1/PreparedPass1JobExecutorStreamingTests.cs": {
+    "suite": "SelfContained"
+  },
+  "PreparedPass1/PreparedPass1WorkerDispatcherTests.cs": {
+    "suite": "SelfContained"
+  },
+  "PreparedPass2/ExactCrossRepositoryPostgreSqlTests.cs": {
+    "suite": "PostgreSql"
+  },
+  "PreparedPass2/ExactCrossRepositoryResolutionTests.cs": {
+    "suite": "LocalTools"
+  },
+  "PreparedPass2/ExactResolutionContractTests.cs": {
+    "suite": "SelfContained"
+  },
+  "PreparedPass2/Pass2BusinessLogicValidationTests.cs": {
+    "suite": "LocalTools"
+  },
+  "PreparedPass2/Pass2CanonicalAssertions.cs": {
+    "suite": "SelfContained"
+  },
+  "PreparedPass2/Pass2DocumentCommitTests.cs": {
+    "suite": "LocalTools"
+  },
+  "PreparedPass2/Pass2DocumentPostgreSqlAtomicTests.cs": {
+    "suite": "PostgreSql"
+  },
+  "PreparedPass2/Pass2ExecutionApiTests.cs": {
+    "suite": "LocalTools"
+  },
+  "PreparedPass2/Pass2ExecutionContractTests.cs": {
+    "suite": "SelfContained"
+  },
+  "PreparedPass2/Pass2ExecutionRecoveryTests.cs": {
+    "suite": "PostgreSql"
+  },
+  "PreparedPass2/Pass2FlowPlanningPostgreSqlTests.cs": {
+    "suite": "PostgreSql"
+  },
+  "PreparedPass2/Pass2FlowPlanningTests.cs": {
+    "suite": "LocalTools"
+  },
+  "PreparedPass2/Pass2LegacyCompatibilityTests.cs": {
+    "suite": "SelfContained"
+  },
+  "PreparedPass2/Pass2MigrationTests.cs": {
+    "suite": "SelfContained"
+  },
+  "PreparedPass2/Pass2PartialCompletionTests.cs": {
+    "suite": "LocalTools"
+  },
+  "PreparedPass2/Pass2PostgreSqlConstraintTests.cs": {
+    "suite": "PostgreSql"
+  },
+  "PreparedPass2/Pass2PrivacyAssertions.cs": {
+    "suite": "SelfContained"
+  },
+  "PreparedPass2/Pass2ProductionCompositionTests.cs": {
+    "suite": "LocalTools"
+  },
+  "PreparedPass2/Pass2ProductionQualificationTests.cs": {
+    "suite": "External"
+  },
+  "PreparedPass2/Pass2PromptCompositionTests.cs": {
+    "suite": "SelfContained"
+  },
+  "PreparedPass2/Pass2SchemaResourceTests.cs": {
+    "suite": "SelfContained"
+  },
+  "PreparedPass2/Pass2StrictSubmissionTests.cs": {
+    "suite": "LocalTools"
+  },
+  "PreparedPass2/Pass2TestFixtures.cs": {
+    "suite": "SelfContained"
+  },
+  "PreparedPass2/Pass2Us5QualityCorrectionTests.cs": {
+    "suite": "SelfContained"
+  },
+  "PreparedPass2/Pass2WorkerDispatcherContractTests.cs": {
+    "suite": "SelfContained"
+  },
+  "PreparedPass2/PreparedPass2JobExecutorStreamingTests.cs": {
+    "suite": "SelfContained"
+  },
+  "PreparedPass2/RetrieveCodeLogicContractTests.cs": {
+    "suite": "LocalTools"
+  },
+  "PreparedPass2/RetrieveCodeLogicPostgreSqlBudgetTests.cs": {
+    "suite": "PostgreSql"
+  },
+  "PreparedPass2/RetrieveCodeLogicSecurityTests.cs": {
+    "suite": "LocalTools"
+  },
+  "PreparedPass2/Story124ExactHandoffProvisioner.cs": {
+    "suite": "External"
+  },
+  "PreparedScanning/CommunicationCatalogTests.cs": {
+    "suite": "SelfContained"
+  },
+  "PreparedScanning/CommunicationClassificationTests.cs": {
+    "suite": "SelfContained"
+  },
+  "PreparedScanning/ExactRevisionAcquisitionTests.cs": {
+    "suite": "SelfContained"
+  },
+  "PreparedScanning/PreparedCanonicalEnvelopeGoldenTests.cs": {
+    "suite": "SelfContained"
+  },
+  "PreparedScanning/PreparedCanonicalEnvelopeTests.cs": {
+    "suite": "SelfContained"
+  },
+  "PreparedScanning/PreparedCodeGraphReadinessTests.cs": {
+    "suite": "SelfContained"
+  },
+  "PreparedScanning/PreparedFileCodeUnitAndSelectionTests.cs": {
+    "suite": "SelfContained"
+  },
+  "PreparedScanning/PreparedHandoffProjectionTests.cs": {
+    "suite": "SelfContained"
+  },
+  "PreparedScanning/PreparedJavaReadinessTests.cs": {
+    "suite": "SelfContained"
+  },
+  "PreparedScanning/PreparedJavaSplitRangeTests.cs": {
+    "suite": "SelfContained"
+  },
+  "PreparedScanning/PreparedPass1ContractIdentitySourceTests.cs": {
+    "suite": "SelfContained"
+  },
+  "PreparedScanning/PreparedRawArtifactTests.cs": {
+    "suite": "LocalTools"
+  },
+  "PreparedScanning/PreparedScanApiTests.cs": {
+    "suite": "LocalTools",
+    "reason": "Production composition resolves the real JDT distribution; file conservatively assigned pending independent split."
+  },
+  "PreparedScanning/PreparedScanAtomicPostgreSqlTests.cs": {
+    "suite": "PostgreSql"
+  },
+  "PreparedScanning/PreparedScanAtomicReplayTests.cs": {
+    "suite": "SelfContained"
+  },
+  "PreparedScanning/PreparedScanAuditContractTests.cs": {
+    "suite": "SelfContained"
+  },
+  "PreparedScanning/PreparedScanBoundaryTests.cs": {
+    "suite": "SelfContained"
+  },
+  "PreparedScanning/PreparedScanCandidateEnumeratorTests.cs": {
+    "suite": "SelfContained"
+  },
+  "PreparedScanning/PreparedScanInitiationApiTests.cs": {
+    "suite": "PostgreSql"
+  },
+  "PreparedScanning/PreparedScanInitiationCoordinatorTests.cs": {
+    "suite": "SelfContained"
+  },
+  "PreparedScanning/PreparedScanInitiationIdentityTests.cs": {
+    "suite": "SelfContained"
+  },
+  "PreparedScanning/PreparedScanInitiationPostgreSqlFixture.cs": {
+    "suite": "PostgreSql"
+  },
+  "PreparedScanning/PreparedScanInitiationPostgreSqlTests.cs": {
+    "suite": "PostgreSql"
+  },
+  "PreparedScanning/PreparedScanPostgreSqlFixture.cs": {
+    "suite": "PostgreSql"
+  },
+  "PreparedScanning/PreparedScanProductionLiteralQualificationTests.cs": {
+    "suite": "SelfContained"
+  },
+  "PreparedScanning/PreparedScanReleaseQualificationTests.cs": {
+    "suite": "SelfContained"
+  },
+  "PreparedScanning/PreparedScanRuntimeIdentityResolverTests.cs": {
+    "suite": "SelfContained"
+  },
+  "PreparedScanning/PreparedScanStoreRegressionTests.cs": {
+    "suite": "PostgreSql"
+  },
+  "PreparedScanning/PreparedScanTestHost.cs": {
+    "suite": "SelfContained"
+  },
+  "PreparedScanning/PreparedSelectionPlannerTests.cs": {
+    "suite": "SelfContained"
+  },
+  "PreparedScanning/PreparedXmlSecurityTests.cs": {
+    "suite": "SelfContained"
+  },
+  "PreparedScanning/PreparedXmlSplitRangeTests.cs": {
+    "suite": "SelfContained"
+  },
+  "PreparedScanning/ReviewedExactProfileSeedAuthorityTests.cs": {
+    "suite": "SelfContained"
+  },
+  "PreparedScanning/ReviewedExactProfileSeedPostgreSqlTests.cs": {
+    "suite": "PostgreSql"
+  },
+  "PreparedScanning/Story12_2BoundaryTests.cs": {
+    "suite": "SelfContained"
+  },
+  "RetainedSource/RetainedSourceApplicationContractTests.cs": {
+    "suite": "SelfContained"
+  },
+  "RetainedSource/RetainedSourceAuthorizationTests.cs": {
+    "suite": "PostgreSql"
+  },
+  "RetainedSource/RetainedSourceCapabilityBoundaryTests.cs": {
+    "suite": "PostgreSql"
+  },
+  "RetainedSource/RetainedSourceCaptureApplicationFixture.cs": {
+    "suite": "PostgreSql"
+  },
+  "RetainedSource/RetainedSourceCaptureBoundaryTests.cs": {
+    "suite": "PostgreSql"
+  },
+  "RetainedSource/RetainedSourceCaptureResourceTests.cs": {
+    "suite": "PostgreSql"
+  },
+  "RetainedSource/RetainedSourceCaptureTests.cs": {
+    "suite": "PostgreSql"
+  },
+  "RetainedSource/RetainedSourceFixture.cs": {
+    "suite": "LocalTools"
+  },
+  "RetainedSource/RetainedSourceHttpE2eTests.cs": {
+    "suite": "E2E"
+  },
+  "RetainedSource/RetainedSourceIdentityCancellationTests.cs": {
+    "suite": "PostgreSql"
+  },
+  "RetainedSource/RetainedSourceLoggingTests.cs": {
+    "suite": "PostgreSql"
+  },
+  "RetainedSource/RetainedSourceManifestTests.cs": {
+    "suite": "PostgreSql"
+  },
+  "RetainedSource/RetainedSourcePersistenceTests.cs": {
+    "suite": "PostgreSql"
+  },
+  "RetainedSource/RetainedSourcePostgreSqlTests.cs": {
+    "suite": "PostgreSql"
+  },
+  "RetainedSource/RetainedSourcePostgreSqlWebApplicationFactory.cs": {
+    "suite": "SelfContained"
+  },
+  "RetainedSource/RetainedSourceProcessGlobalCollection.cs": {
+    "suite": "SelfContained"
+  },
+  "RetainedSource/RetainedSourceRangeReadTests.cs": {
+    "suite": "PostgreSql"
+  },
+  "RetainedSource/RetainedSourceReadContextTests.cs": {
+    "suite": "PostgreSql"
+  },
+  "RetainedSource/RetainedSourceReadFailureTests.cs": {
+    "suite": "PostgreSql"
+  },
+  "RetainedSource/RetainedSourceReadLifecycleTests.cs": {
+    "suite": "PostgreSql"
+  },
+  "RetainedSource/RetainedSourceRepositoryDeletionTests.cs": {
+    "suite": "PostgreSql"
+  },
+  "RetainedSource/RetainedSourceRootMappingTests.cs": {
+    "suite": "PostgreSql"
+  },
+  "RetainedSource/RetainedSourceSeparateProcessChild.cs": {
+    "suite": "PostgreSql"
+  },
+  "RetainedSource/RetainedSourceSeparateProcessTests.cs": {
+    "suite": "PostgreSql"
+  },
+  "RetainedSource/RetainedSourceTestFixtures.cs": {
+    "suite": "SelfContained"
+  },
+  "RetainedSource/TrustedSourceWorkspaceTests.cs": {
+    "suite": "PostgreSql"
+  },
+  "TestInfrastructure/SuiteAttributes.cs": {
+    "suite": "Policy"
+  },
+  "ReleaseGate/Story125/Story125EvaluationContractTests.cs": {
+    "suite": "HistoricalBoundary"
+  },
+  "ReleaseGate/Story125/Story125ReleaseHarness.cs": {
+    "suite": "SelfContained"
+  },
+  "ReleaseGate/Story125/Story125ReleaseHarnessTests.cs": {
+    "suite": "HistoricalBoundary"
+  },
+  "ReleaseGate/Story125/Story125Tier2PostgreSqlTests.cs": {
+    "suite": "SelfContained"
+  },
+  "ReleaseGate/Story125/Story125TrackCMvpPreflightTests.cs": {
+    "suite": "SelfContained"
+  },
+  "ReleaseGate/Story125/Story125TrackCMvpReportContractTests.cs": {
+    "suite": "SelfContained"
+  },
+  "PreparedScanning/TestDoubles/PreparedScanTestDoubles.cs": {
+    "suite": "SelfContained"
+  },
+  "PreparedPass1/Fixtures/PreparedPass1ManifestPairFixtures.cs": {
+    "suite": "SelfContained"
+  },
+  "CodeGraphProviderContract/ProviderFixture/empty_file.cs": {
+    "suite": "SelfContained"
+  },
+  "TestInfrastructure/TestResourceScope.cs": {
+    "suite": "Policy"
+  },
+  "TestInfrastructure/SuiteTestFramework.cs": {
+    "suite": "Policy"
+  },
+  "TestInfrastructure/SuitePolicyTests.cs": {
+    "suite": "SelfContained"
+  },
+  "TestInfrastructure/DisabledFixtureProbe.cs": {
+    "suite": "External"
+  },
+  "TestInfrastructure/FakeJdtDistribution.cs": {
+    "suite": "SelfContained"
+  },
+  "TestInfrastructure/SeededTargetTests.cs": {
+    "suite": "External",
+    "reason": "Explicit controlled local seed import/clone probe; requires -SeedDump with marker fixture."
+  },
+  "PreparedSource/PreparedSourceAuthorityLifecycleTests.cs": {
+    "suite": "SelfContained"
+  },
+  "PreparedSource/PreparedSourceBasicReadTests.cs": {
+    "suite": "SelfContained"
+  },
+  "PreparedSource/PreparedSourceCancellationBudgetTests.cs": {
+    "suite": "SelfContained"
+  },
+  "PreparedSource/PreparedSourceContainmentTests.cs": {
+    "suite": "SelfContained"
+  },
+  "PreparedSource/PreparedSourceFailureTests.cs": {
+    "suite": "SelfContained"
+  },
+  "PreparedSource/PreparedSourceFixture.cs": {
+    "suite": "SelfContained"
+  },
+  "PreparedSource/PreparedSourceGrantTests.cs": {
+    "suite": "SelfContained"
+  },
+  "PreparedSource/PreparedSourceListTests.cs": {
+    "suite": "SelfContained"
+  },
+  "PreparedSource/PreparedSourceRangeReadTests.cs": {
+    "suite": "SelfContained"
+  },
+  "PreparedSource/PreparedSourceSearchTests.cs": {
+    "suite": "SelfContained"
+  },
+  "PreparedSource/PreparedSourceToolFunctionTests.cs": {
+    "suite": "SelfContained"
+  },
+  "PostgreSqlHeavyCollection.cs": {
+    "suite": "PostgreSql"
+  }
+}

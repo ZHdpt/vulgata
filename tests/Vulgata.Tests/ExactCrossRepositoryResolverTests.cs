@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Text;
 using Vulgata.Core.DomainServices;
 using Vulgata.Infrastructure.CrossRepository;
@@ -6,7 +7,8 @@ namespace Vulgata.Tests;
 
 public sealed class ExactCrossRepositoryResolverTests
 {
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task ResolveAsync_ReviewedDirection_BuildsProfileOrderedExactDecisionAsync()
     {
         ExactResolutionProfile profile = new ExactResolutionProfileCatalog().Load();
@@ -73,7 +75,8 @@ public sealed class ExactCrossRepositoryResolverTests
         Assert.Equal(provider.DeclarationEvidenceLocator, evidence.ProviderEvidenceLocator);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public void NormalizeEndpointIdentifier_FormCAsciiEdgesAndOneProviderPrefix_IsDeterministic()
     {
         const string decomposed = "\t cafe\u0301 \r\n";
@@ -97,7 +100,8 @@ public sealed class ExactCrossRepositoryResolverTests
             repeatedPrefix.Message);
     }
 
-    [Theory]
+    [Trait("Suite", "LocalTools")]
+    [SuiteTheory("LocalTools")]
     [InlineData("cust/updateSession", "in/")]
     [InlineData("in/", "in/")]
     [InlineData("in/cust\nupdateSession", "in/")]
@@ -111,7 +115,8 @@ public sealed class ExactCrossRepositoryResolverTests
                 requiredPrefix));
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public void NormalizeEndpointIdentifier_OverBoundUtf8Result_IsRejected()
     {
         string rawIdentifier = "in/" +
@@ -123,7 +128,8 @@ public sealed class ExactCrossRepositoryResolverTests
                 "in/"));
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task ResolveAsync_ReversedDirectionOrOrdinalMismatch_ProducesNoExactDecisionAsync()
     {
         ExactResolutionProfile profile = new ExactResolutionProfileCatalog().Load();
@@ -168,7 +174,8 @@ public sealed class ExactCrossRepositoryResolverTests
         Assert.Equal("unmatched", mismatch.ReasonCode);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task ResolveAsync_TwoEligibleProviders_ProducesNoExactDecisionAsync()
     {
         ExactResolutionProfile profile = new ExactResolutionProfileCatalog().Load();
@@ -212,7 +219,8 @@ public sealed class ExactCrossRepositoryResolverTests
         Assert.Null(decision.Target);
     }
 
-    [Theory]
+    [Trait("Suite", "LocalTools")]
+    [SuiteTheory("LocalTools")]
     [InlineData("receiver")]
     [InlineData("member")]
     [InlineData("argument")]
@@ -260,7 +268,8 @@ public sealed class ExactCrossRepositoryResolverTests
         }
     }
 
-    [Theory]
+    [Trait("Suite", "LocalTools")]
+    [SuiteTheory("LocalTools")]
     [InlineData(0)]
     [InlineData(2)]
     public async Task ResolveAsync_ConsumerCardinalityNotOne_ProducesNoExactDecisionAsync(
@@ -295,7 +304,8 @@ public sealed class ExactCrossRepositoryResolverTests
                     consumerOwner)]));
     }
 
-    [Theory]
+    [Trait("Suite", "LocalTools")]
+    [SuiteTheory("LocalTools")]
     [InlineData("zero")]
     [InlineData("unmatched")]
     [InlineData("self")]

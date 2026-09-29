@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Security.Cryptography;
 using Vulgata.Core.DomainServices;
 using Vulgata.Core.Entities;
@@ -21,7 +22,8 @@ public sealed class Pass1JobIdentityTests
     private const string _profiledRevision =
         "0123456789abcdef0123456789abcdef01234567";
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Create_GoldenBoundary_ProducesCanonicalEnvelopeDigestAndActualJobId()
     {
         OrdinaryPass1JobIdentity identity = OrdinaryPass1JobIdentity.Create(
@@ -43,7 +45,8 @@ public sealed class Pass1JobIdentityTests
             Convert.ToHexStringLower(SHA256.HashData(expectedEnvelope)));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Create_SameBoundaryRepeatsAndEveryCanonicalInputMutationChangesIdentity()
     {
         OrdinaryPass1JobIdentity baseline = CreateIdentity(
@@ -86,7 +89,8 @@ public sealed class Pass1JobIdentityTests
             baseline.CanonicalEnvelope.ToArray());
     }
 
-    [Theory]
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
     [InlineData("")]
     [InlineData("0123456")]
     [InlineData("0123456789ABCDEF0123456789ABCDEF01234567")]
@@ -102,7 +106,8 @@ public sealed class Pass1JobIdentityTests
             revision));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void CreateDocumentVersionId_DerivedJob_UsesExistingForwardProjection()
     {
         Guid jobId = CreateIdentity(
@@ -119,7 +124,8 @@ public sealed class Pass1JobIdentityTests
             OrdinaryPass1JobIdentity.CreateDocumentVersionId(jobId));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task RunPass1_OrdinaryCodeUnit_DispatchesCanonicalActualJobIdAsync()
     {
         Guid repositoryId = Guid.NewGuid();

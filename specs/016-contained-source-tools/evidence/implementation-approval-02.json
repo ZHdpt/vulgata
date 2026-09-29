@@ -1,0 +1,31 @@
+{
+  "kind": "human-approval",
+  "stage": "implementation-approval",
+  "decision_id": "18-1/implementation-approval/2",
+  "status": "accepted",
+  "scope_sha256": "47c617d0cfaecf2cfc18cb6b95fc25593aee8157647d2e201d69937f419f4ca8",
+  "scope_material": "18-1/implementation-approval/2|48c92e4f6582471a1664e553b48756a811f22bb2b4f1334206e94303629b0b6d|b375723e56c8cdc7990a4e7a624c5f58a78fde07d9a23edd79e25025c54fce08|704204445766c907771a785c510836801efe08d2e55f08096d39528437516c9a|aea9fecb36e65f697d8561a5a21ee70dfb1a58f01ee7c74a894b51eed5102d99",
+  "requested_at": "2026-09-28T04:58:13.6392219Z",
+  "decided_at": "2026-09-28T05:03:16.4560797Z",
+  "user_instruction": "Approve",
+  "rebound_at": "2026-09-28T08:23:40.6628207Z",
+  "previous_scope_sha256": "52545dc5cdb63c841b0ccc203e90e02fa7f5bf8e8aeabf2aa44d30175c1fbfd1",
+  "rebound_reason": "Independent plan-review-09 and definition-review-04 confirm the correction only fixes the already-approved Agent factory call shape; implementation scope, behavior, risks and exclusions are unchanged.",
+  "accepted_definition": {
+    "spec": "48c92e4f6582471a1664e553b48756a811f22bb2b4f1334206e94303629b0b6d",
+    "plan": "b375723e56c8cdc7990a4e7a624c5f58a78fde07d9a23edd79e25025c54fce08",
+    "tasks": "704204445766c907771a785c510836801efe08d2e55f08096d39528437516c9a",
+    "definition_review": "aea9fecb36e65f697d8561a5a21ee70dfb1a58f01ee7c74a894b51eed5102d99"
+  },
+  "implementation_scope": "Implement the 26 accepted tasks for contained prepared-source list/read/search, current-authority enforcement, Windows no-follow containment, truthful bounded outcomes, cancellation/resource settlement, thin Worker Agent functions and Git-bound regression preservation.",
+  "verification_route": "Observable production behavior uses separate retained test and production owners with honest RED, minimal GREEN and final surrounding GREEN. Fixture setup and contract-only work use proportionate direct build/ownership checks without fabricated RED. Existing-correct Git behavior receives regression checks rather than manufactured failure.",
+  "coherent_groups": [
+    "T001-T009: owned fixture, Core seam, approved-root issuance, containment and basic list/read MVP",
+    "T010-T018: bounded listing, strict ranges, literal search and closed Agent tool functions",
+    "T019-T025: live revocation/unavailability, truthful failures, cancellation, budgets and resource settlement",
+    "T026: final build, focused tests, retained-source regressions and scope inspection"
+  ],
+  "principal_risk": "The Windows handle-relative no-follow adapter and authority checks must remain race-resistant and fail closed; controlled tests cannot be replaced by lexical path checks or cached authorization.",
+  "approval_permits": "First production/test writes for the accepted task boundary using governed TDD and direct verification routes.",
+  "approval_does_not_permit": "New architecture, broader Scan strategy, PRD changes, Git/copy/hash/retention/database/provider/CodeGraph/LSP/UI/CLI scope, destructive runtime operations, or bypassing convergence, lookback, quality, E2E and final verification."
+}

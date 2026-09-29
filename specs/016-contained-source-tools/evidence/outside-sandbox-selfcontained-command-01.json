@@ -1,0 +1,10 @@
+{
+  "kind":"command","stage":"verify-test","execution_mode":"approved-outside-codex-filesystem-sandbox",
+  "source_commit":"90e34ace483f639b1beca245f057e44325cf9553","observed_at":"2026-09-29T06:52:49.2058815Z",
+  "command":"pwsh -NoProfile -File eng/test.ps1","exit_code":0,
+  "raw_output_path":"specs/016-contained-source-tools/evidence/outside-sandbox-selfcontained-output-01.txt","raw_output_sha256":"a9d05fb3643f843e4e3a358400727af22f98047a92b414eeacc5839a0f49f61d",
+  "trx_path":"TestResults/isolation-551ce5a9076a46d4924e9500ce077ccb/results.trx","trx_sha256":"fd36f7e98f6a7a7c55a3893678a873cdafc7d10c8fc521144c4bfadc26f9c600",
+  "counts":{"suite":"SelfContained","discovered":2811,"selected":1975,"passed":1975,"failed":0,"skipped":0},
+  "excluded_unqualified_suites":["PostgreSql","LocalTools","External","E2E","HistoricalBoundary"],
+  "summary":"The exact configured SelfContained command passed 1,975/1,975 with zero skips when explicitly approved outside the Codex filesystem sandbox."
+}

@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Net;
 using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.DataProtection;
@@ -29,7 +30,8 @@ public sealed partial class LoginLogoutTests : IClassFixture<LoginLogoutTests.Cu
 
     private readonly CustomWebApplicationFactory _factory;
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void LoginPageSource_UsesPostCompatibleInputsAndRemovesOutOfScopeSections()
     {
         string content = ReadRepoFile("src", "dotnet", "Vulgata.Web", "Components", "Account", "Pages", "Login.razor");
@@ -60,7 +62,8 @@ public sealed partial class LoginLogoutTests : IClassFixture<LoginLogoutTests.Cu
         Assert.DoesNotContain("<FluentButton", content, StringComparison.Ordinal);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task LoginPage_DemoPresentation_RendersStandaloneShowcaseAsync()
     {
         using var client = CreateClient();
@@ -73,7 +76,8 @@ public sealed partial class LoginLogoutTests : IClassFixture<LoginLogoutTests.Cu
         Assert.DoesNotContain("class=\"top-nav\"", html, StringComparison.Ordinal);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task LoginPage_DemoPresentation_HidesSelfServiceAccountLinksAsync()
     {
         using var client = CreateClient();
@@ -86,7 +90,8 @@ public sealed partial class LoginLogoutTests : IClassFixture<LoginLogoutTests.Cu
         Assert.DoesNotContain("注册新用户", html, StringComparison.Ordinal);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task LoginPage_Inputs_RenderAsStaticLeftAlignedFieldsAsync()
     {
         using var client = CreateClient();
@@ -99,7 +104,8 @@ public sealed partial class LoginLogoutTests : IClassFixture<LoginLogoutTests.Cu
         Assert.Matches("<input\\b(?=[^>]*id=\"Input\\.Password\")(?=[^>]*dir=\"ltr\")[^>]*>", html);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void ProtectedPages_SourceDeclareRequiredAuthorization()
     {
         Assert.Contains("@attribute [Authorize]", ReadRepoFile("src", "dotnet", "Vulgata.Web", "Components", "Pages", "ChatPage.razor"), StringComparison.Ordinal);
@@ -127,7 +133,8 @@ public sealed partial class LoginLogoutTests : IClassFixture<LoginLogoutTests.Cu
         Assert.Contains("Account/Login?returnUrl=", redirectToLoginContent, StringComparison.Ordinal);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task LoginLink_OnPublicPage_PreservesReturnUrl()
     {
         using var client = CreateClient();
@@ -141,7 +148,8 @@ public sealed partial class LoginLogoutTests : IClassFixture<LoginLogoutTests.Cu
         Assert.Equal("/not-found", returnUrl);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task Login_WithValidCredentials_RedirectsToChatPage()
     {
         const string email = "login.valid@example.com";
@@ -168,7 +176,8 @@ public sealed partial class LoginLogoutTests : IClassFixture<LoginLogoutTests.Cu
         Assert.Contains(cookies, cookie => cookie.Contains(".AspNetCore.Identity.Application", StringComparison.Ordinal));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task Login_WithInvalidPassword_ShowsGenericError()
     {
         const string email = "login.invalid-password@example.com";
@@ -196,7 +205,8 @@ public sealed partial class LoginLogoutTests : IClassFixture<LoginLogoutTests.Cu
         Assert.DoesNotContain(cookies, cookie => cookie.Contains(".AspNetCore.Identity.Application", StringComparison.Ordinal));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task Login_WithNonexistentEmail_ShowsSameGenericError()
     {
         using var client = CreateClient();
@@ -219,7 +229,8 @@ public sealed partial class LoginLogoutTests : IClassFixture<LoginLogoutTests.Cu
         Assert.DoesNotContain(cookies, cookie => cookie.Contains(".AspNetCore.Identity.Application", StringComparison.Ordinal));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task Logout_ClearsCookieAndRedirectsToLogin()
     {
         const string email = "logout.valid@example.com";
@@ -249,7 +260,8 @@ public sealed partial class LoginLogoutTests : IClassFixture<LoginLogoutTests.Cu
         Assert.Contains("Account/Login", protectedResponse.Headers.Location?.OriginalString, StringComparison.OrdinalIgnoreCase);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ProtectedRoute_Unauthenticated_RedirectsToLogin()
     {
         using var client = CreateClient();
@@ -267,7 +279,8 @@ public sealed partial class LoginLogoutTests : IClassFixture<LoginLogoutTests.Cu
         Assert.True(returnUrl == "/" || returnUrl == "http://localhost/", $"Unexpected returnUrl: {returnUrl}");
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task Login_WithReturnUrl_RedirectsToOriginalTarget()
     {
         const string email = "login.return-url@example.com";

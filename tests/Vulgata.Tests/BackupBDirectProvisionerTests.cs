@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Security.Cryptography;
 using System.Text;
 using Vulgata.Core.DomainServices;
@@ -15,7 +16,8 @@ public sealed class BackupBDirectProvisionerTests
 {
     #region Input Validation Tests
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ProvisionAsync_NullRequest_ThrowsArgumentNullException()
     {
         var provisioner = CreateProvisioner();
@@ -25,7 +27,8 @@ public sealed class BackupBDirectProvisionerTests
             () => provisioner.ProvisionAsync(request!, CancellationToken.None));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void BackupBProvisioningRequest_Validate_EmptySystemName_ThrowsArgumentException()
     {
         var request = new BackupBProvisioningRequest
@@ -42,7 +45,8 @@ public sealed class BackupBDirectProvisionerTests
         Assert.Contains("System name", ex.Message);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void BackupBProvisioningRequest_Validate_EmptyRepositories_ThrowsArgumentException()
     {
         var request = new BackupBProvisioningRequest
@@ -56,7 +60,8 @@ public sealed class BackupBDirectProvisionerTests
         Assert.Contains("repository", ex.Message, StringComparison.OrdinalIgnoreCase);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void BackupBRepositoryInput_Validate_EmptyName_ThrowsArgumentException()
     {
         var input = new BackupBRepositoryInput
@@ -73,7 +78,8 @@ public sealed class BackupBDirectProvisionerTests
         Assert.Contains("name", ex.Message, StringComparison.OrdinalIgnoreCase);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void BackupBRepositoryInput_Validate_EmptyCloneUrl_ThrowsArgumentException()
     {
         var input = new BackupBRepositoryInput
@@ -90,7 +96,8 @@ public sealed class BackupBDirectProvisionerTests
         Assert.Contains("Clone URL", ex.Message, StringComparison.OrdinalIgnoreCase);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void BackupBRepositoryInput_Validate_EmptyLocalGitPath_ThrowsArgumentException()
     {
         var input = new BackupBRepositoryInput
@@ -107,7 +114,8 @@ public sealed class BackupBDirectProvisionerTests
         Assert.Contains("Local git path", ex.Message, StringComparison.OrdinalIgnoreCase);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void BackupBRepositoryInput_Validate_EmptyCommit_ThrowsArgumentException()
     {
         var input = new BackupBRepositoryInput
@@ -124,7 +132,8 @@ public sealed class BackupBDirectProvisionerTests
         Assert.Contains("commit", ex.Message, StringComparison.OrdinalIgnoreCase);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void BackupBRepositoryInput_Validate_EmptyManifestEntries_ThrowsArgumentException()
     {
         var input = new BackupBRepositoryInput
@@ -145,7 +154,8 @@ public sealed class BackupBDirectProvisionerTests
 
     #region Manifest Entry Validation Tests
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void BackupBManifestEntry_Validate_EmptyFilePath_ThrowsArgumentException()
     {
         var entry = new BackupBManifestEntry
@@ -160,7 +170,8 @@ public sealed class BackupBDirectProvisionerTests
         Assert.Contains("File path", ex.Message, StringComparison.OrdinalIgnoreCase);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void BackupBManifestEntry_Validate_LeadingSlash_ThrowsArgumentException()
     {
         var entry = new BackupBManifestEntry
@@ -175,7 +186,8 @@ public sealed class BackupBDirectProvisionerTests
         Assert.Contains("repository-relative", ex.Message, StringComparison.OrdinalIgnoreCase);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void BackupBManifestEntry_Validate_DirectoryTraversal_ThrowsArgumentException()
     {
         var entry = new BackupBManifestEntry
@@ -190,7 +202,8 @@ public sealed class BackupBDirectProvisionerTests
         Assert.Contains("traversal", ex.Message, StringComparison.OrdinalIgnoreCase);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void BackupBManifestEntry_Validate_InvalidCommitLength_ThrowsArgumentException()
     {
         var entry = new BackupBManifestEntry
@@ -209,7 +222,8 @@ public sealed class BackupBDirectProvisionerTests
 
     #region Code Unit Entry Validation Tests
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void BackupBCodeUnitEntry_Validate_EmptySymbolName_ThrowsArgumentException()
     {
         var entry = new BackupBCodeUnitEntry
@@ -225,7 +239,8 @@ public sealed class BackupBDirectProvisionerTests
         Assert.Contains("Symbol name", ex.Message, StringComparison.OrdinalIgnoreCase);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void BackupBCodeUnitEntry_Validate_LineEndBeforeStart_ThrowsArgumentException()
     {
         var entry = new BackupBCodeUnitEntry
@@ -241,7 +256,8 @@ public sealed class BackupBDirectProvisionerTests
         Assert.Contains("line start", ex.Message, StringComparison.OrdinalIgnoreCase);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void BackupBCodeUnitEntry_Validate_LineStartZero_ThrowsArgumentException()
     {
         var entry = new BackupBCodeUnitEntry
@@ -257,7 +273,8 @@ public sealed class BackupBDirectProvisionerTests
         Assert.Contains("Line start", ex.Message, StringComparison.OrdinalIgnoreCase);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void BackupBCodeUnitEntry_Validate_ValidEntry_DoesNotThrow()
     {
         var entry = new BackupBCodeUnitEntry
@@ -277,7 +294,8 @@ public sealed class BackupBDirectProvisionerTests
 
     #region Hash Computation Tests
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void ComputeSha256_EmptyString_ReturnsCorrectHash()
     {
         var input = "";
@@ -288,7 +306,8 @@ public sealed class BackupBDirectProvisionerTests
         Assert.Equal(expectedHash, actualHash);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void ComputeSha256_SimpleString_ReturnsCorrectHash()
     {
         var input = "hello";
@@ -299,7 +318,8 @@ public sealed class BackupBDirectProvisionerTests
         Assert.Equal(expectedHash, actualHash);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void ComputeSha256_Consistency_SameInputSameOutput()
     {
         var input = "test content for hash consistency";
@@ -310,7 +330,8 @@ public sealed class BackupBDirectProvisionerTests
         Assert.Equal(hash1, hash2);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void ComputeSha256_ReturnsLowercaseHex()
     {
         var input = "test";

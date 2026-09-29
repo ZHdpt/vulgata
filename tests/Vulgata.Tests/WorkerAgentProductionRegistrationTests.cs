@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Collections.Concurrent;
 using System.Net;
 using System.Security.Cryptography;
@@ -26,7 +27,8 @@ public sealed class WorkerAgentProductionRegistrationTests
         "provider stack trace at C:\\sensitive\\worker\\client.cs";
     private const string _unrelatedSource = "UNRELATED-SOURCE-MUST-NOT-CROSS";
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ProductionComposition_NotReadyGate_PrecedesAuthorizationAndInnerDispatchAsync()
     {
         using var files = new TemporarySourceDirectory();
@@ -120,7 +122,8 @@ public sealed class WorkerAgentProductionRegistrationTests
         Assert.Equal(0, requestCapture.CallCount);
     }
 
-    [Theory]
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
     [InlineData(true, 42002)]
     [InlineData(false, 42001)]
     public async Task ProductionComposition_SystemAssignment_ResolvesScopedSecureGraphAsync(

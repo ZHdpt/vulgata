@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Runtime.CompilerServices;
 using System.Text;
 using Vulgata.Agents.ChatExecution;
@@ -15,7 +16,8 @@ namespace Vulgata.Tests;
 /// </summary>
 public sealed class ChatProviderStreamAssemblerTests
 {
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task AssembleAsync_SplitsUtf8CrLfAndSseJsonAcrossEveryRead_ProducesOneAnswerAsync()
     {
         byte[] body = Wire(
@@ -35,7 +37,8 @@ public sealed class ChatProviderStreamAssemblerTests
         Assert.Equal(1, result.TerminalCount);
     }
 
-    [Theory]
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
     [InlineData("\r")]
     [InlineData("\n")]
     [InlineData("\r\n")]
@@ -54,7 +57,8 @@ public sealed class ChatProviderStreamAssemblerTests
         Assert.Equal(1, result.TerminalCount);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task AssembleAsync_SplitJsonEscapesAndSurrogatePair_UsesDecodedDeltaBytesAsync()
     {
         byte[] body = Wire(
@@ -70,7 +74,8 @@ public sealed class ChatProviderStreamAssemblerTests
         Assert.Equal(7, result.AssembledAnswerByteCount);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task AssembleAsync_MalformedWireUtf8_RejectsWithoutReplacementAsync()
     {
         byte[] body = Wire("data: {\"choices\":[{\"delta\":{\"content\":\"ok\"}}]}\n\n")
@@ -86,7 +91,8 @@ public sealed class ChatProviderStreamAssemblerTests
         Assert.DoesNotContain('\uFFFD', result.PartialAnswer ?? string.Empty);
     }
 
-    [Theory]
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
     [MemberData(nameof(InvalidWireUtf8))]
     public async Task AssembleAsync_TruncatedOrOverlongWireUtf8_RejectsStrictlyAsync(
         byte[] invalidBytes)
@@ -111,7 +117,8 @@ public sealed class ChatProviderStreamAssemblerTests
         [new byte[] { 0xED, 0xA0, 0x80 }], // encoded UTF-16 surrogate
     ];
 
-    [Theory]
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
     [InlineData("data: {not-json}\n\n", "invalid-json-event")]
     [InlineData("data: {\"choices\":[{\"delta\":{\"content\":\"\\q\"}}]}\n\n", "invalid-json-escape")]
     [InlineData("data: {\"choices\":[{\"delta\":{\"content\":\"\\uD800\"}}]}\n\n", "invalid-json-escape")]
@@ -125,7 +132,8 @@ public sealed class ChatProviderStreamAssemblerTests
         AssertRejected(result, category);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task AssembleAsync_MissingTerminalAtEof_RejectsAndDiscardsAssemblyAsync()
     {
         var result = await AssembleAsync(SplitAtEveryByte(
@@ -135,7 +143,8 @@ public sealed class ChatProviderStreamAssemblerTests
         Assert.Null(result.Answer);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task AssembleAsync_DuplicateTerminal_RejectsAfterReadingToPhysicalEofAsync()
     {
         var result = await AssembleAsync(SplitAtEveryByte(Wire(
@@ -147,7 +156,8 @@ public sealed class ChatProviderStreamAssemblerTests
         AssertRejected(result, "duplicate-terminal");
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task AssembleAsync_NonEmptyDataAfterTerminal_RejectsPostTerminalDataAsync()
     {
         var result = await AssembleAsync(SplitAtEveryByte(Wire(
@@ -157,7 +167,8 @@ public sealed class ChatProviderStreamAssemblerTests
         AssertRejected(result, "post-terminal-data");
     }
 
-    [Theory]
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
     [InlineData("data: [DONE]\n", "missing-terminal")]
     [InlineData("wat value\n\n", "invalid-sse")]
     [InlineData("data {\"choices\":[]}\n\n", "invalid-sse")]
@@ -171,7 +182,8 @@ public sealed class ChatProviderStreamAssemblerTests
         AssertRejected(result, category);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task AssembleAsync_DecodedDeltaAtExactLimit_IsAcceptedAsync()
     {
         string content = new('a', 16_384);
@@ -183,7 +195,8 @@ public sealed class ChatProviderStreamAssemblerTests
         Assert.Equal(16_384, result.AnswerDeltaByteCount);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task AssembleAsync_DecodedDeltaOneByteOverLimit_RejectsChunkOverflowAsync()
     {
         string content = new('a', 16_385);
@@ -194,7 +207,8 @@ public sealed class ChatProviderStreamAssemblerTests
         AssertRejected(result, "chunk-overflow");
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task AssembleAsync_EscapedWireSixBytesButDecodedDeltaThreeBytes_UsesDecodedBudgetAsync()
     {
         string escaped = string.Concat(Enumerable.Repeat("\\u4e2d", 16_384 / 3));
@@ -206,7 +220,8 @@ public sealed class ChatProviderStreamAssemblerTests
         Assert.Equal(16_383, result.AnswerDeltaByteCount);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task AssembleAsync_ConcatenatedDeltasAtExactFinalLimit_IsAcceptedAsync()
     {
         string first = new('a', 16_384);
@@ -220,7 +235,8 @@ public sealed class ChatProviderStreamAssemblerTests
         Assert.Equal(65_536, result.AssembledAnswerByteCount);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task AssembleAsync_ConcatenatedDeltasOneByteOverFinalLimit_RejectsTotalOverflowAsync()
     {
         string first = new('a', 16_384);
@@ -235,7 +251,8 @@ public sealed class ChatProviderStreamAssemblerTests
         AssertRejected(result, "total-overflow");
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task AssembleAsync_CommentPaddingAtRawBodySafetyLimit_RejectsEventOverflowAsync()
     {
         byte[] valid = Wire("data: [DONE]\n\n");
@@ -246,7 +263,8 @@ public sealed class ChatProviderStreamAssemblerTests
         AssertRejected(result, "sse-event-overflow");
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task AssembleAsync_RawBodySafetyLimitPlusOne_RejectsRawBodyOverflowAsync()
     {
         byte[] valid = Wire("data: [DONE]\n\n");
@@ -257,7 +275,8 @@ public sealed class ChatProviderStreamAssemblerTests
         AssertRejected(result, "raw-body-overflow");
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task AssembleAsync_SseLineAndEventCapsAreIndependentFromAnswerCapsAsync()
     {
         string longComment = new('x', 131_070);
@@ -271,7 +290,8 @@ public sealed class ChatProviderStreamAssemblerTests
         AssertRejected(overflow, "sse-line-overflow");
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task AssembleAsync_CommentFields_CountTowardEventSafetyCapAsync()
     {
         string overhead = string.Concat(Enumerable.Repeat(": keepalive\n", 50_000));
@@ -281,7 +301,8 @@ public sealed class ChatProviderStreamAssemblerTests
         AssertRejected(result, "sse-event-overflow");
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task AssembleAsync_UnknownSseFields_CountTowardEventSafetyCapAsync()
     {
         string overhead = string.Concat(Enumerable.Repeat("retry: 1000\n", 50_000));
@@ -294,7 +315,8 @@ public sealed class ChatProviderStreamAssemblerTests
         AssertRejected(result, "sse-event-overflow");
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task AssembleAsync_ProviderErrorAfterTerminal_PreservesPostTerminalClassificationAsync()
     {
         var result = await AssembleAsync(SplitAtEveryByte(Wire(
@@ -306,7 +328,8 @@ public sealed class ChatProviderStreamAssemblerTests
         AssertRejected(result, "post-terminal-data");
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task StreamAsync_CancellationDuringArbitraryRead_ThrowsWithoutTerminalAcceptanceAsync()
     {
         using var cancellation = new CancellationTokenSource();
@@ -330,7 +353,8 @@ public sealed class ChatProviderStreamAssemblerTests
             signal => signal.Kind == ChatProviderStreamSignalKind.Terminal);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task StreamAsync_KeepAliveWithoutDecodedData_ExpiresInactivityWithoutPartialAnswerAsync()
     {
         using var cancellation = new CancellationTokenSource(TimeSpan.FromMilliseconds(25));

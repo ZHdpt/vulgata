@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Reflection;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
@@ -34,7 +35,8 @@ public sealed class Pass1MigrationTests
     private static readonly DateTimeOffset _startedAt =
         new(2026, 8, 30, 9, 0, 0, TimeSpan.Zero);
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void ScanExecution_NewPathComplete_UsesVersionAndTimeGuardsAndIsTerminallyImmutable()
     {
         ScanExecution execution = CreateExecution(_firstExecutionId, _firstRepositoryId, _firstScanRunId);
@@ -62,7 +64,8 @@ public sealed class Pass1MigrationTests
             updatedAt: completedAt.AddSeconds(1)));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void ScanExecution_NewPathComplete_RejectsStaleVersionAndRegressingTime()
     {
         ScanExecution stale = CreateExecution(_firstExecutionId, _firstRepositoryId, _firstScanRunId);
@@ -84,7 +87,8 @@ public sealed class Pass1MigrationTests
             updatedAt: _startedAt.AddSeconds(1)));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void ScanExecution_FailedPass1_UsesClosedPolicyAtomAndCannotResume()
     {
         ScanExecution execution = CreateExecution(_firstExecutionId, _firstRepositoryId, _firstScanRunId);
@@ -110,7 +114,8 @@ public sealed class Pass1MigrationTests
             updatedAt: failedAt.AddSeconds(1)));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void TwoRepositoryCoordination_FailedPass1_UsesVersionGuardAndTerminalImmutability()
     {
         ScanExecution first = CreateExecution(_firstExecutionId, _firstRepositoryId, _firstScanRunId);
@@ -151,7 +156,8 @@ public sealed class Pass1MigrationTests
             updatedAt: failedAt.AddSeconds(1)));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void LegacyScanAndCoordinationAtoms_RemainAvailableAndUnchanged()
     {
         ScanExecution legacy = ScanExecution.Start(
@@ -178,7 +184,8 @@ public sealed class Pass1MigrationTests
         Assert.NotEqual(legacy.DocumentSchemaIdentity, v2.DocumentSchemaIdentity);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void StrictResultCorrection_IsExecutionLocalAndLeavesTheEfModelUnchanged()
     {
         using VulgataDbContext db = CreateNpgsqlModelContext();
@@ -204,7 +211,8 @@ public sealed class Pass1MigrationTests
                     name.Contains("ProviderTranscript", StringComparison.OrdinalIgnoreCase));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void ScanJobExecution_OneRetryLifecycle_PreservesOnlyDurableRetryState()
     {
         ScanJobExecution job = ScanJobExecution.Create(
@@ -258,7 +266,8 @@ public sealed class Pass1MigrationTests
                     name.Contains("ProviderTranscript", StringComparison.OrdinalIgnoreCase));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void AddResumablePass1CodeLogic_IsAnAdditiveNoBackfillMigration()
     {
         using VulgataDbContext db = CreateSqliteContext();
@@ -302,7 +311,8 @@ public sealed class Pass1MigrationTests
             operation => operation.Table == "SourceAnchors" && operation.Name == "ByteEnd");
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void AddResumablePass1CodeLogic_DownIsReversibleWithoutHistoricalBackfill()
     {
         using VulgataDbContext db = CreateSqliteContext();

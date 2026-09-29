@@ -1,0 +1,41 @@
+{
+  "observed_after": {
+    "path": "specs/016-contained-source-tools/evidence/workflow-transition-042-diagnosis.json",
+    "sha256": "5a02e1ba092cf1fde2fa3e6d23608d9eb2b666e955cbc5779a11fee957de32e9"
+  },
+  "raw_result": {
+    "kind": "analysis",
+    "stage": "implement",
+    "status": "resolved",
+    "work_kind": "test-only",
+    "source_commit": "6dc584b0f21e2534429e1f586393161090c3a37f",
+    "diagnosis": {
+      "path": "specs/016-contained-source-tools/evidence/quality-diagnosis-03.json",
+      "sha256": "7210fe8de7b33f15a78a046113d2fca4ff9d92401e3217a7e78c64e3cda40532"
+    },
+    "changes": [
+      "Pinned both reviewed demo-resolution JSON paths to LF in .gitattributes and restored the canonical Git-blob fingerprint.",
+      "Placed the two previously ungrouped PostgreSQL-heavy test classes in one disabled-parallelization collection."
+    ],
+    "artifact_hashes": {
+      ".gitattributes": "22231ecbbff5a3f653c971b0aeceebee802185297d64d91eb3b3aed3c926722f",
+      "specs/007-exact-cross-repo-resolution/contracts/demo-resolution-profile.v1.json": "b84223c211f90328e62ca3172f3c398d42fb513b228ca0ff490725d6046398db",
+      "src/dotnet/Vulgata.Infrastructure/CrossRepository/Profiles/demo-resolution-profile.v1.json": "b84223c211f90328e62ca3172f3c398d42fb513b228ca0ff490725d6046398db",
+      "tests/Vulgata.Tests/ExactResolutionProfileTests.cs": "26af1775c40728fbaa5ff31383e2f694694b21e604dd0e36c6cdfd2583ea481f",
+      "tests/Vulgata.Tests/PostgreSqlHeavyCollection.cs": "c3cebb3b0ae5bbb1138768ce37a54c3951a2b7872999a0d9bc7456daf1bfdc90",
+      "tests/Vulgata.Tests/RetainedSource/RetainedSourceCaptureTests.cs": "119a8fbcab2159c4b5c11b159562b051425f48c1407b1025032ac281ef4f9d14",
+      "tests/Vulgata.Tests/Migrations/DurableScanConcurrencyPostgreSqlTests.cs": "b18e30b0194cdb447db3270e786109994b6e6201dba9377e16756b85d3352926"
+    },
+    "focused_verification": {
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter \"FullyQualifiedName~Vulgata.Tests.ExactResolutionProfileTests|FullyQualifiedName=Vulgata.Tests.RetainedSource.RetainedSourceCaptureTests.Composition_InvalidSourceStorageConfiguration_FailsClosedBeforeCapture|FullyQualifiedName=Vulgata.Tests.Migrations.DurableScanConcurrencyPostgreSqlTests.PostgreSql17_RecoveryBatch_AcknowledgementLostAfterCommit_ReplaysWithoutDuplicateStateAdvance\" --logger \"console;verbosity=minimal\"",
+      "exit_code": 0,
+      "passed": 27,
+      "failed": 0,
+      "skipped": 0,
+      "raw_output_path": "specs/016-contained-source-tools/evidence/verify-test-correction-focused-output-02.txt",
+      "raw_output_sha256": "685eee7a303e56269fe994a8289453fdc8674d563413230fd6c463e1b1a1340f"
+    },
+    "unchanged_scope": "No Story 18.1 production code, accepted behavior, schema, migration, Worker tool, Scan strategy, or PRD requirement changed.",
+    "summary": "The bounded test/artifact hygiene correction is complete. The fingerprint and both isolated PostgreSQL failure boundaries pass together 27/27 at the correction commit."
+  }
+}

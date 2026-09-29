@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
@@ -9,10 +10,11 @@ namespace Vulgata.Tests.PreparedScanning;
 
 public sealed class PreparedScanProductionLiteralQualificationTests
 {
-    private const string _artifactRelativePath =
-        "artifacts/qualification/story-12.2/production-literal-inspection.json";
+    private static readonly string _artifactRelativePath =
+        "TestResults/literal-" + Guid.NewGuid().ToString("N") + "/production-literal-inspection.json";
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void ReviewedProfileSeedAdapter_ContainsNoReviewedSampleLiterals()
     {
         string repositoryRoot = FindRepositoryRoot();
@@ -42,7 +44,8 @@ public sealed class PreparedScanProductionLiteralQualificationTests
             source.Contains(literal, StringComparison.Ordinal));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void ProductionArtifacts_FixtureDerivedDenylist_HasZeroExactMatches()
     {
         string repositoryRoot = FindRepositoryRoot();

@@ -1,0 +1,27 @@
+{
+  "observed_after": {
+    "path": "specs/016-contained-source-tools/evidence/workflow-transition-065-e2e-accept.json",
+    "sha256": "f157df7f3117cdb08d16548e3ae01206b73761cfb69da4bb50f1d62a86723fc9"
+  },
+  "raw_result": {
+    "kind": "failure",
+    "stage": "verify-test",
+    "source_commit": "3185c15f5c6fadaf1ed9ad09dee1961f6a64e7d8",
+    "observed_at": "2026-09-29T06:22:19.2772341Z",
+    "command": "pwsh -NoProfile -File eng/test.ps1",
+    "exit_code": 1,
+    "raw_output_path": "specs/016-contained-source-tools/evidence/verify-test-failure-output-06.txt",
+    "raw_output_sha256": "f8bd8b9b8ca280425111189c013a49452b5f47bb6932a2008d2a7e8879ed891b",
+    "trx_path": "TestResults/isolation-750f6fde15084641a45b2b0ceb8e60a1/results.trx",
+    "trx_sha256": "b30e87a78bde04f93f521d36bf9185de2eb66c6b336e48757ff495667e7c8ec4",
+    "summary_counts": {"discovered":2811,"selected":1975,"passed":1887,"failed":88,"skipped":0},
+    "failure_groups": [
+      {"count":87,"expected":"Issued","actual":"RootUnavailable"},
+      {"count":1,"expected":"Denied","actual":"RootUnavailable"}
+    ],
+    "diagnostic_conclusion": "The identical failure after assigning all 11 PreparedSource classes to a DisableParallelization collection disproves the leading hypothesis that ordinary xUnit cross-collection parallelism alone caused the native root-open failure. The exact Windows failure status remains uncaptured; the next diagnosis must instrument the root-open stages/status rather than repeat scheduling changes.",
+    "build_summary": {"command":"dotnet build src/dotnet/Vulgata.Web/Vulgata.Web.csproj","exit_code":0,"errors":0,"warnings":3297,"duration":"00:00:32.02"},
+    "recovery_assessment": {"episode_id":"18-1/implementation/1","failed_results":10,"pause_at":10,"action":"pause","earliest_owner":"tests","next_authority_required":"The cumulative ceiling of 10 is reached. No instrumentation, correction or rerun is authorized without a new explicit finite extension."},
+    "summary": "The quality-reviewed correction built with zero errors, but the exact configured SelfContained suite repeated the same 88 Story 18.1 RootUnavailable failures. This is substantive recovery result 10 and pauses the story."
+  }
+}

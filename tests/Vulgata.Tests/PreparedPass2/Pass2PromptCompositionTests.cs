@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Reflection;
 using System.Text;
 
@@ -8,7 +9,8 @@ public sealed class Pass2PromptCompositionTests
     private const string PromptResourceName =
         "Vulgata.Agents.Prompts.pass2-business-logic-worker.v1.md";
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Pass2Prompt_IsOneFiniteEmbeddedResource_WithStrictFunctionBoundary()
     {
         Assembly assembly = typeof(Vulgata.Agents.WorkerExecution.WorkerAgentDispatcher).Assembly;

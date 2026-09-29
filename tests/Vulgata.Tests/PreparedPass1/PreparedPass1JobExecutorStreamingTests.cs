@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Net;
 using System.Net.Http.Headers;
 using System.Reflection;
@@ -18,6 +19,7 @@ namespace Vulgata.Tests.PreparedPass1;
 /// response through the public executor seam and return the final bounded
 /// result bytes without exposing intermediate reasoning updates.
 /// </summary>
+[Collection("Provider streaming clock tests")]
 public sealed class PreparedPass1JobExecutorStreamingTests
 {
     private static readonly TimeSpan _testInactivityTimeout = TimeSpan.FromMilliseconds(200);
@@ -46,7 +48,8 @@ public sealed class PreparedPass1JobExecutorStreamingTests
     private static readonly Guid _inventedNavigationReceiptId =
         Guid.Parse("dddddddd-eeee-4fff-8aaa-bbbbbbbbbbbb");
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void WireBudgetDiagnosticObserver_RecordsPayloadFreeOutgoingRejectionSubtype()
     {
         PreparedPass1WireBudgetDiagnosticObserver observer = new();
@@ -62,7 +65,8 @@ public sealed class PreparedPass1JobExecutorStreamingTests
             observer.Categories);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ExecuteAsync_StreamResponseWithReasoning_ProducesFinalCodeLogicResultAsync()
     {
         PreparedPass1WorkerPacket packet = CreatePacket();
@@ -98,7 +102,8 @@ public sealed class PreparedPass1JobExecutorStreamingTests
         Assert.DoesNotContain("reasoning", Encoding.UTF8.GetString(result.Utf8Json.Span), StringComparison.OrdinalIgnoreCase);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ExecuteAsync_ProviderRequestOmitsServerOwnedSymbolNameAndRetainsStreamingShapeAsync()
     {
         PreparedPass1WorkerPacket packet = CreatePacket();
@@ -126,7 +131,8 @@ public sealed class PreparedPass1JobExecutorStreamingTests
             body => Assert.Contains("\"stream\":true", body, StringComparison.Ordinal));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ExecuteAsync_RawSseDataAtEof_ProducesCanonicalResultWithoutRetainingRawBytesAsync()
     {
         PreparedPass1WorkerPacket packet = CreatePacket();
@@ -158,7 +164,8 @@ public sealed class PreparedPass1JobExecutorStreamingTests
         Assert.Equal(Encoding.UTF8.GetByteCount(rawComment + CreateSubmitSse(document, includeDone: false)), transport.RawBytesRead);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ExecuteAsync_CommentOnlyRawReadResetsInactivityBeforeParsedUpdateAsync()
     {
         PreparedPass1WorkerPacket packet = CreatePacket();
@@ -186,7 +193,8 @@ public sealed class PreparedPass1JobExecutorStreamingTests
         Assert.Equal(Encoding.UTF8.GetByteCount(": keepalive\n\n" + CreateSubmitSse(document, includeDone: true)), transport.RawBytesRead);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ExecuteAsync_RawSseReadFailureReturnsSanitizedEmptyEvidenceAsync()
     {
         RawReadSseHandler transport = new(
@@ -208,7 +216,8 @@ public sealed class PreparedPass1JobExecutorStreamingTests
         Assert.DoesNotContain("private-provider-bytes", result.ReasonCode, StringComparison.Ordinal);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void TimeoutDefaults_AreFiveMinutesInactivityAndTwentyFiveMinutesAbsolute()
     {
         Type executorType = typeof(PreparedPass1JobExecutor);
@@ -223,7 +232,8 @@ public sealed class PreparedPass1JobExecutorStreamingTests
         Assert.Equal(TimeSpan.FromMinutes(25), absolute);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ExecuteAsync_SilentStream_ExpiresAtInactivityAndReturnsProviderUnavailableAsync()
     {
         StreamingHandler transport = new(
@@ -243,7 +253,8 @@ public sealed class PreparedPass1JobExecutorStreamingTests
         Assert.Equal("provider-unavailable", result.ReasonCode);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ExecuteAsync_ReasoningProgressResetsInactivity_AndAcceptsFinalResultAsync()
     {
         PreparedPass1WorkerPacket packet = CreatePacket();
@@ -275,7 +286,8 @@ public sealed class PreparedPass1JobExecutorStreamingTests
         Assert.Equal(4, transport.ReasoningEvents);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ExecuteAsync_ContinuingProgress_ExpiresAtAbsoluteCapAsync()
     {
         StreamingHandler transport = new(
@@ -295,7 +307,8 @@ public sealed class PreparedPass1JobExecutorStreamingTests
         Assert.Equal("provider-unavailable", result.ReasonCode);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ExecuteAsync_CallerCancellation_IsRethrownAsync()
     {
         StreamingHandler transport = new(
@@ -314,7 +327,8 @@ public sealed class PreparedPass1JobExecutorStreamingTests
             cancellation.Token));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ExecuteAsync_StreamedNavigateCodeLoop_ReturnsOnlyPostToolFinalResultAsync()
     {
         PreparedPass1WorkerPacket packet = CreatePacket();
@@ -357,7 +371,8 @@ public sealed class PreparedPass1JobExecutorStreamingTests
         Assert.Equal(new string('f', 64), Convert.ToHexStringLower(call.Target.ExpectedSourceHash!.Value.Span));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ExecuteAsync_ReasoningNavigateCodeLoop_ReplaysCompleteToolTurnAsync()
     {
         PreparedPass1WorkerPacket packet = CreatePacket();
@@ -385,7 +400,8 @@ public sealed class PreparedPass1JobExecutorStreamingTests
         Assert.Single(assistant.GetProperty("tool_calls").EnumerateArray());
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ExecuteAsync_SubmitCodeLogic_InvalidNestedCandidateThenValidCorrection_CapturesCanonicalResultOnceAsync()
     {
         PreparedPass1WorkerPacket packet = CreatePacket();
@@ -446,7 +462,8 @@ public sealed class PreparedPass1JobExecutorStreamingTests
         Assert.DoesNotContain("schemaIdentity\":\"code-logic/file-v2\",\"schemaIdentity", Encoding.UTF8.GetString(result.Utf8Json.Span), StringComparison.Ordinal);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ExecuteAsync_InventedNavigationReceiptWithoutObservedCallback_UsesEvidenceCorrectionBeforeCaptureAsync()
     {
         PreparedPass1WorkerPacket packet = CreatePacket();
@@ -485,7 +502,8 @@ public sealed class PreparedPass1JobExecutorStreamingTests
             StringComparison.OrdinalIgnoreCase);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ExecuteAsync_ObservedNavigationReceipt_IsAcceptedWithoutReceiptOrderCouplingAsync()
     {
         PreparedPass1WorkerPacket packet = CreatePacket();
@@ -515,7 +533,8 @@ public sealed class PreparedPass1JobExecutorStreamingTests
         Assert.Equal(2, transport.RequestBodies.Count);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ExecuteAsync_MultipleObservedReceipts_AcceptsReverseOrderAndDuplicateCitationsAsync()
     {
         PreparedPass1WorkerPacket packet = CreatePacket();
@@ -554,7 +573,8 @@ public sealed class PreparedPass1JobExecutorStreamingTests
         Assert.Equal(2, transport.RequestBodies.Count);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ExecuteAsync_MixedObservedAndUnobservedReceipts_RejectsBeforeCaptureAndCorrectsAsync()
     {
         PreparedPass1WorkerPacket packet = CreatePacket();
@@ -596,7 +616,8 @@ public sealed class PreparedPass1JobExecutorStreamingTests
             _inventedNavigationReceiptId);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ExecuteAsync_OneRemainingNavigationCapacity_DoesNotAuthorizeExcessReceiptAsync()
     {
         PreparedPass1WorkerPacket packet = CreatePacketWithBudget(1);
@@ -646,7 +667,8 @@ public sealed class PreparedPass1JobExecutorStreamingTests
             _inventedNavigationReceiptId);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ExecuteAsync_ConcurrentExecutions_IsolateCrossExecutionReceiptIdsAsync()
     {
         PreparedPass1WorkerPacket firstPacket = CreatePacket();
@@ -724,7 +746,8 @@ public sealed class PreparedPass1JobExecutorStreamingTests
             _observedNavigationReceiptId);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ExecuteAsync_FirstRejectedSubmission_SecondInvalidTerminatesWithoutRequestElevenAsync()
     {
         PreparedPass1WorkerPacket packet = CreatePacket();
@@ -762,7 +785,8 @@ public sealed class PreparedPass1JobExecutorStreamingTests
             .GetProperty("repairCode").GetString());
     }
 
-    [Theory]
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
     [InlineData(false, false, 9, true)]
     [InlineData(true, false, 10, true)]
     [InlineData(true, true, 10, false)]
@@ -825,7 +849,8 @@ public sealed class PreparedPass1JobExecutorStreamingTests
         }
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task SubmitSession_ValidCandidate_CapturesCanonicalBytesAndTerminatesImmediatelyAsync()
     {
         PreparedPass1WorkerPacket packet = CreatePacket();
@@ -848,7 +873,8 @@ public sealed class PreparedPass1JobExecutorStreamingTests
         Assert.Null(session.TakeCapturedCanonicalJson());
     }
 
-    [Theory]
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
     [InlineData("shape", "invalid-shape")]
     [InlineData("binding", "invalid-binding")]
     [InlineData("evidence", "invalid-evidence")]
@@ -873,7 +899,8 @@ public sealed class PreparedPass1JobExecutorStreamingTests
         Assert.DoesNotContain("source", outcome, StringComparison.OrdinalIgnoreCase);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task SubmitSession_InvalidCandidate_ReportsExactlyOneSanitizedCategoryAsync()
     {
         PreparedPass1WorkerPacket packet = CreatePacket();
@@ -890,7 +917,8 @@ public sealed class PreparedPass1JobExecutorStreamingTests
         Assert.DoesNotContain(candidate, string.Join(',', observer.Categories));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ExecuteAsync_InvalidSubmission_ReportsCategoryAndRetainsClosedReasonAsync()
     {
         const string invalidDocument =
@@ -916,7 +944,8 @@ public sealed class PreparedPass1JobExecutorStreamingTests
         Assert.Empty(result.Utf8Json.ToArray());
     }
 
-    [Theory]
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
     [MemberData(nameof(ServerOwnedBindingPropertyNames))]
     public async Task SubmitSession_EveryServerOwnedBindingDriftMapsInvalidBindingAsync(
         string property)
@@ -933,7 +962,8 @@ public sealed class PreparedPass1JobExecutorStreamingTests
         Assert.Equal("invalid-binding", await InvokeSubmitAsync(session, candidate));
     }
 
-    [Theory]
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
     [InlineData("path")]
     [InlineData("sourceHash")]
     [InlineData("byteStart")]
@@ -951,7 +981,8 @@ public sealed class PreparedPass1JobExecutorStreamingTests
         Assert.Equal("invalid-evidence", await InvokeSubmitAsync(session, candidate));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task SubmitSession_SecondInvalidAndThirdSubmission_TerminateWithoutCaptureAsync()
     {
         PreparedPass1WorkerPacket packet = CreatePacket();
@@ -968,7 +999,8 @@ public sealed class PreparedPass1JobExecutorStreamingTests
         Assert.Null(session.TakeCapturedCanonicalJson());
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task SubmitSession_InvalidSemantics_ReportsClosedRuleWithoutCandidateContentAsync()
     {
         PreparedPass1WorkerPacket packet = CreatePacket();
@@ -996,7 +1028,8 @@ public sealed class PreparedPass1JobExecutorStreamingTests
             method => method.Name == "Observe" && method.GetParameters().Length == 2);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task SubmitSession_OuterShapeDriftAndWrongValueKind_ReturnOnlyInvalidShapeAsync()
     {
         PreparedPass1WorkerPacket packet = CreatePacket();
@@ -1028,7 +1061,8 @@ public sealed class PreparedPass1JobExecutorStreamingTests
         Assert.Equal("invalid-shape", ToolResultText(wrong));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task SubmitSession_CaptureIsExecutionLocalAndClearedAfterTakeAsync()
     {
         PreparedPass1WorkerPacket packet = CreatePacket();
@@ -1048,7 +1082,8 @@ public sealed class PreparedPass1JobExecutorStreamingTests
         Assert.Null(second.TakeCapturedCanonicalJson());
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ExecuteAsync_SubmitThenNavigate_RejectsWithoutNavigationAccessAsync()
     {
         const string invalidDocument =
@@ -1078,7 +1113,8 @@ public sealed class PreparedPass1JobExecutorStreamingTests
         Assert.Equal("NavigationUnavailable", ReadFunctionCallSubtype(diagnostics));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ExecuteAsync_UnknownFunctionCall_TerminatesAsClosedRejectionAsync()
     {
         SingleToolCallHandler transport = new("unknown_function", "{}");
@@ -1104,7 +1140,8 @@ public sealed class PreparedPass1JobExecutorStreamingTests
         Assert.Equal("UnknownFunction", ReadFunctionCallSubtype(diagnostics));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ExecuteAsync_ParallelFunctionCalls_TerminatesWithoutCandidateCaptureAsync()
     {
         ParallelToolCallHandler transport = new();
@@ -1124,7 +1161,8 @@ public sealed class PreparedPass1JobExecutorStreamingTests
         Assert.Empty(result.Utf8Json.ToArray());
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ExecuteAsync_CompleteTurnWithLegalNavigationThenUnknownSibling_PreflightsBeforeAnyCallbackAsync()
     {
         LegalNavigationThenUnknownSiblingHandler transport = new();
@@ -1151,7 +1189,8 @@ public sealed class PreparedPass1JobExecutorStreamingTests
         Assert.Empty(navigation.Requests);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ExecuteAsync_MultipleCallTurnWithLegalThenUnknownSibling_HasNoPartialCallbackAsync()
     {
         MultipleToolCallHandler transport = new("navigate_code", "unknown_function");
@@ -1172,7 +1211,8 @@ public sealed class PreparedPass1JobExecutorStreamingTests
         Assert.Empty(navigation.Requests);
     }
 
-    [Theory]
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
     [InlineData("mixed-navigate-submit", "MixedFunctions")]
     [InlineData("multiple-submissions", "MultipleSubmissions")]
     [InlineData("over-remaining-navigation-budget", "NavigationBudgetExceeded")]
@@ -1241,7 +1281,8 @@ public sealed class PreparedPass1JobExecutorStreamingTests
         Assert.Equal(expectedSubtype, ReadFunctionCallSubtype(executionDiagnostics));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ExecuteAsync_BudgetExhaustionBeforeForcedTurnNine_StopsAtEightCallbacksWithoutRequestTenOrElevenAsync()
     {
         TurnTenIllegalShapeHandler transport = new();
@@ -1267,7 +1308,8 @@ public sealed class PreparedPass1JobExecutorStreamingTests
                    body.Contains("request-eleven", StringComparison.Ordinal));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ExecuteAsync_TurnNineMixedFunctions_ReportsTerminalMixedFunctionsAsync()
     {
         TurnTenMixedShapeHandler transport = new();
@@ -1301,7 +1343,8 @@ public sealed class PreparedPass1JobExecutorStreamingTests
         Assert.Equal("TerminalMixedFunctions", ReadFunctionCallSubtype(diagnostics));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ExecuteAsync_TurnNineTwoSubmissions_UsesDistinctTerminalTopologySubtypeAsync()
     {
         TurnTenDoubleSubmitHandler transport = new();
@@ -1338,7 +1381,8 @@ public sealed class PreparedPass1JobExecutorStreamingTests
         Assert.Equal("TerminalMultipleSubmissions", ReadFunctionCallSubtype(diagnostics));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ExecuteAsync_TurnNineNavigation_ReportsTerminalNavigationAsync()
     {
         PreparedPass1WorkerPacket packet = CreatePacket();
@@ -1386,7 +1430,8 @@ public sealed class PreparedPass1JobExecutorStreamingTests
             expectedCorrectionCategory: null);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ExecuteAsync_TurnNineMultipleNavigations_ReportsTerminalMultipleNavigationsAsync()
     {
         TurnTenMultipleNavigationHandler transport = new();
@@ -1423,7 +1468,8 @@ public sealed class PreparedPass1JobExecutorStreamingTests
         Assert.Equal("TerminalMultipleNavigations", ReadFunctionCallSubtype(diagnostics));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ExecuteAsync_TurnNineFinalization_UsesHistoryFreeThreeMessageProjectionAsync()
     {
         PreparedPass1WorkerPacket packet = CreatePacket();
@@ -1474,7 +1520,8 @@ public sealed class PreparedPass1JobExecutorStreamingTests
             root.GetProperty("tools")[0].GetProperty("function").GetProperty("name").GetString());
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ExecuteAsync_FirstRejectedSubmission_UsesHistoryFreeCorrectionProjectionAsync()
     {
         PreparedPass1WorkerPacket packet = CreatePacket();
@@ -1513,7 +1560,8 @@ public sealed class PreparedPass1JobExecutorStreamingTests
         Assert.Contains("firstSubmissionCorrection", messages.GetRawText(), StringComparison.Ordinal);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void IllegalFunctionCallSubtype_SeparatesTurnDefenseBranchesByDistinctMembers()
     {
         string[] subtypeNames = Enum.GetNames(typeof(PreparedPass1IllegalFunctionCallSubtype));
@@ -1529,7 +1577,8 @@ public sealed class PreparedPass1JobExecutorStreamingTests
             "navigate_code",
             $"{{\"operation\":\"Definition\",\"target\":{{\"repositoryRelativePath\":\"src/Target.java\",\"symbol\":\"{symbol}\",\"position\":null,\"exactLineRange\":null,\"expectedSourceHash\":\"ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff\"}},\"depth\":1,\"parentObservationIdentity\":null}}");
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ExecuteAsync_CompleteAllNavigationBatch_RemainsEligibleAndReleasesUpdatesSeriallyAsync()
     {
         PreparedPass1WorkerPacket packet = CreatePacket();
@@ -1555,7 +1604,8 @@ public sealed class PreparedPass1JobExecutorStreamingTests
             navigation.Requests.Select(request => request.Target.Symbol).ToArray());
     }
 
-    [Theory]
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
     [InlineData(8, 1)]
     [InlineData(8, 2)]
     [InlineData(8, 3)]
@@ -1620,7 +1670,8 @@ public sealed class PreparedPass1JobExecutorStreamingTests
             replay.Split("navigation-budget-exhausted", StringSplitOptions.None).Length - 1);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ExecuteAsync_InitialZero_DirectSubmissionUsesProviderInsteadOfDeferredFallbackAsync()
     {
         PreparedPass1WorkerPacket packet = CreatePacketWithBudget(0);
@@ -1652,7 +1703,8 @@ public sealed class PreparedPass1JobExecutorStreamingTests
         Assert.Empty(reservations.Requests);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ExecuteAsync_InitialZero_ClosedNavigationThenSubmissionHasNoApplicationEffectsAsync()
     {
         PreparedPass1WorkerPacket packet = CreatePacketWithBudget(0);
@@ -1679,7 +1731,8 @@ public sealed class PreparedPass1JobExecutorStreamingTests
         Assert.Empty(reservations.Requests);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ExecuteAsync_NineNavigationCallsRemainWholeResponseRejectedAtCapacityEightAsync()
     {
         PreparedPass1WorkerPacket packet = CreatePacketWithBudget(8);
@@ -1712,7 +1765,8 @@ public sealed class PreparedPass1JobExecutorStreamingTests
         Assert.Equal("NavigationBudgetExceeded", ReadFunctionCallSubtype(diagnostics));
     }
 
-    [Theory]
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
     [InlineData("first-valid", 8, true, 9)]
     [InlineData("first-invalid", 8, false, 10)]
     [InlineData("second-valid", 8, true, 10)]
@@ -1772,7 +1826,8 @@ public sealed class PreparedPass1JobExecutorStreamingTests
         }
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ExecuteAsync_AllNavigationCallbacks_ReserveBeforeSerialCallbackAndUseLatestCursorAsync()
     {
         PreparedPass1WorkerPacket packet = CreatePacket();
@@ -1818,7 +1873,8 @@ public sealed class PreparedPass1JobExecutorStreamingTests
         Assert.Contains("call-navigate-2", transport.RequestBodies[1], StringComparison.Ordinal);
     }
 
-    [Theory]
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
     [InlineData(1, 0)]
     [InlineData(2, 1)]
     public async Task ExecuteAsync_ReservationFailureStopsBeforeAffectedAndLaterCallbacksAsync(
@@ -1847,7 +1903,8 @@ public sealed class PreparedPass1JobExecutorStreamingTests
         Assert.NotEqual(PreparedPass1RawWorkerOutcome.Completed, result.Outcome);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ExecuteAsync_ClientBadRequest_ReportsOnlyProviderClientRequestRejectedAsync()
     {
         PreparedPass1ExecutionDiagnosticObserver diagnostics = new();
@@ -1870,7 +1927,8 @@ public sealed class PreparedPass1JobExecutorStreamingTests
             diagnostics.Categories);
     }
 
-    [Theory]
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
     [InlineData(401, "ProviderUnavailable", "provider-configuration", "")]
     [InlineData(402, "ProviderUnavailable", "provider-configuration", "")]
     [InlineData(403, "ProviderUnavailable", "provider-configuration", "")]
@@ -1920,7 +1978,8 @@ public sealed class PreparedPass1JobExecutorStreamingTests
         }
     }
 
-    [Theory]
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
     [InlineData("temperature", "0.2")]
     [InlineData("top_p", "0.2")]
     [InlineData("presence_penalty", "0.2")]
@@ -1936,7 +1995,8 @@ public sealed class PreparedPass1JobExecutorStreamingTests
         Assert.Null(normalized);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void NormalizeAndValidateDeepSeekRequestBody_AssistantToolTextParts_CollapsesContentToString()
     {
         const string body =
@@ -1958,7 +2018,8 @@ public sealed class PreparedPass1JobExecutorStreamingTests
         Assert.Single(assistant.GetProperty("tool_calls").EnumerateArray());
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void NormalizeAndValidateDeepSeekRequestBody_AssistantToolNonTextPart_RejectsClosed()
     {
         const string body =
@@ -1972,7 +2033,8 @@ public sealed class PreparedPass1JobExecutorStreamingTests
         Assert.Null(normalized);
     }
 
-    [Theory]
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
     [InlineData("unknown", "UnknownFunction")]
     [InlineData("parallel", "MixedFunctions")]
     [InlineData("overlap", "UnknownFunction")]
@@ -2199,7 +2261,8 @@ public sealed class PreparedPass1JobExecutorStreamingTests
         return Assert.IsType<string>(value);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ExecuteAsync_UnexpectedTransportException_ReportsOnlyUnexpectedExceptionAsync()
     {
         PreparedPass1ExecutionDiagnosticObserver diagnostics = new();
@@ -2222,7 +2285,8 @@ public sealed class PreparedPass1JobExecutorStreamingTests
             diagnostics.Categories);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ExecuteAsync_FreeFormJsonWithoutSubmission_IsNotAuthoritativeAsync()
     {
         string validLookingJson = CreateValidDocumentJson(CreatePacket());
@@ -2242,7 +2306,8 @@ public sealed class PreparedPass1JobExecutorStreamingTests
         Assert.Empty(result.Utf8Json.ToArray());
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ExecuteAsync_CompletedZeroCallTurnFailsBeforeFiccWithPayloadFreeMissingFunctionAsync()
     {
         PreparedPass1WorkerPacket packet = CreatePacket();
@@ -4103,3 +4168,7 @@ public sealed class PreparedPass1JobExecutorStreamingTests
             Task.FromResult(new PreparedPass1NavigationResponse(PreparedPass1NavigationOutcome.Unavailable, Guid.Empty, request.Operation, request.RequestedDepth, null, 0, 0, []));
     }
 }
+
+// These bounded real-time transport probes must not compete with the CPU-heavy suite.
+[CollectionDefinition("Provider streaming clock tests", DisableParallelization = true)]
+public sealed class ProviderStreamingClockCollection { }

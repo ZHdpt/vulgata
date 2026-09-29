@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Vulgata.Core.DomainServices;
@@ -17,7 +18,8 @@ public sealed class RetainedSourceRootMappingTests
         _output = output;
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task OpenReadContextAsync_VolumeRootConfiguration_DoesNotResolveCwdAliasAsync()
     {
         if (!OperatingSystem.IsWindows())

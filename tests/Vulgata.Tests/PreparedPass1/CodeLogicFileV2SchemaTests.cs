@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
@@ -55,7 +56,8 @@ public sealed class CodeLogicFileV2SchemaTests
     private const string _targetSourceHash =
         "5555555555555555555555555555555555555555555555555555555555555555";
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Parse_CompleteBoundedFileV2Result_AcceptsAuthoritativeSemanticShape()
     {
         PreparedPass1ParsedWorkerResult result = Parse(BaseJson());
@@ -64,7 +66,8 @@ public sealed class CodeLogicFileV2SchemaTests
         Assert.Equal(BaseJson(), Encoding.UTF8.GetString(result.CanonicalCandidateJson.Span));
     }
 
-    [Theory]
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
     [InlineData("unknown-root-field")]
     [InlineData("duplicate-root-field")]
     [InlineData("unknown-nested-field")]
@@ -89,7 +92,8 @@ public sealed class CodeLogicFileV2SchemaTests
         Assert.Throws<InvalidDataException>(() => Parse(json));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Parse_RejectsWorkerAuthoredProjectionAndIdentityFields()
     {
         JsonObject root = JsonNode.Parse(BaseJson())!.AsObject();

@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Globalization;
 using System.Reflection;
 using System.Security.Cryptography;
@@ -38,7 +39,8 @@ public sealed class Pass1PairPostgreSqlAtomicTests
         { "after-coordination", "vulgata.\"TwoRepositoryScanCoordinations\"", "UPDATE", "AFTER" },
     };
 
-    [Theory]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteTheory("PostgreSql")]
     [MemberData(nameof(StartWriteBoundaries))]
     public async Task PostgreSql17_StartFailureAtEveryWriteBoundary_RollsBackPairQueueAndStateAsync(
         string boundary,
@@ -82,7 +84,8 @@ public sealed class Pass1PairPostgreSqlAtomicTests
         Assert.Equal(before, await ReadVisibilityAsync(fixture.ConnectionString));
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task PostgreSql17_RetryingExecutionStrategy_StartsPreparedPairWithoutTransactionRejectionAsync()
     {
         await using PreparedScanPostgreSqlFixture fixture = await CreateFixtureAsync();
@@ -102,7 +105,8 @@ public sealed class Pass1PairPostgreSqlAtomicTests
         Assert.NotNull(started.PairExecutionId);
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task PostgreSql17_RetryingExecutionStrategy_ClaimsPreparedJobWithoutTransactionRejectionAsync()
     {
         await using PreparedScanPostgreSqlFixture fixture = await CreateFixtureAsync();
@@ -128,7 +132,8 @@ public sealed class Pass1PairPostgreSqlAtomicTests
         Assert.NotNull(claimed.JobId);
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task PostgreSql17_RetryingExecutionStrategy_RecordsClaimFailureWithoutTransactionRejectionAsync()
     {
         await using PreparedScanPostgreSqlFixture fixture = await CreateFixtureAsync();
@@ -161,7 +166,8 @@ public sealed class Pass1PairPostgreSqlAtomicTests
         Assert.Equal(PreparedPass1FailureOutcome.Recorded, failed.Outcome);
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task PostgreSql17_RetryingExecutionStrategy_PersistsNavigationCallsMarkerWithoutTransactionRejectionAsync()
     {
         await using PreparedScanPostgreSqlFixture fixture = await CreateFixtureAsync();
@@ -209,7 +215,8 @@ public sealed class Pass1PairPostgreSqlAtomicTests
                 value.BoundKind == Pass1NavigationBoundKind.Calls));
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task PostgreSql17_RetryingExecutionStrategy_RecoversPreparedPairWithoutTransactionRejectionAsync()
     {
         await using PreparedScanPostgreSqlFixture fixture = await CreateFixtureAsync();
@@ -243,7 +250,8 @@ public sealed class Pass1PairPostgreSqlAtomicTests
         Assert.True(recovered.PairBindingValid);
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task PostgreSql17_CompetingClaimers_SeeOnlyCommittedCompleteQueueAndRespectPairLimitAsync()
     {
         await using PreparedScanPostgreSqlFixture fixture = await CreateFixtureAsync();
@@ -291,7 +299,8 @@ public sealed class Pass1PairPostgreSqlAtomicTests
         Assert.Equal(committed, await ReadVisibilityAsync(fixture.ConnectionString));
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task PostgreSql17_Claim_ReturnsExactDurableLeaseTimestampAsync()
     {
         await using PreparedScanPostgreSqlFixture fixture = await CreateFixtureAsync();
@@ -321,7 +330,8 @@ public sealed class Pass1PairPostgreSqlAtomicTests
         Assert.Equal(durableLease, claim.LeaseExpiresAt);
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task PostgreSql17_RecoveryWithAllJobsCompleted_DoesNotRequireProviderAvailabilityAsync()
     {
         await using PreparedScanPostgreSqlFixture fixture = await CreateFixtureAsync();
@@ -358,7 +368,8 @@ public sealed class Pass1PairPostgreSqlAtomicTests
         Assert.Null(pair.ReasonCode);
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task PostgreSql17_PolicyDrain_RestartBeforeAndAfterLeaseExpiry_ClosesAndAccountsTerminalStateAsync()
     {
         await using PreparedScanPostgreSqlFixture fixture = await CreateFixtureAsync();
@@ -542,7 +553,8 @@ public sealed class Pass1PairPostgreSqlAtomicTests
             .CountAsync(value => value.PairExecutionId == pairExecutionId));
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task PostgreSql17_OrdinaryFailureBeyondBudgetDuringProviderProbe_EntersPolicyDrainImmediatelyAsync()
     {
         await using PreparedScanPostgreSqlFixture fixture = await CreateFixtureAsync();
@@ -622,7 +634,8 @@ public sealed class Pass1PairPostgreSqlAtomicTests
         Assert.Null(drain.RetryAfterAt);
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task PostgreSql17_RejectedExactPairBinding_FailsBothScansAndNeverDispatchesOrCommitsAsync()
     {
         MethodInfo failureMethod = RequireRevisionBindingFailureMethod();
@@ -692,7 +705,8 @@ public sealed class Pass1PairPostgreSqlAtomicTests
                 "SELECT count(*)::integer FROM vulgata.\"DocumentVersions\";"));
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task PostgreSql17_RevisionBindingFailure_RejectsStaleAndUnauthorizedAuthorityWithoutMutationAsync()
     {
         MethodInfo failureMethod = RequireRevisionBindingFailureMethod();
@@ -741,7 +755,8 @@ public sealed class Pass1PairPostgreSqlAtomicTests
         Assert.Equal(currentVersion, await ReadPairStateVersionAsync(fixture.ConnectionString, pairId));
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task PostgreSql17_RevisionBindingFailureAfterReconciling_PreservesCompletedChildrenAndDocumentsAsync()
     {
         MethodInfo failureMethod = RequireRevisionBindingFailureMethod();
@@ -843,7 +858,8 @@ public sealed class Pass1PairPostgreSqlAtomicTests
                 "SELECT count(*)::integer FROM vulgata.\"DocumentVersions\";"));
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task PostgreSql17_ReviewedExactScore1100Entries_UseExistingDirectScoreAndTop20AuthorityWithoutLaterPassActivationAsync()
     {
         await using PreparedScanPostgreSqlFixture fixture = await CreateFixtureAsync();
@@ -874,7 +890,8 @@ public sealed class Pass1PairPostgreSqlAtomicTests
             "SELECT count(*)::integer FROM vulgata.\"CrossRepositoryResolutionDecisions\";"));
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task PostgreSql17_ReviewedExactScore1100RequiredFailure_ProducesFailedPass1WithoutExactResolutionOrPass2Async()
     {
         await using PreparedScanPostgreSqlFixture fixture = await CreateFixtureAsync();

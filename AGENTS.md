@@ -30,6 +30,8 @@ definitions and historical passing tests do not prove the replacement workflow w
   authoritative for installed versions; a planned dependency is not installed.
 - **Author or run tests:** read [testing and verification](docs/agents/testing.md).
   Use owned resources and evidence appropriate to the claimed behavior.
+  Default to `pwsh -NoProfile -File eng/test.ps1`; classify tests and helpers in the
+  enforced suite inventory before adding external dependencies.
 - **Explore domain decisions:** follow [domain guidance](docs/agents/domain.md).
   **Edit workflow customizations:** follow
   [the customization rules](.github/instructions/governed-delivery-customizations.instructions.md).
@@ -91,16 +93,28 @@ advances without this additional approval.
 ## Delegated approval
 
 Human approval remains the default. For a specific story, the user may explicitly
-designate a stable Codex task/chat ID to authorize only planned-change authorization
-after accepted independent plan review and implementation approval after accepted
-independent definition review. The designation must state the story scope, conditions,
-and these gates, and must be recorded with its source in the story's existing decision
-evidence. The story root verifies the actual user instruction, delegate response,
-current accepted review and artifact hashes, and continued scope before proceeding;
-the delegate returns its decision but never writes approval files. A task title alone
-does not identify a delegate; no delegate may substitute another task or subdelegate.
+designate a stable Codex task/chat ID for any of these purposes:
 
-This designation does not cover recovery extensions, authority/blocker resolution,
+- planned-change authorization after accepted independent plan review;
+- implementation approval after accepted independent definition review;
+- finite `recovery-extension` at failure 4 or a reached approved extension limit.
+
+The designation must state story scope, conditions and permitted purposes, and be
+recorded with its actual user source in the story's existing decision evidence.
+Recovery delegation additionally requires a user-set cumulative per-episode
+`max_pause_at`; earlier two-gate grants do not include it. Each reached limit needs
+a fresh decision bound to the current recovery boundary and changed approach, within
+that ceiling. At the ceiling, return to the user. Preserve counts, diagnosis, holds,
+owner and model/escalation strategy; an extension grants allowance, not scope.
+
+The story root verifies the actual user instruction, delegate response, current
+accepted review or paused recovery boundary, artifact hashes and continued scope.
+The delegate returns its decision; the root alone writes and validates approval
+records. A title alone does not identify a delegate; substitution and subdelegation
+are not permitted. Use the installed
+[delegated-approval contract](.agents/skills/run-governed-delivery/references/review-and-correction.md#explicit-delegated-approval-optional).
+
+Delegation does not cover authority/blocker resolution,
 prior-authority conflicts, architecture changes outside the accepted plan, epic
 dispositions, retrospective choices, or separate access/spend/secret/production
 permissions. Existing gate order, recovery limits, worker ownership, and verification

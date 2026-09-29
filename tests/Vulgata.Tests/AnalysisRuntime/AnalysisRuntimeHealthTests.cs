@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Net;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -30,7 +31,8 @@ public sealed class AnalysisRuntimeHealthTests
         _factory = factory;
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task ProductionComposition_RegistersClosedAnalysisPortsAndHealthProbe()
     {
         await using AsyncServiceScope scope = _factory.Services.CreateAsyncScope();
@@ -40,7 +42,8 @@ public sealed class AnalysisRuntimeHealthTests
         Assert.NotNull(scope.ServiceProvider.GetService<IAnalysisRuntimeHealthProbe>());
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task ConfiguredIntegrityHealth_MissingJdtArchive_IsBoundedNotReadyAndSanitized()
     {
         using IServiceScope scope = _factory.Services.CreateScope();
@@ -71,7 +74,8 @@ public sealed class AnalysisRuntimeHealthTests
             result.ComponentChecks);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task OrdinaryStartup_DoesNotCreateIndexOrImportRepository()
     {
         string program = ReadRepositoryFile("src", "dotnet", "Vulgata.Web", "Program.cs");
@@ -81,7 +85,8 @@ public sealed class AnalysisRuntimeHealthTests
             StringComparison.OrdinalIgnoreCase);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task ManagementSurface_RemainsAvailableWhileRuntimeIsNotReady()
     {
         using HttpClient client = _factory.CreateClient(new WebApplicationFactoryClientOptions
@@ -99,7 +104,8 @@ public sealed class AnalysisRuntimeHealthTests
             StringComparison.OrdinalIgnoreCase);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task WorkerDispatch_IsClosedBeforeRuntimeReadiness()
     {
         using IServiceScope scope = _factory.Services.CreateScope();
@@ -116,7 +122,8 @@ public sealed class AnalysisRuntimeHealthTests
         Assert.Contains("NotReady", program, StringComparison.Ordinal);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public void DefaultCompose_UsesPostgreSqlOnlyAndExplicitPostDeadlineAppProfile()
     {
         string compose = ReadRepositoryFile("docker-compose.yml");
@@ -134,7 +141,8 @@ public sealed class AnalysisRuntimeHealthTests
             "The default compose graph must leave PostgreSQL as the unprofiled service.");
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public void RuntimeIdentityFailureCategories_RejectWrongVersionHashJavaAndWorkspace()
     {
         AnalysisRuntimeOptions options = new(
@@ -153,7 +161,8 @@ public sealed class AnalysisRuntimeHealthTests
                 "A58994113B7E493AA8CED51AD02DAB3E424973223E7213F7ED5B9D70861582E2"));
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task ConfiguredIntegrityHealth_ValidSuppliedRuntimeIdentity_ReturnsReady()
     {
         using WebApplicationFactory<Program> factory = CreateConfiguredRuntimeFactory(
@@ -177,7 +186,8 @@ public sealed class AnalysisRuntimeHealthTests
             check => Assert.Equal(AnalysisRuntimeHealthStatus.Ready, check.Status));
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task ConfiguredIntegrityHealth_ReadyIdentityHash_IsCanonicalAndBoundToScope()
     {
         using WebApplicationFactory<Program> factory = CreateConfiguredRuntimeFactory(
@@ -202,7 +212,8 @@ public sealed class AnalysisRuntimeHealthTests
         Assert.NotEqual(first.RuntimeIdentityHash, second.RuntimeIdentityHash);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task ConfiguredIntegrityHealth_RepresentativeIdentityMismatches_FailClosed()
     {
         (string Key, string Value, string FailureMarker)[] mismatches =
@@ -262,7 +273,8 @@ public sealed class AnalysisRuntimeHealthTests
         Assert.True(failures.Count == 0, string.Join(Environment.NewLine, failures));
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public void OrdinaryStartup_InvokesConfiguredHealthProbeOnceWithoutDispatchingTools()
     {
         using var databaseFactory = new LoginLogoutTests.CustomWebApplicationFactory();

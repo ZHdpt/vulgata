@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using Vulgata.Agents.WorkerExecution;
 using Vulgata.Core.DomainServices;
 
@@ -5,7 +6,8 @@ namespace Vulgata.Tests;
 
 public sealed class BoundedRetryWorkerAgentDispatcherTests
 {
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task DispatchAsync_SchemaInvalidThenValid_ReturnsValidSecondAttemptAsync()
     {
         WorkerAgentJobPacket packet = WorkerAgentTestFixtures.CreatePass1Packet();
@@ -26,7 +28,8 @@ public sealed class BoundedRetryWorkerAgentDispatcherTests
         Assert.Equal(2, inner.DispatchCount);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task DispatchAsync_RetryableOutcomesExhausted_ReturnsThirdAndStopsAsync()
     {
         WorkerAgentJobPacket packet = WorkerAgentTestFixtures.CreatePass1Packet();
@@ -44,7 +47,8 @@ public sealed class BoundedRetryWorkerAgentDispatcherTests
         Assert.Equal(3, inner.DispatchCount);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task DispatchAsync_Unbounded_DoesNotRetryAsync()
     {
         WorkerAgentJobPacket packet = WorkerAgentTestFixtures.CreatePass1Packet();

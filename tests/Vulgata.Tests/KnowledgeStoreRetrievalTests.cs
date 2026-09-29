@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Reflection;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
@@ -20,7 +21,8 @@ public sealed class KnowledgeStoreRetrievalTests
     private static readonly Guid _targetAnchorId =
         Guid.Parse("80000000-0000-0000-0000-000000000020");
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task GetCurrentAsync_AuthorizedRequestedSections_ReturnsCurrentKnowledgeInCanonicalOrder()
     {
         await using SqliteKnowledgeStoreSession session =
@@ -53,7 +55,8 @@ public sealed class KnowledgeStoreRetrievalTests
         KnowledgeStoreTestHarness.AssertTrackerClean(session.Context);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task GetCurrentAsync_UnknownRequestedSection_OmitsUnknownAndPreservesCanonicalOrder()
     {
         await using SqliteKnowledgeStoreSession session =
@@ -85,7 +88,8 @@ public sealed class KnowledgeStoreRetrievalTests
         KnowledgeStoreTestHarness.AssertTrackerClean(session.Context);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task GetCurrentAsync_NonCurrentHigherVersionExists_ReturnsOnlyCurrentVersion()
     {
         await using SqliteKnowledgeStoreSession session =
@@ -141,7 +145,8 @@ public sealed class KnowledgeStoreRetrievalTests
         KnowledgeStoreTestHarness.AssertTrackerClean(session.Context);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task GetCurrentAsync_DuplicateRequestedSectionIds_RejectsInvalidBound()
     {
         await using SqliteKnowledgeStoreSession session =
@@ -162,7 +167,8 @@ public sealed class KnowledgeStoreRetrievalTests
         Assert.Equal(KnowledgeRejectionCode.InvalidBound, exception.RejectionCode);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task GetCurrentAsync_MoreThanOneHundredRequestedSections_RejectsInvalidBound()
     {
         await using SqliteKnowledgeStoreSession session =
@@ -184,7 +190,8 @@ public sealed class KnowledgeStoreRetrievalTests
         Assert.Equal(KnowledgeRejectionCode.InvalidBound, exception.RejectionCode);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void RepositoryAccessScope_OneAndTwoHundredFiftySixRepositoryIds_AcceptsExactBounds()
     {
         Guid[] maximumIds = Enumerable.Range(1, 256)
@@ -199,7 +206,8 @@ public sealed class KnowledgeStoreRetrievalTests
         Assert.Equal(256, maximum.AuthorizedRepositoryIds.Count);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void RepositoryAccessScope_ZeroOrTwoHundredFiftySevenRepositoryIds_RejectsInvalidBound()
     {
         Guid[] overMaximumIds = Enumerable.Range(1, 257)
@@ -217,7 +225,8 @@ public sealed class KnowledgeStoreRetrievalTests
         Assert.Equal(KnowledgeRejectionCode.InvalidBound, overMaximum.RejectionCode);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task GetCurrentAsync_SourceAuthorizationIsRevoked_ReturnsSameNullAsMissingDocument()
     {
         await using SqliteKnowledgeStoreSession session =
@@ -246,7 +255,8 @@ public sealed class KnowledgeStoreRetrievalTests
         KnowledgeStoreTestHarness.AssertTrackerClean(session.Context);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task GetCurrentAsync_AuthorizedSource_ReturnsBoundedSourceAnchors()
     {
         await using SqliteKnowledgeStoreSession session =
@@ -276,7 +286,8 @@ public sealed class KnowledgeStoreRetrievalTests
         KnowledgeStoreTestHarness.AssertTrackerClean(session.Context);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task GetCurrentAsync_MaximumFiniteProjection_ReturnsOnlyAcceptedBounds()
     {
         await using SqliteKnowledgeStoreSession session =
@@ -368,7 +379,8 @@ public sealed class KnowledgeStoreRetrievalTests
         KnowledgeStoreTestHarness.AssertTrackerClean(session.Context);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task GetCurrentAsync_TargetAuthorizationIsRevoked_RedactsRelationshipToMarkerOnly()
     {
         await using SqliteKnowledgeStoreSession session =
@@ -411,7 +423,8 @@ public sealed class KnowledgeStoreRetrievalTests
         KnowledgeStoreTestHarness.AssertTrackerClean(session.Context);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task GetCurrentAsync_TargetAuthorizationIsRevoked_RedactsFlowStepIdentityAndBehavior()
     {
         await using SqliteKnowledgeStoreSession session =
@@ -458,7 +471,8 @@ public sealed class KnowledgeStoreRetrievalTests
         KnowledgeStoreTestHarness.AssertTrackerClean(session.Context);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task GetCurrentAsync_TargetAuthorizationIsRevoked_RedactsSectionDocumentReference()
     {
         await using SqliteKnowledgeStoreSession session =
@@ -494,7 +508,8 @@ public sealed class KnowledgeStoreRetrievalTests
         KnowledgeStoreTestHarness.AssertTrackerClean(session.Context);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task GetCurrentAsync_TargetAuthorizationIsRevoked_DoesNotLeakTargetIdentityInCanonicalContent()
     {
         await using SqliteKnowledgeStoreSession session =
@@ -548,7 +563,8 @@ public sealed class KnowledgeStoreRetrievalTests
         KnowledgeStoreTestHarness.AssertTrackerClean(session.Context);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task GetCurrentAsync_TargetAuthorizationIsRevoked_RedactsTargetDerivedTextProjection()
     {
         const string targetDerivedSentinel = "REVOKED_TARGET_DERIVED_SENTINEL";
@@ -603,7 +619,8 @@ public sealed class KnowledgeStoreRetrievalTests
         KnowledgeStoreTestHarness.AssertTrackerClean(session.Context);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task GetCurrentAsync_TargetAuthorizationIsRevoked_RedactsAllRemainingTextProjection()
     {
         const string documentTitleSentinel = "REVOKED_TARGET_DOCUMENT_TITLE";
@@ -656,7 +673,8 @@ public sealed class KnowledgeStoreRetrievalTests
         KnowledgeStoreTestHarness.AssertTrackerClean(session.Context);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task GetCurrentAsync_RestrictedEdgeWithoutSectionReference_RedactsTextProjection()
     {
         const string targetDerivedSentinel = "UNPROVEN_TARGET_DERIVED_SENTINEL";

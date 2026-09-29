@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Reflection;
 using Vulgata.Core.DomainServices;
 using Vulgata.Core.Entities;
@@ -36,7 +37,8 @@ public sealed class PreparedJavaReadinessTests
         "JavaReadinessIdentityHash"
     ];
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void JavaReadiness_PublicSeam_AcceptsOnlyRevisionBoundAnalysisScopeAndReturnsTypedOutcome()
     {
         Type serviceType = RequireType(
@@ -58,7 +60,8 @@ public sealed class PreparedJavaReadinessTests
         }
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void JavaReadiness_UsesPinnedJava21StdioRuntimeAndOrdinalFirstFileSelection()
     {
         Type serviceType = RequireType(
@@ -81,7 +84,8 @@ public sealed class PreparedJavaReadinessTests
             name => name is "JdtLsReleaseIdentity" or "JavaMajorVersion" or "ClientName");
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void JavaReadiness_XMLOnlyHasExplicitNotApplicableAndDurationCannotChangeIdentity()
     {
         Type readinessType = FindReadinessType(typeof(JdtLsAnalysisSessionFactory).Assembly);
@@ -106,7 +110,8 @@ public sealed class PreparedJavaReadinessTests
         Assert.NotNull(outcomeEnum);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task JavaReadiness_XMLOnly_ProducesStableNotApplicableProof()
     {
         AnalysisScope scope = new(

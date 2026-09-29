@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Net;
 using System.Net.Http.Headers;
 using System.Reflection;
@@ -39,7 +40,8 @@ public sealed class Pass1DeepSeekStreamingQualificationTests
     private const string DeepSeekNormalizerName =
         "NormalizeAndValidateDeepSeekRequestBody";
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ExecuteAsync_FakeWire_UsesExactlyTwoStrictStreamingFunctionsWithoutRetryAsync()
     {
         FixedTimeProvider time = new(DateTimeOffset.Parse("2026-08-24T00:00:00+08:00"));
@@ -83,7 +85,8 @@ public sealed class Pass1DeepSeekStreamingQualificationTests
         });
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ExecuteAsync_FakeWire_SuccessfulSseDataIsParsedAndRawBytesAreNotReturnedAsync()
     {
         FixedTimeProvider time = new(DateTimeOffset.Parse("2026-08-24T00:00:00+08:00"));
@@ -108,7 +111,8 @@ public sealed class Pass1DeepSeekStreamingQualificationTests
         Assert.DoesNotContain("[DONE]", Encoding.UTF8.GetString(result.Utf8Json.Span), StringComparison.Ordinal);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ExecuteAsync_FakeWire_ProjectsImmutablePublicAdapterDeclarationsAsync()
     {
         FixedTimeProvider time = new(DateTimeOffset.Parse("2026-08-24T00:00:00+08:00"));
@@ -155,7 +159,8 @@ public sealed class Pass1DeepSeekStreamingQualificationTests
             rawSubmit.FunctionParameters!.ToMemory().ToArray());
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void DeclarationAuthority_ExposesRawAndProjectedHashesAndCompleteSortedLedger()
     {
         PreparedPass1WorkerPacket packet = CreatePacket();
@@ -226,7 +231,8 @@ public sealed class Pass1DeepSeekStreamingQualificationTests
         Assert.Equal(rawSubmitSnapshot, ReadBytes(authority, "RawSubmitCodeLogicParametersUtf8"));
     }
 
-    [Theory]
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
     [MemberData(nameof(StrictProjectionMutationCases))]
     public void DeclarationAuthority_RejectsUnsupportedOrDriftedRawSchemaBeforeSend(
         string mutation,
@@ -497,7 +503,8 @@ public sealed class Pass1DeepSeekStreamingQualificationTests
         };
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ExecuteAsync_FakeWire_OmitsUnsupportedDeepSeekFieldsAsync()
     {
         FixedTimeProvider time = new(DateTimeOffset.Parse("2026-08-24T00:00:00+08:00"));
@@ -779,7 +786,8 @@ public sealed class Pass1DeepSeekStreamingQualificationTests
         }
     }
 
-    [Theory]
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
     [MemberData(nameof(DeepSeekRequestShapeCases))]
     public void NormalizeAndValidateDeepSeekRequestBody_UsesIndependentTokenThinkingAndChoiceOperations(
         string caseName,
@@ -859,7 +867,8 @@ public sealed class Pass1DeepSeekStreamingQualificationTests
         yield return ["frequency-penalty", "{\"max_tokens\":32768,\"thinking\":{\"type\":\"disabled\"},\"frequency_penalty\":0.2,\"stream\":true}", false, false, false, false];
     }
 
-    [Theory]
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
     [MemberData(nameof(DeepSeekCompatibilityShapeCases))]
     public void NormalizeAndValidateDeepSeekRequestBody_ConstructsExactRequiredChoiceOrRejectsIt(
         string caseName,
@@ -902,7 +911,8 @@ public sealed class Pass1DeepSeekStreamingQualificationTests
         yield return ["response-format-wrong-value", prefix + ",\"response_format\":{\"type\":\"text\"}}", false];
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task NormalizeAndValidateDeepSeekRequestBody_IsScopedToPreparedExecutorAndDoesNotMutateSiblingHttpClientAsync()
     {
         byte[] sourceBody = Encoding.UTF8.GetBytes(
@@ -929,7 +939,8 @@ public sealed class Pass1DeepSeekStreamingQualificationTests
         Assert.Equal(siblingBody, transport.RequestBodies[1]);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ExecuteAsync_ProviderFailureDoesNotUseSdkRetryAsync()
     {
         FixedTimeProvider time = new(DateTimeOffset.Parse("2026-08-24T00:00:00+08:00"));
@@ -945,7 +956,8 @@ public sealed class Pass1DeepSeekStreamingQualificationTests
         Assert.Single(transport.RequestBodies);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ExecuteAsync_LatestLegalSecondSubmissionCorrectsTurnNineAtTurnTenWithoutRequestElevenAsync()
     {
         FixedTimeProvider time = new(DateTimeOffset.Parse("2026-08-24T00:00:00+08:00"));
@@ -975,7 +987,8 @@ public sealed class Pass1DeepSeekStreamingQualificationTests
         }
     }
 
-    [Theory]
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
     [MemberData(nameof(T132TurnAwareToolChoiceCases))]
     public void NormalizeAndValidateDeepSeekRequestBody_UsesClosedOrdinaryAndTerminalChoiceMatrix(
         string caseName,
@@ -1034,7 +1047,8 @@ public sealed class Pass1DeepSeekStreamingQualificationTests
         yield return ["terminal-duplicate", 10, "<duplicate>", false, true];
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ExecuteAsync_ReplaysReasoningContentToolCallAndResultUnchangedAsync()
     {
         FixedTimeProvider time = new(DateTimeOffset.Parse("2026-08-24T00:00:00+08:00"));
@@ -1059,7 +1073,8 @@ public sealed class Pass1DeepSeekStreamingQualificationTests
         Assert.Contains("navigate-result-unchanged", replay, StringComparison.Ordinal);
     }
 
-    [Theory]
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
     [InlineData(false)]
     [InlineData(true)]
     public async Task ExecuteAsync_ReplayedAssistantToolCallContentIsAlwaysStringAsync(bool explicitNullContent)
@@ -1085,7 +1100,8 @@ public sealed class Pass1DeepSeekStreamingQualificationTests
         Assert.Equal(string.Empty, content.GetString());
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ExecuteAsync_IndividuallyLegalAssistantMessagesExceedAggregateWithoutLaterSendAsync()
     {
         FixedTimeProvider time = new(DateTimeOffset.Parse("2026-08-24T00:00:00+08:00"));
@@ -1110,7 +1126,8 @@ public sealed class Pass1DeepSeekStreamingQualificationTests
             diagnostics.Categories);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ExecuteAsync_CancellationStopsStreamingTransportAsync()
     {
         FixedTimeProvider time = new(DateTimeOffset.Parse("2026-08-24T00:00:00+08:00"));
@@ -1131,7 +1148,8 @@ public sealed class Pass1DeepSeekStreamingQualificationTests
         Assert.Single(transport.RequestBodies);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ExecuteAsync_StreamingUpdatesResetInactivityDeadlineAsync()
     {
         FixedTimeProvider time = new(DateTimeOffset.Parse("2026-08-24T00:00:00+08:00"));
@@ -1155,7 +1173,8 @@ public sealed class Pass1DeepSeekStreamingQualificationTests
         AssertOutgoingBodiesWithinLimit(transport.RequestBodies);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ExecuteAsync_AbsoluteCapDoesNotResetForStreamingUpdatesAsync()
     {
         ManualTimeProvider time = new(DateTimeOffset.Parse("2026-08-24T00:00:00+08:00"));
@@ -1177,7 +1196,8 @@ public sealed class Pass1DeepSeekStreamingQualificationTests
         Assert.Equal(250, time.Elapsed.TotalMilliseconds);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ExecuteAsync_AssembledResponseAboveOriginalLimitRemainsLegalBelowRawAsync()
     {
         FixedTimeProvider time = new(DateTimeOffset.Parse("2026-08-24T00:00:00+08:00"));
@@ -1198,7 +1218,8 @@ public sealed class Pass1DeepSeekStreamingQualificationTests
         Assert.Empty(diagnostics.Categories);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ExecuteAsync_RawResponsePrecedesAssembledResponseWhenEqualCapsAreCrossedAsync()
     {
         FixedTimeProvider time = new(DateTimeOffset.Parse("2026-08-24T00:00:00+08:00"));
@@ -1222,7 +1243,8 @@ public sealed class Pass1DeepSeekStreamingQualificationTests
             diagnostics.Categories);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ExecuteAsync_RawResponseBoundaryPlusOneCancelsWithoutLaterSendAsync()
     {
         FixedTimeProvider time = new(DateTimeOffset.Parse("2026-08-24T00:00:00+08:00"));
@@ -1246,7 +1268,8 @@ public sealed class Pass1DeepSeekStreamingQualificationTests
             diagnostics.Categories);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ExecuteAsync_RawResponseBoundaryPlusOne_ReportsCategoryWhenTransportCancellationCallbackThrowsAsync()
     {
         FixedTimeProvider time = new(DateTimeOffset.Parse("2026-08-24T00:00:00+08:00"));
@@ -1272,7 +1295,8 @@ public sealed class Pass1DeepSeekStreamingQualificationTests
             diagnostics.Categories);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ExecuteAsync_RawResponseExactBoundaryRemainsLegalAsync()
     {
         FixedTimeProvider time = new(DateTimeOffset.Parse("2026-08-24T00:00:00+08:00"));
@@ -1293,7 +1317,8 @@ public sealed class Pass1DeepSeekStreamingQualificationTests
         Assert.Single(transport.RequestBodies);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ExecuteAsync_PreparedInitialMessageBoundaryPlusOneSendsNoRequestAsync()
     {
         FixedTimeProvider time = new(DateTimeOffset.Parse("2026-08-24T00:00:00+08:00"));
@@ -1309,7 +1334,8 @@ public sealed class Pass1DeepSeekStreamingQualificationTests
         Assert.Empty(transport.RequestBodies);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void PreparedPass1WireBudget_ExactLimitsAreLegalAndPlusOneIsClosed()
     {
         Assert.Equal(131_072, PreparedPass1WireBudget.MaximumPreparedInitialMessageBytes);

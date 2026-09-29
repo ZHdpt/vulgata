@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.RegularExpressions;
@@ -21,7 +22,8 @@ public sealed class GrantSystemOwnershipTests : IClassFixture<LoginLogoutTests.C
         _factory = factory;
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task Administrator_CanAssignSystemOwner_AndOwnerCanSeeAssignedSystem()
     {
         await EnsureApplicationStartedAsync();
@@ -57,7 +59,8 @@ public sealed class GrantSystemOwnershipTests : IClassFixture<LoginLogoutTests.C
         Assert.Contains(systems, system => system.Id == systemId && system.Name == "统一身份平台");
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task AssignSystemOwner_DuplicateAssignment_ReturnsChineseProblem()
     {
         await EnsureApplicationStartedAsync();
@@ -88,7 +91,8 @@ public sealed class GrantSystemOwnershipTests : IClassFixture<LoginLogoutTests.C
         Assert.Contains("该用户已是该系统的所有者", duplicateProblem.Detail ?? string.Empty, StringComparison.Ordinal);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task OwnerCandidates_ExcludeAdministrators_AndSupportSearch()
     {
         await EnsureApplicationStartedAsync();
@@ -125,7 +129,8 @@ public sealed class GrantSystemOwnershipTests : IClassFixture<LoginLogoutTests.C
             Assert.Contains("user.candidate", candidate.Email, StringComparison.OrdinalIgnoreCase));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task RemovingLastOwnerAssignment_RemovesManagementAccessAndKeepsUserRole()
     {
         await EnsureApplicationStartedAsync();
@@ -183,7 +188,8 @@ public sealed class GrantSystemOwnershipTests : IClassFixture<LoginLogoutTests.C
         Assert.StartsWith("/Account/AccessDenied", GetLocationPath(managementResponse), StringComparison.Ordinal);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task NonAdministrator_CannotManageSystemOwnersEndpoints()
     {
         await EnsureApplicationStartedAsync();
@@ -227,7 +233,8 @@ public sealed class GrantSystemOwnershipTests : IClassFixture<LoginLogoutTests.C
         Assert.Contains("只有管理员可以管理系统所有者", removeProblem.Detail ?? string.Empty, StringComparison.Ordinal);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task AssignedOwner_BlocksSystemDeletionDependencyConstraint()
     {
         await EnsureApplicationStartedAsync();

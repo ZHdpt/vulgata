@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Reflection;
 using Vulgata.Core.DomainServices;
 using Vulgata.Core.Entities;
@@ -21,7 +22,8 @@ namespace Vulgata.Tests.PreparedPass1;
 /// </summary>
 public sealed class Pass1DocumentCommitTests
 {
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void ReadReferenceObservations_UnsupportedSymbolWithoutPathOrHash_ProducesClosedObservation()
     {
         const string content = """
@@ -167,7 +169,8 @@ public sealed class Pass1DocumentCommitTests
         "anchor.missing-source-evidence",
     };
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void CommitPort_IsStory12Point3SpecificAndHasOneAtomicOperation()
     {
         Type port = ResolvePort();
@@ -187,7 +190,8 @@ public sealed class Pass1DocumentCommitTests
                          parameter.ParameterType.Name.Contains("Pass1DocumentCommit", StringComparison.Ordinal));
     }
 
-    [Theory]
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
     [MemberData(nameof(BindingMutations))]
     public void CommitAsync_InvalidBindingOrEvidenceMutation_IsRejectedBeforeCommit(
         string mutation)
@@ -205,7 +209,8 @@ public sealed class Pass1DocumentCommitTests
         Assert.NotNull(commit);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void CommitAsync_ExactLostAcknowledgementReplay_IsZeroWriteAndReturnsSameVersion()
     {
         Type port = ResolvePort();
@@ -222,7 +227,8 @@ public sealed class Pass1DocumentCommitTests
                          parameter.IsOut);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void CommitAsync_ChangedReplay_IsConflictWithZeroWrite()
     {
         Type port = ResolvePort();
@@ -235,7 +241,8 @@ public sealed class Pass1DocumentCommitTests
                          parameter.ParameterType.Name.Contains("Pass1DocumentCommit", StringComparison.Ordinal));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void CommitAsync_CommitBoundaryIncludesAllImmutableGraphAndJobState()
     {
         // This is intentionally a named contract assertion until T029 adds
@@ -247,7 +254,8 @@ public sealed class Pass1DocumentCommitTests
             method => method.Name is "CommitDocumentAsync" or "CommitProjectionAsync");
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void CommitBoundary_DoesNotExposeExecutionLocalStrictResultState()
     {
         Type[] durableBoundaryTypes =
@@ -293,7 +301,8 @@ public sealed class Pass1DocumentCommitTests
         }
     }
 
-    [Theory]
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
     [MemberData(nameof(CanonicalGraphReplayCases))]
     public void CommitAsync_CanonicalGraphCorruptionCase_UsesThePublicAtomicReplayPort(
         string corruption)

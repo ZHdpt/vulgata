@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Diagnostics;
 using System.Net;
 using System.Reflection;
@@ -17,7 +18,8 @@ namespace Vulgata.Tests;
 
 public sealed class SequentialScanRunnerDocumentGenerationTests
 {
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task RunCurrentBoundaryAsync_CommittedPreparedRepository_GeneratesExactDocumentsSecurely()
     {
         const string plaintextCredential = "g7-plaintext-secret";
@@ -228,7 +230,8 @@ public sealed class SequentialScanRunnerDocumentGenerationTests
         Assert.DoesNotContain(git.SnapshotPath, capturedSecuritySurface, StringComparison.OrdinalIgnoreCase);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task RunPreparedPass2Async_ExactResolvedFlow_CommitsBeforeCompletedExactlyOnce()
     {
         Guid executionId = WorkerAgentTestFixtures.Id(301);
@@ -288,7 +291,8 @@ public sealed class SequentialScanRunnerDocumentGenerationTests
             events.Where(value => value is "pass2-dispatch" or "pass2-commit" or "completed"));
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task RunPreparedPass2Async_AlternateSelfConsistentFlow_RejectsBeforeDispatch()
     {
         Guid executionId = WorkerAgentTestFixtures.Id(314);
@@ -336,7 +340,8 @@ public sealed class SequentialScanRunnerDocumentGenerationTests
         Assert.Equal(ScanExecutionPhase.Pass1Completed, execution.Phase);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task RunPreparedPass2Async_CancelledInFlightReentry_ReusesJobAndCompletes()
     {
         Guid executionId = WorkerAgentTestFixtures.Id(325);
@@ -385,7 +390,8 @@ public sealed class SequentialScanRunnerDocumentGenerationTests
         Assert.Null(execution.InFlightJobId);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task RunPreparedPass2Async_FinalProgressFailureAfterCommit_RetryCompletesWithoutRedispatch()
     {
         Guid executionId = WorkerAgentTestFixtures.Id(351);
@@ -434,7 +440,8 @@ public sealed class SequentialScanRunnerDocumentGenerationTests
         Assert.Null(store.Durable.InFlightJobId);
     }
 
-    [Theory]
+    [Trait("Suite", "LocalTools")]
+    [SuiteTheory("LocalTools")]
     [InlineData(WorkerAgentResultCommitOutcome.Conflict)]
     [InlineData(WorkerAgentResultCommitOutcome.Rejected)]
     [InlineData(WorkerAgentResultCommitOutcome.Cancelled)]
@@ -480,7 +487,8 @@ public sealed class SequentialScanRunnerDocumentGenerationTests
         Assert.DoesNotContain("completed", events);
     }
 
-    [Theory]
+    [Trait("Suite", "LocalTools")]
+    [SuiteTheory("LocalTools")]
     [InlineData(WorkerAgentResultOutcome.SchemaInvalid)]
     [InlineData(WorkerAgentResultOutcome.Error)]
     [InlineData(WorkerAgentResultOutcome.Unbounded)]
@@ -523,7 +531,8 @@ public sealed class SequentialScanRunnerDocumentGenerationTests
         Assert.DoesNotContain("completed", events);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task RunPreparedPass2Async_DispatchFailure_NeverCommitsOrCompletes()
     {
         Guid executionId = WorkerAgentTestFixtures.Id(341);
@@ -563,7 +572,8 @@ public sealed class SequentialScanRunnerDocumentGenerationTests
         Assert.DoesNotContain("completed", events);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task RunPass1Async_ValidResult_AwaitsKnowledgeBeforeProgressAndStopsAtPass1Completed()
     {
         Guid executionId = WorkerAgentTestFixtures.Id(201);
@@ -621,7 +631,8 @@ public sealed class SequentialScanRunnerDocumentGenerationTests
         Assert.Null(execution.TerminalAt);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task RunPass1Async_AuthoritativePreparedFlow_CarriesClosedAuthorizedContext()
     {
         Guid executionId = WorkerAgentTestFixtures.Id(231);
@@ -689,7 +700,8 @@ public sealed class SequentialScanRunnerDocumentGenerationTests
         Assert.Equal([neighboringJobId], payload.AllowedReferenceDocumentVersionIds);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task RunPass1Async_ProgressPersistenceRetry_ReplaysIdenticalKnowledgeFirst()
     {
         Guid executionId = WorkerAgentTestFixtures.Id(211);
@@ -742,7 +754,8 @@ public sealed class SequentialScanRunnerDocumentGenerationTests
         Assert.Equal(ScanExecutionPhase.Pass1Completed, execution.Phase);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task RunPass1Async_HydrationFailure_RecordsBoundedFailureWithZeroProgressAsync()
     {
         const string rawDiagnostic = "hydrated-source-secret-diagnostic";

@@ -1,0 +1,26 @@
+{
+  "kind": "command",
+  "stage": "verify-focused",
+  "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --no-restore --filter FullyQualifiedName~PreparedSource --logger \"console;verbosity=minimal\"",
+  "source_commit": "b478de6fa32fdc37b1fb865f46daca182af2159d",
+  "observed_at": "2026-09-28T10:19:38.3087903Z",
+  "exit_code": 0,
+  "raw_output_path": "specs/016-contained-source-tools/evidence/quality-correction-focused-output-01.txt",
+  "raw_output_sha256": "f1324c6de6e76892168454a0788f6c75bf55233d72e1161b5576a3dabbb7b6eb",
+  "input_hashes": {
+    "specs/016-contained-source-tools/spec.md": "48c92e4f6582471a1664e553b48756a811f22bb2b4f1334206e94303629b0b6d",
+    "specs/016-contained-source-tools/plan.md": "b375723e56c8cdc7990a4e7a624c5f58a78fde07d9a23edd79e25025c54fce08",
+    "specs/016-contained-source-tools/tasks.md": "b345d7322f8777d8fda77a153c48af954e7ed18a185cf648f8c309ef0d0a8a1b",
+    "src/dotnet/Vulgata.Infrastructure/Source/PreparedSourceReadContext.cs": "8212faefbd7198f374d921d8aa782b711869aceda59afadcba58edaeadc5597e",
+    "tests/Vulgata.Tests/PreparedSource/PreparedSourceListTests.cs": "94329983898d7fd205ffa56ec5d2cd784d04b7ebb8794c97f5fe6fd076037fe0",
+    "tests/Vulgata.Tests/PreparedSource/PreparedSourceFailureTests.cs": "fe180bc5d777249de6a91d9b5802d9a3648a637759f15f00ec1eb3da3bb46de5"
+  },
+  "owned_paths": [
+    "specs/016-contained-source-tools/spec.md",
+    "specs/016-contained-source-tools/plan.md",
+    "specs/016-contained-source-tools/tasks.md",
+    "src/dotnet/Vulgata.Infrastructure/Source/PreparedSourceReadContext.cs",
+    "tests/Vulgata.Tests/PreparedSource/PreparedSourceListTests.cs",
+    "tests/Vulgata.Tests/PreparedSource/PreparedSourceFailureTests.cs"
+  ]
+}

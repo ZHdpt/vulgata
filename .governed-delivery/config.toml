@@ -24,4 +24,4 @@ project_lessons = "docs/project-lessons.md"
 
 [commands]
 build = "dotnet build src/dotnet/Vulgata.Web/Vulgata.Web.csproj"
-test = "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj"
+test = "pwsh -NoProfile -File eng/test.ps1"

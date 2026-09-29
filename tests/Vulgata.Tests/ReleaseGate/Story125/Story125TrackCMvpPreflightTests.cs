@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 namespace Vulgata.Tests.ReleaseGate;
 
 public sealed class Story125TrackCMvpPreflightTests
@@ -20,7 +21,8 @@ public sealed class Story125TrackCMvpPreflightTests
         yield return ["story125_0123456789abcdef"];
     }
 
-    [Theory]
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
     [MemberData(nameof(InvalidDatabaseNames))]
     public void PreconnectionGuard_InvalidTarget_DoesNotInvokeConnectionFactory(string? databaseName)
     {
@@ -38,7 +40,8 @@ public sealed class Story125TrackCMvpPreflightTests
         Assert.Equal(0, factoryCalls);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void PreconnectionGuard_GeneratedOwnedName_InvokesConnectionFactoryExactlyOnce()
     {
         string databaseName = Story125ReleaseHarness.CreateRunIdentity().DatabaseName;

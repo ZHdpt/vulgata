@@ -1,0 +1,12 @@
+{
+  "kind": "self-review",
+  "stage": "plan",
+  "outcome": "passed",
+  "summary": "Removed only the reported trailing spaces on lines 18-25. Reconstructed prior SHA-256 confirms byte equivalence apart from those spaces. Classification, reason, decisions and semantics are unchanged. Working-tree whitespace and deterministic plan-content checks pass; staged validation awaits root restaging.",
+  "input_hashes": {
+    "specs/016-contained-source-tools/plan.md": "926982636796b020bc9f22af3aab52214ddfc809bfef9fdcabaf85b32637884e"
+  },
+  "owned_paths": [
+    "specs/016-contained-source-tools/plan.md"
+  ]
+}

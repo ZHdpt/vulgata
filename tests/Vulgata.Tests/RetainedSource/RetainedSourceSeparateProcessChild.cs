@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Security.Cryptography;
 using System.Text.Json;
 using Microsoft.Extensions.DependencyInjection;
@@ -90,6 +91,7 @@ internal static class RetainedSourceSeparateProcessChild
 
 public sealed class RetainedSourceSeparateProcessChildTests
 {
+    [Trait("Suite", "PostgreSql")]
     [RetainedSourceChildFact]
     public async Task CaptureAsync_WhenParentTerminatesAfterSeal_LeavesOwnedAbandonedOperation()
     {
@@ -144,6 +146,7 @@ public sealed class RetainedSourceSeparateProcessChildTests
             $"The child capture returned before parent termination: {result.Status}/{result.Code}.");
     }
 
+    [Trait("Suite", "PostgreSql")]
     [RetainedSourceChildOperationFact(
         RetainedSourceSeparateProcessChild.CaptureOperation)]
     public async Task CaptureAsync_FromFreshProductionComposition_CompletesAndRecordsIdentity()
@@ -194,6 +197,7 @@ public sealed class RetainedSourceSeparateProcessChildTests
             null));
     }
 
+    [Trait("Suite", "PostgreSql")]
     [RetainedSourceChildOperationFact(
         RetainedSourceSeparateProcessChild.ReopenOperation)]
     public async Task OpenReadContextAsync_FromFreshProductionComposition_ReadsRetainedBytesAfterRemoteUnavailable()
@@ -276,6 +280,7 @@ public sealed class RetainedSourceSeparateProcessChildTests
             deniedOpen.Code));
     }
 
+    [Trait("Suite", "PostgreSql")]
     [RetainedSourceChildOperationFact(
         RetainedSourceSeparateProcessChild.CorruptionOperation)]
     public async Task OpenReadContextAsync_WhenRetainedBlobIsCorrupt_DeniesWithoutContext()
@@ -329,9 +334,9 @@ public sealed class RetainedSourceSeparateProcessChildTests
                 $"The retained-source child requires {name}.");
 }
 
-internal sealed class RetainedSourceChildFactAttribute : FactAttribute
+internal sealed class RetainedSourceChildFactAttribute : SuiteFactAttribute
 {
-    public RetainedSourceChildFactAttribute()
+    public RetainedSourceChildFactAttribute() : base("PostgreSql")
     {
         if (!RetainedSourceSeparateProcessChild.IsCrashEnabled())
         {
@@ -340,9 +345,9 @@ internal sealed class RetainedSourceChildFactAttribute : FactAttribute
     }
 }
 
-internal sealed class RetainedSourceChildOperationFactAttribute : FactAttribute
+internal sealed class RetainedSourceChildOperationFactAttribute : SuiteFactAttribute
 {
-    public RetainedSourceChildOperationFactAttribute(string operation)
+    public RetainedSourceChildOperationFactAttribute(string operation) : base("PostgreSql")
     {
         if (!RetainedSourceSeparateProcessChild.IsEnabled(operation))
         {

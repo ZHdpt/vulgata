@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Collections;
 using System.Reflection;
 using Vulgata.Agents.WorkerExecution;
@@ -18,7 +19,8 @@ public sealed class Pass1ProviderCircuitTests
     private const string ProbeTypeName =
         "Vulgata.Agents.WorkerExecution.WorkerAgentProviderHealthProbe";
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void ProviderHealthProbe_UsesExactlyFiveIncreasingRecoveryWindows()
     {
         Type probe = RequireProbeType();
@@ -49,7 +51,8 @@ public sealed class Pass1ProviderCircuitTests
         Assert.Throws<TargetInvocationException>(() => delay.Invoke(null, [6]));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void ProviderHealthProbe_JitterIsDeterministicNonnegativeAndBelowTenPercent()
     {
         Type probe = RequireProbeType();
@@ -79,7 +82,8 @@ public sealed class Pass1ProviderCircuitTests
         }
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void ProviderHealthProbe_BoundsRetryAfterWithoutAddingAProbeOrAnUnboundedWait()
     {
         Type probe = RequireProbeType();
@@ -109,7 +113,8 @@ public sealed class Pass1ProviderCircuitTests
         Assert.True(bounded >= nominal);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void PreparedPass1Store_ProviderTransientAndProbeSeamsCarryPairWideDurableCircuitState()
     {
         Type store = typeof(IPreparedPass1Store);
@@ -135,7 +140,8 @@ public sealed class Pass1ProviderCircuitTests
         AssertCircuitResult(probe.ReturnType);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void ProviderCircuit_StopsBothRepositoryClaimsAndPausesAfterTheFifthFailedProbe()
     {
         Type result = RequireCircuitResultType(typeof(IPreparedPass1Store));
@@ -170,7 +176,8 @@ public sealed class Pass1ProviderCircuitTests
                 StringComparison.Ordinal));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void ProviderCircuit_RecoveryStatusPreservesCompletedDocumentsAndAllowsOnlyRemainingClaims()
     {
         Type result = RequireCircuitResultType(typeof(IPreparedPass1Store));
@@ -202,7 +209,8 @@ public sealed class Pass1ProviderCircuitTests
                 property.Name.Contains("Raw", StringComparison.OrdinalIgnoreCase));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void ProviderCircuit_UsesTheVersionedActiveHealthProbeContractRatherThanConfigurationResolution()
     {
         Assembly core = Assembly.Load("Vulgata.Core");
@@ -225,7 +233,8 @@ public sealed class Pass1ProviderCircuitTests
                 method.Name.Contains("Configured", StringComparison.OrdinalIgnoreCase));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void ProviderCircuit_ExposesNoProbeTicketBeyondTheFifthDurableWindow()
     {
         Type probe = RequireProbeType();
@@ -246,7 +255,8 @@ public sealed class Pass1ProviderCircuitTests
             method => method.Name.Contains("Sixth", StringComparison.OrdinalIgnoreCase));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void ProviderProbeDriver_ConsumesFiveDurableWindowsWithoutClaimsAndPersistsTheFifthPause()
     {
         Type driver = RequireType(

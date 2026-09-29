@@ -1,0 +1,8 @@
+Policy command: pwsh -NoProfile -File eng/test-policy.ps1
+Policy result: PASS; 283 classified C# sources; guarded test traits checked.
+
+Focused command: pwsh -NoProfile -File eng/test.ps1 -Filter 'FullyQualifiedName~Vulgata.Tests.PreparedSource'
+Suite=SelfContained discovered=2811 selected=119 passed=119 failed=0 skipped=0
+Excluded suites (not qualified): PostgreSql, LocalTools, External, E2E, HistoricalBoundary.
+
+Static focused boundary: 77 suite traits = 67 SuiteFact + 10 SuiteTheory; no bare Fact/Theory remains in PreparedSource tests.

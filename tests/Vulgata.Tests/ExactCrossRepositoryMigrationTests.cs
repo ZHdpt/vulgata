@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
@@ -77,7 +78,8 @@ public sealed class ExactCrossRepositoryMigrationTests
                 LowerHex64("\"EvidenceFingerprint\""),
         };
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public void AddExactCrossRepositoryResolution_Operations_AreAdditiveCompleteAndReversible()
     {
         using VulgataDbContext db = CreateSqliteContext();
@@ -214,7 +216,8 @@ public sealed class ExactCrossRepositoryMigrationTests
         Assert.Equal("SourceAnchors", droppedSourceAnchorKey.Table);
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public void AddExactCrossRepositoryResolution_Model_MatchesAcceptedSchema()
     {
         using VulgataDbContext db = CreateSqliteContext();
@@ -322,7 +325,8 @@ public sealed class ExactCrossRepositoryMigrationTests
             typeof(VulgataDbContext).GetProperty(nameof(VulgataDbContext.Uncertainties)));
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public void AddExactCrossRepositoryResolution_ApplyRollbackAndReapply_PreservesPredecessor()
     {
         using var connection = new SqliteConnection(
@@ -366,16 +370,18 @@ public sealed class ExactCrossRepositoryMigrationTests
         Assert.Equal(firstAppliedSchema, ReadStory114Schema(connection));
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task AddExactCrossRepositoryResolution_PostgreSqlLifecycle_UsesDisposableDatabase()
     {
         string? infrastructureConnectionString =
             Environment.GetEnvironmentVariable("VULGATA_TEST_POSTGRES");
         if (string.IsNullOrWhiteSpace(infrastructureConnectionString))
         {
-            return;
+            throw new InvalidOperationException("Required PostgreSQL qualification prerequisite is unavailable; use eng/test.ps1 -Suite PostgreSql.");
         }
 
+        Vulgata.Tests.TestInfrastructure.TestResourceScope.ValidateAdministrator(infrastructureConnectionString);
         var infrastructureBuilder = new NpgsqlConnectionStringBuilder(
             infrastructureConnectionString);
         string databaseName =
@@ -400,7 +406,11 @@ public sealed class ExactCrossRepositoryMigrationTests
 
             DbContextOptions<VulgataDbContext> options =
                 new DbContextOptionsBuilder<VulgataDbContext>()
-                    .UseNpgsql(targetBuilder.ConnectionString)
+                    .UseNpgsql(
+                        targetBuilder.ConnectionString,
+                        npgsql => npgsql.MigrationsHistoryTable(
+                            "__EFMigrationsHistory",
+                            "public"))
                     .Options;
             await using (var db = new VulgataDbContext(options))
             {

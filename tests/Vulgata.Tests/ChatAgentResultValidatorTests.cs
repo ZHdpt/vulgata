@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Text.Json;
 using Vulgata.Agents.ChatExecution;
 using Vulgata.Core.DomainServices;
@@ -7,7 +8,8 @@ namespace Vulgata.Tests;
 
 public sealed class ChatAgentResultValidatorTests
 {
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Validate_NullBusinessCodeLogicNarrative_TreatsRewriteAsOmitted()
     {
         const string original = "系统调用会话服务并保存客户会话。";
@@ -44,7 +46,8 @@ public sealed class ChatAgentResultValidatorTests
         Assert.Equal(original, Assert.Single(result.MaterialClaims).Text);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Validate_ExactSelection_MaterializesRetainedTextAndFixedSupport()
     {
         ValidationFixture fixture = CreateFixture(ChatMode.It, "服务器保留的技术事实。");
@@ -74,7 +77,8 @@ public sealed class ChatAgentResultValidatorTests
         Assert.Equal(fixture.Request.CandidateClaims[0].SupportSignature, retained.SupportSignature);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Validate_KnownProviderRequestSchemaEcho_AcceptsOtherwiseClosedSelection()
     {
         ValidationFixture fixture = CreateFixture(ChatMode.It, "服务器保留的技术事实。");
@@ -99,7 +103,8 @@ public sealed class ChatAgentResultValidatorTests
         Assert.Equal("服务器保留的技术事实。", Assert.Single(result.MaterialClaims).Text);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Validate_NonClosedOrMismatchedRawJson_RejectsWholeResult()
     {
         ValidationFixture fixture = CreateFixture(ChatMode.It, "服务器保留的技术事实。");
@@ -139,7 +144,8 @@ public sealed class ChatAgentResultValidatorTests
         }
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Validate_TamperedRetainedCandidateState_RejectsWholeResult()
     {
         ValidationFixture fixture = CreateFixture(ChatMode.It, "服务器保留的技术事实。");
@@ -209,7 +215,8 @@ public sealed class ChatAgentResultValidatorTests
         }
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Validate_RestrictedSupportOrBusinessLocatorText_RejectsWholeResult()
     {
         EvidencePacket businessPacket = CreateUnsupportedPacket(
@@ -253,7 +260,8 @@ public sealed class ChatAgentResultValidatorTests
         }
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Validate_MixedValidAndInvalidSelections_ReturnsZeroMaterialization()
     {
         ValidationFixture fixture = CreateFixture(ChatMode.It, "第一项。\n\n第二项。");
@@ -270,7 +278,8 @@ public sealed class ChatAgentResultValidatorTests
         Assert.Empty(result.SelectedCandidates);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Validate_OrderedSelections_UsesOnlyRetainedServerContentAndSupport()
     {
         ValidationFixture fixture = CreateFixture(ChatMode.It, "第一项。\n\n第二项。");
@@ -299,7 +308,8 @@ public sealed class ChatAgentResultValidatorTests
         Assert.Equal(["k2", "k1"], result.SelectedCandidates.Select(candidate => candidate.CandidateHandle));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Validate_TypedResultSelectionMissingFromRawSelection_RejectsWholeAnswer()
     {
         ValidationFixture fixture = CreateFixture(ChatMode.It, "第一项。\n\n第二项。");
@@ -321,7 +331,8 @@ public sealed class ChatAgentResultValidatorTests
         Assert.Empty(result.SelectedCandidates);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Validate_RawSelectionMissingFromTypedResult_RejectsWholeAnswer()
     {
         ValidationFixture fixture = CreateFixture(ChatMode.It, "第一项。\n\n第二项。");

@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
@@ -83,7 +84,8 @@ public sealed class KnowledgeStoreMigrationTests
                 "(\"ByteStart\" IS NOT NULL AND \"ByteEnd\" IS NOT NULL AND \"ByteStart\" >= 0 AND \"ByteEnd\" > \"ByteStart\")",
         };
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void AddMinimalKnowledgeStore_Operations_AreAdditiveCompleteAndReversible()
     {
         using VulgataDbContext db = CreateContext();
@@ -170,7 +172,8 @@ public sealed class KnowledgeStoreMigrationTests
                 .Order(StringComparer.Ordinal));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void KnowledgeStoreModel_OwnershipChecksAndIndexes_MatchAcceptedSchema()
     {
         using VulgataDbContext db = CreateContext();
@@ -340,7 +343,8 @@ public sealed class KnowledgeStoreMigrationTests
             name => Assert.NotNull(typeof(VulgataDbContext).GetProperty(name)));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void AddMinimalKnowledgeStore_ApplyRollbackAndReapply_PreservesStory43Schema()
     {
         using var connection = new SqliteConnection(

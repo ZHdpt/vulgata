@@ -1,0 +1,14 @@
+{
+  "kind": "self-review",
+  "stage": "specify",
+  "outcome": "passed",
+  "summary": "Story intent, measurable acceptance, containment and truthful incomplete outcomes are covered. Prepared labels remain distinct from Profiled Revisions. No active project lessons file exists; historical workflow memory was not used as authority.",
+  "input_hashes": {
+    "specs/016-contained-source-tools/spec.md": "48c92e4f6582471a1664e553b48756a811f22bb2b4f1334206e94303629b0b6d"
+  },
+  "owned_paths": [
+    "specs/016-contained-source-tools/spec.md",
+    "specs/016-contained-source-tools/checklists/requirements.md",
+    ".specify/feature.json"
+  ]
+}

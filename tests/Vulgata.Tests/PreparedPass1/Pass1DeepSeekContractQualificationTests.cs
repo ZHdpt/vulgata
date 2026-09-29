@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Security.Cryptography;
 using System.Reflection;
 using System.Net;
@@ -39,7 +40,8 @@ public sealed class Pass1DeepSeekContractQualificationTests
     private const string FixedSourceFreePacket =
         "{\"sourceFreeSyntheticPacket\":\"fixed\",\"binding\":\"source-free\"}";
 
-    [Fact]
+    [Trait("Suite", "External")]
+    [SuiteFact("External")]
     public void SourceFreeHandshakeEvidence_ExposesSanitizedRawAndProjectedDeclarationIdentities()
     {
         PropertyInfo[] properties = typeof(DeepSeekSourceFreeHandshakeEvidence)
@@ -62,7 +64,8 @@ public sealed class Pass1DeepSeekContractQualificationTests
         }
     }
 
-    [Fact]
+    [Trait("Suite", "External")]
+    [SuiteFact("External")]
     public void AuthoritativeSchema_IsExactlyOneEmbeddedResource_AndMatchesIndependentRepositoryBytes()
     {
         byte[] repositoryBytes = LoadAuthoritativeSchema();
@@ -82,7 +85,8 @@ public sealed class Pass1DeepSeekContractQualificationTests
         Assert.Equal(repositoryBytes, copy.ToArray());
     }
 
-    [Fact]
+    [Trait("Suite", "External")]
+    [SuiteFact("External")]
     public void Project_EmbeddedAuthoritativeSchema_ProducesClosedDocumentWithoutReferencesOrPartialConditionals()
     {
         object projection = InvokeProjector();
@@ -100,7 +104,8 @@ public sealed class Pass1DeepSeekContractQualificationTests
             node.TryGetProperty("anyOf", out JsonElement branches) && IsLedgerConditional(branches));
     }
 
-    [Fact]
+    [Trait("Suite", "External")]
+    [SuiteFact("External")]
     public void ConditionalLedger_UsesExactPointersKindsOrderSemanticsAndIndependentHashes()
     {
         using JsonDocument schema = JsonDocument.Parse(LoadAuthoritativeSchema());
@@ -122,7 +127,8 @@ public sealed class Pass1DeepSeekContractQualificationTests
         _ = InvokeProjector();
     }
 
-    [Theory]
+    [Trait("Suite", "External")]
+    [SuiteTheory("External")]
     [MemberData(nameof(SchemaDriftMutations))]
     public void Project_MutatedAuthoritativeSchema_FailsClosed(string mutation, Func<JsonObject, JsonObject> mutate)
     {
@@ -158,7 +164,8 @@ public sealed class Pass1DeepSeekContractQualificationTests
         yield return ["unclassified-conditional", (Func<JsonObject, JsonObject>)(root => AddUnclassifiedConditional(root))];
     }
 
-    [Fact]
+    [Trait("Suite", "External")]
+    [SuiteFact("External")]
     public void Project_MutationCoverage_RequiresPublicSchemaBytesSeam()
     {
         Type projector = typeof(PreparedPass1ResultParser).Assembly.GetType(
@@ -365,7 +372,8 @@ public sealed class Pass1DeepSeekContractQualificationTests
         return root;
     }
 
-    [Theory]
+    [Trait("Suite", "External")]
+    [SuiteTheory("External")]
     [InlineData(false, false, true, false, false)]
     [InlineData(true, false, true, false, true)]
     [InlineData(false, true, true, false, true)]
@@ -397,7 +405,8 @@ public sealed class Pass1DeepSeekContractQualificationTests
         Assert.Equal("code-logic/file-v2", parsed.SchemaIdentity);
     }
 
-    [Fact]
+    [Trait("Suite", "External")]
+    [SuiteFact("External")]
     public void Project_ProviderSchema_RemainsWithinThe65536ByteProjectionBound()
     {
         string json = ProjectedSchemaJson(InvokeProjector());
@@ -733,7 +742,8 @@ public sealed class Pass1DeepSeekContractQualificationTests
         return stream.ToArray();
     }
 
-    [Fact]
+    [Trait("Suite", "External")]
+    [SuiteFact("External")]
     public void QualificationDiagnosticClassifier_UsesClosedCategoryWithoutEchoingInput()
     {
         const string marker = "provider-secret-arbitrary-marker";
@@ -745,7 +755,8 @@ public sealed class Pass1DeepSeekContractQualificationTests
         Assert.DoesNotContain(marker, category, StringComparison.Ordinal);
     }
 
-    [Theory]
+    [Trait("Suite", "External")]
+    [SuiteTheory("External")]
     [InlineData("root contains an unknown or duplicate property.", "shape-root-unknown-or-duplicate")]
     [InlineData("binding omits a required property.", "shape-binding-missing-required")]
     [InlineData("filePurpose must be an object.", "shape-filePurpose-not-object")]
@@ -763,7 +774,8 @@ public sealed class Pass1DeepSeekContractQualificationTests
         Assert.Equal(expectedCategory, category);
     }
 
-    [Fact]
+    [Trait("Suite", "External")]
+    [SuiteFact("External")]
     public async Task SourceFreeHandshake_UsesConfiguredBetaRouteAndFlashModel_WithExactlyTwoStrictDeclarationsAsync()
     {
         using SourceFreeHandshakeTransport transport = new();
@@ -794,7 +806,8 @@ public sealed class Pass1DeepSeekContractQualificationTests
         }
     }
 
-    [Fact]
+    [Trait("Suite", "External")]
+    [SuiteFact("External")]
     public async Task SourceFreeHandshake_HistoryBearingTerminalUsesProductionProjectionAndSanitizedEvidenceAsync()
     {
         using SourceFreeHandshakeTransport transport = new();
@@ -879,7 +892,8 @@ public sealed class Pass1DeepSeekContractQualificationTests
             token => sanitizedEvidence.Contains(token, StringComparison.OrdinalIgnoreCase));
     }
 
-    [Fact]
+    [Trait("Suite", "External")]
+    [SuiteFact("External")]
     public async Task SourceFreeHandshake_UsesSupportedDefaultsWithoutSamplingOrControlFieldsAsync()
     {
         using SourceFreeHandshakeTransport transport = new();
@@ -903,7 +917,8 @@ public sealed class Pass1DeepSeekContractQualificationTests
         }
     }
 
-    [Fact]
+    [Trait("Suite", "External")]
+    [SuiteFact("External")]
     public async Task SourceFreeHandshake_RecordsDisabledRequiredCallAndDoneEvidenceAsync()
     {
         int responseOrdinal = 0;
@@ -933,7 +948,8 @@ public sealed class Pass1DeepSeekContractQualificationTests
         Assert.Equal(2, transport.RequestBodies.Count);
     }
 
-    [Fact]
+    [Trait("Suite", "External")]
+    [SuiteFact("External")]
     public async Task SourceFreeHandshake_RequiresTwoSanitizedShapesWithDistinctRequestEvidenceAsync()
     {
         int responseOrdinal = 0;
@@ -1009,7 +1025,8 @@ public sealed class Pass1DeepSeekContractQualificationTests
         Assert.DoesNotContain("role\\\":\\\"tool", evidenceText, StringComparison.OrdinalIgnoreCase);
     }
 
-    [Theory]
+    [Trait("Suite", "External")]
+    [SuiteTheory("External")]
     [InlineData(false, true)]
     [InlineData(true, false)]
     public async Task SourceFreeHandshake_MissingCallOrDoneStopsWithConfigurationBeforeSourceBearingTrafficAsync(
@@ -1031,7 +1048,8 @@ public sealed class Pass1DeepSeekContractQualificationTests
         Assert.Single(transport.RequestBodies);
     }
 
-    [Fact]
+    [Trait("Suite", "External")]
+    [SuiteFact("External")]
     public async Task SourceFreeHandshake_ProjectsImmutableOpenAiAdapterSchemaBytesAsync()
     {
         using SourceFreeHandshakeTransport transport = new();
@@ -1111,7 +1129,8 @@ public sealed class Pass1DeepSeekContractQualificationTests
         Assert.Contains("\"type\":\"string\"", Encoding.UTF8.GetString(helperSubmitSchema), StringComparison.Ordinal);
     }
 
-    [Fact]
+    [Trait("Suite", "External")]
+    [SuiteFact("External")]
     public async Task SourceFreeHandshake_RecordsOnlySanitizedHashesAndBytes_WithoutSourceBearingRequestFieldsAsync()
     {
         using SourceFreeHandshakeTransport transport = new();
@@ -1210,6 +1229,7 @@ public sealed class Pass1DeepSeekContractQualificationTests
         }
     }
 
+    [Trait("Suite", "External")]
     [T083SourceFreeHandshakeFact]
     public async Task SourceFreeHandshake_LiveBetaCapability_WritesSanitizedEvidenceAsync()
     {
@@ -1280,8 +1300,8 @@ public sealed class Pass1DeepSeekContractQualificationTests
         string repositoryRoot = FindRepositoryRoot();
         string artifactPath = Path.Combine(
             repositoryRoot,
-            "artifacts",
-            "qualification",
+            "TestResults",
+            "qualification-" + Guid.NewGuid().ToString("N"),
             "story-12.3",
             "deepseek-source-free-handshake.json");
         var artifact = new
@@ -1369,7 +1389,8 @@ public sealed class Pass1DeepSeekContractQualificationTests
             new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
     }
 
-    [Theory]
+    [Trait("Suite", "External")]
+    [SuiteTheory("External")]
     [InlineData(HttpStatusCode.Unauthorized, "ProviderConfiguration")]
     [InlineData(HttpStatusCode.BadRequest, "ProviderConfiguration")]
     [InlineData(HttpStatusCode.ServiceUnavailable, "ProviderUnavailable")]
@@ -1393,7 +1414,8 @@ public sealed class Pass1DeepSeekContractQualificationTests
         AssertSourceFreeHandshakeWire(request, TransportOnlySecret);
     }
 
-    [Theory]
+    [Trait("Suite", "External")]
+    [SuiteTheory("External")]
     [InlineData(HttpStatusCode.PaymentRequired)]
     [InlineData(HttpStatusCode.UnprocessableEntity)]
     public async Task SourceFreeHandshake_402And422RemainSourceFreeAndMapToConfigurationOutcomeAsync(
@@ -1420,7 +1442,8 @@ public sealed class Pass1DeepSeekContractQualificationTests
         Assert.DoesNotContain("responseBody", evidenceText, StringComparison.OrdinalIgnoreCase);
     }
 
-    [Fact]
+    [Trait("Suite", "External")]
+    [SuiteFact("External")]
     public async Task SourceFreeHandshake_NetworkFailureStopsWithClosedUnavailableOutcomeBeforeSourceTrafficAsync()
     {
         using SourceFreeHandshakeTransport transport = new(() =>
@@ -1438,7 +1461,8 @@ public sealed class Pass1DeepSeekContractQualificationTests
         Assert.Single(transport.RequestBodies);
     }
 
-    [Theory]
+    [Trait("Suite", "External")]
+    [SuiteTheory("External")]
     [InlineData("http://api.deepseek.com/beta", "deepseek-v4-flash")]
     [InlineData("https://api.deepseek.com/beta", "deepseek-v3")]
     public async Task SourceFreeHandshake_InvalidEndpointOrModelConfigurationStopsBeforeAnyRequestAsync(
@@ -1712,6 +1736,7 @@ public sealed class Pass1DeepSeekContractQualificationTests
         };
     }
 
+    [Trait("Suite", "External")]
     [T062HostQualificationFact]
     public async Task ApprovedFileCodeUnit_DeepSeekResponse_IsSchemaValidAtDispatcherSeamAsync()
     {
@@ -2166,9 +2191,9 @@ public sealed class Pass1DeepSeekContractQualificationTests
 
 }
 
-internal sealed class T083SourceFreeHandshakeFactAttribute : FactAttribute
+internal sealed class T083SourceFreeHandshakeFactAttribute : SuiteFactAttribute
 {
-    public T083SourceFreeHandshakeFactAttribute()
+    public T083SourceFreeHandshakeFactAttribute() : base("External")
     {
         if (!string.Equals(
             Environment.GetEnvironmentVariable("VULGATA_T083_SOURCE_FREE_HANDSHAKE"),

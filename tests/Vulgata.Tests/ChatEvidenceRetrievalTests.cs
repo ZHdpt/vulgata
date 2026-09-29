@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Data;
 using System.Reflection;
 using System.Security.Cryptography;
@@ -14,7 +15,8 @@ namespace Vulgata.Tests;
 
 public sealed class ChatEvidenceRetrievalTests
 {
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public void RetrieveAsync_UsesSingleTypedPath_ObsoleteClassifierAndLegacyRowsAreAbsent()
     {
         string source = File.ReadAllText(
@@ -74,7 +76,8 @@ public sealed class ChatEvidenceRetrievalTests
             throw new InvalidOperationException("Vulgata repository root could not be located.");
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task RetrieveAsync_CrossRepositoryLiteralAndNeutralEquivalent_PreserveLexicalPrimaryIdentitiesAsync()
     {
         await using PreparedEvidenceFixture literalFixture = await PreparedEvidenceFixture.CreateAsync();
@@ -109,7 +112,8 @@ public sealed class ChatEvidenceRetrievalTests
             literalPacket.Documents.Select(document => document.DocumentVersionId));
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task RetrieveAsync_RelationshipExpansionMutation_DoesNotReplaceExistingLexicalPrimarySectionsAsync()
     {
         await using PreparedEvidenceFixture baselineFixture = await PreparedEvidenceFixture.CreateAsync();
@@ -139,7 +143,8 @@ public sealed class ChatEvidenceRetrievalTests
                 expanded => expanded.StableSectionId == section.StableSectionId));
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task RelationshipProjector_FirstThreeLexicalSeeds_AreOneHopBoundedAndCanonicalAsync()
     {
         await using PreparedEvidenceFixture fixture = await PreparedEvidenceFixture.CreateAsync();
@@ -196,7 +201,8 @@ public sealed class ChatEvidenceRetrievalTests
                 relationship.RelationshipType == ChatRelationshipType.References);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task RelationshipProjector_LowerRankedOptionalRelatedDocument_DoesNotDisplaceHigherRankedEvidenceAsync()
     {
         await using PreparedEvidenceFixture fixture = await PreparedEvidenceFixture.CreateAsync();
@@ -222,7 +228,8 @@ public sealed class ChatEvidenceRetrievalTests
                 fixture.SecondHopDocumentVersionId);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task RelationshipProjector_CandidateBeyondLegacyQueryCap_HigherSeedRankWinsBeforeBoundsAsync()
     {
         await using PreparedEvidenceFixture fixture = await PreparedEvidenceFixture.CreateAsync();
@@ -247,7 +254,8 @@ public sealed class ChatEvidenceRetrievalTests
             typedProjection.DocumentVersionIdsByHandle[relationship.SourceDocumentHandle]);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task RelationshipProjector_BusinessAndItMode_PreferAcceptedRelationshipTypeBeforeBoundsAsync()
     {
         await using PreparedEvidenceFixture fixture = await PreparedEvidenceFixture.CreateAsync();
@@ -274,7 +282,8 @@ public sealed class ChatEvidenceRetrievalTests
             relationship => relationship.EdgeId == referencesEdgeId);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task RetrieveAsync_Exactly256RankedCandidates_IsAcceptedAsync()
     {
         await using PreparedEvidenceFixture fixture = await PreparedEvidenceFixture.CreateAsync();
@@ -293,7 +302,8 @@ public sealed class ChatEvidenceRetrievalTests
         Assert.InRange(packet.Sections.Count, 1, 12);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task RetrieveAsync_MoreThan256EligibleCandidates_RanksFullSetAndKeepsDeterministicHighestWindowAsync()
     {
         await using PreparedEvidenceFixture fixture = await PreparedEvidenceFixture.CreateAsync();
@@ -328,7 +338,8 @@ public sealed class ChatEvidenceRetrievalTests
             firstPacket.Sections.Select(section => section.StableSectionId).Distinct().Count());
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task RetrieveAsync_SelectsTwelvePrimariesWithAtMostFourSectionsPerDocumentAsync()
     {
         await using PreparedEvidenceFixture fixture = await PreparedEvidenceFixture.CreateAsync();
@@ -351,7 +362,8 @@ public sealed class ChatEvidenceRetrievalTests
             group => Assert.Equal(4, group.Count()));
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task RetrieveAsync_MoreThanTwentyEligibleSections_RemainsBoundedAndDeterministicAsync()
     {
         await using PreparedEvidenceFixture fixture = await PreparedEvidenceFixture.CreateAsync();
@@ -381,7 +393,8 @@ public sealed class ChatEvidenceRetrievalTests
             repeatedPacket.Sections.Select(section => section.StableSectionId));
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task RetrieveAsync_SixthLowerRankedDocument_IsExcludedAndPacketRemainsBoundedAsync()
     {
         await using PreparedEvidenceFixture fixture = await PreparedEvidenceFixture.CreateAsync();
@@ -399,7 +412,8 @@ public sealed class ChatEvidenceRetrievalTests
         Assert.InRange(packet.Documents.Count, 1, 5);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task RetrieveAsync_AcceptedV2DecisionAndCurrentEdgeWithoutLegacyEvidence_ReturnsCompletePacketAsync()
     {
         await using PreparedEvidenceFixture fixture = await PreparedEvidenceFixture.CreateAsync();
@@ -416,7 +430,8 @@ public sealed class ChatEvidenceRetrievalTests
         Assert.NotNull(result.Packet);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task RetrieveAsync_LegacyEvidenceWithoutAcceptedV2Decision_DoesNotAuthorizePacketAsync()
     {
         await using PreparedEvidenceFixture fixture = await PreparedEvidenceFixture.CreateAsync();
@@ -435,7 +450,8 @@ public sealed class ChatEvidenceRetrievalTests
         Assert.Null(result.Packet);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task RetrieveAsync_AuthorizedCurrentPreparedFlow_ReturnsCompleteCanonicalPacketAsync()
     {
         await using PreparedEvidenceFixture fixture = await PreparedEvidenceFixture.CreateAsync();
@@ -483,7 +499,8 @@ public sealed class ChatEvidenceRetrievalTests
         Assert.Null(fixture.Context.Database.CurrentTransaction);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task RetrieveAsync_CurrentDirectedOneHopReference_ExpandsRelatedUnitAndExcludesSecondHopAsync()
     {
         await using PreparedEvidenceFixture fixture = await PreparedEvidenceFixture.CreateAsync();
@@ -512,7 +529,8 @@ public sealed class ChatEvidenceRetrievalTests
         Assert.True(packet.Documents.Count <= 5);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task RetrieveAsync_DuplicateRelatedTarget_ReturnsIncompleteOrStaleAsync()
     {
         await using PreparedEvidenceFixture fixture = await PreparedEvidenceFixture.CreateAsync();
@@ -530,7 +548,8 @@ public sealed class ChatEvidenceRetrievalTests
         Assert.Null(result.Packet);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task RetrieveAsync_SelectedPublishedRelatedFlowGroup_IsIncludedWithItsAuthorityAsync()
     {
         await using PreparedEvidenceFixture fixture = await PreparedEvidenceFixture.CreateAsync();
@@ -552,7 +571,8 @@ public sealed class ChatEvidenceRetrievalTests
             flowGroup.ExactResolutionDecisionId == relatedDecisionId);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task RetrieveAsync_MultiplePublishedFlowGroupsForOneRelationship_PreservesEveryGroupAsync()
     {
         await using PreparedEvidenceFixture fixture = await PreparedEvidenceFixture.CreateAsync();
@@ -578,7 +598,8 @@ public sealed class ChatEvidenceRetrievalTests
         Assert.Equal(4, packet.FlowEvidence.Count);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task RetrieveAsync_SharedReferencesEdgeWithCanonicalDecisionAndReversedFlowGroupIds_PreservesAuthorityAsync()
     {
         await using PreparedEvidenceFixture fixture = await PreparedEvidenceFixture.CreateAsync();
@@ -656,7 +677,8 @@ public sealed class ChatEvidenceRetrievalTests
             });
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task RetrieveAsync_BoundedValidatedConversation_IsBoundToReturnedPacketAsync()
     {
         await using PreparedEvidenceFixture fixture = await PreparedEvidenceFixture.CreateAsync();
@@ -702,7 +724,8 @@ public sealed class ChatEvidenceRetrievalTests
         Assert.NotEqual(emptyPacket.Fingerprint, contextualPacket.Fingerprint);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task RetrieveAsync_CurrentNonFlowQuestion_DoesNotRequirePreparedExactRelationshipAsync()
     {
         await using PreparedEvidenceFixture fixture = await PreparedEvidenceFixture.CreateAsync();
@@ -725,7 +748,8 @@ public sealed class ChatEvidenceRetrievalTests
             section => section.Heading == "业务概览");
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task RetrieveAsync_CrossRepositoryQuestionWithoutExactRelationship_UsesProjectionPrimaryAsync()
     {
         await using PreparedEvidenceFixture fixture = await PreparedEvidenceFixture.CreateAsync();
@@ -747,7 +771,8 @@ public sealed class ChatEvidenceRetrievalTests
         Assert.Contains(packet.Sections, section => section.Heading == "业务概览");
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task RetrieveAsync_RepositoryNameTerm_SelectsCurrentRepositoryDocumentAsync()
     {
         await using PreparedEvidenceFixture fixture = await PreparedEvidenceFixture.CreateAsync();
@@ -771,7 +796,8 @@ public sealed class ChatEvidenceRetrievalTests
             document => document.RepositoryId == ExactCrossRepositoryTestValues.ProviderRepositoryId);
     }
 
-    [Theory]
+    [Trait("Suite", "LocalTools")]
+    [SuiteTheory("LocalTools")]
     [InlineData("status")]
     [InlineData("profile")]
     public async Task RetrieveAsync_ProjectionEndpointWithoutCurrentScanIdentity_ReturnsIncompleteOrStaleAsync(
@@ -801,7 +827,8 @@ public sealed class ChatEvidenceRetrievalTests
         Assert.Null(result.Packet);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task RetrieveAsync_AcceptedV2Relationship_UsesProjectionFirstLexicalSelectionAsync()
     {
         await using PreparedEvidenceFixture fixture = await PreparedEvidenceFixture.CreateAsync();
@@ -822,7 +849,8 @@ public sealed class ChatEvidenceRetrievalTests
         Assert.DoesNotContain(packet.Sections, section => section.Heading is "业务概览" or "消费端" or "提供端");
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task RetrieveAsync_MultipleAcceptedV2Edges_DoesNotRequireSingletonExactDecisionAsync()
     {
         await using PreparedEvidenceFixture fixture = await PreparedEvidenceFixture.CreateAsync();
@@ -840,7 +868,8 @@ public sealed class ChatEvidenceRetrievalTests
         Assert.NotNull(result.Packet);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task RetrieveAsync_CrossRepositoryQuestionWithoutOptionalProvenanceOrFlowGroup_UsesProjectionPrimaryAsync()
     {
         await using PreparedEvidenceFixture fixture = await PreparedEvidenceFixture.CreateAsync();
@@ -858,7 +887,8 @@ public sealed class ChatEvidenceRetrievalTests
         Assert.Contains(packet.Sections, section => section.Heading == "业务概览");
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task RetrieveAsync_CrossRepositoryQuestion_IgnoresUnrelatedStaleCrossRepositoryEdgeAsync()
     {
         await using PreparedEvidenceFixture fixture = await PreparedEvidenceFixture.CreateAsync();
@@ -881,7 +911,8 @@ public sealed class ChatEvidenceRetrievalTests
         Assert.NotNull(result.Packet);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task RetrieveAsync_EmptyAdditionalPublishedFlowGroup_RejectsWholePacketAsync()
     {
         await using PreparedEvidenceFixture fixture = await PreparedEvidenceFixture.CreateAsync();
@@ -900,7 +931,8 @@ public sealed class ChatEvidenceRetrievalTests
         Assert.Null(result.Packet);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task RetrieveAsync_ItQuestion_SelectsTechnicalDetailAndEvidenceProjectionSectionsAsync()
     {
         await using PreparedEvidenceFixture fixture = await PreparedEvidenceFixture.CreateAsync();
@@ -925,7 +957,8 @@ public sealed class ChatEvidenceRetrievalTests
         Assert.Contains(packet.Sections, section => section.Heading == "技术证据");
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task RetrieveAsync_ItModeZeroPositivePrimary_UsesServerOwnedAdvisoryBusinessSummaryFallbackAsync()
     {
         await using PreparedEvidenceFixture fixture = await PreparedEvidenceFixture.CreateAsync();
@@ -970,7 +1003,8 @@ public sealed class ChatEvidenceRetrievalTests
             section => section.Heading == "业务概览");
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task RetrieveAsync_TransactionAdvisorySnapshot_IgnoresCallerAndBindsSingleAuthorizedReadAsync()
     {
         await using PreparedEvidenceFixture fixture = await PreparedEvidenceFixture.CreateAsync();
@@ -1012,7 +1046,8 @@ public sealed class ChatEvidenceRetrievalTests
         Assert.DoesNotContain(afterReadMutation.ComposedText, packet.AdvisoryContext, StringComparison.Ordinal);
     }
 
-    [Theory]
+    [Trait("Suite", "LocalTools")]
+    [SuiteTheory("LocalTools")]
     [InlineData(
         ChatAdvisoryContextReadResultKind.NotFoundOrUnauthorized,
         ChatEvidenceResultKind.NotFoundOrUnauthorized)]
@@ -1053,7 +1088,8 @@ public sealed class ChatEvidenceRetrievalTests
         Assert.Equal(IsolationLevel.Serializable, reader.IsolationLevelAtRead);
     }
 
-    [Theory]
+    [Trait("Suite", "LocalTools")]
+    [SuiteTheory("LocalTools")]
     [InlineData("北京天气怎么样？")]
     [InlineData("如何 主要 系统 客户 用户 进行 可以 需要 之后")]
     public async Task RetrieveAsync_AcceptedV2Relationship_WithoutLexicalMatch_ReturnsInsufficientEvidenceAsync(
@@ -1072,7 +1108,8 @@ public sealed class ChatEvidenceRetrievalTests
         Assert.Null(result.Packet);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task RetrieveAsync_FollowUpQuestion_UsesPriorValidatedQuestionForCurrentLexicalSelectionAsync()
     {
         await using PreparedEvidenceFixture fixture = await PreparedEvidenceFixture.CreateAsync();
@@ -1118,7 +1155,8 @@ public sealed class ChatEvidenceRetrievalTests
             section => section.Heading == "特殊会话锚点说明");
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task RetrieveAsync_FollowUpPriorEvidenceNoLongerCurrent_ReturnsMissingEquivalentAsync()
     {
         await using PreparedEvidenceFixture fixture = await PreparedEvidenceFixture.CreateAsync();
@@ -1164,7 +1202,8 @@ public sealed class ChatEvidenceRetrievalTests
         Assert.Empty(conversation.Turns);
     }
 
-    [Theory]
+    [Trait("Suite", "LocalTools")]
+    [SuiteTheory("LocalTools")]
     [InlineData("SpecialSessionAnchor")]
     [InlineData("src/main/java/provider/SpecialSessionAnchor.java")]
     [InlineData("POST /special-session-anchor")]
@@ -1193,7 +1232,8 @@ public sealed class ChatEvidenceRetrievalTests
         Assert.Contains(packet.Sections, section => section.Heading == "普通说明");
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task RetrieveAsync_InvalidOrRestrictedRelationalEvidence_ReturnsClosedWholePacketFailureAsync()
     {
         await AssertClosedFailureAfterMutationAsync(
@@ -1230,7 +1270,8 @@ public sealed class ChatEvidenceRetrievalTests
         Assert.Null(missingEndpoint.Packet);
     }
 
-    [Theory]
+    [Trait("Suite", "LocalTools")]
+    [SuiteTheory("LocalTools")]
     [InlineData("ProfileId")]
     [InlineData("ProfileVersion")]
     [InlineData("ProfileFingerprint")]
@@ -1250,7 +1291,8 @@ public sealed class ChatEvidenceRetrievalTests
         Assert.NotNull(result.Packet);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task RetrieveAsync_LegacyReversedRelationshipEvidence_DoesNotAffectAcceptedV2PacketAsync()
     {
         await using PreparedEvidenceFixture fixture = await PreparedEvidenceFixture.CreateAsync();
@@ -1267,7 +1309,8 @@ public sealed class ChatEvidenceRetrievalTests
         Assert.NotNull(result.Packet);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task RetrieveAsync_WrongProfileDecoyEdge_IsIgnoredAsync()
     {
         await using PreparedEvidenceFixture fixture = await PreparedEvidenceFixture.CreateAsync();
@@ -1284,7 +1327,8 @@ public sealed class ChatEvidenceRetrievalTests
         Assert.Equal(ChatEvidenceResultKind.Found, withDecoy.Kind);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task RetrieveAsync_SecondLegacyPreparedEdge_DoesNotAffectAcceptedV2PacketAsync()
     {
         await using PreparedEvidenceFixture fixture = await PreparedEvidenceFixture.CreateAsync();
@@ -1301,7 +1345,8 @@ public sealed class ChatEvidenceRetrievalTests
         Assert.NotNull(result.Packet);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task RetrieveAsync_CurrentProfiledRevisionDrifts_ReturnsClosedWholePacketFailureAsync()
     {
         await using PreparedEvidenceFixture fixture = await PreparedEvidenceFixture.CreateAsync();

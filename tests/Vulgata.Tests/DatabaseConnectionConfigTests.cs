@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Diagnostics;
 using System.Net;
 using System.Net.Http.Json;
@@ -22,7 +23,8 @@ public sealed class DatabaseConnectionConfigTests : IClassFixture<LoginLogoutTes
         _factory = factory;
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task ManagementUser_CanCreateAndReadDatabaseConnection_AndSecretsAreEncrypted()
     {
         await EnsureApplicationStartedAsync();
@@ -82,7 +84,8 @@ public sealed class DatabaseConnectionConfigTests : IClassFixture<LoginLogoutTes
         Assert.NotEqual("super-secret-password", persisted.EncryptedPassword);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task UpdateDatabaseConnection_WithBlankUsernameAndPassword_PreservesExistingSecrets()
     {
         await EnsureApplicationStartedAsync();
@@ -128,7 +131,8 @@ public sealed class DatabaseConnectionConfigTests : IClassFixture<LoginLogoutTes
         Assert.NotEqual(original.EncryptedConnectionString, current.EncryptedConnectionString);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task Repository_CanHaveAtMostOneDatabaseConnection()
     {
         await EnsureApplicationStartedAsync();
@@ -165,7 +169,8 @@ public sealed class DatabaseConnectionConfigTests : IClassFixture<LoginLogoutTes
         Assert.Equal(1, connectionCount);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task DatabaseConnectionTest_WithSqliteConfiguration_ReturnsChineseSuccessMessage_AndManagementPageShowsSection()
     {
         await EnsureApplicationStartedAsync();
@@ -206,7 +211,8 @@ public sealed class DatabaseConnectionConfigTests : IClassFixture<LoginLogoutTes
         Assert.Contains("测试仓库", html, StringComparison.Ordinal);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task SystemOwner_CannotManageDatabaseConnection_ForHiddenRepository()
     {
         await EnsureApplicationStartedAsync();

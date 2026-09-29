@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Net;
 using System.Net.Http.Json;
 using System.Reflection;
@@ -34,7 +35,8 @@ public sealed class Pass2ExecutionApiTests : IClassFixture<LoginLogoutTests.Cust
         _factory = factory;
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public void Pass2Endpoints_ArePluralAndReachableThroughTheSingleCentralMapper()
     {
         using IServiceScope scope = _factory.Services.CreateScope();
@@ -55,7 +57,8 @@ public sealed class Pass2ExecutionApiTests : IClassFixture<LoginLogoutTests.Cust
             patterns);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task PublicPass2Endpoints_Unauthenticated_Return401WithoutRedirectAsync()
     {
         using HttpClient client = CreateClient();
@@ -76,7 +79,8 @@ public sealed class Pass2ExecutionApiTests : IClassFixture<LoginLogoutTests.Cust
         Assert.DoesNotContain("Account/Login", create.Headers.Location?.OriginalString ?? string.Empty, StringComparison.OrdinalIgnoreCase);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task AuthenticatedNonManagementUser_Create_Returns403WithoutScopeDisclosureAsync()
     {
         using AuthenticatedClient authenticated = await CreateAuthenticatedClientAsync();
@@ -93,7 +97,8 @@ public sealed class Pass2ExecutionApiTests : IClassFixture<LoginLogoutTests.Cust
         Assert.DoesNotContain("ConnectionString", body, StringComparison.OrdinalIgnoreCase);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task AuthenticatedUnknownExecution_StatusAndResume_ReturnOwnershipFiltered404ProblemDetailsAsync()
     {
         using AuthenticatedClient authenticated = await CreateAuthenticatedClientAsync(RoleNames.SystemOwner);
@@ -114,7 +119,8 @@ public sealed class Pass2ExecutionApiTests : IClassFixture<LoginLogoutTests.Cust
         Assert.DoesNotContain("Repository", resumeBody, StringComparison.OrdinalIgnoreCase);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task Create_MissingPairAndMalformedInput_ReturnValidationProblemDetailsAsync()
     {
         using AuthenticatedClient authenticated = await CreateAuthenticatedClientAsync(RoleNames.SystemOwner);
@@ -130,7 +136,8 @@ public sealed class Pass2ExecutionApiTests : IClassFixture<LoginLogoutTests.Cust
             HttpStatusCode.UnprocessableEntity);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task Create_RejectsCallerSuppliedAuthorityScope_AsSanitizedProblemDetailsAsync()
     {
         using AuthenticatedClient authenticated = await CreateAuthenticatedClientAsync(RoleNames.SystemOwner);
@@ -160,7 +167,8 @@ public sealed class Pass2ExecutionApiTests : IClassFixture<LoginLogoutTests.Cust
         Assert.DoesNotContain("C:\\secrets", body, StringComparison.OrdinalIgnoreCase);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task ExecutionStateConflict_ReturnsProblemDetailsWithClosedChineseMessageAsync()
     {
         using AuthenticatedClient authenticated = await CreateAuthenticatedClientAsync(RoleNames.SystemOwner);
@@ -180,7 +188,8 @@ public sealed class Pass2ExecutionApiTests : IClassFixture<LoginLogoutTests.Cust
         Assert.DoesNotContain("StackTrace", body, StringComparison.OrdinalIgnoreCase);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task StatusResponse_ExposesOnlySanitizedCountsAndWarningsAsync()
     {
         using AuthenticatedClient authenticated = await CreateAuthenticatedClientAsync(RoleNames.SystemOwner);
@@ -206,7 +215,8 @@ public sealed class Pass2ExecutionApiTests : IClassFixture<LoginLogoutTests.Cust
         }
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public void Pass2Api_DoesNotAddStory125ChatOrProductionProgressSurface()
     {
         using IServiceScope scope = _factory.Services.CreateScope();
@@ -222,7 +232,8 @@ public sealed class Pass2ExecutionApiTests : IClassFixture<LoginLogoutTests.Cust
             pattern.Contains("progress", StringComparison.OrdinalIgnoreCase));
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task CreateReplay_IsExactAfterProgressAndTerminalStatus_CandidateCountUsesPlannedDenominatorAsync()
     {
         using AuthenticatedClient authenticated = await CreateAuthenticatedClientAsync(

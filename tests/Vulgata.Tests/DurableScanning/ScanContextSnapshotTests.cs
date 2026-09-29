@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Vulgata.Core.Entities;
@@ -16,7 +17,8 @@ public sealed class ScanContextSnapshotTests
     private const string _profiledRevision =
         "0123456789abcdef0123456789abcdef01234567";
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Capture_ValidContext_ProducesCanonicalImmutableBindingAndRejectsCaptureBeforeScanRunStart()
     {
         ScanRun scanRun = ScanRun.Start(_repositoryId, 1_800, _scanStartedAt);
@@ -56,7 +58,8 @@ public sealed class ScanContextSnapshotTests
             capturedAt: _scanStartedAt.AddTicks(-1)));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task PersistSnapshotFirst_ValidTemporalBinding_CommitsBothRows()
     {
         await using PersistenceScenario scenario = await PersistenceScenario.CreateAsync();
@@ -81,7 +84,8 @@ public sealed class ScanContextSnapshotTests
             execution.StartedAt);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task PersistExecutionFirst_ValidTemporalBinding_CommitsBothRows()
     {
         await using PersistenceScenario scenario = await PersistenceScenario.CreateAsync();
@@ -106,7 +110,8 @@ public sealed class ScanContextSnapshotTests
             execution.StartedAt);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task PersistSnapshotFirst_ExecutionStartsBeforeCapture_RollsBackBothRows()
     {
         await using PersistenceScenario scenario = await PersistenceScenario.CreateAsync();
@@ -119,7 +124,8 @@ public sealed class ScanContextSnapshotTests
         await scenario.AssertNoDurableRowsAsync();
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task PersistExecutionFirst_CaptureAfterExecutionStart_RollsBackBothRows()
     {
         await using PersistenceScenario scenario = await PersistenceScenario.CreateAsync();
@@ -132,7 +138,8 @@ public sealed class ScanContextSnapshotTests
         await scenario.AssertNoDurableRowsAsync();
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task CaptureBeforeScanRunStart_DoesNotEnterPersistence()
     {
         await using PersistenceScenario scenario = await PersistenceScenario.CreateAsync();

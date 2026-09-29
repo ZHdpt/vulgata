@@ -1,0 +1,80 @@
+{
+  "observed_after": {
+    "path": "specs/016-contained-source-tools/evidence/workflow-transition-005-plan-review-accept.json",
+    "sha256": "e894d751c44c2e0a2bbcf0a5433cf9202a8c47a35e17b0f28cb49d414cb1c4b2"
+  },
+  "raw_result": {
+    "schema_version": "1.0",
+    "gate": "definition-review",
+    "verdict": "ACCEPT",
+    "reviewed_commit": "6de156569c95e2841e2452084052f95fa5f88168",
+    "reviewed_boundary": {
+      "base_commit": "6de156569c95e2841e2452084052f95fa5f88168",
+      "candidate_commit": null,
+      "diff_sha256": "58b86ae66d31298e6b1f3875c5ab947649edfd673a5e380b455f85bdd3ad1cbb",
+      "artifact_hashes": {
+        "specs/016-contained-source-tools/contracts/prepared-source-tools.md": "513dd8ddb3ba8ea02ce41653a436cb4bcb882347676ef29084c89a8d4b92015a",
+        "specs/016-contained-source-tools/data-model.md": "fa0a2496424b70e48ca207354de29890b54bd8b9bdab0178af7d9ca613e15bb8",
+        "specs/016-contained-source-tools/plan.md": "b4fb3ae8b08dcf38a21d42e6c424ac2188ff5708b0a9c669508d851480347364",
+        "specs/016-contained-source-tools/quickstart.md": "122ce3bd62a8fed32dd9508d256d1528d090c3b612f2e4d4e3b7f40965c3e38e",
+        "specs/016-contained-source-tools/research.md": "40f98b5061aa54fc9757e2377905450bea5a7e2fabcd9fa0a9b05f449e1c71de",
+        "specs/016-contained-source-tools/spec.md": "48c92e4f6582471a1664e553b48756a811f22bb2b4f1334206e94303629b0b6d",
+        "specs/016-contained-source-tools/tasks.md": "dcc72158a1a8ad029f492bd90e063399ce53bfa5c65990f7ac454f19ee377d20"
+      },
+      "owned_paths": [
+        "specs/016-contained-source-tools/spec.md",
+        "specs/016-contained-source-tools/plan.md",
+        "specs/016-contained-source-tools/research.md",
+        "specs/016-contained-source-tools/data-model.md",
+        "specs/016-contained-source-tools/quickstart.md",
+        "specs/016-contained-source-tools/contracts/prepared-source-tools.md",
+        "specs/016-contained-source-tools/tasks.md"
+      ]
+    },
+    "reviewed_artifacts": [
+      "docs/bmad/planning-artifacts/october-release-epics.md",
+      "docs/bmad/implementation-artifacts/18-1-access-prepared-source-through-contained-read-only-tools.md",
+      "specs/016-contained-source-tools/spec.md",
+      "specs/016-contained-source-tools/plan.md",
+      "specs/016-contained-source-tools/research.md",
+      "specs/016-contained-source-tools/data-model.md",
+      "specs/016-contained-source-tools/quickstart.md",
+      "specs/016-contained-source-tools/contracts/prepared-source-tools.md",
+      "specs/016-contained-source-tools/tasks.md",
+      "specs/016-contained-source-tools/evidence/definition-review-boundary-01.json",
+      "specs/016-contained-source-tools/evidence/spec-self-review-01.json",
+      "specs/016-contained-source-tools/evidence/plan-self-review-01.json",
+      "specs/016-contained-source-tools/evidence/tasks-self-review-01.json",
+      "specs/016-contained-source-tools/evidence/plan-authorization-01.json",
+      "specs/016-contained-source-tools/evidence/plan-review-01.json",
+      "specs/016-contained-source-tools/evidence/plan-review-02.json",
+      "specs/016-contained-source-tools/evidence/plan-review-03.json",
+      "specs/016-contained-source-tools/evidence/plan-review-result-03.json",
+      "specs/016-contained-source-tools/evidence/workflow-transition-005-plan-review-accept.json",
+      "specs/016-contained-source-tools/workflow-state.json",
+      ".specify/feature.json",
+      ".specify/init-options.json",
+      ".specify/extensions.yml",
+      ".specify/memory/constitution.md",
+      "AGENTS.md",
+      "docs/agents/project-state.md",
+      "docs/agents/development.md",
+      "docs/agents/testing.md",
+      "docs/agents/domain.md",
+      "docs/UBIQUITOUS_LANGUAGE.md",
+      "docs/bmad/planning-artifacts/architecture.md",
+      "docs/bmad/planning-artifacts/architecture/ARCHITECTURE-SPINE.md",
+      "docs/bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md",
+      "src/dotnet/Vulgata.Core/DomainServices/RetainedSourceContracts.cs",
+      "src/dotnet/Vulgata.Infrastructure/Source/RetainedSourceReadContext.cs",
+      "src/dotnet/Vulgata.Infrastructure/Analysis/Source/RevisionBoundSourceReader.cs",
+      "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedNavigateCodeFunction.cs",
+      "tests/Vulgata.Tests/RetainedSource/RetainedSourceReadContextTests.cs",
+      "tests/Vulgata.Tests/RetainedSource/RetainedSourceReadLifecycleTests.cs",
+      "tests/Vulgata.Tests/RetainedSource/RetainedSourceRangeReadTests.cs",
+      "tests/Vulgata.Tests/RetainedSource/RetainedSourceRootMappingTests.cs"
+    ],
+    "findings": [],
+    "summary": "ACCEPT. All seven pinned hashes and deterministic workflow validation pass. Read-only SpecKit analysis found no unresolved placeholder, unmapped task, task-order conflict or Constitution violation. The 26 tasks cover all 11 functional requirements, five buildable success criteria, three user stories and every accepted R/I/S/A/F/L/T design ID without task references to alternatives or consequences. Behavioral changes have ordered RED/GREEN paths; fixture, contract and Git-bound regression work use proportionate direct checks. PR-18.1-LIVE-AUTHORITY remains resolved. The accepted plan authorization covers task generation only; implementation still requires its separate approval and later verification."
+  }
+}

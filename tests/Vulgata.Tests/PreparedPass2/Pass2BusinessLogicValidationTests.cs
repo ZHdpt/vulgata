@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
@@ -54,7 +55,8 @@ public sealed class Pass2BusinessLogicValidationTests
         "optional-edge-direction",
     };
 
-    [Theory]
+    [Trait("Suite", "LocalTools")]
+    [SuiteTheory("LocalTools")]
     [MemberData(nameof(EdgeAuthorityVectors))]
     public async Task CommitAsync_EdgeAuthorityMutation_RejectsWithoutWritesAsync(string mutation)
     {
@@ -80,7 +82,8 @@ public sealed class Pass2BusinessLogicValidationTests
         Assert.Equal(before, await fixture.DurableMutationSnapshotAsync());
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task CommitAsync_ValidCandidate_CommitsWithExactUsedDocumentsAsync()
     {
         await using CommitFixture fixture = await CommitFixture.CreateAsync();
@@ -126,7 +129,8 @@ public sealed class Pass2BusinessLogicValidationTests
         Assert.Equal(result.UsedDocumentVersionIds, generatedTargets);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task CommitAsync_PersistedCanonicalProviderEvidenceSetFingerprint_CommitsAsync()
     {
         await using CommitFixture fixture = await CommitFixture.CreateAsync();
@@ -141,7 +145,8 @@ public sealed class Pass2BusinessLogicValidationTests
         Assert.NotNull(result.DocumentVersionId);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task CommitAsync_SupportingEdgeMutatedAfterCandidateValidation_RejectsWithoutWritesAsync()
     {
         var interceptor = new PublicationRelationshipMutationInterceptor();
@@ -164,7 +169,8 @@ public sealed class Pass2BusinessLogicValidationTests
         Assert.Equal(before, await fixture.DurableMutationSnapshotAsync());
     }
 
-    [Theory]
+    [Trait("Suite", "LocalTools")]
+    [SuiteTheory("LocalTools")]
     [InlineData("source-anchor-hash", "source-anchor")]
     [InlineData("source-anchor-profiled-revision", "source-anchor")]
     [InlineData("source-excerpt-hash", "source-excerpt")]
@@ -228,7 +234,8 @@ public sealed class Pass2BusinessLogicValidationTests
             .SingleAsync());
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task CommitAsync_RetrievedSourceExcerptStrictSubrange_CommitsWithoutInitialAnchorAsync()
     {
         await using CommitFixture fixture = await CommitFixture.CreateAsync();
@@ -272,7 +279,8 @@ public sealed class Pass2BusinessLogicValidationTests
         Assert.Equal(result.UsedDocumentVersionIds, generatedTargets);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task CommitAsync_AdmittedSourceExcerptFromLineRangedAnchor_CommitsAsync()
     {
         await using CommitFixture fixture = await CommitFixture.CreateAsync();
@@ -294,7 +302,8 @@ public sealed class Pass2BusinessLogicValidationTests
         Assert.Contains(fixture.ConsumerDocumentVersionId, result.UsedDocumentVersionIds);
     }
 
-    [Theory]
+    [Trait("Suite", "LocalTools")]
+    [SuiteTheory("LocalTools")]
     [InlineData("planFingerprint")]
     [InlineData("membershipFingerprint")]
     [InlineData("exactResolutionDecisionFingerprint")]
@@ -349,7 +358,8 @@ public sealed class Pass2BusinessLogicValidationTests
             .Select(value => value.State).SingleAsync());
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task CommitAsync_CoordinatedAuthorityFingerprintCorruptionRejectsEchoedCorruptionWithoutPublicationAsync()
     {
         await using CommitFixture fixture = await CommitFixture.CreateAsync();
@@ -410,7 +420,8 @@ public sealed class Pass2BusinessLogicValidationTests
             .Select(value => value.Id).ToArrayAsync());
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task CommitAsync_ProviderEvidenceSetFingerprintDriftAfterDispatch_RejectsWithoutPublicationAsync()
     {
         await using CommitFixture fixture = await CommitFixture.CreateAsync();
@@ -441,7 +452,8 @@ public sealed class Pass2BusinessLogicValidationTests
             .Select(value => value.State).SingleAsync());
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task CommitAsync_CorrelatedProviderOwnerAndFingerprintDrift_RejectsWithoutPublicationAsync()
     {
         await using CommitFixture fixture = await CommitFixture.CreateAsync();
@@ -510,7 +522,8 @@ public sealed class Pass2BusinessLogicValidationTests
             BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)!
             .SetValue(target, value);
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task CommitAsync_TitleBoundaryUsesEmbeddedBusinessLogicSchemaAuthorityAsync()
     {
         Assembly core = typeof(Pass2BusinessLogicSchemaContract).Assembly;
@@ -536,7 +549,8 @@ public sealed class Pass2BusinessLogicValidationTests
         Assert.Equal(0, fixture.Access.WriteCallCount);
     }
 
-    [Theory]
+    [Trait("Suite", "LocalTools")]
+    [SuiteTheory("LocalTools")]
     [MemberData(nameof(RejectionVectors))]
     public async Task CommitAsync_InvalidSemanticVector_RejectsWithoutWritesAsync(string vector)
     {
@@ -632,7 +646,8 @@ public sealed class Pass2BusinessLogicValidationTests
         Assert.Equal(0, fixture.Access.WriteCallCount);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task CommitAsync_ReturnedButUncitedEvidenceIsExcludedFromUsedDocumentsAsync()
     {
         await using CommitFixture fixture = await CommitFixture.CreateAsync();

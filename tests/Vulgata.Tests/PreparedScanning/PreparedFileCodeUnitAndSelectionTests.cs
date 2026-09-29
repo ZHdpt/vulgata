@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Reflection;
 using Vulgata.Core.DomainServices;
 using Vulgata.Core.Entities;
@@ -12,7 +13,8 @@ namespace Vulgata.Tests.PreparedScanning;
 /// </summary>
 public sealed class PreparedFileCodeUnitAndSelectionTests
 {
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void FileCodeUnitFactory_ExposesExactBoundedConstructionSeam()
     {
         Type planner = typeof(PreparedScanPlanner);
@@ -29,7 +31,8 @@ public sealed class PreparedFileCodeUnitAndSelectionTests
             parameter => parameter.Name is "absolutePath" or "sourceContent" or "hostPath");
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void FileCodeUnitConstruction_ExposesWholeFileAndExactSplitBoundChecks()
     {
         Type factory = typeof(PreparedFileCodeUnitDraft);
@@ -39,7 +42,8 @@ public sealed class PreparedFileCodeUnitAndSelectionTests
         Assert.Contains("Create", names);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void RelatedFileExpansion_UsesBoundedCallsImportsInheritsAndTimeoutWarning()
     {
         Assembly infrastructure = typeof(Vulgata.Infrastructure.Git.PreparedScanCandidateEnumerator)
@@ -65,7 +69,8 @@ public sealed class PreparedFileCodeUnitAndSelectionTests
                 property.Name.Contains("Timeout", StringComparison.Ordinal));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Selection_RequiresBothNamedOrdinalDomainsAndOrdinalIndependentIdentity()
     {
         PropertyInfo[] draftProperties = typeof(PreparedFileCodeUnitDraft)
@@ -91,7 +96,8 @@ public sealed class PreparedFileCodeUnitAndSelectionTests
         Assert.Equal(firstFingerprint, secondFingerprint);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void MatchedOwner_FileCodeUnitSeamCarriesServerOwnedSymbolName()
     {
         PropertyInfo[] inputProperties = typeof(PreparedFileCodeUnitInput)
@@ -107,7 +113,8 @@ public sealed class PreparedFileCodeUnitAndSelectionTests
             property => property.Name == "SymbolName" && property.PropertyType == typeof(string));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void SemanticOwner_UsesSeparateV2IdentityBuilderWithOrdinalFqnBinding()
     {
         MethodInfo[] identityMethods = typeof(PreparedScanIdentityBuilders)
@@ -123,7 +130,8 @@ public sealed class PreparedFileCodeUnitAndSelectionTests
                     parameter.Name is "symbolName" or "fullyQualifiedSymbol"));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void CanonicalEnvelope_UnknownDomainAndVersion_AreRejectedByCreateAndValidate()
     {
         Assert.Throws<ArgumentException>(() => CanonicalEnvelope.Create(

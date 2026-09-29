@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Reflection;
 using Vulgata.Core.DomainServices;
 using Vulgata.Core.Entities;
@@ -6,7 +7,8 @@ namespace Vulgata.Tests.RetainedSource;
 
 public sealed class RetainedSourceApplicationContractTests
 {
-    [Theory]
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
     [MemberData(nameof(InvalidSourceSnapshots))]
     public void SourceSnapshot_Create_InvalidIdentityOrValue_ThrowsArgumentException(
         InvalidSourceSnapshot input)
@@ -22,7 +24,8 @@ public sealed class RetainedSourceApplicationContractTests
             input.CompletedAt));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void SourceSnapshot_Create_ValidIdentityAndValues_AcceptsSourceOnlyRecord()
     {
         SourceSnapshot snapshot = SourceSnapshot.Create(
@@ -40,7 +43,8 @@ public sealed class RetainedSourceApplicationContractTests
         Assert.Equal(17, snapshot.TotalBlobBytes);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void PublicCaptureContract_AlreadyCorrect_UsesOnlyRepositoryRefAndCancellation()
     {
         MethodInfo acquire = typeof(IRetainedSourceApplication).GetMethod(
@@ -65,7 +69,8 @@ public sealed class RetainedSourceApplicationContractTests
                 "maximumAggregateBlobBytes" or "deadline" or "limits");
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void OrdinaryResults_AlreadyCorrect_ContainNoPhysicalWorkspaceLocators()
     {
         Type[] ordinarySurface =

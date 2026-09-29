@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Reflection;
 using Vulgata.Core.DomainServices;
 using Vulgata.Core.Entities;
@@ -10,7 +11,8 @@ namespace Vulgata.Tests.PreparedScanning;
 [Collection(PreparedScanningCollection.Name)]
 public sealed class PreparedScanInitiationCoordinatorTests
 {
-    [Theory]
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
     [InlineData("AdministratorRole")]
     [InlineData("SystemOwnerRole")]
     [InlineData("SystemOwnerAssignment")]
@@ -52,7 +54,8 @@ public sealed class PreparedScanInitiationCoordinatorTests
         Assert.DoesNotContain(TestSystemId.ToString("D"), result.FailureCode ?? string.Empty, StringComparison.Ordinal);
     }
 
-    [Theory]
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
     [InlineData("InvisibleSystem")]
     [InlineData("InvisibleRepository")]
     [InlineData("MalformedScope")]
@@ -124,7 +127,8 @@ public sealed class PreparedScanInitiationCoordinatorTests
         Assert.DoesNotContain(TestRepositoryOneId.ToString("D"), result.FailureCode ?? string.Empty, StringComparison.Ordinal);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task RuntimeNotReady_IsReturnedBeforeStoreAsync()
     {
         CountingInitiationStore store = new();
@@ -147,7 +151,8 @@ public sealed class PreparedScanInitiationCoordinatorTests
         Assert.Null(result.Response);
     }
 
-    [Theory]
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
     [InlineData("null")]
     [InlineData("legacy-v1")]
     [InlineData("malformed-hash")]
@@ -204,7 +209,8 @@ public sealed class PreparedScanInitiationCoordinatorTests
         Assert.Null(result.Response);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void PrePublicationRevocation_RemainsASeparatePreparedCoordinatorBoundary()
     {
         MethodInfo prepare = Assert.Single(
@@ -219,7 +225,8 @@ public sealed class PreparedScanInitiationCoordinatorTests
                       !method.GetCustomAttributes<ObsoleteAttribute>().Any());
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void ExactTuplePreparation_RequiresTupleOnlyCoordinatorAndBuilderSeams()
     {
         MethodInfo build = Assert.Single(
@@ -253,7 +260,8 @@ public sealed class PreparedScanInitiationCoordinatorTests
             parameter => Assert.Equal(typeof(CancellationToken), parameter.ParameterType));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task RecoverPreparedAsync_UsesOnlyTheExistingHandoffSourceAsync()
     {
         MethodInfo recover = Assert.Single(

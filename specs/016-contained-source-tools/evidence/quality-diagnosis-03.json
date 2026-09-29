@@ -1,0 +1,45 @@
+{
+  "kind": "analysis",
+  "stage": "diagnosis",
+  "episode_id": "18-1/implementation/1",
+  "at_count": 6,
+  "source_commit": "88c06be27cf2db4ef63aac7032605bf9a039b83b",
+  "failed_obligation": "The configured full suite must exit zero on the quality-reviewed candidate using authorized isolated PostgreSQL resources.",
+  "failure_source": {
+    "path": "specs/016-contained-source-tools/evidence/verify-test-failure-03.json",
+    "sha256": "9f514151a68a4631ebe1884f4b0769a6fdfc9b3d4aeffe03effbf3f36f383551"
+  },
+  "findings": [
+    {
+      "id": "D18.1-06-A",
+      "classification": "stale cross-platform test/artifact fingerprint",
+      "evidence": "The accepted contract and embedded profile have identical working-tree SHA-256 3a71cfe31bbd2ac32addc1df0fda3cc4e5a0a5b0e4a9f5e6f81f196eb6c2dd55. Git's canonical LF blob is b84223c211f90328e62ca3172f3c398d42fb513b228ca0ff490725d6046398db. The hard-coded 5d621ca3 value matches neither. Both JSON paths have unspecified text/EOL attributes while core.autocrlf is true.",
+      "owner": "tests",
+      "correction": "Pin both reviewed JSON paths to LF in .gitattributes and update the historical test fingerprint to the canonical Git-blob SHA-256. This stabilizes the embedded production resource bytes across checkout platforms without changing its JSON semantics."
+    },
+    {
+      "id": "D18.1-06-B",
+      "classification": "full-suite PostgreSQL parallel resource contention",
+      "evidence": "The retained-source invalid-configuration method passed all 10 cases in isolation in 13 seconds, and the durable-scan acknowledgement-loss case passed 1/1 in isolation in 3 seconds against fresh owned databases. Their full-suite failures were Npgsql read timeouts, including one during cleanup, rather than assertion or state-transition failures.",
+      "owner": "tests",
+      "correction": "Place the two previously ungrouped PostgreSQL-heavy classes in one DisableParallelization collection so their owned-database lifecycles do not compete with the parallel suite. Keep GUID database ownership and exact cleanup assertions unchanged."
+    }
+  ],
+  "diagnostic_commands": [
+    {
+      "path": "specs/016-contained-source-tools/evidence/diagnosis-retained-source-isolated-output-01.txt",
+      "sha256": "b55eab2e2434e3f93c8a3d96a88f4027e3a3101e787ed2f9177b96ef6bb09e62"
+    },
+    {
+      "path": "specs/016-contained-source-tools/evidence/diagnosis-durable-scan-isolated-output-01.txt",
+      "sha256": "7f2631de40046a2d963e524ad927bc649ce71bed664c4bf0c8b58bd20b2e0238"
+    }
+  ],
+  "failed_approaches": [
+    "Correcting only the first migration-history fixture defect made that class green but did not address unrelated historical fingerprint drift.",
+    "Running every PostgreSQL lifecycle test concurrently in the configured full suite exceeded the local server's reliable response window even though both failed database cases pass serially."
+  ],
+  "next_repair": "Make only the four test/artifact-hygiene changes: two LF attributes, the canonical fingerprint constant, a nonparallel PostgreSQL collection definition, and collection annotations on the two failing classes. Then run the fingerprint class, both isolated database boundaries, their combined focused set, and finally the configured full suite.",
+  "unchanged_scope": "No Story 18.1 production code, accepted behavior, schema, migration, Worker tool, Scan strategy, or PRD requirement changes.",
+  "summary": "All three failures are test/artifact boundary defects. The fingerprint is stale and platform-sensitive; the database cases are green serially and failed only under full-suite contention. Earliest owner is tests."
+}

@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
@@ -9,9 +10,10 @@ namespace Vulgata.Tests;
 public sealed class ExactResolutionProfileTests
 {
     private const string ReviewedFingerprint =
-        "5d621ca3a09d88305abc2a3661747ef4c9e04b3016f54baced7dc9c113e434bb";
+        "b84223c211f90328e62ca3172f3c398d42fb513b228ca0ff490725d6046398db";
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public void Load_ReviewedEmbeddedResource_MatchesAcceptedBytesAndFingerprint()
     {
         ExactResolutionProfile profile = new ExactResolutionProfileCatalog().Load();
@@ -24,7 +26,8 @@ public sealed class ExactResolutionProfileTests
             profile.ProfileFingerprint);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public void Load_ReviewedEmbeddedResource_ExposesExactReviewedSelectorsInCanonicalOrder()
     {
         ExactResolutionProfile profile = new ExactResolutionProfileCatalog().Load();
@@ -94,7 +97,8 @@ public sealed class ExactResolutionProfileTests
             observation.EvidenceLocator);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public void Create_RuntimeRequest_RequiresCompleteDistinctCanonicalAliasBindings()
     {
         ExactResolutionProfile profile = new ExactResolutionProfileCatalog().Load();
@@ -136,7 +140,8 @@ public sealed class ExactResolutionProfileTests
             [account, channel with { RepositoryId = account.RepositoryId }]));
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public void BindForValidation_CrossSystemBinding_IsIndistinguishablePreEvidenceRefusal()
     {
         ExactResolutionProfile profile = new ExactResolutionProfileCatalog().Load();
@@ -167,7 +172,8 @@ public sealed class ExactResolutionProfileTests
         Assert.DoesNotContain(systemId.ToString(), exception.ToString(), StringComparison.Ordinal);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public void BindForValidation_CompleteOwnedRevisionEvidence_ReturnsCanonicalRequest()
     {
         MethodInfo? gate = typeof(ExactResolutionProfileCatalog).GetMethod(
@@ -207,7 +213,8 @@ public sealed class ExactResolutionProfileTests
             binding => Assert.Equal("mbs_channel", binding.Alias));
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public void BindForValidation_InvalidBindingProvenanceOrRevision_UsesOneBoundedRefusal()
     {
         ExactResolutionProfile profile = new ExactResolutionProfileCatalog().Load();
@@ -305,7 +312,8 @@ public sealed class ExactResolutionProfileTests
         }
     }
 
-    [Theory]
+    [Trait("Suite", "LocalTools")]
+    [SuiteTheory("LocalTools")]
     [MemberData(nameof(InvalidProfileBytes))]
     public void ParseForValidation_OpenMalformedOrNoncanonicalResource_ThrowsInvalidDataException(
         byte[] bytes)
@@ -314,7 +322,8 @@ public sealed class ExactResolutionProfileTests
             ExactResolutionProfileCatalog.ParseForValidation(bytes));
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public void Load_ReviewedEmbeddedResource_ContainsNoDeploymentOrPersistenceSecrets()
     {
         ExactResolutionProfile profile = new ExactResolutionProfileCatalog().Load();

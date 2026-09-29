@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Net;
 using System.Net.Http.Json;
 using System.Collections.Concurrent;
@@ -44,7 +45,8 @@ public sealed class Pass2ProductionCompositionTests : IClassFixture<LoginLogoutT
         _factory = factory;
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task ProductionContainer_ResolvesPass2RuntimeGraphWithoutEagerProviderActivityAsync()
     {
         using var baseFactory = new LoginLogoutTests.CustomWebApplicationFactory();
@@ -87,7 +89,8 @@ public sealed class Pass2ProductionCompositionTests : IClassFixture<LoginLogoutT
         Assert.Equal(0, transport.CallCount);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public void Pass2RuntimeEntryPoints_DeriveAuthorityAndDoNotInjectAnalysisProviders()
     {
         Type[] entryPoints =
@@ -120,7 +123,8 @@ public sealed class Pass2ProductionCompositionTests : IClassFixture<LoginLogoutT
         }
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public void WebComposition_ExposesCorePass2SeamsWithoutEfInPublicEntryPoints()
     {
         Type webAssembly = typeof(Program).Assembly.GetType("Vulgata.Web.Program") ??
@@ -137,7 +141,8 @@ public sealed class Pass2ProductionCompositionTests : IClassFixture<LoginLogoutT
         Assert.NotNull(typeof(IPass2BusinessLogicDocumentCommitter));
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public void WebPass2ProductionBoundary_DoesNotReferenceEfOrVulgataDbContext()
     {
         DirectoryInfo? repository = new DirectoryInfo(Directory.GetCurrentDirectory());
@@ -163,7 +168,8 @@ public sealed class Pass2ProductionCompositionTests : IClassFixture<LoginLogoutT
         }
     }
 
-    [Theory]
+    [Trait("Suite", "LocalTools")]
+    [SuiteTheory("LocalTools")]
     [InlineData("current-pointer")]
     [InlineData("supersession")]
     [InlineData("profiled-revision")]
@@ -284,7 +290,8 @@ public sealed class Pass2ProductionCompositionTests : IClassFixture<LoginLogoutT
             value => Assert.NotEqual(Pass2JobExecutionState.Completed, value.State));
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task RuntimeMembers_BindExactOrdinaryPass1AndCompletedScanJobIdentitiesAsync()
     {
         await using RuntimeHydrationFixture fixture = await RuntimeHydrationFixture.CreateAsync(this);
@@ -318,7 +325,8 @@ public sealed class Pass2ProductionCompositionTests : IClassFixture<LoginLogoutT
         });
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task RuntimeBinding_PropagatesPersistedManifestRequestedRefAsync()
     {
         await using RuntimeHydrationFixture fixture = await RuntimeHydrationFixture.CreateAsync(this);
@@ -349,7 +357,8 @@ public sealed class Pass2ProductionCompositionTests : IClassFixture<LoginLogoutT
         Assert.Equal(providerManifest.RequestedRef, request.RuntimeBinding.Provider.ExpectedRef);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task RuntimeBinding_CarriesActualPromptAndSubmissionSchemaArtifactHashesAsync()
     {
         await using RuntimeHydrationFixture fixture = await RuntimeHydrationFixture.CreateAsync(this);
@@ -394,7 +403,8 @@ public sealed class Pass2ProductionCompositionTests : IClassFixture<LoginLogoutT
         Assert.Equal(schemaHash, request.SubmissionSchemaFingerprint);
     }
 
-    [Theory]
+    [Trait("Suite", "LocalTools")]
+    [SuiteTheory("LocalTools")]
     [InlineData("absent")]
     [InlineData("mutated")]
     public async Task V2Authority_LegacyExactEvidenceIsIrrelevantToHydrationAsync(string legacyState)
@@ -422,7 +432,8 @@ public sealed class Pass2ProductionCompositionTests : IClassFixture<LoginLogoutT
         Assert.Equal(0, fixture.Transport.CallCount);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public void Pass2Execution_ExposesPersistedAcceptedWorkerContractIdentities()
     {
         string[] required =
@@ -435,7 +446,8 @@ public sealed class Pass2ProductionCompositionTests : IClassFixture<LoginLogoutT
         Assert.All(required, name => Assert.NotNull(typeof(Pass2Execution).GetProperty(name)));
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task V2Authority_SharedReferencesEdge_HydratesEachDecisionContributionAsync()
     {
         using var baseFactory = new LoginLogoutTests.CustomWebApplicationFactory();
@@ -490,7 +502,8 @@ public sealed class Pass2ProductionCompositionTests : IClassFixture<LoginLogoutT
         Assert.Equal(0, transport.CallCount);
     }
 
-    [Theory]
+    [Trait("Suite", "LocalTools")]
+    [SuiteTheory("LocalTools")]
     [InlineData("absent")]
     [InlineData("committed-document-mismatch")]
     public async Task RuntimeMembers_AbsentOrMismatchedCompletedScanJob_RefusesHydrationAsync(
@@ -574,7 +587,8 @@ public sealed class Pass2ProductionCompositionTests : IClassFixture<LoginLogoutT
 
     }
 
-    [Theory]
+    [Trait("Suite", "LocalTools")]
+    [SuiteTheory("LocalTools")]
     [InlineData(RoleNames.SystemOwner)]
     [InlineData(RoleNames.Administrator)]
     public async Task PostClaimAuthorizationRevocation_FailsSecurityWithoutTransportAsync(
@@ -649,7 +663,8 @@ public sealed class Pass2ProductionCompositionTests : IClassFixture<LoginLogoutT
                 .SingleAsync());
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task InvalidIdentityApiBoundary_Returns401WithoutProviderOrNetworkActivityAsync()
     {
         using var baseFactory = new LoginLogoutTests.CustomWebApplicationFactory();
@@ -680,7 +695,8 @@ public sealed class Pass2ProductionCompositionTests : IClassFixture<LoginLogoutT
         Assert.Equal(0, transport.CallCount);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task AuthenticatedStartStatusResume_HostedPathUsesPersistedAuthorityAndRevocationFailsClosedAsync()
     {
         var transport = new BoundedFakeTransport();
@@ -729,7 +745,8 @@ public sealed class Pass2ProductionCompositionTests : IClassFixture<LoginLogoutT
         Assert.True(transport.CallCount >= 1);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task AdministratorStart_HostedPathUsesCurrentRoleAndRoleRemovalFailsClosedAsync()
     {
         using var isolatedFactory = new LoginLogoutTests.CustomWebApplicationFactory();
@@ -794,7 +811,8 @@ public sealed class Pass2ProductionCompositionTests : IClassFixture<LoginLogoutT
             seed.RepositoryIds));
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task HostedFailureLog_UsesClosedCategoryAndCodeWithoutExceptionAtomsAsync()
     {
         Guid executionId = Guid.NewGuid();

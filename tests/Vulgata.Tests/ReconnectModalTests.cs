@@ -1,8 +1,10 @@
+using Vulgata.Tests.TestInfrastructure;
 namespace Vulgata.Tests;
 
 public sealed class ReconnectModalTests
 {
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void FailedReconnect_DoesNotReloadImmediately()
     {
         string script = File.ReadAllText(Path.Combine(

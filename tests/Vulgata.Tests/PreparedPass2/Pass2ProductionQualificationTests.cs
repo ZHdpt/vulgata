@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Net;
 using System.Net.Http.Json;
 using System.Security.Cryptography;
@@ -30,7 +31,8 @@ public sealed class Pass2ProductionQualificationTests
     private const string _administratorVariable = "VULGATA_T124_POSTGRES_ADMIN";
     private const string _sourceConnectionVariable = "VULGATA_T124_SOURCE_CONNECTION";
 
-    [Fact]
+    [Trait("Suite", "External")]
+    [SuiteFact("External")]
     public void Qualification_IsExplicitlyOptIn_AndDoesNotChangeDefaultProviderBehavior()
     {
         string? value = Environment.GetEnvironmentVariable(OptInVariable);
@@ -44,6 +46,7 @@ public sealed class Pass2ProductionQualificationTests
             $"{ProvisionExactHandoffVariable} must be an explicit boolean switch when supplied.");
     }
 
+    [Trait("Suite", "External")]
     [T048ProductionQualificationFact]
     public async Task ApprovedTwoRepositoryPair_ProducesSanitizedSourceGroundedBusinessDocumentAsync()
     {
@@ -515,9 +518,9 @@ public sealed class Pass2ProductionQualificationTests
         Environment.SetEnvironmentVariable("VULGATA_T062_SOURCE_BINDING_READY", "1");
     }
 
-    internal sealed class T048ProductionQualificationFactAttribute : Xunit.FactAttribute
+    internal sealed class T048ProductionQualificationFactAttribute : SuiteFactAttribute
     {
-        public T048ProductionQualificationFactAttribute() => Skip =
+        public T048ProductionQualificationFactAttribute() : base("External") => Skip =
             !IsTrue(Environment.GetEnvironmentVariable("VULGATA_T124_RUN_PRODUCTION_QUALIFICATION")) ||
             !IsTrue(Environment.GetEnvironmentVariable("VULGATA_T124_ALLOW_PROVIDER_CONTENT"))
                 ? "T048 external qualification is opt-in; set both authorization flags to 1."
@@ -615,7 +618,8 @@ public sealed class Pass2ProductionQualificationTests
             QualificationEvidenceJsonOptions()) + Environment.NewLine);
     }
 
-    [Fact]
+    [Trait("Suite", "External")]
+    [SuiteFact("External")]
     public void QualificationEvidence_SerializesRequiredSnakeCaseContract()
     {
         var evidence = new QualificationEvidence(
@@ -854,7 +858,7 @@ public sealed class Pass2ProductionQualificationTests
         }
     }
 
-    private sealed class QualificationDatabase : IAsyncDisposable
+    internal sealed class QualificationDatabase : IAsyncDisposable
     {
         private readonly string _administrator;
         private bool _disposed;
@@ -876,11 +880,12 @@ public sealed class Pass2ProductionQualificationTests
         internal static async Task<QualificationDatabase> CloneAsync(
             string administratorConnection, string sourceConnection)
         {
+            TestResourceScope.ValidateAdministrator(administratorConnection);
+            TestResourceScope.ValidateOwnedTarget(sourceConnection);
             var administrator = new NpgsqlConnectionStringBuilder(administratorConnection)
             { Pooling = false, Timeout = 10, CommandTimeout = 120 };
             var source = new NpgsqlConnectionStringBuilder(sourceConnection);
-            bool approvedSource = StringComparer.OrdinalIgnoreCase.Equals(source.Database, "vulgata") ||
-                source.Database.StartsWith("vulgata_story124_", StringComparison.OrdinalIgnoreCase);
+            bool approvedSource = source.Database.StartsWith("vulgata_story124_", StringComparison.Ordinal);
             if (!approvedSource ||
                 !StringComparer.OrdinalIgnoreCase.Equals(source.Host, administrator.Host) ||
                 source.Port != administrator.Port)
@@ -896,6 +901,7 @@ public sealed class Pass2ProductionQualificationTests
             await using (var create = new NpgsqlCommand(
                 $"CREATE DATABASE {Quote(name)} WITH TEMPLATE {Quote(source.Database)};", connection))
                 await create.ExecuteNonQueryAsync();
+            TestResourceScope.RecordCreated(administrator.ConnectionString, name);
             var target = new NpgsqlConnectionStringBuilder(sourceConnection)
             { Database = name, Pooling = false };
             var database = new QualificationDatabase(

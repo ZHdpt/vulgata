@@ -1,0 +1,35 @@
+{
+  "kind": "analysis",
+  "stage": "lookback",
+  "evidence_id": "18-1-access-prepared-source-through-contained-read-only-tools/lookback/8",
+  "observed_at": "2026-09-29T07:10:53.6426273Z",
+  "record_path": "docs/bmad/implementation-artifacts/18-1-access-prepared-source-through-contained-read-only-tools.md",
+  "section_sha256": "7b7eb2766c7538ec7b7094c9dbc2420d041a0294659ec34997b99169dfd41dce",
+  "record_content_sha256": "17602f31e9b529d5338f340fb1cdf55409744e588a9ee47c166660b4336d7717",
+  "convergence": {
+    "path": "specs/016-contained-source-tools/evidence/convergence-result-10.json",
+    "sha256": "e860079973e8c26015c4df693dcdb54a6ae4d5fc67d624669cc6eae9a1aff4bd"
+  },
+  "output_hashes": {
+    "docs/agents/testing.md": "00796d35eb4bc1389a348ad1aa856da41a8ba5550530892bb7bd966bc02a9259",
+    "docs/project-lessons.md": "bf65e2c44f8cca0bbe9f588e17f60253929edc9d0067eef7b5801a8e12f16c8c"
+  },
+  "disposition": "updated",
+  "authority_decisions": [
+    {
+      "path": "specs/016-contained-source-tools/evidence/plan-authorization-01.json",
+      "sha256": "216bc30d226258e82082e1c267c76132df96daecb8563f93bb953fc6ff1ee9f0"
+    },
+    {
+      "path": "specs/016-contained-source-tools/evidence/implementation-approval-02.json",
+      "sha256": "5c955a9648b4f21133cd1f8da465300a0feddc18d4d97db4fbe90565454c26c8"
+    },
+    {
+      "path": "specs/016-contained-source-tools/evidence/recovery-extension-06.json",
+      "sha256": "f00c0194532df4aaf1d14ca3958aa595fb1c319e4c03c53bc5907a9b949ae234"
+    }
+  ],
+  "unresolved_blockers": [],
+  "follow_up_paths": [],
+  "summary": "The refreshed lookback binds the proven restricted-launcher 0xC0000022 cause, unchanged focused 119/119 and complete SelfContained 1,975/1,975 outside-sandbox passes, and clean convergence. Reusable launcher-permission guidance is synchronized to docs/agents/testing.md and docs/project-lessons.md. No product, test, PRD, architecture, or glossary change is required; excluded suites remain unclaimed."
+}

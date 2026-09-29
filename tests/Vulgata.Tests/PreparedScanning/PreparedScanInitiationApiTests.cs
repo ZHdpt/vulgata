@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Net;
 using System.Net.Http.Json;
 using System.Reflection;
@@ -32,7 +33,8 @@ namespace Vulgata.Tests.PreparedScanning;
 [Collection(PreparedScanningCollection.Name)]
 public sealed class PreparedScanInitiationApiTests
 {
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task PostPreparedScan_HostilePass1ResourceActivation_Returns503WithoutSideEffectsAsync()
     {
         CountingAuthorizationRechecker rechecker = new();
@@ -124,7 +126,8 @@ public sealed class PreparedScanInitiationApiTests
             string.Join(" ", failures));
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task PostPreparedScan_NoPreseededLifecycleState_CreatesCompletePairAndManifestsAsync()
     {
         await using PreparedScanInitiationPostgreSqlFixture database =
@@ -205,7 +208,8 @@ public sealed class PreparedScanInitiationApiTests
         Assert.Equal(new PreparedScanInitiationCounts(2, 2, 2, 1, 2, 120, 0), after);
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task PostPreparedScan_IdenticalRequest_ReplaysSameTupleWithoutDuplicatesAsync()
     {
         await using PublicPreparedScanScenario scenario = await CreateScenarioAsync();
@@ -234,7 +238,8 @@ public sealed class PreparedScanInitiationApiTests
         Assert.Equal(afterFirst, await ReadCountsAsync(scenario.Database));
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task PostPreparedScan_MismatchedPairOrRevision_FailsClosedWithoutDisclosureAsync()
     {
         await using PublicPreparedScanScenario scenario = await CreateScenarioAsync();
@@ -269,7 +274,8 @@ public sealed class PreparedScanInitiationApiTests
         Assert.Equal(before, await ReadCountsAsync(scenario.Database));
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task PostPreparedScan_InitialUnauthorized_CreatesNothingAsync()
     {
         await using PublicPreparedScanScenario scenario = await CreateScenarioAsync(login: false);
@@ -282,7 +288,8 @@ public sealed class PreparedScanInitiationApiTests
             await ReadCountsAsync(scenario.Database));
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task PostPreparedScan_IdenticalConcurrentRequests_ExposeOneTupleAsync()
     {
         await using PublicPreparedScanScenario scenario = await CreateScenarioAsync();
@@ -311,7 +318,8 @@ public sealed class PreparedScanInitiationApiTests
         }
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task PostPreparedScan_PostInitiationPreparationFailure_RetriesExactTupleAsync()
     {
         await using PublicPreparedScanScenario scenario = await CreateScenarioAsync();
@@ -338,7 +346,8 @@ public sealed class PreparedScanInitiationApiTests
         Assert.Equal(0, afterRetry.LogicalDocuments);
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task PostPreparedScan_FreshAuthorizationRevocation_CreatesNothingAsync()
     {
         CountingAuthorizationRechecker rechecker = new() { Deny = true };
@@ -358,7 +367,8 @@ public sealed class PreparedScanInitiationApiTests
             await ReadCountsAsync(scenario.Database));
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task PostPreparedScan_PreparedAndAdvancedReplay_UsesNoAnalysisAsync()
     {
         await using PublicPreparedScanScenario scenario = await CreateScenarioAsync();
@@ -373,7 +383,8 @@ public sealed class PreparedScanInitiationApiTests
         Assert.Equal(beforeReplay, await ReadCountsAsync(scenario.Database));
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task PostPreparedScan_PartialCorruptOrLegacyState_MapsConflictWithoutAnalysisAsync()
     {
         CountingConflictInitiationStore store = new();
@@ -395,7 +406,8 @@ public sealed class PreparedScanInitiationApiTests
             await ReadCountsAsync(scenario.Database));
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task PostPreparedScan_DefaultComposition_UsesPreparedPortsAndNoLaterStagesAsync()
     {
         await using PublicPreparedScanScenario scenario = await CreateScenarioAsync();
@@ -407,7 +419,8 @@ public sealed class PreparedScanInitiationApiTests
         Assert.True(scenario.BuilderEntryTupleVisible);
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public void InitiationBoundary_HasNoForbiddenLaterStageDependencyOrLegacyEndpointCoordinator()
     {
         Type coordinator = typeof(Program).Assembly.GetType(
@@ -438,7 +451,8 @@ public sealed class PreparedScanInitiationApiTests
             name => forbiddenTokens.Any(token => name.Contains(token, StringComparison.OrdinalIgnoreCase)));
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public void PreparedScanPairBuilder_RequiresExactlyOneServerOwnedReviewedProfileAuthority()
     {
         Type builder = typeof(Program).Assembly.GetType(

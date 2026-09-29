@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Globalization;
 using System.Net;
 using System.Reflection;
@@ -12,7 +13,8 @@ namespace Vulgata.Tests.RetainedSource;
 
 public sealed class RetainedSourcePostgreSqlTests
 {
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task Migration_PostgreSql17_CreatesSourceSnapshotStore()
     {
         await using RetainedSourcePostgreSqlDatabase database =
@@ -26,7 +28,8 @@ public sealed class RetainedSourcePostgreSqlTests
         Assert.True(await TableExistsAsync(context, "SourceSnapshots"));
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task SourceSnapshot_PostgreSql17_DeclaresFixedShapeChecksAndRestrictiveRelationship()
     {
         await using RetainedSourcePostgreSqlDatabase database =
@@ -71,7 +74,8 @@ public sealed class RetainedSourcePostgreSqlTests
         Assert.Equal(DeleteBehavior.Restrict, foreignKey.DeleteBehavior);
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task SourceSnapshot_PostgreSql17_RejectsDuplicateIdentityStorageAndNegativeCounts()
     {
         await using RetainedSourcePostgreSqlDatabase database =
@@ -121,7 +125,8 @@ public sealed class RetainedSourcePostgreSqlTests
         await Assert.ThrowsAsync<PostgresException>(() => negative.ExecuteNonQueryAsync());
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task SourceSnapshot_PostgreSql17_RejectsMutationAndRestrictsRepositoryDeletion()
     {
         await using RetainedSourcePostgreSqlDatabase database =
@@ -263,6 +268,7 @@ internal sealed class RetainedSourcePostgreSqlDatabase : IAsyncDisposable
         CancellationToken cancellationToken = default)
     {
         string administratorConnectionString = RequireAdministratorConnection();
+        Vulgata.Tests.TestInfrastructure.TestResourceScope.ValidateAdministrator(administratorConnectionString);
         var suppliedConnection = new DbConnectionStringBuilder
         {
             ConnectionString = administratorConnectionString,
@@ -297,6 +303,7 @@ internal sealed class RetainedSourcePostgreSqlDatabase : IAsyncDisposable
             await create.ExecuteNonQueryAsync(cancellationToken);
         }
 
+        Vulgata.Tests.TestInfrastructure.TestResourceScope.RecordCreated(administrator.ConnectionString, databaseName);
         var target = new NpgsqlConnectionStringBuilder(administrator.ConnectionString)
         {
             Database = databaseName,

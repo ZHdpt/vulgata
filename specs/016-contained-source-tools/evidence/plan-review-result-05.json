@@ -1,0 +1,72 @@
+{
+  "observed_after": {
+    "path": "specs/016-contained-source-tools/evidence/workflow-transition-010-definition-review-accept.json",
+    "sha256": "a6214331e7811697d4e97636961203b213a1dd8b502252cb408934ad00b5aa51"
+  },
+  "raw_result": {
+    "schema_version": "1.0",
+    "gate": "plan-review",
+    "verdict": "REVISE",
+    "reviewed_commit": "3c85920eb38e0bebe3a17add6c1769997783ec13",
+    "reviewed_boundary": {
+      "base_commit": "3c85920eb38e0bebe3a17add6c1769997783ec13",
+      "candidate_commit": "3c85920eb38e0bebe3a17add6c1769997783ec13",
+      "diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "artifact_hashes": {
+        "specs/016-contained-source-tools/contracts/prepared-source-tools.md": "513dd8ddb3ba8ea02ce41653a436cb4bcb882347676ef29084c89a8d4b92015a",
+        "specs/016-contained-source-tools/data-model.md": "fa0a2496424b70e48ca207354de29890b54bd8b9bdab0178af7d9ca613e15bb8",
+        "specs/016-contained-source-tools/plan.md": "926982636796b020bc9f22af3aab52214ddfc809bfef9fdcabaf85b32637884e",
+        "specs/016-contained-source-tools/quickstart.md": "122ce3bd62a8fed32dd9508d256d1528d090c3b612f2e4d4e3b7f40965c3e38e",
+        "specs/016-contained-source-tools/research.md": "40f98b5061aa54fc9757e2377905450bea5a7e2fabcd9fa0a9b05f449e1c71de",
+        "specs/016-contained-source-tools/spec.md": "48c92e4f6582471a1664e553b48756a811f22bb2b4f1334206e94303629b0b6d",
+        "specs/016-contained-source-tools/tasks.md": "dcc72158a1a8ad029f492bd90e063399ce53bfa5c65990f7ac454f19ee377d20"
+      },
+      "owned_paths": [
+        "specs/016-contained-source-tools/spec.md",
+        "specs/016-contained-source-tools/plan.md",
+        "specs/016-contained-source-tools/research.md",
+        "specs/016-contained-source-tools/data-model.md",
+        "specs/016-contained-source-tools/quickstart.md",
+        "specs/016-contained-source-tools/contracts/prepared-source-tools.md",
+        "specs/016-contained-source-tools/tasks.md"
+      ]
+    },
+    "reviewed_artifacts": [
+      "specs/016-contained-source-tools/spec.md",
+      "specs/016-contained-source-tools/plan.md",
+      "specs/016-contained-source-tools/research.md",
+      "specs/016-contained-source-tools/data-model.md",
+      "specs/016-contained-source-tools/quickstart.md",
+      "specs/016-contained-source-tools/contracts/prepared-source-tools.md",
+      "specs/016-contained-source-tools/tasks.md",
+      "specs/016-contained-source-tools/evidence/definition-review-boundary-02.json",
+      "specs/016-contained-source-tools/evidence/plan-review-01.json",
+      "specs/016-contained-source-tools/evidence/plan-review-02.json",
+      "specs/016-contained-source-tools/evidence/plan-review-03.json",
+      "specs/016-contained-source-tools/evidence/plan-review-04.json",
+      "specs/016-contained-source-tools/evidence/definition-review-01.json",
+      "specs/016-contained-source-tools/evidence/definition-review-02.json",
+      "src/dotnet/Vulgata.Core/DomainServices/PreparedSourceContracts.cs",
+      "docs/bmad/planning-artifacts/october-release-epics.md",
+      ".specify/memory/constitution.md",
+      "AGENTS.md",
+      "docs/bmad/planning-artifacts/architecture.md",
+      "docs/bmad/planning-artifacts/architecture/ARCHITECTURE-SPINE.md",
+      "docs/bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md"
+    ],
+    "findings": [
+      {
+        "id": "PR-18.1-ISSUER-SEAM",
+        "severity": "HIGH",
+        "category": "interface-testability",
+        "artifact": "specs/016-contained-source-tools/plan.md",
+        "location": "Implementation Design ID-R01, ID-I01 and ID-T01; trusted issuance contract",
+        "affected_requirement": "Story 18.1 direct production-capability acceptance; spec FR-001 and SC-005; tasks T003-T004",
+        "evidence": "At the reviewed checkpoint, the plan requires tests to call a trusted production issuer, but specifies only the read-context interface after issuance. The contract likewise describes issuance without a callable issuer interface or typed success/failure result. T004 names PreparedSourceContextIssuer while T003 requires public-seam RED tests for missing verifier and absent approval. The completed T002 Core contracts contain a grant request, verifier and read context, but no issuer call. T003's test author would have to invent the public call and its failure shape, a consequential interface decision that should be fixed before behavioral RED.",
+        "correction_outcome": "Define the smallest callable trusted issuer seam and its observable issuance result: required verifier dependency, grant-request input, success/context invariant, sanitized denial and unavailable-root/authority outcomes, and cleanup on failed issuance. Keep the physical root out of Worker arguments and preserve the existing live-authority and containment design. Reconcile the companion contract and T003/T004 test route, then review a separately pinned corrected boundary.",
+        "earliest_owner": "plan"
+      }
+    ],
+    "summary": "REVISE against the committed pre-correction definition. All seven committed artifact hashes were independently verified, and deterministic plan/task structure validation passed; the defect is semantic testability, not missing ID syntax or task coverage. Prior PR-18.1-LIVE-AUTHORITY remains resolved. The visible working-tree correction appears to supply a concrete Infrastructure issuer, typed result and DB-free public test seam within the previously authorized product scope, but it is outside this pinned verdict and requires separate review."
+  }
+}

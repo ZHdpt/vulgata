@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Collections;
 using System.Reflection;
 using Microsoft.Data.Sqlite;
@@ -34,7 +35,8 @@ public sealed class ProductionScanStatusReaderTests
     private static readonly DateTimeOffset _now =
         new(2026, 8, 30, 9, 0, 0, TimeSpan.Zero);
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void PublicSeam_DeclaresOwnershipFilteredListAndGetOperations()
     {
         Type readerContract = RequireContract(ReaderContractName);
@@ -59,7 +61,8 @@ public sealed class ProductionScanStatusReaderTests
         Assert.Equal(resultContract, get.ReturnType.GetGenericArguments()[0]);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void ProductionComposition_ResolvesStatusReaderAndCoordinatorAsScopedServices()
     {
         using var factory = new LoginLogoutTests.CustomWebApplicationFactory();
@@ -78,7 +81,8 @@ public sealed class ProductionScanStatusReaderTests
         Assert.NotSame(firstCoordinator, secondScope.ServiceProvider.GetRequiredService<ProductionScanStatusCoordinator>());
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void ViewContract_ContainsBoundedStateCountsReasonResumeAndProductionEvidenceOrigin()
     {
         Type view = RequireContract(ViewContractName);
@@ -104,7 +108,8 @@ public sealed class ProductionScanStatusReaderTests
         AssertRequiredProperty(view, "EvidenceEligibility");
     }
 
-    [Theory]
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
     [InlineData(ProjectionState.Prepared, "Preparing")]
     [InlineData(ProjectionState.Running, "Running")]
     [InlineData(ProjectionState.RetryScheduled, "Retrying")]
@@ -133,7 +138,8 @@ public sealed class ProductionScanStatusReaderTests
         Assert.Equal(fixture.ExecutionId, GetProperty(view, "ScanExecutionId"));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ListVisibleAsync_DerivesCountsRetryTimeAndBoundedFailureReasonFromPersistedJobs()
     {
         await using ReaderFixture fixture = await ReaderFixture.CreateAsync(
@@ -162,7 +168,8 @@ public sealed class ProductionScanStatusReaderTests
         Assert.DoesNotContain("exception", reason, StringComparison.OrdinalIgnoreCase);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task GetVisibleAsync_HiddenAndUnauthorizedExecutionsAreMissingEquivalent()
     {
         await using ReaderFixture fixture = await ReaderFixture.CreateAsync(ProjectionState.Running);
@@ -201,7 +208,8 @@ public sealed class ProductionScanStatusReaderTests
             StringComparison.OrdinalIgnoreCase);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ListVisibleAsync_OnlyRecoverableCurrentPausedStateCanResumeAndFakeStateIsNeverEligible()
     {
         await using ReaderFixture paused = await ReaderFixture.CreateAsync(ProjectionState.Paused);
@@ -221,7 +229,8 @@ public sealed class ProductionScanStatusReaderTests
         Assert.NotEqual("Demo", GetProperty(pausedView, "EvidenceEligibility")?.ToString());
     }
 
-    [Theory]
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
     [InlineData(DurableScanStoreOutcome.Applied, ProductionScanResumeOutcome.Applied, DurableScanReason.None)]
     [InlineData(DurableScanStoreOutcome.Replay, ProductionScanResumeOutcome.Applied, DurableScanReason.None)]
     [InlineData(DurableScanStoreOutcome.Conflict, ProductionScanResumeOutcome.Conflict, DurableScanReason.StaleStateVersion)]
@@ -272,7 +281,8 @@ public sealed class ProductionScanStatusReaderTests
         Assert.Equal([fixture.RepositoryId], recovery.RecoveryCalls[0].Scope.OwnedRepositoryIds);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void ExistingDurableEntities_CharacterizePersistedStateInputsWithoutFabricatingReaderRED()
     {
         ScanExecution execution = ScanExecution.CreateNewPath(

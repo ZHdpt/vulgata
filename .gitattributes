@@ -1,3 +1,9 @@
+# LF pilot: exact paths only; preserve all existing artifact-specific rules.
+/.gitattributes text eol=lf
+/.editorconfig text eol=lf
+/.gitignore text eol=lf
+/docs/agent-workflow/lf-adoption-preparation-2026-09-29.md text eol=lf
+
 /docker/codegraph/requirements.lock text eol=lf
 /specs/002-language-framework-detection/spec.md text eol=lf
 /specs/002-language-framework-detection/plan.md text eol=lf
@@ -18,6 +24,53 @@
 /specs/001-codegraph-extraction/qualification/attempts/attempt-0001/terminal.json text eol=lf
 /specs/001-codegraph-extraction/qualification/attempts/attempt-0002/authorized.json text eol=crlf
 /specs/013-exact-cross-repository-flow-pass2/contracts/business-logic-flow-v1.schema.json text eol=lf
+/specs/007-exact-cross-repo-resolution/contracts/demo-resolution-profile.v1.json text eol=lf
+/src/dotnet/Vulgata.Infrastructure/CrossRepository/Profiles/demo-resolution-profile.v1.json text eol=lf
+
+# Story 18.1 current definition and transition head are hash-bound across checkouts.
+/specs/016-contained-source-tools/spec.md text eol=lf
+/specs/016-contained-source-tools/plan.md text eol=lf
+/specs/016-contained-source-tools/tasks.md text eol=lf
+/specs/016-contained-source-tools/evidence/workflow-transition-*.json text eol=lf
+/specs/016-contained-source-tools/evidence/verify-test-failure-04.json text eol=lf
+/specs/016-contained-source-tools/evidence/verify-test-failure-output-04.txt text eol=lf
+/specs/016-contained-source-tools/evidence/verify-test-correction-focused-command-02.json text eol=lf
+/specs/016-contained-source-tools/evidence/verify-test-failure-03.json text eol=lf
+/specs/016-contained-source-tools/evidence/quality-diagnosis-03.json text eol=lf
+/specs/016-contained-source-tools/evidence/recovery-extension-02.json text eol=lf
+/specs/016-contained-source-tools/evidence/recovery-extension-03.json text eol=lf
+/specs/016-contained-source-tools/evidence/quality-diagnosis-04.json text eol=lf
+/specs/016-contained-source-tools/evidence/test-policy-red-01.json text eol=lf
+/specs/016-contained-source-tools/evidence/test-policy-red-output-01.txt text eol=lf
+/specs/016-contained-source-tools/evidence/test-policy-correction-01.json text eol=lf
+/specs/016-contained-source-tools/evidence/test-policy-correction-output-01.txt text eol=lf
+/specs/016-contained-source-tools/evidence/convergence-result-07.json text eol=lf
+/specs/016-contained-source-tools/evidence/story-lookback-06.json text eol=lf
+/specs/016-contained-source-tools/evidence/quality-review-result-06.json text eol=lf
+/specs/016-contained-source-tools/evidence/e2e-decision-04.json text eol=lf
+/specs/016-contained-source-tools/evidence/e2e-result-04.json text eol=lf
+/specs/016-contained-source-tools/evidence/final-verification-01.json text eol=lf
+/specs/016-contained-source-tools/evidence/final-verification-output-01.txt text eol=lf
+/specs/016-contained-source-tools/evidence/completion-close-01.json text eol=lf
+
+# Story 18.2 accepted plan and transition evidence retain their reviewed bytes.
+/specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/spec.md text eol=crlf
+/specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/plan.md text eol=lf
+/specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/research.md text eol=lf
+/specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/data-model.md text eol=lf
+/specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/quickstart.md text eol=lf
+/specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/checklists/requirements.md text eol=lf
+/specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/contracts/navigation-tool.md text eol=lf
+/specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/workflow-state.json text eol=lf
+/specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/evidence/specify-self-review-01.json text eol=lf
+/specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/evidence/plan-self-review-01.json text eol=lf
+/specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/evidence/plan-review-01.json text eol=lf
+/specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/evidence/plan-review-02.json text eol=lf
+/specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/evidence/plan-review-result-01.json text eol=lf
+/specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/evidence/plan-review-result-02.json text eol=lf
+/specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/evidence/transition-0001.json text eol=lf
+/specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/evidence/transition-0002.json text eol=lf
+/specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/evidence/transition-0003.json text eol=lf
 
 # Preserve raw-byte pre-images, including their original whitespace and line endings.
 /docs/bmad/history/pre-generic-adoption-2026-09-11/files/** -text -whitespace

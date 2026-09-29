@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
@@ -38,7 +39,8 @@ public sealed class ContextManagementCoordinatorTests : IDisposable
         seedDb.Database.EnsureCreated();
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task SaveAsync_GlobalScope_NoScanRunning_AppliesImmediatelyAndClearsPending()
     {
         var coordinator = BuildCoordinator();
@@ -53,7 +55,8 @@ public sealed class ContextManagementCoordinatorTests : IDisposable
         Assert.Empty(await db.PendingContextChanges.ToListAsync());
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task SaveAsync_GlobalScope_ScanRunning_QueuesPendingAndKeepsCurrent()
     {
         var coordinator = BuildCoordinator();
@@ -71,7 +74,8 @@ public sealed class ContextManagementCoordinatorTests : IDisposable
         Assert.Null(await db.GlobalContexts.FirstOrDefaultAsync());
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task SaveAsync_SystemScope_NonOwnerUser_ReturnsNotFound()
     {
         var coordinator = BuildCoordinator();
@@ -87,7 +91,8 @@ public sealed class ContextManagementCoordinatorTests : IDisposable
         Assert.Equal(ContextSaveOutcome.SystemNotFound, result.Outcome);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task SaveAsync_SystemScope_OwnerUser_Succeeds()
     {
         var coordinator = BuildCoordinator();
@@ -102,7 +107,8 @@ public sealed class ContextManagementCoordinatorTests : IDisposable
         Assert.True(result.IsSuccess);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task SaveAsync_SystemScope_AdminUser_SucceedsEvenWithoutOwnership()
     {
         var coordinator = BuildCoordinator();
@@ -117,7 +123,8 @@ public sealed class ContextManagementCoordinatorTests : IDisposable
         Assert.True(result.IsSuccess);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task SaveAsync_RepositoryScope_StandaloneRepo_NonAdminSucceeds()
     {
         var coordinator = BuildCoordinator();
@@ -132,7 +139,8 @@ public sealed class ContextManagementCoordinatorTests : IDisposable
         Assert.True(result.IsSuccess);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task SaveAsync_GlobalScope_NonAdminUser_ReturnsForbidden()
     {
         var coordinator = BuildCoordinator();
@@ -147,7 +155,8 @@ public sealed class ContextManagementCoordinatorTests : IDisposable
         Assert.Equal(ContextSaveOutcome.Forbidden, result.Outcome);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task SaveAsync_RepositoryScope_ScanRunning_QueuesPending()
     {
         var coordinator = BuildCoordinator();
@@ -168,7 +177,8 @@ public sealed class ContextManagementCoordinatorTests : IDisposable
         Assert.NotNull(pending);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task GetStateAsync_GlobalScope_ReturnsCurrentAndPendingValues()
     {
         var coordinator = BuildCoordinator();

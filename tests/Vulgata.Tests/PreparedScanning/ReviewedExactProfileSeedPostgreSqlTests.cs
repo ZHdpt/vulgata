@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Net;
 using System.Net.Http.Json;
 using System.Reflection;
@@ -39,7 +40,8 @@ namespace Vulgata.Tests.PreparedScanning;
 [Collection(PreparedScanningCollection.Name)]
 public sealed class ReviewedExactProfileSeedPostgreSqlTests
 {
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task PostPreparedScan_MatchedProfile_PublishesRequiredSeedsAndExactEvidenceAsync()
     {
         await using PreparedScanInitiationPostgreSqlFixture database =
@@ -124,7 +126,8 @@ public sealed class ReviewedExactProfileSeedPostgreSqlTests
         Assert.Equal(0, counts.Uncertainties);
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task PostPreparedScan_DoesNotStartPass1OrLeakLaterStagesAsync()
     {
         await using PreparedScanInitiationPostgreSqlFixture database =
@@ -197,7 +200,8 @@ public sealed class ReviewedExactProfileSeedPostgreSqlTests
             $"pair-builder={diagnostics.Exception}");
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task PostPreparedScan_MatchedSemanticOwnerFailsBeforePublication_AndNonmatchingInputRemainsByteNeutralAsync()
     {
         ExactResolutionProfile profile = new ExactResolutionProfileCatalog().Load();
@@ -317,7 +321,8 @@ public sealed class ReviewedExactProfileSeedPostgreSqlTests
         }
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task PostPreparedScan_ThenPublicPass1_ExactResolutionOwnerSymbolMismatch_IsPreciselyCharacterizedAsync()
     {
         await using PreparedScanInitiationPostgreSqlFixture database =
@@ -469,7 +474,8 @@ public sealed class ReviewedExactProfileSeedPostgreSqlTests
         }
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task PostPreparedScan_ThenRejectedPass1_PersistsFailedPass1WithoutExactActivationAsync()
     {
         await using PreparedScanInitiationPostgreSqlFixture database =

@@ -1,3 +1,5 @@
+using Microsoft.AspNetCore.DataProtection;
+using Vulgata.Tests.TestInfrastructure;
 using System.Net;
 using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Hosting;
@@ -28,7 +30,8 @@ public sealed class RoleSeedingAndAuthorizationTests : IClassFixture<LoginLogout
         _factory = factory;
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task Startup_SeedsExpectedRoles()
     {
         using var client = CreateClient(_factory);
@@ -44,7 +47,8 @@ public sealed class RoleSeedingAndAuthorizationTests : IClassFixture<LoginLogout
         }
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task RoleSeeding_IsIdempotentAcrossHostRestarts()
     {
         string databaseDirectory = Path.Combine(Path.GetTempPath(), "vulgata-tests", Guid.NewGuid().ToString("N"));
@@ -81,7 +85,8 @@ public sealed class RoleSeedingAndAuthorizationTests : IClassFixture<LoginLogout
         }
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task UserRole_CannotAccessManagement_SeesAccessDeniedAndNoManagementNav()
     {
         const string email = "roles.user@example.com";
@@ -110,7 +115,8 @@ public sealed class RoleSeedingAndAuthorizationTests : IClassFixture<LoginLogout
         Assert.Contains("访问被拒绝", deniedHtml, StringComparison.Ordinal);
     }
 
-    [Theory]
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
     [InlineData(RoleNames.Administrator)]
     [InlineData(RoleNames.SystemOwner)]
     public async Task ManagementRoles_CanAccessManagementRoute(string roleName)
@@ -260,6 +266,7 @@ public sealed class RoleSeedingAndAuthorizationTests : IClassFixture<LoginLogout
 
             builder.ConfigureServices(services =>
             {
+                services.AddDataProtection().UseEphemeralDataProtectionProvider();
                 services.RemoveAll<DbContextOptions<ApplicationDbContext>>();
                 services.RemoveAll<DbContextOptions<VulgataDbContext>>();
                 services.RemoveAll<IDbContextFactory<VulgataDbContext>>();

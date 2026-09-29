@@ -1,0 +1,22 @@
+Command: dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj
+Exit code: 1
+
+Observed failures:
+1. Vulgata.Tests.PreparedPass1.PreparedPass1JobExecutorStreamingTests.ExecuteAsync_ProviderTurnNineAndOptionalCorrection_MapsSdkIterationsAndTerminatesWithoutRequestElevenAsync
+   Scenario first-invalid expected Rejected but observed ProviderUnavailable at PreparedPass1JobExecutorStreamingTests.cs:1743.
+2. Vulgata.Tests.PreparedPass1.PreparedPass1JobExecutorStreamingTests.ExecuteAsync_CommentOnlyRawReadResetsInactivityBeforeParsedUpdateAsync
+   Expected Completed but observed ProviderUnavailable at PreparedPass1JobExecutorStreamingTests.cs:185.
+3. Vulgata.Tests.RetainedSource.RetainedSourcePostgreSqlTests.SourceSnapshot_PostgreSql17_DeclaresFixedShapeChecksAndRestrictiveRelationship
+   Npgsql timeout while disposing the owned PostgreSQL database.
+4. Vulgata.Tests.Pass2.Pass2PostgreSqlConstraintTests.Story124PostgreSql17_RetrievalBudgetUsesJobPrimaryKeyAndUtcUpdatedAt
+   Npgsql timeout while cleaning up the owned PostgreSQL database.
+5. Vulgata.Tests.Migrations.DurableScanMigrationPostgreSqlTests.DurableScanFoundation_PostgreSql17_ApplyRollbackReapply_PreservesProtectedRows
+   Npgsql timeout while cleaning up the owned PostgreSQL database.
+6. Vulgata.Tests.RetainedSource.RetainedSourceCaptureBoundaryTests.AcquireAsync_RevokedSystemOwnerWhileIdentityLockIsHeld_DeniesWithoutNewRow
+   IOException deleting a lock file still in use at RetainedSourceCaptureBoundaryFixture.cs:458; test line 120.
+7. Vulgata.Tests.RetainedSource.RetainedSourcePostgreSqlTests.SourceSnapshot_PostgreSql17_RejectsDuplicateIdentityStorageAndNegativeCounts
+   Npgsql timeout while disposing the owned PostgreSQL database.
+8. Vulgata.Tests.Pass2.RetrieveCodeLogicPostgreSqlBudgetTests.RetrieveAsync_AcknowledgementLossReplayAfterCurrentnessChangesIsRefusedWithoutMutationAsync
+   Npgsql timeout while cleaning up the owned PostgreSQL database.
+
+Failed!  - Failed: 8, Passed: 3246, Skipped: 15, Total: 3269, Duration: 16 m 23 s - Vulgata.Tests.dll (net10.0)

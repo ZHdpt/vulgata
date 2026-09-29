@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Data.Common;
 using System.Reflection;
 using System.Security.Cryptography;
@@ -24,7 +25,8 @@ public sealed class ChatEvidenceCurrentnessTests
             new ChatEvidencePacketBuilder(),
             logger: null);
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task ValidateCurrentAsync_LegacyExactEvidenceWithoutAcceptedV2Decision_ReturnsMissingOrStaleAsync()
     {
         await using CurrentnessFixture fixture = await CurrentnessFixture.CreateAsync(
@@ -43,7 +45,8 @@ public sealed class ChatEvidenceCurrentnessTests
         Assert.Equal(ChatCurrentnessValidationOutcome.MissingOrStale, outcome);
     }
 
-    [Theory]
+    [Trait("Suite", "LocalTools")]
+    [SuiteTheory("LocalTools")]
     [InlineData("Incomplete")]
     [InlineData("Complete")]
     [InlineData("Failed")]
@@ -60,7 +63,8 @@ public sealed class ChatEvidenceCurrentnessTests
         Assert.Null(fixture.Context.Database.CurrentTransaction);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task ValidateCurrentAsync_AdditionalFlowGroupMismatchedDecision_ReturnsMissingOrStaleAsync()
     {
         await using CurrentnessFixture fixture = await CurrentnessFixture.CreateAsync();
@@ -96,7 +100,8 @@ public sealed class ChatEvidenceCurrentnessTests
         Assert.Null(fixture.Context.Database.CurrentTransaction);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task ValidateCurrentAsync_ExactCurrentAuthorizedSupport_ReturnsCurrentAsync()
     {
         await using CurrentnessFixture fixture = await CurrentnessFixture.CreateAsync();
@@ -114,7 +119,8 @@ public sealed class ChatEvidenceCurrentnessTests
         Assert.Null(fixture.Context.Database.CurrentTransaction);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task ValidateCurrentAsync_TwoDistinctClaimSpansInSameSection_ReturnsCurrentAsync()
     {
         await using CurrentnessFixture fixture = await CurrentnessFixture.CreateAsync();
@@ -152,7 +158,8 @@ public sealed class ChatEvidenceCurrentnessTests
         Assert.Equal(ChatCurrentnessValidationOutcome.Current, outcome);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task ValidateCurrentAsync_CommittedSupportMutationAfterRetrieval_ReturnsMissingOrStaleAsync()
     {
         await AssertMissingAfterProviderWindowMutationAsync(fixture => fixture.CommitSuccessorAsync());
@@ -162,7 +169,8 @@ public sealed class ChatEvidenceCurrentnessTests
         await AssertMissingAfterProviderWindowMutationAsync(fixture => fixture.CommitGeneratedFromLossAsync());
     }
 
-    [Theory]
+    [Trait("Suite", "LocalTools")]
+    [SuiteTheory("LocalTools")]
     [InlineData("generated-from-source-scan-run")]
     [InlineData("generated-from-target-scan-run")]
     [InlineData("generated-from-source-profiled-revision")]
@@ -195,7 +203,8 @@ public sealed class ChatEvidenceCurrentnessTests
         Assert.Null(fixture.Context.Database.CurrentTransaction);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task RetrieveAsync_SharedEdgeWithTwoCurrentDecisions_PreservesDecisionSetAndOwnedFlowGroupsAsync()
     {
         await using CurrentnessFixture fixture = await CurrentnessFixture.CreateAsync();
@@ -256,7 +265,8 @@ public sealed class ChatEvidenceCurrentnessTests
             });
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task ValidateCurrentAsync_SharedEdgeDecisionSetMutationAfterSelection_ReturnsMissingOrStaleAsync()
     {
         await using CurrentnessFixture fixture = await CurrentnessFixture.CreateAsync();
@@ -274,7 +284,8 @@ public sealed class ChatEvidenceCurrentnessTests
         Assert.Equal(ChatCurrentnessValidationOutcome.MissingOrStale, outcome);
     }
 
-    [Theory]
+    [Trait("Suite", "LocalTools")]
+    [SuiteTheory("LocalTools")]
     [InlineData(11)]
     [InlineData(256)]
     public async Task ValidateCurrentAsync_CompleteBoundedExactDecisionSet_PreservesAuthorityAndReturnsCurrentAsync(
@@ -308,7 +319,8 @@ public sealed class ChatEvidenceCurrentnessTests
         Assert.Equal(ChatCurrentnessValidationOutcome.Current, outcome);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task ValidateCurrentAsync_TwoCrossRepositoryEdgesWithIndependentBoundedDecisionSets_ReturnsCurrentAsync()
     {
         await using CurrentnessFixture fixture = await CurrentnessFixture.CreateAsync();
@@ -373,7 +385,8 @@ public sealed class ChatEvidenceCurrentnessTests
         Assert.Equal(ChatCurrentnessValidationOutcome.Current, outcome);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task ValidateCurrentAsync_TwoHundredFiftySevenDecisionsOnOneCrossRepositoryEdge_ReturnsMissingOrStaleAsync()
     {
         await using CurrentnessFixture fixture = await CurrentnessFixture.CreateAsync();
@@ -391,7 +404,8 @@ public sealed class ChatEvidenceCurrentnessTests
         Assert.Equal(ChatCurrentnessValidationOutcome.MissingOrStale, outcome);
     }
 
-    [Theory]
+    [Trait("Suite", "LocalTools")]
+    [SuiteTheory("LocalTools")]
     [InlineData("absent", ChatCurrentnessValidationOutcome.Current)]
     [InlineData("present-valid", ChatCurrentnessValidationOutcome.Current)]
     [InlineData("present-inconsistent", ChatCurrentnessValidationOutcome.MissingOrStale)]
@@ -435,7 +449,8 @@ public sealed class ChatEvidenceCurrentnessTests
         Assert.Equal(expectedOutcome, outcome);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task ValidateCurrentAsync_SameRepositoryReferencesWithoutExactAuthority_ReturnsCurrentAsync()
     {
         await using CurrentnessFixture fixture = await CurrentnessFixture.CreateAsync();
@@ -487,7 +502,8 @@ public sealed class ChatEvidenceCurrentnessTests
         Assert.Equal(ChatCurrentnessValidationOutcome.Current, outcome);
     }
 
-    [Theory]
+    [Trait("Suite", "LocalTools")]
+    [SuiteTheory("LocalTools")]
     [InlineData("scan-run")]
     [InlineData("profiled-revision")]
     public async Task ValidateCurrentAsync_SourceAnchorIdentityMutation_ReturnsMissingOrStaleAsync(
@@ -508,7 +524,8 @@ public sealed class ChatEvidenceCurrentnessTests
         Assert.Equal(ChatCurrentnessValidationOutcome.MissingOrStale, outcome);
     }
 
-    [Theory]
+    [Trait("Suite", "LocalTools")]
+    [SuiteTheory("LocalTools")]
     [InlineData("flow-group-identity")]
     [InlineData("flow-group-state")]
     [InlineData("flow-group-document-binding")]
@@ -544,7 +561,8 @@ public sealed class ChatEvidenceCurrentnessTests
         Assert.Null(fixture.Context.Database.CurrentTransaction);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task ValidateCurrentAsync_PacketDocumentTitleMutation_ReturnsMissingOrStaleAsync()
     {
         await using CurrentnessFixture fixture = await CurrentnessFixture.CreateAsync();
@@ -564,7 +582,8 @@ public sealed class ChatEvidenceCurrentnessTests
         Assert.Null(fixture.Context.Database.CurrentTransaction);
     }
 
-    [Theory]
+    [Trait("Suite", "LocalTools")]
+    [SuiteTheory("LocalTools")]
     [InlineData("flow-group-system")]
     [InlineData("flow-group-repository")]
     [InlineData("flow-group-scan-run")]
@@ -588,7 +607,8 @@ public sealed class ChatEvidenceCurrentnessTests
         Assert.Null(fixture.Context.Database.CurrentTransaction);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task ValidateCurrentAsync_SelectedScanRunNotCompleted_ReturnsMissingOrStaleAsync()
     {
         await using CurrentnessFixture fixture = await CurrentnessFixture.CreateAsync();
@@ -608,7 +628,8 @@ public sealed class ChatEvidenceCurrentnessTests
         Assert.Null(fixture.Context.Database.CurrentTransaction);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task ValidateCurrentAsync_SelectedProviderScanRunProfiledRevisionDrift_ReturnsMissingOrStaleAsync()
     {
         await using CurrentnessFixture fixture = await CurrentnessFixture.CreateAsync();
@@ -628,7 +649,8 @@ public sealed class ChatEvidenceCurrentnessTests
         Assert.Null(fixture.Context.Database.CurrentTransaction);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task ValidateCurrentAsync_FlowStepDocumentProfiledRevisionDrift_ReturnsMissingOrStaleAsync()
     {
         await using CurrentnessFixture fixture = await CurrentnessFixture.CreateAsync();
@@ -651,7 +673,8 @@ public sealed class ChatEvidenceCurrentnessTests
         Assert.Null(fixture.Context.Database.CurrentTransaction);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task ValidateCurrentAsync_CrossSystemExactDecisionRow_ReturnsMissingOrStaleAsync()
     {
         await using CurrentnessFixture fixture = await CurrentnessFixture.CreateAsync();
@@ -671,7 +694,8 @@ public sealed class ChatEvidenceCurrentnessTests
         Assert.Null(fixture.Context.Database.CurrentTransaction);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task ValidateCurrentAsync_ExactDecisionCanonicalFingerprintMutation_ReturnsMissingOrStaleAsync()
     {
         await using CurrentnessFixture fixture = await CurrentnessFixture.CreateAsync();
@@ -691,7 +715,8 @@ public sealed class ChatEvidenceCurrentnessTests
         Assert.Null(fixture.Context.Database.CurrentTransaction);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task ValidateCurrentAsync_LegacySupportMutationsAfterRetrieval_DoNotAffectAcceptedV2CurrentnessAsync()
     {
         await AssertCurrentAfterProviderWindowMutationAsync(fixture => fixture.CommitReferencesEvidenceLossAsync());
@@ -699,7 +724,8 @@ public sealed class ChatEvidenceCurrentnessTests
         await AssertCurrentAfterProviderWindowMutationAsync(fixture => fixture.CommitReferencesDirectionChangeAsync());
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task ValidateCurrentAsync_AuthorizationCancellationOrDatabaseFailure_PreservesClosedSemanticsAsync()
     {
         await using CurrentnessFixture fixture = await CurrentnessFixture.CreateAsync();

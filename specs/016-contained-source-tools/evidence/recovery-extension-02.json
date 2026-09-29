@@ -1,0 +1,22 @@
+{
+  "kind": "human-approval",
+  "stage": "verify",
+  "decision_id": "18-1/implementation/1/extension/2",
+  "status": "accepted",
+  "episode_id": "18-1/implementation/1",
+  "scope_sha256": "f16be621e87b3a8d9088fd7a83d73097ecb3b36cc539e8863bc127333b7dc920",
+  "scope_material": "18-1/implementation/1/extension/2|18-1/implementation/1|7|verify-test-failure-03|isolate-fingerprint-authority|serial-postgresql-timeout-diagnosis|no-story-18-1-production-change",
+  "pause_at": 7,
+  "requested_at": "2026-09-29T02:23:00Z",
+  "decided_at": "2026-09-29T02:29:06.0836883Z",
+  "user_instruction": "Approve extension to 7",
+  "failed_results_at_decision": 6,
+  "failed_approaches": [
+    "The first final-suite attempt exposed and corrected a missing public migration-history mapping in a historical fixture.",
+    "The corrected full-suite rerun used stable postgres admin connections and the authorized disposable vulgata database, but exposed one independent fingerprint mismatch and two PostgreSQL timeout paths."
+  ],
+  "approved_changed_approach": "Use one bounded evidence-driven cycle without changing Story 18.1 production code: isolate the fingerprint test and determine the authoritative resource/fingerprint; inspect PostgreSQL health and run the two timeout cases serially against fresh owned databases; correct only an evidenced fixture or accepted-artifact defect; then rerun affected tests and the exact full suite.",
+  "limits": "This raises the cumulative pause limit from 6 to 7. It does not reset the counter or authorize seven additional failures. A negative result at count 7 returns to the human.",
+  "unchanged_gates": "Definition authority, accepted scope, database/resource authorization, convergence, lookback, independent quality review, conditional E2E, final verification and closure remain required.",
+  "summary": "The user approved the finite Story 18.1 recovery extension from six to seven failed results for the three configured full-suite failures recorded in verify-test-failure-03."
+}

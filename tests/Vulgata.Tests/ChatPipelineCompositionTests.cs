@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Reflection;
 using Microsoft.Extensions.DependencyInjection;
 using Vulgata.Agents.ChatExecution;
@@ -11,7 +12,8 @@ namespace Vulgata.Tests;
 [Collection(DataProtectionProductionCompositionCollection.Name)]
 public sealed class ChatPipelineCompositionTests
 {
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void ProductionComposition_Story125T067_UsesOneConstructorComposedTypedRetrievalPath()
     {
         using var factory = new LoginLogoutTests.CustomWebApplicationFactory();
@@ -33,7 +35,8 @@ public sealed class ChatPipelineCompositionTests
             scope.ServiceProvider.GetRequiredService<ChatEvidencePacketBuilder>());
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void RetrievalArchitecture_Story125T073_LexicalStageConsumesAuthorizedSnapshot()
     {
         ConstructorInfo constructor = Assert.Single(typeof(ChatEvidenceRetriever).GetConstructors());
@@ -57,7 +60,8 @@ public sealed class ChatPipelineCompositionTests
             parameter => IsGuidCollection(parameter.ParameterType));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void RetrievalArchitecture_Story125T073_RelationshipStageConsumesLexicalProjection()
     {
         MethodInfo projectMethod = Assert.Single(
@@ -78,7 +82,8 @@ public sealed class ChatPipelineCompositionTests
             "The relationship stage must return the closed ChatRelationshipExpansionProjection stage result.");
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void RetrievalArchitecture_Story125T073_PacketBuilderConsumesOnlyTypedAssembly()
     {
         MethodInfo buildMethod = Assert.Single(
@@ -94,7 +99,8 @@ public sealed class ChatPipelineCompositionTests
                 candidate.ParameterType == typeof(ChatEvidencePacketBuildRequest)));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void RetrievalArchitecture_Story125T074_RetrieverConstructorComposesServerOwnedAdvisoryReader()
     {
         ConstructorInfo constructor = Assert.Single(typeof(ChatEvidenceRetriever).GetConstructors());
@@ -111,7 +117,8 @@ public sealed class ChatPipelineCompositionTests
             "The retriever must acquire server-owned advisory Context before the typed lexical stage.");
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void ProductionComposition_Story125B1_ResolvesAdvisoryReaderAndRelationshipProjectorAsScopedPorts()
     {
         using var factory = new LoginLogoutTests.CustomWebApplicationFactory();
@@ -139,7 +146,8 @@ public sealed class ChatPipelineCompositionTests
             secondScope.ServiceProvider.GetRequiredService<IChatRelationshipProjector>());
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void PreparedChatCoordinator_Story125B1_DeclaresServerOwnedAdvisoryBeforeEvidenceRetrieval()
     {
         ConstructorInfo constructor = Assert.Single(typeof(PreparedChatCoordinator).GetConstructors());
@@ -163,7 +171,8 @@ public sealed class ChatPipelineCompositionTests
             "Server-owned advisory Context must be acquired before retrieval and packet construction.");
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void PublicationBoundary_Story125B4_DeclaresOneOwnerAndNoAlternateSuccessOwner()
     {
         Type? ownerType = Type.GetType(
@@ -177,7 +186,8 @@ public sealed class ChatPipelineCompositionTests
         Assert.Single(implementations);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void ProductionComposition_Story125BInt_ResolvesOneScopedPublicationOwnerForBusinessFlow()
     {
         using var factory = new LoginLogoutTests.CustomWebApplicationFactory();
@@ -216,7 +226,8 @@ public sealed class ChatPipelineCompositionTests
         Assert.Same(recorder, completionSummaryRecorderField!.GetValue(coordinator));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void ProductionComposition_Story125T071_UsesOneOwnerGenerationResetBoundary()
     {
         Type ownerType = typeof(IPreparedChatPublicationOwner);
@@ -252,7 +263,8 @@ public sealed class ChatPipelineCompositionTests
         Assert.Empty(coordinatorShadowAuthorities);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void ProductionComposition_Story125BInt_DispatcherUsesTypedStreamingTransport()
     {
         using var factory = new LoginLogoutTests.CustomWebApplicationFactory();
@@ -273,7 +285,8 @@ public sealed class ChatPipelineCompositionTests
         Assert.Same(transport, streamingTransportField!.GetValue(dispatcher));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void ProductionComposition_Story125BInt_ItPathHasNoTrackCAttestationOrAlternateLiveStateOwner()
     {
         Type? attestationSink = typeof(ChatAgentDispatcher).Assembly.GetType(
@@ -293,7 +306,8 @@ public sealed class ChatPipelineCompositionTests
         Assert.Empty(nonStreamingEntryPoints);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void PreparedChatQuestionRequest_Story125B1_HasNoCallerAdvisoryTextBoundary()
     {
         Assert.DoesNotContain(

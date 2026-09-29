@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Diagnostics;
 using Vulgata.Core.DomainServices;
 using Vulgata.Infrastructure.Git;
@@ -7,7 +8,8 @@ namespace Vulgata.Tests;
 
 public sealed class ExactGitRevisionAcquisitionTests
 {
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task AcquireAsync_UnsafeLockRef_RefusesBeforeCreatingAnOperationRootAsync()
     {
         await using ExactCrossRepositoryTemporaryGitRepository source =
@@ -36,7 +38,8 @@ public sealed class ExactGitRevisionAcquisitionTests
         }
     }
 
-    [Theory]
+    [Trait("Suite", "LocalTools")]
+    [SuiteTheory("LocalTools")]
     [InlineData(false)]
     [InlineData(true)]
     public async Task AcquireAsync_FullTagRef_ReturnsExactPrivateSnapshotWithoutChangingOrdinaryCheckoutAsync(
@@ -107,7 +110,8 @@ public sealed class ExactGitRevisionAcquisitionTests
         }
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task AcquireAsync_ConcurrentOrdinaryAndExactLeases_KeepOperationRootsAndCheckoutIndependentAsync()
     {
         await using ExactCrossRepositoryTemporaryGitRepository source =
@@ -183,7 +187,8 @@ public sealed class ExactGitRevisionAcquisitionTests
         }
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task AcquireAsync_EmptyCommittedBlob_MaterializesZeroLengthFileAsync()
     {
         await using ExactCrossRepositoryTemporaryGitRepository source =
@@ -218,7 +223,8 @@ public sealed class ExactGitRevisionAcquisitionTests
         }
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task AcquireAsync_MissingMovedSimilarWrongAndArchiveFailures_AreSanitizedAndCleanedAsync()
     {
         await using ExactCrossRepositoryTemporaryGitRepository source =
@@ -287,7 +293,8 @@ public sealed class ExactGitRevisionAcquisitionTests
         }
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task AcquireAsync_AbbreviatedCommit_RefusesBeforeGitAccessAsync()
     {
         await using ExactCrossRepositoryTemporaryGitRepository source =
@@ -316,7 +323,8 @@ public sealed class ExactGitRevisionAcquisitionTests
         }
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task AcquireAsync_CancelledOperation_CleansOnlyItsRootAndLeavesConcurrentLeaseUsableAsync()
     {
         await using ExactCrossRepositoryTemporaryGitRepository source =
@@ -356,7 +364,8 @@ public sealed class ExactGitRevisionAcquisitionTests
         }
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task VerifyIdentityAsync_DriftedSnapshot_RefusesWithoutLeakingSourceOrPathAsync()
     {
         await using ExactCrossRepositoryTemporaryGitRepository source =
@@ -392,7 +401,8 @@ public sealed class ExactGitRevisionAcquisitionTests
         }
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task DisposeAsync_CleanupFailure_InvalidatesLeaseAndCanRetryOnlyItsOwnRootAsync()
     {
         await using ExactCrossRepositoryTemporaryGitRepository source =

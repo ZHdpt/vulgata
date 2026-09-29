@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Reflection;
 using Vulgata.Infrastructure.CommunicationDetection;
 
@@ -16,7 +17,8 @@ public sealed class CommunicationCatalogTests
     private const string _evaluatorName =
         "Vulgata.Infrastructure.CommunicationDetection.CommunicationCatalogEvaluator";
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void CommunicationCatalog_ExposesVersionHashRulesAndClosedLoader()
     {
         Type catalog = RequireType(_catalogName);
@@ -34,7 +36,8 @@ public sealed class CommunicationCatalogTests
             property => property.CanWrite && property.SetMethod?.IsPublic == true);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void CommunicationCatalogLoader_LoadEmbedded_ReturnsAcceptedStory12_2IdentityAndRules()
     {
         CommunicationPatternCatalog catalog = CommunicationCatalogLoader.LoadEmbedded();
@@ -49,7 +52,8 @@ public sealed class CommunicationCatalogTests
             property => property.CanWrite && property.SetMethod?.IsPublic == true);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void CommunicationCatalog_GrammarSupportsPathGlobSelectorAncestorAttributeAndExtraction()
     {
         Type catalog = RequireType(_catalogName);
@@ -70,7 +74,8 @@ public sealed class CommunicationCatalogTests
                 property.Name.Contains(name, StringComparison.OrdinalIgnoreCase)));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void CommunicationCatalog_EvaluatorHasNoExecutableOrDynamicQueryOperations()
     {
         Type evaluator = RequireType(_evaluatorName);

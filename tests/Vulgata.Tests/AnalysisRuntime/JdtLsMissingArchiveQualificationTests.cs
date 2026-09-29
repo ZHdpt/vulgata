@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Diagnostics;
 using System.Security.Cryptography;
 using Vulgata.Core.DomainServices;
@@ -22,7 +23,8 @@ public sealed class JdtLsMissingArchiveQualificationTests
     private static readonly Guid _repositoryId =
         Guid.Parse("12000000-0000-4000-8000-000000000002");
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public void SuppliedHost_ReportsJava21AndObservedCoreJarHash_WithoutRetainedArchive()
     {
         Assert.True(Directory.Exists(JavaHome));
@@ -69,7 +71,8 @@ public sealed class JdtLsMissingArchiveQualificationTests
                     || path.EndsWith(".md5", StringComparison.OrdinalIgnoreCase)));
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public void MissingArchiveOrChecksum_StaysNotReady_AndCoreJarHashCannotSubstitute()
     {
         AnalysisRuntimeOptions options = new(

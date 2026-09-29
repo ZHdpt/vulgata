@@ -1,10 +1,12 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Reflection;
 
 namespace Vulgata.Tests.ReleaseGate;
 
 public sealed class Story125Tier2PostgreSqlTests
 {
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Story125DatabaseNameValidator_GeneratesUniqueLowercaseNamesAndRejectsProtectedTargets()
     {
         Type? harnessType = typeof(Story125Tier2PostgreSqlTests).Assembly.GetType(

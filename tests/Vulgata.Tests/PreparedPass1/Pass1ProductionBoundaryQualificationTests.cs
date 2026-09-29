@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Diagnostics;
 using System.Reflection;
 using System.Security.Cryptography;
@@ -16,8 +17,8 @@ namespace Vulgata.Tests.PreparedPass1;
 public sealed class Pass1ProductionBoundaryQualificationTests
 {
     private const string PinnedBoundaryCommit = "cb3fb0f17b2eaf92d93afe71c710cd7b92c1e3bd";
-    private const string ArtifactRelativePath =
-        "artifacts/qualification/story-12.3/production-boundary-inspection.json";
+    private static readonly string ArtifactRelativePath =
+        "TestResults/boundary-" + Guid.NewGuid().ToString("N") + "/production-boundary-inspection.json";
 
     private static readonly string[] InspectedRelativePaths =
     [
@@ -69,7 +70,8 @@ public sealed class Pass1ProductionBoundaryQualificationTests
         "Npgsql",
     ];
 
-    [Fact]
+    [Trait("Suite", "HistoricalBoundary")]
+    [SuiteFact("HistoricalBoundary")]
     public void SourceFreeHandshake_IsQualificationOnlyAndDoesNotReferenceQr002CircuitOrProbeState()
     {
         Type harness = typeof(DeepSeekSourceFreeHandshakeHarness);
@@ -95,7 +97,8 @@ public sealed class Pass1ProductionBoundaryQualificationTests
                 parameter.ParameterType.FullName?.Contains("ProviderHealthProbe", StringComparison.Ordinal) == true));
     }
 
-    [Fact]
+    [Trait("Suite", "HistoricalBoundary")]
+    [SuiteFact("HistoricalBoundary")]
     public void ProductionBoundary_DoesNotClaimProviderRetentionOrPersistRawFailurePayloads()
     {
         string repositoryRoot = FindRepositoryRoot();
@@ -112,7 +115,8 @@ public sealed class Pass1ProductionBoundaryQualificationTests
         Assert.DoesNotContain("training guarantee", harnessSource, StringComparison.OrdinalIgnoreCase);
     }
 
-    [Fact]
+    [Trait("Suite", "HistoricalBoundary")]
+    [SuiteFact("HistoricalBoundary")]
     public void ProductionBoundary_InspectsClosedCompositionAndForbiddenCapabilities()
     {
         string repositoryRoot = FindRepositoryRoot();

@@ -1,0 +1,42 @@
+{
+  "kind": "analysis",
+  "stage": "verify",
+  "evidence_id": "18-1-access-prepared-source-through-contained-read-only-tools/diagnosis/6",
+  "episode_id": "18-1/implementation/1",
+  "failed_results": 9,
+  "observed_at": "2026-09-29T05:48:57.7976299Z",
+  "failure": {
+    "path": "specs/016-contained-source-tools/evidence/verify-test-failure-05.json",
+    "sha256": "d1995fa555b437b2403d78a413eab00a8d154954513d03ec50086e74f96c7f76"
+  },
+  "failed_obligation": "The exact configured SelfContained suite must pass the Story 18.1 PreparedSource boundary under repository-standard execution, not only as an isolated filter.",
+  "observations": [
+    "The focused PreparedSource boundary passed 119/119 through the same runner before final verification.",
+    "The configured suite selected the same 119 PreparedSource cases: 31 passed and 88 failed.",
+    "Every class that requires a successfully opened real prepared root failed; fixture-only, tool-projection and pre-open validation cases passed.",
+    "All 88 failures were preempted at context issuance by RootUnavailable, while the unique temporary-directory fixture itself created, read and removed its files successfully.",
+    "PreparedSource classes have no shared disabled-parallelization collection, while the full SelfContained suite executes many other classes concurrently and the repository already uses such collections for shared expensive or process-sensitive resources."
+  ],
+  "ranked_hypotheses": [
+    {
+      "rank": 1,
+      "hypothesis": "Full-suite parallel resource/filesystem pressure makes the Windows handle-relative root open unavailable; PreparedSource lacks a declared nonparallel resource boundary.",
+      "prediction": "Running all PreparedSource classes in one disabled-parallelization collection will preserve the focused 119/119 result and remove the 88 full-suite RootUnavailable outcomes."
+    },
+    {
+      "rank": 2,
+      "hypothesis": "An intermittent host filesystem or security-product interaction denied native root traversal during that run.",
+      "prediction": "Isolation will not deterministically correct the suite, and native-status instrumentation would be required after the next bounded stop."
+    },
+    {
+      "rank": 3,
+      "hypothesis": "PreparedSourceTraversal has an intrinsic concurrent P/Invoke defect.",
+      "prediction": "PreparedSource-only parallel execution would reproduce the failure, contrary to the existing 119/119 focused evidence."
+    }
+  ],
+  "affected_assumption": "Passing the focused PreparedSource selection was assumed to prove it could coexist with the repository's complete parallel SelfContained workload without an explicit resource collection.",
+  "earliest_owner": "tests",
+  "changed_approach": "Add one PreparedSource disabled-parallelization collection and assign all filesystem-backed PreparedSource test classes to it, preserving test bodies and assertions. Verify the collection/policy metadata, rerun the complete 119-test PreparedSource boundary, then run the exact configured SelfContained suite once.",
+  "next_check": "The focused PreparedSource selection must remain 119/119 with zero skips and the configured SelfContained suite must pass with zero failures and zero unexpected skips. A failure is cumulative result 10 and pauses without another correction.",
+  "summary": "The 88 failures are a Story 18.1 test-execution isolation defect at the Windows root-handle seam, not database failures or unrelated historical tests. The exact native status is not retained, but the pass/fail partition and isolated 119/119 run support a bounded test-only nonparallel collection correction before the one authorized rerun."
+}

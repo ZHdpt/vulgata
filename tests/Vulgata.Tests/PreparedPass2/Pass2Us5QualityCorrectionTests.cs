@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Reflection;
 using Vulgata.Core.Entities;
 
@@ -11,7 +12,8 @@ namespace Vulgata.Tests.PreparedPass2;
 /// </summary>
 public sealed class Pass2Us5QualityCorrectionTests
 {
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Pass2StoreAndCommitter_DoNotUseLegacyContractFallbacks()
     {
         DirectoryInfo? repository = new DirectoryInfo(Directory.GetCurrentDirectory());
@@ -38,7 +40,8 @@ public sealed class Pass2Us5QualityCorrectionTests
         }
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void ProviderContributionPersistence_DoesNotUseConstantProviderOrdinal()
     {
         DirectoryInfo? repository = new DirectoryInfo(Directory.GetCurrentDirectory());
@@ -63,7 +66,8 @@ public sealed class Pass2Us5QualityCorrectionTests
         Assert.DoesNotContain("ProviderOrdinal).CurrentValue = 1", source, StringComparison.Ordinal);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void ProviderContributionPersistence_DoesNotUseLegacyAuthorityDefaults()
     {
         DirectoryInfo? repository = new DirectoryInfo(Directory.GetCurrentDirectory());
@@ -94,7 +98,8 @@ public sealed class Pass2Us5QualityCorrectionTests
             StringComparison.Ordinal);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void ProviderContribution_PersistsCompleteObservationAuthority()
     {
         string[] required =
@@ -117,7 +122,8 @@ public sealed class Pass2Us5QualityCorrectionTests
             property => StringComparer.Ordinal.Equals(property.Name, name)));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void NonExactResolution_PersistsCanonicalOutcomeOwnershipAndReplayAccounting()
     {
         string[] decisionFields =

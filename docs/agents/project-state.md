@@ -1,6 +1,15 @@
 # Project state for agent resumption
 
-Updated: 2026-09-27. Story 13.1 is complete in `specs/015-retained-source-access`.
+Test infrastructure (2026-09-29): the standard command is now
+`pwsh -NoProfile -File eng/test.ps1`, which builds current sources and selects the
+classified SelfContained suite. Direct CLI/IDE execution has the same safe default
+and external fixture guards. PostgreSQL qualification uses a new owned PostgreSQL 17
+container; tool/provider/E2E and historical suites remain explicit and retain their
+feature-specific gates. See [testing guidance](testing.md). This changes the routine
+regression boundary, not historical product evidence or story lifecycle state.
+
+Updated: 2026-09-29 (delegation policy; product evidence unchanged).
+Story 13.1 is complete in `specs/015-retained-source-access`.
 Exact retained capture, scoped reads, publication/recovery, cleanup, trusted
 workspaces and separate-process reopening have bounded controlled evidence.
 Convergence 02 is clean; quality review 03 accepted with no findings; required
@@ -31,15 +40,17 @@ verification before reuse.
   adding October Epics 18–20 and their 17 definitions (12/3/2) to that tracker on
   September 27; [October release epics](../bmad/planning-artifacts/october-release-epics.md)
   owns their scoped requirements and definitions, routed from the canonical epic index.
-  Tracker refreshes require both epic files. Story 13.1 is done; all other stories,
-  including October, are backlog. No feature was activated by sprint planning.
+  Tracker refreshes require both epic files. The September 27 planning baseline
+  recorded Story 13.1 done and all other stories backlog; that is not live status
+  for runners in separate worktrees. No feature was activated by sprint planning.
   Its bounded retained-source
   qualification does not prove the generic Scan workflow.
 - [Constitution](../../.specify/memory/constitution.md), root AGENTS and the current
   story workflow govern development. The constitution's 2.0.0 local amendment aligns
   prior conflicting rules; it does not claim maintainer PR review/merge.
 
-No story is active after the workflow installation. Story 13.1's
+Workflow installation itself activated no story. Verify current runner ownership
+and its assigned checkout before interpreting the integration tracker. Story 13.1's
 `specs/015-retained-source-access` plan, state and evidence are completed history;
 Story 13.2 remains backlog and requires deliberate activation. Specs 001–014 also
 retain historical scope. The agent-context extension targets root AGENTS; pass the
@@ -58,11 +69,14 @@ The installed workflow is governed-delivery 0.7.4 (updated 2026-09-28), using BM
 new story states use schema 3.1. Sol/Luna profiles use GPT-6, with existing efforts
 and Astra recovery unchanged. Verification follows accepted behavior/risk, not file
 type; nonbehavioral work does not require manufactured RED or new tests. This upgrade
-does not activate a story or alter existing states. User-designated delegates may
-authorize only planned changes and first implementation within their recorded scope;
-the story root records and validates those decisions. The new 0.7.4 recovery-extension
-delegation capability is not enabled by Vulgata policy; human approval remains default,
-and all other gates remain human-only. One persistent Sol/medium definition author owns
+does not activate a story or alter existing states. Root AGENTS now permits explicit
+story-scoped delegation for planned changes, first implementation and finite recovery
+extensions. Recovery requires a separate user-set cumulative per-episode ceiling and
+a fresh bound decision at every reached limit; policy support alone is not a grant.
+The story root records and validates decisions. Human approval remains default;
+other reserved gates and execution permissions are unchanged. See the adoption
+record for current management roles and the remaining designation requirements.
+One persistent Sol/medium definition author owns
 spec, plan, tasks and later document corrections; each coherent implementation
 group retains separate Luna/high test and Sol/medium production owners. Root owns
 lifecycle, evidence, approvals, selective project lessons and Git. See the installed

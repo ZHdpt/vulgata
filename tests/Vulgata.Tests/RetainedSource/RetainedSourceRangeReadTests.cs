@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Security.Cryptography;
 using System.Text;
 using Microsoft.Extensions.DependencyInjection;
@@ -7,7 +8,8 @@ namespace Vulgata.Tests.RetainedSource;
 
 public sealed class RetainedSourceRangeReadTests
 {
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task ReadContext_ReturnsExactByteRangeAndStrictUtf8TextReceipts()
     {
         byte[] content = Encoding.UTF8.GetPreamble()
@@ -78,7 +80,8 @@ public sealed class RetainedSourceRangeReadTests
         Assert.Equal(Convert.ToHexStringLower(SHA256.HashData(content)), text.EntrySha256);
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task ReadContext_EnforcesEofAndInvalidRangeBoundaries()
     {
         byte[] content = Encoding.UTF8.GetBytes("abc");
@@ -136,7 +139,8 @@ public sealed class RetainedSourceRangeReadTests
         Assert.Equal(Convert.ToHexStringLower(SHA256.HashData([])), emptyText.EntrySha256);
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task ReadContext_EmptyFileConsumesReservedMaximumEvenWhenPayloadIsEmpty()
     {
         await using RetainedSourceFixture fixture = await RetainedSourceFixture.CreateAsync(
@@ -164,7 +168,8 @@ public sealed class RetainedSourceRangeReadTests
         Assert.Null(second.Content);
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task ReadContext_StrictTextRejectsScalarSplitAndUnsupportedEncoding()
     {
         byte[] scalarContent = Encoding.UTF8.GetBytes("A😀B");
@@ -191,7 +196,8 @@ public sealed class RetainedSourceRangeReadTests
         Assert.Equal("source_text_unsupported", invalid.LimitationCode);
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task ReadContext_UnsupportedSymlinkAndGitlinkHaveNoBytePayload()
     {
         await using RetainedSourceFixture fixture = await RetainedSourceFixture.CreateAsync();
@@ -218,7 +224,8 @@ public sealed class RetainedSourceRangeReadTests
         Assert.Null(gitlink.Content);
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task ReadContext_ReturnedByteBudgetIsCumulativeWithoutRefund()
     {
         byte[] content = Encoding.UTF8.GetBytes("returned bytes");
@@ -246,7 +253,8 @@ public sealed class RetainedSourceRangeReadTests
         Assert.Empty(second.Content.ToArray());
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task ReadContext_ConcurrentReservationsAdmitOnlyWithinOperationAndByteBudgets()
     {
         byte[] content = Encoding.UTF8.GetBytes("concurrent bytes");
@@ -276,7 +284,8 @@ public sealed class RetainedSourceRangeReadTests
             result => Assert.Equal(content, result.Content.ToArray()));
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task ReadContext_CooperativeAuthorizationWaitStopsAtReadDeadlineBeforeWatchdog()
     {
         var time = new ControlledRetainedSourceTimeProvider();
@@ -364,7 +373,8 @@ public sealed class RetainedSourceRangeReadTests
         }
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task ReadContext_CallerCancellationAfterRangeAuthorizationReturnsNoPayload()
     {
         using var cancellation = new CancellationTokenSource();
@@ -397,7 +407,8 @@ public sealed class RetainedSourceRangeReadTests
         Assert.Empty(result.Content.ToArray());
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task ReadContext_SameLengthBlobMutationOutsideSelectedRangeFailsIntegrity()
     {
         byte[] content = Enumerable.Repeat((byte)'x', 4_096).ToArray();
@@ -429,7 +440,8 @@ public sealed class RetainedSourceRangeReadTests
         Assert.Empty(result.Content.ToArray());
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task ReadContext_PerOperationByteCapRejectsByteAndTextRequestsWithoutPayload()
     {
         byte[] content = Encoding.UTF8.GetBytes("abcdefgh");
@@ -467,7 +479,8 @@ public sealed class RetainedSourceRangeReadTests
         Assert.Null(text.Content);
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task ReadContext_ValidNinetyDayGrantHasNoTimerRangeFailure()
     {
         byte[] content = Encoding.UTF8.GetBytes("long grant\n");
