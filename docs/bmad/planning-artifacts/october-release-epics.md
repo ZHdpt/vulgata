@@ -1,7 +1,7 @@
 ---
 title: Vulgata October release - requirements and epic breakdown
 created: 2026-09-27
-updated: 2026-09-27
+updated: 2026-09-29
 scope: october-14-release-only
 status: final
 stepsCompleted: [1, 2, 3, 4]
@@ -29,6 +29,8 @@ finalValidationOn: 2026-09-27
 workflowComplete: true
 workflowCompletedOn: 2026-09-27
 implementation_authorized: false
+latestDefinitionAmendment: docs/bmad/planning-artifacts/sprint-change-proposal-2026-09-29-october-tool-state-consumers.md
+latestDefinitionAmendmentApprovedOn: 2026-09-29
 primaryInput: docs/bmad/planning-artifacts/sprint-change-proposal-2026-09-26-october-batch-release.md
 inputDocuments:
   - docs/bmad/planning-artifacts/sprint-change-proposal-2026-09-26-october-batch-release.md
@@ -57,6 +59,16 @@ definition authority. Read the earlier no-queue-change statements below as the
 boundary at definition completion, superseded only for routing/tracking by this
 adoption. All 17 October stories remain backlog; no feature or implementation is
 activated. Governed story review and approval gates remain unchanged.
+
+## Scoped definition amendment — September 29, 2026
+
+The user approved the [tool-state consumer correction](sprint-change-proposal-2026-09-29-october-tool-state-consumers.md).
+It adds only the application-owned tool-state admission/accounting criterion in
+18.8 and the integrated source/tool-state qualification criterion in 18.12, with
+their scope notes. Existing story identities, completion dependencies and lifecycle
+statuses are unchanged. Shared source/tool repairs remain with the coordinated
+upstream owners; this amendment neither activates a story nor grants implementation
+or runtime authority. September 27 validation below describes its original revision.
 
 ## Overview
 
@@ -841,6 +853,19 @@ So that prepared source can be processed in parallel and accepted work can be re
 **Then** Scan Control records the policy identity used, final admitted/supporting/excluded decision and supported exclusion/demotion reasons,
 **And** unknown extensions, low confidence or index omission alone cannot remove primary coverage; unsupported exclusions stay admitted.
 
+**Given** the accepted upstream source/tool-state binding for the selected prepared Repository and batch,
+**When** Scan Control builds source work and coverage accounting,
+**Then** positively identified application-owned tool state creates no source-analysis jobs and contributes nothing to source-coverage counts or denominators; record its location, owning tool and exclusion basis separately through existing policy/diagnostic records,
+**And** a directory name such as `.codegraph` alone cannot establish ownership or justify hiding source. Unproven exclusions retain the existing conservative admission treatment; preparation ownership collisions are returned to the tool owner, not silently overwritten or reclassified.
+
+Consume the one accepted upstream distinction; do not introduce another reader
+filter, directory-copying service, repository-wide hash pass, index or persistence
+schema. A location-level exclusion record is sufficient; do not recursively enumerate
+cache contents merely to count excluded files. Missing upstream agreement is an
+explicit integration dependency, not permission to infer it from names or invent a
+consumer-local contract. This admission rule does not itself authorize tool-state
+writes or repair source-tool traversal/continuation.
+
 **Given** more ready files than available slots,
 **When** the host batch dispatches work,
 **Then** dispatch respects one easily edited local concurrency cap and permits one active writer per file while independent work progresses,
@@ -986,6 +1011,20 @@ So that the Web app has genuine broad Knowledge from the prepared business input
 **When** the operator starts the host batch,
 **Then** one composition runs preparation, admission/file work, fixed-corpus resolution, rooted BL and publication with no manual intermediate stage-start calls,
 **And** missing prerequisites fail explicitly rather than invoking legacy pair routing, restoring CGC or substituting old wiki content.
+
+**Given** the qualified upstream prepared-source/tool-state contract and the selected real CodeGraph adapter in an owned small prepared fixture,
+**When** native preparation/MCP use and representative tool-state activity are exercised together with production source listing, ranged reading, search and multi-page continuation,
+**Then** source results remain contained and accurately located; tool-state contents are not returned as ordinary source evidence, dispatched as source jobs or counted as analyzed source, and useful source access works under the declared lifecycle and limits,
+**And** observed drift, cancellation, authority loss and limits retain their existing truthful outcomes rather than becoming empty/completed reads or silent truncation. A permitted `ChangedInput` outcome is not itself a failure, but repeated inability to obtain useful source results cannot qualify the integration as successful.
+
+Reuse the existing small-tool and batch qualification work; this is not a new
+benchmark, additional provider run or exhaustive failure matrix. Include a bounded
+supported continuation/drift case, not a guarantee that every old cursor survives
+changes or that unobserved source mutation is detected. Do not suppress genuine
+source/authority failures to accommodate cache writes, introduce automatic
+retry/update scanning, or implement a second filter in the host. Route any missing
+shared capability to its upstream owner. Controlled small-fixture evidence remains
+distinct from the already-required real registration/login batch evidence.
 
 **Given** natural finish or a graceful stop after partial accepted work,
 **When** finalization runs,
