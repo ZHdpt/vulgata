@@ -59,14 +59,32 @@ public sealed class PreparedToolWorkspaceLease : IAsyncDisposable
     public PreparedToolWorkspaceLifetime Lifetime { get; }
     public Task<PreparedToolWorkspaceCheckStatus> CheckCurrentAsync(
         CancellationToken cancellationToken = default);
+    internal Task<PreparedToolWorkspaceCheckStatus> UseContainedRootAsync(
+        PreparedToolPurpose expectedPurpose,
+        Func<PreparedToolRootScope, CancellationToken, ValueTask> use,
+        CancellationToken cancellationToken = default);
     public ValueTask DisposeAsync();
-    // Root handle and physical path are internal to Infrastructure adapters.
+    // Root handle and identity remain private; no public/model root/path property.
+}
+
+internal sealed class PreparedToolRootScope
+{
+    internal string GetPhysicalRootPathForTrustedToolBinding();
+    internal bool IsSeparateDisposableStateRoot(string absoluteStateRoot);
+    internal bool TryMapContainedFileUri(
+        Uri rawUri, out PreparedSourceLocation? relativeLocation);
 }
 ```
 
 The status families distinguish issued/current, denied, authority unavailable, root unavailable, unsupported platform, cancelled and deadline exceeded without exposing trusted input. `Issued` has exactly one lease; every other status has none. Null or malformed construction/request inputs fail closed. The trusted caller owns async disposal after adapter calls settle. A `JdtNavigation` lease may cover one bounded JDT-LS session; Story 18.3 obtains a distinct `CodeGraphPreparation` lease for its own operation and cannot reuse JDT-LS permission or session lifetime. Cancellation/deadline close the affected lease; a new approval or restored verifier never reopens it.
 
 Issuer and lease check the exact existing `PreparedSourceApproval` through `IPreparedSourceCurrentAuthorityVerifier` and the selected tool purpose through `IPreparedToolUseAuthorizer` at issuance, before each source/protocol operation, between bounded work chunks and immediately before disclosure. Revoked/changed approval, denied purpose or unavailable verifier/authorizer latches the lease closed, cancels owned work and discards buffered results. No cached allow is sufficient. The same grant/root identity is never silently rebound. Story 18.3 may use the lease for its native CodeGraph preparation without referencing JDT-LS classes, but must still prove its own subprocess/tool containment. A path lease itself grants no claim that any subprocess is contained.
+
+`UseContainedRootAsync` is the sole new trusted physical-root operation; it is `internal` in Infrastructure and is never part of `IPreparedSourceReadContext`, a Worker function, a serialized result or a public path property. It rejects an unexpected tool purpose, non-open lease, unavailable/mismatched exact current approval, deadline/cancellation or changed canonical root identity before invoking the callback. It serializes the short callback with lease disposal under one gate, reusing an internal check routine without recursively entering public `CheckCurrentAsync`, and rechecks current authority and pinned root identity afterward. The callback receives a token linked to caller cancellation and lease deadline and only a short-lived `PreparedToolRootScope`, invalidated on completion/closure; the callback returns no physical path or arbitrary value. On failure or an exception, the operation returns a sanitized non-current status, and consumers discard derived bindings/results. This callback is limited to bounded root binding, state-root comparison or URI mapping; no unbounded JDT protocol/navigation wait or Worker disclosure occurs inside it. A launch binding copied by trusted Infrastructure from the callback requires another live identity/authority check immediately before launch.
+
+`GetPhysicalRootPathForTrustedToolBinding` is callable only inside that internal callback by trusted adapters. It lets the JDT adapter create `rootUri` and the CodeGraph adapter bind its input, while the lease retains the private root handle/identity and no path reaches Agent code. `IsSeparateDisposableStateRoot` resolves the configured tool-state directory and rejects overlap in either direction or reparse redirection into the prepared root. `TryMapContainedFileUri` accepts only a canonical absolute `file:` URI, derives a canonical Repository-relative path, and verifies the target through the held root with handle-relative no-follow traversal; it rejects outside roots, encoded traversal, UNC/device paths, symlink/reparse escapes, nonexistent/unreadable targets and changed root identity. It yields only `PreparedSourceLocation` on success, never an outside physical path or raw URI. For every operation, current authority is checked again immediately before any Worker response; authority loss discards already mapped locations.
+
+This lease operation proves only current authorization, selected tool purpose, root identity and contained path mapping. It does not constrain what a child process reads, writes or launches. The separate least-privilege JDT/CodeGraph process profile, read-only prepared source and disposable writable tool state remain required. Story 18.2 owns implementation and focused tests of this JDT-independent internal seam; 18.3 may consume it only after an updated verified checkpoint and separately authorized integration, not from the older checkpoint alone.
 
 ## Navigation context and Worker functions
 

@@ -1,0 +1,14 @@
+{
+  "kind": "behavioral-red",
+  "stage": "implement",
+  "task_id": "T010",
+  "slice": "first shared contained-root callback and owned file URI mapping",
+  "test_path": "tests/Vulgata.Tests/PreparedSource/PreparedToolWorkspaceIssuerTests.cs",
+  "test_sha256": "f3515a11def729871ade5ef803689b7453655cac1555902cc588fce21fc081dd",
+  "command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName~PreparedToolWorkspaceIssuerTests'",
+  "exit_code": 1,
+  "result": "Expected accepted-API compile RED: policy and guards passed; build failed at test line 42 with CS1061 because PreparedToolWorkspaceLease lacks UseContainedRootAsync. No assertions ran.",
+  "build_log_path": "TestResults/isolation-de50ca25e776457c923e699b80152a8d/build.log",
+  "build_log_sha256": "c7d4ed52e71297780b766ff183d92db9bb54b184caf8fd34dadb6caf3a7a7ba6",
+  "environment": "Initial restricted run stopped before compilation on MSB4018 UnauthorizedAccessException writing test obj MvcTestingAppManifest.json. Approved native rerun reached CS1061; NU1900 warnings were nonterminal. No real JDT or Java process started."
+}

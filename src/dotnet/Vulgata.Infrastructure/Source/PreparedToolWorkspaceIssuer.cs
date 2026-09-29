@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Text;
 using Microsoft.Win32.SafeHandles;
 using Vulgata.Core.DomainServices;
 
@@ -120,6 +121,78 @@ public sealed class PreparedToolWorkspaceLease : IAsyncDisposable
         await _gate.WaitAsync();
         try
         {
+            return await CheckCurrentUnderGateAsync(cancellationToken);
+        }
+        finally
+        {
+            _gate.Release();
+        }
+    }
+
+    internal async Task<PreparedToolWorkspaceCheckStatus> UseContainedRootAsync(
+        PreparedToolPurpose expectedPurpose,
+        Func<PreparedToolRootScope, CancellationToken, ValueTask> use,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(use);
+        await _gate.WaitAsync();
+        try
+        {
+            if (Lifetime != PreparedToolWorkspaceLifetime.Open)
+            {
+                return _closedStatus;
+            }
+
+            if (expectedPurpose != ToolPurpose)
+            {
+                return PreparedToolWorkspaceCheckStatus.Denied;
+            }
+
+            PreparedToolWorkspaceCheckStatus before =
+                await CheckCurrentUnderGateAsync(cancellationToken);
+            if (before != PreparedToolWorkspaceCheckStatus.Current)
+            {
+                return before;
+            }
+
+            TimeSpan remaining = _remainingDeadline - Stopwatch.GetElapsedTime(_startedAt);
+            using var deadline = new CancellationTokenSource(remaining);
+            using var linked = CancellationTokenSource.CreateLinkedTokenSource(
+                cancellationToken, deadline.Token);
+            var scope = new PreparedToolRootScope(
+                _rootPath, _rootHandle, _rootIdentity, RepositoryId);
+            try
+            {
+                await use(scope, linked.Token);
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                return Close(PreparedToolWorkspaceCheckStatus.Cancelled);
+            }
+            catch (OperationCanceledException) when (deadline.IsCancellationRequested)
+            {
+                return Close(PreparedToolWorkspaceCheckStatus.DeadlineExceeded);
+            }
+            catch (Exception)
+            {
+                return Close(PreparedToolWorkspaceCheckStatus.RootUnavailable);
+            }
+            finally
+            {
+                scope.Invalidate();
+            }
+
+            return await CheckCurrentUnderGateAsync(cancellationToken);
+        }
+        finally
+        {
+            _gate.Release();
+        }
+    }
+
+    private async Task<PreparedToolWorkspaceCheckStatus> CheckCurrentUnderGateAsync(
+        CancellationToken cancellationToken)
+    {
             if (Lifetime != PreparedToolWorkspaceLifetime.Open)
             {
                 return _closedStatus;
@@ -218,11 +291,6 @@ public sealed class PreparedToolWorkspaceLease : IAsyncDisposable
             }
 
             return PreparedToolWorkspaceCheckStatus.Current;
-        }
-        finally
-        {
-            _gate.Release();
-        }
     }
 
     public async ValueTask DisposeAsync()
@@ -252,6 +320,180 @@ public sealed class PreparedToolWorkspaceLease : IAsyncDisposable
             ? PreparedToolWorkspaceLifetime.AuthorityClosed
             : PreparedToolWorkspaceLifetime.ExpiredOrCancelled));
         return status;
+    }
+}
+
+/// <summary>
+/// A short-lived trusted view of the held prepared root. It is valid only while
+/// the lease's serialized callback is running and never leaves Infrastructure.
+/// </summary>
+internal sealed class PreparedToolRootScope
+{
+    private readonly string _rootPath;
+    private readonly SafeFileHandle _rootHandle;
+    private readonly PreparedSourceTraversal.DirectoryIdentity _rootIdentity;
+    private readonly Guid _repositoryId;
+    private bool _active = true;
+
+    internal PreparedToolRootScope(
+        string rootPath,
+        SafeFileHandle rootHandle,
+        PreparedSourceTraversal.DirectoryIdentity rootIdentity,
+        Guid repositoryId)
+    {
+        _rootPath = rootPath;
+        _rootHandle = rootHandle;
+        _rootIdentity = rootIdentity;
+        _repositoryId = repositoryId;
+    }
+
+    internal void Invalidate() => _active = false;
+
+    internal string GetPhysicalRootPathForTrustedToolBinding()
+    {
+        EnsureActive();
+        return _rootPath;
+    }
+
+    internal bool IsSeparateDisposableStateRoot(string absoluteStateRoot)
+    {
+        if (!_active || string.IsNullOrWhiteSpace(absoluteStateRoot) ||
+            !Path.IsPathFullyQualified(absoluteStateRoot) ||
+            PreparedSourceTraversal.ObserveDirectory(_rootHandle) != _rootIdentity)
+        {
+            return false;
+        }
+
+        try
+        {
+            string root = Path.TrimEndingDirectorySeparator(Path.GetFullPath(_rootPath));
+            string state = Path.TrimEndingDirectorySeparator(Path.GetFullPath(absoluteStateRoot));
+            if (IsWithin(root, state) || IsWithin(state, root))
+            {
+                return false;
+            }
+
+            (PreparedSourceTraversal.OpenStatus status, SafeFileHandle? handle) =
+                PreparedSourceTraversal.OpenRoot(state);
+            using (handle)
+            {
+                return status == PreparedSourceTraversal.OpenStatus.Opened &&
+                    handle is not null &&
+                    PreparedSourceTraversal.ObserveDirectory(handle) is not null;
+            }
+        }
+        catch (Exception exception) when (exception is ArgumentException or IOException or NotSupportedException)
+        {
+            return false;
+        }
+    }
+
+    internal bool TryMapContainedFileUri(
+        Uri rawUri,
+        out PreparedSourceLocation? relativeLocation)
+    {
+        relativeLocation = null;
+        if (!_active || rawUri is null || !rawUri.IsAbsoluteUri || !rawUri.IsFile ||
+            rawUri.IsUnc || rawUri.Query.Length != 0 || rawUri.Fragment.Length != 0 ||
+            !HasOnlyOrdinaryEscapes(rawUri.OriginalString) ||
+            PreparedSourceTraversal.ObserveDirectory(_rootHandle) != _rootIdentity)
+        {
+            return false;
+        }
+
+        try
+        {
+            string root = Path.TrimEndingDirectorySeparator(Path.GetFullPath(_rootPath));
+            string file = Path.GetFullPath(rawUri.LocalPath);
+            if (!IsWithin(file, root) || file.Equals(root, StringComparison.OrdinalIgnoreCase))
+            {
+                return false;
+            }
+
+            string relativePath = Path.GetRelativePath(root, file).Replace('\\', '/');
+            if (!PreparedSourceTraversal.IsCanonicalRelativePath(relativePath, allowEmpty: false))
+            {
+                return false;
+            }
+
+            (PreparedSourceTraversal.OpenStatus status, SafeFileHandle? handle) =
+                PreparedSourceTraversal.OpenRelativeFile(_rootHandle, relativePath);
+            using (handle)
+            {
+                if (status != PreparedSourceTraversal.OpenStatus.Opened || handle is null ||
+                    PreparedSourceTraversal.ObserveFile(handle) is null ||
+                    PreparedSourceTraversal.ObserveDirectory(_rootHandle) != _rootIdentity)
+                {
+                    return false;
+                }
+            }
+
+            relativeLocation = new PreparedSourceLocation(_repositoryId, relativePath);
+            return true;
+        }
+        catch (Exception exception) when (exception is ArgumentException or IOException or NotSupportedException)
+        {
+            return false;
+        }
+    }
+
+    private static bool IsWithin(string path, string root) =>
+        path.Equals(root, StringComparison.OrdinalIgnoreCase) ||
+        path.StartsWith(root + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase);
+
+    private static bool HasOnlyOrdinaryEscapes(string uri)
+    {
+        var strictUtf8 = new UTF8Encoding(
+            encoderShouldEmitUTF8Identifier: false,
+            throwOnInvalidBytes: true);
+        for (int index = 0; index < uri.Length; index++)
+        {
+            if (uri[index] != '%')
+            {
+                continue;
+            }
+
+            var escapedBytes = new List<byte>();
+            while (index < uri.Length && uri[index] == '%')
+            {
+                if (index > uri.Length - 3 ||
+                    !byte.TryParse(
+                        uri.AsSpan(index + 1, 2),
+                        System.Globalization.NumberStyles.HexNumber,
+                        System.Globalization.CultureInfo.InvariantCulture,
+                        out byte decoded) ||
+                    decoded < 0x80 && decoded != 0x20)
+                {
+                    // Encoded dots, separators, percent signs and other ASCII
+                    // syntax must not gain a second path interpretation.
+                    return false;
+                }
+
+                escapedBytes.Add(decoded);
+                index += 3;
+            }
+
+            try
+            {
+                _ = strictUtf8.GetString([.. escapedBytes]);
+            }
+            catch (DecoderFallbackException)
+            {
+                return false;
+            }
+
+            index--;
+        }
+
+        return true;
+    }
+
+    private void EnsureActive()
+    {
+        if (!_active)
+        {
+            throw new InvalidOperationException("Prepared root scope is no longer current.");
+        }
     }
 }
 

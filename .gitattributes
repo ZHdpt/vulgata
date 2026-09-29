@@ -79,6 +79,9 @@
 /src/dotnet/Vulgata.Core/DomainServices/PreparedJavaNavigationContracts.cs text eol=lf
 /src/dotnet/Vulgata.Agents/WorkerExecution/PreparedJavaNavigationFunctions.cs text eol=lf
 /tests/Vulgata.Tests/AnalysisRuntime/PreparedJavaNavigationFunctionsTests.cs text eol=lf
+/src/dotnet/Vulgata.Infrastructure/Analysis/Java/PreparedJavaNavigationContextFactory.cs text eol=lf
+/src/dotnet/Vulgata.Infrastructure/Analysis/Java/PreparedJdtLsNavigationContext.cs text eol=lf
+/tests/Vulgata.Tests/AnalysisRuntime/JdtLsPreparedNavigationTests.cs text eol=lf
 
 # Preserve raw-byte pre-images, including their original whitespace and line endings.
 /docs/bmad/history/pre-generic-adoption-2026-09-11/files/** -text -whitespace

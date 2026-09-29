@@ -42,6 +42,14 @@ This is repository-grounded planning, not live JDT-LS qualification. Authority: 
 
 **Alternatives considered**: Wrapping the legacy `AnalysisScope` factory would import rejected source identity/copy behavior; having tests instantiate private JDT internals would bypass the public capability; exposing physical root or runtime selection as Worker arguments would break authority. Building a broad language-server framework is unnecessary. Production runtime registration and any real Java/JDT launch stay closed until T022/T023 accepted trusted PATH/process-profile work.
 
+## Trusted internal root use
+
+**Decision**: Add one `internal` operation on the existing Story 18.2-owned `PreparedToolWorkspaceLease`: `UseContainedRootAsync(expectedPurpose, callback, cancellationToken)`. It passes a short-lived internal scope to trusted Infrastructure adapters, returns only a sanitized current/non-current status, and checks exact approval, tool purpose, deadline and pinned root identity before and after the bounded callback. The scope offers trusted root binding, disposable-state separation and no-follow raw `file:` URI mapping to `PreparedSourceLocation`; no public/model path or handle is added. Story 18.3 uses the same JDT-independent operation only after an updated verified checkpoint and separately authorized integration.
+
+**Rationale**: T010's first controlled handoff passed, but the lease's private `_rootPath`/`_rootHandle` had no callable operation. The JDT adapter therefore cannot establish `rootUri`, compare `-data`/configuration with source, or map raw JDT URIs under the grant without weakening the lease. A callback gives the trusted adapter the minimum physical binding during one bounded use while keeping the root handle/identity in the lease. Rechecking after use makes a changed approval/root invalidate any derived location before disclosure. The root operation itself does not sandbox a subprocess.
+
+**Alternatives considered**: A public `RootPath` property, a model-visible workspace selector or an 18.1 read-context change would widen authority. A generic permanent path token would outlive the grant and permit stale reuse. Duplicating the operation in 18.3 would split source/tool authority. The accepted ownership decision assigns this shared internal operation to 18.2; no new owner or feature is needed.
+
 ## F0 integration dependency
 
 **Decision**: Bind the shared trusted-workspace seam to integrated 18.1 `PreparedSourceApproval`, `IPreparedSourceCurrentAuthorityVerifier` and `PreparedSourceLocation` semantics without altering 18.1's issuer/context/functions or their failure/continuation semantics. Story 18.2 owns its small JDT-independent Infrastructure issuer/lease and focused tests; Story 18.3 consumes the identifiable verified checkpoint only after separate authorization. Navigation-specific context/functions and JDT-LS implementation remain 18.2-owned.

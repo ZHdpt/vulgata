@@ -1,0 +1,22 @@
+{
+  "kind": "behavioral-green",
+  "stage": "implement",
+  "tasks": ["T010", "T011"],
+  "slice": "first internal contained-root callback and owned file URI mapping; tasks incomplete",
+  "production": {
+    "src/dotnet/Vulgata.Infrastructure/Source/PreparedToolWorkspaceIssuer.cs": "73f654ff3825ab58284ab2470ef9ca947506a04b720b1b081fb7685490f69a98"
+  },
+  "test_path": "tests/Vulgata.Tests/PreparedSource/PreparedToolWorkspaceIssuerTests.cs",
+  "test_sha256": "f3515a11def729871ade5ef803689b7453655cac1555902cc588fce21fc081dd",
+  "command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName~PreparedToolWorkspaceIssuerTests'",
+  "exit_code": 0,
+  "selected": 16,
+  "passed": 16,
+  "failed": 0,
+  "skipped": 0,
+  "trx_path": "TestResults/isolation-65e67260c90d41158c5e33e3be9a9d38/results.trx",
+  "trx_sha256": "124761c47db617f5811a92634d41f172be2231df66dfc58e0df65f272b961224",
+  "environment": "Restricted compiler failed writing its Infrastructure obj DLL with CSC CS2012. Approved native launcher passed. No JDT or Java process started.",
+  "minimal_green": "Internal status-only callback checks current lease around a short scope, serializes with disposal, and maps an existing contained file URI to Repository-relative PreparedSourceLocation through the retained root handle.",
+  "final_shape": "Test owner found independent expected relative location, pre-issued fixture file and caller disposal. Production owner found cohesive issuer, lease and short-lived scope for this slice; no local refactor needed. Wrong purpose, authority loss, near-deadline, reparse and URI escape cases remain unverified."
+}

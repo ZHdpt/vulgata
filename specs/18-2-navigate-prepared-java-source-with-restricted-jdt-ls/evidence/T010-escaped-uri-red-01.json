@@ -1,0 +1,18 @@
+{
+  "kind": "behavioral-red",
+  "stage": "implement",
+  "task_id": "T010",
+  "slice": "canonical escaped in-root file URI with ordinary space",
+  "test_path": "tests/Vulgata.Tests/PreparedSource/PreparedToolWorkspaceIssuerTests.cs",
+  "test_sha256": "3b3d200ec0183b91c6594b7c4c95202c68872832f549cdf3b6808005c573bd9b",
+  "command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName~PreparedToolWorkspaceIssuerTests'",
+  "exit_code": 1,
+  "selected": 20,
+  "passed": 19,
+  "failed": 1,
+  "skipped": 0,
+  "trx_path": "TestResults/isolation-b286b4b8aec740f9aae903e9ed601c7e/results.trx",
+  "trx_sha256": "ab570143f2d455800b30abdc6254c8ef375830b35234616030ea80fa03187948",
+  "result": "UseContainedRootAsync returned Current but TryMapContainedFileUri returned false for a canonical absolute file URI containing escaped `%20` for an owned `Greeter Service.java`; test line 107 Assert.True(mapped) failed. Prior unescaped stimulus passed 20/20 but did not exercise this URI form and was corrected without weakening the literal relative-path expectation.",
+  "environment": "Restricted build stopped before tests on test obj manifest UnauthorizedAccessException. Approved native run reached product assertion. No real JDT or Java process started."
+}

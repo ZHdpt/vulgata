@@ -1,0 +1,22 @@
+{
+  "kind": "behavioral-green",
+  "stage": "implement",
+  "tasks": ["T010", "T011"],
+  "slice": "canonical escaped UTF-8 in-root Java filename; tasks incomplete",
+  "production": {
+    "src/dotnet/Vulgata.Infrastructure/Source/PreparedToolWorkspaceIssuer.cs": "2406dc759a3ca42e6a1442f4f719ad9c9ef462d575d50f69a7f0d36e4f819b8b"
+  },
+  "test_path": "tests/Vulgata.Tests/PreparedSource/PreparedToolWorkspaceIssuerTests.cs",
+  "test_sha256": "7b980aaac7ddee46c7acb78b20e0fe22c2621c681b6a078dc3430709561a0f23",
+  "command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName~PreparedToolWorkspaceIssuerTests'",
+  "exit_code": 0,
+  "selected": 22,
+  "passed": 22,
+  "failed": 0,
+  "skipped": 0,
+  "trx_path": "TestResults/isolation-d7b008241c6b43f1873deb10e8758812/results.trx",
+  "trx_sha256": "2233ef8627696229ecba159eca4cf7dda83b65140b33773bd586e4086f891",
+  "environment": "Restricted CSC obj DLL write was denied; approved native launcher passed. No JDT or Java process started.",
+  "minimal_green": "URI escape validation now admits `%20` and strictly decoded UTF-8 non-ASCII bytes while denying encoded ASCII path syntax and invalid sequences. Canonical relative and held-root handle-relative no-follow checks still decide containment.",
+  "final_shape": "Test owner verified independent literal Unicode/space expectations and encoded traversal stimulus; production owner found one cohesive escape-validation responsibility. Other URI/root lifecycle cases remain pending; no real tool qualification."
+}

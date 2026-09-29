@@ -1,0 +1,22 @@
+{
+  "kind": "behavioral-green",
+  "stage": "implement",
+  "tasks": ["T010", "T011"],
+  "slice": "canonical escaped-space file URI with encoded traversal rejection; tasks incomplete",
+  "production": {
+    "src/dotnet/Vulgata.Infrastructure/Source/PreparedToolWorkspaceIssuer.cs": "289c66f7d01cd5b9f5a191527335f4ba82a83af262dd8b37ce4582838725dc89"
+  },
+  "test_path": "tests/Vulgata.Tests/PreparedSource/PreparedToolWorkspaceIssuerTests.cs",
+  "test_sha256": "4a00b2fadc3a695c6eb5f3e5b12b4a7e3a0130530359d98c802437c913823d16",
+  "command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName~PreparedToolWorkspaceIssuerTests'",
+  "exit_code": 0,
+  "selected": 21,
+  "passed": 21,
+  "failed": 0,
+  "skipped": 0,
+  "trx_path": "TestResults/isolation-63772fa6b6d84b8d93aa6c06080e6ebc/results.trx",
+  "trx_sha256": "25350baeeffedfae93b88eace62a2676b6747e8faa766493c032bdfbc7e945ad",
+  "environment": "Restricted CSC obj DLL write was denied; approved native launcher passed. No JDT or Java process started.",
+  "minimal_green": "Mapper admits `%20` for an ordinary in-root space while retaining canonical relative and handle-relative no-follow file checks. Encoded `%2e%2e` outside-root negative remains withheld.",
+  "final_shape": "Test owner verified escaped and traversal stimuli plus independent expected paths; production owner found the current predicate cohesive for this slice. Other legitimate URI escapes and adversarial URI/root cases remain unverified; T010/T011 are not complete."
+}
