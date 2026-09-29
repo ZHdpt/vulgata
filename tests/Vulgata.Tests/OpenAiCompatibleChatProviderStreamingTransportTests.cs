@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Net;
 using System.Net.Http.Headers;
 using System.Text;
@@ -17,7 +18,8 @@ namespace Vulgata.Tests;
 /// </summary>
 public sealed class OpenAiCompatibleChatProviderStreamingTransportTests
 {
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void ProductionRegistration_UsesRawResponseHeaderAdapter()
     {
         var services = new ServiceCollection();
@@ -32,7 +34,8 @@ public sealed class OpenAiCompatibleChatProviderStreamingTransportTests
             registration.ImplementationType?.FullName);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task StreamAsync_EmitsEachDecodedDeltaBeforeTerminalAsync()
     {
         var provider = new LlmProvider(
@@ -92,7 +95,8 @@ public sealed class OpenAiCompatibleChatProviderStreamingTransportTests
         }
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task StreamAsync_ConfiguredReasoningEffort_SerializesOpenAiCompatibleFieldAsync()
     {
         var provider = CreateProvider();
@@ -120,7 +124,8 @@ public sealed class OpenAiCompatibleChatProviderStreamingTransportTests
             body.RootElement.GetProperty("reasoning_effort").GetString());
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task StreamAsync_OmittedReasoningEffort_LeavesProviderDefaultUnspecifiedAsync()
     {
         var provider = CreateProvider();
@@ -143,7 +148,8 @@ public sealed class OpenAiCompatibleChatProviderStreamingTransportTests
         Assert.False(body.RootElement.TryGetProperty("reasoning_effort", out _));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task StreamAsync_PhysicalIOException_EmitsOneBoundedNeutralDisconnectObservationAsync()
     {
         var provider = new LlmProvider(
@@ -196,7 +202,8 @@ public sealed class OpenAiCompatibleChatProviderStreamingTransportTests
         Assert.Equal("disconnect", observation.RejectionCategory);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task StreamAsync_RuntimeObservation_UsesLifecycleVocabularyAndPerDomainCountersAsync()
     {
         var provider = new LlmProvider(
@@ -266,7 +273,8 @@ public sealed class OpenAiCompatibleChatProviderStreamingTransportTests
         Assert.Equal(1, observation.TerminalEventCount);
     }
 
-    [Theory]
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
     [InlineData("\n", 14, 15, 14)]
     [InlineData("\r", 14, 15, 14)]
     [InlineData("\r\n", 16, 17, 16)]
@@ -319,7 +327,8 @@ public sealed class OpenAiCompatibleChatProviderStreamingTransportTests
         Assert.Equal("provider-failure", observation.TransportOutcome);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task StreamAsync_UnterminatedSseEvent_FinalizesPhysicalReadCountersBeforeRejectionAsync()
     {
         var provider = new LlmProvider(
@@ -369,7 +378,8 @@ public sealed class OpenAiCompatibleChatProviderStreamingTransportTests
         Assert.Equal("observed-before-terminal", observation.PhysicalEofDisposition);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task StreamAsync_RawBodyAtExactSafetyLimit_RecordsExactWireCountAndRejectsZeroOutputAsync()
     {
         const int expectedRawBodyByteCount = 1_048_576;
@@ -414,7 +424,8 @@ public sealed class OpenAiCompatibleChatProviderStreamingTransportTests
         Assert.Equal(16_384, observation.MaximumRawReadByteCount);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task StreamAsync_RawBodyOneByteOverSafetyLimit_EmitsClosedRawOverflowObservationAsync()
     {
         const int expectedRawBodyByteCount = 1_048_576;
@@ -457,7 +468,8 @@ public sealed class OpenAiCompatibleChatProviderStreamingTransportTests
         Assert.Equal(expectedRawBodyByteCount, observation.RawBodyByteCount);
     }
 
-    [Theory]
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
     [InlineData(16_384, "completed")]
     [InlineData(16_385, "received-provider-chunk-overflow")]
     public async Task StreamAsync_ReceivedProviderChunkExactAndPlusOne_IsBoundedBeforeJsonAsync(
@@ -504,7 +516,8 @@ public sealed class OpenAiCompatibleChatProviderStreamingTransportTests
             observation.AssembledReceivedProviderResponseByteCount);
     }
 
-    [Theory]
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
     [InlineData(false, 65_536, "completed")]
     [InlineData(true, 65_537, "received-provider-response-overflow")]
     public async Task StreamAsync_AssembledReceivedResponseExactAndPlusOne_IsBoundedBeforeJsonAsync(
@@ -560,7 +573,8 @@ public sealed class OpenAiCompatibleChatProviderStreamingTransportTests
             observation.AssembledReceivedProviderResponseByteCount);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task StreamAsync_EscapeAndMetadataHeavyPayloads_KeepReceivedAndDecodedDomainsSeparateAsync()
     {
         var provider = CreateProvider();
@@ -596,7 +610,8 @@ public sealed class OpenAiCompatibleChatProviderStreamingTransportTests
         Assert.Equal(7, observation.AssembledAnswerByteCount);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task StreamAsync_ZeroDecodedOutput_FailsClosedWithoutTerminalSuccessAsync()
     {
         var provider = CreateProvider();

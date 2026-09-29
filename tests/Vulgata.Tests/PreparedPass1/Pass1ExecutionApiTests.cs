@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
@@ -23,7 +24,8 @@ public sealed class Pass1ExecutionApiTests : IClassFixture<LoginLogoutTests.Cust
         _factory = factory;
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task PublicPass1Endpoints_Unauthenticated_Return401WithoutRedirect()
     {
         using HttpClient client = CreateClient();
@@ -47,7 +49,8 @@ public sealed class Pass1ExecutionApiTests : IClassFixture<LoginLogoutTests.Cust
         Assert.DoesNotContain("Account/Login", start.Headers.Location?.OriginalString ?? string.Empty, StringComparison.OrdinalIgnoreCase);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Pass1ExecutionEndpoints_RegisterOnlyTheApprovedPublicSeams()
     {
         using IServiceScope scope = _factory.Services.CreateScope();
@@ -69,7 +72,8 @@ public sealed class Pass1ExecutionApiTests : IClassFixture<LoginLogoutTests.Cust
             patterns);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task Authenticated_UnknownExecution_IsOwnershipFilteredAs404()
     {
         using HttpClient client = await CreateAuthenticatedClientAsync();
@@ -90,7 +94,8 @@ public sealed class Pass1ExecutionApiTests : IClassFixture<LoginLogoutTests.Cust
         Assert.DoesNotContain("host", await resume.Content.ReadAsStringAsync(), StringComparison.OrdinalIgnoreCase);
     }
 
-    [Theory]
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
     [InlineData(0)]
     [InlineData(5)]
     [InlineData(-1)]
@@ -110,7 +115,8 @@ public sealed class Pass1ExecutionApiTests : IClassFixture<LoginLogoutTests.Cust
         await AssertProblemAsync(response, HttpStatusCode.BadRequest, HttpStatusCode.UnprocessableEntity);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task Start_AbsentConcurrencyUsesDefaultAndIntegerOneThroughFourAreAcceptedByValidation()
     {
         using HttpClient client = await CreateAuthenticatedClientAsync();
@@ -137,7 +143,8 @@ public sealed class Pass1ExecutionApiTests : IClassFixture<LoginLogoutTests.Cust
         }
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ConcurrencyUpdate_StaleVersionAndChangedActor_ReturnConflictOrForbiddenProblemDetails()
     {
         using HttpClient client = await CreateAuthenticatedClientAsync();
@@ -154,7 +161,8 @@ public sealed class Pass1ExecutionApiTests : IClassFixture<LoginLogoutTests.Cust
         await AssertProblemAsync(changedActor, HttpStatusCode.Forbidden, HttpStatusCode.NotFound);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task Resume_ProviderPauseResponse_UsesChineseManualResumeAndSanitizedProblemDetails()
     {
         using HttpClient client = await CreateAuthenticatedClientAsync();
@@ -181,7 +189,8 @@ public sealed class Pass1ExecutionApiTests : IClassFixture<LoginLogoutTests.Cust
         }
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task StatusResponse_UsesDeterministicPairAndWarningOrdering_AndNoSensitiveAtoms()
     {
         using HttpClient client = await CreateAuthenticatedClientAsync();
@@ -196,7 +205,8 @@ public sealed class Pass1ExecutionApiTests : IClassFixture<LoginLogoutTests.Cust
         Assert.DoesNotContain("Diagnostic", body, StringComparison.OrdinalIgnoreCase);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task Resume_RevalidatesPair_IsIdempotent_AndSkipsCompletedJobs()
     {
         using HttpClient client = await CreateAuthenticatedClientAsync();

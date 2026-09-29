@@ -1,0 +1,76 @@
+{
+  "observed_after": {
+    "path": "specs/016-contained-source-tools/evidence/workflow-transition-001-activation.json",
+    "sha256": "44abaa6ec786fd88f63f65674aa174b8811365db162c727f2a51a7f4106687fb"
+  },
+  "raw_result": {
+    "schema_version": "1.0",
+    "gate": "plan-review",
+    "verdict": "REVISE",
+    "reviewed_commit": "6de156569c95e2841e2452084052f95fa5f88168",
+    "reviewed_boundary": {
+      "base_commit": "6de156569c95e2841e2452084052f95fa5f88168",
+      "candidate_commit": null,
+      "diff_sha256": "c477cd3d5acb406ae44af6c07478a1d2e3be8ef595d776cb74df1835ab849a46",
+      "artifact_hashes": {
+        "specs/016-contained-source-tools/contracts/prepared-source-tools.md": "2a816ad28636877c0d9034c7bb26cdd839dc6f240205439d76bd1bff9128596d",
+        "specs/016-contained-source-tools/data-model.md": "16cb3922d6ce9f24f3aff941c5c2856fdf40c00dc02346685217083d7b9ff678",
+        "specs/016-contained-source-tools/plan.md": "a80cc64d8f55e08d1752635cb35e094012f156fc2b8ec9573eaf05871a4e7654",
+        "specs/016-contained-source-tools/quickstart.md": "67649df59b6e562e4dd63690a4eafb7c045797c3617c1b0c7c4f9dffab8f92f2",
+        "specs/016-contained-source-tools/research.md": "c1c400d33c528d705d685942941fb46a4e3437d9a96c875aa5afac86776d0d36",
+        "specs/016-contained-source-tools/spec.md": "48c92e4f6582471a1664e553b48756a811f22bb2b4f1334206e94303629b0b6d"
+      },
+      "owned_paths": [
+        "specs/016-contained-source-tools/spec.md",
+        "specs/016-contained-source-tools/plan.md",
+        "specs/016-contained-source-tools/research.md",
+        "specs/016-contained-source-tools/data-model.md",
+        "specs/016-contained-source-tools/quickstart.md",
+        "specs/016-contained-source-tools/contracts/prepared-source-tools.md"
+      ]
+    },
+    "reviewed_artifacts": [
+      "docs/bmad/planning-artifacts/october-release-epics.md",
+      "docs/bmad/implementation-artifacts/18-1-access-prepared-source-through-contained-read-only-tools.md",
+      "specs/016-contained-source-tools/spec.md",
+      "specs/016-contained-source-tools/plan.md",
+      "specs/016-contained-source-tools/research.md",
+      "specs/016-contained-source-tools/data-model.md",
+      "specs/016-contained-source-tools/quickstart.md",
+      "specs/016-contained-source-tools/contracts/prepared-source-tools.md",
+      "specs/016-contained-source-tools/evidence/plan-review-boundary-01.json",
+      ".specify/memory/constitution.md",
+      "AGENTS.md",
+      "docs/agents/project-state.md",
+      "docs/agents/development.md",
+      "docs/agents/testing.md",
+      "docs/agents/domain.md",
+      "docs/UBIQUITOUS_LANGUAGE.md",
+      "docs/bmad/planning-artifacts/architecture.md",
+      "docs/bmad/planning-artifacts/architecture/ARCHITECTURE-SPINE.md",
+      "docs/bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md",
+      "src/dotnet/Vulgata.Core/DomainServices/RetainedSourceContracts.cs",
+      "src/dotnet/Vulgata.Infrastructure/Source/RetainedSourceReadContext.cs",
+      "src/dotnet/Vulgata.Infrastructure/Analysis/Source/RevisionBoundSourceReader.cs",
+      "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedNavigateCodeFunction.cs",
+      "tests/Vulgata.Tests/RetainedSource/RetainedSourceReadContextTests.cs",
+      "tests/Vulgata.Tests/RetainedSource/RetainedSourceReadLifecycleTests.cs",
+      "tests/Vulgata.Tests/RetainedSource/RetainedSourceRangeReadTests.cs",
+      "tests/Vulgata.Tests/RetainedSource/RetainedSourceRootMappingTests.cs"
+    ],
+    "findings": [
+      {
+        "id": "PR-18.1-LIVE-AUTHORITY",
+        "severity": "CRITICAL",
+        "category": "authorization",
+        "artifact": "specs/016-contained-source-tools/plan.md",
+        "location": "Implementation Design ID-R01, ID-S01 and ID-A01; trusted issuance and context contract",
+        "affected_requirement": "Spec FR-001; Constitution V; AGENTS.md live authorization boundary; PRD NFR-2.3",
+        "evidence": "The plan checks approval when issuing a context, then treats its batch/Repository/root authority as immutable until deadline, cancellation or disposal. Neither the plan nor the companion contract defines how current approval is checked before later list, read or search disclosure, or how revocation invalidates an active context. A still-live grant could therefore disclose source or metadata after its approving authority is withdrawn. Existing retained-source reads revalidate authorization during operations, illustrating the distinct boundary, though this prepared-source design need not use their database-backed mechanism.",
+        "correction_outcome": "Define an injected, DB-free-testable current-authority or revocation seam bound to the approved batch, Repository, subject and applicable purpose. Specify when operations check it, how a revoked or unavailable approval stops disclosure and invalidates continuations, and the sanitized outcome and settlement behavior. Reconcile the plan, contract, data model and direct fixture tests while preserving the approved-root and no-model-selector design.",
+        "earliest_owner": "plan"
+      }
+    ],
+    "summary": "REVISE. Deterministic workflow and plan-content validation passed, and all six pinned artifact hashes matched. The architecture classification and planned Worker-tool authorization trigger are appropriate; the proposed Windows containment, bounded continuation and regression seams are otherwise reviewable. Current-authority enforcement remains a Constitution MUST gap, so planned-change authorization cannot follow this boundary."
+  }
+}

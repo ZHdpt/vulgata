@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Collections;
 using System.Reflection;
 using Vulgata.Core.DomainServices;
@@ -19,7 +20,8 @@ public sealed class ReviewedExactProfileSeedAuthorityTests
     private static readonly Guid ChannelRepository =
         Guid.Parse("10000000-0000-4000-8000-000000000002");
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void ExactPersistedNameRefAndRevisionMatch_DerivesCanonicalFourRoleUnion()
     {
         ExactResolutionProfile profile = new ExactResolutionProfileCatalog().Load();
@@ -64,7 +66,8 @@ public sealed class ReviewedExactProfileSeedAuthorityTests
         Assert.Contains($"{AccountRepository}|src/main/java/cn/com/yitong/actions/cust/UploadOcrToOssOp.java", bindings);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void ExactMatch_IsIndependentOfRepositoryRequestOrder()
     {
         ExactResolutionProfile profile = new ExactResolutionProfileCatalog().Load();
@@ -77,7 +80,8 @@ public sealed class ReviewedExactProfileSeedAuthorityTests
         Assert.Equal(Property(forward, "ProfileFingerprint"), Property(reverse, "ProfileFingerprint"));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void MatchedUnsupportedOwner_ExposesProfileOwnedQualifiedSymbolAndSelectorLine()
     {
         ExactResolutionProfile profile = new ExactResolutionProfileCatalog().Load();
@@ -99,7 +103,8 @@ public sealed class ReviewedExactProfileSeedAuthorityTests
         Assert.Equal(observation.Selector.Line, Property(source, "SelectorLine"));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void PartialNameRefOrRevisionMatch_IsNonMatchingWithNoRequiredSources()
     {
         ExactResolutionProfile profile = new ExactResolutionProfileCatalog().Load();
@@ -116,7 +121,8 @@ public sealed class ReviewedExactProfileSeedAuthorityTests
         Assert.Null(Property(result, "ProfileFingerprint"));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void CatalogUnavailable_IsClosedOutcomeRatherThanNonMatchFallback()
     {
         Assembly core = typeof(OrdinaryPass1JobIdentity).Assembly;

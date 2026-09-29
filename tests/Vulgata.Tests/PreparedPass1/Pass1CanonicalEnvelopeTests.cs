@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Buffers.Binary;
 using System.Reflection;
 using System.Security.Cryptography;
@@ -47,7 +48,8 @@ public sealed class Pass1CanonicalEnvelopeTests
         new("commit", CommitDomain, CommitFields, "5647434501060000002876756c676174612f73746f72792d31322e332f636f64652d6c6f6769632d636f6d6d69742f312e30090000000b00010400112233445546778899aabbccddeeff000204778899aabbcc4ddeff0011223344556600030499aabbccddee4f0011223344556677880004048899aabbccdd4eff001122334455667700050700000020000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f000608000000020700000020ffeeddccbbaa99887766554433221100ffeeddccbbaa998877665544332211000700000020000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f0007080000000104aabbccddeeff40112233445566778899000808000000010700000020000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f00090700000020ffeeddccbbaa99887766554433221100ffeeddccbbaa99887766554433221100000a080000000107000000203333333333333333333333333333333333333333333333333333333333333333000b080000000107000000204444444444444444444444444444444444444444444444444444444444444444", "ba7596b3b58dd40a253253057951e5c89f59d647b45b1797ba507506ca5fe6b4", "", null)
     ];
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void PreparedPass1CanonicalCodec_ExposesVersionedPublicSeam()
     {
         Type? codec = typeof(CanonicalEnvelope).Assembly.GetType(
@@ -63,7 +65,8 @@ public sealed class Pass1CanonicalEnvelopeTests
                 method.Name.Contains("Derive", StringComparison.Ordinal));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void IndependentReconstructor_ReproducesLiteralEnvelopeDigestAndUuidVectors()
     {
         foreach (Vector vector in Vectors)
@@ -80,7 +83,8 @@ public sealed class Pass1CanonicalEnvelopeTests
         }
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void ExistingStory12_1JobIdentity_RemainsTheStableJobIdentity()
     {
         OrdinaryPass1JobIdentity identity = OrdinaryPass1JobIdentity.Create(
@@ -93,7 +97,8 @@ public sealed class Pass1CanonicalEnvelopeTests
         Assert.Equal(Guid.Parse("6b9362f7-193b-88d9-8d9c-b2a21ecfe2fd"), identity.JobId);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void ExistingProductionCenvWriter_AgreesWithIndependentLogicalDocumentVector()
     {
         const string productionDomain =

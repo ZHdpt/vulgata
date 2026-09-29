@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Reflection;
 using System.Security.Cryptography;
 using Vulgata.Core.DomainServices;
@@ -6,7 +7,8 @@ namespace Vulgata.Tests.PreparedPass2;
 
 public sealed class Pass2SchemaResourceTests
 {
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void BusinessLogicFlowSchema_IsOneEmbeddedResource_AndMatchesAcceptedContract()
     {
         Assembly assembly = typeof(Pass2BusinessLogicSchemaContract).Assembly;

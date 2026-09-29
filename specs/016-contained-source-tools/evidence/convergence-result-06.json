@@ -1,0 +1,56 @@
+{
+  "observed_after": {
+    "path": "specs/016-contained-source-tools/evidence/workflow-transition-043-test-hygiene-accept.json",
+    "sha256": "031530df33e1a88787a842b900e8f61e5f9f020cd13c10e5ee23153db7f409e6"
+  },
+  "raw_result": {
+    "kind": "convergence",
+    "stage": "converge",
+    "outcome": "converged",
+    "source_commit": "6dc584b0f21e2534429e1f586393161090c3a37f",
+    "reused_task_ids": [],
+    "appended_task_ids": [],
+    "tasks_before": {
+      "path": "specs/016-contained-source-tools/evidence/tasks-pre-convergence-03.md",
+      "sha256": "b345d7322f8777d8fda77a153c48af954e7ed18a185cf648f8c309ef0d0a8a1b"
+    },
+    "tasks_after": {
+      "path": "specs/016-contained-source-tools/tasks.md",
+      "sha256": "b345d7322f8777d8fda77a153c48af954e7ed18a185cf648f8c309ef0d0a8a1b"
+    },
+    "unresolved_blockers": [],
+    "input_hashes": {
+      "specs/016-contained-source-tools/spec.md": "48c92e4f6582471a1664e553b48756a811f22bb2b4f1334206e94303629b0b6d",
+      "specs/016-contained-source-tools/plan.md": "b375723e56c8cdc7990a4e7a624c5f58a78fde07d9a23edd79e25025c54fce08",
+      "specs/016-contained-source-tools/tasks.md": "b345d7322f8777d8fda77a153c48af954e7ed18a185cf648f8c309ef0d0a8a1b",
+      "specs/016-contained-source-tools/evidence/quality-diagnosis-03.json": "7210fe8de7b33f15a78a046113d2fca4ff9d92401e3217a7e78c64e3cda40532",
+      "specs/016-contained-source-tools/evidence/implementation-correction-03.json": "8b63acfed0547faab78791d1f64d8909f753eb7ff36b23f3085d6a6357b9509e",
+      "specs/016-contained-source-tools/evidence/verify-test-correction-focused-command-02.json": "c7fce089dc488a2ba5168c605b6f348829de5d4c43a9994b37f99a52fe297a2e",
+      ".gitattributes": "22231ecbbff5a3f653c971b0aeceebee802185297d64d91eb3b3aed3c926722f",
+      "specs/007-exact-cross-repo-resolution/contracts/demo-resolution-profile.v1.json": "b84223c211f90328e62ca3172f3c398d42fb513b228ca0ff490725d6046398db",
+      "src/dotnet/Vulgata.Infrastructure/CrossRepository/Profiles/demo-resolution-profile.v1.json": "b84223c211f90328e62ca3172f3c398d42fb513b228ca0ff490725d6046398db",
+      "tests/Vulgata.Tests/ExactResolutionProfileTests.cs": "26af1775c40728fbaa5ff31383e2f694694b21e604dd0e36c6cdfd2583ea481f",
+      "tests/Vulgata.Tests/PostgreSqlHeavyCollection.cs": "c3cebb3b0ae5bbb1138768ce37a54c3951a2b7872999a0d9bc7456daf1bfdc90",
+      "tests/Vulgata.Tests/RetainedSource/RetainedSourceCaptureTests.cs": "119a8fbcab2159c4b5c11b159562b051425f48c1407b1025032ac281ef4f9d14",
+      "tests/Vulgata.Tests/Migrations/DurableScanConcurrencyPostgreSqlTests.cs": "b18e30b0194cdb447db3270e786109994b6e6201dba9377e16756b85d3352926"
+    },
+    "owned_paths": [
+      "specs/016-contained-source-tools/spec.md",
+      "specs/016-contained-source-tools/plan.md",
+      "specs/016-contained-source-tools/tasks.md",
+      "specs/016-contained-source-tools/evidence/quality-diagnosis-03.json",
+      "specs/016-contained-source-tools/evidence/implementation-correction-03.json",
+      "specs/016-contained-source-tools/evidence/verify-test-correction-focused-command-02.json",
+      ".gitattributes",
+      "specs/007-exact-cross-repo-resolution/contracts/demo-resolution-profile.v1.json",
+      "src/dotnet/Vulgata.Infrastructure/CrossRepository/Profiles/demo-resolution-profile.v1.json",
+      "tests/Vulgata.Tests/ExactResolutionProfileTests.cs",
+      "tests/Vulgata.Tests/PostgreSqlHeavyCollection.cs",
+      "tests/Vulgata.Tests/RetainedSource/RetainedSourceCaptureTests.cs",
+      "tests/Vulgata.Tests/Migrations/DurableScanConcurrencyPostgreSqlTests.cs"
+    ],
+    "assessment": "The bounded correction changes only historical test/resource qualification. Story 18.1 FR-011/SC-005, plan ID-T03, and T026 remain satisfied; T026's retained-source capture boundary passed in the 27/27 focused set. No Story 18.1 production, schema, migration, Worker tool, Scan strategy, or PRD behavior changed.",
+    "verification_route": "Direct test/artifact verification; no behavioral RED was required or fabricated.",
+    "summary": "Converged with no task reuse or append. The configured full-suite rerun remains a separate final-verification obligation."
+  }
+}

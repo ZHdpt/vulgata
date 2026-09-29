@@ -1,0 +1,22 @@
+{
+  "kind": "human-approval",
+  "stage": "verify",
+  "decision_id": "18-1/implementation/1/extension/3",
+  "status": "accepted",
+  "episode_id": "18-1/implementation/1",
+  "scope_sha256": "aa75a9f118e863c446aa112973dbe13f00dc4596509b436edfb6f77c76bda00b",
+  "scope_material": "18-1/implementation/1/extension/3|18-1/implementation/1|8|verify-test-failure-04|policy-commit-11e78b352929c2cc059cd157441faa413d5c3e01|configured-test-pwsh-eng-test|fresh-convergence-lookback-quality-e2e|one-final-result",
+  "pause_at": 8,
+  "requested_at": "2026-09-29T03:24:32.9519688Z",
+  "decided_at": "2026-09-29T04:32:26.4603849Z",
+  "user_instruction": "Another chat has propose a new test policy on oct14/main. I have rebased current work on to it. Reload skills and memories. Follow the new test policy you are able to continue",
+  "failed_results_at_decision": 7,
+  "failed_approaches": [
+    "The former configured full-project command mixed Story 18.1 verification with PostgreSQL, local-tool, provider, E2E, and historical qualification and failed eight tests outside the PreparedSource production boundary.",
+    "Earlier bounded fixture and scheduling corrections passed their focused boundaries but could not make that mixed repository-wide command a reliable default gate."
+  ],
+  "approved_changed_approach": "Use the committed repository test policy at 11e78b352929c2cc059cd157441faa413d5c3e01. Reconcile the rebased hash-bound Story 18.1 artifacts; validate the policy; refresh convergence, lookback, independent quality review, and E2E on the rebased boundary; then run the configured Web build and pwsh -NoProfile -File eng/test.ps1 as the single authoritative result-8 verification. Preserve earlier focused PreparedSource and authorized PostgreSQL evidence where its exact boundary is unchanged. Do not treat excluded suites as passed.",
+  "limits": "This raises the cumulative pause limit from 7 to 8 for one new-policy final verification result. It does not reset the counter or authorize arbitrary retries. A negative result at count 8 returns to the human.",
+  "unchanged_gates": "Definition authority, accepted Story 18.1 behavior, convergence, refreshed lookback, independent quality review, conditional E2E, behavior-specific qualification, configured build, final verification and closure remain required.",
+  "summary": "The user accepted the previously proposed one-result extension to eight after rebasing Story 18.1 onto the committed repository test-isolation policy and directed the story to continue under that policy."
+}

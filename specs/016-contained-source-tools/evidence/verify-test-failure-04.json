@@ -1,0 +1,85 @@
+{
+  "observed_after": {
+    "path": "specs/016-contained-source-tools/evidence/workflow-transition-046-e2e-skipped-covered.json",
+    "sha256": "e85b816c59a5f1f892abbd78ed727e39705213261dec69d7160dc2b6807046af"
+  },
+  "raw_result": {
+    "kind": "failure",
+    "stage": "verify-test",
+    "source_commit": "6d63960b81c824529776005917e7e819453402ea",
+    "observed_at": "2026-09-29T03:24:32.9519688Z",
+    "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj",
+    "exit_code": 1,
+    "raw_output_path": "specs/016-contained-source-tools/evidence/verify-test-failure-output-04.txt",
+    "raw_output_sha256": "f9d659048a70589c8f4798b064c2857d65a904c8c1cf2f223e677e850ed75766",
+    "summary_counts": {
+      "failed": 8,
+      "passed": 3246,
+      "skipped": 15,
+      "total": 3269,
+      "duration": "16 m 23 s"
+    },
+    "failures": [
+      {
+        "test": "Vulgata.Tests.PreparedPass1.PreparedPass1JobExecutorStreamingTests.ExecuteAsync_ProviderTurnNineAndOptionalCorrection_MapsSdkIterationsAndTerminatesWithoutRequestElevenAsync",
+        "classification": "observed streaming test outcome mismatch",
+        "evidence": "Scenario first-invalid expected Rejected but observed ProviderUnavailable at line 1743."
+      },
+      {
+        "test": "Vulgata.Tests.PreparedPass1.PreparedPass1JobExecutorStreamingTests.ExecuteAsync_CommentOnlyRawReadResetsInactivityBeforeParsedUpdateAsync",
+        "classification": "observed streaming test outcome mismatch",
+        "evidence": "Expected Completed but observed ProviderUnavailable at line 185."
+      },
+      {
+        "test": "Vulgata.Tests.RetainedSource.RetainedSourcePostgreSqlTests.SourceSnapshot_PostgreSql17_DeclaresFixedShapeChecksAndRestrictiveRelationship",
+        "classification": "observed owned PostgreSQL cleanup timeout",
+        "evidence": "Npgsql timed out during disposable database cleanup."
+      },
+      {
+        "test": "Vulgata.Tests.Pass2.Pass2PostgreSqlConstraintTests.Story124PostgreSql17_RetrievalBudgetUsesJobPrimaryKeyAndUtcUpdatedAt",
+        "classification": "observed owned PostgreSQL cleanup timeout",
+        "evidence": "Npgsql timed out during disposable database cleanup."
+      },
+      {
+        "test": "Vulgata.Tests.Migrations.DurableScanMigrationPostgreSqlTests.DurableScanFoundation_PostgreSql17_ApplyRollbackReapply_PreservesProtectedRows",
+        "classification": "observed owned PostgreSQL cleanup timeout",
+        "evidence": "Npgsql timed out during disposable database cleanup."
+      },
+      {
+        "test": "Vulgata.Tests.RetainedSource.RetainedSourceCaptureBoundaryTests.AcquireAsync_RevokedSystemOwnerWhileIdentityLockIsHeld_DeniesWithoutNewRow",
+        "classification": "observed retained-source lock cleanup failure",
+        "evidence": "IOException reported while deleting a lock file still in use."
+      },
+      {
+        "test": "Vulgata.Tests.RetainedSource.RetainedSourcePostgreSqlTests.SourceSnapshot_PostgreSql17_RejectsDuplicateIdentityStorageAndNegativeCounts",
+        "classification": "observed owned PostgreSQL cleanup timeout",
+        "evidence": "Npgsql timed out during disposable database cleanup."
+      },
+      {
+        "test": "Vulgata.Tests.Pass2.RetrieveCodeLogicPostgreSqlBudgetTests.RetrieveAsync_AcknowledgementLossReplayAfterCurrentnessChangesIsRefusedWithoutMutationAsync",
+        "classification": "observed owned PostgreSQL cleanup timeout",
+        "evidence": "Npgsql timed out during disposable database cleanup."
+      }
+    ],
+    "recovery_assessment": {
+      "episode_id": "18-1/implementation/1",
+      "failed_results": 7,
+      "pause_at": 7,
+      "action": "pause",
+      "earliest_owner": "tests",
+      "failed_approaches": [
+        "The prior bounded test-hygiene correction made canonical profile bytes platform-stable and serialized two identified PostgreSQL-heavy test classes; its focused boundary passed 27/27.",
+        "The configured full-suite verification still failed eight historical tests across streaming outcomes, PostgreSQL cleanup, and retained-source lock cleanup."
+      ],
+      "next_authority_required": "The cumulative recovery ceiling of 7 is reached. No diagnosis, correction, or rerun is authorized without an explicit human decision and, if recovery is to continue, higher recovery authority supported by policy."
+    },
+    "build_summary": {
+      "command": "dotnet build src/dotnet/Vulgata.Web/Vulgata.Web.csproj",
+      "exit_code": 0,
+      "errors": 0,
+      "warnings": 3297,
+      "duration": "33.56 s"
+    },
+    "summary": "The quality-reviewed Story 18.1 candidate built successfully, but configured full-suite verification failed 8 of 3269 tests. This is substantive recovery result 7 and reaches the approved cumulative ceiling. Downstream convergence, lookback, quality, and E2E acceptance must be treated as invalidated for closure, and no further diagnosis, correction, or rerun is authorized."
+  }
+}

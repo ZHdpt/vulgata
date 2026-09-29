@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
@@ -40,7 +41,8 @@ public sealed class Story125EvaluationContractTests
         yield return ["story125-release-evidence.schema.json", envelope.ToJsonString(), "planned envelope has no check inventory"];
     }
 
-    [Theory]
+    [Trait("Suite", "HistoricalBoundary")]
+    [SuiteTheory("HistoricalBoundary")]
     [MemberData(nameof(AcceptedSchemas))]
     public void AcceptedSchema_LoadsAsClosedDraft202012Document(string fileName, string title)
     {
@@ -55,7 +57,8 @@ public sealed class Story125EvaluationContractTests
         Assert.True(root.GetProperty("$defs").GetProperty("sha256").ValueKind is JsonValueKind.Object);
     }
 
-    [Theory]
+    [Trait("Suite", "HistoricalBoundary")]
+    [SuiteTheory("HistoricalBoundary")]
     [MemberData(nameof(ValidContractDocuments))]
     public void AcceptedSchema_ValidKnownGoodDocument_Passes(string fileName, string json)
     {
@@ -67,7 +70,8 @@ public sealed class Story125EvaluationContractTests
         Assert.Empty(errors);
     }
 
-    [Theory]
+    [Trait("Suite", "HistoricalBoundary")]
+    [SuiteTheory("HistoricalBoundary")]
     [MemberData(nameof(InvalidContractDocuments))]
     public void AcceptedSchema_IndependentKnownBadDocument_Fails(string fileName, string json, string reason)
     {
@@ -81,7 +85,8 @@ public sealed class Story125EvaluationContractTests
         Assert.True(errors.Count > 0, reason);
     }
 
-    [Fact]
+    [Trait("Suite", "HistoricalBoundary")]
+    [SuiteFact("HistoricalBoundary")]
     public void Story125QuestionCorpus_IsSchemaValidAndContainsTwelveToTwentyCases()
     {
         using JsonDocument corpus = LoadQuestionCorpusFixture();
@@ -94,7 +99,8 @@ public sealed class Story125EvaluationContractTests
         Assert.InRange(cases.GetArrayLength(), 12, 20);
     }
 
-    [Fact]
+    [Trait("Suite", "HistoricalBoundary")]
+    [SuiteFact("HistoricalBoundary")]
     public void Story125QuestionCorpus_HasStableUniqueCaseIds()
     {
         using JsonDocument corpus = LoadQuestionCorpusFixture();
@@ -107,7 +113,8 @@ public sealed class Story125EvaluationContractTests
         Assert.All(ids, id => Assert.Matches("^q[0-9]{2}$", id));
     }
 
-    [Fact]
+    [Trait("Suite", "HistoricalBoundary")]
+    [SuiteFact("HistoricalBoundary")]
     public void Story125QuestionCorpus_FollowUpsReferenceExistingAcyclicChainsOfAtMostThreeQuestions()
     {
         using JsonDocument corpus = LoadQuestionCorpusFixture();
@@ -135,7 +142,8 @@ public sealed class Story125EvaluationContractTests
         }
     }
 
-    [Fact]
+    [Trait("Suite", "HistoricalBoundary")]
+    [SuiteFact("HistoricalBoundary")]
     public void Story125QuestionCorpus_DoesNotEmbedDesiredProviderAnswers()
     {
         using JsonDocument corpus = LoadQuestionCorpusFixture();
@@ -148,7 +156,8 @@ public sealed class Story125EvaluationContractTests
         }
     }
 
-    [Fact]
+    [Trait("Suite", "HistoricalBoundary")]
+    [SuiteFact("HistoricalBoundary")]
     public void Story125CrossArtifactConsistency_UsesOneClosedStreamingVocabularyAndByteDomain()
     {
         string root = FindRepositoryRoot();
@@ -209,7 +218,8 @@ public sealed class Story125EvaluationContractTests
             rejectionCategory.EnumerateArray().Select(value => value.GetString()!).Order(StringComparer.Ordinal));
     }
 
-    [Fact]
+    [Trait("Suite", "HistoricalBoundary")]
+    [SuiteFact("HistoricalBoundary")]
     public void Story125EvaluationScoring_RejectsAcceptedTechnicalClaimCitationCoverageBelowOneHundredPercent()
     {
         JsonObject envelope = CreatePassedScoringEnvelope();
@@ -222,7 +232,8 @@ public sealed class Story125EvaluationContractTests
             error => error.Contains("citation", StringComparison.OrdinalIgnoreCase));
     }
 
-    [Fact]
+    [Trait("Suite", "HistoricalBoundary")]
+    [SuiteFact("HistoricalBoundary")]
     public void Story125EvaluationScoring_RejectsAnyUnauthorizedDisclosureAutomatically()
     {
         JsonObject envelope = CreatePassedScoringEnvelope();
@@ -236,7 +247,8 @@ public sealed class Story125EvaluationContractTests
                 error.Contains("disclosure", StringComparison.OrdinalIgnoreCase));
     }
 
-    [Fact]
+    [Trait("Suite", "HistoricalBoundary")]
+    [SuiteFact("HistoricalBoundary")]
     public void Story125EvaluationScoring_UsesExactNonnegativeHalfUpUsefulPercentage()
     {
         JsonObject envelope = CreatePassedScoringEnvelope(usefulCount: 10, usefulPercent: 83.33);
@@ -248,7 +260,8 @@ public sealed class Story125EvaluationContractTests
             error => error.Contains("useful percentage", StringComparison.OrdinalIgnoreCase));
     }
 
-    [Fact]
+    [Trait("Suite", "HistoricalBoundary")]
+    [SuiteFact("HistoricalBoundary")]
     public void Story125EvaluationScoring_RejectsAcceptedAnswerAtOrAboveThirtySeconds()
     {
         JsonObject envelope = CreatePassedScoringEnvelope();
@@ -264,7 +277,8 @@ public sealed class Story125EvaluationContractTests
                 error.Contains("timing", StringComparison.OrdinalIgnoreCase));
     }
 
-    [Fact]
+    [Trait("Suite", "HistoricalBoundary")]
+    [SuiteFact("HistoricalBoundary")]
     public void Story125EvaluationScoring_RejectsProviderDispositionOutsideClosedVocabulary()
     {
         JsonObject envelope = CreatePassedScoringEnvelope();
@@ -278,7 +292,8 @@ public sealed class Story125EvaluationContractTests
                 error.Contains("provider disposition", StringComparison.OrdinalIgnoreCase));
     }
 
-    [Fact]
+    [Trait("Suite", "HistoricalBoundary")]
+    [SuiteFact("HistoricalBoundary")]
     public void Story125SemanticValidation_KnownGoodPlannedEnvelope_RemainsGreen()
     {
         IReadOnlyList<string> errors = Story125SemanticHarnessProbe.Validate(CreateValidReleaseEnvelope());
@@ -286,7 +301,8 @@ public sealed class Story125EvaluationContractTests
         Assert.Empty(errors);
     }
 
-    [Theory]
+    [Trait("Suite", "HistoricalBoundary")]
+    [SuiteTheory("HistoricalBoundary")]
     [InlineData("dangling-command-reference")]
     [InlineData("unresolved-observation-reference")]
     [InlineData("foreign-artifact")]
@@ -396,7 +412,8 @@ public sealed class Story125EvaluationContractTests
         Assert.NotEmpty(errors);
     }
 
-    [Fact]
+    [Trait("Suite", "HistoricalBoundary")]
+    [SuiteFact("HistoricalBoundary")]
     public void Story125PassedEnvelope_EvidenceBindingGraph_IsSchemaValidAndSemanticallyGreen()
     {
         JsonObject envelope = CreateSchemaValidPassedEnvelope();
@@ -410,7 +427,8 @@ public sealed class Story125EvaluationContractTests
         Assert.Empty(semanticErrors);
     }
 
-    [Theory]
+    [Trait("Suite", "HistoricalBoundary")]
+    [SuiteTheory("HistoricalBoundary")]
     [InlineData("dangling-chat-command-reference")]
     [InlineData("foreign-results-artifact")]
     [InlineData("altered-results-artifact-hash")]
@@ -484,7 +502,8 @@ public sealed class Story125EvaluationContractTests
         Assert.NotEmpty(schemaErrors.Concat(semanticErrors));
     }
 
-    [Fact]
+    [Trait("Suite", "HistoricalBoundary")]
+    [SuiteFact("HistoricalBoundary")]
     public void Story125PassedEnvelope_HashVerifiedCorpusAndResultGraph_RemainsGreen()
     {
         Dictionary<string, byte[]> artifactContents = CreateFixedCorpusResultArtifactContents();
@@ -496,7 +515,8 @@ public sealed class Story125EvaluationContractTests
         Assert.Empty(Story125SemanticHarnessProbe.Validate(envelope, artifactContents));
     }
 
-    [Theory]
+    [Trait("Suite", "HistoricalBoundary")]
+    [SuiteTheory("HistoricalBoundary")]
     [InlineData("coordinated-foreign-case-identity")]
     [InlineData("altered-result-artifact-content")]
     [InlineData("missing-result-artifact-content")]

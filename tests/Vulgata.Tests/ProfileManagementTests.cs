@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Net;
 using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Identity;
@@ -16,7 +17,8 @@ public sealed class ProfileManagementTests : IClassFixture<LoginLogoutTests.Cust
         _factory = factory;
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ProfilePage_LoadsCurrentDisplayNameFallbackAndEmail()
     {
         const string email = "profile.load@example.com";
@@ -37,7 +39,8 @@ public sealed class ProfileManagementTests : IClassFixture<LoginLogoutTests.Cust
             "Expected the page to render the legacy display-name fallback and the read-only email.");
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ProfilePage_Post_UpdatesDisplayName()
     {
         const string email = "profile.display-name@example.com";
@@ -65,7 +68,8 @@ public sealed class ProfileManagementTests : IClassFixture<LoginLogoutTests.Cust
         Assert.Contains("个人资料已更新", html, StringComparison.Ordinal);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task EmailPage_Post_UpdatesEmailAndUserName()
     {
         const string originalEmail = "profile.email.original@example.com";
@@ -95,7 +99,8 @@ public sealed class ProfileManagementTests : IClassFixture<LoginLogoutTests.Cust
         await LoginAsync(reloginClient, newEmail, password);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task EmailPage_Post_DuplicateEmailShowsChineseError()
     {
         const string originalEmail = "profile.duplicate.original@example.com";
@@ -123,7 +128,8 @@ public sealed class ProfileManagementTests : IClassFixture<LoginLogoutTests.Cust
         Assert.Equal(originalEmail, user.UserName);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ChangePassword_WithIncorrectCurrentPassword_ShowsChineseErrorAndKeepsOldPassword()
     {
         const string email = "profile.password.invalid-current@example.com";
@@ -150,7 +156,8 @@ public sealed class ProfileManagementTests : IClassFixture<LoginLogoutTests.Cust
         Assert.False(await CheckPasswordAsync(userId, attemptedNewPassword));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ChangePassword_WithWeakNewPassword_ShowsLocalizedGenericError()
     {
         const string email = "profile.password.weak-new@example.com";
@@ -180,7 +187,8 @@ public sealed class ProfileManagementTests : IClassFixture<LoginLogoutTests.Cust
         Assert.False(await CheckPasswordAsync(userId, weakNewPassword));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ChangePassword_WithValidInputs_PreservesSessionAndInvalidatesOldPassword()
     {
         const string email = "profile.password.success@example.com";

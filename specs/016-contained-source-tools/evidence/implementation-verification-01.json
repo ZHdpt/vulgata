@@ -1,0 +1,70 @@
+{
+  "kind": "command-set",
+  "stage": "implement",
+  "outcome": "passed-with-blocked-regression",
+  "story_key": "18-1-access-prepared-source-through-contained-read-only-tools",
+  "source_commit": "4703e4fb9e268580988e976808316ced413f140f",
+  "observed_at": "2026-09-28T09:37:55.2936898Z",
+  "environment": {
+    "os": "Microsoft Windows NT 10.0.26220.0",
+    "dotnet_sdk": "10.0.401",
+    "fixture_account": "actual workspace user",
+    "sandbox_account_limit": "The sandbox account cannot traverse the user-profile ancestor and reports RootUnavailable; containment qualification therefore ran under the actual workspace user."
+  },
+  "commands": [
+    {
+      "purpose": "final assembly boundary",
+      "command": "dotnet build src/dotnet/Vulgata.Web/Vulgata.Web.csproj --no-restore -p:RunAnalyzers=false -v:q",
+      "exit_code": 0,
+      "result": "Build succeeded with 0 errors and 9 existing package-source/assembly-version warnings."
+    },
+    {
+      "purpose": "focused prepared-source behavior and Windows containment",
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter FullyQualifiedName~PreparedSource --logger \"console;verbosity=minimal\"",
+      "exit_code": 0,
+      "result": "115 passed, 0 failed, 0 skipped; includes current-authority timing, handle-relative no-follow link cases and replacement/retarget races."
+    },
+    {
+      "purpose": "selected retained Git-source regression boundary",
+      "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --filter \"FullyQualifiedName~RetainedSourceReadContextTests|FullyQualifiedName~RetainedSourceRangeReadTests|FullyQualifiedName~RetainedSourceCaptureTests\" --logger \"console;verbosity=minimal\"",
+      "exit_code": 1,
+      "result": "63 selected tests were blocked before behavioral assertions because VULGATA_STORY131_POSTGRES_ADMIN is not configured; this is not counted as a pass or a product failure."
+    },
+    {
+      "purpose": "source-only scope inspection",
+      "command": "rg over the six new production files for Git, DbContext, database, provider, CodeGraph, LSP, UI and CLI terms",
+      "exit_code": 1,
+      "result": "No forbidden-scope matches; ripgrep exit 1 means no matches."
+    },
+    {
+      "purpose": "diff whitespace validation",
+      "command": "git diff --check",
+      "exit_code": 0,
+      "result": "Passed; Git emitted only working-tree LF-to-CRLF notices."
+    }
+  ],
+  "additional_passing_evidence": {
+    "agent_function_subset": "15 passed, 0 failed, 0 skipped",
+    "adjacent_agent_regression_subset": "28 passed, 0 failed, 0 skipped"
+  },
+  "qualification": {
+    "prepared_source_contract": "qualified by direct production-seam controlled tests",
+    "windows_containment": "qualified on owned Windows fixtures under the actual workspace user",
+    "current_authority": "checked at issuance, operation start, between bounded units and before release",
+    "real_worker_model_provider_integration": "not claimed"
+  },
+  "known_limits": [
+    "A deterministic partial-unreadable listing could not be induced through the accepted public seam; no test-only fault seam was added.",
+    "A positive nextByteOffset after cumulative returned-byte exhaustion is not constructible under the accepted per-range and cumulative caps; the exhausted-limit path is covered without a next offset.",
+    "The selected retained-source PostgreSQL-backed regressions require an owned administrator credential that is absent from this checkout."
+  ],
+  "owned_paths": [
+    "src/dotnet/Vulgata.Core/DomainServices/PreparedSourceContracts.cs",
+    "src/dotnet/Vulgata.Infrastructure/Source/PreparedSourceContextIssuer.cs",
+    "src/dotnet/Vulgata.Infrastructure/Source/PreparedSourceReadContext.cs",
+    "src/dotnet/Vulgata.Infrastructure/Source/PreparedSourceText.cs",
+    "src/dotnet/Vulgata.Infrastructure/Source/PreparedSourceTraversal.cs",
+    "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedSourceFunctions.cs",
+    "tests/Vulgata.Tests/PreparedSource"
+  ]
+}

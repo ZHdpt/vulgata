@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
@@ -35,7 +36,8 @@ public sealed class ManualResumeApiTests
         _factory = factory;
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task Resume_Unauthenticated_Returns401WithoutCookieRedirect()
     {
         SpyRecoveryCoordinator spy = new();
@@ -50,7 +52,8 @@ public sealed class ManualResumeApiTests
         Assert.Empty(spy.Calls);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task Resume_AuthenticatedWithoutManagementAccess_Returns403BeforeOwnershipLookup()
     {
         string email = UniqueEmail("forbidden");
@@ -71,7 +74,8 @@ public sealed class ManualResumeApiTests
         Assert.Empty(spy.Calls);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task Resume_MalformedRouteIdentity_Returns400WithBoundedChineseProblem()
     {
         string email = UniqueEmail("malformed");
@@ -94,7 +98,8 @@ public sealed class ManualResumeApiTests
         Assert.Empty(spy.Calls);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task Resume_EmptyRouteIdentity_Returns400WithSameBoundedContract()
     {
         string email = UniqueEmail("empty");
@@ -116,7 +121,8 @@ public sealed class ManualResumeApiTests
         Assert.Empty(spy.Calls);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task Resume_OwnerFilteredMissingAndHiddenExecution_ReturnIdentical404Problem()
     {
         string email = UniqueEmail("owner-hidden");
@@ -143,7 +149,8 @@ public sealed class ManualResumeApiTests
         Assert.Empty(spy.Calls);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task Resume_AuthorizedOwner_ReachesRecoveryAndReturnsBoundedSuccessOrRecoveryProblem()
     {
         string email = UniqueEmail("owner");
@@ -169,7 +176,8 @@ public sealed class ManualResumeApiTests
         Assert.NotEmpty(spy.Calls[0].AuthorizationScope.OwnedSystemIds);
     }
 
-    [Theory]
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
     [InlineData(DurableScanStoreOutcome.Conflict, DurableScanReason.StaleStateVersion, 409, "scan-resume-conflict")]
     [InlineData(DurableScanStoreOutcome.Rejected, DurableScanReason.IntegrityViolation, 422, "scan-resume-integrity-rejected")]
     [InlineData(DurableScanStoreOutcome.Rejected, DurableScanReason.ProviderUnavailable, 503, "scan-provider-unavailable")]
@@ -202,7 +210,8 @@ public sealed class ManualResumeApiTests
         Assert.Equal(executionId, spy.Calls[0].ScanExecutionId);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task Resume_Replay_IsIdempotentAndExposesOnlyBoundedResponseFields()
     {
         string email = UniqueEmail("replay");
@@ -239,7 +248,8 @@ public sealed class ManualResumeApiTests
         Assert.All(spy.Calls, call => Assert.Equal(scanExecutionId, call.ScanExecutionId));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task Resume_DoesNotAcceptCallerSuppliedStateOrRuntimeFields()
     {
         string email = UniqueEmail("input-boundary");
@@ -273,7 +283,8 @@ public sealed class ManualResumeApiTests
         Assert.Empty(spy.Calls);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task Resume_SuccessContract_DoesNotDispatchWorkerOrInitializeAnalysisRuntime()
     {
         string email = UniqueEmail("no-dispatch");

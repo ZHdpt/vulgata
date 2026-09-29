@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Reflection;
 using Vulgata.Core.DomainServices;
 using Vulgata.Core.Entities;
@@ -6,7 +7,8 @@ namespace Vulgata.Tests;
 
 public sealed class ChatContractTests
 {
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Create_ValidQuestion_NormalizesTextAndCanonicalizesRepositoryIds()
     {
         Guid systemId = Guid.Parse("10000000-0000-0000-0000-000000000001");
@@ -26,7 +28,8 @@ public sealed class ChatContractTests
             request.RepositoryIds);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Create_InvalidQuestionRequest_RejectsWithClosedFailureCode()
     {
         Guid systemId = Guid.Parse("10000000-0000-0000-0000-000000000001");
@@ -51,7 +54,8 @@ public sealed class ChatContractTests
         Assert.Equal(ChatContractFailureCode.InvalidRequest, overBound.FailureCode);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Create_CandidateClaim_CanonicalizesSupportAndProducesDeterministicHashes()
     {
         Guid documentVersionId = Guid.Parse("30000000-0000-0000-0000-000000000001");
@@ -86,7 +90,8 @@ public sealed class ChatContractTests
         Assert.Matches("^[0-9a-f]{64}$", first.SupportSignature);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Create_EvidencePacket_CanonicalizesCollectionsAndFingerprintsDeterministically()
     {
         Guid systemId = Guid.Parse("10000000-0000-0000-0000-000000000001");
@@ -115,7 +120,8 @@ public sealed class ChatContractTests
         Assert.Matches("^[0-9a-f]{64}$", first.Fingerprint);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Create_ValidatedSelectionAndGroundedAnswer_PreservesFixedClaimCitationMapping()
     {
         string fingerprint = new('a', 64);
@@ -148,7 +154,8 @@ public sealed class ChatContractTests
         Assert.Equal(ChatContractFailureCode.InvalidSelection, invalidOrder.FailureCode);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Generated_ValidRawSelectionJson_RetainsExactProviderContent()
     {
         string rawSelectionJson = "{\r\n  \"schemaVersion\": \"prepared-chat-answer-v1\",\r\n  \"unknown\": 1,\r\n  \"unknown\": 2\r\n}";
@@ -165,7 +172,8 @@ public sealed class ChatContractTests
         Assert.Null(outcome.FailureCode);
     }
 
-    [Theory]
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
     [InlineData("")]
     [InlineData("   ")]
     public void Generated_BlankRawSelectionJson_ThrowsInvalidSelection(string rawSelectionJson)
@@ -182,7 +190,8 @@ public sealed class ChatContractTests
         Assert.Equal(ChatContractFailureCode.InvalidSelection, exception.FailureCode);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Generated_OverBoundRawSelectionJson_ThrowsInvalidSelection()
     {
         ChatSynthesisResult result = ChatSynthesisResult.Create(
@@ -197,7 +206,8 @@ public sealed class ChatContractTests
         Assert.Equal(ChatContractFailureCode.InvalidSelection, exception.FailureCode);
     }
 
-    [Theory]
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
     [InlineData(ChatContractFailureCode.InvalidSelection)]
     [InlineData(ChatContractFailureCode.ProviderFailure)]
     [InlineData(ChatContractFailureCode.TimedOut)]
@@ -212,7 +222,8 @@ public sealed class ChatContractTests
         Assert.Equal(failureCode, outcome.FailureCode);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Create_SynthesisRequest_RequiresAndRetainsExactSystemId()
     {
         Guid systemId = Id(30);
@@ -232,7 +243,8 @@ public sealed class ChatContractTests
         Assert.Equal(ChatContractFailureCode.InvalidSelection, emptySystem.FailureCode);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Create_CurrentnessRequest_RequiresCanonicalScopeAndPositiveSafeSourceAnchors()
     {
         Guid repository1 = Id(20);
@@ -267,7 +279,8 @@ public sealed class ChatContractTests
         Assert.Equal(ChatContractFailureCode.InvalidCurrentness, unsafeAnchor.FailureCode);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void ServiceInterfaces_ExposeExactProviderIndependentClosedContracts()
     {
         AssertMethodSignature(

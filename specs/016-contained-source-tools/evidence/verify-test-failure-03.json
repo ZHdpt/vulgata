@@ -1,0 +1,54 @@
+{
+  "observed_after": {
+    "path": "specs/016-contained-source-tools/evidence/workflow-transition-039-e2e-skipped-covered.json",
+    "sha256": "fa2b5557ca1298a2f7c92584f330425cf0822ca29f613d666be58742c6fa9345"
+  },
+  "raw_result": {
+    "kind": "failure",
+    "stage": "verify-test",
+    "source_commit": "55de5586e67c09bb8aa1892c3fba9f4d2b4d8c7c",
+    "observed_at": "2026-09-29T02:19:51.0695894Z",
+    "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj",
+    "exit_code": 1,
+    "raw_output_path": "specs/016-contained-source-tools/evidence/verify-test-failure-output-03.txt",
+    "raw_output_sha256": "ff2beaec6a2a6bfe4ee3bdfc7df90341159cbdc078afe9cacae4270b1f3ebe05",
+    "summary_counts": {
+      "failed": 3,
+      "passed": 3251,
+      "skipped": 15,
+      "total": 3269,
+      "duration": "14 m 50 s"
+    },
+    "failures": [
+      {
+        "test": "Vulgata.Tests.ExactResolutionProfileTests.Load_ReviewedEmbeddedResource_MatchesAcceptedBytesAndFingerprint",
+        "classification": "historical embedded-resource fingerprint mismatch",
+        "evidence": "Expected fingerprint prefix 5d621ca3 but observed 3a71cfe3 at ExactResolutionProfileTests.cs:21."
+      },
+      {
+        "test": "Vulgata.Tests.RetainedSource.RetainedSourceCaptureTests.Composition_InvalidSourceStorageConfiguration_FailsClosedBeforeCapture",
+        "classification": "database read timeout masked the expected configuration validation",
+        "evidence": "The test expected source_configuration_invalid but received an Npgsql stream exception after 20 seconds."
+      },
+      {
+        "test": "Vulgata.Tests.Migrations.DurableScanConcurrencyPostgreSqlTests.PostgreSql17_RecoveryBatch_AcknowledgementLostAfterCommit_ReplaysWithoutDuplicateStateAdvance",
+        "classification": "owned PostgreSQL database cleanup timeout",
+        "evidence": "Npgsql timed out reading during DisposablePostgreSqlDatabase cleanup at line 265."
+      }
+    ],
+    "recovery_assessment": {
+      "episode_id": "18-1/implementation/1",
+      "failed_results": 6,
+      "pause_at": 6,
+      "action": "pause",
+      "earliest_owner": "tests",
+      "failed_approaches": [
+        "The first final-suite attempt exposed and corrected the missing public migration-history mapping in ExactCrossRepositoryMigrationTests.",
+        "The corrected full-suite rerun used stable postgres admin connections and the authorized disposable vulgata database, but uncovered one independent fingerprint mismatch and two database timeout paths."
+      ],
+      "proposed_changed_approach": "If a bounded extension to 7 is approved, do not alter Story 18.1 production code. First isolate the fingerprint test and identify the reviewed embedded resource plus accepted fingerprint authority. Separately inspect PostgreSQL health and run the two timeout cases serially against fresh owned databases. Classify deterministic fixture defects versus transient database capacity before any correction, then rerun only the affected class and the configured full suite.",
+      "proposed_new_limit": 7
+    },
+    "summary": "The quality-reviewed Story 18.1 candidate built successfully, but configured full-suite verification failed 3 of 3269 tests. None of the three failures is in Story 18.1 production or PreparedSource tests. This is substantive recovery result 6 and reaches the current pause limit; no further correction or rerun is authorized."
+  }
+}

@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Buffers.Binary;
 using System.Diagnostics;
 using System.Formats.Tar;
@@ -13,7 +14,8 @@ namespace Vulgata.Tests;
 
 public sealed class PreScanCommunicationDetectionTests
 {
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task DetectAsync_DirectPreparedRpcAnnotation_ReturnsConfirmedHighWithoutRetainingSource()
     {
         const string relativePath = "src/LedgerService.java";
@@ -54,7 +56,8 @@ public sealed class PreScanCommunicationDetectionTests
         Assert.DoesNotContain(snapshot.Path, classification.Locator, StringComparison.OrdinalIgnoreCase);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task DetectAsync_CommentStringImportAndCodeTokens_DoNotCreateConfirmedEvidence()
     {
         const string relativePath = "src/FakeCommunicationEvidence.java";
@@ -91,7 +94,8 @@ public sealed class PreScanCommunicationDetectionTests
             item => item.Level == ClassificationLevel.Confirmed);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task DetectAsync_AnnotationLeadingStringArgumentDecoys_DoNotCreateConfirmedEvidence()
     {
         const string relativePath = "src/AnnotationArgumentDecoys.java";
@@ -126,7 +130,8 @@ public sealed class PreScanCommunicationDetectionTests
             item => item.Level == ClassificationLevel.Confirmed);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task DetectAsync_JavaMultilineLexicalDecoys_DoNotCreateConfirmedEvidence()
     {
         const string relativePath = "src/JavaMultilineDecoys.java";
@@ -167,7 +172,8 @@ public sealed class PreScanCommunicationDetectionTests
             item => item.Level == ClassificationLevel.Confirmed);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task DetectAsync_CSharpMultilineLexicalDecoys_DoNotCreateConfirmedEvidence()
     {
         const string relativePath = "src/CSharpMultilineDecoys.cs";
@@ -208,7 +214,8 @@ public sealed class PreScanCommunicationDetectionTests
             item => item.Level == ClassificationLevel.Confirmed);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task DetectAsync_ForeignLanguageAnnotationTokens_DoNotCreateConfirmedEvidence()
     {
         const string relativePath = "src/foreign.py";
@@ -244,7 +251,8 @@ public sealed class PreScanCommunicationDetectionTests
             item => item.Level == ClassificationLevel.Confirmed);
     }
 
-    [Theory]
+    [Trait("Suite", "LocalTools")]
+    [SuiteTheory("LocalTools")]
     [InlineData(
         "java",
         "src/ParameterizedRpc.java",
@@ -289,7 +297,8 @@ public sealed class PreScanCommunicationDetectionTests
                 item.Confidence == ConfidenceBand.High);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task DetectAsync_ConfigOnlyCommittedArtifacts_ReturnsConfirmedRpcAndHttp()
     {
         using var snapshot = new TemporaryDirectory();
@@ -343,7 +352,8 @@ public sealed class PreScanCommunicationDetectionTests
             });
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task DetectAsync_DirectPreparedHttpControllerClientAndConfiguration_ReturnsConfirmedHigh()
     {
         const string relativePath = "src/PreparedHttp.java";
@@ -397,7 +407,8 @@ public sealed class PreScanCommunicationDetectionTests
                 item.Confidence == ConfidenceBand.High);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task DetectAsync_ImportNamespacePackageAndFrameworkOnlyEvidence_RemainsConservativeHint()
     {
         const string relativePath = "src/CommunicationImports.java";
@@ -454,7 +465,8 @@ public sealed class PreScanCommunicationDetectionTests
                 item.Provenance == EvidenceProvenance.FrameworkFact);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task DetectAsync_MalformedUnsafeOversizedContradictoryAndUnsupportedEvidence_ApprovesWarningsOnly()
     {
         RepositoryProfileDraft profile = CreateWarningsOnlyProfileDraft();
@@ -499,7 +511,8 @@ public sealed class PreScanCommunicationDetectionTests
             result.Classifications.Select(item => item.Rule).Order().ToArray());
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task DetectAsync_DuplicateDirectEvidence_CollapsesAndRetainsIndependentHint()
     {
         const string relativePath = "src/DuplicateService.java";
@@ -540,7 +553,8 @@ public sealed class PreScanCommunicationDetectionTests
         Assert.Equal(1, result.TotalHintCount);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task DetectAsync_OverOneHundredBothKindsAndPermutation_RetainsAuthoritativeDeterministicSample()
     {
         using var snapshot = new TemporaryDirectory();
@@ -622,7 +636,8 @@ public sealed class PreScanCommunicationDetectionTests
             ProjectClassifications(reverseResult));
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task DetectAsync_ZeroEvidence_StillApproves()
     {
         RepositoryProfileDraft profile = CreateCompletedProfileDraft();
@@ -649,7 +664,8 @@ public sealed class PreScanCommunicationDetectionTests
         Assert.Equal(0, result.TotalWarningCount);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task DetectAsync_TruncatedAndDeferredFamilySource_OmitsUnsupportedBehavior()
     {
         const string relativePath = "src/DeferredFamilies.java";
@@ -689,7 +705,8 @@ public sealed class PreScanCommunicationDetectionTests
                 EvidenceRule.HttpClientAnnotation);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public void CommunicationEvidenceRuleCatalog_EmbeddedVocabulary_IsVersionedAndClosed()
     {
         CommunicationEvidenceRuleCatalog catalog =
@@ -711,7 +728,8 @@ public sealed class PreScanCommunicationDetectionTests
             });
     }
 
-    [Theory]
+    [Trait("Suite", "LocalTools")]
+    [SuiteTheory("LocalTools")]
     [InlineData("\"version\": \"1.0\"", "\"version\": \"2.0\"")]
     [InlineData("\"kind\": \"Rpc\"", "\"kind\": \"Mq\"")]
     [InlineData("\"category\": \"DirectAnnotation\"", "\"category\": \"UserRegex\"")]
@@ -731,7 +749,8 @@ public sealed class PreScanCommunicationDetectionTests
             () => CommunicationEvidenceRuleCatalog.Load(stream));
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public void CommunicationEvidenceRuleCatalog_OversizedNonSeekableInput_StopsAfterOverflowProbe()
     {
         using var stream = new CountingNonSeekableStream(new byte[256 * 1024]);
@@ -741,7 +760,8 @@ public sealed class PreScanCommunicationDetectionTests
         Assert.InRange(stream.BytesRead, 64 * 1024 + 1, 64 * 1024 + 1);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public void CommunicationKindDetector_PublicBoundary_HasNoExternalOrDispatchDependency()
     {
         Type detector = typeof(CommunicationKindDetector);
@@ -766,7 +786,8 @@ public sealed class PreScanCommunicationDetectionTests
                 field.FieldType.Name.Contains("Dispatch", StringComparison.OrdinalIgnoreCase));
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public void DomainLifecycle_CompletedProfileAndApprovedResult_ComposesOneIdentityBoundCommitDraft()
     {
         RepositoryProfileDraft profile = CreateCompletedProfileDraft();
@@ -791,7 +812,8 @@ public sealed class PreScanCommunicationDetectionTests
         Assert.Equal(PreScanApprovalState.PreScanApproved, commit.PreScanResult.State);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public void DomainLifecycle_RepositoryProfileDraft_RemainsProfileOnly()
     {
         Type profileType = typeof(RepositoryProfileDraft);
@@ -811,7 +833,8 @@ public sealed class PreScanCommunicationDetectionTests
             parameter => forbiddenTypes.Contains(parameter.ParameterType));
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public void DomainLifecycle_DetectorContract_ConsumesProfileRevisionAndPrivateSnapshot()
     {
         var method = typeof(IPreScanCommunicationDetector).GetMethod(
@@ -829,7 +852,8 @@ public sealed class PreScanCommunicationDetectionTests
             method.GetParameters().Select(parameter => parameter.ParameterType));
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public void ClosedClassificationVocabulary_ContainsOnlyAcceptedValues()
     {
         Assert.Equal([PreScanApprovalState.PreScanApproved], Enum.GetValues<PreScanApprovalState>());
@@ -868,7 +892,8 @@ public sealed class PreScanCommunicationDetectionTests
             Enum.GetValues<EvidenceRule>());
     }
 
-    [Theory]
+    [Trait("Suite", "LocalTools")]
+    [SuiteTheory("LocalTools")]
     [InlineData(ClassificationLevel.Confirmed, ConfidenceBand.Conservative)]
     [InlineData(ClassificationLevel.Confirmed, ConfidenceBand.None)]
     [InlineData(ClassificationLevel.Hint, ConfidenceBand.High)]
@@ -899,7 +924,8 @@ public sealed class PreScanCommunicationDetectionTests
                 }));
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public void Classification_Create_WithRuleKindOrProvenanceMismatch_Rejects()
     {
         Assert.Throws<ArgumentException>(() =>
@@ -928,7 +954,8 @@ public sealed class PreScanCommunicationDetectionTests
                 EvidenceProvenance.Detector));
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public void Classification_Create_WithCompatibleClosedTuples_Accepts()
     {
         Guid resultId = Guid.NewGuid();
@@ -960,7 +987,8 @@ public sealed class PreScanCommunicationDetectionTests
         Assert.Equal(ClassificationLevel.Warning, warning.Level);
     }
 
-    [Theory]
+    [Trait("Suite", "LocalTools")]
+    [SuiteTheory("LocalTools")]
     [InlineData("")]
     [InlineData("/rooted.cs")]
     [InlineData("C:/rooted.cs")]
@@ -983,7 +1011,8 @@ public sealed class PreScanCommunicationDetectionTests
                 Fingerprint));
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public void Classification_Create_WithOutOfBoundsOrUnboundLocator_Rejects()
     {
         Assert.Throws<ArgumentException>(() =>
@@ -996,7 +1025,8 @@ public sealed class PreScanCommunicationDetectionTests
                 locator: $"src/Service.cs#{new string('x', 4_096)}"));
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public void PreScanResult_Create_WithIdentityRevisionOrConfirmedFlagMismatch_Rejects()
     {
         RepositoryProfileDraft profile = CreateCompletedProfileDraft();
@@ -1035,7 +1065,8 @@ public sealed class PreScanCommunicationDetectionTests
                 confirmedKinds: ConfirmedCommunicationKinds.Http));
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public void RepositoryProfileCommitDraft_Create_WithDifferentRepositoryOrScanRun_Rejects()
     {
         RepositoryProfileDraft profile = CreateCompletedProfileDraft();
@@ -1054,7 +1085,8 @@ public sealed class PreScanCommunicationDetectionTests
             RepositoryProfileCommitDraft.Create(profile, PreScanResultDraft.Create(result)));
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task AcquireAsync_DirtyReusableCheckout_RejectsWithoutProfiledRevision()
     {
         using var source = new TemporaryGitRepository();
@@ -1081,7 +1113,8 @@ public sealed class PreScanCommunicationDetectionTests
         Assert.Null(rejected.ProfiledRevision);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task AcquireAsync_CleanCheckout_CapturesExactLowercaseProfiledRevision()
     {
         using var source = new TemporaryGitRepository();
@@ -1099,7 +1132,8 @@ public sealed class PreScanCommunicationDetectionTests
         AssertProfiledRevision(result.ProfiledRevision);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task AcquireAsync_ExactRevision_MaterializesPrivateGitObjectSnapshot()
     {
         using var source = new TemporaryGitRepository();
@@ -1138,7 +1172,8 @@ public sealed class PreScanCommunicationDetectionTests
         Assert.False(Directory.Exists(snapshotRoot));
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task AcquireAsync_EmptyCommittedBlob_MaterializesZeroLengthFileAsync()
     {
         using var source = new TemporaryGitRepository();
@@ -1167,7 +1202,8 @@ public sealed class PreScanCommunicationDetectionTests
         Assert.Equal(0, snapshotFile.Length);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task AcquireAsync_UnsafeArchiveEntries_RejectsAndPublishesNoLease()
     {
         await AssertRejectedArchiveAsync(CreateTar(("C:/absolute.txt", TarEntryType.RegularFile, "x")));
@@ -1181,7 +1217,8 @@ public sealed class PreScanCommunicationDetectionTests
                 ("duplicate.txt", TarEntryType.RegularFile, "second")));
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task AcquireAsync_PerEntryBoundExceeded_RejectsAndCleansPartialSnapshot()
     {
         await AssertRejectedArchiveAsync(
@@ -1191,7 +1228,8 @@ public sealed class PreScanCommunicationDetectionTests
                 MaximumAggregateBytes: 64));
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task AcquireAsync_AggregateBoundExceeded_RejectsAndCleansPartialSnapshot()
     {
         await AssertRejectedArchiveAsync(
@@ -1203,7 +1241,8 @@ public sealed class PreScanCommunicationDetectionTests
                 MaximumAggregateBytes: 7));
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task AcquireAsync_EntryBoundExceeded_RejectsBeforeCreatingExcessDestinationAndCleansPartialSnapshot()
     {
         using var source = new TemporaryGitRepository();
@@ -1244,14 +1283,16 @@ public sealed class PreScanCommunicationDetectionTests
         AssertNoSnapshots(storage.Path);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task AcquireAsync_MalformedArchive_RejectsAndCleansPartialSnapshot()
     {
         await AssertRejectedArchiveAsync(
             new MemoryStream(Encoding.ASCII.GetBytes("not a tar archive"), writable: false));
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task AcquireAsync_CancelledBeforeAcquisition_CancelsWithoutSnapshot()
     {
         using var source = new TemporaryGitRepository();
@@ -1273,7 +1314,8 @@ public sealed class PreScanCommunicationDetectionTests
         AssertNoSnapshots(storage.Path);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task AcquireAsync_DirtyAfterWorkingCopyAcquisition_RejectsAndCleansSnapshot()
     {
         using var source = new TemporaryGitRepository();
@@ -1301,7 +1343,8 @@ public sealed class PreScanCommunicationDetectionTests
         AssertNoSnapshots(storage.Path);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task AcquireAsync_CancelledDuringMaterialization_CleansPartialSnapshot()
     {
         using var source = new TemporaryGitRepository();
@@ -1328,7 +1371,8 @@ public sealed class PreScanCommunicationDetectionTests
         AssertNoSnapshots(storage.Path);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task AcquireAsync_SameRepository_HoldsAcquisitionLockUntilLeaseDisposal()
     {
         using var source = new TemporaryGitRepository();
@@ -1365,7 +1409,8 @@ public sealed class PreScanCommunicationDetectionTests
         Assert.Equal(2, archiveSource.OpenCount);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task AcquireAsync_CleanupFailure_PreservesPrimaryFailureAndReleasesAcquisitionLock()
     {
         if (!OperatingSystem.IsWindows())

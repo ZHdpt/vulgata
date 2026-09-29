@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
@@ -19,7 +20,8 @@ namespace Vulgata.Tests.PreparedPass2;
 /// </summary>
 public sealed class Pass2DocumentCommitTests
 {
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task CommitAsync_ValidCandidate_DerivesAllAndOnlyUsedGeneratedFromTargetsAsync()
     {
         await using CommitFixture fixture = await CommitFixture.CreateAsync();
@@ -62,7 +64,8 @@ public sealed class Pass2DocumentCommitTests
         Assert.Equal(committedVersionId, completedJob.CommittedDocumentVersionId);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task CommitAsync_InitialEvidenceCurrentnessMutation_IsRejectedWithoutWritesAsync()
     {
         await using CommitFixture fixture = await CommitFixture.CreateAsync();
@@ -81,7 +84,8 @@ public sealed class Pass2DocumentCommitTests
         Assert.Equal(before, await fixture.GraphSnapshotAsync());
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task CommitAsync_RetrievedEvidenceCurrentnessMutation_IsRejectedWithoutWritesAsync()
     {
         await using CommitFixture fixture = await CommitFixture.CreateAsync();
@@ -100,7 +104,8 @@ public sealed class Pass2DocumentCommitTests
         Assert.Equal(before, await fixture.GraphSnapshotAsync());
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task CommitAsync_UnauthorizedEvidence_IsRejectedWithoutWritesAsync()
     {
         await using CommitFixture fixture = await CommitFixture.CreateAsync();
@@ -116,7 +121,8 @@ public sealed class Pass2DocumentCommitTests
         Assert.Equal(before, await fixture.GraphSnapshotAsync());
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task CommitAsync_MismatchedProfiledRevision_IsRejectedWithoutWritesAsync()
     {
         await using CommitFixture fixture = await CommitFixture.CreateAsync();
@@ -134,7 +140,8 @@ public sealed class Pass2DocumentCommitTests
         Assert.Equal(before, await fixture.GraphSnapshotAsync());
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task CommitAsync_ChangedProviderBinding_IsRejectedWithoutWritesAsync()
     {
         await using CommitFixture fixture = await CommitFixture.CreateAsync();

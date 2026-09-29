@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.AspNetCore.Hosting;
@@ -34,7 +35,8 @@ public sealed class DurableScanRestartPostgreSqlTests
     private const string SourceHash =
         "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task RestartThenRepeatedManualResume_PreservesMixedDurableStatesAndRejectsStaleCompetingTransition()
     {
         string? administratorConnectionString =
@@ -43,7 +45,7 @@ public sealed class DurableScanRestartPostgreSqlTests
         {
             // The real PostgreSQL qualification is opt-in and must not fall
             // back to SQLite or an in-memory substitute.
-            return;
+            throw new InvalidOperationException("Required PostgreSQL qualification prerequisite is unavailable; use eng/test.ps1 -Suite PostgreSql.");
         }
 
         await using DisposablePostgreSqlDatabase database =

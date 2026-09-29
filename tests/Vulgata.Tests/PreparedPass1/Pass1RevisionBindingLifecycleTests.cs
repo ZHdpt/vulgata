@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Reflection;
 using Microsoft.Extensions.DependencyInjection;
 using Vulgata.Agents.WorkerExecution;
@@ -18,7 +19,8 @@ namespace Vulgata.Tests.PreparedPass1;
 /// </summary>
 public sealed class Pass1RevisionBindingLifecycleTests
 {
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void CoreContract_RequiresAtomicPairAcquisitionAndExplicitPairRelease()
     {
         Type contract = RequireCoreContract();
@@ -44,7 +46,8 @@ public sealed class Pass1RevisionBindingLifecycleTests
             "T062 RED: pair acquisition must return a binding/lease projection.");
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void ProductionRegistry_ImplementsTheCorePairBindingContract()
     {
         Type contract = RequireCoreContract();
@@ -52,7 +55,8 @@ public sealed class Pass1RevisionBindingLifecycleTests
         Assert.True(registry!.IsPublic || registry.IsNestedPublic);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task AcquirePair_RequiresExactlyTwoAndRollsBackBothOnSecondFailureAsync()
     {
         Type contract = RequireCoreContract();
@@ -83,7 +87,8 @@ public sealed class Pass1RevisionBindingLifecycleTests
             await InvokeAsync(registry, resolve, PairId, RepositoryTwo));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task AcquirePair_ResolvesStableTokensReleasesPairAndReacquiresExactRevisionAsync()
     {
         Type contract = RequireCoreContract();
@@ -129,7 +134,8 @@ public sealed class Pass1RevisionBindingLifecycleTests
             acquirer.SuccessfulRevisions.Skip(2).Order(StringComparer.Ordinal));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void BindingProjection_RequiresStablePerRepositoryOpaqueTokensWithoutHostPaths()
     {
         Type contract = RequireCoreContract();
@@ -158,7 +164,8 @@ public sealed class Pass1RevisionBindingLifecycleTests
             "T062 RED: host paths must not cross the Core binding projection.");
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void LifecycleSurface_ProvidesReacquisitionAfterReleaseAndPreservesActiveRunnerBoundary()
     {
         Type contract = RequireCoreContract();
@@ -193,7 +200,8 @@ public sealed class Pass1RevisionBindingLifecycleTests
             property => property.Name.Contains("BindingToken", StringComparison.OrdinalIgnoreCase));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Store_ExposesAtomicRevisionBindingFailureTransitionWithClosedEffects()
     {
         MethodInfo method = RequireRevisionBindingFailureMethod();

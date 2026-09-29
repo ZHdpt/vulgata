@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
@@ -19,7 +20,8 @@ public sealed class KnowledgeStorePersistenceTests
     private static readonly Guid _targetCodeUnitId =
         Guid.Parse("40000000-0000-0000-0000-000000000002");
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task CommitAsync_ValidCodeAndBusinessLogic_PersistsCompleteOwnedAggregates()
     {
         var capture = new ParameterCaptureInterceptor();
@@ -76,7 +78,8 @@ public sealed class KnowledgeStorePersistenceTests
             command => command.CommandText.Contains("FOR UPDATE", StringComparison.OrdinalIgnoreCase));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task CommitAsync_ExpectedCurrentVersion_InsertsImmutableSuccessorAndMovesCurrentPointer()
     {
         await using SqliteKnowledgeStoreSession session =
@@ -157,7 +160,8 @@ public sealed class KnowledgeStorePersistenceTests
         Assert.Equal(4, await session.Context.Set<DocumentSection>().CountAsync());
     }
 
-    [Theory]
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
     [InlineData("operation")]
     [InlineData("anchor")]
     [InlineData("edge")]
@@ -253,7 +257,8 @@ public sealed class KnowledgeStorePersistenceTests
         KnowledgeStoreTestHarness.AssertTrackerClean(session.Context);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task CommitAsync_ReplayedSuccessorHasTamperedVersionNumber_ReturnsConflictWithoutMutation()
     {
         await using SqliteKnowledgeStoreSession session =
@@ -298,7 +303,8 @@ public sealed class KnowledgeStorePersistenceTests
         KnowledgeStoreTestHarness.AssertTrackerClean(session.Context);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task CommitAsync_ReplayedCurrentVersionHasSuccessor_ReturnsConflictWithoutMutation()
     {
         await using SqliteKnowledgeStoreSession session =
@@ -343,7 +349,8 @@ public sealed class KnowledgeStorePersistenceTests
         KnowledgeStoreTestHarness.AssertTrackerClean(session.Context);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task RebuildProjectionAsync_ExistingVersion_ReplacesOnlyDerivedRowsRepeatably()
     {
         await using SqliteKnowledgeStoreSession session =
@@ -439,7 +446,8 @@ public sealed class KnowledgeStorePersistenceTests
         Assert.Equal(4, await session.Context.Set<DocumentSection>().CountAsync());
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task CommitAsync_StaleExpectedCurrentVersion_ReturnsConflictWithoutLosingRows()
     {
         await using SqliteKnowledgeStoreSession session =
@@ -496,7 +504,8 @@ public sealed class KnowledgeStorePersistenceTests
         KnowledgeStoreTestHarness.AssertTrackerClean(session.Context);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task CommitAsync_BusinessSuccessor_PreservesHistoricalEdgeAndFlowVersionEndpoints()
     {
         await using SqliteKnowledgeStoreSession session =
@@ -630,7 +639,8 @@ public sealed class KnowledgeStorePersistenceTests
         Assert.Equal(successorVersionId, predecessorAfter.SupersededById);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task RebuildProjectionAsync_SaveFails_RollsBackCompleteProjectionAndClearsTracker()
     {
         var failure = new SaveChangesFailureInterceptor(5);
@@ -676,7 +686,8 @@ public sealed class KnowledgeStorePersistenceTests
         KnowledgeStoreTestHarness.AssertTrackerClean(session.Context);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task CommitAsync_InvalidAnchorOwnership_RejectsWithoutPartialRows()
     {
         await using SqliteKnowledgeStoreSession session =
@@ -704,7 +715,8 @@ public sealed class KnowledgeStorePersistenceTests
         KnowledgeStoreTestHarness.AssertTrackerClean(session.Context);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task CommitAsync_UnauthorizedFlowDocumentEndpoint_RejectsBeforePersistence()
     {
         await using SqliteKnowledgeStoreSession session =
@@ -753,7 +765,8 @@ public sealed class KnowledgeStorePersistenceTests
         KnowledgeStoreTestHarness.AssertTrackerClean(session.Context);
     }
 
-    [Theory]
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
     [InlineData(2)]
     [InlineData(3)]
     [InlineData(4)]
@@ -779,7 +792,8 @@ public sealed class KnowledgeStorePersistenceTests
         KnowledgeStoreTestHarness.AssertTrackerClean(session.Context);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task CompositeForeignKeys_CrossOwnerEdgeTuple_IsRejectedByDatabase()
     {
         await using SqliteKnowledgeStoreSession session =
@@ -811,7 +825,8 @@ public sealed class KnowledgeStorePersistenceTests
         await Assert.ThrowsAsync<DbUpdateException>(() => session.Context.SaveChangesAsync());
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task CompositeForeignKeys_CrossOwnerCurrentAndSuccessorPointers_AreRejectedByDatabase()
     {
         await using SqliteKnowledgeStoreSession session =
@@ -852,7 +867,8 @@ public sealed class KnowledgeStorePersistenceTests
         await Assert.ThrowsAsync<DbUpdateException>(() => session.Context.SaveChangesAsync());
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task CompositeForeignKeys_CrossOwnerAnchorTuple_IsRejectedByDatabase()
     {
         await using SqliteKnowledgeStoreSession session =
@@ -885,7 +901,8 @@ public sealed class KnowledgeStorePersistenceTests
         await Assert.ThrowsAsync<DbUpdateException>(() => session.Context.SaveChangesAsync());
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Model_OwnerSafeRelationshipsAndRestrictiveDeletes_AreConfigured()
     {
         using var context = CreateModelOnlyContext();
@@ -925,7 +942,8 @@ public sealed class KnowledgeStorePersistenceTests
             foreignKey => Assert.NotEqual(DeleteBehavior.Cascade, foreignKey.DeleteBehavior));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Model_ClosedPersistedValuesAndVersionIntegrityChecks_AreConfigured()
     {
         using var context = CreateModelOnlyContext();

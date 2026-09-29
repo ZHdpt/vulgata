@@ -1,0 +1,31 @@
+{
+  "kind": "analysis",
+  "stage": "lookback",
+  "evidence_id": "18-1-access-prepared-source-through-contained-read-only-tools/lookback/1",
+  "observed_at": "2026-09-28T09:52:14.7631044Z",
+  "record_path": "docs/bmad/implementation-artifacts/18-1-access-prepared-source-through-contained-read-only-tools.md",
+  "section_sha256": "f017c8603fee54311ebc1dfb498c9b95fbcd256a9766528a9cf5d0cd0c40a641",
+  "record_content_sha256": "6318aafbc9925e3273bf0d4666097950451864a66990689e942e56b4cea810fa",
+  "convergence": {
+    "path": "specs/016-contained-source-tools/evidence/convergence-result-02.json",
+    "sha256": "677322c178590556cc7f2ddc9e5b0c1bc5ce35fe0eab763fb89a6d91e9a7aa0f"
+  },
+  "output_hashes": {
+    "docs/project-lessons.md": "d436cef34d427621ffdccebd43b5c9e7b02dd327dcf6c7080eb312424f045d27"
+  },
+  "disposition": "updated",
+  "authority_decisions": [
+    {
+      "path": "specs/016-contained-source-tools/evidence/plan-authorization-01.json",
+      "sha256": "216bc30d226258e82082e1c267c76132df96daecb8563f93bb953fc6ff1ee9f0"
+    },
+    {
+      "path": "specs/016-contained-source-tools/evidence/implementation-approval-02.json",
+      "sha256": "5c955a9648b4f21133cd1f8da465300a0feddc18d4d97db4fbe90565454c26c8"
+    }
+  ],
+  "unresolved_blockers": [],
+  "follow_up_paths": [
+    "specs/016-contained-source-tools/evidence/implementation-verification-01.json"
+  ]
+}

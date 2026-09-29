@@ -55,6 +55,7 @@ internal sealed partial class PreparedScanInitiationPostgreSqlFixture : IAsyncDi
                 "T011 requires VULGATA_TEST_POSTGRES_ADMIN for an isolated PostgreSQL 17 database.");
         }
 
+        Vulgata.Tests.TestInfrastructure.TestResourceScope.ValidateAdministrator(administratorConnectionString);
         string databaseName = DatabasePrefix + Guid.NewGuid().ToString("N");
         ValidateOwnedDatabaseName(databaseName);
 
@@ -103,6 +104,7 @@ internal sealed partial class PreparedScanInitiationPostgreSqlFixture : IAsyncDi
             await create.ExecuteNonQueryAsync(cancellationToken);
         }
 
+        Vulgata.Tests.TestInfrastructure.TestResourceScope.RecordCreated(administrator.ConnectionString, databaseName);
         NpgsqlConnectionStringBuilder target = new(administrator.ConnectionString)
         {
             Database = databaseName,

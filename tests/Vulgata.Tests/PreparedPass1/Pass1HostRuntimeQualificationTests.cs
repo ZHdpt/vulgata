@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Diagnostics;
 using System.Net;
 using System.Net.Http.Json;
@@ -29,6 +30,7 @@ public sealed class Pass1HostRuntimeQualificationTests
     private const string JdtLsArchiveHash =
         "bbb2297d69a69a8216e17b799744b9ec5454974bbb5e498d45ad3505d8b4fa0f";
 
+    [Trait("Suite", "External")]
     [T062HostQualificationFact]
     public async Task ProductionComposition_RequiresBoundRevisionSourceBeforeClaimedNavigation()
     {
@@ -47,6 +49,7 @@ public sealed class Pass1HostRuntimeQualificationTests
             "approved Profiled Revision binding.");
     }
 
+    [Trait("Suite", "External")]
     [T062HostQualificationFact]
     public async Task PinnedRuntimeQualification_MustReachAuthenticatedPreparedPass1Execution()
     {
@@ -75,6 +78,7 @@ public sealed class Pass1HostRuntimeQualificationTests
         Assert.False(started.IsReplay, body);
     }
 
+    [Trait("Suite", "External")]
     [T046HostQualificationFact]
     public async Task PinnedHostTools_AreExactAndJdtLsUsesStdioFactory()
     {
@@ -133,7 +137,8 @@ public sealed class Pass1HostRuntimeQualificationTests
             JdtLsArchiveHash);
     }
 
-    [Fact]
+    [Trait("Suite", "External")]
+    [SuiteFact("External")]
     public async Task PostgreSql17_OnlyRequiredDockerService_IsReachable()
     {
         string compose = await File.ReadAllTextAsync(FindRepositoryFile("docker-compose.yml"));
@@ -149,6 +154,7 @@ public sealed class Pass1HostRuntimeQualificationTests
             string.IsNullOrWhiteSpace(connectionString),
             "T046 requires VULGATA_TEST_ADMIN_CONNECTION or VULGATA_TEST_POSTGRES_ADMIN.");
 
+        TestResourceScope.ValidateAdministrator(connectionString!);
         await using var connection = new NpgsqlConnection(connectionString);
         await connection.OpenAsync();
         await using var command = new NpgsqlCommand(
@@ -230,8 +236,8 @@ public sealed class Pass1HostRuntimeQualificationTests
             : $"T046 host qualification is opt-in; {missing} is not configured.";
     }
 }
-internal sealed class T046HostQualificationFactAttribute : FactAttribute
+internal sealed class T046HostQualificationFactAttribute : SuiteFactAttribute
 {
-    public T046HostQualificationFactAttribute() => Skip =
+    public T046HostQualificationFactAttribute() : base("External") => Skip =
         Pass1HostRuntimeQualificationTests.HostQualificationSkipReason();
 }

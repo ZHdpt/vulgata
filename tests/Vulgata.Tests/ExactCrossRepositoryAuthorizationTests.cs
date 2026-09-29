@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Text;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
@@ -11,7 +12,8 @@ namespace Vulgata.Tests;
 
 public sealed class ExactCrossRepositoryAuthorizationTests
 {
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public void AuthorizedExactRelationship_SafeEvidence_ExposesOnlyOpaqueIdentityAndMetadata()
     {
         var relationship = new AuthorizedExactRelationship(
@@ -47,7 +49,8 @@ public sealed class ExactCrossRepositoryAuthorizationTests
         Assert.DoesNotContain("C:\\", profileJson, StringComparison.OrdinalIgnoreCase);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task GetCurrentAsync_ExactRelationship_ProjectsSafeEvidenceOnlyWhenBothEndpointsAuthorizedAsync()
     {
         await using ExactCrossRepositoryTestFixture fixture =
@@ -129,7 +132,8 @@ public sealed class ExactCrossRepositoryAuthorizationTests
             JsonSerializer.Serialize(marker));
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task ApplyAsync_AuthorizationRevokedInsideTransaction_RefusesBeforeQueryOrWriteAsync()
     {
         await using ExactCrossRepositoryTestFixture fixture =
@@ -172,7 +176,8 @@ public sealed class ExactCrossRepositoryAuthorizationTests
             provider.SourceAnchor.Id);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task GetCurrentAsync_AuthorizationRevokedBeforeReturn_IsIndistinguishableFromMissingAsync()
     {
         await using ExactCrossRepositoryTestFixture fixture =
@@ -212,7 +217,8 @@ public sealed class ExactCrossRepositoryAuthorizationTests
         Assert.Equal(2, verifier.CallCount);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task GetUncertaintyAsync_MissingEitherEndpointAuthorization_ReturnsSameNullAsMissingAsync()
     {
         await using ExactCrossRepositoryTestFixture fixture =
@@ -269,7 +275,8 @@ public sealed class ExactCrossRepositoryAuthorizationTests
         Assert.Null(missing);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task GetUncertaintyAsync_TargetlessUnknownTarget_ProductionVerifierAllowsAuthorizedOwnerAndHidesUnauthorizedAsync()
     {
         await using ExactCrossRepositoryTestFixture fixture =

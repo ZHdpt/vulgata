@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Text.Json;
 using Vulgata.Core.DomainServices;
 using Vulgata.Core.Entities;
@@ -12,7 +13,8 @@ namespace Vulgata.Tests;
 /// </summary>
 public sealed class ChatEvidencePacketV22ContractTests
 {
-    [Fact]
+    [Trait("Suite", "HistoricalBoundary")]
+    [SuiteFact("HistoricalBoundary")]
     public void Build_UsesGroundedChatEvidence22AndNotRuntime20Shape()
     {
         JsonElement root = Serialize(BuildPacket());
@@ -23,7 +25,8 @@ public sealed class ChatEvidencePacketV22ContractTests
         Assert.DoesNotContain("flowGroupId", PropertyNames(relationship));
     }
 
-    [Fact]
+    [Trait("Suite", "HistoricalBoundary")]
+    [SuiteFact("HistoricalBoundary")]
     public void Build_SerializedRuntimePacket_ConformsToAccepted22Schema()
     {
         using JsonDocument schema = JsonDocument.Parse(File.ReadAllText(
@@ -49,7 +52,8 @@ public sealed class ChatEvidencePacketV22ContractTests
         Assert.Empty(errors);
     }
 
-    [Fact]
+    [Trait("Suite", "HistoricalBoundary")]
+    [SuiteFact("HistoricalBoundary")]
     public void Build_SerializesSelectionPolicyPrimaryAndExpansionSeedIdentities()
     {
         JsonElement selection = Serialize(BuildPacket()).GetProperty("selection");
@@ -62,7 +66,8 @@ public sealed class ChatEvidencePacketV22ContractTests
         Assert.Equal(["d1", "d2"], Strings(selection.GetProperty("expansionSeedDocumentHandles")));
     }
 
-    [Fact]
+    [Trait("Suite", "HistoricalBoundary")]
+    [SuiteFact("HistoricalBoundary")]
     public void Build_SerializesAdvisoryAuthorityFingerprint()
     {
         JsonElement root = Serialize(BuildPacket());
@@ -71,7 +76,8 @@ public sealed class ChatEvidencePacketV22ContractTests
         Assert.Matches("^[0-9a-f]{64}$", fingerprint);
     }
 
-    [Fact]
+    [Trait("Suite", "HistoricalBoundary")]
+    [SuiteFact("HistoricalBoundary")]
     public void Build_SerializesSelectedDecisionSetAndMultipleDecisionOwnedFlowGroups()
     {
         JsonElement root = Serialize(BuildPacket());
@@ -92,7 +98,8 @@ public sealed class ChatEvidencePacketV22ContractTests
         Assert.Equal("fg-2", groups[1].GetProperty("handle").GetString());
     }
 
-    [Fact]
+    [Trait("Suite", "HistoricalBoundary")]
+    [SuiteFact("HistoricalBoundary")]
     public void Build_SerializesFlowStepGroupBinding()
     {
         JsonElement flowStep = Assert.Single(Serialize(BuildPacket()).GetProperty("flowSteps").EnumerateArray());
@@ -101,7 +108,8 @@ public sealed class ChatEvidencePacketV22ContractTests
         Assert.Equal("r1", flowStep.GetProperty("relationshipHandle").GetString());
     }
 
-    [Fact]
+    [Trait("Suite", "HistoricalBoundary")]
+    [SuiteFact("HistoricalBoundary")]
     public void Build_SerializesConversationPriorLogicalDocumentIdsAndBindsThemInFingerprint()
     {
         ChatConversationScope scope = ChatConversationScope.Create(ChatMode.Business, Id(1), [Id(2), Id(3)]);

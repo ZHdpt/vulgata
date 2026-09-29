@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Text;
 using Vulgata.Core.DomainServices;
 using Vulgata.Infrastructure.Analysis.CodeGraph;
@@ -22,7 +23,8 @@ public sealed class BoundedAnalysisEvidenceTests
     private const string BindingToken = "binding-1200000000000000000000000000000000000012";
     private const string RuntimeHash = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ApprovedOperations_ReturnBoundedEvidenceAndRevalidateExactRevisionBinding()
     {
         string root = FindFixtureRepositoryRoot();
@@ -71,12 +73,13 @@ public sealed class BoundedAnalysisEvidenceTests
         Assert.All(snapshots.Scopes, observed => AssertScopeEqual(scope, observed));
         Assert.All(process.Requests, request => Assert.Equal(root, request.WorkingDirectory));
 
+        using var distribution = new FakeJdtDistribution();
         RecordingJavaProtocol protocol = new();
         IJavaAnalysisSessionFactory javaFactory = new JdtLsAnalysisSessionFactory(
             new JdtLsAdapterOptions(
                 "C:/Program Files/Java/latest/jdk-21/bin/java.exe",
-                "C:/Users/13728/.local/jdt-language-server-1.61.0-202608141332",
-                "C:/workspaces",
+                distribution.Root,
+                distribution.Workspace,
                 TimeSpan.FromSeconds(5),
                 TimeSpan.FromSeconds(5),
                 TimeSpan.FromSeconds(5),
@@ -122,7 +125,8 @@ public sealed class BoundedAnalysisEvidenceTests
         Assert.Equal(BindingToken, sourceLease.VerifiedBindingToken);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ApprovedOperations_RejectRuntimeIdentityDriftBeforeToolOrSourceEvidence()
     {
         string root = FindFixtureRepositoryRoot();

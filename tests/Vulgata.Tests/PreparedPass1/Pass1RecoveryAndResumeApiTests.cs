@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Reflection;
 using Vulgata.Core.DomainServices;
 using Vulgata.Core.Entities;
@@ -30,7 +31,8 @@ public sealed class Pass1RecoveryAndResumeApiTests
         TimeSpan.FromMinutes(5),
     ];
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void PreparedPass1Coordinator_ExposesOnePairWideResumeSeam()
     {
         MethodInfo resume = RequireResumeMethod();
@@ -50,7 +52,8 @@ public sealed class Pass1RecoveryAndResumeApiTests
             "T036 RED: recovery must return a typed durable result, not an HTTP response or raw diagnostic.");
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void PreparedPass1Store_ExposesAtomicRecoveryPortSeparateFromStartAndClaim()
     {
         Type store = typeof(IPreparedPass1Store);
@@ -68,7 +71,8 @@ public sealed class Pass1RecoveryAndResumeApiTests
             parameter => parameter.ParameterType == typeof(PreparedScanAuthorizationScope));
     }
 
-    [Theory]
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
     [InlineData("pair")]
     [InlineData("child-one")]
     [InlineData("child-two")]
@@ -97,7 +101,8 @@ public sealed class Pass1RecoveryAndResumeApiTests
             $"T036 RED: recovery result must retain pair binding evidence for {binding}.");
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Recovery_TransitionsOnlyExpiredLeasesAndDueNonExhaustedRetries()
     {
         MethodInfo resume = RequireResumeMethod();
@@ -118,7 +123,8 @@ public sealed class Pass1RecoveryAndResumeApiTests
             property => property.Name is "PendingJobCount" or "RemainingJobCount");
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Recovery_UsesExactFiveProviderProbeWindowsAndStopsPairClaimsWhileUnavailable()
     {
         Type coordinator = RequireCoordinator();
@@ -141,7 +147,8 @@ public sealed class Pass1RecoveryAndResumeApiTests
         }
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Recovery_CancellationProducesDurableCancelledOutcomeWithoutContinuation()
     {
         Type result = UnwrapTask(RequireResumeMethod().ReturnType);
@@ -159,7 +166,8 @@ public sealed class Pass1RecoveryAndResumeApiTests
             property => property.Name is "Continued" or "CanContinue" or "ContinuationAllowed");
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Recovery_ExactNoOpReplayIsDurableAndCompletedJobsAreSkipped()
     {
         Type result = UnwrapTask(RequireResumeMethod().ReturnType);
@@ -176,7 +184,8 @@ public sealed class Pass1RecoveryAndResumeApiTests
             property => property.Name is "SkippedCompletedJobCount" or "CompletedJobCount");
     }
 
-    [Theory]
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
     [InlineData("provider-unavailable")]
     [InlineData("operator-correction")]
     [InlineData("inspection")]

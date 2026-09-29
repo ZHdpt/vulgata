@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Data.Common;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
@@ -10,7 +11,8 @@ namespace Vulgata.Tests.RetainedSource;
 [Collection(RetainedSourceProcessGlobalCollection.Name)]
 public sealed class RetainedSourceIdentityCancellationTests
 {
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task ListAsync_WhenReadDeadlineCancelsProductionIdentityLookup_ReturnsDeadlineExceeded()
     {
         await using RetainedSourceFixture fixture =
@@ -79,7 +81,8 @@ public sealed class RetainedSourceIdentityCancellationTests
         Assert.Null(listed.NextCursor);
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task ListAsync_WhenReadDeadlineCancelsProductionIdentityRoleLookup_ReturnsDeadlineExceeded()
     {
         await using RetainedSourceFixture fixture =
@@ -148,7 +151,8 @@ public sealed class RetainedSourceIdentityCancellationTests
         Assert.Null(listed.NextCursor);
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task ListAsync_WhenProductionIdentityLookupIsCancelled_ReturnsBoundedCancellation()
     {
         await using RetainedSourceFixture fixture =

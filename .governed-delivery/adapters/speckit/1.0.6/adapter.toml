@@ -49,6 +49,9 @@ feature_directory = "FEATURE_DIR"
 plan = ["FEATURE_SPEC", "IMPL_PLAN", "FEATURE_DIR", "BRANCH"]
 tasks = ["FEATURE_DIR", "TASKS_TEMPLATE_CONTENT", "TASKS_TEMPLATE", "AVAILABLE_DOCS"]
 
+[activation]
+feature_directory_override = "SPECIFY_FEATURE_DIRECTORY"
+
 [implementation]
 provider = "governed-tdd"
 behavior_evidence = ["accepted_tasks", "behavioral_red", "minimal_green", "final_green"]

@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Security.Cryptography;
 using System.Text;
 using System.Reflection;
@@ -23,7 +24,8 @@ namespace Vulgata.Tests.PreparedPass2;
 /// </summary>
 public sealed class Pass2FlowPlanningPostgreSqlTests(ITestOutputHelper output)
 {
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task StartAsync_SeededTerminalPair_CreatesOneCompleteGroupJobBudgetAndExactReplayAsync()
     {
         string? administratorConnectionString =
@@ -32,7 +34,7 @@ public sealed class Pass2FlowPlanningPostgreSqlTests(ITestOutputHelper output)
         {
             output.WriteLine(
                 "Qualification not executed: VULGATA_TEST_POSTGRES_ADMIN is unset; no database was contacted.");
-            return;
+            throw new InvalidOperationException("Required PostgreSQL qualification prerequisite is unavailable; use eng/test.ps1 -Suite PostgreSql.");
         }
 
         await using DisposablePostgreSqlDatabase database =
@@ -134,7 +136,8 @@ public sealed class Pass2FlowPlanningPostgreSqlTests(ITestOutputHelper output)
         await AssertDatabaseDroppedAsync(administratorConnectionString, databaseName);
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task StartAsync_EightCurrentDocumentsAtSixteenStepBound_CreatesCompleteGroupAsync()
     {
         await RunOnSeededPostgreSqlAsync(async (context, seed) =>
@@ -160,7 +163,8 @@ public sealed class Pass2FlowPlanningPostgreSqlTests(ITestOutputHelper output)
         });
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task StartAsync_NinthCurrentDocumentAndSeventeenthStep_AreBoundExcludedWithoutJobAsync()
     {
         await RunOnSeededPostgreSqlAsync(async (context, seed) =>
@@ -181,7 +185,8 @@ public sealed class Pass2FlowPlanningPostgreSqlTests(ITestOutputHelper output)
         });
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task StartAsync_EleventhGroupCandidate_PersistsContentDarkOmissionWithoutLeakageAsync()
     {
         await RunOnSeededPostgreSqlAsync(async (context, seed) =>
@@ -204,7 +209,8 @@ public sealed class Pass2FlowPlanningPostgreSqlTests(ITestOutputHelper output)
         });
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task StartAsync_RepeatedPlanningInput_IsByteEquivalentAndDoesNotDuplicateRowsAsync()
     {
         await RunOnSeededPostgreSqlAsync(async (context, seed) =>
@@ -228,7 +234,8 @@ public sealed class Pass2FlowPlanningPostgreSqlTests(ITestOutputHelper output)
         });
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task StartAsync_InducedPersistenceFailure_RollsBackExecutionGroupJobAndBudgetGraphAsync()
     {
         await RunOnSeededPostgreSqlAsync(async (context, seed) =>
@@ -260,7 +267,7 @@ public sealed class Pass2FlowPlanningPostgreSqlTests(ITestOutputHelper output)
         {
             output.WriteLine(
                 "Qualification not executed: VULGATA_TEST_POSTGRES_ADMIN is unset; no database was contacted.");
-            return;
+            throw new InvalidOperationException("Required PostgreSQL qualification prerequisite is unavailable; use eng/test.ps1 -Suite PostgreSql.");
         }
 
         DisposablePostgreSqlDatabase database =

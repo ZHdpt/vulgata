@@ -1,0 +1,151 @@
+{
+  "approvals": [
+    {
+      "decided_at": "2026-09-28T04:25:28.9936733Z",
+      "decision_id": "18-1/plan-authorization/1",
+      "evidence_path": "specs/016-contained-source-tools/evidence/plan-authorization-01.json",
+      "scope_sha256": "2cc8a7aafd61c8fbd2e76dd4e9e58efef69d6e14c89ba0b23092eea87142d769",
+      "status": "accepted"
+    },
+    {
+      "decided_at": "2026-09-28T05:03:16.4560797Z",
+      "decision_id": "18-1/implementation-approval/2",
+      "evidence_path": "specs/016-contained-source-tools/evidence/implementation-approval-02.json",
+      "scope_sha256": "47c617d0cfaecf2cfc18cb6b95fc25593aee8157647d2e201d69937f419f4ca8",
+      "status": "accepted"
+    },
+    {
+      "decided_at": "2026-09-28T11:00:33.9622954Z",
+      "decision_id": "18-1/implementation/1/extension/1",
+      "evidence_path": "specs/016-contained-source-tools/evidence/recovery-extension-01.json",
+      "scope_sha256": "77459b3cc4f34c34e78b1f0f996c700afaaed1ccf837ded85151725e7eaac032",
+      "status": "accepted"
+    },
+    {
+      "decided_at": "2026-09-29T02:29:06.0836883Z",
+      "decision_id": "18-1/implementation/1/extension/2",
+      "evidence_path": "specs/016-contained-source-tools/evidence/recovery-extension-02.json",
+      "scope_sha256": "f16be621e87b3a8d9088fd7a83d73097ecb3b36cc539e8863bc127333b7dc920",
+      "status": "accepted"
+    },
+    {
+      "decided_at": "2026-09-29T04:32:26.4603849Z",
+      "decision_id": "18-1/implementation/1/extension/3",
+      "evidence_path": "specs/016-contained-source-tools/evidence/recovery-extension-03.json",
+      "scope_sha256": "aa75a9f118e863c446aa112973dbe13f00dc4596509b436edfb6f77c76bda00b",
+      "status": "accepted"
+    },
+    {
+      "decided_at": "2026-09-29T05:01:02.5206718Z",
+      "decision_id": "18-1/implementation/1/extension/4",
+      "evidence_path": "specs/016-contained-source-tools/evidence/recovery-extension-04.json",
+      "scope_sha256": "0dcd1f3b114c1f0bf1c1ed771313bbeeed7f9457990f3398dd59ab58d5225da5",
+      "status": "accepted"
+    },
+    {
+      "decided_at": "2026-09-29T05:48:57.7976299Z",
+      "decision_id": "18-1/implementation/1/extension/5",
+      "evidence_path": "specs/016-contained-source-tools/evidence/recovery-extension-05.json",
+      "scope_sha256": "fa6ecdcb7b206e79c900b8df359b4b90841afd304056dbafa3f5f256ebf30af2",
+      "status": "accepted"
+    },
+    {
+      "decided_at": "2026-09-29T06:54:38.7078505Z",
+      "decision_id": "18-1/implementation/1/extension/6",
+      "evidence_path": "specs/016-contained-source-tools/evidence/recovery-extension-06.json",
+      "scope_sha256": "10ff6a65764edc852d7aca3d09a4f2b1ab50355800bc0d554e7c61ea9a649c75",
+      "status": "accepted"
+    }
+  ],
+  "artifacts": {
+    "plan": {
+      "path": "specs/016-contained-source-tools/plan.md",
+      "sha256": "b375723e56c8cdc7990a4e7a624c5f58a78fde07d9a23edd79e25025c54fce08"
+    },
+    "spec": {
+      "path": "specs/016-contained-source-tools/spec.md",
+      "sha256": "48c92e4f6582471a1664e553b48756a811f22bb2b4f1334206e94303629b0b6d"
+    },
+    "tasks": {
+      "path": "specs/016-contained-source-tools/tasks.md",
+      "sha256": "6f619b75c759462dc1390fdfeaa165885216d1ad135a18a2de29ea18dfda8f10"
+    }
+  },
+  "bmad_epic_key": "epic-18",
+  "bmad_story_key": "18-1-access-prepared-source-through-contained-read-only-tools",
+  "checkpoint": {
+    "binding_status": "pending",
+    "checkpoint_id": "bmad-18-1-complete-20260929T073650Z-4fb28c",
+    "commit_sha": null,
+    "stage": "complete"
+  },
+  "convergence": {
+    "attempt": 8,
+    "outcome": "converged",
+    "report_path": "specs/016-contained-source-tools/evidence/convergence-result-10.json",
+    "status": "accepted"
+  },
+  "current_evidence_paths": [
+    "docs/bmad/implementation-artifacts/18-1-access-prepared-source-through-contained-read-only-tools.md",
+    "specs/016-contained-source-tools/evidence/plan-review-result-09.json",
+    "specs/016-contained-source-tools/evidence/definition-review-result-04.json",
+    "specs/016-contained-source-tools/evidence/rootunavailable-execution-diagnosis-01.json",
+    "specs/016-contained-source-tools/evidence/convergence-result-10.json",
+    "specs/016-contained-source-tools/evidence/story-lookback-08.json",
+    "specs/016-contained-source-tools/evidence/quality-review-result-08.json",
+    "specs/016-contained-source-tools/evidence/e2e-result-06.json",
+    "specs/016-contained-source-tools/evidence/final-verification-01.json",
+    "specs/016-contained-source-tools/evidence/workflow-transition-073-final-verification-close.json",
+    "docs/agents/testing.md",
+    "docs/project-lessons.md"
+  ],
+  "definition_author": {
+    "escalation_decision_id": null,
+    "profile": "definition-author"
+  },
+  "e2e": {
+    "decision_path": "specs/016-contained-source-tools/evidence/e2e-result-06.json",
+    "result": "skipped-covered"
+  },
+  "feature_directory": "specs/016-contained-source-tools",
+  "gates": {
+    "definition-review": {
+      "attempt": 4,
+      "status": "accepted",
+      "verdict_path": "specs/016-contained-source-tools/evidence/definition-review-result-04.json"
+    },
+    "plan-review": {
+      "attempt": 4,
+      "status": "accepted",
+      "verdict_path": "specs/016-contained-source-tools/evidence/plan-review-result-09.json"
+    },
+    "quality-review": {
+      "attempt": 8,
+      "status": "accepted",
+      "verdict_path": "specs/016-contained-source-tools/evidence/quality-review-result-08.json"
+    }
+  },
+  "lookback": {
+    "evidence": {
+      "path": "specs/016-contained-source-tools/evidence/story-lookback-08.json",
+      "sha256": "be5acd81999a5b6a1e91f97c86c043aadc6bf6b6120441bd815edda74fd78079"
+    },
+    "status": "current"
+  },
+  "preflight": {
+    "branch": "(detached-native-handoff)",
+    "git_identity_sha256": "70fd67001872ef254ed52a93c4071cef6cb3751dd230e67e97213d3c2133be26",
+    "head": "0c0bf0cfb05edc5b28a346d8f3a63002d1e781ef",
+    "observed_at": "2026-09-28T03:33:29.3096814Z",
+    "status_sha256": "811e45acb3329b898a1a92b4bc69e9a8b9fb70ef8e97a5beba0dacd2c4ca0a74"
+  },
+  "recovery": null,
+  "resume": null,
+  "schema_version": "3.1",
+  "stage": "complete",
+  "transition_head": {
+    "path": "specs/016-contained-source-tools/evidence/workflow-transition-073-final-verification-close.json",
+    "sha256": "38cdaf7b82147734a1b940cdf70a3f2e6aab03d3594184bcb34dd28d2912cbf2"
+  },
+  "updated_at": "2026-09-29T07:36:50.0000000Z"
+}

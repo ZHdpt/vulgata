@@ -70,6 +70,8 @@ For a material late reply or other changed boundary, root declares the earliest 
 
 One episode spans every unresolved correction, including newly discovered defects and upstream moves. Initial negative result sets `failed_results=1`; failed repairs produce 2, 3, 4. Diagnose at 3 before another repair; at 4, pause until an accepted finite extension bound to episode/scope raises `pause_at`. Count each authoritative result once; unchanged reports/checks, expected RED, BLOCKED, and technical failure do not increment. Neither input replacement nor intermediate ACCEPT resets it. See `review-and-correction.md` for technical retry and diagnosis contracts.
 
+An extension is human-approved by default. An explicitly designated delegate may authorize only a fresh finite continuation within the user's per-episode ceiling under `review-and-correction.md`; existing grants for the two review gates do not cover recovery. Reaching the new limit pauses again. Extension never clears holds or changes the author/escalation rules, independent reviews, or implementation approval.
+
 A pre-production episode closes on complete-definition ACCEPT plus required earlier plan conditions. Production entry promotes closure to final verification; post-implementation episodes require the final current convergence/quality/E2E/verified boundary. The closure result advances `transition_head` and sets `recovery` null; never delete the head or active author profile. A fourth-result paused snapshot is structurally valid; the targeted guard forbids the next repair.
 
 ## Resume and Failure

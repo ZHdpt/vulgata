@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using Bunit;
 using Microsoft.Extensions.DependencyInjection;
 using Vulgata.Web.Components.Pages.Management;
@@ -7,7 +8,8 @@ namespace Vulgata.Tests;
 
 public sealed class DemoScanPageTests : TestContext
 {
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void DemoScanPage_OpenedForScanningRepository_CompletesStateAndHostsAnimation()
     {
         var state = new DemoScanUiState(TimeProvider.System);

@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Reflection;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
@@ -10,7 +11,8 @@ namespace Vulgata.Tests;
 
 public sealed class PreparedPass2RuntimeDispatchTests
 {
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Create_RuntimeBinding_ProjectsCrossRepositorySupportToExactSevenSlots()
     {
         ResolvedPreparedPass2Flow resolved = CreateResolved();
@@ -42,7 +44,8 @@ public sealed class PreparedPass2RuntimeDispatchTests
                 .Select(property => property.Name));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Validate_RuntimeBindingChangedAfterPlanning_RejectsBeforeDispatch()
     {
         ResolvedPreparedPass2Flow resolved = CreateResolved();
@@ -62,7 +65,8 @@ public sealed class PreparedPass2RuntimeDispatchTests
             PreparedPass2FlowResolver.ValidateRuntime(substituted));
     }
 
-    [Theory]
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
     [InlineData(false)]
     [InlineData(true)]
     public void ValidatePass2_SectionAnchorOwnership_EnforcesConsumerOnly(bool providerOwned)
@@ -169,7 +173,8 @@ public sealed class PreparedPass2RuntimeDispatchTests
         }
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void ProductionComposition_RuntimePlannerReplacesFixedCatalogAuthority()
     {
         using var databaseFactory = new LoginLogoutTests.CustomWebApplicationFactory();

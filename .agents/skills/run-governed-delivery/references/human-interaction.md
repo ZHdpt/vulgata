@@ -52,7 +52,7 @@ On return, root reads the user's actual instruction and source context, not just
 
 ## Delegated decisions
 
-For the two explicitly delegable gates only, apply [the optional delegated-approval rule](review-and-correction.md#explicit-delegated-approval-optional). Address the same useful decision briefing to the user-designated task, supplying raw accepted inputs and the independent verdict. The runner records the actual user delegation and delegate response; different working directories never transfer approval-file ownership. Other user decisions, including recovery direction below, remain human-only.
+For the explicitly delegable purposes only, apply [the optional delegated-approval rule](review-and-correction.md#explicit-delegated-approval-optional). Address review-gate briefings to the user-designated task with raw accepted inputs and the independent verdict. When `recovery-extension` is explicitly delegated, send the recovery brief below with failures, current episode/count/limit, proposed changed approach/new limit, and the user's cumulative ceiling. It is still a recovery decision, not a document walkthrough. The runner records the actual user delegation and delegate response; different working directories never transfer approval-file ownership. Hold resolution, changed authority and other reserved decisions remain human-only.
 
 ## Recovery brief
 

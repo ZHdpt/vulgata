@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
@@ -16,7 +17,8 @@ namespace Vulgata.Tests.RetainedSource;
 /// </summary>
 public sealed class RetainedSourceManifestTests
 {
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task AcquireAsync_PersistsCanonicalManifestWithRawGitIdentityAndByteEvidence()
     {
         var files = new Dictionary<string, ReadOnlyMemory<byte>>(StringComparer.Ordinal)
@@ -150,7 +152,8 @@ public sealed class RetainedSourceManifestTests
             seenPaths.OrderBy(value => value, StringComparer.Ordinal));
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task AcquireAsync_ManifestRetainsSymlinkAndGitlinkAsExplicitMetadataLimitations()
     {
         await using RetainedSourceFixture fixture = await RetainedSourceFixture.CreateAsync();
@@ -205,7 +208,8 @@ public sealed class RetainedSourceManifestTests
         Assert.Equal(JsonValueKind.Null, gitlink.GetProperty("storageBlobKey").ValueKind);
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task AcquireAsync_ManifestRetainsUnsafeAndInvalidUtf8PathBytesWithoutLogicalTraversal()
     {
         byte[] invalidUtf8Path = [(byte)'b', (byte)'a', (byte)'d', 0xFF, (byte)'n', (byte)'a', (byte)'m', (byte)'e'];

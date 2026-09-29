@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Reflection;
 using Vulgata.Core.DomainServices;
 using Vulgata.Core.Entities;
@@ -11,7 +12,8 @@ namespace Vulgata.Tests.PreparedScanning;
 /// </summary>
 public sealed class PreparedHandoffProjectionTests
 {
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void PreparedContext_ExposesStableIdentitySeparateFromLegacyCaptureMetadata()
     {
         PropertyInfo[] properties = typeof(ScanContextSnapshot)
@@ -34,7 +36,8 @@ public sealed class PreparedHandoffProjectionTests
                     method.Name.Contains("Identity", StringComparison.OrdinalIgnoreCase)));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void PreparedHandoff_ProjectsOnlyCompleteV2RowsAndKeepsV1ReadableButIneligible()
     {
         Assert.Equal("2.0", PreScanResult.PreparedSchemaVersion);
@@ -56,7 +59,8 @@ public sealed class PreparedHandoffProjectionTests
                 property.Name.Contains("Document", StringComparison.OrdinalIgnoreCase));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void PreparedHandoffSource_ExposesOwnershipFilteredImmutableMaterializedRead()
     {
         Type source = typeof(IPreparedScanHandoffSource);
@@ -77,7 +81,8 @@ public sealed class PreparedHandoffProjectionTests
             "The persisted read must implement the ownership-filtered v2 handoff port.");
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void PreparedHandoff_ExposesCompleteTotalsAndBoundedClassificationObservation()
     {
         PropertyInfo[] packageProperties = typeof(PreparedRepositoryPackage)
@@ -92,7 +97,8 @@ public sealed class PreparedHandoffProjectionTests
             "The handoff must expose the complete selected count, not an unbounded query.");
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void PreparedPass1Handoff_RequiresServerOwnedSymbolNameForPathAndSemanticUnits()
     {
         // T045 RED: path-v1 units carry the Repository-relative path while a

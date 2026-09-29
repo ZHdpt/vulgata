@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Text.Json;
 using Vulgata.Core.DomainServices;
 using Vulgata.Core.Entities;
@@ -7,7 +8,8 @@ namespace Vulgata.Tests;
 
 public sealed class ChatEvidencePacketBuilderTests
 {
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Create_V2Packet_UsesGroundedChatSchemaAndRetainsOpaqueEvidenceHandles()
     {
         EvidencePacket packet = CreatePacket();
@@ -30,7 +32,8 @@ public sealed class ChatEvidencePacketBuilderTests
         Assert.All(packet.FlowEvidence, step => Assert.True(step.StepOrder > 0));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Create_V2Packet_CanonicalFingerprint_IsStableAcrossInputOrdering()
     {
         EvidencePacket first = CreatePacket(reverseCollections: false);
@@ -40,7 +43,8 @@ public sealed class ChatEvidencePacketBuilderTests
         Assert.Matches("^[0-9a-f]{64}$", first.Fingerprint);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Create_V2Packet_CanonicalFingerprint_BindsDocumentTitle()
     {
         EvidencePacket original = CreatePacket();
@@ -49,7 +53,8 @@ public sealed class ChatEvidencePacketBuilderTests
         Assert.NotEqual(original.Fingerprint, changed.Fingerprint);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Create_V2Packet_CanonicalFingerprint_BindsSectionHeading()
     {
         EvidencePacket original = CreatePacket();
@@ -58,7 +63,8 @@ public sealed class ChatEvidencePacketBuilderTests
         Assert.NotEqual(original.Fingerprint, changed.Fingerprint);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Create_V2Packet_CanonicalFingerprint_BindsFlowStepDescription()
     {
         EvidencePacket original = CreatePacket();
@@ -67,7 +73,8 @@ public sealed class ChatEvidencePacketBuilderTests
         Assert.NotEqual(original.Fingerprint, changed.Fingerprint);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Create_V2Packet_CanonicalFingerprint_BindsRelationshipEdgeIdentity()
     {
         EvidencePacket original = CreatePacket();
@@ -76,7 +83,8 @@ public sealed class ChatEvidencePacketBuilderTests
         Assert.NotEqual(original.Fingerprint, changed.Fingerprint);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Create_V2Packet_RejectsEvidenceBodyBeyondUtf8ByteBound()
     {
         ChatContractException exception = Assert.Throws<ChatContractException>(() =>
@@ -85,7 +93,8 @@ public sealed class ChatEvidencePacketBuilderTests
         Assert.Equal(ChatContractFailureCode.InvalidEvidence, exception.FailureCode);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Create_V2Packet_DoesNotExposeRawGraphOrProviderAccess()
     {
         EvidencePacket packet = CreatePacket();
@@ -96,7 +105,8 @@ public sealed class ChatEvidencePacketBuilderTests
         Assert.DoesNotContain("Graph", serialized, StringComparison.OrdinalIgnoreCase);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Build_V2Packet_AdvisoryContext_ExactUtf8BoundSucceedsAndPlusOneFails()
     {
         ChatEvidenceAssembly exactRequest = CreateBuildRequest(
@@ -111,7 +121,8 @@ public sealed class ChatEvidencePacketBuilderTests
         Assert.Equal(ChatContractFailureCode.InvalidEvidence, exception.FailureCode);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Build_V2Packet_CanonicalFingerprint_BindsAdvisoryContext()
     {
         EvidencePacket baseline = new ChatEvidencePacketBuilder().Build(CreateBuildRequest());
@@ -121,7 +132,8 @@ public sealed class ChatEvidencePacketBuilderTests
         Assert.NotEqual(baseline.Fingerprint, changed.Fingerprint);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Build_V2Packet_CanonicalFingerprint_BindsConversationState()
     {
         EvidencePacket baseline = new ChatEvidencePacketBuilder().Build(CreateBuildRequest());
@@ -143,7 +155,8 @@ public sealed class ChatEvidencePacketBuilderTests
         Assert.NotEqual(baseline.Fingerprint, changed.Fingerprint);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Build_V2Packet_OverBound_DropsOptionalSectionAsWholeUnitWithUnusedSupport()
     {
         EvidencePacket packet = new ChatEvidencePacketBuilder().Build(CreateBuildRequest(
@@ -162,7 +175,8 @@ public sealed class ChatEvidencePacketBuilderTests
         Assert.Equal("处理订单请求。", required.ContentMarkdown);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Build_V2Packet_OverBoundRequiredEvidence_RejectsWithoutTextTruncation()
     {
         ChatContractException exception = Assert.Throws<ChatContractException>(() =>
@@ -172,7 +186,8 @@ public sealed class ChatEvidencePacketBuilderTests
         Assert.Equal(ChatContractFailureCode.InvalidEvidence, exception.FailureCode);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Build_V2Packet_CanonicalFingerprint_BindsFlowGroupAuthority()
     {
         EvidencePacket baseline = new ChatEvidencePacketBuilder().Build(CreateBuildRequest());
@@ -182,7 +197,8 @@ public sealed class ChatEvidencePacketBuilderTests
         Assert.NotEqual(baseline.Fingerprint, changed.Fingerprint);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Build_V2Packet_CanonicalFingerprint_BindsDecisionCountAndSetFingerprint()
     {
         EvidenceRelationship baselineRelationship = CreateV2Relationship(
@@ -207,7 +223,8 @@ public sealed class ChatEvidencePacketBuilderTests
         Assert.NotEqual(baseline.Fingerprint, setChanged.Fingerprint);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Build_V2Packet_SharedEdgeWithTwoDecisionOwnedFlowGroups_RemainsDistinctAndCanonical()
     {
         EvidenceRelationship relationship = CreateV2Relationship(
@@ -235,7 +252,8 @@ public sealed class ChatEvidencePacketBuilderTests
         Assert.Equal(2, first.FlowGroups.Count);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Build_V2Packet_CanonicalFingerprint_BindsEachDecisionOwnedFlowGroupAndStep()
     {
         EvidenceRelationship relationship = CreateV2Relationship(
@@ -274,7 +292,8 @@ public sealed class ChatEvidencePacketBuilderTests
         Assert.NotEqual(baseline.Fingerprint, stepDescriptionChanged.Fingerprint);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Build_V2Packet_OverBoundOptionalRelationshipUnit_DropsItsCompleteSupport()
     {
         EvidencePacket packet = new ChatEvidencePacketBuilder().Build(CreateBuildRequest(
@@ -293,7 +312,8 @@ public sealed class ChatEvidencePacketBuilderTests
         Assert.DoesNotContain(packet.Documents, document => document.DocumentHandle == "d3");
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Build_V2Packet_OverBoundOptionalRelationshipUnits_DropsLowestEvidenceRankBeforeHandleOrder()
     {
         EvidencePacket packet = new ChatEvidencePacketBuilder().Build(CreateBuildRequest(
@@ -322,7 +342,8 @@ public sealed class ChatEvidencePacketBuilderTests
         Assert.Contains(packet.Documents, document => document.DocumentHandle == "dz");
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Build_V2Packet_OverBoundLexicalExtras_DropsLowestEvidenceRankBeforeHandleOrder()
     {
         EvidencePacket packet = new ChatEvidencePacketBuilder().Build(CreateBuildRequest(
@@ -344,7 +365,8 @@ public sealed class ChatEvidencePacketBuilderTests
         Assert.Contains(packet.Documents, document => document.DocumentHandle == "dz");
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Build_V2Packet_SelectedRequiredFlowGroupWithoutSupport_Rejects()
     {
         ChatContractException exception = Assert.Throws<ChatContractException>(() =>
@@ -360,7 +382,8 @@ public sealed class ChatEvidencePacketBuilderTests
         Assert.Equal(ChatContractFailureCode.InvalidEvidence, exception.FailureCode);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Build_V2Packet_SchemaSerialization_UsesExactConversationFieldNamesAndContents()
     {
         EvidencePacket packet = new ChatEvidencePacketBuilder().Build(CreateBuildRequest(
@@ -414,7 +437,8 @@ public sealed class ChatEvidencePacketBuilderTests
             .Select(value => value.GetGuid()).ToArray());
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Build_V2Packet_SchemaSerialization_ExposesRequiredRelationshipAuthorityFields()
     {
         EvidencePacket packet = new ChatEvidencePacketBuilder().Build(CreateBuildRequest(
@@ -448,7 +472,8 @@ public sealed class ChatEvidencePacketBuilderTests
             .Select(value => value.GetString()).ToArray());
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Build_V2Packet_CanonicalFingerprint_BindsEachRelationshipAuthorityField()
     {
         EvidenceRelationship baselineRelationship = CreateV2Relationship(

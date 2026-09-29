@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Reflection;
 using Microsoft.EntityFrameworkCore;
 using Vulgata.Core.DomainServices;
@@ -8,7 +9,8 @@ namespace Vulgata.Tests;
 
 public sealed class WorkerAgentResultCommitterTests
 {
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task Pass2Projection_RealCurrentKnowledgeMarkdown_AllowsNormalizedLfLayout()
     {
         await using SqliteKnowledgeStoreSession session =
@@ -32,7 +34,8 @@ public sealed class WorkerAgentResultCommitterTests
             section => Assert.Contains('\n', section.ContentMarkdown));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task Pass2Projection_LayoutTextStillRejectsForbiddenControlsSecretsAndHostPaths()
     {
         await using SqliteKnowledgeStoreSession session =
@@ -79,7 +82,8 @@ public sealed class WorkerAgentResultCommitterTests
             Pass2BusinessLogicJobPayload.Create(currentFixture.Flow, changedDocuments));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task CommitAsync_ValidPass1Result_PersistsCompleteScopedAggregateAtomically()
     {
         await using SqliteKnowledgeStoreSession session =
@@ -130,7 +134,8 @@ public sealed class WorkerAgentResultCommitterTests
         Assert.Contains("订单服务调用库存接口。", current.IndexEntry.SearchText);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task CommitAsync_IdenticalPass1Replay_IsIdempotentWithoutDuplicateTruth()
     {
         await using SqliteKnowledgeStoreSession session =
@@ -160,7 +165,8 @@ public sealed class WorkerAgentResultCommitterTests
         Assert.Equal(2, await session.Context.Set<IndexEntry>().CountAsync());
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task CommitAsync_NewPass1VersionAndReplay_PreservesVersionChainIdempotently()
     {
         await using SqliteKnowledgeStoreSession session =
@@ -224,7 +230,8 @@ public sealed class WorkerAgentResultCommitterTests
         Assert.Equal(predecessorBefore.ContentFingerprint, versions[0].ContentFingerprint);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task CommitAsync_ValidPass2Result_PersistsExactBusinessLogicAggregateAtomically()
     {
         await using SqliteKnowledgeStoreSession session =
@@ -287,7 +294,8 @@ public sealed class WorkerAgentResultCommitterTests
         Assert.Contains("库存预留", current.ContentMarkdown);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task CommitAsync_CrossRepositoryPass2_PreservesGeneratedFromOwnershipAndConsumerAnchors()
     {
         await using SqliteKnowledgeStoreSession session =
@@ -362,7 +370,8 @@ public sealed class WorkerAgentResultCommitterTests
                 step.DocumentScanRunId == fixture.ProviderScanRunId);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task HasCommittedResultAsync_StablePass2Job_RecognizesOnlyDurableBusinessLogicVersion()
     {
         await using SqliteKnowledgeStoreSession session =
@@ -383,7 +392,8 @@ public sealed class WorkerAgentResultCommitterTests
         Assert.True(await committer.HasCommittedResultAsync(fixture.Packet, scope));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task CommitAsync_AlternateAuthoritativeFlow_RejectsSelfConsistentPass2Packet()
     {
         await using SqliteKnowledgeStoreSession session =
@@ -410,7 +420,8 @@ public sealed class WorkerAgentResultCommitterTests
         Assert.Equal(WorkerAgentResultCommitOutcome.Rejected, outcome);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task CommitAsync_AlreadyCommittedPass2HasChangedCanonicalContent_ReturnsConflict()
     {
         await using SqliteKnowledgeStoreSession session =
@@ -457,7 +468,8 @@ public sealed class WorkerAgentResultCommitterTests
         Assert.Equal(WorkerAgentResultCommitOutcome.Conflict, replay);
     }
 
-    [Theory]
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
     [InlineData(false)]
     [InlineData(true)]
     public async Task CommitAsync_Pass2GeneratedFromSetIsMissingOrExtra_RejectsAtomically(
@@ -497,7 +509,8 @@ public sealed class WorkerAgentResultCommitterTests
         Assert.Equal(edgesBefore, await session.Context.Set<DocumentEdge>().CountAsync());
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task CommitAsync_Pass2SynthesisInputIsStale_RejectsAtomically()
     {
         await using SqliteKnowledgeStoreSession session =
@@ -578,7 +591,8 @@ public sealed class WorkerAgentResultCommitterTests
         Assert.Equal(edgesBefore, await session.Context.Set<DocumentEdge>().CountAsync());
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task CommitAsync_OutOfRangeSourceAnchor_RejectsWithZeroVisibleRowsAsync()
     {
         await using SqliteKnowledgeStoreSession session =
@@ -612,7 +626,8 @@ public sealed class WorkerAgentResultCommitterTests
         Assert.Equal(projectionsBefore, await session.Context.Set<IndexEntry>().CountAsync());
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task CommitAsync_OutOfRangeSourceAnchor_DefensiveRevalidationAvoidsStoreCallAsync()
     {
         WorkerAgentJobPacket packet = WorkerAgentTestFixtures.CreatePass1Packet();
@@ -629,7 +644,8 @@ public sealed class WorkerAgentResultCommitterTests
         Assert.Equal(0, store.CommitCount);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task CommitAsync_PreparedCommunicationEvidenceIsOmitted_RejectsBeforeStoreCallAsync()
     {
         WorkerAgentJobPacket packet = WorkerAgentTestFixtures.CreatePass1Packet();

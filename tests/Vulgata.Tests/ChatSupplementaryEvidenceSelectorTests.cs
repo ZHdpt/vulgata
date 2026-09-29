@@ -1,10 +1,12 @@
+using Vulgata.Tests.TestInfrastructure;
 using Vulgata.Infrastructure.Data;
 
 namespace Vulgata.Tests;
 
 public sealed class ChatSupplementaryEvidenceSelectorTests
 {
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Select_LoginQuestion_ReturnsRelevantDistinctDocumentsInDeterministicOrder()
     {
         SupplementaryChatSectionCandidate[] candidates =
@@ -25,7 +27,8 @@ public sealed class ChatSupplementaryEvidenceSelectorTests
         Assert.Equal(2, selected.Select(item => item.DocumentVersionId).Distinct().Count());
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Select_UnrelatedQuestion_ReturnsNoSupplementaryEvidence()
     {
         SupplementaryChatSectionCandidate[] candidates =
@@ -36,7 +39,8 @@ public sealed class ChatSupplementaryEvidenceSelectorTests
         Assert.Empty(ChatSupplementaryEvidenceSelector.Select("北京明天天气怎么样？", candidates, 2));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Select_PasswordFailureQuestion_PrefersRuleFromRelevantDocument()
     {
         SupplementaryChatSectionCandidate[] candidates =
@@ -52,7 +56,8 @@ public sealed class ChatSupplementaryEvidenceSelectorTests
         Assert.Equal(Id(12), selected.StableSectionId);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Select_ExactEndpointHeading_PrecedesIncidentalTitleMatch()
     {
         SupplementaryChatSectionCandidate[] candidates =
@@ -67,7 +72,8 @@ public sealed class ChatSupplementaryEvidenceSelectorTests
         Assert.Equal(Id(12), selected.StableSectionId);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Select_HardDocumentBound_DropsTheExactPlusOneDocument()
     {
         SupplementaryChatSectionCandidate[] candidates = Enumerable.Range(1, 6)
@@ -86,7 +92,8 @@ public sealed class ChatSupplementaryEvidenceSelectorTests
         Assert.Equal(5, selected.Select(item => item.DocumentVersionId).Distinct().Count());
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Select_RepositoryNameTerm_SelectsAuthorizedRepositoryCandidate()
     {
         SupplementaryChatSectionCandidate[] candidates =
@@ -119,7 +126,8 @@ public sealed class ChatSupplementaryEvidenceSelectorTests
         Assert.Equal(Id(1), selected.DocumentVersionId);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Select_StrongestSectionPerDocument_AddsAtMostFourExtraSectionsInScoreOrder()
     {
         SupplementaryChatSectionCandidate[] candidates = Enumerable.Range(1, 6)
@@ -139,7 +147,8 @@ public sealed class ChatSupplementaryEvidenceSelectorTests
         Assert.Equal(4, selected.Select(item => item.StableSectionId).Distinct().Count());
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Select_RandomizedCanonicalTieOrder_IsStable()
     {
         SupplementaryChatSectionCandidate[] candidates =
@@ -159,7 +168,8 @@ public sealed class ChatSupplementaryEvidenceSelectorTests
         }
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Select_StructuredSymbolTokenEquality_DoesNotTreatSerializedJsonSubstringAsMatch()
     {
         SupplementaryChatSectionCandidate[] candidates =
@@ -186,7 +196,8 @@ public sealed class ChatSupplementaryEvidenceSelectorTests
         Assert.Equal(Id(12), selected.StableSectionId);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Select_BusinessMode_IgnoresTechnicalTermsForMetadataScoring()
     {
         SupplementaryChatSectionCandidate[] candidates =
@@ -208,7 +219,8 @@ public sealed class ChatSupplementaryEvidenceSelectorTests
                 mode: Vulgata.Core.DomainServices.ChatMode.Business));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Select_MalformedStructuredMetadata_FailsClosed()
     {
         SupplementaryChatSectionCandidate[] candidates =
@@ -226,7 +238,8 @@ public sealed class ChatSupplementaryEvidenceSelectorTests
             ChatSupplementaryEvidenceSelector.Select("SessionUpdate", candidates, 1));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Select_WeakProseCandidate_CompetesWithMetadataCandidateBeforeRanking()
     {
         SupplementaryChatSectionCandidate[] candidates =
@@ -252,7 +265,8 @@ public sealed class ChatSupplementaryEvidenceSelectorTests
         Assert.Equal([Id(11), Id(12)], selected.Select(item => item.StableSectionId));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Select_AllIntegerScoreComponents_AreAppliedOnceAndRemainInCanonicalOrder()
     {
         SupplementaryChatSectionCandidate[] candidates =

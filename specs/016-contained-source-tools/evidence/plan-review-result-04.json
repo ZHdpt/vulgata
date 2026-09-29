@@ -1,0 +1,59 @@
+{
+  "observed_after": {
+    "path": "specs/016-contained-source-tools/evidence/workflow-transition-008-plan-whitespace-invalidation.json",
+    "sha256": "fb8f95fe46651dc41d9737c29623dc03e837bdd27043f5f679e973fa52d6ac05"
+  },
+  "raw_result": {
+    "schema_version": "1.0",
+    "gate": "plan-review",
+    "verdict": "ACCEPT",
+    "reviewed_commit": "6de156569c95e2841e2452084052f95fa5f88168",
+    "reviewed_boundary": {
+      "base_commit": "6de156569c95e2841e2452084052f95fa5f88168",
+      "candidate_commit": null,
+      "diff_sha256": "6cb06063796a3ff9eadd94ae6d902ff460ff9e264215b4c8ceb30f8441ec81ae",
+      "artifact_hashes": {
+        "specs/016-contained-source-tools/contracts/prepared-source-tools.md": "513dd8ddb3ba8ea02ce41653a436cb4bcb882347676ef29084c89a8d4b92015a",
+        "specs/016-contained-source-tools/data-model.md": "fa0a2496424b70e48ca207354de29890b54bd8b9bdab0178af7d9ca613e15bb8",
+        "specs/016-contained-source-tools/plan.md": "926982636796b020bc9f22af3aab52214ddfc809bfef9fdcabaf85b32637884e",
+        "specs/016-contained-source-tools/quickstart.md": "122ce3bd62a8fed32dd9508d256d1528d090c3b612f2e4d4e3b7f40965c3e38e",
+        "specs/016-contained-source-tools/research.md": "40f98b5061aa54fc9757e2377905450bea5a7e2fabcd9fa0a9b05f449e1c71de",
+        "specs/016-contained-source-tools/spec.md": "48c92e4f6582471a1664e553b48756a811f22bb2b4f1334206e94303629b0b6d"
+      },
+      "owned_paths": [
+        "specs/016-contained-source-tools/spec.md",
+        "specs/016-contained-source-tools/plan.md",
+        "specs/016-contained-source-tools/research.md",
+        "specs/016-contained-source-tools/data-model.md",
+        "specs/016-contained-source-tools/quickstart.md",
+        "specs/016-contained-source-tools/contracts/prepared-source-tools.md"
+      ]
+    },
+    "reviewed_artifacts": [
+      "specs/016-contained-source-tools/spec.md",
+      "specs/016-contained-source-tools/plan.md",
+      "specs/016-contained-source-tools/research.md",
+      "specs/016-contained-source-tools/data-model.md",
+      "specs/016-contained-source-tools/quickstart.md",
+      "specs/016-contained-source-tools/contracts/prepared-source-tools.md",
+      "specs/016-contained-source-tools/evidence/plan-review-boundary-03.json",
+      "specs/016-contained-source-tools/evidence/definition-checkpoint-whitespace-01.json",
+      "specs/016-contained-source-tools/evidence/plan-whitespace-self-review-01.json",
+      "specs/016-contained-source-tools/evidence/workflow-transition-008-plan-whitespace-invalidation.json",
+      "specs/016-contained-source-tools/workflow-state.json",
+      "specs/016-contained-source-tools/evidence/plan-review-01.json",
+      "specs/016-contained-source-tools/evidence/plan-review-02.json",
+      "specs/016-contained-source-tools/evidence/plan-review-03.json",
+      "specs/016-contained-source-tools/evidence/definition-review-01.json",
+      "specs/016-contained-source-tools/evidence/plan-authorization-01.json",
+      "docs/bmad/planning-artifacts/october-release-epics.md",
+      ".specify/memory/constitution.md",
+      "AGENTS.md",
+      "docs/bmad/planning-artifacts/architecture.md",
+      "docs/bmad/planning-artifacts/architecture/ARCHITECTURE-SPINE.md",
+      "docs/bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md"
+    ],
+    "findings": [],
+    "summary": "ACCEPT. All six boundary hashes and the transition-head hash match. The actual diff removes only two trailing spaces from each of plan lines 18-25; restoring those spaces reconstructs the previously accepted plan SHA-256 exactly. Classification, design IDs, content and scope are unchanged, and deterministic workflow validation passes. The prior semantic plan acceptance remains valid. This verdict grants neither new scope authority nor implementation approval."
+  }
+}

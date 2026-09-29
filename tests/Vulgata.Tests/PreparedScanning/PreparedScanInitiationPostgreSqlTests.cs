@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Data.Common;
 using System.Buffers.Binary;
 using System.Security.Cryptography;
@@ -24,7 +25,8 @@ public sealed class PreparedScanInitiationPostgreSqlTests
     private static readonly DateTimeOffset InitiatedAt =
         new(2026, 8, 30, 0, 0, 0, TimeSpan.Zero);
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task CreateOrReplayAsync_AbsentState_CreatesOneCompleteTupleAsync()
     {
         await using InitiationDatabase database = await CreateDatabaseAsync();
@@ -49,7 +51,8 @@ public sealed class PreparedScanInitiationPostgreSqlTests
         Assert.Equal(new InitiationCounts(2, 2, 1, 0), await ReadCountsAsync(database));
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task CreateOrReplayAsync_ExactRequestAndReversedOrder_ReplaysSameCanonicalTupleAsync()
     {
         await using InitiationDatabase database = await CreateDatabaseAsync();
@@ -75,7 +78,8 @@ public sealed class PreparedScanInitiationPostgreSqlTests
         "ref", "revision", "runtime", "prompt", "schema", "authorization",
     };
 
-    [Theory]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteTheory("PostgreSql")]
     [MemberData(nameof(ReplayOnlyDimensions))]
     public async Task CreateOrReplayAsync_ChangedReplayDimension_ReturnsConflictWithoutWritesAsync(
         string dimension)
@@ -94,7 +98,8 @@ public sealed class PreparedScanInitiationPostgreSqlTests
         Assert.Equal(new InitiationCounts(2, 2, 1, 0), await ReadCountsAsync(database));
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task CreateOrReplayAsync_HistoricalUncoordinatedRuns_AreIgnoredAndNewPathIsCreatedAsync()
     {
         await using InitiationDatabase database = await CreateDatabaseAsync();
@@ -115,7 +120,8 @@ public sealed class PreparedScanInitiationPostgreSqlTests
         Assert.Equal(new InitiationCounts(4, 2, 1, 0), await ReadCountsAsync(database));
     }
 
-    [Theory]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteTheory("PostgreSql")]
     [InlineData("legacy")]
     [InlineData("partial")]
     [InlineData("extra")]
@@ -140,7 +146,8 @@ public sealed class PreparedScanInitiationPostgreSqlTests
         Assert.Null(result.Tuple);
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task CreateOrReplayAsync_CurrentPhaseWithoutPreparedArtifact_ProjectsReplayMetadataAsync()
     {
         await using InitiationDatabase database = await CreateDatabaseAsync();
@@ -167,7 +174,8 @@ public sealed class PreparedScanInitiationPostgreSqlTests
             Assert.IsType<PreparedScanInitiationTuple>(replay.Tuple).PreparedArtifactPresence);
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task CreateOrReplayAsync_ExactPreparedContextSnapshot_ProjectsArtifactPresenceAsync()
     {
         await using InitiationDatabase database = await CreateDatabaseAsync();
@@ -199,7 +207,8 @@ public sealed class PreparedScanInitiationPostgreSqlTests
             Assert.IsType<PreparedScanInitiationTuple>(replay.Tuple).PreparedArtifactPresence);
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task CreateOrReplayAsync_IdenticalIndependentConnections_ConvergeToOneTupleAsync()
     {
         await using InitiationDatabase database = await CreateDatabaseAsync();
@@ -219,7 +228,8 @@ public sealed class PreparedScanInitiationPostgreSqlTests
         Assert.Equal(new InitiationCounts(2, 2, 1, 0), await ReadCountsAsync(database));
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task CreateOrReplayAsync_CompetingPairOrRevisionConnections_HaveAtMostOneWinnerAsync()
     {
         await using InitiationDatabase database = await CreateDatabaseAsync();
@@ -243,7 +253,8 @@ public sealed class PreparedScanInitiationPostgreSqlTests
         Assert.Equal(new InitiationCounts(2, 2, 1, 0), await ReadCountsAsync(database));
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task CreateOrReplayAsync_AdvisoryLockTimeout_ReturnsUnavailableAndLeavesZeroRowsAsync()
     {
         await using InitiationDatabase database = await CreateDatabaseAsync();
@@ -264,7 +275,8 @@ public sealed class PreparedScanInitiationPostgreSqlTests
         await transaction.RollbackAsync();
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task CreateOrReplayAsync_CancellationBeforeCommit_ReturnsCancelledAndLeavesZeroRowsAsync()
     {
         await using InitiationDatabase database = await CreateDatabaseAsync();
@@ -278,7 +290,8 @@ public sealed class PreparedScanInitiationPostgreSqlTests
         Assert.Equal(new InitiationCounts(0, 0, 0, 0), await ReadCountsAsync(database));
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task CreateOrReplayAsync_InjectedSaveFailure_RollsBackAllRowsAsync()
     {
         await using InitiationDatabase database = await CreateDatabaseAsync();
@@ -293,7 +306,8 @@ public sealed class PreparedScanInitiationPostgreSqlTests
         Assert.Equal(new InitiationCounts(0, 0, 0, 0), await ReadCountsAsync(database));
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task CreateOrReplayAsync_InjectedPreCommitTransactionFailure_RollsBackAllRowsAsync()
     {
         await using InitiationDatabase database = await CreateDatabaseAsync();
@@ -308,7 +322,8 @@ public sealed class PreparedScanInitiationPostgreSqlTests
         Assert.Equal(new InitiationCounts(0, 0, 0, 0), await ReadCountsAsync(database));
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task CreateOrReplayAsync_OneSaveAndCommit_ObserverSeesCompleteTupleOnlyAfterCommitAsync()
     {
         await using InitiationDatabase database = await CreateDatabaseAsync();
@@ -324,7 +339,8 @@ public sealed class PreparedScanInitiationPostgreSqlTests
         Assert.Equal(new InitiationCounts(2, 2, 1, 0), await ReadCountsAsync(database));
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task CreateOrReplayAsync_AmbiguousPostCommitAcknowledgement_ReturnsUnavailableAndExactRetryReplaysAsync()
     {
         await using InitiationDatabase database = await CreateDatabaseAsync();

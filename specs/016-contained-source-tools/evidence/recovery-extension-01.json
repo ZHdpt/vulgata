@@ -1,0 +1,19 @@
+{
+  "kind": "human-approval",
+  "stage": "quality-review",
+  "decision_id": "18-1/implementation/1/extension/1",
+  "status": "accepted",
+  "episode_id": "18-1/implementation/1",
+  "scope_sha256": "77459b3cc4f34c34e78b1f0f996c700afaaed1ccf837ded85151725e7eaac032",
+  "scope_material": "18-1/implementation/1/extension/1|18-1/implementation/1|6|QR-18.1-03|queued-and-opening-operations-return-cancelled-after-context-disposal|regression-red-existing-lifetime-token-post-wait-post-approval-checks",
+  "pause_at": 6,
+  "requested_at": "2026-09-28T10:37:12.8603156Z",
+  "decided_at": "2026-09-28T11:00:33.9622954Z",
+  "user_instruction": "Approve",
+  "failed_approaches": [
+    "The initial implementation checked disposal before queueing or opening but did not cover disposal after that check.",
+    "The first quality correction resolved nested listing and same-length range-read drift but did not address the separate queued/open-window disposal race."
+  ],
+  "approved_changed_approach": "Add public-seam regression RED for queued and approval-to-open disposal, then reuse the existing context lifetime cancellation token and add post-wait/post-approval disposal checks so stopped operations return sanitized Cancelled and settle without disclosure.",
+  "summary": "The user approved a finite recovery extension from four to six failed results for QR-18.1-03 only. Existing definition, architecture, implementation scope and every remaining convergence, quality, E2E and final-verification gate remain unchanged."
+}

@@ -1,10 +1,12 @@
+using Vulgata.Tests.TestInfrastructure;
 using Npgsql;
 
 namespace Vulgata.Tests.Migrations;
 
 public sealed class DisposablePostgreSqlDatabaseTests
 {
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public void CreateUniqueDatabaseName_RepeatedCalls_ReturnDistinctStronglyOwnedNames()
     {
         string first = DisposablePostgreSqlDatabase.CreateUniqueDatabaseName();
@@ -17,7 +19,8 @@ public sealed class DisposablePostgreSqlDatabaseTests
         DisposablePostgreSqlDatabase.ValidateOwnedDatabaseName(second);
     }
 
-    [Theory]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteTheory("PostgreSql")]
     [InlineData(null)]
     [InlineData("")]
     [InlineData(" ")]
@@ -39,7 +42,8 @@ public sealed class DisposablePostgreSqlDatabaseTests
             () => DisposablePostgreSqlDatabase.ValidateOwnedDatabaseName(databaseName));
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task CreateAsync_HarnessOwnedAdministratorDatabase_RefusesBeforeConnecting()
     {
         string administratorDatabaseName =
@@ -54,14 +58,15 @@ public sealed class DisposablePostgreSqlDatabaseTests
         Assert.Contains("administrator database", exception.Message, StringComparison.Ordinal);
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task CreateAsync_ConfiguredPostgreSql17_CreatesUsesAndDropsOnlyOwnedDatabase()
     {
         string? administratorConnectionString =
             Environment.GetEnvironmentVariable("VULGATA_TEST_POSTGRES_ADMIN");
         if (string.IsNullOrWhiteSpace(administratorConnectionString))
         {
-            return;
+            throw new InvalidOperationException("Required PostgreSQL qualification prerequisite is unavailable; use eng/test.ps1 -Suite PostgreSql.");
         }
 
         var administrator = new NpgsqlConnectionStringBuilder(administratorConnectionString)

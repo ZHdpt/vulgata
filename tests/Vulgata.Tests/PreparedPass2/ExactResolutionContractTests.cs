@@ -1,10 +1,12 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Reflection;
 
 namespace Vulgata.Tests.PreparedPass2;
 
 public sealed class ExactResolutionContractTests
 {
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void V2ResolutionDecision_ExposesDecisionOwnedOutcomeAndProviderEvidence()
     {
         Type type = FindCoreType("CrossRepositoryResolutionDecision");
@@ -19,7 +21,8 @@ public sealed class ExactResolutionContractTests
         Assert.NotNull(type.GetProperty("EvidenceFingerprint"));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void ProviderEvidenceContribution_IsOwnedByDecision_NotReusableEdge()
     {
         Type type = FindCoreType("ExactResolutionProviderEvidenceContribution");
@@ -31,7 +34,8 @@ public sealed class ExactResolutionContractTests
         Assert.Null(type.GetProperty("DocumentEdgeId"));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void ResolutionContracts_ExposeDeterministicProtocolAndProviderAggregationSeams()
     {
         Assembly core = typeof(Vulgata.Core.Entities.DocumentEdge).Assembly;

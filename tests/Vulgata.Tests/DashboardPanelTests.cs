@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Security.Claims;
 using System.Reflection;
 using Bunit;
@@ -39,7 +40,8 @@ public sealed class DashboardPanelTests : TestContext
         JSInterop.Mode = JSRuntimeMode.Loose;
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void SystemLlmOverridesPanel_RendersAllAgentTypes_AndFallsBackToGlobalDefault()
     {
         var systemId = Guid.NewGuid();
@@ -61,7 +63,8 @@ public sealed class DashboardPanelTests : TestContext
         Assert.Contains("使用全局默认提供商", cut.Markup, StringComparison.Ordinal);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void StandaloneReposPanel_RendersRepositoryRows_AndEmptyState()
     {
         IReadOnlyList<RepositorySummaryDto> repositories =
@@ -88,7 +91,8 @@ public sealed class DashboardPanelTests : TestContext
         Assert.Contains("暂无独立仓库", empty.Markup, StringComparison.Ordinal);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void StandaloneReposPanel_OnCreateRequested_FiresEventCallback()
     {
         bool fired = false;
@@ -103,7 +107,8 @@ public sealed class DashboardPanelTests : TestContext
         Assert.True(fired);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void StandaloneReposPanel_OnRepositorySelected_FiresWithRepositoryId()
     {
         var repositoryId = Guid.NewGuid();
@@ -123,7 +128,8 @@ public sealed class DashboardPanelTests : TestContext
         Assert.Equal(repositoryId, capturedId);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void StandaloneReposPanel_DemoSnapshot_RendersFakeValuesAndFiresScanRequest()
     {
         var repositoryId = Guid.NewGuid();
@@ -164,7 +170,8 @@ public sealed class DashboardPanelTests : TestContext
         Assert.Equal(repositoryId, startedId);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void StandaloneReposPanel_ScanningRepository_ViewFiresProgressRequest()
     {
         var repositoryId = Guid.NewGuid();
@@ -197,7 +204,8 @@ public sealed class DashboardPanelTests : TestContext
         Assert.Equal(repositoryId, progressId);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void SystemListPanel_RendersSystems_AndRepositoriesPerSystem()
     {
         var alphaId = Guid.NewGuid();
@@ -236,7 +244,8 @@ public sealed class DashboardPanelTests : TestContext
         Assert.DoesNotContain("管理所有者", cut.Markup, StringComparison.Ordinal);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void SystemListPanel_DemoSnapshot_RendersScanControls()
     {
         var systemId = Guid.NewGuid();
@@ -268,7 +277,8 @@ public sealed class DashboardPanelTests : TestContext
         Assert.Contains("开始扫描", cut.Markup, StringComparison.Ordinal);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void SystemListPanel_EmptySystems_RendersEmptyState()
     {
         var cut = Render<SystemListPanel>(parameters => parameters
@@ -278,7 +288,8 @@ public sealed class DashboardPanelTests : TestContext
         Assert.Contains("尚未添加任何系统。创建你的第一个系统开始扫描。", cut.Markup, StringComparison.Ordinal);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void SystemListPanel_Administrator_RendersEditAndDeleteButtons()
     {
         SystemEntity system = new("管理平台", "描述", "上下文", DateTimeOffset.UtcNow);
@@ -299,7 +310,8 @@ public sealed class DashboardPanelTests : TestContext
                 .ClassList);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void RepositoryDetailDialog_WhenVisible_RendersRepositoryNameAndDatabaseConnectionSection()
     {
         Services.AddScoped<IRepositoryDatabaseConnectionCoordinator>(_ => new StubDatabaseConnectionCoordinator());
@@ -322,7 +334,8 @@ public sealed class DashboardPanelTests : TestContext
         Assert.Contains("关闭", cut.Markup, StringComparison.Ordinal);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void RepositoryDetailDialog_WhenNotVisible_RendersNothing()
     {
         Services.AddScoped<IRepositoryDatabaseConnectionCoordinator>(_ => new StubDatabaseConnectionCoordinator());
@@ -337,7 +350,8 @@ public sealed class DashboardPanelTests : TestContext
         Assert.DoesNotContain("隐藏仓库", cut.Markup, StringComparison.Ordinal);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void RepositoryDetailDialog_AfterSuccessfulProfiling_RendersChineseSortedLanguageDistribution()
     {
         Services.AddScoped<IRepositoryDatabaseConnectionCoordinator>(_ => new StubDatabaseConnectionCoordinator());
@@ -370,7 +384,8 @@ public sealed class DashboardPanelTests : TestContext
             cut.Markup.IndexOf("zig_0+#.-", StringComparison.Ordinal));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void RepositoryDetailDialog_AfterSuccessfulProfiling_RendersChineseFrameworkEvidenceOverview()
     {
         Services.AddScoped<IRepositoryDatabaseConnectionCoordinator>(_ => new StubDatabaseConnectionCoordinator());
@@ -411,7 +426,8 @@ public sealed class DashboardPanelTests : TestContext
         Assert.DoesNotContain("C:\\", cut.Markup, StringComparison.OrdinalIgnoreCase);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void RepositoryDetailDialog_AfterSuccessfulProfiling_RendersEverySortedUnknownLanguagePath()
     {
         Services.AddScoped<IRepositoryDatabaseConnectionCoordinator>(_ => new StubDatabaseConnectionCoordinator());
@@ -442,7 +458,8 @@ public sealed class DashboardPanelTests : TestContext
             cut.Markup.IndexOf("src/unknown/Zeta.txt", StringComparison.Ordinal));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void RepositoryDetailDialog_AfterUnsafeProviderAudit_RendersOnlyUnknownPath()
     {
         var summary = new ScanRunSummaryDto
@@ -486,7 +503,8 @@ public sealed class DashboardPanelTests : TestContext
         Assert.DoesNotContain("host-secret", cut.Markup, StringComparison.OrdinalIgnoreCase);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void RepositoryDetailDialog_WithAdversarialProviderFailure_RendersClosedChineseError()
     {
         const string rawDiagnostic =
@@ -523,7 +541,8 @@ public sealed class DashboardPanelTests : TestContext
         Assert.DoesNotContain("9876ms", cut.Markup, StringComparison.Ordinal);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void RepositoryDetailDialog_WithAdversarialLoadException_RendersClosedChineseError()
     {
         const string rawDiagnostic =
@@ -554,7 +573,8 @@ public sealed class DashboardPanelTests : TestContext
         Assert.DoesNotContain("9876ms", cut.Markup, StringComparison.Ordinal);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void DatabaseConnectionPanel_RendersStatusAndFormFields()
     {
         Services.AddScoped<IRepositoryDatabaseConnectionCoordinator>(_ => new StubDatabaseConnectionCoordinator());

@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Runtime.CompilerServices;
 
 namespace Vulgata.Tests.ReleaseGate;
@@ -7,7 +8,8 @@ public sealed class Story125TrackCMvpReportContractTests
     private const string ContractPath =
         "specs/014-grounded-llm-wiki-chat-release-evidence/contracts/release-evidence-contract.md";
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void CurrentMarkdownContract_IsTheTrackCMvpAuthority_WithFourTruthfulDispositions()
     {
         string contract = LoadContract();
@@ -21,7 +23,8 @@ public sealed class Story125TrackCMvpReportContractTests
         }
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void CurrentMarkdownContract_ContainsRequiredPreflightRunQueryEvaluationRestartScreenshotAndFailureSections()
     {
         string contract = LoadContract();
@@ -46,7 +49,8 @@ public sealed class Story125TrackCMvpReportContractTests
         Assert.Contains("manual redaction result", contract, StringComparison.Ordinal);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void CurrentMarkdownContract_DefersHistoricalProofMachinery_AndRetainsNoRequiredMechanismForIt()
     {
         string contract = LoadContract();

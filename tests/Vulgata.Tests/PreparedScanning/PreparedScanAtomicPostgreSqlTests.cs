@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
 using System.Reflection;
@@ -26,7 +27,8 @@ public sealed class PreparedScanAtomicPostgreSqlTests(ITestOutputHelper output)
         { "pre-scan-result", "vulgata.\"PreScanResults\"", "UPDATE" },
     };
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task PostgreSql17_ExactReplayAllowsOnlyCaptureMetadataVarianceAsync()
     {
         await using PreparedScanPostgreSqlFixture fixture = await CreateFixtureAsync();
@@ -59,7 +61,8 @@ public sealed class PreparedScanAtomicPostgreSqlTests(ITestOutputHelper output)
         await AssertCompletePairAsync(fixture.ConnectionString, fixture.Package);
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task PostgreSql17_TamperedStoredCodeGraphProofPreimageCannotMasqueradeAsReplayAsync()
     {
         await using PreparedScanPostgreSqlFixture fixture = await CreateFixtureAsync();
@@ -89,7 +92,8 @@ public sealed class PreparedScanAtomicPostgreSqlTests(ITestOutputHelper output)
             fixture.ConnectionString, target.CreateRowCountSql(manifestId)));
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task PostgreSql17_TamperedStoredJavaReadinessProofPreimageCannotMasqueradeAsReplayAsync()
     {
         await using PreparedScanPostgreSqlFixture fixture = await CreateFixtureAsync();
@@ -127,7 +131,8 @@ public sealed class PreparedScanAtomicPostgreSqlTests(ITestOutputHelper output)
         "SkippedCount",
     };
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task PostgreSql17_TamperedStoredManifestSchemaIdentityCannotReplayAsync()
     {
         await using PreparedScanPostgreSqlFixture fixture = await CreateFixtureAsync();
@@ -157,7 +162,8 @@ public sealed class PreparedScanAtomicPostgreSqlTests(ITestOutputHelper output)
             $"SELECT \"SchemaIdentity\" FROM vulgata.\"PreparedScanManifests\" WHERE \"Id\" = '{manifestId}';"));
     }
 
-    [Theory]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteTheory("PostgreSql")]
     [MemberData(nameof(OmittedManifestScalarColumns))]
     public async Task PostgreSql17_TamperedStoredManifestScalarCannotReplayAsync(string column)
     {
@@ -187,7 +193,8 @@ public sealed class PreparedScanAtomicPostgreSqlTests(ITestOutputHelper output)
             """));
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task PostgreSql17_StableProofOrChildMutationConflictsWithoutMutationAsync()
     {
         await using PreparedScanPostgreSqlFixture fixture = await CreateFixtureAsync();
@@ -237,7 +244,8 @@ public sealed class PreparedScanAtomicPostgreSqlTests(ITestOutputHelper output)
         Assert.Equal(before, await ReadCountsAsync(fixture.ConnectionString));
     }
 
-    [Theory]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteTheory("PostgreSql")]
     [MemberData(nameof(InsertBoundaries))]
     public async Task PostgreSql17_ForcedPersistenceBoundary_RollsBackAllPreparedVisibilityAsync(
         string boundary,
@@ -258,7 +266,8 @@ public sealed class PreparedScanAtomicPostgreSqlTests(ITestOutputHelper output)
         await AssertNoDispatchablePreparedResultAsync(fixture.ConnectionString);
     }
 
-    [Theory]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteTheory("PostgreSql")]
     [MemberData(nameof(InsertBoundaries))]
     public async Task PostgreSql17_CancellationAtPersistenceBoundary_RollsBackAllPreparedVisibilityAsync(
         string boundary,
@@ -278,7 +287,8 @@ public sealed class PreparedScanAtomicPostgreSqlTests(ITestOutputHelper output)
         await AssertNoDispatchablePreparedResultAsync(fixture.ConnectionString);
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task PostgreSql17_StaleWriterConflictsAndLeavesZeroPreparedRowsAsync()
     {
         await using PreparedScanPostgreSqlFixture fixture = await CreateFixtureAsync();
@@ -291,7 +301,8 @@ public sealed class PreparedScanAtomicPostgreSqlTests(ITestOutputHelper output)
         Assert.Equal(DurableCounts.PrincipalOnly, await ReadCountsAsync(fixture.ConnectionString));
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task PostgreSql17_ConcurrentIdenticalWriters_CommitOnceAndReplayOnceAsync()
     {
         await using PreparedScanPostgreSqlFixture fixture = await CreateFixtureAsync();
@@ -311,7 +322,8 @@ public sealed class PreparedScanAtomicPostgreSqlTests(ITestOutputHelper output)
         await AssertCompletePairAsync(fixture.ConnectionString, fixture.Package);
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task PostgreSql17_ConcurrentChangedWriter_ConflictsWithoutPartialVisibilityAsync()
     {
         await using PreparedScanPostgreSqlFixture fixture = await CreateFixtureAsync();
@@ -332,7 +344,8 @@ public sealed class PreparedScanAtomicPostgreSqlTests(ITestOutputHelper output)
         await AssertCompletePairAsync(fixture.ConnectionString, fixture.Package);
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task PostgreSql17_AuditsReconstructTagsOneThroughTenAndSelectedAssociationAsync()
     {
         await using PreparedScanPostgreSqlFixture fixture = await CreateFixtureAsync();
@@ -362,7 +375,8 @@ public sealed class PreparedScanAtomicPostgreSqlTests(ITestOutputHelper output)
         }
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task PostgreSql17_RetainedClassificationPersistsInsideThePairTransactionAsync()
     {
         await using PreparedScanPostgreSqlFixture fixture = await CreateFixtureAsync();
@@ -383,7 +397,8 @@ public sealed class PreparedScanAtomicPostgreSqlTests(ITestOutputHelper output)
             """));
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task PostgreSql17_RestartExactRetryUsesNormativeClassificationOrderAsync()
     {
         await using PreparedScanPostgreSqlFixture fixture = await CreateFixtureAsync();
@@ -419,7 +434,8 @@ public sealed class PreparedScanAtomicPostgreSqlTests(ITestOutputHelper output)
             .Select(classification => classification.Fingerprint).ToArray());
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task PostgreSql17_NoncanonicalClassificationOrderConflictsBeforeFirstCommitAsync()
     {
         await using PreparedScanPostgreSqlFixture fixture = await CreateFixtureAsync();
@@ -467,7 +483,8 @@ public sealed class PreparedScanAtomicPostgreSqlTests(ITestOutputHelper output)
         Assert.Equal(DurableCounts.PrincipalOnly, await ReadCountsAsync(fixture.ConnectionString));
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task PostgreSql17_OverBoundDetectorPackageCommitsReplaysAndRejectsExternalReorderAsync()
     {
         await using PreparedScanPostgreSqlFixture fixture = await CreateFixtureAsync();
@@ -537,7 +554,8 @@ public sealed class PreparedScanAtomicPostgreSqlTests(ITestOutputHelper output)
         Assert.Equal(afterCommit, await ReadCountsAsync(fixture.ConnectionString));
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task PostgreSql17_DigestAndCodeUnitFingerprintTamperingCannotReplayAsync()
     {
         await using PreparedScanPostgreSqlFixture fixture = await CreateFixtureAsync();
@@ -576,7 +594,8 @@ public sealed class PreparedScanAtomicPostgreSqlTests(ITestOutputHelper output)
         Assert.Equal(PreparedScanCommitOutcome.Conflict, digestConflict.Outcome);
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task PostgreSql17_SelectedAuditNullShapeAndAssociationAreDatabaseEnforcedAsync()
     {
         await using PreparedScanPostgreSqlFixture fixture = await CreateFixtureAsync();

@@ -1,9 +1,17 @@
 # Governed-delivery 0.7 adoption
 
-Updated: 2026-09-28. This is Vulgata's installation/resumption record, not product
+Updated: 2026-09-29. This is Vulgata's installation/resumption record, not product
 verification or authorization to start a story.
 
 ## Installed boundary
+
+- Distribution: **0.7.4**, installed September 28 from the validated governed-delivery
+  working tree based on source HEAD `992cf3b96c08a3501e1d80115b7cf4f41a1a202c`;
+  release changes remain uncommitted in the source project. This updates workflow
+  assets, profiles, adapters and validators. At installation Vulgata retained its
+  two-gate delegation policy. The separate September 29 policy decision below now
+  permits explicitly bounded recovery delegation; installation alone did not grant it.
+  No story state or upstream installation changed.
 
 - Distribution: **0.7.3**, installed September 28 from the validated governed-delivery
   working tree based on source HEAD `0c0bf0cfb05edc5b28a346d8f3a63002d1e781ef`;
@@ -53,6 +61,41 @@ Local checkpoints:
 No branch switch, history rewrite, push, product-code change or story activation
 belongs to this installation.
 
+## Current delegated approval and management roles
+
+On September 29 the user explicitly expanded permitted delegation to continuation
+at failure 4 or a reached approved extension limit and assigned three management
+roles. Authority source: `Vulgata Master`, chat
+`019fcbe8-f5db-73b3-914c-b29f75688a22`, user message
+`01a0ead7-a263-73c0-9eaa-7862c864f476` in turn
+`01a0ead7-9a95-7951-9641-8dcca3038ebb`.
+
+Root AGENTS permits this purpose under the installed 0.7.4 contract. A runner still
+needs the actual story-scoped user designation and a user-set `max_pause_at` before
+using recovery delegation. No numeric ceiling was supplied in that message; none
+is inferred here. Earlier two-gate grants remain insufficient for recovery. Each
+reached limit requires a fresh decision against the paused episode, not blanket
+permission to continue, clear holds or change scope. The runner owns the record
+and validation; these notes are not a substitute for actual user provenance.
+
+| Chat | Stable ID | Responsibility |
+| --- | --- | --- |
+| Vulgata October Approver | `01a0e708-c489-7871-9f73-31413f20bf2c` | Decisions within the user's explicit gate/scope designation; escalate human-reserved choices. |
+| Schedule Vulgata release monitoring | `01a0eacd-a033-74b0-88e5-557ac3853181` | Monitor explicitly registered workers; relay decision requests and meaningful milestones without approving or dispatching. |
+| Parallel Development schedule | `01a0e5e1-ee94-7362-9b1f-2c61e2c5d536` | Dependency, parallel-start and integration planning; no approval or implicit Git execution authority. |
+
+These bindings replace the earlier unbound name "Vulgata October Scheduler";
+they do not register story runners or lift a plan-only stop. Monitoring forwards
+approval requests to the approver and completion/dependency milestones to parallel
+scheduling, using the pinned IDs rather than reselecting a same-title chat. The
+user's synchronization request authorizes relaying this update to these three chats;
+ongoing runner communication must retain its explicit user authorization.
+
+Existing worktrees must use compatible installed assets and reconcile the applicable
+consumer policy through their own owners. Updating this checkout does not update
+another worktree, authorize a merge, or modify story state. Preserve current model
+selection, independent gates, source/runtime permissions and historical evidence.
+
 ## Preserved history and common selection
 
 All 14 existing `specs/*/workflow-state.json` files, plans, evidence, activation
@@ -78,6 +121,15 @@ The local Git safety hook was renamed, not removed; Copilot workflow parity is n
 claimed by preserving that hook or unrelated helpers.
 
 ## Verification and unresolved compatibility
+
+September 28 upgrade to 0.7.4: installed workflow assets and profiles match the
+validated source release; dependency and targeted Story 13.1 checks pass. The
+aggregate validator still reports the **256 historical findings**. All 14 workflow
+states, config, sprint tracker, product files and upstream skills are preserved; no
+story or installation errors are reported and no story is activated. At that
+installation checkpoint Vulgata allowed only planned-change and implementation
+delegation. The September 29 consumer-policy decision above supersedes that
+restriction without changing this historical installation evidence.
 
 September 28 upgrade to 0.7.3: installed workflow assets and profiles match the
 validated source release; dependency and targeted Story 13.1 checks pass. The

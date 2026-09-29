@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
@@ -18,7 +19,8 @@ public sealed class PreparedPass2JobExecutorStreamingTests
     private static readonly TimeSpan Inactivity = TimeSpan.FromMilliseconds(40);
     private static readonly TimeSpan Absolute = TimeSpan.FromMilliseconds(150);
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ExecuteAsync_SilentStream_StopsAtInactivityCap()
     {
         ScriptedStreamingTransport transport = new([NeverAsync()]);
@@ -30,7 +32,8 @@ public sealed class PreparedPass2JobExecutorStreamingTests
         Assert.Single(transport.Requests);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ExecuteAsync_ProgressiveStream_StopsAtAbsoluteCapWithoutReset()
     {
         ScriptedStreamingTransport transport = new(
@@ -49,7 +52,8 @@ public sealed class PreparedPass2JobExecutorStreamingTests
         Assert.Single(transport.Requests);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ExecuteAsync_RawProviderResponseAtBound_IsRejected()
     {
         ScriptedStreamingTransport transport = new(
@@ -62,7 +66,8 @@ public sealed class PreparedPass2JobExecutorStreamingTests
         Assert.Single(transport.Requests);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task StreamingTransport_OversizedUnterminatedSseLine_RejectsBeforeRawCapReadAsync()
     {
         Guid systemId = Guid.NewGuid();
@@ -102,7 +107,8 @@ public sealed class PreparedPass2JobExecutorStreamingTests
             $"The unterminated SSE line consumed {stream.BytesRead} bytes before rejection.");
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task StreamingTransport_CanonicalProjectedPacket_ResolvesSystemBindingAsync()
     {
         Guid systemId = Guid.NewGuid();
@@ -141,7 +147,8 @@ public sealed class PreparedPass2JobExecutorStreamingTests
         Assert.Contains("\"name\":\"ok\"", Encoding.UTF8.GetString(chunks[^1].Span));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task StreamingTransport_SubsequentRequest_UsesCanonicalToolRoleHistoryAsync()
     {
         Guid systemId = Guid.NewGuid();
@@ -207,7 +214,8 @@ public sealed class PreparedPass2JobExecutorStreamingTests
         Assert.Equal("call-1", tool.GetProperty("tool_call_id").GetString());
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ExecuteAsync_RequestAtBound_IsRejectedBeforeTransport()
     {
         ScriptedStreamingTransport transport = new([NeverAsync()]);
@@ -222,7 +230,8 @@ public sealed class PreparedPass2JobExecutorStreamingTests
         Assert.Empty(transport.Requests);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ExecuteAsync_AssembledResponseAtBound_IsRejected()
     {
         ScriptedStreamingTransport transport = new(
@@ -235,7 +244,8 @@ public sealed class PreparedPass2JobExecutorStreamingTests
         Assert.Single(transport.Requests);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ExecuteAsync_ProviderFailure_UsesZeroSdkRetries()
     {
         ScriptedStreamingTransport transport = new([ThrowsAsync()]);
@@ -247,7 +257,8 @@ public sealed class PreparedPass2JobExecutorStreamingTests
         Assert.Single(transport.Requests);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ExecuteAsync_AllRetrieveBatch_PreflightsWholeBatchAndRunsCallbacksSerially()
     {
         RecordingRetrievalService retrieval = new(TimeSpan.FromMilliseconds(5));
@@ -264,7 +275,8 @@ public sealed class PreparedPass2JobExecutorStreamingTests
         Assert.Equal(["Search", "Search"], retrieval.Operations);
     }
 
-    [Theory]
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
     [InlineData("Outgoing")]
     [InlineData("outgoing")]
     public async Task ExecuteAsync_RelatedDocumentsStringDirection_InvokesTypedCallbackAsync(
@@ -284,7 +296,8 @@ public sealed class PreparedPass2JobExecutorStreamingTests
         Assert.Equal(["RelatedDocuments"], retrieval.Operations);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ExecuteAsync_StringNullForNullableRetrievalField_CoercesToNullAsync()
     {
         RecordingRetrievalService retrieval = new(TimeSpan.Zero);
@@ -301,7 +314,8 @@ public sealed class PreparedPass2JobExecutorStreamingTests
         Assert.Equal(["SourceAnchors"], retrieval.Operations);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ExecuteAsync_InvalidNullableEnum_ReturnsClosedInvalidToolCallAsync()
     {
         RecordingRetrievalService retrieval = new(TimeSpan.Zero);
@@ -318,7 +332,8 @@ public sealed class PreparedPass2JobExecutorStreamingTests
         Assert.Equal(0, retrieval.Calls);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ExecuteAsync_MixedBatch_FailsWholePreflightWithoutCallbacks()
     {
         RecordingRetrievalService retrieval = new(TimeSpan.Zero);
@@ -333,7 +348,8 @@ public sealed class PreparedPass2JobExecutorStreamingTests
         Assert.Equal(0, retrieval.Calls);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ExecuteAsync_EightRetrievalTurns_UsesForcedSubmissionOnRequestNine()
     {
         ScriptedStreamingTransport transport = new(
@@ -353,7 +369,8 @@ public sealed class PreparedPass2JobExecutorStreamingTests
         Assert.DoesNotContain("retrieve_code_logic", declarations, StringComparison.Ordinal);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ExecuteAsync_FirstRejectedSubmission_UsesSoleCorrectionOnRequestTen()
     {
         ScriptedStreamingTransport transport = new(
@@ -382,7 +399,8 @@ public sealed class PreparedPass2JobExecutorStreamingTests
         Assert.All(transport.Requests[^2..], request => Assert.True(request.SubmissionOnly));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ExecuteAsync_EarlyRejectedSubmission_SkipsRequestNineAndUsesSoleCorrectionOnRequestTen()
     {
         ScriptedStreamingTransport transport = new(
@@ -410,7 +428,8 @@ public sealed class PreparedPass2JobExecutorStreamingTests
         Assert.True(transport.Requests[1].SubmissionOnly);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ExecuteAsync_RejectedCorrection_DoesNotSendRequestEleven()
     {
         ScriptedStreamingTransport transport = new(
@@ -432,7 +451,8 @@ public sealed class PreparedPass2JobExecutorStreamingTests
         Assert.DoesNotContain(transport.Requests, request => request.RequestNumber == 11);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ExecuteAsync_RetryAndRestart_PreserveDurableRetrievalBudget()
     {
         RecordingRetrievalService retrieval = new(TimeSpan.Zero, maximumCalls: 1);
@@ -456,7 +476,8 @@ public sealed class PreparedPass2JobExecutorStreamingTests
         Assert.Equal(2, restartedTransport.Requests.Count);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ExecuteAsync_RetrievalResult_IsProjectedIntoNextProviderRequestTranscriptAsync()
     {
         const string projection = "admitted-retrieval-projection";
@@ -482,7 +503,8 @@ public sealed class PreparedPass2JobExecutorStreamingTests
             PreparedPass2WireBudget.MaximumInitialRequestUtf8Bytes);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ExecuteAsync_MissingToolCallId_IsRejectedBeforeAnyCallbackAsync()
     {
         RecordingRetrievalService retrieval = new(TimeSpan.Zero);
@@ -500,7 +522,8 @@ public sealed class PreparedPass2JobExecutorStreamingTests
         Assert.Single(transport.Requests);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ExecuteAsync_DuplicateToolCallIds_AreRejectedBeforeAnyCallbackAsync()
     {
         RecordingRetrievalService retrieval = new(TimeSpan.Zero);
@@ -520,7 +543,8 @@ public sealed class PreparedPass2JobExecutorStreamingTests
         Assert.Single(transport.Requests);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ExecuteAsync_RequestTenCorrection_ContainsOnlyClosedRepairAndServerContextAsync()
     {
         PreparedPass2WorkerPacket packet = CreatePacket(
@@ -564,7 +588,8 @@ public sealed class PreparedPass2JobExecutorStreamingTests
         Assert.DoesNotContain("contentMarkdown", correction, StringComparison.Ordinal);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ExecuteAsync_TranscriptAndAdmittedResultsCountTowardRequestByteCapAsync()
     {
         RecordingRetrievalService retrieval = new(

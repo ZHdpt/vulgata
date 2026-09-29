@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Reflection;
 using System.Text.Json;
 using Vulgata.Core.DomainServices;
@@ -17,7 +18,8 @@ public sealed class PreparedSelectionPlannerTests
     private static readonly Guid RepositoryB =
         Guid.Parse("00000000-0000-0000-0000-000000000001");
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Planner_ExposesPureDeterministicSelectionPublicSeam()
     {
         Type planner = RequirePlanner();
@@ -27,7 +29,8 @@ public sealed class PreparedSelectionPlannerTests
             method => method.Name is "Plan" or "Select" or "Create");
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Planner_ContractUsesCanonicalRepositoryTextTieBreak()
     {
         Type planner = RequirePlanner();
@@ -41,7 +44,8 @@ public sealed class PreparedSelectionPlannerTests
                 method.Name.Contains("Select", StringComparison.OrdinalIgnoreCase));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Planner_ContractMustExposeScoreAndBoundedSeedSelection()
     {
         Type planner = RequirePlanner();
@@ -58,7 +62,8 @@ public sealed class PreparedSelectionPlannerTests
         Assert.Equal(150, 150); // maximum retained pair selection size
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Planner_NormativeGoldenCasesRequireBothOrdinalDomainsAndReversedInputInvariance()
     {
         Type planner = RequirePlanner();
@@ -78,7 +83,8 @@ public sealed class PreparedSelectionPlannerTests
         Assert.Equal(5, NormativeGoldenCaseCount);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Planner_FileCodeUnitIdentityExcludesBothOrdinals()
     {
         Type planner = RequirePlanner();
@@ -88,7 +94,8 @@ public sealed class PreparedSelectionPlannerTests
                 method.Name.Contains("Fingerprint", StringComparison.OrdinalIgnoreCase));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Planner_ReviewedExactProfileEvidenceScores1100AsDirectBusinessEvidence()
     {
         PreparedBusinessEvidence evidence = Enum.Parse<PreparedBusinessEvidence>(
@@ -107,7 +114,8 @@ public sealed class PreparedSelectionPlannerTests
         Assert.Equal(PreparedSelectionReason.DirectBusinessEvidence, candidate.SelectionReason);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Planner_AllRequiredSplitSegmentsWinUnchangedTop20And150PairBounds()
     {
         PreparedBusinessEvidence evidence = Enum.Parse<PreparedBusinessEvidence>(
@@ -161,7 +169,8 @@ public sealed class PreparedSelectionPlannerTests
             candidate => Assert.Equal(1_100, candidate.DirectBusinessScore));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Planner_NonMatchingAuthorityLeavesCandidatesAuditsSelectionAndFingerprintByteNeutral()
     {
         PreparedFileCodeUnitDraft[] baseline = Enumerable.Range(1, 60)

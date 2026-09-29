@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
@@ -13,7 +14,8 @@ namespace Vulgata.Tests.RetainedSource;
 
 public sealed class RetainedSourceCaptureBoundaryTests
 {
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task AcquireAsync_StalledLoopbackGit_StopsAtConfiguredDeadlineBeforeWatchdog()
     {
         await using RetainedSourceFixture fixture =
@@ -63,7 +65,8 @@ public sealed class RetainedSourceCaptureBoundaryTests
         Assert.Same(capture, winner);
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task AcquireAsync_RevokedSystemOwnerWhileIdentityLockIsHeld_DeniesWithoutNewRow()
     {
         await using RetainedSourceFixture fixture =
@@ -131,7 +134,8 @@ public sealed class RetainedSourceCaptureBoundaryTests
         }
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task AcquireAsync_CancelledAtFinalPublicationAuthorization_ReturnsCancelledWithoutRow()
     {
         await using RetainedSourceFixture fixture =
@@ -165,7 +169,8 @@ public sealed class RetainedSourceCaptureBoundaryTests
             .AnyAsync(snapshot => snapshot.RepositoryId == fixture.RepositoryId));
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public void Create_FilesystemRootWithContainedExcludedRoot_RejectsOverlap()
     {
         string filesystemRoot = Path.GetPathRoot(Path.GetTempPath()) ??
@@ -179,7 +184,8 @@ public sealed class RetainedSourceCaptureBoundaryTests
         Assert.StartsWith("source_configuration_invalid:", exception.Message, StringComparison.Ordinal);
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public void Create_FilesystemRoot_RetainsFullyQualifiedRoot()
     {
         string filesystemRoot = Path.GetPathRoot(Path.GetTempPath()) ??
@@ -197,7 +203,8 @@ public sealed class RetainedSourceCaptureBoundaryTests
             policy.RootPath);
     }
 
-    [Theory]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteTheory("PostgreSql")]
     [InlineData("CaptureDeadlineSeconds")]
     [InlineData("OperationStaleAfterMinutes")]
     public void Create_Int64TimeSpanOverflow_ReturnsSanitizedConfigurationFailure(

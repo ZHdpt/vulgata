@@ -1,0 +1,36 @@
+{
+  "kind": "tdd-correction",
+  "stage": "implement",
+  "outcome": "passed",
+  "story_key": "18-1-access-prepared-source-through-contained-read-only-tools",
+  "finding": "QR-18.1-03",
+  "observed_at": "2026-09-28T11:20:00Z",
+  "source_base": "4bc28f481c0d2f54fb26389cb90b0993bcf03df6",
+  "red": {
+    "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore -p:RunAnalyzers=false --filter \"FullyQualifiedName~QueuedBeforeContextDisposal\" --logger \"console;verbosity=minimal\"",
+    "exit_code": 1,
+    "result": "0 passed, 2 failed, 0 skipped on the actual Windows account: queued List threw ObjectDisposedException on the disposed root; queued Search returned Incomplete instead of Cancelled."
+  },
+  "minimal_green": {
+    "production_path": "src/dotnet/Vulgata.Infrastructure/Source/PreparedSourceReadContext.cs",
+    "summary": "Link List/Search gate waits to the existing lifetime token, recheck disposal after waits and around root/file use, and map disposal-time handle exceptions to sanitized Cancelled without disclosure.",
+    "focused_result": "2/2 passed, 0 skipped"
+  },
+  "final_green": {
+    "focused": "Queued disposal regressions: 2/2 passed, 0 skipped",
+    "surrounding": "PreparedSourceCancellationBudgetTests plus PreparedSourceAuthorityLifecycleTests: 27/27 passed, 0 skipped",
+    "full": "FullyQualifiedName~Vulgata.Tests.PreparedSource: 119/119 passed, 0 skipped",
+    "environment": "fresh build and actual qualified Windows account"
+  },
+  "final_shape": {
+    "test_owner": "Both public tests prove the second operation queued behind the shared gate before disposal and retain Cancelled/no-payload assertions; no refactor needed.",
+    "production_owner": "No new seam or dependency; stored cancellation-token late linking is safe on the installed .NET target, and gate release is reached only after successful acquisition; no further edit needed."
+  },
+  "test_paths": [
+    "tests/Vulgata.Tests/PreparedSource/PreparedSourceCancellationBudgetTests.cs"
+  ],
+  "production_paths": [
+    "src/dotnet/Vulgata.Infrastructure/Source/PreparedSourceReadContext.cs"
+  ],
+  "qualification_limit": "Controlled Windows fixture evidence does not claim real Worker/model/provider integration or immutable snapshot behavior."
+}

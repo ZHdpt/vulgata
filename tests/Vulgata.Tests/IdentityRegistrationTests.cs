@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.ComponentModel.DataAnnotations;
 using System.Reflection;
 using System.Security.Claims;
@@ -186,7 +187,8 @@ public class IdentityRegistrationTests
         return property.GetValue(instance);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void HashPasswordUsesBcryptPrefix()
     {
         BcryptPasswordHasher<ApplicationUser> hasher = new();
@@ -199,7 +201,8 @@ public class IdentityRegistrationTests
             || hash.StartsWith("$2y$", StringComparison.Ordinal));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void VerifyHashedPasswordReturnsSuccessForMatchingPassword()
     {
         ApplicationUser user = new();
@@ -211,7 +214,8 @@ public class IdentityRegistrationTests
         Assert.Equal(PasswordVerificationResult.Success, result);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void VerifyHashedPasswordReturnsFailedForDifferentPassword()
     {
         ApplicationUser user = new();
@@ -223,7 +227,8 @@ public class IdentityRegistrationTests
         Assert.Equal(PasswordVerificationResult.Failed, result);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void VerifyHashedPasswordReturnsFailedForLegacyPbkdf2HashWithoutThrowing()
     {
         ApplicationUser user = new();
@@ -235,7 +240,8 @@ public class IdentityRegistrationTests
         Assert.Equal(PasswordVerificationResult.Failed, result);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void ChineseIdentityErrorDescriberReturnsChineseRegistrationMessages()
     {
         ChineseIdentityErrorDescriber describer = new();
@@ -251,7 +257,8 @@ public class IdentityRegistrationTests
         Assert.Equal("发生未知错误，请重试。", describer.DefaultError().Description);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void RegistrationComponentUsesChineseValidationMessages()
     {
         string repoRoot = GetRepoRoot();
@@ -269,7 +276,8 @@ public class IdentityRegistrationTests
         Assert.Contains("[Compare(\"Password\", ErrorMessage = \"密码与确认密码不一致。\")]", content, StringComparison.Ordinal);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void DbContextSourceFilesConfigureExpectedSchemas()
     {
         string repoRoot = GetRepoRoot();
@@ -282,7 +290,8 @@ public class IdentityRegistrationTests
         Assert.Contains("modelBuilder.HasDefaultSchema(\"vulgata\")", domainContent, StringComparison.Ordinal);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task RegisterUserSignsInAndRedirectsToChatPageAfterSuccessfulRegistrationAsync()
     {
         var harness = CreateRegistrationHarness(
@@ -302,7 +311,8 @@ public class IdentityRegistrationTests
         Assert.Equal("user@example.com", harness.EmailSender.LastEmail);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task RegisterUserStoresBcryptPasswordHashThroughIdentityPipelineAsync()
     {
         var harness = CreateExecutableRegistrationHarness(
@@ -321,7 +331,8 @@ public class IdentityRegistrationTests
         Assert.Equal("/", harness.NavigationManager.LastNavigatedUri);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task AdministratorRoleCoordinator_AssignInitialRoleAsync_ConcurrentCallsPromoteExactlyOneAdministrator()
     {
         TestUserStore store = new();
@@ -361,7 +372,8 @@ public class IdentityRegistrationTests
         Assert.Equal(1, roleSets.Count(roles => roles.Contains(RoleNames.User, StringComparer.Ordinal)));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task AdministratorRoleCoordinator_RemoveAdministratorAsync_ConcurrentCallsPreserveLastAdministrator()
     {
         TestUserStore store = new();
@@ -408,7 +420,8 @@ public class IdentityRegistrationTests
         Assert.Contains(RoleNames.User, demotedRoles);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task RegisterUserRejectsDuplicateEmailThroughProductionIdentityConfigurationAsync()
     {
         ApplicationUser existingUser = new()
@@ -434,7 +447,8 @@ public class IdentityRegistrationTests
         Assert.Equal("错误：该邮箱已被注册", harness.Message);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task RegisterUserReturnsChineseDuplicateEmailMessageWhenCreationFailsAsync()
     {
         var duplicateEmailFailure = IdentityResult.Failed(
@@ -456,7 +470,8 @@ public class IdentityRegistrationTests
         Assert.Equal("错误：该邮箱已被注册", harness.Message);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void ProgramConfigurationKeepsRegistrationRequirementsEnabled()
     {
         string repoRoot = GetRepoRoot();
@@ -480,7 +495,8 @@ public class IdentityRegistrationTests
         Assert.True(options.Password.RequireNonAlphanumeric);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void RegisterInputModelReturnsChineseValidationMessages()
     {
         var emptyEmailResults = ValidateRegisterInput("", "Aa1!Aa1!", "Aa1!Aa1!");
@@ -494,7 +510,8 @@ public class IdentityRegistrationTests
         Assert.Contains(mismatchResults, result => result.ErrorMessage == "密码与确认密码不一致。");
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task PasswordSignInAsyncFailsCleanlyForLegacyPbkdf2HashesAsync()
     {
         ApplicationUser legacyUser = new()

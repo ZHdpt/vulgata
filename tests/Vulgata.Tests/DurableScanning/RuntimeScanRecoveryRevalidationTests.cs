@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using Vulgata.Agents.WorkerExecution;
 using Vulgata.Core.DomainServices;
 using Vulgata.Core.Entities;
@@ -40,7 +41,8 @@ public sealed class RuntimeScanRecoveryRevalidationTests
     private const string _runtimeHash =
         "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc";
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task RevalidateAsync_ExactCurrentBindings_AcceptsWithoutInventingTransition()
     {
         ScanRecoverySnapshot snapshot = SnapshotT056();
@@ -56,7 +58,8 @@ public sealed class RuntimeScanRecoveryRevalidationTests
         Assert.Equal(DurableScanReason.None, result.Reason);
     }
 
-    [Theory]
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
     [InlineData("repository")]
     [InlineData("revision")]
     [InlineData("file-hash")]
@@ -97,7 +100,8 @@ public sealed class RuntimeScanRecoveryRevalidationTests
         });
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task RevalidateAsync_RepositoryNotInCurrentOwnedRepositoryScope_FailsClosed()
     {
         ScanRecoverySnapshot snapshot = SnapshotT056();
@@ -117,7 +121,8 @@ public sealed class RuntimeScanRecoveryRevalidationTests
         Assert.Equal(DurableScanReason.Unauthorized, result.Reason);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task RevalidateAsync_NullCurrentBindings_FailsClosed()
     {
         ScanRecoverySnapshot snapshot = SnapshotT056();
@@ -134,7 +139,8 @@ public sealed class RuntimeScanRecoveryRevalidationTests
         Assert.Equal(DurableScanReason.InvalidIdentity, result.Reason);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task RevalidateAsync_ConfiguredRuntimeIdentityDiffersFromPersistedSnapshot_FailsBeforeTransition()
     {
         ScanRecoverySnapshot snapshot = SnapshotT056();
@@ -166,7 +172,8 @@ public sealed class RuntimeScanRecoveryRevalidationTests
         Assert.Equal(snapshot.ProfiledRevision, configuredHealthProbe.Scope?.ProfiledRevision);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task RevalidateAsync_ConfiguredRuntimeHealthFailure_FailsClosedWithBoundedReason()
     {
         ScanRecoverySnapshot snapshot = SnapshotT056();
@@ -196,7 +203,8 @@ public sealed class RuntimeScanRecoveryRevalidationTests
         Assert.Equal(1, configuredHealthProbe.CallCount);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task RevalidateAsync_ConfiguredRuntimeHealthCancellation_PropagatesWithoutFailClosedMapping()
     {
         ScanRecoverySnapshot snapshot = SnapshotT056();
@@ -263,7 +271,8 @@ public sealed class RuntimeScanRecoveryRevalidationTests
             true,
             snapshot.AnalysisRuntimeIdentityHash);
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ObserveAsync_UsesIndependentCurrentAuthorities_NotPersistedRecoverySnapshot()
     {
         CurrentAuthorities authorities = CreateCurrentAuthorities();

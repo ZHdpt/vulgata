@@ -77,7 +77,7 @@
     "action": "correct",
     "closing_gate": "definition-review",
     "diagnosis": null,
-    "earliest_owner": "tasks",
+    "earliest_owner": "plan",
     "episode_id": "18-4-plan-review-authorization-boundary-01",
     "extension_decision_id": null,
     "failed_results": 1,
@@ -89,8 +89,8 @@
     "pause_at": 4
   },
   "transition_head": {
-    "path": "specs/017-october-batch-setup/evidence/transitions/transition-0003-plan-correction-self-review.json",
-    "sha256": "f26b47cb2b767c5945847738439ec93a723c5ee8bfccb9b327eab682838f5071"
+    "path": "specs/017-october-batch-setup/evidence/transitions/transition-0004-story-18-1-baseline-integration.json",
+    "sha256": "33b1432fe4d16ad30ec11c93d3024ca55ed2dcde209ece9017458ef5852438ad"
   },
   "definition_author": {
     "profile": "definition-author",

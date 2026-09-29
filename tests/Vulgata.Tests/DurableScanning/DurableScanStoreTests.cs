@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
@@ -19,7 +20,8 @@ public sealed class DurableScanStoreTests
     private const string _runtimeHash =
         "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task CreateContextSnapshotAsync_DuplicateDeterministicKeyIsReplayAndDoesNotDuplicateAsync()
     {
         await using SqliteConnection connection = OpenConnection();
@@ -55,7 +57,8 @@ public sealed class DurableScanStoreTests
             await context.Set<ScanContextSnapshot>().CountAsync());
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task InsertJobExecutionsAsync_RejectsDuplicateAndCrossRepositoryOwnershipWithoutPartialInsertAsync()
     {
         await using SqliteConnection connection = OpenConnection();
@@ -102,7 +105,8 @@ public sealed class DurableScanStoreTests
         Assert.Equal(1, await context.Set<ScanJobExecution>().CountAsync());
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task InsertJobExecutionsAsync_StrictSubsetReplayIsRejectedWithoutMutationAsync()
     {
         await using SqliteConnection connection = OpenConnection();
@@ -133,7 +137,8 @@ public sealed class DurableScanStoreTests
         Assert.Equal(before, after);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task InsertJobExecutionsAsync_StrictSupersetReplayIsRejectedWithoutMutationAsync()
     {
         await using SqliteConnection connection = OpenConnection();
@@ -170,7 +175,8 @@ public sealed class DurableScanStoreTests
         Assert.Equal(before, after);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task InsertJobExecutionsAsync_ReorderedReplayIsRejectedWithoutMutationAsync()
     {
         await using SqliteConnection connection = OpenConnection();
@@ -201,7 +207,8 @@ public sealed class DurableScanStoreTests
         Assert.Equal(before, after);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task InsertJobExecutionsAsync_StateMutatedManifestIsRejectedWithoutMutationAsync()
     {
         await using SqliteConnection connection = OpenConnection();
@@ -227,7 +234,8 @@ public sealed class DurableScanStoreTests
         Assert.Empty(await ReadJobsAsync(store, fixture));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task JobTransitions_PersistLeaseRetryAndCompletionShapesAndProtectTerminalRowsAsync()
     {
         await using SqliteConnection connection = OpenConnection();
@@ -298,7 +306,8 @@ public sealed class DurableScanStoreTests
         Assert.Equal(ScanJobExecutionState.RetryScheduled, persisted.State);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ApplyRecoveryTransitionsAsync_StaleSecondCapturedJobVersion_ConflictsWithoutAnyMutationAsync()
     {
         await using SqliteConnection connection = OpenConnection();
@@ -404,7 +413,8 @@ public sealed class DurableScanStoreTests
         Assert.Equal(beforeJobs, await ReadJobsAsync(store, fixture));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Model_DurableKeysChecksAndRestrictiveDeletesAreDeclared()
     {
         using SqliteConnection connection = OpenConnection();
@@ -441,7 +451,8 @@ public sealed class DurableScanStoreTests
         }
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task CreateContextSnapshotAsync_ExecutionFirstRejectsLateCaptureWithoutPartialSnapshotAsync()
     {
         await using SqliteConnection connection = OpenConnection();
@@ -472,7 +483,8 @@ public sealed class DurableScanStoreTests
         Assert.Equal(1, await context.Set<ScanExecution>().CountAsync());
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task CreateScanExecutionAsync_SnapshotFirstRejectsEarlyExecutionWithoutPartialExecutionAsync()
     {
         await using SqliteConnection connection = OpenConnection();

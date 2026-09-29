@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Collections.Concurrent;
 using System.Net;
 using System.Net.Http.Headers;
@@ -34,7 +35,8 @@ public sealed class Pass1DeepSeekPromptCompositionTests
         LoginLogoutTests.CustomWebApplicationFactory factory) =>
         _factory = factory;
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task PreparedDispatcher_UsesOneEmbeddedPromptWithAuthoritativeSubmissionGuidanceAsync()
     {
         RecordingExecutor executor = new();
@@ -76,7 +78,8 @@ public sealed class Pass1DeepSeekPromptCompositionTests
         Assert.DoesNotContain("single registered `navigate_code`", prompt, StringComparison.Ordinal);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task PreparedDispatcher_PromptAndClosedToolsContainNoServerOwnedSymbolNameAsync()
     {
         RecordingExecutor executor = new();
@@ -97,7 +100,8 @@ public sealed class Pass1DeepSeekPromptCompositionTests
         Assert.NotNull(typeof(PreparedSubmitCodeLogicFunction));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task PreparedDispatcher_Prompt_BindsSoleSubmissionAndPreflightedNavigationBatchRulesAsync()
     {
         RecordingExecutor executor = new();
@@ -126,7 +130,8 @@ public sealed class Pass1DeepSeekPromptCompositionTests
         Assert.DoesNotContain("zero-retention is guaranteed", prompt, StringComparison.OrdinalIgnoreCase);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task PreparedDispatcher_PromptContainsOneAuthoritativeTerminalMarkerSetAsync()
     {
         RecordingExecutor executor = new();
@@ -156,7 +161,8 @@ public sealed class Pass1DeepSeekPromptCompositionTests
             StringComparison.Ordinal);
     }
 
-    [Theory]
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
     [InlineData(
         "InvalidShape",
         "UseMinimalValidDocument",
@@ -207,7 +213,8 @@ public sealed class Pass1DeepSeekPromptCompositionTests
             : text[(start + begin.Length)..finish];
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void PreparedExecutor_ProductionCompositionExposesExactlyTwoClosedFunctions()
     {
         ConstructorInfo constructor = Assert.Single(
@@ -236,7 +243,8 @@ public sealed class Pass1DeepSeekPromptCompositionTests
         Assert.NotEqual(navigate.Name, submit.Name);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ProductionWebScope_ResolvesPreparedExecutorAndBothClosedFunctionFactoriesAsync()
     {
         using WebApplicationFactory<Program> isolatedFactory = _factory.WithWebHostBuilder(
@@ -256,7 +264,8 @@ public sealed class Pass1DeepSeekPromptCompositionTests
             scope.ServiceProvider.GetRequiredService<PreparedSubmitCodeLogicFunction>());
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ProductionStyleScope_NoSubmission_ReportsMissingSubmissionThroughSameObserverAsync()
     {
         NoSubmissionStreamingHandler transport = new();

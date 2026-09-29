@@ -1,0 +1,50 @@
+{
+  "observed_after": {
+    "path": "specs/016-contained-source-tools/evidence/workflow-transition-029-disposal-correction-green.json",
+    "sha256": "4ebf31bd2cb147ed9914b3759c2f55474270ba1e4e3d33fc17c323f59bdd6e83"
+  },
+  "raw_result": {
+    "kind": "convergence",
+    "stage": "converge",
+    "outcome": "converged",
+    "story_key": "18-1-access-prepared-source-through-contained-read-only-tools",
+    "source_commit": "623dba90995e1dc115750ae8ee89f7bef39ca112",
+    "prior_candidate": "142e11e7134c24bd74813b85394d23424b1bbf75",
+    "observed_at": "2026-09-28T11:35:00Z",
+    "raw_upstream": "specs/016-contained-source-tools/evidence/convergence-upstream-03.md",
+    "reused_task_ids": [],
+    "appended_task_ids": [],
+    "tasks_before": {"path": "specs/016-contained-source-tools/evidence/tasks-pre-convergence-03.md", "sha256": "b345d7322f8777d8fda77a153c48af954e7ed18a185cf648f8c309ef0d0a8a1b"},
+    "tasks_after": {"path": "specs/016-contained-source-tools/tasks.md", "sha256": "b345d7322f8777d8fda77a153c48af954e7ed18a185cf648f8c309ef0d0a8a1b"},
+    "input_hashes": {
+      "specs/016-contained-source-tools/spec.md": "48c92e4f6582471a1664e553b48756a811f22bb2b4f1334206e94303629b0b6d",
+      "specs/016-contained-source-tools/plan.md": "b375723e56c8cdc7990a4e7a624c5f58a78fde07d9a23edd79e25025c54fce08",
+      "specs/016-contained-source-tools/tasks.md": "b345d7322f8777d8fda77a153c48af954e7ed18a185cf648f8c309ef0d0a8a1b",
+      "src/dotnet/Vulgata.Core/DomainServices/PreparedSourceContracts.cs": "4b9f0cddc3ef1082bf8ba3c0d1c11eca3ece70d26f893179e34673b038564e6e",
+      "src/dotnet/Vulgata.Infrastructure/Source/PreparedSourceContextIssuer.cs": "528342730ca9fb892893606a6a03eb2bfefa5d1e01734e5b4e8ce4c07843271d",
+      "src/dotnet/Vulgata.Infrastructure/Source/PreparedSourceReadContext.cs": "87307eeebbdf8d9878113de05bd92271a3c69e1ebf60ae8c73acb427902f3ffc",
+      "src/dotnet/Vulgata.Infrastructure/Source/PreparedSourceText.cs": "be0b6e411581360dcc9dc257979101c8c261ef5f8b264041acce4be96b1a0455",
+      "src/dotnet/Vulgata.Infrastructure/Source/PreparedSourceTraversal.cs": "0fda6e0867fba81788279e9aaf75e48f477fbb46e2eb29c5b05e35a153252d3f",
+      "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedSourceFunctions.cs": "20e1d5f554294e5163251b4e82dbd11d1714ff442af77249e7aa9a2ab368e1c7",
+      "tests/Vulgata.Tests/PreparedSource/PreparedSourceAuthorityLifecycleTests.cs": "c2331f1415d0ee136b1958a3bd3396f48939adfddf1a54646e7a06ad94f1b522",
+      "tests/Vulgata.Tests/PreparedSource/PreparedSourceBasicReadTests.cs": "2ecbcdfab82906890429051f273f6dc713eec508b7255238dc833a6d278f1f48",
+      "tests/Vulgata.Tests/PreparedSource/PreparedSourceCancellationBudgetTests.cs": "d27837a98a7edb4734fe4393de3af22009e92ef534937d91d66fc167309febde",
+      "tests/Vulgata.Tests/PreparedSource/PreparedSourceContainmentTests.cs": "7cb3cdef2a3c75aef81a5e81268063b226d72f78db1a09aa14614234e4732fbe",
+      "tests/Vulgata.Tests/PreparedSource/PreparedSourceFailureTests.cs": "fe180bc5d777249de6a91d9b5802d9a3648a637759f15f00ec1eb3da3bb46de5",
+      "tests/Vulgata.Tests/PreparedSource/PreparedSourceFixture.cs": "8e5525a53634ce5b3c88908422ce67fd59af25362fde3cca5d730f64ffcc4c1a",
+      "tests/Vulgata.Tests/PreparedSource/PreparedSourceGrantTests.cs": "a663c32070471494a7b98a19baec6a6d2a094a7ba1f75b79df3dd411eed5e772",
+      "tests/Vulgata.Tests/PreparedSource/PreparedSourceListTests.cs": "94329983898d7fd205ffa56ec5d2cd784d04b7ebb8794c97f5fe6fd076037fe0",
+      "tests/Vulgata.Tests/PreparedSource/PreparedSourceRangeReadTests.cs": "32e4e71f8cd58aec6ccc525f9ca5d026ccbf254b9a05e2288848f34358fe2d62",
+      "tests/Vulgata.Tests/PreparedSource/PreparedSourceSearchTests.cs": "ec40ea7ced6964bf3b9d1b54f4e8f0acc3a87f8955204346ad4f8d3e4387c521",
+      "tests/Vulgata.Tests/PreparedSource/PreparedSourceToolFunctionTests.cs": "c34aa0a38d77df9b393dd6d3fe23d9ebcb117fe3c95ade5510b1c2027453710e"
+    },
+    "owned_paths": [
+      "specs/016-contained-source-tools/spec.md", "specs/016-contained-source-tools/plan.md", "specs/016-contained-source-tools/tasks.md",
+      "src/dotnet/Vulgata.Core/DomainServices/PreparedSourceContracts.cs", "src/dotnet/Vulgata.Infrastructure/Source/PreparedSourceContextIssuer.cs", "src/dotnet/Vulgata.Infrastructure/Source/PreparedSourceReadContext.cs", "src/dotnet/Vulgata.Infrastructure/Source/PreparedSourceText.cs", "src/dotnet/Vulgata.Infrastructure/Source/PreparedSourceTraversal.cs", "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedSourceFunctions.cs",
+      "tests/Vulgata.Tests/PreparedSource/PreparedSourceAuthorityLifecycleTests.cs", "tests/Vulgata.Tests/PreparedSource/PreparedSourceBasicReadTests.cs", "tests/Vulgata.Tests/PreparedSource/PreparedSourceCancellationBudgetTests.cs", "tests/Vulgata.Tests/PreparedSource/PreparedSourceContainmentTests.cs", "tests/Vulgata.Tests/PreparedSource/PreparedSourceFailureTests.cs", "tests/Vulgata.Tests/PreparedSource/PreparedSourceFixture.cs", "tests/Vulgata.Tests/PreparedSource/PreparedSourceGrantTests.cs", "tests/Vulgata.Tests/PreparedSource/PreparedSourceListTests.cs", "tests/Vulgata.Tests/PreparedSource/PreparedSourceRangeReadTests.cs", "tests/Vulgata.Tests/PreparedSource/PreparedSourceSearchTests.cs", "tests/Vulgata.Tests/PreparedSource/PreparedSourceToolFunctionTests.cs"
+    ],
+    "checked_obligations": ["QR-18.1-03 disposal cancellation and settlement", "All accepted Story 18.1 requirements and tasks T001 through T026", "No new public seam, dependency or architecture scope"],
+    "findings": [],
+    "qualification_limits": ["Selected retained-source regressions remain blocked by missing VULGATA_STORY131_POSTGRES_ADMIN.", "Direct capability tests do not establish real Worker/model/provider integration or immutable snapshot behavior."]
+  }
+}

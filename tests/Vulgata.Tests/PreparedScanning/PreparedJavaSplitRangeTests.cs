@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Reflection;
 using Vulgata.Core.DomainServices;
 using Vulgata.Infrastructure.Analysis.Java;
@@ -31,7 +32,8 @@ public sealed class PreparedJavaSplitRangeTests
         "SegmentCount"
     ];
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void JavaSplit_PublicSeams_ExposeExactTopLevelByteAndLineRanges()
     {
         Type plannerType = RequireType(typeof(AnalysisScope).Assembly, _rangePlannerName);
@@ -52,7 +54,8 @@ public sealed class PreparedJavaSplitRangeTests
         }
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void JavaSplit_MalformedOverlapOutOfBoundsOrOversizedRanges_AreRejectedAsWholeFile()
     {
         Type plannerType = RequireType(typeof(AnalysisScope).Assembly, _rangePlannerName);
@@ -68,7 +71,8 @@ public sealed class PreparedJavaSplitRangeTests
             name => name is "Skipped" or "SkipReason" or "Outcome");
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void JavaSplit_ExactSegmentHashes_UseRawByteIntervalsAndDoNotApproximateJdtPositions()
     {
         Type plannerType = RequireType(typeof(AnalysisScope).Assembly, _rangePlannerName);
@@ -84,7 +88,8 @@ public sealed class PreparedJavaSplitRangeTests
         Assert.NotNull(plannerType);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void JavaSplit_MatchedOwner_BindsFqnToOneContainingSegmentAndKeepsSiblingsPathValued()
     {
         Type sourceType = RequireType(typeof(JdtLsAnalysisSessionFactory).Assembly, _rangeSourceName);
@@ -100,7 +105,8 @@ public sealed class PreparedJavaSplitRangeTests
                     parameter.Name is "selectorLine" or "fullyQualifiedSymbol"));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void JavaSplit_MatchedOwner_RejectsAmbiguousOrNonContainingObservationBeforePublication()
     {
         Type sourceType = RequireType(typeof(JdtLsAnalysisSessionFactory).Assembly, _rangeSourceName);

@@ -1,0 +1,8 @@
+Command: pwsh -NoProfile -File eng/test.ps1
+Exit code: 1
+Policy passed: 283 classified source files; guarded test traits checked.
+Suite=SelfContained discovered=2811 selected=1975 passed=1887 failed=88 skipped=0
+Excluded suites (not qualified): PostgreSql, LocalTools, External, E2E, HistoricalBoundary.
+TRX: TestResults/isolation-750f6fde15084641a45b2b0ceb8e60a1/results.trx
+TRX SHA-256: b30e87a78bde04f93f521d36bf9185de2eb66c6b336e48757ff495667e7c8ec4
+Failure grouping: 87 expected Issued but observed RootUnavailable; 1 expected Denied but observed RootUnavailable. The result is identical after the nonparallel PreparedSource collection correction.

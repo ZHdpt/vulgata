@@ -16,6 +16,7 @@ SHA = re.compile(r"[0-9a-fA-F]{40}\Z")
 HASH = re.compile(r"[0-9a-fA-F]{64}\Z")
 TIMESTAMP = re.compile(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z\Z")
 DELEGATED_GATES = {"plan-review": "plan-review", "implementation-approval": "definition-review"}
+DELEGATED_PURPOSES = {*DELEGATED_GATES, "recovery-extension"}
 
 
 def is_delegated_decision(record):
@@ -30,7 +31,37 @@ def is_delegated_decision(record):
 
 def require_nondelegated_decision(record):
     if is_delegated_decision(record):
-        raise ValueError("delegated approval cannot authorize recovery extensions or resolve holds")
+        raise ValueError("delegated approval cannot resolve holds or authorize this purpose")
+
+
+def _delegation(pointer, record, state, read, purpose):
+    """Shared evidence checks; the runner still verifies real messages and scope."""
+    _object(record, "delegated approval evidence")
+    if (record.get("kind") != "delegated-approval" or purpose not in DELEGATED_PURPOSES
+            or record.get("stage") != purpose or record.get("status") != "accepted"
+            or pointer.get("status") != "accepted"
+            or record.get("decision_id") != pointer.get("decision_id")
+            or record.get("scope_sha256") != pointer.get("scope_sha256")):
+        raise ValueError("delegated approval must match its accepted pointer, purpose and scope")
+    delegate = _text(record.get("delegate_id"), "delegate_id")
+    _text(record.get("response_source"), "delegate response source")
+    _text(record.get("response_text"), "delegate response text")
+    grant = _record(record.get("delegation"), read, "actual user delegation")
+    if grant.get("kind") != "user-delegation" or grant.get("status") != "accepted":
+        raise ValueError("delegated approval requires an accepted actual user delegation")
+    story = state.get("bmad_story_key")
+    if grant.get("delegate_id") != delegate or grant.get("story_key") != story or record.get("story_key") != story:
+        raise ValueError("delegated approval must match the designated delegate and current story")
+    gates = grant.get("gates")
+    if (not isinstance(gates, list) or not gates
+            or any(not isinstance(gate, str) or gate not in DELEGATED_PURPOSES for gate in gates)
+            or len(set(gates)) != len(gates) or purpose not in gates):
+        raise ValueError("user delegation must explicitly cover this gate and no unsupported gate")
+    for field in ("user_source", "user_instruction", "scope"):
+        _text(grant.get(field), f"user delegation {field}")
+    if "recovery-extension" in gates and (type(grant.get("max_pause_at")) is not int or grant["max_pause_at"] <= 4):
+        raise ValueError("recovery delegation requires a user-set finite max_pause_at above 4")
+    return grant
 
 
 def validate_gate_approval(pointer, record, state, read, purpose):
@@ -49,23 +80,8 @@ def validate_gate_approval(pointer, record, state, read, purpose):
     if not is_delegated_decision(record):
         return
     if record.get("kind") != "delegated-approval" or purpose not in DELEGATED_GATES:
-        raise ValueError("delegated approval is allowed only for planned-change and implementation authorization")
-    delegate = _text(record.get("delegate_id"), "delegate_id")
-    _text(record.get("response_source"), "delegate response source")
-    _text(record.get("response_text"), "delegate response text")
-    grant = _record(record.get("delegation"), read, "actual user delegation")
-    if grant.get("kind") != "user-delegation" or grant.get("status") != "accepted":
-        raise ValueError("delegated approval requires an accepted actual user delegation")
-    story = state.get("bmad_story_key")
-    if grant.get("delegate_id") != delegate or grant.get("story_key") != story or record.get("story_key") != story:
-        raise ValueError("delegated approval must match the designated delegate and current story")
-    gates = grant.get("gates")
-    if (not isinstance(gates, list) or not gates
-            or any(not isinstance(gate, str) or gate not in DELEGATED_GATES for gate in gates)
-            or len(set(gates)) != len(gates) or purpose not in gates):
-        raise ValueError("user delegation must explicitly cover this gate and no unsupported gate")
-    for field in ("user_source", "user_instruction", "scope"):
-        _text(grant.get(field), f"user delegation {field}")
+        raise ValueError("this review-gate check permits only planned-change and implementation authorization; recovery requires an extension transition")
+    _delegation(pointer, record, state, read, purpose)
     review = record.get("review")
     # The existing review proof binds all accepted artifact hashes. Reuse its
     # normal post-implementation allowance for task checkboxes/convergence work.
@@ -74,9 +90,50 @@ def validate_gate_approval(pointer, record, state, read, purpose):
         "implement", "converge", "lookback", "quality-review", "conditional-e2e", "verify", "complete"
     } or (isinstance(recovery, Mapping) and recovery.get("closing_gate") == "verify")
     _review(DELEGATED_GATES[purpose], review, state, read, historical_context=has_implementation)
-    expected = digest(canonical_bytes({"story_key": story, "stage": purpose, "review": review}))
+    expected = digest(canonical_bytes({"story_key": state.get("bmad_story_key"), "stage": purpose, "review": review}))
     if record.get("scope_sha256") != expected:
         raise ValueError("delegated approval scope must bind this story, gate and accepted review boundary")
+
+
+def validate_recovery_extension(pointer, record, state, read, *, current=True, expected_head=None):
+    """Permit only an explicitly delegated, finite extension of this paused episode.
+
+    Replay checks the recorded dispatch boundary, not later corrected file bytes.
+    Human extension records retain the existing recovery-policy contract.
+    """
+    from workflow_runtime import canonical_bytes, digest, reference
+    if not is_delegated_decision(record):
+        return
+    grant = _delegation(pointer, record, state, read, "recovery-extension")
+    recovery = _object(state.get("recovery"), "active recovery")
+    boundary = _object(record.get("recovery_boundary"), "recovery boundary")
+    expected = {key: recovery.get(key) for key in ("episode_id", "failed_results", "pause_at", "last_result")}
+    expected["transition_head"] = expected_head or state.get("transition_head")
+    if (set(boundary) != {*expected, "artifacts"}
+            or any(boundary.get(key) != value for key, value in expected.items())
+            or record.get("episode_id") != recovery.get("episode_id")):
+        raise ValueError("delegated extension must bind the current episode, count, limit and failure boundary")
+    count, old_limit, new_limit = recovery.get("failed_results"), recovery.get("pause_at"), record.get("pause_at")
+    if (type(count) is not int or type(old_limit) is not int or count < old_limit
+            or type(new_limit) is not int or new_limit <= max(count, old_limit)
+            or new_limit > grant["max_pause_at"]):
+        raise ValueError("delegated extension requires a paused episode and a higher limit within the user's max_pause_at")
+    _record(boundary["last_result"], read, "latest recovery failure")
+    artifacts = _object(boundary.get("artifacts"), "recovery boundary artifacts")
+    if current and artifacts != state.get("artifacts"):
+        raise ValueError("delegated extension artifacts differ from the current boundary")
+    for artifact in artifacts.values():
+        if not reference(artifact):
+            raise ValueError("delegated extension requires valid hashed artifact references")
+        if current:
+            content = read(artifact["path"])
+            if content is None or digest(content) != artifact["sha256"]:
+                raise ValueError("delegated extension artifact is missing or stale")
+    approach = _text(record.get("changed_approach"), "changed recovery approach")
+    scope = digest(canonical_bytes({"story_key": state.get("bmad_story_key"), "stage": "recovery-extension",
+                                   "recovery_boundary": boundary, "pause_at": new_limit, "changed_approach": approach}))
+    if record.get("scope_sha256") != scope:
+        raise ValueError("delegated extension scope must bind the recovery boundary, new limit and changed approach")
 
 
 def _object(value, label):

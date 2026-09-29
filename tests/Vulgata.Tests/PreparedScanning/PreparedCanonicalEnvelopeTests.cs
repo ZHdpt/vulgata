@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Reflection;
 using Vulgata.Core.DomainServices;
 
@@ -10,7 +11,8 @@ namespace Vulgata.Tests.PreparedScanning;
 /// </summary>
 public sealed class PreparedCanonicalEnvelopeTests
 {
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void CanonicalEnvelope_ExposesVersionedWriterPublicSeam()
     {
         Type writer = RequireCanonicalWriter();
@@ -20,7 +22,8 @@ public sealed class PreparedCanonicalEnvelopeTests
             method => method.Name is "Create" or "Encode" or "Write" or "Derive");
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void CanonicalEnvelope_ContractRequiresScalarAndNestedValueSupport()
     {
         Type writer = RequireCanonicalWriter();
@@ -32,7 +35,8 @@ public sealed class PreparedCanonicalEnvelopeTests
         Assert.Contains(methods, method => method.Name.Contains("List", StringComparison.Ordinal));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void CanonicalEnvelope_ContractIncludesValidationAndUuidDerivation()
     {
         Type writer = RequireCanonicalWriter();
@@ -44,7 +48,8 @@ public sealed class PreparedCanonicalEnvelopeTests
         Assert.Contains(methods, method => method.Name.Contains("Uuid", StringComparison.OrdinalIgnoreCase));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void CanonicalEnvelope_ContractMustBeIndependentOfLegacyIdentityEnvelope()
     {
         Type writer = RequireCanonicalWriter();
@@ -54,7 +59,8 @@ public sealed class PreparedCanonicalEnvelopeTests
             method => method.DeclaringType == typeof(OrdinaryPass1JobIdentity));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void SemanticFileCodeUnitIdentity_ApprovedV2Domain_ProducesValidCanonicalEnvelope()
     {
         PreparedCanonicalArtifact artifact = PreparedScanIdentityBuilders.CreateSemanticFileCodeUnitIdentity(
@@ -75,7 +81,8 @@ public sealed class PreparedCanonicalEnvelopeTests
         Assert.True(CanonicalEnvelope.Validate(artifact.Envelope.Span));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void SemanticFileCodeUnitIdentity_RepeatedInputsAreStable_AndSymbolsDifferentiate()
     {
         PreparedCanonicalArtifact Create(string symbol) =>
@@ -109,7 +116,8 @@ public sealed class PreparedCanonicalEnvelopeTests
         Assert.NotEqual(first.Fingerprint, differentSymbol.Fingerprint);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void SemanticFileCodeUnitIdentity_InvalidSymbolsAreRejected()
     {
         foreach (string symbol in new[] { "", "Order", "com.example. bad", " com.example.Order" })

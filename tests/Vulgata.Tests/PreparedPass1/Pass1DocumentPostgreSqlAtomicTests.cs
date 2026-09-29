@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
@@ -24,7 +25,8 @@ namespace Vulgata.Tests.PreparedPass1;
 [Collection(PreparedScanningCollection.Name)]
 public sealed class Pass1DocumentPostgreSqlAtomicTests
 {
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public void PostgreSqlReservationQualification_RequiresTheDurableReservationPort()
     {
         Type? reservationStore = typeof(Pass1NavigationBudget).Assembly.GetType(
@@ -36,7 +38,8 @@ public sealed class Pass1DocumentPostgreSqlAtomicTests
             method => method.Name == "ReserveNextAsync");
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task PostgreSql17_ReservationFoundationPersistsAcrossContextRecreationWithoutSchemaDeltaAsync()
     {
         Type? reservationStore = typeof(Pass1NavigationBudget).Assembly.GetType(
@@ -72,7 +75,8 @@ public sealed class Pass1DocumentPostgreSqlAtomicTests
             .ToArrayAsync());
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task PostgreSql17_ReservationReceiptAndMarkerRepairAreDurableAndIdempotentAsync()
     {
         Type? reservationPort = typeof(Pass1NavigationBudget).Assembly.GetType(
@@ -168,7 +172,8 @@ public sealed class Pass1DocumentPostgreSqlAtomicTests
             value => value.ScanJobExecutionId == request.JobId));
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task PostgreSql17_RetryingExecutionStrategy_ReservesAndCommitsNavigationReceiptWithoutTransactionRejectionAsync()
     {
         string administrator = GetAdministratorConnectionStringOrSkip();
@@ -215,7 +220,8 @@ public sealed class Pass1DocumentPostgreSqlAtomicTests
             value.ScanJobExecutionId == request.JobId));
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task PostgreSql17_RetryingExecutionStrategy_CommitsPass1DocumentWithoutTransactionRejectionAsync()
     {
         string administrator = GetAdministratorConnectionStringOrSkip();
@@ -242,7 +248,8 @@ public sealed class Pass1DocumentPostgreSqlAtomicTests
             .SingleAsync());
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task PostgreSql17_RetryingExecutionStrategy_ReconcilesTerminalPairWithoutTransactionRejectionAsync()
     {
         string administrator = GetAdministratorConnectionStringOrSkip();
@@ -526,7 +533,8 @@ public sealed class Pass1DocumentPostgreSqlAtomicTests
     /// fields, so each corruption is expected to return Replayed until T061
     /// adds the complete graph comparison.
     /// </summary>
-    [Theory]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteTheory("PostgreSql")]
     [MemberData(nameof(CanonicalGraphCorruptions))]
     public async Task PostgreSql17_CompletedReplay_RejectsCanonicalGraphCorruptionWithoutMutation(
         string corruption)
@@ -568,7 +576,8 @@ public sealed class Pass1DocumentPostgreSqlAtomicTests
     /// reconciled REFERENCES Edge union, not just its durable fingerprint and
     /// row count.
     /// </summary>
-    [Theory]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteTheory("PostgreSql")]
     [MemberData(nameof(ReconciledEdgeUnionCorruptions))]
     public async Task PostgreSql17_ReconciliationReplay_RejectsEdgeUnionCorruptionWithoutMutation(
         string corruption)
@@ -594,7 +603,8 @@ public sealed class Pass1DocumentPostgreSqlAtomicTests
         Assert.Equal(beforeReplay, await fixture.ReadReferencesEdgeDigestAsync());
     }
 
-    [Theory]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteTheory("PostgreSql")]
     [MemberData(nameof(DocumentWriteBoundaries))]
     public async Task PostgreSql17_CommitFailureAtEveryWriteBoundary_RollsBackDocumentGraphAndJob(
         string boundary,
@@ -627,7 +637,8 @@ public sealed class Pass1DocumentPostgreSqlAtomicTests
         Assert.Equal(ScanJobExecutionState.Running, await fixture.ReadJobStateAsync());
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task PostgreSql17_PolicyDrain_AcceptsLeasedSuccessButTerminalFailureRejectsLateCommit()
     {
         string administrator = GetAdministratorConnectionStringOrSkip();
@@ -670,7 +681,8 @@ public sealed class Pass1DocumentPostgreSqlAtomicTests
         Assert.Equal(ScanJobExecutionState.Running, await terminal.ReadJobStateAsync());
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task PostgreSql17_ProviderProbeDrain_AcceptsAlreadyLeasedSuccessBeforeTerminalRejection()
     {
         string administrator = GetAdministratorConnectionStringOrSkip();
@@ -697,7 +709,8 @@ public sealed class Pass1DocumentPostgreSqlAtomicTests
         Assert.Equal(ScanJobExecutionState.Completed, await fixture.ReadJobStateAsync());
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task PostgreSql17_ConcurrentExactAndDifferentCommits_HaveOneWinnerAndMutationFreeConflict()
     {
         string administrator = GetAdministratorConnectionStringOrSkip();
@@ -719,7 +732,8 @@ public sealed class Pass1DocumentPostgreSqlAtomicTests
         Assert.Equal(1, await CountAsync(fixture.ConnectionString, "\"ScanJobExecutions\"", "\"State\" = 'Completed'"));
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task PostgreSql17_StaleLeaseAndCancellation_LeaveRunningJobAndZeroGraphRows()
     {
         string administrator = GetAdministratorConnectionStringOrSkip();
@@ -739,7 +753,8 @@ public sealed class Pass1DocumentPostgreSqlAtomicTests
         Assert.Equal(ScanJobExecutionState.Running, await fixture.ReadJobStateAsync());
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task PostgreSql17_LocalAuthoritativeRejection_LeavesGraphAndJobUnchanged()
     {
         string administrator = GetAdministratorConnectionStringOrSkip();
@@ -764,7 +779,8 @@ public sealed class Pass1DocumentPostgreSqlAtomicTests
         Assert.Equal(ScanJobExecutionState.Running, await fixture.ReadJobStateAsync());
     }
 
-    [Theory]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteTheory("PostgreSql")]
     [InlineData(0)]
     [InlineData(1)]
     [InlineData(2)]
@@ -797,7 +813,8 @@ public sealed class Pass1DocumentPostgreSqlAtomicTests
         Assert.Equal(2, classifications.Count);
     }
 
-    [Theory]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteTheory("PostgreSql")]
     [InlineData("missing-current-pre-scan-result")]
     [InlineData("wrong-current-pre-scan-result")]
     [InlineData("field-mismatched-uncited-supplied")]
@@ -823,7 +840,8 @@ public sealed class Pass1DocumentPostgreSqlAtomicTests
         Assert.Equal(ScanJobExecutionState.Running, await fixture.ReadJobStateAsync());
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task PostgreSql17_CitedUnsuppliedClassificationIsInvalidAuthoritativeResultAndMutationFreeAsync()
     {
         string administrator = GetAdministratorConnectionStringOrSkip();
@@ -852,7 +870,8 @@ public sealed class Pass1DocumentPostgreSqlAtomicTests
         Assert.Equal(ScanJobExecutionState.Running, await fixture.ReadJobStateAsync());
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task PostgreSql17_ExactReplay_IsMutationFreeAndReconstructsScalarsWithoutArrayDependence()
     {
         string administrator = GetAdministratorConnectionStringOrSkip();
@@ -875,7 +894,8 @@ public sealed class Pass1DocumentPostgreSqlAtomicTests
         Assert.Equal(1, await CountAsync(fixture.ConnectionString, "\"ScanJobExecutions\"", "\"State\" = 'Completed'"));
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task PostgreSql17_ExactReplay_WithSubMicrosecondCommittedAt_IsReplayed()
     {
         string administrator = GetAdministratorConnectionStringOrSkip();
@@ -898,7 +918,8 @@ public sealed class Pass1DocumentPostgreSqlAtomicTests
         Assert.Equal(first.CommitFingerprint, replay.CommitFingerprint);
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task PostgreSql17_DifferentReplay_PreservesImmutableVersionChainAndPreviousSupersededPointer()
     {
         string administrator = GetAdministratorConnectionStringOrSkip();
@@ -929,7 +950,8 @@ public sealed class Pass1DocumentPostgreSqlAtomicTests
         { "after-child-status", "vulgata.\"ScanExecutions\"", "UPDATE", "AFTER" },
     };
 
-    [Theory]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteTheory("PostgreSql")]
     [MemberData(nameof(ReconciliationWriteBoundaries))]
     public async Task PostgreSql17_ReconciliationFailureAtEveryWriteBoundary_RollsBackPairOutcomeChildrenWarningsAndEdges(
         string boundary,
@@ -949,7 +971,8 @@ public sealed class Pass1DocumentPostgreSqlAtomicTests
         Assert.Equal(before, await fixture.ReadReconciliationVisibilityAsync());
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task PostgreSql17_ReconciliationStaleWriter_IsConflictAndMutationFree()
     {
         string administrator = GetAdministratorConnectionStringOrSkip();
@@ -964,7 +987,8 @@ public sealed class Pass1DocumentPostgreSqlAtomicTests
         Assert.Equal(before, await fixture.ReadReconciliationVisibilityAsync());
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task PostgreSql17_ReconciliationCancellation_IsMutationFree()
     {
         string administrator = GetAdministratorConnectionStringOrSkip();
@@ -981,7 +1005,8 @@ public sealed class Pass1DocumentPostgreSqlAtomicTests
         Assert.Equal(before, await fixture.ReadReconciliationVisibilityAsync());
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task PostgreSql17_ReconciliationExactReplay_IsIdempotentAndChangedReplayConflicts()
     {
         string administrator = GetAdministratorConnectionStringOrSkip();
@@ -1004,7 +1029,8 @@ public sealed class Pass1DocumentPostgreSqlAtomicTests
         Assert.Equal(afterFirst, await fixture.ReadReconciliationVisibilityAsync());
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task PostgreSql17_ConcurrentReconciliation_HasDeterministicSingleEdgeAndNoPartialVisibility()
     {
         string administrator = GetAdministratorConnectionStringOrSkip();

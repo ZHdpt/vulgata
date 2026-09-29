@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Reflection;
 using System.Security.Cryptography;
 using Microsoft.Data.Sqlite;
@@ -18,7 +19,8 @@ namespace Vulgata.Tests.PreparedScanning;
 [Collection(PreparedScanningCollection.Name)]
 public sealed class PreparedScanAtomicReplayTests
 {
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void PreparedRepositoryPackage_CarriesContextSourceValuesAndFileLanguage()
     {
         PropertyInfo[] package = typeof(PreparedRepositoryPackage)
@@ -32,7 +34,8 @@ public sealed class PreparedScanAtomicReplayTests
         Assert.Contains(unit, property => property.Name == "Language");
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task PreparedStore_InvalidPair_IsRejectedAndLeavesNoPreparedRowsAsync()
     {
         await using IsolatedPreparedDatabase database = await IsolatedPreparedDatabase.CreateAsync();
@@ -48,7 +51,8 @@ public sealed class PreparedScanAtomicReplayTests
         await AssertNoPreparedRowsAsync(database.Context);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task PreparedStore_CancelledBeforeCommit_ReturnsCancelledAndRollsBackAllRowsAsync()
     {
         await using IsolatedPreparedDatabase database = await IsolatedPreparedDatabase.CreateAsync();
@@ -66,7 +70,8 @@ public sealed class PreparedScanAtomicReplayTests
         await AssertNoPreparedRowsAsync(database.Context);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task PreparedStore_ExactReplayAndChangedAuditPreimageUsePublicCommitSeamAsync()
     {
         await using IsolatedPreparedDatabase database = await IsolatedPreparedDatabase.CreateAsync();
@@ -105,7 +110,8 @@ public sealed class PreparedScanAtomicReplayTests
         AssertDurableRowsEqual(committedRows, await CaptureDurableRowsAsync(database.Context));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task PreparedStore_AuditPreimageMutationCannotReplayAndCannotPartiallyPersistAsync()
     {
         await using IsolatedPreparedDatabase database = await IsolatedPreparedDatabase.CreateAsync();

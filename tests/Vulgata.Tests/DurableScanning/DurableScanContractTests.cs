@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using Vulgata.Core.DomainServices;
@@ -6,7 +7,8 @@ namespace Vulgata.Tests.DurableScanning;
 
 public sealed class DurableScanContractTests
 {
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void DurablePorts_ExposeClosedAsyncOperationsAndImmutableBoundedModels()
     {
         AssertEnumNames<DurableScanStoreOutcome>(

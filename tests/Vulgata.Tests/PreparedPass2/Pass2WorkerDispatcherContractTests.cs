@@ -1,10 +1,12 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Reflection;
 
 namespace Vulgata.Tests.PreparedPass2;
 
 public sealed class Pass2WorkerDispatcherContractTests
 {
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void PreparedPass2WorkerDispatcher_IsPublicAndDeclaresOnlyApprovedSeam()
     {
         Type? dispatcher = typeof(Vulgata.Core.Entities.DocumentEdge).Assembly.GetType(
@@ -16,7 +18,8 @@ public sealed class Pass2WorkerDispatcherContractTests
         Assert.Contains("Dispatch", methods[0].Name, StringComparison.Ordinal);
     }
 
-    [Theory]
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
     [InlineData("PreparedPass2Flow")]
     [InlineData("PreparedPass2RuntimeBinding")]
     [InlineData("Pass2ExecutionContracts")]

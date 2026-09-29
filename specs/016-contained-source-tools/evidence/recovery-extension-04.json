@@ -1,0 +1,20 @@
+{
+  "kind": "human-approval",
+  "stage": "converge",
+  "decision_id": "18-1/implementation/1/extension/4",
+  "status": "accepted",
+  "episode_id": "18-1/implementation/1",
+  "scope_sha256": "0dcd1f3b114c1f0bf1c1ed771313bbeeed7f9457990f3398dd59ab58d5225da5",
+  "scope_material": "18-1/implementation/1/extension/4|18-1/implementation/1|9|convergence-result-07|run-t027-owned-postgresql-63|reconverge-lookback-quality-e2e|configured-build-selfcontained-final|one-negative-result",
+  "pause_at": 9,
+  "requested_at": "2026-09-29T04:52:31.0628914Z",
+  "decided_at": "2026-09-29T05:01:02.5206718Z",
+  "user_instruction": "If these tests are just not run yet but not finish, agree to do a retry 9.",
+  "condition_assessment": "Satisfied. T026 named the complete 63-test retained-source selection, but implementation-verification-01 records that attempt as blocked before assertions. The later 27-test correction selection covered only a subset. T027 therefore tracks unfinished qualification, not a retry of already-passing tests.",
+  "failed_results_at_decision": 8,
+  "approved_changed_approach": "Run T027 once using the exact repository-owned PostgreSql-suite command and require all 63 cases to pass with zero skips. If it passes, reconverge, refresh lookback and independent quality review, apply the E2E decision, then run the configured Web build and SelfContained command. Do not load .env database values or call excluded suites passed.",
+  "limits": "This raises the cumulative pause limit from 8 to 9. It does not reset the counter or authorize arbitrary retries. Any substantive negative result at count 9 returns to the human.",
+  "resource_scope": "The test runner may create and remove one labeled, run-owned PostgreSQL 17 Docker container and volume with generated credentials and a dynamic loopback port. It may not use application or .env database credentials.",
+  "unchanged_gates": "Definition authority, accepted Story 18.1 behavior, clean convergence, refreshed lookback, independent quality review, conditional E2E, configured build, configured SelfContained test and closure remain required.",
+  "summary": "The user approved the finite Story 18.1 recovery extension from eight to nine after confirming the relevant 63-test boundary was unfinished rather than previously completed."
+}

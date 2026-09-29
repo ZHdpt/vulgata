@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Reflection;
 using System.Text.Json;
 using Microsoft.AspNetCore.Hosting;
@@ -33,7 +34,8 @@ public sealed class PreparedScanRuntimeIdentityResolverTests
         _factory = factory;
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ProductionComposition_RegistersOneInternalConfiguredResolver()
     {
         Type contract = FindWebType("IPreparedScanRuntimeIdentityResolver");
@@ -47,7 +49,8 @@ public sealed class PreparedScanRuntimeIdentityResolverTests
         Assert.Single(scope.ServiceProvider.GetServices(contract));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void ResolverContract_IsInternalAndBindsRepositoryAndProfiledRevision()
     {
         Type contract = FindWebType("IPreparedScanRuntimeIdentityResolver");
@@ -75,7 +78,8 @@ public sealed class PreparedScanRuntimeIdentityResolverTests
             "The resolver must return the checked canonical runtime identity, not a caller DTO.");
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task Resolver_ProducesCanonicalIdentityPerRepositoryAndSharesHealthAuthority()
     {
         Type contract = FindWebType("IPreparedScanRuntimeIdentityResolver");
@@ -114,7 +118,8 @@ public sealed class PreparedScanRuntimeIdentityResolverTests
             expectedIdentity.Sha256);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ConfiguredResolver_DefaultWithoutToolFiles_ReturnsNotReady()
     {
         await using AsyncServiceScope scope = _factory.Services.CreateAsyncScope();
@@ -136,7 +141,8 @@ public sealed class PreparedScanRuntimeIdentityResolverTests
         Assert.Null(second.Identity);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void AnalysisRuntimeIdentity_CanonicalConstruction_BindsRepositoryAndRevision()
     {
         const string firstRevision = "0123456789abcdef0123456789abcdef01234567";
@@ -158,7 +164,8 @@ public sealed class PreparedScanRuntimeIdentityResolverTests
         Assert.NotEqual(first.Sha256, second.Sha256);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ConfiguredHealth_IsStableForIdenticalRepositoryAndProfiledRevision()
     {
         using IServiceScope scope = _factory.Services.CreateScope();
@@ -183,7 +190,8 @@ public sealed class PreparedScanRuntimeIdentityResolverTests
         Assert.Equal(first.ComponentChecks, second.ComponentChecks);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task DefaultComposition_UsesCodeGraph15AndJdtLsPorts()
     {
         await using AsyncServiceScope scope = _factory.Services.CreateAsyncScope();
@@ -195,7 +203,8 @@ public sealed class PreparedScanRuntimeIdentityResolverTests
         Assert.Contains("IJavaAnalysisSessionFactory", program, StringComparison.Ordinal);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void ConfiguredIntegrityAlgorithm_HasOneOwnerInsteadOfASecondProgramCopy()
     {
         string program = ReadRepositoryFile("src", "dotnet", "Vulgata.Web", "Program.cs");

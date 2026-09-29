@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using Vulgata.Core.DomainServices;
 using Vulgata.Core.Entities;
 
@@ -164,7 +165,8 @@ public sealed class SequentialScanRunnerFailureTests
     // failing Repository and TerminalReasonKind.SchemaInvalid
     // =====================================================================
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task RunPass1_OnSchemaInvalid_TransitionsToFailedWithChineseMessageAndReasonKind()
     {
         Guid repositoryId = NonEmptyGuid(3);
@@ -192,7 +194,8 @@ public sealed class SequentialScanRunnerFailureTests
     // T054: Error -> Failed with TerminalReasonKind.Error
     // =====================================================================
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task RunPass1_OnError_TransitionsToFailedWithReasonKindError()
     {
         Guid repositoryId = NonEmptyGuid(3);
@@ -217,7 +220,8 @@ public sealed class SequentialScanRunnerFailureTests
     // T055: Unbounded -> Failed with TerminalReasonKind.Unbounded
     // =====================================================================
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task RunPass1_OnUnbounded_TransitionsToFailedWithReasonKindUnbounded()
     {
         Guid repositoryId = NonEmptyGuid(3);
@@ -244,7 +248,8 @@ public sealed class SequentialScanRunnerFailureTests
     // IKnowledgeStoreRepository, so this is a structural assertion.
     // =====================================================================
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task RunPass1_OnFailure_DoesNotCommitDocumentVersion()
     {
         Guid repositoryId = NonEmptyGuid(3);
@@ -273,7 +278,8 @@ public sealed class SequentialScanRunnerFailureTests
     // transition; the final persisted state is internally consistent.
     // =====================================================================
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task RunPass1_OnFailure_NoPartialStateVisible()
     {
         Guid repositoryId = NonEmptyGuid(3);
@@ -316,7 +322,8 @@ public sealed class SequentialScanRunnerFailureTests
     // the runner refuses to start Pass 1).
     // =====================================================================
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task RunPass1_OnNoPreparedCodeUnits_ThrowsAndDoesNotTransitionToFailed()
     {
         Guid repositoryId = NonEmptyGuid(3);
@@ -343,7 +350,8 @@ public sealed class SequentialScanRunnerFailureTests
     // SymbolName > 512 UTF-8 bytes; the runner classifies as OverLimitPacket.
     // =====================================================================
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task RunPass1_OnOversizedPacket_TransitionsToFailedWithOverLimitPacket()
     {
         Guid repositoryId = NonEmptyGuid(3);
@@ -390,7 +398,8 @@ public sealed class SequentialScanRunnerFailureTests
     // TerminalReasonKind.ForbiddenContent
     // =====================================================================
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task RunPass1_OnForbiddenContent_TransitionsToFailedWithForbiddenContent()
     {
         Guid repositoryId = NonEmptyGuid(3);
@@ -425,7 +434,8 @@ public sealed class SequentialScanRunnerFailureTests
     // failure path leaves no Document Version and reaches Failed.
     // =====================================================================
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task RunPass1_OnFailure_LeavesStory11_1InvariantsIntact()
     {
         Guid repositoryId = NonEmptyGuid(3);

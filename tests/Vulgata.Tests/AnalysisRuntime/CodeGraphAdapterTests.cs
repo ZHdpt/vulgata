@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Reflection;
 using System.Text;
 using Vulgata.Core.DomainServices;
@@ -18,7 +19,8 @@ public sealed class CodeGraphAdapterTests
     private static readonly Guid _repositoryId =
         Guid.Parse("12000000-0000-4000-8000-000000000002");
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task CodeGraphAdapter_UsesApprovedIdentity_AndClosedPublicSeamWithoutStartupIndexing()
     {
         AnalysisRuntimeIdentity identity = AnalysisRuntimeIdentity.Create(
@@ -159,7 +161,8 @@ public sealed class CodeGraphAdapterTests
         }
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task CodeGraphPort_CurrentUnboundAdapter_FailsClosedForEveryAllowedOperation()
     {
         ICodeGraphAnalysisPort adapter = new CodeGraphAnalysisAdapter();
@@ -238,7 +241,8 @@ public sealed class CodeGraphAdapterTests
         }
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task CodeGraphPort_ObservedCodeGraphV150Shapes_ReturnBoundedTypedEvidence()
     {
         // T031 remediation RED: CodeGraph 1.5.0 emits human-readable init/index

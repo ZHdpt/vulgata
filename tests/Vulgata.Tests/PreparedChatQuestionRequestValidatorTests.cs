@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
 using Vulgata.Shared.Chat;
@@ -7,7 +8,8 @@ namespace Vulgata.Tests;
 
 public sealed class PreparedChatQuestionRequestValidatorTests
 {
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ValidateAsync_NormalizedTwoRepositoryRequest_IsValidAndNormalizesQuestion()
     {
         var request = new PreparedChatQuestionRequest
@@ -25,7 +27,8 @@ public sealed class PreparedChatQuestionRequestValidatorTests
         Assert.Equal("café 如何更新？", request.NormalizedQuestion);
     }
 
-    [Theory]
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
     [InlineData("mode")]
     [InlineData("system")]
     [InlineData("repository-count")]
@@ -58,7 +61,8 @@ public sealed class PreparedChatQuestionRequestValidatorTests
         Assert.False(result.IsValid);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Validator_AssemblyRegistration_ResolvesPreparedChatBoundaryValidator()
     {
         var services = new ServiceCollection();

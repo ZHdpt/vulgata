@@ -1,0 +1,34 @@
+{
+  "kind": "analysis",
+  "stage": "lookback",
+  "evidence_id": "18-1-access-prepared-source-through-contained-read-only-tools/lookback/7",
+  "observed_at": "2026-09-29T06:07:17.9658042Z",
+  "record_path": "docs/bmad/implementation-artifacts/18-1-access-prepared-source-through-contained-read-only-tools.md",
+  "section_sha256": "d44f5a75d66689706b01c260207f4f1970553c2821d1251f1ea26dd532d6573f",
+  "record_content_sha256": "1bc161e213c61f7afbf9b1e5124d7762cb0c3685ce692c326df51983b9c112af",
+  "convergence": {
+    "path": "specs/016-contained-source-tools/evidence/convergence-result-09.json",
+    "sha256": "8d63fe860e770e9e70c69fb5cbf16b075c40f4b97883f2931d5816f7877c1202"
+  },
+  "output_hashes": {
+    "docs/project-lessons.md": "a7587d3cabfeea0d6bec679f9ce215177accdd92fec6e09a450fe71e164e30f4"
+  },
+  "disposition": "no-new-lesson",
+  "authority_decisions": [
+    {
+      "path": "specs/016-contained-source-tools/evidence/plan-authorization-01.json",
+      "sha256": "ab5993915aebc31cf27bad7b44cacc0b0d171b6a73de4577ab3996837e0e84b6"
+    },
+    {
+      "path": "specs/016-contained-source-tools/evidence/implementation-approval-02.json",
+      "sha256": "defa3810c87331976b3eaa6096889fbcc0adbff5bb4a423d932b4a47163a1186"
+    },
+    {
+      "path": "specs/016-contained-source-tools/evidence/recovery-extension-05.json",
+      "sha256": "52af3297fb23c21461b36b74e44150a45efbfa9bb3a3f7fcc6118a031cf52bdb"
+    }
+  ],
+  "unresolved_blockers": [],
+  "follow_up_paths": [],
+  "summary": "The refreshed lookback binds the full-suite RootUnavailable diagnosis, the test-only nonparallel PreparedSource collection correction, focused 119/119 verification and clean convergence. No duplicate lesson was added because docs/project-lessons.md already requires explicit nonparallel boundaries for shared resource-sensitive test classes. The exact configured SelfContained rerun remains pending."
+}

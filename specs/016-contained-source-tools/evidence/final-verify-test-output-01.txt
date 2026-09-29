@@ -1,0 +1,3 @@
+Policy passed: 283 classified source files; guarded test traits checked.
+Suite=SelfContained discovered=2811 selected=1975 passed=1975 failed=0 skipped=0
+Excluded suites (not qualified): PostgreSql, LocalTools, External, E2E, HistoricalBoundary. TRX: TestResults/isolation-14033df631a54ccc8517d6ed1bf4311d/results.trx

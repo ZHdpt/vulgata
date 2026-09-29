@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Reflection;
 using Vulgata.Agents.ChatExecution;
 using Vulgata.Core.DomainServices;
@@ -14,7 +15,8 @@ public sealed class ChatStreamObservationProvenanceTests
     private static readonly BindingFlags _instanceProperties =
         BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void StreamRequest_TrackBMetadata_HasNoReleaseOrPostTransportValidationCoupling()
     {
         Type requestType = typeof(ChatProviderStreamRequest);
@@ -51,7 +53,8 @@ public sealed class ChatStreamObservationProvenanceTests
         AssertPropertiesAbsent(requestType, prohibitedProperties);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void RuntimeObservation_TrackBTransportFacts_AreImmutableContentDarkAndReleaseNeutral()
     {
         Type observationType = GetRequiredType(
@@ -145,7 +148,8 @@ public sealed class ChatStreamObservationProvenanceTests
                 $"{observationType.Name}.{property.Name} must be immutable after construction."));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void CompletionSummary_CoordinatorResult_IsImmutableContentDarkAndSeparateFromTransportFacts()
     {
         Type summaryType = GetRequiredType(
@@ -204,7 +208,8 @@ public sealed class ChatStreamObservationProvenanceTests
                 $"{summaryType.Name}.{property.Name} must be immutable after construction."));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void PreparedChatCoordinator_ComposesPublicationOwnerForCompletionAuthority()
     {
         ConstructorInfo constructor = Assert.Single(typeof(PreparedChatCoordinator).GetConstructors());
@@ -236,7 +241,8 @@ public sealed class ChatStreamObservationProvenanceTests
             property => property.Name == nameof(AcceptedPublicationCommit.CompletionSummary));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void TrackBComposition_DoesNotContainTrackCCandidateAttestation()
     {
         Assembly agentsAssembly = typeof(IChatProviderStreamingTransport).Assembly;

@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Net;
 using System.Reflection;
 using System.Security.Claims;
@@ -17,7 +18,8 @@ namespace Vulgata.Tests;
 
 public sealed class PreparedChatCoordinatorTests
 {
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void PreparedChatCoordinator_Story125B4_DeclaresPublicationOwnerAsSoleSuccessBoundary()
     {
         Type? ownerType = Type.GetType(
@@ -29,7 +31,8 @@ public sealed class PreparedChatCoordinatorTests
             parameter.ParameterType == ownerType);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Constructor_RequiresExactlyOneTypedRecorderAndPublicationOwnerWithoutFallbacks()
     {
         ParameterInfo[] parameters = Assert.Single(
@@ -52,7 +55,8 @@ public sealed class PreparedChatCoordinatorTests
                 parameter.HasDefaultValue);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Constructor_RejectsNullRecorderAndOwnerInsteadOfActivatingFallbacks()
     {
         var candidateExtractor = new ChatCandidateExtractor();
@@ -75,7 +79,8 @@ public sealed class PreparedChatCoordinatorTests
             null!));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void PreparedChatCoordinator_UsesPublicationOwnerForConversationAuthorityWithoutLocalShadowState()
     {
         FieldInfo[] localPublicationAuthorities = typeof(PreparedChatCoordinator)
@@ -87,7 +92,8 @@ public sealed class PreparedChatCoordinatorTests
             localPublicationAuthorities);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void IChatEvidenceRetriever_RetrieveAsync_UsesServerOwnedConversationRequest()
     {
         MethodInfo retrieveMethod = Assert.Single(
@@ -105,7 +111,8 @@ public sealed class PreparedChatCoordinatorTests
         Assert.NotNull(typeof(ChatRetrievalRequest).GetProperty("DeadlineUtc"));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Constructor_ChatAgentResultValidator_IsRequiredDependency()
     {
         ParameterInfo parameter = Assert.Single(
@@ -116,7 +123,8 @@ public sealed class PreparedChatCoordinatorTests
         Assert.False(parameter.HasDefaultValue);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ListScopesAsync_AuthenticatedOwner_ReturnsVisibleSystemAndRepositories()
     {
         var system = new SystemEntity("支付系统", null, null, DateTimeOffset.UtcNow);
@@ -162,7 +170,8 @@ public sealed class PreparedChatCoordinatorTests
         Assert.Contains(scope.Repositories, repository => repository.DisplayName == "渠道仓库");
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ListScopesAsync_DecoySystemAndRepositoryPair_OffersOnlyPreparedPair()
     {
         var preparedSystem = new SystemEntity("支付系统", null, null, DateTimeOffset.UtcNow);
@@ -203,7 +212,8 @@ public sealed class PreparedChatCoordinatorTests
             scope.Repositories.Select(repository => repository.RepositoryId).Order());
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task AskAsync_AuthorizedPreparedScope_ReturnsExactServerClaimsAndCitations()
     {
         var system = new SystemEntity("支付系统", null, null, DateTimeOffset.UtcNow);
@@ -264,7 +274,8 @@ public sealed class PreparedChatCoordinatorTests
         Assert.Equal(1, currentness.CallCount);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task AskAsync_RepeatedFollowUps_ReFetchesEvidenceAndRevalidatesCurrentnessOnEveryTurn()
     {
         var system = new SystemEntity("支付系统", null, null, DateTimeOffset.UtcNow);
@@ -304,7 +315,8 @@ public sealed class PreparedChatCoordinatorTests
         Assert.Equal(3, dispatcher.CallCount);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task AskAsync_FailedAttempt_DoesNotActivateReplacementConversationAfterCommittedOwner()
     {
         var system = new SystemEntity("支付系统", null, null, DateTimeOffset.UtcNow);
@@ -348,7 +360,8 @@ public sealed class PreparedChatCoordinatorTests
             turn => string.Equals(turn.Question, "失败尝试不应成为会话状态？", StringComparison.Ordinal));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task AskAsync_BusinessCodeLogicFallback_PublishesSafeNarrativeWithOriginalCitation()
     {
         var system = new SystemEntity("支付系统", null, null, DateTimeOffset.UtcNow);
@@ -392,7 +405,8 @@ public sealed class PreparedChatCoordinatorTests
         Assert.Equal(DocumentType.CodeLogic, Assert.Single(answer.DocumentCitations).DocumentType);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task AskAsync_ProviderTimeoutWithStrongIdentifierMatch_ReturnsGroundedCandidate()
     {
         var system = new SystemEntity("支付系统", null, null, DateTimeOffset.UtcNow);
@@ -427,7 +441,8 @@ public sealed class PreparedChatCoordinatorTests
         Assert.Equal(2, authorization.CallCount);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task AskAsync_StrongGroundedCandidateWithoutRelationship_StillValidatesCurrentness()
     {
         var system = new SystemEntity("支付系统", null, null, DateTimeOffset.UtcNow);
@@ -460,7 +475,8 @@ public sealed class PreparedChatCoordinatorTests
             currentness.LastRequest).Relationships);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task AskAsync_ProviderUnsupportedWithStrongChineseMatch_ReturnsGroundedCandidate()
     {
         var system = new SystemEntity("支付系统", null, null, DateTimeOffset.UtcNow);
@@ -492,7 +508,8 @@ public sealed class PreparedChatCoordinatorTests
         Assert.Equal(1, currentness.CallCount);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task AskAsync_MalformedProviderSelection_FailsBeforeCurrentnessAndFinalAuthorizationWithoutLeak()
     {
         var system = new SystemEntity("支付系统", null, null, DateTimeOffset.UtcNow);
@@ -538,7 +555,8 @@ public sealed class PreparedChatCoordinatorTests
         Assert.Equal(0, currentness.CallCount);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task AskAsync_ProviderDispatchCarriesOneCoordinatorOwnedTwentyNineSecondDeadline()
     {
         var system = new SystemEntity("支付系统", null, null, DateTimeOffset.UtcNow);
@@ -579,7 +597,8 @@ public sealed class PreparedChatCoordinatorTests
         Assert.InRange(deadline - now, 1, 29_000);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task AskAsync_SemanticValidationFailure_DoesNotInvokeARepairDispatch()
     {
         var system = new SystemEntity("支付系统", null, null, DateTimeOffset.UtcNow);
@@ -620,7 +639,8 @@ public sealed class PreparedChatCoordinatorTests
         Assert.Null(result.Answer);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task AskAsync_SemanticallyRejectedStreamingAnswer_RecordsContentDarkCompletionSummary()
     {
         var system = new SystemEntity("支付系统", null, null, DateTimeOffset.UtcNow);
@@ -700,7 +720,8 @@ public sealed class PreparedChatCoordinatorTests
         Assert.DoesNotContain(semanticAnswer, serializedSummary, StringComparison.Ordinal);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task AskAsync_UnsupportedStreamingAnswer_RecordsNonAcceptedCompletionSummary()
     {
         var system = new SystemEntity("支付系统", null, null, DateTimeOffset.UtcNow);
@@ -756,7 +777,8 @@ public sealed class PreparedChatCoordinatorTests
         Assert.DoesNotContain("{}", serializedSummary, StringComparison.Ordinal);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task AskAsync_UnrelatedQuestion_ReturnsChineseUnsupportedResponseWithoutCitations()
     {
         var system = new SystemEntity("支付系统", null, null, DateTimeOffset.UtcNow);
@@ -797,7 +819,8 @@ public sealed class PreparedChatCoordinatorTests
         Assert.Equal(0, currentness.CallCount);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task AskAsync_ValidSelection_UsesExactSecurityOrderAndPublishesCompleteFixedCitations()
     {
         var trace = new List<string>();
@@ -851,7 +874,8 @@ public sealed class PreparedChatCoordinatorTests
         Assert.Equal("src/PaymentFlow.cs", citation.RepositoryRelativePath);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task AskAsync_AuthorizedScope_ReadsServerOwnedAdvisoryBeforeEvidenceRetrieval()
     {
         var trace = new List<string>();
@@ -883,7 +907,8 @@ public sealed class PreparedChatCoordinatorTests
         Assert.True(trace.IndexOf("currentness") < trace.LastIndexOf("advisory"));
     }
 
-    [Theory]
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
     [InlineData("value")]
     [InlineData("updated-at")]
     [InlineData("authority-fingerprint")]
@@ -931,7 +956,8 @@ public sealed class PreparedChatCoordinatorTests
         Assert.DoesNotContain("citation-materialization", trace);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task AskAsync_RetrievalPacketAdvisoryDiffersFromInitialAndReveal_WithholdsWithoutConversationAppend()
     {
         var system = new SystemEntity("支付系统", null, null, DateTimeOffset.UtcNow);
@@ -980,7 +1006,8 @@ public sealed class PreparedChatCoordinatorTests
             retriever.PacketAdvisoryContextOverride.AuthorityFingerprint);
     }
 
-    [Theory]
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
     [InlineData("retrieval")]
     [InlineData("currentness")]
     [InlineData("advisory-reveal")]
@@ -1057,7 +1084,8 @@ public sealed class PreparedChatCoordinatorTests
             turn => string.Equals(turn.Question, expiredQuestion, StringComparison.Ordinal));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task AskAsync_FinalPublicationBudgetExpiry_ReturnsTimedOutWithoutAppendingConversationTurn()
     {
         var system = new SystemEntity("支付系统", null, null, DateTimeOffset.UtcNow);
@@ -1095,7 +1123,8 @@ public sealed class PreparedChatCoordinatorTests
         Assert.Empty(retriever.Requests[1].Conversation.Turns);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task AskAsync_DeadlineExpiresDuringSuccessPublication_ReturnsTimedOutWithoutAppendingConversationTurn()
     {
         var system = new SystemEntity("支付系统", null, null, DateTimeOffset.UtcNow);
@@ -1131,7 +1160,8 @@ public sealed class PreparedChatCoordinatorTests
         Assert.Empty(retriever.Requests[1].Conversation.Turns);
     }
 
-    [Theory]
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
     [InlineData(ChatAdvisoryContextReadResultKind.NotFoundOrUnauthorized, PreparedChatResultKind.MissingOrUnauthorized)]
     [InlineData(ChatAdvisoryContextReadResultKind.InconsistentCurrentEvidence, PreparedChatResultKind.EvidenceUnavailable)]
     public async Task AskAsync_AdvisoryFailure_StopsBeforeEvidenceRetrieval(
@@ -1163,7 +1193,8 @@ public sealed class PreparedChatCoordinatorTests
         Assert.Equal(0, retriever.CallCount);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task AskAsync_CurrentnessDenial_FailsBeforeFinalAuthorizationAndCitationPublication()
     {
         var system = new SystemEntity("支付系统", null, null, DateTimeOffset.UtcNow);
@@ -1189,7 +1220,8 @@ public sealed class PreparedChatCoordinatorTests
         Assert.Equal(1, authorization.CallCount);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task AskAsync_FinalAuthorizationRevoked_FailsMissingEquivalentWithoutCitationPublication()
     {
         var system = new SystemEntity("支付系统", null, null, DateTimeOffset.UtcNow);
@@ -1214,7 +1246,8 @@ public sealed class PreparedChatCoordinatorTests
         Assert.Equal(2, authorization.CallCount);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task AskAsync_PrecheckAuthorizationDenied_FailsMissingEquivalentBeforeRetrieval()
     {
         var system = new SystemEntity("支付系统", null, null, DateTimeOffset.UtcNow);
@@ -1238,7 +1271,8 @@ public sealed class PreparedChatCoordinatorTests
         Assert.Equal(0, retriever.CallCount);
     }
 
-    [Theory]
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
     [InlineData(ChatEvidenceResultKind.NotFoundOrUnauthorized, PreparedChatResultKind.MissingOrUnauthorized, "未找到可用的知识范围，或您无权访问。")]
     [InlineData(ChatEvidenceResultKind.IncompleteOrStale, PreparedChatResultKind.EvidenceUnavailable, "当前知识证据不可用或已更新，请稍后重试。")]
     public async Task AskAsync_LiveRetrievalDenialOrStaleEvidence_FailsClosedWithoutDispatch(
@@ -1266,7 +1300,8 @@ public sealed class PreparedChatCoordinatorTests
         Assert.Equal(0, dispatcher.CallCount);
     }
 
-    [Theory]
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
     [InlineData(ChatContractFailureCode.ProviderFailure, PreparedChatResultKind.ProviderUnavailable, "暂时无法生成回答，请稍后重试。")]
     [InlineData(ChatContractFailureCode.TimedOut, PreparedChatResultKind.TimedOut, "回答超时，请重试。")]
     [InlineData(ChatContractFailureCode.Cancelled, PreparedChatResultKind.Cancelled, "已取消本次提问。")]
@@ -1296,7 +1331,8 @@ public sealed class PreparedChatCoordinatorTests
         Assert.Equal(0, currentness.CallCount);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task AskAsync_CallerAlreadyCancelled_ReturnsBoundedCancellationWithoutStartingWork()
     {
         var system = new SystemEntity("支付系统", null, null, DateTimeOffset.UtcNow);
@@ -1342,7 +1378,8 @@ public sealed class PreparedChatCoordinatorTests
         Assert.Equal(0, currentness.CallCount);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task AskAsync_InvalidModeScopeOrQuestion_ReturnsBoundedFailureWithoutStartingWork()
     {
         var system = new SystemEntity("支付系统", null, null, DateTimeOffset.UtcNow);
@@ -1394,7 +1431,8 @@ public sealed class PreparedChatCoordinatorTests
         Assert.Equal(0, currentness.CallCount);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task AskAsync_CrossSystemRepository_ReturnsMissingBeforeAuthorizationOrRetrieval()
     {
         var selectedSystem = new SystemEntity("支付系统", null, null, DateTimeOffset.UtcNow);
@@ -1438,7 +1476,8 @@ public sealed class PreparedChatCoordinatorTests
         Assert.Equal(0, currentness.CallCount);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task AskAsync_AfterPriorSuccessChangedModeAndScopeProviderFailure_PublishesNoPriorOrPartialAnswer()
     {
         var firstSystem = new SystemEntity("支付系统", null, null, DateTimeOffset.UtcNow);

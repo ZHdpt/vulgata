@@ -1,0 +1,23 @@
+{
+  "base_commit": "6de156569c95e2841e2452084052f95fa5f88168",
+  "candidate_commit": null,
+  "diff_sha256": "77e35f441dcd0c767b3efc4ab1b25fe4548c75a681e0796666aa4cef7de0fce6",
+  "artifact_hashes": {
+    "specs/016-contained-source-tools/contracts/prepared-source-tools.md": "513dd8ddb3ba8ea02ce41653a436cb4bcb882347676ef29084c89a8d4b92015a",
+    "specs/016-contained-source-tools/data-model.md": "fa0a2496424b70e48ca207354de29890b54bd8b9bdab0178af7d9ca613e15bb8",
+    "specs/016-contained-source-tools/plan.md": "926982636796b020bc9f22af3aab52214ddfc809bfef9fdcabaf85b32637884e",
+    "specs/016-contained-source-tools/quickstart.md": "122ce3bd62a8fed32dd9508d256d1528d090c3b612f2e4d4e3b7f40965c3e38e",
+    "specs/016-contained-source-tools/research.md": "40f98b5061aa54fc9757e2377905450bea5a7e2fabcd9fa0a9b05f449e1c71de",
+    "specs/016-contained-source-tools/spec.md": "48c92e4f6582471a1664e553b48756a811f22bb2b4f1334206e94303629b0b6d",
+    "specs/016-contained-source-tools/tasks.md": "dcc72158a1a8ad029f492bd90e063399ce53bfa5c65990f7ac454f19ee377d20"
+  },
+  "owned_paths": [
+    "specs/016-contained-source-tools/spec.md",
+    "specs/016-contained-source-tools/plan.md",
+    "specs/016-contained-source-tools/research.md",
+    "specs/016-contained-source-tools/data-model.md",
+    "specs/016-contained-source-tools/quickstart.md",
+    "specs/016-contained-source-tools/contracts/prepared-source-tools.md",
+    "specs/016-contained-source-tools/tasks.md"
+  ]
+}

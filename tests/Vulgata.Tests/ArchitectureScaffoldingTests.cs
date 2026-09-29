@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using Vulgata.Shared;
 
 namespace Vulgata.Tests;
@@ -15,7 +16,8 @@ public class ArchitectureScaffoldingTests
             ?? throw new InvalidOperationException("Repository root could not be found. Ensure Vulgata.slnx exists at the solution root.");
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void LoadState_ContainsAllExpectedValues()
     {
         var names = Enum.GetNames<LoadState>();
@@ -30,7 +32,8 @@ public class ArchitectureScaffoldingTests
         Assert.Contains(nameof(LoadState.Cancelling), names);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void PlaceholderLanguageDirectories_Exist()
     {
         var repoRoot = GetRepoRoot();
@@ -40,7 +43,8 @@ public class ArchitectureScaffoldingTests
         Assert.True(Directory.Exists(Path.Combine(repoRoot, "src", "node")));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void DockerCompose_ExistsAtRepoRoot()
     {
         var repoRoot = GetRepoRoot();

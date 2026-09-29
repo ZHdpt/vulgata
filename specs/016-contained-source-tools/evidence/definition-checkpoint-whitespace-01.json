@@ -1,0 +1,11 @@
+{
+  "kind": "command",
+  "stage": "definition-review",
+  "command": "git diff --cached --check",
+  "outcome": "failed",
+  "summary": "The accepted plan contains trailing spaces on Technical Context lines 18-25. The content remains semantically accepted, but the required checkpoint whitespace validation cannot pass until the retained architecture-plan author removes those Markdown hard-break spaces and the affected hashes/reviews are refreshed.",
+  "affected_path": "specs/016-contained-source-tools/plan.md",
+  "affected_lines": [18, 19, 20, 21, 22, 23, 24, 25],
+  "owner": "plan",
+  "semantic_scope_changed": false
+}

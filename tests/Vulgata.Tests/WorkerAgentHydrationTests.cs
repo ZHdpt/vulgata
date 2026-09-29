@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Security.Cryptography;
 using System.Text;
 using Vulgata.Agents.WorkerExecution;
@@ -8,7 +9,8 @@ namespace Vulgata.Tests;
 
 public sealed class WorkerAgentHydrationTests
 {
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task HydrateAsync_AuthorizedExactRevision_ReturnsOnlyExactCommittedSliceAsync()
     {
         using var files = new HydrationFiles();
@@ -103,7 +105,8 @@ public sealed class WorkerAgentHydrationTests
         Assert.DoesNotContain(expectedSlice, context.ToString(), StringComparison.Ordinal);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task HydrateAsync_ExactPositiveBounds_ReturnsBoundedTransientContextAsync()
     {
         using var files = new HydrationFiles();
@@ -186,7 +189,8 @@ public sealed class WorkerAgentHydrationTests
         Assert.DoesNotContain(source, context.ToString(), StringComparison.Ordinal);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task HydrateAsync_WrongSystem_FailsClosedBeforeSnapshotAccessAsync()
     {
         using var files = new HydrationFiles();
@@ -244,7 +248,8 @@ public sealed class WorkerAgentHydrationTests
         Assert.DoesNotContain(source, exception.ToString(), StringComparison.Ordinal);
     }
 
-    [Theory]
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
     [InlineData(HydrationFailure.UnauthorizedScope)]
     [InlineData(HydrationFailure.WrongRepository)]
     [InlineData(HydrationFailure.WorkingRevisionDrift)]
@@ -346,7 +351,8 @@ public sealed class WorkerAgentHydrationTests
         Assert.DoesNotContain(source, exception.ToString(), StringComparison.Ordinal);
     }
 
-    [Theory]
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
     [InlineData("../outside.cs", 1, 1, WorkerAgentTestFixtures.SourceHash)]
     [InlineData("C:/host/source.cs", 1, 1, WorkerAgentTestFixtures.SourceHash)]
     [InlineData("src/api_key=secret.cs", 1, 1, WorkerAgentTestFixtures.SourceHash)]
@@ -373,7 +379,8 @@ public sealed class WorkerAgentHydrationTests
             []));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task HydrateAsync_Cancellation_StopsBeforeSnapshotAccessAsync()
     {
         WorkerAgentJobPacket packet = WorkerAgentTestFixtures.CreatePass1Packet();

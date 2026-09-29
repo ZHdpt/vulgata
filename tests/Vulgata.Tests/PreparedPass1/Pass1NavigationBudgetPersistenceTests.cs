@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Reflection;
 using Vulgata.Core.Entities;
 using Vulgata.Infrastructure.Data;
@@ -15,7 +16,8 @@ public sealed class Pass1NavigationBudgetPersistenceTests
     private const string ReservationPortName =
         "Vulgata.Core.DomainServices.IPass1NavigationAttemptReservationStore";
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void ReservationStore_ExposesReserveNextAsyncContract()
     {
         Type? reservationStore = typeof(Pass1NavigationBudget).Assembly.GetType(ReservationPortName);
@@ -34,7 +36,8 @@ public sealed class Pass1NavigationBudgetPersistenceTests
             reserve.ReturnType.GetGenericTypeDefinition() == typeof(ValueTask<>));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void ReservationTicket_ExposesOnlyServerCursorAndLeaseAuthorization()
     {
         Type? ticket = typeof(Pass1NavigationBudget).Assembly.GetType(
@@ -50,7 +53,8 @@ public sealed class Pass1NavigationBudgetPersistenceTests
         Assert.Contains(properties, property => property.Name is "StateVersion" or "BudgetStateVersion");
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void NavigationBudget_ExposesReservationAndReservedReceiptTransitions()
     {
         MethodInfo[] methods = typeof(Pass1NavigationBudget).GetMethods(
@@ -66,7 +70,8 @@ public sealed class Pass1NavigationBudgetPersistenceTests
             property => property.Name == nameof(Pass1NavigationBudget.StateVersion));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void NavigationBudget_ReserveAdvancesOnlyDurableHighWaterAndReturnsLatestCursor()
     {
         MethodInfo? reserve = typeof(Pass1NavigationBudget).GetMethod(
@@ -123,7 +128,8 @@ public sealed class Pass1NavigationBudgetPersistenceTests
             evidenceBytes: null, depth: null, now: now.AddSeconds(2)));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void NavigationBudget_ReservedReceiptUpdatesEvidenceWithoutIncrementingAttemptHighWater()
     {
         MethodInfo? reserve = typeof(Pass1NavigationBudget).GetMethod(
@@ -162,7 +168,8 @@ public sealed class Pass1NavigationBudgetPersistenceTests
             receipt!, budget, budget.StateVersion, 2, null, false, 0, 1, now.AddSeconds(2)));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void PreparedPass1Store_ExposesReservationReceiptAndMarkerRepairSeams()
     {
         MethodInfo[] methods = typeof(PreparedPass1Store).GetMethods(
@@ -173,7 +180,8 @@ public sealed class Pass1NavigationBudgetPersistenceTests
         Assert.Contains(methods, method => method.Name == "EnsureNavigationCallsMarkerAsync");
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void NavigationReceipt_AllowsAReservedOrdinalWithoutASecondAttemptIncrement()
     {
         Guid jobId = Guid.Parse("4f9b2e51-1f82-46af-bf96-dc7e69f16d1e");
@@ -199,7 +207,8 @@ public sealed class Pass1NavigationBudgetPersistenceTests
         Assert.Equal(3, receipt.ToolAttemptOrdinal);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void ReservationContract_DoesNotIntroduceANewNavigationEntityOrSchemaSurface()
     {
         Assert.DoesNotContain(

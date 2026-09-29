@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
@@ -23,7 +24,8 @@ namespace Vulgata.Tests.PreparedPass1;
 [Collection(PreparedScanningCollection.Name)]
 public sealed class Pass1DeepSeekIsolatedSourceQualificationTests
 {
-    [Fact]
+    [Trait("Suite", "External")]
+    [SuiteFact("External")]
     public void IsolatedQualification_DiagnosticObserverDoesNotExposeCandidateValidationDetails()
     {
         var observer = new PreparedPass1SubmissionDiagnosticObserver();
@@ -41,6 +43,7 @@ public sealed class Pass1DeepSeekIsolatedSourceQualificationTests
             method => method.Name == "Observe" && method.GetParameters().Length == 2);
     }
 
+    [Trait("Suite", "External")]
     [T084IsolatedSourceJobsFact]
     public async Task ThreeIsolatedSourceJobs_CompleteCommitAndReplayWithoutLeakingPayloadsAsync()
     {
@@ -448,8 +451,8 @@ public sealed class Pass1DeepSeekIsolatedSourceQualificationTests
         string repositoryRoot = FindRepositoryRoot();
         string path = Path.Combine(
             repositoryRoot,
-            "artifacts",
-            "qualification",
+            "TestResults",
+            "qualification-" + Guid.NewGuid().ToString("N"),
             "story-12.3",
             "deepseek-isolated-source-jobs.json");
         Directory.CreateDirectory(Path.GetDirectoryName(path)!);
@@ -813,9 +816,9 @@ public sealed class Pass1DeepSeekIsolatedSourceQualificationTests
         IReadOnlyList<PreparedRevisionRequest> RevisionRequests);
 }
 
-internal sealed class T084IsolatedSourceJobsFactAttribute : FactAttribute
+internal sealed class T084IsolatedSourceJobsFactAttribute : SuiteFactAttribute
 {
-    public T084IsolatedSourceJobsFactAttribute()
+    public T084IsolatedSourceJobsFactAttribute() : base("External")
     {
         Skip = !string.Equals(
             Environment.GetEnvironmentVariable("VULGATA_T084_ISOLATED_SOURCE_JOBS"),
