@@ -1,0 +1,27 @@
+{
+  "observed_after": {
+    "path": "specs/017-october-batch-setup/evidence/transitions/transition-0029-setup-seam-definition-review-accept.json",
+    "sha256": "c14969220d04c50184588212578058f18d005969c8050bfe7cdd25116425b5ab"
+  },
+  "raw_result": {
+  "kind": "analysis",
+  "stage": "implement",
+  "verdict": "REVISE",
+  "evidence_id": "18-4/implementation/bootstrap-composition/1",
+  "summary": "T006 cannot exercise authorization-only Web through a real public seam because the accepted definition does not name the host-mode selector/composition entrypoint or the controlled certificate-identity verification boundary. Guessing configuration or injecting test-only routes/authentication would bypass the behavior under test.",
+  "finding": {
+    "id": "I-18.4-BOOTSTRAP-COMPOSITION-01",
+    "earliest_owner": "plan",
+    "evidence": "Current Vulgata.Web Program unconditionally configures ordinary services, migrates ordinary Identity/domain stores, and maps the ordinary API. No October mode selector, bootstrap composition entrypoint, or existing certificate-auth test seam is present.",
+    "required_outcome": "Name an explicit closed Web startup mode selector and public composition boundary for Ordinary, OctoberAuthorizationOnly, and later OctoberSelectedData modes. Name a production certificate-identity verifier input that validates target-scoped allowlisting and can receive controlled certificate identity in SelfContained tests without weakening the real authentication boundary. Preserve ordinary startup, two-route bootstrap isolation, and the external certificate qualification gate."
+  },
+  "production_started": true,
+  "preserved_work": {
+    "checkpoint_commit": "794300e0",
+    "completed_tasks": ["T001", "T002", "T003", "T004", "T005"],
+    "verification": "Foundational October filter passed 34/34, policy checks passed, and Infrastructure build had zero errors."
+  },
+  "test_discovery": "T006 test owner made no edits. Existing Identity factory patterns can cover cookie and ManagementAccess behavior once the accepted mode and certificate seams are selectable.",
+  "authority_effect": "The affected implementation path returns to plan. Existing human approvals remain historical but require corrected-hash review and rebinding before production resumes. No external resource permission is inferred."
+  }
+}

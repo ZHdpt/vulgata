@@ -3,7 +3,7 @@
   "stage": "plan-review",
   "decision_id": "18-4/plan-authorization/1",
   "status": "accepted",
-  "scope_sha256": "5e84142806b14e94a8608bba56b5a3225d9d7e9fab01babdebd29550097f998d",
+  "scope_sha256": "545aec0d17c5295e09e4935d79c516e7c75556e25d4a00e9d1f8ffb37acced92",
   "requested_at": "2026-09-29T10:28:46Z",
   "decided_at": "2026-09-29T10:30:42.0336756Z",
   "user_instruction": "Approve this change",
@@ -27,17 +27,17 @@
       "reason": "Independent plan-review-06 confirmed the bootstrap correction remained within the user's approved semantic scope."
     }
   ],
-  "rebound_at": "2026-09-29T12:11:43.4684767Z",
-  "previous_scope_sha256": "1f07a6816f6056e4c5fe346d9e2ca4828e9025150e23cf6b7ac26fc05aa0351c",
-  "rebound_reason": "Independent plan-review-07 confirmed the callable setup-seam clarification only makes the already approved shared setup policy directly constructible and testable. It adds no route, Worker tool, Scan strategy, PRD change, external resource permission or later-story scope, so the original user approval remains semantically applicable.",
+  "rebound_at": "2026-09-29T13:27:24.0715686Z",
+  "previous_scope_sha256": "5e84142806b14e94a8608bba56b5a3225d9d7e9fab01babdebd29550097f998d",
+  "rebound_reason": "Independent plan-review-08 confirmed the closed Web startup selector and same-verifier certificate seam clarify the already approved three-mode and mutual-TLS design without adding routes, tools, PRD scope, later-story work or resource permission.",
   "previous_review": {
-    "path": "specs/017-october-batch-setup/evidence/plan-review-06.json",
-    "sha256": "1a4f6554484a17a517d1cd80ad72c0faa5d016253ff643112d7156f0df47648f"
-  },
-  "scope_material": "18-4/plan-authorization/1|18-4-prepare-an-owned-october-batch-with-valid-context-and-provid|plan-review|specs/017-october-batch-setup/evidence/plan-review-07.json|d248617b97ec6ad2b081d948253bffc02818036e12f21b50d605269fc5335cd3|01a0ecb6-c84b-78a1-81ef-a419d8ca024f",
-  "review": {
     "path": "specs/017-october-batch-setup/evidence/plan-review-07.json",
     "sha256": "d248617b97ec6ad2b081d948253bffc02818036e12f21b50d605269fc5335cd3"
+  },
+  "scope_material": "18-4/plan-authorization/1|18-4-prepare-an-owned-october-batch-with-valid-context-and-provid|plan-review|specs/017-october-batch-setup/evidence/plan-review-08.json|badfa5c73d49ad9335c6210fa8a579314df5176869882ac6bce2fbd4e99dbcf0|01a0ecb6-c84b-78a1-81ef-a419d8ca024f",
+  "review": {
+    "path": "specs/017-october-batch-setup/evidence/plan-review-08.json",
+    "sha256": "badfa5c73d49ad9335c6210fa8a579314df5176869882ac6bce2fbd4e99dbcf0"
   },
   "trigger": "The accepted plan is governed_delivery_classification architecture and the installed validator requires scoped planned-change authorization before tasks or later definition stages.",
   "approved_scope": "Dedicated fixed-schema October persistence, exact owned database and batch selection, context provenance, explicit provider binding, four closed Web authority routes, minimal generator prepare/select composition, production adaptation of the existing Story 18.1 source approval/verifier/issuer/context/three-function contracts, and ordinary-startup isolation exactly as independently accepted in plan-review-05.",

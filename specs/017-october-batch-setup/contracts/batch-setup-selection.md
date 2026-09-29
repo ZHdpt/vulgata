@@ -16,6 +16,50 @@ The shared policy consumes that trusted authorization result, verifies exact tar
 
 All routes are JSON-only, under plural `/api/` resources, use closed request DTOs with validation, accept a `CancellationToken`, and return sanitized JSON or `application/problem+json` ProblemDetails. Explicit authorization-only October Web bootstrap starts with ordinary Identity/Data Protection and deployment target/certificate allowlists and exposes only the first two grant/validation routes below. It registers no October context, selector, migration, selected-data service or source-approval route and never opens an October target. Selected-data October Web starts only after an exact batch exists and may expose all four routes. Default ordinary Web has none of these October routes or services. No caller may submit a subject ID, connection string, physical root, source tool name or provider secret.
 
+### Closed Web startup and generator-certificate seam
+
+`Program` resolves one `OctoberWebStartupSelection` from its own `builder.Configuration` with `OctoberWebStartupSelector.Resolve(IConfiguration)` **before** calling `VulgataWebComposition.ConfigureServices(WebApplicationBuilder builder, OctoberWebStartupSelection selection)`, resolving readiness services, running startup migrations or mapping routes. The selector accepts only these exact `October:Web:Mode` values: absent or `ordinary` selects `OctoberWebMode.Ordinary`; `authorization-only` selects `OctoberWebMode.AuthorizationOnly`; `selected-data` selects `OctoberWebMode.SelectedData`. It never infers a mode from environment name, connection availability or route request. Unknown values and mode-incompatible/partial selection fields fail host startup with a sanitized configuration error, not an ordinary-mode fallback. The selection is immutable for that process. The ordinary branch delegates to the existing `ConfigureServices(builder)` composition and ordinary startup/mapping path; the two explicit October branches register and map only their accepted services/routes. No branch silently registers October services in ordinary mode.
+
+The only selected-data host selection keys are `October:Web:TargetId` (nonempty opaque allowlisted ID), `October:Web:BatchId` (nonempty Guid) and `October:Web:ActivationGrant` (protected short-lived grant). All three are required in selected-data mode and rejected in ordinary or authorization-only mode. Authorization-only mode needs no target/batch/grant and remains startable before the October target exists. Deployment-owned `October:Web:AllowedTargets` entries carry exact `TargetId` and canonical database identity; selected-data alone additionally needs a protected connection reference for its selected target, resolved inside its Infrastructure adapter. Deployment-owned `October:Web:GeneratorCertificates` entries carry a SHA-256 certificate fingerprint and its explicit nonempty target-ID set. Both explicit October modes require configured, nonempty applicable target and certificate allowlists; duplicate target IDs, certificate identities or contradictory mappings fail startup. An identity not present in those fixed allowlists never authorizes a target. These collections are host configuration, never request body authority. A `WebApplicationFactory<Program>` sets the same keys through `ConfigureAppConfiguration` and reaches the same `Program` branch without a test-only route or startup flag. Its controlled ordinary Identity store may be supplied by existing test composition; neither the bootstrap branch nor its tests need an October connection.
+
+The closed production certificate policy has one concrete verifier and one replaceable input boundary:
+
+```csharp
+public enum OctoberWebMode { Ordinary, AuthorizationOnly, SelectedData }
+public sealed record OctoberWebStartupSelection(
+    OctoberWebMode Mode, string? TargetId, Guid? BatchId, string? ActivationGrant);
+public static class OctoberWebStartupSelector
+{
+    public static OctoberWebStartupSelection Resolve(IConfiguration configuration);
+}
+public enum OctoberCertificateIdentityStatus
+{ Authenticated, Unauthenticated, AuthorityUnavailable, Cancelled }
+public sealed record OctoberCertificateIdentityResult(
+    OctoberCertificateIdentityStatus Status, string? Sha256Fingerprint);
+public interface IOctoberAuthenticatedCertificateSource
+{
+    Task<OctoberCertificateIdentityResult> ReadAsync(
+        HttpContext httpContext, CancellationToken cancellationToken);
+}
+public sealed record OctoberGeneratorCertificateAllowlist(
+    IReadOnlyDictionary<string, IReadOnlySet<string>> AllowedFingerprintsByTarget);
+public enum OctoberGeneratorCertificateStatus
+{ Authorized, Unauthenticated, Forbidden, AuthorityUnavailable, Cancelled }
+public sealed record OctoberGeneratorCertificateDecision(
+    OctoberGeneratorCertificateStatus Status);
+public sealed class OctoberGeneratorCertificateVerifier
+{
+    public OctoberGeneratorCertificateVerifier(
+        IOctoberAuthenticatedCertificateSource source,
+        OctoberGeneratorCertificateAllowlist allowlist);
+    public Task<OctoberGeneratorCertificateDecision> VerifyAsync(
+        HttpContext httpContext, string targetId,
+        CancellationToken cancellationToken);
+}
+```
+
+`OctoberGeneratorCertificateAllowlist` is the immutable normalized mapping from exact target ID to allowed certificate SHA-256 fingerprints, built only from `October:Web:GeneratorCertificates`; it has no request-supplied entries. The verifier is registered unchanged for every October internal route in both explicit modes. Production `IOctoberAuthenticatedCertificateSource` reads a client certificate from the authenticated TLS connection/host certificate-auth boundary, validates trust and validity at that boundary, and derives its fingerprint from the certificate bytes; it never accepts an HTTP header, cookie, body field or unauthenticated proxy claim as proof. A reverse proxy may be used only with a separately protected, authenticated certificate-identity hop; it cannot turn an arbitrary forwarded header into this source. SelfContained `WebApplicationFactory` tests may inject a controlled source result and allowlist entries while still invoking the same concrete verifier and route handlers. `Authenticated` requires a nonempty fingerprint; all other source statuses require no fingerprint. Missing, expired, untrusted or malformed certificate is `Unauthenticated`/HTTP `401`; an authenticated identity not allowlisted for the exact requested target is `Forbidden`/HTTP `403`; unavailable trusted certificate authority/configuration is `AuthorityUnavailable`/HTTP `503`; cancellation ends the attempt without authorization. The route separately rejects a body target different from a selected-data host's fixed target, and still validates the operator grant and live authority. A test-injected identity is not evidence of actual TLS, certificate chain, process or PostgreSQL behavior; T020/T029 retain that owned-resource qualification.
+
 | Method and route | Caller proof and closed request | Success result |
 | --- | --- | --- |
 | `POST /api/october-batch-activation-grants` | Existing authenticated Web Identity cookie, live `ManagementAccess`, and validated antiforgery token. Body: `targetId` (opaque string), `batchId` (nonempty Guid), `repositories` (nonempty distinct entries of `repositoryId`, nullable `systemId`, `rootBindingIdentity`, `operatorLabel`), and `contextSelections` (distinct entries of `scope: global|system|repository` plus `recordId: Guid`; the record ID is respectively `GlobalContext.Id`, `System.Id` or `Repository.Id`). No caller context text is accepted. | `201` with protected `activationGrant`, `expiresAtUtc`, exact `targetId`/`batchId` and canonical `selectionDigest`; server derives `SubjectId` and grant purpose. The grant contains the exact selected Repository/root/context digest and cannot be retargeted. |

@@ -1,0 +1,17 @@
+{
+  "kind": "analysis",
+  "episode_id": "18-4-implementation-setup-seam-01",
+  "at_count": 3,
+  "summary": "Three results trace to executable-seam sequencing, not unresolved product semantics: the first correction made the Core setup policy callable; the second made Web mode and certificate policy selectable; D-18.4-05 then found that tasks again placed typed verifier tests before their declarations. The changed approach is a tasks-only declaration scaffold for the already accepted certificate source/decision/verifier and startup signatures, verified by compilation only, followed by genuine T006 behavioral RED and T007 GREEN. The next check is fresh complete-definition review of that exact ordering before code resumes.",
+  "failed_approaches": [
+    "The original setup tasks named behavior without a complete callable Core seam.",
+    "The first bootstrap task correction named the Web/certificate seam but still scheduled typed tests before declarations existed."
+  ],
+  "recommended_repair": "Retained definition author revises T006/T007 only: T007 first supplies declaration-only compiling accepted types/signatures without authorization behavior; T006 then observes runtime behavioral RED through the production verifier and Program path; T007 completes minimal/final GREEN. Missing symbols never count as RED.",
+  "owner": "tasks",
+  "profile": "definition-author",
+  "escalation_required": false,
+  "authority_decision_required": false,
+  "preserved": ["T001-T005 completion", "plan-review-08 semantics", "existing human approvals pending hash rebind", "T020/T029 resource hold", "Story 18.1 contracts"],
+  "next_guard": "Any next authoritative failed result reaches pause_at=4 and requires a fresh finite recovery-extension decision before another repair."
+}

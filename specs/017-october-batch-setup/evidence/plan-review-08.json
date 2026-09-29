@@ -1,0 +1,53 @@
+{
+  "observed_after": {
+    "path": "specs/017-october-batch-setup/evidence/transitions/transition-0032-bootstrap-composition-plan-review-invalidation.json",
+    "sha256": "42856c8f02be3746893cd842cbc36a072e3fbe65d21424f60f3b99ee190d86f6"
+  },
+  "raw_result": {
+    "schema_version": "1.0",
+    "gate": "plan-review",
+    "verdict": "ACCEPT",
+    "reviewed_commit": "794300e001f2ab64fbcc58d49468bcfef6f1d7e9",
+    "reviewed_boundary": {
+      "base_commit": "794300e001f2ab64fbcc58d49468bcfef6f1d7e9",
+      "candidate_commit": null,
+      "diff_sha256": "c4804ca1f69c1ad3770df9974753059fd595699bc0b4cc68dd294f9f882911ba",
+      "artifact_hashes": {
+        "specs/017-october-batch-setup/spec.md": "09bd29f496be4a9c956a460f9d1fc8af952f88c031324e528becb19bbc15b3bc",
+        "specs/017-october-batch-setup/plan.md": "743239064fe6d6df63493eb5579bb33eec6388d72b8c78c541e62c4a331286bc",
+        "specs/017-october-batch-setup/research.md": "95716c4a811742c6c6964600410558dd8b9f644396bfe8fd634f6fcaff22b2b2",
+        "specs/017-october-batch-setup/data-model.md": "a5547480c2a53169c0c925be690b8c5016f5af94fec7373e327cf89739b15537",
+        "specs/017-october-batch-setup/quickstart.md": "8d383bf1890d34806a6d57bc8f41d92c1f58ca1be6237cd440481ad9c29adaa0",
+        "specs/017-october-batch-setup/contracts/batch-setup-selection.md": "bae96c62f3b0060a6d96656b6647db76f302d020e23a7b495c165f4cabe88b98",
+        "specs/017-october-batch-setup/contracts/provider-binding.md": "0c59b9d803c2d6770b9ebaf8d060bb73f6a6dd40b91a33947f72a033db48e3cd"
+      },
+      "owned_paths": [
+        "specs/017-october-batch-setup/spec.md",
+        "specs/017-october-batch-setup/plan.md",
+        "specs/017-october-batch-setup/research.md",
+        "specs/017-october-batch-setup/data-model.md",
+        "specs/017-october-batch-setup/quickstart.md",
+        "specs/017-october-batch-setup/contracts/batch-setup-selection.md",
+        "specs/017-october-batch-setup/contracts/provider-binding.md"
+      ]
+    },
+    "reviewed_artifacts": [
+      "AGENTS.md",
+      "docs/bmad/planning-artifacts/architecture.md",
+      "docs/bmad/planning-artifacts/architecture/ARCHITECTURE-SPINE.md",
+      "docs/bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md",
+      "specs/017-october-batch-setup/spec.md",
+      "specs/017-october-batch-setup/plan.md",
+      "specs/017-october-batch-setup/contracts/batch-setup-selection.md",
+      "specs/017-october-batch-setup/evidence/implementation-bootstrap-composition-discovery-01.json",
+      "specs/017-october-batch-setup/evidence/implementation-bootstrap-composition-plan-self-review-01.json",
+      "specs/017-october-batch-setup/evidence/plan-review-08-boundary.json",
+      "specs/017-october-batch-setup/evidence/plan-review-07.json",
+      "specs/017-october-batch-setup/evidence/definition-review-06.json",
+      "src/dotnet/Vulgata.Web/Program.cs",
+      "specs/016-contained-source-tools/contracts/prepared-source-tools.md"
+    ],
+    "findings": [],
+    "summary": "Fresh plan-only ACCEPT after transition-0032. The closed startup selector and production composition entrypoint resolve I-18.4-BOOTSTRAP-COMPOSITION-01 before registration, migrations and route mapping. Absent mode preserves ordinary startup; invalid explicit modes fail closed. One target-scoped verifier consumes authenticated TLS certificate identity in production and the same policy with a controlled identity source in SelfContained tests; headers, cookies and bodies cannot become proof. T020/T029 retain real owned-resource qualification. No route, Worker tool, Scan strategy, PRD change, Story 18.1 duplication or resource permission is added. Existing human approvals remain semantically applicable subject to root-owned corrected-hash rebinding."
+  }
+}

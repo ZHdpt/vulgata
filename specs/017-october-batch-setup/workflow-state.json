@@ -18,23 +18,23 @@
     },
     "plan": {
       "path": "specs/017-october-batch-setup/plan.md",
-      "sha256": "17abea835e9382e0b782be7307760ae92a7fb168bdcf9c32a24041112201e565"
+      "sha256": "743239064fe6d6df63493eb5579bb33eec6388d72b8c78c541e62c4a331286bc"
     },
     "tasks": {
       "path": "specs/017-october-batch-setup/tasks.md",
-      "sha256": "42178ae7e6f1cf42d4f463e2e3cde58f67f13c6a022596e0db4e4deb231d21d2"
+      "sha256": "e43b95cb04f624cc125eb44ab3dff53759d61ba7525c7373e57393132e969af3"
     }
   },
   "gates": {
     "plan-review": {
       "status": "accepted",
-      "attempt": 3,
-      "verdict_path": "specs/017-october-batch-setup/evidence/plan-review-07.json"
+      "attempt": 4,
+      "verdict_path": "specs/017-october-batch-setup/evidence/plan-review-08.json"
     },
     "definition-review": {
       "status": "accepted",
-      "attempt": 3,
-      "verdict_path": "specs/017-october-batch-setup/evidence/definition-review-06.json"
+      "attempt": 4,
+      "verdict_path": "specs/017-october-batch-setup/evidence/definition-review-08.json"
     },
     "quality-review": {
       "status": "pending",
@@ -47,14 +47,14 @@
       "decided_at": "2026-09-29T10:30:42.0336756Z",
       "decision_id": "18-4/plan-authorization/1",
       "evidence_path": "specs/017-october-batch-setup/evidence/plan-authorization-01.json",
-      "scope_sha256": "5e84142806b14e94a8608bba56b5a3225d9d7e9fab01babdebd29550097f998d",
+      "scope_sha256": "545aec0d17c5295e09e4935d79c516e7c75556e25d4a00e9d1f8ffb37acced92",
       "status": "accepted"
     },
     {
       "decided_at": "2026-09-29T11:22:29.4265806Z",
       "decision_id": "18-4/implementation-approval/2",
       "evidence_path": "specs/017-october-batch-setup/evidence/implementation-approval-02.json",
-      "scope_sha256": "724724bca7bfb3f57d82adf67512b590b4a3ff866938d4972616135ebab1853f",
+      "scope_sha256": "dc024516a55beb4efbad78a9d067e2240454feb60ffa3f813c3d9214f7d8474c",
       "status": "accepted"
     }
   ],
@@ -97,21 +97,27 @@
   "recovery": {
     "action": "proceed",
     "closing_gate": "verify",
-    "diagnosis": null,
-    "earliest_owner": "plan",
+    "diagnosis": {
+      "at_count": 3,
+      "evidence": {
+        "path": "specs/017-october-batch-setup/evidence/recovery-diagnosis-implementation-setup-seam-01-count-03.json",
+        "sha256": "8e1f2d4f42ba1d4c767d3cab20a134a8a416b27fb5c1d7946981de15b89dcc0d"
+      }
+    },
+    "earliest_owner": "tasks",
     "episode_id": "18-4-implementation-setup-seam-01",
     "extension_decision_id": null,
-    "failed_results": 1,
+    "failed_results": 3,
     "holds": [],
     "last_result": {
-      "path": "specs/017-october-batch-setup/evidence/implementation-setup-seam-discovery-result-01.json",
-      "sha256": "7136f21be3ec07dcfc89551ad9b13e22850ad17153c341e660d0f014b9eb8d37"
+      "path": "specs/017-october-batch-setup/evidence/definition-review-07.json",
+      "sha256": "33de894896173c9025e21782d7dae308659e5834a75241dda0cfd22f6539e77e"
     },
     "pause_at": 4
   },
   "transition_head": {
-    "path": "specs/017-october-batch-setup/evidence/transitions/transition-0029-setup-seam-definition-review-accept.json",
-    "sha256": "c14969220d04c50184588212578058f18d005969c8050bfe7cdd25116425b5ab"
+    "path": "specs/017-october-batch-setup/evidence/transitions/transition-0037-bootstrap-definition-review-accept.json",
+    "sha256": "ec0a45a0239d17520c64f2d5eaaac36d5df4812cca448a5f41bc5923983e776e"
   },
   "definition_author": {
     "profile": "definition-author",
