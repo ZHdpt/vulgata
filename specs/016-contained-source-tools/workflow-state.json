@@ -47,29 +47,25 @@
   "bmad_story_key": "18-1-access-prepared-source-through-contained-read-only-tools",
   "checkpoint": {
     "binding_status": "pending",
-    "checkpoint_id": "bmad-18-1-final-hygiene-quality-candidate-20260929T025714Z-44bb9e",
+    "checkpoint_id": "bmad-18-1-verify-limit7-pause-20260929T032432Z-928a76",
     "commit_sha": null,
-    "stage": "lookback"
+    "stage": "verify"
   },
   "convergence": {
     "attempt": 5,
-    "outcome": "converged",
+    "outcome": "pending",
     "report_path": "specs/016-contained-source-tools/evidence/convergence-result-06.json",
-    "status": "accepted"
+    "status": "invalidated"
   },
   "current_evidence_paths": [
     "docs/bmad/implementation-artifacts/18-1-access-prepared-source-through-contained-read-only-tools.md",
     "specs/016-contained-source-tools/evidence/plan-review-result-09.json",
     "specs/016-contained-source-tools/evidence/definition-review-result-04.json",
     "specs/016-contained-source-tools/evidence/recovery-extension-02.json",
-    "specs/016-contained-source-tools/evidence/verify-infrastructure-resolution-01.json",
     "specs/016-contained-source-tools/evidence/verify-test-correction-focused-command-02.json",
     "specs/016-contained-source-tools/evidence/quality-diagnosis-03.json",
-    "specs/016-contained-source-tools/evidence/implementation-correction-03.json",
-    "specs/016-contained-source-tools/evidence/story-lookback-05.json",
-    "specs/016-contained-source-tools/evidence/convergence-result-06.json",
-    "specs/016-contained-source-tools/evidence/verify-test-failure-03.json",
-    "specs/016-contained-source-tools/evidence/workflow-transition-044-convergence-accept.json"
+    "specs/016-contained-source-tools/evidence/verify-test-failure-04.json",
+    "specs/016-contained-source-tools/evidence/workflow-transition-047-verify-test-limit-pause.json"
   ],
   "definition_author": {
     "escalation_decision_id": null,
@@ -92,9 +88,9 @@
       "verdict_path": "specs/016-contained-source-tools/evidence/plan-review-result-09.json"
     },
     "quality-review": {
-      "attempt": 4,
+      "attempt": 5,
       "status": "invalidated",
-      "verdict_path": "specs/016-contained-source-tools/evidence/quality-review-result-04.json"
+      "verdict_path": "specs/016-contained-source-tools/evidence/quality-review-result-05.json"
     }
   },
   "lookback": {
@@ -102,7 +98,7 @@
       "path": "specs/016-contained-source-tools/evidence/story-lookback-05.json",
       "sha256": "44bb9ee49b3538c1f269b0ec23cf85aad404dd489cd5209fda6f48e4ec48c8e5"
     },
-    "status": "current"
+    "status": "invalidated"
   },
   "preflight": {
     "branch": "(detached-native-handoff)",
@@ -112,7 +108,7 @@
     "status_sha256": "811e45acb3329b898a1a92b4bc69e9a8b9fb70ef8e97a5beba0dacd2c4ca0a74"
   },
   "recovery": {
-    "action": "proceed",
+    "action": "pause",
     "closing_gate": "verify",
     "diagnosis": {
       "at_count": 6,
@@ -124,24 +120,24 @@
     "earliest_owner": "tests",
     "episode_id": "18-1/implementation/1",
     "extension_decision_id": "18-1/implementation/1/extension/2",
-    "failed_results": 6,
+    "failed_results": 7,
     "holds": [],
     "last_result": {
-      "path": "specs/016-contained-source-tools/evidence/verify-test-failure-03.json",
-      "sha256": "9f514151a68a4631ebe1884f4b0769a6fdfc9b3d4aeffe03effbf3f36f383551"
+      "path": "specs/016-contained-source-tools/evidence/verify-test-failure-04.json",
+      "sha256": "928a765c5406aca7285cf6a0fc3171ada7390759882b6b7998538577e7d060a3"
     },
     "pause_at": 7
   },
   "resume": {
-    "evidence_path": "specs/016-contained-source-tools/evidence/verify-test-failure-03.json",
-    "reason": "Fresh convergence and Story Lookback are current after the bounded test/artifact correction; run independent quality review.",
-    "stage": "quality-review"
+    "evidence_path": "specs/016-contained-source-tools/evidence/verify-test-failure-04.json",
+    "reason": "Paused after substantive recovery result 7 reached the approved cumulative ceiling. Human direction and any required higher recovery authority are needed before diagnosis, correction, or rerun.",
+    "stage": "verify"
   },
   "schema_version": "3.1",
-  "stage": "quality-review",
+  "stage": "verify",
   "transition_head": {
-    "path": "specs/016-contained-source-tools/evidence/workflow-transition-044-convergence-accept.json",
-    "sha256": "140be50c79e7f7aed52bd7a3a80e5b45f6f5122d2425ebc136de668d80a1c0a3"
+    "path": "specs/016-contained-source-tools/evidence/workflow-transition-047-verify-test-limit-pause.json",
+    "sha256": "0f36a0ea80dba5ca1dd6ec6b4a7bff0502c9b97f27d05eabaaccff43888678f7"
   },
-  "updated_at": "2026-09-29T02:59:00Z"
+  "updated_at": "2026-09-29T03:24:32.9519688Z"
 }
