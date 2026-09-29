@@ -236,7 +236,9 @@ public sealed class PreparedJavaNavigationContextFactory
                         }
 
                         slot.Gate.Release();
-                    }));
+                    },
+                    _profile.RequestTimeout,
+                    _profile.ShutdownTimeout));
         }
         finally
         {

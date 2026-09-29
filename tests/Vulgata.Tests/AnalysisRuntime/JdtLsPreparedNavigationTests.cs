@@ -279,6 +279,81 @@ public sealed class JdtLsPreparedNavigationTests
 
     [Trait("Suite", "SelfContained")]
     [SuiteFact("SelfContained")]
+    public async Task GetDefinitionAsync_WhenSessionExceedsRequestTimeout_ReturnsDeadlineExceededAndRetiresSession()
+    {
+        await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
+        string callerDirectory = Path.Combine(fixture.PreparedRootPath, "src", "main", "java", "example");
+        Directory.CreateDirectory(callerDirectory);
+        await File.WriteAllTextAsync(Path.Combine(callerDirectory, "Caller.java"), "package example; class Caller {}\n");
+
+        fixture.Authority.Approve(fixture.Approval);
+        var toolAuthorization = new ControlledPreparedToolUseAuthorizer(
+            fixture.Approval,
+            PreparedToolPurpose.JdtNavigation);
+        var issuer = new PreparedToolWorkspaceIssuer(fixture.Authority, toolAuthorization);
+        PreparedToolWorkspaceIssueResult issue = await issuer.IssueAsync(
+            new PreparedToolWorkspaceGrantRequest(
+                fixture.Approval,
+                fixture.PreparedRootPath,
+                PreparedToolPurpose.JdtNavigation,
+                TimeSpan.FromSeconds(10)));
+        Assert.Equal(PreparedToolWorkspaceIssueStatus.Issued, issue.Status);
+        PreparedToolWorkspaceLease lease = Assert.IsType<PreparedToolWorkspaceLease>(issue.Lease);
+
+        string disposableStateRoot = Path.Combine(fixture.SiblingPath, "jdt-state");
+        Directory.CreateDirectory(disposableStateRoot);
+        var profile = new PreparedJavaNavigationProfile(
+            disposableStateRoot,
+            TimeSpan.FromSeconds(3),
+            TimeSpan.FromMilliseconds(200),
+            TimeSpan.FromSeconds(1),
+            MaximumResponseBytes: 64 * 1024);
+        var runtime = new BlockingNavigationRuntime();
+        var factory = new PreparedJavaNavigationContextFactory(profile, runtime);
+        PreparedJavaNavigationOpenResult? open = null;
+        Task<PreparedJavaNavigationResult>? navigationTask = null;
+
+        try
+        {
+            open = await factory.OpenAsync(lease);
+            Assert.Equal(PreparedJavaNavigationOpenStatus.Opened, open.Status);
+            IPreparedJavaNavigationContext context = Assert.IsAssignableFrom<IPreparedJavaNavigationContext>(open.Context);
+
+            navigationTask = context.GetDefinitionAsync(
+                new PreparedJavaNavigationRequest("src/main/java/example/Caller.java", 1, 1, 5));
+            await runtime.Session.NavigationStarted.Task.WaitAsync(TimeSpan.FromSeconds(5));
+            Task completed = await Task.WhenAny(navigationTask, Task.Delay(TimeSpan.FromSeconds(5)));
+
+            Assert.Same(navigationTask, completed);
+            PreparedJavaNavigationResult result = await navigationTask;
+
+            Assert.Equal(PreparedJavaNavigationOutcome.DeadlineExceeded, result.Outcome);
+            Assert.Equal(PreparedJavaNavigationOperation.Definition, result.Operation);
+            Assert.Empty(result.Locations);
+            Assert.Empty(result.Limitations);
+            Assert.Null(result.StoppingLimit);
+            await runtime.Session.CancellationObserved.Task.WaitAsync(TimeSpan.FromSeconds(1));
+            Assert.Equal(1, runtime.Session.DisposeCallCount);
+        }
+        finally
+        {
+            runtime.Session.ReleaseNavigation.TrySetResult(true);
+            if (navigationTask is not null)
+            {
+                await navigationTask.WaitAsync(TimeSpan.FromSeconds(5));
+            }
+
+            if (open?.Context is not null)
+            {
+                await open.Context.DisposeAsync();
+            }
+
+            await lease.DisposeAsync();
+        }
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task OpenAsync_AfterUnconfirmedCleanup_QuarantinesRepositoryWithoutRetryingRuntime()
     {
         await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
@@ -555,6 +630,63 @@ public sealed class JdtLsPreparedNavigationTests
             LastProfile = profile;
             LastCancellationToken = cancellationToken;
             return Task.FromResult<IPreparedJdtLsSession>(Session);
+        }
+    }
+
+    private sealed class BlockingNavigationRuntime : IPreparedJdtLsRuntime
+    {
+        public BlockingNavigationSession Session { get; } = new();
+
+        public Task<IPreparedJdtLsSession> OpenAsync(
+            PreparedToolWorkspaceLease workspaceLease,
+            PreparedJavaNavigationProfile profile,
+            CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            return Task.FromResult<IPreparedJdtLsSession>(Session);
+        }
+    }
+
+    private sealed class BlockingNavigationSession : IPreparedJdtLsSession
+    {
+        private int _disposeCallCount;
+
+        public TaskCompletionSource<bool> NavigationStarted { get; } =
+            new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        public TaskCompletionSource<bool> CancellationObserved { get; } =
+            new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        public TaskCompletionSource<bool> ReleaseNavigation { get; } =
+            new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        public int DisposeCallCount => Volatile.Read(ref _disposeCallCount);
+
+        public async Task<PreparedJdtLsRawReply> NavigateAsync(
+            PreparedJavaNavigationOperation operation,
+            PreparedJavaNavigationRequest request,
+            CancellationToken cancellationToken = default)
+        {
+            using CancellationTokenRegistration cancellationRegistration = cancellationToken.Register(
+                () => CancellationObserved.TrySetResult(true));
+            NavigationStarted.TrySetResult(true);
+            try
+            {
+                await ReleaseNavigation.Task.WaitAsync(cancellationToken);
+                return new PreparedJdtLsRawReply([], false, null);
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                CancellationObserved.TrySetResult(true);
+                throw;
+            }
+        }
+
+        public ValueTask DisposeAsync()
+        {
+            Interlocked.Increment(ref _disposeCallCount);
+            ReleaseNavigation.TrySetResult(true);
+            return ValueTask.CompletedTask;
         }
     }
 
