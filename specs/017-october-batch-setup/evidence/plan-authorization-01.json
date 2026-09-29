@@ -1,0 +1,45 @@
+{
+  "kind": "human-approval",
+  "stage": "plan-review",
+  "decision_id": "18-4/plan-authorization/1",
+  "status": "accepted",
+  "scope_sha256": "eec356a5ef940e3062f239e71ce15d4b80ce84ae1e8cb4d738f71e7c8bc4a9e0",
+  "requested_at": "2026-09-29T10:28:46Z",
+  "decided_at": "2026-09-29T10:30:42.0336756Z",
+  "user_instruction": "Approve this change",
+  "user_source": {
+    "thread_id": "01a0e728-b7cc-78f1-8a3d-d0d49c7dfde2",
+    "turn_id": "01a0ecb6-c7a0-7010-8959-b490a5da3678",
+    "message_id": "01a0ecb6-c84b-78a1-81ef-a419d8ca024f"
+  },
+  "briefing_source": {
+    "turn_id": "01a0ecb5-b550-7683-a65a-d1b2faa2da59",
+    "message_id": "msg_02903580ee59b6b6016abb92eecdcc87d08851c870289f3e46"
+  },
+  "scope_material": "18-4/plan-authorization/1|18-4-prepare-an-owned-october-batch-with-valid-context-and-provid|plan-review|specs/017-october-batch-setup/evidence/plan-review-05.json|021764203a1cd49f13e490f1b1b7a122016e203593ab78e9264130644d68971b|01a0ecb6-c84b-78a1-81ef-a419d8ca024f",
+  "review": {
+    "path": "specs/017-october-batch-setup/evidence/plan-review-05.json",
+    "sha256": "021764203a1cd49f13e490f1b1b7a122016e203593ab78e9264130644d68971b"
+  },
+  "trigger": "The accepted plan is governed_delivery_classification architecture and the installed validator requires scoped planned-change authorization before tasks or later definition stages.",
+  "approved_scope": "Dedicated fixed-schema October persistence, exact owned database and batch selection, context provenance, explicit provider binding, four closed Web authority routes, minimal generator prepare/select composition, production adaptation of the existing Story 18.1 source approval/verifier/issuer/context/three-function contracts, and ordinary-startup isolation exactly as independently accepted in plan-review-05.",
+  "effects": [
+    "The accepted plan may progress through the governed task and complete-definition boundary.",
+    "Story 18.1 contracts are consumed without duplication or material tool-surface change.",
+    "October selection remains one database and batch per process with no fallback or ordinary-startup migration leakage."
+  ],
+  "implementation_intent": "Retain and revalidate the already drafted task boundary, repeat independent complete-definition review after this earlier gate is durable, and then require a separate implementation approval before any production or test write.",
+  "approval_permits": "Progression from the accepted architecture plan through task generation and complete-definition review for this exact scope.",
+  "approval_does_not_permit": "Production or test implementation, database/certificate/credential/provider/runtime access, destructive operations, later-story scope, recovery waivers, or bypassing implementation approval, TDD, convergence, quality, E2E and final verification.",
+  "excluded_scope": [
+    "JDT-LS",
+    "CodeGraph",
+    "Scan or Worker dispatch",
+    "new or changed Worker Agent tools",
+    "Knowledge generation, acceptance, publication or reads",
+    "paid provider execution",
+    "Chat behavior",
+    "later October stories"
+  ],
+  "summary": "The user directly approved the detailed Story 18.4 architecture change after receiving the exact boundary, effects, exclusions and remaining gates. This is planned-change authorization only."
+}

@@ -1,0 +1,17 @@
+{
+  "kind": "analysis",
+  "stage": "plan-review",
+  "status": "blocked",
+  "observed_at": "2026-09-29T10:08:34Z",
+  "story_key": "18-4-prepare-an-owned-october-batch-with-valid-context-and-provid",
+  "trigger": "The installed validator requires scoped planned-change authorization for the accepted architecture-classified plan before advancement.",
+  "accepted_plan_review": {
+    "path": "specs/017-october-batch-setup/evidence/plan-review-05.json",
+    "sha256": "021764203a1cd49f13e490f1b1b7a122016e203593ab78e9264130644d68971b"
+  },
+  "delegate_id": "01a0e708-c489-7871-9f73-31413f20bf2c",
+  "contact_result": "Rejected: the coordination gate classified the target as completed rather than idle or waiting, despite the read snapshot reporting idle.",
+  "authority_effect": "No planned-change or implementation approval exists. Drafted tasks and their independent definition review are retained as historical work but cannot authorize implementation or an accepted-definition checkpoint until the missing earlier gate is resolved and the boundary is revalidated.",
+  "required_action": "The user must make the designated approver chat eligible for idle/waiting coordination or explicitly authorize contact with the completed chat; then root must obtain and validate a fresh scoped decision before advancement.",
+  "summary": "Story 18.4 is stopped at the architecture planned-change authorization gate. No delegate message was delivered, no approval was inferred, and no production, test, database, credential, runtime or Git checkpoint action followed."
+}

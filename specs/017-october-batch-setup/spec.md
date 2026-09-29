@@ -4,9 +4,9 @@
 
 **Created**: 2026-09-28
 
-**Status**: Draft — definition and planning only; Story 18.1 integration remains a completion dependency
+**Status**: Draft — integrated Story 18.1 baseline available; Story 18.4 source-binding reconciliation and independent review pending
 
-**Input**: October Story 18.4, “Prepare an Owned October Batch with Valid Context and Provider Bindings,” and the user's direction to plan independently decidable setup while withholding delivery until Story 18.1 is integrated and verified.
+**Input**: October Story 18.4, “Prepare an Owned October Batch with Valid Context and Provider Bindings,” the integrated and verified Story 18.1 baseline, and the user's direction to reconcile the deferred source-binding obligations before governed delivery continues.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -96,7 +96,7 @@ As an operator, I can prepare October data without changing ordinary startup beh
 - **FR-008**: Provider and database credentials MUST remain protected and absent from prompts, logs and diagnostics. If protected rows are copied as the selected configuration route, setup MUST establish compatible protection keys, application identity and purpose before use. (O-NFR03)
 - **FR-009**: October persistence MUST have a separate context, fixed schema, migration history and model snapshot. Ordinary startup MUST neither register nor migrate October persistence, and its existing model, source validation and routes MUST remain unchanged. (O-AR01–O-AR03)
 - **FR-010**: Setup MUST provide sanitized selection/configuration outcomes and failure classifications without claiming source-tool readiness, paid-provider readiness or completed Knowledge generation. (Story 18.4 acceptance)
-- **FR-011**: The 18.1-dependent source binding MUST consume the integrated, accepted 18.1 Repository/root/source identity and contained read-only tool contracts when available. It MUST NOT substitute a newly invented identity, physical-path authority, fake Git revision, source copy or tool grant. Its final validation and detailed interface remain pending plan reconciliation with a verified integrated 18.1 baseline. (O-FR01; Story 18.1 dependency)
+- **FR-011**: The 18.1-dependent source binding MUST consume the integrated, accepted Story 18.1 Repository/root/source approval and contained read-only tool contracts, with current authority checked before source disclosure. It MUST NOT substitute a newly invented identity, physical-path authority, fake Git revision, source copy or tool grant. Story 18.4's adaptation of those contracts remains subject to deterministic validation and independent review before task generation. (O-FR01; Story 18.1 dependency)
 - **FR-012**: The generator and October Web MUST use the same selected setup identity and compatible shared data rules; this story MUST NOT create a separate acceptance/publication/read implementation or overwrite ordinary provider administration. (O-FR18, O-FR19, O-AR04)
 
 ### Key Entities
@@ -106,7 +106,7 @@ As an operator, I can prepare October data without changing ordinary startup beh
 - **System and Repository Binding**: Valid organizational membership for selected Repositories, including standalone Repositories; it does not assert communication or grant source-tool access by itself.
 - **Selected Advisory Context**: Batch-bound Global/System/Repository values, scopes, origins and conflicts; interpretation guidance rather than source evidence.
 - **Provider Binding**: The declared configuration source/precedence and effective endpoint, model, credential reference, API type and Worker/Chat role profiles for a host process.
-- **Prepared Source Binding**: The batch's approved Repository/root/source access association. Its exact identity, grant and tool representation are owned by Story 18.1 and are pending integration.
+- **Prepared Source Binding**: The batch's approved Repository/root/source access association. Story 18.1 owns the accepted identity, grant and contained tool representation; Story 18.4 must bind its selected batch to that existing authority without creating another source-access contract.
 
 ## Success Criteria *(mandatory)*
 
@@ -117,7 +117,7 @@ As an operator, I can prepare October data without changing ordinary startup beh
 - **SC-003**: In controlled conflicting-context and incomplete-provider cases, 100% retain the context disagreement or report a sanitized configuration failure; none silently substitutes credentials, fields or a provider.
 - **SC-004**: In controlled ordinary startup, October persistence causes zero October migrations or model additions and leaves existing ordinary behavior unchanged.
 - **SC-005**: Every emitted setup diagnostic in controlled success/failure cases omits credentials and raw source and distinguishes setup selection from later tool, provider and Knowledge readiness.
-- **SC-006**: Before downstream delivery resumes, a verified integrated Story 18.1 baseline is present, each 18.1-dependent source-binding assumption is reconciled against its accepted contracts, and the affected definition receives the required independent review. Until then, dependency satisfaction is 0% claimed.
+- **SC-006**: The integrated Story 18.1 baseline is verified. Before task generation, 100% of Story 18.4's source-binding assumptions are reconciled against its accepted contracts, deterministic definition validation passes, and the affected definition receives the required independent review. Baseline availability alone does not satisfy this criterion.
 
 ## Assumptions
 
@@ -125,5 +125,5 @@ As an operator, I can prepare October data without changing ordinary startup beh
 - Context already exists through valid project management rules. This feature selects it for a batch and does not add context authoring screens or a human-maintained counterpart map.
 - The operator explicitly declares which provider configuration source a process uses. This definition requires visible precedence and complete binding but leaves concrete input names and selection mechanics to planning.
 - The October host generator and October Web are distinct consumers of one selected setup. Their later generation, publication, Chat and reader behavior belongs to their owning stories.
-- Story 18.1 is still being implemented elsewhere. Its accepted integrated source identity, Repository/root binding and contained read-only tool contracts are unknown here. FR-011 is a dependency obligation, not an implementation choice or claim of contract availability.
-- Planning may resolve independent batch, database, context, provider and isolation decisions now. Task generation and later delivery remain held until the integrated verified Story 18.1 baseline is present in this worktree and the specification/plan are reconciled against its actual contracts and reviewed as required.
+- Story 18.1 is complete and its verified baseline is integrated in this worktree. Its accepted approval, issuer, current-authority verifier, read-context and three contained Worker functions are available as the source-access boundary. FR-011 requires Story 18.4 to adapt to that boundary; integration alone does not validate this story's binding.
+- The independently decidable batch, database, context, provider and isolation requirements remain in scope. Task generation follows reconciliation of this specification and plan with the actual Story 18.1 contracts, deterministic validation and independent review, plus any applicable planned-change authorization.

@@ -1,0 +1,51 @@
+{
+  "kind": "self-review",
+  "stage": "tasks",
+  "outcome": "passed",
+  "summary": "Corrected all three definition-review-01 task findings: RED now targets the absent October source-authority adapter, entity-owning tasks update the October migration/snapshot, and controlled host RED precedes separately authorized two-host PostgreSQL qualification.",
+  "story_key": "18-4-prepare-an-owned-october-batch-with-valid-context-and-provid",
+  "feature_directory": "specs/017-october-batch-setup",
+  "source_verdict": "specs/017-october-batch-setup/evidence/definition-review-01.json",
+  "source_diagnosis": "specs/017-october-batch-setup/evidence/definition-diagnosis-01.json",
+  "source_transition": {
+    "path": "specs/017-october-batch-setup/evidence/transitions/transition-0013-definition-diagnosis.json",
+    "sha256": "f7555d47e8b5a338bd2a33176efdf42d0a2fcd6199fc0e070cd9a2d7ce8ad145"
+  },
+  "input_hashes": {
+    "specs/017-october-batch-setup/spec.md": "09bd29f496be4a9c956a460f9d1fc8af952f88c031324e528becb19bbc15b3bc",
+    "specs/017-october-batch-setup/plan.md": "94bf6ce9c4d4cc9019453adaf1cea17921be62f30550e8ae4c221c7b7eb46821",
+    "specs/017-october-batch-setup/research.md": "a9eb13861f0e0099289f63c0e05abb20c549d7a08c99a576f46d5943d193636b",
+    "specs/017-october-batch-setup/data-model.md": "a5547480c2a53169c0c925be690b8c5016f5af94fec7373e327cf89739b15537",
+    "specs/017-october-batch-setup/quickstart.md": "7d839c62f1ab26797d665781ebc91a8b1ecf76f6f6fee8c12767722273382a7d",
+    "specs/017-october-batch-setup/contracts/batch-setup-selection.md": "81acdf656815cfb5455b09b9cacbbae54ea0f4ccf4aa5a74058f985e4cc36557",
+    "specs/017-october-batch-setup/contracts/provider-binding.md": "0c59b9d803c2d6770b9ebaf8d060bb73f6a6dd40b91a33947f72a033db48e3cd",
+    "specs/017-october-batch-setup/tasks.md": "b14ce803897b7947ad0004c4b687f1e542cdfb643050cb8bcea29acaa86a1544"
+  },
+  "owned_paths": [
+    "specs/017-october-batch-setup/tasks.md",
+    "specs/017-october-batch-setup/evidence/tasks-correction-self-review-01.json"
+  ],
+  "finding_dispositions": {
+    "D-18.4-01": "T014 now constructs the missing Story 18.4 OctoberPreparedSourceAuthorityVerifier and PreparedSourceBinding against controlled Web approval, setup and trusted root mapping and calls through the unchanged Story 18.1 issuer. Its expected RED is the absent October adapter; existing Story 18.1 issuer/functions/containment/cancellation tests are GREEN regression evidence. T015 supplies the production adapter and composition.",
+    "D-18.4-02": "T005 establishes only the dedicated context and separate migration/history convention. Entity-owning T011 adds setup tables/constraints and updates the fixed October migration/snapshot; T013 adds approval tables/constraints and updates that migration/snapshot. T020 and T029 require fresh owned PostgreSQL targets and proof of the complete post-T013 schema and october.__OctoberMigrationsHistory while ordinary mappings/migrations stay excluded.",
+    "D-18.4-03": "T018 is explicitly SelfContained controlled host-composition RED using controlled HTTP/selection/certificate identity and no native process, listener, external DB or credential. T019 implements that missing composition. T020 authors/runs actual process and two-host PostgreSQL/certificate qualification only after root establishes explicitly authorized owned resources; it uses test-only/direct verification of already GREEN behavior rather than fabricated RED."
+  },
+  "self_review": {
+    "task_order_and_ownership": "T001-T030 IDs and coherent test-owner RED then disjoint production-owner GREEN order are preserved. Resource-heavy process/PostgreSQL tasks are later, conditional qualification with explicit suite classification; shared Program.cs, store, suite inventory and container use are serialized.",
+    "scope_and_sources": "All four user stories and accepted FR/design coverage remain. Tasks preserve exact Story 18.1 approval/issuer/context/three-function boundaries and exclude JDT-LS, CodeGraph, Scan/Worker dispatch, paid provider execution, Knowledge publication/read and Chat.",
+    "project_lesson_precaution": "The Story 18.1 callable public-seam lesson is applied to the actual new adapter. PostgreSQL tasks prove the complete schema/history on fresh runner-owned databases rather than relying on early model-only checks; suite inventory and safe launcher rules remain explicit.",
+    "hooks": "Readable .specify/extensions.yml registers no before_tasks or after_tasks hook."
+  },
+  "checks": {
+    "task_format": "30 sequential T001-T030 checklist lines; US1-US4 labels retained; no malformed line.",
+    "plan_task_design_content": "Installed validate_plan_implementation_design(plan, tasks, require_explicit=True) returned no errors and every accepted R/I/S/A/F/L/T ID remains cited on a task checklist line.",
+    "whitespace": "Direct tasks.md whitespace scan passed; root must run staged git diff --cached --check before checkpoint."
+  },
+  "authority_effect": {
+    "recovery_count_changed": false,
+    "pause_at_changed": false,
+    "approval_granted": false,
+    "workflow_state_changed_by_author": false,
+    "production_or_test_code_written": false
+  }
+}

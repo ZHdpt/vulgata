@@ -1,0 +1,66 @@
+{
+  "observed_after": {
+    "path": "specs/017-october-batch-setup/evidence/transitions/transition-0009-plan-review-03-correction-self-review.json",
+    "sha256": "1c371e68b13697fe32f81f6741ddc653bb22c60234ea4f52d0fc3c1ba229ede2"
+  },
+  "raw_result": {
+    "schema_version": "1.0",
+    "gate": "plan-review",
+    "verdict": "ACCEPT",
+    "reviewed_commit": "f190f8dc1d19977c64b4316f8ac9ae27b85a325a",
+    "reviewed_boundary": {
+      "base_commit": "f190f8dc1d19977c64b4316f8ac9ae27b85a325a",
+      "candidate_commit": null,
+      "diff_sha256": "27eb5023b42400be336158d4b40432ad2736fe424b53313a65734fae80335a66",
+      "artifact_hashes": {
+        "specs/017-october-batch-setup/spec.md": "09bd29f496be4a9c956a460f9d1fc8af952f88c031324e528becb19bbc15b3bc",
+        "specs/017-october-batch-setup/plan.md": "94bf6ce9c4d4cc9019453adaf1cea17921be62f30550e8ae4c221c7b7eb46821",
+        "specs/017-october-batch-setup/research.md": "a9eb13861f0e0099289f63c0e05abb20c549d7a08c99a576f46d5943d193636b",
+        "specs/017-october-batch-setup/data-model.md": "a5547480c2a53169c0c925be690b8c5016f5af94fec7373e327cf89739b15537",
+        "specs/017-october-batch-setup/quickstart.md": "7d839c62f1ab26797d665781ebc91a8b1ecf76f6f6fee8c12767722273382a7d",
+        "specs/017-october-batch-setup/contracts/batch-setup-selection.md": "81acdf656815cfb5455b09b9cacbbae54ea0f4ccf4aa5a74058f985e4cc36557",
+        "specs/017-october-batch-setup/contracts/provider-binding.md": "0c59b9d803c2d6770b9ebaf8d060bb73f6a6dd40b91a33947f72a033db48e3cd"
+      },
+      "owned_paths": [
+        "specs/017-october-batch-setup/spec.md",
+        "specs/017-october-batch-setup/plan.md",
+        "specs/017-october-batch-setup/research.md",
+        "specs/017-october-batch-setup/data-model.md",
+        "specs/017-october-batch-setup/quickstart.md",
+        "specs/017-october-batch-setup/contracts/batch-setup-selection.md",
+        "specs/017-october-batch-setup/contracts/provider-binding.md"
+      ]
+    },
+    "reviewed_artifacts": [
+      "AGENTS.md",
+      "docs/agents/project-state.md",
+      "docs/project-lessons.md",
+      "docs/UBIQUITOUS_LANGUAGE.md",
+      "docs/bmad/epics.md",
+      "docs/bmad/planning-artifacts/october-release-epics.md",
+      "docs/bmad/planning-artifacts/architecture.md",
+      "docs/bmad/planning-artifacts/architecture/ARCHITECTURE-SPINE.md",
+      "docs/bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md",
+      ".specify/memory/constitution.md",
+      "specs/017-october-batch-setup/spec.md",
+      "specs/017-october-batch-setup/plan.md",
+      "specs/017-october-batch-setup/research.md",
+      "specs/017-october-batch-setup/data-model.md",
+      "specs/017-october-batch-setup/quickstart.md",
+      "specs/017-october-batch-setup/contracts/batch-setup-selection.md",
+      "specs/017-october-batch-setup/contracts/provider-binding.md",
+      "specs/017-october-batch-setup/evidence/plan-review-01.json",
+      "specs/017-october-batch-setup/evidence/plan-review-02.json",
+      "specs/017-october-batch-setup/evidence/plan-review-03.json",
+      "specs/017-october-batch-setup/evidence/plan-review-03-correction-self-review-result-01.json",
+      "specs/017-october-batch-setup/evidence/story-18-1-baseline-integration-01.json",
+      "specs/016-contained-source-tools/contracts/prepared-source-tools.md",
+      "specs/016-contained-source-tools/evidence/final-verification-01.json",
+      "src/dotnet/Vulgata.Core/DomainServices/PreparedSourceContracts.cs",
+      "src/dotnet/Vulgata.Infrastructure/Source/PreparedSourceContextIssuer.cs",
+      "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedSourceFunctions.cs"
+    ],
+    "findings": [],
+    "summary": "ACCEPT for this plan-only boundary. Ordered prior raw verdicts were plan-review-01, plan-review-02 and plan-review-03. P-18.4-01 remains resolved. P-18.4-02 is resolved by the in-scope minimal generator prepare/select executable and real two-host selection checks. P-18.4-03 is resolved by the closed Web authorization routes, separate operator and generator proof, bounded cancellation, sanitized API failures and actual callable selector. P-18.4-04 is resolved by current specification and review wording. The plan preserves exact owned-database/batch isolation, context provenance, explicit provider binding, ordinary-startup isolation and Story 18.1's approval, mandatory current-authority verifier, context lifetime and three closed Worker functions. Architecture classification and independent early review are required and satisfied. No current AGENTS.md planned-change trigger is established: the plan adds or changes no Worker Agent tool, Scan strategy or PRD requirement; a later expansion would require reassessment. Current workflow and deterministic plan-content validation returned no errors. Read-only SpecKit analyze prerequisite reported tasks.md absent, as expected before task generation, so task coverage remains unreviewed. This verdict grants neither implementation approval nor runtime or resource permission."
+  }
+}
