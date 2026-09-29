@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Security.Cryptography;
 using System.Text;
 using Vulgata.Core.DomainServices;
@@ -36,7 +37,8 @@ public sealed class RevisionBoundSourceReaderTests
         "    public GreetingService(GreetingFormatter formatter) {\n" +
         "        this.formatter = Objects.requireNonNull(formatter);";
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ReadAsync_UsesOnlyVerifiedRevisionLeaseAndReturnsExactBoundedEvidence()
     {
         string fixtureRoot = FindFixtureRepositoryRoot();
@@ -135,7 +137,8 @@ public sealed class RevisionBoundSourceReaderTests
         Assert.DoesNotContain("\\", missing.Failure.Diagnostic, StringComparison.Ordinal);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ReadAsync_FullCrLfFileRange_PreservesExactSourceBytes()
     {
         string root = Path.Combine(
@@ -179,7 +182,8 @@ public sealed class RevisionBoundSourceReaderTests
         }
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void RevisionBoundSourceRequest_RejectsUnboundedOrEscapingRangesBeforeThePort()
     {
         Assert.Throws<ArgumentException>(() => new RevisionBoundSourceRequest(

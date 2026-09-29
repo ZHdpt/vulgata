@@ -1,0 +1,37 @@
+{
+  "kind": "analysis",
+  "stage": "diagnosis",
+  "episode_id": "18-1/implementation/1",
+  "at_count": 8,
+  "source_commit": "3cd0151d34872cc9ad15ae764279235fcf127669",
+  "failed_obligation": "T027 must establish T026's complete 63-test retained-source Git-bound regression boundary under the explicit PostgreSql suite.",
+  "failure_source": {
+    "path": "specs/016-contained-source-tools/evidence/convergence-result-07.json",
+    "sha256": "965de0e631421b18d01acbb95c301eefd1c76c4610f896cb4c9db44ea6dbc2db"
+  },
+  "findings": [
+    {
+      "id": "D18.1-08-A",
+      "classification": "unfinished accepted qualification",
+      "evidence": "T026 explicitly names RetainedSourceReadContextTests, RetainedSourceRangeReadTests, and RetainedSourceCaptureTests. implementation-verification-01 records the 63-test selection as blocked before assertions. The later 27/27 correction selection covered only a subset, so no evidence proves all 63 cases.",
+      "owner": "tests",
+      "correction": "Complete T027 with the exact PostgreSql-suite command appended to tasks.md and require 63 passed, zero failed, zero skipped."
+    },
+    {
+      "id": "D18.1-08-B",
+      "classification": "now-available owned resource route",
+      "evidence": "The committed eng/test.ps1 PostgreSql route provisions a labeled PostgreSQL 17 container and volume with generated credentials, a dynamic loopback port, pre-acquisition guards, and bounded cleanup. It clears application and .env database configuration before execution.",
+      "owner": "tests",
+      "correction": "Use that runner without loading .env values; preserve its logs and counts separately from the configured SelfContained final gate."
+    }
+  ],
+  "failed_approaches": [
+    "The original T026 qualification could not start because its PostgreSQL prerequisite was unavailable or unauthorized.",
+    "The later 27-test correction run proved selected fixture boundaries but did not execute the complete 63-test T026 selection."
+  ],
+  "changed_approach": "Use the repository-owned PostgreSql suite and its ephemeral PostgreSQL 17 container for the exact T027 filter. This supplies the missing resource boundary without reusing .env secrets or changing Story 18.1 production code, tests, or assertions.",
+  "next_check": "Run pwsh -NoProfile -File eng/test.ps1 -Suite PostgreSql -Filter 'FullyQualifiedName~Vulgata.Tests.RetainedSource.RetainedSourceReadContextTests|FullyQualifiedName~Vulgata.Tests.RetainedSource.RetainedSourceRangeReadTests|FullyQualifiedName~Vulgata.Tests.RetainedSource.RetainedSourceCaptureTests' and require 63 passed with zero failed/skipped plus successful owned-resource cleanup.",
+  "stopping_condition": "Any substantive negative outcome is recovery result 9 and returns to the human without retry.",
+  "unchanged_scope": "No product behavior, API, schema, migration, Worker tool, Scan strategy, PRD requirement, or qualification assertion changes.",
+  "summary": "The remaining gap is a never-completed T026 qualification, not a product diagnosis. The repository now provides the exact owned PostgreSql route required to execute T027 once."
+}

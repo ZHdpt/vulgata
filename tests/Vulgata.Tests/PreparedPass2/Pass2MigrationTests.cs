@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Reflection;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
@@ -28,7 +29,8 @@ public sealed class Pass2MigrationTests
         "Pass2RetrievalResults",
     ];
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Story124Model_RegistersV2EntitiesAndPrePublicationBindings()
     {
         using VulgataDbContext context = CreateSqliteContext();
@@ -75,7 +77,8 @@ public sealed class Pass2MigrationTests
                 ]));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Story124Migration_IsOneCohesiveAdditiveMigration_WithRollbackOperations()
     {
         using VulgataDbContext context = CreateSqliteContext();
@@ -111,7 +114,8 @@ public sealed class Pass2MigrationTests
             operation => V2TableNames.Contains(operation.Name, StringComparer.Ordinal));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Story124Migration_AfterApply_HasNoPendingModelChanges_AndLegacyRowsRemainMapped()
     {
         using SqliteConnection connection = new("Data Source=:memory:");
@@ -133,7 +137,8 @@ public sealed class Pass2MigrationTests
         Assert.NotNull(typeof(VulgataDbContext).GetProperty(nameof(VulgataDbContext.Uncertainties)));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Story124Rollback_IsDefinedAgainstTheLastStory123Migration()
     {
         using VulgataDbContext context = CreateSqliteContext();

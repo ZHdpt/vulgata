@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Diagnostics;
 using System.Text;
 using Vulgata.Core.DomainServices;
@@ -9,7 +10,8 @@ namespace Vulgata.Tests;
 
 public sealed class FrameworkDetectionArchiveLeaseTests
 {
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task ArchiveOnlyLease_CommittedPackageManifest_ReturnsRevisionBoundFrameworkEvidenceAsync()
     {
         await using ArchiveLeaseFixture fixture = await CreateArchiveLeaseFixtureAsync();
@@ -30,7 +32,8 @@ public sealed class FrameworkDetectionArchiveLeaseTests
         Assert.Equal(fixture.ProfiledRevision, lease.ProfiledRevision);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task ArchiveOnlyLease_ValidIdentity_VerifiesBeforeAndAfterReadsAsync()
     {
         await using ArchiveLeaseFixture fixture = await CreateArchiveLeaseFixtureAsync();
@@ -46,7 +49,8 @@ public sealed class FrameworkDetectionArchiveLeaseTests
         Assert.Equal(2, recordingLease.VerifyCallCount);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task ArchiveOnlyLease_IdentityMutatesBeforeFinalVerification_FailsClosedAsync()
     {
         await using ArchiveLeaseFixture fixture = await CreateArchiveLeaseFixtureAsync();
@@ -76,7 +80,8 @@ public sealed class FrameworkDetectionArchiveLeaseTests
         Assert.DoesNotContain(fixture.Lease.RootPath, result.Error, StringComparison.Ordinal);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task ArchiveOnlyLease_DisposedLease_FailsClosedWithoutEvidenceAsync()
     {
         await using ArchiveLeaseFixture fixture = await CreateArchiveLeaseFixtureAsync();

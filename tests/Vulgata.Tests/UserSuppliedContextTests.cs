@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Diagnostics;
 using System.Net;
 using System.Net.Http.Json;
@@ -23,7 +24,8 @@ public sealed class UserSuppliedContextTests : IClassFixture<LoginLogoutTests.Cu
         _factory = factory;
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task Administrator_CanSaveAndReadGlobalContext_AndSettingsPageShowsSection()
     {
         await EnsureApplicationStartedAsync();
@@ -62,7 +64,8 @@ public sealed class UserSuppliedContextTests : IClassFixture<LoginLogoutTests.Cu
         Assert.Contains("全局业务术语：订单、履约、结算。", html, StringComparison.Ordinal);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task AssignedSystemOwner_CanSaveSystemAndRepositoryContexts_AndDashboardShowsSections()
     {
         await EnsureApplicationStartedAsync();
@@ -146,7 +149,8 @@ public sealed class UserSuppliedContextTests : IClassFixture<LoginLogoutTests.Cu
         Assert.Contains("履约仓库", html, StringComparison.Ordinal);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task ManagementUser_CanSaveStandaloneRepositoryContext()
     {
         await EnsureApplicationStartedAsync();
@@ -178,7 +182,8 @@ public sealed class UserSuppliedContextTests : IClassFixture<LoginLogoutTests.Cu
         Assert.Equal("独立仓库上下文：所有管理用户共享。", readBack.CurrentContext);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task User_CannotWriteContextEndpoints()
     {
         await EnsureApplicationStartedAsync();

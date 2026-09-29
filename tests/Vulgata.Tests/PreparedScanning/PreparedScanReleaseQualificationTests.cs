@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Diagnostics;
 using System.Reflection;
 using System.Security.Cryptography;
@@ -44,7 +45,8 @@ public sealed class PreparedScanReleaseQualificationTests(ITestOutputHelper outp
         CatalogUnavailable,
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ProductionPairBuilder_MatchedReviewedProfile_PromotesEveryRequiredSegmentAsync()
     {
         await using ReleaseHarness harness = await ReleaseHarness.CreateAsync(output, reviewedPair: true);
@@ -67,7 +69,8 @@ public sealed class PreparedScanReleaseQualificationTests(ITestOutputHelper outp
         Assert.All(harness.JavaRequests, paths => Assert.NotEmpty(paths));
     }
 
-    [Theory]
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
     [InlineData(ReviewedSeedFixtureMode.Missing)]
     [InlineData(ReviewedSeedFixtureMode.Filtered)]
     [InlineData(ReviewedSeedFixtureMode.Unsafe)]
@@ -93,7 +96,8 @@ public sealed class PreparedScanReleaseQualificationTests(ITestOutputHelper outp
         Assert.Equal(0, harness.AnalysisEvents.Count(value => value.StartsWith("proof:", StringComparison.Ordinal)));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ProductionPairBuilder_MatchedReviewedProfile_SelectionOverflowPreservesRequiredSegmentsAsync()
     {
         await using ReleaseHarness harness = await ReleaseHarness.CreateAsync(
@@ -112,7 +116,8 @@ public sealed class PreparedScanReleaseQualificationTests(ITestOutputHelper outp
                 .Count(unit => unit.DirectBusinessScore == 1_100));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ProductionPairBuilder_NonMatchingPair_IsByteIdenticalToGenericSelectionAsync()
     {
         await using ReleaseHarness harness = await ReleaseHarness.CreateAsync(output);
@@ -128,7 +133,8 @@ public sealed class PreparedScanReleaseQualificationTests(ITestOutputHelper outp
             unit => unit.DirectBusinessScore == 1_100);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ProductionPairBuilder_MatchedReviewedProfile_CatalogUnavailableMapsClosedOutcomeAsync()
     {
         await using ReleaseHarness harness = await ReleaseHarness.CreateAsync(
@@ -144,7 +150,8 @@ public sealed class PreparedScanReleaseQualificationTests(ITestOutputHelper outp
         Assert.Equal(0, harness.AnalysisEvents.Count(value => value.StartsWith("proof:", StringComparison.Ordinal)));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void ReviewedProfileEvidence_IsScore1100AndAllRequiredSegmentsRemainMandatory()
     {
         bool parsed = Enum.TryParse(
@@ -191,7 +198,8 @@ public sealed class PreparedScanReleaseQualificationTests(ITestOutputHelper outp
         });
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void ReviewedProfileSelection_IsIndependentOfRepositoryAndCandidateOrder()
     {
         bool parsed = Enum.TryParse(
@@ -260,7 +268,8 @@ public sealed class PreparedScanReleaseQualificationTests(ITestOutputHelper outp
         }
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void PreparedJavaRangeSource_ExposesRevisionBoundExactTopLevelRangeSeam()
     {
         Type? sourceType = typeof(PreparedJdtSymbolSpan).Assembly.GetType(
@@ -286,7 +295,8 @@ public sealed class PreparedScanReleaseQualificationTests(ITestOutputHelper outp
         Assert.NotNull(resultType.GetProperty("Failure"));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ProductionPairBuilder_OversizedJava_ConsumesExactRangesOrClosesWholeFileAsync()
     {
         await using ReleaseHarness harness = await ReleaseHarness.CreateAsync(output);
@@ -359,7 +369,8 @@ public sealed class PreparedScanReleaseQualificationTests(ITestOutputHelper outp
         }
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ProductionPairBuilder_ThreeRunsIncludingReversedInputs_ProducesIdenticalSc001OutputsAsync()
     {
         await using ReleaseHarness harness = await ReleaseHarness.CreateAsync(output);
@@ -380,7 +391,8 @@ public sealed class PreparedScanReleaseQualificationTests(ITestOutputHelper outp
         harness.AssertTimingBounds();
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ProductionPairBuilder_OversizedEligibleXml_IsSplitIntoBoundedFileCodeUnitsAsync()
     {
         await using ReleaseHarness harness = await ReleaseHarness.CreateAsync(output);
@@ -405,7 +417,8 @@ public sealed class PreparedScanReleaseQualificationTests(ITestOutputHelper outp
         });
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ProductionPairBuilder_MatchingXmlCatalogEvidence_ProducesClassificationsAsync()
     {
         await using ReleaseHarness harness = await ReleaseHarness.CreateAsync(output);
@@ -425,7 +438,8 @@ public sealed class PreparedScanReleaseQualificationTests(ITestOutputHelper outp
             classification.RelativePath.EndsWith("application.xml", StringComparison.Ordinal));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ProductionPairBuilder_RelatedExpansion_IsBoundedAfterReadinessAndFallsBackDeterministicallyAsync()
     {
         await using ReleaseHarness harness = await ReleaseHarness.CreateAsync(output);
@@ -520,7 +534,8 @@ public sealed class PreparedScanReleaseQualificationTests(ITestOutputHelper outp
                 audit.Reason == PreparedScanAuditReason.RelatedFileExpansionFailed);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ProductionPairBuilder_EmptyOrdinalFirstJava_IsExcludedFromReadinessCandidatesAsync()
     {
         await using ReleaseHarness harness = await ReleaseHarness.CreateAsync(output);
@@ -540,7 +555,8 @@ public sealed class PreparedScanReleaseQualificationTests(ITestOutputHelper outp
             });
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ProductionPairBuilder_InventoryOutcomesBecomeCanonicalAuditsAndWarningsAsync()
     {
         await using ReleaseHarness harness = await ReleaseHarness.CreateAsync(output);

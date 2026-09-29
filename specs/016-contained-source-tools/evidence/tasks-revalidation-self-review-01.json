@@ -1,0 +1,13 @@
+{
+  "kind": "self-review",
+  "stage": "tasks",
+  "outcome": "passed",
+  "summary": "Revalidated unchanged tasks against the corrected plan. Coverage, dependencies, RED/GREEN ordering and format remain valid; no correction or write was needed.",
+  "input_hashes": {
+    "specs/016-contained-source-tools/plan.md": "926982636796b020bc9f22af3aab52214ddfc809bfef9fdcabaf85b32637884e",
+    "specs/016-contained-source-tools/tasks.md": "dcc72158a1a8ad029f492bd90e063399ce53bfa5c65990f7ac454f19ee377d20"
+  },
+  "owned_paths": [
+    "specs/016-contained-source-tools/tasks.md"
+  ]
+}

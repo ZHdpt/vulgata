@@ -1,0 +1,5 @@
+Command: dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter "FullyQualifiedName~Vulgata.Tests.ExactResolutionProfileTests|FullyQualifiedName=Vulgata.Tests.RetainedSource.RetainedSourceCaptureTests.Composition_InvalidSourceStorageConfiguration_FailsClosedBeforeCapture|FullyQualifiedName=Vulgata.Tests.Migrations.DurableScanConcurrencyPostgreSqlTests.PostgreSql17_RecoveryBatch_AcknowledgementLostAfterCommit_ReplaysWithoutDuplicateStateAdvance" --logger "console;verbosity=minimal"
+Source commit: 6dc584b0
+
+Build completed with the repository's existing warnings and produced Vulgata.Tests.dll.
+Passed!  - Failed: 0, Passed: 27, Skipped: 0, Total: 27, Duration: 16 s - Vulgata.Tests.dll (net10.0)

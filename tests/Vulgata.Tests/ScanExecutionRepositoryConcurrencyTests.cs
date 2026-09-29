@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Collections.Concurrent;
 using System.Data.Common;
 using Microsoft.Data.Sqlite;
@@ -13,7 +14,8 @@ public sealed class ScanExecutionRepositoryConcurrencyTests
 {
     private const string ProfiledRevision = "0123456789abcdef0123456789abcdef01234567";
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task PersistAsync_TwoStaleRestartObservations_ReservesBeforeRevalidation()
     {
         string databasePath = Path.Combine(

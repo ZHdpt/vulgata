@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -7,7 +8,8 @@ namespace Vulgata.Tests;
 
 public sealed class LoggingConfigurationTests
 {
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ProductionHost_CriticalLog_WritesConfiguredLocalFileAsync()
     {
         string marker = $"local-file-log-{Guid.NewGuid():N}";

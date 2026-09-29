@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
@@ -27,7 +28,8 @@ public sealed class AtomicDocumentJobCommitTests
     private const string _fileIdentityHash =
         "a3f15bb08b2bd1684e84c4b2e2d673282c0e31f27a6a2e56aeb894ecff0c10f4";
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task CommitAsync_RunningJob_CreatesExactlyOneImmutableDocumentGraphAndCompletesTheMatchingJob()
     {
         await using CommitFixture fixture = await CommitFixture.CreateAsync();
@@ -55,7 +57,8 @@ public sealed class AtomicDocumentJobCommitTests
         Assert.Null(job.LeaseToken);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task CommitAsync_NewCommit_RequiresExactExpectedVersionAndLeaseToken()
     {
         await using CommitFixture fixture = await CommitFixture.CreateAsync();
@@ -75,7 +78,8 @@ public sealed class AtomicDocumentJobCommitTests
             (await fixture.Context.Set<ScanJobExecution>().SingleAsync()).State);
     }
 
-    [Theory]
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
     [InlineData(1)]
     [InlineData(2)]
     [InlineData(3)]
@@ -103,7 +107,8 @@ public sealed class AtomicDocumentJobCommitTests
         Assert.Equal(fixture.LeaseToken, job.LeaseToken);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task CommitAsync_LostResponseReplay_ExactCompletedIdentityAndContentReturnsMutationFreeCommittedDespiteStaleLease()
     {
         await using CommitFixture fixture = await CommitFixture.CreateAsync();
@@ -126,7 +131,8 @@ public sealed class AtomicDocumentJobCommitTests
         Assert.Equal(1, await fixture.Context.Set<DocumentVersion>().CountAsync());
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task CommitAsync_NewCommit_WithWellShapedNonCanonicalFingerprint_ConflictsBeforeAnyDocumentOrJobMutation()
     {
         await using CommitFixture fixture = await CommitFixture.CreateAsync();
@@ -157,7 +163,8 @@ public sealed class AtomicDocumentJobCommitTests
         Assert.Null(after.CommittedDocumentVersionId);
     }
 
-    [Theory]
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
     [MemberData(nameof(NonIdenticalCompletedReplays))]
     public async Task CommitAsync_CompletedReplay_WithAnyNonIdenticalCanonicalIdentityFingerprintOrContentConflictsWithoutMutation(
         Func<ScanJobResultCommitRequest, ScanJobResultCommitRequest> change)
@@ -206,7 +213,8 @@ public sealed class AtomicDocumentJobCommitTests
             request with { WorkerResult = ChangeContent(request.WorkerResult) })],
     ];
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task CommitAsync_CancelledBeforeCommit_RollsBackWithoutCompletingTheJob()
     {
         await using CommitFixture fixture = await CommitFixture.CreateAsync();

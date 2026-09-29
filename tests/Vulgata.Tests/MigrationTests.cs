@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
@@ -16,7 +17,8 @@ public sealed class PreScanMigrationTests
     private const string _migrationSuffix = "_AddConservativePreScanGate";
     private const string _npgsqlProvider = "Npgsql.EntityFrameworkCore.PostgreSQL";
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void AddConservativePreScanGate_Operations_AreAdditiveCompleteAndReversible()
     {
         using VulgataDbContext db = CreateContext();
@@ -32,7 +34,8 @@ public sealed class PreScanMigrationTests
         AssertDownOperations(migration.DownOperations);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void PreScanModel_ConstraintsAndOwnership_MatchApprovedAggregate()
     {
         using VulgataDbContext db = CreateContext();
@@ -119,7 +122,8 @@ public sealed class PreScanMigrationTests
             newTableNames);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void AddConservativePreScanGate_ApplyAndRollback_RestoresBaselineAtomically()
     {
         using var connection = new SqliteConnection(

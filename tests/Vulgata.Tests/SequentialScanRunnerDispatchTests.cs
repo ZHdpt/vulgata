@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using Vulgata.Core.DomainServices;
 using Vulgata.Core.Entities;
 
@@ -239,7 +240,8 @@ public sealed class SequentialScanRunnerDispatchTests
 
     // --- T027: RunPass1 transitions Pass1Planning → Pass1Running and sets TotalJobCount ---
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task RunPass1_TransitionsToPass1Running_AndSetsTotalJobCountFromCodeUnits()
     {
         Guid repositoryId = NonEmptyGuid(3);
@@ -265,7 +267,8 @@ public sealed class SequentialScanRunnerDispatchTests
 
     // --- T028: packets constructed per Code Unit in deterministic order (FilePath ordinal, then LineStart, then CodeUnitId) ---
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task RunPass1_DispatchesPacketsInDeterministicOrder_FilePathThenLineStartThenId()
     {
         Guid repositoryId = NonEmptyGuid(3);
@@ -298,7 +301,8 @@ public sealed class SequentialScanRunnerDispatchTests
 
     // --- T029: packets dispatched strictly one at a time (no Task.WhenAll, no concurrency) ---
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task RunPass1_DispatchesStrictlyOneAtATime_NoOverlap()
     {
         Guid repositoryId = NonEmptyGuid(3);
@@ -323,7 +327,8 @@ public sealed class SequentialScanRunnerDispatchTests
 
     // --- T030: each packet names kind, bounded source slice, exact Code Unit identity, Profiled Revision; no unauthorized content ---
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task RunPass1_EachPacketCarriesExactIdentityBoundedSliceAndNoSecretsOrSourceText()
     {
         Guid repositoryId = NonEmptyGuid(3);
@@ -373,7 +378,8 @@ public sealed class SequentialScanRunnerDispatchTests
 
     // --- T031: on Valid, RecordValid clears InFlightJobId and increments CompletedJobCount; InFlightJobId is set during dispatch ---
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task RunPass1_OnValidResult_ClearsInFlightJobIdAndIncrementsCompletedCount()
     {
         Guid repositoryId = NonEmptyGuid(3);
@@ -411,7 +417,8 @@ public sealed class SequentialScanRunnerDispatchTests
 
     // --- T032: no concurrency/lease/replay/failover/retry/multi-Repository scheduling (negative assertion) ---
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task RunPass1_DoesNotIntroduceConcurrencyLeaseReplayFailoverRetryOrMultiRepositoryScheduling()
     {
         Guid repositoryId = NonEmptyGuid(3);
@@ -452,7 +459,8 @@ public sealed class SequentialScanRunnerDispatchTests
 
     // --- T036: when CompletedJobCount == TotalJobCount, runner transitions through Pass1Completed to Completed ---
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task RunPass1_OnAllValid_TransitionsThroughPass1CompletedToCompleted()
     {
         Guid repositoryId = NonEmptyGuid(3);
@@ -481,7 +489,8 @@ public sealed class SequentialScanRunnerDispatchTests
 
     // --- T037: terminal TerminalMessage is bounded Chinese, non-sensitive, and carries the exact count ---
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task RunPass1_TerminalMessageIsBoundedChineseNonSensitiveAndCarriesExactCount()
     {
         Guid repositoryId = NonEmptyGuid(3);
@@ -519,7 +528,8 @@ public sealed class SequentialScanRunnerDispatchTests
 
     // --- T038: TerminalAt >= StartedAt and terminal timestamp is set ---
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task RunPass1_TerminalAtGreaterThanOrEqualToStartedAt_AndTerminalTimestampSet()
     {
         Guid repositoryId = NonEmptyGuid(3);
@@ -545,7 +555,8 @@ public sealed class SequentialScanRunnerDispatchTests
 
     // --- T039: no deferred Pass 2 flow planning, flow-group clustering, Cross-Repository Resolution, retry, or failover ---
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task RunPass1_OnCompletion_DoesNotDeferPass2OrCrossRepositoryResolution()
     {
         Guid repositoryId = NonEmptyGuid(3);

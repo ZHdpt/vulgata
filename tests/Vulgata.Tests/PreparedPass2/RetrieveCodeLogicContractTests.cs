@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Reflection;
 using System.Text;
 using System.Text.Json;
@@ -30,7 +31,8 @@ public sealed class RetrieveCodeLogicContractTests
         "RelatedDocuments",
     ];
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public void RetrieveCodeLogic_PublicService_DeclaresTypedServerOwnedAsyncSeam()
     {
         Type? service = FindService();
@@ -65,7 +67,8 @@ public sealed class RetrieveCodeLogicContractTests
                          parameter.ParameterType != typeof(string));
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public void RetrieveCodeLogic_Request_ClosesTheFiveTypedOperations()
     {
         Type? service = FindService();
@@ -96,7 +99,8 @@ public sealed class RetrieveCodeLogicContractTests
             Enum.GetNames(operation.PropertyType).OrderBy(name => name));
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public void RetrieveCodeLogic_Result_IsTypedAndNotAnUnboundedRawPayload()
     {
         Type? service = FindService();
@@ -115,7 +119,8 @@ public sealed class RetrieveCodeLogicContractTests
         Assert.NotEmpty(resultType.GetProperties(BindingFlags.Instance | BindingFlags.Public));
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public void RetrieveCodeLogic_Item_ExposesClosedKindAndTypedBoundedDescriptor()
     {
         Type itemType = typeof(Pass2CodeLogicRetrievalItem);
@@ -157,7 +162,8 @@ public sealed class RetrieveCodeLogicContractTests
             property.Name.Contains("RepositoryAccessScope", StringComparison.OrdinalIgnoreCase));
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public void RetrieveCodeLogic_Item_ExposesTypedTransientDescriptorCoordinates()
     {
         Type itemType = typeof(Pass2CodeLogicRetrievalItem);
@@ -181,7 +187,8 @@ public sealed class RetrieveCodeLogicContractTests
         }
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public void RetrieveCodeLogic_Item_ExposesTypedTransientContentProjections()
     {
         Type itemType = typeof(Pass2CodeLogicRetrievalItem);
@@ -196,7 +203,8 @@ public sealed class RetrieveCodeLogicContractTests
         }
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public void RetrieveCodeLogic_Bounds_AreInclusiveAndExact()
     {
         Assert.Equal(8, Pass2RetrievalContracts.MaxCalls);
@@ -206,7 +214,8 @@ public sealed class RetrieveCodeLogicContractTests
         Assert.Equal(65_536, Pass2RetrievalContracts.MaxReturnedUtf8Bytes);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public void RetrieveCodeLogic_DurableRows_AreContentDarkAndUseClosedOutcomes()
     {
         Assert.Equal(
@@ -235,7 +244,8 @@ public sealed class RetrieveCodeLogicContractTests
         }
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task RetrieveCodeLogic_Search_UsesCurrentPersistedSectionsAndOpaqueResultsAsync()
     {
         await using RetrievalHarness harness = await RetrievalHarness.CreateAsync();
@@ -252,7 +262,8 @@ public sealed class RetrieveCodeLogicContractTests
         Assert.DoesNotContain("ledger", result.Code, StringComparison.OrdinalIgnoreCase);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task RetrieveCodeLogic_Search_RepeatedRequestIsCanonicallyOrderedAndDeduplicatedAsync()
     {
         await using RetrievalHarness harness = await RetrievalHarness.CreateAsync();
@@ -275,7 +286,8 @@ public sealed class RetrieveCodeLogicContractTests
         Assert.Equal(firstHandles.Length, firstHandles.Distinct(StringComparer.Ordinal).Count());
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task RetrieveCodeLogic_SearchIssuedSectionHandle_SectionsReturnsCurrentBoundedSectionAsync()
     {
         await using RetrievalHarness harness = await RetrievalHarness.CreateAsync();
@@ -302,7 +314,8 @@ public sealed class RetrieveCodeLogicContractTests
         Assert.True(returned.ReturnedUtf8Bytes > 0);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task RetrieveCodeLogic_SearchIssuedSectionHandle_SourceAnchorsReturnsSafeCurrentDescriptorAsync()
     {
         await using RetrievalHarness harness = await RetrievalHarness.CreateAsync();
@@ -332,7 +345,8 @@ public sealed class RetrieveCodeLogicContractTests
         });
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task RetrieveCodeLogic_SearchIssuedAnchorHandle_SourceExcerptReadsExactRevisionBoundSourceAsync()
     {
         await using RetrievalHarness harness = await RetrievalHarness.CreateAsync();
@@ -378,7 +392,8 @@ public sealed class RetrieveCodeLogicContractTests
         Assert.Equal(6, harness.SourceReader.LastRequest.ByteEndExclusive);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task RetrieveCodeLogic_SearchIssuedDocumentHandle_RelatedDocumentsFollowsOneReferencesHopAsync()
     {
         await using RetrievalHarness harness = await RetrievalHarness.CreateAsync();
@@ -406,7 +421,8 @@ public sealed class RetrieveCodeLogicContractTests
         Assert.True(related.ReturnedUtf8Bytes > 0);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task RetrieveCodeLogic_Sections_ReturnsExactTransientContentMarkdownAsync()
     {
         await using RetrievalHarness harness = await RetrievalHarness.CreateAsync();
@@ -440,7 +456,8 @@ public sealed class RetrieveCodeLogicContractTests
         Assert.Equal(expected.ContentMarkdown, contentProperty.GetValue(returned));
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task RetrieveCodeLogic_SourceExcerpt_ReturnsExactTransientReaderExcerptAsync()
     {
         await using RetrievalHarness harness = await RetrievalHarness.CreateAsync();
@@ -480,7 +497,8 @@ public sealed class RetrieveCodeLogicContractTests
         Assert.Equal("ledger", excerptProperty.GetValue(returned));
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task RetrieveCodeLogic_SourceExcerptWithoutContainedRange_ReturnsWholeSourceAnchorAsync()
     {
         await using RetrievalHarness harness = await RetrievalHarness.CreateAsync();
@@ -516,7 +534,8 @@ public sealed class RetrieveCodeLogicContractTests
         Assert.Null(harness.SourceReader.LastRequest?.ByteEndExclusive);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task RetrieveCodeLogic_InitialPacketSourceAnchorHandle_ReturnsWholeSourceAnchorAsync()
     {
         await using RetrievalHarness harness = await RetrievalHarness.CreateAsync();
@@ -548,7 +567,8 @@ public sealed class RetrieveCodeLogicContractTests
         Assert.Equal("ledger", returned.Excerpt);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task RetrieveCodeLogic_Sections_UsesCanonicalProviderSerializationByteCountAsync()
     {
         await using RetrievalHarness harness = await RetrievalHarness.CreateAsync();
@@ -572,7 +592,8 @@ public sealed class RetrieveCodeLogicContractTests
         Assert.Equal(independentlyComputedBytes, returned.ReturnedUtf8Bytes);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task RetrieveCodeLogic_AllItemKinds_UseCompleteIndependentProviderVisibleUtf8ByteAccountingAsync()
     {
         await using RetrievalHarness harness = await RetrievalHarness.CreateAsync();
@@ -675,7 +696,8 @@ public sealed class RetrieveCodeLogicContractTests
             relationship.ReturnedUtf8Bytes);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task RetrieveCodeLogic_ProviderCodec_ClosesWireFieldsAndMatchesEveryStoredCountAsync()
     {
         Type? codecType = typeof(Pass2RetrievalContracts).Assembly.GetType(
@@ -847,7 +869,8 @@ public sealed class RetrieveCodeLogicContractTests
         }
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task RetrieveCodeLogic_AcceptedHandlesAreCanonicalResultIdsAndDescriptorFingerprintsRemainSha256Async()
     {
         await using RetrievalHarness harness = await RetrievalHarness.CreateAsync();
@@ -881,7 +904,8 @@ public sealed class RetrieveCodeLogicContractTests
         }
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task RetrieveCodeLogic_ServerOwnedCallIdentity_IsAcceptedWithoutModelVisibleIdentityAsync()
     {
         await using RetrievalHarness harness = await RetrievalHarness.CreateAsync();
@@ -905,7 +929,8 @@ public sealed class RetrieveCodeLogicContractTests
                 "ToolCallIdFingerprint");
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task RetrieveCodeLogic_Search_ExposesRemainingBudgetAfterAcceptedCallAsync()
     {
         await using RetrievalHarness harness = await RetrievalHarness.CreateAsync();
@@ -933,7 +958,8 @@ public sealed class RetrieveCodeLogicContractTests
             Pass2RetrievalContracts.MaxReturnedUtf8Bytes - 1);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task RetrieveCodeLogic_SearchHandleChangesAcrossProviderAttemptsAsync()
     {
         await using RetrievalHarness harness = await RetrievalHarness.CreateAsync();
@@ -963,7 +989,8 @@ public sealed class RetrieveCodeLogicContractTests
         Assert.False(firstHandles.SequenceEqual(retryHandles));
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task RetrieveCodeLogic_StaleAnchorHandleAfterEvidenceChange_IsRefusedAsync()
     {
         await using RetrievalHarness harness = await RetrievalHarness.CreateAsync();
@@ -1002,7 +1029,8 @@ public sealed class RetrieveCodeLogicContractTests
         Assert.Equal(0, harness.SourceReader.ReadCalls);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task RetrieveCodeLogic_AnchorHandleChangesButVisibleByteCountRemainsExactWhenEvidenceChangesAsync()
     {
         await using RetrievalHarness harness = await RetrievalHarness.CreateAsync();
@@ -1046,7 +1074,8 @@ public sealed class RetrieveCodeLogicContractTests
         Assert.Equal(oldAnchor.ReturnedUtf8Bytes, newAnchor.ReturnedUtf8Bytes);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task RetrieveCodeLogic_Sections_UnknownOpaqueHandleIsClosedRefusalAsync()
     {
         await using RetrievalHarness harness = await RetrievalHarness.CreateAsync();
@@ -1062,7 +1091,8 @@ public sealed class RetrieveCodeLogicContractTests
         Assert.DoesNotContain("opaque-handle-not-issued-for-this-job", result.Code, StringComparison.Ordinal);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task RetrieveCodeLogic_SourceAnchors_UnknownOpaqueHandleIsClosedRefusalAsync()
     {
         await using RetrievalHarness harness = await RetrievalHarness.CreateAsync();
@@ -1077,7 +1107,8 @@ public sealed class RetrieveCodeLogicContractTests
         Assert.Empty(result.Items);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task RetrieveCodeLogic_SourceExcerpt_UnknownOpaqueHandleIsRefusedBeforeSourceReadAsync()
     {
         await using RetrievalHarness harness = await RetrievalHarness.CreateAsync();
@@ -1095,7 +1126,8 @@ public sealed class RetrieveCodeLogicContractTests
         Assert.Equal(0, harness.SourceReader.ReadCalls);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task RetrieveCodeLogic_RelatedDocuments_UnknownOpaqueHandleIsClosedRefusalAsync()
     {
         await using RetrievalHarness harness = await RetrievalHarness.CreateAsync();

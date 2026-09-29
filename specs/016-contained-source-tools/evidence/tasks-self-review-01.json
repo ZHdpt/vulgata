@@ -1,0 +1,13 @@
+{
+  "kind": "self-review",
+  "stage": "tasks",
+  "outcome": "passed",
+  "summary": "Tasks cover the accepted source grant, Windows no-follow containment, live authority, bounded list/read/search, truthful outcomes, cancellation, Agent wrappers and Git-bound regression. Behavioral changes use ordered RED/GREEN slices; fixture and contract setup use direct checks. No project-lessons file exists, so no lesson precaution was added.",
+  "input_hashes": {
+    "specs/016-contained-source-tools/tasks.md": "dcc72158a1a8ad029f492bd90e063399ce53bfa5c65990f7ac454f19ee377d20",
+    "specs/016-contained-source-tools/plan.md": "b4fb3ae8b08dcf38a21d42e6c424ac2188ff5708b0a9c669508d851480347364"
+  },
+  "owned_paths": [
+    "specs/016-contained-source-tools/tasks.md"
+  ]
+}

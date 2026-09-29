@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text.Json;
@@ -28,7 +29,8 @@ public sealed class PreparedChatIntegrationTests
 {
     private const string _applicationName = "Vulgata.Story115.ReleaseGate";
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task AuthenticatedBusinessInitialAndFollowUp_TraversesEachAcceptedBoundaryOnceAsync()
     {
         var system = new SystemEntity("支付系统", null, null, DateTimeOffset.UtcNow);
@@ -81,7 +83,8 @@ public sealed class PreparedChatIntegrationTests
             ports.Retriever.ConversationShapes);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task AuthenticatedItInitialAndFollowUp_TraversesEachAcceptedBoundaryOnceAsync()
     {
         var system = new SystemEntity("支付系统", null, null, DateTimeOffset.UtcNow);
@@ -134,7 +137,8 @@ public sealed class PreparedChatIntegrationTests
             ports.Retriever.ConversationShapes);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task AuthenticatedItFollowUp_InvokesConversationRefetchPortExactlyOnceAsync()
     {
         var system = new SystemEntity("支付系统", null, null, DateTimeOffset.UtcNow);
@@ -177,7 +181,8 @@ public sealed class PreparedChatIntegrationTests
         Assert.Equal(2, ports.PublicationOwner.CommitCount);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task AuthenticatedItFlow_WhenLexicalPrimaryIsReplaced_IsRejectedAsync()
     {
         var system = new SystemEntity("支付系统", null, null, DateTimeOffset.UtcNow);
@@ -216,7 +221,8 @@ public sealed class PreparedChatIntegrationTests
         Assert.Equal(0, ports.PublicationOwner.CommitCount);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task AuthenticatedItFlow_WhenRelationshipExpansionIsSkipped_IsRejectedAsync()
     {
         var system = new SystemEntity("支付系统", null, null, DateTimeOffset.UtcNow);
@@ -255,7 +261,8 @@ public sealed class PreparedChatIntegrationTests
         Assert.Equal(0, ports.PublicationOwner.CommitCount);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void ProductionComposition_ChatServices_ResolveAsScopedRelationalGraph()
     {
         using var factory = new LoginLogoutTests.CustomWebApplicationFactory();
@@ -330,7 +337,8 @@ public sealed class PreparedChatIntegrationTests
             secondScope.ServiceProvider.GetRequiredService<AuthenticationStateProvider>());
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ProductionComposition_PairedDataProtectionConfiguration_SharesPersistedProtectedSecretsAsync()
     {
         using var keyRing = new TemporaryKeyRingDirectory();
@@ -401,7 +409,8 @@ public sealed class PreparedChatIntegrationTests
                 .DecryptAsync(SecretPurposes.LlmApiKey, cipher));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ProductionComposition_KeyRingPathWithoutApplicationName_PreservesDefaultsAsync()
     {
         using var configuredPath = new TemporaryKeyRingDirectory();
@@ -423,7 +432,8 @@ public sealed class PreparedChatIntegrationTests
         Assert.Empty(Directory.EnumerateFileSystemEntries(configuredPath.Path));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ProductionComposition_ApplicationNameWithoutKeyRingPath_PreservesDefaultsAsync()
     {
         using var environment = new DataProtectionEnvironment(

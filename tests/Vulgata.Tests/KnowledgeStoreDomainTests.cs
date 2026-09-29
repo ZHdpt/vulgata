@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
@@ -10,7 +11,8 @@ namespace Vulgata.Tests;
 
 public sealed class KnowledgeStoreDomainTests
 {
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Materialize_ValidCanonicalContent_ProducesDeterministicFiniteProjection()
     {
         string input = KnowledgeStoreTestFixtures.CreateCanonicalJson();
@@ -57,7 +59,8 @@ public sealed class KnowledgeStoreDomainTests
             });
     }
 
-    [Theory]
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
     [InlineData("password=hunter2")]
     [InlineData("pwd=hunter2")]
     [InlineData("api_key=abc")]
@@ -108,7 +111,8 @@ public sealed class KnowledgeStoreDomainTests
             StringComparison.OrdinalIgnoreCase);
     }
 
-    [Theory]
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
     [MemberData(nameof(InvalidCanonicalJsonCases))]
     public void Materialize_InvalidCanonicalShape_RejectsClosedCode(string input)
     {
@@ -126,7 +130,8 @@ public sealed class KnowledgeStoreDomainTests
         Assert.Equal(KnowledgeRejectionCode.InvalidContent, exception.RejectionCode);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Materialize_FormCAndSafeCounterexamples_NormalizesWithoutFalsePositive()
     {
         var materializer = new KnowledgeDocumentMaterializer();
@@ -146,7 +151,8 @@ public sealed class KnowledgeStoreDomainTests
         Assert.Contains("/api/orders", result.IndexEntry.SearchText, StringComparison.Ordinal);
     }
 
-    [Theory]
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
     [MemberData(nameof(ExactBoundaryCases))]
     public void Materialize_ExactBoundary_AcceptsOrRejectsOneUnitOverflow(
         string input,
@@ -328,7 +334,8 @@ public sealed class KnowledgeStoreDomainTests
     private static string CreateWithSections(IReadOnlyList<CanonicalSectionFixture> sections) =>
         KnowledgeStoreTestFixtures.CreateCanonicalJson(sections: sections);
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void ValidateCommit_ExactGeneratedFromFlow_AcceptsClosedBusinessEvidence()
     {
         var materializer = new KnowledgeDocumentMaterializer();
@@ -345,7 +352,8 @@ public sealed class KnowledgeStoreDomainTests
         KnowledgeStoreContractValidator.ValidateCommit(commit);
     }
 
-    [Theory]
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
     [InlineData("anchor")]
     [InlineData("flow-title")]
     [InlineData("step-description")]
@@ -371,7 +379,8 @@ public sealed class KnowledgeStoreDomainTests
         Assert.True(storedValue.IsNormalized(NormalizationForm.FormC));
     }
 
-    [Theory]
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
     [InlineData("anchor")]
     [InlineData("flow-title")]
     [InlineData("step-description")]
@@ -411,7 +420,8 @@ public sealed class KnowledgeStoreDomainTests
             exception.RejectionCode);
     }
 
-    [Theory]
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
     [MemberData(nameof(UnsafeEvidenceTextCases))]
     public void ValidateCommit_SensitiveEvidenceText_RejectsClosedCode(
         string evidenceLocation,
@@ -438,7 +448,8 @@ public sealed class KnowledgeStoreDomainTests
         Assert.DoesNotContain(unsafeText, exception.Message, StringComparison.OrdinalIgnoreCase);
     }
 
-    [Theory]
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
     [MemberData(nameof(ForbiddenEvidenceControlCases))]
     public void ValidateCommit_ForbiddenEvidenceControl_RejectsClosedCode(
         string evidenceLocation,
@@ -581,7 +592,8 @@ public sealed class KnowledgeStoreDomainTests
             _ => throw new InvalidOperationException("Unknown evidence location."),
         };
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void ValidateCommit_UndefinedDocumentEdgeType_RejectsClosedCode()
     {
         var materializer = new KnowledgeDocumentMaterializer();
@@ -604,7 +616,8 @@ public sealed class KnowledgeStoreDomainTests
         Assert.Equal(KnowledgeRejectionCode.InvalidEdgeSemantic, exception.RejectionCode);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void ValidateCommit_UndefinedFlowTraceStepKind_RejectsClosedCode()
     {
         var materializer = new KnowledgeDocumentMaterializer();
@@ -635,7 +648,8 @@ public sealed class KnowledgeStoreDomainTests
         Assert.Equal(KnowledgeRejectionCode.InvalidFlow, exception.RejectionCode);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void ValidateCommit_NonContiguousFlowAndWrongEdgeSemantics_RejectsClosedCodes()
     {
         var materializer = new KnowledgeDocumentMaterializer();
@@ -682,7 +696,8 @@ public sealed class KnowledgeStoreDomainTests
         Assert.Equal(KnowledgeRejectionCode.InvalidFlow, flowException.RejectionCode);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void MoveCurrentVersion_ValidSuccessor_PreservesImmutableVersionChain()
     {
         var materializer = new KnowledgeDocumentMaterializer();

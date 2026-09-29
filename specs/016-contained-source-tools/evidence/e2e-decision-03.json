@@ -1,0 +1,34 @@
+{
+  "kind": "analysis",
+  "stage": "conditional-e2e",
+  "result": "skipped-covered",
+  "required": false,
+  "triggered_predicates": [
+    "authorization",
+    "multi-module integration"
+  ],
+  "coverage_override": {
+    "test_ids": [
+      "PreparedSourceGrantTests",
+      "PreparedSourceAuthorityLifecycleTests",
+      "PreparedSourceCancellationBudgetTests",
+      "PreparedSourceListTests",
+      "PreparedSourceRangeReadTests",
+      "PreparedSourceSearchTests",
+      "PreparedSourceToolFunctionTests"
+    ],
+    "rationale": "Direct production-seam tests cover every triggered Story 18.1 observable predicate. The latest corrections affect only historical artifact identity and test scheduling."
+  },
+  "correction_effect": "No user-visible workflow, product authorization behavior, persistence schema, migration, or integration contract changed.",
+  "excluded_claims": [
+    "real Worker/model/provider integration",
+    "immutable Source Snapshot behavior"
+  ],
+  "source_boundary": {
+    "base_commit": "4703e4fb9e268580988e976808316ced413f140f",
+    "candidate_commit": "6d63960b81c824529776005917e7e819453402ea",
+    "diff_sha256": "a397c328140a589a6f4c70dc98fa40fbd1140d21592e6ad25ad8652b736b9489"
+  },
+  "owner": "delivery-orchestrator",
+  "reason": "Existing direct integration coverage completely covers every triggered Story 18.1 predicate; the final test-only correction introduces no new product E2E predicate."
+}

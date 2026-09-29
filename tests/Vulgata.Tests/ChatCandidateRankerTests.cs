@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using Vulgata.Agents.ChatExecution;
 using Vulgata.Core.DomainServices;
 
@@ -5,7 +6,8 @@ namespace Vulgata.Tests;
 
 public sealed class ChatCandidateRankerTests
 {
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Rank_BusinessQuestionWithoutRelevantBusinessLogic_UsesRelevantCodeLogicFallback()
     {
         CandidateClaim unrelatedBusiness = Candidate("k1", "客户提交付款后完成订单。", false);
@@ -19,7 +21,8 @@ public sealed class ChatCandidateRankerTests
         Assert.Equal(["k2"], ranked.Select(candidate => candidate.CandidateHandle));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Rank_BusinessQuestionWithRelevantBusinessLogic_PrefersBusinessLogic()
     {
         CandidateClaim business = Candidate("k1", "客户登录后，系统更新会话。", false);
@@ -33,7 +36,8 @@ public sealed class ChatCandidateRankerTests
         Assert.Equal(["k1", "k2"], ranked.Select(candidate => candidate.CandidateHandle));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Rank_BusinessQuestionWithStrongerCodeLogicMatch_PreservesCodeLogicFallback()
     {
         CandidateClaim weakBusiness = Candidate("k1", "系统记录认证错误后更新客户会话。", false);
@@ -51,7 +55,8 @@ public sealed class ChatCandidateRankerTests
         Assert.Contains(ranked, candidate => candidate.CandidateHandle == "k1");
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Rank_BusinessQuestionWithStrongCodeLogicEvidence_PreservesCodeLogicFallback()
     {
         CandidateClaim business = Candidate(
@@ -71,7 +76,8 @@ public sealed class ChatCandidateRankerTests
         Assert.Equal(["k1", "k2"], ranked.Select(candidate => candidate.CandidateHandle));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Rank_FailureOutcomeQuestion_PrioritizesConsequenceOverSubjectOverlap()
     {
         CandidateClaim workflowEntry = Candidate(
@@ -91,7 +97,8 @@ public sealed class ChatCandidateRankerTests
         Assert.Equal("k2", ranked[0].CandidateHandle);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Rank_ItQuestion_PrefersTechnicalCandidateOverBusinessCandidate()
     {
         CandidateClaim business = Candidate("a1", "接口业务说明。", false);
@@ -105,7 +112,8 @@ public sealed class ChatCandidateRankerTests
         Assert.Equal("z1", ranked[0].CandidateHandle);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Rank_EqualScores_UsesCanonicalDocumentOrderInsteadOfCandidateHandle()
     {
         CandidateClaim firstDocument = CandidateWithIdentity(
@@ -129,7 +137,8 @@ public sealed class ChatCandidateRankerTests
         Assert.Equal(["z1", "a1"], ranked.Select(candidate => candidate.CandidateHandle));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Rank_NoLexicalMatch_DoesNotReturnUnrelatedFallbackCandidates()
     {
         CandidateClaim unrelated = CandidateWithIdentity(
@@ -147,7 +156,8 @@ public sealed class ChatCandidateRankerTests
         Assert.Empty(ranked);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Rank_ProviderCandidateRanking_RemainsCountBoundedAndSeparateFromSectionRetrieval()
     {
         CandidateClaim[] candidates = Enumerable.Range(1, 13)
@@ -168,7 +178,8 @@ public sealed class ChatCandidateRankerTests
         Assert.DoesNotContain(ranked, candidate => candidate.CandidateHandle == "k13");
     }
 
-    [Theory]
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
     [InlineData("移动端消费方和渠道提供方在会话更新中各自负责什么？", "k1")]
     [InlineData("认证错误次数检查操作类负责什么？", "k2")]
     [InlineData("登录认证错误次数超过上限会怎样？", "k2")]

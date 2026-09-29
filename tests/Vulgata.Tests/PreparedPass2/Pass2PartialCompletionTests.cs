@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Reflection;
 using Vulgata.Agents.WorkerExecution;
 using Microsoft.EntityFrameworkCore;
@@ -14,7 +15,8 @@ public sealed class Pass2PartialCompletionTests
     private static readonly DateTimeOffset CreatedAt =
         new(2026, 8, 26, 12, 0, 0, TimeSpan.Zero);
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public void CreatePlannedFlowGroup_IsDocumentlessUntilPublished()
     {
         FlowGroup group = CreateCompleteGroup();
@@ -29,7 +31,8 @@ public sealed class Pass2PartialCompletionTests
         Assert.Throws<InvalidOperationException>(() => group.Publish(Id(90_101)));
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public void CreateIncompleteFlowGroup_IsTerminalAndHasNoDocument()
     {
         FlowGroup group = FlowGroup.CreateIncomplete(
@@ -59,7 +62,8 @@ public sealed class Pass2PartialCompletionTests
         Assert.Null(group.BusinessLogicDocumentVersionId);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public void CreateBoundExcludedFlowGroup_IsTerminalAndHasNoDocument()
     {
         FlowGroup group = FlowGroup.CreateBoundExcluded(
@@ -89,7 +93,8 @@ public sealed class Pass2PartialCompletionTests
         Assert.Null(group.BusinessLogicDocumentVersionId);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public void BoundExcludedOmission_IsContentDarkAndReasonBounded()
     {
         Pass2Omission omission = Pass2Omission.CreateBoundExcluded(
@@ -104,7 +109,8 @@ public sealed class Pass2PartialCompletionTests
         Assert.Equal(Id(90_043), omission.ExactResolutionDecisionId);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public void Pass2Execution_RecordsPublishedAndFailedTerminalCountsWithoutChangingResolution()
     {
         Pass2Execution execution = Pass2Execution.CreatePlanning(
@@ -124,7 +130,8 @@ public sealed class Pass2PartialCompletionTests
         Assert.Equal(3, execution.StateVersion);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public void Pass2Execution_ZeroPlannedDenominator_DoesNotDeriveFromTerminalGraph()
     {
         Pass2Execution execution = Pass2Execution.CreatePlanning(
@@ -145,7 +152,8 @@ public sealed class Pass2PartialCompletionTests
         Assert.Equal(Pass2ExecutionState.Running, execution.State);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task RecoverAsync_TerminalDenominatorDrift_RefusesInsteadOfFallingBackAsync()
     {
         await using ExactCrossRepositoryTestFixture fixture =
@@ -200,7 +208,8 @@ public sealed class Pass2PartialCompletionTests
         Assert.Equal(0, persisted.PlannedCount);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public void Pass2JobExecution_CompletedPublicationRetainsImmutableDocumentIdentity()
     {
         Pass2JobExecution job = Pass2JobExecution.CreatePending(
@@ -222,7 +231,8 @@ public sealed class Pass2PartialCompletionTests
         Assert.Null(job.LeaseExpiresAt);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task Coordinator_ExhaustedJobWithNoPublishedDocument_CompletesWithWarningsAsync()
     {
         await using ExactCrossRepositoryTestFixture fixture =
@@ -293,7 +303,8 @@ public sealed class Pass2PartialCompletionTests
         Assert.Null(group.BusinessLogicDocumentVersionId);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task ResolutionStore_V2Authority_DoesNotPersistLegacyEvidenceRowAsync()
     {
         await using ExactCrossRepositoryTestFixture fixture =
@@ -310,7 +321,8 @@ public sealed class Pass2PartialCompletionTests
         Assert.Empty(await context.ExactCrossRepositoryEdgeEvidence.ToArrayAsync());
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task V2Decisions_SharedReferencesEdge_OwnIndependentContributionsAsync()
     {
         await using ExactCrossRepositoryTestFixture fixture =
@@ -340,7 +352,8 @@ public sealed class Pass2PartialCompletionTests
         }
     }
 
-    [Theory]
+    [Trait("Suite", "LocalTools")]
+    [SuiteTheory("LocalTools")]
     [InlineData("legacy-absent")]
     [InlineData("v2-contribution-tampered")]
     public async Task CommitAsync_V2Authority_UsesContributionsAndIgnoresLegacyEvidenceAsync(string mutation)
@@ -387,7 +400,8 @@ public sealed class Pass2PartialCompletionTests
         }
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task Coordinator_Status_ReportsContentDarkWarningInventoryWithoutChangingResolutionAsync()
     {
         await using ExactCrossRepositoryTestFixture fixture =
@@ -451,7 +465,8 @@ public sealed class Pass2PartialCompletionTests
         Assert.Equal(originalDecision.DocumentEdgeId, afterDecision.DocumentEdgeId);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task Coordinator_AllPublishedGroups_CompletesWithoutWarningsAndPreservesDocumentAsync()
     {
         await using ExactCrossRepositoryTestFixture fixture =
@@ -498,7 +513,8 @@ public sealed class Pass2PartialCompletionTests
         Assert.Equal(documentVersionId, group.BusinessLogicDocumentVersionId);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task Coordinator_MixedPublishedAndFailedGroups_CompletesWithWarningsAndPreservesSuccessAsync()
     {
         await using ExactCrossRepositoryTestFixture fixture =
@@ -621,7 +637,8 @@ public sealed class Pass2PartialCompletionTests
                 .ToArray());
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task CommitAsync_FinalSuccessfulPublication_TerminalizesExecutionAndCoordinationImmediatelyAsync()
     {
         object fixture = await CreateAcceptedCommitFixtureAsync();

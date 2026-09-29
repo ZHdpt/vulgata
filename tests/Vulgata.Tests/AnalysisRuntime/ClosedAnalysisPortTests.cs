@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Reflection;
 using Vulgata.Core.DomainServices;
 
@@ -5,7 +6,8 @@ namespace Vulgata.Tests.AnalysisRuntime;
 
 public sealed class ClosedAnalysisPortTests
 {
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void ClosedPorts_ExposeOnlyApprovedAsyncOperationsWithCancellationAndBoundedScope()
     {
         AssertAsyncPort(
@@ -46,7 +48,8 @@ public sealed class ClosedAnalysisPortTests
         }
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void CodeGraphPort_IsClosedToOnlyApprovedTypedCapabilities()
     {
         Type portType = typeof(ICodeGraphAnalysisPort);
@@ -66,7 +69,8 @@ public sealed class ClosedAnalysisPortTests
         AssertNoForbiddenPortMembers(portType);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void JavaSession_IsClosedToOnlyBoundedNavigationCapabilities()
     {
         Type portType = typeof(IJavaAnalysisSession);
@@ -83,7 +87,8 @@ public sealed class ClosedAnalysisPortTests
         AssertNoForbiddenPortMembers(portType);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void SourceReader_RequiresRevisionBoundExactRangeAndFiniteByteCap()
     {
         MethodInfo method = typeof(IRevisionBoundSourceReader).GetMethod("ReadAsync")!;
@@ -103,7 +108,8 @@ public sealed class ClosedAnalysisPortTests
         AssertNoForbiddenPortMembers(typeof(IRevisionBoundSourceReader));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void HealthProbe_ExposesBoundedIntegrityResultWithoutStartupToolLeakage()
     {
         MethodInfo method = typeof(IAnalysisRuntimeHealthProbe)
@@ -118,7 +124,8 @@ public sealed class ClosedAnalysisPortTests
             property => property.Name is "Status" or "FailureCode" or "Diagnostic");
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void ClosedResults_AreImmutableBoundedAndSanitized()
     {
         foreach (Type resultType in Ports
@@ -153,7 +160,8 @@ public sealed class ClosedAnalysisPortTests
         Assert.NotEmpty(closedFailureEnums);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void PublicAnalysisSurface_DoesNotExposeRawProtocolShellNetworkStoreOrFilesystemAccess()
     {
         foreach (Type portType in Ports)

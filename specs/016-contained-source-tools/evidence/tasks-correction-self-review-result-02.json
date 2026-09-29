@@ -1,0 +1,17 @@
+{
+  "observed_after": {
+    "path": "specs/016-contained-source-tools/evidence/workflow-transition-012-issuer-seam-plan-correction.json",
+    "sha256": "27c9ae892e9daaa32ce56cac52828ebef0d15160d811fd3451c3bfb589b7342e"
+  },
+  "raw_result": {
+    "kind": "self-review",
+    "stage": "tasks",
+    "outcome": "passed",
+    "summary": "Narrowly clarified T003/T004 against the corrected public issuer seam while preserving completed T001/T002 work, task order, accepted scope and all design-ID coverage.",
+    "input_hashes": {
+      "specs/016-contained-source-tools/plan.md": "547b9cfab482494e81f182c19570f8af59e01055bd5b293f8a44e357abefdcff",
+      "specs/016-contained-source-tools/tasks.md": "70d9cc0f033184be4d650ff72c49c6d9ba4ec8fb1405cf7e078707bd64555ca6"
+    },
+    "owned_paths": ["specs/016-contained-source-tools/tasks.md"]
+  }
+}

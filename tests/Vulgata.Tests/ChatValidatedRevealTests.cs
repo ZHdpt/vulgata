@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Reflection;
 using Vulgata.Agents.ChatExecution;
 using Vulgata.Core.DomainServices;
@@ -14,7 +15,8 @@ namespace Vulgata.Tests;
 /// </summary>
 public sealed class ChatValidatedRevealTests
 {
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void ChatPage_RequiresAcceptedPublicationCommitBeforeClientReveal()
     {
         Type? commitType = Type.GetType(
@@ -26,7 +28,8 @@ public sealed class ChatValidatedRevealTests
             property => property.PropertyType == commitType);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void RejectedProviderAssembly_ExposesNoRenderablePartialAnswer()
     {
         ChatProviderStreamAssemblyResult result = ChatProviderStreamAssemblyResult.RejectedResult(
@@ -42,7 +45,8 @@ public sealed class ChatValidatedRevealTests
         Assert.Null(result.PartialAnswer);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void PendingTurn_ContainsNoAcceptedAnswerOrEvidenceBeforeValidation()
     {
         ChatTurn turn = ChatTurn.CreatePending("尚未验证的问题", ChatMode.Business);
@@ -53,7 +57,8 @@ public sealed class ChatValidatedRevealTests
         Assert.Null(turn.Message);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void AcceptedTurn_Characterization_RevealsOnlyUnicodeTextElementsAfterAcceptance()
     {
         GroundedAnswer answer = CreateAnswer("e\u0301👨‍👩‍👧‍👦已验证");
@@ -72,7 +77,8 @@ public sealed class ChatValidatedRevealTests
         Assert.True(claim.IsComplete);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void ProgressiveRevealDirective_BindsUnicodeTextElementCostAndFixedSafetyMargin()
     {
         Type directiveType = typeof(PreparedChatRevealDirective);

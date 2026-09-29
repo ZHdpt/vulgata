@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Reflection;
 using Vulgata.Core.Entities;
 
@@ -10,7 +11,8 @@ namespace Vulgata.Tests.PreparedScanning;
 /// </summary>
 public sealed class PreparedScanAuditContractTests
 {
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void PreparedScanAuditFactory_ExposesOneCanonicalConstructionSeam()
     {
         Type factory = RequirePublicType(
@@ -34,7 +36,8 @@ public sealed class PreparedScanAuditContractTests
             property => property.Name == "Id");
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void PreparedScanAuditContract_PersistsAllTenPreimageFieldsAndExcludesDerivedIdentityInputs()
     {
         Type factory = RequirePublicType(

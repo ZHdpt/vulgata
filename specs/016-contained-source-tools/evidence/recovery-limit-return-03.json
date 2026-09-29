@@ -1,0 +1,46 @@
+{
+  "kind": "human-decision-request",
+  "stage": "verify",
+  "decision_id": "18-1/implementation/1/limit-return/3",
+  "status": "requested",
+  "episode_id": "18-1/implementation/1",
+  "failed_results": 7,
+  "pause_at": 7,
+  "transition_head": {
+    "path": "specs/016-contained-source-tools/evidence/workflow-transition-047-verify-test-limit-pause.json",
+    "sha256": "0f36a0ea80dba5ca1dd6ec6b4a7bff0502c9b97f27d05eabaaccff43888678f7"
+  },
+  "failure_evidence": {
+    "path": "specs/016-contained-source-tools/evidence/verify-test-failure-04.json",
+    "sha256": "928a765c5406aca7285cf6a0fc3171ada7390759882b6b7998538577e7d060a3",
+    "summary": "8 failed, 3246 passed, 15 skipped, 3269 total in 16 m 23 s"
+  },
+  "observed": [
+    "The exact configured Web build passed with zero errors.",
+    "The exact configured full test suite failed two PreparedPass1 streaming tests, five owned PostgreSQL cleanup paths, and one retained-source lock cleanup path.",
+    "The failures are outside the Story 18.1 PreparedSource production boundary, but they prevent the repository-wide verification gate from closing.",
+    "The prior focused correction boundary passed 27 of 27 tests; it did not make the full suite green."
+  ],
+  "ruled_out": [
+    "The earlier demo-profile canonical-byte mismatch is no longer present in result 7.",
+    "The two PostgreSQL-heavy classes serialized by the prior correction are not sufficient to make the repository-wide suite pass."
+  ],
+  "unknown": "No diagnosis of the eight new result-7 failures is authorized at the recovery ceiling, so their causes and whether they share one remediation remain unknown.",
+  "recommendation": "Keep Story 18.1 paused and authorize a separately scoped repository test-suite stabilization effort. After that effort independently restores the configured suite, resume Story 18.1 at verification without changing its accepted production boundary.",
+  "alternatives": [
+    {
+      "decision": "defer-story",
+      "consequence": "Retain the recoverable Story 18.1 checkpoint as incomplete and do no further verification work."
+    },
+    {
+      "decision": "separate-suite-stabilization",
+      "consequence": "Investigate and repair the repository-wide test infrastructure outside Story 18.1, then return to its invalidated convergence, lookback, quality, E2E, and final verification gates."
+    },
+    {
+      "decision": "higher-recovery-authority",
+      "consequence": "Continue the same recovery episode only if an explicit policy-supported finite allowance and changed diagnostic approach are supplied; a bare retry is insufficient."
+    }
+  ],
+  "requested_decision": "Choose whether to defer Story 18.1, authorize a separate suite-stabilization scope, or provide policy-supported higher recovery authority with a finite limit and changed approach.",
+  "requested_at": "2026-09-29T03:24:32.9519688Z"
+}

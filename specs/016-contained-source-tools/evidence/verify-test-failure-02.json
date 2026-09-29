@@ -1,0 +1,30 @@
+{
+  "observed_after": {
+    "path": "specs/016-contained-source-tools/evidence/workflow-transition-034-verify-infrastructure-resolved.json",
+    "sha256": "6a7d3a37b9c963d27581cfc056aa3370198488064875356e65ca4648d263db4b"
+  },
+  "raw_result": {
+    "kind": "failure",
+    "stage": "verify-test",
+    "source_commit": "305552699989efde75aeaf886e7ea0562fb2a459",
+    "observed_at": "2026-09-29T01:33:12.5079989Z",
+    "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --no-restore --filter \"FullyQualifiedName=Vulgata.Tests.ExactCrossRepositoryMigrationTests.AddExactCrossRepositoryResolution_PostgreSqlLifecycle_UsesDisposableDatabase\" --logger \"console;verbosity=minimal\"",
+    "exit_code": 1,
+    "failure": {
+      "test": "Vulgata.Tests.ExactCrossRepositoryMigrationTests.AddExactCrossRepositoryResolution_PostgreSqlLifecycle_UsesDisposableDatabase",
+      "postgres_code": "42P07",
+      "message": "relation GlobalContexts already exists",
+      "source_location": "tests/Vulgata.Tests/ExactCrossRepositoryMigrationTests.cs:415"
+    },
+    "diagnosis": {
+      "classification": "test-fixture migration-history configuration defect",
+      "evidence": "The isolated test reproduces against a new GUID-named database. Production and current PostgreSQL fixtures configure __EFMigrationsHistory in schema public, while this historical test constructs UseNpgsql without that mapping. The second context then attempts to replay InitialVulgataDomain and collides with vulgata.GlobalContexts.",
+      "falsified": [
+        "database name collision or retained database contamination",
+        "parallel full-suite interference"
+      ],
+      "next_check": "Configure the test context with MigrationsHistoryTable(\"__EFMigrationsHistory\", \"public\"), observe this exact isolated repro pass, then rerun affected migration tests and the full suite."
+    },
+    "summary": "Final verification exposed a deterministic historical test-fixture defect after infrastructure resolution. The isolated PostgreSQL migration lifecycle test fails because its context omits the repository-standard public migration-history mapping; this is not a Story 18.1 production behavior failure."
+  }
+}

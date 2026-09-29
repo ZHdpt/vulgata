@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Reflection;
 using System.Text;
 using System.Text.Json;
@@ -20,6 +21,7 @@ namespace Vulgata.Tests.PreparedPass2;
 /// </summary>
 public sealed class RetrieveCodeLogicPostgreSqlBudgetTests(ITestOutputHelper output)
 {
+    [Trait("Suite", "PostgreSql")]
     [PostgreSqlQualificationFact]
     public void RetrieveAsync_ServerOwnedCallIdentityOverloadIsAvailable()
     {
@@ -61,6 +63,7 @@ public sealed class RetrieveCodeLogicPostgreSqlBudgetTests(ITestOutputHelper out
         Assert.False(invocation!.IsPublic);
     }
 
+    [Trait("Suite", "PostgreSql")]
     [PostgreSqlQualificationFact]
     public async Task RetrieveAsync_ConcurrentReservationsKeepOrdinalsAndCountersConsistentAsync()
     {
@@ -104,6 +107,7 @@ public sealed class RetrieveCodeLogicPostgreSqlBudgetTests(ITestOutputHelper out
         });
     }
 
+    [Trait("Suite", "PostgreSql")]
     [PostgreSqlQualificationFact]
     public async Task RetrieveAsync_FourAdditionalDocumentsAreInclusiveAndFifthIsBoundedAsync()
     {
@@ -158,6 +162,7 @@ public sealed class RetrieveCodeLogicPostgreSqlBudgetTests(ITestOutputHelper out
         });
     }
 
+    [Trait("Suite", "PostgreSql")]
     [PostgreSqlQualificationFact]
     public async Task RetrieveAsync_FifthSectionForDocumentIsRefusedWithoutMutationAsync()
     {
@@ -202,6 +207,7 @@ public sealed class RetrieveCodeLogicPostgreSqlBudgetTests(ITestOutputHelper out
         });
     }
 
+    [Trait("Suite", "PostgreSql")]
     [PostgreSqlQualificationFact]
     public async Task RetrieveAsync_DuplicateHandleProjectionProducesOneCanonicalResultAndChargesOnceAsync()
     {
@@ -246,6 +252,7 @@ public sealed class RetrieveCodeLogicPostgreSqlBudgetTests(ITestOutputHelper out
         });
     }
 
+    [Trait("Suite", "PostgreSql")]
     [PostgreSqlQualificationFact]
     public async Task RetrieveAsync_ExactOrdinalReplayReturnsSameDescriptorsWithoutMutationAsync()
     {
@@ -295,6 +302,7 @@ public sealed class RetrieveCodeLogicPostgreSqlBudgetTests(ITestOutputHelper out
         });
     }
 
+    [Trait("Suite", "PostgreSql")]
     [PostgreSqlQualificationFact]
     public async Task RetrieveAsync_AcknowledgementLossReplaySectionsRehydratesContentWithoutMutationAsync()
     {
@@ -364,6 +372,7 @@ public sealed class RetrieveCodeLogicPostgreSqlBudgetTests(ITestOutputHelper out
         });
     }
 
+    [Trait("Suite", "PostgreSql")]
     [PostgreSqlQualificationFact]
     public async Task RetrieveAsync_AcknowledgementLossReplaySourceExcerptRehydratesExcerptWithoutMutationAsync()
     {
@@ -441,6 +450,7 @@ public sealed class RetrieveCodeLogicPostgreSqlBudgetTests(ITestOutputHelper out
         });
     }
 
+    [Trait("Suite", "PostgreSql")]
     [PostgreSqlQualificationFact]
     public async Task RetrieveAsync_AcknowledgementLossReplayAfterCurrentnessChangesIsRefusedWithoutMutationAsync()
     {
@@ -496,6 +506,7 @@ public sealed class RetrieveCodeLogicPostgreSqlBudgetTests(ITestOutputHelper out
         });
     }
 
+    [Trait("Suite", "PostgreSql")]
     [PostgreSqlQualificationFact]
     public async Task RetrieveAsync_ChangedRequestForExistingOrdinalIsRefusedWithoutMutationAsync()
     {
@@ -546,6 +557,7 @@ public sealed class RetrieveCodeLogicPostgreSqlBudgetTests(ITestOutputHelper out
         });
     }
 
+    [Trait("Suite", "PostgreSql")]
     [PostgreSqlQualificationFact]
     public async Task RetrieveAsync_LostReservationRemainsConsumedAndCannotBeRetriedAsync()
     {
@@ -630,6 +642,7 @@ public sealed class RetrieveCodeLogicPostgreSqlBudgetTests(ITestOutputHelper out
         });
     }
 
+    [Trait("Suite", "PostgreSql")]
     [PostgreSqlQualificationFact]
     public async Task RetrieveAsync_EightCallsAreInclusiveAndNinthIsPersistedBoundRefusalAsync()
     {
@@ -674,6 +687,7 @@ public sealed class RetrieveCodeLogicPostgreSqlBudgetTests(ITestOutputHelper out
         });
     }
 
+    [Trait("Suite", "PostgreSql")]
     [PostgreSqlQualificationFact]
     public async Task RetrieveAsync_TenReturnedResultsAreInclusiveAndEleventhIsPersistedBoundRefusalAsync()
     {
@@ -712,6 +726,7 @@ public sealed class RetrieveCodeLogicPostgreSqlBudgetTests(ITestOutputHelper out
         });
     }
 
+    [Trait("Suite", "PostgreSql")]
     [PostgreSqlQualificationFact]
     public async Task RetrieveAsync_ExactReturnedUtf8ByteBudgetIsInclusiveAndPlusOneIsBoundedAsync()
     {
@@ -775,6 +790,7 @@ public sealed class RetrieveCodeLogicPostgreSqlBudgetTests(ITestOutputHelper out
         });
     }
 
+    [Trait("Suite", "PostgreSql")]
     [PostgreSqlQualificationFact]
     public async Task RetrieveAsync_FourSectionsPerDocumentAreInclusiveAsync()
     {
@@ -809,6 +825,7 @@ public sealed class RetrieveCodeLogicPostgreSqlBudgetTests(ITestOutputHelper out
         });
     }
 
+    [Trait("Suite", "PostgreSql")]
     [PostgreSqlQualificationFact]
     public async Task RetrieveAsync_RepeatedRequestChargesCallsButKeepsDocumentAccountingCanonicalAsync()
     {
@@ -847,6 +864,7 @@ public sealed class RetrieveCodeLogicPostgreSqlBudgetTests(ITestOutputHelper out
         });
     }
 
+    [Trait("Suite", "PostgreSql")]
     [PostgreSqlQualificationFact]
     public async Task RetrieveAsync_NewServiceInstanceDoesNotResetPersistedBudgetAsync()
     {

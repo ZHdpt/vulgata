@@ -1,0 +1,20 @@
+{
+  "kind": "self-review",
+  "stage": "plan",
+  "outcome": "passed",
+  "summary": "Specified one callable public Infrastructure issuer using the existing Core request, verifier and read-context types. Constructor, async issuance method, result invariant and sanitized failure statuses are unambiguous for T003 public-seam tests. This completes an omitted interface detail without changing approved authorization semantics or scope. Deterministic plan/task validation and whitespace check passed.",
+  "input_hashes": {
+    "specs/016-contained-source-tools/plan.md": "547b9cfab482494e81f182c19570f8af59e01055bd5b293f8a44e357abefdcff",
+    "specs/016-contained-source-tools/contracts/prepared-source-tools.md": "ab8df8173ca8754545abbef31e66b8c50727beb1efb09f791540fea80cd78143",
+    "specs/016-contained-source-tools/data-model.md": "c6ff708a20a0598c4613dc90975cc73b5e0b21f6f16eb09381a01e318e53d9ce",
+    "specs/016-contained-source-tools/research.md": "bbd3abc2095b8e1cadbfa5c7db4e16654f9f03d5d61006b72a5cb7adde2a4d27",
+    "specs/016-contained-source-tools/quickstart.md": "5c0c479782440c2011cf635c27a490a217efbfa533acb8be3dc70191e1515f27"
+  },
+  "owned_paths": [
+    "specs/016-contained-source-tools/plan.md",
+    "specs/016-contained-source-tools/contracts/prepared-source-tools.md",
+    "specs/016-contained-source-tools/data-model.md",
+    "specs/016-contained-source-tools/research.md",
+    "specs/016-contained-source-tools/quickstart.md"
+  ]
+}

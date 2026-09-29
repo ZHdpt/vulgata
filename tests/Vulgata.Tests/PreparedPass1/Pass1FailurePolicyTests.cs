@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Reflection;
 using Vulgata.Core.DomainServices;
 using Vulgata.Core.Entities;
@@ -43,7 +44,8 @@ public sealed class Pass1FailurePolicyTests
         FailureCategoryNames[7],
     };
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void PreparedPass1Store_ExposesOneDurableFailureClassificationSeam()
     {
         MethodInfo method = RequireFailureMethod();
@@ -85,7 +87,8 @@ public sealed class Pass1FailurePolicyTests
                         property.Name.Contains("Credential", StringComparison.OrdinalIgnoreCase));
     }
 
-    [Theory]
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
     [MemberData(nameof(ClosedFailureCategories))]
     public void PreparedPass1FailureClassification_UsesTheClosedDurableCategoryAllowlist(
         string categoryName)
@@ -100,7 +103,8 @@ public sealed class Pass1FailurePolicyTests
             Enum.GetNames<ScanJobFailureCategory>().OrderBy(value => value));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void JobTransient_FirstFailure_RetrysTheSameJobOnceWithoutChangingDenominator()
     {
         MethodInfo method = RequireFailureMethod();
@@ -122,7 +126,8 @@ public sealed class Pass1FailurePolicyTests
                 parameter.Name is "expectedLeaseToken" or "leaseToken");
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void JobTransient_SecondFailure_BecomesOneOrdinaryTerminalFailure()
     {
         MethodInfo method = RequireFailureMethod();
@@ -140,7 +145,8 @@ public sealed class Pass1FailurePolicyTests
                 parameter.Name is "expectedStateVersion" or "jobStateVersion");
     }
 
-    [Theory]
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
     [InlineData(nameof(ScanJobFailureCategory.ProviderConfiguration), "PausedProviderConfiguration")]
     [InlineData(nameof(ScanJobFailureCategory.Unclassified), "PausedUnclassified")]
     public void ProviderConfigurationOrUnclassified_PausesWithoutRetryOrNewDispatch(
@@ -161,7 +167,8 @@ public sealed class Pass1FailurePolicyTests
         Assert.NotEmpty(expectedPauseState);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Cancellation_StopsRemainingWorkWithoutAutomaticResume()
     {
         MethodInfo method = RequireFailureMethod();
@@ -174,7 +181,8 @@ public sealed class Pass1FailurePolicyTests
         Assert.Contains(properties, property => property.Name is "FailureCategory" or "Classification");
     }
 
-    [Theory]
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
     [InlineData(nameof(ScanJobFailureCategory.Integrity))]
     [InlineData(nameof(ScanJobFailureCategory.Security))]
     public void IntegrityOrSecurity_FailsClosedAndStopsNewDispatch(string categoryName)
@@ -189,7 +197,8 @@ public sealed class Pass1FailurePolicyTests
         Assert.Contains(categoryName, ClosedFailureCategories);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void DurableFailureStatus_IsSanitizedAndNeverCarriesRawDiagnostics()
     {
         MethodInfo method = RequireFailureMethod();
@@ -208,7 +217,8 @@ public sealed class Pass1FailurePolicyTests
                         property.Name.Contains("Path", StringComparison.OrdinalIgnoreCase));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void AttemptsRetriesAndDuplicateDelivery_DoNotInflateDispatchedDenominator()
     {
         MethodInfo method = RequireFailureMethod();
@@ -225,7 +235,8 @@ public sealed class Pass1FailurePolicyTests
     // result must be reconstructed from the immutable start-time job set and
     // the accepted Story 12.2 manifest entries; callers cannot supply a live
     // denominator, a rescored seed count, or an independent failure list.
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void TerminalAccounting_UsesFixedStartDenominatorAndExactFailureBudget()
     {
         MethodInfo method = RequireTerminalAccountingMethod();
@@ -243,7 +254,8 @@ public sealed class Pass1FailurePolicyTests
                 "ordinaryFailureCount");
     }
 
-    [Theory]
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
     [InlineData(0, 0)]
     [InlineData(9, 0)]
     [InlineData(10, 1)]
@@ -263,7 +275,8 @@ public sealed class Pass1FailurePolicyTests
         Assert.Equal(expectedBudget, Math.Min(5, dispatchedCount / 10));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void TerminalAccounting_ReconstructsStory12Point2SeedsAndRequiresEverySeedSuccess()
     {
         MethodInfo method = RequireTerminalAccountingMethod();
@@ -282,7 +295,8 @@ public sealed class Pass1FailurePolicyTests
                 parameter.ParameterType == typeof(IReadOnlyCollection<Guid>));
     }
 
-    [Theory]
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
     [InlineData("Succeeded")]
     [InlineData("CompletedWithWarnings")]
     [InlineData("FailedPass1")]
@@ -306,7 +320,8 @@ public sealed class Pass1FailurePolicyTests
             "The failed-file inventory must be a structured bounded collection.");
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void TerminalAccounting_FailureInventoryIsCanonicalAndBoundedToPreparedFileIdentity()
     {
         MethodInfo method = RequireTerminalAccountingMethod();
@@ -333,7 +348,8 @@ public sealed class Pass1FailurePolicyTests
                 property.Name.Contains("Exception", StringComparison.OrdinalIgnoreCase));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void TerminalAccounting_FailedSeedOrOverBudgetStopsAtResolvingWithoutLaterPassAuthorization()
     {
         MethodInfo method = RequireTerminalAccountingMethod();

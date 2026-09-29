@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using Vulgata.Core.Entities;
 
 namespace Vulgata.Tests.DurableScanning;
@@ -28,7 +29,8 @@ public sealed class TwoRepositoryScanCoordinationTests
     private static readonly DateTimeOffset _createdAt =
         new(2026, 8, 30, 9, 0, 0, TimeSpan.Zero);
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Create_WithExactlyTwoSameSystemScans_RetainsCanonicalIndependentBindingsAndIdentity()
     {
         ScanExecution repositoryOne = CreateNewPath(
@@ -94,7 +96,8 @@ public sealed class TwoRepositoryScanCoordinationTests
             TwoRepositoryScanCoordination.Create(repositoryOne, duplicateRepository, _createdAt));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Lifecycle_UsesClosedCombinedPhasesReasonCodesAndMonotonicExpectedVersions()
     {
         TwoRepositoryScanCoordination coordination = CreateCoordination();
@@ -164,7 +167,8 @@ public sealed class TwoRepositoryScanCoordinationTests
             Enum.GetValues<TwoRepositoryScanReasonCategory>());
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void CompleteFromChildren_RequiresTwoValidTerminalScansPropagatesWarningsAndPreservesOtherOutcome()
     {
         ScanExecution completedOne = CreateLegacyCompleted(
@@ -310,7 +314,8 @@ public sealed class TwoRepositoryScanCoordinationTests
         }
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void FailureAndCancellation_UseClosedReasonsAndRemainTerminalAndImmutable()
     {
         TwoRepositoryScanCoordination integrity = CreateCoordination();

@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using Vulgata.Core.DomainServices;
 using Vulgata.Core.Entities;
 
@@ -50,7 +51,8 @@ public sealed class SequentialScanRunnerContractTests
 
     // --- T003: closed kind allowlist ---
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void WorkerAgentJobKind_DefinesOnlyPass1AndPass2DocumentKinds()
     {
         WorkerAgentJobKind[] values = Enum.GetValues<WorkerAgentJobKind>();
@@ -62,7 +64,8 @@ public sealed class SequentialScanRunnerContractTests
             values);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void WorkerAgentJobPacket_RejectsUndefinedKind()
     {
         var (jobId, scanExecId, repoId, sysId, scanRunId, cuId) = Ids();
@@ -74,7 +77,8 @@ public sealed class SequentialScanRunnerContractTests
 
     // --- T004: WorkerAgentJobPacket factory validation ---
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void JobPacket_Create_ValidInput_ReturnsBoundedPacket()
     {
         WorkerAgentJobPacket packet = CreatePacket();
@@ -86,7 +90,8 @@ public sealed class SequentialScanRunnerContractTests
         Assert.Equal("csharp", packet.SourceSlice.Language);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void JobPacket_RejectsEmptyJobId()
     {
         Assert.Throws<ArgumentException>(() =>
@@ -96,46 +101,56 @@ public sealed class SequentialScanRunnerContractTests
                 ProfiledRevision, FilePath, 1, 10, SymbolName, CodeUnitType.Method, "csharp", Sha256, Sha256));
     }
 
-    [Theory]
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
     [InlineData("uppercase", "ABCDEF0123456789abcdef0123456789abcdef01")]
     [InlineData("too_long", "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789")]
     [InlineData("non_hex", "g123456789abcdef0123456789abcdef01234567")]
     public void JobPacket_RejectsInvalidProfiledRevision(string _, string revision) =>
         Assert.Throws<ArgumentException>(() => CreatePacket(profiledRevision: revision));
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void JobPacket_RejectsAbsoluteHostPath() =>
         Assert.Throws<ArgumentException>(() => CreatePacket(filePath: "/home/user/src/Service.cs"));
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void JobPacket_RejectsWindowsDrivePath() =>
         Assert.Throws<ArgumentException>(() => CreatePacket(filePath: "C:/source/Service.cs"));
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void JobPacket_RejectsParentTraversal() =>
         Assert.Throws<ArgumentException>(() => CreatePacket(filePath: "../escape/Service.cs"));
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void JobPacket_RejectsSecretMarker() =>
         Assert.Throws<ArgumentException>(() => CreatePacket(symbolName: "password=secret"));
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void JobPacket_RejectsPrivateKeyMarker() =>
         Assert.Throws<ArgumentException>(() => CreatePacket(symbolName: "-----BEGIN PRIVATE KEY-----"));
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void JobPacket_RejectsStackTraceDiagnostic() =>
         Assert.Throws<ArgumentException>(() => CreatePacket(symbolName: "stack trace: at System.Method()"));
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void JobPacket_RejectsOversizedFilePath() =>
         Assert.Throws<ArgumentException>(() => CreatePacket(filePath: new string('a', 2_049)));
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void JobPacket_RejectsOversizedSymbolName() =>
         Assert.Throws<ArgumentException>(() => CreatePacket(symbolName: new string('a', 513)));
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void JobPacket_RejectsLineStartBelowOne() =>
         Assert.Throws<ArgumentOutOfRangeException>(() =>
             WorkerAgentJobPacket.Create(
@@ -143,7 +158,8 @@ public sealed class SequentialScanRunnerContractTests
                 NonEmptyGuid(2), NonEmptyGuid(3), NonEmptyGuid(4), NonEmptyGuid(5), NonEmptyGuid(6),
                 ProfiledRevision, FilePath, 0, 10, SymbolName, CodeUnitType.Method, "csharp", Sha256, Sha256));
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void JobPacket_RejectsLineEndBelowLineStart() =>
         Assert.Throws<ArgumentOutOfRangeException>(() =>
             WorkerAgentJobPacket.Create(
@@ -151,17 +167,20 @@ public sealed class SequentialScanRunnerContractTests
                 NonEmptyGuid(2), NonEmptyGuid(3), NonEmptyGuid(4), NonEmptyGuid(5), NonEmptyGuid(6),
                 ProfiledRevision, FilePath, 10, 5, SymbolName, CodeUnitType.Method, "csharp", Sha256, Sha256));
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void JobPacket_RejectsInvalidSourceHash() =>
         Assert.Throws<ArgumentException>(() => CreatePacket(sourceHash: "not-a-hash"));
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void JobPacket_RejectsInvalidFileIdentityHash() =>
         Assert.Throws<ArgumentException>(() => CreatePacket(fileIdentityHash: "short"));
 
     // --- T005: WorkerAgentResultEnvelope factory validation ---
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void ResultEnvelope_Create_ValidOutcome_ReturnsEnvelope()
     {
         DateTimeOffset now = DateTimeOffset.UtcNow;
@@ -177,7 +196,8 @@ public sealed class SequentialScanRunnerContractTests
         Assert.NotNull(envelope.Payload);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void ResultEnvelope_RejectsReceivedBeforeDispatched() =>
         Assert.Throws<ArgumentException>(() =>
             WorkerAgentResultEnvelope.Create(
@@ -185,7 +205,8 @@ public sealed class SequentialScanRunnerContractTests
                 WorkerAgentResultOutcome.Valid, null,
                 DateTimeOffset.UtcNow, DateTimeOffset.UtcNow.AddSeconds(-1)));
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void ResultEnvelope_RequiresReasonOnNonValidOutcome()
     {
         DateTimeOffset now = DateTimeOffset.UtcNow;
@@ -195,7 +216,8 @@ public sealed class SequentialScanRunnerContractTests
                 WorkerAgentResultOutcome.SchemaInvalid, null, now, now));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void ResultEnvelope_RejectsPayloadOnNonValidOutcome()
     {
         DateTimeOffset now = DateTimeOffset.UtcNow;
@@ -206,28 +228,32 @@ public sealed class SequentialScanRunnerContractTests
                 payload: WorkerAgentResultPayload.Reserved));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void ResultEnvelope_RejectsUndefinedOutcome() =>
         Assert.Throws<ArgumentException>(() =>
             WorkerAgentResultEnvelope.Create(
                 NonEmptyGuid(1), NonEmptyGuid(2), WorkerAgentJobKind.Pass1CodeLogicDocument,
                 (WorkerAgentResultOutcome)999, "未知结果。", DateTimeOffset.UtcNow, DateTimeOffset.UtcNow));
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void ResultEnvelope_RejectsSecretInReason() =>
         Assert.Throws<ArgumentException>(() =>
             WorkerAgentResultEnvelope.Create(
                 NonEmptyGuid(1), NonEmptyGuid(2), WorkerAgentJobKind.Pass1CodeLogicDocument,
                 WorkerAgentResultOutcome.Error, "password=secret leaked", DateTimeOffset.UtcNow, DateTimeOffset.UtcNow));
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void ResultEnvelope_RejectsOversizedReason() =>
         Assert.Throws<ArgumentException>(() =>
             WorkerAgentResultEnvelope.Create(
                 NonEmptyGuid(1), NonEmptyGuid(2), WorkerAgentJobKind.Pass1CodeLogicDocument,
                 WorkerAgentResultOutcome.Error, new string('错', 200), DateTimeOffset.UtcNow, DateTimeOffset.UtcNow));
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void ResultEnvelope_OutcomeEnum_IsClosedAllowlist()
     {
         WorkerAgentResultOutcome[] values = Enum.GetValues<WorkerAgentResultOutcome>();
@@ -240,7 +266,8 @@ public sealed class SequentialScanRunnerContractTests
 
     // --- T006: WorkerAgentResultPayload closed allowlist ---
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void ResultPayload_Reserved_IsSingleton()
     {
         WorkerAgentResultPayload a = WorkerAgentResultPayload.Reserved;
@@ -251,7 +278,8 @@ public sealed class SequentialScanRunnerContractTests
     // --- T007: deterministic ordering (validated via dispatch tests, but
     // the ordering rule is documented in the packet contract) ---
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void JobPacket_FilePath_IsRepositoryRelativeAndNormalized()
     {
         WorkerAgentJobPacket packet = CreatePacket(filePath: "src\\Service.cs");

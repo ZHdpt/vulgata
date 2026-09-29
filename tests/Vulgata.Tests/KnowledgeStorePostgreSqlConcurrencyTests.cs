@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Data.Common;
 using System.Reflection;
 using System.Text.Json.Nodes;
@@ -14,10 +15,13 @@ public sealed class KnowledgeStorePostgreSqlConcurrencyTests
     private static readonly Guid _targetLogicalDocumentId =
         Guid.Parse("50000000-0000-0000-0000-000000000002");
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task CommitAsync_TwoSuccessorsFromOneCurrentVersion_CommitsOneAndConflictsOne()
     {
-        string connectionString = RequireConnectionString();
+        await using var database = await Vulgata.Tests.Migrations.DisposablePostgreSqlDatabase.CreateAsync(
+            TestResourceScope.RequireAdministrator());
+        string connectionString = database.ConnectionString;
         await ResetAndSeedAsync(connectionString);
         await using (VulgataDbContext setup = CreateContext(connectionString))
         {
@@ -86,10 +90,13 @@ public sealed class KnowledgeStorePostgreSqlConcurrencyTests
         Assert.Equal(4, await verification.Set<DocumentSection>().CountAsync());
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task CommitAsync_WaitingEdgeTargetIsSuperseded_ReturnsNonCurrentEndpointWithoutRows()
     {
-        string connectionString = RequireConnectionString();
+        await using var database = await Vulgata.Tests.Migrations.DisposablePostgreSqlDatabase.CreateAsync(
+            TestResourceScope.RequireAdministrator());
+        string connectionString = database.ConnectionString;
         await ResetAndSeedAsync(connectionString);
         await using (VulgataDbContext setup = CreateContext(connectionString))
         {
@@ -156,10 +163,13 @@ public sealed class KnowledgeStorePostgreSqlConcurrencyTests
         Assert.Equal(targetSuccessorVersionId, target.CurrentVersionId);
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task CompositeForeignKeys_CrossOwnerCurrentSuccessorAndEdgeTuples_AreRejected()
     {
-        string connectionString = RequireConnectionString();
+        await using var database = await Vulgata.Tests.Migrations.DisposablePostgreSqlDatabase.CreateAsync(
+            TestResourceScope.RequireAdministrator());
+        string connectionString = database.ConnectionString;
         await ResetAndSeedAsync(connectionString);
         await using VulgataDbContext context = CreateContext(connectionString);
         KnowledgeStoreRepository repository = CreateRepository(context);
@@ -213,10 +223,13 @@ public sealed class KnowledgeStorePostgreSqlConcurrencyTests
         await Assert.ThrowsAsync<DbUpdateException>(() => context.SaveChangesAsync());
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task CommitAsync_ReplayedStableOperation_VerifiesCommittedVersionWithoutDuplicateRows()
     {
-        string connectionString = RequireConnectionString();
+        await using var database = await Vulgata.Tests.Migrations.DisposablePostgreSqlDatabase.CreateAsync(
+            TestResourceScope.RequireAdministrator());
+        string connectionString = database.ConnectionString;
         await ResetAndSeedAsync(connectionString);
         KnowledgeCommit commit = CreateCodeCommit(
             KnowledgeStoreTestFixtures.LogicalDocumentId,
@@ -448,7 +461,6 @@ public sealed class KnowledgeStorePostgreSqlConcurrencyTests
     private static async Task ResetAndSeedAsync(string connectionString)
     {
         await using VulgataDbContext context = CreateContext(connectionString);
-        await context.Database.EnsureDeletedAsync();
         await context.Database.MigrateAsync();
         context.Repositories.AddRange(
             CreateStandaloneRepository(
@@ -496,15 +508,6 @@ public sealed class KnowledgeStorePostgreSqlConcurrencyTests
         return repository;
     }
 
-    private static string RequireConnectionString()
-    {
-        string? connectionString =
-            Environment.GetEnvironmentVariable("VULGATA_TEST_POSTGRES");
-        return string.IsNullOrWhiteSpace(connectionString)
-            ? throw new InvalidOperationException(
-                "VULGATA_TEST_POSTGRES must identify the disposable PostgreSQL 17 database.")
-            : connectionString;
-    }
 }
 
 internal sealed class OwnerLockObserverInterceptor(bool pauseAfterAcquisition)

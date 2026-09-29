@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 using Vulgata.Core.DomainServices;
@@ -7,7 +8,8 @@ namespace Vulgata.Tests.RetainedSource;
 
 public sealed class RetainedSourceReadLifecycleTests(ITestOutputHelper output)
 {
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task ReadTextAsync_DisposedContextCancelsAdmittedRead_AndLeavesSiblingUsableAsync()
     {
         await using RetainedSourceFixture fixture =
@@ -79,7 +81,8 @@ public sealed class RetainedSourceReadLifecycleTests(ITestOutputHelper output)
         }
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task OpenReadContextAsync_SynchronousFirstTimerEvent_LeavesLongGrantUsableAsync()
     {
         await using RetainedSourceFixture fixture =

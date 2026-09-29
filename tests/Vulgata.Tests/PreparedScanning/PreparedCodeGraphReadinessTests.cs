@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Reflection;
 using System.Text;
 using System.Text.Json;
@@ -49,7 +50,8 @@ public sealed class PreparedCodeGraphReadinessTests
         "CodeGraphProofIdentityHash"
     ];
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void CodeGraphReadiness_PublicSeam_ExposesTypedRevisionBoundCompletenessProof()
     {
         Type adapterType = RequireType(
@@ -73,7 +75,8 @@ public sealed class PreparedCodeGraphReadinessTests
             name => name is "IndexAsync" or "RebuildAsync");
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void CodeGraphReadiness_ApprovedAdapter_UsesPinnedIdentityAndNoLegacyContextOrRawToolSurface()
     {
         Type adapterType = RequireType(
@@ -86,7 +89,8 @@ public sealed class PreparedCodeGraphReadinessTests
                 .Contains(method.Name, StringComparer.OrdinalIgnoreCase));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void CodeGraphReadiness_DurationIsAuditOnly_AndHardFailuresHaveClosedOutcomeSurface()
     {
         Type adapterType = RequireType(
@@ -114,7 +118,8 @@ public sealed class PreparedCodeGraphReadinessTests
         Assert.NotNull(adapterType);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task CodeGraphReadiness_ConcreteAdapterProducesCompletePreparedProofAfterReadiness()
     {
         string repositoryRoot = Path.Combine(

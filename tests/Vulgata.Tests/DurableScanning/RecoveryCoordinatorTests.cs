@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
@@ -32,7 +33,8 @@ public sealed class RecoveryCoordinatorTests
     //   ReleasedDueRetryCount, StateChanged, Reason), carried by
     // ScanRecoveryResult.View with ScanRecoveryResult.IsReplay.
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ResumeAsync_ValidPausedExecutionWithMixedJobs_ReturnsPreparedBoundedViewAndTransitionCounts()
     {
         await using RecoveryFixture fixture = await RecoveryFixture.CreateAsync();
@@ -65,7 +67,8 @@ public sealed class RecoveryCoordinatorTests
         Assert.Equal(DurableScanReason.None, view.Reason);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ResumeAsync_ValidPausedExecution_ReplayReturnsSameBoundedViewWithoutAnotherVersionChange()
     {
         await using RecoveryFixture fixture = await RecoveryFixture.CreateAsync();
@@ -101,7 +104,8 @@ public sealed class RecoveryCoordinatorTests
         Assert.Equal(versionAfterFirst, await fixture.ExecutionVersionAsync());
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ResumeAsync_RepeatedInvocation_IsIdempotentAndDoesNotDispatchOrScheduleWork()
     {
         await using RecoveryFixture fixture = await RecoveryFixture.CreateAsync();
@@ -117,7 +121,8 @@ public sealed class RecoveryCoordinatorTests
         Assert.Equal(0, fixture.RetryScheduleCount);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ResumeAsync_ExpiredLeaseAndDueRetry_ReturnPending_WithoutChangingIdentityOrAttemptCount()
     {
         await using RecoveryFixture fixture = await RecoveryFixture.CreateAsync();
@@ -140,7 +145,8 @@ public sealed class RecoveryCoordinatorTests
         Assert.Equal(dueRetry.Id, await fixture.DeterministicJobIdAsync(2));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ResumeAsync_LeaseAtExpiryOrFutureRetry_LeavesJobsUnchanged()
     {
         await using RecoveryFixture fixture = await RecoveryFixture.CreateAsync();
@@ -163,7 +169,8 @@ public sealed class RecoveryCoordinatorTests
         Assert.Equal((futureVersion, futureAttempts), await fixture.VersionAndAttemptsAsync(futureRetry.Id));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ResumeAsync_ExhaustedAndTerminalJobs_AreNeverReopened()
     {
         await using RecoveryFixture fixture = await RecoveryFixture.CreateAsync();
@@ -182,7 +189,8 @@ public sealed class RecoveryCoordinatorTests
         Assert.Equal(before, await fixture.SnapshotJobStateAsync(failed.Id, cancelled.Id));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ResumeAsync_InvalidAuthorization_IsRejectedWithoutLookupMutation()
     {
         await using RecoveryFixture fixture = await RecoveryFixture.CreateAsync();
@@ -196,7 +204,8 @@ public sealed class RecoveryCoordinatorTests
         Assert.Equal(0, fixture.RetryScheduleCount);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ResumeAsync_CancelledBeforeConditionalWrite_ReturnsCancelledAndPreservesDurableRows()
     {
         await using RecoveryFixture fixture = await RecoveryFixture.CreateAsync();
@@ -215,7 +224,8 @@ public sealed class RecoveryCoordinatorTests
         Assert.Equal(before, await fixture.VersionAndAttemptsAsync(job.Id));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ResumeAsync_LateCapturedVersionConflict_UsesOneBatchWithoutPartialApplication()
     {
         await using RecoveryFixture fixture = await RecoveryFixture.CreateAsync();
@@ -240,7 +250,8 @@ public sealed class RecoveryCoordinatorTests
         Assert.Equal(before, await fixture.SnapshotDurableStateAsync());
     }
 
-    [Theory]
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
     [InlineData("authorization")]
     [InlineData("profiled-revision")]
     [InlineData("affected-file-hash")]
@@ -273,7 +284,8 @@ public sealed class RecoveryCoordinatorTests
         Assert.Equal(0, fixture.RetryScheduleCount);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ResumeAsync_ProviderUnavailable_PausesWithoutReopeningJobs()
     {
         await using RecoveryFixture fixture = await RecoveryFixture.CreateAsync();
@@ -290,7 +302,8 @@ public sealed class RecoveryCoordinatorTests
         Assert.Equal(0, fixture.DispatchCount);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ResumeAsync_CompletedWithoutMatchingDocument_FailsIntegrityAndRetainsAnyValidDocumentRows()
     {
         await using RecoveryFixture fixture = await RecoveryFixture.CreateAsync();
@@ -306,7 +319,8 @@ public sealed class RecoveryCoordinatorTests
         Assert.Equal(0, fixture.DispatchCount);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ResumeAsync_ResultIsBoundedAndNeverStartsAutomaticLoopOrWorkerDispatch()
     {
         await using RecoveryFixture fixture = await RecoveryFixture.CreateAsync();

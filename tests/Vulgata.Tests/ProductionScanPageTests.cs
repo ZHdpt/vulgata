@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Collections.Generic;
 using System.Reflection;
 using Bunit;
@@ -29,7 +30,8 @@ public sealed class ProductionScanPageTests : BunitContext
         Services.AddFluentUIComponents();
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void ProductionComposition_ResolvesStatusReaderAndCoordinatorForManagementPages()
     {
         using var factory = new LoginLogoutTests.CustomWebApplicationFactory();
@@ -41,7 +43,8 @@ public sealed class ProductionScanPageTests : BunitContext
             scope.ServiceProvider.GetRequiredService<ProductionScanStatusCoordinator>());
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void ScanExecutionPage_ExposesPublicGuidRouteForPersistedExecution()
     {
         Type? pageType = typeof(ScanHistoryPage).Assembly.GetType(
@@ -57,7 +60,8 @@ public sealed class ProductionScanPageTests : BunitContext
         Assert.Contains(":guid", route.Template, StringComparison.Ordinal);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void ScanHistoryPage_RemainsProtectedByManagementAccess()
     {
         AuthorizeAttribute? authorize =
@@ -67,7 +71,8 @@ public sealed class ProductionScanPageTests : BunitContext
         Assert.Equal(AuthorizationPolicyNames.ManagementAccess, authorize!.Policy);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void ScanHistoryPage_PersistedPausedExecution_RendersChineseStateCountsReasonAndResumeAction()
     {
         Guid scanExecutionId = Guid.Parse("11111111-1111-4111-8111-111111111111");
@@ -105,7 +110,8 @@ public sealed class ProductionScanPageTests : BunitContext
         Assert.DoesNotContain("vulgata-scanning.html", cut.Markup, StringComparison.Ordinal);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void ScanHistoryPage_PersistedStates_RendersClosedChineseLabelsAndBoundedFailureSummary()
     {
         Services.AddSingleton<IProductionScanStatusReader>(
@@ -148,7 +154,8 @@ public sealed class ProductionScanPageTests : BunitContext
         Assert.DoesNotContain("vulgata-scanning.html", cut.Markup, StringComparison.Ordinal);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void ScanHistoryPage_MissingOrUnauthorizedReaderResult_RendersNoProtectedDetailsOrResumeAction()
     {
         var reader = new StubProductionScanStatusReader([]);
@@ -164,7 +171,8 @@ public sealed class ProductionScanPageTests : BunitContext
         Assert.DoesNotContain("vulgata-scanning.html", cut.Markup, StringComparison.Ordinal);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void ScanHistoryPage_NonRecoverableExecution_DoesNotOfferResumeAction()
     {
         var reader = new StubProductionScanStatusReader(

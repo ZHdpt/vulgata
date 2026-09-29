@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Reflection;
 using Vulgata.Core.Entities;
 using Vulgata.Infrastructure.CommunicationDetection;
@@ -19,7 +20,8 @@ public sealed class PreparedXmlSecurityTests
     private const string _locatorName =
         "Vulgata.Infrastructure.CommunicationDetection.XmlEvidenceLocator";
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void SafeXmlReader_ExposesBoundedProjectionAndStrictEncodingOutcome()
     {
         Type reader = RequireType(_readerName);
@@ -48,7 +50,8 @@ public sealed class PreparedXmlSecurityTests
                 name.Contains("Limit", StringComparison.Ordinal));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void SafeXmlReader_RejectsEvaluationFeaturesAndNeverExposesHostOrSourceContent()
     {
         Type reader = RequireType(_readerName);
@@ -83,7 +86,8 @@ public sealed class PreparedXmlSecurityTests
                 property.Name.Contains(fragment, StringComparison.OrdinalIgnoreCase)));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void SafeXmlEvidenceLocator_MapsExactRepositoryRelativeNodeLineAndColumn()
     {
         Type locator = RequireType(_locatorName);

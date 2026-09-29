@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Diagnostics;
 using System.Security.Cryptography;
 using Vulgata.Core.DomainServices;
@@ -35,7 +36,8 @@ public sealed class JdtLsRealQualificationTests
     private static readonly Guid RepositoryId =
         Guid.Parse("12000000-0000-4000-8000-000000000012");
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public void RuntimeIdentity_AcceptsRetainedTarGzArchiveAsConfiguredIdentity()
     {
         AnalysisRuntimeIdentity identity = AnalysisRuntimeIdentity.Create(
@@ -67,7 +69,8 @@ public sealed class JdtLsRealQualificationTests
         Assert.Equal(ArchiveSha256, identity.JdtLsDistributionArchiveSha256);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task RetainedArchive_RealJava21Session_QualifiesNavigationAndBoundedCleanup()
     {
         Assert.True(File.Exists(ArchivePath));

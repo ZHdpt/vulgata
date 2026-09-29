@@ -1,0 +1,46 @@
+{
+  "kind": "analysis",
+  "stage": "lookback",
+  "evidence_id": "18-1-access-prepared-source-through-contained-read-only-tools/lookback/6",
+  "observed_at": "2026-09-29T05:18:07.6259733Z",
+  "record_path": "docs/bmad/implementation-artifacts/18-1-access-prepared-source-through-contained-read-only-tools.md",
+  "section_sha256": "8f5e92d57f0064c0ea34a63bb466693aaed89761088830fa06c6894b62854541",
+  "record_content_sha256": "498ec0f95b0a2ed247baa31a6361350138b84448614351bf7b39661476385ed9",
+  "convergence": {
+    "path": "specs/016-contained-source-tools/evidence/convergence-result-08.json",
+    "sha256": "ac296da6c4988d9971207131ffec9ad2ff5f776e7326ce4d08f54cb1a47448e5"
+  },
+  "output_hashes": {
+    "docs/project-lessons.md": "a7587d3cabfeea0d6bec679f9ce215177accdd92fec6e09a450fe71e164e30f4"
+  },
+  "disposition": "no-new-lesson",
+  "authority_decisions": [
+    {
+      "path": "specs/016-contained-source-tools/evidence/plan-authorization-01.json",
+      "sha256": "ab5993915aebc31cf27bad7b44cacc0b0d171b6a73de4577ab3996837e0e84b6"
+    },
+    {
+      "path": "specs/016-contained-source-tools/evidence/implementation-approval-02.json",
+      "sha256": "defa3810c87331976b3eaa6096889fbcc0adbff5bb4a423d932b4a47163a1186"
+    },
+    {
+      "path": "specs/016-contained-source-tools/evidence/recovery-extension-01.json",
+      "sha256": "f67757f40bc53bff511505feb743fb7427275142b614dcdcd92763786c0a28c5"
+    },
+    {
+      "path": "specs/016-contained-source-tools/evidence/recovery-extension-02.json",
+      "sha256": "a1a807f1911dfa23fde25dac4f7af71027bab65b88ac8145c751725211dbec08"
+    },
+    {
+      "path": "specs/016-contained-source-tools/evidence/recovery-extension-03.json",
+      "sha256": "0b016537b8ea2868bc9da8b753ec9aece99ece7ba7e468c968d6265f9d363a85"
+    },
+    {
+      "path": "specs/016-contained-source-tools/evidence/recovery-extension-04.json",
+      "sha256": "1196f4baacb463e197dfc7be39ed7947f4c17e075f33e3fd46400bf7a99040ff"
+    }
+  ],
+  "unresolved_blockers": [],
+  "follow_up_paths": [],
+  "summary": "The refreshed lookback binds clean convergence after policy classification and the exact T027 PostgreSQL qualification. It records PreparedSource 119/119 and retained-source PostgreSQL 63/63 separately, preserves the configured build and complete SelfContained suite as pending final verification, and adds no duplicate project lesson because the reusable suite rule is already canonical in docs/agents/testing.md."
+}

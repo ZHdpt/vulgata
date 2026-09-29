@@ -1,0 +1,37 @@
+{
+  "kind": "analysis",
+  "stage": "diagnosis",
+  "episode_id": "18-1/implementation/1",
+  "at_count": 7,
+  "source_commit": "dfc9677a8af1cc3c5679332a20b766de776c0a4d",
+  "failed_obligation": "Final verification must pass the repository-configured complete regression command and preserve all behavior-specific qualification required by Story 18.1.",
+  "failure_source": {
+    "path": "specs/016-contained-source-tools/evidence/verify-test-failure-04.json",
+    "sha256": "928a765c5406aca7285cf6a0fc3171ada7390759882b6b7998538577e7d060a3"
+  },
+  "findings": [
+    {
+      "id": "D18.1-07-A",
+      "classification": "superseded mixed-suite verification boundary",
+      "evidence": "Repository policy commit 11e78b352929c2cc059cd157441faa413d5c3e01 changed .governed-delivery/config.toml from an unfiltered dotnet test command to pwsh -NoProfile -File eng/test.ps1. Five of the six result-7 failure files are classified PostgreSql and are intentionally excluded from the complete SelfContained regression suite. The remaining PreparedPass1 streaming class is SelfContained and the policy commit places timing probes in an isolated nonparallel collection.",
+      "owner": "tests",
+      "correction": "Verify the committed policy enforcement, retain PostgreSQL outcomes as explicit qualification rather than default-suite results, and use the configured SelfContained runner for the final aggregate gate."
+    },
+    {
+      "id": "D18.1-07-B",
+      "classification": "rebase-induced checkout byte drift",
+      "evidence": "Git reports no semantic diff for the Story 18.1 spec, plan, tasks, or transition head between the pre-rebase and rebased commits, but core.autocrlf changed their worktree bytes and invalidated recorded SHA-256 values.",
+      "owner": "tests",
+      "correction": "Pin only the current Story 18.1 definition files, workflow transitions, and referenced recovery evidence to canonical LF. Preserve historical mixed preimages that are not part of the current hash chain."
+    }
+  ],
+  "failed_approaches": [
+    "The former unfiltered full-project command conflated routine regression with database, local-tool, provider, E2E, and historical qualification.",
+    "Per-story fixture corrections could reduce individual failures but could not make that mixed command a safe or semantically correct default gate."
+  ],
+  "changed_approach": "Use the repository-owned suite classifier and runner adopted at 11e78b352929c2cc059cd157441faa413d5c3e01. First run policy-only enforcement. Then refresh convergence, Story Lookback, independent quality review, and E2E on the rebased Story 18.1 boundary. Finally run the configured Web build and SelfContained command once as result 8. Preserve the existing 119/119 PreparedSource and 27/27 focused PostgreSQL/artifact evidence where hashes remain unchanged; excluded suites are not called passed.",
+  "next_check": "Run pwsh -NoProfile -File eng/test.ps1 -PolicyOnly. If it passes, record the test-policy/rebase reconciliation and dispatch fresh convergence over the rebased candidate. Do not consume result 8 until the final configured verification command.",
+  "stopping_condition": "Any failure of the final configured command is substantive recovery result 8 and returns to the human without retry.",
+  "unchanged_scope": "No Story 18.1 product behavior, API, schema, migration, Worker tool, Scan strategy, PRD requirement, or external qualification claim changes.",
+  "summary": "Result 7 was produced by a repository test command that the committed policy has replaced because it mixed unrelated resource suites. The bounded recovery approach is to validate the new policy, refresh invalidated review gates on the rebased boundary, and use one configured SelfContained final result while retaining—not relabeling—separate Story 18.1 qualification evidence."
+}

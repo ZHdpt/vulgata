@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
@@ -22,7 +23,8 @@ public sealed class SystemCrudAdminTests : IClassFixture<LoginLogoutTests.Custom
         _factory = factory;
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task Administrator_SystemManagementPage_ShowsChineseTreeAndEmptyState()
     {
         await EnsureApplicationStartedAsync();
@@ -41,7 +43,8 @@ public sealed class SystemCrudAdminTests : IClassFixture<LoginLogoutTests.Custom
         Assert.Contains("尚未添加任何系统。创建你的第一个系统开始扫描。", html, StringComparison.Ordinal);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task Administrator_SystemManagementPage_UsesSharedChatNavigationShell()
     {
         await EnsureApplicationStartedAsync();
@@ -63,7 +66,8 @@ public sealed class SystemCrudAdminTests : IClassFixture<LoginLogoutTests.Custom
         Assert.Contains(email, html, StringComparison.OrdinalIgnoreCase);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task Administrator_CanCreateSystem_AndSeeItInListAndManagementPage()
     {
         await EnsureApplicationStartedAsync();
@@ -90,7 +94,8 @@ public sealed class SystemCrudAdminTests : IClassFixture<LoginLogoutTests.Custom
         Assert.Contains("处理支付与清结算", html, StringComparison.Ordinal);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task Administrator_CanUpdateAndDeleteEmptySystem()
     {
         await EnsureApplicationStartedAsync();
@@ -130,7 +135,8 @@ public sealed class SystemCrudAdminTests : IClassFixture<LoginLogoutTests.Custom
         Assert.DoesNotContain(systems, system => system.GetProperty("id").GetGuid() == systemId);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task DuplicateSystemName_ReturnsChineseValidationProblem()
     {
         await EnsureApplicationStartedAsync();
@@ -174,7 +180,8 @@ public sealed class SystemCrudAdminTests : IClassFixture<LoginLogoutTests.Custom
         Assert.NotEqual(existingSystemId, anotherSystemId);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task DeleteSystem_WithAssignedOwnerOrRepository_IsBlockedWithChineseProblem()
     {
         await EnsureApplicationStartedAsync();
@@ -200,7 +207,8 @@ public sealed class SystemCrudAdminTests : IClassFixture<LoginLogoutTests.Custom
         Assert.Contains("请先移除依赖", ownerProblem.Detail ?? string.Empty, StringComparison.Ordinal);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task SystemOwner_OnlySeesAssignedSystems_AndCannotCreateOrModifySystems()
     {
         await EnsureApplicationStartedAsync();
@@ -252,7 +260,8 @@ public sealed class SystemCrudAdminTests : IClassFixture<LoginLogoutTests.Custom
         Assert.Contains("只有管理员可以修改系统", createProblem.Detail ?? string.Empty, StringComparison.Ordinal);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task User_MainLayout_DoesNotShowManagementNavigation()
     {
         await EnsureApplicationStartedAsync();

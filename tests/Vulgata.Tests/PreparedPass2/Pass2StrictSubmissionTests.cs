@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Reflection;
 using System.Text;
 using System.Text.Json;
@@ -15,7 +16,8 @@ public sealed class Pass2StrictSubmissionTests
     private static readonly Guid JobId =
         Guid.Parse("11111111-1111-4111-8111-111111111111");
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public void Pass2StrictDeclarations_ExposeExactlyRetrieveAndSubmitFunctions()
     {
         AIFunction retrieve = CreateRetrieveFunction();
@@ -44,7 +46,8 @@ public sealed class Pass2StrictSubmissionTests
         Assert.Equal("submit_business_logic", ToolName(terminalTools[0]));
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task RetrieveCodeLogic_UsesBoundedSelectorsAndServerOwnedCallbackAsync()
     {
         RecordingRetrievalService service = new();
@@ -108,7 +111,8 @@ public sealed class Pass2StrictSubmissionTests
         Assert.Equal(Pass2CodeLogicRetrievalOperation.Search, service.LastRequest!.Operation);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public void SubmitBusinessLogic_UsesOneClosedDocumentArgumentWithoutEvidenceAuthority()
     {
         AIFunction function = CreateSubmitFunction();
@@ -152,7 +156,8 @@ public sealed class Pass2StrictSubmissionTests
             schemaResources[0]);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public void SubmitBusinessLogic_LocalValidationParityTracksEmbeddedSchemaBoundsAndEnums()
     {
         Assembly core = typeof(Pass2BusinessLogicSchemaContract).Assembly;
@@ -198,7 +203,8 @@ public sealed class Pass2StrictSubmissionTests
         Assert.Equal(256, shortText.GetProperty("allOf")[1].GetProperty("maxLength").GetInt32());
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public void PreparedPass2Dispatch_RequiresServerClaimedJobAndAuthorityBinding()
     {
         Type requestType = typeof(PreparedPass2DispatchRequest);
@@ -231,7 +237,8 @@ public sealed class Pass2StrictSubmissionTests
                 parameter.ParameterType == typeof(IPass2BusinessLogicDocumentCommitter)));
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public void SubmitBusinessLogic_PreservesAllAcceptedResourceConstraints()
     {
         AIFunction function = CreateSubmitFunction();
@@ -272,7 +279,8 @@ public sealed class Pass2StrictSubmissionTests
                 .EnumerateArray().Select(value => value.GetString()));
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public void PreparedPass2ProviderRequest_CarriesBoundedTranscriptAndRepairContext()
     {
         Type requestType = typeof(PreparedPass2ProviderRequest);
@@ -291,7 +299,8 @@ public sealed class Pass2StrictSubmissionTests
             property => string.Equals(property.Name, "RepairContextUtf8", StringComparison.Ordinal));
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task PreparedPass2WorkerDispatcher_PropagatesClaimedAuthorityToRetrievalAndCommitterAsync()
     {
         Guid claimedJobId = Guid.Parse("61000000-0000-4000-8000-000000000006");

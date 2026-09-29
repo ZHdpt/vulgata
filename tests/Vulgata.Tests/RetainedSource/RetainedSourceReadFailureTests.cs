@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using Microsoft.Extensions.DependencyInjection;
 using Vulgata.Core.DomainServices;
 using Vulgata.Core.Entities;
@@ -6,7 +7,8 @@ namespace Vulgata.Tests.RetainedSource;
 
 public sealed class RetainedSourceReadFailureTests
 {
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task OpenReadContextAsync_WhenAuthorizationInfrastructureThrows_ReturnsSanitizedStorageFailure()
     {
         await using RetainedSourceFixture fixture =
@@ -60,7 +62,8 @@ public sealed class RetainedSourceReadFailureTests
             StringComparison.Ordinal);
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task OpenReadContextAsync_WhenSnapshotRepositoryThrows_ReturnsSanitizedStorageFailure()
     {
         await using RetainedSourceFixture fixture =
@@ -103,7 +106,8 @@ public sealed class RetainedSourceReadFailureTests
             StringComparison.Ordinal);
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task ListAsync_WhenLiveAuthorizationInfrastructureThrows_ReturnsSanitizedStorageFailure()
     {
         await using RetainedSourceFixture fixture =
@@ -164,7 +168,8 @@ public sealed class RetainedSourceReadFailureTests
             StringComparison.Ordinal);
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task ReadBytesAsync_WhenLiveSnapshotRepositoryThrows_ReturnsSanitizedStorageFailure()
     {
         await using RetainedSourceFixture fixture =

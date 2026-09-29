@@ -1,0 +1,19 @@
+Command: dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj
+Source commit: 55de5586e67c09bb8aa1892c3fba9f4d2b4d8c7c
+
+Failed Vulgata.Tests.ExactResolutionProfileTests.Load_ReviewedEmbeddedResource_MatchesAcceptedBytesAndFingerprint
+Assert.Equal() Failure: Strings differ
+Expected fingerprint prefix: 5d621ca3a09d88305abc2a3661747ef4c9e04b301
+Actual fingerprint prefix:   3a71cfe31bbd2ac32addc1df0fda3cc4e5a0a5b0e
+Source: tests/Vulgata.Tests/ExactResolutionProfileTests.cs:21
+
+Failed Vulgata.Tests.RetainedSource.RetainedSourceCaptureTests.Composition_InvalidSourceStorageConfiguration_FailsClosedBeforeCapture(key: "SourceStorage:OperationStaleAfterMinutes", value: "0")
+Assert.Contains() Failure: expected "source_configuration_invalid"; actual exception began "Npgsql.NpgsqlException ... Exception while reading from stream"
+Source: tests/Vulgata.Tests/RetainedSource/RetainedSourceCaptureTests.cs:114
+
+Failed Vulgata.Tests.Migrations.DurableScanConcurrencyPostgreSqlTests.PostgreSql17_RecoveryBatch_AcknowledgementLostAfterCommit_ReplaysWithoutDuplicateStateAdvance
+Npgsql.NpgsqlException: Exception while reading from stream
+Inner: System.TimeoutException: Timeout during reading attempt
+Failure occurred during DisposablePostgreSqlDatabase cleanup at tests/Vulgata.Tests/Migrations/DisposablePostgreSqlDatabase.cs:265.
+
+Failed!  - Failed: 3, Passed: 3251, Skipped: 15, Total: 3269, Duration: 14 m 50 s - Vulgata.Tests.dll (net10.0)

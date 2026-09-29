@@ -1,10 +1,12 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Reflection;
 
 namespace Vulgata.Tests.PreparedPass2;
 
 public sealed class Pass2ExecutionContractTests
 {
-    [Theory]
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
     [InlineData("Pass2Execution", "Id")]
     [InlineData("Pass2Omission", "Id")]
     [InlineData("Pass2JobExecution", "Id")]
@@ -20,7 +22,8 @@ public sealed class Pass2ExecutionContractTests
         Assert.NotNull(type.GetProperty("State"));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void FlowGroup_ExposesPrePublicationIdentityAndCompleteness()
     {
         Type type = FindCoreType("FlowGroup");
@@ -30,7 +33,8 @@ public sealed class Pass2ExecutionContractTests
         Assert.NotNull(type.GetProperty("PlanFingerprint"));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void LogicalDocument_ExposesBusinessFlowSchemaIdentityWithoutBreakingCurrentPointer()
     {
         Type type = FindCoreType("LogicalDocument");

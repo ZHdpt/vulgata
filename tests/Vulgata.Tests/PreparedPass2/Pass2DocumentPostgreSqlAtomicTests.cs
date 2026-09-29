@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
@@ -21,7 +22,8 @@ namespace Vulgata.Tests.PreparedPass2;
 /// </summary>
 public sealed class Pass2DocumentPostgreSqlAtomicTests
 {
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public void Pass2Publication_ExposesOnePublicAtomicReplayPort()
     {
         Type port = ResolvePort();
@@ -51,7 +53,8 @@ public sealed class Pass2DocumentPostgreSqlAtomicTests
         Assert.Contains("Replayed", Enum.GetNames(disposition.PropertyType), StringComparer.Ordinal);
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public void Pass2Execution_ExposesDurablePublicationAccountingFields()
     {
         Type execution = typeof(Pass2Execution);
@@ -64,6 +67,7 @@ public sealed class Pass2DocumentPostgreSqlAtomicTests
         Assert.Equal(typeof(long), stateVersion.PropertyType);
     }
 
+    [Trait("Suite", "PostgreSql")]
     [PostgreSqlQualificationFact]
     public async Task PostgreSql17_ValidCandidatePublishesOneImmutableVersionAsync()
     {
@@ -102,6 +106,7 @@ public sealed class Pass2DocumentPostgreSqlAtomicTests
         Assert.Equal(traceBefore, await fixture.FlowTraceSnapshotAsync());
     }
 
+    [Trait("Suite", "PostgreSql")]
     [PostgreSqlQualificationFact]
     public async Task PostgreSql17_ExactReplayAfterRestartReturnsSameVersionWithoutMutationAsync()
     {
@@ -123,6 +128,7 @@ public sealed class Pass2DocumentPostgreSqlAtomicTests
         Assert.Equal(before, await fixture.PublicationSnapshotAsync());
     }
 
+    [Trait("Suite", "PostgreSql")]
     [PostgreSqlQualificationFact]
     public async Task PostgreSql17_ChangedReplayConflictsWithoutMutationAsync()
     {
@@ -158,6 +164,7 @@ public sealed class Pass2DocumentPostgreSqlAtomicTests
         Assert.Equal(before, await fixture.PublicationSnapshotAsync());
     }
 
+    [Trait("Suite", "PostgreSql")]
     [PostgreSqlQualificationFact]
     public async Task PostgreSql17_LostAcknowledgementRetryReturnsSameVersionWithoutMutationAsync()
     {
@@ -179,6 +186,7 @@ public sealed class Pass2DocumentPostgreSqlAtomicTests
         Assert.Equal(before, await fixture.PublicationSnapshotAsync());
     }
 
+    [Trait("Suite", "PostgreSql")]
     [PostgreSqlQualificationFact]
     public async Task PostgreSql17_ConcurrentSameJobAdmissionHasOneOwnerAndOneReplayAsync()
     {
@@ -207,6 +215,7 @@ public sealed class Pass2DocumentPostgreSqlAtomicTests
         Assert.Equal(versionsBefore + 1, await fixture.Context.DocumentVersions.CountAsync());
     }
 
+    [Trait("Suite", "PostgreSql")]
     [PostgreSqlQualificationFact]
     public async Task PostgreSql17_SharedResolutionEdgeWithAnotherDecisionIsRejectedWithoutMutationAsync()
     {
@@ -251,6 +260,7 @@ public sealed class Pass2DocumentPostgreSqlAtomicTests
         "job-execution-graph",
     };
 
+    [Trait("Suite", "PostgreSql")]
     [PostgreSqlQualificationTheory]
     [MemberData(nameof(ReplayAuthorityMutations))]
     public async Task PostgreSql17_AuthorityDriftAfterCommitConflictsWithoutPublicationMutationAsync(
@@ -272,6 +282,7 @@ public sealed class Pass2DocumentPostgreSqlAtomicTests
         Assert.Equal(before, await fixture.PublicationSnapshotAsync());
     }
 
+    [Trait("Suite", "PostgreSql")]
     [PostgreSqlQualificationFact]
     public async Task PostgreSql17_LaterPairWithSameStableKeyAppendsAndSupersedesAsync()
     {
@@ -294,6 +305,7 @@ public sealed class Pass2DocumentPostgreSqlAtomicTests
         Assert.Equal(2, await fixture.BusinessVersionCountAsync(firstLogicalId));
     }
 
+    [Trait("Suite", "PostgreSql")]
     [PostgreSqlQualificationFact]
     public async Task PostgreSql17_ReplayOfSupersededEarlierPairReturnsReplayedWithoutMutationAsync()
     {
@@ -348,6 +360,7 @@ public sealed class Pass2DocumentPostgreSqlAtomicTests
         Assert.Equal(second.DocumentVersionId, supersededAfterReplay.SupersededById);
     }
 
+    [Trait("Suite", "PostgreSql")]
     [PostgreSqlQualificationFact]
     public async Task PostgreSql17_ReplayOfSupersededPairWithCurrentPointerDriftReturnsConflictWithoutMutationAsync()
     {
@@ -378,6 +391,7 @@ public sealed class Pass2DocumentPostgreSqlAtomicTests
         Assert.Equal(beforeReplay, await fixture.PublicationChainSnapshotAsync());
     }
 
+    [Trait("Suite", "PostgreSql")]
     [PostgreSqlQualificationFact]
     public async Task PostgreSql17_ReplayOfSupersededPairWithImmediateSuccessorBacklinkReturnsConflictWithoutMutationAsync()
     {
@@ -407,6 +421,7 @@ public sealed class Pass2DocumentPostgreSqlAtomicTests
         Assert.Equal(beforeReplay, await fixture.PublicationChainSnapshotAsync());
     }
 
+    [Trait("Suite", "PostgreSql")]
     [PostgreSqlQualificationFact]
     public async Task PostgreSql17_ReplayOfFirstPairWithSecondHopSupersededByDriftReturnsConflictWithoutMutationAsync()
     {
@@ -458,6 +473,7 @@ public sealed class Pass2DocumentPostgreSqlAtomicTests
                 .SingleAsync());
     }
 
+    [Trait("Suite", "PostgreSql")]
     [PostgreSqlQualificationFact]
     public async Task PostgreSql17_PublicationAdvancesExecutionPublishedCountAndStateVersionAtomicallyAsync()
     {
@@ -492,6 +508,7 @@ public sealed class Pass2DocumentPostgreSqlAtomicTests
         Assert.Equal(nameof(Pass2ExecutionState.Completed), afterSecond.State);
     }
 
+    [Trait("Suite", "PostgreSql")]
     [PostgreSqlQualificationFact]
     public async Task PostgreSql17_PublicationFailureRollsBackExecutionAccountingAsync()
     {
@@ -510,6 +527,7 @@ public sealed class Pass2DocumentPostgreSqlAtomicTests
         Assert.Equal(before, after);
     }
 
+    [Trait("Suite", "PostgreSql")]
     [PostgreSqlQualificationFact]
     public async Task PostgreSql17_ConcurrentPublicationAndReplayAdvanceExecutionAccountingOnceAsync()
     {
@@ -541,6 +559,7 @@ public sealed class Pass2DocumentPostgreSqlAtomicTests
         Assert.Equal(nameof(Pass2ExecutionState.Completed), after.State);
     }
 
+    [Trait("Suite", "PostgreSql")]
     [PostgreSqlQualificationFact]
     public async Task PostgreSql17_LaterPairChangedEndpointCreatesNewLogicalDocumentChainAsync()
     {
@@ -562,6 +581,7 @@ public sealed class Pass2DocumentPostgreSqlAtomicTests
             await fixture.BusinessLogicalDocumentIdForVersionAsync(second.DocumentVersionId!.Value)));
     }
 
+    [Trait("Suite", "PostgreSql")]
     [PostgreSqlQualificationFact]
     public async Task PostgreSql17_PersistedStableKeyDriftRejectsAndPreservesPriorCurrentVersionAsync()
     {
@@ -588,6 +608,7 @@ public sealed class Pass2DocumentPostgreSqlAtomicTests
             .SingleAsync());
     }
 
+    [Trait("Suite", "PostgreSql")]
     [PostgreSqlQualificationFact]
     public async Task PostgreSql17_ReplayOfSupersededPairWithSuccessorVersionGapReturnsConflictWithoutMutationAsync()
     {
@@ -614,6 +635,7 @@ public sealed class Pass2DocumentPostgreSqlAtomicTests
         Assert.Equal(beforeReplay, await fixture.PublicationChainSnapshotAsync());
     }
 
+    [Trait("Suite", "PostgreSql")]
     [PostgreSqlQualificationFact]
     public async Task PostgreSql17_ConcurrentLaterPairsSerializeCurrentPointerAndPreserveOldVersionAsync()
     {
@@ -658,6 +680,7 @@ public sealed class Pass2DocumentPostgreSqlAtomicTests
         { "Pass2JobExecutions", "UPDATE" },
     };
 
+    [Trait("Suite", "PostgreSql")]
     [PostgreSqlQualificationTheory]
     [MemberData(nameof(PublicationFailureBoundaries))]
     public async Task PostgreSql17_InjectedFailureAtPublicationBoundaryRollsBackEverythingAsync(
@@ -2134,9 +2157,9 @@ public sealed class Pass2DocumentPostgreSqlAtomicTests
 /// every generated boundary case visibly skipped when the approved admin
 /// connection is absent, instead of relying on a runtime dynamic skip.
 /// </summary>
-internal sealed class PostgreSqlQualificationTheoryAttribute : TheoryAttribute
+internal sealed class PostgreSqlQualificationTheoryAttribute : SuiteTheoryAttribute
 {
-    public PostgreSqlQualificationTheoryAttribute()
+    public PostgreSqlQualificationTheoryAttribute() : base("PostgreSql")
     {
         if (string.IsNullOrWhiteSpace(
                 Environment.GetEnvironmentVariable("VULGATA_TEST_POSTGRES_ADMIN")))

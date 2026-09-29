@@ -1,0 +1,20 @@
+{
+  "observed_after": {
+    "path": "specs/016-contained-source-tools/evidence/workflow-transition-049-policy-diagnosis.json",
+    "sha256": "007c8fe7e643b8af2f83a71715c3e57faacbc46ed8d96cbd2a5b5aefc0cb1523"
+  },
+  "raw_result": {
+    "kind": "expected-red",
+    "stage": "implement",
+    "work_kind": "test-only-policy-adaptation",
+    "source_commit": "dfc9677a8af1cc3c5679332a20b766de776c0a4d",
+    "observed_at": "2026-09-29T04:35:00Z",
+    "command": "pwsh -NoProfile -File eng/test.ps1 -PolicyOnly",
+    "exit_code": 1,
+    "raw_output_path": "specs/016-contained-source-tools/evidence/test-policy-red-output-01.txt",
+    "raw_output_sha256": "8210c5ec93cf5fd2a2bc061c1769a006904e1b3b64879d0e082d7be9b4aa390d",
+    "expected_gap": "The policy commit predates the rebased Story 18.1 test files, so its complete classification inventory must reject those files until they are explicitly classified and guarded.",
+    "coverage_reason": "This is direct policy enforcement for test-only metadata and guards; no product behavior changes and no behavioral RED is claimed.",
+    "summary": "The committed test policy correctly rejected all rebased Story 18.1 PreparedSource test/helper files plus the Story 18.1 PostgreSQL collection helper as unclassified."
+  }
+}

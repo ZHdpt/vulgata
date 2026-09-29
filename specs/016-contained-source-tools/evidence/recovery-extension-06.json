@@ -1,0 +1,12 @@
+{
+  "kind":"human-approval","stage":"verify","decision_id":"18-1/implementation/1/extension/6","status":"accepted","episode_id":"18-1/implementation/1",
+  "scope_sha256":"10ff6a65764edc852d7aca3d09a4f2b1ab50355800bc0d554e7c61ea9a649c75",
+  "scope_material":"18-1/implementation/1/extension/6|18-1/implementation/1|11|verify-test-failure-06|sandbox-access-denied-0xC0000022|outside-sandbox-selfcontained-qualification|reconverge-lookback-quality-e2e-final|one-negative-result",
+  "pause_at":11,"requested_at":"2026-09-29T06:54:38.7078505Z","decided_at":"2026-09-29T06:54:38.7078505Z",
+  "user_instruction":"Proceed the story. And remember maintain this to project memory about run tests out of sandbox",
+  "context_assessment":"This directly authorizes the finite extension required after result 10 and the already-proposed outside-sandbox verification route, while separately requesting durable project memory.",
+  "failed_results_at_decision":10,
+  "approved_changed_approach":"Use the controlled diagnosis showing restricted NtCreateFile 0xC0000022 and passing approved execution; preserve containment and assertions; record reusable testing guidance; reconverge and complete with the exact configured suite outside the sandbox.",
+  "limits":"Raises the cumulative pause limit from 10 to 11 without resetting the episode. Any new substantive negative result at 11 returns to the user.",
+  "summary":"The user authorized Story 18.1 to proceed using outside-sandbox filesystem qualification and requested the lesson be retained in project memory."
+}

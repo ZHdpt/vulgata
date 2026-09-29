@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Reflection;
 using Vulgata.Infrastructure.Git;
 
@@ -10,7 +11,8 @@ namespace Vulgata.Tests.PreparedScanning;
 /// </summary>
 public sealed class ExactRevisionAcquisitionTests
 {
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void PreparedRevisionAcquirer_ExposesOnePublicExactAcquisitionPort()
     {
         Assembly assembly = typeof(ExactGitRevisionSnapshotService).Assembly;
@@ -35,7 +37,8 @@ public sealed class ExactRevisionAcquisitionTests
             "The port must receive both the full Git reference and exact commit.");
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void PreparedRevisionAcquirer_DoesNotExposeOrdinaryCheckoutOrUnboundedRevisionPorts()
     {
         Type acquirer = RequirePublicType(

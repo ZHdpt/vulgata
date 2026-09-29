@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
@@ -14,7 +15,8 @@ namespace Vulgata.Tests.PreparedPass2;
 
 public sealed class ExactCrossRepositoryResolutionTests
 {
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task ResolveAsync_ExactDuplicateProviderObservation_IsDeduplicatedAsync()
     {
         ExactResolutionProfile profile = new ExactResolutionProfileCatalog().Load();
@@ -50,7 +52,8 @@ public sealed class ExactCrossRepositoryResolutionTests
             decision.ProviderObservations));
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task ResolveAsync_SameLocatorDifferentClassification_IsRetainedInCanonicalOrderAsync()
     {
         ExactResolutionProfile profile = new ExactResolutionProfileCatalog().Load();
@@ -91,7 +94,8 @@ public sealed class ExactCrossRepositoryResolutionTests
             .Select(value => value.CommunicationClassificationId));
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task ResolveAsync_DuplicateProviderObservationsForOneCurrentDocument_AggregateToOneExactProviderAsync()
     {
         ExactResolutionProfile profile = new ExactResolutionProfileCatalog().Load();
@@ -126,7 +130,8 @@ public sealed class ExactCrossRepositoryResolutionTests
         Assert.NotNull(decision.ExactEvidence);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task ResolveAsync_TenRandomizedObservationOrders_ProduceOneCanonicalBatchAsync()
     {
         ExactResolutionProfile profile = new ExactResolutionProfileCatalog().Load();
@@ -168,7 +173,8 @@ public sealed class ExactCrossRepositoryResolutionTests
         }
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task ResolveAsync_MultipleCurrentProviders_ReturnsClosedUncertaintyAsync()
     {
         ExactResolutionProfile profile = new ExactResolutionProfileCatalog().Load();
@@ -208,7 +214,8 @@ public sealed class ExactCrossRepositoryResolutionTests
         Assert.Null(decision.Target);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task ResolveAsync_UnsafeHttpWithQueryAndFragment_ProducesClosedRejectionAsync()
     {
         ExactResolutionProfile profile = new ExactResolutionProfileCatalog().Load();
@@ -240,7 +247,8 @@ public sealed class ExactCrossRepositoryResolutionTests
         Assert.Equal("normalization_mismatch", exception.ReasonCode);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task CurrentCommunicationCandidateSource_ReconstructsCurrentPersistedCandidatesAsync()
     {
         await using ExactCrossRepositoryTestFixture fixture =
@@ -327,7 +335,8 @@ public sealed class ExactCrossRepositoryResolutionTests
             candidate => candidate.Owner.DocumentVersionId == provider.DocumentVersion.Id);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task CurrentCommunicationCandidateSource_RequiresTerminalExecutionAndPreparedPairAsync()
     {
         await using ExactCrossRepositoryTestFixture fixture =
@@ -351,7 +360,8 @@ public sealed class ExactCrossRepositoryResolutionTests
             () => source.ReconstructAsync(request, fixture.Access.AuthorizedScope));
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task CurrentCommunicationCandidateSource_RequiresCommunicationEvidenceAndCrossRepositoryObservationAsync()
     {
         await using ExactCrossRepositoryTestFixture fixture =
@@ -379,7 +389,8 @@ public sealed class ExactCrossRepositoryResolutionTests
             () => source.ReconstructAsync(Request(profile), fixture.Access.AuthorizedScope));
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task CurrentCommunicationCandidateSource_RereadsRevisionBoundSourceAndChecksAnchorHashAsync()
     {
         await using ExactCrossRepositoryTestFixture fixture =
@@ -422,7 +433,8 @@ public sealed class ExactCrossRepositoryResolutionTests
                 fixture.Access.AuthorizedScope));
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task CurrentCommunicationCandidateSource_ReevaluatesEmbeddedCatalogIdentityAndRuleAsync()
     {
         await using ExactCrossRepositoryTestFixture fixture =
@@ -449,7 +461,8 @@ public sealed class ExactCrossRepositoryResolutionTests
             () => source.ReconstructAsync(Request(profile), fixture.Access.AuthorizedScope));
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task CurrentCommunicationCandidateSource_UsesChangedDeferredTargetForConsumerIdentityAsync()
     {
         await using ExactCrossRepositoryTestFixture fixture =
@@ -484,7 +497,8 @@ public sealed class ExactCrossRepositoryResolutionTests
         Assert.Equal("cust/newSession", candidate.NormalizedIdentifier);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task CurrentCommunicationCandidateSource_UsesReproducedProviderSourceIdentityAsync()
     {
         await using ExactCrossRepositoryTestFixture fixture =
@@ -534,7 +548,8 @@ public sealed class ExactCrossRepositoryResolutionTests
         Assert.Equal("cust/newSession", candidate.NormalizedIdentifier);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task CurrentCommunicationCandidateSource_RejectsInvalidManifestProofBindingAsync()
     {
         await using ExactCrossRepositoryTestFixture fixture =

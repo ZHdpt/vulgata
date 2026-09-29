@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Reflection;
 using Vulgata.Core.DomainServices;
 using Vulgata.Infrastructure.Data;
@@ -30,7 +31,8 @@ public sealed class NavigateCodeSecurityTests
         "navigation scheduling",
     ];
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void NavigationFacade_BindsSecurityCasesToOneClosedUnavailableOutcome()
     {
         Type port = RequireType(
@@ -109,7 +111,8 @@ public sealed class NavigateCodeSecurityTests
                 "RawResponse" or "RawQuery" or "RepositoryId" or "ProfiledRevision");
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void NavigationRequest_UsesOnlyClosedOperationsAndBoundedTargetFields()
     {
         Type requestType = typeof(PreparedPass1NavigationRequestInput);
@@ -175,7 +178,8 @@ public sealed class NavigateCodeSecurityTests
                 property.Name.Contains("Query", StringComparison.OrdinalIgnoreCase));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void NavigationComposition_RegistersOnlyOneClosedWorkerFunction()
     {
         Assembly agents = Assembly.Load("Vulgata.Agents");
@@ -210,7 +214,8 @@ public sealed class NavigateCodeSecurityTests
         }
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void NavigationImplementation_DoesNotExposeRawProviderOrMutationSurface()
     {
         Type implementation = RequireType(
@@ -245,7 +250,8 @@ public sealed class NavigateCodeSecurityTests
         }
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void SecurityCases_DoNotGainDistinctExistenceOrAuthorizationDisclosure()
     {
         Type responseType = RequireResponseType();

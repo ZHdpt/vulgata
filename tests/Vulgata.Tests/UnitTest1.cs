@@ -1,8 +1,10 @@
+using Vulgata.Tests.TestInfrastructure;
 namespace Vulgata.Tests;
 
 public class UnitTest1
 {
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void ChatAndManagementPages_AreScaffolded()
     {
         var dir = new DirectoryInfo(AppContext.BaseDirectory);

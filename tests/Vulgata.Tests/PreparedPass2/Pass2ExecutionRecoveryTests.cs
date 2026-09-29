@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
@@ -24,7 +25,8 @@ public sealed class Pass2ExecutionRecoveryTests(ITestOutputHelper output)
     private static readonly DateTimeOffset _start =
         new(2026, 8, 26, 12, 0, 0, TimeSpan.Zero);
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public void Pass2JobExecution_AcquireLease_IsSingleAttemptAndBindsLeaseIdentity()
     {
         Pass2JobExecution job = NewJob();
@@ -39,7 +41,8 @@ public sealed class Pass2ExecutionRecoveryTests(ITestOutputHelper output)
         Assert.Equal(1, job.StateVersion);
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public void Pass2JobExecution_ScheduleRetry_PreservesJobIdentityAndAllowsOneDurableRetry()
     {
         Pass2JobExecution job = NewJob();
@@ -71,7 +74,8 @@ public sealed class Pass2ExecutionRecoveryTests(ITestOutputHelper output)
         Assert.Equal(retryLeaseToken, job.LeaseToken);
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public void Pass2JobExecution_RejectsThirdAttemptAfterOneDurableRetry()
     {
         Pass2JobExecution job = NewJob();
@@ -100,7 +104,8 @@ public sealed class Pass2ExecutionRecoveryTests(ITestOutputHelper output)
         Assert.Equal(secondLease, job.LeaseToken);
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public void Pass2JobExecution_ExpiredFirstAttempt_IsReclaimedWithSameIdentity()
     {
         Pass2JobExecution job = NewJob();
@@ -116,7 +121,8 @@ public sealed class Pass2ExecutionRecoveryTests(ITestOutputHelper output)
         Assert.Equal(2, job.StateVersion);
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public void Pass2JobExecution_ExpiredSecondAttempt_IsTerminalFailureAndCannotReopen()
     {
         Pass2JobExecution job = NewJob();
@@ -142,7 +148,8 @@ public sealed class Pass2ExecutionRecoveryTests(ITestOutputHelper output)
         Assert.Null(job.LeaseToken);
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public void Pass2JobExecution_ProviderPauseReleasesLeaseWithoutChargingAttempt()
     {
         Pass2JobExecution job = NewJob();
@@ -158,7 +165,8 @@ public sealed class Pass2ExecutionRecoveryTests(ITestOutputHelper output)
         Assert.Equal(2, job.StateVersion);
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public void Pass2Execution_ProviderPauseAndResume_PreserveExecutionIdentity()
     {
         Pass2Execution execution = Pass2Execution.CreatePlanning(
@@ -175,7 +183,8 @@ public sealed class Pass2ExecutionRecoveryTests(ITestOutputHelper output)
         Assert.Equal(3, execution.StateVersion);
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public void Pass2Execution_ExposesRunningTerminalAccountingForRecoveryPreservation()
     {
         Pass2Execution execution = Pass2Execution.CreatePlanning(
@@ -191,7 +200,8 @@ public sealed class Pass2ExecutionRecoveryTests(ITestOutputHelper output)
         Assert.Equal(Pass2ExecutionState.Running, execution.State);
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public void Pass2RetrievalBudget_CountersRemainDurableAcrossJobLocalRetry()
     {
         Pass2RetrievalBudget budget = Pass2RetrievalBudget.Create(Guid.NewGuid(), _start);
@@ -206,7 +216,8 @@ public sealed class Pass2ExecutionRecoveryTests(ITestOutputHelper output)
         Assert.Equal(Pass2RetrievalBudgetState.Available, budget.State);
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task ClaimNextAsync_SerialCanonicalOrder_AllowsOnlyOneActiveJobAsync()
     {
         await using RecoveryFixture fixture = await RecoveryFixture.CreateAsync();
@@ -225,7 +236,8 @@ public sealed class Pass2ExecutionRecoveryTests(ITestOutputHelper output)
         Assert.Equal(Pass2JobExecutionState.Pending, await fixture.StateAsync(fixture.SecondJob.Id));
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task ClaimNextAsync_ExpiredLease_IsReclaimedOnHostRestartWithoutChangingJobIdentityAsync()
     {
         await using RecoveryFixture fixture = await RecoveryFixture.CreateAsync();
@@ -243,7 +255,8 @@ public sealed class Pass2ExecutionRecoveryTests(ITestOutputHelper output)
         Assert.Equal(2, await fixture.AttemptCountAsync(fixture.FirstJob.Id));
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task ClaimNextAsync_DueRetry_IsReclaimedAsSecondAttemptWithSameBudgetIdentityAsync()
     {
         await using RecoveryFixture fixture = await RecoveryFixture.CreateAsync();
@@ -272,7 +285,8 @@ public sealed class Pass2ExecutionRecoveryTests(ITestOutputHelper output)
         Assert.Equal(2, await fixture.AttemptCountAsync(fixture.FirstJob.Id));
     }
 
-    [Theory]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteTheory("PostgreSql")]
     [InlineData(ScanJobFailureCategory.Integrity, Pass2ExecutionState.FailedIntegrity,
         TwoRepositoryScanCoordinationPhase.FailedIntegrity)]
     [InlineData(ScanJobFailureCategory.Security, Pass2ExecutionState.FailedSecurity,
@@ -312,7 +326,8 @@ public sealed class Pass2ExecutionRecoveryTests(ITestOutputHelper output)
         Assert.Equal(PreparedPass2ClaimOutcome.Ineligible, laterClaim.Outcome);
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task PostgreSql17_ConcurrentClaimHasOneActiveJobAndPreservesJobBudgetIdentityAsync()
     {
         string? administrator = Environment.GetEnvironmentVariable("VULGATA_TEST_POSTGRES_ADMIN");
@@ -320,7 +335,7 @@ public sealed class Pass2ExecutionRecoveryTests(ITestOutputHelper output)
         {
             output.WriteLine(
                 "Qualification not executed: VULGATA_TEST_POSTGRES_ADMIN is unset; no database was contacted.");
-            return;
+            throw new InvalidOperationException("Required PostgreSQL qualification prerequisite is unavailable; use eng/test.ps1 -Suite PostgreSql.");
         }
 
         await using DisposablePostgreSqlDatabase database =
@@ -365,7 +380,8 @@ public sealed class Pass2ExecutionRecoveryTests(ITestOutputHelper output)
         await AssertPostgreSqlDatabaseDroppedAsync(administrator, databaseName);
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task PostgreSql17_ExpiredLeaseAndDueRetryPreserveJobAndBudgetIdentityAsync()
     {
         string? administrator = Environment.GetEnvironmentVariable("VULGATA_TEST_POSTGRES_ADMIN");
@@ -373,7 +389,7 @@ public sealed class Pass2ExecutionRecoveryTests(ITestOutputHelper output)
         {
             output.WriteLine(
                 "Qualification not executed: VULGATA_TEST_POSTGRES_ADMIN is unset; no database was contacted.");
-            return;
+            throw new InvalidOperationException("Required PostgreSQL qualification prerequisite is unavailable; use eng/test.ps1 -Suite PostgreSql.");
         }
 
         await using DisposablePostgreSqlDatabase database =
@@ -422,7 +438,8 @@ public sealed class Pass2ExecutionRecoveryTests(ITestOutputHelper output)
         await AssertPostgreSqlDatabaseDroppedAsync(administrator, databaseName);
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task RecoverAsync_CancelledBeforeDatabaseAccess_PreservesDurableIdentityAsync()
     {
         using SqliteConnection connection = new("Data Source=:memory:");
@@ -445,7 +462,8 @@ public sealed class Pass2ExecutionRecoveryTests(ITestOutputHelper output)
         Assert.Equal(0, result.RecoveredJobCount);
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task Coordinator_StartAndResume_UseAuthenticatedUserWithoutCallerSuppliedScopeAsync()
     {
         using SqliteConnection connection = new("Data Source=:memory:");
@@ -462,7 +480,8 @@ public sealed class Pass2ExecutionRecoveryTests(ITestOutputHelper output)
         Assert.Equal(PreparedPass2RecoveryOutcome.NotFound, resume.Outcome);
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task ExecutionActivator_SignalsOnlyTheDurableExecutionIdentityAsync()
     {
         var activator = new PreparedPass2ExecutionActivator();

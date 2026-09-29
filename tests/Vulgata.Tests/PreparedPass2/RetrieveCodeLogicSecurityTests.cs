@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Reflection;
 
 using Microsoft.EntityFrameworkCore;
@@ -16,7 +17,8 @@ namespace Vulgata.Tests.PreparedPass2;
 /// </summary>
 public sealed class RetrieveCodeLogicSecurityTests
 {
-    [Theory]
+    [Trait("Suite", "LocalTools")]
+    [SuiteTheory("LocalTools")]
     [InlineData("stale")]
     [InlineData("superseded")]
     [InlineData("cross-system")]
@@ -49,7 +51,8 @@ public sealed class RetrieveCodeLogicSecurityTests
         Assert.Equal("0:0:0:0:0:0:0", await fixture.RetrievalAccountingSnapshotAsync());
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task RetrieveAsync_RevokedServerScope_ReturnsClosedRefusalWithoutAuthorityMutationAsync()
     {
         await using PersistedRetrievalFixture fixture =
@@ -69,7 +72,8 @@ public sealed class RetrieveCodeLogicSecurityTests
         Assert.Equal(0, fixture.SourceReader.Calls);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task RetrieveAsync_UnverifiedServerScope_ReturnsClosedRefusalWithoutAuthorityMutationAsync()
     {
         await using PersistedRetrievalFixture fixture =
@@ -97,7 +101,8 @@ public sealed class RetrieveCodeLogicSecurityTests
         Assert.Equal(accountingBefore, await fixture.RetrievalAccountingSnapshotAsync());
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task RetrieveAsync_HandleIssuedForDifferentJob_IsContentDarkRefusalAsync()
     {
         await using PersistedRetrievalFixture owner =
@@ -133,7 +138,8 @@ public sealed class RetrieveCodeLogicSecurityTests
         AssertCurrentRemainingBudget(result, accountingAfter);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task RetrieveAsync_IssuedAnchorWithPersistedHashMismatch_IsContentDarkRefusalAsync()
     {
         await using PersistedRetrievalFixture fixture =
@@ -171,7 +177,8 @@ public sealed class RetrieveCodeLogicSecurityTests
         await AssertReservedRefusalAsync(fixture, accountingBefore, accountingAfter, result);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task RetrieveAsync_IssuedAnchorWithPersistedRangeMismatch_IsContentDarkRefusalAsync()
     {
         await using PersistedRetrievalFixture fixture =
@@ -203,7 +210,8 @@ public sealed class RetrieveCodeLogicSecurityTests
         await AssertReservedRefusalAsync(fixture, accountingBefore, accountingAfter, result);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task RetrieveAsync_RelatedDocuments_StopsAtOneReferencesHopAndExcludesNonReferencesAsync()
     {
         await using PersistedRetrievalFixture fixture =
@@ -247,7 +255,8 @@ public sealed class RetrieveCodeLogicSecurityTests
         Assert.Equal(authorityBefore, await fixture.AuthoritySnapshotAsync());
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task RetrieveAsync_UnknownUnauthorizedAndStaleRequestsHaveEquivalentContentDarkRefusalAsync()
     {
         await using PersistedRetrievalFixture owner =
@@ -283,7 +292,8 @@ public sealed class RetrieveCodeLogicSecurityTests
         Assert.Equal(staleAccountingBefore, await stale.RetrievalAccountingSnapshotAsync());
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task RetrieveAsync_UnknownOpaqueSelector_ConsumesCallAndPersistsContentDarkRefusalAsync()
     {
         await using PersistedRetrievalFixture fixture =
@@ -307,7 +317,8 @@ public sealed class RetrieveCodeLogicSecurityTests
         AssertCurrentRemainingBudget(result, after);
     }
 
-    [Theory]
+    [Trait("Suite", "LocalTools")]
+    [SuiteTheory("LocalTools")]
     [InlineData("Pending")]
     [InlineData("RetryScheduled")]
     [InlineData("Completed")]
@@ -339,7 +350,8 @@ public sealed class RetrieveCodeLogicSecurityTests
         Assert.Equal(accountingBefore, accountingAfter);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task RetrieveAsync_HandleIssuedBeforeAttemptAdvance_IsContentDarkRefusalAsync()
     {
         await using PersistedRetrievalFixture fixture =
@@ -371,7 +383,8 @@ public sealed class RetrieveCodeLogicSecurityTests
         await AssertReservedRefusalAsync(fixture, accountingBefore, accountingAfter, result);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public void Pass2JobExecution_ExposesLeaseAndAttemptAdmissionIdentity()
     {
         Type jobType = typeof(Pass2JobExecution);
@@ -393,7 +406,8 @@ public sealed class RetrieveCodeLogicSecurityTests
         }
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task RetrieveAsync_CurrentnessChangesBetweenSourceReadAndAdmission_IsRefusedWithConsumedReservationAsync()
     {
         await using PersistedRetrievalFixture fixture =
@@ -426,7 +440,8 @@ public sealed class RetrieveCodeLogicSecurityTests
         await AssertReservedRefusalAsync(fixture, before, after, result);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task PreparedPass2Store_AdmissionCurrentnessChangesAfterProjection_IsRefusedWithoutAdmissionMutationAsync()
     {
         await using PersistedRetrievalFixture fixture =
@@ -481,7 +496,8 @@ public sealed class RetrieveCodeLogicSecurityTests
         Assert.Empty(result.Items);
     }
 
-    [Theory]
+    [Trait("Suite", "LocalTools")]
+    [SuiteTheory("LocalTools")]
     [InlineData("source-anchor-hash")]
     [InlineData("source-anchor-range")]
     public async Task RetrieveAsync_CandidateEvidenceChangesAfterProjectionBeforeAdmission_IsRefusedWithoutAcceptedMutationAsync(
@@ -522,7 +538,8 @@ public sealed class RetrieveCodeLogicSecurityTests
             result);
     }
 
-    [Theory]
+    [Trait("Suite", "LocalTools")]
+    [SuiteTheory("LocalTools")]
     [InlineData("live-authorization")]
     [InlineData("pair")]
     [InlineData("system")]
@@ -562,7 +579,8 @@ public sealed class RetrieveCodeLogicSecurityTests
         AssertCurrentRemainingBudget(result, after);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public void RetrieveCodeLogic_RequestCannotSupplyAuthorityMutationFields()
     {
         string[] forbiddenFragments = ["Provider", "Group", "System", "Repository", "Revision"];

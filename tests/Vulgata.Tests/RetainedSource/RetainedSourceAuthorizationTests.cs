@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
@@ -7,7 +8,8 @@ namespace Vulgata.Tests.RetainedSource;
 
 public sealed class RetainedSourceAuthorizationTests
 {
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task AcquireAndOpen_UnauthenticatedSubjectIsDeniedWithoutSourceDisclosure()
     {
         await using RetainedSourceFixture fixture = await RetainedSourceFixture.CreateAsync();
@@ -40,7 +42,8 @@ public sealed class RetainedSourceAuthorizationTests
         Assert.Null(opened.Context);
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task AcquireAndOpen_AnonymousKnownIdentifierCannotBorrowAdministratorAuthority()
     {
         await using RetainedSourceFixture fixture = await RetainedSourceFixture.CreateAsync();
@@ -89,7 +92,8 @@ public sealed class RetainedSourceAuthorizationTests
         Assert.Null(opened.Context);
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task AcquireAndOpen_AuthenticatedIdentityWithoutIdentifierCannotBorrowAuxiliaryAnonymousId()
     {
         await using RetainedSourceFixture fixture = await RetainedSourceFixture.CreateAsync();
@@ -135,7 +139,8 @@ public sealed class RetainedSourceAuthorizationTests
         Assert.Null(opened.Context);
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task AcquireAndOpen_AuthenticatedIdentifierWinsOverEarlierAnonymousIdentity()
     {
         await using RetainedSourceFixture fixture = await RetainedSourceFixture.CreateAsync();
@@ -182,7 +187,8 @@ public sealed class RetainedSourceAuthorizationTests
         await opened.Context!.DisposeAsync();
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task ReadContext_AfterSystemOwnerAndRoleRevocation_DeniesWithoutPayload()
     {
         await using RetainedSourceFixture fixture = await RetainedSourceFixture.CreateAsync();
@@ -219,7 +225,8 @@ public sealed class RetainedSourceAuthorizationTests
         Assert.Null(bytes.EntrySha256);
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task ReadContext_AfterOriginRebind_DeniesWithoutPayload()
     {
         await using RetainedSourceFixture fixture = await RetainedSourceFixture.CreateAsync();
@@ -251,7 +258,8 @@ public sealed class RetainedSourceAuthorizationTests
         Assert.Null(text.EntrySha256);
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task ReadContext_AfterSystemRebind_DeniesSystemOwnerWithoutPayload()
     {
         await using RetainedSourceFixture fixture = await RetainedSourceFixture.CreateAsync();
@@ -282,7 +290,8 @@ public sealed class RetainedSourceAuthorizationTests
         Assert.Null(list.NextCursor);
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task OpenReadContext_RepositoryAndRevisionScopeMismatchDoesNotDiscloseSource()
     {
         await using RetainedSourceFixture fixture = await RetainedSourceFixture.CreateAsync();
@@ -311,7 +320,8 @@ public sealed class RetainedSourceAuthorizationTests
         Assert.Null(wrongRevision.Context);
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task ReadContext_AfterGrantExpiry_DeniesMetadataWithoutDisclosure()
     {
         var time = new ControlledRetainedSourceTimeProvider();
@@ -340,7 +350,8 @@ public sealed class RetainedSourceAuthorizationTests
         Assert.Null(entry.Entry);
     }
 
-    [Theory]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteTheory("PostgreSql")]
     [InlineData("/absolute")]
     [InlineData("src\\file.txt")]
     [InlineData("src/./file.txt")]

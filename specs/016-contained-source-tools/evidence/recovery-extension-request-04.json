@@ -1,0 +1,32 @@
+{
+  "kind": "human-decision-request",
+  "stage": "converge",
+  "decision_id": "18-1/implementation/1/extension/4",
+  "status": "requested",
+  "episode_id": "18-1/implementation/1",
+  "failed_results": 8,
+  "current_pause_at": 8,
+  "proposed_pause_at": 9,
+  "scope_sha256": "0dcd1f3b114c1f0bf1c1ed771313bbeeed7f9457990f3398dd59ab58d5225da5",
+  "scope_material": "18-1/implementation/1/extension/4|18-1/implementation/1|9|convergence-result-07|run-t027-owned-postgresql-63|reconverge-lookback-quality-e2e|configured-build-selfcontained-final|one-negative-result",
+  "transition_head": {
+    "path": "specs/016-contained-source-tools/evidence/workflow-transition-052-convergence-t026-reused-pause.json",
+    "sha256": "d8b1f6c32502b0c7cbaa28a822c4d3539e0386a9d2754ecd311e4274854b576d"
+  },
+  "failure_evidence": {
+    "path": "specs/016-contained-source-tools/evidence/convergence-result-07.json",
+    "sha256": "965de0e631421b18d01acbb95c301eefd1c76c4610f896cb4c9db44ea6dbc2db",
+    "summary": "T027 was appended because T026's complete 63-test retained-source PostgreSql qualification was previously blocked before assertions and was not covered by the later 27-test selection."
+  },
+  "retained_valid_work": [
+    "The committed test-isolation policy is active and its enforcement passes for all 283 classified C# sources.",
+    "The rebased Story 18.1 PreparedSource SelfContained boundary passes 119/119 with zero skips.",
+    "Story 18.1 product code and assertions are unchanged by the policy adaptation.",
+    "The configured SelfContained final command remains separate from explicit PostgreSql qualification."
+  ],
+  "proposed_changed_approach": "Run T027 through the repository-owned PostgreSQL 17 container using the exact task command and require all 63 selected retained-source cases to pass with zero skips. If it passes, mark T027 complete, reconverge, refresh lookback and independent quality review, apply the E2E decision, then run the configured Web build and SelfContained command once. Do not load .env database values or treat excluded suites as passed.",
+  "recommendation": "Approve a finite cumulative extension from 8 to 9. Positive qualification/review results do not consume the allowance; any new substantive negative result at count 9 returns to the human without retry.",
+  "main_consequence": "The story remains incomplete until the relevant PostgreSql qualification and configured SelfContained final gate both pass. The new runner may create and remove one labeled, run-owned PostgreSQL 17 Docker container and volume.",
+  "material_uncertainty": "The new owned-container runner has not yet executed T027 in this checkout. The 63 cases may expose a genuine Story 18.1 regression, a test-policy integration defect, or an infrastructure prerequisite failure; none is assumed in advance.",
+  "requested_at": "2026-09-29T04:52:31.0628914Z"
+}

@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Security.Cryptography;
 using System.Text.Json;
 
@@ -10,7 +11,8 @@ public sealed class AnalysisRuntimeFixtureTests
         PropertyNameCaseInsensitive = true,
     };
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Manifest_NeutralRepositoryRevision_HasDeterministicContainedFilesAndRelationships()
     {
         string fixtureRoot = FindFixtureRoot();
@@ -43,7 +45,8 @@ public sealed class AnalysisRuntimeFixtureTests
             });
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void ResolveContainedPath_TraversalOrRootedPath_RejectsEscapeFromFixtureRoot()
     {
         string fixtureRoot = FindFixtureRoot();

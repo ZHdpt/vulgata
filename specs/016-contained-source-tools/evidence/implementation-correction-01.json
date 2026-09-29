@@ -1,0 +1,40 @@
+{
+  "kind": "tdd-correction",
+  "stage": "implement",
+  "outcome": "passed",
+  "story_key": "18-1-access-prepared-source-through-contained-read-only-tools",
+  "findings": ["QR-18.1-01", "QR-18.1-02"],
+  "observed_at": "2026-09-28T10:17:21.3216611Z",
+  "source_base": "eb5c20e82c054574367daae51efc73ff7a6a3e1e",
+  "red": {
+    "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --no-restore --filter \"FullyQualifiedName~PreparedSourceListTests|FullyQualifiedName~PreparedSourceFailureTests\" --logger \"console;verbosity=minimal\"",
+    "exit_code": 1,
+    "result": "13 passed and exactly 2 expected failures: nested list expected Complete but received Incomplete; equal-length in-flight rewrite expected ChangedInput but received Complete. No skips or unrelated failures."
+  },
+  "minimal_green": {
+    "production_paths": [
+      "src/dotnet/Vulgata.Infrastructure/Source/PreparedSourceReadContext.cs"
+    ],
+    "summary": "Reuse OpenRelativeDirectory for non-root immediate listing and ObserveFile identity/metadata comparisons for range-read drift; no public seam, dependency, traversal policy or architecture change.",
+    "focused_result": "2/2 passed on qualified Windows."
+  },
+  "final_green": {
+    "focused_command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-restore --filter \"FullyQualifiedName~ListAsync_NestedDirectory_ReturnsImmediateChildrenWithRepositoryRelativeLocations|FullyQualifiedName~ReadTextRangeAsync_EqualLengthRewriteBeforeRelease_ReturnsChangedInputWithoutText\" -v:q --logger \"console;verbosity=minimal\"",
+    "focused_result": "2/2 passed, 0 skipped",
+    "surrounding_result": "PreparedSourceListTests plus PreparedSourceFailureTests: 15/15 passed, 0 skipped",
+    "full_result": "FullyQualifiedName~PreparedSource: 117/117 passed, 0 skipped",
+    "assembly": "freshly rebuilt under the actual workspace user on qualified Windows"
+  },
+  "final_shape": {
+    "test_owner": "Regression tests still exercise nested held-root enumeration and an equal-length rewrite with distinct LastWriteTime while disclosure is buffered; no refactor needed.",
+    "production_owner": "Existing traversal and identity seams are reused, child handles are bounded and cursor/authority/budget behavior remains intact; no refactor needed."
+  },
+  "qualification_limit": "Live input can change after the final bounded observation; this correction does not claim immutable snapshot behavior or real Worker/model/provider integration.",
+  "test_paths": [
+    "tests/Vulgata.Tests/PreparedSource/PreparedSourceListTests.cs",
+    "tests/Vulgata.Tests/PreparedSource/PreparedSourceFailureTests.cs"
+  ],
+  "production_paths": [
+    "src/dotnet/Vulgata.Infrastructure/Source/PreparedSourceReadContext.cs"
+  ]
+}

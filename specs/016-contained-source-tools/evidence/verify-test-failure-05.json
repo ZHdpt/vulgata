@@ -1,0 +1,63 @@
+{
+  "observed_after": {
+    "path": "specs/016-contained-source-tools/evidence/workflow-transition-058-e2e-accept.json",
+    "sha256": "f00b48752c96e559f12a225ede5ef3a24aa12bd6ff6b3c2db6b5c9b296edf2b6"
+  },
+  "raw_result": {
+    "kind": "failure",
+    "stage": "verify-test",
+    "source_commit": "f89ffea4c9b185ab42d3dd6bf09d3e99001bac0b",
+    "observed_at": "2026-09-29T05:32:42.9904169Z",
+    "command": "pwsh -NoProfile -File eng/test.ps1",
+    "exit_code": 1,
+    "raw_output_path": "specs/016-contained-source-tools/evidence/verify-test-failure-output-05.txt",
+    "raw_output_sha256": "f430121c6889022f4355059cd177fc4f025eacebada456d76393818ff0f17fc7",
+    "trx_path": "TestResults/isolation-cec72e7f7d3c434ebc5e1a36488161b5/results.trx",
+    "trx_sha256": "9cd74c8ebe425fca81ab47ebca215db010a5c4bbbff36e8520c44f56706c8c52",
+    "summary_counts": {
+      "discovered": 2811,
+      "selected": 1975,
+      "passed": 1887,
+      "failed": 88,
+      "skipped": 0
+    },
+    "failure_groups": [
+      {
+        "count": 87,
+        "expected": "PreparedSourceIssueStatus.Issued",
+        "actual": "PreparedSourceIssueStatus.RootUnavailable",
+        "classification": "Story 18.1 PreparedSource fixture/issuer boundary failed under the complete SelfContained suite after passing the focused 119-test boundary."
+      },
+      {
+        "count": 1,
+        "expected": "PreparedSourceIssueStatus.Denied",
+        "actual": "PreparedSourceIssueStatus.RootUnavailable",
+        "classification": "The same root-unavailable condition preempted the expected denial assertion."
+      }
+    ],
+    "diagnostic_observation": "All 88 failures are within the Story 18.1 PreparedSource boundary and share RootUnavailable at context issuance. Unique fixture directories and the earlier 119/119 focused pass make an assertion regression unproven; full-suite parallel resource or filesystem interaction is plausible but not established. This is not classified as an irrelevant historical-suite failure.",
+    "build_summary": {
+      "command": "dotnet build src/dotnet/Vulgata.Web/Vulgata.Web.csproj",
+      "exit_code": 0,
+      "errors": 0,
+      "warnings": 3297,
+      "duration": "00:00:29.60",
+      "raw_output_path": "specs/016-contained-source-tools/evidence/verify-build-output-02.txt",
+      "raw_output_sha256": "e3cab85441ab06e557b7ebc9ddfb21d95b9d9430504a48a20fed835dba99b820"
+    },
+    "recovery_assessment": {
+      "episode_id": "18-1/implementation/1",
+      "failed_results": 9,
+      "pause_at": 9,
+      "action": "pause",
+      "earliest_owner": "tests",
+      "failed_approaches": [
+        "The isolated-suite policy correction classified PreparedSource as SelfContained and its complete focused boundary passed 119/119.",
+        "T027 separately passed the exact retained-source PostgreSql qualification 63/63 under runner-owned resources.",
+        "The configured complete SelfContained suite still produced 88 Story 18.1 RootUnavailable outcomes during context issuance."
+      ],
+      "next_authority_required": "The cumulative recovery ceiling of 9 is reached. No diagnosis-driven correction or rerun is authorized without a new explicit finite extension."
+    },
+    "summary": "The quality-reviewed Story 18.1 candidate built with zero errors, but the configured complete SelfContained suite failed 88 of 1975 selected tests, all in the Story 18.1 PreparedSource boundary with RootUnavailable issuance outcomes. This is substantive recovery result 9 and pauses the story at the approved cumulative ceiling."
+  }
+}

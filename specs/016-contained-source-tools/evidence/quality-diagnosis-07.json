@@ -1,0 +1,14 @@
+{
+  "kind":"analysis","stage":"verify","evidence_id":"18-1-access-prepared-source-through-contained-read-only-tools/diagnosis/7","episode_id":"18-1/implementation/1","failed_results":10,"observed_at":"2026-09-29T06:57:05.8045380Z",
+  "failure":{"path":"specs/016-contained-source-tools/evidence/verify-test-failure-06.json","sha256":"75ac72a332a00531454ddefc9b8aafe73900eeb7c935465a1d344c540db36e4e"},
+  "controlled_diagnosis":{"path":"specs/016-contained-source-tools/evidence/rootunavailable-execution-diagnosis-01.json","sha256":"e8251d6db2338fd679229ad680053b9351cdae7abedf33ac937e6fdced603686"},
+  "diagnosis_report":{"path":"specs/016-contained-source-tools/evidence/rootunavailable-execution-diagnosis-01.md","sha256":"817181cac5584c8e839c3560fe2bed7410c36a70ca173f9b60d1e5912c0eb1c0"},
+  "independent_outside_sandbox_pass":{"path":"specs/016-contained-source-tools/evidence/outside-sandbox-selfcontained-command-01.json","sha256":"e571ae23aeb67136e9f88ddd44fdda583bdf031e8b15a55873ae79c811a73d2f"},
+  "failed_obligation":"The configured SelfContained verification was executed through a restricted child-process boundary that denied required ancestor-directory handles, so its 88 RootUnavailable outcomes did not qualify the accepted Windows containment behavior.",
+  "cause":"The repository launcher inside the Codex filesystem sandbox receives NtCreateFile status 0xC0000022 at the second ancestor component below the volume root. The identical launcher and unchanged sources pass outside the sandbox. Full-suite size and xUnit parallelism are not necessary causes.",
+  "affected_assumption":"Permission to create and delete the temporary leaf fixture was incorrectly treated as proof that the sandboxed child could open every ancestor required by handle-relative containment.",
+  "earliest_owner":"tests",
+  "changed_approach":"Preserve product containment and assertions; run native prepared-source qualification with the same repository launcher under explicitly approved outside-sandbox execution, record the operational requirement in testing guidance and project lessons, then complete normal convergence/review/verification gates.",
+  "next_check":"After the final reviewed candidate is pinned, rerun the exact configured build and SelfContained command outside the sandbox. Require 1,975/1,975 with zero skips; any substantive failure is result 11 and pauses.",
+  "summary":"Controlled restricted/approved comparison and raw NTSTATUS identify the Codex filesystem sandbox as the cause. An independent approved outside-sandbox run passed the complete SelfContained suite 1,975/1,975."
+}

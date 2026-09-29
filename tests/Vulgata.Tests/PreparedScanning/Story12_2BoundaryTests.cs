@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 namespace Vulgata.Tests.PreparedScanning;
 
 public sealed class Story12_2BoundaryTests
@@ -9,7 +10,8 @@ public sealed class Story12_2BoundaryTests
     public const string AcceptedPlanReview = "plan-review-03";
     public const string AuthorizationDecision = "planned-change-authorization-01";
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void AcceptedDefinitionBoundary_RecordedInputs_MatchDurableArtifacts()
     {
         string repositoryRoot = FindRepositoryRoot();

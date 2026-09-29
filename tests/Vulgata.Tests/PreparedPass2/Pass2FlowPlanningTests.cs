@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Reflection;
 using System.Security.Cryptography;
 
@@ -17,7 +18,8 @@ namespace Vulgata.Tests.PreparedPass2;
 /// </summary>
 public sealed class Pass2FlowPlanningTests
 {
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task T018_PreparedPass2FlowPlanner_PlansPersistedAuthoritativeHandoffAsync()
     {
         await using PlanningHarness harness = await PlanningHarness.CreateAsync();
@@ -38,7 +40,8 @@ public sealed class Pass2FlowPlanningTests
         Assert.Equal(harness.SharedEdgeId, group.ExactResolutionEdgeId);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public void T018_FlowGroup_SeparatesExecutionIdentityFromCrossScanLogicalIdentity()
     {
         AssertProperty<FlowGroup>(nameof(FlowGroup.LogicalDocumentStableKey));
@@ -58,7 +61,8 @@ public sealed class Pass2FlowPlanningTests
         AssertProperty<FlowGroup>(nameof(FlowGroup.ExactResolutionEdgeId));
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public void T018_FlowGroup_RequiresClosedCompleteMembershipAndCanonicalPlanFingerprint()
     {
         AssertProperty<FlowGroup>(nameof(FlowGroup.State));
@@ -67,14 +71,16 @@ public sealed class Pass2FlowPlanningTests
         AssertProperty<FlowGroup>(nameof(FlowGroup.ReasonCode));
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public void T018_FlowTraceStep_BindsDecisionIndependentlyFromReusableEdge()
     {
         AssertProperty<FlowTraceStep>(nameof(FlowTraceStep.EdgeId));
         AssertProperty<FlowTraceStep>(nameof(FlowTraceStep.ExactResolutionDecisionId));
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task T018_Planning_TwoPersistedDecisionsSharingOneEdgeRemainDistinctAsync()
     {
         await using PlanningHarness harness = await PlanningHarness.CreateAsync(decisionCount: 2);
@@ -93,7 +99,8 @@ public sealed class Pass2FlowPlanningTests
             result.FlowGroups.Select(group => group.LogicalDocumentStableKey).Distinct().Count());
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task T018_Planning_PersistedConsumerEntryChangeProducesNewBusinessFlowKeyAsync()
     {
         await using PlanningHarness harness = await PlanningHarness.CreateAsync(decisionCount: 2);
@@ -110,7 +117,8 @@ public sealed class Pass2FlowPlanningTests
             result.FlowGroups.Select(group => group.LogicalDocumentStableKey).Distinct().Count());
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task T018_Planning_UsesPersistedCurrentDocumentsAndCanonicalTraceOrderAsync()
     {
         await using PlanningHarness harness = await PlanningHarness.CreateAsync();
@@ -128,7 +136,8 @@ public sealed class Pass2FlowPlanningTests
                 trace.Steps.OrderBy(step => step.StepOrder).Select(step => step.StepOrder)));
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task T018_Planning_PreservesConsumerEntryIdentityAcrossCurrentVersionChangeAsync()
     {
         await using PlanningHarness baseline = await PlanningHarness.CreateAsync();
@@ -155,7 +164,8 @@ public sealed class Pass2FlowPlanningTests
         Assert.NotEqual(baseline.ConsumerDocumentVersionId, group.ConsumerDocumentVersionId);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task T019_Planning_ExpandsOneSameRepositoryHopAndCollapsesCycleAsync()
     {
         await using PlanningHarness harness = await PlanningHarness.CreateAsync();
@@ -196,49 +206,56 @@ public sealed class Pass2FlowPlanningTests
             trace.Steps.OrderBy(step => step.StepOrder).Select(step => step.StepOrder));
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task T019_Planning_MissingImplementationProducesIncompleteWithoutJobAsync()
     {
         await AssertIncompleteWithoutJobAsync(
             static harness => harness.RemoveProviderImplementationEdgeAsync());
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task T019_Planning_MultipleImplementationsProduceIncompleteWithoutJobAsync()
     {
         await AssertIncompleteWithoutJobAsync(
             static harness => harness.AddSecondProviderImplementationAsync());
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task T019_Planning_UnanchoredImplementationProducesIncompleteWithoutJobAsync()
     {
         await AssertIncompleteWithoutJobAsync(
             static harness => harness.RemoveProviderImplementationAnchorAsync());
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task T019_Planning_StaleCurrentImplementationProducesIncompleteWithoutJobAsync()
     {
         await AssertIncompleteWithoutJobAsync(
             static harness => harness.ClearProviderImplementationCurrentPointerAsync());
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task T019_Planning_WrongRevisionImplementationProducesIncompleteWithoutJobAsync()
     {
         await AssertIncompleteWithoutJobAsync(
             static harness => harness.ChangeProviderImplementationRevisionAsync());
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task T019_Planning_ForeignSystemImplementationProducesIncompleteWithoutJobAsync()
     {
         await AssertIncompleteWithoutJobAsync(
             static harness => harness.ChangeProviderImplementationSystemAsync());
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task T019_Planning_UnauthorizedProviderProducesIncompleteWithoutJobAsync()
     {
         await using PlanningHarness harness = await PlanningHarness.CreateAsync();
@@ -258,7 +275,8 @@ public sealed class Pass2FlowPlanningTests
             .ToArrayAsync());
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task T019_Planning_IgnoresUnrelatedGraphEdgesWithoutExpandingMembershipAsync()
     {
         await using PlanningHarness harness = await PlanningHarness.CreateAsync();

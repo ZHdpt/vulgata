@@ -1,0 +1,10 @@
+Execution mode: approved outside the Codex filesystem sandbox
+Command: pwsh -NoProfile -File eng/test.ps1
+Exit code: 0
+Policy passed: 283 classified source files; guarded test traits checked.
+Suite=SelfContained discovered=2811 selected=1975 passed=1975 failed=0 skipped=0
+Excluded suites (not qualified): PostgreSql, LocalTools, External, E2E, HistoricalBoundary.
+TRX: TestResults/isolation-551ce5a9076a46d4924e9500ce077ccb/results.trx
+TRX SHA-256: fd36f7e98f6a7a7c55a3893678a873cdafc7d10c8fc521144c4bfadc26f9c600
+Started: 2026-09-29T14:50:03.3952306+08:00
+Finished: 2026-09-29T14:52:49.2058815+08:00

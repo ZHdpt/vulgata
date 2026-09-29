@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Reflection;
 using Vulgata.Core.DomainServices;
 using Vulgata.Core.Entities;
@@ -13,7 +14,8 @@ namespace Vulgata.Tests.PreparedPass1;
 /// </summary>
 public sealed class Pass1ConcurrencyAndOrderingTests
 {
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void PreparedPass1Store_ExposesOnePairWideClaimSeamWithDurableLeaseAndOrdinals()
     {
         Type contract = RequireStoreContract();
@@ -46,7 +48,8 @@ public sealed class Pass1ConcurrencyAndOrderingTests
             property.Name == "ManifestOrdinal");
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void PreparedPass1PairExecution_StoresDefaultTwoAndOnlyOneThroughFourEffectiveLimits()
     {
         Type contract = RequireStoreContract();
@@ -69,7 +72,8 @@ public sealed class Pass1ConcurrencyAndOrderingTests
         }
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void PreparedPass1ClaimContract_UsesPairSelectionOrdinalForClaimsAndManifestOrdinalForDisplay()
     {
         Type result = UnwrapTask(RequireMethod(
@@ -100,7 +104,8 @@ public sealed class Pass1ConcurrencyAndOrderingTests
         }
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void PreparedPass1ClaimContract_ProvidesActiveLeaseAndExpiryInformationForPairCapacity()
     {
         Type result = UnwrapTask(RequireMethod(
@@ -112,7 +117,8 @@ public sealed class Pass1ConcurrencyAndOrderingTests
         Assert.Contains(properties, property => property.Name is "ConcurrencyLimit" or "EffectiveConcurrencyLimit");
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void PreparedPass1ClaimContract_SeparatesCompletionFromIdentityAndDisplayOrder()
     {
         Type contract = RequireStoreContract();
@@ -126,7 +132,8 @@ public sealed class Pass1ConcurrencyAndOrderingTests
         Assert.Contains(properties, property => property.Name is "PairSelectionOrdinal" or "SelectionOrdinal");
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void PreparedPass1TenCompletionPermutations_RetainTheSameCanonicalPairAndDisplayOrder()
     {
         _ = RequireStoreContract();

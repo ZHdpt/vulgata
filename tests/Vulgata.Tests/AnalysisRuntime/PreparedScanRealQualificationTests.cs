@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Diagnostics;
 using System.Security.Cryptography;
 using System.Text;
@@ -49,7 +50,8 @@ public sealed class PreparedScanRealQualificationTests
     private const string PreparedRuntimeIdentityJson = "{\"runtime\":\"prepared-real-test\"}";
     private static readonly string PreparedRuntimeIdentityHash = new('9', 64);
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task ExactGit_PrivateFullRefAcquisition_BindsCommitAndCleansItsLease()
     {
         string root = CreateTemporaryRoot("git");
@@ -89,7 +91,8 @@ public sealed class PreparedScanRealQualificationTests
         }
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task PinnedCodeGraph_RealCompletePreparedProof_FinishesUnderThirtySeconds()
     {
         await AssertPinnedCodeGraphBundleAsync();
@@ -167,7 +170,8 @@ public sealed class PreparedScanRealQualificationTests
         }
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task PinnedJdtLs_RealReadinessFile_FinishesUnderSixtySeconds()
     {
         Assert.True(File.Exists(JdtLsArchive));
@@ -220,7 +224,8 @@ public sealed class PreparedScanRealQualificationTests
         }
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task PreparedJavaReadiness_XmlOnly_IsExplicitNotApplicable()
     {
         AnalysisScope scope = CreateScope();
@@ -246,7 +251,8 @@ public sealed class PreparedScanRealQualificationTests
         Assert.NotNull(proof.IdentityHash);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task ProductionPairBuilder_JavaRevisionPath_UsesPinnedJdtLsAndProducesRanges()
     {
         string fixtureRoot = CreateTemporaryRoot("t056-real-git");
@@ -403,7 +409,8 @@ public sealed class PreparedScanRealQualificationTests
         }
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task ProductionPairBuilder_ExactRevision_UsesFreshCodeGraphBeforeJdtReadiness()
     {
         string fixtureRoot = CreateTemporaryRoot("t058-real-codegraph");
@@ -757,7 +764,8 @@ public sealed class PreparedScanRealQualificationTests
             tupleRepositories);
     }
 
-    [Fact]
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task HardReadinessFailureRejects_OnlyPostReadinessExpansionFallsBack()
     {
         AnalysisScope scope = CreateScope();

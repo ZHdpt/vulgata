@@ -1,11 +1,14 @@
+using Vulgata.Tests.TestInfrastructure;
 using Microsoft.Extensions.DependencyInjection;
 using Vulgata.Core.DomainServices;
 
 namespace Vulgata.Tests.RetainedSource;
 
+[Collection(PostgreSqlHeavyCollection.Name)]
 public sealed class RetainedSourceCaptureTests
 {
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task AcquireAsync_AuthorizedSystemRepository_ResolvesFullRefAndReturnsCompletedIdentity()
     {
         await using RetainedSourceFixture fixture =
@@ -24,7 +27,8 @@ public sealed class RetainedSourceCaptureTests
         Assert.NotNull(result.CompletedAt);
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task AcquireAsync_AuthorizedStandaloneRepository_DoesNotRequireSystemOrPairIdentity()
     {
         await using RetainedSourceFixture fixture =
@@ -41,7 +45,8 @@ public sealed class RetainedSourceCaptureTests
         Assert.Equal("sha1", result.GitObjectFormat);
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task AcquireAsync_AssignedSystemOwner_CapturesSystemRepositoryWithoutAdministratorRole()
     {
         await using RetainedSourceFixture fixture =
@@ -60,7 +65,8 @@ public sealed class RetainedSourceCaptureTests
         Assert.Equal(fixture.RepositoryId, result.RepositoryId);
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task AcquireAsync_AfterRefAndWorkingCopyMutation_RetainsOriginalRevisionIdentity()
     {
         await using RetainedSourceFixture fixture =
@@ -80,7 +86,8 @@ public sealed class RetainedSourceCaptureTests
         Assert.Equal(originalRevision, result.ProfiledRevision);
     }
 
-    [Theory]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteTheory("PostgreSql")]
     [InlineData("SourceStorage:RootPath", null)]
     [InlineData("SourceStorage:RootPath", "")]
     [InlineData("SourceStorage:MaximumEntries", "0")]
@@ -114,7 +121,8 @@ public sealed class RetainedSourceCaptureTests
         Assert.Contains("source_configuration_invalid", exception!.ToString(), StringComparison.Ordinal);
     }
 
-    [Theory]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteTheory("PostgreSql")]
     [InlineData("entry", 1L, 8L, 16L)]
     [InlineData("blob", 10_000L, 1L, 16L)]
     [InlineData("aggregate", 10_000L, 8L, 12L)]
@@ -150,7 +158,8 @@ public sealed class RetainedSourceCaptureTests
         Assert.Null(result.ManifestSha256);
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task AcquireAsync_ServerOwnedDeadlineExpiry_ReturnsDistinctDeadlineOutcome()
     {
         await using RetainedSourceFixture fixture =
@@ -173,7 +182,8 @@ public sealed class RetainedSourceCaptureTests
         Assert.Null(result.ManifestSha256);
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task AcquireAsync_UnauthorizedSubject_DeniesBeforeGitResolution()
     {
         await using RetainedSourceFixture fixture =
@@ -193,7 +203,8 @@ public sealed class RetainedSourceCaptureTests
         Assert.Null(result.ManifestSha256);
     }
 
-    [Theory]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteTheory("PostgreSql")]
     [InlineData("missing-ref")]
     [InlineData("refs/heads/does-not-exist")]
     public async Task AcquireAsync_InvalidPermittedRef_ReturnsSanitizedAcquisitionFailure(
@@ -214,7 +225,8 @@ public sealed class RetainedSourceCaptureTests
         Assert.DoesNotContain(fixture.Repository.RootPath, result.Code, StringComparison.OrdinalIgnoreCase);
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task AcquireAsync_GitTransportFailure_ReturnsSanitizedAcquisitionFailure()
     {
         await using RetainedSourceFixture fixture =
@@ -234,7 +246,8 @@ public sealed class RetainedSourceCaptureTests
         Assert.Null(result.ManifestSha256);
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task AcquireAsync_OriginRebindBeforePublication_DeniesWithoutCompletion()
     {
         await using RetainedSourceFixture fixture =
@@ -262,7 +275,8 @@ public sealed class RetainedSourceCaptureTests
         Assert.Equal(1, mutationCount);
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task AcquireAsync_SystemRebindBeforePublication_DeniesWithoutCompletion()
     {
         await using RetainedSourceFixture fixture =
@@ -292,7 +306,8 @@ public sealed class RetainedSourceCaptureTests
         Assert.Equal(1, mutationCount);
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task AcquireAsync_AuthorityRevokedBeforePublication_DeniesWithoutCompletion()
     {
         await using RetainedSourceFixture fixture =
@@ -322,7 +337,8 @@ public sealed class RetainedSourceCaptureTests
         Assert.Equal(1, mutationCount);
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task AcquireAsync_CancelledBeforeVerification_ReturnsCancelledWithoutCompletion()
     {
         await using RetainedSourceFixture fixture =
@@ -353,7 +369,8 @@ public sealed class RetainedSourceCaptureTests
         Assert.Equal(1, mutationCount);
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task AcquireAsync_StorageRootUnavailable_ReturnsSanitizedStorageFailureWithoutPartialIdentity()
     {
         await using RetainedSourceFixture fixture =

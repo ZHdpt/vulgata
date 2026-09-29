@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Collections;
 using System.Reflection;
 using System.Text.Json;
@@ -31,7 +32,8 @@ public sealed class CodeLogicFileV2ProjectionTests
     private const string HashC = "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc";
     private const string Revision = "0123456789abcdef0123456789abcdef01234567";
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Project_AuthoritativeJson_UsesFixedOrderAndAtMostNineSectionGroups()
     {
         object projection = InvokeProjector(AuthoritativeJson());
@@ -69,7 +71,8 @@ public sealed class CodeLogicFileV2ProjectionTests
             section => Convert.ToString(RequiredProperty(section, "Heading"))!.Contains("LLM", StringComparison.OrdinalIgnoreCase));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Project_RepeatedRuns_ProduceByteIdenticalMarkdownSectionsIndexAndCommitFingerprint()
     {
         object first = InvokeProjector(AuthoritativeJson());
@@ -83,7 +86,8 @@ public sealed class CodeLogicFileV2ProjectionTests
             CanonicalFingerprint(second, "CommitFingerprint"));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Project_AuthoritativeJson_OrdersAnchorsAndSameRepositoryReferencesCanonically()
     {
         object projection = InvokeProjector(AuthoritativeJson());
@@ -103,7 +107,8 @@ public sealed class CodeLogicFileV2ProjectionTests
             edge => Assert.Equal("References", Convert.ToString(RequiredProperty(edge, "EdgeType", "RelationshipKind"))));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void Project_DerivesSearchAndMarkdownOnlyFromAuthoritativeJsonClaims()
     {
         object projection = InvokeProjector(AuthoritativeJson());

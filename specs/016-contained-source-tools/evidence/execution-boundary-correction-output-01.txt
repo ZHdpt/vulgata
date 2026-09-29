@@ -1,0 +1,8 @@
+Execution mode: approved outside the Codex filesystem sandbox
+Command: pwsh -NoProfile -File eng/test.ps1 -Filter 'FullyQualifiedName~Vulgata.Tests.PreparedSource'
+Exit code: 0
+Policy passed: 283 classified source files; guarded test traits checked.
+Suite=SelfContained discovered=2811 selected=119 passed=119 failed=0 skipped=0
+Excluded suites (not qualified): PostgreSql, LocalTools, External, E2E, HistoricalBoundary.
+TRX: TestResults/isolation-3555a8b7b60f40a3899544f75fe92a7a/results.trx
+TRX SHA-256: 172058793bc0e0bfc00225bc6b0ef4c4a5e0bacf59e7ab1cfa3716ee2a93e969

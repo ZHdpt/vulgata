@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Reflection;
 using Vulgata.Core.DomainServices;
 
@@ -62,7 +63,8 @@ public sealed class Pass1ReconciliationTests
         RejectedObservationCaseNames[9],
     };
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void PreparedPass1Store_ExposesOneDeterministicReconciliationOperation()
     {
         MethodInfo method = RequireReconciliationMethod();
@@ -85,7 +87,8 @@ public sealed class Pass1ReconciliationTests
                 parameter.ParameterType.Name.Contains("Pass1", StringComparison.Ordinal));
     }
 
-    [Theory]
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
     [MemberData(nameof(ExactTargetCases))]
     public void ReconcileAsync_ExactCurrentSameRepositoryTarget_CreatesOnlyOneReferencesEdge(
         string caseName)
@@ -106,7 +109,8 @@ public sealed class Pass1ReconciliationTests
                 property.Name.Contains("Uncertainty", StringComparison.OrdinalIgnoreCase));
     }
 
-    [Theory]
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
     [MemberData(nameof(RejectedObservationCases))]
     public void ReconcileAsync_NonExactObservation_CreatesNoEdgeAndPreservesDeferredContent(
         string caseName)
@@ -128,7 +132,8 @@ public sealed class Pass1ReconciliationTests
                 "DocumentSections" or "IndexEntries" or "SourceAnchors");
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void ReconcileAsync_TenCompletionOrders_ExposeCanonicalEdgeAndWarningOutputsOnly()
     {
         MethodInfo method = RequireReconciliationMethod();
@@ -147,7 +152,8 @@ public sealed class Pass1ReconciliationTests
                 property.Name.Contains("CompletedAt", StringComparison.OrdinalIgnoreCase));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void ReconcileAsync_ExactReplay_IsIdempotentAndChangedReplayIsConflict()
     {
         MethodInfo method = RequireReconciliationMethod();
@@ -167,7 +173,8 @@ public sealed class Pass1ReconciliationTests
         Assert.Contains(properties, property => property.Name is "CreatedEdgeCount" or "ReconciledEdgeCount" or "EdgeCount");
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void ReconcileAsync_MutatesNoImmutableDocumentRepresentation()
     {
         MethodInfo method = RequireReconciliationMethod();

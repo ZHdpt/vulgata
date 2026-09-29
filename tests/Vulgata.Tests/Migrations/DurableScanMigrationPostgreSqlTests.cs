@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Reflection;
 using System.Security.Cryptography;
 using Microsoft.EntityFrameworkCore;
@@ -45,14 +46,15 @@ public sealed class DurableScanMigrationPostgreSqlTests
     private const string ProfiledRevision = "0123456789abcdef0123456789abcdef01234567";
     private const string SourceHash = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task DurableScanFoundation_PostgreSql17_ApplyRollbackReapply_PreservesProtectedRows()
     {
         string? administratorConnectionString =
             Environment.GetEnvironmentVariable("VULGATA_TEST_POSTGRES_ADMIN");
         if (string.IsNullOrWhiteSpace(administratorConnectionString))
         {
-            return;
+            throw new InvalidOperationException("Required PostgreSQL qualification prerequisite is unavailable; use eng/test.ps1 -Suite PostgreSql.");
         }
 
         await using DisposablePostgreSqlDatabase database =

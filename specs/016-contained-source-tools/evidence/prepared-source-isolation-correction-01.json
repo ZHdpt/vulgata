@@ -1,0 +1,89 @@
+{
+  "observed_after": {
+    "path": "specs/016-contained-source-tools/evidence/workflow-transition-061-diagnosis.json",
+    "sha256": "351d60ef7fb97229c8f5af9523778047aaa75b26787b3c5b112ec3f99e34fb54"
+  },
+  "raw_result": {
+  "kind": "command",
+  "stage": "verify-focused",
+  "outcome": "passed",
+  "work_kind": "test-only",
+  "source_commit": "91f7a92d2d60d612c1829ceb96967e28a7e4c924",
+  "observed_at": "2026-09-29T05:58:15.1149274Z",
+  "command": "pwsh -NoProfile -File eng/test.ps1 -Filter 'FullyQualifiedName~Vulgata.Tests.PreparedSource'",
+  "exit_code": 0,
+  "failure": {
+    "path": "specs/016-contained-source-tools/evidence/verify-test-failure-05.json",
+    "sha256": "d1995fa555b437b2403d78a413eab00a8d154954513d03ec50086e74f96c7f76"
+  },
+  "diagnosis": {
+    "path": "specs/016-contained-source-tools/evidence/quality-diagnosis-06.json",
+    "sha256": "161c6c9830fd6c54151a200b158c4555671033dae3ff1c5ec288fbb502802cfb"
+  },
+  "correction": "One xUnit collection with DisableParallelization=true now contains every PreparedSource test class. This prevents those filesystem-handle tests from running concurrently with other collections while preserving every test body, assertion, trait and suite classification.",
+  "commands": {
+    "policy": "pwsh -NoProfile -File eng/test-policy.ps1",
+    "focused": "pwsh -NoProfile -File eng/test.ps1 -Filter 'FullyQualifiedName~Vulgata.Tests.PreparedSource'",
+    "diff_check": "git diff --check -- tests/Vulgata.Tests/PreparedSource"
+  },
+  "results": {
+    "policy_exit_code": 0,
+    "classified_sources": 283,
+    "focused_exit_code": 0,
+    "focused_discovered": 2811,
+    "focused_selected": 119,
+    "focused_passed": 119,
+    "focused_failed": 0,
+    "focused_skipped": 0,
+    "diff_check_exit_code": 0
+  },
+  "raw_output_path": "specs/016-contained-source-tools/evidence/prepared-source-isolation-correction-output-01.txt",
+  "raw_output_sha256": "beab57930ff6340e210f93a789d8b8e4577aaa3f5626fb4fe34bdc951e6b9473",
+  "trx_path": "TestResults/isolation-9850dc7cdf9e4cb680c380291e6d1faf/results.trx",
+  "trx_sha256": "1a3f3b62b10798a08bbeee54aac9b5b4661ee319731707dc1094780924d1d860",
+  "input_hashes": {
+    "specs/016-contained-source-tools/spec.md": "48c92e4f6582471a1664e553b48756a811f22bb2b4f1334206e94303629b0b6d",
+    "specs/016-contained-source-tools/plan.md": "b375723e56c8cdc7990a4e7a624c5f58a78fde07d9a23edd79e25025c54fce08",
+    "specs/016-contained-source-tools/tasks.md": "6f619b75c759462dc1390fdfeaa165885216d1ad135a18a2de29ea18dfda8f10",
+    "tests/Vulgata.Tests/PreparedSource/PreparedSourceAuthorityLifecycleTests.cs": "827b048424120b4acd1989a61690a61c7f777ba80fd9aba153a36377983df96b",
+    "tests/Vulgata.Tests/PreparedSource/PreparedSourceBasicReadTests.cs": "68edf974d5f7293d7aa47df3e8428e400c6822761fe0857f6ef5c4a955b04c2c",
+    "tests/Vulgata.Tests/PreparedSource/PreparedSourceCancellationBudgetTests.cs": "aef89e0d520f411d097832ea3667b2c0f76f64ccafc98f0062c3eb41b1d94adf",
+    "tests/Vulgata.Tests/PreparedSource/PreparedSourceContainmentTests.cs": "7df7604061cc3d7270edc471586dacf3bf620194ca8a0dddd41cd36737e25ac5",
+    "tests/Vulgata.Tests/PreparedSource/PreparedSourceFailureTests.cs": "97ca8ebc38fdb39505ad0e8046662931c694c9a6d4d87296d35af4505dd6d2d0",
+    "tests/Vulgata.Tests/PreparedSource/PreparedSourceFixture.cs": "0bd3f2e78e71d8ab5782b6d23704144a703cfc69c33a028328710ca602a7e425",
+    "tests/Vulgata.Tests/PreparedSource/PreparedSourceGrantTests.cs": "3455a97353b710b6fa1c07fde8512178790381b127a7a1fbc32252903b60521f",
+    "tests/Vulgata.Tests/PreparedSource/PreparedSourceListTests.cs": "a4fd712cd0782c2f4de8b6c8e9430d738a14af718c0b9c2850364e3e2b7e81d5",
+    "tests/Vulgata.Tests/PreparedSource/PreparedSourceRangeReadTests.cs": "65bdcfee9cce1458eb621ad0e2adac174c48e4b681103e20f74cee35ebdca858",
+    "tests/Vulgata.Tests/PreparedSource/PreparedSourceSearchTests.cs": "3c1386b3f7b05ca2b603d8ffde9301eabbb7c7bb3674ca47f38064c2c0516188",
+    "tests/Vulgata.Tests/PreparedSource/PreparedSourceToolFunctionTests.cs": "cc89b38b284bd83b0c1dbe6ed38fa22b9cdfd8a777d4f2913ee7d8a7934c7cbd"
+  },
+  "owned_paths": [
+    "tests/Vulgata.Tests/PreparedSource/PreparedSourceAuthorityLifecycleTests.cs",
+    "tests/Vulgata.Tests/PreparedSource/PreparedSourceBasicReadTests.cs",
+    "tests/Vulgata.Tests/PreparedSource/PreparedSourceCancellationBudgetTests.cs",
+    "tests/Vulgata.Tests/PreparedSource/PreparedSourceContainmentTests.cs",
+    "tests/Vulgata.Tests/PreparedSource/PreparedSourceFailureTests.cs",
+    "tests/Vulgata.Tests/PreparedSource/PreparedSourceFixture.cs",
+    "tests/Vulgata.Tests/PreparedSource/PreparedSourceGrantTests.cs",
+    "tests/Vulgata.Tests/PreparedSource/PreparedSourceListTests.cs",
+    "tests/Vulgata.Tests/PreparedSource/PreparedSourceRangeReadTests.cs",
+    "tests/Vulgata.Tests/PreparedSource/PreparedSourceSearchTests.cs",
+    "tests/Vulgata.Tests/PreparedSource/PreparedSourceToolFunctionTests.cs"
+  ],
+  "test_paths": [
+    "tests/Vulgata.Tests/PreparedSource/PreparedSourceAuthorityLifecycleTests.cs",
+    "tests/Vulgata.Tests/PreparedSource/PreparedSourceBasicReadTests.cs",
+    "tests/Vulgata.Tests/PreparedSource/PreparedSourceCancellationBudgetTests.cs",
+    "tests/Vulgata.Tests/PreparedSource/PreparedSourceContainmentTests.cs",
+    "tests/Vulgata.Tests/PreparedSource/PreparedSourceFailureTests.cs",
+    "tests/Vulgata.Tests/PreparedSource/PreparedSourceFixture.cs",
+    "tests/Vulgata.Tests/PreparedSource/PreparedSourceGrantTests.cs",
+    "tests/Vulgata.Tests/PreparedSource/PreparedSourceListTests.cs",
+    "tests/Vulgata.Tests/PreparedSource/PreparedSourceRangeReadTests.cs",
+    "tests/Vulgata.Tests/PreparedSource/PreparedSourceSearchTests.cs",
+    "tests/Vulgata.Tests/PreparedSource/PreparedSourceToolFunctionTests.cs"
+  ],
+  "final_shape_assessment": "The collection definition is colocated in the already-classified PreparedSourceFixture source, every PreparedSource test class is included, and the change adds no new helper source or policy exception. Assertions and product code are unchanged.",
+  "summary": "The test-only nonparallel collection correction passed policy validation and the full focused PreparedSource boundary 119/119 with zero skips. The configured complete SelfContained suite remains the single pending verification rerun."
+  }
+}

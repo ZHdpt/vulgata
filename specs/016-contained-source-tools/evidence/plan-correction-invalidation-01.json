@@ -1,0 +1,10 @@
+{
+  "kind": "analysis",
+  "stage": "plan-review",
+  "summary": "The corrected architecture plan changes the prior rejected review boundary and requires the repository-mandated independent plan-only review before tasks. The valid specification and corrected plan content are retained; recovery count and episode are unchanged.",
+  "owner": "plan",
+  "corrected_boundary": {
+    "path": "specs/016-contained-source-tools/evidence/plan-review-boundary-02.json",
+    "sha256": "71ebe2a137a09e6b863867c7acd27e2de6e7c3961f9383239240df1f80c8d733"
+  }
+}

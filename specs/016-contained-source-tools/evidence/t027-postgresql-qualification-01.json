@@ -1,0 +1,61 @@
+{
+  "observed_after": {
+    "path": "specs/016-contained-source-tools/evidence/workflow-transition-054-t027-diagnosis.json",
+    "sha256": "0a97897c6e7a3a8365aac56d17bfb2e7acbc14413934de97a33574a1719736f4"
+  },
+  "raw_result": {
+    "kind": "command",
+    "stage": "verify-focused",
+    "work_kind": "nonbehavioral",
+    "source_commit": "3cd0151d34872cc9ad15ae764279235fcf127669",
+    "observed_at": "2026-09-29T05:08:26.5606193Z",
+    "command": "pwsh -NoProfile -File eng/test.ps1 -Suite PostgreSql -Filter 'FullyQualifiedName~Vulgata.Tests.RetainedSource.RetainedSourceReadContextTests|FullyQualifiedName~Vulgata.Tests.RetainedSource.RetainedSourceRangeReadTests|FullyQualifiedName~Vulgata.Tests.RetainedSource.RetainedSourceCaptureTests'",
+    "exit_code": 0,
+    "counts": {
+      "suite": "PostgreSql",
+      "discovered": 2959,
+      "selected": 63,
+      "passed": 63,
+      "failed": 0,
+      "skipped": 0,
+      "duration": "1 m 36 s"
+    },
+    "raw_output_path": "specs/016-contained-source-tools/evidence/t027-postgresql-qualification-output-01.txt",
+    "raw_output_sha256": "483133aa2d192ed98a8ee9e33080c97bfe5d651af5ddb5b320965628f282f120",
+    "trx": {
+      "runtime_path": "TestResults/isolation-1989d6a60b0b409a8efaab806573cbb5/results.trx",
+      "sha256": "8cec08a66795968766691c0387c90957de74b936c0f0ee66bed5f3795577914c"
+    },
+    "resource_evidence": {
+      "docker_readiness_sha256": "5f85edda8f72b8f1b6417b40eebff15208d46d9554b986b3f57469cadff5f743",
+      "postgres_readiness_sha256": "f65a06d12c78be4ce11dc662c4ebf525a1da13786331065f0fe973c6df5ddd29",
+      "container_cleanup_sha256": "4247a97e7cd347efcad912d3e950910f08a1f8b7bbc215884a3db807c09a741e",
+      "volume_cleanup_sha256": "c26ba33446b43f9b427d22e8f04f4ea001b9418fd88b97d9d707ce3521572c8a",
+      "volume_verification_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "volume_absence_sha256": "52be80a56d96fc2ba81014802316a29e3d5564ceeb8cbb260e0be8ae00705e70",
+      "summary": "The runner created a labeled run-owned PostgreSQL 17 container and volume with generated credentials and a dynamic loopback port, then removed both and verified the volume absent."
+    },
+    "input_hashes": {
+      "specs/016-contained-source-tools/spec.md": "48c92e4f6582471a1664e553b48756a811f22bb2b4f1334206e94303629b0b6d",
+      "specs/016-contained-source-tools/plan.md": "b375723e56c8cdc7990a4e7a624c5f58a78fde07d9a23edd79e25025c54fce08",
+      "specs/016-contained-source-tools/tasks.md": "aed0bd21abdd5eaee03d65eff6a7636c990874c8e3c3c1369ee3a61f57069403",
+      "eng/test.ps1": "8e1438ab4a98e60f1b107d61d6befcd3e192a25ab0e947d9bda04cd083c5cb11",
+      "tests/Vulgata.Tests/TestInfrastructure/suites.json": "2617583a8eb41b15428a220f1e1397234b4b670709f162dabb648e0ff2434eb0",
+      "tests/Vulgata.Tests/RetainedSource/RetainedSourceReadContextTests.cs": "afda39ecb5a900aa129719ad7b5c120d86b88539a06dab08ad3a8fc19cbcedfc",
+      "tests/Vulgata.Tests/RetainedSource/RetainedSourceRangeReadTests.cs": "d186065b624ace6da97e81662a0af30aa21490dfc3cdd9b2b79d2065ed352cac",
+      "tests/Vulgata.Tests/RetainedSource/RetainedSourceCaptureTests.cs": "4550fe2cbe5443b9cc7c1dd84ff7163257ff153407491275004fda7a905c0474"
+    },
+    "owned_paths": [
+      "specs/016-contained-source-tools/spec.md",
+      "specs/016-contained-source-tools/plan.md",
+      "specs/016-contained-source-tools/tasks.md",
+      "eng/test.ps1",
+      "tests/Vulgata.Tests/TestInfrastructure/suites.json",
+      "tests/Vulgata.Tests/RetainedSource/RetainedSourceReadContextTests.cs",
+      "tests/Vulgata.Tests/RetainedSource/RetainedSourceRangeReadTests.cs",
+      "tests/Vulgata.Tests/RetainedSource/RetainedSourceCaptureTests.cs"
+    ],
+    "verification_route": "Direct feature-specific PostgreSql qualification for completed-task follow-up T027; no product or test behavior changed and no behavioral RED was required.",
+    "summary": "T027 passed its exact 63-test retained-source PostgreSql qualification with zero failures/skips and successful cleanup of all run-owned resources."
+  }
+}

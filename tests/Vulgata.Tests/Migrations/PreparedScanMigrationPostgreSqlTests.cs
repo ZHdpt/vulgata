@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
@@ -30,13 +31,14 @@ public sealed class PreparedScanMigrationPostgreSqlTests(ITestOutputHelper outpu
     private static readonly DateTimeOffset CreatedAt =
         new(2026, 8, 18, 12, 34, 56, TimeSpan.Zero);
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task PreparedScanManifest_PostgreSql17_CleanApplyRollbackReapply_PreservesHistoricalRows()
     {
         string? administratorConnectionString = GetAdministratorConnectionString();
         if (administratorConnectionString is null)
         {
-            return;
+            throw new InvalidOperationException("Required PostgreSQL qualification prerequisite is unavailable.");
         }
 
         await using DisposablePostgreSqlDatabase database =
@@ -101,13 +103,14 @@ public sealed class PreparedScanMigrationPostgreSqlTests(ITestOutputHelper outpu
         await AssertDatabaseDroppedAsync(administratorConnectionString, databaseName);
     }
 
-    [Fact]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task PreparedScanManifest_PostgreSql17_ForcedLateBoundaryFailure_RollsBackWholeMigration()
     {
         string? administratorConnectionString = GetAdministratorConnectionString();
         if (administratorConnectionString is null)
         {
-            return;
+            throw new InvalidOperationException("Required PostgreSQL qualification prerequisite is unavailable.");
         }
 
         await using DisposablePostgreSqlDatabase database =

@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Net;
 using System.Net.Http.Json;
 using System.Reflection;
@@ -31,6 +32,7 @@ namespace Vulgata.Tests.PreparedPass1;
 [Collection(PreparedScanningCollection.Name)]
 public sealed class Pass1ProductionExecutionTests
 {
+    [Trait("Suite", "External")]
     [T062HostQualificationFact]
     public async Task HostedRevisionBinding_CurrentRunningPair_LoadsAndAcquiresExactTwoRequestsAsync()
     {
@@ -71,6 +73,7 @@ public sealed class Pass1ProductionExecutionTests
         await registry.ReleasePairAsync(pair.Id);
     }
 
+    [Trait("Suite", "External")]
     [T062HostQualificationTheory]
     [MemberData(nameof(QualificationConcurrencyLimits))]
     public async Task AuthenticatedApprovedPair_StartsRealRunAtEveryLimit_AndPersistsTerminalEvidence(
@@ -281,9 +284,11 @@ public sealed class Pass1ProductionExecutionTests
 
     internal static async Task<T062QualificationInputs> LoadQualificationInputsAsync()
     {
-        RequireRealHostQualificationPrerequisites();
         string connectionString = Environment.GetEnvironmentVariable(
-            "VULGATA_T062_QUALIFICATION_CONNECTION")!;
+            "VULGATA_T062_QUALIFICATION_CONNECTION") ?? throw new InvalidOperationException(
+                "T062 requires an explicitly supplied local seed imported with eng/test.ps1 -WithPostgreSql -SeedDump; manifest IDs and provider/source consent remain required.");
+        TestResourceScope.ValidateOwnedTarget(connectionString);
+        RequireRealHostQualificationPrerequisites();
         Guid systemId = ParseRequiredGuid("VULGATA_T062_SYSTEM_ID");
         Guid[] manifestIds =
         [
@@ -704,14 +709,14 @@ internal sealed record T062RepositoryQualification(
     string SourceRoot,
     string ProfiledRevision);
 
-internal sealed class T062HostQualificationTheoryAttribute : TheoryAttribute
+internal sealed class T062HostQualificationTheoryAttribute : SuiteTheoryAttribute
 {
-    public T062HostQualificationTheoryAttribute() => Skip =
+    public T062HostQualificationTheoryAttribute() : base("External") => Skip =
         Pass1ProductionExecutionTests.HostQualificationSkipReason();
 }
 
-internal sealed class T062HostQualificationFactAttribute : FactAttribute
+internal sealed class T062HostQualificationFactAttribute : SuiteFactAttribute
 {
-    public T062HostQualificationFactAttribute() => Skip =
+    public T062HostQualificationFactAttribute() : base("External") => Skip =
         Pass1ProductionExecutionTests.HostQualificationSkipReason();
 }

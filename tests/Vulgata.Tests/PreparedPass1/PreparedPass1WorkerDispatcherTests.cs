@@ -1,3 +1,4 @@
+using Vulgata.Tests.TestInfrastructure;
 using System.Reflection;
 using System.Collections.Concurrent;
 using System.Security.Cryptography;
@@ -26,7 +27,8 @@ public sealed class PreparedPass1WorkerDispatcherTests
     private const string DispatcherImplementationName =
         "Vulgata.Agents.WorkerExecution.PreparedPass1WorkerDispatcher";
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void PreparedDispatcher_ExposesDedicatedPortAndServerOwnedDispatchLoop()
     {
         Type port = RequireType(DispatcherPortName, typeof(WorkerAgentJobPacket).Assembly);
@@ -61,7 +63,8 @@ public sealed class PreparedPass1WorkerDispatcherTests
                 method.Name.Contains("Enumerate", StringComparison.OrdinalIgnoreCase));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void PreparedDispatcher_RequestBindsPreparedUnitsSnapshotAndClassificationProjection()
     {
         Type port = RequireType(DispatcherPortName, typeof(WorkerAgentJobPacket).Assembly);
@@ -97,7 +100,8 @@ public sealed class PreparedPass1WorkerDispatcherTests
             property => property.Name.Contains("Concurrency", StringComparison.Ordinal));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void PreparedDispatcher_AssignmentAndPacketRequireOneServerOwnedSymbolName()
     {
         // T045 RED: dispatcher validation must compare SymbolName as part of
@@ -108,7 +112,8 @@ public sealed class PreparedPass1WorkerDispatcherTests
             "SymbolName", BindingFlags.Public | BindingFlags.Instance));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void PreparedDispatcher_PacketProjectionCarriesExactUnitIdentityAndNoCompletionOrder()
     {
         ApprovedPreparedManifestPairSeed pair =
@@ -157,7 +162,8 @@ public sealed class PreparedPass1WorkerDispatcherTests
                 property.Name.Contains("FinishedAt", StringComparison.Ordinal));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void PreparedDispatcher_UsesSharedCapacityAndDoesNotExposeNavigationScheduling()
     {
         Type port = RequireType(DispatcherPortName, typeof(WorkerAgentJobPacket).Assembly);
@@ -187,7 +193,8 @@ public sealed class PreparedPass1WorkerDispatcherTests
                 method.Name.Contains("Enumerate", StringComparison.OrdinalIgnoreCase));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task DispatchAsync_InvokesEachExecutorConversationOnceAndReturnsItsFirstResultAsync()
     {
         ScriptedProviderExecutor executor = new(turnsBeforeFinalResult: 9);
@@ -208,7 +215,8 @@ public sealed class PreparedPass1WorkerDispatcherTests
         Assert.All(executor.ToolAttemptCounts, attempts => Assert.Equal(1, attempts.Value));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task DispatchAsync_RepeatedDurableClaimsDoNotUseDispatcherLocalRetryOrBudgetAsync()
     {
         ScriptedProviderExecutor executor = new(turnsBeforeFinalResult: 8);
@@ -239,7 +247,8 @@ public sealed class PreparedPass1WorkerDispatcherTests
             packetType.GetProperty("RemainingNavigationBudget", BindingFlags.Public | BindingFlags.Instance));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task DispatchAsync_InvokesExecutorExactlyOncePerDurableClaimAsync()
     {
         OneShotRejectedExecutor executor = new();
@@ -261,7 +270,8 @@ public sealed class PreparedPass1WorkerDispatcherTests
         Assert.Equal("invalid-or-repeated-tool-call", item.ReasonCode);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void PreparedDispatcher_DoesNotOwnConversationRetryOrBudgetState()
     {
         FieldInfo[] fields = typeof(PreparedPass1WorkerDispatcher)
@@ -275,7 +285,8 @@ public sealed class PreparedPass1WorkerDispatcherTests
                 field.Name.Contains("retry", StringComparison.OrdinalIgnoreCase));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task DispatchAsync_InvalidCompletedPayload_ReportsOneSanitizedCategoryAndClosedFailureAsync()
     {
         RecordingSubmissionDiagnosticObserver observer = new();
@@ -302,7 +313,8 @@ public sealed class PreparedPass1WorkerDispatcherTests
             observer.Categories);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task DispatchAsync_EightRefusedToolAttemptsRemainExecutorOwnedAndDoNotLoopAsync()
     {
         ScriptedProviderExecutor executor = new(turnsBeforeFinalResult: 8);

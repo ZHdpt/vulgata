@@ -1,10 +1,12 @@
+using Vulgata.Tests.TestInfrastructure;
 using Vulgata.Tests.DurableScanning;
 
 namespace Vulgata.Tests.AnalysisRuntime;
 
 public sealed class Story121TestHelperTests
 {
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void FixedClockAndIds_RepeatedInputs_AreDeterministicAndMonotonic()
     {
         DateTimeOffset initial = new(2026, 8, 30, 1, 2, 3, TimeSpan.Zero);
@@ -21,7 +23,8 @@ public sealed class Story121TestHelperTests
         Assert.Throws<ArgumentOutOfRangeException>(() => clock.Advance(TimeSpan.FromTicks(-1)));
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void CanonicalHash_EquivalentObjectOrder_ProducesSameLowercaseSha256()
     {
         string first = Utf8CanonicalHash.ComputeJson("""{"z":2,"a":{"y":1,"x":0}}""");
@@ -32,7 +35,8 @@ public sealed class Story121TestHelperTests
         Assert.Matches("^[0-9a-f]{64}$", first);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ProcessAndFileSystemDoubles_AlreadyCancelled_ObserveCancellationWithoutRecordingWork()
     {
         RecordingProcessLauncherDouble process = new();
@@ -53,7 +57,8 @@ public sealed class Story121TestHelperTests
         Assert.True(fileSystem.ObservedCancellation);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task Doubles_ConfiguredResultsAndFiles_AreDeterministicAndReturnDefensiveCopies()
     {
         string root = Path.Combine(Path.GetTempPath(), "story-12-1");
@@ -76,7 +81,8 @@ public sealed class Story121TestHelperTests
         Assert.Single(process.Requests);
     }
 
-    [Fact]
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void SanitizedDiagnostics_SecretsPathsAndLongInput_IsRedactedAndBounded()
     {
         string input = "token=very-secret C:\\Users\\operator\\repo\\source.cs /srv/vulgata/source.cs " + new string('x', 500);

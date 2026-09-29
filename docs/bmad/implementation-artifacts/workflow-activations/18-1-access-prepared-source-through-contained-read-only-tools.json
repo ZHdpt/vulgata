@@ -1,0 +1,43 @@
+{
+  "schema_version": "3.1",
+  "bmad_story_key": "18-1-access-prepared-source-through-contained-read-only-tools",
+  "bmad_epic_key": "epic-18",
+  "status": "superseded",
+  "requested_feature_directory": "specs/016-contained-source-tools",
+  "feature_directory": "specs/016-contained-source-tools",
+  "preflight": {
+    "branch": "(detached-native-handoff)",
+    "head": "0c0bf0cfb05edc5b28a346d8f3a63002d1e781ef",
+    "git_identity_sha256": "70fd67001872ef254ed52a93c4071cef6cb3751dd230e67e97213d3c2133be26",
+    "status_sha256": "811e45acb3329b898a1a92b4bc69e9a8b9fb70ef8e97a5beba0dacd2c4ca0a74",
+    "observed_at": "2026-09-28T03:33:29.3096814Z"
+  },
+  "authorities": [
+    {"path": "AGENTS.md", "sha256": "75f2b2b397cf2c4d4250fe5c570452a40c583b62e3d571ac70c7de108b3280ce"},
+    {"path": "docs/agents/project-state.md", "sha256": "2b60094665b37b3ae8098acc6bdb8925541fb1847f39e170b87007865902dc63"},
+    {"path": "docs/bmad/epics.md", "sha256": "5946844ec463a5d71a32761c82410d2838e8dbdbdedf8c8cde5ca8de2e11a2d3"},
+    {"path": "docs/bmad/planning-artifacts/october-release-epics.md", "sha256": "38489ae285e46abeebd627653e0b66bab621e72268407cf30753d88c744c43d3"},
+    {"path": "docs/bmad/planning-artifacts/architecture.md", "sha256": "04f1e97b1c1078e8c1095b3d553978b1a927d3dd82feb9858e32c23c56d3f55c"},
+    {"path": "docs/bmad/planning-artifacts/architecture/ARCHITECTURE-SPINE.md", "sha256": "6db04423129e6512ac9f39f6121c32f3672106947fd7d87a72efbd524284d855"},
+    {"path": "docs/bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md", "sha256": "cba2398cf8400ff93daa1860fd4ae4d77d3861b03afb2dca67f72f07f68624c3"},
+    {"path": ".specify/memory/constitution.md", "sha256": "0f3198751810904ae57fe20eab180474396157064622edf5167781969f1e0c20"},
+    {"path": "docs/UBIQUITOUS_LANGUAGE.md", "sha256": "6734a91273ab8efd290c23b5f5ed77a46bd850d2b5e0799180061ac371aef267"}
+  ],
+  "owned_paths": [
+    "docs/bmad/implementation-artifacts/workflow-activations/18-1-access-prepared-source-through-contained-read-only-tools.json",
+    "docs/bmad/implementation-artifacts/18-1-access-prepared-source-through-contained-read-only-tools.md",
+    "docs/bmad/implementation-artifacts/sprint-status.yaml",
+    ".specify/feature.json",
+    "specs/016-contained-source-tools/"
+  ],
+  "unrelated_paths": [],
+  "git_identity": {
+    "repository_root": "C:/Users/13728/.codex/worktrees/7658/vulgata",
+    "common_directory": "G:/source/repos/vulgata/.git",
+    "worktree": "C:/Users/13728/.codex/worktrees/7658/vulgata"
+  },
+  "porcelain_v2": "# branch.oid 0c0bf0cfb05edc5b28a346d8f3a63002d1e781ef\n# branch.head (detached)\n",
+  "checkout_authority": "Codex assigned this managed worktree to the current task; the native handoff permits its detached checkout without a branch switch.",
+  "created_at": "2026-09-28T03:33:29.3096814Z",
+  "scope": "Story 18.1 only; prepared-directory contained list/read/search; no implementation or task-generation approval is inferred"
+}

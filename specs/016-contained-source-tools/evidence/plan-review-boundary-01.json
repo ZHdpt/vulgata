@@ -1,0 +1,21 @@
+{
+  "base_commit": "6de156569c95e2841e2452084052f95fa5f88168",
+  "candidate_commit": null,
+  "diff_sha256": "c477cd3d5acb406ae44af6c07478a1d2e3be8ef595d776cb74df1835ab849a46",
+  "artifact_hashes": {
+    "specs/016-contained-source-tools/contracts/prepared-source-tools.md": "2a816ad28636877c0d9034c7bb26cdd839dc6f240205439d76bd1bff9128596d",
+    "specs/016-contained-source-tools/data-model.md": "16cb3922d6ce9f24f3aff941c5c2856fdf40c00dc02346685217083d7b9ff678",
+    "specs/016-contained-source-tools/plan.md": "a80cc64d8f55e08d1752635cb35e094012f156fc2b8ec9573eaf05871a4e7654",
+    "specs/016-contained-source-tools/quickstart.md": "67649df59b6e562e4dd63690a4eafb7c045797c3617c1b0c7c4f9dffab8f92f2",
+    "specs/016-contained-source-tools/research.md": "c1c400d33c528d705d685942941fb46a4e3437d9a96c875aa5afac86776d0d36",
+    "specs/016-contained-source-tools/spec.md": "48c92e4f6582471a1664e553b48756a811f22bb2b4f1334206e94303629b0b6d"
+  },
+  "owned_paths": [
+    "specs/016-contained-source-tools/spec.md",
+    "specs/016-contained-source-tools/plan.md",
+    "specs/016-contained-source-tools/research.md",
+    "specs/016-contained-source-tools/data-model.md",
+    "specs/016-contained-source-tools/quickstart.md",
+    "specs/016-contained-source-tools/contracts/prepared-source-tools.md"
+  ]
+}
