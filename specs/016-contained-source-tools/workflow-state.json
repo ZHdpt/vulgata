@@ -61,29 +61,29 @@
   "bmad_story_key": "18-1-access-prepared-source-through-contained-read-only-tools",
   "checkpoint": {
     "binding_status": "pending",
-    "checkpoint_id": "bmad-18-1-converged-20260929T051942Z-5ef797",
+    "checkpoint_id": "bmad-18-1-verify-pause-20260929T053434Z-c58a1a",
     "commit_sha": null,
-    "stage": "converge"
+    "stage": "verify"
   },
   "convergence": {
     "attempt": 6,
-    "outcome": "converged",
+    "outcome": "pending",
     "report_path": "specs/016-contained-source-tools/evidence/convergence-result-08.json",
-    "status": "accepted"
+    "status": "invalidated"
   },
   "current_evidence_paths": [
     "docs/bmad/implementation-artifacts/18-1-access-prepared-source-through-contained-read-only-tools.md",
     "specs/016-contained-source-tools/evidence/plan-review-result-09.json",
     "specs/016-contained-source-tools/evidence/definition-review-result-04.json",
     "specs/016-contained-source-tools/evidence/recovery-extension-04.json",
-    "specs/016-contained-source-tools/evidence/verify-test-correction-focused-command-02.json",
     "specs/016-contained-source-tools/evidence/quality-diagnosis-05.json",
-    "specs/016-contained-source-tools/evidence/verify-test-failure-04.json",
     "specs/016-contained-source-tools/evidence/test-policy-correction-01.json",
     "specs/016-contained-source-tools/evidence/convergence-result-08.json",
     "specs/016-contained-source-tools/evidence/t027-postgresql-qualification-01.json",
-    "specs/016-contained-source-tools/evidence/workflow-transition-056-convergence-accept.json",
-    "specs/016-contained-source-tools/evidence/story-lookback-06.json"
+    "specs/016-contained-source-tools/evidence/quality-review-result-06.json",
+    "specs/016-contained-source-tools/evidence/e2e-result-04.json",
+    "specs/016-contained-source-tools/evidence/verify-test-failure-05.json",
+    "specs/016-contained-source-tools/evidence/workflow-transition-059-verify-self-contained-failure-pause.json"
   ],
   "definition_author": {
     "escalation_decision_id": null,
@@ -106,9 +106,9 @@
       "verdict_path": "specs/016-contained-source-tools/evidence/plan-review-result-09.json"
     },
     "quality-review": {
-      "attempt": 5,
+      "attempt": 6,
       "status": "invalidated",
-      "verdict_path": "specs/016-contained-source-tools/evidence/quality-review-result-05.json"
+      "verdict_path": "specs/016-contained-source-tools/evidence/quality-review-result-06.json"
     }
   },
   "lookback": {
@@ -116,7 +116,7 @@
       "path": "specs/016-contained-source-tools/evidence/story-lookback-06.json",
       "sha256": "56ef1b9d7313202487901a875c939628f61ceb2ed7967fee30e3c8bf5812510a"
     },
-    "status": "current"
+    "status": "invalidated"
   },
   "preflight": {
     "branch": "(detached-native-handoff)",
@@ -126,7 +126,7 @@
     "status_sha256": "811e45acb3329b898a1a92b4bc69e9a8b9fb70ef8e97a5beba0dacd2c4ca0a74"
   },
   "recovery": {
-    "action": "proceed",
+    "action": "pause",
     "closing_gate": "verify",
     "diagnosis": {
       "at_count": 8,
@@ -138,24 +138,24 @@
     "earliest_owner": "tests",
     "episode_id": "18-1/implementation/1",
     "extension_decision_id": "18-1/implementation/1/extension/4",
-    "failed_results": 8,
+    "failed_results": 9,
     "holds": [],
     "last_result": {
-      "path": "specs/016-contained-source-tools/evidence/convergence-result-07.json",
-      "sha256": "965de0e631421b18d01acbb95c301eefd1c76c4610f896cb4c9db44ea6dbc2db"
+      "path": "specs/016-contained-source-tools/evidence/verify-test-failure-05.json",
+      "sha256": "d1995fa555b437b2403d78a413eab00a8d154954513d03ec50086e74f96c7f76"
     },
     "pause_at": 9
   },
   "resume": {
-    "evidence_path": "specs/016-contained-source-tools/evidence/story-lookback-06.json",
-    "reason": "Clean convergence and the refreshed current Story Lookback are ready for a fresh independent quality review.",
-    "stage": "quality-review"
+    "evidence_path": "specs/016-contained-source-tools/evidence/verify-test-failure-05.json",
+    "reason": "Paused at result 9: the configured SelfContained suite failed 88 Story 18.1 PreparedSource cases with RootUnavailable. A new finite extension is required before correction or rerun.",
+    "stage": "verify"
   },
   "schema_version": "3.1",
-  "stage": "quality-review",
+  "stage": "verify",
   "transition_head": {
-    "path": "specs/016-contained-source-tools/evidence/workflow-transition-056-convergence-accept.json",
-    "sha256": "89e5fc3c878f01379d8e803ca2a240cde12c05461e3f873fdb8051b11181f929"
+    "path": "specs/016-contained-source-tools/evidence/workflow-transition-059-verify-self-contained-failure-pause.json",
+    "sha256": "91c7a433afb7c481843bff2bd9cf7c83c655409a42edaa895b98f320b25de19d"
   },
-  "updated_at": "2026-09-29T05:18:35.1609446Z"
+  "updated_at": "2026-09-29T05:34:03.6779373Z"
 }

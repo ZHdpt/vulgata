@@ -1,0 +1,7 @@
+Command: dotnet build src/dotnet/Vulgata.Web/Vulgata.Web.csproj
+Exit code: 0
+Result: Build succeeded.
+Warnings: 3297
+Errors: 0
+Time elapsed: 00:00:29.60
+Note: Existing package-source, compiler, analyzer, style, nullable, and Entity Framework warning baseline was emitted; the captured terminal stream was truncated by the execution transport, but the final MSBuild summary above was observed directly.
