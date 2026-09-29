@@ -40,29 +40,29 @@
   "bmad_story_key": "18-1-access-prepared-source-through-contained-read-only-tools",
   "checkpoint": {
     "binding_status": "pending",
-    "checkpoint_id": "bmad-18-1-final-test-quality-candidate-20260929T015158Z-1bace5",
+    "checkpoint_id": "bmad-18-1-verify-pause-20260929T022300Z-e2ba9a",
     "commit_sha": null,
-    "stage": "lookback"
+    "stage": "verify"
   },
   "convergence": {
     "attempt": 4,
-    "outcome": "converged",
+    "outcome": "pending",
     "report_path": "specs/016-contained-source-tools/evidence/convergence-result-05.json",
-    "status": "accepted"
+    "status": "invalidated"
   },
   "current_evidence_paths": [
     "docs/bmad/implementation-artifacts/18-1-access-prepared-source-through-contained-read-only-tools.md",
     "specs/016-contained-source-tools/evidence/plan-review-result-09.json",
     "specs/016-contained-source-tools/evidence/definition-review-result-04.json",
-    "specs/016-contained-source-tools/evidence/implementation-approval-02.json",
     "specs/016-contained-source-tools/evidence/recovery-extension-01.json",
-    "specs/016-contained-source-tools/evidence/quality-diagnosis-02.json",
     "specs/016-contained-source-tools/evidence/verify-infrastructure-resolution-01.json",
-    "specs/016-contained-source-tools/evidence/verify-test-failure-02.json",
     "specs/016-contained-source-tools/evidence/verify-test-correction-focused-command-01.json",
     "specs/016-contained-source-tools/evidence/convergence-result-05.json",
-    "specs/016-contained-source-tools/evidence/workflow-transition-037-convergence-accept.json",
-    "specs/016-contained-source-tools/evidence/story-lookback-04.json"
+    "specs/016-contained-source-tools/evidence/story-lookback-04.json",
+    "specs/016-contained-source-tools/evidence/quality-review-result-04.json",
+    "specs/016-contained-source-tools/evidence/recovery-extension-request-02.json",
+    "specs/016-contained-source-tools/evidence/verify-test-failure-03.json",
+    "specs/016-contained-source-tools/evidence/workflow-transition-040-verify-test-pause.json"
   ],
   "definition_author": {
     "escalation_decision_id": null,
@@ -85,9 +85,9 @@
       "verdict_path": "specs/016-contained-source-tools/evidence/plan-review-result-09.json"
     },
     "quality-review": {
-      "attempt": 3,
+      "attempt": 4,
       "status": "invalidated",
-      "verdict_path": "specs/016-contained-source-tools/evidence/quality-review-result-03.json"
+      "verdict_path": "specs/016-contained-source-tools/evidence/quality-review-result-04.json"
     }
   },
   "lookback": {
@@ -95,7 +95,7 @@
       "path": "specs/016-contained-source-tools/evidence/story-lookback-04.json",
       "sha256": "1bace5e597cd1aba5e3e09898be9fdfabaac0b4d81958b4e783bba340d1b3653"
     },
-    "status": "current"
+    "status": "invalidated"
   },
   "preflight": {
     "branch": "(detached-native-handoff)",
@@ -105,7 +105,7 @@
     "status_sha256": "811e45acb3329b898a1a92b4bc69e9a8b9fb70ef8e97a5beba0dacd2c4ca0a74"
   },
   "recovery": {
-    "action": "proceed",
+    "action": "pause",
     "closing_gate": "verify",
     "diagnosis": {
       "at_count": 4,
@@ -117,24 +117,24 @@
     "earliest_owner": "tests",
     "episode_id": "18-1/implementation/1",
     "extension_decision_id": "18-1/implementation/1/extension/1",
-    "failed_results": 5,
+    "failed_results": 6,
     "holds": [],
     "last_result": {
-      "path": "specs/016-contained-source-tools/evidence/verify-test-failure-02.json",
-      "sha256": "e34b8db80e6afefff35010057c07589708e462245527539534bb97e96e678547"
+      "path": "specs/016-contained-source-tools/evidence/verify-test-failure-03.json",
+      "sha256": "9f514151a68a4631ebe1884f4b0769a6fdfc9b3d4aeffe03effbf3f36f383551"
     },
     "pause_at": 6
   },
   "resume": {
-    "evidence_path": "specs/016-contained-source-tools/evidence/story-lookback-04.json",
-    "reason": "The test-only fixture correction reconverged and lookback-04 is current; run fresh independent quality review.",
-    "stage": "quality-review"
+    "evidence_path": "specs/016-contained-source-tools/evidence/verify-test-failure-03.json",
+    "reason": "Configured full-suite verification failed 3 of 3269 tests and reached the cumulative recovery limit 6; await a fresh bounded extension decision before diagnosis or correction.",
+    "stage": "verify"
   },
   "schema_version": "3.1",
-  "stage": "quality-review",
+  "stage": "verify",
   "transition_head": {
-    "path": "specs/016-contained-source-tools/evidence/workflow-transition-037-convergence-accept.json",
-    "sha256": "d29d28a9392dd8c71c254d5694b2181eb01aeb0458cc03d01c63d486ab092e8c"
+    "path": "specs/016-contained-source-tools/evidence/workflow-transition-040-verify-test-pause.json",
+    "sha256": "e7357a25346f1127f358470221938fbad9d08dd7d28c363e908364c609afe58d"
   },
-  "updated_at": "2026-09-29T01:51:58.0517665Z"
+  "updated_at": "2026-09-29T02:21:00Z"
 }

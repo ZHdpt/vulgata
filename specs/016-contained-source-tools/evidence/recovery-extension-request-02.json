@@ -1,0 +1,38 @@
+{
+  "kind": "human-decision-request",
+  "stage": "verify",
+  "decision_id": "18-1/implementation/1/extension/2",
+  "status": "requested",
+  "episode_id": "18-1/implementation/1",
+  "failed_results": 6,
+  "current_pause_at": 6,
+  "proposed_pause_at": 7,
+  "scope_sha256": "f16be621e87b3a8d9088fd7a83d73097ecb3b36cc539e8863bc127333b7dc920",
+  "scope_material": "18-1/implementation/1/extension/2|18-1/implementation/1|7|verify-test-failure-03|isolate-fingerprint-authority|serial-postgresql-timeout-diagnosis|no-story-18-1-production-change",
+  "transition_head": {
+    "path": "specs/016-contained-source-tools/evidence/workflow-transition-040-verify-test-pause.json",
+    "sha256": "e7357a25346f1127f358470221938fbad9d08dd7d28c363e908364c609afe58d"
+  },
+  "mapped_artifact_hashes": {
+    "specs/016-contained-source-tools/spec.md": "48c92e4f6582471a1664e553b48756a811f22bb2b4f1334206e94303629b0b6d",
+    "specs/016-contained-source-tools/plan.md": "b375723e56c8cdc7990a4e7a624c5f58a78fde07d9a23edd79e25025c54fce08",
+    "specs/016-contained-source-tools/tasks.md": "b345d7322f8777d8fda77a153c48af954e7ed18a185cf648f8c309ef0d0a8a1b",
+    "specs/016-contained-source-tools/evidence/quality-review-result-04.json": "e2c2a54e70b69cdcaa9bc10c64177ad50927924903ebe09beb8628568474d95a",
+    "specs/016-contained-source-tools/evidence/e2e-result-02.json": "60fe71aa92a9ea13e43587a8ad1f80f9472552eabb7f4f0ef2bde4cac45facb0",
+    "specs/016-contained-source-tools/evidence/verify-test-failure-03.json": "9f514151a68a4631ebe1884f4b0769a6fdfc9b3d4aeffe03effbf3f36f383551"
+  },
+  "raw_failure_evidence": {
+    "path": "specs/016-contained-source-tools/evidence/verify-test-failure-output-03.txt",
+    "sha256": "ff2beaec6a2a6bfe4ee3bdfc7df90341159cbdc078afe9cacae4270b1f3ebe05",
+    "summary": "3 failed, 3251 passed, 15 skipped, 3269 total in 14 m 50 s"
+  },
+  "failed_approaches": [
+    "The first final-suite attempt exposed a deterministic migration fixture defect; adding the repository-standard public migration-history mapping corrected that isolated test and its four-test class.",
+    "The corrected full-suite rerun used stable postgres admin connections and the authorized disposable vulgata database, but uncovered a separate embedded-resource fingerprint mismatch plus two PostgreSQL timeout paths."
+  ],
+  "proposed_changed_approach": "Use the single additional result only for bounded diagnosis and correction of the three final-suite failures, without changing Story 18.1 production code. First isolate the fingerprint test and determine whether the accepted fingerprint or embedded resource is authoritative. Separately inspect PostgreSQL health and run the retained-source and durable-scan timeout cases serially against fresh owned databases. Correct only an evidenced fixture or accepted-artifact defect, then rerun affected tests and the exact full suite.",
+  "recommendation": "Approve a finite cumulative extension from 6 to 7. This permits one evidence-driven diagnostic/correction cycle and one authoritative final-suite result; if result 7 is negative, return to the human without another automatic attempt.",
+  "main_consequence": "The story remains paused and not done until final verification passes. The accepted specification, plan, production implementation, database authorization, independent-review requirement, convergence, lookback, quality, E2E and closure gates remain in force.",
+  "material_uncertainty": "The fingerprint mismatch may be an accepted-artifact drift rather than a test bug, and the two PostgreSQL timeouts may share resource pressure or be independent fixture defects. The extension authorizes diagnosis, not a predetermined fix.",
+  "requested_at": "2026-09-29T02:23:00Z"
+}
