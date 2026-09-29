@@ -2,9 +2,9 @@
   "schema_version": "3.1",
   "bmad_story_key": "18-2-navigate-prepared-java-source-with-restricted-jdt-ls",
   "bmad_epic_key": "epic-18",
-  "status": "pending",
+  "status": "superseded",
   "requested_feature_directory": "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls",
-  "feature_directory": null,
+  "feature_directory": "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls",
   "preflight": {
     "branch": "codex/18-2-plan",
     "head": "d99f6a0f71a7c20b36b68e462efe9b0a552578c7",

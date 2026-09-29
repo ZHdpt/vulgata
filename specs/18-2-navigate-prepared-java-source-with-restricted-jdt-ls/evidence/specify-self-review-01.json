@@ -1,0 +1,20 @@
+{
+  "id": "18-2/specify/1",
+  "kind": "self-review",
+  "stage": "specify",
+  "outcome": "passed",
+  "source_commit": "e1c0678c",
+  "observed_at": "2026-09-29T02:14:36.550612Z",
+  "input_hashes": {
+    "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/spec.md": "dbb3024b8d0c18908f57013eec853511c8c726a13af4ed6f4a9a7d4f4dff6ca2"
+  },
+  "owned_paths": [
+    "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/spec.md"
+  ],
+  "summary": "Persistent definition author reports Story 18.2 acceptance coverage, no placeholders, and unresolved integrated Story 18.1 dependency; git diff --check passed.",
+  "raw_result": {
+    "spec_file": "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/spec.md",
+    "checklist": "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/checklists/requirements.md",
+    "dependency": "Reconcile with integrated, verified Story 18.1 baseline before delivery and rerun affected gates."
+  }
+}
