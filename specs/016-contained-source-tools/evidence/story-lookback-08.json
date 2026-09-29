@@ -4,25 +4,25 @@
   "evidence_id": "18-1-access-prepared-source-through-contained-read-only-tools/lookback/8",
   "observed_at": "2026-09-29T07:10:53.6426273Z",
   "record_path": "docs/bmad/implementation-artifacts/18-1-access-prepared-source-through-contained-read-only-tools.md",
-  "section_sha256": "5fd00993e947c468ab59e6d208fc372bb49ca9437d5f7579982dccc9204b20e4",
-  "record_content_sha256": "f1976f1527f51f3fb81a72a3b732c9281c40b590556f4164d78cb9c9a52c61b8",
+  "section_sha256": "7b7eb2766c7538ec7b7094c9dbc2420d041a0294659ec34997b99169dfd41dce",
+  "record_content_sha256": "17602f31e9b529d5338f340fb1cdf55409744e588a9ee47c166660b4336d7717",
   "convergence": {
     "path": "specs/016-contained-source-tools/evidence/convergence-result-10.json",
-    "sha256": "2a8062d0db231df0a67247c9626e74250d624011f01585b7ff55c9af0c09bc0a"
+    "sha256": "e860079973e8c26015c4df693dcdb54a6ae4d5fc67d624669cc6eae9a1aff4bd"
   },
   "output_hashes": {
-    "docs/agents/testing.md": "29ae25a672a5cc8f549d89248ec3a60761a5493f6bcf7f5f6ec9d4588eaabe60",
-    "docs/project-lessons.md": "b35d3cb30b5d0a7a7a963202214d8dfde7a04e3c8169ebdb1723f591e6263b59"
+    "docs/agents/testing.md": "00796d35eb4bc1389a348ad1aa856da41a8ba5550530892bb7bd966bc02a9259",
+    "docs/project-lessons.md": "bf65e2c44f8cca0bbe9f588e17f60253929edc9d0067eef7b5801a8e12f16c8c"
   },
   "disposition": "updated",
   "authority_decisions": [
     {
       "path": "specs/016-contained-source-tools/evidence/plan-authorization-01.json",
-      "sha256": "ab5993915aebc31cf27bad7b44cacc0b0d171b6a73de4577ab3996837e0e84b6"
+      "sha256": "216bc30d226258e82082e1c267c76132df96daecb8563f93bb953fc6ff1ee9f0"
     },
     {
       "path": "specs/016-contained-source-tools/evidence/implementation-approval-02.json",
-      "sha256": "defa3810c87331976b3eaa6096889fbcc0adbff5bb4a423d932b4a47163a1186"
+      "sha256": "5c955a9648b4f21133cd1f8da465300a0feddc18d4d97db4fbe90565454c26c8"
     },
     {
       "path": "specs/016-contained-source-tools/evidence/recovery-extension-06.json",
