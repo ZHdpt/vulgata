@@ -1,0 +1,15 @@
+{
+  "kind": "analysis",
+  "stage": "implement",
+  "source": "Current user's Story 18.2 coordination update choosing in-place CodeGraph preparation and native MCP in a dedicated Vulgata-managed prepared workspace; Story 18.3 user decision read through Codex chat 01a0eae9-657d-7f90-80e0-6bf7d83a5c7c",
+  "current_interface": "PreparedToolWorkspaceLease holds a pinned physical root, exact prepared-source approval, separate JdtNavigation or CodeGraphPreparation purpose and current authority checks before/after short Infrastructure callbacks. It offers trusted physical-root binding and a separate-state-root check; it does not grant or constrain contained writable .codegraph state. A read lease alone is not a write grant.",
+  "impact": "The new in-place CodeGraph policy requires an explicit contained, purpose-specific tool-state write capability and owned process restrictions before Story 18.3 can use the shared lease for index mutation. The existing JDT-LS design keeps its disposable state outside prepared source and needs no behavior change from this policy. Prepared source files remain unchanged and ordinary Worker file tools remain read-only.",
+  "ownership": {
+    "shared_lease_contract": "Story 18.2, after Story 18.3 supplies the declared CodeGraph write footprint and session needs, with affected plan/spec/tasks reconciliation and fresh independent review and approval gates before implementation.",
+    "codegraph_adapter_index_sessions": "Story 18.3, including startup-path and process/write qualification; no source copy solely for the index.",
+    "ordinary_file_tool_exclusion": "Vulgata Master/Parallel Development schedule to assign the owning October correction for Story 18.1 list/read/search traversal and continuation interaction with .codegraph. Story 18.2 will not introduce a competing filter or change the 18.1 public contract independently."
+  },
+  "verified_dependency": "Current Story 18.1 PreparedSourceReadContext lists immediate entries and recursively searches child directories without a .codegraph exclusion; writable generated state could consume budgets and change continuation identity. Scan admission filtering alone does not correct direct file-tool access.",
+  "coordination": "Sent ownership assessment to idle Parallel Development schedule chat 01a0e5e1-ee94-7362-9b1f-2c61e2c5d536 after verified shared seam checkpoint c4d4be37. Worker 18.3 was active during this assessment; direct coordination awaits an idle/waiting boundary under user's chat instruction.",
+  "status": "Dependency recorded. No shared lease, 18.1 file-tool or JDT-LS contract change was made under this analysis; no CodeGraph integration readiness is claimed."
+}
