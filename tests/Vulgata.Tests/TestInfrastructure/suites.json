@@ -305,6 +305,9 @@
   "AnalysisRuntime/CodeGraphCliQualificationTests.cs": {
     "suite": "LocalTools"
   },
+  "AnalysisRuntime/NativeCodeGraphMcpClientTests.cs": {
+    "suite": "LocalTools"
+  },
   "AnalysisRuntime/InMemoryFileSystemDouble.cs": {
     "suite": "SelfContained"
   },
