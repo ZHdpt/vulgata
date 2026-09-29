@@ -1,0 +1,57 @@
+{
+  "observed_after": {
+    "path": "specs/016-contained-source-tools/evidence/workflow-transition-051-policy-correction-accept.json",
+    "sha256": "31e2711d000dfa9de219dd5bd9b8b541165e3a5f8fd33a6c2414aa09c8e0700d"
+  },
+  "raw_result": {
+    "kind": "convergence",
+    "stage": "converge",
+    "outcome": "tasks_appended",
+    "source_commit": "5ba522e4277dd8f74faedf3fbab0a575f90ed6a1",
+    "reused_task_ids": [],
+    "appended_task_ids": [
+      "T027"
+    ],
+    "tasks_before": {
+      "path": "specs/016-contained-source-tools/evidence/tasks-pre-convergence-04.md",
+      "sha256": "b345d7322f8777d8fda77a153c48af954e7ed18a185cf648f8c309ef0d0a8a1b"
+    },
+    "tasks_after": {
+      "path": "specs/016-contained-source-tools/tasks.md",
+      "sha256": "aed0bd21abdd5eaee03d65eff6a7636c990874c8e3c3c1369ee3a61f57069403"
+    },
+    "unresolved_blockers": [],
+    "input_hashes": {
+      "specs/016-contained-source-tools/spec.md": "48c92e4f6582471a1664e553b48756a811f22bb2b4f1334206e94303629b0b6d",
+      "specs/016-contained-source-tools/plan.md": "b375723e56c8cdc7990a4e7a624c5f58a78fde07d9a23edd79e25025c54fce08",
+      "specs/016-contained-source-tools/tasks.md": "aed0bd21abdd5eaee03d65eff6a7636c990874c8e3c3c1369ee3a61f57069403",
+      "specs/016-contained-source-tools/contracts/prepared-source-tools.md": "f83cf4fae7c7d3b65f3fefb0b58aa6c73f7aacf8be08e138e8b94f850f6c0a81",
+      "specs/016-contained-source-tools/evidence/implementation-verification-01.json": "5777b34f3f9e6d5dfff61f7a90535ffc8d6e9484e992327942713693de99e214",
+      "specs/016-contained-source-tools/evidence/quality-diagnosis-04.json": "034fedc22c9dd61614b7747acb2a5cc8eb2576d36eea114359377e235433337a",
+      "specs/016-contained-source-tools/evidence/test-policy-red-01.json": "8c0aafa03e0712c4d41eac0dfd61a909999494750dcce6acf73e1dae4ff05e61",
+      "specs/016-contained-source-tools/evidence/test-policy-correction-01.json": "7dbc20f75316b3411f3d3f66301bdb493f2cc5beeb38208d223859e8ee4b0ce7",
+      "specs/016-contained-source-tools/evidence/convergence-result-06.json": "d15ffd2333bbcdc95ff797994fe894e7f0d5e3e14610cd6c8cf4974400e49e1e",
+      "specs/016-contained-source-tools/evidence/recovery-extension-03.json": "0b016537b8ea2868bc9da8b753ec9aece99ece7ba7e468c968d6265f9d363a85",
+      "tests/Vulgata.Tests/TestInfrastructure/suites.json": "2617583a8eb41b15428a220f1e1397234b4b670709f162dabb648e0ff2434eb0",
+      "eng/test.ps1": "8e1438ab4a98e60f1b107d61d6befcd3e192a25ab0e947d9bda04cd083c5cb11"
+    },
+    "owned_paths": [
+      "specs/016-contained-source-tools/spec.md",
+      "specs/016-contained-source-tools/plan.md",
+      "specs/016-contained-source-tools/tasks.md",
+      "specs/016-contained-source-tools/contracts/prepared-source-tools.md",
+      "specs/016-contained-source-tools/evidence/implementation-verification-01.json",
+      "specs/016-contained-source-tools/evidence/quality-diagnosis-04.json",
+      "specs/016-contained-source-tools/evidence/test-policy-red-01.json",
+      "specs/016-contained-source-tools/evidence/test-policy-correction-01.json",
+      "specs/016-contained-source-tools/evidence/convergence-result-06.json",
+      "specs/016-contained-source-tools/evidence/recovery-extension-03.json",
+      "tests/Vulgata.Tests/TestInfrastructure/suites.json",
+      "eng/test.ps1"
+    ],
+    "assessment": "PreparedSource obligations remain covered and the policy adaptation passes 119/119. T026 is checked complete, but its evidence records the selected 63-test retained-source boundary as blocked before assertions; the later 27/27 selection did not cover all 63 cases. Because the missing work follows a completed task, T027 is a distinct traceable convergence correction. The new policy correctly classifies these tests PostgreSql, so the configured SelfContained suite cannot establish this qualification.",
+    "verification_route": "Complete T027 using the exact explicit PostgreSql-suite command recorded in tasks.md. Keep it separate from the configured SelfContained final gate and do not report excluded tests as passed.",
+    "earliest_owner": "tests",
+    "summary": "tasks_appended: T027 now tracks the missing complete 63-test Git-bound retained-source regression qualification under the explicit PostgreSql suite. No definition or product defect was found; all prior task bytes and IDs are preserved."
+  }
+}

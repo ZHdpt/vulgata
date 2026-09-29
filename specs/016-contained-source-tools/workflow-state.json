@@ -47,16 +47,16 @@
     },
     "tasks": {
       "path": "specs/016-contained-source-tools/tasks.md",
-      "sha256": "b345d7322f8777d8fda77a153c48af954e7ed18a185cf648f8c309ef0d0a8a1b"
+      "sha256": "aed0bd21abdd5eaee03d65eff6a7636c990874c8e3c3c1369ee3a61f57069403"
     }
   },
   "bmad_epic_key": "epic-18",
   "bmad_story_key": "18-1-access-prepared-source-through-contained-read-only-tools",
   "checkpoint": {
     "binding_status": "pending",
-    "checkpoint_id": "bmad-18-1-policy-correction-20260929T044126Z-7dbc20",
+    "checkpoint_id": "bmad-18-1-convergence-t027-pause-20260929T045231Z-965de0",
     "commit_sha": null,
-    "stage": "implement"
+    "stage": "converge"
   },
   "convergence": {
     "attempt": 5,
@@ -73,7 +73,8 @@
     "specs/016-contained-source-tools/evidence/quality-diagnosis-04.json",
     "specs/016-contained-source-tools/evidence/verify-test-failure-04.json",
     "specs/016-contained-source-tools/evidence/test-policy-correction-01.json",
-    "specs/016-contained-source-tools/evidence/workflow-transition-051-policy-correction-accept.json"
+    "specs/016-contained-source-tools/evidence/convergence-result-07.json",
+    "specs/016-contained-source-tools/evidence/workflow-transition-052-convergence-t026-reused-pause.json"
   ],
   "definition_author": {
     "escalation_decision_id": null,
@@ -116,7 +117,7 @@
     "status_sha256": "811e45acb3329b898a1a92b4bc69e9a8b9fb70ef8e97a5beba0dacd2c4ca0a74"
   },
   "recovery": {
-    "action": "proceed",
+    "action": "pause",
     "closing_gate": "verify",
     "diagnosis": {
       "at_count": 7,
@@ -128,24 +129,24 @@
     "earliest_owner": "tests",
     "episode_id": "18-1/implementation/1",
     "extension_decision_id": "18-1/implementation/1/extension/3",
-    "failed_results": 7,
+    "failed_results": 8,
     "holds": [],
     "last_result": {
-      "path": "specs/016-contained-source-tools/evidence/verify-test-failure-04.json",
-      "sha256": "928a765c5406aca7285cf6a0fc3171ada7390759882b6b7998538577e7d060a3"
+      "path": "specs/016-contained-source-tools/evidence/convergence-result-07.json",
+      "sha256": "965de0e631421b18d01acbb95c301eefd1c76c4610f896cb4c9db44ea6dbc2db"
     },
     "pause_at": 8
   },
   "resume": {
-    "evidence_path": "specs/016-contained-source-tools/evidence/verify-test-failure-04.json",
-    "reason": "The rebased Story 18.1 tests satisfy the committed suite policy and pass 119/119; refresh convergence on the corrected boundary.",
-    "stage": "converge"
+    "evidence_path": "specs/016-contained-source-tools/evidence/convergence-result-07.json",
+    "reason": "Paused at cumulative result 8. T027 must run the complete 63-test retained-source boundary under the explicit owned PostgreSql suite before reconvergence.",
+    "stage": "implement"
   },
   "schema_version": "3.1",
   "stage": "verify",
   "transition_head": {
-    "path": "specs/016-contained-source-tools/evidence/workflow-transition-051-policy-correction-accept.json",
-    "sha256": "31e2711d000dfa9de219dd5bd9b8b541165e3a5f8fd33a6c2414aa09c8e0700d"
+    "path": "specs/016-contained-source-tools/evidence/workflow-transition-052-convergence-t026-reused-pause.json",
+    "sha256": "d8b1f6c32502b0c7cbaa28a822c4d3539e0386a9d2754ecd311e4274854b576d"
   },
-  "updated_at": "2026-09-29T04:41:26.4745364Z"
+  "updated_at": "2026-09-29T04:52:31.0628914Z"
 }

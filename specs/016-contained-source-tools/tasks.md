@@ -157,3 +157,9 @@ No independent checklist tasks are dispatched concurrently in US1. After T004 re
 - No task authorizes a new Scan admission strategy, database or production approval source. The current-authority seam uses controlled in-memory approval for direct Story 18.1 tests; later batch integration supplies its production approval source.
 - A failed or unqualified Windows containment fixture must be reported as such. Existing Git-bound tests may have prerequisites; skipped or blocked checks are not passes.
 - Root alone handles lifecycle, evidence, approvals, checkpoints and Git. Workers do not stage or commit.
+
+## Phase 7: Convergence
+
+**Purpose**: Complete the accepted Git-bound regression qualification that was blocked during T026.
+
+- [ ] T027 Run T026's selected retained-source regression boundary in the explicit PostgreSql suite at the current candidate; pass all 63 selected cases with zero skips and record the owned PostgreSQL 17 result using `pwsh -NoProfile -File eng/test.ps1 -Suite PostgreSql -Filter 'FullyQualifiedName~Vulgata.Tests.RetainedSource.RetainedSourceReadContextTests|FullyQualifiedName~Vulgata.Tests.RetainedSource.RetainedSourceRangeReadTests|FullyQualifiedName~Vulgata.Tests.RetainedSource.RetainedSourceCaptureTests'`. The SelfContained result does not include these excluded qualification cases. (FR-011, SC-005, plan ID-T03; T026 follow-up) (partial)
