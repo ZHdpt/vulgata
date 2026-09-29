@@ -1,0 +1,22 @@
+{
+  "observed_after":{"path":"specs/016-contained-source-tools/evidence/workflow-transition-068-diagnosis.json","sha256":"6ca0d567f09cd37f05fe33240c3312cd47a321c73dcfcf3b2f817109e4b8d930"},
+  "raw_result":{
+    "kind":"command","stage":"verify-focused","status":"resolved","work_kind":"nonbehavioral",
+    "source_commit":"90e34ace483f639b1beca245f057e44325cf9553","observed_at":"2026-09-29T07:01:08.1365909Z",
+    "command":"pwsh -NoProfile -File eng/test.ps1 -Filter 'FullyQualifiedName~Vulgata.Tests.PreparedSource'","exit_code":0,
+    "raw_output_path":"specs/016-contained-source-tools/evidence/execution-boundary-correction-output-01.txt","raw_output_sha256":"4c1675b1e6d6365674264f5b96754d90e09dc1aac4c2aae0796d1e248cb9bf23",
+    "input_hashes":{
+      "specs/016-contained-source-tools/spec.md":"48c92e4f6582471a1664e553b48756a811f22bb2b4f1334206e94303629b0b6d",
+      "specs/016-contained-source-tools/plan.md":"b375723e56c8cdc7990a4e7a624c5f58a78fde07d9a23edd79e25025c54fce08",
+      "specs/016-contained-source-tools/tasks.md":"6f619b75c759462dc1390fdfeaa165885216d1ad135a18a2de29ea18dfda8f10",
+      "docs/agents/testing.md":"29ae25a672a5cc8f549d89248ec3a60761a5493f6bcf7f5f6ec9d4588eaabe60",
+      "docs/project-lessons.md":"b35d3cb30b5d0a7a7a963202214d8dfde7a04e3c8169ebdb1723f591e6263b59",
+      "specs/016-contained-source-tools/evidence/rootunavailable-execution-diagnosis-01.json":"e8251d6db2338fd679229ad680053b9351cdae7abedf33ac937e6fdced603686",
+      "specs/016-contained-source-tools/evidence/outside-sandbox-selfcontained-command-01.json":"e571ae23aeb67136e9f88ddd44fdda583bdf031e8b15a55873ae79c811a73d2f"
+    },
+    "owned_paths":["docs/agents/testing.md","docs/project-lessons.md","specs/016-contained-source-tools/evidence/rootunavailable-execution-diagnosis-01.json","specs/016-contained-source-tools/evidence/outside-sandbox-selfcontained-command-01.json"],
+    "resolution":"The failure is an execution-environment qualification issue. Native containment and tests remain unchanged; repository guidance now requires matching launcher permission modes and approved outside-sandbox execution for this Windows handle-relative boundary.",
+    "verification":"Controlled restricted execution reproduced all 88 failures with NtCreateFile 0xC0000022, while unchanged approved execution passed focused 119/119 and complete SelfContained 1,975/1,975 with zero skips.",
+    "summary":"The Story 18.1 RootUnavailable blocker is resolved operationally without weakening production containment or tests. Durable diagnosis, testing guidance and project lesson identify the required outside-sandbox execution boundary."
+  }
+}

@@ -48,6 +48,13 @@
       "evidence_path": "specs/016-contained-source-tools/evidence/recovery-extension-05.json",
       "scope_sha256": "fa6ecdcb7b206e79c900b8df359b4b90841afd304056dbafa3f5f256ebf30af2",
       "status": "accepted"
+    },
+    {
+      "decided_at": "2026-09-29T06:54:38.7078505Z",
+      "decision_id": "18-1/implementation/1/extension/6",
+      "evidence_path": "specs/016-contained-source-tools/evidence/recovery-extension-06.json",
+      "scope_sha256": "10ff6a65764edc852d7aca3d09a4f2b1ab50355800bc0d554e7c61ea9a649c75",
+      "status": "accepted"
     }
   ],
   "artifacts": {
@@ -68,9 +75,9 @@
   "bmad_story_key": "18-1-access-prepared-source-through-contained-read-only-tools",
   "checkpoint": {
     "binding_status": "pending",
-    "checkpoint_id": "bmad-18-1-verify-pause-20260929T062357Z-19720c",
+    "checkpoint_id": "bmad-18-1-correction-20260929T070309Z-4a6948",
     "commit_sha": null,
-    "stage": "verify"
+    "stage": "implement"
   },
   "convergence": {
     "attempt": 7,
@@ -82,15 +89,15 @@
     "docs/bmad/implementation-artifacts/18-1-access-prepared-source-through-contained-read-only-tools.md",
     "specs/016-contained-source-tools/evidence/plan-review-result-09.json",
     "specs/016-contained-source-tools/evidence/definition-review-result-04.json",
-    "specs/016-contained-source-tools/evidence/recovery-extension-05.json",
-    "specs/016-contained-source-tools/evidence/convergence-result-09.json",
-    "specs/016-contained-source-tools/evidence/quality-diagnosis-06.json",
-    "specs/016-contained-source-tools/evidence/prepared-source-isolation-correction-01.json",
-    "specs/016-contained-source-tools/evidence/story-lookback-07.json",
-    "specs/016-contained-source-tools/evidence/quality-review-result-07.json",
-    "specs/016-contained-source-tools/evidence/e2e-result-05.json",
+    "specs/016-contained-source-tools/evidence/recovery-extension-06.json",
     "specs/016-contained-source-tools/evidence/verify-test-failure-06.json",
-    "specs/016-contained-source-tools/evidence/workflow-transition-066-verify-self-contained-failure-pause.json"
+    "specs/016-contained-source-tools/evidence/quality-diagnosis-07.json",
+    "specs/016-contained-source-tools/evidence/rootunavailable-execution-diagnosis-01.json",
+    "specs/016-contained-source-tools/evidence/outside-sandbox-selfcontained-command-01.json",
+    "specs/016-contained-source-tools/evidence/execution-boundary-correction-01.json",
+    "specs/016-contained-source-tools/evidence/workflow-transition-069-execution-boundary-correction-accept.json",
+    "docs/agents/testing.md",
+    "docs/project-lessons.md"
   ],
   "definition_author": {
     "escalation_decision_id": null,
@@ -104,7 +111,7 @@
   "gates": {
     "definition-review": {
       "attempt": 4,
-      "status": "invalidated",
+      "status": "accepted",
       "verdict_path": "specs/016-contained-source-tools/evidence/definition-review-result-04.json"
     },
     "plan-review": {
@@ -114,7 +121,7 @@
     },
     "quality-review": {
       "attempt": 7,
-      "status": "accepted",
+      "status": "invalidated",
       "verdict_path": "specs/016-contained-source-tools/evidence/quality-review-result-07.json"
     }
   },
@@ -133,36 +140,36 @@
     "status_sha256": "811e45acb3329b898a1a92b4bc69e9a8b9fb70ef8e97a5beba0dacd2c4ca0a74"
   },
   "recovery": {
-    "action": "pause",
+    "action": "proceed",
     "closing_gate": "verify",
     "diagnosis": {
-      "at_count": 9,
+      "at_count": 10,
       "evidence": {
-        "path": "specs/016-contained-source-tools/evidence/quality-diagnosis-06.json",
-        "sha256": "161c6c9830fd6c54151a200b158c4555671033dae3ff1c5ec288fbb502802cfb"
+        "path": "specs/016-contained-source-tools/evidence/quality-diagnosis-07.json",
+        "sha256": "a5d35c9e19c524d0ab7841a2692265f149074921bb22bba91c67d03451a4e1d1"
       }
     },
     "earliest_owner": "tests",
     "episode_id": "18-1/implementation/1",
-    "extension_decision_id": "18-1/implementation/1/extension/5",
+    "extension_decision_id": "18-1/implementation/1/extension/6",
     "failed_results": 10,
     "holds": [],
     "last_result": {
       "path": "specs/016-contained-source-tools/evidence/verify-test-failure-06.json",
       "sha256": "75ac72a332a00531454ddefc9b8aafe73900eeb7c935465a1d344c540db36e4e"
     },
-    "pause_at": 10
+    "pause_at": 11
   },
   "resume": {
-    "evidence_path": "specs/016-contained-source-tools/evidence/verify-test-failure-06.json",
-    "reason": "Paused at result 10: the nonparallel correction left the same 88 RootUnavailable failures. Further work must capture the native root-open status before another correction.",
-    "stage": "verify"
+    "evidence_path": "specs/016-contained-source-tools/evidence/execution-boundary-correction-01.json",
+    "reason": "Outside-sandbox execution is proven and the focused PreparedSource boundary passes 119/119; reconverge with the updated testing guidance and project lesson.",
+    "stage": "converge"
   },
   "schema_version": "3.1",
   "stage": "verify",
   "transition_head": {
-    "path": "specs/016-contained-source-tools/evidence/workflow-transition-066-verify-self-contained-failure-pause.json",
-    "sha256": "f7954e1ecc79d357d4eca4411f15035cf375114077288e86d10871feb62f1d2d"
+    "path": "specs/016-contained-source-tools/evidence/workflow-transition-069-execution-boundary-correction-accept.json",
+    "sha256": "02f55e4a8004eecc6f14d3c609e14809baf45587ae20a62690752450db973528"
   },
-  "updated_at": "2026-09-29T06:23:57.3677565Z"
+  "updated_at": "2026-09-29T07:03:09.9285669Z"
 }

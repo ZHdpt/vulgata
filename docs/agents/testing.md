@@ -163,6 +163,14 @@ feature-specific E2E gates. Excluded qualification is never reported as passed.
   defects. Production cannot weaken tests; disputed test behavior returns through
   root to the test owner with evidence. See the installed
   [TDD skill](../../.agents/skills/governed-tdd/SKILL.md).
+- Prepared-source Windows tests open every ancestor with native directory handles.
+  A restricted execution context may allow temporary-file creation but deny an
+  ancestor open (`NtCreateFile` access denied, surfaced as `RootUnavailable`).
+  Compare focused and full runs through the same launcher and permission mode:
+  a direct `dotnet test` pass does not establish access for children launched by
+  `eng/test-native.ps1`. If that launcher reproduces the failure only in a sandbox,
+  use approved execution outside it; preserve containment checks and test assertions.
+  See [Story 18.1 execution diagnosis](../../specs/016-contained-source-tools/evidence/rootunavailable-execution-diagnosis-01.md).
 - A no-build result can use a stale binary. Confirm the tested assembly/build
   boundary. Concurrent `dotnet` processes can lock shared outputs; serialize owned
   test work or use proven isolated outputs rather than killing unrelated processes.
