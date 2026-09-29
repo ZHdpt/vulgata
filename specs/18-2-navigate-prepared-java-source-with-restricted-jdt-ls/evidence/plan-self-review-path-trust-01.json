@@ -1,0 +1,14 @@
+{
+  "id": "18-2/plan/path-trust-repair-01",
+  "kind": "self-review",
+  "stage": "plan",
+  "outcome": "passed",
+  "observed_at": "2026-09-29T10:37:29.714224Z",
+  "input_hashes": {
+    "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/plan.md": "10f6e83e1e0c9f5e45e20cabe157ce86c241c78fc60709c91ce107277bd473ed"
+  },
+  "owned_paths": [
+    "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/plan.md"
+  ],
+  "summary": "Retained architecture plan author corrected P-PATH-TRUST-01: ordered host PATH exact-name resolution excludes empty/relative/current-directory entries, prepared/tool-state and untrusted/reparse candidates, pins validated executable identity, constrains fixed batch interpreter/children, and adds rejected-candidate qualification. User PATH-only choice and prior authority/source boundaries remain; deterministic plan validation and git diff --check passed."
+}

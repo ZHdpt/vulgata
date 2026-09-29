@@ -1,0 +1,14 @@
+{
+  "id": "18-2/plan/path-executable-correction-01",
+  "kind": "self-review",
+  "stage": "plan",
+  "outcome": "passed",
+  "observed_at": "2026-09-29T10:28:55.164851Z",
+  "input_hashes": {
+    "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/plan.md": "8eba120142e988e2a5bec3c5e14caf78cc5891cd9b8582ebbfc44115230d68de"
+  },
+  "owned_paths": [
+    "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/plan.md"
+  ],
+  "summary": "Retained architecture plan author replaced config-file/test-local .env executable choice with trusted host PATH resolution for JDT-LS and Java, while preserving restricted profile, process boundary, integrated 18.1 and shared 18.3 seam. Invisible command pauses/reports; visible command is not qualification. Deterministic implementation-design validation and git diff --check passed."
+}

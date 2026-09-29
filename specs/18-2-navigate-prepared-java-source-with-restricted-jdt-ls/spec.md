@@ -17,7 +17,7 @@ As a source-analysis operator, I want Workers to find definitions and references
 
 **Acceptance Scenarios**:
 
-1. **Given** a currently approved prepared Java Repository binding and an explicitly configured local JDT-LS/Java installation, **when** a navigation session starts, **then** it covers the whole bound Repository with separate disposable tool state and automatic Maven/Gradle import, build and dependency restoration disabled. Story 18.1's Worker read context alone does not supply the physical root needed by JDT-LS.
+1. **Given** a currently approved prepared Java Repository binding and JDT-LS/Java commands available on the host `PATH`, **when** a navigation session starts, **then** it covers the whole bound Repository with separate disposable tool state and automatic Maven/Gradle import, build and dependency restoration disabled. Story 18.1's Worker read context alone does not supply the physical root needed by JDT-LS.
 2. **Given** representative declarations and callers in that Repository, **when** definition and reference navigation runs, **then** actual navigation results identify granted Repository-relative locations and report applicable capability or classpath limitations.
 3. **Given** a missing or incomplete navigation result, **when** it is returned to a Worker, **then** it is not presented as proof that a definition or relationship is absent, and the Worker can still use the separately granted Story 18.1 file tools.
 
@@ -53,11 +53,11 @@ As a source-analysis operator, I want time-bounded navigation with clear failure
 1. **Given** failed readiness, failed navigation, cancellation or timeout, **when** the operation finishes, **then** it reports the limitation or failure explicitly and settles its owned process and disposable state without affecting unrelated services.
 2. **Given** navigation is unavailable or incomplete, **when** the Worker continues source analysis, **then** separately granted Story 18.1 list/read/search remains available; this limitation does not silently waive the separate required CodeGraph capability.
 3. **Given** qualification of the declared host profile, **when** evidence is recorded, **then** it distinguishes successful process initialization from actual definition and reference navigation and describes observed gaps without claiming universal Java completeness.
-4. **Given** a configuration-file-defined executable and a real JDT qualification run, **when** the host is prepared, **then** the local `JDT_LS_BIN` value is loaded only for that real-tool test from its local `.env`; ordinary configuration does not discover arbitrary `.env` files or expose their contents.
+4. **Given** a real JDT qualification run, **when** the host launches the declared tools, **then** it uses the JDT-LS and Java commands on `PATH`; if either command is not visible and blocks qualification, work pauses and the blocker is reported rather than treating command discovery as navigation evidence.
 
 ### Edge Cases
 
-- The local JDT-LS or Java installation is missing, misconfigured or cannot become ready: report a configuration/readiness failure without a synthetic navigation result.
+- The JDT-LS or Java command is not visible on the host `PATH` or cannot become ready: pause and report a blocking command-visibility or readiness failure without a synthetic navigation result.
 - A declaration or caller depends on unavailable classpath information: preserve the observed result and limitation; never convert an empty result into an absence claim.
 - A returned location has no safe relative mapping within the granted Repository: withhold the unsafe location and report the limitation.
 - Requests overlap while one is cancelled or timed out: keep the session ownership limit, settle the affected operation and avoid leaking a stale result to another request.
@@ -70,7 +70,7 @@ As a source-analysis operator, I want time-bounded navigation with clear failure
 ### Functional Requirements
 
 - **FR-001**: The system MUST offer definition and reference navigation for a currently approved whole prepared Java Repository using the declared restricted JDT-LS profile. (O-FR06, O-AR09)
-- **FR-002**: The system MUST require an explicitly configured local JDT-LS/Java installation and keep navigation tool state separate from prepared source. Automatic Maven/Gradle import, build and dependency restoration MUST remain disabled, and source must remain read-only, for this profile. The executable is configured through configuration files; only real JDT tests load `JDT_LS_BIN` from their local `.env`. This does not authorize general `.env` discovery or disclosure. (O-FR06; AD-15; scoped user instruction)
+- **FR-002**: The system MUST use the JDT-LS and Java commands available on the host `PATH` and keep navigation tool state separate from prepared source. Automatic Maven/Gradle import, build and dependency restoration MUST remain disabled, and source must remain read-only, for this profile. If command visibility blocks qualification, work MUST pause and report the blocker. A visible command alone does not establish successful navigation or the restricted profile. (O-FR06; AD-15; revised user instruction)
 - **FR-003**: Trusted application composition MUST supply the approved batch, Repository, subject, Worker-source-read purpose, opaque approval/root-binding identity and physical prepared root to a trusted navigation authority. The current exact authority MUST be verified at issuance, during use, and immediately before any result disclosure; a missing or unavailable verifier MUST fail closed. The Worker/model MUST see no physical root, approval identifier, alternative authority selector or arbitrary adapter choice. (O-NFR01; integrated 18.1 authority boundary)
 - **FR-004**: The system MUST own at most one navigation session per selected Repository and serialize shared navigation operations when overlap is unsafe. (O-FR06)
 - **FR-005**: Definition/reference results MUST expose only locations safely mapped to the granted Repository-relative source. Inputs and outputs MUST NOT grant traversal, symlink escape, host-file access, source writes or shell/command access. (O-NFR01)

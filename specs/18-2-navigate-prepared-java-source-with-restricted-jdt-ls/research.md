@@ -12,11 +12,19 @@ This is repository-grounded planning, not live JDT-LS qualification. Authority: 
 
 ## Restricted profile and result truth
 
-**Decision**: Select the executable from application config files and fix no-import/no-build/no-restore settings at the adapter. Only real JDT-LS tests may load `JDT_LS_BIN` from their local `.env`; no ordinary `.env` discovery. Qualify actual definition and reference calls, source no-write and least-privilege process behavior. Preserve zero results, missing classpath and failures as distinct observations.
+**Decision**: Assume JDT-LS and Java commands are on the host `PATH`; trusted Infrastructure resolves them without a model argument, config-file executable selector, user-profile fallback or `.env`/`JDT_LS_BIN` input. If command invisibility blocks qualification, pause and report, including the possibility of a stale Codex process environment after a recent `PATH` edit. Fix no-import/no-build/no-restore settings at the adapter and qualify actual definition/reference calls, source no-write and least-privilege process behavior. Preserve zero results, missing classpath and failures as distinct observations.
 
-**Rationale**: O-FR06/O-AR09 and PRD FR-15.1–15.2 require semantic navigation evidence and explicit limits. The current protocol initializer supplies `rootUri` and `workspaceFolders`, but inspection found no evidenced disabling settings. `ParseEvidence` currently treats a null response as succeeded with no evidence. Neither proves the October profile or absence semantics.
+**Rationale**: The user's revised executable choice supersedes earlier config-file/test-local environment selection. The currently observed `jdtls.bat` and `java.exe` on `PATH` prove command visibility only. O-FR06/O-AR09 and PRD FR-15.1–15.2 require semantic navigation evidence and explicit limits. The current protocol initializer supplies `rootUri` and `workspaceFolders`, but inspection found no evidenced disabling settings. `ParseEvidence` currently treats a null response as succeeded with no evidence. Neither proves the October profile or absence semantics.
 
-**Alternatives considered**: Count startup/readiness as success, assume current settings are restricted, or enable dependency restoration. Each exceeds or underproves accepted scope.
+**Alternatives considered**: Retain config-file executable paths or test-local `.env`/`JDT_LS_BIN`, count command visibility/startup as navigation success, assume current settings are restricted, or enable dependency restoration. The first is superseded by user direction; the rest underprove or exceed accepted scope.
+
+## Trusted PATH executable selection
+
+**Decision**: Infrastructure alone enumerates ordered host `PATH` entries for exact JDT-LS/Java names and launches only a validated absolute target. Empty/relative/current-directory entries, prepared-source and disposable tool-state roots, reparse redirection, wrong file types and entries outside approved host executable directories cannot supply the command. An untrusted first match fails closed rather than falling through to a later one. Pin canonical path, file identity and digest for the session; hold against replacement where supported and recheck immediately before launch. The fixed batch interpreter and Java child use the same approved process boundary and constrained child `PATH`.
+
+**Rationale**: The independent P-PATH-TRUST-01 finding correctly identified that a PATH-only instruction prevents model selection but can still select attacker-controlled source or tool-state content. Windows process creation can search application and current directories when given a bare executable name, and batch launch uses a command interpreter; see [Microsoft CreateProcess documentation](https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-createprocessw). Explicit ordered PATH inspection followed by absolute-path launch closes that selection gap while retaining the user's PATH-only source of candidates. Host approval of an executable directory concerns process trust, not a fallback executable path.
+
+**Alternatives considered**: Bare-name `Process.Start`, generic command lookup that may search the current directory, skipping a malicious first match to a later candidate, or trusting a lexical PATH string without checking reparse/identity. Each leaves executable substitution or search-order ambiguity. A fixed config path or `.env` selector would contradict the revised user instruction. Location validation alone does not replace the separately required subprocess isolation.
 
 ## Concurrency, lifetime and failures
 
@@ -25,6 +33,14 @@ This is repository-grounded planning, not live JDT-LS qualification. Authority: 
 **Rationale**: O-FR06 and Story 18.2 acceptance require one-session ownership, serialization and bounded cleanup. The current adapter already has timeout and owned process/lease disposal mechanisms, but they are tied to the old scope and require direct-root assessment.
 
 **Alternatives considered**: Per-Worker processes and blind automatic replay increase contention and hide uncertain outcomes.
+
+## October JDT-LS construction seam
+
+**Decision**: Introduce one Infrastructure `PreparedJavaNavigationContextFactory` whose trusted constructor takes bounded profile/state configuration and an injected `IPreparedJdtLsRuntime`, and whose `OpenAsync` takes the already issued `JdtNavigation` workspace lease plus cancellation. Return one context only for `Opened`; other statuses have no context. The injected runtime owns and cleans everything it starts until it successfully returns a session. The factory owns its one-session slot and any returned session until successful context handoff; on pre-return exception/cancellation it maps the status and releases the slot without pretending to dispose invisible resources. After handoff, the context owns the session; the caller retains and later disposes its separate lease. Controlled fakes can expose each phase with zero real launches. See `contracts/navigation-tool.md`.
+
+**Rationale**: T010 stopped before writing a test because the Core navigation interface and Agent functions had no accepted Infrastructure creation/injection route. Definition review P-PARTIAL-OPEN-OWNERSHIP-01 then exposed a false assumption: a factory cannot clean process/protocol resources the runtime has not returned. The corrected handoff gives each resource an observable cleanup owner and keeps failure outcomes testable. Current `JdtLsAnalysisSessionFactory.OpenAsync(AnalysisScope)` remains tied to Profiled Revision and mirrored workspaces, which ID-L01 excludes from October grant authority. The new factory remains a small seam for lease validation, session ownership and raw-result containment. The project lesson requires exact construction/result/lifetime/cancellation before TDD.
+
+**Alternatives considered**: Wrapping the legacy `AnalysisScope` factory would import rejected source identity/copy behavior; having tests instantiate private JDT internals would bypass the public capability; exposing physical root or runtime selection as Worker arguments would break authority. Building a broad language-server framework is unnecessary. Production runtime registration and any real Java/JDT launch stay closed until T022/T023 accepted trusted PATH/process-profile work.
 
 ## F0 integration dependency
 

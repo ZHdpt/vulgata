@@ -1,0 +1,37 @@
+{
+  "schema_version": "1.0",
+  "gate": "plan-review",
+  "verdict": "ACCEPT",
+  "reviewed_commit": "9924357ae85855adcf282fa9d4eab722d84751e2",
+  "reviewed_boundary": {
+    "base_commit": "9924357ae85855adcf282fa9d4eab722d84751e2",
+    "candidate_commit": null,
+    "diff_sha256": "63e49b80a80f3bb2b99077af2b5d86c3454b299601e3eaa6143aa72521950b0f",
+    "artifact_hashes": {
+      "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/spec.md": "b12a0422ab2864d5aeef1026e4085c03c52878dcee22e5804be2e0bba0f236ce",
+      "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/plan.md": "10f6e83e1e0c9f5e45e20cabe157ce86c241c78fc60709c91ce107277bd473ed",
+      "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/research.md": "0cc218e6152c1526465754b9601d697b3319005ca280749402fbc30c157d6d4b",
+      "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/data-model.md": "76353e9743256f5482f7818a34bced05bb6852f87b70ae34149258e9b0743647",
+      "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/contracts/navigation-tool.md": "3cb93112418e815f877c4019acec2dcf8c6cd97d0d1318fc0ba9f011f19c18da",
+      "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/quickstart.md": "78f1f5e72953bb8393d29c859f08a30bd86ebde75149efa8712346152ce74914"
+    },
+    "owned_paths": [
+      "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/spec.md",
+      "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/plan.md",
+      "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/research.md",
+      "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/data-model.md",
+      "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/contracts/navigation-tool.md",
+      "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/quickstart.md"
+    ]
+  },
+  "reviewed_artifacts": [
+    "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/spec.md",
+    "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/plan.md",
+    "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/research.md",
+    "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/data-model.md",
+    "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/contracts/navigation-tool.md",
+    "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/quickstart.md"
+  ],
+  "findings": [],
+  "summary": "Plan-only review ACCEPT. Ordered prior verdicts 01–03 had no findings. P-PATH-TRUST-01 from verdict 04 is resolved: ID-I03, ID-F03, ID-T03 and the navigation contract define exact ordered PATH inspection, exclusion of ambient and untrusted candidates, first-match fail-closed behavior, trusted file/location validation, pinned executable identity and absolute launch, plus constrained interpreter/child execution. The user's PATH-only choice remains; command visibility is not treated as runtime qualification. Integrated 18.1 authority, the separately authorized 18.3 shared seam, source no-write and restricted-profile obligations remain intact. Deterministic implementation-design validation returned no errors. Existing tasks are stale and were not reviewed. diff_sha256 is SHA-256 of canonical sorted path-to-artifact-SHA256 JSON encoded as UTF-8 with a terminal newline."
+}

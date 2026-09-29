@@ -115,9 +115,83 @@ public sealed class PreparedJavaNavigationFunctions
 
 Results echo only `repositoryId`, operation, sanitized outcome, contained relative locations/ranges, explicit result bound and safe limitation codes. No raw physical URI, source text, subject, approval identity, tool-state path, outside-root metadata, stack trace or exception text. Zero locations mean `no result observed`, never proof of absence. A capped response reports `limited`; there is no implied continuation or full coverage. Outside-root/unmappable URIs are withheld with a limitation. Revocation, changed authority, unavailable verifier, cancellation or disposal returns an empty sanitized payload after discarding all buffered locations and counts.
 
+## October Infrastructure construction seam
+
+The existing `JdtLsAnalysisSessionFactory.OpenAsync(AnalysisScope)` uses a revision-bound workspace and cannot open this prepared-root context. Trusted composition uses one October-specific factory in `Vulgata.Infrastructure.Analysis.Java`. The Core/Agent interface above remains unchanged. The callable shape below fixes the construction seam for controlled process/protocol tests and later production composition; it is not a new Worker operation:
+
+```csharp
+public sealed record PreparedJavaNavigationProfile(
+    string DisposableStateRoot,
+    TimeSpan InitializationTimeout,
+    TimeSpan RequestTimeout,
+    TimeSpan ShutdownTimeout,
+    int MaximumResponseBytes);
+public enum PreparedJavaNavigationOpenStatus
+{
+    Opened, Denied, AuthorityUnavailable, RootUnavailable,
+    ConfigurationUnavailable, ReadinessFailed, Cancelled, DeadlineExceeded,
+    CleanupUnconfirmed
+}
+public sealed record PreparedJavaNavigationOpenResult(
+    PreparedJavaNavigationOpenStatus Status,
+    IPreparedJavaNavigationContext? Context);
+
+public sealed class PreparedJavaNavigationContextFactory
+{
+    public PreparedJavaNavigationContextFactory(
+        PreparedJavaNavigationProfile profile,
+        IPreparedJdtLsRuntime runtime);
+    public Task<PreparedJavaNavigationOpenResult> OpenAsync(
+        PreparedToolWorkspaceLease workspaceLease,
+        CancellationToken cancellationToken = default);
+}
+
+// Trusted Infrastructure/test adapter seam, never a Worker function or model input.
+// OpenAsync owns all resources it acquires until it successfully returns a session.
+// On throw/cancellation before return, it settles them itself; no partial handle
+// exists for the caller to dispose.
+public interface IPreparedJdtLsRuntime
+{
+    Task<IPreparedJdtLsSession> OpenAsync(
+        PreparedToolWorkspaceLease workspaceLease,
+        PreparedJavaNavigationProfile profile,
+        CancellationToken cancellationToken = default);
+}
+public sealed class PreparedJdtLsOpenFailureException : Exception
+{
+    public PreparedJdtLsOpenFailureException(
+        PreparedJavaNavigationOpenStatus status, bool cleanupConfirmed);
+    public PreparedJavaNavigationOpenStatus Status { get; }
+    public bool CleanupConfirmed { get; }
+}
+public interface IPreparedJdtLsSession : IAsyncDisposable
+{
+    Task<PreparedJdtLsRawReply> NavigateAsync(
+        PreparedJavaNavigationOperation operation,
+        PreparedJavaNavigationRequest request,
+        CancellationToken cancellationToken = default);
+}
+public sealed record PreparedJdtLsRawReply(
+    IReadOnlyList<PreparedJdtLsRawLocation> Locations,
+    bool LimitReached,
+    string? CapabilityLimitation);
+public sealed record PreparedJdtLsRawLocation(
+    Uri Uri, int StartLine, int StartCharacter, int EndLine, int EndCharacter);
+```
+
+The application constructs `PreparedJavaNavigationProfile` from trusted bounds and a disposable state root outside the prepared source; it contains no executable selector. The caller first obtains a `PreparedToolWorkspaceLease` with `JdtNavigation` purpose. Factory `OpenAsync` checks that purpose, lease lifetime/current authority, root identity and profile/state separation and reserves the one-session-per-Repository slot before calling the injected runtime. `Opened` has exactly one context; every other status has null context and no model-visible trusted details. Null programmer inputs fail without launch.
+
+Ownership has three distinct phases. **Before runtime return**, `IPreparedJdtLsRuntime.OpenAsync` owns every process, protocol and disposable-state resource it starts. If opening fails or is cancelled before returning `IPreparedJdtLsSession`, it performs bounded cleanup, then throws `PreparedJdtLsOpenFailureException` with a sanitized status and whether cleanup was confirmed; the factory cannot dispose handles it never received. A confirmed failure lets the factory release its slot and return that sanitized status with null context. An unconfirmed failure (or unexpected exception without cleanup attestation) maps to `CleanupUnconfirmed` with null context, keeps the slot unavailable and forbids retry until owned-resource resolution; it cannot be reported as safe `Cancelled`. A second open for the same Repository while quarantined returns `CleanupUnconfirmed` without calling the runtime. If this trusted status must be surfaced through a Worker function, map it to existing `PreparedJavaNavigationOutcome.ConfigurationUnavailable` with empty locations, counts and details. The exception never carries raw paths/source/approval or protocol details into the Worker result. **After session return but before context handoff**, the factory owns the returned session. If cancellation, a current-lease/profile check or context construction then fails, it disposes that session before mapping a sanitized null-context status and releasing its session slot. **After successful context handoff**, the context owns and disposes the returned session and releases the slot after Worker calls settle. The context borrows the separately issued lease; the trusted caller disposes the lease after the context, or after a failed open. The factory never disposes that caller-owned lease. A failed/disposed context or partial runtime session cannot be reused.
+
+The injected `IPreparedJdtLsRuntime` is selected only by trusted Infrastructure composition. A controlled fake may report raw protocol replies and record its own pre-return cleanup or a returned session's later disposal for T010/T011/T013/T018 without starting Java or JDT-LS. The context validates and maps raw URIs to the granted relative root, performs current-authority/pre-disclosure checks and sanitizes outcomes; the fake cannot turn raw locations into authorized output by itself. Fake runtime behavior cannot prove real `rootUri`, `-data`/configuration placement or fixed JDT settings; those require observable production-runtime checks and T022–T024 qualification. Production composition must remain unregistered/fail closed for a real runtime until accepted T022/T023 trusted PATH and process-profile evidence. The eventual real runtime reuses assessed stdio/StreamJsonRpc/process mechanics behind this interface, never the legacy `AnalysisScope` factory or revision lease. No caller passes a model-selected root, command, adapter or physical workspace through `OpenAsync`.
+
 ## Process and source protection
 
-October application config files explicitly select the Java executable and JDT-LS installation/distribution; missing config fails closed. Existing `AnalysisRuntime:JavaHome`/`JdtLsInstallationRoot` and Java-plus-launcher-jar path are mechanism candidates, not a mandate to use the historical `bin/jdtls.bat` or user-profile fallback. Only real JDT-LS tests may load `JDT_LS_BIN` from their local `.env`; ordinary composition does not discover arbitrary `.env` files. JDT-LS receives the whole prepared Repository as `rootUri`, with separate writable `-data` and Equinox configuration. Its effective settings disable automatic Maven/Gradle import, builds and dependency restore. A trusted root lease and URI filtering do not restrict process reads/writes: the declared host profile must enforce least privilege so prepared source is read-only and unrelated host files are inaccessible apart from declared Java/JDT runtime inputs. Unsafe launch fails closed pending design correction. No source mirror/copy, Git identity or shell/command tool is granted.
+Trusted Infrastructure uses the running host `PATH` as the sole source of JDT-LS/Java command candidates. It walks entries in order for exact supported names (`jdtls.exe` or `jdtls.bat`; `java.exe`) rather than launching a bare name, consulting `PATHEXT`, `SearchPath`, `Get-Command` selection or leaving Windows to search application/current/system directories. Empty, relative and current-directory entries fail resolution instead of authorizing a candidate; two supported JDT names in the same first matching directory are ambiguous and also fail. If the first matching candidate is untrusted, fail closed without trying a later entry. No config-file executable override, user-profile fallback or `.env`/`JDT_LS_BIN` discovery is permitted. If no trusted command is visible and qualification is blocked, pause and report; an unrestarted process may have a stale `PATH`, but a guessed fallback is not authorized.
+
+For each first match, resolve its physical directory and ancestors without following an untrusted reparse redirect; reject a candidate within the prepared root, disposable tool state, current directory or another host-untrusted PATH entry. Require a regular non-reparse file with the exact expected extension in a host-approved executable directory that Worker/tool identities cannot write or replace. Pin its canonical absolute path, file identity and content digest for the session; keep a read handle that prevents replacement where supported and recheck identity immediately before launch. A changed file, ambiguous path, unsupported type or unverifiable parent is an unsafe candidate and starts no process. The application passes the validated absolute target, never a bare command, to process creation. These are trusted host-location checks, not a new model-selectable executable setting.
+
+For `jdtls.bat`, the fixed adapter may use only a validated absolute system interpreter with a fixed argument shape; it must not resolve `cmd.exe` from an untrusted `COMSPEC` or current directory. The interpreter, script, Java child and any permitted descendants run under the same approved least-privilege process boundary with a constrained child `PATH` containing only approved resolved tool/system inputs. An unexpected child or expansion outside that policy fails qualification; no Worker shell/command tool is exposed. JDT-LS receives the whole prepared Repository as `rootUri`, with separate writable `-data` and Equinox configuration. Its effective settings disable automatic Maven/Gradle import, builds and dependency restore. A trusted root lease and URI filtering do not restrict process reads/writes: the declared host profile must enforce least privilege so prepared source is read-only and unrelated host files are inaccessible except declared Java/JDT runtime inputs. Unsafe launch fails closed pending design correction. No source mirror/copy or Git identity is granted.
 
 ## Representative cases
 

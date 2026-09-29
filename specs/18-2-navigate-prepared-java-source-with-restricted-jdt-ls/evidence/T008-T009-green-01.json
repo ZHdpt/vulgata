@@ -1,0 +1,35 @@
+{
+  "kind": "behavioral-green",
+  "stage": "implement",
+  "tasks": [
+    "T008",
+    "T009"
+  ],
+  "observed_at": "2026-09-29T11:00:55.761516Z",
+  "production": {
+    "src/dotnet/Vulgata.Core/DomainServices/PreparedJavaNavigationContracts.cs": "ef6eb4fec5ef43378615d70e782d6ded380cb4a994f251aa3cb2c569bda0e547",
+    "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedJavaNavigationFunctions.cs": "a5074f665f84f956bca18571071184b7c0dde803d33621d76cb88f64edcbe271"
+  },
+  "focused_command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter FullyQualifiedName~PreparedJavaNavigationFunctionsTests",
+  "exit_code": 0,
+  "selected": 1,
+  "passed": 1,
+  "failed": 0,
+  "skipped": 0,
+  "trx_path": "TestResults/isolation-dcfaaa14a0ab44808fe929254087036a/results.trx",
+  "trx_sha256": "4305f8515d1de3dc7f48ea18adf5161f7e7fbef0463effd17f7525d9a2719e03",
+  "minimal_green": "Exactly two closed navigation function schemas, borrowed context not invoked/disposed during creation; Core portable request/result types and Agent wrapper compile and focused test passes. No JDT process or executable selection.",
+  "final_shape": "Test owner added passing test-only coverage for exact requests/results and cancellation-token forwarding, buffered-result suppression after cancellation, and denied extra authority args; nearby 18.1 file-function selection remains GREEN 20/20. Test unit uses independent controlled results and clear privacy assertions; no concrete test defect. Production owner assessed Core portable types/Agent borrowed context and found no local refactor needed. No JDT process or adapter behavior qualified.",
+  "final_green": {
+    "command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter FullyQualifiedName~PreparedJavaNavigationFunctionsTests|FullyQualifiedName~PreparedSourceToolFunctionTests",
+    "exit_code": 0,
+    "selected": 20,
+    "passed": 20,
+    "failed": 0,
+    "skipped": 0,
+    "trx_path": "TestResults/isolation-8308dbe351b04356966b7e91251b2ee5/results.trx",
+    "trx_sha256": "b48555f3be1bf9b988e2d7895f32d4496cf4cfafffe89a6339f5b0af752f50e5",
+    "test_path": "tests/Vulgata.Tests/AnalysisRuntime/PreparedJavaNavigationFunctionsTests.cs",
+    "test_sha256": "7ecb13a608bc7e566c350d30f1629c8d0b9c30db9a90e7d0252b3ba0cb526741"
+  }
+}

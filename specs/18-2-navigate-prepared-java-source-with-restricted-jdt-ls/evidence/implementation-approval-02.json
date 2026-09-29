@@ -1,0 +1,21 @@
+{
+  "kind": "delegated-approval",
+  "stage": "implementation-approval",
+  "decision_id": "18-2/implementation-approval/02",
+  "status": "accepted",
+  "scope_sha256": "04d28c6217071d41283db3bbd94ac2fbc1347986991a588ebd9031ba6edceae6",
+  "story_key": "18-2-navigate-prepared-java-source-with-restricted-jdt-ls",
+  "delegate_id": "01a0e708-c489-7871-9f73-31413f20bf2c",
+  "delegation": {
+    "path": "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/evidence/user-delegation-01.json",
+    "sha256": "7ec0729f79c94c39612eb35e04524b0c3dce1e933305a3a6f6494818786d8cfa"
+  },
+  "response_source": "Codex chat 01a0e708-c489-7871-9f73-31413f20bf2c turn 01a0ecce-1d8c-74b3-8916-f20312523ff2 final message msg_0e55faeae43f1fb3016abb992fdc188196a5071ba88c7f7060",
+  "response_text": "APPROVE — 18-2/implementation-approval/02, current definition only. Verified definition-review 03 ACCEPT, the corrected launch ordering and all seven artifact hashes. Approved boundary: Base: 9924357ae85855adcf282fa9d4eab722d84751e2 Manifest: edf3123817662c5c083c46735e5ffb3dd325b919adf4bc89282ece0afc30988b Review-file SHA-256: be939082bddcc7ec0527592a4d3aedb6919bb1f30c1c21f2b60bea7f137391e7 Implementation may resume with T009 against the preserved T008 RED. All real October JDT-LS/Java launch paths remain closed until T022 RED and T023 GREEN establish the accepted launch protections. Real qualification and T025’s prepared-Repository dependency remain required. Preserve the active recovery episode and its two failed results. This grants no runtime permissions, recovery extension, verification waiver or Story 18.3 integration authority. Root records and validates this decision before proceeding. No runner message sent.",
+  "review": {
+    "path": "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/evidence/definition-review-result-03.json",
+    "sha256": "770c508f1c184d32af1553342c8435eafd43b427d845a7fec52318cc6f73f1a2"
+  },
+  "summary": "Delegate approved resumed production only for corrected Story 18.2 accepted definition, with real launch closed through T022/T023; recovery count2 and all qualification/dependency gates retained.",
+  "decided_at": "2026-09-29T10:56:24.907985Z"
+}

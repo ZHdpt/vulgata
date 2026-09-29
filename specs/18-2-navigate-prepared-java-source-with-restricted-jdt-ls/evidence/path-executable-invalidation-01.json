@@ -1,0 +1,12 @@
+{
+  "kind": "analysis",
+  "stage": "implement",
+  "observed_at": "2026-09-29T10:24:00.824675Z",
+  "summary": "User revised the Story 18.2 JDT-LS executable assumption after accepted definition and implementation approval: assume JDT-LS command is on PATH, and pause/report if PATH visibility becomes a blocker. This supersedes the earlier config-file executable and test-only .env JDT_LS_BIN requirement. Earliest affected owner is spec; plan and tasks require reconciliation and affected independent reviews/approvals must rerun. Existing T001-T007 verified checkpoint and T008 RED are preserved. Current host PATH resolves jdtls.bat and java.exe, which is command visibility only, not JDT qualification.",
+  "user_source": "Current Story 18.2 chat 01a0eae8-edeb-7fb3-874e-35ce36ee4a92 user message on 2026-09-29 beginning Sorry, I changed my mind on JDT-LS executable.",
+  "user_instruction": "Sorry, I changed my mind on JDT-LS executable. You can assume they are on the path always. And you may find out jdtls not on the path, the reason why is I just added it, and codex is not restart yet. If it becomes a blocker, pause and report to user.",
+  "observed_path_commands": {
+    "jdtls": "jdtls.bat via C:\\Users\\13728\\.local\\bin\\jdtls.bat",
+    "java": "java.exe via C:\\Program Files\\Common Files\\Oracle\\Java\\javapath\\java.exe"
+  }
+}

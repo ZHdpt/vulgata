@@ -1,0 +1,14 @@
+{
+  "kind": "behavioral-red",
+  "stage": "implement",
+  "task_id": "T008",
+  "observed_at": "2026-09-29T10:23:03.405614Z",
+  "test_path": "tests/Vulgata.Tests/AnalysisRuntime/PreparedJavaNavigationFunctionsTests.cs",
+  "test_sha256": "b510b6bc057a7931e368f5e7b2543f0e5f48b374b48222af902b82f30c983b8a",
+  "command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter FullyQualifiedName~PreparedJavaNavigationFunctionsTests",
+  "exit_code": 1,
+  "result": "expected compile RED: policy and guard probes passed; build failed with five CS0246 missing accepted navigation context/request/result contract symbols; no test assertion executed.",
+  "build_log_path": "TestResults/isolation-db68275eb1e74825b789b820734753ee/build.log",
+  "build_log_sha256": "cfe0a6e26d091efb9a674906a773930a33dee7e82dec84c59692b78b0cb8325b",
+  "environment": "No sandbox denial; NuGet warnings did not prevent build from reaching missing-contract errors."
+}

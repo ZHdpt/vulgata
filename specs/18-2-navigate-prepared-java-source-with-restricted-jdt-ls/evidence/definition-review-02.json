@@ -1,0 +1,52 @@
+{
+  "schema_version": "1.0",
+  "gate": "definition-review",
+  "verdict": "REVISE",
+  "reviewed_commit": "9924357ae85855adcf282fa9d4eab722d84751e2",
+  "reviewed_boundary": {
+    "base_commit": "9924357ae85855adcf282fa9d4eab722d84751e2",
+    "candidate_commit": null,
+    "diff_sha256": "e41ba108028384f0253006e3685587d2f1150de8d21dc571da6cf7f6c95a21ea",
+    "artifact_hashes": {
+      "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/spec.md": "b12a0422ab2864d5aeef1026e4085c03c52878dcee22e5804be2e0bba0f236ce",
+      "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/plan.md": "10f6e83e1e0c9f5e45e20cabe157ce86c241c78fc60709c91ce107277bd473ed",
+      "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/research.md": "0cc218e6152c1526465754b9601d697b3319005ca280749402fbc30c157d6d4b",
+      "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/data-model.md": "76353e9743256f5482f7818a34bced05bb6852f87b70ae34149258e9b0743647",
+      "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/contracts/navigation-tool.md": "3cb93112418e815f877c4019acec2dcf8c6cd97d0d1318fc0ba9f011f19c18da",
+      "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/quickstart.md": "78f1f5e72953bb8393d29c859f08a30bd86ebde75149efa8712346152ce74914",
+      "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/tasks.md": "f5802826f79f7c4865f09442469587d97f8ac56d4a85ba7da7f8d83478e8c798"
+    },
+    "owned_paths": [
+      "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/spec.md",
+      "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/plan.md",
+      "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/research.md",
+      "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/data-model.md",
+      "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/contracts/navigation-tool.md",
+      "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/quickstart.md",
+      "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/tasks.md"
+    ]
+  },
+  "reviewed_artifacts": [
+    "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/spec.md",
+    "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/plan.md",
+    "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/research.md",
+    "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/data-model.md",
+    "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/contracts/navigation-tool.md",
+    "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/quickstart.md",
+    "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/tasks.md"
+  ],
+  "findings": [
+    {
+      "id": "T-PATH-LAUNCH-ORDER-01",
+      "severity": "HIGH",
+      "category": "Task ordering and security boundary",
+      "artifact": "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/tasks.md",
+      "location": "T010–T013 versus T022–T023; Phase Dependencies",
+      "affected_requirement": "plan ID-I03, ID-F03 and ID-T03; O-NFR01; spec FR-002 and FR-005",
+      "evidence": "T011 implements the prepared-root JDT-LS adapter and T013 composes it using trusted absolute PATH targets in Phase 3, while T022–T023 defer first-match rejection, trusted directory and executable identity checks, replacement protection, and safe batch/interpreter child launch until Phase 6. The tasks do not explicitly close all production-capable launch paths between these phases. An implementer following the listed order could expose the adapter before the accepted fail-closed executable boundary exists.",
+      "correction_outcome": "Make the launch dependency explicit without changing completed T001–T007 or pending T008: either move T022–T023 before any production-capable JDT launch/composition, or constrain T011/T013 to controlled protocol-only behavior with every real launch path closed until T023. State the checkpoint that prevents real launch and preserve T022/T023 RED/GREEN and T024 real qualification.",
+      "earliest_owner": "tasks"
+    }
+  ],
+  "summary": "Complete-definition REVISE. Prior plan finding P-PATH-TRUST-01 is resolved by accepted plan review 05, and prior definition review 01 had no findings but was invalidated by the user PATH change. Read-only SpecKit analysis found one new task-ordering risk, T-PATH-LAUNCH-ORDER-01. The prerequisite check resolved the selected feature; deterministic plan/task validation returned no errors, with all accepted implementation IDs referenced and no unknown IDs. PATH-only selection, 18.1's closed read contract, the completed T001–T007 shared checkpoint, T008 RED and later real-tool qualification remain in scope. Existing task text contains no obsolete config-file or .env/JDT_LS_BIN requirement. diff_sha256 is SHA-256 of canonical sorted path-to-artifact-SHA256 JSON encoded as UTF-8 with a terminal newline."
+}

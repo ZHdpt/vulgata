@@ -1,0 +1,13 @@
+{
+  "kind": "analysis",
+  "stage": "implement",
+  "task_id": "T010",
+  "observed_at": "2026-09-29T10:59:53.323790Z",
+  "summary": "T010 test author found no accepted non-legacy Infrastructure construction/injection seam for prepared-root JDT-LS navigation. Public Core IPreparedJavaNavigationContext methods and Worker function factory are specified, but creating the Infrastructure context with controlled process/protocol dependencies is not. Existing JdtLsAnalysisSessionFactory.OpenAsync(AnalysisScope) uses legacy revision/workspace semantics rejected by plan ID-L01. No T010 test or production change was made. Earliest owner is plan; specify callable factory construction, inputs, result/lifetime and injection without granting model-chosen root/adapter, then reconcile tasks and re-review before T010/T011. T009 Core/Agent function seam is independent and was already in flight under accepted scope.",
+  "inputs": {
+    "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/contracts/navigation-tool.md": "3cb93112418e815f877c4019acec2dcf8c6cd97d0d1318fc0ba9f011f19c18da",
+    "src/dotnet/Vulgata.Infrastructure/Analysis/Java/JdtLsAnalysisAdapter.cs": "4226cb46db5688ac2771443f0d78866dba31d31df4f7a90a39f178d23c9dd997"
+  },
+  "required_route": "plan",
+  "test_author_result": "No T010 test or manifest edits; no build; no fake RED."
+}

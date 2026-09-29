@@ -320,6 +320,9 @@
   "AnalysisRuntime/PreparedJavaNavigationFixture.cs": {
     "suite": "SelfContained"
   },
+  "AnalysisRuntime/PreparedJavaNavigationFunctionsTests.cs": {
+    "suite": "SelfContained"
+  },
   "AnalysisRuntime/RecordingProcessLauncherDouble.cs": {
     "suite": "SelfContained"
   },

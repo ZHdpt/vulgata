@@ -1,0 +1,37 @@
+{
+  "schema_version": "1.0",
+  "gate": "plan-review",
+  "verdict": "ACCEPT",
+  "reviewed_commit": "9924357ae85855adcf282fa9d4eab722d84751e2",
+  "reviewed_boundary": {
+    "base_commit": "9924357ae85855adcf282fa9d4eab722d84751e2",
+    "candidate_commit": null,
+    "diff_sha256": "6ab5decd965252c498bf925febf5ba20c60c9d8a06e62987117cf14fbafaed8a",
+    "artifact_hashes": {
+      "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/spec.md": "b12a0422ab2864d5aeef1026e4085c03c52878dcee22e5804be2e0bba0f236ce",
+      "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/plan.md": "dc511c161b0e7280f9b851a9c64304a80684e782879136c82b2bb496b74be5ee",
+      "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/research.md": "f21ca3b947a38ccd36aa3307e82ad99d740563cf90d11f0295e3bdb349863205",
+      "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/data-model.md": "8ca64bdbdcc2b1ed44f6dcae2ad07c0e4959faac3151547ca602258c73178cf6",
+      "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/contracts/navigation-tool.md": "71300d2d8a5914097004bbacb41d4734d74ac8dc9ce8f707d009fe0abafe9a99",
+      "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/quickstart.md": "d3671ae848c44b0d281aa2230b07dced55deceeee5dc975be977f88a3db72ef5"
+    },
+    "owned_paths": [
+      "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/spec.md",
+      "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/plan.md",
+      "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/research.md",
+      "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/data-model.md",
+      "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/contracts/navigation-tool.md",
+      "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/quickstart.md"
+    ]
+  },
+  "reviewed_artifacts": [
+    "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/spec.md",
+    "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/plan.md",
+    "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/research.md",
+    "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/data-model.md",
+    "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/contracts/navigation-tool.md",
+    "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/quickstart.md"
+  ],
+  "findings": [],
+  "summary": "Plan-only ACCEPT. The new ID-I05, ID-S04, ID-L03 and ID-T04 specify the missing trusted Infrastructure construction and test seam for the already accepted October JDT-LS adapter. The factory consumes an issued JdtNavigation lease and trusted profile/runtime injection, returns a context only on Opened, defines cancellation and disposal, keeps raw replies subject to containment and authority checks, and keeps real runtime composition fail closed until T022/T023. It adds no Worker operation, model-selected root/executable, 18.1 public-contract change or 18.3 shared-lease ownership change. This is within the accepted 18.2 architecture, not a human-reserved architecture change outside it; root retains approval/hash-binding authority. Prior P-PATH-TRUST-01 and T-PATH-LAUNCH-ORDER-01 remain resolved. Deterministic plan validation returned no errors. Current tasks were not reviewed. diff_sha256 is SHA-256 of canonical sorted path-to-artifact-SHA256 JSON encoded as UTF-8 with a terminal newline."
+}

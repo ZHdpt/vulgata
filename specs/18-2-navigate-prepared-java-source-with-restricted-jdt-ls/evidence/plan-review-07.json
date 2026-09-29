@@ -1,0 +1,37 @@
+{
+  "schema_version": "1.0",
+  "gate": "plan-review",
+  "verdict": "ACCEPT",
+  "reviewed_commit": "9924357ae85855adcf282fa9d4eab722d84751e2",
+  "reviewed_boundary": {
+    "base_commit": "9924357ae85855adcf282fa9d4eab722d84751e2",
+    "candidate_commit": null,
+    "diff_sha256": "44a576b093ae6da6590dd60208e1cb5c96b38604c90a688a68682ed4fe915080",
+    "artifact_hashes": {
+      "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/spec.md": "b12a0422ab2864d5aeef1026e4085c03c52878dcee22e5804be2e0bba0f236ce",
+      "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/plan.md": "d6b7e05957908b991f8e19ac5067e04c8b5a3029cdae9e665adbda4f1b8a3e92",
+      "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/research.md": "311352d9e21d76c0438bc16a28b386c632c5ddbdfde9efbef5dbd2ebcb6983aa",
+      "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/data-model.md": "ee91370c6602ec7742a32ef295212ba7b0834b3f7111c557d91e04063cc60a69",
+      "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/contracts/navigation-tool.md": "cf9b35df77ecc8431de31e78da272a48380c41f1793281beb8290aad21b307dd",
+      "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/quickstart.md": "e076ff148304d2802825bd8ecbdcc063b497818300c01c215356e0897e031fee"
+    },
+    "owned_paths": [
+      "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/spec.md",
+      "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/plan.md",
+      "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/research.md",
+      "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/data-model.md",
+      "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/contracts/navigation-tool.md",
+      "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/quickstart.md"
+    ]
+  },
+  "reviewed_artifacts": [
+    "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/spec.md",
+    "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/plan.md",
+    "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/research.md",
+    "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/data-model.md",
+    "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/contracts/navigation-tool.md",
+    "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/quickstart.md"
+  ],
+  "findings": [],
+  "summary": "Plan-only ACCEPT. P-PARTIAL-OPEN-OWNERSHIP-01 from definition review 04 is resolved: the injected runtime owns and settles every resource acquired before successful session return, reports typed cleanup confirmation, and the factory releases its slot only after confirmed settlement. Unconfirmed cleanup quarantines the Repository slot and produces CleanupUnconfirmed/null context with an empty sanitized Worker projection. The factory owns a returned session until context handoff; afterward the context owns it, while the trusted caller retains the separate lease. ID-T04 and quickstart provide controlled checks. The separate T-RUNTIME-SETTINGS-SEAM-01 remains tasks-owned for later complete-definition review; this plan explicitly states fakes cannot qualify real rootUri, tool-state placement or restricted settings. Prior P-PATH-TRUST-01 and T-PATH-LAUNCH-ORDER-01 remain resolved. No 18.1 or 18.3 contract, PATH authority, source-protection or zero-real-launch-before-T023 boundary changed. Deterministic plan validation returned no errors. Current tasks were not reviewed. diff_sha256 is SHA-256 of canonical sorted path-to-artifact-SHA256 JSON encoded as UTF-8 with a terminal newline."
+}

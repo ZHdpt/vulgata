@@ -1,0 +1,63 @@
+{
+  "schema_version": "1.0",
+  "gate": "definition-review",
+  "verdict": "REVISE",
+  "reviewed_commit": "9924357ae85855adcf282fa9d4eab722d84751e2",
+  "reviewed_boundary": {
+    "base_commit": "9924357ae85855adcf282fa9d4eab722d84751e2",
+    "candidate_commit": null,
+    "diff_sha256": "88b2b71a902c15820173a907ba720fbe10dcbdb3174b09846628eacc0374bd35",
+    "artifact_hashes": {
+      "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/spec.md": "b12a0422ab2864d5aeef1026e4085c03c52878dcee22e5804be2e0bba0f236ce",
+      "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/plan.md": "dc511c161b0e7280f9b851a9c64304a80684e782879136c82b2bb496b74be5ee",
+      "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/research.md": "f21ca3b947a38ccd36aa3307e82ad99d740563cf90d11f0295e3bdb349863205",
+      "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/data-model.md": "8ca64bdbdcc2b1ed44f6dcae2ad07c0e4959faac3151547ca602258c73178cf6",
+      "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/contracts/navigation-tool.md": "71300d2d8a5914097004bbacb41d4734d74ac8dc9ce8f707d009fe0abafe9a99",
+      "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/quickstart.md": "d3671ae848c44b0d281aa2230b07dced55deceeee5dc975be977f88a3db72ef5",
+      "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/tasks.md": "1eee183ae2e6bec936ef211618a55dc60a7a46b7a6d7be734d47dc5573fa5845"
+    },
+    "owned_paths": [
+      "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/spec.md",
+      "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/plan.md",
+      "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/research.md",
+      "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/data-model.md",
+      "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/contracts/navigation-tool.md",
+      "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/quickstart.md",
+      "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/tasks.md"
+    ]
+  },
+  "reviewed_artifacts": [
+    "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/spec.md",
+    "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/plan.md",
+    "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/research.md",
+    "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/data-model.md",
+    "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/contracts/navigation-tool.md",
+    "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/quickstart.md",
+    "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/tasks.md"
+  ],
+  "findings": [
+    {
+      "id": "P-PARTIAL-OPEN-OWNERSHIP-01",
+      "severity": "HIGH",
+      "category": "Failure cleanup and ownership",
+      "artifact": "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/contracts/navigation-tool.md",
+      "location": "October Infrastructure construction seam, IPreparedJdtLsRuntime.OpenAsync and lifecycle paragraph; plan.md ID-S04",
+      "affected_requirement": "spec FR-007; plan ID-S04, ID-A01 and ID-T04; Constitution I and IV",
+      "evidence": "IPreparedJdtLsRuntime.OpenAsync returns an IPreparedJdtLsSession only after successful open. If it starts a process or protocol and then throws or is cancelled before returning, PreparedJavaNavigationContextFactory has no handle to those partial resources. The plan nevertheless assigns partial process/protocol/state settlement to the factory, and T010/T011/T018 require the factory to prove it. That cleanup obligation cannot be implemented or honestly tested through the documented callable interface.",
+      "correction_outcome": "Specify ownership across the handoff: the injected runtime owns and settles every process, protocol and disposable state item until it successfully returns a session; after return the context owns and disposes that session. The factory maps failed/cancelled open to sanitized null-context outcomes, releases its session slot and disposes any session it actually received if later validation fails; the trusted caller always disposes its separate lease. Reconcile T010/T011/T018 tests with these observable duties and preserve zero real launches before T023.",
+      "earliest_owner": "plan"
+    },
+    {
+      "id": "T-RUNTIME-SETTINGS-SEAM-01",
+      "severity": "MEDIUM",
+      "category": "Verification routing",
+      "artifact": "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/tasks.md",
+      "location": "T010 versus contracts/navigation-tool.md PreparedJavaNavigationProfile and IPreparedJdtLsRuntime.OpenAsync",
+      "affected_requirement": "plan ID-I05 and ID-T04; spec FR-002 and FR-009",
+      "evidence": "T010 asks a controlled injected runtime/session to verify the JDT rootUri, separate -data/configuration and fixed no-import/no-build/no-restore settings. The accepted runtime OpenAsync receives only the lease and profile, and the profile contains a disposable state root and bounds but no JDT initialization settings. A fake can verify factory handoff and raw-reply mapping, but cannot observe how the eventual real runtime constructs rootUri or JDT settings. As written, these assertions would mirror a fake or require an unaccepted production seam.",
+      "correction_outcome": "Keep T010 RED focused on the observable factory/profile/lease handoff, result mapping and lifecycle. Route real-runtime rootUri, disposable data/configuration and fixed restricted-setting assertions to an observable production-runtime seam and T022–T024 qualification, or first define an accepted settings projection if controlled testing of those values is required. Do not count fake initialization behavior as real JDT qualification.",
+      "earliest_owner": "tasks"
+    }
+  ],
+  "summary": "Complete-definition REVISE. Prior P-PATH-TRUST-01 and T-PATH-LAUNCH-ORDER-01 remain resolved; plan review 06 accepted the new factory as within the existing 18.2 architecture. Current tasks reference the new design IDs and retain PATH-only selection, the closed real-launch boundary until T022/T023, 18.1's public read contract, 18.3's separate shared-lease ownership, and the fixture-first then prepared-Repository sequence. Read-only SpecKit analysis found two new semantic testability and cleanup issues. The feature prerequisite check passed and deterministic plan/task validation returned no errors, but it cannot detect P-PARTIAL-OPEN-OWNERSHIP-01 or T-RUNTIME-SETTINGS-SEAM-01. Real navigation and process protection remain unqualified. diff_sha256 is SHA-256 of canonical sorted path-to-artifact-SHA256 JSON encoded as UTF-8 with a terminal newline."
+}

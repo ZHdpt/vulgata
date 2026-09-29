@@ -32,4 +32,5 @@
 ## Notes
 
 - JDT-LS/Java, the restricted profile and CodeGraph are accepted scope terms, not newly selected mechanisms.
+- The revised user instruction assumes JDT-LS and Java commands on host `PATH`; command visibility is not runtime qualification, and a blocking absence is reported. Prior config-file executable and test-only `.env` requirements are superseded.
 - Story 18.1 is integrated and verified. This correction aligns with its exact public read contract and current-authority semantics; downstream plan/review must be rerun. Story 18.2 owns the shared trusted physical-workspace seam; the plan still defines its exact callable shape and Story 18.3 consumes it after a separately authorized, identifiable, verified checkpoint.
