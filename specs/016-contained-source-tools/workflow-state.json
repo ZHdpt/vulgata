@@ -68,15 +68,15 @@
   "bmad_story_key": "18-1-access-prepared-source-through-contained-read-only-tools",
   "checkpoint": {
     "binding_status": "pending",
-    "checkpoint_id": "bmad-18-1-correction-20260929T060059Z-119bea",
+    "checkpoint_id": "bmad-18-1-converged-20260929T060814Z-d29bd9",
     "commit_sha": null,
-    "stage": "implement"
+    "stage": "converge"
   },
   "convergence": {
-    "attempt": 6,
-    "outcome": "pending",
-    "report_path": "specs/016-contained-source-tools/evidence/convergence-result-08.json",
-    "status": "invalidated"
+    "attempt": 7,
+    "outcome": "converged",
+    "report_path": "specs/016-contained-source-tools/evidence/convergence-result-09.json",
+    "status": "accepted"
   },
   "current_evidence_paths": [
     "docs/bmad/implementation-artifacts/18-1-access-prepared-source-through-contained-read-only-tools.md",
@@ -84,12 +84,13 @@
     "specs/016-contained-source-tools/evidence/definition-review-result-04.json",
     "specs/016-contained-source-tools/evidence/recovery-extension-05.json",
     "specs/016-contained-source-tools/evidence/test-policy-correction-01.json",
-    "specs/016-contained-source-tools/evidence/convergence-result-08.json",
+    "specs/016-contained-source-tools/evidence/convergence-result-09.json",
     "specs/016-contained-source-tools/evidence/t027-postgresql-qualification-01.json",
     "specs/016-contained-source-tools/evidence/verify-test-failure-05.json",
     "specs/016-contained-source-tools/evidence/quality-diagnosis-06.json",
     "specs/016-contained-source-tools/evidence/prepared-source-isolation-correction-01.json",
-    "specs/016-contained-source-tools/evidence/workflow-transition-062-isolation-correction-accept.json"
+    "specs/016-contained-source-tools/evidence/workflow-transition-063-convergence-accept.json",
+    "specs/016-contained-source-tools/evidence/story-lookback-07.json"
   ],
   "definition_author": {
     "escalation_decision_id": null,
@@ -119,10 +120,10 @@
   },
   "lookback": {
     "evidence": {
-      "path": "specs/016-contained-source-tools/evidence/story-lookback-06.json",
-      "sha256": "56ef1b9d7313202487901a875c939628f61ceb2ed7967fee30e3c8bf5812510a"
+      "path": "specs/016-contained-source-tools/evidence/story-lookback-07.json",
+      "sha256": "913dd107e2366e14163453ef02449d52a207047c392c6ce5787722ab4a634c64"
     },
-    "status": "invalidated"
+    "status": "current"
   },
   "preflight": {
     "branch": "(detached-native-handoff)",
@@ -153,15 +154,15 @@
     "pause_at": 10
   },
   "resume": {
-    "evidence_path": "specs/016-contained-source-tools/evidence/prepared-source-isolation-correction-01.json",
-    "reason": "The test-only isolation correction passes policy and PreparedSource 119/119; reconverge before refreshing lookback and quality review.",
-    "stage": "converge"
+    "evidence_path": "specs/016-contained-source-tools/evidence/story-lookback-07.json",
+    "reason": "The isolation correction reconverged and its lookback is current; run a fresh independent quality review before the bounded final verification.",
+    "stage": "quality-review"
   },
   "schema_version": "3.1",
-  "stage": "verify",
+  "stage": "quality-review",
   "transition_head": {
-    "path": "specs/016-contained-source-tools/evidence/workflow-transition-062-isolation-correction-accept.json",
-    "sha256": "6f4f0a9c8111208e0670dfcfde74fc1fe8dea77a09e4c86e1ad10bc8217617bb"
+    "path": "specs/016-contained-source-tools/evidence/workflow-transition-063-convergence-accept.json",
+    "sha256": "1086a3f4c0690b9759b8946fa9619ab3b2b95ebd917d684e2e23a126b43df13b"
   },
-  "updated_at": "2026-09-29T06:00:59.6540115Z"
+  "updated_at": "2026-09-29T06:08:14.5823282Z"
 }
