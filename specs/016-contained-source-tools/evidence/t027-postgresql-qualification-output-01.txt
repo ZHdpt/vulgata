@@ -1,0 +1,7 @@
+Command: pwsh -NoProfile -File eng/test.ps1 -Suite PostgreSql -Filter 'FullyQualifiedName~Vulgata.Tests.RetainedSource.RetainedSourceReadContextTests|FullyQualifiedName~Vulgata.Tests.RetainedSource.RetainedSourceRangeReadTests|FullyQualifiedName~Vulgata.Tests.RetainedSource.RetainedSourceCaptureTests'
+Exit code: 0
+Suite=PostgreSql discovered=2959 selected=63 passed=63 failed=0 skipped=0
+Duration: 1 m 36 s
+TRX SHA-256: 8cec08a66795968766691c0387c90957de74b936c0f0ee66bed5f3795577914c
+Resource result: Docker and PostgreSQL 17 readiness passed; run-owned container removed; run-owned volume removed and verified absent.
+Environment result: no .env or application database credentials loaded.

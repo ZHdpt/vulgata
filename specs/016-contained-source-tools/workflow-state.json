@@ -34,6 +34,13 @@
       "evidence_path": "specs/016-contained-source-tools/evidence/recovery-extension-03.json",
       "scope_sha256": "aa75a9f118e863c446aa112973dbe13f00dc4596509b436edfb6f77c76bda00b",
       "status": "accepted"
+    },
+    {
+      "decided_at": "2026-09-29T05:01:02.5206718Z",
+      "decision_id": "18-1/implementation/1/extension/4",
+      "evidence_path": "specs/016-contained-source-tools/evidence/recovery-extension-04.json",
+      "scope_sha256": "0dcd1f3b114c1f0bf1c1ed771313bbeeed7f9457990f3398dd59ab58d5225da5",
+      "status": "accepted"
     }
   ],
   "artifacts": {
@@ -47,7 +54,7 @@
     },
     "tasks": {
       "path": "specs/016-contained-source-tools/tasks.md",
-      "sha256": "aed0bd21abdd5eaee03d65eff6a7636c990874c8e3c3c1369ee3a61f57069403"
+      "sha256": "6f619b75c759462dc1390fdfeaa165885216d1ad135a18a2de29ea18dfda8f10"
     }
   },
   "bmad_epic_key": "epic-18",
@@ -68,13 +75,14 @@
     "docs/bmad/implementation-artifacts/18-1-access-prepared-source-through-contained-read-only-tools.md",
     "specs/016-contained-source-tools/evidence/plan-review-result-09.json",
     "specs/016-contained-source-tools/evidence/definition-review-result-04.json",
-    "specs/016-contained-source-tools/evidence/recovery-extension-03.json",
+    "specs/016-contained-source-tools/evidence/recovery-extension-04.json",
     "specs/016-contained-source-tools/evidence/verify-test-correction-focused-command-02.json",
-    "specs/016-contained-source-tools/evidence/quality-diagnosis-04.json",
+    "specs/016-contained-source-tools/evidence/quality-diagnosis-05.json",
     "specs/016-contained-source-tools/evidence/verify-test-failure-04.json",
     "specs/016-contained-source-tools/evidence/test-policy-correction-01.json",
     "specs/016-contained-source-tools/evidence/convergence-result-07.json",
-    "specs/016-contained-source-tools/evidence/workflow-transition-052-convergence-t026-reused-pause.json"
+    "specs/016-contained-source-tools/evidence/t027-postgresql-qualification-01.json",
+    "specs/016-contained-source-tools/evidence/workflow-transition-055-t027-qualification-accept.json"
   ],
   "definition_author": {
     "escalation_decision_id": null,
@@ -117,36 +125,36 @@
     "status_sha256": "811e45acb3329b898a1a92b4bc69e9a8b9fb70ef8e97a5beba0dacd2c4ca0a74"
   },
   "recovery": {
-    "action": "pause",
+    "action": "proceed",
     "closing_gate": "verify",
     "diagnosis": {
-      "at_count": 7,
+      "at_count": 8,
       "evidence": {
-        "path": "specs/016-contained-source-tools/evidence/quality-diagnosis-04.json",
-        "sha256": "034fedc22c9dd61614b7747acb2a5cc8eb2576d36eea114359377e235433337a"
+        "path": "specs/016-contained-source-tools/evidence/quality-diagnosis-05.json",
+        "sha256": "26d0a4808339b04d06c9539e648ae3e138935de92b5ce8842f09a213696468c4"
       }
     },
     "earliest_owner": "tests",
     "episode_id": "18-1/implementation/1",
-    "extension_decision_id": "18-1/implementation/1/extension/3",
+    "extension_decision_id": "18-1/implementation/1/extension/4",
     "failed_results": 8,
     "holds": [],
     "last_result": {
       "path": "specs/016-contained-source-tools/evidence/convergence-result-07.json",
       "sha256": "965de0e631421b18d01acbb95c301eefd1c76c4610f896cb4c9db44ea6dbc2db"
     },
-    "pause_at": 8
+    "pause_at": 9
   },
   "resume": {
     "evidence_path": "specs/016-contained-source-tools/evidence/convergence-result-07.json",
-    "reason": "Paused at cumulative result 8. T027 must run the complete 63-test retained-source boundary under the explicit owned PostgreSql suite before reconvergence.",
-    "stage": "implement"
+    "reason": "T027 passed 63/63 under the run-owned PostgreSql suite; mark the task complete and reconverge.",
+    "stage": "converge"
   },
   "schema_version": "3.1",
   "stage": "verify",
   "transition_head": {
-    "path": "specs/016-contained-source-tools/evidence/workflow-transition-052-convergence-t026-reused-pause.json",
-    "sha256": "d8b1f6c32502b0c7cbaa28a822c4d3539e0386a9d2754ecd311e4274854b576d"
+    "path": "specs/016-contained-source-tools/evidence/workflow-transition-055-t027-qualification-accept.json",
+    "sha256": "a4beed30b0415b2f12b3f23e6a3cfd00a794d04a010921a8f0f2470cc6a0ce16"
   },
-  "updated_at": "2026-09-29T04:52:31.0628914Z"
+  "updated_at": "2026-09-29T05:08:26.5606193Z"
 }
