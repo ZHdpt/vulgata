@@ -1,0 +1,13 @@
+Policy command: pwsh -NoProfile -File eng/test-policy.ps1
+Policy exit code: 0
+Policy passed: 283 classified source files; guarded test traits checked.
+
+Focused command: pwsh -NoProfile -File eng/test.ps1 -Filter 'FullyQualifiedName~Vulgata.Tests.PreparedSource'
+Focused exit code: 0
+Suite=SelfContained discovered=2811 selected=119 passed=119 failed=0 skipped=0
+TRX: TestResults/isolation-9850dc7cdf9e4cb680c380291e6d1faf/results.trx
+TRX SHA-256: 1a3f3b62b10798a08bbeee54aac9b5b4661ee319731707dc1094780924d1d860
+
+Diff check: git diff --check -- tests/Vulgata.Tests/PreparedSource
+Diff check exit code: 0
+Change shape: 11 PreparedSource files, 21 insertions; one disabled-parallelization collection definition and one Collection attribute per test class. No test body, assertion, trait, skip, filter, or production edit.

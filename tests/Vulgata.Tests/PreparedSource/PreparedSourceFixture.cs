@@ -5,6 +5,16 @@ using Vulgata.Tests.TestInfrastructure;
 
 namespace Vulgata.Tests.PreparedSource;
 
+internal static class PreparedSourceTestCollection
+{
+    internal const string Name = "Story 18.1 prepared-source filesystem";
+}
+
+[CollectionDefinition(PreparedSourceTestCollection.Name, DisableParallelization = true)]
+public sealed class PreparedSourceTestCollectionDefinition
+{
+}
+
 /// <summary>
 /// In-memory authority control for direct prepared-source tests. It deliberately
 /// contains no filesystem root or persistence access.
@@ -272,6 +282,7 @@ internal sealed class PreparedSourceFixture : IAsyncDisposable
     }
 }
 
+[Collection(PreparedSourceTestCollection.Name)]
 public sealed class PreparedSourceFixtureTests
 {
     [Trait("Suite", "SelfContained")]

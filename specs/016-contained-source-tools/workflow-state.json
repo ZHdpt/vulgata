@@ -41,6 +41,13 @@
       "evidence_path": "specs/016-contained-source-tools/evidence/recovery-extension-04.json",
       "scope_sha256": "0dcd1f3b114c1f0bf1c1ed771313bbeeed7f9457990f3398dd59ab58d5225da5",
       "status": "accepted"
+    },
+    {
+      "decided_at": "2026-09-29T05:48:57.7976299Z",
+      "decision_id": "18-1/implementation/1/extension/5",
+      "evidence_path": "specs/016-contained-source-tools/evidence/recovery-extension-05.json",
+      "scope_sha256": "fa6ecdcb7b206e79c900b8df359b4b90841afd304056dbafa3f5f256ebf30af2",
+      "status": "accepted"
     }
   ],
   "artifacts": {
@@ -61,9 +68,9 @@
   "bmad_story_key": "18-1-access-prepared-source-through-contained-read-only-tools",
   "checkpoint": {
     "binding_status": "pending",
-    "checkpoint_id": "bmad-18-1-verify-pause-20260929T053434Z-c58a1a",
+    "checkpoint_id": "bmad-18-1-correction-20260929T060059Z-119bea",
     "commit_sha": null,
-    "stage": "verify"
+    "stage": "implement"
   },
   "convergence": {
     "attempt": 6,
@@ -75,15 +82,14 @@
     "docs/bmad/implementation-artifacts/18-1-access-prepared-source-through-contained-read-only-tools.md",
     "specs/016-contained-source-tools/evidence/plan-review-result-09.json",
     "specs/016-contained-source-tools/evidence/definition-review-result-04.json",
-    "specs/016-contained-source-tools/evidence/recovery-extension-04.json",
-    "specs/016-contained-source-tools/evidence/quality-diagnosis-05.json",
+    "specs/016-contained-source-tools/evidence/recovery-extension-05.json",
     "specs/016-contained-source-tools/evidence/test-policy-correction-01.json",
     "specs/016-contained-source-tools/evidence/convergence-result-08.json",
     "specs/016-contained-source-tools/evidence/t027-postgresql-qualification-01.json",
-    "specs/016-contained-source-tools/evidence/quality-review-result-06.json",
-    "specs/016-contained-source-tools/evidence/e2e-result-04.json",
     "specs/016-contained-source-tools/evidence/verify-test-failure-05.json",
-    "specs/016-contained-source-tools/evidence/workflow-transition-059-verify-self-contained-failure-pause.json"
+    "specs/016-contained-source-tools/evidence/quality-diagnosis-06.json",
+    "specs/016-contained-source-tools/evidence/prepared-source-isolation-correction-01.json",
+    "specs/016-contained-source-tools/evidence/workflow-transition-062-isolation-correction-accept.json"
   ],
   "definition_author": {
     "escalation_decision_id": null,
@@ -126,36 +132,36 @@
     "status_sha256": "811e45acb3329b898a1a92b4bc69e9a8b9fb70ef8e97a5beba0dacd2c4ca0a74"
   },
   "recovery": {
-    "action": "pause",
+    "action": "proceed",
     "closing_gate": "verify",
     "diagnosis": {
-      "at_count": 8,
+      "at_count": 9,
       "evidence": {
-        "path": "specs/016-contained-source-tools/evidence/quality-diagnosis-05.json",
-        "sha256": "26d0a4808339b04d06c9539e648ae3e138935de92b5ce8842f09a213696468c4"
+        "path": "specs/016-contained-source-tools/evidence/quality-diagnosis-06.json",
+        "sha256": "161c6c9830fd6c54151a200b158c4555671033dae3ff1c5ec288fbb502802cfb"
       }
     },
     "earliest_owner": "tests",
     "episode_id": "18-1/implementation/1",
-    "extension_decision_id": "18-1/implementation/1/extension/4",
+    "extension_decision_id": "18-1/implementation/1/extension/5",
     "failed_results": 9,
     "holds": [],
     "last_result": {
       "path": "specs/016-contained-source-tools/evidence/verify-test-failure-05.json",
       "sha256": "d1995fa555b437b2403d78a413eab00a8d154954513d03ec50086e74f96c7f76"
     },
-    "pause_at": 9
+    "pause_at": 10
   },
   "resume": {
-    "evidence_path": "specs/016-contained-source-tools/evidence/verify-test-failure-05.json",
-    "reason": "Paused at result 9: the configured SelfContained suite failed 88 Story 18.1 PreparedSource cases with RootUnavailable. A new finite extension is required before correction or rerun.",
-    "stage": "verify"
+    "evidence_path": "specs/016-contained-source-tools/evidence/prepared-source-isolation-correction-01.json",
+    "reason": "The test-only isolation correction passes policy and PreparedSource 119/119; reconverge before refreshing lookback and quality review.",
+    "stage": "converge"
   },
   "schema_version": "3.1",
   "stage": "verify",
   "transition_head": {
-    "path": "specs/016-contained-source-tools/evidence/workflow-transition-059-verify-self-contained-failure-pause.json",
-    "sha256": "91c7a433afb7c481843bff2bd9cf7c83c655409a42edaa895b98f320b25de19d"
+    "path": "specs/016-contained-source-tools/evidence/workflow-transition-062-isolation-correction-accept.json",
+    "sha256": "6f4f0a9c8111208e0670dfcfde74fc1fe8dea77a09e4c86e1ad10bc8217617bb"
   },
-  "updated_at": "2026-09-29T05:34:03.6779373Z"
+  "updated_at": "2026-09-29T06:00:59.6540115Z"
 }

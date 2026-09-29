@@ -7,6 +7,7 @@ using Vulgata.Tests.TestInfrastructure;
 
 namespace Vulgata.Tests.PreparedSource;
 
+[Collection(PreparedSourceTestCollection.Name)]
 public sealed class PreparedSourceContainmentTests
 {
     [Trait("Suite", "SelfContained")]

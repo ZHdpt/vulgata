@@ -1,0 +1,26 @@
+{
+  "kind": "human-decision-request",
+  "stage": "verify",
+  "decision_id": "18-1/implementation/1/extension/5",
+  "status": "requested",
+  "episode_id": "18-1/implementation/1",
+  "failed_results": 9,
+  "current_pause_at": 9,
+  "proposed_pause_at": 10,
+  "scope_sha256": "fa6ecdcb7b206e79c900b8df359b4b90841afd304056dbafa3f5f256ebf30af2",
+  "scope_material": "18-1/implementation/1/extension/5|18-1/implementation/1|10|verify-test-failure-05|capture-native-root-open-status|evidence-supported-isolation-or-implementation-correction|focused-and-configured-selfcontained|one-negative-result",
+  "transition_head": {
+    "path": "specs/016-contained-source-tools/evidence/workflow-transition-059-verify-self-contained-failure-pause.json",
+    "sha256": "91c7a433afb7c481843bff2bd9cf7c83c655409a42edaa895b98f320b25de19d"
+  },
+  "failure_evidence": {
+    "path": "specs/016-contained-source-tools/evidence/verify-test-failure-05.json",
+    "sha256": "d1995fa555b437b2403d78a413eab00a8d154954513d03ec50086e74f96c7f76",
+    "summary": "The configured SelfContained suite failed 88 Story 18.1 PreparedSource cases because real-root context issuance returned RootUnavailable; the same focused boundary previously passed 119/119."
+  },
+  "proposed_changed_approach": "Capture the exact failing Windows root-open step/status under a controlled reproduction, distinguish full-suite parallel/resource interference from an implementation defect, apply only the evidence-supported isolation or implementation correction, then rerun the focused PreparedSource boundary and exact configured SelfContained suite once.",
+  "recommendation": "Approve a finite cumulative extension from 9 to 10 for diagnosis and one corrected verification attempt.",
+  "main_consequence": "Any further substantive negative result at count 10 pauses again without another repair.",
+  "material_uncertainty": "PreparedSource passes 119/119 alone but every test requiring a usable real root failed in the complete suite. The implementation currently discards the native failure status, so concurrency/resource interference is likely but not proven.",
+  "requested_at": "2026-09-29T05:48:57.7976299Z"
+}
