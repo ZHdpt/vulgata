@@ -1,0 +1,6 @@
+{
+  "kind": "analysis",
+  "stage": "implement",
+  "observed_at": "2026-09-29T09:49:51.768489Z",
+  "summary": "Production behavior change began at accepted T004 after T003 expected RED and scoped implementation approval. Native focused minimal GREEN passed 1/1; restricted launcher RootUnavailable was environment denial. Later source/tool authority rechecks and JDT qualification remain open."
+}

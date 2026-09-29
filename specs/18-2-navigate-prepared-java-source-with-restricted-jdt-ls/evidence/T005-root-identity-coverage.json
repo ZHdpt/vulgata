@@ -1,0 +1,18 @@
+{
+  "kind": "test-only-coverage",
+  "stage": "implement",
+  "task_id": "T005",
+  "observed_at": "2026-09-29T10:00:56.253797Z",
+  "test_path": "tests/Vulgata.Tests/PreparedSource/PreparedToolWorkspaceIssuerTests.cs",
+  "test_sha256": "5069d059dc92368f1cf80a70985b3efaacedcfcb3e24a680f2b865283719731a",
+  "command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter FullyQualifiedName~CheckCurrentAsync_WhenPreparedRootIsReplaced_ClosesOriginalRootLease",
+  "launcher": "approved native launcher",
+  "result": "passed",
+  "selected": 1,
+  "passed": 1,
+  "failed": 0,
+  "skipped": 0,
+  "trx_path": "TestResults/isolation-75caf62df6554595bd2d00e5c913c54d/results.trx",
+  "trx_sha256": "97a4eeafd008a0c6b50eb702f532c5b024f3aa97d69c6fdfdcb61d756ad69c51",
+  "coverage_reason": "Root identity replacement is an accepted public CheckCurrentAsync risk; T006 already implemented observed-root comparison, so passing coverage is truthful and no expected RED is fabricated."
+}

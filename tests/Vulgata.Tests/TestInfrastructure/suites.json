@@ -317,6 +317,9 @@
   "AnalysisRuntime/PreparedScanRealQualificationTests.cs": {
     "suite": "LocalTools"
   },
+  "AnalysisRuntime/PreparedJavaNavigationFixture.cs": {
+    "suite": "SelfContained"
+  },
   "AnalysisRuntime/RecordingProcessLauncherDouble.cs": {
     "suite": "SelfContained"
   },
@@ -851,6 +854,9 @@
     "suite": "SelfContained"
   },
   "PreparedSource/PreparedSourceToolFunctionTests.cs": {
+    "suite": "SelfContained"
+  },
+  "PreparedSource/PreparedToolWorkspaceIssuerTests.cs": {
     "suite": "SelfContained"
   },
   "PostgreSqlHeavyCollection.cs": {

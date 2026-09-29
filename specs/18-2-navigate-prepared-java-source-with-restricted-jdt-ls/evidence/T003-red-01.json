@@ -1,0 +1,14 @@
+{
+  "kind": "behavioral-red",
+  "stage": "implement",
+  "task_id": "T003",
+  "observed_at": "2026-09-29T09:43:28.389137Z",
+  "command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter FullyQualifiedName~PreparedToolWorkspaceIssuerTests",
+  "result": "expected RED: build reached six CS0246 missing accepted PreparedToolWorkspace issuer contract symbols; no test assertion executed",
+  "test_file": "tests/Vulgata.Tests/PreparedSource/PreparedToolWorkspaceIssuerTests.cs",
+  "test_sha256": "b7a6d29fb71fadfa764913b50975d45bc5b3638c0c6f32ae2c16a0505493d6d9",
+  "build_log": "TestResults/isolation-8e591f6dae2e42c6a0a45611f6e055a2/build.log",
+  "build_log_sha256": "0db950228b1586181b21e8dda8bc224d7028b3077cc9a146b001ee14ef5cc740",
+  "environment": "NuGet NU1900 service-index warnings did not stop restore/build; terminal cause was six missing-symbol compile errors, not sandbox denial.",
+  "next": "T004 minimal GREEN for accepted public seam; root identity observable in later T005 through held-root replacement and CheckCurrentAsync status."
+}
