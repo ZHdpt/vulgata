@@ -46,9 +46,9 @@
   },
   "convergence": {
     "attempt": 3,
-    "outcome": "converged",
+    "outcome": "pending",
     "report_path": "specs/016-contained-source-tools/evidence/convergence-result-04.json",
-    "status": "accepted"
+    "status": "invalidated"
   },
   "current_evidence_paths": [
     "docs/bmad/implementation-artifacts/18-1-access-prepared-source-through-contained-read-only-tools.md",
@@ -57,20 +57,17 @@
     "specs/016-contained-source-tools/evidence/implementation-approval-02.json",
     "specs/016-contained-source-tools/evidence/recovery-extension-01.json",
     "specs/016-contained-source-tools/evidence/quality-diagnosis-02.json",
-    "specs/016-contained-source-tools/evidence/convergence-result-04.json",
-    "specs/016-contained-source-tools/evidence/story-lookback-03.json",
-    "specs/016-contained-source-tools/evidence/quality-review-result-03.json",
-    "specs/016-contained-source-tools/evidence/e2e-result-01.json",
-    "specs/016-contained-source-tools/evidence/verify-full-test-blocker-01.json",
-    "specs/016-contained-source-tools/evidence/workflow-transition-033-verify-blocked.json"
+    "specs/016-contained-source-tools/evidence/verify-infrastructure-resolution-01.json",
+    "specs/016-contained-source-tools/evidence/verify-test-failure-02.json",
+    "specs/016-contained-source-tools/evidence/workflow-transition-035-verify-test-failure.json"
   ],
   "definition_author": {
     "escalation_decision_id": null,
     "profile": "definition-author"
   },
   "e2e": {
-    "decision_path": "specs/016-contained-source-tools/evidence/e2e-result-01.json",
-    "result": "skipped-covered"
+    "decision_path": null,
+    "result": "pending"
   },
   "feature_directory": "specs/016-contained-source-tools",
   "gates": {
@@ -86,7 +83,7 @@
     },
     "quality-review": {
       "attempt": 3,
-      "status": "accepted",
+      "status": "invalidated",
       "verdict_path": "specs/016-contained-source-tools/evidence/quality-review-result-03.json"
     }
   },
@@ -95,7 +92,7 @@
       "path": "specs/016-contained-source-tools/evidence/story-lookback-03.json",
       "sha256": "e3c7f4ebc74177b93c6ecc77ae808da4d40cc0f06d933a972af58831e54ade84"
     },
-    "status": "current"
+    "status": "invalidated"
   },
   "preflight": {
     "branch": "(detached-native-handoff)",
@@ -105,7 +102,7 @@
     "status_sha256": "811e45acb3329b898a1a92b4bc69e9a8b9fb70ef8e97a5beba0dacd2c4ca0a74"
   },
   "recovery": {
-    "action": "blocked",
+    "action": "correct",
     "closing_gate": "verify",
     "diagnosis": {
       "at_count": 4,
@@ -114,29 +111,27 @@
         "sha256": "683fc4117bfd24c1da1f2b8c832c0f3c8ec4d0f9a204c2860f21febb1319b2d0"
       }
     },
-    "earliest_owner": "implement",
+    "earliest_owner": "tests",
     "episode_id": "18-1/implementation/1",
     "extension_decision_id": "18-1/implementation/1/extension/1",
-    "failed_results": 4,
-    "holds": [
-      "blocked"
-    ],
+    "failed_results": 5,
+    "holds": [],
     "last_result": {
-      "path": "specs/016-contained-source-tools/evidence/quality-review-result-02.json",
-      "sha256": "5d6e74e6dd4260a9dbd77c7b6ee7c164b084a5133c9ea94c6deb9a85203ee4ee"
+      "path": "specs/016-contained-source-tools/evidence/verify-test-failure-02.json",
+      "sha256": "e34b8db80e6afefff35010057c07589708e462245527539534bb97e96e678547"
     },
     "pause_at": 6
   },
   "resume": {
-    "evidence_path": "specs/016-contained-source-tools/evidence/verify-full-test-blocker-01.json",
-    "reason": "Configured final verification is blocked until owned PostgreSQL 17 test connections and an owned different-drive Windows fixture path are available.",
-    "stage": "verify"
+    "evidence_path": "specs/016-contained-source-tools/evidence/verify-test-failure-02.json",
+    "reason": "Correct the isolated PostgreSQL migration-history test fixture, then reconverge and repeat invalidated downstream gates.",
+    "stage": "implement"
   },
   "schema_version": "3.1",
-  "stage": "verify",
+  "stage": "implement",
   "transition_head": {
-    "path": "specs/016-contained-source-tools/evidence/workflow-transition-033-verify-blocked.json",
-    "sha256": "7bd885df0fdec8667161b30cd69c4774d90d07c4eda40cf8b25d2d09af9d46f6"
+    "path": "specs/016-contained-source-tools/evidence/workflow-transition-035-verify-test-failure.json",
+    "sha256": "c7bd546bd21ea3cab9f14792c3b7221c2c31c65525133b5a8a6d43509345e69a"
   },
-  "updated_at": "2026-09-28T12:04:50.8410777Z"
+  "updated_at": "2026-09-29T01:33:12.5079989Z"
 }

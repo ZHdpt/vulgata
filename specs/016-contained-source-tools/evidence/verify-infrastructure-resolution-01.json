@@ -1,0 +1,37 @@
+{
+  "observed_after": {
+    "path": "specs/016-contained-source-tools/evidence/workflow-transition-033-verify-blocked.json",
+    "sha256": "7bd885df0fdec8667161b30cd69c4774d90d07c4eda40cf8b25d2d09af9d46f6"
+  },
+  "status": "resolved",
+  "summary": "The previously missing verification infrastructure is resolved by explicit destructive-test authorization and a passing 3/3 PostgreSQL boundary check.",
+  "raw_result": {
+    "kind": "analysis",
+    "stage": "verify",
+    "status": "resolved",
+    "source_commit": "977e1f0c7749690873dedbfff17ac4ccf8a16ef9",
+    "observed_at": "2026-09-29T01:19:17.3575421Z",
+    "authorization": {
+      "source": "current user",
+      "scope": "The user confirmed that database vulgata at 127.0.0.1:5432 is disposable, contains no data to preserve, and authorized deletion/recreation plus creation/deletion of additional test databases."
+    },
+    "environment": {
+      "postgres_host": "127.0.0.1",
+      "postgres_port": 5432,
+      "direct_database": "vulgata",
+      "administrator_database": "postgres",
+      "temp_volume": "G:\\",
+      "secrets_recorded": false
+    },
+    "command": "dotnet test tests/Vulgata.Tests/Vulgata.Tests.csproj --no-build --no-restore --filter \"FullyQualifiedName=Vulgata.Tests.RetainedSource.RetainedSourceReadContextTests.ReadContext_RootListingPagesSafeAndUnsupportedMetadataWithinOneCumulativeBudget|FullyQualifiedName=Vulgata.Tests.KnowledgeStorePostgreSqlConcurrencyTests.CommitAsync_ReplayedStableOperation_VerifiesCommittedVersionWithoutDuplicateRows|FullyQualifiedName=Vulgata.Tests.PreparedScanning.PreparedScanInitiationPostgreSqlTests.CreateOrReplayAsync_OneSaveAndCommit_ObserverSeesCompleteTupleOnlyAfterCommitAsync\" --logger \"console;verbosity=minimal\"",
+    "result": {
+      "exit_code": 0,
+      "passed": 3,
+      "failed": 0,
+      "skipped": 0,
+      "total": 3,
+      "duration": "00:00:07"
+    },
+    "summary": "The previously missing verification infrastructure is resolved. Under explicit destructive-test authorization, all three PostgreSQL boundaries completed successfully: Story 13.1 retained-source isolated database lifecycle, the disposable direct vulgata database reset, and prepared-scan isolated database lifecycle. The alternate-volume G: temp boundary was active, no credentials were persisted in evidence, and final verification may resume."
+  }
+}

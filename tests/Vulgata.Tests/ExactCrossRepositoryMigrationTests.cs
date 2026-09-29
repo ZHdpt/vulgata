@@ -406,7 +406,11 @@ public sealed class ExactCrossRepositoryMigrationTests
 
             DbContextOptions<VulgataDbContext> options =
                 new DbContextOptionsBuilder<VulgataDbContext>()
-                    .UseNpgsql(targetBuilder.ConnectionString)
+                    .UseNpgsql(
+                        targetBuilder.ConnectionString,
+                        npgsql => npgsql.MigrationsHistoryTable(
+                            "__EFMigrationsHistory",
+                            "public"))
                     .Options;
             await using (var db = new VulgataDbContext(options))
             {
