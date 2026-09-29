@@ -75,27 +75,27 @@
   "bmad_story_key": "18-1-access-prepared-source-through-contained-read-only-tools",
   "checkpoint": {
     "binding_status": "pending",
-    "checkpoint_id": "bmad-18-1-correction-20260929T070309Z-4a6948",
+    "checkpoint_id": "bmad-18-1-converged-20260929T071121Z-2fea5e",
     "commit_sha": null,
-    "stage": "implement"
+    "stage": "converge"
   },
   "convergence": {
-    "attempt": 7,
-    "outcome": "pending",
-    "report_path": "specs/016-contained-source-tools/evidence/convergence-result-09.json",
-    "status": "invalidated"
+    "attempt": 8,
+    "outcome": "converged",
+    "report_path": "specs/016-contained-source-tools/evidence/convergence-result-10.json",
+    "status": "accepted"
   },
   "current_evidence_paths": [
     "docs/bmad/implementation-artifacts/18-1-access-prepared-source-through-contained-read-only-tools.md",
     "specs/016-contained-source-tools/evidence/plan-review-result-09.json",
     "specs/016-contained-source-tools/evidence/definition-review-result-04.json",
     "specs/016-contained-source-tools/evidence/recovery-extension-06.json",
-    "specs/016-contained-source-tools/evidence/verify-test-failure-06.json",
     "specs/016-contained-source-tools/evidence/quality-diagnosis-07.json",
     "specs/016-contained-source-tools/evidence/rootunavailable-execution-diagnosis-01.json",
-    "specs/016-contained-source-tools/evidence/outside-sandbox-selfcontained-command-01.json",
     "specs/016-contained-source-tools/evidence/execution-boundary-correction-01.json",
-    "specs/016-contained-source-tools/evidence/workflow-transition-069-execution-boundary-correction-accept.json",
+    "specs/016-contained-source-tools/evidence/convergence-result-10.json",
+    "specs/016-contained-source-tools/evidence/story-lookback-08.json",
+    "specs/016-contained-source-tools/evidence/workflow-transition-070-convergence-accept.json",
     "docs/agents/testing.md",
     "docs/project-lessons.md"
   ],
@@ -127,10 +127,10 @@
   },
   "lookback": {
     "evidence": {
-      "path": "specs/016-contained-source-tools/evidence/story-lookback-07.json",
-      "sha256": "913dd107e2366e14163453ef02449d52a207047c392c6ce5787722ab4a634c64"
+      "path": "specs/016-contained-source-tools/evidence/story-lookback-08.json",
+      "sha256": "b996a0dc512c1c80ee03e793d03bf6d82eef0145556f2f84d9640154208dadbd"
     },
-    "status": "invalidated"
+    "status": "current"
   },
   "preflight": {
     "branch": "(detached-native-handoff)",
@@ -161,15 +161,15 @@
     "pause_at": 11
   },
   "resume": {
-    "evidence_path": "specs/016-contained-source-tools/evidence/execution-boundary-correction-01.json",
-    "reason": "Outside-sandbox execution is proven and the focused PreparedSource boundary passes 119/119; reconverge with the updated testing guidance and project lesson.",
-    "stage": "converge"
+    "evidence_path": "specs/016-contained-source-tools/evidence/story-lookback-08.json",
+    "reason": "The execution-boundary correction reconverged and its refreshed lookback is current; run a fresh independent quality review before final verification.",
+    "stage": "quality-review"
   },
   "schema_version": "3.1",
-  "stage": "verify",
+  "stage": "quality-review",
   "transition_head": {
-    "path": "specs/016-contained-source-tools/evidence/workflow-transition-069-execution-boundary-correction-accept.json",
-    "sha256": "02f55e4a8004eecc6f14d3c609e14809baf45587ae20a62690752450db973528"
+    "path": "specs/016-contained-source-tools/evidence/workflow-transition-070-convergence-accept.json",
+    "sha256": "98e33d773557abe6c2837db9309a435777c005f089e328e714ad36f6bcafb75b"
   },
-  "updated_at": "2026-09-29T07:03:09.9285669Z"
+  "updated_at": "2026-09-29T07:11:21.4059072Z"
 }
