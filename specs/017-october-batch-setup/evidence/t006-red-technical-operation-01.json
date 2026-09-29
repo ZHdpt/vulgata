@@ -1,0 +1,18 @@
+{
+  "kind": "technical-operation",
+  "stage": "implement",
+  "task": "T006",
+  "operation_id": "18-4/t006-focused-red/1",
+  "invocations": 3,
+  "outcome": "infrastructure-limited",
+  "summary": "All three bounded invocations stopped during compilation with CS2012 access denial while creating build output. No test executed, no TRX was produced, and no behavioral RED or product failure is claimed.",
+  "attempts": [
+    {"invocation":1,"command":"eng/test.ps1 focused OctoberActivationApiTests","result":"CS2012 denied writing tests/Vulgata.Tests/obj/Debug/net10.0/Vulgata.Tests.dll","log":"TestResults/isolation-ba487b21ba114e1297ab08bdf1477af0/build.log"},
+    {"invocation":2,"command":"eng/test.ps1 focused OctoberActivationApiTests","result":"same CS2012 test-project output denial","log":"TestResults/isolation-97899c05e1f94293811e4a2981814d90/build.log"},
+    {"invocation":3,"command":"dotnet test with unique ArtifactsPath artifacts/t184-t006-red","result":"CS2012 denied writing isolated Vulgata.Core.dll; no TRX","results_directory":"TestResults/t184-t006-red"}
+  ],
+  "successful_checks": ["dotnet build Vulgata.Web: 0 errors", "eng/test.ps1 -PolicyOnly: passed"],
+  "preserved_work": ["T007 declaration-only fail-closed Web/certificate scaffold", "T006 SelfContained test source and inventory classification"],
+  "recovery_effect": "none; technical failure does not increment failed_results",
+  "next_action": "Retry only after the local compiler/build output denial is resolved or an available build slot is established."
+}

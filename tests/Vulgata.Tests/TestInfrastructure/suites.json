@@ -158,6 +158,9 @@
   "October/OctoberPersistenceModelTests.cs": {
     "suite": "SelfContained"
   },
+  "October/OctoberActivationApiTests.cs": {
+    "suite": "SelfContained"
+  },
   "October/OctoberSetupPolicyTests.cs": {
     "suite": "SelfContained"
   },

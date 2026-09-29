@@ -184,6 +184,13 @@ static bool IsApiRequest(HttpRequest request) =>
 
 public static class VulgataWebComposition
 {
+    public static FrameworkCatalog ConfigureServices(
+        WebApplicationBuilder builder,
+        OctoberWebStartupSelection selection)
+    {
+        throw new NotImplementedException();
+    }
+
     public static FrameworkCatalog ConfigureServices(WebApplicationBuilder builder)
     {
         ArgumentNullException.ThrowIfNull(builder);
