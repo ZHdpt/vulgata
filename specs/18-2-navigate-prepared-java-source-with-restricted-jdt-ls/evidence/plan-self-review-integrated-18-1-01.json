@@ -1,0 +1,25 @@
+{
+  "id": "18-2/plan/integrated-18-1-correction-01",
+  "kind": "self-review",
+  "stage": "plan",
+  "outcome": "passed",
+  "observed_at": "2026-09-29T09:15:38.221411Z",
+  "input_hashes": {
+    "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/plan.md": "4ee4ca2ee63776a5c800c52b2ef8ca04360b6187272a4d0fe78b97555422b1b1"
+  },
+  "owned_paths": [
+    "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/plan.md"
+  ],
+  "summary": "Retained architecture plan author reconciled integrated 18.1 contracts and Parallel Development shared-seam ownership; architecture classification and decisions preserved/extended, source protection and qualification risks explicit. Deterministic implementation-design validation returned no errors; git diff --check passed.",
+  "raw_result": {
+    "plan_file": "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/plan.md",
+    "supporting_artifacts": [
+      "research.md",
+      "data-model.md",
+      "contracts/navigation-tool.md",
+      "quickstart.md"
+    ],
+    "coordination_thread": "01a0e5e1-ee94-7362-9b1f-2c61e2c5d536",
+    "coordination_decision": "Story 18.2 owns shared trusted-workspace seam; Story 18.3 consumes only after separately authorized identifiable verified checkpoint."
+  }
+}

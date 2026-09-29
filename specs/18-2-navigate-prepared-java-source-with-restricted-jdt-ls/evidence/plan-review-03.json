@@ -1,0 +1,37 @@
+{
+  "schema_version": "1.0",
+  "gate": "plan-review",
+  "verdict": "ACCEPT",
+  "reviewed_commit": "2ba504c7cad5f340966bdc2842625f0619fecca0",
+  "reviewed_boundary": {
+    "base_commit": "2ba504c7cad5f340966bdc2842625f0619fecca0",
+    "candidate_commit": null,
+    "diff_sha256": "5bfb9df1ee09e1a4d40f9cf919ead531ef8c79d08460bb304e0d537d71f6446b",
+    "artifact_hashes": {
+      "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/spec.md": "455bd4ddee978226ba20e5422710e8c42677cab9316851d0532614922d23c9ba",
+      "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/plan.md": "4ee4ca2ee63776a5c800c52b2ef8ca04360b6187272a4d0fe78b97555422b1b1",
+      "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/research.md": "908458367ed34ed24746d8cd5b1dde42137b4d0f9c921d61a208a72e81053406",
+      "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/data-model.md": "7083612e63094f1796e31a7349929f2f5bb2f0cef14d0219a1bed6084d501277",
+      "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/contracts/navigation-tool.md": "490debecfeafb69ca78e1cdde7519005e998ddd0d02539df5dcd9b2244495df3",
+      "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/quickstart.md": "8caf149ee85d3a66b5ceab3ade581b17ec10d2de398d9ccbffcc232ede76e61e"
+    },
+    "owned_paths": [
+      "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/spec.md",
+      "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/plan.md",
+      "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/research.md",
+      "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/data-model.md",
+      "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/contracts/navigation-tool.md",
+      "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/quickstart.md"
+    ]
+  },
+  "reviewed_artifacts": [
+    "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/spec.md",
+    "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/plan.md",
+    "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/research.md",
+    "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/data-model.md",
+    "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/contracts/navigation-tool.md",
+    "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/quickstart.md"
+  ],
+  "findings": [],
+  "summary": "Plan-only review ACCEPT. Ordered prior raw verdicts 01 and 02 had no findings; their boundaries were invalidated by integrated Story 18.1 and the shared-workspace ownership correction. Current raw artifacts reconcile 18.1's closed read context and exact approval tuple without altering its list/read/search contract. They define a separate 18.2-owned trusted workspace lease with current source and tool-purpose checks, a JDT-independent checkpoint for later authorized 18.3 consumption, and a bounded Worker navigation interface. Config-file executable selection and real-test-only local .env JDT_LS_BIN are explicit. The architecture classification and design IDs pass deterministic plan validation with no errors. Real restricted settings, source no-write behavior, subprocess containment and useful navigation remain explicit fail-closed qualification holds, not claimed results. No tasks or implementation were reviewed. diff_sha256 is SHA-256 of canonical sorted path-to-artifact-SHA256 JSON encoded as UTF-8 with a terminal newline."
+}

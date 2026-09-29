@@ -1,0 +1,14 @@
+{
+  "id": "18-2/specify/shared-owner-01",
+  "kind": "self-review",
+  "stage": "specify",
+  "outcome": "passed",
+  "observed_at": "2026-09-29T09:13:29.250109Z",
+  "input_hashes": {
+    "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/spec.md": "455bd4ddee978226ba20e5422710e8c42677cab9316851d0532614922d23c9ba"
+  },
+  "owned_paths": [
+    "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/spec.md"
+  ],
+  "summary": "Retained definition author reconciled the Parallel Development ownership decision: Story 18.2 owns the shared trusted physical-workspace seam and Story 18.3 consumes after separately authorized verified checkpoint; exact callable shape remains plan design. No 18.1 contract change; git diff --check passed."
+}

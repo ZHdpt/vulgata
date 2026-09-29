@@ -71,6 +71,8 @@
 /specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/evidence/transition-0001.json text eol=lf
 /specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/evidence/transition-0002.json text eol=lf
 /specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/evidence/transition-0003.json text eol=lf
+/specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/tasks.md text eol=lf
+/specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/evidence/*.json text eol=lf
 
 # Preserve raw-byte pre-images, including their original whitespace and line endings.
 /docs/bmad/history/pre-generic-adoption-2026-09-11/files/** -text -whitespace

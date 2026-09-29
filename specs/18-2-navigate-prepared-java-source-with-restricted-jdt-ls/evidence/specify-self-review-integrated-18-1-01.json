@@ -1,0 +1,19 @@
+{
+  "id": "18-2/specify/integrated-18-1-correction-01",
+  "kind": "self-review",
+  "stage": "specify",
+  "outcome": "passed",
+  "observed_at": "2026-09-29T09:05:01.740146Z",
+  "input_hashes": {
+    "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/spec.md": "2f507def2649dfb3d94809aaccabc01c0f59fe35fea620336f17a691fecb69cf"
+  },
+  "owned_paths": [
+    "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/spec.md"
+  ],
+  "summary": "Retained definition author reconciled integrated Story 18.1 public read context and live approval semantics, preserved restricted JDT-LS source protection, and recorded shared physical-workspace ownership as unresolved for plan coordination. No placeholders or stale 18.1 dependency wording; git diff --check passed.",
+  "raw_result": {
+    "spec_file": "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/spec.md",
+    "checklist": "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/checklists/requirements.md",
+    "shared_dependency": "Physical-workspace seam owner and callable shape require Parallel Development coordination with Story 18.3."
+  }
+}

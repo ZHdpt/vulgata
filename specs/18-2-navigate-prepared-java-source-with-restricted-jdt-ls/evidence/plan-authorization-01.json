@@ -1,0 +1,33 @@
+{
+  "kind": "delegated-approval",
+  "stage": "plan-review",
+  "decision_id": "18-2/plan-authorization/01",
+  "status": "accepted",
+  "scope_sha256": "4a4bd83fbfc065f5c3e2fcd38da8294e5bd7006fb25377bf7382691fe6bb3c0c",
+  "story_key": "18-2-navigate-prepared-java-source-with-restricted-jdt-ls",
+  "delegate_id": "01a0e708-c489-7871-9f73-31413f20bf2c",
+  "delegation": {
+    "path": "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/evidence/user-delegation-01.json",
+    "sha256": "7ec0729f79c94c39612eb35e04524b0c3dce1e933305a3a6f6494818786d8cfa"
+  },
+  "response_source": "Codex chat 01a0e708-c489-7871-9f73-31413f20bf2c turn 01a0ec77-a985-7672-9f16-82be55bc15f1 final message msg_0e55faeae43f1fb3016abb8368ea008196852c7a8193335f09",
+  "response_text": "Approve — 18-2/plan-authorization/01, planned-change gate only. I verified the user’s explicit removal of the plan-only restriction, the current independent ACCEPT, and all six artifact hashes against review 03. Approved boundary: Base: 2ba504c7cad5f340966bdc2842625f0619fecca0 Manifest: 5bfb9df1ee09e1a4d40f9cf919ead531ef8c79d08460bb304e0d537d71f6446b Raw review SHA-256: 4ef432b5dbdc2b3085f31ab016bccdb64216d5e52563d2f798fec12f9e409f0c The bounded navigation tools and separate trusted workspace lease fit October scope while preserving 18.1’s public read contract. Real navigation, source protection and subprocess containment remain unproven and required; this approval does not waive them or authorize a broader isolation redesign. This permits task generation, followed by independent definition review and separate implementation approval. It grants no runtime permissions or Story 18.3 integration authority. The runner remains marked active, so I have not sent an interrupting message. Its root must record this response and validate the unchanged boundary before advancing.",
+  "review": {
+    "path": "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/evidence/plan-review-result-03.json",
+    "sha256": "0e8b24efd16c4b19b1c3a4a0bbea2c66e600f3862b2ed584bf522197059038c7"
+  },
+  "summary": "Delegate approved only planned-change authorization for Story 18.2 accepted plan review 03 and unchanged October scope; tasks may be generated, with separate definition/implementation gates and no runtime or 18.3 integration authority.",
+  "trigger": "Adds material Worker definition/reference navigation tools and a shared trusted tool-workspace authority under AGENTS.md.",
+  "proposed_approach": "Separate purpose-bound trusted workspace lease and restricted offline JDT-LS tool; preserve integrated Story 18.1 public read contract.",
+  "effects": [
+    "Trusted Infrastructure adapters gain live-authorized physical-root lease; models see only bounded relative navigation.",
+    "Story 18.3 consumes shared seam only after verified checkpoint and separately authorized integration."
+  ],
+  "implementation_intent": "Generate tasks, obtain independent complete-definition review and separate implementation approval before production work.",
+  "affected_material": [
+    "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/plan.md",
+    "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/contracts/navigation-tool.md",
+    "docs/bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md"
+  ],
+  "decided_at": "2026-09-29T09:24:03.657433Z"
+}
