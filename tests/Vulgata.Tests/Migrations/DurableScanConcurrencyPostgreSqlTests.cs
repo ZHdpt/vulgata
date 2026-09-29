@@ -17,6 +17,7 @@ namespace Vulgata.Tests.Migrations;
 /// lease, and atomic-commit contracts also hold on the production provider.
 /// No RED is expected for this qualification-only task.
 /// </summary>
+[Collection(PostgreSqlHeavyCollection.Name)]
 public sealed class DurableScanConcurrencyPostgreSqlTests
 {
     private static readonly DateTimeOffset At =

@@ -18,6 +18,8 @@
 /specs/001-codegraph-extraction/qualification/attempts/attempt-0001/terminal.json text eol=lf
 /specs/001-codegraph-extraction/qualification/attempts/attempt-0002/authorized.json text eol=crlf
 /specs/013-exact-cross-repository-flow-pass2/contracts/business-logic-flow-v1.schema.json text eol=lf
+/specs/007-exact-cross-repo-resolution/contracts/demo-resolution-profile.v1.json text eol=lf
+/src/dotnet/Vulgata.Infrastructure/CrossRepository/Profiles/demo-resolution-profile.v1.json text eol=lf
 
 # Preserve raw-byte pre-images, including their original whitespace and line endings.
 /docs/bmad/history/pre-generic-adoption-2026-09-11/files/** -text -whitespace

@@ -10,7 +10,7 @@ namespace Vulgata.Tests;
 public sealed class ExactResolutionProfileTests
 {
     private const string ReviewedFingerprint =
-        "5d621ca3a09d88305abc2a3661747ef4c9e04b3016f54baced7dc9c113e434bb";
+        "b84223c211f90328e62ca3172f3c398d42fb513b228ca0ff490725d6046398db";
 
     [Trait("Suite", "LocalTools")]
     [SuiteFact("LocalTools")]

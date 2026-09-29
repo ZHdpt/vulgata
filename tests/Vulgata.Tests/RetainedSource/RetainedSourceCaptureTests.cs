@@ -4,6 +4,7 @@ using Vulgata.Core.DomainServices;
 
 namespace Vulgata.Tests.RetainedSource;
 
+[Collection(PostgreSqlHeavyCollection.Name)]
 public sealed class RetainedSourceCaptureTests
 {
     [Trait("Suite", "PostgreSql")]
