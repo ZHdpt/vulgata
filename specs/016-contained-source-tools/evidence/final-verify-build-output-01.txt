@@ -1,0 +1,16 @@
+  Determining projects to restore...
+  All projects are up-to-date for restore.
+  Vulgata.Shared -> src\dotnet\Vulgata.Shared\bin\Debug\net10.0\Vulgata.Shared.dll
+  Vulgata.Core -> src\dotnet\Vulgata.Core\bin\Debug\net10.0\Vulgata.Core.dll
+  Vulgata.Infrastructure -> src\dotnet\Vulgata.Infrastructure\bin\Debug\net10.0\Vulgata.Infrastructure.dll
+  Vulgata.Web.ViewModels -> src\dotnet\Vulgata.Web.ViewModels\bin\Debug\net10.0\Vulgata.Web.ViewModels.dll
+  Vulgata.Agents -> src\dotnet\Vulgata.Agents\bin\Debug\net10.0\Vulgata.Agents.dll
+  Vulgata.Web -> src\dotnet\Vulgata.Web\bin\Debug\net10.0\Vulgata.Web.dll
+
+Build succeeded.
+    15 Warning(s)
+    0 Error(s)
+
+Time Elapsed 00:00:02.39
+
+Captured final summary from the second exact configured build invocation. Warnings were existing NU1507 package-source and MSB3277 Entity Framework assembly-version warnings.

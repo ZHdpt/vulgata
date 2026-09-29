@@ -1,6 +1,6 @@
 # Story 18.1 development record
 
-Status: review
+Status: done
 Feature directory: specs/016-contained-source-tools
 Workflow state: specs/016-contained-source-tools/workflow-state.json
 
