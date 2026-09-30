@@ -221,6 +221,14 @@ public static class VulgataWebComposition
                 return;
             }
 
+            string? managementAuthorityId = hostContext.Configuration["October:Web:ManagementAuthorityId"];
+            if (string.IsNullOrWhiteSpace(managementAuthorityId) ||
+                !string.Equals(managementAuthorityId, managementAuthorityId.Trim(), StringComparison.Ordinal))
+            {
+                throw new InvalidOperationException("Invalid October Web ManagementAuthorityId.");
+            }
+            services.AddSingleton(new OctoberWebManagementAuthority(managementAuthorityId));
+
             if (selection.Mode != OctoberWebMode.AuthorizationOnly)
             {
                 throw new InvalidOperationException("Invalid October Web startup selection.");

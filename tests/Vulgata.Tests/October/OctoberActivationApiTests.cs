@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http.Metadata;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.AspNetCore.TestHost;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -29,6 +30,9 @@ public sealed class OctoberActivationApiTests
     private const string TargetB = "october-target-b";
     private const string FingerprintA = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
     private const string FingerprintB = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
+    private static readonly Guid StandaloneGrantBatchId = Guid.Parse("b8e53c9e-38a6-4cc5-8ab9-43cf78f5a301");
+    private static readonly Guid StandaloneGrantRepositoryId = Guid.Parse("605fe9bf-f67c-49dc-a7ce-81f74d8cb909");
+    private static readonly Guid StandaloneGrantGlobalContextId = Guid.Parse("41227845-16b7-4ce1-a106-320c4b3a2587");
 
     [Trait("Suite", "SelfContained")]
     [SuiteFact("SelfContained")]
@@ -156,6 +160,8 @@ public sealed class OctoberActivationApiTests
     [InlineData("October:Web:GeneratorCertificates:0:TargetIds:0", null)]
     [InlineData("October:Web:TargetId", TargetA)]
     [InlineData("October:Web:Mode", "selected-data")]
+    [InlineData("October:Web:ManagementAuthorityId", null)]
+    [InlineData("October:Web:ManagementAuthorityId", "   ")]
     public void InvalidAuthorizationOnlyConfiguration_FailsBeforeHostServes(
         string key,
         string? value)
@@ -166,16 +172,29 @@ public sealed class OctoberActivationApiTests
 
         Exception exception = Assert.ThrowsAny<Exception>(() => host.Factory.CreateClient());
 
-        Assert.Contains("Invalid October Web", exception.ToString(), StringComparison.Ordinal);
+        if (key == "October:Web:ManagementAuthorityId")
+        {
+            Assert.Contains("ManagementAuthorityId", exception.ToString(), StringComparison.OrdinalIgnoreCase);
+        }
+        else
+        {
+            Assert.Contains("Invalid October Web", exception.ToString(), StringComparison.Ordinal);
+        }
     }
 
     [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
-    public async Task AuthorizationOnlyValidation_UsesControlledSourceThroughConcreteVerifier()
+    [SuiteTheory("SelfContained")]
+    [InlineData(OctoberCertificateIdentityStatus.Authenticated, HttpStatusCode.Forbidden)]
+    [InlineData(OctoberCertificateIdentityStatus.Unauthenticated, HttpStatusCode.Unauthorized)]
+    [InlineData(OctoberCertificateIdentityStatus.AuthorityUnavailable, HttpStatusCode.ServiceUnavailable)]
+    [InlineData(OctoberCertificateIdentityStatus.Cancelled, HttpStatusCode.ServiceUnavailable)]
+    public async Task AuthorizationOnlyValidation_UsesControlledSourceThroughConcreteVerifier(
+        OctoberCertificateIdentityStatus certificateStatus,
+        HttpStatusCode expectedStatus)
     {
         ControlledCertificateSource source = new(new OctoberCertificateIdentityResult(
-            OctoberCertificateIdentityStatus.Authenticated,
-            FingerprintA));
+            certificateStatus,
+            certificateStatus == OctoberCertificateIdentityStatus.Authenticated ? FingerprintA : null));
         using BootstrapWebHost host = CreateAuthorizationOnlyHost(
             new OctoberCertificateIdentityResult(OctoberCertificateIdentityStatus.Unauthenticated, null),
             controlledSource: source);
@@ -185,7 +204,7 @@ public sealed class OctoberActivationApiTests
             "/api/october-batch-activation-grants/validations",
             CreateGrantValidationRequest());
 
-        await AssertProblemDetailsAsync(response, HttpStatusCode.Forbidden);
+        await AssertProblemDetailsAsync(response, expectedStatus);
         Assert.Same(source, host.Factory.Services.GetRequiredService<IOctoberAuthenticatedCertificateSource>());
         Assert.IsType<OctoberGeneratorCertificateVerifier>(
             host.Factory.Services.GetRequiredService<OctoberGeneratorCertificateVerifier>());
@@ -196,17 +215,19 @@ public sealed class OctoberActivationApiTests
     [SuiteFact("SelfContained")]
     public async Task ManagementAccessOperator_IssuesAndValidatesCanonicalSystemAndStandaloneGrant()
     {
+        MutableTimeProvider clock = new(new DateTimeOffset(2026, 9, 30, 12, 0, 0, TimeSpan.Zero));
         ControlledCertificateSource source = new(new OctoberCertificateIdentityResult(
             OctoberCertificateIdentityStatus.Authenticated,
             FingerprintA));
         using BootstrapWebHost host = CreateAuthorizationOnlyHost(
             new OctoberCertificateIdentityResult(OctoberCertificateIdentityStatus.Unauthenticated, null),
-            controlledSource: source);
+            controlledSource: source,
+            testTimeProvider: clock);
         using HttpClient client = CreateClient(host.Factory);
         string subjectId = await CreateManagementAdministratorAsync(host.Factory.Services);
         await LoginAsync(client, "october.operator@example.com", "Valid1!Pass");
 
-        DateTimeOffset now = DateTimeOffset.UtcNow;
+        DateTimeOffset now = clock.GetUtcNow();
         Vulgata.Core.Entities.System system = new("October system", null, "system advisory", now);
         Repository systemRepository = system.AddRepository(
             "Member repository", "https://example.test/member.git", null, "repository advisory", now);
@@ -264,6 +285,16 @@ public sealed class OctoberActivationApiTests
         Assert.Matches("^[0-9a-f]{64}$", selectionDigest);
         Assert.Equal(subjectId, issuedJson.GetProperty("subjectId").GetString());
 
+        object firstValidationRequest = CreateGrantValidationRequest(
+            activationGrant, TargetA, batchId, repositorySelections, orderedContexts);
+        using (HttpResponseMessage firstValidation = await client.PostAsJsonAsync(
+                   "/api/october-batch-activation-grants/validations", firstValidationRequest))
+        {
+            Assert.Equal(HttpStatusCode.OK, firstValidation.StatusCode);
+        }
+
+        clock.Advance(TimeSpan.FromMinutes(6));
+
         object reorderedRequest = CreateAuthenticatedGrantRequest(
             TargetA,
             batchId,
@@ -274,9 +305,11 @@ public sealed class OctoberActivationApiTests
         Assert.Equal(HttpStatusCode.Created, reordered.StatusCode);
         using JsonDocument reorderedBody = JsonDocument.Parse(await reordered.Content.ReadAsByteArrayAsync());
         Assert.Equal(selectionDigest, reorderedBody.RootElement.GetProperty("selectionDigest").GetString());
+        string refreshedGrant = reorderedBody.RootElement.GetProperty("activationGrant").GetString()!;
+        Assert.NotEqual(activationGrant, refreshedGrant);
 
         object validationRequest = CreateGrantValidationRequest(
-            activationGrant, TargetA, batchId, repositorySelections, orderedContexts);
+            refreshedGrant, TargetA, batchId, repositorySelections, orderedContexts);
         using HttpResponseMessage validated = await client.PostAsJsonAsync(
             "/api/october-batch-activation-grants/validations", validationRequest);
 
@@ -286,7 +319,180 @@ public sealed class OctoberActivationApiTests
         Assert.Equal(TargetA, validatedBody.RootElement.GetProperty("targetId").GetString());
         Assert.Equal(batchId, validatedBody.RootElement.GetProperty("batchId").GetGuid());
         Assert.Equal(selectionDigest, validatedBody.RootElement.GetProperty("selectionDigest").GetString());
-        Assert.Equal(1, source.ReadCount);
+        Assert.Equal(2, source.ReadCount);
+
+        JsonElement selectedContext = validatedBody.RootElement.GetProperty("selectedContext");
+        Assert.Equal("management-authority-a", selectedContext.GetProperty("managementAuthorityId").GetString());
+        JsonElement[] selectedEntries = selectedContext.GetProperty("entries").EnumerateArray().ToArray();
+        Assert.Equal(6, selectedEntries.Length);
+        Assert.Contains(selectedEntries, entry =>
+            entry.GetProperty("repositoryId").GetGuid() == systemRepository.Id &&
+            entry.GetProperty("scope").GetString() == "global" &&
+            entry.GetProperty("applicability").GetString() == "selected" &&
+            entry.GetProperty("originRecordId").GetGuid() == globalContext.Id &&
+            entry.GetProperty("value").GetString() == "global advisory" &&
+            entry.GetProperty("evidenceKind").GetString() == "advisory-not-source-proof");
+        Assert.Contains(selectedEntries, entry =>
+            entry.GetProperty("repositoryId").GetGuid() == systemRepository.Id &&
+            entry.GetProperty("scope").GetString() == "system" &&
+            entry.GetProperty("originRecordId").GetGuid() == system.Id &&
+            entry.GetProperty("value").GetString() == "system advisory");
+        Assert.Contains(selectedEntries, entry =>
+            entry.GetProperty("repositoryId").GetGuid() == systemRepository.Id &&
+            entry.GetProperty("scope").GetString() == "repository" &&
+            entry.GetProperty("originRecordId").GetGuid() == systemRepository.Id &&
+            entry.GetProperty("value").GetString() == "repository advisory");
+        Assert.Contains(selectedEntries, entry =>
+            entry.GetProperty("repositoryId").GetGuid() == standaloneRepository.Id &&
+            entry.GetProperty("scope").GetString() == "system" &&
+            entry.GetProperty("applicability").GetString() == "not-applicable" &&
+            entry.GetProperty("originRecordId").ValueKind == JsonValueKind.Null &&
+            entry.GetProperty("value").ValueKind == JsonValueKind.Null);
+        JsonElement[] differences = selectedContext.GetProperty("differences").EnumerateArray().ToArray();
+        Assert.Equal(4, differences.Length);
+        Assert.Contains(differences, difference =>
+            difference.GetProperty("repositoryId").GetGuid() == systemRepository.Id &&
+            difference.GetProperty("leftScope").GetString() == "global" &&
+            difference.GetProperty("rightScope").GetString() == "system");
+        Assert.DoesNotContain(subjectId, JsonSerializer.Serialize(selectedContext), StringComparison.Ordinal);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task Validation_RejectsCallerSuppliedContextValuesAndChangedContextUnderSameGrant()
+    {
+        using StandaloneGrantHost fixture = await CreateStandaloneGrantHostAsync();
+        object forgedContextRequest = new
+        {
+            targetId = TargetA,
+            batchId = fixture.BatchId,
+            repositories = fixture.Repositories,
+            selectedContext = new
+            {
+                managementAuthorityId = "caller-selected-authority",
+                entries = new[] { new { value = "caller-forged advisory", originRecordId = fixture.RepositoryId } },
+            },
+            contextSelections = new object[]
+            {
+                new { scope = "global", recordId = fixture.GlobalContextId, value = "caller-forged advisory" },
+                new { scope = "repository", recordId = fixture.RepositoryId, originRecordId = fixture.RepositoryId },
+            },
+        };
+        using (HttpResponseMessage forged = await fixture.Client.PostAsJsonAsync(
+                   "/api/october-batch-activation-grants", forgedContextRequest))
+        {
+            await AssertProblemDetailsAsync(forged, HttpStatusCode.BadRequest);
+        }
+
+        using HttpResponseMessage issued = await fixture.Client.PostAsJsonAsync(
+            "/api/october-batch-activation-grants", fixture.Request);
+        Assert.Equal(HttpStatusCode.Created, issued.StatusCode);
+        using JsonDocument issuedBody = JsonDocument.Parse(await issued.Content.ReadAsByteArrayAsync());
+        string grant = issuedBody.RootElement.GetProperty("activationGrant").GetString()!;
+
+        await using (AsyncServiceScope scope = fixture.Host.Factory.Services.CreateAsyncScope())
+        {
+            VulgataDbContext database = scope.ServiceProvider.GetRequiredService<VulgataDbContext>();
+            GlobalContext context = await database.GlobalContexts.SingleAsync(value => value.Id == fixture.GlobalContextId);
+            context.UpdateContext("changed advisory after grant", fixture.Clock.GetUtcNow().AddSeconds(1));
+            await database.SaveChangesAsync();
+        }
+
+        using HttpResponseMessage validation = await fixture.Client.PostAsJsonAsync(
+            "/api/october-batch-activation-grants/validations", fixture.ValidationRequest(grant));
+        await AssertProblemDetailsAsync(validation, HttpStatusCode.Forbidden);
+        string problem = await validation.Content.ReadAsStringAsync();
+        Assert.DoesNotContain("changed advisory after grant", problem, StringComparison.Ordinal);
+        Assert.DoesNotContain("management-authority-a", problem, StringComparison.Ordinal);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task AuthorizationOnlyValidation_RejectsExpiredV2Grant()
+    {
+        MutableTimeProvider clock = new(new DateTimeOffset(2026, 9, 30, 12, 0, 0, TimeSpan.Zero));
+        using StandaloneGrantHost fixture = await CreateStandaloneGrantHostAsync(testTimeProvider: clock);
+        using HttpResponseMessage issued = await fixture.Client.PostAsJsonAsync(
+            "/api/october-batch-activation-grants", fixture.Request);
+        Assert.Equal(HttpStatusCode.Created, issued.StatusCode);
+        using JsonDocument issuedBody = JsonDocument.Parse(await issued.Content.ReadAsByteArrayAsync());
+        string grant = issuedBody.RootElement.GetProperty("activationGrant").GetString()!;
+
+        clock.Advance(TimeSpan.FromMinutes(6));
+
+        using HttpResponseMessage validation = await fixture.Client.PostAsJsonAsync(
+            "/api/october-batch-activation-grants/validations", fixture.ValidationRequest(grant));
+        await AssertProblemDetailsAsync(validation, HttpStatusCode.Forbidden);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task AuthorizationOnlyValidation_RejectsVersionOneGrantWithoutSnapshot()
+    {
+        MutableTimeProvider clock = new(new DateTimeOffset(2026, 9, 30, 12, 0, 0, TimeSpan.Zero));
+        using StandaloneGrantHost fixture = await CreateStandaloneGrantHostAsync(testTimeProvider: clock);
+        using HttpResponseMessage issued = await fixture.Client.PostAsJsonAsync(
+            "/api/october-batch-activation-grants", fixture.Request);
+        Assert.Equal(HttpStatusCode.Created, issued.StatusCode);
+        using JsonDocument issuedBody = JsonDocument.Parse(await issued.Content.ReadAsByteArrayAsync());
+        string digest = issuedBody.RootElement.GetProperty("selectionDigest").GetString()!;
+        IDataProtectionProvider protection = fixture.Host.Factory.Services.GetRequiredService<IDataProtectionProvider>();
+        string legacyGrant = protection.CreateProtector("october-batch-activation-v1").Protect(
+            JsonSerializer.Serialize(new
+            {
+                Purpose = "october-batch-activation-v1",
+                SubjectId = fixture.SubjectId,
+                TargetId = TargetA,
+                BatchId = fixture.BatchId,
+                SelectionDigest = digest,
+                ExpiresAtUtc = clock.GetUtcNow().AddMinutes(4),
+            }));
+
+        using HttpResponseMessage validation = await fixture.Client.PostAsJsonAsync(
+            "/api/october-batch-activation-grants/validations", fixture.ValidationRequest(legacyGrant));
+        await AssertProblemDetailsAsync(validation, HttpStatusCode.Forbidden);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task AuthorizationOnlyValidation_RejectsGrantFromDifferentManagementAuthorityWithCollidingRecords()
+    {
+        DirectoryInfo sharedKeyDirectory = Directory.CreateTempSubdirectory("october-management-authority-");
+        try
+        {
+            using StandaloneGrantHost authorityA = await CreateStandaloneGrantHostAsync(
+                managementAuthorityId: "management-authority-a",
+                sharedDataProtectionKeyDirectory: sharedKeyDirectory.FullName);
+            using StandaloneGrantHost authorityB = await CreateStandaloneGrantHostAsync(
+                managementAuthorityId: "management-authority-b",
+                subjectId: authorityA.SubjectId,
+                sharedDataProtectionKeyDirectory: sharedKeyDirectory.FullName);
+
+            using HttpResponseMessage issued = await authorityA.Client.PostAsJsonAsync(
+                "/api/october-batch-activation-grants", authorityA.Request);
+            Assert.Equal(HttpStatusCode.Created, issued.StatusCode);
+            using JsonDocument issuedBody = JsonDocument.Parse(await issued.Content.ReadAsByteArrayAsync());
+            string grant = issuedBody.RootElement.GetProperty("activationGrant").GetString()!;
+
+            using HttpResponseMessage sameAuthorityValidation = await authorityA.Client.PostAsJsonAsync(
+                "/api/october-batch-activation-grants/validations", authorityA.ValidationRequest(grant));
+            Assert.Equal(HttpStatusCode.OK, sameAuthorityValidation.StatusCode);
+
+            using HttpResponseMessage differentAuthorityValidation = await authorityB.Client.PostAsJsonAsync(
+                "/api/october-batch-activation-grants/validations", authorityB.ValidationRequest(grant));
+            await AssertProblemDetailsAsync(differentAuthorityValidation, HttpStatusCode.Forbidden);
+            string problem = await differentAuthorityValidation.Content.ReadAsStringAsync();
+            Assert.DoesNotContain("management-authority-a", problem, StringComparison.Ordinal);
+            Assert.DoesNotContain("management-authority-b", problem, StringComparison.Ordinal);
+            Assert.DoesNotContain("fixture global advisory", problem, StringComparison.Ordinal);
+        }
+        finally
+        {
+            if (Directory.Exists(sharedKeyDirectory.FullName))
+            {
+                Directory.Delete(sharedKeyDirectory.FullName, recursive: true);
+            }
+        }
     }
 
     [Trait("Suite", "SelfContained")]
@@ -327,6 +533,8 @@ public sealed class OctoberActivationApiTests
     {
         using BootstrapWebHost host = CreateOrdinaryHost();
         _ = host.Factory.CreateClient();
+        Assert.Null(host.Factory.Services.GetRequiredService<IConfiguration>()[
+            "October:Web:ManagementAuthorityId"]);
 
         string[] octoberRoutes = ReadOctoberRoutes(host.Factory.Services);
         Assert.Empty(octoberRoutes);
@@ -400,7 +608,9 @@ public sealed class OctoberActivationApiTests
     private static BootstrapWebHost CreateAuthorizationOnlyHost(
         OctoberCertificateIdentityResult certificateIdentity,
         IReadOnlyDictionary<string, string?>? configurationOverrides = null,
-        ControlledCertificateSource? controlledSource = null)
+        ControlledCertificateSource? controlledSource = null,
+        TimeProvider? testTimeProvider = null,
+        string? sharedDataProtectionKeyDirectory = null)
     {
         LoginLogoutTests.CustomWebApplicationFactory ordinaryFactory = new();
         WebApplicationFactory<Program> factory = ConfigureFactory(
@@ -408,7 +618,9 @@ public sealed class OctoberActivationApiTests
             authorizationOnly: true,
             certificateIdentity: certificateIdentity,
             configurationOverrides: configurationOverrides,
-            controlledSource: controlledSource);
+            controlledSource: controlledSource,
+            testTimeProvider: testTimeProvider,
+            sharedDataProtectionKeyDirectory: sharedDataProtectionKeyDirectory);
 
         return new BootstrapWebHost(ordinaryFactory, factory);
     }
@@ -431,7 +643,9 @@ public sealed class OctoberActivationApiTests
         bool authorizationOnly,
         OctoberCertificateIdentityResult certificateIdentity,
         IReadOnlyDictionary<string, string?>? configurationOverrides = null,
-        ControlledCertificateSource? controlledSource = null) =>
+        ControlledCertificateSource? controlledSource = null,
+        TimeProvider? testTimeProvider = null,
+        string? sharedDataProtectionKeyDirectory = null) =>
         ordinaryFactory.WithWebHostBuilder(builder =>
         {
             if (authorizationOnly)
@@ -441,6 +655,7 @@ public sealed class OctoberActivationApiTests
                     Dictionary<string, string?> settings = new(StringComparer.Ordinal)
                     {
                         ["October:Web:Mode"] = "authorization-only",
+                        ["October:Web:ManagementAuthorityId"] = "management-authority-a",
                         ["October:Web:AllowedTargets:0:TargetId"] = TargetA,
                         ["October:Web:AllowedTargets:0:CanonicalDatabaseIdentity"] =
                             "postgres://test-cluster/october-target-a",
@@ -474,6 +689,18 @@ public sealed class OctoberActivationApiTests
                 services.RemoveAll<IOctoberAuthenticatedCertificateSource>();
                 services.AddSingleton<IOctoberAuthenticatedCertificateSource>(
                     controlledSource ?? new ControlledCertificateSource(certificateIdentity));
+                if (testTimeProvider is not null)
+                {
+                    services.RemoveAll<TimeProvider>();
+                    services.AddSingleton<TimeProvider>(testTimeProvider);
+                }
+
+                if (sharedDataProtectionKeyDirectory is not null)
+                {
+                    services.AddDataProtection()
+                        .PersistKeysToFileSystem(new DirectoryInfo(sharedDataProtectionKeyDirectory))
+                        .SetApplicationName("Vulgata.Tests");
+                }
             });
         });
 
@@ -560,12 +787,91 @@ public sealed class OctoberActivationApiTests
             contextSelections,
         };
 
-    private static async Task<string> CreateManagementAdministratorAsync(IServiceProvider services)
+    private static async Task<StandaloneGrantHost> CreateStandaloneGrantHostAsync(
+        string managementAuthorityId = "management-authority-a",
+        TimeProvider? testTimeProvider = null,
+        string? sharedDataProtectionKeyDirectory = null,
+        string? subjectId = null)
+    {
+        Dictionary<string, string?> configuration = new(StringComparer.Ordinal)
+        {
+            ["October:Web:ManagementAuthorityId"] = managementAuthorityId,
+        };
+        BootstrapWebHost host = CreateAuthorizationOnlyHost(
+            new OctoberCertificateIdentityResult(OctoberCertificateIdentityStatus.Authenticated, FingerprintA),
+            configurationOverrides: configuration,
+            testTimeProvider: testTimeProvider,
+            sharedDataProtectionKeyDirectory: sharedDataProtectionKeyDirectory);
+        HttpClient client = CreateClient(host.Factory);
+        try
+        {
+            string realSubjectId = await CreateManagementAdministratorAsync(host.Factory.Services, subjectId);
+            await LoginAsync(client, "october.operator@example.com", "Valid1!Pass");
+            TimeProvider clock = testTimeProvider ?? TimeProvider.System;
+            DateTimeOffset now = clock.GetUtcNow();
+            Repository repository = Repository.CreateStandalone(
+                "October standalone",
+                "https://example.test/october-standalone.git",
+                null,
+                "fixture repository advisory",
+                now);
+            GlobalContext globalContext = new("fixture global advisory", now);
+            await using (AsyncServiceScope scope = host.Factory.Services.CreateAsyncScope())
+            {
+                VulgataDbContext database = scope.ServiceProvider.GetRequiredService<VulgataDbContext>();
+                database.Entry(repository).Property(nameof(Repository.Id)).CurrentValue = StandaloneGrantRepositoryId;
+                database.Entry(globalContext).Property(nameof(GlobalContext.Id)).CurrentValue = StandaloneGrantGlobalContextId;
+                database.Repositories.Add(repository);
+                database.GlobalContexts.Add(globalContext);
+                await database.SaveChangesAsync();
+            }
+
+            object[] repositories =
+            [
+                new
+                {
+                    repositoryId = StandaloneGrantRepositoryId,
+                    systemId = (Guid?)null,
+                    rootBindingIdentity = "fixture-root-v1",
+                    operatorLabel = "fixture-operator",
+                },
+            ];
+            object[] contextSelections =
+            [
+                new { scope = "global", recordId = StandaloneGrantGlobalContextId },
+                new { scope = "repository", recordId = StandaloneGrantRepositoryId },
+            ];
+            object request = CreateAuthenticatedGrantRequest(
+                TargetA, StandaloneGrantBatchId, repositories, contextSelections);
+            return new StandaloneGrantHost(
+                host,
+                client,
+                realSubjectId,
+                clock,
+                StandaloneGrantBatchId,
+                StandaloneGrantRepositoryId,
+                StandaloneGrantGlobalContextId,
+                repositories,
+                contextSelections,
+                request);
+        }
+        catch
+        {
+            client.Dispose();
+            host.Dispose();
+            throw;
+        }
+    }
+
+    private static async Task<string> CreateManagementAdministratorAsync(
+        IServiceProvider services,
+        string? fixedSubjectId = null)
     {
         await using AsyncServiceScope scope = services.CreateAsyncScope();
         UserManager<ApplicationUser> userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
         ApplicationUser user = new()
         {
+            Id = fixedSubjectId ?? Guid.NewGuid().ToString("N"),
             UserName = "october.operator@example.com",
             Email = "october.operator@example.com",
             EmailConfirmed = true,
@@ -650,6 +956,44 @@ public sealed class OctoberActivationApiTests
         }
     }
 
+    private sealed class StandaloneGrantHost(
+        BootstrapWebHost host,
+        HttpClient client,
+        string subjectId,
+        TimeProvider clock,
+        Guid batchId,
+        Guid repositoryId,
+        Guid globalContextId,
+        object[] repositories,
+        object[] contextSelections,
+        object request) : IDisposable
+    {
+        public BootstrapWebHost Host { get; } = host;
+        public HttpClient Client { get; } = client;
+        public string SubjectId { get; } = subjectId;
+        public TimeProvider Clock { get; } = clock;
+        public Guid BatchId { get; } = batchId;
+        public Guid RepositoryId { get; } = repositoryId;
+        public Guid GlobalContextId { get; } = globalContextId;
+        public object[] Repositories { get; } = repositories;
+        public object[] ContextSelections { get; } = contextSelections;
+        public object Request { get; } = request;
+
+        public object ValidationRequest(string activationGrant) =>
+            CreateGrantValidationRequest(
+                activationGrant,
+                TargetA,
+                BatchId,
+                Repositories,
+                ContextSelections);
+
+        public void Dispose()
+        {
+            Client.Dispose();
+            Host.Dispose();
+        }
+    }
+
     private sealed class ControlledCertificateSource(OctoberCertificateIdentityResult result)
         : IOctoberAuthenticatedCertificateSource
     {
@@ -664,5 +1008,14 @@ public sealed class OctoberActivationApiTests
             CancellationToken = cancellationToken;
             return Task.FromResult(result);
         }
+    }
+
+    private sealed class MutableTimeProvider(DateTimeOffset utcNow) : TimeProvider
+    {
+        private DateTimeOffset _utcNow = utcNow;
+
+        public override DateTimeOffset GetUtcNow() => _utcNow;
+
+        public void Advance(TimeSpan duration) => _utcNow = _utcNow.Add(duration);
     }
 }

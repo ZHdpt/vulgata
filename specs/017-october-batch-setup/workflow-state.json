@@ -22,7 +22,7 @@
     },
     "tasks": {
       "path": "specs/017-october-batch-setup/tasks.md",
-      "sha256": "9c274fa10c8a5cca08e5fecb974681134468f2329d208da52a53241cfc4dc286"
+      "sha256": "94fc61374b3a80598c1c15c5e6b2ae87f0ddb4fd6bab29a1a36052e63c39d892"
     }
   },
   "gates": {
@@ -107,28 +107,27 @@
     "docs/bmad/implementation-artifacts/18-4-prepare-an-owned-october-batch-with-valid-context-and-provid.md",
     "specs/017-october-batch-setup/evidence/delegated-authority-registration-01.json",
     "specs/017-october-batch-setup/evidence/delivery-resume-authorization-01.json",
-    "specs/017-october-batch-setup/evidence/feature-directory-relocation-01.json",
-    "specs/017-october-batch-setup/evidence/preflight-01.json",
-    "specs/017-october-batch-setup/evidence/plan-correction-self-review-01.json",
-    "specs/017-october-batch-setup/evidence/plan-review-03-correction-self-review-result-01.json",
-    "specs/017-october-batch-setup/evidence/plan-review-01.json",
-    "specs/017-october-batch-setup/evidence/plan-review-02.json",
-    "specs/017-october-batch-setup/evidence/spec-currentness-self-review-result-01.json",
-    "specs/017-october-batch-setup/evidence/spec-self-review-01.json",
-    "specs/017-october-batch-setup/evidence/transitions/transition-0003-plan-correction-self-review.json"
+    "specs/017-october-batch-setup/evidence/plan-review-11.json",
+    "specs/017-october-batch-setup/evidence/definition-review-10.json",
+    "specs/017-october-batch-setup/evidence/implementation-approval-04.json",
+    "specs/017-october-batch-setup/evidence/recovery-diagnosis-implementation-setup-seam-01-count-05.json",
+    "specs/017-october-batch-setup/evidence/recovery-extension-implementation-setup-seam-01-count-05.json",
+    "specs/017-october-batch-setup/evidence/checkpoint-definition-02.json",
+    "specs/017-october-batch-setup/evidence/context-provenance-tdd-01.json",
+    "specs/017-october-batch-setup/evidence/checkpoint-implementation-02.json"
   ],
   "checkpoint": {
-    "checkpoint_id": "bmad-18-4-definition-review-20260930T043300Z-c7a921",
-    "stage": "definition-review",
+    "checkpoint_id": "bmad-18-4-implement-20260930T052907Z-4d8c21",
+    "stage": "implement",
     "commit_sha": null,
     "binding_status": "pending"
   },
   "resume": {
     "stage": "implement",
-    "reason": "Implementation approval 4 binds definition review 10. Resume dependency-ready governed TDD; T020/T029 remain resource-held and recovery remains 6/7.",
-    "evidence_path": "specs/017-october-batch-setup/evidence/implementation-approval-04.json"
+    "reason": "T008/T009 final GREEN is checkpointed. Resume dependency-ready T010/T011 persistence TDD; T020/T029 remain resource-held and recovery remains 6/7.",
+    "evidence_path": "specs/017-october-batch-setup/evidence/context-provenance-tdd-01.json"
   },
-  "updated_at": "2026-09-30T04:33:00.4562650Z",
+  "updated_at": "2026-09-30T05:29:07.3822026Z",
   "recovery": {
     "action": "proceed",
     "closing_gate": "verify",

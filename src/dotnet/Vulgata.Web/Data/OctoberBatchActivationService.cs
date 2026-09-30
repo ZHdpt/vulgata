@@ -1,9 +1,12 @@
+using System.Collections.Immutable;
+using System.Data;
 using System.Security.Cryptography;
 using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Vulgata.Core.DomainServices;
 using Vulgata.Infrastructure.Data;
 using Vulgata.Shared;
 
@@ -30,7 +33,11 @@ internal sealed record OctoberActivationValidationRequest(
 
 internal sealed record OctoberActivationGrantPayload(
     string Purpose, string SubjectId, string TargetId, Guid BatchId,
-    string SelectionDigest, DateTimeOffset ExpiresAtUtc);
+    string SelectionDigest, DateTimeOffset ExpiresAtUtc,
+    OctoberSetupRequest Selection,
+    OctoberSelectedAdvisoryContext SelectedContext);
+
+internal sealed record OctoberWebManagementAuthority(string Id);
 
 internal sealed class OctoberBatchActivationService(
     IAuthorizationService authorization,
@@ -38,9 +45,10 @@ internal sealed class OctoberBatchActivationService(
     VulgataDbContext database,
     IDataProtectionProvider dataProtection,
     OctoberWebTargetAllowlist targets,
+    OctoberWebManagementAuthority managementAuthority,
     TimeProvider clock)
 {
-    private const string GrantPurpose = "october-batch-activation-v1";
+    private const string GrantPurpose = "october-batch-activation-v2";
     private static readonly TimeSpan GrantLifetime = TimeSpan.FromMinutes(5);
 
     public async Task<IResult> IssueAsync(
@@ -67,16 +75,25 @@ internal sealed class OctoberBatchActivationService(
             }
 
             string? subjectId = userManager.GetUserId(context.User);
-            if (string.IsNullOrWhiteSpace(subjectId) ||
-                !await HasCurrentSelectionAuthorityAsync(subjectId, selection, cancellationToken))
+            if (string.IsNullOrWhiteSpace(subjectId))
             {
                 return Problem(StatusCodes.Status403Forbidden, "not_authorized");
             }
 
-            string digest = SelectionDigest(selection);
+            OctoberSelectedAdvisoryContext? selectedContext = await CaptureCurrentSelectionAsync(
+                subjectId, selection, cancellationToken);
+            if (selectedContext is null)
+            {
+                return Problem(StatusCodes.Status403Forbidden, "not_authorized");
+            }
+
+            OctoberSetupRequest setupRequest = ToSetupRequest(selection);
+            string digest = OctoberSelectionDigest.Compute(setupRequest, selectedContext);
+            setupRequest = setupRequest with { SelectionDigest = digest };
             DateTimeOffset expiry = clock.GetUtcNow().Add(GrantLifetime);
             OctoberActivationGrantPayload payload = new(
-                GrantPurpose, subjectId, selection.TargetId!, selection.BatchId, digest, expiry);
+                GrantPurpose, subjectId, selection.TargetId!, selection.BatchId, digest, expiry,
+                setupRequest, selectedContext);
             string grant = dataProtection.CreateProtector(GrantPurpose)
                 .Protect(JsonSerializer.Serialize(payload));
             return Results.Json(new
@@ -126,17 +143,33 @@ internal sealed class OctoberBatchActivationService(
         }
 
         if (payload is null || payload.Purpose != GrantPurpose ||
+            payload.Selection is null || payload.SelectedContext is null ||
             payload.ExpiresAtUtc <= clock.GetUtcNow() ||
             !string.Equals(payload.TargetId, selection.TargetId, StringComparison.Ordinal) ||
             payload.BatchId != selection.BatchId ||
-            !string.Equals(payload.SelectionDigest, SelectionDigest(selection), StringComparison.Ordinal))
+            !string.Equals(payload.SelectedContext.ManagementAuthorityId,
+                managementAuthority.Id, StringComparison.Ordinal))
         {
             return Problem(StatusCodes.Status403Forbidden, "invalid_grant");
         }
 
         try
         {
-            if (!await HasCurrentSelectionAuthorityAsync(payload.SubjectId, selection, cancellationToken))
+            OctoberSetupRequest requested = ToSetupRequest(selection);
+            string protectedDigest = OctoberSelectionDigest.Compute(payload.Selection, payload.SelectedContext);
+            string requestedDigest = OctoberSelectionDigest.Compute(requested, payload.SelectedContext);
+            if (!string.Equals(protectedDigest, payload.SelectionDigest, StringComparison.Ordinal) ||
+                !string.Equals(requestedDigest, payload.SelectionDigest, StringComparison.Ordinal) ||
+                !string.Equals(payload.Selection.SelectionDigest, payload.SelectionDigest, StringComparison.Ordinal))
+            {
+                return Problem(StatusCodes.Status403Forbidden, "invalid_grant");
+            }
+
+            OctoberSelectedAdvisoryContext? liveContext = await CaptureCurrentSelectionAsync(
+                payload.SubjectId, selection, cancellationToken);
+            if (liveContext is null ||
+                !string.Equals(OctoberSelectionDigest.Compute(requested, liveContext),
+                    payload.SelectionDigest, StringComparison.Ordinal))
             {
                 return Problem(StatusCodes.Status403Forbidden, "not_authorized");
             }
@@ -149,8 +182,13 @@ internal sealed class OctoberBatchActivationService(
                 canonicalDatabaseIdentity = targets.CanonicalDatabaseIdentities[selection.TargetId!],
                 repositoryIds = selection.Repositories!.Select(repository => repository.RepositoryId).ToArray(),
                 selectionDigest = payload.SelectionDigest,
+                selectedContext = ToResponseContext(payload.SelectedContext),
                 expiresAtUtc = payload.ExpiresAtUtc
             });
+        }
+        catch (ArgumentException)
+        {
+            return Problem(StatusCodes.Status403Forbidden, "invalid_grant");
         }
         catch (OperationCanceledException)
         {
@@ -200,7 +238,7 @@ internal sealed class OctoberBatchActivationService(
         return true;
     }
 
-    private async Task<bool> HasCurrentSelectionAuthorityAsync(
+    private async Task<OctoberSelectedAdvisoryContext?> CaptureCurrentSelectionAsync(
         string subjectId,
         OctoberActivationSelection selection,
         CancellationToken cancellationToken)
@@ -208,16 +246,19 @@ internal sealed class OctoberBatchActivationService(
         ApplicationUser? user = await userManager.FindByIdAsync(subjectId);
         if (user is null)
         {
-            return false;
+            return null;
         }
 
         bool administrator = await userManager.IsInRoleAsync(user, RoleNames.Administrator);
         bool systemOwner = await userManager.IsInRoleAsync(user, RoleNames.SystemOwner);
         if (!administrator && !systemOwner)
         {
-            return false;
+            return null;
         }
 
+        await using var transaction = await database.Database.BeginTransactionAsync(
+            IsolationLevel.Serializable, cancellationToken);
+        Dictionary<Guid, Vulgata.Core.Entities.Repository> repositories = [];
         foreach (OctoberActivationRepository selected in selection.Repositories!)
         {
             Vulgata.Core.Entities.Repository? repository = await database.Repositories
@@ -225,8 +266,10 @@ internal sealed class OctoberBatchActivationService(
                     cancellationToken);
             if (repository is null || repository.SystemId != selected.SystemId)
             {
-                return false;
+                return null;
             }
+
+            repositories.Add(selected.RepositoryId, repository);
 
             if (selected.SystemId is Guid systemId &&
                 (!await database.Systems.AsNoTracking().AnyAsync(value => value.Id == systemId,
@@ -235,55 +278,142 @@ internal sealed class OctoberBatchActivationService(
                      .AnyAsync(value => value.SystemId == systemId && value.UserId == subjectId,
                          cancellationToken))))
             {
-                return false;
+                return null;
             }
         }
 
+        Dictionary<Guid, string?> globalValues = [];
+        Dictionary<Guid, string?> systemValues = [];
+        Dictionary<Guid, string?> repositoryValues = [];
         foreach (OctoberActivationContext context in selection.ContextSelections!)
         {
-            bool current = context.Scope switch
+            switch (context.Scope)
             {
-                "global" => await database.GlobalContexts.AsNoTracking()
-                    .AnyAsync(value => value.Id == context.RecordId, cancellationToken),
-                "system" => selection.Repositories!.Any(repository =>
-                    repository.SystemId == context.RecordId) &&
-                    await database.Systems.AsNoTracking()
-                        .AnyAsync(value => value.Id == context.RecordId, cancellationToken),
-                "repository" => selection.Repositories!.Any(repository =>
-                    repository.RepositoryId == context.RecordId),
-                _ => false
-            };
-            if (!current)
-            {
-                return false;
+                case "global":
+                    Vulgata.Core.Entities.GlobalContext? global = await database.GlobalContexts
+                        .AsNoTracking().SingleOrDefaultAsync(value => value.Id == context.RecordId,
+                            cancellationToken);
+                    if (global is null || globalValues.Count != 0) return null;
+                    globalValues.Add(context.RecordId, global.Context);
+                    break;
+                case "system":
+                    if (!selection.Repositories.Any(value => value.SystemId == context.RecordId)) return null;
+                    Vulgata.Core.Entities.System? system = await database.Systems.AsNoTracking()
+                        .SingleOrDefaultAsync(value => value.Id == context.RecordId, cancellationToken);
+                    if (system is null) return null;
+                    systemValues.Add(context.RecordId, system.Context);
+                    break;
+                case "repository":
+                    if (!repositories.TryGetValue(context.RecordId, out var selectedRepository)) return null;
+                    repositoryValues.Add(context.RecordId, selectedRepository.Context);
+                    break;
+                default:
+                    return null;
             }
         }
 
-        return true;
+        List<OctoberAdvisoryContextEntry> entries = [];
+        List<OctoberContextDifference> differences = [];
+        foreach (OctoberActivationRepository selected in selection.Repositories.OrderBy(
+                     value => value.RepositoryId))
+        {
+            List<OctoberAdvisoryContextEntry> selectedEntries = [];
+            AddEntry(OctoberContextScope.Global, globalValues.Count == 0 ? null : globalValues.Single(),
+                notApplicable: false);
+            AddEntry(OctoberContextScope.System,
+                selected.SystemId is Guid systemId && systemValues.TryGetValue(systemId, out string? systemValue)
+                    ? new KeyValuePair<Guid, string?>(systemId, systemValue) : null,
+                notApplicable: selected.SystemId is null);
+            AddEntry(OctoberContextScope.Repository,
+                repositoryValues.TryGetValue(selected.RepositoryId, out string? repositoryValue)
+                    ? new KeyValuePair<Guid, string?>(selected.RepositoryId, repositoryValue) : null,
+                notApplicable: false);
+
+            for (int left = 0; left < selectedEntries.Count; left++)
+            for (int right = left + 1; right < selectedEntries.Count; right++)
+            {
+                if (!string.Equals(selectedEntries[left].Value, selectedEntries[right].Value,
+                        StringComparison.Ordinal))
+                    differences.Add(new OctoberContextDifference(selected.RepositoryId,
+                        selectedEntries[left].Scope, selectedEntries[right].Scope));
+            }
+
+            void AddEntry(OctoberContextScope scope, KeyValuePair<Guid, string?>? selectedValue,
+                bool notApplicable)
+            {
+                OctoberAdvisoryContextEntry entry = new(selected.RepositoryId, scope,
+                    notApplicable ? OctoberContextApplicability.NotApplicable : selectedValue is null
+                        ? OctoberContextApplicability.NotSelected : OctoberContextApplicability.Selected,
+                    selectedValue?.Key, selectedValue?.Value,
+                    OctoberContextEvidenceKind.AdvisoryNotSourceProof);
+                entries.Add(entry);
+                if (selectedValue is not null) selectedEntries.Add(entry);
+            }
+        }
+
+        return new OctoberSelectedAdvisoryContext(
+            managementAuthority.Id,
+            selection.Repositories.Select(value => new OctoberRepositorySelection(
+                value.RepositoryId, value.SystemId, value.RootBindingIdentity!, value.OperatorLabel!))
+                .OrderBy(value => value.RepositoryId).ToImmutableArray(),
+            entries.ToImmutableArray(),
+            differences.ToImmutableArray());
     }
 
-    private static string SelectionDigest(OctoberActivationSelection selection)
+    private static OctoberSetupRequest ToSetupRequest(OctoberActivationSelection selection)
     {
-        byte[] canonical = JsonSerializer.SerializeToUtf8Bytes(new
-        {
-            targetId = selection.TargetId,
-            batchId = selection.BatchId,
-            repositories = selection.Repositories!
-                .OrderBy(repository => repository.RepositoryId)
-                .Select(repository => new
-                {
-                    repository.RepositoryId,
-                    repository.SystemId,
-                    repository.RootBindingIdentity,
-                    repository.OperatorLabel
-                }),
-            contexts = selection.ContextSelections!
-                .OrderBy(context => context.Scope, StringComparer.Ordinal)
-                .ThenBy(context => context.RecordId)
-                .Select(context => new { context.Scope, context.RecordId })
-        });
-        return Convert.ToHexStringLower(SHA256.HashData(canonical));
+        return new OctoberSetupRequest(selection.TargetId!, selection.BatchId,
+            selection.Repositories!.Select(value => new OctoberRepositorySelection(
+                value.RepositoryId, value.SystemId, value.RootBindingIdentity!, value.OperatorLabel!))
+                .ToImmutableArray(),
+            selection.ContextSelections!.Select(value => new OctoberContextSelection(value.Scope switch
+            {
+                "global" => OctoberContextScope.Global,
+                "system" => OctoberContextScope.System,
+                "repository" => OctoberContextScope.Repository,
+                _ => throw new ArgumentException("Invalid context scope.")
+            }, value.RecordId)).ToImmutableArray(),
+            string.Empty);
     }
+
+    private static object ToResponseContext(OctoberSelectedAdvisoryContext context) => new
+    {
+        managementAuthorityId = context.ManagementAuthorityId,
+        repositories = context.Repositories.Select(value => new
+        {
+            repositoryId = value.RepositoryId,
+            systemId = value.SystemId,
+            rootBindingIdentity = value.RootBindingIdentity,
+            operatorLabel = value.OperatorLabel
+        }),
+        entries = context.Entries.Select(value => new
+        {
+            repositoryId = value.RepositoryId,
+            scope = ScopeName(value.Scope),
+            applicability = value.Applicability switch
+            {
+                OctoberContextApplicability.Selected => "selected",
+                OctoberContextApplicability.NotSelected => "not-selected",
+                _ => "not-applicable"
+            },
+            originRecordId = value.OriginRecordId,
+            value = value.Value,
+            evidenceKind = "advisory-not-source-proof"
+        }),
+        differences = context.Differences.Select(value => new
+        {
+            repositoryId = value.RepositoryId,
+            leftScope = ScopeName(value.LeftScope),
+            rightScope = ScopeName(value.RightScope)
+        })
+    };
+
+    private static string ScopeName(OctoberContextScope scope) => scope switch
+    {
+        OctoberContextScope.Global => "global",
+        OctoberContextScope.System => "system",
+        _ => "repository"
+    };
 
     private static IResult Problem(int status, string code) =>
         Results.Problem(title: code, statusCode: status);

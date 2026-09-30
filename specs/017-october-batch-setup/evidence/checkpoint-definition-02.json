@@ -4,8 +4,8 @@
   "stage": "definition-review",
   "story_key": "18-4-prepare-an-owned-october-batch-with-valid-context-and-provid",
   "source_head": "012d41ac0e5a20f2d16ba62904d28df6eb836d26",
-  "binding_status": "pending",
-  "commit_sha": null,
+  "binding_status": "bound",
+  "commit_sha": "42a0ca056858577e96758cf921ec3e538186eea8",
   "summary": "Accepted context-provenance and management-authority continuity correction through plan-review-11, definition-review-10 and implementation-approval-04. Recovery remains open at 6/7 and T020/T029 remain resource-held.",
   "paths": [
     "specs/017-october-batch-setup/contracts/batch-setup-selection.md",

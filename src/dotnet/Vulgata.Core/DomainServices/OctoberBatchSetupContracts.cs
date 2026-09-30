@@ -30,7 +30,39 @@ public sealed record OctoberAuthorizedSelection(
     string SubjectId,
     string CanonicalDatabaseIdentity,
     IReadOnlyList<Guid> RepositoryIds,
-    string SelectionDigest);
+    string SelectionDigest,
+    OctoberSelectedAdvisoryContext? SelectedContext = null);
+
+public sealed record OctoberSelectedAdvisoryContext(
+    string ManagementAuthorityId,
+    System.Collections.Immutable.ImmutableArray<OctoberRepositorySelection> Repositories,
+    System.Collections.Immutable.ImmutableArray<OctoberAdvisoryContextEntry> Entries,
+    System.Collections.Immutable.ImmutableArray<OctoberContextDifference> Differences);
+
+public enum OctoberContextApplicability
+{
+    Selected,
+    NotSelected,
+    NotApplicable
+}
+
+public enum OctoberContextEvidenceKind
+{
+    AdvisoryNotSourceProof
+}
+
+public sealed record OctoberAdvisoryContextEntry(
+    Guid RepositoryId,
+    OctoberContextScope Scope,
+    OctoberContextApplicability Applicability,
+    Guid? OriginRecordId,
+    string? Value,
+    OctoberContextEvidenceKind EvidenceKind);
+
+public sealed record OctoberContextDifference(
+    Guid RepositoryId,
+    OctoberContextScope LeftScope,
+    OctoberContextScope RightScope);
 
 public enum OctoberPrepareStatus
 {
@@ -47,7 +79,8 @@ public sealed record OctoberCommittedBatch(
     string TargetId,
     Guid BatchId,
     string CanonicalDatabaseIdentity,
-    string SelectionDigest);
+    string SelectionDigest,
+    DateTimeOffset? SelectedAtUtc = null);
 
 public sealed record OctoberPrepareResult(
     OctoberPrepareStatus Status,
