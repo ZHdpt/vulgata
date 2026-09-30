@@ -401,6 +401,25 @@ def advance_recovery(state: Mapping, event: Mapping) -> dict:
     return projection
 
 
+def plan_review_recovery_candidate(state: Mapping, next_stage: str, next_profile: str | None,
+                                   plan_classification: str | None, *, gate_statuses=frozenset({"revised", "invalidated"})) -> bool:
+    """Identify the review owed after a corrected plan advances ownership to tasks.
+
+    Raw transition and current-plan freshness are authenticated by result_proofs.
+    This does not accept the review or authorize task progression.
+    """
+    recovery = state.get("recovery")
+    gate = state.get("gates", {}).get("plan-review")
+    return (next_stage == "plan-review" and next_profile == "definition-reviewer"
+            and plan_classification == "architecture"
+            and isinstance(recovery, Mapping) and recovery.get("action") == "correct"
+            and recovery.get("earliest_owner") == "tasks"
+            and recovery.get("closing_gate") in {"definition-review", "verify"}
+            and not recovery.get("holds")
+            and recovery.get("failed_results", 0) < recovery.get("pause_at", 0)
+            and isinstance(gate, Mapping) and gate.get("status") in gate_statuses)
+
+
 def recovery_dispatch_decision(state: Mapping, next_stage: str, next_profile: str | None = None, *, plan_classification: str | None = None) -> dict:
     """Guard corrections/author continuity; ordinary lifecycle gates stay upstream."""
     def decision(allowed: bool, action: str, reason: str) -> dict:
@@ -415,7 +434,8 @@ def recovery_dispatch_decision(state: Mapping, next_stage: str, next_profile: st
         action = recovery["action"]
         if action in {"pause", "authority", "blocked", "diagnose"}:
             return decision(False, action, f"resolve recovery action {action} before dispatch")
-        if action == "correct" and next_stage != _OWNER_STAGE[recovery["earliest_owner"]]:
+        if (action == "correct" and next_stage != _OWNER_STAGE[recovery["earliest_owner"]]
+                and not plan_review_recovery_candidate(state, next_stage, next_profile, plan_classification)):
             return decision(False, "return_to_owner", f"correct the earliest invalid owner: {recovery['earliest_owner']}")
     profile = state["definition_author"]["profile"]
     if next_profile in {*RECOVERY_PROFILES, "plan-architect-high"}:

@@ -5,6 +5,16 @@ verification or authorization to start a story.
 
 ## Installed boundary
 
+On September 30, a user-authorized bounded local validator correction restored the
+required independent plan-review route after a fresh corrected architecture plan
+advances recovery ownership to tasks, including an already-started implementation
+whose recovery closes only at final verification. The correction authenticates the
+current plan hash and transition ancestry, retains reviewer/hold/budget/gate checks,
+and does not accept the review or authorize tasks. Focused dispatch, ACCEPT-recording,
+stale-proof and restriction regressions pass 5/5; targeted dependency and live-story
+guard checks pass. This is an installed Vulgata workflow correction, not a Story 18.4
+product or architecture decision and not an upstream distribution release.
+
 - Distribution: **0.7.4**, installed September 28 from the validated governed-delivery
   working tree based on source HEAD `992cf3b96c08a3501e1d80115b7cf4f41a1a202c`;
   release changes remain uncommitted in the source project. This updates workflow

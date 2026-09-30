@@ -442,6 +442,53 @@ def validate_closure(event, state, read: Reader, config=None) -> list[str]:
         return [f"closure proof: {exc}"]
 
 
+def _fresh_corrected_plan_review_boundary(state, read: Reader) -> None:
+    """Authenticate the current plan and its latest successful author phase."""
+    plan = _object(state.get("artifacts", {}).get("plan"), "current plan")
+    plan_path = _text(plan.get("path"), "current plan path")
+    plan_content = read(plan_path)
+    if plan_content is None or hashlib.sha256(plan_content).hexdigest() != plan.get("sha256"):
+        raise ValueError("current plan is missing or stale")
+
+    head = state.get("transition_head")
+    story_key = state.get("bmad_story_key")
+    later_sequence = None
+    visited = set()
+    while head is not None:
+        if head.get("path") in visited:
+            raise ValueError("plan review transition ancestry contains a cycle")
+        visited.add(head.get("path"))
+        transition = _object(_record(head, read, "plan review transition").get("transition"),
+                             "plan review transition")
+        sequence = transition.get("sequence")
+        if (transition.get("story_key") != story_key or type(sequence) is not int
+                or sequence < 1 or (later_sequence is not None and sequence != later_sequence - 1)):
+            raise ValueError("plan review transition ancestry is invalid")
+        event = _object(transition.get("event"), "plan review transition event")
+        kind = event.get("kind")
+        if (kind == "invalidation" and event.get("owner") in {None, "spec", "plan"}) or (
+                kind == "failure" and any(owner in {"spec", "plan"}
+                                          for owner in event.get("owners", []))) or (
+                kind == "phase_complete" and event.get("phase") == "spec"):
+            raise ValueError("plan review requires a fresh plan phase after invalidation")
+        previous = transition.get("previous_head")
+        if kind == "phase_complete" and event.get("phase") == "plan":
+            envelope = _record(event.get("result"), read, "fresh plan self-review")
+            raw = _raw(envelope)
+            hashes = _object(raw.get("input_hashes"), "fresh plan self-review input hashes")
+            if (previous is None or envelope.get("observed_after") != previous
+                    or raw.get("kind") != "self-review" or raw.get("stage") != "plan"
+                    or raw.get("outcome") != "passed" or not raw.get("summary")
+                    or hashes.get(plan_path) != plan["sha256"]):
+                raise ValueError("plan review requires a fresh successful plan self-review bound to the current plan")
+            return
+        if previous is None and sequence != 1:
+            raise ValueError("plan review transition ancestry ended early")
+        later_sequence = sequence
+        head = previous
+    raise ValueError("plan review requires a fresh successful plan phase completion")
+
+
 def validate_dispatch_proofs(state, read: Reader, next_stage, config=None) -> list[str]:
     """Authenticate current boundaries separately from immutable historical heads.
 
@@ -460,6 +507,11 @@ def validate_dispatch_proofs(state, read: Reader, next_stage, config=None) -> li
     production = {"implement", "converge", "lookback", "quality-review", "conditional-e2e", "verify", "complete"}
     try:
         _object(state, "state")
+        if next_stage == "plan-review":
+            from decision_policy import plan_review_recovery_candidate
+            classification = _plan_classification(state, read)
+            if plan_review_recovery_candidate(state, next_stage, "definition-reviewer", classification):
+                _fresh_corrected_plan_review_boundary(state, read)
         if next_stage not in production:
             return []
         gates = _object(state.get("gates"), "current gates")
@@ -505,6 +557,14 @@ def validate_result(event, state, read: Reader, config=None, expected_head=None)
         definition_pending = isinstance(recovery, Mapping) and (recovery.get("action") == "correct" or state.get("gates", {}).get("definition-review", {}).get("status") != "accepted")
         if definition_pending and recovery.get("earliest_owner") in ("spec", "plan", "tasks") and not event.get("resolved_holds"):
             gates = ("definition-review",) if recovery["earliest_owner"] == "tasks" else ("plan-review", "definition-review")
+            if raw.get("gate") == "plan-review":
+                from decision_policy import plan_review_recovery_candidate
+                classification = _plan_classification(state, read)
+                if plan_review_recovery_candidate(
+                        state, "plan-review", "definition-reviewer", classification,
+                        gate_statuses=frozenset({"accepted"})):
+                    _fresh_corrected_plan_review_boundary(state, read)
+                    gates = ("plan-review", "definition-review")
             if raw.get("verdict") != "ACCEPT" or raw.get("gate") not in gates:
                 raise ValueError("definition-owned recovery advances through author phase_complete or its relevant independent review, not an unrelated passing check")
         if raw.get("verdict") == "ACCEPT":
