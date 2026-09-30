@@ -1,4 +1,6 @@
 using System.Text.Json;
+using Microsoft.Extensions.AI;
+using Vulgata.Agents.WorkerExecution;
 using Vulgata.Core.DomainServices;
 using Vulgata.Infrastructure.Analysis.Java;
 using Vulgata.Infrastructure.Source;
@@ -11,6 +13,87 @@ namespace Vulgata.Tests.AnalysisRuntime;
 [Collection(PreparedSourceTestCollection.Name)]
 public sealed class JdtLsPreparedNavigationTests
 {
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData(@"C:\outside\Secret.java")]
+    [InlineData("../outside/Secret.java")]
+    [InlineData(@"src\main\java\Secret.java")]
+    public async Task DefinitionFunction_WithNonCanonicalRepositoryPath_DeniesWithoutSessionCall(
+        string relativePath)
+    {
+        await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
+        string callerDirectory = Path.Combine(fixture.PreparedRootPath, "src", "main", "java", "example");
+        Directory.CreateDirectory(callerDirectory);
+        await File.WriteAllTextAsync(Path.Combine(callerDirectory, "Caller.java"), "class Caller {}\n");
+
+        fixture.Authority.Approve(fixture.Approval);
+        var toolAuthorization = new ControlledPreparedToolUseAuthorizer(
+            fixture.Approval,
+            PreparedToolPurpose.JdtNavigation);
+        var issuer = new PreparedToolWorkspaceIssuer(fixture.Authority, toolAuthorization);
+        PreparedToolWorkspaceIssueResult issue = await issuer.IssueAsync(
+            new PreparedToolWorkspaceGrantRequest(
+                fixture.Approval,
+                fixture.PreparedRootPath,
+                PreparedToolPurpose.JdtNavigation,
+                TimeSpan.FromSeconds(10)));
+        Assert.Equal(PreparedToolWorkspaceIssueStatus.Issued, issue.Status);
+        PreparedToolWorkspaceLease lease = Assert.IsType<PreparedToolWorkspaceLease>(issue.Lease);
+
+        string disposableStateRoot = Path.Combine(fixture.SiblingPath, "jdt-state");
+        Directory.CreateDirectory(disposableStateRoot);
+        var runtime = new ControlledPreparedJdtLsRuntime();
+        var factory = new PreparedJavaNavigationContextFactory(
+            new PreparedJavaNavigationProfile(
+                disposableStateRoot,
+                TimeSpan.FromSeconds(3),
+                TimeSpan.FromSeconds(2),
+                TimeSpan.FromSeconds(1),
+                MaximumResponseBytes: 64 * 1024),
+            runtime);
+        PreparedJavaNavigationOpenResult? open = null;
+
+        try
+        {
+            open = await factory.OpenAsync(lease);
+            Assert.Equal(PreparedJavaNavigationOpenStatus.Opened, open.Status);
+            IPreparedJavaNavigationContext context =
+                Assert.IsAssignableFrom<IPreparedJavaNavigationContext>(open.Context);
+            AIFunction definitionFunction = Assert.Single(
+                new PreparedJavaNavigationFunctions(context).Create().Where(
+                    function => function.Name == "navigate_java_definition"));
+
+            object? rawResult = await definitionFunction.InvokeAsync(
+                new AIFunctionArguments(new Dictionary<string, object?>
+                {
+                    ["relativePath"] = relativePath,
+                    ["line"] = 1,
+                    ["character"] = 1,
+                    ["maximumLocations"] = 5,
+                }),
+                CancellationToken.None);
+
+            PreparedJavaNavigationResult result = Assert.IsType<PreparedJavaNavigationResult>(rawResult);
+            Assert.Equal(PreparedJavaNavigationOutcome.Denied, result.Outcome);
+            Assert.Empty(result.Locations);
+            Assert.Empty(result.Limitations);
+            Assert.Null(result.StoppingLimit);
+            Assert.Equal(0, runtime.Session.NavigateCallCount);
+            string serializedResult = JsonSerializer.Serialize(result);
+            Assert.DoesNotContain(fixture.PreparedRootPath, serializedResult, StringComparison.OrdinalIgnoreCase);
+            Assert.DoesNotContain(relativePath, serializedResult, StringComparison.Ordinal);
+        }
+        finally
+        {
+            if (open?.Context is not null)
+            {
+                await open.Context.DisposeAsync();
+            }
+
+            await lease.DisposeAsync();
+        }
+    }
+
     [Trait("Suite", "SelfContained")]
     [SuiteFact("SelfContained")]
     public async Task OpenAsync_WithCurrentJdtLease_PassesFixedProfileAndReturnsOneContext()
@@ -335,7 +418,7 @@ public sealed class JdtLsPreparedNavigationTests
 
     [Trait("Suite", "SelfContained")]
     [SuiteFact("SelfContained")]
-    public async Task GetDefinitionAsync_WithContainedRawFileLocation_ReturnsRepositoryRelativeLocation()
+    public async Task DefinitionFunction_WithContainedRawFileLocation_ReturnsRepositoryRelativeLocation()
     {
         await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
         string javaDirectory = Path.Combine(fixture.PreparedRootPath, "src", "main", "java", "example");
@@ -380,8 +463,19 @@ public sealed class JdtLsPreparedNavigationTests
             Assert.Equal(PreparedJavaNavigationOpenStatus.Opened, open.Status);
             IPreparedJavaNavigationContext context = Assert.IsAssignableFrom<IPreparedJavaNavigationContext>(open.Context);
 
-            PreparedJavaNavigationResult result = await context.GetDefinitionAsync(
-                new PreparedJavaNavigationRequest("src/main/java/example/Caller.java", 1, 1, 5));
+            AIFunction definitionFunction = Assert.Single(
+                new PreparedJavaNavigationFunctions(context).Create().Where(
+                    function => function.Name == "navigate_java_definition"));
+            object? rawWorkerResult = await definitionFunction.InvokeAsync(
+                new AIFunctionArguments(new Dictionary<string, object?>
+                {
+                    ["relativePath"] = "src/main/java/example/Caller.java",
+                    ["line"] = 1,
+                    ["character"] = 1,
+                    ["maximumLocations"] = 5,
+                }),
+                CancellationToken.None);
+            PreparedJavaNavigationResult result = Assert.IsType<PreparedJavaNavigationResult>(rawWorkerResult);
 
             Assert.Equal(fixture.Approval.RepositoryId, result.RepositoryId);
             Assert.Equal(PreparedJavaNavigationOperation.Definition, result.Operation);
@@ -411,7 +505,7 @@ public sealed class JdtLsPreparedNavigationTests
 
     [Trait("Suite", "SelfContained")]
     [SuiteFact("SelfContained")]
-    public async Task GetDefinitionAsync_WithJsonDecodedDeviceUriWithholdsRawPathAndMapsContainedControl()
+    public async Task DefinitionFunction_WithJsonDecodedUntrustedUrisWithholdsPathsAndMapsContainedControl()
     {
         await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
         string javaDirectory = Path.Combine(fixture.PreparedRootPath, "src", "main", "java", "example");
@@ -421,10 +515,31 @@ public sealed class JdtLsPreparedNavigationTests
         await File.WriteAllTextAsync(targetFilePath, "package example; class Target {}\n");
 
         string rawDevicePath = $"""\\?\{targetFilePath}""";
-        using JsonDocument protocolReply = JsonDocument.Parse(
-            JsonSerializer.Serialize(new { uri = rawDevicePath }));
-        string decodedRawUri = Assert.IsType<string>(protocolReply.RootElement.GetProperty("uri").GetString());
-        Assert.Equal(rawDevicePath, decodedRawUri);
+        string rawDeviceNamespace = $"""\\.\{targetFilePath}""";
+        string symlinkPath = Path.Combine(javaDirectory, "EscapesToSentinel.java");
+        File.CreateSymbolicLink(symlinkPath, fixture.SentinelPath);
+        string rootUri = new Uri(fixture.PreparedRootPath + Path.DirectorySeparatorChar).AbsoluteUri;
+        string driveRoot = Path.GetPathRoot(targetFilePath)!;
+        string fileRelativeToDrive = Path.GetRelativePath(driveRoot, targetFilePath).Replace('\\', '/');
+        string[] rawUntrustedUris =
+        [
+            rawDevicePath,
+            rawDeviceNamespace,
+            $"file:///?/{driveRoot.Replace('\\', '/')}{fileRelativeToDrive}",
+            "https://example.invalid/Target.java",
+            new Uri(fixture.SentinelPath).AbsoluteUri,
+            new Uri(symlinkPath).AbsoluteUri,
+            rootUri + "%2e%2e/outside/sentinel.txt",
+            rootUri + "src/main/java%2FTarget.java",
+            "file://server/share/Secret.java",
+            new Uri(targetFilePath).AbsoluteUri + "?token=private",
+            new Uri(targetFilePath).AbsoluteUri + "#private-fragment",
+        ];
+        using JsonDocument protocolReply = JsonDocument.Parse(JsonSerializer.Serialize(rawUntrustedUris));
+        string[] decodedRawUris = protocolReply.RootElement.EnumerateArray()
+            .Select(element => Assert.IsType<string>(element.GetString()))
+            .ToArray();
+        Assert.Equal(rawUntrustedUris, decodedRawUris);
         string canonicalContainedUri = new Uri(targetFilePath).AbsoluteUri;
 
         fixture.Authority.Approve(fixture.Approval);
@@ -451,10 +566,9 @@ public sealed class JdtLsPreparedNavigationTests
             MaximumResponseBytes: 64 * 1024);
         var runtime = new ControlledPreparedJdtLsRuntime();
         runtime.Session.Reply = new PreparedJdtLsRawReply(
-            [
-                new PreparedJdtLsRawLocation(decodedRawUri, 2, 3, 2, 12),
-                new PreparedJdtLsRawLocation(canonicalContainedUri, 4, 9, 4, 21),
-            ],
+            decodedRawUris.Select(rawUri => new PreparedJdtLsRawLocation(rawUri, 2, 3, 2, 12))
+                .Append(new PreparedJdtLsRawLocation(canonicalContainedUri, 4, 9, 4, 21))
+                .ToArray(),
             LimitReached: false,
             CapabilityLimitation: null);
         var factory = new PreparedJavaNavigationContextFactory(profile, runtime);
@@ -466,8 +580,19 @@ public sealed class JdtLsPreparedNavigationTests
             Assert.Equal(PreparedJavaNavigationOpenStatus.Opened, open.Status);
             IPreparedJavaNavigationContext context = Assert.IsAssignableFrom<IPreparedJavaNavigationContext>(open.Context);
 
-            PreparedJavaNavigationResult result = await context.GetDefinitionAsync(
-                new PreparedJavaNavigationRequest("src/main/java/example/Caller.java", 1, 1, 5));
+            AIFunction definitionFunction = Assert.Single(
+                new PreparedJavaNavigationFunctions(context).Create().Where(
+                    function => function.Name == "navigate_java_definition"));
+            object? rawWorkerResult = await definitionFunction.InvokeAsync(
+                new AIFunctionArguments(new Dictionary<string, object?>
+                {
+                    ["relativePath"] = "src/main/java/example/Caller.java",
+                    ["line"] = 1,
+                    ["character"] = 1,
+                    ["maximumLocations"] = decodedRawUris.Length + 1,
+                }),
+                CancellationToken.None);
+            PreparedJavaNavigationResult result = Assert.IsType<PreparedJavaNavigationResult>(rawWorkerResult);
 
             Assert.Equal(PreparedJavaNavigationOutcome.Observed, result.Outcome);
             Assert.Equal(
@@ -478,11 +603,19 @@ public sealed class JdtLsPreparedNavigationTests
                     4,
                     21),
                 Assert.Single(result.Locations));
-            PreparedJavaLimitation limitation = Assert.Single(result.Limitations);
-            Assert.Equal("UnmappableLocation", limitation.Code);
-            Assert.Null(limitation.Source);
+            Assert.Equal(decodedRawUris.Length, result.Limitations.Count);
+            Assert.All(result.Limitations, limitation =>
+            {
+                Assert.Equal("UnmappableLocation", limitation.Code);
+                Assert.Null(limitation.Source);
+            });
             string serializedResult = JsonSerializer.Serialize(result);
-            Assert.DoesNotContain(rawDevicePath, serializedResult, StringComparison.Ordinal);
+            foreach (string rawUri in decodedRawUris)
+            {
+                Assert.DoesNotContain(rawUri, serializedResult, StringComparison.Ordinal);
+            }
+
+            Assert.DoesNotContain(fixture.SentinelPath, serializedResult, StringComparison.OrdinalIgnoreCase);
             Assert.DoesNotContain(fixture.PreparedRootPath, serializedResult, StringComparison.OrdinalIgnoreCase);
         }
         finally
