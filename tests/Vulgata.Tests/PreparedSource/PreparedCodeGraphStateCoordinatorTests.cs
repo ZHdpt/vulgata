@@ -336,6 +336,134 @@ public sealed class PreparedCodeGraphStateCoordinatorTests
 
     [Trait("Suite", "SelfContained")]
     [SuiteFact("SelfContained")]
+    public async Task GetOwnershipViewAsync_RejectsPersistedTransitionalAndInconsistentRecords()
+    {
+        await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
+        fixture.Authority.Approve(fixture.Approval);
+
+        string statePath = Path.Combine(fixture.PreparedRootPath, ".codegraph");
+        Directory.CreateDirectory(statePath);
+        string stateContentPath = Path.Combine(statePath, "index.bin");
+        await File.WriteAllTextAsync(stateContentPath, "state retained while classification is unavailable");
+        string originalSource = await File.ReadAllTextAsync(fixture.UnfamiliarTextPath);
+        string originalSibling = await File.ReadAllTextAsync(fixture.SentinelPath);
+        PreparedToolDirectoryObjectIdentity entryIdentity = ObserveDirectoryIdentity(statePath);
+        PreparedToolDirectoryObjectIdentity rootIdentity = ObserveDirectoryIdentity(fixture.PreparedRootPath);
+
+        foreach (PreparedCodeGraphOwnershipPhase phase in new[]
+        {
+            PreparedCodeGraphOwnershipPhase.Creating,
+            PreparedCodeGraphOwnershipPhase.Disposing,
+            PreparedCodeGraphOwnershipPhase.Quarantined,
+            PreparedCodeGraphOwnershipPhase.Removed,
+        })
+        {
+            var persistedRecord = new PreparedCodeGraphWorkspaceOwnership(
+                Guid.NewGuid(),
+                Version: 3,
+                phase,
+                fixture.Approval,
+                Path.GetFullPath(fixture.PreparedRootPath),
+                rootIdentity,
+                WorkspaceOwnerIdentity: $"owner-{fixture.SandboxId:N}",
+                StateEntryObjectIdentity: phase == PreparedCodeGraphOwnershipPhase.Creating
+                    ? null
+                    : entryIdentity);
+            var store = new RecordingOwnershipStore();
+            store.Seed(persistedRecord);
+            var coordinator = new PreparedCodeGraphStateCoordinator(
+                fixture.Authority,
+                new TestToolUseAuthorizer(),
+                new RecordingWorkspaceOwnershipVerifier(),
+                store);
+
+            PreparedCodeGraphOwnershipViewResult view = await coordinator.GetOwnershipViewAsync(
+                persistedRecord,
+                fixture.Approval);
+
+            Assert.True(
+                view.Status == PreparedCodeGraphOwnershipViewStatus.Unavailable,
+                $"A loaded {phase} record must not establish a positive ownership view.");
+            Assert.Null(view.Record);
+        }
+
+        Assert.Equal(
+            "state retained while classification is unavailable",
+            await File.ReadAllTextAsync(stateContentPath));
+        Assert.Equal(originalSource, await File.ReadAllTextAsync(fixture.UnfamiliarTextPath));
+        Assert.Equal(originalSibling, await File.ReadAllTextAsync(fixture.SentinelPath));
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task UseOwnedStateAsync_DoesNotAdoptPreexistingSameNameEntry()
+    {
+        await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
+        fixture.Authority.Approve(fixture.Approval);
+
+        string statePath = Path.Combine(fixture.PreparedRootPath, ".codegraph");
+        Directory.CreateDirectory(statePath);
+        string preexistingContentPath = Path.Combine(statePath, "unowned.txt");
+        await File.WriteAllTextAsync(preexistingContentPath, "preexisting same-name entry");
+        string originalSource = await File.ReadAllTextAsync(fixture.UnfamiliarTextPath);
+        string originalSibling = await File.ReadAllTextAsync(fixture.SentinelPath);
+
+        var authorization = new TestToolUseAuthorizer();
+        authorization.Allow(fixture.Approval, PreparedToolPurpose.CodeGraphPreparation);
+        var issuer = new PreparedToolWorkspaceIssuer(fixture.Authority, authorization);
+        PreparedToolWorkspaceIssueResult issue = await issuer.IssueAsync(
+            new PreparedToolWorkspaceGrantRequest(
+                fixture.Approval,
+                fixture.PreparedRootPath,
+                PreparedToolPurpose.CodeGraphPreparation,
+                TimeSpan.FromSeconds(5)));
+        Assert.Equal(PreparedToolWorkspaceIssueStatus.Issued, issue.Status);
+        PreparedToolWorkspaceLease lease = Assert.IsType<PreparedToolWorkspaceLease>(issue.Lease);
+
+        var absentBinding = new PreparedCodeGraphWorkspaceOwnership(
+            Guid.NewGuid(),
+            Version: 0,
+            PreparedCodeGraphOwnershipPhase.Absent,
+            fixture.Approval,
+            Path.GetFullPath(fixture.PreparedRootPath),
+            ObserveDirectoryIdentity(fixture.PreparedRootPath),
+            WorkspaceOwnerIdentity: $"owner-{fixture.SandboxId:N}",
+            StateEntryObjectIdentity: null);
+        var store = new RecordingOwnershipStore();
+        var coordinator = new PreparedCodeGraphStateCoordinator(
+            fixture.Authority,
+            authorization,
+            new RecordingWorkspaceOwnershipVerifier(),
+            store);
+        int callbackCount = 0;
+
+        try
+        {
+            PreparedToolWorkspaceCheckStatus result = await coordinator.UseOwnedStateAsync(
+                lease,
+                absentBinding,
+                (_, _) =>
+                {
+                    callbackCount++;
+                    return ValueTask.CompletedTask;
+                });
+
+            Assert.Equal(PreparedToolWorkspaceCheckStatus.Denied, result);
+            Assert.Equal(0, callbackCount);
+            Assert.Empty(store.CommittedPhases);
+            Assert.Null(store.CurrentRecord);
+            Assert.Equal("preexisting same-name entry", await File.ReadAllTextAsync(preexistingContentPath));
+            Assert.Equal(originalSource, await File.ReadAllTextAsync(fixture.UnfamiliarTextPath));
+            Assert.Equal(originalSibling, await File.ReadAllTextAsync(fixture.SentinelPath));
+        }
+        finally
+        {
+            await lease.DisposeAsync();
+        }
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task DisposeOwnedStateAsync_LeavesSubstitutedEntryAndSourceUntouched()
     {
         await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
