@@ -69,7 +69,7 @@ public sealed record PreparedJdtLsRawReply(
     string? CapabilityLimitation);
 
 public sealed record PreparedJdtLsRawLocation(
-    Uri Uri,
+    string RawProtocolUri,
     int StartLine,
     int StartCharacter,
     int EndLine,

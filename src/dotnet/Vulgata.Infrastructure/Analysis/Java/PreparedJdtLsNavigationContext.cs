@@ -113,7 +113,7 @@ public sealed class PreparedJdtLsNavigationContext : IPreparedJavaNavigationCont
                     foreach (PreparedJdtLsRawLocation location in raw.Locations.Take(request.MaximumLocations))
                     {
                         if (location is not null &&
-                            scope.TryMapContainedFileUri(location.Uri, out PreparedSourceLocation? source) &&
+                            scope.TryMapContainedFileUri(location.RawProtocolUri, out PreparedSourceLocation? source) &&
                             source is not null &&
                             ValidRange(location))
                         {

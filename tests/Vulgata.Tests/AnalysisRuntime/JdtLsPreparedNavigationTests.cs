@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Vulgata.Core.DomainServices;
 using Vulgata.Infrastructure.Analysis.Java;
 using Vulgata.Infrastructure.Source;
@@ -367,7 +368,7 @@ public sealed class JdtLsPreparedNavigationTests
             MaximumResponseBytes: 64 * 1024);
         var runtime = new ControlledPreparedJdtLsRuntime();
         runtime.Session.Reply = new PreparedJdtLsRawReply(
-            [new PreparedJdtLsRawLocation(new Uri(targetFilePath), 4, 9, 4, 21)],
+            [new PreparedJdtLsRawLocation(new Uri(targetFilePath).AbsoluteUri, 4, 9, 4, 21)],
             LimitReached: false,
             CapabilityLimitation: null);
         var factory = new PreparedJavaNavigationContextFactory(profile, runtime);
@@ -396,6 +397,93 @@ public sealed class JdtLsPreparedNavigationTests
             Assert.Empty(result.Limitations);
             Assert.Null(result.StoppingLimit);
             Assert.Equal(1, runtime.Session.NavigateCallCount);
+        }
+        finally
+        {
+            if (open?.Context is not null)
+            {
+                await open.Context.DisposeAsync();
+            }
+
+            await lease.DisposeAsync();
+        }
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task GetDefinitionAsync_WithJsonDecodedDeviceUriWithholdsRawPathAndMapsContainedControl()
+    {
+        await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
+        string javaDirectory = Path.Combine(fixture.PreparedRootPath, "src", "main", "java", "example");
+        Directory.CreateDirectory(javaDirectory);
+        await File.WriteAllTextAsync(Path.Combine(javaDirectory, "Caller.java"), "package example; class Caller {}\n");
+        string targetFilePath = Path.Combine(javaDirectory, "Target.java");
+        await File.WriteAllTextAsync(targetFilePath, "package example; class Target {}\n");
+
+        string rawDevicePath = $"""\\?\{targetFilePath}""";
+        using JsonDocument protocolReply = JsonDocument.Parse(
+            JsonSerializer.Serialize(new { uri = rawDevicePath }));
+        string decodedRawUri = Assert.IsType<string>(protocolReply.RootElement.GetProperty("uri").GetString());
+        Assert.Equal(rawDevicePath, decodedRawUri);
+        string canonicalContainedUri = new Uri(targetFilePath).AbsoluteUri;
+
+        fixture.Authority.Approve(fixture.Approval);
+        var toolAuthorization = new ControlledPreparedToolUseAuthorizer(
+            fixture.Approval,
+            PreparedToolPurpose.JdtNavigation);
+        var issuer = new PreparedToolWorkspaceIssuer(fixture.Authority, toolAuthorization);
+        PreparedToolWorkspaceIssueResult issue = await issuer.IssueAsync(
+            new PreparedToolWorkspaceGrantRequest(
+                fixture.Approval,
+                fixture.PreparedRootPath,
+                PreparedToolPurpose.JdtNavigation,
+                TimeSpan.FromSeconds(10)));
+        Assert.Equal(PreparedToolWorkspaceIssueStatus.Issued, issue.Status);
+        PreparedToolWorkspaceLease lease = Assert.IsType<PreparedToolWorkspaceLease>(issue.Lease);
+
+        string disposableStateRoot = Path.Combine(fixture.SiblingPath, "jdt-state");
+        Directory.CreateDirectory(disposableStateRoot);
+        var profile = new PreparedJavaNavigationProfile(
+            disposableStateRoot,
+            TimeSpan.FromSeconds(3),
+            TimeSpan.FromSeconds(2),
+            TimeSpan.FromSeconds(1),
+            MaximumResponseBytes: 64 * 1024);
+        var runtime = new ControlledPreparedJdtLsRuntime();
+        runtime.Session.Reply = new PreparedJdtLsRawReply(
+            [
+                new PreparedJdtLsRawLocation(decodedRawUri, 2, 3, 2, 12),
+                new PreparedJdtLsRawLocation(canonicalContainedUri, 4, 9, 4, 21),
+            ],
+            LimitReached: false,
+            CapabilityLimitation: null);
+        var factory = new PreparedJavaNavigationContextFactory(profile, runtime);
+        PreparedJavaNavigationOpenResult? open = null;
+
+        try
+        {
+            open = await factory.OpenAsync(lease);
+            Assert.Equal(PreparedJavaNavigationOpenStatus.Opened, open.Status);
+            IPreparedJavaNavigationContext context = Assert.IsAssignableFrom<IPreparedJavaNavigationContext>(open.Context);
+
+            PreparedJavaNavigationResult result = await context.GetDefinitionAsync(
+                new PreparedJavaNavigationRequest("src/main/java/example/Caller.java", 1, 1, 5));
+
+            Assert.Equal(PreparedJavaNavigationOutcome.Observed, result.Outcome);
+            Assert.Equal(
+                new PreparedJavaLocation(
+                    new PreparedSourceLocation(fixture.Approval.RepositoryId, "src/main/java/example/Target.java"),
+                    4,
+                    9,
+                    4,
+                    21),
+                Assert.Single(result.Locations));
+            PreparedJavaLimitation limitation = Assert.Single(result.Limitations);
+            Assert.Equal("UnmappableLocation", limitation.Code);
+            Assert.Null(limitation.Source);
+            string serializedResult = JsonSerializer.Serialize(result);
+            Assert.DoesNotContain(rawDevicePath, serializedResult, StringComparison.Ordinal);
+            Assert.DoesNotContain(fixture.PreparedRootPath, serializedResult, StringComparison.OrdinalIgnoreCase);
         }
         finally
         {
@@ -515,7 +603,7 @@ public sealed class JdtLsPreparedNavigationTests
             TimeSpan.FromMilliseconds(200),
             MaximumResponseBytes: 64 * 1024);
         var runtime = new UnsettledNavigationRuntime(new PreparedJdtLsRawReply(
-            [new PreparedJdtLsRawLocation(new Uri(callerPath), 1, 1, 1, 10)],
+            [new PreparedJdtLsRawLocation(new Uri(callerPath).AbsoluteUri, 1, 1, 1, 10)],
             LimitReached: false,
             CapabilityLimitation: null));
         var factory = new PreparedJavaNavigationContextFactory(profile, runtime);
