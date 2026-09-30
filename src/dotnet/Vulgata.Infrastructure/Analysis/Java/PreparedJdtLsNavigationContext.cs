@@ -121,7 +121,10 @@ public sealed class PreparedJdtLsNavigationContext : IPreparedJavaNavigationCont
 
             if (raw?.Locations is null)
             {
-                return Empty(operation, PreparedJavaNavigationOutcome.ProtocolFailed);
+                bool settled = await RetireSessionUnderGateAsync();
+                return Empty(operation, settled
+                    ? PreparedJavaNavigationOutcome.ProtocolFailed
+                    : PreparedJavaNavigationOutcome.ConfigurationUnavailable);
             }
 
             var locations = new List<PreparedJavaLocation>();
