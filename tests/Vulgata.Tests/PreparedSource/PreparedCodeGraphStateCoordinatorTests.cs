@@ -260,6 +260,82 @@ public sealed class PreparedCodeGraphStateCoordinatorTests
 
     [Trait("Suite", "SelfContained")]
     [SuiteFact("SelfContained")]
+    public async Task GetOwnershipViewAsync_DistinguishesUnavailableAbsenceAndForeignOwnership()
+    {
+        await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
+        fixture.Authority.Approve(fixture.Approval);
+
+        string statePath = Path.Combine(fixture.PreparedRootPath, ".codegraph");
+        Directory.CreateDirectory(statePath);
+        string unownedContentPath = Path.Combine(statePath, "source-owned-directory.txt");
+        await File.WriteAllTextAsync(unownedContentPath, "same-name unowned content");
+        string originalSource = await File.ReadAllTextAsync(fixture.UnfamiliarTextPath);
+        string originalSibling = await File.ReadAllTextAsync(fixture.SentinelPath);
+        var absentBinding = new PreparedCodeGraphWorkspaceOwnership(
+            Guid.NewGuid(),
+            Version: 0,
+            PreparedCodeGraphOwnershipPhase.Absent,
+            fixture.Approval,
+            Path.GetFullPath(fixture.PreparedRootPath),
+            ObserveDirectoryIdentity(fixture.PreparedRootPath),
+            WorkspaceOwnerIdentity: $"owner-{fixture.SandboxId:N}",
+            StateEntryObjectIdentity: null);
+
+        var unavailableStore = new RecordingOwnershipStore
+        {
+            EmptyLoadStatus = PreparedCodeGraphOwnershipLoadStatus.Unavailable,
+        };
+        var unavailableCoordinator = new PreparedCodeGraphStateCoordinator(
+            fixture.Authority,
+            new TestToolUseAuthorizer(),
+            new RecordingWorkspaceOwnershipVerifier(),
+            unavailableStore);
+        PreparedCodeGraphOwnershipViewResult unavailable = await unavailableCoordinator.GetOwnershipViewAsync(
+            absentBinding,
+            fixture.Approval);
+
+        var absentStore = new RecordingOwnershipStore();
+        var absentCoordinator = new PreparedCodeGraphStateCoordinator(
+            fixture.Authority,
+            new TestToolUseAuthorizer(),
+            new RecordingWorkspaceOwnershipVerifier(),
+            absentStore);
+        PreparedCodeGraphOwnershipViewResult verifiedAbsent = await absentCoordinator.GetOwnershipViewAsync(
+            absentBinding,
+            fixture.Approval);
+
+        var foreignOwner = absentBinding with
+        {
+            OwnershipId = Guid.NewGuid(),
+            Version = 4,
+            Phase = PreparedCodeGraphOwnershipPhase.Ready,
+            WorkspaceOwnerIdentity = "another-workspace-owner",
+            StateEntryObjectIdentity = ObserveDirectoryIdentity(statePath),
+        };
+        var foreignStore = new RecordingOwnershipStore();
+        foreignStore.Seed(foreignOwner);
+        var foreignCoordinator = new PreparedCodeGraphStateCoordinator(
+            fixture.Authority,
+            new TestToolUseAuthorizer(),
+            new RecordingWorkspaceOwnershipVerifier(),
+            foreignStore);
+        PreparedCodeGraphOwnershipViewResult foreign = await foreignCoordinator.GetOwnershipViewAsync(
+            absentBinding,
+            fixture.Approval);
+
+        Assert.Equal(PreparedCodeGraphOwnershipViewStatus.Unavailable, unavailable.Status);
+        Assert.Null(unavailable.Record);
+        Assert.Equal(PreparedCodeGraphOwnershipViewStatus.VerifiedUnowned, verifiedAbsent.Status);
+        Assert.Null(verifiedAbsent.Record);
+        Assert.Equal(PreparedCodeGraphOwnershipViewStatus.Unavailable, foreign.Status);
+        Assert.Null(foreign.Record);
+        Assert.Equal("same-name unowned content", await File.ReadAllTextAsync(unownedContentPath));
+        Assert.Equal(originalSource, await File.ReadAllTextAsync(fixture.UnfamiliarTextPath));
+        Assert.Equal(originalSibling, await File.ReadAllTextAsync(fixture.SentinelPath));
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task DisposeOwnedStateAsync_LeavesSubstitutedEntryAndSourceUntouched()
     {
         await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
@@ -312,6 +388,68 @@ public sealed class PreparedCodeGraphStateCoordinatorTests
         Assert.Equal(originalSibling, await File.ReadAllTextAsync(fixture.SentinelPath));
     }
 
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task DisposeOwnedStateAsync_QuarantinesWhenReadinessIsLostDuringRemoval()
+    {
+        await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
+        fixture.Authority.Approve(fixture.Approval);
+
+        string statePath = Path.Combine(fixture.PreparedRootPath, ".codegraph");
+        string cachePath = Path.Combine(statePath, "cache", "index.db");
+        Directory.CreateDirectory(Path.GetDirectoryName(cachePath)!);
+        await File.WriteAllTextAsync(cachePath, "owned state fixture");
+        string originalSource = await File.ReadAllTextAsync(fixture.UnfamiliarTextPath);
+        string originalSibling = await File.ReadAllTextAsync(fixture.SentinelPath);
+        var ready = new PreparedCodeGraphWorkspaceOwnership(
+            Guid.NewGuid(),
+            Version: 2,
+            PreparedCodeGraphOwnershipPhase.Ready,
+            fixture.Approval,
+            Path.GetFullPath(fixture.PreparedRootPath),
+            ObserveDirectoryIdentity(fixture.PreparedRootPath),
+            WorkspaceOwnerIdentity: $"owner-{fixture.SandboxId:N}",
+            StateEntryObjectIdentity: ObserveDirectoryIdentity(statePath));
+        var store = new RecordingOwnershipStore();
+        store.Seed(ready);
+        bool readinessLostAfterDeletion = false;
+        var ownerVerifier = new RecordingWorkspaceOwnershipVerifier
+        {
+            DispositionReadiness = () =>
+            {
+                if (File.Exists(cachePath))
+                {
+                    return true;
+                }
+
+                readinessLostAfterDeletion = true;
+                return false;
+            },
+        };
+        var authorization = new TestToolUseAuthorizer();
+        authorization.Allow(fixture.Approval, PreparedToolPurpose.CodeGraphPreparation);
+        var coordinator = new PreparedCodeGraphStateCoordinator(
+            fixture.Authority,
+            authorization,
+            ownerVerifier,
+            store);
+
+        PreparedToolWorkspaceCheckStatus result = await coordinator.DisposeOwnedStateAsync(
+            fixture.Approval,
+            ready);
+
+        Assert.Equal(PreparedToolWorkspaceCheckStatus.RootUnavailable, result);
+        Assert.True(readinessLostAfterDeletion,
+            "Disposition must recheck workspace readiness after each completed removal before continuing.");
+        Assert.Equal(PreparedCodeGraphOwnershipPhase.Quarantined, store.CurrentRecord?.Phase);
+        Assert.True(store.QuarantineAttempted,
+            "A partially removed state tree must not remain classified as reusable after readiness is lost.");
+        Assert.False(File.Exists(cachePath), "The controlled revocation occurs after the owned file is removed.");
+        Assert.True(Directory.Exists(statePath), "Cleanup must stop while owned state remains after authority loss.");
+        Assert.Equal(originalSource, await File.ReadAllTextAsync(fixture.UnfamiliarTextPath));
+        Assert.Equal(originalSibling, await File.ReadAllTextAsync(fixture.SentinelPath));
+    }
+
     private static PreparedToolDirectoryObjectIdentity ObserveDirectoryIdentity(string path)
     {
         (PreparedSourceTraversal.OpenStatus status, SafeFileHandle? handle) =
@@ -353,6 +491,9 @@ public sealed class PreparedCodeGraphStateCoordinatorTests
 
         internal int TerminalReadbackCount { get; private set; }
 
+        internal PreparedCodeGraphOwnershipLoadStatus EmptyLoadStatus { get; init; } =
+            PreparedCodeGraphOwnershipLoadStatus.VerifiedAbsent;
+
         internal void Seed(PreparedCodeGraphWorkspaceOwnership ready)
         {
             CurrentRecord = ready;
@@ -373,9 +514,9 @@ public sealed class PreparedCodeGraphStateCoordinatorTests
                 TerminalReadbackCount++;
             }
 
-            return Task.FromResult(record is not null && record.OwnershipId == expectedBinding.OwnershipId
+            return Task.FromResult(record is not null
                 ? new PreparedCodeGraphOwnershipLoadResult(PreparedCodeGraphOwnershipLoadStatus.Found, record)
-                : new PreparedCodeGraphOwnershipLoadResult(PreparedCodeGraphOwnershipLoadStatus.VerifiedAbsent, null));
+                : new PreparedCodeGraphOwnershipLoadResult(EmptyLoadStatus, null));
         }
 
         public Task<PreparedCodeGraphOwnershipTransitionResult> BeginCreateAsync(
@@ -504,6 +645,8 @@ public sealed class PreparedCodeGraphStateCoordinatorTests
     {
         internal int DispositionReadyChecks { get; private set; }
 
+        internal Func<bool>? DispositionReadiness { get; init; }
+
         public ValueTask<bool> VerifyCurrentAsync(
             PreparedCodeGraphWorkspaceOwnership ownership,
             CancellationToken cancellationToken = default) =>
@@ -514,7 +657,7 @@ public sealed class PreparedCodeGraphStateCoordinatorTests
             CancellationToken cancellationToken = default)
         {
             DispositionReadyChecks++;
-            return ValueTask.FromResult(true);
+            return ValueTask.FromResult(DispositionReadiness?.Invoke() ?? true);
         }
     }
 
