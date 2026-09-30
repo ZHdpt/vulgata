@@ -93,19 +93,76 @@ The intended internal callable shape is:
 ```csharp
 internal sealed record PreparedToolDirectoryObjectIdentity(
     uint VolumeSerialNumber, uint FileIndexHigh, uint FileIndexLow);
+internal enum PreparedCodeGraphOwnershipPhase
+{
+    Absent, Creating, Ready, Disposing, Removed, Quarantined
+}
 internal sealed record PreparedCodeGraphWorkspaceOwnership(
+    Guid OwnershipId,
+    long Version,
+    PreparedCodeGraphOwnershipPhase Phase,
     PreparedSourceApproval Approval,
     string PhysicalRootPath,
     PreparedToolDirectoryObjectIdentity RootObjectIdentity,
     string WorkspaceOwnerIdentity,
     PreparedToolDirectoryObjectIdentity? StateEntryObjectIdentity);
+internal enum PreparedCodeGraphOwnershipTransitionStatus
+{
+    Committed, Conflict, Unavailable
+}
+internal sealed record PreparedCodeGraphOwnershipTransitionResult(
+    PreparedCodeGraphOwnershipTransitionStatus Status,
+    PreparedCodeGraphWorkspaceOwnership? Record);
+internal enum PreparedCodeGraphOwnershipLoadStatus
+{
+    Found, VerifiedAbsent, Unavailable
+}
+internal sealed record PreparedCodeGraphOwnershipLoadResult(
+    PreparedCodeGraphOwnershipLoadStatus Status,
+    PreparedCodeGraphWorkspaceOwnership? Record);
+internal enum PreparedCodeGraphOwnershipViewStatus
+{
+    VerifiedOwned, VerifiedUnowned, Unavailable
+}
+internal sealed record PreparedCodeGraphOwnershipViewResult(
+    PreparedCodeGraphOwnershipViewStatus Status,
+    PreparedCodeGraphWorkspaceOwnership? Record);
+internal interface IPreparedCodeGraphOwnershipStore
+{
+    // Every transition is durable and atomic, compares OwnershipId and Version,
+    // and returns its newly committed record only after persistence succeeds.
+    Task<PreparedCodeGraphOwnershipLoadResult> LoadAsync(
+        PreparedCodeGraphWorkspaceOwnership expectedBinding,
+        CancellationToken cancellationToken = default);
+    Task<PreparedCodeGraphOwnershipTransitionResult> BeginCreateAsync(
+        PreparedCodeGraphWorkspaceOwnership absent,
+        CancellationToken cancellationToken = default);
+    Task<PreparedCodeGraphOwnershipTransitionResult> CommitCreatedAsync(
+        PreparedCodeGraphWorkspaceOwnership creating,
+        PreparedToolDirectoryObjectIdentity createdEntry,
+        CancellationToken cancellationToken = default);
+    Task<PreparedCodeGraphOwnershipTransitionResult> BeginDispositionAsync(
+        PreparedCodeGraphWorkspaceOwnership ready,
+        CancellationToken cancellationToken = default);
+    Task<PreparedCodeGraphOwnershipTransitionResult> CommitRemovedAsync(
+        PreparedCodeGraphWorkspaceOwnership disposing,
+        CancellationToken cancellationToken = default);
+    Task<PreparedCodeGraphOwnershipTransitionResult> QuarantineAsync(
+        PreparedCodeGraphWorkspaceOwnership current,
+        CancellationToken cancellationToken = default);
+}
 
 internal sealed class PreparedCodeGraphStateCoordinator
 {
     internal PreparedCodeGraphStateCoordinator(
         IPreparedSourceCurrentAuthorityVerifier sourceAuthority,
         IPreparedToolUseAuthorizer toolAuthorization,
-        IPreparedCodeGraphWorkspaceOwnershipVerifier workspaceOwnershipVerifier);
+        IPreparedCodeGraphWorkspaceOwnershipVerifier workspaceOwnershipVerifier,
+        IPreparedCodeGraphOwnershipStore ownershipStore);
+    internal Task<PreparedCodeGraphOwnershipViewResult> GetOwnershipViewAsync(
+        PreparedCodeGraphWorkspaceOwnership workspaceBinding,
+        PreparedSourceApproval currentApproval,
+        CancellationToken cancellationToken = default);
     internal Task<PreparedToolWorkspaceCheckStatus> UseOwnedStateAsync(
         PreparedToolWorkspaceLease codeGraphLease,
         PreparedCodeGraphWorkspaceOwnership workspaceOwnership,
@@ -135,11 +192,15 @@ internal sealed class PreparedCodeGraphStateScope
 }
 ```
 
-The ownership record is issued and verified by trusted composition, never constructed from a Worker/tool result. `StateEntryObjectIdentity == null` means no entry has been created and is valid only before the exclusive create; an owned entry requires the recorded non-null object identity. The only accepted state-entry name is the coordinator's fixed `.codegraph` constant, not a record or call argument. Object identities intentionally omit mutable directory last-write time. The owner verifier must confirm the record's dedicated-workspace owner, exact grant/root and current ownership state; field equality alone is not authorization. A reader may use only a current verified non-null owned-entry record under the same approval/root binding; an unowned `.codegraph` name remains ordinary source subject to 18.3's reader policy.
+The trusted workspace owner supplies an `Absent` draft with a new `OwnershipId`, version zero, exact approved workspace/root/owner fields and null entry identity; no Worker/tool can construct or select it. `BeginCreateAsync` atomically inserts that draft as a **durable `Creating` record** only if no record for the ID/workspace exists. Every later store transition compares the expected ID/version/phase and persists its new version before returning `Committed` plus that new record; `Conflict` or `Unavailable` never returns a usable binding. The record lives in protected application-owned metadata outside `.codegraph`; the exact storage service and permissions are an implementation prerequisite, not an existing service or a new database schema. If no durable store is configured, creation and verified reads are unavailable. The only accepted state-entry name is the coordinator's fixed `.codegraph` constant, not a record or call argument. Object identities intentionally omit mutable directory last-write time.
 
-`UseOwnedStateAsync` checks a current `CodeGraphPreparation` lease, exact approval/tool authority, owner record and pinned root object identity before and after its bounded callback. It exclusively creates one absent `.codegraph` root entry using the held prepared-root handle, records its physical identity, and gives the trusted adapter only a short-lived state scope. Creation changes the prepared-root directory last-write time; the current `PreparedSourceTraversal.DirectoryIdentity` includes that mutable field, so the CodeGraph state operation must compare stable root object identity while still rejecting root replacement. It must not treat expected cache-entry metadata changes as proof of source mutation. JDT's separate-state validation is unchanged; Story 18.3 owns the ordinary reader's corresponding in-place state handling. Later leases verify the recorded identity and may use only that owned subtree. Any direct application descendant create/open/modify operation is handle-relative with no-follow traversal and verifies ownership/current authority before mutation; symlinks/reparse substitutes, hardlink aliases to source, traversal, siblings and another state name are denied. A copied trusted child binding is revalidated immediately before launch. The callback does not encompass an unbounded native MCP session; the adapter checks live authority during use and before disclosure. A post-check failure cannot report success and closes the lease. If mutation may have occurred at authority loss, quarantine the workspace; no ordinary retry adopts or deletes the entry.
+The coordinator is the sole transition producer. After `BeginCreateAsync` commits `Creating`, it confirms the entry is absent, exclusively creates `.codegraph` through the held root, observes its stable physical identity, rechecks exact source/tool/root/owner authority, and calls `CommitCreatedAsync(creating, observedEntry)`. Only a **durably committed `Ready` record with that non-null identity** may be returned by `GetOwnershipViewAsync` or used to invoke the adapter callback. A failed exclusive create, observed identity mismatch, authority loss, cancelled/failed `CommitCreatedAsync`, or uncertain persistence moves the workspace to `Quarantined` when possible; an unconfirmed `Creating` record remains unavailable after restart and requires explicit owner resolution. Never adopt a preexisting entry by name or let a null-identity draft pass a post-create check. The owner verifier confirms dedicated workspace ownership and exact grant/root independently of record field equality.
 
-`DisposeOwnedStateAsync` is invoked by trusted application composition only at workspace disposition after stopping new grants and settling CodeGraph children/handles. `dispositionApproval` is the currently selected, application-held approval, never a Worker argument; it must exactly equal the approval in the positive owner record. The coordinator's injected *existing* `IPreparedSourceCurrentAuthorityVerifier` must return `Current` with `CurrentApproval == dispositionApproval`, and its injected *existing* `IPreparedToolUseAuthorizer` must return `Current` for that approval and the hard-coded `CodeGraphPreparation` purpose. The ownership verifier's disposition-ready check must confirm stopped grants and settled child/handles from the trusted workspace/process owners; a caller assertion alone is insufficient. Before each bounded cleanup chunk, the coordinator checks these fresh results, `workspaceOwnershipVerifier.VerifyCurrentAsync`, `VerifyDispositionReadyAsync`, the dedicated workspace/owner record, and reopened held no-follow root plus recorded entry identity. After removal it repeats the fresh authority/owner/readiness and root-object checks, and verifies that the recorded entry is absent; there is no removed entry identity to compare. A substituted entry is never deleted by name. Neither the record nor a previously granted or revoked lease supplies current source/tool authority. A denied, changed, unavailable, cancelled or timed-out check prevents further deletion and cannot report success. If cleanup has begun, if a child/handle is not demonstrably settled, or if the post-check fails, the workspace is quarantined and unavailable for reuse; only explicit owner resolution can handle partial state, never a by-name retry. The coordinator removes only the recorded `.codegraph` entry and descendants through held-root-relative no-follow operations, never source or siblings. A resumed workspace with lost/unverifiable record is quarantined rather than adopted by name. This contract does not prescribe a new database schema or general-purpose workspace-write API.
+`GetOwnershipViewAsync` is the one internal producer of current ownership classification for later leases and Story 18.3's reader. `workspaceBinding` is the application-held exact owner/root draft or record, never a Worker argument. The store's `LoadAsync` distinguishes a current `Found` record from **positively verified absence for that same workspace key** and `Unavailable`; a null or thrown load is never interpreted as absence. The coordinator matches trusted current approval, freshly calls `IPreparedSourceCurrentAuthorityVerifier`, calls `IPreparedCodeGraphWorkspaceOwnershipVerifier.VerifyCurrentAsync` for the exact binding and observes the root/entry objects under held no-follow handles. `VerifiedOwned` contains the **same typed current `Ready` record** with non-null entry identity, after matching expected ownership ID, owner/root/approval and verifying the *loaded* version is current; an older caller copy is replaced only by this checked view, never used directly. `VerifiedUnowned` contains no positive owned record and is possible only for a verified `Absent` draft, `LoadStatus.VerifiedAbsent`, current source/workspace-owner verification and unchanged root object; a same-name source entry alone never proves ownership. A conflicting owner/root/approval, `Creating`, `Disposing`, `Removed` with a present entry, `Quarantined`, missing/unavailable store, changed entry or unavailable source/owner authority yields `Unavailable` and no record. Story 18.3 consumes these states in its reader repair: it excludes only verified owned state, retains verified unowned source, and fails closed on unavailable ownership rather than exposing cache or hiding source by name. CodeGraph preparation/use additionally requires the separate current `CodeGraphPreparation` tool authorizer and a current lease; reader classification does not treat that tool-purpose grant as the source of ownership. No second descriptor or filter contract is introduced.
+
+`UseOwnedStateAsync` checks a current `CodeGraphPreparation` lease, exact approval/tool authority, the current positive ownership record and pinned root object identity before and after its bounded callback. For an `Absent` draft it performs the durable `Creating`/exclusive-create/`Ready` handoff above before invoking the callback; for a later `Ready` record it reloads and requires `GetOwnershipViewAsync` to return `VerifiedOwned` with the same current version and physical entry identity. It never returns `Current` or exposes a state scope while the record is `Creating` or its commit is uncertain. Creation changes the prepared-root directory last-write time; the current `PreparedSourceTraversal.DirectoryIdentity` includes that mutable field, so the CodeGraph state operation must compare stable root object identity while still rejecting root replacement. It must not treat expected cache-entry metadata changes as proof of source mutation. JDT's separate-state validation is unchanged; Story 18.3 owns the ordinary reader's corresponding in-place state handling. Any direct application descendant create/open/modify operation is handle-relative with no-follow traversal and verifies ownership/current authority before mutation; symlinks/reparse substitutes, hardlink aliases to source, traversal, siblings and another state name are denied. A copied trusted child binding is revalidated immediately before launch. The callback does not encompass an unbounded native MCP session; the adapter checks live authority during use and before disclosure. A post-check failure cannot report success and closes the lease. If mutation may have occurred at authority loss, quarantine the workspace; no ordinary retry adopts or deletes the entry.
+
+`DisposeOwnedStateAsync` is invoked by trusted application composition only at workspace disposition after stopping new grants and settling CodeGraph children/handles. `dispositionApproval` is the currently selected, application-held approval, never a Worker argument; it must exactly equal the approval in the current durable `Ready` record. The coordinator's injected *existing* `IPreparedSourceCurrentAuthorityVerifier` must return `Current` with `CurrentApproval == dispositionApproval`, and its injected *existing* `IPreparedToolUseAuthorizer` must return `Current` for that approval and the hard-coded `CodeGraphPreparation` purpose. The ownership verifier's disposition-ready check must confirm stopped grants and settled child/handles from the trusted workspace/process owners; a caller assertion alone is insufficient. The coordinator atomically persists `BeginDispositionAsync(ready)` to `Disposing` **before** removing any entry, so new verified views and uses stop. Before each bounded cleanup chunk it checks fresh source/tool/owner/readiness results, the durable `Disposing` version, and reopened held no-follow root plus recorded entry identity. After removal it repeats the fresh authority/owner/readiness and root-object checks and verifies absence of the recorded entry; there is no removed entry identity to compare. Only then may `CommitRemovedAsync(disposing)` durably change the same record to `Removed`, and the coordinator reads back that terminal version before reporting success. A substituted entry is never deleted by name. Neither the record nor a previously granted or revoked lease supplies current source/tool authority. A denied, changed, unavailable, cancelled or timed-out check prevents further deletion and cannot report success. If cleanup has begun, if a child/handle is not demonstrably settled, or if the post-check, `CommitRemovedAsync` or readback fails, the workspace is quarantined and unavailable for reuse; a surviving `Disposing` version after restart is also unavailable and requires explicit owner resolution, never a by-name retry. `QuarantineAsync` is a durable compare-and-set transition when the store is reachable; an unavailable store itself denies all verified views and grants until resolved. The coordinator removes only the recorded `.codegraph` entry and descendants through held-root-relative no-follow operations, never source or siblings. A resumed workspace with lost/unverifiable record is quarantined rather than adopted by name. This contract does not prescribe a new database schema or general-purpose workspace-write API.
 
 For Story 18.3's returned source excerpts, the integrated `IPreparedSourceReadContext.ReadTextRangeAsync` supplies bounded held-root-relative no-follow source reads, but its current root metadata and traversal behavior are not yet qualified for in-place cache writes. After Story 18.3's reader correction, trusted composition may use it only under the same exact approval/root binding as the current `CodeGraphPreparation` lease, after mapping the native location to a contained relative path; compare the bounded bytes and treat `Limited`, `ChangedInput`, denied or unavailable reads as no verified excerpt. Recheck both source-read and CodeGraph-purpose authority before disclosure. This reuses Story 18.1's public read contract; Story 18.3 owns the reader integration and continuation repair, and 18.2 adds no second source-reader/filter contract. The positive owner binding needed to exclude cache from ordinary reading is an internal verified producer output, not a lexical `.codegraph` rule or a Worker-visible handle.
 
