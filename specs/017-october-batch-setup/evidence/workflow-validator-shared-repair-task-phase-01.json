@@ -1,0 +1,32 @@
+{
+  "kind": "analysis",
+  "status": "passed",
+  "summary": "The shared corrected-plan recovery route now permits the retained task author to record a fresh tasks phase after independent plan ACCEPT changes recovery action to proceed. All prior dispatch, acceptance, freshness, role, hold and pause guards remain intact.",
+  "authorization": {
+    "path": "specs/017-october-batch-setup/evidence/workflow-validator-shared-repair-authorization-02.json",
+    "sha256": "1bf9b841ee626f9d7a84cb372fdb7ceadecb3db2837016e3d9e54bd020781a90"
+  },
+  "changed_files": {
+    ".agents/skills/run-governed-delivery/scripts/decision_policy.py": "9b435349bb0ac060bb977a0d495af1d098bf99aebe80a790c7284b19118c3b5c",
+    ".governed-delivery/tests/test_plan_review_recovery.py": "b8da31f70df6b5cfc144a9c83e49f6e537e7586a1c52f5971c492602f60f61c2"
+  },
+  "verification": [
+    {
+      "command": "python -m unittest discover -s .governed-delivery/tests -p 'test_plan_review_recovery.py' -v",
+      "result": "passed 7/7"
+    },
+    {
+      "command": "python source compile for decision_policy.py and result_proofs.py",
+      "result": "syntax-ok"
+    },
+    {
+      "command": "validate_workflow.py --result transition-0049-bootstrap-config-tasks-self-review.json --json",
+      "result": "ok=true; proposed transition e379f8fab644c082ad83a7b2bd6d2346de2be1853a12dafea97cef944e54bf80"
+    },
+    {
+      "command": "git diff --check",
+      "result": "passed with only existing line-ending conversion warnings"
+    }
+  ],
+  "preserved": "Only phase=tasks may complete from action=proceed at earliest_owner=tasks with no holds and no due diagnosis/pause. Spec/plan phases, stale task hashes/self-reviews and restricted recovery actions remain rejected. Episode, count, pause limit, diagnosis, owner and closing gate are unchanged."
+}

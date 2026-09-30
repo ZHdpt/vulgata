@@ -11,7 +11,7 @@ advances recovery ownership to tasks, including an already-started implementatio
 whose recovery closes only at final verification. The correction authenticates the
 current plan hash and transition ancestry, retains reviewer/hold/budget/gate checks,
 and does not accept the review or authorize tasks. Focused dispatch, ACCEPT-recording,
-stale-proof and restriction regressions pass 5/5; targeted dependency and live-story
+task-phase, stale-proof and restriction regressions pass 7/7; targeted dependency and live-story
 guard checks pass. This is an installed Vulgata workflow correction, not a Story 18.4
 product or architecture decision and not an upstream distribution release.
 

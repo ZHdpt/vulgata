@@ -305,6 +305,47 @@ def _record_current_plan_review_acceptance(state, files, suffix):
     return record, path
 
 
+def _accepted_tasks_recovery():
+    """Prepare the post-production tasks boundary after current plan ACCEPT."""
+    state, files = _synthetic_story18_4_history()
+    state = _postproduction_recovery(state, files)
+    record, path = _record_current_plan_review_acceptance(state, files, "before-tasks")
+    state, completed = propose_transition(state, record, path, files.get)
+    files[path] = canonical_bytes(completed)
+
+    authorization_path = f"{FEATURE}/evidence/plan-authorization.json"
+    authorization = {"kind": "human-direction", "status": "accepted",
+                     "decision_id": "synthetic/plan-authorization/1",
+                     "scope_sha256": "9" * 64,
+                     "summary": "Authorize retained task reconciliation after plan review."}
+    _put(files, authorization_path, authorization)
+    state["approvals"].append({"decision_id": authorization["decision_id"],
+                               "status": "accepted", "scope_sha256": authorization["scope_sha256"],
+                               "evidence_path": authorization_path,
+                               "decided_at": "2026-09-30T00:00:00Z"})
+    state["resume"] = {"stage": "tasks", "reason": "Reconcile tasks against the accepted plan.",
+                       "evidence_path": path}
+    return state, files
+
+
+def _propose_phase_complete(state, files, phase="tasks", *, task_hash=None, observed_after=None):
+    artifact_name = {"spec": "spec", "plan": "plan", "tasks": "tasks"}[phase]
+    artifact = state["artifacts"][artifact_name]
+    stage = {"spec": "specify", "plan": "plan", "tasks": "tasks"}[phase]
+    result = _put(files, f"{FEATURE}/evidence/{phase}-self-review-current.json", {
+        "observed_after": copy.deepcopy(observed_after or state["transition_head"]),
+        "raw_result": {
+            "kind": "self-review", "stage": stage, "outcome": "passed",
+            "summary": f"The current {phase} artifact passed retained-author self-review.",
+            "profile": "definition-author-recovery",
+            "input_hashes": {artifact["path"]: task_hash or artifact["sha256"]},
+        },
+    })
+    record, path = _next_record(state, files, {"kind": "phase_complete", "phase": phase,
+                                                "result": result})
+    return propose_transition(state, record, path, files.get)
+
+
 def _run_dispatch(state, files, *, alter=None):
     with tempfile.TemporaryDirectory() as directory:
         root = Path(directory)
@@ -393,6 +434,51 @@ class PlanReviewRecoveryTests(unittest.TestCase):
                 for name, gate in unrelated_gates_before.items():
                     self.assertEqual(gate, accepted["gates"][name], name)
                 self.assertEqual("accepted", completed_record["transition"]["event"]["kind"])
+
+    def test_retained_task_author_can_complete_tasks_after_current_plan_acceptance(self):
+        state, files = _accepted_tasks_recovery()
+        recovery_before = copy.deepcopy(state["recovery"])
+        approvals_before = copy.deepcopy(state["approvals"])
+        gates_before = copy.deepcopy(state["gates"])
+        tasks_before = copy.deepcopy(state["artifacts"]["tasks"])
+
+        completed, record = _propose_phase_complete(state, files)
+
+        self.assertEqual("proceed", completed["recovery"]["action"])
+        self.assertEqual("tasks", completed["recovery"]["earliest_owner"])
+        for field in ("episode_id", "failed_results", "pause_at", "closing_gate",
+                      "holds", "last_result", "diagnosis", "extension_decision_id"):
+            self.assertEqual(recovery_before[field], completed["recovery"][field], field)
+        self.assertEqual(approvals_before, completed["approvals"])
+        self.assertEqual(gates_before, completed["gates"])
+        self.assertEqual(tasks_before, completed["artifacts"]["tasks"])
+        self.assertEqual("phase_complete", record["transition"]["event"]["kind"])
+        self.assertEqual("tasks", record["transition"]["event"]["phase"])
+
+    def test_proceed_recovery_rejects_other_phases_restrictions_and_stale_task_proofs(self):
+        state, files = _accepted_tasks_recovery()
+        old_head = json.loads(files[state["gates"]["plan-review"]["verdict_path"]])["observed_after"]
+
+        for phase in ("spec", "plan"):
+            with self.subTest(phase=phase):
+                with self.assertRaises(ValueError):
+                    _propose_phase_complete(state, files, phase)
+
+        for action, recovery_patch in (
+            ("blocked", {"action": "blocked", "holds": ["blocked"]}),
+            ("pause", {"action": "pause", "failed_results": 5, "pause_at": 5}),
+            ("diagnose", {"action": "diagnose"}),
+        ):
+            with self.subTest(action=action):
+                restricted = copy.deepcopy(state)
+                restricted["recovery"].update(recovery_patch)
+                with self.assertRaises(ValueError):
+                    _propose_phase_complete(restricted, files)
+
+        with self.assertRaisesRegex(ValueError, "missing or stale"):
+            _propose_phase_complete(state, files, task_hash="f" * 64)
+        with self.assertRaisesRegex(ValueError, "stale raw result"):
+            _propose_phase_complete(state, files, observed_after=old_head)
 
     def test_plan_review_recovery_keeps_freshness_roles_and_restrictions(self):
         state, files = _synthetic_story18_4_history()

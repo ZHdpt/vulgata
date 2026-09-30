@@ -301,9 +301,14 @@ def advance_recovery(state: Mapping, event: Mapping) -> dict:
         _add_event_holds(recovery, event)
         recovery["action"] = _budget_action(recovery, action)
     elif kind == "phase_complete":
-        if recovery is None or recovery["action"] != "correct" or recovery["holds"] or _diagnosis_due(recovery):
-            raise ValueError("phase_complete requires an unblocked corrective author phase")
         phase = event.get("phase")
+        proceeding_tasks = (recovery is not None and phase == "tasks"
+                            and recovery["action"] == "proceed"
+                            and recovery["earliest_owner"] == "tasks")
+        if (recovery is None or (recovery["action"] != "correct" and not proceeding_tasks)
+                or recovery["holds"] or _diagnosis_due(recovery)
+                or recovery["failed_results"] >= recovery["pause_at"]):
+            raise ValueError("phase_complete requires an unblocked corrective author phase")
         if phase not in ("spec", "plan", "tasks") or phase != recovery["earliest_owner"]:
             raise ValueError("phase_complete.phase must match the current definition owner")
         if phase == "tasks":
