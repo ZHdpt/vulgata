@@ -103,7 +103,10 @@ public sealed class PreparedJdtLsNavigationContext : IPreparedJavaNavigationCont
             }
             catch (Exception)
             {
-                return Empty(operation, PreparedJavaNavigationOutcome.ProtocolFailed);
+                bool settled = await RetireSessionUnderGateAsync();
+                return Empty(operation, settled
+                    ? PreparedJavaNavigationOutcome.ProtocolFailed
+                    : PreparedJavaNavigationOutcome.ConfigurationUnavailable);
             }
 
             if (linked.IsCancellationRequested)
