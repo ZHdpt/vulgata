@@ -326,6 +326,9 @@
   "AnalysisRuntime/JdtLsPreparedNavigationTests.cs": {
     "suite": "SelfContained"
   },
+  "AnalysisRuntime/PreparedJavaNavigationCompositionTests.cs": {
+    "suite": "SelfContained"
+  },
   "AnalysisRuntime/RecordingProcessLauncherDouble.cs": {
     "suite": "SelfContained"
   },

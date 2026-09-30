@@ -28,6 +28,7 @@ using Vulgata.Infrastructure;
 using Vulgata.Shared;
 using Vulgata.Shared.Chat;
 using Vulgata.Shared.Repositories;
+using Vulgata.Web;
 using Vulgata.Shared.Scans;
 using Vulgata.Shared.Validators.Repositories;
 using Vulgata.Shared.Validators.Systems;
@@ -356,6 +357,9 @@ public static class VulgataWebComposition
         builder.Services.AddSingleton<IPreparedCommunicationCatalogSource,
             EmbeddedPreparedCommunicationCatalogSource>();
         builder.Services.AddScoped<IPreparedJavaReadinessPort, PreparedJavaReadinessService>();
+        builder.Services.AddScoped<PreparedJavaWorkerToolComposer>(services => new(
+            services.GetService<PreparedToolWorkspaceIssuer>(),
+            services.GetService<PreparedJavaNavigationContextFactory>()));
         builder.Services.AddScoped<IPreparedTopLevelSymbolSource, PreparedJavaRangeSource>();
         builder.Services.AddSingleton<PreparedJavaRangeProvider>();
         builder.Services.AddScoped<ExactCandidateExtractors>();

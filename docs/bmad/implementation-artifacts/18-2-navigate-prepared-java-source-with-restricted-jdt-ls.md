@@ -1,12 +1,12 @@
 # Story 18.2 development record
 
-Status: in-progress (plan-only stop after independent plan review)
+Status: in-progress (governed implementation; T012/T013 composition slice)
 Feature directory: specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls
 Workflow state: specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/workflow-state.json
 
 ## Scope and dependency
 
-The accepted story is `Story 18.2: Navigate Prepared Java Source with Restricted JDT-LS` in `docs/bmad/planning-artifacts/october-release-epics.md`. This run ends after independent plan review. No tasks or implementation are authorized by this planning run. At the original plan checkpoint, Story 18.1 was actively implemented in another checkout; its source identity, root grant and list/read/search contracts remained owned there. After mainline integration, reconcile this definition and plan with the completed, verified 18.1 baseline and rerun affected gates before later delivery.
+The accepted story is `Story 18.2: Navigate Prepared Java Source with Restricted JDT-LS` in `docs/bmad/planning-artifacts/october-release-epics.md`. The original run ended after independent plan review while Story 18.1 was being implemented elsewhere. The user later lifted that stop and authorized normal governed delivery in this assigned checkout. The definition and plan were reconciled with integrated Story 18.1; affected deterministic validation, independent reviews, planned-change authorization and implementation approval were completed before implementation. Story 18.1's source identity, root grant and list/read/search contracts remain owned by that story.
 
 ## Delegation designation
 
@@ -21,6 +21,8 @@ The plan uses an owned representative Java fixture first, then the actual prepar
 ## Workflow Bookkeeping
 
 Activation selected `specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls` from the read-only feature selector at `d99f6a0f71a7c20b36b68e462efe9b0a552578c7` on `codex/18-2-plan`. Initial transition and state were validated before definition dispatch. This checkout did not inspect or change Story 18.1's checkout.
+
+At T013, the first GREEN build reported CS0246 because the new Web composer namespace was not imported in `Program.cs`. The raw failed command and log remain in `evidence/T013-composer-initial-green-failure-01.json`. The user clarified that expected RED and normal TDD build iterations do not count as workflow failures and directed work to proceed. The uncommitted failure transition and pause brief were withdrawn before any checkpoint; `evidence/T013-composer-build-iteration-classification-01.json` records the correction. Recovery stays at 10 failed results with approved `pause_at=11`. The missing import was corrected within the owned T013 slice; the focused launcher then selected and passed the initial composition test. Subsequent behavioral slices retain their own raw test results.
 
 ## Mainline integration, 2026-09-29
 
