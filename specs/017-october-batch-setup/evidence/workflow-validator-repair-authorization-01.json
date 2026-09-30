@@ -1,0 +1,19 @@
+{
+  "kind": "human-authorization",
+  "status": "accepted",
+  "story_key": "18-4-prepare-an-owned-october-batch-with-valid-context-and-provid",
+  "authorized_at": "2026-09-30T09:49:03.4052933+08:00",
+  "user_source": "Current Story 18.4 chat; user message: Approve your request",
+  "authorized_scope": "A bounded correction to the installed governed-delivery validator that restores the required independent plan-review-before-tasks route after a corrected architecture plan advances recovery ownership to tasks.",
+  "constraints": [
+    "Add focused regression coverage and observe honest RED before changing validator behavior.",
+    "Do not bypass, auto-accept, reorder or waive plan review, planned-change authorization, tasks reconciliation, definition review, implementation approval or later verification gates.",
+    "Preserve Story 18.4 recovery episode, failed-result count, pause limit, diagnosis, retained owners, model strategy, approvals, holds and resource restrictions.",
+    "Do not modify another checkout, merge, push, rewrite history or start another story."
+  ],
+  "excluded": [
+    "Product or architecture scope changes",
+    "New database, credential, provider, certificate or production-resource permission",
+    "Changes to historical accepted evidence or failure counts"
+  ]
+}

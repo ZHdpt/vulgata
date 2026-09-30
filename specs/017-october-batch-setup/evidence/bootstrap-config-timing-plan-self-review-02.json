@@ -1,0 +1,51 @@
+{
+  "observed_after": {
+    "path": "specs/017-october-batch-setup/evidence/transitions/transition-0044-plan-review-09-diagnosis.json",
+    "sha256": "1abcc3343562b8b2274934e4ccf24cfd7c725153fa3ce2616f4291a6efc6d9f0"
+  },
+  "raw_result": {
+    "kind": "self-review",
+    "stage": "plan",
+    "outcome": "passed",
+    "story_key": "18-4-prepare-an-owned-october-batch-with-valid-context-and-provid",
+    "profile": "definition-author-recovery",
+    "source_commit": "17211e7dc187b36a487afa29eed9452730da7fb2",
+    "source_finding": "I-18.4-BOOTSTRAP-CONFIG-TIMING-01",
+    "summary": "Re-completed the plan phase after canonical invalidation and fresh count-4 diagnosis. Current plan and contract already express the executable deferred host composition and required runtime proof; no semantic or artifact correction is needed. Both remain byte-identical and ready for independent plan-only review.",
+    "diagnosis": {
+      "path": "specs/017-october-batch-setup/evidence/recovery-diagnosis-implementation-setup-seam-01-count-04-plan-review-09.json",
+      "sha256": "40f4c34cdf80b5431d6ea01773df03c5df3cf1f8359c4eb6bcdc50ac0ed69453"
+    },
+    "input_hashes": {
+      "specs/017-october-batch-setup/spec.md": "09bd29f496be4a9c956a460f9d1fc8af952f88c031324e528becb19bbc15b3bc",
+      "specs/017-october-batch-setup/plan.md": "de84d76a3d0130a7a2a041e2e4384f739de986506d3ad5b034b08341148beeb1",
+      "specs/017-october-batch-setup/contracts/batch-setup-selection.md": "e0c7287dec2e0562a35bfec98376981e805461af1585c8a42521cf1ad85af639"
+    },
+    "classification": "architecture",
+    "classification_reason": "Fresh assessment preserves explicit architecture classification: shared generator/Web exact selection, authorization contracts and dedicated October persistence remain the plan's consequential decisions. The timing correction realizes that accepted scope without new product authority, storage or routes.",
+    "planned_change_trigger": "No additional Worker Agent tool, Scan strategy or PRD change. Existing architecture review requirement remains. Existing human approvals are semantically applicable only after required independent acceptance and root-owned rebinding.",
+    "semantic_bytes_changed": false,
+    "changed_paths": [
+      "specs/017-october-batch-setup/evidence/bootstrap-config-timing-plan-self-review-02.json"
+    ],
+    "self_review": {
+      "intent_and_coverage": "Current spec FR-005/006/009/012 and accepted bootstrap authority suffice. R02/I06/S03 and the T01/T02 host-proof paragraph describe final configuration, conditional composition, same immutable selection and restart-only behavior. X05/C05 describe rejected premature callbacks and test replacement ordering. No spec change is required.",
+      "feasibility": "ConfigureOctoberHost(builder) explicitly installs DefaultServiceProviderFactory and ConfigureContainer<IServiceCollection>. HostBuilding replays WAF application configuration and test services before the deferred container callback. That callback resolves final HostBuilderContext.Configuration once, registers the selection and conditional October descriptors, then the factory builds the provider. Program consumes the registered instance after Build. Immediate Host.ConfigureServices and implicit-factory ConfigureContainer are expressly rejected. Development provider validation defaults remain intact.",
+      "ordinary_and_test_isolation": "Ordinary/shared registrations remain early and occur once, preserving existing fixture overrides and normal startup. Only October operational registrations are deferred. Ordinary receives mode metadata but no October context, selector, migration, verifier or route. Authorization-only has ordinary Identity/domain startup and exactly two October grant routes. The unchanged concrete certificate verifier uses a source registered with TryAdd so the controlled ConfigureTestServices source survives; no replacement verifier, header proof, static state, test selection or test route is permitted.",
+      "selected_data_and_source": "Selected-data still requires exact target/batch/grant plus live authorization and existing-batch BindAsync before exposure, never October migration. Generator prepare remains the sole first-batch migration path. Context provenance, atomic provider profiles, Story 18.1 approval/verifier/issuer/lifetime/closed functions and revocation/cancellation boundaries remain unchanged.",
+      "lessons_and_order": "Callable-seam lesson remains addressed by explicit ConfigureOctoberHost(WebApplicationBuilder)->void construction and lifecycle constraints. No task edits in this phase. Downstream task wording must be reconciled only after root accepts/maps this phase and the required plan review. Completed T001-T005 and existing RED/GREEN evidence remain intact.",
+      "deterministic_checks": "Fresh validate_plan_implementation_design(plan_text, require_explicit=True) returned ok=true with errors=[]; scoped git diff --check passed. Plan and contract hashes equal the dispatch and diagnosis hashes. No executable design IDs were added or removed.",
+      "hooks": "Existing-file correction under SpecKit 1.0.6; no starter-template overwrite. Previously inspected readable extensions.yml has no mandatory plan hook. Optional agent-context update stays outside the write boundary and is not run.",
+      "authority": "No unresolved semantic or authority decision. Existing approvals still require root-controlled accepted-hash rebinding; this self-review is neither independent ACCEPT nor implementation permission. Recovery remains count 4, pause_at 5, closing_gate verify with no hold clearance or resource grant. T020/T029 retain explicit owned-resource gates."
+    },
+    "feasibility_sources": [
+      "https://github.com/dotnet/aspnetcore/blob/v10.0.0/src/DefaultBuilder/src/ConfigureHostBuilder.cs",
+      "https://github.com/dotnet/aspnetcore/blob/v10.0.0/src/DefaultBuilder/src/WebApplicationBuilder.cs",
+      "https://github.com/dotnet/runtime/blob/v10.0.0/src/libraries/Microsoft.Extensions.Hosting/src/HostApplicationBuilder.cs",
+      "https://github.com/dotnet/aspnetcore/blob/v10.0.0/src/Mvc/Mvc.Testing/src/DeferredHostBuilder.cs"
+    ],
+    "unresolved_runtime_proof": "No corrected production-host execution is claimed. After affected definition gates, actual WebApplicationFactory<Program> must show ConfigureAppConfiguration visibility, exactly one matching immutable selection, same verifier with controlled source, two bootstrap routes, API-shaped denials and no October data access; ordinary host and invalid-config-before-migration checks plus restart-only behavior must pass. Existing failed host TRX is retained, and source inspection or selector unit GREEN cannot substitute.",
+    "remaining_conflicts": [],
+    "next_gate": "Root validates this bound plan completion, then independent plan-only review. Only afterward reconcile affected tasks under a fresh stage dispatch, complete independent definition review and root approval rebinding before implementation."
+  }
+}

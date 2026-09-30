@@ -1,0 +1,33 @@
+{
+  "kind": "analysis",
+  "status": "blocked",
+  "summary": "The installed governed-delivery validator creates a deterministic dispatch cycle after the corrected architecture plan is phase-complete: recovery ownership advances from plan to tasks, plan-review is then rejected because tasks is the earliest owner, and tasks is rejected because the invalidated architecture plan-review and scoped authorization must be restored first. No Story 18.4 semantic or authority conflict is present; changing the installed workflow validator is outside the story's currently authorized write scope.",
+  "story_key": "18-4-prepare-an-owned-october-batch-with-valid-context-and-provid",
+  "observed_after": {
+    "path": "specs/017-october-batch-setup/evidence/transitions/transition-0045-bootstrap-config-plan-self-review-02.json",
+    "sha256": "5f360429e04fcc7a695d8b3cbf7bab766955263a2d020eae9eb0e74d409be913"
+  },
+  "checks": [
+    {
+      "next_stage": "plan-review",
+      "ok": false,
+      "decision": "return_to_owner",
+      "error": "correct the earliest invalid owner: tasks"
+    },
+    {
+      "next_stage": "tasks",
+      "next_profile": "definition-author-recovery",
+      "ok": false,
+      "decision": "dispatch",
+      "error": "architecture requires accepted plan review and scoped planned-change authorization"
+    }
+  ],
+  "preserved_boundary": {
+    "plan_sha256": "de84d76a3d0130a7a2a041e2e4384f739de986506d3ad5b034b08341148beeb1",
+    "tasks_sha256": "e43b95cb04f624cc125eb44ab3dff53759d61ba7525c7373e57393132e969af3",
+    "failed_results": 4,
+    "pause_at": 5,
+    "definition_author_profile": "definition-author-recovery"
+  },
+  "required_resolution": "Authorize a bounded installed-workflow correction that allows the required independent plan-review dispatch after plan phase completion while retaining the pre-task plan-review and approval gate, or provide an already accepted workflow update containing that correction. Story implementation and tests remain paused until the guard validates the required gate sequence."
+}

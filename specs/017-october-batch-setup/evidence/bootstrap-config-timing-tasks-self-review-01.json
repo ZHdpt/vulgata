@@ -1,0 +1,49 @@
+{
+  "observed_after": {
+    "path": "specs/017-october-batch-setup/evidence/transitions/transition-0048-plan-review-09-accept.json",
+    "sha256": "3b063579e3b38fa0ac04a41982ac3d04398a7c6a2c6c20d6d75559a3df11b16b"
+  },
+  "raw_result": {
+    "kind": "self-review",
+    "stage": "tasks",
+    "outcome": "passed",
+    "story_key": "18-4-prepare-an-owned-october-batch-with-valid-context-and-provid",
+    "profile": "definition-author-recovery",
+    "source_commit": "b072c4e915cdbaeee9ae9cf7742bf6c39dee156b",
+    "source_finding": "I-18.4-BOOTSTRAP-CONFIG-TIMING-01",
+    "summary": "Reconciled existing tasks to the accepted deferred host-composition plan, preserving all 30 task IDs, completed T001-T005 lines and existing honest host RED/verifier GREEN. No intent or implementation artifact changed.",
+    "input_hashes": {
+      "specs/017-october-batch-setup/spec.md": "09bd29f496be4a9c956a460f9d1fc8af952f88c031324e528becb19bbc15b3bc",
+      "specs/017-october-batch-setup/plan.md": "de84d76a3d0130a7a2a041e2e4384f739de986506d3ad5b034b08341148beeb1",
+      "specs/017-october-batch-setup/tasks.md": "59035bce8b8c53f274e2e5cbe63d49fcd10bad3735f1d981eebcd0ee6fcfac5e"
+    },
+    "tasks_before_sha256": "e43b95cb04f624cc125eb44ab3dff53759d61ba7525c7373e57393132e969af3",
+    "plan_review": {
+      "path": "specs/017-october-batch-setup/evidence/plan-review-09.json",
+      "sha256": "758b79362f82af59f0773a9407e1433f1f4cf9bf9156135448efe46fb5677afc"
+    },
+    "planned_change_authorization": {
+      "path": "specs/017-october-batch-setup/evidence/plan-authorization-02.json",
+      "sha256": "b2f1360c4af572b01c351c6cc1dedd1b53785d0fa3142c7d04f93d74a6a9f279"
+    },
+    "classification": "architecture",
+    "classification_disposition": "Accepted plan classification and trigger unchanged; tasks introduce no new design choice, Worker tool, Scan strategy, PRD change or authority.",
+    "changed_task_ids": ["T006", "T007", "T018", "T019", "T025", "T026"],
+    "other_changes": ["Current plan-review-09 and plan-authorization-02 prerequisite pointers", "US1 and US4 dependency wording"],
+    "preserved_completed_tasks": ["T001", "T002", "T003", "T004", "T005"],
+    "preserved_unmodified_tasks": ["T008", "T009", "T010", "T011", "T012", "T013", "T014", "T015", "T016", "T017", "T020", "T021", "T022", "T023", "T024", "T027", "T028", "T029", "T030"],
+    "self_review": {
+      "coverage": "T007 installs ConfigureOctoberHost(WebApplicationBuilder) once with explicit DefaultServiceProviderFactory and deferred ConfigureContainer<IServiceCollection>. Final HostBuilderContext.Configuration supplies one immutable DI selection and captured allowlists before conditional registration/provider construction; Program consumes it after Build. Ordinary composition stays early/once; Development provider-validation defaults remain. T006 proves the actual WAF path, source override retention, same verifier, matching singleton/registrations/routes, invalid-config-before-migration and restart-only lifetime. T018/T019 reuse that seam for selected-data and generator sequencing. T025/T026 retain three-mode isolation and avoid duplicate implementation.",
+      "verification_route": "Retain actual host RED from the failed four bootstrap assertions and already-GREEN selector/verifier cases. Add RED only for genuinely changed or missing production behavior, then minimal/final GREEN with separate test/production owners. Declaration scaffold is already present and is not repeated. Later already-correct mode behavior uses truthful regression coverage instead of forced RED or redundant production changes. Full T006 host and surrounding ordinary regressions are required before further host implementation; source feasibility alone is insufficient.",
+      "feasibility_and_paths": "Inspected current Program's premature selection and current activation tests using ConfigureAppConfiguration/ConfigureTestServices. T007 continues the existing OctoberBatchActivationEndpoints.cs draft plus its planned authority service rather than inventing a second endpoint implementation. All 30 checklist tasks contain concrete source/test/spec paths; future paths are creation targets, not asserted existing files. Existing setup policy, generator shell, separate context and model filtering remain complete.",
+      "dependency_order": "Current independent plan ACCEPT and delegated authorization permit this tasks reconciliation only. Complete-definition ACCEPT and implementation approval still precede code changes. T006 retained RED precedes T007 timing GREEN, followed by actual host final GREEN before dependent host work. Existing US1 setup, selected approval and Story18.1 adapter order remains; T018 controlled first-batch proof and T020 actual qualification stay separate. T025 observes coverage/gaps before any T026 correction; T030 follows all required verification.",
+      "boundaries": "No changes to Story18.1 contracts, context lifetime, identity cardinality or revocation/cancellation; no JDT-LS, CodeGraph, Knowledge, Worker dispatch or later-story work. T020/T029 are byte-unchanged and require explicitly authorized owned PostgreSQL/Identity/real certificate resources. No resource or implementation approval is inferred.",
+      "lessons": "Retains callable-seam declaration/lifecycle and honest RED prerequisites from project lessons and prior definition findings; concrete host timing is now explicit. Current testing.md suite classification, standard launcher and owned-resource boundaries remain mandatory.",
+      "deterministic_validation": "Installed validate_plan_implementation_design(plan,tasks,require_explicit=True) returned ok=true/errors=[]. Additional syntax checks passed: unique ordered T001-T030, user-story labels T006-T029, concrete paths on every task, and all five completed task lines exactly equal HEAD. All executable design IDs retain coverage, no unknown IDs. Scoped git diff --check passed (only ordinary LF/CRLF warning). Stale immediate-mode calls and superseded review/authorization pointers no longer occur in tasks.",
+      "speckit": "Read-only setup-tasks.ps1 -Json with SPECIFY_FEATURE_DIRECTORY resolved this exact feature, active tasks template, research/data-model/contracts/quickstart. Existing-file correction preserves structure. No mandatory before/after-tasks hook is configured; no starter overwrite, context update or Git action.",
+      "authority": "No unresolved semantic or authority conflict. Recovery count 4/pause_at 5 and verify closure remain unchanged. This self-review is not independent acceptance or implementation approval."
+    },
+    "remaining_conflicts": [],
+    "next_gate": "Root validates/maps/hashes the task result and requests independent complete-definition review against current raw artifacts, ordered prior verdicts, plan-review-09 and plan-authorization-02; then resolves scoped implementation approval before separate owners resume production-host correction."
+  }
+}

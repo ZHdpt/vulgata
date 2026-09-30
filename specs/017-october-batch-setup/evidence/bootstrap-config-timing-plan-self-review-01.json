@@ -1,0 +1,61 @@
+{
+  "observed_after": {
+    "path": "specs/017-october-batch-setup/evidence/transitions/transition-0041-definition-author-recovery-escalation.json",
+    "sha256": "4a157a61be9932b78ac0d770aa73bd56ef253a4a8015dd17608d74ea1b17c9f0"
+  },
+  "raw_result": {
+  "kind": "self-review",
+  "stage": "plan",
+  "outcome": "passed",
+  "story_key": "18-4-prepare-an-owned-october-batch-with-valid-context-and-provid",
+  "profile": "definition-author-recovery",
+  "source_finding": "I-18.4-BOOTSTRAP-CONFIG-TIMING-01",
+  "summary": "Replaced the infeasible top-level configuration read with an explicit service-provider factory and deferred ConfigureContainer seam that resolves final host configuration once, conditionally registers October services before provider construction, and exposes the same immutable selection to Program after Build.",
+  "observed_boundary": "specs/017-october-batch-setup/evidence/transitions/transition-0041-definition-author-recovery-escalation.json",
+  "episode": { "id": "18-4-implementation-setup-seam-01", "failed_results": 4, "pause_at": 5, "closing_gate": "verify" },
+  "classification": "architecture",
+  "classification_reason": "Fresh assessment retains architecture because the existing shared host selection, authority and dedicated persistence decisions remain consequential. This correction makes the already approved host timing executable; it introduces no new authority, route, persistence model or product scope.",
+  "changed_paths": [
+    "specs/017-october-batch-setup/plan.md",
+    "specs/017-october-batch-setup/contracts/batch-setup-selection.md"
+  ],
+  "input_hashes": {
+    "specs/017-october-batch-setup/plan.md": "de84d76a3d0130a7a2a041e2e4384f739de986506d3ad5b034b08341148beeb1"
+  },
+  "artifact_hashes": {
+    "specs/017-october-batch-setup/plan.md": "de84d76a3d0130a7a2a041e2e4384f739de986506d3ad5b034b08341148beeb1",
+    "specs/017-october-batch-setup/contracts/batch-setup-selection.md": "e0c7287dec2e0562a35bfec98376981e805461af1585c8a42521cf1ad85af639"
+  },
+  "unchanged_tasks_sha256": "e43b95cb04f624cc125eb44ab3dff53759d61ba7525c7373e57393132e969af3",
+  "changed_design": ["ID-R02", "ID-I06", "ID-S03", "ID-T01/ID-T02 host proof clarification", "ID-X05", "ID-C05"],
+  "self_review": {
+    "intent": "Spec FR-005/006/009/012 and existing authority/route scopes are sufficient; spec remains unchanged. Ordinary operation, bootstrap before an October database exists, selected-data exact binding and restart-only lifetime are preserved.",
+    "feasibility": "Top-level resolution was too early. Merely using builder.Host.ConfigureServices is also too early; ConfigureContainer without an explicit factory is applied early as well. ConfigureOctoberHost installs an explicit DefaultServiceProviderFactory with the existing Development validation defaults and ConfigureContainer<IServiceCollection>. The container callback reads final HostBuilderContext.Configuration, captures one selection and allowlists, and adds only conditional October services before provider creation. Program obtains that singleton after Build. Ordinary registration remains early and is not repeated; TryAdd preserves the permitted certificate-source test override.",
+    "source_coverage": "Inspected current Program, selector/verifier, actual activation test factory and count-4 failed TRX. The host evidence is 15 executed, 11 passed, 4 failed: absent bootstrap routes/verifier and two 405 results. Existing passing selector/verifier behavior is retained. Reviewed the ordered earlier plan and definition findings, bootstrap diagnosis, extension and exclusive escalation. Framework source supports the corrected timing but does not substitute for executing the current repository host.",
+    "lessons": "Applied docs/project-lessons.md callable-seam precaution: construction entrypoint, deferred lifecycle, immutable result ownership, replacement boundaries and observable production-host proof are explicit. Preserve existing native launcher permission evidence and separate owned PostgreSQL qualification.",
+    "verification_route": "Document correction uses deterministic validation and diff checks. Subsequent changed production startup behavior uses retained honest host RED followed by minimal/final GREEN and ordinary-startup regression; no fabricated RED for already-green verifier behavior or documentation.",
+    "scope_and_approvals": "No new Worker tool, Scan strategy, PRD change or resource authority. Existing user approvals remain semantically applicable subject to independent acceptance and root-owned corrected-hash rebinding. Recovery count and finite limit remain unchanged. T020/T029 still require explicitly authorized owned PostgreSQL, Identity and real certificate resources.",
+    "deterministic_validation": "validate_plan_implementation_design(plan_text, require_explicit=True) returned {ok:true,errors:[]}; git diff --check for both edited documents passed. All prior executable design IDs remain; new X05/C05 are alternatives/consequences and do not require task references. Root owns path/hash-bound workflow validation.",
+    "hooks": "SpecKit 1.0.6 correction branch preserves existing files and does not rerun starter-template setup. extensions.yml is readable; no before-plan hook. Optional agent-context after-plan hook is outside the dispatched write boundary and is not executed. No tasks phase executed before root validation."
+  },
+  "framework_sources": [
+    "https://github.com/dotnet/aspnetcore/blob/v10.0.0/src/DefaultBuilder/src/ConfigureHostBuilder.cs",
+    "https://github.com/dotnet/runtime/blob/v10.0.0/src/libraries/Microsoft.Extensions.Hosting/src/HostApplicationBuilder.cs",
+    "https://github.com/dotnet/aspnetcore/blob/v10.0.0/src/Mvc/Mvc.Testing/src/DeferredHostBuilder.cs"
+  ],
+  "retained_evidence": [
+    "TestResults/isolation-4087de333ae349bd818968c8f43517ab/results.trx",
+    "TestResults/isolation-d863d95605d347f28aa622dcfde3b609/results.trx",
+    "specs/017-october-batch-setup/evidence/plan-review-08.json",
+    "specs/017-october-batch-setup/evidence/definition-review-08.json",
+    "specs/017-october-batch-setup/evidence/recovery-diagnosis-implementation-setup-seam-01-count-04.json"
+  ],
+  "remaining_conflicts": [],
+  "next_checks": [
+    "Root validate/map/hash plan and contract, then independent plan review and applicable approval rebinding.",
+    "Retained recovery owner task-phase follow-up: reconcile T006/T007, T018/T019, T025/T026 and current review pointer; preserve all IDs, T001-T005 completion and T020/T029 resource gates.",
+    "Deterministic task coverage and independent complete-definition review; root rebind applicable implementation approval.",
+    "Separate test/production owners execute focused real Program-host proof and ordinary-startup regressions. This self-review grants no code/test authority."
+  ]
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "kind": "delegated-approval",
+  "stage": "recovery-extension",
+  "status": "accepted",
+  "decision_id": "18-4/recovery-extension/implementation-setup-seam-01/1",
+  "story_key": "18-4-prepare-an-owned-october-batch-with-valid-context-and-provid",
+  "delegate_id": "01a0e708-c489-7871-9f73-31413f20bf2c",
+  "delegation": {
+    "path": "specs/017-october-batch-setup/evidence/user-delegation-recovery-01.json",
+    "sha256": "e299e832115615dbde3bc828ab5e4132e0de4c13c0d64372732ab07c6d5646c6"
+  },
+  "response_source": "delegate thread 01a0e708-c489-7871-9f73-31413f20bf2c, turn 01a0ed99-1b4a-7342-9f18-aaa2c9f3bec3, message msg_0e55faeae43f1fb3016abbcd3125d88196bfb84607a74b83be",
+  "response_text": "ACCEPT - raise cumulative pause_at from 4 to 5 for episode 18-4-implementation-setup-seam-01; refresh diagnosis before corrective dispatch; preserve all gates and resource restrictions; pause again at failure 5.",
+  "episode_id": "18-4-implementation-setup-seam-01",
+  "pause_at": 5,
+  "scope_sha256": "404e2865956f524f190ae97a387182954bed479624ea67d5a844f59ba660102a",
+  "recovery_boundary": {
+    "episode_id": "18-4-implementation-setup-seam-01",
+    "failed_results": 4,
+    "pause_at": 4,
+    "last_result": {
+      "path": "specs/017-october-batch-setup/evidence/implementation-bootstrap-program-configuration-result-01.json",
+      "sha256": "19443961768b9a7e0798a5b794162dfcb95c5a9d10b0e190f22567b7bd782ddf"
+    },
+    "transition_head": {
+      "path": "specs/017-october-batch-setup/evidence/transitions/transition-0038-bootstrap-program-configuration-revise.json",
+      "sha256": "586e7793129bef91550952c03866b16a89cf4461adff8307008e0c58cd494cd0"
+    },
+    "artifacts": {
+      "spec": {"path":"specs/017-october-batch-setup/spec.md","sha256":"09bd29f496be4a9c956a460f9d1fc8af952f88c031324e528becb19bbc15b3bc"},
+      "plan": {"path":"specs/017-october-batch-setup/plan.md","sha256":"743239064fe6d6df63493eb5579bb33eec6388d72b8c78c541e62c4a331286bc"},
+      "tasks": {"path":"specs/017-october-batch-setup/tasks.md","sha256":"e43b95cb04f624cc125eb44ab3dff53759d61ba7525c7373e57393132e969af3"}
+    }
+  },
+  "changed_approach": "Return to plan and replace the infeasible top-level ConfigureAppConfiguration timing assumption with an executable production startup-mode input available before conditional registration and route mapping in both real startup and WebApplicationFactory, while preserving closed modes, ordinary isolation, the same certificate verifier, and all existing review/resource gates.",
+  "decided_at": "2026-09-29T14:37:52.7648821Z"
+}

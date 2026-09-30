@@ -1,0 +1,17 @@
+{
+  "kind": "analysis",
+  "episode_id": "18-4-implementation-setup-seam-01",
+  "at_count": 4,
+  "summary": "The accepted startup design read builder.Configuration during top-level Program execution, but WebApplicationFactory ConfigureAppConfiguration applies during later host finalization. The host therefore retained Ordinary selection even though selector/verifier unit behavior passed. The changed approach is to resolve the closed mode from final HostBuilderContext.Configuration inside a deferred production host service/composition callback, register one immutable OctoberWebStartupSelection, and consume that same DI selection for startup/migration and route mapping after build. The next check is a focused production-host proof plus independent plan review before tasks or code resume.",
+  "failed_approaches": [
+    "The count-3 correction only staged declarations before behavioral RED and did not test when host-injected configuration becomes visible.",
+    "The T007 GREEN attempt faithfully implemented the accepted top-level read, but the real WebApplicationFactory remained Ordinary and mapped no October routes."
+  ],
+  "recommended_repair": "Exclusive definition-author-recovery at Astra/medium owns plan, contract and downstream task reconciliation. Pin deferred final-configuration resolution, immutable DI selection and post-build startup/route consumption; require focused host proof that ConfigureAppConfiguration is visible. Preserve ordinary isolation, same certificate verifier and all resource gates.",
+  "owner": "plan",
+  "profile": "definition-author-recovery",
+  "escalation_required": true,
+  "escalation_trigger": "unresolved_definition_reasoning",
+  "authority_decision_required": false,
+  "next_guard": "Any next authoritative failed result reaches pause_at=5 and requires a fresh finite extension decision."
+}

@@ -5,11 +5,11 @@
   "feature_directory": "specs/017-october-batch-setup",
   "stage": "implement",
   "preflight": {
-    "branch": "detached-managed-worktree",
-    "head": "5e5553374b342fb658776fbfcb86c6e06513832a",
-    "git_identity_sha256": "e8f846d29f6532bde02c1bacfcc601cecfb6ede376447e08cefff5c1a1e8cd28",
-    "status_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-    "observed_at": "2026-09-28T08:39:49.4375537Z"
+    "branch": "oct14/story-18-4",
+    "head": "cfa07a3d6526f52d2922930f9bddf5d8bf5087ee",
+    "git_identity_sha256": "a24946723c57104264c9eb34545f4d00a69c8aa4de4f6596fafd6b503a7d37a7",
+    "status_sha256": "fc0a9340e381f7915e935fa24923f5afaa2fc7655eb69a28ae07b9556cd28845",
+    "observed_at": "2026-09-30T02:55:58.1200556Z"
   },
   "artifacts": {
     "spec": {
@@ -18,23 +18,23 @@
     },
     "plan": {
       "path": "specs/017-october-batch-setup/plan.md",
-      "sha256": "743239064fe6d6df63493eb5579bb33eec6388d72b8c78c541e62c4a331286bc"
+      "sha256": "de84d76a3d0130a7a2a041e2e4384f739de986506d3ad5b034b08341148beeb1"
     },
     "tasks": {
       "path": "specs/017-october-batch-setup/tasks.md",
-      "sha256": "e43b95cb04f624cc125eb44ab3dff53759d61ba7525c7373e57393132e969af3"
+      "sha256": "59035bce8b8c53f274e2e5cbe63d49fcd10bad3735f1d981eebcd0ee6fcfac5e"
     }
   },
   "gates": {
     "plan-review": {
       "status": "accepted",
-      "attempt": 4,
-      "verdict_path": "specs/017-october-batch-setup/evidence/plan-review-08.json"
+      "attempt": 5,
+      "verdict_path": "specs/017-october-batch-setup/evidence/plan-review-09.json"
     },
     "definition-review": {
       "status": "accepted",
-      "attempt": 4,
-      "verdict_path": "specs/017-october-batch-setup/evidence/definition-review-08.json"
+      "attempt": 5,
+      "verdict_path": "specs/017-october-batch-setup/evidence/definition-review-09.json"
     },
     "quality-review": {
       "status": "pending",
@@ -55,6 +55,27 @@
       "decision_id": "18-4/implementation-approval/2",
       "evidence_path": "specs/017-october-batch-setup/evidence/implementation-approval-02.json",
       "scope_sha256": "dc024516a55beb4efbad78a9d067e2240454feb60ffa3f813c3d9214f7d8474c",
+      "status": "accepted"
+    },
+    {
+      "decided_at": "2026-09-29T14:37:52.7648821Z",
+      "decision_id": "18-4/recovery-extension/implementation-setup-seam-01/1",
+      "evidence_path": "specs/017-october-batch-setup/evidence/recovery-extension-implementation-setup-seam-01-count-04.json",
+      "scope_sha256": "404e2865956f524f190ae97a387182954bed479624ea67d5a844f59ba660102a",
+      "status": "accepted"
+    },
+    {
+      "decided_at": "2026-09-30T02:35:18.2740135Z",
+      "decision_id": "18-4/plan-authorization/2",
+      "evidence_path": "specs/017-october-batch-setup/evidence/plan-authorization-02.json",
+      "scope_sha256": "077bbc60906f0bc0f51c519b1a8f7947719b9b554b1b869388e0a7713a651bec",
+      "status": "accepted"
+    },
+    {
+      "decided_at": "2026-09-30T02:54:51.1300525Z",
+      "decision_id": "18-4/implementation-approval/3",
+      "evidence_path": "specs/017-october-batch-setup/evidence/implementation-approval-03.json",
+      "scope_sha256": "e100d427f8292094b8892159b22f36fedfd5747ff505c4a6920f9dc2ed55d491",
       "status": "accepted"
     }
   ],
@@ -83,45 +104,45 @@
     "specs/017-october-batch-setup/evidence/transitions/transition-0003-plan-correction-self-review.json"
   ],
   "checkpoint": {
-    "checkpoint_id": "bmad-18-4-definition-review-20260929T111000Z-b7e4f1",
+    "checkpoint_id": "bmad-18-4-definition-review-20260930T025558Z-46dd3a",
     "stage": "definition-review",
     "commit_sha": null,
     "binding_status": "pending"
   },
   "resume": {
     "stage": "implement",
-    "reason": "The user directly approved implementation of the accepted Story 18.4 definition; begin governed TDD while retaining the external-resource hold for T020 and T029.",
-    "evidence_path": "specs/017-october-batch-setup/evidence/implementation-approval-02.json"
+    "reason": "The corrected definition and fresh scoped implementation approval are current. Resume governed TDD at the retained actual Program-host RED while preserving T020/T029 resource holds.",
+    "evidence_path": "specs/017-october-batch-setup/evidence/implementation-approval-03.json"
   },
   "updated_at": "2026-09-29T02:14:26.4999515Z",
   "recovery": {
     "action": "proceed",
     "closing_gate": "verify",
     "diagnosis": {
-      "at_count": 3,
+      "at_count": 4,
       "evidence": {
-        "path": "specs/017-october-batch-setup/evidence/recovery-diagnosis-implementation-setup-seam-01-count-03.json",
-        "sha256": "8e1f2d4f42ba1d4c767d3cab20a134a8a416b27fb5c1d7946981de15b89dcc0d"
+        "path": "specs/017-october-batch-setup/evidence/recovery-diagnosis-implementation-setup-seam-01-count-04-plan-review-09.json",
+        "sha256": "40f4c34cdf80b5431d6ea01773df03c5df3cf1f8359c4eb6bcdc50ac0ed69453"
       }
     },
     "earliest_owner": "tasks",
     "episode_id": "18-4-implementation-setup-seam-01",
-    "extension_decision_id": null,
-    "failed_results": 3,
+    "extension_decision_id": "18-4/recovery-extension/implementation-setup-seam-01/1",
+    "failed_results": 4,
     "holds": [],
     "last_result": {
-      "path": "specs/017-october-batch-setup/evidence/definition-review-07.json",
-      "sha256": "33de894896173c9025e21782d7dae308659e5834a75241dda0cfd22f6539e77e"
+      "path": "specs/017-october-batch-setup/evidence/implementation-bootstrap-program-configuration-result-01.json",
+      "sha256": "19443961768b9a7e0798a5b794162dfcb95c5a9d10b0e190f22567b7bd782ddf"
     },
-    "pause_at": 4
+    "pause_at": 5
   },
   "transition_head": {
-    "path": "specs/017-october-batch-setup/evidence/transitions/transition-0037-bootstrap-definition-review-accept.json",
-    "sha256": "ec0a45a0239d17520c64f2d5eaaac36d5df4812cca448a5f41bc5923983e776e"
+    "path": "specs/017-october-batch-setup/evidence/transitions/transition-0050-definition-review-09-accept.json",
+    "sha256": "4572a1b0a95c56c2ff8360605478452d2f65b5648506a60374c4ec1d43728177"
   },
   "definition_author": {
-    "profile": "definition-author",
-    "escalation_decision_id": null
+    "profile": "definition-author-recovery",
+    "escalation_decision_id": "18-4/definition-escalation/1"
   },
   "lookback": {
     "status": "invalidated",

@@ -1,0 +1,9 @@
+{
+  "kind": "analysis",
+  "decision_id": "18-4/definition-escalation/1",
+  "episode_id": "18-4-implementation-setup-seam-01",
+  "scope_sha256": "47b7e024eec8fedf3316303b9e408327c6085adcf539e956bc6258015508457c",
+  "trigger": "unresolved_definition_reasoning",
+  "profile": "definition-author-recovery",
+  "summary": "The accepted central startup-timing assumption failed in the real WebApplicationFactory after ordinary plan/task correction. Count-4 diagnosis requires an exclusive Astra/medium definition recovery author to replace the infeasible top-level configuration read with a deferred final-configuration composition seam and reconcile downstream tasks. This changes ownership/model only; it grants no product scope, approval, resource or recovery budget."
+}

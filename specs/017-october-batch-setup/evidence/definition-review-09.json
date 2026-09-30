@@ -1,0 +1,73 @@
+{
+  "observed_after": {
+    "path": "specs/017-october-batch-setup/evidence/transitions/transition-0049-bootstrap-config-tasks-self-review.json",
+    "sha256": "e379f8fab644c082ad83a7b2bd6d2346de2be1853a12dafea97cef944e54bf80"
+  },
+  "raw_result": {
+    "schema_version": "1.0",
+    "gate": "definition-review",
+    "verdict": "ACCEPT",
+    "reviewed_commit": "cfa07a3d6526f52d2922930f9bddf5d8bf5087ee",
+    "reviewed_boundary": {
+      "base_commit": "cfa07a3d6526f52d2922930f9bddf5d8bf5087ee",
+      "candidate_commit": null,
+      "diff_sha256": "7c6f8254f4b7e785c1a23b2c130a305a544c11942c478fcda7a38ede70534dd9",
+      "artifact_hashes": {
+        "specs/017-october-batch-setup/spec.md": "09bd29f496be4a9c956a460f9d1fc8af952f88c031324e528becb19bbc15b3bc",
+        "specs/017-october-batch-setup/plan.md": "de84d76a3d0130a7a2a041e2e4384f739de986506d3ad5b034b08341148beeb1",
+        "specs/017-october-batch-setup/research.md": "95716c4a811742c6c6964600410558dd8b9f644396bfe8fd634f6fcaff22b2b2",
+        "specs/017-october-batch-setup/data-model.md": "a5547480c2a53169c0c925be690b8c5016f5af94fec7373e327cf89739b15537",
+        "specs/017-october-batch-setup/quickstart.md": "8d383bf1890d34806a6d57bc8f41d92c1f58ca1be6237cd440481ad9c29adaa0",
+        "specs/017-october-batch-setup/contracts/batch-setup-selection.md": "e0c7287dec2e0562a35bfec98376981e805461af1585c8a42521cf1ad85af639",
+        "specs/017-october-batch-setup/contracts/provider-binding.md": "0c59b9d803c2d6770b9ebaf8d060bb73f6a6dd40b91a33947f72a033db48e3cd",
+        "specs/017-october-batch-setup/tasks.md": "59035bce8b8c53f274e2e5cbe63d49fcd10bad3735f1d981eebcd0ee6fcfac5e"
+      },
+      "owned_paths": [
+        "specs/017-october-batch-setup/spec.md",
+        "specs/017-october-batch-setup/plan.md",
+        "specs/017-october-batch-setup/research.md",
+        "specs/017-october-batch-setup/data-model.md",
+        "specs/017-october-batch-setup/quickstart.md",
+        "specs/017-october-batch-setup/contracts/batch-setup-selection.md",
+        "specs/017-october-batch-setup/contracts/provider-binding.md",
+        "specs/017-october-batch-setup/tasks.md"
+      ]
+    },
+    "reviewed_artifacts": [
+      "AGENTS.md",
+      ".specify/memory/constitution.md",
+      "docs/agents/project-state.md",
+      "docs/agents/testing.md",
+      "docs/bmad/implementation-artifacts/18-4-prepare-an-owned-october-batch-with-valid-context-and-provid.md",
+      "docs/bmad/planning-artifacts/architecture.md",
+      "docs/bmad/planning-artifacts/architecture/ARCHITECTURE-SPINE.md",
+      "docs/bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md",
+      "specs/017-october-batch-setup/spec.md",
+      "specs/017-october-batch-setup/plan.md",
+      "specs/017-october-batch-setup/research.md",
+      "specs/017-october-batch-setup/data-model.md",
+      "specs/017-october-batch-setup/quickstart.md",
+      "specs/017-october-batch-setup/contracts/batch-setup-selection.md",
+      "specs/017-october-batch-setup/contracts/provider-binding.md",
+      "specs/017-october-batch-setup/tasks.md",
+      "specs/017-october-batch-setup/evidence/plan-review-09.json",
+      "specs/017-october-batch-setup/evidence/plan-authorization-02.json",
+      "specs/017-october-batch-setup/evidence/bootstrap-config-timing-tasks-self-review-01.json",
+      "specs/017-october-batch-setup/evidence/implementation-bootstrap-program-configuration-result-01.json",
+      "specs/017-october-batch-setup/evidence/recovery-diagnosis-implementation-setup-seam-01-count-04-plan-review-09.json",
+      "specs/017-october-batch-setup/evidence/definition-review-01.json",
+      "specs/017-october-batch-setup/evidence/definition-review-02.json",
+      "specs/017-october-batch-setup/evidence/definition-review-03.json",
+      "specs/017-october-batch-setup/evidence/definition-review-04.json",
+      "specs/017-october-batch-setup/evidence/definition-review-05.json",
+      "specs/017-october-batch-setup/evidence/definition-review-06.json",
+      "specs/017-october-batch-setup/evidence/definition-review-07.json",
+      "specs/017-october-batch-setup/evidence/definition-review-08.json",
+      "specs/016-contained-source-tools/contracts/prepared-source-tools.md",
+      "src/dotnet/Vulgata.Web/Program.cs",
+      "tests/Vulgata.Tests/October/OctoberActivationApiTests.cs"
+    ],
+    "findings": [],
+    "summary": "Fresh complete-definition ACCEPT after transition-0049. All earlier P-18.4-01–04 and D-18.4-01–05 findings remain resolved. The 30 ordered tasks cite all 12 FRs and 23 executable design IDs; completed T001–T005 remain checked and unchanged. T006 retains the observed actual-WebApplicationFactory bootstrap-host RED rather than manufacturing RED from already-passing selector/verifier behavior. T007 replaces the premature top-level read with the accepted explicit-factory deferred ConfigureContainer seam, captures one immutable DI selection from final configuration, and requires actual Program-host minimal/final GREEN plus ordinary regressions before dependent host work. T018/T019 and T025/T026 reuse that seam with behavior-based verification; the same concrete certificate verifier and controlled source replacement are preserved. Source-approval/current-authority, issuer/context lifetime, identity cardinality, revocation/cancellation, provider binding, exact database/batch and ordinary-startup boundaries remain covered without Story 18.1 duplication or later-story expansion. T020/T029 still require separately authorized owned PostgreSQL, Identity and real-TLS resources. Plan-review-09 and planned-change authorization-02 cover task reconciliation only; this review grants no implementation or resource permission. Read-only SpecKit prerequisites passed, deterministic plan/task validation returned no errors, workflow validation reported no errors, and scoped diff check was clean. Corrected actual-host proof remains a required implementation GREEN outcome, not an unresolved definition defect."
+  }
+}
