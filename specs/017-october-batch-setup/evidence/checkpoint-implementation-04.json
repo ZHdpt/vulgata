@@ -4,8 +4,8 @@
   "stage": "implement",
   "story_key": "18-4-prepare-an-owned-october-batch-with-valid-context-and-provid",
   "source_head": "9ec8376fc38b7b3f09f0f11a4d8bbdbe945aa7a7",
-  "binding_status": "pending",
-  "commit_sha": null,
+  "binding_status": "bound",
+  "commit_sha": "3bd5bee5b01b843b0e8322d9d3ec1321cbf10129",
   "summary": "Verified T012 and the T013 approval route/service/persistence portion. Selected-data Program composition is deliberately deferred to T019 and keeps T013 open.",
   "paths": [
     "specs/017-october-batch-setup/tasks.md",

@@ -22,7 +22,7 @@
     },
     "tasks": {
       "path": "specs/017-october-batch-setup/tasks.md",
-      "sha256": "d7a208e8387b149ea2acd1cd3743b7a9aa3e641a14675c50c2d414cb1df49e0a"
+      "sha256": "7f76375c0b235eeb7e125a490b8122b95023476a7e7db02ca3dc02bf34d3689c"
     }
   },
   "gates": {
@@ -112,23 +112,23 @@
     "specs/017-october-batch-setup/evidence/implementation-approval-04.json",
     "specs/017-october-batch-setup/evidence/recovery-diagnosis-implementation-setup-seam-01-count-05.json",
     "specs/017-october-batch-setup/evidence/recovery-extension-implementation-setup-seam-01-count-05.json",
-    "specs/017-october-batch-setup/evidence/october-setup-store-tdd-01.json",
-    "specs/017-october-batch-setup/evidence/checkpoint-implementation-03.json",
     "specs/017-october-batch-setup/evidence/prepared-source-approval-tdd-01.json",
-    "specs/017-october-batch-setup/evidence/checkpoint-implementation-04.json"
+    "specs/017-october-batch-setup/evidence/checkpoint-implementation-04.json",
+    "specs/017-october-batch-setup/evidence/prepared-source-binding-tdd-01.json",
+    "specs/017-october-batch-setup/evidence/checkpoint-implementation-05.json"
   ],
   "checkpoint": {
-    "checkpoint_id": "bmad-18-4-implement-20260930T073401Z-6afc82",
+    "checkpoint_id": "bmad-18-4-implement-20260930T081059Z-0cb947",
     "stage": "implement",
     "commit_sha": null,
     "binding_status": "pending"
   },
   "resume": {
     "stage": "implement",
-    "reason": "T012 and T013 route/service/persistence behavior are checkpointed; T013 Program composition remains assigned to T019. Resume dependency-ready T014/T015 source-authority adapter TDD; T020/T029 remain resource-held and recovery remains 6/7.",
-    "evidence_path": "specs/017-october-batch-setup/evidence/prepared-source-approval-tdd-01.json"
+    "reason": "T014/T015 final GREEN is checkpointed. Resume dependency-ready T016/T017 existing-batch selector TDD; T013 Program composition remains assigned to T019, T020/T029 remain resource-held, and recovery remains 6/7.",
+    "evidence_path": "specs/017-october-batch-setup/evidence/prepared-source-binding-tdd-01.json"
   },
-  "updated_at": "2026-09-30T07:34:01.4770052Z",
+  "updated_at": "2026-09-30T08:10:59.5993419Z",
   "recovery": {
     "action": "proceed",
     "closing_gate": "verify",

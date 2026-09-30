@@ -1,0 +1,22 @@
+{
+  "kind": "checkpoint-manifest",
+  "checkpoint_id": "bmad-18-4-implement-20260930T081059Z-0cb947",
+  "stage": "implement",
+  "story_key": "18-4-prepare-an-owned-october-batch-with-valid-context-and-provid",
+  "source_head": "3bd5bee5b01b843b0e8322d9d3ec1321cbf10129",
+  "binding_status": "pending",
+  "commit_sha": null,
+  "summary": "Verified T014/T015 exact current-authority adapter and trusted prepared-source binding against the unchanged Story 18.1 issuer and regression boundary.",
+  "paths": [
+    "specs/017-october-batch-setup/tasks.md",
+    "specs/017-october-batch-setup/workflow-state.json",
+    "specs/017-october-batch-setup/evidence/checkpoint-implementation-04.json",
+    "specs/017-october-batch-setup/evidence/prepared-source-binding-tdd-01.json",
+    "specs/017-october-batch-setup/evidence/checkpoint-implementation-05.json",
+    "src/dotnet/Vulgata.Infrastructure/Source/OctoberPreparedSourceAuthorityVerifier.cs",
+    "src/dotnet/Vulgata.OctoberGenerator/PreparedSourceBinding.cs",
+    "tests/Vulgata.Tests/Vulgata.Tests.csproj",
+    "tests/Vulgata.Tests/October/OctoberPreparedSourceBindingTests.cs",
+    "tests/Vulgata.Tests/TestInfrastructure/suites.json"
+  ]
+}
