@@ -865,6 +865,9 @@
   "PreparedSource/PreparedToolWorkspaceIssuerTests.cs": {
     "suite": "SelfContained"
   },
+  "PreparedSource/PreparedCodeGraphStateCoordinatorTests.cs": {
+    "suite": "SelfContained"
+  },
   "PostgreSqlHeavyCollection.cs": {
     "suite": "PostgreSql"
   }

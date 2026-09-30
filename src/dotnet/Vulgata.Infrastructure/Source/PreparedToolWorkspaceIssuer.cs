@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 using System.Text;
 using Microsoft.Win32.SafeHandles;
 using Vulgata.Core.DomainServices;
@@ -337,6 +338,7 @@ public sealed class PreparedToolWorkspaceLease : IAsyncDisposable
 /// </summary>
 internal sealed class PreparedToolRootScope
 {
+    private const string CodeGraphEntryName = ".codegraph";
     private readonly string _rootPath;
     private readonly SafeFileHandle _rootHandle;
     private readonly PreparedSourceTraversal.DirectoryIdentity _rootIdentity;
@@ -361,6 +363,145 @@ internal sealed class PreparedToolRootScope
     {
         EnsureActive();
         return _rootPath;
+    }
+
+    internal PreparedToolDirectoryObjectIdentity? ObserveRootObjectIdentity()
+    {
+        EnsureActive();
+        return ToStableIdentity(PreparedSourceTraversal.ObserveDirectory(_rootHandle));
+    }
+
+    internal PreparedToolDirectoryObjectIdentity? ObserveCodeGraphEntryIdentity()
+    {
+        EnsureActive();
+        (PreparedSourceTraversal.OpenStatus status, SafeFileHandle? entry) =
+            PreparedSourceTraversal.OpenRelativeDirectory(_rootHandle, CodeGraphEntryName);
+        using (entry)
+        {
+            return status == PreparedSourceTraversal.OpenStatus.Opened && entry is not null
+                ? ToStableIdentity(PreparedSourceTraversal.ObserveDirectory(entry))
+                : null;
+        }
+    }
+
+    internal bool TryCreateCodeGraphEntryExclusively()
+    {
+        EnsureActive();
+        if (!PreparedToolWorkspaceLease.IsSameRootObject(
+                PreparedSourceTraversal.ObserveDirectory(_rootHandle), _rootIdentity))
+        {
+            return false;
+        }
+
+        IntPtr nameBuffer = Marshal.StringToHGlobalUni(CodeGraphEntryName);
+        IntPtr unicodePointer = IntPtr.Zero;
+        try
+        {
+            var unicode = new UnicodeString
+            {
+                Length = checked((ushort)(CodeGraphEntryName.Length * sizeof(char))),
+                MaximumLength = checked((ushort)((CodeGraphEntryName.Length + 1) * sizeof(char))),
+                Buffer = nameBuffer,
+            };
+            unicodePointer = Marshal.AllocHGlobal(Marshal.SizeOf<UnicodeString>());
+            Marshal.StructureToPtr(unicode, unicodePointer, fDeleteOld: false);
+            var attributes = new ObjectAttributes
+            {
+                Length = Marshal.SizeOf<ObjectAttributes>(),
+                RootDirectory = _rootHandle.DangerousGetHandle(),
+                ObjectName = unicodePointer,
+                Attributes = 0x00001000, // OBJ_DONT_REPARSE
+            };
+            bool parentReferenceAdded = false;
+            try
+            {
+                _rootHandle.DangerousAddRef(ref parentReferenceAdded);
+                int status = NtCreateFile(
+                    out SafeFileHandle entry,
+                    0x80 | 0x1 | 0x20 | 0x00100000, // attributes/list/traverse/synchronize
+                    ref attributes,
+                    out _,
+                    IntPtr.Zero,
+                    (uint)FileAttributes.Directory,
+                    0x00000007, // share read/write/delete
+                    2, // FILE_CREATE: never open or adopt an existing entry
+                    0x1 | 0x00200000 | 0x20, // directory, open reparse point, synchronous
+                    IntPtr.Zero,
+                    0);
+                using (entry)
+                {
+                    return status >= 0 && !entry.IsInvalid &&
+                        PreparedSourceTraversal.ObserveDirectory(entry) is not null &&
+                        PreparedToolWorkspaceLease.IsSameRootObject(
+                            PreparedSourceTraversal.ObserveDirectory(_rootHandle), _rootIdentity);
+                }
+            }
+            catch (ObjectDisposedException)
+            {
+                return false;
+            }
+            finally
+            {
+                if (parentReferenceAdded)
+                {
+                    _rootHandle.DangerousRelease();
+                }
+            }
+        }
+        finally
+        {
+            if (unicodePointer != IntPtr.Zero)
+            {
+                Marshal.FreeHGlobal(unicodePointer);
+            }
+
+            Marshal.FreeHGlobal(nameBuffer);
+        }
+    }
+
+    private static PreparedToolDirectoryObjectIdentity? ToStableIdentity(
+        PreparedSourceTraversal.DirectoryIdentity? identity) =>
+        identity is null ? null : new PreparedToolDirectoryObjectIdentity(
+            identity.VolumeSerialNumber, identity.FileIndexHigh, identity.FileIndexLow);
+
+    [DllImport("ntdll.dll", ExactSpelling = true)]
+    private static extern int NtCreateFile(
+        out SafeFileHandle fileHandle,
+        uint desiredAccess,
+        ref ObjectAttributes objectAttributes,
+        out IoStatusBlock ioStatusBlock,
+        IntPtr allocationSize,
+        uint fileAttributes,
+        uint shareAccess,
+        uint createDisposition,
+        uint createOptions,
+        IntPtr eaBuffer,
+        uint eaLength);
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct UnicodeString
+    {
+        public ushort Length;
+        public ushort MaximumLength;
+        public IntPtr Buffer;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct ObjectAttributes
+    {
+        public int Length;
+        public IntPtr RootDirectory;
+        public IntPtr ObjectName;
+        public uint Attributes;
+        public IntPtr SecurityDescriptor;
+        public IntPtr SecurityQualityOfService;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct IoStatusBlock
+    {
+        public IntPtr Status;
+        public IntPtr Information;
     }
 
     internal bool IsSeparateDisposableStateRoot(string absoluteStateRoot)
