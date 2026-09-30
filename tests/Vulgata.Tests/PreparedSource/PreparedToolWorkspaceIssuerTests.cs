@@ -691,6 +691,64 @@ public sealed class PreparedToolWorkspaceIssuerTests
 
     [Trait("Suite", "SelfContained")]
     [SuiteFact("SelfContained")]
+    public async Task UseContainedRootAsync_WhenToolPurposeIsRevokedDuringCallback_ClosesAndInvalidatesScope()
+    {
+        await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
+        string javaDirectory = Path.Combine(fixture.PreparedRootPath, "src", "main", "java");
+        Directory.CreateDirectory(javaDirectory);
+        string javaFilePath = Path.Combine(javaDirectory, "Target.java");
+        await File.WriteAllTextAsync(javaFilePath, "package example; class Target {}\n");
+
+        fixture.Authority.Approve(fixture.Approval);
+        var toolAuthorization = new ControlledPreparedToolUseAuthorizer();
+        toolAuthorization.Allow(fixture.Approval, PreparedToolPurpose.JdtNavigation);
+        var issuer = new PreparedToolWorkspaceIssuer(fixture.Authority, toolAuthorization);
+        PreparedToolWorkspaceIssueResult issue = await issuer.IssueAsync(
+            new PreparedToolWorkspaceGrantRequest(
+                fixture.Approval,
+                fixture.PreparedRootPath,
+                PreparedToolPurpose.JdtNavigation,
+                TimeSpan.FromSeconds(5)));
+        Assert.Equal(PreparedToolWorkspaceIssueStatus.Issued, issue.Status);
+        PreparedToolWorkspaceLease lease = Assert.IsType<PreparedToolWorkspaceLease>(issue.Lease);
+
+        PreparedToolRootScope? savedScope = null;
+        bool mappedInsideCallback = false;
+        PreparedSourceLocation? candidateLocation = null;
+        try
+        {
+            PreparedToolWorkspaceCheckStatus status = await lease.UseContainedRootAsync(
+                PreparedToolPurpose.JdtNavigation,
+                (scope, _) =>
+                {
+                    savedScope = scope;
+                    mappedInsideCallback = scope.TryMapContainedFileUri(
+                        new Uri(javaFilePath),
+                        out candidateLocation);
+                    toolAuthorization.SetStatus(PreparedToolUseAuthorityStatus.Denied);
+                    return ValueTask.CompletedTask;
+                });
+
+            Assert.True(mappedInsideCallback);
+            Assert.Equal(
+                new PreparedSourceLocation(fixture.Approval.RepositoryId, "src/main/java/Target.java"),
+                candidateLocation);
+            Assert.Equal(PreparedToolWorkspaceCheckStatus.Denied, status);
+            Assert.Equal(PreparedToolWorkspaceLifetime.AuthorityClosed, lease.Lifetime);
+            Assert.NotNull(savedScope);
+            Assert.False(savedScope!.TryMapContainedFileUri(
+                new Uri(javaFilePath),
+                out PreparedSourceLocation? staleLocation));
+            Assert.Null(staleLocation);
+        }
+        finally
+        {
+            await lease.DisposeAsync();
+        }
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task UseContainedRootAsync_WhenOwnedCodeGraphEntryChangesRootMetadata_KeepsStableRootLeaseCurrent()
     {
         await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();

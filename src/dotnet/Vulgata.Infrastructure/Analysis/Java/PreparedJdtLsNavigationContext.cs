@@ -135,14 +135,20 @@ public sealed class PreparedJdtLsNavigationContext : IPreparedJavaNavigationCont
                 cancellationToken);
             if (mapping != PreparedToolWorkspaceCheckStatus.Current)
             {
-                return Empty(operation, Map(mapping));
+                bool settled = await RetireSessionUnderGateAsync();
+                return Empty(operation, settled
+                    ? Map(mapping)
+                    : PreparedJavaNavigationOutcome.ConfigurationUnavailable);
             }
 
             PreparedToolWorkspaceCheckStatus disclosure =
                 await _workspaceLease.CheckCurrentAsync(cancellationToken);
             if (disclosure != PreparedToolWorkspaceCheckStatus.Current)
             {
-                return Empty(operation, Map(disclosure));
+                bool settled = await RetireSessionUnderGateAsync();
+                return Empty(operation, settled
+                    ? Map(disclosure)
+                    : PreparedJavaNavigationOutcome.ConfigurationUnavailable);
             }
 
             bool limited = raw.LimitReached || raw.Locations.Count > request.MaximumLocations;

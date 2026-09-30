@@ -15,6 +15,268 @@ public sealed class JdtLsPreparedNavigationTests
 {
     [Trait("Suite", "SelfContained")]
     [SuiteTheory("SelfContained")]
+    [InlineData(9)]
+    [InlineData(10)]
+    public async Task GetDefinitionAsync_WhenPurposeIsDeniedAfterMappingOrBeforeDisclosure_RetiresSession(
+        int denyOnVerification)
+    {
+        await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
+        string callerPath = Path.Combine(fixture.PreparedRootPath, "src", "main", "java", "Caller.java");
+        Directory.CreateDirectory(Path.GetDirectoryName(callerPath)!);
+        await File.WriteAllTextAsync(callerPath, "class Caller {}\n");
+
+        fixture.Authority.Approve(fixture.Approval);
+        // Issue and successful factory open perform six tool checks. Navigation then checks
+        // before the request, before and after the contained callback, and before disclosure.
+        var toolAuthorization = new DenyingToolUseAuthorizer(
+            fixture.Approval,
+            PreparedToolPurpose.JdtNavigation,
+            denyOnVerification);
+        var issuer = new PreparedToolWorkspaceIssuer(fixture.Authority, toolAuthorization);
+        PreparedToolWorkspaceIssueResult issue = await issuer.IssueAsync(
+            new PreparedToolWorkspaceGrantRequest(
+                fixture.Approval,
+                fixture.PreparedRootPath,
+                PreparedToolPurpose.JdtNavigation,
+                TimeSpan.FromSeconds(10)));
+        Assert.Equal(PreparedToolWorkspaceIssueStatus.Issued, issue.Status);
+        PreparedToolWorkspaceLease lease = Assert.IsType<PreparedToolWorkspaceLease>(issue.Lease);
+
+        string disposableStateRoot = Path.Combine(fixture.SiblingPath, "jdt-state");
+        Directory.CreateDirectory(disposableStateRoot);
+        var runtime = new ControlledPreparedJdtLsRuntime();
+        runtime.Session.Reply = new PreparedJdtLsRawReply(
+            [new PreparedJdtLsRawLocation(new Uri(callerPath).AbsoluteUri, 2, 1, 2, 8)],
+            LimitReached: true,
+            CapabilityLimitation: "controlled limit detail");
+        var factory = new PreparedJavaNavigationContextFactory(
+            new PreparedJavaNavigationProfile(
+                disposableStateRoot,
+                TimeSpan.FromSeconds(3),
+                TimeSpan.FromSeconds(2),
+                TimeSpan.FromSeconds(1),
+                MaximumResponseBytes: 64 * 1024),
+            runtime);
+        PreparedJavaNavigationOpenResult? open = null;
+
+        try
+        {
+            open = await factory.OpenAsync(lease);
+            Assert.Equal(PreparedJavaNavigationOpenStatus.Opened, open.Status);
+            IPreparedJavaNavigationContext context =
+                Assert.IsAssignableFrom<IPreparedJavaNavigationContext>(open.Context);
+            Assert.Equal(6, toolAuthorization.VerificationCount);
+
+            PreparedJavaNavigationResult result = await context.GetDefinitionAsync(
+                new PreparedJavaNavigationRequest("src/main/java/Caller.java", 1, 1, 10));
+
+            Assert.Equal(PreparedJavaNavigationOutcome.Denied, result.Outcome);
+            Assert.Empty(result.Locations);
+            Assert.Empty(result.Limitations);
+            Assert.Null(result.StoppingLimit);
+            Assert.Equal(1, runtime.Session.NavigateCallCount);
+            Assert.Equal(1, runtime.Session.DisposeCallCount);
+            Assert.Equal(denyOnVerification, toolAuthorization.VerificationCount);
+            Assert.Equal(PreparedToolWorkspaceLifetime.AuthorityClosed, lease.Lifetime);
+            string serializedResult = JsonSerializer.Serialize(result);
+            Assert.DoesNotContain(callerPath, serializedResult, StringComparison.OrdinalIgnoreCase);
+            Assert.DoesNotContain(disposableStateRoot, serializedResult, StringComparison.OrdinalIgnoreCase);
+            Assert.DoesNotContain("controlled limit detail", serializedResult, StringComparison.Ordinal);
+        }
+        finally
+        {
+            if (open?.Context is not null)
+            {
+                await open.Context.DisposeAsync();
+            }
+
+            await lease.DisposeAsync();
+        }
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData(PreparedSourceAuthorityStatus.Revoked, PreparedJavaNavigationOutcome.Denied)]
+    [InlineData(PreparedSourceAuthorityStatus.Unavailable, PreparedJavaNavigationOutcome.AuthorityUnavailable)]
+    public async Task GetDefinitionAsync_WhenSourceAuthorityIsLostBeforeDisclosure_DiscardsBufferedPayload(
+        PreparedSourceAuthorityStatus loss,
+        PreparedJavaNavigationOutcome expectedOutcome)
+    {
+        await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
+        string callerPath = Path.Combine(fixture.PreparedRootPath, "src", "main", "java", "Caller.java");
+        Directory.CreateDirectory(Path.GetDirectoryName(callerPath)!);
+        await File.WriteAllTextAsync(callerPath, "class Caller {}\n");
+
+        fixture.Authority.Approve(fixture.Approval);
+        // The same six successful issue/open source checks precede the four navigation checks;
+        // lose source authority on the final pre-disclosure check.
+        var sourceAuthority = new DenyingSourceAuthority(
+            fixture.Authority,
+            denyOnVerification: 10,
+            loss: loss);
+        var toolAuthorization = new ControlledPreparedToolUseAuthorizer(
+            fixture.Approval,
+            PreparedToolPurpose.JdtNavigation);
+        var issuer = new PreparedToolWorkspaceIssuer(sourceAuthority, toolAuthorization);
+        PreparedToolWorkspaceIssueResult issue = await issuer.IssueAsync(
+            new PreparedToolWorkspaceGrantRequest(
+                fixture.Approval,
+                fixture.PreparedRootPath,
+                PreparedToolPurpose.JdtNavigation,
+                TimeSpan.FromSeconds(10)));
+        Assert.Equal(PreparedToolWorkspaceIssueStatus.Issued, issue.Status);
+        PreparedToolWorkspaceLease lease = Assert.IsType<PreparedToolWorkspaceLease>(issue.Lease);
+
+        string disposableStateRoot = Path.Combine(fixture.SiblingPath, "jdt-state");
+        Directory.CreateDirectory(disposableStateRoot);
+        var runtime = new ControlledPreparedJdtLsRuntime();
+        runtime.Session.Reply = new PreparedJdtLsRawReply(
+            [new PreparedJdtLsRawLocation(new Uri(callerPath).AbsoluteUri, 2, 1, 2, 8)],
+            LimitReached: true,
+            CapabilityLimitation: "controlled limit detail");
+        var factory = new PreparedJavaNavigationContextFactory(
+            new PreparedJavaNavigationProfile(
+                disposableStateRoot,
+                TimeSpan.FromSeconds(3),
+                TimeSpan.FromSeconds(2),
+                TimeSpan.FromSeconds(1),
+                MaximumResponseBytes: 64 * 1024),
+            runtime);
+        PreparedJavaNavigationOpenResult? open = null;
+
+        try
+        {
+            open = await factory.OpenAsync(lease);
+            Assert.Equal(PreparedJavaNavigationOpenStatus.Opened, open.Status);
+            IPreparedJavaNavigationContext context =
+                Assert.IsAssignableFrom<IPreparedJavaNavigationContext>(open.Context);
+            Assert.Equal(6, sourceAuthority.VerificationCount);
+
+            PreparedJavaNavigationResult result = await context.GetDefinitionAsync(
+                new PreparedJavaNavigationRequest("src/main/java/Caller.java", 1, 1, 10));
+
+            Assert.Equal(expectedOutcome, result.Outcome);
+            Assert.Empty(result.Locations);
+            Assert.Empty(result.Limitations);
+            Assert.Null(result.StoppingLimit);
+            Assert.Equal(1, runtime.Session.NavigateCallCount);
+            Assert.Equal(1, runtime.Session.DisposeCallCount);
+            Assert.Equal(10, sourceAuthority.VerificationCount);
+            Assert.Equal(PreparedToolWorkspaceLifetime.AuthorityClosed, lease.Lifetime);
+            string serializedResult = JsonSerializer.Serialize(result);
+            Assert.DoesNotContain(callerPath, serializedResult, StringComparison.OrdinalIgnoreCase);
+            Assert.DoesNotContain(disposableStateRoot, serializedResult, StringComparison.OrdinalIgnoreCase);
+            Assert.DoesNotContain("controlled limit detail", serializedResult, StringComparison.Ordinal);
+        }
+        finally
+        {
+            if (open?.Context is not null)
+            {
+                await open.Context.DisposeAsync();
+            }
+
+            await lease.DisposeAsync();
+        }
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task GetDefinitionAsync_WhenAuthorityLossCannotSettleSession_QuarantinesRepository()
+    {
+        await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
+        string callerPath = Path.Combine(fixture.PreparedRootPath, "src", "main", "java", "Caller.java");
+        Directory.CreateDirectory(Path.GetDirectoryName(callerPath)!);
+        await File.WriteAllTextAsync(callerPath, "class Caller {}\n");
+        fixture.Authority.Approve(fixture.Approval);
+
+        var toolAuthorization = new DenyingToolUseAuthorizer(
+            fixture.Approval,
+            PreparedToolPurpose.JdtNavigation,
+            denyOnVerification: 10);
+        var issuer = new PreparedToolWorkspaceIssuer(fixture.Authority, toolAuthorization);
+        PreparedToolWorkspaceIssueResult issue = await issuer.IssueAsync(
+            new PreparedToolWorkspaceGrantRequest(
+                fixture.Approval,
+                fixture.PreparedRootPath,
+                PreparedToolPurpose.JdtNavigation,
+                TimeSpan.FromSeconds(10)));
+        Assert.Equal(PreparedToolWorkspaceIssueStatus.Issued, issue.Status);
+        PreparedToolWorkspaceLease lease = Assert.IsType<PreparedToolWorkspaceLease>(issue.Lease);
+
+        string disposableStateRoot = Path.Combine(fixture.SiblingPath, "jdt-state");
+        Directory.CreateDirectory(disposableStateRoot);
+        var runtime = new UnconfirmedDisposeNavigationRuntime(new PreparedJdtLsRawReply(
+            [new PreparedJdtLsRawLocation(new Uri(callerPath).AbsoluteUri, 2, 1, 2, 8)],
+            LimitReached: true,
+            CapabilityLimitation: "controlled limit detail"));
+        var factory = new PreparedJavaNavigationContextFactory(
+            new PreparedJavaNavigationProfile(
+                disposableStateRoot,
+                TimeSpan.FromSeconds(3),
+                TimeSpan.FromSeconds(2),
+                TimeSpan.FromSeconds(1),
+                MaximumResponseBytes: 64 * 1024),
+            runtime);
+        PreparedJavaNavigationOpenResult? open = null;
+        PreparedToolWorkspaceLease? retryLease = null;
+        try
+        {
+            open = await factory.OpenAsync(lease);
+            Assert.Equal(PreparedJavaNavigationOpenStatus.Opened, open.Status);
+            IPreparedJavaNavigationContext context =
+                Assert.IsAssignableFrom<IPreparedJavaNavigationContext>(open.Context);
+
+            PreparedJavaNavigationResult result = await context.GetDefinitionAsync(
+                new PreparedJavaNavigationRequest("src/main/java/Caller.java", 1, 1, 10));
+
+            Assert.Equal(PreparedJavaNavigationOutcome.ConfigurationUnavailable, result.Outcome);
+            Assert.Empty(result.Locations);
+            Assert.Empty(result.Limitations);
+            Assert.Null(result.StoppingLimit);
+            Assert.Equal(1, runtime.OpenCallCount);
+            Assert.Equal(1, runtime.Session.DisposeCallCount);
+            Assert.Equal(PreparedToolWorkspaceLifetime.AuthorityClosed, lease.Lifetime);
+            Assert.DoesNotContain("controlled limit detail", JsonSerializer.Serialize(result), StringComparison.Ordinal);
+
+            var retryAuthorization = new ControlledPreparedToolUseAuthorizer(
+                fixture.Approval,
+                PreparedToolPurpose.JdtNavigation);
+            PreparedToolWorkspaceIssueResult retryIssue = await new PreparedToolWorkspaceIssuer(
+                fixture.Authority,
+                retryAuthorization).IssueAsync(
+                    new PreparedToolWorkspaceGrantRequest(
+                        fixture.Approval,
+                        fixture.PreparedRootPath,
+                        PreparedToolPurpose.JdtNavigation,
+                        TimeSpan.FromSeconds(10)));
+            Assert.Equal(PreparedToolWorkspaceIssueStatus.Issued, retryIssue.Status);
+            retryLease = Assert.IsType<PreparedToolWorkspaceLease>(retryIssue.Lease);
+
+            PreparedJavaNavigationOpenResult retry = await factory.OpenAsync(retryLease);
+            Assert.Equal(PreparedJavaNavigationOpenStatus.CleanupUnconfirmed, retry.Status);
+            Assert.Null(retry.Context);
+            Assert.Equal(1, runtime.OpenCallCount);
+        }
+        finally
+        {
+            if (open?.Context is not null)
+            {
+                await open.Context.DisposeAsync();
+            }
+
+            if (retryLease is not null)
+            {
+                await retryLease.DisposeAsync();
+            }
+
+            await lease.DisposeAsync();
+        }
+
+        Assert.Equal(1, runtime.Session.DisposeCallCount);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
     [InlineData(@"C:\outside\Secret.java")]
     [InlineData("../outside/Secret.java")]
     [InlineData(@"src\main\java\Secret.java")]
@@ -1364,6 +1626,88 @@ public sealed class JdtLsPreparedNavigationTests
                     ? PreparedToolUseAuthorityStatus.Current
                     : PreparedToolUseAuthorityStatus.Denied;
             return Task.FromResult(new PreparedToolUseAuthorityResult(status));
+        }
+    }
+
+    private sealed class DenyingToolUseAuthorizer(
+        PreparedSourceApproval approval,
+        PreparedToolPurpose purpose,
+        int denyOnVerification) : IPreparedToolUseAuthorizer
+    {
+        public int VerificationCount { get; private set; }
+
+        public Task<PreparedToolUseAuthorityResult> VerifyCurrentAsync(
+            PreparedSourceApproval requestedApproval,
+            PreparedToolPurpose requestedPurpose,
+            CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            VerificationCount++;
+            PreparedToolUseAuthorityStatus status = requestedApproval != approval ||
+                requestedPurpose != purpose
+                    ? PreparedToolUseAuthorityStatus.Denied
+                    : VerificationCount >= denyOnVerification
+                        ? PreparedToolUseAuthorityStatus.Denied
+                        : PreparedToolUseAuthorityStatus.Current;
+            return Task.FromResult(new PreparedToolUseAuthorityResult(status));
+        }
+    }
+
+    private sealed class DenyingSourceAuthority(
+        IPreparedSourceCurrentAuthorityVerifier inner,
+        int denyOnVerification,
+        PreparedSourceAuthorityStatus loss) : IPreparedSourceCurrentAuthorityVerifier
+    {
+        public int VerificationCount { get; private set; }
+
+        public Task<PreparedSourceAuthorityResult> VerifyCurrentAsync(
+            PreparedSourceApproval requestedApproval,
+            CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            VerificationCount++;
+            return VerificationCount >= denyOnVerification
+                ? Task.FromResult(new PreparedSourceAuthorityResult(loss, null))
+                : inner.VerifyCurrentAsync(requestedApproval, cancellationToken);
+        }
+    }
+
+    private sealed class UnconfirmedDisposeNavigationRuntime(PreparedJdtLsRawReply reply)
+        : IPreparedJdtLsRuntime
+    {
+        public UnconfirmedDisposeNavigationSession Session { get; } = new(reply);
+
+        public int OpenCallCount { get; private set; }
+
+        public Task<IPreparedJdtLsSession> OpenAsync(
+            PreparedToolWorkspaceLease workspaceLease,
+            PreparedJavaNavigationProfile profile,
+            CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            OpenCallCount++;
+            return Task.FromResult<IPreparedJdtLsSession>(Session);
+        }
+    }
+
+    private sealed class UnconfirmedDisposeNavigationSession(PreparedJdtLsRawReply reply)
+        : IPreparedJdtLsSession
+    {
+        public int DisposeCallCount { get; private set; }
+
+        public Task<PreparedJdtLsRawReply> NavigateAsync(
+            PreparedJavaNavigationOperation operation,
+            PreparedJavaNavigationRequest request,
+            CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            return Task.FromResult(reply);
+        }
+
+        public ValueTask DisposeAsync()
+        {
+            DisposeCallCount++;
+            throw new InvalidOperationException("Controlled session cleanup is unconfirmed.");
         }
     }
 }
