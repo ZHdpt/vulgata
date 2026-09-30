@@ -226,13 +226,176 @@ internal sealed class PreparedCodeGraphStateCoordinator
         return UnavailableView();
     }
 
-    // Disposition is deliberately unavailable until the separate bounded cleanup
-    // slice verifies child settlement and durable Removed readback.
-    internal Task<PreparedToolWorkspaceCheckStatus> DisposeOwnedStateAsync(
+    internal async Task<PreparedToolWorkspaceCheckStatus> DisposeOwnedStateAsync(
         PreparedSourceApproval dispositionApproval,
         PreparedCodeGraphWorkspaceOwnership workspaceOwnership,
-        CancellationToken cancellationToken = default) =>
-        Task.FromResult(PreparedToolWorkspaceCheckStatus.RootUnavailable);
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(workspaceOwnership);
+        if (!ValidBinding(workspaceOwnership) ||
+            workspaceOwnership.Phase != PreparedCodeGraphOwnershipPhase.Ready ||
+            workspaceOwnership.StateEntryObjectIdentity is null ||
+            dispositionApproval != workspaceOwnership.Approval)
+        {
+            return PreparedToolWorkspaceCheckStatus.Denied;
+        }
+
+        PreparedToolWorkspaceCheckStatus approval = await VerifyDispositionAuthorityAsync(
+            workspaceOwnership, cancellationToken);
+        if (approval != PreparedToolWorkspaceCheckStatus.Current)
+        {
+            return approval;
+        }
+
+        (PreparedSourceTraversal.OpenStatus openStatus, SafeFileHandle? rootHandle) =
+            PreparedSourceTraversal.OpenRoot(workspaceOwnership.PhysicalRootPath);
+        if (openStatus != PreparedSourceTraversal.OpenStatus.Opened || rootHandle is null)
+        {
+            return PreparedToolWorkspaceCheckStatus.RootUnavailable;
+        }
+
+        using (rootHandle)
+        {
+            PreparedSourceTraversal.DirectoryIdentity? observedRoot =
+                PreparedSourceTraversal.ObserveDirectory(rootHandle);
+            if (observedRoot is null || Stable(observedRoot) != workspaceOwnership.RootObjectIdentity)
+            {
+                return PreparedToolWorkspaceCheckStatus.RootUnavailable;
+            }
+
+            var scope = new PreparedToolRootScope(
+                workspaceOwnership.PhysicalRootPath,
+                rootHandle,
+                observedRoot,
+                workspaceOwnership.Approval.RepositoryId);
+            try
+            {
+                if (scope.ObserveCodeGraphEntryIdentity() != workspaceOwnership.StateEntryObjectIdentity ||
+                    !await DispositionCheckAsync(scope, workspaceOwnership, expectEntry: true, cancellationToken))
+                {
+                    return PreparedToolWorkspaceCheckStatus.RootUnavailable;
+                }
+
+                PreparedCodeGraphOwnershipTransitionResult? begun = await TryTransitionAsync(
+                    () => _store.BeginDispositionAsync(workspaceOwnership, cancellationToken));
+                if (begun?.Status != PreparedCodeGraphOwnershipTransitionStatus.Committed ||
+                    begun.Record is not { Phase: PreparedCodeGraphOwnershipPhase.Disposing } disposing ||
+                    !SameBinding(workspaceOwnership, disposing) ||
+                    disposing.Version <= workspaceOwnership.Version ||
+                    disposing.StateEntryObjectIdentity != workspaceOwnership.StateEntryObjectIdentity)
+                {
+                    return PreparedToolWorkspaceCheckStatus.RootUnavailable;
+                }
+
+                try
+                {
+                    bool removed = await scope.RemoveRecordedCodeGraphEntryAsync(
+                        disposing.StateEntryObjectIdentity!,
+                        token => DispositionCheckAsync(scope, disposing, expectEntry: true, token),
+                        cancellationToken);
+                    if (!removed ||
+                        !await DispositionCheckAsync(scope, disposing, expectEntry: false, cancellationToken) ||
+                        !scope.IsCodeGraphEntryAbsent())
+                    {
+                        await TryQuarantineDispositionAsync(disposing);
+                        return PreparedToolWorkspaceCheckStatus.RootUnavailable;
+                    }
+
+                    PreparedCodeGraphOwnershipTransitionResult? terminal = await TryTransitionAsync(
+                        () => _store.CommitRemovedAsync(disposing, cancellationToken));
+                    if (terminal?.Status != PreparedCodeGraphOwnershipTransitionStatus.Committed ||
+                        terminal.Record is not { Phase: PreparedCodeGraphOwnershipPhase.Removed } saved ||
+                        !SameBinding(disposing, saved) || saved.Version <= disposing.Version ||
+                        saved.StateEntryObjectIdentity is not null)
+                    {
+                        await TryQuarantineDispositionAsync(disposing);
+                        return PreparedToolWorkspaceCheckStatus.RootUnavailable;
+                    }
+
+                    PreparedCodeGraphOwnershipLoadResult? readback = await TryLoadAsync(saved, cancellationToken);
+                    if (readback?.Status != PreparedCodeGraphOwnershipLoadStatus.Found ||
+                        readback.Record != saved || !scope.IsCodeGraphEntryAbsent() ||
+                        !RootMatches(scope, saved))
+                    {
+                        await TryQuarantineDispositionAsync(saved);
+                        return PreparedToolWorkspaceCheckStatus.RootUnavailable;
+                    }
+
+                    return PreparedToolWorkspaceCheckStatus.Current;
+                }
+                catch (OperationCanceledException)
+                {
+                    await TryQuarantineDispositionAsync(disposing);
+                    return PreparedToolWorkspaceCheckStatus.Cancelled;
+                }
+                catch (Exception)
+                {
+                    await TryQuarantineDispositionAsync(disposing);
+                    return PreparedToolWorkspaceCheckStatus.RootUnavailable;
+                }
+            }
+            finally
+            {
+                scope.Invalidate();
+            }
+        }
+    }
+
+    private async Task<bool> DispositionCheckAsync(
+        PreparedToolRootScope scope,
+        PreparedCodeGraphWorkspaceOwnership ownership,
+        bool expectEntry,
+        CancellationToken cancellationToken)
+    {
+        if (await VerifyDispositionAuthorityAsync(ownership, cancellationToken) !=
+                PreparedToolWorkspaceCheckStatus.Current || !RootMatches(scope, ownership) ||
+            expectEntry && scope.ObserveCodeGraphEntryIdentity() != ownership.StateEntryObjectIdentity)
+        {
+            return false;
+        }
+
+        PreparedCodeGraphOwnershipLoadResult? loaded = await TryLoadAsync(ownership, cancellationToken);
+        return loaded?.Status == PreparedCodeGraphOwnershipLoadStatus.Found &&
+            loaded.Record == ownership;
+    }
+
+    private async Task<PreparedToolWorkspaceCheckStatus> VerifyDispositionAuthorityAsync(
+        PreparedCodeGraphWorkspaceOwnership ownership,
+        CancellationToken cancellationToken)
+    {
+        PreparedToolWorkspaceCheckStatus use = await VerifyUseAuthorityAsync(ownership, cancellationToken);
+        if (use != PreparedToolWorkspaceCheckStatus.Current)
+        {
+            return use;
+        }
+
+        try
+        {
+            return await _workspaceOwner.VerifyDispositionReadyAsync(ownership, cancellationToken)
+                ? PreparedToolWorkspaceCheckStatus.Current
+                : PreparedToolWorkspaceCheckStatus.Denied;
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            return PreparedToolWorkspaceCheckStatus.Cancelled;
+        }
+        catch (Exception)
+        {
+            return PreparedToolWorkspaceCheckStatus.AuthorityUnavailable;
+        }
+    }
+
+    private async Task TryQuarantineDispositionAsync(PreparedCodeGraphWorkspaceOwnership expected)
+    {
+        PreparedCodeGraphOwnershipLoadResult? loaded = await TryLoadAsync(expected, CancellationToken.None);
+        if (loaded?.Status == PreparedCodeGraphOwnershipLoadStatus.Found &&
+            loaded.Record is { } current && SameBinding(expected, current) &&
+            current.Version >= expected.Version &&
+            current.Phase is PreparedCodeGraphOwnershipPhase.Disposing or PreparedCodeGraphOwnershipPhase.Removed)
+        {
+            await TryTransitionAsync(() => _store.QuarantineAsync(current, CancellationToken.None));
+        }
+    }
 
     private async Task<PreparedToolWorkspaceCheckStatus> VerifyUseAuthorityAsync(
         PreparedCodeGraphWorkspaceOwnership ownership,

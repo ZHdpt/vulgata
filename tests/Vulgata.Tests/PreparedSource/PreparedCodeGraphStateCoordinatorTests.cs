@@ -41,7 +41,7 @@ public sealed class PreparedCodeGraphStateCoordinatorTests
         var coordinator = new PreparedCodeGraphStateCoordinator(
             fixture.Authority,
             authorization,
-            new CurrentWorkspaceOwnershipVerifier(),
+            new RecordingWorkspaceOwnershipVerifier(),
             store);
 
         int callbackCount = 0;
@@ -113,7 +113,7 @@ public sealed class PreparedCodeGraphStateCoordinatorTests
         var coordinator = new PreparedCodeGraphStateCoordinator(
             fixture.Authority,
             authorization,
-            new CurrentWorkspaceOwnershipVerifier(),
+            new RecordingWorkspaceOwnershipVerifier(),
             store);
 
         int callbackCount = 0;
@@ -141,6 +141,65 @@ public sealed class PreparedCodeGraphStateCoordinatorTests
         {
             await lease.DisposeAsync();
         }
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task DisposeOwnedStateAsync_CommitsDisposingBeforeRemovalAndReadsBackRemoved()
+    {
+        await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
+        fixture.Authority.Approve(fixture.Approval);
+
+        string statePath = Path.Combine(fixture.PreparedRootPath, ".codegraph");
+        string cachePath = Path.Combine(statePath, "cache", "index.db");
+        Directory.CreateDirectory(Path.GetDirectoryName(cachePath)!);
+        await File.WriteAllTextAsync(cachePath, "owned state fixture");
+        Assert.True(File.Exists(fixture.UnfamiliarTextPath), "The fixture source must exist before disposition.");
+
+        var ready = new PreparedCodeGraphWorkspaceOwnership(
+            Guid.NewGuid(),
+            Version: 2,
+            PreparedCodeGraphOwnershipPhase.Ready,
+            fixture.Approval,
+            Path.GetFullPath(fixture.PreparedRootPath),
+            ObserveDirectoryIdentity(fixture.PreparedRootPath),
+            WorkspaceOwnerIdentity: $"owner-{fixture.SandboxId:N}",
+            StateEntryObjectIdentity: ObserveDirectoryIdentity(statePath));
+        var store = new RecordingOwnershipStore();
+        store.Seed(ready);
+        var authorization = new TestToolUseAuthorizer();
+        authorization.Allow(fixture.Approval, PreparedToolPurpose.CodeGraphPreparation);
+        var ownerVerifier = new RecordingWorkspaceOwnershipVerifier();
+        var coordinator = new PreparedCodeGraphStateCoordinator(
+            fixture.Authority,
+            authorization,
+            ownerVerifier,
+            store);
+
+        PreparedToolWorkspaceCheckStatus result = await coordinator.DisposeOwnedStateAsync(
+            fixture.Approval,
+            ready);
+
+        Assert.Equal(PreparedToolWorkspaceCheckStatus.Current, result);
+        Assert.Equal(
+            new[]
+            {
+                PreparedCodeGraphOwnershipPhase.Ready,
+                PreparedCodeGraphOwnershipPhase.Disposing,
+                PreparedCodeGraphOwnershipPhase.Removed,
+            },
+            store.CommittedPhases);
+        Assert.Equal(PreparedCodeGraphOwnershipPhase.Removed, store.CurrentRecord?.Phase);
+        Assert.Equal(4, store.CurrentRecord?.Version);
+        Assert.Null(store.CurrentRecord?.StateEntryObjectIdentity);
+        Assert.Equal(1, store.TerminalReadbackCount);
+        Assert.True(ownerVerifier.DispositionReadyChecks >= 2,
+            "Trusted owner readiness must be rechecked before and after removing the entry.");
+        Assert.Equal(fixture.Approval, fixture.Authority.LastRequestedApproval);
+        Assert.Equal(fixture.Approval, authorization.LastApproval);
+        Assert.Equal(PreparedToolPurpose.CodeGraphPreparation, authorization.LastPurpose);
+        Assert.False(Directory.Exists(statePath), "Disposition must remove only the recorded CodeGraph state tree.");
+        Assert.True(File.Exists(fixture.UnfamiliarTextPath), "Prepared source must remain untouched by state disposition.");
     }
 
     private static PreparedToolDirectoryObjectIdentity ObserveDirectoryIdentity(string path)
@@ -171,12 +230,28 @@ public sealed class PreparedCodeGraphStateCoordinatorTests
 
         internal PreparedCodeGraphWorkspaceOwnership? CurrentRecord { get; private set; }
 
+        internal int TerminalReadbackCount { get; private set; }
+
+        internal void Seed(PreparedCodeGraphWorkspaceOwnership ready)
+        {
+            CurrentRecord = ready;
+            _committedPhases.Add(ready.Phase);
+        }
+
         public Task<PreparedCodeGraphOwnershipLoadResult> LoadAsync(
             PreparedCodeGraphWorkspaceOwnership expectedBinding,
             CancellationToken cancellationToken = default)
         {
             cancellationToken.ThrowIfCancellationRequested();
             PreparedCodeGraphWorkspaceOwnership? record = CurrentRecord;
+            if (expectedBinding.Phase == PreparedCodeGraphOwnershipPhase.Removed &&
+                record?.Phase == PreparedCodeGraphOwnershipPhase.Removed &&
+                record.OwnershipId == expectedBinding.OwnershipId &&
+                record.Version == expectedBinding.Version)
+            {
+                TerminalReadbackCount++;
+            }
+
             return Task.FromResult(record is not null && record.OwnershipId == expectedBinding.OwnershipId
                 ? new PreparedCodeGraphOwnershipLoadResult(PreparedCodeGraphOwnershipLoadStatus.Found, record)
                 : new PreparedCodeGraphOwnershipLoadResult(PreparedCodeGraphOwnershipLoadStatus.VerifiedAbsent, null));
@@ -226,13 +301,42 @@ public sealed class PreparedCodeGraphStateCoordinatorTests
 
         public Task<PreparedCodeGraphOwnershipTransitionResult> BeginDispositionAsync(
             PreparedCodeGraphWorkspaceOwnership ready,
-            CancellationToken cancellationToken = default) =>
-            throw new NotSupportedException("This tracer-bullet scenario does not dispose the workspace.");
+            CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            AssertRecordMatches(ready, PreparedCodeGraphOwnershipPhase.Ready);
+            Assert.True(Directory.Exists(Path.Combine(ready.PhysicalRootPath, ".codegraph")),
+                "Disposing must commit before any physical removal.");
+            CurrentRecord = ready with
+            {
+                Version = ready.Version + 1,
+                Phase = PreparedCodeGraphOwnershipPhase.Disposing,
+            };
+            _committedPhases.Add(CurrentRecord.Phase);
+            return Task.FromResult(new PreparedCodeGraphOwnershipTransitionResult(
+                PreparedCodeGraphOwnershipTransitionStatus.Committed,
+                CurrentRecord));
+        }
 
         public Task<PreparedCodeGraphOwnershipTransitionResult> CommitRemovedAsync(
             PreparedCodeGraphWorkspaceOwnership disposing,
-            CancellationToken cancellationToken = default) =>
-            throw new NotSupportedException("This tracer-bullet scenario does not dispose the workspace.");
+            CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            AssertRecordMatches(disposing, PreparedCodeGraphOwnershipPhase.Disposing);
+            Assert.False(Directory.Exists(Path.Combine(disposing.PhysicalRootPath, ".codegraph")),
+                "Removed may commit only after the owned entry is absent.");
+            CurrentRecord = disposing with
+            {
+                Version = disposing.Version + 1,
+                Phase = PreparedCodeGraphOwnershipPhase.Removed,
+                StateEntryObjectIdentity = null,
+            };
+            _committedPhases.Add(CurrentRecord.Phase);
+            return Task.FromResult(new PreparedCodeGraphOwnershipTransitionResult(
+                PreparedCodeGraphOwnershipTransitionStatus.Committed,
+                CurrentRecord));
+        }
 
         public Task<PreparedCodeGraphOwnershipTransitionResult> QuarantineAsync(
             PreparedCodeGraphWorkspaceOwnership current,
@@ -262,10 +366,22 @@ public sealed class PreparedCodeGraphStateCoordinatorTests
         }
 
         internal bool QuarantineAttempted { get; private set; }
+
+        private void AssertRecordMatches(
+            PreparedCodeGraphWorkspaceOwnership expected,
+            PreparedCodeGraphOwnershipPhase phase)
+        {
+            Assert.NotNull(CurrentRecord);
+            Assert.Equal(expected.OwnershipId, CurrentRecord!.OwnershipId);
+            Assert.Equal(expected.Version, CurrentRecord.Version);
+            Assert.Equal(phase, CurrentRecord.Phase);
+        }
     }
 
-    private sealed class CurrentWorkspaceOwnershipVerifier : IPreparedCodeGraphWorkspaceOwnershipVerifier
+    private sealed class RecordingWorkspaceOwnershipVerifier : IPreparedCodeGraphWorkspaceOwnershipVerifier
     {
+        internal int DispositionReadyChecks { get; private set; }
+
         public ValueTask<bool> VerifyCurrentAsync(
             PreparedCodeGraphWorkspaceOwnership ownership,
             CancellationToken cancellationToken = default) =>
@@ -273,14 +389,21 @@ public sealed class PreparedCodeGraphStateCoordinatorTests
 
         public ValueTask<bool> VerifyDispositionReadyAsync(
             PreparedCodeGraphWorkspaceOwnership ownership,
-            CancellationToken cancellationToken = default) =>
-            ValueTask.FromResult(true);
+            CancellationToken cancellationToken = default)
+        {
+            DispositionReadyChecks++;
+            return ValueTask.FromResult(true);
+        }
     }
 
     private sealed class TestToolUseAuthorizer : IPreparedToolUseAuthorizer
     {
         private PreparedSourceApproval? _approval;
         private PreparedToolPurpose _purpose;
+
+        internal PreparedSourceApproval? LastApproval { get; private set; }
+
+        internal PreparedToolPurpose? LastPurpose { get; private set; }
 
         internal void Allow(PreparedSourceApproval approval, PreparedToolPurpose purpose)
         {
@@ -294,6 +417,8 @@ public sealed class PreparedCodeGraphStateCoordinatorTests
             CancellationToken cancellationToken = default)
         {
             cancellationToken.ThrowIfCancellationRequested();
+            LastApproval = approval;
+            LastPurpose = toolPurpose;
             PreparedToolUseAuthorityStatus status = approval == _approval && toolPurpose == _purpose
                 ? PreparedToolUseAuthorityStatus.Current
                 : PreparedToolUseAuthorityStatus.Denied;

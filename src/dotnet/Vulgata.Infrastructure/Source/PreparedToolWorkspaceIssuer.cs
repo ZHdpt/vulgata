@@ -384,6 +384,15 @@ internal sealed class PreparedToolRootScope
         }
     }
 
+    internal bool IsCodeGraphEntryAbsent()
+    {
+        EnsureActive();
+        (PreparedSourceTraversal.OpenStatus status, SafeFileHandle? entry) =
+            PreparedSourceTraversal.OpenRelativeDirectory(_rootHandle, CodeGraphEntryName);
+        entry?.Dispose();
+        return status == PreparedSourceTraversal.OpenStatus.Missing;
+    }
+
     internal bool TryCreateCodeGraphEntryExclusively()
     {
         EnsureActive();
@@ -457,6 +466,216 @@ internal sealed class PreparedToolRootScope
 
             Marshal.FreeHGlobal(nameBuffer);
         }
+    }
+
+    internal async Task<bool> RemoveRecordedCodeGraphEntryAsync(
+        PreparedToolDirectoryObjectIdentity recordedEntry,
+        Func<CancellationToken, Task<bool>> mayRemoveNext,
+        CancellationToken cancellationToken)
+    {
+        EnsureActive();
+        if (ObserveCodeGraphEntryIdentity() != recordedEntry)
+        {
+            return false;
+        }
+
+        using SafeFileHandle? entry = OpenChildForDelete(_rootHandle, CodeGraphEntryName);
+        if (entry is null || ToStableIdentity(PreparedSourceTraversal.ObserveDirectory(entry)) != recordedEntry)
+        {
+            return false;
+        }
+
+        return await RemoveTreeAsync(entry, mayRemoveNext, 0, cancellationToken);
+    }
+
+    private async Task<bool> RemoveTreeAsync(
+        SafeFileHandle directory,
+        Func<CancellationToken, Task<bool>> mayRemoveNext,
+        int depth,
+        CancellationToken cancellationToken)
+    {
+        if (depth >= 64)
+        {
+            return false;
+        }
+
+        // Restart enumeration after every removal. Each operation checks authority;
+        // no unbounded batch can retain a stale disposal decision.
+        for (int removed = 0; removed < 10_000; removed++)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            if (!await mayRemoveNext(cancellationToken))
+            {
+                return false;
+            }
+
+            (PreparedSourceTraversal.OpenStatus status,
+                IReadOnlyList<PreparedSourceTraversal.ListedEntry> entries, bool complete) =
+                PreparedSourceTraversal.ListImmediate(directory, 1);
+            if (status != PreparedSourceTraversal.OpenStatus.Opened)
+            {
+                return false;
+            }
+
+            if (entries.Count == 0)
+            {
+                return complete && TryMarkForDeletion(directory);
+            }
+
+            using SafeFileHandle? child = OpenChildForDelete(directory, entries[0].Name);
+            if (child is null || !TryGetOrdinaryChildType(child, out bool childIsDirectory))
+            {
+                return false;
+            }
+
+            if (childIsDirectory)
+            {
+                if (!await RemoveTreeAsync(child, mayRemoveNext, depth + 1, cancellationToken))
+                {
+                    return false;
+                }
+            }
+            else if (!await mayRemoveNext(cancellationToken) || !TryMarkForDeletion(child))
+            {
+                return false;
+            }
+        }
+
+        return false;
+    }
+
+    private static SafeFileHandle? OpenChildForDelete(SafeFileHandle parent, string name)
+    {
+        if (!PreparedSourceTraversal.IsCanonicalRelativePath(name, allowEmpty: false) ||
+            name.Contains('/'))
+        {
+            return null;
+        }
+
+        IntPtr nameBuffer = Marshal.StringToHGlobalUni(name);
+        IntPtr unicodePointer = IntPtr.Zero;
+        try
+        {
+            var unicode = new UnicodeString
+            {
+                Length = checked((ushort)(name.Length * sizeof(char))),
+                MaximumLength = checked((ushort)((name.Length + 1) * sizeof(char))),
+                Buffer = nameBuffer,
+            };
+            unicodePointer = Marshal.AllocHGlobal(Marshal.SizeOf<UnicodeString>());
+            Marshal.StructureToPtr(unicode, unicodePointer, fDeleteOld: false);
+            var attributes = new ObjectAttributes
+            {
+                Length = Marshal.SizeOf<ObjectAttributes>(),
+                RootDirectory = parent.DangerousGetHandle(),
+                ObjectName = unicodePointer,
+                Attributes = 0x00001000, // OBJ_DONT_REPARSE
+            };
+            bool parentReferenceAdded = false;
+            try
+            {
+                parent.DangerousAddRef(ref parentReferenceAdded);
+                int status = NtCreateFile(
+                    out SafeFileHandle child,
+                    0x00010000 | 0x80 | 0x1 | 0x20 | 0x00100000, // DELETE and inspect/traverse
+                    ref attributes,
+                    out _,
+                    IntPtr.Zero,
+                    0,
+                    0x00000007,
+                    1, // FILE_OPEN, never create a missing child
+                    0x00200000 | 0x20, // open reparse point, synchronous
+                    IntPtr.Zero,
+                    0);
+                if (status < 0 || child.IsInvalid)
+                {
+                    child.Dispose();
+                    return null;
+                }
+
+                return child;
+            }
+            catch (ObjectDisposedException)
+            {
+                return null;
+            }
+            finally
+            {
+                if (parentReferenceAdded)
+                {
+                    parent.DangerousRelease();
+                }
+            }
+        }
+        finally
+        {
+            if (unicodePointer != IntPtr.Zero)
+            {
+                Marshal.FreeHGlobal(unicodePointer);
+            }
+
+            Marshal.FreeHGlobal(nameBuffer);
+        }
+    }
+
+    private static bool TryGetOrdinaryChildType(SafeFileHandle child, out bool isDirectory)
+    {
+        isDirectory = false;
+        if (!GetFileInformationByHandle(child, out FileInformation information) ||
+            (information.Attributes & FileAttributes.ReparsePoint) != 0 ||
+            information.NumberOfLinks != 1)
+        {
+            return false;
+        }
+
+        isDirectory = (information.Attributes & FileAttributes.Directory) != 0;
+        return isDirectory || PreparedSourceTraversal.ObserveFile(child) is not null;
+    }
+
+    private static bool TryMarkForDeletion(SafeFileHandle child)
+    {
+        if (!TryGetOrdinaryChildType(child, out _))
+        {
+            return false;
+        }
+
+        var disposition = new FileDispositionInformation { DeleteFile = true };
+        return SetFileInformationByHandle(
+            child, 4, ref disposition, (uint)Marshal.SizeOf<FileDispositionInformation>());
+    }
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool GetFileInformationByHandle(
+        SafeFileHandle file, out FileInformation information);
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool SetFileInformationByHandle(
+        SafeFileHandle file, int informationClass,
+        ref FileDispositionInformation information, uint bufferSize);
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct FileDispositionInformation
+    {
+        [MarshalAs(UnmanagedType.Bool)] public bool DeleteFile;
+    }
+
+    // BY_HANDLE_FILE_INFORMATION embeds three FILETIME values aligned to four
+    // bytes. Without Pack=4, NumberOfLinks is read from the wrong native field.
+    [StructLayout(LayoutKind.Sequential, Pack = 4)]
+    private struct FileInformation
+    {
+        public FileAttributes Attributes;
+        public long CreationTime;
+        public long LastAccessTime;
+        public long LastWriteTime;
+        public uint VolumeSerialNumber;
+        public uint FileSizeHigh;
+        public uint FileSizeLow;
+        public uint NumberOfLinks;
+        public uint FileIndexHigh;
+        public uint FileIndexLow;
     }
 
     private static PreparedToolDirectoryObjectIdentity? ToStableIdentity(
