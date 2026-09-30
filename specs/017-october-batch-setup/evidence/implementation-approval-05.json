@@ -1,0 +1,21 @@
+{
+  "kind": "delegated-approval",
+  "stage": "implementation-approval",
+  "decision_id": "18-4/implementation-approval/5",
+  "status": "accepted",
+  "story_key": "18-4-prepare-an-owned-october-batch-with-valid-context-and-provid",
+  "delegate_id": "01a0e708-c489-7871-9f73-31413f20bf2c",
+  "decided_at": "2026-09-30T14:30:50Z",
+  "scope_sha256": "1cec6dd9ec7e1df79b769e3e622d1cbad62bac62acd1591ac85df097a1530411",
+  "delegation": {
+    "path": "specs/017-october-batch-setup/evidence/user-delegation-recovery-01.json",
+    "sha256": "e299e832115615dbde3bc828ab5e4132e0de4c13c0d64372732ab07c6d5646c6"
+  },
+  "response_source": "thread 01a0e708-c489-7871-9f73-31413f20bf2c; turn 01a0f2b9-375f-77b1-aec7-34aeca11d73d; message msg_0e55faeae43f1fb3016abd1d13892c8196999d0c28039cc503",
+  "response_text": "APPROVE — 18-4/implementation-approval/5. Verified boundary: Reviewed base: aa72914e836f2a24e2454eabe462e5f8913015f5 Eight-artifact digest: 62ac05958cd4b6729b7f1be61e30f3acaab0f1918753983aa6d5779ae0210b64 definition-review-11: ACCEPT Review SHA-256: 0b07ba2635f1a1014cb448a7add92cc421fbd16ad952b1e888acc5a375d35e5e All eight current hashes match. The revised tasks cover real headless Identity authentication, fresh authorization/revocation, independent batch execution and startup-only dataset selection. They preserve unchanged behavior as regression evidence and reopen affected transport work. Proceed with dependency-ready implementation under the accepted TDD/verification routing. T020/T029 and all resource, credential and execution permissions remain separately gated. No scope expansion, merge/push authority or waiver is granted. Recovery remains 6/7; another substantive negative requires human direction. Root alone records and validates this decision.",
+  "review": {
+    "path": "specs/017-october-batch-setup/evidence/definition-review-11.json",
+    "sha256": "0b07ba2635f1a1014cb448a7add92cc421fbd16ad952b1e888acc5a375d35e5e"
+  },
+  "summary": "Fresh scoped implementation approval for accepted corrected definition; all normal delivery gates and explicit resource permissions retained."
+}

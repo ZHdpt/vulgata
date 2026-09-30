@@ -1,0 +1,21 @@
+{
+  "kind": "delegated-approval",
+  "stage": "plan-review",
+  "decision_id": "18-4/plan-authorization/3",
+  "status": "accepted",
+  "story_key": "18-4-prepare-an-owned-october-batch-with-valid-context-and-provid",
+  "delegate_id": "01a0e708-c489-7871-9f73-31413f20bf2c",
+  "decided_at": "2026-09-30T14:11:24Z",
+  "scope_sha256": "8902c4918fe2c52281573641cf81195c685c03efb215fc5ea50ebd06053d95a4",
+  "delegation": {
+    "path": "specs/017-october-batch-setup/evidence/user-delegation-recovery-01.json",
+    "sha256": "e299e832115615dbde3bc828ab5e4132e0de4c13c0d64372732ab07c6d5646c6"
+  },
+  "response_source": "thread 01a0e708-c489-7871-9f73-31413f20bf2c; turn 01a0f2a7-3e31-7902-80c0-a10faa05b7f8; message msg_0e55faeae43f1fb3016abd18865fdc81968cdccc9529851428",
+  "response_text": "APPROVE — 18-4/plan-authorization/3, for retained-owner task reconciliation only. Verified the direct user instructions for independent batch execution and startup-only Web database selection, plus: Reviewed base: aa72914e836f2a24e2454eabe462e5f8913015f5 Seven-artifact digest: aea719db3d742c541e079ad3df7288e9853d85e8a591cf29287a57b88f326aad plan-review-12: ACCEPT Review SHA-256: d3f8a752ab9dcd544e49225edafe925e1cc951931c630805ba1561a4fdca7b02 All seven current hashes match. The design removes the running-Web dependency while retaining real Identity authentication, fresh database authorization and unchanged Story 18.1 contracts. It does not treat database access as operator identity. Complete-definition review and separate implementation approval remain required. No credentials, key provisioning, database access, migration/seeding or execution permission is granted. Recovery remains 6/7, with human direction required at 7.",
+  "review": {
+    "path": "specs/017-october-batch-setup/evidence/plan-review-12.json",
+    "sha256": "d3f8a752ab9dcd544e49225edafe925e1cc951931c630805ba1561a4fdca7b02"
+  },
+  "summary": "Fresh revised-architecture authorization for retained-owner task reconciliation only. Real credential/database/process permissions and implementation remain separate."
+}

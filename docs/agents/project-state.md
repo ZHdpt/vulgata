@@ -8,7 +8,7 @@ container; tool/provider/E2E and historical suites remain explicit and retain th
 feature-specific gates. See [testing guidance](testing.md). This changes the routine
 regression boundary, not historical product evidence or story lifecycle state.
 
-Updated: 2026-09-29 (delegation policy; product evidence unchanged).
+Updated: 2026-09-30 (Story 18.4 corrected definition/approval; product qualification incomplete).
 Story 13.1 is complete in `specs/015-retained-source-access`.
 Exact retained capture, scoped reads, publication/recovery, cleanup, trusted
 workspaces and separate-process reopening have bounded controlled evidence.
@@ -42,11 +42,12 @@ verification before reuse.
   owns their scoped requirements and definitions, routed from the canonical epic index.
   Tracker refreshes require both epic files. Story 13.1 and October Story 18.1 are
   done; this checkout includes Story 18.1's completed baseline at `3632b2cc`. October
-  Story 18.4 is active for definition/planning only in
-  `specs/017-october-batch-setup`; its corrected architecture plan has raw independent
-  plan-only ACCEPT, but no tasks or implementation authority. The plan must still be
-  reconciled and independently reviewed against the integrated Story 18.1 contracts
-  before its dependency can be treated as satisfied for further delivery. Status in
+  Story 18.4 is in implementation in `specs/017-october-batch-setup` after
+  accepted plan-review-12, definition-review-11 and fresh delegated approvals.
+  Its corrected plan uses independent batch execution and startup-only Web dataset
+  selection; previous online-Web transport evidence is historical. Story 18.1
+  contracts remain integrated and unchanged; the new direct authority requires
+  its own verification. Status in
   other assigned worktrees must be verified there. Sprint planning alone activated
   no feature.
   Its bounded retained-source
@@ -56,9 +57,10 @@ verification before reuse.
   prior conflicting rules; it does not claim maintainer PR review/merge.
 
 Story 18.4 is the only feature activated in this checkout after the workflow
-installation. Its `specs/017-october-batch-setup` state stops before tasks: prepared
-source identity/grant/tool seams must now be reconciled against the integrated,
-verified Story 18.1 baseline and receive the required review before tasks. Workflow
+installation. Its `specs/017-october-batch-setup` state retains the Astra-medium
+recovery author and open episode at 6/7. Affected authority/composition tasks were
+reopened; unchanged completed work and historical evidence remain. Runtime
+PostgreSQL/process qualification still requires explicitly authorized owned resources. Workflow
 installation itself activated no story; verify current runner ownership and its
 assigned checkout before interpreting the integration tracker. Story 13.1's
 `specs/015-retained-source-access` plan, state and evidence are completed history;

@@ -1,6 +1,6 @@
 # Story 18.4 development record
 
-Status: in-progress (definition and planning only)
+Status: in-progress (corrected independent-batch definition accepted; implementation approved)
 Feature directory: `specs/017-october-batch-setup`
 Workflow state: `specs/017-october-batch-setup/workflow-state.json`
 

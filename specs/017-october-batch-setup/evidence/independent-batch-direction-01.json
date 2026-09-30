@@ -1,0 +1,16 @@
+{
+  "kind": "analysis",
+  "stage": "plan",
+  "outcome": "changed-boundary",
+  "summary": "User directs independent batch execution without a running Web dependency; Web selects database through startup configuration and retains it for process lifetime. Prior online Web bootstrap/grant/current-authority transport assumptions require bounded plan correction.",
+  "user_sources": [
+    {
+      "text": "I find a severe gap between me and current batch plan. What I want is batch can run independently, while web app use different database by changing its config when startup. Not a runtime switch, run as current plan says."
+    },
+    {
+      "text": "correction agreed. Go back to plan phase and proceed run-governed-delivery with my arrangements."
+    }
+  ],
+  "owner": "plan",
+  "preserved": "Existing mapping/branch, committed and uncommitted code/tests, Story 18.1 contracts, recovery count 6/pause_at 7, definition-author-recovery profile, historical reviews/approvals and resource restrictions. Revised scope must receive fresh affected gates."
+}

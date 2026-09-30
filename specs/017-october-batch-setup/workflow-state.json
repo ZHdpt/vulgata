@@ -1,47 +1,4 @@
 {
-  "schema_version": "3.1",
-  "bmad_story_key": "18-4-prepare-an-owned-october-batch-with-valid-context-and-provid",
-  "bmad_epic_key": "epic-18",
-  "feature_directory": "specs/017-october-batch-setup",
-  "stage": "implement",
-  "preflight": {
-    "branch": "oct14/story-18-4",
-    "head": "cfa07a3d6526f52d2922930f9bddf5d8bf5087ee",
-    "git_identity_sha256": "a24946723c57104264c9eb34545f4d00a69c8aa4de4f6596fafd6b503a7d37a7",
-    "status_sha256": "fc0a9340e381f7915e935fa24923f5afaa2fc7655eb69a28ae07b9556cd28845",
-    "observed_at": "2026-09-30T02:55:58.1200556Z"
-  },
-  "artifacts": {
-    "spec": {
-      "path": "specs/017-october-batch-setup/spec.md",
-      "sha256": "09bd29f496be4a9c956a460f9d1fc8af952f88c031324e528becb19bbc15b3bc"
-    },
-    "plan": {
-      "path": "specs/017-october-batch-setup/plan.md",
-      "sha256": "f8513a4526d1111eef0b1ba08012336b83fd7517adcefa2d41ddfa121400132d"
-    },
-    "tasks": {
-      "path": "specs/017-october-batch-setup/tasks.md",
-      "sha256": "9224a18bfa89e193a2b6b9443cfe97a84703add5bbd5e3d5ef7050977c994f0f"
-    }
-  },
-  "gates": {
-    "plan-review": {
-      "status": "accepted",
-      "attempt": 7,
-      "verdict_path": "specs/017-october-batch-setup/evidence/plan-review-11.json"
-    },
-    "definition-review": {
-      "status": "accepted",
-      "attempt": 6,
-      "verdict_path": "specs/017-october-batch-setup/evidence/definition-review-10.json"
-    },
-    "quality-review": {
-      "status": "pending",
-      "attempt": 0,
-      "verdict_path": null
-    }
-  },
   "approvals": [
     {
       "decided_at": "2026-09-29T10:30:42.0336756Z",
@@ -91,17 +48,49 @@
       "evidence_path": "specs/017-october-batch-setup/evidence/implementation-approval-04.json",
       "scope_sha256": "37364a19944ad869cb3975bac400aa944bd4ce371cf36fc21c1e31406438465b",
       "status": "accepted"
+    },
+    {
+      "decided_at": "2026-09-30T14:11:24Z",
+      "decision_id": "18-4/plan-authorization/3",
+      "evidence_path": "specs/017-october-batch-setup/evidence/plan-authorization-03.json",
+      "scope_sha256": "8902c4918fe2c52281573641cf81195c685c03efb215fc5ea50ebd06053d95a4",
+      "status": "accepted"
+    },
+    {
+      "decided_at": "2026-09-30T14:30:50Z",
+      "decision_id": "18-4/implementation-approval/5",
+      "evidence_path": "specs/017-october-batch-setup/evidence/implementation-approval-05.json",
+      "scope_sha256": "1cec6dd9ec7e1df79b769e3e622d1cbad62bac62acd1591ac85df097a1530411",
+      "status": "accepted"
     }
   ],
+  "artifacts": {
+    "plan": {
+      "path": "specs/017-october-batch-setup/plan.md",
+      "sha256": "6c494db99fef0d4cca57d0082536d9433301fdf6b594a19e463ff28cfc6e7907"
+    },
+    "spec": {
+      "path": "specs/017-october-batch-setup/spec.md",
+      "sha256": "09bd29f496be4a9c956a460f9d1fc8af952f88c031324e528becb19bbc15b3bc"
+    },
+    "tasks": {
+      "path": "specs/017-october-batch-setup/tasks.md",
+      "sha256": "7cfea67d9e3be5115a4a4d4096951ab09fb7ff5914f7dae096144460b5de955b"
+    }
+  },
+  "bmad_epic_key": "epic-18",
+  "bmad_story_key": "18-4-prepare-an-owned-october-batch-with-valid-context-and-provid",
+  "checkpoint": {
+    "checkpoint_id": "bmad-18-4-definition-review-20260930T143500Z-f71ab3",
+    "stage": "definition-review",
+    "commit_sha": null,
+    "binding_status": "pending"
+  },
   "convergence": {
-    "status": "invalidated",
     "attempt": 0,
     "outcome": "pending",
-    "report_path": null
-  },
-  "e2e": {
-    "result": "pending",
-    "decision_path": null
+    "report_path": null,
+    "status": "invalidated"
   },
   "current_evidence_paths": [
     "docs/bmad/implementation-artifacts/18-4-prepare-an-owned-october-batch-with-valid-context-and-provid.md",
@@ -117,26 +106,51 @@
     "specs/017-october-batch-setup/evidence/october-batch-selector-tdd-01.json",
     "specs/017-october-batch-setup/evidence/checkpoint-implementation-06.json"
   ],
-  "checkpoint": {
-    "checkpoint_id": "bmad-18-4-implement-20260930T084425Z-3dc419",
-    "stage": "implement",
-    "commit_sha": null,
-    "binding_status": "pending"
+  "definition_author": {
+    "escalation_decision_id": "18-4/definition-escalation/1",
+    "profile": "definition-author-recovery"
   },
-  "resume": {
-    "stage": "implement",
-    "reason": "T016/T017 final GREEN is checkpointed. Resume dependency-ready T018/T019 host composition TDD, including completion of T013 Program mapping; T020/T029 remain resource-held and recovery remains 6/7.",
-    "evidence_path": "specs/017-october-batch-setup/evidence/october-batch-selector-tdd-01.json"
+  "e2e": {
+    "decision_path": null,
+    "result": "pending"
   },
-  "updated_at": "2026-09-30T08:44:25.1211872Z",
+  "feature_directory": "specs/017-october-batch-setup",
+  "gates": {
+    "definition-review": {
+      "attempt": 7,
+      "status": "accepted",
+      "verdict_path": "specs/017-october-batch-setup/evidence/definition-review-11.json"
+    },
+    "plan-review": {
+      "attempt": 8,
+      "status": "accepted",
+      "verdict_path": "specs/017-october-batch-setup/evidence/plan-review-12.json"
+    },
+    "quality-review": {
+      "attempt": 0,
+      "status": "pending",
+      "verdict_path": null
+    }
+  },
+  "lookback": {
+    "evidence": null,
+    "status": "invalidated"
+  },
+  "preflight": {
+    "branch": "oct14/story-18-4",
+    "head": "aa72914e836f2a24e2454eabe462e5f8913015f5",
+    "git_identity_sha256": "17e382ea0f41b9eace5492dad17c9560dafe8159d969b8bbe29713fdc960725e",
+    "status_sha256": "9cf165dcbc0ba616a42a35bbd5ff71d1c9b8f7bc51debb38244e5c818a5b81e4",
+    "observed_at": "2026-09-30T14:35:04.0746275Z"
+  },
   "recovery": {
     "action": "proceed",
     "closing_gate": "verify",
     "diagnosis": {
-      "at_count": 5,
+      "at_count": 6,
       "evidence": {
-        "path": "specs/017-october-batch-setup/evidence/recovery-diagnosis-implementation-setup-seam-01-count-05.json",
-        "sha256": "8141b710a10ab25f34c8681b4f480b593d90646bee071cfd520a269dab2d7efb"
+        "path": "specs/017-october-batch-setup/evidence/independent-batch-diagnosis-01.json",
+        "sha256": "bddfffce102f558dea654feb77c675fa5ce1825260f63fe938f193290562fa45"
       }
     },
     "earliest_owner": "tasks",
@@ -150,16 +164,16 @@
     },
     "pause_at": 7
   },
+  "resume": {
+    "evidence_path": "specs/017-october-batch-setup/evidence/independent-batch-direction-01.json",
+    "reason": "Corrected independent-batch definition accepted and implementation freshly approved; dependency-ready T006/T007 authentication slice next. Preserve 6/7 and resource gates.",
+    "stage": "implement"
+  },
+  "schema_version": "3.1",
+  "stage": "implement",
   "transition_head": {
-    "path": "specs/017-october-batch-setup/evidence/transitions/transition-0059-definition-review-10-accept.json",
-    "sha256": "e161e242ec3c1a4cde5042e19d8bf83de5898c3be802f51873faa8a4ac19ba80"
+    "path": "specs/017-october-batch-setup/evidence/transitions/transition-0065-independent-batch-definition-review-accept.json",
+    "sha256": "729e1ec6c4d3789d5621ac1f099cc22704dc047c655ee3760b5f7d21d964c7bb"
   },
-  "definition_author": {
-    "profile": "definition-author-recovery",
-    "escalation_decision_id": "18-4/definition-escalation/1"
-  },
-  "lookback": {
-    "status": "invalidated",
-    "evidence": null
-  }
+  "updated_at": "2026-09-30T14:35:04.0746275Z"
 }
