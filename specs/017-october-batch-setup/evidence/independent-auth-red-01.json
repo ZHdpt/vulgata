@@ -1,0 +1,31 @@
+{
+  "observed_after": {
+    "path": "specs/017-october-batch-setup/evidence/transitions/transition-0066-independent-auth-development-build.json",
+    "sha256": "48bec82f8fce41b557731484188545bbbe004a79ffb6bccdc67f140ddd8dbf11"
+  },
+  "raw_result": {
+    "kind": "test-red",
+    "stage": "implement",
+    "outcome": "expected-red",
+    "command": "pwsh -NoProfile -File eng/test.ps1 -Filter 'FullyQualifiedName~OctoberLocalAuthorityTests'",
+    "exit_code": 1,
+    "source_commit": "f40c84bfd3ca8951890f0e90f85c0f074fde0602",
+    "accepted_task": "T006/T007 first authentication tracer",
+    "run_path": "TestResults/isolation-e6c80e7f60fa464286a3992c472ae6bc",
+    "trx_path": "TestResults/isolation-e6c80e7f60fa464286a3992c472ae6bc/results.trx",
+    "counts": {
+      "selected": 1,
+      "passed": 0,
+      "failed": 1,
+      "skipped": 0
+    },
+    "summary": "Genuine expected product RED at approved headless registration-to-authentication seam: AddOctoberLocalAuthority throws NotImplementedException. Build succeeded. Identity seeding and AuthenticateAsync/password assertion not reached; no claim otherwise.",
+    "build": {
+      "errors": 0,
+      "warnings": 47
+    },
+    "test_sha256": "3b7932f8327e94ae66d13bd0b21e0bfea44a3a55644e7b65c406294530fff4b6",
+    "suite_sha256": "36c03bf4631c01875d142a61cc0950853514237296d9cba78dbf9b954914a772",
+    "accounting": "Expected development RED, noncounting."
+  }
+}

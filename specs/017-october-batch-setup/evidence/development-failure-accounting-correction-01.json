@@ -1,0 +1,18 @@
+{
+  "kind": "analysis",
+  "stage": "implement",
+  "summary": "User corrected root accounting: expected RED and ordinary first development build failures are noncounting; independent negative review/convergence and recurrence of the same problem after attempted repair count. This CS0433 was the first development build after declarations and no repair had been attempted. Preserve raw build failure and rejected uncommitted increment receipt; retain the six previously recorded historical failures, limit7, diagnosis/holds/owners/approvals. No extension, waiver, new resources or global workflow-tool mutation.",
+  "user_source": "current Story18.4 runner chat user message dated 2026-10-01, beginning Before approving, I must correct a mistake",
+  "user_instruction": "Before approving, I must correct a mistake. Expected and normal red or build failure during development are not count as work flow failures. Only independent review and convergence not passed plus same problem keeps reproducing itself after fixing are count as work flows failures that require approval to continue. So current situation  does not require approval. Proceed if you get me",
+  "superseded_record": {
+    "path": "specs/017-october-batch-setup/evidence/independent-auth-build-misclassification-superseded-01.json",
+    "reason": "Uncommitted erroneous root increment; retained for audit, not a valid recovery failure"
+  },
+  "raw_failure": {
+    "path": "specs/017-october-batch-setup/evidence/independent-auth-build-failure-01.json",
+    "sha256": "b8cbe75679e6c9c48ebf2914f11d04bae950492bf324ec3f4e2bc7cbcc8395b1"
+  },
+  "classification": "ordinary-development-build-failure",
+  "prior_recorded_failures": 6,
+  "pause_at": 7
+}

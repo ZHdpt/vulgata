@@ -1,0 +1,18 @@
+{
+  "observed_after": {
+    "path": "specs/017-october-batch-setup/evidence/transitions/transition-0071-console-testability-plan-review-accept.json",
+    "sha256": "31b971727f8c0a960fe7c379ca2bafb7ecabe4972ef7f263de0df24f6d54e2b5"
+  },
+  "raw_result": {
+    "kind": "self-review",
+    "stage": "tasks",
+    "outcome": "passed",
+    "source_commit": "f40c84bfd3ca8951890f0e90f85c0f074fde0602",
+    "input_hashes": {
+      "specs/017-october-batch-setup/tasks.md": "f5fba5e980f10673114101051d188043de43720ed1ae6b298c6fa752c01d5cff",
+      "specs/017-october-batch-setup/plan.md": "a72bd8c4531d302f6f6ddc4797b20910205da362eacc11fc3e48ec5fddfaeb92",
+      "specs/017-october-batch-setup/spec.md": "09bd29f496be4a9c956a460f9d1fc8af952f88c031324e528becb19bbc15b3bc"
+    },
+    "summary": "Retained recovery author reconciled only prerequisites pointer and T006/T007 for accepted terminal interface/overload: declaration compile first, same-concrete-source interactive tracer RED before behavior GREEN, controlled noecho/factor/cancellation/failure tests and separate static real-console binding verification. Current plan-review13/auth04, earlier12/03 historical scope retained. All30 IDs/checkboxes/unrelatedbytes preserved. Deterministic plan/task validation[] and diffcheck passed; existing017 setup resolved/no taskhooks. No production/scope/resource/count changes."
+  }
+}

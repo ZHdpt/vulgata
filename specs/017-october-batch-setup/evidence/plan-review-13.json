@@ -1,0 +1,83 @@
+{
+  "observed_after": {
+    "path": "specs/017-october-batch-setup/evidence/transitions/transition-0070-console-testability-plan-self-review.json",
+    "sha256": "9897171570fc771bbc1a4275c34c520aee535797542bb009a91eebe203a54a25"
+  },
+  "raw_result": {
+    "schema_version": "1.0",
+    "gate": "plan-review",
+    "verdict": "ACCEPT",
+    "reviewed_commit": "f40c84bfd3ca8951890f0e90f85c0f074fde0602",
+    "reviewed_boundary": {
+      "base_commit": "f40c84bfd3ca8951890f0e90f85c0f074fde0602",
+      "candidate_commit": null,
+      "diff_sha256": "28618604bf86d4eb6002a2f6b8e4fcf62543fbc1360e036deb623479186a1ca6",
+      "artifact_hashes": {
+        "specs/017-october-batch-setup/spec.md": "09bd29f496be4a9c956a460f9d1fc8af952f88c031324e528becb19bbc15b3bc",
+        "specs/017-october-batch-setup/plan.md": "a72bd8c4531d302f6f6ddc4797b20910205da362eacc11fc3e48ec5fddfaeb92",
+        "specs/017-october-batch-setup/research.md": "bd5fc9103c3fdd7b9a5d2558cdb60d551c33264be642c0abf4a238378e13c66c",
+        "specs/017-october-batch-setup/data-model.md": "277b3b5802394d615eb4494a16e07f13db42c33375b8724adb5fe08e7f5fb766",
+        "specs/017-october-batch-setup/quickstart.md": "d1b1a7cfc492b866c9df533deb6368478e63040496a5503e10ca3a9793fc1a1a",
+        "specs/017-october-batch-setup/contracts/batch-setup-selection.md": "e242af1cb689fcb93cdb0717a34c25159920e7765f0313adace5b88649c1f892",
+        "specs/017-october-batch-setup/contracts/provider-binding.md": "0c59b9d803c2d6770b9ebaf8d060bb73f6a6dd40b91a33947f72a033db48e3cd"
+      },
+      "owned_paths": [
+        "specs/017-october-batch-setup/spec.md",
+        "specs/017-october-batch-setup/plan.md",
+        "specs/017-october-batch-setup/research.md",
+        "specs/017-october-batch-setup/data-model.md",
+        "specs/017-october-batch-setup/quickstart.md",
+        "specs/017-october-batch-setup/contracts/batch-setup-selection.md",
+        "specs/017-october-batch-setup/contracts/provider-binding.md"
+      ]
+    },
+    "reviewed_artifacts": [
+      "AGENTS.md",
+      ".specify/memory/constitution.md",
+      "docs/agents/testing.md",
+      "docs/bmad/planning-artifacts/architecture.md",
+      "docs/bmad/planning-artifacts/architecture/ARCHITECTURE-SPINE.md",
+      "docs/bmad/planning-artifacts/prds/prd-vulgata-2026-06-12/prd.md",
+      "docs/project-lessons.md",
+      "specs/017-october-batch-setup/spec.md",
+      "specs/017-october-batch-setup/plan.md",
+      "specs/017-october-batch-setup/research.md",
+      "specs/017-october-batch-setup/data-model.md",
+      "specs/017-october-batch-setup/quickstart.md",
+      "specs/017-october-batch-setup/contracts/batch-setup-selection.md",
+      "specs/017-october-batch-setup/contracts/provider-binding.md",
+      "specs/017-october-batch-setup/evidence/console-testability-boundary-01.json",
+      "specs/017-october-batch-setup/evidence/console-testability-diagnosis-01.json",
+      "specs/017-october-batch-setup/evidence/console-testability-plan-self-review-01.json",
+      "specs/017-october-batch-setup/evidence/plan-authorization-03.json",
+      "specs/017-october-batch-setup/evidence/implementation-approval-05.json",
+      "specs/017-october-batch-setup/evidence/plan-review-01.json",
+      "specs/017-october-batch-setup/evidence/plan-review-02.json",
+      "specs/017-october-batch-setup/evidence/plan-review-03.json",
+      "specs/017-october-batch-setup/evidence/plan-review-04.json",
+      "specs/017-october-batch-setup/evidence/plan-review-05.json",
+      "specs/017-october-batch-setup/evidence/plan-review-06.json",
+      "specs/017-october-batch-setup/evidence/plan-review-07.json",
+      "specs/017-october-batch-setup/evidence/plan-review-08.json",
+      "specs/017-october-batch-setup/evidence/plan-review-09.json",
+      "specs/017-october-batch-setup/evidence/plan-review-10.json",
+      "specs/017-october-batch-setup/evidence/plan-review-11.json",
+      "specs/017-october-batch-setup/evidence/plan-review-12.json",
+      "specs/017-october-batch-setup/evidence/definition-review-01.json",
+      "specs/017-october-batch-setup/evidence/definition-review-02.json",
+      "specs/017-october-batch-setup/evidence/definition-review-03.json",
+      "specs/017-october-batch-setup/evidence/definition-review-04.json",
+      "specs/017-october-batch-setup/evidence/definition-review-05.json",
+      "specs/017-october-batch-setup/evidence/definition-review-06.json",
+      "specs/017-october-batch-setup/evidence/definition-review-07.json",
+      "specs/017-october-batch-setup/evidence/definition-review-08.json",
+      "specs/017-october-batch-setup/evidence/definition-review-09.json",
+      "specs/017-october-batch-setup/evidence/definition-review-10.json",
+      "specs/017-october-batch-setup/evidence/definition-review-11.json",
+      "src/dotnet/Vulgata.Web/Data/OctoberOperatorCredentialSources.cs",
+      "tests/Vulgata.Tests/October/OctoberOperatorCredentialSourceTests.cs"
+    ],
+    "findings": [],
+    "summary": "Plan-only ACCEPT at transition-0070. The correction adds a borrowed terminal seam to the existing concrete console credential source, retaining the parameterless production constructor and the accepted authentication policy. It specifies cancellation during key entry without an abandoned blocking read, intercepted no-echo input, sanitized failures, and controlled tests of the same credential-entry behavior. Static inspection of the system-console binding remains distinct from real-terminal runtime proof. Earlier plan and definition findings remain resolved. The change adds no Worker tool, Scan strategy, PRD change, source-access contract, database authority, or runtime-resource permission. It is a bounded testability refinement within the previously approved semantic scope; corrected hashes and affected tasks still require binding and complete-definition review before implementation resumes. Workflow validation, explicit plan-content validation and scoped diff check passed. Recovery remains 6 of 7."
+  }
+}

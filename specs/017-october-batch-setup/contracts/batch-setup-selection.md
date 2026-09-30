@@ -39,6 +39,32 @@ Its callable constructor is `OctoberAuthorityConfiguration(string authorityId, s
 
 The credential constructor is `OctoberOperatorCredentials(string userName, string password, string? authenticatorCode = null, string? recoveryCode = null)` with read-only properties, IDisposable, and rejection of simultaneous factor methods. Production sources are `OctoberConsoleCredentialSource()` and `OctoberProtectedFileCredentialSource(string path, IDataProtectionProvider protection)`, both implementing the same interface. Their failures return null for absent input, propagate caller cancellation, or throw sanitized input-unavailable failure mapped by AuthenticateAsync to Unavailable. The protected JSON payload has exactly userName/password/authenticatorCode/recoveryCode; unknown fields, both factors or invalid types are rejected. Creating that encrypted input is an operator-side use of the same existing Data Protection provider/purpose, not a new command, account or unapproved key-ring provisioning action. Tests inject controlled input through this interface while invoking the same concrete authentication adapter.
 
+### Concrete console input seam
+
+The parameterless console constructor remains the normal production entrypoint. Add one public overload and one terminal dependency in the existing `Vulgata.Web.Data` namespace; both constructors use the same credential-entry implementation:
+
+```csharp
+public interface IOctoberCredentialTerminal
+{
+    bool IsInteractive { get; }
+    ValueTask<ConsoleKeyInfo> ReadKeyAsync(bool intercept, CancellationToken cancellationToken);
+    void Write(string value);
+}
+// Constructors on the existing concrete credential source:
+OctoberConsoleCredentialSource();
+OctoberConsoleCredentialSource(IOctoberCredentialTerminal terminal);
+```
+
+The overload rejects null with ArgumentNullException. The injected terminal is borrowed, is never disposed by the source and conveys only input/output, never identity or authorization. The parameterless constructor supplies a thin internal system-console adapter, without a new public factory, host mode or service. Tests supply a controlled terminal to the same concrete source; no reflection/private-method testing or process-global Console.SetIn replacement is needed.
+
+ReadAsync checks caller cancellation before accessing the terminal, then rejects noninteractive input with the existing static sanitized unavailable failure before consuming keys. The source requests every credential key with `intercept: true`; prompts/separators go through Write, and credential characters, password/factor values and exception details never do. Enter terminates a field, Backspace edits the current field without echo, and other non-text control keys do not become credential characters. Read username/password and optional authenticator/recovery fields without imposing a new authentication policy; empty optional fields become null, and simultaneous factors remain rejected. Missing required input yields no credentials. Cancellation while awaiting input or before returning a result propagates OperationCanceledException and returns no partially entered credentials. Terminal availability/read/write failures map to the existing sanitized unavailable failure; they never return partial success or raw console exception text. Transient entry buffers are released on every exit without claiming secure erasure of immutable strings.
+
+The system adapter derives IsInteractive from actual input/output redirection and Environment.UserInteractive, uses the supplied intercept flag for native key reads, and supports cancellation while waiting for a key. It must not leave an uncancellable blocking Console.ReadKey running on an abandoned Task.Run after cancellation. A cancellable key-availability wait followed by an intercepted read is suitable when the adapter is the exclusive application console reader; serialize overlapping source reads with cancellable admission and do not introduce competing readers. The thin adapter owns no console handle and never closes process stdin/stdout. This describes its required behavior, not a prescribed private polling helper or timing constant.
+
+Controlled tests assert returned credentials and captured output across the concrete source, with a terminal that models native echo when intercept is false so an accidental echo request is observable. Cover successful input, optional-factor handling, unavailable input, cancellation before/during entry, sanitized terminal failure and no partial/secret output. Preserve current parameterless redirected-console and protected-file passing evidence. Static inspection of the thin system binding separately checks actual availability, native intercept and non-abandoned cancellable waiting; it is not reported as real-terminal execution. This correction introduces no native-process/terminal permission or additional mandatory runtime qualification gate.
+
+The alternative parameterless-only seam cannot exercise interactive success in a redirected SelfContained testhost: Console.SetIn does not supply native ReadKey events or interactive availability. Substituting IOctoberOperatorCredentialSource bypasses the behavior under test. The small terminal dependency is chosen over process-global mutation, reflection, a test-only credential algorithm or an unapproved real-terminal harness. Authentication, database/provider selection, ordinary startup and Story 18.1 remain unchanged.
+
 `OctoberLocalAuthority` implements the following Core-facing interface. Core carries domain statuses and capabilities, never Identity/EF/connection/password types:
 
 ```csharp

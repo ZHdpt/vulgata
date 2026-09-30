@@ -1,0 +1,34 @@
+{
+  "observed_after": {
+    "path": "specs/017-october-batch-setup/evidence/transitions/transition-0067-independent-auth-expected-red.json",
+    "sha256": "2b628702ce14f04c36886c227e806f0bd40a0419c2e686fb5d3dba1b9addba54"
+  },
+  "raw_result": {
+    "kind": "test-red",
+    "stage": "implement",
+    "outcome": "expected-red",
+    "source_commit": "f40c84bfd3ca8951890f0e90f85c0f074fde0602",
+    "command": "pwsh -NoProfile -File eng/test.ps1 -Filter 'FullyQualifiedName~OctoberLocalAuthorityTests'",
+    "exit_code": 1,
+    "trx_path": "TestResults/isolation-318cd7aefe3d45909e1f743b572ae535/results.trx",
+    "execution_log": "TestResults/isolation-318cd7aefe3d45909e1f743b572ae535/execution.log",
+    "counts": {
+      "selected": 2,
+      "passed": 1,
+      "failed": 1,
+      "skipped": 0
+    },
+    "test_name": "AuthenticateAsync_ValidPasswordAndRecoveryCode_ReturnsSessionForTwoFactorUser",
+    "summary": "Real manager-created two-factor Identity user and manager-generated recovery code: expected Authenticated, actual AdditionalAuthenticationRequired. Correct fixture/password/setup reached assertion; code-consumption assertion not reached. Noncounting expected development RED.",
+    "test_sha256": "cea2e9e7c64ddef561a562e4c26e372b5bf54fd1f74e5da6f76297b3ed98562f",
+    "previous_tracer_final_green": {
+      "command": "pwsh -NoProfile -File eng/test.ps1 -Filter 'FullyQualifiedName~OctoberLocalAuthorityTests'",
+      "exit_code": 0,
+      "selected": 1,
+      "passed": 1,
+      "skipped": 0,
+      "trx_path": "TestResults/isolation-fceb5f7f42e949ff91590929415bdc6a/results.trx",
+      "summary": "Independent test-owner rerun after adding session async disposal; no product assertions weakened."
+    }
+  }
+}

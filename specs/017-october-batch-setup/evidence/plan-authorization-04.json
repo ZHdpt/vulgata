@@ -1,0 +1,21 @@
+{
+  "kind": "delegated-approval",
+  "stage": "plan-review",
+  "decision_id": "18-4/plan-authorization/4",
+  "status": "accepted",
+  "story_key": "18-4-prepare-an-owned-october-batch-with-valid-context-and-provid",
+  "delegate_id": "01a0e708-c489-7871-9f73-31413f20bf2c",
+  "decided_at": "2026-09-30T18:52:52Z",
+  "scope_sha256": "db305d57d36ef53acc50e9ff64ac9939918d4b9059e74ba4f93dcff5ca2a9dfd",
+  "delegation": {
+    "path": "specs/017-october-batch-setup/evidence/user-delegation-recovery-01.json",
+    "sha256": "e299e832115615dbde3bc828ab5e4132e0de4c13c0d64372732ab07c6d5646c6"
+  },
+  "response_source": "thread01a0e708-c489-7871-9f73-31413f20bf2c; turn01a0f3a8-cae0-72c0-8794-eb1328eb38d4; message msg_0e55faeae43f1fb3016abd5a64681481969da3db21d8de7f2e",
+  "response_text": "APPROVE — 18-4/plan-authorization/4, for affected T006/T007 task reconciliation only. Verified: Reviewed base: f40c84bfd3ca8951890f0e90f85c0f074fde0602 Seven-artifact digest: 28618604bf86d4eb6002a2f6b8e4fcf62543fbc1360e036deb623479186a1ca6 plan-review-13: ACCEPT Review SHA-256: e95aebaa7ddaabb4cdccd9e79d2c08e7a6ac279427cf2df9a3354588f0a97376 All seven current hashes match. The borrowed terminal seam makes no-echo and cancellation behavior testable without changing authentication policy or claiming real-terminal qualification. Complete-definition review and separate implementation approval remain required. Resource restrictions and recovery 6/7 are unchanged; this grants no execution permission, extension or waiver.",
+  "review": {
+    "path": "specs/017-october-batch-setup/evidence/plan-review-13.json",
+    "sha256": "e95aebaa7ddaabb4cdccd9e79d2c08e7a6ac279427cf2df9a3354588f0a97376"
+  },
+  "summary": "Bounded revised-plan binding for T006/T007 task reconciliation only; semantic scope unchanged, historical03/05 preserved. No execution/resource permission, extension or waiver."
+}

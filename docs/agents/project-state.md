@@ -43,7 +43,7 @@ verification before reuse.
   Tracker refreshes require both epic files. Story 13.1 and October Story 18.1 are
   done; this checkout includes Story 18.1's completed baseline at `3632b2cc`. October
   Story 18.4 is in implementation in `specs/017-october-batch-setup` after
-  accepted plan-review-12, definition-review-11 and fresh delegated approvals.
+  accepted plan-review-13, definition-review-12 and delegated bindings 04/06.
   Its corrected plan uses independent batch execution and startup-only Web dataset
   selection; previous online-Web transport evidence is historical. Story 18.1
   contracts remain integrated and unchanged; the new direct authority requires
@@ -59,7 +59,11 @@ verification before reuse.
 Story 18.4 is the only feature activated in this checkout after the workflow
 installation. Its `specs/017-october-batch-setup` state retains the Astra-medium
 recovery author and open episode at 6/7. Affected authority/composition tasks were
-reopened; unchanged completed work and historical evidence remain. Runtime
+reopened; unchanged completed work and historical evidence remain. Expected TDD
+RED and ordinary first-pass development build failures do not consume recovery
+allowance; independent negative review/convergence and recurrent defects after
+repair remain counted. The bounded console testability correction preserves
+authentication policy; controlled terminal tests are not native-terminal proof. Runtime
 PostgreSQL/process qualification still requires explicitly authorized owned resources. Workflow
 installation itself activated no story; verify current runner ownership and its
 assigned checkout before interpreting the integration tracker. Story 13.1's

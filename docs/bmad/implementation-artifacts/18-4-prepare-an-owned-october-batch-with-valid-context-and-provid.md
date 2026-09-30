@@ -38,7 +38,14 @@ So that generation and later readers address the intended data without polluting
 **Then** the October persistence context, migration history and model snapshot are isolated; ordinary startup and the normal model remain unchanged,
 **And** setup emits sanitized diagnostics without claiming tool readiness, paid-provider readiness or completed Knowledge generation.
 
-## Authorized boundary
+## Current authorized delivery boundary
+
+- The user lifted the historical plan-only/merge-only restrictions and authorized normal governed delivery in this assigned branch/worktree. Accepted corrected plan-review-13 and definition-review-12 preserve independent batch execution and startup-only Web dataset selection; delegated decisions 04/06 bind the corrected artifacts. Story 18.1's integrated contracts remain unchanged and require this story's actual use-path verification.
+- The bounded console seam clarification changes only testability, not authentication policy or resource scope. Existing source/authentication/protected-file evidence remains valid for its tested slices; interactive input and current authority remain unfinished. Pending unavailable-store RED is development evidence, not completion.
+- The user corrected root's mistaken first-build failure count. Expected RED and ordinary first-pass development failures are noncounting; independent negative reviews/convergence and recurrence after repair remain countable. Raw erroneous accounting is retained as superseded evidence; the existing historical episode remains at 6/7 with its owners, diagnosis, holds and extension preserved. No recovery extension or waiver was requested for this correction.
+- Actual PostgreSQL/migration/process/credential/key/terminal/provider qualification still needs explicit authorized owned resources. No merge, push, history rewrite, later-story work or other checkout access is authorized. All remaining reviews, convergence and final verification gates remain mandatory.
+
+## Historical planning-only authorization (2026-09-28)
 
 - The user authorized Story 18.4 definition and planning only. Task generation, implementation, production/test changes, runtime/provider use and migration execution are prohibited in this run.
 - Independently decidable planning covers owned batch setup, exact database and batch selection, context origin/conflict handling, explicit provider-role binding/configuration precedence, and isolation from ordinary startup and other batch databases.
