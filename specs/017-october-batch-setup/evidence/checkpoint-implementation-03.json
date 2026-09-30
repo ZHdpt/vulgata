@@ -1,0 +1,23 @@
+{
+  "kind": "checkpoint-manifest",
+  "checkpoint_id": "bmad-18-4-implement-20260930T062301Z-31e7b4",
+  "stage": "implement",
+  "story_key": "18-4-prepare-an-owned-october-batch-with-valid-context-and-provid",
+  "source_head": "89b64395faaed39f804be91c746cf3ff42bbd49c",
+  "binding_status": "pending",
+  "commit_sha": null,
+  "summary": "Verified T010/T011 atomic setup persistence, exact replay/conflict behavior, first-commit UTC retention and fixed October model/migration snapshot under controlled SelfContained tests.",
+  "paths": [
+    "specs/017-october-batch-setup/tasks.md",
+    "specs/017-october-batch-setup/workflow-state.json",
+    "specs/017-october-batch-setup/evidence/checkpoint-implementation-02.json",
+    "specs/017-october-batch-setup/evidence/october-setup-store-tdd-01.json",
+    "specs/017-october-batch-setup/evidence/checkpoint-implementation-03.json",
+    "src/dotnet/Vulgata.Infrastructure/Data/October/OctoberDbContext.cs",
+    "src/dotnet/Vulgata.Infrastructure/Data/October/OctoberSetupStore.cs",
+    "src/dotnet/Vulgata.Infrastructure/Data/October/Migrations/20260930000000_InitialOctoberSetup.cs",
+    "src/dotnet/Vulgata.Infrastructure/Data/October/Migrations/OctoberDbContextModelSnapshot.cs",
+    "tests/Vulgata.Tests/October/OctoberSetupStoreTests.cs",
+    "tests/Vulgata.Tests/TestInfrastructure/suites.json"
+  ]
+}

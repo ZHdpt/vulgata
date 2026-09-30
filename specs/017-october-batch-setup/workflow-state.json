@@ -22,7 +22,7 @@
     },
     "tasks": {
       "path": "specs/017-october-batch-setup/tasks.md",
-      "sha256": "94fc61374b3a80598c1c15c5e6b2ae87f0ddb4fd6bab29a1a36052e63c39d892"
+      "sha256": "03cc32c29ca4b0235e52c146ada8f19f86e25870f8e8398b7b3c35b521a4d9c9"
     }
   },
   "gates": {
@@ -112,22 +112,23 @@
     "specs/017-october-batch-setup/evidence/implementation-approval-04.json",
     "specs/017-october-batch-setup/evidence/recovery-diagnosis-implementation-setup-seam-01-count-05.json",
     "specs/017-october-batch-setup/evidence/recovery-extension-implementation-setup-seam-01-count-05.json",
-    "specs/017-october-batch-setup/evidence/checkpoint-definition-02.json",
     "specs/017-october-batch-setup/evidence/context-provenance-tdd-01.json",
-    "specs/017-october-batch-setup/evidence/checkpoint-implementation-02.json"
+    "specs/017-october-batch-setup/evidence/checkpoint-implementation-02.json",
+    "specs/017-october-batch-setup/evidence/october-setup-store-tdd-01.json",
+    "specs/017-october-batch-setup/evidence/checkpoint-implementation-03.json"
   ],
   "checkpoint": {
-    "checkpoint_id": "bmad-18-4-implement-20260930T052907Z-4d8c21",
+    "checkpoint_id": "bmad-18-4-implement-20260930T062301Z-31e7b4",
     "stage": "implement",
     "commit_sha": null,
     "binding_status": "pending"
   },
   "resume": {
     "stage": "implement",
-    "reason": "T008/T009 final GREEN is checkpointed. Resume dependency-ready T010/T011 persistence TDD; T020/T029 remain resource-held and recovery remains 6/7.",
-    "evidence_path": "specs/017-october-batch-setup/evidence/context-provenance-tdd-01.json"
+    "reason": "T010/T011 final GREEN is checkpointed. Resume dependency-ready T012/T013 prepared-source approval TDD; T020/T029 remain resource-held and recovery remains 6/7.",
+    "evidence_path": "specs/017-october-batch-setup/evidence/october-setup-store-tdd-01.json"
   },
-  "updated_at": "2026-09-30T05:29:07.3822026Z",
+  "updated_at": "2026-09-30T06:23:01.2818780Z",
   "recovery": {
     "action": "proceed",
     "closing_gate": "verify",

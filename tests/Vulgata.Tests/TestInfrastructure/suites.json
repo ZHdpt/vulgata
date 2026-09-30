@@ -164,6 +164,9 @@
   "October/OctoberSetupPolicyTests.cs": {
     "suite": "SelfContained"
   },
+  "October/OctoberSetupStoreTests.cs": {
+    "suite": "SelfContained"
+  },
   "Pass1JobIdentityTests.cs": {
     "suite": "SelfContained"
   },
