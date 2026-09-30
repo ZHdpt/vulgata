@@ -258,6 +258,60 @@ public sealed class PreparedCodeGraphStateCoordinatorTests
         Assert.True(File.Exists(Path.Combine(statePath, "index.bin")));
     }
 
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task DisposeOwnedStateAsync_LeavesSubstitutedEntryAndSourceUntouched()
+    {
+        await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
+        fixture.Authority.Approve(fixture.Approval);
+
+        string statePath = Path.Combine(fixture.PreparedRootPath, ".codegraph");
+        string originalStatePath = Path.Combine(fixture.PreparedRootPath, ".codegraph-original");
+        string originalStateFile = Path.Combine(statePath, "cache", "index.db");
+        Directory.CreateDirectory(Path.GetDirectoryName(originalStateFile)!);
+        await File.WriteAllTextAsync(originalStateFile, "owned state fixture");
+        string originalSource = await File.ReadAllTextAsync(fixture.UnfamiliarTextPath);
+        string originalSibling = await File.ReadAllTextAsync(fixture.SentinelPath);
+
+        var ready = new PreparedCodeGraphWorkspaceOwnership(
+            Guid.NewGuid(),
+            Version: 2,
+            PreparedCodeGraphOwnershipPhase.Ready,
+            fixture.Approval,
+            Path.GetFullPath(fixture.PreparedRootPath),
+            ObserveDirectoryIdentity(fixture.PreparedRootPath),
+            WorkspaceOwnerIdentity: $"owner-{fixture.SandboxId:N}",
+            StateEntryObjectIdentity: ObserveDirectoryIdentity(statePath));
+        var store = new RecordingOwnershipStore(() =>
+        {
+            Directory.Move(statePath, originalStatePath);
+            Directory.CreateDirectory(statePath);
+            File.WriteAllText(Path.Combine(statePath, "replacement.marker"), "foreign replacement");
+        });
+        store.Seed(ready);
+
+        var authorization = new TestToolUseAuthorizer();
+        authorization.Allow(fixture.Approval, PreparedToolPurpose.CodeGraphPreparation);
+        var coordinator = new PreparedCodeGraphStateCoordinator(
+            fixture.Authority,
+            authorization,
+            new RecordingWorkspaceOwnershipVerifier(),
+            store);
+
+        PreparedToolWorkspaceCheckStatus result = await coordinator.DisposeOwnedStateAsync(
+            fixture.Approval,
+            ready);
+
+        Assert.Equal(PreparedToolWorkspaceCheckStatus.RootUnavailable, result);
+        Assert.Equal(PreparedCodeGraphOwnershipPhase.Quarantined, store.CurrentRecord?.Phase);
+        Assert.True(store.QuarantineAttempted,
+            "A substituted entry must leave ownership unavailable after disposition cannot verify the recorded identity.");
+        Assert.Equal("owned state fixture", await File.ReadAllTextAsync(Path.Combine(originalStatePath, "cache", "index.db")));
+        Assert.Equal("foreign replacement", await File.ReadAllTextAsync(Path.Combine(statePath, "replacement.marker")));
+        Assert.Equal(originalSource, await File.ReadAllTextAsync(fixture.UnfamiliarTextPath));
+        Assert.Equal(originalSibling, await File.ReadAllTextAsync(fixture.SentinelPath));
+    }
+
     private static PreparedToolDirectoryObjectIdentity ObserveDirectoryIdentity(string path)
     {
         (PreparedSourceTraversal.OpenStatus status, SafeFileHandle? handle) =
@@ -278,9 +332,20 @@ public sealed class PreparedCodeGraphStateCoordinatorTests
     {
         private readonly List<PreparedCodeGraphOwnershipPhase> _committedPhases = [];
         private readonly bool _loseCreatedCommitAcknowledgement;
+        private readonly Action? _beforeDispositionCommit;
 
-        internal RecordingOwnershipStore(bool loseCreatedCommitAcknowledgement = false) =>
+        internal RecordingOwnershipStore(
+            bool loseCreatedCommitAcknowledgement = false,
+            Action? beforeDispositionCommit = null)
+        {
             _loseCreatedCommitAcknowledgement = loseCreatedCommitAcknowledgement;
+            _beforeDispositionCommit = beforeDispositionCommit;
+        }
+
+        internal RecordingOwnershipStore(Action beforeDispositionCommit)
+            : this(loseCreatedCommitAcknowledgement: false, beforeDispositionCommit)
+        {
+        }
 
         internal IReadOnlyList<PreparedCodeGraphOwnershipPhase> CommittedPhases => _committedPhases;
 
@@ -369,6 +434,7 @@ public sealed class PreparedCodeGraphStateCoordinatorTests
                 Phase = PreparedCodeGraphOwnershipPhase.Disposing,
             };
             _committedPhases.Add(CurrentRecord.Phase);
+            _beforeDispositionCommit?.Invoke();
             return Task.FromResult(new PreparedCodeGraphOwnershipTransitionResult(
                 PreparedCodeGraphOwnershipTransitionStatus.Committed,
                 CurrentRecord));
