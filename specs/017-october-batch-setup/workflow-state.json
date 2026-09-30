@@ -18,23 +18,23 @@
     },
     "plan": {
       "path": "specs/017-october-batch-setup/plan.md",
-      "sha256": "de84d76a3d0130a7a2a041e2e4384f739de986506d3ad5b034b08341148beeb1"
+      "sha256": "f8513a4526d1111eef0b1ba08012336b83fd7517adcefa2d41ddfa121400132d"
     },
     "tasks": {
       "path": "specs/017-october-batch-setup/tasks.md",
-      "sha256": "75ffc826dafe87c4df6851bf3e7ab55e58c83103d9c728ceb990d28739f29999"
+      "sha256": "9c274fa10c8a5cca08e5fecb974681134468f2329d208da52a53241cfc4dc286"
     }
   },
   "gates": {
     "plan-review": {
       "status": "accepted",
-      "attempt": 5,
-      "verdict_path": "specs/017-october-batch-setup/evidence/plan-review-09.json"
+      "attempt": 7,
+      "verdict_path": "specs/017-october-batch-setup/evidence/plan-review-11.json"
     },
     "definition-review": {
       "status": "accepted",
-      "attempt": 5,
-      "verdict_path": "specs/017-october-batch-setup/evidence/definition-review-09.json"
+      "attempt": 6,
+      "verdict_path": "specs/017-october-batch-setup/evidence/definition-review-10.json"
     },
     "quality-review": {
       "status": "pending",
@@ -77,6 +77,20 @@
       "evidence_path": "specs/017-october-batch-setup/evidence/implementation-approval-03.json",
       "scope_sha256": "e100d427f8292094b8892159b22f36fedfd5747ff505c4a6920f9dc2ed55d491",
       "status": "accepted"
+    },
+    {
+      "decided_at": "2026-09-30T03:47:26.4836818Z",
+      "decision_id": "18-4/recovery-extension/implementation-setup-seam-01/2",
+      "evidence_path": "specs/017-october-batch-setup/evidence/recovery-extension-implementation-setup-seam-01-count-05.json",
+      "scope_sha256": "9528e80e451bbd81a22ecd241aa0778f8d3f4da313115cd5da9c15cfeb9c9343",
+      "status": "accepted"
+    },
+    {
+      "decided_at": "2026-09-30T04:33:00.4562650Z",
+      "decision_id": "18-4/implementation-approval/4",
+      "evidence_path": "specs/017-october-batch-setup/evidence/implementation-approval-04.json",
+      "scope_sha256": "37364a19944ad869cb3975bac400aa944bd4ce371cf36fc21c1e31406438465b",
+      "status": "accepted"
     }
   ],
   "convergence": {
@@ -104,41 +118,41 @@
     "specs/017-october-batch-setup/evidence/transitions/transition-0003-plan-correction-self-review.json"
   ],
   "checkpoint": {
-    "checkpoint_id": "bmad-18-4-implement-20260930T033243Z-89b9f5",
-    "stage": "implement",
+    "checkpoint_id": "bmad-18-4-definition-review-20260930T043300Z-c7a921",
+    "stage": "definition-review",
     "commit_sha": null,
     "binding_status": "pending"
   },
   "resume": {
     "stage": "implement",
-    "reason": "T006/T007 are verified GREEN. Continue the next dependency-ready accepted task group while preserving T020/T029 owned-resource holds and the open recovery episode.",
-    "evidence_path": "specs/017-october-batch-setup/evidence/bootstrap-host-tdd-01.json"
+    "reason": "Implementation approval 4 binds definition review 10. Resume dependency-ready governed TDD; T020/T029 remain resource-held and recovery remains 6/7.",
+    "evidence_path": "specs/017-october-batch-setup/evidence/implementation-approval-04.json"
   },
-  "updated_at": "2026-09-29T02:14:26.4999515Z",
+  "updated_at": "2026-09-30T04:33:00.4562650Z",
   "recovery": {
     "action": "proceed",
     "closing_gate": "verify",
     "diagnosis": {
-      "at_count": 4,
+      "at_count": 5,
       "evidence": {
-        "path": "specs/017-october-batch-setup/evidence/recovery-diagnosis-implementation-setup-seam-01-count-04-plan-review-09.json",
-        "sha256": "40f4c34cdf80b5431d6ea01773df03c5df3cf1f8359c4eb6bcdc50ac0ed69453"
+        "path": "specs/017-october-batch-setup/evidence/recovery-diagnosis-implementation-setup-seam-01-count-05.json",
+        "sha256": "8141b710a10ab25f34c8681b4f480b593d90646bee071cfd520a269dab2d7efb"
       }
     },
     "earliest_owner": "tasks",
     "episode_id": "18-4-implementation-setup-seam-01",
-    "extension_decision_id": "18-4/recovery-extension/implementation-setup-seam-01/1",
-    "failed_results": 4,
+    "extension_decision_id": "18-4/recovery-extension/implementation-setup-seam-01/2",
+    "failed_results": 6,
     "holds": [],
     "last_result": {
-      "path": "specs/017-october-batch-setup/evidence/implementation-bootstrap-program-configuration-result-01.json",
-      "sha256": "19443961768b9a7e0798a5b794162dfcb95c5a9d10b0e190f22567b7bd782ddf"
+      "path": "specs/017-october-batch-setup/evidence/plan-review-10.json",
+      "sha256": "f445bc3f9659d7b21c666005385df001da51fcf3b5eced4b8823401a4e7bf780"
     },
-    "pause_at": 5
+    "pause_at": 7
   },
   "transition_head": {
-    "path": "specs/017-october-batch-setup/evidence/transitions/transition-0050-definition-review-09-accept.json",
-    "sha256": "4572a1b0a95c56c2ff8360605478452d2f65b5648506a60374c4ec1d43728177"
+    "path": "specs/017-october-batch-setup/evidence/transitions/transition-0059-definition-review-10-accept.json",
+    "sha256": "e161e242ec3c1a4cde5042e19d8bf83de5898c3be802f51873faa8a4ac19ba80"
   },
   "definition_author": {
     "profile": "definition-author-recovery",

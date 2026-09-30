@@ -1,0 +1,27 @@
+{
+  "observed_after": {
+    "path": "specs/017-october-batch-setup/evidence/transitions/transition-0057-plan-review-11-accept.json",
+    "sha256": "1d92833c65ef1cc65881827e45e000763b888b0b646d05c8637a46d2a6f76092"
+  },
+  "raw_result": {
+    "kind": "self-review",
+    "stage": "tasks",
+    "outcome": "passed",
+    "tasks_sha256": "9c274fa10c8a5cca08e5fecb974681134468f2329d208da52a53241cfc4dc286",
+    "classification": "architecture",
+    "summary": "Reconciled trusted context, digest v2, first-commit time, historical selection and management-authority continuity through existing unfinished tasks.",
+    "input_hashes": {
+      "specs/017-october-batch-setup/spec.md": "09bd29f496be4a9c956a460f9d1fc8af952f88c031324e528becb19bbc15b3bc",
+      "specs/017-october-batch-setup/plan.md": "f8513a4526d1111eef0b1ba08012336b83fd7517adcefa2d41ddfa121400132d",
+      "specs/017-october-batch-setup/tasks.md": "9c274fa10c8a5cca08e5fecb974681134468f2329d208da52a53241cfc4dc286"
+    },
+    "changed_task_ids": ["T008", "T009", "T010", "T011", "T012", "T013", "T016", "T017", "T018", "T019", "T021", "T022"],
+    "order": "T009 declaration-only compilation precedes T008 policy RED and T009 policy GREEN; T008 then tests Web v2 authority behavior before T009 route GREEN. T010/T011 prove atomic snapshot/time retention. T016/T017 prove current/stored authority continuity. T018/T019 prove generator-expected identity and host sequencing. T021/T022 implement projection behavior.",
+    "coverage": "SelectedContext, digest, applicability/differences/advisory classification, original SelectedAtUtc on retry, prepare Conflict versus read-only historical selection, three authority comparisons, colliding-ID denial, same-authority text-edit positive, cancellation/outage and sanitized outcomes are assigned.",
+    "preserved": "All task IDs/order, completed T001-T007, historical evidence, Story 18.1 contracts, three-mode/provider isolation and unchanged T020/T029 resource gates.",
+    "validation": "Deterministic plan/task validation and syntax/path/order/completed-line/resource-line checks passed; scoped diff check passed.",
+    "planned_change": "Plan-review-11 establishes no new Worker-tool, Scan-strategy or PRD-change trigger. No fresh planned-change authorization is needed before tasks; renewed implementation approval remains required after complete-definition ACCEPT.",
+    "remaining_conflicts": [],
+    "next_gate": "Root hash validation and independent complete-definition review, then renewed implementation approval."
+  }
+}

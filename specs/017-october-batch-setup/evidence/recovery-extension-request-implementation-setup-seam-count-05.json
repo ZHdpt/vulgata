@@ -1,0 +1,58 @@
+{
+  "kind": "recovery-extension-request",
+  "request_id": "18-4/recovery-extension/implementation-setup-seam-01/2/request",
+  "story_key": "18-4-prepare-an-owned-october-batch-with-valid-context-and-provid",
+  "delegate_id": "01a0e708-c489-7871-9f73-31413f20bf2c",
+  "delegation": {
+    "path": "specs/017-october-batch-setup/evidence/user-delegation-recovery-01.json",
+    "sha256": "e299e832115615dbde3bc828ab5e4132e0de4c13c0d64372732ab07c6d5646c6",
+    "max_pause_at": 7
+  },
+  "recovery_boundary": {
+    "episode_id": "18-4-implementation-setup-seam-01",
+    "failed_results": 5,
+    "pause_at": 5,
+    "closing_gate": "verify",
+    "earliest_owner": "plan",
+    "holds": [],
+    "last_result": {
+      "path": "specs/017-october-batch-setup/evidence/implementation-context-provenance-seam-result-01.json",
+      "sha256": "c493e22bfce701c2ce11eaef16cc74ec8468976099a3eb68b75a0df4b9e341cb"
+    },
+    "transition_head": {
+      "path": "specs/017-october-batch-setup/evidence/transitions/transition-0051-context-provenance-seam-revise.json",
+      "sha256": "07efac0fb61af702cfec4995e3cfc7bd4d6351e43d6bef5acde907649b10031c"
+    },
+    "artifacts": {
+      "spec": {
+        "path": "specs/017-october-batch-setup/spec.md",
+        "sha256": "09bd29f496be4a9c956a460f9d1fc8af952f88c031324e528becb19bbc15b3bc"
+      },
+      "plan": {
+        "path": "specs/017-october-batch-setup/plan.md",
+        "sha256": "de84d76a3d0130a7a2a041e2e4384f739de986506d3ad5b034b08341148beeb1"
+      },
+      "tasks": {
+        "path": "specs/017-october-batch-setup/tasks.md",
+        "sha256": "75ffc826dafe87c4df6851bf3e7ab55e58c83103d9c728ceb990d28739f29999"
+      }
+    }
+  },
+  "failed_obligation": "T008/T009 require the public setup policy to validate and retain immutable advisory context value, scope, origin, selection time, applicability and disagreement, but the accepted seam carries only scope/record-ID references and provides neither trusted snapshots nor a reader port.",
+  "failed_approaches": [
+    "The original accepted plan fixed OctoberContextSelection to Scope plus RecordId and OctoberAuthorizedSelection to target/batch/subject/database/Repository IDs/digest, leaving no provenance payload at the policy seam.",
+    "T008 could not create an honest public-seam RED for unobservable values or disagreement; the test owner stopped before editing rather than asserting reference forwarding as false proof.",
+    "The earlier recovery corrected Program-host configuration timing and T006/T007 are verified; that correction does not supply the missing context-provenance data."
+  ],
+  "proposed_changed_approach": "Return only the affected definition to plan under the retained recovery author. Reconcile a single trusted immutable selected-advisory-context payload sourced from live Web management authority and carried through the existing one Core policy and one writer, so the policy can compare exact request references/digest and persistence can retain value, scope, originating record, selection time, applicability and disagreement. Do not add Core database access, a second policy, flattened context text, source-proof semantics, or a Story 18.1 contract change. The exact public record adjustment remains subject to deterministic validation and independent plan/definition review; this extension does not approve that design outcome.",
+  "requested_decision": {
+    "decision_id": "18-4/recovery-extension/implementation-setup-seam-01/2",
+    "recommended": "approve",
+    "old_pause_at": 5,
+    "proposed_pause_at": 7,
+    "ceiling": 7,
+    "consequence": "Approval supplies finite correction allowance only. The root must refresh diagnosis, dispatch only the retained definition owner at plan, rerun affected reviews and approvals, and stop at count 7 for a human decision if the episode remains unresolved. Decline leaves Story 18.4 paused at the current checkpoint."
+  },
+  "scope_text": "Story 18.4 episode 18-4-implementation-setup-seam-01 at failed_results=5: raise cumulative pause_at from 5 to 7 solely to correct and independently review the context-provenance setup seam, reconcile downstream tasks, and re-obtain applicable gates; no product-scope, architecture-outcome, resource, authority, Story 18.1 contract, hold, or verification waiver.",
+  "scope_sha256": "9528e80e451bbd81a22ecd241aa0778f8d3f4da313115cd5da9c15cfeb9c9343"
+}

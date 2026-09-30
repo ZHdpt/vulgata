@@ -1,0 +1,30 @@
+{
+  "observed_after": {
+    "path": "specs/017-october-batch-setup/evidence/transitions/transition-0055-plan-review-10-revise.json",
+    "sha256": "b7a97b9bd0a99f7cf2950412b46190946c2c30e73dc4c73a082bd945752c3eb6"
+  },
+  "raw_result": {
+    "kind": "self-review",
+    "stage": "plan",
+    "outcome": "passed",
+    "source_finding": "P-18.4-05",
+    "classification": "architecture",
+    "summary": "Made protected-versus-live, generator-expected-versus-validated and current-versus-stored management-authority equality explicit before authorization or historical-context disclosure.",
+    "input_hashes": {
+      "specs/017-october-batch-setup/spec.md": "09bd29f496be4a9c956a460f9d1fc8af952f88c031324e528becb19bbc15b3bc",
+      "specs/017-october-batch-setup/plan.md": "f8513a4526d1111eef0b1ba08012336b83fd7517adcefa2d41ddfa121400132d",
+      "specs/017-october-batch-setup/research.md": "d68eb46bf554e05526a9574b72dc58f05b4b8c53f69439eee7a980a14e1b6010",
+      "specs/017-october-batch-setup/data-model.md": "a5920193ac0f8ae596178be378d463692e3d3afd7b64f76b3329ed2152b87e4a",
+      "specs/017-october-batch-setup/quickstart.md": "a4803669080e874f28d4b452eb3e719359e14c6b9cedc376583202a6305fbe1f",
+      "specs/017-october-batch-setup/contracts/batch-setup-selection.md": "d51ea174a1ac499119f3b16584f3907829b19495e7bcdbb7ce3ba99b9dc5bea2",
+      "specs/017-october-batch-setup/contracts/provider-binding.md": "0c59b9d803c2d6770b9ebaf8d060bb73f6a6dd40b91a33947f72a033db48e3cd"
+    },
+    "configuration": "Both explicit Web modes freeze deployment-owned October:Web:ManagementAuthorityId from final configuration. Generator pins October:ManagementAuthorityId for its configured authority endpoint. Ordinary mode needs neither. Blank or whitespace-wrapped values are invalid and comparisons are exact ordinal.",
+    "test_seam": "Controlled authorities A/B with otherwise colliding IDs and values deny A-grant validation under B and B-grant binding to a batch stored under A. A-to-A with changed advisory text remains the historical-read positive control. Failures disclose no capability, context, mutation or sensitive identity.",
+    "preserved": "Trusted payload, writer-owned first-commit time, prepare retry, immutable history, T001-T007 evidence, Story 18.1 contracts, isolation, provider and resource boundaries remain unchanged. No expired-grant route.",
+    "planned_change_trigger_assessment": "No Worker Agent tool, Scan strategy or PRD change. Architecture plan review remains required; root and reviewer decide whether prior authorization needs rebinding.",
+    "affected_downstream_tasks": ["T008", "T009", "T010", "T011", "T012", "T013", "T016", "T017", "T018", "T019", "T020", "T021", "T022"],
+    "remaining_conflicts": [],
+    "next_gate": "Root hash validation and repeat independent plan-only review."
+  }
+}

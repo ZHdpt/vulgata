@@ -4,8 +4,8 @@
   "stage": "implement",
   "story_key": "18-4-prepare-an-owned-october-batch-with-valid-context-and-provid",
   "source_head": "fd56c8a088c74bdd58e7ec1c408500526fe3daab",
-  "binding_status": "pending",
-  "commit_sha": null,
+  "binding_status": "bound",
+  "commit_sha": "012d41ac0e5a20f2d16ba62904d28df6eb836d26",
   "summary": "Verified T006/T007 Program-host composition and authenticated activation-grant implementation. Later selected-data, generator and owned-resource qualification remain open.",
   "paths": [
     "specs/017-october-batch-setup/tasks.md",
