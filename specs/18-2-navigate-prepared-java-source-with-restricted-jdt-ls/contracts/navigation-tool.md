@@ -279,6 +279,12 @@ public sealed class PreparedJavaNavigationContextFactory
     public PreparedJavaNavigationContextFactory(
         PreparedJavaNavigationProfile profile,
         IPreparedJdtLsRuntime runtime);
+    internal PreparedJavaNavigationContextFactory(
+        PreparedJavaNavigationProfile profile,
+        IPreparedJdtLsRuntime runtime,
+        PreparedCodeGraphStateCoordinator ownershipCoordinator,
+        Func<PreparedToolWorkspaceLease, CancellationToken,
+            ValueTask<PreparedCodeGraphWorkspaceOwnership?>> currentWorkspaceBinding);
     public Task<PreparedJavaNavigationOpenResult> OpenAsync(
         PreparedToolWorkspaceLease workspaceLease,
         CancellationToken cancellationToken = default);
@@ -295,6 +301,68 @@ public interface IPreparedJdtLsRuntime
         PreparedJavaNavigationProfile profile,
         CancellationToken cancellationToken = default);
 }
+// Infrastructure-only production construction, selected by trusted composition.
+internal sealed class PreparedJdtLsRuntime : IPreparedJdtLsRuntime
+{
+    internal PreparedJdtLsRuntime(
+        IPreparedJdtCommandResolver commands,
+        IPreparedJdtProcessLauncher launcher,
+        IPreparedJdtProtocolFactory protocols,
+        PreparedJdtHostPolicy fixedHostPolicy);
+    public Task<IPreparedJdtLsSession> OpenAsync(
+        PreparedToolWorkspaceLease workspaceLease,
+        PreparedJavaNavigationProfile profile,
+        CancellationToken cancellationToken = default);
+}
+internal interface IPreparedJdtCommandResolver
+{
+    Task<PreparedJdtCommandResolution> ResolveAsync(
+        PreparedJdtCommandRequest request,
+        CancellationToken cancellationToken);
+}
+internal sealed record PreparedJdtCommandRequest(
+    string HostPathSnapshot, string PreparedRoot, string DisposableStateRoot,
+    PreparedJdtHostPolicy FixedHostPolicy);
+internal enum PreparedJdtCommandResolutionStatus { Pinned, Missing, Rejected, Unavailable }
+internal sealed record PreparedJdtCommandResolution(
+    PreparedJdtCommandResolutionStatus Status,
+    PreparedJdtPinnedCommands? Commands);
+internal sealed record PreparedJdtPinnedCommands(
+    PreparedJdtPinnedFile JdtCommand, PreparedJdtPinnedFile JavaCommand,
+    PreparedJdtPinnedFile? FixedInterpreter);
+internal sealed record PreparedJdtFileIdentity(
+    uint VolumeSerialNumber, uint FileIndexHigh, uint FileIndexLow);
+internal sealed record PreparedJdtPinnedFile(
+    string CanonicalAbsolutePath, PreparedJdtFileIdentity FileIdentity,
+    string Sha256, int? FirstPathEntryIndex);
+internal sealed record PreparedJdtHostPolicy(
+    IReadOnlyList<string> ApprovedExecutableDirectories,
+    IReadOnlyList<string> DeclaredRuntimeReadRoots,
+    string FixedCmdAbsolutePath,
+    IReadOnlyList<string> FixedChildPathEntries);
+internal interface IPreparedJdtProcessLauncher
+{
+    Task<IJdtLsProcess> LaunchAsync(
+        PreparedToolWorkspaceLease workspaceLease,
+        PreparedJdtLaunchRequest request,
+        CancellationToken cancellationToken);
+}
+internal sealed record PreparedJdtLaunchRequest(
+    string CanonicalPreparedRoot, PreparedToolDirectoryObjectIdentity RootIdentity,
+    string RootUri, string DataPath, string ConfigurationPath,
+    PreparedJdtPinnedCommands Commands, IReadOnlyList<string> FixedArguments,
+    IReadOnlyDictionary<string, string> FixedChildEnvironment,
+    PreparedJdtHostPolicy FixedHostPolicy);
+internal interface IPreparedJdtProtocolFactory
+{
+    Task<IPreparedJdtLsSession> InitializeAsync(
+        IJdtLsProcess process,
+        PreparedJdtInitializeRequest request,
+        CancellationToken cancellationToken);
+}
+internal sealed record PreparedJdtInitializeRequest(
+    string RootUri, string WorkspaceFolderUri, string WorkspaceFolderName,
+    IReadOnlyDictionary<string, object> FixedSettings, int MaximumResponseBytes);
 public sealed class PreparedJdtLsOpenFailureException : Exception
 {
     public PreparedJdtLsOpenFailureException(
@@ -317,9 +385,17 @@ public sealed record PreparedJdtLsRawLocation(
     string RawProtocolUri, int StartLine, int StartCharacter, int EndLine, int EndCharacter);
 ```
 
-The application constructs `PreparedJavaNavigationProfile` from trusted bounds and a disposable state root outside the prepared source; it contains no executable selector. The caller first obtains a `PreparedToolWorkspaceLease` with `JdtNavigation` purpose. Factory `OpenAsync` checks that purpose, lease lifetime/current authority, root identity and profile/state separation and reserves the one-session-per-Repository slot before calling the injected runtime. `Opened` has exactly one context; every other status has null context and no model-visible trusted details. Null programmer inputs fail without launch.
+The internal types above are an October-only construction seam, not an Agent/Worker surface. The runtime reads the running process's host PATH into `HostPathSnapshot`; Worker input never supplies it. `PreparedJdtHostPolicy` is fixed by trusted application composition; it lists directories to *validate* PATH candidates and declared runtime read inputs, never a fallback executable selector. `PreparedJdtCommandResolution` is `Pinned` with all required descriptors or `Missing`, `Rejected` or `Unavailable` with null commands; it never resolves a second PATH match after rejecting the first. `FirstPathEntryIndex` is non-null for the first matching JDT and Java entries independently; a fixed `cmd.exe` is checked outside PATH and has a null index. Pinning covers canonical absolute paths, stable physical file identities and content digests, with held protection against replacement where available. Invalid or changing identity returns no launch. `IJdtLsProcess` is the existing Infrastructure-only process/stdio/settlement shape; the new launcher owns an OS-enforced child and is not the old `ProcessJdtLsLauncher` implementation.
 
-Ownership has three distinct phases. **Before runtime return**, `IPreparedJdtLsRuntime.OpenAsync` owns every process, protocol and disposable-state resource it starts. If opening fails or is cancelled before returning `IPreparedJdtLsSession`, it performs bounded cleanup, then throws `PreparedJdtLsOpenFailureException` with a sanitized status and whether cleanup was confirmed; the factory cannot dispose handles it never received. A confirmed failure lets the factory release its slot and return that sanitized status with null context. An unconfirmed failure (or unexpected exception without cleanup attestation) maps to `CleanupUnconfirmed` with null context, keeps the slot unavailable and forbids retry until owned-resource resolution; it cannot be reported as safe `Cancelled`. A second open for the same Repository while quarantined returns `CleanupUnconfirmed` without calling the runtime. If this trusted status must be surfaced through a Worker function, map it to existing `PreparedJavaNavigationOutcome.ConfigurationUnavailable` with empty locations, counts and details. The exception never carries raw paths/source/approval or protocol details into the Worker result. **After session return but before context handoff**, the factory owns the returned session. If cancellation, a current-lease/profile check or context construction then fails, it disposes that session before mapping a sanitized null-context status and releasing its session slot. **After successful context handoff**, the context owns and disposes the returned session and releases the slot after Worker calls settle. The context borrows the separately issued lease; the trusted caller disposes the lease after the context, or after a failed open. The factory never disposes that caller-owned lease. A failed/disposed context or partial runtime session cannot be reused.
+The application constructs `PreparedJavaNavigationProfile` from trusted bounds and a disposable state root outside the prepared source; it contains no executable selector. The caller first obtains a `PreparedToolWorkspaceLease` with `JdtNavigation` purpose. The internal factory constructor binds the **existing** `PreparedCodeGraphStateCoordinator` and an Infrastructure-only callback that obtains the current exact `PreparedCodeGraphWorkspaceOwnership` binding from the trusted application workspace owner. The callback is not a second ownership view or a Worker-selected descriptor. The factory checks `lease.MatchesApproval(binding.Approval)`, root/owner binding and current authority under its held scope; it passes that same application-held binding and approval to `GetOwnershipViewAsync`. A null/mismatched binding, missing coordinator/store or `Unavailable` view leaves navigation `ConfigurationUnavailable` with no runtime or protocol call. The public two-argument constructor remains source compatible for earlier controlled lifecycle tests, but cannot supply ownership eligibility and cannot enable a production navigation context by itself. Trusted Web composition registers only the bound factory; a fake runtime is not a substitute for the binding. Factory `OpenAsync` also checks purpose, lease lifetime/current authority, root identity and profile/state separation and reserves the one-session-per-Repository slot before calling the injected runtime. The runtime obtains the exact whole-root path/object identity only within the short held-root callback and copies it into `PreparedJdtLaunchRequest` for trusted use. The launcher re-enters the current lease/root check and rechecks every pinned command immediately before OS creation, then applies the restricted child identity and owned process-tree lifetime before executable code runs. It returns a process only after those steps succeed; a caller bool or recorded request is not proof. It passes the fixed interpreter, script, Java and allowed descendants a constrained child `PATH`, minimal inherited stdio handles and one OS restriction boundary. `Opened` has exactly one context; every other status has null context and no model-visible trusted details. Null programmer inputs fail without launch.
+
+For every navigation request, the context reloads that same ownership view **before** protocol use. For a candidate whose first relative component is the coordinator's fixed `.codegraph` entry, the existing held-root scope observes that physical entry identity under no-follow traversal; the component only selects the identity check and is never by itself an exclusion rule. `VerifiedOwned` with a current `Ready` record excludes the input only when the observed entry identity equals the record's physical state-entry object; `VerifiedUnowned` admits ordinary source even when a directory is named `.codegraph`. The context maps each raw returned URI through the existing held-root mapper, then applies the same contained first-component/physical-identity check within the bounded root callback, withholding only locations beneath the verified current owned object. It reloads the view immediately before Worker disclosure and requires the status and, for `VerifiedOwned`, `OwnershipId`, version and physical entry identity to remain current; transition, substituted entry, cancellation, authority loss or `Unavailable` discards all buffered locations, counts and limit details. If `VerifiedUnowned` changes to owned during a request, discard the full response and reissue only under a newly checked request; do not infer absence from an empty result. Ownership classification does not require a `CodeGraphPreparation` grant: the JDT operation continues to require its own `JdtNavigation` purpose. This changes neither 18.1's reader nor 18.3's separately owned list/read/search repair.
+
+The initialization request uses the same granted root for `rootUri` and the single `workspaceFolders[0].uri`, with name `repository`; neither `-data` nor configuration nor temporary/profile data may overlap the prepared root. The fixed settings map contains `java.import.maven.enabled=false`, `java.import.gradle.enabled=false`, `java.autobuild.enabled=false`, `java.configuration.updateBuildConfiguration="disabled"`, `java.import.maven.offline.enabled=true`, `java.import.gradle.offline.enabled=true`, `java.import.gradle.wrapper.enabled=false`, `java.maven.downloadSources=false` and `java.maven.updateSnapshots=false`. The proposed wire shape nests their `java` members in `initialize.initializationOptions.settings`; after `initialized`, send the identical `workspace/didChangeConfiguration.settings` before reporting `Opened` if the pinned server requires that notification. Neither stage may reenable build/import. These names are candidate client/server settings documented by the JDT/Java extension sources; T022 must observe the serialized request/notification order and T023 must verify the pinned 1.61.0 server accepts and honors this exact shape, failing closed if it does not. T024 must observe effective absence of import/build/restore and source writes, since serializing booleans does not establish it.
+
+For the declared Windows host, a Less Privileged AppContainer (LPAC) launched with a package/capability identity and an All Application Packages opt-out is one candidate for the required real boundary. Its package/capability grants must allow only read/execute on pinned `cmd.exe`, the selected JDT script, Java and transitive runtime inputs, read on the exact prepared root, and write on bounded disposable JDT state. LPAC redirects profile and TEMP/TMP data: those locations must be owned, inspected and cleaned as tool state, or the profile fails. A job object may bound the child tree but is not a filesystem permission. AppContainer creation, effective DACLs for shared installations, fixed interpreter and all Python/Java descendants, and actual unrelated-host denial are unresolved host prerequisites; no shared ACL or PATH edit, child launch or production registration follows from this candidate. If the first PATH script requires an unapproved Python/external-checkout chain, it is rejected rather than adopted or skipped for a later entry.
+
+Ownership has three distinct phases. **Before runtime return**, `IPreparedJdtLsRuntime.OpenAsync` owns every process, protocol and disposable-state resource it starts. `IPreparedJdtProtocolFactory.InitializeAsync` may wrap the process but does not transfer its cleanup obligation to the caller; on failed or cancelled initialization the runtime settles both process and protocol. If opening fails or is cancelled before returning `IPreparedJdtLsSession`, it performs bounded cleanup, then throws `PreparedJdtLsOpenFailureException` with a sanitized status and whether cleanup was confirmed; the factory cannot dispose handles it never received. A confirmed failure lets the factory release its slot and return that sanitized status with null context. An unconfirmed failure (or unexpected exception without cleanup attestation) maps to `CleanupUnconfirmed` with null context, keeps the slot unavailable and forbids retry until owned-resource resolution; it cannot be reported as safe `Cancelled`. A second open for the same Repository while quarantined returns `CleanupUnconfirmed` without calling the runtime. If this trusted status must be surfaced through a Worker function, map it to existing `PreparedJavaNavigationOutcome.ConfigurationUnavailable` with empty locations, counts and details. The exception never carries raw paths/source/approval or protocol details into the Worker result. **After session return but before context handoff**, the factory owns the returned session. If cancellation, a current-lease/profile check or context construction then fails, it disposes that session before mapping a sanitized null-context status and releasing its session slot. **After successful context handoff**, the context owns and disposes the returned session and releases the slot after Worker calls settle. The context borrows the separately issued lease; the trusted caller disposes the lease after the context, or after a failed open. The factory never disposes that caller-owned lease. A failed/disposed context or partial runtime session cannot be reused.
 
 The injected `IPreparedJdtLsRuntime` is selected only by trusted Infrastructure composition. A controlled fake may report raw protocol replies and record its own pre-return cleanup or a returned session's later disposal for T010/T011/T013/T018 without starting Java or JDT-LS. Its `RawProtocolUri` is the JSON-decoded location field before `System.Uri` construction, so actual Windows device spellings can reach the denial seam and be tested. The context validates and maps those raw strings to the granted relative root, performs current-authority/pre-disclosure checks and sanitizes outcomes; the fake cannot turn raw locations into authorized output by itself. Fake runtime behavior cannot prove real `rootUri`, `-data`/configuration placement or fixed JDT settings; those require observable production-runtime checks and T022–T024 qualification. Production composition must remain unregistered/fail closed for a real runtime until accepted T022/T023 trusted PATH and process-profile evidence. The eventual real runtime reuses assessed stdio/StreamJsonRpc/process mechanics behind this interface, never the legacy `AnalysisScope` factory or revision lease. No caller passes a model-selected root, command, adapter or physical workspace through `OpenAsync`.
 
@@ -349,7 +425,7 @@ public sealed class PreparedJavaWorkerToolComposition : IAsyncDisposable
 }
 ```
 
-`Program.cs` registers the composer as a scoped service with an explicit DI factory equivalent to `services.AddScoped<PreparedJavaWorkerToolComposer>(sp => new(sp.GetService<PreparedToolWorkspaceIssuer>(), sp.GetService<PreparedJavaNavigationContextFactory>()))`. `GetService` permits absent optional navigation dependencies without constructing or resolving a runtime. The default application registers neither a production-capable JDT runtime nor an issuer/factory with missing current-authority and tool-purpose verifiers; unresolved optional dependencies yield a file-only `ConfigurationUnavailable` composition. A controlled application test registers real issuer/factory instances backed by controlled source/tool authorizers, a fixed `PreparedJavaNavigationProfile` and fake `IPreparedJdtLsRuntime`, then resolves and calls this same Web service. Later production registration requires the T022/T023 accepted trusted PATH/process boundary and fixed profile; a configured command name alone does not enable it. The existing 18.1 `PreparedSourceFunctions` can also be used independently of this service.
+`Program.cs` registers the composer as a scoped service with an explicit DI factory equivalent to `services.AddScoped<PreparedJavaWorkerToolComposer>(sp => new(sp.GetService<PreparedToolWorkspaceIssuer>(), sp.GetService<PreparedJavaNavigationContextFactory>()))`. `GetService` permits absent optional navigation dependencies without constructing or resolving a runtime. The default application registers neither a production-capable JDT runtime nor an issuer/factory with missing current-authority and tool-purpose verifiers. It also cannot register an enabled navigation factory without the exact application-held workspace binding, current ownership coordinator and qualified durable store; unresolved optional dependencies yield a file-only `ConfigurationUnavailable` composition. A controlled application test registers real issuer/factory instances backed by controlled source/tool authorizers, the exact owned fixture binding and coordinator/store, a fixed `PreparedJavaNavigationProfile` and fake `IPreparedJdtLsRuntime`, then resolves and calls this same Web service. Later production registration requires the T022/T023 accepted trusted PATH/process boundary and fixed profile as well as that ownership binding; a configured command name or fake view alone does not enable it. The existing 18.1 `PreparedSourceFunctions` can also be used independently of this service.
 
 The SelfContained T012 test reaches that real registration by creating a test `WebApplicationBuilder`, supplying only a disposable placeholder `ConnectionStrings:DefaultConnection` value required by `VulgataWebComposition.ConfigureServices(builder)`, calling that public composition method, and then adding controlled issuer/factory service registrations. It builds a service provider and resolves the scoped composer without starting the Web host, database migration, hosted services or a JDT process. The test does not replace the composer registration. This is a direct check of the application composition code in `Program.cs`; a `WebApplicationFactory<Program>` native host run is unnecessary for this controlled service seam and has separate database/startup costs.
 
