@@ -182,7 +182,7 @@ public sealed class PreparedJavaNavigationContextFactory
             IPreparedJdtLsSession session;
             try
             {
-                session = await _runtime.OpenAsync(workspaceLease, _profile, cancellationToken);
+                session = await _runtime.OpenAsync(workspaceLease, _profile, waitToken.Token);
             }
             catch (PreparedJdtLsOpenFailureException failure)
             {
@@ -208,12 +208,16 @@ public sealed class PreparedJavaNavigationContextFactory
             }
 
             leaseStatus = await workspaceLease.CheckCurrentAsync(cancellationToken);
-            if (leaseStatus != PreparedToolWorkspaceCheckStatus.Current)
+            if (waitToken.IsCancellationRequested || leaseStatus != PreparedToolWorkspaceCheckStatus.Current)
             {
                 try
                 {
-                    await session.DisposeAsync();
-                    return Failed(Map(leaseStatus));
+                    await session.DisposeAsync().AsTask().WaitAsync(_profile.ShutdownTimeout);
+                    return Failed(waitToken.IsCancellationRequested
+                        ? cancellationToken.IsCancellationRequested
+                            ? PreparedJavaNavigationOpenStatus.Cancelled
+                            : PreparedJavaNavigationOpenStatus.DeadlineExceeded
+                        : Map(leaseStatus));
                 }
                 catch (Exception)
                 {

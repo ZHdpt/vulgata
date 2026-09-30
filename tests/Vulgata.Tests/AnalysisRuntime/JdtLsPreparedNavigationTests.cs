@@ -398,7 +398,7 @@ public sealed class JdtLsPreparedNavigationTests
             Assert.Equal(1, runtime.OpenCallCount);
             Assert.Same(lease, runtime.LastWorkspaceLease);
             Assert.Equal(profile, runtime.LastProfile);
-            Assert.Equal(CancellationToken.None, runtime.LastCancellationToken);
+            Assert.True(runtime.LastCancellationToken.CanBeCanceled);
             Assert.Equal(PreparedToolPurpose.JdtNavigation, lease.ToolPurpose);
 
             await context.DisposeAsync();
@@ -893,6 +893,81 @@ public sealed class JdtLsPreparedNavigationTests
 
     [Trait("Suite", "SelfContained")]
     [SuiteFact("SelfContained")]
+    public async Task GetDefinitionAsync_WhenActiveWorkerIsCancelled_ReturnsCancelledAndRetiresSession()
+    {
+        await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
+        string callerPath = Path.Combine(fixture.PreparedRootPath, "src", "main", "java", "example", "Caller.java");
+        Directory.CreateDirectory(Path.GetDirectoryName(callerPath)!);
+        await File.WriteAllTextAsync(callerPath, "package example; class Caller {}\n");
+
+        fixture.Authority.Approve(fixture.Approval);
+        var toolAuthorization = new ControlledPreparedToolUseAuthorizer(
+            fixture.Approval,
+            PreparedToolPurpose.JdtNavigation);
+        var issuer = new PreparedToolWorkspaceIssuer(fixture.Authority, toolAuthorization);
+        PreparedToolWorkspaceIssueResult issue = await issuer.IssueAsync(
+            new PreparedToolWorkspaceGrantRequest(
+                fixture.Approval,
+                fixture.PreparedRootPath,
+                PreparedToolPurpose.JdtNavigation,
+                TimeSpan.FromSeconds(10)));
+        Assert.Equal(PreparedToolWorkspaceIssueStatus.Issued, issue.Status);
+        PreparedToolWorkspaceLease lease = Assert.IsType<PreparedToolWorkspaceLease>(issue.Lease);
+
+        string disposableStateRoot = Path.Combine(fixture.SiblingPath, "jdt-state");
+        Directory.CreateDirectory(disposableStateRoot);
+        var profile = new PreparedJavaNavigationProfile(
+            disposableStateRoot,
+            TimeSpan.FromSeconds(3),
+            TimeSpan.FromSeconds(10),
+            TimeSpan.FromSeconds(1),
+            MaximumResponseBytes: 64 * 1024);
+        var runtime = new BlockingNavigationRuntime();
+        var factory = new PreparedJavaNavigationContextFactory(profile, runtime);
+        PreparedJavaNavigationOpenResult? open = null;
+        Task<PreparedJavaNavigationResult>? navigationTask = null;
+        using var cancellation = new CancellationTokenSource();
+
+        try
+        {
+            open = await factory.OpenAsync(lease);
+            Assert.Equal(PreparedJavaNavigationOpenStatus.Opened, open.Status);
+            IPreparedJavaNavigationContext context = Assert.IsAssignableFrom<IPreparedJavaNavigationContext>(open.Context);
+
+            navigationTask = context.GetDefinitionAsync(
+                new PreparedJavaNavigationRequest("src/main/java/example/Caller.java", 1, 1, 5),
+                cancellation.Token);
+            await runtime.Session.NavigationStarted.Task.WaitAsync(TimeSpan.FromSeconds(5));
+            cancellation.Cancel();
+
+            PreparedJavaNavigationResult cancelled = await navigationTask.WaitAsync(TimeSpan.FromSeconds(5));
+
+            Assert.Equal(PreparedJavaNavigationOutcome.Cancelled, cancelled.Outcome);
+            Assert.Empty(cancelled.Locations);
+            Assert.Empty(cancelled.Limitations);
+            Assert.Null(cancelled.StoppingLimit);
+            await runtime.Session.CancellationObserved.Task.WaitAsync(TimeSpan.FromSeconds(1));
+            Assert.Equal(1, runtime.Session.DisposeCallCount);
+        }
+        finally
+        {
+            runtime.Session.ReleaseNavigation.TrySetResult(true);
+            if (navigationTask is not null)
+            {
+                await navigationTask.WaitAsync(TimeSpan.FromSeconds(5));
+            }
+
+            if (open?.Context is not null)
+            {
+                await open.Context.DisposeAsync();
+            }
+
+            await lease.DisposeAsync();
+        }
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task GetDefinitionAsync_WhenSessionExceedsRequestTimeout_ReturnsDeadlineExceededAndRetiresSession()
     {
         await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
@@ -1050,6 +1125,215 @@ public sealed class JdtLsPreparedNavigationTests
         Assert.Empty(result.Locations);
         Assert.Empty(result.Limitations);
         Assert.Null(result.StoppingLimit);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task OpenAsync_WhenReturnedSessionCleanupExceedsShutdownTimeout_QuarantinesRepository()
+    {
+        await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
+        fixture.Authority.Approve(fixture.Approval);
+        var toolAuthorization = new ControlledPreparedToolUseAuthorizer(
+            fixture.Approval,
+            PreparedToolPurpose.JdtNavigation);
+        var issuer = new PreparedToolWorkspaceIssuer(fixture.Authority, toolAuthorization);
+        PreparedToolWorkspaceIssueResult issue = await issuer.IssueAsync(
+            new PreparedToolWorkspaceGrantRequest(
+                fixture.Approval,
+                fixture.PreparedRootPath,
+                PreparedToolPurpose.JdtNavigation,
+                TimeSpan.FromSeconds(10)));
+        Assert.Equal(PreparedToolWorkspaceIssueStatus.Issued, issue.Status);
+        PreparedToolWorkspaceLease lease = Assert.IsType<PreparedToolWorkspaceLease>(issue.Lease);
+
+        string disposableStateRoot = Path.Combine(fixture.SiblingPath, "jdt-state");
+        Directory.CreateDirectory(disposableStateRoot);
+        var profile = new PreparedJavaNavigationProfile(
+            disposableStateRoot,
+            TimeSpan.FromMilliseconds(200),
+            TimeSpan.FromSeconds(2),
+            TimeSpan.FromMilliseconds(200),
+            MaximumResponseBytes: 64 * 1024);
+        var runtime = new LateReturningBlockedDisposeRuntime();
+        var factory = new PreparedJavaNavigationContextFactory(profile, runtime);
+        Task<PreparedJavaNavigationOpenResult>? openingTask = null;
+        PreparedJavaNavigationOpenResult? open = null;
+
+        try
+        {
+            openingTask = factory.OpenAsync(lease);
+            await runtime.OpenStarted.Task.WaitAsync(TimeSpan.FromSeconds(5));
+            await runtime.InitializationDeadlineObserved.Task.WaitAsync(TimeSpan.FromSeconds(5));
+            runtime.ReturnSessionAfterDeadline();
+            await runtime.Session.DisposeStarted.Task.WaitAsync(TimeSpan.FromSeconds(5));
+
+            Task completed = await Task.WhenAny(openingTask, Task.Delay(TimeSpan.FromSeconds(2)));
+            Assert.True(
+                ReferenceEquals(openingTask, completed),
+                "Factory cleanup of a returned session must stop waiting at ShutdownTimeout.");
+
+            open = await openingTask;
+            Assert.Equal(PreparedJavaNavigationOpenStatus.CleanupUnconfirmed, open.Status);
+            Assert.Null(open.Context);
+            Assert.Equal(1, runtime.Session.DisposeCallCount);
+
+            PreparedJavaNavigationOpenResult retry = await factory.OpenAsync(lease)
+                .WaitAsync(TimeSpan.FromSeconds(5));
+            Assert.Equal(PreparedJavaNavigationOpenStatus.CleanupUnconfirmed, retry.Status);
+            Assert.Null(retry.Context);
+            Assert.Equal(1, runtime.OpenCallCount);
+        }
+        finally
+        {
+            runtime.ReturnSessionAfterDeadline();
+            runtime.Session.ReleaseDisposeForTest();
+            if (runtime.Session.DisposeCallCount > 0)
+            {
+                await runtime.Session.DisposeSettled.Task.WaitAsync(TimeSpan.FromSeconds(5));
+            }
+
+            if (openingTask is not null)
+            {
+                open ??= await openingTask.WaitAsync(TimeSpan.FromSeconds(5));
+            }
+
+            if (open?.Context is not null)
+            {
+                await open.Context.DisposeAsync();
+            }
+
+            await lease.DisposeAsync();
+        }
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task OpenAsync_WhenRuntimeReturnsAfterInitializationDeadline_DisposesSessionBeforeDeadlineResult()
+    {
+        await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
+        fixture.Authority.Approve(fixture.Approval);
+        var toolAuthorization = new ControlledPreparedToolUseAuthorizer(
+            fixture.Approval,
+            PreparedToolPurpose.JdtNavigation);
+        var issuer = new PreparedToolWorkspaceIssuer(fixture.Authority, toolAuthorization);
+        PreparedToolWorkspaceIssueResult issue = await issuer.IssueAsync(
+            new PreparedToolWorkspaceGrantRequest(
+                fixture.Approval,
+                fixture.PreparedRootPath,
+                PreparedToolPurpose.JdtNavigation,
+                TimeSpan.FromSeconds(10)));
+        Assert.Equal(PreparedToolWorkspaceIssueStatus.Issued, issue.Status);
+        PreparedToolWorkspaceLease lease = Assert.IsType<PreparedToolWorkspaceLease>(issue.Lease);
+
+        string disposableStateRoot = Path.Combine(fixture.SiblingPath, "jdt-state");
+        Directory.CreateDirectory(disposableStateRoot);
+        var profile = new PreparedJavaNavigationProfile(
+            disposableStateRoot,
+            TimeSpan.FromMilliseconds(200),
+            TimeSpan.FromSeconds(2),
+            TimeSpan.FromSeconds(1),
+            MaximumResponseBytes: 64 * 1024);
+        var runtime = new LateReturningReadinessRuntime();
+        var factory = new PreparedJavaNavigationContextFactory(profile, runtime);
+        Task<PreparedJavaNavigationOpenResult>? openingTask = null;
+        PreparedJavaNavigationOpenResult? open = null;
+
+        try
+        {
+            openingTask = factory.OpenAsync(lease);
+            await runtime.OpenStarted.Task.WaitAsync(TimeSpan.FromSeconds(5));
+            await runtime.InitializationDeadlineObserved.Task.WaitAsync(TimeSpan.FromSeconds(5));
+            runtime.ReturnSessionAfterDeadline();
+            open = await openingTask.WaitAsync(TimeSpan.FromSeconds(5));
+
+            Assert.Equal(PreparedJavaNavigationOpenStatus.DeadlineExceeded, open.Status);
+            Assert.Null(open.Context);
+            Assert.Equal(1, runtime.Session.DisposeCallCount);
+            Assert.Equal(1, runtime.OpenCallCount);
+        }
+        finally
+        {
+            runtime.ReturnSessionAfterDeadline();
+            if (openingTask is not null)
+            {
+                open ??= await openingTask.WaitAsync(TimeSpan.FromSeconds(5));
+            }
+
+            if (open?.Context is not null)
+            {
+                await open.Context.DisposeAsync();
+            }
+
+            await lease.DisposeAsync();
+        }
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task OpenAsync_WhenRuntimeReadinessExceedsInitializationTimeout_SettlesBeforeReturningDeadlineExceeded()
+    {
+        await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
+        fixture.Authority.Approve(fixture.Approval);
+        var toolAuthorization = new ControlledPreparedToolUseAuthorizer(
+            fixture.Approval,
+            PreparedToolPurpose.JdtNavigation);
+        var issuer = new PreparedToolWorkspaceIssuer(fixture.Authority, toolAuthorization);
+        PreparedToolWorkspaceIssueResult issue = await issuer.IssueAsync(
+            new PreparedToolWorkspaceGrantRequest(
+                fixture.Approval,
+                fixture.PreparedRootPath,
+                PreparedToolPurpose.JdtNavigation,
+                TimeSpan.FromSeconds(10)));
+        Assert.Equal(PreparedToolWorkspaceIssueStatus.Issued, issue.Status);
+        PreparedToolWorkspaceLease lease = Assert.IsType<PreparedToolWorkspaceLease>(issue.Lease);
+
+        string disposableStateRoot = Path.Combine(fixture.SiblingPath, "jdt-state");
+        Directory.CreateDirectory(disposableStateRoot);
+        var profile = new PreparedJavaNavigationProfile(
+            disposableStateRoot,
+            TimeSpan.FromMilliseconds(200),
+            TimeSpan.FromSeconds(2),
+            TimeSpan.FromSeconds(1),
+            MaximumResponseBytes: 64 * 1024);
+        var runtime = new StalledReadinessRuntime();
+        var factory = new PreparedJavaNavigationContextFactory(profile, runtime);
+        Task<PreparedJavaNavigationOpenResult>? openingTask = null;
+        PreparedJavaNavigationOpenResult? open = null;
+
+        try
+        {
+            openingTask = factory.OpenAsync(lease);
+            await runtime.OpenStarted.Task.WaitAsync(TimeSpan.FromSeconds(5));
+            Task completed = await Task.WhenAny(
+                openingTask,
+                Task.Delay(TimeSpan.FromSeconds(2)));
+            Assert.True(
+                ReferenceEquals(openingTask, completed),
+                "InitializationTimeout must bound runtime readiness before a session is returned.");
+
+            open = await openingTask;
+            Assert.Equal(PreparedJavaNavigationOpenStatus.DeadlineExceeded, open.Status);
+            Assert.Null(open.Context);
+            Assert.True(runtime.DeadlineCancellationObserved);
+            Assert.True(runtime.CleanupConfirmed);
+            Assert.False(runtime.StartupResourceActive);
+            Assert.Equal(1, runtime.OpenCallCount);
+        }
+        finally
+        {
+            runtime.ReleaseReadinessForTest();
+            if (openingTask is not null)
+            {
+                open ??= await openingTask.WaitAsync(TimeSpan.FromSeconds(5));
+            }
+
+            if (open?.Context is not null)
+            {
+                await open.Context.DisposeAsync();
+            }
+
+            await lease.DisposeAsync();
+        }
     }
 
     [Trait("Suite", "SelfContained")]
@@ -1216,6 +1500,249 @@ public sealed class JdtLsPreparedNavigationTests
 
     [Trait("Suite", "SelfContained")]
     [SuiteFact("SelfContained")]
+    public async Task GetDefinitionAsync_WhenWorkersOverlap_SerializesProtocolCalls()
+    {
+        await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
+        string callerPath = Path.Combine(fixture.PreparedRootPath, "src", "main", "java", "example", "Caller.java");
+        Directory.CreateDirectory(Path.GetDirectoryName(callerPath)!);
+        await File.WriteAllTextAsync(callerPath, "package example; class Caller {}\n");
+
+        fixture.Authority.Approve(fixture.Approval);
+        var toolAuthorization = new ControlledPreparedToolUseAuthorizer(
+            fixture.Approval,
+            PreparedToolPurpose.JdtNavigation);
+        var issuer = new PreparedToolWorkspaceIssuer(fixture.Authority, toolAuthorization);
+        PreparedToolWorkspaceIssueResult issue = await issuer.IssueAsync(
+            new PreparedToolWorkspaceGrantRequest(
+                fixture.Approval,
+                fixture.PreparedRootPath,
+                PreparedToolPurpose.JdtNavigation,
+                TimeSpan.FromSeconds(10)));
+        Assert.Equal(PreparedToolWorkspaceIssueStatus.Issued, issue.Status);
+        PreparedToolWorkspaceLease lease = Assert.IsType<PreparedToolWorkspaceLease>(issue.Lease);
+
+        string disposableStateRoot = Path.Combine(fixture.SiblingPath, "jdt-state");
+        Directory.CreateDirectory(disposableStateRoot);
+        var profile = new PreparedJavaNavigationProfile(
+            disposableStateRoot,
+            TimeSpan.FromSeconds(3),
+            TimeSpan.FromSeconds(10),
+            TimeSpan.FromSeconds(1),
+            MaximumResponseBytes: 64 * 1024);
+        var runtime = new BlockingNavigationRuntime();
+        var factory = new PreparedJavaNavigationContextFactory(profile, runtime);
+        PreparedJavaNavigationOpenResult? open = null;
+        Task<PreparedJavaNavigationResult>? definitionTask = null;
+        Task<PreparedJavaNavigationResult>? referencesTask = null;
+
+        try
+        {
+            open = await factory.OpenAsync(lease);
+            Assert.Equal(PreparedJavaNavigationOpenStatus.Opened, open.Status);
+            IPreparedJavaNavigationContext context = Assert.IsAssignableFrom<IPreparedJavaNavigationContext>(open.Context);
+            var request = new PreparedJavaNavigationRequest("src/main/java/example/Caller.java", 1, 1, 5);
+
+            definitionTask = context.GetDefinitionAsync(request);
+            await runtime.Session.NavigationStarted.Task.WaitAsync(TimeSpan.FromSeconds(5));
+            referencesTask = context.GetReferencesAsync(request);
+
+            Assert.Equal(1, runtime.Session.NavigationCallCount);
+            Assert.False(referencesTask.IsCompleted);
+
+            runtime.Session.ReleaseNavigation.TrySetResult(true);
+            PreparedJavaNavigationResult definition = await definitionTask.WaitAsync(TimeSpan.FromSeconds(5));
+            PreparedJavaNavigationResult references = await referencesTask.WaitAsync(TimeSpan.FromSeconds(5));
+
+            Assert.Equal(PreparedJavaNavigationOutcome.NoResultObserved, definition.Outcome);
+            Assert.Equal(PreparedJavaNavigationOperation.Definition, definition.Operation);
+            Assert.Equal(PreparedJavaNavigationOutcome.NoResultObserved, references.Outcome);
+            Assert.Equal(PreparedJavaNavigationOperation.References, references.Operation);
+            Assert.Equal(2, runtime.Session.NavigationCallCount);
+            Assert.Equal(0, runtime.Session.DisposeCallCount);
+        }
+        finally
+        {
+            runtime.Session.ReleaseNavigation.TrySetResult(true);
+            if (definitionTask is not null)
+            {
+                await definitionTask.WaitAsync(TimeSpan.FromSeconds(5));
+            }
+
+            if (referencesTask is not null)
+            {
+                await referencesTask.WaitAsync(TimeSpan.FromSeconds(5));
+            }
+
+            if (open?.Context is not null)
+            {
+                await open.Context.DisposeAsync();
+            }
+
+            await lease.DisposeAsync();
+        }
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task GetDefinitionAsync_WhenWorkerIsCancelledWhileWaitingForSession_StopsBeforeProtocolCall()
+    {
+        await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
+        string callerPath = Path.Combine(fixture.PreparedRootPath, "src", "main", "java", "example", "Caller.java");
+        Directory.CreateDirectory(Path.GetDirectoryName(callerPath)!);
+        await File.WriteAllTextAsync(callerPath, "package example; class Caller {}\n");
+
+        fixture.Authority.Approve(fixture.Approval);
+        var toolAuthorization = new ControlledPreparedToolUseAuthorizer(
+            fixture.Approval,
+            PreparedToolPurpose.JdtNavigation);
+        var issuer = new PreparedToolWorkspaceIssuer(fixture.Authority, toolAuthorization);
+        PreparedToolWorkspaceIssueResult issue = await issuer.IssueAsync(
+            new PreparedToolWorkspaceGrantRequest(
+                fixture.Approval,
+                fixture.PreparedRootPath,
+                PreparedToolPurpose.JdtNavigation,
+                TimeSpan.FromSeconds(10)));
+        Assert.Equal(PreparedToolWorkspaceIssueStatus.Issued, issue.Status);
+        PreparedToolWorkspaceLease lease = Assert.IsType<PreparedToolWorkspaceLease>(issue.Lease);
+
+        string disposableStateRoot = Path.Combine(fixture.SiblingPath, "jdt-state");
+        Directory.CreateDirectory(disposableStateRoot);
+        var profile = new PreparedJavaNavigationProfile(
+            disposableStateRoot,
+            TimeSpan.FromSeconds(3),
+            TimeSpan.FromSeconds(10),
+            TimeSpan.FromSeconds(1),
+            MaximumResponseBytes: 64 * 1024);
+        var runtime = new BlockingNavigationRuntime();
+        var factory = new PreparedJavaNavigationContextFactory(profile, runtime);
+        PreparedJavaNavigationOpenResult? open = null;
+        Task<PreparedJavaNavigationResult>? activeRequest = null;
+        Task<PreparedJavaNavigationResult>? cancelledWaitingRequest = null;
+
+        try
+        {
+            open = await factory.OpenAsync(lease);
+            Assert.Equal(PreparedJavaNavigationOpenStatus.Opened, open.Status);
+            IPreparedJavaNavigationContext context = Assert.IsAssignableFrom<IPreparedJavaNavigationContext>(open.Context);
+
+            var request = new PreparedJavaNavigationRequest("src/main/java/example/Caller.java", 1, 1, 5);
+            activeRequest = context.GetDefinitionAsync(request);
+            await runtime.Session.NavigationStarted.Task.WaitAsync(TimeSpan.FromSeconds(5));
+
+            using var cancellation = new CancellationTokenSource();
+            cancelledWaitingRequest = context.GetDefinitionAsync(request, cancellation.Token);
+            cancellation.Cancel();
+
+            Task completed = await Task.WhenAny(
+                cancelledWaitingRequest,
+                Task.Delay(TimeSpan.FromSeconds(1)));
+            Assert.True(
+                ReferenceEquals(cancelledWaitingRequest, completed),
+                "A cancelled Worker waiting for the serialized session must finish before the active request releases it.");
+
+            PreparedJavaNavigationResult cancelled = await cancelledWaitingRequest;
+            Assert.Equal(PreparedJavaNavigationOutcome.Cancelled, cancelled.Outcome);
+            Assert.Empty(cancelled.Locations);
+            Assert.Empty(cancelled.Limitations);
+            Assert.Equal(1, runtime.Session.NavigationCallCount);
+            Assert.False(activeRequest.IsCompleted);
+            Assert.Equal(0, runtime.Session.DisposeCallCount);
+
+            runtime.Session.ReleaseNavigation.TrySetResult(true);
+            PreparedJavaNavigationResult active = await activeRequest.WaitAsync(TimeSpan.FromSeconds(5));
+            Assert.Equal(PreparedJavaNavigationOutcome.NoResultObserved, active.Outcome);
+            Assert.Equal(0, runtime.Session.DisposeCallCount);
+        }
+        finally
+        {
+            runtime.Session.ReleaseNavigation.TrySetResult(true);
+            if (activeRequest is not null)
+            {
+                await activeRequest.WaitAsync(TimeSpan.FromSeconds(5));
+            }
+
+            if (cancelledWaitingRequest is not null)
+            {
+                await cancelledWaitingRequest.WaitAsync(TimeSpan.FromSeconds(5));
+            }
+
+            if (open?.Context is not null)
+            {
+                await open.Context.DisposeAsync();
+            }
+
+            await lease.DisposeAsync();
+        }
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task OpenAsync_WhenSameRepositorySlotRemainsBusy_ExpiresBoundedWaitWithoutSecondRuntimeOpen()
+    {
+        await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
+        fixture.Authority.Approve(fixture.Approval);
+        var toolAuthorization = new ControlledPreparedToolUseAuthorizer(
+            fixture.Approval,
+            PreparedToolPurpose.JdtNavigation);
+        var issuer = new PreparedToolWorkspaceIssuer(fixture.Authority, toolAuthorization);
+        var request = new PreparedToolWorkspaceGrantRequest(
+            fixture.Approval,
+            fixture.PreparedRootPath,
+            PreparedToolPurpose.JdtNavigation,
+            TimeSpan.FromSeconds(10));
+        PreparedToolWorkspaceIssueResult firstIssue = await issuer.IssueAsync(request);
+        Assert.Equal(PreparedToolWorkspaceIssueStatus.Issued, firstIssue.Status);
+        PreparedToolWorkspaceLease firstLease = Assert.IsType<PreparedToolWorkspaceLease>(firstIssue.Lease);
+
+        PreparedToolWorkspaceLease? secondLease = null;
+        PreparedJavaNavigationOpenResult? firstOpen = null;
+        try
+        {
+            PreparedToolWorkspaceIssueResult secondIssue = await issuer.IssueAsync(request);
+            Assert.Equal(PreparedToolWorkspaceIssueStatus.Issued, secondIssue.Status);
+            secondLease = Assert.IsType<PreparedToolWorkspaceLease>(secondIssue.Lease);
+            Assert.Equal(firstLease.RepositoryId, secondLease.RepositoryId);
+
+            string disposableStateRoot = Path.Combine(fixture.SiblingPath, "jdt-state");
+            Directory.CreateDirectory(disposableStateRoot);
+            var profile = new PreparedJavaNavigationProfile(
+                disposableStateRoot,
+                TimeSpan.FromMilliseconds(200),
+                TimeSpan.FromSeconds(2),
+                TimeSpan.FromSeconds(1),
+                MaximumResponseBytes: 64 * 1024);
+            var runtime = new ControlledPreparedJdtLsRuntime();
+            var factory = new PreparedJavaNavigationContextFactory(profile, runtime);
+
+            firstOpen = await factory.OpenAsync(firstLease);
+            Assert.Equal(PreparedJavaNavigationOpenStatus.Opened, firstOpen.Status);
+            Assert.NotNull(firstOpen.Context);
+
+            PreparedJavaNavigationOpenResult queuedOpen = await factory.OpenAsync(secondLease)
+                .WaitAsync(TimeSpan.FromSeconds(5));
+
+            Assert.Equal(PreparedJavaNavigationOpenStatus.DeadlineExceeded, queuedOpen.Status);
+            Assert.Null(queuedOpen.Context);
+            Assert.Equal(1, runtime.OpenCallCount);
+        }
+        finally
+        {
+            if (firstOpen?.Context is not null)
+            {
+                await firstOpen.Context.DisposeAsync();
+            }
+
+            if (secondLease is not null)
+            {
+                await secondLease.DisposeAsync();
+            }
+
+            await firstLease.DisposeAsync();
+        }
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task OpenAsync_WhenSameRepositorySlotIsBusy_CancelledWaitDoesNotInvokeRuntimeAgain()
     {
         await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
@@ -1350,6 +1877,7 @@ public sealed class JdtLsPreparedNavigationTests
     private sealed class BlockingNavigationSession : IPreparedJdtLsSession
     {
         private int _disposeCallCount;
+        private int _navigationCallCount;
 
         public TaskCompletionSource<bool> NavigationStarted { get; } =
             new(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -1362,11 +1890,14 @@ public sealed class JdtLsPreparedNavigationTests
 
         public int DisposeCallCount => Volatile.Read(ref _disposeCallCount);
 
+        public int NavigationCallCount => Volatile.Read(ref _navigationCallCount);
+
         public async Task<PreparedJdtLsRawReply> NavigateAsync(
             PreparedJavaNavigationOperation operation,
             PreparedJavaNavigationRequest request,
             CancellationToken cancellationToken = default)
         {
+            Interlocked.Increment(ref _navigationCallCount);
             using CancellationTokenRegistration cancellationRegistration = cancellationToken.Register(
                 () => CancellationObserved.TrySetResult(true));
             NavigationStarted.TrySetResult(true);
@@ -1494,6 +2025,178 @@ public sealed class JdtLsPreparedNavigationTests
             }
 
             throw new InvalidOperationException("Unexpected runtime retry after unconfirmed cleanup.");
+        }
+    }
+
+    private sealed class StalledReadinessRuntime : IPreparedJdtLsRuntime
+    {
+        private readonly TaskCompletionSource<bool> _releaseReadinessForTest =
+            new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        public TaskCompletionSource<bool> OpenStarted { get; } =
+            new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        public bool StartupResourceActive { get; private set; }
+
+        public bool DeadlineCancellationObserved { get; private set; }
+
+        public bool CleanupConfirmed { get; private set; }
+
+        public int OpenCallCount { get; private set; }
+
+        public async Task<IPreparedJdtLsSession> OpenAsync(
+            PreparedToolWorkspaceLease workspaceLease,
+            PreparedJavaNavigationProfile profile,
+            CancellationToken cancellationToken = default)
+        {
+            OpenCallCount++;
+            StartupResourceActive = true;
+            OpenStarted.TrySetResult(true);
+
+            try
+            {
+                await _releaseReadinessForTest.Task.WaitAsync(cancellationToken);
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                DeadlineCancellationObserved = true;
+                ConfirmCleanup();
+                throw new PreparedJdtLsOpenFailureException(
+                    PreparedJavaNavigationOpenStatus.DeadlineExceeded,
+                    cleanupConfirmed: true);
+            }
+
+            ConfirmCleanup();
+            throw new PreparedJdtLsOpenFailureException(
+                PreparedJavaNavigationOpenStatus.ReadinessFailed,
+                cleanupConfirmed: true);
+        }
+
+        public void ReleaseReadinessForTest() => _releaseReadinessForTest.TrySetResult(true);
+
+        private void ConfirmCleanup()
+        {
+            StartupResourceActive = false;
+            CleanupConfirmed = true;
+        }
+    }
+
+    private sealed class LateReturningReadinessRuntime : IPreparedJdtLsRuntime
+    {
+        private readonly TaskCompletionSource<bool> _returnSession =
+            new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        public RecordingPreparedJdtLsSession Session { get; } = new();
+
+        public TaskCompletionSource<bool> OpenStarted { get; } =
+            new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        public TaskCompletionSource<bool> InitializationDeadlineObserved { get; } =
+            new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        public int OpenCallCount { get; private set; }
+
+        public async Task<IPreparedJdtLsSession> OpenAsync(
+            PreparedToolWorkspaceLease workspaceLease,
+            PreparedJavaNavigationProfile profile,
+            CancellationToken cancellationToken = default)
+        {
+            OpenCallCount++;
+            OpenStarted.TrySetResult(true);
+            try
+            {
+                await Task.Delay(Timeout.InfiniteTimeSpan, cancellationToken);
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                InitializationDeadlineObserved.TrySetResult(true);
+            }
+
+            await _returnSession.Task;
+            return Session;
+        }
+
+        public void ReturnSessionAfterDeadline() => _returnSession.TrySetResult(true);
+    }
+
+    private sealed class LateReturningBlockedDisposeRuntime : IPreparedJdtLsRuntime
+    {
+        private readonly TaskCompletionSource<bool> _returnSession =
+            new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        public BlockingDisposeNavigationSession Session { get; } = new();
+
+        public TaskCompletionSource<bool> OpenStarted { get; } =
+            new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        public TaskCompletionSource<bool> InitializationDeadlineObserved { get; } =
+            new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        public int OpenCallCount { get; private set; }
+
+        public async Task<IPreparedJdtLsSession> OpenAsync(
+            PreparedToolWorkspaceLease workspaceLease,
+            PreparedJavaNavigationProfile profile,
+            CancellationToken cancellationToken = default)
+        {
+            OpenCallCount++;
+            if (OpenCallCount > 1)
+            {
+                throw new PreparedJdtLsOpenFailureException(
+                    PreparedJavaNavigationOpenStatus.ReadinessFailed,
+                    cleanupConfirmed: true);
+            }
+
+            OpenStarted.TrySetResult(true);
+            try
+            {
+                await Task.Delay(Timeout.InfiniteTimeSpan, cancellationToken);
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                InitializationDeadlineObserved.TrySetResult(true);
+            }
+
+            await _returnSession.Task;
+            return Session;
+        }
+
+        public void ReturnSessionAfterDeadline() => _returnSession.TrySetResult(true);
+    }
+
+    private sealed class BlockingDisposeNavigationSession : IPreparedJdtLsSession
+    {
+        private readonly TaskCompletionSource<bool> _releaseDispose =
+            new(TaskCreationOptions.RunContinuationsAsynchronously);
+        private int _disposeCallCount;
+
+        public TaskCompletionSource<bool> DisposeStarted { get; } =
+            new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        public TaskCompletionSource<bool> DisposeSettled { get; } =
+            new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        public int DisposeCallCount => Volatile.Read(ref _disposeCallCount);
+
+        public Task<PreparedJdtLsRawReply> NavigateAsync(
+            PreparedJavaNavigationOperation operation,
+            PreparedJavaNavigationRequest request,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult(new PreparedJdtLsRawReply([], false, null));
+
+        public ValueTask DisposeAsync()
+        {
+            Interlocked.Increment(ref _disposeCallCount);
+            DisposeStarted.TrySetResult(true);
+            return new ValueTask(SettleDisposeAsync());
+        }
+
+        public void ReleaseDisposeForTest() => _releaseDispose.TrySetResult(true);
+
+        private async Task SettleDisposeAsync()
+        {
+            await _releaseDispose.Task;
+            DisposeSettled.TrySetResult(true);
         }
     }
 

@@ -48,9 +48,29 @@ public sealed class PreparedJdtLsNavigationContext : IPreparedJavaNavigationCont
         PreparedJavaNavigationRequest request,
         CancellationToken cancellationToken)
     {
-        await _gate.WaitAsync();
+        using var requestDeadline = new CancellationTokenSource(_requestTimeout);
+        using var linked = CancellationTokenSource.CreateLinkedTokenSource(
+            cancellationToken, requestDeadline.Token);
         try
         {
+            await _gate.WaitAsync(linked.Token);
+        }
+        catch (OperationCanceledException) when (linked.IsCancellationRequested)
+        {
+            return Empty(operation, cancellationToken.IsCancellationRequested
+                ? PreparedJavaNavigationOutcome.Cancelled
+                : PreparedJavaNavigationOutcome.DeadlineExceeded);
+        }
+
+        try
+        {
+            if (linked.IsCancellationRequested)
+            {
+                return Empty(operation, cancellationToken.IsCancellationRequested
+                    ? PreparedJavaNavigationOutcome.Cancelled
+                    : PreparedJavaNavigationOutcome.DeadlineExceeded);
+            }
+
             if (Volatile.Read(ref _disposed) != 0 || !ValidRequest(request))
             {
                 return Empty(operation, PreparedJavaNavigationOutcome.Denied);
@@ -64,9 +84,6 @@ public sealed class PreparedJdtLsNavigationContext : IPreparedJavaNavigationCont
             }
 
             PreparedJdtLsRawReply raw;
-            using var requestDeadline = new CancellationTokenSource(_requestTimeout);
-            using var linked = CancellationTokenSource.CreateLinkedTokenSource(
-                cancellationToken, requestDeadline.Token);
             Task<PreparedJdtLsRawReply>? pendingReply = null;
             try
             {
