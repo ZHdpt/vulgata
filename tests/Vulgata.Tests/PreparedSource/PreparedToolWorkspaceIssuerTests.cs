@@ -216,6 +216,67 @@ public sealed class PreparedToolWorkspaceIssuerTests
 
     [Trait("Suite", "SelfContained")]
     [SuiteFact("SelfContained")]
+    public async Task UseContainedRootAsync_RejectsJsonDecodedExtendedLengthPathBeforeUriNormalization()
+    {
+        await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
+        string javaDirectory = Path.Combine(fixture.PreparedRootPath, "src", "main", "java");
+        Directory.CreateDirectory(javaDirectory);
+        string javaFilePath = Path.Combine(javaDirectory, "Target.java");
+        await File.WriteAllTextAsync(javaFilePath, "package example; class Target {}\n");
+
+        string rawDevicePath = $"""\\?\{javaFilePath}""";
+        using JsonDocument protocolReply = JsonDocument.Parse(
+            JsonSerializer.Serialize(new { uri = rawDevicePath }));
+        string decodedRawUri = Assert.IsType<string>(protocolReply.RootElement.GetProperty("uri").GetString());
+        Assert.Equal(rawDevicePath, decodedRawUri);
+        string canonicalContainedUri = new Uri(javaFilePath).AbsoluteUri;
+
+        fixture.Authority.Approve(fixture.Approval);
+        var toolAuthorization = new ControlledPreparedToolUseAuthorizer();
+        toolAuthorization.Allow(fixture.Approval, PreparedToolPurpose.JdtNavigation);
+        var issuer = new PreparedToolWorkspaceIssuer(fixture.Authority, toolAuthorization);
+        PreparedToolWorkspaceIssueResult issue = await issuer.IssueAsync(
+            new PreparedToolWorkspaceGrantRequest(
+                fixture.Approval,
+                fixture.PreparedRootPath,
+                PreparedToolPurpose.JdtNavigation,
+                TimeSpan.FromSeconds(5)));
+        Assert.Equal(PreparedToolWorkspaceIssueStatus.Issued, issue.Status);
+        PreparedToolWorkspaceLease lease = Assert.IsType<PreparedToolWorkspaceLease>(issue.Lease);
+
+        bool? devicePathMapped = null;
+        PreparedSourceLocation? devicePathLocation = null;
+        bool? canonicalFileMapped = null;
+        PreparedSourceLocation? canonicalFileLocation = null;
+        try
+        {
+            PreparedToolWorkspaceCheckStatus status = await lease.UseContainedRootAsync(
+                PreparedToolPurpose.JdtNavigation,
+                (scope, _) =>
+                {
+                    devicePathMapped = scope.TryMapContainedFileUri(decodedRawUri, out devicePathLocation);
+                    canonicalFileMapped = scope.TryMapContainedFileUri(
+                        canonicalContainedUri,
+                        out canonicalFileLocation);
+                    return ValueTask.CompletedTask;
+                });
+
+            Assert.Equal(PreparedToolWorkspaceCheckStatus.Current, status);
+            Assert.False(devicePathMapped);
+            Assert.Null(devicePathLocation);
+            Assert.True(canonicalFileMapped);
+            Assert.Equal(
+                new PreparedSourceLocation(fixture.Approval.RepositoryId, "src/main/java/Target.java"),
+                canonicalFileLocation);
+        }
+        finally
+        {
+            await lease.DisposeAsync();
+        }
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task UseContainedRootAsync_RejectsNonFileOutsideAndSpecialFileUris()
     {
         await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();

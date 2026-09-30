@@ -758,6 +758,33 @@ internal sealed class PreparedToolRootScope
     }
 
     internal bool TryMapContainedFileUri(
+        string? rawProtocolUri,
+        out PreparedSourceLocation? relativeLocation)
+    {
+        relativeLocation = null;
+        if (rawProtocolUri is null || !rawProtocolUri.StartsWith("file:///", StringComparison.OrdinalIgnoreCase) ||
+            rawProtocolUri.Length <= 11 || !IsAsciiLetter(rawProtocolUri[8]) ||
+            rawProtocolUri[9] != ':' || rawProtocolUri[10] != '/' ||
+            rawProtocolUri.Contains('\\') || rawProtocolUri.Contains('?') ||
+            rawProtocolUri.Contains('#') || rawProtocolUri.AsSpan(11).Contains(':') ||
+            !HasOnlyOrdinaryEscapes(rawProtocolUri))
+        {
+            return false;
+        }
+
+        foreach (string segment in rawProtocolUri[11..].Split('/'))
+        {
+            if (segment is "" or "." or "..")
+            {
+                return false;
+            }
+        }
+
+        return Uri.TryCreate(rawProtocolUri, UriKind.Absolute, out Uri? uri) &&
+            TryMapContainedFileUri(uri, out relativeLocation);
+    }
+
+    internal bool TryMapContainedFileUri(
         Uri rawUri,
         out PreparedSourceLocation? relativeLocation)
     {
@@ -811,6 +838,9 @@ internal sealed class PreparedToolRootScope
     private static bool IsWithin(string path, string root) =>
         path.Equals(root, StringComparison.OrdinalIgnoreCase) ||
         path.StartsWith(root + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase);
+
+    private static bool IsAsciiLetter(char character) =>
+        character is >= 'A' and <= 'Z' or >= 'a' and <= 'z';
 
     private static bool HasOnlyOrdinaryEscapes(string uri)
     {
