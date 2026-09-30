@@ -113,6 +113,8 @@ public sealed class PreparedToolWorkspaceLease : IAsyncDisposable
 
     public PreparedToolPurpose ToolPurpose { get; }
 
+    internal bool MatchesApproval(PreparedSourceApproval approval) => _approval == approval;
+
     public PreparedToolWorkspaceLifetime Lifetime =>
         (PreparedToolWorkspaceLifetime)Volatile.Read(ref _lifetime);
 

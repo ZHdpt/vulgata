@@ -10,6 +10,81 @@ public sealed class PreparedCodeGraphStateCoordinatorTests
 {
     [Trait("Suite", "SelfContained")]
     [SuiteFact("SelfContained")]
+    public async Task UseOwnedStateAsync_RequiresLeaseAndOwnershipApprovalToMatchExactly()
+    {
+        await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
+        PreparedSourceApproval leaseApproval = fixture.Approval;
+        PreparedSourceApproval ownershipApproval = leaseApproval with
+        {
+            BatchId = Guid.NewGuid(),
+            SubjectId = "another-current-subject",
+            ApprovalIdentity = "another-current-approval",
+            RootBindingIdentity = "another-current-root-binding",
+        };
+        var sourceAuthority = new CurrentPreparedSourceApprovals(leaseApproval, ownershipApproval);
+        var toolAuthorization = new CurrentPreparedToolGrants(
+            (leaseApproval, PreparedToolPurpose.CodeGraphPreparation),
+            (ownershipApproval, PreparedToolPurpose.CodeGraphPreparation));
+        var issuer = new PreparedToolWorkspaceIssuer(sourceAuthority, toolAuthorization);
+        PreparedToolWorkspaceIssueResult issue = await issuer.IssueAsync(
+            new PreparedToolWorkspaceGrantRequest(
+                leaseApproval,
+                fixture.PreparedRootPath,
+                PreparedToolPurpose.CodeGraphPreparation,
+                TimeSpan.FromSeconds(5)));
+        Assert.Equal(PreparedToolWorkspaceIssueStatus.Issued, issue.Status);
+        PreparedToolWorkspaceLease lease = Assert.IsType<PreparedToolWorkspaceLease>(issue.Lease);
+
+        var ownership = new PreparedCodeGraphWorkspaceOwnership(
+            Guid.NewGuid(),
+            Version: 0,
+            PreparedCodeGraphOwnershipPhase.Absent,
+            ownershipApproval,
+            Path.GetFullPath(fixture.PreparedRootPath),
+            ObserveDirectoryIdentity(fixture.PreparedRootPath),
+            WorkspaceOwnerIdentity: $"owner-{fixture.SandboxId:N}",
+            StateEntryObjectIdentity: null);
+        var store = new RecordingOwnershipStore();
+        var coordinator = new PreparedCodeGraphStateCoordinator(
+            sourceAuthority,
+            toolAuthorization,
+            new ExactWorkspaceOwnershipVerifier(ownership),
+            store);
+        int callbackCount = 0;
+
+        try
+        {
+            PreparedToolWorkspaceCheckStatus result = await coordinator.UseOwnedStateAsync(
+                lease,
+                ownership,
+                (_, _) =>
+                {
+                    callbackCount++;
+                    return ValueTask.CompletedTask;
+                });
+
+            Assert.Equal(PreparedToolWorkspaceCheckStatus.Denied, result);
+            Assert.Equal(0, callbackCount);
+            Assert.Empty(store.CommittedPhases);
+            Assert.Null(store.CurrentRecord);
+            Assert.False(Directory.Exists(Path.Combine(fixture.PreparedRootPath, ".codegraph")));
+            Assert.Contains(leaseApproval, sourceAuthority.VerifiedApprovals);
+            Assert.Contains(ownershipApproval, sourceAuthority.VerifiedApprovals);
+            Assert.Contains(
+                (leaseApproval, PreparedToolPurpose.CodeGraphPreparation),
+                toolAuthorization.VerifiedGrants);
+            Assert.Contains(
+                (ownershipApproval, PreparedToolPurpose.CodeGraphPreparation),
+                toolAuthorization.VerifiedGrants);
+        }
+        finally
+        {
+            await lease.DisposeAsync();
+        }
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task UseOwnedStateAsync_PersistsCreatingAndReadyIdentityBeforeCallback()
     {
         await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
@@ -737,6 +812,74 @@ public sealed class PreparedCodeGraphStateCoordinatorTests
                 observed.FileIndexHigh,
                 observed.FileIndexLow);
         }
+    }
+
+    private sealed class CurrentPreparedSourceApprovals(params PreparedSourceApproval[] approvals)
+        : IPreparedSourceCurrentAuthorityVerifier
+    {
+        private readonly HashSet<PreparedSourceApproval> _approvals = new(approvals);
+        private readonly List<PreparedSourceApproval> _verifiedApprovals = [];
+
+        internal IReadOnlyList<PreparedSourceApproval> VerifiedApprovals => _verifiedApprovals;
+
+        public Task<PreparedSourceAuthorityResult> VerifyCurrentAsync(
+            PreparedSourceApproval requestedApproval,
+            CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            _verifiedApprovals.Add(requestedApproval);
+            return Task.FromResult(_approvals.Contains(requestedApproval)
+                ? new PreparedSourceAuthorityResult(
+                    PreparedSourceAuthorityStatus.Current,
+                    requestedApproval)
+                : new PreparedSourceAuthorityResult(
+                    PreparedSourceAuthorityStatus.Revoked,
+                    null));
+        }
+    }
+
+    private sealed class CurrentPreparedToolGrants(
+        params (PreparedSourceApproval Approval, PreparedToolPurpose Purpose)[] grants)
+        : IPreparedToolUseAuthorizer
+    {
+        private readonly HashSet<(PreparedSourceApproval Approval, PreparedToolPurpose Purpose)> _grants =
+            new(grants);
+        private readonly List<(PreparedSourceApproval Approval, PreparedToolPurpose Purpose)> _verifiedGrants = [];
+
+        internal IReadOnlyList<(PreparedSourceApproval Approval, PreparedToolPurpose Purpose)> VerifiedGrants =>
+            _verifiedGrants;
+
+        public Task<PreparedToolUseAuthorityResult> VerifyCurrentAsync(
+            PreparedSourceApproval approval,
+            PreparedToolPurpose toolPurpose,
+            CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            var grant = (approval, toolPurpose);
+            _verifiedGrants.Add(grant);
+            return Task.FromResult(new PreparedToolUseAuthorityResult(
+                _grants.Contains(grant)
+                    ? PreparedToolUseAuthorityStatus.Current
+                    : PreparedToolUseAuthorityStatus.Denied));
+        }
+    }
+
+    private sealed class ExactWorkspaceOwnershipVerifier(
+        PreparedCodeGraphWorkspaceOwnership expected) : IPreparedCodeGraphWorkspaceOwnershipVerifier
+    {
+        public ValueTask<bool> VerifyCurrentAsync(
+            PreparedCodeGraphWorkspaceOwnership ownership,
+            CancellationToken cancellationToken = default) =>
+            ValueTask.FromResult(
+                ownership.Approval == expected.Approval &&
+                ownership.PhysicalRootPath == expected.PhysicalRootPath &&
+                ownership.RootObjectIdentity == expected.RootObjectIdentity &&
+                ownership.WorkspaceOwnerIdentity == expected.WorkspaceOwnerIdentity);
+
+        public ValueTask<bool> VerifyDispositionReadyAsync(
+            PreparedCodeGraphWorkspaceOwnership ownership,
+            CancellationToken cancellationToken = default) =>
+            ValueTask.FromResult(false);
     }
 
     private sealed class RecordingOwnershipStore : IPreparedCodeGraphOwnershipStore

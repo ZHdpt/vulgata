@@ -81,6 +81,12 @@ internal sealed class PreparedCodeGraphStateCoordinator
                     return;
                 }
 
+                if (!codeGraphLease.MatchesApproval(workspaceOwnership.Approval))
+                {
+                    operation = PreparedToolWorkspaceCheckStatus.Denied;
+                    return;
+                }
+
                 PreparedCodeGraphOwnershipLoadResult? loaded = await TryLoadAsync(workspaceOwnership, token);
                 if (workspaceOwnership.Phase == PreparedCodeGraphOwnershipPhase.Absent &&
                     workspaceOwnership.Version == 0 && workspaceOwnership.StateEntryObjectIdentity is null &&
