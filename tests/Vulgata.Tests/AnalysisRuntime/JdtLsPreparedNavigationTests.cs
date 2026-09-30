@@ -1129,6 +1129,78 @@ public sealed class JdtLsPreparedNavigationTests
 
     [Trait("Suite", "SelfContained")]
     [SuiteFact("SelfContained")]
+    public async Task GetDefinitionAsync_WhenClasspathCapabilityIsUnavailable_ReturnsLimitedWithoutLeakingRawDetail()
+    {
+        await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
+        string callerPath = Path.Combine(fixture.PreparedRootPath, "src", "main", "java", "example", "Caller.java");
+        Directory.CreateDirectory(Path.GetDirectoryName(callerPath)!);
+        await File.WriteAllTextAsync(callerPath, "package example; class Caller {}\n");
+
+        fixture.Authority.Approve(fixture.Approval);
+        var toolAuthorization = new ControlledPreparedToolUseAuthorizer(
+            fixture.Approval,
+            PreparedToolPurpose.JdtNavigation);
+        var issuer = new PreparedToolWorkspaceIssuer(fixture.Authority, toolAuthorization);
+        PreparedToolWorkspaceIssueResult issue = await issuer.IssueAsync(
+            new PreparedToolWorkspaceGrantRequest(
+                fixture.Approval,
+                fixture.PreparedRootPath,
+                PreparedToolPurpose.JdtNavigation,
+                TimeSpan.FromSeconds(10)));
+        Assert.Equal(PreparedToolWorkspaceIssueStatus.Issued, issue.Status);
+        PreparedToolWorkspaceLease lease = Assert.IsType<PreparedToolWorkspaceLease>(issue.Lease);
+
+        string disposableStateRoot = Path.Combine(fixture.SiblingPath, "jdt-state");
+        Directory.CreateDirectory(disposableStateRoot);
+        var profile = new PreparedJavaNavigationProfile(
+            disposableStateRoot,
+            TimeSpan.FromSeconds(3),
+            TimeSpan.FromSeconds(2),
+            TimeSpan.FromSeconds(1),
+            MaximumResponseBytes: 64 * 1024);
+        const string rawCapabilityDetail = "Missing classpath at /controlled/private-classpath-sentinel/secret.jar";
+        var runtime = new ControlledPreparedJdtLsRuntime();
+        runtime.Session.Reply = new PreparedJdtLsRawReply(
+            [],
+            LimitReached: false,
+            CapabilityLimitation: rawCapabilityDetail);
+        var factory = new PreparedJavaNavigationContextFactory(profile, runtime);
+        PreparedJavaNavigationOpenResult? open = null;
+
+        try
+        {
+            open = await factory.OpenAsync(lease);
+            Assert.Equal(PreparedJavaNavigationOpenStatus.Opened, open.Status);
+            IPreparedJavaNavigationContext context =
+                Assert.IsAssignableFrom<IPreparedJavaNavigationContext>(open.Context);
+            PreparedJavaNavigationResult result = await context.GetDefinitionAsync(
+                new PreparedJavaNavigationRequest("src/main/java/example/Caller.java", 1, 1, 5));
+
+            Assert.Equal(PreparedJavaNavigationOutcome.Limited, result.Outcome);
+            Assert.Empty(result.Locations);
+            Assert.NotEmpty(result.Limitations);
+            Assert.All(result.Limitations, limitation =>
+                Assert.False(string.IsNullOrWhiteSpace(limitation.Code)));
+            Assert.Null(result.StoppingLimit);
+
+            string serialized = JsonSerializer.Serialize(result);
+            Assert.DoesNotContain(rawCapabilityDetail, serialized, StringComparison.Ordinal);
+            Assert.DoesNotContain("secret.jar", serialized, StringComparison.Ordinal);
+            Assert.DoesNotContain("Caller.java", serialized, StringComparison.Ordinal);
+        }
+        finally
+        {
+            if (open?.Context is not null)
+            {
+                await open.Context.DisposeAsync();
+            }
+
+            await lease.DisposeAsync();
+        }
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task GetDefinitionAsync_WhenProtocolThrows_RetiresSessionBeforeExplicitRetry()
     {
         await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();

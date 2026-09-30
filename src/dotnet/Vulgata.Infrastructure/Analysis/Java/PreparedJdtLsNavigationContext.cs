@@ -171,7 +171,14 @@ public sealed class PreparedJdtLsNavigationContext : IPreparedJavaNavigationCont
                     : PreparedJavaNavigationOutcome.ConfigurationUnavailable);
             }
 
-            bool limited = raw.LimitReached || raw.Locations.Count > request.MaximumLocations;
+            bool locationLimited = raw.LimitReached || raw.Locations.Count > request.MaximumLocations;
+            bool capabilityLimited = !string.IsNullOrWhiteSpace(raw.CapabilityLimitation);
+            if (capabilityLimited)
+            {
+                limitations.Add(new PreparedJavaLimitation("CapabilityUnavailable", null));
+            }
+
+            bool limited = locationLimited || capabilityLimited;
             PreparedJavaNavigationOutcome outcome = limited
                 ? PreparedJavaNavigationOutcome.Limited
                 : locations.Count > 0
@@ -183,7 +190,7 @@ public sealed class PreparedJdtLsNavigationContext : IPreparedJavaNavigationCont
                 outcome,
                 locations,
                 limitations,
-                limited ? PreparedJavaStoppingLimit.LocationLimit : null);
+                locationLimited ? PreparedJavaStoppingLimit.LocationLimit : null);
         }
         finally
         {
