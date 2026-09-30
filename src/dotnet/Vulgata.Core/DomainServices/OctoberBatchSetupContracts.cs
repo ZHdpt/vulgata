@@ -106,6 +106,16 @@ public interface IOctoberBoundSetupData
     Guid BatchId { get; }
 }
 
+public sealed record OctoberBoundSetupSnapshot(
+    OctoberSetupRequest Request,
+    OctoberAuthorizedSelection Authority,
+    DateTimeOffset SelectedAtUtc);
+
+public interface IOctoberHistoricalBoundSetupData : IOctoberBoundSetupData
+{
+    OctoberBoundSetupSnapshot Snapshot { get; }
+}
+
 public enum OctoberSelectionStatus
 {
     Selected,

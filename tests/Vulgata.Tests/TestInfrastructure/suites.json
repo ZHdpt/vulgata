@@ -173,6 +173,9 @@
   "October/OctoberPreparedSourceBindingTests.cs": {
     "suite": "SelfContained"
   },
+  "October/OctoberBatchSelectorTests.cs": {
+    "suite": "SelfContained"
+  },
   "Pass1JobIdentityTests.cs": {
     "suite": "SelfContained"
   },

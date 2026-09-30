@@ -1,0 +1,35 @@
+{
+  "kind": "analysis",
+  "stage": "implement",
+  "outcome": "passed",
+  "story_key": "18-4-prepare-an-owned-october-batch-with-valid-context-and-provid",
+  "task_ids": ["T016", "T017"],
+  "work_kind": "behavioral",
+  "summary": "The existing-batch selector binds only one configured target and selectable batch, checks current versus stored authority and stable selection identity, and exposes the immutable stored historical snapshot without migration, fallback or mutation.",
+  "behavioral_red": {
+    "trx": "TestResults/isolation-5db1156e078142079237e80514b45124/results.trx",
+    "trx_sha256": "3cecdb6198f7b9f10877b4a9eab0d815633c7ef3b3202e05d59b4f4fd9168ace",
+    "selected": 13,
+    "passed": 0,
+    "failed": 13,
+    "skipped": 0,
+    "observation": "Every seeded case reached the declaration-only production selector and failed at BindAsync NotImplementedException."
+  },
+  "minimal_green": {
+    "trx": "TestResults/isolation-aa94d6b798af49878467eed834074408/results.trx",
+    "trx_sha256": "c0544927c883a6d6a8399ebe2156646db530e6eebeff8a2cb2560ec2529289d8",
+    "result": "13/13 selector tests passed"
+  },
+  "final_green": {
+    "command": "pwsh -NoProfile -File eng/test.ps1 -Filter 'FullyQualifiedName~OctoberBatchSelectorTests|FullyQualifiedName~OctoberSetupStoreTests|FullyQualifiedName~OctoberPersistenceModelTests'",
+    "selected": 25,
+    "passed": 25,
+    "failed": 0,
+    "skipped": 0,
+    "trx_path": "TestResults/isolation-e2fefe4719b946febc13286909aa2164/results.trx",
+    "trx_sha256": "9322a95dfa5e85f9ef4738030de28ec1aa62830716a6bee062efb28154d1effd"
+  },
+  "test_owner_assessment": "The actual writer seeds an owned SQLite fixture and the actual selector returns a read-only historical capability. Tests independently assert stored request/authority/context/digest/original UTC time, strict A/B identity denial, A/A advisory-edit history, NotSelectable rejection, every negative null capability and before/after row counts. No test refactor was needed.",
+  "production_owner_assessment": "The selector performs one bounded exact-batch projection, validates configured target/canonical identity and stable current authority before constructing a private historical capability, and maps closed failures without writes. A final correction rejected duplicate current Repository tuples. No further refactor was justified.",
+  "qualification_limit": "Controlled SQLite evidence only; no live PostgreSQL target or migration qualification is claimed."
+}
