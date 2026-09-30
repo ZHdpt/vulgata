@@ -62,5 +62,19 @@ public sealed class OctoberDbContextModelSnapshot : ModelSnapshot
                 .HasForeignKey(value => new { value.BatchId, value.RepositoryId })
                 .OnDelete(DeleteBehavior.Cascade);
         });
+
+        modelBuilder.Entity<OctoberPreparedSourceApprovalRecord>(approval =>
+        {
+            approval.ToTable("OctoberPreparedSourceApprovals", table =>
+                table.HasCheckConstraint("CK_OctoberPreparedSourceApprovals_Purpose", "\"Purpose\" = 0"));
+            approval.HasKey(value => value.ApprovalIdentity);
+            approval.Property(value => value.ApprovalIdentity).IsRequired();
+            approval.Property(value => value.SubjectId).IsRequired();
+            approval.Property(value => value.RootBindingIdentity).IsRequired();
+            approval.Property(value => value.OperatorLabel).IsRequired();
+            approval.HasOne<OctoberRepositoryRecord>().WithMany()
+                .HasForeignKey(value => new { value.BatchId, value.RepositoryId })
+                .OnDelete(DeleteBehavior.Cascade);
+        });
     }
 }

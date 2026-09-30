@@ -19,6 +19,9 @@ public sealed class OctoberDbContext : DbContext
 
     public DbSet<OctoberContextDifferenceRecord> ContextDifferences => Set<OctoberContextDifferenceRecord>();
 
+    public DbSet<OctoberPreparedSourceApprovalRecord> PreparedSourceApprovals =>
+        Set<OctoberPreparedSourceApprovalRecord>();
+
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
         bool alternateProviderSelected = optionsBuilder.Options.Extensions.Any(extension =>
@@ -90,6 +93,20 @@ public sealed class OctoberDbContext : DbContext
                 .HasForeignKey(value => new { value.BatchId, value.RepositoryId })
                 .OnDelete(DeleteBehavior.Cascade);
         });
+
+        modelBuilder.Entity<OctoberPreparedSourceApprovalRecord>(approval =>
+        {
+            approval.ToTable("OctoberPreparedSourceApprovals", table =>
+                table.HasCheckConstraint("CK_OctoberPreparedSourceApprovals_Purpose", "\"Purpose\" = 0"));
+            approval.HasKey(value => value.ApprovalIdentity);
+            approval.Property(value => value.ApprovalIdentity).IsRequired();
+            approval.Property(value => value.SubjectId).IsRequired();
+            approval.Property(value => value.RootBindingIdentity).IsRequired();
+            approval.Property(value => value.OperatorLabel).IsRequired();
+            approval.HasOne<OctoberRepositoryRecord>().WithMany()
+                .HasForeignKey(value => new { value.BatchId, value.RepositoryId })
+                .OnDelete(DeleteBehavior.Cascade);
+        });
     }
 }
 
@@ -145,4 +162,17 @@ public sealed class OctoberContextDifferenceRecord
     public Guid RepositoryId { get; set; }
     public int LeftScope { get; set; }
     public int RightScope { get; set; }
+}
+
+public sealed class OctoberPreparedSourceApprovalRecord
+{
+    public string ApprovalIdentity { get; set; } = string.Empty;
+    public Guid BatchId { get; set; }
+    public Guid RepositoryId { get; set; }
+    public string SubjectId { get; set; } = string.Empty;
+    public int Purpose { get; set; }
+    public string RootBindingIdentity { get; set; } = string.Empty;
+    public string OperatorLabel { get; set; } = string.Empty;
+    public DateTimeOffset ExpiresAtUtc { get; set; }
+    public bool IsRevoked { get; set; }
 }

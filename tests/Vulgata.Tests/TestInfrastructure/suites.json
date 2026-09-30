@@ -167,6 +167,9 @@
   "October/OctoberSetupStoreTests.cs": {
     "suite": "SelfContained"
   },
+  "October/OctoberPreparedSourceApprovalApiTests.cs": {
+    "suite": "SelfContained"
+  },
   "Pass1JobIdentityTests.cs": {
     "suite": "SelfContained"
   },

@@ -1,0 +1,25 @@
+{
+  "kind": "checkpoint-manifest",
+  "checkpoint_id": "bmad-18-4-implement-20260930T073401Z-6afc82",
+  "stage": "implement",
+  "story_key": "18-4-prepare-an-owned-october-batch-with-valid-context-and-provid",
+  "source_head": "9ec8376fc38b7b3f09f0f11a4d8bbdbe945aa7a7",
+  "binding_status": "pending",
+  "commit_sha": null,
+  "summary": "Verified T012 and the T013 approval route/service/persistence portion. Selected-data Program composition is deliberately deferred to T019 and keeps T013 open.",
+  "paths": [
+    "specs/017-october-batch-setup/tasks.md",
+    "specs/017-october-batch-setup/workflow-state.json",
+    "specs/017-october-batch-setup/evidence/checkpoint-implementation-03.json",
+    "specs/017-october-batch-setup/evidence/prepared-source-approval-tdd-01.json",
+    "specs/017-october-batch-setup/evidence/checkpoint-implementation-04.json",
+    "src/dotnet/Vulgata.Core/DomainServices/OctoberBatchSetupContracts.cs",
+    "src/dotnet/Vulgata.Web/Data/OctoberPreparedSourceApprovalEndpoints.cs",
+    "src/dotnet/Vulgata.Web/Data/OctoberPreparedSourceApprovalService.cs",
+    "src/dotnet/Vulgata.Infrastructure/Data/October/OctoberDbContext.cs",
+    "src/dotnet/Vulgata.Infrastructure/Data/October/Migrations/20260930010000_AddOctoberPreparedSourceApprovals.cs",
+    "src/dotnet/Vulgata.Infrastructure/Data/October/Migrations/OctoberDbContextModelSnapshot.cs",
+    "tests/Vulgata.Tests/October/OctoberPreparedSourceApprovalApiTests.cs",
+    "tests/Vulgata.Tests/TestInfrastructure/suites.json"
+  ]
+}

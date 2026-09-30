@@ -93,3 +93,37 @@ public interface IOctoberSetupWriter
         OctoberAuthorizedSelection authority,
         CancellationToken cancellationToken = default);
 }
+
+public sealed record OctoberStartupSelection(
+    string TargetId,
+    Guid BatchId,
+    OctoberAuthorizedSelection Authority);
+
+public interface IOctoberBoundSetupData
+{
+    string TargetId { get; }
+
+    Guid BatchId { get; }
+}
+
+public enum OctoberSelectionStatus
+{
+    Selected,
+    MissingTarget,
+    MissingBatch,
+    BatchMismatch,
+    Denied,
+    AuthorityUnavailable,
+    Cancelled
+}
+
+public sealed record OctoberSelectionResult(
+    OctoberSelectionStatus Status,
+    IOctoberBoundSetupData? BoundSetupData);
+
+public interface IOctoberBatchSelector
+{
+    Task<OctoberSelectionResult> BindAsync(
+        OctoberStartupSelection selection,
+        CancellationToken cancellationToken = default);
+}
