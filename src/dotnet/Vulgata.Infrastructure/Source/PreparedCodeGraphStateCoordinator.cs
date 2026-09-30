@@ -99,6 +99,7 @@ internal sealed class PreparedCodeGraphStateCoordinator
                         begun.Record is not { Phase: PreparedCodeGraphOwnershipPhase.Creating } creating ||
                         !SameBinding(workspaceOwnership, creating) || creating.Version <= workspaceOwnership.Version)
                     {
+                        await TryQuarantineAsync(root, workspaceOwnership, requireExactCreating: true);
                         operation = PreparedToolWorkspaceCheckStatus.RootUnavailable;
                         return;
                     }
@@ -477,7 +478,8 @@ internal sealed class PreparedCodeGraphStateCoordinator
 
     private async Task<bool> TryQuarantineAsync(
         PreparedToolRootScope root,
-        PreparedCodeGraphWorkspaceOwnership expected)
+        PreparedCodeGraphWorkspaceOwnership expected,
+        bool requireExactCreating = false)
     {
         // The transition that prompted quarantine may have persisted even when
         // its acknowledgement was lost. Compare against the freshly loaded
@@ -494,6 +496,11 @@ internal sealed class PreparedCodeGraphStateCoordinator
             loaded.Record is not { } current || !SameBinding(expected, current) ||
             current.Version < expected.Version ||
             current.Phase is not (PreparedCodeGraphOwnershipPhase.Creating or PreparedCodeGraphOwnershipPhase.Ready) ||
+            requireExactCreating &&
+                (current.Phase != PreparedCodeGraphOwnershipPhase.Creating ||
+                 current.Version != expected.Version + 1 ||
+                 current.StateEntryObjectIdentity is not null ||
+                 root.ObserveCodeGraphEntryIdentity() is not null) ||
             current.Phase == PreparedCodeGraphOwnershipPhase.Ready &&
                 (current.StateEntryObjectIdentity is null ||
                  root.ObserveCodeGraphEntryIdentity() != current.StateEntryObjectIdentity))

@@ -145,6 +145,151 @@ public sealed class PreparedCodeGraphStateCoordinatorTests
 
     [Trait("Suite", "SelfContained")]
     [SuiteFact("SelfContained")]
+    public async Task UseOwnedStateAsync_LostBeginCreateAcknowledgementQuarantinesPersistedRecord()
+    {
+        await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
+        fixture.Authority.Approve(fixture.Approval);
+
+        var authorization = new TestToolUseAuthorizer();
+        authorization.Allow(fixture.Approval, PreparedToolPurpose.CodeGraphPreparation);
+        var issuer = new PreparedToolWorkspaceIssuer(fixture.Authority, authorization);
+        PreparedToolWorkspaceIssueResult issue = await issuer.IssueAsync(
+            new PreparedToolWorkspaceGrantRequest(
+                fixture.Approval,
+                fixture.PreparedRootPath,
+                PreparedToolPurpose.CodeGraphPreparation,
+                TimeSpan.FromSeconds(5)));
+        Assert.Equal(PreparedToolWorkspaceIssueStatus.Issued, issue.Status);
+        PreparedToolWorkspaceLease lease = Assert.IsType<PreparedToolWorkspaceLease>(issue.Lease);
+
+        var absent = new PreparedCodeGraphWorkspaceOwnership(
+            Guid.NewGuid(),
+            Version: 0,
+            PreparedCodeGraphOwnershipPhase.Absent,
+            fixture.Approval,
+            Path.GetFullPath(fixture.PreparedRootPath),
+            ObserveDirectoryIdentity(fixture.PreparedRootPath),
+            WorkspaceOwnerIdentity: $"owner-{fixture.SandboxId:N}",
+            StateEntryObjectIdentity: null);
+        var store = new RecordingOwnershipStore
+        {
+            LoseBeginCreateAcknowledgement = true,
+        };
+        var coordinator = new PreparedCodeGraphStateCoordinator(
+            fixture.Authority,
+            authorization,
+            new RecordingWorkspaceOwnershipVerifier(),
+            store);
+        int callbackCount = 0;
+
+        try
+        {
+            PreparedToolWorkspaceCheckStatus result = await coordinator.UseOwnedStateAsync(
+                lease,
+                absent,
+                (_, _) =>
+                {
+                    callbackCount++;
+                    return ValueTask.CompletedTask;
+                });
+            PreparedCodeGraphOwnershipViewResult laterView = await coordinator.GetOwnershipViewAsync(
+                absent,
+                fixture.Approval);
+
+            Assert.Equal(PreparedToolWorkspaceCheckStatus.RootUnavailable, result);
+            Assert.Equal(0, callbackCount);
+            Assert.False(Directory.Exists(Path.Combine(fixture.PreparedRootPath, ".codegraph")));
+            Assert.True(store.QuarantineAttempted,
+                "An uncertain Creating commit must quarantine its exact persisted record when the store is reachable.");
+            Assert.Equal(absent.OwnershipId, store.CurrentRecord?.OwnershipId);
+            Assert.Equal(absent.Version + 2, store.CurrentRecord?.Version);
+            Assert.Equal(PreparedCodeGraphOwnershipPhase.Quarantined, store.CurrentRecord?.Phase);
+            Assert.Equal(1, store.QuarantineReadbackCount);
+            Assert.Equal(PreparedCodeGraphOwnershipViewStatus.Unavailable, laterView.Status);
+            Assert.Null(laterView.Record);
+        }
+        finally
+        {
+            await lease.DisposeAsync();
+        }
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task UseOwnedStateAsync_ConflictingCreateDoesNotQuarantineOtherOwner()
+    {
+        await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
+        fixture.Authority.Approve(fixture.Approval);
+
+        var authorization = new TestToolUseAuthorizer();
+        authorization.Allow(fixture.Approval, PreparedToolPurpose.CodeGraphPreparation);
+        var issuer = new PreparedToolWorkspaceIssuer(fixture.Authority, authorization);
+        PreparedToolWorkspaceIssueResult issue = await issuer.IssueAsync(
+            new PreparedToolWorkspaceGrantRequest(
+                fixture.Approval,
+                fixture.PreparedRootPath,
+                PreparedToolPurpose.CodeGraphPreparation,
+                TimeSpan.FromSeconds(5)));
+        Assert.Equal(PreparedToolWorkspaceIssueStatus.Issued, issue.Status);
+        PreparedToolWorkspaceLease lease = Assert.IsType<PreparedToolWorkspaceLease>(issue.Lease);
+
+        var absent = new PreparedCodeGraphWorkspaceOwnership(
+            Guid.NewGuid(),
+            Version: 0,
+            PreparedCodeGraphOwnershipPhase.Absent,
+            fixture.Approval,
+            Path.GetFullPath(fixture.PreparedRootPath),
+            ObserveDirectoryIdentity(fixture.PreparedRootPath),
+            WorkspaceOwnerIdentity: $"owner-{fixture.SandboxId:N}",
+            StateEntryObjectIdentity: null);
+        var competingCreating = absent with
+        {
+            OwnershipId = Guid.NewGuid(),
+            Version = 1,
+            Phase = PreparedCodeGraphOwnershipPhase.Creating,
+            WorkspaceOwnerIdentity = "competing-workspace-owner",
+        };
+        var store = new RecordingOwnershipStore
+        {
+            CompetingCreateRecord = competingCreating,
+        };
+        var coordinator = new PreparedCodeGraphStateCoordinator(
+            fixture.Authority,
+            authorization,
+            new RecordingWorkspaceOwnershipVerifier(),
+            store);
+        int callbackCount = 0;
+        string originalSource = await File.ReadAllTextAsync(fixture.UnfamiliarTextPath);
+        string originalSibling = await File.ReadAllTextAsync(fixture.SentinelPath);
+
+        try
+        {
+            PreparedToolWorkspaceCheckStatus result = await coordinator.UseOwnedStateAsync(
+                lease,
+                absent,
+                (_, _) =>
+                {
+                    callbackCount++;
+                    return ValueTask.CompletedTask;
+                });
+
+            Assert.Equal(PreparedToolWorkspaceCheckStatus.RootUnavailable, result);
+            Assert.Equal(0, callbackCount);
+            Assert.False(Directory.Exists(Path.Combine(fixture.PreparedRootPath, ".codegraph")));
+            Assert.False(store.QuarantineAttempted,
+                "A create conflict must not let this request quarantine a different owner’s record.");
+            Assert.Equal(competingCreating, store.CurrentRecord);
+            Assert.Equal(originalSource, await File.ReadAllTextAsync(fixture.UnfamiliarTextPath));
+            Assert.Equal(originalSibling, await File.ReadAllTextAsync(fixture.SentinelPath));
+        }
+        finally
+        {
+            await lease.DisposeAsync();
+        }
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task DisposeOwnedStateAsync_CommitsDisposingBeforeRemovalAndReadsBackRemoved()
     {
         await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
@@ -622,6 +767,12 @@ public sealed class PreparedCodeGraphStateCoordinatorTests
         internal PreparedCodeGraphOwnershipLoadStatus EmptyLoadStatus { get; init; } =
             PreparedCodeGraphOwnershipLoadStatus.VerifiedAbsent;
 
+        internal bool LoseBeginCreateAcknowledgement { get; init; }
+
+        internal PreparedCodeGraphWorkspaceOwnership? CompetingCreateRecord { get; init; }
+
+        internal int QuarantineReadbackCount { get; private set; }
+
         internal void Seed(PreparedCodeGraphWorkspaceOwnership ready)
         {
             CurrentRecord = ready;
@@ -634,6 +785,14 @@ public sealed class PreparedCodeGraphStateCoordinatorTests
         {
             cancellationToken.ThrowIfCancellationRequested();
             PreparedCodeGraphWorkspaceOwnership? record = CurrentRecord;
+            if (expectedBinding.Phase == PreparedCodeGraphOwnershipPhase.Quarantined &&
+                record?.Phase == PreparedCodeGraphOwnershipPhase.Quarantined &&
+                record.OwnershipId == expectedBinding.OwnershipId &&
+                record.Version == expectedBinding.Version)
+            {
+                QuarantineReadbackCount++;
+            }
+
             if (expectedBinding.Phase == PreparedCodeGraphOwnershipPhase.Removed &&
                 record?.Phase == PreparedCodeGraphOwnershipPhase.Removed &&
                 record.OwnershipId == expectedBinding.OwnershipId &&
@@ -654,8 +813,24 @@ public sealed class PreparedCodeGraphStateCoordinatorTests
             cancellationToken.ThrowIfCancellationRequested();
             string statePath = Path.Combine(absent.PhysicalRootPath, ".codegraph");
             Assert.False(Directory.Exists(statePath), "Creating must be durably committed before the state entry appears.");
+            if (CompetingCreateRecord is { } competing)
+            {
+                CurrentRecord = competing;
+                _committedPhases.Add(competing.Phase);
+                return Task.FromResult(new PreparedCodeGraphOwnershipTransitionResult(
+                    PreparedCodeGraphOwnershipTransitionStatus.Conflict,
+                    competing));
+            }
+
             CurrentRecord = absent with { Version = absent.Version + 1, Phase = PreparedCodeGraphOwnershipPhase.Creating };
             _committedPhases.Add(CurrentRecord.Phase);
+            if (LoseBeginCreateAcknowledgement)
+            {
+                return Task.FromResult(new PreparedCodeGraphOwnershipTransitionResult(
+                    PreparedCodeGraphOwnershipTransitionStatus.Unavailable,
+                    null));
+            }
+
             return Task.FromResult(new PreparedCodeGraphOwnershipTransitionResult(
                 PreparedCodeGraphOwnershipTransitionStatus.Committed,
                 CurrentRecord));
