@@ -539,6 +539,102 @@ public sealed class PreparedToolWorkspaceIssuerTests
 
     [Trait("Suite", "SelfContained")]
     [SuiteFact("SelfContained")]
+    public async Task UseContainedRootAsync_WhenOwnedCodeGraphEntryChangesRootMetadata_KeepsStableRootLeaseCurrent()
+    {
+        await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
+
+        fixture.Authority.Approve(fixture.Approval);
+        var toolAuthorization = new ControlledPreparedToolUseAuthorizer();
+        toolAuthorization.Allow(fixture.Approval, PreparedToolPurpose.CodeGraphPreparation);
+        var issuer = new PreparedToolWorkspaceIssuer(fixture.Authority, toolAuthorization);
+        PreparedToolWorkspaceIssueResult issue = await issuer.IssueAsync(
+            new PreparedToolWorkspaceGrantRequest(
+                fixture.Approval,
+                fixture.PreparedRootPath,
+                PreparedToolPurpose.CodeGraphPreparation,
+                TimeSpan.FromSeconds(5)));
+        Assert.Equal(PreparedToolWorkspaceIssueStatus.Issued, issue.Status);
+        PreparedToolWorkspaceLease lease = Assert.IsType<PreparedToolWorkspaceLease>(issue.Lease);
+
+        var (rootOpenStatus, heldRoot) = PreparedSourceTraversal.OpenRoot(fixture.PreparedRootPath);
+        Assert.Equal(PreparedSourceTraversal.OpenStatus.Opened, rootOpenStatus);
+        Assert.NotNull(heldRoot);
+        using (heldRoot)
+        {
+            PreparedSourceTraversal.DirectoryIdentity initialRootIdentity =
+                Assert.IsType<PreparedSourceTraversal.DirectoryIdentity>(
+                    PreparedSourceTraversal.ObserveDirectory(heldRoot));
+            string ownedEntryPath = Path.Combine(fixture.PreparedRootPath, ".codegraph");
+            int callbackCount = 0;
+            bool rootObjectStayedTheSame = false;
+            bool nativeRootWriteTimeChanged = false;
+            string? callbackObservationFailure = null;
+            try
+            {
+                PreparedToolWorkspaceCheckStatus status = await lease.UseContainedRootAsync(
+                    PreparedToolPurpose.CodeGraphPreparation,
+                    (_, _) =>
+                    {
+                        callbackCount++;
+                        Directory.CreateDirectory(ownedEntryPath);
+
+                        PreparedSourceTraversal.DirectoryIdentity? afterEntryCreation =
+                            PreparedSourceTraversal.ObserveDirectory(heldRoot);
+                        if (afterEntryCreation is null)
+                        {
+                            callbackObservationFailure = "The held root handle could not be observed after entry creation.";
+                            return ValueTask.CompletedTask;
+                        }
+
+                        if (afterEntryCreation.LastWriteTime == initialRootIdentity.LastWriteTime)
+                        {
+                            try
+                            {
+                                DateTime controlledWriteTime = DateTime.UtcNow.AddDays(-1);
+                                Directory.SetLastWriteTimeUtc(fixture.PreparedRootPath, controlledWriteTime);
+                            }
+                            catch (Exception exception)
+                            {
+                                callbackObservationFailure =
+                                    $"Controlled directory timestamp update failed: {exception.GetType().Name}.";
+                                return ValueTask.CompletedTask;
+                            }
+
+                            afterEntryCreation = PreparedSourceTraversal.ObserveDirectory(heldRoot);
+                            if (afterEntryCreation is null)
+                            {
+                                callbackObservationFailure = "The held root handle could not be observed after timestamp update.";
+                                return ValueTask.CompletedTask;
+                            }
+                        }
+
+                        rootObjectStayedTheSame =
+                            afterEntryCreation.VolumeSerialNumber == initialRootIdentity.VolumeSerialNumber &&
+                            afterEntryCreation.FileIndexHigh == initialRootIdentity.FileIndexHigh &&
+                            afterEntryCreation.FileIndexLow == initialRootIdentity.FileIndexLow;
+                        nativeRootWriteTimeChanged =
+                            afterEntryCreation.LastWriteTime != initialRootIdentity.LastWriteTime;
+                        return ValueTask.CompletedTask;
+                    });
+
+                Assert.Equal(1, callbackCount);
+                Assert.True(Directory.Exists(ownedEntryPath));
+                Assert.True(callbackObservationFailure is null, callbackObservationFailure);
+                Assert.True(rootObjectStayedTheSame, "The same held root object must remain after metadata changes.");
+                Assert.True(nativeRootWriteTimeChanged);
+                Assert.Equal(PreparedToolWorkspaceCheckStatus.Current, status);
+                Assert.Equal(PreparedToolWorkspaceLifetime.Open, lease.Lifetime);
+                Assert.Equal(PreparedToolWorkspaceCheckStatus.Current, await lease.CheckCurrentAsync());
+            }
+            finally
+            {
+                await lease.DisposeAsync();
+            }
+        }
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task UseContainedRootAsync_WhenPreparedRootIsReplacedBeforeCallback_DoesNotInvokeCallback()
     {
         await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();

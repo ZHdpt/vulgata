@@ -272,8 +272,8 @@ public sealed class PreparedToolWorkspaceLease : IAsyncDisposable
 
             using (observedRoot)
             {
-                if (PreparedSourceTraversal.ObserveDirectory(observedRoot) != _rootIdentity ||
-                    PreparedSourceTraversal.ObserveDirectory(_rootHandle) != _rootIdentity)
+                if (!IsSameRootObject(PreparedSourceTraversal.ObserveDirectory(observedRoot), _rootIdentity) ||
+                    !IsSameRootObject(PreparedSourceTraversal.ObserveDirectory(_rootHandle), _rootIdentity))
                 {
                     return Close(PreparedToolWorkspaceCheckStatus.RootUnavailable);
                 }
@@ -321,6 +321,14 @@ public sealed class PreparedToolWorkspaceLease : IAsyncDisposable
             : PreparedToolWorkspaceLifetime.ExpiredOrCancelled));
         return status;
     }
+
+    internal static bool IsSameRootObject(
+        PreparedSourceTraversal.DirectoryIdentity? observed,
+        PreparedSourceTraversal.DirectoryIdentity expected) =>
+        observed is not null &&
+        observed.VolumeSerialNumber == expected.VolumeSerialNumber &&
+        observed.FileIndexHigh == expected.FileIndexHigh &&
+        observed.FileIndexLow == expected.FileIndexLow;
 }
 
 /// <summary>
@@ -359,7 +367,8 @@ internal sealed class PreparedToolRootScope
     {
         if (!_active || string.IsNullOrWhiteSpace(absoluteStateRoot) ||
             !Path.IsPathFullyQualified(absoluteStateRoot) ||
-            PreparedSourceTraversal.ObserveDirectory(_rootHandle) != _rootIdentity)
+            !PreparedToolWorkspaceLease.IsSameRootObject(
+                PreparedSourceTraversal.ObserveDirectory(_rootHandle), _rootIdentity))
         {
             return false;
         }
@@ -396,7 +405,8 @@ internal sealed class PreparedToolRootScope
         if (!_active || rawUri is null || !rawUri.IsAbsoluteUri || !rawUri.IsFile ||
             rawUri.IsUnc || rawUri.Query.Length != 0 || rawUri.Fragment.Length != 0 ||
             !HasOnlyOrdinaryEscapes(rawUri.OriginalString) ||
-            PreparedSourceTraversal.ObserveDirectory(_rootHandle) != _rootIdentity)
+            !PreparedToolWorkspaceLease.IsSameRootObject(
+                PreparedSourceTraversal.ObserveDirectory(_rootHandle), _rootIdentity))
         {
             return false;
         }
@@ -422,7 +432,8 @@ internal sealed class PreparedToolRootScope
             {
                 if (status != PreparedSourceTraversal.OpenStatus.Opened || handle is null ||
                     PreparedSourceTraversal.ObserveFile(handle) is null ||
-                    PreparedSourceTraversal.ObserveDirectory(_rootHandle) != _rootIdentity)
+                    !PreparedToolWorkspaceLease.IsSameRootObject(
+                        PreparedSourceTraversal.ObserveDirectory(_rootHandle), _rootIdentity))
                 {
                     return false;
                 }
