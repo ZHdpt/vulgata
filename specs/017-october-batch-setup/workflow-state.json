@@ -22,7 +22,7 @@
     },
     "tasks": {
       "path": "specs/017-october-batch-setup/tasks.md",
-      "sha256": "59035bce8b8c53f274e2e5cbe63d49fcd10bad3735f1d981eebcd0ee6fcfac5e"
+      "sha256": "75ffc826dafe87c4df6851bf3e7ab55e58c83103d9c728ceb990d28739f29999"
     }
   },
   "gates": {
@@ -104,15 +104,15 @@
     "specs/017-october-batch-setup/evidence/transitions/transition-0003-plan-correction-self-review.json"
   ],
   "checkpoint": {
-    "checkpoint_id": "bmad-18-4-definition-review-20260930T025558Z-46dd3a",
-    "stage": "definition-review",
+    "checkpoint_id": "bmad-18-4-implement-20260930T033243Z-89b9f5",
+    "stage": "implement",
     "commit_sha": null,
     "binding_status": "pending"
   },
   "resume": {
     "stage": "implement",
-    "reason": "The corrected definition and fresh scoped implementation approval are current. Resume governed TDD at the retained actual Program-host RED while preserving T020/T029 resource holds.",
-    "evidence_path": "specs/017-october-batch-setup/evidence/implementation-approval-03.json"
+    "reason": "T006/T007 are verified GREEN. Continue the next dependency-ready accepted task group while preserving T020/T029 owned-resource holds and the open recovery episode.",
+    "evidence_path": "specs/017-october-batch-setup/evidence/bootstrap-host-tdd-01.json"
   },
   "updated_at": "2026-09-29T02:14:26.4999515Z",
   "recovery": {

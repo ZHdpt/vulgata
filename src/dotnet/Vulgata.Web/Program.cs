@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.FluentUI.AspNetCore.Components;
 using Vulgata.Agents.ChatExecution;
 using Vulgata.Agents.WorkerExecution;
@@ -62,6 +63,7 @@ builder.Services.AddRazorComponents()
 builder.Services.AddFluentUIComponents();
 builder.Services.AddProblemDetails();
 FrameworkCatalog frameworkCatalog = VulgataWebComposition.ConfigureServices(builder);
+VulgataWebComposition.ConfigureOctoberHost(builder);
 
 builder.Services.ConfigureApplicationCookie(options =>
 {
@@ -93,6 +95,8 @@ builder.Services.ConfigureApplicationCookie(options =>
 });
 
 var app = builder.Build();
+OctoberWebStartupSelection octoberSelection =
+    app.Services.GetRequiredService<OctoberWebStartupSelection>();
 
 IAnalysisRuntimeHealthProbe analysisHealthProbe =
     app.Services.GetRequiredService<IAnalysisRuntimeHealthProbe>();
@@ -175,6 +179,10 @@ app.MapRazorComponents<App>()
 app.MapAdditionalIdentityEndpoints();
 
 app.MapVulgataApiEndpoints();
+if (octoberSelection.Mode == OctoberWebMode.AuthorizationOnly)
+{
+    OctoberBatchActivationEndpoints.Map(app);
+}
 
 await app.RunAsync();
 return;
@@ -184,11 +192,51 @@ static bool IsApiRequest(HttpRequest request) =>
 
 public static class VulgataWebComposition
 {
-    public static FrameworkCatalog ConfigureServices(
-        WebApplicationBuilder builder,
-        OctoberWebStartupSelection selection)
+    private sealed class OctoberHostCompositionMarker;
+
+    public static void ConfigureOctoberHost(WebApplicationBuilder builder)
     {
-        throw new NotImplementedException();
+        ArgumentNullException.ThrowIfNull(builder);
+        if (builder.Services.Any(service =>
+                service.ServiceType == typeof(OctoberHostCompositionMarker)))
+        {
+            throw new InvalidOperationException("October Web host composition is already configured.");
+        }
+
+        builder.Services.AddSingleton<OctoberHostCompositionMarker>();
+        bool validateServices = builder.Environment.IsDevelopment();
+        builder.Host.UseServiceProviderFactory(new DefaultServiceProviderFactory(
+            new ServiceProviderOptions
+            {
+                ValidateScopes = validateServices,
+                ValidateOnBuild = validateServices
+            }));
+        builder.Host.ConfigureContainer<IServiceCollection>((hostContext, services) =>
+        {
+            OctoberWebStartupSelection selection =
+                OctoberWebStartupSelector.Resolve(hostContext.Configuration);
+            services.AddSingleton(selection);
+            if (selection.Mode == OctoberWebMode.Ordinary)
+            {
+                return;
+            }
+
+            if (selection.Mode != OctoberWebMode.AuthorizationOnly)
+            {
+                throw new InvalidOperationException("Invalid October Web startup selection.");
+            }
+
+            OctoberGeneratorCertificateAllowlist allowlist =
+                OctoberGeneratorCertificateConfiguration.ReadAllowlist(hostContext.Configuration);
+            OctoberWebTargetAllowlist targets =
+                OctoberGeneratorCertificateConfiguration.ReadTargets(hostContext.Configuration);
+            services.AddSingleton(allowlist);
+            services.AddSingleton(targets);
+            services.TryAddSingleton<IOctoberAuthenticatedCertificateSource,
+                OctoberConnectionCertificateSource>();
+            services.AddSingleton<OctoberGeneratorCertificateVerifier>();
+            services.AddScoped<OctoberBatchActivationService>();
+        });
     }
 
     public static FrameworkCatalog ConfigureServices(WebApplicationBuilder builder)
