@@ -1,0 +1,50 @@
+{
+  "kind": "direct-native-qualification",
+  "story_key": "18-3-use-native-codegraph-mcp-against-prepared-source",
+  "task": "T015 targeted completion",
+  "route": "nonbehavioral direct verification",
+  "boundary_commit_at_observation": "c6afd72fcc0c35e31e082b4ce3016123032cb0dc",
+  "prior_controlled_evidence": "evidence/codegraph-direct-fixture-01.json",
+  "fixture_parent": "C:/Users/13728/.codex/worktrees/2de8/vulgata/TestResults/T015-direct-20260930-01",
+  "installed_bundle": {
+    "package": "@colbymchenry/codegraph@1.5.0",
+    "platform_package": "@colbymchenry/codegraph-win32-x64@1.5.0",
+    "package_json_sha256": "11c22f9779cf074d74d1751598713285515559cef0b75de7a4d2e8a4f404fc29",
+    "shim_sha256": "80419260f06862d7a422d13ef69e3b24c7a21dbef4309bce41db02ad642b1877",
+    "bundled_node_sha256": "b3094d0b49f9ad602262a9921551737bb97637c05dd357a06ae98188d7290aa3",
+    "bundled_cli_sha256": "03e4c791cc0dd91ed264278461bf9a56c0278aa0670d5942fc4732311c66de03",
+    "preflight": "Package and bundled CLI versions matched 1.5.0; installed node.exe and CLI entry existed before launch. CODEGRAPH_NO_DOWNLOAD=1 disabled shim network fallback."
+  },
+  "fixed_child_environment": ["CODEGRAPH_NO_DAEMON=1", "CODEGRAPH_NO_WATCH=1", "DO_NOT_TRACK=1", "CODEGRAPH_TELEMETRY=0", "CODEGRAPH_NO_UPDATE_CHECK=1", "CODEGRAPH_NO_DOWNLOAD=1", "GIT_CONFIG_GLOBAL=NUL"],
+  "checks": [
+    {
+      "name": "empty_index_and_watcher_fallback",
+      "fixture": "empty",
+      "commands": ["pwsh -NoProfile -File TestResults/T015-direct-20260930-01/run-init.ps1 empty", "pwsh -NoProfile -File TestResults/T015-direct-20260930-01/run-mcp.ps1 empty"],
+      "result": "PASS controlled observation: precreated empty .codegraph accepted; init exit 0 and reported no files to index; closed stdin declined the watcher-disabled Git-hook offer. Native initialize/list returned codegraph 1.5.0 and codegraph_explore; call returned no relevant code. MCP exit 0.",
+      "process_ids": [61004, 41240],
+      "processes_exited": true,
+      "fixture_changes": ["empty/.codegraph/.gitignore", "empty/.codegraph/codegraph.db", "empty/.codegraph/codegraph.db-shm", "empty/.codegraph/codegraph.db-wal"],
+      "root_codegraph_json_absent": true,
+      "raw_sha256": {"init_stdout": "e11eb2dbfad98cb8dc2cf515eb2d49ca326bf683fb81df1cf8197b8795f8540d", "mcp_result": "2d205ea006d11df5b166e0fac13aa191060d68021910cfc812d9ec1d99232bee"}
+    },
+    {
+      "name": "root_config_offer_closed_stdin",
+      "fixture": "ignoredrepo",
+      "command": "pwsh -NoProfile -File TestResults/T015-direct-20260930-01/run-init.ps1 ignoredrepo",
+      "result": "PASS controlled observation: ignored nested owned Git repository produced a codegraph.json opt-in hint rather than an interactive acceptance; watcher-disabled Git-hook offer was not accepted; init exit 0. No root codegraph.json or hook change; only .codegraph/.gitignore and codegraph.db were added.",
+      "process_id": 52672,
+      "process_exited": true,
+      "raw_sha256": {"before_manifest": "01eb5b148f3132443da59a58e55c89ebb69c60379e75e271e0bf311cc2325dd6", "after_manifest": "df2c0c3d13b45c54041f3eb9e25faa19ecac4b8465eb4ae9b93f6cad4980c248", "init_stdout": "25e1b786098d224937582977d625ad61e3f26453e9388fe373d944c43fcbf6a0"}
+    },
+    {
+      "name": "foreign_preexisting_state",
+      "fixture": "foreign",
+      "command": "pwsh -NoProfile -File TestResults/T015-direct-20260930-01/run-init.ps1 foreign",
+      "result": "PASS for owned trial preflight only: nonempty .codegraph with foreign-marker.txt was rejected before CodeGraph launch; command exit 1, no process log, marker unchanged. Production foreign-state enforcement remains part of held app-bound work.",
+      "marker_sha256": "882f4a4b5b8b7ea29811268aef44663418c85436f5b5a8cc2ee029518f70c637"
+    }
+  ],
+  "limits": ["Direct children inherited broader host rights; no preventive OS filesystem or outbound-network confinement is claimed.", "External filesystem writes and network attempts were not comprehensively observable.", "Exact process PIDs exited; sandbox command-line enumeration of descendants was unavailable, so no broader process-tree observation is claimed.", "These controlled fixtures do not establish Vulgata app-bound Story 18.1/18.2 authority, contained result verification, or owner cleanup."],
+  "assessment": "The targeted missing T015 checks passed within their controlled-fixture scope. T015 may be checked as controlled direct startup qualification under the accepted direct-process plan, while T013 and Story 18.2 app-bound holds remain. No production code, tracked tests, definition, or workflow state was edited by this owner."
+}

@@ -8,7 +8,7 @@ container; tool/provider/E2E and historical suites remain explicit and retain th
 feature-specific gates. See [testing guidance](testing.md). This changes the routine
 regression boundary, not historical product evidence or story lifecycle state.
 
-Updated: 2026-09-29 (delegation policy; product evidence unchanged).
+Updated: 2026-09-30 (Story 18.3 definition and authority; product qualification unchanged).
 Story 13.1 is complete in `specs/015-retained-source-access`.
 Exact retained capture, scoped reads, publication/recovery, cleanup, trusted
 workspaces and separate-process reopening have bounded controlled evidence.
@@ -51,10 +51,16 @@ verification before reuse.
   prior conflicting rules; it does not claim maintainer PR review/merge.
 
 The September 29 integration records Story 18.1 as done in
-`specs/016-contained-source-tools`. Story 18.3 is in progress only through accepted
-independent plan review in `specs/18-3-use-native-codegraph-mcp-against-prepared-source`.
-Its plan-only stop remains in force: reconcile the integrated, verified 18.1
-contract and rerun affected definition gates before any later tasks or delivery.
+`specs/016-contained-source-tools`. In this assigned worktree, Story 18.3 has
+reconciled that contract and the user's narrow direct CodeGraph child exception.
+Independent plan-review-09 and definition-review-04 accepted the corrected
+definition; scoped delegated planned-change and implementation decisions permit
+dependency-ready work. The controlled Git/no-Git native MCP fixture is transport
+and observed local-footprint evidence, not Vulgata application qualification.
+Physical integration remains held for Story 18.2's verified shared write,
+positive-binding and contained-read capability, exact shared file/type agreement,
+affected review and separate execution permission. The feature's workflow state
+and evidence own the current boundary; no merge into main is implied.
 
 Workflow installation itself activated no story. Verify current runner ownership
 and its assigned checkout before interpreting the integration tracker. Story 13.1's
@@ -115,7 +121,7 @@ runtime workflow:
 | --- | --- |
 | Administration/persistence | Reusable Identity, roles, configuration and domain persistence; Identity remains in Web/Data. |
 | Source preparation | Story 13.1 has verified raw-Git retained capture, canonical manifests, and scoped metadata and byte/text reads. Live denial, concurrent publication and controlled process-crash cleanup are verified; trusted workspace materialization is verified; fresh-process remote-unavailable reopen is verified; source-only boundaries and diagnostics are verified; controlled full-suite and all Story 13.1 independent gates pass; no generic Scan qualification is implied. Legacy disposable leases and prepared pair contracts remain separate. |
-| CodeGraph/LSP | CodeGraph 1.5 integration is CLI/JSON, not native MCP; tool identity/launch paths are Windows-oriented. JDT protocol/containment mechanisms need the new declared Docker/profile qualification. |
+| CodeGraph/LSP | Story 18.3 has a native MCP client and controlled CodeGraph 1.5.0 Git/no-Git fixture discovery/call evidence, but the Vulgata application-bound integration remains unqualified and depends on Story 18.2's shared physical authority. The trusted pinned direct child inherits host filesystem rights under the human's narrow exception; no preventive OS write or network denial is claimed. JDT-LS retains separate Story 18.2 ownership and qualification. |
 | Knowledge | Atomic persistence/provenance mechanics exist, but file-level CL/paired Flow semantics are not the new semantic Code Unit/Logical Flow contracts. |
 | Resolution | Finite exact matching is profile-bound; generic inquiry, late-evidence reconciliation and the ordinary production caller are not delivered. Controlled baseline qualification also exposed an unchanged consumer candidate missing ConsumerEntryStableKey, which the V2 store rejects with Conflict; see specs/015-retained-source-access/evidence/canonical-correction-affected-fixture-diagnosis-01.json. |
 | Chat | Provider SSE is ingested but the current answer path buffers strict candidates and reveals accepted text in the UI. Pair-bound scope and process-local dialogue/publication are not genuine generic streaming/durable reattachment or Business BL-only behavior. |
