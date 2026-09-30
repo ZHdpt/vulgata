@@ -202,6 +202,62 @@ public sealed class PreparedCodeGraphStateCoordinatorTests
         Assert.True(File.Exists(fixture.UnfamiliarTextPath), "Prepared source must remain untouched by state disposition.");
     }
 
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task GetOwnershipViewAsync_ReplacesStaleReadyCopyWithCurrentExactRecord()
+    {
+        await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
+        fixture.Authority.Approve(fixture.Approval);
+
+        string statePath = Path.Combine(fixture.PreparedRootPath, ".codegraph");
+        Directory.CreateDirectory(statePath);
+        await File.WriteAllTextAsync(Path.Combine(statePath, "index.bin"), "owned fixture state");
+        string originalSource = await File.ReadAllTextAsync(fixture.UnfamiliarTextPath);
+        string originalSibling = await File.ReadAllTextAsync(fixture.SentinelPath);
+        PreparedToolDirectoryObjectIdentity stateIdentity = ObserveDirectoryIdentity(statePath);
+        var currentReady = new PreparedCodeGraphWorkspaceOwnership(
+            Guid.NewGuid(),
+            Version: 8,
+            PreparedCodeGraphOwnershipPhase.Ready,
+            fixture.Approval,
+            Path.GetFullPath(fixture.PreparedRootPath),
+            ObserveDirectoryIdentity(fixture.PreparedRootPath),
+            WorkspaceOwnerIdentity: $"owner-{fixture.SandboxId:N}",
+            StateEntryObjectIdentity: stateIdentity);
+        PreparedToolDirectoryObjectIdentity staleEntryIdentity = stateIdentity with
+        {
+            FileIndexHigh = stateIdentity.FileIndexHigh ^ 1u,
+        };
+        PreparedCodeGraphWorkspaceOwnership staleReadyCopy = currentReady with
+        {
+            Version = currentReady.Version - 1,
+            StateEntryObjectIdentity = staleEntryIdentity,
+        };
+
+        var store = new RecordingOwnershipStore();
+        store.Seed(currentReady);
+        // Ownership classification is a source/workspace view; it must not require
+        // a CodeGraph-purpose grant that authorizes preparation or mutation.
+        var coordinator = new PreparedCodeGraphStateCoordinator(
+            fixture.Authority,
+            new TestToolUseAuthorizer(),
+            new RecordingWorkspaceOwnershipVerifier(),
+            store);
+
+        PreparedCodeGraphOwnershipViewResult result = await coordinator.GetOwnershipViewAsync(
+            staleReadyCopy,
+            fixture.Approval);
+
+        Assert.Equal(PreparedCodeGraphOwnershipViewStatus.VerifiedOwned, result.Status);
+        Assert.Equal(currentReady, result.Record);
+        Assert.NotEqual(staleReadyCopy, result.Record);
+        Assert.Equal(stateIdentity, result.Record?.StateEntryObjectIdentity);
+        Assert.Equal(fixture.Approval, fixture.Authority.LastRequestedApproval);
+        Assert.Equal(originalSource, await File.ReadAllTextAsync(fixture.UnfamiliarTextPath));
+        Assert.Equal(originalSibling, await File.ReadAllTextAsync(fixture.SentinelPath));
+        Assert.True(File.Exists(Path.Combine(statePath, "index.bin")));
+    }
+
     private static PreparedToolDirectoryObjectIdentity ObserveDirectoryIdentity(string path)
     {
         (PreparedSourceTraversal.OpenStatus status, SafeFileHandle? handle) =
