@@ -123,6 +123,7 @@ internal sealed class PreparedWorkspaceUseRegistry : IAsyncDisposable
     private readonly HashSet<PreparedWorkspaceBorrow> _borrows = [];
     private readonly HashSet<Task> _pendingProofChecks = [];
     private readonly HashSet<Task> _pendingHostAcquisitions = [];
+    private readonly HashSet<Task> _pendingHoldDisposals = [];
     private IPreparedManagedWorkspaceHostHold? _hold;
     private PreparedCodeGraphWorkspaceOwnership? _admittedBinding;
     private RegistryState _state = RegistryState.Closed;
@@ -292,13 +293,28 @@ internal sealed class PreparedWorkspaceUseRegistry : IAsyncDisposable
                 {
                     if (pendingHold is not null)
                     {
-                        await pendingHold.DisposeAsync();
+                        IPreparedManagedWorkspaceHostHold holdToDispose = pendingHold;
+                        pendingHold = null;
+                        Task disposal = holdToDispose.DisposeAsync().AsTask();
+                        try
+                        {
+                            await disposal.WaitAsync(deadline.Token);
+                        }
+                        catch
+                        {
+                            if (!disposal.IsCompleted)
+                            {
+                                TrackPendingHoldDisposal(disposal);
+                            }
+
+                            throw;
+                        }
                     }
                 }
                 catch
                 {
                     _state = RegistryState.Unknown;
-                    throw;
+                    throw new InvalidOperationException("Partial host hold cleanup is unconfirmed.");
                 }
                 finally
                 {
@@ -372,7 +388,37 @@ internal sealed class PreparedWorkspaceUseRegistry : IAsyncDisposable
     {
         lock (_publicationGate)
         {
-            return _pendingProofChecks.Count != 0 || _pendingHostAcquisitions.Count != 0;
+            return _pendingProofChecks.Count != 0 || _pendingHostAcquisitions.Count != 0 ||
+                _pendingHoldDisposals.Count != 0;
+        }
+    }
+
+    private void TrackPendingHoldDisposal(Task disposal)
+    {
+        lock (_publicationGate)
+        {
+            _pendingHoldDisposals.Add(disposal);
+        }
+
+        _ = ObservePendingHoldDisposalAsync(disposal);
+    }
+
+    private async Task ObservePendingHoldDisposalAsync(Task disposal)
+    {
+        try
+        {
+            await disposal;
+        }
+        catch
+        {
+            _state = RegistryState.Unknown;
+        }
+        finally
+        {
+            lock (_publicationGate)
+            {
+                _pendingHoldDisposals.Remove(disposal);
+            }
         }
     }
 
@@ -719,8 +765,20 @@ internal sealed class PreparedWorkspaceUseRegistry : IAsyncDisposable
             _state = allSettled ? RegistryState.Disposed : RegistryState.Unknown;
             if (_hold is not null)
             {
-                await _hold.DisposeAsync();
+                Task disposal = _hold.DisposeAsync().AsTask();
                 _hold = null;
+                try
+                {
+                    await disposal.WaitAsync(deadline.Token);
+                }
+                catch
+                {
+                    _state = RegistryState.Unknown;
+                    if (!disposal.IsCompleted)
+                    {
+                        TrackPendingHoldDisposal(disposal);
+                    }
+                }
             }
         }
         finally
