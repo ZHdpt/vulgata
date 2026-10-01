@@ -603,6 +603,11 @@ public sealed class PreparedCodeGraphStateCoordinatorTests
             Assert.Equal(ready.WorkspaceOwnerIdentity, quarantined.WorkspaceOwnerIdentity);
             Assert.Equal(ready.StateEntryObjectIdentity, quarantined.StateEntryObjectIdentity);
 
+            PreparedCodeGraphOwnershipTransitionResult staleDisposition =
+                await store.BeginDispositionAsync(ready);
+            Assert.Equal(PreparedCodeGraphOwnershipTransitionStatus.Conflict, staleDisposition.Status);
+            Assert.Null(staleDisposition.Record);
+
             string statePath = Path.Combine(fixture.PreparedRootPath, ".codegraph");
             Assert.True(Directory.Exists(statePath), "Quarantine preserves state for owner resolution.");
             Assert.Equal(
@@ -615,6 +620,7 @@ public sealed class PreparedCodeGraphStateCoordinatorTests
             PreparedCodeGraphOwnershipLoadResult freshLoad = await freshStore.LoadAsync(ready);
 
             Assert.Equal(PreparedCodeGraphOwnershipLoadStatus.Found, freshLoad.Status);
+            Assert.Equal(quarantined.Version, freshLoad.Record?.Version);
             Assert.Equal(quarantined, freshLoad.Record);
 
             PreparedCodeGraphOwnershipViewResult quarantinedView = await coordinator.GetOwnershipViewAsync(

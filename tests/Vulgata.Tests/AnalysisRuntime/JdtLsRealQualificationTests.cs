@@ -197,6 +197,158 @@ public sealed class JdtLsRealQualificationTests
 
     [Trait("Suite", "LocalTools")]
     [SuiteFact("LocalTools")]
+    public async Task ReturnedOwnedLocation_UsingNativeShortDirectoryAlias_IsFiltered()
+    {
+        Assert.True(OperatingSystem.IsWindows(),
+            "Native alias qualification is blocked because GetShortPathNameW requires Windows.");
+
+        await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
+        fixture.Authority.Approve(fixture.Approval);
+        string codeGraphPath = Path.Combine(fixture.PreparedRootPath, ".codegraph");
+        Directory.CreateDirectory(codeGraphPath);
+        string ownedJavaPath = Path.Combine(codeGraphPath, "Owned.java");
+        string ordinaryJavaPath = Path.Combine(fixture.PreparedRootPath, "Source.java");
+        string callerJavaPath = Path.Combine(fixture.PreparedRootPath, "Caller.java");
+        await File.WriteAllTextAsync(ownedJavaPath, "class Owned { void target() {} }\n");
+        await File.WriteAllTextAsync(ordinaryJavaPath, "class Source { void target() {} }\n");
+        await File.WriteAllTextAsync(callerJavaPath, "class Caller { void call() {} }\n");
+
+        PreparedJavaNavigationOwnershipFixture ownershipFixture =
+            PreparedJavaNavigationOwnershipFixture.CreateVerifiedOwned(
+                fixture.Authority,
+                fixture.Approval,
+                fixture.PreparedRootPath);
+        PreparedCodeGraphWorkspaceOwnership binding = ownershipFixture.ApplicationHeldBinding;
+        PreparedCodeGraphOwnershipViewResult ownershipView =
+            await ownershipFixture.GetCurrentOwnershipViewAsync(fixture.Approval);
+        Assert.Equal(PreparedCodeGraphOwnershipViewStatus.VerifiedOwned, ownershipView.Status);
+        Assert.Equal(binding, ownershipView.Record);
+        Assert.NotNull(binding.StateEntryObjectIdentity);
+
+        string shortDirectoryPath = GetNativeShortPath(codeGraphPath);
+        string aliasLeaf = Path.GetFileName(shortDirectoryPath);
+        Assert.False(aliasLeaf.Equals(".codegraph", StringComparison.OrdinalIgnoreCase),
+            "Native alias qualification is blocked: GetShortPathNameW returned the original .codegraph leaf; no alias behavior was tested.");
+
+        string aliasDirectoryPath = Path.Combine(fixture.PreparedRootPath, aliasLeaf);
+        Assert.True(Path.IsPathFullyQualified(fixture.PreparedRootPath),
+            "The original prepared root must already be fully qualified.");
+        Assert.True(string.Equals(
+                fixture.PreparedRootPath,
+                Path.GetDirectoryName(aliasDirectoryPath),
+                StringComparison.OrdinalIgnoreCase),
+            "The test must use only the returned alias leaf under the original granted root.");
+        Assert.True(File.Exists(Path.Combine(aliasDirectoryPath, "Owned.java")),
+            "The native alias leaf must resolve the existing owned Java file.");
+
+        (PreparedSourceTraversal.OpenStatus rootStatus, SafeFileHandle? rootHandle) =
+            PreparedSourceTraversal.OpenRoot(fixture.PreparedRootPath);
+        Assert.Equal(PreparedSourceTraversal.OpenStatus.Opened, rootStatus);
+        using SafeFileHandle heldRoot = rootHandle ??
+            throw new InvalidOperationException("The prepared root handle was unavailable for alias qualification.");
+        (PreparedSourceTraversal.OpenStatus aliasStatus, SafeFileHandle? aliasHandle) =
+            PreparedSourceTraversal.OpenRelativeDirectory(heldRoot, aliasLeaf);
+        Assert.Equal(PreparedSourceTraversal.OpenStatus.Opened, aliasStatus);
+        using SafeFileHandle heldAlias = aliasHandle ??
+            throw new InvalidOperationException("The native alias could not be opened relative to the granted root.");
+        PreparedSourceTraversal.DirectoryIdentity observedAliasIdentity =
+            PreparedSourceTraversal.ObserveDirectory(heldAlias) ??
+            throw new InvalidOperationException("The native alias did not resolve to an ordinary physical directory.");
+        Assert.Equal(
+            binding.StateEntryObjectIdentity,
+            new PreparedToolDirectoryObjectIdentity(
+                observedAliasIdentity.VolumeSerialNumber,
+                observedAliasIdentity.FileIndexHigh,
+                observedAliasIdentity.FileIndexLow));
+
+        var toolAuthorization = new CurrentNavigationToolAuthorizer(fixture.Approval);
+        var issuer = new PreparedToolWorkspaceIssuer(fixture.Authority, toolAuthorization);
+        PreparedToolWorkspaceIssueResult issue = await issuer.IssueAsync(
+            new PreparedToolWorkspaceGrantRequest(
+                fixture.Approval,
+                fixture.PreparedRootPath,
+                PreparedToolPurpose.JdtNavigation,
+                TimeSpan.FromSeconds(10)));
+        Assert.Equal(PreparedToolWorkspaceIssueStatus.Issued, issue.Status);
+        PreparedToolWorkspaceLease lease = Assert.IsType<PreparedToolWorkspaceLease>(issue.Lease);
+
+        string disposableStateRoot = Path.Combine(fixture.SiblingPath, "jdt-alias-result-state");
+        Directory.CreateDirectory(disposableStateRoot);
+        var runtime = new AliasQualificationRuntime();
+        string rootPathWithSeparator = Path.EndsInDirectorySeparator(fixture.PreparedRootPath)
+            ? fixture.PreparedRootPath
+            : fixture.PreparedRootPath + Path.DirectorySeparatorChar;
+        var originalRootUri = new Uri(rootPathWithSeparator, UriKind.Absolute);
+        string rawAliasOwnedFileUri = new Uri(
+            originalRootUri,
+            $"{aliasLeaf}/Owned.java").AbsoluteUri;
+        string rawAliasSegment = $"/{aliasLeaf}/Owned.java";
+        Assert.True(rawAliasOwnedFileUri.Contains(rawAliasSegment, StringComparison.OrdinalIgnoreCase),
+            "The controlled raw protocol location must preserve the qualified native alias leaf.");
+        Assert.True(originalRootUri.IsBaseOf(new Uri(rawAliasOwnedFileUri, UriKind.Absolute)),
+            "The raw alias URI must remain inside the original granted root.");
+        runtime.Session.Reply = new PreparedJdtLsRawReply(
+            [
+                new PreparedJdtLsRawLocation(
+                    rawAliasOwnedFileUri,
+                    1,
+                    1,
+                    1,
+                    7),
+                new PreparedJdtLsRawLocation(new Uri(ordinaryJavaPath).AbsoluteUri, 1, 1, 1, 7),
+            ],
+            LimitReached: false,
+            CapabilityLimitation: null);
+        var factory = ownershipFixture.CreateFactory(
+            new PreparedJavaNavigationProfile(
+                disposableStateRoot,
+                TimeSpan.FromSeconds(3),
+                TimeSpan.FromSeconds(2),
+                TimeSpan.FromSeconds(1),
+                MaximumResponseBytes: 64 * 1024),
+            runtime);
+        PreparedJavaNavigationOpenResult? opened = null;
+
+        try
+        {
+            opened = await factory.OpenAsync(lease);
+            Assert.Equal(PreparedJavaNavigationOpenStatus.Opened, opened.Status);
+            IPreparedJavaNavigationContext context =
+                Assert.IsAssignableFrom<IPreparedJavaNavigationContext>(opened.Context);
+            var request = new PreparedJavaNavigationRequest("Caller.java", 1, 1, 10);
+
+            PreparedJavaNavigationResult result = await context.GetDefinitionAsync(request);
+
+            Assert.Equal(1, runtime.Session.NavigateCallCount);
+            Assert.Equal(request, runtime.Session.LastRequest);
+            Assert.Equal(PreparedJavaNavigationOutcome.Observed, result.Outcome);
+            Assert.Equal(
+                ["Source.java"],
+                result.Locations.Select(location => location.Source.RelativePath));
+            PreparedJavaLocation ordinaryLocation = Assert.Single(result.Locations);
+            Assert.Equal("Source.java", ordinaryLocation.Source.RelativePath);
+            Assert.Empty(result.Limitations);
+            Assert.Null(result.StoppingLimit);
+            Assert.Equal(PreparedToolWorkspaceCheckStatus.Current, await lease.CheckCurrentAsync());
+            Assert.Equal(
+                PreparedToolUseAuthorityStatus.Current,
+                (await toolAuthorization.VerifyCurrentAsync(
+                    fixture.Approval,
+                    PreparedToolPurpose.JdtNavigation)).Status);
+        }
+        finally
+        {
+            if (opened?.Context is not null)
+            {
+                await opened.Context.DisposeAsync();
+            }
+
+            await lease.DisposeAsync();
+        }
+    }
+
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task RetainedArchive_RealJava21Session_QualifiesNavigationAndBoundedCleanup()
     {
         Assert.True(File.Exists(ArchivePath));
@@ -393,7 +545,11 @@ public sealed class JdtLsRealQualificationTests
 
     private sealed class AliasQualificationSession : IPreparedJdtLsSession
     {
+        public PreparedJdtLsRawReply Reply { get; set; } = new([], LimitReached: false, CapabilityLimitation: null);
+
         public int NavigateCallCount { get; private set; }
+
+        public PreparedJavaNavigationRequest? LastRequest { get; private set; }
 
         public Task<PreparedJdtLsRawReply> NavigateAsync(
             PreparedJavaNavigationOperation operation,
@@ -402,7 +558,8 @@ public sealed class JdtLsRealQualificationTests
         {
             cancellationToken.ThrowIfCancellationRequested();
             NavigateCallCount++;
-            return Task.FromResult(new PreparedJdtLsRawReply([], LimitReached: false, CapabilityLimitation: null));
+            LastRequest = request;
+            return Task.FromResult(Reply);
         }
 
         public ValueTask DisposeAsync() => ValueTask.CompletedTask;
