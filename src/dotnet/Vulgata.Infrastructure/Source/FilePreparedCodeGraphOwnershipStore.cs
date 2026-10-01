@@ -1,5 +1,7 @@
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using Microsoft.Win32.SafeHandles;
 
 namespace Vulgata.Infrastructure.Source;
@@ -19,8 +21,15 @@ internal sealed class FilePreparedCodeGraphOwnershipStore : IPreparedCodeGraphOw
 {
     private const string MetadataDirectoryName = ".prepared-codegraph-ownership";
     private const string LedgerFileName = "ledger.json";
+    private const string LockFileName = "ledger.lock";
+    private const string LedgerFormat = "vulgata-codegraph-ownership-v1";
+    private const int MaximumLedgerBytes = 1_048_576;
     private static readonly byte[] EmptyLedger = Encoding.UTF8.GetBytes(
         "{\"format\":\"vulgata-codegraph-ownership-v1\",\"records\":[]}");
+
+    private sealed record LedgerDocument(
+        [property: JsonPropertyName("format")] string Format,
+        [property: JsonPropertyName("records")] PreparedCodeGraphWorkspaceOwnership[] Records);
 
     private readonly RetainedSourceCapturePolicy _sourceStoragePolicy;
 
@@ -148,32 +157,23 @@ internal sealed class FilePreparedCodeGraphOwnershipStore : IPreparedCodeGraphOw
                         return UnavailableLoad();
                     }
 
-                    (int ledgerStatus, SafeFileHandle? ledger) = OpenRelative(
-                        metadata!, LedgerFileName, directory: false, create: false);
-                    if (ledgerStatus < 0 || ledger is null || ledger.IsInvalid ||
-                        PreparedSourceTraversal.ObserveFile(ledger) is null)
+                    LedgerDocument? ledger = await ReadLedgerAsync(metadata!, cancellationToken);
+                    if (ledger is null || Stable(root) != rootIdentity ||
+                        Stable(metadata) != metadataIdentity)
                     {
-                        ledger?.Dispose();
                         return UnavailableLoad();
                     }
 
-                    await using (var stream = new FileStream(
-                        ledger, FileAccess.Read, bufferSize: 4096, isAsync: false))
+                    PreparedCodeGraphWorkspaceOwnership[] matches = ledger.Records
+                        .Where(record => SameWorkspace(record, expectedBinding) ||
+                            record.OwnershipId == expectedBinding.OwnershipId).ToArray();
+                    if (matches.Length == 1 && SameBinding(matches[0], expectedBinding))
                     {
-                        if (stream.Length != EmptyLedger.Length)
-                        {
-                            return UnavailableLoad();
-                        }
-
-                        byte[] bytes = new byte[EmptyLedger.Length];
-                        await stream.ReadExactlyAsync(bytes, cancellationToken);
-                        if (!bytes.AsSpan().SequenceEqual(EmptyLedger))
-                        {
-                            return UnavailableLoad();
-                        }
+                        return new PreparedCodeGraphOwnershipLoadResult(
+                            PreparedCodeGraphOwnershipLoadStatus.Found, matches[0]);
                     }
 
-                    return Stable(root) == rootIdentity && Stable(metadata) == metadataIdentity
+                    return matches.Length == 0
                         ? new PreparedCodeGraphOwnershipLoadResult(
                             PreparedCodeGraphOwnershipLoadStatus.VerifiedAbsent, null)
                         : UnavailableLoad();
@@ -186,12 +186,106 @@ internal sealed class FilePreparedCodeGraphOwnershipStore : IPreparedCodeGraphOw
         }
     }
 
-    public Task<PreparedCodeGraphOwnershipTransitionResult> BeginCreateAsync(
+    public async Task<PreparedCodeGraphOwnershipTransitionResult> BeginCreateAsync(
         PreparedCodeGraphWorkspaceOwnership absent,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(absent);
-        return UnavailableTransition();
+        try
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            if (absent.OwnershipId == Guid.Empty || absent.Phase != PreparedCodeGraphOwnershipPhase.Absent ||
+                absent.Version != 0 || absent.StateEntryObjectIdentity is not null ||
+                absent.Approval.RepositoryId == Guid.Empty ||
+                string.IsNullOrWhiteSpace(absent.WorkspaceOwnerIdentity) ||
+                !SeparateRoots(_sourceStoragePolicy.RootPath, absent.PhysicalRootPath))
+            {
+                return UnavailableTransitionResult();
+            }
+
+            (PreparedSourceTraversal.OpenStatus workspaceStatus, SafeFileHandle? workspace) =
+                PreparedSourceTraversal.OpenRoot(absent.PhysicalRootPath);
+            using (workspace)
+            {
+                if (workspaceStatus != PreparedSourceTraversal.OpenStatus.Opened ||
+                    Stable(workspace) != absent.RootObjectIdentity)
+                {
+                    return UnavailableTransitionResult();
+                }
+            }
+
+            (PreparedSourceTraversal.OpenStatus rootStatus, SafeFileHandle? root) =
+                PreparedSourceTraversal.OpenRoot(_sourceStoragePolicy.RootPath);
+            using (root)
+            {
+                PreparedToolDirectoryObjectIdentity? rootIdentity = Stable(root);
+                if (rootStatus != PreparedSourceTraversal.OpenStatus.Opened || rootIdentity is null)
+                {
+                    return UnavailableTransitionResult();
+                }
+
+                (PreparedSourceTraversal.OpenStatus metadataStatus, SafeFileHandle? metadata) =
+                    PreparedSourceTraversal.OpenRelativeDirectory(root!, MetadataDirectoryName);
+                using (metadata)
+                {
+                    PreparedToolDirectoryObjectIdentity? metadataIdentity = Stable(metadata);
+                    if (metadataStatus != PreparedSourceTraversal.OpenStatus.Opened ||
+                        metadataIdentity is null)
+                    {
+                        return UnavailableTransitionResult();
+                    }
+
+                    (int lockStatus, SafeFileHandle? exclusiveLock) = OpenRelative(
+                        metadata!, LockFileName, directory: false, create: false, exclusiveLock: true);
+                    using (exclusiveLock)
+                    {
+                        if (lockStatus < 0 || exclusiveLock is null || exclusiveLock.IsInvalid ||
+                            PreparedSourceTraversal.ObserveFile(exclusiveLock) is null)
+                        {
+                            return UnavailableTransitionResult();
+                        }
+
+                        LedgerDocument? ledger = await ReadLedgerAsync(metadata!, cancellationToken);
+                        if (ledger is null || Stable(root) != rootIdentity ||
+                            Stable(metadata) != metadataIdentity)
+                        {
+                            return UnavailableTransitionResult();
+                        }
+
+                        if (ledger.Records.Any(record => SameWorkspace(record, absent) ||
+                            record.OwnershipId == absent.OwnershipId))
+                        {
+                            return new PreparedCodeGraphOwnershipTransitionResult(
+                                PreparedCodeGraphOwnershipTransitionStatus.Conflict, null);
+                        }
+
+                        PreparedCodeGraphWorkspaceOwnership creating = absent with
+                        {
+                            Version = 1,
+                            Phase = PreparedCodeGraphOwnershipPhase.Creating,
+                        };
+                        var updated = new LedgerDocument(LedgerFormat, [.. ledger.Records, creating]);
+                        if (!await ReplaceLedgerAsync(metadata!, updated, cancellationToken) ||
+                            Stable(root) != rootIdentity || Stable(metadata) != metadataIdentity)
+                        {
+                            return UnavailableTransitionResult();
+                        }
+
+                        LedgerDocument? readback = await ReadLedgerAsync(metadata!, cancellationToken);
+                        return readback is not null &&
+                            readback.Records.SequenceEqual(updated.Records) &&
+                            Stable(root) == rootIdentity && Stable(metadata) == metadataIdentity
+                            ? new PreparedCodeGraphOwnershipTransitionResult(
+                                PreparedCodeGraphOwnershipTransitionStatus.Committed, creating)
+                            : UnavailableTransitionResult();
+                    }
+                }
+            }
+        }
+        catch (Exception)
+        {
+            return UnavailableTransitionResult();
+        }
     }
 
     public Task<PreparedCodeGraphOwnershipTransitionResult> CommitCreatedAsync(
@@ -231,9 +325,150 @@ internal sealed class FilePreparedCodeGraphOwnershipStore : IPreparedCodeGraphOw
     private static PreparedCodeGraphOwnershipLoadResult UnavailableLoad() =>
         new(PreparedCodeGraphOwnershipLoadStatus.Unavailable, null);
 
+    private static PreparedCodeGraphOwnershipTransitionResult UnavailableTransitionResult() =>
+        new(PreparedCodeGraphOwnershipTransitionStatus.Unavailable, null);
+
     private static Task<PreparedCodeGraphOwnershipTransitionResult> UnavailableTransition() =>
-        Task.FromResult(new PreparedCodeGraphOwnershipTransitionResult(
-            PreparedCodeGraphOwnershipTransitionStatus.Unavailable, null));
+        Task.FromResult(UnavailableTransitionResult());
+
+    private static async Task<LedgerDocument?> ReadLedgerAsync(
+        SafeFileHandle metadata, CancellationToken cancellationToken)
+    {
+        (PreparedSourceTraversal.OpenStatus listingStatus,
+            IReadOnlyList<PreparedSourceTraversal.ListedEntry> entries, bool complete) =
+            PreparedSourceTraversal.ListImmediate(metadata, maximumEntries: 4);
+        if (listingStatus != PreparedSourceTraversal.OpenStatus.Opened || !complete ||
+            entries.Any(entry => entry.Name is not (LedgerFileName or LockFileName)))
+        {
+            return null;
+        }
+
+        (int status, SafeFileHandle? file) = OpenRelative(
+            metadata, LedgerFileName, directory: false, create: false);
+        if (status < 0 || file is null || file.IsInvalid ||
+            PreparedSourceTraversal.ObserveFile(file) is null)
+        {
+            file?.Dispose();
+            return null;
+        }
+
+        await using var stream = new FileStream(
+            file, FileAccess.Read, bufferSize: 4096, isAsync: false);
+        if (stream.Length is <= 0 or > MaximumLedgerBytes)
+        {
+            return null;
+        }
+
+        byte[] bytes = new byte[checked((int)stream.Length)];
+        await stream.ReadExactlyAsync(bytes, cancellationToken);
+        LedgerDocument? ledger = JsonSerializer.Deserialize<LedgerDocument>(bytes);
+        if (ledger?.Format != LedgerFormat || ledger.Records is null ||
+            !JsonSerializer.SerializeToUtf8Bytes(ledger).AsSpan().SequenceEqual(bytes) ||
+            ledger.Records.Any(record => record is null ||
+                record.OwnershipId == Guid.Empty || record.Version <= 0 ||
+                record.Phase == PreparedCodeGraphOwnershipPhase.Absent ||
+                record.Approval is null || record.RootObjectIdentity is null ||
+                !Path.IsPathFullyQualified(record.PhysicalRootPath) ||
+                string.IsNullOrWhiteSpace(record.WorkspaceOwnerIdentity) ||
+                record.Phase == PreparedCodeGraphOwnershipPhase.Creating &&
+                    record.StateEntryObjectIdentity is not null))
+        {
+            return null;
+        }
+
+        for (int i = 0; i < ledger.Records.Length; i++)
+        {
+            for (int j = i + 1; j < ledger.Records.Length; j++)
+            {
+                if (ledger.Records[i].OwnershipId == ledger.Records[j].OwnershipId ||
+                    SameWorkspace(ledger.Records[i], ledger.Records[j]))
+                {
+                    return null;
+                }
+            }
+        }
+
+        return ledger;
+    }
+
+    private static async Task<bool> ReplaceLedgerAsync(
+        SafeFileHandle metadata, LedgerDocument updated, CancellationToken cancellationToken)
+    {
+        byte[] bytes = JsonSerializer.SerializeToUtf8Bytes(updated);
+        if (bytes.Length > MaximumLedgerBytes)
+        {
+            return false;
+        }
+
+        string tempName = $"ledger-{Guid.NewGuid():N}.tmp";
+        (int status, SafeFileHandle? file) = OpenRelative(
+            metadata, tempName, directory: false, create: true, renameSource: true);
+        if (status < 0 || file is null || file.IsInvalid ||
+            PreparedSourceTraversal.ObserveFile(file) is null)
+        {
+            file?.Dispose();
+            return false;
+        }
+
+        await using var stream = new FileStream(
+            file, FileAccess.ReadWrite, bufferSize: 4096, isAsync: false);
+        await stream.WriteAsync(bytes, cancellationToken);
+        await stream.FlushAsync(cancellationToken);
+        stream.Flush(flushToDisk: true);
+        cancellationToken.ThrowIfCancellationRequested();
+        return RenameOverLedger(stream.SafeFileHandle, metadata);
+    }
+
+    private static bool RenameOverLedger(SafeFileHandle source, SafeFileHandle metadata)
+    {
+        byte[] name = Encoding.Unicode.GetBytes(LedgerFileName);
+        int rootOffset = IntPtr.Size == 8 ? 8 : 4;
+        int lengthOffset = rootOffset + IntPtr.Size;
+        int nameOffset = lengthOffset + sizeof(int);
+        int headerSize = IntPtr.Size == 8 ? 24 : 16;
+        int bufferSize = checked(headerSize + name.Length);
+        IntPtr information = Marshal.AllocHGlobal(bufferSize);
+        bool referenceAdded = false;
+        try
+        {
+            Marshal.Copy(new byte[bufferSize], 0, information, bufferSize);
+            Marshal.WriteByte(information, 0, 1); // ReplaceIfExists
+            metadata.DangerousAddRef(ref referenceAdded);
+            Marshal.WriteIntPtr(information, rootOffset, metadata.DangerousGetHandle());
+            Marshal.WriteInt32(information, lengthOffset, name.Length);
+            Marshal.Copy(name, 0, IntPtr.Add(information, nameOffset), name.Length);
+            int status = NtSetInformationFile(
+                source, out _, information, (uint)bufferSize, 10); // FileRenameInformation
+            return status == 0;
+        }
+        finally
+        {
+            if (referenceAdded)
+            {
+                metadata.DangerousRelease();
+            }
+
+            Marshal.FreeHGlobal(information);
+        }
+    }
+
+    private static bool SameBinding(
+        PreparedCodeGraphWorkspaceOwnership stored,
+        PreparedCodeGraphWorkspaceOwnership expected) =>
+        stored.OwnershipId == expected.OwnershipId &&
+        stored.Approval == expected.Approval &&
+        string.Equals(stored.PhysicalRootPath, expected.PhysicalRootPath,
+            StringComparison.OrdinalIgnoreCase) &&
+        stored.RootObjectIdentity == expected.RootObjectIdentity &&
+        stored.WorkspaceOwnerIdentity == expected.WorkspaceOwnerIdentity;
+
+    private static bool SameWorkspace(
+        PreparedCodeGraphWorkspaceOwnership left,
+        PreparedCodeGraphWorkspaceOwnership right) =>
+        string.Equals(left.PhysicalRootPath, right.PhysicalRootPath,
+            StringComparison.OrdinalIgnoreCase) ||
+        left.RootObjectIdentity == right.RootObjectIdentity ||
+        left.WorkspaceOwnerIdentity == right.WorkspaceOwnerIdentity;
 
     private static PreparedToolDirectoryObjectIdentity? Stable(SafeFileHandle? directory)
     {
@@ -255,7 +490,8 @@ internal sealed class FilePreparedCodeGraphOwnershipStore : IPreparedCodeGraphOw
     }
 
     private static (int Status, SafeFileHandle? Handle) OpenRelative(
-        SafeFileHandle parent, string name, bool directory, bool create)
+        SafeFileHandle parent, string name, bool directory, bool create,
+        bool exclusiveLock = false, bool renameSource = false)
     {
         IntPtr nameBuffer = Marshal.StringToHGlobalUni(name);
         IntPtr unicodePointer = IntPtr.Zero;
@@ -285,15 +521,16 @@ internal sealed class FilePreparedCodeGraphOwnershipStore : IPreparedCodeGraphOw
                     out SafeFileHandle handle,
                     directory
                         ? 0x80u | 0x1u | 0x20u | 0x00100000u
-                        : create
-                            ? 0x1u | 0x2u | 0x80u | 0x00100000u
+                        : create || exclusiveLock
+                            ? 0x1u | 0x2u | 0x80u | 0x00100000u |
+                                (renameSource ? 0x00010000u : 0u)
                             : 0x1u | 0x80u | 0x00100000u,
                     ref attributes,
                     out _,
                     IntPtr.Zero,
                     directory ? (uint)FileAttributes.Directory : 0,
-                    0x00000007, // share read/write/delete
-                    create ? 2u : 1u, // FILE_CREATE or FILE_OPEN
+                    exclusiveLock ? 0u : 0x00000007u, // exclusive lock or share read/write/delete
+                    exclusiveLock ? 3u : create ? 2u : 1u, // FILE_OPEN_IF/CREATE/OPEN
                     (directory ? 0x1u : 0x40u) | 0x00200000u | 0x20u,
                     IntPtr.Zero,
                     0);
@@ -337,6 +574,14 @@ internal sealed class FilePreparedCodeGraphOwnershipStore : IPreparedCodeGraphOw
         uint createOptions,
         IntPtr eaBuffer,
         uint eaLength);
+
+    [DllImport("ntdll.dll", ExactSpelling = true)]
+    private static extern int NtSetInformationFile(
+        SafeFileHandle file,
+        out IoStatusBlock ioStatusBlock,
+        IntPtr information,
+        uint bufferSize,
+        int informationClass);
 
     [StructLayout(LayoutKind.Sequential)]
     private struct UnicodeString

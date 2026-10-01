@@ -59,6 +59,73 @@ public sealed class PreparedCodeGraphStateCoordinatorTests
 
     [Trait("Suite", "SelfContained")]
     [SuiteFact("SelfContained")]
+    public async Task BeginCreateAsync_PersistsCreatingRecordVisibleFromFreshStore()
+    {
+        await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
+        string sourceStorageRoot = Path.Combine(fixture.SandboxPath, "source-storage");
+        Directory.CreateDirectory(sourceStorageRoot);
+
+        IConfiguration configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["SourceStorage:RootPath"] = sourceStorageRoot,
+                ["SourceStorage:MaximumEntries"] = "10000",
+                ["SourceStorage:MaximumBlobBytes"] = "8388608",
+                ["SourceStorage:MaximumAggregateBlobBytes"] = "67108864",
+                ["SourceStorage:CaptureDeadlineSeconds"] = "600",
+                ["SourceStorage:OperationStaleAfterMinutes"] = "1440",
+                ["SourceStorage:VerificationBufferBytes"] = "65536",
+                ["SourceStorage:Read:DeadlineSeconds"] = "60",
+            })
+            .Build();
+        RetainedSourceCapturePolicy policy = RetainedSourceCapturePolicy.Create(
+            configuration,
+            fixture.SandboxPath,
+            fixture.PreparedRootPath);
+        var absent = new PreparedCodeGraphWorkspaceOwnership(
+            Guid.NewGuid(),
+            Version: 0,
+            PreparedCodeGraphOwnershipPhase.Absent,
+            fixture.Approval,
+            Path.GetFullPath(fixture.PreparedRootPath),
+            ObserveDirectoryIdentity(fixture.PreparedRootPath),
+            WorkspaceOwnerIdentity: $"owner-{fixture.SandboxId:N}",
+            StateEntryObjectIdentity: null);
+
+        PreparedCodeGraphStoreProvisionStatus provisionStatus =
+            await FilePreparedCodeGraphOwnershipStore.ProvisionNewAsync(policy);
+        Assert.Equal(PreparedCodeGraphStoreProvisionStatus.Provisioned, provisionStatus);
+
+        var store = new FilePreparedCodeGraphOwnershipStore(policy);
+        PreparedCodeGraphOwnershipLoadResult initialLoad = await store.LoadAsync(absent);
+        Assert.Equal(PreparedCodeGraphOwnershipLoadStatus.VerifiedAbsent, initialLoad.Status);
+        Assert.Null(initialLoad.Record);
+
+        PreparedCodeGraphOwnershipTransitionResult transition = await store.BeginCreateAsync(absent);
+
+        Assert.Equal(PreparedCodeGraphOwnershipTransitionStatus.Committed, transition.Status);
+        PreparedCodeGraphWorkspaceOwnership creating = Assert.IsType<PreparedCodeGraphWorkspaceOwnership>(
+            transition.Record);
+        Assert.Equal(PreparedCodeGraphOwnershipPhase.Creating, creating.Phase);
+        Assert.True(
+            creating.Version > absent.Version,
+            "A committed Creating transition must advance the ownership version.");
+        Assert.Equal(absent.OwnershipId, creating.OwnershipId);
+        Assert.Equal(absent.Approval, creating.Approval);
+        Assert.Equal(absent.PhysicalRootPath, creating.PhysicalRootPath);
+        Assert.Equal(absent.RootObjectIdentity, creating.RootObjectIdentity);
+        Assert.Equal(absent.WorkspaceOwnerIdentity, creating.WorkspaceOwnerIdentity);
+        Assert.Null(creating.StateEntryObjectIdentity);
+
+        var freshStore = new FilePreparedCodeGraphOwnershipStore(policy);
+        PreparedCodeGraphOwnershipLoadResult freshLoad = await freshStore.LoadAsync(absent);
+
+        Assert.Equal(PreparedCodeGraphOwnershipLoadStatus.Found, freshLoad.Status);
+        Assert.Equal(creating, freshLoad.Record);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task UseOwnedStateAsync_RequiresLeaseAndOwnershipApprovalToMatchExactly()
     {
         await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
