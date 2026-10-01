@@ -1,0 +1,53 @@
+{
+  "kind": "test-red",
+  "stage": "implement",
+  "evidence_id": "18-4/generator-cli-binder-configuration-diagnostics-red/1",
+  "source_commit": "0b45faf14438de2454dc5d31a9f9e43fd090ce1d",
+  "observed_at": "2026-10-01T18:43:13Z",
+  "observed_after": {
+    "path": "specs/017-october-batch-setup/evidence/transitions/transition-0096-generator-cli-authority-expected-red.json",
+    "sha256": "48cc1be7d56ace422ce1fa9f9b23a0d8d7c77ce042a377c9cbe859f067b36a46"
+  },
+  "input_hashes": {
+    "src/dotnet/Vulgata.OctoberGenerator/Program.cs": "ee6d12ea59c276ba47f4a6fc913fe038b18e892e70107fb7402640037581dc66",
+    "tests/Vulgata.Tests/October/OctoberHostSelectionTests.cs": "65b5482c30532c0a7c30f7bd1797879f03f7437588c7aaa5ba871750c605ffd1"
+  },
+  "raw_result": {
+    "kind": "test-red",
+    "stage": "implement",
+    "command": "pwsh -NoProfile -File eng/test.ps1 -Suite E2E -WithPostgreSql -Filter 'FullyQualifiedName~GeneratorPrepare_MissingSelectedWorkerProfileReportsInvalidConfigurationBeforeOperatorFactorValidationOrOctoberMigration'",
+    "exit_code": 1,
+    "selected": 1,
+    "passed": 0,
+    "failed": 1,
+    "skipped": 0,
+    "trx_path": "TestResults/isolation-d833129335cd4aaf96c0477cc37f6c1d/results.trx",
+    "trx_sha256": "098256f8eb6a5536dd21f46ab6e0ba6e0e061ea3074a7694fee56fa86181f70d",
+    "failure": "Assert.Contains() Failure: Sub-string not found\r\nString:    \"An issue was encountered verifying worklo\"···\r\nNot found: \"InvalidConfiguration\"",
+    "child_pid": 10508,
+    "child_exit": 1,
+    "seam": "Actual generator CLI. Real binder Bound precondition then only selected Worker profile reference changed to nonexistent name; valid document structure, noOctober/secret-exclusion/calibrated unchanged factor-counter checks pass before missing closed InvalidConfiguration assertion."
+  },
+  "authority_verification": {
+    "minimal_green": {
+      "trx_path": "TestResults/isolation-3b835f8a1fc84a5ebbd598f8fd6e3a71/results.trx",
+      "trx_sha256": "83e49886fc2a51a65379778daa927be05dbbbf071d5d9be6c5d2c1949f895029",
+      "passed": 1,
+      "exit_code": 0
+    },
+    "independent_final_green": {
+      "trx_path": "TestResults/isolation-458488b57ec44fe2bed0fb389854ca74/results.trx",
+      "trx_sha256": "16b683ba5d06d5cea702ea5255124fa5a09c609bd9ae99532145f3101f7882dd",
+      "passed": 1,
+      "exit_code": 0
+    },
+    "assessment": "Retained implementer assessed fixed module AuthorityUnavailable report; no refactor needed, no input/exception details. Independent final focused verification preserved prior security assertions."
+  },
+  "cleanup": {
+    "run_id": "d833129335cd4aaf96c0477cc37f6c1d",
+    "database": "vulgata_story184_generator_69599346d0224e5a8cdf9ea5cc2c6942",
+    "verified": true,
+    "evidence": "TRX exact database/temp cleanup and named volume absence inspected; owner verified matching labeled container/mount and removal."
+  },
+  "scope": "Expected T027/T028 binder-classification RED under existing approval; recovery6/7 unchanged. Descriptor enforcement and Web binding lifetime remain separately recorded unfinished implementation."
+}

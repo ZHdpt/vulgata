@@ -3,6 +3,7 @@ using System.Collections.Immutable;
 using System.Globalization;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -12,6 +13,7 @@ using Vulgata.Core.DomainServices;
 using Vulgata.Core.Entities;
 using Vulgata.Infrastructure.Data;
 using Vulgata.Infrastructure.Data.October;
+using Vulgata.Infrastructure.Configuration;
 using Vulgata.Shared;
 using Vulgata.Tests.TestInfrastructure;
 using Vulgata.Web.Data;
@@ -36,6 +38,7 @@ public sealed class OctoberHostSelectionTests(ITestOutputHelper output)
         Assert.Empty(parsedRequest.SelectionDigest);
 
         await fixture.AssertOwnedOperatorCanPrepareAsync(request);
+        await fixture.AssertOwnedProviderDocumentBindsAsync();
         await fixture.AssertOctoberSchemaAbsentAsync();
         using Process process = fixture.StartGenerator(requestJson);
         int processId = process.Id;
@@ -50,6 +53,16 @@ public sealed class OctoberHostSelectionTests(ITestOutputHelper output)
         Assert.DoesNotContain(fixture.ConnectionString, childOutput, StringComparison.Ordinal);
         Assert.DoesNotContain(fixture.OwnedRoot, childOutput, StringComparison.OrdinalIgnoreCase);
         Assert.True(exitCode == 0, "The actual generator prepare command should commit the authorized owned batch.");
+        Assert.True(
+            childOutput.Contains("Prepared", StringComparison.Ordinal) &&
+            childOutput.Contains(fixture.BatchId.ToString("D"), StringComparison.OrdinalIgnoreCase),
+            "The successful command should report Prepared and its exact batch ID.");
+        bool reportsBoundProviderConfiguration = childOutput
+            .Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries)
+            .Any(line => line.Contains("provider", StringComparison.OrdinalIgnoreCase) &&
+                         line.Contains("bound", StringComparison.OrdinalIgnoreCase));
+        Assert.True(reportsBoundProviderConfiguration,
+            "The successful command should identify provider configuration as bound without exposing provider details.");
 
         await using AsyncServiceScope scope = fixture.Services.CreateAsyncScope();
         IOctoberLocalAuthority authority = scope.ServiceProvider.GetRequiredService<IOctoberLocalAuthority>();
@@ -122,6 +135,10 @@ public sealed class OctoberHostSelectionTests(ITestOutputHelper output)
         Assert.DoesNotContain(fixture.ConnectionString, selectOutput + selectError, StringComparison.Ordinal);
         Assert.DoesNotContain(fixture.OwnedRoot, selectOutput + selectError, StringComparison.OrdinalIgnoreCase);
         Assert.Equal(0, selectExitCode);
+        Assert.True(
+            selectOutput.Contains("Selected", StringComparison.Ordinal) &&
+            selectOutput.Contains(fixture.BatchId.ToString("D"), StringComparison.OrdinalIgnoreCase),
+            "The successful command should report Selected and its exact batch ID.");
 
         OctoberBoundSetupSnapshot committedAfterSelect = await fixture.ReadBoundSnapshotAsync();
         var persistedAfterSelect = await fixture.CaptureOctoberStateAsync();
@@ -198,8 +215,233 @@ public sealed class OctoberHostSelectionTests(ITestOutputHelper output)
         await fixture.AssertOctoberSchemaAbsentAsync();
         int failedLoginCountAfterRejection = await fixture.ReadOperatorAccessFailedCountAsync();
         Assert.Equal(failedLoginBaseline, failedLoginCountAfterRejection);
+        Assert.Contains("InvalidConfiguration", childOutput, StringComparison.Ordinal);
         output.WriteLine("provider-rejection-failed-factor-counter-unchanged=true");
         output.WriteLine("provider-rejection-october-schema=absent");
+    }
+
+    [Trait("Suite", "E2E")]
+    [SuiteFact("E2E")]
+    public async Task GeneratorPrepare_UnusableSelectedProviderCredentialReportsCredentialUnavailableBeforeOperatorFactorValidationOrOctoberMigration()
+    {
+        await using GeneratorPrepareFixture fixture = await GeneratorPrepareFixture.CreateAsync(output);
+        OctoberSetupRequest request = fixture.CreatePrepareRequest();
+        string requestJson = JsonSerializer.Serialize(request);
+
+        await fixture.AssertOwnedOperatorCanPrepareAsync(request);
+        await fixture.AssertOwnedProviderDocumentBindsAsync();
+        await fixture.AssertOctoberSchemaAbsentAsync();
+
+        (int failedFactorBaseline, string invalidRecoveryCode) =
+            await fixture.EnableTwoFactorAndProveFailedFactorIncrementsCounterAsync();
+        output.WriteLine($"failed-factor-counter-baseline={failedFactorBaseline}");
+        fixture.WriteUnusableSelectedProviderCredential();
+        output.WriteLine("provider-document=complete-owned-document-with-unusable-worker-ciphertext");
+
+        using Process process = fixture.StartGenerator("prepare", requestJson);
+        output.WriteLine($"generator-process-id={process.Id}");
+        (int exitCode, string standardOutput, string standardError) =
+            await fixture.WaitForGeneratorAsync(process);
+        output.WriteLine($"generator-exit-code={exitCode}");
+
+        string childOutput = standardOutput + standardError;
+        Assert.DoesNotContain(fixture.OperatorPassword, childOutput, StringComparison.Ordinal);
+        Assert.DoesNotContain(invalidRecoveryCode, childOutput, StringComparison.Ordinal);
+        Assert.DoesNotContain(fixture.ProviderApiKeyWorker, childOutput, StringComparison.Ordinal);
+        Assert.DoesNotContain(fixture.ProviderApiKeyChat, childOutput, StringComparison.Ordinal);
+        Assert.DoesNotContain(fixture.ConnectionString, childOutput, StringComparison.Ordinal);
+        Assert.DoesNotContain(fixture.OwnedRoot, childOutput, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal(1, exitCode);
+
+        await fixture.AssertOctoberSchemaAbsentAsync();
+        int failedFactorCountAfterRejection = await fixture.ReadOperatorAccessFailedCountAsync();
+        Assert.Equal(failedFactorBaseline, failedFactorCountAfterRejection);
+        Assert.Contains("CredentialUnavailable", childOutput, StringComparison.Ordinal);
+        output.WriteLine("provider-rejection-failed-factor-counter-unchanged=true");
+        output.WriteLine("provider-rejection-october-schema=absent");
+    }
+
+    [Trait("Suite", "E2E")]
+    [SuiteFact("E2E")]
+    public async Task GeneratorPrepare_UnavailableOwnedIdentityConnectionReportsAuthorityUnavailableBeforeOctoberMigration()
+    {
+        await using GeneratorPrepareFixture fixture = await GeneratorPrepareFixture.CreateAsync(output);
+        OctoberSetupRequest request = fixture.CreatePrepareRequest();
+        string requestJson = JsonSerializer.Serialize(request);
+
+        await fixture.AssertOwnedOperatorCanPrepareAsync(request);
+        await fixture.AssertOwnedProviderDocumentBindsAsync();
+        await fixture.AssertOctoberSchemaAbsentAsync();
+        string unavailableIdentityConnection = fixture.CreateUnavailableIdentityConnectionString();
+
+        using Process process = fixture.StartGenerator(
+            "prepare", requestJson, identityConnectionStringOverride: unavailableIdentityConnection);
+        output.WriteLine($"generator-process-id={process.Id}");
+        (int exitCode, string standardOutput, string standardError) =
+            await fixture.WaitForGeneratorAsync(process);
+        output.WriteLine($"generator-exit-code={exitCode}");
+
+        string childOutput = standardOutput + standardError;
+        Assert.DoesNotContain(fixture.OperatorPassword, childOutput, StringComparison.Ordinal);
+        Assert.DoesNotContain(fixture.ProviderApiKeyWorker, childOutput, StringComparison.Ordinal);
+        Assert.DoesNotContain(fixture.ProviderApiKeyChat, childOutput, StringComparison.Ordinal);
+        Assert.DoesNotContain(fixture.ConnectionString, childOutput, StringComparison.Ordinal);
+        Assert.DoesNotContain(unavailableIdentityConnection, childOutput, StringComparison.Ordinal);
+        Assert.DoesNotContain(fixture.OwnedRoot, childOutput, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal(1, exitCode);
+
+        await fixture.AssertOctoberSchemaAbsentAsync();
+        Assert.Contains("AuthorityUnavailable", childOutput, StringComparison.Ordinal);
+        output.WriteLine("unavailable-owned-identity-connection-october-schema=absent");
+    }
+
+    [Trait("Suite", "E2E")]
+    [SuiteFact("E2E")]
+    public async Task GeneratorPrepare_MismatchedOwnedTargetDescriptorReportsTargetUnavailableBeforeOctoberMigration()
+    {
+        await using GeneratorPrepareFixture fixture = await GeneratorPrepareFixture.CreateAsync(output);
+        OctoberSetupRequest request = fixture.CreatePrepareRequest();
+        string requestJson = JsonSerializer.Serialize(request);
+
+        await fixture.AssertOwnedOperatorCanPrepareAsync(request);
+        await fixture.AssertOwnedProviderDocumentBindsAsync();
+        await fixture.AssertOctoberSchemaAbsentAsync();
+        string mismatchedTargetIdentity = fixture.CreateMismatchedTargetCanonicalDatabaseIdentity();
+        output.WriteLine("target-descriptor=synthetic-database-name-mismatch-on-owned-data-connection");
+
+        using Process process = fixture.StartGenerator(
+            "prepare", requestJson,
+            identityConnectionStringOverride: fixture.ConnectionString,
+            targetCanonicalDatabaseIdentityOverride: mismatchedTargetIdentity);
+        output.WriteLine($"generator-process-id={process.Id}");
+        (int exitCode, string standardOutput, string standardError) =
+            await fixture.WaitForGeneratorAsync(process);
+        output.WriteLine($"generator-exit-code={exitCode}");
+
+        string childOutput = standardOutput + standardError;
+        Assert.DoesNotContain(fixture.OperatorPassword, childOutput, StringComparison.Ordinal);
+        Assert.DoesNotContain(fixture.ProviderApiKeyWorker, childOutput, StringComparison.Ordinal);
+        Assert.DoesNotContain(fixture.ProviderApiKeyChat, childOutput, StringComparison.Ordinal);
+        Assert.DoesNotContain(fixture.ConnectionString, childOutput, StringComparison.Ordinal);
+        Assert.DoesNotContain(fixture.CanonicalDatabaseIdentity, childOutput, StringComparison.Ordinal);
+        Assert.DoesNotContain(mismatchedTargetIdentity, childOutput, StringComparison.Ordinal);
+        Assert.DoesNotContain(fixture.OwnedRoot, childOutput, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal(1, exitCode);
+
+        await fixture.AssertOctoberSchemaAbsentAsync();
+        Assert.Contains("TargetUnavailable", childOutput, StringComparison.Ordinal);
+        output.WriteLine("mismatched-target-descriptor-october-schema=absent");
+    }
+
+    [Trait("Suite", "E2E")]
+    [SuiteFact("E2E")]
+    public async Task GeneratorPrepare_MissingSelectedWorkerProfileReportsInvalidConfigurationBeforeOperatorFactorValidationOrOctoberMigration()
+    {
+        await using GeneratorPrepareFixture fixture = await GeneratorPrepareFixture.CreateAsync(output);
+        OctoberSetupRequest request = fixture.CreatePrepareRequest();
+        string requestJson = JsonSerializer.Serialize(request);
+
+        await fixture.AssertOwnedOperatorCanPrepareAsync(request);
+        await fixture.AssertOwnedProviderDocumentBindsAsync();
+        await fixture.AssertOctoberSchemaAbsentAsync();
+
+        (int failedFactorBaseline, string invalidRecoveryCode) =
+            await fixture.EnableTwoFactorAndProveFailedFactorIncrementsCounterAsync();
+        output.WriteLine($"failed-factor-counter-baseline={failedFactorBaseline}");
+        fixture.WriteMissingSelectedWorkerProfile();
+        output.WriteLine("provider-document=complete-owned-document-with-missing-selected-worker-profile");
+
+        using Process process = fixture.StartGenerator("prepare", requestJson);
+        output.WriteLine($"generator-process-id={process.Id}");
+        (int exitCode, string standardOutput, string standardError) =
+            await fixture.WaitForGeneratorAsync(process);
+        output.WriteLine($"generator-exit-code={exitCode}");
+
+        string childOutput = standardOutput + standardError;
+        Assert.DoesNotContain(fixture.OperatorPassword, childOutput, StringComparison.Ordinal);
+        Assert.DoesNotContain(invalidRecoveryCode, childOutput, StringComparison.Ordinal);
+        Assert.DoesNotContain(fixture.ProviderApiKeyWorker, childOutput, StringComparison.Ordinal);
+        Assert.DoesNotContain(fixture.ProviderApiKeyChat, childOutput, StringComparison.Ordinal);
+        Assert.DoesNotContain(fixture.ConnectionString, childOutput, StringComparison.Ordinal);
+        Assert.DoesNotContain(fixture.OwnedRoot, childOutput, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal(1, exitCode);
+
+        await fixture.AssertOctoberSchemaAbsentAsync();
+        int failedFactorCountAfterRejection = await fixture.ReadOperatorAccessFailedCountAsync();
+        Assert.Equal(failedFactorBaseline, failedFactorCountAfterRejection);
+        Assert.Contains("InvalidConfiguration", childOutput, StringComparison.Ordinal);
+        output.WriteLine("invalid-role-reference-failed-factor-counter-unchanged=true");
+        output.WriteLine("invalid-role-reference-october-schema=absent");
+    }
+
+    [Trait("Suite", "E2E")]
+    [SuiteFact("E2E")]
+    public async Task GeneratorUnsupportedModeReportsInvalidConfigurationWithoutOctoberMigration()
+    {
+        await using GeneratorPrepareFixture fixture = await GeneratorPrepareFixture.CreateAsync(output);
+        OctoberSetupRequest request = fixture.CreatePrepareRequest();
+        string requestJson = JsonSerializer.Serialize(request);
+
+        await fixture.AssertOwnedOperatorCanPrepareAsync(request);
+        await fixture.AssertOwnedProviderDocumentBindsAsync();
+        await fixture.AssertOctoberSchemaAbsentAsync();
+
+        using Process process = fixture.StartGenerator("unsupported-mode", requestJson);
+        output.WriteLine($"generator-process-id={process.Id}");
+        (int exitCode, string standardOutput, string standardError) =
+            await fixture.WaitForGeneratorAsync(process);
+        output.WriteLine($"generator-exit-code={exitCode}");
+
+        string childOutput = standardOutput + standardError;
+        Assert.DoesNotContain(fixture.OperatorPassword, childOutput, StringComparison.Ordinal);
+        Assert.DoesNotContain(fixture.ProviderApiKeyWorker, childOutput, StringComparison.Ordinal);
+        Assert.DoesNotContain(fixture.ProviderApiKeyChat, childOutput, StringComparison.Ordinal);
+        Assert.DoesNotContain(fixture.ConnectionString, childOutput, StringComparison.Ordinal);
+        Assert.DoesNotContain(fixture.OwnedRoot, childOutput, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal(1, exitCode);
+
+        await fixture.AssertOctoberSchemaAbsentAsync();
+        Assert.Contains("InvalidConfiguration", childOutput, StringComparison.Ordinal);
+        output.WriteLine("unsupported-mode-october-schema=absent");
+    }
+
+    [Trait("Suite", "E2E")]
+    [SuiteTheory("E2E")]
+    [InlineData("missing-authority-id")]
+    [InlineData("missing-protection-setting")]
+    [InlineData("unsupported-credential-source")]
+    [InlineData("malformed-setup-json")]
+    [InlineData("non-exact-authority-id")]
+    public async Task GeneratorPrepare_InvalidStartupConfigurationPredicatesReportInvalidConfigurationBeforeOctoberMigration(
+        string invalidCase)
+    {
+        await using GeneratorPrepareFixture fixture = await GeneratorPrepareFixture.CreateAsync(output);
+        OctoberSetupRequest request = fixture.CreatePrepareRequest();
+        string requestJson = JsonSerializer.Serialize(request);
+
+        await fixture.AssertOwnedOperatorCanPrepareAsync(request);
+        await fixture.AssertOwnedProviderDocumentBindsAsync();
+        await fixture.AssertOctoberSchemaAbsentAsync();
+        output.WriteLine($"startup-configuration-case={invalidCase}");
+
+        using Process process = fixture.StartGenerator(
+            "prepare", requestJson, invalidStartupConfigurationCase: invalidCase);
+        output.WriteLine($"generator-process-id={process.Id}");
+        (int exitCode, string standardOutput, string standardError) =
+            await fixture.WaitForGeneratorAsync(process);
+        output.WriteLine($"generator-exit-code={exitCode}");
+
+        string childOutput = standardOutput + standardError;
+        Assert.DoesNotContain(fixture.OperatorPassword, childOutput, StringComparison.Ordinal);
+        Assert.DoesNotContain(fixture.ProviderApiKeyWorker, childOutput, StringComparison.Ordinal);
+        Assert.DoesNotContain(fixture.ProviderApiKeyChat, childOutput, StringComparison.Ordinal);
+        Assert.DoesNotContain(fixture.ConnectionString, childOutput, StringComparison.Ordinal);
+        Assert.DoesNotContain(fixture.OwnedRoot, childOutput, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal(1, exitCode);
+
+        await fixture.AssertOctoberSchemaAbsentAsync();
+        Assert.Contains("InvalidConfiguration", childOutput, StringComparison.Ordinal);
+        output.WriteLine("invalid-startup-configuration-october-schema=absent");
     }
 
     [Trait("Suite", "E2E")]
@@ -316,6 +558,7 @@ public sealed class OctoberHostSelectionTests(ITestOutputHelper output)
         Assert.Equal(1, exitCode);
 
         await fixture.AssertOctoberSchemaAbsentAsync();
+        Assert.Contains("Denied", childOutput, StringComparison.Ordinal);
         output.WriteLine("invalid-operator-password-october-schema=absent");
     }
 
@@ -626,6 +869,99 @@ public sealed class OctoberHostSelectionTests(ITestOutputHelper output)
         internal void WriteMalformedProviderDocument() =>
             File.WriteAllText(Path.Combine(OwnedRoot, "providers.json"), "{ malformed provider document");
 
+        internal async Task AssertOwnedProviderDocumentBindsAsync()
+        {
+            using JsonDocument document = JsonDocument.Parse(
+                File.ReadAllText(Path.Combine(OwnedRoot, "providers.json")));
+            JsonElement root = document.RootElement;
+            OctoberProviderProfile[] profiles = root.GetProperty("profiles").EnumerateArray()
+                .Select(profile => new OctoberProviderProfile(
+                    profile.GetProperty("name").GetString()!,
+                    profile.GetProperty("apiType").GetString() switch
+                    {
+                        "chat-completions" => ApiType.ChatCompletions,
+                        "responses" => ApiType.Responses,
+                        "messages" => ApiType.Messages,
+                        _ => throw new InvalidOperationException("The owned provider fixture API type is invalid."),
+                    },
+                    profile.GetProperty("endpoint").GetString()!,
+                    profile.GetProperty("model").GetString()!,
+                    profile.GetProperty("credentialReference").GetString()!))
+                .ToArray();
+            Dictionary<string, string> protectedCredentials = root.GetProperty("protectedCredentials")
+                .EnumerateObject()
+                .ToDictionary(entry => entry.Name, entry => entry.Value.GetString()!, StringComparer.Ordinal);
+            OctoberProviderConfiguration configuration = new(
+                root.GetProperty("sourceIdentity").GetString()!,
+                root.GetProperty("precedence").GetString()!,
+                root.GetProperty("workerProfile").GetString()!,
+                root.GetProperty("chatProfile").GetString()!,
+                profiles,
+                protectedCredentials);
+
+            OctoberProviderBindingResult result = await new OctoberProviderBinder(
+                new SecretEncryptionService(_protection.Provider)).BindAsync(configuration);
+
+            Assert.Equal(OctoberProviderBindingStatus.Bound, result.Status);
+            Assert.IsType<OctoberBoundProviderConfiguration>(result.Binding);
+        }
+
+        internal void WriteUnusableSelectedProviderCredential()
+        {
+            string providerFile = Path.Combine(OwnedRoot, "providers.json");
+            JsonObject provider = Assert.IsType<JsonObject>(JsonNode.Parse(File.ReadAllText(providerFile)));
+            JsonObject protectedCredentials = Assert.IsType<JsonObject>(provider["protectedCredentials"]);
+            Assert.False(string.IsNullOrWhiteSpace(
+                protectedCredentials["worker-credential"]?.GetValue<string>()));
+            protectedCredentials["worker-credential"] = "synthetically-unusable-protected-worker-ciphertext";
+            File.WriteAllText(providerFile, provider.ToJsonString());
+        }
+
+        internal void WriteMissingSelectedWorkerProfile()
+        {
+            string providerFile = Path.Combine(OwnedRoot, "providers.json");
+            JsonObject provider = Assert.IsType<JsonObject>(JsonNode.Parse(File.ReadAllText(providerFile)));
+            JsonArray profiles = Assert.IsType<JsonArray>(provider["profiles"]);
+            string currentWorkerProfile = Assert.IsType<string>(provider["workerProfile"]?.GetValue<string>());
+            Assert.Contains(profiles, profile =>
+                string.Equals(profile?["name"]?.GetValue<string>(), currentWorkerProfile, StringComparison.Ordinal));
+
+            string missingWorkerProfile = $"{currentWorkerProfile}-not-present";
+            Assert.DoesNotContain(profiles, profile =>
+                string.Equals(profile?["name"]?.GetValue<string>(), missingWorkerProfile, StringComparison.Ordinal));
+            provider["workerProfile"] = missingWorkerProfile;
+            File.WriteAllText(providerFile, provider.ToJsonString());
+        }
+
+        internal string CreateUnavailableIdentityConnectionString()
+        {
+            TestResourceScope.ValidateOwnedTarget(ConnectionString);
+            NpgsqlConnectionStringBuilder ownedIdentity = new(ConnectionString);
+            NpgsqlConnectionStringBuilder identityConnection = new(ConnectionString)
+            {
+                Password = $"synthetic-unavailable-identity-password-{_runId}",
+                Pooling = false,
+            };
+            Assert.Equal(ownedIdentity.Host, identityConnection.Host);
+            Assert.Equal(ownedIdentity.Port, identityConnection.Port);
+            Assert.Equal(ownedIdentity.Database, identityConnection.Database);
+            Assert.Equal(ownedIdentity.Username, identityConnection.Username);
+            Assert.NotEqual(ownedIdentity.Password, identityConnection.Password);
+            return identityConnection.ConnectionString;
+        }
+
+        internal string CreateMismatchedTargetCanonicalDatabaseIdentity()
+        {
+            TestResourceScope.ValidateOwnedTarget(ConnectionString);
+            NpgsqlConnectionStringBuilder descriptor = new(ConnectionString);
+            string declaredIdentity = string.Create(CultureInfo.InvariantCulture,
+                $"postgres://{descriptor.Host}:{descriptor.Port}/{descriptor.Database}");
+            Assert.Equal(CanonicalDatabaseIdentity, declaredIdentity);
+
+            return string.Create(CultureInfo.InvariantCulture,
+                $"postgres://{descriptor.Host}:{descriptor.Port}/{descriptor.Database}-mismatch");
+        }
+
         internal string WriteWrongOperatorPassword()
         {
             string wrongPassword = $"Wrong1!Generator-{Guid.NewGuid():N}";
@@ -793,7 +1129,10 @@ public sealed class OctoberHostSelectionTests(ITestOutputHelper output)
         internal Process StartGenerator(
             string mode,
             string? requestJson,
-            bool includeCompetingProviderSource = false)
+            bool includeCompetingProviderSource = false,
+            string? identityConnectionStringOverride = null,
+            string? targetCanonicalDatabaseIdentityOverride = null,
+            string? invalidStartupConfigurationCase = null)
         {
             string repositoryRoot = FindRepositoryRoot();
             string project = Path.Combine(repositoryRoot,
@@ -839,7 +1178,8 @@ public sealed class OctoberHostSelectionTests(ITestOutputHelper output)
             }
             startInfo.Environment["October__Authority__Id"] = AuthorityId;
             startInfo.Environment["October__Targets__0__TargetId"] = TargetId;
-            startInfo.Environment["October__Targets__0__CanonicalDatabaseIdentity"] = CanonicalDatabaseIdentity;
+            startInfo.Environment["October__Targets__0__CanonicalDatabaseIdentity"] =
+                targetCanonicalDatabaseIdentityOverride ?? CanonicalDatabaseIdentity;
             startInfo.Environment["October__Operator__CredentialSource"] = "protected-file";
             startInfo.Environment["October__Operator__CredentialFile"] =
                 Path.Combine(OwnedRoot, "operator.credentials.protected");
@@ -847,6 +1187,36 @@ public sealed class OctoberHostSelectionTests(ITestOutputHelper output)
                 Path.Combine(OwnedRoot, "providers.json");
             if (includeCompetingProviderSource)
                 startInfo.Environment["October__Providers__SourceIdentity"] = "competing-flattened-source";
+            if (identityConnectionStringOverride is not null)
+            {
+                startInfo.Environment["October__Identity__ConnectionName"] = "GeneratorIdentity";
+                startInfo.Environment["ConnectionStrings__GeneratorIdentity"] = identityConnectionStringOverride;
+                startInfo.Environment["October__Identity__CanonicalDatabaseIdentity"] =
+                    CanonicalDatabaseIdentity;
+            }
+            switch (invalidStartupConfigurationCase)
+            {
+                case null:
+                    break;
+                case "missing-authority-id":
+                    startInfo.Environment.Remove("October__Authority__Id");
+                    break;
+                case "missing-protection-setting":
+                    startInfo.Environment.Remove("DataProtection__KeyRingPath");
+                    break;
+                case "unsupported-credential-source":
+                    startInfo.Environment["October__Operator__CredentialSource"] =
+                        "synthetic-unsupported-source";
+                    break;
+                case "malformed-setup-json":
+                    startInfo.Environment["October__SetupRequestJson"] = "{";
+                    break;
+                case "non-exact-authority-id":
+                    startInfo.Environment["October__Authority__Id"] = $" {AuthorityId}";
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(invalidStartupConfigurationCase));
+            }
 
             startInfo.ArgumentList.Add("run");
             startInfo.ArgumentList.Add("--project");

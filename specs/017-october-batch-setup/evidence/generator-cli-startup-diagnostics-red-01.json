@@ -1,0 +1,48 @@
+{
+  "kind": "test-red",
+  "stage": "implement",
+  "evidence_id": "18-4/generator-cli-startup-diagnostics-red/1",
+  "source_commit": "0b45faf14438de2454dc5d31a9f9e43fd090ce1d",
+  "observed_at": "2026-10-01T18:52:10.2838435Z",
+  "observed_after": {
+    "path": "specs/017-october-batch-setup/evidence/transitions/transition-0097-generator-cli-binder-configuration-expected-red.json",
+    "sha256": "971f7607aecd3c79077d7a7575ef2d254c9064db160cb3e17b8759f1dd609604"
+  },
+  "input_hashes": {
+    "src/dotnet/Vulgata.OctoberGenerator/Program.cs": "1e348d24d9742e0b7576d534230fa541b18b3deb1d6405e4d72f4d1f7372d61a",
+    "tests/Vulgata.Tests/October/OctoberHostSelectionTests.cs": "2931481363c4bb5a4a26dd486a3648adbe408e8a94b2aec17e72e6c0363a68bd"
+  },
+  "raw_result": {
+    "kind": "test-red",
+    "stage": "implement",
+    "command": "pwsh -NoProfile -File eng/test.ps1 -Suite E2E -WithPostgreSql -Filter 'FullyQualifiedName~GeneratorUnsupportedModeReportsInvalidConfigurationWithoutOctoberMigration'",
+    "exit_code": 1,
+    "selected": 1,
+    "passed": 0,
+    "failed": 1,
+    "skipped": 0,
+    "trx_path": "TestResults/isolation-9758e504359148ef932cfc7d3312576a/results.trx",
+    "trx_sha256": "9b00805b050fb03785631608233b099f827ba0b8bc466b1bd3773ddeabb4e811",
+    "failure": "Assert.Contains() Failure: Sub-string not found\r\nString:    \"An issue was encountered verifying worklo\"···\r\nNot found: \"InvalidConfiguration\"",
+    "child_pid": 49280,
+    "child_exit": 1,
+    "seam": "Actual generator unsupported startup mode; valid owned operator/provider preconditions, redaction and noOctober checks pass before missing InvalidConfiguration."
+  },
+  "binder_verification": {
+    "minimal_green": {
+      "trx_path": "TestResults/isolation-d3bc6f88185d45e8b18f10455e216567/results.trx",
+      "trx_sha256": "de112f4c91b774afeee9fbd03184395c48c6cddc2c8f0e829f8d82c960ef6b43",
+      "passed": 1,
+      "exit_code": 0
+    },
+    "final_verification_limit": "Test owner returned the same production minimal-GREEN path/hash as focused verification; no distinct later rerun is present among current raw results. Do not relabel it as independent final execution. Whole-group test-owner focused/surrounding final verification remains required.",
+    "assessment": "Retained implementer assessed safe fixed InvalidConfiguration binder class branch; no refactor, provider policy/secrets unchanged."
+  },
+  "cleanup": {
+    "run_id": "9758e504359148ef932cfc7d3312576a",
+    "database": "vulgata_story184_generator_77b9303aedc74329b9e4bf16936a9932",
+    "verified": true,
+    "evidence": "Owner reports database/temp cleanup and labeled container removal; root inspected [] and named volume absence."
+  },
+  "scope": "Expected startup classification RED under existing T027/T028 approval, no review/convergence or recurring completed product repair. Recovery6/7 unchanged."
+}

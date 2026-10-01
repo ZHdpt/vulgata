@@ -1,0 +1,49 @@
+{
+  "kind": "test-red",
+  "stage": "implement",
+  "evidence_id": "18-4/generator-cli-target-diagnostics-red/1",
+  "source_commit": "0b45faf14438de2454dc5d31a9f9e43fd090ce1d",
+  "observed_at": "2026-10-01T19:07:21.4684414Z",
+  "observed_after": {
+    "path": "specs/017-october-batch-setup/evidence/transitions/transition-0098-generator-cli-startup-expected-red.json",
+    "sha256": "0d80f755ea7141644fb4477c8a6ce63ae41e6396af57305075b5324623df1398"
+  },
+  "input_hashes": {
+    "src/dotnet/Vulgata.OctoberGenerator/Program.cs": "aa068529b8e24833bd096f2bd23dc4815efe470ad899f7e084f32f84ccbba95e",
+    "tests/Vulgata.Tests/October/OctoberHostSelectionTests.cs": "beea459281a256a48b2087f1ef1cd0427741e49aec35af8b457b9e0e6e1a0125",
+    "src/dotnet/Vulgata.OctoberGenerator/OctoberNpgsqlTargetDependencies.cs": "55773a75697e3de4db625192abb658dfa1cd49990393ca0198f178917184f262"
+  },
+  "raw_result": {
+    "kind": "test-red",
+    "stage": "implement",
+    "command": "pwsh -NoProfile -File eng/test.ps1 -Suite E2E -WithPostgreSql -Filter 'FullyQualifiedName~GeneratorPrepare_MismatchedOwnedTargetDescriptorReportsTargetUnavailableBeforeOctoberMigration'",
+    "exit_code": 1,
+    "selected": 1,
+    "passed": 0,
+    "failed": 1,
+    "skipped": 0,
+    "trx_path": "TestResults/isolation-19b1d9f5b0f5451aa83cb863b73ebc11/results.trx",
+    "trx_sha256": "4d0587ee0c12190000ef408fbf0ea8d4d541cb401dd464e13535ed148cfbf3fa",
+    "failure": "Assert.Contains() Failure: Sub-string not found\r\nString:    \"An issue was encountered verifying worklo\"···\r\nNot found: \"TargetUnavailable\"",
+    "child_pid": 38320,
+    "child_exit": 1,
+    "seam": "Actual CLI after valid real operator/provider preconditions. Data descriptor alone mismatches owned connection-derived descriptor; explicit Identity uses same owned connection and correct identity. Safe exit/noOctober/redaction pass before missing TargetUnavailable. Predicate rejects before another target connection, not proof of a current_database() mismatch."
+  },
+  "startup_verification": {
+    "minimal_green": {
+      "command": "pwsh -NoProfile -File eng/test.ps1 -Suite E2E -WithPostgreSql -Filter 'FullyQualifiedName~GeneratorUnsupportedModeReportsInvalidConfigurationWithoutOctoberMigration'",
+      "trx_path": "TestResults/isolation-c398c32e9c184fb38ae694bfc9a17091/results.trx",
+      "trx_sha256": "a7284761900bfc7655cb512cdd195041b4e545cc4610055e4093ae436527b21b",
+      "passed": 1,
+      "exit_code": 0
+    },
+    "assessment": "Retained implementer assessed phase-bounded ReadCommand validation report, no refactor needed. Whole-group test-owner final focused/surrounding execution remains required, no repeated baseline execution claimed."
+  },
+  "cleanup": {
+    "run_id": "19b1d9f5b0f5451aa83cb863b73ebc11",
+    "database": "vulgata_story184_generator_04ddb523a921466ab381ec3fde3ff8b1",
+    "verified": true,
+    "evidence": "Exact database/temp removal in raw receipt, [] container inspection and named volume absence verified."
+  },
+  "scope": "Approved T027/T028 expected diagnostic RED, not negative independent review/convergence or recurring completed repair. Recovery6/7 unchanged."
+}

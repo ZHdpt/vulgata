@@ -1,0 +1,55 @@
+{
+  "kind": "test-red",
+  "stage": "implement",
+  "evidence_id": "18-4/generator-cli-configuration-diagnostics-red/1",
+  "source_commit": "0b45faf14438de2454dc5d31a9f9e43fd090ce1d",
+  "observed_at": "2026-10-01T18:02:13Z",
+  "observed_after": {
+    "path": "specs/017-october-batch-setup/evidence/transitions/transition-0093-generator-cli-selected-expected-red.json",
+    "sha256": "bc3205896e98b9611bde8a3515d918cbb6f32eb0c4bd4ca9b5ed1bd8af97ee47"
+  },
+  "input_hashes": {
+    "src/dotnet/Vulgata.OctoberGenerator/Program.cs": "7086297d1a1a2de537b13253794777885211c52cf79cdf5ef32070db0712d3a5",
+    "tests/Vulgata.Tests/October/OctoberHostSelectionTests.cs": "213454a7677a225a110ec8854e065bdb89210ff627924e65bda30302d68a906d"
+  },
+  "raw_result": {
+    "kind": "test-red",
+    "stage": "implement",
+    "command": "pwsh -NoProfile -File eng/test.ps1 -Suite E2E -WithPostgreSql -Filter 'FullyQualifiedName~GeneratorPrepare_MalformedProviderDoesNotReachOperatorFactorValidationOrOctoberMigration'",
+    "exit_code": 1,
+    "selected": 1,
+    "passed": 0,
+    "failed": 1,
+    "skipped": 0,
+    "trx_path": "TestResults/isolation-bc65d5df9a0e4ad296fc80458bce3856/results.trx",
+    "trx_sha256": "699a8ff4398adf73cf5e66013057deaa1ecafed91eee86e5b11eec63521e6bd3",
+    "failure": "Assert.Contains() Failure: Sub-string not found\r\nString:    \"An issue was encountered verifying worklo\"···\r\nNot found: \"InvalidConfiguration\"",
+    "child_pid": 21768,
+    "child_exit": 1,
+    "seam": "Actual CLI after malformed provider. Retained secret/exit/noOctober/calibrated counter checks precede one missing InvalidConfiguration assertion."
+  },
+  "selected_verification": {
+    "minimal_green": {
+      "trx_path": "TestResults/isolation-6d7103eb3fae4bafbc663c67cde70557/results.trx",
+      "trx_sha256": "cebce66fd070dfb54cd933a827149c56c84c70c336d32f35651def5c3dfa651f",
+      "passed": 1,
+      "exit_code": 0
+    },
+    "independent_final_green": {
+      "command": "pwsh -NoProfile -File eng/test.ps1 -Suite E2E -WithPostgreSql -Filter 'FullyQualifiedName~GeneratorSelect_WithWebStopped_ReturnsExistingBatchWithoutChangingCommittedState'",
+      "trx_path": "TestResults/isolation-9e8c15b591a743509c4abbc3dac4418e/results.trx",
+      "trx_sha256": "623bebc1ebc31b6ae6fb4a5206bf04e39047feba4099566d120f8add33c885f9",
+      "passed": 1,
+      "exit_code": 0
+    },
+    "assessment": "Both retained owners assessed bounded Selected+exactGUID report; no refactor or weakened assertion, preserved metadata and secret exclusions."
+  },
+  "cleanup": {
+    "run_id": "bc65d5df9a0e4ad296fc80458bce3856",
+    "database": "vulgata_story184_generator_bf1331afa0604d42b750176703862ded",
+    "verified": true,
+    "inspect_sha256": "ea3a558f7421d9b2a85dcbbe53c30ab6ee3998940ff9ff103504f9959f66d017",
+    "volume_absence_sha256": "5512a8c318ad7134a9829d818bc2c647e322c8a341c31deb7671bcdd340e4c29"
+  },
+  "scope": "Expected approved T027/T028 configuration classification RED, not independent review/convergence or repeated completed repair. Recovery6/7 unchanged."
+}

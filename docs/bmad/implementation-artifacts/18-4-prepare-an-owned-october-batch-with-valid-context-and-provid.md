@@ -66,7 +66,8 @@ ambiguous/malformed documents atomically, accepts identical selector values and
 does not rebind after document mutation/configuration reload. Changed behavior
 retains expected RED/minimal GREEN; already-correct loading/freeze behavior uses
 passing coverage. Both retained owners assessed final affected units without a
-required refactor. Generator startup invocation remains open under T023/T024.
+required refactor. Generator startup invocation now has actual executable coverage;
+Identity descriptor enforcement and Web binding retention remain open under T018/T019/T024.
 No plaintext is returned, no paid provider is contacted, and recovery remains
 count6/limit7. See `evidence/provider-binding-final-green-01.json` and
 `evidence/selected-web-provider-final-green-01.json`. Executable/PG qualification
@@ -96,11 +97,20 @@ raw fixture comparison/prebuild-policy failures remain history, not product RED 
 workflow-count increments. No production change was needed for this coverage.
 See `evidence/generator-loader-auth-final-green-01.json` and
 `evidence/selected-web-denial-final-green-01.json`.
-FR010 still requires the actual CLI to expose sanitized setup outcomes/failure
-classes: Main currently emits nothing and collapses every failure into exit1.
-This is unfinished approved T027/T028 behavior, not a new semantic decision or
-definition restart; normal executable RED/GREEN follows. Full A/B qualification
-and final gates remain unfinished; no whole host task is marked complete here.
+FR010 actual-CLI diagnostics now retain expected RED/minimal GREEN and independent
+final verification: 19/19 executable cases and 272/272 mapped surrounding tests pass.
+Main reports Prepared/Selected and exact batch identity, provider configuration Bound,
+and sanitized closed failure classes. Phase-bounded startup validation includes the
+demonstrated non-exact identity ArgumentException without weakening identity checks
+or relabeling later authority/storage failures. Both affected units were assessed;
+no further refactor was needed. Exact owned database/temp/container/volume cleanup
+is verified. See `evidence/generator-cli-diagnostics-final-green-01.json`.
+Cancellation remains qualified at existing callable seams, not as actual CLI
+interruption: no new cancellation protocol is invented. Accepted Identity descriptor
+enforcement and process-lifetime Web provider-binding retention remain concrete
+implementation obligations; their findings are recorded in existing evidence.
+Full A/B qualification and final gates remain unfinished; no whole host or
+diagnostics task is marked complete here. The same30IDs and19 completed markers remain.
 Recovery remains6/7 with unchanged approvals. The first broad regression also exposed 18 obsolete
 approval-API host cases; their accepted T018/T025 reconciliation now passes 17 focused
 and 249 surrounding cases. The failed broad run is retained rather than described as

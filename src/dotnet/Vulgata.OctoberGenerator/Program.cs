@@ -22,28 +22,58 @@ public static class OctoberGeneratorEntryPoint
             IConfigurationRoot configuration = new ConfigurationBuilder()
                 .AddEnvironmentVariables()
                 .Build();
-            OctoberGeneratorCommand command = ReadCommand(configuration);
-            OctoberAuthorityConfiguration authorityConfiguration = ReadAuthorityConfiguration(
-                configuration, command);
+            OctoberGeneratorCommand command;
+            OctoberAuthorityConfiguration authorityConfiguration;
+            string keyRingPath;
+            string applicationName;
+            try
+            {
+                command = ReadCommand(configuration);
+                authorityConfiguration = ReadAuthorityConfiguration(configuration, command);
+                keyRingPath = Required(configuration, "DataProtection:KeyRingPath");
+                applicationName = Required(configuration, "DataProtection:ApplicationName");
+            }
+            catch (Exception exception) when (exception is InvalidOperationException or JsonException or
+                ArgumentException)
+            {
+                Console.Error.WriteLine("October startup configuration failed: InvalidConfiguration.");
+                return 1;
+            }
 
             IServiceCollection registrations = new ServiceCollection();
             registrations.AddDataProtection()
-                .PersistKeysToFileSystem(new DirectoryInfo(Required(configuration,
-                    "DataProtection:KeyRingPath")))
-                .SetApplicationName(Required(configuration, "DataProtection:ApplicationName"));
+                .PersistKeysToFileSystem(new DirectoryInfo(keyRingPath))
+                .SetApplicationName(applicationName);
             registrations.AddSingleton<ISecretEncryptionService, SecretEncryptionService>();
             await using ServiceProvider protection = registrations.BuildServiceProvider(validateScopes: true);
-            OctoberProviderConfiguration providerConfiguration =
-                await ReadProviderConfigurationAsync(configuration);
+            OctoberProviderConfiguration providerConfiguration;
+            try
+            {
+                providerConfiguration = await ReadProviderConfigurationAsync(configuration);
+            }
+            catch (InvalidOperationException)
+            {
+                Console.Error.WriteLine("October provider configuration failed: InvalidConfiguration.");
+                return 1;
+            }
             OctoberProviderBindingResult providerBinding = await new OctoberProviderBinder(
                 protection.GetRequiredService<ISecretEncryptionService>())
                 .BindAsync(providerConfiguration);
             if (providerBinding.Status != OctoberProviderBindingStatus.Bound ||
                 providerBinding.Binding is null)
+            {
+                if (providerBinding.Status == OctoberProviderBindingStatus.InvalidConfiguration)
+                    Console.Error.WriteLine("October provider binding failed: InvalidConfiguration.");
+                if (providerBinding.Status == OctoberProviderBindingStatus.CredentialUnavailable)
+                    Console.Error.WriteLine("October provider binding failed: CredentialUnavailable.");
                 return 1;
+            }
+            Console.Out.WriteLine("October provider configuration Bound.");
 
-            IOctoberOperatorCredentialSource credentialSource =
-                Required(configuration, "October:Operator:CredentialSource") switch
+            IOctoberOperatorCredentialSource credentialSource;
+            try
+            {
+                credentialSource = Required(configuration, "October:Operator:CredentialSource") switch
                 {
                     "console" when configuration["October:Operator:CredentialFile"] is null =>
                         new OctoberConsoleCredentialSource(),
@@ -52,6 +82,12 @@ public static class OctoberGeneratorEntryPoint
                         protection.GetRequiredService<IDataProtectionProvider>()),
                     _ => throw new InvalidOperationException("October operator configuration is invalid.")
                 };
+            }
+            catch (InvalidOperationException)
+            {
+                Console.Error.WriteLine("October startup configuration failed: InvalidConfiguration.");
+                return 1;
+            }
             OctoberHeadlessAuthorityRegistration.AddOctoberLocalAuthority(
                 registrations, authorityConfiguration, credentialSource, TimeProvider.System);
             registrations.AddDbContext<OctoberDbContext>(options =>
@@ -73,6 +109,18 @@ public static class OctoberGeneratorEntryPoint
                 scope.ServiceProvider.GetRequiredService<IOctoberLocalAuthority>(),
                 target, authorityConfiguration.AuthorityId);
             OctoberGeneratorExecutionResult result = await module.ExecuteAsync(command);
+            if (result.Status == OctoberGeneratorExecutionStatus.Denied)
+                Console.Error.WriteLine("October setup failed: Denied.");
+            if (result.Status == OctoberGeneratorExecutionStatus.AuthorityUnavailable)
+                Console.Error.WriteLine("October setup failed: AuthorityUnavailable.");
+            if (result.Status == OctoberGeneratorExecutionStatus.TargetUnavailable)
+                Console.Error.WriteLine("October setup failed: TargetUnavailable.");
+            if (result.Status == OctoberGeneratorExecutionStatus.Prepared &&
+                result.CommittedBatch is { } committed)
+                Console.Out.WriteLine($"October setup Prepared: batch {committed.BatchId:D}.");
+            if (result.Status == OctoberGeneratorExecutionStatus.Selected &&
+                result.BoundSetupData is { } bound)
+                Console.Out.WriteLine($"October setup Selected: batch {bound.BatchId:D}.");
             return result.Status is OctoberGeneratorExecutionStatus.Prepared or
                 OctoberGeneratorExecutionStatus.Selected ? 0 : 1;
         }

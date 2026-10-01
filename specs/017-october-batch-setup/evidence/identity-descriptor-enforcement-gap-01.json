@@ -1,0 +1,23 @@
+{
+  "kind": "analysis",
+  "stage": "implement",
+  "evidence_id": "18-4/identity-descriptor-enforcement-gap/1",
+  "source_commit": "0b45faf14438de2454dc5d31a9f9e43fd090ce1d",
+  "observed_at": "2026-10-01T18:29:37Z",
+  "authoritative_inputs": [
+    "specs/017-october-batch-setup/contracts/batch-setup-selection.md:18",
+    "specs/017-october-batch-setup/tasks.md#T018",
+    "specs/017-october-batch-setup/tasks.md#T019",
+    "src/dotnet/Vulgata.Web/Data/OctoberHeadlessAuthorityRegistration.cs",
+    "src/dotnet/Vulgata.Web/Data/OctoberLocalAuthority.cs",
+    "src/dotnet/Vulgata.OctoberGenerator/OctoberNpgsqlTargetDependencies.cs"
+  ],
+  "raw_result": {
+    "owner": "retained definition-author-recovery Astra/medium",
+    "earliest_owner": "implement",
+    "required": true,
+    "assessment": "Required; earliest owner is implementation, not plan. The accepted contract says the separate Identity descriptor pins its intended database independently. Its connection rule requires descriptors to include database/endpoint identity and connected current_database() to match the selected descriptor. Merely selecting a named connection or storing a nonblank descriptor does not satisfy it. Current registration selects the explicit Identity connection but passes only its connection string to EF; IdentityCanonicalDatabaseIdentity is assigned/exposed without enforcement. Generator checker verifies data target, not separate Identity. Existing configuration, callable authentication interface and failure boundaries suffice; no new public verification interface or definition restart is needed. Covered by unfinished T018/T019 and qualification T020/T029. Identity DB access failure maps Unavailable/AuthorityUnavailable; data-target mismatch maps TargetUnavailable. Descriptor mismatch needs fail-closed rejection, not an invented requirement to label every mismatch AuthorityUnavailable. Read-only interpretation, no files/state changed."
+  },
+  "next": "Preserve accepted definition/approvals. After current diagnostic GREEN, test actual existing headless/host seam for mismatched Identity descriptor, then retained implementer minimal in-scope enforcement and final regression. No invented contracts or permissive test-only fallback.",
+  "recovery": "Known unfinished implementation, not independent negative review/convergence or recurrent completed repair. Recovery6/pause7, diagnosis/holds/owner profiles unchanged."
+}

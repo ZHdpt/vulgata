@@ -1,0 +1,18 @@
+{
+  "kind": "analysis",
+  "stage": "implement",
+  "evidence_id": "18-4/web-provider-binding-retention-gap/1",
+  "source_commit": "0b45faf14438de2454dc5d31a9f9e43fd090ce1d",
+  "observed_at": "2026-10-01T17:38:00Z",
+  "scope": "Known unfinished T024 accepted lifetime requirement, not negative independent review/convergence or repeated completed repair. Recovery6/7 unchanged.",
+  "authoritative_inputs": [
+    "specs/017-october-batch-setup/contracts/provider-binding.md:38",
+    "specs/017-october-batch-setup/tasks.md#T024",
+    "src/dotnet/Vulgata.Web/Program.cs:109"
+  ],
+  "raw_result": {
+    "owner": "retained tdd-implementer Sol/medium",
+    "assessment": "The provider contract says host owns successful immutable input/result for that process. Web checks providerBinding then drops locals at end of startup conditional; generator locals span short process. Retention gap is not provider-switch or paid-call defect. Live T019 composition is coherent; setup sessions dispose, only prepare migrates. T026 old routes/services/certverifier are unregistered; OctoberWebAuthorityClient absent; live selector portion of certificate-verifier file must remain; dirty activation draft untouched. No general refactor indicated."
+  },
+  "next": "Bounded retained production-owner correction of lifetime without invented consumer/public formatter/provider execution; choose behavior-appropriate direct verification or existing accepted host regression, never fabricate RED for an unobservable future consumer."
+}

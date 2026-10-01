@@ -1,0 +1,56 @@
+{
+  "kind": "test-red",
+  "stage": "implement",
+  "evidence_id": "18-4/generator-cli-selected-diagnostics-red/1",
+  "source_commit": "0b45faf14438de2454dc5d31a9f9e43fd090ce1d",
+  "observed_at": "2026-10-01T17:52:07Z",
+  "observed_after": {
+    "path": "specs/017-october-batch-setup/evidence/transitions/transition-0092-generator-cli-prepared-expected-red.json",
+    "sha256": "67fd6032c7867bc8bee86aeb53fedb968f3c3a908ffdbe2894102c3a40955d82"
+  },
+  "input_hashes": {
+    "src/dotnet/Vulgata.OctoberGenerator/Program.cs": "ffcbca9e59f3caf17ece4e965d9cb6c6c8849e7adb12a747a7e3212a33cc4e1a",
+    "tests/Vulgata.Tests/October/OctoberHostSelectionTests.cs": "16e90f18249cb915bece4fec7e6bc8a8549f04cff98c8a913932425c8d71f23a"
+  },
+  "raw_result": {
+    "kind": "test-red",
+    "stage": "implement",
+    "command": "pwsh -NoProfile -File eng/test.ps1 -Suite E2E -WithPostgreSql -Filter 'FullyQualifiedName~GeneratorSelect_WithWebStopped_ReturnsExistingBatchWithoutChangingCommittedState'",
+    "exit_code": 1,
+    "selected": 1,
+    "passed": 0,
+    "failed": 1,
+    "skipped": 0,
+    "trx_path": "TestResults/isolation-d0e061657c9e42afa86821365787d097/results.trx",
+    "trx_sha256": "149cdb59be4fc21b14fdc397e072c913089bab8ca551ca1f3908ec10df0235d6",
+    "failure": "The successful command should report Selected and its exact batch ID.",
+    "prepare_pid": 31948,
+    "select_pid": 44928,
+    "both_child_exit": 0,
+    "seam": "Actual select CLI captured output, one format-agnostic Selected+exactbatch assertion. All original exit/redaction/persisted-state expectations retained."
+  },
+  "prepared_verification": {
+    "minimal_green": {
+      "trx_path": "TestResults/isolation-58543afd5ff94b3d8e9231dc2c5b303a/results.trx",
+      "trx_sha256": "fd76da8b37e1be977029ae99b0a472e92286a334927e8f762cbaa659c4906f41",
+      "exit_code": 0,
+      "passed": 1
+    },
+    "independent_final_green": {
+      "command": "pwsh -NoProfile -File eng/test.ps1 -Suite E2E -WithPostgreSql -Filter 'FullyQualifiedName~GeneratorPrepare_WithWebStopped_CommitsOwnedBatch'",
+      "trx_path": "TestResults/isolation-375fd51caee0479fb73a7faa3f0aaf67/results.trx",
+      "trx_sha256": "a50c54548bab2c0de608b819c708ae7b9dc162e84ea30b784d3ba4aa00720888",
+      "exit_code": 0,
+      "passed": 1
+    },
+    "assessment": "Retained implementer assessed Main: safe fixedPrepared+committedGUID,no target/secret/source output or refactor. Retained test-owner independently verified before next assertion; no assertions weakened."
+  },
+  "cleanup": {
+    "run_id": "d0e061657c9e42afa86821365787d097",
+    "database": "vulgata_story184_generator_2b9b217f19f9474f980e1238249d1f76",
+    "verified": true,
+    "inspect_sha256": "d2341e7d2b47937aff7f63a6de92111b8b0fcdf92e74256832b016ef9597356b",
+    "volume_absence_sha256": "063bc5c4af503c70378a30c407254a169326b7b958a3189af5c5c81ad09048b8"
+  },
+  "scope": "Expected new Selected-reporting RED under approved T027/T028, not independent negative review/convergence or recurring completed repair. Recovery6/7 unchanged."
+}
