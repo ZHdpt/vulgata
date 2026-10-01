@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Configuration;
 using Microsoft.Win32.SafeHandles;
 using Vulgata.Core.DomainServices;
 using Vulgata.Infrastructure.Source;
@@ -8,6 +9,54 @@ namespace Vulgata.Tests.PreparedSource;
 [Collection(PreparedSourceTestCollection.Name)]
 public sealed class PreparedCodeGraphStateCoordinatorTests
 {
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task ProvisionNewAsync_InitializedStoreLoadsAsVerifiedAbsent()
+    {
+        await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
+        string sourceStorageRoot = Path.Combine(fixture.SandboxPath, "source-storage");
+        Directory.CreateDirectory(sourceStorageRoot);
+
+        IConfiguration configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["SourceStorage:RootPath"] = sourceStorageRoot,
+                ["SourceStorage:MaximumEntries"] = "10000",
+                ["SourceStorage:MaximumBlobBytes"] = "8388608",
+                ["SourceStorage:MaximumAggregateBlobBytes"] = "67108864",
+                ["SourceStorage:CaptureDeadlineSeconds"] = "600",
+                ["SourceStorage:OperationStaleAfterMinutes"] = "1440",
+                ["SourceStorage:VerificationBufferBytes"] = "65536",
+                ["SourceStorage:Read:DeadlineSeconds"] = "60",
+            })
+            .Build();
+        RetainedSourceCapturePolicy policy = RetainedSourceCapturePolicy.Create(
+            configuration,
+            fixture.SandboxPath,
+            fixture.PreparedRootPath);
+        var expectedBinding = new PreparedCodeGraphWorkspaceOwnership(
+            Guid.NewGuid(),
+            Version: 0,
+            PreparedCodeGraphOwnershipPhase.Absent,
+            fixture.Approval,
+            Path.GetFullPath(fixture.PreparedRootPath),
+            ObserveDirectoryIdentity(fixture.PreparedRootPath),
+            WorkspaceOwnerIdentity: $"owner-{fixture.SandboxId:N}",
+            StateEntryObjectIdentity: null);
+
+        PreparedCodeGraphStoreProvisionStatus provisionStatus =
+            await FilePreparedCodeGraphOwnershipStore.ProvisionNewAsync(policy);
+        Assert.Equal(
+            PreparedCodeGraphStoreProvisionStatus.Provisioned,
+            provisionStatus);
+
+        var store = new FilePreparedCodeGraphOwnershipStore(policy);
+        PreparedCodeGraphOwnershipLoadResult load = await store.LoadAsync(expectedBinding);
+
+        Assert.Equal(PreparedCodeGraphOwnershipLoadStatus.VerifiedAbsent, load.Status);
+        Assert.Null(load.Record);
+    }
+
     [Trait("Suite", "SelfContained")]
     [SuiteFact("SelfContained")]
     public async Task UseOwnedStateAsync_RequiresLeaseAndOwnershipApprovalToMatchExactly()
