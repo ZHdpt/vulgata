@@ -37,7 +37,8 @@ public sealed class PreparedJavaNavigationCompositionTests
         var workspaceIssuer = new PreparedToolWorkspaceIssuer(
             fixture.Authority,
             new ControlledToolUseAuthorizer(fixture.Approval));
-        var navigationFactory = new PreparedJavaNavigationContextFactory(
+        var navigationFactory = PreparedJavaNavigationOwnershipFixture.CreateFactory(
+            fixture,
             new PreparedJavaNavigationProfile(
                 stateRoot,
                 TimeSpan.FromSeconds(3),
@@ -108,7 +109,8 @@ public sealed class PreparedJavaNavigationCompositionTests
         var workspaceIssuer = new PreparedToolWorkspaceIssuer(
             fixture.Authority,
             new ControlledToolUseAuthorizer(fixture.Approval));
-        var navigationFactory = new PreparedJavaNavigationContextFactory(
+        var navigationFactory = PreparedJavaNavigationOwnershipFixture.CreateFactory(
+            fixture,
             new PreparedJavaNavigationProfile(
                 stateRoot,
                 TimeSpan.FromSeconds(3),
@@ -465,6 +467,162 @@ public sealed class PreparedJavaNavigationCompositionTests
 
     [Trait("Suite", "SelfContained")]
     [SuiteFact("SelfContained")]
+    public async Task ComposeAsync_WhenTrustedOwnershipBindingIsMissing_LeavesNavigationUnavailable()
+    {
+        await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
+        PreparedSourceGrantRequest sourceGrant = new(
+            fixture.Approval,
+            fixture.PreparedRootPath,
+            PreparedSourceGrantLimits.Default);
+        fixture.Authority.Approve(fixture.Approval);
+        PreparedSourceIssueResult sourceIssue = await new PreparedSourceContextIssuer(fixture.Authority)
+            .IssueAsync(sourceGrant);
+        Assert.Equal(PreparedSourceIssueStatus.Issued, sourceIssue.Status);
+        IPreparedSourceReadContext readContext =
+            Assert.IsAssignableFrom<IPreparedSourceReadContext>(sourceIssue.Context);
+
+        string stateRoot = Path.Combine(fixture.SiblingPath, "jdt-state");
+        Directory.CreateDirectory(stateRoot);
+        var runtime = new ControlledNavigationRuntime(new PreparedJdtLsRawReply([], false, null));
+        var workspaceIssuer = new PreparedToolWorkspaceIssuer(
+            fixture.Authority,
+            new ControlledToolUseAuthorizer(fixture.Approval));
+        var navigationFactory = new PreparedJavaNavigationContextFactory(
+            new PreparedJavaNavigationProfile(
+                stateRoot,
+                TimeSpan.FromSeconds(3),
+                TimeSpan.FromSeconds(2),
+                TimeSpan.FromSeconds(1),
+                MaximumResponseBytes: 64 * 1024),
+            runtime);
+        PreparedToolWorkspaceGrantRequest selectedGrant = new(
+            fixture.Approval,
+            fixture.PreparedRootPath,
+            PreparedToolPurpose.JdtNavigation,
+            TimeSpan.FromSeconds(10));
+        PreparedToolWorkspaceIssueResult leaseIssue = await workspaceIssuer.IssueAsync(selectedGrant);
+        Assert.Equal(PreparedToolWorkspaceIssueStatus.Issued, leaseIssue.Status);
+        await Assert.IsAssignableFrom<PreparedToolWorkspaceLease>(leaseIssue.Lease).DisposeAsync();
+
+        try
+        {
+            using ServiceProvider services = BuildWebServiceProvider(workspaceIssuer, navigationFactory);
+            using IServiceScope scope = services.CreateScope();
+            PreparedJavaWorkerToolComposer composer =
+                scope.ServiceProvider.GetRequiredService<PreparedJavaWorkerToolComposer>();
+
+            PreparedJavaWorkerToolComposition composition = await composer.ComposeAsync(
+                readContext,
+                sourceGrant,
+                selectedGrant);
+            try
+            {
+                Assert.Equal(
+                    PreparedJavaNavigationOpenStatus.ConfigurationUnavailable,
+                    composition.NavigationStatus);
+                Assert.Equal(
+                    ["list_prepared_source", "read_prepared_source", "search_prepared_source"],
+                    composition.WorkerFunctions.Select(function => function.Name));
+                Assert.Empty(composition.NavigationFunctions);
+                Assert.Equal(0, runtime.OpenCallCount);
+            }
+            finally
+            {
+                await composition.DisposeAsync();
+            }
+        }
+        finally
+        {
+            await readContext.DisposeAsync();
+        }
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task ComposeAsync_WhenCurrentBindingIsVerifiedUnowned_OpensNavigation()
+    {
+        await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
+        PreparedSourceGrantRequest sourceGrant = new(
+            fixture.Approval,
+            fixture.PreparedRootPath,
+            PreparedSourceGrantLimits.Default);
+        fixture.Authority.Approve(fixture.Approval);
+        PreparedSourceIssueResult sourceIssue = await new PreparedSourceContextIssuer(fixture.Authority)
+            .IssueAsync(sourceGrant);
+        Assert.Equal(PreparedSourceIssueStatus.Issued, sourceIssue.Status);
+        IPreparedSourceReadContext readContext =
+            Assert.IsAssignableFrom<IPreparedSourceReadContext>(sourceIssue.Context);
+
+        PreparedJavaNavigationOwnershipFixture ownershipFixture =
+            PreparedJavaNavigationOwnershipFixture.Create(
+                fixture.Authority,
+                fixture.Approval,
+                fixture.PreparedRootPath);
+        PreparedCodeGraphOwnershipViewResult ownershipView =
+            await ownershipFixture.GetCurrentOwnershipViewAsync(fixture.Approval);
+        Assert.Equal(PreparedCodeGraphOwnershipViewStatus.VerifiedUnowned, ownershipView.Status);
+        Assert.Null(ownershipView.Record);
+
+        string stateRoot = Path.Combine(fixture.SiblingPath, "jdt-state");
+        Directory.CreateDirectory(stateRoot);
+        var runtime = new ControlledNavigationRuntime(new PreparedJdtLsRawReply([], false, null));
+        var workspaceIssuer = new PreparedToolWorkspaceIssuer(
+            fixture.Authority,
+            new ControlledToolUseAuthorizer(fixture.Approval));
+        PreparedToolWorkspaceGrantRequest selectedGrant = new(
+            fixture.Approval,
+            fixture.PreparedRootPath,
+            PreparedToolPurpose.JdtNavigation,
+            TimeSpan.FromSeconds(10));
+        PreparedToolWorkspaceIssueResult leaseIssue = await workspaceIssuer.IssueAsync(selectedGrant);
+        Assert.Equal(PreparedToolWorkspaceIssueStatus.Issued, leaseIssue.Status);
+        await Assert.IsAssignableFrom<PreparedToolWorkspaceLease>(leaseIssue.Lease).DisposeAsync();
+
+        var navigationFactory = ownershipFixture.CreateFactory(
+            new PreparedJavaNavigationProfile(
+                stateRoot,
+                TimeSpan.FromSeconds(3),
+                TimeSpan.FromSeconds(2),
+                TimeSpan.FromSeconds(1),
+                MaximumResponseBytes: 64 * 1024),
+            runtime);
+
+        try
+        {
+            using ServiceProvider services = BuildWebServiceProvider(workspaceIssuer, navigationFactory);
+            using IServiceScope scope = services.CreateScope();
+            PreparedJavaWorkerToolComposer composer =
+                scope.ServiceProvider.GetRequiredService<PreparedJavaWorkerToolComposer>();
+
+            PreparedJavaWorkerToolComposition composition = await composer.ComposeAsync(
+                readContext,
+                sourceGrant,
+                selectedGrant);
+            try
+            {
+                Assert.Equal(PreparedJavaNavigationOpenStatus.Opened, composition.NavigationStatus);
+                Assert.Equal(
+                    ["list_prepared_source", "read_prepared_source", "search_prepared_source"],
+                    composition.SourceFunctions.Select(function => function.Name));
+                Assert.Equal(
+                    ["navigate_java_definition", "navigate_java_references"],
+                    composition.NavigationFunctions.Select(function => function.Name));
+                Assert.Equal(5, composition.WorkerFunctions.Count);
+                Assert.Equal(1, runtime.OpenCallCount);
+            }
+            finally
+            {
+                await composition.DisposeAsync();
+            }
+        }
+        finally
+        {
+            await readContext.DisposeAsync();
+        }
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task ComposeAsync_WhenNavigationOpens_KeepsFiveFunctionsAfterLimitedCall()
     {
         await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
@@ -496,7 +654,10 @@ public sealed class PreparedJavaNavigationCompositionTests
             CapabilityLimitation: "controlled fixture limit"));
         var toolAuthorization = new ControlledToolUseAuthorizer(fixture.Approval);
         var workspaceIssuer = new PreparedToolWorkspaceIssuer(fixture.Authority, toolAuthorization);
-        var navigationFactory = new PreparedJavaNavigationContextFactory(profile, runtime);
+        var navigationFactory = PreparedJavaNavigationOwnershipFixture.CreateFactory(
+            fixture,
+            profile,
+            runtime);
         PreparedJavaWorkerToolComposition? composition = null;
 
         try

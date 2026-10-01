@@ -49,7 +49,8 @@ public sealed class JdtLsPreparedNavigationTests
             [new PreparedJdtLsRawLocation(new Uri(callerPath).AbsoluteUri, 2, 1, 2, 8)],
             LimitReached: true,
             CapabilityLimitation: "controlled limit detail");
-        var factory = new PreparedJavaNavigationContextFactory(
+        var factory = PreparedJavaNavigationOwnershipFixture.CreateFactory(
+            fixture,
             new PreparedJavaNavigationProfile(
                 disposableStateRoot,
                 TimeSpan.FromSeconds(3),
@@ -108,11 +109,11 @@ public sealed class JdtLsPreparedNavigationTests
         await File.WriteAllTextAsync(callerPath, "class Caller {}\n");
 
         fixture.Authority.Approve(fixture.Approval);
-        // The same six successful issue/open source checks precede the four navigation checks;
+        // The ownership-view check joins the six successful issue/open checks before navigation;
         // lose source authority on the final pre-disclosure check.
         var sourceAuthority = new DenyingSourceAuthority(
             fixture.Authority,
-            denyOnVerification: 10,
+            denyOnVerification: 11,
             loss: loss);
         var toolAuthorization = new ControlledPreparedToolUseAuthorizer(
             fixture.Approval,
@@ -134,14 +135,16 @@ public sealed class JdtLsPreparedNavigationTests
             [new PreparedJdtLsRawLocation(new Uri(callerPath).AbsoluteUri, 2, 1, 2, 8)],
             LimitReached: true,
             CapabilityLimitation: "controlled limit detail");
-        var factory = new PreparedJavaNavigationContextFactory(
+        var factory = PreparedJavaNavigationOwnershipFixture.CreateFactory(
+            fixture,
             new PreparedJavaNavigationProfile(
                 disposableStateRoot,
                 TimeSpan.FromSeconds(3),
                 TimeSpan.FromSeconds(2),
                 TimeSpan.FromSeconds(1),
                 MaximumResponseBytes: 64 * 1024),
-            runtime);
+            runtime,
+            sourceAuthority);
         PreparedJavaNavigationOpenResult? open = null;
 
         try
@@ -150,7 +153,7 @@ public sealed class JdtLsPreparedNavigationTests
             Assert.Equal(PreparedJavaNavigationOpenStatus.Opened, open.Status);
             IPreparedJavaNavigationContext context =
                 Assert.IsAssignableFrom<IPreparedJavaNavigationContext>(open.Context);
-            Assert.Equal(6, sourceAuthority.VerificationCount);
+            Assert.Equal(7, sourceAuthority.VerificationCount);
 
             PreparedJavaNavigationResult result = await context.GetDefinitionAsync(
                 new PreparedJavaNavigationRequest("src/main/java/Caller.java", 1, 1, 10));
@@ -161,7 +164,7 @@ public sealed class JdtLsPreparedNavigationTests
             Assert.Null(result.StoppingLimit);
             Assert.Equal(1, runtime.Session.NavigateCallCount);
             Assert.Equal(1, runtime.Session.DisposeCallCount);
-            Assert.Equal(10, sourceAuthority.VerificationCount);
+            Assert.Equal(11, sourceAuthority.VerificationCount);
             Assert.Equal(PreparedToolWorkspaceLifetime.AuthorityClosed, lease.Lifetime);
             string serializedResult = JsonSerializer.Serialize(result);
             Assert.DoesNotContain(callerPath, serializedResult, StringComparison.OrdinalIgnoreCase);
@@ -209,7 +212,8 @@ public sealed class JdtLsPreparedNavigationTests
             [new PreparedJdtLsRawLocation(new Uri(callerPath).AbsoluteUri, 2, 1, 2, 8)],
             LimitReached: true,
             CapabilityLimitation: "controlled limit detail"));
-        var factory = new PreparedJavaNavigationContextFactory(
+        var factory = PreparedJavaNavigationOwnershipFixture.CreateFactory(
+            fixture,
             new PreparedJavaNavigationProfile(
                 disposableStateRoot,
                 TimeSpan.FromSeconds(3),
@@ -305,7 +309,8 @@ public sealed class JdtLsPreparedNavigationTests
         string disposableStateRoot = Path.Combine(fixture.SiblingPath, "jdt-state");
         Directory.CreateDirectory(disposableStateRoot);
         var runtime = new ControlledPreparedJdtLsRuntime();
-        var factory = new PreparedJavaNavigationContextFactory(
+        var factory = PreparedJavaNavigationOwnershipFixture.CreateFactory(
+            fixture,
             new PreparedJavaNavigationProfile(
                 disposableStateRoot,
                 TimeSpan.FromSeconds(3),
@@ -384,7 +389,7 @@ public sealed class JdtLsPreparedNavigationTests
             TimeSpan.FromSeconds(1),
             MaximumResponseBytes: 64 * 1024);
         var runtime = new ControlledPreparedJdtLsRuntime();
-        var factory = new PreparedJavaNavigationContextFactory(profile, runtime);
+        var factory = PreparedJavaNavigationOwnershipFixture.CreateFactory(fixture, profile, runtime);
         PreparedJavaNavigationOpenResult? open = null;
         bool contextDisposed = false;
 
@@ -446,7 +451,7 @@ public sealed class JdtLsPreparedNavigationTests
             TimeSpan.FromSeconds(1),
             MaximumResponseBytes: 64 * 1024);
         var runtime = new ControlledPreparedJdtLsRuntime();
-        var factory = new PreparedJavaNavigationContextFactory(profile, runtime);
+        var factory = PreparedJavaNavigationOwnershipFixture.CreateFactory(fixture, profile, runtime);
 
         try
         {
@@ -490,7 +495,7 @@ public sealed class JdtLsPreparedNavigationTests
             TimeSpan.FromSeconds(1),
             MaximumResponseBytes: 64 * 1024);
         var runtime = new ControlledPreparedJdtLsRuntime();
-        var factory = new PreparedJavaNavigationContextFactory(profile, runtime);
+        var factory = PreparedJavaNavigationOwnershipFixture.CreateFactory(fixture, profile, runtime);
 
         try
         {
@@ -533,7 +538,7 @@ public sealed class JdtLsPreparedNavigationTests
             TimeSpan.FromSeconds(1),
             MaximumResponseBytes: 64 * 1024);
         var runtime = new ControlledPreparedJdtLsRuntime();
-        var factory = new PreparedJavaNavigationContextFactory(invalidProfile, runtime);
+        var factory = PreparedJavaNavigationOwnershipFixture.CreateFactory(fixture, invalidProfile, runtime);
 
         try
         {
@@ -577,7 +582,7 @@ public sealed class JdtLsPreparedNavigationTests
             TimeSpan.FromSeconds(1),
             MaximumResponseBytes: 64 * 1024);
         var runtime = new ControlledPreparedJdtLsRuntime();
-        var factory = new PreparedJavaNavigationContextFactory(profile, runtime);
+        var factory = PreparedJavaNavigationOwnershipFixture.CreateFactory(fixture, profile, runtime);
         PreparedJavaNavigationOpenResult? open = null;
         try
         {
@@ -626,7 +631,7 @@ public sealed class JdtLsPreparedNavigationTests
             TimeSpan.FromSeconds(1),
             MaximumResponseBytes: 64 * 1024);
         var runtime = new RevokingSourceOnceRuntime(fixture.Authority);
-        var factory = new PreparedJavaNavigationContextFactory(profile, runtime);
+        var factory = PreparedJavaNavigationOwnershipFixture.CreateFactory(fixture, profile, runtime);
         PreparedJavaNavigationOpenResult? firstOpen = null;
         PreparedToolWorkspaceLease? retryLease = null;
         PreparedJavaNavigationOpenResult? retryOpen = null;
@@ -716,7 +721,7 @@ public sealed class JdtLsPreparedNavigationTests
             [new PreparedJdtLsRawLocation(new Uri(targetFilePath).AbsoluteUri, 4, 9, 4, 21)],
             LimitReached: false,
             CapabilityLimitation: null);
-        var factory = new PreparedJavaNavigationContextFactory(profile, runtime);
+        var factory = PreparedJavaNavigationOwnershipFixture.CreateFactory(fixture, profile, runtime);
         PreparedJavaNavigationOpenResult? open = null;
 
         try
@@ -833,7 +838,7 @@ public sealed class JdtLsPreparedNavigationTests
                 .ToArray(),
             LimitReached: false,
             CapabilityLimitation: null);
-        var factory = new PreparedJavaNavigationContextFactory(profile, runtime);
+        var factory = PreparedJavaNavigationOwnershipFixture.CreateFactory(fixture, profile, runtime);
         PreparedJavaNavigationOpenResult? open = null;
 
         try
@@ -923,7 +928,7 @@ public sealed class JdtLsPreparedNavigationTests
             TimeSpan.FromSeconds(1),
             MaximumResponseBytes: 64 * 1024);
         var runtime = new BlockingNavigationRuntime();
-        var factory = new PreparedJavaNavigationContextFactory(profile, runtime);
+        var factory = PreparedJavaNavigationOwnershipFixture.CreateFactory(fixture, profile, runtime);
         PreparedJavaNavigationOpenResult? open = null;
         Task<PreparedJavaNavigationResult>? navigationTask = null;
         using var cancellation = new CancellationTokenSource();
@@ -998,7 +1003,7 @@ public sealed class JdtLsPreparedNavigationTests
             TimeSpan.FromSeconds(1),
             MaximumResponseBytes: 64 * 1024);
         var runtime = new BlockingNavigationRuntime();
-        var factory = new PreparedJavaNavigationContextFactory(profile, runtime);
+        var factory = PreparedJavaNavigationOwnershipFixture.CreateFactory(fixture, profile, runtime);
         PreparedJavaNavigationOpenResult? open = null;
         Task<PreparedJavaNavigationResult>? navigationTask = null;
 
@@ -1076,7 +1081,7 @@ public sealed class JdtLsPreparedNavigationTests
             [new PreparedJdtLsRawLocation(new Uri(callerPath).AbsoluteUri, 1, 1, 1, 10)],
             LimitReached: false,
             CapabilityLimitation: null));
-        var factory = new PreparedJavaNavigationContextFactory(profile, runtime);
+        var factory = PreparedJavaNavigationOwnershipFixture.CreateFactory(fixture, profile, runtime);
         PreparedJavaNavigationOpenResult? open = null;
         PreparedJavaNavigationResult? result = null;
 
@@ -1164,7 +1169,7 @@ public sealed class JdtLsPreparedNavigationTests
             [],
             LimitReached: false,
             CapabilityLimitation: rawCapabilityDetail);
-        var factory = new PreparedJavaNavigationContextFactory(profile, runtime);
+        var factory = PreparedJavaNavigationOwnershipFixture.CreateFactory(fixture, profile, runtime);
         PreparedJavaNavigationOpenResult? open = null;
 
         try
@@ -1231,7 +1236,7 @@ public sealed class JdtLsPreparedNavigationTests
             TimeSpan.FromSeconds(1),
             MaximumResponseBytes: 64 * 1024);
         var runtime = new ProtocolFailureThenSuccessRuntime();
-        var factory = new PreparedJavaNavigationContextFactory(profile, runtime);
+        var factory = PreparedJavaNavigationOwnershipFixture.CreateFactory(fixture, profile, runtime);
         PreparedJavaNavigationOpenResult? firstOpen = null;
         PreparedJavaNavigationOpenResult? retryOpen = null;
         Task<PreparedJavaNavigationResult>? navigationTask = null;
@@ -1331,7 +1336,7 @@ public sealed class JdtLsPreparedNavigationTests
             TimeSpan.FromSeconds(1),
             MaximumResponseBytes: 64 * 1024);
         var runtime = new NullReplyThenSuccessRuntime();
-        var factory = new PreparedJavaNavigationContextFactory(profile, runtime);
+        var factory = PreparedJavaNavigationOwnershipFixture.CreateFactory(fixture, profile, runtime);
         PreparedJavaNavigationOpenResult? firstOpen = null;
         PreparedJavaNavigationOpenResult? retryOpen = null;
         Task<PreparedJavaNavigationResult>? navigationTask = null;
@@ -1430,7 +1435,7 @@ public sealed class JdtLsPreparedNavigationTests
             TimeSpan.FromMilliseconds(200),
             MaximumResponseBytes: 64 * 1024);
         var runtime = new ProtocolFailureThenSuccessRuntime();
-        var factory = new PreparedJavaNavigationContextFactory(profile, runtime);
+        var factory = PreparedJavaNavigationOwnershipFixture.CreateFactory(fixture, profile, runtime);
         PreparedJavaNavigationOpenResult? open = null;
         Task<PreparedJavaNavigationResult>? navigationTask = null;
 
@@ -1514,7 +1519,7 @@ public sealed class JdtLsPreparedNavigationTests
             TimeSpan.FromMilliseconds(200),
             MaximumResponseBytes: 64 * 1024);
         var runtime = new LateReturningBlockedDisposeRuntime();
-        var factory = new PreparedJavaNavigationContextFactory(profile, runtime);
+        var factory = PreparedJavaNavigationOwnershipFixture.CreateFactory(fixture, profile, runtime);
         Task<PreparedJavaNavigationOpenResult>? openingTask = null;
         PreparedJavaNavigationOpenResult? open = null;
 
@@ -1593,7 +1598,7 @@ public sealed class JdtLsPreparedNavigationTests
             TimeSpan.FromSeconds(1),
             MaximumResponseBytes: 64 * 1024);
         var runtime = new LateReturningReadinessRuntime();
-        var factory = new PreparedJavaNavigationContextFactory(profile, runtime);
+        var factory = PreparedJavaNavigationOwnershipFixture.CreateFactory(fixture, profile, runtime);
         Task<PreparedJavaNavigationOpenResult>? openingTask = null;
         PreparedJavaNavigationOpenResult? open = null;
 
@@ -1655,7 +1660,7 @@ public sealed class JdtLsPreparedNavigationTests
             TimeSpan.FromSeconds(1),
             MaximumResponseBytes: 64 * 1024);
         var runtime = new StalledReadinessRuntime();
-        var factory = new PreparedJavaNavigationContextFactory(profile, runtime);
+        var factory = PreparedJavaNavigationOwnershipFixture.CreateFactory(fixture, profile, runtime);
         Task<PreparedJavaNavigationOpenResult>? openingTask = null;
         PreparedJavaNavigationOpenResult? open = null;
 
@@ -1723,7 +1728,7 @@ public sealed class JdtLsPreparedNavigationTests
             TimeSpan.FromSeconds(1),
             MaximumResponseBytes: 64 * 1024);
         var runtime = new UnconfirmedCleanupRuntime();
-        var factory = new PreparedJavaNavigationContextFactory(profile, runtime);
+        var factory = PreparedJavaNavigationOwnershipFixture.CreateFactory(fixture, profile, runtime);
 
         try
         {
@@ -1772,7 +1777,7 @@ public sealed class JdtLsPreparedNavigationTests
             TimeSpan.FromSeconds(1),
             MaximumResponseBytes: 64 * 1024);
         var runtime = new ConfirmedCleanupThenSuccessRuntime();
-        var factory = new PreparedJavaNavigationContextFactory(profile, runtime);
+        var factory = PreparedJavaNavigationOwnershipFixture.CreateFactory(fixture, profile, runtime);
         PreparedJavaNavigationOpenResult? retry = null;
 
         try
@@ -1830,7 +1835,7 @@ public sealed class JdtLsPreparedNavigationTests
             TimeSpan.FromSeconds(1),
             MaximumResponseBytes: 64 * 1024);
         var runtime = new UnexpectedExceptionRuntime();
-        var factory = new PreparedJavaNavigationContextFactory(profile, runtime);
+        var factory = PreparedJavaNavigationOwnershipFixture.CreateFactory(fixture, profile, runtime);
         PreparedJavaNavigationOpenResult? retry = null;
 
         try
@@ -1889,7 +1894,7 @@ public sealed class JdtLsPreparedNavigationTests
             TimeSpan.FromSeconds(1),
             MaximumResponseBytes: 64 * 1024);
         var runtime = new BlockingNavigationRuntime();
-        var factory = new PreparedJavaNavigationContextFactory(profile, runtime);
+        var factory = PreparedJavaNavigationOwnershipFixture.CreateFactory(fixture, profile, runtime);
         PreparedJavaNavigationOpenResult? open = null;
         Task<PreparedJavaNavigationResult>? definitionTask = null;
         Task<PreparedJavaNavigationResult>? referencesTask = null;
@@ -1973,7 +1978,7 @@ public sealed class JdtLsPreparedNavigationTests
             TimeSpan.FromSeconds(1),
             MaximumResponseBytes: 64 * 1024);
         var runtime = new BlockingNavigationRuntime();
-        var factory = new PreparedJavaNavigationContextFactory(profile, runtime);
+        var factory = PreparedJavaNavigationOwnershipFixture.CreateFactory(fixture, profile, runtime);
         PreparedJavaNavigationOpenResult? open = null;
         Task<PreparedJavaNavigationResult>? activeRequest = null;
         Task<PreparedJavaNavigationResult>? cancelledWaitingRequest = null;
@@ -2071,7 +2076,7 @@ public sealed class JdtLsPreparedNavigationTests
                 TimeSpan.FromSeconds(1),
                 MaximumResponseBytes: 64 * 1024);
             var runtime = new ControlledPreparedJdtLsRuntime();
-            var factory = new PreparedJavaNavigationContextFactory(profile, runtime);
+            var factory = PreparedJavaNavigationOwnershipFixture.CreateFactory(fixture, profile, runtime);
 
             firstOpen = await factory.OpenAsync(firstLease);
             Assert.Equal(PreparedJavaNavigationOpenStatus.Opened, firstOpen.Status);
@@ -2133,7 +2138,7 @@ public sealed class JdtLsPreparedNavigationTests
             TimeSpan.FromSeconds(2),
             TimeSpan.FromSeconds(1),
             MaximumResponseBytes: 64 * 1024);
-        var factory = new PreparedJavaNavigationContextFactory(profile, runtime);
+        var factory = PreparedJavaNavigationOwnershipFixture.CreateFactory(fixture, profile, runtime);
         using var waitingCancellation = new CancellationTokenSource();
 
         try

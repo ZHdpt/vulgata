@@ -1,4 +1,9 @@
 using System.Text;
+using Microsoft.Win32.SafeHandles;
+using Vulgata.Core.DomainServices;
+using Vulgata.Infrastructure.Analysis.Java;
+using Vulgata.Infrastructure.Source;
+using Vulgata.Tests.PreparedSource;
 using Vulgata.Tests.TestInfrastructure;
 
 namespace Vulgata.Tests.AnalysisRuntime;
@@ -228,6 +233,174 @@ internal sealed class PreparedJavaNavigationFixture : IAsyncDisposable
         }
 
         Directory.Delete(directoryPath);
+    }
+}
+
+/// <summary>
+/// Supplies an application-held Absent binding and controlled current ownership view
+/// for tests that exercise the trusted factory without creating CodeGraph state.
+/// </summary>
+internal sealed class PreparedJavaNavigationOwnershipFixture
+{
+    private readonly PreparedCodeGraphWorkspaceOwnership _binding;
+
+    private PreparedJavaNavigationOwnershipFixture(
+        PreparedCodeGraphWorkspaceOwnership binding,
+        PreparedCodeGraphStateCoordinator coordinator)
+    {
+        _binding = binding;
+        Coordinator = coordinator;
+    }
+
+    internal PreparedCodeGraphStateCoordinator Coordinator { get; }
+
+    internal static PreparedJavaNavigationOwnershipFixture Create(
+        IPreparedSourceCurrentAuthorityVerifier sourceAuthority,
+        PreparedSourceApproval approval,
+        string physicalRootPath)
+    {
+        ArgumentNullException.ThrowIfNull(sourceAuthority);
+        ArgumentNullException.ThrowIfNull(approval);
+        ArgumentException.ThrowIfNullOrWhiteSpace(physicalRootPath);
+
+        var binding = new PreparedCodeGraphWorkspaceOwnership(
+            Guid.NewGuid(),
+            Version: 0,
+            PreparedCodeGraphOwnershipPhase.Absent,
+            approval,
+            Path.GetFullPath(physicalRootPath),
+            ObserveDirectoryIdentity(physicalRootPath),
+            WorkspaceOwnerIdentity: $"navigation-owner-{Guid.NewGuid():N}",
+            StateEntryObjectIdentity: null);
+        var coordinator = new PreparedCodeGraphStateCoordinator(
+            sourceAuthority,
+            new DeniedCodeGraphAuthorization(),
+            new MatchingWorkspaceVerifier(binding),
+            new VerifiedAbsentOwnershipStore());
+        return new PreparedJavaNavigationOwnershipFixture(binding, coordinator);
+    }
+
+    internal static PreparedJavaNavigationContextFactory CreateFactory(
+        PreparedSourceFixture fixture,
+        PreparedJavaNavigationProfile profile,
+        IPreparedJdtLsRuntime runtime,
+        IPreparedSourceCurrentAuthorityVerifier? sourceAuthority = null) =>
+        Create(
+            sourceAuthority ?? fixture.Authority,
+            fixture.Approval,
+            fixture.PreparedRootPath).CreateFactory(profile, runtime);
+
+    internal PreparedJavaNavigationContextFactory CreateFactory(
+        PreparedJavaNavigationProfile profile,
+        IPreparedJdtLsRuntime runtime) =>
+        new(profile, runtime, Coordinator, GetCurrentBindingAsync);
+
+    internal ValueTask<PreparedCodeGraphWorkspaceOwnership?> GetCurrentBindingAsync(
+        CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        return ValueTask.FromResult<PreparedCodeGraphWorkspaceOwnership?>(_binding);
+    }
+
+    internal Task<PreparedCodeGraphOwnershipViewResult> GetCurrentOwnershipViewAsync(
+        PreparedSourceApproval approval,
+        CancellationToken cancellationToken = default) =>
+        Coordinator.GetOwnershipViewAsync(_binding, approval, cancellationToken);
+
+    private static PreparedToolDirectoryObjectIdentity ObserveDirectoryIdentity(string path)
+    {
+        (PreparedSourceTraversal.OpenStatus status, SafeFileHandle? handle) =
+            PreparedSourceTraversal.OpenRoot(path);
+        using (handle)
+        {
+            if (status != PreparedSourceTraversal.OpenStatus.Opened || handle is null)
+            {
+                throw new InvalidOperationException(
+                    "The controlled ownership fixture requires an open prepared root.");
+            }
+
+            PreparedSourceTraversal.DirectoryIdentity observed =
+                PreparedSourceTraversal.ObserveDirectory(handle) ??
+                throw new InvalidOperationException(
+                    "The controlled ownership fixture requires a stable prepared-root identity.");
+            return new PreparedToolDirectoryObjectIdentity(
+                observed.VolumeSerialNumber,
+                observed.FileIndexHigh,
+                observed.FileIndexLow);
+        }
+    }
+
+    private sealed class MatchingWorkspaceVerifier(
+        PreparedCodeGraphWorkspaceOwnership expected) : IPreparedCodeGraphWorkspaceOwnershipVerifier
+    {
+        public ValueTask<bool> VerifyCurrentAsync(
+            PreparedCodeGraphWorkspaceOwnership ownership,
+            CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            return ValueTask.FromResult(ownership == expected);
+        }
+
+        public ValueTask<bool> VerifyDispositionReadyAsync(
+            PreparedCodeGraphWorkspaceOwnership ownership,
+            CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            return ValueTask.FromResult(false);
+        }
+    }
+
+    // The JDT ownership view classifies state without granting CodeGraph execution.
+    private sealed class DeniedCodeGraphAuthorization : IPreparedToolUseAuthorizer
+    {
+        public Task<PreparedToolUseAuthorityResult> VerifyCurrentAsync(
+            PreparedSourceApproval approval,
+            PreparedToolPurpose toolPurpose,
+            CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            return Task.FromResult(new PreparedToolUseAuthorityResult(
+                PreparedToolUseAuthorityStatus.Denied));
+        }
+    }
+
+    private sealed class VerifiedAbsentOwnershipStore : IPreparedCodeGraphOwnershipStore
+    {
+        public Task<PreparedCodeGraphOwnershipLoadResult> LoadAsync(
+            PreparedCodeGraphWorkspaceOwnership expectedBinding,
+            CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            return Task.FromResult(new PreparedCodeGraphOwnershipLoadResult(
+                PreparedCodeGraphOwnershipLoadStatus.VerifiedAbsent,
+                Record: null));
+        }
+
+        public Task<PreparedCodeGraphOwnershipTransitionResult> BeginCreateAsync(
+            PreparedCodeGraphWorkspaceOwnership absent,
+            CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException("The controlled navigation fixture never provisions state.");
+
+        public Task<PreparedCodeGraphOwnershipTransitionResult> CommitCreatedAsync(
+            PreparedCodeGraphWorkspaceOwnership creating,
+            PreparedToolDirectoryObjectIdentity createdEntry,
+            CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException("The controlled navigation fixture never provisions state.");
+
+        public Task<PreparedCodeGraphOwnershipTransitionResult> BeginDispositionAsync(
+            PreparedCodeGraphWorkspaceOwnership ready,
+            CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException("The controlled navigation fixture never disposes state.");
+
+        public Task<PreparedCodeGraphOwnershipTransitionResult> CommitRemovedAsync(
+            PreparedCodeGraphWorkspaceOwnership disposing,
+            CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException("The controlled navigation fixture never disposes state.");
+
+        public Task<PreparedCodeGraphOwnershipTransitionResult> QuarantineAsync(
+            PreparedCodeGraphWorkspaceOwnership current,
+            CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException("The controlled navigation fixture never quarantines state.");
     }
 }
 

@@ -92,6 +92,8 @@ public sealed class PreparedJavaNavigationContextFactory
 
     private readonly PreparedJavaNavigationProfile _profile;
     private readonly IPreparedJdtLsRuntime _runtime;
+    private readonly PreparedCodeGraphStateCoordinator? _ownershipCoordinator;
+    private readonly Func<CancellationToken, ValueTask<PreparedCodeGraphWorkspaceOwnership?>>? _getWorkspaceBinding;
 
     public PreparedJavaNavigationContextFactory(
         PreparedJavaNavigationProfile profile,
@@ -99,6 +101,18 @@ public sealed class PreparedJavaNavigationContextFactory
     {
         _profile = profile ?? throw new ArgumentNullException(nameof(profile));
         _runtime = runtime ?? throw new ArgumentNullException(nameof(runtime));
+        _ownershipCoordinator = null;
+    }
+
+    internal PreparedJavaNavigationContextFactory(
+        PreparedJavaNavigationProfile profile,
+        IPreparedJdtLsRuntime runtime,
+        PreparedCodeGraphStateCoordinator ownershipCoordinator,
+        Func<CancellationToken, ValueTask<PreparedCodeGraphWorkspaceOwnership?>> getWorkspaceBinding)
+        : this(profile, runtime)
+    {
+        _ownershipCoordinator = ownershipCoordinator ?? throw new ArgumentNullException(nameof(ownershipCoordinator));
+        _getWorkspaceBinding = getWorkspaceBinding ?? throw new ArgumentNullException(nameof(getWorkspaceBinding));
     }
 
     public async Task<PreparedJavaNavigationOpenResult> OpenAsync(
@@ -115,6 +129,11 @@ public sealed class PreparedJavaNavigationContextFactory
         if (workspaceLease.ToolPurpose != PreparedToolPurpose.JdtNavigation)
         {
             return Failed(PreparedJavaNavigationOpenStatus.Denied);
+        }
+
+        if (_ownershipCoordinator is null || _getWorkspaceBinding is null)
+        {
+            return Failed(PreparedJavaNavigationOpenStatus.ConfigurationUnavailable);
         }
 
         if (!ValidProfile(_profile))
@@ -159,22 +178,72 @@ public sealed class PreparedJavaNavigationContextFactory
                 return Failed(Map(leaseStatus));
             }
 
+            PreparedCodeGraphWorkspaceOwnership? binding;
+            try
+            {
+                binding = await _getWorkspaceBinding(waitToken.Token).AsTask().WaitAsync(waitToken.Token);
+            }
+            catch (OperationCanceledException) when (waitToken.IsCancellationRequested)
+            {
+                return Failed(cancellationToken.IsCancellationRequested
+                    ? PreparedJavaNavigationOpenStatus.Cancelled
+                    : PreparedJavaNavigationOpenStatus.DeadlineExceeded);
+            }
+            catch (Exception)
+            {
+                return Failed(PreparedJavaNavigationOpenStatus.ConfigurationUnavailable);
+            }
+
+            if (binding is null || !workspaceLease.MatchesApproval(binding.Approval))
+            {
+                return Failed(PreparedJavaNavigationOpenStatus.ConfigurationUnavailable);
+            }
+
             bool stateRootIsSeparate = false;
+            bool bindingMatchesRoot = false;
             PreparedToolWorkspaceCheckStatus stateCheck = await workspaceLease.UseContainedRootAsync(
                 PreparedToolPurpose.JdtNavigation,
                 (scope, _) =>
                 {
                     stateRootIsSeparate = scope.IsSeparateDisposableStateRoot(
                         _profile.DisposableStateRoot);
+                    bindingMatchesRoot = string.Equals(
+                        scope.GetPhysicalRootPathForTrustedToolBinding(),
+                        binding.PhysicalRootPath,
+                        StringComparison.OrdinalIgnoreCase) &&
+                        scope.ObserveRootObjectIdentity() == binding.RootObjectIdentity;
                     return ValueTask.CompletedTask;
                 },
-                cancellationToken);
+                waitToken.Token);
             if (stateCheck != PreparedToolWorkspaceCheckStatus.Current)
             {
                 return Failed(Map(stateCheck));
             }
 
-            if (!stateRootIsSeparate)
+            if (!stateRootIsSeparate || !bindingMatchesRoot)
+            {
+                return Failed(PreparedJavaNavigationOpenStatus.ConfigurationUnavailable);
+            }
+
+            PreparedCodeGraphOwnershipViewResult ownershipView;
+            try
+            {
+                ownershipView = await _ownershipCoordinator.GetOwnershipViewAsync(
+                    binding, binding.Approval, waitToken.Token).WaitAsync(waitToken.Token);
+            }
+            catch (OperationCanceledException) when (waitToken.IsCancellationRequested)
+            {
+                return Failed(cancellationToken.IsCancellationRequested
+                    ? PreparedJavaNavigationOpenStatus.Cancelled
+                    : PreparedJavaNavigationOpenStatus.DeadlineExceeded);
+            }
+            catch (Exception)
+            {
+                return Failed(PreparedJavaNavigationOpenStatus.ConfigurationUnavailable);
+            }
+
+            if (ownershipView.Status is not (PreparedCodeGraphOwnershipViewStatus.VerifiedUnowned or
+                PreparedCodeGraphOwnershipViewStatus.VerifiedOwned))
             {
                 return Failed(PreparedJavaNavigationOpenStatus.ConfigurationUnavailable);
             }
