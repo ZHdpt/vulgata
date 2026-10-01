@@ -1,0 +1,26 @@
+{
+  "observed_after": {
+    "path": "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/evidence/registry-admission-seam-diagnosis-transition-01.json",
+    "sha256": "219236a7868a4c9e08fb3465dd24aa6887f80e01196bd116088d5be7cb37c3e4"
+  },
+  "raw_result": {
+    "kind": "self-review",
+    "stage": "plan",
+    "outcome": "passed",
+    "summary": "T031's missing registry construction/admission seam is corrected within the existing architecture classification and AGENTS.md Worker-tool/shared-authority trigger. The contract now names the mandatory registry constructor, positive admission/disposition deadlines, `AdmitAsync(binding,purpose,token)` result/status, host `ObserveAsync` and `VerifyAndHoldAsync` inputs/results, scoped `CheckCurrentAsync`/`DisposeAsync` hold, and previous-generation settlement verifier. T031 can construct the registry with controlled dependencies and exercise Closed→Open→borrow before T033's binding producer exists; controlled fake proof is distinct from selected-host qualification. Successful admission owns held root/metadata/app-only mutex proof; failed/cancelled admission disposes partial holds, while Closing/Unknown never reopens. Same-process Absent→Creating→Ready preserves immutable approval/root/owner/OwnershipId and reloads monotonic versions; fresh-process Ready remains Closed/Unknown until independently verified old child/handle settlement. Closure of new grants leaves current CodeGraph-purpose authority available for freshly checked disposition. The 48 existing IDs, one typed record/store, 18.1 public read contract and 18.3 native/ordinary-reader ownership remain. CodeGraph-enabled application composition stays closed until 18.3 qualifies ordinary read exclusion, direct reads, budgets/continuations and native readiness. Feasibility, invariants, compatibility, Constitution I/V and AD-3/4/6/15 alignment and the callable-seam lesson were self-reviewed. Prior plan reviews 01–15 and definition reviews 01–14 remain historical; their resolved findings are preserved. The T031 discovery produced no test/production write or RED. Operator admission, approved principal, selected-host ACL/mutex, actual 18.3 settlement, first-PATH JDT/restricted profile and native permissions remain prerequisites, not inferred authority or qualification. Any necessary new owner/schema/root/authority decision returns to root before implementation.",
+    "input_hashes": {
+      "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/plan.md": "6bd2235b729ffc6a7218e9ed97f8f780088992344d3692c6e501e000df720216",
+      "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/contracts/navigation-tool.md": "5b665fd90f03d3a41641232ab8679f2312cb5489077321f9fb3511c9ebd92fd3",
+      "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/data-model.md": "91bbcc113916a7001271f260be6bb02d6a8f8eca2e9df11cec7960353fad79c6",
+      "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/research.md": "08ff4fa8a723126a7ae3cb6f14edc7705bbcf04ffe273cff1fad9db293896b46",
+      "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/quickstart.md": "dcff9abb2f0132270850d5fcd920514b7b36913c276ba882176f44a1edfda111"
+    },
+    "owned_paths": [
+      "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/plan.md",
+      "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/contracts/navigation-tool.md",
+      "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/data-model.md",
+      "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/research.md",
+      "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/quickstart.md"
+    ]
+  }
+}

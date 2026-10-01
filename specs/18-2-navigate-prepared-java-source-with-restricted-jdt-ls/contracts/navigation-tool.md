@@ -431,14 +431,85 @@ internal sealed class PreparedManagedWorkspaceBindingSource
         CancellationToken cancellationToken = default);
 }
 
+internal enum PreparedManagedWorkspaceHostStatus
+{
+    Observed, Protected, Denied, Unavailable
+}
+internal sealed record PreparedManagedWorkspaceHostObservation(
+    PreparedManagedWorkspaceHostStatus Status,
+    PreparedToolDirectoryObjectIdentity? RootObjectIdentity,
+    string? DerivedWorkspaceOwnerIdentity);
+internal sealed record PreparedManagedWorkspaceHostHoldResult(
+    PreparedManagedWorkspaceHostStatus Status,
+    IPreparedManagedWorkspaceHostHold? Hold);
+internal interface IPreparedManagedWorkspaceHostHold : IAsyncDisposable
+{
+    ValueTask<PreparedManagedWorkspaceHostStatus> CheckCurrentAsync(
+        PreparedCodeGraphWorkspaceOwnership binding,
+        CancellationToken cancellationToken = default);
+}
+internal interface IPreparedManagedWorkspaceHostVerifier
+{
+    // Observation derives fields for lookup; it grants no use or mutex ownership.
+    Task<PreparedManagedWorkspaceHostObservation> ObserveAsync(
+        PreparedSourceGrantRequest applicationHeldSourceGrant,
+        RetainedSourceCapturePolicy sourceStoragePolicy,
+        CancellationToken cancellationToken = default);
+    // Rechecks the exact binding and returns a held root/metadata/mutex proof.
+    Task<PreparedManagedWorkspaceHostHoldResult> VerifyAndHoldAsync(
+        PreparedCodeGraphWorkspaceOwnership binding,
+        RetainedSourceCapturePolicy sourceStoragePolicy,
+        CancellationToken cancellationToken = default);
+}
+// The selected Windows adapter receives the approved principal from trusted host
+// configuration, checks it against the effective process token and OS objects,
+// and never accepts that principal through a Worker/tool call.
+internal sealed class WindowsPreparedManagedWorkspaceHostVerifier
+    : IPreparedManagedWorkspaceHostVerifier
+{
+    internal WindowsPreparedManagedWorkspaceHostVerifier(
+        System.Security.Principal.SecurityIdentifier approvedApplicationPrincipal);
+    public Task<PreparedManagedWorkspaceHostObservation> ObserveAsync(
+        PreparedSourceGrantRequest applicationHeldSourceGrant,
+        RetainedSourceCapturePolicy sourceStoragePolicy,
+        CancellationToken cancellationToken = default);
+    public Task<PreparedManagedWorkspaceHostHoldResult> VerifyAndHoldAsync(
+        PreparedCodeGraphWorkspaceOwnership binding,
+        RetainedSourceCapturePolicy sourceStoragePolicy,
+        CancellationToken cancellationToken = default);
+}
+
 internal enum PreparedWorkspaceSettlementStatus { Settled, Active, Unknown }
 internal interface IPreparedWorkspaceResourceSettlementProbe
 {
     ValueTask<PreparedWorkspaceSettlementStatus> InspectOwnedResourcesAsync(
         CancellationToken cancellationToken = default);
 }
-internal sealed class PreparedWorkspaceUseRegistry
+internal interface IPreparedWorkspacePreviousGenerationVerifier
 {
+    // Only an actual native owner can establish old child/handle settlement.
+    ValueTask<PreparedWorkspaceSettlementStatus> VerifySettledAsync(
+        PreparedCodeGraphWorkspaceOwnership binding,
+        CancellationToken cancellationToken = default);
+}
+internal enum PreparedWorkspaceAdmissionStatus { Opened, Denied, Unavailable, Cancelled }
+internal sealed record PreparedWorkspaceAdmissionResult(
+    PreparedWorkspaceAdmissionStatus Status);
+internal sealed class PreparedWorkspaceUseRegistry : IAsyncDisposable
+{
+    internal PreparedWorkspaceUseRegistry(
+        IPreparedSourceCurrentAuthorityVerifier sourceAuthority,
+        IPreparedToolUseAuthorizer toolAuthorization,
+        IPreparedCodeGraphOwnershipStore ownershipStore,
+        RetainedSourceCapturePolicy sourceStoragePolicy,
+        IPreparedManagedWorkspaceHostVerifier hostProtection,
+        IPreparedWorkspacePreviousGenerationVerifier previousGeneration,
+        TimeSpan admissionDeadline,
+        TimeSpan dispositionDeadline);
+    internal Task<PreparedWorkspaceAdmissionResult> AdmitAsync(
+        PreparedCodeGraphWorkspaceOwnership binding,
+        PreparedToolPurpose selectedPurpose,
+        CancellationToken cancellationToken = default);
     internal Task<PreparedWorkspaceBorrowResult> BeginBorrowAsync(
         PreparedCodeGraphWorkspaceOwnership binding,
         PreparedToolPurpose purpose,
@@ -447,6 +518,7 @@ internal sealed class PreparedWorkspaceUseRegistry
     internal Task<PreparedWorkspaceSettlementStatus> CloseForDispositionAsync(
         PreparedCodeGraphWorkspaceOwnership binding,
         CancellationToken cancellationToken = default);
+    public ValueTask DisposeAsync();
 }
 internal sealed record PreparedWorkspaceBorrowResult(
     PreparedWorkspaceSettlementStatus Status,
@@ -459,6 +531,14 @@ internal sealed class PreparedWorkspaceBorrow : IAsyncDisposable
 }
 ```
 
+`PreparedWorkspaceUseRegistry` has one admitted key per instance and starts Closed. T031 constructs it with controlled source/tool/store/host/previous-generation dependencies and calls `AdmitAsync` directly on a controlled existing-record fixture before `BeginBorrowAsync`; T033's later binding source is not needed to create this test state. The controlled host fake returns a scoped hold for call-order, race and disposal tests; this is not selected-host ACL/mutex qualification. A production host verifier is registered only with an approved principal from trusted host configuration and checks that identity against the effective process token, no-follow root/metadata objects and protected named mutex. The approved principal is not a Worker/tool argument. `ObserveAsync` returns `Observed` with non-null root/derived-owner fields for lookup but grants no use; `VerifyAndHoldAsync` returns `Protected` only with one hold that owns the root/metadata handles and mutex. A `Protected` status with null hold, or `Observed` on the hold path, is `Unavailable`; a held scope's `CheckCurrentAsync` must continue returning `Protected` for the same root/owner/metadata/mutex before use and disposition. A failed check latches the registry unavailable, stops issue/borrow and cannot authorize cleanup. Only the registry owns and disposes a successful hold. Observation and hold objects are process-local proof, never a second serialized ownership descriptor or reader classification.
+
+`AdmitAsync(binding, selectedPurpose, token)` accepts an internal `Absent` draft only with the fixed initialized ledger's positive `VerifiedAbsent`, or a current `Ready` record exactly reloaded by the same store; transitional/terminal phases and stale versions stay Closed. The trusted constructor's positive `admissionDeadline` bounds source/tool/store/host/mutex/previous-generation checks, and its positive `dispositionDeadline` bounds closure; neither is a Worker argument. It verifies current exact source approval and selected tool purpose, then obtains and checks the selected-host hold. A fresh-process `Ready` additionally requires `IPreparedWorkspacePreviousGenerationVerifier.VerifySettledAsync` to return `Settled` from independent old child/handle evidence. Missing provider, `Active`/`Unknown`, empty local tracking, mutex reacquisition or parent PID exit cannot satisfy this check. After a final source/tool/store/hold check under the registry gate, it publishes `Opened`; every other result has no borrow/lease and disposes any partial hold. Cancellation before publish returns `Cancelled` and stays Closed; timeout, exception or uncertain cleanup returns `Unavailable`. Neither a later restored verifier nor a second `AdmitAsync` may reopen a Closing, Unknown or disposed instance. The status is trusted local output, not a Worker grant.
+
+The admitted key is immutable approval, physical root object, derived owner and `OwnershipId`; phase/version are reloaded from the same store for current use. A same-process `Absent` → `Creating` → `Ready` progression under the coordinator may advance the current version for that key while the registry retains its host hold; the registry requires exact monotonic store readback, never a copied Ready or changed immutable field. A new process has no retained hold/use history and treats persisted Ready as old-generation Unknown until separately settled. `BeginBorrowAsync` and the tracked issuer verify the Open state, current source/tool purpose, current store version and held proof before registering resources. A JDT borrow may use positively Absent or current Ready ownership classification; a native CodeGraph borrow requires current Ready, while a tracked CodeGraph-purpose lease may be issued under Absent solely for coordinator preparation. Creating/Disposing/uncertain versions permit no new native borrow. `CloseForDispositionAsync` latches new grants closed before checking existing tickets and returns `Settled` only after all same-key resources and the host hold remain verified; it does not revoke the underlying current `CodeGraphPreparation` authorization, which the coordinator still needs for fresh checked cleanup. The registry owns its hold through `Removed` readback or quarantine. Its `DisposeAsync` closes admissions, bounds waiting for owned uses, disposes the hold and records unknown settlement if resources cannot be proved closed; process exit is not a cleanup receipt.
+
+`PreparedManagedWorkspaceBindingSource.BindAsync` first calls `ObserveAsync` to derive root identity and owner for `FindExactWorkspaceAsync`, then rechecks a found record through `LoadAsync` or constructs a positively absent draft. It calls the registry's `AdmitAsync` with that binding and selected purpose; only `Opened` plus a final exact record/root check yields `Bound`. `VerifyAndHoldAsync` rechecks observation under the held root/mutex, so a race between observation and admission returns `Unavailable`. A T031 controlled fixture can call the registry directly with a manually built internal binding; production never treats that fixture, a caller `dedicated` boolean or owner string as authority. Actual Windows host protection and real previous-generation settlement remain separate qualification.
+
 `BindAsync` is callable only from trusted application admission with the exact grant used for 18.1 issuance; its physical root, approval and purpose are never Worker arguments. It rechecks `IPreparedSourceCurrentAuthorityVerifier` and `IPreparedToolUseAuthorizer`, opens the root without following substitutions, and compares the held root object identity. The host verifier is a concrete selected-host adapter, not an injected allow boolean: it checks that this operator-admitted root is the dedicated Vulgata-managed workspace under the approved application principal, derives workspace-unique `WorkspaceOwnerIdentity` from that principal plus the observed root object (not caller text), and validates no-follow source/metadata separation and the fixed SourceStorage child. Ordinary Worker tools must be unable to name/traverse that separate metadata root through their granted APIs; host ACL/mount protection against unrelated principals also needs qualification. Workers in the same app process may share its OS principal, so no false distinct-identity or preventive pinned-child claim follows. For single active host ownership, select a process-lifetime OS named mutex whose name is derived from a digest of the observed root object and approved application principal, with an app-only security descriptor; hold it through the binding/registry lifetime and disposition. Failure to acquire or qualify it returns `Unavailable`, rather than treating short file-CAS locks as a host lease. A crash releases that mutex but cannot prove prior native resources settled. The app's effective principal and host ACL/mount behavior require direct qualification. The trusted pinned CodeGraph child may inherit that principal's rights, so metadata placement makes no claim of denying that child OS access; its observed effects are Story 18.3 work.
 
 The binding source constructs only the existing record shape. Existing `IPreparedCodeGraphOwnershipStore.LoadAsync(expectedBinding)` cannot discover a prior `OwnershipId` from a newly constructed absent draft: it returns `Unavailable` if an exact workspace exists with another ID. Add one internal `FindExactWorkspaceAsync(approval, physicalRootPath, rootObjectIdentity, derivedWorkspaceOwnerIdentity, cancellationToken)` lookup to that same store/interface, returning the existing `PreparedCodeGraphOwnershipLoadResult` with the one matching record or positive initialized-ledger `VerifiedAbsent`; ambiguous/foreign/corrupt metadata returns `Unavailable`. It is a lookup over the fixed current ledger, not a new descriptor/schema. A found record is then reloaded through existing `LoadAsync(record)` before use. Create an `Absent` draft with a new `OwnershipId` only after that positive absence and absent fixed entry. Missing/corrupt metadata, stale approval, foreign Ready, substituted root/entry, ambiguous owner or unprotected placement is `Unavailable`, not a new draft. A current `Ready` record after restart still requires prior-generation resource settlement before any `VerifiedOwned` view or disposition. No new database table, ledger format, state name, source copy or standalone workspace manager is added. Existing `GetOwnershipViewAsync` remains the one reader/JDT classification producer.
@@ -467,7 +547,7 @@ The registry is one process-scoped instance for the exact approval/root/owner ke
 
 Before `DisposeOwnedStateAsync`, trusted composition calls `CloseForDispositionAsync` for the exact current binding. It latches closure against concurrent issuance and borrow, checks every lease registration and live settlement probe, and returns `Settled` only after all are verified closed. The existing `IPreparedCodeGraphWorkspaceOwnershipVerifier.VerifyDispositionReadyAsync` checks this latched status plus fresh exact owner/root/current-source/tool authority before each bounded deletion chunk; it cannot derive readiness from the coordinator callback ending. Closure remains latched through durable `Removed` readback or quarantine. On restart, process-local emptiness is `Unknown` for a persisted record: a new trusted admission must independently reconcile the prior generation's child/handle ownership before use or cleanup. Until the native owner can supply that proof, no Ready view, new borrow or disposition proceeds. `Creating`/`Disposing`/uncertain terminal state remains unavailable under the existing store rules. No new operator UI or automatic by-name cleanup is implied.
 
-The default Web composition stays file-only. Only after current operator admission/source-tool providers, selected-host root and metadata protection, exact binding, the registry, coordinator and protected store are qualified may a trusted production registration supply a bound JDT factory or enable `CodeGraphPreparation`. Real JDT additionally requires its distinct restricted launcher/profile and first-running-host-`PATH` qualification; this binding does not grant a native launch. Story 18.3 consumes the same typed binding and registry after a separate verified shared checkpoint and its own approval, then supplies real borrower/child/handle settlement and reader/native readiness evidence. If the actual operator admission or host protection cannot meet this contract without a new authority, owner, schema or root, return for a fresh scoped architecture decision.
+The default Web composition stays file-only. Only after current operator admission/source-tool providers, selected-host root and metadata protection, exact binding, the registry, coordinator and protected store are qualified may a trusted production registration supply a bound JDT factory or enable `CodeGraphPreparation`. Real JDT additionally requires its distinct restricted launcher/profile and first-running-host-`PATH` qualification; this binding does not grant a native launch. Story 18.3 consumes the same typed binding and registry after a separate verified shared checkpoint and its own approval, then supplies real borrower/child/handle settlement and reader/native readiness evidence. CodeGraph-enabled application composition must remain closed until 18.3 qualifies ordinary list/read/search exclusion of the owned physical entry, direct read access, budgets/continuations and native readiness; the 18.2 binding/hold does not repair ordinary file-tool traversal. If the actual operator admission or host protection cannot meet this contract without a new authority, owner, schema or root, return for a fresh scoped architecture decision.
 
 ### Trusted Web application composition
 
