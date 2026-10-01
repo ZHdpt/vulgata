@@ -108,6 +108,8 @@ internal sealed class PreparedJdtLsRuntime : IPreparedJdtLsRuntime
 
         IJdtLsProcess? process = null;
         IPreparedJdtLsSession? initialized = null;
+        Task<IJdtLsProcess>? pendingLaunch = null;
+        Task<IPreparedJdtLsSession>? pendingInitialization = null;
         var pinnedFiles = new List<FileStream>();
         using var timeout = new CancellationTokenSource(profile.InitializationTimeout);
         using var linked = CancellationTokenSource.CreateLinkedTokenSource(
@@ -208,19 +210,20 @@ internal sealed class PreparedJdtLsRuntime : IPreparedJdtLsRuntime
                 throw new InvalidOperationException("jdt_prelaunch_authority_unavailable");
             }
 
-            process = await _launcher.LaunchAsync(workspaceLease, launch, linked.Token)
-                .WaitAsync(linked.Token);
+            pendingLaunch = _launcher.LaunchAsync(workspaceLease, launch, linked.Token);
+            process = await pendingLaunch.WaitAsync(linked.Token);
             if (process is null)
             {
                 throw new InvalidOperationException("jdt_process_unavailable");
             }
 
-            initialized = await _protocols.InitializeAsync(
+            pendingInitialization = _protocols.InitializeAsync(
                 process,
                 new PreparedJdtInitializeRequest(
                     rootUri, rootUri, "repository", FixedOfflineSettings(),
                     profile.MaximumResponseBytes),
-                linked.Token).WaitAsync(linked.Token);
+                linked.Token);
+            initialized = await pendingInitialization.WaitAsync(linked.Token);
             if (initialized is null ||
                 await workspaceLease.CheckCurrentAsync(linked.Token) !=
                     PreparedToolWorkspaceCheckStatus.Current)
@@ -233,10 +236,50 @@ internal sealed class PreparedJdtLsRuntime : IPreparedJdtLsRuntime
         }
         catch (Exception exception)
         {
-            bool settled = await SettleAsync(initialized, process, profile.ShutdownTimeout);
-            foreach (FileStream pinnedFile in pinnedFiles)
+            bool pendingUnconfirmed = false;
+            bool pinsTransferred = false;
+            if (pendingLaunch is not null && process is null)
             {
-                pinnedFile.Dispose();
+                try
+                {
+                    process = await pendingLaunch.WaitAsync(profile.ShutdownTimeout);
+                }
+                catch (TimeoutException)
+                {
+                    pendingUnconfirmed = true;
+                    pinsTransferred = true;
+                    _ = SettleLateLaunchAsync(pendingLaunch, pinnedFiles.ToArray(),
+                        profile.ShutdownTimeout);
+                }
+                catch (Exception)
+                {
+                    // A completed failed launch returned no process to settle.
+                }
+            }
+
+            if (pendingInitialization is not null && initialized is null)
+            {
+                try
+                {
+                    initialized = await pendingInitialization.WaitAsync(profile.ShutdownTimeout);
+                }
+                catch (TimeoutException)
+                {
+                    pendingUnconfirmed = true;
+                    pinsTransferred = true;
+                    _ = SettleLateInitializationAsync(pendingInitialization,
+                        pinnedFiles.ToArray(), profile.ShutdownTimeout);
+                }
+                catch (Exception)
+                {
+                    // A completed failed initialization returned no session.
+                }
+            }
+
+            bool settled = await SettleAsync(initialized, process, profile.ShutdownTimeout);
+            if (!pinsTransferred)
+            {
+                DisposePins(pinnedFiles);
             }
 
             PreparedJavaNavigationOpenStatus status = cancellationToken.IsCancellationRequested
@@ -248,8 +291,57 @@ internal sealed class PreparedJdtLsRuntime : IPreparedJdtLsRuntime
                         : PreparedJavaNavigationOpenStatus.ConfigurationUnavailable;
             throw new PreparedJdtLsOpenFailureException(
                 status,
-                settled && (exception is not PreparedJdtLsOpenFailureException prior ||
+                settled && !pendingUnconfirmed &&
+                (exception is not PreparedJdtLsOpenFailureException prior ||
                     prior.CleanupConfirmed));
+        }
+    }
+
+    private static async Task SettleLateLaunchAsync(
+        Task<IJdtLsProcess> pendingLaunch,
+        FileStream[] pinnedFiles,
+        TimeSpan shutdownTimeout)
+    {
+        try
+        {
+            IJdtLsProcess? lateProcess = await pendingLaunch;
+            _ = await SettleAsync(null, lateProcess, shutdownTimeout);
+        }
+        catch (Exception)
+        {
+            // The failed launcher returned no process; this path never attests cleanup.
+        }
+        finally
+        {
+            DisposePins(pinnedFiles);
+        }
+    }
+
+    private static async Task SettleLateInitializationAsync(
+        Task<IPreparedJdtLsSession> pendingInitialization,
+        FileStream[] pinnedFiles,
+        TimeSpan shutdownTimeout)
+    {
+        try
+        {
+            IPreparedJdtLsSession? lateSession = await pendingInitialization;
+            _ = await SettleAsync(lateSession, null, shutdownTimeout);
+        }
+        catch (Exception)
+        {
+            // The failed protocol factory returned no session; cleanup was unconfirmed.
+        }
+        finally
+        {
+            DisposePins(pinnedFiles);
+        }
+    }
+
+    private static void DisposePins(IEnumerable<FileStream> pinnedFiles)
+    {
+        foreach (FileStream pinnedFile in pinnedFiles)
+        {
+            pinnedFile.Dispose();
         }
     }
 
