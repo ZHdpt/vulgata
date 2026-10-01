@@ -1,0 +1,16 @@
+{
+  "kind": "analysis",
+  "summary": "Expected regression RED for accepted partial-hold cleanup lifetime: the failing hold disposal throws before gate release, so later registry disposal cannot finish. Prior positive admission test remains passing. Expected RED and normal xUnit compilation correction are uncounted.",
+  "verification_route": "behavioral RED/GREEN",
+  "task_ids": ["T031", "T032"],
+  "source_commit": "b05361bf61d9ec016a00100fb941bc79b8be69bb",
+  "accepted_definition": "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/evidence/definition-review-attempt-16.json",
+  "implementation_approval": "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/evidence/implementation-approval-10.json",
+  "source_hashes": {"src/dotnet/Vulgata.Infrastructure/Source/PreparedWorkspaceUseRegistry.cs": "15a4eec624fcbc8d65adcee1446ce7fdb5698a223ba0d271e8977856a583a1dd", "tests/Vulgata.Tests/PreparedSource/PreparedWorkspaceUseRegistryTests.cs": "0842760850a8bdce43457f33f9869e035100483a4946f305c2b645e2b13d23a7"},
+  "command": "pwsh -NoProfile -File eng/test.ps1 -Filter 'FullyQualifiedName~PreparedWorkspaceUseRegistryTests'",
+  "result": {"path": "TestResults/isolation-0ceb829ca06749e8bed221f17ef0bc2a/results.trx", "sha256": "763bc54c9b444369773bc85ceeb928422dd5351cd4ea47350f7e1752190f21d4", "selected": 2, "passed": 1, "failed": 1, "skipped": 0},
+  "assertion": {"test": "AdmitAsync_WhenPartialHostHoldCleanupFails_RemainsUnavailableAndReleasesGate", "line": 147, "message": "Failed partial-hold cleanup must release the admission gate so registry disposal can finish.", "elapsed_seconds": 3.02},
+  "build": {"path": "TestResults/isolation-0ceb829ca06749e8bed221f17ef0bc2a/build.log", "sha256": "f13ec7a969f94f19e2633571c6ca7e09c0405351aad9fec4ff98a55195f4ef36", "result": "passed"},
+  "limits": "Controlled host fake only; no actual Windows protected root, native process or qualified Web composition.",
+  "recovery": {"failed_results": 3, "pause_at": 12, "changed": false}
+}

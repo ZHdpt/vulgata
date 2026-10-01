@@ -868,6 +868,9 @@
   "PreparedSource/PreparedToolWorkspaceIssuerTests.cs": {
     "suite": "SelfContained"
   },
+  "PreparedSource/PreparedWorkspaceUseRegistryTests.cs": {
+    "suite": "SelfContained"
+  },
   "PreparedSource/PreparedCodeGraphStateCoordinatorTests.cs": {
     "suite": "SelfContained"
   },

@@ -1,0 +1,13 @@
+{
+  "kind": "analysis",
+  "summary": "First current-Absent registry admission slice passed focused and surrounding verification after separate producer and test-owner final-shape assessment. Known partial-hold disposal/gate-release counterexample remains for the next accepted T031 regression slice; no implementation group or task completion claimed.",
+  "verification_route": "behavioral RED/GREEN",
+  "red": "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/evidence/T031-registry-positive-admission-red-01.json",
+  "minimal_green": {"path": "TestResults/isolation-bc56a231514246c6b806d1e93b3fee7b/results.trx", "sha256": "ef767db7af09bda50121a453288bdd92b792ac19db93f52b9ba225b422d4cdcd", "passed": 1, "failed": 0, "skipped": 0},
+  "producer_final_green": {"path": "TestResults/isolation-9cfdc846410844dabfb10d16f7c2513e/results.trx", "sha256": "988cd17f1764bc9f312fd0835f0ee25e7f518091e018fe1ec7d20af49c74f4e0", "passed": 1, "failed": 0, "skipped": 0},
+  "independent_final_verification": {"command": "pwsh -NoProfile -File eng/test.ps1 -Filter 'FullyQualifiedName~PreparedSource'", "path": "TestResults/isolation-d22eead176da4d9eb07607a89dc67ad9/results.trx", "sha256": "0e72a2b7ea2b4f8646deeb72e24b6da31ebdb186ddc5cd4d883a8c0efc90d22a", "passed": 176, "failed": 0, "skipped": 0, "build_sha256": "13c78b12d2bb81dec485c8d629daa23fc8d4ca4cbcb54c2072a992fd6fdc51e8"},
+  "source_hashes": {"src/dotnet/Vulgata.Infrastructure/Source/PreparedWorkspaceUseRegistry.cs": "15a4eec624fcbc8d65adcee1446ce7fdb5698a223ba0d271e8977856a583a1dd", "tests/Vulgata.Tests/PreparedSource/PreparedWorkspaceUseRegistryTests.cs": "818c2ac5dd883d3b00f0e3a6e66410d23680e342048fa85f4990294b6478ce0e", "tests/Vulgata.Tests/TestInfrastructure/suites.json": "cf3c4244843542edd1c23a1e2bb416b2fc1beb7e39661de3a2d07d33555dfac8"},
+  "final_shape": {"production": "Moved partial-hold cleanup under admission gate to prevent racing second admission; additional throwing-cleanup release counterexample identified independently and stays open.", "test": "Full controlled test unit assessed; independent explicit fixture and public-seam assertions sound, no refactor needed."},
+  "qualification": "Controlled fake-host only. Borrow/disposition and actual Windows adapter/native/protection qualification remain incomplete; no production enablement or integrated18.3 handoff.",
+  "recovery": {"failed_results": 3, "pause_at": 12, "changed": false}
+}
