@@ -66,3 +66,10 @@ Owned request denial and returned-owned-location exclusion preserve legitimate V
 ### Concrete Disposing and version coverage checkpoint (2026-10-01)
 
 Exact Ready to Disposing persists a monotonically newer record retaining physical entry and reads it back before success. Focused1/1 and combined affected classes54/54 passed, independently verified. Both owners assessed units with no concrete refactor needed. New JDT Ready-version drift coverage proves existing-correct fresh record equality, with no production change or fabricated RED. Original RED retained; recovery1/12 unchanged. Remaining cleanup/terminal/quarantine/CAS adversarial/process/protection and JDT physical aliases/native qualification remain open. Evidence: `T028-disposing-slice-completion-01.json` and `T016-ready-version-test-verification-01.json`.
+
+
+### Concrete Removed checkpoint and alias assessment (2026-10-01)
+
+Coordinator cleanup to durable Removed passed focused1/1 and surrounding17/17, independently verified; both retained owners found no concrete refactor needed. Current exact approval/readiness controls remain in coordinator; the store only commits after physical absence and reads back the terminal record. Source/sibling text remains unchanged. Evidence: `T028-removed-slice-completion-01.json`. Quarantine/adverse/CAS/process/protection/wiring/integration remain open; recovery1/12 unchanged.
+
+An exact-filter LocalTools test qualified a real non-lexical short directory alias with the same held-root physical identity, then reproduced ExpectedDenied/ActualNoResultObserved. No JDT/Java/CodeGraph child was launched. Both root and retained production owner classify the bounded internal first-directory identity helper as within the accepted physical-entry contract; no public/shared lease or reader contract changes. Impact was reported to idle Parallel Development schedule before implementation. Alias RED and assessment remain working evidence for next correction, not integration readiness.
