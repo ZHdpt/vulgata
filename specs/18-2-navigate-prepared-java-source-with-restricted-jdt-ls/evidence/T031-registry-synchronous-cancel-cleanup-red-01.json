@@ -1,0 +1,17 @@
+{
+  "kind": "analysis",
+  "summary": "Expected regression RED: a completed protected acquisition cancels the caller token; the cooperative hold is invoked once and throws currentness cancellation synchronously. Admission returns without disposing the acquired hold. Disposal count is measured as zero before shutdown, so caller cleanup does not mask the leak.",
+  "verification_route": "behavioral RED/GREEN",
+  "task_ids": ["T031", "T032"],
+  "source_commit": "2287a639db54d4f39872036dff19c9b06c66b960",
+  "accepted_definition": "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/evidence/definition-review-attempt-16.json",
+  "implementation_approval": "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/evidence/implementation-approval-10.json",
+  "source_hashes": {"src/dotnet/Vulgata.Infrastructure/Source/PreparedWorkspaceUseRegistry.cs": "01c5a825d9f8edc791187f9d07ee645f8297df5c1ef3fd84fbd5e2045842fd6b", "tests/Vulgata.Tests/PreparedSource/PreparedWorkspaceUseRegistryTests.cs": "348d44c7bf6a8916be07b9161eaccffa74cbf053d50d57b2ab7c0873a90c51de", "tests/Vulgata.Tests/TestInfrastructure/suites.json": "cf3c4244843542edd1c23a1e2bb416b2fc1beb7e39661de3a2d07d33555dfac8"},
+  "command": "pwsh -NoProfile -File eng/test.ps1 -Filter 'FullyQualifiedName~PreparedWorkspaceUseRegistryTests'",
+  "result": {"path": "TestResults/isolation-e3b757bd511c4758ab586432492d733e/results.trx", "sha256": "f872e557fd93f58289548c346a3509ea8fd7e03de0495a96ccf9d5d2399fc753", "selected": 16, "passed": 15, "failed": 1, "skipped": 0},
+  "assertion": "The registry must dispose the acquired hold when currentness throws synchronously on cancellation.",
+  "observations": {"current_check_count": 1, "disposal_count_before_shutdown": 0},
+  "build": {"path": "TestResults/isolation-e3b757bd511c4758ab586432492d733e/build.log", "sha256": "f738859f81d1171746e0c0a7e71252eee0f1621e8c76c3899e97626eb4ef6867", "result": "passed"},
+  "setup_observation": {"path": "TestResults/isolation-e62d81857e374776af1183a0dd0451be/build.log", "sha256": "d44dd13d59b272b09a3dbdeea4189b05796fabf5411e32cba4a31898c71c7f29", "classification": "uncounted test constructor/unsupported xUnit overload setup correction; no behavioral RED"},
+  "recovery": {"failed_results": 3, "pause_at": 12, "changed": false}
+}

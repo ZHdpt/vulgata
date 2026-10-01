@@ -121,6 +121,8 @@ internal sealed class PreparedWorkspaceUseRegistry : IAsyncDisposable
     private readonly SemaphoreSlim _gate = new(1, 1);
     private readonly object _publicationGate = new();
     private readonly HashSet<PreparedWorkspaceBorrow> _borrows = [];
+    private readonly HashSet<Task> _pendingProofChecks = [];
+    private readonly HashSet<Task> _pendingHostAcquisitions = [];
     private IPreparedManagedWorkspaceHostHold? _hold;
     private PreparedCodeGraphWorkspaceOwnership? _admittedBinding;
     private RegistryState _state = RegistryState.Closed;
@@ -128,6 +130,14 @@ internal sealed class PreparedWorkspaceUseRegistry : IAsyncDisposable
     private Task? _deferredShutdownCleanup;
 
     private enum RegistryState { Closed, Open, Closing, Unknown, Disposed }
+
+    private sealed class HeldCheckOwnershipTransferredException : OperationCanceledException
+    {
+        internal HeldCheckOwnershipTransferredException(CancellationToken cancellationToken)
+            : base(cancellationToken)
+        {
+        }
+    }
 
     internal PreparedWorkspaceUseRegistry(
         IPreparedSourceCurrentAuthorityVerifier sourceAuthority,
@@ -157,7 +167,7 @@ internal sealed class PreparedWorkspaceUseRegistry : IAsyncDisposable
         CancellationToken cancellationToken = default)
     {
         if (binding is null || cancellationToken.IsCancellationRequested ||
-            Volatile.Read(ref _shutdownRequested) != 0)
+            Volatile.Read(ref _shutdownRequested) != 0 || HasPendingChecks())
         {
             return new PreparedWorkspaceAdmissionResult(cancellationToken.IsCancellationRequested
                 ? PreparedWorkspaceAdmissionStatus.Cancelled
@@ -173,6 +183,7 @@ internal sealed class PreparedWorkspaceUseRegistry : IAsyncDisposable
             try
             {
                 if (_state != RegistryState.Closed || Volatile.Read(ref _shutdownRequested) != 0 ||
+                    HasPendingChecks() ||
                     binding.Phase is not (PreparedCodeGraphOwnershipPhase.Absent or PreparedCodeGraphOwnershipPhase.Ready))
                 {
                     return new PreparedWorkspaceAdmissionResult(PreparedWorkspaceAdmissionStatus.Unavailable);
@@ -191,14 +202,26 @@ internal sealed class PreparedWorkspaceUseRegistry : IAsyncDisposable
                 }
 
                 if (binding.Phase == PreparedCodeGraphOwnershipPhase.Ready &&
-                    await _previousGeneration.VerifySettledAsync(binding, deadline.Token)
+                    await AwaitProofAsync(
+                        _previousGeneration.VerifySettledAsync(binding, deadline.Token).AsTask(),
+                        deadline.Token)
                         != PreparedWorkspaceSettlementStatus.Settled)
                 {
                     return new PreparedWorkspaceAdmissionResult(PreparedWorkspaceAdmissionStatus.Unavailable);
                 }
 
-                PreparedManagedWorkspaceHostHoldResult host = await _hostProtection.VerifyAndHoldAsync(
-                    binding, _sourceStoragePolicy, deadline.Token);
+                Task<PreparedManagedWorkspaceHostHoldResult> acquisition =
+                    _hostProtection.VerifyAndHoldAsync(binding, _sourceStoragePolicy, deadline.Token);
+                PreparedManagedWorkspaceHostHoldResult host;
+                try
+                {
+                    host = await acquisition.WaitAsync(deadline.Token);
+                }
+                catch (OperationCanceledException)
+                {
+                    TrackLateHostAcquisition(acquisition);
+                    throw;
+                }
                 pendingHold = host.Hold;
                 if (host.Status != PreparedManagedWorkspaceHostStatus.Protected || pendingHold is null)
                 {
@@ -207,21 +230,44 @@ internal sealed class PreparedWorkspaceUseRegistry : IAsyncDisposable
                         : PreparedWorkspaceAdmissionStatus.Unavailable);
                 }
 
-                if (await pendingHold.CheckCurrentAsync(binding, deadline.Token)
-                    != PreparedManagedWorkspaceHostStatus.Protected)
+                PreparedManagedWorkspaceHostStatus heldStatus;
+                try
+                {
+                    heldStatus = await CheckHeldCurrentAsync(pendingHold, binding, deadline.Token);
+                }
+                catch (HeldCheckOwnershipTransferredException)
+                {
+                    pendingHold = null;
+                    throw;
+                }
+
+                if (heldStatus != PreparedManagedWorkspaceHostStatus.Protected)
                 {
                     return new PreparedWorkspaceAdmissionResult(PreparedWorkspaceAdmissionStatus.Unavailable);
                 }
 
                 authority = await CheckAuthorityAsync(binding, selectedPurpose, deadline.Token);
                 if (authority != PreparedWorkspaceAdmissionStatus.Opened ||
-                    !await CheckStoreAsync(binding, deadline.Token) ||
-                    await pendingHold.CheckCurrentAsync(binding, deadline.Token)
-                        != PreparedManagedWorkspaceHostStatus.Protected)
+                    !await CheckStoreAsync(binding, deadline.Token))
                 {
                     return new PreparedWorkspaceAdmissionResult(authority == PreparedWorkspaceAdmissionStatus.Denied
                         ? PreparedWorkspaceAdmissionStatus.Denied
                         : PreparedWorkspaceAdmissionStatus.Unavailable);
+                }
+
+                try
+                {
+                    heldStatus = await CheckHeldCurrentAsync(pendingHold, binding, deadline.Token);
+                }
+                catch (HeldCheckOwnershipTransferredException)
+                {
+                    pendingHold = null;
+                    throw;
+                }
+
+                if (heldStatus != PreparedManagedWorkspaceHostStatus.Protected)
+                {
+                    return new PreparedWorkspaceAdmissionResult(PreparedWorkspaceAdmissionStatus.Unavailable);
                 }
 
                 deadline.Token.ThrowIfCancellationRequested();
@@ -277,8 +323,9 @@ internal sealed class PreparedWorkspaceUseRegistry : IAsyncDisposable
         PreparedToolPurpose purpose,
         CancellationToken cancellationToken)
     {
-        PreparedSourceAuthorityResult source = await _sourceAuthority.VerifyCurrentAsync(
-            binding.Approval, cancellationToken);
+        PreparedSourceAuthorityResult source = await AwaitProofAsync(
+            _sourceAuthority.VerifyCurrentAsync(binding.Approval, cancellationToken),
+            cancellationToken);
         if (source.Status != PreparedSourceAuthorityStatus.Current ||
             source.CurrentApproval != binding.Approval)
         {
@@ -287,8 +334,9 @@ internal sealed class PreparedWorkspaceUseRegistry : IAsyncDisposable
                 : PreparedWorkspaceAdmissionStatus.Unavailable;
         }
 
-        PreparedToolUseAuthorityResult tool = await _toolAuthorization.VerifyCurrentAsync(
-            binding.Approval, purpose, cancellationToken);
+        PreparedToolUseAuthorityResult tool = await AwaitProofAsync(
+            _toolAuthorization.VerifyCurrentAsync(binding.Approval, purpose, cancellationToken),
+            cancellationToken);
         return tool.Status switch
         {
             PreparedToolUseAuthorityStatus.Current => PreparedWorkspaceAdmissionStatus.Opened,
@@ -297,12 +345,157 @@ internal sealed class PreparedWorkspaceUseRegistry : IAsyncDisposable
         };
     }
 
+    private async Task<T> AwaitProofAsync<T>(Task<T> verification, CancellationToken cancellationToken)
+    {
+        try
+        {
+            return await verification.WaitAsync(cancellationToken);
+        }
+        catch (OperationCanceledException)
+        {
+            TrackLateProofCheck(verification);
+            throw;
+        }
+    }
+
+    private void TrackLateProofCheck(Task verification)
+    {
+        lock (_publicationGate)
+        {
+            _pendingProofChecks.Add(verification);
+        }
+
+        _ = ObserveLateProofCheckAsync(verification);
+    }
+
+    private bool HasPendingChecks()
+    {
+        lock (_publicationGate)
+        {
+            return _pendingProofChecks.Count != 0 || _pendingHostAcquisitions.Count != 0;
+        }
+    }
+
+    private void TrackLateHostAcquisition(Task<PreparedManagedWorkspaceHostHoldResult> acquisition)
+    {
+        lock (_publicationGate)
+        {
+            _pendingHostAcquisitions.Add(acquisition);
+        }
+
+        _ = DisposeLateHostAcquisitionAsync(acquisition);
+    }
+
+    private async Task<PreparedManagedWorkspaceHostStatus> CheckHeldCurrentAsync(
+        IPreparedManagedWorkspaceHostHold hold,
+        PreparedCodeGraphWorkspaceOwnership binding,
+        CancellationToken cancellationToken)
+    {
+        Task<PreparedManagedWorkspaceHostStatus> check =
+            hold.CheckCurrentAsync(binding, cancellationToken).AsTask();
+        try
+        {
+            return await check.WaitAsync(cancellationToken);
+        }
+        catch (OperationCanceledException)
+        {
+            lock (_publicationGate)
+            {
+                _pendingProofChecks.Add(check);
+            }
+
+            _ = DisposeAfterLateHeldCheckAsync(check, hold);
+            throw new HeldCheckOwnershipTransferredException(cancellationToken);
+        }
+    }
+
+    private async Task DisposeAfterLateHeldCheckAsync(
+        Task<PreparedManagedWorkspaceHostStatus> check,
+        IPreparedManagedWorkspaceHostHold hold)
+    {
+        try
+        {
+            await check;
+        }
+        catch
+        {
+            // The result is no longer authority after the admission deadline.
+        }
+
+        try
+        {
+            await hold.DisposeAsync();
+        }
+        catch
+        {
+            lock (_publicationGate)
+            {
+                Volatile.Write(ref _shutdownRequested, 1);
+                _state = RegistryState.Unknown;
+            }
+        }
+        finally
+        {
+            lock (_publicationGate)
+            {
+                _pendingProofChecks.Remove(check);
+            }
+        }
+    }
+
+    private async Task DisposeLateHostAcquisitionAsync(
+        Task<PreparedManagedWorkspaceHostHoldResult> acquisition)
+    {
+        try
+        {
+            PreparedManagedWorkspaceHostHoldResult result = await acquisition;
+            if (result.Hold is not null)
+            {
+                await result.Hold.DisposeAsync();
+            }
+        }
+        catch
+        {
+            lock (_publicationGate)
+            {
+                Volatile.Write(ref _shutdownRequested, 1);
+                _state = RegistryState.Unknown;
+            }
+        }
+        finally
+        {
+            lock (_publicationGate)
+            {
+                _pendingHostAcquisitions.Remove(acquisition);
+            }
+        }
+    }
+
+    private async Task ObserveLateProofCheckAsync(Task verification)
+    {
+        try
+        {
+            await verification;
+        }
+        catch
+        {
+            // A late proof cannot authorize a timed-out operation.
+        }
+        finally
+        {
+            lock (_publicationGate)
+            {
+                _pendingProofChecks.Remove(verification);
+            }
+        }
+    }
+
     private async Task<bool> CheckStoreAsync(
         PreparedCodeGraphWorkspaceOwnership binding,
         CancellationToken cancellationToken)
     {
-        PreparedCodeGraphOwnershipLoadResult loaded = await _ownershipStore.LoadAsync(
-            binding, cancellationToken);
+        PreparedCodeGraphOwnershipLoadResult loaded = await AwaitProofAsync(
+            _ownershipStore.LoadAsync(binding, cancellationToken), cancellationToken);
         return binding.Phase switch
         {
             PreparedCodeGraphOwnershipPhase.Absent =>

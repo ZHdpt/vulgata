@@ -1,0 +1,12 @@
+{
+  "kind": "analysis",
+  "summary": "Independent eleven-case verification passes: admission is bounded during stalled host acquisition, late non-null hold disposal is observed, and no late borrow is granted. Other mandatory proof waits and hold disposal deadlines remain unfinished.",
+  "verification_route": "behavioral RED/GREEN",
+  "red": "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/evidence/T031-registry-late-host-deadline-red-01.json",
+  "minimal_green": {"path": "TestResults/isolation-9cd19ffdbed5405498ec34e29672d4ac/results.trx", "sha256": "9ff6fa74cadcdc6e1b771b32003c0dd6eb0432d8b1667b49370ce94f0cfd5089", "passed": 11, "failed": 0, "skipped": 0, "build_sha256": "1bc2aa124c8f30ac3ec9db21fab9ef111932dbcda871253aae71b102f893f08f"},
+  "independent_final_verification": {"path": "TestResults/isolation-8fee58e879b045f780e8a59aa4688ca4/results.trx", "sha256": "2429bffd48b5958dac63c2cca2dc5e8d0a220b565fbb62c57e43a3d45ed56838", "passed": 11, "failed": 0, "skipped": 0, "build_sha256": "9655d99e1201e9c8a8127ea2bfa0658b0fb9145451db9aff0150d05e24878574"},
+  "source_hashes": {"src/dotnet/Vulgata.Infrastructure/Source/PreparedWorkspaceUseRegistry.cs": "6c6728cc5329074f74c03bcce8f9559b9db949e921c4bff417e89a5ffb71d3cc", "tests/Vulgata.Tests/PreparedSource/PreparedWorkspaceUseRegistryTests.cs": "70ea8a2a37c5c5f50ab84c44231f21fe8ba098758da320ef53ea0911ae7ed932", "tests/Vulgata.Tests/TestInfrastructure/suites.json": "cf3c4244843542edd1c23a1e2bb416b2fc1beb7e39661de3a2d07d33555dfac8"},
+  "final_shape": {"production": "Timed-out host acquisition remains retained and observed; any late non-null hold is disposed. Pending acquisition/disposal blocks admission; cleanup failure latches shutdown/Unknown. No further refactor for this case.", "test": "Eleven controlled public-seam scenarios preserve handshakes, bounded task observation and actual late-hold disposal signal before shutdown. No refactor needed."},
+  "qualification": "Controlled registry only. Broader Source184 belongs to previous checkpoint. Other tool/store/prior-generation/held-check and disposal bounds, immutable progression, integration and actual Windows/native behavior remain open.",
+  "recovery": {"failed_results": 3, "pause_at": 12, "changed": false}
+}

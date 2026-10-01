@@ -231,6 +231,384 @@ public sealed class PreparedWorkspaceUseRegistryTests
 
     [Trait("Suite", "SelfContained")]
     [SuiteFact("SelfContained")]
+    public async Task AdmitAsync_WhenCurrentSourceProviderIgnoresCancellation_ReturnsUnavailableByDeadline()
+    {
+        await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
+        fixture.Authority.Approve(fixture.Approval);
+
+        string sourceStorageRoot = Path.Combine(fixture.SandboxPath, "source-storage");
+        Directory.CreateDirectory(sourceStorageRoot);
+        string codeGraphPath = Path.Combine(fixture.PreparedRootPath, ".codegraph");
+        Directory.CreateDirectory(codeGraphPath);
+        RetainedSourceCapturePolicy sourceStoragePolicy = CreatePolicy(
+            fixture.SandboxPath,
+            fixture.PreparedRootPath,
+            sourceStorageRoot);
+        var binding = new PreparedCodeGraphWorkspaceOwnership(
+            OwnershipId: Guid.NewGuid(),
+            Version: 1,
+            Phase: PreparedCodeGraphOwnershipPhase.Ready,
+            Approval: fixture.Approval,
+            PhysicalRootPath: Path.GetFullPath(fixture.PreparedRootPath),
+            RootObjectIdentity: ObserveDirectoryIdentity(fixture.PreparedRootPath),
+            WorkspaceOwnerIdentity: $"owner-{fixture.SandboxId:N}",
+            StateEntryObjectIdentity: ObserveDirectoryIdentity(codeGraphPath));
+        var sourceAuthority = new UncooperativeCurrentSourceAuthority(fixture.Approval);
+        var registry = new PreparedWorkspaceUseRegistry(
+            sourceAuthority,
+            new CurrentToolAuthorization(fixture.Approval, PreparedToolPurpose.CodeGraphPreparation),
+            new ControlledOwnershipStore(binding),
+            sourceStoragePolicy,
+            new ProtectedHostVerifier(binding),
+            new PreviousGenerationSettledVerifier(),
+            admissionDeadline: TimeSpan.FromMilliseconds(100),
+            dispositionDeadline: TimeSpan.FromSeconds(2));
+        Task<PreparedWorkspaceAdmissionResult>? admissionTask = null;
+        PreparedWorkspaceAdmissionResult? admissionResult = null;
+        PreparedWorkspaceBorrowResult? lateBorrow = null;
+        bool returnedBeforeProviderRelease = false;
+
+        try
+        {
+            admissionTask = registry.AdmitAsync(binding, PreparedToolPurpose.CodeGraphPreparation);
+            await sourceAuthority.VerificationStarted.WaitAsync(TimeSpan.FromSeconds(2));
+
+            Task completed = await Task.WhenAny(admissionTask, Task.Delay(TimeSpan.FromSeconds(2)));
+            returnedBeforeProviderRelease = ReferenceEquals(admissionTask, completed);
+            if (returnedBeforeProviderRelease)
+            {
+                admissionResult = await admissionTask;
+            }
+        }
+        finally
+        {
+            sourceAuthority.ReleaseCurrent();
+            await sourceAuthority.PendingVerification.WaitAsync(TimeSpan.FromSeconds(2));
+
+            if (admissionTask is not null)
+            {
+                Task observedAdmission = await Task.WhenAny(admissionTask, Task.Delay(TimeSpan.FromSeconds(2)));
+                if (ReferenceEquals(admissionTask, observedAdmission))
+                {
+                    try
+                    {
+                        admissionResult = await admissionTask;
+                        lateBorrow = await registry.BeginBorrowAsync(
+                            binding,
+                            PreparedToolPurpose.CodeGraphPreparation,
+                            new ControlledResourceProbe());
+                    }
+                    catch
+                    {
+                        // The test asserts public outcomes after cleanup; cleanup only observes the controlled admission.
+                    }
+                }
+            }
+
+            await registry.DisposeAsync().AsTask().WaitAsync(TimeSpan.FromSeconds(2));
+        }
+
+        Assert.True(returnedBeforeProviderRelease,
+            "Admission must finish within its trusted deadline even when the current-source provider ignores cancellation.");
+        Assert.True(admissionResult is { Status: PreparedWorkspaceAdmissionStatus.Unavailable },
+            "An expired source check must return Unavailable rather than publish Open after the provider eventually returns Current.");
+        Assert.True(lateBorrow is { Borrow: null },
+            "The late Current provider result cannot open the registry or issue a borrow after the admission deadline.");
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task AdmitAsync_WhenHostAcquisitionIgnoresCancellation_DisposesLateHold()
+    {
+        await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
+        fixture.Authority.Approve(fixture.Approval);
+
+        string sourceStorageRoot = Path.Combine(fixture.SandboxPath, "source-storage");
+        Directory.CreateDirectory(sourceStorageRoot);
+        string codeGraphPath = Path.Combine(fixture.PreparedRootPath, ".codegraph");
+        Directory.CreateDirectory(codeGraphPath);
+        RetainedSourceCapturePolicy sourceStoragePolicy = CreatePolicy(
+            fixture.SandboxPath,
+            fixture.PreparedRootPath,
+            sourceStorageRoot);
+        var binding = new PreparedCodeGraphWorkspaceOwnership(
+            OwnershipId: Guid.NewGuid(),
+            Version: 1,
+            Phase: PreparedCodeGraphOwnershipPhase.Ready,
+            Approval: fixture.Approval,
+            PhysicalRootPath: Path.GetFullPath(fixture.PreparedRootPath),
+            RootObjectIdentity: ObserveDirectoryIdentity(fixture.PreparedRootPath),
+            WorkspaceOwnerIdentity: $"owner-{fixture.SandboxId:N}",
+            StateEntryObjectIdentity: ObserveDirectoryIdentity(codeGraphPath));
+        var hostProtection = new UncooperativeProtectedHostVerifier(binding);
+        var registry = new PreparedWorkspaceUseRegistry(
+            new CurrentSourceAuthority(fixture.Approval),
+            new CurrentToolAuthorization(fixture.Approval, PreparedToolPurpose.CodeGraphPreparation),
+            new ControlledOwnershipStore(binding),
+            sourceStoragePolicy,
+            hostProtection,
+            new PreviousGenerationSettledVerifier(),
+            admissionDeadline: TimeSpan.FromMilliseconds(100),
+            dispositionDeadline: TimeSpan.FromSeconds(2));
+        Task<PreparedWorkspaceAdmissionResult>? admissionTask = null;
+        PreparedWorkspaceAdmissionResult? admissionResult = null;
+        PreparedWorkspaceBorrowResult? lateBorrow = null;
+        bool returnedBeforeHostRelease = false;
+        bool lateHoldDisposed = false;
+
+        try
+        {
+            admissionTask = registry.AdmitAsync(binding, PreparedToolPurpose.CodeGraphPreparation);
+            await hostProtection.AcquisitionStarted.WaitAsync(TimeSpan.FromSeconds(2));
+
+            Task completed = await Task.WhenAny(admissionTask, Task.Delay(TimeSpan.FromSeconds(2)));
+            returnedBeforeHostRelease = ReferenceEquals(admissionTask, completed);
+            if (returnedBeforeHostRelease)
+            {
+                admissionResult = await admissionTask;
+            }
+        }
+        finally
+        {
+            hostProtection.ReleaseProtectedHold();
+            await hostProtection.ProviderRelease.WaitAsync(TimeSpan.FromSeconds(2));
+
+            if (admissionTask is not null)
+            {
+                Task observedAdmission = await Task.WhenAny(admissionTask, Task.Delay(TimeSpan.FromSeconds(2)));
+                if (ReferenceEquals(admissionTask, observedAdmission))
+                {
+                    try
+                    {
+                        admissionResult = await admissionTask;
+                        lateBorrow = await registry.BeginBorrowAsync(
+                            binding,
+                            PreparedToolPurpose.CodeGraphPreparation,
+                            new ControlledResourceProbe());
+                    }
+                    catch
+                    {
+                        // The public outcome is asserted on the success path; cleanup only observes the controlled admission.
+                    }
+                }
+            }
+
+            Task holdDisposed = await Task.WhenAny(
+                hostProtection.Hold.DisposalCompleted,
+                Task.Delay(TimeSpan.FromSeconds(2)));
+            lateHoldDisposed = ReferenceEquals(hostProtection.Hold.DisposalCompleted, holdDisposed);
+
+            await registry.DisposeAsync().AsTask().WaitAsync(TimeSpan.FromSeconds(2));
+        }
+
+        Assert.True(returnedBeforeHostRelease,
+            "Admission must finish within its trusted deadline when host verification ignores cancellation.");
+        Assert.True(admissionResult is { Status: PreparedWorkspaceAdmissionStatus.Unavailable },
+            "A late protected host result cannot publish Open after the admission deadline.");
+        Assert.True(lateHoldDisposed,
+            "The registry must dispose a protected hold returned after its admission deadline.");
+        Assert.True(lateBorrow is { Borrow: null },
+            "A late host hold cannot authorize a borrow after admission timed out.");
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData("tool-authorization")]
+    [InlineData("ownership-store")]
+    [InlineData("previous-generation")]
+    [InlineData("held-current-check")]
+    public async Task AdmitAsync_WhenMandatoryProofIgnoresCancellation_ReturnsUnavailableByDeadline(string proofStage)
+    {
+        await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
+        fixture.Authority.Approve(fixture.Approval);
+
+        string sourceStorageRoot = Path.Combine(fixture.SandboxPath, "source-storage");
+        Directory.CreateDirectory(sourceStorageRoot);
+        string codeGraphPath = Path.Combine(fixture.PreparedRootPath, ".codegraph");
+        Directory.CreateDirectory(codeGraphPath);
+        RetainedSourceCapturePolicy sourceStoragePolicy = CreatePolicy(
+            fixture.SandboxPath,
+            fixture.PreparedRootPath,
+            sourceStorageRoot);
+        var binding = new PreparedCodeGraphWorkspaceOwnership(
+            OwnershipId: Guid.NewGuid(),
+            Version: 1,
+            Phase: PreparedCodeGraphOwnershipPhase.Ready,
+            Approval: fixture.Approval,
+            PhysicalRootPath: Path.GetFullPath(fixture.PreparedRootPath),
+            RootObjectIdentity: ObserveDirectoryIdentity(fixture.PreparedRootPath),
+            WorkspaceOwnerIdentity: $"owner-{fixture.SandboxId:N}",
+            StateEntryObjectIdentity: ObserveDirectoryIdentity(codeGraphPath));
+        var proofWait = new ControlledAdmissionProofWait();
+        IPreparedToolUseAuthorizer toolAuthorization = proofStage == "tool-authorization"
+            ? new UncooperativeToolAuthorization(fixture.Approval, proofWait)
+            : new CurrentToolAuthorization(fixture.Approval, PreparedToolPurpose.CodeGraphPreparation);
+        IPreparedCodeGraphOwnershipStore ownershipStore = proofStage == "ownership-store"
+            ? new UncooperativeOwnershipStore(binding, proofWait)
+            : new ControlledOwnershipStore(binding);
+        IPreparedWorkspacePreviousGenerationVerifier previousGeneration = proofStage == "previous-generation"
+            ? new UncooperativePreviousGenerationVerifier(proofWait)
+            : new PreviousGenerationSettledVerifier();
+        UncooperativeCurrentHoldVerifier? heldCheckHost = null;
+        IPreparedManagedWorkspaceHostVerifier hostProtection;
+        if (proofStage == "held-current-check")
+        {
+            heldCheckHost = new UncooperativeCurrentHoldVerifier(binding, proofWait);
+            hostProtection = heldCheckHost;
+        }
+        else
+        {
+            hostProtection = new ProtectedHostVerifier(binding);
+        }
+
+        var registry = new PreparedWorkspaceUseRegistry(
+            new CurrentSourceAuthority(fixture.Approval),
+            toolAuthorization,
+            ownershipStore,
+            sourceStoragePolicy,
+            hostProtection,
+            previousGeneration,
+            admissionDeadline: TimeSpan.FromMilliseconds(100),
+            dispositionDeadline: TimeSpan.FromSeconds(2));
+        Task<PreparedWorkspaceAdmissionResult>? admissionTask = null;
+        PreparedWorkspaceAdmissionResult? admissionResult = null;
+        PreparedWorkspaceBorrowResult? laterBorrow = null;
+        bool returnedBeforeProviderRelease = false;
+        bool acquiredHoldDisposed = proofStage != "held-current-check";
+
+        try
+        {
+            admissionTask = registry.AdmitAsync(binding, PreparedToolPurpose.CodeGraphPreparation);
+            await proofWait.Started.WaitAsync(TimeSpan.FromSeconds(2));
+
+            Task completed = await Task.WhenAny(admissionTask, Task.Delay(TimeSpan.FromSeconds(2)));
+            returnedBeforeProviderRelease = ReferenceEquals(admissionTask, completed);
+            if (returnedBeforeProviderRelease)
+            {
+                admissionResult = await admissionTask;
+            }
+        }
+        finally
+        {
+            proofWait.Release();
+            await proofWait.ProviderTask.WaitAsync(TimeSpan.FromSeconds(2));
+
+            if (admissionTask is not null)
+            {
+                Task observedAdmission = await Task.WhenAny(admissionTask, Task.Delay(TimeSpan.FromSeconds(2)));
+                if (ReferenceEquals(admissionTask, observedAdmission))
+                {
+                    try
+                    {
+                        admissionResult = await admissionTask;
+                        laterBorrow = await registry.BeginBorrowAsync(
+                            binding,
+                            PreparedToolPurpose.CodeGraphPreparation,
+                            new ControlledResourceProbe());
+                    }
+                    catch
+                    {
+                        // The test asserts public outcomes after cleanup; cleanup only observes the controlled admission.
+                    }
+                }
+            }
+
+            if (heldCheckHost is not null)
+            {
+                Task disposed = await Task.WhenAny(
+                    heldCheckHost.Hold.DisposalCompleted,
+                    Task.Delay(TimeSpan.FromSeconds(2)));
+                acquiredHoldDisposed = ReferenceEquals(heldCheckHost.Hold.DisposalCompleted, disposed);
+            }
+
+            await registry.DisposeAsync().AsTask().WaitAsync(TimeSpan.FromSeconds(2));
+        }
+
+        Assert.True(returnedBeforeProviderRelease,
+            $"Admission must bound the {proofStage} proof even when its provider ignores cancellation.");
+        Assert.True(admissionResult is { Status: PreparedWorkspaceAdmissionStatus.Unavailable },
+            $"A late positive {proofStage} proof cannot publish Open after the admission deadline.");
+        Assert.True(laterBorrow is { Borrow: null },
+            $"A timed-out {proofStage} proof cannot authorize a borrow after admission closes.");
+        if (heldCheckHost is not null)
+        {
+            Assert.True(acquiredHoldDisposed,
+                "A hold acquired before a timed-out currentness check must be disposed after the late check completes.");
+        }
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task AdmitAsync_WhenHeldCheckCancelsSynchronously_DisposesAcquiredHold()
+    {
+        await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
+        fixture.Authority.Approve(fixture.Approval);
+
+        string sourceStorageRoot = Path.Combine(fixture.SandboxPath, "source-storage");
+        Directory.CreateDirectory(sourceStorageRoot);
+        RetainedSourceCapturePolicy sourceStoragePolicy = CreatePolicy(
+            fixture.SandboxPath,
+            fixture.PreparedRootPath,
+            sourceStorageRoot);
+        var binding = new PreparedCodeGraphWorkspaceOwnership(
+            OwnershipId: Guid.NewGuid(),
+            Version: 0,
+            Phase: PreparedCodeGraphOwnershipPhase.Absent,
+            Approval: fixture.Approval,
+            PhysicalRootPath: Path.GetFullPath(fixture.PreparedRootPath),
+            RootObjectIdentity: ObserveDirectoryIdentity(fixture.PreparedRootPath),
+            WorkspaceOwnerIdentity: $"owner-{fixture.SandboxId:N}",
+            StateEntryObjectIdentity: null);
+        using var callerCancellation = new CancellationTokenSource();
+        var hold = new SynchronouslyCancelledHostHold(binding);
+        var hostProtection = new CancellingProtectedHostVerifier(binding, hold, callerCancellation);
+        var registry = new PreparedWorkspaceUseRegistry(
+            new CurrentSourceAuthority(fixture.Approval),
+            new CurrentToolAuthorization(fixture.Approval, PreparedToolPurpose.CodeGraphPreparation),
+            new ControlledOwnershipStore(binding),
+            sourceStoragePolicy,
+            hostProtection,
+            new PreviousGenerationSettledVerifier(),
+            admissionDeadline: TimeSpan.FromSeconds(2),
+            dispositionDeadline: TimeSpan.FromSeconds(2));
+
+        PreparedWorkspaceAdmissionResult? admission = null;
+        PreparedWorkspaceBorrowResult? borrow = null;
+        int disposeCountAfterAdmission = 0;
+        bool disposalCompletedAfterAdmission = false;
+        try
+        {
+            admission = await registry.AdmitAsync(
+                binding,
+                PreparedToolPurpose.CodeGraphPreparation,
+                callerCancellation.Token);
+            disposeCountAfterAdmission = hold.DisposeCount;
+            disposalCompletedAfterAdmission = hold.DisposalCompleted.IsCompleted;
+            borrow = await registry.BeginBorrowAsync(
+                binding,
+                PreparedToolPurpose.CodeGraphPreparation,
+                new ControlledResourceProbe());
+        }
+        finally
+        {
+            await registry.DisposeAsync();
+        }
+
+        Assert.Equal(PreparedWorkspaceAdmissionStatus.Cancelled, admission?.Status);
+        Assert.True(hostProtection.VerifyAndHoldCount == 1,
+            "The controlled host provider must return the acquired protected hold before cancellation is observed.");
+        Assert.True(hold.CheckCurrentCount == 1,
+            "The held currentness proof must be called and synchronously observe the caller cancellation.");
+        Assert.True(disposeCountAfterAdmission == 1,
+            "The registry must dispose the acquired hold when currentness throws synchronously on cancellation.");
+        Assert.True(disposalCompletedAfterAdmission,
+            "Cancellation cleanup must finish disposing the acquired hold before registry shutdown.");
+        Assert.True(borrow?.Borrow is null,
+            "A cancelled admission must not issue a borrow for its prepared binding.");
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task BeginBorrowAsync_ReadyWorkspaceTracksJdtAndCodeGraphPurposesTogether()
     {
         await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
@@ -971,6 +1349,100 @@ public sealed class PreparedWorkspaceUseRegistryTests
         }
     }
 
+    private sealed class ControlledAdmissionProofWait
+    {
+        private readonly TaskCompletionSource _started = new(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+        private readonly TaskCompletionSource _released = new(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+        private Task? _providerTask;
+
+        internal Task Started => _started.Task;
+
+        internal Task ProviderTask => _providerTask ?? Task.CompletedTask;
+
+        internal void Release() => _released.TrySetResult();
+
+        internal Task<TResult> ReturnAfterReleaseAsync<TResult>(TResult result)
+        {
+            Task<TResult> providerTask = CompleteAfterReleaseAsync(result);
+            _providerTask = providerTask;
+            return providerTask;
+        }
+
+        private async Task<TResult> CompleteAfterReleaseAsync<TResult>(TResult result)
+        {
+            _started.TrySetResult();
+            await _released.Task;
+            return result;
+        }
+    }
+
+    private sealed class UncooperativeToolAuthorization(
+        PreparedSourceApproval expectedApproval,
+        ControlledAdmissionProofWait proofWait) : IPreparedToolUseAuthorizer
+    {
+        public Task<PreparedToolUseAuthorityResult> VerifyCurrentAsync(
+            PreparedSourceApproval approval,
+            PreparedToolPurpose toolPurpose,
+            CancellationToken cancellationToken = default) =>
+            proofWait.ReturnAfterReleaseAsync(new PreparedToolUseAuthorityResult(
+                approval == expectedApproval && toolPurpose == PreparedToolPurpose.CodeGraphPreparation
+                    ? PreparedToolUseAuthorityStatus.Current
+                    : PreparedToolUseAuthorityStatus.Denied));
+    }
+
+    private sealed class UncooperativeOwnershipStore(
+        PreparedCodeGraphWorkspaceOwnership expectedBinding,
+        ControlledAdmissionProofWait proofWait) : IPreparedCodeGraphOwnershipStore
+    {
+        public Task<PreparedCodeGraphOwnershipLoadResult> LoadAsync(
+            PreparedCodeGraphWorkspaceOwnership expected,
+            CancellationToken cancellationToken = default) =>
+            proofWait.ReturnAfterReleaseAsync(expected == expectedBinding
+                ? new PreparedCodeGraphOwnershipLoadResult(
+                    PreparedCodeGraphOwnershipLoadStatus.Found,
+                    expectedBinding)
+                : new PreparedCodeGraphOwnershipLoadResult(
+                    PreparedCodeGraphOwnershipLoadStatus.Unavailable,
+                    null));
+
+        public Task<PreparedCodeGraphOwnershipTransitionResult> BeginCreateAsync(
+            PreparedCodeGraphWorkspaceOwnership absent,
+            CancellationToken cancellationToken = default) =>
+            throw new InvalidOperationException("Admission must not mutate the Ready ownership record.");
+
+        public Task<PreparedCodeGraphOwnershipTransitionResult> CommitCreatedAsync(
+            PreparedCodeGraphWorkspaceOwnership creating,
+            PreparedToolDirectoryObjectIdentity createdEntry,
+            CancellationToken cancellationToken = default) =>
+            throw new InvalidOperationException("Admission must not commit a created entry.");
+
+        public Task<PreparedCodeGraphOwnershipTransitionResult> BeginDispositionAsync(
+            PreparedCodeGraphWorkspaceOwnership ready,
+            CancellationToken cancellationToken = default) =>
+            throw new InvalidOperationException("Admission must not begin disposition.");
+
+        public Task<PreparedCodeGraphOwnershipTransitionResult> CommitRemovedAsync(
+            PreparedCodeGraphWorkspaceOwnership disposing,
+            CancellationToken cancellationToken = default) =>
+            throw new InvalidOperationException("Admission must not commit removal.");
+
+        public Task<PreparedCodeGraphOwnershipTransitionResult> QuarantineAsync(
+            PreparedCodeGraphWorkspaceOwnership current,
+            CancellationToken cancellationToken = default) =>
+            throw new InvalidOperationException("Admission must not quarantine an unchanged Ready record.");
+    }
+
+    private sealed class UncooperativePreviousGenerationVerifier(ControlledAdmissionProofWait proofWait)
+        : IPreparedWorkspacePreviousGenerationVerifier
+    {
+        public ValueTask<PreparedWorkspaceSettlementStatus> VerifySettledAsync(
+            PreparedCodeGraphWorkspaceOwnership binding,
+            CancellationToken cancellationToken = default) =>
+            new(proofWait.ReturnAfterReleaseAsync(PreparedWorkspaceSettlementStatus.Settled));
+    }
+
     private sealed class ControlledOwnershipStore(PreparedCodeGraphWorkspaceOwnership expectedBinding)
         : IPreparedCodeGraphOwnershipStore
     {
@@ -1062,6 +1534,160 @@ public sealed class PreparedWorkspaceUseRegistryTests
             return Task.FromResult(binding == expectedBinding
                 ? new PreparedManagedWorkspaceHostHoldResult(PreparedManagedWorkspaceHostStatus.Protected, Hold)
                 : new PreparedManagedWorkspaceHostHoldResult(PreparedManagedWorkspaceHostStatus.Denied, null));
+        }
+    }
+
+    private sealed class CancellingProtectedHostVerifier(
+        PreparedCodeGraphWorkspaceOwnership expectedBinding,
+        SynchronouslyCancelledHostHold hold,
+        CancellationTokenSource callerCancellation)
+        : IPreparedManagedWorkspaceHostVerifier
+    {
+        internal int VerifyAndHoldCount { get; private set; }
+
+        public Task<PreparedManagedWorkspaceHostObservation> ObserveAsync(
+            PreparedSourceGrantRequest applicationHeldSourceGrant,
+            RetainedSourceCapturePolicy sourceStoragePolicy,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult(new PreparedManagedWorkspaceHostObservation(
+                PreparedManagedWorkspaceHostStatus.Observed,
+                expectedBinding.RootObjectIdentity,
+                expectedBinding.WorkspaceOwnerIdentity));
+
+        public Task<PreparedManagedWorkspaceHostHoldResult> VerifyAndHoldAsync(
+            PreparedCodeGraphWorkspaceOwnership binding,
+            RetainedSourceCapturePolicy sourceStoragePolicy,
+            CancellationToken cancellationToken = default)
+        {
+            VerifyAndHoldCount++;
+            Task<PreparedManagedWorkspaceHostHoldResult> completed = Task.FromResult(
+                binding == expectedBinding
+                    ? new PreparedManagedWorkspaceHostHoldResult(PreparedManagedWorkspaceHostStatus.Protected, hold)
+                    : new PreparedManagedWorkspaceHostHoldResult(PreparedManagedWorkspaceHostStatus.Denied, null));
+            callerCancellation.Cancel();
+            return completed;
+        }
+    }
+
+    private sealed class SynchronouslyCancelledHostHold(
+        PreparedCodeGraphWorkspaceOwnership expectedBinding) : IPreparedManagedWorkspaceHostHold
+    {
+        private readonly TaskCompletionSource _disposalCompleted = new(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+
+        internal int CheckCurrentCount { get; private set; }
+
+        internal int DisposeCount { get; private set; }
+
+        internal Task DisposalCompleted => _disposalCompleted.Task;
+
+        public ValueTask<PreparedManagedWorkspaceHostStatus> CheckCurrentAsync(
+            PreparedCodeGraphWorkspaceOwnership binding,
+            CancellationToken cancellationToken = default)
+        {
+            CheckCurrentCount++;
+            cancellationToken.ThrowIfCancellationRequested();
+            return ValueTask.FromResult(binding == expectedBinding
+                ? PreparedManagedWorkspaceHostStatus.Protected
+                : PreparedManagedWorkspaceHostStatus.Unavailable);
+        }
+
+        public ValueTask DisposeAsync()
+        {
+            DisposeCount++;
+            _disposalCompleted.TrySetResult();
+            return ValueTask.CompletedTask;
+        }
+    }
+
+    private sealed class UncooperativeProtectedHostVerifier(PreparedCodeGraphWorkspaceOwnership expectedBinding)
+        : IPreparedManagedWorkspaceHostVerifier
+    {
+        private readonly TaskCompletionSource _acquisitionStarted = new(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+        private readonly TaskCompletionSource _released = new(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+
+        internal Task AcquisitionStarted => _acquisitionStarted.Task;
+
+        internal Task ProviderRelease => _released.Task;
+
+        internal ProtectedHostHold Hold { get; } = new(expectedBinding);
+
+        internal void ReleaseProtectedHold() => _released.TrySetResult();
+
+        public Task<PreparedManagedWorkspaceHostObservation> ObserveAsync(
+            PreparedSourceGrantRequest applicationHeldSourceGrant,
+            RetainedSourceCapturePolicy sourceStoragePolicy,
+            CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            return Task.FromResult(new PreparedManagedWorkspaceHostObservation(
+                PreparedManagedWorkspaceHostStatus.Observed,
+                expectedBinding.RootObjectIdentity,
+                expectedBinding.WorkspaceOwnerIdentity));
+        }
+
+        public async Task<PreparedManagedWorkspaceHostHoldResult> VerifyAndHoldAsync(
+            PreparedCodeGraphWorkspaceOwnership binding,
+            RetainedSourceCapturePolicy sourceStoragePolicy,
+            CancellationToken cancellationToken = default)
+        {
+            _acquisitionStarted.TrySetResult();
+            await _released.Task;
+            return binding == expectedBinding
+                ? new PreparedManagedWorkspaceHostHoldResult(PreparedManagedWorkspaceHostStatus.Protected, Hold)
+                : new PreparedManagedWorkspaceHostHoldResult(PreparedManagedWorkspaceHostStatus.Denied, null);
+        }
+    }
+
+    private sealed class UncooperativeCurrentHoldVerifier(
+        PreparedCodeGraphWorkspaceOwnership expectedBinding,
+        ControlledAdmissionProofWait proofWait) : IPreparedManagedWorkspaceHostVerifier
+    {
+        internal UncooperativeCurrentHold Hold { get; } = new(expectedBinding, proofWait);
+
+        public Task<PreparedManagedWorkspaceHostObservation> ObserveAsync(
+            PreparedSourceGrantRequest applicationHeldSourceGrant,
+            RetainedSourceCapturePolicy sourceStoragePolicy,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult(new PreparedManagedWorkspaceHostObservation(
+                PreparedManagedWorkspaceHostStatus.Observed,
+                expectedBinding.RootObjectIdentity,
+                expectedBinding.WorkspaceOwnerIdentity));
+
+        public Task<PreparedManagedWorkspaceHostHoldResult> VerifyAndHoldAsync(
+            PreparedCodeGraphWorkspaceOwnership binding,
+            RetainedSourceCapturePolicy sourceStoragePolicy,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult(binding == expectedBinding
+                ? new PreparedManagedWorkspaceHostHoldResult(PreparedManagedWorkspaceHostStatus.Protected, Hold)
+                : new PreparedManagedWorkspaceHostHoldResult(PreparedManagedWorkspaceHostStatus.Denied, null));
+    }
+
+    private sealed class UncooperativeCurrentHold(
+        PreparedCodeGraphWorkspaceOwnership expectedBinding,
+        ControlledAdmissionProofWait proofWait) : IPreparedManagedWorkspaceHostHold
+    {
+        private readonly TaskCompletionSource _disposalCompleted = new(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+
+        internal Task DisposalCompleted => _disposalCompleted.Task;
+
+        internal bool IsDisposed { get; private set; }
+
+        public ValueTask<PreparedManagedWorkspaceHostStatus> CheckCurrentAsync(
+            PreparedCodeGraphWorkspaceOwnership binding,
+            CancellationToken cancellationToken = default) =>
+            new(proofWait.ReturnAfterReleaseAsync(!IsDisposed && binding == expectedBinding
+                ? PreparedManagedWorkspaceHostStatus.Protected
+                : PreparedManagedWorkspaceHostStatus.Unavailable));
+
+        public ValueTask DisposeAsync()
+        {
+            IsDisposed = true;
+            _disposalCompleted.TrySetResult();
+            return ValueTask.CompletedTask;
         }
     }
 

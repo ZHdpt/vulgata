@@ -1,0 +1,12 @@
+{
+  "kind": "analysis",
+  "summary": "Independent10/10 focused verification confirms bounded admission despite unresponsive source authority, Unavailable before provider release, and no late grant. Pending authority completion stays observed; other providers and host-hold cleanup remain unqualified.",
+  "verification_route": "behavioral RED/GREEN",
+  "red": "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/evidence/T031-registry-admission-deadline-red-01.json",
+  "minimal_green": {"path": "TestResults/isolation-dd54f6bb8d224d279c9e2fd1837583cc/results.trx", "sha256": "84d48e5fff66426f082f5b5cdd6560c0584b7a3bdacad80d146288f838d5d1fb", "passed": 10, "failed": 0, "skipped": 0, "build_sha256": "f66fbdcbe7ecbd54a370da721b3fbcfa3ec37e92bbfc55537e5dbe431447cf6c"},
+  "independent_final_verification": {"path": "TestResults/isolation-c8f186e539894d29a052c338e5c20111/results.trx", "sha256": "6d67882d43ef4c335fb743f20c3ef2e604aacb3b3aba8a3be86d9190cdd0a6f0", "passed": 10, "failed": 0, "skipped": 0, "build_sha256": "9212d7df4fac911122119854a4fc509f6f6f7be13ade5b921b54c07f47648611"},
+  "source_hashes": {"src/dotnet/Vulgata.Infrastructure/Source/PreparedWorkspaceUseRegistry.cs": "683928a44666871a287d7db4d4dd238ee42afbc80fb748dcb6d27d70fb277904", "tests/Vulgata.Tests/PreparedSource/PreparedWorkspaceUseRegistryTests.cs": "bd82c7eeb37340b2bd0a2313d8a0ee77465193f1cccd79b8d8c0685ae8652ac6", "tests/Vulgata.Tests/TestInfrastructure/suites.json": "cf3c4244843542edd1c23a1e2bb416b2fc1beb7e39661de3a2d07d33555dfac8"},
+  "final_shape": {"production": "Source await bounded independently of provider cancellation cooperation; timed-out task stays retained and observed, and admission is refused while it remains pending. No further refactor for this bounded case.", "test": "Ten public-seam scenarios preserve handshakes, bounded waits and observed cleanup. No private hooks or refactor required."},
+  "remaining": "VerifyAndHoldAsync late hold lifetime and other tool/store/host/prior-generation provider and disposal bounds, monotonic binding, issuer/coordinator integration and actual host/native qualification remain open. Source184 belongs to the prior checkpoint.",
+  "recovery": {"failed_results": 3, "pause_at": 12, "changed": false}
+}
