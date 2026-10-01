@@ -59,7 +59,9 @@ verification before reuse.
   contracts remain integrated and unchanged. Direct authority and actual source-issuer
   integration have bounded controlled/native-root evidence (20 focused, 344 surrounding);
   selected-Web controlled startup/route checks passed 17/17 with 249 surrounding
-  checks. Actual generator entry-point/provider composition and PostgreSQL/process
+  checks. Revised T015 callable-adapter assessment needs no production edit; current
+  real-authority module/lockout tests pass 2/2 and surrounding authority/source/Web
+  checks pass 267/267. Actual generator entry-point/provider composition and PostgreSQL/process
   qualification remain incomplete. Status in
   other assigned worktrees must be verified there. Sprint planning alone activated
   no feature.

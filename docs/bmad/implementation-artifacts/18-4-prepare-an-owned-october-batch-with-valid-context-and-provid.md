@@ -62,10 +62,14 @@ passing. Current tests prove route absence and reject obsolete inputs, not real
 database or native-host qualification.
 Current evidence is in `workflow-state.json` and the local authority/source issuer
 and independent generator module evidence under the existing feature directory.
-The new real headless-authority/module/store prepare tracer passes 1/1. Its wider
-authority run is 84/85: a separate unchanged approval-lockout fixture uses an elapsed
-absolute 08:10Z expiry. That pending fixture correction is recorded explicitly; no
-surrounding GREEN or production authorization defect is inferred from it.
+The real headless-authority/module/store prepare tracer now verifies the persisted
+snapshot through the actual selector. The lockout fixture uses a future real-Identity
+expiry and asserts the locked-out precondition, preserving Revoked/null expectations.
+Final focused coverage passes 2/2 and surrounding authority/source/Web coverage passes
+267/267, with no skips. Earlier 84/85 and collection-assertion failures remain raw
+history, not expected RED or workflow-count increments. Revised T015's production
+adapters conform without edits/refactoring and current regression completes that
+task; whole host and PostgreSQL qualification remain open.
 
 Expected behavioral RED and ordinary development build/test corrections do not
 consume recovery allowance. The existing episode remains 6/7 with its diagnosis,

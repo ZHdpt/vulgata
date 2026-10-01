@@ -96,14 +96,14 @@
     },
     "tasks": {
       "path": "specs/017-october-batch-setup/tasks.md",
-      "sha256": "8170a762b247c76b8003366d597f32d52c3d8112eeb67051f7491d175e2ac361"
+      "sha256": "955b189aea068d581e4226b0af78dc372b25ccae58382956d86b4bf284ae12f6"
     }
   },
   "bmad_epic_key": "epic-18",
   "bmad_story_key": "18-4-prepare-an-owned-october-batch-with-valid-context-and-provid",
   "checkpoint": {
-    "checkpoint_id": "bmad-18-4-definition-review-20261001T104152Z-457c64",
-    "stage": "definition-review",
+    "checkpoint_id": "bmad-18-4-implement-20261001T110215Z-67f2a6",
+    "stage": "implement",
     "commit_sha": null,
     "binding_status": "pending"
   },
@@ -118,14 +118,14 @@
     "specs/017-october-batch-setup/evidence/user-delegation-recovery-01.json",
     "specs/017-october-batch-setup/evidence/development-failure-accounting-correction-01.json",
     "specs/017-october-batch-setup/evidence/runtime-qualification-resource-authorization-01.json",
-    "specs/017-october-batch-setup/evidence/source-composition-lifetime-plan-self-review-01.json",
+    "specs/017-october-batch-setup/evidence/source-adapter-t015-final-shape-01.json",
     "specs/017-october-batch-setup/evidence/plan-authorization-05.json",
     "specs/017-october-batch-setup/evidence/implementation-approval-07.json",
     "specs/017-october-batch-setup/evidence/source-composition-lifetime-diagnosis-01.json",
     "specs/017-october-batch-setup/evidence/local-authority-command-cancellation-selection-final-green-01.json",
     "specs/017-october-batch-setup/evidence/protected-operator-input-final-verification-01.json",
     "specs/017-october-batch-setup/evidence/console-interactive-input-final-verification-01.json",
-    "specs/017-october-batch-setup/evidence/login-clr-isolation-01.json"
+    "specs/017-october-batch-setup/evidence/local-authority-module-current-final-green-01.json"
   ],
   "definition_author": {
     "escalation_decision_id": "18-4/definition-escalation/1",
@@ -159,10 +159,10 @@
   },
   "preflight": {
     "branch": "oct14/story-18-4",
-    "head": "af9872a62fa5805bc4f9b590f54d467da8247b07",
-    "git_identity_sha256": "e42b2d2936ae7fbde04a7eeb6de84ba25ae6ff096fcc6befc3f88bc3706a1098",
-    "status_sha256": "370bddafd6e7a31ef1d8e5db814f6483a649bc09bc9aa9a77cff8a1866b5c674",
-    "observed_at": "2026-10-01T10:43:33.397003Z"
+    "head": "495309a72e31aea1ad30d93153de0903e3c6d123",
+    "git_identity_sha256": "297523e6ba450f55998a7eb9b4a7b403ba5e272351f43d5efdb808f4fab125b7",
+    "status_sha256": "a4727deb2476d0718866808db891f0d5108d7a1761ac4092cd855df4edec2f36",
+    "observed_at": "2026-10-01T11:02:15.032717Z"
   },
   "recovery": {
     "action": "proceed",
@@ -187,8 +187,8 @@
   },
   "resume": {
     "stage": "implement",
-    "reason": "Corrected definition13 and plan14 accepted; delegated approvals5/7 bound. Owned definition checkpoint pending; resume retained dependency-ready TDD owners, count6/limit7, exact owned resource grant.",
-    "evidence_path": "specs/017-october-batch-setup/evidence/implementation-approval-07.json"
+    "reason": "T015 assessed/regressed, test-only fixture/tracer2/2+267/267 GREEN. Verified owned checkpoint pending; provider declarations compile but behavior/host wiring unfinished. Retain approvals7/count6limit7/resources.",
+    "evidence_path": "specs/017-october-batch-setup/evidence/local-authority-module-current-final-green-01.json"
   },
   "schema_version": "3.1",
   "stage": "implement",
@@ -196,5 +196,5 @@
     "path": "specs/017-october-batch-setup/evidence/transitions/transition-0079-source-composition-lifetime-definition-review-accept.json",
     "sha256": "2ca848c32533ac13112906c8861d2590972523d5ea6a4a209082299d8e1621d3"
   },
-  "updated_at": "2026-10-01T10:43:33.397003Z"
+  "updated_at": "2026-10-01T11:02:15.032717Z"
 }

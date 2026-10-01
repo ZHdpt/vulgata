@@ -16,6 +16,7 @@ using Vulgata.Core.DomainServices;
 using Vulgata.Core.Entities;
 using Vulgata.Infrastructure.Data;
 using Vulgata.Infrastructure.Data.October;
+using Vulgata.OctoberGenerator;
 using Vulgata.Shared;
 using Vulgata.Tests.TestInfrastructure;
 using Vulgata.Web.Data;
@@ -799,6 +800,89 @@ public sealed partial class OctoberLocalAuthorityTests
             repositoryId, OctoberContextScope.Global, OctoberContextScope.Repository), context.Differences);
         Assert.Contains(new OctoberContextDifference(
             repositoryId, OctoberContextScope.System, OctoberContextScope.Repository), context.Differences);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task GeneratorModule_PreparesOwnedBatchThroughCurrentLocalAuthority()
+    {
+        await using SelectionFixture fixture = await SelectionFixture.CreateAsync(
+            initializeOctoberSchema: false);
+        OctoberAuthoritySelectionRequest callerSelection = fixture.CreateRequest();
+        OctoberSetupRequest callerRequest = Assert.IsType<OctoberSetupRequest>(callerSelection.PrepareRequest);
+        Assert.Equal(string.Empty, callerRequest.SelectionDigest);
+
+        List<string> events = [];
+        ObservedLocalAuthority authority = new(fixture.Authority, events);
+        await using AsyncServiceScope targetScope = fixture.Provider.CreateAsyncScope();
+        OctoberDbContext october = targetScope.ServiceProvider.GetRequiredService<OctoberDbContext>();
+        IOctoberSetupWriter actualWriter = targetScope.ServiceProvider.GetRequiredService<IOctoberSetupWriter>();
+        ObservedSetupWriter writer = new(actualWriter, events);
+        OwnedOctoberTargetMigrator migrator = new(october, events);
+        OwnedTargetIdentityVerifier verifier = new(events);
+        OctoberBatchSelector selector = new(october, TargetId,
+            "sqlite://owned/october-authentication-target");
+        OctoberConfiguredTarget configuredTarget = new(
+            TargetId,
+            "sqlite://owned/october-authentication-target",
+            verifier,
+            migrator,
+            writer,
+            selector);
+        IOctoberGeneratorModule module = new OctoberGeneratorModule(authority, configuredTarget, AuthorityId);
+
+        OctoberGeneratorExecutionResult result = await module.ExecuteAsync(new OctoberGeneratorCommand(
+            OctoberGeneratorMode.Prepare,
+            TargetId,
+            callerRequest.BatchId,
+            callerRequest));
+
+        Assert.Equal(OctoberGeneratorExecutionStatus.Prepared, result.Status);
+        Assert.Equal(
+            ["authenticate", "authorize-selection", "target-identity", "migrate", "write"],
+            events);
+        Assert.Equal(TargetId, verifier.VerifiedTargetId);
+        Assert.Equal("sqlite://owned/october-authentication-target", verifier.VerifiedDatabaseIdentity);
+
+        OctoberCommittedBatch committed = Assert.IsType<OctoberCommittedBatch>(result.CommittedBatch);
+        string expectedDigest = OctoberSelectionDigest.Compute(
+            callerRequest, fixture.ExpectedFullySelectedContext());
+        Assert.Equal(callerRequest.BatchId, committed.BatchId);
+        Assert.Equal(TargetId, committed.TargetId);
+        Assert.Equal("sqlite://owned/october-authentication-target", committed.CanonicalDatabaseIdentity);
+        Assert.Equal(expectedDigest, committed.SelectionDigest);
+        Assert.NotEqual(callerRequest.SelectionDigest, committed.SelectionDigest);
+        Assert.Equal(fixture.Clock.GetUtcNow(), committed.SelectedAtUtc);
+
+        OctoberAuthorizedSelection authorized =
+            Assert.IsType<OctoberAuthorizedSelection>(authority.AuthorizedSelection);
+        OctoberSelectionResult selected = await selector.BindAsync(
+            new OctoberStartupSelection(TargetId, callerRequest.BatchId, authorized));
+        Assert.Equal(OctoberSelectionStatus.Selected, selected.Status);
+        OctoberBoundSetupSnapshot snapshot = Assert.IsAssignableFrom<IOctoberHistoricalBoundSetupData>(
+            selected.BoundSetupData).Snapshot;
+        Assert.Equal(TargetId, snapshot.Request.TargetId);
+        Assert.Equal(callerRequest.BatchId, snapshot.Request.BatchId);
+        Assert.Equal(expectedDigest, snapshot.Request.SelectionDigest);
+        Assert.Equal(SubjectId, snapshot.Authority.SubjectId);
+        Assert.Equal(AuthorityId, snapshot.Authority.SelectedContext?.ManagementAuthorityId);
+        OctoberSelectedAdvisoryContext selectedContext = Assert.IsType<OctoberSelectedAdvisoryContext>(
+            snapshot.Authority.SelectedContext);
+        OctoberSelectedAdvisoryContext expectedContext = fixture.ExpectedFullySelectedContext();
+        Assert.Equal(expectedContext.Repositories.ToArray(), selectedContext.Repositories.ToArray());
+        Assert.Equal(expectedContext.Entries.ToArray(), selectedContext.Entries.ToArray());
+        Assert.Equal(expectedContext.Differences.ToArray(), selectedContext.Differences.ToArray());
+        Assert.Equal(committed.SelectedAtUtc, snapshot.SelectedAtUtc);
+
+        IOctoberOperatorSession retainedSession =
+            Assert.IsAssignableFrom<IOctoberOperatorSession>(authority.AuthenticatedSession);
+        OctoberAuthoritySelectionResult afterDisposal = await fixture.Authority.AuthorizeSelectionAsync(
+            retainedSession,
+            fixture.CreateRequest(),
+            CancellationToken.None);
+        Assert.Equal(OctoberAuthorityDecisionStatus.Denied, afterDisposal.Status);
+        Assert.Null(afterDisposal.Request);
+        Assert.Null(afterDisposal.Authority);
     }
 
     [Trait("Suite", "SelfContained")]
@@ -1598,7 +1682,8 @@ public sealed partial class OctoberLocalAuthorityTests
         string? systemContextValue,
         string? repositoryContextValue,
         string roleName = RoleNames.SystemOwner,
-        bool standalone = false)
+        bool standalone = false,
+        bool createOctoberSchema = true)
     {
         await using (AsyncServiceScope identityScope = provider.CreateAsyncScope())
         {
@@ -1646,9 +1731,12 @@ public sealed partial class OctoberLocalAuthorityTests
             await management.SaveChangesAsync();
         }
 
-        await using OctoberDbContext october = new(
-            new DbContextOptionsBuilder<OctoberDbContext>().UseSqlite(connection).Options);
-        await october.Database.ExecuteSqlRawAsync(october.Database.GenerateCreateScript());
+        if (createOctoberSchema)
+        {
+            await using OctoberDbContext october = new(
+                new DbContextOptionsBuilder<OctoberDbContext>().UseSqlite(connection).Options);
+            await october.Database.ExecuteSqlRawAsync(october.Database.GenerateCreateScript());
+        }
     }
 
     private static async Task SeedUserAsync(ServiceProvider provider)
@@ -1987,6 +2075,99 @@ public sealed partial class OctoberLocalAuthorityTests
         public ValueTask DisposeAsync() => ValueTask.CompletedTask;
     }
 
+    private sealed class ObservedLocalAuthority(
+        IOctoberLocalAuthority inner,
+        List<string> events) : IOctoberLocalAuthority
+    {
+        public IOctoberOperatorSession? AuthenticatedSession { get; private set; }
+        public OctoberAuthorizedSelection? AuthorizedSelection { get; private set; }
+
+        public async Task<OctoberAuthenticationResult> AuthenticateAsync(CancellationToken cancellationToken)
+        {
+            events.Add("authenticate");
+            OctoberAuthenticationResult result = await inner.AuthenticateAsync(cancellationToken);
+            AuthenticatedSession = result.Session;
+            return result;
+        }
+
+        public async Task<OctoberAuthoritySelectionResult> AuthorizeSelectionAsync(
+            IOctoberOperatorSession session,
+            OctoberAuthoritySelectionRequest request,
+            CancellationToken cancellationToken)
+        {
+            events.Add("authorize-selection");
+            OctoberAuthoritySelectionResult result = await inner.AuthorizeSelectionAsync(
+                session, request, cancellationToken);
+            AuthorizedSelection = result.Authority;
+            return result;
+        }
+
+        public Task<OctoberSourceApprovalResult> IssueSourceApprovalAsync(
+            IOctoberOperatorSession session,
+            IOctoberHistoricalBoundSetupData boundSetup,
+            Guid repositoryId,
+            CancellationToken cancellationToken) =>
+            throw new NotSupportedException("The prepare tracer does not issue source approvals.");
+
+        public Task<PreparedSourceAuthorityResult> VerifySourceApprovalAsync(
+            IOctoberOperatorSession session,
+            string targetId,
+            PreparedSourceApproval approval,
+            CancellationToken cancellationToken) =>
+            throw new NotSupportedException("The prepare tracer does not verify source approvals.");
+
+        public Task<OctoberRevocationStatus> RevokeSourceApprovalAsync(
+            IOctoberOperatorSession session,
+            string targetId,
+            string approvalIdentity,
+            CancellationToken cancellationToken) =>
+            throw new NotSupportedException("The prepare tracer does not revoke source approvals.");
+    }
+
+    private sealed class OwnedTargetIdentityVerifier(List<string> events) :
+        IOctoberConnectedTargetIdentityVerifier
+    {
+        public string? VerifiedTargetId { get; private set; }
+        public string? VerifiedDatabaseIdentity { get; private set; }
+
+        public Task<OctoberConnectedTargetStatus> VerifyAsync(
+            string targetId,
+            string canonicalDatabaseIdentity,
+            CancellationToken cancellationToken = default)
+        {
+            events.Add("target-identity");
+            VerifiedTargetId = targetId;
+            VerifiedDatabaseIdentity = canonicalDatabaseIdentity;
+            return Task.FromResult(OctoberConnectedTargetStatus.Matched);
+        }
+    }
+
+    private sealed class OwnedOctoberTargetMigrator(
+        OctoberDbContext database,
+        List<string> events) : IOctoberTargetMigrator
+    {
+        public async Task MigrateAsync(CancellationToken cancellationToken = default)
+        {
+            events.Add("migrate");
+            await database.Database.ExecuteSqlRawAsync(
+                database.Database.GenerateCreateScript(), cancellationToken);
+        }
+    }
+
+    private sealed class ObservedSetupWriter(
+        IOctoberSetupWriter inner,
+        List<string> events) : IOctoberSetupWriter
+    {
+        public Task<OctoberPrepareResult> CommitAsync(
+            OctoberSetupRequest request,
+            OctoberAuthorizedSelection authority,
+            CancellationToken cancellationToken = default)
+        {
+            events.Add("write");
+            return inner.CommitAsync(request, authority, cancellationToken);
+        }
+    }
+
     private sealed class SelectionFixture : IAsyncDisposable
     {
         private const string GlobalContextValue = "Owned global advisory context.";
@@ -2036,7 +2217,8 @@ public sealed partial class OctoberLocalAuthorityTests
             string globalContextValue = GlobalContextValue,
             string? systemContextValue = SystemContextValue,
             string? repositoryContextValue = RepositoryContextValue,
-            TimeSpan? sessionLifetime = null)
+            TimeSpan? sessionLifetime = null,
+            bool initializeOctoberSchema = true)
         {
             DateTimeOffset now = new(2026, 10, 1, 8, 0, 0, TimeSpan.Zero);
             SqliteConnection connection = new("Data Source=:memory:");
@@ -2051,7 +2233,8 @@ public sealed partial class OctoberLocalAuthorityTests
             try
             {
                 await SeedOwnedAuthorityAsync(provider, connection, now,
-                    globalContextValue, systemContextValue, repositoryContextValue, roleName, standalone);
+                    globalContextValue, systemContextValue, repositoryContextValue, roleName, standalone,
+                    initializeOctoberSchema);
                 Guid? systemId = null;
                 Guid repositoryId;
                 Guid globalContextId;

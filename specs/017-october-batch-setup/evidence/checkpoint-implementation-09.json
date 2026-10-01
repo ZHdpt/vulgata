@@ -1,0 +1,63 @@
+{
+  "kind": "checkpoint-manifest",
+  "checkpoint_id": "bmad-18-4-implement-20261001T110215Z-67f2a6",
+  "stage": "implement",
+  "story_key": "18-4-prepare-an-owned-october-batch-with-valid-context-and-provid",
+  "source_head": "495309a72e31aea1ad30d93153de0903e3c6d123",
+  "binding_status": "pending",
+  "commit_sha": null,
+  "paths": [
+    "docs/agents/project-state.md",
+    "docs/bmad/implementation-artifacts/18-4-prepare-an-owned-october-batch-with-valid-context-and-provid.md",
+    "specs/017-october-batch-setup/tasks.md",
+    "specs/017-october-batch-setup/workflow-state.json",
+    "tests/Vulgata.Tests/October/OctoberLocalAuthorityTests.cs",
+    "tests/Vulgata.Tests/October/OctoberLocalSourceApprovalTests.cs",
+    "specs/017-october-batch-setup/evidence/source-adapter-t015-final-shape-01.json",
+    "specs/017-october-batch-setup/evidence/local-authority-module-current-final-green-01.json",
+    "specs/017-october-batch-setup/evidence/checkpoint-implementation-09.json"
+  ],
+  "preserved_unstaged": [
+    " M specs/017-october-batch-setup/evidence/checkpoint-implementation-06.json",
+    " M src/dotnet/Vulgata.Web/Data/OctoberBatchActivationService.cs",
+    "?? specs/017-october-batch-setup/evidence/host-composition-interruption-handoff-01.json",
+    "?? specs/017-october-batch-setup/evidence/transitions/transition-0066-independent-auth-build-failure.json",
+    "?? src/dotnet/Vulgata.Infrastructure/Configuration/"
+  ],
+  "preflight": {
+    "identity": {
+      "branch": "oct14/story-18-4",
+      "head": "495309a72e31aea1ad30d93153de0903e3c6d123",
+      "root": "C:/Users/13728/.codex/worktrees/d166/vulgata",
+      "common_dir": "G:/source/repos/vulgata/.git",
+      "worktree": "C:/Users/13728/.codex/worktrees/d166/vulgata"
+    },
+    "git_identity_sha256": "297523e6ba450f55998a7eb9b4a7b403ba5e272351f43d5efdb808f4fab125b7",
+    "status_sha256": "a4727deb2476d0718866808db891f0d5108d7a1761ac4092cd855df4edec2f36",
+    "porcelain": [
+      " M docs/agents/project-state.md",
+      " M docs/bmad/implementation-artifacts/18-4-prepare-an-owned-october-batch-with-valid-context-and-provid.md",
+      " M specs/017-october-batch-setup/evidence/checkpoint-implementation-06.json",
+      " M specs/017-october-batch-setup/tasks.md",
+      " M specs/017-october-batch-setup/workflow-state.json",
+      " M src/dotnet/Vulgata.Web/Data/OctoberBatchActivationService.cs",
+      " M tests/Vulgata.Tests/October/OctoberLocalAuthorityTests.cs",
+      " M tests/Vulgata.Tests/October/OctoberLocalSourceApprovalTests.cs",
+      "?? specs/017-october-batch-setup/evidence/host-composition-interruption-handoff-01.json",
+      "?? specs/017-october-batch-setup/evidence/local-authority-module-current-final-green-01.json",
+      "?? specs/017-october-batch-setup/evidence/source-adapter-t015-final-shape-01.json",
+      "?? specs/017-october-batch-setup/evidence/transitions/transition-0066-independent-auth-build-failure.json",
+      "?? src/dotnet/Vulgata.Infrastructure/Configuration/"
+    ],
+    "index": [],
+    "observed_at": "2026-10-01T11:02:15.032717Z",
+    "checkpoint_id": "bmad-18-4-implement-20261001T110215Z-67f2a6"
+  },
+  "verification": "Current focused2/2 and surrounding267/267 SelfContained passed, no skips; root verified TRX counters/hashes and exact test source hashes. No production edit for T015; both final-shape dispositions no-refactor-needed. Runtime/PG/entrypoint/provider behavior not qualified.",
+  "task_progress": "Mechanical T015 completion only; accepted wording/30IDs preserved, T018/T019/T023/T024 still open. Unfinished provider scaffold excluded.",
+  "recovery": {
+    "failed_results": 6,
+    "pause_at": 7,
+    "changed": false
+  }
+}

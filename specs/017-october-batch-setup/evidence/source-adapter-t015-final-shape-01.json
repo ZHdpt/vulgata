@@ -1,0 +1,29 @@
+{
+  "kind": "analysis",
+  "stage": "implement",
+  "source_commit": "495309a72e31aea1ad30d93153de0903e3c6d123",
+  "task_ids": [
+    "T015"
+  ],
+  "verification_route": "existing-correct adapters: retained/current regression and final-shape assessment, no fabricated RED",
+  "summary": "Retained production owner assessed the current exact verifier/root-binding adapters against accepted revised T015 and found no required production edit/refactor. Controlled integration caller owns source-session/context lifetime; setup module disposes its separate setup session before returning metadata. Current test-owner regression is pending before root marks T015 complete; no actual host/PostgreSQL/generation qualification claimed.",
+  "input_hashes": {
+    "src/dotnet/Vulgata.Infrastructure/Source/OctoberPreparedSourceAuthorityVerifier.cs": "e638d7d92c053b5a54e861cdf976f8f59aaed7fa8a1cf3fac70ab626724b8e2e",
+    "src/dotnet/Vulgata.OctoberGenerator/PreparedSourceBinding.cs": "3e3d8f494e7cd6b9e2868764616e49571f6bbd0cde5aeaf0a12f502590e9a742",
+    "specs/017-october-batch-setup/plan.md": "119a56fd62cc4f8750aa5d685d7ff34973ab1c3549600f6f252b19a770ddbfa3",
+    "specs/017-october-batch-setup/tasks.md": "8170a762b247c76b8003366d597f32d52c3d8112eeb67051f7491d175e2ac361"
+  },
+  "raw_worker_response": "Revised T015’s callable adapters conform to the accepted setup-only boundary. No production edit or refactor is needed.\n\n[OctoberPreparedSourceAuthorityVerifier.cs](</C:/Users/13728/.codex/worktrees/d166/vulgata/src/dotnet/Vulgata.Infrastructure/Source/OctoberPreparedSourceAuthorityVerifier.cs:5>) uses the transport-neutral callback, rechecks the exact approval and root predicate, and fails closed. SHA-256: `e638d7d92c053b5a54e861cdf976f8f59aaed7fa8a1cf3fac70ab626724b8e2e`. [PreparedSourceBinding.cs](</C:/Users/13728/.codex/worktrees/d166/vulgata/src/dotnet/Vulgata.OctoberGenerator/PreparedSourceBinding.cs:13>) retains the exact immutable root mapping and calls the unchanged issuer. SHA-256: `3e3d8f494e7cd6b9e2868764616e49571f6bbd0cde5aeaf0a12f502590e9a742`.\n\nThe [controlled integration caller](</C:/Users/13728/.codex/worktrees/d166/vulgata/tests/Vulgata.Tests/October/OctoberPreparedSourceBindingTests.cs:658>) captures its own live session, awaits borrowed calls, and disposes contexts before the session. [OctoberGeneratorModule.cs](</C:/Users/13728/.codex/worktrees/d166/vulgata/src/dotnet/Vulgata.OctoberGenerator/OctoberGeneratorModule.cs:87>) separately disposes its setup session before returning metadata. Retained 20/344 evidence protects the adapter behavior; I ran no tests or builds during this assessment. Current test-owner regression and later host/PostgreSQL qualification remain separate.",
+  "assessment": {
+    "summary": "Revised T015’s callable adapters conform to the accepted setup-only boundary. No production edit or refactor is needed.",
+    "source_references": [
+      "src/dotnet/Vulgata.Infrastructure/Source/OctoberPreparedSourceAuthorityVerifier.cs:5",
+      "src/dotnet/Vulgata.OctoberGenerator/PreparedSourceBinding.cs:13",
+      "tests/Vulgata.Tests/October/OctoberPreparedSourceBindingTests.cs:658",
+      "src/dotnet/Vulgata.OctoberGenerator/OctoberGeneratorModule.cs:87"
+    ],
+    "checks_run": [],
+    "final_shape": "no-refactor-needed",
+    "limitations": "Retained20/344 protects prior adapter boundary; current test-owner regression and actual host/PostgreSQL qualification remain separate."
+  }
+}
