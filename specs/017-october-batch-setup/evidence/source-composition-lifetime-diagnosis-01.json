@@ -1,0 +1,5 @@
+{
+  "kind": "analysis",
+  "stage": "plan",
+  "summary": "Actual module command lifetime disposes authenticated session at setup/selection completion, while T015 requires a production caller to own source contexts through borrowed calls. Test-local construction proves current primitives but no actual caller is pinned. Existing code/source contracts remain valid. Changed approach: retained Astra-medium definition owner corrects only the plan's source-caller/session-lifetime seam and affected contract, reconciling the setup-only/no-source-work boundary without unused factories, later-story implementation, waiver or external prerequisite. Preserve unrelated plan IDs, tasks, completed code/tests, historical approvals and count6/limit7/holds. Independent plan review must assess semantic scope/authority applicability; tasks and affected downstream gates follow only the accepted bounded plan."
+}

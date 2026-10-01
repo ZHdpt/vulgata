@@ -42,13 +42,25 @@ verification before reuse.
   owns their scoped requirements and definitions, routed from the canonical epic index.
   Tracker refreshes require both epic files. Story 13.1 and October Story 18.1 are
   done; this checkout includes Story 18.1's completed baseline at `3632b2cc`. October
-  Story 18.4 is in implementation in `specs/017-october-batch-setup` after
-  accepted plan-review-13, definition-review-12 and delegated bindings 04/06.
+  Story 18.4 resumes in `specs/017-october-batch-setup` from implementation
+  checkpoint `af9872a`. The retained Astra-medium owner completed the bounded plan
+  correction; independent plan-review-14 accepted it at transition 0077 and delegated
+  plan-authorization-05 permits affected task reconciliation only. The candidate
+  distinguishes callable source-adapter integration from setup-only execution,
+  which disposes its session, and pins the provider binder's callable seam. T015
+  and affected task ordering are reconciled under the same 30 IDs. Independent
+  definition-review-13 accepted the current eight-artifact boundary and delegated
+  implementation-approval-07 permits dependency-ready delivery. Plan-review-13,
+  definition-review-12 and delegated bindings 04/06 remain
+  historical accepted authority for unchanged scope; affected gates were invalidated
+  and rerun for this correction, not waived or treated as advance approval.
   Its corrected plan uses independent batch execution and startup-only Web dataset
   selection; previous online-Web transport evidence is historical. Story 18.1
   contracts remain integrated and unchanged. Direct authority and actual source-issuer
   integration have bounded controlled/native-root evidence (20 focused, 344 surrounding);
-  real host composition and PostgreSQL/process qualification remain incomplete. Status in
+  selected-Web controlled startup/route checks passed 17/17 with 249 surrounding
+  checks. Actual generator entry-point/provider composition and PostgreSQL/process
+  qualification remain incomplete. Status in
   other assigned worktrees must be verified there. Sprint planning alone activated
   no feature.
   Its bounded retained-source
@@ -65,7 +77,9 @@ RED and ordinary first-pass development build failures do not consume recovery
 allowance; independent negative review/convergence and recurrent defects after
 repair remain counted. The bounded console testability correction preserves
 authentication policy; controlled terminal tests are not native-terminal proof. Runtime
-PostgreSQL/process qualification still requires explicitly authorized owned resources. Workflow
+PostgreSQL/process qualification now has an explicit fresh owned-resource grant in
+`runtime-qualification-resource-authorization-01.json`; this grants no revised-plan
+approval, recovery extension or waiver. Workflow
 installation itself activated no story; verify current runner ownership and its
 assigned checkout before interpreting the integration tracker. Story 13.1's
 `specs/015-retained-source-access` plan, state and evidence are completed history;

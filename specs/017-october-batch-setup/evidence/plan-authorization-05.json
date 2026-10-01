@@ -1,0 +1,21 @@
+{
+  "kind": "delegated-approval",
+  "stage": "plan-review",
+  "decision_id": "18-4/plan-authorization/5",
+  "status": "accepted",
+  "story_key": "18-4-prepare-an-owned-october-batch-with-valid-context-and-provid",
+  "delegate_id": "01a0e708-c489-7871-9f73-31413f20bf2c",
+  "decided_at": "2026-10-01T10:19:18Z",
+  "scope_sha256": "ac27cecad8321041f8fa57733d632c48214c76cf899a013ccfd3cbe9eff52e2e",
+  "delegation": {
+    "path": "specs/017-october-batch-setup/evidence/user-delegation-recovery-01.json",
+    "sha256": "e299e832115615dbde3bc828ab5e4132e0de4c13c0d64372732ab07c6d5646c6"
+  },
+  "response_source": "thread01a0e708-c489-7871-9f73-31413f20bf2c; turn01a0f6f9-0964-7891-86af-b4d8463b7928; message msg_0e55faeae43f1fb3016abe339a73ec8196941fc22173f9f678",
+  "response_text": "APPROVE — 18-4/plan-authorization/5, for affected task reconciliation only. Read-only verification succeeded: HEAD: af9872a62fa5805bc4f9b590f54d467da8247b07 Review SHA-256: fb9af3d4cb9240a130cdcdf9dec2421749a898e17e98a23ccf5b38df29f86625 Exact seven-path diff digest: e10f7afd9bd680b4783a969b8b55fbba5680245efee75419fcfa4c22b667ce35 All seven artifact hashes match; independent review is ACCEPT. The clarification correctly separates setup-session disposal from controlled source-adapter qualification and defines atomic, explicit provider binding without claiming a generation consumer. Complete-definition review and separate implementation approval remain required. Preserve resource boundaries, owners/model strategy and recovery 6/7. No implementation, runtime permission, extension or waiver is granted. This resolves the previous verification-only clarification for the same decision.",
+  "review": {
+    "path": "specs/017-october-batch-setup/evidence/plan-review-14.json",
+    "sha256": "fb9af3d4cb9240a130cdcdf9dec2421749a898e17e98a23ccf5b38df29f86625"
+  },
+  "summary": "Fresh bounded plan binding for source-adapter caller/lifetime reconciliation and concrete provider seam/dependency ordering under existing task IDs. Prior unchanged semantics/history retained. No implementation/resource grant, recovery extension/reset or waiver."
+}

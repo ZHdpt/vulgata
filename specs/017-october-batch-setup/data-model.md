@@ -24,6 +24,8 @@ Current Prepared Source Approval remains an October row keyed by opaque random A
 
 IOctoberOperatorSession is ephemeral, minted only by the production headless Identity adapter after actual authentication. Private implementation binds its authority instance, subject, original security stamp, expiry and closed state; no caller constructor or serialization can create accepted authority. It holds no password after authentication. Every protected operation checks current account/stamp/eligibility/roles; expiry/disposal/authority loss closes it. It is never a batch row or a Web browser principal.
 
+Generator prepare/select owns and disposes this session within ExecuteAsync; Web owns and disposes its startup session before serving. Their returned setup metadata does not retain source authority. The controlled source-adapter integration authenticates a separate caller-owned session and keeps it alive through issuance, settled borrowed function calls and asynchronous disposal of every context, then disposes the session. No production generation caller or durable session is introduced by this setup story.
+
 Approval issuance requires a current authenticated session and exact bound setup. Maximum approval lifetime is ten minutes, bounded by session expiry. Direct revoke is idempotent for an authorized subject/current Administrator. Fresh verifier calls read the current row and live identity/management data, so revocation works with Web stopped. Restored permission cannot reactivate a latched closed 18.1 context.
 
 ## Host configuration and provider binding

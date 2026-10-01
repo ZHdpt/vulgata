@@ -1,0 +1,22 @@
+{
+  "kind": "analysis",
+  "stage": "plan",
+  "source_commit": "af9872a62fa5805bc4f9b590f54d467da8247b07",
+  "summary": "First concrete source-session lifetime/caller definition discovery, noncounting. Route the bounded T015/setup-only lifetime inconsistency to retained definition owner; no production factory or later-story work invented.",
+  "observed_after": {
+    "path": "specs/017-october-batch-setup/evidence/transitions/transition-0073-console-testability-definition-review-accept.json",
+    "sha256": "68ca9dc2d04d4bddb54d3425b0f503c71dbe0bbc4b4d4a99a565ea3c3539e4ee"
+  },
+  "raw_result": {
+    "kind": "analysis",
+    "stage": "plan",
+    "summary": "Read-only T015 disposition: no actual production source-session consumer/callable construction path exists at this accepted setup-only generator boundary. OctoberGeneratorModule.ExecuteAsync (src/dotnet/Vulgata.OctoberGenerator/OctoberGeneratorModule.cs:71-150) authenticates then await using disposes its private session at command exit, returning only Prepared/Selected; contract batch-setup-selection.md:163 explicitly says this slice exits after setup/selection and later generation must extend lifetime, with no source work implied. Production PreparedSourceBinding only accepts an already-built issuer at :20-24 and issues via :59-80; verifier/issuer/function primitives are standalone. Repo-wide src/dotnet search finds no new PreparedSourceBinding, new OctoberPreparedSourceAuthorityVerifier, new PreparedSourceContextIssuer, or new PreparedSourceFunctions production call site. The concrete current-session lambda/issuer/binding construction exists only in test OctoberPreparedSourceBindingTests.cs:658-696; its 20/344 checks prove primitives, not production composition. T015:56 requires production capture in binding/module and context/session lifetime; plan ID-S04 and contract:179-181 require caller-owned context disposal after borrowed calls, but the accepted setup-only module has no such caller/operation. Adding an unused public factory or extending ExecuteAsync into Worker/source work would change this accepted boundary. Earliest owner: plan (lifetime/responsibility/callable consumer), then tasks T015/T019 reconciliation by retained definition owner. Valid current work: direct authority issue/verify, transport-neutral callback rename, exact root map, issuer and 18.1 functions, test-local integration; preserve all. No writes, tests, builds, or resource use."
+  },
+  "earliest_owner": "plan",
+  "retained_scope": "Independent setup-only generator; startup-only selected Web; unchanged18.1 issuer/functions/contracts; no Worker/source analysis, external prerequisite or new resources.",
+  "recovery": {
+    "failed_results": 6,
+    "pause_at": 7,
+    "incremented": false
+  }
+}

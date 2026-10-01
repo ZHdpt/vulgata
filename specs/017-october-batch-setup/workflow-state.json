@@ -1,10 +1,17 @@
 {
   "approvals": [
     {
-      "decided_at": "2026-09-29T10:30:42.0336756Z",
-      "decision_id": "18-4/plan-authorization/1",
-      "evidence_path": "specs/017-october-batch-setup/evidence/plan-authorization-01.json",
-      "scope_sha256": "545aec0d17c5295e09e4935d79c516e7c75556e25d4a00e9d1f8ffb37acced92",
+      "decided_at": "2026-10-01T10:19:18Z",
+      "decision_id": "18-4/plan-authorization/5",
+      "evidence_path": "specs/017-october-batch-setup/evidence/plan-authorization-05.json",
+      "scope_sha256": "ac27cecad8321041f8fa57733d632c48214c76cf899a013ccfd3cbe9eff52e2e",
+      "status": "accepted"
+    },
+    {
+      "decided_at": "2026-10-01T10:40:48Z",
+      "decision_id": "18-4/implementation-approval/7",
+      "evidence_path": "specs/017-october-batch-setup/evidence/implementation-approval-07.json",
+      "scope_sha256": "a5cc0f474dda3b2e1cef7d39079a4c881ba67b71e11276c0b70d50ab43e5f9f1",
       "status": "accepted"
     },
     {
@@ -81,7 +88,7 @@
   "artifacts": {
     "plan": {
       "path": "specs/017-october-batch-setup/plan.md",
-      "sha256": "a72bd8c4531d302f6f6ddc4797b20910205da362eacc11fc3e48ec5fddfaeb92"
+      "sha256": "119a56fd62cc4f8750aa5d685d7ff34973ab1c3549600f6f252b19a770ddbfa3"
     },
     "spec": {
       "path": "specs/017-october-batch-setup/spec.md",
@@ -89,16 +96,16 @@
     },
     "tasks": {
       "path": "specs/017-october-batch-setup/tasks.md",
-      "sha256": "f810aee84411cff49cb081e686a2d0621dd6b2da81557b3d517b3ed1c9f9e7b9"
+      "sha256": "8170a762b247c76b8003366d597f32d52c3d8112eeb67051f7491d175e2ac361"
     }
   },
   "bmad_epic_key": "epic-18",
   "bmad_story_key": "18-4-prepare-an-owned-october-batch-with-valid-context-and-provid",
   "checkpoint": {
-    "binding_status": "pending",
-    "checkpoint_id": "bmad-18-4-implement-20261001T081225Z-dbe49d",
+    "checkpoint_id": "bmad-18-4-definition-review-20261001T104152Z-457c64",
+    "stage": "definition-review",
     "commit_sha": null,
-    "stage": "implement"
+    "binding_status": "pending"
   },
   "convergence": {
     "attempt": 0,
@@ -110,11 +117,11 @@
     "docs/bmad/implementation-artifacts/18-4-prepare-an-owned-october-batch-with-valid-context-and-provid.md",
     "specs/017-october-batch-setup/evidence/user-delegation-recovery-01.json",
     "specs/017-october-batch-setup/evidence/development-failure-accounting-correction-01.json",
-    "specs/017-october-batch-setup/evidence/plan-review-13.json",
-    "specs/017-october-batch-setup/evidence/definition-review-12.json",
-    "specs/017-october-batch-setup/evidence/plan-authorization-04.json",
-    "specs/017-october-batch-setup/evidence/implementation-approval-06.json",
-    "specs/017-october-batch-setup/evidence/console-testability-diagnosis-01.json",
+    "specs/017-october-batch-setup/evidence/runtime-qualification-resource-authorization-01.json",
+    "specs/017-october-batch-setup/evidence/source-composition-lifetime-plan-self-review-01.json",
+    "specs/017-october-batch-setup/evidence/plan-authorization-05.json",
+    "specs/017-october-batch-setup/evidence/implementation-approval-07.json",
+    "specs/017-october-batch-setup/evidence/source-composition-lifetime-diagnosis-01.json",
     "specs/017-october-batch-setup/evidence/local-authority-command-cancellation-selection-final-green-01.json",
     "specs/017-october-batch-setup/evidence/protected-operator-input-final-verification-01.json",
     "specs/017-october-batch-setup/evidence/console-interactive-input-final-verification-01.json",
@@ -131,14 +138,14 @@
   "feature_directory": "specs/017-october-batch-setup",
   "gates": {
     "definition-review": {
-      "attempt": 8,
-      "status": "accepted",
-      "verdict_path": "specs/017-october-batch-setup/evidence/definition-review-12.json"
-    },
-    "plan-review": {
       "attempt": 9,
       "status": "accepted",
-      "verdict_path": "specs/017-october-batch-setup/evidence/plan-review-13.json"
+      "verdict_path": "specs/017-october-batch-setup/evidence/definition-review-13.json"
+    },
+    "plan-review": {
+      "attempt": 10,
+      "status": "accepted",
+      "verdict_path": "specs/017-october-batch-setup/evidence/plan-review-14.json"
     },
     "quality-review": {
       "attempt": 0,
@@ -152,10 +159,10 @@
   },
   "preflight": {
     "branch": "oct14/story-18-4",
-    "git_identity_sha256": "351c0a6fb957f2f1627181aa03d5ee27b5e27187eb1ed85062f2c99aaea59add",
-    "head": "ff8ddf2afa1c325610031a0e0e0b0fe33dacec08",
-    "observed_at": "2026-10-01T08:12:25.6880375Z",
-    "status_sha256": "bf0011d474c446c3e6aa9f52fbd56a532c12282076dac81441372bb6aed80197"
+    "head": "af9872a62fa5805bc4f9b590f54d467da8247b07",
+    "git_identity_sha256": "e42b2d2936ae7fbde04a7eeb6de84ba25ae6ff096fcc6befc3f88bc3706a1098",
+    "status_sha256": "370bddafd6e7a31ef1d8e5db814f6483a649bc09bc9aa9a77cff8a1866b5c674",
+    "observed_at": "2026-10-01T10:43:33.397003Z"
   },
   "recovery": {
     "action": "proceed",
@@ -163,8 +170,8 @@
     "diagnosis": {
       "at_count": 6,
       "evidence": {
-        "path": "specs/017-october-batch-setup/evidence/console-testability-diagnosis-01.json",
-        "sha256": "3ea6bbfca19f71108144b38c32e0e97be885a2396d5b311ca3bcd399f76fe50b"
+        "path": "specs/017-october-batch-setup/evidence/source-composition-lifetime-diagnosis-01.json",
+        "sha256": "8479dc57b534d36d54b2cb1aae039e88edaca03d11953afd4cb119ab9a56cff8"
       }
     },
     "earliest_owner": "tasks",
@@ -180,14 +187,14 @@
   },
   "resume": {
     "stage": "implement",
-    "reason": "Selected-Web current composition17/17 and surrounding249/249 verified; owned checkpoint pending. Resume remaining T018/T019 independent generator composition; count6/limit7 unchanged; runtime resources not granted.",
-    "evidence_path": "specs/017-october-batch-setup/evidence/selected-web-current-composition-final-green-01.json"
+    "reason": "Corrected definition13 and plan14 accepted; delegated approvals5/7 bound. Owned definition checkpoint pending; resume retained dependency-ready TDD owners, count6/limit7, exact owned resource grant.",
+    "evidence_path": "specs/017-october-batch-setup/evidence/implementation-approval-07.json"
   },
   "schema_version": "3.1",
   "stage": "implement",
   "transition_head": {
-    "path": "specs/017-october-batch-setup/evidence/transitions/transition-0073-console-testability-definition-review-accept.json",
-    "sha256": "68ca9dc2d04d4bddb54d3425b0f503c71dbe0bbc4b4d4a99a565ea3c3539e4ee"
+    "path": "specs/017-october-batch-setup/evidence/transitions/transition-0079-source-composition-lifetime-definition-review-accept.json",
+    "sha256": "2ca848c32533ac13112906c8861d2590972523d5ea6a4a209082299d8e1621d3"
   },
-  "updated_at": "2026-10-01T08:12:25.6880375Z"
+  "updated_at": "2026-10-01T10:43:33.397003Z"
 }

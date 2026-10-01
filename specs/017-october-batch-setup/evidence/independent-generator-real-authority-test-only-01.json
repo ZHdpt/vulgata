@@ -1,0 +1,13 @@
+{
+  "kind": "test-only", "stage": "implement", "outcome": "focused-passed-surrounding-pending",
+  "source_commit": "af9872a62fa5805bc4f9b590f54d467da8247b07",
+  "accepted_task": "T018",
+  "test": "OctoberLocalAuthorityTests.GeneratorModule_PreparesOwnedBatchThroughCurrentLocalAuthority",
+  "focused": {"command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName~GeneratorModule_PreparesOwnedBatchThroughCurrentLocalAuthority'", "exit_code": 0, "selected": 1, "passed": 1, "failed": 0, "skipped": 0, "trx_path": "TestResults/isolation-4538948f68dc4022bd927db6d0c989cc/results.trx"},
+  "surrounding": {"command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName~OctoberLocalAuthorityTests'", "exit_code": 1, "selected": 85, "passed": 84, "failed": 1, "trx_path": "TestResults/isolation-e9b861849482419eb36bffc9eeea6ccf/results.trx"},
+  "test_file_sha256": "4f4e8d299df64d3a6dc5c702fefc0d42f63d3aff8f7b807050cd6721a0faf11f",
+  "observed": "Real headless local authority and real policy/store with owned Identity/management SQLite; no prior October schema; authenticate/current authorize before controlled connected-identity/migration and actual write. Canonical digest persisted; session is denied after module disposal. Test owner final-shape assessment: no further refactor needed. Already-correct composition gets coverage, not fabricated RED.",
+  "pending_fixture": "Unchanged OctoberLocalSourceApprovalTests.VerifySourceApprovalAsync_RevokesWhenIdentityAccountIsLockedOut sets absolute 2026-10-01T08:10Z expiry while Identity uses wall time; expected Revoked/actual Current after that expiry. Outside issued write boundary, unchanged. Correct actual lockout precondition while preserving Revoked/no-payload assertion after affected definition gates; no full surrounding GREEN claimed.",
+  "limits": "Controlled SQLite/module integration only; no actual generator entry-point/Npgsql or source-caller composition qualification. Bounded T015 lifetime plan correction is separate.",
+  "recovery": {"failed_results": 6, "pause_at": 7, "changed": false}
+}

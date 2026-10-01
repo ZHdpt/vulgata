@@ -1,14 +1,21 @@
 # Story 18.4 development record
 
-Status: in-progress (corrected independent-batch definition accepted; implementation approved)
+Status: in-progress (corrected definition accepted and implementation approved; verified implementation preserved)
 Feature directory: `specs/017-october-batch-setup`
 Workflow state: `specs/017-october-batch-setup/workflow-state.json`
 
 ## Current delivery boundary (2026-10-01)
 
 The later user authorization supersedes the historical plan-only restrictions below.
-Current plan-review-13 and definition-review-12 are accepted; delegated planned-change
-and implementation bindings 04/06 remain applicable. The corrected target is an
+Plan-review-13 and definition-review-12 accepted the preceding definition; delegated
+bindings 04/06 remain historical authority for unchanged scope, not advance approval
+of corrected artifacts. The retained Astra-medium owner completed the bounded T015
+caller/session-lifetime and provider-seam plan correction; deterministic validation
+passed and independent plan-review-14 accepted it at transition 0077. Delegated
+plan-authorization-05 permits affected task reconciliation only. All 30 task IDs and
+completion markers are retained; independent definition-review-13 accepted the
+corrected definition. Separate delegated implementation-approval-07 is bound, with
+count6/limit7 unchanged. The target remains an
 independent batch executable with Web stopped and a whole Web dataset selected once
 from startup configuration, changed only by restart. No online authority transport
 or runtime dataset switch belongs to this accepted definition.
@@ -21,6 +28,18 @@ restricted native root-open denial. Context closure, per-Repository isolation an
 cancellation settlement are tested; 18.1 source contracts are unchanged. Console
 entry has controlled no-echo tests and a separate static native-adapter inspection,
 not native-terminal runtime qualification.
+
+Actual source-current-check construction exists only in trusted integration tests,
+not in a production caller. Earlier T015 required such a caller/context lifetime while the
+accepted setup-only generator contract exits and disposes its session without source
+work. The current candidate reconciles that gap as production callable adapters
+qualified together by the controlled caller, not an executable source consumer;
+contexts settle and dispose before the caller's session. It preserves direct
+authority, exact root mapping, existing issuer/functions and all controlled evidence.
+No later-story source analysis or external prerequisite is created. Independent
+plan/definition acceptance and bounded T015 task reconciliation are now recorded;
+production completion and runtime qualification are not yet claimed. The first
+discovery is a noncounting invalidation, with count6/limit7 intact.
 
 The generator module's direct orchestration passed independent final coverage (8/8)
 and surrounding regressions (344/344). The first actual selected-Web startup tracer
@@ -43,13 +62,23 @@ passing. Current tests prove route absence and reject obsolete inputs, not real
 database or native-host qualification.
 Current evidence is in `workflow-state.json` and the local authority/source issuer
 and independent generator module evidence under the existing feature directory.
+The new real headless-authority/module/store prepare tracer passes 1/1. Its wider
+authority run is 84/85: a separate unchanged approval-lockout fixture uses an elapsed
+absolute 08:10Z expiry. That pending fixture correction is recorded explicitly; no
+surrounding GREEN or production authorization defect is inferred from it.
 
 Expected behavioral RED and ordinary development build/test corrections do not
 consume recovery allowance. The existing episode remains 6/7 with its diagnosis,
 holds, retained Astra-medium definition ownership and model strategy preserved.
 Unavailable implementation/test sessions were restored under the same Sol-medium
 and Luna-high responsibilities from raw artifacts, without restarting definition.
-No database/container/host-process resource permission is inferred from this work.
+Actual subsequent user permission explicitly grants fresh runner-owned PostgreSQL17
+A/B (optional separate Identity), synthetic fixtures/keys/source roots and owned
+generator/Web processes on isolated loopback ports, with exact owned cleanup. See
+runtime-qualification-resource-authorization-01.json. This grants resources only,
+not approval of revised definition artifacts or a recovery extension; the separate
+definition approvals and remaining verification gates are not waived. No shared database/credentials,
+paid provider or unrelated process is authorized.
 Earlier grant-based plans/results and scope restrictions below are historical,
 not the current implementation authority.
 

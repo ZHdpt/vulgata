@@ -1,0 +1,17 @@
+{
+  "kind": "user-resource-permission", "stage": "implement", "status": "accepted",
+  "story_key": "18-4-prepare-an-owned-october-batch-with-valid-context-and-provid",
+  "recorded_at": "2026-10-01T09:54:12Z",
+  "user_source": "Current runner chat explicit question reply to request_user_input_async call_W54b5Io0ghPegfQrRwvUK253 question0",
+  "question": "For Story 18.4’s required real-runtime tests, do you authorize fresh runner-owned PostgreSQL 17 containers/volumes and A/B databases (including an optional separate Identity database), synthetic test accounts/credentials and owned protection keys/source roots, plus run-owned generator/Web processes on isolated loopback ports? Cleanup will touch only recorded run-owned resources—no shared databases, real credentials, paid providers or unrelated processes.",
+  "answer": "Authorize these owned test resources",
+  "scope": {
+    "database": "Fresh runner-owned PostgreSQL17 containers/volumes, A/B databases and optional explicitly owned separate Identity database; never another story's instance/database or ambient credentials",
+    "fixtures": "Synthetic test accounts/credentials, owned protection keys and source roots",
+    "processes": "Run-owned generator/Web processes on isolated loopback ports",
+    "cleanup": "Only exact recorded run-owned resources; preserve ownership labels, database/create records, process trees and port identity; verify cleanup through current testing.md launcher"
+  },
+  "exclusions": ["shared databases", "real credentials", "paid providers", "unrelated processes", "merge", "push", "history rewrite", "later-story implementation"],
+  "gates": "Resource permission only. Not a recovery extension, approval of revised artifacts, source/architecture waiver or permission to bypass pending affected definition/implementation/verification gates. Root dispatches runtime only after accepted prerequisites.",
+  "prior_request": "specs/017-october-batch-setup/evidence/runtime-qualification-resource-request-01.json"
+}
