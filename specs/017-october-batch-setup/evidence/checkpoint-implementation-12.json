@@ -1,0 +1,64 @@
+{
+  "kind": "checkpoint-manifest",
+  "checkpoint_id": "bmad-18-4-implement-20261001T134958Z-71a439",
+  "stage": "implement",
+  "story_key": "18-4-prepare-an-owned-october-batch-with-valid-context-and-provid",
+  "source_head": "0020ffdef6e45a361ac84716fd2a6320ab471a37",
+  "binding_status": "pending",
+  "commit_sha": null,
+  "paths": [
+    "docs/agents/project-state.md",
+    "docs/bmad/implementation-artifacts/18-4-prepare-an-owned-october-batch-with-valid-context-and-provid.md",
+    "specs/017-october-batch-setup/workflow-state.json",
+    "specs/017-october-batch-setup/tasks.md",
+    "tests/Vulgata.Tests/October/OctoberContextSelectionTests.cs",
+    "tests/Vulgata.Tests/TestInfrastructure/suites.json",
+    "specs/017-october-batch-setup/evidence/context-projection-final-green-01.json",
+    "specs/017-october-batch-setup/evidence/context-projection-t022-assessment-01.json",
+    "specs/017-october-batch-setup/evidence/checkpoint-implementation-12.json"
+  ],
+  "preserved_unstaged": [
+    " M specs/017-october-batch-setup/evidence/checkpoint-implementation-06.json",
+    " M src/dotnet/Vulgata.Web/Data/OctoberBatchActivationService.cs",
+    "?? specs/017-october-batch-setup/evidence/generator-composition-assessment-01.json",
+    "?? specs/017-october-batch-setup/evidence/generator-executable-development-resource-boundary-01.json",
+    "?? specs/017-october-batch-setup/evidence/host-composition-interruption-handoff-01.json",
+    "?? specs/017-october-batch-setup/evidence/transitions/transition-0066-independent-auth-build-failure.json"
+  ],
+  "preflight": {
+    "identity": {
+      "branch": "oct14/story-18-4",
+      "head": "0020ffdef6e45a361ac84716fd2a6320ab471a37",
+      "root": "C:/Users/13728/.codex/worktrees/d166/vulgata",
+      "common_dir": "G:/source/repos/vulgata/.git",
+      "worktree": "C:/Users/13728/.codex/worktrees/d166/vulgata"
+    },
+    "git_identity_sha256": "320335bacfa3bb9245ea6a6b6449cac9d75fcc9c8743ea6d7c12fa1f408b46e7",
+    "status_sha256": "19a4c39f82947c27e5ae39b698e13d4bc7cb27c24e7c97c4f636e36bf0523d1a",
+    "porcelain": [
+      " M docs/agents/project-state.md",
+      " M docs/bmad/implementation-artifacts/18-4-prepare-an-owned-october-batch-with-valid-context-and-provid.md",
+      " M specs/017-october-batch-setup/evidence/checkpoint-implementation-06.json",
+      " M specs/017-october-batch-setup/tasks.md",
+      " M specs/017-october-batch-setup/workflow-state.json",
+      " M src/dotnet/Vulgata.Web/Data/OctoberBatchActivationService.cs",
+      " M tests/Vulgata.Tests/TestInfrastructure/suites.json",
+      "?? specs/017-october-batch-setup/evidence/context-projection-final-green-01.json",
+      "?? specs/017-october-batch-setup/evidence/context-projection-t022-assessment-01.json",
+      "?? specs/017-october-batch-setup/evidence/generator-composition-assessment-01.json",
+      "?? specs/017-october-batch-setup/evidence/generator-executable-development-resource-boundary-01.json",
+      "?? specs/017-october-batch-setup/evidence/host-composition-interruption-handoff-01.json",
+      "?? specs/017-october-batch-setup/evidence/transitions/transition-0066-independent-auth-build-failure.json",
+      "?? tests/Vulgata.Tests/October/OctoberContextSelectionTests.cs"
+    ],
+    "index": [],
+    "observed_at": "2026-10-01T13:49:58.520158Z"
+  },
+  "verification": "Public-seam context focused1/1 and166/166 surrounding no skips, raw source/TRX hashes verified by root. Retained production no-gap assessment and test whole-unit no-refactor disposition. No production changes/fabricated RED.",
+  "task_progress": "Mechanical completion of T021/T022 only; same30IDs; others retained. Historical accepted tasks hash retained by definition review; current task hash mapped in state.",
+  "recovery": {
+    "failed_results": 6,
+    "pause_at": 7,
+    "changed": false
+  }
+}

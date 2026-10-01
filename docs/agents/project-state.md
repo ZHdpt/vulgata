@@ -66,7 +66,9 @@ verification before reuse.
   Data Protection compatibility. Selected-Web provider startup now passes independent
   12/12 focused and 249/249 surrounding tests, including pre-authentication atomic
   rejection and fixed process selection. This is controlled WAF/SQLite evidence;
-  actual generator entry-point/provider composition and PostgreSQL/process
+  Immutable context projection is additionally covered through the existing public
+  store/selector (1/1 focused, 166/166 surrounding); no duplicate store was added.
+  Actual generator entry-point/provider composition and PostgreSQL/process
   qualification remain incomplete. Status in
   other assigned worktrees must be verified there. Sprint planning alone activated
   no feature.

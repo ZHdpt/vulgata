@@ -96,13 +96,13 @@
     },
     "tasks": {
       "path": "specs/017-october-batch-setup/tasks.md",
-      "sha256": "955b189aea068d581e4226b0af78dc372b25ccae58382956d86b4bf284ae12f6"
+      "sha256": "431f367cea058a8d283024656e54f8f93df9cc35e10d953a3b332f024053fb0d"
     }
   },
   "bmad_epic_key": "epic-18",
   "bmad_story_key": "18-4-prepare-an-owned-october-batch-with-valid-context-and-provid",
   "checkpoint": {
-    "checkpoint_id": "bmad-18-4-implement-20261001T133613Z-19ca78",
+    "checkpoint_id": "bmad-18-4-implement-20261001T134958Z-71a439",
     "stage": "implement",
     "commit_sha": null,
     "binding_status": "pending"
@@ -125,7 +125,7 @@
     "specs/017-october-batch-setup/evidence/local-authority-command-cancellation-selection-final-green-01.json",
     "specs/017-october-batch-setup/evidence/provider-binding-final-green-01.json",
     "specs/017-october-batch-setup/evidence/selected-web-provider-final-green-01.json",
-    "specs/017-october-batch-setup/evidence/local-authority-module-current-final-green-01.json"
+    "specs/017-october-batch-setup/evidence/context-projection-final-green-01.json"
   ],
   "definition_author": {
     "escalation_decision_id": "18-4/definition-escalation/1",
@@ -159,10 +159,10 @@
   },
   "preflight": {
     "branch": "oct14/story-18-4",
-    "head": "784e5303514f77c45f542dcf83d47544b44cae24",
-    "git_identity_sha256": "2982842e461c19529d42c080afc2888f3a89cf96d47d834c4394d115295fd428",
-    "status_sha256": "88ecfe0cfff7917cbfa42b9032c20c399f1907c868e410b47e95a907dfe8b270",
-    "observed_at": "2026-10-01T13:37:24.673676Z"
+    "head": "0020ffdef6e45a361ac84716fd2a6320ab471a37",
+    "git_identity_sha256": "320335bacfa3bb9245ea6a6b6449cac9d75fcc9c8743ea6d7c12fa1f408b46e7",
+    "status_sha256": "19a4c39f82947c27e5ae39b698e13d4bc7cb27c24e7c97c4f636e36bf0523d1a",
+    "observed_at": "2026-10-01T13:49:58.520158Z"
   },
   "recovery": {
     "action": "proceed",
@@ -187,8 +187,8 @@
   },
   "resume": {
     "stage": "implement",
-    "reason": "Selected-Web provider group independently GREEN12/12 and249/249, both final units assessed. Commit owned checkpoint, then retained context coverage and generator composition; recovery6/7, approvals/gates unchanged.",
-    "evidence_path": "specs/017-october-batch-setup/evidence/selected-web-provider-final-green-01.json"
+    "reason": "T021/T022 complete via already implemented snapshot projection, GREEN1/1and166/166. Context checkpoint pending; next actual generator executable development tracer under owned grant. Recovery6/7 and gates unchanged.",
+    "evidence_path": "specs/017-october-batch-setup/evidence/context-projection-final-green-01.json"
   },
   "schema_version": "3.1",
   "stage": "implement",
@@ -196,5 +196,5 @@
     "path": "specs/017-october-batch-setup/evidence/transitions/transition-0088-selected-web-provider-utf8-loading-expected-red.json",
     "sha256": "7cf4928765cf52b46b9c2231270861926264a7e9060b8dd2dea087361e75fd38"
   },
-  "updated_at": "2026-10-01T13:37:24.673676Z"
+  "updated_at": "2026-10-01T13:49:58.520158Z"
 }

@@ -72,6 +72,14 @@ count6/limit7. See `evidence/provider-binding-final-green-01.json` and
 `evidence/selected-web-provider-final-green-01.json`. Executable/PG qualification
 and remaining tasks are not implied by this controlled WAF/SQLite checkpoint.
 
+T021/T022 context projection is complete through already implemented storage and
+selection: 1/1 combined member/standalone projection case and 166/166 surrounding
+tests pass. Stored scope/origin/applicability/null/empty/advisory differences,
+digest and first-commit time survive fresh same-authority advisory edits; foreign
+colliding authority denial reuses existing selector coverage. No new production
+store, writer or manufactured RED was required. See
+`evidence/context-projection-final-green-01.json` and retained T022 assessment.
+
 Actual generator entry-point composition, broader startup isolation, provider host wiring
 and PostgreSQL/process qualification remain unfinished. This is not full-story or
 standalone-process qualification. The first broad regression also exposed 18 obsolete

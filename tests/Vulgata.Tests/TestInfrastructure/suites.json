@@ -176,6 +176,9 @@
   "October/OctoberBatchSelectorTests.cs": {
     "suite": "SelfContained"
   },
+  "October/OctoberContextSelectionTests.cs": {
+    "suite": "SelfContained"
+  },
   "October/OctoberHostCompositionTests.cs": {
     "suite": "SelfContained"
   },

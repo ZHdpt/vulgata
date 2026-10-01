@@ -1,0 +1,49 @@
+{
+  "kind": "test-green",
+  "stage": "implement",
+  "evidence_id": "18-4/context-projection-final-green/1",
+  "source_commit": "0020ffdef6e45a361ac84716fd2a6320ab471a37",
+  "observed_at": "2026-10-01T13:48:32Z",
+  "tasks": [
+    "T021",
+    "T022"
+  ],
+  "verification_route": "Test-only coverage of already implemented persisted v2 snapshot projection; no RED, production write, new store/class or refactor required.",
+  "input_hashes": {
+    "tests/Vulgata.Tests/October/OctoberContextSelectionTests.cs": "dc2b01cbed892bb1a794f7932a933f238c85ffacb8d804f2bea9bdb041851d63",
+    "tests/Vulgata.Tests/TestInfrastructure/suites.json": "89929202003aec60bc0f4d443c66002e1ebcfa7657052bea6528820687a67a5c",
+    "src/dotnet/Vulgata.Infrastructure/Data/October/OctoberSetupStore.cs": "39f149cbdecb7e172b0d43f33c68b47ea45b9be47f54a58d39455e51fa3ecc74",
+    "src/dotnet/Vulgata.Infrastructure/Data/October/OctoberBatchSelector.cs": "2df82e4626decdbcd2c81bd365eea4341ccb15ebfade3c700891b9af9c97342b"
+  },
+  "commands": [
+    {
+      "command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName~OctoberContextSelectionTests'",
+      "exit_code": 0,
+      "selected": 1,
+      "passed": 1,
+      "failed": 0,
+      "skipped": 0,
+      "trx_path": "TestResults/isolation-a6b4de1257474bc6af75f73c0371d655/results.trx",
+      "trx_sha256": "6c129b1937c76fca7bcbe550c5d5571bc2c634705a9c2af11840be1bcbc0be1f"
+    },
+    {
+      "command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName~OctoberSetupStoreTests|FullyQualifiedName~OctoberSetupPolicyTests|FullyQualifiedName~OctoberBatchSelectorTests|FullyQualifiedName~OctoberLocalAuthorityTests|FullyQualifiedName~OctoberContextSelectionTests'",
+      "exit_code": 0,
+      "selected": 166,
+      "passed": 166,
+      "failed": 0,
+      "skipped": 0,
+      "trx_path": "TestResults/isolation-fd92c3bbd77542848869563f6056cfe1/results.trx",
+      "trx_sha256": "2dd178af492e53b8cb1cd9daa009f25858a1aafd43ab25a7afa775cf37de3b5f"
+    }
+  ],
+  "raw_result": {
+    "owner": "retained tdd-test-author Luna/high",
+    "coverage": "Public IOctoberSetupWriter.CommitAsync then IOctoberBatchSelector.BindAsync historical snapshot; combined member/standalone, all three scope slots, NotApplicable System, null/empty, AdvisoryNotSourceProof, case-sensitive ordinal Differences and original digest/time after same-authority advisory edits.",
+    "reused_foreign_authority": "OctoberBatchSelectorTests.BindAsync_CollidingFreshGrantFromAuthorityB_DeniesStoredAuthorityA denies without bound capability; surrounding run includes it.",
+    "assessment": "One self-contained public-seam test with explicit expected values and owned SQLite fixture; no further refactor needed. Inventory SelfContained.",
+    "production_assessment": "Existing retained production-owner read-only assessment in context-projection-t022-assessment-01.json plus unchanged source hashes and current passing coverage show T022's conditional projection implementation already fulfilled; no duplicate OctoberContextSelectionStore class needed."
+  },
+  "production_assessment": "specs/017-october-batch-setup/evidence/context-projection-t022-assessment-01.json",
+  "root_disposition": "T021/T022 complete by current coverage and retained unchanged-unit assessment, mechanical checkbox updates only. Broader host/provider generator/runtime tasks and all final gates remain open; recovery6/7 unchanged."
+}
