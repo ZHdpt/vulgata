@@ -404,25 +404,37 @@ internal sealed class PreparedToolRootScope
         }
 
         int separator = relativePath.IndexOf('/');
-        if (separator < 0)
+        if (separator >= 0)
         {
-            return PreparedToolOwnedEntryPathClassification.Other;
+            string firstDirectory = relativePath[..separator];
+            (PreparedSourceTraversal.OpenStatus status, SafeFileHandle? entry) =
+                PreparedSourceTraversal.OpenRelativeDirectory(_rootHandle, firstDirectory);
+            using (entry)
+            {
+                PreparedToolDirectoryObjectIdentity? observed =
+                    status == PreparedSourceTraversal.OpenStatus.Opened && entry is not null
+                        ? ToStableIdentity(PreparedSourceTraversal.ObserveDirectory(entry))
+                        : null;
+                if (observed is null)
+                {
+                    return PreparedToolOwnedEntryPathClassification.Unknown;
+                }
+
+                if (observed == ownedEntryIdentity)
+                {
+                    return PreparedToolOwnedEntryPathClassification.Owned;
+                }
+            }
         }
 
-        string firstDirectory = relativePath[..separator];
-        (PreparedSourceTraversal.OpenStatus status, SafeFileHandle? entry) =
-            PreparedSourceTraversal.OpenRelativeDirectory(_rootHandle, firstDirectory);
-        using (entry)
+        (PreparedSourceTraversal.OpenStatus fileStatus, SafeFileHandle? file) =
+            PreparedSourceTraversal.OpenRelativeFile(_rootHandle, relativePath);
+        using (file)
         {
-            PreparedToolDirectoryObjectIdentity? observed =
-                status == PreparedSourceTraversal.OpenStatus.Opened && entry is not null
-                    ? ToStableIdentity(PreparedSourceTraversal.ObserveDirectory(entry))
-                    : null;
-            return observed is null
-                ? PreparedToolOwnedEntryPathClassification.Unknown
-                : observed == ownedEntryIdentity
-                    ? PreparedToolOwnedEntryPathClassification.Owned
-                    : PreparedToolOwnedEntryPathClassification.Other;
+            return fileStatus == PreparedSourceTraversal.OpenStatus.Opened && file is not null &&
+                PreparedSourceTraversal.ObserveFile(file) is not null
+                    ? PreparedToolOwnedEntryPathClassification.Other
+                    : PreparedToolOwnedEntryPathClassification.Unknown;
         }
     }
 

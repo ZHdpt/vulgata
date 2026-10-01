@@ -349,6 +349,107 @@ public sealed class JdtLsRealQualificationTests
 
     [Trait("Suite", "LocalTools")]
     [SuiteFact("LocalTools")]
+    public async Task OwnedIncomingPath_ThroughNestedDirectorySymlink_FailsClosedBeforeProtocol()
+    {
+        Assert.True(OperatingSystem.IsWindows(),
+            "Nested reparse qualification requires Windows directory handles.");
+
+        await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
+        fixture.Authority.Approve(fixture.Approval);
+        string codeGraphPath = Path.Combine(fixture.PreparedRootPath, ".codegraph");
+        Directory.CreateDirectory(codeGraphPath);
+        string ownedJavaPath = Path.Combine(codeGraphPath, "Owned.java");
+        await File.WriteAllTextAsync(ownedJavaPath, "class Owned { void target() {} }\n");
+
+        string ordinaryParentPath = Path.Combine(fixture.PreparedRootPath, "src");
+        Directory.CreateDirectory(ordinaryParentPath);
+        string nestedLinkPath = Path.Combine(ordinaryParentPath, "generated");
+        Directory.CreateSymbolicLink(nestedLinkPath, codeGraphPath);
+        Assert.True(File.Exists(Path.Combine(nestedLinkPath, "Owned.java")),
+            "The nested directory reparse point must resolve to the owned Java file.");
+        Assert.True(string.Equals(
+                codeGraphPath,
+                new DirectoryInfo(nestedLinkPath).LinkTarget,
+                StringComparison.OrdinalIgnoreCase),
+            "The nested reparse target must be the positively owned .codegraph directory.");
+
+        PreparedJavaNavigationOwnershipFixture ownershipFixture =
+            PreparedJavaNavigationOwnershipFixture.CreateVerifiedOwned(
+                fixture.Authority,
+                fixture.Approval,
+                fixture.PreparedRootPath);
+        PreparedCodeGraphWorkspaceOwnership binding = ownershipFixture.ApplicationHeldBinding;
+        PreparedCodeGraphOwnershipViewResult ownershipView =
+            await ownershipFixture.GetCurrentOwnershipViewAsync(fixture.Approval);
+        Assert.Equal(PreparedCodeGraphOwnershipViewStatus.VerifiedOwned, ownershipView.Status);
+        Assert.Equal(binding, ownershipView.Record);
+        Assert.NotNull(binding.StateEntryObjectIdentity);
+
+        var toolAuthorization = new CurrentNavigationToolAuthorizer(fixture.Approval);
+        var issuer = new PreparedToolWorkspaceIssuer(fixture.Authority, toolAuthorization);
+        PreparedToolWorkspaceIssueResult issue = await issuer.IssueAsync(
+            new PreparedToolWorkspaceGrantRequest(
+                fixture.Approval,
+                fixture.PreparedRootPath,
+                PreparedToolPurpose.JdtNavigation,
+                TimeSpan.FromSeconds(10)));
+        Assert.Equal(PreparedToolWorkspaceIssueStatus.Issued, issue.Status);
+        PreparedToolWorkspaceLease lease = Assert.IsType<PreparedToolWorkspaceLease>(issue.Lease);
+
+        string disposableStateRoot = Path.Combine(fixture.SiblingPath, "jdt-nested-reparse-state");
+        Directory.CreateDirectory(disposableStateRoot);
+        var runtime = new AliasQualificationRuntime();
+        var factory = ownershipFixture.CreateFactory(
+            new PreparedJavaNavigationProfile(
+                disposableStateRoot,
+                TimeSpan.FromSeconds(3),
+                TimeSpan.FromSeconds(2),
+                TimeSpan.FromSeconds(1),
+                MaximumResponseBytes: 64 * 1024),
+            runtime);
+        PreparedJavaNavigationOpenResult? opened = null;
+
+        try
+        {
+            opened = await factory.OpenAsync(lease);
+            Assert.Equal(PreparedJavaNavigationOpenStatus.Opened, opened.Status);
+            IPreparedJavaNavigationContext context =
+                Assert.IsAssignableFrom<IPreparedJavaNavigationContext>(opened.Context);
+            string requestPath = "src/generated/Owned.java";
+            Assert.True(PreparedSourceTraversal.IsCanonicalRelativePath(requestPath, allowEmpty: false));
+            Assert.True(File.Exists(Path.Combine(fixture.PreparedRootPath, requestPath.Replace('/', Path.DirectorySeparatorChar))),
+                "The requested in-root spelling must resolve to the owned target through the nested reparse point.");
+
+            PreparedJavaNavigationResult result = await context.GetDefinitionAsync(
+                new PreparedJavaNavigationRequest(requestPath, 1, 1, 10));
+
+            Assert.Equal(PreparedJavaNavigationOutcome.ConfigurationUnavailable, result.Outcome);
+            Assert.Empty(result.Locations);
+            Assert.Empty(result.Limitations);
+            Assert.Null(result.StoppingLimit);
+            Assert.Equal(0, runtime.Session.NavigateCallCount);
+            Assert.Equal(PreparedToolWorkspaceCheckStatus.Current, await lease.CheckCurrentAsync());
+            Assert.Equal(
+                PreparedToolUseAuthorityStatus.Current,
+                (await toolAuthorization.VerifyCurrentAsync(
+                    fixture.Approval,
+                    PreparedToolPurpose.JdtNavigation)).Status);
+            Assert.Equal(PreparedSourceAuthorityStatus.Current,
+                (await fixture.Authority.VerifyCurrentAsync(fixture.Approval)).Status);
+        }
+        finally
+        {
+            if (opened?.Context is not null)
+            {
+                await opened.Context.DisposeAsync();
+            }
+
+            await lease.DisposeAsync();
+        }
+    }
+
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task RetainedArchive_RealJava21Session_QualifiesNavigationAndBoundedCleanup()
     {
         Assert.True(File.Exists(ArchivePath));

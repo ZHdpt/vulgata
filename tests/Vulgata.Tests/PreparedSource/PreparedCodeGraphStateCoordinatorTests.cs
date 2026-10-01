@@ -58,6 +58,71 @@ public sealed class PreparedCodeGraphStateCoordinatorTests
     }
 
     [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData("missing", null)]
+    [InlineData("malformed-json", "{")]
+    [InlineData("wrong-format", "{\"format\":\"unrecognized\",\"records\":[]}")]
+    public async Task LoadAsync_DoesNotTreatMissingOrCorruptLedgerAsVerifiedAbsent(
+        string ledgerCondition,
+        string? replacementLedger)
+    {
+        await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
+        string sourceStorageRoot = Path.Combine(fixture.SandboxPath, "source-storage");
+        Directory.CreateDirectory(sourceStorageRoot);
+
+        IConfiguration configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["SourceStorage:RootPath"] = sourceStorageRoot,
+                ["SourceStorage:MaximumEntries"] = "10000",
+                ["SourceStorage:MaximumBlobBytes"] = "8388608",
+                ["SourceStorage:MaximumAggregateBlobBytes"] = "67108864",
+                ["SourceStorage:CaptureDeadlineSeconds"] = "600",
+                ["SourceStorage:OperationStaleAfterMinutes"] = "1440",
+                ["SourceStorage:VerificationBufferBytes"] = "65536",
+                ["SourceStorage:Read:DeadlineSeconds"] = "60",
+            })
+            .Build();
+        RetainedSourceCapturePolicy policy = RetainedSourceCapturePolicy.Create(
+            configuration,
+            fixture.SandboxPath,
+            fixture.PreparedRootPath);
+        var expectedBinding = new PreparedCodeGraphWorkspaceOwnership(
+            Guid.NewGuid(),
+            Version: 0,
+            PreparedCodeGraphOwnershipPhase.Absent,
+            fixture.Approval,
+            Path.GetFullPath(fixture.PreparedRootPath),
+            ObserveDirectoryIdentity(fixture.PreparedRootPath),
+            WorkspaceOwnerIdentity: $"owner-{fixture.SandboxId:N}",
+            StateEntryObjectIdentity: null);
+
+        PreparedCodeGraphStoreProvisionStatus provisionStatus =
+            await FilePreparedCodeGraphOwnershipStore.ProvisionNewAsync(policy);
+        Assert.Equal(PreparedCodeGraphStoreProvisionStatus.Provisioned, provisionStatus);
+
+        string ledgerPath = Path.Combine(
+            sourceStorageRoot,
+            ".prepared-codegraph-ownership",
+            "ledger.json");
+        Assert.True(File.Exists(ledgerPath), "Provisioning must create the fixture ledger before corruption setup.");
+        if (ledgerCondition == "missing")
+        {
+            File.Delete(ledgerPath);
+        }
+        else
+        {
+            await File.WriteAllTextAsync(ledgerPath, replacementLedger!);
+        }
+
+        var freshStore = new FilePreparedCodeGraphOwnershipStore(policy);
+        PreparedCodeGraphOwnershipLoadResult load = await freshStore.LoadAsync(expectedBinding);
+
+        Assert.Equal(PreparedCodeGraphOwnershipLoadStatus.Unavailable, load.Status);
+        Assert.Null(load.Record);
+    }
+
+    [Trait("Suite", "SelfContained")]
     [SuiteFact("SelfContained")]
     public async Task BeginCreateAsync_PersistsCreatingRecordVisibleFromFreshStore()
     {
