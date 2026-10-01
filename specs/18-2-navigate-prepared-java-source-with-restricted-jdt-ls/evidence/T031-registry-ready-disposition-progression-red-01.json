@@ -1,0 +1,42 @@
+{
+  "kind": "analysis",
+  "summary": "Expected behavioral RED: original Absent admission followed by coordinator-equivalent Creating v1/Ready v2 cannot close for disposition without a prior Ready borrow. Immutable key/current proofs remain available; full-record admission comparison prevents fresh Ready disposition. No native resource started.",
+  "verification_route": "behavioral RED/GREEN",
+  "task_ids": [
+    "T031",
+    "T032"
+  ],
+  "source_commit": "d152931c8dfb4ded12e8c3020ddef47dbd3e2005",
+  "accepted_definition": "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/evidence/definition-review-attempt-16.json",
+  "implementation_approval": "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/evidence/implementation-approval-10.json",
+  "source_hashes": {
+    "src/dotnet/Vulgata.Infrastructure/Source/PreparedWorkspaceUseRegistry.cs": "f01d7a374ac913daf042b6910777da0bb6cda0be4b94060e4f9dae6175c5c59c",
+    "tests/Vulgata.Tests/PreparedSource/PreparedWorkspaceUseRegistryTests.cs": "748b6df31332a17aa1de035144681a4f2708ebf7a51046a2bb96abca7f476c42"
+  },
+  "command": "pwsh -NoProfile -File eng/test.ps1 -Filter 'FullyQualifiedName~PreparedWorkspaceUseRegistryTests'",
+  "result": {
+    "path": "TestResults/isolation-fae5a0a463aa4b1eaa3f5e3b876a0898/results.trx",
+    "sha256": "2f8bd2ef51cfef1eab047b1df4af0a48c048d2b89690e2619ab3e889c8ec4991",
+    "selected": 22,
+    "passed": 21,
+    "failed": 1,
+    "skipped": 0
+  },
+  "assertion": "Same-process disposition must accept the freshly verified Ready phase without a prior Ready borrow.",
+  "build": {
+    "path": "TestResults/isolation-fae5a0a463aa4b1eaa3f5e3b876a0898/build.log",
+    "sha256": "cd67a1ffbd56de92cec267e399fb5d02ef99b631fe36a5fe93c54d33c2c848ce",
+    "result": "passed"
+  },
+  "setup_observation": {
+    "path": "TestResults/isolation-4d907d3208274b2bb027b3754b92ac7a/build.log",
+    "sha256": "16457456787dc081841593d410a516ea1a131e9bc669219ae92196d36997cdd9",
+    "classification": "Uncounted xUnit2.9.3 message-overload compile setup; intended assertion preserved using supported Assert.True."
+  },
+  "resources": "Controlled same-process registry/store/host only; actual Windows/native and integration remain unqualified.",
+  "recovery": {
+    "failed_results": 3,
+    "pause_at": 12,
+    "changed": false
+  }
+}

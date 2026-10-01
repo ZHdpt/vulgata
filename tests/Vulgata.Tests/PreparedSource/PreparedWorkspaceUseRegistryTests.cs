@@ -356,6 +356,82 @@ public sealed class PreparedWorkspaceUseRegistryTests
 
     [Trait("Suite", "SelfContained")]
     [SuiteFact("SelfContained")]
+    public async Task AdmitAsync_FreshRegistryWithReadyBindingAndUnknownPreviousGeneration_IsUnavailable()
+    {
+        await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
+        fixture.Authority.Approve(fixture.Approval);
+
+        string sourceStorageRoot = Path.Combine(fixture.SandboxPath, "source-storage");
+        string codeGraphPath = Path.Combine(fixture.PreparedRootPath, ".codegraph");
+        Directory.CreateDirectory(sourceStorageRoot);
+        Directory.CreateDirectory(codeGraphPath);
+        RetainedSourceCapturePolicy sourceStoragePolicy = CreatePolicy(
+            fixture.SandboxPath,
+            fixture.PreparedRootPath,
+            sourceStorageRoot);
+        var binding = new PreparedCodeGraphWorkspaceOwnership(
+            OwnershipId: Guid.NewGuid(),
+            Version: 1,
+            Phase: PreparedCodeGraphOwnershipPhase.Ready,
+            Approval: fixture.Approval,
+            PhysicalRootPath: Path.GetFullPath(fixture.PreparedRootPath),
+            RootObjectIdentity: ObserveDirectoryIdentity(fixture.PreparedRootPath),
+            WorkspaceOwnerIdentity: $"owner-{fixture.SandboxId:N}",
+            StateEntryObjectIdentity: ObserveDirectoryIdentity(codeGraphPath));
+        var sourceAuthority = new CurrentSourceAuthority(fixture.Approval);
+        var toolAuthorization = new CurrentToolAuthorization(
+            fixture.Approval,
+            PreparedToolPurpose.CodeGraphPreparation);
+        var ownershipStore = new ControlledOwnershipStore(binding);
+        var hostProtection = new ProtectedHostVerifier(binding);
+        var previousGeneration = new UnknownPreviousGenerationVerifier();
+        var registry = new PreparedWorkspaceUseRegistry(
+            sourceAuthority,
+            toolAuthorization,
+            ownershipStore,
+            sourceStoragePolicy,
+            hostProtection,
+            previousGeneration,
+            admissionDeadline: TimeSpan.FromSeconds(2),
+            dispositionDeadline: TimeSpan.FromSeconds(2));
+
+        PreparedWorkspaceSettlementStatus disposition = PreparedWorkspaceSettlementStatus.Unknown;
+        try
+        {
+            PreparedWorkspaceAdmissionResult admission = await registry.AdmitAsync(
+                binding,
+                PreparedToolPurpose.CodeGraphPreparation);
+            Assert.Equal(PreparedWorkspaceAdmissionStatus.Unavailable, admission.Status);
+            Assert.True(sourceAuthority.VerificationCount > 0 &&
+                toolAuthorization.VerificationCount > 0 &&
+                ownershipStore.LastLoadedBinding == binding,
+                "The Ready record has healthy current source, tool, and ownership-store evidence.");
+            Assert.True(previousGeneration.VerificationCount > 0 &&
+                previousGeneration.LastBinding == binding,
+                "A fresh registry must consult independent settlement for this exact persisted Ready key.");
+
+            PreparedWorkspaceBorrowResult borrow = await registry.BeginBorrowAsync(
+                binding,
+                PreparedToolPurpose.CodeGraphPreparation,
+                new ControlledResourceProbe());
+            Assert.True(borrow.Borrow is null,
+                "An empty fresh registry cannot treat persisted Ready as a current-process borrower grant.");
+
+            disposition = await registry.CloseForDispositionAsync(binding);
+        }
+        finally
+        {
+            await registry.DisposeAsync();
+        }
+
+        Assert.True(disposition != PreparedWorkspaceSettlementStatus.Settled,
+            "Unknown previous-generation state cannot authorize Ready disposition or cleanup.");
+        Assert.True(hostProtection.VerifyAndHoldCount == 0 || hostProtection.Hold.DisposeAttemptCount > 0,
+            "Any host hold acquired during refused admission remains owned through registry shutdown.");
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task BeginBorrowAsync_AdmittedReadyBindingTracksBorrowUntilProbeSettles()
     {
         await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
@@ -432,6 +508,318 @@ public sealed class PreparedWorkspaceUseRegistryTests
         {
             await registry.DisposeAsync();
         }
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task BeginBorrowAsync_AfterSameKeyAbsentCreatingReadyProgressionUsesRetainedAdmission()
+    {
+        await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
+        fixture.Authority.Approve(fixture.Approval);
+
+        string sourceStorageRoot = Path.Combine(fixture.SandboxPath, "source-storage");
+        Directory.CreateDirectory(sourceStorageRoot);
+        string codeGraphPath = Path.Combine(fixture.PreparedRootPath, ".codegraph");
+        RetainedSourceCapturePolicy sourceStoragePolicy = CreatePolicy(
+            fixture.SandboxPath,
+            fixture.PreparedRootPath,
+            sourceStorageRoot);
+        var absent = new PreparedCodeGraphWorkspaceOwnership(
+            OwnershipId: Guid.NewGuid(),
+            Version: 0,
+            Phase: PreparedCodeGraphOwnershipPhase.Absent,
+            Approval: fixture.Approval,
+            PhysicalRootPath: Path.GetFullPath(fixture.PreparedRootPath),
+            RootObjectIdentity: ObserveDirectoryIdentity(fixture.PreparedRootPath),
+            WorkspaceOwnerIdentity: $"owner-{fixture.SandboxId:N}",
+            StateEntryObjectIdentity: null);
+        var ownershipStore = new SameKeyProgressingOwnershipStore(absent);
+        var hostProtection = new SameKeyProtectedHostVerifier(absent);
+        var registry = new PreparedWorkspaceUseRegistry(
+            new CurrentSourceAuthority(fixture.Approval),
+            new CurrentToolAuthorization(fixture.Approval, PreparedToolPurpose.CodeGraphPreparation),
+            ownershipStore,
+            sourceStoragePolicy,
+            hostProtection,
+            new PreviousGenerationSettledVerifier(),
+            admissionDeadline: TimeSpan.FromSeconds(2),
+            dispositionDeadline: TimeSpan.FromSeconds(2));
+        PreparedWorkspaceBorrow? readyBorrow = null;
+
+        try
+        {
+            Assert.True(!Directory.Exists(codeGraphPath),
+                "The controlled Absent binding starts with no CodeGraph entry.");
+            PreparedWorkspaceAdmissionResult admission = await registry.AdmitAsync(
+                absent,
+                PreparedToolPurpose.CodeGraphPreparation);
+            Assert.Equal(PreparedWorkspaceAdmissionStatus.Opened, admission.Status);
+            Assert.True(hostProtection.VerifyAndHoldCount == 1,
+                "The registry must acquire one host hold for the immutable workspace key.");
+
+            PreparedCodeGraphOwnershipTransitionResult creatingCommit = await ownershipStore.BeginCreateAsync(absent);
+            Assert.True(creatingCommit.Status == PreparedCodeGraphOwnershipTransitionStatus.Committed &&
+                creatingCommit.Record is { Phase: PreparedCodeGraphOwnershipPhase.Creating, Version: 1 },
+                "The current ownership store must commit Creating as the next monotonic phase.");
+            PreparedCodeGraphWorkspaceOwnership creating = creatingCommit.Record!;
+
+            PreparedWorkspaceBorrowResult creatingBorrow = await registry.BeginBorrowAsync(
+                creating,
+                PreparedToolPurpose.CodeGraphPreparation,
+                new ControlledResourceProbe());
+            Assert.True(creatingBorrow.Borrow is null,
+                "A Creating record cannot authorize a CodeGraph borrow during progression.");
+
+            Directory.CreateDirectory(codeGraphPath);
+            PreparedToolDirectoryObjectIdentity createdEntry = ObserveDirectoryIdentity(codeGraphPath);
+            PreparedCodeGraphOwnershipTransitionResult readyCommit = await ownershipStore.CommitCreatedAsync(
+                creating,
+                createdEntry);
+            Assert.True(readyCommit.Status == PreparedCodeGraphOwnershipTransitionStatus.Committed &&
+                readyCommit.Record is { Phase: PreparedCodeGraphOwnershipPhase.Ready, Version: 2 } readyRecord &&
+                readyRecord.StateEntryObjectIdentity == createdEntry,
+                "The current ownership store must commit Ready with the observed entry identity and next version.");
+            PreparedCodeGraphWorkspaceOwnership ready = readyCommit.Record!;
+            Assert.True(SameImmutableKey(absent, creating) && SameImmutableKey(creating, ready),
+                "Creating and Ready must preserve approval, root object, derived owner and OwnershipId.");
+
+            int loadsBeforeReadyBorrow = ownershipStore.LoadCount;
+            PreparedWorkspaceBorrowResult readyBorrowResult = await registry.BeginBorrowAsync(
+                ready,
+                PreparedToolPurpose.CodeGraphPreparation,
+                new ControlledResourceProbe());
+            Assert.True(readyBorrowResult.Borrow is not null,
+                "A current Ready record on the admitted immutable key must be borrowable under the retained hold.");
+            readyBorrow = readyBorrowResult.Borrow;
+            Assert.True(ownershipStore.LoadCount > loadsBeforeReadyBorrow &&
+                ownershipStore.LastLoadedBinding == ready,
+                "Ready borrowing must reload the exact current version rather than trust the admission copy.");
+            Assert.True(hostProtection.VerifyAndHoldCount == 1 &&
+                SameImmutableKey(absent, hostProtection.Hold.LastCheckedBinding!),
+                "Ready borrowing must retain and recheck the original host hold for the same immutable key.");
+        }
+        finally
+        {
+            if (readyBorrow is not null)
+            {
+                await readyBorrow.DisposeAsync();
+            }
+
+            await registry.DisposeAsync();
+        }
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task CloseForDispositionAsync_AfterSameKeyProgressionSettlesWithoutPriorReadyBorrow()
+    {
+        await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
+        fixture.Authority.Approve(fixture.Approval);
+
+        string sourceStorageRoot = Path.Combine(fixture.SandboxPath, "source-storage");
+        Directory.CreateDirectory(sourceStorageRoot);
+        string codeGraphPath = Path.Combine(fixture.PreparedRootPath, ".codegraph");
+        RetainedSourceCapturePolicy sourceStoragePolicy = CreatePolicy(
+            fixture.SandboxPath,
+            fixture.PreparedRootPath,
+            sourceStorageRoot);
+        var absent = new PreparedCodeGraphWorkspaceOwnership(
+            OwnershipId: Guid.NewGuid(),
+            Version: 0,
+            Phase: PreparedCodeGraphOwnershipPhase.Absent,
+            Approval: fixture.Approval,
+            PhysicalRootPath: Path.GetFullPath(fixture.PreparedRootPath),
+            RootObjectIdentity: ObserveDirectoryIdentity(fixture.PreparedRootPath),
+            WorkspaceOwnerIdentity: $"owner-{fixture.SandboxId:N}",
+            StateEntryObjectIdentity: null);
+        var ownershipStore = new SameKeyProgressingOwnershipStore(absent);
+        var sourceAuthority = new CurrentSourceAuthority(fixture.Approval);
+        var toolAuthorization = new CurrentToolAuthorization(
+            fixture.Approval,
+            PreparedToolPurpose.CodeGraphPreparation);
+        var hostProtection = new SameKeyProtectedHostVerifier(absent);
+        var registry = new PreparedWorkspaceUseRegistry(
+            sourceAuthority,
+            toolAuthorization,
+            ownershipStore,
+            sourceStoragePolicy,
+            hostProtection,
+            new PreviousGenerationSettledVerifier(),
+            admissionDeadline: TimeSpan.FromSeconds(2),
+            dispositionDeadline: TimeSpan.FromSeconds(2));
+
+        try
+        {
+            Assert.True(!Directory.Exists(codeGraphPath),
+                "The controlled Absent binding starts with no CodeGraph entry.");
+            PreparedWorkspaceAdmissionResult admission = await registry.AdmitAsync(
+                absent,
+                PreparedToolPurpose.CodeGraphPreparation);
+            Assert.Equal(PreparedWorkspaceAdmissionStatus.Opened, admission.Status);
+            Assert.True(hostProtection.VerifyAndHoldCount == 1,
+                "The initial Absent admission must acquire the registry's host hold exactly once.");
+
+            PreparedCodeGraphOwnershipTransitionResult creatingCommit = await ownershipStore.BeginCreateAsync(absent);
+            Assert.True(creatingCommit.Status == PreparedCodeGraphOwnershipTransitionStatus.Committed &&
+                creatingCommit.Record is { Phase: PreparedCodeGraphOwnershipPhase.Creating, Version: 1 },
+                "The existing ownership store must commit Creating as the next monotonic phase.");
+            PreparedCodeGraphWorkspaceOwnership creating = creatingCommit.Record!;
+
+            Directory.CreateDirectory(codeGraphPath);
+            PreparedToolDirectoryObjectIdentity createdEntry = ObserveDirectoryIdentity(codeGraphPath);
+            PreparedCodeGraphOwnershipTransitionResult readyCommit = await ownershipStore.CommitCreatedAsync(
+                creating,
+                createdEntry);
+            Assert.True(readyCommit.Status == PreparedCodeGraphOwnershipTransitionStatus.Committed &&
+                readyCommit.Record is { Phase: PreparedCodeGraphOwnershipPhase.Ready, Version: 2 } readyRecord &&
+                readyRecord.StateEntryObjectIdentity == createdEntry,
+                "The existing ownership store must commit Ready with the observed entry identity and next version.");
+            PreparedCodeGraphWorkspaceOwnership ready = readyCommit.Record!;
+            Assert.True(SameImmutableKey(absent, creating) && SameImmutableKey(creating, ready),
+                "The current Ready record must retain the admitted approval, root object, owner and OwnershipId.");
+
+            int loadsBeforeClose = ownershipStore.LoadCount;
+            int sourceChecksBeforeClose = sourceAuthority.VerificationCount;
+            int toolChecksBeforeClose = toolAuthorization.VerificationCount;
+            PreparedWorkspaceSettlementStatus disposition = await registry.CloseForDispositionAsync(ready);
+
+            Assert.True(disposition == PreparedWorkspaceSettlementStatus.Settled,
+                "Same-process disposition must accept the freshly verified Ready phase without a prior Ready borrow.");
+            Assert.True(ownershipStore.LoadCount > loadsBeforeClose && ownershipStore.LastLoadedBinding == ready,
+                "Disposition must reload the exact current Ready record rather than trust the Absent admission copy.");
+            Assert.True(sourceAuthority.VerificationCount > sourceChecksBeforeClose &&
+                toolAuthorization.VerificationCount > toolChecksBeforeClose,
+                "Disposition must recheck current source approval and CodeGraph purpose for the Ready record.");
+            Assert.True(hostProtection.VerifyAndHoldCount == 1 &&
+                hostProtection.Hold.CheckCurrentCount >= 3 &&
+                SameImmutableKey(absent, hostProtection.Hold.LastCheckedBinding!),
+                "Disposition must recheck the Ready record with the original retained host hold.");
+
+            PreparedWorkspaceBorrowResult laterBorrow = await registry.BeginBorrowAsync(
+                ready,
+                PreparedToolPurpose.JdtNavigation,
+                new ControlledResourceProbe());
+            Assert.True(laterBorrow.Borrow is null,
+                "Once disposition is latched, a later borrower cannot use the Ready record.");
+        }
+        finally
+        {
+            await registry.DisposeAsync();
+        }
+
+        Assert.True(hostProtection.Hold.DisposeCount == 1,
+            "The registry must retain and then dispose the same admitted hold through shutdown.");
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task BeginBorrowAsync_WhenReadyReadbackRollsBack_DeniesOlderRecord()
+    {
+        await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
+        fixture.Authority.Approve(fixture.Approval);
+
+        string sourceStorageRoot = Path.Combine(fixture.SandboxPath, "source-storage");
+        Directory.CreateDirectory(sourceStorageRoot);
+        string codeGraphPath = Path.Combine(fixture.PreparedRootPath, ".codegraph");
+        RetainedSourceCapturePolicy sourceStoragePolicy = CreatePolicy(
+            fixture.SandboxPath,
+            fixture.PreparedRootPath,
+            sourceStorageRoot);
+        var absent = new PreparedCodeGraphWorkspaceOwnership(
+            OwnershipId: Guid.NewGuid(),
+            Version: 0,
+            Phase: PreparedCodeGraphOwnershipPhase.Absent,
+            Approval: fixture.Approval,
+            PhysicalRootPath: Path.GetFullPath(fixture.PreparedRootPath),
+            RootObjectIdentity: ObserveDirectoryIdentity(fixture.PreparedRootPath),
+            WorkspaceOwnerIdentity: $"owner-{fixture.SandboxId:N}",
+            StateEntryObjectIdentity: null);
+        var ownershipStore = new SameKeyProgressingOwnershipStore(absent);
+        var hostProtection = new SameKeyProtectedHostVerifier(absent);
+        var registry = new PreparedWorkspaceUseRegistry(
+            new CurrentSourceAuthority(fixture.Approval),
+            new CurrentToolAuthorization(fixture.Approval, PreparedToolPurpose.CodeGraphPreparation),
+            ownershipStore,
+            sourceStoragePolicy,
+            hostProtection,
+            new PreviousGenerationSettledVerifier(),
+            admissionDeadline: TimeSpan.FromSeconds(2),
+            dispositionDeadline: TimeSpan.FromSeconds(2));
+        PreparedWorkspaceBorrow? readyBorrow = null;
+
+        try
+        {
+            PreparedWorkspaceAdmissionResult admission = await registry.AdmitAsync(
+                absent,
+                PreparedToolPurpose.CodeGraphPreparation);
+            Assert.Equal(PreparedWorkspaceAdmissionStatus.Opened, admission.Status);
+
+            PreparedCodeGraphWorkspaceOwnership creating = (await ownershipStore.BeginCreateAsync(absent)).Record!;
+            Directory.CreateDirectory(codeGraphPath);
+            PreparedToolDirectoryObjectIdentity createdEntry = ObserveDirectoryIdentity(codeGraphPath);
+            PreparedCodeGraphWorkspaceOwnership ready = (await ownershipStore.CommitCreatedAsync(
+                creating,
+                createdEntry)).Record!;
+
+            PreparedWorkspaceBorrowResult initialReadyBorrow = await registry.BeginBorrowAsync(
+                ready,
+                PreparedToolPurpose.CodeGraphPreparation,
+                new ControlledResourceProbe());
+            Assert.True(initialReadyBorrow.Borrow is not null,
+                "The registry must first observe current Ready version 2 under the admitted immutable key.");
+            readyBorrow = initialReadyBorrow.Borrow;
+            await readyBorrow.DisposeAsync();
+            readyBorrow = null;
+
+            PreparedCodeGraphWorkspaceOwnership olderReady = creating with
+            {
+                Phase = PreparedCodeGraphOwnershipPhase.Ready,
+                StateEntryObjectIdentity = createdEntry,
+            };
+            Assert.True(olderReady.Version < ready.Version &&
+                olderReady.StateEntryObjectIdentity == ready.StateEntryObjectIdentity &&
+                SameImmutableKey(olderReady, ready),
+                "The adverse readback keeps the same Ready entry and immutable key but reports an older version.");
+            ownershipStore.SimulateCurrentReadbackRollback(olderReady);
+
+            int loadsBeforeOlderCaller = ownershipStore.LoadCount;
+            PreparedWorkspaceBorrowResult olderCallerBorrow = await registry.BeginBorrowAsync(
+                olderReady,
+                PreparedToolPurpose.CodeGraphPreparation,
+                new ControlledResourceProbe());
+            Assert.True(olderCallerBorrow.Status == PreparedWorkspaceSettlementStatus.Unknown &&
+                olderCallerBorrow.Borrow is null,
+                "A lower caller-supplied Ready version cannot receive a ticket after the registry observed version 2.");
+            Assert.True(ownershipStore.LoadCount == loadsBeforeOlderCaller,
+                "The stale caller version must be rejected before querying authority for a non-current binding.");
+
+            int loadsBeforeRollbackReadback = ownershipStore.LoadCount;
+            PreparedWorkspaceBorrowResult currentCallerBorrow = await registry.BeginBorrowAsync(
+                ready,
+                PreparedToolPurpose.CodeGraphPreparation,
+                new ControlledResourceProbe());
+            Assert.True(currentCallerBorrow.Status == PreparedWorkspaceSettlementStatus.Unknown &&
+                currentCallerBorrow.Borrow is null,
+                "A same-store rollback to older Ready v1 must make a new v2 borrow unavailable.");
+            Assert.True(ownershipStore.LoadCount > loadsBeforeRollbackReadback &&
+                ownershipStore.LastLoadedBinding == ready &&
+                ownershipStore.LastReadbackRecord == olderReady,
+                "The registry must observe the store's exact older Ready readback rather than trust its v2 copy.");
+            Assert.True(hostProtection.VerifyAndHoldCount == 1,
+                "A readback rollback cannot replace the retained host hold with a new admission.");
+        }
+        finally
+        {
+            if (readyBorrow is not null)
+            {
+                await readyBorrow.DisposeAsync();
+            }
+
+            await registry.DisposeAsync();
+        }
+
+        Assert.True(hostProtection.Hold.DisposeCount == 1,
+            "The original registry hold remains owned until shutdown after uncertain rollback.");
     }
 
     [Trait("Suite", "SelfContained")]
@@ -1611,6 +1999,15 @@ public sealed class PreparedWorkspaceUseRegistryTests
         return RetainedSourceCapturePolicy.Create(configuration, sandboxPath, preparedRootPath);
     }
 
+    private static bool SameImmutableKey(
+        PreparedCodeGraphWorkspaceOwnership left,
+        PreparedCodeGraphWorkspaceOwnership right) =>
+        left.OwnershipId == right.OwnershipId &&
+        left.Approval == right.Approval &&
+        left.PhysicalRootPath == right.PhysicalRootPath &&
+        left.RootObjectIdentity == right.RootObjectIdentity &&
+        left.WorkspaceOwnerIdentity == right.WorkspaceOwnerIdentity;
+
     private static PreparedToolDirectoryObjectIdentity ObserveDirectoryIdentity(string path)
     {
         (PreparedSourceTraversal.OpenStatus status, SafeFileHandle? handle) =
@@ -1890,6 +2287,198 @@ public sealed class PreparedWorkspaceUseRegistryTests
             PreparedCodeGraphWorkspaceOwnership current,
             CancellationToken cancellationToken = default) =>
             throw new InvalidOperationException("Admission must not quarantine an unchanged absent record.");
+    }
+
+    private sealed class SameKeyProgressingOwnershipStore(
+        PreparedCodeGraphWorkspaceOwnership initialAbsent) : IPreparedCodeGraphOwnershipStore
+    {
+        private PreparedCodeGraphWorkspaceOwnership _current = initialAbsent;
+        private PreparedCodeGraphWorkspaceOwnership? _currentReadbackOverride;
+
+        internal int LoadCount { get; private set; }
+
+        internal PreparedCodeGraphWorkspaceOwnership? LastLoadedBinding { get; private set; }
+
+        internal PreparedCodeGraphWorkspaceOwnership? LastReadbackRecord { get; private set; }
+
+        internal void SimulateCurrentReadbackRollback(PreparedCodeGraphWorkspaceOwnership olderReady)
+        {
+            if (_current.Phase != PreparedCodeGraphOwnershipPhase.Ready ||
+                olderReady.Phase != PreparedCodeGraphOwnershipPhase.Ready ||
+                olderReady.Version >= _current.Version ||
+                olderReady.StateEntryObjectIdentity is null ||
+                olderReady.StateEntryObjectIdentity != _current.StateEntryObjectIdentity ||
+                !SameImmutableKey(olderReady, _current))
+            {
+                throw new ArgumentException(
+                    "The simulated rollback must preserve the Ready entry and immutable key while lowering its version.",
+                    nameof(olderReady));
+            }
+
+            // Model an adverse current-store readback without changing the coordinator's committed record.
+            _currentReadbackOverride = olderReady;
+        }
+
+        public Task<PreparedCodeGraphOwnershipLoadResult> LoadAsync(
+            PreparedCodeGraphWorkspaceOwnership expectedBinding,
+            CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            LoadCount++;
+            LastLoadedBinding = expectedBinding;
+            PreparedCodeGraphWorkspaceOwnership readback = _currentReadbackOverride ?? _current;
+            LastReadbackRecord = readback.Phase == PreparedCodeGraphOwnershipPhase.Ready
+                ? readback
+                : null;
+            bool sameReadyKey = expectedBinding.Phase == PreparedCodeGraphOwnershipPhase.Ready &&
+                readback.Phase == PreparedCodeGraphOwnershipPhase.Ready &&
+                SameImmutableKey(expectedBinding, readback);
+            PreparedCodeGraphOwnershipLoadResult result = expectedBinding != readback && !sameReadyKey
+                ? new PreparedCodeGraphOwnershipLoadResult(PreparedCodeGraphOwnershipLoadStatus.Unavailable, null)
+                : readback.Phase switch
+                {
+                    PreparedCodeGraphOwnershipPhase.Absent => new PreparedCodeGraphOwnershipLoadResult(
+                        PreparedCodeGraphOwnershipLoadStatus.VerifiedAbsent,
+                        null),
+                    PreparedCodeGraphOwnershipPhase.Ready => new PreparedCodeGraphOwnershipLoadResult(
+                        PreparedCodeGraphOwnershipLoadStatus.Found,
+                        readback),
+                    _ => new PreparedCodeGraphOwnershipLoadResult(
+                        PreparedCodeGraphOwnershipLoadStatus.Unavailable,
+                        null),
+                };
+            return Task.FromResult(result);
+        }
+
+        public Task<PreparedCodeGraphOwnershipTransitionResult> BeginCreateAsync(
+            PreparedCodeGraphWorkspaceOwnership absent,
+            CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            if (absent != _current || absent.Phase != PreparedCodeGraphOwnershipPhase.Absent ||
+                absent.StateEntryObjectIdentity is not null)
+            {
+                return Task.FromResult(new PreparedCodeGraphOwnershipTransitionResult(
+                    PreparedCodeGraphOwnershipTransitionStatus.Conflict,
+                    _current));
+            }
+
+            _current = absent with
+            {
+                Version = checked(absent.Version + 1),
+                Phase = PreparedCodeGraphOwnershipPhase.Creating,
+            };
+            return Task.FromResult(new PreparedCodeGraphOwnershipTransitionResult(
+                PreparedCodeGraphOwnershipTransitionStatus.Committed,
+                _current));
+        }
+
+        public Task<PreparedCodeGraphOwnershipTransitionResult> CommitCreatedAsync(
+            PreparedCodeGraphWorkspaceOwnership creating,
+            PreparedToolDirectoryObjectIdentity createdEntry,
+            CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            if (creating != _current || creating.Phase != PreparedCodeGraphOwnershipPhase.Creating)
+            {
+                return Task.FromResult(new PreparedCodeGraphOwnershipTransitionResult(
+                    PreparedCodeGraphOwnershipTransitionStatus.Conflict,
+                    _current));
+            }
+
+            _current = creating with
+            {
+                Version = checked(creating.Version + 1),
+                Phase = PreparedCodeGraphOwnershipPhase.Ready,
+                StateEntryObjectIdentity = createdEntry,
+            };
+            return Task.FromResult(new PreparedCodeGraphOwnershipTransitionResult(
+                PreparedCodeGraphOwnershipTransitionStatus.Committed,
+                _current));
+        }
+
+        public Task<PreparedCodeGraphOwnershipTransitionResult> BeginDispositionAsync(
+            PreparedCodeGraphWorkspaceOwnership ready,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult(new PreparedCodeGraphOwnershipTransitionResult(
+                PreparedCodeGraphOwnershipTransitionStatus.Unavailable,
+                _current));
+
+        public Task<PreparedCodeGraphOwnershipTransitionResult> CommitRemovedAsync(
+            PreparedCodeGraphWorkspaceOwnership disposing,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult(new PreparedCodeGraphOwnershipTransitionResult(
+                PreparedCodeGraphOwnershipTransitionStatus.Unavailable,
+                _current));
+
+        public Task<PreparedCodeGraphOwnershipTransitionResult> QuarantineAsync(
+            PreparedCodeGraphWorkspaceOwnership current,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult(new PreparedCodeGraphOwnershipTransitionResult(
+                PreparedCodeGraphOwnershipTransitionStatus.Unavailable,
+                _current));
+    }
+
+    private sealed class SameKeyProtectedHostVerifier(
+        PreparedCodeGraphWorkspaceOwnership initialBinding) : IPreparedManagedWorkspaceHostVerifier
+    {
+        internal int VerifyAndHoldCount { get; private set; }
+
+        internal SameKeyProtectedHostHold Hold { get; } = new(initialBinding);
+
+        public Task<PreparedManagedWorkspaceHostObservation> ObserveAsync(
+            PreparedSourceGrantRequest applicationHeldSourceGrant,
+            RetainedSourceCapturePolicy sourceStoragePolicy,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult(new PreparedManagedWorkspaceHostObservation(
+                PreparedManagedWorkspaceHostStatus.Observed,
+                initialBinding.RootObjectIdentity,
+                initialBinding.WorkspaceOwnerIdentity));
+
+        public Task<PreparedManagedWorkspaceHostHoldResult> VerifyAndHoldAsync(
+            PreparedCodeGraphWorkspaceOwnership binding,
+            RetainedSourceCapturePolicy sourceStoragePolicy,
+            CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            VerifyAndHoldCount++;
+            return Task.FromResult(SameImmutableKey(initialBinding, binding) &&
+                binding.Phase == PreparedCodeGraphOwnershipPhase.Absent
+                ? new PreparedManagedWorkspaceHostHoldResult(PreparedManagedWorkspaceHostStatus.Protected, Hold)
+                : new PreparedManagedWorkspaceHostHoldResult(PreparedManagedWorkspaceHostStatus.Denied, null));
+        }
+    }
+
+    private sealed class SameKeyProtectedHostHold(
+        PreparedCodeGraphWorkspaceOwnership initialBinding) : IPreparedManagedWorkspaceHostHold
+    {
+        internal int CheckCurrentCount { get; private set; }
+
+        internal PreparedCodeGraphWorkspaceOwnership? LastCheckedBinding { get; private set; }
+
+        internal int DisposeCount { get; private set; }
+
+        private bool _disposed;
+
+        public ValueTask<PreparedManagedWorkspaceHostStatus> CheckCurrentAsync(
+            PreparedCodeGraphWorkspaceOwnership binding,
+            CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            CheckCurrentCount++;
+            LastCheckedBinding = binding;
+            return ValueTask.FromResult(!_disposed && SameImmutableKey(initialBinding, binding) &&
+                binding.Phase is PreparedCodeGraphOwnershipPhase.Absent or PreparedCodeGraphOwnershipPhase.Ready
+                ? PreparedManagedWorkspaceHostStatus.Protected
+                : PreparedManagedWorkspaceHostStatus.Unavailable);
+        }
+
+        public ValueTask DisposeAsync()
+        {
+            DisposeCount++;
+            _disposed = true;
+            return ValueTask.CompletedTask;
+        }
     }
 
     private sealed class ProtectedHostVerifier(
@@ -2284,6 +2873,23 @@ public sealed class PreparedWorkspaceUseRegistryTests
             cancellationToken.ThrowIfCancellationRequested();
             VerificationCount++;
             return ValueTask.FromResult(PreparedWorkspaceSettlementStatus.Settled);
+        }
+    }
+
+    private sealed class UnknownPreviousGenerationVerifier : IPreparedWorkspacePreviousGenerationVerifier
+    {
+        internal int VerificationCount { get; private set; }
+
+        internal PreparedCodeGraphWorkspaceOwnership? LastBinding { get; private set; }
+
+        public ValueTask<PreparedWorkspaceSettlementStatus> VerifySettledAsync(
+            PreparedCodeGraphWorkspaceOwnership binding,
+            CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            VerificationCount++;
+            LastBinding = binding;
+            return ValueTask.FromResult(PreparedWorkspaceSettlementStatus.Unknown);
         }
     }
 

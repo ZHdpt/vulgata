@@ -547,9 +547,30 @@ internal sealed class PreparedWorkspaceUseRegistry : IAsyncDisposable
             PreparedCodeGraphOwnershipPhase.Absent =>
                 loaded.Status == PreparedCodeGraphOwnershipLoadStatus.VerifiedAbsent && loaded.Record is null,
             PreparedCodeGraphOwnershipPhase.Ready =>
-                loaded.Status == PreparedCodeGraphOwnershipLoadStatus.Found && loaded.Record == binding,
+                loaded.Status == PreparedCodeGraphOwnershipLoadStatus.Found && loaded.Record == binding &&
+                binding.StateEntryObjectIdentity is not null,
             _ => false,
         };
+    }
+
+    private bool IsCurrentBindingOrReadyProgression(PreparedCodeGraphWorkspaceOwnership binding)
+    {
+        PreparedCodeGraphWorkspaceOwnership? current = _admittedBinding;
+        if (current is null || binding.Approval != current.Approval ||
+            !string.Equals(binding.PhysicalRootPath, current.PhysicalRootPath, StringComparison.Ordinal) ||
+            binding.RootObjectIdentity != current.RootObjectIdentity ||
+            !string.Equals(binding.WorkspaceOwnerIdentity, current.WorkspaceOwnerIdentity, StringComparison.Ordinal) ||
+            binding.OwnershipId != current.OwnershipId)
+        {
+            return false;
+        }
+
+        return binding == current ||
+            current.Phase == PreparedCodeGraphOwnershipPhase.Absent &&
+            binding.Phase == PreparedCodeGraphOwnershipPhase.Ready &&
+            current.Version <= long.MaxValue - 2 &&
+            binding.Version == current.Version + 2 &&
+            binding.StateEntryObjectIdentity is not null;
     }
 
     internal async Task<PreparedWorkspaceBorrowResult> BeginBorrowAsync(
@@ -571,7 +592,7 @@ internal sealed class PreparedWorkspaceUseRegistry : IAsyncDisposable
             try
             {
                 if (_state != RegistryState.Open || Volatile.Read(ref _shutdownRequested) != 0 ||
-                    binding != _admittedBinding ||
+                    !IsCurrentBindingOrReadyProgression(binding) ||
                     _hold is null ||
                     purpose is not (PreparedToolPurpose.JdtNavigation or PreparedToolPurpose.CodeGraphPreparation) ||
                     purpose == PreparedToolPurpose.CodeGraphPreparation &&
@@ -615,6 +636,7 @@ internal sealed class PreparedWorkspaceUseRegistry : IAsyncDisposable
                     }
 
                     var borrow = new PreparedWorkspaceBorrow(this, resources);
+                    _admittedBinding = binding;
                     _borrows.Add(borrow);
                     return new PreparedWorkspaceBorrowResult(PreparedWorkspaceSettlementStatus.Active, borrow);
                 }
@@ -656,7 +678,8 @@ internal sealed class PreparedWorkspaceUseRegistry : IAsyncDisposable
                     _state = RegistryState.Closing;
                 }
 
-                if (_state != RegistryState.Closing || binding != _admittedBinding || _hold is null ||
+                if (_state != RegistryState.Closing || !IsCurrentBindingOrReadyProgression(binding) ||
+                    _hold is null ||
                     await CheckAuthorityAsync(binding, PreparedToolPurpose.CodeGraphPreparation, deadline.Token)
                         != PreparedWorkspaceAdmissionStatus.Opened ||
                     !await CheckStoreAsync(binding, deadline.Token) ||
@@ -678,6 +701,17 @@ internal sealed class PreparedWorkspaceUseRegistry : IAsyncDisposable
                 }
 
                 deadline.Token.ThrowIfCancellationRequested();
+                lock (_publicationGate)
+                {
+                    if (_shutdownRequested != 0)
+                    {
+                        _state = RegistryState.Unknown;
+                        return PreparedWorkspaceSettlementStatus.Unknown;
+                    }
+
+                    _admittedBinding = binding;
+                }
+
                 return _borrows.Count == 0
                     ? PreparedWorkspaceSettlementStatus.Settled
                     : PreparedWorkspaceSettlementStatus.Active;

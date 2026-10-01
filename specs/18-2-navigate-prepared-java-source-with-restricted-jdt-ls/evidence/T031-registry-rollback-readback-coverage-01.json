@@ -1,0 +1,33 @@
+{
+  "kind": "analysis",
+  "summary": "Existing-correct monotonic rollback coverage: registry observes Ready v2, refuses caller v1 before store load, and refuses v2 when the same store returns older v1. Adverse readback injected without altering committed v2; no new host acquisition, admitted hold disposed once on shutdown.",
+  "verification_route": "test-only coverage of existing correct behavior",
+  "task_ids": [
+    "T031",
+    "T032"
+  ],
+  "source_commit": "d152931c8dfb4ded12e8c3020ddef47dbd3e2005",
+  "source_hashes": {
+    "src/dotnet/Vulgata.Infrastructure/Source/PreparedWorkspaceUseRegistry.cs": "b934528a1954e89e6d17c01f8913eaca3354ae4245bf1a80449d0dcccc452f3e",
+    "tests/Vulgata.Tests/PreparedSource/PreparedWorkspaceUseRegistryTests.cs": "d233251df9fbcd4a6c2be382b3137687616be3f73b0ddaf7d95b370b8e09dd65"
+  },
+  "command": "pwsh -NoProfile -File eng/test.ps1 -Filter 'FullyQualifiedName~PreparedWorkspaceUseRegistryTests'",
+  "result": {
+    "path": "TestResults/isolation-0a3717c7b4c54a7e8daeef0621a0929a/results.trx",
+    "sha256": "fdc95c0966ba720908c93b87ee2ac672e03b040e2f5b2ef789d5b7c34dc77679",
+    "selected": 23,
+    "passed": 23,
+    "failed": 0,
+    "skipped": 0,
+    "build_path": "TestResults/isolation-0a3717c7b4c54a7e8daeef0621a0929a/build.log",
+    "build_sha256": "09c8825f6beb60adc757ab76880018bd321d6652c257d7a28ccb67d4d7c84b4f"
+  },
+  "red": "Not applicable: existing-correct behavior; no production change or fabricated RED.",
+  "final_shape": "Bounded public-seam scenario reuses controlled progression/hold fixtures; no refactor needed.",
+  "limitations": "Controlled only; further accepted producer/host/native work and later gates remain open.",
+  "recovery": {
+    "failed_results": 3,
+    "pause_at": 12,
+    "changed": false
+  }
+}
