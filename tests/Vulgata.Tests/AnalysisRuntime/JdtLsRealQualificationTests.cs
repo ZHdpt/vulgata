@@ -1,8 +1,14 @@
 using Vulgata.Tests.TestInfrastructure;
+using System.ComponentModel;
+using System.Runtime.InteropServices;
+using System.Text;
+using Microsoft.Win32.SafeHandles;
 using System.Diagnostics;
 using System.Security.Cryptography;
 using Vulgata.Core.DomainServices;
 using Vulgata.Infrastructure.Analysis.Java;
+using Vulgata.Infrastructure.Source;
+using Vulgata.Tests.PreparedSource;
 
 namespace Vulgata.Tests.AnalysisRuntime;
 
@@ -67,6 +73,126 @@ public sealed class JdtLsRealQualificationTests
 
         Assert.Equal(ArchiveName, identity.JdtLsDistributionArchiveName);
         Assert.Equal(ArchiveSha256, identity.JdtLsDistributionArchiveSha256);
+    }
+
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
+    public async Task OwnedIncomingPath_UsingNativeShortDirectoryAlias_IsDeniedBeforeProtocol()
+    {
+        Assert.True(OperatingSystem.IsWindows(),
+            "Native alias qualification is blocked because GetShortPathNameW requires Windows.");
+
+        await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
+        fixture.Authority.Approve(fixture.Approval);
+        string codeGraphPath = Path.Combine(fixture.PreparedRootPath, ".codegraph");
+        Directory.CreateDirectory(codeGraphPath);
+        string ownedJavaPath = Path.Combine(codeGraphPath, "Owned.java");
+        await File.WriteAllTextAsync(ownedJavaPath, "class Owned { void target() {} }\n");
+
+        PreparedJavaNavigationOwnershipFixture ownershipFixture =
+            PreparedJavaNavigationOwnershipFixture.CreateVerifiedOwned(
+                fixture.Authority,
+                fixture.Approval,
+                fixture.PreparedRootPath);
+        PreparedCodeGraphWorkspaceOwnership binding = ownershipFixture.ApplicationHeldBinding;
+        PreparedCodeGraphOwnershipViewResult ownershipView =
+            await ownershipFixture.GetCurrentOwnershipViewAsync(fixture.Approval);
+        Assert.Equal(PreparedCodeGraphOwnershipViewStatus.VerifiedOwned, ownershipView.Status);
+        Assert.Equal(binding, ownershipView.Record);
+        Assert.NotNull(binding.StateEntryObjectIdentity);
+
+        string shortDirectoryPath = GetNativeShortPath(codeGraphPath);
+        string aliasLeaf = Path.GetFileName(shortDirectoryPath);
+        Assert.False(aliasLeaf.Equals(".codegraph", StringComparison.OrdinalIgnoreCase),
+            "Native alias qualification is blocked: GetShortPathNameW returned the original .codegraph leaf; no alias behavior was tested.");
+
+        string aliasDirectoryPath = Path.GetFullPath(Path.Combine(fixture.PreparedRootPath, aliasLeaf));
+        Assert.True(string.Equals(
+                Path.GetFullPath(fixture.PreparedRootPath),
+                Path.GetDirectoryName(aliasDirectoryPath),
+                StringComparison.OrdinalIgnoreCase),
+            "The test must use only the returned alias leaf under the original granted root.");
+        Assert.True(File.Exists(Path.Combine(aliasDirectoryPath, "Owned.java")),
+            "The native alias leaf must resolve the existing owned Java file.");
+
+        (PreparedSourceTraversal.OpenStatus rootStatus, SafeFileHandle? rootHandle) =
+            PreparedSourceTraversal.OpenRoot(fixture.PreparedRootPath);
+        Assert.Equal(PreparedSourceTraversal.OpenStatus.Opened, rootStatus);
+        using SafeFileHandle heldRoot = rootHandle ??
+            throw new InvalidOperationException("The prepared root handle was unavailable for alias qualification.");
+        (PreparedSourceTraversal.OpenStatus aliasStatus, SafeFileHandle? aliasHandle) =
+            PreparedSourceTraversal.OpenRelativeDirectory(heldRoot, aliasLeaf);
+        Assert.Equal(PreparedSourceTraversal.OpenStatus.Opened, aliasStatus);
+        using SafeFileHandle heldAlias = aliasHandle ??
+            throw new InvalidOperationException("The native alias could not be opened relative to the granted root.");
+        PreparedSourceTraversal.DirectoryIdentity observedAliasIdentity =
+            PreparedSourceTraversal.ObserveDirectory(heldAlias) ??
+            throw new InvalidOperationException("The native alias did not resolve to an ordinary physical directory.");
+        Assert.Equal(
+            binding.StateEntryObjectIdentity,
+            new PreparedToolDirectoryObjectIdentity(
+                observedAliasIdentity.VolumeSerialNumber,
+                observedAliasIdentity.FileIndexHigh,
+                observedAliasIdentity.FileIndexLow));
+
+        var toolAuthorization = new CurrentNavigationToolAuthorizer(fixture.Approval);
+        var issuer = new PreparedToolWorkspaceIssuer(fixture.Authority, toolAuthorization);
+        PreparedToolWorkspaceIssueResult issue = await issuer.IssueAsync(
+            new PreparedToolWorkspaceGrantRequest(
+                fixture.Approval,
+                fixture.PreparedRootPath,
+                PreparedToolPurpose.JdtNavigation,
+                TimeSpan.FromSeconds(10)));
+        Assert.Equal(PreparedToolWorkspaceIssueStatus.Issued, issue.Status);
+        PreparedToolWorkspaceLease lease = Assert.IsType<PreparedToolWorkspaceLease>(issue.Lease);
+
+        string disposableStateRoot = Path.Combine(fixture.SiblingPath, "jdt-alias-state");
+        Directory.CreateDirectory(disposableStateRoot);
+        var runtime = new AliasQualificationRuntime();
+        var factory = ownershipFixture.CreateFactory(
+            new PreparedJavaNavigationProfile(
+                disposableStateRoot,
+                TimeSpan.FromSeconds(3),
+                TimeSpan.FromSeconds(2),
+                TimeSpan.FromSeconds(1),
+                MaximumResponseBytes: 64 * 1024),
+            runtime);
+        PreparedJavaNavigationOpenResult? opened = null;
+
+        try
+        {
+            opened = await factory.OpenAsync(lease);
+            Assert.Equal(PreparedJavaNavigationOpenStatus.Opened, opened.Status);
+            IPreparedJavaNavigationContext context =
+                Assert.IsAssignableFrom<IPreparedJavaNavigationContext>(opened.Context);
+            string requestPath = $"{aliasLeaf}/Owned.java";
+            Assert.NotEqual(".codegraph/Owned.java", requestPath);
+            Assert.True(PreparedSourceTraversal.IsCanonicalRelativePath(requestPath, allowEmpty: false));
+
+            PreparedJavaNavigationResult result = await context.GetDefinitionAsync(
+                new PreparedJavaNavigationRequest(requestPath, 1, 1, 10));
+
+            Assert.Equal(PreparedJavaNavigationOutcome.Denied, result.Outcome);
+            Assert.Empty(result.Locations);
+            Assert.Empty(result.Limitations);
+            Assert.Null(result.StoppingLimit);
+            Assert.Equal(0, runtime.Session.NavigateCallCount);
+            Assert.Equal(PreparedToolWorkspaceCheckStatus.Current, await lease.CheckCurrentAsync());
+            Assert.Equal(
+                PreparedToolUseAuthorityStatus.Current,
+                (await toolAuthorization.VerifyCurrentAsync(
+                    fixture.Approval,
+                    PreparedToolPurpose.JdtNavigation)).Status);
+        }
+        finally
+        {
+            if (opened?.Context is not null)
+            {
+                await opened.Context.DisposeAsync();
+            }
+
+            await lease.DisposeAsync();
+        }
     }
 
     [Trait("Suite", "LocalTools")]
@@ -198,6 +324,88 @@ public sealed class JdtLsRealQualificationTests
 
             Assert.False(Directory.Exists(workspaceRoot));
         }
+    }
+
+    private static string GetNativeShortPath(string longPath)
+    {
+        uint required = GetShortPathNameW(longPath, null, 0);
+        if (required == 0)
+        {
+            throw new InvalidOperationException(
+                "Native alias qualification is blocked: GetShortPathNameW failed: " +
+                new Win32Exception(Marshal.GetLastWin32Error()).Message);
+        }
+
+        if (required > 32768)
+        {
+            throw new InvalidOperationException(
+                "Native alias qualification is blocked: the returned path exceeds the documented Windows path buffer bound.");
+        }
+
+        var output = new StringBuilder(checked((int)required));
+        uint written = GetShortPathNameW(longPath, output, required);
+        if (written == 0 || written >= required)
+        {
+            throw new InvalidOperationException(
+                "Native alias qualification is blocked: GetShortPathNameW could not return the complete path: " +
+                new Win32Exception(Marshal.GetLastWin32Error()).Message);
+        }
+
+        return output.ToString();
+    }
+
+    [DllImport("kernel32.dll", EntryPoint = "GetShortPathNameW", CharSet = CharSet.Unicode, SetLastError = true)]
+    private static extern uint GetShortPathNameW(
+        string longPath,
+        [Out] StringBuilder? shortPath,
+        uint bufferLength);
+
+    private sealed class CurrentNavigationToolAuthorizer(PreparedSourceApproval approval)
+        : IPreparedToolUseAuthorizer
+    {
+        public Task<PreparedToolUseAuthorityResult> VerifyCurrentAsync(
+            PreparedSourceApproval requestedApproval,
+            PreparedToolPurpose toolPurpose,
+            CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            PreparedToolUseAuthorityStatus status = requestedApproval == approval &&
+                toolPurpose == PreparedToolPurpose.JdtNavigation
+                    ? PreparedToolUseAuthorityStatus.Current
+                    : PreparedToolUseAuthorityStatus.Denied;
+            return Task.FromResult(new PreparedToolUseAuthorityResult(status));
+        }
+    }
+
+    private sealed class AliasQualificationRuntime : IPreparedJdtLsRuntime
+    {
+        public AliasQualificationSession Session { get; } = new();
+
+        public Task<IPreparedJdtLsSession> OpenAsync(
+            PreparedToolWorkspaceLease workspaceLease,
+            PreparedJavaNavigationProfile profile,
+            CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            return Task.FromResult<IPreparedJdtLsSession>(Session);
+        }
+    }
+
+    private sealed class AliasQualificationSession : IPreparedJdtLsSession
+    {
+        public int NavigateCallCount { get; private set; }
+
+        public Task<PreparedJdtLsRawReply> NavigateAsync(
+            PreparedJavaNavigationOperation operation,
+            PreparedJavaNavigationRequest request,
+            CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            NavigateCallCount++;
+            return Task.FromResult(new PreparedJdtLsRawReply([], LimitReached: false, CapabilityLimitation: null));
+        }
+
+        public ValueTask DisposeAsync() => ValueTask.CompletedTask;
     }
 
     private static void AssertNavigationSucceeded(JavaNavigationResult result)

@@ -334,6 +334,13 @@ public sealed class PreparedToolWorkspaceLease : IAsyncDisposable
         observed.FileIndexLow == expected.FileIndexLow;
 }
 
+internal enum PreparedToolOwnedEntryPathClassification
+{
+    Unknown,
+    Other,
+    Owned,
+}
+
 /// <summary>
 /// A short-lived trusted view of the held prepared root. It is valid only while
 /// the lease's serialized callback is running and never leaves Infrastructure.
@@ -383,6 +390,39 @@ internal sealed class PreparedToolRootScope
             return status == PreparedSourceTraversal.OpenStatus.Opened && entry is not null
                 ? ToStableIdentity(PreparedSourceTraversal.ObserveDirectory(entry))
                 : null;
+        }
+    }
+
+    internal PreparedToolOwnedEntryPathClassification ClassifyOwnedEntryDescendant(
+        string relativePath,
+        PreparedToolDirectoryObjectIdentity ownedEntryIdentity)
+    {
+        EnsureActive();
+        if (!PreparedSourceTraversal.IsCanonicalRelativePath(relativePath, allowEmpty: false))
+        {
+            return PreparedToolOwnedEntryPathClassification.Unknown;
+        }
+
+        int separator = relativePath.IndexOf('/');
+        if (separator < 0)
+        {
+            return PreparedToolOwnedEntryPathClassification.Other;
+        }
+
+        string firstDirectory = relativePath[..separator];
+        (PreparedSourceTraversal.OpenStatus status, SafeFileHandle? entry) =
+            PreparedSourceTraversal.OpenRelativeDirectory(_rootHandle, firstDirectory);
+        using (entry)
+        {
+            PreparedToolDirectoryObjectIdentity? observed =
+                status == PreparedSourceTraversal.OpenStatus.Opened && entry is not null
+                    ? ToStableIdentity(PreparedSourceTraversal.ObserveDirectory(entry))
+                    : null;
+            return observed is null
+                ? PreparedToolOwnedEntryPathClassification.Unknown
+                : observed == ownedEntryIdentity
+                    ? PreparedToolOwnedEntryPathClassification.Owned
+                    : PreparedToolOwnedEntryPathClassification.Other;
         }
     }
 

@@ -116,23 +116,32 @@ public sealed class PreparedJdtLsNavigationContext : IPreparedJavaNavigationCont
                     return Empty(operation, PreparedJavaNavigationOutcome.ConfigurationUnavailable);
                 }
 
-                if (request.RelativePath.StartsWith(".codegraph/", StringComparison.OrdinalIgnoreCase))
-                {
-                    bool matchesOwnedEntry = false;
-                    PreparedToolWorkspaceCheckStatus rootCheck = await _workspaceLease.UseContainedRootAsync(
-                        PreparedToolPurpose.JdtNavigation,
-                        (scope, _) =>
-                        {
-                            matchesOwnedEntry = scope.ObserveCodeGraphEntryIdentity() ==
-                                owned.StateEntryObjectIdentity;
-                            return ValueTask.CompletedTask;
-                        },
-                        linked.Token);
-                    if (rootCheck != PreparedToolWorkspaceCheckStatus.Current || !matchesOwnedEntry)
+                bool matchesOwnedEntry = false;
+                PreparedToolOwnedEntryPathClassification incomingPath =
+                    PreparedToolOwnedEntryPathClassification.Unknown;
+                PreparedToolWorkspaceCheckStatus rootCheck = await _workspaceLease.UseContainedRootAsync(
+                    PreparedToolPurpose.JdtNavigation,
+                    (scope, _) =>
                     {
-                        return Empty(operation, PreparedJavaNavigationOutcome.ConfigurationUnavailable);
-                    }
+                        matchesOwnedEntry = scope.ObserveCodeGraphEntryIdentity() ==
+                            owned.StateEntryObjectIdentity;
+                        if (matchesOwnedEntry)
+                        {
+                            incomingPath = scope.ClassifyOwnedEntryDescendant(
+                                request.RelativePath, owned.StateEntryObjectIdentity);
+                        }
 
+                        return ValueTask.CompletedTask;
+                    },
+                    linked.Token);
+                if (rootCheck != PreparedToolWorkspaceCheckStatus.Current || !matchesOwnedEntry ||
+                    incomingPath == PreparedToolOwnedEntryPathClassification.Unknown)
+                {
+                    return Empty(operation, PreparedJavaNavigationOutcome.ConfigurationUnavailable);
+                }
+
+                if (incomingPath == PreparedToolOwnedEntryPathClassification.Owned)
+                {
                     return Empty(operation, PreparedJavaNavigationOutcome.Denied);
                 }
             }
