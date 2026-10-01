@@ -301,6 +301,8 @@ public sealed class PreparedJavaNavigationContextFactory
                 new PreparedJdtLsNavigationContext(
                     workspaceLease,
                     session,
+                    _ownershipCoordinator,
+                    binding,
                     cleanupConfirmed =>
                     {
                         if (!cleanupConfirmed)

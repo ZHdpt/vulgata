@@ -56,3 +56,8 @@ The concrete store now commits the initial Creating record only after exclusive 
 ### Concrete Ready checkpoint (2026-10-01)
 
 T027/T028 concrete Creating to Ready behavior passed focused1/1 and coordinator15/15 after preserved expected RED. Both retained owners independently assessed the final units; no concrete refactor needed. Callback-time persistence, exact physical ownership identity and separate-object reload are qualified on owned controlled fixtures. Evidence: `T028-ready-slice-completion-01.json`. Recovery remains1/12; no expected RED/build iteration counted. Cleanup/quarantine/stale/CAS competition, fresh-process durability, metadata protection/production composition and18.3 handoff remain open. Working JDT disclosure RED is preserved separately.
+
+
+### Controlled JDT ownership disclosure checkpoint (2026-10-01)
+
+Owned request denial and returned-owned-location exclusion preserve legitimate VerifiedUnowned same-name source. Fresh ownership-view loss now discards buffered payload and limits and retires the session while source/JDT authority stays current. Focused disclosure1/1 and surrounding37/37 passed, independently verified; both retained owners assessed units with no refactor needed. Original expected REDs remain immutable and uncounted. Physical aliases and changed Ready identity/version/root remain open; T014–T017 are not complete. Evidence: `T016-ownership-disclosure-final-verification-01.json`. Recovery1/12 and all remaining native/resource/gates remain unchanged.

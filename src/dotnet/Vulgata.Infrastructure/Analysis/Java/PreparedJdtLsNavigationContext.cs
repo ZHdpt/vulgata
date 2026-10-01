@@ -11,6 +11,8 @@ public sealed class PreparedJdtLsNavigationContext : IPreparedJavaNavigationCont
 {
     private readonly PreparedToolWorkspaceLease _workspaceLease;
     private readonly IPreparedJdtLsSession _session;
+    private readonly PreparedCodeGraphStateCoordinator _ownershipCoordinator;
+    private readonly PreparedCodeGraphWorkspaceOwnership _workspaceBinding;
     private readonly Action<bool> _releaseSlot;
     private readonly TimeSpan _requestTimeout;
     private readonly TimeSpan _shutdownTimeout;
@@ -20,12 +22,16 @@ public sealed class PreparedJdtLsNavigationContext : IPreparedJavaNavigationCont
     internal PreparedJdtLsNavigationContext(
         PreparedToolWorkspaceLease workspaceLease,
         IPreparedJdtLsSession session,
+        PreparedCodeGraphStateCoordinator ownershipCoordinator,
+        PreparedCodeGraphWorkspaceOwnership workspaceBinding,
         Action<bool> releaseSlot,
         TimeSpan requestTimeout,
         TimeSpan shutdownTimeout)
     {
         _workspaceLease = workspaceLease;
         _session = session;
+        _ownershipCoordinator = ownershipCoordinator;
+        _workspaceBinding = workspaceBinding;
         _releaseSlot = releaseSlot;
         _requestTimeout = requestTimeout;
         _shutdownTimeout = shutdownTimeout;
@@ -83,6 +89,65 @@ public sealed class PreparedJdtLsNavigationContext : IPreparedJavaNavigationCont
                 return Empty(operation, Map(before));
             }
 
+            PreparedCodeGraphOwnershipViewResult ownershipView;
+            try
+            {
+                ownershipView = await _ownershipCoordinator.GetOwnershipViewAsync(
+                    _workspaceBinding, _workspaceBinding.Approval, linked.Token).WaitAsync(linked.Token);
+            }
+            catch (OperationCanceledException) when (linked.IsCancellationRequested)
+            {
+                return Empty(operation, cancellationToken.IsCancellationRequested
+                    ? PreparedJavaNavigationOutcome.Cancelled
+                    : PreparedJavaNavigationOutcome.DeadlineExceeded);
+            }
+            catch (Exception)
+            {
+                return Empty(operation, PreparedJavaNavigationOutcome.ConfigurationUnavailable);
+            }
+
+            if (ownershipView.Status == PreparedCodeGraphOwnershipViewStatus.VerifiedOwned)
+            {
+                PreparedCodeGraphWorkspaceOwnership? owned = ownershipView.Record;
+                if (owned is not { Phase: PreparedCodeGraphOwnershipPhase.Ready,
+                    StateEntryObjectIdentity: not null } ||
+                    owned.OwnershipId != _workspaceBinding.OwnershipId)
+                {
+                    return Empty(operation, PreparedJavaNavigationOutcome.ConfigurationUnavailable);
+                }
+
+                if (request.RelativePath.StartsWith(".codegraph/", StringComparison.OrdinalIgnoreCase))
+                {
+                    bool matchesOwnedEntry = false;
+                    PreparedToolWorkspaceCheckStatus rootCheck = await _workspaceLease.UseContainedRootAsync(
+                        PreparedToolPurpose.JdtNavigation,
+                        (scope, _) =>
+                        {
+                            matchesOwnedEntry = scope.ObserveCodeGraphEntryIdentity() ==
+                                owned.StateEntryObjectIdentity;
+                            return ValueTask.CompletedTask;
+                        },
+                        linked.Token);
+                    if (rootCheck != PreparedToolWorkspaceCheckStatus.Current || !matchesOwnedEntry)
+                    {
+                        return Empty(operation, PreparedJavaNavigationOutcome.ConfigurationUnavailable);
+                    }
+
+                    return Empty(operation, PreparedJavaNavigationOutcome.Denied);
+                }
+            }
+            else if (ownershipView.Status != PreparedCodeGraphOwnershipViewStatus.VerifiedUnowned)
+            {
+                return Empty(operation, PreparedJavaNavigationOutcome.ConfigurationUnavailable);
+            }
+
+            if (linked.IsCancellationRequested)
+            {
+                return Empty(operation, cancellationToken.IsCancellationRequested
+                    ? PreparedJavaNavigationOutcome.Cancelled
+                    : PreparedJavaNavigationOutcome.DeadlineExceeded);
+            }
+
             PreparedJdtLsRawReply raw;
             Task<PreparedJdtLsRawReply>? pendingReply = null;
             try
@@ -129,10 +194,24 @@ public sealed class PreparedJdtLsNavigationContext : IPreparedJavaNavigationCont
 
             var locations = new List<PreparedJavaLocation>();
             var limitations = new List<PreparedJavaLimitation>();
+            PreparedCodeGraphWorkspaceOwnership? ownedRecord =
+                ownershipView.Status == PreparedCodeGraphOwnershipViewStatus.VerifiedOwned
+                    ? ownershipView.Record : null;
+            bool ownedEntryMatches = true;
             PreparedToolWorkspaceCheckStatus mapping = await _workspaceLease.UseContainedRootAsync(
                 PreparedToolPurpose.JdtNavigation,
                 (scope, _) =>
                 {
+                    if (ownedRecord is not null)
+                    {
+                        ownedEntryMatches = scope.ObserveCodeGraphEntryIdentity() ==
+                            ownedRecord.StateEntryObjectIdentity;
+                        if (!ownedEntryMatches)
+                        {
+                            return ValueTask.CompletedTask;
+                        }
+                    }
+
                     foreach (PreparedJdtLsRawLocation location in raw.Locations.Take(request.MaximumLocations))
                     {
                         if (location is not null &&
@@ -140,6 +219,12 @@ public sealed class PreparedJdtLsNavigationContext : IPreparedJavaNavigationCont
                             source is not null &&
                             ValidRange(location))
                         {
+                            if (ownedRecord is not null && source.RelativePath.StartsWith(
+                                    ".codegraph/", StringComparison.OrdinalIgnoreCase))
+                            {
+                                continue;
+                            }
+
                             locations.Add(new PreparedJavaLocation(
                                 source,
                                 location.StartLine,
@@ -164,6 +249,12 @@ public sealed class PreparedJdtLsNavigationContext : IPreparedJavaNavigationCont
                     : PreparedJavaNavigationOutcome.ConfigurationUnavailable);
             }
 
+            if (!ownedEntryMatches)
+            {
+                _ = await RetireSessionUnderGateAsync();
+                return Empty(operation, PreparedJavaNavigationOutcome.ConfigurationUnavailable);
+            }
+
             PreparedToolWorkspaceCheckStatus disclosure =
                 await _workspaceLease.CheckCurrentAsync(cancellationToken);
             if (disclosure != PreparedToolWorkspaceCheckStatus.Current)
@@ -171,6 +262,44 @@ public sealed class PreparedJdtLsNavigationContext : IPreparedJavaNavigationCont
                 bool settled = await RetireSessionUnderGateAsync();
                 return Empty(operation, settled
                     ? Map(disclosure)
+                    : PreparedJavaNavigationOutcome.ConfigurationUnavailable);
+            }
+
+            PreparedCodeGraphOwnershipViewResult disclosureView;
+            try
+            {
+                disclosureView = await _ownershipCoordinator.GetOwnershipViewAsync(
+                    _workspaceBinding, _workspaceBinding.Approval, linked.Token).WaitAsync(linked.Token);
+            }
+            catch (OperationCanceledException) when (linked.IsCancellationRequested)
+            {
+                bool settled = await RetireSessionUnderGateAsync();
+                return Empty(operation, settled
+                    ? cancellationToken.IsCancellationRequested
+                        ? PreparedJavaNavigationOutcome.Cancelled
+                        : PreparedJavaNavigationOutcome.DeadlineExceeded
+                    : PreparedJavaNavigationOutcome.ConfigurationUnavailable);
+            }
+            catch (Exception)
+            {
+                _ = await RetireSessionUnderGateAsync();
+                return Empty(operation, PreparedJavaNavigationOutcome.ConfigurationUnavailable);
+            }
+
+            if (disclosureView.Status != ownershipView.Status ||
+                disclosureView.Record != ownershipView.Record)
+            {
+                _ = await RetireSessionUnderGateAsync();
+                return Empty(operation, PreparedJavaNavigationOutcome.ConfigurationUnavailable);
+            }
+
+            if (linked.IsCancellationRequested)
+            {
+                bool settled = await RetireSessionUnderGateAsync();
+                return Empty(operation, settled
+                    ? cancellationToken.IsCancellationRequested
+                        ? PreparedJavaNavigationOutcome.Cancelled
+                        : PreparedJavaNavigationOutcome.DeadlineExceeded
                     : PreparedJavaNavigationOutcome.ConfigurationUnavailable);
             }
 
