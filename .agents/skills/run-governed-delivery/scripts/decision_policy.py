@@ -135,7 +135,7 @@ def validate_recovery_projection(state: Mapping) -> list[str]:
         if set(recovery) != RECOVERY_FIELDS:
             raise ValueError("recovery has invalid fields")
         _text(recovery.get("episode_id"), "recovery.episode_id")
-        count = _integer(recovery.get("failed_results"), "recovery.failed_results", 1)
+        count = _integer(recovery.get("failed_results"), "recovery.failed_results")
         limit = _integer(recovery.get("pause_at"), "recovery.pause_at", 4)
         if recovery.get("closing_gate") not in {"definition-review", "verify"}:
             raise ValueError("recovery.closing_gate must be definition-review or verify")
@@ -153,7 +153,7 @@ def validate_recovery_projection(state: Mapping) -> list[str]:
             if set(diag) != {"evidence", "at_count"}:
                 raise ValueError("recovery.diagnosis requires evidence and at_count")
             _evidence(diag.get("evidence"), "recovery.diagnosis.evidence")
-            if _integer(diag.get("at_count"), "recovery.diagnosis.at_count", 1) > count:
+            if _integer(diag.get("at_count"), "recovery.diagnosis.at_count") > count:
                 raise ValueError("diagnosis cannot cover a future failure count")
         extension = recovery.get("extension_decision_id")
         if extension is not None:
@@ -370,6 +370,17 @@ def advance_recovery(state: Mapping, event: Mapping) -> dict:
         if decision["decision_id"] == recovery["extension_decision_id"]:
             raise ValueError("an extension decision cannot be reused")
         recovery.update(pause_at=limit, extension_decision_id=decision["decision_id"], diagnosis=None)
+        recovery["action"] = _budget_action(recovery, "diagnose")
+    elif kind == "human_counter_reset":
+        if recovery is None or recovery["failed_results"] == 0:
+            raise ValueError("counter reset requires an active episode with failures")
+        _decision(state, event, recovery)
+        if (event.get("count_from") != recovery["failed_results"]
+                or type(event.get("reset_to")) is not int or event["reset_to"] != 0
+                or event.get("recovery_before") != recovery):
+            raise ValueError("counter reset must bind the exact current recovery boundary")
+        recovery["failed_results"] = 0
+        recovery["diagnosis"] = None
         recovery["action"] = _budget_action(recovery, "diagnose")
     elif kind == "close":
         if recovery is not None and recovery["holds"]:
