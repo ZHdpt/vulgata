@@ -1,5 +1,15 @@
+using System.Collections.Immutable;
+using System.Text;
 using System.Text.Json;
+using Microsoft.AspNetCore.DataProtection;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Vulgata.Core.DomainServices;
+using Vulgata.Core.Entities;
+using Vulgata.Infrastructure.Configuration;
+using Vulgata.Infrastructure.Data.October;
+using Vulgata.Web.Data;
 
 namespace Vulgata.OctoberGenerator;
 
@@ -7,43 +17,211 @@ public static class OctoberGeneratorEntryPoint
 {
     public static async Task<int> Main()
     {
-        // Direct host configuration and target composition follow the T018 behavioral RED.
-        string? modeText = Environment.GetEnvironmentVariable("October__Mode");
-        string? targetId = Environment.GetEnvironmentVariable("October__TargetId");
-        string? batchText = Environment.GetEnvironmentVariable("October__BatchId");
-        string? setupRequestJson = Environment.GetEnvironmentVariable("October__SetupRequestJson");
-        if (modeText is not ("prepare" or "select") ||
-            string.IsNullOrWhiteSpace(targetId) ||
-            !Guid.TryParse(batchText, out Guid batchId) || batchId == Guid.Empty)
+        try
+        {
+            IConfigurationRoot configuration = new ConfigurationBuilder()
+                .AddEnvironmentVariables()
+                .Build();
+            OctoberGeneratorCommand command = ReadCommand(configuration);
+            OctoberAuthorityConfiguration authorityConfiguration = ReadAuthorityConfiguration(
+                configuration, command);
+
+            IServiceCollection registrations = new ServiceCollection();
+            registrations.AddDataProtection()
+                .PersistKeysToFileSystem(new DirectoryInfo(Required(configuration,
+                    "DataProtection:KeyRingPath")))
+                .SetApplicationName(Required(configuration, "DataProtection:ApplicationName"));
+            registrations.AddSingleton<ISecretEncryptionService, SecretEncryptionService>();
+            await using ServiceProvider protection = registrations.BuildServiceProvider(validateScopes: true);
+            OctoberProviderConfiguration providerConfiguration =
+                await ReadProviderConfigurationAsync(configuration);
+            OctoberProviderBindingResult providerBinding = await new OctoberProviderBinder(
+                protection.GetRequiredService<ISecretEncryptionService>())
+                .BindAsync(providerConfiguration);
+            if (providerBinding.Status != OctoberProviderBindingStatus.Bound ||
+                providerBinding.Binding is null)
+                return 1;
+
+            IOctoberOperatorCredentialSource credentialSource =
+                Required(configuration, "October:Operator:CredentialSource") switch
+                {
+                    "console" when configuration["October:Operator:CredentialFile"] is null =>
+                        new OctoberConsoleCredentialSource(),
+                    "protected-file" => new OctoberProtectedFileCredentialSource(
+                        Required(configuration, "October:Operator:CredentialFile"),
+                        protection.GetRequiredService<IDataProtectionProvider>()),
+                    _ => throw new InvalidOperationException("October operator configuration is invalid.")
+                };
+            OctoberHeadlessAuthorityRegistration.AddOctoberLocalAuthority(
+                registrations, authorityConfiguration, credentialSource, TimeProvider.System);
+            registrations.AddDbContext<OctoberDbContext>(options =>
+                options.UseNpgsql(authorityConfiguration.DataConnectionString, npgsql =>
+                    npgsql.MigrationsHistoryTable("__OctoberMigrationsHistory", "october")));
+
+            await using ServiceProvider host = registrations.BuildServiceProvider(validateScopes: true);
+            await using AsyncServiceScope scope = host.CreateAsyncScope();
+            OctoberDbContext database = scope.ServiceProvider.GetRequiredService<OctoberDbContext>();
+            OctoberNpgsqlTargetDependencies targetDependencies = new(
+                database, authorityConfiguration.DataConnectionString);
+            OctoberConfiguredTarget target = new(
+                authorityConfiguration.TargetId, authorityConfiguration.CanonicalDatabaseIdentity,
+                targetDependencies, targetDependencies,
+                new OctoberSetupStore(database, TimeProvider.System),
+                new OctoberBatchSelector(database, authorityConfiguration.TargetId,
+                    authorityConfiguration.CanonicalDatabaseIdentity));
+            OctoberGeneratorModule module = new(
+                scope.ServiceProvider.GetRequiredService<IOctoberLocalAuthority>(),
+                target, authorityConfiguration.AuthorityId);
+            OctoberGeneratorExecutionResult result = await module.ExecuteAsync(command);
+            return result.Status is OctoberGeneratorExecutionStatus.Prepared or
+                OctoberGeneratorExecutionStatus.Selected ? 0 : 1;
+        }
+        catch (Exception)
         {
             return 1;
         }
+    }
 
-        OctoberSetupRequest? setupRequest = null;
-        if (modeText == "prepare")
+    private static OctoberGeneratorCommand ReadCommand(IConfiguration configuration)
+    {
+        OctoberGeneratorMode mode = configuration["October:Mode"] switch
         {
-            try
-            {
-                setupRequest = JsonSerializer.Deserialize<OctoberSetupRequest>(setupRequestJson ?? string.Empty);
-            }
-            catch (JsonException)
-            {
-                return 1;
-            }
+            "prepare" => OctoberGeneratorMode.Prepare,
+            "select" => OctoberGeneratorMode.Select,
+            _ => throw new InvalidOperationException("October generator mode is invalid.")
+        };
+        string targetId = Required(configuration, "October:TargetId");
+        if (!Guid.TryParse(configuration["October:BatchId"], out Guid batchId) ||
+            batchId == Guid.Empty)
+            throw new InvalidOperationException("October batch is invalid.");
 
-            if (setupRequest is null ||
-                !string.Equals(setupRequest.TargetId, targetId, StringComparison.Ordinal) ||
-                setupRequest.BatchId != batchId)
-            {
-                return 1;
-            }
+        OctoberSetupRequest? request = null;
+        if (mode == OctoberGeneratorMode.Prepare)
+        {
+            request = JsonSerializer.Deserialize<OctoberSetupRequest>(
+                Required(configuration, "October:SetupRequestJson"));
+            if (request is null ||
+                !string.Equals(request.TargetId, targetId, StringComparison.Ordinal) ||
+                request.BatchId != batchId)
+                throw new InvalidOperationException("October setup request is invalid.");
+        }
+        else if (configuration["October:SetupRequestJson"] is not null)
+        {
+            throw new InvalidOperationException("October select request is invalid.");
         }
 
-        _ = new OctoberGeneratorCommand(
-            modeText == "prepare" ? OctoberGeneratorMode.Prepare : OctoberGeneratorMode.Select,
-            targetId,
-            batchId,
-            setupRequest);
-        return 1;
+        return new OctoberGeneratorCommand(mode, targetId, batchId, request);
+    }
+
+    private static OctoberAuthorityConfiguration ReadAuthorityConfiguration(
+        IConfiguration configuration, OctoberGeneratorCommand command)
+    {
+        ImmutableDictionary<string, string>.Builder targets =
+            ImmutableDictionary.CreateBuilder<string, string>(StringComparer.Ordinal);
+        foreach (IConfigurationSection item in configuration.GetSection("October:Targets").GetChildren())
+        {
+            if (!targets.TryAdd(Required(item, "TargetId"),
+                    Required(item, "CanonicalDatabaseIdentity")))
+                throw new InvalidOperationException("October target configuration is invalid.");
+        }
+
+        if (!targets.TryGetValue(command.TargetId, out string? canonicalIdentity))
+            throw new InvalidOperationException("October selected target is invalid.");
+        string dataConnection = Required(configuration, "ConnectionStrings:DefaultConnection");
+        string? identityName = configuration["October:Identity:ConnectionName"];
+        string identityConnection = identityName is null
+            ? dataConnection
+            : Required(configuration, $"ConnectionStrings:{identityName}");
+        string identityCanonical = identityName is null
+            ? canonicalIdentity
+            : Required(configuration, "October:Identity:CanonicalDatabaseIdentity");
+
+        return new OctoberAuthorityConfiguration(
+            Required(configuration, "October:Authority:Id"),
+            command.TargetId, command.BatchId, canonicalIdentity,
+            dataConnection, identityConnection, identityCanonical,
+            targets.ToImmutable(), TimeSpan.FromSeconds(30), TimeSpan.FromHours(1));
+    }
+
+    private static string Required(IConfiguration configuration, string key)
+    {
+        string? value = configuration[key];
+        return !string.IsNullOrWhiteSpace(value) ? value :
+            throw new InvalidOperationException("October configuration is invalid.");
+    }
+
+    private static async Task<OctoberProviderConfiguration> ReadProviderConfigurationAsync(
+        IConfigurationRoot configuration)
+    {
+        HashSet<string> suppliedSelectors = new(StringComparer.Ordinal);
+        foreach (IConfigurationProvider source in configuration.Providers)
+        {
+            if (source.TryGet("October:Providers:ConfigurationFile", out string? supplied) &&
+                supplied is not null)
+                suppliedSelectors.Add(supplied);
+        }
+        if (suppliedSelectors.Count > 1 ||
+            configuration.GetSection("October:Providers").GetChildren()
+                .Any(section => !string.Equals(section.Key, "ConfigurationFile", StringComparison.Ordinal)))
+            throw new InvalidOperationException("October provider configuration is invalid.");
+
+        string path = Required(configuration, "October:Providers:ConfigurationFile");
+        try
+        {
+            using JsonDocument document = JsonDocument.Parse(await File.ReadAllTextAsync(
+                path, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false, throwOnInvalidBytes: true)));
+            JsonElement root = document.RootElement;
+            ValidateProperties(root, "sourceIdentity", "precedence", "workerProfile", "chatProfile",
+                "profiles", "protectedCredentials");
+            OctoberProviderProfile[] profiles = root.GetProperty("profiles").EnumerateArray()
+                .Select(profile =>
+                {
+                    ValidateProperties(profile, "name", "apiType", "endpoint", "model",
+                        "credentialReference");
+                    return new OctoberProviderProfile(
+                        RequiredString(profile, "name"),
+                        RequiredString(profile, "apiType") switch
+                        {
+                            "chat-completions" => ApiType.ChatCompletions,
+                            "responses" => ApiType.Responses,
+                            "messages" => ApiType.Messages,
+                            _ => throw new FormatException()
+                        },
+                        RequiredString(profile, "endpoint"), RequiredString(profile, "model"),
+                        RequiredString(profile, "credentialReference"));
+                }).ToArray();
+            Dictionary<string, string> credentials = new(StringComparer.Ordinal);
+            foreach (JsonProperty entry in root.GetProperty("protectedCredentials").EnumerateObject())
+            {
+                if (!credentials.TryAdd(entry.Name, entry.Value.GetString() ?? throw new FormatException()))
+                    throw new FormatException();
+            }
+            return new OctoberProviderConfiguration(
+                RequiredString(root, "sourceIdentity"), RequiredString(root, "precedence"),
+                RequiredString(root, "workerProfile"), RequiredString(root, "chatProfile"),
+                profiles, credentials);
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or
+            DecoderFallbackException or JsonException or InvalidOperationException or
+            KeyNotFoundException or FormatException)
+        {
+            throw new InvalidOperationException("October provider configuration is invalid.");
+        }
+
+        static string RequiredString(JsonElement value, string name) =>
+            value.GetProperty(name).GetString() ?? throw new FormatException();
+
+        static void ValidateProperties(JsonElement value, params string[] names)
+        {
+            if (value.ValueKind != JsonValueKind.Object)
+                throw new FormatException();
+            HashSet<string> allowed = new(names, StringComparer.Ordinal);
+            HashSet<string> seen = new(StringComparer.Ordinal);
+            foreach (JsonProperty property in value.EnumerateObject())
+            {
+                if (!allowed.Contains(property.Name) || !seen.Add(property.Name))
+                    throw new FormatException();
+            }
+        }
     }
 }

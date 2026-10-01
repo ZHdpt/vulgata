@@ -1,6 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
+using Microsoft.EntityFrameworkCore.Migrations.Operations;
+using Microsoft.EntityFrameworkCore.Metadata;
 using Vulgata.Infrastructure.Data;
 using Vulgata.Infrastructure.Data.October;
 using Vulgata.Tests.TestInfrastructure;
@@ -41,6 +43,21 @@ public sealed class OctoberPersistenceModelTests
 
     [Trait("Suite", "SelfContained")]
     [SuiteFact("SelfContained")]
+    public void OctoberModel_HasNoPendingModelChanges()
+    {
+        using OctoberDbContext october = CreateOctoberModelContext();
+        bool hasPendingModelChanges = october.Database.HasPendingModelChanges();
+        string differences = hasPendingModelChanges
+            ? DescribeModelDifferences(october)
+            : string.Empty;
+
+        Assert.False(
+            hasPendingModelChanges,
+            $"The October model must match its migration snapshot. Differences: {differences}");
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public void OrdinaryVulgataModel_ContainsNoOctoberMappings()
     {
         using VulgataDbContext ordinary = CreateOrdinaryModelContext();
@@ -66,5 +83,51 @@ public sealed class OctoberPersistenceModelTests
             .Options;
 
         return new VulgataDbContext(options);
+    }
+
+    private static string DescribeModelDifferences(OctoberDbContext october)
+    {
+        ModelSnapshot? snapshot = october.GetService<IMigrationsAssembly>().ModelSnapshot;
+        Assert.NotNull(snapshot);
+
+        IMigrationsModelDiffer differ = october.GetService<IMigrationsModelDiffer>();
+        IModel designTimeModel = october.GetService<IDesignTimeModel>().Model;
+        IReadOnlyList<MigrationOperation> operations = differ.GetDifferences(
+            snapshot!.Model.GetRelationalModel(),
+            designTimeModel.GetRelationalModel());
+
+        return string.Join(
+            "; ",
+            operations.Select(operation =>
+            {
+                string operationName = operation.GetType().Name;
+                string annotations = string.Join(",", operation.GetAnnotations().Select(annotation => annotation.Name));
+                string annotationDetails = annotations.Length == 0
+                    ? string.Empty
+                    : $" Annotations=[{annotations}]";
+
+                return operation switch
+                {
+                    AddColumnOperation column =>
+                        $"{operationName} {column.Schema}.{column.Table}.{column.Name}:" +
+                        $"{column.ClrType.Name}/{column.ColumnType}/{(column.IsNullable ? "nullable" : "required")}" +
+                        annotationDetails,
+                    AlterColumnOperation column =>
+                        $"{operationName} {column.Schema}.{column.Table}.{column.Name}:" +
+                        $"{column.ClrType.Name}/{column.ColumnType}/{(column.IsNullable ? "nullable" : "required")}" +
+                        annotationDetails,
+                    CreateIndexOperation index =>
+                        $"{operationName} {index.Schema}.{index.Table}.{index.Name}" +
+                        $"({string.Join(",", index.Columns)}) unique={index.IsUnique}{annotationDetails}",
+                    AddForeignKeyOperation foreignKey =>
+                        $"{operationName} {foreignKey.Schema}.{foreignKey.Table}" +
+                        $"({string.Join(",", foreignKey.Columns)})->" +
+                        $"{foreignKey.PrincipalSchema}.{foreignKey.PrincipalTable}" +
+                        $"({string.Join(",", foreignKey.PrincipalColumns)}){annotationDetails}",
+                    DropForeignKeyOperation foreignKey =>
+                        $"{operationName} {foreignKey.Schema}.{foreignKey.Table}{annotationDetails}",
+                    _ => $"{operationName}{annotationDetails}"
+                };
+            }));
     }
 }

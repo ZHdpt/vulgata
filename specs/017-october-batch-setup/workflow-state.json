@@ -102,7 +102,7 @@
   "bmad_epic_key": "epic-18",
   "bmad_story_key": "18-4-prepare-an-owned-october-batch-with-valid-context-and-provid",
   "checkpoint": {
-    "checkpoint_id": "bmad-18-4-implement-20261001T134958Z-71a439",
+    "checkpoint_id": "bmad-18-4-implement-20261001T152056Z-c05f81",
     "stage": "implement",
     "commit_sha": null,
     "binding_status": "pending"
@@ -125,7 +125,7 @@
     "specs/017-october-batch-setup/evidence/local-authority-command-cancellation-selection-final-green-01.json",
     "specs/017-october-batch-setup/evidence/provider-binding-final-green-01.json",
     "specs/017-october-batch-setup/evidence/selected-web-provider-final-green-01.json",
-    "specs/017-october-batch-setup/evidence/context-projection-final-green-01.json"
+    "specs/017-october-batch-setup/evidence/generator-prepare-final-green-01.json"
   ],
   "definition_author": {
     "escalation_decision_id": "18-4/definition-escalation/1",
@@ -159,10 +159,10 @@
   },
   "preflight": {
     "branch": "oct14/story-18-4",
-    "head": "0020ffdef6e45a361ac84716fd2a6320ab471a37",
-    "git_identity_sha256": "320335bacfa3bb9245ea6a6b6449cac9d75fcc9c8743ea6d7c12fa1f408b46e7",
-    "status_sha256": "19a4c39f82947c27e5ae39b698e13d4bc7cb27c24e7c97c4f636e36bf0523d1a",
-    "observed_at": "2026-10-01T13:49:58.520158Z"
+    "head": "eaa8842a2b2d873ba166720020d8793dfa825d24",
+    "git_identity_sha256": "7c438f9dbe61ebc35a8ef18f3163b7e7114ccf54c28cf27480b3cb0d124b9028",
+    "status_sha256": "25e241e7ca586309d4431476d49a40d18c1f2e998313f922e14d306c7cdf99e9",
+    "observed_at": "2026-10-01T15:20:56.514314Z"
   },
   "recovery": {
     "action": "proceed",
@@ -187,14 +187,14 @@
   },
   "resume": {
     "stage": "implement",
-    "reason": "T021/T022 complete via already implemented snapshot projection, GREEN1/1and166/166. Context checkpoint pending; next actual generator executable development tracer under owned grant. Recovery6/7 and gates unchanged.",
-    "evidence_path": "specs/017-october-batch-setup/evidence/context-projection-final-green-01.json"
+    "reason": "Generator prepare1/1 child0, model5/5 and270/270 independent GREEN. Continue missing select/denial and isolation before final A/B qualification; recovery6/7 and approvals retained.",
+    "evidence_path": "specs/017-october-batch-setup/evidence/generator-prepare-final-green-01.json"
   },
   "schema_version": "3.1",
   "stage": "implement",
   "transition_head": {
-    "path": "specs/017-october-batch-setup/evidence/transitions/transition-0088-selected-web-provider-utf8-loading-expected-red.json",
-    "sha256": "7cf4928765cf52b46b9c2231270861926264a7e9060b8dd2dea087361e75fd38"
+    "path": "specs/017-october-batch-setup/evidence/transitions/transition-0090-october-model-snapshot-consistency-expected-red.json",
+    "sha256": "d81a46f0f776fc5063ec0a21019d0db038d33bef0a1583ae889b566605bb580d"
   },
-  "updated_at": "2026-10-01T13:49:58.520158Z"
+  "updated_at": "2026-10-01T15:20:56Z"
 }

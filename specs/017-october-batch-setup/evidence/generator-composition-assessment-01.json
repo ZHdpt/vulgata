@@ -1,0 +1,19 @@
+{
+  "kind": "analysis",
+  "stage": "implement",
+  "source_commit": "784e5303514f77c45f542dcf83d47544b44cae24",
+  "task": "T019",
+  "input_hashes": {
+    "src/dotnet/Vulgata.OctoberGenerator/Program.cs": "586d3fc18f0b733d53a24e49eee633563b1014f8e9b13c4bf6ad91745b70db50",
+    "src/dotnet/Vulgata.OctoberGenerator/OctoberConfiguredTarget.cs": "7bb6c5a79521c858bea6f99cdf7136e028b4d042322f98a10da22c6e46a231a5"
+  },
+  "assessment": "Program parses but always returns1; unconfigured connected identity/migrator/writer/selector placeholders remain. Existing target already orders connected identity before prepare-only migration and never migrates on select. Reuse existing headlessIdentity/protectedfile orconsolecredentials/OctoberGeneratorModule/OctoberDbContext separatehistory/store/selector/sharedproviderbinder. No actual connectedPostgreSQL database/endpoint qualification exists.",
+  "accepted_obligation": "Configured selected connection must match its declared descriptor and connected PostgreSQL database identity before migration; no actual proof from configured-string comparisons.",
+  "next_boundary": "ActualMain executable behavioral development tracer through authorized fresh runner-owned PG with Web stopped. Resource grant permits owned test, not evidence of implementation. Provider parser privateWeb; shared local composition remains accepted implementation work, not a new public test seam.",
+  "limitations": "Read-only/no changes/build/tests/resources; no T019completion. No external prerequisite or new story created.",
+  "recovery": {
+    "failed_results": 6,
+    "pause_at": 7,
+    "changed": false
+  }
+}

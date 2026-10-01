@@ -1,0 +1,45 @@
+{
+  "kind": "analysis",
+  "stage": "implement",
+  "evidence_id": "18-4/generator-model-consistency-development-diagnosis/1",
+  "source_commit": "eaa8842a2b2d873ba166720020d8793dfa825d24",
+  "observed_at": "2026-10-01T14:29:03Z",
+  "summary": "First actual prepare implementation now reaches connected-target verification then EF October migration throws pending-model-changes InvalidOperationException. Generator owner did not alter/suppress model or snapshot because prior write boundary excluded migrations. No snapshot repair has been attempted. This is a newly exposed normal development/schema-consistency defect, not independent review/convergence or repeated failed snapshot repair; count6/7 and retained recovery diagnosis remain unchanged. Route one existing public provider-model consistency regression to retained test owner, read-only exact metadata diagnosis to retained production owner, then bounded approved October artifact correction. No plan reset/new prerequisite or authority decision.",
+  "observed_after": {
+    "path": "specs/017-october-batch-setup/evidence/transitions/transition-0089-generator-executable-prepare-expected-red.json",
+    "sha256": "6c164fa4353cd31759fb903cded1a4fa70175c32ba69cb807d6eb0c787025b47"
+  },
+  "raw_result": {
+    "owner": "retained tdd-implementer Sol/medium",
+    "outcome": "not-green",
+    "command": "pwsh -NoProfile -File eng/test.ps1 -Suite E2E -WithPostgreSql -Filter 'FullyQualifiedName~GeneratorPrepare_WithWebStopped_CommitsOwnedBatch'",
+    "exit_code": 1,
+    "selected": 1,
+    "passed": 0,
+    "failed": 1,
+    "skipped": 0,
+    "build_errors": 0,
+    "trx_path": "TestResults/isolation-869e25d3e9504735b7511154420ba4a2/results.trx",
+    "trx_sha256": "0353928c8294c669e936e372d3b5656c937526c0b837789c01b8def289a98a1d",
+    "diagnostic_child_exit_code": 39,
+    "diagnosis": "Temporary sanitized diagnostic codes isolated EF InvalidOperationException containing pending changes in October migration, after connected-target verification. Diagnostic codes removed from current source; this TRX is not final-shape evidence.",
+    "cleanup_proofs": [
+      {
+        "path": "TestResults/isolation-869e25d3e9504735b7511154420ba4a2/cleanup-inspect.log",
+        "sha256": "72be39c249c5e9507d0b07f2f246ff31bb484b389047b155ccce7153cd884e7f"
+      },
+      {
+        "path": "TestResults/isolation-869e25d3e9504735b7511154420ba4a2/volume-absence.log",
+        "sha256": "4a648c5480547e913693ac1747e6f94847a0e856ebf5c3dff1d06c70f57e8868"
+      }
+    ]
+  },
+  "input_hashes": {
+    "src/dotnet/Vulgata.OctoberGenerator/Program.cs": "21d05229203395f8a8440e2fc8d37f0e57c8d1dc8b7f72775d81a2a179493dc3",
+    "src/dotnet/Vulgata.OctoberGenerator/OctoberNpgsqlTargetDependencies.cs": "55773a75697e3de4db625192abb658dfa1cd49990393ca0198f178917184f262",
+    "src/dotnet/Vulgata.Infrastructure/Data/October/OctoberDbContext.cs": "a970f27443c171a5ffa871bd2f49924151089750ded474507414031f09b111b8",
+    "src/dotnet/Vulgata.Infrastructure/Data/October/Migrations/OctoberDbContextModelSnapshot.cs": "4c4b8b435d0a3028ad225a1a8c559a050aa78cf373ed0c05fccdda17dd6903e1"
+  },
+  "scope": "Existing accepted fixed October schema/history/model/snapshot obligations T004/T005/T011/T019/T029. No new schema semantics, source contract, ordinary model, warning suppression, package or resource permission.",
+  "next": "Retained test owner adds metadata-only OctoberModel_HasNoPendingModelChanges RED; retained production owner diagnoses concrete differences read-only. Root then authorizes only necessary existing approved schema/snapshot paths."
+}

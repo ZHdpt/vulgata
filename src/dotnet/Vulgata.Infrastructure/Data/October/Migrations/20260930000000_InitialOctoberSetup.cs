@@ -146,7 +146,10 @@ public sealed class InitialOctoberSetup : Migration
 
     protected override void BuildTargetModel(ModelBuilder modelBuilder)
     {
-        modelBuilder.HasDefaultSchema("october");
+        modelBuilder.HasDefaultSchema("october")
+            .HasAnnotation("ProductVersion", "10.0.9")
+            .HasAnnotation("Relational:MaxIdentifierLength", 63);
+        NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
         modelBuilder.Entity<OctoberBatchRecord>(batch =>
         {
             batch.ToTable("OctoberBatches", table =>
@@ -158,11 +161,14 @@ public sealed class InitialOctoberSetup : Migration
             batch.Property(value => value.CanonicalDatabaseIdentity).IsRequired();
             batch.Property(value => value.SelectionDigest).IsRequired().HasMaxLength(64);
             batch.Property(value => value.ManagementAuthorityId).IsRequired();
+            batch.Property(value => value.SelectedAtUtc);
+            batch.Property(value => value.State);
         });
         modelBuilder.Entity<OctoberRepositoryRecord>(repository =>
         {
             repository.ToTable("OctoberRepositorySelections");
             repository.HasKey(value => new { value.BatchId, value.RepositoryId });
+            repository.Property(value => value.SystemId);
             repository.Property(value => value.RootBindingIdentity).IsRequired();
             repository.Property(value => value.OperatorLabel).IsRequired();
             repository.HasOne<OctoberBatchRecord>().WithMany().HasForeignKey(value => value.BatchId)
@@ -179,9 +185,14 @@ public sealed class InitialOctoberSetup : Migration
         {
             entry.ToTable("OctoberAdvisoryEntries");
             entry.HasKey(value => new { value.BatchId, value.RepositoryId, value.Scope });
+            entry.Property(value => value.Applicability);
+            entry.Property(value => value.EvidenceKind);
+            entry.Property(value => value.OriginRecordId);
+            entry.Property(value => value.Value);
             entry.HasOne<OctoberRepositoryRecord>().WithMany()
                 .HasForeignKey(value => new { value.BatchId, value.RepositoryId })
-                .OnDelete(DeleteBehavior.Cascade);
+                .OnDelete(DeleteBehavior.Cascade)
+                .IsRequired();
         });
         modelBuilder.Entity<OctoberContextDifferenceRecord>(difference =>
         {
@@ -192,7 +203,8 @@ public sealed class InitialOctoberSetup : Migration
             });
             difference.HasOne<OctoberRepositoryRecord>().WithMany()
                 .HasForeignKey(value => new { value.BatchId, value.RepositoryId })
-                .OnDelete(DeleteBehavior.Cascade);
+                .OnDelete(DeleteBehavior.Cascade)
+                .IsRequired();
         });
     }
 }

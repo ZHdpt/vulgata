@@ -68,7 +68,11 @@ verification before reuse.
   rejection and fixed process selection. This is controlled WAF/SQLite evidence;
   Immutable context projection is additionally covered through the existing public
   store/selector (1/1 focused, 166/166 surrounding); no duplicate store was added.
-  Actual generator entry-point/provider composition and PostgreSQL/process
+  Actual generator prepare now passes an independent real child-process tracer
+  with Web stopped (1/1), model consistency (5/5) and surrounding regressions
+  (270/270), using fresh authorized PostgreSQL 17 resources with verified cleanup.
+  The frozen metadata correction leaves migration operations unchanged. Generator
+  select/denial, broader startup isolation and full A/B PostgreSQL/process
   qualification remain incomplete. Status in
   other assigned worktrees must be verified there. Sprint planning alone activated
   no feature.

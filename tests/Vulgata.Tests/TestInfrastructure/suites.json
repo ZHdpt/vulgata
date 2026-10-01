@@ -182,6 +182,9 @@
   "October/OctoberHostCompositionTests.cs": {
     "suite": "SelfContained"
   },
+  "October/OctoberHostSelectionTests.cs": {
+    "suite": "E2E"
+  },
   "October/OctoberLocalAuthorityTests.cs": {
     "suite": "SelfContained"
   },

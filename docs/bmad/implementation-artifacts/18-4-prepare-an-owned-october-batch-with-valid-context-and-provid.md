@@ -80,9 +80,16 @@ colliding authority denial reuses existing selector coverage. No new production
 store, writer or manufactured RED was required. See
 `evidence/context-projection-final-green-01.json` and retained T022 assessment.
 
-Actual generator entry-point composition, broader startup isolation, provider host wiring
-and PostgreSQL/process qualification remain unfinished. This is not full-story or
-standalone-process qualification. The first broad regression also exposed 18 obsolete
+Actual generator prepare/provider composition now passes independent model5/5,
+real child1/1 with Web stopped and surrounding270/270, without skips. Fresh authorized
+PostgreSQL17 resources and exact cleanup are verified. Public EF diagnostics exposed
+incomplete frozen snapshot/target metadata; the bounded correction leaves migration
+Up/Down and runtime context unchanged. The earlier static completeness assumption is
+disproved by retained raw diagnostics, not rewritten. Both owners assessed final units;
+no further refactor is required. See `evidence/generator-prepare-final-green-01.json`.
+Generator select/denial, broader startup isolation and full A/B qualification remain
+unfinished; no whole host task is marked complete by this first executable tracer.
+Recovery remains6/7 with unchanged approvals. The first broad regression also exposed 18 obsolete
 approval-API host cases; their accepted T018/T025 reconciliation now passes 17 focused
 and 249 surrounding cases. The failed broad run is retained rather than described as
 passing. Current tests prove route absence and reject obsolete inputs, not real

@@ -1,0 +1,61 @@
+{
+  "kind": "test-green",
+  "stage": "implement",
+  "evidence_id": "18-4/generator-prepare-final-green/1",
+  "source_commit": "eaa8842a2b2d873ba166720020d8793dfa825d24",
+  "observed_at": "2026-10-01T15:19:05Z",
+  "minimal_green": "specs/017-october-batch-setup/evidence/generator-prepare-minimal-green-01.json",
+  "red_evidence": ["specs/017-october-batch-setup/evidence/generator-executable-prepare-red-01.json", "specs/017-october-batch-setup/evidence/october-model-snapshot-consistency-red-01.json"],
+  "input_hashes": {
+    "src/dotnet/Vulgata.OctoberGenerator/Program.cs": "21d05229203395f8a8440e2fc8d37f0e57c8d1dc8b7f72775d81a2a179493dc3",
+    "src/dotnet/Vulgata.OctoberGenerator/OctoberNpgsqlTargetDependencies.cs": "55773a75697e3de4db625192abb658dfa1cd49990393ca0198f178917184f262",
+    "src/dotnet/Vulgata.Infrastructure/Data/October/Migrations/OctoberDbContextModelSnapshot.cs": "7b6a685dc98d78bd30fe6271d17783e00e1c8fe92c84c018e25d40881ed81cbf",
+    "src/dotnet/Vulgata.Infrastructure/Data/October/Migrations/20260930000000_InitialOctoberSetup.cs": "1b32b3c37597974809779af1dd8304b6cda63367ae657f78a70d435f3b5b6539",
+    "src/dotnet/Vulgata.Infrastructure/Data/October/Migrations/20260930010000_AddOctoberPreparedSourceApprovals.cs": "d45671dd0d885bb94dac94931a4aafc69438a8450b7ed06abc2f9ebd0168daea",
+    "tests/Vulgata.Tests/October/OctoberHostSelectionTests.cs": "dec0c301025fd9605d75c76db3b071e8ba7f425f8b80ccd034b52e5a95e9d930",
+    "tests/Vulgata.Tests/October/OctoberPersistenceModelTests.cs": "fecae64a3ad4b377e110edf49968ee70307bb7bb1d477a500c9e3df3e9b63108",
+    "tests/Vulgata.Tests/TestInfrastructure/suites.json": "38a176e8d8b1c0d34f5f417b488b4f27404a8e52f2cc694ed59b3e6aac6b9152"
+  },
+  "commands": [
+    {
+      "command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName~OctoberPersistenceModelTests'",
+      "exit_code": 0, "selected": 5, "passed": 5, "failed": 0, "skipped": 0,
+      "trx_path": "TestResults/isolation-7362f118209e467fa8911e99353e8a23/results.trx",
+      "trx_sha256": "2984a99fb6fee9e738972cface8e8aee731dec64dfc6da463182be92424e0bd3"
+    },
+    {
+      "command": "pwsh -NoProfile -File eng/test.ps1 -Suite E2E -WithPostgreSql -Filter 'FullyQualifiedName~GeneratorPrepare_WithWebStopped_CommitsOwnedBatch'",
+      "exit_code": 0, "child_exit_code": 0, "selected": 1, "passed": 1, "failed": 0, "skipped": 0,
+      "trx_path": "TestResults/isolation-e152288c2ab2403b8ff7b542ab624329/results.trx",
+      "trx_sha256": "7b68d1144203cbacd9c3d8ea6721648926dcadac5fc56b8682de8ac8765348d8"
+    },
+    {
+      "command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName~OctoberLocalAuthorityTests|FullyQualifiedName~OctoberOperatorCredentialSourceTests|FullyQualifiedName~OctoberPreparedSourceBindingTests|FullyQualifiedName~OctoberBatchSelectorTests|FullyQualifiedName~OctoberSetupStoreTests|FullyQualifiedName~OctoberSetupPolicyTests|FullyQualifiedName~OctoberProviderBindingTests|FullyQualifiedName~OctoberContextSelectionTests|FullyQualifiedName~OctoberHostCompositionTests|FullyQualifiedName~OctoberPersistenceModelTests'",
+      "exit_code": 0, "selected": 270, "passed": 270, "failed": 0, "skipped": 0,
+      "trx_path": "TestResults/isolation-138edd4d69524e5c9631d92f9338eeab/results.trx",
+      "trx_sha256": "8edd40c034193404ef27c05fb2de752f9a61b138438b6be01e681ddd59eeda4c"
+    }
+  ],
+  "owned_runtime": {
+    "authorization": "specs/017-october-batch-setup/evidence/runtime-qualification-resource-authorization-01.json",
+    "boundary": "specs/017-october-batch-setup/evidence/generator-executable-development-resource-boundary-01.json",
+    "run": "e152288c2ab2403b8ff7b542ab624329",
+    "container": "vulgata-test-e152288c2ab2403b8ff7b542ab624329",
+    "volume": "vulgata-test-data-e152288c2ab2403b8ff7b542ab624329",
+    "database": "vulgata_story184_generator_67be5776e720426f9d6c6efe65d6b082",
+    "child_pid": 17200,
+    "cleanup": [
+      {"path": "TestResults/isolation-e152288c2ab2403b8ff7b542ab624329/cleanup-inspect.log", "sha256": "e08ab1b40efee3837bea25cfb95e4222746caa72e2dae1eecc8a7a2e1cc286de"},
+      {"path": "TestResults/isolation-e152288c2ab2403b8ff7b542ab624329/owned-mounts.json", "sha256": "37695f65167bab28d5e7607d6bc8cf31649e90e6830b42847844158c97cba8a9"},
+      {"path": "TestResults/isolation-e152288c2ab2403b8ff7b542ab624329/volume-absence.log", "sha256": "2d781f871287a3a9977efed82e2bf6616796e483d30e1716fb6f93667bf3c561"}
+    ],
+    "cleanup_verified": "TRX records exact created database/temp cleanup; launcher label/mount match, container list empty and exact volume absent. Child0 and sanitized output assertions passed. No Web listener, shared resource, real credential or paid provider used."
+  },
+  "raw_result": {
+    "owner": "retained tdd-test-author Luna/high",
+    "outcome": "passed",
+    "assessment": "Actual child and public committed/bound selection assertions with authenticated fixture precondition and October-absent precondition; failure-only public EF diagnostics retain original model assertion. No concrete test-unit refactor required; no files changed during independent verification."
+  },
+  "production_assessment": "Retained implementer assessed whole Main/adapter and frozen metadata. Actual bootstrap stays live through credential reading and disposes after host; no required refactor or demonstrated duplicated-parser divergence. Existing migration Up/Down unchanged. No warning suppression/new DDL. Minimal and final source hashes unchanged.",
+  "root_disposition": "Verified first actual generator prepare/provider composition increment, not whole T018/T019/T023/T024 or final T020/T029 qualification. All30 task IDs and19 complete markers retained; accepted gates, Astra owner, count6/limit7, holds and diagnosis unchanged. Continue missing generator select/denial, startup isolation and final qualification."
+}
