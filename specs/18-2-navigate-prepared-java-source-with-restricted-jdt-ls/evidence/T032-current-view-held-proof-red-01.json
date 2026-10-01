@@ -1,0 +1,52 @@
+{
+  "kind": "analysis",
+  "summary": "Expected public later-ownership-view freshness RED: same-process actual coordinator persisted Ready, but GetOwnershipViewAsync(original Absent) returns Unavailable rather than VerifiedOwned under retained hold requiring actual current typed ledger record. Registry reads Ready yet passes Absent to hold.",
+  "verification_route": "behavioral RED/GREEN",
+  "task_ids": [
+    "T031",
+    "T032"
+  ],
+  "source_commit": "261d9b151b8ec2932967c0f0edcb48f972e258ed",
+  "source_hashes": {
+    "src/dotnet/Vulgata.Infrastructure/Source/PreparedWorkspaceUseRegistry.cs": "9106d4c1d977ae261802aa1dfaa232cc56fd2937a28cb2612fb10ce2b977971c",
+    "src/dotnet/Vulgata.Infrastructure/Source/PreparedCodeGraphStateCoordinator.cs": "bc65ecc6078a6fd311b3f763fc4adbfc52a4b1fddfaa40253c199a3954df7426",
+    "tests/Vulgata.Tests/PreparedSource/PreparedCodeGraphStateCoordinatorTests.cs": "9fcae09aa2f0528b6f45e6376a303f3fb4faf1d331d89e7437186ad7fd64f65f"
+  },
+  "canonical_red": {
+    "path": "TestResults/isolation-46b7fe8d6b1145cabc93c706e58b150f/results.trx",
+    "sha256": "04680b6fbe1025d8de30aa1886ba26fb71a8ae0b5a1b45689a9e493472ee8ad2",
+    "selected": 23,
+    "passed": 22,
+    "failed": 1,
+    "skipped": 0,
+    "raw_failure_messages": [
+      "Assert.Equal() Failure: Values differ\r\nExpected: VerifiedOwned\r\nActual:   Unavailable"
+    ],
+    "build": {
+      "path": "TestResults/isolation-46b7fe8d6b1145cabc93c706e58b150f/build.log",
+      "sha256": "68bfbdf6169d98dce2b47eead2beb2248fd0d1b67e3bdfb0713b7c82a374b29a"
+    }
+  },
+  "prior_diagnostic_attempt": {
+    "path": "TestResults/isolation-6167779e29a84d29b8a817df6d38c9bc/results.trx",
+    "sha256": "a7a35772a61b99b5c9c3200b2132b5791c0373f9facb51555788e10cc465da9c",
+    "selected": 23,
+    "passed": 22,
+    "failed": 1,
+    "skipped": 0,
+    "raw_failure_messages": [
+      "Assert.Equal() Failure: Values differ\r\nExpected: PreparedCodeGraphWorkspaceOwnership { OwnershipId = 39e42bdf-9721-47fe-b14c-45175e89d9e7, Version = 2, Phase = Ready, Approval = PreparedSourceApproval { BatchId = 6ab501b0-cea7-4ab0-aa2d-c1a4ec4f8edc, RepositoryId = 45ec5e10-53a9-4bc4-bc89-f4f636deba99, SubjectId = prepared-source-test-subject, Purpose = WorkerSourceRead, ApprovalIdentity = approval-51ac607bc0634176bdd9eb1e9a9c5f8b, RootBindingIdentity = root-binding-51ac607bc0634176bdd9eb1e9a9c5f8b, OperatorLabel = operator supplied fixture label }, PhysicalRootPath = C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-prepared-source-51ac607bc0634176bdd9eb1e9a9c5f8b\\prepared, RootObjectIdentity = PreparedToolDirectoryObjectIdentity { VolumeSerialNumber = 0, FileIndexHigh = 1429803, FileIndexLow = 0 }, WorkspaceOwnerIdentity = owner-51ac607bc0634176bdd9eb1e9a9c5f8b, StateEntryObjectIdentity = PreparedToolDirectoryObjectIdentity { VolumeSerialNumber = 0, FileIndexHigh = 1429822, FileIndexLow = 0 } }\r\nActual:   PreparedCodeGraphWorkspaceOwnership { OwnershipId = 39e42bdf-9721-47fe-b14c-45175e89d9e7, Version = 0, Phase = Absent, Approval = PreparedSourceApproval { BatchId = 6ab501b0-cea7-4ab0-aa2d-c1a4ec4f8edc, RepositoryId = 45ec5e10-53a9-4bc4-bc89-f4f636deba99, SubjectId = prepared-source-test-subject, Purpose = WorkerSourceRead, ApprovalIdentity = approval-51ac607bc0634176bdd9eb1e9a9c5f8b, RootBindingIdentity = root-binding-51ac607bc0634176bdd9eb1e9a9c5f8b, OperatorLabel = operator supplied fixture label }, PhysicalRootPath = C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-prepared-source-51ac607bc0634176bdd9eb1e9a9c5f8b\\prepared, RootObjectIdentity = PreparedToolDirectoryObjectIdentity { VolumeSerialNumber = 0, FileIndexHigh = 1429803, FileIndexLow = 0 }, WorkspaceOwnerIdentity = owner-51ac607bc0634176bdd9eb1e9a9c5f8b, StateEntryObjectIdentity =  }"
+    ],
+    "build": {
+      "path": "TestResults/isolation-6167779e29a84d29b8a817df6d38c9bc/build.log",
+      "sha256": "740db2b677abbed89e11ec75ae1fdfd56d15f65aeb299aa7e860d5e07f6e5d72"
+    }
+  },
+  "correction": "Preserved original trace. Moved public view status/record assertions before diagnostic hold arguments; dynamic current-store-backed held proof and all source/closure assertions unchanged. Canonical failure now public outcome, not diagnostic argument.",
+  "resources": "Owned actual file-store/source fixture with controlled exact-current host hold; no actual Windows/native resources.",
+  "recovery": {
+    "failed_results": 3,
+    "pause_at": 12,
+    "changed": false
+  }
+}

@@ -1,0 +1,39 @@
+{
+  "kind": "analysis",
+  "summary": "Expected coordinator integration RED through existing verifier interface. Real initialized file store, Absent registry admission and tracked lease issue succeed; actual UseOwnedStateAsync returns Denied instead of Current because registry current verifier is default false. Same scenario retains Ready view, pre-close cleanup denial, closure settlement and durable Removed readback assertions for GREEN.",
+  "verification_route": "behavioral RED/GREEN",
+  "task_ids": [
+    "T031",
+    "T032"
+  ],
+  "source_commit": "261d9b151b8ec2932967c0f0edcb48f972e258ed",
+  "accepted_definition": "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/evidence/definition-review-attempt-16.json",
+  "implementation_approval": "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/evidence/implementation-approval-10.json",
+  "source_hashes": {
+    "src/dotnet/Vulgata.Infrastructure/Source/PreparedWorkspaceUseRegistry.cs": "80f1c3b62f6c25838999fc0e3492e80d7851d8a2909e83eb7537d77af2325c2f",
+    "src/dotnet/Vulgata.Infrastructure/Source/PreparedCodeGraphStateCoordinator.cs": "bc65ecc6078a6fd311b3f763fc4adbfc52a4b1fddfaa40253c199a3954df7426",
+    "tests/Vulgata.Tests/PreparedSource/PreparedCodeGraphStateCoordinatorTests.cs": "6fab8782f8d349c2b84f22bd5608cec2534375c35921d18fdb4edc4e235961f8"
+  },
+  "result": {
+    "path": "TestResults/isolation-8e4e30b47a2d45fb94abd9548048c8e0/results.trx",
+    "sha256": "fd82ccd685ec39b1fe70bd4222d28cb35bd62a2185b1107405d16dd6bff2f32e",
+    "selected": 22,
+    "passed": 21,
+    "failed": 1,
+    "skipped": 0
+  },
+  "build": {
+    "path": "TestResults/isolation-8e4e30b47a2d45fb94abd9548048c8e0/build.log",
+    "sha256": "3a039b747f95969ce0bbb62ee41d261a9abf323814def190eac7f3717ba5d3ad",
+    "result": "passed"
+  },
+  "raw_failure_messages": [
+    "Assert.Equal() Failure: Values differ\r\nExpected: Current\r\nActual:   Denied"
+  ],
+  "resources": "Owned local source/metadata file-store fixture with controlled host hold; no native/actual Windows protection.",
+  "recovery": {
+    "failed_results": 3,
+    "pause_at": 12,
+    "changed": false
+  }
+}

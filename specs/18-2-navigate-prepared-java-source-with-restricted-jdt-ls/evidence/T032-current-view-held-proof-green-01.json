@@ -1,0 +1,38 @@
+{
+  "kind": "analysis",
+  "summary": "Minimal GREEN public later view: registry passes exact current trusted-store record to retained hold under existing gate/deadline, preserving positive Absent and same-key monotonic Ready plus exact transition phases. No guessed binding, new contract or native-use grant.",
+  "task_ids": [
+    "T031",
+    "T032"
+  ],
+  "verification_route": "behavioral RED/GREEN",
+  "source_commit": "261d9b151b8ec2932967c0f0edcb48f972e258ed",
+  "source_hashes": {
+    "src/dotnet/Vulgata.Infrastructure/Source/PreparedWorkspaceUseRegistry.cs": "9681fd8222d814710b863db7831c6dc80121a15cb7a645b32cfffc97721425f3",
+    "tests/Vulgata.Tests/PreparedSource/PreparedCodeGraphStateCoordinatorTests.cs": "9fcae09aa2f0528b6f45e6376a303f3fb4faf1d331d89e7437186ad7fd64f65f"
+  },
+  "red_evidence": "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/evidence/T032-current-view-held-proof-red-01.json",
+  "minimal_green": {
+    "path": "TestResults/isolation-8b056081f6c545f993e3392192140cc1/results.trx",
+    "sha256": "0df89a56c0eabe2331b2c008fab2228fb6f5c7043cfd2ff422790c314d9e40d2",
+    "selected": 23,
+    "passed": 23,
+    "failed": 0,
+    "skipped": 0,
+    "build": {
+      "path": "TestResults/isolation-8b056081f6c545f993e3392192140cc1/build.log",
+      "sha256": "8cd57b77decc6c377e2e82f1360fef6d5eb973923627f4993e2309268fc4ed42"
+    }
+  },
+  "final_shape": "Store resolution returns the actual verified current record, pairing it with held proof without additional state or abstraction. Production owner assessed affected unit; no further refactor needed.",
+  "remaining": [
+    "independent final subgroup verification",
+    "actual Windows host protection",
+    "exact binding/native/later gates"
+  ],
+  "recovery": {
+    "failed_results": 3,
+    "pause_at": 12,
+    "changed": false
+  }
+}

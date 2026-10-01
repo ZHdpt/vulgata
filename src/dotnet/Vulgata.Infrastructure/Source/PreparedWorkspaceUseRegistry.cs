@@ -108,7 +108,7 @@ internal sealed class PreparedWorkspaceBorrow : IAsyncDisposable
     public ValueTask DisposeAsync() => _registry.CompleteBorrowAsync(this);
 }
 
-internal sealed class PreparedWorkspaceUseRegistry : IAsyncDisposable
+internal sealed class PreparedWorkspaceUseRegistry : IAsyncDisposable, IPreparedCodeGraphWorkspaceOwnershipVerifier
 {
     private readonly IPreparedSourceCurrentAuthorityVerifier _sourceAuthority;
     private readonly IPreparedToolUseAuthorizer _toolAuthorization;
@@ -127,6 +127,7 @@ internal sealed class PreparedWorkspaceUseRegistry : IAsyncDisposable
     private IPreparedManagedWorkspaceHostHold? _hold;
     private PreparedCodeGraphWorkspaceOwnership? _admittedBinding;
     private RegistryState _state = RegistryState.Closed;
+    private bool _dispositionSettled;
     private int _shutdownRequested;
     private Task? _deferredShutdownCleanup;
 
@@ -160,6 +161,123 @@ internal sealed class PreparedWorkspaceUseRegistry : IAsyncDisposable
             ? admissionDeadline : throw new ArgumentOutOfRangeException(nameof(admissionDeadline));
         _dispositionDeadline = dispositionDeadline > TimeSpan.Zero
             ? dispositionDeadline : throw new ArgumentOutOfRangeException(nameof(dispositionDeadline));
+    }
+
+    ValueTask<bool> IPreparedCodeGraphWorkspaceOwnershipVerifier.VerifyCurrentAsync(
+        PreparedCodeGraphWorkspaceOwnership ownership,
+        CancellationToken cancellationToken) => VerifyCoordinatorOwnershipAsync(ownership, false, cancellationToken);
+
+    ValueTask<bool> IPreparedCodeGraphWorkspaceOwnershipVerifier.VerifyDispositionReadyAsync(
+        PreparedCodeGraphWorkspaceOwnership ownership,
+        CancellationToken cancellationToken) => VerifyCoordinatorOwnershipAsync(ownership, true, cancellationToken);
+
+    private async ValueTask<bool> VerifyCoordinatorOwnershipAsync(
+        PreparedCodeGraphWorkspaceOwnership ownership,
+        bool requireDisposition,
+        CancellationToken cancellationToken)
+    {
+        if (ownership is null)
+        {
+            return false;
+        }
+
+        using var deadline = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        deadline.CancelAfter(requireDisposition ? _dispositionDeadline : _admissionDeadline);
+        try
+        {
+            await _gate.WaitAsync(deadline.Token);
+            try
+            {
+                if (Volatile.Read(ref _shutdownRequested) != 0 ||
+                    _state is not (RegistryState.Open or RegistryState.Closing) ||
+                    requireDisposition && (_state != RegistryState.Closing || !_dispositionSettled ||
+                        _borrows.Count != 0 || HasPendingChecks()) ||
+                    _hold is null || !IsCoordinatorPhaseCurrent(ownership))
+                {
+                    return false;
+                }
+
+                if (await CheckAuthorityAsync(ownership, PreparedToolPurpose.CodeGraphPreparation, deadline.Token)
+                        != PreparedWorkspaceAdmissionStatus.Opened)
+                {
+                    _state = RegistryState.Unknown;
+                    return false;
+                }
+
+                PreparedCodeGraphWorkspaceOwnership? current = await ResolveCoordinatorStoreAsync(
+                    ownership, deadline.Token);
+                if (current is null ||
+                    await AwaitProofAsync(_hold.CheckCurrentAsync(current, deadline.Token).AsTask(), deadline.Token)
+                        != PreparedManagedWorkspaceHostStatus.Protected)
+                {
+                    _state = RegistryState.Unknown;
+                    return false;
+                }
+
+                deadline.Token.ThrowIfCancellationRequested();
+                return Volatile.Read(ref _shutdownRequested) == 0;
+            }
+            finally
+            {
+                _gate.Release();
+            }
+        }
+        catch
+        {
+            _state = RegistryState.Unknown;
+            return false;
+        }
+    }
+
+    private bool IsCoordinatorPhaseCurrent(PreparedCodeGraphWorkspaceOwnership ownership)
+    {
+        PreparedCodeGraphWorkspaceOwnership? admitted = _admittedBinding;
+        if (!HasAdmittedImmutableKey(ownership) || admitted is null)
+        {
+            return false;
+        }
+
+        if (ownership == admitted)
+        {
+            return admitted.Phase is PreparedCodeGraphOwnershipPhase.Absent or PreparedCodeGraphOwnershipPhase.Ready;
+        }
+
+        return (admitted.Phase, ownership.Phase) switch
+        {
+            (PreparedCodeGraphOwnershipPhase.Absent, PreparedCodeGraphOwnershipPhase.Creating) =>
+                admitted.Version < long.MaxValue && ownership.Version == admitted.Version + 1 &&
+                ownership.StateEntryObjectIdentity is null,
+            (PreparedCodeGraphOwnershipPhase.Absent, PreparedCodeGraphOwnershipPhase.Ready) =>
+                admitted.Version < long.MaxValue - 1 && ownership.Version == admitted.Version + 2 &&
+                ownership.StateEntryObjectIdentity is not null,
+            (PreparedCodeGraphOwnershipPhase.Ready, PreparedCodeGraphOwnershipPhase.Disposing) =>
+                _state == RegistryState.Closing && admitted.Version < long.MaxValue &&
+                ownership.Version == admitted.Version + 1 &&
+                ownership.StateEntryObjectIdentity == admitted.StateEntryObjectIdentity,
+            _ => false,
+        };
+    }
+
+    private async Task<PreparedCodeGraphWorkspaceOwnership?> ResolveCoordinatorStoreAsync(
+        PreparedCodeGraphWorkspaceOwnership ownership,
+        CancellationToken cancellationToken)
+    {
+        PreparedCodeGraphOwnershipLoadResult loaded = await AwaitProofAsync(
+            _ownershipStore.LoadAsync(ownership, cancellationToken), cancellationToken);
+        if (ownership.Phase == PreparedCodeGraphOwnershipPhase.Absent)
+        {
+            if (loaded.Status == PreparedCodeGraphOwnershipLoadStatus.VerifiedAbsent && loaded.Record is null)
+            {
+                return ownership;
+            }
+
+            return loaded.Status == PreparedCodeGraphOwnershipLoadStatus.Found &&
+                loaded.Record is { Phase: PreparedCodeGraphOwnershipPhase.Ready } ready &&
+                IsCurrentBindingOrReadyProgression(ready) ? ready : null;
+        }
+
+        return loaded.Status == PreparedCodeGraphOwnershipLoadStatus.Found && loaded.Record == ownership
+            ? ownership : null;
     }
 
     internal async Task<PreparedWorkspaceAdmissionResult> AdmitAsync(
@@ -757,9 +875,10 @@ internal sealed class PreparedWorkspaceUseRegistry : IAsyncDisposable
                     }
 
                     _admittedBinding = binding;
+                    _dispositionSettled = _borrows.Count == 0;
                 }
 
-                return _borrows.Count == 0
+                return _dispositionSettled
                     ? PreparedWorkspaceSettlementStatus.Settled
                     : PreparedWorkspaceSettlementStatus.Active;
             }
