@@ -1,0 +1,31 @@
+{
+  "kind": "analysis",
+  "summary": "Accepted internal tracked issuer constructor declaration compiles and preserves existing public issuer behavior. Constructor delegates unchanged public two-argument constructor and validates existing typed binding/registry; no fields, lease registration or IssueAsync/lease behavior implemented.",
+  "verification_route": "nonbehavioral declaration scaffold, direct compile/regression verification",
+  "task_ids": [
+    "T031",
+    "T032"
+  ],
+  "source_commit": "cff395329b251afddb3128d999c1a1f64ad65e68",
+  "assessment": "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/evidence/T032-producer-registration-assessment-01.json",
+  "source_hashes": {
+    "src/dotnet/Vulgata.Infrastructure/Source/PreparedToolWorkspaceIssuer.cs": "3f7213f396cb90ba589fb4241ae95f2a3ad5094eb2864674bb95f90cf8bfc9bb"
+  },
+  "command": "pwsh -NoProfile -File eng/test.ps1 -Filter 'FullyQualifiedName~PreparedToolWorkspaceIssuerTests'",
+  "result": {
+    "path": "TestResults/isolation-50f26c93d4c24a749a3661f5d10c55e9/results.trx",
+    "sha256": "240792e81a86d667cd082941e9105ea72b5b784e1a0d206666e7dbdc97076e34",
+    "selected": 35,
+    "passed": 35,
+    "failed": 0,
+    "skipped": 0,
+    "build_path": "TestResults/isolation-50f26c93d4c24a749a3661f5d10c55e9/build.log",
+    "build_sha256": "84b372209cb661eb86f4a607d79f620bfef064bf629c34618a352d9ad1df34e1"
+  },
+  "limitations": "Compilation scaffold only; NOT behavioral RED or registration GREEN. Public IssueAsync resource registration test follows; actual host/native and producer integration remain unqualified.",
+  "recovery": {
+    "failed_results": 3,
+    "pause_at": 12,
+    "changed": false
+  }
+}

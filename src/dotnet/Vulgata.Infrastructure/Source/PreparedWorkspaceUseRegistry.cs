@@ -553,14 +553,20 @@ internal sealed class PreparedWorkspaceUseRegistry : IAsyncDisposable
         };
     }
 
+    private bool HasAdmittedImmutableKey(PreparedCodeGraphWorkspaceOwnership binding)
+    {
+        PreparedCodeGraphWorkspaceOwnership? current = _admittedBinding;
+        return current is not null && binding.Approval == current.Approval &&
+            string.Equals(binding.PhysicalRootPath, current.PhysicalRootPath, StringComparison.Ordinal) &&
+            binding.RootObjectIdentity == current.RootObjectIdentity &&
+            string.Equals(binding.WorkspaceOwnerIdentity, current.WorkspaceOwnerIdentity, StringComparison.Ordinal) &&
+            binding.OwnershipId == current.OwnershipId;
+    }
+
     private bool IsCurrentBindingOrReadyProgression(PreparedCodeGraphWorkspaceOwnership binding)
     {
         PreparedCodeGraphWorkspaceOwnership? current = _admittedBinding;
-        if (current is null || binding.Approval != current.Approval ||
-            !string.Equals(binding.PhysicalRootPath, current.PhysicalRootPath, StringComparison.Ordinal) ||
-            binding.RootObjectIdentity != current.RootObjectIdentity ||
-            !string.Equals(binding.WorkspaceOwnerIdentity, current.WorkspaceOwnerIdentity, StringComparison.Ordinal) ||
-            binding.OwnershipId != current.OwnershipId)
+        if (!HasAdmittedImmutableKey(binding) || current is null)
         {
             return false;
         }
@@ -573,11 +579,26 @@ internal sealed class PreparedWorkspaceUseRegistry : IAsyncDisposable
             binding.StateEntryObjectIdentity is not null;
     }
 
-    internal async Task<PreparedWorkspaceBorrowResult> BeginBorrowAsync(
+    internal Task<PreparedWorkspaceBorrowResult> BeginBorrowAsync(
         PreparedCodeGraphWorkspaceOwnership binding,
         PreparedToolPurpose purpose,
         IPreparedWorkspaceResourceSettlementProbe resources,
         CancellationToken cancellationToken = default)
+        => RegisterUseAsync(binding, purpose, resources, allowAbsentPreparationLease: false, cancellationToken);
+
+    internal Task<PreparedWorkspaceBorrowResult> RegisterPreparationLeaseAsync(
+        PreparedCodeGraphWorkspaceOwnership binding,
+        PreparedToolPurpose purpose,
+        IPreparedWorkspaceResourceSettlementProbe resources,
+        CancellationToken cancellationToken = default)
+        => RegisterUseAsync(binding, purpose, resources, allowAbsentPreparationLease: true, cancellationToken);
+
+    private async Task<PreparedWorkspaceBorrowResult> RegisterUseAsync(
+        PreparedCodeGraphWorkspaceOwnership binding,
+        PreparedToolPurpose purpose,
+        IPreparedWorkspaceResourceSettlementProbe resources,
+        bool allowAbsentPreparationLease,
+        CancellationToken cancellationToken)
     {
         if (binding is null || resources is null)
         {
@@ -592,11 +613,37 @@ internal sealed class PreparedWorkspaceUseRegistry : IAsyncDisposable
             try
             {
                 if (_state != RegistryState.Open || Volatile.Read(ref _shutdownRequested) != 0 ||
+                    !HasAdmittedImmutableKey(binding))
+                {
+                    return new PreparedWorkspaceBorrowResult(PreparedWorkspaceSettlementStatus.Unknown, null);
+                }
+
+                if (allowAbsentPreparationLease &&
+                    purpose is (PreparedToolPurpose.JdtNavigation or PreparedToolPurpose.CodeGraphPreparation) &&
+                    binding.Phase == PreparedCodeGraphOwnershipPhase.Absent)
+                {
+                    PreparedCodeGraphOwnershipLoadResult current = await AwaitProofAsync(
+                        _ownershipStore.LoadAsync(binding, deadline.Token), deadline.Token);
+                    if (current.Status == PreparedCodeGraphOwnershipLoadStatus.Found &&
+                        current.Record is { Phase: PreparedCodeGraphOwnershipPhase.Ready } ready &&
+                        IsCurrentBindingOrReadyProgression(ready))
+                    {
+                        binding = ready;
+                    }
+                    else if (current.Status != PreparedCodeGraphOwnershipLoadStatus.VerifiedAbsent ||
+                             current.Record is not null)
+                    {
+                        return new PreparedWorkspaceBorrowResult(PreparedWorkspaceSettlementStatus.Unknown, null);
+                    }
+                }
+
+                if (_state != RegistryState.Open || Volatile.Read(ref _shutdownRequested) != 0 ||
                     !IsCurrentBindingOrReadyProgression(binding) ||
                     _hold is null ||
                     purpose is not (PreparedToolPurpose.JdtNavigation or PreparedToolPurpose.CodeGraphPreparation) ||
                     purpose == PreparedToolPurpose.CodeGraphPreparation &&
-                    binding.Phase != PreparedCodeGraphOwnershipPhase.Ready)
+                    binding.Phase != PreparedCodeGraphOwnershipPhase.Ready &&
+                    !(allowAbsentPreparationLease && binding.Phase == PreparedCodeGraphOwnershipPhase.Absent))
                 {
                     return new PreparedWorkspaceBorrowResult(PreparedWorkspaceSettlementStatus.Unknown, null);
                 }

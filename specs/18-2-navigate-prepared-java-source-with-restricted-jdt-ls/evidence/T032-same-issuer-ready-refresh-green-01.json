@@ -1,0 +1,95 @@
+{
+  "kind": "analysis",
+  "summary": "Same original issuer now registers current same-key Ready read from existing trusted store under retained registry gate and host hold. No filesystem candidate synthesis, new lookup/schema or caller-selected binding.",
+  "source_commit": "cff395329b251afddb3128d999c1a1f64ad65e68",
+  "task_ids": [
+    "T031",
+    "T032"
+  ],
+  "verification_route": "behavioral RED/GREEN",
+  "red_evidence": "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/evidence/T032-same-issuer-ready-refresh-red-01.json",
+  "source_hashes": {
+    "src/dotnet/Vulgata.Infrastructure/Source/PreparedToolWorkspaceIssuer.cs": "b209a4fef1feedbb03d5f25b01a0afe4dbbce37eb51d3328642919ccbe3690f6",
+    "src/dotnet/Vulgata.Infrastructure/Source/PreparedWorkspaceUseRegistry.cs": "aa01d2215fc87b4c0e919e95f90dd09f44e3759fe1817f220885866c5db3b391",
+    "tests/Vulgata.Tests/PreparedSource/PreparedToolWorkspaceIssuerTests.cs": "a2cbaebecaf303d5dde3591aa7b9afc4a0dcfb4ab6fd540381698e13e8b44886"
+  },
+  "runs": [
+    {
+      "label": "minimal issuer",
+      "path": "TestResults/isolation-53cd7242bbc64a8a94573aeb2fb43681/results.trx",
+      "sha256": "0a4e58c29a4b40145fdc819bb543d8f1e6e125b3eaba227869983444c6552a46",
+      "selected": 37,
+      "passed": 37,
+      "failed": 0,
+      "skipped": 0,
+      "build": {
+        "path": "TestResults/isolation-53cd7242bbc64a8a94573aeb2fb43681/build.log",
+        "sha256": "c3c0bc94ed47eb99e8c4b3843c2dfdf7182d01f3328e85eefe77b1a0e64d75ee"
+      }
+    },
+    {
+      "label": "minimal registry",
+      "path": "TestResults/isolation-3056b7cf789d40fab7617dc8d5652d3e/results.trx",
+      "sha256": "b2ab28bece8ca20246b6c3d010f8ddaa19978d2f692a3d9fd3538e0702bd2e1c",
+      "selected": 24,
+      "passed": 24,
+      "failed": 0,
+      "skipped": 0,
+      "build": {
+        "path": "TestResults/isolation-3056b7cf789d40fab7617dc8d5652d3e/build.log",
+        "sha256": "127b09c92c4443c13b532cd48afc5bfcbb690673a1214e12e971817fb4051192"
+      }
+    },
+    {
+      "label": "final issuer",
+      "path": "TestResults/isolation-b43663386a1b49bfbc71788298d03752/results.trx",
+      "sha256": "d51f07bd0864bd0c3e7f81ba11f002591068d9bcf2ca8059d020a83b68b1df2b",
+      "selected": 37,
+      "passed": 37,
+      "failed": 0,
+      "skipped": 0,
+      "build": {
+        "path": "TestResults/isolation-b43663386a1b49bfbc71788298d03752/build.log",
+        "sha256": "ed1959341e2be16bb2e13b19d0bee59f51f9936cb366a529cec0d3355645c9c3"
+      }
+    },
+    {
+      "label": "final registry",
+      "path": "TestResults/isolation-0316dbb48b364ac6b5fdaa5bb6b9db8c/results.trx",
+      "sha256": "ae242fed2c9a1e2cbe3da0b1c8b6a2cc224860cb0a972e73c5ac48ab5ca17fc2",
+      "selected": 24,
+      "passed": 24,
+      "failed": 0,
+      "skipped": 0,
+      "build": {
+        "path": "TestResults/isolation-0316dbb48b364ac6b5fdaa5bb6b9db8c/build.log",
+        "sha256": "7a2b64fe3aa880bfae5348847295678d26a74ad5f4740d53c61aef492ccdc061"
+      }
+    }
+  ],
+  "final_shape": "Local early Open/shutdown/immutable-key guard precedes producer refresh. Exact current Ready progression checked, then current source/tool/store/held proof before ticket. Existing native BeginBorrow behavior retained.",
+  "approval_review": "Filesystem-synthesized Ready candidate rejected and unapplied. Root verified concrete LoadAsync immutable-key semantics and directed safe current-store read; no bypass or changed scope.",
+  "remaining": [
+    "JdtNavigation same-issuer refresh",
+    "existing coordinator ownership/disposition-verifier integration",
+    "actual Windows host/native qualification"
+  ],
+  "recovery": {
+    "failed_results": 3,
+    "pause_at": 12,
+    "changed": false
+  },
+  "independent_verification": {
+    "path": "TestResults/isolation-be500a5cd3bd4b5a9109508ebaa78549/results.trx",
+    "sha256": "20898b2adaf7adb36bce70a7c99e6c3e5a4a5d5c9c1b9f44cafe8192dbfc5ef7",
+    "selected": 37,
+    "passed": 37,
+    "failed": 0,
+    "skipped": 0,
+    "build": {
+      "path": "TestResults/isolation-be500a5cd3bd4b5a9109508ebaa78549/build.log",
+      "sha256": "fe0acfa7c85307de769ea6b078389f0fda7fb0e2fd3bc46ce9d54a3f5fea50a8"
+    },
+    "test_sha256_before_variant": "a2cbaebecaf303d5dde3591aa7b9afc4a0dcfb4ab6fd540381698e13e8b44886"
+  }
+}

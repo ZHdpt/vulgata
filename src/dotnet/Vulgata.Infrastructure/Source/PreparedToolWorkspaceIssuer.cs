@@ -84,6 +84,7 @@ public sealed class PreparedToolWorkspaceLease : IAsyncDisposable
     private readonly SemaphoreSlim _gate = new(1, 1);
     private readonly long _startedAt;
     private readonly TimeSpan _remainingDeadline;
+    private PreparedWorkspaceBorrow? _registration;
     private int _lifetime;
     private PreparedToolWorkspaceCheckStatus _closedStatus;
 
@@ -114,6 +115,18 @@ public sealed class PreparedToolWorkspaceLease : IAsyncDisposable
     public PreparedToolPurpose ToolPurpose { get; }
 
     internal bool MatchesApproval(PreparedSourceApproval approval) => _approval == approval;
+
+    internal bool OwnedResourcesSettled =>
+        Lifetime == PreparedToolWorkspaceLifetime.Disposed && _rootHandle.IsClosed;
+
+    internal void AttachRegistration(PreparedWorkspaceBorrow registration)
+    {
+        ArgumentNullException.ThrowIfNull(registration);
+        if (Interlocked.CompareExchange(ref _registration, registration, null) is not null)
+        {
+            throw new InvalidOperationException("Workspace lease is already registered.");
+        }
+    }
 
     public PreparedToolWorkspaceLifetime Lifetime =>
         (PreparedToolWorkspaceLifetime)Volatile.Read(ref _lifetime);
@@ -311,6 +324,12 @@ public sealed class PreparedToolWorkspaceLease : IAsyncDisposable
         finally
         {
             _gate.Release();
+        }
+
+        PreparedWorkspaceBorrow? registration = Interlocked.Exchange(ref _registration, null);
+        if (registration is not null)
+        {
+            await registration.DisposeAsync();
         }
     }
 
@@ -960,6 +979,8 @@ public sealed class PreparedToolWorkspaceIssuer
 {
     private readonly IPreparedSourceCurrentAuthorityVerifier _sourceAuthority;
     private readonly IPreparedToolUseAuthorizer _toolAuthorization;
+    private readonly PreparedCodeGraphWorkspaceOwnership? _binding;
+    private readonly PreparedWorkspaceUseRegistry? _registry;
 
     public PreparedToolWorkspaceIssuer(
         IPreparedSourceCurrentAuthorityVerifier sourceAuthority,
@@ -967,6 +988,19 @@ public sealed class PreparedToolWorkspaceIssuer
     {
         _sourceAuthority = sourceAuthority ?? throw new ArgumentNullException(nameof(sourceAuthority));
         _toolAuthorization = toolAuthorization ?? throw new ArgumentNullException(nameof(toolAuthorization));
+    }
+
+    internal PreparedToolWorkspaceIssuer(
+        IPreparedSourceCurrentAuthorityVerifier sourceAuthority,
+        IPreparedToolUseAuthorizer toolAuthorization,
+        PreparedCodeGraphWorkspaceOwnership binding,
+        PreparedWorkspaceUseRegistry registry)
+        : this(sourceAuthority, toolAuthorization)
+    {
+        ArgumentNullException.ThrowIfNull(binding);
+        ArgumentNullException.ThrowIfNull(registry);
+        _binding = binding;
+        _registry = registry;
     }
 
     public async Task<PreparedToolWorkspaceIssueResult> IssueAsync(
@@ -981,6 +1015,13 @@ public sealed class PreparedToolWorkspaceIssuer
         }
 
         if (!ValidRequest(request))
+        {
+            return Failed(PreparedToolWorkspaceIssueStatus.Denied);
+        }
+
+        if (_binding is not null &&
+            (request.Approval != _binding.Approval ||
+             !string.Equals(request.PhysicalRootPath, _binding.PhysicalRootPath, StringComparison.Ordinal)))
         {
             return Failed(PreparedToolWorkspaceIssueStatus.Denied);
         }
@@ -1076,6 +1117,15 @@ public sealed class PreparedToolWorkspaceIssuer
             return Failed(PreparedToolWorkspaceIssueStatus.RootUnavailable);
         }
 
+        if (_binding is not null &&
+            (rootIdentity.VolumeSerialNumber != _binding.RootObjectIdentity.VolumeSerialNumber ||
+             rootIdentity.FileIndexHigh != _binding.RootObjectIdentity.FileIndexHigh ||
+             rootIdentity.FileIndexLow != _binding.RootObjectIdentity.FileIndexLow))
+        {
+            root.Dispose();
+            return Failed(PreparedToolWorkspaceIssueStatus.RootUnavailable);
+        }
+
         TimeSpan remaining = request.Deadline - Stopwatch.GetElapsedTime(startedAt);
         if (remaining <= TimeSpan.Zero)
         {
@@ -1083,9 +1133,7 @@ public sealed class PreparedToolWorkspaceIssuer
             return Failed(PreparedToolWorkspaceIssueStatus.DeadlineExceeded);
         }
 
-        return new PreparedToolWorkspaceIssueResult(
-            PreparedToolWorkspaceIssueStatus.Issued,
-            new PreparedToolWorkspaceLease(
+        var lease = new PreparedToolWorkspaceLease(
                 request.Approval,
                 request.ToolPurpose,
                 request.PhysicalRootPath,
@@ -1093,7 +1141,43 @@ public sealed class PreparedToolWorkspaceIssuer
                 rootIdentity,
                 _sourceAuthority,
                 _toolAuthorization,
-                remaining));
+                remaining);
+
+        if (_registry is not null && _binding is not null)
+        {
+            PreparedWorkspaceBorrowResult registration = await _registry.RegisterPreparationLeaseAsync(
+                _binding, request.ToolPurpose, new PreparedLeaseSettlementProbe(lease), linked.Token);
+            if (registration.Borrow is not null)
+            {
+                lease.AttachRegistration(registration.Borrow);
+            }
+
+            if (registration.Borrow is null || linked.IsCancellationRequested)
+            {
+                await lease.DisposeAsync();
+                return Failed(cancellationToken.IsCancellationRequested
+                    ? PreparedToolWorkspaceIssueStatus.Cancelled
+                    : linked.IsCancellationRequested
+                        ? PreparedToolWorkspaceIssueStatus.DeadlineExceeded
+                        : PreparedToolWorkspaceIssueStatus.AuthorityUnavailable);
+            }
+
+        }
+
+        return new PreparedToolWorkspaceIssueResult(PreparedToolWorkspaceIssueStatus.Issued, lease);
+    }
+
+    private sealed class PreparedLeaseSettlementProbe(PreparedToolWorkspaceLease lease)
+        : IPreparedWorkspaceResourceSettlementProbe
+    {
+        public ValueTask<PreparedWorkspaceSettlementStatus> InspectOwnedResourcesAsync(
+            CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            return ValueTask.FromResult(lease.OwnedResourcesSettled
+                ? PreparedWorkspaceSettlementStatus.Settled
+                : PreparedWorkspaceSettlementStatus.Active);
+        }
     }
 
     private static bool ValidRequest(PreparedToolWorkspaceGrantRequest request) =>
