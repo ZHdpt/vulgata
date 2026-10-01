@@ -1,0 +1,18 @@
+{
+  "kind": "dependency-assessment",
+  "stage": "implement",
+  "status": "requires-plan-reconciliation",
+  "source_commit": "5a29b35023950852f37852efb1a11eed2416c644",
+  "task_ids": ["T028", "T029", "T030"],
+  "current_interface_impact": "Existing lease/coordinator/store/ownership-view interfaces support dedicated in-place tool state and separate restricted JDT state. No second descriptor, name-only filter, source copy solely for indexing or Story18.1 contract change is indicated.",
+  "source_finding": "Program.cs registers optional composer and SourceStorage policy, but no concrete trusted exact application-held dedicated-workspace binding supplier, workspace-owner/disposition-readiness verifier or registered producer/store/bound factory. Current file-store fixture evidence is not production metadata root/ACL/mount/protection evidence.",
+  "definition_owner_assessment": "Accepted shape is sufficient, but production must prove exact current approval/root object/owner binding, current source and tool purpose, stopped grants and settled resources, and safe separated protected SourceStorage metadata inaccessible to ordinary Worker tools. If no existing trusted owner establishes those facts, return to plan before inventing one.",
+  "coordination": [
+    {"thread_id": "01a0e5e1-ee94-7362-9b1f-2c61e2c5d536", "title": "Parallel Development schedule", "turn_id": "01a0f7cc-a9b9-7a11-b8d6-08b8e61c482b", "status_when_contacted": "idle", "disposition": "Recommendation only, no design/implementation/resource permission", "recommendation": "18.2 owns exact workspace binding, protected metadata configuration, grant closure/shared-use tracking.18.3 owns actual child/session termination and handle-settlement facts. Reconcile bounded composition with existing plan owner; no general workspace manager or unexplained18.4 dependency."},
+    {"thread_id": "01a0eae9-657d-7f90-80e0-6bf7d83a5c7c", "title": "Worker 18.3", "turn_id": "01a0f7d1-927d-78e3-9986-bed19bebf261", "status_when_contacted": "idle", "disposition": "Read-only requirements, no checkout/workflow changes", "requirements": "Current MCP connection disposal or T015 parent PID exit does not prove all children/handles settled. Trusted lifetime handoff must keep readiness false/quarantined for active or uncertain resources. Existing interface needs actual proof supplier; missing integration requires owner-controlled planning/review. Real pinned child cancellation/failed cleanup qualification remains separate."}
+  ],
+  "owners_and_consumers": {"shared_producer_binding_metadata_grant_closure": "18.2", "native_borrowers_calls_child_handle_settlement_and_reader": "18.3", "jdt_ownership_view_consumer": "18.2"},
+  "next_action": "Reconcile the concrete bounded production composition/trusted lifetime handoff through existing architecture plan ownership and affected deterministic validation/independent review/authorization before implementing changed shared scope. Preserve accepted specification intent, existing work/tasks/review history and exact18.1 contracts.",
+  "unresolved_dependencies": ["Qualified production dedicated-workspace owner/root/approval/source/tool providers and metadata configuration/protection", "18.3 actual resource settlement evidence and separate integrated shared checkpoint", "Trusted first-PATH JDT/Java/interpreter/child chain and declared restricted host profile/native execution permissions", "Prepared registration/login Repository is not ready"],
+  "recovery": "1/12 unchanged; dependency/design reconciliation is not a failed command/review or reset. No gate waived or story/integration readiness claimed."
+}

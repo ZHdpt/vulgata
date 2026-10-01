@@ -22,16 +22,23 @@ public sealed class PreparedCodeGraphPersistenceQualificationTests
     private const string OwnershipIdVariable = "VULGATA_T029_STORE_OWNERSHIP_ID";
     private const string ApprovalVariable = "VULGATA_T029_STORE_APPROVAL";
     private const string ReadyRecordVariable = "VULGATA_T029_STORE_READY_RECORD";
+    private const string CurrentRecordVariable = "VULGATA_T029_STORE_CURRENT_RECORD";
     private const string ResultVariable = "VULGATA_T029_STORE_RESULT";
+    private const string LockReadyVariable = "VULGATA_T029_STORE_LOCK_READY";
+    private const string ReleaseLockVariable = "VULGATA_T029_STORE_RELEASE_LOCK";
     private const string LifecycleFixturesVariable = "VULGATA_T029_STORE_LIFECYCLE_FIXTURES";
     private const string SeedOperation = "seed-ready";
     private const string ReopenOperation = "reopen-ready";
     private const string SeedLifecycleOperation = "seed-lifecycle";
     private const string ReopenLifecycleOperation = "reopen-lifecycle";
+    private const string HoldWriterLockOperation = "hold-writer-lock";
+    private const string StaleDispositionOperation = "stale-disposition";
     private const string ChildTestName =
         "Vulgata.Tests.PreparedSource.PreparedCodeGraphPersistenceQualificationTests.T029_ReadyOwnershipRecordSurvivesFreshTestHostProcess";
     private const string LifecycleChildTestName =
         "Vulgata.Tests.PreparedSource.PreparedCodeGraphPersistenceQualificationTests.T029_LifecycleRecordsStayUnavailableAfterFreshTestHostRestart";
+    private const string LockCasChildTestName =
+        "Vulgata.Tests.PreparedSource.PreparedCodeGraphPersistenceQualificationTests.T029_CrossProcessWriterLockAndStaleCasPreserveCurrentRecord";
     private const int MaximumChildOutputCharacters = 8_192;
 
     [Trait("Suite", "LocalTools")]
@@ -229,6 +236,157 @@ public sealed class PreparedCodeGraphPersistenceQualificationTests
         Assert.Equal(originalSibling, await File.ReadAllBytesAsync(fixture.SentinelPath));
     }
 
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
+    public async Task T029_CrossProcessWriterLockAndStaleCasPreserveCurrentRecord()
+    {
+        if (Environment.GetEnvironmentVariable(ChildOperationVariable) is { Length: > 0 })
+        {
+            await ExecuteChildOperationAsync();
+            return;
+        }
+
+        await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
+        string sourceStorageRoot = Path.Combine(fixture.SandboxPath, "source-storage");
+        Directory.CreateDirectory(sourceStorageRoot);
+
+        byte[] originalSource = await File.ReadAllBytesAsync(fixture.UnfamiliarTextPath);
+        byte[] originalSibling = await File.ReadAllBytesAsync(fixture.SentinelPath);
+        Guid ownershipId = Guid.NewGuid();
+        string ownerIdentity = $"owner-{fixture.SandboxId:N}";
+        string readyRecordPath = Path.Combine(fixture.SandboxPath, "lock-ready-record.json");
+        string seedResultPath = Path.Combine(fixture.SandboxPath, "lock-seed-result.json");
+        string holderReadyPath = Path.Combine(fixture.SandboxPath, "lock-holder-ready.json");
+        string releaseHolderPath = Path.Combine(fixture.SandboxPath, "release-lock-holder.json");
+        string lockHolderResultPath = Path.Combine(fixture.SandboxPath, "lock-holder-result.json");
+        string currentRecordPath = Path.Combine(fixture.SandboxPath, "current-disposing-record.json");
+        string staleResultPath = Path.Combine(fixture.SandboxPath, "stale-cas-result.json");
+        var absent = new PreparedCodeGraphWorkspaceOwnership(
+            ownershipId,
+            Version: 0,
+            PreparedCodeGraphOwnershipPhase.Absent,
+            fixture.Approval,
+            Path.GetFullPath(fixture.PreparedRootPath),
+            ObserveDirectoryIdentity(fixture.PreparedRootPath),
+            ownerIdentity,
+            StateEntryObjectIdentity: null);
+        RetainedSourceCapturePolicy policy = CreatePolicy(
+            sourceStorageRoot,
+            fixture.SandboxPath,
+            fixture.PreparedRootPath);
+
+        await SeedReadyRecordAsync(policy, absent, seedResultPath, readyRecordPath);
+        PreparedCodeGraphWorkspaceOwnership ready = ReadExpectedRecord(readyRecordPath);
+        Assert.Equal(PreparedCodeGraphOwnershipPhase.Ready, ready.Phase);
+        Assert.Equal(absent.OwnershipId, ready.OwnershipId);
+        Assert.Equal(absent.Approval, ready.Approval);
+        Assert.Equal(absent.PhysicalRootPath, ready.PhysicalRootPath);
+        Assert.Equal(absent.RootObjectIdentity, ready.RootObjectIdentity);
+        Assert.Equal(absent.WorkspaceOwnerIdentity, ready.WorkspaceOwnerIdentity);
+        Assert.NotNull(ready.StateEntryObjectIdentity);
+
+        var childInputs = new ChildInputs(
+            fixture.SandboxPath,
+            fixture.PreparedRootPath,
+            sourceStorageRoot,
+            ownerIdentity,
+            ownershipId,
+            JsonSerializer.Serialize(fixture.Approval),
+            readyRecordPath,
+            LockReadyPath: holderReadyPath,
+            ReleaseLockPath: releaseHolderPath);
+        Task<ChildProcessResult> holderTask = RunChildAsync(
+            fixture.SandboxPath,
+            childInputs with
+            {
+                Operation = HoldWriterLockOperation,
+                ResultPath = lockHolderResultPath,
+            },
+            LockCasChildTestName);
+
+        ChildProcessResult holder;
+        try
+        {
+            await WaitForMarkerAsync(holderReadyPath, TimeSpan.FromSeconds(30));
+            using JsonDocument holderEvidence = ReadBoundedJson(holderReadyPath);
+            int holderProcessId = holderEvidence.RootElement.GetProperty("processId").GetInt32();
+            Assert.NotEqual(Environment.ProcessId, holderProcessId);
+
+            var store = new FilePreparedCodeGraphOwnershipStore(policy);
+            PreparedCodeGraphOwnershipTransitionResult blocked =
+                await store.BeginDispositionAsync(ready);
+            Assert.Equal(PreparedCodeGraphOwnershipTransitionStatus.Unavailable, blocked.Status);
+            Assert.Null(blocked.Record);
+
+            PreparedCodeGraphOwnershipLoadResult duringLock = await store.LoadAsync(ready);
+            Assert.Equal(PreparedCodeGraphOwnershipLoadStatus.Found, duringLock.Status);
+            Assert.Equal(ready, duringLock.Record);
+            Assert.Equal(originalSource, await File.ReadAllBytesAsync(fixture.UnfamiliarTextPath));
+            Assert.Equal(originalSibling, await File.ReadAllBytesAsync(fixture.SentinelPath));
+        }
+        finally
+        {
+            await File.WriteAllTextAsync(releaseHolderPath, "release");
+            holder = await holderTask;
+        }
+
+        AssertChildSucceeded(holder, fixture.SandboxPath, "release the owned writer-lock holder");
+        using (JsonDocument holderResult = ReadBoundedJson(lockHolderResultPath))
+        {
+            Assert.Equal(HoldWriterLockOperation,
+                holderResult.RootElement.GetProperty("operation").GetString());
+        }
+
+        var currentStore = new FilePreparedCodeGraphOwnershipStore(policy);
+        PreparedCodeGraphOwnershipTransitionResult committed =
+            await currentStore.BeginDispositionAsync(ready);
+        Assert.Equal(PreparedCodeGraphOwnershipTransitionStatus.Committed, committed.Status);
+        PreparedCodeGraphWorkspaceOwnership disposing = Assert.IsType<PreparedCodeGraphWorkspaceOwnership>(
+            committed.Record);
+        AssertTransition(ready, disposing, PreparedCodeGraphOwnershipPhase.Disposing);
+
+        var freshStore = new FilePreparedCodeGraphOwnershipStore(policy);
+        PreparedCodeGraphOwnershipLoadResult currentLoad = await freshStore.LoadAsync(ready);
+        Assert.Equal(PreparedCodeGraphOwnershipLoadStatus.Found, currentLoad.Status);
+        Assert.Equal(disposing, currentLoad.Record);
+        WriteEvidence(
+            currentRecordPath,
+            "current-disposing",
+            currentLoad.Status,
+            PreparedCodeGraphOwnershipViewStatus.Unavailable,
+            disposing);
+
+        ChildProcessResult stalePeer = await RunChildAsync(
+            fixture.SandboxPath,
+            childInputs with
+            {
+                Operation = StaleDispositionOperation,
+                CurrentRecordPath = currentRecordPath,
+                ResultPath = staleResultPath,
+            },
+            LockCasChildTestName);
+        AssertChildSucceeded(stalePeer, fixture.SandboxPath, "reject a stale Ready disposition");
+        using JsonDocument staleEvidence = ReadBoundedJson(staleResultPath);
+        JsonElement stale = staleEvidence.RootElement;
+        Assert.Equal(StaleDispositionOperation, stale.GetProperty("operation").GetString());
+        Assert.NotEqual(Environment.ProcessId, stale.GetProperty("processId").GetInt32());
+        Assert.Equal("Found", stale.GetProperty("preloadStatus").GetString());
+        Assert.Equal("Conflict", stale.GetProperty("transitionStatus").GetString());
+        Assert.Equal(JsonValueKind.Null, stale.GetProperty("transitionRecord").ValueKind);
+        Assert.Equal("Found", stale.GetProperty("reloadStatus").GetString());
+        using (JsonDocument expectedCurrentEvidence = ReadBoundedJson(currentRecordPath))
+        {
+            AssertRecordSnapshotsEqual(
+                expectedCurrentEvidence.RootElement.GetProperty("record"),
+                stale.GetProperty("record"));
+        }
+        Assert.Equal(
+            disposing.StateEntryObjectIdentity,
+            ObserveDirectoryIdentity(Path.Combine(fixture.PreparedRootPath, ".codegraph")));
+        Assert.Equal(originalSource, await File.ReadAllBytesAsync(fixture.UnfamiliarTextPath));
+        Assert.Equal(originalSibling, await File.ReadAllBytesAsync(fixture.SentinelPath));
+    }
+
     private static async Task ExecuteChildOperationAsync()
     {
         string operation = RequiredEnvironment(ChildOperationVariable);
@@ -247,6 +405,24 @@ public sealed class PreparedCodeGraphPersistenceQualificationTests
         AssertOwnedChildPath(sandboxRoot, sourceStorageRoot);
         AssertOwnedChildPath(sandboxRoot, readyRecordPath);
         AssertOwnedChildPath(sandboxRoot, resultPath);
+        string? lockReadyPath = Environment.GetEnvironmentVariable(LockReadyVariable);
+        string? releaseLockPath = Environment.GetEnvironmentVariable(ReleaseLockVariable);
+        string? currentRecordPath = Environment.GetEnvironmentVariable(CurrentRecordVariable);
+        if (lockReadyPath is not null)
+        {
+            AssertOwnedChildPath(sandboxRoot, lockReadyPath);
+        }
+
+        if (releaseLockPath is not null)
+        {
+            AssertOwnedChildPath(sandboxRoot, releaseLockPath);
+        }
+
+        if (currentRecordPath is not null)
+        {
+            AssertOwnedChildPath(sandboxRoot, currentRecordPath);
+        }
+
         Assert.True(Directory.Exists(preparedRoot));
         Assert.True(Directory.Exists(sourceStorageRoot));
 
@@ -265,6 +441,78 @@ public sealed class PreparedCodeGraphPersistenceQualificationTests
                 phaseFixturesJson,
                 readyRecordPath,
                 resultPath);
+            return;
+        }
+
+        if (operation == HoldWriterLockOperation)
+        {
+            string readyPath = Assert.IsType<string>(lockReadyPath);
+            string releasePath = Assert.IsType<string>(releaseLockPath);
+            string lockPath = Path.Combine(
+                sourceStorageRoot,
+                ".prepared-codegraph-ownership",
+                "ledger.lock");
+            AssertOwnedChildPath(sandboxRoot, lockPath);
+            using (new FileStream(lockPath, FileMode.Open, FileAccess.ReadWrite, FileShare.None))
+            {
+                await File.WriteAllTextAsync(readyPath, JsonSerializer.Serialize(new
+                {
+                    operation,
+                    processId = Environment.ProcessId,
+                }));
+                await WaitForMarkerAsync(releasePath, TimeSpan.FromSeconds(60));
+            }
+
+            await File.WriteAllTextAsync(resultPath, JsonSerializer.Serialize(new
+            {
+                operation,
+                processId = Environment.ProcessId,
+            }));
+            return;
+        }
+
+        if (operation == StaleDispositionOperation)
+        {
+            string currentPath = Assert.IsType<string>(currentRecordPath);
+            PreparedCodeGraphWorkspaceOwnership staleReady = ReadExpectedRecord(readyRecordPath);
+            PreparedCodeGraphWorkspaceOwnership expectedCurrent = ReadExpectedRecord(currentPath);
+            Assert.Equal(PreparedCodeGraphOwnershipPhase.Ready, staleReady.Phase);
+            Assert.Equal(PreparedCodeGraphOwnershipPhase.Disposing, expectedCurrent.Phase);
+            Assert.Equal(staleReady.OwnershipId, expectedCurrent.OwnershipId);
+            Assert.Equal(staleReady.Approval, expectedCurrent.Approval);
+            Assert.Equal(staleReady.PhysicalRootPath, expectedCurrent.PhysicalRootPath);
+            Assert.Equal(staleReady.RootObjectIdentity, expectedCurrent.RootObjectIdentity);
+            Assert.Equal(staleReady.WorkspaceOwnerIdentity, expectedCurrent.WorkspaceOwnerIdentity);
+            Assert.Equal(staleReady.StateEntryObjectIdentity, expectedCurrent.StateEntryObjectIdentity);
+
+            var staleStore = new FilePreparedCodeGraphOwnershipStore(policy);
+            PreparedCodeGraphOwnershipLoadResult preload = await staleStore.LoadAsync(staleReady);
+            Assert.Equal(PreparedCodeGraphOwnershipLoadStatus.Found, preload.Status);
+            Assert.Equal(expectedCurrent, preload.Record);
+
+            PreparedCodeGraphOwnershipTransitionResult staleTransition =
+                await staleStore.BeginDispositionAsync(staleReady);
+            Assert.Equal(PreparedCodeGraphOwnershipTransitionStatus.Conflict, staleTransition.Status);
+            Assert.Null(staleTransition.Record);
+
+            PreparedCodeGraphOwnershipLoadResult reload =
+                await new FilePreparedCodeGraphOwnershipStore(policy).LoadAsync(staleReady);
+            Assert.Equal(PreparedCodeGraphOwnershipLoadStatus.Found, reload.Status);
+            PreparedCodeGraphWorkspaceOwnership retainedCurrent = Assert.IsType<PreparedCodeGraphWorkspaceOwnership>(
+                reload.Record);
+            Assert.Equal(expectedCurrent, retainedCurrent);
+            await File.WriteAllTextAsync(resultPath, JsonSerializer.Serialize(new
+            {
+                operation,
+                processId = Environment.ProcessId,
+                preloadStatus = preload.Status.ToString(),
+                transitionStatus = staleTransition.Status.ToString(),
+                transitionRecord = staleTransition.Record is null
+                    ? null
+                    : OwnershipSnapshot(staleTransition.Record),
+                reloadStatus = reload.Status.ToString(),
+                record = OwnershipSnapshot(retainedCurrent),
+            }));
             return;
         }
 
@@ -784,6 +1032,21 @@ public sealed class PreparedCodeGraphPersistenceQualificationTests
             startInfo.Environment[LifecycleFixturesVariable] = inputs.PhaseFixturesJson;
         }
 
+        if (inputs.CurrentRecordPath is not null)
+        {
+            startInfo.Environment[CurrentRecordVariable] = inputs.CurrentRecordPath;
+        }
+
+        if (inputs.LockReadyPath is not null)
+        {
+            startInfo.Environment[LockReadyVariable] = inputs.LockReadyPath;
+        }
+
+        if (inputs.ReleaseLockPath is not null)
+        {
+            startInfo.Environment[ReleaseLockVariable] = inputs.ReleaseLockPath;
+        }
+
         using var process = new Process { StartInfo = startInfo };
         if (!process.Start())
         {
@@ -852,6 +1115,33 @@ public sealed class PreparedCodeGraphPersistenceQualificationTests
         }
 
         return captured.ToString();
+    }
+
+    private static async Task WaitForMarkerAsync(string path, TimeSpan timeout)
+    {
+        if (File.Exists(path))
+        {
+            return;
+        }
+
+        string directory = Path.GetDirectoryName(path) ??
+            throw new InvalidOperationException("The owned marker path did not have a parent directory.");
+        using var watcher = new FileSystemWatcher(directory, Path.GetFileName(path))
+        {
+            NotifyFilter = NotifyFilters.FileName | NotifyFilters.LastWrite,
+        };
+        var observed = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+        FileSystemEventHandler signal = (_, _) => observed.TrySetResult(true);
+        watcher.Created += signal;
+        watcher.Changed += signal;
+        watcher.EnableRaisingEvents = true;
+        if (File.Exists(path))
+        {
+            return;
+        }
+
+        await observed.Task.WaitAsync(timeout);
+        Assert.True(File.Exists(path), "The owned synchronization marker was observed but is not readable yet.");
     }
 
     private static void AssertChildSucceeded(
@@ -1123,7 +1413,10 @@ public sealed class PreparedCodeGraphPersistenceQualificationTests
         string ReadyRecordPath,
         string? Operation = null,
         string? ResultPath = null,
-        string? PhaseFixturesJson = null);
+        string? PhaseFixturesJson = null,
+        string? CurrentRecordPath = null,
+        string? LockReadyPath = null,
+        string? ReleaseLockPath = null);
 
     private sealed record PhaseFixture(
         string Phase,
