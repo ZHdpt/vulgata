@@ -1,7 +1,25 @@
 using System.Collections.Immutable;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.AspNetCore.TestHost;
+using Microsoft.Data.Sqlite;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Options;
+using Npgsql.EntityFrameworkCore.PostgreSQL.Infrastructure.Internal;
+using Vulgata.Core.Entities;
 using Vulgata.Core.DomainServices;
+using Vulgata.Infrastructure.Data;
+using Vulgata.Infrastructure.Data.October;
 using Vulgata.OctoberGenerator;
+using Vulgata.Shared;
 using Vulgata.Tests.TestInfrastructure;
+using Vulgata.Web.Data;
+using SystemEntity = Vulgata.Core.Entities.System;
 
 namespace Vulgata.Tests.October;
 
@@ -19,6 +37,18 @@ public sealed class OctoberHostCompositionTests
     private static readonly Guid GlobalId = Guid.Parse("72e41d20-e11f-4df8-b46a-cdfc6288a7ae");
     private static readonly DateTimeOffset FirstCommitUtc =
         new(2026, 9, 30, 11, 20, 0, TimeSpan.Zero);
+    private const string SelectedWebTargetId = "october-host-target-b";
+    private const string SelectedWebAuthorityId = "october-host-management-b";
+    private const string SelectedWebCanonicalDatabaseIdentity =
+        "postgres://owned-test/october-host-target-b";
+    private const string SelectedWebUserName = "october-host-operator@example.test";
+    private const string SelectedWebPassword = "OctoberHost!Passw0rd8";
+    private const string BaselineWebNpgsqlConnection =
+        "Host=localhost;Port=5432;Database=october_host_baseline_a;Username=test;Password=test-only";
+    private const string SelectedWebNpgsqlConnection =
+        "Host=localhost;Port=5432;Database=october_host_selected_b;Username=test;Password=test-only";
+    private static readonly Guid SelectedWebBatchId =
+        Guid.Parse("2746c8b4-bd3a-4fc6-a603-6bacda77be11");
 
     [Trait("Suite", "SelfContained")]
     [SuiteFact("SelfContained")]
@@ -78,6 +108,350 @@ public sealed class OctoberHostCompositionTests
         Assert.Equal(0, rig.Selector.CallCount);
         Assert.True(rig.Authority.LastSession.IsDisposed,
             "The authenticated session must be disposed when cancellation ends the command.");
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task SelectedDataStartup_BindsExactConfiguredBatchWithoutLegacyGrant()
+    {
+        using LoginLogoutTests.CustomWebApplicationFactory baselineFactory = new();
+        using HttpClient baselineClient = baselineFactory.CreateClient();
+        using LoginLogoutTests.CustomWebApplicationFactory selectedDataFactory = new();
+        using HttpClient selectedDataClient = selectedDataFactory.CreateClient();
+        string subjectId = await SeedSelectedWebBatchAsync(
+            selectedDataFactory, SelectedWebAuthorityId, SelectedWebCanonicalDatabaseIdentity,
+            SelectedWebTargetId, SelectedWebBatchId);
+
+        SelectedWebConnectionTranslation translation = new(
+            BaselineWebNpgsqlConnection,
+            SelectedWebNpgsqlConnection,
+            baselineFactory.ConnectionString,
+            selectedDataFactory.ConnectionString);
+        ProductionNpgsqlDeclarations? productionDeclarations = null;
+        using WebApplicationFactory<Program> selectedFactory = new WebApplicationFactory<Program>()
+            .WithWebHostBuilder(builder =>
+        {
+            builder.UseEnvironment("Development");
+            builder.ConfigureAppConfiguration((_, configuration) =>
+            {
+                configuration.AddInMemoryCollection(new Dictionary<string, string?>
+                {
+                    ["ConnectionStrings:DefaultConnection"] = BaselineWebNpgsqlConnection
+                });
+                configuration.AddInMemoryCollection(
+                    CreateSelectedWebConfiguration(SelectedWebNpgsqlConnection));
+            });
+            builder.ConfigureTestServices(services =>
+            {
+                productionDeclarations = CaptureProductionNpgsqlDeclarations(services);
+                services.RemoveAll<IOctoberOperatorCredentialSource>();
+                services.AddSingleton<IOctoberOperatorCredentialSource>(
+                    new SelectedWebCredentialSource(SelectedWebUserName, SelectedWebPassword));
+                ReplaceSelectedWebSqliteOptions(services, productionDeclarations, translation);
+            });
+        });
+
+        using HttpClient selectedClient = selectedFactory.CreateClient();
+        OctoberLegacyAuthorityRoutes.AssertAbsent(
+            selectedFactory.Services,
+            OctoberLegacyAuthorityRoutes.BatchActivationIssue,
+            OctoberLegacyAuthorityRoutes.BatchActivationValidation,
+            OctoberLegacyAuthorityRoutes.PreparedSourceApprovalIssue,
+            OctoberLegacyAuthorityRoutes.PreparedSourceApprovalVerification);
+        using IServiceScope scope = selectedFactory.Services.CreateScope();
+        IConfiguration finalConfiguration = scope.ServiceProvider.GetRequiredService<IConfiguration>();
+        string selectedConnection = finalConfiguration.GetConnectionString("DefaultConnection")!;
+        Assert.Equal(SelectedWebNpgsqlConnection, selectedConnection);
+        Assert.NotEqual(BaselineWebNpgsqlConnection, selectedConnection);
+        Assert.Equal(SelectedWebTargetId, finalConfiguration["October:Web:TargetId"]);
+        Assert.Equal(SelectedWebBatchId.ToString("D"), finalConfiguration["October:Web:BatchId"]);
+        Assert.Null(finalConfiguration["October:Web:ActivationGrant"]);
+        Assert.Null(finalConfiguration["October:Web:Endpoint"]);
+        Assert.Empty(finalConfiguration.GetSection("October:Web:GeneratorCertificates").GetChildren());
+
+        IOctoberBoundSetupData bound = scope.ServiceProvider.GetRequiredService<IOctoberBoundSetupData>();
+        Assert.Equal(SelectedWebTargetId, bound.TargetId);
+        Assert.Equal(SelectedWebBatchId, bound.BatchId);
+
+        ProductionNpgsqlDeclarations declarations = Assert.IsType<ProductionNpgsqlDeclarations>(
+            productionDeclarations);
+        Assert.Equal(SelectedWebNpgsqlConnection,
+            CaptureProductionNpgsqlConnection(scope.ServiceProvider, declarations.Identity));
+        Assert.All(CaptureProductionNpgsqlConnections(scope.ServiceProvider, declarations.Management),
+            connection => Assert.Equal(SelectedWebNpgsqlConnection, connection));
+        OctoberAuthorityConfiguration authority =
+            scope.ServiceProvider.GetRequiredService<OctoberAuthorityConfiguration>();
+        Assert.Equal(SelectedWebNpgsqlConnection, authority.DataConnectionString);
+        Assert.NotEqual(BaselineWebNpgsqlConnection, authority.DataConnectionString);
+
+        ApplicationDbContext identity = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        ApplicationUser seededOperator = Assert.IsAssignableFrom<ApplicationUser>(
+            await identity.Users.SingleOrDefaultAsync(user => user.Id == subjectId));
+        Assert.Equal(SelectedWebUserName, seededOperator.UserName);
+        VulgataDbContext management = scope.ServiceProvider.GetRequiredService<VulgataDbContext>();
+        OctoberDbContext october = scope.ServiceProvider.GetRequiredService<OctoberDbContext>();
+        IDbContextFactory<VulgataDbContext> managementFactory =
+            scope.ServiceProvider.GetRequiredService<IDbContextFactory<VulgataDbContext>>();
+        await using VulgataDbContext factoryContext = await managementFactory.CreateDbContextAsync();
+        AssertSelectedSqliteConnection(selectedDataFactory.ConnectionString,
+            identity.Database.GetDbConnection().ConnectionString);
+        AssertSelectedSqliteConnection(selectedDataFactory.ConnectionString,
+            management.Database.GetDbConnection().ConnectionString);
+        AssertSelectedSqliteConnection(selectedDataFactory.ConnectionString,
+            october.Database.GetDbConnection().ConnectionString);
+        AssertSelectedSqliteConnection(selectedDataFactory.ConnectionString,
+            factoryContext.Database.GetDbConnection().ConnectionString);
+    }
+
+    private static Dictionary<string, string?> CreateSelectedWebConfiguration(string selectedConnection) =>
+        new(StringComparer.Ordinal)
+        {
+            ["ConnectionStrings:DefaultConnection"] = selectedConnection,
+            ["October:Web:Mode"] = "selected-data",
+            ["October:Web:TargetId"] = SelectedWebTargetId,
+            ["October:Web:BatchId"] = SelectedWebBatchId.ToString("D"),
+            ["October:Authority:Id"] = SelectedWebAuthorityId,
+            ["October:Targets:0:TargetId"] = SelectedWebTargetId,
+            ["October:Targets:0:CanonicalDatabaseIdentity"] = SelectedWebCanonicalDatabaseIdentity,
+            ["October:Identity:ConnectionName"] = null,
+            ["October:Operator:CredentialSource"] = "console",
+            ["October:Operator:CredentialFile"] = null,
+            ["October:Web:ActivationGrant"] = null,
+            ["October:Web:Endpoint"] = null,
+            ["October:Web:ManagementAuthorityId"] = null,
+            ["October:Web:AllowedTargets"] = null,
+            ["October:Web:GeneratorCertificates"] = null
+        };
+
+    private static async Task<string> SeedSelectedWebBatchAsync(
+        LoginLogoutTests.CustomWebApplicationFactory factory,
+        string authorityId,
+        string canonicalDatabaseIdentity,
+        string targetId,
+        Guid batchId)
+    {
+        DateTimeOffset now = new(2026, 10, 1, 4, 0, 0, TimeSpan.Zero);
+        await using AsyncServiceScope scope = factory.Services.CreateAsyncScope();
+        RoleManager<IdentityRole> roles = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+        if (!await roles.RoleExistsAsync(RoleNames.SystemOwner))
+        {
+            IdentityResult roleCreated = await roles.CreateAsync(new IdentityRole(RoleNames.SystemOwner));
+            Assert.True(roleCreated.Succeeded,
+                string.Join("; ", roleCreated.Errors.Select(error => error.Code)));
+        }
+
+        UserManager<ApplicationUser> users = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+        ApplicationUser user = new()
+        {
+            UserName = SelectedWebUserName,
+            Email = SelectedWebUserName,
+            EmailConfirmed = true,
+            LockoutEnabled = true
+        };
+        IdentityResult created = await users.CreateAsync(user, SelectedWebPassword);
+        Assert.True(created.Succeeded, string.Join("; ", created.Errors.Select(error => error.Code)));
+        IdentityResult roleAssigned = await users.AddToRoleAsync(user, RoleNames.SystemOwner);
+        Assert.True(roleAssigned.Succeeded,
+            string.Join("; ", roleAssigned.Errors.Select(error => error.Code)));
+
+        VulgataDbContext management = await scope.ServiceProvider
+            .GetRequiredService<IDbContextFactory<VulgataDbContext>>()
+            .CreateDbContextAsync();
+        await using (management)
+        {
+            SystemEntity system = new("October selected Web System", "Owned test fixture",
+                "System advisory", now);
+            Repository repository = system.AddRepository("October selected Web Repository",
+                "https://example.test/october-selected-web.git", "Owned test fixture",
+                "Repository advisory", now);
+            GlobalContext global = new("Global advisory", now);
+            management.Systems.Add(system);
+            management.SystemOwnerAssignments.Add(SystemOwnerAssignment.Create(system.Id, user.Id, now));
+            management.Repositories.Add(repository);
+            management.GlobalContexts.Add(global);
+            await management.SaveChangesAsync();
+
+            OctoberRepositorySelection selectedRepository = new(
+                repository.Id, system.Id, "selected-web-root-v1", "selected-web-operator");
+            OctoberContextSelection[] references =
+            [
+                new OctoberContextSelection(OctoberContextScope.Global, global.Id),
+                new OctoberContextSelection(OctoberContextScope.System, system.Id),
+                new OctoberContextSelection(OctoberContextScope.Repository, repository.Id)
+            ];
+            OctoberAdvisoryContextEntry[] entries =
+            [
+                new(repository.Id, OctoberContextScope.Global, OctoberContextApplicability.Selected,
+                    global.Id, "Global advisory", OctoberContextEvidenceKind.AdvisoryNotSourceProof),
+                new(repository.Id, OctoberContextScope.System, OctoberContextApplicability.Selected,
+                    system.Id, "System advisory", OctoberContextEvidenceKind.AdvisoryNotSourceProof),
+                new(repository.Id, OctoberContextScope.Repository, OctoberContextApplicability.Selected,
+                    repository.Id, "Repository advisory", OctoberContextEvidenceKind.AdvisoryNotSourceProof)
+            ];
+            OctoberContextDifference[] differences =
+            [
+                new(repository.Id, OctoberContextScope.Global, OctoberContextScope.System),
+                new(repository.Id, OctoberContextScope.Global, OctoberContextScope.Repository),
+                new(repository.Id, OctoberContextScope.System, OctoberContextScope.Repository)
+            ];
+            OctoberSelectedAdvisoryContext context = new(
+                authorityId,
+                ImmutableArray.Create(selectedRepository),
+                ImmutableArray.Create(entries),
+                ImmutableArray.Create(differences));
+            OctoberSetupRequest request = new(targetId, batchId,
+                [selectedRepository], references, string.Empty);
+            string digest = OctoberSelectionDigest.Compute(request, context);
+            request = request with { SelectionDigest = digest };
+            OctoberAuthorizedSelection authority = new(targetId, batchId, user.Id,
+                canonicalDatabaseIdentity, [repository.Id], digest, context);
+
+            await using OctoberDbContext october = new(
+                new DbContextOptionsBuilder<OctoberDbContext>()
+                    .UseSqlite(factory.ConnectionString)
+                    .Options);
+            await october.Database.ExecuteSqlRawAsync(october.Database.GenerateCreateScript());
+            OctoberPrepareResult prepared = await new OctoberBatchSetupPolicy(
+                    new OctoberSetupStore(october, TimeProvider.System))
+                .PrepareAsync(request, authority, CancellationToken.None);
+            Assert.Equal(OctoberPrepareStatus.Created, prepared.Status);
+            Assert.Equal(batchId, prepared.CommittedBatch!.BatchId);
+        }
+
+        return user.Id;
+    }
+
+    private static ProductionNpgsqlDeclarations CaptureProductionNpgsqlDeclarations(
+        IServiceCollection services) =>
+        new(
+            CaptureProductionDeclarations<ApplicationDbContext>(services),
+            CaptureProductionDeclarations<VulgataDbContext>(services));
+
+    private static ImmutableArray<IDbContextOptionsConfiguration<TContext>>
+        CaptureProductionDeclarations<TContext>(IServiceCollection services)
+        where TContext : DbContext
+    {
+        ServiceDescriptor[] descriptors = services
+            .Where(descriptor => descriptor.ServiceType ==
+                typeof(IDbContextOptionsConfiguration<TContext>))
+            .ToArray();
+        Assert.NotEmpty(descriptors);
+
+        return descriptors.Select(descriptor =>
+        {
+            object? declaration = descriptor.ImplementationInstance ??
+                descriptor.ImplementationFactory?.Invoke(EmptyServiceProvider.Instance);
+            return Assert.IsAssignableFrom<IDbContextOptionsConfiguration<TContext>>(
+                declaration ?? throw new InvalidOperationException(
+                    $"The production {typeof(TContext).Name} options declaration was not captured."));
+        }).ToImmutableArray();
+    }
+
+    private static void ReplaceSelectedWebSqliteOptions(
+        IServiceCollection services,
+        ProductionNpgsqlDeclarations declarations,
+        SelectedWebConnectionTranslation translation)
+    {
+        services.RemoveAll<ApplicationDbContext>();
+        services.RemoveAll<DbContextOptions<ApplicationDbContext>>();
+        services.RemoveAll<IDbContextOptionsConfiguration<ApplicationDbContext>>();
+        services.RemoveAll<IConfigureOptions<DbContextOptions<ApplicationDbContext>>>();
+        services.AddDbContext<ApplicationDbContext>((provider, options) =>
+            options.UseSqlite(translation.ToSqliteConnection(
+                CaptureProductionNpgsqlConnection(provider, declarations.Identity))));
+
+        services.RemoveAll<VulgataDbContext>();
+        services.RemoveAll<DbContextOptions<VulgataDbContext>>();
+        services.RemoveAll<IDbContextFactory<VulgataDbContext>>();
+        services.RemoveAll<IDbContextOptionsConfiguration<VulgataDbContext>>();
+        services.RemoveAll<IConfigureOptions<DbContextOptions<VulgataDbContext>>>();
+        services.AddDbContext<VulgataDbContext>((provider, options) =>
+                options.UseSqlite(translation.ToSqliteConnection(
+                    CaptureProductionNpgsqlConnection(provider, declarations.Management))),
+            contextLifetime: ServiceLifetime.Scoped,
+            optionsLifetime: ServiceLifetime.Singleton);
+        services.AddDbContextFactory<VulgataDbContext>((provider, options) =>
+            options.UseSqlite(translation.ToSqliteConnection(
+                CaptureProductionNpgsqlConnection(provider, declarations.Management))));
+
+        services.RemoveAll<OctoberDbContext>();
+        services.RemoveAll<DbContextOptions<OctoberDbContext>>();
+        services.RemoveAll<IDbContextOptionsConfiguration<OctoberDbContext>>();
+        services.RemoveAll<IConfigureOptions<DbContextOptions<OctoberDbContext>>>();
+        services.AddDbContext<OctoberDbContext>((provider, options) =>
+        {
+            OctoberAuthorityConfiguration authority =
+                provider.GetRequiredService<OctoberAuthorityConfiguration>();
+            options.UseSqlite(translation.ToSqliteConnection(authority.DataConnectionString));
+        });
+    }
+
+    private static string CaptureProductionNpgsqlConnection<TContext>(
+        IServiceProvider provider,
+        ImmutableArray<IDbContextOptionsConfiguration<TContext>> declarations)
+        where TContext : DbContext
+    {
+        string[] configuredConnections = CaptureProductionNpgsqlConnections(provider, declarations);
+        Assert.NotEmpty(configuredConnections);
+        Assert.All(configuredConnections,
+            connection => Assert.Equal(configuredConnections[0], connection));
+        return configuredConnections[0];
+    }
+
+    private static string[] CaptureProductionNpgsqlConnections<TContext>(
+        IServiceProvider provider,
+        ImmutableArray<IDbContextOptionsConfiguration<TContext>> declarations)
+        where TContext : DbContext => declarations.Select(declaration =>
+        {
+            DbContextOptionsBuilder<TContext> options = new();
+            declaration.Configure(provider, options);
+            NpgsqlOptionsExtension npgsql = Assert.Single(
+                options.Options.Extensions.OfType<NpgsqlOptionsExtension>());
+            return Assert.IsType<string>(npgsql.ConnectionString);
+        }).ToArray();
+
+    private static void AssertSelectedSqliteConnection(string selectedConnection, string actualConnection)
+    {
+        string expectedDataSource = new SqliteConnectionStringBuilder(selectedConnection).DataSource;
+        string actualDataSource = new SqliteConnectionStringBuilder(actualConnection).DataSource;
+        Assert.Equal(expectedDataSource, actualDataSource);
+    }
+
+    private sealed record ProductionNpgsqlDeclarations(
+        ImmutableArray<IDbContextOptionsConfiguration<ApplicationDbContext>> Identity,
+        ImmutableArray<IDbContextOptionsConfiguration<VulgataDbContext>> Management);
+
+    private sealed record SelectedWebConnectionTranslation(
+        string BaselineNpgsqlConnection,
+        string SelectedNpgsqlConnection,
+        string BaselineSqliteConnection,
+        string SelectedSqliteConnection)
+    {
+        public string ToSqliteConnection(string productionConnection) =>
+            StringComparer.Ordinal.Equals(productionConnection, BaselineNpgsqlConnection)
+                ? BaselineSqliteConnection
+                : StringComparer.Ordinal.Equals(productionConnection, SelectedNpgsqlConnection)
+                    ? SelectedSqliteConnection
+                    : throw new InvalidOperationException(
+                        "A production October context selected an unowned test database.");
+    }
+
+    private sealed class EmptyServiceProvider : IServiceProvider
+    {
+        public static EmptyServiceProvider Instance { get; } = new();
+
+        public object? GetService(Type serviceType) => null;
+    }
+
+    private sealed class SelectedWebCredentialSource(string userName, string password)
+        : IOctoberOperatorCredentialSource
+    {
+        public ValueTask<OctoberOperatorCredentials?> ReadAsync(CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            return ValueTask.FromResult<OctoberOperatorCredentials?>(
+                new OctoberOperatorCredentials(userName, password));
+        }
     }
 
     [Trait("Suite", "SelfContained")]

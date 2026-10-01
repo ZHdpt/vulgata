@@ -26,31 +26,33 @@ public static class OctoberWebStartupSelector
         string? targetId = configuration["October:Web:TargetId"];
         string? batchIdText = configuration["October:Web:BatchId"];
         string? activationGrant = configuration["October:Web:ActivationGrant"];
+        bool obsoleteTransportConfigured = activationGrant is not null ||
+            configuration["October:Web:Endpoint"] is not null ||
+            configuration["October:WebAuthorityEndpoint"] is not null ||
+            configuration["October:Web:ManagementAuthorityId"] is not null ||
+            configuration.GetSection("October:Web:AllowedTargets").Exists() ||
+            configuration.GetSection("October:Web:GeneratorCertificates").Exists();
 
-        if (mode is null or "ordinary" or "authorization-only")
+        if (mode is null or "ordinary")
         {
-            if (targetId is not null || batchIdText is not null || activationGrant is not null)
+            if (targetId is not null || batchIdText is not null || obsoleteTransportConfigured)
             {
                 throw new InvalidOperationException("Invalid October Web startup selection.");
             }
 
-            return new OctoberWebStartupSelection(
-                mode == "authorization-only" ? OctoberWebMode.AuthorizationOnly : OctoberWebMode.Ordinary,
-                null,
-                null,
-                null);
+            return new OctoberWebStartupSelection(OctoberWebMode.Ordinary, null, null, null);
         }
 
         if (mode != "selected-data" ||
             string.IsNullOrWhiteSpace(targetId) ||
             !Guid.TryParse(batchIdText, out Guid batchId) ||
             batchId == Guid.Empty ||
-            string.IsNullOrWhiteSpace(activationGrant))
+            obsoleteTransportConfigured)
         {
             throw new InvalidOperationException("Invalid October Web startup selection.");
         }
 
-        return new OctoberWebStartupSelection(OctoberWebMode.SelectedData, targetId, batchId, activationGrant);
+        return new OctoberWebStartupSelection(OctoberWebMode.SelectedData, targetId, batchId, null);
     }
 }
 

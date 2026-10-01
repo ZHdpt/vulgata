@@ -96,7 +96,7 @@
   "bmad_story_key": "18-4-prepare-an-owned-october-batch-with-valid-context-and-provid",
   "checkpoint": {
     "binding_status": "pending",
-    "checkpoint_id": "bmad-18-4-implement-20261001T055858Z-7ebac7",
+    "checkpoint_id": "bmad-18-4-implement-20261001T081225Z-dbe49d",
     "commit_sha": null,
     "stage": "implement"
   },
@@ -152,10 +152,10 @@
   },
   "preflight": {
     "branch": "oct14/story-18-4",
-    "git_identity_sha256": "cacec4df204244d9222e22c4358d6a6b42132ba3ef42543182efaac271eab191",
-    "head": "84f95e1e681663914dfefb8c2969ba8e1eef201e",
-    "observed_at": "2026-10-01T05:58:58.1247997Z",
-    "status_sha256": "734be2e2f5e4445bd0e99602937c3c56ff7d0cfca16be3a73d66e90366d91175"
+    "git_identity_sha256": "351c0a6fb957f2f1627181aa03d5ee27b5e27187eb1ed85062f2c99aaea59add",
+    "head": "ff8ddf2afa1c325610031a0e0e0b0fe33dacec08",
+    "observed_at": "2026-10-01T08:12:25.6880375Z",
+    "status_sha256": "bf0011d474c446c3e6aa9f52fbd56a532c12282076dac81441372bb6aed80197"
   },
   "recovery": {
     "action": "proceed",
@@ -180,8 +180,8 @@
   },
   "resume": {
     "stage": "implement",
-    "reason": "Direct module final GREEN8/8 and344/344; authority/issuer group verified. Mechanical completion marks only, historical accepted definition hashes retained. Owned checkpoint next; actual host/runtime work pending. Count6/limit7 unchanged.",
-    "evidence_path": "specs/017-october-batch-setup/evidence/independent-generator-module-final-green-01.json"
+    "reason": "Selected-Web current composition17/17 and surrounding249/249 verified; owned checkpoint pending. Resume remaining T018/T019 independent generator composition; count6/limit7 unchanged; runtime resources not granted.",
+    "evidence_path": "specs/017-october-batch-setup/evidence/selected-web-current-composition-final-green-01.json"
   },
   "schema_version": "3.1",
   "stage": "implement",
@@ -189,5 +189,5 @@
     "path": "specs/017-october-batch-setup/evidence/transitions/transition-0073-console-testability-definition-review-accept.json",
     "sha256": "68ca9dc2d04d4bddb54d3425b0f503c71dbe0bbc4b4d4a99a565ea3c3539e4ee"
   },
-  "updated_at": "2026-10-01T05:58:58.1247997Z"
+  "updated_at": "2026-10-01T08:12:25.6880375Z"
 }

@@ -1,0 +1,18 @@
+{
+  "kind": "test-green", "stage": "implement", "outcome": "passed",
+  "source_commit": "ff8ddf2afa1c325610031a0e0e0b0fe33dacec08",
+  "red_evidence": "specs/017-october-batch-setup/evidence/selected-web-startup-red-01.json",
+  "command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName~OctoberHostCompositionTests'",
+  "minimal_green_trx": "TestResults/isolation-c9ecd6a0606f47cdba6e2563c45cfeb5/results.trx",
+  "final_implementer_trx": "TestResults/isolation-eec7eea7cf05495abe89ed5f906092be/results.trx",
+  "build_log": "TestResults/isolation-eec7eea7cf05495abe89ed5f906092be/build.log",
+  "exit_code": 0, "selected": 9, "passed": 9, "failed": 0, "skipped": 0,
+  "production_hashes": {
+    "src/dotnet/Vulgata.Web/Program.cs": "899efe8e5755c44cc58ac9ec70bcb81a37912462b03943cddc9b5ef6c68eeac9",
+    "src/dotnet/Vulgata.Web/Data/OctoberSelectedDataStartupBinder.cs": "6aafe069a264376d3f6eaa0e773d564a0aff16e2376564d9f0d31b24093500ea",
+    "src/dotnet/Vulgata.Web/Data/OctoberGeneratorCertificateVerifier.cs": "2238f904ff40abf8946a18dd0180123f6858b470ccceb7a0aaa4894dd9a70fb0"
+  },
+  "final_shape": "Implementer assessed affected units: final immutable configuration, direct authenticate/current authorize/exact Bind before serving; ordinary-only migration/seeding; old routes unmapped; owned SQLite registrations preserved. No additional refactor needed. After minimal GREEN, corrected obsolete nested-section detection and verified 9/9 again.",
+  "scope": "First actual selected-Web WAF tracer only. Test-owner final surrounding verification pending. Generator actual Program/target, broader startup compatibility and PostgreSQL/process qualification remain incomplete.",
+  "recovery": {"failed_results": 6, "pause_at": 7, "incremented": false, "reason": "Expected development RED/build iterations are noncounting; no independent negative review or recurring repaired defect recorded"}
+}

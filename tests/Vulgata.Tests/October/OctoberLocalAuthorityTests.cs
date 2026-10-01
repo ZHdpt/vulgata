@@ -1068,8 +1068,10 @@ public sealed partial class OctoberLocalAuthorityTests
         await AssertIdentityChangeDeniesSelectionAsync(async (users, user) =>
         {
             IdentityResult locked = await users.SetLockoutEndDateAsync(
-                user, new DateTimeOffset(2026, 10, 1, 8, 1, 0, TimeSpan.Zero));
+                user, DateTimeOffset.UtcNow.AddMinutes(10));
             Assert.True(locked.Succeeded, string.Join("; ", locked.Errors.Select(error => error.Code)));
+            Assert.True(await users.IsLockedOutAsync(user),
+                "The selection-denial check requires a currently locked Identity account.");
         });
     }
 

@@ -1,0 +1,11 @@
+{
+  "kind": "analysis", "stage": "implement", "earliest_owner": "test",
+  "original_trx": "TestResults/isolation-23b47be3bb7b484f89f94abaef41f1d9/results.trx",
+  "original_selected": 249, "original_passed": 248, "original_failed": 1,
+  "focused_trx": "TestResults/isolation-af2e5958c0c64073a6e0a3a1b86fe5cb/results.trx",
+  "focused_selected": 1, "focused_failed": 1,
+  "finding": "AuthorizeSelectionAsync_DeniesWhenIdentityAccountBecomesLockedOut sets the real Identity user's LockoutEnd to absolute 2026-10-01T08:01:00Z while the fixture clock is 08:00. Root observed wall UTC 2026-10-01T08:03:00.3473527Z; production calls real UserManager.IsLockedOutAsync. The asserted account-lockout precondition has elapsed, independently of the fixture clock governing October session expiry.",
+  "correction": "Keep the Denied/no-payload assertion. Establish a currently locked real Identity account using supported UserManager API with wall-time-relative future LockoutEnd and assert IsLockedOutAsync true before selection. No production policy or fixed October session/context clock change. Author already uses this relative pattern in AuthenticateAsync_LockedIdentityUser_ReturnsDeniedWithoutSession.",
+  "execution_note": "Test owner ran an isolated reproduction after source inspection without a separate root-issued retry record. Preserve the actual result; no hidden passing claim or further unchanged retry is authorized. Next run follows the concrete fixture correction, not unchanged repetition.",
+  "recovery": {"failed_results": 6, "pause_at": 7, "incremented": false, "reason": "First elapsed-time fixture defect; reproduction was before any repair. No failed independent review/convergence or recurring defect after repair."}
+}

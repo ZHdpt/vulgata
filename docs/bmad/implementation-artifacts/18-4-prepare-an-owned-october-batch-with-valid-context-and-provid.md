@@ -23,9 +23,24 @@ entry has controlled no-echo tests and a separate static native-adapter inspecti
 not native-terminal runtime qualification.
 
 The generator module's direct orchestration passed independent final coverage (8/8)
-and surrounding regressions (344/344). Real host composition, startup-selected context
-factories, provider binding, ordinary-startup compatibility and PostgreSQL/process
-qualification remain unfinished. This is not full-story or real-host qualification.
+and surrounding regressions (344/344). The first actual selected-Web startup tracer
+now passes 9/9, with 234/234 current surrounding checks: direct authentication and
+current authorization bind the exact existing batch before serving. This is
+in-process WAF/owned SQLite evidence. The initial options replacement masked production
+connection declarations; the corrected fixture captures Application/Vulgata Npgsql
+callbacks before translating exact A/B declarations to separately owned SQLite targets.
+October uses the production authority's declared data connection. Final startup/route
+checks pass 17/17 and mapped surrounding checks pass 249/249. A previously absolute
+Identity lockout expiry elapsed during this run; the fixture now establishes and
+asserts a currently locked account, preserving Denied/no-payload checks and leaving
+production authorization unchanged. See current composition final-GREEN evidence.
+Actual generator entry-point composition, broader startup isolation, provider binding
+and PostgreSQL/process qualification remain unfinished. This is not full-story or
+standalone-process qualification. The first broad regression also exposed 18 obsolete
+approval-API host cases; their accepted T018/T025 reconciliation now passes 17 focused
+and 249 surrounding cases. The failed broad run is retained rather than described as
+passing. Current tests prove route absence and reject obsolete inputs, not real
+database or native-host qualification.
 Current evidence is in `workflow-state.json` and the local authority/source issuer
 and independent generator module evidence under the existing feature directory.
 
@@ -75,7 +90,7 @@ So that generation and later readers address the intended data without polluting
 ## Current authorized delivery boundary
 
 - The user lifted the historical plan-only/merge-only restrictions and authorized normal governed delivery in this assigned branch/worktree. Accepted corrected plan-review-13 and definition-review-12 preserve independent batch execution and startup-only Web dataset selection; delegated decisions 04/06 bind the corrected artifacts. Story 18.1's integrated contracts remain unchanged and require this story's actual use-path verification.
-- The bounded console seam clarification changes only testability, not authentication policy or resource scope. Existing source/authentication/protected-file evidence remains valid for its tested slices; interactive input and current authority remain unfinished. Pending unavailable-store RED is development evidence, not completion.
+- The bounded console seam clarification changes only testability, not authentication policy or resource scope. Existing source/authentication/protected-file evidence remains valid for its tested slices; controlled interactive input and current authority have passing evidence, while native-terminal and actual host/runtime qualification remain distinct and incomplete.
 - The user corrected root's mistaken first-build failure count. Expected RED and ordinary first-pass development failures are noncounting; independent negative reviews/convergence and recurrence after repair remain countable. Raw erroneous accounting is retained as superseded evidence; the existing historical episode remains at 6/7 with its owners, diagnosis, holds and extension preserved. No recovery extension or waiver was requested for this correction.
 - Actual PostgreSQL/migration/process/credential/key/terminal/provider qualification still needs explicit authorized owned resources. No merge, push, history rewrite, later-story work or other checkout access is authorized. All remaining reviews, convergence and final verification gates remain mandatory.
 

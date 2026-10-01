@@ -1,0 +1,18 @@
+{
+  "kind": "analysis", "stage": "implement", "status": "correction-in-progress",
+  "earliest_owner": "test",
+  "finding": "Root final diff inspection: ReplaceSelectedWebSqliteOptions removes actual production DbContextOptions/configuration and factory declarations and injects desired IConfiguration connections. Equality then proves the fixture chooses the final value, not that actual production options choose it. Preserve actual Npgsql declarations before owned SQLite translation and distinguish baseline A from selected B.",
+  "scope": "Existing accepted T018 actual WAF/final-configuration seam. Private fixture correction only; no new architecture/interface/authority decision, resource permission or plan restart.",
+  "retained_narrow_evidence": {
+    "focused_trx": "TestResults/isolation-dabfe52aa1874c6280b851949a710426/results.trx",
+    "focused_passed": 17,
+    "surrounding_trx": "TestResults/isolation-ef03b07e7250465389a297fe6d38095c/results.trx",
+    "surrounding_passed": 249,
+    "reason": "Binding, route absence and legacy-key rejection still have controlled evidence; production connection registration is not claimed. Superseded transport bodies removed, historical Git/raw evidence retained."
+  },
+  "local_oracle_correction": {
+    "raw_trx": "TestResults/isolation-c436745cb1e84ae4bf538a809d92c595/results.trx",
+    "finding": "POST returns 405 from the host fallback, not the fixture's assumed404; actual exact endpoint table absence is the accepted behavior, no404 contract imposed."
+  },
+  "recovery": {"failed_results": 6, "pause_at": 7, "incremented": false, "reason": "First concrete fixture coverage defect in ordinary development, not independent negative review/convergence or recurrent failed repair"}
+}

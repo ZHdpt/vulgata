@@ -1,0 +1,79 @@
+{
+  "kind": "checkpoint-manifest",
+  "checkpoint_id": "bmad-18-4-implement-20261001T081225Z-dbe49d",
+  "stage": "implement",
+  "story_key": "18-4-prepare-an-owned-october-batch-with-valid-context-and-provid",
+  "source_head": "ff8ddf2afa1c325610031a0e0e0b0fe33dacec08",
+  "binding_status": "pending",
+  "commit_sha": null,
+  "paths": [
+    "docs/bmad/implementation-artifacts/18-4-prepare-an-owned-october-batch-with-valid-context-and-provid.md",
+    "specs/017-october-batch-setup/workflow-state.json",
+    "src/dotnet/Vulgata.Web/Program.cs",
+    "src/dotnet/Vulgata.Web/Data/OctoberGeneratorCertificateVerifier.cs",
+    "src/dotnet/Vulgata.Web/Data/OctoberSelectedDataStartupBinder.cs",
+    "src/dotnet/Vulgata.Web/Data/OctoberSelectedDataBoundSetup.cs",
+    "tests/Vulgata.Tests/October/OctoberHostCompositionTests.cs",
+    "tests/Vulgata.Tests/October/OctoberActivationApiTests.cs",
+    "tests/Vulgata.Tests/October/OctoberPreparedSourceApprovalApiTests.cs",
+    "tests/Vulgata.Tests/October/OctoberLocalAuthorityTests.cs",
+    "specs/017-october-batch-setup/evidence/selected-web-startup-red-01.json",
+    "specs/017-october-batch-setup/evidence/selected-web-startup-minimal-green-01.json",
+    "specs/017-october-batch-setup/evidence/selected-web-startup-final-green-01.json",
+    "specs/017-october-batch-setup/evidence/selected-web-legacy-regression-disposition-01.json",
+    "specs/017-october-batch-setup/evidence/selected-web-production-options-coverage-correction-01.json",
+    "specs/017-october-batch-setup/evidence/lockout-absolute-time-fixture-diagnosis-01.json",
+    "specs/017-october-batch-setup/evidence/selected-web-current-composition-final-green-01.json",
+    "specs/017-october-batch-setup/evidence/checkpoint-implementation-08.json"
+  ],
+  "preserved_unstaged": [
+    " M specs/017-october-batch-setup/evidence/checkpoint-implementation-06.json",
+    " M src/dotnet/Vulgata.Web/Data/OctoberBatchActivationService.cs",
+    "?? specs/017-october-batch-setup/evidence/host-composition-interruption-handoff-01.json",
+    "?? specs/017-october-batch-setup/evidence/transitions/transition-0066-independent-auth-build-failure.json"
+  ],
+  "preflight": {
+    "identity": {
+      "branch": "oct14/story-18-4",
+      "head": "ff8ddf2afa1c325610031a0e0e0b0fe33dacec08",
+      "root": "C:/Users/13728/.codex/worktrees/d166/vulgata",
+      "common_dir": "G:/source/repos/vulgata/.git",
+      "worktree": "C:\\Users\\13728\\.codex\\worktrees\\d166\\vulgata"
+    },
+    "git_identity_sha256": "351c0a6fb957f2f1627181aa03d5ee27b5e27187eb1ed85062f2c99aaea59add",
+    "status_sha256": "bf0011d474c446c3e6aa9f52fbd56a532c12282076dac81441372bb6aed80197",
+    "porcelain": [
+      " M docs/bmad/implementation-artifacts/18-4-prepare-an-owned-october-batch-with-valid-context-and-provid.md",
+      " M specs/017-october-batch-setup/evidence/checkpoint-implementation-06.json",
+      " M specs/017-october-batch-setup/workflow-state.json",
+      " M src/dotnet/Vulgata.Web/Data/OctoberBatchActivationService.cs",
+      " M src/dotnet/Vulgata.Web/Data/OctoberGeneratorCertificateVerifier.cs",
+      " M src/dotnet/Vulgata.Web/Program.cs",
+      " M tests/Vulgata.Tests/October/OctoberActivationApiTests.cs",
+      " M tests/Vulgata.Tests/October/OctoberHostCompositionTests.cs",
+      " M tests/Vulgata.Tests/October/OctoberLocalAuthorityTests.cs",
+      " M tests/Vulgata.Tests/October/OctoberPreparedSourceApprovalApiTests.cs",
+      "?? specs/017-october-batch-setup/evidence/host-composition-interruption-handoff-01.json",
+      "?? specs/017-october-batch-setup/evidence/lockout-absolute-time-fixture-diagnosis-01.json",
+      "?? specs/017-october-batch-setup/evidence/selected-web-current-composition-final-green-01.json",
+      "?? specs/017-october-batch-setup/evidence/selected-web-legacy-regression-disposition-01.json",
+      "?? specs/017-october-batch-setup/evidence/selected-web-production-options-coverage-correction-01.json",
+      "?? specs/017-october-batch-setup/evidence/selected-web-startup-final-green-01.json",
+      "?? specs/017-october-batch-setup/evidence/selected-web-startup-minimal-green-01.json",
+      "?? specs/017-october-batch-setup/evidence/selected-web-startup-red-01.json",
+      "?? specs/017-october-batch-setup/evidence/transitions/transition-0066-independent-auth-build-failure.json",
+      "?? src/dotnet/Vulgata.Web/Data/OctoberSelectedDataBoundSetup.cs",
+      "?? src/dotnet/Vulgata.Web/Data/OctoberSelectedDataStartupBinder.cs"
+    ],
+    "observed_at": "2026-10-01T08:12:25.6880375Z",
+    "checkpoint_id": "bmad-18-4-implement-20261001T081225Z-dbe49d",
+    "index": []
+  },
+  "verification": "specs/017-october-batch-setup/evidence/selected-web-current-composition-final-green-01.json:17/17 focused249/249 surrounding; realPG/independent process unqualified",
+  "task_progress": "No task checkbox completed: remaining T018/T019/T025/T026 obligations preserved",
+  "recovery": {
+    "failed_results": 6,
+    "pause_at": 7,
+    "changed": false
+  }
+}

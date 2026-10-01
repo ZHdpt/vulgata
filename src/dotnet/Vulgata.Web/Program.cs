@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using System.Collections.Immutable;
 using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components.Authorization;
@@ -21,6 +22,7 @@ using Vulgata.Infrastructure.CommunicationDetection;
 using Vulgata.Infrastructure.ContextManagement;
 using Vulgata.Infrastructure.CrossRepository;
 using Vulgata.Infrastructure.Data;
+using Vulgata.Infrastructure.Data.October;
 using Vulgata.Infrastructure.FrameworkDetection;
 using Vulgata.Infrastructure.Git;
 using Vulgata.Infrastructure.Git.BackupB;
@@ -97,6 +99,21 @@ builder.Services.ConfigureApplicationCookie(options =>
 var app = builder.Build();
 OctoberWebStartupSelection octoberSelection =
     app.Services.GetRequiredService<OctoberWebStartupSelection>();
+if (octoberSelection.Mode == OctoberWebMode.SelectedData)
+{
+    using IServiceScope startupScope = app.Services.CreateScope();
+    OctoberSelectedDataStartupResult binding = await startupScope.ServiceProvider
+        .GetRequiredService<IOctoberSelectedDataStartupBinder>()
+        .BindAsync(octoberSelection, CancellationToken.None);
+    if (binding.Status != OctoberSelectedDataStartupStatus.Bound ||
+        binding.BoundSetupData is null)
+    {
+        throw new InvalidOperationException($"October selected-data startup failed: {binding.Status}.");
+    }
+
+    app.Services.GetRequiredService<OctoberSelectedDataBoundSetup>()
+        .SetOnce(binding.BoundSetupData);
+}
 
 IAnalysisRuntimeHealthProbe analysisHealthProbe =
     app.Services.GetRequiredService<IAnalysisRuntimeHealthProbe>();
@@ -146,29 +163,32 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.UseAntiforgery();
 
-try
+if (octoberSelection.Mode == OctoberWebMode.Ordinary)
 {
-    using var scope = app.Services.CreateScope();
-    var identityDb = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-    var vulgataDb = scope.ServiceProvider.GetRequiredService<VulgataDbContext>();
+    try
+    {
+        using var scope = app.Services.CreateScope();
+        var identityDb = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        var vulgataDb = scope.ServiceProvider.GetRequiredService<VulgataDbContext>();
 
-    startupLogger.LogInformation("Applying Identity database migrations...");
-    await identityDb.Database.MigrateAsync();
-    startupLogger.LogInformation("Identity migrations applied successfully.");
+        startupLogger.LogInformation("Applying Identity database migrations...");
+        await identityDb.Database.MigrateAsync();
+        startupLogger.LogInformation("Identity migrations applied successfully.");
 
-    startupLogger.LogInformation("Applying Vulgata domain database migrations...");
-    await vulgataDb.Database.MigrateAsync();
-    startupLogger.LogInformation("Vulgata domain migrations applied successfully.");
+        startupLogger.LogInformation("Applying Vulgata domain database migrations...");
+        await vulgataDb.Database.MigrateAsync();
+        startupLogger.LogInformation("Vulgata domain migrations applied successfully.");
 
-    var roleSeeder = scope.ServiceProvider.GetRequiredService<RoleSeeder>();
-    startupLogger.LogInformation("Seeding identity roles...");
-    await roleSeeder.SeedAsync();
-    startupLogger.LogInformation("Identity role seeding completed.");
-}
-catch (Exception ex)
-{
-    startupLogger.LogCritical(ex, "Database migration failed. The application cannot start.");
-    throw;
+        var roleSeeder = scope.ServiceProvider.GetRequiredService<RoleSeeder>();
+        startupLogger.LogInformation("Seeding identity roles...");
+        await roleSeeder.SeedAsync();
+        startupLogger.LogInformation("Identity role seeding completed.");
+    }
+    catch (Exception ex)
+    {
+        startupLogger.LogCritical(ex, "Database migration failed. The application cannot start.");
+        throw;
+    }
 }
 
 app.MapStaticAssets();
@@ -179,10 +199,6 @@ app.MapRazorComponents<App>()
 app.MapAdditionalIdentityEndpoints();
 
 app.MapVulgataApiEndpoints();
-if (octoberSelection.Mode == OctoberWebMode.AuthorizationOnly)
-{
-    OctoberBatchActivationEndpoints.Map(app);
-}
 
 await app.RunAsync();
 return;
@@ -221,30 +237,94 @@ public static class VulgataWebComposition
                 return;
             }
 
-            string? managementAuthorityId = hostContext.Configuration["October:Web:ManagementAuthorityId"];
-            if (string.IsNullOrWhiteSpace(managementAuthorityId) ||
-                !string.Equals(managementAuthorityId, managementAuthorityId.Trim(), StringComparison.Ordinal))
+            OctoberAuthorityConfiguration authority = ResolveOctoberAuthorityConfiguration(
+                hostContext.Configuration, selection);
+            services.AddSingleton(authority);
+            if (!services.Any(service => service.ServiceType == typeof(DbContextOptions<OctoberDbContext>)))
             {
-                throw new InvalidOperationException("Invalid October Web ManagementAuthorityId.");
+                services.AddDbContext<OctoberDbContext>(options =>
+                    options.UseNpgsql(authority.DataConnectionString, npgsql =>
+                        npgsql.MigrationsHistoryTable("__OctoberMigrationsHistory", "october")));
             }
-            services.AddSingleton(new OctoberWebManagementAuthority(managementAuthorityId));
-
-            if (selection.Mode != OctoberWebMode.AuthorizationOnly)
+            string credentialSource = hostContext.Configuration["October:Operator:CredentialSource"] ??
+                throw new InvalidOperationException("October operator credential source is required.");
+            if (credentialSource == "console")
             {
-                throw new InvalidOperationException("Invalid October Web startup selection.");
+                if (hostContext.Configuration["October:Operator:CredentialFile"] is not null)
+                    throw new InvalidOperationException("Invalid October operator credential source.");
+                services.TryAddSingleton<IOctoberOperatorCredentialSource, OctoberConsoleCredentialSource>();
+            }
+            else if (credentialSource == "protected-file")
+            {
+                string path = hostContext.Configuration["October:Operator:CredentialFile"] ??
+                    throw new InvalidOperationException("October operator credential file is required.");
+                services.TryAddSingleton<IOctoberOperatorCredentialSource>(provider =>
+                    new OctoberProtectedFileCredentialSource(path,
+                        provider.GetRequiredService<IDataProtectionProvider>()));
+            }
+            else
+            {
+                throw new InvalidOperationException("Invalid October operator credential source.");
             }
 
-            OctoberGeneratorCertificateAllowlist allowlist =
-                OctoberGeneratorCertificateConfiguration.ReadAllowlist(hostContext.Configuration);
-            OctoberWebTargetAllowlist targets =
-                OctoberGeneratorCertificateConfiguration.ReadTargets(hostContext.Configuration);
-            services.AddSingleton(allowlist);
-            services.AddSingleton(targets);
-            services.TryAddSingleton<IOctoberAuthenticatedCertificateSource,
-                OctoberConnectionCertificateSource>();
-            services.AddSingleton<OctoberGeneratorCertificateVerifier>();
-            services.AddScoped<OctoberBatchActivationService>();
+            services.AddScoped<IOctoberLocalAuthority, OctoberLocalAuthority>();
+            services.AddScoped<IOctoberBatchSelector>(provider => new OctoberBatchSelector(
+                provider.GetRequiredService<OctoberDbContext>(), authority.TargetId,
+                authority.CanonicalDatabaseIdentity));
+            services.AddSingleton<OctoberSelectedDataBoundSetup>();
+            services.AddScoped<IOctoberBoundSetupData>(provider =>
+                provider.GetRequiredService<OctoberSelectedDataBoundSetup>().GetBound());
+            services.AddScoped<IOctoberSelectedDataStartupBinder>(provider =>
+                new OctoberSelectedDataStartupBinder(
+                    provider.GetRequiredService<IOctoberLocalAuthority>(),
+                    provider.GetRequiredService<IOctoberBatchSelector>(), authority.AuthorityId));
         });
+    }
+
+    private static OctoberAuthorityConfiguration ResolveOctoberAuthorityConfiguration(
+        IConfiguration configuration, OctoberWebStartupSelection selection)
+    {
+        string dataConnection = configuration.GetConnectionString("DefaultConnection") ??
+            throw new InvalidOperationException("October selected database is required.");
+        string? identityConnectionName = configuration["October:Identity:ConnectionName"];
+        string identityConnection = identityConnectionName is null
+            ? dataConnection
+            : configuration.GetConnectionString(identityConnectionName) ??
+                throw new InvalidOperationException("October Identity database is required.");
+        ImmutableDictionary<string, string>.Builder targets =
+            ImmutableDictionary.CreateBuilder<string, string>(StringComparer.Ordinal);
+        foreach (IConfigurationSection item in configuration.GetSection("October:Targets").GetChildren())
+        {
+            string? targetId = item["TargetId"];
+            string? databaseIdentity = item["CanonicalDatabaseIdentity"];
+            if (string.IsNullOrWhiteSpace(targetId) || string.IsNullOrWhiteSpace(databaseIdentity) ||
+                !targets.TryAdd(targetId, databaseIdentity))
+                throw new InvalidOperationException("Invalid October target configuration.");
+        }
+
+        string target = selection.TargetId!;
+        if (!targets.TryGetValue(target, out string? canonicalIdentity))
+            throw new InvalidOperationException("October selected target is not configured.");
+        string identityCanonical = identityConnectionName is null
+            ? canonicalIdentity
+            : configuration["October:Identity:CanonicalDatabaseIdentity"] ??
+                throw new InvalidOperationException("October Identity database identity is required.");
+        return new OctoberAuthorityConfiguration(
+            configuration["October:Authority:Id"] ?? string.Empty,
+            target, selection.BatchId!.Value, canonicalIdentity, dataConnection,
+            identityConnection, identityCanonical, targets.ToImmutable(),
+            TimeSpan.FromSeconds(30), TimeSpan.FromHours(1));
+    }
+
+
+    private static string GetContextConnection(IServiceProvider provider, bool identity)
+    {
+        OctoberAuthorityConfiguration? selected = provider.GetService<OctoberAuthorityConfiguration>();
+        if (selected is not null)
+            return identity ? selected.IdentityConnectionString : selected.DataConnectionString;
+
+        return provider.GetRequiredService<IConfiguration>().GetConnectionString("DefaultConnection") ??
+            throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
     }
 
     public static FrameworkCatalog ConfigureServices(WebApplicationBuilder builder)
@@ -290,24 +370,22 @@ public static class VulgataWebComposition
             options.DefaultSignInScheme = IdentityConstants.ExternalScheme;
         }).AddIdentityCookies();
 
-        string connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ??
-                                  throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
-        builder.Services.AddDbContext<ApplicationDbContext>(options =>
-            options.UseNpgsql(connectionString, npgsqlOptions =>
+        builder.Services.AddDbContext<ApplicationDbContext>((provider, options) =>
+            options.UseNpgsql(GetContextConnection(provider, identity: true), npgsqlOptions =>
             {
                 npgsqlOptions.MigrationsHistoryTable("__IdentityMigrationsHistory", "identity");
                 npgsqlOptions.EnableRetryOnFailure(3);
             }));
         builder.Services.AddDbContext<VulgataDbContext>(
-            options => options.UseNpgsql(connectionString, npgsqlOptions =>
+            (provider, options) => options.UseNpgsql(GetContextConnection(provider, identity: false), npgsqlOptions =>
             {
                 npgsqlOptions.MigrationsHistoryTable("__EFMigrationsHistory", "public");
                 npgsqlOptions.EnableRetryOnFailure(3);
             }),
             contextLifetime: ServiceLifetime.Scoped,
             optionsLifetime: ServiceLifetime.Singleton);
-        builder.Services.AddDbContextFactory<VulgataDbContext>(options =>
-            options.UseNpgsql(connectionString, npgsqlOptions =>
+        builder.Services.AddDbContextFactory<VulgataDbContext>((provider, options) =>
+            options.UseNpgsql(GetContextConnection(provider, identity: false), npgsqlOptions =>
             {
                 npgsqlOptions.MigrationsHistoryTable("__EFMigrationsHistory", "public");
                 npgsqlOptions.EnableRetryOnFailure(3);
