@@ -75,7 +75,37 @@ internal sealed record PreparedWorkspaceBorrowResult(
 
 internal sealed class PreparedWorkspaceBorrow : IAsyncDisposable
 {
-    public ValueTask DisposeAsync() => ValueTask.CompletedTask;
+    private readonly PreparedWorkspaceUseRegistry _registry;
+    private readonly IPreparedWorkspaceResourceSettlementProbe _resources;
+    private Task<PreparedWorkspaceSettlementStatus>? _inspection;
+
+    internal PreparedWorkspaceBorrow(
+        PreparedWorkspaceUseRegistry registry,
+        IPreparedWorkspaceResourceSettlementProbe resources)
+    {
+        _registry = registry;
+        _resources = resources;
+    }
+
+    internal async ValueTask<PreparedWorkspaceSettlementStatus> CheckSettlementAsync(
+        CancellationToken cancellationToken)
+    {
+        Task<PreparedWorkspaceSettlementStatus> inspection = _inspection ??=
+            _resources.InspectOwnedResourcesAsync(cancellationToken).AsTask();
+        try
+        {
+            return await inspection.WaitAsync(cancellationToken);
+        }
+        finally
+        {
+            if (inspection.IsCompleted)
+            {
+                _inspection = null;
+            }
+        }
+    }
+
+    public ValueTask DisposeAsync() => _registry.CompleteBorrowAsync(this);
 }
 
 internal sealed class PreparedWorkspaceUseRegistry : IAsyncDisposable
@@ -89,10 +119,15 @@ internal sealed class PreparedWorkspaceUseRegistry : IAsyncDisposable
     private readonly TimeSpan _admissionDeadline;
     private readonly TimeSpan _dispositionDeadline;
     private readonly SemaphoreSlim _gate = new(1, 1);
+    private readonly object _publicationGate = new();
+    private readonly HashSet<PreparedWorkspaceBorrow> _borrows = [];
     private IPreparedManagedWorkspaceHostHold? _hold;
+    private PreparedCodeGraphWorkspaceOwnership? _admittedBinding;
     private RegistryState _state = RegistryState.Closed;
+    private int _shutdownRequested;
+    private Task? _deferredShutdownCleanup;
 
-    private enum RegistryState { Closed, Open, Unknown, Disposed }
+    private enum RegistryState { Closed, Open, Closing, Unknown, Disposed }
 
     internal PreparedWorkspaceUseRegistry(
         IPreparedSourceCurrentAuthorityVerifier sourceAuthority,
@@ -121,7 +156,8 @@ internal sealed class PreparedWorkspaceUseRegistry : IAsyncDisposable
         PreparedToolPurpose selectedPurpose,
         CancellationToken cancellationToken = default)
     {
-        if (binding is null || cancellationToken.IsCancellationRequested)
+        if (binding is null || cancellationToken.IsCancellationRequested ||
+            Volatile.Read(ref _shutdownRequested) != 0)
         {
             return new PreparedWorkspaceAdmissionResult(cancellationToken.IsCancellationRequested
                 ? PreparedWorkspaceAdmissionStatus.Cancelled
@@ -136,7 +172,7 @@ internal sealed class PreparedWorkspaceUseRegistry : IAsyncDisposable
             await _gate.WaitAsync(deadline.Token);
             try
             {
-                if (_state != RegistryState.Closed ||
+                if (_state != RegistryState.Closed || Volatile.Read(ref _shutdownRequested) != 0 ||
                     binding.Phase is not (PreparedCodeGraphOwnershipPhase.Absent or PreparedCodeGraphOwnershipPhase.Ready))
                 {
                     return new PreparedWorkspaceAdmissionResult(PreparedWorkspaceAdmissionStatus.Unavailable);
@@ -189,9 +225,19 @@ internal sealed class PreparedWorkspaceUseRegistry : IAsyncDisposable
                 }
 
                 deadline.Token.ThrowIfCancellationRequested();
-                _hold = pendingHold;
-                pendingHold = null;
-                _state = RegistryState.Open;
+                lock (_publicationGate)
+                {
+                    if (_shutdownRequested != 0)
+                    {
+                        return new PreparedWorkspaceAdmissionResult(PreparedWorkspaceAdmissionStatus.Unavailable);
+                    }
+
+                    _hold = pendingHold;
+                    pendingHold = null;
+                    _admittedBinding = binding;
+                    _state = RegistryState.Open;
+                }
+
                 return new PreparedWorkspaceAdmissionResult(PreparedWorkspaceAdmissionStatus.Opened);
             }
             finally
@@ -267,22 +313,190 @@ internal sealed class PreparedWorkspaceUseRegistry : IAsyncDisposable
         };
     }
 
-    internal Task<PreparedWorkspaceBorrowResult> BeginBorrowAsync(
+    internal async Task<PreparedWorkspaceBorrowResult> BeginBorrowAsync(
         PreparedCodeGraphWorkspaceOwnership binding,
         PreparedToolPurpose purpose,
         IPreparedWorkspaceResourceSettlementProbe resources,
         CancellationToken cancellationToken = default)
-        => Task.FromResult(new PreparedWorkspaceBorrowResult(
-            PreparedWorkspaceSettlementStatus.Unknown, null));
+    {
+        if (binding is null || resources is null)
+        {
+            return new PreparedWorkspaceBorrowResult(PreparedWorkspaceSettlementStatus.Unknown, null);
+        }
 
-    internal Task<PreparedWorkspaceSettlementStatus> CloseForDispositionAsync(
+        using var deadline = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        deadline.CancelAfter(_admissionDeadline);
+        try
+        {
+            await _gate.WaitAsync(deadline.Token);
+            try
+            {
+                if (_state != RegistryState.Open || Volatile.Read(ref _shutdownRequested) != 0 ||
+                    binding != _admittedBinding ||
+                    _hold is null ||
+                    purpose is not (PreparedToolPurpose.JdtNavigation or PreparedToolPurpose.CodeGraphPreparation) ||
+                    purpose == PreparedToolPurpose.CodeGraphPreparation &&
+                    binding.Phase != PreparedCodeGraphOwnershipPhase.Ready)
+                {
+                    return new PreparedWorkspaceBorrowResult(PreparedWorkspaceSettlementStatus.Unknown, null);
+                }
+
+                if (await CheckAuthorityAsync(binding, purpose, deadline.Token)
+                        != PreparedWorkspaceAdmissionStatus.Opened ||
+                    !await CheckStoreAsync(binding, deadline.Token) ||
+                    await _hold.CheckCurrentAsync(binding, deadline.Token)
+                        != PreparedManagedWorkspaceHostStatus.Protected)
+                {
+                    _state = RegistryState.Unknown;
+                    return new PreparedWorkspaceBorrowResult(PreparedWorkspaceSettlementStatus.Unknown, null);
+                }
+
+                deadline.Token.ThrowIfCancellationRequested();
+                lock (_publicationGate)
+                {
+                    if (_shutdownRequested != 0)
+                    {
+                        return new PreparedWorkspaceBorrowResult(PreparedWorkspaceSettlementStatus.Unknown, null);
+                    }
+
+                    var borrow = new PreparedWorkspaceBorrow(this, resources);
+                    _borrows.Add(borrow);
+                    return new PreparedWorkspaceBorrowResult(PreparedWorkspaceSettlementStatus.Active, borrow);
+                }
+            }
+            finally
+            {
+                _gate.Release();
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            return new PreparedWorkspaceBorrowResult(PreparedWorkspaceSettlementStatus.Unknown, null);
+        }
+        catch
+        {
+            _state = RegistryState.Unknown;
+            return new PreparedWorkspaceBorrowResult(PreparedWorkspaceSettlementStatus.Unknown, null);
+        }
+    }
+
+    internal async Task<PreparedWorkspaceSettlementStatus> CloseForDispositionAsync(
         PreparedCodeGraphWorkspaceOwnership binding,
         CancellationToken cancellationToken = default)
-        => Task.FromResult(PreparedWorkspaceSettlementStatus.Unknown);
+    {
+        if (binding is null)
+        {
+            return PreparedWorkspaceSettlementStatus.Unknown;
+        }
+
+        using var deadline = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        deadline.CancelAfter(_dispositionDeadline);
+        try
+        {
+            await _gate.WaitAsync(deadline.Token);
+            try
+            {
+                if (_state == RegistryState.Open)
+                {
+                    _state = RegistryState.Closing;
+                }
+
+                if (_state != RegistryState.Closing || binding != _admittedBinding || _hold is null ||
+                    await CheckAuthorityAsync(binding, PreparedToolPurpose.CodeGraphPreparation, deadline.Token)
+                        != PreparedWorkspaceAdmissionStatus.Opened ||
+                    !await CheckStoreAsync(binding, deadline.Token) ||
+                    await _hold.CheckCurrentAsync(binding, deadline.Token)
+                        != PreparedManagedWorkspaceHostStatus.Protected)
+                {
+                    _state = RegistryState.Unknown;
+                    return PreparedWorkspaceSettlementStatus.Unknown;
+                }
+
+                foreach (PreparedWorkspaceBorrow borrow in _borrows)
+                {
+                    PreparedWorkspaceSettlementStatus status = await borrow.CheckSettlementAsync(deadline.Token);
+                    if (status != PreparedWorkspaceSettlementStatus.Settled)
+                    {
+                        return status;
+                    }
+                }
+
+                return _borrows.Count == 0
+                    ? PreparedWorkspaceSettlementStatus.Settled
+                    : PreparedWorkspaceSettlementStatus.Active;
+            }
+            catch
+            {
+                _state = RegistryState.Unknown;
+                return PreparedWorkspaceSettlementStatus.Unknown;
+            }
+            finally
+            {
+                _gate.Release();
+            }
+        }
+        catch
+        {
+            return PreparedWorkspaceSettlementStatus.Unknown;
+        }
+    }
+
+    internal async ValueTask CompleteBorrowAsync(PreparedWorkspaceBorrow borrow)
+    {
+        using var deadline = new CancellationTokenSource(_dispositionDeadline);
+        await _gate.WaitAsync();
+        try
+        {
+            if (!_borrows.Contains(borrow))
+            {
+                return;
+            }
+
+            try
+            {
+                if (await borrow.CheckSettlementAsync(deadline.Token)
+                    == PreparedWorkspaceSettlementStatus.Settled)
+                {
+                    _borrows.Remove(borrow);
+                }
+                else
+                {
+                    _state = RegistryState.Unknown;
+                }
+            }
+            catch
+            {
+                _state = RegistryState.Unknown;
+            }
+        }
+        finally
+        {
+            _gate.Release();
+        }
+    }
 
     public async ValueTask DisposeAsync()
     {
-        await _gate.WaitAsync();
+        using var deadline = new CancellationTokenSource(_dispositionDeadline);
+        lock (_publicationGate)
+        {
+            Volatile.Write(ref _shutdownRequested, 1);
+        }
+
+        try
+        {
+            await _gate.WaitAsync(deadline.Token);
+        }
+        catch (OperationCanceledException)
+        {
+            // Keep ownership of a stalled operation's eventual host-hold cleanup.
+            lock (_publicationGate)
+            {
+                _deferredShutdownCleanup ??= CompleteDeferredShutdownAsync();
+            }
+            return;
+        }
+
         try
         {
             if (_state == RegistryState.Disposed)
@@ -290,11 +504,55 @@ internal sealed class PreparedWorkspaceUseRegistry : IAsyncDisposable
                 return;
             }
 
-            _state = RegistryState.Disposed;
+            _state = RegistryState.Closing;
+            bool allSettled = true;
+            foreach (PreparedWorkspaceBorrow borrow in _borrows)
+            {
+                try
+                {
+                    if (await borrow.CheckSettlementAsync(deadline.Token)
+                        != PreparedWorkspaceSettlementStatus.Settled)
+                    {
+                        allSettled = false;
+                    }
+                }
+                catch
+                {
+                    allSettled = false;
+                    break;
+                }
+            }
+
+            _state = allSettled ? RegistryState.Disposed : RegistryState.Unknown;
             if (_hold is not null)
             {
                 await _hold.DisposeAsync();
                 _hold = null;
+            }
+        }
+        finally
+        {
+            _gate.Release();
+        }
+    }
+
+    private async Task CompleteDeferredShutdownAsync()
+    {
+        await _gate.WaitAsync();
+        try
+        {
+            _state = RegistryState.Unknown;
+            if (_hold is not null)
+            {
+                try
+                {
+                    await _hold.DisposeAsync();
+                    _hold = null;
+                }
+                catch
+                {
+                    // Keep Unknown: an unsuccessful hold release is not settlement.
+                }
             }
         }
         finally

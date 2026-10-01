@@ -1,0 +1,15 @@
+{
+  "kind": "analysis",
+  "summary": "Expected behavioral RED: an admission current-authority provider ignoring cancellation holds the registry gate and shutdown misses its trusted disposition deadline. Cleanup releases and observes provider/admission/shutdown tasks. No environment or build failure.",
+  "verification_route": "behavioral RED/GREEN",
+  "task_ids": ["T031", "T032"],
+  "source_commit": "d9aa2d0d2d1a5bd74ddea37e901bd55a80fb7821",
+  "accepted_definition": "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/evidence/definition-review-attempt-16.json",
+  "implementation_approval": "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/evidence/implementation-approval-10.json",
+  "source_hashes": {"src/dotnet/Vulgata.Infrastructure/Source/PreparedWorkspaceUseRegistry.cs": "242a066d3773b60569a6fb6e7e1c8bf7bbf6fb5b6871043100977058925ec56f", "tests/Vulgata.Tests/PreparedSource/PreparedWorkspaceUseRegistryTests.cs": "23883f98587d9a2add7bb36bd766d8ea03a2e4f08cdfab37b9beb2810318278a"},
+  "command": "pwsh -NoProfile -File eng/test.ps1 -Filter 'FullyQualifiedName~PreparedWorkspaceUseRegistryTests'",
+  "result": {"path": "TestResults/isolation-de656fff0e9b460c9c4ae1e7d01293b8/results.trx", "sha256": "5531927a1042aac07c8db971ed665847f9ceb963d4ccbe8edf3b0846d2e2c947", "selected": 8, "passed": 7, "failed": 1, "skipped": 0},
+  "assertion": {"message": "Shutdown must honor its deadline while a current-authority provider is stalled inside admission.", "disposition_deadline_ms": 100},
+  "build": {"path": "TestResults/isolation-de656fff0e9b460c9c4ae1e7d01293b8/build.log", "sha256": "29e6ba16b836e490214bc2f2d58921b8d9471568a46febfeed023d9d9892cd93", "result": "passed"},
+  "recovery": {"failed_results": 3, "pause_at": 12, "changed": false}
+}

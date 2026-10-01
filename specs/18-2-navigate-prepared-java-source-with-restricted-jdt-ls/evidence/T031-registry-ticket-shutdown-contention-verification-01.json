@@ -1,0 +1,13 @@
+{
+  "kind": "analysis",
+  "summary": "Independent final verification of bounded ticket inspection and concurrent registry shutdown: seven controlled registry tests pass. Other-provider and partial-hold cleanup deadlines remain unfinished accepted obligations.",
+  "verification_route": "behavioral RED/GREEN",
+  "red": "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/evidence/T031-registry-ticket-shutdown-contention-red-01.json",
+  "minimal_green": {"path": "TestResults/isolation-6c0c5deb825f49a5a8bf25fc7e03e214/results.trx", "sha256": "786b9216620412efe235d2afcc0767a229947d1b0287943d16be1698df68a491", "passed": 7, "failed": 0, "skipped": 0, "build_sha256": "5c8ba689db398c877941cdc0db849bf6b2870fcdb83c3153ed8a18646f1bbce5"},
+  "independent_final_verification": {"command": "pwsh -NoProfile -File eng/test.ps1 -Filter 'FullyQualifiedName~PreparedWorkspaceUseRegistryTests'", "path": "TestResults/isolation-b5c39fa8353d42c0af76b38752b1caef/results.trx", "sha256": "a528b83789a181c1cd9bf76ea02cea3788f2a1b49654bd86b21600838e7fadc7", "passed": 7, "failed": 0, "skipped": 0, "build_sha256": "1fefb503a527ace75c25e26d44084458f0323a1d743493b3aeb24e9f60a9b982"},
+  "source_hashes": {"src/dotnet/Vulgata.Infrastructure/Source/PreparedWorkspaceUseRegistry.cs": "242a066d3773b60569a6fb6e7e1c8bf7bbf6fb5b6871043100977058925ec56f", "tests/Vulgata.Tests/PreparedSource/PreparedWorkspaceUseRegistryTests.cs": "99b5aa634c7b514bbf4000b92324fb6f8b1d96e403b688bacd4a7246241c0b92", "tests/Vulgata.Tests/TestInfrastructure/suites.json": "cf3c4244843542edd1c23a1e2bb416b2fc1beb7e39661de3a2d07d33555dfac8"},
+  "final_shape": {"production": "Ticket completion bounds retained probe inspection with disposition deadline and releases gate conservatively on Unknown; pending inspection remains owned. No further local refactor for this slice.", "test": "Seven public-seam scenarios use controlled collaborators, bounded waits, handshakes and finally cleanup releasing and observing ticket and shutdown tasks. No further refactor needed."},
+  "remaining": "Shutdown gate acquisition and admission provider/partial-hold cleanup waits still require bounded fail-closed behavior. Actual host protection, issuer/coordinator and native qualification remain unimplemented or unqualified.",
+  "qualification": "Focused controlled registry evidence only; broader Source179 belongs to an earlier boundary. No actual Windows/native, integrated producer or prepared Repository readiness.",
+  "recovery": {"failed_results": 3, "pause_at": 12, "changed": false}
+}

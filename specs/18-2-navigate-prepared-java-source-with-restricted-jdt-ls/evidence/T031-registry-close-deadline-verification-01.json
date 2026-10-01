@@ -1,0 +1,13 @@
+{
+  "kind": "analysis",
+  "summary": "Controlled bounded-close behavior independently verified: one pending inspection is retained, timeout latches Unknown under gate, no duplicate probe/new borrow or host-hold release. Final five-test registry class passed; broader Source179 is the prior shared-purpose boundary, not a current full-suite claim.",
+  "verification_route": "behavioral RED/GREEN",
+  "red": "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/evidence/T031-registry-close-deadline-red-01.json",
+  "minimal_green": {"path": "TestResults/isolation-a9b035c17e4b49519547688b9377f3e0/results.trx", "sha256": "111f0b067310d5c5a68e4574c6618f58a713dae47d422b4024768952652b86e8", "passed": 5, "failed": 0, "skipped": 0},
+  "independent_final_verification": {"command": "pwsh -NoProfile -File eng/test.ps1 -Filter 'FullyQualifiedName~PreparedWorkspaceUseRegistryTests'", "path": "TestResults/isolation-4bb8a0620298465c9d2bb9bb831c552f/results.trx", "sha256": "0104a6b8f9856452801410355740dae9a474d507f62786a921c784268a9803f2", "passed": 5, "failed": 0, "skipped": 0, "build_sha256": "889e88b60a2d345eb7e21c21d1e5b7edb94b161029f48fa7993e672ca0cd0906"},
+  "source_hashes": {"src/dotnet/Vulgata.Infrastructure/Source/PreparedWorkspaceUseRegistry.cs": "ac28bb52d786dd4979e22dbdd7fd94b9a92aa4106a8664ceb6fb8d36643a0bf9", "tests/Vulgata.Tests/PreparedSource/PreparedWorkspaceUseRegistryTests.cs": "221f370404bc8409036c54b64d1aed7c32fe07e22d8150f8cf69b277d96d6006", "tests/Vulgata.Tests/TestInfrastructure/suites.json": "cf3c4244843542edd1c23a1e2bb416b2fc1beb7e39661de3a2d07d33555dfac8"},
+  "final_shape": {"production": "Borrow retains one pending inspection task and bounds the caller's wait; closure cancellation maps to Unknown while gate held. No further local refactor needed for this slice.", "test": "Complete five-test unit independently assessed; started handshake, bounded unknown result/hold/no-borrow checks and observed controlled late-task cleanup preserve intended uncertainty; no refactor needed."},
+  "test_selection_reason": "Only new registry class changed, no consumers integrated. New case plus four surrounding registry cases protect current changed unit; broader Source regression reruns at coherent integration boundary.",
+  "unfinished": "Full registry disposal and terminal-readback hold retention, other provider deadlines, monotonic transitions, issuer/coordinator registration, Windows adapter RED/GREEN and real host/native/Repository qualification.",
+  "recovery": {"failed_results": 3, "pause_at": 12, "changed": false}
+}

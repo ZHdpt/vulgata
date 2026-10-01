@@ -1,0 +1,14 @@
+{
+  "kind": "analysis",
+  "summary": "Accepted bounded shutdown behavior independently verified: registered work is inspected within trusted deadline, unresolved work stays Unknown, then hold released without settlement/deletion receipt. Six registry cases pass; full ticket disposal/gate timeout and host qualification remain open.",
+  "verification_route": "behavioral RED/GREEN",
+  "red": "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/evidence/T031-registry-shutdown-red-01.json",
+  "dispatch_correction": "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/evidence/T031-shutdown-dispatch-interpretation-01.json",
+  "minimal_green": {"path": "TestResults/isolation-c43f82f4b7db489993e7633256426612/results.trx", "sha256": "7b2906ebf8839c931423e7f39ddb84cc1000fb4ed3fc4b68bab33ca764e8d9c8", "passed": 6, "failed": 0, "skipped": 0},
+  "independent_final_verification": {"command": "pwsh -NoProfile -File eng/test.ps1 -Filter 'FullyQualifiedName~PreparedWorkspaceUseRegistryTests'", "path": "TestResults/isolation-a0dc5136dc6b440fa10bc92a28a5c232/results.trx", "sha256": "ad15ac8e0cf9731dcf81d2cc2f2a6104e2e35a16039f0f924b135bb945956a7c", "passed": 6, "failed": 0, "skipped": 0, "build_sha256": "08bfb1775c78d2d5b859e46f09189caed146bad60cab32dd5ca37b298cbe3583"},
+  "source_hashes": {"src/dotnet/Vulgata.Infrastructure/Source/PreparedWorkspaceUseRegistry.cs": "dbf7415a9ef92abef08c196edab80f90f05039634a9de67c5056070821b6584d", "tests/Vulgata.Tests/PreparedSource/PreparedWorkspaceUseRegistryTests.cs": "ccb38d9c9e7855f5971de4abc97840ba0fa4e8f70c8aa185ae61e73fe811f902", "tests/Vulgata.Tests/TestInfrastructure/suites.json": "cf3c4244843542edd1c23a1e2bb416b2fc1beb7e39661de3a2d07d33555dfac8"},
+  "final_shape": {"production": "Shutdown uses trusted disposition deadline to inspect retained tickets/probes, records unconfirmed Unknown and releases hold. No settlement receipt inferred; ticket-disposal gate contention remains next planned slice.", "test": "Concrete test cleanup gap corrected while GREEN: release and boundedly await controlled probe task; assertions unchanged and final class rerun. Complete test unit assessed, no further refactor needed."},
+  "next_counterexample": "CompleteBorrowAsync awaits probe with CancellationToken.None under gate; an unresponsive probe can block shutdown at its unbounded gate wait before deadline starts. Independently confirmed by both retained owners, not yet behaviorally tested.",
+  "qualification": "Current registry-class controlled evidence only; broader Source179 belongs to previous boundary. No actual Windows host/native/integrated producer or Repository readiness.",
+  "recovery": {"failed_results": 3, "pause_at": 12, "changed": false}
+}
