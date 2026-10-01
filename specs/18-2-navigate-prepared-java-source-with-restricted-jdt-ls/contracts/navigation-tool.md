@@ -134,6 +134,13 @@ internal interface IPreparedCodeGraphOwnershipStore
     Task<PreparedCodeGraphOwnershipLoadResult> LoadAsync(
         PreparedCodeGraphWorkspaceOwnership expectedBinding,
         CancellationToken cancellationToken = default);
+    // Narrow lookup on the same fixed ledger so restart can recover the prior ID.
+    Task<PreparedCodeGraphOwnershipLoadResult> FindExactWorkspaceAsync(
+        PreparedSourceApproval approval,
+        string physicalRootPath,
+        PreparedToolDirectoryObjectIdentity rootObjectIdentity,
+        string derivedWorkspaceOwnerIdentity,
+        CancellationToken cancellationToken = default);
     Task<PreparedCodeGraphOwnershipTransitionResult> BeginCreateAsync(
         PreparedCodeGraphWorkspaceOwnership absent,
         CancellationToken cancellationToken = default);
@@ -175,12 +182,12 @@ internal sealed class PreparedCodeGraphStateCoordinator
 }
 internal interface IPreparedCodeGraphWorkspaceOwnershipVerifier
 {
-    // Trusted workspace-manager verification, never a Worker argument.
+    // Trusted binding-source verification, never a Worker argument.
     // Checks the exact dedicated workspace and owner record for each use/disposition.
     ValueTask<bool> VerifyCurrentAsync(
         PreparedCodeGraphWorkspaceOwnership ownership,
         CancellationToken cancellationToken = default);
-    // Trusted manager confirms new grants stopped and CodeGraph child/handles settled.
+    // The registry confirms closure and actual registered resources settled.
     ValueTask<bool> VerifyDispositionReadyAsync(
         PreparedCodeGraphWorkspaceOwnership ownership,
         CancellationToken cancellationToken = default);
@@ -192,7 +199,7 @@ internal sealed class PreparedCodeGraphStateScope
 }
 ```
 
-The trusted workspace owner supplies an `Absent` draft with a new `OwnershipId`, version zero, exact approved workspace/root/owner fields and null entry identity; no Worker/tool can construct or select it. `BeginCreateAsync` atomically inserts that draft as a **durable `Creating` record** only if no record for the ID/workspace exists. Every later store transition compares the expected ID/version/phase and persists its new version before returning `Committed` plus that new record; `Conflict` or `Unavailable` never returns a usable binding. The record lives in application-owned metadata outside `.codegraph`; trusted application access checks keep its bytes unavailable through ordinary model-visible Worker tools. The exact storage service and permissions are an implementation prerequisite, not an existing service or a new database schema. Under the user's direct-child exception this placement does **not** prove the pinned native CodeGraph process lacks OS read/write access to those bytes; that risk must be reported and actual mutations observed by Story 18.3. If no durable store is configured, creation and verified reads are unavailable. The only accepted state-entry name is the coordinator's fixed `.codegraph` constant, not a record or call argument. Object identities intentionally omit mutable directory last-write time.
+The trusted workspace owner supplies an `Absent` draft with a new `OwnershipId`, version zero, exact approved workspace/root/owner fields and null entry identity; no Worker/tool can construct or select it. `BeginCreateAsync` atomically inserts that draft as a **durable `Creating` record** only if no record for the ID/workspace exists. Every later store transition compares the expected ID/version/phase and persists its new version before returning `Committed` plus that new record; `Conflict` or `Unavailable` never returns a usable binding. The record lives in application-owned metadata outside `.codegraph`; trusted application access checks keep its bytes unavailable through ordinary model-visible Worker tools. The fixed `SourceStorage/.prepared-codegraph-ownership` file-CAS store now exists; production trusted binding, selected-host placement/permissions and native settlement remain unqualified. Under the user's direct-child exception this placement does **not** prove the pinned native CodeGraph process lacks OS read/write access to those bytes; that risk must be reported and actual mutations observed by Story 18.3. If no protected production store is configured, creation and verified reads are unavailable. The only accepted state-entry name is the coordinator's fixed `.codegraph` constant, not a record or call argument. Object identities intentionally omit mutable directory last-write time.
 
 The coordinator is the sole transition producer. After `BeginCreateAsync` commits `Creating`, it confirms the entry is absent, exclusively creates `.codegraph` through the held root, observes its stable physical identity, rechecks exact source/tool/root/owner authority, and calls `CommitCreatedAsync(creating, observedEntry)`. Only a **durably committed `Ready` record with that non-null identity** may be returned by `GetOwnershipViewAsync` or used to invoke the adapter callback. A failed exclusive create, observed identity mismatch, authority loss, cancelled/failed `CommitCreatedAsync`, or uncertain persistence moves the workspace to `Quarantined` when possible; an unconfirmed `Creating` record remains unavailable after restart and requires explicit owner resolution. Never adopt a preexisting entry by name or let a null-identity draft pass a post-create check. The owner verifier confirms dedicated workspace ownership and exact grant/root independently of record field equality.
 
@@ -398,6 +405,69 @@ For the declared Windows host, a Less Privileged AppContainer (LPAC) launched wi
 Ownership has three distinct phases. **Before runtime return**, `IPreparedJdtLsRuntime.OpenAsync` owns every process, protocol and disposable-state resource it starts. `IPreparedJdtProtocolFactory.InitializeAsync` may wrap the process but does not transfer its cleanup obligation to the caller; on failed or cancelled initialization the runtime settles both process and protocol. If opening fails or is cancelled before returning `IPreparedJdtLsSession`, it performs bounded cleanup, then throws `PreparedJdtLsOpenFailureException` with a sanitized status and whether cleanup was confirmed; the factory cannot dispose handles it never received. A confirmed failure lets the factory release its slot and return that sanitized status with null context. An unconfirmed failure (or unexpected exception without cleanup attestation) maps to `CleanupUnconfirmed` with null context, keeps the slot unavailable and forbids retry until owned-resource resolution; it cannot be reported as safe `Cancelled`. A second open for the same Repository while quarantined returns `CleanupUnconfirmed` without calling the runtime. If this trusted status must be surfaced through a Worker function, map it to existing `PreparedJavaNavigationOutcome.ConfigurationUnavailable` with empty locations, counts and details. The exception never carries raw paths/source/approval or protocol details into the Worker result. **After session return but before context handoff**, the factory owns the returned session. If cancellation, a current-lease/profile check or context construction then fails, it disposes that session before mapping a sanitized null-context status and releasing its session slot. **After successful context handoff**, the context owns and disposes the returned session and releases the slot after Worker calls settle. The context borrows the separately issued lease; the trusted caller disposes the lease after the context, or after a failed open. The factory never disposes that caller-owned lease. A failed/disposed context or partial runtime session cannot be reused.
 
 The injected `IPreparedJdtLsRuntime` is selected only by trusted Infrastructure composition. A controlled fake may report raw protocol replies and record its own pre-return cleanup or a returned session's later disposal for T010/T011/T013/T018 without starting Java or JDT-LS. Its `RawProtocolUri` is the JSON-decoded location field before `System.Uri` construction, so actual Windows device spellings can reach the denial seam and be tested. The context validates and maps those raw strings to the granted relative root, performs current-authority/pre-disclosure checks and sanitizes outcomes; the fake cannot turn raw locations into authorized output by itself. Fake runtime behavior cannot prove real `rootUri`, `-data`/configuration placement or fixed JDT settings; those require observable production-runtime checks and T022–T024 qualification. Production composition must remain unregistered/fail closed for a real runtime until accepted T022/T023 trusted PATH and process-profile evidence. The eventual real runtime reuses assessed stdio/StreamJsonRpc/process mechanics behind this interface, never the legacy `AnalysisScope` factory or revision lease. No caller passes a model-selected root, command, adapter or physical workspace through `OpenAsync`.
+
+### Production binding and shared-use handoff
+
+The current checkout implements `PreparedToolWorkspaceIssuer`, `PreparedCodeGraphStateCoordinator`, the internal typed ownership record/view and `FilePreparedCodeGraphOwnershipStore` with the fixed `SourceStorage/.prepared-codegraph-ownership` ledger/lock. `Program.cs` registers an optional `PreparedJavaWorkerToolComposer`; it does not register a trusted source/tool verifier, dedicated-workspace binding producer, owner/readiness verifier or protected production store. A test-created `PreparedCodeGraphWorkspaceOwnership` is input evidence for the controlled coordinator, not production authority. The following small composition is the Story 18.2 proposal, not an implemented or enabled service.
+
+```csharp
+internal enum PreparedManagedWorkspaceBindingStatus { Bound, Denied, Unavailable }
+internal sealed record PreparedManagedWorkspaceBindingResult(
+    PreparedManagedWorkspaceBindingStatus Status,
+    PreparedCodeGraphWorkspaceOwnership? Binding);
+
+internal sealed class PreparedManagedWorkspaceBindingSource
+{
+    internal PreparedManagedWorkspaceBindingSource(
+        IPreparedSourceCurrentAuthorityVerifier sourceAuthority,
+        IPreparedToolUseAuthorizer toolAuthorization,
+        RetainedSourceCapturePolicy sourceStoragePolicy,
+        FilePreparedCodeGraphOwnershipStore ownershipStore,
+        IPreparedManagedWorkspaceHostVerifier hostProtection,
+        PreparedWorkspaceUseRegistry uses);
+    internal Task<PreparedManagedWorkspaceBindingResult> BindAsync(
+        PreparedSourceGrantRequest applicationHeldSourceGrant,
+        PreparedToolPurpose selectedPurpose,
+        CancellationToken cancellationToken = default);
+}
+
+internal enum PreparedWorkspaceSettlementStatus { Settled, Active, Unknown }
+internal interface IPreparedWorkspaceResourceSettlementProbe
+{
+    ValueTask<PreparedWorkspaceSettlementStatus> InspectOwnedResourcesAsync(
+        CancellationToken cancellationToken = default);
+}
+internal sealed class PreparedWorkspaceUseRegistry
+{
+    internal Task<PreparedWorkspaceBorrowResult> BeginBorrowAsync(
+        PreparedCodeGraphWorkspaceOwnership binding,
+        PreparedToolPurpose purpose,
+        IPreparedWorkspaceResourceSettlementProbe resources,
+        CancellationToken cancellationToken = default);
+    internal Task<PreparedWorkspaceSettlementStatus> CloseForDispositionAsync(
+        PreparedCodeGraphWorkspaceOwnership binding,
+        CancellationToken cancellationToken = default);
+}
+internal sealed record PreparedWorkspaceBorrowResult(
+    PreparedWorkspaceSettlementStatus Status,
+    PreparedWorkspaceBorrow? Borrow);
+internal sealed class PreparedWorkspaceBorrow : IAsyncDisposable
+{
+    // Dispose only after the registered probe has verified process, protocol,
+    // active calls and held handles settled; otherwise the registry stays Unknown.
+    public ValueTask DisposeAsync();
+}
+```
+
+`BindAsync` is callable only from trusted application admission with the exact grant used for 18.1 issuance; its physical root, approval and purpose are never Worker arguments. It rechecks `IPreparedSourceCurrentAuthorityVerifier` and `IPreparedToolUseAuthorizer`, opens the root without following substitutions, and compares the held root object identity. The host verifier is a concrete selected-host adapter, not an injected allow boolean: it checks that this operator-admitted root is the dedicated Vulgata-managed workspace under the approved application principal, derives workspace-unique `WorkspaceOwnerIdentity` from that principal plus the observed root object (not caller text), and validates no-follow source/metadata separation and the fixed SourceStorage child. Ordinary Worker tools must be unable to name/traverse that separate metadata root through their granted APIs; host ACL/mount protection against unrelated principals also needs qualification. Workers in the same app process may share its OS principal, so no false distinct-identity or preventive pinned-child claim follows. For single active host ownership, select a process-lifetime OS named mutex whose name is derived from a digest of the observed root object and approved application principal, with an app-only security descriptor; hold it through the binding/registry lifetime and disposition. Failure to acquire or qualify it returns `Unavailable`, rather than treating short file-CAS locks as a host lease. A crash releases that mutex but cannot prove prior native resources settled. The app's effective principal and host ACL/mount behavior require direct qualification. The trusted pinned CodeGraph child may inherit that principal's rights, so metadata placement makes no claim of denying that child OS access; its observed effects are Story 18.3 work.
+
+The binding source constructs only the existing record shape. Existing `IPreparedCodeGraphOwnershipStore.LoadAsync(expectedBinding)` cannot discover a prior `OwnershipId` from a newly constructed absent draft: it returns `Unavailable` if an exact workspace exists with another ID. Add one internal `FindExactWorkspaceAsync(approval, physicalRootPath, rootObjectIdentity, derivedWorkspaceOwnerIdentity, cancellationToken)` lookup to that same store/interface, returning the existing `PreparedCodeGraphOwnershipLoadResult` with the one matching record or positive initialized-ledger `VerifiedAbsent`; ambiguous/foreign/corrupt metadata returns `Unavailable`. It is a lookup over the fixed current ledger, not a new descriptor/schema. A found record is then reloaded through existing `LoadAsync(record)` before use. Create an `Absent` draft with a new `OwnershipId` only after that positive absence and absent fixed entry. Missing/corrupt metadata, stale approval, foreign Ready, substituted root/entry, ambiguous owner or unprotected placement is `Unavailable`, not a new draft. A current `Ready` record after restart still requires prior-generation resource settlement before any `VerifiedOwned` view or disposition. No new database table, ledger format, state name, source copy or standalone workspace manager is added. Existing `GetOwnershipViewAsync` remains the one reader/JDT classification producer.
+
+The registry is one process-scoped instance for the exact approval/root/owner key. Production `PreparedToolWorkspaceIssuer` construction additionally takes this internal registry without changing its public `IssueAsync` or Worker surface: issue registers a lease before return, and lease disposal releases it only after its contained operations settle. The JDT factory/context registers its process/session until actual protocol and process disposal. Story 18.3 registers one borrow before launching or connecting its native CodeGraph child; its probe inspects the owned child tree/job, MCP connection, in-flight calls and held source/state handles. `BeginBorrowAsync` returns a ticket only while admission is open and exact source/tool/root/owner authority is current. A failed start, cancellation or disposal with unknown descendants/handles keeps the ticket `Unknown`; a parent PID exit, MCP `DisposeAsync` call or caller-supplied `true` cannot mark it settled. The native implementation and its handle checks remain Story 18.3-owned.
+
+Before `DisposeOwnedStateAsync`, trusted composition calls `CloseForDispositionAsync` for the exact current binding. It latches closure against concurrent issuance and borrow, checks every lease registration and live settlement probe, and returns `Settled` only after all are verified closed. The existing `IPreparedCodeGraphWorkspaceOwnershipVerifier.VerifyDispositionReadyAsync` checks this latched status plus fresh exact owner/root/current-source/tool authority before each bounded deletion chunk; it cannot derive readiness from the coordinator callback ending. Closure remains latched through durable `Removed` readback or quarantine. On restart, process-local emptiness is `Unknown` for a persisted record: a new trusted admission must independently reconcile the prior generation's child/handle ownership before use or cleanup. Until the native owner can supply that proof, no Ready view, new borrow or disposition proceeds. `Creating`/`Disposing`/uncertain terminal state remains unavailable under the existing store rules. No new operator UI or automatic by-name cleanup is implied.
+
+The default Web composition stays file-only. Only after current operator admission/source-tool providers, selected-host root and metadata protection, exact binding, the registry, coordinator and protected store are qualified may a trusted production registration supply a bound JDT factory or enable `CodeGraphPreparation`. Real JDT additionally requires its distinct restricted launcher/profile and first-running-host-`PATH` qualification; this binding does not grant a native launch. Story 18.3 consumes the same typed binding and registry after a separate verified shared checkpoint and its own approval, then supplies real borrower/child/handle settlement and reader/native readiness evidence. If the actual operator admission or host protection cannot meet this contract without a new authority, owner, schema or root, return for a fresh scoped architecture decision.
 
 ### Trusted Web application composition
 
