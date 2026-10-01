@@ -871,6 +871,9 @@
   "PreparedSource/PreparedCodeGraphStateCoordinatorTests.cs": {
     "suite": "SelfContained"
   },
+  "PreparedSource/PreparedCodeGraphPersistenceQualificationTests.cs": {
+    "suite": "LocalTools"
+  },
   "PostgreSqlHeavyCollection.cs": {
     "suite": "PostgreSql"
   }
