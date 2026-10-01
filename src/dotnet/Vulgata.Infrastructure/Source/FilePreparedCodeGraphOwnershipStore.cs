@@ -122,7 +122,8 @@ internal sealed class FilePreparedCodeGraphOwnershipStore : IPreparedCodeGraphOw
                 expectedBinding.Version == 0 && expectedBinding.StateEntryObjectIdentity is null;
             bool recordedPhase = (expectedBinding.Phase is
                 PreparedCodeGraphOwnershipPhase.Creating or PreparedCodeGraphOwnershipPhase.Ready or
-                PreparedCodeGraphOwnershipPhase.Disposing or PreparedCodeGraphOwnershipPhase.Removed) &&
+                PreparedCodeGraphOwnershipPhase.Disposing or PreparedCodeGraphOwnershipPhase.Removed or
+                PreparedCodeGraphOwnershipPhase.Quarantined) &&
                 expectedBinding.Version > 0;
             if ((!absentDraft && !recordedPhase) ||
                 !SeparateRoots(_sourceStoragePolicy.RootPath, expectedBinding.PhysicalRootPath))
@@ -642,12 +643,101 @@ internal sealed class FilePreparedCodeGraphOwnershipStore : IPreparedCodeGraphOw
         }
     }
 
-    public Task<PreparedCodeGraphOwnershipTransitionResult> QuarantineAsync(
+    public async Task<PreparedCodeGraphOwnershipTransitionResult> QuarantineAsync(
         PreparedCodeGraphWorkspaceOwnership current,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(current);
-        return UnavailableTransition();
+        try
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            if (current.OwnershipId == Guid.Empty || current.Version <= 0 ||
+                current.Phase is not (PreparedCodeGraphOwnershipPhase.Creating or
+                    PreparedCodeGraphOwnershipPhase.Ready or
+                    PreparedCodeGraphOwnershipPhase.Disposing or
+                    PreparedCodeGraphOwnershipPhase.Removed) ||
+                !SeparateRoots(_sourceStoragePolicy.RootPath, current.PhysicalRootPath))
+            {
+                return UnavailableTransitionResult();
+            }
+
+            (PreparedSourceTraversal.OpenStatus rootStatus, SafeFileHandle? root) =
+                PreparedSourceTraversal.OpenRoot(_sourceStoragePolicy.RootPath);
+            using (root)
+            {
+                PreparedToolDirectoryObjectIdentity? rootIdentity = Stable(root);
+                if (rootStatus != PreparedSourceTraversal.OpenStatus.Opened || rootIdentity is null)
+                {
+                    return UnavailableTransitionResult();
+                }
+
+                (PreparedSourceTraversal.OpenStatus metadataStatus, SafeFileHandle? metadata) =
+                    PreparedSourceTraversal.OpenRelativeDirectory(root!, MetadataDirectoryName);
+                using (metadata)
+                {
+                    PreparedToolDirectoryObjectIdentity? metadataIdentity = Stable(metadata);
+                    if (metadataStatus != PreparedSourceTraversal.OpenStatus.Opened ||
+                        metadataIdentity is null)
+                    {
+                        return UnavailableTransitionResult();
+                    }
+
+                    (int lockStatus, SafeFileHandle? exclusiveLock) = OpenRelative(
+                        metadata!, LockFileName, directory: false, create: false,
+                        exclusiveLock: true);
+                    using (exclusiveLock)
+                    {
+                        if (lockStatus < 0 || exclusiveLock is null || exclusiveLock.IsInvalid ||
+                            PreparedSourceTraversal.ObserveFile(exclusiveLock) is null)
+                        {
+                            return UnavailableTransitionResult();
+                        }
+
+                        LedgerDocument? ledger = await ReadLedgerAsync(metadata!, cancellationToken);
+                        if (ledger is null || Stable(root) != rootIdentity ||
+                            Stable(metadata) != metadataIdentity)
+                        {
+                            return UnavailableTransitionResult();
+                        }
+
+                        PreparedCodeGraphWorkspaceOwnership[] matches = ledger.Records
+                            .Where(record => SameWorkspace(record, current) ||
+                                record.OwnershipId == current.OwnershipId).ToArray();
+                        if (matches.Length != 1 || matches[0] != current)
+                        {
+                            return new PreparedCodeGraphOwnershipTransitionResult(
+                                PreparedCodeGraphOwnershipTransitionStatus.Conflict, null);
+                        }
+
+                        PreparedCodeGraphWorkspaceOwnership quarantined = current with
+                        {
+                            Version = checked(current.Version + 1),
+                            Phase = PreparedCodeGraphOwnershipPhase.Quarantined,
+                        };
+                        var updated = new LedgerDocument(LedgerFormat,
+                            ledger.Records.Select(record => record == current ? quarantined : record)
+                                .ToArray());
+                        if (!await ReplaceLedgerAsync(metadata!, updated, cancellationToken) ||
+                            Stable(root) != rootIdentity || Stable(metadata) != metadataIdentity)
+                        {
+                            return UnavailableTransitionResult();
+                        }
+
+                        LedgerDocument? readback = await ReadLedgerAsync(metadata!, cancellationToken);
+                        return readback is not null &&
+                            readback.Records.SequenceEqual(updated.Records) &&
+                            Stable(root) == rootIdentity && Stable(metadata) == metadataIdentity
+                            ? new PreparedCodeGraphOwnershipTransitionResult(
+                                PreparedCodeGraphOwnershipTransitionStatus.Committed, quarantined)
+                            : UnavailableTransitionResult();
+                    }
+                }
+            }
+        }
+        catch (Exception)
+        {
+            return UnavailableTransitionResult();
+        }
     }
 
     private static PreparedCodeGraphOwnershipLoadResult UnavailableLoad() =>
@@ -655,9 +745,6 @@ internal sealed class FilePreparedCodeGraphOwnershipStore : IPreparedCodeGraphOw
 
     private static PreparedCodeGraphOwnershipTransitionResult UnavailableTransitionResult() =>
         new(PreparedCodeGraphOwnershipTransitionStatus.Unavailable, null);
-
-    private static Task<PreparedCodeGraphOwnershipTransitionResult> UnavailableTransition() =>
-        Task.FromResult(UnavailableTransitionResult());
 
     private static async Task<LedgerDocument?> ReadLedgerAsync(
         SafeFileHandle metadata, CancellationToken cancellationToken)
@@ -694,7 +781,11 @@ internal sealed class FilePreparedCodeGraphOwnershipStore : IPreparedCodeGraphOw
             !JsonSerializer.SerializeToUtf8Bytes(ledger).AsSpan().SequenceEqual(bytes) ||
             ledger.Records.Any(record => record is null ||
                 record.OwnershipId == Guid.Empty || record.Version <= 0 ||
-                record.Phase == PreparedCodeGraphOwnershipPhase.Absent ||
+                record.Phase is not (PreparedCodeGraphOwnershipPhase.Creating or
+                    PreparedCodeGraphOwnershipPhase.Ready or
+                    PreparedCodeGraphOwnershipPhase.Disposing or
+                    PreparedCodeGraphOwnershipPhase.Removed or
+                    PreparedCodeGraphOwnershipPhase.Quarantined) ||
                 record.Approval is null || record.RootObjectIdentity is null ||
                 !Path.IsPathFullyQualified(record.PhysicalRootPath) ||
                 string.IsNullOrWhiteSpace(record.WorkspaceOwnerIdentity) ||
@@ -705,7 +796,10 @@ internal sealed class FilePreparedCodeGraphOwnershipStore : IPreparedCodeGraphOw
                 record.Phase == PreparedCodeGraphOwnershipPhase.Disposing &&
                     record.StateEntryObjectIdentity is null ||
                 record.Phase == PreparedCodeGraphOwnershipPhase.Removed &&
-                    record.StateEntryObjectIdentity is not null))
+                    record.StateEntryObjectIdentity is not null ||
+                record.Phase == PreparedCodeGraphOwnershipPhase.Quarantined &&
+                    record.StateEntryObjectIdentity is null &&
+                    record.Version <= 1))
         {
             return null;
         }
