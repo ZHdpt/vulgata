@@ -1,0 +1,37 @@
+{
+  "kind": "analysis",
+  "summary": "Expected behavioral RED: disposition closure waits past its deadline on the required held-currentness proof. Controlled test also checks original result after release and latched closure against later borrowing; finally drains all owned tasks.",
+  "verification_route": "behavioral RED/GREEN",
+  "task_ids": [
+    "T031",
+    "T032"
+  ],
+  "source_commit": "1722b381a7c433de159954bad58ebb8f7a7908bc",
+  "accepted_definition": "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/evidence/definition-review-attempt-16.json",
+  "implementation_approval": "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/evidence/implementation-approval-10.json",
+  "source_hashes": {
+    "src/dotnet/Vulgata.Infrastructure/Source/PreparedWorkspaceUseRegistry.cs": "2eb3e3981e8fe03a94d42e6b5772da754ba3b8eb80357895efb3866087f1fec0",
+    "tests/Vulgata.Tests/PreparedSource/PreparedWorkspaceUseRegistryTests.cs": "f2f365ae17bc67721ceb6223a53a7f5bda8a67007d5da74fc68fbb576beef079"
+  },
+  "command": "pwsh -NoProfile -File eng/test.ps1 -Filter 'FullyQualifiedName~PreparedWorkspaceUseRegistryTests'",
+  "result": {
+    "path": "TestResults/isolation-4b7bdeb1daf94a6993da2a77457f169b/results.trx",
+    "sha256": "57a4859063d30a1d5cc61a9dc0f6bce17de0f786e628cdab2bb9a5c13322d87d",
+    "selected": 20,
+    "passed": 19,
+    "failed": 1,
+    "skipped": 0
+  },
+  "assertion": "Disposition must honor its trusted deadline while the required held currentness proof remains pending.",
+  "build": {
+    "path": "TestResults/isolation-4b7bdeb1daf94a6993da2a77457f169b/build.log",
+    "sha256": "cb47cb98e67ca41b5e55b8330cd093c034085ab0c331b32ed8eed5281eeba5e8",
+    "result": "passed"
+  },
+  "resources": "Controlled fakes only; no Windows/native qualification.",
+  "recovery": {
+    "failed_results": 3,
+    "pause_at": 12,
+    "changed": false
+  }
+}

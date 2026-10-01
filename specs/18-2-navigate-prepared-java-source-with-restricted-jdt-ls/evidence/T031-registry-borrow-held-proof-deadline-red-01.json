@@ -1,0 +1,37 @@
+{
+  "kind": "analysis",
+  "summary": "Expected behavioral RED: successfully admitted Ready workspace borrowing awaits an uncooperative held-currentness proof past its trusted deadline. Controlled late proof and borrow are released and observed in finally; no separate retry policy is asserted.",
+  "verification_route": "behavioral RED/GREEN",
+  "task_ids": [
+    "T031",
+    "T032"
+  ],
+  "source_commit": "1722b381a7c433de159954bad58ebb8f7a7908bc",
+  "accepted_definition": "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/evidence/definition-review-attempt-16.json",
+  "implementation_approval": "specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/evidence/implementation-approval-10.json",
+  "source_hashes": {
+    "src/dotnet/Vulgata.Infrastructure/Source/PreparedWorkspaceUseRegistry.cs": "1b99d912793c76cb875f8ec9613bc1a3b77a9b189baff548ac1f66819b21ee59",
+    "tests/Vulgata.Tests/PreparedSource/PreparedWorkspaceUseRegistryTests.cs": "84b67c5c45f7028b504bf017ad8fd6b162bee01e19eef67e38a09afd9ef3fe5a"
+  },
+  "command": "pwsh -NoProfile -File eng/test.ps1 -Filter 'FullyQualifiedName~PreparedWorkspaceUseRegistryTests'",
+  "result": {
+    "path": "TestResults/isolation-06a3a21745d8446e85530184de22a301/results.trx",
+    "sha256": "5b682593fc53bb97db13d2346405b2ba87f2f3342cada7320cd015e1ab70ebef",
+    "selected": 19,
+    "passed": 18,
+    "failed": 1,
+    "skipped": 0
+  },
+  "assertion": "BeginBorrowAsync must honor its trusted deadline while the held currentness proof remains pending.",
+  "build": {
+    "path": "TestResults/isolation-06a3a21745d8446e85530184de22a301/build.log",
+    "sha256": "1a1fb2c56b7e0bfa273b1585cf1cf48024fad869e62c5b166f57f50c9d765e5f",
+    "result": "passed"
+  },
+  "resources": "Controlled fakes only; no Windows/native qualification.",
+  "recovery": {
+    "failed_results": 3,
+    "pause_at": 12,
+    "changed": false
+  }
+}

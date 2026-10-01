@@ -582,9 +582,25 @@ internal sealed class PreparedWorkspaceUseRegistry : IAsyncDisposable
 
                 if (await CheckAuthorityAsync(binding, purpose, deadline.Token)
                         != PreparedWorkspaceAdmissionStatus.Opened ||
-                    !await CheckStoreAsync(binding, deadline.Token) ||
-                    await _hold.CheckCurrentAsync(binding, deadline.Token)
-                        != PreparedManagedWorkspaceHostStatus.Protected)
+                    !await CheckStoreAsync(binding, deadline.Token))
+                {
+                    _state = RegistryState.Unknown;
+                    return new PreparedWorkspaceBorrowResult(PreparedWorkspaceSettlementStatus.Unknown, null);
+                }
+
+                PreparedManagedWorkspaceHostStatus heldStatus;
+                try
+                {
+                    heldStatus = await AwaitProofAsync(
+                        _hold.CheckCurrentAsync(binding, deadline.Token).AsTask(), deadline.Token);
+                }
+                catch
+                {
+                    _state = RegistryState.Unknown;
+                    throw;
+                }
+
+                if (heldStatus != PreparedManagedWorkspaceHostStatus.Protected)
                 {
                     _state = RegistryState.Unknown;
                     return new PreparedWorkspaceBorrowResult(PreparedWorkspaceSettlementStatus.Unknown, null);
@@ -644,7 +660,8 @@ internal sealed class PreparedWorkspaceUseRegistry : IAsyncDisposable
                     await CheckAuthorityAsync(binding, PreparedToolPurpose.CodeGraphPreparation, deadline.Token)
                         != PreparedWorkspaceAdmissionStatus.Opened ||
                     !await CheckStoreAsync(binding, deadline.Token) ||
-                    await _hold.CheckCurrentAsync(binding, deadline.Token)
+                    await AwaitProofAsync(
+                        _hold.CheckCurrentAsync(binding, deadline.Token).AsTask(), deadline.Token)
                         != PreparedManagedWorkspaceHostStatus.Protected)
                 {
                     _state = RegistryState.Unknown;
@@ -660,6 +677,7 @@ internal sealed class PreparedWorkspaceUseRegistry : IAsyncDisposable
                     }
                 }
 
+                deadline.Token.ThrowIfCancellationRequested();
                 return _borrows.Count == 0
                     ? PreparedWorkspaceSettlementStatus.Settled
                     : PreparedWorkspaceSettlementStatus.Active;

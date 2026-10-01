@@ -436,6 +436,193 @@ public sealed class PreparedWorkspaceUseRegistryTests
 
     [Trait("Suite", "SelfContained")]
     [SuiteFact("SelfContained")]
+    public async Task BeginBorrowAsync_WhenHeldCurrentProofIgnoresDeadline_ReturnsUnknownWithoutLateTicket()
+    {
+        await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
+        fixture.Authority.Approve(fixture.Approval);
+
+        string sourceStorageRoot = Path.Combine(fixture.SandboxPath, "source-storage");
+        Directory.CreateDirectory(sourceStorageRoot);
+        string codeGraphPath = Path.Combine(fixture.PreparedRootPath, ".codegraph");
+        Directory.CreateDirectory(codeGraphPath);
+        RetainedSourceCapturePolicy sourceStoragePolicy = CreatePolicy(
+            fixture.SandboxPath,
+            fixture.PreparedRootPath,
+            sourceStorageRoot);
+        var binding = new PreparedCodeGraphWorkspaceOwnership(
+            OwnershipId: Guid.NewGuid(),
+            Version: 1,
+            Phase: PreparedCodeGraphOwnershipPhase.Ready,
+            Approval: fixture.Approval,
+            PhysicalRootPath: Path.GetFullPath(fixture.PreparedRootPath),
+            RootObjectIdentity: ObserveDirectoryIdentity(fixture.PreparedRootPath),
+            WorkspaceOwnerIdentity: $"owner-{fixture.SandboxId:N}",
+            StateEntryObjectIdentity: ObserveDirectoryIdentity(codeGraphPath));
+        var hold = new UncooperativeThirdCheckHold(binding);
+        var hostProtection = new UncooperativeThirdCheckHostVerifier(binding, hold);
+        var registry = new PreparedWorkspaceUseRegistry(
+            new CurrentSourceAuthority(fixture.Approval),
+            new CurrentToolAuthorization(fixture.Approval, PreparedToolPurpose.CodeGraphPreparation),
+            new ControlledOwnershipStore(binding),
+            sourceStoragePolicy,
+            hostProtection,
+            new PreviousGenerationSettledVerifier(),
+            admissionDeadline: TimeSpan.FromMilliseconds(100),
+            dispositionDeadline: TimeSpan.FromMilliseconds(100));
+
+        Task<PreparedWorkspaceBorrowResult>? borrowTask = null;
+        PreparedWorkspaceBorrowResult? borrowBeforeRelease = null;
+        PreparedWorkspaceBorrowResult? borrowAfterRelease = null;
+        bool returnedBeforeProofRelease = false;
+        try
+        {
+            PreparedWorkspaceAdmissionResult admission = await registry.AdmitAsync(
+                binding,
+                PreparedToolPurpose.CodeGraphPreparation);
+            Assert.Equal(PreparedWorkspaceAdmissionStatus.Opened, admission.Status);
+
+            borrowTask = registry.BeginBorrowAsync(
+                binding,
+                PreparedToolPurpose.CodeGraphPreparation,
+                new ControlledResourceProbe());
+            await hold.ThirdCheckStarted.WaitAsync(TimeSpan.FromSeconds(2));
+
+            Task completed = await Task.WhenAny(borrowTask, Task.Delay(TimeSpan.FromSeconds(2)));
+            returnedBeforeProofRelease = ReferenceEquals(borrowTask, completed);
+            if (returnedBeforeProofRelease)
+            {
+                borrowBeforeRelease = await borrowTask;
+            }
+        }
+        finally
+        {
+            hold.ReleaseThirdCheck();
+            if (hold.ThirdCheckStarted.IsCompleted)
+            {
+                await hold.PendingThirdCheck.WaitAsync(TimeSpan.FromSeconds(2));
+            }
+
+            if (borrowTask is not null)
+            {
+                borrowAfterRelease = await borrowTask.WaitAsync(TimeSpan.FromSeconds(2));
+            }
+
+            await registry.DisposeAsync().AsTask().WaitAsync(TimeSpan.FromSeconds(2));
+        }
+
+        Assert.True(returnedBeforeProofRelease,
+            "BeginBorrowAsync must honor its trusted deadline while the held currentness proof remains pending.");
+        Assert.True(borrowBeforeRelease is { Status: PreparedWorkspaceSettlementStatus.Unknown, Borrow: null },
+            "A timed-out held proof must return Unknown without issuing a ticket before its provider is released.");
+        Assert.True(borrowAfterRelease is { Status: PreparedWorkspaceSettlementStatus.Unknown, Borrow: null },
+            "The late positive held-proof result cannot grant a ticket to the timed-out borrow.");
+        Assert.True(hold.ThirdCheckCount == 1 && hold.PendingThirdCheck.IsCompleted,
+            "The scenario must observe one controlled late held-proof result during cleanup.");
+        Assert.True(hold.DisposeCount == 1,
+            "The registry remains the owner of the admitted hold after borrow proof times out.");
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task CloseForDispositionAsync_WhenHeldCurrentProofIgnoresDeadline_ReturnsUnknownWithoutLateSettlement()
+    {
+        await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
+        fixture.Authority.Approve(fixture.Approval);
+
+        string sourceStorageRoot = Path.Combine(fixture.SandboxPath, "source-storage");
+        Directory.CreateDirectory(sourceStorageRoot);
+        string codeGraphPath = Path.Combine(fixture.PreparedRootPath, ".codegraph");
+        Directory.CreateDirectory(codeGraphPath);
+        RetainedSourceCapturePolicy sourceStoragePolicy = CreatePolicy(
+            fixture.SandboxPath,
+            fixture.PreparedRootPath,
+            sourceStorageRoot);
+        var binding = new PreparedCodeGraphWorkspaceOwnership(
+            OwnershipId: Guid.NewGuid(),
+            Version: 1,
+            Phase: PreparedCodeGraphOwnershipPhase.Ready,
+            Approval: fixture.Approval,
+            PhysicalRootPath: Path.GetFullPath(fixture.PreparedRootPath),
+            RootObjectIdentity: ObserveDirectoryIdentity(fixture.PreparedRootPath),
+            WorkspaceOwnerIdentity: $"owner-{fixture.SandboxId:N}",
+            StateEntryObjectIdentity: ObserveDirectoryIdentity(codeGraphPath));
+        var hold = new UncooperativeThirdCheckHold(binding);
+        var hostProtection = new UncooperativeThirdCheckHostVerifier(binding, hold);
+        var registry = new PreparedWorkspaceUseRegistry(
+            new CurrentSourceAuthority(fixture.Approval),
+            new CurrentToolAuthorization(fixture.Approval, PreparedToolPurpose.CodeGraphPreparation),
+            new ControlledOwnershipStore(binding),
+            sourceStoragePolicy,
+            hostProtection,
+            new PreviousGenerationSettledVerifier(),
+            admissionDeadline: TimeSpan.FromMilliseconds(100),
+            dispositionDeadline: TimeSpan.FromMilliseconds(100));
+
+        Task<PreparedWorkspaceSettlementStatus>? closeTask = null;
+        PreparedWorkspaceSettlementStatus? closeBeforeProofRelease = null;
+        PreparedWorkspaceSettlementStatus? closeAfterProofRelease = null;
+        PreparedWorkspaceBorrowResult? borrowAfterClose = null;
+        bool returnedBeforeProofRelease = false;
+        try
+        {
+            PreparedWorkspaceAdmissionResult admission = await registry.AdmitAsync(
+                binding,
+                PreparedToolPurpose.CodeGraphPreparation);
+            Assert.Equal(PreparedWorkspaceAdmissionStatus.Opened, admission.Status);
+
+            closeTask = registry.CloseForDispositionAsync(binding);
+            await hold.ThirdCheckStarted.WaitAsync(TimeSpan.FromSeconds(2));
+
+            Task completed = await Task.WhenAny(closeTask, Task.Delay(TimeSpan.FromSeconds(2)));
+            returnedBeforeProofRelease = ReferenceEquals(closeTask, completed);
+            if (returnedBeforeProofRelease)
+            {
+                closeBeforeProofRelease = await closeTask;
+                borrowAfterClose = await registry.BeginBorrowAsync(
+                    binding,
+                    PreparedToolPurpose.JdtNavigation,
+                    new ControlledResourceProbe()).WaitAsync(TimeSpan.FromSeconds(2));
+            }
+        }
+        finally
+        {
+            hold.ReleaseThirdCheck();
+            if (hold.ThirdCheckStarted.IsCompleted)
+            {
+                await hold.PendingThirdCheck.WaitAsync(TimeSpan.FromSeconds(2));
+            }
+
+            if (closeTask is not null)
+            {
+                closeAfterProofRelease = await closeTask.WaitAsync(TimeSpan.FromSeconds(2));
+                if (borrowAfterClose is null)
+                {
+                    borrowAfterClose = await registry.BeginBorrowAsync(
+                        binding,
+                        PreparedToolPurpose.JdtNavigation,
+                        new ControlledResourceProbe()).WaitAsync(TimeSpan.FromSeconds(2));
+                }
+            }
+
+            await registry.DisposeAsync().AsTask().WaitAsync(TimeSpan.FromSeconds(2));
+        }
+
+        Assert.True(returnedBeforeProofRelease,
+            "Disposition must honor its trusted deadline while the required held currentness proof remains pending.");
+        Assert.True(closeBeforeProofRelease == PreparedWorkspaceSettlementStatus.Unknown,
+            "A timed-out held proof must return Unknown before its provider is released.");
+        Assert.True(closeAfterProofRelease == PreparedWorkspaceSettlementStatus.Unknown,
+            "The late positive held-proof result cannot turn the timed-out close into Settled.");
+        Assert.True(borrowAfterClose?.Borrow is null,
+            "A registry closed under uncertain held proof cannot issue a later borrower.");
+        Assert.True(hold.ThirdCheckCount == 1 && hold.PendingThirdCheck.IsCompleted,
+            "The scenario must observe the one controlled late held-proof result during cleanup.");
+        Assert.True(hold.DisposeCount == 1,
+            "The registry retains and disposes its host hold through shutdown after uncertain closure.");
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task AdmitAsync_WhenCurrentSourceProviderIgnoresCancellation_ReturnsUnavailableByDeadline()
     {
         await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
@@ -1966,6 +2153,81 @@ public sealed class PreparedWorkspaceUseRegistryTests
             IsDisposed = true;
             _disposalCompleted.TrySetResult();
             return ValueTask.CompletedTask;
+        }
+    }
+
+    private sealed class UncooperativeThirdCheckHostVerifier(
+        PreparedCodeGraphWorkspaceOwnership expectedBinding,
+        UncooperativeThirdCheckHold hold) : IPreparedManagedWorkspaceHostVerifier
+    {
+        public Task<PreparedManagedWorkspaceHostObservation> ObserveAsync(
+            PreparedSourceGrantRequest applicationHeldSourceGrant,
+            RetainedSourceCapturePolicy sourceStoragePolicy,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult(new PreparedManagedWorkspaceHostObservation(
+                PreparedManagedWorkspaceHostStatus.Observed,
+                expectedBinding.RootObjectIdentity,
+                expectedBinding.WorkspaceOwnerIdentity));
+
+        public Task<PreparedManagedWorkspaceHostHoldResult> VerifyAndHoldAsync(
+            PreparedCodeGraphWorkspaceOwnership binding,
+            RetainedSourceCapturePolicy sourceStoragePolicy,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult(binding == expectedBinding
+                ? new PreparedManagedWorkspaceHostHoldResult(PreparedManagedWorkspaceHostStatus.Protected, hold)
+                : new PreparedManagedWorkspaceHostHoldResult(PreparedManagedWorkspaceHostStatus.Denied, null));
+    }
+
+    private sealed class UncooperativeThirdCheckHold(
+        PreparedCodeGraphWorkspaceOwnership expectedBinding) : IPreparedManagedWorkspaceHostHold
+    {
+        private readonly TaskCompletionSource _thirdCheckStarted = new(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+        private readonly TaskCompletionSource _thirdCheckReleased = new(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+        private Task<PreparedManagedWorkspaceHostStatus>? _pendingThirdCheck;
+        private int _checkCount;
+        private int _disposeCount;
+
+        internal Task ThirdCheckStarted => _thirdCheckStarted.Task;
+
+        internal Task<PreparedManagedWorkspaceHostStatus> PendingThirdCheck =>
+            _pendingThirdCheck ?? throw new InvalidOperationException("The third held check has not started.");
+
+        internal int ThirdCheckCount => Math.Max(0, Volatile.Read(ref _checkCount) - 2);
+
+        internal int DisposeCount => Volatile.Read(ref _disposeCount);
+
+        internal void ReleaseThirdCheck() => _thirdCheckReleased.TrySetResult();
+
+        public ValueTask<PreparedManagedWorkspaceHostStatus> CheckCurrentAsync(
+            PreparedCodeGraphWorkspaceOwnership binding,
+            CancellationToken cancellationToken = default)
+        {
+            int check = Interlocked.Increment(ref _checkCount);
+            if (check == 3)
+            {
+                Task<PreparedManagedWorkspaceHostStatus> pending = ReturnAfterReleaseAsync();
+                _pendingThirdCheck = pending;
+                _thirdCheckStarted.TrySetResult();
+                return new ValueTask<PreparedManagedWorkspaceHostStatus>(pending);
+            }
+
+            return ValueTask.FromResult(binding == expectedBinding
+                ? PreparedManagedWorkspaceHostStatus.Protected
+                : PreparedManagedWorkspaceHostStatus.Unavailable);
+        }
+
+        public ValueTask DisposeAsync()
+        {
+            Interlocked.Increment(ref _disposeCount);
+            return ValueTask.CompletedTask;
+        }
+
+        private async Task<PreparedManagedWorkspaceHostStatus> ReturnAfterReleaseAsync()
+        {
+            await _thirdCheckReleased.Task;
+            return PreparedManagedWorkspaceHostStatus.Protected;
         }
     }
 
