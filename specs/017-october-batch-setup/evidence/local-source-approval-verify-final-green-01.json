@@ -1,0 +1,9 @@
+{
+  "kind": "test-green", "stage": "implement", "outcome": "passed", "source_commit": "84f95e1e681663914dfefb8c2969ba8e1eef201e",
+  "command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName~VerifySourceApprovalAsync_ReturnsCurrentIssuedApproval'",
+  "exit_code": 0, "selected": 1, "passed": 1, "trx_path": "TestResults/isolation-6f55a7996e9f4990923397033856a98a/results.trx",
+  "regression": {"exit_code": 0, "selected": 155, "passed": 155, "trx_path": "TestResults/isolation-46ab8ba44621472a9f24e8aca8611d1c/results.trx"},
+  "summary": "Retained test owner independently verified direct Current result and exact seven-field approval before adding intentional Revoke RED. Actual Issue/session/store path and surrounding auth/selection/credential/store/policy passed. Remaining failure/idempotency/foreign administrator matrix and issuer integration not yet proven.",
+  "source_sha256": "8981dedd106602ca3e8e429a276ad20ce27cdd7e15f4b0d6e6d84e16b9b99024",
+  "recovery": {"failed_results": 6, "pause_at": 7, "incremented": false}
+}

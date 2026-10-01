@@ -1,0 +1,11 @@
+{
+  "kind": "test-green", "stage": "implement", "outcome": "passed", "source_commit": "84f95e1e681663914dfefb8c2969ba8e1eef201e",
+  "command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName~OctoberLocalAuthorityTests.AuthorizeSelectionAsync_PreparesOwnedSystemSelectionWithTrustedContext'",
+  "minimal": {"exit_code": 0, "selected": 1, "passed": 1, "trx_path": "TestResults/isolation-970d5a6230864eb9881945ea8d39e5e7/results.trx"},
+  "final": {"exit_code": 0, "selected": 1, "passed": 1, "trx_path": "TestResults/isolation-c8aeb80617a04b8f8007872a1cd6fe00/results.trx"},
+  "summary": "Prepare direct authority now validates private current session and exact target/batch, refreshes Identity eligibility/stamp/ManagementAccess role, transactionally captures current owned management membership and three scoped context origins/values/differences, copies request/reference lists, uses existing v2 digest and rejects inconsistent supplied digest. Rechecks subject/cancellation/session before Authorized. No Web/grant, select/approval implementation, migration or source-contract duplication. Corrected RED retained. Controlled SQLite only, not physical PostgreSQL identity qualification.",
+  "regression": {"command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName~OctoberLocalAuthorityTests|FullyQualifiedName~OctoberOperatorCredentialSourceTests|FullyQualifiedName~OctoberSetupPolicyTests'", "exit_code": 0, "discovered": 3030, "selected": 112, "passed": 112, "failed": 0, "skipped": 0, "trx_path": "TestResults/isolation-84f92296bbb54a07b03b35844b746a72/results.trx"},
+  "source_sha256": "4b3f71eeb8b9a6588a16bf513ccc209f2119d04c442657822ab92909205cedc2",
+  "final_shape": "Owner separated current-subject/shape/transactional context helpers and corrected late cancellation/expiry guard before final GREEN; no further refactor needed. Select/approval/live mutation/session matrix and qualification remain pending; T008/T009 not complete.",
+  "recovery": {"failed_results": 6, "pause_at": 7}
+}

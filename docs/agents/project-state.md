@@ -8,7 +8,7 @@ container; tool/provider/E2E and historical suites remain explicit and retain th
 feature-specific gates. See [testing guidance](testing.md). This changes the routine
 regression boundary, not historical product evidence or story lifecycle state.
 
-Updated: 2026-09-30 (Story 18.4 corrected definition/approval; product qualification incomplete).
+Updated: 2026-10-01 (Story 18.4 direct authority/source integration verified; host qualification incomplete).
 Story 13.1 is complete in `specs/015-retained-source-access`.
 Exact retained capture, scoped reads, publication/recovery, cleanup, trusted
 workspaces and separate-process reopening have bounded controlled evidence.
@@ -46,8 +46,9 @@ verification before reuse.
   accepted plan-review-13, definition-review-12 and delegated bindings 04/06.
   Its corrected plan uses independent batch execution and startup-only Web dataset
   selection; previous online-Web transport evidence is historical. Story 18.1
-  contracts remain integrated and unchanged; the new direct authority requires
-  its own verification. Status in
+  contracts remain integrated and unchanged. Direct authority and actual source-issuer
+  integration have bounded controlled/native-root evidence (20 focused, 344 surrounding);
+  real host composition and PostgreSQL/process qualification remain incomplete. Status in
   other assigned worktrees must be verified there. Sprint planning alone activated
   no feature.
   Its bounded retained-source

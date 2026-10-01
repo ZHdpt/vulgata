@@ -1,0 +1,16 @@
+{
+  "kind": "test-green", "stage": "implement", "outcome": "passed", "source_commit": "84f95e1e681663914dfefb8c2969ba8e1eef201e",
+  "summary": "Retained test owner independently final-verified issuance before adding intentional Verify RED. Exact seven fields, committed row, UTC expiry within10min/session, nonrevoked state retained. Small test-only committed-bound-setup helper shares real local auth/writer/selector chain; before/after passing regression proves behavior preserved.",
+  "checks": [
+    {"phase": "before-test-refactor", "filter": "FullyQualifiedName~IssueSourceApprovalAsync_IssuesExactApprovalForCommittedRepository", "exit_code": 0, "selected": 1, "passed": 1, "trx_path": "TestResults/isolation-fe54d5217aef42fca9fe7e8422da9d0b/results.trx"},
+    {"phase": "before-test-refactor-surrounding", "exit_code": 0, "selected": 154, "passed": 154, "trx_path": "TestResults/isolation-be69d1535f424cf8848188ff99a7c446/results.trx"},
+    {"phase": "final-test-shape", "filter": "FullyQualifiedName~IssueSourceApprovalAsync_IssuesExactApprovalForCommittedRepository", "exit_code": 0, "selected": 1, "passed": 1, "trx_path": "TestResults/isolation-43af79581a4f485a8980e3f1015a1d31/results.trx"},
+    {"phase": "final-test-shape-surrounding", "exit_code": 0, "selected": 154, "passed": 154, "trx_path": "TestResults/isolation-06b41efd9723473783fc55b4649539d1/results.trx"}
+  ],
+  "launcher": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter <filter>",
+  "surrounding_filter": "FullyQualifiedName~OctoberLocalAuthorityTests|FullyQualifiedName~OctoberOperatorCredentialSourceTests|FullyQualifiedName~OctoberBatchSelectorTests|FullyQualifiedName~OctoberSetupStoreTests|FullyQualifiedName~OctoberSetupPolicyTests",
+  "source_sha256": "03e821d2f4ef738db46a08ee0960b925a3f09eadb468ac45fa782bd34e6a325b",
+  "test_final_shape": "Complete issuance assertions, no weakening, real owner/session/store/selector helper avoids setup duplication. New source remains classified SelfContained. Current test hash also contains later intentional Verify RED, not part of these pre-addition passing runs.",
+  "remaining": "Approval guard matrix, Verify/Revoke, real issuer integration and runtime qualification pending.",
+  "recovery": {"failed_results": 6, "pause_at": 7, "incremented": false}
+}

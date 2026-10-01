@@ -1,0 +1,11 @@
+{
+  "kind": "test-red", "stage": "implement", "outcome": "expected-red", "source_commit": "84f95e1e681663914dfefb8c2969ba8e1eef201e",
+  "command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName=Vulgata.Tests.October.OctoberLocalAuthorityTests.AuthenticateAsync_UnsupportedAuthenticatorProvider_DeniesWithoutSession'",
+  "exit_code": 1, "trx_path": "TestResults/isolation-941ef895dd994c9ea92fdfbc5c01e9d4/results.trx", "trx_sha256": "d8e5f3f41dca01db1b6191c65df3d8501e07d6a8c00567635df2fa784a9ec8cc",
+  "counts": {"discovered": 3029, "selected": 1, "passed": 0, "failed": 1, "skipped": 0},
+  "summary": "Contract requires unsupported factor mechanism deny without weakening policy. Real owned SQLite Identity user/2FA via public managers; actual scoped token-provider option set to unregistered name. VerifyTwoFactorTokenAsync NotSupportedException escapes public AuthenticateAsync instead of Denied/null. Setup/build passed; new missing guard expected development RED, noncounting. No fake adapter/private seam/resource.",
+  "prior_coverage": {"auth_config_selected": 23, "auth_config_passed": 23, "auth_config_trx": "TestResults/isolation-069daeaac8984da08a36b7fc48ddef5f/results.trx", "source_selected": 28, "source_passed": 28, "source_trx": "TestResults/isolation-c1fdd5b3a5994768b9fce22592704da3/results.trx", "summary": "Constructor boundaries/explicit connections/ordinal copied allowlist/diagnostics, current unconfirmed eligibility, invalid factor counter and credential disposal are passing existing-behavior coverage. No fabricated RED."},
+  "test_sha256": "c9c54ad0b3c3709502d95e4894470360e41bae0f550fecc03081658880ad4769", "source_sha256": "0ce565aa1f11b32f18feb7cb4a7fda7da46785fca35b10b18c63a89ba890c9ea",
+  "pending": "Session/current authority use checks remain for later public methods. Credentials have no caller subject/role or DB-login claim fields; actual Identity SubjectId and unknown-account rejection are already covered.",
+  "recovery": {"failed_results": 6, "pause_at": 7}
+}

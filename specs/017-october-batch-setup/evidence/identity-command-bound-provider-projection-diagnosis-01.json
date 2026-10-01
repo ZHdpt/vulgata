@@ -1,0 +1,9 @@
+{
+  "kind": "analysis", "stage": "implement",
+  "raw_run": {"exit_code": 1, "selected": 1, "failed": 1, "trx_path": "TestResults/isolation-a0e3ec2fb55644d7ac3cb66fe82c835a/results.trx", "observed_sqlite_command_timeout_seconds": 30},
+  "summary": "First registration fix configures Npgsql CommandTimeout from OperationTimeout, but controlled SQLite fixture still reports30. Root source diagnosis found test extraction uses options.FindExtension<RelationalOptionsExtension>(), whereas provider options store concrete provider extensions. Return this precise provider-projection question to test owner: inspect public options.Extensions.OfType<RelationalOptionsExtension>() and preserve actual configured timeout. Do not modify production scoped context solely to fit potentially lossy fixture projection. Original pre-fix meaningful timeout RED retained; no GREEN yet claimed.",
+  "test_path": "tests/Vulgata.Tests/October/OctoberLocalAuthorityTests.cs:1506",
+  "production_path": "src/dotnet/Vulgata.Web/Data/OctoberHeadlessAuthorityRegistration.cs:30",
+  "disposition": "Bounded ordinary development/test-fixture diagnosis; no independent review/convergence failure or demonstrated recurring repaired product defect. Await faithful projection verification before any further product repair or recovery accounting.",
+  "recovery": {"failed_results": 6, "pause_at": 7, "incremented": false}
+}

@@ -176,6 +176,18 @@
   "October/OctoberBatchSelectorTests.cs": {
     "suite": "SelfContained"
   },
+  "October/OctoberHostCompositionTests.cs": {
+    "suite": "SelfContained"
+  },
+  "October/OctoberLocalAuthorityTests.cs": {
+    "suite": "SelfContained"
+  },
+  "October/OctoberLocalSourceApprovalTests.cs": {
+    "suite": "SelfContained"
+  },
+  "October/OctoberOperatorCredentialSourceTests.cs": {
+    "suite": "SelfContained"
+  },
   "Pass1JobIdentityTests.cs": {
     "suite": "SelfContained"
   },

@@ -1,0 +1,7 @@
+{
+  "kind": "analysis", "stage": "implement", "owner": "tests",
+  "summary": "Production owner challenged two independently evidenced test defects before editing code: requestBatch b70230d1-93ab-4af1-aad7-8e449774637a differs from actual configured862de94c-c28a-4c86-9ac6-4cfca8a69c5c, whose exact mismatch must deny; three distinct seeded Global/System/Repository values cannot have empty Differences under accepted contract/Core policy, all three differing scope pairs must be retained. Original method-stub RED did not exercise later assertions. Retained test owner corrects fixture/expected literal differences against unchanged accepted intent, preserves original RED and observes fresh corrected RED. No implementation/definition/authority change or workflow failure increment: first test-authoring mistakes, not an independent negative review/convergence or recurring repaired product defect.",
+  "raw_findings": ["OctoberLocalAuthorityTests.cs requestBatch at651 vs provider/config at793-803/~894", "Three distinct values at635-637 conflict with Empty(context.Differences) at~740"],
+  "preserved": "All existing auth/source52 passing scope, accepted definition/approvals, original T008 RED and diagnosis. Production owner made no edits. Historical count6/limit7 retained.",
+  "recovery": {"failed_results": 6, "pause_at": 7}
+}

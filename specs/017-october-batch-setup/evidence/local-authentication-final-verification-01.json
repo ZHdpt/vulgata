@@ -1,0 +1,15 @@
+{
+  "kind": "test-green", "stage": "implement", "outcome": "passed", "source_commit": "84f95e1e681663914dfefb8c2969ba8e1eef201e",
+  "summary": "Retained independent test owner verified final authentication/input/prepare shape before adding the separate select tracer. Real Identity/EF stores, controlled inputs and owned SQLite only. Production owner assessed auth/input subset as cohesive with no further refactor; test owner assessed fixture/public-seam assertions. Unsupported store capability fix retains password/lockout/factor policy. No select/approval/host/native/PostgreSQL/process completion claim.",
+  "checks": [
+    {"filter": "FullyQualifiedName~OctoberLocalAuthorityTests.AuthenticateAsync_UnsupportedTwoFactorStoreCapability_DeniesWithoutSession", "exit_code": 0, "selected": 1, "passed": 1, "failed": 0, "skipped": 0, "trx_path": "TestResults/isolation-60fdc4183d0a43cd896657f43f83254f/results.trx"},
+    {"filter": "FullyQualifiedName~OctoberLocalAuthorityTests", "exit_code": 0, "selected": 38, "passed": 38, "failed": 0, "skipped": 0, "trx_path": "TestResults/isolation-0f8f4aebffc44428b54d1923ae032ff5/results.trx"},
+    {"filter": "FullyQualifiedName~OctoberOperatorCredentialSourceTests", "exit_code": 0, "selected": 28, "passed": 28, "failed": 0, "skipped": 0, "trx_path": "TestResults/isolation-4754c7bca63847f2ab87f42bced7a064/results.trx"},
+    {"filter": "FullyQualifiedName~OctoberSetupPolicyTests", "exit_code": 0, "selected": 59, "passed": 59, "failed": 0, "skipped": 0, "trx_path": "TestResults/isolation-3e98b335e8bd472e9aca6d3e6063fda7/results.trx"}
+  ],
+  "launcher": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter <filter>",
+  "source_sha256": "768a84b58e5928d0caa287ec74d8d0f1f0c77f9202db7d33241128f1280a9a7e",
+  "test_sha256_before_select_edit": "bc96ab9b58dc1d2f71a61e22b3c43e0daf45e5a7d540e3a9372dc5b57e1e07ad",
+  "related_evidence": ["specs/017-october-batch-setup/evidence/unsupported-identity-store-red-01.json", "specs/017-october-batch-setup/evidence/unsupported-identity-store-minimal-green-01.json", "specs/017-october-batch-setup/evidence/local-selection-prepare-guards-final-green-01.json", "specs/017-october-batch-setup/evidence/console-interactive-input-final-verification-01.json", "specs/017-october-batch-setup/evidence/console-native-binding-static-verification-01.json", "specs/017-october-batch-setup/evidence/protected-operator-input-final-verification-01.json", "specs/017-october-batch-setup/evidence/independent-auth-store-unavailable-minimal-green-01.json"],
+  "recovery": {"failed_results": 6, "pause_at": 7, "incremented": false}
+}

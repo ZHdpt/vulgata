@@ -1,0 +1,10 @@
+{
+  "kind": "test-red", "stage": "implement", "outcome": "expected-red", "source_commit": "84f95e1e681663914dfefb8c2969ba8e1eef201e",
+  "command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName~OctoberLocalAuthorityTests.AuthorizeSelectionAsync_SelectsAnExistingExactBatchWithCurrentAuthority'",
+  "exit_code": 1, "discovered": 3044, "selected": 1, "passed": 0, "failed": 1, "skipped": 0,
+  "trx_path": "TestResults/isolation-e0a89dc162bc4a2480c1c71fb1a64451/results.trx",
+  "summary": "Real SystemOwner authentication and current prepare authorization followed by actual OctoberBatchSetupPolicy/SQLite writer Created seeded exact target/batch/digest. Accepted existing-batch call with PrepareRequest:null returns Denied instead of Authorized because current early guard denies this unimplemented path. This is first expected select RED, not workflow failure. Separate final auth GREEN was obtained before select-test edit.",
+  "test_sha256": "ee6525ab5d21844733030edd0e0304e467d39723dc4f44f5fd5cb3b7561278ee",
+  "source_sha256": "768a84b58e5928d0caa287ec74d8d0f1f0c77f9202db7d33241128f1280a9a7e",
+  "recovery": {"failed_results": 6, "pause_at": 7, "incremented": false}
+}

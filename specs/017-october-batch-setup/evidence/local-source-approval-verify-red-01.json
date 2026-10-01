@@ -1,0 +1,8 @@
+{
+  "kind": "test-red", "stage": "implement", "outcome": "expected-red", "source_commit": "84f95e1e681663914dfefb8c2969ba8e1eef201e",
+  "command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName~VerifySourceApprovalAsync_ReturnsCurrentIssuedApproval'",
+  "exit_code": 1, "selected": 1, "passed": 0, "failed": 1, "skipped": 0, "trx_path": "TestResults/isolation-2e34f373d44249caa993264b40640551/results.trx",
+  "summary": "Actual authenticated session/current prepare/writer/selector chain and IssueSourceApprovalAsync Issued succeed; VerifySourceApprovalAsync NotImplementedException at source803 before expected PreparedSourceAuthorityStatus.Current and exact seven-field CurrentApproval. No revocation calls. First expected new missing-behavior RED, noncounting.",
+  "test_sha256": "0452b3046d2607d0a8be8284773e00ca1abf6f5d03ffdc767c232d8fb447704a", "source_sha256": "03e821d2f4ef738db46a08ee0960b925a3f09eadb468ac45fa782bd34e6a325b",
+  "recovery": {"failed_results": 6, "pause_at": 7, "incremented": false}
+}

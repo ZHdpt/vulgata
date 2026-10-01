@@ -1,0 +1,13 @@
+{
+  "kind": "analysis", "stage": "implement", "status": "restored-production-focused-green",
+  "resumed_results_directory": "TestResults/isolation-5dcec4715bd546a386e257ac51cb51d4",
+  "observation": "After execution-session refresh, collaboration.list_agents returned only /root; retained child sessions were unavailable. Prior waiting snapshots therefore did not represent a live production owner. Current written module remains preserved, not rolled back.",
+  "current_module_sha256": "c49f9d8e5d71b2dae5b6fc30ce88a147fac592103177099729323f6a1aca2342",
+  "unfinished_results_directory": "TestResults/isolation-65ec28a20cfa4b8d828f1b851a38f260",
+  "unfinished_result": "Directory enumeration returned no files: no build/TRX/minimal GREEN is available. Do not infer success or product failure.",
+  "recovery_route": "Initialize replacement tdd-implementer Sol/medium and tdd-test-author Luna/high from actual accepted artifacts, approvals, previous owner boundaries and raw RED/GREEN evidence. Preserve exclusive definition-recovery owner profile, historical independent reviews, counts, holds and model/escalation strategy; restore other unavailable sessions only when needed. No definition restart or new approval gate.",
+  "technical_retry": null,
+  "technical_history": {"operation": "minimal generator module focused prepare check", "invocations": 2, "maximum": 3, "result": "closed by resumed GREEN1/1 exit0 at TestResults/isolation-5dcec4715bd546a386e257ac51cb51d4/results.trx; prior lost-session run had no result", "qualification": "Unavailable owner restored under same responsibility/profile and actual current source pinned; no unchanged product negative rerun"},
+  "runner_note": "Read-only recovery commands succeeded with exec_command login:false and sandbox_permissions=require_escalated after the earlier sandbox ACL-launch failure. Restored test owner reported two failed before-launch sandbox reads and stopped honestly without claiming inspection. Root supplies the demonstrated outside read-only route for one evidence-initialization invocation; no semantic counter change. Resource scope unchanged; no PostgreSQL, host services or unrelated process termination authorized.",
+  "recovery": {"failed_results": 6, "pause_at": 7, "incremented": false}
+}

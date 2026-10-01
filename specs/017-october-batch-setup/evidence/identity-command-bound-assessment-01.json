@@ -1,0 +1,8 @@
+{
+  "kind": "analysis", "stage": "implement",
+  "summary": "Retained production owner read-only assessment confirmed headless ApplicationDbContext UseNpgsql has no CommandTimeout, and actual UserManager/SignInManager calls omit CancellationToken. Adapter linked CancelAfter and after-await checks safely retain scopes but do not bound in-flight real Identity commands by shorter configured OperationTimeout/incoming deadline. This is an existing accepted implementation obligation, not a new semantic decision or external prerequisite. Auth task remains open pending truthful controlled command-bound RED and verification.",
+  "source_paths": ["src/dotnet/Vulgata.Web/Data/OctoberLocalAuthority.cs", "src/dotnet/Vulgata.Web/Data/OctoberHeadlessAuthorityRegistration.cs"],
+  "accepted_authority": "specs/017-october-batch-setup/contracts/batch-setup-selection.md:185",
+  "next_route": "Test owner observes actual EF Identity command timeout via public command interceptor on owned SQLite with faithful headless provider override. Preserve deployed relational timeout configuration rather than replacing it with desired test values. No fake managers, private inspection or timing-only assertion. Later cancellation/deadline guards follow actual evidence.",
+  "recovery": {"failed_results": 6, "pause_at": 7, "incremented": false}
+}

@@ -1,0 +1,9 @@
+{
+  "kind": "test-red", "stage": "implement", "outcome": "expected-red", "source_commit": "84f95e1e681663914dfefb8c2969ba8e1eef201e",
+  "command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName~OctoberLocalAuthorityTests.AuthorizeSelectionAsync_PreparesOwnedSystemSelectionWithTrustedContext'",
+  "exit_code": 1, "trx_path": "TestResults/isolation-0c7d0171891e4b6ba90810c4d668b1fd/results.trx", "counts": {"selected": 1, "passed": 0, "failed": 1, "skipped": 0},
+  "summary": "Diagnosed test fixture connection parameter restored; compile completed4317 warnings/0errors (AD0001 analyzer NullReference warnings retained). Real owned co-located SQLite Identity/Vulgata/October fixtures seed current SystemOwner role/owner assignment/Repository and three context records via existing managers/domain entities, authenticate genuine session, verify persisted data before actual public AuthorizeSelectionAsync NotImplementedException. Expected output Authorized with copied canonical request/digest, trusted subject/database/repository, three exact context origins/values/AdvisoryNotSourceProof and empty differences. Blank caller digest is permitted by contract, not weakened assertion. Genuine new direct behavior RED, noncounting development result. No source identity/tool contract duplication or DB runtime equivalence claim.",
+  "fixture_correction": "evidence/local-selection-fixture-build-failure-01.json preserves first normal build failure; it is not behavioral RED or a recovery increment.",
+  "test_sha256": "057278dacef643e3b2dbd95e920b86cba7d5208d0bec94b3f48aa30cb4a771ca", "source_sha256": "7b2ef810ca7049a185f3a8055697b2d7c56a4724605e97e07ca55fb8de74920c",
+  "recovery": {"failed_results": 6, "pause_at": 7}
+}

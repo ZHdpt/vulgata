@@ -1,0 +1,11 @@
+{
+  "kind": "test-red", "stage": "implement", "outcome": "expected-red", "source_commit": "84f95e1e681663914dfefb8c2969ba8e1eef201e",
+  "command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName~OctoberLocalAuthorityTests'",
+  "exit_code": 1, "trx_path": "TestResults/isolation-61792a02a14941d39ca0d54dafd4dc99/results.trx", "counts": {"discovered": 3035, "selected": 30, "passed": 29, "failed": 1, "skipped": 0},
+  "summary": "New public authority-use guard reveals previously untested missing behavior, not independent review/convergence or recurrence of repaired defect: actual SystemOwnerAssignment removed after authentication -> Denied; restored -> same old session Authorized, contrary to accepted contract expiry/discovered authority loss latches closed and later restoration requires fresh authentication. Original stub prepare GREEN remains valid for its slice. No raw old fields/reflection/fake authorization.",
+  "passing_guard_coverage": "Independent baseline auth/config/prepare25/25; fabricated/foreign then rightful authority/disposed/expired sessions, fresh role/stamp/lockout changes now pass. Initial run had one test fixture failure from reusing disposed credential object; corrected fixture supplies fresh credentials for each explicit authentication, preserves auth read-once/disposal rule and raw observations. No behavior weakening.",
+  "regression": {"credential_selected": 28, "credential_passed": 28, "credential_trx": "TestResults/isolation-1c6a0465b7a74f43b9cae57ed96ab939/results.trx", "policy_selected": 59, "policy_passed": 59, "policy_trx": "TestResults/isolation-9fdffabd1b214d668f0caec971218800/results.trx"},
+  "test_sha256": "470ae833353b791f858f4722af6d806f8a0cbaf700dfb36aa4cea5389d38b048", "source_sha256": "4b3f71eeb8b9a6588a16bf513ccc209f2119d04c442657822ab92909205cedc2",
+  "pending": "Digest/standalone/null-empty-unselected-origin-copy and select/approval paths still pending; no task completion claim.",
+  "recovery": {"failed_results": 6, "pause_at": 7}
+}

@@ -1,0 +1,10 @@
+{
+  "kind": "test-green", "stage": "implement", "outcome": "passed", "source_commit": "84f95e1e681663914dfefb8c2969ba8e1eef201e",
+  "command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName=Vulgata.Tests.October.OctoberLocalAuthorityTests.AuthorityConfiguration_OperationTimeoutAboveMaximum_RejectsConstruction'",
+  "exit_code": 0, "trx_path": "TestResults/isolation-8a65e3763e0c44e6bf9bf0fab8c783f1/results.trx", "counts": {"selected": 1, "passed": 1, "failed": 0, "skipped": 0},
+  "summary": "Cohesive accepted constructor invariant now validates nonblank exact authority/target/canonical identities, nonempty batch/explicit connections, valid nonempty allowlist with ordinal exact selected mapping/copied immutable map, timeout(0,30s] and session lifetime(0,1h]. Exceptions name fields only, never supplied values. No DB operation. Focused RED proves >30s rejection; broader current validation awaits truthful coverage.",
+  "regression": {"command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName~OctoberLocalAuthorityTests|FullyQualifiedName~OctoberOperatorCredentialSourceTests'", "exit_code": 0, "discovered": 3017, "selected": 40, "passed": 40, "failed": 0, "skipped": 0, "trx_path": "TestResults/isolation-00dde1bfce6c49ac8b9c79d08765c3ef/results.trx"},
+  "source_sha256": "0ce565aa1f11b32f18feb7cb4a7fda7da46785fca35b10b18c63a89ba890c9ea",
+  "final_shape": "Owner assessed small private validation helpers/cohesive constructor; no refactor required. Current session/authority and task completion remain pending.",
+  "recovery": {"failed_results": 6, "pause_at": 7}
+}

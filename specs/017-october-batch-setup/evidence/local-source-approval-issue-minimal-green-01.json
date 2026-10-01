@@ -1,0 +1,10 @@
+{
+  "kind": "test-green", "stage": "implement", "outcome": "passed", "source_commit": "84f95e1e681663914dfefb8c2969ba8e1eef201e",
+  "command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName~IssueSourceApprovalAsync_IssuesExactApprovalForCommittedRepository'",
+  "exit_code": 0, "selected": 1, "passed": 1, "trx_path": "TestResults/isolation-1eb1c8faa14d40b5925a18e21a27aa88/results.trx",
+  "regression": {"filter": "FullyQualifiedName~OctoberLocalAuthorityTests|FullyQualifiedName~OctoberOperatorCredentialSourceTests|FullyQualifiedName~OctoberBatchSelectorTests|FullyQualifiedName~OctoberSetupStoreTests|FullyQualifiedName~OctoberSetupPolicyTests", "exit_code": 0, "selected": 154, "passed": 154, "trx_path": "TestResults/isolation-e92945c70442469cb0ce6cae03d0862d/results.trx"},
+  "summary": "Actual direct issue checks private current session/configuration, current Identity, actual persisted selector historical snapshot/digest/time, current management membership/context origins and late Identity/session; derives unchanged seven fields from persisted row/private subject. RNG32-byte opaque identity, UTC expiry min(now+10min,session); Issued only after awaited existing approval-row commit. Failure payloads null. No HTTP/grant/source18.1 changes. Verify/revoke remain unimplemented.",
+  "source_sha256": "03e821d2f4ef738db46a08ee0960b925a3f09eadb468ac45fa782bd34e6a325b",
+  "production_final_shape": "One bounded issuance workflow; owner identified no concrete refactor need or second policy/store writer. No post-GREEN refactor. Test-owner final verification and approval guard matrix remain pending. Untracked source diff-check alone does not inspect file contents.",
+  "recovery": {"failed_results": 6, "pause_at": 7, "incremented": false}
+}

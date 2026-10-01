@@ -1,0 +1,11 @@
+{
+  "kind": "test-green", "stage": "implement", "outcome": "passed", "source_commit": "84f95e1e681663914dfefb8c2969ba8e1eef201e",
+  "command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName=Vulgata.Tests.October.OctoberLocalAuthorityTests.AuthorizeSelectionAsync_LatchesClosedWhenSystemOwnershipIsRevoked'",
+  "exit_code": 0, "trx_path": "TestResults/isolation-1c4741a55d264ad3989b7307aa6001e4/results.trx", "counts": {"selected": 1, "passed": 1, "failed": 0, "skipped": 0},
+  "summary": "Current matching System ownership absent for non-Administrator closes only the adapter-issued owned session; restored assignment cannot reactivate it. Foreign/fabricated denial remains before scoped read and does not close rightful authority session. Private closed flag made volatile for concurrent visibility, no public state/seam change. Original RED retained, normal TDD no recovery increment.",
+  "minimal_regression": {"exit_code": 0, "selected": 117, "passed": 117, "trx_path": "TestResults/isolation-4eba7a908d9243328158b3b77af72dd2/results.trx"},
+  "final_regression": {"command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName~OctoberLocalAuthorityTests|FullyQualifiedName~OctoberOperatorCredentialSourceTests|FullyQualifiedName~OctoberSetupPolicyTests'", "exit_code": 0, "discovered": 3035, "selected": 117, "passed": 117, "failed": 0, "skipped": 0, "trx_path": "TestResults/isolation-1654755a46e54ed5910c8f4ead66074c/results.trx"},
+  "source_sha256": "789c3cbbbcef15d89a2864f8ffae001c5012d6bf1765d12f6df64a1d6fd8f19e",
+  "final_shape": "Owner assessed narrow authority-loss management latch and volatile closure; no further refactor. Remaining context/select/approval/qualification obligations pending; not group completion.",
+  "recovery": {"failed_results": 6, "pause_at": 7}
+}

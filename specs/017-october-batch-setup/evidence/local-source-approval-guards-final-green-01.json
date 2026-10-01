@@ -1,0 +1,29 @@
+{
+  "kind": "test-green",
+  "stage": "implement",
+  "outcome": "passed",
+  "source_commit": "84f95e1e681663914dfefb8c2969ba8e1eef201e",
+  "command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName~SourceApprovalAsync'",
+  "exit_code": 0,
+  "selected": 19,
+  "passed": 19,
+  "trx_path": "TestResults/isolation-66923e4a303345298094da0db438ef6d/results.trx",
+  "regression": {
+    "command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName~OctoberLocalAuthorityTests|FullyQualifiedName~OctoberOperatorCredentialSourceTests|FullyQualifiedName~OctoberBatchSelectorTests|FullyQualifiedName~OctoberSetupStoreTests|FullyQualifiedName~OctoberSetupPolicyTests'",
+    "exit_code": 0,
+    "selected": 172,
+    "passed": 172,
+    "trx_path": "TestResults/isolation-a355854237ec48ec9e1c3235fd15627c/results.trx"
+  },
+  "hashes": {
+    "src/dotnet/Vulgata.Web/Data/OctoberLocalAuthority.cs": "e2fdc0b87d4a78f44580aa5af6c6800fb375d873c9ef32a047b9275b5a1d6e75",
+    "tests/Vulgata.Tests/October/OctoberLocalSourceApprovalTests.cs": "1213d0777009666d33d289c678cf95b1140cfa98355ea16443093fba09860a5b",
+    "tests/Vulgata.Tests/October/OctoberLocalAuthorityTests.cs": "161c44edf4e8cc95a0ce47825e114674c42f35d202153fa2a7b8250c9137dfda",
+    "tests/Vulgata.Tests/TestInfrastructure/suites.json": "6232ad42bce118a29354db209270892baa39455045bcc8616f3ed2b3e10b0cd0"
+  },
+  "assessment": "Retained test owner verified real authenticated sessions, owned stores and selector, controlled clock, exact persisted approval tuple, current authority loss, expiry, revocation/idempotency, foreign Administrator and failure-null outcomes. Owned in-memory table deletion supplies approval-store outages. No refactor needed; no production changes in this guard slice.",
+  "production_final_shape": "Retained production owner read-only assessed T006-T009/T012-T013: no concrete local refactor needed. Cohesive private session/current Identity and management checks; shared current-subject and repository helpers; awaited bounded work/scopes; issue/revoke database acknowledgement; fresh approval row/current checks; closed failure payloads. Borrowed terminal/protection provider are not disposed by source. No new seam or class split justified. This assessment is not issuer/host/runtime qualification.",
+  "development_corrections": "Initial class-name filter selected zero tests because the file extends a partial class; corrected method-name filter. One overconstrained expired-approval revoke expectation was removed: a still-current subject can revoke an expired row. Expired-session denial remains. These ordinary test-development corrections are not workflow recovery failures. Raw test runs remain retained.",
+  "unqualified": ["actual source issuer and closed Worker functions integration", "native runtime", "host processes", "PostgreSQL"],
+  "recovery": {"failed_results": 6, "pause_at": 7, "incremented": false}
+}

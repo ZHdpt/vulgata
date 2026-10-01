@@ -1,0 +1,9 @@
+{
+  "kind": "test-red", "stage": "implement", "outcome": "expected-red", "source_commit": "84f95e1e681663914dfefb8c2969ba8e1eef201e",
+  "command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName=Vulgata.Tests.October.OctoberLocalAuthorityTests.AuthorityConfiguration_OperationTimeoutAboveMaximum_RejectsConstruction'",
+  "exit_code": 1, "trx_path": "TestResults/isolation-17a9da2ae4414397b0f49de2fad00176/results.trx", "trx_sha256": "e45babda3f954b986a638242d9520a1d82374f8e529d25616b68e464af7f30ad",
+  "counts": {"discovered": 3017, "selected": 1, "passed": 0, "failed": 1, "skipped": 0},
+  "summary": "Accepted public immutable configuration constructor with otherwise valid synthetic fields/map/lifetime accepts forbidden31s operation timeout; Assert.ThrowsAny reports no exception. No connection opened. Build/fixture valid, one missing constructor validation RED, noncounting development result. Diagnostic assertion forbids synthetic connection content without pinning exception implementation text.",
+  "test_sha256": "48968488a24ceffc8487f4f55e81e156316be2f1f8cbf4a4a7d11091d1746d1f", "source_sha256": "0ca9ecd4e007dc4d6f488a5dd19f4dd9858b05b12455dd73d8b1ae8c6bcbe61a",
+  "recovery": {"failed_results": 6, "pause_at": 7}
+}

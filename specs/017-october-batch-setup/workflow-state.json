@@ -89,16 +89,16 @@
     },
     "tasks": {
       "path": "specs/017-october-batch-setup/tasks.md",
-      "sha256": "f5fba5e980f10673114101051d188043de43720ed1ae6b298c6fa752c01d5cff"
+      "sha256": "f810aee84411cff49cb081e686a2d0621dd6b2da81557b3d517b3ed1c9f9e7b9"
     }
   },
   "bmad_epic_key": "epic-18",
   "bmad_story_key": "18-4-prepare-an-owned-october-batch-with-valid-context-and-provid",
   "checkpoint": {
     "binding_status": "pending",
-    "checkpoint_id": "bmad-18-4-definition-review-20260930T191218Z-b44d93",
+    "checkpoint_id": "bmad-18-4-implement-20261001T055858Z-7ebac7",
     "commit_sha": null,
-    "stage": "definition-review"
+    "stage": "implement"
   },
   "convergence": {
     "attempt": 0,
@@ -115,9 +115,9 @@
     "specs/017-october-batch-setup/evidence/plan-authorization-04.json",
     "specs/017-october-batch-setup/evidence/implementation-approval-06.json",
     "specs/017-october-batch-setup/evidence/console-testability-diagnosis-01.json",
-    "specs/017-october-batch-setup/evidence/independent-auth-store-unavailable-red-01.json",
+    "specs/017-october-batch-setup/evidence/local-authority-command-cancellation-selection-final-green-01.json",
     "specs/017-october-batch-setup/evidence/protected-operator-input-final-verification-01.json",
-    "specs/017-october-batch-setup/evidence/console-operator-input-minimal-green-01.json",
+    "specs/017-october-batch-setup/evidence/console-interactive-input-final-verification-01.json",
     "specs/017-october-batch-setup/evidence/login-clr-isolation-01.json"
   ],
   "definition_author": {
@@ -152,10 +152,10 @@
   },
   "preflight": {
     "branch": "oct14/story-18-4",
-    "git_identity_sha256": "17e382ea0f41b9eace5492dad17c9560dafe8159d969b8bbe29713fdc960725e",
-    "head": "f40c84bfd3ca8951890f0e90f85c0f074fde0602",
-    "observed_at": "2026-09-30T14:35:04.0746275Z",
-    "status_sha256": "9cf165dcbc0ba616a42a35bbd5ff71d1c9b8f7bc51debb38244e5c818a5b81e4"
+    "git_identity_sha256": "cacec4df204244d9222e22c4358d6a6b42132ba3ef42543182efaac271eab191",
+    "head": "84f95e1e681663914dfefb8c2969ba8e1eef201e",
+    "observed_at": "2026-10-01T05:58:58.1247997Z",
+    "status_sha256": "734be2e2f5e4445bd0e99602937c3c56ff7d0cfca16be3a73d66e90366d91175"
   },
   "recovery": {
     "action": "proceed",
@@ -180,8 +180,8 @@
   },
   "resume": {
     "stage": "implement",
-    "reason": "Corrected definition12 and implementation06 accepted. Resume pending auth-store unavailable RED, then terminal declaration/interactive TDD. Count6/limit7, resource gates and unchanged work retained.",
-    "evidence_path": "specs/017-october-batch-setup/evidence/implementation-approval-06.json"
+    "reason": "Direct module final GREEN8/8 and344/344; authority/issuer group verified. Mechanical completion marks only, historical accepted definition hashes retained. Owned checkpoint next; actual host/runtime work pending. Count6/limit7 unchanged.",
+    "evidence_path": "specs/017-october-batch-setup/evidence/independent-generator-module-final-green-01.json"
   },
   "schema_version": "3.1",
   "stage": "implement",
@@ -189,5 +189,5 @@
     "path": "specs/017-october-batch-setup/evidence/transitions/transition-0073-console-testability-definition-review-accept.json",
     "sha256": "68ca9dc2d04d4bddb54d3425b0f503c71dbe0bbc4b4d4a99a565ea3c3539e4ee"
   },
-  "updated_at": "2026-09-30T19:07:06Z"
+  "updated_at": "2026-10-01T05:58:58.1247997Z"
 }

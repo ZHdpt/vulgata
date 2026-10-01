@@ -2,7 +2,7 @@ using Vulgata.Core.DomainServices;
 
 namespace Vulgata.Infrastructure.Source;
 
-public delegate Task<PreparedSourceAuthorityResult> OctoberWebApprovalCheck(
+public delegate Task<PreparedSourceAuthorityResult> OctoberCurrentApprovalCheck(
     string targetId,
     PreparedSourceApproval requestedApproval,
     CancellationToken cancellationToken);
@@ -10,12 +10,12 @@ public delegate Task<PreparedSourceAuthorityResult> OctoberWebApprovalCheck(
 public sealed class OctoberPreparedSourceAuthorityVerifier : IPreparedSourceCurrentAuthorityVerifier
 {
     private readonly string _targetId;
-    private readonly OctoberWebApprovalCheck _webApprovalCheck;
+    private readonly OctoberCurrentApprovalCheck _currentApprovalCheck;
     private readonly Func<PreparedSourceApproval, bool> _hasCurrentRootBinding;
 
     public OctoberPreparedSourceAuthorityVerifier(
         string targetId,
-        OctoberWebApprovalCheck webApprovalCheck,
+        OctoberCurrentApprovalCheck currentApprovalCheck,
         Func<PreparedSourceApproval, bool> hasCurrentRootBinding)
     {
         if (string.IsNullOrWhiteSpace(targetId))
@@ -24,7 +24,8 @@ public sealed class OctoberPreparedSourceAuthorityVerifier : IPreparedSourceCurr
         }
 
         _targetId = targetId;
-        _webApprovalCheck = webApprovalCheck ?? throw new ArgumentNullException(nameof(webApprovalCheck));
+        _currentApprovalCheck = currentApprovalCheck ??
+            throw new ArgumentNullException(nameof(currentApprovalCheck));
         _hasCurrentRootBinding = hasCurrentRootBinding ??
             throw new ArgumentNullException(nameof(hasCurrentRootBinding));
     }
@@ -39,10 +40,10 @@ public sealed class OctoberPreparedSourceAuthorityVerifier : IPreparedSourceCurr
             return new PreparedSourceAuthorityResult(PreparedSourceAuthorityStatus.Revoked, null);
         }
 
-        PreparedSourceAuthorityResult? webDecision;
+        PreparedSourceAuthorityResult? currentDecision;
         try
         {
-            webDecision = await _webApprovalCheck(_targetId, requestedApproval, cancellationToken);
+            currentDecision = await _currentApprovalCheck(_targetId, requestedApproval, cancellationToken);
             cancellationToken.ThrowIfCancellationRequested();
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
@@ -54,13 +55,13 @@ public sealed class OctoberPreparedSourceAuthorityVerifier : IPreparedSourceCurr
             return new PreparedSourceAuthorityResult(PreparedSourceAuthorityStatus.Unavailable, null);
         }
 
-        if (webDecision is null || webDecision.Status == PreparedSourceAuthorityStatus.Unavailable)
+        if (currentDecision is null || currentDecision.Status == PreparedSourceAuthorityStatus.Unavailable)
         {
             return new PreparedSourceAuthorityResult(PreparedSourceAuthorityStatus.Unavailable, null);
         }
 
-        if (webDecision.Status != PreparedSourceAuthorityStatus.Current ||
-            webDecision.CurrentApproval != requestedApproval)
+        if (currentDecision.Status != PreparedSourceAuthorityStatus.Current ||
+            currentDecision.CurrentApproval != requestedApproval)
         {
             return new PreparedSourceAuthorityResult(PreparedSourceAuthorityStatus.Revoked, null);
         }

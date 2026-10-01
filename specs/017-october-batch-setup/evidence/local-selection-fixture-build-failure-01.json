@@ -1,0 +1,9 @@
+{
+  "kind": "analysis", "stage": "implement", "classification": "ordinary-first-pass-test-fixture-build-failure",
+  "command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName~OctoberLocalAuthorityTests.AuthorizeSelectionAsync_PreparesOwnedSystemSelectionWithTrustedContext'",
+  "exit_code": 1, "raw_output_path": "TestResults/isolation-da7189b3501449bba74c439d21c3acd8/build.log", "trx_path": null,
+  "summary": "Test-local CS0103 at OctoberLocalAuthorityTests.cs:865: connection identifier remains in helper after removing its parameter. No behavioral execution/TRX, not product RED. Initially buildlog was reported unreadable but became readable after completion; raw diagnostic preserved. Retained owner may correct the diagnosed owned fixture and rerun normal authoring; no approval/extension/count increment or technical infrastructure retry granted.",
+  "test_sha256": "c1f84bd7d8fa1839bcb56b62f67135d2f45c76408519f08fbe9d24cf95f18f6e",
+  "source_sha256": "7b2ef810ca7049a185f3a8055697b2d7c56a4724605e97e07ca55fb8de74920c",
+  "recovery": {"failed_results": 6, "pause_at": 7}
+}

@@ -1,0 +1,11 @@
+{
+  "kind": "analysis", "stage": "implement", "status": "final-green",
+  "final_focused": {"selected": 20, "passed": 20, "exit_code": 0, "trx_path": "TestResults/isolation-4d59e530a3d541adb536bc20ec811d34/results.trx"},
+  "final_regression": {"selected": 344, "passed": 344, "exit_code": 0, "trx_path": "TestResults/isolation-d764ce8adc524732864db08cf5dc6c7f/results.trx"},
+  "route": "Behavior-preserving refactor, accepted T015; no fabricated RED",
+  "before_evidence": "specs/017-october-batch-setup/evidence/local-source-issuer-integration-final-green-01.json",
+  "production": {"path": "src/dotnet/Vulgata.Infrastructure/Source/OctoberPreparedSourceAuthorityVerifier.cs", "before_sha256": "7983324d7df97b0da532c81a236c78dca4022b619a1638c570307927ecb6c67a", "after_sha256": "e638d7d92c053b5a54e861cdf976f8f59aaed7fa8a1cf3fac70ab626724b8e2e", "changes": "OctoberWebApprovalCheck to OctoberCurrentApprovalCheck; private/constructor callback names and local decision name only. Signature, exact tuple, outcome, cancellation and root predicate unchanged.", "assessment": "Cohesive verifier, no further refactor needed."},
+  "tests": {"path": "tests/Vulgata.Tests/October/OctoberPreparedSourceBindingTests.cs", "after_sha256": "4edb938c43e2a217300507ced283e61d7b522288b750d1ddef2225925fb3dbc7", "changes": "One explicitly typed helper parameter migrated; no assertions/fixtures changed. Build deferred until both owner changes complete."},
+  "remaining": "Actual production generator callback/session lifetime composition remains T019. This rename does not claim host wiring complete.",
+  "recovery": {"failed_results": 6, "pause_at": 7, "incremented": false}
+}

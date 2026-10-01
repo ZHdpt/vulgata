@@ -1,0 +1,7 @@
+{
+  "kind": "analysis", "stage": "implement", "status": "permission-requested-not-granted",
+  "tasks": ["T020", "T029"],
+  "request_source": "current runner asynchronous user question; no response received at record creation",
+  "request_text": "For Story 18.4’s required PostgreSQL and independent-process qualification, do you authorize fresh runner-owned PostgreSQL 17 containers/volumes and A/B databases (plus an owned optional separate Identity target), synthetic accounts/credentials, test-owned protection keys/files/source roots, and run-owned generator/Web processes with isolated loopback ports? Cleanup will target only recorded run-owned resources. No shared database, real credentials, paid provider, unrelated process, merge or push will be used. This is resource permission, not a recovery extension.",
+  "summary": "Nonblocking request while SelfContained implementation continues. Tool accepted/displayed question and preselected option are not user permission. No actual PostgreSQL/process runtime may begin without actual explicit user response, recorded exact owned scope and launcher guard. No recovery hold/count/extension or new prerequisite story created. Default permitted SelfContained resources remain available."
+}

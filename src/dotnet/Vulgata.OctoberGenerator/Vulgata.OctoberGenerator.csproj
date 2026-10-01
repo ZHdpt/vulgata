@@ -10,6 +10,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Vulgata.Core\Vulgata.Core.csproj" />
     <ProjectReference Include="..\Vulgata.Infrastructure\Vulgata.Infrastructure.csproj" />
+    <ProjectReference Include="..\Vulgata.Web\Vulgata.Web.csproj" />
   </ItemGroup>
 
 </Project>

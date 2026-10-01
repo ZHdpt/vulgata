@@ -4,6 +4,40 @@ Status: in-progress (corrected independent-batch definition accepted; implementa
 Feature directory: `specs/017-october-batch-setup`
 Workflow state: `specs/017-october-batch-setup/workflow-state.json`
 
+## Current delivery boundary (2026-10-01)
+
+The later user authorization supersedes the historical plan-only restrictions below.
+Current plan-review-13 and definition-review-12 are accepted; delegated planned-change
+and implementation bindings 04/06 remain applicable. The corrected target is an
+independent batch executable with Web stopped and a whole Web dataset selected once
+from startup configuration, changed only by restart. No online authority transport
+or runtime dataset switch belongs to this accepted definition.
+
+Direct Identity authentication, current management selection and database-backed
+source approval issue/verify/revoke have controlled passing evidence. The actual
+18.1 issuer and three closed borrowed Worker functions passed 20 focused and 344
+surrounding tests through the approved outside-sandbox SelfContained launcher after
+restricted native root-open denial. Context closure, per-Repository isolation and
+cancellation settlement are tested; 18.1 source contracts are unchanged. Console
+entry has controlled no-echo tests and a separate static native-adapter inspection,
+not native-terminal runtime qualification.
+
+The generator module's direct orchestration passed independent final coverage (8/8)
+and surrounding regressions (344/344). Real host composition, startup-selected context
+factories, provider binding, ordinary-startup compatibility and PostgreSQL/process
+qualification remain unfinished. This is not full-story or real-host qualification.
+Current evidence is in `workflow-state.json` and the local authority/source issuer
+and independent generator module evidence under the existing feature directory.
+
+Expected behavioral RED and ordinary development build/test corrections do not
+consume recovery allowance. The existing episode remains 6/7 with its diagnosis,
+holds, retained Astra-medium definition ownership and model strategy preserved.
+Unavailable implementation/test sessions were restored under the same Sol-medium
+and Luna-high responsibilities from raw artifacts, without restarting definition.
+No database/container/host-process resource permission is inferred from this work.
+Earlier grant-based plans/results and scope restrictions below are historical,
+not the current implementation authority.
+
 ## Lifecycle story
 
 ### Story 18.4: Prepare an Owned October Batch with Valid Context and Provider Bindings

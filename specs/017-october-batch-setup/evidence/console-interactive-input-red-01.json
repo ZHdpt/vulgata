@@ -1,0 +1,11 @@
+{
+  "kind": "test-red", "stage": "implement", "outcome": "expected-red",
+  "source_commit": "84f95e1e681663914dfefb8c2969ba8e1eef201e",
+  "command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName=Vulgata.Tests.October.OctoberOperatorCredentialSourceTests.ReadAsync_InteractiveTerminal_ReturnsCredentialsWithoutEchoingSecrets'",
+  "exit_code": 1, "trx_path": "TestResults/isolation-18b2f18430a448708a6efbb542026f9d/results.trx", "trx_sha256": "8d2336a8bab5b9667f469bb2ab0557175fff2bba9dd86f15e01f288f1edc824f",
+  "counts": {"discovered": 3005, "selected": 1, "passed": 0, "failed": 1, "skipped": 0},
+  "summary": "Accepted concrete source overload and controlled terminal seam, IsInteractive=true, queued username/password and empty optional fields with native echo modeled if intercept=false. Build/policy and fixture passed; source NotImplementedException before key consumption is genuine missing interactive behavior. Tests assert literal credentials, null optional fields, all keys consumed and no username/password in captured output. No realterminal, process, global Console mutation or private/reflection test. One invocation, no retry, expected development RED noncounting.",
+  "test_sha256": "8c26e500732b82ebf171cf89c20bd55184dab0050849d40ade48e7d522eec57f",
+  "source_sha256": "2a7d4fcc84a92e6932879067c52afb21c43fceaa3b77bcd5e108f3c3f4e9e215",
+  "recovery": {"failed_results": 6, "pause_at": 7}
+}

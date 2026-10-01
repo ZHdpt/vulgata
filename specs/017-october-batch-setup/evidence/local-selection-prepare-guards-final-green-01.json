@@ -1,0 +1,14 @@
+{
+  "kind": "test-green", "stage": "implement", "outcome": "passed",
+  "source_commit": "84f95e1e681663914dfefb8c2969ba8e1eef201e",
+  "summary": "Retained test owner completed remaining prepare guards against unchanged production source. Existing-correct behavior has honest passing coverage, not fabricated RED. Select and approval remain unfinished; controlled SQLite evidence is not PostgreSQL/process qualification.",
+  "checks": [
+    {"command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName~OctoberLocalAuthorityTests'", "exit_code": 0, "discovered": 3042, "selected": 37, "passed": 37, "failed": 0, "skipped": 0, "trx_path": "TestResults/isolation-34447aa3dfca4813925748ab9953cebd/results.trx"},
+    {"command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName~OctoberOperatorCredentialSourceTests'", "exit_code": 0, "selected": 28, "passed": 28, "failed": 0, "skipped": 0, "trx_path": "TestResults/isolation-406399dab9bf4ba7acd4f22c32e7d7e2/results.trx"},
+    {"command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName~OctoberSetupPolicyTests'", "exit_code": 0, "selected": 59, "passed": 59, "failed": 0, "skipped": 0, "trx_path": "TestResults/isolation-0179e3d8479e48ee8b76691ee5c45952/results.trx"}
+  ],
+  "coverage": ["exact matching/inconsistent digest", "outer/inner and allowlisted target/batch", "stored System membership", "null/empty/unselected context provenance and exact differences", "copied request/reference collections", "standalone SystemOwner allow and ordinary User deny", "fabricated/foreign/disposed/expired sessions", "role/stamp/lockout/deleted-user revocation", "ownership loss closes session across restoration", "unknown/out-of-scope references and Repository/System mismatch", "pre-cancellation and management-store outage failure-null"],
+  "hashes": {"tests/Vulgata.Tests/October/OctoberLocalAuthorityTests.cs": "475e8da8706079e9856e9ecb0d86d9653cf255ad9d02b894e52cf8aa4992213a", "src/dotnet/Vulgata.Web/Data/OctoberLocalAuthority.cs": "789c3cbbbcef15d89a2864f8ffae001c5012d6bf1765d12f6df64a1d6fd8f19e", "tests/Vulgata.Tests/TestInfrastructure/suites.json": "92d25c054e25f437752c37e5ddfaae7c70ee641e5eee01eebc54f7f998993249"},
+  "final_shape": "Test owner assessed consolidated real SQLite Identity/management/October fixture, public seams, real managers/entities and controlled clock; no new production test seam or manifest entry. No further test refactor needed. Scoped diff check passed.",
+  "recovery": {"failed_results": 6, "pause_at": 7, "incremented": false}
+}
