@@ -257,7 +257,9 @@ internal sealed class PreparedJavaNavigationOwnershipFixture
     internal static PreparedJavaNavigationOwnershipFixture Create(
         IPreparedSourceCurrentAuthorityVerifier sourceAuthority,
         PreparedSourceApproval approval,
-        string physicalRootPath)
+        string physicalRootPath,
+        PreparedCodeGraphOwnershipLoadStatus loadStatus =
+            PreparedCodeGraphOwnershipLoadStatus.VerifiedAbsent)
     {
         ArgumentNullException.ThrowIfNull(sourceAuthority);
         ArgumentNullException.ThrowIfNull(approval);
@@ -276,7 +278,43 @@ internal sealed class PreparedJavaNavigationOwnershipFixture
             sourceAuthority,
             new DeniedCodeGraphAuthorization(),
             new MatchingWorkspaceVerifier(binding),
-            new VerifiedAbsentOwnershipStore());
+            new ControlledOwnershipStore(loadStatus, record: null));
+        return new PreparedJavaNavigationOwnershipFixture(binding, coordinator);
+    }
+
+    internal static PreparedJavaNavigationOwnershipFixture CreateVerifiedOwned(
+        IPreparedSourceCurrentAuthorityVerifier sourceAuthority,
+        PreparedSourceApproval approval,
+        string physicalRootPath)
+    {
+        ArgumentNullException.ThrowIfNull(sourceAuthority);
+        ArgumentNullException.ThrowIfNull(approval);
+        ArgumentException.ThrowIfNullOrWhiteSpace(physicalRootPath);
+
+        string rootPath = Path.GetFullPath(physicalRootPath);
+        string statePath = Path.Combine(rootPath, ".codegraph");
+        if (!Directory.Exists(statePath))
+        {
+            throw new InvalidOperationException(
+                "The controlled owned-state fixture requires its physical .codegraph entry.");
+        }
+
+        var binding = new PreparedCodeGraphWorkspaceOwnership(
+            Guid.NewGuid(),
+            Version: 1,
+            PreparedCodeGraphOwnershipPhase.Ready,
+            approval,
+            rootPath,
+            ObserveDirectoryIdentity(rootPath),
+            WorkspaceOwnerIdentity: $"navigation-owner-{Guid.NewGuid():N}",
+            StateEntryObjectIdentity: ObserveDirectoryIdentity(statePath));
+        var coordinator = new PreparedCodeGraphStateCoordinator(
+            sourceAuthority,
+            new DeniedCodeGraphAuthorization(),
+            new MatchingWorkspaceVerifier(binding),
+            new ControlledOwnershipStore(
+                PreparedCodeGraphOwnershipLoadStatus.Found,
+                binding));
         return new PreparedJavaNavigationOwnershipFixture(binding, coordinator);
     }
 
@@ -294,6 +332,14 @@ internal sealed class PreparedJavaNavigationOwnershipFixture
         PreparedJavaNavigationProfile profile,
         IPreparedJdtLsRuntime runtime) =>
         new(profile, runtime, Coordinator, GetCurrentBindingAsync);
+
+    internal PreparedJavaNavigationContextFactory CreateFactory(
+        PreparedJavaNavigationProfile profile,
+        IPreparedJdtLsRuntime runtime,
+        Func<CancellationToken, ValueTask<PreparedCodeGraphWorkspaceOwnership?>> getCurrentBinding) =>
+        new(profile, runtime, Coordinator, getCurrentBinding);
+
+    internal PreparedCodeGraphWorkspaceOwnership ApplicationHeldBinding => _binding;
 
     internal ValueTask<PreparedCodeGraphWorkspaceOwnership?> GetCurrentBindingAsync(
         CancellationToken cancellationToken = default)
@@ -364,7 +410,9 @@ internal sealed class PreparedJavaNavigationOwnershipFixture
         }
     }
 
-    private sealed class VerifiedAbsentOwnershipStore : IPreparedCodeGraphOwnershipStore
+    private sealed class ControlledOwnershipStore(
+        PreparedCodeGraphOwnershipLoadStatus loadStatus,
+        PreparedCodeGraphWorkspaceOwnership? record) : IPreparedCodeGraphOwnershipStore
     {
         public Task<PreparedCodeGraphOwnershipLoadResult> LoadAsync(
             PreparedCodeGraphWorkspaceOwnership expectedBinding,
@@ -372,8 +420,8 @@ internal sealed class PreparedJavaNavigationOwnershipFixture
         {
             cancellationToken.ThrowIfCancellationRequested();
             return Task.FromResult(new PreparedCodeGraphOwnershipLoadResult(
-                PreparedCodeGraphOwnershipLoadStatus.VerifiedAbsent,
-                Record: null));
+                loadStatus,
+                record));
         }
 
         public Task<PreparedCodeGraphOwnershipTransitionResult> BeginCreateAsync(

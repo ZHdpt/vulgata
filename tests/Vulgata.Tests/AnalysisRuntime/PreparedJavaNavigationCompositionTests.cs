@@ -538,6 +538,128 @@ public sealed class PreparedJavaNavigationCompositionTests
     }
 
     [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData("callback-null")]
+    [InlineData("approval-mismatch")]
+    [InlineData("root-mismatch")]
+    [InlineData("store-unavailable")]
+    public async Task ComposeAsync_WhenOwnershipBindingOrStoreIsUnavailable_KeepsFileFunctionsUsable(
+        string scenario)
+    {
+        await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
+        PreparedSourceGrantRequest sourceGrant = new(
+            fixture.Approval,
+            fixture.PreparedRootPath,
+            PreparedSourceGrantLimits.Default);
+        fixture.Authority.Approve(fixture.Approval);
+        PreparedSourceIssueResult sourceIssue = await new PreparedSourceContextIssuer(fixture.Authority)
+            .IssueAsync(sourceGrant);
+        Assert.Equal(PreparedSourceIssueStatus.Issued, sourceIssue.Status);
+        IPreparedSourceReadContext readContext =
+            Assert.IsAssignableFrom<IPreparedSourceReadContext>(sourceIssue.Context);
+
+        PreparedJavaNavigationOwnershipFixture ownershipFixture = scenario switch
+        {
+            "callback-null" => PreparedJavaNavigationOwnershipFixture.Create(
+                fixture.Authority,
+                fixture.Approval,
+                fixture.PreparedRootPath),
+            "approval-mismatch" => PreparedJavaNavigationOwnershipFixture.Create(
+                fixture.Authority,
+                fixture.Approval with
+                {
+                    ApprovalIdentity = fixture.Approval.ApprovalIdentity + "-mismatch",
+                },
+                fixture.PreparedRootPath),
+            "root-mismatch" => PreparedJavaNavigationOwnershipFixture.Create(
+                fixture.Authority,
+                fixture.Approval,
+                fixture.SiblingPath),
+            "store-unavailable" => PreparedJavaNavigationOwnershipFixture.Create(
+                fixture.Authority,
+                fixture.Approval,
+                fixture.PreparedRootPath,
+                PreparedCodeGraphOwnershipLoadStatus.Unavailable),
+            _ => throw new ArgumentOutOfRangeException(nameof(scenario), scenario, null),
+        };
+
+        string stateRoot = Path.Combine(fixture.SiblingPath, "jdt-state");
+        Directory.CreateDirectory(stateRoot);
+        var runtime = new ControlledNavigationRuntime(new PreparedJdtLsRawReply([], false, null));
+        var workspaceIssuer = new PreparedToolWorkspaceIssuer(
+            fixture.Authority,
+            new ControlledToolUseAuthorizer(fixture.Approval));
+        PreparedToolWorkspaceGrantRequest selectedGrant = new(
+            fixture.Approval,
+            fixture.PreparedRootPath,
+            PreparedToolPurpose.JdtNavigation,
+            TimeSpan.FromSeconds(10));
+        PreparedToolWorkspaceIssueResult leaseIssue = await workspaceIssuer.IssueAsync(selectedGrant);
+        Assert.Equal(PreparedToolWorkspaceIssueStatus.Issued, leaseIssue.Status);
+        await Assert.IsAssignableFrom<PreparedToolWorkspaceLease>(leaseIssue.Lease).DisposeAsync();
+
+        Func<CancellationToken, ValueTask<PreparedCodeGraphWorkspaceOwnership?>> bindingCallback =
+            scenario == "callback-null"
+                ? _ => ValueTask.FromResult<PreparedCodeGraphWorkspaceOwnership?>(null)
+                : ownershipFixture.GetCurrentBindingAsync;
+        var navigationFactory = ownershipFixture.CreateFactory(
+            new PreparedJavaNavigationProfile(
+                stateRoot,
+                TimeSpan.FromSeconds(3),
+                TimeSpan.FromSeconds(2),
+                TimeSpan.FromSeconds(1),
+                MaximumResponseBytes: 64 * 1024),
+            runtime,
+            bindingCallback);
+
+        try
+        {
+            using ServiceProvider services = BuildWebServiceProvider(workspaceIssuer, navigationFactory);
+            using IServiceScope scope = services.CreateScope();
+            PreparedJavaWorkerToolComposer composer =
+                scope.ServiceProvider.GetRequiredService<PreparedJavaWorkerToolComposer>();
+
+            PreparedJavaWorkerToolComposition composition = await composer.ComposeAsync(
+                readContext,
+                sourceGrant,
+                selectedGrant);
+            try
+            {
+                Assert.Equal(
+                    PreparedJavaNavigationOpenStatus.ConfigurationUnavailable,
+                    composition.NavigationStatus);
+                Assert.Equal(
+                    ["list_prepared_source", "read_prepared_source", "search_prepared_source"],
+                    composition.WorkerFunctions.Select(function => function.Name));
+                Assert.Empty(composition.NavigationFunctions);
+                Assert.Equal(0, runtime.OpenCallCount);
+
+                AIFunction readFunction = Assert.Single(composition.SourceFunctions.Where(
+                    function => function.Name == "read_prepared_source"));
+                object? rawResult = await readFunction.InvokeAsync(
+                    new AIFunctionArguments(new Dictionary<string, object?>
+                    {
+                        ["relativePath"] = "notes.oddlangx",
+                        ["byteOffset"] = 0L,
+                        ["byteCount"] = 64,
+                    }),
+                    CancellationToken.None);
+                PreparedSourceResult readResult = Assert.IsType<PreparedSourceResult>(rawResult);
+                Assert.Equal(PreparedSourceOutcome.Complete, readResult.Outcome);
+                Assert.Equal("café\nsource fixture\n", readResult.Text);
+            }
+            finally
+            {
+                await composition.DisposeAsync();
+            }
+        }
+        finally
+        {
+            await readContext.DisposeAsync();
+        }
+    }
+
+    [Trait("Suite", "SelfContained")]
     [SuiteFact("SelfContained")]
     public async Task ComposeAsync_WhenCurrentBindingIsVerifiedUnowned_OpensNavigation()
     {
@@ -607,6 +729,83 @@ public sealed class PreparedJavaNavigationCompositionTests
                 Assert.Equal(
                     ["navigate_java_definition", "navigate_java_references"],
                     composition.NavigationFunctions.Select(function => function.Name));
+                Assert.Equal(5, composition.WorkerFunctions.Count);
+                Assert.Equal(1, runtime.OpenCallCount);
+            }
+            finally
+            {
+                await composition.DisposeAsync();
+            }
+        }
+        finally
+        {
+            await readContext.DisposeAsync();
+        }
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task ComposeAsync_WhenCurrentBindingIsVerifiedOwned_OpensNavigation()
+    {
+        await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
+        PreparedSourceGrantRequest sourceGrant = new(
+            fixture.Approval,
+            fixture.PreparedRootPath,
+            PreparedSourceGrantLimits.Default);
+        fixture.Authority.Approve(fixture.Approval);
+        PreparedSourceIssueResult sourceIssue = await new PreparedSourceContextIssuer(fixture.Authority)
+            .IssueAsync(sourceGrant);
+        Assert.Equal(PreparedSourceIssueStatus.Issued, sourceIssue.Status);
+        IPreparedSourceReadContext readContext =
+            Assert.IsAssignableFrom<IPreparedSourceReadContext>(sourceIssue.Context);
+
+        Directory.CreateDirectory(Path.Combine(fixture.PreparedRootPath, ".codegraph"));
+        PreparedJavaNavigationOwnershipFixture ownershipFixture =
+            PreparedJavaNavigationOwnershipFixture.CreateVerifiedOwned(
+                fixture.Authority,
+                fixture.Approval,
+                fixture.PreparedRootPath);
+        PreparedCodeGraphOwnershipViewResult ownershipView =
+            await ownershipFixture.GetCurrentOwnershipViewAsync(fixture.Approval);
+        Assert.Equal(PreparedCodeGraphOwnershipViewStatus.VerifiedOwned, ownershipView.Status);
+        Assert.Equal(ownershipFixture.ApplicationHeldBinding, ownershipView.Record);
+
+        string stateRoot = Path.Combine(fixture.SiblingPath, "jdt-state");
+        Directory.CreateDirectory(stateRoot);
+        var runtime = new ControlledNavigationRuntime(new PreparedJdtLsRawReply([], false, null));
+        var workspaceIssuer = new PreparedToolWorkspaceIssuer(
+            fixture.Authority,
+            new ControlledToolUseAuthorizer(fixture.Approval));
+        PreparedToolWorkspaceGrantRequest selectedGrant = new(
+            fixture.Approval,
+            fixture.PreparedRootPath,
+            PreparedToolPurpose.JdtNavigation,
+            TimeSpan.FromSeconds(10));
+        PreparedToolWorkspaceIssueResult leaseIssue = await workspaceIssuer.IssueAsync(selectedGrant);
+        Assert.Equal(PreparedToolWorkspaceIssueStatus.Issued, leaseIssue.Status);
+        await Assert.IsAssignableFrom<PreparedToolWorkspaceLease>(leaseIssue.Lease).DisposeAsync();
+        var navigationFactory = ownershipFixture.CreateFactory(
+            new PreparedJavaNavigationProfile(
+                stateRoot,
+                TimeSpan.FromSeconds(3),
+                TimeSpan.FromSeconds(2),
+                TimeSpan.FromSeconds(1),
+                MaximumResponseBytes: 64 * 1024),
+            runtime);
+
+        try
+        {
+            using ServiceProvider services = BuildWebServiceProvider(workspaceIssuer, navigationFactory);
+            using IServiceScope scope = services.CreateScope();
+            PreparedJavaWorkerToolComposer composer =
+                scope.ServiceProvider.GetRequiredService<PreparedJavaWorkerToolComposer>();
+            PreparedJavaWorkerToolComposition composition = await composer.ComposeAsync(
+                readContext,
+                sourceGrant,
+                selectedGrant);
+            try
+            {
+                Assert.Equal(PreparedJavaNavigationOpenStatus.Opened, composition.NavigationStatus);
                 Assert.Equal(5, composition.WorkerFunctions.Count);
                 Assert.Equal(1, runtime.OpenCallCount);
             }
