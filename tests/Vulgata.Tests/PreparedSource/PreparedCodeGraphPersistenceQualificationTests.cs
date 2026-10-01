@@ -23,10 +23,15 @@ public sealed class PreparedCodeGraphPersistenceQualificationTests
     private const string ApprovalVariable = "VULGATA_T029_STORE_APPROVAL";
     private const string ReadyRecordVariable = "VULGATA_T029_STORE_READY_RECORD";
     private const string ResultVariable = "VULGATA_T029_STORE_RESULT";
+    private const string LifecycleFixturesVariable = "VULGATA_T029_STORE_LIFECYCLE_FIXTURES";
     private const string SeedOperation = "seed-ready";
     private const string ReopenOperation = "reopen-ready";
+    private const string SeedLifecycleOperation = "seed-lifecycle";
+    private const string ReopenLifecycleOperation = "reopen-lifecycle";
     private const string ChildTestName =
         "Vulgata.Tests.PreparedSource.PreparedCodeGraphPersistenceQualificationTests.T029_ReadyOwnershipRecordSurvivesFreshTestHostProcess";
+    private const string LifecycleChildTestName =
+        "Vulgata.Tests.PreparedSource.PreparedCodeGraphPersistenceQualificationTests.T029_LifecycleRecordsStayUnavailableAfterFreshTestHostRestart";
     private const int MaximumChildOutputCharacters = 8_192;
 
     [Trait("Suite", "LocalTools")]
@@ -106,6 +111,124 @@ public sealed class PreparedCodeGraphPersistenceQualificationTests
         Assert.Equal(originalSibling, await File.ReadAllBytesAsync(fixture.SentinelPath));
     }
 
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
+    public async Task T029_LifecycleRecordsStayUnavailableAfterFreshTestHostRestart()
+    {
+        if (Environment.GetEnvironmentVariable(ChildOperationVariable) is { Length: > 0 })
+        {
+            await ExecuteChildOperationAsync();
+            return;
+        }
+
+        await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
+        string sourceStorageRoot = Path.Combine(fixture.SandboxPath, "source-storage");
+        Directory.CreateDirectory(sourceStorageRoot);
+        string[] phases = ["Creating", "Disposing", "Removed", "Quarantined"];
+        var phaseFixtures = new List<PhaseFixture>(phases.Length);
+        var originalSources = new Dictionary<string, byte[]>(StringComparer.Ordinal);
+        foreach (string phase in phases)
+        {
+            string root = Path.Combine(fixture.SandboxPath, $"workspace-{phase.ToLowerInvariant()}");
+            Directory.CreateDirectory(root);
+            byte[] content = Encoding.UTF8.GetBytes($"source fixture for {phase}\n");
+            string sourcePath = Path.Combine(root, "source.txt");
+            await File.WriteAllBytesAsync(sourcePath, content);
+            originalSources.Add(sourcePath, content);
+            phaseFixtures.Add(new PhaseFixture(
+                phase,
+                root,
+                $"owner-{phase}-{fixture.SandboxId:N}",
+                Guid.NewGuid()));
+        }
+
+        byte[] originalSibling = await File.ReadAllBytesAsync(fixture.SentinelPath);
+        string recordsPath = Path.Combine(fixture.SandboxPath, "lifecycle-records.json");
+        string seedResultPath = Path.Combine(fixture.SandboxPath, "lifecycle-seed-result.json");
+        string reopenResultPath = Path.Combine(fixture.SandboxPath, "lifecycle-reopen-result.json");
+        string fixturesJson = JsonSerializer.Serialize(phaseFixtures.Select(item => new
+        {
+            phase = item.Phase,
+            rootPath = item.RootPath,
+            ownerIdentity = item.OwnerIdentity,
+            ownershipId = item.OwnershipId,
+        }));
+        var childInputs = new ChildInputs(
+            fixture.SandboxPath,
+            fixture.PreparedRootPath,
+            sourceStorageRoot,
+            $"owner-lifecycle-{fixture.SandboxId:N}",
+            Guid.NewGuid(),
+            JsonSerializer.Serialize(fixture.Approval),
+            recordsPath,
+            PhaseFixturesJson: fixturesJson);
+
+        ChildProcessResult seed = await RunChildAsync(
+            fixture.SandboxPath,
+            childInputs with { Operation = SeedLifecycleOperation, ResultPath = seedResultPath },
+            LifecycleChildTestName);
+        AssertChildSucceeded(seed, fixture.SandboxPath, "seed lifecycle records");
+        using JsonDocument seedEvidence = ReadBoundedJson(seedResultPath);
+        JsonElement seeded = seedEvidence.RootElement;
+        Assert.Equal(SeedLifecycleOperation, seeded.GetProperty("operation").GetString());
+        int seedProcessId = seeded.GetProperty("processId").GetInt32();
+        Assert.NotEqual(Environment.ProcessId, seedProcessId);
+
+        ChildProcessResult reopen = await RunChildAsync(
+            fixture.SandboxPath,
+            childInputs with { Operation = ReopenLifecycleOperation, ResultPath = reopenResultPath },
+            LifecycleChildTestName);
+        AssertChildSucceeded(reopen, fixture.SandboxPath, "reopen lifecycle records");
+        using JsonDocument reopenEvidence = ReadBoundedJson(reopenResultPath);
+        JsonElement reopened = reopenEvidence.RootElement;
+        Assert.Equal(ReopenLifecycleOperation, reopened.GetProperty("operation").GetString());
+        int reopenProcessId = reopened.GetProperty("processId").GetInt32();
+        Assert.NotEqual(Environment.ProcessId, reopenProcessId);
+        Assert.NotEqual(seedProcessId, reopenProcessId);
+
+        foreach (PhaseFixture phaseFixture in phaseFixtures)
+        {
+            JsonElement seededCase = FindLifecycleCase(seeded, phaseFixture.Phase);
+            JsonElement reopenedCase = FindLifecycleCase(reopened, phaseFixture.Phase);
+            Assert.Equal("Found", seededCase.GetProperty("loadStatus").GetString());
+            Assert.Equal("Unavailable", seededCase.GetProperty("viewStatus").GetString());
+            Assert.Equal("Found", reopenedCase.GetProperty("loadStatus").GetString());
+            Assert.Equal("Unavailable", reopenedCase.GetProperty("viewStatus").GetString());
+
+            JsonElement seededRecord = seededCase.GetProperty("record");
+            JsonElement reopenedRecord = reopenedCase.GetProperty("record");
+            AssertRecordSnapshotsEqual(seededRecord, reopenedRecord);
+            Assert.Equal(phaseFixture.OwnershipId, reopenedRecord.GetProperty("ownershipId").GetGuid());
+            Assert.Equal(phaseFixture.Phase, reopenedRecord.GetProperty("phase").GetString());
+            Assert.True(reopenedRecord.GetProperty("version").GetInt64() > 0);
+            Assert.Equal(phaseFixture.RootPath,
+                reopenedRecord.GetProperty("physicalRootPath").GetString());
+            Assert.Equal(phaseFixture.OwnerIdentity,
+                reopenedRecord.GetProperty("workspaceOwnerIdentity").GetString());
+
+            string entryPath = Path.Combine(phaseFixture.RootPath, ".codegraph");
+            if (phaseFixture.Phase is "Disposing" or "Quarantined")
+            {
+                Assert.True(Directory.Exists(entryPath));
+                AssertIdentityEqual(
+                    ObserveDirectoryIdentity(entryPath),
+                    reopenedRecord.GetProperty("stateEntryObjectIdentity"));
+            }
+            else
+            {
+                Assert.False(Directory.Exists(entryPath));
+                Assert.Equal(JsonValueKind.Null,
+                    reopenedRecord.GetProperty("stateEntryObjectIdentity").ValueKind);
+            }
+        }
+
+        foreach ((string path, byte[] expected) in originalSources)
+        {
+            Assert.Equal(expected, await File.ReadAllBytesAsync(path));
+        }
+        Assert.Equal(originalSibling, await File.ReadAllBytesAsync(fixture.SentinelPath));
+    }
+
     private static async Task ExecuteChildOperationAsync()
     {
         string operation = RequiredEnvironment(ChildOperationVariable);
@@ -131,6 +254,20 @@ public sealed class PreparedCodeGraphPersistenceQualificationTests
             sourceStorageRoot,
             sandboxRoot,
             preparedRoot);
+        if (operation is SeedLifecycleOperation or ReopenLifecycleOperation)
+        {
+            string phaseFixturesJson = RequiredEnvironment(LifecycleFixturesVariable);
+            await ExecuteLifecycleChildOperationAsync(
+                operation,
+                policy,
+                sandboxRoot,
+                approval,
+                phaseFixturesJson,
+                readyRecordPath,
+                resultPath);
+            return;
+        }
+
         var absent = new PreparedCodeGraphWorkspaceOwnership(
             ownershipId,
             Version: 0,
@@ -185,6 +322,313 @@ public sealed class PreparedCodeGraphPersistenceQualificationTests
             currentReady.StateEntryObjectIdentity);
         WriteEvidence(resultPath, operation, freshLoad.Status, view.Status, currentReady);
     }
+
+    private static async Task ExecuteLifecycleChildOperationAsync(
+        string operation,
+        RetainedSourceCapturePolicy policy,
+        string sandboxRoot,
+        PreparedSourceApproval approval,
+        string phaseFixturesJson,
+        string recordsPath,
+        string resultPath)
+    {
+        IReadOnlyList<PhaseFixture> fixtures = ReadPhaseFixtures(phaseFixturesJson);
+        Assert.Equal(new[] { "Creating", "Disposing", "Removed", "Quarantined" },
+            fixtures.Select(fixture => fixture.Phase).ToArray());
+        foreach (PhaseFixture fixture in fixtures)
+        {
+            AssertOwnedChildPath(sandboxRoot, fixture.RootPath);
+            Assert.True(Directory.Exists(fixture.RootPath));
+        }
+
+        var store = new FilePreparedCodeGraphOwnershipStore(policy);
+        var authority = new ControlledPreparedSourceAuthority();
+        authority.Approve(approval);
+        var toolAuthorizer = new FixtureToolUseAuthorizer(approval);
+
+        if (operation == SeedLifecycleOperation)
+        {
+            PreparedCodeGraphStoreProvisionStatus provision =
+                await FilePreparedCodeGraphOwnershipStore.ProvisionNewAsync(policy);
+            Assert.Equal(PreparedCodeGraphStoreProvisionStatus.Provisioned, provision);
+
+            var seeded = new List<LifecycleRecord>(fixtures.Count);
+            foreach (PhaseFixture fixture in fixtures)
+            {
+                PreparedCodeGraphWorkspaceOwnership absent = CreateAbsentBinding(fixture, approval);
+                PreparedCodeGraphWorkspaceOwnership phaseRecord;
+                PreparedCodeGraphStateCoordinator coordinator;
+                if (fixture.Phase == "Creating")
+                {
+                    coordinator = CreateCoordinator(absent, authority, toolAuthorizer, store);
+                    PreparedCodeGraphOwnershipTransitionResult transition =
+                        await store.BeginCreateAsync(absent);
+                    Assert.Equal(PreparedCodeGraphOwnershipTransitionStatus.Committed, transition.Status);
+                    phaseRecord = Assert.IsType<PreparedCodeGraphWorkspaceOwnership>(transition.Record);
+                    AssertTransition(absent, phaseRecord, PreparedCodeGraphOwnershipPhase.Creating);
+                }
+                else
+                {
+                    var readyResult = await CreateReadyRecordAsync(
+                        absent,
+                        authority,
+                        toolAuthorizer,
+                        store);
+                    coordinator = readyResult.Coordinator;
+                    PreparedCodeGraphWorkspaceOwnership ready = readyResult.Ready;
+                    if (fixture.Phase == "Disposing")
+                    {
+                        PreparedCodeGraphOwnershipTransitionResult transition =
+                            await store.BeginDispositionAsync(ready);
+                        Assert.Equal(PreparedCodeGraphOwnershipTransitionStatus.Committed, transition.Status);
+                        phaseRecord = Assert.IsType<PreparedCodeGraphWorkspaceOwnership>(transition.Record);
+                        AssertTransition(ready, phaseRecord, PreparedCodeGraphOwnershipPhase.Disposing);
+                    }
+                    else if (fixture.Phase == "Removed")
+                    {
+                        PreparedToolWorkspaceCheckStatus disposed =
+                            await coordinator.DisposeOwnedStateAsync(approval, ready);
+                        Assert.Equal(PreparedToolWorkspaceCheckStatus.Current, disposed);
+                        PreparedCodeGraphOwnershipLoadResult removedLoad = await store.LoadAsync(ready);
+                        Assert.Equal(PreparedCodeGraphOwnershipLoadStatus.Found, removedLoad.Status);
+                        phaseRecord = Assert.IsType<PreparedCodeGraphWorkspaceOwnership>(removedLoad.Record);
+                        AssertTransition(ready, phaseRecord, PreparedCodeGraphOwnershipPhase.Removed);
+                    }
+                    else
+                    {
+                        Assert.Equal("Quarantined", fixture.Phase);
+                        PreparedCodeGraphOwnershipTransitionResult transition =
+                            await store.QuarantineAsync(ready);
+                        Assert.Equal(PreparedCodeGraphOwnershipTransitionStatus.Committed, transition.Status);
+                        phaseRecord = Assert.IsType<PreparedCodeGraphWorkspaceOwnership>(transition.Record);
+                        AssertTransition(ready, phaseRecord, PreparedCodeGraphOwnershipPhase.Quarantined);
+                    }
+                }
+
+                PreparedCodeGraphOwnershipLoadResult loaded = await store.LoadAsync(phaseRecord);
+                Assert.Equal(PreparedCodeGraphOwnershipLoadStatus.Found, loaded.Status);
+                Assert.Equal(phaseRecord, loaded.Record);
+                AssertLifecyclePhysicalState(fixture, phaseRecord);
+                PreparedCodeGraphOwnershipViewResult view = await coordinator.GetOwnershipViewAsync(
+                    phaseRecord,
+                    approval);
+                Assert.Equal(PreparedCodeGraphOwnershipViewStatus.Unavailable, view.Status);
+                Assert.Null(view.Record);
+                seeded.Add(new LifecycleRecord(fixture.Phase, loaded.Status, view.Status, phaseRecord));
+            }
+
+            WriteLifecycleEvidence(recordsPath, operation, seeded);
+            WriteLifecycleEvidence(resultPath, operation, seeded);
+            return;
+        }
+
+        Assert.Equal(ReopenLifecycleOperation, operation);
+        IReadOnlyList<LifecycleRecord> expectedRecords = ReadLifecycleEvidence(recordsPath);
+        Assert.Equal(fixtures.Count, expectedRecords.Count);
+        var reopened = new List<LifecycleRecord>(fixtures.Count);
+        foreach (PhaseFixture fixture in fixtures)
+        {
+            LifecycleRecord expected = Assert.Single(
+                expectedRecords.Where(record => record.Phase == fixture.Phase));
+            Assert.Equal(PreparedCodeGraphOwnershipLoadStatus.Found, expected.LoadStatus);
+            Assert.Equal(PreparedCodeGraphOwnershipViewStatus.Unavailable, expected.ViewStatus);
+            PreparedCodeGraphWorkspaceOwnership expectedRecord = expected.Record;
+            PreparedCodeGraphWorkspaceOwnership binding = CreateAbsentBinding(fixture, approval);
+            Assert.Equal(binding.OwnershipId, expectedRecord.OwnershipId);
+            Assert.Equal(binding.Approval, expectedRecord.Approval);
+            Assert.Equal(binding.PhysicalRootPath, expectedRecord.PhysicalRootPath);
+            Assert.Equal(binding.RootObjectIdentity, expectedRecord.RootObjectIdentity);
+            Assert.Equal(binding.WorkspaceOwnerIdentity, expectedRecord.WorkspaceOwnerIdentity);
+
+            PreparedCodeGraphOwnershipLoadResult load = await store.LoadAsync(expectedRecord);
+            Assert.Equal(PreparedCodeGraphOwnershipLoadStatus.Found, load.Status);
+            PreparedCodeGraphWorkspaceOwnership current = Assert.IsType<PreparedCodeGraphWorkspaceOwnership>(
+                load.Record);
+            Assert.Equal(expectedRecord, current);
+            AssertLifecyclePhysicalState(fixture, current);
+
+            PreparedCodeGraphStateCoordinator coordinator = CreateCoordinator(
+                binding,
+                authority,
+                toolAuthorizer,
+                store);
+            PreparedCodeGraphOwnershipViewResult view = await coordinator.GetOwnershipViewAsync(
+                current,
+                approval);
+            Assert.Equal(PreparedCodeGraphOwnershipViewStatus.Unavailable, view.Status);
+            Assert.Null(view.Record);
+            reopened.Add(new LifecycleRecord(fixture.Phase, load.Status, view.Status, current));
+        }
+
+        WriteLifecycleEvidence(resultPath, operation, reopened);
+    }
+
+    private static async Task<(
+        PreparedCodeGraphStateCoordinator Coordinator,
+        PreparedCodeGraphWorkspaceOwnership Ready)> CreateReadyRecordAsync(
+        PreparedCodeGraphWorkspaceOwnership absent,
+        ControlledPreparedSourceAuthority authority,
+        FixtureToolUseAuthorizer toolAuthorizer,
+        FilePreparedCodeGraphOwnershipStore store)
+    {
+        var issuer = new PreparedToolWorkspaceIssuer(authority, toolAuthorizer);
+        PreparedToolWorkspaceIssueResult issue = await issuer.IssueAsync(
+            new PreparedToolWorkspaceGrantRequest(
+                absent.Approval,
+                absent.PhysicalRootPath,
+                PreparedToolPurpose.CodeGraphPreparation,
+                TimeSpan.FromSeconds(10)));
+        Assert.Equal(PreparedToolWorkspaceIssueStatus.Issued, issue.Status);
+        PreparedToolWorkspaceLease lease = Assert.IsType<PreparedToolWorkspaceLease>(issue.Lease);
+        PreparedCodeGraphStateCoordinator coordinator = CreateCoordinator(
+            absent,
+            authority,
+            toolAuthorizer,
+            store);
+        try
+        {
+            PreparedToolWorkspaceCheckStatus use = await coordinator.UseOwnedStateAsync(
+                lease,
+                absent,
+                (_, _) => ValueTask.CompletedTask);
+            Assert.Equal(PreparedToolWorkspaceCheckStatus.Current, use);
+            PreparedCodeGraphOwnershipLoadResult load = await store.LoadAsync(absent);
+            Assert.Equal(PreparedCodeGraphOwnershipLoadStatus.Found, load.Status);
+            PreparedCodeGraphWorkspaceOwnership ready = Assert.IsType<PreparedCodeGraphWorkspaceOwnership>(
+                load.Record);
+            AssertTransition(absent, ready, PreparedCodeGraphOwnershipPhase.Ready);
+            Assert.NotNull(ready.StateEntryObjectIdentity);
+            Assert.Equal(
+                ObserveDirectoryIdentity(Path.Combine(absent.PhysicalRootPath, ".codegraph")),
+                ready.StateEntryObjectIdentity);
+            PreparedCodeGraphOwnershipViewResult view = await coordinator.GetOwnershipViewAsync(
+                ready,
+                absent.Approval);
+            Assert.Equal(PreparedCodeGraphOwnershipViewStatus.VerifiedOwned, view.Status);
+            Assert.Equal(ready, view.Record);
+            return (coordinator, ready);
+        }
+        finally
+        {
+            await lease.DisposeAsync();
+        }
+    }
+
+    private static PreparedCodeGraphStateCoordinator CreateCoordinator(
+        PreparedCodeGraphWorkspaceOwnership binding,
+        ControlledPreparedSourceAuthority authority,
+        FixtureToolUseAuthorizer toolAuthorizer,
+        FilePreparedCodeGraphOwnershipStore store) =>
+        new(
+            authority,
+            toolAuthorizer,
+            new FixtureWorkspaceOwnershipVerifier(
+                binding.PhysicalRootPath,
+                binding.RootObjectIdentity,
+                binding.WorkspaceOwnerIdentity),
+            store);
+
+    private static PreparedCodeGraphWorkspaceOwnership CreateAbsentBinding(
+        PhaseFixture fixture,
+        PreparedSourceApproval approval) =>
+        new(
+            fixture.OwnershipId,
+            Version: 0,
+            PreparedCodeGraphOwnershipPhase.Absent,
+            approval,
+            Path.GetFullPath(fixture.RootPath),
+            ObserveDirectoryIdentity(fixture.RootPath),
+            fixture.OwnerIdentity,
+            StateEntryObjectIdentity: null);
+
+    private static void AssertTransition(
+        PreparedCodeGraphWorkspaceOwnership expected,
+        PreparedCodeGraphWorkspaceOwnership actual,
+        PreparedCodeGraphOwnershipPhase phase)
+    {
+        Assert.Equal(phase, actual.Phase);
+        Assert.True(actual.Version > expected.Version);
+        Assert.Equal(expected.OwnershipId, actual.OwnershipId);
+        Assert.Equal(expected.Approval, actual.Approval);
+        Assert.Equal(expected.PhysicalRootPath, actual.PhysicalRootPath);
+        Assert.Equal(expected.RootObjectIdentity, actual.RootObjectIdentity);
+        Assert.Equal(expected.WorkspaceOwnerIdentity, actual.WorkspaceOwnerIdentity);
+        if (phase is PreparedCodeGraphOwnershipPhase.Creating or PreparedCodeGraphOwnershipPhase.Removed)
+        {
+            Assert.Null(actual.StateEntryObjectIdentity);
+        }
+        else if (phase is PreparedCodeGraphOwnershipPhase.Disposing or PreparedCodeGraphOwnershipPhase.Quarantined)
+        {
+            Assert.Equal(expected.StateEntryObjectIdentity, actual.StateEntryObjectIdentity);
+        }
+    }
+
+    private static void AssertLifecyclePhysicalState(
+        PhaseFixture fixture,
+        PreparedCodeGraphWorkspaceOwnership record)
+    {
+        Assert.Equal(Enum.Parse<PreparedCodeGraphOwnershipPhase>(fixture.Phase), record.Phase);
+        string entryPath = Path.Combine(fixture.RootPath, ".codegraph");
+        if (fixture.Phase is "Disposing" or "Quarantined")
+        {
+            Assert.True(Directory.Exists(entryPath));
+            Assert.NotNull(record.StateEntryObjectIdentity);
+            Assert.Equal(record.StateEntryObjectIdentity, ObserveDirectoryIdentity(entryPath));
+        }
+        else
+        {
+            Assert.False(Directory.Exists(entryPath));
+            Assert.Null(record.StateEntryObjectIdentity);
+        }
+    }
+
+    private static IReadOnlyList<PhaseFixture> ReadPhaseFixtures(string json)
+    {
+        using JsonDocument document = JsonDocument.Parse(json);
+        return document.RootElement.EnumerateArray()
+            .Select(element => new PhaseFixture(
+                element.GetProperty("phase").GetString()!,
+                element.GetProperty("rootPath").GetString()!,
+                element.GetProperty("ownerIdentity").GetString()!,
+                element.GetProperty("ownershipId").GetGuid()))
+            .ToArray();
+    }
+
+    private static void WriteLifecycleEvidence(
+        string path,
+        string operation,
+        IReadOnlyList<LifecycleRecord> records)
+    {
+        var evidence = new
+        {
+            operation,
+            processId = Environment.ProcessId,
+            cases = records.Select(item => new
+            {
+                phase = item.Phase,
+                loadStatus = item.LoadStatus.ToString(),
+                viewStatus = item.ViewStatus.ToString(),
+                record = OwnershipSnapshot(item.Record),
+            }),
+        };
+        File.WriteAllText(path, JsonSerializer.Serialize(evidence));
+    }
+
+    private static IReadOnlyList<LifecycleRecord> ReadLifecycleEvidence(string path)
+    {
+        using JsonDocument document = ReadBoundedJson(path);
+        return document.RootElement.GetProperty("cases").EnumerateArray()
+            .Select(item => new LifecycleRecord(
+                item.GetProperty("phase").GetString()!,
+                Enum.Parse<PreparedCodeGraphOwnershipLoadStatus>(item.GetProperty("loadStatus").GetString()!),
+                Enum.Parse<PreparedCodeGraphOwnershipViewStatus>(item.GetProperty("viewStatus").GetString()!),
+                ReadOwnershipRecord(item.GetProperty("record"))))
+            .ToArray();
+    }
+
+    private static JsonElement FindLifecycleCase(JsonElement evidence, string phase) =>
+        Assert.Single(evidence.GetProperty("cases").EnumerateArray()
+            .Where(item => item.GetProperty("phase").GetString() == phase));
 
     private static async Task SeedReadyRecordAsync(
         RetainedSourceCapturePolicy policy,
@@ -282,7 +726,8 @@ public sealed class PreparedCodeGraphPersistenceQualificationTests
 
     private static async Task<ChildProcessResult> RunChildAsync(
         string sandboxRoot,
-        ChildInputs inputs)
+        ChildInputs inputs,
+        string childTestName = ChildTestName)
     {
         string repositoryRoot = FindRepositoryRoot();
         string projectPath = Path.Combine(repositoryRoot, "tests", "Vulgata.Tests", "Vulgata.Tests.csproj");
@@ -304,7 +749,7 @@ public sealed class PreparedCodeGraphPersistenceQualificationTests
         startInfo.ArgumentList.Add("--settings");
         startInfo.ArgumentList.Add(settingsPath);
         startInfo.ArgumentList.Add("--filter");
-        startInfo.ArgumentList.Add($"Suite=LocalTools&FullyQualifiedName~{ChildTestName}");
+        startInfo.ArgumentList.Add($"Suite=LocalTools&FullyQualifiedName~{childTestName}");
         startInfo.ArgumentList.Add("--results-directory");
         startInfo.ArgumentList.Add(childResults);
         startInfo.ArgumentList.Add("--logger");
@@ -334,6 +779,10 @@ public sealed class PreparedCodeGraphPersistenceQualificationTests
         startInfo.Environment[ApprovalVariable] = inputs.ApprovalJson;
         startInfo.Environment[ReadyRecordVariable] = inputs.ReadyRecordPath;
         startInfo.Environment[ResultVariable] = inputs.ResultPath!;
+        if (inputs.PhaseFixturesJson is not null)
+        {
+            startInfo.Environment[LifecycleFixturesVariable] = inputs.PhaseFixturesJson;
+        }
 
         using var process = new Process { StartInfo = startInfo };
         if (!process.Start())
@@ -507,7 +956,11 @@ public sealed class PreparedCodeGraphPersistenceQualificationTests
     private static PreparedCodeGraphWorkspaceOwnership ReadExpectedRecord(string path)
     {
         using JsonDocument document = ReadBoundedJson(path);
-        JsonElement record = document.RootElement.GetProperty("record");
+        return ReadOwnershipRecord(document.RootElement.GetProperty("record"));
+    }
+
+    private static PreparedCodeGraphWorkspaceOwnership ReadOwnershipRecord(JsonElement record)
+    {
         JsonElement approvalElement = record.GetProperty("approval");
         JsonElement rootIdentityElement = record.GetProperty("rootObjectIdentity");
         JsonElement entryIdentityElement = record.GetProperty("stateEntryObjectIdentity");
@@ -526,7 +979,9 @@ public sealed class PreparedCodeGraphPersistenceQualificationTests
             record.GetProperty("physicalRootPath").GetString()!,
             ReadIdentity(rootIdentityElement),
             record.GetProperty("workspaceOwnerIdentity").GetString()!,
-            ReadIdentity(entryIdentityElement));
+            entryIdentityElement.ValueKind == JsonValueKind.Null
+                ? null
+                : ReadIdentity(entryIdentityElement));
     }
 
     private static JsonDocument ReadBoundedJson(string path)
@@ -578,31 +1033,33 @@ public sealed class PreparedCodeGraphPersistenceQualificationTests
             processId = Environment.ProcessId,
             loadStatus = loadStatus.ToString(),
             viewStatus = viewStatus.ToString(),
-            record = new
-            {
-                ownershipId = record.OwnershipId,
-                version = record.Version,
-                phase = record.Phase.ToString(),
-                approval = new
-                {
-                    batchId = record.Approval.BatchId,
-                    repositoryId = record.Approval.RepositoryId,
-                    subjectId = record.Approval.SubjectId,
-                    purpose = record.Approval.Purpose.ToString(),
-                    approvalIdentity = record.Approval.ApprovalIdentity,
-                    rootBindingIdentity = record.Approval.RootBindingIdentity,
-                    operatorLabel = record.Approval.OperatorLabel,
-                },
-                physicalRootPath = record.PhysicalRootPath,
-                rootObjectIdentity = IdentityJson(record.RootObjectIdentity),
-                workspaceOwnerIdentity = record.WorkspaceOwnerIdentity,
-                stateEntryObjectIdentity = record.StateEntryObjectIdentity is null
-                    ? null
-                    : IdentityJson(record.StateEntryObjectIdentity),
-            },
+            record = OwnershipSnapshot(record),
         };
         File.WriteAllText(path, JsonSerializer.Serialize(evidence));
     }
+
+    private static object OwnershipSnapshot(PreparedCodeGraphWorkspaceOwnership record) => new
+    {
+        ownershipId = record.OwnershipId,
+        version = record.Version,
+        phase = record.Phase.ToString(),
+        approval = new
+        {
+            batchId = record.Approval.BatchId,
+            repositoryId = record.Approval.RepositoryId,
+            subjectId = record.Approval.SubjectId,
+            purpose = record.Approval.Purpose.ToString(),
+            approvalIdentity = record.Approval.ApprovalIdentity,
+            rootBindingIdentity = record.Approval.RootBindingIdentity,
+            operatorLabel = record.Approval.OperatorLabel,
+        },
+        physicalRootPath = record.PhysicalRootPath,
+        rootObjectIdentity = IdentityJson(record.RootObjectIdentity),
+        workspaceOwnerIdentity = record.WorkspaceOwnerIdentity,
+        stateEntryObjectIdentity = record.StateEntryObjectIdentity is null
+            ? null
+            : IdentityJson(record.StateEntryObjectIdentity),
+    };
 
     private static object IdentityJson(PreparedToolDirectoryObjectIdentity identity) => new
     {
@@ -665,7 +1122,20 @@ public sealed class PreparedCodeGraphPersistenceQualificationTests
         string ApprovalJson,
         string ReadyRecordPath,
         string? Operation = null,
-        string? ResultPath = null);
+        string? ResultPath = null,
+        string? PhaseFixturesJson = null);
+
+    private sealed record PhaseFixture(
+        string Phase,
+        string RootPath,
+        string OwnerIdentity,
+        Guid OwnershipId);
+
+    private sealed record LifecycleRecord(
+        string Phase,
+        PreparedCodeGraphOwnershipLoadStatus LoadStatus,
+        PreparedCodeGraphOwnershipViewStatus ViewStatus,
+        PreparedCodeGraphWorkspaceOwnership Record);
 
     private sealed record ChildProcessResult(
         int ExitCode,
@@ -725,15 +1195,25 @@ public sealed class PreparedCodeGraphPersistenceQualificationTests
             CancellationToken cancellationToken = default)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            bool current = ownership.Phase == PreparedCodeGraphOwnershipPhase.Ready &&
+            bool bindingCurrent = (ownership.Phase is PreparedCodeGraphOwnershipPhase.Ready or
+                    PreparedCodeGraphOwnershipPhase.Disposing) &&
                 ownership.PhysicalRootPath.Equals(physicalRootPath, StringComparison.OrdinalIgnoreCase) &&
                 ownership.RootObjectIdentity == rootIdentity &&
                 ownership.WorkspaceOwnerIdentity == ownerIdentity &&
-                ownership.StateEntryObjectIdentity is not null &&
-                TryObserveDirectoryIdentity(
-                    Path.Combine(physicalRootPath, ".codegraph"),
-                    out PreparedToolDirectoryObjectIdentity? actual) &&
-                actual == ownership.StateEntryObjectIdentity;
+                ownership.StateEntryObjectIdentity is not null;
+            string statePath = Path.Combine(physicalRootPath, ".codegraph");
+            bool entryCurrent = ownership.Phase == PreparedCodeGraphOwnershipPhase.Ready
+                ? TryObserveDirectoryIdentity(
+                    statePath,
+                    out PreparedToolDirectoryObjectIdentity? readyEntry) &&
+                    readyEntry == ownership.StateEntryObjectIdentity
+                : ownership.Phase == PreparedCodeGraphOwnershipPhase.Disposing &&
+                    (!Directory.Exists(statePath) ||
+                        TryObserveDirectoryIdentity(
+                            statePath,
+                            out PreparedToolDirectoryObjectIdentity? disposingEntry) &&
+                        disposingEntry == ownership.StateEntryObjectIdentity);
+            bool current = bindingCurrent && entryCurrent;
             return ValueTask.FromResult(current);
         }
     }
