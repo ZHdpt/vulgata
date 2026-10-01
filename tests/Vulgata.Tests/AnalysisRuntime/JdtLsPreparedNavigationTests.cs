@@ -2679,6 +2679,411 @@ public sealed class JdtLsPreparedNavigationTests
         }
     }
 
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task PreparedJdtLsRuntime_WhenLeaseAndPinnedCommandsAreCurrent_InitializesForGrantedRootWithOfflineSettings()
+    {
+        await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
+        fixture.Authority.Approve(fixture.Approval);
+        var toolAuthorization = new ControlledPreparedToolUseAuthorizer(
+            fixture.Approval,
+            PreparedToolPurpose.JdtNavigation);
+        PreparedToolWorkspaceIssueResult issue = await new PreparedToolWorkspaceIssuer(
+            fixture.Authority,
+            toolAuthorization).IssueAsync(
+                new PreparedToolWorkspaceGrantRequest(
+                    fixture.Approval,
+                    fixture.PreparedRootPath,
+                    PreparedToolPurpose.JdtNavigation,
+                    TimeSpan.FromSeconds(10)));
+        Assert.Equal(PreparedToolWorkspaceIssueStatus.Issued, issue.Status);
+        PreparedToolWorkspaceLease lease = Assert.IsType<PreparedToolWorkspaceLease>(issue.Lease);
+
+        string stateRoot = Path.Combine(fixture.SiblingPath, "jdt-runtime-state");
+        string toolRoot = Path.Combine(fixture.SiblingPath, "controlled-jdt-tools");
+        Directory.CreateDirectory(stateRoot);
+        Directory.CreateDirectory(toolRoot);
+        PreparedToolDirectoryObjectIdentity? rootIdentity = null;
+        string? canonicalRoot = null;
+        PreparedToolWorkspaceCheckStatus leaseStatus = await lease.UseContainedRootAsync(
+            PreparedToolPurpose.JdtNavigation,
+            (scope, _) =>
+            {
+                canonicalRoot = scope.GetPhysicalRootPathForTrustedToolBinding();
+                rootIdentity = scope.ObserveRootObjectIdentity();
+                return ValueTask.CompletedTask;
+            });
+        Assert.Equal(PreparedToolWorkspaceCheckStatus.Current, leaseStatus);
+        Assert.Equal(Path.GetFullPath(fixture.PreparedRootPath), canonicalRoot);
+        Assert.NotNull(rootIdentity);
+
+        string jdtScriptPath = Path.Combine(toolRoot, "jdtls.bat");
+        string javaPath = Path.Combine(toolRoot, "java.exe");
+        string cmdPath = Path.Combine(toolRoot, "cmd.exe");
+        await File.WriteAllTextAsync(jdtScriptPath, "@echo off\r\n");
+        await File.WriteAllTextAsync(javaPath, "controlled java executable fixture\n");
+        await File.WriteAllTextAsync(cmdPath, "controlled command interpreter fixture\n");
+        PreparedJdtPinnedFile jdtCommand = await ObservePinnedFileAsync(jdtScriptPath, 0);
+        PreparedJdtPinnedFile javaCommand = await ObservePinnedFileAsync(javaPath, 0);
+        PreparedJdtPinnedFile fixedInterpreter = await ObservePinnedFileAsync(cmdPath, null);
+        var hostPolicy = new PreparedJdtHostPolicy(
+            [toolRoot],
+            [toolRoot],
+            cmdPath,
+            [toolRoot]);
+        var resolver = new RecordingPreparedJdtCommandResolver(
+            new PreparedJdtPinnedCommands(jdtCommand, javaCommand, fixedInterpreter));
+        var launcher = new RecordingPreparedJdtProcessLauncher();
+        var protocols = new RecordingPreparedJdtProtocolFactory();
+        var runtime = new PreparedJdtLsRuntime(resolver, launcher, protocols, hostPolicy);
+        var profile = new PreparedJavaNavigationProfile(
+            stateRoot,
+            TimeSpan.FromSeconds(5),
+            TimeSpan.FromSeconds(3),
+            TimeSpan.FromSeconds(2),
+            MaximumResponseBytes: 64 * 1024);
+
+        IPreparedJdtLsSession? session = null;
+        try
+        {
+            PreparedJdtLsOpenFailureException? openFailure = null;
+            try
+            {
+                session = await runtime.OpenAsync(lease, profile);
+            }
+            catch (PreparedJdtLsOpenFailureException exception)
+            {
+                openFailure = exception;
+            }
+
+            Assert.Null(openFailure);
+            Assert.NotNull(session);
+            Assert.Equal(1, resolver.CallCount);
+            Assert.Equal(1, launcher.CallCount);
+            Assert.Equal(1, protocols.CallCount);
+            await session.NavigateAsync(
+                PreparedJavaNavigationOperation.Definition,
+                new PreparedJavaNavigationRequest("src/main/java/Probe.java", 1, 1, 1));
+            Assert.Equal(1, protocols.Session.NavigateCallCount);
+
+            PreparedJdtCommandRequest commandRequest = Assert.IsType<PreparedJdtCommandRequest>(resolver.LastRequest);
+            Assert.Equal(Path.GetFullPath(fixture.PreparedRootPath), commandRequest.PreparedRoot);
+            Assert.Equal(Path.GetFullPath(stateRoot), commandRequest.DisposableStateRoot);
+            AssertHostPolicyValues(hostPolicy, commandRequest.FixedHostPolicy);
+
+            PreparedJdtLaunchRequest launchRequest = Assert.IsType<PreparedJdtLaunchRequest>(launcher.LastRequest);
+            Assert.Equal(Path.GetFullPath(fixture.PreparedRootPath), launchRequest.CanonicalPreparedRoot);
+            Assert.Equal(rootIdentity, launchRequest.RootIdentity);
+            string expectedRootUri = new Uri(
+                Path.GetFullPath(fixture.PreparedRootPath).TrimEnd(Path.DirectorySeparatorChar) +
+                Path.DirectorySeparatorChar).AbsoluteUri;
+            Assert.Equal(expectedRootUri, launchRequest.RootUri);
+            Assert.Equal(jdtScriptPath, launchRequest.Commands.JdtCommand.CanonicalAbsolutePath);
+            Assert.Equal(javaPath, launchRequest.Commands.JavaCommand.CanonicalAbsolutePath);
+            Assert.Equal(fixedInterpreter, launchRequest.Commands.FixedInterpreter);
+            Assert.Equal(new[] { "-data", launchRequest.DataPath }, launchRequest.FixedArguments.Take(2));
+            Assert.True(Path.IsPathFullyQualified(launchRequest.DataPath));
+            Assert.True(Path.IsPathFullyQualified(launchRequest.ConfigurationPath));
+            Assert.True(IsPathWithin(stateRoot, launchRequest.DataPath));
+            Assert.True(IsPathWithin(stateRoot, launchRequest.ConfigurationPath));
+            Assert.False(IsPathWithin(fixture.PreparedRootPath, launchRequest.DataPath));
+            Assert.False(IsPathWithin(fixture.PreparedRootPath, launchRequest.ConfigurationPath));
+            AssertHostPolicyValues(hostPolicy, launchRequest.FixedHostPolicy);
+            Assert.Equal(string.Join(Path.PathSeparator, hostPolicy.FixedChildPathEntries),
+                launchRequest.FixedChildEnvironment["PATH"]);
+            foreach (string variable in new[] { "TEMP", "TMP", "USERPROFILE" })
+            {
+                Assert.True(launchRequest.FixedChildEnvironment.TryGetValue(variable, out string? ownedPath));
+                Assert.True(Path.IsPathFullyQualified(ownedPath));
+                Assert.True(IsPathWithin(stateRoot, ownedPath));
+                Assert.False(IsPathWithin(fixture.PreparedRootPath, ownedPath));
+            }
+
+            PreparedJdtInitializeRequest initialize = Assert.IsType<PreparedJdtInitializeRequest>(protocols.LastRequest);
+            Assert.Equal(expectedRootUri, initialize.RootUri);
+            Assert.Equal(expectedRootUri, initialize.WorkspaceFolderUri);
+            Assert.Equal("repository", initialize.WorkspaceFolderName);
+            Assert.Equal(profile.MaximumResponseBytes, initialize.MaximumResponseBytes);
+            AssertFixedOfflineSettings(initialize.FixedSettings);
+        }
+        finally
+        {
+            if (session is not null)
+            {
+                await session.DisposeAsync();
+            }
+
+            await lease.DisposeAsync();
+        }
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task PreparedJdtLsRuntime_WhenSourceAuthorityIsRevokedDuringLaunchRequestPreparation_DoesNotLaunch()
+    {
+        await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
+        fixture.Authority.Approve(fixture.Approval);
+        var toolAuthorization = new ControlledPreparedToolUseAuthorizer(
+            fixture.Approval,
+            PreparedToolPurpose.JdtNavigation);
+        PreparedToolWorkspaceIssueResult issue = await new PreparedToolWorkspaceIssuer(
+            fixture.Authority,
+            toolAuthorization).IssueAsync(
+                new PreparedToolWorkspaceGrantRequest(
+                    fixture.Approval,
+                    fixture.PreparedRootPath,
+                    PreparedToolPurpose.JdtNavigation,
+                    TimeSpan.FromSeconds(10)));
+        Assert.Equal(PreparedToolWorkspaceIssueStatus.Issued, issue.Status);
+        PreparedToolWorkspaceLease lease = Assert.IsType<PreparedToolWorkspaceLease>(issue.Lease);
+
+        string stateRoot = Path.Combine(fixture.SiblingPath, "jdt-revocation-state");
+        string toolRoot = Path.Combine(fixture.SiblingPath, "controlled-jdt-revocation-tools");
+        Directory.CreateDirectory(stateRoot);
+        Directory.CreateDirectory(toolRoot);
+        string jdtScriptPath = Path.Combine(toolRoot, "jdtls.bat");
+        string javaPath = Path.Combine(toolRoot, "java.exe");
+        string cmdPath = Path.Combine(toolRoot, "cmd.exe");
+        await File.WriteAllTextAsync(jdtScriptPath, "@echo off\r\n");
+        await File.WriteAllTextAsync(javaPath, "controlled java executable fixture\n");
+        await File.WriteAllTextAsync(cmdPath, "controlled command interpreter fixture\n");
+        PreparedJdtPinnedFile jdtCommand = await ObservePinnedFileAsync(jdtScriptPath, 0);
+        PreparedJdtPinnedFile javaCommand = await ObservePinnedFileAsync(javaPath, 0);
+        PreparedJdtPinnedFile fixedInterpreter = await ObservePinnedFileAsync(cmdPath, null);
+
+        Assert.Equal(PreparedToolWorkspaceCheckStatus.Current, await lease.CheckCurrentAsync());
+        Assert.Equal(PreparedSourceAuthorityStatus.Current,
+            (await fixture.Authority.VerifyCurrentAsync(fixture.Approval)).Status);
+
+        var pathEntries = new RevokingPathEntries(toolRoot, fixture.Authority.Revoke);
+        var hostPolicy = new PreparedJdtHostPolicy(
+            [toolRoot],
+            [toolRoot],
+            cmdPath,
+            pathEntries);
+        var resolver = new RecordingPreparedJdtCommandResolver(
+            new PreparedJdtPinnedCommands(jdtCommand, javaCommand, fixedInterpreter));
+        var launcher = new RecordingPreparedJdtProcessLauncher();
+        var protocols = new RecordingPreparedJdtProtocolFactory();
+        var runtime = new PreparedJdtLsRuntime(
+            resolver,
+            launcher,
+            protocols,
+            hostPolicy);
+        var profile = new PreparedJavaNavigationProfile(
+            stateRoot,
+            TimeSpan.FromSeconds(5),
+            TimeSpan.FromSeconds(3),
+            TimeSpan.FromSeconds(2),
+            MaximumResponseBytes: 64 * 1024);
+
+        IPreparedJdtLsSession? session = null;
+        PreparedJdtLsOpenFailureException? openFailure = null;
+        try
+        {
+            try
+            {
+                session = await runtime.OpenAsync(lease, profile);
+            }
+            catch (PreparedJdtLsOpenFailureException exception)
+            {
+                openFailure = exception;
+            }
+
+            Assert.True(pathEntries.EnumerationCount > 0,
+                "The controlled PATH source must revoke authority during request construction.");
+            Assert.Equal(toolRoot, pathEntries.SingleValue);
+            Assert.Equal(PreparedSourceAuthorityStatus.Revoked,
+                (await fixture.Authority.VerifyCurrentAsync(fixture.Approval)).Status);
+            Assert.Null(session);
+            Assert.NotNull(openFailure);
+            Assert.Equal(PreparedJavaNavigationOpenStatus.ConfigurationUnavailable, openFailure.Status);
+            Assert.True(openFailure.CleanupConfirmed);
+            Assert.Equal(1, resolver.CallCount);
+            Assert.Equal(0, launcher.CallCount);
+            Assert.Equal(0, protocols.CallCount);
+
+            foreach (string pinnedPath in new[] { jdtScriptPath, javaPath, cmdPath })
+            {
+                using var releasedPin = new FileStream(
+                    pinnedPath,
+                    FileMode.Open,
+                    FileAccess.ReadWrite,
+                    FileShare.None);
+                Assert.True(releasedPin.CanRead);
+                Assert.True(releasedPin.CanWrite);
+            }
+        }
+        finally
+        {
+            if (session is not null)
+            {
+                await session.DisposeAsync();
+            }
+
+            await lease.DisposeAsync();
+        }
+    }
+
+    private static async Task<PreparedJdtPinnedFile> ObservePinnedFileAsync(
+        string path,
+        int? firstPathEntryIndex)
+    {
+        using Microsoft.Win32.SafeHandles.SafeFileHandle handle = File.OpenHandle(
+            path,
+            FileMode.Open,
+            FileAccess.Read,
+            FileShare.ReadWrite | FileShare.Delete);
+        PreparedSourceTraversal.FileIdentity identity = Assert.IsType<PreparedSourceTraversal.FileIdentity>(
+            PreparedSourceTraversal.ObserveFile(handle));
+        string digest = Convert.ToHexString(
+            System.Security.Cryptography.SHA256.HashData(await File.ReadAllBytesAsync(path)));
+        return new PreparedJdtPinnedFile(
+            Path.GetFullPath(path),
+            new PreparedJdtFileIdentity(
+                identity.VolumeSerialNumber,
+                identity.FileIndexHigh,
+                identity.FileIndexLow),
+            digest,
+            firstPathEntryIndex);
+    }
+
+    private static bool IsPathWithin(string root, string candidate)
+    {
+        string prefix = Path.GetFullPath(root).TrimEnd(Path.DirectorySeparatorChar) +
+            Path.DirectorySeparatorChar;
+        return Path.GetFullPath(candidate).StartsWith(prefix, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static void AssertHostPolicyValues(
+        PreparedJdtHostPolicy expected,
+        PreparedJdtHostPolicy actual)
+    {
+        Assert.Equal(expected.ApprovedExecutableDirectories.ToArray(),
+            actual.ApprovedExecutableDirectories.ToArray());
+        Assert.Equal(expected.DeclaredRuntimeReadRoots.ToArray(),
+            actual.DeclaredRuntimeReadRoots.ToArray());
+        Assert.Equal(expected.FixedCmdAbsolutePath, actual.FixedCmdAbsolutePath);
+        Assert.Equal(expected.FixedChildPathEntries.ToArray(),
+            actual.FixedChildPathEntries.ToArray());
+    }
+
+    private static void AssertFixedOfflineSettings(IReadOnlyDictionary<string, object> settings)
+    {
+        using JsonDocument json = JsonDocument.Parse(JsonSerializer.Serialize(settings));
+        JsonElement java = json.RootElement.GetProperty("java");
+        Assert.False(java.GetProperty("import").GetProperty("maven").GetProperty("enabled").GetBoolean());
+        Assert.False(java.GetProperty("import").GetProperty("gradle").GetProperty("enabled").GetBoolean());
+        Assert.True(java.GetProperty("import").GetProperty("maven").GetProperty("offline").GetProperty("enabled").GetBoolean());
+        Assert.True(java.GetProperty("import").GetProperty("gradle").GetProperty("offline").GetProperty("enabled").GetBoolean());
+        Assert.False(java.GetProperty("import").GetProperty("gradle").GetProperty("wrapper").GetProperty("enabled").GetBoolean());
+        Assert.False(java.GetProperty("autobuild").GetProperty("enabled").GetBoolean());
+        Assert.Equal("disabled", java.GetProperty("configuration").GetProperty("updateBuildConfiguration").GetString());
+        Assert.False(java.GetProperty("maven").GetProperty("downloadSources").GetBoolean());
+        Assert.False(java.GetProperty("maven").GetProperty("updateSnapshots").GetBoolean());
+    }
+
+    private sealed class RecordingPreparedJdtCommandResolver(PreparedJdtPinnedCommands commands)
+        : IPreparedJdtCommandResolver
+    {
+        public int CallCount { get; private set; }
+
+        public PreparedJdtCommandRequest? LastRequest { get; private set; }
+
+        public Task<PreparedJdtCommandResolution> ResolveAsync(
+            PreparedJdtCommandRequest request,
+            CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            CallCount++;
+            LastRequest = request;
+            return Task.FromResult(new PreparedJdtCommandResolution(
+                PreparedJdtCommandResolutionStatus.Pinned,
+                commands));
+        }
+    }
+
+    private sealed class RevokingPathEntries(
+        string singleValue,
+        Action revokeAuthority) : IReadOnlyList<string>
+    {
+        private int _enumerationCount;
+
+        public string SingleValue { get; } = singleValue;
+
+        public int EnumerationCount => Volatile.Read(ref _enumerationCount);
+
+        public int Count => 1;
+
+        public string this[int index] => index == 0
+            ? SingleValue
+            : throw new ArgumentOutOfRangeException(nameof(index));
+
+        public IEnumerator<string> GetEnumerator()
+        {
+            Interlocked.Increment(ref _enumerationCount);
+            revokeAuthority();
+            yield return SingleValue;
+        }
+
+        System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
+    }
+
+    private sealed class RecordingPreparedJdtProcessLauncher : IPreparedJdtProcessLauncher
+    {
+        public int CallCount { get; private set; }
+
+        public PreparedJdtLaunchRequest? LastRequest { get; private set; }
+
+        public Task<IJdtLsProcess> LaunchAsync(
+            PreparedToolWorkspaceLease workspaceLease,
+            PreparedJdtLaunchRequest request,
+            CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            CallCount++;
+            LastRequest = request;
+            return Task.FromResult<IJdtLsProcess>(new RecordingPreparedJdtProcess());
+        }
+    }
+
+    private sealed class RecordingPreparedJdtProtocolFactory : IPreparedJdtProtocolFactory
+    {
+        public RecordingPreparedJdtLsSession Session { get; } = new();
+
+        public int CallCount { get; private set; }
+
+        public PreparedJdtInitializeRequest? LastRequest { get; private set; }
+
+        public Task<IPreparedJdtLsSession> InitializeAsync(
+            IJdtLsProcess process,
+            PreparedJdtInitializeRequest request,
+            CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            CallCount++;
+            LastRequest = request;
+            return Task.FromResult<IPreparedJdtLsSession>(Session);
+        }
+    }
+
+    private sealed class RecordingPreparedJdtProcess : IJdtLsProcess
+    {
+        public Stream StandardInput => Stream.Null;
+
+        public Stream StandardOutput => Stream.Null;
+
+        public Task<string> ReadBoundedStandardErrorAsync(int byteLimit, CancellationToken cancellationToken) =>
+            Task.FromResult(string.Empty);
+
+        public Task<int> WaitForExitAsync(TimeSpan timeout, CancellationToken cancellationToken) =>
+            Task.FromResult(0);
+
+        public Task KillTreeAsync(CancellationToken cancellationToken) => Task.CompletedTask;
+
+        public ValueTask DisposeAsync() => ValueTask.CompletedTask;
+    }
+
     private sealed class ControlledPreparedJdtLsRuntime : IPreparedJdtLsRuntime
     {
         public RecordingPreparedJdtLsSession Session { get; } = new();
