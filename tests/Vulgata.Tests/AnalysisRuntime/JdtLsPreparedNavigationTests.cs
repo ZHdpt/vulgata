@@ -3019,6 +3019,105 @@ public sealed class JdtLsPreparedNavigationTests
         }
     }
 
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task PreparedJdtLsRuntime_WhenProtocolInitializationReturnsSessionAfterCancellation_SettlesLateSession()
+    {
+        await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
+        fixture.Authority.Approve(fixture.Approval);
+        var toolAuthorization = new ControlledPreparedToolUseAuthorizer(
+            fixture.Approval,
+            PreparedToolPurpose.JdtNavigation);
+        PreparedToolWorkspaceIssueResult issue = await new PreparedToolWorkspaceIssuer(
+            fixture.Authority,
+            toolAuthorization).IssueAsync(
+                new PreparedToolWorkspaceGrantRequest(
+                    fixture.Approval,
+                    fixture.PreparedRootPath,
+                    PreparedToolPurpose.JdtNavigation,
+                    TimeSpan.FromSeconds(10)));
+        Assert.Equal(PreparedToolWorkspaceIssueStatus.Issued, issue.Status);
+        PreparedToolWorkspaceLease lease = Assert.IsType<PreparedToolWorkspaceLease>(issue.Lease);
+
+        string stateRoot = Path.Combine(fixture.SiblingPath, "jdt-late-protocol-state");
+        string toolRoot = Path.Combine(fixture.SiblingPath, "controlled-jdt-late-protocol-tools");
+        Directory.CreateDirectory(stateRoot);
+        Directory.CreateDirectory(toolRoot);
+        string jdtScriptPath = Path.Combine(toolRoot, "jdtls.bat");
+        string javaPath = Path.Combine(toolRoot, "java.exe");
+        string cmdPath = Path.Combine(toolRoot, "cmd.exe");
+        await File.WriteAllTextAsync(jdtScriptPath, "@echo off\r\n");
+        await File.WriteAllTextAsync(javaPath, "controlled java executable fixture\n");
+        await File.WriteAllTextAsync(cmdPath, "controlled command interpreter fixture\n");
+        PreparedJdtPinnedFile jdtCommand = await ObservePinnedFileAsync(jdtScriptPath, 0);
+        PreparedJdtPinnedFile javaCommand = await ObservePinnedFileAsync(javaPath, 0);
+        PreparedJdtPinnedFile fixedInterpreter = await ObservePinnedFileAsync(cmdPath, null);
+        var hostPolicy = new PreparedJdtHostPolicy(
+            [toolRoot],
+            [toolRoot],
+            cmdPath,
+            [toolRoot]);
+        var resolver = new RecordingPreparedJdtCommandResolver(
+            new PreparedJdtPinnedCommands(jdtCommand, javaCommand, fixedInterpreter));
+        var process = new TrackedLatePreparedJdtProcess();
+        var launcher = new ReturningTrackedPreparedJdtProcessLauncher(process);
+        var protocols = new LateReturningPreparedJdtProtocolFactory();
+        var runtime = new PreparedJdtLsRuntime(resolver, launcher, protocols, hostPolicy);
+        var profile = new PreparedJavaNavigationProfile(
+            stateRoot,
+            TimeSpan.FromSeconds(30),
+            TimeSpan.FromSeconds(3),
+            TimeSpan.FromSeconds(1),
+            MaximumResponseBytes: 64 * 1024);
+        using var cancellation = new CancellationTokenSource();
+        Task<IPreparedJdtLsSession>? openTask = null;
+
+        try
+        {
+            Task<IPreparedJdtLsSession> opening = runtime.OpenAsync(lease, profile, cancellation.Token);
+            openTask = opening;
+            await protocols.InitializeStarted.Task.WaitAsync(TimeSpan.FromSeconds(5));
+            cancellation.Cancel();
+
+            PreparedJdtLsOpenFailureException failure = await Assert.ThrowsAsync<PreparedJdtLsOpenFailureException>(
+                async () => await opening.WaitAsync(TimeSpan.FromSeconds(5)));
+
+            Assert.Equal(PreparedJavaNavigationOpenStatus.Cancelled, failure.Status);
+            Assert.False(failure.CleanupConfirmed,
+                "The protocol initialization task is still responsible for any session it later returns.");
+            Assert.True(process.KillCallCount > 0);
+            Assert.True(process.WaitCallCount > 0);
+            Assert.True(process.DisposeCallCount > 0);
+            Assert.Equal(1, launcher.CallCount);
+            Assert.Equal(1, protocols.CallCount);
+
+            protocols.ReturnSession();
+            await protocols.Session.Disposed.Task.WaitAsync(TimeSpan.FromSeconds(5));
+            Assert.True(protocols.Session.DisposeCallCount > 0);
+            foreach (string pinnedPath in new[] { jdtScriptPath, javaPath, cmdPath })
+            {
+                await AssertPinnedFileReleasedAsync(pinnedPath);
+            }
+        }
+        finally
+        {
+            cancellation.Cancel();
+            protocols.ReturnSession();
+            if (openTask is not null && !openTask.IsCompleted)
+            {
+                try
+                {
+                    await openTask.WaitAsync(TimeSpan.FromSeconds(5));
+                }
+                catch (PreparedJdtLsOpenFailureException)
+                {
+                }
+            }
+
+            await lease.DisposeAsync();
+        }
+    }
+
     private static async Task<PreparedJdtPinnedFile> ObservePinnedFileAsync(
         string path,
         int? firstPathEntryIndex)
@@ -3048,6 +3147,37 @@ public sealed class JdtLsPreparedNavigationTests
             Path.DirectorySeparatorChar;
         return Path.GetFullPath(candidate).StartsWith(prefix, StringComparison.OrdinalIgnoreCase);
     }
+
+    private static async Task AssertPinnedFileReleasedAsync(string path)
+    {
+        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+        while (true)
+        {
+            if (timeout.IsCancellationRequested)
+            {
+                throw new TimeoutException("The runtime did not release a pinned command file.");
+            }
+
+            try
+            {
+                using var releasedPin = new FileStream(
+                    path,
+                    FileMode.Open,
+                    FileAccess.ReadWrite,
+                    FileShare.None);
+                Assert.True(releasedPin.CanRead);
+                Assert.True(releasedPin.CanWrite);
+                return;
+            }
+            catch (IOException exception) when (IsWindowsShareOrLockViolation(exception))
+            {
+                await Task.Yield();
+            }
+        }
+    }
+
+    private static bool IsWindowsShareOrLockViolation(IOException exception) =>
+        (exception.HResult & 0xFFFF) is 32 or 33;
 
     private static void AssertHostPolicyValues(
         PreparedJdtHostPolicy expected,
@@ -3163,6 +3293,70 @@ public sealed class JdtLsPreparedNavigationTests
         }
 
         public void ReturnProcess() => _returnProcess.TrySetResult(lateProcess);
+    }
+
+    private sealed class ReturningTrackedPreparedJdtProcessLauncher(
+        IJdtLsProcess process) : IPreparedJdtProcessLauncher
+    {
+        public int CallCount { get; private set; }
+
+        public Task<IJdtLsProcess> LaunchAsync(
+            PreparedToolWorkspaceLease workspaceLease,
+            PreparedJdtLaunchRequest request,
+            CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            CallCount++;
+            return Task.FromResult(process);
+        }
+    }
+
+    private sealed class LateReturningPreparedJdtProtocolFactory : IPreparedJdtProtocolFactory
+    {
+        private readonly TaskCompletionSource<IPreparedJdtLsSession> _returnSession =
+            new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        public TrackedLatePreparedJdtLsSession Session { get; } = new();
+
+        public TaskCompletionSource<bool> InitializeStarted { get; } =
+            new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        public int CallCount { get; private set; }
+
+        public Task<IPreparedJdtLsSession> InitializeAsync(
+            IJdtLsProcess process,
+            PreparedJdtInitializeRequest request,
+            CancellationToken cancellationToken)
+        {
+            CallCount++;
+            InitializeStarted.TrySetResult(true);
+            return _returnSession.Task;
+        }
+
+        public void ReturnSession() => _returnSession.TrySetResult(Session);
+    }
+
+    private sealed class TrackedLatePreparedJdtLsSession : IPreparedJdtLsSession
+    {
+        private int _disposeCallCount;
+
+        public TaskCompletionSource<bool> Disposed { get; } =
+            new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        public int DisposeCallCount => Volatile.Read(ref _disposeCallCount);
+
+        public Task<PreparedJdtLsRawReply> NavigateAsync(
+            PreparedJavaNavigationOperation operation,
+            PreparedJavaNavigationRequest request,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult(new PreparedJdtLsRawReply([], false, null));
+
+        public ValueTask DisposeAsync()
+        {
+            Interlocked.Increment(ref _disposeCallCount);
+            Disposed.TrySetResult(true);
+            return ValueTask.CompletedTask;
+        }
     }
 
     private sealed class TrackedLatePreparedJdtProcess : IJdtLsProcess
