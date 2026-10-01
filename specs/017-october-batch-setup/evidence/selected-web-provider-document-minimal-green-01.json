@@ -1,0 +1,23 @@
+{
+  "kind": "test-green",
+  "stage": "implement",
+  "outcome": "passed",
+  "source_commit": "784e5303514f77c45f542dcf83d47544b44cae24",
+  "red_path": "specs/017-october-batch-setup/evidence/selected-web-provider-document-red-01.json",
+  "command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName~SelectedDataStartup_RejectsInvalidProviderDocumentBeforeAuthentication'",
+  "exit_code": 0,
+  "selected": 1,
+  "passed": 1,
+  "failed": 0,
+  "skipped": 0,
+  "trx_path": "TestResults/isolation-e523d62282aa4be4b036cbed562eaaa1/results.trx",
+  "trx_sha256": "10f74a6801c6305421a129dcb0b0c25ba6ec44e60e3d025acdbb765426916b42",
+  "production_sha256": "3115ef1fae23830392b36a4aa776b0414e9362cee2e798a87ce20e1a62a52bdb",
+  "owner_reply": "Selected-Web invalid-provider-document tracer GREEN1/1. Only Program.cs changed. Selected-data reads explicit provider JSON, parses accepted API names, invokes existing binder before authentication; invalid input sanitized, ordinary skips. Private parser/startup order cohesive, no refactor needed. Valid-host binding, duplicate/conflicting sources, generator wiring and runtime remain unverified.",
+  "limitations": "Minimal negative-host tracer only, not complete provider loader/startup qualification or T023/T024 completion.",
+  "recovery": {
+    "failed_results": 6,
+    "pause_at": 7,
+    "incremented": false
+  }
+}

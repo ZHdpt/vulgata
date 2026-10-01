@@ -1,0 +1,34 @@
+{
+  "observed_after": {
+    "path": "specs/017-october-batch-setup/evidence/transitions/transition-0083-provider-cancellation-expected-red.json",
+    "sha256": "011fb8a28db9127cd53d0506c0051bcde0812375ccc9a4af08d2f7dd1b4421a0"
+  },
+  "raw_result": {
+    "kind": "test-red",
+    "stage": "implement",
+    "outcome": "expected-red",
+    "source_commit": "784e5303514f77c45f542dcf83d47544b44cae24",
+    "command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName~SelectedDataStartup_RejectsInvalidProviderDocumentBeforeAuthentication'",
+    "exit_code": 1,
+    "discovered": 3077,
+    "selected": 1,
+    "passed": 0,
+    "failed": 1,
+    "skipped": 0,
+    "trx_path": "TestResults/isolation-33a8867be31541da92be417e9ae3199a/results.trx",
+    "trx_sha256": "2a2c43d598594f519ae5849fe3b8de7733a77356e8374c03ebfafab390ed66ce",
+    "input_hashes": {
+      "tests/Vulgata.Tests/October/OctoberHostCompositionTests.cs": "84fb9db7a52690ca6fabdad3f3c1b39c13aa61da4911602fa0dc3711a6d8311d",
+      "src/dotnet/Vulgata.Web/Program.cs": "899efe8e5755c44cc58ac9ec70bcb81a37912462b03943cddc9b5ef6c68eeac9",
+      "src/dotnet/Vulgata.Infrastructure/Configuration/OctoberProviderBinder.cs": "7b28f61339d57d819cfa1e9f6024c4ec0397faafde95f62706d67df1c6d67870"
+    },
+    "failure": "Ordinary WAF starts with invalid explicit provider document, as required. Selected-data WAF also starts instead of rejecting it. Assert.NotNull(startupFailure) failed; sanitization/preauthentication assertions NOT reached. Build0errors, no fixture failure; current Program lacks provider startup handling.",
+    "scope": "One actual selected-Web startup behavioral tracer via existing WAF/finalconfiguration ownedSQLite; no runtime/process/PG/provider execution.",
+    "recovery": {
+      "failed_results": 6,
+      "pause_at": 7,
+      "incremented": false,
+      "reason": "Expected development RED is noncounting."
+    }
+  }
+}

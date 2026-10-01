@@ -1,4 +1,8 @@
 using System.Collections.Immutable;
+using System.Text;
+using System.Text.Json;
+using System.Text.Json.Nodes;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -127,6 +131,11 @@ public sealed class OctoberHostCompositionTests
             SelectedWebNpgsqlConnection,
             baselineFactory.ConnectionString,
             selectedDataFactory.ConnectionString);
+        using OwnedProviderDocument providerDocument = await OwnedProviderDocument.CreateAsync();
+        List<string> startupEvents = [];
+        RecordingSecretEncryptionService? recordingEncryption = null;
+        CountingSelectedWebCredentialSource credentialSource = new(
+            SelectedWebUserName, SelectedWebPassword, startupEvents);
         ProductionNpgsqlDeclarations? productionDeclarations = null;
         using WebApplicationFactory<Program> selectedFactory = new WebApplicationFactory<Program>()
             .WithWebHostBuilder(builder =>
@@ -140,18 +149,46 @@ public sealed class OctoberHostCompositionTests
                 });
                 configuration.AddInMemoryCollection(
                     CreateSelectedWebConfiguration(SelectedWebNpgsqlConnection));
+                configuration.AddInMemoryCollection(new Dictionary<string, string?>
+                {
+                    ["October:Providers:ConfigurationFile"] = providerDocument.ConfigurationFilePath,
+                    ["DataProtection:KeyRingPath"] = providerDocument.KeyRingPath,
+                    ["DataProtection:ApplicationName"] = providerDocument.ApplicationName
+                });
+                configuration.AddInMemoryCollection(new Dictionary<string, string?>
+                {
+                    ["October:Providers:ConfigurationFile"] = providerDocument.ConfigurationFilePath
+                });
             });
             builder.ConfigureTestServices(services =>
             {
                 productionDeclarations = CaptureProductionNpgsqlDeclarations(services);
                 services.RemoveAll<IOctoberOperatorCredentialSource>();
-                services.AddSingleton<IOctoberOperatorCredentialSource>(
-                    new SelectedWebCredentialSource(SelectedWebUserName, SelectedWebPassword));
+                services.AddSingleton<IOctoberOperatorCredentialSource>(credentialSource);
+                services.RemoveAll<IDataProtectionProvider>();
+                services.AddSingleton(providerDocument.DataProtectionProvider);
+                services.RemoveAll<ISecretEncryptionService>();
+                services.AddSingleton<ISecretEncryptionService>(_ =>
+                    recordingEncryption = new RecordingSecretEncryptionService(
+                        new SecretEncryptionService(providerDocument.DataProtectionProvider),
+                        startupEvents));
                 ReplaceSelectedWebSqliteOptions(services, productionDeclarations, translation);
             });
         });
 
         using HttpClient selectedClient = selectedFactory.CreateClient();
+        RecordingSecretEncryptionService actualEncryption =
+            Assert.IsType<RecordingSecretEncryptionService>(recordingEncryption);
+        Assert.Equal(2, actualEncryption.Decryptions.Count);
+        Assert.All(actualEncryption.Decryptions,
+            decryption => Assert.Equal("Vulgata.LlmProviders.ApiKey", decryption.Purpose));
+        Assert.Contains(providerDocument.WorkerCiphertext,
+            actualEncryption.Decryptions.Select(decryption => decryption.Ciphertext));
+        Assert.Contains(providerDocument.ChatCiphertext,
+            actualEncryption.Decryptions.Select(decryption => decryption.Ciphertext));
+        Assert.Equal(new[] { "provider-decrypt", "provider-decrypt", "operator-credentials" },
+            startupEvents.ToArray());
+        Assert.Equal(1, credentialSource.ReadCount);
         OctoberLegacyAuthorityRoutes.AssertAbsent(
             selectedFactory.Services,
             OctoberLegacyAuthorityRoutes.BatchActivationIssue,
@@ -159,7 +196,14 @@ public sealed class OctoberHostCompositionTests
             OctoberLegacyAuthorityRoutes.PreparedSourceApprovalIssue,
             OctoberLegacyAuthorityRoutes.PreparedSourceApprovalVerification);
         using IServiceScope scope = selectedFactory.Services.CreateScope();
-        IConfiguration finalConfiguration = scope.ServiceProvider.GetRequiredService<IConfiguration>();
+        IConfigurationRoot finalConfiguration = Assert.IsAssignableFrom<IConfigurationRoot>(
+            scope.ServiceProvider.GetRequiredService<IConfiguration>());
+        await providerDocument.WriteAlternativeValidDocumentAsync();
+        finalConfiguration.Reload();
+        Assert.Equal(providerDocument.ConfigurationFilePath,
+            finalConfiguration["October:Providers:ConfigurationFile"]);
+        Assert.Equal(2, actualEncryption.Decryptions.Count);
+        Assert.Equal(1, credentialSource.ReadCount);
         string selectedConnection = finalConfiguration.GetConnectionString("DefaultConnection")!;
         Assert.Equal(SelectedWebNpgsqlConnection, selectedConnection);
         Assert.NotEqual(BaselineWebNpgsqlConnection, selectedConnection);
@@ -203,6 +247,109 @@ public sealed class OctoberHostCompositionTests
             factoryContext.Database.GetDbConnection().ConnectionString);
     }
 
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task SelectedDataStartup_RejectsInvalidProviderDocumentBeforeAuthentication()
+    {
+        using OwnedProviderDocument providerDocument =
+            await OwnedProviderDocument.CreateAsync("unknown-api-type");
+        using LoginLogoutTests.CustomWebApplicationFactory ordinaryBaseFactory = new();
+        using WebApplicationFactory<Program> ordinaryFactory = ordinaryBaseFactory.WithWebHostBuilder(builder =>
+            builder.ConfigureAppConfiguration((_, configuration) =>
+                configuration.AddInMemoryCollection(new Dictionary<string, string?>
+                {
+                    ["October:Providers:ConfigurationFile"] = providerDocument.ConfigurationFilePath
+                })));
+        using HttpClient ordinaryClient = ordinaryFactory.CreateClient();
+        using (IServiceScope scope = ordinaryFactory.Services.CreateScope())
+        {
+            Assert.Equal(OctoberWebMode.Ordinary,
+                scope.ServiceProvider.GetRequiredService<OctoberWebStartupSelection>().Mode);
+        }
+
+        SelectedWebStartupAttempt attempt = await AttemptSelectedDataStartupAsync(providerDocument);
+        AssertRejectedProviderDocument(attempt, providerDocument);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData("duplicate-root-property")]
+    [InlineData("unknown-root-property")]
+    [InlineData("duplicate-profile-property")]
+    [InlineData("unknown-profile-property")]
+    public async Task SelectedDataStartup_RejectsDuplicateOrUnknownProviderPropertiesAtomically(
+        string schemaViolation)
+    {
+        using OwnedProviderDocument providerDocument =
+            await OwnedProviderDocument.CreateAsync(schemaViolation);
+
+        SelectedWebStartupAttempt attempt = await AttemptSelectedDataStartupAsync(providerDocument);
+
+        AssertRejectedProviderDocument(attempt, providerDocument);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task SelectedDataStartup_RejectsDistinctProviderFileSelectorsBeforeCredentialWork()
+    {
+        using OwnedProviderDocument providerDocument = await OwnedProviderDocument.CreateAsync();
+        string competingSelectorPath = providerDocument.CreateAlternateSelectorFile();
+
+        SelectedWebStartupAttempt attempt = await AttemptSelectedDataStartupAsync(
+            providerDocument, competingSelectorPath);
+
+        AssertRejectedProviderDocument(attempt, providerDocument);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task SelectedDataStartup_RejectsCompetingProviderSourceIdentityBeforeCredentialWork()
+    {
+        using OwnedProviderDocument providerDocument = await OwnedProviderDocument.CreateAsync();
+
+        SelectedWebStartupAttempt attempt = await AttemptSelectedDataStartupAsync(
+            providerDocument,
+            competingProviderSourceIdentity: "selected-web-provider-source-override");
+
+        AssertRejectedProviderDocument(attempt, providerDocument);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteTheory("SelfContained")]
+    [InlineData("malformed-json")]
+    [InlineData("missing-file")]
+    [InlineData("wrong-required-type")]
+    [InlineData("malformed-utf8-source-identity")]
+    public async Task SelectedDataStartup_RejectsMalformedOrUnreadableProviderDocumentBeforeCredentialWork(
+        string documentFailure)
+    {
+        string? documentVariant = documentFailure == "missing-file" ? null : documentFailure;
+        using OwnedProviderDocument providerDocument = await OwnedProviderDocument.CreateAsync(documentVariant);
+        if (documentFailure == "missing-file")
+            File.Delete(providerDocument.ConfigurationFilePath);
+
+        SelectedWebStartupAttempt attempt = await AttemptSelectedDataStartupAsync(providerDocument);
+
+        AssertRejectedProviderDocument(attempt, providerDocument);
+    }
+
+    private static void AssertRejectedProviderDocument(
+        SelectedWebStartupAttempt attempt,
+        OwnedProviderDocument providerDocument)
+    {
+        Assert.True(attempt.DecryptionCount == 0 && attempt.CredentialReadCount == 0,
+            $"Rejected provider documents must stop before credential work " +
+            $"(decryptions={attempt.DecryptionCount}, credentialReads={attempt.CredentialReadCount}).");
+        Exception startupFailure = Assert.IsType<InvalidOperationException>(attempt.StartupFailure);
+        string failureDetails = startupFailure.ToString();
+        Assert.True(failureDetails.Contains("provider", StringComparison.OrdinalIgnoreCase),
+            "Selected-data startup should classify the rejected provider document.");
+        Assert.True(failureDetails.Contains("configuration", StringComparison.OrdinalIgnoreCase),
+            "Selected-data startup should report a sanitized configuration failure.");
+        Assert.DoesNotContain(providerDocument.WorkerCiphertext, failureDetails, StringComparison.Ordinal);
+        Assert.DoesNotContain(providerDocument.ChatCiphertext, failureDetails, StringComparison.Ordinal);
+    }
+
     private static Dictionary<string, string?> CreateSelectedWebConfiguration(string selectedConnection) =>
         new(StringComparer.Ordinal)
         {
@@ -222,6 +369,85 @@ public sealed class OctoberHostCompositionTests
             ["October:Web:AllowedTargets"] = null,
             ["October:Web:GeneratorCertificates"] = null
         };
+
+    private static async Task<SelectedWebStartupAttempt> AttemptSelectedDataStartupAsync(
+        OwnedProviderDocument providerDocument,
+        string? competingSelectorPath = null,
+        string? competingProviderSourceIdentity = null)
+    {
+        using LoginLogoutTests.CustomWebApplicationFactory selectedDataFactory = new();
+        using HttpClient selectedDataClient = selectedDataFactory.CreateClient();
+        await SeedSelectedWebBatchAsync(
+            selectedDataFactory, SelectedWebAuthorityId, SelectedWebCanonicalDatabaseIdentity,
+            SelectedWebTargetId, SelectedWebBatchId);
+
+        SelectedWebConnectionTranslation translation = new(
+            BaselineWebNpgsqlConnection,
+            SelectedWebNpgsqlConnection,
+            selectedDataFactory.ConnectionString,
+            selectedDataFactory.ConnectionString);
+        List<string> startupEvents = [];
+        ProductionNpgsqlDeclarations? productionDeclarations = null;
+        RecordingSecretEncryptionService? recordingEncryption = null;
+        CountingSelectedWebCredentialSource credentialSource = new(
+            SelectedWebUserName, SelectedWebPassword, startupEvents);
+        using WebApplicationFactory<Program> selectedFactory = new WebApplicationFactory<Program>()
+            .WithWebHostBuilder(builder =>
+            {
+                builder.UseEnvironment("Development");
+                builder.ConfigureAppConfiguration((_, configuration) =>
+                {
+                    configuration.AddInMemoryCollection(new Dictionary<string, string?>
+                    {
+                        ["ConnectionStrings:DefaultConnection"] = BaselineWebNpgsqlConnection
+                    });
+                    configuration.AddInMemoryCollection(
+                        CreateSelectedWebConfiguration(SelectedWebNpgsqlConnection));
+                    configuration.AddInMemoryCollection(new Dictionary<string, string?>
+                    {
+                        ["October:Providers:ConfigurationFile"] = providerDocument.ConfigurationFilePath,
+                        ["DataProtection:KeyRingPath"] = providerDocument.KeyRingPath,
+                        ["DataProtection:ApplicationName"] = providerDocument.ApplicationName
+                    });
+                    if (competingSelectorPath is not null)
+                    {
+                        configuration.AddInMemoryCollection(new Dictionary<string, string?>
+                        {
+                            ["October:Providers:ConfigurationFile"] = competingSelectorPath
+                        });
+                    }
+                    if (competingProviderSourceIdentity is not null)
+                    {
+                        configuration.AddInMemoryCollection(new Dictionary<string, string?>
+                        {
+                            ["October:Providers:SourceIdentity"] = competingProviderSourceIdentity
+                        });
+                    }
+                });
+                builder.ConfigureTestServices(services =>
+                {
+                    productionDeclarations = CaptureProductionNpgsqlDeclarations(services);
+                    services.RemoveAll<IOctoberOperatorCredentialSource>();
+                    services.AddSingleton<IOctoberOperatorCredentialSource>(credentialSource);
+                    services.RemoveAll<IDataProtectionProvider>();
+                    services.AddSingleton(providerDocument.DataProtectionProvider);
+                    services.RemoveAll<ISecretEncryptionService>();
+                    services.AddSingleton<ISecretEncryptionService>(_ =>
+                        recordingEncryption = new RecordingSecretEncryptionService(
+                            new SecretEncryptionService(providerDocument.DataProtectionProvider),
+                            startupEvents));
+                    ReplaceSelectedWebSqliteOptions(
+                        services, productionDeclarations, translation);
+                });
+            });
+
+        Exception? startupFailure = Record.Exception(() =>
+        {
+            using HttpClient selectedClient = selectedFactory.CreateClient();
+        });
+        return new SelectedWebStartupAttempt(
+            startupFailure, recordingEncryption?.Decryptions.Count ?? 0, credentialSource.ReadCount);
+    }
 
     private static async Task<string> SeedSelectedWebBatchAsync(
         LoginLogoutTests.CustomWebApplicationFactory factory,
@@ -421,6 +647,11 @@ public sealed class OctoberHostCompositionTests
         ImmutableArray<IDbContextOptionsConfiguration<ApplicationDbContext>> Identity,
         ImmutableArray<IDbContextOptionsConfiguration<VulgataDbContext>> Management);
 
+    private sealed record SelectedWebStartupAttempt(
+        Exception? StartupFailure,
+        int DecryptionCount,
+        int CredentialReadCount);
+
     private sealed record SelectedWebConnectionTranslation(
         string BaselineNpgsqlConnection,
         string SelectedNpgsqlConnection,
@@ -443,14 +674,239 @@ public sealed class OctoberHostCompositionTests
         public object? GetService(Type serviceType) => null;
     }
 
-    private sealed class SelectedWebCredentialSource(string userName, string password)
+    private sealed class CountingSelectedWebCredentialSource(
+        string userName,
+        string password,
+        ICollection<string>? events = null)
         : IOctoberOperatorCredentialSource
     {
+        private int _readCount;
+
+        public int ReadCount => Volatile.Read(ref _readCount);
+
         public ValueTask<OctoberOperatorCredentials?> ReadAsync(CancellationToken cancellationToken)
         {
+            Interlocked.Increment(ref _readCount);
+            events?.Add("operator-credentials");
             cancellationToken.ThrowIfCancellationRequested();
             return ValueTask.FromResult<OctoberOperatorCredentials?>(
                 new OctoberOperatorCredentials(userName, password));
+        }
+    }
+
+    private sealed class RecordingSecretEncryptionService(
+        ISecretEncryptionService inner,
+        ICollection<string> events) : ISecretEncryptionService
+    {
+        public List<(string Purpose, string Ciphertext)> Decryptions { get; } = [];
+
+        public Task<string> EncryptAsync(
+            string purpose,
+            string plain,
+            CancellationToken cancellationToken = default) =>
+            inner.EncryptAsync(purpose, plain, cancellationToken);
+
+        public Task<string> DecryptAsync(
+            string purpose,
+            string cipher,
+            CancellationToken cancellationToken = default)
+        {
+            Decryptions.Add((purpose, cipher));
+            events.Add("provider-decrypt");
+            return inner.DecryptAsync(purpose, cipher, cancellationToken);
+        }
+    }
+
+    private sealed class OwnedProviderDocument(
+        string directoryPath,
+        string configurationFilePath,
+        string keyRingPath,
+        string applicationName,
+        ServiceProvider protectionServices,
+        IDataProtectionProvider dataProtectionProvider,
+        string workerCiphertext,
+        string chatCiphertext) : IDisposable
+    {
+        public string ConfigurationFilePath { get; } = configurationFilePath;
+        public string KeyRingPath { get; } = keyRingPath;
+        public string ApplicationName { get; } = applicationName;
+        public IDataProtectionProvider DataProtectionProvider { get; } = dataProtectionProvider;
+        public string WorkerCiphertext { get; } = workerCiphertext;
+        public string ChatCiphertext { get; } = chatCiphertext;
+
+        public string CreateAlternateSelectorFile()
+        {
+            string alternatePath = Path.Combine(directoryPath, "providers-alternate.json");
+            File.Copy(configurationFilePath, alternatePath);
+            return alternatePath;
+        }
+
+        public async Task WriteAlternativeValidDocumentAsync()
+        {
+            JsonObject document = JsonNode.Parse(
+                await File.ReadAllTextAsync(configurationFilePath))?.AsObject() ??
+                throw new InvalidOperationException("The owned provider document was not a JSON object.");
+            document["sourceIdentity"] = "selected-web-provider-after-startup";
+            JsonArray profiles = document["profiles"]?.AsArray() ??
+                throw new InvalidOperationException("The owned provider profiles were not an array.");
+            JsonObject worker = profiles[0]?.AsObject() ??
+                throw new InvalidOperationException("The owned worker profile was not an object.");
+            worker["model"] = "worker-model-after-startup";
+            await File.WriteAllTextAsync(
+                configurationFilePath, document.ToJsonString(),
+                new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
+        }
+
+        public static async Task<OwnedProviderDocument> CreateAsync(string? documentVariant = null)
+        {
+            const string applicationName = "Vulgata.Tests.October.ProviderStartup";
+            const string purpose = "Vulgata.LlmProviders.ApiKey";
+            string directoryPath = Path.Combine(
+                Path.GetTempPath(), $"vulgata-provider-startup-{Guid.NewGuid():N}");
+            string keyRingPath = Path.Combine(directoryPath, "keys");
+            string configurationFilePath = Path.Combine(directoryPath, "providers.json");
+            Directory.CreateDirectory(keyRingPath);
+            ServiceProvider? providerToDispose = null;
+
+            try
+            {
+                ServiceCollection services = new();
+                services.AddDataProtection()
+                    .PersistKeysToFileSystem(new DirectoryInfo(keyRingPath))
+                    .SetApplicationName(applicationName);
+                ServiceProvider provider = services.BuildServiceProvider();
+                providerToDispose = provider;
+                SecretEncryptionService encryption = new(
+                    provider.GetRequiredService<IDataProtectionProvider>());
+                string workerCiphertext = await encryption.EncryptAsync(
+                    purpose, "synthetic-worker-api-key");
+                string chatCiphertext = await encryption.EncryptAsync(
+                    purpose, "synthetic-chat-api-key");
+                string document = JsonSerializer.Serialize(new
+                {
+                    sourceIdentity = "selected-web-provider-startup-test",
+                    precedence = "only-source",
+                    workerProfile = "worker-primary",
+                    chatProfile = "chat-primary",
+                    profiles = new[]
+                    {
+                        new
+                        {
+                            name = "worker-primary",
+                            apiType = "chat-completions",
+                            endpoint = "https://worker.example.test/v1",
+                            model = "worker-model",
+                            credentialReference = "worker-key"
+                        },
+                        new
+                        {
+                            name = "chat-primary",
+                            apiType = "responses",
+                            endpoint = "https://chat.example.test/v1",
+                            model = "chat-model",
+                            credentialReference = "chat-key"
+                        }
+                    },
+                    protectedCredentials = new Dictionary<string, string>(StringComparer.Ordinal)
+                    {
+                        ["worker-key"] = workerCiphertext,
+                        ["chat-key"] = chatCiphertext
+                    }
+                });
+                document = documentVariant switch
+                {
+                    null => document,
+                    "unknown-api-type" => ReplaceRequired(
+                        document,
+                        "\"apiType\":\"chat-completions\"",
+                        "\"apiType\":\"unknown-provider-type\""),
+                    "malformed-json" => ReplaceRequired(
+                        document,
+                        "\"precedence\":\"only-source\"",
+                        "\"precedence\" \"only-source\""),
+                    "wrong-required-type" => ReplaceRequired(
+                        document,
+                        "\"sourceIdentity\":\"selected-web-provider-startup-test\"",
+                        "\"sourceIdentity\":42"),
+                    "malformed-utf8-source-identity" => document,
+                    "duplicate-root-property" => ReplaceRequired(
+                        document,
+                        "\"sourceIdentity\":\"selected-web-provider-startup-test\"",
+                        "\"sourceIdentity\":\"selected-web-provider-startup-test\",\"sourceIdentity\":\"selected-web-provider-duplicate\""),
+                    "unknown-root-property" => document.Insert(
+                        1, "\"unexpectedRootProperty\":\"unused\","),
+                    "duplicate-profile-property" => ReplaceRequired(
+                        document,
+                        "\"model\":\"worker-model\"",
+                        "\"model\":\"worker-model\",\"model\":\"worker-model\""),
+                    "unknown-profile-property" => ReplaceRequired(
+                        document,
+                        "\"model\":\"worker-model\"",
+                        "\"model\":\"worker-model\",\"unexpectedProfileProperty\":\"unused\""),
+                    _ => throw new ArgumentOutOfRangeException(nameof(documentVariant), documentVariant, null)
+                };
+                if (documentVariant == "malformed-utf8-source-identity")
+                {
+                    byte[] documentBytes = Encoding.UTF8.GetBytes(document);
+                    byte[] identityBytes = Encoding.UTF8.GetBytes("selected-web-provider-startup-test");
+                    int identityStart = FindSequenceIndex(documentBytes, identityBytes);
+                    if (identityStart < 0)
+                        throw new InvalidOperationException("The provider source identity was not found in the fixture.");
+                    documentBytes[identityStart] = 0xff;
+                    await File.WriteAllBytesAsync(configurationFilePath, documentBytes);
+                }
+                else
+                {
+                    await File.WriteAllTextAsync(
+                        configurationFilePath, document, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
+                }
+                return new OwnedProviderDocument(
+                    directoryPath, configurationFilePath, keyRingPath, applicationName,
+                    provider, provider.GetRequiredService<IDataProtectionProvider>(),
+                    workerCiphertext, chatCiphertext);
+            }
+            catch
+            {
+                providerToDispose?.Dispose();
+                if (Directory.Exists(directoryPath))
+                    Directory.Delete(directoryPath, recursive: true);
+                throw;
+            }
+        }
+
+        public void Dispose()
+        {
+            try
+            {
+                protectionServices.Dispose();
+            }
+            finally
+            {
+                if (Directory.Exists(directoryPath))
+                    Directory.Delete(directoryPath, recursive: true);
+            }
+        }
+
+        private static string ReplaceRequired(string document, string existingProperty, string replacement)
+        {
+            string updated = document.Replace(existingProperty, replacement, StringComparison.Ordinal);
+            if (string.Equals(updated, document, StringComparison.Ordinal))
+                throw new InvalidOperationException("The requested provider-document test mutation was not applied.");
+            return updated;
+        }
+
+        private static int FindSequenceIndex(byte[] source, byte[] sequence)
+        {
+            for (int start = 0; start <= source.Length - sequence.Length; start++)
+            {
+                int offset = 0;
+                while (offset < sequence.Length && source[start + offset] == sequence[offset])
+                    offset++;
+                if (offset == sequence.Length)
+                    return start;
+            }
+
+            return -1;
         }
     }
 

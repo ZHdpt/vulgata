@@ -1,0 +1,41 @@
+{
+  "observed_after": {
+    "path": "specs/017-october-batch-setup/evidence/transitions/transition-0087-selected-web-provider-competing-source-expected-red.json",
+    "sha256": "e71b5e86405925205c792d7508617da5666613e714c46cdb2bf57cf91a18ff07"
+  },
+  "raw_result": {
+    "kind": "test-red",
+    "stage": "implement",
+    "outcome": "expected-red",
+    "source_commit": "784e5303514f77c45f542dcf83d47544b44cae24",
+    "command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName~SelectedDataStartup_RejectsMalformedOrUnreadableProviderDocumentBeforeCredentialWork'",
+    "exit_code": 1,
+    "selected": 4,
+    "passed": 3,
+    "failed": 1,
+    "skipped": 0,
+    "trx_path": "TestResults/isolation-9e2f4c13b48c4a0798895b1bd9af18a5/results.trx",
+    "trx_sha256": "fef9e5c68ff4bfeab050a80ba30dc243aec95a6fe75744f1d0feed16b22af1e0",
+    "independent_prior_green": {
+      "command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName~SelectedDataStartup_BindsExactConfiguredBatchWithoutLegacyGrant|FullyQualifiedName~SelectedDataStartup_RejectsInvalidProviderDocumentBeforeAuthentication|FullyQualifiedName~SelectedDataStartup_RejectsDuplicateOrUnknownProviderPropertiesAtomically|FullyQualifiedName~SelectedDataStartup_RejectsDistinctProviderFileSelectorsBeforeCredentialWork|FullyQualifiedName~SelectedDataStartup_RejectsCompetingProviderSourceIdentityBeforeCredentialWork'",
+      "exit_code": 0,
+      "selected": 8,
+      "passed": 8,
+      "trx_path": "TestResults/isolation-cc53fd5e752945ab89d8b32ede31206f/results.trx",
+      "trx_sha256": "54afcf4d4623dd67fc07519c0f0080d71ae593e2d6d550c4686d6ca788ed2d6f"
+    },
+    "input_hashes": {
+      "tests/Vulgata.Tests/October/OctoberHostCompositionTests.cs": "9b2c1efa915787dd709e1e81bfb9cca8faa7c670f130aeb19d2399f1034da593",
+      "src/dotnet/Vulgata.Web/Program.cs": "c6aab33e446eb47b6a1b3782b84d67ac960bed4557fa66ae2b09e82b106c3cbe"
+    },
+    "failure": "MalformedUTF8 byte in otherwisevalid sourceIdentity is silentlydecoded and reaches atomicityguard decryptions2/credentialReads1. Later failureclassification assertions NOT reached. MalformedJSON/missingfile/wrongrequiredtype alreadypass. Build0errors.",
+    "fixture_correction": "First theory attempt had test mutation-switch error for malformedUTF8 row; testowner corrected fixture then observed currentgenuineRED. Noncounting fixturefailure, not productRED; separate failed receipt to retain at finalgroup handoff.",
+    "scope": "One actualWAF declaredUTF8JSON loading failure outcome; no new encoding/BOM policy, resource or broader regression.",
+    "recovery": {
+      "failed_results": 6,
+      "pause_at": 7,
+      "incremented": false,
+      "reason": "Expected development RED/first fixture error noncounting."
+    }
+  }
+}

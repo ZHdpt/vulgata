@@ -1,0 +1,42 @@
+{
+  "observed_after": {
+    "path": "specs/017-october-batch-setup/evidence/transitions/transition-0085-selected-web-provider-schema-expected-red.json",
+    "sha256": "685f8cdde4997180a5e8c34937f11391ade5e98838a3d7016e3a18c907af140d"
+  },
+  "raw_result": {
+    "kind": "test-red",
+    "stage": "implement",
+    "outcome": "expected-red",
+    "source_commit": "784e5303514f77c45f542dcf83d47544b44cae24",
+    "command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName~SelectedDataStartup_RejectsDistinctProviderFileSelectorsBeforeCredentialWork'",
+    "exit_code": 1,
+    "selected": 1,
+    "passed": 0,
+    "failed": 1,
+    "skipped": 0,
+    "trx_path": "TestResults/isolation-ce4325ac5ff348d7a734908e02e90014/results.trx",
+    "trx_sha256": "08c60ef35183c453fb5663a9a3cbe0ff37fae01e851bca5d0e5c1eebab781421",
+    "independent_prior_green": {
+      "command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName~SelectedDataStartup_BindsExactConfiguredBatchWithoutLegacyGrant|FullyQualifiedName~SelectedDataStartup_RejectsInvalidProviderDocumentBeforeAuthentication|FullyQualifiedName~SelectedDataStartup_RejectsDuplicateOrUnknownProviderPropertiesAtomically'",
+      "exit_code": 0,
+      "selected": 6,
+      "passed": 6,
+      "failed": 0,
+      "skipped": 0,
+      "trx_path": "TestResults/isolation-80009c63c6a6460c9ddf03edfa1e520a/results.trx",
+      "trx_sha256": "5b13504fecb8deadba4898b3a795842879ede85d45176649efe23a84877cfa66"
+    },
+    "input_hashes": {
+      "tests/Vulgata.Tests/October/OctoberHostCompositionTests.cs": "e93cd1023064591c5e8dd4dfe0b6b986cb88274938126db678c0aabccd558b72",
+      "src/dotnet/Vulgata.Web/Program.cs": "10372f17547135520e8222a3da04c3e960d8ae57117544fec608aff8ef2c9e56"
+    },
+    "failure": "Two actual configuration layers supply distinct owned paths to identical valid protected documents. Atomicity guard observes decryptions=2/credentialReads=1, so source conflict not rejected beforecredentialwork. Later failureclassification assertions NOT reached. Build0errors. No production changes or broad regression.",
+    "scope": "One actualWAF distinct-file-selector conflict outcome. No competingflattenedsource/reload/generator/runtime/resource proof.",
+    "recovery": {
+      "failed_results": 6,
+      "pause_at": 7,
+      "incremented": false,
+      "reason": "Expected development RED is noncounting."
+    }
+  }
+}

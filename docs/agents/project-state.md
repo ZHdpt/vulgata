@@ -43,7 +43,7 @@ verification before reuse.
   Tracker refreshes require both epic files. Story 13.1 and October Story 18.1 are
   done; this checkout includes Story 18.1's completed baseline at `3632b2cc`. October
   Story 18.4 resumes in `specs/017-october-batch-setup` from implementation
-  checkpoint `af9872a`. The retained Astra-medium owner completed the bounded plan
+  checkpoint `784e530`. The retained Astra-medium owner completed the bounded plan
   correction; independent plan-review-14 accepted it at transition 0077 and delegated
   plan-authorization-05 permits affected task reconciliation only. The candidate
   distinguishes callable source-adapter integration from setup-only execution,
@@ -63,7 +63,10 @@ verification before reuse.
   real-authority module/lockout tests pass 2/2 and surrounding authority/source/Web
   checks pass 267/267. The concrete provider binder now passes independent36/36
   focused and270/270 mapped surrounding tests, no skips, including real ephemeral
-  Data Protection compatibility. This is binder-only; actual generator entry-point/provider composition and PostgreSQL/process
+  Data Protection compatibility. Selected-Web provider startup now passes independent
+  12/12 focused and 249/249 surrounding tests, including pre-authentication atomic
+  rejection and fixed process selection. This is controlled WAF/SQLite evidence;
+  actual generator entry-point/provider composition and PostgreSQL/process
   qualification remain incomplete. Status in
   other assigned worktrees must be verified there. Sprint planning alone activated
   no feature.

@@ -1,0 +1,22 @@
+{
+  "kind": "test-green",
+  "stage": "implement",
+  "outcome": "passed",
+  "source_commit": "784e5303514f77c45f542dcf83d47544b44cae24",
+  "red_path": "specs/017-october-batch-setup/evidence/selected-web-provider-schema-red-01.json",
+  "command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName~SelectedDataStartup_RejectsDuplicateOrUnknownProviderPropertiesAtomically|FullyQualifiedName~SelectedDataStartup_RejectsInvalidProviderDocumentBeforeAuthentication'",
+  "exit_code": 0,
+  "selected": 5,
+  "passed": 5,
+  "failed": 0,
+  "skipped": 0,
+  "trx_path": "TestResults/isolation-4068b57b41ad4fcdba1644759ff19633/results.trx",
+  "trx_sha256": "e3b7a15b68210cd52a788c638c2fb9099404bfcd23d6ecd333a7b0ec9e13c488",
+  "production_sha256": "10372f17547135520e8222a3da04c3e960d8ae57117544fec608aff8ef2c9e56",
+  "owner_reply": "Selected-Web strict-property slice GREEN5/5. Only Program.cs changed; private parser rejects duplicate/unknown root and profile properties before provider construction/decryption/operator access. Cohesive, no refactor needed. Valid-host fixture previously passed, not rerun this slice; selector conflicts/reload/generator/broader qualification remain open.",
+  "recovery": {
+    "failed_results": 6,
+    "pause_at": 7,
+    "changed": false
+  }
+}

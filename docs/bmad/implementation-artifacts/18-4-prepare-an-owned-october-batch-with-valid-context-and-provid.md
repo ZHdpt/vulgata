@@ -59,10 +59,18 @@ invalid-input, credential-exception and cancellation behaviors retain separate
 expected RED/minimal GREEN evidence. Shared/unused credentials, defensive copies
 and real ephemeral Data Protection compatibility have truthful test-only coverage.
 Both retained owners assessed the affected units; no refactor was needed. This is
-binder-only verification, not provider availability or generation qualification;
-actual single-document loading and both host startup invocations remain open under
-T023/T024. No plaintext is returned, no paid provider is contacted, and recovery
-remains count6/limit7. See `evidence/provider-binding-final-green-01.json`.
+binder verification, not provider availability or generation qualification.
+Actual selected-Web single-document loading now passes independent 12/12 focused
+and 249/249 surrounding tests. It validates/binds before authentication, rejects
+ambiguous/malformed documents atomically, accepts identical selector values and
+does not rebind after document mutation/configuration reload. Changed behavior
+retains expected RED/minimal GREEN; already-correct loading/freeze behavior uses
+passing coverage. Both retained owners assessed final affected units without a
+required refactor. Generator startup invocation remains open under T023/T024.
+No plaintext is returned, no paid provider is contacted, and recovery remains
+count6/limit7. See `evidence/provider-binding-final-green-01.json` and
+`evidence/selected-web-provider-final-green-01.json`. Executable/PG qualification
+and remaining tasks are not implied by this controlled WAF/SQLite checkpoint.
 
 Actual generator entry-point composition, broader startup isolation, provider host wiring
 and PostgreSQL/process qualification remain unfinished. This is not full-story or

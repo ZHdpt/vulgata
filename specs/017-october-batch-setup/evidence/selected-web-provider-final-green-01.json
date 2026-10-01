@@ -1,0 +1,63 @@
+{
+  "kind": "test-green",
+  "stage": "implement",
+  "evidence_id": "18-4/selected-web-provider-final-green/1",
+  "source_commit": "784e5303514f77c45f542dcf83d47544b44cae24",
+  "observed_at": "2026-10-01T13:36:13Z",
+  "observed_after": {
+    "path": "specs/017-october-batch-setup/evidence/transitions/transition-0088-selected-web-provider-utf8-loading-expected-red.json",
+    "sha256": "7cf4928765cf52b46b9c2231270861926264a7e9060b8dd2dea087361e75fd38"
+  },
+  "input_hashes": {
+    "src/dotnet/Vulgata.Web/Program.cs": "271d9a3be3b2106d9dfeba2947c1b0979bf10a25d6ee3af038713d46263c88ba",
+    "tests/Vulgata.Tests/October/OctoberHostCompositionTests.cs": "7b29d3067b7792a8e2a76c2c37fe66a01d3c8750f483148dcfebc723cff2b2ac",
+    "src/dotnet/Vulgata.Infrastructure/Configuration/OctoberProviderBinder.cs": "7b28f61339d57d819cfa1e9f6024c4ec0397faafde95f62706d67df1c6d67870",
+    "src/dotnet/Vulgata.Web/Data/SecretEncryptionService.cs": "c5e8cc0df4c4e1f55d75ca57cc901045204a8dfc35965f2568da5deff0f14035"
+  },
+  "commands": [
+    {
+      "command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName~SelectedDataStartup_RejectsMalformedOrUnreadableProviderDocumentBeforeCredentialWork'",
+      "exit_code": 0,
+      "selected": 4,
+      "passed": 4,
+      "failed": 0,
+      "skipped": 0,
+      "trx_path": "TestResults/isolation-eac716e9070f43dd95783e898e4ff756/results.trx",
+      "trx_sha256": "206afc5295ff5eabb4f141e7a14f6d85cad14bef51687ff6d70cea45911bccf5"
+    },
+    {
+      "command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName~SelectedDataStartup_BindsExactConfiguredBatchWithoutLegacyGrant|FullyQualifiedName~SelectedDataStartup_RejectsInvalidProviderDocumentBeforeAuthentication|FullyQualifiedName~SelectedDataStartup_RejectsDuplicateOrUnknownProviderPropertiesAtomically|FullyQualifiedName~SelectedDataStartup_RejectsDistinctProviderFileSelectorsBeforeCredentialWork|FullyQualifiedName~SelectedDataStartup_RejectsCompetingProviderSourceIdentityBeforeCredentialWork|FullyQualifiedName~SelectedDataStartup_RejectsMalformedOrUnreadableProviderDocumentBeforeCredentialWork'",
+      "exit_code": 0,
+      "selected": 12,
+      "passed": 12,
+      "failed": 0,
+      "skipped": 0,
+      "trx_path": "TestResults/isolation-86dc1aa759834a0f8505744f55fc09bd/results.trx",
+      "trx_sha256": "aa278f4ec200024f7d3de5ecfdd43921588963b69886167d3c564e19f7c16ae0"
+    },
+    {
+      "command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName~OctoberProviderBindingTests|FullyQualifiedName~OctoberHostCompositionTests|FullyQualifiedName~OctoberLocalAuthorityTests|FullyQualifiedName~OctoberOperatorCredentialSourceTests|FullyQualifiedName~OctoberBatchSelectorTests|FullyQualifiedName~OctoberSetupStoreTests|FullyQualifiedName~OctoberSetupPolicyTests'",
+      "exit_code": 0,
+      "selected": 249,
+      "passed": 249,
+      "failed": 0,
+      "skipped": 0,
+      "trx_path": "TestResults/isolation-7c0890a91a35495c9ac43fb9afabb187/results.trx",
+      "trx_sha256": "13d3e5a797ab86fcc36ba896e2a546ef24f1aa548d99942d8f3e2da700dce1c4"
+    }
+  ],
+  "raw_result": {
+    "test_owner": "Retained tdd-test-author Luna/high",
+    "test_assessment": "The positive actual-WAF test confirms identical selector values from separate configuration layers are accepted, and changing the owned document followed by configuration reload causes no additional decrypt or credential-source call. Existing exact-batch and context/factory assertions remain intact. No inventory change or further refactor needed.",
+    "production_owner": "Retained tdd-implementer Sol/medium",
+    "production_assessment": "No local refactor needed. Program binds the explicit provider document before selected-data authentication; ordinary startup bypasses it. The loader rejects competing sources and malformed input before decryption, constructs one immutable snapshot, and has no reload path. Binder validates both roles before decrypting and returns closed non-plaintext results through borrowed SecretEncryptionService. Read-only assessment performed without additional checks."
+  },
+  "ordinary_fixture_error": {
+    "classification": "First loading-theory fixture mutation-switch error, corrected before genuine malformed-UTF8 RED. Non-product and noncounting.",
+    "exception": "ArgumentOutOfRangeException parameter schemaViolation",
+    "trx_path": "TestResults/isolation-96aea57d687842f2acb632ac6a434ec9/results.trx",
+    "trx_sha256": "2956fc9a981d22b7ba1008f94e416ff58f84aa91c1191c0a4d341f781f45b6b3"
+  },
+  "route": "Changed selected-Web behavior has retained separate expected RED/minimal GREEN receipts for document invocation, schema ambiguity, selector conflict, competing fields and malformed UTF8. Existing correct missing/JSON/type loading, identical selector and process freeze use truthful passing coverage.",
+  "qualification": "Controlled actual WAF/owned SQLite startup only. T018/T023/T024 remain open for generator/remaining host obligations; no executable generator, PostgreSQL, paid-provider, generation or final review claim. Recovery6/pause7, historical approvals/owners preserved."
+}

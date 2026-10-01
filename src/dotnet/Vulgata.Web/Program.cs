@@ -1,5 +1,7 @@
 using System.Security.Claims;
 using System.Collections.Immutable;
+using System.Text;
+using System.Text.Json;
 using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components.Authorization;
@@ -23,6 +25,7 @@ using Vulgata.Infrastructure.ContextManagement;
 using Vulgata.Infrastructure.CrossRepository;
 using Vulgata.Infrastructure.Data;
 using Vulgata.Infrastructure.Data.October;
+using Vulgata.Infrastructure.Configuration;
 using Vulgata.Infrastructure.FrameworkDetection;
 using Vulgata.Infrastructure.Git;
 using Vulgata.Infrastructure.Git.BackupB;
@@ -101,6 +104,18 @@ OctoberWebStartupSelection octoberSelection =
     app.Services.GetRequiredService<OctoberWebStartupSelection>();
 if (octoberSelection.Mode == OctoberWebMode.SelectedData)
 {
+    OctoberProviderConfiguration providerConfiguration =
+        await ReadOctoberProviderConfigurationAsync(app.Configuration);
+    OctoberProviderBindingResult providerBinding = await new OctoberProviderBinder(
+        app.Services.GetRequiredService<ISecretEncryptionService>())
+        .BindAsync(providerConfiguration);
+    if (providerBinding.Status != OctoberProviderBindingStatus.Bound ||
+        providerBinding.Binding is null)
+    {
+        throw new InvalidOperationException(
+            $"October provider configuration failed: {providerBinding.Status}.");
+    }
+
     using IServiceScope startupScope = app.Services.CreateScope();
     OctoberSelectedDataStartupResult binding = await startupScope.ServiceProvider
         .GetRequiredService<IOctoberSelectedDataStartupBinder>()
@@ -205,6 +220,103 @@ return;
 
 static bool IsApiRequest(HttpRequest request) =>
     request.Path.StartsWithSegments("/api", StringComparison.OrdinalIgnoreCase);
+
+static async Task<OctoberProviderConfiguration> ReadOctoberProviderConfigurationAsync(
+    IConfiguration configuration)
+{
+    if (configuration is not IConfigurationRoot sources)
+        throw new InvalidOperationException("October provider configuration is invalid.");
+
+    HashSet<string> suppliedSelectors = new(StringComparer.Ordinal);
+    foreach (IConfigurationProvider source in sources.Providers)
+    {
+        if (source.TryGet("October:Providers:ConfigurationFile", out string? supplied) &&
+            supplied is not null)
+        {
+            suppliedSelectors.Add(supplied);
+        }
+    }
+    if (suppliedSelectors.Count > 1)
+        throw new InvalidOperationException("October provider configuration is invalid.");
+
+    if (configuration.GetSection("October:Providers").GetChildren()
+        .Any(section => !string.Equals(section.Key, "ConfigurationFile", StringComparison.Ordinal)))
+    {
+        throw new InvalidOperationException("October provider configuration is invalid.");
+    }
+
+    string? path = configuration["October:Providers:ConfigurationFile"];
+    if (string.IsNullOrWhiteSpace(path))
+        throw new InvalidOperationException("October provider configuration is invalid.");
+
+    try
+    {
+        using JsonDocument document = JsonDocument.Parse(await File.ReadAllTextAsync(
+            path, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false, throwOnInvalidBytes: true)));
+        JsonElement root = document.RootElement;
+        if (root.ValueKind != JsonValueKind.Object)
+            throw new FormatException();
+        ValidateProperties(root, "sourceIdentity", "precedence", "workerProfile", "chatProfile",
+            "profiles", "protectedCredentials");
+
+        OctoberProviderProfile[] profiles = root.GetProperty("profiles")
+            .EnumerateArray()
+            .Select(profile =>
+            {
+                ValidateProperties(profile, "name", "apiType", "endpoint", "model",
+                    "credentialReference");
+                return new OctoberProviderProfile(
+                    RequiredString(profile, "name"),
+                    RequiredString(profile, "apiType") switch
+                    {
+                        "chat-completions" => ApiType.ChatCompletions,
+                        "responses" => ApiType.Responses,
+                        "messages" => ApiType.Messages,
+                        _ => throw new FormatException()
+                    },
+                    RequiredString(profile, "endpoint"),
+                    RequiredString(profile, "model"),
+                    RequiredString(profile, "credentialReference"));
+            })
+            .ToArray();
+        Dictionary<string, string> credentials = new(StringComparer.Ordinal);
+        foreach (JsonProperty entry in root.GetProperty("protectedCredentials").EnumerateObject())
+        {
+            if (!credentials.TryAdd(entry.Name, entry.Value.GetString() ?? throw new FormatException()))
+                throw new FormatException();
+        }
+
+        return new OctoberProviderConfiguration(
+            RequiredString(root, "sourceIdentity"),
+            RequiredString(root, "precedence"),
+            RequiredString(root, "workerProfile"),
+            RequiredString(root, "chatProfile"),
+            profiles, credentials);
+    }
+    catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or
+        DecoderFallbackException or JsonException or InvalidOperationException or
+        KeyNotFoundException or FormatException)
+    {
+        throw new InvalidOperationException("October provider configuration is invalid.");
+    }
+
+    static string RequiredString(JsonElement value, string name) =>
+        value.GetProperty(name).GetString() ?? throw new FormatException();
+
+    static void ValidateProperties(JsonElement value, params string[] names)
+    {
+        if (value.ValueKind != JsonValueKind.Object)
+            throw new FormatException();
+
+        HashSet<string> allowed = new(names, StringComparer.Ordinal);
+        HashSet<string> seen = new(StringComparer.Ordinal);
+        foreach (JsonProperty property in value.EnumerateObject())
+        {
+            if (!allowed.Contains(property.Name) || !seen.Add(property.Name))
+                throw new FormatException();
+        }
+    }
+}
 
 public static class VulgataWebComposition
 {

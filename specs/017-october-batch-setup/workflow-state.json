@@ -102,7 +102,7 @@
   "bmad_epic_key": "epic-18",
   "bmad_story_key": "18-4-prepare-an-owned-october-batch-with-valid-context-and-provid",
   "checkpoint": {
-    "checkpoint_id": "bmad-18-4-implement-20261001T120435Z-33af3d",
+    "checkpoint_id": "bmad-18-4-implement-20261001T133613Z-19ca78",
     "stage": "implement",
     "commit_sha": null,
     "binding_status": "pending"
@@ -124,7 +124,7 @@
     "specs/017-october-batch-setup/evidence/source-composition-lifetime-diagnosis-01.json",
     "specs/017-october-batch-setup/evidence/local-authority-command-cancellation-selection-final-green-01.json",
     "specs/017-october-batch-setup/evidence/provider-binding-final-green-01.json",
-    "specs/017-october-batch-setup/evidence/console-interactive-input-final-verification-01.json",
+    "specs/017-october-batch-setup/evidence/selected-web-provider-final-green-01.json",
     "specs/017-october-batch-setup/evidence/local-authority-module-current-final-green-01.json"
   ],
   "definition_author": {
@@ -159,10 +159,10 @@
   },
   "preflight": {
     "branch": "oct14/story-18-4",
-    "head": "3d590b3ea90a525d96745f5e43ca145b23c0816c",
-    "git_identity_sha256": "eef201d8ce2d9840b2f899634f658d39cf75572ee7ca66f21f066b648504261c",
-    "status_sha256": "05b45bdac94fbaef15b3b086c67d175aa5b4c885dd42f2f79539a57c25608c52",
-    "observed_at": "2026-10-01T12:04:35.168829Z"
+    "head": "784e5303514f77c45f542dcf83d47544b44cae24",
+    "git_identity_sha256": "2982842e461c19529d42c080afc2888f3a89cf96d47d834c4394d115295fd428",
+    "status_sha256": "88ecfe0cfff7917cbfa42b9032c20c399f1907c868e410b47e95a907dfe8b270",
+    "observed_at": "2026-10-01T13:37:24.673676Z"
   },
   "recovery": {
     "action": "proceed",
@@ -187,14 +187,14 @@
   },
   "resume": {
     "stage": "implement",
-    "reason": "Provider binder independently verified36/36focused270/270surrounding; owned checkpoint pending. Next actual provider document/host startup wiring, preserving6/7 and accepted gates/resources.",
-    "evidence_path": "specs/017-october-batch-setup/evidence/provider-binding-final-green-01.json"
+    "reason": "Selected-Web provider group independently GREEN12/12 and249/249, both final units assessed. Commit owned checkpoint, then retained context coverage and generator composition; recovery6/7, approvals/gates unchanged.",
+    "evidence_path": "specs/017-october-batch-setup/evidence/selected-web-provider-final-green-01.json"
   },
   "schema_version": "3.1",
   "stage": "implement",
   "transition_head": {
-    "path": "specs/017-october-batch-setup/evidence/transitions/transition-0083-provider-cancellation-expected-red.json",
-    "sha256": "011fb8a28db9127cd53d0506c0051bcde0812375ccc9a4af08d2f7dd1b4421a0"
+    "path": "specs/017-october-batch-setup/evidence/transitions/transition-0088-selected-web-provider-utf8-loading-expected-red.json",
+    "sha256": "7cf4928765cf52b46b9c2231270861926264a7e9060b8dd2dea087361e75fd38"
   },
-  "updated_at": "2026-10-01T12:04:35.168829Z"
+  "updated_at": "2026-10-01T13:37:24.673676Z"
 }
