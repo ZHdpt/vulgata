@@ -126,6 +126,121 @@ public sealed class PreparedCodeGraphStateCoordinatorTests
 
     [Trait("Suite", "SelfContained")]
     [SuiteFact("SelfContained")]
+    public async Task UseOwnedStateAsync_PersistsReadyIdentityAndPublishesVerifiedOwnership()
+    {
+        await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
+        fixture.Authority.Approve(fixture.Approval);
+
+        string sourceStorageRoot = Path.Combine(fixture.SandboxPath, "source-storage");
+        Directory.CreateDirectory(sourceStorageRoot);
+        IConfiguration configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["SourceStorage:RootPath"] = sourceStorageRoot,
+                ["SourceStorage:MaximumEntries"] = "10000",
+                ["SourceStorage:MaximumBlobBytes"] = "8388608",
+                ["SourceStorage:MaximumAggregateBlobBytes"] = "67108864",
+                ["SourceStorage:CaptureDeadlineSeconds"] = "600",
+                ["SourceStorage:OperationStaleAfterMinutes"] = "1440",
+                ["SourceStorage:VerificationBufferBytes"] = "65536",
+                ["SourceStorage:Read:DeadlineSeconds"] = "60",
+            })
+            .Build();
+        RetainedSourceCapturePolicy policy = RetainedSourceCapturePolicy.Create(
+            configuration,
+            fixture.SandboxPath,
+            fixture.PreparedRootPath);
+        var absent = new PreparedCodeGraphWorkspaceOwnership(
+            Guid.NewGuid(),
+            Version: 0,
+            PreparedCodeGraphOwnershipPhase.Absent,
+            fixture.Approval,
+            Path.GetFullPath(fixture.PreparedRootPath),
+            ObserveDirectoryIdentity(fixture.PreparedRootPath),
+            WorkspaceOwnerIdentity: $"owner-{fixture.SandboxId:N}",
+            StateEntryObjectIdentity: null);
+
+        PreparedCodeGraphStoreProvisionStatus provisionStatus =
+            await FilePreparedCodeGraphOwnershipStore.ProvisionNewAsync(policy);
+        Assert.Equal(PreparedCodeGraphStoreProvisionStatus.Provisioned, provisionStatus);
+
+        var authorization = new TestToolUseAuthorizer();
+        authorization.Allow(fixture.Approval, PreparedToolPurpose.CodeGraphPreparation);
+        var issuer = new PreparedToolWorkspaceIssuer(fixture.Authority, authorization);
+        PreparedToolWorkspaceIssueResult issue = await issuer.IssueAsync(
+            new PreparedToolWorkspaceGrantRequest(
+                fixture.Approval,
+                fixture.PreparedRootPath,
+                PreparedToolPurpose.CodeGraphPreparation,
+                TimeSpan.FromSeconds(5)));
+        Assert.Equal(PreparedToolWorkspaceIssueStatus.Issued, issue.Status);
+        PreparedToolWorkspaceLease lease = Assert.IsType<PreparedToolWorkspaceLease>(issue.Lease);
+
+        var store = new FilePreparedCodeGraphOwnershipStore(policy);
+        var coordinator = new PreparedCodeGraphStateCoordinator(
+            fixture.Authority,
+            authorization,
+            new RecordingWorkspaceOwnershipVerifier(),
+            store);
+        int callbackCount = 0;
+        PreparedCodeGraphOwnershipLoadResult? callbackLoad = null;
+
+        try
+        {
+            PreparedToolWorkspaceCheckStatus useResult = await coordinator.UseOwnedStateAsync(
+                lease,
+                absent,
+                async (_, token) =>
+                {
+                    callbackCount++;
+                    callbackLoad = await store.LoadAsync(absent, token);
+                });
+
+            Assert.Equal(PreparedToolWorkspaceCheckStatus.Current, useResult);
+            Assert.Equal(1, callbackCount);
+            Assert.Equal(PreparedCodeGraphOwnershipLoadStatus.Found, callbackLoad?.Status);
+            PreparedCodeGraphWorkspaceOwnership callbackReady = Assert.IsType<PreparedCodeGraphWorkspaceOwnership>(
+                callbackLoad?.Record);
+            Assert.Equal(PreparedCodeGraphOwnershipPhase.Ready, callbackReady.Phase);
+            Assert.Equal(
+                ObserveDirectoryIdentity(Path.Combine(fixture.PreparedRootPath, ".codegraph")),
+                callbackReady.StateEntryObjectIdentity);
+
+            PreparedCodeGraphOwnershipViewResult view = await coordinator.GetOwnershipViewAsync(
+                absent,
+                fixture.Approval);
+
+            Assert.Equal(PreparedCodeGraphOwnershipViewStatus.VerifiedOwned, view.Status);
+            PreparedCodeGraphWorkspaceOwnership ready = Assert.IsType<PreparedCodeGraphWorkspaceOwnership>(
+                view.Record);
+            Assert.Equal(callbackReady, ready);
+            Assert.Equal(PreparedCodeGraphOwnershipPhase.Ready, ready.Phase);
+            Assert.True(
+                ready.Version > absent.Version,
+                "A committed Ready binding must advance the ownership version.");
+            Assert.Equal(absent.OwnershipId, ready.OwnershipId);
+            Assert.Equal(absent.Approval, ready.Approval);
+            Assert.Equal(absent.PhysicalRootPath, ready.PhysicalRootPath);
+            Assert.Equal(absent.RootObjectIdentity, ready.RootObjectIdentity);
+            Assert.Equal(absent.WorkspaceOwnerIdentity, ready.WorkspaceOwnerIdentity);
+            Assert.Equal(
+                ObserveDirectoryIdentity(Path.Combine(fixture.PreparedRootPath, ".codegraph")),
+                ready.StateEntryObjectIdentity);
+
+            var freshStore = new FilePreparedCodeGraphOwnershipStore(policy);
+            PreparedCodeGraphOwnershipLoadResult freshLoad = await freshStore.LoadAsync(absent);
+
+            Assert.Equal(PreparedCodeGraphOwnershipLoadStatus.Found, freshLoad.Status);
+            Assert.Equal(ready, freshLoad.Record);
+        }
+        finally
+        {
+            await lease.DisposeAsync();
+        }
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task UseOwnedStateAsync_RequiresLeaseAndOwnershipApprovalToMatchExactly()
     {
         await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
