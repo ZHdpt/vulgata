@@ -241,6 +241,129 @@ public sealed class PreparedCodeGraphStateCoordinatorTests
 
     [Trait("Suite", "SelfContained")]
     [SuiteFact("SelfContained")]
+    public async Task BeginDispositionAsync_PersistsDisposingForExactReadyBinding()
+    {
+        await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
+        fixture.Authority.Approve(fixture.Approval);
+
+        string sourceStorageRoot = Path.Combine(fixture.SandboxPath, "source-storage");
+        Directory.CreateDirectory(sourceStorageRoot);
+        IConfiguration configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["SourceStorage:RootPath"] = sourceStorageRoot,
+                ["SourceStorage:MaximumEntries"] = "10000",
+                ["SourceStorage:MaximumBlobBytes"] = "8388608",
+                ["SourceStorage:MaximumAggregateBlobBytes"] = "67108864",
+                ["SourceStorage:CaptureDeadlineSeconds"] = "600",
+                ["SourceStorage:OperationStaleAfterMinutes"] = "1440",
+                ["SourceStorage:VerificationBufferBytes"] = "65536",
+                ["SourceStorage:Read:DeadlineSeconds"] = "60",
+            })
+            .Build();
+        RetainedSourceCapturePolicy policy = RetainedSourceCapturePolicy.Create(
+            configuration,
+            fixture.SandboxPath,
+            fixture.PreparedRootPath);
+        var absent = new PreparedCodeGraphWorkspaceOwnership(
+            Guid.NewGuid(),
+            Version: 0,
+            PreparedCodeGraphOwnershipPhase.Absent,
+            fixture.Approval,
+            Path.GetFullPath(fixture.PreparedRootPath),
+            ObserveDirectoryIdentity(fixture.PreparedRootPath),
+            WorkspaceOwnerIdentity: $"owner-{fixture.SandboxId:N}",
+            StateEntryObjectIdentity: null);
+
+        PreparedCodeGraphStoreProvisionStatus provisionStatus =
+            await FilePreparedCodeGraphOwnershipStore.ProvisionNewAsync(policy);
+        Assert.Equal(PreparedCodeGraphStoreProvisionStatus.Provisioned, provisionStatus);
+
+        var authorization = new TestToolUseAuthorizer();
+        authorization.Allow(fixture.Approval, PreparedToolPurpose.CodeGraphPreparation);
+        var issuer = new PreparedToolWorkspaceIssuer(fixture.Authority, authorization);
+        PreparedToolWorkspaceIssueResult issue = await issuer.IssueAsync(
+            new PreparedToolWorkspaceGrantRequest(
+                fixture.Approval,
+                fixture.PreparedRootPath,
+                PreparedToolPurpose.CodeGraphPreparation,
+                TimeSpan.FromSeconds(5)));
+        Assert.Equal(PreparedToolWorkspaceIssueStatus.Issued, issue.Status);
+        PreparedToolWorkspaceLease lease = Assert.IsType<PreparedToolWorkspaceLease>(issue.Lease);
+
+        var store = new FilePreparedCodeGraphOwnershipStore(policy);
+        var coordinator = new PreparedCodeGraphStateCoordinator(
+            fixture.Authority,
+            authorization,
+            new RecordingWorkspaceOwnershipVerifier(),
+            store);
+        bool leaseDisposed = false;
+
+        try
+        {
+            int callbackCount = 0;
+            PreparedToolWorkspaceCheckStatus useResult = await coordinator.UseOwnedStateAsync(
+                lease,
+                absent,
+                (_, _) =>
+                {
+                    callbackCount++;
+                    return ValueTask.CompletedTask;
+                });
+            Assert.Equal(PreparedToolWorkspaceCheckStatus.Current, useResult);
+            Assert.Equal(1, callbackCount);
+
+            PreparedCodeGraphOwnershipViewResult view = await coordinator.GetOwnershipViewAsync(
+                absent,
+                fixture.Approval);
+            Assert.Equal(PreparedCodeGraphOwnershipViewStatus.VerifiedOwned, view.Status);
+            PreparedCodeGraphWorkspaceOwnership ready = Assert.IsType<PreparedCodeGraphWorkspaceOwnership>(
+                view.Record);
+            Assert.Equal(PreparedCodeGraphOwnershipPhase.Ready, ready.Phase);
+            Assert.Equal(
+                ObserveDirectoryIdentity(Path.Combine(fixture.PreparedRootPath, ".codegraph")),
+                ready.StateEntryObjectIdentity);
+
+            await lease.DisposeAsync();
+            leaseDisposed = true;
+
+            PreparedCodeGraphOwnershipTransitionResult transition =
+                await store.BeginDispositionAsync(ready);
+
+            Assert.Equal(PreparedCodeGraphOwnershipTransitionStatus.Committed, transition.Status);
+            PreparedCodeGraphWorkspaceOwnership disposing = Assert.IsType<PreparedCodeGraphWorkspaceOwnership>(
+                transition.Record);
+            Assert.Equal(PreparedCodeGraphOwnershipPhase.Disposing, disposing.Phase);
+            Assert.True(
+                disposing.Version > ready.Version,
+                "A committed Disposing transition must advance the ownership version.");
+            Assert.Equal(ready.OwnershipId, disposing.OwnershipId);
+            Assert.Equal(ready.Approval, disposing.Approval);
+            Assert.Equal(ready.PhysicalRootPath, disposing.PhysicalRootPath);
+            Assert.Equal(ready.RootObjectIdentity, disposing.RootObjectIdentity);
+            Assert.Equal(ready.WorkspaceOwnerIdentity, disposing.WorkspaceOwnerIdentity);
+            Assert.Equal(ready.StateEntryObjectIdentity, disposing.StateEntryObjectIdentity);
+            Assert.Equal(
+                ready.StateEntryObjectIdentity,
+                ObserveDirectoryIdentity(Path.Combine(fixture.PreparedRootPath, ".codegraph")));
+
+            var freshStore = new FilePreparedCodeGraphOwnershipStore(policy);
+            PreparedCodeGraphOwnershipLoadResult freshLoad = await freshStore.LoadAsync(ready);
+
+            Assert.Equal(PreparedCodeGraphOwnershipLoadStatus.Found, freshLoad.Status);
+            Assert.Equal(disposing, freshLoad.Record);
+        }
+        finally
+        {
+            if (!leaseDisposed)
+            {
+                await lease.DisposeAsync();
+            }
+        }
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task UseOwnedStateAsync_RequiresLeaseAndOwnershipApprovalToMatchExactly()
     {
         await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();

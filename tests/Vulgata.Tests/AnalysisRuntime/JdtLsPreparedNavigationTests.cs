@@ -1046,6 +1046,126 @@ public sealed class JdtLsPreparedNavigationTests
 
     [Trait("Suite", "SelfContained")]
     [SuiteFact("SelfContained")]
+    public async Task GetDefinitionAsync_WhenReadyVersionChangesBeforeDisclosure_DiscardsBufferedReply()
+    {
+        await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
+        fixture.Authority.Approve(fixture.Approval);
+        string codeGraphPath = Path.Combine(fixture.PreparedRootPath, ".codegraph");
+        Directory.CreateDirectory(codeGraphPath);
+        string ownedJavaPath = Path.Combine(codeGraphPath, "Owned.java");
+        string sourceJavaPath = Path.Combine(fixture.PreparedRootPath, "Source.java");
+        string callerJavaPath = Path.Combine(fixture.PreparedRootPath, "Caller.java");
+        await File.WriteAllTextAsync(ownedJavaPath, "class Owned { void target() {} }\n");
+        await File.WriteAllTextAsync(sourceJavaPath, "class Source { void target() {} }\n");
+        await File.WriteAllTextAsync(callerJavaPath, "class Caller { void call() {} }\n");
+
+        PreparedJavaNavigationOwnershipFixture bindingFixture =
+            PreparedJavaNavigationOwnershipFixture.CreateVerifiedOwned(
+                fixture.Authority,
+                fixture.Approval,
+                fixture.PreparedRootPath);
+        PreparedCodeGraphWorkspaceOwnership binding = bindingFixture.ApplicationHeldBinding;
+        var ownershipStore = new AvailabilityChangingOwnershipStore(binding);
+        var ownershipCoordinator = new PreparedCodeGraphStateCoordinator(
+            fixture.Authority,
+            new ControlledPreparedToolUseAuthorizer(
+                fixture.Approval,
+                PreparedToolPurpose.JdtNavigation),
+            new MatchingNavigationOwnershipVerifier(binding),
+            ownershipStore);
+        PreparedCodeGraphOwnershipViewResult beforeNavigation =
+            await ownershipCoordinator.GetOwnershipViewAsync(binding, fixture.Approval);
+        Assert.Equal(PreparedCodeGraphOwnershipViewStatus.VerifiedOwned, beforeNavigation.Status);
+        Assert.Equal(binding, beforeNavigation.Record);
+        Assert.NotNull(beforeNavigation.Record?.StateEntryObjectIdentity);
+
+        var toolAuthorization = new ControlledPreparedToolUseAuthorizer(
+            fixture.Approval,
+            PreparedToolPurpose.JdtNavigation);
+        var issuer = new PreparedToolWorkspaceIssuer(fixture.Authority, toolAuthorization);
+        PreparedToolWorkspaceIssueResult issue = await issuer.IssueAsync(
+            new PreparedToolWorkspaceGrantRequest(
+                fixture.Approval,
+                fixture.PreparedRootPath,
+                PreparedToolPurpose.JdtNavigation,
+                TimeSpan.FromSeconds(10)));
+        Assert.Equal(PreparedToolWorkspaceIssueStatus.Issued, issue.Status);
+        PreparedToolWorkspaceLease lease = Assert.IsType<PreparedToolWorkspaceLease>(issue.Lease);
+
+        string disposableStateRoot = Path.Combine(fixture.SiblingPath, "jdt-state");
+        Directory.CreateDirectory(disposableStateRoot);
+        var runtime = new ControlledPreparedJdtLsRuntime();
+        runtime.Session.Reply = new PreparedJdtLsRawReply(
+            [
+                new PreparedJdtLsRawLocation(new Uri(ownedJavaPath).AbsoluteUri, 1, 1, 1, 7),
+                new PreparedJdtLsRawLocation(new Uri(sourceJavaPath).AbsoluteUri, 1, 1, 1, 7),
+            ],
+            LimitReached: true,
+            CapabilityLimitation: "controlled limitation");
+        runtime.Session.AfterNavigate = ownershipStore.AdvanceReadyVersion;
+        var factory = new PreparedJavaNavigationContextFactory(
+            new PreparedJavaNavigationProfile(
+                disposableStateRoot,
+                TimeSpan.FromSeconds(3),
+                TimeSpan.FromSeconds(2),
+                TimeSpan.FromSeconds(1),
+                MaximumResponseBytes: 64 * 1024),
+            runtime,
+            ownershipCoordinator,
+            _ => ValueTask.FromResult<PreparedCodeGraphWorkspaceOwnership?>(binding));
+        PreparedJavaNavigationOpenResult? opened = null;
+
+        try
+        {
+            opened = await factory.OpenAsync(lease);
+            Assert.Equal(PreparedJavaNavigationOpenStatus.Opened, opened.Status);
+            IPreparedJavaNavigationContext context =
+                Assert.IsAssignableFrom<IPreparedJavaNavigationContext>(opened.Context);
+            var request = new PreparedJavaNavigationRequest("Caller.java", 1, 1, 10);
+
+            PreparedJavaNavigationResult result = await context.GetDefinitionAsync(request);
+
+            Assert.Equal(1, runtime.Session.NavigateCallCount);
+            Assert.Equal(request, runtime.Session.LastRequest);
+            Assert.Equal(
+                PreparedToolWorkspaceCheckStatus.Current,
+                await lease.CheckCurrentAsync());
+            Assert.Equal(
+                PreparedToolUseAuthorityStatus.Current,
+                (await toolAuthorization.VerifyCurrentAsync(
+                    fixture.Approval,
+                    PreparedToolPurpose.JdtNavigation)).Status);
+            Assert.Equal(PreparedSourceAuthorityStatus.Current,
+                (await fixture.Authority.VerifyCurrentAsync(fixture.Approval)).Status);
+
+            PreparedCodeGraphOwnershipViewResult afterVersionChange =
+                await ownershipCoordinator.GetOwnershipViewAsync(binding, fixture.Approval);
+            Assert.Equal(PreparedCodeGraphOwnershipViewStatus.VerifiedOwned, afterVersionChange.Status);
+            Assert.NotNull(afterVersionChange.Record);
+            Assert.Equal(binding.OwnershipId, afterVersionChange.Record.OwnershipId);
+            Assert.Equal(binding.Version + 1, afterVersionChange.Record.Version);
+            Assert.Equal(binding.StateEntryObjectIdentity, afterVersionChange.Record.StateEntryObjectIdentity);
+            Assert.Equal(PreparedCodeGraphOwnershipLoadStatus.Found, ownershipStore.CurrentStatus);
+
+            Assert.Equal(PreparedJavaNavigationOutcome.ConfigurationUnavailable, result.Outcome);
+            Assert.Empty(result.Locations);
+            Assert.Empty(result.Limitations);
+            Assert.Null(result.StoppingLimit);
+            Assert.Equal(1, runtime.Session.DisposeCallCount);
+        }
+        finally
+        {
+            if (opened?.Context is not null)
+            {
+                await opened.Context.DisposeAsync();
+            }
+
+            await lease.DisposeAsync();
+        }
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task DefinitionFunction_WithContainedRawFileLocation_ReturnsRepositoryRelativeLocation()
     {
         await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
@@ -3211,6 +3331,7 @@ public sealed class JdtLsPreparedNavigationTests
         PreparedCodeGraphWorkspaceOwnership record) : IPreparedCodeGraphOwnershipStore
     {
         private int _unavailable;
+        private PreparedCodeGraphWorkspaceOwnership _record = record;
 
         public PreparedCodeGraphOwnershipLoadStatus CurrentStatus =>
             Volatile.Read(ref _unavailable) == 0
@@ -3219,15 +3340,22 @@ public sealed class JdtLsPreparedNavigationTests
 
         public void MakeUnavailable() => Interlocked.Exchange(ref _unavailable, 1);
 
+        public void AdvanceReadyVersion()
+        {
+            PreparedCodeGraphWorkspaceOwnership current = Volatile.Read(ref _record);
+            Volatile.Write(ref _record, current with { Version = checked(current.Version + 1) });
+        }
+
         public Task<PreparedCodeGraphOwnershipLoadResult> LoadAsync(
             PreparedCodeGraphWorkspaceOwnership expectedBinding,
             CancellationToken cancellationToken = default)
         {
             cancellationToken.ThrowIfCancellationRequested();
             PreparedCodeGraphOwnershipLoadStatus status = CurrentStatus;
+            PreparedCodeGraphWorkspaceOwnership current = Volatile.Read(ref _record);
             return Task.FromResult(new PreparedCodeGraphOwnershipLoadResult(
                 status,
-                status == PreparedCodeGraphOwnershipLoadStatus.Found ? record : null));
+                status == PreparedCodeGraphOwnershipLoadStatus.Found ? current : null));
         }
 
         public Task<PreparedCodeGraphOwnershipTransitionResult> BeginCreateAsync(

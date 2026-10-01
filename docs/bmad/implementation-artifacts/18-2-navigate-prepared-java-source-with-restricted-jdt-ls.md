@@ -61,3 +61,8 @@ T027/T028 concrete Creating to Ready behavior passed focused1/1 and coordinator1
 ### Controlled JDT ownership disclosure checkpoint (2026-10-01)
 
 Owned request denial and returned-owned-location exclusion preserve legitimate VerifiedUnowned same-name source. Fresh ownership-view loss now discards buffered payload and limits and retires the session while source/JDT authority stays current. Focused disclosure1/1 and surrounding37/37 passed, independently verified; both retained owners assessed units with no refactor needed. Original expected REDs remain immutable and uncounted. Physical aliases and changed Ready identity/version/root remain open; T014–T017 are not complete. Evidence: `T016-ownership-disclosure-final-verification-01.json`. Recovery1/12 and all remaining native/resource/gates remain unchanged.
+
+
+### Concrete Disposing and version coverage checkpoint (2026-10-01)
+
+Exact Ready to Disposing persists a monotonically newer record retaining physical entry and reads it back before success. Focused1/1 and combined affected classes54/54 passed, independently verified. Both owners assessed units with no concrete refactor needed. New JDT Ready-version drift coverage proves existing-correct fresh record equality, with no production change or fabricated RED. Original RED retained; recovery1/12 unchanged. Remaining cleanup/terminal/quarantine/CAS adversarial/process/protection and JDT physical aliases/native qualification remain open. Evidence: `T028-disposing-slice-completion-01.json` and `T016-ready-version-test-verification-01.json`.
