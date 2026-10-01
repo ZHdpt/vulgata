@@ -102,7 +102,7 @@
   "bmad_epic_key": "epic-18",
   "bmad_story_key": "18-4-prepare-an-owned-october-batch-with-valid-context-and-provid",
   "checkpoint": {
-    "checkpoint_id": "bmad-18-4-implement-20261001T110215Z-67f2a6",
+    "checkpoint_id": "bmad-18-4-implement-20261001T120435Z-33af3d",
     "stage": "implement",
     "commit_sha": null,
     "binding_status": "pending"
@@ -123,7 +123,7 @@
     "specs/017-october-batch-setup/evidence/implementation-approval-07.json",
     "specs/017-october-batch-setup/evidence/source-composition-lifetime-diagnosis-01.json",
     "specs/017-october-batch-setup/evidence/local-authority-command-cancellation-selection-final-green-01.json",
-    "specs/017-october-batch-setup/evidence/protected-operator-input-final-verification-01.json",
+    "specs/017-october-batch-setup/evidence/provider-binding-final-green-01.json",
     "specs/017-october-batch-setup/evidence/console-interactive-input-final-verification-01.json",
     "specs/017-october-batch-setup/evidence/local-authority-module-current-final-green-01.json"
   ],
@@ -159,10 +159,10 @@
   },
   "preflight": {
     "branch": "oct14/story-18-4",
-    "head": "495309a72e31aea1ad30d93153de0903e3c6d123",
-    "git_identity_sha256": "297523e6ba450f55998a7eb9b4a7b403ba5e272351f43d5efdb808f4fab125b7",
-    "status_sha256": "a4727deb2476d0718866808db891f0d5108d7a1761ac4092cd855df4edec2f36",
-    "observed_at": "2026-10-01T11:02:15.032717Z"
+    "head": "3d590b3ea90a525d96745f5e43ca145b23c0816c",
+    "git_identity_sha256": "eef201d8ce2d9840b2f899634f658d39cf75572ee7ca66f21f066b648504261c",
+    "status_sha256": "05b45bdac94fbaef15b3b086c67d175aa5b4c885dd42f2f79539a57c25608c52",
+    "observed_at": "2026-10-01T12:04:35.168829Z"
   },
   "recovery": {
     "action": "proceed",
@@ -187,14 +187,14 @@
   },
   "resume": {
     "stage": "implement",
-    "reason": "T015 assessed/regressed, test-only fixture/tracer2/2+267/267 GREEN. Verified owned checkpoint pending; provider declarations compile but behavior/host wiring unfinished. Retain approvals7/count6limit7/resources.",
-    "evidence_path": "specs/017-october-batch-setup/evidence/local-authority-module-current-final-green-01.json"
+    "reason": "Provider binder independently verified36/36focused270/270surrounding; owned checkpoint pending. Next actual provider document/host startup wiring, preserving6/7 and accepted gates/resources.",
+    "evidence_path": "specs/017-october-batch-setup/evidence/provider-binding-final-green-01.json"
   },
   "schema_version": "3.1",
   "stage": "implement",
   "transition_head": {
-    "path": "specs/017-october-batch-setup/evidence/transitions/transition-0079-source-composition-lifetime-definition-review-accept.json",
-    "sha256": "2ca848c32533ac13112906c8861d2590972523d5ea6a4a209082299d8e1621d3"
+    "path": "specs/017-october-batch-setup/evidence/transitions/transition-0083-provider-cancellation-expected-red.json",
+    "sha256": "011fb8a28db9127cd53d0506c0051bcde0812375ccc9a4af08d2f7dd1b4421a0"
   },
-  "updated_at": "2026-10-01T11:02:15.032717Z"
+  "updated_at": "2026-10-01T12:04:35.168829Z"
 }

@@ -188,6 +188,9 @@
   "October/OctoberOperatorCredentialSourceTests.cs": {
     "suite": "SelfContained"
   },
+  "October/OctoberProviderBindingTests.cs": {
+    "suite": "SelfContained"
+  },
   "Pass1JobIdentityTests.cs": {
     "suite": "SelfContained"
   },

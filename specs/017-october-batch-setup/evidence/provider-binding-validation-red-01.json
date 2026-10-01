@@ -1,0 +1,36 @@
+{
+  "observed_after": {
+    "path": "specs/017-october-batch-setup/evidence/transitions/transition-0080-provider-binding-positive-expected-red.json",
+    "sha256": "23a81e4ec16ed5ce0cea38b4f4588734370260b53d29431096d07551e088a30e"
+  },
+  "raw_result": {
+    "kind": "test-red",
+    "stage": "implement",
+    "outcome": "expected-red",
+    "source_commit": "3d590b3ea90a525d96745f5e43ca145b23c0816c",
+    "command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName~OctoberProviderBindingTests'",
+    "exit_code": 1,
+    "discovered": 3066,
+    "selected": 26,
+    "passed": 10,
+    "failed": 16,
+    "skipped": 0,
+    "trx_path": "TestResults/isolation-f95ecbb820634af59ca7cee04932b0d9/results.trx",
+    "trx_sha256": "366a747e43ced51f99b11d64d8024a06502e2b633076e2ab514930c378a85552",
+    "independent_prior_positive": {
+      "exit_code": 0,
+      "selected": 1,
+      "passed": 1,
+      "trx_path": "TestResults/isolation-7051ab70563f404ebecd6ee367ccd5cb/results.trx"
+    },
+    "input_hashes": {
+      "src/dotnet/Vulgata.Infrastructure/Configuration/OctoberProviderBinder.cs": "ca58010d658bcf40d629045d657cb9e551a68bfeb91b5a87ee9aa84f8c2258e5",
+      "tests/Vulgata.Tests/October/OctoberProviderBindingTests.cs": "1a193c115b75de4fb4d8953658005d0ddc6e6029e7fa3c29244b97d1912c757b",
+      "tests/Vulgata.Tests/TestInfrastructure/suites.json": "6db4bd7992ff342bf778dbef3a396d0bddaecef10f544f8fe1d77c3c62043b9c"
+    },
+    "failure": "Atomic-invalid-configuration theory: blank source, duplicate names, blank model, invalid API enum and malformed endpoint return Bound; missing selected protected entry or blank Chat credential reference permits prior Worker decryption; blank protected entry returns CredentialUnavailable instead of InvalidConfiguration. Positive and nine already-protected invalid cases pass. No compile or fixture failure.",
+    "scope": "One atomic validation obligation at accepted BindAsync seam, 25 input variations; all invalid configurations require InvalidConfiguration/null/zero decryption. No cancellation, protection integration, host or runtime-resource execution.",
+    "owner_final_reply": "The existing positive binder tracer passed independently (1/1). The new invalid-configuration theory produced the expected behavioral RED: 26 selected, 10 passed, 16 failed, 0 skipped. Failures show incomplete validation or decryption occurring before the full role configuration is checked; none were compile or fixture failures. Raw TRX and exact mismatch breakdown are with root. I made no production changes and stopped after this slice. No host, PostgreSQL, or provider-runtime qualification is claimed.",
+    "recovery": {"failed_results": 6, "pause_at": 7, "incremented": false, "reason": "Expected behavioral RED is normal development, not a workflow failure."}
+  }
+}

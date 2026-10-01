@@ -53,7 +53,18 @@ checks pass 17/17 and mapped surrounding checks pass 249/249. A previously absol
 Identity lockout expiry elapsed during this run; the fixture now establishes and
 asserts a currently locked account, preserving Denied/no-payload checks and leaving
 production authorization unchanged. See current composition final-GREEN evidence.
-Actual generator entry-point composition, broader startup isolation, provider binding
+The concrete provider binder is now independently verified: 36/36 focused and
+270/270 mapped surrounding tests pass without skips. Changed atomic binding,
+invalid-input, credential-exception and cancellation behaviors retain separate
+expected RED/minimal GREEN evidence. Shared/unused credentials, defensive copies
+and real ephemeral Data Protection compatibility have truthful test-only coverage.
+Both retained owners assessed the affected units; no refactor was needed. This is
+binder-only verification, not provider availability or generation qualification;
+actual single-document loading and both host startup invocations remain open under
+T023/T024. No plaintext is returned, no paid provider is contacted, and recovery
+remains count6/limit7. See `evidence/provider-binding-final-green-01.json`.
+
+Actual generator entry-point composition, broader startup isolation, provider host wiring
 and PostgreSQL/process qualification remain unfinished. This is not full-story or
 standalone-process qualification. The first broad regression also exposed 18 obsolete
 approval-API host cases; their accepted T018/T025 reconciliation now passes 17 focused

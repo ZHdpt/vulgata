@@ -1,0 +1,39 @@
+{
+  "observed_after": {
+    "path": "specs/017-october-batch-setup/evidence/transitions/transition-0082-provider-credential-expected-red.json",
+    "sha256": "422440d8b5b1ae02d74dae7b970a61bd59182d8a8b825ea559b0cc527484827e"
+  },
+  "raw_result": {
+    "kind": "test-red",
+    "stage": "implement",
+    "outcome": "expected-red",
+    "source_commit": "3d590b3ea90a525d96745f5e43ca145b23c0816c",
+    "command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName~OctoberProviderBindingTests'",
+    "exit_code": 1,
+    "discovered": 3070,
+    "selected": 30,
+    "passed": 29,
+    "failed": 1,
+    "skipped": 0,
+    "trx_path": "TestResults/isolation-e25d106ad6164cfd84c7601f8aa52873/results.trx",
+    "trx_sha256": "dabb0f49338e26b30d730e0970e19efae1085b059ebf41b0bd516f918d432bf2",
+    "independent_prior_green": {
+      "exit_code": 0,
+      "selected": 28,
+      "passed": 28,
+      "trx_path": "TestResults/isolation-d90e2e6fd13243b596025f38b91bd491/results.trx",
+      "trx_sha256": "0d336c70a60b2e1725379175d80fba962dd985d95098b16a07fb8cc27666c9d6"
+    },
+    "production_sha256": "23c2a9d0e2acc6780919ce26d4b4e7739cfed9a032feb48c7a3210e21fc43e15",
+    "test_sha256": "fda5be0f83c658dbe5a345599d51598eb967d1be2f75d5039d1aec3a3b4045b3",
+    "failure": "After-first-decryption cancellation expected Cancelled, actual Bound at line164. Decryption-count assertion not reached; no observed-count claim. Pre-cancel zero-decryption case passes. Fake cancels caller CTS during first DecryptAsync then returns completed plaintext; no sleeps/race. Policy/compilation passed.",
+    "owner_final_reply": "The 28-case provider GREEN passed independently. The new cancellation theory produced one RED: pre-decrypt cancellation passes, but cancellation triggered on the first completed decryption returns Bound instead of Cancelled. The focused run selected 30 cases: 29 passed, 1 failed, no skips. TRX paths, exact hashes, and the observed mismatch are with root. I made no production changes and stopped at this slice.",
+    "scope": "One caller-cancellation outcome; no protection/host/runtime resources.",
+    "recovery": {
+      "failed_results": 6,
+      "pause_at": 7,
+      "incremented": false,
+      "reason": "Expected development RED is noncounting."
+    }
+  }
+}

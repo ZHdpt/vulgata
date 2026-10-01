@@ -1,0 +1,61 @@
+{
+  "kind": "test-green",
+  "stage": "implement",
+  "outcome": "passed",
+  "source_commit": "3d590b3ea90a525d96745f5e43ca145b23c0816c",
+  "verification_route": "Changed binder behavior: retained-owner RED/minimal GREEN slices; already-correct shared/copy/protection behavior: truthful passing test-only coverage.",
+  "focused": {
+    "command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName~OctoberProviderBindingTests'",
+    "exit_code": 0,
+    "discovered": 3076,
+    "selected": 36,
+    "passed": 36,
+    "failed": 0,
+    "skipped": 0,
+    "trx_path": "TestResults/isolation-22b2b99db8cc412789ba0d29de7afcc6/results.trx",
+    "trx_sha256": "95d23d351afda9e2a0a2f03a4e4bfa0a0e833a87083087c715ce5a380df5693c"
+  },
+  "surrounding": {
+    "command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName~OctoberProviderBindingTests|FullyQualifiedName~OctoberLocalAuthorityTests|FullyQualifiedName~OctoberOperatorCredentialSourceTests|FullyQualifiedName~OctoberPreparedSourceBindingTests|FullyQualifiedName~OctoberBatchSelectorTests|FullyQualifiedName~OctoberSetupStoreTests|FullyQualifiedName~OctoberSetupPolicyTests|FullyQualifiedName~OctoberHostCompositionTests|FullyQualifiedName~OctoberActivationApiTests|FullyQualifiedName~OctoberPreparedSourceApprovalApiTests|FullyQualifiedName~SecretEncryptionServiceTests'",
+    "exit_code": 0,
+    "discovered": 3076,
+    "selected": 270,
+    "passed": 270,
+    "failed": 0,
+    "skipped": 0,
+    "trx_path": "TestResults/isolation-fec011d4d297491986c4427a288b95b8/results.trx",
+    "trx_sha256": "f4ea19c912e2db9441a67f02e23e559c159360fb704201bf908c1380f2859497"
+  },
+  "independent_cancellation_baseline": {
+    "command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName~OctoberProviderBindingTests'",
+    "exit_code": 0,
+    "selected": 30,
+    "passed": 30,
+    "trx_path": "TestResults/isolation-61c6fa689b3540c49b1de25ee68ff7f4/results.trx",
+    "trx_sha256": "abec0f61987b662c18d7635305c51e171dcf8c6e9f6808c5fb8b76a0f51e0f40"
+  },
+  "input_hashes": {
+    "src/dotnet/Vulgata.Infrastructure/Configuration/OctoberProviderBinder.cs": "7b28f61339d57d819cfa1e9f6024c4ec0397faafde95f62706d67df1c6d67870",
+    "tests/Vulgata.Tests/October/OctoberProviderBindingTests.cs": "fda917b8d3bbafbc7333b10d01a8f5846ed2b68a96e8c6a26a08dcd383e7985b",
+    "tests/Vulgata.Tests/TestInfrastructure/suites.json": "6db4bd7992ff342bf778dbef3a396d0bddaecef10f544f8fe1d77c3c62043b9c"
+  },
+  "red_and_minimal_green": [
+    "specs/017-october-batch-setup/evidence/provider-binding-positive-red-01.json",
+    "specs/017-october-batch-setup/evidence/provider-binding-positive-minimal-green-01.json",
+    "specs/017-october-batch-setup/evidence/provider-binding-validation-red-01.json",
+    "specs/017-october-batch-setup/evidence/provider-binding-validation-minimal-green-01.json",
+    "specs/017-october-batch-setup/evidence/provider-binding-credential-red-01.json",
+    "specs/017-october-batch-setup/evidence/provider-binding-credential-minimal-green-01.json",
+    "specs/017-october-batch-setup/evidence/provider-binding-cancellation-red-01.json",
+    "specs/017-october-batch-setup/evidence/provider-binding-cancellation-minimal-green-01.json"
+  ],
+  "production_assessment": "Retained Sol/medium assessed full affected binder/types read-only: sound; no local refactor indicated. Atomic validation precedes fixed-purpose distinct selected decryptions, immutable inputs, no retained plaintext, closed cancellation/failures. No build/test in assessment.",
+  "test_assessment": "Retained Luna/high: no-refactor-needed. Public BindAsync and actual SecretEncryptionService seams, unique synthetic markers, owned/disposed ephemeral providers; no network/client/keyring/runtime claims.",
+  "raw_test_owner_final": "Binder-group verification is complete: focused 36/36 and mapped surrounding 270/270 passed, with no skips. Added test-only coverage for shared and unused credentials, immutable input snapshots, and real ephemeral Data Protection compatibility. No refactor was needed; no provider runtime or host-wiring qualification is claimed.\n\nExact commands, TRX paths, and final hashes are with root.",
+  "limitations": "Binder-only group complete; T023/T024 remain open for actual generator/Web single-document loading/startup binder invocation. No PG/real-process qualification, full suite, convergence, quality, E2E or completion claimed.",
+  "recovery": {
+    "failed_results": 6,
+    "pause_at": 7,
+    "incremented": false
+  }
+}

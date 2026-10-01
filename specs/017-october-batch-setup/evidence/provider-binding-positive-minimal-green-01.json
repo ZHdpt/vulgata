@@ -1,0 +1,31 @@
+{
+  "kind": "test-green",
+  "stage": "implement",
+  "outcome": "minimal-green",
+  "source_commit": "3d590b3ea90a525d96745f5e43ca145b23c0816c",
+  "task_ids": [
+    "T023",
+    "T024"
+  ],
+  "red": {
+    "path": "specs/017-october-batch-setup/evidence/provider-binding-positive-red-01.json",
+    "sha256": "b98e93c3015b42d9d28c98fd811aefffb634e6f765e0ccaf4f79c2f1b3b35245"
+  },
+  "command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName~OctoberProviderBindingTests'",
+  "exit_code": 0,
+  "selected": 1,
+  "passed": 1,
+  "failed": 0,
+  "skipped": 0,
+  "trx": {
+    "path": "TestResults/isolation-d8c334a230b44c92aec49e78041e7cb0/results.trx",
+    "sha256": "f7c706760f85ac4c3259b195c3ab858b1c3416a07ee9cf910b3b8e0226f3c529"
+  },
+  "input_hashes": {
+    "src/dotnet/Vulgata.Infrastructure/Configuration/OctoberProviderBinder.cs": "ca58010d658bcf40d629045d657cb9e551a68bfeb91b5a87ee9aa84f8c2258e5",
+    "tests/Vulgata.Tests/October/OctoberProviderBindingTests.cs": "7741dadfc0c91d6d1a487736c537c345a5315ce640e482fcbc2871dedc7dda89",
+    "tests/Vulgata.Tests/TestInfrastructure/suites.json": "6db4bd7992ff342bf778dbef3a396d0bddaecef10f544f8fe1d77c3c62043b9c"
+  },
+  "summary": "Production owner's first positive provider tracer passed; exact named Worker/Chat profiles, distinct fixed-purpose decryption, bound result without plaintext. No refactor required for current slice. Independent test-owner verification and remaining validation/failure/cancellation/protection/host behavior pending; T023/T024 remain open.",
+  "raw_worker_response": "The first T023 positive tracer is GREEN: `pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName~OctoberProviderBindingTests'` exited 0; 1 selected, 1 passed, 0 failed, 0 skipped. [TRX](</C:/Users/13728/.codex/worktrees/d166/vulgata/TestResults/isolation-d8c334a230b44c92aec49e78041e7cb0/results.trx>).\n\nOnly [OctoberProviderBinder.cs](</C:/Users/13728/.codex/worktrees/d166/vulgata/src/dotnet/Vulgata.Infrastructure/Configuration/OctoberProviderBinder.cs>) changed (SHA-256 `ca58010d658bcf40d629045d657cb9e551a68bfeb91b5a87ee9aa84f8c2258e5`). `BindAsync` now selects the named Worker and Chat profiles, decrypts each distinct selected credential with the fixed existing purpose, and returns a bound result without plaintext. The method is cohesive for this slice; no refactor was needed.\n\nInvalid-input, exception, cancellation-after-await, real Data Protection, and host-wiring behavior remain unverified. T023/T024 are not complete."
+}
