@@ -87,8 +87,20 @@ incomplete frozen snapshot/target metadata; the bounded correction leaves migrat
 Up/Down and runtime context unchanged. The earlier static completeness assumption is
 disproved by retained raw diagnostics, not rewritten. Both owners assessed final units;
 no further refactor is required. See `evidence/generator-prepare-final-green-01.json`.
-Generator select/denial, broader startup isolation and full A/B qualification remain
-unfinished; no whole host task is marked complete by this first executable tracer.
+Generator prepare/select/parser rejection and invalid credentials now pass9/9 actual
+process cases under fresh owned PostgreSQL17, with exact database/temp/container/volume
+cleanup. Controlled Web split Identity, cookie-free401 versus permitted-cookie200,
+ordinary operational service absence and actual missing-batch Denied diagnostics pass
+22/22 and262/262 surrounding checks. The login helper now selects the named form;
+raw fixture comparison/prebuild-policy failures remain history, not product RED or
+workflow-count increments. No production change was needed for this coverage.
+See `evidence/generator-loader-auth-final-green-01.json` and
+`evidence/selected-web-denial-final-green-01.json`.
+FR010 still requires the actual CLI to expose sanitized setup outcomes/failure
+classes: Main currently emits nothing and collapses every failure into exit1.
+This is unfinished approved T027/T028 behavior, not a new semantic decision or
+definition restart; normal executable RED/GREEN follows. Full A/B qualification
+and final gates remain unfinished; no whole host task is marked complete here.
 Recovery remains6/7 with unchanged approvals. The first broad regression also exposed 18 obsolete
 approval-API host cases; their accepted T018/T025 reconciliation now passes 17 focused
 and 249 surrounding cases. The failed broad run is retained rather than described as

@@ -43,7 +43,7 @@ verification before reuse.
   Tracker refreshes require both epic files. Story 13.1 and October Story 18.1 are
   done; this checkout includes Story 18.1's completed baseline at `3632b2cc`. October
   Story 18.4 resumes in `specs/017-october-batch-setup` from implementation
-  checkpoint `784e530`. The retained Astra-medium owner completed the bounded plan
+  checkpoint `7e52fb5`. The retained Astra-medium owner completed the bounded plan
   correction; independent plan-review-14 accepted it at transition 0077 and delegated
   plan-authorization-05 permits affected task reconciliation only. The candidate
   distinguishes callable source-adapter integration from setup-only execution,
@@ -72,8 +72,12 @@ verification before reuse.
   with Web stopped (1/1), model consistency (5/5) and surrounding regressions
   (270/270), using fresh authorized PostgreSQL 17 resources with verified cleanup.
   The frozen metadata correction leaves migration operations unchanged. Generator
-  select/denial, broader startup isolation and full A/B PostgreSQL/process
-  qualification remain incomplete. Status in
+  select/provider/auth-denial coverage now passes9/9 real-process cases with exact
+  owned cleanup. Controlled Web isolation and missing-batch diagnostics additionally
+  pass22/22 with262/262 surrounding tests, including split Identity and normal browser
+  authorization. The silent actual generator CLI still lacks FR010 classifications;
+  approved T027/T028 RED/GREEN and full A/B PostgreSQL/process qualification remain
+  incomplete. Status in
   other assigned worktrees must be verified there. Sprint planning alone activated
   no feature.
   Its bounded retained-source

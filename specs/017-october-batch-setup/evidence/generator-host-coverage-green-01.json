@@ -1,0 +1,43 @@
+{
+  "kind": "test-green",
+  "stage": "implement",
+  "evidence_id": "18-4/generator-host-coverage-green/1",
+  "source_commit": "7e52fb5d57cacde2d42102d477d6d56581d734d4",
+  "observed_at": "2026-10-01T15:51:26Z",
+  "verification_route": "Test-only existing actual generator prepare/select/provider-denial coverage; no new production behavior or fabricated RED.",
+  "prior_green": ["specs/017-october-batch-setup/evidence/generator-prepare-final-green-01.json", "specs/017-october-batch-setup/evidence/generator-select-coverage-green-01.json"],
+  "input_hashes": {
+    "tests/Vulgata.Tests/October/OctoberHostSelectionTests.cs": "6b2e199c04fd41de762c0820699779b29c0aeefd8cdee7d77f46483d3d3bca0d",
+    "src/dotnet/Vulgata.OctoberGenerator/Program.cs": "21d05229203395f8a8440e2fc8d37f0e57c8d1dc8b7f72775d81a2a179493dc3",
+    "src/dotnet/Vulgata.Web/Data/OctoberLocalAuthority.cs": "e2fdc0b87d4a78f44580aa5af6c6800fb375d873c9ef32a047b9275b5a1d6e75",
+    "src/dotnet/Vulgata.Web/Data/OctoberOperatorCredentialSources.cs": "9e9e62baace608615d69ab5028e06485ad5ab77a229d5f4e56aafd00a981fb8d"
+  },
+  "commands": [
+    {
+      "command": "pwsh -NoProfile -File eng/test.ps1 -Suite E2E -WithPostgreSql -Filter 'FullyQualifiedName~GeneratorPrepare_MalformedProviderDoesNotReachOperatorFactorValidationOrOctoberMigration'",
+      "exit_code": 0, "selected": 1, "passed": 1, "failed": 0, "skipped": 0,
+      "trx_path": "TestResults/isolation-2d1d73ad27954ddc974a828500ece7a4/results.trx",
+      "trx_sha256": "603224ffe35944d782f352f3799ee56b5f96d5f179bbece378ca622bcea2b6a8"
+    },
+    {
+      "command": "pwsh -NoProfile -File eng/test.ps1 -Suite E2E -WithPostgreSql -Filter 'FullyQualifiedName~GeneratorPrepare_WithWebStopped_CommitsOwnedBatch|FullyQualifiedName~GeneratorSelect_WithWebStopped_ReturnsExistingBatchWithoutChangingCommittedState|FullyQualifiedName~GeneratorPrepare_MalformedProviderDoesNotReachOperatorFactorValidationOrOctoberMigration'",
+      "exit_code": 0, "selected": 3, "passed": 3, "failed": 0, "skipped": 0,
+      "trx_path": "TestResults/isolation-cac1e37e9d564dd4921688509f7f4173/results.trx",
+      "trx_sha256": "530ac3f8ee1435b8267e381e09bd03c981fc54ab85ab4c94e13f9d66f98f2eda"
+    }
+  ],
+  "owned_resource_boundary": "Existing explicit grant; fresh PG17 runner run cac1e37e9d564dd4921688509f7f4173, three separately created/recorded database/temp fixtures. No Web/listener/source/paid/shared resource. TRX verifies each created database/temp cleanup; exact run labels and owned mounts verified, container list empty and exact volume absent.",
+  "cleanup_proofs": [
+    {"path": "TestResults/isolation-cac1e37e9d564dd4921688509f7f4173/cleanup-inspect.log", "sha256": "2c3930eb0846df09a7a59197d88cb77bbfc7f43be0958e361d229927751bb0b0"},
+    {"path": "TestResults/isolation-cac1e37e9d564dd4921688509f7f4173/owned-mounts.json", "sha256": "b73f5f83892288fc62569fd7d6d67d17e5b39111630fd4d8201ab7e540e7c8a6"},
+    {"path": "TestResults/isolation-cac1e37e9d564dd4921688509f7f4173/volume-absence.log", "sha256": "6affa594270a9e4509fc5a4d91ad7c1980e6b348aa5645eabe14fcde763c5251"}
+  ],
+  "raw_result": {
+    "owner": "retained tdd-test-author Luna/high",
+    "outcome": "passed",
+    "coverage": "Prepare child0; prepare/select children0/0 with historical state stable; malformed-provider child1, no October schema. Valid password plus deliberately invalid protected recovery code calibrated actual authority failed-factor counter0to1; baseline1 unchanged after child rejection. Sanitized output excludes secrets.",
+    "limitation": "Counter proves counter-changing factor-validation path skipped, not all data access. Wrong-password sentinel was withdrawn before edits/tests because lockoutOnFailure=false; ordinary fixture correction, not workflow failure. Existing select catalog stability does not prove absence of attempted migrations.",
+    "assessment": "Existing guarded E2E fixture, no new file/inventory/production changes. Original prepare/select assertions preserved; no concrete refactor needed."
+  },
+  "root_disposition": "Continue missing controlled startup isolation/diagnostics before final T020/T029 A/B qualification. No whole task completion, no changed semantic scope. Recovery6/7, diagnosis/holds/owner/gates/approvals retained."
+}

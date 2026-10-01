@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Collections.Immutable;
 using System.Globalization;
+using System.Text;
 using System.Text.Json;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
@@ -82,6 +83,240 @@ public sealed class OctoberHostSelectionTests(ITestOutputHelper output)
         Assert.Matches("^[0-9a-f]{64}$", bound.Snapshot.Request.SelectionDigest);
         Assert.Equal(bound.Snapshot.Request.SelectionDigest, bound.Snapshot.Authority.SelectionDigest);
         Assert.Equal(TimeSpan.Zero, bound.Snapshot.SelectedAtUtc.Offset);
+    }
+
+    [Trait("Suite", "E2E")]
+    [SuiteFact("E2E")]
+    public async Task GeneratorSelect_WithWebStopped_ReturnsExistingBatchWithoutChangingCommittedState()
+    {
+        await using GeneratorPrepareFixture fixture = await GeneratorPrepareFixture.CreateAsync(output);
+        OctoberSetupRequest request = fixture.CreatePrepareRequest();
+        string requestJson = JsonSerializer.Serialize(request);
+
+        await fixture.AssertOwnedOperatorCanPrepareAsync(request);
+        await fixture.AssertOctoberSchemaAbsentAsync();
+
+        using Process prepare = fixture.StartGenerator("prepare", requestJson);
+        output.WriteLine($"prepare-process-id={prepare.Id}");
+        (int prepareExitCode, string prepareOutput, string prepareError) =
+            await fixture.WaitForGeneratorAsync(prepare);
+        output.WriteLine($"prepare-exit-code={prepareExitCode}");
+        Assert.DoesNotContain(fixture.OperatorPassword, prepareOutput + prepareError, StringComparison.Ordinal);
+        Assert.DoesNotContain(fixture.ProviderApiKeyWorker, prepareOutput + prepareError, StringComparison.Ordinal);
+        Assert.DoesNotContain(fixture.ProviderApiKeyChat, prepareOutput + prepareError, StringComparison.Ordinal);
+        Assert.DoesNotContain(fixture.ConnectionString, prepareOutput + prepareError, StringComparison.Ordinal);
+        Assert.DoesNotContain(fixture.OwnedRoot, prepareOutput + prepareError, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal(0, prepareExitCode);
+
+        OctoberBoundSetupSnapshot committedBeforeSelect = await fixture.ReadBoundSnapshotAsync();
+        var persistedBeforeSelect = await fixture.CaptureOctoberStateAsync();
+
+        using Process select = fixture.StartGenerator("select", requestJson: null);
+        output.WriteLine($"select-process-id={select.Id}");
+        (int selectExitCode, string selectOutput, string selectError) =
+            await fixture.WaitForGeneratorAsync(select);
+        output.WriteLine($"select-exit-code={selectExitCode}");
+        Assert.DoesNotContain(fixture.OperatorPassword, selectOutput + selectError, StringComparison.Ordinal);
+        Assert.DoesNotContain(fixture.ProviderApiKeyWorker, selectOutput + selectError, StringComparison.Ordinal);
+        Assert.DoesNotContain(fixture.ProviderApiKeyChat, selectOutput + selectError, StringComparison.Ordinal);
+        Assert.DoesNotContain(fixture.ConnectionString, selectOutput + selectError, StringComparison.Ordinal);
+        Assert.DoesNotContain(fixture.OwnedRoot, selectOutput + selectError, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal(0, selectExitCode);
+
+        OctoberBoundSetupSnapshot committedAfterSelect = await fixture.ReadBoundSnapshotAsync();
+        var persistedAfterSelect = await fixture.CaptureOctoberStateAsync();
+
+        Assert.Equal(committedBeforeSelect.Request.TargetId, committedAfterSelect.Request.TargetId);
+        Assert.Equal(committedBeforeSelect.Request.BatchId, committedAfterSelect.Request.BatchId);
+        Assert.Equal(committedBeforeSelect.Request.SelectionDigest, committedAfterSelect.Request.SelectionDigest);
+        Assert.Equal(
+            committedBeforeSelect.Request.Repositories.ToArray(),
+            committedAfterSelect.Request.Repositories.ToArray());
+        Assert.Equal(
+            committedBeforeSelect.Request.ContextSelections.ToArray(),
+            committedAfterSelect.Request.ContextSelections.ToArray());
+        Assert.Equal(committedBeforeSelect.Authority.TargetId, committedAfterSelect.Authority.TargetId);
+        Assert.Equal(committedBeforeSelect.Authority.BatchId, committedAfterSelect.Authority.BatchId);
+        Assert.Equal(committedBeforeSelect.Authority.SubjectId, committedAfterSelect.Authority.SubjectId);
+        Assert.Equal(
+            committedBeforeSelect.Authority.CanonicalDatabaseIdentity,
+            committedAfterSelect.Authority.CanonicalDatabaseIdentity);
+        Assert.Equal(
+            committedBeforeSelect.Authority.SelectionDigest,
+            committedAfterSelect.Authority.SelectionDigest);
+        Assert.Equal(
+            committedBeforeSelect.Authority.SelectedContext!.ManagementAuthorityId,
+            committedAfterSelect.Authority.SelectedContext!.ManagementAuthorityId);
+        Assert.Equal(
+            committedBeforeSelect.Authority.SelectedContext.Repositories.ToArray(),
+            committedAfterSelect.Authority.SelectedContext.Repositories.ToArray());
+        Assert.Equal(
+            committedBeforeSelect.Authority.SelectedContext.Entries.ToArray(),
+            committedAfterSelect.Authority.SelectedContext.Entries.ToArray());
+        Assert.Equal(
+            committedBeforeSelect.Authority.SelectedContext.Differences.ToArray(),
+            committedAfterSelect.Authority.SelectedContext.Differences.ToArray());
+        Assert.Equal(committedBeforeSelect.SelectedAtUtc, committedAfterSelect.SelectedAtUtc);
+
+        Assert.Equal(persistedBeforeSelect.AppliedMigrations, persistedAfterSelect.AppliedMigrations);
+        Assert.Equal(persistedBeforeSelect.SchemaDefinition, persistedAfterSelect.SchemaDefinition);
+        Assert.Equal(persistedBeforeSelect.RowCounts, persistedAfterSelect.RowCounts);
+    }
+
+    [Trait("Suite", "E2E")]
+    [SuiteFact("E2E")]
+    public async Task GeneratorPrepare_MalformedProviderDoesNotReachOperatorFactorValidationOrOctoberMigration()
+    {
+        await using GeneratorPrepareFixture fixture = await GeneratorPrepareFixture.CreateAsync(output);
+        OctoberSetupRequest request = fixture.CreatePrepareRequest();
+        string requestJson = JsonSerializer.Serialize(request);
+
+        await fixture.AssertOwnedOperatorCanPrepareAsync(request);
+        await fixture.AssertOctoberSchemaAbsentAsync();
+
+        (int failedLoginBaseline, string invalidRecoveryCode) =
+            await fixture.EnableTwoFactorAndProveFailedFactorIncrementsCounterAsync();
+        output.WriteLine($"failed-factor-counter-baseline={failedLoginBaseline}");
+        fixture.WriteMalformedProviderDocument();
+        output.WriteLine("provider-document=malformed-owned-json");
+
+        using Process process = fixture.StartGenerator("prepare", requestJson);
+        output.WriteLine($"generator-process-id={process.Id}");
+        (int exitCode, string standardOutput, string standardError) =
+            await fixture.WaitForGeneratorAsync(process);
+        output.WriteLine($"generator-exit-code={exitCode}");
+
+        string childOutput = standardOutput + standardError;
+        Assert.DoesNotContain(fixture.OperatorPassword, childOutput, StringComparison.Ordinal);
+        Assert.DoesNotContain(invalidRecoveryCode, childOutput, StringComparison.Ordinal);
+        Assert.DoesNotContain(fixture.ProviderApiKeyWorker, childOutput, StringComparison.Ordinal);
+        Assert.DoesNotContain(fixture.ProviderApiKeyChat, childOutput, StringComparison.Ordinal);
+        Assert.DoesNotContain(fixture.ConnectionString, childOutput, StringComparison.Ordinal);
+        Assert.DoesNotContain(fixture.OwnedRoot, childOutput, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal(1, exitCode);
+
+        await fixture.AssertOctoberSchemaAbsentAsync();
+        int failedLoginCountAfterRejection = await fixture.ReadOperatorAccessFailedCountAsync();
+        Assert.Equal(failedLoginBaseline, failedLoginCountAfterRejection);
+        output.WriteLine("provider-rejection-failed-factor-counter-unchanged=true");
+        output.WriteLine("provider-rejection-october-schema=absent");
+    }
+
+    [Trait("Suite", "E2E")]
+    [SuiteFact("E2E")]
+    public async Task GeneratorPrepare_DuplicateProviderDocumentPropertyIsRejectedBeforeOperatorFactorValidationOrOctoberMigration()
+    {
+        await using GeneratorPrepareFixture fixture = await GeneratorPrepareFixture.CreateAsync(output);
+        OctoberSetupRequest request = fixture.CreatePrepareRequest();
+        string requestJson = JsonSerializer.Serialize(request);
+
+        await fixture.AssertOwnedOperatorCanPrepareAsync(request);
+        await fixture.AssertOctoberSchemaAbsentAsync();
+
+        (int failedFactorBaseline, string invalidRecoveryCode) =
+            await fixture.EnableTwoFactorAndProveFailedFactorIncrementsCounterAsync();
+        output.WriteLine($"failed-factor-counter-baseline={failedFactorBaseline}");
+        fixture.WriteDuplicateRootProviderProperty();
+        output.WriteLine("provider-document=duplicate-root-sourceIdentity");
+
+        using Process process = fixture.StartGenerator("prepare", requestJson);
+        output.WriteLine($"generator-process-id={process.Id}");
+        (int exitCode, string standardOutput, string standardError) =
+            await fixture.WaitForGeneratorAsync(process);
+        output.WriteLine($"generator-exit-code={exitCode}");
+
+        string childOutput = standardOutput + standardError;
+        Assert.DoesNotContain(fixture.OperatorPassword, childOutput, StringComparison.Ordinal);
+        Assert.DoesNotContain(invalidRecoveryCode, childOutput, StringComparison.Ordinal);
+        Assert.DoesNotContain(fixture.ProviderApiKeyWorker, childOutput, StringComparison.Ordinal);
+        Assert.DoesNotContain(fixture.ProviderApiKeyChat, childOutput, StringComparison.Ordinal);
+        Assert.DoesNotContain(fixture.ConnectionString, childOutput, StringComparison.Ordinal);
+        Assert.DoesNotContain(fixture.OwnedRoot, childOutput, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal(1, exitCode);
+
+        await fixture.AssertOctoberSchemaAbsentAsync();
+        int failedFactorCountAfterRejection = await fixture.ReadOperatorAccessFailedCountAsync();
+        Assert.Equal(failedFactorBaseline, failedFactorCountAfterRejection);
+        output.WriteLine("duplicate-provider-rejection-failed-factor-counter-unchanged=true");
+        output.WriteLine("duplicate-provider-rejection-october-schema=absent");
+    }
+
+    [Trait("Suite", "E2E")]
+    [SuiteTheory("E2E")]
+    [InlineData("unknown-profile-property")]
+    [InlineData("unknown-api-wire-value")]
+    [InlineData("competing-provider-source")]
+    [InlineData("malformed-utf8")]
+    public async Task GeneratorPrepare_InvalidProviderDocumentPredicatesAreRejectedBeforeOperatorFactorValidationOrOctoberMigration(
+        string invalidCase)
+    {
+        await using GeneratorPrepareFixture fixture = await GeneratorPrepareFixture.CreateAsync(output);
+        OctoberSetupRequest request = fixture.CreatePrepareRequest();
+        string requestJson = JsonSerializer.Serialize(request);
+
+        await fixture.AssertOwnedOperatorCanPrepareAsync(request);
+        await fixture.AssertOctoberSchemaAbsentAsync();
+
+        (int failedFactorBaseline, string invalidRecoveryCode) =
+            await fixture.EnableTwoFactorAndProveFailedFactorIncrementsCounterAsync();
+        output.WriteLine($"failed-factor-counter-baseline={failedFactorBaseline}");
+        if (invalidCase != "competing-provider-source")
+            fixture.WriteInvalidProviderDocument(invalidCase);
+        output.WriteLine($"provider-document-case={invalidCase}");
+
+        using Process process = fixture.StartGenerator(
+            "prepare", requestJson, includeCompetingProviderSource: invalidCase == "competing-provider-source");
+        output.WriteLine($"generator-process-id={process.Id}");
+        (int exitCode, string standardOutput, string standardError) =
+            await fixture.WaitForGeneratorAsync(process);
+        output.WriteLine($"generator-exit-code={exitCode}");
+
+        string childOutput = standardOutput + standardError;
+        Assert.DoesNotContain(fixture.OperatorPassword, childOutput, StringComparison.Ordinal);
+        Assert.DoesNotContain(invalidRecoveryCode, childOutput, StringComparison.Ordinal);
+        Assert.DoesNotContain(fixture.ProviderApiKeyWorker, childOutput, StringComparison.Ordinal);
+        Assert.DoesNotContain(fixture.ProviderApiKeyChat, childOutput, StringComparison.Ordinal);
+        Assert.DoesNotContain(fixture.ConnectionString, childOutput, StringComparison.Ordinal);
+        Assert.DoesNotContain(fixture.OwnedRoot, childOutput, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal(1, exitCode);
+
+        await fixture.AssertOctoberSchemaAbsentAsync();
+        int failedFactorCountAfterRejection = await fixture.ReadOperatorAccessFailedCountAsync();
+        Assert.Equal(failedFactorBaseline, failedFactorCountAfterRejection);
+        output.WriteLine("invalid-provider-rejection-failed-factor-counter-unchanged=true");
+        output.WriteLine("invalid-provider-rejection-october-schema=absent");
+    }
+
+    [Trait("Suite", "E2E")]
+    [SuiteFact("E2E")]
+    public async Task GeneratorPrepare_InvalidProtectedOperatorPasswordIsSanitizedBeforeOctoberMigration()
+    {
+        await using GeneratorPrepareFixture fixture = await GeneratorPrepareFixture.CreateAsync(output);
+        OctoberSetupRequest request = fixture.CreatePrepareRequest();
+        string requestJson = JsonSerializer.Serialize(request);
+
+        await fixture.AssertOwnedOperatorCanPrepareAsync(request);
+        await fixture.AssertOctoberSchemaAbsentAsync();
+        string wrongOperatorPassword = fixture.WriteWrongOperatorPassword();
+        output.WriteLine("operator-credential-case=synthetic-wrong-protected-password");
+
+        using Process process = fixture.StartGenerator("prepare", requestJson);
+        output.WriteLine($"generator-process-id={process.Id}");
+        (int exitCode, string standardOutput, string standardError) =
+            await fixture.WaitForGeneratorAsync(process);
+        output.WriteLine($"generator-exit-code={exitCode}");
+
+        string childOutput = standardOutput + standardError;
+        Assert.DoesNotContain(fixture.OperatorPassword, childOutput, StringComparison.Ordinal);
+        Assert.DoesNotContain(wrongOperatorPassword, childOutput, StringComparison.Ordinal);
+        Assert.DoesNotContain(fixture.ProviderApiKeyWorker, childOutput, StringComparison.Ordinal);
+        Assert.DoesNotContain(fixture.ProviderApiKeyChat, childOutput, StringComparison.Ordinal);
+        Assert.DoesNotContain(fixture.ConnectionString, childOutput, StringComparison.Ordinal);
+        Assert.DoesNotContain(fixture.OwnedRoot, childOutput, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal(1, exitCode);
+
+        await fixture.AssertOctoberSchemaAbsentAsync();
+        output.WriteLine("invalid-operator-password-october-schema=absent");
     }
 
     private sealed class GeneratorPrepareFixture : IAsyncDisposable
@@ -334,6 +569,132 @@ public sealed class OctoberHostSelectionTests(ITestOutputHelper output)
             Assert.Equal(BatchId, selection.Authority!.BatchId);
         }
 
+        internal async Task<(int FailedLoginCount, string InvalidRecoveryCode)>
+            EnableTwoFactorAndProveFailedFactorIncrementsCounterAsync()
+        {
+            int failedLoginCountBefore;
+            string invalidRecoveryCode = "not-a-valid-identity-recovery-code-" + _runId;
+            await using (AsyncServiceScope setupScope = Services.CreateAsyncScope())
+            {
+                TestResourceScope.ValidateOwnedTarget(ConnectionString);
+                UserManager<ApplicationUser> users = setupScope.ServiceProvider
+                    .GetRequiredService<UserManager<ApplicationUser>>();
+                ApplicationUser user = Assert.IsAssignableFrom<ApplicationUser>(
+                    await users.FindByIdAsync(SubjectId));
+                IdentityResult enabled = await users.SetTwoFactorEnabledAsync(user, true);
+                Assert.True(enabled.Succeeded, string.Join("; ", enabled.Errors.Select(error => error.Code)));
+                IEnumerable<string>? recoveryCodes = await users.GenerateNewTwoFactorRecoveryCodesAsync(
+                    user, number: 1);
+                Assert.Single(recoveryCodes ?? Array.Empty<string>());
+                Assert.DoesNotContain(invalidRecoveryCode, recoveryCodes ?? Array.Empty<string>());
+                failedLoginCountBefore = await users.GetAccessFailedCountAsync(user);
+                Assert.Equal(0, failedLoginCountBefore);
+
+                WriteProtectedOperatorCredentials(
+                    _protection.Provider,
+                    Path.Combine(OwnedRoot, "operator.credentials.protected"),
+                    OperatorUserName,
+                    OperatorPassword,
+                    authenticatorCode: null,
+                    recoveryCode: invalidRecoveryCode);
+            }
+
+            await using (AsyncServiceScope operationScope = Services.CreateAsyncScope())
+            {
+                IOctoberLocalAuthority authority = operationScope.ServiceProvider
+                    .GetRequiredService<IOctoberLocalAuthority>();
+                OctoberAuthenticationResult result = await authority.AuthenticateAsync(CancellationToken.None);
+                Assert.Equal(OctoberAuthenticationStatus.Denied, result.Status);
+                Assert.Null(result.Session);
+            }
+
+            int failedLoginCountAfter = await ReadOperatorAccessFailedCountAsync();
+            Assert.Equal(failedLoginCountBefore + 1, failedLoginCountAfter);
+            _output.WriteLine($"verified-failed-factor-counter={failedLoginCountBefore}->{failedLoginCountAfter}");
+            return (failedLoginCountAfter, invalidRecoveryCode);
+        }
+
+        internal async Task<int> ReadOperatorAccessFailedCountAsync()
+        {
+            TestResourceScope.ValidateOwnedTarget(ConnectionString);
+            await using AsyncServiceScope scope = Services.CreateAsyncScope();
+            UserManager<ApplicationUser> users = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+            ApplicationUser user = Assert.IsAssignableFrom<ApplicationUser>(await users.FindByIdAsync(SubjectId));
+            return await users.GetAccessFailedCountAsync(user);
+        }
+
+        internal void WriteMalformedProviderDocument() =>
+            File.WriteAllText(Path.Combine(OwnedRoot, "providers.json"), "{ malformed provider document");
+
+        internal string WriteWrongOperatorPassword()
+        {
+            string wrongPassword = $"Wrong1!Generator-{Guid.NewGuid():N}";
+            WriteProtectedOperatorCredentials(
+                _protection.Provider,
+                Path.Combine(OwnedRoot, "operator.credentials.protected"),
+                OperatorUserName,
+                wrongPassword,
+                authenticatorCode: null,
+                recoveryCode: null);
+            return wrongPassword;
+        }
+
+        internal void WriteDuplicateRootProviderProperty()
+        {
+            string providerFile = Path.Combine(OwnedRoot, "providers.json");
+            string providerDocument = File.ReadAllText(providerFile);
+            int rootObjectEnd = providerDocument.LastIndexOf('}');
+            Assert.True(rootObjectEnd >= 0, "The fixture must start from its complete valid provider document.");
+            string duplicateProperty = ",\"sourceIdentity\":\"duplicate-owned-source\"";
+            File.WriteAllText(providerFile,
+                providerDocument[..rootObjectEnd] + duplicateProperty + providerDocument[rootObjectEnd..]);
+        }
+
+        internal void WriteInvalidProviderDocument(string invalidCase)
+        {
+            string providerFile = Path.Combine(OwnedRoot, "providers.json");
+            string providerDocument = File.ReadAllText(providerFile);
+            if (invalidCase == "malformed-utf8")
+            {
+                byte[] original = File.ReadAllBytes(providerFile);
+                byte[] marker = Encoding.UTF8.GetBytes("\"sourceIdentity\":\"owned-generator-provider-");
+                int markerIndex = original.AsSpan().IndexOf(marker);
+                Assert.True(markerIndex >= 0, "The valid source identity must be present in the fixture document.");
+                int invalidByteIndex = markerIndex + marker.Length;
+                byte[] malformed = new byte[original.Length + 1];
+                Buffer.BlockCopy(original, 0, malformed, 0, invalidByteIndex);
+                malformed[invalidByteIndex] = 0xC3;
+                Buffer.BlockCopy(original, invalidByteIndex, malformed, invalidByteIndex + 1,
+                    original.Length - invalidByteIndex);
+                File.WriteAllBytes(providerFile, malformed);
+                return;
+            }
+
+            string mutated = invalidCase switch
+            {
+                "unknown-profile-property" => providerDocument.Replace(
+                    "\"name\":\"worker-profile\"",
+                    "\"name\":\"worker-profile\",\"unknownProperty\":true",
+                    StringComparison.Ordinal),
+                "unknown-api-wire-value" => ReplaceFirst(
+                    providerDocument,
+                    "\"apiType\":\"chat-completions\"",
+                    "\"apiType\":\"unknown-wire-value\""),
+                _ => throw new ArgumentOutOfRangeException(nameof(invalidCase), invalidCase,
+                    "Unknown invalid provider document case."),
+            };
+
+            Assert.NotEqual(providerDocument, mutated);
+            File.WriteAllText(providerFile, mutated);
+        }
+
+        private static string ReplaceFirst(string value, string expected, string replacement)
+        {
+            int index = value.IndexOf(expected, StringComparison.Ordinal);
+            Assert.True(index >= 0, "The expected provider field must be present in the valid fixture document.");
+            return value[..index] + replacement + value[(index + expected.Length)..];
+        }
+
         internal async Task AssertOctoberSchemaAbsentAsync()
         {
             TestResourceScope.ValidateOwnedTarget(ConnectionString);
@@ -342,6 +703,79 @@ public sealed class OctoberHostSelectionTests(ITestOutputHelper output)
             await using NpgsqlCommand command = new(
                 "SELECT EXISTS (SELECT 1 FROM pg_namespace WHERE nspname = 'october');", target);
             Assert.False((bool)(await command.ExecuteScalarAsync() ?? true));
+        }
+
+        internal async Task<OctoberBoundSetupSnapshot> ReadBoundSnapshotAsync()
+        {
+            await using AsyncServiceScope scope = Services.CreateAsyncScope();
+            IOctoberLocalAuthority authority = scope.ServiceProvider.GetRequiredService<IOctoberLocalAuthority>();
+            OctoberAuthenticationResult authentication = await authority.AuthenticateAsync(CancellationToken.None);
+            Assert.Equal(OctoberAuthenticationStatus.Authenticated, authentication.Status);
+            await using IOctoberOperatorSession session = Assert.IsAssignableFrom<IOctoberOperatorSession>(
+                authentication.Session);
+            OctoberAuthoritySelectionResult current = await authority.AuthorizeSelectionAsync(
+                session,
+                new OctoberAuthoritySelectionRequest(TargetId, BatchId, PrepareRequest: null),
+                CancellationToken.None);
+            Assert.Equal(OctoberAuthorityDecisionStatus.Authorized, current.Status);
+            OctoberAuthorizedSelection freshAuthority = Assert.IsType<OctoberAuthorizedSelection>(current.Authority);
+
+            await using OctoberDbContext october = CreateOctoberContext();
+            IOctoberBatchSelector selector = new OctoberBatchSelector(
+                october, TargetId, CanonicalDatabaseIdentity);
+            OctoberSelectionResult selected = await selector.BindAsync(
+                new OctoberStartupSelection(TargetId, BatchId, freshAuthority),
+                CancellationToken.None);
+            Assert.Equal(OctoberSelectionStatus.Selected, selected.Status);
+            IOctoberHistoricalBoundSetupData bound =
+                Assert.IsAssignableFrom<IOctoberHistoricalBoundSetupData>(selected.BoundSetupData);
+            return bound.Snapshot;
+        }
+
+        internal async Task<(string[] AppliedMigrations, string[] SchemaDefinition, int[] RowCounts)>
+            CaptureOctoberStateAsync()
+        {
+            await using OctoberDbContext october = CreateOctoberContext();
+            string[] appliedMigrations = (await october.Database.GetAppliedMigrationsAsync()).ToArray();
+            int[] rowCounts =
+            [
+                await october.Batches.CountAsync(),
+                await october.RepositorySelections.CountAsync(),
+                await october.ContextReferences.CountAsync(),
+                await october.AdvisoryEntries.CountAsync(),
+                await october.ContextDifferences.CountAsync(),
+                await october.PreparedSourceApprovals.CountAsync(),
+            ];
+
+            const string schemaQuery = """
+                SELECT 'table|' || table_name || '|' || table_type
+                FROM information_schema.tables
+                WHERE table_schema = 'october'
+                UNION ALL
+                SELECT 'column|' || table_name || '|' || column_name || '|' || data_type || '|' ||
+                    udt_name || '|' || is_nullable
+                FROM information_schema.columns
+                WHERE table_schema = 'october'
+                UNION ALL
+                SELECT 'constraint|' || table_name || '|' || constraint_name || '|' || constraint_type
+                FROM information_schema.table_constraints
+                WHERE constraint_schema = 'october'
+                UNION ALL
+                SELECT 'index|' || tablename || '|' || indexname || '|' || indexdef
+                FROM pg_indexes
+                WHERE schemaname = 'october'
+                ORDER BY 1;
+                """;
+            TestResourceScope.ValidateOwnedTarget(ConnectionString);
+            await using NpgsqlConnection connection = new(ConnectionString);
+            await connection.OpenAsync();
+            await using NpgsqlCommand command = new(schemaQuery, connection);
+            await using NpgsqlDataReader reader = await command.ExecuteReaderAsync();
+            List<string> schemaDefinition = [];
+            while (await reader.ReadAsync())
+                schemaDefinition.Add(reader.GetString(0));
+
+            return (appliedMigrations, schemaDefinition.ToArray(), rowCounts);
         }
 
         internal OctoberDbContext CreateOctoberContext()
@@ -354,6 +788,12 @@ public sealed class OctoberHostSelectionTests(ITestOutputHelper output)
         }
 
         internal Process StartGenerator(string requestJson)
+            => StartGenerator("prepare", requestJson);
+
+        internal Process StartGenerator(
+            string mode,
+            string? requestJson,
+            bool includeCompetingProviderSource = false)
         {
             string repositoryRoot = FindRepositoryRoot();
             string project = Path.Combine(repositoryRoot,
@@ -386,10 +826,17 @@ public sealed class OctoberHostSelectionTests(ITestOutputHelper output)
             startInfo.Environment["ConnectionStrings__DefaultConnection"] = ConnectionString;
             startInfo.Environment["DataProtection__KeyRingPath"] = Path.Combine(OwnedRoot, "keys");
             startInfo.Environment["DataProtection__ApplicationName"] = DataProtectionApplicationName;
-            startInfo.Environment["October__Mode"] = "prepare";
+            startInfo.Environment["October__Mode"] = mode;
             startInfo.Environment["October__TargetId"] = TargetId;
             startInfo.Environment["October__BatchId"] = BatchId.ToString("D", CultureInfo.InvariantCulture);
-            startInfo.Environment["October__SetupRequestJson"] = requestJson;
+            if (requestJson is null)
+            {
+                Assert.False(startInfo.Environment.ContainsKey("October__SetupRequestJson"));
+            }
+            else
+            {
+                startInfo.Environment["October__SetupRequestJson"] = requestJson;
+            }
             startInfo.Environment["October__Authority__Id"] = AuthorityId;
             startInfo.Environment["October__Targets__0__TargetId"] = TargetId;
             startInfo.Environment["October__Targets__0__CanonicalDatabaseIdentity"] = CanonicalDatabaseIdentity;
@@ -398,6 +845,8 @@ public sealed class OctoberHostSelectionTests(ITestOutputHelper output)
                 Path.Combine(OwnedRoot, "operator.credentials.protected");
             startInfo.Environment["October__Providers__ConfigurationFile"] =
                 Path.Combine(OwnedRoot, "providers.json");
+            if (includeCompetingProviderSource)
+                startInfo.Environment["October__Providers__SourceIdentity"] = "competing-flattened-source";
 
             startInfo.ArgumentList.Add("run");
             startInfo.ArgumentList.Add("--project");
@@ -460,6 +909,27 @@ public sealed class OctoberHostSelectionTests(ITestOutputHelper output)
             ServiceProvider provider = services.BuildServiceProvider();
             return new DataProtectionProviderRegistration(provider,
                 provider.GetRequiredService<IDataProtectionProvider>());
+        }
+
+        private static void WriteProtectedOperatorCredentials(
+            IDataProtectionProvider protection,
+            string credentialFile,
+            string userName,
+            string password,
+            string? authenticatorCode,
+            string? recoveryCode)
+        {
+            string credentials = JsonSerializer.Serialize(new
+            {
+                userName,
+                password,
+                authenticatorCode,
+                recoveryCode,
+            });
+            string protectedCredentials = protection
+                .CreateProtector("october-operator-credentials-v1")
+                .Protect(credentials);
+            File.WriteAllText(credentialFile, protectedCredentials);
         }
 
         private static void WriteProtectedInputs(

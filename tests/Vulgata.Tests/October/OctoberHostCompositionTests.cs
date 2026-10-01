@@ -1,7 +1,9 @@
 using System.Collections.Immutable;
+using System.Net;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Hosting;
@@ -115,8 +117,11 @@ public sealed class OctoberHostCompositionTests
     }
 
     [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
-    public async Task SelectedDataStartup_BindsExactConfiguredBatchWithoutLegacyGrant()
+    [SuiteTheory("SelfContained")]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task SelectedDataStartup_BindsExactConfiguredBatchWithoutLegacyGrant(
+        bool separateIdentityDatabase)
     {
         using LoginLogoutTests.CustomWebApplicationFactory baselineFactory = new();
         using HttpClient baselineClient = baselineFactory.CreateClient();
@@ -125,6 +130,8 @@ public sealed class OctoberHostCompositionTests
         string subjectId = await SeedSelectedWebBatchAsync(
             selectedDataFactory, SelectedWebAuthorityId, SelectedWebCanonicalDatabaseIdentity,
             SelectedWebTargetId, SelectedWebBatchId);
+        if (separateIdentityDatabase)
+            await SeedIdentityReplicaAsync(baselineFactory, subjectId);
 
         SelectedWebConnectionTranslation translation = new(
             BaselineWebNpgsqlConnection,
@@ -148,7 +155,9 @@ public sealed class OctoberHostCompositionTests
                     ["ConnectionStrings:DefaultConnection"] = BaselineWebNpgsqlConnection
                 });
                 configuration.AddInMemoryCollection(
-                    CreateSelectedWebConfiguration(SelectedWebNpgsqlConnection));
+                    CreateSelectedWebConfiguration(
+                        SelectedWebNpgsqlConnection,
+                        separateIdentityDatabase ? "Identity" : null));
                 configuration.AddInMemoryCollection(new Dictionary<string, string?>
                 {
                     ["October:Providers:ConfigurationFile"] = providerDocument.ConfigurationFilePath,
@@ -176,7 +185,48 @@ public sealed class OctoberHostCompositionTests
             });
         });
 
-        using HttpClient selectedClient = selectedFactory.CreateClient();
+        using HttpClient selectedClient = selectedFactory.CreateClient(
+            new WebApplicationFactoryClientOptions
+            {
+                AllowAutoRedirect = false,
+                HandleCookies = true
+            });
+        using HttpResponseMessage anonymousSystemsResponse = await selectedClient.GetAsync("/api/systems/");
+        Assert.Equal(System.Net.HttpStatusCode.Unauthorized, anonymousSystemsResponse.StatusCode);
+        Dictionary<string, string> loginFields = await GetSelectedHostLoginFieldsAsync(selectedClient);
+        loginFields["Input.Email"] = SelectedWebUserName;
+        loginFields["Input.Password"] = SelectedWebPassword;
+        loginFields["Input.RememberMe"] = "false";
+        using (FormUrlEncodedContent login = new(loginFields))
+        using (HttpResponseMessage loginResponse = await selectedClient.PostAsync("/Account/Login", login))
+        {
+            Assert.Equal(System.Net.HttpStatusCode.Redirect, loginResponse.StatusCode);
+            string[] setCookies = loginResponse.Headers.TryGetValues("Set-Cookie", out IEnumerable<string>? values)
+                ? values.ToArray()
+                : [];
+            Assert.Contains(setCookies, cookie =>
+                cookie.Contains(".AspNetCore.Identity.Application", StringComparison.Ordinal));
+        }
+        using HttpResponseMessage permittedSystemsResponse = await selectedClient.GetAsync("/api/systems/");
+        Assert.Equal(System.Net.HttpStatusCode.OK, permittedSystemsResponse.StatusCode);
+        using (IServiceScope ordinaryScope = baselineFactory.Services.CreateScope())
+        {
+            IServiceProvider ordinaryServices = ordinaryScope.ServiceProvider;
+            Assert.Equal(OctoberWebMode.Ordinary,
+                ordinaryServices.GetRequiredService<OctoberWebStartupSelection>().Mode);
+            Assert.Null(ordinaryServices.GetService<OctoberAuthorityConfiguration>());
+            Assert.Null(ordinaryServices.GetService<OctoberDbContext>());
+            Assert.Null(ordinaryServices.GetService<IOctoberLocalAuthority>());
+            Assert.Null(ordinaryServices.GetService<IOctoberSelectedDataStartupBinder>());
+            Assert.Null(ordinaryServices.GetService<IOctoberBoundSetupData>());
+            Assert.Null(ordinaryServices.GetService<IOctoberOperatorCredentialSource>());
+        }
+        OctoberLegacyAuthorityRoutes.AssertAbsent(
+            baselineFactory.Services,
+            OctoberLegacyAuthorityRoutes.BatchActivationIssue,
+            OctoberLegacyAuthorityRoutes.BatchActivationValidation,
+            OctoberLegacyAuthorityRoutes.PreparedSourceApprovalIssue,
+            OctoberLegacyAuthorityRoutes.PreparedSourceApprovalVerification);
         RecordingSecretEncryptionService actualEncryption =
             Assert.IsType<RecordingSecretEncryptionService>(recordingEncryption);
         Assert.Equal(2, actualEncryption.Decryptions.Count);
@@ -219,13 +269,22 @@ public sealed class OctoberHostCompositionTests
 
         ProductionNpgsqlDeclarations declarations = Assert.IsType<ProductionNpgsqlDeclarations>(
             productionDeclarations);
-        Assert.Equal(SelectedWebNpgsqlConnection,
+        string expectedIdentityConnection = separateIdentityDatabase
+            ? BaselineWebNpgsqlConnection
+            : SelectedWebNpgsqlConnection;
+        Assert.Equal(expectedIdentityConnection,
             CaptureProductionNpgsqlConnection(scope.ServiceProvider, declarations.Identity));
         Assert.All(CaptureProductionNpgsqlConnections(scope.ServiceProvider, declarations.Management),
             connection => Assert.Equal(SelectedWebNpgsqlConnection, connection));
         OctoberAuthorityConfiguration authority =
             scope.ServiceProvider.GetRequiredService<OctoberAuthorityConfiguration>();
         Assert.Equal(SelectedWebNpgsqlConnection, authority.DataConnectionString);
+        Assert.Equal(expectedIdentityConnection, authority.IdentityConnectionString);
+        Assert.Equal(
+            separateIdentityDatabase
+                ? "sqlite://owned/october-host-identity-a"
+                : SelectedWebCanonicalDatabaseIdentity,
+            authority.IdentityCanonicalDatabaseIdentity);
         Assert.NotEqual(BaselineWebNpgsqlConnection, authority.DataConnectionString);
 
         ApplicationDbContext identity = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
@@ -237,7 +296,8 @@ public sealed class OctoberHostCompositionTests
         IDbContextFactory<VulgataDbContext> managementFactory =
             scope.ServiceProvider.GetRequiredService<IDbContextFactory<VulgataDbContext>>();
         await using VulgataDbContext factoryContext = await managementFactory.CreateDbContextAsync();
-        AssertSelectedSqliteConnection(selectedDataFactory.ConnectionString,
+        AssertSelectedSqliteConnection(
+            separateIdentityDatabase ? baselineFactory.ConnectionString : selectedDataFactory.ConnectionString,
             identity.Database.GetDbConnection().ConnectionString);
         AssertSelectedSqliteConnection(selectedDataFactory.ConnectionString,
             management.Database.GetDbConnection().ConnectionString);
@@ -245,6 +305,58 @@ public sealed class OctoberHostCompositionTests
             october.Database.GetDbConnection().ConnectionString);
         AssertSelectedSqliteConnection(selectedDataFactory.ConnectionString,
             factoryContext.Database.GetDbConnection().ConnectionString);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task SelectedDataStartup_MissingBatchAfterValidProviderBinding_ReportsSanitizedDeniedStatus()
+    {
+        using OwnedProviderDocument providerDocument = await OwnedProviderDocument.CreateAsync();
+        Guid missingBatchId = Guid.Parse("d3c9b744-14f8-4a97-a52c-7f0abec52e04");
+
+        SelectedWebStartupAttempt attempt = await AttemptSelectedDataStartupAsync(
+            providerDocument,
+            configuredBatchId: missingBatchId,
+            captureBatchState: true);
+
+        Assert.Equal(2, attempt.DecryptionCount);
+        Assert.Equal(1, attempt.CredentialReadCount);
+        InvalidOperationException startupFailure =
+            Assert.IsType<InvalidOperationException>(attempt.StartupFailure);
+        string diagnostic = startupFailure.ToString();
+        Assert.Contains("October selected-data startup failed: Denied.", diagnostic, StringComparison.Ordinal);
+        Assert.DoesNotContain("October provider configuration failed", diagnostic, StringComparison.Ordinal);
+        foreach (string canary in new[]
+        {
+            SelectedWebPassword,
+            SelectedWebUserName,
+            "synthetic-worker-api-key",
+            "synthetic-chat-api-key",
+            providerDocument.WorkerCiphertext,
+            providerDocument.ChatCiphertext,
+            providerDocument.ConfigurationFilePath,
+            providerDocument.KeyRingPath,
+            providerDocument.ApplicationName,
+            BaselineWebNpgsqlConnection,
+            SelectedWebNpgsqlConnection,
+            SelectedWebTargetId,
+            SelectedWebBatchId.ToString("D"),
+            missingBatchId.ToString("D"),
+            SelectedWebAuthorityId,
+            SelectedWebCanonicalDatabaseIdentity,
+            "selected-web-root-v1",
+            "Global advisory",
+            "System advisory",
+            "Repository advisory",
+            attempt.SubjectId,
+            "selected-web-provider-startup-test"
+        })
+        {
+            Assert.DoesNotContain(canary, diagnostic, StringComparison.Ordinal);
+        }
+
+        Assert.Equal([SelectedWebBatchId], attempt.BatchStateBefore.Select(batch => batch.BatchId));
+        Assert.Equal(attempt.BatchStateBefore.ToArray(), attempt.BatchStateAfter.ToArray());
     }
 
     [Trait("Suite", "SelfContained")]
@@ -350,17 +462,26 @@ public sealed class OctoberHostCompositionTests
         Assert.DoesNotContain(providerDocument.ChatCiphertext, failureDetails, StringComparison.Ordinal);
     }
 
-    private static Dictionary<string, string?> CreateSelectedWebConfiguration(string selectedConnection) =>
+    private static Dictionary<string, string?> CreateSelectedWebConfiguration(
+        string selectedConnection,
+        string? identityConnectionName = null,
+        Guid? configuredBatchId = null) =>
         new(StringComparer.Ordinal)
         {
             ["ConnectionStrings:DefaultConnection"] = selectedConnection,
+            ["ConnectionStrings:Identity"] = identityConnectionName is null
+                ? null
+                : BaselineWebNpgsqlConnection,
             ["October:Web:Mode"] = "selected-data",
             ["October:Web:TargetId"] = SelectedWebTargetId,
-            ["October:Web:BatchId"] = SelectedWebBatchId.ToString("D"),
+            ["October:Web:BatchId"] = (configuredBatchId ?? SelectedWebBatchId).ToString("D"),
             ["October:Authority:Id"] = SelectedWebAuthorityId,
             ["October:Targets:0:TargetId"] = SelectedWebTargetId,
             ["October:Targets:0:CanonicalDatabaseIdentity"] = SelectedWebCanonicalDatabaseIdentity,
-            ["October:Identity:ConnectionName"] = null,
+            ["October:Identity:ConnectionName"] = identityConnectionName,
+            ["October:Identity:CanonicalDatabaseIdentity"] = identityConnectionName is null
+                ? null
+                : "sqlite://owned/october-host-identity-a",
             ["October:Operator:CredentialSource"] = "console",
             ["October:Operator:CredentialFile"] = null,
             ["October:Web:ActivationGrant"] = null,
@@ -370,16 +491,129 @@ public sealed class OctoberHostCompositionTests
             ["October:Web:GeneratorCertificates"] = null
         };
 
+    private static async Task SeedIdentityReplicaAsync(
+        LoginLogoutTests.CustomWebApplicationFactory factory,
+        string subjectId)
+    {
+        await using AsyncServiceScope scope = factory.Services.CreateAsyncScope();
+        RoleManager<IdentityRole> roles = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+        if (!await roles.RoleExistsAsync(RoleNames.SystemOwner))
+        {
+            IdentityResult roleCreated = await roles.CreateAsync(new IdentityRole(RoleNames.SystemOwner));
+            Assert.True(roleCreated.Succeeded,
+                string.Join("; ", roleCreated.Errors.Select(error => error.Code)));
+        }
+
+        UserManager<ApplicationUser> users = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+        ApplicationUser user = new()
+        {
+            Id = subjectId,
+            UserName = SelectedWebUserName,
+            Email = SelectedWebUserName,
+            EmailConfirmed = true,
+            LockoutEnabled = true
+        };
+        IdentityResult created = await users.CreateAsync(user, SelectedWebPassword);
+        Assert.True(created.Succeeded, string.Join("; ", created.Errors.Select(error => error.Code)));
+        IdentityResult roleAssigned = await users.AddToRoleAsync(user, RoleNames.SystemOwner);
+        Assert.True(roleAssigned.Succeeded,
+            string.Join("; ", roleAssigned.Errors.Select(error => error.Code)));
+    }
+
+    private static async Task<Dictionary<string, string>> GetSelectedHostLoginFieldsAsync(
+        HttpClient client)
+    {
+        using HttpResponseMessage response = await client.GetAsync("/Account/Login");
+        response.EnsureSuccessStatusCode();
+        string html = await response.Content.ReadAsStringAsync();
+        Match[] loginForms = Regex.Matches(
+                html,
+                @"<form\b(?<attributes>[^>]*)>(?<content>.*?)</form>",
+                RegexOptions.IgnoreCase | RegexOptions.Singleline)
+            .Cast<Match>()
+            .Where(form => string.Equals(
+                ReadHtmlAttribute(form.Groups["attributes"].Value, "method"),
+                "post",
+                StringComparison.OrdinalIgnoreCase))
+            .Where(form =>
+            {
+                Dictionary<string, string> values = ReadHtmlInputValues(form.Groups["content"].Value);
+                bool namedLoginForm =
+                    (values.TryGetValue("_handler", out string? handler) && handler == "login") ||
+                    (values.TryGetValue("__formName", out string? formName) && formName == "login");
+                string? action = ReadHtmlAttribute(form.Groups["attributes"].Value, "action");
+                bool targetsLoginRoute = string.IsNullOrWhiteSpace(action) ||
+                    (Uri.TryCreate(new Uri("http://localhost"), action, out Uri? actionUri) &&
+                     string.Equals(actionUri.AbsolutePath, "/Account/Login", StringComparison.OrdinalIgnoreCase));
+                return namedLoginForm && targetsLoginRoute;
+            })
+            .ToArray();
+
+        Match loginForm = Assert.Single(loginForms);
+        return ReadHtmlInputValues(loginForm.Groups["content"].Value);
+    }
+
+    private static Dictionary<string, string> ReadHtmlInputValues(string content)
+    {
+        Dictionary<string, string> values = new(StringComparer.Ordinal);
+        foreach (Match input in Regex.Matches(
+                     content,
+                     @"<input\b(?<attributes>[^>]*)>",
+                     RegexOptions.IgnoreCase | RegexOptions.Singleline))
+        {
+            string attributes = input.Groups["attributes"].Value;
+            string? name = ReadHtmlAttribute(attributes, "name");
+            string? value = ReadHtmlAttribute(attributes, "value");
+            if (name is not null && value is not null)
+                values[name] = value;
+        }
+
+        return values;
+    }
+
+    private static string? ReadHtmlAttribute(string attributes, string attributeName)
+    {
+        Match attribute = Regex.Match(
+            attributes,
+            "(?:^|\\s)" + Regex.Escape(attributeName) +
+                "\\s*=\\s*(?:\"(?<double>[^\"]*)\"|'(?<single>[^']*)'|(?<bare>[^\\s/>]+))",
+            RegexOptions.IgnoreCase | RegexOptions.Singleline);
+        if (!attribute.Success)
+            return null;
+
+        string value = attribute.Groups["double"].Success
+            ? attribute.Groups["double"].Value
+            : attribute.Groups["single"].Success
+                ? attribute.Groups["single"].Value
+                : attribute.Groups["bare"].Value;
+        return WebUtility.HtmlDecode(value);
+    }
+
     private static async Task<SelectedWebStartupAttempt> AttemptSelectedDataStartupAsync(
         OwnedProviderDocument providerDocument,
         string? competingSelectorPath = null,
-        string? competingProviderSourceIdentity = null)
+        string? competingProviderSourceIdentity = null,
+        Guid? configuredBatchId = null,
+        bool captureBatchState = false)
     {
         using LoginLogoutTests.CustomWebApplicationFactory selectedDataFactory = new();
         using HttpClient selectedDataClient = selectedDataFactory.CreateClient();
-        await SeedSelectedWebBatchAsync(
+        string subjectId = await SeedSelectedWebBatchAsync(
             selectedDataFactory, SelectedWebAuthorityId, SelectedWebCanonicalDatabaseIdentity,
             SelectedWebTargetId, SelectedWebBatchId);
+        if (captureBatchState)
+        {
+            await using AsyncServiceScope identityScope = selectedDataFactory.Services.CreateAsyncScope();
+            UserManager<ApplicationUser> users = identityScope.ServiceProvider
+                .GetRequiredService<UserManager<ApplicationUser>>();
+            ApplicationUser seededOperator = Assert.IsAssignableFrom<ApplicationUser>(
+                await users.FindByNameAsync(SelectedWebUserName));
+            Assert.True(await users.CheckPasswordAsync(seededOperator, SelectedWebPassword));
+            Assert.True(await users.IsInRoleAsync(seededOperator, RoleNames.SystemOwner));
+        }
+        ImmutableArray<SelectedWebBatchState> batchStateBefore = captureBatchState
+            ? await CaptureSelectedWebBatchStateAsync(selectedDataFactory.ConnectionString)
+            : [];
 
         SelectedWebConnectionTranslation translation = new(
             BaselineWebNpgsqlConnection,
@@ -402,7 +636,9 @@ public sealed class OctoberHostCompositionTests
                         ["ConnectionStrings:DefaultConnection"] = BaselineWebNpgsqlConnection
                     });
                     configuration.AddInMemoryCollection(
-                        CreateSelectedWebConfiguration(SelectedWebNpgsqlConnection));
+                        CreateSelectedWebConfiguration(
+                            SelectedWebNpgsqlConnection,
+                            configuredBatchId: configuredBatchId));
                     configuration.AddInMemoryCollection(new Dictionary<string, string?>
                     {
                         ["October:Providers:ConfigurationFile"] = providerDocument.ConfigurationFilePath,
@@ -445,8 +681,38 @@ public sealed class OctoberHostCompositionTests
         {
             using HttpClient selectedClient = selectedFactory.CreateClient();
         });
+        ImmutableArray<SelectedWebBatchState> batchStateAfter = captureBatchState
+            ? await CaptureSelectedWebBatchStateAsync(selectedDataFactory.ConnectionString)
+            : [];
         return new SelectedWebStartupAttempt(
-            startupFailure, recordingEncryption?.Decryptions.Count ?? 0, credentialSource.ReadCount);
+            startupFailure,
+            recordingEncryption?.Decryptions.Count ?? 0,
+            credentialSource.ReadCount,
+            subjectId,
+            batchStateBefore,
+            batchStateAfter);
+    }
+
+    private static async Task<ImmutableArray<SelectedWebBatchState>> CaptureSelectedWebBatchStateAsync(
+        string sqliteConnectionString)
+    {
+        await using OctoberDbContext database = new(
+            new DbContextOptionsBuilder<OctoberDbContext>()
+                .UseSqlite(sqliteConnectionString)
+                .Options);
+        OctoberBatchRecord[] records = await database.Batches.AsNoTracking().ToArrayAsync();
+        return records
+            .OrderBy(record => record.BatchId)
+            .Select(record => new SelectedWebBatchState(
+                record.BatchId,
+                record.TargetId,
+                record.SubjectId,
+                record.CanonicalDatabaseIdentity,
+                record.SelectionDigest,
+                record.ManagementAuthorityId,
+                record.SelectedAtUtc,
+                record.State))
+            .ToImmutableArray();
     }
 
     private static async Task<string> SeedSelectedWebBatchAsync(
@@ -650,7 +916,20 @@ public sealed class OctoberHostCompositionTests
     private sealed record SelectedWebStartupAttempt(
         Exception? StartupFailure,
         int DecryptionCount,
-        int CredentialReadCount);
+        int CredentialReadCount,
+        string SubjectId,
+        ImmutableArray<SelectedWebBatchState> BatchStateBefore,
+        ImmutableArray<SelectedWebBatchState> BatchStateAfter);
+
+    private sealed record SelectedWebBatchState(
+        Guid BatchId,
+        string TargetId,
+        string SubjectId,
+        string CanonicalDatabaseIdentity,
+        string SelectionDigest,
+        string ManagementAuthorityId,
+        DateTimeOffset SelectedAtUtc,
+        OctoberBatchState State);
 
     private sealed record SelectedWebConnectionTranslation(
         string BaselineNpgsqlConnection,

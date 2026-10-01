@@ -1,0 +1,89 @@
+{
+  "kind": "test-green",
+  "stage": "implement",
+  "evidence_id": "18-4/generator-loader-auth-final-green/1",
+  "source_commit": "7e52fb5d57cacde2d42102d477d6d56581d734d4",
+  "observed_at": "2026-10-01T17:20:41Z",
+  "verification_route": "Test-only actual executable rejection coverage of already implemented separate generator loader and authentication. No production change or fabricated RED.",
+  "input_hashes": {
+    "tests/Vulgata.Tests/October/OctoberHostSelectionTests.cs": "43f224b9979299b12f692ed96ceaa8c0bc7ea343de1ac2d0a42433e4aef4a35e",
+    "src/dotnet/Vulgata.OctoberGenerator/Program.cs": "21d05229203395f8a8440e2fc8d37f0e57c8d1dc8b7f72775d81a2a179493dc3"
+  },
+  "commands": [
+    {
+      "command": "pwsh -NoProfile -File eng/test.ps1 -Suite E2E -WithPostgreSql -Filter 'FullyQualifiedName~GeneratorPrepare_DuplicateProviderDocumentPropertyIsRejectedBeforeOperatorFactorValidationOrOctoberMigration'",
+      "exit_code": 0,
+      "selected": 1,
+      "passed": 1,
+      "failed": 0,
+      "skipped": 0,
+      "trx_path": "TestResults/isolation-c41b3921fb894161b1a76e6dc028fa7f/results.trx",
+      "trx_sha256": "af6b9e66c76b702bdebe6d459376c3e4ed5241723b535f3e3269a71ae55d0da2"
+    },
+    {
+      "command": "pwsh -NoProfile -File eng/test.ps1 -Suite E2E -WithPostgreSql -Filter 'FullyQualifiedName~GeneratorPrepare_InvalidProviderDocumentPredicatesAreRejectedBeforeOperatorFactorValidationOrOctoberMigration'",
+      "exit_code": 0,
+      "selected": 4,
+      "passed": 4,
+      "failed": 0,
+      "skipped": 0,
+      "trx_path": "TestResults/isolation-e8fcb26867d14b4faaa0529bef6c19ed/results.trx",
+      "trx_sha256": "3e31f53408666942e271a8421e6d1432af7fbffb94188fbefba70ffeed724bc7"
+    },
+    {
+      "command": "pwsh -NoProfile -File eng/test.ps1 -Suite E2E -WithPostgreSql -Filter 'FullyQualifiedName~GeneratorPrepare_InvalidProtectedOperatorPasswordIsSanitizedBeforeOctoberMigration'",
+      "exit_code": 0,
+      "selected": 1,
+      "passed": 1,
+      "failed": 0,
+      "skipped": 0,
+      "trx_path": "TestResults/isolation-b0765ca8f703433691d6a41937a79cfc/results.trx",
+      "trx_sha256": "d47b98d7b2db147055117ebf05e74f5747d2f177b3b341c25376e723f364e5ed"
+    },
+    {
+      "command": "pwsh -NoProfile -File eng/test.ps1 -Suite E2E -WithPostgreSql -Filter 'FullyQualifiedName~OctoberHostSelectionTests'",
+      "exit_code": 0,
+      "selected": 9,
+      "passed": 9,
+      "failed": 0,
+      "skipped": 0,
+      "trx_path": "TestResults/isolation-fb92e640a80d4020baca26c537dce4ea/results.trx",
+      "trx_sha256": "4ce04669c796bba6477b33e425736ff5f17e20e7098cb4cc9578c81232eaf3c7"
+    }
+  ],
+  "raw_result": {
+    "owner": "retained tdd-test-author Luna/high",
+    "outcome": "passed",
+    "coverage": "Original prepare/select/malformed JSON cases preserved. Duplicate root property, unknown profile property, Worker-only unknown API with valid Chat, flattened competing source and localized malformed UTF8 reject before calibrated factor path and leave October absent. Correct-password authentication/authorization precondition precedes synthetic wrong protected password; actual child1, no Oct, both password values omitted. No false password-failure counter claim.",
+    "assessment": "Existing guarded E2E file and exact fresh owned fixtures. Refined API case only invalidates Worker; UTF8 byte mutation localized; wrong synthetic password also checked for disclosure. No further refactor, inventory or production change needed.",
+    "limitation": "Development executable coverage, not final A/B Web restart or PostgreSQL migration qualification. Current silent CLI classification gap remains T027/T028."
+  },
+  "owned_runtime": {
+    "authorization": "specs/017-october-batch-setup/evidence/runtime-qualification-resource-authorization-01.json",
+    "run": "fb92e640a80d4020baca26c537dce4ea",
+    "container": "vulgata-test-fb92e640a80d4020baca26c537dce4ea",
+    "volume": "vulgata-test-data-fb92e640a80d4020baca26c537dce4ea",
+    "databases": "Nine exact created database names and temp roots recorded/cleanup-confirmed in final TRX; each unique successful Create was recorded and validated. No Web listener, paid provider, shared DB or real credential.",
+    "cleanup_proofs": [
+      {
+        "path": "TestResults/isolation-fb92e640a80d4020baca26c537dce4ea/owned-mounts.json",
+        "sha256": "02192f4986d6d84b34eb768512b45328a96f05038feb06488646a1f005c364b7"
+      },
+      {
+        "path": "TestResults/isolation-fb92e640a80d4020baca26c537dce4ea/cleanup-inspect.log",
+        "sha256": "83abf07b359462081cc1485bf7e030bec3814e41848fb63e1cabdaa5b832159e"
+      },
+      {
+        "path": "TestResults/isolation-fb92e640a80d4020baca26c537dce4ea/volume-absence.log",
+        "sha256": "ebab1d93dddd00c822e4b633c6f6ede693102b55156f8028f4b1cfbb8c9cfeee"
+      }
+    ],
+    "root_verified": "Exact hashes/counters and9 DB cleanup lines, matching run label/mount, container empty list and named volume absent."
+  },
+  "transient_prebuild": {
+    "path": "TestResults/isolation-1382822112d640f3853c6f13ae5e9c6e/build.log",
+    "sha256": "41078b3d7f33aca65fc4e773ed8199fb1738800cf47cb659cde5470771bae793",
+    "failure": "MSB3073 from prebuild test-policy.ps1 before discovery; no test/resource launched. Independent read-only policy check passed297 files; same filter retry passed4/4. Not product RED or workflow failure."
+  },
+  "root_disposition": "Checkpoint verified host coverage, then normal T027/T028 actual CLI classification RED/GREEN. No task completion or semantic scope expansion here. Recovery6/7, owner/diagnosis/holds/gates/approvals retained."
+}
