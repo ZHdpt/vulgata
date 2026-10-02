@@ -512,6 +512,63 @@ internal interface IPreparedJdtCommandResolver
         CancellationToken cancellationToken);
 }
 
+internal sealed class PreparedJdtCommandResolver : IPreparedJdtCommandResolver
+{
+    public Task<PreparedJdtCommandResolution> ResolveAsync(
+        PreparedJdtCommandRequest request,
+        CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        if (request is null || string.IsNullOrWhiteSpace(request.HostPathSnapshot) ||
+            !Path.IsPathFullyQualified(request.PreparedRoot))
+        {
+            return Unavailable();
+        }
+
+        try
+        {
+            string preparedRoot = Path.GetFullPath(request.PreparedRoot)
+                .TrimEnd(Path.DirectorySeparatorChar);
+            string preparedPrefix = preparedRoot + Path.DirectorySeparatorChar;
+            foreach (string entry in request.HostPathSnapshot.Split(Path.PathSeparator))
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                if (!Path.IsPathFullyQualified(entry))
+                {
+                    return Unavailable();
+                }
+
+                string directory = Path.GetFullPath(entry).TrimEnd(Path.DirectorySeparatorChar);
+                bool executable = File.Exists(Path.Combine(directory, "jdtls.exe"));
+                bool batch = File.Exists(Path.Combine(directory, "jdtls.bat"));
+                if (!executable && !batch)
+                {
+                    continue;
+                }
+
+                bool insidePreparedRoot =
+                    string.Equals(directory, preparedRoot, StringComparison.OrdinalIgnoreCase) ||
+                    directory.StartsWith(preparedPrefix, StringComparison.OrdinalIgnoreCase);
+                return Task.FromResult(new PreparedJdtCommandResolution(
+                    insidePreparedRoot || executable && batch
+                        ? PreparedJdtCommandResolutionStatus.Rejected
+                        : PreparedJdtCommandResolutionStatus.Unavailable,
+                    null));
+            }
+        }
+        catch (Exception exception) when (exception is ArgumentException or NotSupportedException or PathTooLongException)
+        {
+            return Unavailable();
+        }
+
+        return Unavailable();
+    }
+
+    private static Task<PreparedJdtCommandResolution> Unavailable() =>
+        Task.FromResult(new PreparedJdtCommandResolution(
+            PreparedJdtCommandResolutionStatus.Unavailable, null));
+}
+
 internal sealed record PreparedJdtCommandRequest(
     string HostPathSnapshot,
     string PreparedRoot,
