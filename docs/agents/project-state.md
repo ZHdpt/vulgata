@@ -43,8 +43,8 @@ verification before reuse.
   Tracker refreshes require both epic files. Story 13.1 and October Story 18.1 are
   done; this checkout includes Story 18.1's completed baseline at `3632b2cc`. October
   Story 18.4 resumes in `specs/017-october-batch-setup` from implementation
-  controlled implementation checkpoint19 (ordinary-Web capture and startup removal;
-  not a final verified candidate), whose unique binding
+  user-paused safe checkpoint20 (ordinary-Web capture/startup removal, bounded type
+  cleanup and compiled runtime-test reconciliation; not a final verified candidate), whose unique binding
   is recorded in its workflow state.
   On 2026-10-02 the human clarified ordinary Web startup with only its database
   configuration changed. Its retained Astra-medium owner completed the bounded
@@ -58,7 +58,14 @@ verification before reuse.
   final Build-time database capture, stale-setting inertness, setup-service absence
   and normal browser/role/system-provider behavior. Generator/source18.1 files are
   unchanged. Residual type/runtime-test reconciliation and revised owned PostgreSQL,
-  A/B process and provider-administration qualification remain before completion;
+  A/B process and provider-administration qualification remain before completion.
+  The user requested a pause at the next safe checkpoint; the already-running
+  cleanup passed43/43, and all workers are idle. Do not dispatch or acquire runtime
+  resources until explicit resume. Positive separate-generator-Identity and real
+  PG/process provider-admin cases remain under existingT020/T029; no new external
+  prerequisite or definition restart is needed. Counts/holds/owners stay6/7 and
+  task markers stay23/30; this is a user pause, not completion. Certificate types
+  required by protected legacy consumers remain; retired startup types are removed.
   these controlled tests do not substitute for them. Exact user decision and correction diagnosis are story-owned evidence;
   recovery remains6/7. The old diagnostic hold is superseded only for definition
   correction, not proof of a passing runtime or permission for an old-path rerun.

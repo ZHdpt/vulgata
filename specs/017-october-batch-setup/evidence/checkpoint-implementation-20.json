@@ -1,0 +1,40 @@
+{
+  "kind": "analysis",
+  "stage": "implement",
+  "checkpoint_id": "bmad-18-4-implement-20261002T110709Z-e2dd51",
+  "story_key": "18-4-prepare-an-owned-october-batch-with-valid-context-and-provid",
+  "expected_parent": "9ec2a6fe17947a4cec9445f79255823ba6dfc1f1",
+  "summary": "Safe user-pause checkpoint: bounded unused startup-type removal verified43/43; ordinary runtime-test reconciliation compiled, not PG/process qualification. Preserve retained legacy certificate dependencies and unrelated activation draft. Task markers/counts unchanged; no further delivery dispatch.",
+  "owned_paths": [
+    "docs/agents/project-state.md",
+    "docs/bmad/implementation-artifacts/18-4-prepare-an-owned-october-batch-with-valid-context-and-provid.md",
+    "specs/017-october-batch-setup/workflow-state.json",
+    "src/dotnet/Vulgata.Web/Data/OctoberGeneratorCertificateVerifier.cs",
+    "src/dotnet/Vulgata.Web/Data/OctoberSelectedDataBoundSetup.cs",
+    "src/dotnet/Vulgata.Web/Data/OctoberSelectedDataStartupBinder.cs",
+    "tests/Vulgata.Tests/October/OctoberHostSelectionTests.cs",
+    "tests/Vulgata.Tests/October/OctoberPostgreSqlIsolationTests.cs",
+    "specs/017-october-batch-setup/evidence/ordinary-web-runtime-consumer-reconciliation-01.json",
+    "specs/017-october-batch-setup/evidence/ordinary-web-unused-types-final-green-01.json",
+    "specs/017-october-batch-setup/evidence/user-pause-safe-checkpoint-01.json",
+    "specs/017-october-batch-setup/evidence/checkpoint-implementation-20.json"
+  ],
+  "proofs": [
+    "specs/017-october-batch-setup/evidence/ordinary-web-runtime-consumer-reconciliation-01.json",
+    "specs/017-october-batch-setup/evidence/ordinary-web-unused-types-final-green-01.json"
+  ],
+  "pause_evidence": "specs/017-october-batch-setup/evidence/user-pause-safe-checkpoint-01.json",
+  "excluded_unrelated": [
+    "specs/017-october-batch-setup/evidence/checkpoint-implementation-06.json",
+    "src/dotnet/Vulgata.Web/Data/OctoberBatchActivationService.cs",
+    "specs/017-october-batch-setup/evidence/host-composition-interruption-handoff-01.json",
+    "specs/017-october-batch-setup/evidence/transitions/transition-0066-independent-auth-build-failure.json"
+  ],
+  "counts": {
+    "completed": 23,
+    "total": 30,
+    "failed_results": 6,
+    "pause_at": 7
+  },
+  "no_merge_push_rewrite": true
+}

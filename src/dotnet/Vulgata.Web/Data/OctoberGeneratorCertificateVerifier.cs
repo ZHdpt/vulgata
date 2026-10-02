@@ -3,59 +3,6 @@ using System.Security.Cryptography.X509Certificates;
 
 namespace Vulgata.Web.Data;
 
-public enum OctoberWebMode
-{
-    Ordinary,
-    AuthorizationOnly,
-    SelectedData
-}
-
-public sealed record OctoberWebStartupSelection(
-    OctoberWebMode Mode,
-    string? TargetId,
-    Guid? BatchId,
-    string? ActivationGrant);
-
-public static class OctoberWebStartupSelector
-{
-    public static OctoberWebStartupSelection Resolve(IConfiguration configuration)
-    {
-        ArgumentNullException.ThrowIfNull(configuration);
-
-        string? mode = configuration["October:Web:Mode"];
-        string? targetId = configuration["October:Web:TargetId"];
-        string? batchIdText = configuration["October:Web:BatchId"];
-        string? activationGrant = configuration["October:Web:ActivationGrant"];
-        bool obsoleteTransportConfigured = activationGrant is not null ||
-            configuration["October:Web:Endpoint"] is not null ||
-            configuration["October:WebAuthorityEndpoint"] is not null ||
-            configuration["October:Web:ManagementAuthorityId"] is not null ||
-            configuration.GetSection("October:Web:AllowedTargets").Exists() ||
-            configuration.GetSection("October:Web:GeneratorCertificates").Exists();
-
-        if (mode is null or "ordinary")
-        {
-            if (targetId is not null || batchIdText is not null || obsoleteTransportConfigured)
-            {
-                throw new InvalidOperationException("Invalid October Web startup selection.");
-            }
-
-            return new OctoberWebStartupSelection(OctoberWebMode.Ordinary, null, null, null);
-        }
-
-        if (mode != "selected-data" ||
-            string.IsNullOrWhiteSpace(targetId) ||
-            !Guid.TryParse(batchIdText, out Guid batchId) ||
-            batchId == Guid.Empty ||
-            obsoleteTransportConfigured)
-        {
-            throw new InvalidOperationException("Invalid October Web startup selection.");
-        }
-
-        return new OctoberWebStartupSelection(OctoberWebMode.SelectedData, targetId, batchId, null);
-    }
-}
-
 public enum OctoberCertificateIdentityStatus
 {
     Authenticated,

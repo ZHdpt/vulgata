@@ -367,26 +367,28 @@ public sealed class OctoberHostSelectionTests(ITestOutputHelper output)
 
     [Trait("Suite", "E2E")]
     [SuiteFact("E2E")]
-    public async Task SelectedWebProcess_RestartFromOwnedTargetAtoB_BindsEachBatchWithoutBrowserAuthority()
+    public async Task OrdinaryWebProcess_RestartFromOwnedTargetAtoB_UsesOnlyDefaultConnection()
     {
         await using GeneratorPrepareFixture targetA = await GeneratorPrepareFixture.CreateAsync(output);
         await using GeneratorPrepareFixture targetB = await GeneratorPrepareFixture.CreateAsync(output);
         Assert.NotEqual(targetA.BatchId, targetB.BatchId);
 
+        await targetA.AssertOctoberSchemaAbsentAsync();
+        int port = ReserveOwnedLoopbackPort();
+        string contextWrittenToA = await AssertOrdinaryWebProcessAsync(targetA, targetB, port);
+        await targetA.AssertOctoberSchemaAbsentAsync();
+
+        // The first ordinary Web process succeeds before any October schema or batch exists.
+        // Stop it before independent generator preparation and the restart against target B.
         await PrepareOwnedTargetAsync(targetA);
         await PrepareOwnedTargetAsync(targetB);
         OctoberBoundSetupSnapshot snapshotA = await targetA.ReadBoundSnapshotAsync();
         OctoberBoundSetupSnapshot snapshotB = await targetB.ReadBoundSnapshotAsync();
         var stateABeforeWeb = await targetA.CaptureOctoberStateAsync();
         var stateBBeforeWeb = await targetB.CaptureOctoberStateAsync();
-        int port = ReserveOwnedLoopbackPort();
-
-        string contextWrittenToA = await AssertSelectedWebProcessAsync(targetA, targetB, port);
-        await AssertOctoberStateUnchangedAsync(targetA, stateABeforeWeb);
-        await AssertOctoberStateUnchangedAsync(targetB, stateBBeforeWeb);
 
         Assert.Equal(contextWrittenToA, await targetA.ReadSystemContextAsync());
-        string contextWrittenToB = await AssertSelectedWebProcessAsync(targetB, targetA, port);
+        string contextWrittenToB = await AssertOrdinaryWebProcessAsync(targetB, targetA, port);
         await AssertOctoberStateUnchangedAsync(targetA, stateABeforeWeb);
         await AssertOctoberStateUnchangedAsync(targetB, stateBBeforeWeb);
         Assert.Equal(contextWrittenToA, await targetA.ReadSystemContextAsync());
@@ -439,14 +441,14 @@ public sealed class OctoberHostSelectionTests(ITestOutputHelper output)
         return ((IPEndPoint)listener.LocalEndpoint).Port;
     }
 
-    private async Task<string> AssertSelectedWebProcessAsync(
+    private async Task<string> AssertOrdinaryWebProcessAsync(
         GeneratorPrepareFixture fixture,
         GeneratorPrepareFixture otherTarget,
         int port)
     {
         using Process process = fixture.StartWeb(port);
-        output.WriteLine($"selected-web-process-id={process.Id}");
-        output.WriteLine($"selected-web-loopback-port={port}");
+        output.WriteLine($"ordinary-web-process-id={process.Id}");
+        output.WriteLine($"ordinary-web-loopback-port={port}");
         Task<string> standardOutputTask = process.StandardOutput.ReadToEndAsync();
         Task<string> standardErrorTask = process.StandardError.ReadToEndAsync();
         Exception? startupOrBrowserFailure = null;
@@ -524,7 +526,7 @@ public sealed class OctoberHostSelectionTests(ITestOutputHelper output)
             Assert.Equal("System advisory context",
                 contextBefore.RootElement.GetProperty("currentContext").GetString());
 
-            contextWritten = $"native-selected-web-{fixture.TargetId}-{Guid.NewGuid():N}";
+            contextWritten = $"native-ordinary-web-{fixture.TargetId}-{Guid.NewGuid():N}";
             using (StringContent update = new(
                        JsonSerializer.Serialize(new { context = contextWritten }),
                        Encoding.UTF8, "application/json"))
@@ -544,7 +546,7 @@ public sealed class OctoberHostSelectionTests(ITestOutputHelper output)
             Assert.Equal(contextWritten,
                 contextAfter.RootElement.GetProperty("currentContext").GetString());
             Assert.False(process.HasExited,
-                "The selected-data Web process should stay alive until its owned restart boundary.");
+                "The ordinary Web process should stay alive until its owned restart boundary.");
         }
         catch (Exception exception)
         {
@@ -559,12 +561,12 @@ public sealed class OctoberHostSelectionTests(ITestOutputHelper output)
 
         if (startupOrBrowserFailure is not null)
             throw new InvalidOperationException(
-                $"Owned selected-data Web qualification failed: " +
+                $"Owned ordinary Web qualification failed: " +
                 $"{startupOrBrowserFailure.GetType().Name}: {startupOrBrowserFailure.Message}. " +
                 $"Child output: {childOutput}",
                 startupOrBrowserFailure);
         return contextWritten ??
-            throw new InvalidOperationException("The selected-data Web browser write was not observed.");
+            throw new InvalidOperationException("The ordinary Web browser write was not observed.");
     }
 
     private static async Task WaitForWebStartupAsync(
@@ -591,7 +593,7 @@ public sealed class OctoberHostSelectionTests(ITestOutputHelper output)
                 string childOutput = standardOutputTask.Result + standardErrorTask.Result;
                 AssertWebOutputDoesNotExposeProtectedValues(childOutput, fixture);
                 throw new InvalidOperationException(
-                    $"The owned selected-data Web process exited before readiness " +
+                    $"The owned ordinary Web process exited before readiness " +
                     $"(exit={process.ExitCode}). Child output: {childOutput}");
             }
 
@@ -622,7 +624,7 @@ public sealed class OctoberHostSelectionTests(ITestOutputHelper output)
             }
         }
 
-        throw new TimeoutException("The owned selected-data Web process did not become ready in 90 seconds.");
+        throw new TimeoutException("The owned ordinary Web process did not become ready in 90 seconds.");
     }
 
     private static void AssertWebOutputDoesNotExposeProtectedValues(
@@ -630,15 +632,15 @@ public sealed class OctoberHostSelectionTests(ITestOutputHelper output)
         GeneratorPrepareFixture fixture)
     {
         Assert.False(childOutput.Contains(fixture.OperatorPassword, StringComparison.Ordinal),
-            "The selected-data Web process must not emit operator credentials.");
+            "The ordinary Web process must not emit browser credentials.");
         Assert.False(childOutput.Contains(fixture.ProviderApiKeyWorker, StringComparison.Ordinal),
-            "The selected-data Web process must not emit provider credentials.");
+            "The ordinary Web process must not emit provider credentials.");
         Assert.False(childOutput.Contains(fixture.ProviderApiKeyChat, StringComparison.Ordinal),
-            "The selected-data Web process must not emit provider credentials.");
+            "The ordinary Web process must not emit provider credentials.");
         Assert.False(childOutput.Contains(fixture.ConnectionString, StringComparison.Ordinal),
-            "The selected-data Web process must not emit database credentials.");
+            "The ordinary Web process must not emit database credentials.");
         Assert.False(childOutput.Contains(fixture.OwnedRoot, StringComparison.OrdinalIgnoreCase),
-            "The selected-data Web process must not emit the owned physical source root.");
+            "The ordinary Web process must not emit the owned physical source root.");
     }
 
     private static async Task StopOwnedWebProcessAsync(Process process)
@@ -1846,7 +1848,7 @@ public sealed class OctoberHostSelectionTests(ITestOutputHelper output)
             startInfo.Environment["ASPNETCORE_CONTENTROOT"] = Path.Combine(
                 FindRepositoryRoot(), "src", "dotnet", "Vulgata.Web");
             startInfo.Environment["ASPNETCORE_URLS"] = $"http://127.0.0.1:{port.ToString(CultureInfo.InvariantCulture)}";
-            startInfo.Environment["Logging__LocalFile__Path"] = Path.Combine(OwnedRoot, "selected-web.log");
+            startInfo.Environment["Logging__LocalFile__Path"] = Path.Combine(OwnedRoot, "ordinary-web.log");
             startInfo.Environment["SourceStorage__RootPath"] = OwnedSourceRoot;
             startInfo.Environment["CodeGraph__DataRootPath"] = Path.Combine(OwnedRoot, "codegraph");
             startInfo.Environment["AnalysisRuntime__JdtLsWorkspaceRoot"] =
@@ -1854,21 +1856,11 @@ public sealed class OctoberHostSelectionTests(ITestOutputHelper output)
             startInfo.Environment["ConnectionStrings__DefaultConnection"] = ConnectionString;
             startInfo.Environment["DataProtection__KeyRingPath"] = KeyRingPath;
             startInfo.Environment["DataProtection__ApplicationName"] = DataProtectionApplicationName;
-            startInfo.Environment["October__Web__Mode"] = "selected-data";
-            startInfo.Environment["October__Web__TargetId"] = TargetId;
-            startInfo.Environment["October__Web__BatchId"] = BatchId.ToString("D", CultureInfo.InvariantCulture);
-            startInfo.Environment["October__Authority__Id"] = AuthorityId;
-            startInfo.Environment["October__Targets__0__TargetId"] = TargetId;
-            startInfo.Environment["October__Targets__0__CanonicalDatabaseIdentity"] =
-                CanonicalDatabaseIdentity;
-            startInfo.Environment["October__Operator__CredentialSource"] = "protected-file";
-            startInfo.Environment["October__Operator__CredentialFile"] = OperatorCredentialPath;
-            startInfo.Environment["October__Providers__ConfigurationFile"] = ProviderDocumentPath;
             startInfo.ArgumentList.Add(webAssembly);
             Assert.DoesNotContain(OperatorPassword, string.Join(' ', startInfo.ArgumentList),
                 StringComparison.Ordinal);
             Process process = Process.Start(startInfo)
-                ?? throw new InvalidOperationException("The owned selected-data Web child did not start.");
+                ?? throw new InvalidOperationException("The owned ordinary Web child did not start.");
             return process;
         }
 

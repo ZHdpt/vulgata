@@ -1,12 +1,17 @@
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.ComTypes;
+using System.Runtime.ExceptionServices;
 using System.Text;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.AspNetCore.TestHost;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Npgsql;
 using System.Text.RegularExpressions;
 using Vulgata.Core.DomainServices;
@@ -94,27 +99,124 @@ public sealed class OctoberPostgreSqlIsolationTests(ITestOutputHelper output)
 
     [Trait("Suite", "PostgreSql")]
     [SuiteFact("PostgreSql")]
-    public async Task PostgreSqlSelectedWebStartup_UsesOwnedDatabaseFactoriesWithoutMigrationOrSeeding()
+    public async Task PostgreSqlOrdinaryWebStartup_UsesOwnedDatabaseFactoriesWithoutOctoberMigration()
     {
-        await using OctoberHostSelectionTests.GeneratorPrepareFixture targetA =
-            await OctoberHostSelectionTests.GeneratorPrepareFixture.CreateAsync(output);
-        await using OctoberHostSelectionTests.GeneratorPrepareFixture targetB =
-            await OctoberHostSelectionTests.GeneratorPrepareFixture.CreateAsync(output);
-        await PrepareOwnedTargetAsync(targetA);
-        await PrepareOwnedTargetAsync(targetB);
+        OctoberHostSelectionTests.GeneratorPrepareFixture? targetA = null;
+        OctoberHostSelectionTests.GeneratorPrepareFixture? targetB = null;
+        Exception? primaryException = null;
+        List<(string Owner, Exception Failure)> teardownFailures = [];
 
-        SelectedDataState selectedStateA = await CaptureSelectedDataStateAsync(targetA);
-        SelectedDataState selectedStateB = await CaptureSelectedDataStateAsync(targetB);
-        var octoberStateA = await targetA.CaptureOctoberStateAsync();
-        var octoberStateB = await targetB.CaptureOctoberStateAsync();
-        AssertEquivalentSelectedDataShape(selectedStateA, selectedStateB);
+        try
+        {
+            targetA = await OctoberHostSelectionTests.GeneratorPrepareFixture.CreateAsync(output);
+            targetB = await OctoberHostSelectionTests.GeneratorPrepareFixture.CreateAsync(output);
 
-        await AssertSelectedWebCompositionAsync(targetA, output);
-        await AssertSelectedWebCompositionAsync(targetB, output);
-        await AssertOctoberStateUnchangedAsync(targetA, octoberStateA);
-        await AssertOctoberStateUnchangedAsync(targetB, octoberStateB);
-        AssertEquivalentSelectedDataShape(selectedStateA, await CaptureSelectedDataStateAsync(targetA));
-        AssertEquivalentSelectedDataShape(selectedStateB, await CaptureSelectedDataStateAsync(targetB));
+            await targetA.AssertOctoberSchemaAbsentAsync();
+            await targetB.AssertOctoberSchemaAbsentAsync();
+            await AssertOrdinaryWebCompositionAsync(targetA, output, teardownFailures);
+            await targetA.AssertOctoberSchemaAbsentAsync();
+
+            await PrepareOwnedTargetAsync(targetA);
+            await PrepareOwnedTargetAsync(targetB);
+
+            OrdinaryDataState ordinaryStateA = await CaptureOrdinaryDataStateAsync(targetA);
+            OrdinaryDataState ordinaryStateB = await CaptureOrdinaryDataStateAsync(targetB);
+            var octoberStateA = await targetA.CaptureOctoberStateAsync();
+            var octoberStateB = await targetB.CaptureOctoberStateAsync();
+            AssertEquivalentOrdinaryDataShape(ordinaryStateA, ordinaryStateB);
+
+            await AssertOrdinaryWebCompositionAsync(targetB, output, teardownFailures);
+            await AssertOctoberStateUnchangedAsync(targetA, octoberStateA);
+            await AssertOctoberStateUnchangedAsync(targetB, octoberStateB);
+            AssertEquivalentOrdinaryDataShape(ordinaryStateA, await CaptureOrdinaryDataStateAsync(targetA));
+            AssertEquivalentOrdinaryDataShape(ordinaryStateB, await CaptureOrdinaryDataStateAsync(targetB));
+        }
+        catch (Exception exception)
+        {
+            primaryException = exception;
+        }
+        finally
+        {
+            await CaptureFixtureDisposalFailureAsync("target-B", targetB, teardownFailures);
+            await CaptureFixtureDisposalFailureAsync("target-A", targetA, teardownFailures);
+        }
+
+        if (primaryException is not null)
+        {
+            output.WriteLine(
+                "primary-test-exception=" + SanitizeDiagnostic(primaryException.ToString(), targetA, targetB));
+        }
+
+        foreach ((string owner, Exception failure) in teardownFailures)
+        {
+            output.WriteLine(
+                $"teardown-exception[{owner}]=" + SanitizeDiagnostic(failure.ToString(), targetA, targetB));
+        }
+
+        if (primaryException is not null || teardownFailures.Count > 0)
+        {
+            throw new InvalidOperationException(
+                "The ordinary-Web test or its owned-resource teardown failed; see separately labeled sanitized diagnostics.");
+        }
+    }
+
+    private static async Task CaptureFixtureDisposalFailureAsync(
+        string owner,
+        OctoberHostSelectionTests.GeneratorPrepareFixture? fixture,
+        List<(string Owner, Exception Failure)> teardownFailures)
+    {
+        if (fixture is null)
+        {
+            return;
+        }
+
+        try
+        {
+            await fixture.DisposeAsync();
+        }
+        catch (Exception exception)
+        {
+            teardownFailures.Add(($"fixture-{owner}", exception));
+        }
+    }
+
+    private static string SanitizeDiagnostic(
+        string diagnostic,
+        params OctoberHostSelectionTests.GeneratorPrepareFixture?[] fixtures)
+    {
+        string sanitized = diagnostic;
+        foreach (string sensitiveValue in fixtures
+                     .OfType<OctoberHostSelectionTests.GeneratorPrepareFixture>()
+                     .SelectMany(fixture => new[]
+                     {
+                         fixture.OperatorPassword,
+                         fixture.ProviderApiKeyWorker,
+                         fixture.ProviderApiKeyChat,
+                         fixture.OperatorUserName,
+                         fixture.SubjectId,
+                         fixture.ConnectionString,
+                         fixture.CanonicalDatabaseIdentity,
+                         fixture.OperatorCredentialPath,
+                         fixture.ProviderDocumentPath,
+                         fixture.KeyRingPath,
+                         fixture.OwnedSourceRoot,
+                         fixture.OwnedRoot,
+                     })
+                     .Where(value => !string.IsNullOrWhiteSpace(value))
+                     .OrderByDescending(value => value.Length))
+        {
+            sanitized = sanitized.Replace(sensitiveValue, "[redacted]", StringComparison.OrdinalIgnoreCase);
+        }
+
+        sanitized = Regex.Replace(
+            sanitized,
+            @"(?i)(Password|Username|User ID|User)\s*=\s*[^;\s]+",
+            "$1=[redacted]");
+        sanitized = Regex.Replace(
+            sanitized,
+            @"(?i)(postgres(?:ql)?://)[^/@\s]+@",
+            "$1[redacted]@");
+        return sanitized;
     }
 
     private static async Task AssertOrdinaryContextsExcludeOctoberAsync(
@@ -171,11 +273,12 @@ public sealed class OctoberPostgreSqlIsolationTests(ITestOutputHelper output)
         await fixture.AssertOctoberSchemaPresentAsync();
     }
 
-    private static async Task AssertSelectedWebCompositionAsync(
+    private static async Task AssertOrdinaryWebCompositionAsync(
         OctoberHostSelectionTests.GeneratorPrepareFixture fixture,
-        ITestOutputHelper output)
+        ITestOutputHelper output,
+        List<(string Owner, Exception Failure)> teardownFailures)
     {
-        string logPath = Path.Combine(fixture.OwnedRoot, "selected-web.log");
+        string logPath = Path.Combine(fixture.OwnedRoot, "ordinary-web.log");
         WebApplicationFactory<Program> parentFactory = new();
         WebApplicationFactory<Program> factory = parentFactory.WithWebHostBuilder(builder =>
             {
@@ -184,16 +287,6 @@ public sealed class OctoberPostgreSqlIsolationTests(ITestOutputHelper output)
                     configuration.AddInMemoryCollection(new Dictionary<string, string?>
                     {
                         ["ConnectionStrings:DefaultConnection"] = fixture.ConnectionString,
-                        ["October:Web:Mode"] = "selected-data",
-                        ["October:Web:TargetId"] = fixture.TargetId,
-                        ["October:Web:BatchId"] = fixture.BatchId.ToString("D"),
-                        ["October:Authority:Id"] = fixture.AuthorityId,
-                        ["October:Targets:0:TargetId"] = fixture.TargetId,
-                        ["October:Targets:0:CanonicalDatabaseIdentity"] =
-                            fixture.CanonicalDatabaseIdentity,
-                        ["October:Operator:CredentialSource"] = "protected-file",
-                        ["October:Operator:CredentialFile"] = fixture.OperatorCredentialPath,
-                        ["October:Providers:ConfigurationFile"] = fixture.ProviderDocumentPath,
                         ["DataProtection:KeyRingPath"] = fixture.KeyRingPath,
                         ["DataProtection:ApplicationName"] = fixture.ProtectionApplicationName,
                         ["Logging:LocalFile:Path"] = logPath,
@@ -202,59 +295,174 @@ public sealed class OctoberPostgreSqlIsolationTests(ITestOutputHelper output)
                         ["AnalysisRuntime:JdtLsWorkspaceRoot"] =
                             Path.Combine(fixture.OwnedRoot, "jdt-workspace")
                     }));
+                builder.ConfigureTestServices(services =>
+                {
+                    services.RemoveAll<IDataProtectionProvider>();
+                    services.AddSingleton(fixture.Services.GetRequiredService<IDataProtectionProvider>());
+                });
             });
+
+        Exception? primaryException = null;
+        AsyncServiceScope? scope = null;
+        VulgataDbContext? factoryManagement = null;
+        HttpClient? anonymousBrowser = null;
+        HttpResponseMessage? systems = null;
 
         try
         {
-            await using (AsyncServiceScope scope = factory.Services.CreateAsyncScope())
+            scope = factory.Services.CreateAsyncScope();
+            IServiceProvider services = scope.Value.ServiceProvider;
+            Assert.Null(services.GetService<OctoberDbContext>());
+            Assert.Null(services.GetService<IOctoberLocalAuthority>());
+            Assert.Null(services.GetService<IOctoberBatchSelector>());
+            Assert.Null(services.GetService<IOctoberBoundSetupData>());
+
+            ApplicationDbContext identity = services.GetRequiredService<ApplicationDbContext>();
+            AssertTargetDatabase(identity.Database.GetDbConnection().ConnectionString, fixture);
+            Assert.NotEmpty(await identity.Database.GetAppliedMigrationsAsync());
+            RoleManager<IdentityRole> roles = services.GetRequiredService<RoleManager<IdentityRole>>();
+            Assert.True(await roles.RoleExistsAsync(RoleNames.SystemOwner),
+                "Ordinary Web startup should preserve normal role seeding.");
+            VulgataDbContext scopedManagement = services.GetRequiredService<VulgataDbContext>();
+            AssertTargetDatabase(scopedManagement.Database.GetDbConnection().ConnectionString, fixture);
+            Assert.NotEmpty(await scopedManagement.Database.GetAppliedMigrationsAsync());
+            factoryManagement = await services
+                .GetRequiredService<IDbContextFactory<VulgataDbContext>>()
+                .CreateDbContextAsync();
+            AssertTargetDatabase(factoryManagement.Database.GetDbConnection().ConnectionString, fixture);
+            await AssertOrdinaryMigrationHistoryTablesAsync(fixture);
+
+            anonymousBrowser = factory.CreateClient(new WebApplicationFactoryClientOptions
             {
-                IServiceProvider services = scope.ServiceProvider;
-                OctoberWebStartupSelection selection = services.GetRequiredService<OctoberWebStartupSelection>();
-                Assert.Equal(OctoberWebMode.SelectedData, selection.Mode);
-                Assert.Equal(fixture.TargetId, selection.TargetId);
-                Assert.Equal(fixture.BatchId, selection.BatchId);
+                AllowAutoRedirect = false
+            });
+            using HttpResponseMessage login = await anonymousBrowser.GetAsync("/Account/Login");
+            Assert.Equal(System.Net.HttpStatusCode.OK, login.StatusCode);
+            using HttpResponseMessage anonymousHome = await anonymousBrowser.GetAsync("/");
+            Assert.Equal(System.Net.HttpStatusCode.Redirect, anonymousHome.StatusCode);
+            Assert.Contains("/Account/Login", anonymousHome.Headers.Location?.OriginalString ?? string.Empty,
+                StringComparison.Ordinal);
+            systems = await anonymousBrowser.GetAsync("/api/systems/");
+            Assert.Equal(System.Net.HttpStatusCode.Unauthorized, systems.StatusCode);
 
-                IOctoberBoundSetupData bound = services.GetRequiredService<IOctoberBoundSetupData>();
-                Assert.Equal(fixture.TargetId, bound.TargetId);
-                Assert.Equal(fixture.BatchId, bound.BatchId);
-
-                OctoberAuthorityConfiguration authority =
-                    services.GetRequiredService<OctoberAuthorityConfiguration>();
-                Assert.Equal(fixture.ConnectionString, authority.DataConnectionString);
-                Assert.Equal(fixture.ConnectionString, authority.IdentityConnectionString);
-
-                ApplicationDbContext identity = services.GetRequiredService<ApplicationDbContext>();
-                AssertTargetDatabase(identity.Database.GetDbConnection().ConnectionString, fixture);
-                VulgataDbContext scopedManagement = services.GetRequiredService<VulgataDbContext>();
-                AssertTargetDatabase(scopedManagement.Database.GetDbConnection().ConnectionString, fixture);
-                await using VulgataDbContext factoryManagement = await services
-                    .GetRequiredService<IDbContextFactory<VulgataDbContext>>()
-                    .CreateDbContextAsync();
-                AssertTargetDatabase(factoryManagement.Database.GetDbConnection().ConnectionString, fixture);
-                OctoberDbContext october = services.GetRequiredService<OctoberDbContext>();
-                AssertTargetDatabase(october.Database.GetDbConnection().ConnectionString, fixture);
-
-                using HttpClient anonymousBrowser = factory.CreateClient();
-                using HttpResponseMessage systems = await anonymousBrowser.GetAsync("/api/systems/");
-                Assert.Equal(System.Net.HttpStatusCode.Unauthorized, systems.StatusCode);
-            }
-
-            output.WriteLine($"selected-web-log-exclusive-open-before-disposal={ProbeExclusiveLogOpen(logPath)}");
+            output.WriteLine($"ordinary-web-log-exclusive-open-before-disposal={ProbeExclusiveLogOpen(logPath)}");
+        }
+        catch (Exception exception)
+        {
+            primaryException = exception;
         }
         finally
         {
-            await factory.DisposeAsync();
-            string afterDerivedDisposal = ProbeExclusiveLogOpen(logPath);
-            output.WriteLine($"selected-web-log-exclusive-open-after-derived-disposal={afterDerivedDisposal}");
+            CaptureSynchronousDisposalFailure("ordinary-web-response", systems, teardownFailures);
+            CaptureSynchronousDisposalFailure("ordinary-web-client", anonymousBrowser, teardownFailures);
+            if (factoryManagement is not null)
+            {
+                try
+                {
+                    await factoryManagement.DisposeAsync();
+                }
+                catch (Exception exception)
+                {
+                    teardownFailures.Add(("ordinary-web-factory-context", exception));
+                }
+            }
 
-            await parentFactory.DisposeAsync();
+            if (scope is not null)
+            {
+                try
+                {
+                    await scope.Value.DisposeAsync();
+                }
+                catch (Exception exception)
+                {
+                    teardownFailures.Add(("ordinary-web-service-scope", exception));
+                }
+            }
+
+            try
+            {
+                await factory.DisposeAsync();
+            }
+            catch (Exception exception)
+            {
+                teardownFailures.Add(("ordinary-web-derived-factory", exception));
+            }
+
+            string afterDerivedDisposal = ProbeExclusiveLogOpen(logPath);
+            output.WriteLine($"ordinary-web-log-exclusive-open-after-derived-disposal={afterDerivedDisposal}");
+
+            try
+            {
+                await parentFactory.DisposeAsync();
+            }
+            catch (Exception exception)
+            {
+                teardownFailures.Add(("ordinary-web-parent-factory", exception));
+            }
+
             string afterParentDisposal = ProbeExclusiveLogOpen(logPath);
-            output.WriteLine($"selected-web-log-exclusive-open-after-parent-disposal={afterParentDisposal}");
+            output.WriteLine($"ordinary-web-log-exclusive-open-after-parent-disposal={afterParentDisposal}");
 
             if (afterParentDisposal.StartsWith("blocked-", StringComparison.Ordinal))
             {
-                output.WriteLine($"selected-web-log-restart-manager-owners={GetRestartManagerOwnerPids(logPath)}");
+                string owners = GetRestartManagerOwnerPids(logPath);
+                output.WriteLine($"ordinary-web-log-restart-manager-owners={owners}");
+                teardownFailures.Add(("ordinary-web-log-release", new IOException(
+                    $"The owned Web log remained unavailable after parent disposal: {afterParentDisposal}; owners={owners}.")));
             }
+            else if (!string.Equals(afterParentDisposal, "opened", StringComparison.Ordinal))
+            {
+                teardownFailures.Add(("ordinary-web-log-release", new IOException(
+                    $"The owned Web log could not be verified after parent disposal: {afterParentDisposal}.")));
+            }
+        }
+
+        if (primaryException is not null)
+        {
+            ExceptionDispatchInfo.Capture(primaryException).Throw();
+        }
+    }
+
+    private static async Task AssertOrdinaryMigrationHistoryTablesAsync(
+        OctoberHostSelectionTests.GeneratorPrepareFixture fixture)
+    {
+        TestResourceScope.ValidateOwnedTarget(fixture.ConnectionString);
+        await using NpgsqlConnection connection = new(fixture.ConnectionString);
+        await connection.OpenAsync();
+        foreach ((string schema, string table) in new[]
+                 {
+                     ("identity", "__IdentityMigrationsHistory"),
+                     ("public", "__EFMigrationsHistory")
+                 })
+        {
+            await using NpgsqlCommand command = new(
+                "SELECT EXISTS (SELECT 1 FROM information_schema.tables " +
+                "WHERE table_schema = @schema AND table_name = @table);",
+                connection);
+            command.Parameters.AddWithValue("schema", schema);
+            command.Parameters.AddWithValue("table", table);
+            Assert.True((bool)(await command.ExecuteScalarAsync() ?? false),
+                $"Ordinary Web should retain migration history at {schema}.{table}.");
+        }
+    }
+
+    private static void CaptureSynchronousDisposalFailure(
+        string owner,
+        IDisposable? resource,
+        List<(string Owner, Exception Failure)> teardownFailures)
+    {
+        if (resource is null)
+        {
+            return;
+        }
+
+        try
+        {
+            resource.Dispose();
+        }
+        catch (Exception exception)
+        {
+            teardownFailures.Add((owner, exception));
         }
     }
 
@@ -455,7 +663,7 @@ public sealed class OctoberPostgreSqlIsolationTests(ITestOutputHelper output)
         Assert.Equal(expected.RowCounts, actual.RowCounts);
     }
 
-    private static async Task<SelectedDataState> CaptureSelectedDataStateAsync(
+    private static async Task<OrdinaryDataState> CaptureOrdinaryDataStateAsync(
         OctoberHostSelectionTests.GeneratorPrepareFixture fixture)
     {
         await using AsyncServiceScope scope = fixture.Services.CreateAsyncScope();
@@ -479,14 +687,14 @@ public sealed class OctoberPostgreSqlIsolationTests(ITestOutputHelper output)
         int contextCount = await october.ContextReferences.CountAsync();
         int entryCount = await october.AdvisoryEntries.CountAsync();
         int differenceCount = await october.ContextDifferences.CountAsync();
-        return new SelectedDataState(identityMigrations, managementMigrations, octoberMigrations,
+        return new OrdinaryDataState(identityMigrations, managementMigrations, octoberMigrations,
             roleCount, systemCount, repositoryCount, globalContextCount, batchCount,
             selectionCount, contextCount, entryCount, differenceCount);
     }
 
-    private static void AssertEquivalentSelectedDataShape(
-        SelectedDataState expected,
-        SelectedDataState actual)
+    private static void AssertEquivalentOrdinaryDataShape(
+        OrdinaryDataState expected,
+        OrdinaryDataState actual)
     {
         Assert.Equal(expected.IdentityMigrations, actual.IdentityMigrations);
         Assert.Equal(expected.ManagementMigrations, actual.ManagementMigrations);
@@ -514,7 +722,7 @@ public sealed class OctoberPostgreSqlIsolationTests(ITestOutputHelper output)
         Assert.Equal(expected.Username, actual.Username);
     }
 
-    private sealed record SelectedDataState(
+    private sealed record OrdinaryDataState(
         string[] IdentityMigrations,
         string[] ManagementMigrations,
         string[] OctoberMigrations,

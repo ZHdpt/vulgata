@@ -1,6 +1,6 @@
 # Story 18.4 development record
 
-Status: in-progress (ordinary-Web controlled implementation verified; runtime qualification and final gates pending)
+Status: in-progress (paused by user at safe checkpoint20; runtime qualification and final gates pending)
 Feature directory: `specs/017-october-batch-setup`
 Workflow state: `specs/017-october-batch-setup/workflow-state.json`
 
@@ -35,6 +35,17 @@ removed with their Git/raw history preserved. Real PostgreSQL migrations, ordina
 Web A/B processes and the E2E provider-administration class remain unqualified;
 runtime consumer reconciliation, residual owned-type cleanup and final gates are
 next. No task completion markers changed during this bounded controlled checkpoint.
+The user then instructed: "Pause at next safe checkpoint". Root completed only the
+already-running T026 cleanup and its43/43 controlled check, reconciled/compiled the
+two runtime-test files, and saved owned checkpoint20. The unused selected-data
+binder/bound-setup files and startup selection declarations are removed; certificate
+types needed by tracked legacy consumers and the protected activation draft remain.
+Deleted source/test files remain recoverable in Git. No new PostgreSQL/E2E resources
+or app processes were launched. On explicit resume, retain the same test owner to
+fill existing positive separate-generator-Identity and actual-PG/process provider
+administration coverage gaps under T020/T029, then qualify and finish all gates.
+Recovery6/7,23/30 task markers, current owners/approvals and historical evidence are
+unchanged. The user pause is not a workflow failure, waiver or completion.
 
 ## Historical pre-correction boundary (2026-10-01)
 
