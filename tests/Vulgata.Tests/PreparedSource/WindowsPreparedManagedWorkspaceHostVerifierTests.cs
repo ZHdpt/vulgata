@@ -110,6 +110,97 @@ public sealed class WindowsPreparedManagedWorkspaceHostVerifierTests
 
     [Trait("Suite", "LocalTools")]
     [SuiteFact("LocalTools")]
+    public async Task VerifyAndHoldAsync_WhenOwnedLocalMutexDeniesCurrentSid_ReturnsClosedWithoutThrowing()
+    {
+        Assert.True(OperatingSystem.IsWindows(), "This LocalTools case requires Windows ACL and named-mutex semantics.");
+
+        using WindowsIdentity identity = WindowsIdentity.GetCurrent();
+        SecurityIdentifier effectiveProcessSid = Assert.IsType<SecurityIdentifier>(identity.User);
+        await using WindowsHostFixture fixture = await WindowsHostFixture.CreateAsync(
+            effectiveProcessSid,
+            protectedDacl: true);
+        var verifier = new WindowsPreparedManagedWorkspaceHostVerifier(effectiveProcessSid);
+
+        PreparedManagedWorkspaceHostObservation observation = await verifier.ObserveAsync(
+                fixture.Grant,
+                fixture.SourceStoragePolicy)
+            .WaitAsync(ObservationGuard);
+        Assert.Equal(PreparedManagedWorkspaceHostStatus.Observed, observation.Status);
+        PreparedToolDirectoryObjectIdentity rootIdentity = Assert.IsType<PreparedToolDirectoryObjectIdentity>(
+            observation.RootObjectIdentity);
+        string ownerIdentity = Assert.IsType<string>(observation.DerivedWorkspaceOwnerIdentity);
+        var binding = new PreparedCodeGraphWorkspaceOwnership(
+            Guid.NewGuid(),
+            Version: 0,
+            PreparedCodeGraphOwnershipPhase.Absent,
+            fixture.Approval,
+            fixture.PreparedRootPath,
+            rootIdentity,
+            ownerIdentity,
+            StateEntryObjectIdentity: null);
+
+        string mutexName = $@"Local\Vulgata.PreparedWorkspace.{ownerIdentity}";
+        var allowedMutexDacl = new MutexSecurity();
+        allowedMutexDacl.SetAccessRuleProtection(isProtected: true, preserveInheritance: false);
+        allowedMutexDacl.AddAccessRule(new MutexAccessRule(
+            effectiveProcessSid,
+            MutexRights.FullControl,
+            AccessControlType.Allow));
+        using Mutex ownedMutex = MutexAcl.Create(
+            initiallyOwned: false,
+            mutexName,
+            out bool createdNew,
+            allowedMutexDacl);
+        Assert.True(createdNew, "The adapter-derived Local mutex name must be unique to this fixture.");
+
+        MutexSecurity originalMutexDacl = ownedMutex.GetAccessControl();
+        PreparedManagedWorkspaceHostHoldResult? result = null;
+        bool denialInstalled = false;
+        try
+        {
+            var deniedMutexDacl = new MutexSecurity();
+            deniedMutexDacl.SetAccessRuleProtection(isProtected: true, preserveInheritance: false);
+            deniedMutexDacl.AddAccessRule(new MutexAccessRule(
+                effectiveProcessSid,
+                MutexRights.FullControl,
+                AccessControlType.Deny));
+            ownedMutex.SetAccessControl(deniedMutexDacl);
+            denialInstalled = true;
+
+            Exception? verificationFailure = await Record.ExceptionAsync(async () =>
+            {
+                result = await verifier.VerifyAndHoldAsync(binding, fixture.SourceStoragePolicy)
+                    .WaitAsync(ObservationGuard);
+            });
+
+            Assert.Null(verificationFailure);
+            Assert.NotNull(result);
+            AssertDeniedOrUnavailable(result.Status);
+            Assert.Null(result.Hold);
+            await fixture.AssertFixtureContentsUnchangedAsync();
+            fixture.AssertFixtureDaclsUnchanged();
+        }
+        finally
+        {
+            try
+            {
+                if (result?.Hold is not null)
+                {
+                    await result.Hold.DisposeAsync().AsTask().WaitAsync(ObservationGuard);
+                }
+            }
+            finally
+            {
+                if (denialInstalled)
+                {
+                    ownedMutex.SetAccessControl(originalMutexDacl);
+                }
+            }
+        }
+    }
+
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task ObserveAsync_WrongApprovedPrincipalDoesNotObserveAnOwnedRoot()
     {
         Assert.True(OperatingSystem.IsWindows(), "This LocalTools case requires Windows token semantics.");
@@ -362,26 +453,14 @@ public sealed class WindowsPreparedManagedWorkspaceHostVerifierTests
                     approval,
                     policy);
             }
-            catch
+            catch (Exception setupFailure)
             {
+                var cleanupFailures = new List<Exception>();
+                TryRestoreDacl(metadataRoot, originalMetadataDacl, cleanupFailures);
+                TryRestoreDacl(preparedRoot, originalPreparedRootDacl, cleanupFailures);
+                TryRestoreDacl(sourceStorageRoot, originalSourceStorageDacl, cleanupFailures);
+
                 try
-                {
-                    if (originalMetadataDacl is not null && Directory.Exists(metadataRoot))
-                    {
-                        RestoreDacl(metadataRoot, originalMetadataDacl);
-                    }
-
-                    if (originalPreparedRootDacl is not null && Directory.Exists(preparedRoot))
-                    {
-                        RestoreDacl(preparedRoot, originalPreparedRootDacl);
-                    }
-
-                    if (originalSourceStorageDacl is not null && Directory.Exists(sourceStorageRoot))
-                    {
-                        RestoreDacl(sourceStorageRoot, originalSourceStorageDacl);
-                    }
-                }
-                finally
                 {
                     if (Directory.Exists(fixtureRoot))
                     {
@@ -389,7 +468,18 @@ public sealed class WindowsPreparedManagedWorkspaceHostVerifierTests
                         EnsureNoReparsePoints(fixtureRoot);
                         Directory.Delete(fixtureRoot, recursive: true);
                     }
+                }
+                catch (Exception cleanupFailure)
+                {
+                    cleanupFailures.Add(cleanupFailure);
+                }
 
+                if (cleanupFailures.Count > 0)
+                {
+                    cleanupFailures.Insert(0, setupFailure);
+                    throw new AggregateException(
+                        "Fixture setup failed and one or more confined cleanup steps also failed.",
+                        cleanupFailures);
                 }
 
                 throw;
@@ -407,19 +497,49 @@ public sealed class WindowsPreparedManagedWorkspaceHostVerifierTests
             string testResultsRoot = Path.Combine(_repositoryRoot, "TestResults");
             EnsureOwnedPath(testResultsRoot, _fixtureRoot);
             AssertNoReparsePoint(testResultsRoot);
+            var cleanupFailures = new List<Exception>();
+            TryRestoreDacl(MetadataRootPath, _originalMetadataDacl, cleanupFailures);
+            TryRestoreDacl(PreparedRootPath, _originalPreparedRootDacl, cleanupFailures);
+            TryRestoreDacl(SourceStorageRootPath, _originalSourceStorageDacl, cleanupFailures);
+
             try
-            {
-                RestoreDacl(MetadataRootPath, _originalMetadataDacl);
-                RestoreDacl(PreparedRootPath, _originalPreparedRootDacl);
-                RestoreDacl(SourceStorageRootPath, _originalSourceStorageDacl);
-            }
-            finally
             {
                 EnsureNoReparsePoints(_fixtureRoot);
                 Directory.Delete(_fixtureRoot, recursive: true);
             }
+            catch (Exception cleanupFailure)
+            {
+                cleanupFailures.Add(cleanupFailure);
+            }
+
+            if (cleanupFailures.Count > 0)
+            {
+                throw new AggregateException(
+                    "Fixture disposal reported one or more confined cleanup failures.",
+                    cleanupFailures);
+            }
 
             return ValueTask.CompletedTask;
+        }
+
+        private static void TryRestoreDacl(
+            string path,
+            DirectorySecurity? original,
+            ICollection<Exception> failures)
+        {
+            if (original is null || !Directory.Exists(path))
+            {
+                return;
+            }
+
+            try
+            {
+                RestoreDacl(path, original);
+            }
+            catch (Exception failure)
+            {
+                failures.Add(failure);
+            }
         }
 
         private static string FindRepositoryRoot()
