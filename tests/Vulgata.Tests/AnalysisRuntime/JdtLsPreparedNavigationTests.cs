@@ -1003,6 +1003,228 @@ public sealed class JdtLsPreparedNavigationTests
 
     [Trait("Suite", "SelfContained")]
     [SuiteFact("SelfContained")]
+    public async Task GetDefinitionAsync_WhenAbsentWorkspaceBecomesReadyDuringBufferedReply_DiscardsEntireReply()
+    {
+        await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
+        fixture.Authority.Approve(fixture.Approval);
+        string callerPath = Path.Combine(fixture.PreparedRootPath, "Caller.java");
+        await File.WriteAllTextAsync(callerPath, "class Caller { void target() {} }\n");
+        string codeGraphPath = Path.Combine(fixture.PreparedRootPath, ".codegraph");
+        Assert.False(Directory.Exists(codeGraphPath),
+            "The positively absent workspace must not contain a CodeGraph entry before admission.");
+
+        byte[] sourceBefore = await File.ReadAllBytesAsync(fixture.UnfamiliarTextPath);
+        byte[] siblingBefore = await File.ReadAllBytesAsync(fixture.SentinelPath);
+        PreparedJavaNavigationOwnershipFixture bindingFixture =
+            PreparedJavaNavigationOwnershipFixture.Create(
+                fixture.Authority,
+                fixture.Approval,
+                fixture.PreparedRootPath);
+        PreparedCodeGraphWorkspaceOwnership absent = bindingFixture.ApplicationHeldBinding;
+
+        string sourceStorageRoot = Path.Combine(fixture.SandboxPath, "source-storage");
+        Directory.CreateDirectory(sourceStorageRoot);
+        IConfiguration configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["SourceStorage:RootPath"] = sourceStorageRoot,
+                ["SourceStorage:MaximumEntries"] = "10000",
+                ["SourceStorage:MaximumBlobBytes"] = "8388608",
+                ["SourceStorage:MaximumAggregateBlobBytes"] = "67108864",
+                ["SourceStorage:CaptureDeadlineSeconds"] = "600",
+                ["SourceStorage:OperationStaleAfterMinutes"] = "1440",
+                ["SourceStorage:VerificationBufferBytes"] = "65536",
+                ["SourceStorage:Read:DeadlineSeconds"] = "60",
+            })
+            .Build();
+        RetainedSourceCapturePolicy sourceStoragePolicy = RetainedSourceCapturePolicy.Create(
+            configuration,
+            fixture.SandboxPath,
+            fixture.PreparedRootPath);
+        Assert.Equal(
+            PreparedCodeGraphStoreProvisionStatus.Provisioned,
+            await FilePreparedCodeGraphOwnershipStore.ProvisionNewAsync(sourceStoragePolicy));
+
+        var ownershipStore = new FilePreparedCodeGraphOwnershipStore(sourceStoragePolicy);
+        PreparedCodeGraphOwnershipLoadResult initialLoad = await ownershipStore.LoadAsync(absent);
+        Assert.Equal(PreparedCodeGraphOwnershipLoadStatus.VerifiedAbsent, initialLoad.Status);
+        Assert.Null(initialLoad.Record);
+
+        var toolAuthorization = new JdtAndCodeGraphToolUseAuthorizer(fixture.Approval);
+        var hostProtection = new ProgressiveRegistryHostVerifier(absent);
+        var registry = new PreparedWorkspaceUseRegistry(
+            fixture.Authority,
+            toolAuthorization,
+            ownershipStore,
+            sourceStoragePolicy,
+            hostProtection,
+            new JdtOnlyPreviousGenerationVerifier(),
+            admissionDeadline: TimeSpan.FromSeconds(2),
+            dispositionDeadline: TimeSpan.FromSeconds(2));
+        PreparedToolWorkspaceLease? navigationLease = null;
+        PreparedToolWorkspaceLease? codeGraphLease = null;
+        PreparedJavaNavigationOpenResult? opened = null;
+        try
+        {
+            PreparedWorkspaceAdmissionResult admission = await registry.AdmitAsync(
+                absent,
+                PreparedToolPurpose.JdtNavigation);
+            Assert.Equal(PreparedWorkspaceAdmissionStatus.Opened, admission.Status);
+
+            var issuer = new PreparedToolWorkspaceIssuer(
+                fixture.Authority,
+                toolAuthorization,
+                absent,
+                registry);
+            PreparedToolWorkspaceIssueResult navigationIssue = await issuer.IssueAsync(
+                new PreparedToolWorkspaceGrantRequest(
+                    fixture.Approval,
+                    fixture.PreparedRootPath,
+                    PreparedToolPurpose.JdtNavigation,
+                    TimeSpan.FromSeconds(10)));
+            navigationLease = navigationIssue.Lease;
+            Assert.Equal(PreparedToolWorkspaceIssueStatus.Issued, navigationIssue.Status);
+            PreparedToolWorkspaceLease currentNavigationLease =
+                Assert.IsType<PreparedToolWorkspaceLease>(navigationLease);
+
+            PreparedToolWorkspaceIssueResult codeGraphIssue = await issuer.IssueAsync(
+                new PreparedToolWorkspaceGrantRequest(
+                    fixture.Approval,
+                    fixture.PreparedRootPath,
+                    PreparedToolPurpose.CodeGraphPreparation,
+                    TimeSpan.FromSeconds(10)));
+            codeGraphLease = codeGraphIssue.Lease;
+            Assert.Equal(PreparedToolWorkspaceIssueStatus.Issued, codeGraphIssue.Status);
+            PreparedToolWorkspaceLease currentCodeGraphLease =
+                Assert.IsType<PreparedToolWorkspaceLease>(codeGraphLease);
+
+            var coordinator = new PreparedCodeGraphStateCoordinator(
+                fixture.Authority,
+                toolAuthorization,
+                registry,
+                ownershipStore);
+            var ownedReply = new PreparedJdtLsRawReply(
+                [
+                    new PreparedJdtLsRawLocation(new Uri(callerPath).AbsoluteUri, 1, 1, 1, 7),
+                    new PreparedJdtLsRawLocation(
+                        new Uri(Path.Combine(codeGraphPath, "Generated.java")).AbsoluteUri,
+                        1,
+                        1,
+                        1,
+                        7),
+                ],
+                LimitReached: true,
+                CapabilityLimitation: "controlled capability detail");
+            PreparedToolWorkspaceCheckStatus? stateCreationStatus = null;
+            string? generatedPath = null;
+            var runtime = new OwnedStateTransitionPreparedJdtLsRuntime(
+                async token =>
+                {
+                    stateCreationStatus = await coordinator.UseOwnedStateAsync(
+                        currentCodeGraphLease,
+                        absent,
+                        async (scope, operationToken) =>
+                        {
+                            generatedPath = Path.Combine(
+                                scope.GetPhysicalStatePathForTrustedToolBinding(),
+                                "Generated.java");
+                            await File.WriteAllTextAsync(
+                                generatedPath,
+                                "class Generated { void target() {} }\n",
+                                operationToken);
+                        },
+                        token);
+                },
+                ownedReply);
+            string disposableStateRoot = Path.Combine(fixture.SiblingPath, "jdt-state");
+            Directory.CreateDirectory(disposableStateRoot);
+            var factory = new PreparedJavaNavigationContextFactory(
+                new PreparedJavaNavigationProfile(
+                    disposableStateRoot,
+                    TimeSpan.FromSeconds(3),
+                    TimeSpan.FromSeconds(2),
+                    TimeSpan.FromSeconds(1),
+                    MaximumResponseBytes: 64 * 1024),
+                runtime,
+                coordinator,
+                _ => ValueTask.FromResult<PreparedCodeGraphWorkspaceOwnership?>(absent));
+
+            opened = await factory.OpenAsync(currentNavigationLease);
+            Assert.Equal(PreparedJavaNavigationOpenStatus.Opened, opened.Status);
+            IPreparedJavaNavigationContext context =
+                Assert.IsAssignableFrom<IPreparedJavaNavigationContext>(opened.Context);
+
+            PreparedJavaNavigationResult result = await context.GetDefinitionAsync(
+                new PreparedJavaNavigationRequest("Caller.java", 1, 1, 10));
+
+            Assert.Equal(PreparedToolWorkspaceCheckStatus.Current, stateCreationStatus);
+            Assert.NotNull(generatedPath);
+            Assert.True(File.Exists(generatedPath));
+            PreparedCodeGraphOwnershipLoadResult currentLoad = await ownershipStore.LoadAsync(absent);
+            Assert.Equal(PreparedCodeGraphOwnershipLoadStatus.Found, currentLoad.Status);
+            PreparedCodeGraphWorkspaceOwnership ready =
+                Assert.IsType<PreparedCodeGraphWorkspaceOwnership>(currentLoad.Record);
+            Assert.Equal(PreparedCodeGraphOwnershipPhase.Ready, ready.Phase);
+            Assert.Equal(2, ready.Version);
+            Assert.Equal(absent.OwnershipId, ready.OwnershipId);
+            Assert.Equal(absent.Approval, ready.Approval);
+            Assert.Equal(absent.PhysicalRootPath, ready.PhysicalRootPath);
+            Assert.Equal(absent.RootObjectIdentity, ready.RootObjectIdentity);
+            Assert.Equal(absent.WorkspaceOwnerIdentity, ready.WorkspaceOwnerIdentity);
+            Assert.NotNull(ready.StateEntryObjectIdentity);
+            var physicalEntry = PreparedSourceTraversal.OpenRoot(codeGraphPath);
+            Assert.Equal(PreparedSourceTraversal.OpenStatus.Opened, physicalEntry.Status);
+            using (physicalEntry.Handle)
+            {
+                PreparedSourceTraversal.DirectoryIdentity observed = Assert.IsType<PreparedSourceTraversal.DirectoryIdentity>(
+                    physicalEntry.Handle is null
+                        ? null
+                        : PreparedSourceTraversal.ObserveDirectory(physicalEntry.Handle));
+                Assert.Equal(
+                    new PreparedToolDirectoryObjectIdentity(
+                        observed.VolumeSerialNumber,
+                        observed.FileIndexHigh,
+                        observed.FileIndexLow),
+                    ready.StateEntryObjectIdentity);
+            }
+
+            PreparedCodeGraphOwnershipViewResult finalView = await coordinator.GetOwnershipViewAsync(
+                absent,
+                fixture.Approval);
+            Assert.Equal(PreparedCodeGraphOwnershipViewStatus.VerifiedOwned, finalView.Status);
+            Assert.Equal(ready, finalView.Record);
+            Assert.Equal(1, runtime.Session.NavigateCallCount);
+            Assert.Equal(1, runtime.Session.DisposeCallCount);
+            Assert.Equal(PreparedJavaNavigationOutcome.ConfigurationUnavailable, result.Outcome);
+            Assert.Empty(result.Locations);
+            Assert.Empty(result.Limitations);
+            Assert.Null(result.StoppingLimit);
+            Assert.Equal(sourceBefore, await File.ReadAllBytesAsync(fixture.UnfamiliarTextPath));
+            Assert.Equal(siblingBefore, await File.ReadAllBytesAsync(fixture.SentinelPath));
+        }
+        finally
+        {
+            if (opened?.Context is not null)
+            {
+                await opened.Context.DisposeAsync();
+            }
+
+            if (codeGraphLease is not null)
+            {
+                await codeGraphLease.DisposeAsync();
+            }
+
+            if (navigationLease is not null)
+            {
+                await navigationLease.DisposeAsync();
+            }
+
+            await registry.DisposeAsync();
+        }
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task GetDefinitionAsync_WhenReplyIncludesVerifiedOwnedState_FiltersOnlyOwnedLocation()
     {
         await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
@@ -4284,6 +4506,140 @@ public sealed class JdtLsPreparedNavigationTests
         {
             cancellationToken.ThrowIfCancellationRequested();
             return ValueTask.FromResult(PreparedWorkspaceSettlementStatus.Settled);
+        }
+    }
+
+    private sealed class JdtAndCodeGraphToolUseAuthorizer(PreparedSourceApproval expectedApproval)
+        : IPreparedToolUseAuthorizer
+    {
+        public Task<PreparedToolUseAuthorityResult> VerifyCurrentAsync(
+            PreparedSourceApproval approval,
+            PreparedToolPurpose toolPurpose,
+            CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            bool allowed = approval == expectedApproval &&
+                toolPurpose is PreparedToolPurpose.JdtNavigation or PreparedToolPurpose.CodeGraphPreparation;
+            return Task.FromResult(new PreparedToolUseAuthorityResult(
+                allowed ? PreparedToolUseAuthorityStatus.Current : PreparedToolUseAuthorityStatus.Denied));
+        }
+    }
+
+    private sealed class ProgressiveRegistryHostVerifier(
+        PreparedCodeGraphWorkspaceOwnership absentBinding) : IPreparedManagedWorkspaceHostVerifier
+    {
+        internal ProgressiveRegistryHostHold Hold { get; } = new(absentBinding);
+
+        public Task<PreparedManagedWorkspaceHostObservation> ObserveAsync(
+            PreparedSourceGrantRequest applicationHeldSourceGrant,
+            RetainedSourceCapturePolicy sourceStoragePolicy,
+            CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            return Task.FromResult(new PreparedManagedWorkspaceHostObservation(
+                PreparedManagedWorkspaceHostStatus.Observed,
+                absentBinding.RootObjectIdentity,
+                absentBinding.WorkspaceOwnerIdentity));
+        }
+
+        public Task<PreparedManagedWorkspaceHostHoldResult> VerifyAndHoldAsync(
+            PreparedCodeGraphWorkspaceOwnership binding,
+            RetainedSourceCapturePolicy sourceStoragePolicy,
+            CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            return Task.FromResult(binding == absentBinding
+                ? new PreparedManagedWorkspaceHostHoldResult(PreparedManagedWorkspaceHostStatus.Protected, Hold)
+                : new PreparedManagedWorkspaceHostHoldResult(PreparedManagedWorkspaceHostStatus.Denied, null));
+        }
+    }
+
+    private sealed class ProgressiveRegistryHostHold(
+        PreparedCodeGraphWorkspaceOwnership absentBinding) : IPreparedManagedWorkspaceHostHold
+    {
+        private bool _disposed;
+
+        public ValueTask<PreparedManagedWorkspaceHostStatus> CheckCurrentAsync(
+            PreparedCodeGraphWorkspaceOwnership binding,
+            CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            return ValueTask.FromResult(!_disposed && IsSameImmutableKey(absentBinding, binding) &&
+                IsAllowedSameProcessProgression(absentBinding, binding)
+                    ? PreparedManagedWorkspaceHostStatus.Protected
+                    : PreparedManagedWorkspaceHostStatus.Unavailable);
+        }
+
+        public ValueTask DisposeAsync()
+        {
+            _disposed = true;
+            return ValueTask.CompletedTask;
+        }
+
+        private static bool IsSameImmutableKey(
+            PreparedCodeGraphWorkspaceOwnership expected,
+            PreparedCodeGraphWorkspaceOwnership actual) =>
+            expected.OwnershipId == actual.OwnershipId &&
+            expected.Approval == actual.Approval &&
+            string.Equals(expected.PhysicalRootPath, actual.PhysicalRootPath, StringComparison.OrdinalIgnoreCase) &&
+            expected.RootObjectIdentity == actual.RootObjectIdentity &&
+            expected.WorkspaceOwnerIdentity == actual.WorkspaceOwnerIdentity;
+
+        private static bool IsAllowedSameProcessProgression(
+            PreparedCodeGraphWorkspaceOwnership absent,
+            PreparedCodeGraphWorkspaceOwnership current) =>
+            (current.Phase, current.Version, current.StateEntryObjectIdentity) switch
+            {
+                (PreparedCodeGraphOwnershipPhase.Absent, var version, null) => version == absent.Version,
+                (PreparedCodeGraphOwnershipPhase.Creating, var version, null) =>
+                    absent.Version < long.MaxValue && version == absent.Version + 1,
+                (PreparedCodeGraphOwnershipPhase.Ready, var version, not null) =>
+                    absent.Version < long.MaxValue - 1 && version == absent.Version + 2,
+                _ => false,
+            };
+    }
+
+    private sealed class OwnedStateTransitionPreparedJdtLsRuntime(
+        Func<CancellationToken, Task> commitOwnedState,
+        PreparedJdtLsRawReply reply) : IPreparedJdtLsRuntime
+    {
+        internal OwnedStateTransitionPreparedJdtLsSession Session { get; } =
+            new(commitOwnedState, reply);
+
+        public Task<IPreparedJdtLsSession> OpenAsync(
+            PreparedToolWorkspaceLease workspaceLease,
+            PreparedJavaNavigationProfile profile,
+            CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            return Task.FromResult<IPreparedJdtLsSession>(Session);
+        }
+    }
+
+    private sealed class OwnedStateTransitionPreparedJdtLsSession(
+        Func<CancellationToken, Task> commitOwnedState,
+        PreparedJdtLsRawReply reply) : IPreparedJdtLsSession
+    {
+        public int NavigateCallCount { get; private set; }
+
+        public int DisposeCallCount { get; private set; }
+
+        public async Task<PreparedJdtLsRawReply> NavigateAsync(
+            PreparedJavaNavigationOperation operation,
+            PreparedJavaNavigationRequest request,
+            CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            NavigateCallCount++;
+            await commitOwnedState(cancellationToken);
+            cancellationToken.ThrowIfCancellationRequested();
+            return reply;
+        }
+
+        public ValueTask DisposeAsync()
+        {
+            DisposeCallCount++;
+            return ValueTask.CompletedTask;
         }
     }
 
