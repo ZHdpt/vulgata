@@ -4,6 +4,9 @@ using System.Globalization;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using System.Net;
+using System.Net.Sockets;
+using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -64,6 +67,8 @@ public sealed class OctoberHostSelectionTests(ITestOutputHelper output)
         Assert.True(reportsBoundProviderConfiguration,
             "The successful command should identify provider configuration as bound without exposing provider details.");
 
+        await AssertGeneratorPrepareReplayAndConflictAsync(fixture, request);
+
         await using AsyncServiceScope scope = fixture.Services.CreateAsyncScope();
         IOctoberLocalAuthority authority = scope.ServiceProvider.GetRequiredService<IOctoberLocalAuthority>();
         OctoberAuthenticationResult authentication = await authority.AuthenticateAsync(CancellationToken.None);
@@ -96,6 +101,156 @@ public sealed class OctoberHostSelectionTests(ITestOutputHelper output)
         Assert.Matches("^[0-9a-f]{64}$", bound.Snapshot.Request.SelectionDigest);
         Assert.Equal(bound.Snapshot.Request.SelectionDigest, bound.Snapshot.Authority.SelectionDigest);
         Assert.Equal(TimeSpan.Zero, bound.Snapshot.SelectedAtUtc.Offset);
+    }
+
+    private async Task AssertGeneratorPrepareReplayAndConflictAsync(
+        GeneratorPrepareFixture fixture,
+        OctoberSetupRequest originalRequest)
+    {
+        OctoberBoundSetupSnapshot original = await fixture.ReadBoundSnapshotAsync();
+        var originalState = await fixture.CaptureOctoberStateAsync();
+
+        using (Process replay = fixture.StartGenerator("prepare", JsonSerializer.Serialize(originalRequest)))
+        {
+            output.WriteLine($"generator-identical-replay-process-id={replay.Id}");
+            (int exitCode, string standardOutput, string standardError) =
+                await fixture.WaitForGeneratorAsync(replay);
+            string childOutput = standardOutput + standardError;
+            AssertGeneratorOutputIsSanitized(fixture, childOutput);
+            Assert.Equal(0, exitCode);
+            Assert.Contains("Prepared", childOutput, StringComparison.Ordinal);
+            Assert.Contains(fixture.BatchId.ToString("D"), childOutput, StringComparison.OrdinalIgnoreCase);
+        }
+
+        OctoberBoundSetupSnapshot replayed = await fixture.ReadBoundSnapshotAsync();
+        AssertEquivalentCommittedSnapshot(original, replayed);
+        await AssertOctoberStateUnchangedAsync(fixture, originalState);
+
+        OctoberSetupRequest changedRequest = originalRequest with
+        {
+            Repositories = originalRequest.Repositories.Select(repository => repository with
+            {
+                OperatorLabel = repository.OperatorLabel + " changed-by-generator-replay-check"
+            }).ToArray()
+        };
+        using (Process conflict = fixture.StartGenerator("prepare", JsonSerializer.Serialize(changedRequest)))
+        {
+            output.WriteLine($"generator-changed-content-conflict-process-id={conflict.Id}");
+            (int exitCode, string standardOutput, string standardError) =
+                await fixture.WaitForGeneratorAsync(conflict);
+            string childOutput = standardOutput + standardError;
+            AssertGeneratorOutputIsSanitized(fixture, childOutput);
+            Assert.Equal(1, exitCode);
+            Assert.Contains("Denied", childOutput, StringComparison.Ordinal);
+            Assert.DoesNotContain("Prepared", childOutput, StringComparison.Ordinal);
+        }
+
+        OctoberBoundSetupSnapshot afterConflict = await fixture.ReadBoundSnapshotAsync();
+        AssertEquivalentCommittedSnapshot(original, afterConflict);
+        await AssertOctoberStateUnchangedAsync(fixture, originalState);
+    }
+
+    private static void AssertGeneratorOutputIsSanitized(
+        GeneratorPrepareFixture fixture,
+        string childOutput)
+    {
+        Assert.DoesNotContain(fixture.OperatorPassword, childOutput, StringComparison.Ordinal);
+        Assert.DoesNotContain(fixture.ProviderApiKeyWorker, childOutput, StringComparison.Ordinal);
+        Assert.DoesNotContain(fixture.ProviderApiKeyChat, childOutput, StringComparison.Ordinal);
+        Assert.DoesNotContain(fixture.ConnectionString, childOutput, StringComparison.Ordinal);
+        Assert.DoesNotContain(fixture.OwnedRoot, childOutput, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static void AssertEquivalentCommittedSnapshot(
+        OctoberBoundSetupSnapshot expected,
+        OctoberBoundSetupSnapshot actual)
+    {
+        Assert.Equal(expected.Request.TargetId, actual.Request.TargetId);
+        Assert.Equal(expected.Request.BatchId, actual.Request.BatchId);
+        Assert.Equal(expected.Request.SelectionDigest, actual.Request.SelectionDigest);
+        Assert.Equal(expected.Request.Repositories.ToArray(), actual.Request.Repositories.ToArray());
+        Assert.Equal(expected.Request.ContextSelections.ToArray(), actual.Request.ContextSelections.ToArray());
+        Assert.Equal(expected.Authority.TargetId, actual.Authority.TargetId);
+        Assert.Equal(expected.Authority.BatchId, actual.Authority.BatchId);
+        Assert.Equal(expected.Authority.SubjectId, actual.Authority.SubjectId);
+        Assert.Equal(expected.Authority.CanonicalDatabaseIdentity, actual.Authority.CanonicalDatabaseIdentity);
+        Assert.Equal(expected.Authority.RepositoryIds.ToArray(), actual.Authority.RepositoryIds.ToArray());
+        Assert.Equal(expected.Authority.SelectionDigest, actual.Authority.SelectionDigest);
+        OctoberSelectedAdvisoryContext expectedContext =
+            Assert.IsType<OctoberSelectedAdvisoryContext>(expected.Authority.SelectedContext);
+        OctoberSelectedAdvisoryContext actualContext =
+            Assert.IsType<OctoberSelectedAdvisoryContext>(actual.Authority.SelectedContext);
+        Assert.Equal(expectedContext.ManagementAuthorityId, actualContext.ManagementAuthorityId);
+        Assert.Equal(expectedContext.Repositories.ToArray(), actualContext.Repositories.ToArray());
+        Assert.Equal(expectedContext.Entries.ToArray(), actualContext.Entries.ToArray());
+        Assert.Equal(expectedContext.Differences.ToArray(), actualContext.Differences.ToArray());
+        Assert.Equal(expected.SelectedAtUtc, actual.SelectedAtUtc);
+        Assert.Equal(TimeSpan.Zero, actual.SelectedAtUtc.Offset);
+    }
+
+    private static async Task<Dictionary<string, string>> GetLoginFormFieldsAsync(HttpClient client)
+    {
+        using HttpResponseMessage response = await client.GetAsync("/Account/Login");
+        response.EnsureSuccessStatusCode();
+        string html = await response.Content.ReadAsStringAsync();
+        Match[] loginForms = Regex.Matches(
+                html,
+                @"<form\b(?<attributes>[^>]*)>(?<content>.*?)</form>",
+                RegexOptions.IgnoreCase | RegexOptions.Singleline)
+            .Cast<Match>()
+            .Where(form => string.Equals(
+                ReadHtmlAttribute(form.Groups["attributes"].Value, "method"),
+                "post", StringComparison.OrdinalIgnoreCase))
+            .Where(form =>
+            {
+                Dictionary<string, string> values = ReadHtmlInputValues(form.Groups["content"].Value);
+                bool isLoginForm =
+                    (values.TryGetValue("_handler", out string? handler) && handler == "login") ||
+                    (values.TryGetValue("__formName", out string? formName) && formName == "login");
+                string? action = ReadHtmlAttribute(form.Groups["attributes"].Value, "action");
+                bool targetsLogin = string.IsNullOrWhiteSpace(action) ||
+                    (Uri.TryCreate(new Uri("http://localhost"), action, out Uri? actionUri) &&
+                     string.Equals(actionUri.AbsolutePath, "/Account/Login",
+                         StringComparison.OrdinalIgnoreCase));
+                return isLoginForm && targetsLogin;
+            })
+            .ToArray();
+        Match loginForm = Assert.Single(loginForms);
+        return ReadHtmlInputValues(loginForm.Groups["content"].Value);
+    }
+
+    private static Dictionary<string, string> ReadHtmlInputValues(string content)
+    {
+        Dictionary<string, string> values = new(StringComparer.Ordinal);
+        foreach (Match input in Regex.Matches(
+                     content,
+                     @"<input\b(?<attributes>[^>]*)>",
+                     RegexOptions.IgnoreCase | RegexOptions.Singleline))
+        {
+            string attributes = input.Groups["attributes"].Value;
+            string? name = ReadHtmlAttribute(attributes, "name");
+            string? value = ReadHtmlAttribute(attributes, "value");
+            if (name is not null && value is not null)
+                values[name] = value;
+        }
+        return values;
+    }
+
+    private static string? ReadHtmlAttribute(string attributes, string attributeName)
+    {
+        Match attribute = Regex.Match(
+            attributes,
+            "(?:^|\\s)" + Regex.Escape(attributeName) +
+                "\\s*=\\s*(?:\"(?<double>[^\"]*)\"|'(?<single>[^']*)'|(?<bare>[^\\s/>]+))",
+            RegexOptions.IgnoreCase | RegexOptions.Singleline);
+        if (!attribute.Success)
+            return null;
+        string value = attribute.Groups["double"].Success
+            ? attribute.Groups["double"].Value
+            : attribute.Groups["single"].Success
+                ? attribute.Groups["single"].Value
+                : attribute.Groups["bare"].Value;
+        return WebUtility.HtmlDecode(value);
     }
 
     [Trait("Suite", "E2E")]
@@ -178,6 +333,322 @@ public sealed class OctoberHostSelectionTests(ITestOutputHelper output)
         Assert.Equal(persistedBeforeSelect.AppliedMigrations, persistedAfterSelect.AppliedMigrations);
         Assert.Equal(persistedBeforeSelect.SchemaDefinition, persistedAfterSelect.SchemaDefinition);
         Assert.Equal(persistedBeforeSelect.RowCounts, persistedAfterSelect.RowCounts);
+
+        await AssertGeneratorSelectDeniedAsync(
+            fixture, "missing-batch", batchIdOverride: Guid.NewGuid());
+        await AssertOctoberStateUnchangedAsync(fixture, persistedAfterSelect);
+        AssertEquivalentCommittedSnapshot(committedAfterSelect, await fixture.ReadBoundSnapshotAsync());
+
+        await AssertGeneratorSelectDeniedAsync(
+            fixture, "mismatched-target", targetIdOverride: $"unconfigured-target-{Guid.NewGuid():N}");
+        await AssertOctoberStateUnchangedAsync(fixture, persistedAfterSelect);
+        AssertEquivalentCommittedSnapshot(committedAfterSelect, await fixture.ReadBoundSnapshotAsync());
+    }
+
+    private async Task AssertGeneratorSelectDeniedAsync(
+        GeneratorPrepareFixture fixture,
+        string scenario,
+        Guid? batchIdOverride = null,
+        string? targetIdOverride = null)
+    {
+        using Process process = fixture.StartGenerator(
+            "select", requestJson: null,
+            batchIdOverride: batchIdOverride,
+            targetIdOverride: targetIdOverride);
+        output.WriteLine($"generator-select-{scenario}-process-id={process.Id}");
+        (int exitCode, string standardOutput, string standardError) =
+            await fixture.WaitForGeneratorAsync(process);
+        string childOutput = standardOutput + standardError;
+        AssertGeneratorOutputIsSanitized(fixture, childOutput);
+        Assert.Equal(1, exitCode);
+        Assert.Contains("Denied", childOutput, StringComparison.Ordinal);
+        Assert.DoesNotContain("Selected", childOutput, StringComparison.Ordinal);
+    }
+
+    [Trait("Suite", "E2E")]
+    [SuiteFact("E2E")]
+    public async Task SelectedWebProcess_RestartFromOwnedTargetAtoB_BindsEachBatchWithoutBrowserAuthority()
+    {
+        await using GeneratorPrepareFixture targetA = await GeneratorPrepareFixture.CreateAsync(output);
+        await using GeneratorPrepareFixture targetB = await GeneratorPrepareFixture.CreateAsync(output);
+        Assert.NotEqual(targetA.BatchId, targetB.BatchId);
+
+        await PrepareOwnedTargetAsync(targetA);
+        await PrepareOwnedTargetAsync(targetB);
+        OctoberBoundSetupSnapshot snapshotA = await targetA.ReadBoundSnapshotAsync();
+        OctoberBoundSetupSnapshot snapshotB = await targetB.ReadBoundSnapshotAsync();
+        var stateABeforeWeb = await targetA.CaptureOctoberStateAsync();
+        var stateBBeforeWeb = await targetB.CaptureOctoberStateAsync();
+        int port = ReserveOwnedLoopbackPort();
+
+        string contextWrittenToA = await AssertSelectedWebProcessAsync(targetA, targetB, port);
+        await AssertOctoberStateUnchangedAsync(targetA, stateABeforeWeb);
+        await AssertOctoberStateUnchangedAsync(targetB, stateBBeforeWeb);
+
+        Assert.Equal(contextWrittenToA, await targetA.ReadSystemContextAsync());
+        string contextWrittenToB = await AssertSelectedWebProcessAsync(targetB, targetA, port);
+        await AssertOctoberStateUnchangedAsync(targetA, stateABeforeWeb);
+        await AssertOctoberStateUnchangedAsync(targetB, stateBBeforeWeb);
+        Assert.Equal(contextWrittenToA, await targetA.ReadSystemContextAsync());
+        Assert.Equal(contextWrittenToB, await targetB.ReadSystemContextAsync());
+        Assert.NotEqual(contextWrittenToA, contextWrittenToB);
+
+        Assert.Equal(targetA.BatchId, snapshotA.Request.BatchId);
+        Assert.Equal(targetA.CanonicalDatabaseIdentity, snapshotA.Authority.CanonicalDatabaseIdentity);
+        Assert.Equal(targetB.BatchId, snapshotB.Request.BatchId);
+        Assert.Equal(targetB.CanonicalDatabaseIdentity, snapshotB.Authority.CanonicalDatabaseIdentity);
+        Assert.NotEqual(snapshotA.Request.SelectionDigest, snapshotB.Request.SelectionDigest);
+    }
+
+    private static async Task PrepareOwnedTargetAsync(GeneratorPrepareFixture fixture)
+    {
+        OctoberSetupRequest request = fixture.CreatePrepareRequest();
+        await fixture.AssertOwnedOperatorCanPrepareAsync(request);
+        await fixture.AssertOwnedProviderDocumentBindsAsync();
+        await fixture.AssertOctoberSchemaAbsentAsync();
+
+        using Process process = fixture.StartGenerator(JsonSerializer.Serialize(request));
+        (int exitCode, string standardOutput, string standardError) =
+            await fixture.WaitForGeneratorAsync(process);
+        string childOutput = standardOutput + standardError;
+        Assert.DoesNotContain(fixture.OperatorPassword, childOutput, StringComparison.Ordinal);
+        Assert.DoesNotContain(fixture.ProviderApiKeyWorker, childOutput, StringComparison.Ordinal);
+        Assert.DoesNotContain(fixture.ProviderApiKeyChat, childOutput, StringComparison.Ordinal);
+        Assert.DoesNotContain(fixture.ConnectionString, childOutput, StringComparison.Ordinal);
+        Assert.DoesNotContain(fixture.OwnedRoot, childOutput, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal(0, exitCode);
+        Assert.Contains("Prepared", childOutput, StringComparison.Ordinal);
+        Assert.Contains(fixture.BatchId.ToString("D"), childOutput, StringComparison.OrdinalIgnoreCase);
+        await fixture.AssertOctoberSchemaPresentAsync();
+    }
+
+    private static async Task AssertOctoberStateUnchangedAsync(
+        GeneratorPrepareFixture fixture,
+        (string[] AppliedMigrations, string[] SchemaDefinition, int[] RowCounts) expected)
+    {
+        var actual = await fixture.CaptureOctoberStateAsync();
+        Assert.Equal(expected.AppliedMigrations, actual.AppliedMigrations);
+        Assert.Equal(expected.SchemaDefinition, actual.SchemaDefinition);
+        Assert.Equal(expected.RowCounts, actual.RowCounts);
+    }
+
+    private static int ReserveOwnedLoopbackPort()
+    {
+        using TcpListener listener = new(IPAddress.Loopback, 0);
+        listener.Start();
+        return ((IPEndPoint)listener.LocalEndpoint).Port;
+    }
+
+    private async Task<string> AssertSelectedWebProcessAsync(
+        GeneratorPrepareFixture fixture,
+        GeneratorPrepareFixture otherTarget,
+        int port)
+    {
+        using Process process = fixture.StartWeb(port);
+        output.WriteLine($"selected-web-process-id={process.Id}");
+        output.WriteLine($"selected-web-loopback-port={port}");
+        Task<string> standardOutputTask = process.StandardOutput.ReadToEndAsync();
+        Task<string> standardErrorTask = process.StandardError.ReadToEndAsync();
+        Exception? startupOrBrowserFailure = null;
+        string? childOutput = null;
+        string? contextWritten = null;
+        try
+        {
+            await WaitForWebStartupAsync(
+                process, port, fixture, standardOutputTask, standardErrorTask);
+            using HttpClient browser = new(new HttpClientHandler
+            {
+                AllowAutoRedirect = false,
+                CheckCertificateRevocationList = true,
+                CookieContainer = new CookieContainer()
+            })
+            {
+                BaseAddress = new Uri($"http://127.0.0.1:{port}")
+            };
+            using HttpResponseMessage anonymousHome = await browser.GetAsync("/");
+            Assert.Equal(HttpStatusCode.Redirect, anonymousHome.StatusCode);
+            Uri redirectLocation = anonymousHome.Headers.Location ??
+                throw new InvalidOperationException("Anonymous home must redirect to the login page.");
+            Uri loginDestination = redirectLocation.IsAbsoluteUri
+                ? redirectLocation
+                : new Uri(browser.BaseAddress!, redirectLocation);
+            Assert.True(string.Equals(
+                    browser.BaseAddress!.GetLeftPart(UriPartial.Authority),
+                    loginDestination.GetLeftPart(UriPartial.Authority),
+                    StringComparison.OrdinalIgnoreCase),
+                "Anonymous login redirects must stay on the owned Web process origin.");
+            Assert.True(string.Equals("/Account/Login", loginDestination.AbsolutePath,
+                    StringComparison.OrdinalIgnoreCase),
+                "Anonymous home must redirect to the login page.");
+
+            using HttpResponseMessage anonymousSystems = await browser.GetAsync("/api/systems/");
+            Assert.Equal(HttpStatusCode.Unauthorized, anonymousSystems.StatusCode);
+
+            Dictionary<string, string> loginFields = await GetLoginFormFieldsAsync(browser);
+            loginFields["Input.Email"] = fixture.OperatorUserName;
+            loginFields["Input.Password"] = fixture.OperatorPassword;
+            loginFields["Input.RememberMe"] = "false";
+            using (FormUrlEncodedContent login = new(loginFields))
+            using (HttpResponseMessage loginResponse = await browser.PostAsync("/Account/Login", login))
+            {
+                Assert.Equal(HttpStatusCode.Redirect, loginResponse.StatusCode);
+                string[] setCookies = loginResponse.Headers.TryGetValues(
+                    "Set-Cookie", out IEnumerable<string>? values) ? values.ToArray() : [];
+                Assert.Contains(setCookies,
+                    cookie => cookie.Contains(".AspNetCore.Identity.Application", StringComparison.Ordinal));
+            }
+
+            using HttpResponseMessage visibleSystemsResponse = await browser.GetAsync("/api/systems/");
+            Assert.Equal(HttpStatusCode.OK, visibleSystemsResponse.StatusCode);
+            using JsonDocument visibleSystems = JsonDocument.Parse(
+                await visibleSystemsResponse.Content.ReadAsStringAsync());
+            JsonElement[] systemRows = visibleSystems.RootElement.EnumerateArray().ToArray();
+            Assert.Contains(systemRows, row => row.GetProperty("id").GetGuid() == fixture.SystemId);
+            Assert.DoesNotContain(systemRows, row => row.GetProperty("id").GetGuid() == otherTarget.SystemId);
+
+            using HttpResponseMessage repositoriesResponse = await browser.GetAsync(
+                $"/api/systems/{fixture.SystemId:D}/repositories/");
+            Assert.Equal(HttpStatusCode.OK, repositoriesResponse.StatusCode);
+            using JsonDocument repositories = JsonDocument.Parse(
+                await repositoriesResponse.Content.ReadAsStringAsync());
+            JsonElement[] repositoryRows = repositories.RootElement.EnumerateArray().ToArray();
+            Assert.Contains(repositoryRows, row => row.GetProperty("id").GetGuid() == fixture.RepositoryId);
+            Assert.DoesNotContain(repositoryRows,
+                row => row.GetProperty("id").GetGuid() == otherTarget.RepositoryId);
+
+            string contextPath = $"/api/systems/{fixture.SystemId:D}/context/";
+            using HttpResponseMessage contextBeforeResponse = await browser.GetAsync(contextPath);
+            Assert.Equal(HttpStatusCode.OK, contextBeforeResponse.StatusCode);
+            using JsonDocument contextBefore = JsonDocument.Parse(
+                await contextBeforeResponse.Content.ReadAsStringAsync());
+            Assert.Equal("System advisory context",
+                contextBefore.RootElement.GetProperty("currentContext").GetString());
+
+            contextWritten = $"native-selected-web-{fixture.TargetId}-{Guid.NewGuid():N}";
+            using (StringContent update = new(
+                       JsonSerializer.Serialize(new { context = contextWritten }),
+                       Encoding.UTF8, "application/json"))
+            using (HttpResponseMessage updateResponse = await browser.PutAsync(contextPath, update))
+            {
+                Assert.Equal(HttpStatusCode.OK, updateResponse.StatusCode);
+                using JsonDocument updated = JsonDocument.Parse(
+                    await updateResponse.Content.ReadAsStringAsync());
+                Assert.Equal(contextWritten,
+                    updated.RootElement.GetProperty("currentContext").GetString());
+            }
+
+            using HttpResponseMessage contextAfterResponse = await browser.GetAsync(contextPath);
+            Assert.Equal(HttpStatusCode.OK, contextAfterResponse.StatusCode);
+            using JsonDocument contextAfter = JsonDocument.Parse(
+                await contextAfterResponse.Content.ReadAsStringAsync());
+            Assert.Equal(contextWritten,
+                contextAfter.RootElement.GetProperty("currentContext").GetString());
+            Assert.False(process.HasExited,
+                "The selected-data Web process should stay alive until its owned restart boundary.");
+        }
+        catch (Exception exception)
+        {
+            startupOrBrowserFailure = exception;
+        }
+        finally
+        {
+            await StopOwnedWebProcessAsync(process);
+            childOutput = await standardOutputTask + await standardErrorTask;
+            AssertWebOutputDoesNotExposeProtectedValues(childOutput, fixture);
+        }
+
+        if (startupOrBrowserFailure is not null)
+            throw new InvalidOperationException(
+                $"Owned selected-data Web qualification failed: " +
+                $"{startupOrBrowserFailure.GetType().Name}: {startupOrBrowserFailure.Message}. " +
+                $"Child output: {childOutput}",
+                startupOrBrowserFailure);
+        return contextWritten ??
+            throw new InvalidOperationException("The selected-data Web browser write was not observed.");
+    }
+
+    private static async Task WaitForWebStartupAsync(
+        Process process,
+        int port,
+        GeneratorPrepareFixture fixture,
+        Task<string> standardOutputTask,
+        Task<string> standardErrorTask)
+    {
+        using HttpClient readiness = new(new HttpClientHandler
+        {
+            AllowAutoRedirect = false,
+            CheckCertificateRevocationList = true
+        })
+        {
+            BaseAddress = new Uri($"http://127.0.0.1:{port}")
+        };
+        using CancellationTokenSource totalDeadline = new(TimeSpan.FromSeconds(90));
+        while (!totalDeadline.IsCancellationRequested)
+        {
+            if (process.HasExited)
+            {
+                await Task.WhenAll(standardOutputTask, standardErrorTask);
+                string childOutput = standardOutputTask.Result + standardErrorTask.Result;
+                AssertWebOutputDoesNotExposeProtectedValues(childOutput, fixture);
+                throw new InvalidOperationException(
+                    $"The owned selected-data Web process exited before readiness " +
+                    $"(exit={process.ExitCode}). Child output: {childOutput}");
+            }
+
+            try
+            {
+                using CancellationTokenSource requestDeadline =
+                    CancellationTokenSource.CreateLinkedTokenSource(totalDeadline.Token);
+                requestDeadline.CancelAfter(TimeSpan.FromSeconds(2));
+                using HttpResponseMessage response = await readiness.GetAsync(
+                    "/Account/Login", requestDeadline.Token);
+                if (response.StatusCode == HttpStatusCode.OK)
+                    return;
+            }
+            catch (HttpRequestException)
+            {
+            }
+            catch (OperationCanceledException) when (!totalDeadline.IsCancellationRequested)
+            {
+            }
+
+            try
+            {
+                await Task.Delay(TimeSpan.FromMilliseconds(200), totalDeadline.Token);
+            }
+            catch (OperationCanceledException) when (totalDeadline.IsCancellationRequested)
+            {
+                break;
+            }
+        }
+
+        throw new TimeoutException("The owned selected-data Web process did not become ready in 90 seconds.");
+    }
+
+    private static void AssertWebOutputDoesNotExposeProtectedValues(
+        string childOutput,
+        GeneratorPrepareFixture fixture)
+    {
+        Assert.False(childOutput.Contains(fixture.OperatorPassword, StringComparison.Ordinal),
+            "The selected-data Web process must not emit operator credentials.");
+        Assert.False(childOutput.Contains(fixture.ProviderApiKeyWorker, StringComparison.Ordinal),
+            "The selected-data Web process must not emit provider credentials.");
+        Assert.False(childOutput.Contains(fixture.ProviderApiKeyChat, StringComparison.Ordinal),
+            "The selected-data Web process must not emit provider credentials.");
+        Assert.False(childOutput.Contains(fixture.ConnectionString, StringComparison.Ordinal),
+            "The selected-data Web process must not emit database credentials.");
+        Assert.False(childOutput.Contains(fixture.OwnedRoot, StringComparison.OrdinalIgnoreCase),
+            "The selected-data Web process must not emit the owned physical source root.");
+    }
+
+    private static async Task StopOwnedWebProcessAsync(Process process)
+    {
+        if (!process.HasExited)
+        {
+            process.Kill(entireProcessTree: true);
+            using CancellationTokenSource deadline = new(TimeSpan.FromSeconds(15));
+            await process.WaitForExitAsync(deadline.Token);
+        }
     }
 
     [Trait("Suite", "E2E")]
@@ -597,7 +1068,7 @@ public sealed class OctoberHostSelectionTests(ITestOutputHelper output)
         output.WriteLine("invalid-operator-password-october-schema=absent");
     }
 
-    private sealed class GeneratorPrepareFixture : IAsyncDisposable
+    internal sealed class GeneratorPrepareFixture : IAsyncDisposable
     {
         private const string DatabasePrefix = "vulgata_story184_generator_";
         private const string DataProtectionApplicationName = "Vulgata.Tests.Story184.GeneratorPrepare";
@@ -634,6 +1105,7 @@ public sealed class OctoberHostSelectionTests(ITestOutputHelper output)
             ConnectionString = connectionString;
             CanonicalDatabaseIdentity = canonicalDatabaseIdentity;
             OwnedRoot = ownedRoot;
+            OwnedSourceRoot = Path.Combine(ownedRoot, "source");
             Services = services;
             _protection = protection;
             SubjectId = subjectId;
@@ -652,6 +1124,7 @@ public sealed class OctoberHostSelectionTests(ITestOutputHelper output)
         internal string ConnectionString { get; }
         internal string CanonicalDatabaseIdentity { get; }
         internal string OwnedRoot { get; }
+        internal string OwnedSourceRoot { get; }
         internal ServiceProvider Services { get; }
         internal string SubjectId { get; }
         internal string OperatorUserName { get; }
@@ -664,6 +1137,10 @@ public sealed class OctoberHostSelectionTests(ITestOutputHelper output)
         internal string AuthorityId { get; }
         internal string ProviderApiKeyWorker { get; }
         internal string ProviderApiKeyChat { get; }
+        internal string OperatorCredentialPath => Path.Combine(OwnedRoot, "operator.credentials.protected");
+        internal string ProviderDocumentPath => Path.Combine(OwnedRoot, "providers.json");
+        internal string KeyRingPath => Path.Combine(OwnedRoot, "keys");
+        internal string ProtectionApplicationName => DataProtectionApplicationName;
 
         internal static async Task<GeneratorPrepareFixture> CreateAsync(ITestOutputHelper output)
         {
@@ -720,6 +1197,7 @@ public sealed class OctoberHostSelectionTests(ITestOutputHelper output)
                 ownedRoot = CreateOwnedRoot(runId);
                 string keyRingPath = Path.Combine(ownedRoot, "keys");
                 Directory.CreateDirectory(keyRingPath);
+                Directory.CreateDirectory(Path.Combine(ownedRoot, "source"));
                 string subjectId = Guid.NewGuid().ToString("N", CultureInfo.InvariantCulture);
                 string operatorUserName = CreateOperatorUserName(subjectId);
                 string operatorPassword = $"Valid1!Generator-{Guid.NewGuid():N}";
@@ -845,6 +1323,49 @@ public sealed class OctoberHostSelectionTests(ITestOutputHelper output)
             Assert.Equal(OctoberAuthorityDecisionStatus.Authorized, selection.Status);
             Assert.Equal(TargetId, Assert.IsType<OctoberSetupRequest>(selection.Request).TargetId);
             Assert.Equal(BatchId, selection.Authority!.BatchId);
+        }
+
+        internal async Task<string?> ReadSystemContextAsync()
+        {
+            TestResourceScope.ValidateOwnedTarget(ConnectionString);
+            await using AsyncServiceScope scope = Services.CreateAsyncScope();
+            await using VulgataDbContext management = await scope.ServiceProvider
+                .GetRequiredService<IDbContextFactory<VulgataDbContext>>()
+                .CreateDbContextAsync();
+            SystemEntity system = Assert.IsType<SystemEntity>(
+                await management.Systems.AsNoTracking()
+                    .SingleOrDefaultAsync(value => value.Id == SystemId));
+            return system.Context;
+        }
+
+        internal ServiceProvider CreateAuthorityWithDifferentManagementAuthority(string authorityId)
+        {
+            Assert.False(string.IsNullOrWhiteSpace(authorityId));
+            Assert.NotEqual(AuthorityId, authorityId);
+            TestResourceScope.ValidateOwnedTarget(ConnectionString);
+            ImmutableDictionary<string, string> allowedTargets =
+                ImmutableDictionary<string, string>.Empty.WithComparers(StringComparer.Ordinal)
+                    .Add(TargetId, CanonicalDatabaseIdentity);
+            OctoberAuthorityConfiguration configuration = new(
+                authorityId,
+                TargetId,
+                BatchId,
+                CanonicalDatabaseIdentity,
+                ConnectionString,
+                ConnectionString,
+                CanonicalDatabaseIdentity,
+                allowedTargets,
+                TimeSpan.FromSeconds(30),
+                TimeSpan.FromHours(1));
+            ServiceCollection registrations = new();
+            IOctoberOperatorCredentialSource credentialSource = new OctoberProtectedFileCredentialSource(
+                OperatorCredentialPath, _protection.Provider);
+            OctoberHeadlessAuthorityRegistration.AddOctoberLocalAuthority(
+                registrations, configuration, credentialSource, TimeProvider.System);
+            registrations.AddDbContext<OctoberDbContext>(options => options.UseNpgsql(
+                ConnectionString,
+                npgsql => npgsql.MigrationsHistoryTable("__OctoberMigrationsHistory", "october")));
+            return registrations.BuildServiceProvider(validateScopes: true);
         }
 
         internal async Task<(int FailedLoginCount, string InvalidRecoveryCode)>
@@ -1076,6 +1597,26 @@ public sealed class OctoberHostSelectionTests(ITestOutputHelper output)
             Assert.False((bool)(await command.ExecuteScalarAsync() ?? true));
         }
 
+        internal async Task AssertOctoberSchemaPresentAsync()
+        {
+            TestResourceScope.ValidateOwnedTarget(ConnectionString);
+            await using NpgsqlConnection target = new(ConnectionString);
+            await target.OpenAsync();
+            await using NpgsqlCommand command = new(
+                "SELECT EXISTS (SELECT 1 FROM pg_namespace WHERE nspname = 'october') " +
+                "AND EXISTS (SELECT 1 FROM information_schema.tables " +
+                "WHERE table_schema = 'october' AND table_name = '__OctoberMigrationsHistory');",
+                target);
+            Assert.True((bool)(await command.ExecuteScalarAsync() ?? false),
+                "Prepare must create the fixed October schema and its dedicated migration history table.");
+
+            await using OctoberDbContext october = CreateOctoberContext();
+            string[] expected = october.Database.GetMigrations().ToArray();
+            string[] applied = (await october.Database.GetAppliedMigrationsAsync()).ToArray();
+            Assert.NotEmpty(expected);
+            Assert.Equal(expected, applied);
+        }
+
         internal async Task<OctoberBoundSetupSnapshot> ReadBoundSnapshotAsync()
         {
             await using AsyncServiceScope scope = Services.CreateAsyncScope();
@@ -1168,8 +1709,12 @@ public sealed class OctoberHostSelectionTests(ITestOutputHelper output)
             string? identityConnectionStringOverride = null,
             string? identityCanonicalDatabaseIdentityOverride = null,
             string? targetCanonicalDatabaseIdentityOverride = null,
-            string? invalidStartupConfigurationCase = null)
+            string? invalidStartupConfigurationCase = null,
+            Guid? batchIdOverride = null,
+            string? targetIdOverride = null)
         {
+            string configuredTargetId = targetIdOverride ?? TargetId;
+            Guid configuredBatchId = batchIdOverride ?? BatchId;
             string repositoryRoot = FindRepositoryRoot();
             string project = Path.Combine(repositoryRoot,
                 "src", "dotnet", "Vulgata.OctoberGenerator", "Vulgata.OctoberGenerator.csproj");
@@ -1202,8 +1747,9 @@ public sealed class OctoberHostSelectionTests(ITestOutputHelper output)
             startInfo.Environment["DataProtection__KeyRingPath"] = Path.Combine(OwnedRoot, "keys");
             startInfo.Environment["DataProtection__ApplicationName"] = DataProtectionApplicationName;
             startInfo.Environment["October__Mode"] = mode;
-            startInfo.Environment["October__TargetId"] = TargetId;
-            startInfo.Environment["October__BatchId"] = BatchId.ToString("D", CultureInfo.InvariantCulture);
+            startInfo.Environment["October__TargetId"] = configuredTargetId;
+            startInfo.Environment["October__BatchId"] =
+                configuredBatchId.ToString("D", CultureInfo.InvariantCulture);
             if (requestJson is null)
             {
                 Assert.False(startInfo.Environment.ContainsKey("October__SetupRequestJson"));
@@ -1213,7 +1759,7 @@ public sealed class OctoberHostSelectionTests(ITestOutputHelper output)
                 startInfo.Environment["October__SetupRequestJson"] = requestJson;
             }
             startInfo.Environment["October__Authority__Id"] = AuthorityId;
-            startInfo.Environment["October__Targets__0__TargetId"] = TargetId;
+            startInfo.Environment["October__Targets__0__TargetId"] = configuredTargetId;
             startInfo.Environment["October__Targets__0__CanonicalDatabaseIdentity"] =
                 targetCanonicalDatabaseIdentityOverride ?? CanonicalDatabaseIdentity;
             startInfo.Environment["October__Operator__CredentialSource"] = "protected-file";
@@ -1263,6 +1809,66 @@ public sealed class OctoberHostSelectionTests(ITestOutputHelper output)
             Assert.DoesNotContain(OperatorPassword, string.Join(' ', startInfo.ArgumentList), StringComparison.Ordinal);
             Process process = Process.Start(startInfo)
                 ?? throw new InvalidOperationException("The owned generator child did not start.");
+            return process;
+        }
+
+        internal Process StartWeb(int port)
+        {
+            Assert.InRange(port, 1, 65535);
+            string webAssembly = Path.Combine(AppContext.BaseDirectory, "Vulgata.Web.dll");
+            Assert.True(File.Exists(webAssembly),
+                "The current test build must include the actual Web entry assembly.");
+            ProcessStartInfo startInfo = new("dotnet")
+            {
+                WorkingDirectory = OwnedRoot,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                CreateNoWindow = true,
+            };
+            string? path = Environment.GetEnvironmentVariable("PATH");
+            string? systemRoot = Environment.GetEnvironmentVariable("SystemRoot");
+            string? temp = Environment.GetEnvironmentVariable("TEMP");
+            string? tmp = Environment.GetEnvironmentVariable("TMP");
+            string? dotnetRoot = Environment.GetEnvironmentVariable("DOTNET_ROOT");
+            startInfo.Environment.Clear();
+            if (!string.IsNullOrWhiteSpace(path)) startInfo.Environment["PATH"] = path;
+            if (!string.IsNullOrWhiteSpace(systemRoot)) startInfo.Environment["SystemRoot"] = systemRoot;
+            if (!string.IsNullOrWhiteSpace(temp)) startInfo.Environment["TEMP"] = temp;
+            if (!string.IsNullOrWhiteSpace(tmp)) startInfo.Environment["TMP"] = tmp;
+            if (!string.IsNullOrWhiteSpace(dotnetRoot)) startInfo.Environment["DOTNET_ROOT"] = dotnetRoot;
+            startInfo.Environment["DOTNET_CLI_HOME"] = Path.Combine(OwnedRoot, "dotnet-cli");
+            startInfo.Environment["DOTNET_CLI_TELEMETRY_OPTOUT"] = "1";
+            startInfo.Environment["DOTNET_SKIP_FIRST_TIME_EXPERIENCE"] = "1";
+            startInfo.Environment["DOTNET_NOLOGO"] = "1";
+            startInfo.Environment["DOTNET_ENVIRONMENT"] = "Production";
+            startInfo.Environment["ASPNETCORE_ENVIRONMENT"] = "Production";
+            startInfo.Environment["ASPNETCORE_CONTENTROOT"] = Path.Combine(
+                FindRepositoryRoot(), "src", "dotnet", "Vulgata.Web");
+            startInfo.Environment["ASPNETCORE_URLS"] = $"http://127.0.0.1:{port.ToString(CultureInfo.InvariantCulture)}";
+            startInfo.Environment["Logging__LocalFile__Path"] = Path.Combine(OwnedRoot, "selected-web.log");
+            startInfo.Environment["SourceStorage__RootPath"] = OwnedSourceRoot;
+            startInfo.Environment["CodeGraph__DataRootPath"] = Path.Combine(OwnedRoot, "codegraph");
+            startInfo.Environment["AnalysisRuntime__JdtLsWorkspaceRoot"] =
+                Path.Combine(OwnedRoot, "jdt-workspace");
+            startInfo.Environment["ConnectionStrings__DefaultConnection"] = ConnectionString;
+            startInfo.Environment["DataProtection__KeyRingPath"] = KeyRingPath;
+            startInfo.Environment["DataProtection__ApplicationName"] = DataProtectionApplicationName;
+            startInfo.Environment["October__Web__Mode"] = "selected-data";
+            startInfo.Environment["October__Web__TargetId"] = TargetId;
+            startInfo.Environment["October__Web__BatchId"] = BatchId.ToString("D", CultureInfo.InvariantCulture);
+            startInfo.Environment["October__Authority__Id"] = AuthorityId;
+            startInfo.Environment["October__Targets__0__TargetId"] = TargetId;
+            startInfo.Environment["October__Targets__0__CanonicalDatabaseIdentity"] =
+                CanonicalDatabaseIdentity;
+            startInfo.Environment["October__Operator__CredentialSource"] = "protected-file";
+            startInfo.Environment["October__Operator__CredentialFile"] = OperatorCredentialPath;
+            startInfo.Environment["October__Providers__ConfigurationFile"] = ProviderDocumentPath;
+            startInfo.ArgumentList.Add(webAssembly);
+            Assert.DoesNotContain(OperatorPassword, string.Join(' ', startInfo.ArgumentList),
+                StringComparison.Ordinal);
+            Process process = Process.Start(startInfo)
+                ?? throw new InvalidOperationException("The owned selected-data Web child did not start.");
             return process;
         }
 

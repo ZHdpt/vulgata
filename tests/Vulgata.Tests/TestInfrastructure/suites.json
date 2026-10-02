@@ -188,6 +188,9 @@
   "October/OctoberHostSelectionTests.cs": {
     "suite": "E2E"
   },
+  "October/OctoberPostgreSqlIsolationTests.cs": {
+    "suite": "PostgreSql"
+  },
   "October/OctoberLocalAuthorityTests.cs": {
     "suite": "PostgreSql"
   },

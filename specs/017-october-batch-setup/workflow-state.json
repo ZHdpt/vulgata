@@ -96,16 +96,16 @@
     },
     "tasks": {
       "path": "specs/017-october-batch-setup/tasks.md",
-      "sha256": "ff261f5554b200e2c355712d91799f6bad2eab3243cee4164dfc46ab373a6346"
+      "sha256": "3e05b708a6c2bab6f44f2aa651ef0ddf967ce510167f3bafafd816f5e390144c"
     }
   },
   "bmad_epic_key": "epic-18",
   "bmad_story_key": "18-4-prepare-an-owned-october-batch-with-valid-context-and-provid",
   "checkpoint": {
-    "checkpoint_id": "bmad-18-4-implement-20261002T030100Z-a641ef",
-    "stage": "implement",
+    "binding_status": "pending",
+    "checkpoint_id": "bmad-18-4-implement-20261002T053146Z-d166diag",
     "commit_sha": null,
-    "binding_status": "pending"
+    "stage": "implement"
   },
   "convergence": {
     "attempt": 0,
@@ -159,13 +159,13 @@
   },
   "preflight": {
     "branch": "oct14/story-18-4",
-    "head": "ea7062a84abc74bd3609b1292159a27776530971",
-    "git_identity_sha256": "f15705b23aadc0b59b87eeff0f34655e19baa1e3fb1a9a662bf9e0eedebdb980",
-    "status_sha256": "4859e53c28d2c9266fb29b0a4e27d1a5d2757091226f4ff45744026a8271ba66",
-    "observed_at": "2026-10-02T02:59:18.1443051Z"
+    "head": "c6b023fa402b414fd384d7650b788220e2ce589d",
+    "git_identity_sha256": "0684bc259a2c65248b1d248d7fcb830c02e5894fc52208a2061c61fe9ce8f9c6",
+    "status_sha256": "85f17b1ee51f6b0644322752024fd8a17df1df0931675fc1973f57eb28c4e7c5",
+    "observed_at": "2026-10-02T05:32:32.4385939Z"
   },
   "recovery": {
-    "action": "proceed",
+    "action": "blocked",
     "closing_gate": "verify",
     "diagnosis": {
       "at_count": 6,
@@ -178,7 +178,9 @@
     "episode_id": "18-4-implementation-setup-seam-01",
     "extension_decision_id": "18-4/recovery-extension/implementation-setup-seam-01/2",
     "failed_results": 6,
-    "holds": [],
+    "holds": [
+      "blocked"
+    ],
     "last_result": {
       "path": "specs/017-october-batch-setup/evidence/plan-review-10.json",
       "sha256": "f445bc3f9659d7b21c666005385df001da51fcf3b5eced4b8823401a4e7bf780"
@@ -187,14 +189,14 @@
   },
   "resume": {
     "stage": "implement",
-    "reason": "Identity/source/Web binding group final GREEN and authorized fixture consolidation complete. Same30IDs/27done. Continue T020/T029 owned A/B runtime qualification, T030 and remaining gates. Recovery6/7 unchanged.",
-    "evidence_path": "specs/017-october-batch-setup/evidence/identity-group-final-green-01.json"
+    "reason": "Stopped after three log-lifetime checks; cleanup masks original Web setup/assertion exception. Preserve primary exception, then seek fresh bounded diagnostic continuation. Recovery6/7 and approvals unchanged.",
+    "evidence_path": "specs/017-october-batch-setup/evidence/postgresql-fixture-log-lifetime-blocked-01.json"
   },
   "schema_version": "3.1",
   "stage": "implement",
   "transition_head": {
-    "path": "specs/017-october-batch-setup/evidence/transitions/transition-0109-hold-resolution-current-tasks-self-review.json",
-    "sha256": "f020d6b8054aa7defba94136b4e7aebcd7e0844465dcf715cdebd19f99e1f59f"
+    "path": "specs/017-october-batch-setup/evidence/transitions/transition-0111-postgresql-log-lifetime-blocked.json",
+    "sha256": "dcd649ab85c4788fbc8e21596c171849ec9940b114f9986db3c26f96477287c9"
   },
-  "updated_at": "2026-10-02T02:59:18.1443051Z"
+  "updated_at": "2026-10-02T05:32:32.4385939Z"
 }

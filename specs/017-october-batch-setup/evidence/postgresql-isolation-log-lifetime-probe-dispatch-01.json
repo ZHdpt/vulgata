@@ -1,0 +1,20 @@
+{
+  "kind": "dispatch",
+  "stage": "implement",
+  "role": "tdd-test-author",
+  "source_commit": "c6b023fa402b414fd384d7650b788220e2ce589d",
+  "preflight_at": "2026-10-02T05:13:35.4589470Z",
+  "branch": "oct14/story-18-4",
+  "guard": "implement dispatch allowed; errors=[]",
+  "technical_operation": "focused October PostgreSql selected-Web fixture log cleanup",
+  "invocation": 3,
+  "maximum": 3,
+  "prior_evidence": "specs/017-october-batch-setup/evidence/postgresql-isolation-fixture-cleanup-diagnosis-01.json",
+  "write_boundary": ["tests/Vulgata.Tests/October/OctoberPostgreSqlIsolationTests.cs"],
+  "probe": "Name and own parent and derived WAF; promptly closed exclusive-open probes on exact owned selected-web.log before teardown, after derived awaited disposal, after parent awaited disposal. If still locked, bounded Windows Restart Manager read-only owner-PID query for that exact file only. Preserve all assertions, logging and exact cleanup.",
+  "command": "pwsh -NoProfile -File eng/test.ps1 -Suite PostgreSql -Filter 'FullyQualifiedName~PostgreSqlSelectedWebStartup_UsesOwnedDatabaseFactoriesWithoutMigrationOrSeeding'",
+  "environment": "process-local NLS1, telemetry opt-out, short tool PATH; no persistent change",
+  "resource_authority": "specs/017-october-batch-setup/evidence/runtime-qualification-resource-authorization-01.json",
+  "limits": "One fresh runner-owned resource invocation. Stop on negative or fatal result and clean only exact recorded owned resources. No fourth invocation, relabeling or reset. No process shutdown/kill by file-owner query, log sharing change, production edit, dependency, assertion weakening or new resource permission.",
+  "accounting": "Governed recovery remains 6/pause7; test cleanup technical allowance is separate. Passing probes are not whole-story qualification."
+}

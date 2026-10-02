@@ -594,115 +594,120 @@ public sealed class OctoberLocalAuthority : IOctoberLocalAuthority
         bool administrator,
         CancellationToken cancellationToken)
     {
-        await using var transaction = await management.Database.BeginTransactionAsync(
-            IsolationLevel.Serializable, cancellationToken);
-        Dictionary<Guid, Vulgata.Core.Entities.Repository> repositories = [];
-        Dictionary<Guid, Vulgata.Core.Entities.System> systems = [];
-        foreach (OctoberRepositorySelection selection in request.Repositories)
-        {
-            Vulgata.Core.Entities.Repository? repository = await management.Repositories.AsNoTracking()
-                .SingleOrDefaultAsync(value => value.Id == selection.RepositoryId, cancellationToken);
-            if (repository is null || repository.SystemId != selection.SystemId)
+        return await management.Database.CreateExecutionStrategy()
+            .ExecuteAsync<OctoberSelectedAdvisoryContext?>(
+            async operationCancellationToken =>
             {
-                return null;
-            }
-
-            repositories.Add(selection.RepositoryId, repository);
-            if (selection.SystemId is Guid systemId)
-            {
-                if (!systems.ContainsKey(systemId))
+                await using var transaction = await management.Database.BeginTransactionAsync(
+                    IsolationLevel.Serializable, operationCancellationToken);
+                Dictionary<Guid, Vulgata.Core.Entities.Repository> repositories = [];
+                Dictionary<Guid, Vulgata.Core.Entities.System> systems = [];
+                foreach (OctoberRepositorySelection selection in request.Repositories)
                 {
-                    Vulgata.Core.Entities.System? system = await management.Systems.AsNoTracking()
-                        .SingleOrDefaultAsync(value => value.Id == systemId, cancellationToken);
-                    if (system is null)
+                    Vulgata.Core.Entities.Repository? repository = await management.Repositories.AsNoTracking()
+                        .SingleOrDefaultAsync(value => value.Id == selection.RepositoryId, operationCancellationToken);
+                    if (repository is null || repository.SystemId != selection.SystemId)
                     {
                         return null;
                     }
 
-                    systems.Add(systemId, system);
+                    repositories.Add(selection.RepositoryId, repository);
+                    if (selection.SystemId is Guid systemId)
+                    {
+                        if (!systems.ContainsKey(systemId))
+                        {
+                            Vulgata.Core.Entities.System? system = await management.Systems.AsNoTracking()
+                                .SingleOrDefaultAsync(value => value.Id == systemId, operationCancellationToken);
+                            if (system is null)
+                            {
+                                return null;
+                            }
+
+                            systems.Add(systemId, system);
+                        }
+
+                        if (!administrator && !await management.SystemOwnerAssignments.AsNoTracking()
+                                .AnyAsync(value => value.SystemId == systemId && value.UserId == session.SubjectId,
+                                    operationCancellationToken))
+                        {
+                            session.Close();
+                            return null;
+                        }
+                    }
                 }
 
-                if (!administrator && !await management.SystemOwnerAssignments.AsNoTracking()
-                        .AnyAsync(value => value.SystemId == systemId && value.UserId == session.SubjectId,
-                            cancellationToken))
+                Guid? globalId = null;
+                string? globalValue = null;
+                Dictionary<Guid, string?> systemValues = [];
+                Dictionary<Guid, string?> repositoryValues = [];
+                foreach (OctoberContextSelection reference in request.ContextSelections)
                 {
-                    session.Close();
-                    return null;
+                    switch (reference.Scope)
+                    {
+                        case OctoberContextScope.Global:
+                            Vulgata.Core.Entities.GlobalContext? global = await management.GlobalContexts.AsNoTracking()
+                                .SingleOrDefaultAsync(value => value.Id == reference.RecordId, operationCancellationToken);
+                            if (global is null || globalId is not null) return null;
+                            globalId = global.Id;
+                            globalValue = global.Context;
+                            break;
+                        case OctoberContextScope.System:
+                            if (!systems.TryGetValue(reference.RecordId, out Vulgata.Core.Entities.System? system))
+                                return null;
+                            systemValues.Add(reference.RecordId, system.Context);
+                            break;
+                        case OctoberContextScope.Repository:
+                            if (!repositories.TryGetValue(reference.RecordId,
+                                    out Vulgata.Core.Entities.Repository? repository)) return null;
+                            repositoryValues.Add(reference.RecordId, repository.Context);
+                            break;
+                        default:
+                            return null;
+                    }
                 }
-            }
-        }
 
-        Guid? globalId = null;
-        string? globalValue = null;
-        Dictionary<Guid, string?> systemValues = [];
-        Dictionary<Guid, string?> repositoryValues = [];
-        foreach (OctoberContextSelection reference in request.ContextSelections)
-        {
-            switch (reference.Scope)
-            {
-                case OctoberContextScope.Global:
-                    Vulgata.Core.Entities.GlobalContext? global = await management.GlobalContexts.AsNoTracking()
-                        .SingleOrDefaultAsync(value => value.Id == reference.RecordId, cancellationToken);
-                    if (global is null || globalId is not null) return null;
-                    globalId = global.Id;
-                    globalValue = global.Context;
-                    break;
-                case OctoberContextScope.System:
-                    if (!systems.TryGetValue(reference.RecordId, out Vulgata.Core.Entities.System? system))
-                        return null;
-                    systemValues.Add(reference.RecordId, system.Context);
-                    break;
-                case OctoberContextScope.Repository:
-                    if (!repositories.TryGetValue(reference.RecordId,
-                            out Vulgata.Core.Entities.Repository? repository)) return null;
-                    repositoryValues.Add(reference.RecordId, repository.Context);
-                    break;
-                default:
-                    return null;
-            }
-        }
-
-        List<OctoberAdvisoryContextEntry> entries = [];
-        List<OctoberContextDifference> differences = [];
-        foreach (OctoberRepositorySelection selection in request.Repositories)
-        {
-            List<OctoberAdvisoryContextEntry> selected = [];
-            Add(OctoberContextScope.Global, globalId, globalValue, false);
-            bool hasSystem = selection.SystemId is Guid sid && systemValues.TryGetValue(sid, out _);
-            Add(OctoberContextScope.System, hasSystem ? selection.SystemId : null,
-                hasSystem ? systemValues[selection.SystemId!.Value] : null, selection.SystemId is null);
-            bool hasRepository = repositoryValues.TryGetValue(selection.RepositoryId, out string? repositoryValue);
-            Add(OctoberContextScope.Repository, hasRepository ? selection.RepositoryId : null,
-                repositoryValue, false);
-
-            for (int left = 0; left < selected.Count; left++)
-            for (int right = left + 1; right < selected.Count; right++)
-            {
-                if (!string.Equals(selected[left].Value, selected[right].Value, StringComparison.Ordinal))
+                List<OctoberAdvisoryContextEntry> entries = [];
+                List<OctoberContextDifference> differences = [];
+                foreach (OctoberRepositorySelection selection in request.Repositories)
                 {
-                    differences.Add(new OctoberContextDifference(selection.RepositoryId,
-                        selected[left].Scope, selected[right].Scope));
+                    List<OctoberAdvisoryContextEntry> selected = [];
+                    Add(OctoberContextScope.Global, globalId, globalValue, false);
+                    bool hasSystem = selection.SystemId is Guid sid && systemValues.TryGetValue(sid, out _);
+                    Add(OctoberContextScope.System, hasSystem ? selection.SystemId : null,
+                        hasSystem ? systemValues[selection.SystemId!.Value] : null, selection.SystemId is null);
+                    bool hasRepository = repositoryValues.TryGetValue(selection.RepositoryId, out string? repositoryValue);
+                    Add(OctoberContextScope.Repository, hasRepository ? selection.RepositoryId : null,
+                        repositoryValue, false);
+
+                    for (int left = 0; left < selected.Count; left++)
+                    for (int right = left + 1; right < selected.Count; right++)
+                    {
+                        if (!string.Equals(selected[left].Value, selected[right].Value, StringComparison.Ordinal))
+                        {
+                            differences.Add(new OctoberContextDifference(selection.RepositoryId,
+                                selected[left].Scope, selected[right].Scope));
+                        }
+                    }
+
+                    void Add(OctoberContextScope scope, Guid? origin, string? value, bool notApplicable)
+                    {
+                        OctoberAdvisoryContextEntry entry = new(
+                            selection.RepositoryId, scope,
+                            notApplicable ? OctoberContextApplicability.NotApplicable : origin is null
+                                ? OctoberContextApplicability.NotSelected : OctoberContextApplicability.Selected,
+                            origin, origin is null ? null : value,
+                            OctoberContextEvidenceKind.AdvisoryNotSourceProof);
+                        entries.Add(entry);
+                        if (origin is not null) selected.Add(entry);
+                    }
                 }
-            }
 
-            void Add(OctoberContextScope scope, Guid? origin, string? value, bool notApplicable)
-            {
-                OctoberAdvisoryContextEntry entry = new(
-                    selection.RepositoryId, scope,
-                    notApplicable ? OctoberContextApplicability.NotApplicable : origin is null
-                        ? OctoberContextApplicability.NotSelected : OctoberContextApplicability.Selected,
-                    origin, origin is null ? null : value,
-                    OctoberContextEvidenceKind.AdvisoryNotSourceProof);
-                entries.Add(entry);
-                if (origin is not null) selected.Add(entry);
-            }
-        }
-
-        await transaction.CommitAsync(cancellationToken);
-        return new OctoberSelectedAdvisoryContext(
-            _configuration.AuthorityId,
-            request.Repositories.OrderBy(value => value.RepositoryId).ToImmutableArray(),
-            entries.ToImmutableArray(), differences.ToImmutableArray());
+                await transaction.CommitAsync(operationCancellationToken);
+                return new OctoberSelectedAdvisoryContext(
+                    _configuration.AuthorityId,
+                    request.Repositories.OrderBy(value => value.RepositoryId).ToImmutableArray(),
+                    entries.ToImmutableArray(), differences.ToImmutableArray());
+            }, cancellationToken);
     }
 
     public async Task<OctoberSourceApprovalResult> IssueSourceApprovalAsync(

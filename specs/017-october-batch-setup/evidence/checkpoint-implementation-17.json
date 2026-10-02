@@ -1,0 +1,90 @@
+{
+  "kind": "checkpoint-manifest",
+  "checkpoint_id": "bmad-18-4-implement-20261002T053146Z-d166diag",
+  "stage": "implement",
+  "story_key": "18-4-prepare-an-owned-october-batch-with-valid-context-and-provid",
+  "source_head": "c6b023fa402b414fd384d7650b788220e2ce589d",
+  "binding_status": "pending",
+  "commit_sha": null,
+  "paths": [
+    "docs/agents/project-state.md",
+    "docs/bmad/implementation-artifacts/18-4-prepare-an-owned-october-batch-with-valid-context-and-provid.md",
+    "specs/017-october-batch-setup/evidence/checkpoint-implementation-17.json",
+    "specs/017-october-batch-setup/evidence/dotnet-exception-dialog-user-observation-01.json",
+    "specs/017-october-batch-setup/evidence/dotnet-exception-event-correlation-01.json",
+    "specs/017-october-batch-setup/evidence/postgresql-fixture-log-lifetime-blocked-01.json",
+    "specs/017-october-batch-setup/evidence/postgresql-isolation-fixture-cleanup-diagnosis-01.json",
+    "specs/017-october-batch-setup/evidence/postgresql-isolation-fixture-cleanup-failure-01.json",
+    "specs/017-october-batch-setup/evidence/postgresql-isolation-log-lifetime-probe-dispatch-01.json",
+    "specs/017-october-batch-setup/evidence/postgresql-isolation-probe-launcher-correction-01.json",
+    "specs/017-october-batch-setup/evidence/sdk-discovery-globalization-diagnosis-01.json",
+    "specs/017-october-batch-setup/evidence/selected-web-management-retry-green-dispatch-01.json",
+    "specs/017-october-batch-setup/evidence/selected-web-management-retry-minimal-green-01.json",
+    "specs/017-october-batch-setup/evidence/selected-web-management-retry-transaction-red-01.json",
+    "specs/017-october-batch-setup/evidence/selected-web-management-retry-transition-proposal-01.json",
+    "specs/017-october-batch-setup/evidence/transitions/transition-0111-postgresql-log-lifetime-blocked.json",
+    "specs/017-october-batch-setup/tasks.md",
+    "specs/017-october-batch-setup/workflow-state.json",
+    "src/dotnet/Vulgata.Web/Data/OctoberLocalAuthority.cs",
+    "tests/Vulgata.Tests/October/OctoberHostSelectionTests.cs",
+    "tests/Vulgata.Tests/October/OctoberPostgreSqlIsolationTests.cs",
+    "tests/Vulgata.Tests/TestInfrastructure/suites.json"
+  ],
+  "preserved_unstaged": [
+    " M specs/017-october-batch-setup/evidence/checkpoint-implementation-06.json",
+    " M src/dotnet/Vulgata.Web/Data/OctoberBatchActivationService.cs",
+    "?? specs/017-october-batch-setup/evidence/host-composition-interruption-handoff-01.json",
+    "?? specs/017-october-batch-setup/evidence/transitions/transition-0066-independent-auth-build-failure.json"
+  ],
+  "preflight": {
+    "identity": {
+      "branch": "oct14/story-18-4",
+      "head": "c6b023fa402b414fd384d7650b788220e2ce589d",
+      "root": "C:/Users/13728/.codex/worktrees/d166/vulgata",
+      "common_dir": "G:/source/repos/vulgata/.git",
+      "worktree": "C:\\Users\\13728\\.codex\\worktrees\\d166\\vulgata"
+    },
+    "git_identity_sha256": "0684bc259a2c65248b1d248d7fcb830c02e5894fc52208a2061c61fe9ce8f9c6",
+    "status_sha256": "85f17b1ee51f6b0644322752024fd8a17df1df0931675fc1973f57eb28c4e7c5",
+    "porcelain": [
+      " M docs/agents/project-state.md",
+      " M docs/bmad/implementation-artifacts/18-4-prepare-an-owned-october-batch-with-valid-context-and-provid.md",
+      " M specs/017-october-batch-setup/evidence/checkpoint-implementation-06.json",
+      " M specs/017-october-batch-setup/tasks.md",
+      " M specs/017-october-batch-setup/workflow-state.json",
+      " M src/dotnet/Vulgata.Web/Data/OctoberBatchActivationService.cs",
+      " M src/dotnet/Vulgata.Web/Data/OctoberLocalAuthority.cs",
+      " M tests/Vulgata.Tests/October/OctoberHostSelectionTests.cs",
+      " M tests/Vulgata.Tests/TestInfrastructure/suites.json",
+      "?? specs/017-october-batch-setup/evidence/dotnet-exception-dialog-user-observation-01.json",
+      "?? specs/017-october-batch-setup/evidence/dotnet-exception-event-correlation-01.json",
+      "?? specs/017-october-batch-setup/evidence/host-composition-interruption-handoff-01.json",
+      "?? specs/017-october-batch-setup/evidence/postgresql-fixture-log-lifetime-blocked-01.json",
+      "?? specs/017-october-batch-setup/evidence/postgresql-isolation-fixture-cleanup-diagnosis-01.json",
+      "?? specs/017-october-batch-setup/evidence/postgresql-isolation-fixture-cleanup-failure-01.json",
+      "?? specs/017-october-batch-setup/evidence/postgresql-isolation-log-lifetime-probe-dispatch-01.json",
+      "?? specs/017-october-batch-setup/evidence/postgresql-isolation-probe-launcher-correction-01.json",
+      "?? specs/017-october-batch-setup/evidence/sdk-discovery-globalization-diagnosis-01.json",
+      "?? specs/017-october-batch-setup/evidence/selected-web-management-retry-green-dispatch-01.json",
+      "?? specs/017-october-batch-setup/evidence/selected-web-management-retry-minimal-green-01.json",
+      "?? specs/017-october-batch-setup/evidence/selected-web-management-retry-transaction-red-01.json",
+      "?? specs/017-october-batch-setup/evidence/selected-web-management-retry-transition-proposal-01.json",
+      "?? specs/017-october-batch-setup/evidence/transitions/transition-0066-independent-auth-build-failure.json",
+      "?? specs/017-october-batch-setup/evidence/transitions/transition-0111-postgresql-log-lifetime-blocked.json",
+      "?? tests/Vulgata.Tests/October/OctoberPostgreSqlIsolationTests.cs"
+    ],
+    "index": [],
+    "observed_at": "2026-10-02T05:32:32.4385939Z"
+  },
+  "verification": "Diagnostic recovery checkpoint, NOT verified group/review candidate/completion. Npgsql serializable capture has actual A/B minimalGREEN1/1. Expanded actual-host lane root verifies21/21, TRX7244d751a00413080631d6f0f7456786ecdf18981529a6351bac5a74647a14eb/buildfe52dc97f1173d71c160b62b36cbfc8fea8ccbdad8fa5393d55206312b6ad3b2; owned container/volume absent. PostgreSql checks4427/8589 pass2/3, final18b59 probe0/1; original Web exception masked. Latest actual sources build, but runtime assertions and final unit qualification remain unresolved. Source18.1/merge baseline ancestral and three source contracts unchanged. All exact final probe resources independently verified absent.",
+  "task_progress": "Same30IDs/26complete; T019,T020,T029,T030 and all later required gates open. Checkboxes only; definition semantics unchanged.",
+  "recovery": {
+    "failed_results": 6,
+    "pause_at": 7,
+    "holds": [
+      "blocked"
+    ],
+    "changed_count": false
+  },
+  "resumption": "Fresh bounded continuation decision for changed primary-exception diagnostic route. Retain current owners, approvals, raw failed approaches. Diagnostic interop/fixture code is provisional; assess final fixture shape and remove unnecessary instrumentation before verified group/convergence."
+}

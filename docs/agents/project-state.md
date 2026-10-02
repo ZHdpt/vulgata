@@ -43,7 +43,8 @@ verification before reuse.
   Tracker refreshes require both epic files. Story 13.1 and October Story 18.1 are
   done; this checkout includes Story 18.1's completed baseline at `3632b2cc`. October
   Story 18.4 resumes in `specs/017-october-batch-setup` from implementation
-  checkpoint 16, whose unique binding is recorded in its workflow state.
+  checkpoint 17 (diagnostic recovery, not a verified candidate), whose unique binding
+  is recorded in its workflow state.
   The retained Astra-medium owner completed the bounded plan
   correction; independent plan-review-14 accepted it at transition 0077 and delegated
   plan-authorization-05 permits affected task reconciliation only. The candidate
@@ -85,8 +86,20 @@ verification before reuse.
   fresh PostgreSQL authority/source checks pass93/93, actual generator checks20/20,
   selected-Web Identity WAF checks3/3 and October SelfContained187/187. Exact owned
   containers/volumes are absent. See `evidence/identity-group-final-green-01.json`.
-  The same30 task IDs now have27 completed markers; full A/B PostgreSQL/process
+  Actual-Web A/B qualification subsequently exposed a management serializable transaction
+  executed outside the configured Npgsql retry strategy. The one-file correction now
+  executes the complete serializable capture within that strategy and passes actual A/B
+  minimal GREEN1/1 with verified owned cleanup. T019 remains open until independent
+  surrounding verification. Its raw RED/minimal GREEN remain in
+  `evidence/selected-web-management-retry-transaction-red-01.json` and
+  `evidence/selected-web-management-retry-minimal-green-01.json`.
+  The same30 task IDs now have26 completed markers; full A/B PostgreSQL/process
   qualification, cross-cutting verification and every remaining governed gate remain open.
+  Actual host-selection qualification passed21/21, but the separate PostgreSQL WAF
+  lane is blocked: three bounded log-lifetime checks retain a process-owned file handle,
+  and fixture cleanup masks an earlier setup/assertion exception. Its primary failure
+  must be preserved before a further finite diagnostic execution; no full-Web assertion
+  PASS is inferred. See `evidence/postgresql-fixture-log-lifetime-blocked-01.json`.
   WAF/SQLite selected-data checks are not full PostgreSQL/listener qualification. Status in
   other assigned worktrees must be verified there. Sprint planning alone activated
   no feature.

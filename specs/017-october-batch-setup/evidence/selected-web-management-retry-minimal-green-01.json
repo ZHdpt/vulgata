@@ -1,0 +1,50 @@
+{
+  "kind": "test-green",
+  "stage": "implement",
+  "outcome": "passed",
+  "verification_route": "behavioral RED/minimal GREEN; final surrounding qualification still required",
+  "observed_after": {
+    "path": "specs/017-october-batch-setup/evidence/selected-web-management-retry-transition-proposal-01.json",
+    "sha256": "cddeec5b79d531a0718b281b2c4e34d8c0ba7747d8619b6c7e4a71147e6fc821"
+  },
+  "source_commit": "c6b023fa402b414fd384d7650b788220e2ce589d",
+  "command": "pwsh -NoProfile -File eng/test.ps1 -Suite E2E -WithPostgreSql -Filter 'FullyQualifiedName~SelectedWebProcess_RestartFromOwnedTargetAtoB_BindsEachBatchWithoutBrowserAuthority'",
+  "environment": "Process-local short PATH for Windows/dotnet/Docker/Git/bundledPowerShell; DOTNET_CLI_TELEMETRY_OPTOUT=1. No repository/global SDK environment edit.",
+  "exit_code": 0,
+  "run_id": "0c2a3f1886264baf8172c0bbe70229ba",
+  "root_verified": {
+    "counters": "<Counters total=\"1\" executed=\"1\" passed=\"1\" failed=\"0\" error=\"0\" timeout=\"0\" aborted=\"0\" inconclusive=\"0\" passedButRunAborted=\"0\" notRunnable=\"0\" notExecuted=\"0\" disconnected=\"0\" warning=\"0\" completed=\"0\" inProgress=\"0\" pending=\"0\" xmlns=\"http://microsoft.com/schemas/VisualStudio/TeamTest/2010\" />",
+    "hashes": {
+      "TestResults/isolation-0c2a3f1886264baf8172c0bbe70229ba/results.trx": "5883f57786085db0eeacb10cf799c131d965da5078372b8701de32f16fd30aff",
+      "TestResults/isolation-0c2a3f1886264baf8172c0bbe70229ba/build.log": "7d3bdcbfd07a738e4bb7536347d25abcdddbf4acbfbb0c1e7f48f45d2845cd77",
+      "TestResults/isolation-0c2a3f1886264baf8172c0bbe70229ba/volume-absence.log": "da54480a9a7058f711c37252fc6f3fcfd198d1e8301a41744145e1b676b76509",
+      "src/dotnet/Vulgata.Web/Data/OctoberLocalAuthority.cs": "86788949017d78a2c212e32ddd4dba98999dcf1b0ffe2ade606d6e60760d5381",
+      "tests/Vulgata.Tests/October/OctoberHostSelectionTests.cs": "61a1b2b894329b8d9cbb4e42b113e31e1090c8603e8cd8bc5f56a7cd14089924"
+    },
+    "owned_output": [
+      "owned-database=vulgata_story184_generator_efaf02c3b465450fb2132c987f19464a",
+      "owned-temp-root=C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-tests\\story184-generator-0c2a3f1886264baf8172c0bbe70229ba-074eecbbae014b0db9289d8757345db2",
+      "owned-database=vulgata_story184_generator_93a3b353232246e3bc460419db0f85e5",
+      "owned-temp-root=C:\\Users\\13728\\AppData\\Local\\Temp\\vulgata-tests\\story184-generator-0c2a3f1886264baf8172c0bbe70229ba-66b22dfcd2044f93943e4552b046bb56",
+      "selected-web-process-id=48612",
+      "selected-web-loopback-port=56359",
+      "selected-web-process-id=48756",
+      "selected-web-loopback-port=56359",
+      "verified-database-cleanup=vulgata_story184_generator_93a3b353232246e3bc460419db0f85e5",
+      "verified-temp-cleanup=0c2a3f1886264baf8172c0bbe70229ba",
+      "verified-database-cleanup=vulgata_story184_generator_efaf02c3b465450fb2132c987f19464a",
+      "verified-temp-cleanup=0c2a3f1886264baf8172c0bbe70229ba"
+    ],
+    "volume_absence": "[]\nError response from daemon: get vulgata-test-data-0c2a3f1886264baf8172c0bbe70229ba: no such volume\n",
+    "cleanup": "vulgata-test-0c2a3f1886264baf8172c0bbe70229ba\n",
+    "head": "c6b023fa402b414fd384d7650b788220e2ce589d",
+    "index": []
+  },
+  "root_container_absence": "Exact docker inspect vulgata-test-0c2a3f1886264baf8172c0bbe70229ba returned nonzero/absent after cleanup.",
+  "source_preimage_sha256": "905d38c9e35435e26235b96285aae7c2a05d0ba75eddacca0b140f85c70eb90f",
+  "implementation": "Entire existing management serializable transaction/read/context projection/commit executes inside configured EF execution strategy, with fresh per-attempt collections and operation cancellation token. No isolation/retry registration changes.",
+  "raw_production_final_assessment": "CaptureCurrentContextAsync keeps entire read-only serializable query/projection/commit inside each retry attempt with fresh per-attempt dictionaries, awaited transaction disposal, cancellation propagated to strategy and EF calls. AuthorizeSelectionAsync and IssueSourceApprovalAsync still use fresh scopes/context, current subject checks before/after, unchanged denial and source approval boundaries. No concrete further local refactor necessary; no public contract/schema/dependency/architecture change.",
+  "test_correction": "Independent test owner corrected only URI representation: resolve absolute/relative Location, require same owned origin and exact /Account/Login path; redirect status/anonymous intent retained. Prior run67c0 failed this overconstraint after actual Web reached listener, not the original transaction defect.",
+  "limitations": "Passing case proves native A/B startup and anonymous login redirect plus no October state mutation. It does not yet prove all T020 domain reads/writes/replay/conflict/mismatch/no-reload predicates, optional layouts or fullstory/final gates.",
+  "accounting": "Initial product discovery was expected behavioral RED, then distinct fixture URI correction. Original repaired transaction failure is not reproduced; recovery6/7 unchanged."
+}

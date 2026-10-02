@@ -1,0 +1,92 @@
+{
+  "kind": "analysis",
+  "stage": "implement",
+  "evidence_id": "18-4/postgresql-fixture-log-lifetime/stop-1",
+  "source_commit": "c6b023fa402b414fd384d7650b788220e2ce589d",
+  "observed_after": {
+    "path": "specs/017-october-batch-setup/evidence/selected-web-management-retry-transition-proposal-01.json",
+    "sha256": "cddeec5b79d531a0718b281b2c4e34d8c0ba7747d8619b6c7e4a71147e6fc821"
+  },
+  "summary": "Bounded log-lifetime investigation exhausted three actual fixture checks without releasing the log. Third probe establishes an earlier setup/assertion exception is being masked by cleanup; no claim that selected-Web assertions passed. Stop further execution pending direction for a changed bounded diagnostic route.",
+  "raw_result": {
+    "status": "blocked",
+    "run_id": "18b59c2a7d8641e7a9fe3b35e90e0184",
+    "counts": {
+      "selected": 1,
+      "executed": 1,
+      "passed": 0,
+      "failed": 1,
+      "skipped": 0
+    },
+    "missing_checkpoint": "exclusive open before disposal; original exception superseded by fixture cleanup",
+    "after_derived_disposal": "blocked HRESULT0x80070020",
+    "after_parent_disposal": "blocked HRESULT0x80070020",
+    "exact_file_owner_pid": 48784,
+    "owner_identity_limit": "PID gone after test-process exit; exclusive open then succeeds. Process-lifetime lock proven; exact managed object and original failure not identified.",
+    "verification": {
+      "observed_at": "2026-10-02T05:23:51.3990737Z",
+      "branch": "oct14/story-18-4",
+      "head": "c6b023fa402b414fd384d7650b788220e2ce589d",
+      "root": "C:/Users/13728/.codex/worktrees/d166/vulgata",
+      "common_dir": "G:/source/repos/vulgata/.git",
+      "index": [],
+      "status": [
+        " M docs/agents/project-state.md",
+        " M docs/bmad/implementation-artifacts/18-4-prepare-an-owned-october-batch-with-valid-context-and-provid.md",
+        " M specs/017-october-batch-setup/evidence/checkpoint-implementation-06.json",
+        " M specs/017-october-batch-setup/tasks.md",
+        " M specs/017-october-batch-setup/workflow-state.json",
+        " M src/dotnet/Vulgata.Web/Data/OctoberBatchActivationService.cs",
+        " M src/dotnet/Vulgata.Web/Data/OctoberLocalAuthority.cs",
+        " M tests/Vulgata.Tests/October/OctoberHostSelectionTests.cs",
+        " M tests/Vulgata.Tests/TestInfrastructure/suites.json",
+        "?? specs/017-october-batch-setup/evidence/dotnet-exception-dialog-user-observation-01.json",
+        "?? specs/017-october-batch-setup/evidence/dotnet-exception-event-correlation-01.json",
+        "?? specs/017-october-batch-setup/evidence/host-composition-interruption-handoff-01.json",
+        "?? specs/017-october-batch-setup/evidence/postgresql-isolation-fixture-cleanup-diagnosis-01.json",
+        "?? specs/017-october-batch-setup/evidence/postgresql-isolation-fixture-cleanup-failure-01.json",
+        "?? specs/017-october-batch-setup/evidence/postgresql-isolation-log-lifetime-probe-dispatch-01.json",
+        "?? specs/017-october-batch-setup/evidence/postgresql-isolation-probe-launcher-correction-01.json",
+        "?? specs/017-october-batch-setup/evidence/sdk-discovery-globalization-diagnosis-01.json",
+        "?? specs/017-october-batch-setup/evidence/selected-web-management-retry-green-dispatch-01.json",
+        "?? specs/017-october-batch-setup/evidence/selected-web-management-retry-minimal-green-01.json",
+        "?? specs/017-october-batch-setup/evidence/selected-web-management-retry-transaction-red-01.json",
+        "?? specs/017-october-batch-setup/evidence/selected-web-management-retry-transition-proposal-01.json",
+        "?? specs/017-october-batch-setup/evidence/transitions/transition-0066-independent-auth-build-failure.json",
+        "?? tests/Vulgata.Tests/October/OctoberPostgreSqlIsolationTests.cs"
+      ],
+      "counts": "<Counters total=\"1\" executed=\"1\" passed=\"0\" failed=\"1\" error=\"0\" timeout=\"0\" aborted=\"0\" inconclusive=\"0\" passedButRunAborted=\"0\" notRunnable=\"0\" notExecuted=\"0\" disconnected=\"0\" warning=\"0\" completed=\"0\" inProgress=\"0\" pending=\"0\" xmlns=\"http://microsoft.com/schemas/VisualStudio/TeamTest/2010\" />",
+      "hashes": {
+        "volume-absence.log": "be9666fb50cf90051701d5c2ed76e0dcd175663a604dfc49adbbf15bccd3bbf5",
+        "cleanup.log": "500e11201c298481d547ea51f66e95dbe3dad456135aa3b7dfbd3131be0c2289",
+        "execution.log": "e1a455a8b0dd56bc9407e7449dbdfb3945620e848f05117d51f17cfb21af92e2",
+        "owned-mounts.json": "6e46d3a1204d837882b5b344f66343f6a914185bbe1a26fc2a34f2968d4e7b0c",
+        "results.trx": "76305ebd21a2f713f7708213f942c9761358ce29f6a9e42e61bc6f4eb02089e6",
+        "discovery.log": "397ce8957f4082543e4301d0421de22253146ad20c7016fcb59058107aa8f2c7",
+        "build.log": "f51be6998dde2f60e3fcf0bdb17a5c8f1e508ad40a0e6c67f330822dd4fb38dc"
+      },
+      "container_absent": true,
+      "volume_absent": true,
+      "root_a_absent": true,
+      "root_b_absent": true
+    }
+  },
+  "technical_allowance": {
+    "operation": "focused selected-Web PostgreSql fixture log cleanup/lifetime",
+    "actual_fixture_invocations": [
+      "4427ef1ad9f541b9991ae2ee63609240",
+      "8589acffc9604a3a8ccba080c0f94909",
+      "18b59c2a7d8641e7a9fe3b35e90e0184"
+    ],
+    "maximum": 3,
+    "pre_launch_failure": "Separately retained PATH/pwsh resolution error invoked no runner/build/fixture/resources.",
+    "exhausted": true
+  },
+  "requested_changed_route": "Preserve the original setup/assertion exception separately from cleanup, then one finite corrected diagnostic execution on the same explicitly owned resources. No blind repeated cleanup check or external prerequisite.",
+  "workflow": "BLOCKED technical diagnosis consumes no genuine workflow revision. Preserve episode6/pause7, all reviews/approvals/owners, source contracts and task IDs. T019/T020/T029/T030 and downstream gates remain open; no complete-definition restart.",
+  "input_hashes": {
+    "tests/Vulgata.Tests/October/OctoberPostgreSqlIsolationTests.cs": "97a3d07cceb08fd6077e6c58adf7f2aa4a712afd937b93df8caec32b7424b7f9",
+    "src/dotnet/Vulgata.Web/Data/OctoberLocalAuthority.cs": "86788949017d78a2c212e32ddd4dba98999dcf1b0ffe2ade606d6e60760d5381"
+  },
+  "user_dialog_observation": "Recorded separately; cannot map each of user's three dialogs to a particular exception or claim harmlessness."
+}

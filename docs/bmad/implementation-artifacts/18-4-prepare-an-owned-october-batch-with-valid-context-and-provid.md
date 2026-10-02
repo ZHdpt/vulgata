@@ -115,7 +115,25 @@ isolation. Fresh final checks pass93/93 PostgreSQL authority/source,20/20 actual
 are absent. Both affected units are assessed with no further refactor needed. See
 `evidence/identity-group-final-green-01.json`. Selected-Web WAF/SQLite data translation
 does not prove full PostgreSQL/listener behavior. Full A/B qualification and final gates
-remain unfinished. The same30IDs now have27 completed markers; T020/T029/T030 remain open.
+remain unfinished. Actual-Web qualification exposed the management serializable transaction
+outside its configured Npgsql retry strategy; Web exits Unavailable before serving.
+T019 is reopened for the bounded private correction with observed actual-process RED in
+`evidence/selected-web-management-retry-transaction-red-01.json`. The complete serializable
+capture now runs inside the configured strategy with fresh retry-local state and preserved
+cancellation/disposal. Actual A/B minimal GREEN1/1 and exact cleanup are independently
+verified in `evidence/selected-web-management-retry-minimal-green-01.json`; final surrounding
+qualification is still pending. An independent URI assertion correction preserves same-origin
+login redirection and anonymous authority behavior. The original transaction defect is not
+reproduced; no failed repair or independent gate verdict is counted for these development checks.
+The same30IDs now have26 completed markers; T019/T020/T029/T030 remain open.
+The expanded actual host-selection lane passed21/21; this is not complete T020 coverage
+or a final group check. The PostgreSQL WAF lane is blocked after three bounded log-lifetime
+checks. Derived and parent disposal do not release the process-owned log; cleanup masks
+an earlier setup/assertion exception, so no Web assertion PASS can be inferred. All exact
+owned containers, volumes and roots are absent. Preserve the primary exception separately
+before any additional finite diagnostic execution. Raw proof and unchanged recovery6/7
+are bound in `evidence/postgresql-fixture-log-lifetime-blocked-01.json` and transition0111.
+Checkpoint17 preserves this diagnostic recovery boundary, not a verified delivery candidate.
 Recovery remains6/7 with unchanged approvals. The first broad regression also exposed 18 obsolete
 approval-API host cases; their accepted T018/T025 reconciliation now passes 17 focused
 and 249 surrounding cases. The failed broad run is retained rather than described as
