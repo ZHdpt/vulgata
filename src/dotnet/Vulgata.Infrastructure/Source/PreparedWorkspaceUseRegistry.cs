@@ -197,8 +197,11 @@ internal sealed class PreparedWorkspaceUseRegistry : IAsyncDisposable, IPrepared
                     return false;
                 }
 
-                if (await CheckAuthorityAsync(ownership, PreparedToolPurpose.CodeGraphPreparation, deadline.Token)
-                        != PreparedWorkspaceAdmissionStatus.Opened)
+                PreparedWorkspaceAdmissionStatus authority = requireDisposition
+                    ? await CheckAuthorityAsync(
+                        ownership, PreparedToolPurpose.CodeGraphPreparation, deadline.Token)
+                    : await CheckSourceAuthorityAsync(ownership, deadline.Token);
+                if (authority != PreparedWorkspaceAdmissionStatus.Opened)
                 {
                     _state = RegistryState.Unknown;
                     return false;
@@ -457,15 +460,10 @@ internal sealed class PreparedWorkspaceUseRegistry : IAsyncDisposable, IPrepared
         PreparedToolPurpose purpose,
         CancellationToken cancellationToken)
     {
-        PreparedSourceAuthorityResult source = await AwaitProofAsync(
-            _sourceAuthority.VerifyCurrentAsync(binding.Approval, cancellationToken),
-            cancellationToken);
-        if (source.Status != PreparedSourceAuthorityStatus.Current ||
-            source.CurrentApproval != binding.Approval)
+        PreparedWorkspaceAdmissionStatus source = await CheckSourceAuthorityAsync(binding, cancellationToken);
+        if (source != PreparedWorkspaceAdmissionStatus.Opened)
         {
-            return source.Status == PreparedSourceAuthorityStatus.Revoked
-                ? PreparedWorkspaceAdmissionStatus.Denied
-                : PreparedWorkspaceAdmissionStatus.Unavailable;
+            return source;
         }
 
         PreparedToolUseAuthorityResult tool = await AwaitProofAsync(
@@ -477,6 +475,24 @@ internal sealed class PreparedWorkspaceUseRegistry : IAsyncDisposable, IPrepared
             PreparedToolUseAuthorityStatus.Denied => PreparedWorkspaceAdmissionStatus.Denied,
             _ => PreparedWorkspaceAdmissionStatus.Unavailable,
         };
+    }
+
+    private async Task<PreparedWorkspaceAdmissionStatus> CheckSourceAuthorityAsync(
+        PreparedCodeGraphWorkspaceOwnership binding,
+        CancellationToken cancellationToken)
+    {
+        PreparedSourceAuthorityResult source = await AwaitProofAsync(
+            _sourceAuthority.VerifyCurrentAsync(binding.Approval, cancellationToken),
+            cancellationToken);
+        if (source.Status != PreparedSourceAuthorityStatus.Current ||
+            source.CurrentApproval != binding.Approval)
+        {
+            return source.Status == PreparedSourceAuthorityStatus.Revoked
+                ? PreparedWorkspaceAdmissionStatus.Denied
+                : PreparedWorkspaceAdmissionStatus.Unavailable;
+        }
+
+        return PreparedWorkspaceAdmissionStatus.Opened;
     }
 
     private async Task<T> AwaitProofAsync<T>(Task<T> verification, CancellationToken cancellationToken)

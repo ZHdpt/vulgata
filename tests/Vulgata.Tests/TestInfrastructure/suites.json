@@ -868,6 +868,10 @@
   "PreparedSource/PreparedToolWorkspaceIssuerTests.cs": {
     "suite": "SelfContained"
   },
+  "PreparedSource/WindowsPreparedManagedWorkspaceHostVerifierTests.cs": {
+    "suite": "LocalTools",
+    "reason": "Exercises owned Windows token, fixture DACL and named-mutex behavior; requires explicit LocalTools execution authority."
+  },
   "PreparedSource/PreparedWorkspaceUseRegistryTests.cs": {
     "suite": "SelfContained"
   },

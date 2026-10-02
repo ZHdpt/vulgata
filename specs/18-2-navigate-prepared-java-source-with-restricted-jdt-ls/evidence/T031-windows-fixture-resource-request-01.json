@@ -1,0 +1,65 @@
+{
+  "kind": "analysis",
+  "summary": "Reviewed prepared actual Windows verifier tests compile under guarded LocalTools classification; existing SelfContained registry24 passes. Actual Windows token/DACL/mutex fixture execution remains unapproved and unrun. Request confined fixture execution authority for actual T031/T032 protected/denied RED/GREEN, not selected-host/native-tool qualification.",
+  "observed_at": "2026-10-01T23:47:39.260215+00:00",
+  "source_commit": "c2fd2d56e73d054bd9b1a8a7df2051dce44d8408",
+  "task_ids": [
+    "T031",
+    "T032"
+  ],
+  "source_hashes": {
+    "src/dotnet/Vulgata.Infrastructure/Source/WindowsPreparedManagedWorkspaceHostVerifier.cs": "1f0e3bb8d92a35b6107cdc2fb96ec6d370ff0629c39a48bd257e4c0e8e546c28",
+    "tests/Vulgata.Tests/PreparedSource/WindowsPreparedManagedWorkspaceHostVerifierTests.cs": "3ce8d7676bb92fe5a447a86db500b027e159d0b4572171c3a1acaf85a26b7e03",
+    "tests/Vulgata.Tests/TestInfrastructure/suites.json": "6c1b47d627d11e561fc6e280f228f23820d28f3e70a81abd298e305fb578f2d2"
+  },
+  "preparedness": {
+    "verification_route": "policy/compile/direct source review, not native RED/GREEN",
+    "self_contained": {
+      "path": "TestResults/isolation-e4ea5c3a785e4cce9322261aa8b1bbd1/results.trx",
+      "sha256": "7f13537abfdb1fdb5257f5eb735a283c5715e721881f32b1883d1fff328066bc",
+      "selected": 24,
+      "passed": 24,
+      "failed": 0,
+      "skipped": 0,
+      "build": {
+        "path": "TestResults/isolation-e4ea5c3a785e4cce9322261aa8b1bbd1/build.log",
+        "sha256": "644c390fd82ce88c7b717ed878271ca0254a224116038b6a1ecaff05dcd9a7ce"
+      }
+    },
+    "uncounted_setup": {
+      "path": "TestResults/isolation-c7ed41252732415894aca11e15943adc/build.log",
+      "sha256": "65de549e7f1e46c08cc8019bd8730aed612e0a1492c2ba399cec9650083fed99",
+      "correction": "Added missing test-infrastructure namespace import; no native fixture executed."
+    },
+    "policy": "PolicyOnly passed;292 classified sources",
+    "cleanup_review": "Every nonnull returned hold finally disposed even on assertion failure; source/sibling marker bytes and workspace/SourceStorage/metadata DACL snapshots checked; fixture DACL restoration and no-reparse confined-path deletion."
+  },
+  "resource_scope": {
+    "root": "C:\\Users\\13728\\.codex\\worktrees\\7535\\vulgata\\TestResults\\windows-host-verifier-{guid}",
+    "principal": "Read effective Windows user SID inside guarded test body; use only that SID as fixture approved app principal; wrong approved SID is a test identifier, not impersonation.",
+    "mutations": [
+      "Create uniquely marked owned workspace/source-storage/sibling fixtures and initialized fixed metadata ledger",
+      "Capture/set fixture-only DACLs to current-SID-only protected or Authenticated Users Modify denial variant; restore captured DACLs",
+      "Create/acquire/check/dispose only adapter-derived Local named mutex and owned root/metadata handles/thread; no arbitrary named objects",
+      "Verify confined absolute paths/no reparse before deleting only unique fixture"
+    ],
+    "excluded": [
+      "repo/shared/source ACL changes",
+      "accounts/privileges/impersonation/PATH/profiles",
+      "native tool child processes/JDT/Java/CodeGraph/LPAC",
+      "production enablement or selected-host/native settlement qualification"
+    ],
+    "command": "pwsh -NoProfile -File eng/test.ps1 -Suite LocalTools -Filter 'FullyQualifiedName~WindowsPreparedManagedWorkspaceHostVerifierTests'",
+    "coverage": "Protected Observed\u2192Protected nonnull held proof/currentness/exclusivity/reacquisition; wrongSID and unprotectedwritable fixture closed. Defaultclosed scaffold expected public Observed vsUnavailable RED."
+  },
+  "decision": {
+    "status": "pending",
+    "authority": "human-reserved execution/resource permission; designated delegate does not cover it"
+  },
+  "recovery": {
+    "failed_results": 3,
+    "pause_at": 12,
+    "changed": false
+  },
+  "resource_scope_sha256": "b9776ec4fb15c3464b7f050a1cb07e42235d2396d7f4b6d8a0202a7c1296ae08"
+}
