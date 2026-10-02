@@ -520,7 +520,8 @@ internal sealed class PreparedJdtCommandResolver : IPreparedJdtCommandResolver
     {
         cancellationToken.ThrowIfCancellationRequested();
         if (request is null || string.IsNullOrWhiteSpace(request.HostPathSnapshot) ||
-            !Path.IsPathFullyQualified(request.PreparedRoot))
+            !Path.IsPathFullyQualified(request.PreparedRoot) ||
+            !Path.IsPathFullyQualified(request.DisposableStateRoot))
         {
             return Unavailable();
         }
@@ -530,6 +531,9 @@ internal sealed class PreparedJdtCommandResolver : IPreparedJdtCommandResolver
             string preparedRoot = Path.GetFullPath(request.PreparedRoot)
                 .TrimEnd(Path.DirectorySeparatorChar);
             string preparedPrefix = preparedRoot + Path.DirectorySeparatorChar;
+            string stateRoot = Path.GetFullPath(request.DisposableStateRoot)
+                .TrimEnd(Path.DirectorySeparatorChar);
+            string statePrefix = stateRoot + Path.DirectorySeparatorChar;
             foreach (string entry in request.HostPathSnapshot.Split(Path.PathSeparator))
             {
                 cancellationToken.ThrowIfCancellationRequested();
@@ -549,8 +553,11 @@ internal sealed class PreparedJdtCommandResolver : IPreparedJdtCommandResolver
                 bool insidePreparedRoot =
                     string.Equals(directory, preparedRoot, StringComparison.OrdinalIgnoreCase) ||
                     directory.StartsWith(preparedPrefix, StringComparison.OrdinalIgnoreCase);
+                bool insideDisposableStateRoot =
+                    string.Equals(directory, stateRoot, StringComparison.OrdinalIgnoreCase) ||
+                    directory.StartsWith(statePrefix, StringComparison.OrdinalIgnoreCase);
                 return Task.FromResult(new PreparedJdtCommandResolution(
-                    insidePreparedRoot || executable && batch
+                    insidePreparedRoot || insideDisposableStateRoot || executable && batch
                         ? PreparedJdtCommandResolutionStatus.Rejected
                         : PreparedJdtCommandResolutionStatus.Unavailable,
                     null));

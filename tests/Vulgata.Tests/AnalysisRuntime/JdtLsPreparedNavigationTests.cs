@@ -4219,6 +4219,47 @@ public sealed class JdtLsPreparedNavigationTests
 
     [Trait("Suite", "SelfContained")]
     [SuiteFact("SelfContained")]
+    public async Task PreparedJdtCommandResolver_WhenFirstJdtMatchIsInsideDisposableStateRoot_RejectsResolution()
+    {
+        await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
+        string sourceMarkerPath = Path.Combine(fixture.PreparedRootPath, "ResolverStateMarker.java");
+        byte[] sourceMarker = "class ResolverStateMarker {}\n"u8.ToArray();
+        await File.WriteAllBytesAsync(sourceMarkerPath, sourceMarker);
+
+        string disposableStateRoot = Path.Combine(fixture.SiblingPath, "resolver-disposable-state-root");
+        string laterCandidateRoot = Path.Combine(fixture.SiblingPath, "resolver-later-state-candidate");
+        Directory.CreateDirectory(disposableStateRoot);
+        Directory.CreateDirectory(laterCandidateRoot);
+        string forbiddenFirstPath = Path.Combine(disposableStateRoot, "jdtls.bat");
+        string laterCandidatePath = Path.Combine(laterCandidateRoot, "jdtls.bat");
+        await File.WriteAllTextAsync(forbiddenFirstPath, "controlled state-root first-match fixture\n");
+        await File.WriteAllTextAsync(laterCandidatePath, "controlled later JDT candidate fixture\n");
+
+        Assert.True(File.Exists(forbiddenFirstPath));
+        Assert.True(File.Exists(laterCandidatePath));
+        // This is only the request's policy descriptor; it does not establish OS protection or make state executable.
+        var hostPolicy = new PreparedJdtHostPolicy(
+            [disposableStateRoot, laterCandidateRoot],
+            [laterCandidateRoot],
+            Path.Combine(laterCandidateRoot, "cmd.exe"),
+            [laterCandidateRoot]);
+        var request = new PreparedJdtCommandRequest(
+            string.Join(Path.PathSeparator, disposableStateRoot, laterCandidateRoot),
+            fixture.PreparedRootPath,
+            disposableStateRoot,
+            hostPolicy);
+
+        PreparedJdtCommandResolution resolution = await new PreparedJdtCommandResolver().ResolveAsync(
+            request,
+            CancellationToken.None);
+
+        Assert.Equal(PreparedJdtCommandResolutionStatus.Rejected, resolution.Status);
+        Assert.Null(resolution.Commands);
+        Assert.Equal(sourceMarker, await File.ReadAllBytesAsync(sourceMarkerPath));
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task PreparedJdtLsRuntime_WhenSourceAuthorityIsRevokedDuringLaunchRequestPreparation_DoesNotLaunch()
     {
         await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
