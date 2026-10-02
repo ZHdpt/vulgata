@@ -21,3 +21,15 @@ No persistent entity or migration is introduced. Story 18.1's exact authority ty
 ## State transitions
 
 `Unqualified -> Bound18.2AuthorityAndPinnedBundle -> PreExistingStateChecked -> OneOwnerPreparing -> Prepared -> Connecting -> DiscoveredAndQualified -> Invoking -> ContainedResultVerified -> Completed -> SessionReleased -> WorkspaceOwnerDisposition` is the intended app-bound route. The direct child inherits host rights throughout; these states do not imply preventive OS write/network confinement. Story 18.3's reader correction consumes positive ownership for list/read/search and continuations; changed binding/directory yields `ChangedInput` or denial. Missing 18.2 checkpoint, unsafe pre-existing state, missing pinned bundle or unavailable contained read yields `Unavailable`/explicit limitation. Same-binding Workers borrow one index; session release never rebuilds/deletes it. Owner disposition cleans only owned state while authority persists, otherwise quarantine. Revocation/expiry discards buffered output. The controlled direct Git/no-Git fixture reached native invocation with unchanged local source/config/hooks; it did not traverse this app-bound authority route or prove external side-effect absence. [Direct result](evidence/codegraph-direct-fixture-01.json); [spec FR-004–FR-012](spec.md).
+
+## Immediate-slice transient records (2026-10-02)
+
+These records serve only the newly selected owned-fixture preparation/descriptor proof; they do not replace the historical full app-bound model above.
+
+| Record | Fields and validation | Lifetime / relationship |
+|---|---|---|
+| Application-selected fixture input | Repository ID, dedicated fully qualified prepared directory selected by trusted application code, configured pinned CodeGraph installation; no model-supplied path, command or environment. Reject missing/foreign/unsafe pre-existing state. | Valid for one exclusive in-process preparation owner and its fixture session; not a Story 18.2 lease or production approval. |
+| Prepared MCP connection descriptor | Immutable `Command`, ordered `Arguments`, `WorkingDirectory`, fixed required environment. `init` and `serve -p` bind the same selected directory; `.ps1` shim uses fixed `pwsh -NoProfile -File` prefix. | Returned only to trusted application composition; the existing native client consumes the exact value. Never serialized to Worker/model tool input or result. |
+| Immediate-slice owner handle | Prepared-state identity, descriptor, owned child/session and cancellation/disposal state. | One owner; disposal settles its child, never deletes an index per Worker. Cross-process borrowing, cache/restart adoption and automatic reclamation are deferred. |
+
+Immediate state sequence: `SelectedOwnedFixture -> PinnedBundleChecked -> ForeignStateRejected -> InitWithClosedStdin -> DescriptorReturned -> NativeInitialize -> ReviewedToolDiscovered -> RealCall -> OwnedSessionClosed`. Any observed source/config/hook or out-of-footprint change stops readiness. A returned descriptor alone is not native proof; source excerpts/locations from a general Repository remain withheld pending later contained-read integration.
