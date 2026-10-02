@@ -1,3 +1,6 @@
+using System.Collections.Concurrent;
+using System.IO.Pipelines;
+using System.Text;
 using System.Text.Json;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Configuration;
@@ -3493,6 +3496,119 @@ public sealed class JdtLsPreparedNavigationTests
 
     [Trait("Suite", "SelfContained")]
     [SuiteFact("SelfContained")]
+    public async Task PreparedJdtLsRuntime_WithPreparedStdioFactory_SerializesFixedInitializeHandshakeBeforeOpened()
+    {
+        await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
+        fixture.Authority.Approve(fixture.Approval);
+        var toolAuthorization = new ControlledPreparedToolUseAuthorizer(
+            fixture.Approval,
+            PreparedToolPurpose.JdtNavigation);
+        PreparedToolWorkspaceIssueResult issue = await new PreparedToolWorkspaceIssuer(
+            fixture.Authority,
+            toolAuthorization).IssueAsync(
+                new PreparedToolWorkspaceGrantRequest(
+                    fixture.Approval,
+                    fixture.PreparedRootPath,
+                    PreparedToolPurpose.JdtNavigation,
+                    TimeSpan.FromSeconds(10)));
+        Assert.Equal(PreparedToolWorkspaceIssueStatus.Issued, issue.Status);
+        PreparedToolWorkspaceLease lease = Assert.IsType<PreparedToolWorkspaceLease>(issue.Lease);
+
+        string stateRoot = Path.Combine(fixture.SiblingPath, "prepared-stdio-state");
+        string toolRoot = Path.Combine(fixture.SiblingPath, "prepared-stdio-tools");
+        Directory.CreateDirectory(stateRoot);
+        Directory.CreateDirectory(toolRoot);
+        string jdtScriptPath = Path.Combine(toolRoot, "jdtls.bat");
+        string javaPath = Path.Combine(toolRoot, "java.exe");
+        string cmdPath = Path.Combine(toolRoot, "cmd.exe");
+        await File.WriteAllTextAsync(jdtScriptPath, "@echo off\r\n");
+        await File.WriteAllTextAsync(javaPath, "controlled java executable fixture\n");
+        await File.WriteAllTextAsync(cmdPath, "controlled command interpreter fixture\n");
+        PreparedJdtPinnedFile jdtCommand = await ObservePinnedFileAsync(jdtScriptPath, 0);
+        PreparedJdtPinnedFile javaCommand = await ObservePinnedFileAsync(javaPath, 0);
+        PreparedJdtPinnedFile fixedInterpreter = await ObservePinnedFileAsync(cmdPath, null);
+        var hostPolicy = new PreparedJdtHostPolicy(
+            [toolRoot],
+            [toolRoot],
+            cmdPath,
+            [toolRoot]);
+        var resolver = new RecordingPreparedJdtCommandResolver(
+            new PreparedJdtPinnedCommands(jdtCommand, javaCommand, fixedInterpreter));
+        var process = new PreparedJdtStdioPeerProcess();
+        var launcher = new ReturningTrackedPreparedJdtProcessLauncher(process);
+        var runtime = new PreparedJdtLsRuntime(
+            resolver,
+            launcher,
+            new PreparedJdtProtocolFactory(),
+            hostPolicy);
+        var profile = new PreparedJavaNavigationProfile(
+            stateRoot,
+            TimeSpan.FromSeconds(5),
+            TimeSpan.FromSeconds(3),
+            TimeSpan.FromSeconds(2),
+            MaximumResponseBytes: 64 * 1024);
+        PreparedJavaNavigationOwnershipFixture ownershipFixture =
+            PreparedJavaNavigationOwnershipFixture.Create(
+                fixture.Authority,
+                fixture.Approval,
+                fixture.PreparedRootPath);
+        PreparedJavaNavigationContextFactory factory =
+            ownershipFixture.CreateFactory(profile, runtime);
+        PreparedJavaNavigationOpenResult? opened = null;
+        IPreparedJavaNavigationContext? context = null;
+        try
+        {
+            opened = await factory.OpenAsync(lease);
+            Assert.Equal(1, launcher.CallCount);
+            Assert.Equal(PreparedJavaNavigationOpenStatus.Opened, opened.Status);
+            context = Assert.IsAssignableFrom<IPreparedJavaNavigationContext>(opened.Context);
+
+            await process.HandshakeObserved.Task.WaitAsync(TimeSpan.FromSeconds(2));
+            JsonElement[] messages = process.ObservedMessages.ToArray();
+            string[] methods = messages.Select(message => message.GetProperty("method").GetString()!)
+                .ToArray();
+            Assert.Equal(
+                new[] { "initialize", "initialized", "workspace/didChangeConfiguration" },
+                methods);
+
+            string expectedRootUri = new Uri(
+                Path.GetFullPath(fixture.PreparedRootPath).TrimEnd(Path.DirectorySeparatorChar) +
+                Path.DirectorySeparatorChar).AbsoluteUri;
+            JsonElement initializeParameters = messages[0].GetProperty("params");
+            Assert.Equal(expectedRootUri, initializeParameters.GetProperty("rootUri").GetString());
+            JsonElement folders = initializeParameters.GetProperty("workspaceFolders");
+            Assert.Equal(1, folders.GetArrayLength());
+            Assert.Equal(expectedRootUri, folders[0].GetProperty("uri").GetString());
+            Assert.Equal("repository", folders[0].GetProperty("name").GetString());
+
+            JsonElement initializeSettings = initializeParameters
+                .GetProperty("initializationOptions")
+                .GetProperty("settings");
+            JsonElement configurationSettings = messages[2]
+                .GetProperty("params")
+                .GetProperty("settings");
+            Assert.True(
+                AreEquivalentJsonValues(initializeSettings, configurationSettings),
+                "Initialization and configuration notifications must carry the same settings values.");
+            AssertFixedOfflineWireSettings(initializeSettings);
+            Assert.True(messages[0].TryGetProperty("id", out _));
+            Assert.False(messages[1].TryGetProperty("id", out _));
+            Assert.False(messages[2].TryGetProperty("id", out _));
+        }
+        finally
+        {
+            if (context is not null)
+            {
+                await context.DisposeAsync();
+            }
+
+            await lease.DisposeAsync();
+            await process.DisposeAsync();
+        }
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task PreparedJdtLsRuntime_WhenSourceAuthorityIsRevokedDuringLaunchRequestPreparation_DoesNotLaunch()
     {
         await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
@@ -3881,6 +3997,89 @@ public sealed class JdtLsPreparedNavigationTests
         Assert.False(java.GetProperty("maven").GetProperty("updateSnapshots").GetBoolean());
     }
 
+    private static void AssertFixedOfflineWireSettings(JsonElement settings)
+    {
+        JsonElement java = settings.GetProperty("java");
+        Assert.False(java.GetProperty("import").GetProperty("maven").GetProperty("enabled").GetBoolean());
+        Assert.False(java.GetProperty("import").GetProperty("gradle").GetProperty("enabled").GetBoolean());
+        Assert.True(java.GetProperty("import").GetProperty("maven").GetProperty("offline").GetProperty("enabled").GetBoolean());
+        Assert.True(java.GetProperty("import").GetProperty("gradle").GetProperty("offline").GetProperty("enabled").GetBoolean());
+        Assert.False(java.GetProperty("import").GetProperty("gradle").GetProperty("wrapper").GetProperty("enabled").GetBoolean());
+        Assert.False(java.GetProperty("autobuild").GetProperty("enabled").GetBoolean());
+        Assert.Equal("disabled", java.GetProperty("configuration").GetProperty("updateBuildConfiguration").GetString());
+        Assert.False(java.GetProperty("maven").GetProperty("downloadSources").GetBoolean());
+        Assert.False(java.GetProperty("maven").GetProperty("updateSnapshots").GetBoolean());
+    }
+
+    private static bool AreEquivalentJsonValues(JsonElement expected, JsonElement actual)
+    {
+        if (expected.ValueKind != actual.ValueKind)
+        {
+            return false;
+        }
+
+        switch (expected.ValueKind)
+        {
+            case JsonValueKind.Object:
+                JsonProperty[] expectedProperties = expected.EnumerateObject()
+                    .OrderBy(property => property.Name, StringComparer.Ordinal)
+                    .ToArray();
+                JsonProperty[] actualProperties = actual.EnumerateObject()
+                    .OrderBy(property => property.Name, StringComparer.Ordinal)
+                    .ToArray();
+                if (expectedProperties.Length != actualProperties.Length)
+                {
+                    return false;
+                }
+
+                for (int index = 0; index < expectedProperties.Length; index++)
+                {
+                    if (!string.Equals(
+                            expectedProperties[index].Name,
+                            actualProperties[index].Name,
+                            StringComparison.Ordinal) ||
+                        !AreEquivalentJsonValues(
+                            expectedProperties[index].Value,
+                            actualProperties[index].Value))
+                    {
+                        return false;
+                    }
+                }
+
+                return true;
+
+            case JsonValueKind.Array:
+                if (expected.GetArrayLength() != actual.GetArrayLength())
+                {
+                    return false;
+                }
+
+                for (int index = 0; index < expected.GetArrayLength(); index++)
+                {
+                    if (!AreEquivalentJsonValues(expected[index], actual[index]))
+                    {
+                        return false;
+                    }
+                }
+
+                return true;
+
+            case JsonValueKind.String:
+                return string.Equals(expected.GetString(), actual.GetString(), StringComparison.Ordinal);
+
+            case JsonValueKind.Number:
+                return string.Equals(expected.GetRawText(), actual.GetRawText(), StringComparison.Ordinal);
+
+            case JsonValueKind.True:
+            case JsonValueKind.False:
+            case JsonValueKind.Null:
+                return true;
+
+            default:
+                return false;
+        }
+    }
+
     private sealed class RecordingPreparedJdtCommandResolver(PreparedJdtPinnedCommands commands)
         : IPreparedJdtCommandResolver
     {
@@ -4111,6 +4310,189 @@ public sealed class JdtLsPreparedNavigationTests
         public Task KillTreeAsync(CancellationToken cancellationToken) => Task.CompletedTask;
 
         public ValueTask DisposeAsync() => ValueTask.CompletedTask;
+    }
+
+    private sealed class PreparedJdtStdioPeerProcess : IJdtLsProcess
+    {
+        private const int MaximumFrameBytes = 64 * 1024;
+        private readonly Pipe _clientToPeer = new();
+        private readonly Pipe _peerToClient = new();
+        private readonly Stream _clientInput;
+        private readonly Stream _clientOutput;
+        private readonly Stream _peerInput;
+        private readonly Stream _peerOutput;
+        private readonly ConcurrentQueue<JsonElement> _observedMessages = new();
+        private readonly TaskCompletionSource<bool> _handshakeObserved =
+            new(TaskCreationOptions.RunContinuationsAsynchronously);
+        private readonly TaskCompletionSource<bool> _processExited =
+            new(TaskCreationOptions.RunContinuationsAsynchronously);
+        private readonly Task _peerTask;
+        private int _disposed;
+
+        internal PreparedJdtStdioPeerProcess()
+        {
+            _clientInput = _clientToPeer.Writer.AsStream(leaveOpen: true);
+            _clientOutput = _peerToClient.Reader.AsStream(leaveOpen: true);
+            _peerInput = _clientToPeer.Reader.AsStream(leaveOpen: true);
+            _peerOutput = _peerToClient.Writer.AsStream(leaveOpen: true);
+            _peerTask = RunPeerAsync();
+        }
+
+        public Stream StandardInput => _clientInput;
+
+        public Stream StandardOutput => _clientOutput;
+
+        internal TaskCompletionSource<bool> HandshakeObserved => _handshakeObserved;
+
+        internal ConcurrentQueue<JsonElement> ObservedMessages => _observedMessages;
+
+        public Task<string> ReadBoundedStandardErrorAsync(
+            int byteLimit,
+            CancellationToken cancellationToken) => Task.FromResult(string.Empty);
+
+        public async Task<int> WaitForExitAsync(TimeSpan timeout, CancellationToken cancellationToken)
+        {
+            await _processExited.Task.WaitAsync(timeout, cancellationToken);
+            return 0;
+        }
+
+        public async Task KillTreeAsync(CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            _processExited.TrySetResult(true);
+            await CompleteWriterAsync(_clientToPeer.Writer);
+            await CompleteWriterAsync(_peerToClient.Writer);
+        }
+
+        public async ValueTask DisposeAsync()
+        {
+            if (Interlocked.Exchange(ref _disposed, 1) != 0)
+            {
+                return;
+            }
+
+            _processExited.TrySetResult(true);
+            await CompleteWriterAsync(_clientToPeer.Writer);
+            await CompleteWriterAsync(_peerToClient.Writer);
+            await _peerTask.WaitAsync(TimeSpan.FromSeconds(2));
+            await _clientToPeer.Reader.CompleteAsync();
+            await _peerToClient.Reader.CompleteAsync();
+        }
+
+        private async Task RunPeerAsync()
+        {
+            while (await ReadFrameAsync(_peerInput) is { } frame)
+            {
+                using JsonDocument document = JsonDocument.Parse(frame);
+                JsonElement message = document.RootElement.Clone();
+                _observedMessages.Enqueue(message);
+                string? method = message.TryGetProperty("method", out JsonElement methodValue)
+                    ? methodValue.GetString()
+                    : null;
+
+                if (string.Equals(method, "workspace/didChangeConfiguration", StringComparison.Ordinal))
+                {
+                    _handshakeObserved.TrySetResult(true);
+                }
+
+                if (string.Equals(method, "exit", StringComparison.Ordinal))
+                {
+                    _processExited.TrySetResult(true);
+                    return;
+                }
+
+                if (message.TryGetProperty("id", out JsonElement requestId))
+                {
+                    object? result = string.Equals(method, "initialize", StringComparison.Ordinal)
+                        ? new { capabilities = new { } }
+                        : null;
+                    var response = new Dictionary<string, object?>
+                    {
+                        ["jsonrpc"] = "2.0",
+                        ["id"] = requestId.Clone(),
+                        ["result"] = result,
+                    };
+                    await WriteFrameAsync(_peerOutput, JsonSerializer.SerializeToUtf8Bytes(response));
+                }
+            }
+        }
+
+        private static async Task<byte[]?> ReadFrameAsync(Stream stream)
+        {
+            var header = new List<byte>();
+            byte[] next = new byte[1];
+            while (true)
+            {
+                int read = await stream.ReadAsync(next.AsMemory());
+                if (read == 0)
+                {
+                    if (header.Count == 0)
+                    {
+                        return null;
+                    }
+
+                    throw new EndOfStreamException("Prepared stdio header ended before its frame boundary.");
+                }
+
+                header.Add(next[0]);
+                if (header.Count > 4096)
+                {
+                    throw new InvalidDataException("Prepared stdio header exceeded its test bound.");
+                }
+
+                int count = header.Count;
+                if (count >= 4 && header[count - 4] == (byte)'\r' && header[count - 3] == (byte)'\n' &&
+                    header[count - 2] == (byte)'\r' && header[count - 1] == (byte)'\n')
+                {
+                    break;
+                }
+            }
+
+            string headerText = Encoding.ASCII.GetString(header.ToArray());
+            string? lengthHeader = headerText.Split("\r\n", StringSplitOptions.RemoveEmptyEntries)
+                .FirstOrDefault(line => line.StartsWith("Content-Length:", StringComparison.OrdinalIgnoreCase));
+            if (lengthHeader is null ||
+                !int.TryParse(lengthHeader[(lengthHeader.IndexOf(':') + 1)..].Trim(), out int length) ||
+                length is <= 0 or > MaximumFrameBytes)
+            {
+                throw new InvalidDataException("Prepared stdio frame length was missing or outside its test bound.");
+            }
+
+            byte[] body = new byte[length];
+            int offset = 0;
+            while (offset < body.Length)
+            {
+                int read = await stream.ReadAsync(body.AsMemory(offset));
+                if (read == 0)
+                {
+                    throw new EndOfStreamException("Prepared stdio body ended before Content-Length bytes were read.");
+                }
+
+                offset += read;
+            }
+
+            return body;
+        }
+
+        private static async Task WriteFrameAsync(Stream stream, byte[] body)
+        {
+            byte[] header = Encoding.ASCII.GetBytes($"Content-Length: {body.Length}\r\n\r\n");
+            await stream.WriteAsync(header.AsMemory());
+            await stream.WriteAsync(body.AsMemory());
+            await stream.FlushAsync();
+        }
+
+        private static async Task CompleteWriterAsync(PipeWriter writer)
+        {
+            try
+            {
+                await writer.CompleteAsync();
+            }
+            catch (InvalidOperationException)
+            {
+                // The peer or process cleanup already completed this owned pipe end.
+            }
+        }
     }
 
     private sealed class ControlledPreparedJdtLsRuntime : IPreparedJdtLsRuntime

@@ -586,6 +586,73 @@ internal sealed record PreparedJdtInitializeRequest(
     IReadOnlyDictionary<string, object> FixedSettings,
     int MaximumResponseBytes);
 
+internal sealed class PreparedJdtProtocolFactory : IPreparedJdtProtocolFactory
+{
+    public async Task<IPreparedJdtLsSession> InitializeAsync(
+        IJdtLsProcess process,
+        PreparedJdtInitializeRequest request,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(process);
+        ArgumentNullException.ThrowIfNull(request);
+        if (request.MaximumResponseBytes <= 0 ||
+            !string.Equals(request.RootUri, request.WorkspaceFolderUri, StringComparison.Ordinal) ||
+            request.FixedSettings is null)
+        {
+            throw new InvalidOperationException("jdt_prepared_protocol_unavailable");
+        }
+
+        cancellationToken.ThrowIfCancellationRequested();
+        JsonRpc rpc = JsonRpc.Attach(process.StandardInput, process.StandardOutput, target: null);
+        try
+        {
+            _ = await rpc.InvokeWithParameterObjectAsync<JsonElement>(
+                "initialize",
+                new
+                {
+                    processId = Environment.ProcessId,
+                    rootUri = request.RootUri,
+                    capabilities = new { },
+                    workspaceFolders = new[]
+                    {
+                        new { uri = request.WorkspaceFolderUri, name = request.WorkspaceFolderName },
+                    },
+                    initializationOptions = new { settings = request.FixedSettings },
+                },
+                argumentDeclaredTypes: null,
+                cancellationToken);
+            cancellationToken.ThrowIfCancellationRequested();
+            await rpc.NotifyWithParameterObjectAsync("initialized", new { }).WaitAsync(cancellationToken);
+            await rpc.NotifyWithParameterObjectAsync(
+                "workspace/didChangeConfiguration",
+                new { settings = request.FixedSettings }).WaitAsync(cancellationToken);
+            cancellationToken.ThrowIfCancellationRequested();
+            return new PreparedJdtProtocolSession(rpc);
+        }
+        catch
+        {
+            rpc.Dispose();
+            throw;
+        }
+    }
+
+    private sealed class PreparedJdtProtocolSession(JsonRpc rpc) : IPreparedJdtLsSession
+    {
+        public Task<PreparedJdtLsRawReply> NavigateAsync(
+            PreparedJavaNavigationOperation operation,
+            PreparedJavaNavigationRequest request,
+            CancellationToken cancellationToken = default) =>
+            Task.FromException<PreparedJdtLsRawReply>(
+                new InvalidOperationException("jdt_prepared_navigation_unavailable"));
+
+        public ValueTask DisposeAsync()
+        {
+            rpc.Dispose();
+            return ValueTask.CompletedTask;
+        }
+    }
+}
+
 internal interface IJdtLsProtocolClientFactory
 {
     IJdtLsProtocolClient Create(IJdtLsProcess process, int responseByteLimit);
