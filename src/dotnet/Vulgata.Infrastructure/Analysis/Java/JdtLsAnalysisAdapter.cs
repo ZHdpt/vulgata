@@ -603,7 +603,9 @@ internal sealed class PreparedJdtProtocolFactory : IPreparedJdtProtocolFactory
         }
 
         cancellationToken.ThrowIfCancellationRequested();
-        JsonRpc rpc = JsonRpc.Attach(process.StandardInput, process.StandardOutput, target: null);
+        var boundedOutput = new PreparedJdtBoundedResponseStream(
+            process.StandardOutput, request.MaximumResponseBytes);
+        JsonRpc rpc = JsonRpc.Attach(process.StandardInput, boundedOutput, target: null);
         try
         {
             _ = await rpc.InvokeWithParameterObjectAsync<JsonElement>(
@@ -627,7 +629,7 @@ internal sealed class PreparedJdtProtocolFactory : IPreparedJdtProtocolFactory
                 "workspace/didChangeConfiguration",
                 new { settings = request.FixedSettings }).WaitAsync(cancellationToken);
             cancellationToken.ThrowIfCancellationRequested();
-            return new PreparedJdtProtocolSession(rpc, new Uri(request.RootUri));
+            return new PreparedJdtProtocolSession(rpc, new Uri(request.RootUri), boundedOutput);
         }
         catch
         {
@@ -636,14 +638,18 @@ internal sealed class PreparedJdtProtocolFactory : IPreparedJdtProtocolFactory
         }
     }
 
-    private sealed class PreparedJdtProtocolSession(JsonRpc rpc, Uri rootUri) : IPreparedJdtLsSession
+    private sealed class PreparedJdtProtocolSession(
+        JsonRpc rpc,
+        Uri rootUri,
+        PreparedJdtBoundedResponseStream boundedOutput) : IPreparedJdtLsSession
     {
         public async Task<PreparedJdtLsRawReply> NavigateAsync(
             PreparedJavaNavigationOperation operation,
             PreparedJavaNavigationRequest request,
             CancellationToken cancellationToken = default)
         {
-            if (operation != PreparedJavaNavigationOperation.Definition || request is null ||
+            if (operation is not (PreparedJavaNavigationOperation.Definition or
+                    PreparedJavaNavigationOperation.References) || request is null ||
                 !PreparedSourceTraversal.IsCanonicalRelativePath(request.RelativePath, allowEmpty: false) ||
                 request.Line <= 0 || request.Character <= 0)
             {
@@ -653,15 +659,25 @@ internal sealed class PreparedJdtProtocolFactory : IPreparedJdtProtocolFactory
             string relativeUri = string.Join('/',
                 request.RelativePath.Split('/').Select(Uri.EscapeDataString));
             string documentUri = new Uri(rootUri, relativeUri).AbsoluteUri;
-            JToken responseToken = await rpc.InvokeWithParameterObjectAsync<JToken>(
-                "textDocument/definition",
-                new
-                {
-                    textDocument = new { uri = documentUri },
-                    position = new { line = request.Line - 1, character = request.Character - 1 },
-                },
-                argumentDeclaredTypes: null,
-                cancellationToken);
+            var textDocument = new { uri = documentUri };
+            var position = new { line = request.Line - 1, character = request.Character - 1 };
+            object parameters = operation == PreparedJavaNavigationOperation.References
+                ? new { textDocument, position, context = new { includeDeclaration = true } }
+                : new { textDocument, position };
+            JToken responseToken;
+            try
+            {
+                responseToken = await rpc.InvokeWithParameterObjectAsync<JToken>(
+                    operation == PreparedJavaNavigationOperation.References
+                        ? "textDocument/references" : "textDocument/definition",
+                    parameters,
+                    argumentDeclaredTypes: null,
+                    cancellationToken);
+            }
+            catch (Exception) when (boundedOutput.LimitExceeded && !cancellationToken.IsCancellationRequested)
+            {
+                throw new PreparedJdtResponseBytesExceededException();
+            }
             using JsonDocument responseDocument = JsonDocument.Parse(
                 responseToken.ToString(NewtonsoftJsonFormatting.None));
             JsonElement response = responseDocument.RootElement;
@@ -694,6 +710,133 @@ internal sealed class PreparedJdtProtocolFactory : IPreparedJdtProtocolFactory
             return ValueTask.CompletedTask;
         }
     }
+}
+
+internal sealed class PreparedJdtResponseBytesExceededException : Exception { }
+
+internal sealed class PreparedJdtBoundedResponseStream(Stream inner, int maximumBodyBytes) : Stream
+{
+    private const int MaximumHeaderBytes = 4096;
+    private readonly List<byte> _header = [];
+    private int _bodyRemaining;
+    private bool _readingBody;
+    private int _limitExceeded;
+
+    internal bool LimitExceeded => Volatile.Read(ref _limitExceeded) != 0;
+
+    public override bool CanRead => inner.CanRead;
+
+    public override bool CanSeek => false;
+
+    public override bool CanWrite => false;
+
+    public override long Length => throw new NotSupportedException();
+
+    public override long Position
+    {
+        get => throw new NotSupportedException();
+        set => throw new NotSupportedException();
+    }
+
+    public override int Read(byte[] buffer, int offset, int count) =>
+        Read(buffer.AsSpan(offset, count));
+
+    public override int Read(Span<byte> buffer)
+    {
+        if (buffer.IsEmpty)
+        {
+            return 0;
+        }
+
+        int read = inner.Read(buffer[..ReadLength(buffer.Length)]);
+        Inspect(buffer[..read]);
+        return read;
+    }
+
+    public override async ValueTask<int> ReadAsync(
+        Memory<byte> buffer,
+        CancellationToken cancellationToken = default)
+    {
+        if (buffer.IsEmpty)
+        {
+            return 0;
+        }
+
+        int read = await inner.ReadAsync(buffer[..ReadLength(buffer.Length)], cancellationToken);
+        Inspect(buffer.Span[..read]);
+        return read;
+    }
+
+    public override Task<int> ReadAsync(
+        byte[] buffer,
+        int offset,
+        int count,
+        CancellationToken cancellationToken) =>
+        ReadAsync(buffer.AsMemory(offset, count), cancellationToken).AsTask();
+
+    private int ReadLength(int requested) =>
+        LimitExceeded ? throw new InvalidDataException("jdt_prepared_response_too_large") :
+        _readingBody ? Math.Min(requested, _bodyRemaining) : 1;
+
+    private void Inspect(ReadOnlySpan<byte> bytes)
+    {
+        if (_readingBody)
+        {
+            _bodyRemaining -= bytes.Length;
+            if (_bodyRemaining == 0)
+            {
+                _readingBody = false;
+            }
+
+            return;
+        }
+
+        foreach (byte value in bytes)
+        {
+            _header.Add(value);
+            if (_header.Count > MaximumHeaderBytes)
+            {
+                throw new InvalidDataException("jdt_prepared_header_invalid");
+            }
+
+            int count = _header.Count;
+            if (count < 4 || _header[count - 4] != '\r' || _header[count - 3] != '\n' ||
+                _header[count - 2] != '\r' || _header[count - 1] != '\n')
+            {
+                continue;
+            }
+
+            string header = Encoding.ASCII.GetString(_header.ToArray());
+            string[] lengths = header.Split("\r\n", StringSplitOptions.RemoveEmptyEntries)
+                .Where(line => line.StartsWith("Content-Length:", StringComparison.OrdinalIgnoreCase))
+                .ToArray();
+            if (lengths.Length != 1 || !int.TryParse(lengths[0]["Content-Length:".Length..].Trim(),
+                    System.Globalization.NumberStyles.None,
+                    System.Globalization.CultureInfo.InvariantCulture, out int bodyLength) ||
+                bodyLength < 0)
+            {
+                throw new InvalidDataException("jdt_prepared_header_invalid");
+            }
+
+            _header.Clear();
+            if (bodyLength > maximumBodyBytes)
+            {
+                Volatile.Write(ref _limitExceeded, 1);
+                throw new InvalidDataException("jdt_prepared_response_too_large");
+            }
+
+            _bodyRemaining = bodyLength;
+            _readingBody = bodyLength != 0;
+        }
+    }
+
+    public override void Flush() { }
+
+    public override long Seek(long offset, SeekOrigin origin) => throw new NotSupportedException();
+
+    public override void SetLength(long value) => throw new NotSupportedException();
+
+    public override void Write(byte[] buffer, int offset, int count) => throw new NotSupportedException();
 }
 
 internal interface IJdtLsProtocolClientFactory

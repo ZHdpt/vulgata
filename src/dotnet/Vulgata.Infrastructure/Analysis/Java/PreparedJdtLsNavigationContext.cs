@@ -183,6 +183,29 @@ public sealed class PreparedJdtLsNavigationContext : IPreparedJavaNavigationCont
                         : PreparedJavaNavigationOutcome.DeadlineExceeded
                     : PreparedJavaNavigationOutcome.ConfigurationUnavailable);
             }
+            catch (PreparedJdtResponseBytesExceededException)
+            {
+                bool settled = await RetireSessionUnderGateAsync();
+                if (!settled)
+                {
+                    return Empty(operation, PreparedJavaNavigationOutcome.ConfigurationUnavailable);
+                }
+
+                if (linked.IsCancellationRequested)
+                {
+                    return Empty(operation, cancellationToken.IsCancellationRequested
+                        ? PreparedJavaNavigationOutcome.Cancelled
+                        : PreparedJavaNavigationOutcome.DeadlineExceeded);
+                }
+
+                return new PreparedJavaNavigationResult(
+                    RepositoryId,
+                    operation,
+                    PreparedJavaNavigationOutcome.Limited,
+                    [],
+                    [],
+                    PreparedJavaStoppingLimit.ResponseBytes);
+            }
             catch (Exception)
             {
                 bool settled = await RetireSessionUnderGateAsync();
