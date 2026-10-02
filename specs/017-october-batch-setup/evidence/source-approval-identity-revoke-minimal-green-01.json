@@ -1,0 +1,29 @@
+{
+  "kind": "test-green",
+  "stage": "implement",
+  "evidence_id": "18-4/source-approval-identity-revoke-minimal-green/1",
+  "source_commit": "ea7062a84abc74bd3609b1292159a27776530971",
+  "red": {
+    "path": "specs/017-october-batch-setup/evidence/source-approval-identity-revoke-red-01.json",
+    "sha256": "f6bd493d1d1119cfe758a238f20eece02ed9a0d03814daad2b5ff205250da034"
+  },
+  "minimal_green": {
+    "command": "pwsh -NoProfile -File eng/test.ps1 -Suite PostgreSql -WithPostgreSql -Filter 'FullyQualifiedName~RevokeSourceApprovalAsync_DoesNotRevokeWhenFreshIdentityDatabaseChanges'",
+    "exit_code": 0,
+    "selected": 1,
+    "passed": 1,
+    "failed": 0,
+    "skipped": 0,
+    "trx_path": "TestResults/isolation-ba94672f248f4a4f920f0927a4926072/results.trx",
+    "trx_sha256": "7e3c31c27781be23532dd9e08d5b2697d67f7903aeda9f4b43a158c2ac3bc67f"
+  },
+  "source": {
+    "path": "src/dotnet/Vulgata.Web/Data/OctoberLocalAuthority.cs",
+    "sha256": "905d38c9e35435e26235b96285aae7c2a05d0ba75eddacca0b140f85c70eb90f",
+    "change": "Revoke only reuses existing private Identity check before freshsubjectread; mismatchUnavailable and noapprovalmutation. Issue/Verify unchanged."
+  },
+  "whole_unit_assessment": "Retained production owner assessed affectedauthorityunit: allfive freshIdentityreadingentrypoints use same bounded/scopeddatabasecheck beforeIdentityreads; cancellation/awaiteddisposal/acceptedrevocationpolicy retained. No concrete private refactor needed.",
+  "cleanup": "OwnedA/Bfixtures disposed/absencechecked. Root read exactcontainer cleanup/[]/namedvolumeabsence forba94672f248f4a4f920f0927a4926072.",
+  "limits": "MinimalGREEN only; testalso verifies approvalstillCurrentonoriginalA. Testowner finalshape assessment/focused+surroundingregression pending beforecheckpoint. No wholeStory/runtimeA-Bclaim.",
+  "workflow": "ExpectedRED noncounting; recovery6/7/definitionowner/approvals/18.1contracts unchanged."
+}

@@ -1,0 +1,31 @@
+{
+  "kind": "test-red",
+  "stage": "implement",
+  "evidence_id": "18-4/source-approval-identity-issue-red/1",
+  "source_commit": "ea7062a84abc74bd3609b1292159a27776530971",
+  "observed_after": {
+    "path": "specs/017-october-batch-setup/evidence/transitions/transition-0103-identity-descriptor-enforcement-expected-red.json",
+    "sha256": "e396f79e6f92a3a50d255a3b8aa669650dcb4a4cb423e64b3858721e0de0e1df"
+  },
+  "input_hashes": {
+    "tests/Vulgata.Tests/October/OctoberLocalSourceApprovalTests.cs": "b452b40d74740b67a9c01a8f73d8ed5f61e3a11eab39f590a43cb625634a40e8",
+    "src/dotnet/Vulgata.Web/Data/OctoberLocalAuthority.cs": "729af1d48f13ee491b1b433f671dae5af709e69a331ba0508156e831cbd32adb"
+  },
+  "raw_result": {
+    "command": "pwsh -NoProfile -File eng/test.ps1 -Suite PostgreSql -WithPostgreSql -Filter 'FullyQualifiedName~IssueSourceApprovalAsync_DoesNotIssueWhenFreshIdentityDatabaseCannotBeConfirmed'",
+    "exit_code": 1,
+    "selected": 1,
+    "passed": 0,
+    "failed": 1,
+    "skipped": 0,
+    "trx_path": "TestResults/isolation-527005b7311d43b5907e8826c330c7da/results.trx",
+    "trx_sha256": "f023b47b8305a3a5b8100be205d2e0437bf02ddcc923072bf859a3296d3f4bb0",
+    "failure": "Expected closed status other than Issued after configured Identity A/effective fresh scope Identity B mismatch; actual Issued. No later payload assertions executed.",
+    "seam": "IOctoberLocalAuthority.IssueSourceApprovalAsync; accepted existing fresh current authority/source approval operations.",
+    "stimulus": "Authenticate and commit selection on A first; switch fresh scopes to B holding same synthetic subject/security stamp/SystemOwner role. Actual Npgsql scoped connection drift independent of private SQL.",
+    "identity_a": "vulgata_story184_identity_01df5386b645466cb217064540217339",
+    "identity_b": "vulgata_story184_identity_1ac06850ee6d4786b85cbe9f270cbd76",
+    "cleanup": "Existing fixture drops successfully created exact A/B and verifies absence. Root read owned-container cleanup and []/named-volume-absence receipts for527005b7311d43b5907e8826c330c7da."
+  },
+  "scope": "Expected RED for unfinished coherent-group Identity enforcement, noncounting. First flawed75df stimulus retained separately. No new source contract/public verifier/18.1 modification/plan change. Next minimal Issue-only reuse of existing Identity checker, same production owner."
+}

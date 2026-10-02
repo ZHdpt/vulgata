@@ -297,6 +297,41 @@ public sealed class OctoberHostSelectionTests(ITestOutputHelper output)
 
     [Trait("Suite", "E2E")]
     [SuiteFact("E2E")]
+    public async Task GeneratorPrepare_MismatchedOwnedIdentityDescriptorFailsClosedBeforeOctoberMigration()
+    {
+        await using GeneratorPrepareFixture fixture = await GeneratorPrepareFixture.CreateAsync(output);
+        OctoberSetupRequest request = fixture.CreatePrepareRequest();
+        string requestJson = JsonSerializer.Serialize(request);
+
+        await fixture.AssertOwnedOperatorCanPrepareAsync(request);
+        await fixture.AssertOwnedProviderDocumentBindsAsync();
+        await fixture.AssertOctoberSchemaAbsentAsync();
+        string mismatchedIdentity = fixture.CreateMismatchedCanonicalDatabaseIdentity();
+        output.WriteLine("identity-descriptor=synthetic-mismatch-on-same-owned-identity-connection");
+
+        using Process process = fixture.StartGenerator(
+            "prepare", requestJson,
+            identityConnectionStringOverride: fixture.ConnectionString,
+            identityCanonicalDatabaseIdentityOverride: mismatchedIdentity);
+        output.WriteLine($"generator-process-id={process.Id}");
+        (int exitCode, string standardOutput, string standardError) =
+            await fixture.WaitForGeneratorAsync(process);
+        output.WriteLine($"generator-exit-code={exitCode}");
+
+        string childOutput = standardOutput + standardError;
+        Assert.DoesNotContain(fixture.OperatorPassword, childOutput, StringComparison.Ordinal);
+        Assert.DoesNotContain(fixture.ProviderApiKeyWorker, childOutput, StringComparison.Ordinal);
+        Assert.DoesNotContain(fixture.ProviderApiKeyChat, childOutput, StringComparison.Ordinal);
+        Assert.DoesNotContain(fixture.ConnectionString, childOutput, StringComparison.Ordinal);
+        Assert.DoesNotContain(mismatchedIdentity, childOutput, StringComparison.Ordinal);
+        Assert.DoesNotContain(fixture.OwnedRoot, childOutput, StringComparison.OrdinalIgnoreCase);
+        await fixture.AssertOctoberSchemaAbsentAsync();
+        Assert.NotEqual(0, exitCode);
+        output.WriteLine("mismatched-owned-identity-descriptor-october-schema=absent");
+    }
+
+    [Trait("Suite", "E2E")]
+    [SuiteFact("E2E")]
     public async Task GeneratorPrepare_MismatchedOwnedTargetDescriptorReportsTargetUnavailableBeforeOctoberMigration()
     {
         await using GeneratorPrepareFixture fixture = await GeneratorPrepareFixture.CreateAsync(output);
@@ -306,7 +341,7 @@ public sealed class OctoberHostSelectionTests(ITestOutputHelper output)
         await fixture.AssertOwnedOperatorCanPrepareAsync(request);
         await fixture.AssertOwnedProviderDocumentBindsAsync();
         await fixture.AssertOctoberSchemaAbsentAsync();
-        string mismatchedTargetIdentity = fixture.CreateMismatchedTargetCanonicalDatabaseIdentity();
+        string mismatchedTargetIdentity = fixture.CreateMismatchedCanonicalDatabaseIdentity();
         output.WriteLine("target-descriptor=synthetic-database-name-mismatch-on-owned-data-connection");
 
         using Process process = fixture.StartGenerator(
@@ -950,7 +985,7 @@ public sealed class OctoberHostSelectionTests(ITestOutputHelper output)
             return identityConnection.ConnectionString;
         }
 
-        internal string CreateMismatchedTargetCanonicalDatabaseIdentity()
+        internal string CreateMismatchedCanonicalDatabaseIdentity()
         {
             TestResourceScope.ValidateOwnedTarget(ConnectionString);
             NpgsqlConnectionStringBuilder descriptor = new(ConnectionString);
@@ -1131,6 +1166,7 @@ public sealed class OctoberHostSelectionTests(ITestOutputHelper output)
             string? requestJson,
             bool includeCompetingProviderSource = false,
             string? identityConnectionStringOverride = null,
+            string? identityCanonicalDatabaseIdentityOverride = null,
             string? targetCanonicalDatabaseIdentityOverride = null,
             string? invalidStartupConfigurationCase = null)
         {
@@ -1192,7 +1228,7 @@ public sealed class OctoberHostSelectionTests(ITestOutputHelper output)
                 startInfo.Environment["October__Identity__ConnectionName"] = "GeneratorIdentity";
                 startInfo.Environment["ConnectionStrings__GeneratorIdentity"] = identityConnectionStringOverride;
                 startInfo.Environment["October__Identity__CanonicalDatabaseIdentity"] =
-                    CanonicalDatabaseIdentity;
+                    identityCanonicalDatabaseIdentityOverride ?? CanonicalDatabaseIdentity;
             }
             switch (invalidStartupConfigurationCase)
             {

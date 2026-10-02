@@ -1,10 +1,12 @@
 using System.Collections.Immutable;
 using System.Data;
 using System.Data.Common;
+using System.Globalization;
 using System.Security.Cryptography;
 using System.Text.Json;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
 using Vulgata.Core.DomainServices;
 using Vulgata.Infrastructure.Data;
 using Vulgata.Infrastructure.Data.October;
@@ -109,6 +111,59 @@ public sealed class OctoberLocalAuthority : IOctoberLocalAuthority
         _clock = clock ?? throw new ArgumentNullException(nameof(clock));
     }
 
+    private async Task<bool> HasCurrentIdentityDatabaseAsync(
+        IServiceProvider services,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            NpgsqlConnectionStringBuilder configured = new(_configuration.IdentityConnectionString);
+            string configuredIdentity = string.Create(CultureInfo.InvariantCulture,
+                $"postgres://{configured.Host}:{configured.Port}/{configured.Database}");
+            if (!string.Equals(configuredIdentity, _configuration.IdentityCanonicalDatabaseIdentity,
+                    StringComparison.Ordinal))
+            {
+                return false;
+            }
+
+            ApplicationDbContext identity = services.GetRequiredService<ApplicationDbContext>();
+            if (identity.Database.GetDbConnection() is not NpgsqlConnection connection)
+            {
+                return false;
+            }
+
+            NpgsqlConnectionStringBuilder actual = new(connection.ConnectionString);
+            if (!string.Equals(actual.Host, configured.Host, StringComparison.Ordinal) ||
+                actual.Port != configured.Port ||
+                !string.Equals(actual.Database, configured.Database, StringComparison.Ordinal))
+            {
+                return false;
+            }
+
+            await identity.Database.OpenConnectionAsync(cancellationToken);
+            try
+            {
+                await using DbCommand command = connection.CreateCommand();
+                command.CommandText = "SELECT current_database();";
+                string? connectedDatabase = (string?)await command.ExecuteScalarAsync(cancellationToken);
+                return string.Equals(connectedDatabase, configured.Database, StringComparison.Ordinal);
+            }
+            finally
+            {
+                await identity.Database.CloseConnectionAsync();
+            }
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch (Exception exception) when (exception is DbException or InvalidOperationException or
+            ArgumentException or TimeoutException)
+        {
+            return false;
+        }
+    }
+
     public async Task<OctoberAuthenticationResult> AuthenticateAsync(CancellationToken cancellationToken)
     {
         if (cancellationToken.IsCancellationRequested)
@@ -141,6 +196,11 @@ public sealed class OctoberLocalAuthority : IOctoberLocalAuthority
             }
 
             await using AsyncServiceScope scope = _scopes.CreateAsyncScope();
+            if (!await HasCurrentIdentityDatabaseAsync(scope.ServiceProvider, timeout.Token))
+            {
+                return new(OctoberAuthenticationStatus.Unavailable, null);
+            }
+
             UserManager<ApplicationUser> users = scope.ServiceProvider
                 .GetRequiredService<UserManager<ApplicationUser>>();
             SignInManager<ApplicationUser> signIn = scope.ServiceProvider
@@ -315,6 +375,11 @@ public sealed class OctoberLocalAuthority : IOctoberLocalAuthority
         try
         {
             await using AsyncServiceScope scope = _scopes.CreateAsyncScope();
+            if (!await HasCurrentIdentityDatabaseAsync(scope.ServiceProvider, timeout.Token))
+            {
+                return new(OctoberAuthorityDecisionStatus.Unavailable, null, null);
+            }
+
             UserManager<ApplicationUser> users = scope.ServiceProvider
                 .GetRequiredService<UserManager<ApplicationUser>>();
             SignInManager<ApplicationUser> signIn = scope.ServiceProvider
@@ -687,6 +752,11 @@ public sealed class OctoberLocalAuthority : IOctoberLocalAuthority
             }
 
             await using AsyncServiceScope scope = _scopes.CreateAsyncScope();
+            if (!await HasCurrentIdentityDatabaseAsync(scope.ServiceProvider, timeout.Token))
+            {
+                return new(OctoberSourceApprovalStatus.Unavailable, null, null);
+            }
+
             UserManager<ApplicationUser> users = scope.ServiceProvider
                 .GetRequiredService<UserManager<ApplicationUser>>();
             SignInManager<ApplicationUser> signIn = scope.ServiceProvider
@@ -823,6 +893,11 @@ public sealed class OctoberLocalAuthority : IOctoberLocalAuthority
         try
         {
             await using AsyncServiceScope scope = _scopes.CreateAsyncScope();
+            if (!await HasCurrentIdentityDatabaseAsync(scope.ServiceProvider, timeout.Token))
+            {
+                return new(PreparedSourceAuthorityStatus.Unavailable, null);
+            }
+
             UserManager<ApplicationUser> users = scope.ServiceProvider
                 .GetRequiredService<UserManager<ApplicationUser>>();
             SignInManager<ApplicationUser> signIn = scope.ServiceProvider
@@ -956,6 +1031,11 @@ public sealed class OctoberLocalAuthority : IOctoberLocalAuthority
         try
         {
             await using AsyncServiceScope scope = _scopes.CreateAsyncScope();
+            if (!await HasCurrentIdentityDatabaseAsync(scope.ServiceProvider, timeout.Token))
+            {
+                return OctoberRevocationStatus.Unavailable;
+            }
+
             UserManager<ApplicationUser> users = scope.ServiceProvider
                 .GetRequiredService<UserManager<ApplicationUser>>();
             SignInManager<ApplicationUser> signIn = scope.ServiceProvider

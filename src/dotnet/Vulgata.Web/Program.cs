@@ -128,6 +128,10 @@ if (octoberSelection.Mode == OctoberWebMode.SelectedData)
 
     app.Services.GetRequiredService<OctoberSelectedDataBoundSetup>()
         .SetOnce(binding.BoundSetupData);
+    // The selected host owns its immutable provider snapshot for its full lifetime.
+    const string providerBindingKey = "Vulgata.October.SelectedProviderBinding";
+    ((IApplicationBuilder)app).Properties[providerBindingKey] =
+        (providerConfiguration, providerBinding);
 }
 
 IAnalysisRuntimeHealthProbe analysisHealthProbe =

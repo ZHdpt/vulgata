@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Vulgata.Core.DomainServices;
@@ -14,8 +15,85 @@ namespace Vulgata.Tests.October;
 
 public sealed partial class OctoberLocalAuthorityTests
 {
-    [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
+    public async Task IssueSourceApprovalAsync_DoesNotIssueWhenFreshIdentityDatabaseCannotBeConfirmed()
+    {
+        await using ApprovalIdentityFixture fixture = await ApprovalIdentityFixture.CreateAsync();
+        await using IOctoberOperatorSession session = await fixture.AuthenticateAsync();
+        IOctoberHistoricalBoundSetupData boundSetup = await fixture.CreateCommittedBoundSetupAsync(session);
+
+        fixture.UseAlternateIdentityDatabase();
+        OctoberSourceApprovalResult result = await fixture.Authority.IssueSourceApprovalAsync(
+            session, boundSetup, fixture.RepositoryId, CancellationToken.None);
+
+        Assert.True(result.Status != OctoberSourceApprovalStatus.Issued,
+            $"Issue must fail closed when fresh Identity resolves to a different owned database; " +
+            $"configured={fixture.ConfiguredIdentityDatabaseName}, actual={fixture.AlternateIdentityDatabaseName}.");
+        Assert.Null(result.Approval);
+        Assert.Null(result.ExpiresAtUtc);
+    }
+
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
+    public async Task VerifySourceApprovalAsync_DoesNotReturnCurrentWhenFreshIdentityDatabaseChanges()
+    {
+        await using ApprovalIdentityFixture fixture = await ApprovalIdentityFixture.CreateAsync();
+        await using IOctoberOperatorSession session = await fixture.AuthenticateAsync();
+        IOctoberHistoricalBoundSetupData boundSetup = await fixture.CreateCommittedBoundSetupAsync(session);
+        OctoberSourceApprovalResult issued = await fixture.Authority.IssueSourceApprovalAsync(
+            session, boundSetup, fixture.RepositoryId, CancellationToken.None);
+        Assert.Equal(OctoberSourceApprovalStatus.Issued, issued.Status);
+        PreparedSourceApproval approval = Assert.IsAssignableFrom<PreparedSourceApproval>(issued.Approval);
+
+        PreparedSourceAuthorityResult initiallyCurrent = await fixture.Authority.VerifySourceApprovalAsync(
+            session, TargetId, approval, CancellationToken.None);
+        Assert.Equal(PreparedSourceAuthorityStatus.Current, initiallyCurrent.Status);
+        Assert.Equal(approval, initiallyCurrent.CurrentApproval);
+
+        fixture.UseAlternateIdentityDatabase();
+        PreparedSourceAuthorityResult afterIdentityDatabaseChange = await fixture.Authority
+            .VerifySourceApprovalAsync(session, TargetId, approval, CancellationToken.None);
+
+        Assert.NotEqual(PreparedSourceAuthorityStatus.Current, afterIdentityDatabaseChange.Status);
+        Assert.Null(afterIdentityDatabaseChange.CurrentApproval);
+    }
+
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
+    public async Task RevokeSourceApprovalAsync_DoesNotRevokeWhenFreshIdentityDatabaseChanges()
+    {
+        await using ApprovalIdentityFixture fixture = await ApprovalIdentityFixture.CreateAsync();
+        await using IOctoberOperatorSession session = await fixture.AuthenticateAsync();
+        IOctoberHistoricalBoundSetupData boundSetup = await fixture.CreateCommittedBoundSetupAsync(session);
+        OctoberSourceApprovalResult issued = await fixture.Authority.IssueSourceApprovalAsync(
+            session, boundSetup, fixture.RepositoryId, CancellationToken.None);
+        Assert.Equal(OctoberSourceApprovalStatus.Issued, issued.Status);
+        PreparedSourceApproval approval = Assert.IsAssignableFrom<PreparedSourceApproval>(issued.Approval);
+
+        PreparedSourceAuthorityResult initiallyCurrent = await fixture.Authority.VerifySourceApprovalAsync(
+            session, TargetId, approval, CancellationToken.None);
+        Assert.Equal(PreparedSourceAuthorityStatus.Current, initiallyCurrent.Status);
+        Assert.Equal(approval, initiallyCurrent.CurrentApproval);
+
+        fixture.UseAlternateIdentityDatabase();
+        OctoberRevocationStatus afterIdentityDatabaseChange = await fixture.Authority.RevokeSourceApprovalAsync(
+            session, TargetId, approval.ApprovalIdentity, CancellationToken.None);
+
+        Assert.False(afterIdentityDatabaseChange is OctoberRevocationStatus.Revoked or
+            OctoberRevocationStatus.AlreadyRevoked,
+            $"A fresh Identity mismatch must not revoke an approval; " +
+            $"configured={fixture.ConfiguredIdentityDatabaseName}, actual={fixture.AlternateIdentityDatabaseName}.");
+
+        fixture.UseConfiguredIdentityDatabase();
+        PreparedSourceAuthorityResult remainsCurrent = await fixture.Authority.VerifySourceApprovalAsync(
+            session, TargetId, approval, CancellationToken.None);
+        Assert.Equal(PreparedSourceAuthorityStatus.Current, remainsCurrent.Status);
+        Assert.Equal(approval, remainsCurrent.CurrentApproval);
+    }
+
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task IssueSourceApprovalAsync_IssuesExactApprovalForCommittedRepository()
     {
         await using SelectionFixture fixture = await SelectionFixture.CreateAsync();
@@ -59,8 +137,8 @@ public sealed partial class OctoberLocalAuthorityTests
         Assert.False(row.IsRevoked);
     }
 
-    [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task IssueSourceApprovalAsync_DeniesRepositoryOutsideBoundSelectionWithoutPayload()
     {
         await using SelectionFixture fixture = await SelectionFixture.CreateAsync();
@@ -79,8 +157,8 @@ public sealed partial class OctoberLocalAuthorityTests
         Assert.Empty(await october.PreparedSourceApprovals.AsNoTracking().ToListAsync());
     }
 
-    [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task VerifySourceApprovalAsync_ReturnsCurrentIssuedApproval()
     {
         await using SelectionFixture fixture = await SelectionFixture.CreateAsync();
@@ -100,8 +178,8 @@ public sealed partial class OctoberLocalAuthorityTests
         Assert.Equal(approval, verification.CurrentApproval);
     }
 
-    [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task VerifySourceApprovalAsync_RejectsExpiredApprovalWithoutPayload()
     {
         await using SelectionFixture fixture = await SelectionFixture.CreateAsync();
@@ -121,8 +199,8 @@ public sealed partial class OctoberLocalAuthorityTests
         Assert.Null(expired.CurrentApproval);
     }
 
-    [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task VerifySourceApprovalAsync_RejectsApprovalAtSessionExpiryWithoutPayload()
     {
         TimeSpan sessionLifetime = TimeSpan.FromMinutes(2);
@@ -148,8 +226,8 @@ public sealed partial class OctoberLocalAuthorityTests
                 session, TargetId, approval.ApprovalIdentity, CancellationToken.None));
     }
 
-    [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task VerifyAndRevokeSourceApprovalAsync_DenyDisposedAuthenticatedSession()
     {
         await using SelectionFixture fixture = await SelectionFixture.CreateAsync();
@@ -172,8 +250,8 @@ public sealed partial class OctoberLocalAuthorityTests
                 session, TargetId, approval.ApprovalIdentity, CancellationToken.None));
     }
 
-    [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task IssueVerifyAndRevokeSourceApprovalAsync_RespectCancellationContracts()
     {
         await using SelectionFixture fixture = await SelectionFixture.CreateAsync();
@@ -210,8 +288,8 @@ public sealed partial class OctoberLocalAuthorityTests
         Assert.False(row.IsRevoked);
     }
 
-    [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task IssueSourceApprovalAsync_ReturnsUnavailableWithoutPayloadWhenApprovalStoreFails()
     {
         await using SelectionFixture fixture = await SelectionFixture.CreateAsync();
@@ -232,8 +310,8 @@ public sealed partial class OctoberLocalAuthorityTests
         Assert.Null(result.ExpiresAtUtc);
     }
 
-    [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task VerifyAndRevokeSourceApprovalAsync_ReturnUnavailableWhenApprovalStoreFails()
     {
         await using SelectionFixture fixture = await SelectionFixture.CreateAsync();
@@ -261,8 +339,8 @@ public sealed partial class OctoberLocalAuthorityTests
         Assert.Equal(OctoberRevocationStatus.Unavailable, revocation);
     }
 
-    [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task VerifySourceApprovalAsync_SameAuthorityAdvisoryEditsPreserveApprovalAndHistory()
     {
         await using SelectionFixture fixture = await SelectionFixture.CreateAsync();
@@ -318,8 +396,8 @@ public sealed partial class OctoberLocalAuthorityTests
         Assert.Equal(storedHistory, retainedHistory);
     }
 
-    [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task VerifySourceApprovalAsync_ClosesSessionAfterOwnershipLossWithoutReactivation()
     {
         await using SelectionFixture fixture = await SelectionFixture.CreateAsync();
@@ -358,8 +436,8 @@ public sealed partial class OctoberLocalAuthorityTests
         Assert.Null(afterRestoration.CurrentApproval);
     }
 
-    [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task VerifySourceApprovalAsync_RevokesAfterManagementRoleRemoval()
     {
         await AssertApprovalRevokedAfterIdentityChangeAsync(async (users, user) =>
@@ -369,8 +447,8 @@ public sealed partial class OctoberLocalAuthorityTests
         });
     }
 
-    [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task VerifySourceApprovalAsync_RevokesAfterSecurityStampChange()
     {
         await AssertApprovalRevokedAfterIdentityChangeAsync(async (users, user) =>
@@ -380,8 +458,8 @@ public sealed partial class OctoberLocalAuthorityTests
         });
     }
 
-    [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task VerifySourceApprovalAsync_RevokesWhenIdentityAccountIsLockedOut()
     {
         await AssertApprovalRevokedAfterIdentityChangeAsync(async (users, user) =>
@@ -393,8 +471,8 @@ public sealed partial class OctoberLocalAuthorityTests
         });
     }
 
-    [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task VerifySourceApprovalAsync_RevokesAfterIdentityAccountDeletion()
     {
         await AssertApprovalRevokedAfterIdentityChangeAsync(async (users, user) =>
@@ -404,8 +482,8 @@ public sealed partial class OctoberLocalAuthorityTests
         });
     }
 
-    [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task RevokeSourceApprovalAsync_RevokesCurrentSubjectApproval()
     {
         await using SelectionFixture fixture = await SelectionFixture.CreateAsync();
@@ -452,8 +530,8 @@ public sealed partial class OctoberLocalAuthorityTests
         Assert.Null(afterRevocation.CurrentApproval);
     }
 
-    [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task RevokeSourceApprovalAsync_AllowsCurrentAdministratorForExactAuthority()
     {
         const string administratorId = "october-approval-administrator";
@@ -519,8 +597,8 @@ public sealed partial class OctoberLocalAuthorityTests
         Assert.True(row.IsRevoked);
     }
 
-    [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task RevokeSourceApprovalAsync_DeniesNonOwnerAndUnknownIdentityWithoutDisclosure()
     {
         const string otherOperatorId = "october-unprivileged-operator";
@@ -592,8 +670,8 @@ public sealed partial class OctoberLocalAuthorityTests
         Assert.True(row.IsRevoked);
     }
 
-    [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task VerifySourceApprovalAsync_RejectsMismatchedTupleAndAuthorityWithoutPayload()
     {
         await using SelectionFixture fixture = await SelectionFixture.CreateAsync();
@@ -633,6 +711,7 @@ public sealed partial class OctoberLocalAuthorityTests
             new OctoberOperatorCredentials(UserName, Password));
         await using ServiceProvider foreignProvider = CreateAuthorityProvider(
             fixture.Connection,
+            fixture.IdentityDatabase,
             foreignCredentials,
             fixture.Clock,
             authorityId: "october-foreign-approval-authority");
@@ -656,9 +735,13 @@ public sealed partial class OctoberLocalAuthorityTests
     }
 
     private static async Task<(OctoberCommittedBatch Batch, IOctoberHistoricalBoundSetupData BoundSetup)>
-        CreateCommittedBoundSetupAsync(SelectionFixture fixture, IOctoberOperatorSession session)
+        CreateCommittedBoundSetupAsync(
+            SelectionFixture fixture,
+            IOctoberOperatorSession session,
+            IOctoberLocalAuthority? authorityOverride = null)
     {
-        OctoberAuthoritySelectionResult authorization = await fixture.Authority.AuthorizeSelectionAsync(
+        IOctoberLocalAuthority authority = authorityOverride ?? fixture.Authority;
+        OctoberAuthoritySelectionResult authorization = await authority.AuthorizeSelectionAsync(
             session, fixture.CreateRequest(), CancellationToken.None);
         Assert.Equal(OctoberAuthorityDecisionStatus.Authorized, authorization.Status);
         OctoberSetupRequest request = Assert.IsAssignableFrom<OctoberSetupRequest>(authorization.Request);
@@ -710,5 +793,181 @@ public sealed partial class OctoberLocalAuthorityTests
             session, TargetId, approval, CancellationToken.None);
         Assert.Equal(PreparedSourceAuthorityStatus.Revoked, rejected.Status);
         Assert.Null(rejected.CurrentApproval);
+    }
+
+    private sealed class ApprovalIdentityFixture : IAsyncDisposable
+    {
+        private readonly SelectionFixture _selectionFixture;
+        private readonly OctoberOwnedIdentityFixture _alternateIdentityDatabase;
+        private readonly ServiceProvider _alternateIdentityProvider;
+        private readonly SwitchableIdentityScopeFactory _scopes;
+
+        private ApprovalIdentityFixture(
+            SelectionFixture selectionFixture,
+            OctoberOwnedIdentityFixture alternateIdentityDatabase,
+            ServiceProvider alternateIdentityProvider,
+            SwitchableIdentityScopeFactory scopes,
+            IOctoberLocalAuthority authority)
+        {
+            _selectionFixture = selectionFixture;
+            _alternateIdentityDatabase = alternateIdentityDatabase;
+            _alternateIdentityProvider = alternateIdentityProvider;
+            _scopes = scopes;
+            Authority = authority;
+        }
+
+        public ServiceProvider Provider => _selectionFixture.Provider;
+        public SqliteConnection Connection => _selectionFixture.Connection;
+        public OctoberOwnedIdentityFixture IdentityDatabase => _selectionFixture.IdentityDatabase;
+        public ControlledCredentialSource CredentialSource => _selectionFixture.CredentialSource;
+        public FixedTimeProvider Clock => _selectionFixture.Clock;
+        public IOctoberLocalAuthority Authority { get; }
+        public string ConfiguredIdentityDatabaseName => IdentityDatabase.DatabaseName;
+        public string AlternateIdentityDatabaseName => _alternateIdentityDatabase.DatabaseName;
+        public Guid? SystemId => _selectionFixture.SystemId;
+        public Guid RepositoryId => _selectionFixture.RepositoryId;
+        public Guid GlobalContextId => _selectionFixture.GlobalContextId;
+
+        public static async Task<ApprovalIdentityFixture> CreateAsync()
+        {
+            SelectionFixture selectionFixture = await SelectionFixture.CreateAsync();
+            OctoberOwnedIdentityFixture? alternateIdentityDatabase = null;
+            ServiceProvider? alternateIdentityProvider = null;
+            try
+            {
+                alternateIdentityDatabase = await OctoberOwnedIdentityFixture.CreateAsync();
+                alternateIdentityProvider = CreateAuthorityProvider(
+                    selectionFixture.Connection,
+                    alternateIdentityDatabase,
+                    selectionFixture.CredentialSource,
+                    selectionFixture.Clock);
+                string subjectSecurityStamp;
+                await using (AsyncServiceScope identityScope = selectionFixture.Provider.CreateAsyncScope())
+                {
+                    UserManager<ApplicationUser> users = identityScope.ServiceProvider
+                        .GetRequiredService<UserManager<ApplicationUser>>();
+                    ApplicationUser user = Assert.IsAssignableFrom<ApplicationUser>(
+                        await users.FindByIdAsync(SubjectId));
+                    subjectSecurityStamp = await users.GetSecurityStampAsync(user);
+                }
+
+                await SeedMatchingIdentityAsync(alternateIdentityProvider, subjectSecurityStamp);
+
+                SwitchableIdentityScopeFactory scopes = new(selectionFixture.Provider, alternateIdentityProvider);
+                OctoberLocalAuthority authority = new(
+                    scopes,
+                    CreateConfiguration(selectionFixture.Connection.ConnectionString,
+                        selectionFixture.IdentityDatabase),
+                    selectionFixture.CredentialSource,
+                    selectionFixture.Clock);
+                return new ApprovalIdentityFixture(selectionFixture, alternateIdentityDatabase,
+                    alternateIdentityProvider, scopes, authority);
+            }
+            catch
+            {
+                try
+                {
+                    if (alternateIdentityProvider is not null)
+                        await alternateIdentityProvider.DisposeAsync();
+                }
+                finally
+                {
+                    try
+                    {
+                        if (alternateIdentityDatabase is not null)
+                            await alternateIdentityDatabase.DisposeAsync();
+                    }
+                    finally
+                    {
+                        await selectionFixture.DisposeAsync();
+                    }
+                }
+                throw;
+            }
+        }
+
+        public void UseAlternateIdentityDatabase() => _scopes.UseAlternateIdentityDatabase();
+        public void UseConfiguredIdentityDatabase() => _scopes.UseConfiguredIdentityDatabase();
+
+        public async Task<IOctoberOperatorSession> AuthenticateAsync()
+        {
+            CredentialSource.Credentials = new OctoberOperatorCredentials(UserName, Password);
+            OctoberAuthenticationResult authentication = await Authority.AuthenticateAsync(CancellationToken.None);
+            Assert.Equal(OctoberAuthenticationStatus.Authenticated, authentication.Status);
+            return Assert.IsAssignableFrom<IOctoberOperatorSession>(authentication.Session);
+        }
+
+        public async Task<IOctoberHistoricalBoundSetupData> CreateCommittedBoundSetupAsync(
+            IOctoberOperatorSession session)
+        {
+            return (await OctoberLocalAuthorityTests.CreateCommittedBoundSetupAsync(
+                _selectionFixture, session, Authority)).BoundSetup;
+        }
+
+        public async ValueTask DisposeAsync()
+        {
+            try
+            {
+                await _alternateIdentityProvider.DisposeAsync();
+            }
+            finally
+            {
+                try
+                {
+                    await _alternateIdentityDatabase.DisposeAsync();
+                }
+                finally
+                {
+                    await _selectionFixture.DisposeAsync();
+                }
+            }
+        }
+
+        private static async Task SeedMatchingIdentityAsync(ServiceProvider provider, string securityStamp)
+        {
+            await using AsyncServiceScope scope = provider.CreateAsyncScope();
+            ApplicationDbContext identity = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            await identity.Database.MigrateAsync();
+
+            RoleManager<IdentityRole> roles = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+            IdentityResult roleCreated = await roles.CreateAsync(new IdentityRole(RoleNames.SystemOwner));
+            Assert.True(roleCreated.Succeeded, string.Join("; ", roleCreated.Errors.Select(error => error.Code)));
+
+            UserManager<ApplicationUser> users = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+            ApplicationUser user = new()
+            {
+                Id = SubjectId,
+                UserName = UserName,
+                Email = UserName,
+                EmailConfirmed = true,
+                LockoutEnabled = true,
+            };
+            IdentityResult created = await users.CreateAsync(user, Password);
+            Assert.True(created.Succeeded, string.Join("; ", created.Errors.Select(error => error.Code)));
+            user.SecurityStamp = securityStamp;
+            IdentityResult stampSet = await users.UpdateAsync(user);
+            Assert.True(stampSet.Succeeded, string.Join("; ", stampSet.Errors.Select(error => error.Code)));
+            Assert.Equal(securityStamp, await users.GetSecurityStampAsync(user));
+            IdentityResult roleAssigned = await users.AddToRoleAsync(user, RoleNames.SystemOwner);
+            Assert.True(roleAssigned.Succeeded, string.Join("; ", roleAssigned.Errors.Select(error => error.Code)));
+        }
+
+        private sealed class SwitchableIdentityScopeFactory(
+            ServiceProvider configuredIdentityProvider,
+            ServiceProvider alternateIdentityProvider) : IServiceScopeFactory
+        {
+            private int _useAlternateIdentity;
+
+            public IServiceScope CreateScope()
+            {
+                ServiceProvider provider = Volatile.Read(ref _useAlternateIdentity) == 0
+                    ? configuredIdentityProvider
+                    : alternateIdentityProvider;
+                return provider.GetRequiredService<IServiceScopeFactory>().CreateScope();
+            }
+
+            public void UseAlternateIdentityDatabase() => Volatile.Write(ref _useAlternateIdentity, 1);
+            public void UseConfiguredIdentityDatabase() => Volatile.Write(ref _useAlternateIdentity, 0);
+        }
     }
 }

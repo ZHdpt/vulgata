@@ -1,0 +1,24 @@
+{
+  "kind": "implementation-evidence",
+  "stage": "implement",
+  "story_key": "18-4-prepare-an-owned-october-batch-with-valid-context-and-provid",
+  "source_commit": "ea7062a84abc74bd3609b1292159a27776530971",
+  "route": "nonbehavioral-private-lifetime-direct-verification",
+  "obligation": "Accepted contracts/provider-binding.md host owns immutable successful input/result for process lifetime, T024.",
+  "production": {
+    "path": "src/dotnet/Vulgata.Web/Program.cs",
+    "sha256": "773f913dfbfb151dfe0bf360741f0e88e635745418841e6b06c661b9ca21c85b",
+    "disposition": "Selected-data branch stores immutable configuration plus complete successful binding result in per-host IApplicationBuilder.Properties under private string key. Ordinary branch unchanged; no consumer/reload/public interface/provider call. Whole affected startup unit assessed; no further private refactor required."
+  },
+  "development_correction": "Initial new-object dictionary key was a static type mistake; replaced with valid branch-local string key. First ordinary development/build correction, noncounting, not independent negative review/convergence.",
+  "build": {
+    "command": "dotnet build src/dotnet/Vulgata.Web/Vulgata.Web.csproj",
+    "exit_code": 0,
+    "errors": 0,
+    "warnings": 470,
+    "evidence": "Retained production-owner execution report; no separate build log generated. Later fresh wrapper and final configured build evidence remain required."
+  },
+  "direct_verification": "Root inspected selected-only three-line diff; production owner git diff --check passed.",
+  "limits": "Compilation/direct ownership proof only. Fresh selected-Web/ordinary/reload checks pending Identity fixture reconciliation; no actual Web listener/runtime/PostgreSQL/lifetime-GC claim.",
+  "workflow": "Approvals/owners/recovery6/7 unchanged; no fabricated RED for absent future consumer."
+}

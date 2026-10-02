@@ -1,0 +1,30 @@
+{
+  "kind": "test-red",
+  "stage": "implement",
+  "evidence_id": "18-4/source-approval-identity-revoke-red/1",
+  "source_commit": "ea7062a84abc74bd3609b1292159a27776530971",
+  "observed_after": {
+    "path": "specs/017-october-batch-setup/evidence/transitions/transition-0105-source-approval-identity-verify-expected-red.json",
+    "sha256": "4c3d0b6a94f4712e746c6bec4638b077a725604f6abbcb7cb49af09311cd031a"
+  },
+  "input_hashes": {
+    "tests/Vulgata.Tests/October/OctoberLocalSourceApprovalTests.cs": "0b5810a6ba68303e1792d866e62a5c32eea8370ad833c8cc9e68dbd4c07acc3b",
+    "src/dotnet/Vulgata.Web/Data/OctoberLocalAuthority.cs": "2583ef0f25ead170353fecc84ceb07f6173b08954e9055ed8e25065ce0b0e727"
+  },
+  "raw_result": {
+    "command": "pwsh -NoProfile -File eng/test.ps1 -Suite PostgreSql -WithPostgreSql -Filter 'FullyQualifiedName~RevokeSourceApprovalAsync_DoesNotRevokeWhenFreshIdentityDatabaseChanges'",
+    "exit_code": 1,
+    "selected": 1,
+    "passed": 0,
+    "failed": 1,
+    "skipped": 0,
+    "trx_path": "TestResults/isolation-c4eed3081f134457b367f443a6c31ef4/results.trx",
+    "trx_sha256": "6431511e0bd3235ac1e1062b3d76f1ed4f7c75dbc8f74ad5abbe6d79dc7840ef",
+    "failure": "Approval issued and Current on actualIdentityA before switchfreshscopesB withsame synthetic subject/stamp/role. Revoke returned Revoked orAlreadyRevoked success, failing no-success assertion; later approvalstillCurrentonA assertionnotrun.",
+    "seam": "IOctoberLocalAuthority.RevokeSourceApprovalAsync, accepted current authority for revocation.",
+    "identity_a": "vulgata_story184_identity_bbca9a07947b4c688554ca5784242b28",
+    "identity_b": "vulgata_story184_identity_2f672ad08b794c7d9dd6cb3949340040",
+    "cleanup": "ExactownedA/Bfixtures disposed andabsencechecked. Root readcleanup and []/namedvolumeabsent receipts forc4eed3081f134457b367f443a6c31ef4."
+  },
+  "scope": "Expected RED for unfinished Revoke after Issue/Verify minimalGREEN, noncounting. No publiccontract/18.1/plan/resourcechanges. Same implementer minimal existingprivateIdentitycheck next; finalgroupassessment/regression afterward."
+}

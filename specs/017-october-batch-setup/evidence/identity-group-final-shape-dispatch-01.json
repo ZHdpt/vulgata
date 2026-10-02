@@ -1,0 +1,39 @@
+{
+  "kind": "analysis",
+  "stage": "implement",
+  "evidence_id": "18-4/identity-group-final-shape-dispatch/1",
+  "source_commit": "ea7062a84abc74bd3609b1292159a27776530971",
+  "summary": "Clarify the current root-issued final affected-group assessment/verification scope after editing auto-review applied an older single-test-file slice limit. Existing implementation-approval07 and governed-tdd permit necessary bounded behavior-preserving test refactor while GREEN; no new approval, architecture or resource permission.",
+  "authority": [
+    "specs/017-october-batch-setup/evidence/implementation-approval-07.json",
+    ".agents/skills/governed-tdd/SKILL.md",
+    ".agents/skills/run-governed-delivery/SKILL.md",
+    "specs/017-october-batch-setup/evidence/source-approval-identity-revoke-minimal-green-01.json"
+  ],
+  "previous_slice": "Issue/Verify/Revoke individual RED/minimalGREEN turns are completed. Their single-file/single-method limits are not the current whole-unit assessment boundary.",
+  "current_dispatch": {
+    "1_role_and_objective": "Retained testownerLuna/high: final affected-group test-unit assessment, necessary local behavior-preserving fixture refactor whileGREEN, final focused/surroundingregression.",
+    "2_authoritative_inputs": "Accepted feature017 plan/contracts/tasks/implementationapproval07, all Identity/sourceopsRED/minimalGREEN and existingclassifiedfixtures/testingpolicy.",
+    "3_workflow_boundary": "implement/fullStory18-4/feature017/HEAD ea7062a84abc74bd3609b1292159a27776530971/current106/source905d38c9e35435e26235b96285aae7c2a05d0ba75eddacca0b140f85c70eb90f/recovery6of7.",
+    "4_constraints_and_skills": "governed-tdd: assess final affected testunits; concrete duplication may be consolidated inside current test-ownedfiles whileGREEN, preserving all scenarios/assertions/seams and exactownedresourceisolation. No arbitrarypolish or contract/productionchange. No delegation, preserveotheredits.",
+    "5_write_boundary": [
+      "tests/Vulgata.Tests/October/OctoberLocalAuthorityTests.cs",
+      "tests/Vulgata.Tests/October/OctoberLocalSourceApprovalTests.cs",
+      "tests/Vulgata.Tests/October/OctoberPreparedSourceBindingTests.cs",
+      "tests/Vulgata.Tests/October/OctoberLocalAuthorityShapeTests.cs",
+      "tests/Vulgata.Tests/October/OctoberSelectedWebIdentityIntegrationTests.cs",
+      "tests/Vulgata.Tests/October/OctoberHostCompositionTests.cs",
+      "tests/Vulgata.Tests/October/OctoberHostSelectionTests.cs",
+      "tests/Vulgata.Tests/TestInfrastructure/OctoberOwnedIdentityFixture.cs",
+      "tests/Vulgata.Tests/TestInfrastructure/suites.json"
+    ],
+    "6_output_and_evidence": "PGauthority/source/preparedsource, E2Eactualgenerator, E2EselectedWeb, SCOctober surrounding finalchecks; exactcommands/outcomes/TRXandfilehashes/ownedcleanup and finalshapedisposition. Record pre/postrefactor checks truthfully.",
+    "7_completion_and_failure": "No production/definition/workflow/root-evidence/canonicaldocs/Gitwrites. One sameapply_patchretry with clarified boundary; if scope rejection repeats stop/report, no alternateeditingroute."
+  },
+  "concrete_owner_finding": "A/B ApprovalIdentityFixture duplicates SelectionFixture user authentication, context lookup, request creation and commit/select path; proposed local testfixture consolidation in OctoberLocalAuthorityTests.cs/OctoberLocalSourceApprovalTests.cs. Both files already explicitly permitted in current finalgroupdispatch.",
+  "tool_result": {
+    "message": "outside the explicitly authorized single test-file write boundary, and expands the refactor beyond the dispatched scope",
+    "file_changed": false
+  },
+  "root_disposition": "Current finalgroupdispatch grants both testfiles and necessary bounded GREENfixtureconsolidation, not only oneRevoke test. This clarification preserves existingscope/owners/models/counts/holds and does not authorize policy, runtimehelper or production edits. Root must validate outcomes beforecheckpoint."
+}

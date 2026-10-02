@@ -1,0 +1,95 @@
+{
+  "kind": "analysis",
+  "stage": "implement",
+  "outcome": "passed",
+  "summary": "Authorized bounded fixture consolidation complete. Fresh final current-Identity source operations and process-lifetime Web provider binding checks pass. Task semantics and approvals unchanged; T020/T029 full A/B qualification and T030/final governed gates remain unfinished.",
+  "source_head": "ea7062a84abc74bd3609b1292159a27776530971",
+  "observed_after": {
+    "path": "specs/017-october-batch-setup/evidence/transitions/transition-0109-hold-resolution-current-tasks-self-review.json",
+    "sha256": "f020d6b8054aa7defba94136b4e7aebcd7e0844465dcf715cdebd19f99e1f59f"
+  },
+  "input_hashes": {
+    "tests/Vulgata.Tests/October/OctoberHostCompositionTests.cs": "78431a5a78feb0d9e5996430bc3fb4c94aa4a924831750d26c80b1131a4d9f46",
+    "tests/Vulgata.Tests/October/OctoberHostSelectionTests.cs": "453f6361bd0902cf4bb84e27ddcc7b7045d46298521fa603b38b0588f561cc57",
+    "tests/Vulgata.Tests/October/OctoberLocalSourceApprovalTests.cs": "409de8f7eb3703f698e223650783078f6ab1123733e4b2d51514434298bdeaa6",
+    "tests/Vulgata.Tests/TestInfrastructure/OctoberOwnedIdentityFixture.cs": "8e7ebf2830fcb7ece10137e87205df1a923b97e9747256f7bdea7bf947499b63",
+    "src/dotnet/Vulgata.Web/Program.cs": "773f913dfbfb151dfe0bf360741f0e88e635745418841e6b06c661b9ca21c85b",
+    "tests/Vulgata.Tests/October/OctoberLocalAuthorityTests.cs": "ae3152408b864d324f9f1aff56628e36c7e26e0bb11048d1f96fc5d55ec21cf7",
+    "src/dotnet/Vulgata.Web/Data/OctoberLocalAuthority.cs": "905d38c9e35435e26235b96285aae7c2a05d0ba75eddacca0b140f85c70eb90f",
+    "tests/Vulgata.Tests/TestInfrastructure/suites.json": "5aa2ea92d0b71dd0836e8bc3a416471e0af20d95be94ec137800c54f204aaa20",
+    "src/dotnet/Vulgata.OctoberGenerator/Program.cs": "5e44e52d4ae8affeb4b354cfaeb124eb6e26fd27fdc2e0a3a442e4c4f60fdb6e",
+    "tests/Vulgata.Tests/October/OctoberSelectedWebIdentityIntegrationTests.cs": "ba453b52e07c4af21edd07fe11cda8f35b9f6ae0ad909a3d60f010c2a6061511",
+    "tests/Vulgata.Tests/October/OctoberPreparedSourceBindingTests.cs": "ab89f6e57cd1f8552fa0a76358fa7b85631b4627195bfd7f98d0041c0affd113",
+    "tests/Vulgata.Tests/October/OctoberLocalAuthorityShapeTests.cs": "667100d71765af64657814c44d061a044c41f13bb58b099b47c6a357843af055"
+  },
+  "verification": [
+    {
+      "run": "27c9c1f522194632ab16368cedad16fd",
+      "trx_sha256": "c3008dbec950fdc7e2804923aa7590e2c714818f6a2693546acea7173f1a364b",
+      "counters": "<Counters total=\"93\" executed=\"93\" passed=\"93\" failed=\"0\" error=\"0\" timeout=\"0\" aborted=\"0\" inconclusive=\"0\" passedButRunAborted=\"0\" notRunnable=\"0\" notExecuted=\"0\" disconnected=\"0\" warning=\"0\" completed=\"0\" inProgress=\"0\" pending=\"0\" xmlns=\"http://microsoft.com/schemas/VisualStudio/TeamTest/2010\" />",
+      "build_sha256": "196a0db74daba54adead3a359570d9e64ed4ce839152160d0c6b93a6c8f5adf1",
+      "volume_absence": "[]\nError response from daemon: get vulgata-test-data-27c9c1f522194632ab16368cedad16fd: no such volume\n",
+      "volume_absence_sha256": "72e401944af90a9d22902b0b071616a4f3088863ca13a8e2f45144ad643ec8d3",
+      "cleanup": "vulgata-test-27c9c1f522194632ab16368cedad16fd\n",
+      "cleanup_inspect": "{\"Label\":\"27c9c1f522194632ab16368cedad16fd\",\"Mounts\":[{\"Type\":\"volume\",\"Name\":\"vulgata-test-data-27c9c1f522194632ab16368cedad16fd\",\"Source\":\"/var/lib/docker/volumes/vulgata-test-data-27c9c1f522194632ab16368cedad16fd/_data\",\"Destination\":\"/var/lib/postgresql/data\",\"Driver\":\"local\",\"Mode\":\"z\",\"RW\":true,\"Propagation\":\"\"}]}\n",
+      "command": "pwsh -NoProfile -File eng/test.ps1 -Suite PostgreSql -WithPostgreSql -Filter 'FullyQualifiedName~OctoberLocalAuthorityTests|FullyQualifiedName~OctoberLocalSourceApprovalTests|FullyQualifiedName~OctoberPreparedSourceBindingTests'",
+      "exit_code": 0,
+      "artifact_path": "TestResults/isolation-27c9c1f522194632ab16368cedad16fd/results.trx"
+    },
+    {
+      "run": "c40865b54e18442d9cb2dc364a4c046b",
+      "trx_sha256": "ca873f3d764e96c87f3fc9d292089486457899217dec79fa21d7b941a47cd63c",
+      "counters": "<Counters total=\"20\" executed=\"20\" passed=\"20\" failed=\"0\" error=\"0\" timeout=\"0\" aborted=\"0\" inconclusive=\"0\" passedButRunAborted=\"0\" notRunnable=\"0\" notExecuted=\"0\" disconnected=\"0\" warning=\"0\" completed=\"0\" inProgress=\"0\" pending=\"0\" xmlns=\"http://microsoft.com/schemas/VisualStudio/TeamTest/2010\" />",
+      "build_sha256": "a13cc81be6076cf2aa38b90b1a72c686d13732c4f2a1944a73cf2884d0819721",
+      "volume_absence": "[]\nError response from daemon: get vulgata-test-data-c40865b54e18442d9cb2dc364a4c046b: no such volume\n",
+      "volume_absence_sha256": "4f8370493dcc6b029d79e97e97cc0bc80601869cd808f8002b3c4c8ec5698fa1",
+      "cleanup": "vulgata-test-c40865b54e18442d9cb2dc364a4c046b\n",
+      "cleanup_inspect": "{\"Label\":\"c40865b54e18442d9cb2dc364a4c046b\",\"Mounts\":[{\"Type\":\"volume\",\"Name\":\"vulgata-test-data-c40865b54e18442d9cb2dc364a4c046b\",\"Source\":\"/var/lib/docker/volumes/vulgata-test-data-c40865b54e18442d9cb2dc364a4c046b/_data\",\"Destination\":\"/var/lib/postgresql/data\",\"Driver\":\"local\",\"Mode\":\"z\",\"RW\":true,\"Propagation\":\"\"}]}\n",
+      "command": "pwsh -NoProfile -File eng/test.ps1 -Suite E2E -WithPostgreSql -Filter 'FullyQualifiedName~OctoberHostSelectionTests'",
+      "exit_code": 0,
+      "artifact_path": "TestResults/isolation-c40865b54e18442d9cb2dc364a4c046b/results.trx"
+    },
+    {
+      "run": "a82df85ed2704bea90d9437b12ee98f9",
+      "trx_sha256": "98f1addc1d65dbd47b9712e3f03c8ecc98605c5f229f38690363da0f181efbcb",
+      "counters": "<Counters total=\"3\" executed=\"3\" passed=\"3\" failed=\"0\" error=\"0\" timeout=\"0\" aborted=\"0\" inconclusive=\"0\" passedButRunAborted=\"0\" notRunnable=\"0\" notExecuted=\"0\" disconnected=\"0\" warning=\"0\" completed=\"0\" inProgress=\"0\" pending=\"0\" xmlns=\"http://microsoft.com/schemas/VisualStudio/TeamTest/2010\" />",
+      "build_sha256": "27c7f90c9e3d017502adea59f515e16481f47c8770955ab0a0c5fb3092a443a3",
+      "volume_absence": "[]\nError response from daemon: get vulgata-test-data-a82df85ed2704bea90d9437b12ee98f9: no such volume\n",
+      "volume_absence_sha256": "1e5a1e5ec5ca753b98e38d7f7f697cda9d9dfac767fe3ba70410c07f6e19c2aa",
+      "cleanup": "vulgata-test-a82df85ed2704bea90d9437b12ee98f9\n",
+      "cleanup_inspect": "{\"Label\":\"a82df85ed2704bea90d9437b12ee98f9\",\"Mounts\":[{\"Type\":\"volume\",\"Name\":\"vulgata-test-data-a82df85ed2704bea90d9437b12ee98f9\",\"Source\":\"/var/lib/docker/volumes/vulgata-test-data-a82df85ed2704bea90d9437b12ee98f9/_data\",\"Destination\":\"/var/lib/postgresql/data\",\"Driver\":\"local\",\"Mode\":\"z\",\"RW\":true,\"Propagation\":\"\"}]}\n",
+      "command": "pwsh -NoProfile -File eng/test.ps1 -Suite E2E -WithPostgreSql -Filter 'FullyQualifiedName~OctoberSelectedWebIdentityIntegrationTests'",
+      "exit_code": 0,
+      "artifact_path": "TestResults/isolation-a82df85ed2704bea90d9437b12ee98f9/results.trx"
+    },
+    {
+      "run": "f37c098310324a2691900cf24cb6a3b5",
+      "trx_sha256": "d14be1e2423aea0d9dae32da8bb6db4a235fa0fb1cb445ac8fefd99a9ffcec63",
+      "counters": "<Counters total=\"187\" executed=\"187\" passed=\"187\" failed=\"0\" error=\"0\" timeout=\"0\" aborted=\"0\" inconclusive=\"0\" passedButRunAborted=\"0\" notRunnable=\"0\" notExecuted=\"0\" disconnected=\"0\" warning=\"0\" completed=\"0\" inProgress=\"0\" pending=\"0\" xmlns=\"http://microsoft.com/schemas/VisualStudio/TeamTest/2010\" />",
+      "build_sha256": "6ebcd3a7a016322062c785363205c55f8ae690af6ab2ec5e10d00c231aa8ec31",
+      "command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName~Vulgata.Tests.October'",
+      "exit_code": 0,
+      "artifact_path": "TestResults/isolation-f37c098310324a2691900cf24cb6a3b5/results.trx"
+    }
+  ],
+  "cleanup": "Runner cleanup-inspect is pre-removal mount/label proof, not absence. Root independently inspected all three exact containers after runs: docker inspect exit1/absent. Volume-absence files prove named volumes absent. Fixtures assert exact created database cleanup; complete database-name inventory not supplied by these runs.",
+  "test_owner_final_assessment": "Source-approval fixture delegates existing SelectionFixture setup/authentication/selection/base cleanup; alternate Identity database and fresh scopes retained. Session helper uses minting authority instance. Assertions, scenarios, classification, isolation and diagnostic behavior preserved. No further refactor needed.",
+  "production_owner_final_assessment": "All five Identity authority entrypoints perform private current database validation, retaining cancellation and awaited cleanup. Selected-Web binding snapshot retained for process; ordinary unchanged. Retained production owner assessed whole affected units; no further refactor needed.",
+  "noncounting_development_corrections": [
+    {
+      "path": "TestResults/isolation-d7bf3c2831dc4c4296d4958fa3038156/build.log",
+      "reason": "Build-policy pwsh PATH exit9009; scoped environment corrected."
+    },
+    {
+      "path": "TestResults/isolation-cd436337fdc64bce8ea4e63a239e1f44/build.log",
+      "sha256": "276ce260487c9af015ce2d37995f09fc44def5f073369e38d09f6c55e1c106d1",
+      "reason": "Initial test helper CS1501 corrected by qualification; all final checks rerun."
+    }
+  ],
+  "limitations": "Selected-Web is WAF plus real Identity PostgreSQL and owned SQLite management/October translation, not actual listener/full PostgreSQL selection. CLI checks are real executable PostgreSQL, not complete A/B process evidence. No paid provider readiness or later-story generation claimed.",
+  "recovery": {
+    "failed_results": 6,
+    "pause_at": 7,
+    "changed": false
+  }
+}

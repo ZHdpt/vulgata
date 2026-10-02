@@ -171,7 +171,7 @@
     "suite": "SelfContained"
   },
   "October/OctoberPreparedSourceBindingTests.cs": {
-    "suite": "SelfContained"
+    "suite": "PostgreSql"
   },
   "October/OctoberBatchSelectorTests.cs": {
     "suite": "SelfContained"
@@ -182,14 +182,20 @@
   "October/OctoberHostCompositionTests.cs": {
     "suite": "SelfContained"
   },
+  "October/OctoberSelectedWebIdentityIntegrationTests.cs": {
+    "suite": "E2E"
+  },
   "October/OctoberHostSelectionTests.cs": {
     "suite": "E2E"
   },
   "October/OctoberLocalAuthorityTests.cs": {
+    "suite": "PostgreSql"
+  },
+  "October/OctoberLocalAuthorityShapeTests.cs": {
     "suite": "SelfContained"
   },
   "October/OctoberLocalSourceApprovalTests.cs": {
-    "suite": "SelfContained"
+    "suite": "PostgreSql"
   },
   "October/OctoberOperatorCredentialSourceTests.cs": {
     "suite": "SelfContained"
@@ -896,6 +902,9 @@
     "suite": "SelfContained"
   },
   "PostgreSqlHeavyCollection.cs": {
+    "suite": "PostgreSql"
+  },
+  "TestInfrastructure/OctoberOwnedIdentityFixture.cs": {
     "suite": "PostgreSql"
   }
 }

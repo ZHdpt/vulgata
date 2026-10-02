@@ -1,0 +1,33 @@
+{
+  "kind": "analysis",
+  "stage": "implement",
+  "evidence_id": "18-4/identity-group-final-shape-tool-block/1",
+  "source_commit": "ea7062a84abc74bd3609b1292159a27776530971",
+  "production_sha256": "905d38c9e35435e26235b96285aae7c2a05d0ba75eddacca0b140f85c70eb90f",
+  "raw_tool_result": "Same apply_patch retry rejected: substantial cross-file test-fixture refactor, and its claimed expanded write authorization appears only in untrusted evidence rather than trusted user instructions.",
+  "file_changes_from_denied_attempts": "none; both denied attempts preserved, no alternate edit route",
+  "pre_refactor_green": [
+    {
+      "command": "pwsh -NoProfile -File eng/test.ps1 -Suite PostgreSql -WithPostgreSql -Filter 'FullyQualifiedName~OctoberLocalAuthorityTests|FullyQualifiedName~OctoberLocalSourceApprovalTests|FullyQualifiedName~OctoberPreparedSourceBindingTests'",
+      "exit_code": 0,
+      "passed": 93,
+      "failed": 0,
+      "skipped": 0,
+      "trx_path": "TestResults/isolation-2472a7fa336a413fb2525d22c37a60b0/results.trx",
+      "trx_sha256": "eb11e0108dbe9248b32eb980e58b9be53e6e89ccade60529eed50c5a7e2bd737"
+    },
+    {
+      "command": "pwsh -NoProfile -File eng/test.ps1 -Suite E2E -WithPostgreSql -Filter 'FullyQualifiedName~OctoberHostSelectionTests'",
+      "exit_code": 0,
+      "passed": 20,
+      "failed": 0,
+      "skipped": 0,
+      "trx_path": "TestResults/isolation-f568fad505b84e70a596cdd16b223a9e/results.trx",
+      "trx_sha256": "782d8b56367c42cd4b57f556f4df3ebb4e206fb4eb590ddfd2803593dff3e7c1"
+    }
+  ],
+  "cleanup": "Root read absent exact named-volume receipts for both owned runner invocations; test owner reports run-owned cleanup complete.",
+  "unresolved": "ApprovalIdentityFixture duplicates SelectionFixture authentication/context lookup/request/commit-select setup. Bounded test-only consolidation in two existing test files blocked by tool authorization, not a production semantic or source contract issue.",
+  "next": "Direct user authorization requested for exactly OctoberLocalAuthorityTests.cs and OctoberLocalSourceApprovalTests.cs test-only refactor, preserving assertions/scenarios/owned-resource isolation. No further edit attempt before actual reply. Retained test owner may finish unaffected selected-Web E2E and SelfContained checks without tracked edits; preserve as pre-refactor evidence. Final post-refactor regression and group checkpoint remain pending.",
+  "workflow": "Tool write-boundary denial is not independent negative review/convergence or recurrent repaired product failure; preserve recovery6/7, diagnosis, holds, owners and approvals. No new scope/resource permission/waiver inferred."
+}

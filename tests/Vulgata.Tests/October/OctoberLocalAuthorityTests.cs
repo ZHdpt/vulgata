@@ -32,149 +32,19 @@ public sealed partial class OctoberLocalAuthorityTests
     private const string UserName = "october.operator@example.test";
     private const string Password = "CorrectHorse!2038";
 
-    [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
-    public void AuthorityConfiguration_OperationTimeoutAboveMaximum_RejectsConstruction()
-    {
-        const string canonicalDatabaseIdentity = "sqlite://owned/october-authentication-target";
-        const string connectionString = "Host=synthetic.invalid;Password=synthetic-only-not-a-credential";
-
-        ArgumentException failure = Assert.ThrowsAny<ArgumentException>(() =>
-        {
-            _ = new OctoberAuthorityConfiguration(
-                AuthorityId,
-                TargetId,
-                Guid.Parse("862de94c-c28a-4c86-9ac6-4cfca8a69c5c"),
-                canonicalDatabaseIdentity,
-                connectionString,
-                connectionString,
-                canonicalDatabaseIdentity,
-                ImmutableDictionary<string, string>.Empty.Add(TargetId, canonicalDatabaseIdentity),
-                TimeSpan.FromSeconds(31),
-                TimeSpan.FromHours(1));
-        });
-
-        Assert.DoesNotContain("synthetic-only-not-a-credential", failure.ToString(), StringComparison.Ordinal);
-    }
-
-    [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
-    public void AuthorityConfiguration_ValidMaximumBounds_RetainsExplicitConnectionsAndOrdinalAllowlist()
-    {
-        const string canonicalDatabaseIdentity = "sqlite://owned/october-authentication-target";
-        const string dataConnection = "Data Source=synthetic-october-data;Password=data-only-test-value";
-        const string identityConnection = "Data Source=synthetic-october-identity;Password=identity-only-test-value";
-        ImmutableDictionary<string, string> inputAllowlist =
-            ImmutableDictionary.Create<string, string>(StringComparer.OrdinalIgnoreCase)
-                .Add(TargetId, canonicalDatabaseIdentity)
-                .Add("october-secondary-target", "sqlite://owned/october-secondary-target");
-
-        OctoberAuthorityConfiguration configuration = new(
-            AuthorityId,
-            TargetId,
-            Guid.Parse("862de94c-c28a-4c86-9ac6-4cfca8a69c5c"),
-            canonicalDatabaseIdentity,
-            dataConnection,
-            identityConnection,
-            "sqlite://owned/october-identity-database",
-            inputAllowlist,
-            TimeSpan.FromSeconds(30),
-            TimeSpan.FromHours(1));
-
-        Assert.Equal(dataConnection, configuration.DataConnectionString);
-        Assert.Equal(identityConnection, configuration.IdentityConnectionString);
-        Assert.Equal("sqlite://owned/october-identity-database", configuration.IdentityCanonicalDatabaseIdentity);
-        Assert.Equal(TimeSpan.FromSeconds(30), configuration.OperationTimeout);
-        Assert.Equal(TimeSpan.FromHours(1), configuration.SessionLifetime);
-        Assert.True(configuration.AllowedTargets.ContainsKey(TargetId));
-        Assert.True(configuration.AllowedTargets.ContainsKey("october-secondary-target"));
-        Assert.False(configuration.AllowedTargets.ContainsKey(TargetId.ToUpperInvariant()));
-        Assert.DoesNotContain(dataConnection, configuration.ToString(), StringComparison.Ordinal);
-        Assert.DoesNotContain(identityConnection, configuration.ToString(), StringComparison.Ordinal);
-    }
-
-    [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
-    public void AuthorityConfiguration_NonExactIdentity_RejectsConstruction()
-    {
-        ArgumentException failure = Assert.ThrowsAny<ArgumentException>(() =>
-            CreateAuthorityConfiguration(targetId: $" {TargetId}"));
-
-        Assert.DoesNotContain(TargetId, failure.ToString(), StringComparison.Ordinal);
-    }
-
-    [Trait("Suite", "SelfContained")]
-    [SuiteTheory("SelfContained")]
-    [InlineData("data")]
-    [InlineData("identity")]
-    public void AuthorityConfiguration_MissingExplicitConnection_RejectsConstruction(string connection)
-    {
-        ArgumentException failure = Assert.ThrowsAny<ArgumentException>(() =>
-            CreateAuthorityConfiguration(
-                dataConnectionString: connection == "data" ? string.Empty : "Data Source=identity-test",
-                identityConnectionString: connection == "identity" ? string.Empty : "Data Source=data-test"));
-
-        Assert.DoesNotContain("Data Source=", failure.ToString(), StringComparison.Ordinal);
-    }
-
-    [Trait("Suite", "SelfContained")]
-    [SuiteTheory("SelfContained")]
-    [InlineData("timeout")]
-    [InlineData("lifetime")]
-    public void AuthorityConfiguration_NonPositiveBound_RejectsConstruction(string bound)
-    {
-        ArgumentException failure = Assert.ThrowsAny<ArgumentException>(() =>
-            CreateAuthorityConfiguration(
-                operationTimeout: bound == "timeout" ? TimeSpan.Zero : TimeSpan.FromSeconds(30),
-                sessionLifetime: bound == "lifetime" ? TimeSpan.Zero : TimeSpan.FromHours(1)));
-
-        Assert.DoesNotContain("synthetic", failure.ToString(), StringComparison.OrdinalIgnoreCase);
-    }
-
-    [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
-    public void AuthorityConfiguration_SessionLifetimeAboveMaximum_RejectsConstruction()
-    {
-        ArgumentException failure = Assert.ThrowsAny<ArgumentException>(() =>
-            CreateAuthorityConfiguration(sessionLifetime: TimeSpan.FromMinutes(61)));
-
-        Assert.DoesNotContain("synthetic", failure.ToString(), StringComparison.OrdinalIgnoreCase);
-    }
-
-    [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
-    public void AuthorityConfiguration_EmptyBatchIdentity_RejectsConstruction()
-    {
-        ArgumentException failure = Assert.ThrowsAny<ArgumentException>(() =>
-            CreateAuthorityConfiguration(batchId: Guid.Empty));
-
-        Assert.DoesNotContain("synthetic", failure.ToString(), StringComparison.OrdinalIgnoreCase);
-    }
-
-    [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
-    public void AuthorityConfiguration_AllowlistWithoutExactSelectedBinding_RejectsConstruction()
-    {
-        ImmutableDictionary<string, string> allowlist = ImmutableDictionary<string, string>.Empty
-            .Add(TargetId.ToUpperInvariant(), "sqlite://owned/october-authentication-target");
-
-        ArgumentException failure = Assert.ThrowsAny<ArgumentException>(() =>
-            CreateAuthorityConfiguration(allowedTargets: allowlist));
-
-        Assert.DoesNotContain("sqlite://", failure.ToString(), StringComparison.Ordinal);
-    }
-
-    [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task AuthenticateAsync_ValidIdentityPassword_ReturnsOpaqueSessionForAuthenticatedUser()
     {
         await using SqliteConnection connection = new("Data Source=:memory:");
         await connection.OpenAsync();
+        await using OctoberOwnedIdentityFixture identityDatabase = await OctoberOwnedIdentityFixture.CreateAsync();
 
         OctoberOperatorCredentials suppliedCredentials = new(UserName, Password);
         ControlledCredentialSource credentialSource = new(suppliedCredentials);
-        await using ServiceProvider provider = CreateIdentityProvider(
+        await using ServiceProvider provider = await CreateIdentityProviderAsync(
             connection,
+            identityDatabase,
             credentialSource,
             new FixedTimeProvider(new DateTimeOffset(2026, 9, 30, 12, 0, 0, TimeSpan.Zero)));
         await SeedUserAsync(provider);
@@ -192,8 +62,8 @@ public sealed partial class OctoberLocalAuthorityTests
         Assert.Throws<ObjectDisposedException>(() => suppliedCredentials.Password);
     }
 
-    [Trait("Suite", "SelfContained")]
-    [SuiteTheory("SelfContained")]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteTheory("PostgreSql")]
     [InlineData(UserName, "IncorrectHorse!2038")]
     [InlineData("unknown.october.operator@example.test", Password)]
     public async Task AuthenticateAsync_UnknownUserOrWrongPassword_ReturnsDeniedWithoutSession(
@@ -202,10 +72,12 @@ public sealed partial class OctoberLocalAuthorityTests
     {
         await using SqliteConnection connection = new("Data Source=:memory:");
         await connection.OpenAsync();
+        await using OctoberOwnedIdentityFixture identityDatabase = await OctoberOwnedIdentityFixture.CreateAsync();
 
         ControlledCredentialSource credentialSource = new(new OctoberOperatorCredentials(UserName, Password));
-        await using ServiceProvider provider = CreateIdentityProvider(
+        await using ServiceProvider provider = await CreateIdentityProviderAsync(
             connection,
+            identityDatabase,
             credentialSource,
             new FixedTimeProvider(new DateTimeOffset(2026, 9, 30, 12, 0, 0, TimeSpan.Zero)));
         await SeedUserAsync(provider);
@@ -224,16 +96,18 @@ public sealed partial class OctoberLocalAuthorityTests
         Assert.Equal(0, await users.GetAccessFailedCountAsync(storedUser));
     }
 
-    [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task AuthenticateAsync_LockedIdentityUser_ReturnsDeniedWithoutSession()
     {
         await using SqliteConnection connection = new("Data Source=:memory:");
         await connection.OpenAsync();
+        await using OctoberOwnedIdentityFixture identityDatabase = await OctoberOwnedIdentityFixture.CreateAsync();
 
         ControlledCredentialSource credentialSource = new(new OctoberOperatorCredentials(UserName, Password));
-        await using ServiceProvider provider = CreateIdentityProvider(
+        await using ServiceProvider provider = await CreateIdentityProviderAsync(
             connection,
+            identityDatabase,
             credentialSource,
             TimeProvider.System);
         await SeedUserAsync(provider);
@@ -254,16 +128,18 @@ public sealed partial class OctoberLocalAuthorityTests
         Assert.Null(result.Session);
     }
 
-    [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task AuthenticateAsync_UnconfirmedIdentityAccount_RemainsEligibleUnderCurrentOptions()
     {
         await using SqliteConnection connection = new("Data Source=:memory:");
         await connection.OpenAsync();
+        await using OctoberOwnedIdentityFixture identityDatabase = await OctoberOwnedIdentityFixture.CreateAsync();
 
         ControlledCredentialSource credentialSource = new(new OctoberOperatorCredentials(UserName, Password));
-        await using ServiceProvider provider = CreateIdentityProvider(
+        await using ServiceProvider provider = await CreateIdentityProviderAsync(
             connection,
+            identityDatabase,
             credentialSource,
             new FixedTimeProvider(new DateTimeOffset(2026, 9, 30, 12, 0, 0, TimeSpan.Zero)));
         await SeedUserAsync(provider);
@@ -286,16 +162,18 @@ public sealed partial class OctoberLocalAuthorityTests
         Assert.Equal(SubjectId, session.SubjectId);
     }
 
-    [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task AuthenticateAsync_TwoFactorUserWithoutFactor_ReturnsAdditionalAuthenticationRequired()
     {
         await using SqliteConnection connection = new("Data Source=:memory:");
         await connection.OpenAsync();
+        await using OctoberOwnedIdentityFixture identityDatabase = await OctoberOwnedIdentityFixture.CreateAsync();
 
         ControlledCredentialSource credentialSource = new(new OctoberOperatorCredentials(UserName, Password));
-        await using ServiceProvider provider = CreateIdentityProvider(
+        await using ServiceProvider provider = await CreateIdentityProviderAsync(
             connection,
+            identityDatabase,
             credentialSource,
             new FixedTimeProvider(new DateTimeOffset(2026, 9, 30, 12, 0, 0, TimeSpan.Zero)));
         await SeedUserAsync(provider);
@@ -318,16 +196,18 @@ public sealed partial class OctoberLocalAuthorityTests
         Assert.Null(result.Session);
     }
 
-    [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task AuthenticateAsync_InvalidRecoveryCode_DeniesAndPersistsFailedAttempt()
     {
         await using SqliteConnection connection = new("Data Source=:memory:");
         await connection.OpenAsync();
+        await using OctoberOwnedIdentityFixture identityDatabase = await OctoberOwnedIdentityFixture.CreateAsync();
 
         ControlledCredentialSource credentialSource = new(new OctoberOperatorCredentials(UserName, Password));
-        await using ServiceProvider provider = CreateIdentityProvider(
+        await using ServiceProvider provider = await CreateIdentityProviderAsync(
             connection,
+            identityDatabase,
             credentialSource,
             new FixedTimeProvider(new DateTimeOffset(2026, 9, 30, 12, 0, 0, TimeSpan.Zero)));
         await SeedUserAsync(provider);
@@ -364,16 +244,18 @@ public sealed partial class OctoberLocalAuthorityTests
         Assert.Equal(3, await verificationUsers.GetAccessFailedCountAsync(storedUser));
     }
 
-    [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task AuthenticateAsync_InvalidAuthenticatorCode_DeniesAndPersistsFailedAttempt()
     {
         await using SqliteConnection connection = new("Data Source=:memory:");
         await connection.OpenAsync();
+        await using OctoberOwnedIdentityFixture identityDatabase = await OctoberOwnedIdentityFixture.CreateAsync();
 
         ControlledCredentialSource credentialSource = new(new OctoberOperatorCredentials(UserName, Password));
-        await using ServiceProvider provider = CreateIdentityProvider(
+        await using ServiceProvider provider = await CreateIdentityProviderAsync(
             connection,
+            identityDatabase,
             credentialSource,
             new FixedTimeProvider(new DateTimeOffset(2026, 9, 30, 12, 0, 0, TimeSpan.Zero)));
         await SeedUserAsync(provider);
@@ -405,16 +287,18 @@ public sealed partial class OctoberLocalAuthorityTests
         Assert.Equal(1, await verificationUsers.GetAccessFailedCountAsync(storedUser));
     }
 
-    [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task AuthenticateAsync_UnsupportedAuthenticatorProvider_DeniesWithoutSession()
     {
         await using SqliteConnection connection = new("Data Source=:memory:");
         await connection.OpenAsync();
+        await using OctoberOwnedIdentityFixture identityDatabase = await OctoberOwnedIdentityFixture.CreateAsync();
 
         ControlledCredentialSource credentialSource = new(new OctoberOperatorCredentials(UserName, Password));
-        await using ServiceProvider provider = CreateIdentityProvider(
+        await using ServiceProvider provider = await CreateIdentityProviderAsync(
             connection,
+            identityDatabase,
             credentialSource,
             new FixedTimeProvider(new DateTimeOffset(2026, 9, 30, 12, 0, 0, TimeSpan.Zero)));
         await SeedUserAsync(provider);
@@ -439,15 +323,17 @@ public sealed partial class OctoberLocalAuthorityTests
         Assert.Null(result.Session);
     }
 
-    [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task AuthenticateAsync_UnsupportedTwoFactorStoreCapability_DeniesWithoutSession()
     {
         await using SqliteConnection connection = new("Data Source=:memory:");
         await connection.OpenAsync();
+        await using OctoberOwnedIdentityFixture identityDatabase = await OctoberOwnedIdentityFixture.CreateAsync();
         ControlledCredentialSource credentialSource = new(new OctoberOperatorCredentials(UserName, Password));
         await using ServiceProvider provider = CreateAuthorityProvider(
             connection,
+            identityDatabase,
             credentialSource,
             new FixedTimeProvider(new DateTimeOffset(2026, 9, 30, 12, 0, 0, TimeSpan.Zero)),
             supportsTwoFactorStore: false);
@@ -462,17 +348,19 @@ public sealed partial class OctoberLocalAuthorityTests
         Assert.Null(result.Session);
     }
 
-    [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task AuthenticateAsync_IdentityCommandsRespectShorterOperationTimeout()
     {
         TimeSpan operationTimeout = TimeSpan.FromSeconds(2);
         await using SqliteConnection connection = new("Data Source=:memory:");
         await connection.OpenAsync();
+        await using OctoberOwnedIdentityFixture identityDatabase = await OctoberOwnedIdentityFixture.CreateAsync();
         ControlledCredentialSource credentialSource = new(new OctoberOperatorCredentials(UserName, Password));
         IdentityCommandTimeoutObserver observer = new();
         await using ServiceProvider provider = CreateAuthorityProvider(
             connection,
+            identityDatabase,
             credentialSource,
             new FixedTimeProvider(new DateTimeOffset(2026, 9, 30, 12, 0, 0, TimeSpan.Zero)),
             operationTimeout: operationTimeout,
@@ -494,17 +382,19 @@ public sealed partial class OctoberLocalAuthorityTests
         await Assert.IsAssignableFrom<IOctoberOperatorSession>(result.Session).DisposeAsync();
     }
 
-    [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task AuthenticateAsync_CancellationDuringIdentityCommandAwaitsOwnedWork()
     {
         await using SqliteConnection connection = new("Data Source=:memory:");
         await connection.OpenAsync();
+        await using OctoberOwnedIdentityFixture identityDatabase = await OctoberOwnedIdentityFixture.CreateAsync();
 
         ControlledCredentialSource credentialSource = new(new OctoberOperatorCredentials(UserName, Password));
         IdentityCommandCancellationBarrier barrier = new();
         await using ServiceProvider provider = CreateAuthorityProvider(
             connection,
+            identityDatabase,
             credentialSource,
             new FixedTimeProvider(new DateTimeOffset(2026, 9, 30, 12, 0, 0, TimeSpan.Zero)),
             identityCommandInterceptor: barrier);
@@ -547,16 +437,18 @@ public sealed partial class OctoberLocalAuthorityTests
         Assert.Equal(1, barrier.BlockedCommandCount);
     }
 
-    [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task AuthenticateAsync_CancelledMissingAndUnavailableInput_ReturnsClosedResults()
     {
         await using SqliteConnection connection = new("Data Source=:memory:");
         await connection.OpenAsync();
+        await using OctoberOwnedIdentityFixture identityDatabase = await OctoberOwnedIdentityFixture.CreateAsync();
 
         ControlledCredentialSource credentialSource = new(new OctoberOperatorCredentials(UserName, Password));
-        await using ServiceProvider provider = CreateIdentityProvider(
+        await using ServiceProvider provider = await CreateIdentityProviderAsync(
             connection,
+            identityDatabase,
             credentialSource,
             new FixedTimeProvider(new DateTimeOffset(2026, 9, 30, 12, 0, 0, TimeSpan.Zero)));
         await using AsyncServiceScope operationScope = provider.CreateAsyncScope();
@@ -582,19 +474,21 @@ public sealed partial class OctoberLocalAuthorityTests
         Assert.Equal(2, credentialSource.ReadCount);
     }
 
-    [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task AuthenticateAsync_CredentialInputUnavailable_ReturnsUnavailableWithoutSession()
     {
         await using SqliteConnection connection = new("Data Source=:memory:");
         await connection.OpenAsync();
+        await using OctoberOwnedIdentityFixture identityDatabase = await OctoberOwnedIdentityFixture.CreateAsync();
 
         ControlledCredentialSource credentialSource = new(new OctoberOperatorCredentials(UserName, Password))
         {
             ReadFailure = new IOException("Test-owned operator credential input is unavailable."),
         };
-        await using ServiceProvider provider = CreateIdentityProvider(
+        await using ServiceProvider provider = await CreateIdentityProviderAsync(
             connection,
+            identityDatabase,
             credentialSource,
             new FixedTimeProvider(new DateTimeOffset(2026, 9, 30, 12, 0, 0, TimeSpan.Zero)));
         await using AsyncServiceScope operationScope = provider.CreateAsyncScope();
@@ -607,16 +501,18 @@ public sealed partial class OctoberLocalAuthorityTests
         Assert.Equal(1, credentialSource.ReadCount);
     }
 
-    [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task AuthenticateAsync_UnavailableIdentityStore_ReturnsUnavailableWithoutSession()
     {
         await using SqliteConnection connection = new("Data Source=:memory:");
         await connection.OpenAsync();
+        await using OctoberOwnedIdentityFixture identityDatabase = await OctoberOwnedIdentityFixture.CreateAsync();
 
         ControlledCredentialSource credentialSource = new(new OctoberOperatorCredentials(UserName, Password));
-        await using ServiceProvider provider = CreateIdentityProvider(
+        await using ServiceProvider provider = await CreateIdentityProviderAsync(
             connection,
+            identityDatabase,
             credentialSource,
             new FixedTimeProvider(new DateTimeOffset(2026, 9, 30, 12, 0, 0, TimeSpan.Zero)));
         await SeedUserAsync(provider);
@@ -624,7 +520,7 @@ public sealed partial class OctoberLocalAuthorityTests
         await using (AsyncServiceScope storeScope = provider.CreateAsyncScope())
         {
             ApplicationDbContext db = storeScope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-            await db.Database.ExecuteSqlRawAsync("DROP TABLE AspNetUsers;");
+            await db.Database.ExecuteSqlRawAsync("DROP TABLE identity.\"AspNetUsers\" CASCADE;");
         }
 
         await using AsyncServiceScope operationScope = provider.CreateAsyncScope();
@@ -636,16 +532,18 @@ public sealed partial class OctoberLocalAuthorityTests
         Assert.Equal(1, credentialSource.ReadCount);
     }
 
-    [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task AuthenticateAsync_ValidPasswordAndRecoveryCode_ReturnsSessionForTwoFactorUser()
     {
         await using SqliteConnection connection = new("Data Source=:memory:");
         await connection.OpenAsync();
+        await using OctoberOwnedIdentityFixture identityDatabase = await OctoberOwnedIdentityFixture.CreateAsync();
 
         ControlledCredentialSource credentialSource = new(new OctoberOperatorCredentials(UserName, Password));
-        await using ServiceProvider provider = CreateIdentityProvider(
+        await using ServiceProvider provider = await CreateIdentityProviderAsync(
             connection,
+            identityDatabase,
             credentialSource,
             new FixedTimeProvider(new DateTimeOffset(2026, 9, 30, 12, 0, 0, TimeSpan.Zero)));
         await SeedUserAsync(provider);
@@ -689,16 +587,18 @@ public sealed partial class OctoberLocalAuthorityTests
         Assert.False(reusedCode.Succeeded);
     }
 
-    [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task AuthenticateAsync_ValidPasswordAndAuthenticatorCode_ReturnsSessionForTwoFactorUser()
     {
         await using SqliteConnection connection = new("Data Source=:memory:");
         await connection.OpenAsync();
+        await using OctoberOwnedIdentityFixture identityDatabase = await OctoberOwnedIdentityFixture.CreateAsync();
 
         ControlledCredentialSource credentialSource = new(new OctoberOperatorCredentials(UserName, Password));
         TimeProvider clock = TimeProvider.System;
-        await using ServiceProvider provider = CreateIdentityProvider(connection, credentialSource, clock);
+        await using ServiceProvider provider = await CreateIdentityProviderAsync(
+            connection, identityDatabase, credentialSource, clock);
         await SeedUserAsync(provider);
         string authenticatorCode;
         await using (AsyncServiceScope seedScope = provider.CreateAsyncScope())
@@ -741,8 +641,8 @@ public sealed partial class OctoberLocalAuthorityTests
             clock.GetUtcNow().AddHours(1));
     }
 
-    [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task AuthorizeSelectionAsync_PreparesOwnedSystemSelectionWithTrustedContext()
     {
         const string globalContextValue = "Owned global advisory context.";
@@ -802,8 +702,8 @@ public sealed partial class OctoberLocalAuthorityTests
             repositoryId, OctoberContextScope.System, OctoberContextScope.Repository), context.Differences);
     }
 
-    [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task GeneratorModule_PreparesOwnedBatchThroughCurrentLocalAuthority()
     {
         await using SelectionFixture fixture = await SelectionFixture.CreateAsync(
@@ -885,8 +785,8 @@ public sealed partial class OctoberLocalAuthorityTests
         Assert.Null(afterDisposal.Authority);
     }
 
-    [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task AuthorizeSelectionAsync_SelectsAnExistingExactBatchWithCurrentAuthority()
     {
         await using SelectionFixture fixture = await SelectionFixture.CreateAsync();
@@ -940,8 +840,8 @@ public sealed partial class OctoberLocalAuthorityTests
         Assert.Equal(preparedContext.Differences.ToArray(), selectedContext.Differences.ToArray());
     }
 
-    [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task AuthorizeSelectionAsync_DistinguishesMissingConfiguredBatchFromAnotherBatch()
     {
         await using SelectionFixture fixture = await SelectionFixture.CreateAsync();
@@ -967,8 +867,8 @@ public sealed partial class OctoberLocalAuthorityTests
         Assert.Null(mismatch.Authority);
     }
 
-    [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task AuthorizeSelectionAsync_DeniesBatchWrittenUnderCollidingForeignAuthority()
     {
         await using SelectionFixture fixture = await SelectionFixture.CreateAsync();
@@ -987,8 +887,8 @@ public sealed partial class OctoberLocalAuthorityTests
         AssertDeniedSelection(result);
     }
 
-    [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task AuthorizeSelectionAsync_DeniesMalformedStoredSelectionMetadataWithoutPayload()
     {
         await using SelectionFixture fixture = await SelectionFixture.CreateAsync();
@@ -1056,8 +956,8 @@ public sealed partial class OctoberLocalAuthorityTests
         Assert.NotNull(restored.Authority);
     }
 
-    [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task AuthorizeSelectionAsync_ReportsSelectCancellationAndOctoberStoreOutageWithoutPayload()
     {
         await using SelectionFixture fixture = await SelectionFixture.CreateAsync();
@@ -1084,8 +984,8 @@ public sealed partial class OctoberLocalAuthorityTests
         Assert.Null(unavailable.Authority);
     }
 
-    [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task AuthorizeSelectionAsync_RejectsFabricatedForeignDisposedAndExpiredSessions()
     {
         await using SelectionFixture fixture = await SelectionFixture.CreateAsync();
@@ -1123,8 +1023,8 @@ public sealed partial class OctoberLocalAuthorityTests
         AssertDeniedSelection(expired);
     }
 
-    [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task AuthorizeSelectionAsync_DeniesAfterManagementRoleIsRemoved()
     {
         await AssertIdentityChangeDeniesSelectionAsync(async (users, user) =>
@@ -1134,8 +1034,8 @@ public sealed partial class OctoberLocalAuthorityTests
         });
     }
 
-    [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task AuthorizeSelectionAsync_DeniesAfterSecurityStampChanges()
     {
         await AssertIdentityChangeDeniesSelectionAsync(async (users, user) =>
@@ -1145,8 +1045,8 @@ public sealed partial class OctoberLocalAuthorityTests
         });
     }
 
-    [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task AuthorizeSelectionAsync_DeniesWhenIdentityAccountBecomesLockedOut()
     {
         await AssertIdentityChangeDeniesSelectionAsync(async (users, user) =>
@@ -1159,8 +1059,8 @@ public sealed partial class OctoberLocalAuthorityTests
         });
     }
 
-    [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task AuthorizeSelectionAsync_LatchesClosedWhenSystemOwnershipIsRevoked()
     {
         await using SelectionFixture fixture = await SelectionFixture.CreateAsync();
@@ -1189,8 +1089,8 @@ public sealed partial class OctoberLocalAuthorityTests
         AssertDeniedSelection(restored);
     }
 
-    [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task AuthorizeSelectionAsync_AcceptsOnlyTheCanonicalCallerDigest()
     {
         await using SelectionFixture fixture = await SelectionFixture.CreateAsync();
@@ -1217,8 +1117,8 @@ public sealed partial class OctoberLocalAuthorityTests
         AssertDeniedSelection(inconsistent);
     }
 
-    [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task AuthorizeSelectionAsync_DeniesTargetBatchAndInnerRequestMismatchWithoutPayload()
     {
         await using SelectionFixture fixture = await SelectionFixture.CreateAsync();
@@ -1258,8 +1158,8 @@ public sealed partial class OctoberLocalAuthorityTests
             CancellationToken.None));
     }
 
-    [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task AuthorizeSelectionAsync_RejectsReferencesOutsideCurrentRepositoryScope()
     {
         await using SelectionFixture fixture = await SelectionFixture.CreateAsync();
@@ -1327,8 +1227,8 @@ public sealed partial class OctoberLocalAuthorityTests
             CancellationToken.None));
     }
 
-    [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task AuthorizeSelectionAsync_PreservesNullEmptyAndUnselectedContextProvenance()
     {
         await using SelectionFixture fixture = await SelectionFixture.CreateAsync(
@@ -1411,8 +1311,8 @@ public sealed partial class OctoberLocalAuthorityTests
         Assert.Equal(fixture.GlobalContextId, copiedGlobal.OriginRecordId);
     }
 
-    [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task AuthorizeSelectionAsync_AllowsOnlyManagementAccessForStandaloneRepository()
     {
         await using (SelectionFixture allowed = await SelectionFixture.CreateAsync(standalone: true))
@@ -1437,8 +1337,8 @@ public sealed partial class OctoberLocalAuthorityTests
             deniedSession, denied.CreateRequest(), CancellationToken.None));
     }
 
-    [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task AuthorizeSelectionAsync_ClosesSessionWhenIdentityAccountIsDeleted()
     {
         await using SelectionFixture fixture = await SelectionFixture.CreateAsync();
@@ -1485,8 +1385,8 @@ public sealed partial class OctoberLocalAuthorityTests
             session, fixture.CreateRequest(), CancellationToken.None));
     }
 
-    [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task AuthorizeSelectionAsync_ReportsCancellationAndManagementStoreOutageWithoutPayload()
     {
         await using SelectionFixture fixture = await SelectionFixture.CreateAsync();
@@ -1561,6 +1461,7 @@ public sealed partial class OctoberLocalAuthorityTests
         ControlledCredentialSource credentials = new(new OctoberOperatorCredentials(UserName, Password));
         await using ServiceProvider provider = CreateAuthorityProvider(
             fixture.Connection,
+            fixture.IdentityDatabase,
             credentials,
             fixture.Clock,
             authorityId: authorityId,
@@ -1621,8 +1522,9 @@ public sealed partial class OctoberLocalAuthorityTests
         return bytes.ToArray();
     }
 
-    private static ServiceProvider CreateIdentityProvider(
+    private static async Task<ServiceProvider> CreateIdentityProviderAsync(
         SqliteConnection connection,
+        OctoberOwnedIdentityFixture identityDatabase,
         ControlledCredentialSource credentialSource,
         TimeProvider clock)
     {
@@ -1630,15 +1532,26 @@ public sealed partial class OctoberLocalAuthorityTests
         services.AddLogging();
         OctoberHeadlessAuthorityRegistration.AddOctoberLocalAuthority(
             services,
-            CreateConfiguration(connection.ConnectionString),
+            CreateConfiguration(connection.ConnectionString, identityDatabase),
             credentialSource,
             clock);
-        ReplaceIdentityStoreWithSqlite(services, connection);
-        return services.BuildServiceProvider(validateScopes: true);
+        ServiceProvider provider = services.BuildServiceProvider(validateScopes: true);
+        try
+        {
+            await using AsyncServiceScope scope = provider.CreateAsyncScope();
+            await scope.ServiceProvider.GetRequiredService<ApplicationDbContext>().Database.MigrateAsync();
+            return provider;
+        }
+        catch
+        {
+            await provider.DisposeAsync();
+            throw;
+        }
     }
 
     private static ServiceProvider CreateAuthorityProvider(
         SqliteConnection connection,
+        OctoberOwnedIdentityFixture identityDatabase,
         ControlledCredentialSource credentialSource,
         TimeProvider clock,
         bool supportsTwoFactorStore = true,
@@ -1652,10 +1565,12 @@ public sealed partial class OctoberLocalAuthorityTests
         services.AddLogging();
         OctoberHeadlessAuthorityRegistration.AddOctoberLocalAuthority(
             services,
-            CreateConfiguration(connection.ConnectionString, operationTimeout, authorityId, batchId, sessionLifetime),
+            CreateConfiguration(connection.ConnectionString, identityDatabase,
+                operationTimeout, authorityId, batchId, sessionLifetime),
             credentialSource,
             clock);
-        ReplaceIdentityStoreWithSqlite(services, connection, identityCommandInterceptor);
+        if (identityCommandInterceptor is not null)
+            services.AddDbContext<ApplicationDbContext>(options => options.AddInterceptors(identityCommandInterceptor));
         services.RemoveAll<IDbContextFactory<VulgataDbContext>>();
         services.RemoveAll<VulgataDbContext>();
         services.RemoveAll<DbContextOptions<VulgataDbContext>>();
@@ -1688,7 +1603,7 @@ public sealed partial class OctoberLocalAuthorityTests
         await using (AsyncServiceScope identityScope = provider.CreateAsyncScope())
         {
             ApplicationDbContext identity = identityScope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-            await identity.Database.ExecuteSqlRawAsync(identity.Database.GenerateCreateScript());
+            await identity.Database.MigrateAsync();
             RoleManager<IdentityRole> roles = identityScope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
             IdentityResult roleCreated = await roles.CreateAsync(new IdentityRole(roleName));
             Assert.True(roleCreated.Succeeded, string.Join("; ", roleCreated.Errors.Select(error => error.Code)));
@@ -1743,7 +1658,7 @@ public sealed partial class OctoberLocalAuthorityTests
     {
         await using AsyncServiceScope scope = provider.CreateAsyncScope();
         ApplicationDbContext db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        await db.Database.EnsureCreatedAsync();
+        await db.Database.MigrateAsync();
 
         UserManager<ApplicationUser> users = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
         ApplicationUser user = new()
@@ -1759,7 +1674,8 @@ public sealed partial class OctoberLocalAuthorityTests
     }
 
     private static OctoberAuthorityConfiguration CreateConfiguration(
-        string connectionString,
+        string dataConnectionString,
+        OctoberOwnedIdentityFixture identityDatabase,
         TimeSpan? operationTimeout = null,
         string authorityId = AuthorityId,
         Guid? batchId = null,
@@ -1773,9 +1689,9 @@ public sealed partial class OctoberLocalAuthorityTests
             TargetId,
             batchId ?? Guid.Parse("862de94c-c28a-4c86-9ac6-4cfca8a69c5c"),
             "sqlite://owned/october-authentication-target",
-            connectionString,
-            connectionString,
-            "sqlite://owned/october-authentication-target",
+            dataConnectionString,
+            identityDatabase.ConnectionString,
+            identityDatabase.CanonicalDatabaseIdentity,
             allowedTargets,
             operationTimeout ?? TimeSpan.FromSeconds(30),
             sessionLifetime ?? TimeSpan.FromHours(1));
@@ -1807,37 +1723,6 @@ public sealed partial class OctoberLocalAuthorityTests
             selectedTargets,
             operationTimeout ?? TimeSpan.FromSeconds(30),
             sessionLifetime ?? TimeSpan.FromHours(1));
-    }
-
-    private static void ReplaceIdentityStoreWithSqlite(
-        IServiceCollection services,
-        SqliteConnection connection,
-        IDbCommandInterceptor? commandInterceptor = null)
-    {
-        int? configuredCommandTimeout = ReadConfiguredIdentityCommandTimeout(services);
-        services.RemoveAll<ApplicationDbContext>();
-        services.RemoveAll<DbContextOptions<ApplicationDbContext>>();
-        services.RemoveAll<IDbContextOptionsConfiguration<ApplicationDbContext>>();
-        services.RemoveAll<IConfigureOptions<DbContextOptions<ApplicationDbContext>>>();
-        services.AddDbContext<ApplicationDbContext>(options =>
-        {
-            options.UseSqlite(connection, sqlite =>
-            {
-                if (configuredCommandTimeout is int timeoutSeconds)
-                    sqlite.CommandTimeout(timeoutSeconds);
-            });
-            if (commandInterceptor is not null)
-                options.AddInterceptors(commandInterceptor);
-        });
-    }
-
-    private static int? ReadConfiguredIdentityCommandTimeout(IServiceCollection services)
-    {
-        using ServiceProvider optionsProvider = services.BuildServiceProvider(validateScopes: false);
-        DbContextOptions<ApplicationDbContext> options =
-            optionsProvider.GetRequiredService<DbContextOptions<ApplicationDbContext>>();
-        return options.Extensions.OfType<RelationalOptionsExtension>()
-            .SingleOrDefault()?.CommandTimeout;
     }
 
     private sealed class ControlledCredentialSource(OctoberOperatorCredentials? credentials) : IOctoberOperatorCredentialSource
@@ -2178,10 +2063,12 @@ public sealed partial class OctoberLocalAuthorityTests
         private static readonly Guid BatchId = Guid.Parse("862de94c-c28a-4c86-9ac6-4cfca8a69c5c");
 
         private readonly SqliteConnection _connection;
+        private readonly OctoberOwnedIdentityFixture _identityDatabase;
         private readonly AsyncServiceScope _operationScope;
 
         private SelectionFixture(
             SqliteConnection connection,
+            OctoberOwnedIdentityFixture identityDatabase,
             ServiceProvider provider,
             AsyncServiceScope operationScope,
             ControlledCredentialSource credentialSource,
@@ -2192,6 +2079,7 @@ public sealed partial class OctoberLocalAuthorityTests
             Guid globalContextId)
         {
             _connection = connection;
+            _identityDatabase = identityDatabase;
             Provider = provider;
             _operationScope = operationScope;
             CredentialSource = credentialSource;
@@ -2204,6 +2092,7 @@ public sealed partial class OctoberLocalAuthorityTests
 
         public ServiceProvider Provider { get; }
         public SqliteConnection Connection => _connection;
+        public OctoberOwnedIdentityFixture IdentityDatabase => _identityDatabase;
         public ControlledCredentialSource CredentialSource { get; }
         public FixedTimeProvider Clock { get; }
         public IOctoberLocalAuthority Authority { get; }
@@ -2223,11 +2112,12 @@ public sealed partial class OctoberLocalAuthorityTests
             DateTimeOffset now = new(2026, 10, 1, 8, 0, 0, TimeSpan.Zero);
             SqliteConnection connection = new("Data Source=:memory:");
             await connection.OpenAsync();
+            OctoberOwnedIdentityFixture identityDatabase = await OctoberOwnedIdentityFixture.CreateAsync();
             ControlledCredentialSource credentialSource =
                 new(new OctoberOperatorCredentials(UserName, Password));
             FixedTimeProvider clock = new(now);
             ServiceProvider provider = CreateAuthorityProvider(
-                connection, credentialSource, clock, sessionLifetime: sessionLifetime);
+                connection, identityDatabase, credentialSource, clock, sessionLifetime: sessionLifetime);
             AsyncServiceScope operationScope = default;
             bool scopeCreated = false;
             try
@@ -2259,7 +2149,7 @@ public sealed partial class OctoberLocalAuthorityTests
                 scopeCreated = true;
                 IOctoberLocalAuthority authority = operationScope.ServiceProvider
                     .GetRequiredService<IOctoberLocalAuthority>();
-                return new SelectionFixture(connection, provider, operationScope,
+                return new SelectionFixture(connection, identityDatabase, provider, operationScope,
                     credentialSource, clock, authority, systemId, repositoryId, globalContextId);
             }
             catch
@@ -2268,6 +2158,7 @@ public sealed partial class OctoberLocalAuthorityTests
                     await operationScope.DisposeAsync();
                 await provider.DisposeAsync();
                 await connection.DisposeAsync();
+                await identityDatabase.DisposeAsync();
                 throw;
             }
         }
@@ -2336,6 +2227,7 @@ public sealed partial class OctoberLocalAuthorityTests
             await _operationScope.DisposeAsync();
             await Provider.DisposeAsync();
             await _connection.DisposeAsync();
+            await _identityDatabase.DisposeAsync();
         }
     }
 }

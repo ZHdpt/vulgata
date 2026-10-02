@@ -8,7 +8,7 @@ container; tool/provider/E2E and historical suites remain explicit and retain th
 feature-specific gates. See [testing guidance](testing.md). This changes the routine
 regression boundary, not historical product evidence or story lifecycle state.
 
-Updated: 2026-10-01 (Story 18.4 direct authority/source integration verified; host qualification incomplete).
+Updated: 2026-10-02 (Story 18.4 host/Identity/provider implementation verified; full A/B qualification incomplete).
 Story 13.1 is complete in `specs/015-retained-source-access`.
 Exact retained capture, scoped reads, publication/recovery, cleanup, trusted
 workspaces and separate-process reopening have bounded controlled evidence.
@@ -43,7 +43,7 @@ verification before reuse.
   Tracker refreshes require both epic files. Story 13.1 and October Story 18.1 are
   done; this checkout includes Story 18.1's completed baseline at `3632b2cc`. October
   Story 18.4 resumes in `specs/017-october-batch-setup` from implementation
-  checkpoint `0b45faf` with a verified diagnostics group pending its owned checkpoint.
+  checkpoint 16, whose unique binding is recorded in its workflow state.
   The retained Astra-medium owner completed the bounded plan
   correction; independent plan-review-14 accepted it at transition 0077 and delegated
   plan-authorization-05 permits affected task reconciliation only. The candidate
@@ -80,9 +80,14 @@ verification before reuse.
   and272/272 mapped surrounding tests after expected RED/minimal GREEN; both owners
   assessed final units and exact owned cleanup is verified. See the story's
   `evidence/generator-cli-diagnostics-final-green-01.json`. Identity descriptor
-  enforcement and Web process-lifetime provider-binding retention remain unfinished
-  accepted implementation obligations, followed by full A/B PostgreSQL/process
-  qualification and every remaining governed gate. Status in
+  enforcement now covers all five fresh-authority entrypoints; successful selected-Web
+  provider binding is retained for the process. After the authorized fixture consolidation,
+  fresh PostgreSQL authority/source checks pass93/93, actual generator checks20/20,
+  selected-Web Identity WAF checks3/3 and October SelfContained187/187. Exact owned
+  containers/volumes are absent. See `evidence/identity-group-final-green-01.json`.
+  The same30 task IDs now have27 completed markers; full A/B PostgreSQL/process
+  qualification, cross-cutting verification and every remaining governed gate remain open.
+  WAF/SQLite selected-data checks are not full PostgreSQL/listener qualification. Status in
   other assigned worktrees must be verified there. Sprint planning alone activated
   no feature.
   Its bounded retained-source

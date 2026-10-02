@@ -96,13 +96,13 @@
     },
     "tasks": {
       "path": "specs/017-october-batch-setup/tasks.md",
-      "sha256": "431f367cea058a8d283024656e54f8f93df9cc35e10d953a3b332f024053fb0d"
+      "sha256": "ff261f5554b200e2c355712d91799f6bad2eab3243cee4164dfc46ab373a6346"
     }
   },
   "bmad_epic_key": "epic-18",
   "bmad_story_key": "18-4-prepare-an-owned-october-batch-with-valid-context-and-provid",
   "checkpoint": {
-    "checkpoint_id": "bmad-18-4-implement-20261001T195715Z-c15d66",
+    "checkpoint_id": "bmad-18-4-implement-20261002T030100Z-a641ef",
     "stage": "implement",
     "commit_sha": null,
     "binding_status": "pending"
@@ -124,7 +124,7 @@
     "specs/017-october-batch-setup/evidence/source-composition-lifetime-diagnosis-01.json",
     "specs/017-october-batch-setup/evidence/local-authority-command-cancellation-selection-final-green-01.json",
     "specs/017-october-batch-setup/evidence/provider-binding-final-green-01.json",
-    "specs/017-october-batch-setup/evidence/selected-web-provider-final-green-01.json",
+    "specs/017-october-batch-setup/evidence/identity-group-final-green-01.json",
     "specs/017-october-batch-setup/evidence/generator-cli-diagnostics-final-green-01.json"
   ],
   "definition_author": {
@@ -159,10 +159,10 @@
   },
   "preflight": {
     "branch": "oct14/story-18-4",
-    "head": "0b45faf14438de2454dc5d31a9f9e43fd090ce1d",
-    "git_identity_sha256": "6b40f68270c52538e92203b70edd7c76805efb28bfaae47e4f1f82894b6023c6",
-    "status_sha256": "bff60d2a92ea4e4a9a90670fa46c3d6cc0c4b8c6173d9c4a8fecf2c88e36452f",
-    "observed_at": "2026-10-01T20:00:58.5309270Z"
+    "head": "ea7062a84abc74bd3609b1292159a27776530971",
+    "git_identity_sha256": "f15705b23aadc0b59b87eeff0f34655e19baa1e3fb1a9a662bf9e0eedebdb980",
+    "status_sha256": "4859e53c28d2c9266fb29b0a4e27d1a5d2757091226f4ff45744026a8271ba66",
+    "observed_at": "2026-10-02T02:59:18.1443051Z"
   },
   "recovery": {
     "action": "proceed",
@@ -187,14 +187,14 @@
   },
   "resume": {
     "stage": "implement",
-    "reason": "CLI diagnostics verified19/19 and272/272; next Identity descriptor enforcement, Web binding retention, owned A/B qualification and remaining governed gates. Same30tasks/19completed; recovery6/7 unchanged.",
-    "evidence_path": "specs/017-october-batch-setup/evidence/generator-cli-diagnostics-final-green-01.json"
+    "reason": "Identity/source/Web binding group final GREEN and authorized fixture consolidation complete. Same30IDs/27done. Continue T020/T029 owned A/B runtime qualification, T030 and remaining gates. Recovery6/7 unchanged.",
+    "evidence_path": "specs/017-october-batch-setup/evidence/identity-group-final-green-01.json"
   },
   "schema_version": "3.1",
   "stage": "implement",
   "transition_head": {
-    "path": "specs/017-october-batch-setup/evidence/transitions/transition-0102-generator-cli-nonexact-authority-expected-red.json",
-    "sha256": "dcdff0be1044ee365fad59021f8909421690ca01c1461dfcda81b1d20169cf13"
+    "path": "specs/017-october-batch-setup/evidence/transitions/transition-0109-hold-resolution-current-tasks-self-review.json",
+    "sha256": "f020d6b8054aa7defba94136b4e7aebcd7e0844465dcf715cdebd19f99e1f59f"
   },
-  "updated_at": "2026-10-01T20:00:58.5309270Z"
+  "updated_at": "2026-10-02T02:59:18.1443051Z"
 }

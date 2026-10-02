@@ -28,8 +28,8 @@ public sealed class OctoberPreparedSourceBindingTests
     private static readonly Guid RepositoryOne = Guid.Parse("c07e2cc2-f96f-4c8e-8fd7-e975e220b917");
     private static readonly Guid RepositoryTwo = Guid.Parse("a17b99e0-f130-41fb-8d2d-985fd53a43bb");
 
-    [Trait("Suite", "SelfContained")]
-    [SuiteTheory("SelfContained")]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteTheory("PostgreSql")]
     [InlineData("current", PreparedSourceIssueStatus.Issued)]
     [InlineData("revoked", PreparedSourceIssueStatus.Denied)]
     [InlineData("unavailable", PreparedSourceIssueStatus.AuthorityUnavailable)]
@@ -84,8 +84,8 @@ public sealed class OctoberPreparedSourceBindingTests
         Assert.Equal(approval, web.Calls[0].Approval);
     }
 
-    [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task IssueAsync_CurrentApprovalAndExactRootBindings_IssuesIndependentRepositoryContexts()
     {
         RequireWindowsHost();
@@ -149,8 +149,8 @@ public sealed class OctoberPreparedSourceBindingTests
         Assert.Equal(PreparedSourceContextLifetime.Disposed, secondContext.Lifetime);
     }
 
-    [Trait("Suite", "SelfContained")]
-    [SuiteTheory("SelfContained")]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteTheory("PostgreSql")]
     [InlineData("web-revoked", PreparedSourceIssueStatus.Denied)]
     [InlineData("web-unavailable", PreparedSourceIssueStatus.AuthorityUnavailable)]
     [InlineData("web-substituted-approval", PreparedSourceIssueStatus.Denied)]
@@ -199,8 +199,8 @@ public sealed class OctoberPreparedSourceBindingTests
         }
     }
 
-    [Trait("Suite", "SelfContained")]
-    [SuiteTheory("SelfContained")]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteTheory("PostgreSql")]
     [InlineData("revoked", PreparedSourceOutcome.Denied)]
     [InlineData("unavailable", PreparedSourceOutcome.AuthorityUnavailable)]
     [InlineData("root-version-rotated", PreparedSourceOutcome.Denied)]
@@ -263,8 +263,8 @@ public sealed class OctoberPreparedSourceBindingTests
         Assert.Equal(PreparedSourceContextLifetime.Disposed, context.Lifetime);
     }
 
-    [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task ReadTextRangeAsync_CancellationDuringBorrowedAuthorityCheck_SettlesBeforeCallerDisposal()
     {
         RequireWindowsHost();
@@ -388,8 +388,8 @@ public sealed class OctoberPreparedSourceBindingTests
 
 public sealed partial class OctoberLocalAuthorityTests
 {
-    [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task PreparedSourceBinding_UsesRealOctoberAuthorityAndKeepsRepositoriesIsolated()
     {
         if (!OperatingSystem.IsWindows())
@@ -457,8 +457,8 @@ public sealed partial class OctoberLocalAuthorityTests
         Assert.Equal(PreparedSourceContextLifetime.Disposed, secondContext.Lifetime);
     }
 
-    [Trait("Suite", "SelfContained")]
-    [SuiteTheory("SelfContained")]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteTheory("PostgreSql")]
     [InlineData("role", PreparedSourceIssueStatus.Denied)]
     [InlineData("membership", PreparedSourceIssueStatus.Denied)]
     [InlineData("stamp", PreparedSourceIssueStatus.Denied)]
@@ -487,8 +487,8 @@ public sealed partial class OctoberLocalAuthorityTests
         Assert.Null(issue.Context);
     }
 
-    [Trait("Suite", "SelfContained")]
-    [SuiteTheory("SelfContained")]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteTheory("PostgreSql")]
     [InlineData("role", PreparedSourceOutcome.Denied)]
     [InlineData("membership", PreparedSourceOutcome.Denied)]
     [InlineData("stamp", PreparedSourceOutcome.Denied)]
@@ -526,8 +526,8 @@ public sealed partial class OctoberLocalAuthorityTests
         Assert.Equal(PreparedSourceContextLifetime.Disposed, context.Lifetime);
     }
 
-    [Trait("Suite", "SelfContained")]
-    [SuiteTheory("SelfContained")]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteTheory("PostgreSql")]
     [InlineData("revoked", PreparedSourceOutcome.Denied)]
     [InlineData("store", PreparedSourceOutcome.AuthorityUnavailable)]
     public async Task PreparedSourceFunction_RechecksRealOctoberAuthorityImmediatelyBeforeDisclosure(
@@ -579,8 +579,8 @@ public sealed partial class OctoberLocalAuthorityTests
         await context.DisposeAsync();
     }
 
-    [Trait("Suite", "SelfContained")]
-    [SuiteFact("SelfContained")]
+    [Trait("Suite", "PostgreSql")]
+    [SuiteFact("PostgreSql")]
     public async Task PreparedSourceFunction_CancellationSettlesBorrowedCheckBeforeContextAndSessionDisposal()
     {
         RequireWindowsHostForIntegration();
