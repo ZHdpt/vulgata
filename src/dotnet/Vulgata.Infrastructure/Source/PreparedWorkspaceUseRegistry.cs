@@ -128,6 +128,7 @@ internal sealed class PreparedWorkspaceUseRegistry : IAsyncDisposable, IPrepared
     private PreparedCodeGraphWorkspaceOwnership? _admittedBinding;
     private RegistryState _state = RegistryState.Closed;
     private bool _dispositionSettled;
+    private int _closeRequested;
     private int _shutdownRequested;
     private Task? _deferredShutdownCleanup;
 
@@ -289,7 +290,8 @@ internal sealed class PreparedWorkspaceUseRegistry : IAsyncDisposable, IPrepared
         CancellationToken cancellationToken = default)
     {
         if (binding is null || cancellationToken.IsCancellationRequested ||
-            Volatile.Read(ref _shutdownRequested) != 0 || HasPendingChecks())
+            Volatile.Read(ref _shutdownRequested) != 0 ||
+            Volatile.Read(ref _closeRequested) != 0 || HasPendingChecks())
         {
             return new PreparedWorkspaceAdmissionResult(cancellationToken.IsCancellationRequested
                 ? PreparedWorkspaceAdmissionStatus.Cancelled
@@ -305,6 +307,7 @@ internal sealed class PreparedWorkspaceUseRegistry : IAsyncDisposable, IPrepared
             try
             {
                 if (_state != RegistryState.Closed || Volatile.Read(ref _shutdownRequested) != 0 ||
+                    Volatile.Read(ref _closeRequested) != 0 ||
                     HasPendingChecks() ||
                     binding.Phase is not (PreparedCodeGraphOwnershipPhase.Absent or PreparedCodeGraphOwnershipPhase.Ready))
                 {
@@ -395,7 +398,7 @@ internal sealed class PreparedWorkspaceUseRegistry : IAsyncDisposable, IPrepared
                 deadline.Token.ThrowIfCancellationRequested();
                 lock (_publicationGate)
                 {
-                    if (_shutdownRequested != 0)
+                    if (_shutdownRequested != 0 || _closeRequested != 0)
                     {
                         return new PreparedWorkspaceAdmissionResult(PreparedWorkspaceAdmissionStatus.Unavailable);
                     }
@@ -747,6 +750,7 @@ internal sealed class PreparedWorkspaceUseRegistry : IAsyncDisposable, IPrepared
             try
             {
                 if (_state != RegistryState.Open || Volatile.Read(ref _shutdownRequested) != 0 ||
+                    Volatile.Read(ref _closeRequested) != 0 ||
                     !HasAdmittedImmutableKey(binding))
                 {
                     return new PreparedWorkspaceBorrowResult(PreparedWorkspaceSettlementStatus.Unknown, null);
@@ -772,6 +776,7 @@ internal sealed class PreparedWorkspaceUseRegistry : IAsyncDisposable, IPrepared
                 }
 
                 if (_state != RegistryState.Open || Volatile.Read(ref _shutdownRequested) != 0 ||
+                    Volatile.Read(ref _closeRequested) != 0 ||
                     !IsCurrentBindingOrReadyProgression(binding) ||
                     _hold is null ||
                     purpose is not (PreparedToolPurpose.JdtNavigation or PreparedToolPurpose.CodeGraphPreparation) ||
@@ -811,7 +816,7 @@ internal sealed class PreparedWorkspaceUseRegistry : IAsyncDisposable, IPrepared
                 deadline.Token.ThrowIfCancellationRequested();
                 lock (_publicationGate)
                 {
-                    if (_shutdownRequested != 0)
+                    if (_shutdownRequested != 0 || _closeRequested != 0)
                     {
                         return new PreparedWorkspaceBorrowResult(PreparedWorkspaceSettlementStatus.Unknown, null);
                     }
@@ -845,6 +850,11 @@ internal sealed class PreparedWorkspaceUseRegistry : IAsyncDisposable, IPrepared
         if (binding is null)
         {
             return PreparedWorkspaceSettlementStatus.Unknown;
+        }
+
+        lock (_publicationGate)
+        {
+            Volatile.Write(ref _closeRequested, 1);
         }
 
         using var deadline = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);

@@ -3,6 +3,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.Win32.SafeHandles;
+using Vulgata.Core.DomainServices;
 
 namespace Vulgata.Infrastructure.Source;
 
@@ -107,6 +108,95 @@ internal sealed class FilePreparedCodeGraphOwnershipStore : IPreparedCodeGraphOw
         {
             // Any partially initialized child is left unavailable, never adopted.
             return PreparedCodeGraphStoreProvisionStatus.Unavailable;
+        }
+    }
+
+    public async Task<PreparedCodeGraphOwnershipLoadResult> FindExactWorkspaceAsync(
+        PreparedSourceApproval approval,
+        string physicalRootPath,
+        PreparedToolDirectoryObjectIdentity rootObjectIdentity,
+        string derivedWorkspaceOwnerIdentity,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            if (approval is null || approval.RepositoryId == Guid.Empty ||
+                rootObjectIdentity is null || string.IsNullOrWhiteSpace(derivedWorkspaceOwnerIdentity) ||
+                !Path.IsPathFullyQualified(physicalRootPath) ||
+                !SeparateRoots(_sourceStoragePolicy.RootPath, physicalRootPath))
+            {
+                return UnavailableLoad();
+            }
+
+            (PreparedSourceTraversal.OpenStatus workspaceStatus, SafeFileHandle? workspace) =
+                PreparedSourceTraversal.OpenRoot(physicalRootPath);
+            using (workspace)
+            {
+                if (workspaceStatus != PreparedSourceTraversal.OpenStatus.Opened ||
+                    Stable(workspace) != rootObjectIdentity)
+                {
+                    return UnavailableLoad();
+                }
+
+                (PreparedSourceTraversal.OpenStatus storageStatus, SafeFileHandle? storage) =
+                    PreparedSourceTraversal.OpenRoot(_sourceStoragePolicy.RootPath);
+                using (storage)
+                {
+                    PreparedToolDirectoryObjectIdentity? storageIdentity = Stable(storage);
+                    if (storageStatus != PreparedSourceTraversal.OpenStatus.Opened ||
+                        storageIdentity is null)
+                    {
+                        return UnavailableLoad();
+                    }
+
+                    (PreparedSourceTraversal.OpenStatus metadataStatus, SafeFileHandle? metadata) =
+                        PreparedSourceTraversal.OpenRelativeDirectory(storage!, MetadataDirectoryName);
+                    using (metadata)
+                    {
+                        PreparedToolDirectoryObjectIdentity? metadataIdentity = Stable(metadata);
+                        if (metadataStatus != PreparedSourceTraversal.OpenStatus.Opened ||
+                            metadataIdentity is null)
+                        {
+                            return UnavailableLoad();
+                        }
+
+                        LedgerDocument? ledger = await ReadLedgerAsync(metadata!, cancellationToken);
+                        if (ledger is null || Stable(workspace) != rootObjectIdentity ||
+                            Stable(storage) != storageIdentity || Stable(metadata) != metadataIdentity)
+                        {
+                            return UnavailableLoad();
+                        }
+
+                        PreparedCodeGraphWorkspaceOwnership[] matches = ledger.Records.Where(record =>
+                            string.Equals(record.PhysicalRootPath, physicalRootPath,
+                                StringComparison.OrdinalIgnoreCase) ||
+                            record.RootObjectIdentity == rootObjectIdentity ||
+                            record.WorkspaceOwnerIdentity == derivedWorkspaceOwnerIdentity).ToArray();
+                        if (matches.Length == 1)
+                        {
+                            PreparedCodeGraphWorkspaceOwnership found = matches[0];
+                            return found.Approval == approval &&
+                                string.Equals(found.PhysicalRootPath, physicalRootPath,
+                                    StringComparison.OrdinalIgnoreCase) &&
+                                found.RootObjectIdentity == rootObjectIdentity &&
+                                found.WorkspaceOwnerIdentity == derivedWorkspaceOwnerIdentity
+                                    ? new PreparedCodeGraphOwnershipLoadResult(
+                                        PreparedCodeGraphOwnershipLoadStatus.Found, found)
+                                    : UnavailableLoad();
+                        }
+
+                        return matches.Length == 0 && CodeGraphEntryAbsent(workspace!)
+                            ? new PreparedCodeGraphOwnershipLoadResult(
+                                PreparedCodeGraphOwnershipLoadStatus.VerifiedAbsent, null)
+                            : UnavailableLoad();
+                    }
+                }
+            }
+        }
+        catch (Exception)
+        {
+            return UnavailableLoad();
         }
     }
 

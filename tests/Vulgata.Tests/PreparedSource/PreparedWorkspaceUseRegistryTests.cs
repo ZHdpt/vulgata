@@ -1578,6 +1578,177 @@ public sealed class PreparedWorkspaceUseRegistryTests
 
     [Trait("Suite", "SelfContained")]
     [SuiteFact("SelfContained")]
+    public async Task CloseForDispositionAsync_WhenGateWaitExceedsDeadline_DoesNotReopenBorrowAdmission()
+    {
+        await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
+        fixture.Authority.Approve(fixture.Approval);
+
+        string sourceStorageRoot = Path.Combine(fixture.SandboxPath, "source-storage");
+        Directory.CreateDirectory(sourceStorageRoot);
+        RetainedSourceCapturePolicy sourceStoragePolicy = CreatePolicy(
+            fixture.SandboxPath,
+            fixture.PreparedRootPath,
+            sourceStorageRoot);
+        var binding = new PreparedCodeGraphWorkspaceOwnership(
+            OwnershipId: Guid.NewGuid(),
+            Version: 0,
+            Phase: PreparedCodeGraphOwnershipPhase.Absent,
+            Approval: fixture.Approval,
+            PhysicalRootPath: Path.GetFullPath(fixture.PreparedRootPath),
+            RootObjectIdentity: ObserveDirectoryIdentity(fixture.PreparedRootPath),
+            WorkspaceOwnerIdentity: $"owner-{fixture.SandboxId:N}",
+            StateEntryObjectIdentity: null);
+        var hold = new UncooperativeThirdCheckHold(binding);
+        var hostProtection = new UncooperativeThirdCheckHostVerifier(binding, hold);
+        var toolAuthorization = new CurrentToolAuthorization(
+            fixture.Approval,
+            PreparedToolPurpose.JdtNavigation,
+            PreparedToolPurpose.CodeGraphPreparation);
+        var registry = new PreparedWorkspaceUseRegistry(
+            new CurrentSourceAuthority(fixture.Approval),
+            toolAuthorization,
+            new ControlledOwnershipStore(binding),
+            sourceStoragePolicy,
+            hostProtection,
+            new PreviousGenerationSettledVerifier(),
+            admissionDeadline: TimeSpan.FromSeconds(5),
+            dispositionDeadline: TimeSpan.FromMilliseconds(100));
+
+        Task<PreparedWorkspaceBorrowResult>? inFlightBorrowTask = null;
+        Task<PreparedWorkspaceBorrowResult>? postCloseBorrowTask = null;
+        Task<PreparedWorkspaceSettlementStatus>? closeTask = null;
+        PreparedWorkspaceBorrowResult? inFlightBorrow = null;
+        PreparedWorkspaceBorrowResult? postCloseBorrow = null;
+        PreparedWorkspaceSettlementStatus? closeResult = null;
+        PreparedWorkspaceAdmissionResult? retryAdmission = null;
+        bool closeCompletedBeforeProofRelease = false;
+        bool heldProofPendingWhenCloseReturned = false;
+
+        try
+        {
+            PreparedWorkspaceAdmissionResult admission = await registry.AdmitAsync(
+                binding,
+                PreparedToolPurpose.JdtNavigation);
+            Assert.Equal(PreparedWorkspaceAdmissionStatus.Opened, admission.Status);
+
+            inFlightBorrowTask = registry.BeginBorrowAsync(
+                binding,
+                PreparedToolPurpose.JdtNavigation,
+                new ControlledResourceProbe());
+            await hold.ThirdCheckStarted.WaitAsync(TimeSpan.FromSeconds(2));
+
+            closeTask = registry.CloseForDispositionAsync(binding);
+            Task completedClose = await Task.WhenAny(
+                closeTask,
+                Task.Delay(TimeSpan.FromSeconds(2)));
+            closeCompletedBeforeProofRelease = ReferenceEquals(closeTask, completedClose);
+            if (closeCompletedBeforeProofRelease)
+            {
+                closeResult = await closeTask;
+                heldProofPendingWhenCloseReturned = !hold.PendingThirdCheck.IsCompleted;
+            }
+
+            // This request is made after Close returned (or exceeded its bounded observation guard),
+            // while the earlier held proof still owns the registry gate.
+            postCloseBorrowTask = registry.BeginBorrowAsync(
+                binding,
+                PreparedToolPurpose.JdtNavigation,
+                new ControlledResourceProbe());
+        }
+        finally
+        {
+            hold.ReleaseThirdCheck();
+
+            if (hold.ThirdCheckStarted.IsCompleted)
+            {
+                try
+                {
+                    await hold.PendingThirdCheck.WaitAsync(TimeSpan.FromSeconds(5));
+                }
+                catch
+                {
+                    // Final assertions report an unobserved controlled proof without leaving it pending.
+                }
+            }
+
+            if (inFlightBorrowTask is not null)
+            {
+                try
+                {
+                    inFlightBorrow = await inFlightBorrowTask.WaitAsync(TimeSpan.FromSeconds(5));
+                }
+                catch
+                {
+                    // Final assertions report an unobserved borrow result.
+                }
+            }
+
+            if (postCloseBorrowTask is not null)
+            {
+                try
+                {
+                    postCloseBorrow = await postCloseBorrowTask.WaitAsync(TimeSpan.FromSeconds(5));
+                }
+                catch
+                {
+                    // Final assertions report an unobserved borrow result.
+                }
+            }
+
+            if (closeTask is not null)
+            {
+                try
+                {
+                    closeResult = await closeTask.WaitAsync(TimeSpan.FromSeconds(5));
+                }
+                catch
+                {
+                    // Final assertions report an unobserved close result.
+                }
+            }
+
+            if (inFlightBorrow?.Borrow is not null)
+            {
+                await inFlightBorrow.Borrow.DisposeAsync();
+            }
+
+            if (postCloseBorrow?.Borrow is not null)
+            {
+                await postCloseBorrow.Borrow.DisposeAsync();
+            }
+
+            try
+            {
+                retryAdmission = await registry.AdmitAsync(
+                    binding,
+                    PreparedToolPurpose.JdtNavigation).WaitAsync(TimeSpan.FromSeconds(5));
+            }
+            catch
+            {
+                // Final assertions report an unobserved admission result.
+            }
+
+            await registry.DisposeAsync().AsTask().WaitAsync(TimeSpan.FromSeconds(5));
+        }
+
+        Assert.True(closeCompletedBeforeProofRelease,
+            "Close must return within its disposition deadline while another owned proof holds the registry gate.");
+        Assert.Equal(PreparedWorkspaceSettlementStatus.Unknown, closeResult);
+        Assert.True(heldProofPendingWhenCloseReturned,
+            "The close deadline must expire while the controlled currentness proof still owns the gate.");
+        Assert.True(hold.PendingThirdCheck.IsCompleted,
+            "The controlled held-currentness proof must be released and observed before checking later admission.");
+        Assert.True(postCloseBorrow is { Status: PreparedWorkspaceSettlementStatus.Unknown, Borrow: null },
+            "A borrow requested after timed-out closure cannot receive a ticket when the held proof is restored.");
+        Assert.True(inFlightBorrow is not null,
+            "The already-started borrow must unwind before the test assesses later admission.");
+        Assert.Equal(PreparedWorkspaceAdmissionStatus.Unavailable,
+            retryAdmission?.Status);
+        Assert.Equal(1, hold.DisposeCount);
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task DisposeAsync_WhenRegisteredProbeIgnoresCancellation_BoundsShutdownWithoutClaimingSettlement()
     {
         await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();

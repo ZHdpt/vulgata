@@ -58,6 +58,15 @@ internal interface IPreparedCodeGraphOwnershipStore
         PreparedCodeGraphWorkspaceOwnership expectedBinding,
         CancellationToken cancellationToken = default);
 
+    Task<PreparedCodeGraphOwnershipLoadResult> FindExactWorkspaceAsync(
+        PreparedSourceApproval approval,
+        string physicalRootPath,
+        PreparedToolDirectoryObjectIdentity rootObjectIdentity,
+        string derivedWorkspaceOwnerIdentity,
+        CancellationToken cancellationToken = default) =>
+        Task.FromResult(new PreparedCodeGraphOwnershipLoadResult(
+            PreparedCodeGraphOwnershipLoadStatus.Unavailable, null));
+
     Task<PreparedCodeGraphOwnershipTransitionResult> BeginCreateAsync(
         PreparedCodeGraphWorkspaceOwnership absent,
         CancellationToken cancellationToken = default);
