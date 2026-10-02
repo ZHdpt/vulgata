@@ -16,8 +16,12 @@ public sealed class PreparedJdtLsNavigationContext : IPreparedJavaNavigationCont
     private readonly Action<bool> _releaseSlot;
     private readonly TimeSpan _requestTimeout;
     private readonly TimeSpan _shutdownTimeout;
+    private readonly PreparedWorkspaceBorrow? _sessionRegistration;
+    private readonly PreparedJdtSessionSettlementProbe? _sessionProbe;
     private readonly SemaphoreSlim _gate = new(1, 1);
     private int _disposed;
+    private bool _sessionSettled;
+    private Task? _pendingSessionDisposal;
 
     internal PreparedJdtLsNavigationContext(
         PreparedToolWorkspaceLease workspaceLease,
@@ -26,7 +30,9 @@ public sealed class PreparedJdtLsNavigationContext : IPreparedJavaNavigationCont
         PreparedCodeGraphWorkspaceOwnership workspaceBinding,
         Action<bool> releaseSlot,
         TimeSpan requestTimeout,
-        TimeSpan shutdownTimeout)
+        TimeSpan shutdownTimeout,
+        PreparedWorkspaceBorrow? sessionRegistration = null,
+        PreparedJdtSessionSettlementProbe? sessionProbe = null)
     {
         _workspaceLease = workspaceLease;
         _session = session;
@@ -35,6 +41,8 @@ public sealed class PreparedJdtLsNavigationContext : IPreparedJavaNavigationCont
         _releaseSlot = releaseSlot;
         _requestTimeout = requestTimeout;
         _shutdownTimeout = shutdownTimeout;
+        _sessionRegistration = sessionRegistration;
+        _sessionProbe = sessionProbe;
     }
 
     public Guid RepositoryId => _workspaceLease.RepositoryId;
@@ -405,23 +413,64 @@ public sealed class PreparedJdtLsNavigationContext : IPreparedJavaNavigationCont
     {
         if (Interlocked.Exchange(ref _disposed, 1) != 0)
         {
-            return true;
+            return _sessionSettled;
         }
 
-        bool cleanupConfirmed = false;
+        Task? disposal = null;
         try
         {
-            await _session.DisposeAsync().AsTask().WaitAsync(_shutdownTimeout);
-            cleanupConfirmed = true;
-            return protocolSettled;
+            disposal = _session.DisposeAsync().AsTask();
+            await disposal.WaitAsync(_shutdownTimeout);
+            _sessionSettled = protocolSettled;
+            if (_sessionSettled)
+            {
+                _sessionProbe?.ConfirmSettled();
+                if (_sessionRegistration is not null)
+                {
+                    await _sessionRegistration.DisposeAsync();
+                }
+            }
+            else
+            {
+                _sessionProbe?.MarkUnknown();
+            }
+
+            return _sessionSettled;
         }
         catch (Exception)
         {
+            _sessionSettled = false;
+            _sessionProbe?.MarkUnknown();
+            if (disposal is not null)
+            {
+                _pendingSessionDisposal = disposal;
+                _ = ObservePendingSessionDisposalAsync(disposal);
+            }
+
             return false;
         }
         finally
         {
-            _releaseSlot(cleanupConfirmed && protocolSettled);
+            _releaseSlot(_sessionSettled);
+        }
+    }
+
+    private async Task ObservePendingSessionDisposalAsync(Task disposal)
+    {
+        try
+        {
+            await disposal;
+        }
+        catch
+        {
+            // Late disposal cannot change the earlier unknown cleanup result.
+        }
+        finally
+        {
+            if (ReferenceEquals(_pendingSessionDisposal, disposal))
+            {
+                _pendingSessionDisposal = null;
+            }
         }
     }
 }

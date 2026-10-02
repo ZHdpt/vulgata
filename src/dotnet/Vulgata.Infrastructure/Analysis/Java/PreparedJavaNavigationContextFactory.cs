@@ -63,6 +63,28 @@ public interface IPreparedJdtLsSession : IAsyncDisposable
         CancellationToken cancellationToken = default);
 }
 
+internal sealed class PreparedJdtSessionSettlementProbe : IPreparedWorkspaceResourceSettlementProbe
+{
+    private int _status = (int)PreparedWorkspaceSettlementStatus.Active;
+
+    internal bool IsSettled => (PreparedWorkspaceSettlementStatus)Volatile.Read(ref _status) ==
+        PreparedWorkspaceSettlementStatus.Settled;
+
+    internal void ConfirmSettled() => Interlocked.CompareExchange(
+        ref _status, (int)PreparedWorkspaceSettlementStatus.Settled,
+        (int)PreparedWorkspaceSettlementStatus.Active);
+
+    internal void MarkUnknown() => Interlocked.Exchange(
+        ref _status, (int)PreparedWorkspaceSettlementStatus.Unknown);
+
+    public ValueTask<PreparedWorkspaceSettlementStatus> InspectOwnedResourcesAsync(
+        CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        return ValueTask.FromResult((PreparedWorkspaceSettlementStatus)Volatile.Read(ref _status));
+    }
+}
+
 public sealed record PreparedJdtLsRawReply(
     IReadOnlyList<PreparedJdtLsRawLocation> Locations,
     bool LimitReached,
@@ -88,12 +110,15 @@ public sealed class PreparedJavaNavigationContextFactory
         internal SemaphoreSlim Gate { get; } = new(1, 1);
 
         internal bool Quarantined { get; set; }
+
+        internal Task? PendingSessionDisposal { get; set; }
     }
 
     private readonly PreparedJavaNavigationProfile _profile;
     private readonly IPreparedJdtLsRuntime _runtime;
     private readonly PreparedCodeGraphStateCoordinator? _ownershipCoordinator;
     private readonly Func<CancellationToken, ValueTask<PreparedCodeGraphWorkspaceOwnership?>>? _getWorkspaceBinding;
+    private readonly PreparedWorkspaceUseRegistry? _registry;
 
     public PreparedJavaNavigationContextFactory(
         PreparedJavaNavigationProfile profile,
@@ -113,6 +138,17 @@ public sealed class PreparedJavaNavigationContextFactory
     {
         _ownershipCoordinator = ownershipCoordinator ?? throw new ArgumentNullException(nameof(ownershipCoordinator));
         _getWorkspaceBinding = getWorkspaceBinding ?? throw new ArgumentNullException(nameof(getWorkspaceBinding));
+    }
+
+    internal PreparedJavaNavigationContextFactory(
+        PreparedJavaNavigationProfile profile,
+        IPreparedJdtLsRuntime runtime,
+        PreparedCodeGraphStateCoordinator ownershipCoordinator,
+        Func<CancellationToken, ValueTask<PreparedCodeGraphWorkspaceOwnership?>> getWorkspaceBinding,
+        PreparedWorkspaceUseRegistry registry)
+        : this(profile, runtime, ownershipCoordinator, getWorkspaceBinding)
+    {
+        _registry = registry ?? throw new ArgumentNullException(nameof(registry));
     }
 
     public async Task<PreparedJavaNavigationOpenResult> OpenAsync(
@@ -248,6 +284,24 @@ public sealed class PreparedJavaNavigationContextFactory
                 return Failed(PreparedJavaNavigationOpenStatus.ConfigurationUnavailable);
             }
 
+            PreparedWorkspaceBorrow? sessionRegistration = null;
+            PreparedJdtSessionSettlementProbe? sessionProbe = null;
+            if (_registry is not null)
+            {
+                sessionProbe = new PreparedJdtSessionSettlementProbe();
+                PreparedCodeGraphWorkspaceOwnership currentBinding =
+                    ownershipView.Status == PreparedCodeGraphOwnershipViewStatus.VerifiedOwned
+                        ? ownershipView.Record! : binding;
+                PreparedWorkspaceBorrowResult registered = await _registry.BeginBorrowAsync(
+                    currentBinding, PreparedToolPurpose.JdtNavigation, sessionProbe, waitToken.Token);
+                if (registered.Borrow is null)
+                {
+                    return Failed(PreparedJavaNavigationOpenStatus.ConfigurationUnavailable);
+                }
+
+                sessionRegistration = registered.Borrow;
+            }
+
             IPreparedJdtLsSession session;
             try
             {
@@ -258,6 +312,15 @@ public sealed class PreparedJavaNavigationContextFactory
                 if (!failure.CleanupConfirmed)
                 {
                     slot.Quarantined = true;
+                    sessionProbe?.MarkUnknown();
+                }
+                else
+                {
+                    sessionProbe?.ConfirmSettled();
+                    if (sessionRegistration is not null)
+                    {
+                        await sessionRegistration.DisposeAsync();
+                    }
                 }
 
                 return Failed(failure.CleanupConfirmed
@@ -267,21 +330,30 @@ public sealed class PreparedJavaNavigationContextFactory
             catch (Exception)
             {
                 slot.Quarantined = true;
+                sessionProbe?.MarkUnknown();
                 return Failed(PreparedJavaNavigationOpenStatus.CleanupUnconfirmed);
             }
 
             if (session is null)
             {
                 slot.Quarantined = true;
+                sessionProbe?.MarkUnknown();
                 return Failed(PreparedJavaNavigationOpenStatus.CleanupUnconfirmed);
             }
 
             leaseStatus = await workspaceLease.CheckCurrentAsync(cancellationToken);
             if (waitToken.IsCancellationRequested || leaseStatus != PreparedToolWorkspaceCheckStatus.Current)
             {
+                Task? disposal = null;
                 try
                 {
-                    await session.DisposeAsync().AsTask().WaitAsync(_profile.ShutdownTimeout);
+                    disposal = session.DisposeAsync().AsTask();
+                    await disposal.WaitAsync(_profile.ShutdownTimeout);
+                    sessionProbe?.ConfirmSettled();
+                    if (sessionRegistration is not null)
+                    {
+                        await sessionRegistration.DisposeAsync();
+                    }
                     return Failed(waitToken.IsCancellationRequested
                         ? cancellationToken.IsCancellationRequested
                             ? PreparedJavaNavigationOpenStatus.Cancelled
@@ -291,6 +363,13 @@ public sealed class PreparedJavaNavigationContextFactory
                 catch (Exception)
                 {
                     slot.Quarantined = true;
+                    sessionProbe?.MarkUnknown();
+                    if (disposal is not null)
+                    {
+                        slot.PendingSessionDisposal = disposal;
+                        _ = ObservePendingSessionDisposalAsync(slot, disposal);
+                    }
+
                     return Failed(PreparedJavaNavigationOpenStatus.CleanupUnconfirmed);
                 }
             }
@@ -313,13 +392,34 @@ public sealed class PreparedJavaNavigationContextFactory
                         slot.Gate.Release();
                     },
                     _profile.RequestTimeout,
-                    _profile.ShutdownTimeout));
+                    _profile.ShutdownTimeout,
+                    sessionRegistration,
+                    sessionProbe));
         }
         finally
         {
             if (!transferred)
             {
                 slot.Gate.Release();
+            }
+        }
+    }
+
+    private static async Task ObservePendingSessionDisposalAsync(RepositorySlot slot, Task disposal)
+    {
+        try
+        {
+            await disposal;
+        }
+        catch
+        {
+            // Late disposal cannot change the earlier unknown cleanup result.
+        }
+        finally
+        {
+            if (ReferenceEquals(slot.PendingSessionDisposal, disposal))
+            {
+                slot.PendingSessionDisposal = null;
             }
         }
     }

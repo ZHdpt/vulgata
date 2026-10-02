@@ -1003,6 +1003,300 @@ public sealed class JdtLsPreparedNavigationTests
 
     [Trait("Suite", "SelfContained")]
     [SuiteFact("SelfContained")]
+    public async Task CloseForDispositionAsync_WhenCallerLeaseIsDisposedButJdtSessionRemainsOpen_StaysActiveUntilContextDisposal()
+    {
+        await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
+        fixture.Authority.Approve(fixture.Approval);
+
+        PreparedJavaNavigationOwnershipFixture bindingFixture =
+            PreparedJavaNavigationOwnershipFixture.Create(
+                fixture.Authority,
+                fixture.Approval,
+                fixture.PreparedRootPath);
+        PreparedCodeGraphWorkspaceOwnership binding = bindingFixture.ApplicationHeldBinding;
+
+        string sourceStorageRoot = Path.Combine(fixture.SandboxPath, "source-storage");
+        Directory.CreateDirectory(sourceStorageRoot);
+        IConfiguration configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["SourceStorage:RootPath"] = sourceStorageRoot,
+                ["SourceStorage:MaximumEntries"] = "10000",
+                ["SourceStorage:MaximumBlobBytes"] = "8388608",
+                ["SourceStorage:MaximumAggregateBlobBytes"] = "67108864",
+                ["SourceStorage:CaptureDeadlineSeconds"] = "600",
+                ["SourceStorage:OperationStaleAfterMinutes"] = "1440",
+                ["SourceStorage:VerificationBufferBytes"] = "65536",
+                ["SourceStorage:Read:DeadlineSeconds"] = "60",
+            })
+            .Build();
+        RetainedSourceCapturePolicy sourceStoragePolicy = RetainedSourceCapturePolicy.Create(
+            configuration,
+            fixture.SandboxPath,
+            fixture.PreparedRootPath);
+        Assert.Equal(
+            PreparedCodeGraphStoreProvisionStatus.Provisioned,
+            await FilePreparedCodeGraphOwnershipStore.ProvisionNewAsync(sourceStoragePolicy));
+
+        var ownershipStore = new FilePreparedCodeGraphOwnershipStore(sourceStoragePolicy);
+        PreparedCodeGraphOwnershipLoadResult initialRecord = await ownershipStore.LoadAsync(binding);
+        Assert.Equal(PreparedCodeGraphOwnershipLoadStatus.VerifiedAbsent, initialRecord.Status);
+        Assert.Null(initialRecord.Record);
+
+        var toolAuthorization = new JdtAndCodeGraphToolUseAuthorizer(fixture.Approval);
+        var registry = new PreparedWorkspaceUseRegistry(
+            fixture.Authority,
+            toolAuthorization,
+            ownershipStore,
+            sourceStoragePolicy,
+            new JdtOnlyRegistryHostVerifier(binding),
+            new JdtOnlyPreviousGenerationVerifier(),
+            admissionDeadline: TimeSpan.FromSeconds(2),
+            dispositionDeadline: TimeSpan.FromSeconds(2));
+        PreparedToolWorkspaceLease? lease = null;
+        IPreparedJavaNavigationContext? context = null;
+        try
+        {
+            PreparedWorkspaceAdmissionResult admission = await registry.AdmitAsync(
+                binding,
+                PreparedToolPurpose.JdtNavigation);
+            Assert.Equal(PreparedWorkspaceAdmissionStatus.Opened, admission.Status);
+
+            var issuer = new PreparedToolWorkspaceIssuer(
+                fixture.Authority,
+                toolAuthorization,
+                binding,
+                registry);
+            PreparedToolWorkspaceIssueResult issue = await issuer.IssueAsync(
+                new PreparedToolWorkspaceGrantRequest(
+                    fixture.Approval,
+                    fixture.PreparedRootPath,
+                    PreparedToolPurpose.JdtNavigation,
+                    TimeSpan.FromSeconds(10)));
+            Assert.Equal(PreparedToolWorkspaceIssueStatus.Issued, issue.Status);
+            lease = Assert.IsType<PreparedToolWorkspaceLease>(issue.Lease);
+
+            var coordinator = new PreparedCodeGraphStateCoordinator(
+                fixture.Authority,
+                toolAuthorization,
+                registry,
+                ownershipStore);
+            var runtime = new ControlledPreparedJdtLsRuntime();
+            string disposableStateRoot = Path.Combine(fixture.SiblingPath, "jdt-state");
+            Directory.CreateDirectory(disposableStateRoot);
+            var factory = new PreparedJavaNavigationContextFactory(
+                new PreparedJavaNavigationProfile(
+                    disposableStateRoot,
+                    TimeSpan.FromSeconds(3),
+                    TimeSpan.FromSeconds(2),
+                    TimeSpan.FromSeconds(1),
+                    MaximumResponseBytes: 64 * 1024),
+                runtime,
+                coordinator,
+                _ => ValueTask.FromResult<PreparedCodeGraphWorkspaceOwnership?>(binding),
+                registry);
+
+            PreparedJavaNavigationOpenResult opened = await factory.OpenAsync(lease);
+            Assert.Equal(PreparedJavaNavigationOpenStatus.Opened, opened.Status);
+            context = Assert.IsAssignableFrom<IPreparedJavaNavigationContext>(opened.Context);
+            Assert.Equal(1, runtime.OpenCallCount);
+            Assert.Equal(0, runtime.Session.DisposeCallCount);
+
+            await lease.DisposeAsync();
+            lease = null;
+            Assert.Equal(0, runtime.Session.DisposeCallCount);
+
+            PreparedWorkspaceSettlementStatus whileSessionIsLive =
+                await registry.CloseForDispositionAsync(binding);
+            Assert.Equal(PreparedWorkspaceSettlementStatus.Active, whileSessionIsLive);
+
+            PreparedToolWorkspaceIssueResult lateIssue = await issuer.IssueAsync(
+                new PreparedToolWorkspaceGrantRequest(
+                    fixture.Approval,
+                    fixture.PreparedRootPath,
+                    PreparedToolPurpose.JdtNavigation,
+                    TimeSpan.FromSeconds(10)));
+            Assert.NotEqual(PreparedToolWorkspaceIssueStatus.Issued, lateIssue.Status);
+            Assert.Null(lateIssue.Lease);
+
+            await context.DisposeAsync();
+            context = null;
+            Assert.Equal(1, runtime.Session.DisposeCallCount);
+            Assert.Equal(
+                PreparedWorkspaceSettlementStatus.Settled,
+                await registry.CloseForDispositionAsync(binding));
+        }
+        finally
+        {
+            if (context is not null)
+            {
+                await context.DisposeAsync();
+            }
+
+            if (lease is not null)
+            {
+                await lease.DisposeAsync();
+            }
+
+            await registry.DisposeAsync();
+        }
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
+    public async Task CloseForDispositionAsync_WhenTrackedJdtSessionDisposalTimesOut_RemainsUnknownAfterLateCompletion()
+    {
+        await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
+        fixture.Authority.Approve(fixture.Approval);
+
+        PreparedJavaNavigationOwnershipFixture bindingFixture =
+            PreparedJavaNavigationOwnershipFixture.Create(
+                fixture.Authority,
+                fixture.Approval,
+                fixture.PreparedRootPath);
+        PreparedCodeGraphWorkspaceOwnership binding = bindingFixture.ApplicationHeldBinding;
+
+        string sourceStorageRoot = Path.Combine(fixture.SandboxPath, "source-storage");
+        Directory.CreateDirectory(sourceStorageRoot);
+        IConfiguration configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["SourceStorage:RootPath"] = sourceStorageRoot,
+                ["SourceStorage:MaximumEntries"] = "10000",
+                ["SourceStorage:MaximumBlobBytes"] = "8388608",
+                ["SourceStorage:MaximumAggregateBlobBytes"] = "67108864",
+                ["SourceStorage:CaptureDeadlineSeconds"] = "600",
+                ["SourceStorage:OperationStaleAfterMinutes"] = "1440",
+                ["SourceStorage:VerificationBufferBytes"] = "65536",
+                ["SourceStorage:Read:DeadlineSeconds"] = "60",
+            })
+            .Build();
+        RetainedSourceCapturePolicy sourceStoragePolicy = RetainedSourceCapturePolicy.Create(
+            configuration,
+            fixture.SandboxPath,
+            fixture.PreparedRootPath);
+        Assert.Equal(
+            PreparedCodeGraphStoreProvisionStatus.Provisioned,
+            await FilePreparedCodeGraphOwnershipStore.ProvisionNewAsync(sourceStoragePolicy));
+
+        var ownershipStore = new FilePreparedCodeGraphOwnershipStore(sourceStoragePolicy);
+        PreparedCodeGraphOwnershipLoadResult initialRecord = await ownershipStore.LoadAsync(binding);
+        Assert.Equal(PreparedCodeGraphOwnershipLoadStatus.VerifiedAbsent, initialRecord.Status);
+        Assert.Null(initialRecord.Record);
+
+        var toolAuthorization = new JdtAndCodeGraphToolUseAuthorizer(fixture.Approval);
+        var registry = new PreparedWorkspaceUseRegistry(
+            fixture.Authority,
+            toolAuthorization,
+            ownershipStore,
+            sourceStoragePolicy,
+            new JdtOnlyRegistryHostVerifier(binding),
+            new JdtOnlyPreviousGenerationVerifier(),
+            admissionDeadline: TimeSpan.FromSeconds(2),
+            dispositionDeadline: TimeSpan.FromSeconds(2));
+        PreparedToolWorkspaceLease? lease = null;
+        IPreparedJavaNavigationContext? context = null;
+        Task? pendingContextDisposal = null;
+        var runtime = new StalledDisposePreparedJdtLsRuntime();
+        try
+        {
+            PreparedWorkspaceAdmissionResult admission = await registry.AdmitAsync(
+                binding,
+                PreparedToolPurpose.JdtNavigation);
+            Assert.Equal(PreparedWorkspaceAdmissionStatus.Opened, admission.Status);
+
+            var issuer = new PreparedToolWorkspaceIssuer(
+                fixture.Authority,
+                toolAuthorization,
+                binding,
+                registry);
+            PreparedToolWorkspaceIssueResult issue = await issuer.IssueAsync(
+                new PreparedToolWorkspaceGrantRequest(
+                    fixture.Approval,
+                    fixture.PreparedRootPath,
+                    PreparedToolPurpose.JdtNavigation,
+                    TimeSpan.FromSeconds(10)));
+            Assert.Equal(PreparedToolWorkspaceIssueStatus.Issued, issue.Status);
+            lease = Assert.IsType<PreparedToolWorkspaceLease>(issue.Lease);
+
+            var coordinator = new PreparedCodeGraphStateCoordinator(
+                fixture.Authority,
+                toolAuthorization,
+                registry,
+                ownershipStore);
+            string disposableStateRoot = Path.Combine(fixture.SiblingPath, "jdt-state");
+            Directory.CreateDirectory(disposableStateRoot);
+            var factory = new PreparedJavaNavigationContextFactory(
+                new PreparedJavaNavigationProfile(
+                    disposableStateRoot,
+                    TimeSpan.FromSeconds(3),
+                    TimeSpan.FromSeconds(2),
+                    TimeSpan.FromMilliseconds(100),
+                    MaximumResponseBytes: 64 * 1024),
+                runtime,
+                coordinator,
+                _ => ValueTask.FromResult<PreparedCodeGraphWorkspaceOwnership?>(binding),
+                registry);
+
+            PreparedJavaNavigationOpenResult opened = await factory.OpenAsync(lease);
+            Assert.Equal(PreparedJavaNavigationOpenStatus.Opened, opened.Status);
+            context = Assert.IsAssignableFrom<IPreparedJavaNavigationContext>(opened.Context);
+            await lease.DisposeAsync();
+            lease = null;
+
+            pendingContextDisposal = context.DisposeAsync().AsTask();
+            await runtime.Session.DisposeStarted.Task.WaitAsync(TimeSpan.FromSeconds(2));
+            await pendingContextDisposal.WaitAsync(TimeSpan.FromSeconds(2));
+
+            PreparedWorkspaceSettlementStatus whileDisposeIsPending =
+                await registry.CloseForDispositionAsync(binding);
+            Assert.Equal(PreparedWorkspaceSettlementStatus.Unknown, whileDisposeIsPending);
+
+            PreparedToolWorkspaceIssueResult issueAfterUnconfirmedCleanup = await issuer.IssueAsync(
+                new PreparedToolWorkspaceGrantRequest(
+                    fixture.Approval,
+                    fixture.PreparedRootPath,
+                    PreparedToolPurpose.JdtNavigation,
+                    TimeSpan.FromSeconds(10)));
+            Assert.NotEqual(PreparedToolWorkspaceIssueStatus.Issued, issueAfterUnconfirmedCleanup.Status);
+            Assert.Null(issueAfterUnconfirmedCleanup.Lease);
+
+            runtime.Session.ReleaseDispose();
+            await runtime.Session.DisposeCompleted.Task.WaitAsync(TimeSpan.FromSeconds(2));
+            await context.DisposeAsync();
+            Assert.Equal(
+                PreparedWorkspaceSettlementStatus.Unknown,
+                await registry.CloseForDispositionAsync(binding));
+        }
+        finally
+        {
+            runtime.Session.ReleaseDispose();
+            if (runtime.Session.DisposeStarted.Task.IsCompleted)
+            {
+                await runtime.Session.DisposeCompleted.Task.WaitAsync(TimeSpan.FromSeconds(2));
+            }
+
+            if (pendingContextDisposal is not null)
+            {
+                await pendingContextDisposal.WaitAsync(TimeSpan.FromSeconds(2));
+            }
+
+            if (context is not null)
+            {
+                await context.DisposeAsync();
+            }
+
+            if (lease is not null)
+            {
+                await lease.DisposeAsync();
+            }
+
+            await registry.DisposeAsync();
+        }
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task GetDefinitionAsync_WhenAbsentWorkspaceBecomesReadyDuringBufferedReply_DiscardsEntireReply()
     {
         await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
@@ -3842,6 +4136,55 @@ public sealed class JdtLsPreparedNavigationTests
             LastProfile = profile;
             LastCancellationToken = cancellationToken;
             return Task.FromResult<IPreparedJdtLsSession>(Session);
+        }
+    }
+
+    private sealed class StalledDisposePreparedJdtLsRuntime : IPreparedJdtLsRuntime
+    {
+        internal StalledDisposePreparedJdtLsSession Session { get; } = new();
+
+        public Task<IPreparedJdtLsSession> OpenAsync(
+            PreparedToolWorkspaceLease workspaceLease,
+            PreparedJavaNavigationProfile profile,
+            CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            return Task.FromResult<IPreparedJdtLsSession>(Session);
+        }
+    }
+
+    private sealed class StalledDisposePreparedJdtLsSession : IPreparedJdtLsSession
+    {
+        private readonly TaskCompletionSource<bool> _releaseDispose =
+            new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        internal TaskCompletionSource<bool> DisposeStarted { get; } =
+            new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        internal TaskCompletionSource<bool> DisposeCompleted { get; } =
+            new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        public Task<PreparedJdtLsRawReply> NavigateAsync(
+            PreparedJavaNavigationOperation operation,
+            PreparedJavaNavigationRequest request,
+            CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            return Task.FromResult(new PreparedJdtLsRawReply([], false, null));
+        }
+
+        public ValueTask DisposeAsync()
+        {
+            DisposeStarted.TrySetResult(true);
+            return new ValueTask(CompleteDisposeAsync());
+        }
+
+        internal void ReleaseDispose() => _releaseDispose.TrySetResult(true);
+
+        private async Task CompleteDisposeAsync()
+        {
+            await _releaseDispose.Task;
+            DisposeCompleted.TrySetResult(true);
         }
     }
 
