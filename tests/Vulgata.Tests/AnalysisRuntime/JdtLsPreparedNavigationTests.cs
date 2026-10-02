@@ -3609,6 +3609,145 @@ public sealed class JdtLsPreparedNavigationTests
 
     [Trait("Suite", "SelfContained")]
     [SuiteFact("SelfContained")]
+    public async Task PreparedJdtLsRuntime_WithPreparedStdioFactory_NavigatesDefinitionAndMapsRawProtocolLocation()
+    {
+        await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
+        fixture.Authority.Approve(fixture.Approval);
+        string callerPath = Path.Combine(fixture.PreparedRootPath, "src", "main", "java", "Caller.java");
+        string targetPath = Path.Combine(fixture.PreparedRootPath, "src", "main", "java", "Target.java");
+        Directory.CreateDirectory(Path.GetDirectoryName(callerPath)!);
+        await File.WriteAllTextAsync(callerPath, "class Caller { void call() {} }\n");
+        await File.WriteAllTextAsync(targetPath, "class Target { void target() {} }\n");
+        byte[] callerSourceBytesBefore = await File.ReadAllBytesAsync(callerPath);
+        byte[] targetSourceBytesBefore = await File.ReadAllBytesAsync(targetPath);
+
+        var toolAuthorization = new ControlledPreparedToolUseAuthorizer(
+            fixture.Approval,
+            PreparedToolPurpose.JdtNavigation);
+        PreparedToolWorkspaceIssueResult issue = await new PreparedToolWorkspaceIssuer(
+            fixture.Authority,
+            toolAuthorization).IssueAsync(
+                new PreparedToolWorkspaceGrantRequest(
+                    fixture.Approval,
+                    fixture.PreparedRootPath,
+                    PreparedToolPurpose.JdtNavigation,
+                    TimeSpan.FromSeconds(10)));
+        Assert.Equal(PreparedToolWorkspaceIssueStatus.Issued, issue.Status);
+        PreparedToolWorkspaceLease lease = Assert.IsType<PreparedToolWorkspaceLease>(issue.Lease);
+
+        string stateRoot = Path.Combine(fixture.SiblingPath, "prepared-stdio-navigation-state");
+        string toolRoot = Path.Combine(fixture.SiblingPath, "prepared-stdio-navigation-tools");
+        Directory.CreateDirectory(stateRoot);
+        Directory.CreateDirectory(toolRoot);
+        string jdtScriptPath = Path.Combine(toolRoot, "jdtls.bat");
+        string javaPath = Path.Combine(toolRoot, "java.exe");
+        string cmdPath = Path.Combine(toolRoot, "cmd.exe");
+        await File.WriteAllTextAsync(jdtScriptPath, "@echo off\r\n");
+        await File.WriteAllTextAsync(javaPath, "controlled java executable fixture\n");
+        await File.WriteAllTextAsync(cmdPath, "controlled command interpreter fixture\n");
+        PreparedJdtPinnedFile jdtCommand = await ObservePinnedFileAsync(jdtScriptPath, 0);
+        PreparedJdtPinnedFile javaCommand = await ObservePinnedFileAsync(javaPath, 0);
+        PreparedJdtPinnedFile fixedInterpreter = await ObservePinnedFileAsync(cmdPath, null);
+        var hostPolicy = new PreparedJdtHostPolicy(
+            [toolRoot],
+            [toolRoot],
+            cmdPath,
+            [toolRoot]);
+        var resolver = new RecordingPreparedJdtCommandResolver(
+            new PreparedJdtPinnedCommands(jdtCommand, javaCommand, fixedInterpreter));
+        var process = new PreparedJdtStdioPeerProcess();
+        using (JsonDocument definitionReply = JsonDocument.Parse(JsonSerializer.Serialize(
+                   new[]
+                   {
+                       new
+                       {
+                           uri = new Uri(targetPath).AbsoluteUri,
+                           range = new
+                           {
+                               start = new { line = 5, character = 2 },
+                               end = new { line = 5, character = 8 },
+                           },
+                       },
+                   })))
+        {
+            process.DefinitionReply = definitionReply.RootElement.Clone();
+        }
+
+        var launcher = new ReturningTrackedPreparedJdtProcessLauncher(process);
+        var runtime = new PreparedJdtLsRuntime(
+            resolver,
+            launcher,
+            new PreparedJdtProtocolFactory(),
+            hostPolicy);
+        var profile = new PreparedJavaNavigationProfile(
+            stateRoot,
+            TimeSpan.FromSeconds(5),
+            TimeSpan.FromSeconds(3),
+            TimeSpan.FromSeconds(2),
+            MaximumResponseBytes: 64 * 1024);
+        PreparedJavaNavigationOwnershipFixture ownershipFixture =
+            PreparedJavaNavigationOwnershipFixture.Create(
+                fixture.Authority,
+                fixture.Approval,
+                fixture.PreparedRootPath);
+        PreparedJavaNavigationContextFactory factory =
+            ownershipFixture.CreateFactory(profile, runtime);
+        PreparedJavaNavigationOpenResult? opened = null;
+        IPreparedJavaNavigationContext? context = null;
+        try
+        {
+            opened = await factory.OpenAsync(lease);
+            Assert.Equal(1, launcher.CallCount);
+            Assert.Equal(PreparedJavaNavigationOpenStatus.Opened, opened.Status);
+            context = Assert.IsAssignableFrom<IPreparedJavaNavigationContext>(opened.Context);
+
+            var request = new PreparedJavaNavigationRequest(
+                "src/main/java/Caller.java",
+                Line: 3,
+                Character: 4,
+                MaximumLocations: 5);
+            PreparedJavaNavigationResult result = await context.GetDefinitionAsync(request);
+
+            Assert.Equal(PreparedJavaNavigationOutcome.Observed, result.Outcome);
+            Assert.Equal(fixture.Approval.RepositoryId, result.RepositoryId);
+            Assert.Equal(PreparedJavaNavigationOperation.Definition, result.Operation);
+            PreparedJavaLocation location = Assert.Single(result.Locations);
+            Assert.Equal("src/main/java/Target.java", location.Source.RelativePath);
+            Assert.Empty(result.Limitations);
+            Assert.Null(result.StoppingLimit);
+            string serializedResult = JsonSerializer.Serialize(result);
+            Assert.DoesNotContain(fixture.PreparedRootPath, serializedResult, StringComparison.OrdinalIgnoreCase);
+            Assert.DoesNotContain(new Uri(targetPath).AbsoluteUri, serializedResult, StringComparison.OrdinalIgnoreCase);
+            Assert.DoesNotContain("class Target", serializedResult, StringComparison.Ordinal);
+            Assert.Equal(callerSourceBytesBefore, await File.ReadAllBytesAsync(callerPath));
+            Assert.Equal(targetSourceBytesBefore, await File.ReadAllBytesAsync(targetPath));
+
+            await process.DefinitionObserved.Task.WaitAsync(TimeSpan.FromSeconds(2));
+            JsonElement definitionMessage = Assert.Single(process.ObservedMessages.Where(message =>
+                message.TryGetProperty("method", out JsonElement method) &&
+                string.Equals(method.GetString(), "textDocument/definition", StringComparison.Ordinal)));
+            JsonElement parameters = definitionMessage.GetProperty("params");
+            Assert.Equal(
+                new Uri(callerPath).AbsoluteUri,
+                parameters.GetProperty("textDocument").GetProperty("uri").GetString());
+            JsonElement position = parameters.GetProperty("position");
+            Assert.Equal(2, position.GetProperty("line").GetInt32());
+            Assert.Equal(3, position.GetProperty("character").GetInt32());
+        }
+        finally
+        {
+            if (context is not null)
+            {
+                await context.DisposeAsync();
+            }
+
+            await lease.DisposeAsync();
+            await process.DisposeAsync();
+        }
+    }
+
+    [Trait("Suite", "SelfContained")]
+    [SuiteFact("SelfContained")]
     public async Task PreparedJdtLsRuntime_WhenSourceAuthorityIsRevokedDuringLaunchRequestPreparation_DoesNotLaunch()
     {
         await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
@@ -4324,6 +4463,8 @@ public sealed class JdtLsPreparedNavigationTests
         private readonly ConcurrentQueue<JsonElement> _observedMessages = new();
         private readonly TaskCompletionSource<bool> _handshakeObserved =
             new(TaskCreationOptions.RunContinuationsAsynchronously);
+        private readonly TaskCompletionSource<bool> _definitionObserved =
+            new(TaskCreationOptions.RunContinuationsAsynchronously);
         private readonly TaskCompletionSource<bool> _processExited =
             new(TaskCreationOptions.RunContinuationsAsynchronously);
         private readonly Task _peerTask;
@@ -4344,7 +4485,11 @@ public sealed class JdtLsPreparedNavigationTests
 
         internal TaskCompletionSource<bool> HandshakeObserved => _handshakeObserved;
 
+        internal TaskCompletionSource<bool> DefinitionObserved => _definitionObserved;
+
         internal ConcurrentQueue<JsonElement> ObservedMessages => _observedMessages;
+
+        internal JsonElement? DefinitionReply { get; set; }
 
         public Task<string> ReadBoundedStandardErrorAsync(
             int byteLimit,
@@ -4395,6 +4540,11 @@ public sealed class JdtLsPreparedNavigationTests
                     _handshakeObserved.TrySetResult(true);
                 }
 
+                if (string.Equals(method, "textDocument/definition", StringComparison.Ordinal))
+                {
+                    _definitionObserved.TrySetResult(true);
+                }
+
                 if (string.Equals(method, "exit", StringComparison.Ordinal))
                 {
                     _processExited.TrySetResult(true);
@@ -4405,7 +4555,10 @@ public sealed class JdtLsPreparedNavigationTests
                 {
                     object? result = string.Equals(method, "initialize", StringComparison.Ordinal)
                         ? new { capabilities = new { } }
-                        : null;
+                        : string.Equals(method, "textDocument/definition", StringComparison.Ordinal) &&
+                          DefinitionReply is JsonElement definitionReply
+                            ? definitionReply.Clone()
+                            : null;
                     var response = new Dictionary<string, object?>
                     {
                         ["jsonrpc"] = "2.0",

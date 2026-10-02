@@ -627,7 +627,7 @@ internal sealed class PreparedJdtProtocolFactory : IPreparedJdtProtocolFactory
                 "workspace/didChangeConfiguration",
                 new { settings = request.FixedSettings }).WaitAsync(cancellationToken);
             cancellationToken.ThrowIfCancellationRequested();
-            return new PreparedJdtProtocolSession(rpc);
+            return new PreparedJdtProtocolSession(rpc, new Uri(request.RootUri));
         }
         catch
         {
@@ -636,14 +636,57 @@ internal sealed class PreparedJdtProtocolFactory : IPreparedJdtProtocolFactory
         }
     }
 
-    private sealed class PreparedJdtProtocolSession(JsonRpc rpc) : IPreparedJdtLsSession
+    private sealed class PreparedJdtProtocolSession(JsonRpc rpc, Uri rootUri) : IPreparedJdtLsSession
     {
-        public Task<PreparedJdtLsRawReply> NavigateAsync(
+        public async Task<PreparedJdtLsRawReply> NavigateAsync(
             PreparedJavaNavigationOperation operation,
             PreparedJavaNavigationRequest request,
-            CancellationToken cancellationToken = default) =>
-            Task.FromException<PreparedJdtLsRawReply>(
-                new InvalidOperationException("jdt_prepared_navigation_unavailable"));
+            CancellationToken cancellationToken = default)
+        {
+            if (operation != PreparedJavaNavigationOperation.Definition || request is null ||
+                !PreparedSourceTraversal.IsCanonicalRelativePath(request.RelativePath, allowEmpty: false) ||
+                request.Line <= 0 || request.Character <= 0)
+            {
+                throw new InvalidOperationException("jdt_prepared_navigation_unavailable");
+            }
+
+            string relativeUri = string.Join('/',
+                request.RelativePath.Split('/').Select(Uri.EscapeDataString));
+            string documentUri = new Uri(rootUri, relativeUri).AbsoluteUri;
+            JToken responseToken = await rpc.InvokeWithParameterObjectAsync<JToken>(
+                "textDocument/definition",
+                new
+                {
+                    textDocument = new { uri = documentUri },
+                    position = new { line = request.Line - 1, character = request.Character - 1 },
+                },
+                argumentDeclaredTypes: null,
+                cancellationToken);
+            using JsonDocument responseDocument = JsonDocument.Parse(
+                responseToken.ToString(NewtonsoftJsonFormatting.None));
+            JsonElement response = responseDocument.RootElement;
+            if (response.ValueKind != JsonValueKind.Array)
+            {
+                throw new InvalidOperationException("jdt_prepared_definition_invalid");
+            }
+
+            var locations = new List<PreparedJdtLsRawLocation>();
+            foreach (JsonElement location in response.EnumerateArray())
+            {
+                JsonElement range = location.GetProperty("range");
+                JsonElement start = range.GetProperty("start");
+                JsonElement end = range.GetProperty("end");
+                locations.Add(new PreparedJdtLsRawLocation(
+                    location.GetProperty("uri").GetString() ??
+                        throw new InvalidOperationException("jdt_prepared_definition_invalid"),
+                    checked(start.GetProperty("line").GetInt32() + 1),
+                    checked(start.GetProperty("character").GetInt32() + 1),
+                    checked(end.GetProperty("line").GetInt32() + 1),
+                    checked(end.GetProperty("character").GetInt32() + 1)));
+            }
+
+            return new PreparedJdtLsRawReply(locations, LimitReached: false, CapabilityLimitation: null);
+        }
 
         public ValueTask DisposeAsync()
         {
