@@ -1,0 +1,14 @@
+{
+  "kind": "analysis", "stage": "implement", "outcome": "transient-launcher-input-error",
+  "operation": "Current ordinary-host/provider/browser SelfContained verification; test-project MSBuild nested pwsh lookup",
+  "operation_identity": "eng/test.ps1-current-controlled-group/msbuild-policy-pwsh/PATH-lookup",
+  "source_commit": "4d7182509c45537cbe19df46990c83b66718d51e",
+  "run": "TestResults/isolation-a21f98e4e5524f48a1aad48e1163b6b9",
+  "primary_failure": "MSBuild nested pwsh Exec exit9009 before discovery; worker accidentally appended host long PATH rather than keeping dispatched short PATH.",
+  "invocations": 1, "maximum_root_issued_invocations": 3,
+  "previous_operation": "Earlier tracer launcher operation closed after demonstrated short-PATH execution. Current launch reintroduced the erroneous long PATH; not an unchanged product repair or new semantic decision.",
+  "corrected_invocation_authorized": "Same current test selection with process-local PATH consisting only of native pwsh, Windows/System32, Windows, dotnet, Docker and Git. Preserve failure log; stop unchanged/fatal failure, no broad retry or tool-policy change.",
+  "executed_tests": 0, "product_result": null,
+  "recovery": { "failed_results": 6, "pause_at": 7, "unchanged": true },
+  "next": "Retained test owner executes corrected launcher input and returns exact environment, current-source result and raw artifacts. Root closes technical allowance only after actual success."
+}

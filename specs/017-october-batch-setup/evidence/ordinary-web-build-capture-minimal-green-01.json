@@ -1,0 +1,19 @@
+{
+  "kind": "analysis", "stage": "implement", "outcome": "minimal-green",
+  "source_commit": "4d7182509c45537cbe19df46990c83b66718d51e",
+  "task": "T019", "red": "specs/017-october-batch-setup/evidence/ordinary-web-build-capture-red-01.json",
+  "production": { "path": "src/dotnet/Vulgata.Web/Program.cs", "before_sha256": "773f913dfbfb151dfe0bf360741f0e88e635745418841e6b06c661b9ca21c85b", "after_sha256": "b057c3a0a341614574c2ab124a77ecfa689fa5a4ca9fd02b1e58a851e73c75bf" },
+  "test_sha256": "353730c44b4ddfeca2f1c5a18649b9613fccc9b2314a0d6bacdec6256eb2d61d",
+  "change": "Private non-printing immutable DefaultConnectionSnapshot; original Development provider validation moved into ConfigureServices; explicit factory and deferred ConfigureContainer capture nonblank final DefaultConnection before provider construction. Ordinary context/factory callbacks resolve snapshot. Interim special-Web branch remains pending later accepted removal. No context re-registration over test substitutions.",
+  "command": "pwsh -NoProfile -File eng/test.ps1 -Filter 'FullyQualifiedName~OrdinaryWebBuild_CapturesFinalDefaultConnectionBeforeFirstContext'",
+  "environment": "Demonstrated short process-local PATH with Windows system32/Windows/dotnet/Docker/Git/native pwsh; NLS=1; DOTNET_CLI_TELEMETRY_OPTOUT=1.",
+  "run": "TestResults/isolation-f92ab4444a8e446eb1e62cb53044f031",
+  "counts": { "discovered": 3085, "selected": 1, "passed": 1, "failed": 0, "skipped": 0 },
+  "build_log_sha256": "6fa2ddcec94dec2df68bca6e7c36189275b9aa04b5c02ce1a0a2339edbfc256c",
+  "trx_sha256": "07eacf699d1c3502d033ec3858a36dc3189dcd7a847bf6cbb5c620de3fa0b4e4",
+  "production_owner_assessment": "All three ordinary EF callbacks share snapshot; no lazy reread, I/O/context in callback, or secret-printing snapshot. Retry/history/context/option lifetimes and test replacements preserved. Missing/blank sanitized fail before DB access. No concrete additional local refactor needed for slice.",
+  "diff_check_exit": 0,
+  "qualification": "Controlled Build-only configuration capture; not ordinary Program startup or PostgreSQL/process qualification.",
+  "recovery": { "failed_results": 6, "pause_at": 7, "unchanged": true },
+  "next": "Independent retained test-owner focused/surrounding verification; then next changed ordinary-startup tracer. No task completed by this partial slice."
+}

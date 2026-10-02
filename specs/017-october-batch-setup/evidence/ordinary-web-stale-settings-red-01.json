@@ -1,0 +1,22 @@
+{
+  "kind": "analysis", "stage": "implement", "outcome": "expected-behavioral-red",
+  "source_commit": "4d7182509c45537cbe19df46990c83b66718d51e",
+  "task": "T018", "production_task": "T019",
+  "test": "Vulgata.Tests.October.OctoberHostCompositionTests.OrdinaryProgram_IgnoresStaleOctoberSelectionAndUsesDefaultDatabase",
+  "test_path": "tests/Vulgata.Tests/October/OctoberHostCompositionTests.cs",
+  "test_sha256": "e864bdd1660bd930d442cb1c93f9ab9d4ef7bfefa6f1fdf93f291c5c4f2197bc",
+  "production_sha256": "b057c3a0a341614574c2ab124a77ecfa689fa5a4ca9fd02b1e58a851e73c75bf",
+  "seam": "Actual WebApplicationFactory<Program> ordinary startup using supported owned SQLite substitutions and normal login route; ID-I06/ID-T02.",
+  "scenario": "Stale selected-data Web mode, empty target, invalid batch and missing provider JSON path; no operator credentials. Ordinary login must start and Identity/domain/factory use the normal DefaultConnection test substitution.",
+  "primary_failure": "Invalid October Web startup selection. from OctoberWebStartupSelector.Resolve during Program Build.",
+  "causal_assessment": "Stale October configuration gates ordinary startup contrary to approved decision. Provider-file reading not reached; no independent provider-read causality claimed.",
+  "command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName~OrdinaryProgram_IgnoresStaleOctoberSelectionAndUsesDefaultDatabase'",
+  "run": "TestResults/isolation-2f0fb142b0fb4b88b72c09e64c6e3d68",
+  "counts": { "discovered": 3085, "selected": 1, "passed": 0, "failed": 1, "skipped": 0 },
+  "trx_sha256": "6c19ce5964f56508c70bdd05d6c4290799989c0d11cf634cfb9a926ee63e22b2",
+  "build_log_sha256": "5adaddac736661423c1c53a1824f0e9814415fafef289b187ce429c439c12599",
+  "tested_assembly_sha256": "67b80c3bdff13e7c5da1376088e26a08389dba58ed21343d9d1b83fdc990083d",
+  "assessment": "Reused prior ordinary WAF/provider case rather than duplicate; accepted public seam, actual EF contexts/factory, owned SQLite fixture, no provider read/DB service/listener. Historical selected-Web assertions retained in Git/raw evidence.",
+  "recovery": { "failed_results": 6, "pause_at": 7, "unchanged": true },
+  "next": "Retained production owner minimal ordinary Program startup removal in Program.cs; residual type cleanup later after affected consumers reconciled."
+}

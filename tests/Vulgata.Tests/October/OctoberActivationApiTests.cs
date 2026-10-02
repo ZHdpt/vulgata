@@ -1,3 +1,4 @@
+using System.Net;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
@@ -30,17 +31,31 @@ public sealed class OctoberActivationApiTests
     [InlineData("October:Web:ManagementAuthorityId", "obsolete-authority")]
     [InlineData("October:Web:AllowedTargets:0:TargetId", "obsolete-target")]
     [InlineData("October:Web:GeneratorCertificates:0:Sha256Fingerprint", "obsolete-fingerprint")]
-    public void ObsoleteWebModeOrAuthorityConfiguration_FailsBeforeHostServes(string key, string value)
+    public async Task FormerWebModeOrAuthorityConfiguration_LeavesOrdinaryHostAvailable(
+        string key, string value)
     {
         using LoginLogoutTests.CustomWebApplicationFactory ordinaryFactory = new();
         using WebApplicationFactory<Program> factory = ordinaryFactory.WithWebHostBuilder(builder =>
             builder.ConfigureAppConfiguration((_, configuration) => configuration.AddInMemoryCollection(
                 new Dictionary<string, string?> { [key] = value })));
+        using HttpClient client = factory.CreateClient(new WebApplicationFactoryClientOptions
+        {
+            AllowAutoRedirect = false
+        });
 
-        Exception startupFailure = Assert.ThrowsAny<Exception>(() => factory.CreateClient());
+        using HttpResponseMessage login = await client.GetAsync("/Account/Login");
+        Assert.Equal(HttpStatusCode.OK, login.StatusCode);
 
-        Assert.Contains("Invalid October Web startup selection.",
-            startupFailure.ToString(), StringComparison.Ordinal);
+        using HttpResponseMessage protectedPage = await client.GetAsync("/");
+        Assert.Equal(HttpStatusCode.Redirect, protectedPage.StatusCode);
+        string location = protectedPage.Headers.Location?.OriginalString
+            ?? throw new InvalidOperationException("Expected the ordinary authorization redirect to identify login.");
+        Assert.Contains("/Account/Login", location, StringComparison.Ordinal);
+
+        OctoberLegacyAuthorityRoutes.AssertAbsent(
+            factory.Services,
+            OctoberLegacyAuthorityRoutes.BatchActivationIssue,
+            OctoberLegacyAuthorityRoutes.BatchActivationValidation);
     }
 }
 

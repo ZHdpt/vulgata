@@ -1,0 +1,21 @@
+{
+  "kind": "analysis", "stage": "implement", "outcome": "first-valid-focused-green",
+  "source_commit": "4d7182509c45537cbe19df46990c83b66718d51e",
+  "tasks": ["T018", "T019"],
+  "red": "specs/017-october-batch-setup/evidence/ordinary-web-stale-settings-red-01.json",
+  "test_oracle_correction": "specs/017-october-batch-setup/evidence/ordinary-web-stale-settings-test-oracle-01.json",
+  "production_sha256": "f8941fd4d8b7db5e4c665fe38f047ce003beabc47ba92fca9604b9929467d77e",
+  "test_sha256": "d65b9338981ffb04575dd9e94e4d08324edf003122ae32e265a9b5b19c965f5b",
+  "change": "Removed ConfigureOctoberHost, October startup selection/authentication/batch/provider document loader and retained binding. Contexts use captured DefaultConnection only. Ordinary Identity/domain migrations and role seeding always execute; normal routes/authorization/provider registration retained.",
+  "command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName~OrdinaryWebBuild_CapturesFinalDefaultConnectionBeforeFirstContext|FullyQualifiedName~OrdinaryProgram_IgnoresStaleOctoberSelectionAndUsesDefaultDatabase'",
+  "environment": "Process-local native pwsh/Windows/System32/Windows/dotnet/Docker/Git PATH; DOTNET_SYSTEM_GLOBALIZATION_USENLS=1; DOTNET_CLI_TELEMETRY_OPTOUT=1.",
+  "run": "TestResults/isolation-aaacfccb81874febbea7ef3b483a7f73",
+  "counts": { "discovered": 3085, "selected": 2, "passed": 2, "failed": 0, "skipped": 0 },
+  "trx_sha256": "74be16207ba7cebe27a84baf9bf5bfb43b8b43dec1c406a1faaf0370b5175777",
+  "build_log_sha256": "c6ddac4c681dca573152c9356aaf18bf8442366083b70a3ccd4c0685cef79b13",
+  "tested_assembly_sha256": "5237a86baaabf6bb37550a03a963b07fcbec65685baf0b430b75db17d7de2f2e",
+  "test_owner_assessment": "Corrected all three public SQLite DataSource assertions preserve exact owned fixture binding, not generic main. Direct Build and actual Program scenarios remain distinct and cohesive; no original RED rewritten. No further test refactor needed for these tracers.",
+  "qualification": "Controlled public composition/WAF SQLite startup only; no PostgreSQL/process/provider call qualification.",
+  "recovery": { "failed_results": 6, "pause_at": 7, "unchanged": true },
+  "next": "Production-owner final-shape assessment; retained test owner reconciles obsolete selected-Web assertions and remaining current ordinary-host coverage before final surrounding GREEN and residual cleanup. Tasks remain open."
+}

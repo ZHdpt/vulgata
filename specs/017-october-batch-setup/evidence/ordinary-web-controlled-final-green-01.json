@@ -1,0 +1,32 @@
+{
+  "kind": "analysis", "stage": "implement", "outcome": "independent-controlled-final-green",
+  "source_commit": "4d7182509c45537cbe19df46990c83b66718d51e",
+  "tasks": ["T018", "T019", "T025"], "task_completion_claim": false,
+  "red_and_green_chain": ["ordinary-web-build-capture-red-01.json", "ordinary-web-build-capture-minimal-green-01.json", "ordinary-web-build-capture-final-green-01.json", "ordinary-web-stale-settings-red-01.json", "ordinary-web-stale-settings-test-oracle-01.json", "ordinary-web-stale-settings-minimal-green-01.json", "ordinary-web-program-final-shape-01.json", "ordinary-web-controlled-reconciliation-01.json"],
+  "production_sha256": "f8941fd4d8b7db5e4c665fe38f047ce003beabc47ba92fca9604b9929467d77e",
+  "test_hashes": {
+    "tests/Vulgata.Tests/October/OctoberActivationApiTests.cs": "06f2aa5bc00abe1632123a27847a403b59e6fc6d58ebb397e8dffadaf40cffe8",
+    "tests/Vulgata.Tests/October/OctoberHostCompositionTests.cs": "78c10a142e460281693021f7ef5f24ba8eb1c6f75f4efd485d92bb16b1fd04cf",
+    "tests/Vulgata.Tests/TestInfrastructure/suites.json": "205ca44f48f0ad298ee714cb52cd6825e2fc174320678e9353644f97b147a790"
+  },
+  "command": "pwsh -NoProfile -File eng/test.ps1 -Suite SelfContained -Filter 'FullyQualifiedName~OctoberActivationApiTests|FullyQualifiedName~OctoberHostCompositionTests|FullyQualifiedName~LlmProviderConfigTests|FullyQualifiedName~SystemLlmProviderOverrideTests|FullyQualifiedName~RoleSeedingAndAuthorizationTests|FullyQualifiedName~LoginLogoutTests'",
+  "run": "TestResults/isolation-1155d40469b644b484e738e3612cb85a",
+  "counts": { "selected": 43, "passed": 43, "failed": 0, "skipped": 0 },
+  "trx_sha256": "787cc1988156277c8cc6d96417b20bbfbeab700cf8b1b4265677ce596830d436",
+  "build_log_sha256": "1cedefed9c76a5b5c51d0f3a738d57f37716053769ca98e1ad4268d2644ee5fe",
+  "environment": "Scoped short native pwsh/Windows/System32/Windows/dotnet/Docker/Git PATH only; DOTNET_SYSTEM_GLOBALIZATION_USENLS=1; DOTNET_CLI_TELEMETRY_OPTOUT=1.",
+  "technical_allowance": { "failure": "specs/017-october-batch-setup/evidence/ordinary-web-controlled-launcher-failure-01.json", "total_invocations": 2, "maximum": 3, "closed_by_actual_success": true },
+  "current_observations": [
+    "Final ordinary DefaultConnection captured at Build; all Identity/domain/factory production Npgsql declarations agree before supported SQLite substitution and after reload.",
+    "Missing/blank DefaultConnection fails static sanitized configuration validation with no Identity/October fallback.",
+    "Stale selected-Web/provider settings cannot gate startup; normal login and role seeding work with no batch/operator/provider document.",
+    "Retained OctoberDbContext, IOctoberLocalAuthority, IOctoberBatchSelector and IOctoberBoundSetupData absent from ordinary Web DI.",
+    "Six formerly rejected legacy setting cases now verify ordinary startup/login, anonymous redirect and absent former activation routes.",
+    "Existing login/logout, role seeding/authorization and system-provider override tests pass; generator module tests preserved."
+  ],
+  "not_qualified": ["Real PostgreSQL migrations", "Actual ordinary Web processes/listeners/A-B restart", "LlmProviderConfigTests E2E class excluded by SelfContained guard", "Later-story generation/Knowledge/Chat/native tools"],
+  "assessment": "Retained test owner reconciled only current ordinary-host obligations and removed obsolete special-Web-only scaffolding. Both production and test owners assessed final affected units; concrete SQLite oracle and fixture warning defects corrected without changing intended exact-target or startup assertions. Historical raw failures remain. No further local refactor required.",
+  "diff_check_exit": 0,
+  "recovery": { "failed_results": 6, "pause_at": 7, "unchanged": true },
+  "next": "Checkpoint verified controlled implementation, reconcile remaining runtime consumers, remove unused owned special-Web types under T026, then authorized fresh PostgreSQL/process/provider-admin qualification and all completion gates."
+}

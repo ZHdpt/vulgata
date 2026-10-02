@@ -1,0 +1,27 @@
+{
+  "kind": "analysis",
+  "stage": "implement",
+  "source_commit": "4d7182509c45537cbe19df46990c83b66718d51e",
+  "checkpoint": "bmad-18-4-definition-review-20261002T090131Z-0db740",
+  "summary": "Verified unique ancestral checkpoint and exact 45 owned committed paths. Bound checkpoint cache; next-stage implement guard passed. Retained test owner resumes one public-seam T018 tracer before production writes.",
+  "accepted_definition": {
+    "spec_sha256": "1e81267cc8e0280ce2ad91faca4cab95643510a768732d04ffa4d80ea93e9864",
+    "plan_sha256": "4f93f2ad3eb6cc3e3df00d6192e4dd61f1d3053c1a4562d488fc6cfc0b7d0edd",
+    "tasks_sha256": "e49c76e9c2e24da858d6afd055b979f7e66ae4710d096d60d365264281d44f4c",
+    "review": "specs/017-october-batch-setup/evidence/definition-review-14.json",
+    "approval": "specs/017-october-batch-setup/evidence/implementation-approval-08.json"
+  },
+  "task": "T018",
+  "seam": "Existing public VulgataWebComposition.ConfigureServices(WebApplicationBuilder)->FrameworkCatalog followed by builder.Build; plan ID-I06/ID-T02 and batch-setup-selection contract.",
+  "verification_route": "Changed production behavior requires one honest behavioral RED then retained production minimal GREEN; already-correct behavior uses passing coverage without fabricated RED.",
+  "obligation": "Final DefaultConnection is captured at Build across Identity/domain contexts and domain factory; configuration reload before first context cannot retarget the built host. This is capture-timing proof only, not ordinary startup or PostgreSQL/process qualification.",
+  "write_boundary": [
+    "tests/Vulgata.Tests/October/OctoberHostCompositionTests.cs",
+    "tests/Vulgata.Tests/October/OctoberHostSelectionTests.cs",
+    "tests/Vulgata.Tests/October/OctoberOrdinaryWebCompositionTests.cs",
+    "tests/Vulgata.Tests/TestInfrastructure/suites.json"
+  ],
+  "limits": "One coherent tracer only; no production, definition, state, canonical, evidence or Git writes by worker. No database/process/listener required for Build-only tracer. Preserve provisional PostgreSQL test edit and unrelated activation draft. Root alone persists raw output; serialize dotnet work.",
+  "recovery": { "failed_results": 6, "pause_at": 7, "unchanged": true },
+  "expected_red_is_not_workflow_failure": true
+}

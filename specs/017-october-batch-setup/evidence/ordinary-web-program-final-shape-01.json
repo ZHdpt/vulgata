@@ -1,0 +1,9 @@
+{
+  "kind": "analysis", "stage": "implement", "outcome": "production-unit-assessed",
+  "source_commit": "4d7182509c45537cbe19df46990c83b66718d51e",
+  "production": { "path": "src/dotnet/Vulgata.Web/Program.cs", "sha256": "f8941fd4d8b7db5e4c665fe38f047ce003beabc47ba92fca9604b9929467d77e" },
+  "green": "specs/017-october-batch-setup/evidence/ordinary-web-stale-settings-minimal-green-01.json",
+  "raw_owner_disposition": "Read-only final affected-Program assessment: frozen Program.cs matches accepted ordinary-only composition. ConfigureServices keeps explicit DefaultServiceProviderFactory with Development validation and deferred Build-time nonblank DefaultConnection snapshot; one private immutable value feeds ApplicationDbContext, VulgataDbContext and IDbContextFactory with original retries, migration-history schemas and lifetimes. Snapshot is provider-owned, sanitizes ToString and is not reread after Build. Program no longer invokes October host registration, selector, provider loader, operator auth, bound-setup or batch path. It always awaits ordinary Identity/domain migration and role seeding in one startup scope, preserves exception propagation before serving, and retains browser/API cookie handling, provider administration registrations and routes. No October public type files touched; later T026 consumer reconciliation remains. No concrete local maintainability defect within authorized unit; no refactor needed. Root receipt records actual first valid focused 2/2 GREEN at frozen source and corrected test SHA d65b9338981ffb04575dd9e94e4d08324edf003122ae32e265a9b5b19c965f5b; controlled WAF/SQLite only, not PostgreSQL/process qualification. No writes/build/tests in assessment turn.",
+  "recovery": { "failed_results": 6, "pause_at": 7, "unchanged": true },
+  "next": "Retained test-owner affected consumer reconciliation/independent surrounding GREEN, then residual cleanup and fresh owned runtime qualification."
+}

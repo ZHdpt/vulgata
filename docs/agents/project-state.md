@@ -8,7 +8,7 @@ container; tool/provider/E2E and historical suites remain explicit and retain th
 feature-specific gates. See [testing guidance](testing.md). This changes the routine
 regression boundary, not historical product evidence or story lifecycle state.
 
-Updated: 2026-10-02 (Story 18.4 host/Identity/provider implementation verified; full A/B qualification incomplete).
+Updated: 2026-10-02 (Story 18.4 ordinary-Web controlled implementation verified; revised PostgreSQL/A-B qualification pending).
 Story 13.1 is complete in `specs/015-retained-source-access`.
 Exact retained capture, scoped reads, publication/recovery, cleanup, trusted
 workspaces and separate-process reopening have bounded controlled evidence.
@@ -43,8 +43,8 @@ verification before reuse.
   Tracker refreshes require both epic files. Story 13.1 and October Story 18.1 are
   done; this checkout includes Story 18.1's completed baseline at `3632b2cc`. October
   Story 18.4 resumes in `specs/017-october-batch-setup` from implementation
-  accepted-definition checkpoint 18 (ordinary-Web reconciliation, not a verified
-  implementation candidate), whose unique binding
+  controlled implementation checkpoint19 (ordinary-Web capture and startup removal;
+  not a final verified candidate), whose unique binding
   is recorded in its workflow state.
   On 2026-10-02 the human clarified ordinary Web startup with only its database
   configuration changed. Its retained Astra-medium owner completed the bounded
@@ -54,7 +54,12 @@ verification before reuse.
   or generator provider binding may be Web startup prerequisites. Independent batch
   setup, source18.1 and isolation remain. Prior selected-Web tests/approvals described
   below are historical for that affected path, not acceptance of the revised Web
-  boundary. Exact user decision and correction diagnosis are story-owned evidence;
+  boundary. Current ordinary-Web public composition/WAF checks passed64/64 and43/43:
+  final Build-time database capture, stale-setting inertness, setup-service absence
+  and normal browser/role/system-provider behavior. Generator/source18.1 files are
+  unchanged. Residual type/runtime-test reconciliation and revised owned PostgreSQL,
+  A/B process and provider-administration qualification remain before completion;
+  these controlled tests do not substitute for them. Exact user decision and correction diagnosis are story-owned evidence;
   recovery remains6/7. The old diagnostic hold is superseded only for definition
   correction, not proof of a passing runtime or permission for an old-path rerun.
   The retained Astra-medium owner previously completed the bounded plan

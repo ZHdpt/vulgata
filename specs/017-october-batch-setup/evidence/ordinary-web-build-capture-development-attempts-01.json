@@ -1,0 +1,21 @@
+{
+  "kind": "analysis",
+  "stage": "implement",
+  "source_commit": "4d7182509c45537cbe19df46990c83b66718d51e",
+  "task": "T018",
+  "test": "Vulgata.Tests.October.OctoberHostCompositionTests.OrdinaryWebBuild_CapturesFinalDefaultConnectionBeforeFirstContext",
+  "outcome": "development-fixture-corrected-awaiting-behavioral-run",
+  "attempts": [
+    { "run": "TestResults/isolation-42d7fa9d3bbc4e31b1baad59f9e8124d", "classification": "transient-launcher-environment", "primary": "Nested pwsh resolution failed, MSB3073/9009", "executed_tests": 0 },
+    { "run": "TestResults/isolation-13433d7c18444862967cbc53db0ebb29", "classification": "ordinary-development-test-build", "primary": "New fixture omitted Microsoft.Extensions.Hosting namespace for Environments", "executed_tests": 0 },
+    { "run": "TestResults/isolation-4cc09fd48bae481da138dd1f1cf066e7", "classification": "ordinary-development-test-fixture", "primary": "source_configuration_invalid: RootPath is required, before target assertion", "executed_tests": 1, "passed": 0, "failed": 1, "skipped": 0, "meaningful_product_red": false }
+  ],
+  "launcher_correction": "Short process-local PATH resolves native pwsh, Windows/System32, Windows, dotnet, Docker and Git; demonstrated build/discovery/test execution in third run. NLS=1 and telemetry optout=1. No policy/source change.",
+  "fixture_correction": "Retained test owner added missing namespace then ordinary required SourceStorage values after clearing configuration. No assertion weakened. Latest fixture correction not yet executed.",
+  "corrected_test_sha256": "353730c44b4ddfeca2f1c5a18649b9613fccc9b2314a0d6bacdec6256eb2d61d",
+  "executed_trx_sha256": "57cdbba018ae4ca985b9daef9e0013406e57b60a487d177cd45a875ea2f1c1109",
+  "counting_disposition": "Not independent review/convergence or recurring repaired product failure. Resolved launcher failure is distinct from ordinary development build/fixture corrections. No workflow failure increment, no new approval or recovery extension required. Continue current corrected fixture under existing implementation approval; do not fabricate RED.",
+  "recovery": { "failed_results": 6, "pause_at": 7, "unchanged": true },
+  "resources": "No database, listener, container or provider calls created. Unrelated files preserved.",
+  "next": "Retained test owner runs current corrected tracer once, obtains actual behavior, then returns raw outcome. No production handoff before meaningful RED or truthful already-correct coverage."
+}

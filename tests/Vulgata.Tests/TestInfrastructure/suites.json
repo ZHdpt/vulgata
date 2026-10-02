@@ -182,9 +182,6 @@
   "October/OctoberHostCompositionTests.cs": {
     "suite": "SelfContained"
   },
-  "October/OctoberSelectedWebIdentityIntegrationTests.cs": {
-    "suite": "E2E"
-  },
   "October/OctoberHostSelectionTests.cs": {
     "suite": "E2E"
   },

@@ -1,6 +1,6 @@
 # Story 18.4 development record
 
-Status: in-progress (ordinary-Web definition accepted and implementation approved; unchanged batch evidence preserved)
+Status: in-progress (ordinary-Web controlled implementation verified; runtime qualification and final gates pending)
 Feature directory: `specs/017-october-batch-setup`
 Workflow state: `specs/017-october-batch-setup/workflow-state.json`
 
@@ -22,7 +22,19 @@ open tasks. Counts remain6/7; old diagnostic failures are not
 relabeled as passing and no old-path runtime retry is implied. Historical approvals
 below remain evidence for unchanged semantic scope, not revised Web implementation
 approval. New delivery uses the retained separate test/production owners and all
-remaining verification gates; ordinary Web qualification is not yet claimed.
+remaining verification gates. Ordinary Web now captures final DefaultConnection at
+Build for Identity/domain/factory contexts and has no special October startup,
+batch/operator authentication or generator provider loading. The retained test owner
+verified honest RED/minimal GREEN and controlled final runs of64/64 and43/43;
+the latter includes the six legacy-setting cases, setup-service absence and normal
+browser/role/system-provider consumers. SQLite oracle/model-warning fixture errors
+and launcher input errors remain separately recorded, not product RED or counted
+workflow failures. See `evidence/ordinary-web-controlled-final-green-01.json`.
+No source18.1 or generator files changed. Obsolete selected-Web-only tests were
+removed with their Git/raw history preserved. Real PostgreSQL migrations, ordinary
+Web A/B processes and the E2E provider-administration class remain unqualified;
+runtime consumer reconciliation, residual owned-type cleanup and final gates are
+next. No task completion markers changed during this bounded controlled checkpoint.
 
 ## Historical pre-correction boundary (2026-10-01)
 
