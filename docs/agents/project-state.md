@@ -43,9 +43,21 @@ verification before reuse.
   Tracker refreshes require both epic files. Story 13.1 and October Story 18.1 are
   done; this checkout includes Story 18.1's completed baseline at `3632b2cc`. October
   Story 18.4 resumes in `specs/017-october-batch-setup` from implementation
-  checkpoint 17 (diagnostic recovery, not a verified candidate), whose unique binding
+  accepted-definition checkpoint 18 (ordinary-Web reconciliation, not a verified
+  implementation candidate), whose unique binding
   is recorded in its workflow state.
-  The retained Astra-medium owner completed the bounded plan
+  On 2026-10-02 the human clarified ordinary Web startup with only its database
+  configuration changed. Its retained Astra-medium owner completed the bounded
+  specification/plan/tasks correction; independent plan-review15 and definition-review14
+  accepted it, and scoped delegate approvals06/08 permit dependency-ready delivery.
+  Only T018/T025/T026 reopened;23/30 tasks remain completed. No October mode, batch ID, setup credentials
+  or generator provider binding may be Web startup prerequisites. Independent batch
+  setup, source18.1 and isolation remain. Prior selected-Web tests/approvals described
+  below are historical for that affected path, not acceptance of the revised Web
+  boundary. Exact user decision and correction diagnosis are story-owned evidence;
+  recovery remains6/7. The old diagnostic hold is superseded only for definition
+  correction, not proof of a passing runtime or permission for an old-path rerun.
+  The retained Astra-medium owner previously completed the bounded plan
   correction; independent plan-review-14 accepted it at transition 0077 and delegated
   plan-authorization-05 permits affected task reconciliation only. The candidate
   distinguishes callable source-adapter integration from setup-only execution,

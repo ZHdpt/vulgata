@@ -1,17 +1,17 @@
 {
   "approvals": [
     {
-      "decided_at": "2026-10-01T10:19:18Z",
-      "decision_id": "18-4/plan-authorization/5",
-      "evidence_path": "specs/017-october-batch-setup/evidence/plan-authorization-05.json",
-      "scope_sha256": "ac27cecad8321041f8fa57733d632c48214c76cf899a013ccfd3cbe9eff52e2e",
+      "decided_at": "2026-10-02T08:34:33.000Z",
+      "decision_id": "18-4/plan-authorization/6",
+      "evidence_path": "specs/017-october-batch-setup/evidence/plan-authorization-06.json",
+      "scope_sha256": "e60c08a91b7fe565c277463f7160f998180a8072e4511901da968fef8d2471a8",
       "status": "accepted"
     },
     {
-      "decided_at": "2026-10-01T10:40:48Z",
-      "decision_id": "18-4/implementation-approval/7",
-      "evidence_path": "specs/017-october-batch-setup/evidence/implementation-approval-07.json",
-      "scope_sha256": "a5cc0f474dda3b2e1cef7d39079a4c881ba67b71e11276c0b70d50ab43e5f9f1",
+      "decided_at": "2026-10-02T08:59:28.000Z",
+      "decision_id": "18-4/implementation-approval/8",
+      "evidence_path": "specs/017-october-batch-setup/evidence/implementation-approval-08.json",
+      "scope_sha256": "187354cfc71bf1f2b1837d76a7dc183e1728d5799c14e43052d8b90bb0ab5b26",
       "status": "accepted"
     },
     {
@@ -88,24 +88,24 @@
   "artifacts": {
     "plan": {
       "path": "specs/017-october-batch-setup/plan.md",
-      "sha256": "119a56fd62cc4f8750aa5d685d7ff34973ab1c3549600f6f252b19a770ddbfa3"
+      "sha256": "4f93f2ad3eb6cc3e3df00d6192e4dd61f1d3053c1a4562d488fc6cfc0b7d0edd"
     },
     "spec": {
       "path": "specs/017-october-batch-setup/spec.md",
-      "sha256": "09bd29f496be4a9c956a460f9d1fc8af952f88c031324e528becb19bbc15b3bc"
+      "sha256": "1e81267cc8e0280ce2ad91faca4cab95643510a768732d04ffa4d80ea93e9864"
     },
     "tasks": {
       "path": "specs/017-october-batch-setup/tasks.md",
-      "sha256": "3e05b708a6c2bab6f44f2aa651ef0ddf967ce510167f3bafafd816f5e390144c"
+      "sha256": "e49c76e9c2e24da858d6afd055b979f7e66ae4710d096d60d365264281d44f4c"
     }
   },
   "bmad_epic_key": "epic-18",
   "bmad_story_key": "18-4-prepare-an-owned-october-batch-with-valid-context-and-provid",
   "checkpoint": {
     "binding_status": "pending",
-    "checkpoint_id": "bmad-18-4-implement-20261002T053146Z-d166diag",
+    "checkpoint_id": "bmad-18-4-definition-review-20261002T090131Z-0db740",
     "commit_sha": null,
-    "stage": "implement"
+    "stage": "definition-review"
   },
   "convergence": {
     "attempt": 0,
@@ -119,9 +119,9 @@
     "specs/017-october-batch-setup/evidence/development-failure-accounting-correction-01.json",
     "specs/017-october-batch-setup/evidence/runtime-qualification-resource-authorization-01.json",
     "specs/017-october-batch-setup/evidence/source-adapter-t015-final-shape-01.json",
-    "specs/017-october-batch-setup/evidence/plan-authorization-05.json",
-    "specs/017-october-batch-setup/evidence/implementation-approval-07.json",
-    "specs/017-october-batch-setup/evidence/source-composition-lifetime-diagnosis-01.json",
+    "specs/017-october-batch-setup/evidence/ordinary-web-plan-review-boundary-01.json",
+    "specs/017-october-batch-setup/evidence/ordinary-web-user-decision-01.json",
+    "specs/017-october-batch-setup/evidence/ordinary-web-correction-diagnosis-01.json",
     "specs/017-october-batch-setup/evidence/local-authority-command-cancellation-selection-final-green-01.json",
     "specs/017-october-batch-setup/evidence/provider-binding-final-green-01.json",
     "specs/017-october-batch-setup/evidence/identity-group-final-green-01.json",
@@ -138,14 +138,14 @@
   "feature_directory": "specs/017-october-batch-setup",
   "gates": {
     "definition-review": {
-      "attempt": 9,
-      "status": "accepted",
-      "verdict_path": "specs/017-october-batch-setup/evidence/definition-review-13.json"
-    },
-    "plan-review": {
       "attempt": 10,
       "status": "accepted",
-      "verdict_path": "specs/017-october-batch-setup/evidence/plan-review-14.json"
+      "verdict_path": "specs/017-october-batch-setup/evidence/definition-review-14.json"
+    },
+    "plan-review": {
+      "attempt": 11,
+      "status": "accepted",
+      "verdict_path": "specs/017-october-batch-setup/evidence/plan-review-15.json"
     },
     "quality-review": {
       "attempt": 0,
@@ -159,28 +159,26 @@
   },
   "preflight": {
     "branch": "oct14/story-18-4",
-    "head": "c6b023fa402b414fd384d7650b788220e2ce589d",
-    "git_identity_sha256": "0684bc259a2c65248b1d248d7fcb830c02e5894fc52208a2061c61fe9ce8f9c6",
-    "status_sha256": "85f17b1ee51f6b0644322752024fd8a17df1df0931675fc1973f57eb28c4e7c5",
-    "observed_at": "2026-10-02T05:32:32.4385939Z"
+    "head": "cf45e4e0ca667466b58afd0cac0f14c529629392",
+    "git_identity_sha256": "eb88a82e054b4cd2e37d077d5b88fa5a6392de0062148a827724494b4768d69f",
+    "status_sha256": "d6bd08fb7667544b78b030e71b1441df2ac7d1a09a870a3fb8a1ae9923a28e8c",
+    "observed_at": "2026-10-02T09:04:10.6475460Z"
   },
   "recovery": {
-    "action": "blocked",
+    "action": "proceed",
     "closing_gate": "verify",
     "diagnosis": {
       "at_count": 6,
       "evidence": {
-        "path": "specs/017-october-batch-setup/evidence/source-composition-lifetime-diagnosis-01.json",
-        "sha256": "8479dc57b534d36d54b2cb1aae039e88edaca03d11953afd4cb119ab9a56cff8"
+        "path": "specs/017-october-batch-setup/evidence/ordinary-web-correction-diagnosis-01.json",
+        "sha256": "246bc9ef3ccbcb1ba98c6e84da681222cf292c0ee15b53eaeb1a475161338ec2"
       }
     },
     "earliest_owner": "tasks",
     "episode_id": "18-4-implementation-setup-seam-01",
     "extension_decision_id": "18-4/recovery-extension/implementation-setup-seam-01/2",
     "failed_results": 6,
-    "holds": [
-      "blocked"
-    ],
+    "holds": [],
     "last_result": {
       "path": "specs/017-october-batch-setup/evidence/plan-review-10.json",
       "sha256": "f445bc3f9659d7b21c666005385df001da51fcf3b5eced4b8823401a4e7bf780"
@@ -189,14 +187,14 @@
   },
   "resume": {
     "stage": "implement",
-    "reason": "Stopped after three log-lifetime checks; cleanup masks original Web setup/assertion exception. Preserve primary exception, then seek fresh bounded diagnostic continuation. Recovery6/7 and approvals unchanged.",
-    "evidence_path": "specs/017-october-batch-setup/evidence/postgresql-fixture-log-lifetime-blocked-01.json"
+    "reason": "Accepted ordinary-Web definition/approval8 ready. Bind owned definition checkpoint18, then retained TDD owners implement seven open obligations. Recovery6/7 unchanged.",
+    "evidence_path": "specs/017-october-batch-setup/evidence/implementation-approval-08.json"
   },
   "schema_version": "3.1",
   "stage": "implement",
   "transition_head": {
-    "path": "specs/017-october-batch-setup/evidence/transitions/transition-0111-postgresql-log-lifetime-blocked.json",
-    "sha256": "dcd649ab85c4788fbc8e21596c171849ec9940b114f9986db3c26f96477287c9"
+    "path": "specs/017-october-batch-setup/evidence/transitions/transition-0122-ordinary-web-definition-review-accepted.json",
+    "sha256": "d337ee0e137eb25a642239d4e969f4e26b87511992ddd6adf134427dae024e15"
   },
-  "updated_at": "2026-10-02T05:32:32.4385939Z"
+  "updated_at": "2026-10-02T09:04:10.6475460Z"
 }

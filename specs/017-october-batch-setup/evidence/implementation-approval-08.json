@@ -1,0 +1,21 @@
+{
+  "kind": "delegated-approval",
+  "stage": "implementation-approval",
+  "decision_id": "18-4/implementation-approval/8",
+  "status": "accepted",
+  "story_key": "18-4-prepare-an-owned-october-batch-with-valid-context-and-provid",
+  "delegate_id": "01a0e708-c489-7871-9f73-31413f20bf2c",
+  "decided_at": "2026-10-02T08:59:28.000Z",
+  "scope_sha256": "187354cfc71bf1f2b1837d76a7dc183e1728d5799c14e43052d8b90bb0ab5b26",
+  "delegation": {
+    "path": "specs/017-october-batch-setup/evidence/user-delegation-recovery-01.json",
+    "sha256": "e299e832115615dbde3bc828ab5e4132e0de4c13c0d64372732ab07c6d5646c6"
+  },
+  "response_source": "thread01a0e708-c489-7871-9f73-31413f20bf2c; turn01a0fbd5-e3d1-7702-a8d0-e9a2924fb6fc; message msg_0e55faeae43f1fb3016abf72646bec8196a3a700bdf4763efa",
+  "response_text": "APPROVE — 18-4/implementation-approval/8. Verified binding: HEAD: cf45e4e0ca667466b58afd0cac0f14c529629392 Definition review 14 ACCEPT, SHA-256: e65f8d8e700b4d3fd4715073f0721620a5328b71a7031bf5252bf62f1e96e09a Scope SHA-256: 187354cfc71bf1f2b1837d76a7dc183e1728d5799c14e43052d8b90bb0ab5b26 All thirteen artifact hashes and the exact diff digest match. Task ordering requires meaningful ordinary-Web RED/GREEN before revised qualification and preserves completed generator/source/provider work. Proceed with dependency-ready implementation of database-only ordinary Web startup, final Build-time connection capture and bounded removal of special-Web startup. Preserve normal migrations, seeding, browser authorization and provider administration. Leave the unrelated activation-service draft untouched. Retain current owners/models and all subsequent verification gates. Runtime qualification remains restricted to independently verified existing resource authorization; this decision grants no new resources or exhausted diagnostic replay. Recovery remains 6/7, with no extension, reset or waiver. The story root alone records and validates this decision.",
+  "review": {
+    "path": "specs/017-october-batch-setup/evidence/definition-review-14.json",
+    "sha256": "e65f8d8e700b4d3fd4715073f0721620a5328b71a7031bf5252bf62f1e96e09a"
+  },
+  "summary": "Fresh delegated authority for accepted revised ordinary-Web definition14, dependency-ready delivery only. Preserve historical implementation07 and unchanged23completedtask obligations. Current source/authority/context/provider/isolation boundaries and all later gates retained; no newresources, olddiagnosticreplay, recoveryextension/reset, waiver orintegration authority."
+}

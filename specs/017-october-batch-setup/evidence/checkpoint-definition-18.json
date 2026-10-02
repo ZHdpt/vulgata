@@ -1,0 +1,81 @@
+{
+  "kind": "analysis",
+  "stage": "definition-review",
+  "checkpoint_id": "bmad-18-4-definition-review-20261002T090131Z-0db740",
+  "expected_parent": "cf45e4e0ca667466b58afd0cac0f14c529629392",
+  "story_key": "18-4-prepare-an-owned-october-batch-with-valid-context-and-provid",
+  "summary": "Owned accepted ordinary-Web definition and approval checkpoint only, not verified implementation; preserve superseded diagnostic evidence truthfully. No production/test paths staged.",
+  "owned_paths": [
+    "docs/agents/project-state.md",
+    "docs/bmad/implementation-artifacts/18-4-prepare-an-owned-october-batch-with-valid-context-and-provid.md",
+    "specs/017-october-batch-setup/spec.md",
+    "specs/017-october-batch-setup/checklists/requirements.md",
+    "specs/017-october-batch-setup/plan.md",
+    "specs/017-october-batch-setup/research.md",
+    "specs/017-october-batch-setup/data-model.md",
+    "specs/017-october-batch-setup/quickstart.md",
+    "specs/017-october-batch-setup/contracts/batch-setup-selection.md",
+    "specs/017-october-batch-setup/contracts/provider-binding.md",
+    "docs/bmad/planning-artifacts/october-release-epics.md",
+    "docs/bmad/planning-artifacts/sprint-change-proposal-2026-09-26-october-batch-release.md",
+    "specs/017-october-batch-setup/evidence/ordinary-web-user-decision-01.json",
+    "specs/017-october-batch-setup/evidence/ordinary-web-correction-diagnosis-01.json",
+    "specs/017-october-batch-setup/tasks.md",
+    "specs/017-october-batch-setup/workflow-state.json",
+    "specs/017-october-batch-setup/evidence/ordinary-web-correction-preflight-01.json",
+    "specs/017-october-batch-setup/evidence/ordinary-web-spec-self-review-01.json",
+    "specs/017-october-batch-setup/evidence/ordinary-web-plan-self-review-01.json",
+    "specs/017-october-batch-setup/evidence/ordinary-web-plan-review-boundary-01.json",
+    "specs/017-october-batch-setup/evidence/ordinary-web-plan-authorization-request-01.json",
+    "specs/017-october-batch-setup/evidence/ordinary-web-tasks-self-review-01.json",
+    "specs/017-october-batch-setup/evidence/ordinary-web-task-marker-invalidation-01.json",
+    "specs/017-october-batch-setup/evidence/ordinary-web-current-tasks-self-review-01.json",
+    "specs/017-october-batch-setup/evidence/ordinary-web-definition-review-boundary-01.json",
+    "specs/017-october-batch-setup/evidence/ordinary-web-implementation-approval-request-01.json",
+    "specs/017-october-batch-setup/evidence/plan-review-15.json",
+    "specs/017-october-batch-setup/evidence/plan-authorization-06.json",
+    "specs/017-october-batch-setup/evidence/definition-review-14.json",
+    "specs/017-october-batch-setup/evidence/implementation-approval-08.json",
+    "specs/017-october-batch-setup/evidence/primary-exception-current-tasks-self-review-01.json",
+    "specs/017-october-batch-setup/evidence/primary-exception-diagnostic-authorization-01.json",
+    "specs/017-october-batch-setup/evidence/primary-exception-diagnostic-result-01.json",
+    "specs/017-october-batch-setup/evidence/transitions/transition-0112-primary-exception-diagnostic-authorized.json",
+    "specs/017-october-batch-setup/evidence/transitions/transition-0113-primary-exception-current-tasks-self-review.json",
+    "specs/017-october-batch-setup/evidence/transitions/transition-0114-primary-exception-qualification-stopped.json",
+    "specs/017-october-batch-setup/evidence/transitions/transition-0115-ordinary-web-decision-resolves-old-path-hold.json",
+    "specs/017-october-batch-setup/evidence/transitions/transition-0116-ordinary-web-spec-invalidation.json",
+    "specs/017-october-batch-setup/evidence/transitions/transition-0117-ordinary-web-spec-diagnosis.json",
+    "specs/017-october-batch-setup/evidence/transitions/transition-0118-ordinary-web-spec-self-reviewed.json",
+    "specs/017-october-batch-setup/evidence/transitions/transition-0119-ordinary-web-plan-self-reviewed.json",
+    "specs/017-october-batch-setup/evidence/transitions/transition-0120-ordinary-web-plan-review-accepted.json",
+    "specs/017-october-batch-setup/evidence/transitions/transition-0121-ordinary-web-current-tasks-self-reviewed.json",
+    "specs/017-october-batch-setup/evidence/transitions/transition-0122-ordinary-web-definition-review-accepted.json",
+    "specs/017-october-batch-setup/evidence/checkpoint-definition-18.json"
+  ],
+  "accepted_gates": {
+    "plan_review": {
+      "path": "specs/017-october-batch-setup/evidence/plan-review-15.json",
+      "sha256": "a5b2548f79711e489bc57536e45c82ad784533e8d15687b8d5b750c2e1cd2a7e"
+    },
+    "definition_review": {
+      "path": "specs/017-october-batch-setup/evidence/definition-review-14.json",
+      "sha256": "e65f8d8e700b4d3fd4715073f0721620a5328b71a7031bf5252bf62f1e96e09a"
+    },
+    "plan_authorization": "specs/017-october-batch-setup/evidence/plan-authorization-06.json",
+    "implementation_approval": "specs/017-october-batch-setup/evidence/implementation-approval-08.json"
+  },
+  "preserved_unrelated": [
+    "specs/017-october-batch-setup/evidence/checkpoint-implementation-06.json",
+    "src/dotnet/Vulgata.Web/Data/OctoberBatchActivationService.cs",
+    "specs/017-october-batch-setup/evidence/host-composition-interruption-handoff-01.json",
+    "specs/017-october-batch-setup/evidence/transitions/transition-0066-independent-auth-build-failure.json"
+  ],
+  "owned_uncommitted_test_excluded": "tests/Vulgata.Tests/October/OctoberPostgreSqlIsolationTests.cs",
+  "counts": {
+    "completed": 23,
+    "total": 30,
+    "failed_results": 6,
+    "pause_at": 7
+  },
+  "no_merge_push_rewrite": true
+}

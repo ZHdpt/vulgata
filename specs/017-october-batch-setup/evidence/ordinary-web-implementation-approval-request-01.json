@@ -1,0 +1,58 @@
+{
+  "kind": "analysis",
+  "stage": "implementation-approval",
+  "decision_id": "18-4/implementation-approval/8",
+  "status": "requested",
+  "story_key": "18-4-prepare-an-owned-october-batch-with-valid-context-and-provid",
+  "delegate_id": "01a0e708-c489-7871-9f73-31413f20bf2c",
+  "source_commit": "cf45e4e0ca667466b58afd0cac0f14c529629392",
+  "scope_sha256": "187354cfc71bf1f2b1837d76a7dc183e1728d5799c14e43052d8b90bb0ab5b26",
+  "review": {
+    "path": "specs/017-october-batch-setup/evidence/definition-review-14.json",
+    "sha256": "e65f8d8e700b4d3fd4715073f0721620a5328b71a7031bf5252bf62f1e96e09a"
+  },
+  "summary": "Request revised implementation authority for accepted ordinary-Web definition14; plan15/scopedauthorization6 already accepted. Same30IDs,23done, sevenopen. No new resource or recovery allowance requested.",
+  "briefing": {
+    "implementation_intent": "Retained Luna-high test owner observes meaningful public-host behavioral RED for changed ordinary startup/database lifetime; retained Sol-medium production owner makes minimal GREEN and assessed local refactor where needed. Reconcile obsolete special-Web tests/glue only within owned paths. Preserve generator/source/provider/context work; verify surrounding behavior, actual independent generator and ordinary Web A/B PostgreSQL/process paths using existing owned-resource grant.",
+    "accepted_behavior": "Ordinary Web starts with ONLY DefaultConnection changed, captured at final Build for Identity/domain/factory lifetimes. No October mode/batch/setupcredentials/provider document/binder. Preserve ordinary migrations/role seeding/browser authorization/provider administration and zero October operational registration/migration. Database changes require restart; no latest batch or new read-selection implementation.",
+    "consequences": "Special selected-data startup is retired. Ordinary Web applies its normal migrations/seeding to configured databases. Unrelated activation-service draft remains excluded. Earlier selected-Web qualification cannot qualify new behavior.",
+    "unchanged": "Standalone generator exact target/batch and real direct auth; context provenance/conflicts, generator provider/secret purpose, integrated18.1 issuer/verifier/closedfunctions/lifetime/cardinality/revocation/cancellation, separateOctober persistence.",
+    "remaining_verification": "Focused/surrounding GREEN; T020 actual processes/HTTP and T029 PostgreSQL; T030 build/fullSelfContained; convergence/lookback/quality/E2E/finalverification. No claimedcompletionnow."
+  },
+  "current_plan_authorization": "specs/017-october-batch-setup/evidence/plan-authorization-06.json",
+  "raw_boundary_evidence": "specs/017-october-batch-setup/evidence/ordinary-web-definition-review-boundary-01.json",
+  "raw_artifacts": [
+    "specs/017-october-batch-setup/spec.md",
+    "specs/017-october-batch-setup/checklists/requirements.md",
+    "specs/017-october-batch-setup/plan.md",
+    "specs/017-october-batch-setup/research.md",
+    "specs/017-october-batch-setup/data-model.md",
+    "specs/017-october-batch-setup/quickstart.md",
+    "specs/017-october-batch-setup/contracts/batch-setup-selection.md",
+    "specs/017-october-batch-setup/contracts/provider-binding.md",
+    "docs/bmad/planning-artifacts/october-release-epics.md",
+    "docs/bmad/planning-artifacts/sprint-change-proposal-2026-09-26-october-batch-release.md",
+    "specs/017-october-batch-setup/evidence/ordinary-web-user-decision-01.json",
+    "specs/017-october-batch-setup/evidence/ordinary-web-correction-diagnosis-01.json",
+    "specs/017-october-batch-setup/tasks.md"
+  ],
+  "current_open_tasks": [
+    "T018",
+    "T019",
+    "T020",
+    "T025",
+    "T026",
+    "T029",
+    "T030"
+  ],
+  "limits": {
+    "failed_results": 6,
+    "pause_at": 7,
+    "no_resource_extension": true,
+    "no_recovery_extension": true,
+    "no_diagnostic_retry": true,
+    "no_waiver": true,
+    "no_merge_push_rewrite": true,
+    "no_later_story": true
+  }
+}

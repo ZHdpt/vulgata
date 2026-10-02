@@ -1,0 +1,39 @@
+{
+  "kind": "analysis",
+  "observed_after": {
+    "path": "specs/017-october-batch-setup/evidence/transitions/transition-0120-ordinary-web-plan-review-accepted.json",
+    "sha256": "2363a52e2c11e1ed2dda0eaedde7bb02d44d71ae0785da3a0b43120c6f671d16"
+  },
+  "raw_result": {
+    "kind": "self-review",
+    "stage": "tasks",
+    "outcome": "passed",
+    "source_commit": "cf45e4e0ca667466b58afd0cac0f14c529629392",
+    "summary": "Verified current tasks after root reopened only T018/T025/T026. Reversing those three markers reproduces the exact previously reviewed SHA-256, proving no semantic text change. Task coverage, dependencies and verification routes remain valid.",
+    "input_hashes": {
+      "specs/017-october-batch-setup/tasks.md": "e49c76e9c2e24da858d6afd055b979f7e66ae4710d096d60d365264281d44f4c",
+      "specs/017-october-batch-setup/plan.md": "4f93f2ad3eb6cc3e3df00d6192e4dd61f1d3053c1a4562d488fc6cfc0b7d0edd",
+      "specs/017-october-batch-setup/spec.md": "1e81267cc8e0280ce2ad91faca4cab95643510a768732d04ffa4d80ea93e9864"
+    },
+    "task_count": 30,
+    "completed": 23,
+    "open": [
+      "T018",
+      "T019",
+      "T020",
+      "T025",
+      "T026",
+      "T029",
+      "T030"
+    ],
+    "marker_only_delta": true,
+    "deterministic_validation": {
+      "validator": "validate_plan_implementation_design(plan, tasks, require_explicit=True)",
+      "passed": true,
+      "errors": []
+    },
+    "remaining_conflicts": [],
+    "changed_paths": [],
+    "next": "Root may bind this current-hash self-review. Independent complete-definition review and revised implementation approval remain required; recovery stays 6/7."
+  }
+}

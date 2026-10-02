@@ -1,10 +1,30 @@
 # Story 18.4 development record
 
-Status: in-progress (corrected definition accepted and implementation approved; verified implementation preserved)
+Status: in-progress (ordinary-Web definition accepted and implementation approved; unchanged batch evidence preserved)
 Feature directory: `specs/017-october-batch-setup`
 Workflow state: `specs/017-october-batch-setup/workflow-state.json`
 
-## Current delivery boundary (2026-10-01)
+## Current delivery boundary (2026-10-02)
+
+The human clarified ordinary Web startup with only its database configuration
+changed and instructed delivery to proceed on that basis. The special selected-data
+Web startup described below is historical, not the current target: Web must require
+no October mode, batch ID, setup-operator credentials or generator provider binding.
+Independent batch setup with Web stopped retains exact selection, authorization,
+provider/context provenance, source18.1 and persistence-isolation obligations.
+Root reconciled the affected October requirement/proposal wording against the exact
+decision in `evidence/ordinary-web-user-decision-01.json`. The retained Astra-medium
+author corrected only affected specification/plan/tasks. Independent plan-review-15
+and definition-review-14 accepted the revised definition; scoped delegate decisions
+plan-authorization-06 and implementation-approval-08 are bound and validated.
+Only T018/T025/T026 were reopened: 23 of the same30 IDs remain completed, with seven
+open tasks. Counts remain6/7; old diagnostic failures are not
+relabeled as passing and no old-path runtime retry is implied. Historical approvals
+below remain evidence for unchanged semantic scope, not revised Web implementation
+approval. New delivery uses the retained separate test/production owners and all
+remaining verification gates; ordinary Web qualification is not yet claimed.
+
+## Historical pre-correction boundary (2026-10-01)
 
 The later user authorization supersedes the historical plan-only restrictions below.
 Plan-review-13 and definition-review-12 accepted the preceding definition; delegated

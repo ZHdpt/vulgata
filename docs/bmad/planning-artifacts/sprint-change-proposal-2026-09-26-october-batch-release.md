@@ -331,7 +331,7 @@ and [purpose isolation](https://learn.microsoft.com/en-us/aspnet/core/security/d
 ### Isolate October behavior; share its integrity implementation
 
 Recommended design: an additive October module with its own Knowledge persistence
-context/schema, shared by the October batch and the explicitly enabled October Web
+context/schema, prepared by the independent October batch and available to ordinary Web
 composition. Keep it within the existing project/process boundaries unless an actual
 dependency requires a separate assembly. Dedicated namespaces/folders and a single
 composition boundary are sufficient; do not scatter deadline conditionals through
@@ -341,10 +341,16 @@ normal validators, entities, tools or retrieval.
 instance, with identical fixed schema names and model in every batch database.**
 This user-approved choice supersedes the earlier schema-per-batch option. Prepare
 each database with its approved setup/context data while preserving real identity
-references and October publication rules. Generator and Web select the same exact
-database and batch ID for generation, Chat, reader and graph.
+references and October publication rules. The generator selects the exact database
+and batch ID. Under the user's 2026-10-02 clarification, Web starts ordinarily with
+only its database configuration changed; October mode, batch ID, setup-operator
+credentials and generator provider binding are not Web startup prerequisites.
+Later Chat, reader and graph consume that configured database through their owning
+shared contracts; this clarification does not implement their read selection.
 
-Bind selection at process startup, not to whichever batch was created most recently.
+Bind the generator's exact batch and each host's database at process startup, not
+to whichever batch was created most recently. Ordinary Web does not perform a batch
+selection operation at startup.
 Switch batches by stopping/restarting the relevant host with the new configuration;
 do not switch an active turn's data source. Check that System/Repository/context
 identifiers belong to the authorized prepared setup. A missing or mismatched
@@ -358,8 +364,9 @@ not a replacement for schema-qualified EF mappings. The current normal
 migration history also specify schemas. `Search Path` alone cannot redirect that
 existing model into a cloned schema, and normal mappings must not be weakened.
 
-Generator and Web receive the selected database connection plus exact batch ID at
-startup. No live per-user database switcher, dynamic schema mapping or schema-varying
+The generator receives the selected database connection plus exact batch ID at
+startup. Web uses only its ordinary database configuration at startup. No live
+per-user database switcher, dynamic schema mapping or schema-varying
 EF model cache is required for this release. Pin data-source/factory configuration
 to that selection and keep the mapping fixed. Database creation/prepared-data setup
 still requires an owned authorized target during implementation; this planning
@@ -399,8 +406,11 @@ reuse a legacy orchestration contract by disabling its preconditions.
 | Chat and graph | New consumers of the October wiki contract | Existing routes/registrations retain their behavior when October is disabled |
 | Legacy evidence | Optional read-only secondary adapter with original identities and provenance | No copying or relabelling legacy rows as October output |
 
-Enable the release composition deliberately; no fallback into it when the normal
-path fails. Keep its migration folder, model snapshot and migration history separate.
+Enable independent batch setup deliberately; no fallback into it when ordinary Web
+fails. Ordinary Web remains its normal composition with only database configuration
+changed. Later October consumer integration is owned by its respective stories and
+does not reinstate an October-specific Web startup prerequisite. Keep October's
+migration folder, model snapshot and migration history separate.
 October migrations must not run during ordinary Web startup. The normal
 `VulgataDbContext` scans its assembly for entity configurations, so merely adding a
 new context is not enough: October mappings must not be accidentally discovered by

@@ -31,5 +31,6 @@
 
 ## Notes
 
-- Specification self-review passed for the independently decidable definition. FR-011 and SC-006 deliberately keep the Story 18.1 source identity/tool integration unresolved; planning may describe this seam but downstream tasks and implementation require an integrated, verified 18.1 baseline and reconciliation.
-- The optional `after_specify` agent-context hook was identified but not run: this phase's write boundary permits only the specification and this checklist, and the feature has no plan for a targeted context refresh.
+- Specification self-review passed for the bounded ordinary Web correction. Generator exact target/batch validation and independent setup remain; Web startup needs only its ordinary database configuration and preserves ordinary migrations, role seeding, browser authorization and provider administration. No later Knowledge read-selection contract is inferred.
+- Story 18.1 is integrated and its source authority contract remains unchanged. The revised Web intent requires downstream plan reclassification and affected independent reviews; historical acceptance and passing tests do not establish the revised boundary.
+- The optional `after_specify` agent-context hook was identified but not run: this phase permits only the specification and this checklist; the existing plan is awaiting authorized reconciliation and agent-context writes are outside this phase.
