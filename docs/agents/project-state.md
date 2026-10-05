@@ -8,7 +8,7 @@ container; tool/provider/E2E and historical suites remain explicit and retain th
 feature-specific gates. See [testing guidance](testing.md). This changes the routine
 regression boundary, not historical product evidence or story lifecycle state.
 
-Updated: 2026-10-05 (Story 18.4 all30 tasks verified; independent completion gates pending, recovery7/8).
+Updated: 2026-10-05 (Story 18.4 all30 tasks verified and convergence01 clean; formal gate/completion status is in its feature state).
 Story 13.1 is complete in `specs/015-retained-source-access`.
 Exact retained capture, scoped reads, publication/recovery, cleanup, trusted
 workspaces and separate-process reopening have bounded controlled evidence.
@@ -42,7 +42,7 @@ verification before reuse.
   owns their scoped requirements and definitions, routed from the canonical epic index.
   Tracker refreshes require both epic files. Story 13.1 and October Story 18.1 are
   done; this checkout includes Story 18.1's completed baseline at `3632b2cc`. October
-  Story 18.4 is the only active feature in this assigned checkout, on
+  Story 18.4 is the only feature activated in this assigned checkout, on
   `oct14/story-18-4`, mapped to `specs/017-october-batch-setup`.
   Independent batch execution retains source18.1 authority/context lifetime,
   isolation, context provenance and explicit provider binding. Ordinary Web uses
@@ -63,12 +63,14 @@ verification before reuse.
   `evidence/t030-implementation-prerequisites-01.json`.
   The human approved finite recovery7-to8 after the recurring role-order fixture
   defect; count7 is retained, delegate ceiling7 unchanged, holds empty. Transition127
-  records the passing exact configured build and permits independent convergence.
+  records the passing exact configured build; convergence01 is independently clean.
   The corrected full-suite environment adds only the hash-verified existing npm
   prefix for an unchanged static integrity lookup, not CodeGraph launch or scope.
-  Recovery remains open until final accepted/verified delivery; a counted failure8
+  Recovery entered independent gates at7/8; final closure is proved only by the
+  accepted/verified feature state. A counted failure8
   needs a fresh human decision. Convergence, lookback, quality review, conditional
-  E2E decision and pinned final verification remain pending. No merge/push/history
+  E2E decision and pinned final verification are recorded in feature state; tests
+  alone never prove completion. No merge/push/history
   rewrite or next-story work is authorized. Unrelated activation draft and historical
   dirty evidence are preserved. Status in other worktrees must be verified there.
 - [Constitution](../../.specify/memory/constitution.md), root AGENTS and the current
@@ -77,7 +79,8 @@ verification before reuse.
 
 Story 18.4 is the only feature activated in this checkout after the workflow
 installation. Its `specs/017-october-batch-setup` state retains the Astra-medium
-recovery author and open episode at 7/8. Affected authority/composition tasks were
+recovery author and history of the7/8 episode; formal closure is in feature state.
+Affected authority/composition tasks were
 reopened; unchanged completed work and historical evidence remain. Expected TDD
 RED and ordinary first-pass development build failures do not consume recovery
 allowance; independent negative review/convergence and recurrent defects after

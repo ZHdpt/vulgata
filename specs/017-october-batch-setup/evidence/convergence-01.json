@@ -1,0 +1,241 @@
+{
+  "kind": "analysis",
+  "observed_after": {
+    "path": "specs/017-october-batch-setup/evidence/transitions/transition-0127-qualified-implementation-accepted.json",
+    "sha256": "cae5a43e6750ed3b383509d63ff124a5a91e01412c7dbe94e7f09926f715da0c"
+  },
+  "raw_result": {
+    "stage": "converge",
+    "outcome": "converged",
+    "source_commit": "96bbd685dee6f3b453494d867513340fb6810091",
+    "raw_upstream_result": {
+      "adapter": ".governed-delivery/adapters/speckit/1.0.6",
+      "feature_directory": "specs/017-october-batch-setup",
+      "findings": [],
+      "summary": {
+        "functional_requirements_checked": 12,
+        "acceptance_scenarios_checked": 14,
+        "buildable_success_criteria_checked": 6,
+        "implementation_design_ids_checked": 23,
+        "constitution_principles_checked": 5,
+        "existing_tasks_checked": 30,
+        "gaps_by_type": {
+          "missing": 0,
+          "partial": 0,
+          "contradicts": 0,
+          "unrequested": 0
+        },
+        "findings_by_severity": {
+          "CRITICAL": 0,
+          "HIGH": 0,
+          "MEDIUM": 0,
+          "LOW": 0
+        }
+      },
+      "output": "✅ Converged — the implementation satisfies the spec, plan, and tasks."
+    },
+    "checked_obligations": [
+      {
+        "source_refs": [
+          "spec.md FR-001–FR-004",
+          "US1 acceptance scenarios",
+          "plan.md ID-R01, ID-R02, ID-I01–ID-I05, ID-S02–ID-S04"
+        ],
+        "assessment": "Current Identity and management authority gates exact batch preparation/selection; persistence is October-scoped, with context origins and conflicts retained. Standalone Repository selection is supported."
+      },
+      {
+        "source_refs": [
+          "spec.md FR-005–FR-009",
+          "US2 and US4 acceptance scenarios",
+          "plan.md ID-I06, ID-S01, ID-T02"
+        ],
+        "assessment": "Generator selection is exact-target/exact-batch. Ordinary Web captures only DefaultConnection at container build, retains ordinary Identity/domain migrations and seeding, and does not register October authority or persistence as startup requirements. Provider binding remains generator-only."
+      },
+      {
+        "source_refs": [
+          "spec.md FR-010",
+          "US4 acceptance scenario 3",
+          "tasks.md T027–T028"
+        ],
+        "assessment": "Generator startup emits closed sanitized status messages; credential/configuration representations suppress their values. Existing October host-selection and provider-binding tests cover failure classifications. The dedicated diagnostics helper/test filename is absent, but the observable obligation is covered by existing entrypoint and test seams."
+      },
+      {
+        "source_refs": [
+          "spec.md FR-011",
+          "Story 18.1 prepared-source-tools contract",
+          "plan.md ID-T04",
+          "tasks.md T014–T015"
+        ],
+        "assessment": "The current approval, verifier, trusted root map, issuer, and three closed Worker read functions follow the accepted Story 18.1 contract. The controlled integration caller owns the source session/context lifetime. Actual Worker generation remains outside this story’s boundary."
+      },
+      {
+        "source_refs": [
+          "spec.md FR-012",
+          "plan.md ID-F01–ID-F02, ID-L01–ID-L03, ID-T01–ID-T04"
+        ],
+        "assessment": "Shared setup/storage rules and separate October persistence are present; no later Knowledge selection/publication or generation behavior was added to this assessment."
+      }
+    ],
+    "findings": [],
+    "unchanged_findings": [],
+    "reused_task_ids": [],
+    "appended_task_ids": [],
+    "tasks_before": {
+      "path": "specs/017-october-batch-setup/evidence/convergence-tasks-preimage-01.md",
+      "sha256": "ad5e136d9cfc14589745088854267e4a8c878bd283fe8f57d64be837f4e6c676"
+    },
+    "tasks_after": {
+      "path": "specs/017-october-batch-setup/tasks.md",
+      "sha256": "ad5e136d9cfc14589745088854267e4a8c878bd283fe8f57d64be837f4e6c676"
+    },
+    "current_task_markers": {
+      "total": 30,
+      "complete": 30,
+      "open": 0,
+      "convergence_section_present": false
+    },
+    "prerequisite_evidence": {
+      "feature_selection": {
+        "command": "check-prerequisites.ps1 -Json -RequireSpec -RequireTasks -IncludeTasks",
+        "feature_dir": "specs/017-october-batch-setup",
+        "available_docs": [
+          "research.md",
+          "data-model.md",
+          "contracts/",
+          "quickstart.md",
+          "tasks.md"
+        ]
+      },
+      "accepted_definition": [
+        "plan-review-15.json: ACCEPT; 23 design IDs and no unresolved plan finding",
+        "definition-review-14.json: ACCEPT; all 12 FRs mapped to tasks; no uncovered requirement; current tasks subsequently verified complete",
+        "plan-authorization-06.json: accepted scoped task reconciliation authority",
+        "implementation-approval-08.json: accepted dependency-ready delivery scope"
+      ],
+      "implementation_and_verification": [
+        "source-adapter-t015-final-shape-01.json: no refactor required for current adapters",
+        "ordinary-web-controlled-final-green-01.json: revised ordinary-Web controlled final GREEN",
+        "ordinary-web-unused-types-final-green-01.json: nonbehavioral removal with consumer checks and 43/43 before/after regression; no fabricated RED",
+        "ordinary-web-runtime-qualification-final-green-01.json: owned PostgreSQL and actual process A/B qualification passed",
+        "t030-implementation-prerequisites-01.json: all 30 tasks verified; October-focused 174/174; full SelfContained 2149/2149; 35 build warnings, 0 errors",
+        "t030-configured-build-accepted-01.json: exact configured Web build passed"
+      ],
+      "verification_routing": {
+        "behavior_changes": "Accepted tasks plus RED/minimal-GREEN/final-GREEN recorded for changed ordinary-Web startup/capture behavior, including ordinary-web-build-capture-* and ordinary-web-stale-settings-* evidence.",
+        "test_only_coverage": "Passing controlled and PostgreSQL tests with coverage reason; no fabricated RED for T025/T029 coverage reconciliation.",
+        "nonbehavioral_work": "Direct verification for setup/build work; T030 records passing focused/full checks and configured build.",
+        "behavior_preserving_refactor": "T026 used consumer/compile checks and before/after controlled regression."
+      }
+    },
+    "source_boundary": {
+      "branch": "oct14/story-18-4",
+      "source_commit": "96bbd685dee6f3b453494d867513340fb6810091",
+      "diff_base": "f190f8dc1d19977c64b4316f8ac9ae27b85a325a"
+    },
+    "input_hashes": {
+      "specs/017-october-batch-setup/spec.md": "1e81267cc8e0280ce2ad91faca4cab95643510a768732d04ffa4d80ea93e9864",
+      "specs/017-october-batch-setup/plan.md": "4f93f2ad3eb6cc3e3df00d6192e4dd61f1d3053c1a4562d488fc6cfc0b7d0edd",
+      "specs/017-october-batch-setup/tasks.md": "ad5e136d9cfc14589745088854267e4a8c878bd283fe8f57d64be837f4e6c676",
+      "specs/017-october-batch-setup/research.md": "01fd06994ea52dcc2063c9b5ddb0c9109d02fb0b1a8eed359a47a8682dbcba79",
+      "specs/017-october-batch-setup/data-model.md": "69c2d395fae8f051f733e68d734e74f1965c9f4d6b4cd86a4e5b7dd977f8edf8",
+      "specs/017-october-batch-setup/quickstart.md": "c09e40f13dfc8eb8d88a2ee9998d5e9fa3f3e0bc380220c6977898ae6b09951c",
+      "specs/017-october-batch-setup/contracts/batch-setup-selection.md": "12dd23f4cb98e833dc0cb8e4dc6883b64f50058f9b5b1b4e7ba304caa81383b0",
+      "specs/017-october-batch-setup/contracts/provider-binding.md": "67f57e05c66a6b5665b6dfa91829c888eaa5ca4c75fd81946d0502c6627104fa",
+      ".specify/memory/constitution.md": "0f3198751810904ae57fe20eab180474396157064622edf5167781969f1e0c20",
+      "docs/bmad/planning-artifacts/october-release-epics.md": "dbb34ffbce21eaaa4b096c5a406f3d455678049989f4bf2fc8e097aa1d6d6d85",
+      "specs/016-contained-source-tools/contracts/prepared-source-tools.md": "f83cf4fae7c7d3b65f3fefb0b58aa6c73f7aacf8be08e138e8b94f850f6c0a81",
+      "src/dotnet/Vulgata.Web/Program.cs": "f8941fd4d8b7db5e4c665fe38f047ce003beabc47ba92fca9604b9929467d77e",
+      "src/dotnet/Vulgata.Web/Data/OctoberLocalAuthority.cs": "86788949017d78a2c212e32ddd4dba98999dcf1b0ffe2ade606d6e60760d5381",
+      "src/dotnet/Vulgata.Web/Data/OctoberOperatorCredentialSources.cs": "9e9e62baace608615d69ab5028e06485ad5ab77a229d5f4e56aafd00a981fb8d",
+      "src/dotnet/Vulgata.Web/Data/OctoberHeadlessAuthorityRegistration.cs": "3f276eecae2c77f8d482ee13d8b23e1ea1888c5d35593e964f33b07f66829528",
+      "src/dotnet/Vulgata.Core/DomainServices/OctoberBatchSetupPolicy.cs": "58d645a9a549060a221405ba84116c3a8ff99628b014ba445b23566044bf3c82",
+      "src/dotnet/Vulgata.Core/DomainServices/OctoberBatchSetupContracts.cs": "8c672306e2122add168bcf8f19098b689264fe95e22f1d0dc715db69b8878a62",
+      "src/dotnet/Vulgata.Core/DomainServices/OctoberLocalAuthorityContracts.cs": "fde65b9480563a82614a2644f83306dd9a89d5334d5e2d53971e00e937f78e0c",
+      "src/dotnet/Vulgata.Core/DomainServices/OctoberSelectionDigest.cs": "405ca97e112f4409558c470c02a8b0ab03bf2b0e5ba5f590bae4dd641eb0a0b0",
+      "src/dotnet/Vulgata.Infrastructure/Data/October/OctoberDbContext.cs": "a970f27443c171a5ffa871bd2f49924151089750ded474507414031f09b111b8",
+      "src/dotnet/Vulgata.Infrastructure/Data/October/OctoberSetupStore.cs": "39f149cbdecb7e172b0d43f33c68b47ea45b9be47f54a58d39455e51fa3ecc74",
+      "src/dotnet/Vulgata.Infrastructure/Data/October/OctoberBatchSelector.cs": "2df82e4626decdbcd2c81bd365eea4341ccb15ebfade3c700891b9af9c97342b",
+      "src/dotnet/Vulgata.Infrastructure/Data/October/Migrations/20260930000000_InitialOctoberSetup.cs": "1b32b3c37597974809779af1dd8304b6cda63367ae657f78a70d435f3b5b6539",
+      "src/dotnet/Vulgata.Infrastructure/Data/October/Migrations/20260930010000_AddOctoberPreparedSourceApprovals.cs": "d45671dd0d885bb94dac94931a4aafc69438a8450b7ed06abc2f9ebd0168daea",
+      "src/dotnet/Vulgata.Infrastructure/Data/October/Migrations/OctoberDbContextModelSnapshot.cs": "7b6a685dc98d78bd30fe6271d17783e00e1c8fe92c84c018e25d40881ed81cbf",
+      "src/dotnet/Vulgata.Infrastructure/Configuration/OctoberProviderBinder.cs": "7b28f61339d57d819cfa1e9f6024c4ec0397faafde95f62706d67df1c6d67870",
+      "src/dotnet/Vulgata.Infrastructure/Source/OctoberPreparedSourceAuthorityVerifier.cs": "e638d7d92c053b5a54e861cdf976f8f59aaed7fa8a1cf3fac70ab626724b8e2e",
+      "src/dotnet/Vulgata.OctoberGenerator/Program.cs": "5e44e52d4ae8affeb4b354cfaeb124eb6e26fd27fdc2e0a3a442e4c4f60fdb6e",
+      "src/dotnet/Vulgata.OctoberGenerator/OctoberGeneratorModule.cs": "c49f9d8e5d71b2dae5b6fc30ce88a147fac592103177099729323f6a1aca2342",
+      "src/dotnet/Vulgata.OctoberGenerator/OctoberConfiguredTarget.cs": "7bb6c5a79521c858bea6f99cdf7136e028b4d042322f98a10da22c6e46a231a5",
+      "src/dotnet/Vulgata.OctoberGenerator/PreparedSourceBinding.cs": "3e3d8f494e7cd6b9e2868764616e49571f6bbd0cde5aeaf0a12f502590e9a742",
+      "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedSourceFunctions.cs": "e1d288428f13d1d871a01262f6cba07ab34addc1dfae41aa1f9ee0773af974c6",
+      "tests/Vulgata.Tests/October/OctoberHostCompositionTests.cs": "78c10a142e460281693021f7ef5f24ba8eb1c6f75f4efd485d92bb16b1fd04cf",
+      "tests/Vulgata.Tests/October/OctoberHostSelectionTests.cs": "4a03942c8e4128ba6d7554dd961875e56f8c5a7f7e0fb91338561aea3ca8dbab",
+      "tests/Vulgata.Tests/October/OctoberPostgreSqlIsolationTests.cs": "897fcd1a09e6c463df70ab975af7ed02c4611e3108eaa4798c46ac65cb748248",
+      "tests/Vulgata.Tests/October/OctoberPreparedSourceBindingTests.cs": "ab89f6e57cd1f8552fa0a76358fa7b85631b4627195bfd7f98d0041c0affd113",
+      "tests/Vulgata.Tests/October/OctoberBatchSelectorTests.cs": "dc467f14e21dcd08a28318747107757574c767e1ceae2743243bf22c181de892",
+      "tests/Vulgata.Tests/October/OctoberContextSelectionTests.cs": "dc2b01cbed892bb1a794f7932a933f238c85ffacb8d804f2bea9bdb041851d63",
+      "tests/Vulgata.Tests/October/OctoberLocalAuthorityTests.cs": "ae3152408b864d324f9f1aff56628e36c7e26e0bb11048d1f96fc5d55ec21cf7",
+      "tests/Vulgata.Tests/October/OctoberLocalSourceApprovalTests.cs": "409de8f7eb3703f698e223650783078f6ab1123733e4b2d51514434298bdeaa6",
+      "tests/Vulgata.Tests/October/OctoberOperatorCredentialSourceTests.cs": "f6702de3ceecd7a2a974a4263d5d777be91699e59cf86ed15fc984ca3bbe8f0f",
+      "tests/Vulgata.Tests/October/OctoberPersistenceModelTests.cs": "fecae64a3ad4b377e110edf49968ee70307bb7bb1d477a500c9e3df3e9b63108",
+      "tests/Vulgata.Tests/October/OctoberSetupPolicyTests.cs": "5ab5c5c6a93586c4df8df77eeacdad29e0102c9b6e489bb27b3ec20137657240",
+      "tests/Vulgata.Tests/October/OctoberSetupStoreTests.cs": "de89f5ec6f4daa23dd89c5a45a62b708e7a91eb365e1dc2802a28951979d74bc",
+      "tests/Vulgata.Tests/October/OctoberProviderBindingTests.cs": "fda917b8d3bbafbc7333b10d01a8f5846ed2b68a96e8c6a26a08dcd383e7985b",
+      "tests/Vulgata.Tests/TestInfrastructure/suites.json": "205ca44f48f0ad298ee714cb52cd6825e2fc174320678e9353644f97b147a790"
+    },
+    "owned_paths": [
+      "specs/017-october-batch-setup/spec.md",
+      "specs/017-october-batch-setup/plan.md",
+      "specs/017-october-batch-setup/tasks.md",
+      "specs/017-october-batch-setup/research.md",
+      "specs/017-october-batch-setup/data-model.md",
+      "specs/017-october-batch-setup/quickstart.md",
+      "specs/017-october-batch-setup/contracts/batch-setup-selection.md",
+      "specs/017-october-batch-setup/contracts/provider-binding.md",
+      ".specify/memory/constitution.md",
+      "docs/bmad/planning-artifacts/october-release-epics.md",
+      "specs/016-contained-source-tools/contracts/prepared-source-tools.md",
+      "src/dotnet/Vulgata.Web/Program.cs",
+      "src/dotnet/Vulgata.Web/Data/OctoberLocalAuthority.cs",
+      "src/dotnet/Vulgata.Web/Data/OctoberOperatorCredentialSources.cs",
+      "src/dotnet/Vulgata.Web/Data/OctoberHeadlessAuthorityRegistration.cs",
+      "src/dotnet/Vulgata.Core/DomainServices/OctoberBatchSetupPolicy.cs",
+      "src/dotnet/Vulgata.Core/DomainServices/OctoberBatchSetupContracts.cs",
+      "src/dotnet/Vulgata.Core/DomainServices/OctoberLocalAuthorityContracts.cs",
+      "src/dotnet/Vulgata.Core/DomainServices/OctoberSelectionDigest.cs",
+      "src/dotnet/Vulgata.Infrastructure/Data/October/OctoberDbContext.cs",
+      "src/dotnet/Vulgata.Infrastructure/Data/October/OctoberSetupStore.cs",
+      "src/dotnet/Vulgata.Infrastructure/Data/October/OctoberBatchSelector.cs",
+      "src/dotnet/Vulgata.Infrastructure/Data/October/Migrations/20260930000000_InitialOctoberSetup.cs",
+      "src/dotnet/Vulgata.Infrastructure/Data/October/Migrations/20260930010000_AddOctoberPreparedSourceApprovals.cs",
+      "src/dotnet/Vulgata.Infrastructure/Data/October/Migrations/OctoberDbContextModelSnapshot.cs",
+      "src/dotnet/Vulgata.Infrastructure/Configuration/OctoberProviderBinder.cs",
+      "src/dotnet/Vulgata.Infrastructure/Source/OctoberPreparedSourceAuthorityVerifier.cs",
+      "src/dotnet/Vulgata.OctoberGenerator/Program.cs",
+      "src/dotnet/Vulgata.OctoberGenerator/OctoberGeneratorModule.cs",
+      "src/dotnet/Vulgata.OctoberGenerator/OctoberConfiguredTarget.cs",
+      "src/dotnet/Vulgata.OctoberGenerator/PreparedSourceBinding.cs",
+      "src/dotnet/Vulgata.Agents/WorkerExecution/PreparedSourceFunctions.cs",
+      "tests/Vulgata.Tests/October/OctoberHostCompositionTests.cs",
+      "tests/Vulgata.Tests/October/OctoberHostSelectionTests.cs",
+      "tests/Vulgata.Tests/October/OctoberPostgreSqlIsolationTests.cs",
+      "tests/Vulgata.Tests/October/OctoberPreparedSourceBindingTests.cs",
+      "tests/Vulgata.Tests/October/OctoberBatchSelectorTests.cs",
+      "tests/Vulgata.Tests/October/OctoberContextSelectionTests.cs",
+      "tests/Vulgata.Tests/October/OctoberLocalAuthorityTests.cs",
+      "tests/Vulgata.Tests/October/OctoberLocalSourceApprovalTests.cs",
+      "tests/Vulgata.Tests/October/OctoberOperatorCredentialSourceTests.cs",
+      "tests/Vulgata.Tests/October/OctoberPersistenceModelTests.cs",
+      "tests/Vulgata.Tests/October/OctoberSetupPolicyTests.cs",
+      "tests/Vulgata.Tests/October/OctoberSetupStoreTests.cs",
+      "tests/Vulgata.Tests/October/OctoberProviderBindingTests.cs",
+      "tests/Vulgata.Tests/TestInfrastructure/suites.json"
+    ],
+    "execution_mode": {
+      "approved_route": "read-only PowerShell, login:false, sandbox_permissions=require_escalated",
+      "before_inspection_failure": "Initial in-sandbox process setup failed before inspection with helper_unknown_error: apply deny-read ACLs. Root authorized retry through the outside-sandbox read-only route; it succeeded. No semantic result was produced by the failed attempt."
+    },
+    "unresolved_blockers": [],
+    "evidence_limitations": [
+      "No tests/build/runtime were rerun during convergence, per dispatch constraints.",
+      "Paid provider calls and actual Worker generation are not part of this story’s qualified scope."
+    ]
+  }
+}

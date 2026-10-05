@@ -1,0 +1,33 @@
+{
+  "kind": "analysis",
+  "stage": "quality-review",
+  "checkpoint_id": "bmad-18-4-quality-review-20261005T134906Z-da4824",
+  "story_key": "18-4-prepare-an-owned-october-batch-with-valid-context-and-provid",
+  "expected_parent": "96bbd685dee6f3b453494d867513340fb6810091",
+  "summary": "Converged complete-review candidate with exact canonical lookback and BMad review transition. Semantic definition/approvals unchanged, source/contract Git blobs unchanged by formatting. Count7/pause8 remains open. Lookback01 is preserved as the superseded producer attempt; onlylookback02 current.",
+  "owned_paths": [
+    ".gitattributes",
+    "docs/agents/project-state.md",
+    "docs/bmad/implementation-artifacts/18-4-prepare-an-owned-october-batch-with-valid-context-and-provid.md",
+    "docs/bmad/implementation-artifacts/sprint-status.yaml",
+    "specs/017-october-batch-setup/workflow-state.json",
+    "specs/017-october-batch-setup/evidence/convergence-tasks-preimage-01.md",
+    "specs/017-october-batch-setup/evidence/convergence-01.json",
+    "specs/017-october-batch-setup/evidence/convergence-02.json",
+    "specs/017-october-batch-setup/evidence/canonical-reviewed-inputs-01.json",
+    "specs/017-october-batch-setup/evidence/canonical-reviewed-inputs-02.json",
+    "specs/017-october-batch-setup/evidence/lookback-01.json",
+    "specs/017-october-batch-setup/evidence/lookback-02.json",
+    "specs/017-october-batch-setup/evidence/transitions/transition-0128-convergence-accepted.json",
+    "specs/017-october-batch-setup/evidence/transitions/transition-0129-canonical-convergence-accepted.json",
+    "specs/017-october-batch-setup/evidence/checkpoint-quality-review-01.json"
+  ],
+  "excluded_unrelated": [
+    "specs/017-october-batch-setup/evidence/checkpoint-implementation-06.json",
+    "src/dotnet/Vulgata.Web/Data/OctoberBatchActivationService.cs",
+    "specs/017-october-batch-setup/evidence/host-composition-interruption-handoff-01.json",
+    "specs/017-october-batch-setup/evidence/transitions/transition-0066-independent-auth-build-failure.json"
+  ],
+  "no_source_git_changes": true,
+  "no_merge_push_rewrite": true
+}

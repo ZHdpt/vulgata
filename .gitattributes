@@ -59,6 +59,60 @@
 /specs/017-october-batch-setup/evidence/*.json text eol=lf
 /specs/017-october-batch-setup/evidence/transitions/*.json text eol=lf
 
+# Story 18.4 reviewed input/closure bytes use canonical LF in this checkout.
+/specs/017-october-batch-setup/tasks.md text eol=lf
+/specs/017-october-batch-setup/research.md text eol=lf
+/specs/017-october-batch-setup/data-model.md text eol=lf
+/specs/017-october-batch-setup/quickstart.md text eol=lf
+/specs/017-october-batch-setup/contracts/batch-setup-selection.md text eol=lf
+/specs/017-october-batch-setup/contracts/provider-binding.md text eol=lf
+/.specify/memory/constitution.md text eol=lf
+/docs/bmad/planning-artifacts/october-release-epics.md text eol=lf
+/specs/016-contained-source-tools/contracts/prepared-source-tools.md text eol=lf
+/src/dotnet/Vulgata.Web/Program.cs text eol=lf
+/src/dotnet/Vulgata.Web/Data/OctoberLocalAuthority.cs text eol=lf
+/src/dotnet/Vulgata.Web/Data/OctoberOperatorCredentialSources.cs text eol=lf
+/src/dotnet/Vulgata.Web/Data/OctoberHeadlessAuthorityRegistration.cs text eol=lf
+/src/dotnet/Vulgata.Core/DomainServices/OctoberBatchSetupPolicy.cs text eol=lf
+/src/dotnet/Vulgata.Core/DomainServices/OctoberBatchSetupContracts.cs text eol=lf
+/src/dotnet/Vulgata.Core/DomainServices/OctoberLocalAuthorityContracts.cs text eol=lf
+/src/dotnet/Vulgata.Core/DomainServices/OctoberSelectionDigest.cs text eol=lf
+/src/dotnet/Vulgata.Infrastructure/Data/October/OctoberDbContext.cs text eol=lf
+/src/dotnet/Vulgata.Infrastructure/Data/October/OctoberSetupStore.cs text eol=lf
+/src/dotnet/Vulgata.Infrastructure/Data/October/OctoberBatchSelector.cs text eol=lf
+/src/dotnet/Vulgata.Infrastructure/Data/October/Migrations/20260930000000_InitialOctoberSetup.cs text eol=lf
+/src/dotnet/Vulgata.Infrastructure/Data/October/Migrations/20260930010000_AddOctoberPreparedSourceApprovals.cs text eol=lf
+/src/dotnet/Vulgata.Infrastructure/Data/October/Migrations/OctoberDbContextModelSnapshot.cs text eol=lf
+/src/dotnet/Vulgata.Infrastructure/Configuration/OctoberProviderBinder.cs text eol=lf
+/src/dotnet/Vulgata.Infrastructure/Source/OctoberPreparedSourceAuthorityVerifier.cs text eol=lf
+/src/dotnet/Vulgata.OctoberGenerator/Program.cs text eol=lf
+/src/dotnet/Vulgata.OctoberGenerator/OctoberGeneratorModule.cs text eol=lf
+/src/dotnet/Vulgata.OctoberGenerator/OctoberConfiguredTarget.cs text eol=lf
+/src/dotnet/Vulgata.OctoberGenerator/PreparedSourceBinding.cs text eol=lf
+/src/dotnet/Vulgata.Agents/WorkerExecution/PreparedSourceFunctions.cs text eol=lf
+/tests/Vulgata.Tests/October/OctoberHostCompositionTests.cs text eol=lf
+/tests/Vulgata.Tests/October/OctoberHostSelectionTests.cs text eol=lf
+/tests/Vulgata.Tests/October/OctoberPostgreSqlIsolationTests.cs text eol=lf
+/tests/Vulgata.Tests/October/OctoberPreparedSourceBindingTests.cs text eol=lf
+/tests/Vulgata.Tests/October/OctoberBatchSelectorTests.cs text eol=lf
+/tests/Vulgata.Tests/October/OctoberContextSelectionTests.cs text eol=lf
+/tests/Vulgata.Tests/October/OctoberLocalAuthorityTests.cs text eol=lf
+/tests/Vulgata.Tests/October/OctoberLocalSourceApprovalTests.cs text eol=lf
+/tests/Vulgata.Tests/October/OctoberOperatorCredentialSourceTests.cs text eol=lf
+/tests/Vulgata.Tests/October/OctoberPersistenceModelTests.cs text eol=lf
+/tests/Vulgata.Tests/October/OctoberSetupPolicyTests.cs text eol=lf
+/tests/Vulgata.Tests/October/OctoberSetupStoreTests.cs text eol=lf
+/tests/Vulgata.Tests/October/OctoberProviderBindingTests.cs text eol=lf
+/tests/Vulgata.Tests/TestInfrastructure/suites.json text eol=lf
+/docs/agents/project-state.md text eol=lf
+/docs/project-lessons.md text eol=lf
+/docs/bmad/implementation-artifacts/18-4-prepare-an-owned-october-batch-with-valid-context-and-provid.md text eol=lf
+/docs/bmad/planning-artifacts/sprint-change-proposal-2026-09-26-october-batch-release.md text eol=lf
+/specs/017-october-batch-setup/evidence/convergence-tasks-preimage-01.md text eol=lf
+/specs/017-october-batch-setup/evidence/verify-focused-output-01.txt text eol=lf
+/specs/017-october-batch-setup/evidence/verify-test-output-01.txt text eol=lf
+/specs/017-october-batch-setup/evidence/verify-build-output-01.txt text eol=lf
+
 # Preserve raw-byte pre-images, including their original whitespace and line endings.
 /docs/bmad/history/pre-generic-adoption-2026-09-11/files/** -text -whitespace
 

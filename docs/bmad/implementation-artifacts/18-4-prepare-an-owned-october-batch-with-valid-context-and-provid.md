@@ -1,6 +1,6 @@
 # Story 18.4 development record
 
-Status: in-progress (30/30 tasks verified; independent convergence and downstream gates pending; recovery7/8)
+Status: review
 Feature directory: `specs/017-october-batch-setup`
 Workflow state: `specs/017-october-batch-setup/workflow-state.json`
 
@@ -190,6 +190,53 @@ action to proceed while preserving count7/limit8. T030 is complete; all30 origin
 IDs are checked. `evidence/t030-implementation-prerequisites-01.json` binds focused,
 full and build results and corrected-environment invocation2/maximum3. This is
 implementation prerequisite evidence, not final governed verification or closure.
+
+Independent convergence01 checked12 functional requirements,14 acceptance scenarios,
+6 buildable success criteria,23 implementation-design IDs and all30 tasks: no
+findings or appended/reused tasks. Its first process-setup error was resolved via
+the approved outside-sandbox read-only route, and producer-format fields were
+corrected without changing its clean assessment. The validated raw report is
+`evidence/convergence-01.json`; transition128 preserves count7/limit8. Required
+quality/E2E decision/pinned final verification remain explicit workflow-state gates;
+passing implementation checks are not final completion.
+
+## Story Lookback
+
+No new reusable lesson is needed. Existing callable-seam, migration-history and
+native-launcher lessons were applied; the corrected fixture now asserts every
+ordinary seeded role and uses scoped Identity services through shared test helpers.
+These explicit checks prevent the observed local errors without another guide or
+workflow stage. Original failures, diagnosis, count7/limit8 and the finite human
+extension remain historical evidence; only final accepted/verified closure resolves
+the recovery episode.
+
+The existing canonical-byte lesson also applies: exact-path LF rules now make
+review/closure inputs agree with their committed Git bytes. Source and contract
+normalization matches existing blobs and changes no behavior or accepted intent.
+Earlier command/review preimages remain untouched; refreshed current bindings
+record the mechanical materialization in `evidence/canonical-reviewed-inputs-01.json`.
+
+Approved intent is synchronized: ordinary Web uses startup database configuration
+only, without October batch/operator/provider prerequisites or runtime switching;
+independent generator setup retains authorization, source18.1 context lifetime,
+context provenance, explicit provider binding and persistence isolation. Current
+October release wording and accepted plan-review15/definition-review14 plus scoped
+approvals06/08 agree. Project state now routes formal status to feature state rather
+than treating controlled or fixture-backed success as completed delivery. No later
+JDT-LS, CodeGraph, Knowledge or generation scope was adopted.
+
+There is no unresolved authority or required document delta. Nonblocking residuals
+are existing package-feed/source-mapping/EF-version warnings; unreachable
+vulnerability feeds are not a clean vulnerability-audit claim. Owned PostgreSQL and
+actual processes are qualified separately from controlled tests and every recorded
+run cleaned its owned resources. No paid provider or native-tool readiness is
+claimed. Full completion still requires the ordinary remaining governed gates.
+
+## Workflow Bookkeeping
+
+Verified implementation checkpoint: `bmad-18-4-implement-20261005T130500Z-aed923`.
+Review candidate checkpoint: `bmad-18-4-quality-review-20261005T134906Z-da4824`.
+Current lifecycle: review. Current gate/checkpoint binding is in `workflow-state.json`.
 
 ## Historical pre-correction boundary (2026-10-01)
 
