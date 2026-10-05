@@ -102,8 +102,8 @@
   "bmad_epic_key": "epic-18",
   "bmad_story_key": "18-4-prepare-an-owned-october-batch-with-valid-context-and-provid",
   "checkpoint": {
-    "checkpoint_id": "bmad-18-4-quality-review-20261005T134906Z-da4824",
-    "stage": "quality-review",
+    "checkpoint_id": "bmad-18-4-complete-20261005T143030Z-7c940e",
+    "stage": "complete",
     "commit_sha": null,
     "binding_status": "pending"
   },
@@ -132,8 +132,8 @@
     "profile": "definition-author-recovery"
   },
   "e2e": {
-    "decision_path": null,
-    "result": "pending"
+    "decision_path": "specs/017-october-batch-setup/evidence/e2e-decision-01.json",
+    "result": "skipped-covered"
   },
   "feature_directory": "specs/017-october-batch-setup",
   "gates": {
@@ -148,17 +148,17 @@
       "verdict_path": "specs/017-october-batch-setup/evidence/plan-review-15.json"
     },
     "quality-review": {
-      "attempt": 0,
-      "status": "pending",
-      "verdict_path": null
+      "attempt": 1,
+      "status": "accepted",
+      "verdict_path": "specs/017-october-batch-setup/evidence/quality-review-01.json"
     }
   },
   "lookback": {
-    "status": "current",
     "evidence": {
       "path": "specs/017-october-batch-setup/evidence/lookback-02.json",
       "sha256": "8c1df0555b1fd8e34e44e9d1de81719ee9b7c6e4580996d2153c56b67520f59b"
-    }
+    },
+    "status": "current"
   },
   "preflight": {
     "branch": "oct14/story-18-4",
@@ -167,37 +167,13 @@
     "observed_at": "2026-10-05T13:49:42.230Z",
     "status_sha256": "9b1d33239197523fa771951e7ce05b3f8293847c5da040a4ec84196b85016b46"
   },
-  "recovery": {
-    "action": "proceed",
-    "closing_gate": "verify",
-    "diagnosis": {
-      "at_count": 7,
-      "evidence": {
-        "path": "specs/017-october-batch-setup/evidence/ordinary-web-pg-role-order-post-extension-diagnosis-01.json",
-        "sha256": "140fd029f0782076ac9904a90a8ee1bd7008c7caf79f80df283cbd88d17f6a3c"
-      }
-    },
-    "earliest_owner": "tests",
-    "episode_id": "18-4-implementation-setup-seam-01",
-    "extension_decision_id": "18-4/recovery-extension/implementation-setup-seam-01/3",
-    "failed_results": 7,
-    "holds": [],
-    "last_result": {
-      "path": "specs/017-october-batch-setup/evidence/ordinary-web-pg-role-order-recurring-failure-01.json",
-      "sha256": "2b5294b9b540da91da2f7b93f5538583e6db543a8e077b0356b0ba593ebb667e"
-    },
-    "pause_at": 8
-  },
-  "resume": {
-    "stage": "quality-review",
-    "reason": "All30tasks, current canonical convergence02 and exact lookback02 validated; fresh complete-boundary quality review next. Counts7/8 retained.",
-    "evidence_path": "specs/017-october-batch-setup/evidence/lookback-02.json"
-  },
+  "recovery": null,
+  "resume": null,
   "schema_version": "3.1",
-  "stage": "quality-review",
+  "stage": "complete",
   "transition_head": {
-    "path": "specs/017-october-batch-setup/evidence/transitions/transition-0129-canonical-convergence-accepted.json",
-    "sha256": "22eb492d37db0a34a9260ef5763506afd1b8b2620c300e9094a55a432677cc7d"
+    "path": "specs/017-october-batch-setup/evidence/transitions/transition-0132-verified-recovery-closed.json",
+    "sha256": "2a213e5ea35a9614644d728375d4a071590751de9d96db9c4409d997f8e3d6b1"
   },
-  "updated_at": "2026-10-05T13:49:36.093Z"
+  "updated_at": "2026-10-05T14:30:33.577Z"
 }

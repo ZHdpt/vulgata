@@ -1,0 +1,26 @@
+Policy passed: 300 classified source files; guarded test traits checked.
+PASS: empty/all-skipped/incomplete/process-failure outcomes rejected; valid counts accepted
+PASS: unclassified test
+PASS: unguarded attribute long name
+PASS: guard mismatch
+PASS: direct process
+PASS: indirect helper
+PASS: indented helper
+PASS: unknown helper
+PASS: policy exemption abuse
+PASS: uncontrolled HTTP
+PASS: interpolation process
+PASS: combined attributes
+PASS: qualified mismatch
+PASS: target typed HTTP return
+PASS: HTTP initializer without parentheses
+PASS: arbitrary regex exemption
+PASS: unreviewed exception identifier
+PASS: test attribute alias
+PASS: ordinary factory aliases remain allowed
+PASS: explicit skip allowlist applies to every suite
+PASS: unsupported scopes/plain seed rejected; owned timeout tree stopped; sensitive output redacted
+PASS: cleanup failure propagates after restoring saved environment
+Building current test sources. Log: C:\Users\13728\.codex\worktrees\d166\vulgata\TestResults\isolation-7d99c229ec174d59b2c366659eb2ff9e/build.log
+Suite=SelfContained discovered=3069 selected=2149 passed=2149 failed=0 skipped=0
+Excluded suites (not qualified): PostgreSql, LocalTools, External, E2E, HistoricalBoundary. TRX: C:\Users\13728\.codex\worktrees\d166\vulgata\TestResults\isolation-7d99c229ec174d59b2c366659eb2ff9e\results.trx

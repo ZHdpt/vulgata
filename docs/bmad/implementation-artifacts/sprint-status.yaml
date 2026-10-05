@@ -95,7 +95,7 @@ development_status:
   18-1-access-prepared-source-through-contained-read-only-tools: done
   18-2-navigate-prepared-java-source-with-restricted-jdt-ls: backlog
   18-3-use-native-codegraph-mcp-against-prepared-source: backlog
-  18-4-prepare-an-owned-october-batch-with-valid-context-and-provid: review
+  18-4-prepare-an-owned-october-batch-with-valid-context-and-provid: done
   18-5-accept-semantic-file-knowledge-and-read-exact-published-resu: backlog
   18-6-read-exact-knowledge-documents-without-management-permission: backlog
   18-7-generate-whole-file-code-logic-with-a-real-worker: backlog

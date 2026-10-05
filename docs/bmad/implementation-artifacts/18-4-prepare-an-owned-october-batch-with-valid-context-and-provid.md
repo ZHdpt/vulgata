@@ -1,6 +1,6 @@
 # Story 18.4 development record
 
-Status: review
+Status: done
 Feature directory: `specs/017-october-batch-setup`
 Workflow state: `specs/017-october-batch-setup/workflow-state.json`
 
@@ -236,7 +236,12 @@ claimed. Full completion still requires the ordinary remaining governed gates.
 
 Verified implementation checkpoint: `bmad-18-4-implement-20261005T130500Z-aed923`.
 Review candidate checkpoint: `bmad-18-4-quality-review-20261005T134906Z-da4824`.
-Current lifecycle: review. Current gate/checkpoint binding is in `workflow-state.json`.
+Current lifecycle: done. Current gate/checkpoint binding is in `workflow-state.json`.
+Completion checkpoint: `bmad-18-4-complete-20261005T143030Z-7c940e`.
+All30tasks and current convergence/lookback/quality/E2E/final verification accepted.
+Final174focused/2149full tests passed0skip; exactbuild passed0errors35warnings.
+Owned PostgreSQL/process qualification retained by complete coverage override; no duplicate runtime.
+Recovery7/8 closed by verified proof; counts/diagnosis/approvals remain in historical evidence.
 
 ## Historical pre-correction boundary (2026-10-01)
 
