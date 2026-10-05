@@ -1,0 +1,6 @@
+{
+  "userSource": "Try a jdk-21 at C:/Program Files/Java/latest/jdk-21. Do not hard code jdk location when trying. When necessary, make java bin location as a dependency at appropriate boundary.",
+  "adoption": "Optional application-controlled PreparedJdtHostPolicy.JavaBinDirectory; configuredphysicalapprovedbin selectsjava.exe withnofollowpins andnullPATHindex. InvalidconfigurationrefuseswithoutPATHfallback. UnsetretainsfirstPATHselection.",
+  "testBoundary": "Caller-only VULGATA_JDT_JAVA_BIN suppliesphysicalbin; deriveJDKruntime root without vendorpaths in source. Productdoesnotreadthatvariable.",
+  "scope": "NewdirectionauthorizesexplicitJDK21trial ratherthanearlierfirstJava27 for thistrial. No machinePATHupdates, sharedsourcelease/filterchange, oldtaskreactivation orworkflowreset."
+}

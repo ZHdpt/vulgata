@@ -1,0 +1,11 @@
+{
+  "suite": "LocalTools",
+  "selected": 110,
+  "passed": 110,
+  "failed": 0,
+  "skipped": 0,
+  "results": "TestResults/isolation-010cd3e5a98b4d85ac805bc3819ac68e/results.trx",
+  "scope": "OptionalapplicationJavaBinDirectory selectsphysicalapprovedJava anddeclaredJDKroot; invalidconfigurationrefused,nofallback; defaultPATH/aliases/security/lifetimes unchanged.",
+  "native": "JDK21realfunctionsobserved; cleanupstillunqualified retained separately.",
+  "location": "No hardcodedJDKpathinproduction; suppliedbyapplicationpolicy. Testfixturecallerconfiguration changesremaininprogress."
+}

@@ -1,0 +1,14 @@
+{
+  "suite": "LocalTools",
+  "selected": 3,
+  "failed": 3,
+  "results": "TestResults/isolation-154178644737436c9c57193a866665b3/results.trx",
+  "classification": "ValidbehavioralRED: configuredselectionignored; missing/undeclaredconfiguredJavafallsbackincorrectly.",
+  "required": "ExplicitphysicalJavaBinDirectory pinnedwithnullPATHindex; invalidconfigurationrefusedwithnofallback; unsetsupportsoriginalPATHbehavior.",
+  "Jdk21Preflight": {
+    "logicalUserInput": "C:/Program Files/Java/latest/jdk-21",
+    "physicalBin": "C:/Program Files/Java/jdk-21.0.12/bin",
+    "observedVersion": "21.0.12+7-LTS-205",
+    "productPathHardcoded": false
+  }
+}

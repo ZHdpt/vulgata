@@ -5105,6 +5105,123 @@ public sealed class JdtLsPreparedNavigationTests
 
     [Trait("Suite", "LocalTools")]
     [SuiteFact("LocalTools")]
+    public async Task PreparedJdtCommandResolver_WhenJavaBinIsConfigured_PinsThatExecutableWithoutPathIndex()
+    {
+        await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
+        ConfiguredJavaResolverFixture configured = await CreateConfiguredJavaResolverFixtureAsync(
+            fixture,
+            createConfiguredJava: true,
+            declareConfiguredJdkRoot: true);
+
+        PreparedJdtCommandResolution resolution = await new PreparedJdtCommandResolver().ResolveAsync(
+            configured.Request,
+            CancellationToken.None);
+
+        Assert.Equal(PreparedJdtCommandResolutionStatus.Pinned, resolution.Status);
+        PreparedJdtPinnedCommands commands = Assert.IsType<PreparedJdtPinnedCommands>(resolution.Commands);
+        await AssertPinnedCommandAsync(commands.JavaCommand, configured.ConfiguredJavaPath, expectedPathIndex: null);
+        Assert.Equal(Path.GetFullPath(configured.ConfiguredJavaPath), commands.JavaCommand.CanonicalAbsolutePath);
+        Assert.NotEqual(Path.GetFullPath(configured.PathJavaFallbackPath), commands.JavaCommand.CanonicalAbsolutePath);
+        Assert.Equal(2, commands.PythonCommand!.FirstPathEntryIndex);
+    }
+
+    [Trait("Suite", "LocalTools")]
+    [SuiteTheory("LocalTools")]
+    [InlineData("configured-java-missing")]
+    [InlineData("configured-jdk-root-not-declared")]
+    public async Task PreparedJdtCommandResolver_WhenConfiguredJavaIsInvalid_RejectsWithoutPathFallback(
+        string invalidConfiguration)
+    {
+        await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
+        ConfiguredJavaResolverFixture configured = await CreateConfiguredJavaResolverFixtureAsync(
+            fixture,
+            createConfiguredJava: invalidConfiguration != "configured-java-missing",
+            declareConfiguredJdkRoot: invalidConfiguration != "configured-jdk-root-not-declared");
+        Assert.True(File.Exists(configured.PathJavaFallbackPath),
+            "The host PATH contains a valid later Java candidate that must not be silently selected.");
+
+        PreparedJdtCommandResolution resolution = await new PreparedJdtCommandResolver().ResolveAsync(
+            configured.Request,
+            CancellationToken.None);
+
+        Assert.Equal(PreparedJdtCommandResolutionStatus.Rejected, resolution.Status);
+        Assert.Null(resolution.Commands);
+    }
+
+    private static async Task<ConfiguredJavaResolverFixture> CreateConfiguredJavaResolverFixtureAsync(
+        PreparedSourceFixture fixture,
+        bool createConfiguredJava,
+        bool declareConfiguredJdkRoot)
+    {
+        string stateRoot = Path.Combine(fixture.SiblingPath, "resolver-configured-java-state");
+        string jdtDirectory = Path.Combine(fixture.SiblingPath, "resolver-configured-java-jdt");
+        string pathJavaDirectory = Path.Combine(fixture.SiblingPath, "resolver-configured-java-path-candidate");
+        string jdkRoot = Path.Combine(fixture.SiblingPath, "resolver-configured-jdk");
+        string configuredJavaBin = Path.Combine(jdkRoot, "bin");
+        string pythonDirectory = Path.Combine(fixture.SiblingPath, "resolver-configured-java-python");
+        string cmdDirectory = Path.Combine(fixture.SiblingPath, "resolver-configured-java-cmd");
+        string runtimeRoot = Path.Combine(fixture.SiblingPath, "resolver-configured-java-runtime");
+        foreach (string directory in new[]
+        {
+            stateRoot, jdtDirectory, pathJavaDirectory, configuredJavaBin, pythonDirectory,
+            cmdDirectory, Path.Combine(runtimeRoot, "bin"), Path.Combine(runtimeRoot, "config_win"),
+            Path.Combine(runtimeRoot, "plugins"),
+        })
+        {
+            Directory.CreateDirectory(directory);
+        }
+
+        string bootstrapPath = Path.Combine(runtimeRoot, "bin", "jdtls");
+        string configuredJavaPath = Path.Combine(configuredJavaBin, "java.exe");
+        string pathJavaFallbackPath = Path.Combine(pathJavaDirectory, "java.exe");
+        string pythonPath = Path.Combine(pythonDirectory, "python.exe");
+        string cmdPath = Path.Combine(cmdDirectory, "cmd.exe");
+        await File.WriteAllTextAsync(Path.Combine(jdtDirectory, "jdtls.bat"),
+            $"@echo off\r\npython \"{bootstrapPath}\" %*\r\n");
+        await File.WriteAllTextAsync(bootstrapPath, "configured Java bootstrap fixture\n");
+        await File.WriteAllTextAsync(Path.Combine(runtimeRoot, "bin", "jdtls.py"), "configured Java module\n");
+        await File.WriteAllTextAsync(Path.Combine(runtimeRoot, "config_win", "config.ini"), "configured Java config\n");
+        await File.WriteAllTextAsync(
+            Path.Combine(runtimeRoot, "plugins", "org.eclipse.equinox.launcher_1.0.0.jar"), "configured Java launcher\n");
+        if (createConfiguredJava)
+        {
+            await File.WriteAllTextAsync(configuredJavaPath, "approved configured Java executable\n");
+        }
+
+        await File.WriteAllTextAsync(pathJavaFallbackPath, "valid but non-selected PATH Java candidate\n");
+        await File.WriteAllTextAsync(pythonPath, "approved configured Java test Python\n");
+        await File.WriteAllTextAsync(cmdPath, "approved command interpreter fixture\n");
+
+        string[] approvedDirectories =
+        [jdtDirectory, pathJavaDirectory, configuredJavaBin, pythonDirectory, cmdDirectory];
+        string[] declaredRuntimeRoots = declareConfiguredJdkRoot
+            ? [runtimeRoot, jdkRoot]
+            : [runtimeRoot];
+        string[] fixedChildPath = [jdtDirectory, configuredJavaBin, pythonDirectory, cmdDirectory];
+        var hostPolicy = new PreparedJdtHostPolicy(
+            approvedDirectories,
+            declaredRuntimeRoots,
+            cmdPath,
+            fixedChildPath,
+            JavaBinDirectory: configuredJavaBin);
+        var request = new PreparedJdtCommandRequest(
+            string.Join(Path.PathSeparator, jdtDirectory, pathJavaDirectory, pythonDirectory, cmdDirectory),
+            fixture.PreparedRootPath,
+            stateRoot,
+            hostPolicy);
+        return new ConfiguredJavaResolverFixture(
+            request,
+            configuredJavaPath,
+            pathJavaFallbackPath);
+    }
+
+    private sealed record ConfiguredJavaResolverFixture(
+        PreparedJdtCommandRequest Request,
+        string ConfiguredJavaPath,
+        string PathJavaFallbackPath);
+
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
     public async Task PreparedJdtCommandResolver_WhenFirstJavaAndPythonAreApprovedAliases_PinsAndRechecksSelectedChain()
     {
         await using PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();

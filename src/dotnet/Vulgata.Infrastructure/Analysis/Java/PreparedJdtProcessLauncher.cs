@@ -155,7 +155,9 @@ internal sealed class PreparedJdtProcessLauncher : IPreparedJdtProcessLauncher
                     throw new InvalidOperationException("jdt_prelaunch_authority_unavailable");
                 }
 
-                if (!PreparedJdtCommandResolver.AliasesCurrent(
+                if (!PreparedJdtCommandResolver.ConfiguredJavaMatches(
+                        request.Commands, request.FixedHostPolicy) ||
+                    !PreparedJdtCommandResolver.AliasesCurrent(
                         request.Commands, request.FixedHostPolicy,
                         request.CanonicalPreparedRoot, stateRoot))
                 {

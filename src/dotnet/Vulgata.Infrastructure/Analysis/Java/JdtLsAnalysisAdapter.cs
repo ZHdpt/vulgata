@@ -168,6 +168,7 @@ internal sealed class PreparedJdtLsRuntime : IPreparedJdtLsRuntime
                 },
                 linked.Token);
             if (finalScope != PreparedToolWorkspaceCheckStatus.Current || rootIdentity is null ||
+                !PreparedJdtCommandResolver.ConfiguredJavaMatches(commands, _fixedHostPolicy) ||
                 !PreparedJdtCommandResolver.AliasesCurrent(
                     commands, _fixedHostPolicy, root, stateRoot) ||
                 !TryPinCommands(commands, pinnedFiles))
@@ -603,7 +604,23 @@ internal sealed class PreparedJdtCommandResolver : IPreparedJdtCommandResolver
                     return Rejected();
                 }
 
-                (string? javaPath, int javaIndex) = FindFirst(pathEntries, "java.exe");
+                string? javaPath;
+                int javaIndex;
+                if (request.FixedHostPolicy.JavaBinDirectory is { } configuredBin)
+                {
+                    if (!TryConfiguredJava(configuredBin, request.FixedHostPolicy,
+                            preparedRoot, stateRoot, out javaPath))
+                    {
+                        return Rejected();
+                    }
+
+                    javaIndex = -1;
+                }
+                else
+                {
+                    (javaPath, javaIndex) = FindFirst(pathEntries, "java.exe");
+                }
+
                 (string? pythonPath, int pythonIndex) = FindFirst(pathEntries, "python.exe");
                 string cmdPath = request.FixedHostPolicy.FixedCmdAbsolutePath;
                 if (javaPath is null || pythonPath is null || !Path.IsPathFullyQualified(cmdPath) ||
@@ -615,11 +632,18 @@ internal sealed class PreparedJdtCommandResolver : IPreparedJdtCommandResolver
                     return Rejected();
                 }
 
-                if (!TryResolveSelectedCommand(javaPath, javaIndex,
+                string? physicalJava = javaPath;
+                PreparedJdtSelectedExecutableAlias? javaAlias = null;
+                if (javaIndex >= 0 &&
+                    !TryResolveSelectedCommand(javaPath, javaIndex,
                         PreparedJdtSelectedExecutableAliasKind.JavaParentJunction,
                         request.FixedHostPolicy, preparedRoot, stateRoot,
-                        out string? physicalJava, out PreparedJdtSelectedExecutableAlias? javaAlias) ||
-                    !TryResolveSelectedCommand(pythonPath, pythonIndex,
+                        out physicalJava, out javaAlias))
+                {
+                    return Rejected();
+                }
+
+                if (!TryResolveSelectedCommand(pythonPath, pythonIndex,
                         PreparedJdtSelectedExecutableAliasKind.PythonFileSymbolicLink,
                         request.FixedHostPolicy, preparedRoot, stateRoot,
                         out string? physicalPython, out PreparedJdtSelectedExecutableAlias? pythonAlias))
@@ -628,7 +652,8 @@ internal sealed class PreparedJdtCommandResolver : IPreparedJdtCommandResolver
                 }
 
                 if (!TryDescribe(batchPath, index, out PreparedJdtPinnedFile? jdtPin) ||
-                    !TryDescribe(physicalJava!, javaIndex, out PreparedJdtPinnedFile? javaPin) ||
+                    !TryDescribe(physicalJava!, javaIndex < 0 ? null : javaIndex,
+                        out PreparedJdtPinnedFile? javaPin) ||
                     !TryDescribe(physicalPython!, pythonIndex, out PreparedJdtPinnedFile? pythonPin) ||
                     !TryDescribe(cmdPath, null, out PreparedJdtPinnedFile? cmdPin) ||
                     !TryDescribe(bootstrapPath, null, out PreparedJdtPinnedFile? bootstrapPin) ||
@@ -681,6 +706,62 @@ internal sealed class PreparedJdtCommandResolver : IPreparedJdtCommandResolver
         !IsWithin(path, preparedRoot) && !IsWithin(path, stateRoot) &&
         IsApprovedDirectory(Path.GetDirectoryName(path)!,
             request.FixedHostPolicy.ApprovedExecutableDirectories);
+
+    private static bool TryConfiguredJava(string configuredBin,
+        PreparedJdtHostPolicy policy, string preparedRoot, string stateRoot,
+        out string? javaPath)
+    {
+        javaPath = null;
+        if (!Path.IsPathFullyQualified(configuredBin))
+        {
+            return false;
+        }
+
+        string bin = Path.GetFullPath(configuredBin).TrimEnd(Path.DirectorySeparatorChar);
+        string? jdkRoot = Path.GetDirectoryName(bin);
+        if (!string.Equals(configuredBin.TrimEnd(Path.DirectorySeparatorChar), bin,
+                StringComparison.OrdinalIgnoreCase) ||
+            !string.Equals(Path.GetFileName(bin), "bin", StringComparison.OrdinalIgnoreCase) ||
+            jdkRoot is null || IsWithin(bin, preparedRoot) || IsWithin(bin, stateRoot) ||
+            !IsApprovedDirectory(bin, policy.ApprovedExecutableDirectories) ||
+            !IsApprovedDirectory(jdkRoot, policy.DeclaredRuntimeReadRoots) ||
+            !policy.FixedChildPathEntries.Any(entry =>
+                Path.IsPathFullyQualified(entry) &&
+                string.Equals(Path.GetFullPath(entry).TrimEnd(Path.DirectorySeparatorChar),
+                    bin, StringComparison.OrdinalIgnoreCase)))
+        {
+            return false;
+        }
+
+        (PreparedSourceTraversal.OpenStatus status, SafeFileHandle? heldBin) =
+            PreparedSourceTraversal.OpenRoot(bin);
+        using (heldBin)
+        {
+            if (status != PreparedSourceTraversal.OpenStatus.Opened || heldBin is null)
+            {
+                return false;
+            }
+        }
+
+        javaPath = Path.Combine(bin, "java.exe");
+        return File.Exists(javaPath) &&
+            (File.GetAttributes(javaPath) & FileAttributes.ReparsePoint) == 0;
+    }
+
+    internal static bool ConfiguredJavaMatches(PreparedJdtPinnedCommands commands,
+        PreparedJdtHostPolicy policy)
+    {
+        if (policy.JavaBinDirectory is null)
+        {
+            return true;
+        }
+
+        return Path.IsPathFullyQualified(policy.JavaBinDirectory) &&
+            commands.JavaCommand.FirstPathEntryIndex is null &&
+            string.Equals(commands.JavaCommand.CanonicalAbsolutePath,
+                Path.Combine(Path.GetFullPath(policy.JavaBinDirectory), "java.exe"),
+                StringComparison.OrdinalIgnoreCase);
+    }
 
     internal static bool AliasesCurrent(PreparedJdtPinnedCommands commands,
         PreparedJdtHostPolicy policy, string preparedRoot, string stateRoot)
@@ -1026,7 +1107,8 @@ public sealed record PreparedJdtHostPolicy(
     IReadOnlyList<string> ApprovedExecutableDirectories,
     IReadOnlyList<string> DeclaredRuntimeReadRoots,
     string FixedCmdAbsolutePath,
-    IReadOnlyList<string> FixedChildPathEntries);
+    IReadOnlyList<string> FixedChildPathEntries,
+    string? JavaBinDirectory = null);
 
 internal interface IPreparedJdtProcessLauncher
 {

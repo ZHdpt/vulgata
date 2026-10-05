@@ -351,3 +351,22 @@ retarget refusal before the real T046 fixture/function/shutdown qualification.
 The exact Oracle physical target directory is explicitly included in the native
 application policy; Python's target is in the already-approved `.local/bin`.
 Ordinary 18.1 readers, the shared lease and 18.3 ownership remain unchanged.
+
+
+### Configured Java dependency — authorized October 5 trial
+
+The human authorized trying the supplied JDK 21 while forbidding a hard-coded JDK
+location. Append optional `JavaBinDirectory` to application-controlled
+`PreparedJdtHostPolicy`. An explicit physical approved bin selects its `java.exe`,
+pins it no-follow with no PATH index, and rejects invalid configuration without
+falling back. When absent, retain the existing first-PATH Java selection. JDT and
+Python retain first-PATH selection. Root selection/startup/disposal and Java
+configuration remain unavailable to Worker functions.
+
+The application resolves its supplied installation to a physical bin before policy
+construction and declares that bin/JDK runtime root. Tests consume only the caller
+dependency `VULGATA_JDT_JAVA_BIN`; no vendor-specific JDK path remains in the fixture
+policy builder and production never reads that variable. This bounded direction
+supersedes first-Java selection only for the explicit JDK 21 trial. Controlled
+configured-selection/no-fallback RED/GREEN precedes real public-factory qualification.
+All earlier evidence, skipped work and historical workflow remain preserved.
