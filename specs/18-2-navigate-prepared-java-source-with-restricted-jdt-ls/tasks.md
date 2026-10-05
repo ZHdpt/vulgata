@@ -283,3 +283,18 @@ is LocalTools and excluded from the basic SelfContained suite.
 The only prerequisite decisions are explicit new implementation-boundary/JDT exception
 and resource authority. This document does not manufacture acceptance by the old
 review/approval hashes or authorize a native child through a caller boolean.
+
+
+### Current runtime checkpoint — 2026-10-05
+
+T046 is **blocked**, not completed: first PATH Java 27 starts the pinned JDT
+process, but its ASM/weaving bootstrap rejects class-file major version 71 and
+prevents language-server initialization. The public-factory qualification remains
+failing; no real definition/reference/function results were observed. The separate
+diagnostic probe establishes bounded capture and confirmed owned process exit/state
+cleanup only. Controlled JDT LocalTools passes 107/107; basic SelfContained passes
+2063/2063 and excludes all dedicated JDT tests. T047 retains that verification but
+remains unfinished with T046. No fallback or external installation update is adopted.
+To retain the human-selected first Java, provide a compatible pinned JDT distribution
+and rerun affected native qualification with fresh identities/digests. Preserve all
+old SKIP items and the frozen historical workflow.

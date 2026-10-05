@@ -1,0 +1,13 @@
+{
+  "suite": "LocalTools",
+  "selected": 1,
+  "failed": 1,
+  "results": "TestResults/isolation-a6d945a1549c4c39b64d67364aafa9c2/results.trx",
+  "resolver": "Pinned661 declaredinputs",
+  "durationSeconds": 21.7455199,
+  "publicFactoryStatus": "ConfigurationUnavailable",
+  "functionsInvoked": false,
+  "classification": "Post-resolution startup/initialization failure; rootcause unlocalized, no product correction until bounded actualprocess/protocol diagnostics.",
+  "nativeServerClaim": "No initialized session or useful native navigation qualified.",
+  "constraints": "Existing30secgrant, no laterPATHfallback, approvedphysicalpins/sourceprotection, bounded ownedcleanup retained."
+}

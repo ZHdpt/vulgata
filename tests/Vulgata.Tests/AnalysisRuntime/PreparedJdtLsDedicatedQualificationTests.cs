@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Reflection;
 using System.Text;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using Microsoft.Extensions.AI;
 using Vulgata.Agents.WorkerExecution;
@@ -292,6 +293,132 @@ public sealed class PreparedJdtLsDedicatedQualificationTests(ITestOutputHelper o
         }
     }
 
+    [Trait("Suite", "LocalTools")]
+    [SuiteFact("LocalTools")]
+    public async Task DiagnoseCurrentJdtRuntimeFailure_ReportsBoundedOwnedProcessAndProtocolDetails()
+    {
+        PreparedSourceFixture fixture = await PreparedSourceFixture.CreateAsync();
+        PreparedToolWorkspaceLease? lease = null;
+        bool preserveFixture = false;
+        try
+        {
+            string sourcePath = Path.Combine(fixture.PreparedRootPath, "src", "main", "java", "fixture", "Probe.java");
+            Directory.CreateDirectory(Path.GetDirectoryName(sourcePath)!);
+            await File.WriteAllTextAsync(sourcePath,
+                "package fixture;\npublic class Probe { public void inspect() {} }\n", Utf8);
+
+            string stateRoot = Path.Combine(fixture.SiblingPath, "dedicated-jdt-diagnostic-state");
+            Directory.CreateDirectory(stateRoot);
+            string callerMarker = Path.Combine(stateRoot, "caller-owned-marker.txt");
+            await File.WriteAllTextAsync(callerMarker, "preserve caller state\n", Utf8);
+            var (hostPath, hostPolicy, runtimeRoot, javaPath, pythonPath, jdtCommandPath) =
+                CreateCurrentHostPolicy();
+            Assert.Equal(hostPath, Environment.GetEnvironmentVariable("PATH"));
+            output.WriteLine("Diagnostic host selection: JDT {0}; Python {1}; Java {2}; pinned runtime root {3}.",
+                jdtCommandPath, pythonPath, javaPath, runtimeRoot);
+
+            fixture.Authority.Approve(fixture.Approval);
+            PreparedToolWorkspaceIssueResult issue = await new PreparedToolWorkspaceIssuer(
+                fixture.Authority,
+                new FixtureToolUseAuthorizer(fixture.Approval)).IssueAsync(
+                    new PreparedToolWorkspaceGrantRequest(
+                        fixture.Approval,
+                        fixture.PreparedRootPath,
+                        PreparedToolPurpose.JdtNavigation,
+                        TimeSpan.FromSeconds(30)));
+            Assert.Equal(PreparedToolWorkspaceIssueStatus.Issued, issue.Status);
+            lease = Assert.IsType<PreparedToolWorkspaceLease>(issue.Lease);
+
+            var profile = new PreparedJavaNavigationProfile(
+                stateRoot,
+                TimeSpan.FromSeconds(20),
+                TimeSpan.FromSeconds(6),
+                TimeSpan.FromSeconds(15),
+                MaximumResponseBytes: 2 * 1024 * 1024);
+            var processLauncher = new DiagnosticPreparedJdtProcessLauncher(output);
+            var protocols = new DiagnosticPreparedJdtProtocolFactory(output);
+            var runtime = new PreparedJdtLsRuntime(
+                new PreparedJdtCommandResolver(),
+                processLauncher,
+                protocols,
+                hostPolicy);
+            IPreparedJdtLsSession? session = null;
+            try
+            {
+                session = await runtime.OpenAsync(lease, profile, CancellationToken.None);
+                output.WriteLine("Diagnostic runtime initialization succeeded; opening session for bounded disposal.");
+            }
+            catch (PreparedJdtLsOpenFailureException failure)
+            {
+                output.WriteLine("Runtime open failure: status={0}; cleanupConfirmed={1}.",
+                    failure.Status, failure.CleanupConfirmed);
+            }
+            finally
+            {
+                Exception? sessionDisposeFailure = null;
+                if (session is not null)
+                {
+                    try
+                    {
+                        await session.DisposeAsync().AsTask().WaitAsync(
+                            profile.ShutdownTimeout + TimeSpan.FromSeconds(5));
+                    }
+                    catch (Exception exception)
+                    {
+                        sessionDisposeFailure = exception;
+                        output.WriteLine("Diagnostic session disposal failed: {0}: {1}",
+                            exception.GetType().FullName, exception.Message);
+                    }
+                }
+
+                DiagnosticPreparedJdtOwnedProcess? ownedProcess = processLauncher.OwnedProcess;
+                if (ownedProcess is not null)
+                {
+                    await ownedProcess.ReportCapturedStderrAsync();
+                    preserveFixture = !ownedProcess.CleanupConfirmed;
+                    output.WriteLine("Owned-process result: started={0}; killRequested={1}; waitCompleted={2}; exitCode={3}; disposeCompleted={4}.",
+                        ownedProcess.StartCompleted,
+                        ownedProcess.KillRequested,
+                        ownedProcess.ExitObserved,
+                        ownedProcess.ExitCode?.ToString() ?? "<unobserved>",
+                        ownedProcess.CleanupConfirmed);
+                }
+
+                if (preserveFixture)
+                {
+                    output.WriteLine("Cleanup was not confirmed; preserving diagnostic source/state at {0}.",
+                        fixture.SandboxPath);
+                    Assert.False(preserveFixture,
+                        "Unconfirmed owned-process cleanup must preserve diagnostic files and fail this qualification.");
+                }
+                else
+                {
+                    Assert.Equal("preserve caller state\n", await File.ReadAllTextAsync(callerMarker));
+                    Assert.Equal(new[] { callerMarker }, Directory.EnumerateFiles(stateRoot).ToArray());
+                    Assert.Empty(Directory.EnumerateDirectories(stateRoot));
+                    output.WriteLine("Confirmed diagnostic state cleanup left only the caller-owned marker.");
+                }
+
+                if (sessionDisposeFailure is not null)
+                {
+                    throw new InvalidOperationException("diagnostic_session_disposal_failed", sessionDisposeFailure);
+                }
+            }
+        }
+        finally
+        {
+            if (lease is not null)
+            {
+                await lease.DisposeAsync();
+            }
+
+            if (!preserveFixture)
+            {
+                await fixture.DisposeAsync();
+            }
+        }
+    }
+
     private static AIFunctionArguments Arguments(string relativePath, int line, int character) =>
         new(new Dictionary<string, object?>
         {
@@ -340,6 +467,146 @@ public sealed class PreparedJdtLsDedicatedQualificationTests(ITestOutputHelper o
         start.ArgumentList.Add("/c");
         start.ArgumentList.Add("set /p story18_2_wait=");
         return Process.Start(start) ?? throw new InvalidOperationException("test_sentinel_start_failed");
+    }
+
+    private sealed class DiagnosticPreparedJdtProcessLauncher(ITestOutputHelper output) : IPreparedJdtProcessLauncher
+    {
+        private readonly PreparedJdtProcessLauncher _inner = new();
+
+        internal DiagnosticPreparedJdtOwnedProcess? OwnedProcess { get; private set; }
+
+        public async Task<IJdtLsProcess> LaunchAsync(
+            PreparedToolWorkspaceLease workspaceLease,
+            PreparedJdtLaunchRequest request,
+            CancellationToken cancellationToken)
+        {
+            output.WriteLine("Process launch requested: python={0}; bootstrap={1}; Java={2}; data={3}; configuration={4}.",
+                request.Commands.PythonCommand?.CanonicalAbsolutePath,
+                request.Commands.BootstrapScript?.CanonicalAbsolutePath,
+                request.Commands.JavaCommand.CanonicalAbsolutePath,
+                request.DataPath,
+                request.ConfigurationPath);
+            IJdtLsProcess process = await _inner.LaunchAsync(workspaceLease, request, cancellationToken);
+            OwnedProcess = new DiagnosticPreparedJdtOwnedProcess(process, request.DataPath, output);
+            output.WriteLine("Process launch completed and an owned process handle was returned.");
+            return OwnedProcess;
+        }
+    }
+
+    private sealed class DiagnosticPreparedJdtProtocolFactory(ITestOutputHelper output) : IPreparedJdtProtocolFactory
+    {
+        private readonly PreparedJdtProtocolFactory _inner = new();
+
+        public async Task<IPreparedJdtLsSession> InitializeAsync(
+            IJdtLsProcess process,
+            PreparedJdtInitializeRequest request,
+            CancellationToken cancellationToken)
+        {
+            var timer = Stopwatch.StartNew();
+            output.WriteLine("LSP initialize requested: root={0}; workspace={1}; settings={2}.",
+                request.RootUri,
+                request.WorkspaceFolderUri,
+                JsonSerializer.Serialize(request.FixedSettings));
+            try
+            {
+                IPreparedJdtLsSession session = await _inner.InitializeAsync(process, request, cancellationToken);
+                output.WriteLine("LSP initialize succeeded after {0} ms.", timer.ElapsedMilliseconds);
+                return session;
+            }
+            catch (Exception exception)
+            {
+                output.WriteLine("LSP initialize failed after {0} ms: {1}: {2}",
+                    timer.ElapsedMilliseconds, exception.GetType().FullName, exception.Message);
+                throw;
+            }
+        }
+    }
+
+    private sealed class DiagnosticPreparedJdtOwnedProcess(
+        IJdtLsProcess inner,
+        string dataPath,
+        ITestOutputHelper output) : IJdtLsProcess
+    {
+        internal bool StartCompleted { get; } = true;
+
+        internal bool KillRequested { get; private set; }
+
+        internal bool ExitObserved { get; private set; }
+
+        internal int? ExitCode { get; private set; }
+
+        internal bool CleanupConfirmed { get; private set; }
+
+        public Stream StandardInput => inner.StandardInput;
+
+        public Stream StandardOutput => inner.StandardOutput;
+
+        public Task<string> ReadBoundedStandardErrorAsync(int byteLimit, CancellationToken cancellationToken) =>
+            inner.ReadBoundedStandardErrorAsync(byteLimit, cancellationToken);
+
+        public async Task<int> WaitForExitAsync(TimeSpan timeout, CancellationToken cancellationToken)
+        {
+            int exitCode = await inner.WaitForExitAsync(timeout, cancellationToken);
+            ExitObserved = true;
+            ExitCode = exitCode;
+            output.WriteLine("Owned process exited with code {0}.", exitCode);
+            return exitCode;
+        }
+
+        public Task KillTreeAsync(CancellationToken cancellationToken)
+        {
+            KillRequested = true;
+            output.WriteLine("Owned process tree termination was requested.");
+            return inner.KillTreeAsync(cancellationToken);
+        }
+
+        public async ValueTask DisposeAsync()
+        {
+            await ReportCapturedStderrAsync();
+            string logPath = Path.Combine(dataPath, ".metadata", ".log");
+            string? logTail = await ReadFileTailAsync(logPath, maximumBytes: 64 * 1024);
+            if (logTail is not null)
+            {
+                output.WriteLine("JDT workspace log tail ({0} bytes max):\n{1}", 64 * 1024, logTail);
+            }
+
+            await inner.DisposeAsync();
+            CleanupConfirmed = true;
+            output.WriteLine("Owned process wrapper disposal and confirmed state cleanup completed.");
+        }
+
+        internal async Task ReportCapturedStderrAsync()
+        {
+            string stderr = await inner.ReadBoundedStandardErrorAsync(64 * 1024, CancellationToken.None);
+            output.WriteLine("Bounded owned-process stderr (up to 64 KiB):\n{0}",
+                string.IsNullOrWhiteSpace(stderr) ? "<empty>" : stderr);
+        }
+
+        private static async Task<string?> ReadFileTailAsync(string path, int maximumBytes)
+        {
+            if (!File.Exists(path))
+            {
+                return null;
+            }
+
+            await using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+            long start = Math.Max(0, stream.Length - maximumBytes);
+            stream.Position = start;
+            byte[] bytes = new byte[(int)(stream.Length - start)];
+            int offset = 0;
+            while (offset < bytes.Length)
+            {
+                int read = await stream.ReadAsync(bytes.AsMemory(offset));
+                if (read == 0)
+                {
+                    break;
+                }
+
+                offset += read;
+            }
+
+            return Utf8.GetString(bytes, 0, offset);
+        }
     }
 
     private static (string HostPath, PreparedJdtHostPolicy Policy, string RuntimeRoot,

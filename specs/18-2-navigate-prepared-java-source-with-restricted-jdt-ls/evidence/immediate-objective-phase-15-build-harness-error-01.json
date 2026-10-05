@@ -1,0 +1,17 @@
+{
+  "suite": "SelfContained",
+  "resultsRoot": "TestResults/isolation-f1c1cf672201401b83786ef83131f6b7",
+  "testsExecuted": 0,
+  "processExit": -1073741819,
+  "stderr": "Fatal error. Internal CLR error. (0x80131506)",
+  "windowsEvent": {
+    "time": "2026-10-05T21:56:28+08:00",
+    "application": "C:/Program Files/dotnet/dotnet.exe",
+    "module": "C:/Program Files/dotnet/shared/Microsoft.NETCore.App/10.0.12/coreclr.dll",
+    "exception": "0xc0000005",
+    "offset": "0x73cd9",
+    "reportId": "e7188482-a5f7-4a42-abd3-aa4de36e1f48"
+  },
+  "classification": "Build/runtime process crash before product tests, not filesystemaccessdenial and not productRED. Rootcause unknown.",
+  "retryPolicy": "Fresh read-only dotnet qualification, one unchanged standardSelfContained retry; no sourceassertion/script/runtimeflag weakening, cacheclears or unrelatedprocess termination."
+}

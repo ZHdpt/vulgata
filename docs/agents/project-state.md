@@ -8,7 +8,7 @@ container; tool/provider/E2E and historical suites remain explicit and retain th
 feature-specific gates. See [testing guidance](testing.md). This changes the routine
 regression boundary, not historical product evidence or story lifecycle state.
 
-Updated: 2026-09-29 (delegation policy; product evidence unchanged).
+Updated: 2026-10-05 (Story 18.2 immediate-objective checkpoint; other product evidence unchanged).
 Story 13.1 is complete in `specs/015-retained-source-access`.
 Exact retained capture, scoped reads, publication/recovery, cleanup, trusted
 workspaces and separate-process reopening have bounded controlled evidence.
@@ -108,7 +108,7 @@ runtime workflow:
 | --- | --- |
 | Administration/persistence | Reusable Identity, roles, configuration and domain persistence; Identity remains in Web/Data. |
 | Source preparation | Story 13.1 has verified raw-Git retained capture, canonical manifests, and scoped metadata and byte/text reads. Live denial, concurrent publication and controlled process-crash cleanup are verified; trusted workspace materialization is verified; fresh-process remote-unavailable reopen is verified; source-only boundaries and diagnostics are verified; controlled full-suite and all Story 13.1 independent gates pass; no generic Scan qualification is implied. Legacy disposable leases and prepared pair contracts remain separate. |
-| CodeGraph/LSP | Historical CodeGraph 1.5 integration is CLI/JSON, not native MCP. October Story 18.2 has controlled prepared-protocol/trusted-binding coverage and owned Windows ACL/mutex fixture evidence; its host executable pinning, restricted launcher, selected-host/native qualification and integrated producer handoff remain open. See the [18.2 development record](../bmad/implementation-artifacts/18-2-navigate-prepared-java-source-with-restricted-jdt-ls.md). |
+| CodeGraph/LSP | Historical CodeGraph 1.5 integration is CLI/JSON, not native MCP. October Story 18.2 in its assigned branch has 107 controlled JDT LocalTools passes, 2063 basic SelfContained passes and actual owned process-start/cleanup evidence. Its selected first-PATH Java 27 cannot initialize pinned JDT 1.58 (ASM class-file major version 71); real navigation/function qualification and integrated producer handoff remain open. Old unfinished tasks/workflow are preserved and stopped. See the [18.2 development record](../bmad/implementation-artifacts/18-2-navigate-prepared-java-source-with-restricted-jdt-ls.md). |
 | Knowledge | Atomic persistence/provenance mechanics exist, but file-level CL/paired Flow semantics are not the new semantic Code Unit/Logical Flow contracts. |
 | Resolution | Finite exact matching is profile-bound; generic inquiry, late-evidence reconciliation and the ordinary production caller are not delivered. Controlled baseline qualification also exposed an unchanged consumer candidate missing ConsumerEntryStableKey, which the V2 store rejects with Conflict; see specs/015-retained-source-access/evidence/canonical-correction-affected-fixture-diagnosis-01.json. |
 | Chat | Provider SSE is ingested but the current answer path buffers strict candidates and reveals accepted text in the UI. Pair-bound scope and process-local dialogue/publication are not genuine generic streaming/durable reattachment or Business BL-only behavior. |

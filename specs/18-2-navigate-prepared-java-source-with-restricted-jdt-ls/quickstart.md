@@ -81,3 +81,24 @@ T037–T047 only. Run real JDT qualification explicitly in LocalTools; default
 SelfContained excludes native JDT starts. Fixed test-only short PATH may be reused
 for controlled tests, but native qualification must use the actual host PATH for
 first-match selection. No host PATH/ACL edits or old skipped-task resumption.
+
+
+## Actual October 5 checkpoint
+
+Dedicated JDT controlled cases are LocalTools (107/107); basic SelfContained is
+2063/2063. The legacy CodeGraph test passed with unmodified running-host PATH; its
+earlier short-PATH failure and initial CLR build crash remain recorded separately.
+
+The real first-PATH Java 27 / JDT 1.58 chain starts and cleans up, but initialization
+fails with `Unsupported class file major version 71` in ASM/weaving/m2e. This is a
+compatibility blocker, not navigation qualification. Keep the failing public-factory
+test. The diagnostic method is a capture/cleanup probe and cannot substitute for it.
+After a compatible runtime is supplied, use the exact acceptance selection:
+
+```powershell
+pwsh -NoProfile -File eng/test.ps1 -Suite LocalTools -Filter 'FullyQualifiedName~OpenDedicatedAsync_WithPinnedHostJdt_ReturnsUsefulFunctionResultsAndSettlesOwnedProcess'
+```
+
+Keep the live workspace grant within its existing 30-second limit; source-only root,
+separate state, physical pins/alias rechecks, offline settings and bounded cleanup
+remain required. No machine PATH edits, silent Java fallback or cache adoption.

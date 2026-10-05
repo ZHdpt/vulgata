@@ -1,0 +1,13 @@
+{
+  "suite": "SelfContained",
+  "results": "TestResults/isolation-a60b7636522f4063bf2d26f491b0312c/results.trx",
+  "discovered": 3000,
+  "selected": 2063,
+  "passed": 2063,
+  "failed": 0,
+  "skipped": 0,
+  "JdtCases": "ExcludedguardedLocalTools; no JDT qualificationclaimed.",
+  "parentPATH": "Unmodified runninghostPATH; priorlegacyCodeGraphmissingchildPATHcasepassedwithouttest/source/filterchanges.",
+  "earlierCrash": "Retained separately; freshdotnetinfoexit0 thenoneunchangedretry passed. Not rootcauseexplanation.",
+  "sourceCheckpoint": "702caee1 plus diagnostic test helpers; product sourceunchangedfrom107controlledGREEN."
+}

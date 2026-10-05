@@ -1,10 +1,40 @@
 # Story 18.2 development record
 
-Status: in-progress (corrected definition accepted; controlled implementation authorized; human-audited counter reset to zero verified)
+Status: in-progress — immediate-objective T046 blocked by pinned JDT / selected Java 27 compatibility; historical governed workflow frozen
 Feature directory: specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls
 Workflow state: specs/18-2-navigate-prepared-java-source-with-restricted-jdt-ls/workflow-state.json
 
-## Scope and dependency
+## Current immediate-objective boundary — 2026-10-05
+
+The human stopped the previous workflow and authorized direct SpecKit correction
+and implementation of T037–T047 in the existing branch/feature. T037–T045 are
+complete; 19 earlier unfinished items remain SKIP, not completed or waived. Historical
+reviews, counter, owners/models and workflow state remain preserved and inactive.
+
+The public dedicated factory, existing protocol/navigation/functions and concrete
+launcher now support the selected first-PATH Python/Java chain, pinned physical
+command targets, strict single-hop aliases, whole prepared root and separate fresh
+state. Application retains root/startup/disposal authority; default Web remains
+file-only. No shared 18.1/18.3 workspace/reader/filter contract changed.
+
+Controlled JDT LocalTools: 107/107; basic SelfContained: 2063/2063, no skips. The
+first basic build's coreclr.dll crash is preserved; a fresh qualified unchanged retry
+passed. The old CodeGraph short-PATH case passed with actual unmodified host PATH.
+
+Actual JDT process startup and bounded own tree termination/wait/disposal/state
+cleanup are observed. Initialization fails because bundled ASM/weaving rejects
+Java 27 class-file major version 71, preventing m2e/JDT plugin activation. The public
+factory returned no context, so real definition/references/function results and
+successful source-preserving session lifecycle remain unqualified. T046 and final
+T047 stay unfinished. Keep first Java as directed; a compatible pinned JDT runtime
+must be supplied before native qualification can continue. Customer Repository is
+not ready; mixed-root/restart/cache/shared integration obligations remain deferred.
+See the feature's `evidence/immediate-objective-runtime-blocker-2026-10-05.json`.
+
+The following sections retain historical governed delivery decisions and evidence;
+they do not reactivate the stopped workflow.
+
+## Scope and dependency (historical governed boundary)
 
 The accepted story is `Story 18.2: Navigate Prepared Java Source with Restricted JDT-LS` in `docs/bmad/planning-artifacts/october-release-epics.md`. The original run ended after independent plan review while Story 18.1 was being implemented elsewhere. The user later lifted that stop and authorized normal governed delivery in this assigned checkout. The definition and plan were reconciled with integrated Story 18.1; affected deterministic validation, independent reviews, planned-change authorization and implementation approval were completed before implementation. Story 18.1's source identity, root grant and list/read/search contracts remain owned by that story.
 
